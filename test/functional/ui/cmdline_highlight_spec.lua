@@ -4,13 +4,12 @@ local Screen = require('test.functional.ui.screen')
 local eq = helpers.eq
 local feed = helpers.feed
 local clear = helpers.clear
-local meths = helpers.meths
-local funcs = helpers.funcs
+local api = helpers.api
+local fn = helpers.fn
 local source = helpers.source
 local exec_capture = helpers.exec_capture
 local dedent = helpers.dedent
 local command = helpers.command
-local curbufmeths = helpers.curbufmeths
 
 local screen
 
@@ -157,16 +156,16 @@ before_each(function()
 end)
 
 local function set_color_cb(funcname, callback_return, id)
-  meths.set_var('id', id or '')
-  if id and id ~= '' and funcs.exists('*' .. funcname .. 'N') then
+  api.nvim_set_var('id', id or '')
+  if id and id ~= '' and fn.exists('*' .. funcname .. 'N') then
     command(('let g:Nvim_color_input%s = {cmdline -> %sN(%s, cmdline)}'):format(id, funcname, id))
     if callback_return then
-      meths.set_var('callback_return' .. id, callback_return)
+      api.nvim_set_var('callback_return' .. id, callback_return)
     end
   else
-    meths.set_var('Nvim_color_input', funcname)
+    api.nvim_set_var('Nvim_color_input', funcname)
     if callback_return then
-      meths.set_var('callback_return', callback_return)
+      api.nvim_set_var('callback_return', callback_return)
     end
   end
 end
@@ -177,7 +176,7 @@ end
 describe('Command-line coloring', function()
   it('works', function()
     set_color_cb('RainBowParens')
-    meths.set_option_value('more', false, {})
+    api.nvim_set_option_value('more', false, {})
     start_prompt()
     screen:expect([[
                                               |
@@ -362,9 +361,9 @@ describe('Command-line coloring', function()
                                               |
     ]])
     feed('\n')
-    eq('let x = "«»«»«»«»«»"', meths.get_var('out'))
+    eq('let x = "«»«»«»«»«»"', api.nvim_get_var('out'))
     local msg = '\nE5405: Chunk 0 start 10 splits multibyte character'
-    eq(msg:rep(1), funcs.execute('messages'))
+    eq(msg:rep(1), fn.execute('messages'))
   end)
   it('allows interrupting callback with <C-c>', function()
     set_color_cb('Halting')
@@ -398,7 +397,7 @@ describe('Command-line coloring', function()
       :echo 42                                |
     ]])
     feed('\n')
-    eq('echo 42', meths.get_var('out'))
+    eq('echo 42', api.nvim_get_var('out'))
     feed('<C-c>')
     screen:expect([[
       ^                                        |
@@ -503,9 +502,9 @@ describe('Command-line coloring', function()
     ]]))
     eq(
       { '', ':', 'E888 detected for  \\ze*', ':', 'E888 detected for  \\zs*' },
-      curbufmeths.get_lines(0, -1, false)
+      api.nvim_buf_get_lines(0, 0, -1, false)
     )
-    eq('', funcs.execute('messages'))
+    eq('', fn.execute('messages'))
   end)
   it('allows nesting input()s', function()
     set_color_cb('ReturningGlobal', { { 0, 1, 'RBP1' } }, '')
@@ -564,16 +563,16 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|*6
                                               |
     ]])
-    eq('1234', meths.get_var('out'))
-    eq('234', meths.get_var('out1'))
-    eq('34', meths.get_var('out2'))
-    eq('4', meths.get_var('out3'))
-    eq(0, funcs.exists('g:out4'))
+    eq('1234', api.nvim_get_var('out'))
+    eq('234', api.nvim_get_var('out1'))
+    eq('34', api.nvim_get_var('out2'))
+    eq('4', api.nvim_get_var('out3'))
+    eq(0, fn.exists('g:out4'))
   end)
   it('runs callback with the same data only once', function()
     local function new_recording_calls(...)
-      eq({ ... }, meths.get_var('recording_calls'))
-      meths.set_var('recording_calls', {})
+      eq({ ... }, api.nvim_get_var('recording_calls'))
+      api.nvim_set_var('recording_calls', {})
     end
     set_color_cb('Recording')
     start_prompt('')
@@ -594,7 +593,7 @@ describe('Command-line coloring', function()
     feed('<BS>')
     new_recording_calls() -- ('a')
     feed('<CR><CR>')
-    eq('', meths.get_var('out'))
+    eq('', api.nvim_get_var('out'))
   end)
   it('does not crash when callback has caught not-a-editor-command exception', function()
     source([[
@@ -609,12 +608,12 @@ describe('Command-line coloring', function()
     ]])
     set_color_cb('CaughtExc')
     start_prompt('1')
-    eq(1, meths.eval('1'))
+    eq(1, api.nvim_eval('1'))
   end)
 end)
 describe('Ex commands coloring', function()
   it('works', function()
-    meths.set_var('Nvim_color_cmdline', 'RainBowParens')
+    api.nvim_set_var('Nvim_color_cmdline', 'RainBowParens')
     feed(':echo (((1)))')
     screen:expect([[
                                               |
@@ -623,11 +622,11 @@ describe('Ex commands coloring', function()
     ]])
   end)
   it('still executes command-line even if errored out', function()
-    meths.set_var('Nvim_color_cmdline', 'SplitMultibyteStart')
+    api.nvim_set_var('Nvim_color_cmdline', 'SplitMultibyteStart')
     feed(':let x = "«"\n')
-    eq('«', meths.get_var('x'))
+    eq('«', api.nvim_get_var('x'))
     local msg = 'E5405: Chunk 0 start 10 splits multibyte character'
-    eq('\n' .. msg, funcs.execute('messages'))
+    eq('\n' .. msg, fn.execute('messages'))
   end)
   it('does not error out when called from a errorred out cycle', function()
     -- Apparently when there is a cycle in which one of the commands errors out
@@ -646,9 +645,9 @@ describe('Ex commands coloring', function()
     ]]))
     eq(
       { '', 'E888 detected for  \\ze*', 'E888 detected for  \\zs*' },
-      curbufmeths.get_lines(0, -1, false)
+      api.nvim_buf_get_lines(0, 0, -1, false)
     )
-    eq('', funcs.execute('messages'))
+    eq('', fn.execute('messages'))
   end)
   it('does not crash when using `n` in debug mode', function()
     feed(':debug execute "echo 1"\n')
@@ -709,7 +708,7 @@ describe('Ex commands coloring', function()
     )
   end)
   it('errors out when failing to get callback', function()
-    meths.set_var('Nvim_color_cmdline', 42)
+    api.nvim_set_var('Nvim_color_cmdline', 42)
     feed(':#')
     screen:expect([[
                                               |
@@ -725,10 +724,10 @@ describe('Ex commands coloring', function()
 end)
 describe('Expressions coloring support', function()
   it('works', function()
-    meths.command('hi clear NvimNumber')
-    meths.command('hi clear NvimNestingParenthesis')
-    meths.command('hi NvimNumber guifg=Blue2')
-    meths.command('hi NvimNestingParenthesis guifg=Yellow')
+    command('hi clear NvimNumber')
+    command('hi clear NvimNestingParenthesis')
+    command('hi NvimNumber guifg=Blue2')
+    command('hi NvimNestingParenthesis guifg=Yellow')
     feed(':echo <C-r>=(((1)))')
     screen:expect([[
                                               |
@@ -737,10 +736,10 @@ describe('Expressions coloring support', function()
     ]])
   end)
   it('does not use Nvim_color_expr', function()
-    meths.set_var('Nvim_color_expr', 42)
+    api.nvim_set_var('Nvim_color_expr', 42)
     -- Used to error out due to failing to get callback.
-    meths.command('hi clear NvimNumber')
-    meths.command('hi NvimNumber guifg=Blue2')
+    command('hi clear NvimNumber')
+    command('hi NvimNumber guifg=Blue2')
     feed(':<C-r>=1')
     screen:expect([[
                                               |
@@ -749,12 +748,12 @@ describe('Expressions coloring support', function()
     ]])
   end)
   it('works correctly with non-ASCII and control characters', function()
-    meths.command('hi clear NvimStringBody')
-    meths.command('hi clear NvimStringQuote')
-    meths.command('hi clear NvimInvalid')
-    meths.command('hi NvimStringQuote guifg=Blue3')
-    meths.command('hi NvimStringBody guifg=Blue4')
-    meths.command('hi NvimInvalid guifg=Red guibg=Blue')
+    command('hi clear NvimStringBody')
+    command('hi clear NvimStringQuote')
+    command('hi clear NvimInvalid')
+    command('hi NvimStringQuote guifg=Blue3')
+    command('hi NvimStringBody guifg=Blue4')
+    command('hi NvimInvalid guifg=Red guibg=Blue')
     feed('i<C-r>="«»"«»')
     screen:expect([[
                                               |
@@ -787,7 +786,7 @@ describe('Expressions coloring support', function()
       {EOB:~                                       }|*6
       :^                                       |
     ]])
-    funcs.setreg('a', { '\192' })
+    fn.setreg('a', { '\192' })
     feed('<C-r>="<C-r><C-r>a"<C-r><C-r>a"foo"')
     screen:expect([[
                                               |

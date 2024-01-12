@@ -1,4 +1,4 @@
-local luv = require('luv')
+local uv = vim.uv
 local global_helpers = require('test.helpers')
 
 local Session = require('test.client.session')
@@ -10,17 +10,13 @@ local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
 local dedent = global_helpers.dedent
 local eq = global_helpers.eq
-local filter = global_helpers.tbl_filter
 local is_os = global_helpers.is_os
-local map = global_helpers.tbl_map
 local ok = global_helpers.ok
-local sleep = global_helpers.sleep
-local tbl_contains = global_helpers.tbl_contains
+local sleep = uv.sleep
 local fail = global_helpers.fail
 
 local module = {}
 
-local start_dir = luv.cwd()
 local runtime_set = 'set runtimepath^=./build/lib/nvim/'
 module.nvim_prog = (os.getenv('NVIM_PRG') or global_helpers.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
@@ -98,8 +94,8 @@ end
 local session, loop_running, last_error, method_error
 
 if not is_os('win') then
-  local sigpipe_handler = luv.new_signal()
-  luv.signal_start(sigpipe_handler, 'sigpipe', function()
+  local sigpipe_handler = uv.new_signal()
+  uv.signal_start(sigpipe_handler, 'sigpipe', function()
     print('warning: got SIGPIPE signal. Likely related to a crash in nvim')
   end)
 end
@@ -204,7 +200,7 @@ function module.expect_msg_seq(...)
             )
           )
         )
-      elseif tbl_contains(ignore, msg_type) then
+      elseif vim.tbl_contains(ignore, msg_type) then
         nr_ignored = nr_ignored + 1
       else
         table.insert(actual_seq, msg)
@@ -292,12 +288,6 @@ function module.nvim_prog_abs()
   else
     return module.nvim_prog
   end
-end
-
--- Executes an ex-command. Vimscript errors manifest as client (lua) errors, but
--- v:errmsg will not be updated.
-function module.command(cmd)
-  module.request('nvim_command', cmd)
 end
 
 -- Use for commands which expect nvim to quit.
@@ -408,11 +398,11 @@ local function remove_args(args, args_rm)
   end
   local last = ''
   for _, arg in ipairs(args) do
-    if tbl_contains(skip_following, last) then
+    if vim.tbl_contains(skip_following, last) then
       last = ''
-    elseif tbl_contains(args_rm, arg) then
+    elseif vim.tbl_contains(args_rm, arg) then
       last = arg
-    elseif arg == runtime_set and tbl_contains(args_rm, 'runtimepath') then
+    elseif arg == runtime_set and vim.tbl_contains(args_rm, 'runtimepath') then
       table.remove(new_args) -- Remove the preceding "--cmd".
       last = ''
     else
@@ -426,10 +416,10 @@ function module.check_close()
   if not session then
     return
   end
-  local start_time = luv.now()
+  local start_time = uv.now()
   session:close()
-  luv.update_time() -- Update cached value of luv.now() (libuv: uv_now()).
-  local end_time = luv.now()
+  uv.update_time() -- Update cached value of luv.now() (libuv: uv_now()).
+  local end_time = uv.now()
   local delta = end_time - start_time
   if delta > 500 then
     print(
@@ -632,64 +622,22 @@ end
 module.async_meths = module.create_callindex(module.nvim_async)
 module.uimeths = module.create_callindex(ui)
 
-local function create_api(request, call)
-  local m = {}
-  function m.nvim(method, ...)
+local function create_bridge(request, call)
+  local function nvim(method, ...)
+    if vim.startswith(method, 'nvim_') then
+      return request(method, ...)
+    end
     return request('nvim_' .. method, ...)
   end
 
-  function m.buffer(method, ...)
-    return request('nvim_buf_' .. method, ...)
-  end
-
-  function m.window(method, ...)
-    return request('nvim_win_' .. method, ...)
-  end
-
-  function m.tabpage(method, ...)
-    return request('nvim_tabpage_' .. method, ...)
-  end
-
-  function m.curbuf(method, ...)
-    if not method then
-      return m.nvim('get_current_buf')
-    end
-    return m.buffer(method, 0, ...)
-  end
-
-  function m.curwin(method, ...)
-    if not method then
-      return m.nvim('get_current_win')
-    end
-    return m.window(method, 0, ...)
-  end
-
-  function m.curtab(method, ...)
-    if not method then
-      return m.nvim('get_current_tabpage')
-    end
-    return m.tabpage(method, 0, ...)
-  end
-
-  m.funcs = module.create_callindex(call)
-  m.meths = module.create_callindex(m.nvim)
-  m.bufmeths = module.create_callindex(m.buffer)
-  m.winmeths = module.create_callindex(m.window)
-  m.tabmeths = module.create_callindex(m.tabpage)
-  m.curbufmeths = module.create_callindex(m.curbuf)
-  m.curwinmeths = module.create_callindex(m.curwin)
-  m.curtabmeths = module.create_callindex(m.curtab)
-
-  return m
+  return {
+    fn = module.create_callindex(call),
+    api = module.create_callindex(nvim),
+  }
 end
 
-module.rpc = {
-  api = create_api(module.request, module.call),
-}
-
-module.lua = {
-  api = create_api(module.request_lua, module.call_lua),
-}
+module.rpc = create_bridge(module.request, module.call)
+module.lua = create_bridge(module.request_lua, module.call_lua)
 
 module.describe_lua_and_rpc = function(describe)
   return function(what, tests)
@@ -704,9 +652,17 @@ module.describe_lua_and_rpc = function(describe)
   end
 end
 
-for name, fn in pairs(module.rpc.api) do
-  module[name] = fn
+--- add for typing. The for loop after will overwrite this
+module.api = vim.api
+module.fn = vim.fn
+
+for name, fns in pairs(module.rpc) do
+  module[name] = fns
 end
+
+-- Executes an ex-command. Vimscript errors manifest as client (lua) errors, but
+-- v:errmsg will not be updated.
+module.command = module.api.nvim_command
 
 function module.poke_eventloop()
   -- Execute 'nvim_eval' (a deferred function) to
@@ -721,7 +677,7 @@ end
 ---@see buf_lines()
 function module.curbuf_contents()
   module.poke_eventloop() -- Before inspecting the buffer, do whatever.
-  return table.concat(module.curbuf('get_lines', 0, -1, true), '\n')
+  return table.concat(module.api.nvim_buf_get_lines(0, 0, -1, true), '\n')
 end
 
 function module.expect(contents)
@@ -734,17 +690,16 @@ function module.expect_any(contents)
 end
 
 function module.expect_events(expected, received, kind)
-  local inspect = require 'vim.inspect'
   if not pcall(eq, expected, received) then
     local msg = 'unexpected ' .. kind .. ' received.\n\n'
 
     msg = msg .. 'received events:\n'
     for _, e in ipairs(received) do
-      msg = msg .. '  ' .. inspect(e) .. ';\n'
+      msg = msg .. '  ' .. vim.inspect(e) .. ';\n'
     end
     msg = msg .. '\nexpected events:\n'
     for _, e in ipairs(expected) do
-      msg = msg .. '  ' .. inspect(e) .. ';\n'
+      msg = msg .. '  ' .. vim.inspect(e) .. ';\n'
     end
     fail(msg)
   end
@@ -759,22 +714,22 @@ end
 -- Asserts that buffer is loaded and visible in the current tabpage.
 function module.assert_visible(bufnr, visible)
   assert(type(visible) == 'boolean')
-  eq(visible, module.bufmeths.is_loaded(bufnr))
+  eq(visible, module.api.nvim_buf_is_loaded(bufnr))
   if visible then
     assert(
-      -1 ~= module.funcs.bufwinnr(bufnr),
+      -1 ~= module.fn.bufwinnr(bufnr),
       'expected buffer to be visible in current tabpage: ' .. tostring(bufnr)
     )
   else
     assert(
-      -1 == module.funcs.bufwinnr(bufnr),
+      -1 == module.fn.bufwinnr(bufnr),
       'expected buffer NOT visible in current tabpage: ' .. tostring(bufnr)
     )
   end
 end
 
 local function do_rmdir(path)
-  local stat = luv.fs_stat(path)
+  local stat = uv.fs_stat(path)
   if stat == nil then
     return
   end
@@ -803,11 +758,13 @@ local function do_rmdir(path)
       end
     end
   end
-  local ret, err = luv.fs_rmdir(path)
+  local ret, err = uv.fs_rmdir(path)
   if not ret then
     error('luv.fs_rmdir(' .. path .. '): ' .. err)
   end
 end
+
+local start_dir = uv.cwd()
 
 function module.rmdir(path)
   local ret, _ = pcall(do_rmdir, path)
@@ -865,17 +822,17 @@ function module.skip_fragile(pending_fn, cond)
 end
 
 function module.exec(code)
-  module.meths.exec2(code, {})
+  module.api.nvim_exec2(code, {})
 end
 
 function module.exec_capture(code)
-  return module.meths.exec2(code, { output = true }).output
+  return module.api.nvim_exec2(code, { output = true }).output
 end
 
 --- @param code string
 --- @return any
 function module.exec_lua(code, ...)
-  return module.meths.exec_lua(code, { ... })
+  return module.api.exec_lua(code, { ... })
 end
 
 function module.get_pathsep()
@@ -907,7 +864,7 @@ end
 function module.new_pipename()
   -- HACK: Start a server temporarily, get the name, then stop it.
   local pipename = module.eval('serverstart()')
-  module.funcs.serverstop(pipename)
+  module.fn.serverstop(pipename)
   -- Remove the pipe so that trying to connect to it without a server listening
   -- will be an error instead of a hang.
   os.remove(pipename)
@@ -916,11 +873,11 @@ end
 
 function module.missing_provider(provider)
   if provider == 'ruby' or provider == 'node' or provider == 'perl' then
-    local e = module.funcs['provider#' .. provider .. '#Detect']()[2]
+    local e = module.fn['provider#' .. provider .. '#Detect']()[2]
     return e ~= '' and e or false
   elseif provider == 'python' or provider == 'python3' then
     local py_major_version = (provider == 'python3' and 3 or 2)
-    local e = module.funcs['provider#pythonx#Detect'](py_major_version)[2]
+    local e = module.fn['provider#pythonx#Detect'](py_major_version)[2]
     return e ~= '' and e or false
   else
     assert(false, 'Unknown provider: ' .. provider)
@@ -959,12 +916,12 @@ end
 function module.parse_context(ctx)
   local parsed = {}
   for _, item in ipairs({ 'regs', 'jumps', 'bufs', 'gvars' }) do
-    parsed[item] = filter(function(v)
+    parsed[item] = vim.tbl_filter(function(v)
       return type(v) == 'table'
     end, module.call('msgpackparse', ctx[item]))
   end
   parsed['bufs'] = parsed['bufs'][1]
-  return map(function(v)
+  return vim.tbl_map(function(v)
     if #v == 0 then
       return nil
     end
@@ -993,7 +950,7 @@ function module.mkdir_p(path)
 end
 
 --- @class test.functional.helpers: test.helpers
-module = global_helpers.tbl_extend('error', module, global_helpers)
+module = vim.tbl_extend('error', module, global_helpers)
 
 --- @return test.functional.helpers
 return function(after_each)

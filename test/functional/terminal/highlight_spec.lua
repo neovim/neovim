@@ -1,11 +1,12 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
-local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
+local feed, clear = helpers.feed, helpers.clear
+local api = helpers.api
 local testprg, command = helpers.testprg, helpers.command
 local nvim_prog_abs = helpers.nvim_prog_abs
 local eq, eval = helpers.eq, helpers.eval
-local funcs = helpers.funcs
+local fn = helpers.fn
 local nvim_set = helpers.nvim_set
 local is_os = helpers.is_os
 local skip = helpers.skip
@@ -150,7 +151,7 @@ it(':terminal highlight has lower precedence than editor #9964', function()
   })
   screen:attach({ rgb = true })
   -- Child nvim process in :terminal (with cterm colors).
-  funcs.termopen({
+  fn.termopen({
     nvim_prog_abs(),
     '-n',
     '-u',
@@ -250,7 +251,7 @@ describe(':terminal highlight with custom palette', function()
       [9] = { bold = true },
     })
     screen:attach({ rgb = true })
-    nvim('set_var', 'terminal_color_3', '#123456')
+    api.nvim_set_var('terminal_color_3', '#123456')
     command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
     feed('i')
     screen:expect([[

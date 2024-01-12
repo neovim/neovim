@@ -1,12 +1,12 @@
 local helpers = require('test.functional.helpers')(after_each)
 local exc_exec = helpers.exc_exec
 local command = helpers.command
-local funcs = helpers.funcs
+local fn = helpers.fn
 local clear = helpers.clear
 local eval = helpers.eval
 local eq = helpers.eq
-local meths = helpers.meths
-local NIL = helpers.NIL
+local api = helpers.api
+local NIL = vim.NIL
 
 describe('Special values', function()
   before_each(clear)
@@ -25,15 +25,15 @@ describe('Special values', function()
   end)
 
   it('work with empty()', function()
-    eq(0, funcs.empty(true))
-    eq(1, funcs.empty(false))
-    eq(1, funcs.empty(NIL))
+    eq(0, fn.empty(true))
+    eq(1, fn.empty(false))
+    eq(1, fn.empty(NIL))
   end)
 
   it('can be stringified and eval’ed back', function()
-    eq(true, funcs.eval(funcs.string(true)))
-    eq(false, funcs.eval(funcs.string(false)))
-    eq(NIL, funcs.eval(funcs.string(NIL)))
+    eq(true, fn.eval(fn.string(true)))
+    eq(false, fn.eval(fn.string(false)))
+    eq(NIL, fn.eval(fn.string(NIL)))
   end)
 
   it('work with is/isnot properly', function()
@@ -107,8 +107,8 @@ describe('Special values', function()
   end)
 
   it('does not work with +=/-=/.=', function()
-    meths.set_var('true', true)
-    meths.set_var('false', false)
+    api.nvim_set_var('true', true)
+    api.nvim_set_var('false', false)
     command('let null = v:null')
 
     eq('Vim(let):E734: Wrong variable type for +=', exc_exec('let true  += 1'))
@@ -137,19 +137,19 @@ describe('Special values', function()
   end)
 
   it('work with type()', function()
-    eq(6, funcs.type(true))
-    eq(6, funcs.type(false))
-    eq(7, funcs.type(NIL))
+    eq(6, fn.type(true))
+    eq(6, fn.type(false))
+    eq(7, fn.type(NIL))
   end)
 
   it('work with copy() and deepcopy()', function()
-    eq(true, funcs.deepcopy(true))
-    eq(false, funcs.deepcopy(false))
-    eq(NIL, funcs.deepcopy(NIL))
+    eq(true, fn.deepcopy(true))
+    eq(false, fn.deepcopy(false))
+    eq(NIL, fn.deepcopy(NIL))
 
-    eq(true, funcs.copy(true))
-    eq(false, funcs.copy(false))
-    eq(NIL, funcs.copy(NIL))
+    eq(true, fn.copy(true))
+    eq(false, fn.copy(false))
+    eq(NIL, fn.copy(NIL))
   end)
 
   it('fails in index', function()
@@ -159,20 +159,20 @@ describe('Special values', function()
   end)
 
   it('is accepted by assert_true and assert_false', function()
-    funcs.assert_false(false)
-    funcs.assert_false(true)
-    funcs.assert_false(NIL)
+    fn.assert_false(false)
+    fn.assert_false(true)
+    fn.assert_false(NIL)
 
-    funcs.assert_true(false)
-    funcs.assert_true(true)
-    funcs.assert_true(NIL)
+    fn.assert_true(false)
+    fn.assert_true(true)
+    fn.assert_true(NIL)
 
     eq({
       'Expected False but got v:true',
       'Expected False but got v:null',
       'Expected True but got v:false',
       'Expected True but got v:null',
-    }, meths.get_vvar('errors'))
+    }, api.nvim_get_vvar('errors'))
   end)
 
   describe('compat', function()

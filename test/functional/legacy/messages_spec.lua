@@ -4,7 +4,7 @@ local clear = helpers.clear
 local command = helpers.command
 local exec = helpers.exec
 local feed = helpers.feed
-local meths = helpers.meths
+local api = helpers.api
 local nvim_dir = helpers.nvim_dir
 local assert_alive = helpers.assert_alive
 
@@ -410,9 +410,9 @@ describe('messages', function()
       screen:attach()
 
       command('cd ' .. nvim_dir)
-      meths.set_option_value('shell', './shell-test', {})
-      meths.set_option_value('shellcmdflag', 'REP 20', {})
-      meths.set_option_value('shellxquote', '', {}) -- win: avoid extra quotes
+      api.nvim_set_option_value('shell', './shell-test', {})
+      api.nvim_set_option_value('shellcmdflag', 'REP 20', {})
+      api.nvim_set_option_value('shellxquote', '', {}) -- win: avoid extra quotes
 
       -- display a page and go back, results in exactly the same view
       feed([[:4 verbose echo system('foo')<CR>]])

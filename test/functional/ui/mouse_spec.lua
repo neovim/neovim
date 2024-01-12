@@ -1,8 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed, meths = helpers.clear, helpers.feed, helpers.meths
+local clear, feed, api = helpers.clear, helpers.feed, helpers.api
 local insert, feed_command = helpers.insert, helpers.feed_command
-local eq, funcs = helpers.eq, helpers.funcs
+local eq, fn = helpers.eq, helpers.fn
 local poke_eventloop = helpers.poke_eventloop
 local command = helpers.command
 local exec = helpers.exec
@@ -12,8 +12,8 @@ describe('ui/mouse/input', function()
 
   before_each(function()
     clear()
-    meths.set_option_value('mouse', 'a', {})
-    meths.set_option_value('list', true, {})
+    api.nvim_set_option_value('mouse', 'a', {})
+    api.nvim_set_option_value('list', true, {})
     -- NB: this is weird, but mostly irrelevant to the test
     -- So I didn't bother to change it
     command('set listchars=eol:$')
@@ -69,7 +69,7 @@ describe('ui/mouse/input', function()
   end)
 
   it("in external ui works with unset 'mouse'", function()
-    meths.set_option_value('mouse', '', {})
+    api.nvim_set_option_value('mouse', '', {})
     feed('<LeftMouse><2,1>')
     screen:expect {
       grid = [[
@@ -379,7 +379,7 @@ describe('ui/mouse/input', function()
     end)
 
     it('left click in default tabline (position 24) closes tab', function()
-      meths.set_option_value('hidden', true, {})
+      api.nvim_set_option_value('hidden', true, {})
       feed_command('%delete')
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
@@ -399,7 +399,7 @@ describe('ui/mouse/input', function()
     end)
 
     it('double click in default tabline (position 4) opens new tab', function()
-      meths.set_option_value('hidden', true, {})
+      api.nvim_set_option_value('hidden', true, {})
       feed_command('%delete')
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
@@ -432,8 +432,8 @@ describe('ui/mouse/input', function()
             return call('Test', a:000 + [2])
           endfunction
         ]])
-        meths.set_option_value('tabline', '%@Test@test%X-%5@Test2@test2', {})
-        meths.set_option_value('showtabline', 2, {})
+        api.nvim_set_option_value('tabline', '%@Test@test%X-%5@Test2@test2', {})
+        api.nvim_set_option_value('showtabline', 2, {})
         screen:expect([[
           {fill:test-test2               }|
           testing                  |
@@ -441,17 +441,17 @@ describe('ui/mouse/input', function()
           support and selectio^n    |
                                    |
         ]])
-        meths.set_var('reply', {})
+        api.nvim_set_var('reply', {})
       end)
 
       local check_reply = function(expected)
-        eq(expected, meths.get_var('reply'))
-        meths.set_var('reply', {})
+        eq(expected, api.nvim_get_var('reply'))
+        api.nvim_set_var('reply', {})
       end
 
       local test_click = function(name, click_str, click_num, mouse_button, modifiers)
         local function doit(do_click)
-          eq(1, funcs.has('tablineat'))
+          eq(1, fn.has('tablineat'))
           do_click(0, 3)
           check_reply({ 0, click_num, mouse_button, modifiers })
           do_click(0, 4)
@@ -475,7 +475,7 @@ describe('ui/mouse/input', function()
             for char in string.gmatch(modifiers, '%w') do
               modstr = modstr .. char .. '-' -- - not needed but should be accepted
             end
-            meths.input_mouse(buttons[mouse_button], 'press', modstr, 0, row, col)
+            api.nvim_input_mouse(buttons[mouse_button], 'press', modstr, 0, row, col)
           end)
         end)
       end
@@ -609,7 +609,7 @@ describe('ui/mouse/input', function()
     ]],
     }
 
-    meths.input_mouse('left', 'press', '', 0, 6, 27)
+    api.nvim_input_mouse('left', 'press', '', 0, 6, 27)
     screen:expect {
       grid = [[
       testing                   │testing                   |
@@ -624,7 +624,7 @@ describe('ui/mouse/input', function()
                                                            |
     ]],
     }
-    meths.input_mouse('left', 'drag', '', 0, 7, 30)
+    api.nvim_input_mouse('left', 'drag', '', 0, 7, 30)
 
     screen:expect {
       grid = [[
@@ -779,7 +779,7 @@ describe('ui/mouse/input', function()
   end)
 
   it('ctrl + left click will search for a tag', function()
-    meths.set_option_value('tags', './non-existent-tags-file', {})
+    api.nvim_set_option_value('tags', './non-existent-tags-file', {})
     feed('<C-LeftMouse><0,0>')
     screen:expect([[
       {6:E433: No tags file}       |
@@ -792,28 +792,28 @@ describe('ui/mouse/input', function()
   end)
 
   it('x1 and x2 can be triggered by api', function()
-    meths.set_var('x1_pressed', 0)
-    meths.set_var('x1_released', 0)
-    meths.set_var('x2_pressed', 0)
-    meths.set_var('x2_released', 0)
+    api.nvim_set_var('x1_pressed', 0)
+    api.nvim_set_var('x1_released', 0)
+    api.nvim_set_var('x2_pressed', 0)
+    api.nvim_set_var('x2_released', 0)
     command('nnoremap <X1Mouse> <Cmd>let g:x1_pressed += 1<CR>')
     command('nnoremap <X1Release> <Cmd>let g:x1_released += 1<CR>')
     command('nnoremap <X2Mouse> <Cmd>let g:x2_pressed += 1<CR>')
     command('nnoremap <X2Release> <Cmd>let g:x2_released += 1<CR>')
-    meths.input_mouse('x1', 'press', '', 0, 0, 0)
-    meths.input_mouse('x1', 'release', '', 0, 0, 0)
-    meths.input_mouse('x2', 'press', '', 0, 0, 0)
-    meths.input_mouse('x2', 'release', '', 0, 0, 0)
-    eq(1, meths.get_var('x1_pressed'), 'x1 pressed once')
-    eq(1, meths.get_var('x1_released'), 'x1 released once')
-    eq(1, meths.get_var('x2_pressed'), 'x2 pressed once')
-    eq(1, meths.get_var('x2_released'), 'x2 released once')
+    api.nvim_input_mouse('x1', 'press', '', 0, 0, 0)
+    api.nvim_input_mouse('x1', 'release', '', 0, 0, 0)
+    api.nvim_input_mouse('x2', 'press', '', 0, 0, 0)
+    api.nvim_input_mouse('x2', 'release', '', 0, 0, 0)
+    eq(1, api.nvim_get_var('x1_pressed'), 'x1 pressed once')
+    eq(1, api.nvim_get_var('x1_released'), 'x1 released once')
+    eq(1, api.nvim_get_var('x2_pressed'), 'x2 pressed once')
+    eq(1, api.nvim_get_var('x2_released'), 'x2 released once')
   end)
 
   it('dragging vertical separator', function()
     screen:try_resize(45, 5)
     command('setlocal nowrap')
-    local oldwin = meths.get_current_win().id
+    local oldwin = api.nvim_get_current_win().id
     command('rightbelow vnew')
     screen:expect([[
       testing               │{0:^$}                     |
@@ -822,9 +822,9 @@ describe('ui/mouse/input', function()
       {4:[No Name] [+]          }{5:[No Name]             }|
                                                    |
     ]])
-    meths.input_mouse('left', 'press', '', 0, 0, 22)
+    api.nvim_input_mouse('left', 'press', '', 0, 0, 22)
     poke_eventloop()
-    meths.input_mouse('left', 'drag', '', 0, 1, 12)
+    api.nvim_input_mouse('left', 'drag', '', 0, 1, 12)
     screen:expect([[
       testing     │{0:^$}                               |
       mouse       │{0:~                               }|
@@ -832,7 +832,7 @@ describe('ui/mouse/input', function()
       {4:< Name] [+]  }{5:[No Name]                       }|
                                                    |
     ]])
-    meths.input_mouse('left', 'drag', '', 0, 2, 2)
+    api.nvim_input_mouse('left', 'drag', '', 0, 2, 2)
     screen:expect([[
       te│{0:^$}                                         |
       mo│{0:~                                         }|
@@ -840,17 +840,17 @@ describe('ui/mouse/input', function()
       {4:<  }{5:[No Name]                                 }|
                                                    |
     ]])
-    meths.input_mouse('left', 'release', '', 0, 2, 2)
-    meths.set_option_value('statuscolumn', 'foobar', { win = oldwin })
+    api.nvim_input_mouse('left', 'release', '', 0, 2, 2)
+    api.nvim_set_option_value('statuscolumn', 'foobar', { win = oldwin })
     screen:expect([[
       {8:fo}│{0:^$}                                         |
       {8:fo}│{0:~                                         }|*2
       {4:<  }{5:[No Name]                                 }|
                                                    |
     ]])
-    meths.input_mouse('left', 'press', '', 0, 0, 2)
+    api.nvim_input_mouse('left', 'press', '', 0, 0, 2)
     poke_eventloop()
-    meths.input_mouse('left', 'drag', '', 0, 1, 12)
+    api.nvim_input_mouse('left', 'drag', '', 0, 1, 12)
     screen:expect([[
       {8:foobar}testin│{0:^$}                               |
       {8:foobar}mouse │{0:~                               }|
@@ -858,7 +858,7 @@ describe('ui/mouse/input', function()
       {4:< Name] [+]  }{5:[No Name]                       }|
                                                    |
     ]])
-    meths.input_mouse('left', 'drag', '', 0, 2, 22)
+    api.nvim_input_mouse('left', 'drag', '', 0, 2, 22)
     screen:expect([[
       {8:foobar}testing         │{0:^$}                     |
       {8:foobar}mouse           │{0:~                     }|
@@ -866,7 +866,7 @@ describe('ui/mouse/input', function()
       {4:[No Name] [+]          }{5:[No Name]             }|
                                                    |
     ]])
-    meths.input_mouse('left', 'release', '', 0, 2, 22)
+    api.nvim_input_mouse('left', 'release', '', 0, 2, 22)
   end)
 
   local function wheel(use_api)
@@ -901,7 +901,7 @@ describe('ui/mouse/input', function()
       :vsp                                                 |
     ]])
     if use_api then
-      meths.input_mouse('wheel', 'down', '', 0, 0, 0)
+      api.nvim_input_mouse('wheel', 'down', '', 0, 0, 0)
     else
       feed('<ScrollWheelDown><0,0>')
     end
@@ -922,7 +922,7 @@ describe('ui/mouse/input', function()
       :vsp                                                 |
     ]])
     if use_api then
-      meths.input_mouse('wheel', 'up', '', 0, 0, 27)
+      api.nvim_input_mouse('wheel', 'up', '', 0, 0, 27)
     else
       feed('<ScrollWheelUp><27,0>')
     end
@@ -943,8 +943,8 @@ describe('ui/mouse/input', function()
       :vsp                                                 |
     ]])
     if use_api then
-      meths.input_mouse('wheel', 'up', '', 0, 7, 27)
-      meths.input_mouse('wheel', 'up', '', 0, 7, 27)
+      api.nvim_input_mouse('wheel', 'up', '', 0, 7, 27)
+      api.nvim_input_mouse('wheel', 'up', '', 0, 7, 27)
     else
       feed('<ScrollWheelUp><27,7><ScrollWheelUp>')
     end
@@ -1016,7 +1016,7 @@ describe('ui/mouse/input', function()
                                |
     ]])
 
-    meths.input_mouse('wheel', 'left', '', 0, 0, 27)
+    api.nvim_input_mouse('wheel', 'left', '', 0, 0, 27)
     screen:expect([[
                                |*2
       n bbbbbbbbbbbbbbbbbbb^b   |
@@ -1025,7 +1025,7 @@ describe('ui/mouse/input', function()
     ]])
 
     feed('^')
-    meths.input_mouse('wheel', 'right', '', 0, 0, 0)
+    api.nvim_input_mouse('wheel', 'right', '', 0, 0, 0)
     screen:expect([[
       g                        |
                                |
@@ -1048,7 +1048,7 @@ describe('ui/mouse/input', function()
                                |
     ]])
 
-    meths.input_mouse('wheel', 'right', '', 0, 0, 27)
+    api.nvim_input_mouse('wheel', 'right', '', 0, 0, 27)
     screen:expect([[
       g                        |
                                |
@@ -1068,7 +1068,7 @@ describe('ui/mouse/input', function()
                                |
     ]])
 
-    meths.input_mouse('wheel', 'right', '', 0, 0, 27)
+    api.nvim_input_mouse('wheel', 'right', '', 0, 0, 27)
     screen:expect([[
       g                        |
                                |
@@ -1605,39 +1605,39 @@ describe('ui/mouse/input', function()
 
     describe('(matchadd())', function()
       before_each(function()
-        funcs.matchadd('Conceal', [[\*]])
-        funcs.matchadd('Conceal', [[cats]], 10, -1, { conceal = 'X' })
-        funcs.matchadd('Conceal', [[\n\@<=x]], 10, -1, { conceal = '>' })
+        fn.matchadd('Conceal', [[\*]])
+        fn.matchadd('Conceal', [[cats]], 10, -1, { conceal = 'X' })
+        fn.matchadd('Conceal', [[\n\@<=x]], 10, -1, { conceal = '>' })
       end)
       test_mouse_click_conceal()
     end)
 
     describe('(extmarks)', function()
       before_each(function()
-        local ns = meths.create_namespace('conceal')
-        meths.buf_set_extmark(0, ns, 0, 11, { end_col = 12, conceal = '' })
-        meths.buf_set_extmark(0, ns, 0, 14, { end_col = 15, conceal = '' })
-        meths.buf_set_extmark(0, ns, 1, 5, { end_col = 6, conceal = '' })
-        meths.buf_set_extmark(0, ns, 1, 8, { end_col = 9, conceal = '' })
-        meths.buf_set_extmark(0, ns, 1, 10, { end_col = 11, conceal = '' })
-        meths.buf_set_extmark(0, ns, 1, 13, { end_col = 14, conceal = '' })
-        meths.buf_set_extmark(0, ns, 1, 15, { end_col = 16, conceal = '' })
-        meths.buf_set_extmark(0, ns, 1, 18, { end_col = 19, conceal = '' })
-        meths.buf_set_extmark(0, ns, 2, 24, { end_col = 25, conceal = '' })
-        meths.buf_set_extmark(0, ns, 2, 29, { end_col = 30, conceal = '' })
-        meths.buf_set_extmark(0, ns, 2, 25, { end_col = 29, conceal = 'X' })
-        meths.buf_set_extmark(0, ns, 2, 0, { end_col = 1, conceal = '>' })
+        local ns = api.nvim_create_namespace('conceal')
+        api.nvim_buf_set_extmark(0, ns, 0, 11, { end_col = 12, conceal = '' })
+        api.nvim_buf_set_extmark(0, ns, 0, 14, { end_col = 15, conceal = '' })
+        api.nvim_buf_set_extmark(0, ns, 1, 5, { end_col = 6, conceal = '' })
+        api.nvim_buf_set_extmark(0, ns, 1, 8, { end_col = 9, conceal = '' })
+        api.nvim_buf_set_extmark(0, ns, 1, 10, { end_col = 11, conceal = '' })
+        api.nvim_buf_set_extmark(0, ns, 1, 13, { end_col = 14, conceal = '' })
+        api.nvim_buf_set_extmark(0, ns, 1, 15, { end_col = 16, conceal = '' })
+        api.nvim_buf_set_extmark(0, ns, 1, 18, { end_col = 19, conceal = '' })
+        api.nvim_buf_set_extmark(0, ns, 2, 24, { end_col = 25, conceal = '' })
+        api.nvim_buf_set_extmark(0, ns, 2, 29, { end_col = 30, conceal = '' })
+        api.nvim_buf_set_extmark(0, ns, 2, 25, { end_col = 29, conceal = 'X' })
+        api.nvim_buf_set_extmark(0, ns, 2, 0, { end_col = 1, conceal = '>' })
       end)
       test_mouse_click_conceal()
     end)
   end)
 
   it('getmousepos() works correctly', function()
-    local winwidth = meths.get_option_value('winwidth', {})
+    local winwidth = api.nvim_get_option_value('winwidth', {})
     -- Set winwidth=1 so that window sizes don't change.
-    meths.set_option_value('winwidth', 1, {})
+    api.nvim_set_option_value('winwidth', 1, {})
     command('tabedit')
-    local tabpage = meths.get_current_tabpage()
+    local tabpage = api.nvim_get_current_tabpage()
     insert('hello')
     command('vsplit')
     local opts = {
@@ -1651,19 +1651,19 @@ describe('ui/mouse/input', function()
       border = 'single',
       focusable = 1,
     }
-    local float = meths.open_win(meths.get_current_buf(), false, opts)
+    local float = api.nvim_open_win(api.nvim_get_current_buf(), false, opts)
     command('redraw')
-    local lines = meths.get_option_value('lines', {})
-    local columns = meths.get_option_value('columns', {})
+    local lines = api.nvim_get_option_value('lines', {})
+    local columns = api.nvim_get_option_value('columns', {})
 
     -- Test that screenrow and screencol are set properly for all positions.
     for row = 0, lines - 1 do
       for col = 0, columns - 1 do
         -- Skip the X button that would close the tab.
         if row ~= 0 or col ~= columns - 1 then
-          meths.input_mouse('left', 'press', '', 0, row, col)
-          meths.set_current_tabpage(tabpage)
-          local mousepos = funcs.getmousepos()
+          api.nvim_input_mouse('left', 'press', '', 0, row, col)
+          api.nvim_set_current_tabpage(tabpage)
+          local mousepos = fn.getmousepos()
           eq(row + 1, mousepos.screenrow)
           eq(col + 1, mousepos.screencol)
           -- All other values should be 0 when clicking on the command line.
@@ -1686,8 +1686,8 @@ describe('ui/mouse/input', function()
       for win_col = 0, opts.width + 1 do
         local row = win_row + opts.row
         local col = win_col + opts.col
-        meths.input_mouse('left', 'press', '', 0, row, col)
-        local mousepos = funcs.getmousepos()
+        api.nvim_input_mouse('left', 'press', '', 0, row, col)
+        local mousepos = fn.getmousepos()
         eq(float.id, mousepos.winid)
         eq(win_row + 1, mousepos.winrow)
         eq(win_col + 1, mousepos.wincol)
@@ -1702,8 +1702,8 @@ describe('ui/mouse/input', function()
         then
           -- Because of border, win_row and win_col don't need to be
           -- incremented by 1.
-          line = math.min(win_row, funcs.line('$'))
-          column = math.min(win_col, #funcs.getline(line) + 1)
+          line = math.min(win_row, fn.line('$'))
+          column = math.min(win_col, #fn.getline(line) + 1)
           coladd = win_col - column
         end
         eq(line, mousepos.line)
@@ -1715,19 +1715,19 @@ describe('ui/mouse/input', function()
     -- Test that mouse position values are properly set for the floating
     -- window, after removing the border.
     opts.border = 'none'
-    meths.win_set_config(float, opts)
+    api.nvim_win_set_config(float, opts)
     command('redraw')
     for win_row = 0, opts.height - 1 do
       for win_col = 0, opts.width - 1 do
         local row = win_row + opts.row
         local col = win_col + opts.col
-        meths.input_mouse('left', 'press', '', 0, row, col)
-        local mousepos = funcs.getmousepos()
+        api.nvim_input_mouse('left', 'press', '', 0, row, col)
+        local mousepos = fn.getmousepos()
         eq(float.id, mousepos.winid)
         eq(win_row + 1, mousepos.winrow)
         eq(win_col + 1, mousepos.wincol)
-        local line = math.min(win_row + 1, funcs.line('$'))
-        local column = math.min(win_col + 1, #funcs.getline(line) + 1)
+        local line = math.min(win_row + 1, fn.line('$'))
+        local column = math.min(win_col + 1, #fn.getline(line) + 1)
         local coladd = win_col + 1 - column
         eq(line, mousepos.line)
         eq(column, mousepos.column)
@@ -1740,20 +1740,20 @@ describe('ui/mouse/input', function()
     -- that getmousepos() does not consider unfocusable floats. (see discussion
     -- in PR #14937 for details).
     opts.focusable = false
-    meths.win_set_config(float, opts)
+    api.nvim_win_set_config(float, opts)
     command('redraw')
     for nr = 1, 2 do
-      for win_row = 0, funcs.winheight(nr) - 1 do
-        for win_col = 0, funcs.winwidth(nr) - 1 do
-          local row = win_row + funcs.win_screenpos(nr)[1] - 1
-          local col = win_col + funcs.win_screenpos(nr)[2] - 1
-          meths.input_mouse('left', 'press', '', 0, row, col)
-          local mousepos = funcs.getmousepos()
-          eq(funcs.win_getid(nr), mousepos.winid)
+      for win_row = 0, fn.winheight(nr) - 1 do
+        for win_col = 0, fn.winwidth(nr) - 1 do
+          local row = win_row + fn.win_screenpos(nr)[1] - 1
+          local col = win_col + fn.win_screenpos(nr)[2] - 1
+          api.nvim_input_mouse('left', 'press', '', 0, row, col)
+          local mousepos = fn.getmousepos()
+          eq(fn.win_getid(nr), mousepos.winid)
           eq(win_row + 1, mousepos.winrow)
           eq(win_col + 1, mousepos.wincol)
-          local line = math.min(win_row + 1, funcs.line('$'))
-          local column = math.min(win_col + 1, #funcs.getline(line) + 1)
+          local line = math.min(win_row + 1, fn.line('$'))
+          local column = math.min(win_col + 1, #fn.getline(line) + 1)
           local coladd = win_col + 1 - column
           eq(line, mousepos.line)
           eq(column, mousepos.column)
@@ -1764,34 +1764,34 @@ describe('ui/mouse/input', function()
 
     -- Restore state and release mouse.
     command('tabclose!')
-    meths.set_option_value('winwidth', winwidth, {})
-    meths.input_mouse('left', 'release', '', 0, 0, 0)
+    api.nvim_set_option_value('winwidth', winwidth, {})
+    api.nvim_input_mouse('left', 'release', '', 0, 0, 0)
   end)
 
   it('scroll keys are not translated into multiclicks and can be mapped #6211 #6989', function()
-    meths.set_var('mouse_up', 0)
-    meths.set_var('mouse_up2', 0)
+    api.nvim_set_var('mouse_up', 0)
+    api.nvim_set_var('mouse_up2', 0)
     command('nnoremap <ScrollWheelUp> <Cmd>let g:mouse_up += 1<CR>')
     command('nnoremap <2-ScrollWheelUp> <Cmd>let g:mouse_up2 += 1<CR>')
     feed('<ScrollWheelUp><0,0>')
     feed('<ScrollWheelUp><0,0>')
-    meths.input_mouse('wheel', 'up', '', 0, 0, 0)
-    meths.input_mouse('wheel', 'up', '', 0, 0, 0)
-    eq(4, meths.get_var('mouse_up'))
-    eq(0, meths.get_var('mouse_up2'))
+    api.nvim_input_mouse('wheel', 'up', '', 0, 0, 0)
+    api.nvim_input_mouse('wheel', 'up', '', 0, 0, 0)
+    eq(4, api.nvim_get_var('mouse_up'))
+    eq(0, api.nvim_get_var('mouse_up2'))
   end)
 
   it('<MouseMove> is not translated into multiclicks and can be mapped', function()
-    meths.set_var('mouse_move', 0)
-    meths.set_var('mouse_move2', 0)
+    api.nvim_set_var('mouse_move', 0)
+    api.nvim_set_var('mouse_move2', 0)
     command('nnoremap <MouseMove> <Cmd>let g:mouse_move += 1<CR>')
     command('nnoremap <2-MouseMove> <Cmd>let g:mouse_move2 += 1<CR>')
     feed('<MouseMove><0,0>')
     feed('<MouseMove><0,0>')
-    meths.input_mouse('move', '', '', 0, 0, 0)
-    meths.input_mouse('move', '', '', 0, 0, 0)
-    eq(4, meths.get_var('mouse_move'))
-    eq(0, meths.get_var('mouse_move2'))
+    api.nvim_input_mouse('move', '', '', 0, 0, 0)
+    api.nvim_input_mouse('move', '', '', 0, 0, 0)
+    eq(4, api.nvim_get_var('mouse_move'))
+    eq(0, api.nvim_get_var('mouse_move2'))
   end)
 
   it('feeding <MouseMove> in Normal mode does not use uninitialized memory #19480', function()
@@ -1818,127 +1818,127 @@ describe('ui/mouse/input', function()
       vmenu PopUp.baz y:<C-U>let g:menustr = 'baz'<CR>
     ]])
 
-    meths.win_set_cursor(0, { 1, 0 })
-    meths.input_mouse('right', 'press', '', 0, 0, 4)
-    meths.input_mouse('right', 'release', '', 0, 0, 4)
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    api.nvim_input_mouse('right', 'press', '', 0, 0, 4)
+    api.nvim_input_mouse('right', 'release', '', 0, 0, 4)
     feed('<Down><Down><CR>')
-    eq('bar', meths.get_var('menustr'))
-    eq({ 1, 4 }, meths.win_get_cursor(0))
+    eq('bar', api.nvim_get_var('menustr'))
+    eq({ 1, 4 }, api.nvim_win_get_cursor(0))
 
     -- Test for right click in visual mode inside the selection
-    funcs.setreg('"', '')
-    meths.win_set_cursor(0, { 1, 9 })
+    fn.setreg('"', '')
+    api.nvim_win_set_cursor(0, { 1, 9 })
     feed('vee')
-    meths.input_mouse('right', 'press', '', 0, 0, 11)
-    meths.input_mouse('right', 'release', '', 0, 0, 11)
+    api.nvim_input_mouse('right', 'press', '', 0, 0, 11)
+    api.nvim_input_mouse('right', 'release', '', 0, 0, 11)
     feed('<Down><CR>')
-    eq({ 1, 9 }, meths.win_get_cursor(0))
-    eq('ran away', funcs.getreg('"'))
+    eq({ 1, 9 }, api.nvim_win_get_cursor(0))
+    eq('ran away', fn.getreg('"'))
 
     -- Test for right click in visual mode right before the selection
-    funcs.setreg('"', '')
-    meths.win_set_cursor(0, { 1, 9 })
+    fn.setreg('"', '')
+    api.nvim_win_set_cursor(0, { 1, 9 })
     feed('vee')
-    meths.input_mouse('right', 'press', '', 0, 0, 8)
-    meths.input_mouse('right', 'release', '', 0, 0, 8)
+    api.nvim_input_mouse('right', 'press', '', 0, 0, 8)
+    api.nvim_input_mouse('right', 'release', '', 0, 0, 8)
     feed('<Down><CR>')
-    eq({ 1, 8 }, meths.win_get_cursor(0))
-    eq('', funcs.getreg('"'))
+    eq({ 1, 8 }, api.nvim_win_get_cursor(0))
+    eq('', fn.getreg('"'))
 
     -- Test for right click in visual mode right after the selection
-    funcs.setreg('"', '')
-    meths.win_set_cursor(0, { 1, 9 })
+    fn.setreg('"', '')
+    api.nvim_win_set_cursor(0, { 1, 9 })
     feed('vee')
-    meths.input_mouse('right', 'press', '', 0, 0, 17)
-    meths.input_mouse('right', 'release', '', 0, 0, 17)
+    api.nvim_input_mouse('right', 'press', '', 0, 0, 17)
+    api.nvim_input_mouse('right', 'release', '', 0, 0, 17)
     feed('<Down><CR>')
-    eq({ 1, 17 }, meths.win_get_cursor(0))
-    eq('', funcs.getreg('"'))
+    eq({ 1, 17 }, api.nvim_win_get_cursor(0))
+    eq('', fn.getreg('"'))
 
     -- Test for right click in block-wise visual mode inside the selection
-    funcs.setreg('"', '')
-    meths.win_set_cursor(0, { 1, 15 })
+    fn.setreg('"', '')
+    api.nvim_win_set_cursor(0, { 1, 15 })
     feed('<C-V>j3l')
-    meths.input_mouse('right', 'press', '', 0, 1, 16)
-    meths.input_mouse('right', 'release', '', 0, 1, 16)
+    api.nvim_input_mouse('right', 'press', '', 0, 1, 16)
+    api.nvim_input_mouse('right', 'release', '', 0, 1, 16)
     feed('<Down><CR>')
-    eq({ 1, 15 }, meths.win_get_cursor(0))
-    eq('\0224', funcs.getregtype('"'))
+    eq({ 1, 15 }, api.nvim_win_get_cursor(0))
+    eq('\0224', fn.getregtype('"'))
 
     -- Test for right click in block-wise visual mode outside the selection
-    funcs.setreg('"', '')
-    meths.win_set_cursor(0, { 1, 15 })
+    fn.setreg('"', '')
+    api.nvim_win_set_cursor(0, { 1, 15 })
     feed('<C-V>j3l')
-    meths.input_mouse('right', 'press', '', 0, 1, 1)
-    meths.input_mouse('right', 'release', '', 0, 1, 1)
+    api.nvim_input_mouse('right', 'press', '', 0, 1, 1)
+    api.nvim_input_mouse('right', 'release', '', 0, 1, 1)
     feed('<Down><CR>')
-    eq({ 2, 1 }, meths.win_get_cursor(0))
-    eq('v', funcs.getregtype('"'))
-    eq('', funcs.getreg('"'))
+    eq({ 2, 1 }, api.nvim_win_get_cursor(0))
+    eq('v', fn.getregtype('"'))
+    eq('', fn.getreg('"'))
 
     -- Test for right click in line-wise visual mode inside the selection
-    funcs.setreg('"', '')
-    meths.win_set_cursor(0, { 1, 15 })
+    fn.setreg('"', '')
+    api.nvim_win_set_cursor(0, { 1, 15 })
     feed('V')
-    meths.input_mouse('right', 'press', '', 0, 0, 9)
-    meths.input_mouse('right', 'release', '', 0, 0, 9)
+    api.nvim_input_mouse('right', 'press', '', 0, 0, 9)
+    api.nvim_input_mouse('right', 'release', '', 0, 0, 9)
     feed('<Down><CR>')
-    eq({ 1, 0 }, meths.win_get_cursor(0)) -- After yanking, the cursor goes to 1,1
-    eq('V', funcs.getregtype('"'))
-    eq(1, #funcs.getreg('"', 1, true))
+    eq({ 1, 0 }, api.nvim_win_get_cursor(0)) -- After yanking, the cursor goes to 1,1
+    eq('V', fn.getregtype('"'))
+    eq(1, #fn.getreg('"', 1, true))
 
     -- Test for right click in multi-line line-wise visual mode inside the selection
-    funcs.setreg('"', '')
-    meths.win_set_cursor(0, { 1, 15 })
+    fn.setreg('"', '')
+    api.nvim_win_set_cursor(0, { 1, 15 })
     feed('Vj')
-    meths.input_mouse('right', 'press', '', 0, 1, 19)
-    meths.input_mouse('right', 'release', '', 0, 1, 19)
+    api.nvim_input_mouse('right', 'press', '', 0, 1, 19)
+    api.nvim_input_mouse('right', 'release', '', 0, 1, 19)
     feed('<Down><CR>')
-    eq({ 1, 0 }, meths.win_get_cursor(0)) -- After yanking, the cursor goes to 1,1
-    eq('V', funcs.getregtype('"'))
-    eq(2, #funcs.getreg('"', 1, true))
+    eq({ 1, 0 }, api.nvim_win_get_cursor(0)) -- After yanking, the cursor goes to 1,1
+    eq('V', fn.getregtype('"'))
+    eq(2, #fn.getreg('"', 1, true))
 
     -- Test for right click in line-wise visual mode outside the selection
-    funcs.setreg('"', '')
-    meths.win_set_cursor(0, { 1, 15 })
+    fn.setreg('"', '')
+    api.nvim_win_set_cursor(0, { 1, 15 })
     feed('V')
-    meths.input_mouse('right', 'press', '', 0, 1, 9)
-    meths.input_mouse('right', 'release', '', 0, 1, 9)
+    api.nvim_input_mouse('right', 'press', '', 0, 1, 9)
+    api.nvim_input_mouse('right', 'release', '', 0, 1, 9)
     feed('<Down><CR>')
-    eq({ 2, 9 }, meths.win_get_cursor(0))
-    eq('', funcs.getreg('"'))
+    eq({ 2, 9 }, api.nvim_win_get_cursor(0))
+    eq('', fn.getreg('"'))
 
     -- Try clicking outside the window
-    funcs.setreg('"', '')
-    meths.win_set_cursor(0, { 2, 1 })
+    fn.setreg('"', '')
+    api.nvim_win_set_cursor(0, { 2, 1 })
     feed('vee')
-    meths.input_mouse('right', 'press', '', 0, 6, 1)
-    meths.input_mouse('right', 'release', '', 0, 6, 1)
+    api.nvim_input_mouse('right', 'press', '', 0, 6, 1)
+    api.nvim_input_mouse('right', 'release', '', 0, 6, 1)
     feed('<Down><CR>')
-    eq(2, funcs.winnr())
-    eq('', funcs.getreg('"'))
+    eq(2, fn.winnr())
+    eq('', fn.getreg('"'))
 
     -- Test for right click in visual mode inside the selection with vertical splits
     command('wincmd t')
     command('rightbelow vsplit')
-    funcs.setreg('"', '')
-    meths.win_set_cursor(0, { 1, 9 })
+    fn.setreg('"', '')
+    api.nvim_win_set_cursor(0, { 1, 9 })
     feed('vee')
-    meths.input_mouse('right', 'press', '', 0, 0, 52)
-    meths.input_mouse('right', 'release', '', 0, 0, 52)
+    api.nvim_input_mouse('right', 'press', '', 0, 0, 52)
+    api.nvim_input_mouse('right', 'release', '', 0, 0, 52)
     feed('<Down><CR>')
-    eq({ 1, 9 }, meths.win_get_cursor(0))
-    eq('ran away', funcs.getreg('"'))
+    eq({ 1, 9 }, api.nvim_win_get_cursor(0))
+    eq('ran away', fn.getreg('"'))
 
     -- Test for right click inside visual selection at bottom of window with winbar
     command('setlocal winbar=WINBAR')
     feed('2yyP')
-    funcs.setreg('"', '')
+    fn.setreg('"', '')
     feed('G$vbb')
-    meths.input_mouse('right', 'press', '', 0, 4, 61)
-    meths.input_mouse('right', 'release', '', 0, 4, 61)
+    api.nvim_input_mouse('right', 'press', '', 0, 4, 61)
+    api.nvim_input_mouse('right', 'release', '', 0, 4, 61)
     feed('<Down><CR>')
-    eq({ 4, 20 }, meths.win_get_cursor(0))
-    eq('the moon', funcs.getreg('"'))
+    eq({ 4, 20 }, api.nvim_win_get_cursor(0))
+    eq('the moon', fn.getreg('"'))
   end)
 end)

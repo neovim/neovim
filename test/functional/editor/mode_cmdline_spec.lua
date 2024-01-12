@@ -2,11 +2,11 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, insert, funcs, eq, feed =
-  helpers.clear, helpers.insert, helpers.funcs, helpers.eq, helpers.feed
+local clear, insert, fn, eq, feed =
+  helpers.clear, helpers.insert, helpers.fn, helpers.eq, helpers.feed
 local eval = helpers.eval
 local command = helpers.command
-local meths = helpers.meths
+local api = helpers.api
 
 describe('cmdline', function()
   before_each(clear)
@@ -20,22 +20,22 @@ describe('cmdline', function()
       -- Yank 2 lines linewise, then paste to cmdline.
       feed([[<C-\><C-N>gg0yj:<C-R>0]])
       -- <CR> inserted between lines, NOT after the final line.
-      eq('line1abc\rline2somemoretext', funcs.getcmdline())
+      eq('line1abc\rline2somemoretext', fn.getcmdline())
 
       -- Yank 2 lines charwise, then paste to cmdline.
       feed([[<C-\><C-N>gg05lyvj:<C-R>0]])
       -- <CR> inserted between lines, NOT after the final line.
-      eq('abc\rline2', funcs.getcmdline())
+      eq('abc\rline2', fn.getcmdline())
 
       -- Yank 1 line linewise, then paste to cmdline.
       feed([[<C-\><C-N>ggyy:<C-R>0]])
       -- No <CR> inserted.
-      eq('line1abc', funcs.getcmdline())
+      eq('line1abc', fn.getcmdline())
     end)
 
     it('pasting special register inserts <CR>, <NL>', function()
       feed([[:<C-R>="foo\nbar\rbaz"<CR>]])
-      eq('foo\nbar\rbaz', funcs.getcmdline())
+      eq('foo\nbar\rbaz', fn.getcmdline())
     end)
   end)
 
@@ -77,30 +77,30 @@ describe('cmdline', function()
     it('correctly clears start of the history', function()
       -- Regression test: check absence of the memory leak when clearing start of
       -- the history using cmdhist.c/clr_history().
-      eq(1, funcs.histadd(':', 'foo'))
-      eq(1, funcs.histdel(':'))
-      eq('', funcs.histget(':', -1))
+      eq(1, fn.histadd(':', 'foo'))
+      eq(1, fn.histdel(':'))
+      eq('', fn.histget(':', -1))
     end)
 
     it('correctly clears end of the history', function()
       -- Regression test: check absence of the memory leak when clearing end of
       -- the history using cmdhist.c/clr_history().
-      meths.set_option_value('history', 1, {})
-      eq(1, funcs.histadd(':', 'foo'))
-      eq(1, funcs.histdel(':'))
-      eq('', funcs.histget(':', -1))
+      api.nvim_set_option_value('history', 1, {})
+      eq(1, fn.histadd(':', 'foo'))
+      eq(1, fn.histdel(':'))
+      eq('', fn.histget(':', -1))
     end)
 
     it('correctly removes item from history', function()
       -- Regression test: check that cmdhist.c/del_history_idx() correctly clears
       -- history index after removing history entry. If it does not then deleting
       -- history will result in a double free.
-      eq(1, funcs.histadd(':', 'foo'))
-      eq(1, funcs.histadd(':', 'bar'))
-      eq(1, funcs.histadd(':', 'baz'))
-      eq(1, funcs.histdel(':', -2))
-      eq(1, funcs.histdel(':'))
-      eq('', funcs.histget(':', -1))
+      eq(1, fn.histadd(':', 'foo'))
+      eq(1, fn.histadd(':', 'bar'))
+      eq(1, fn.histadd(':', 'baz'))
+      eq(1, fn.histdel(':', -2))
+      eq(1, fn.histdel(':'))
+      eq('', fn.histget(':', -1))
     end)
   end)
 end)

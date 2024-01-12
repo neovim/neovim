@@ -5,12 +5,12 @@ local clear = helpers.clear
 local command = helpers.command
 local feed = helpers.feed
 local eq = helpers.eq
-local funcs = helpers.funcs
-local meths = helpers.meths
+local fn = helpers.fn
+local api = helpers.api
 local exec = helpers.exec
 local exec_lua = helpers.exec_lua
 local eval = helpers.eval
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 
 local mousemodels = { 'extend', 'popup', 'popup_setpos' }
 
@@ -39,31 +39,31 @@ for _, model in ipairs(mousemodels) do
     end)
 
     it('works', function()
-      meths.set_option_value('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
-      meths.input_mouse('left', 'press', '', 0, 6, 16)
+      api.nvim_set_option_value('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
+      api.nvim_input_mouse('left', 'press', '', 0, 6, 16)
       eq('', eval('g:testvar'))
-      meths.input_mouse('right', 'press', '', 0, 6, 29)
+      api.nvim_input_mouse('right', 'press', '', 0, 6, 29)
       eq('', eval('g:testvar'))
-      meths.input_mouse('left', 'press', '', 0, 6, 17)
+      api.nvim_input_mouse('left', 'press', '', 0, 6, 17)
       eq('0 1 l', eval('g:testvar'))
-      meths.input_mouse('left', 'press', '', 0, 6, 17)
+      api.nvim_input_mouse('left', 'press', '', 0, 6, 17)
       eq('0 2 l', eval('g:testvar'))
-      meths.input_mouse('left', 'press', '', 0, 6, 17)
+      api.nvim_input_mouse('left', 'press', '', 0, 6, 17)
       eq('0 3 l', eval('g:testvar'))
-      meths.input_mouse('left', 'press', '', 0, 6, 17)
+      api.nvim_input_mouse('left', 'press', '', 0, 6, 17)
       eq('0 4 l', eval('g:testvar'))
-      meths.input_mouse('right', 'press', '', 0, 6, 28)
+      api.nvim_input_mouse('right', 'press', '', 0, 6, 28)
       eq('0 1 r', eval('g:testvar'))
-      meths.input_mouse('right', 'press', '', 0, 6, 28)
+      api.nvim_input_mouse('right', 'press', '', 0, 6, 28)
       eq('0 2 r', eval('g:testvar'))
-      meths.input_mouse('right', 'press', '', 0, 6, 28)
+      api.nvim_input_mouse('right', 'press', '', 0, 6, 28)
       eq('0 3 r', eval('g:testvar'))
-      meths.input_mouse('right', 'press', '', 0, 6, 28)
+      api.nvim_input_mouse('right', 'press', '', 0, 6, 28)
       eq('0 4 r', eval('g:testvar'))
     end)
 
     it('works with control characters and highlight', function()
-      meths.set_option_value('statusline', '\t%#NonText#\1%0@MyClickFunc@\t\1%T\t%##\1', {})
+      api.nvim_set_option_value('statusline', '\t%#NonText#\1%0@MyClickFunc@\t\1%T\t%##\1', {})
       screen:expect {
         grid = [[
         ^                                        |
@@ -72,50 +72,50 @@ for _, model in ipairs(mousemodels) do
                                                 |
       ]],
       }
-      meths.input_mouse('right', 'press', '', 0, 6, 3)
+      api.nvim_input_mouse('right', 'press', '', 0, 6, 3)
       eq('', eval('g:testvar'))
-      meths.input_mouse('left', 'press', '', 0, 6, 8)
+      api.nvim_input_mouse('left', 'press', '', 0, 6, 8)
       eq('', eval('g:testvar'))
-      meths.input_mouse('right', 'press', '', 0, 6, 4)
+      api.nvim_input_mouse('right', 'press', '', 0, 6, 4)
       eq('0 1 r', eval('g:testvar'))
-      meths.input_mouse('left', 'press', '', 0, 6, 7)
+      api.nvim_input_mouse('left', 'press', '', 0, 6, 7)
       eq('0 1 l', eval('g:testvar'))
     end)
 
     it('works for winbar', function()
-      meths.set_option_value('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
-      meths.input_mouse('left', 'press', '', 0, 0, 17)
+      api.nvim_set_option_value('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
+      api.nvim_input_mouse('left', 'press', '', 0, 0, 17)
       eq('0 1 l', eval('g:testvar'))
-      meths.input_mouse('right', 'press', '', 0, 0, 17)
+      api.nvim_input_mouse('right', 'press', '', 0, 0, 17)
       eq('0 1 r', eval('g:testvar'))
     end)
 
     it('works for winbar in floating window', function()
-      meths.open_win(
+      api.nvim_open_win(
         0,
         true,
         { width = 30, height = 4, relative = 'editor', row = 1, col = 5, border = 'single' }
       )
-      meths.set_option_value(
+      api.nvim_set_option_value(
         'winbar',
         'Not clicky stuff %0@MyClickFunc@Clicky stuff%T',
         { scope = 'local' }
       )
-      meths.input_mouse('left', 'press', '', 0, 2, 23)
+      api.nvim_input_mouse('left', 'press', '', 0, 2, 23)
       eq('0 1 l', eval('g:testvar'))
     end)
 
     it('works when there are multiple windows', function()
       command('split')
-      meths.set_option_value('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
-      meths.set_option_value('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
-      meths.input_mouse('left', 'press', '', 0, 0, 17)
+      api.nvim_set_option_value('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
+      api.nvim_set_option_value('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
+      api.nvim_input_mouse('left', 'press', '', 0, 0, 17)
       eq('0 1 l', eval('g:testvar'))
-      meths.input_mouse('right', 'press', '', 0, 4, 17)
+      api.nvim_input_mouse('right', 'press', '', 0, 4, 17)
       eq('0 1 r', eval('g:testvar'))
-      meths.input_mouse('middle', 'press', '', 0, 3, 17)
+      api.nvim_input_mouse('middle', 'press', '', 0, 3, 17)
       eq('0 1 m', eval('g:testvar'))
-      meths.input_mouse('left', 'press', '', 0, 6, 17)
+      api.nvim_input_mouse('left', 'press', '', 0, 6, 17)
       eq('0 1 l', eval('g:testvar'))
     end)
 
@@ -125,64 +125,64 @@ for _, model in ipairs(mousemodels) do
         vim.g.testvar = string.format("%d %d %s", minwid, clicks, button)
       end
       ]])
-      meths.set_option_value(
+      api.nvim_set_option_value(
         'statusline',
         'Not clicky stuff %0@v:lua.clicky_func@Clicky stuff%T',
         {}
       )
-      meths.input_mouse('left', 'press', '', 0, 6, 17)
+      api.nvim_input_mouse('left', 'press', '', 0, 6, 17)
       eq('0 1 l', eval('g:testvar'))
     end)
 
     it('ignores unsupported click items', function()
       command('tabnew | tabprevious')
-      meths.set_option_value('statusline', '%2TNot clicky stuff%T', {})
-      meths.input_mouse('left', 'press', '', 0, 6, 0)
-      eq(1, meths.get_current_tabpage().id)
-      meths.set_option_value('statusline', '%2XNot clicky stuff%X', {})
-      meths.input_mouse('left', 'press', '', 0, 6, 0)
-      eq(2, #meths.list_tabpages())
+      api.nvim_set_option_value('statusline', '%2TNot clicky stuff%T', {})
+      api.nvim_input_mouse('left', 'press', '', 0, 6, 0)
+      eq(1, api.nvim_get_current_tabpage().id)
+      api.nvim_set_option_value('statusline', '%2XNot clicky stuff%X', {})
+      api.nvim_input_mouse('left', 'press', '', 0, 6, 0)
+      eq(2, #api.nvim_list_tabpages())
     end)
 
     it("right click works when statusline isn't focused #18994", function()
-      meths.set_option_value('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
-      meths.input_mouse('right', 'press', '', 0, 6, 17)
+      api.nvim_set_option_value('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
+      api.nvim_input_mouse('right', 'press', '', 0, 6, 17)
       eq('0 1 r', eval('g:testvar'))
-      meths.input_mouse('right', 'press', '', 0, 6, 17)
+      api.nvim_input_mouse('right', 'press', '', 0, 6, 17)
       eq('0 2 r', eval('g:testvar'))
     end)
 
     it('works with modifiers #18994', function()
-      meths.set_option_value('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
+      api.nvim_set_option_value('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
       -- Note: alternate between left and right mouse buttons to avoid triggering multiclicks
-      meths.input_mouse('left', 'press', 'S', 0, 6, 17)
+      api.nvim_input_mouse('left', 'press', 'S', 0, 6, 17)
       eq('0 1 l(s   )', eval('g:testvar'))
-      meths.input_mouse('right', 'press', 'S', 0, 6, 17)
+      api.nvim_input_mouse('right', 'press', 'S', 0, 6, 17)
       eq('0 1 r(s   )', eval('g:testvar'))
-      meths.input_mouse('left', 'press', 'A', 0, 6, 17)
+      api.nvim_input_mouse('left', 'press', 'A', 0, 6, 17)
       eq('0 1 l(  a )', eval('g:testvar'))
-      meths.input_mouse('right', 'press', 'A', 0, 6, 17)
+      api.nvim_input_mouse('right', 'press', 'A', 0, 6, 17)
       eq('0 1 r(  a )', eval('g:testvar'))
-      meths.input_mouse('left', 'press', 'AS', 0, 6, 17)
+      api.nvim_input_mouse('left', 'press', 'AS', 0, 6, 17)
       eq('0 1 l(s a )', eval('g:testvar'))
-      meths.input_mouse('right', 'press', 'AS', 0, 6, 17)
+      api.nvim_input_mouse('right', 'press', 'AS', 0, 6, 17)
       eq('0 1 r(s a )', eval('g:testvar'))
-      meths.input_mouse('left', 'press', 'T', 0, 6, 17)
+      api.nvim_input_mouse('left', 'press', 'T', 0, 6, 17)
       eq('0 1 l(   m)', eval('g:testvar'))
-      meths.input_mouse('right', 'press', 'T', 0, 6, 17)
+      api.nvim_input_mouse('right', 'press', 'T', 0, 6, 17)
       eq('0 1 r(   m)', eval('g:testvar'))
-      meths.input_mouse('left', 'press', 'TS', 0, 6, 17)
+      api.nvim_input_mouse('left', 'press', 'TS', 0, 6, 17)
       eq('0 1 l(s  m)', eval('g:testvar'))
-      meths.input_mouse('right', 'press', 'TS', 0, 6, 17)
+      api.nvim_input_mouse('right', 'press', 'TS', 0, 6, 17)
       eq('0 1 r(s  m)', eval('g:testvar'))
-      meths.input_mouse('left', 'press', 'C', 0, 6, 17)
+      api.nvim_input_mouse('left', 'press', 'C', 0, 6, 17)
       eq('0 1 l( c  )', eval('g:testvar'))
       -- <C-RightMouse> is for tag jump
     end)
 
     it('works for global statusline with vertical splits #19186', function()
       command('set laststatus=3')
-      meths.set_option_value(
+      api.nvim_set_option_value(
         'statusline',
         '%0@MyClickFunc@Clicky stuff%T %= %0@MyClickFunc@Clicky stuff%T',
         {}
@@ -198,15 +198,15 @@ for _, model in ipairs(mousemodels) do
       }
 
       -- clickable area on the right
-      meths.input_mouse('left', 'press', '', 0, 6, 35)
+      api.nvim_input_mouse('left', 'press', '', 0, 6, 35)
       eq('0 1 l', eval('g:testvar'))
-      meths.input_mouse('right', 'press', '', 0, 6, 35)
+      api.nvim_input_mouse('right', 'press', '', 0, 6, 35)
       eq('0 1 r', eval('g:testvar'))
 
       -- clickable area on the left
-      meths.input_mouse('left', 'press', '', 0, 6, 5)
+      api.nvim_input_mouse('left', 'press', '', 0, 6, 5)
       eq('0 1 l', eval('g:testvar'))
-      meths.input_mouse('right', 'press', '', 0, 6, 5)
+      api.nvim_input_mouse('right', 'press', '', 0, 6, 5)
       eq('0 1 r', eval('g:testvar'))
     end)
 
@@ -214,9 +214,9 @@ for _, model in ipairs(mousemodels) do
       command([[
       let &stl = '%@Test@%T%@MyClickFunc@%=%T%@Test@'
       ]])
-      meths.input_mouse('left', 'press', '', 0, 6, 0)
+      api.nvim_input_mouse('left', 'press', '', 0, 6, 0)
       eq('0 1 l', eval('g:testvar'))
-      meths.input_mouse('right', 'press', '', 0, 6, 39)
+      api.nvim_input_mouse('right', 'press', '', 0, 6, 39)
       eq('0 1 r', eval('g:testvar'))
     end)
 
@@ -224,7 +224,7 @@ for _, model in ipairs(mousemodels) do
       command([[
       let &stl = '%@MyClickFunc@foo%X' .. repeat('a', 40) .. '%<t%@Test@bar%X%@Test@baz'
       ]])
-      meths.input_mouse('left', 'press', '', 0, 6, 2)
+      api.nvim_input_mouse('left', 'press', '', 0, 6, 2)
       eq('0 1 l', eval('g:testvar'))
     end)
   end)
@@ -366,38 +366,38 @@ describe('global statusline', function()
   end)
 
   it('win_move_statusline() can reduce cmdheight to 1', function()
-    eq(1, meths.get_option_value('cmdheight', {}))
-    funcs.win_move_statusline(0, -1)
-    eq(2, meths.get_option_value('cmdheight', {}))
-    funcs.win_move_statusline(0, -1)
-    eq(3, meths.get_option_value('cmdheight', {}))
-    funcs.win_move_statusline(0, 1)
-    eq(2, meths.get_option_value('cmdheight', {}))
-    funcs.win_move_statusline(0, 1)
-    eq(1, meths.get_option_value('cmdheight', {}))
+    eq(1, api.nvim_get_option_value('cmdheight', {}))
+    fn.win_move_statusline(0, -1)
+    eq(2, api.nvim_get_option_value('cmdheight', {}))
+    fn.win_move_statusline(0, -1)
+    eq(3, api.nvim_get_option_value('cmdheight', {}))
+    fn.win_move_statusline(0, 1)
+    eq(2, api.nvim_get_option_value('cmdheight', {}))
+    fn.win_move_statusline(0, 1)
+    eq(1, api.nvim_get_option_value('cmdheight', {}))
   end)
 
   it('mouse dragging can reduce cmdheight to 1', function()
     command('set mouse=a')
-    meths.input_mouse('left', 'press', '', 0, 14, 10)
-    eq(1, meths.get_option_value('cmdheight', {}))
-    meths.input_mouse('left', 'drag', '', 0, 13, 10)
-    eq(2, meths.get_option_value('cmdheight', {}))
-    meths.input_mouse('left', 'drag', '', 0, 12, 10)
-    eq(3, meths.get_option_value('cmdheight', {}))
-    meths.input_mouse('left', 'drag', '', 0, 13, 10)
-    eq(2, meths.get_option_value('cmdheight', {}))
-    meths.input_mouse('left', 'drag', '', 0, 14, 10)
-    eq(1, meths.get_option_value('cmdheight', {}))
-    meths.input_mouse('left', 'drag', '', 0, 15, 10)
-    eq(1, meths.get_option_value('cmdheight', {}))
-    meths.input_mouse('left', 'drag', '', 0, 14, 10)
-    eq(1, meths.get_option_value('cmdheight', {}))
+    api.nvim_input_mouse('left', 'press', '', 0, 14, 10)
+    eq(1, api.nvim_get_option_value('cmdheight', {}))
+    api.nvim_input_mouse('left', 'drag', '', 0, 13, 10)
+    eq(2, api.nvim_get_option_value('cmdheight', {}))
+    api.nvim_input_mouse('left', 'drag', '', 0, 12, 10)
+    eq(3, api.nvim_get_option_value('cmdheight', {}))
+    api.nvim_input_mouse('left', 'drag', '', 0, 13, 10)
+    eq(2, api.nvim_get_option_value('cmdheight', {}))
+    api.nvim_input_mouse('left', 'drag', '', 0, 14, 10)
+    eq(1, api.nvim_get_option_value('cmdheight', {}))
+    api.nvim_input_mouse('left', 'drag', '', 0, 15, 10)
+    eq(1, api.nvim_get_option_value('cmdheight', {}))
+    api.nvim_input_mouse('left', 'drag', '', 0, 14, 10)
+    eq(1, api.nvim_get_option_value('cmdheight', {}))
   end)
 
   it('cmdline row is correct after setting cmdheight #20514', function()
     command('botright split test/functional/fixtures/bigfile.txt')
-    meths.set_option_value('cmdheight', 1, {})
+    api.nvim_set_option_value('cmdheight', 1, {})
     feed('L')
     screen:expect([[
                                                                   |
@@ -428,7 +428,7 @@ describe('global statusline', function()
       {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
                                                                   |
     ]])
-    meths.set_option_value('showtabline', 2, {})
+    api.nvim_set_option_value('showtabline', 2, {})
     screen:expect([[
       {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
                                                                   |
@@ -443,7 +443,7 @@ describe('global statusline', function()
       {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
                                                                   |
     ]])
-    meths.set_option_value('cmdheight', 0, {})
+    api.nvim_set_option_value('cmdheight', 0, {})
     screen:expect([[
       {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
                                                                   |
@@ -458,7 +458,7 @@ describe('global statusline', function()
       ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
       {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
     ]])
-    meths.set_option_value('cmdheight', 1, {})
+    api.nvim_set_option_value('cmdheight', 1, {})
     screen:expect([[
       {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
                                                                   |
@@ -478,8 +478,8 @@ end)
 
 it('statusline does not crash if it has Arabic characters #19447', function()
   clear()
-  meths.set_option_value('statusline', 'غً', {})
-  meths.set_option_value('laststatus', 2, {})
+  api.nvim_set_option_value('statusline', 'غً', {})
+  api.nvim_set_option_value('laststatus', 2, {})
   command('redraw!')
   assert_alive()
 end)

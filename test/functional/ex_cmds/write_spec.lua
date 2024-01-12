@@ -1,12 +1,11 @@
 local helpers = require('test.functional.helpers')(after_each)
-local luv = require('luv')
 local eq, eval, clear, write_file, source, insert =
   helpers.eq, helpers.eval, helpers.clear, helpers.write_file, helpers.source, helpers.insert
 local pcall_err = helpers.pcall_err
 local command = helpers.command
 local feed_command = helpers.feed_command
-local funcs = helpers.funcs
-local meths = helpers.meths
+local fn = helpers.fn
+local api = helpers.api
 local skip = helpers.skip
 local is_os = helpers.is_os
 local is_ci = helpers.is_ci
@@ -113,11 +112,11 @@ describe(':write', function()
     eq('Vim(write):E32: No file name', pcall_err(command, 'write ++p test_write/'))
     if not is_os('win') then
       eq(
-        ('Vim(write):E17: "' .. funcs.fnamemodify('.', ':p:h') .. '" is a directory'),
+        ('Vim(write):E17: "' .. fn.fnamemodify('.', ':p:h') .. '" is a directory'),
         pcall_err(command, 'write ++p .')
       )
       eq(
-        ('Vim(write):E17: "' .. funcs.fnamemodify('.', ':p:h') .. '" is a directory'),
+        ('Vim(write):E17: "' .. fn.fnamemodify('.', ':p:h') .. '" is a directory'),
         pcall_err(command, 'write ++p ./')
       )
     end
@@ -126,26 +125,26 @@ describe(':write', function()
   it('errors out correctly', function()
     skip(is_ci('cirrus'))
     command('let $HOME=""')
-    eq(funcs.fnamemodify('.', ':p:h'), funcs.fnamemodify('.', ':p:h:~'))
+    eq(fn.fnamemodify('.', ':p:h'), fn.fnamemodify('.', ':p:h:~'))
     -- Message from check_overwrite
     if not is_os('win') then
       eq(
-        ('Vim(write):E17: "' .. funcs.fnamemodify('.', ':p:h') .. '" is a directory'),
+        ('Vim(write):E17: "' .. fn.fnamemodify('.', ':p:h') .. '" is a directory'),
         pcall_err(command, 'write .')
       )
     end
-    meths.set_option_value('writeany', true, {})
+    api.nvim_set_option_value('writeany', true, {})
     -- Message from buf_write
     eq('Vim(write):E502: "." is a directory', pcall_err(command, 'write .'))
-    funcs.mkdir(fname_bak)
-    meths.set_option_value('backupdir', '.', {})
-    meths.set_option_value('backup', true, {})
+    fn.mkdir(fname_bak)
+    api.nvim_set_option_value('backupdir', '.', {})
+    api.nvim_set_option_value('backup', true, {})
     write_file(fname, 'content0')
     command('edit ' .. fname)
-    funcs.setline(1, 'TTY')
+    fn.setline(1, 'TTY')
     eq("Vim(write):E510: Can't make backup file (add ! to override)", pcall_err(command, 'write'))
-    meths.set_option_value('backup', false, {})
-    funcs.setfperm(fname, 'r--------')
+    api.nvim_set_option_value('backup', false, {})
+    fn.setfperm(fname, 'r--------')
     eq(
       'Vim(write):E505: "Xtest-functional-ex_cmds-write" is read-only (add ! to override)',
       pcall_err(command, 'write')
@@ -159,7 +158,7 @@ describe(':write', function()
     end
     write_file(fname_bak, 'TTYX')
     skip(is_os('win'), [[FIXME: exc_exec('write!') outputs 0 in Windows]])
-    luv.fs_symlink(fname_bak .. ('/xxxxx'):rep(20), fname)
+    vim.uv.fs_symlink(fname_bak .. ('/xxxxx'):rep(20), fname)
     eq("Vim(write):E166: Can't open linked file for writing", pcall_err(command, 'write!'))
   end)
 end)

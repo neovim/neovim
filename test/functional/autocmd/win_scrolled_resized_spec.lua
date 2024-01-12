@@ -7,7 +7,7 @@ local eval = helpers.eval
 local exec = helpers.exec
 local command = helpers.command
 local feed = helpers.feed
-local meths = helpers.meths
+local api = helpers.api
 local assert_alive = helpers.assert_alive
 
 before_each(clear)
@@ -45,7 +45,7 @@ describe('WinScrolled', function()
   local win_id
 
   before_each(function()
-    win_id = meths.get_current_win().id
+    win_id = api.nvim_get_current_win().id
     command(string.format('autocmd WinScrolled %d let g:matched = v:true', win_id))
     exec([[
       let g:scrolled = 0
@@ -64,7 +64,7 @@ describe('WinScrolled', function()
 
   it('is triggered by scrolling vertically', function()
     local lines = { '123', '123' }
-    meths.buf_set_lines(0, 0, -1, true, lines)
+    api.nvim_buf_set_lines(0, 0, -1, true, lines)
     eq(0, eval('g:scrolled'))
 
     feed('<C-E>')
@@ -84,10 +84,10 @@ describe('WinScrolled', function()
 
   it('is triggered by scrolling horizontally', function()
     command('set nowrap')
-    local width = meths.win_get_width(0)
+    local width = api.nvim_win_get_width(0)
     local line = '123' .. ('*'):rep(width * 2)
     local lines = { line, line }
-    meths.buf_set_lines(0, 0, -1, true, lines)
+    api.nvim_buf_set_lines(0, 0, -1, true, lines)
     eq(0, eval('g:scrolled'))
 
     feed('zl')
@@ -108,8 +108,8 @@ describe('WinScrolled', function()
   it('is triggered by horizontal scrolling from cursor move', function()
     command('set nowrap')
     local lines = { '', '', 'Foo' }
-    meths.buf_set_lines(0, 0, -1, true, lines)
-    meths.win_set_cursor(0, { 3, 0 })
+    api.nvim_buf_set_lines(0, 0, -1, true, lines)
+    api.nvim_win_set_cursor(0, { 3, 0 })
     eq(0, eval('g:scrolled'))
 
     feed('zl')
@@ -143,10 +143,10 @@ describe('WinScrolled', function()
 
   -- oldtest: Test_WinScrolled_long_wrapped()
   it('is triggered by scrolling on a long wrapped line #19968', function()
-    local height = meths.win_get_height(0)
-    local width = meths.win_get_width(0)
-    meths.buf_set_lines(0, 0, -1, true, { ('foo'):rep(height * width) })
-    meths.win_set_cursor(0, { 1, height * width - 1 })
+    local height = api.nvim_win_get_height(0)
+    local width = api.nvim_win_get_width(0)
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('foo'):rep(height * width) })
+    api.nvim_win_set_cursor(0, { 1, height * width - 1 })
     eq(0, eval('g:scrolled'))
 
     feed('gj')
@@ -168,12 +168,12 @@ describe('WinScrolled', function()
   end)
 
   it('is triggered when the window scrolls in Insert mode', function()
-    local height = meths.win_get_height(0)
+    local height = api.nvim_win_get_height(0)
     local lines = {}
     for i = 1, height * 2 do
       lines[i] = tostring(i)
     end
-    meths.buf_set_lines(0, 0, -1, true, lines)
+    api.nvim_buf_set_lines(0, 0, -1, true, lines)
 
     feed('M')
     eq(0, eval('g:scrolled'))
@@ -220,12 +220,12 @@ describe('WinScrolled', function()
     eq(0, eval('g:scrolled'))
 
     -- With the upper split focused, send a scroll-down event to the unfocused one.
-    meths.input_mouse('wheel', 'down', '', 0, 6, 0)
+    api.nvim_input_mouse('wheel', 'down', '', 0, 6, 0)
     eq(1, eval('g:scrolled'))
 
     -- Again, but this time while we're in insert mode.
     feed('i')
-    meths.input_mouse('wheel', 'down', '', 0, 6, 0)
+    api.nvim_input_mouse('wheel', 'down', '', 0, 6, 0)
     feed('<Esc>')
     eq(2, eval('g:scrolled'))
   end)
@@ -296,15 +296,15 @@ describe('WinScrolled', function()
     ]])
     eq(0, eval('g:scrolled'))
 
-    local buf = meths.create_buf(true, true)
-    meths.buf_set_lines(
+    local buf = api.nvim_create_buf(true, true)
+    api.nvim_buf_set_lines(
       buf,
       0,
       -1,
       false,
       { '@', 'b', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n' }
     )
-    local win = meths.open_win(buf, false, {
+    local win = api.nvim_open_win(buf, false, {
       height = 5,
       width = 10,
       col = 0,
@@ -317,7 +317,7 @@ describe('WinScrolled', function()
     -- WinScrolled should not be triggered when creating a new floating window
     eq(0, eval('g:scrolled'))
 
-    meths.input_mouse('wheel', 'down', '', 0, 3, 3)
+    api.nvim_input_mouse('wheel', 'down', '', 0, 3, 3)
     eq(1, eval('g:scrolled'))
     eq(winid_str, eval('g:amatch'))
     eq({
@@ -325,7 +325,7 @@ describe('WinScrolled', function()
       [winid_str] = { leftcol = 0, topline = 3, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
 
-    meths.input_mouse('wheel', 'up', '', 0, 3, 3)
+    api.nvim_input_mouse('wheel', 'up', '', 0, 3, 3)
     eq(2, eval('g:scrolled'))
     eq(tostring(win.id), eval('g:amatch'))
     eq({

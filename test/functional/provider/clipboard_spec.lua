@@ -6,7 +6,7 @@ local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local feed_command, expect, eq, eval, source =
   helpers.feed_command, helpers.expect, helpers.eq, helpers.eval, helpers.source
 local command = helpers.command
-local meths = helpers.meths
+local api = helpers.api
 
 local function basic_register_test(noblock)
   insert('some words')
@@ -188,7 +188,7 @@ describe('clipboard', function()
 
   it('valid g:clipboard', function()
     -- provider#clipboard#Executable() only checks the structure.
-    meths.set_var('clipboard', {
+    api.nvim_set_var('clipboard', {
       ['name'] = 'clippy!',
       ['copy'] = { ['+'] = 'any command', ['*'] = 'some other' },
       ['paste'] = { ['+'] = 'any command', ['*'] = 'some other' },
@@ -545,7 +545,7 @@ describe('clipboard (with fake clipboard.vim)', function()
       eq({ { 'text', '' }, 'V' }, eval("g:test_clip['*']"))
       command("let g:test_clip['*'] = [['star'], 'c']")
       feed('p')
-      eq('textstar', meths.get_current_line())
+      eq('textstar', api.nvim_get_current_line())
     end)
 
     it('Block paste works correctly', function()

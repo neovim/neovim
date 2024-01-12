@@ -4,7 +4,7 @@ local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local run = helpers.run
 local stop = helpers.stop
-local NIL = helpers.NIL
+local NIL = vim.NIL
 
 local M = {}
 

@@ -5,7 +5,7 @@ local source = helpers.source
 local clear = helpers.clear
 local command = helpers.command
 local poke_eventloop = helpers.poke_eventloop
-local meths = helpers.meths
+local api = helpers.api
 local eq = helpers.eq
 local neq = helpers.neq
 
@@ -180,12 +180,12 @@ describe('prompt buffer', function()
       call timer_start(0, {-> nvim_buf_set_lines(s:buf, -1, -1, 0, ['walrus'])})
     ]]
     poke_eventloop()
-    eq({ mode = 'i', blocking = false }, meths.get_mode())
+    eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
   end)
 
   -- oldtest: Test_prompt_appending_while_hidden()
   it('accessing hidden prompt buffer does not start insert mode', function()
-    local prev_win = meths.get_current_win()
+    local prev_win = api.nvim_get_current_win()
     source([[
       new prompt
       set buftype=prompt
@@ -205,16 +205,16 @@ describe('prompt buffer', function()
       endfunc
     ]])
     feed('asomething<CR>')
-    eq('something', meths.get_var('entered'))
-    neq(prev_win, meths.get_current_win())
+    eq('something', api.nvim_get_var('entered'))
+    neq(prev_win, api.nvim_get_current_win())
     feed('exit<CR>')
-    eq(prev_win, meths.get_current_win())
-    eq({ mode = 'n', blocking = false }, meths.get_mode())
+    eq(prev_win, api.nvim_get_current_win())
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
     command('call DoAppend()')
-    eq({ mode = 'n', blocking = false }, meths.get_mode())
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
     feed('i')
-    eq({ mode = 'i', blocking = false }, meths.get_mode())
+    eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
     command('call DoAppend()')
-    eq({ mode = 'i', blocking = false }, meths.get_mode())
+    eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
   end)
 end)

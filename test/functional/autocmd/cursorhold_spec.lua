@@ -5,8 +5,8 @@ local eq = helpers.eq
 local feed = helpers.feed
 local retry = helpers.retry
 local exec = helpers.source
-local sleep = helpers.sleep
-local meths = helpers.meths
+local sleep = vim.uv.sleep
+local api = helpers.api
 
 before_each(clear)
 
@@ -26,47 +26,47 @@ describe('CursorHold', function()
       -- if testing with small 'updatetime' fails, double its value and test again
       retry(10, nil, function()
         ut = ut * 2
-        meths.set_option_value('updatetime', ut, {})
+        api.nvim_set_option_value('updatetime', ut, {})
         feed('0') -- reset did_cursorhold
-        meths.set_var('cursorhold', 0)
+        api.nvim_set_var('cursorhold', 0)
         sleep(ut / 4)
         fn()
-        eq(0, meths.get_var('cursorhold'))
+        eq(0, api.nvim_get_var('cursorhold'))
         sleep(ut / 2)
         fn()
-        eq(0, meths.get_var('cursorhold'))
+        eq(0, api.nvim_get_var('cursorhold'))
         sleep(ut / 2)
-        eq(early, meths.get_var('cursorhold'))
+        eq(early, api.nvim_get_var('cursorhold'))
         sleep(ut / 4 * 3)
-        eq(1, meths.get_var('cursorhold'))
+        eq(1, api.nvim_get_var('cursorhold'))
       end)
     end
 
-    local ignore_key = meths.replace_termcodes('<Ignore>', true, true, true)
+    local ignore_key = api.nvim_replace_termcodes('<Ignore>', true, true, true)
     test_cursorhold(function() end, 1)
     test_cursorhold(function()
       feed('')
     end, 1)
     test_cursorhold(function()
-      meths.feedkeys('', 'n', true)
+      api.nvim_feedkeys('', 'n', true)
     end, 1)
     test_cursorhold(function()
       feed('<Ignore>')
     end, 0)
     test_cursorhold(function()
-      meths.feedkeys(ignore_key, 'n', true)
+      api.nvim_feedkeys(ignore_key, 'n', true)
     end, 0)
   end)
 
   it("reducing 'updatetime' while waiting for CursorHold #20241", function()
-    meths.set_option_value('updatetime', 10000, {})
+    api.nvim_set_option_value('updatetime', 10000, {})
     feed('0') -- reset did_cursorhold
-    meths.set_var('cursorhold', 0)
+    api.nvim_set_var('cursorhold', 0)
     sleep(50)
-    eq(0, meths.get_var('cursorhold'))
-    meths.set_option_value('updatetime', 20, {})
+    eq(0, api.nvim_get_var('cursorhold'))
+    api.nvim_set_option_value('updatetime', 20, {})
     sleep(10)
-    eq(1, meths.get_var('cursorhold'))
+    eq(1, api.nvim_get_var('cursorhold'))
   end)
 end)
 
@@ -85,7 +85,7 @@ describe('CursorHoldI', function()
     feed('ifoo')
     retry(5, nil, function()
       sleep(1)
-      eq(1, meths.get_var('cursorhold'))
+      eq(1, api.nvim_get_var('cursorhold'))
     end)
   end)
 end)

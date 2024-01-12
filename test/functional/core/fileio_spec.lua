@@ -1,4 +1,4 @@
-local luv = require('luv')
+local uv = vim.uv
 local helpers = require('test.functional.helpers')(after_each)
 
 local assert_log = helpers.assert_log
@@ -9,18 +9,18 @@ local eq = helpers.eq
 local neq = helpers.neq
 local ok = helpers.ok
 local feed = helpers.feed
-local funcs = helpers.funcs
+local fn = helpers.fn
 local nvim_prog = helpers.nvim_prog
 local request = helpers.request
 local retry = helpers.retry
 local rmdir = helpers.rmdir
 local matches = helpers.matches
-local meths = helpers.meths
+local api = helpers.api
 local mkdir = helpers.mkdir
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 local read_file = helpers.read_file
-local trim = helpers.trim
-local currentdir = helpers.funcs.getcwd
+local trim = vim.trim
+local currentdir = helpers.fn.getcwd
 local assert_alive = helpers.assert_alive
 local check_close = helpers.check_close
 local expect_exit = helpers.expect_exit
@@ -100,8 +100,8 @@ describe('fileio', function()
     eq('foozubbaz', trim(read_file('Xtest_startup_file1')))
 
     -- 4. Exit caused by deadly signal (+ 'swapfile').
-    local j = funcs.jobstart(vim.tbl_flatten({ args, '--embed' }), { rpc = true })
-    funcs.rpcrequest(
+    local j = fn.jobstart(vim.tbl_flatten({ args, '--embed' }), { rpc = true })
+    fn.rpcrequest(
       j,
       'nvim_exec2',
       [[
@@ -112,8 +112,8 @@ describe('fileio', function()
     ]],
       {}
     )
-    eq('Xtest_startup_swapdir', funcs.rpcrequest(j, 'nvim_eval', '&directory'))
-    funcs.jobstop(j) -- Send deadly signal.
+    eq('Xtest_startup_swapdir', fn.rpcrequest(j, 'nvim_eval', '&directory'))
+    fn.jobstop(j) -- Send deadly signal.
 
     local screen = startup()
     feed(':recover Xtest_startup_file2<cr>')
@@ -210,7 +210,7 @@ describe('fileio', function()
     local backup_file_name = link_file_name .. '~'
 
     write_file('Xtest_startup_file1', initial_content, false)
-    luv.fs_symlink('Xtest_startup_file1', link_file_name)
+    uv.fs_symlink('Xtest_startup_file1', link_file_name)
     command('set backup')
     command('set backupcopy=yes')
     command('edit ' .. link_file_name)
@@ -233,7 +233,7 @@ describe('fileio', function()
     local backup_file_name = backup_dir .. sep .. link_file_name .. '~'
 
     write_file('Xtest_startup_file1', initial_content, false)
-    luv.fs_symlink('Xtest_startup_file1', link_file_name)
+    uv.fs_symlink('Xtest_startup_file1', link_file_name)
     mkdir(backup_dir)
     command('set backup')
     command('set backupcopy=yes')
@@ -258,9 +258,9 @@ describe('fileio', function()
       '',
     }
     local fname = 'Xtest_тест.md'
-    funcs.writefile(text, fname, 's')
+    fn.writefile(text, fname, 's')
     table.insert(text, '')
-    eq(text, funcs.readfile(fname, 'b'))
+    eq(text, fn.readfile(fname, 'b'))
   end)
   it("read invalid u8 over INT_MAX doesn't segfault", function()
     clear()
@@ -295,7 +295,6 @@ describe('fileio', function()
     local future_time = cur_unix_time + 999999
     -- Set the file's access/update time to be
     -- greater than the time at which it was created.
-    local uv = require('luv')
     uv.fs_utime('Xtest-overwrite-forced', future_time, future_time)
     -- use async feed_command because nvim basically hangs on the prompt
     feed_command('w')
@@ -342,7 +341,7 @@ describe('tmpdir', function()
     -- Tempfiles typically look like: "…/nvim.<user>/xxx/0".
     --  - "…/nvim.<user>/xxx/" is the per-process tmpdir, not shared with other Nvims.
     --  - "…/nvim.<user>/" is the tmpdir root, shared by all Nvims (normally).
-    local tmproot = (funcs.tempname()):match(tmproot_pat)
+    local tmproot = (fn.tempname()):match(tmproot_pat)
     ok(tmproot:len() > 4, 'tmproot like "nvim.foo"', tmproot)
     return tmproot
   end
@@ -361,7 +360,7 @@ describe('tmpdir', function()
     rmdir(tmproot)
     write_file(tmproot, '') -- Not a directory, vim_mktempdir() should skip it.
     clear({ env = { NVIM_LOG_FILE = testlog, TMPDIR = os_tmpdir } })
-    matches(tmproot_pat, funcs.stdpath('run')) -- Tickle vim_mktempdir().
+    matches(tmproot_pat, fn.stdpath('run')) -- Tickle vim_mktempdir().
     -- Assert that broken tmpdir root was handled.
     assert_log('tempdir root not a directory', testlog, 100)
 
@@ -370,9 +369,9 @@ describe('tmpdir', function()
     os.remove(testlog)
     os.remove(tmproot)
     mkdir(tmproot)
-    funcs.setfperm(tmproot, 'rwxr--r--') -- Invalid permissions, vim_mktempdir() should skip it.
+    fn.setfperm(tmproot, 'rwxr--r--') -- Invalid permissions, vim_mktempdir() should skip it.
     clear({ env = { NVIM_LOG_FILE = testlog, TMPDIR = os_tmpdir } })
-    matches(tmproot_pat, funcs.stdpath('run')) -- Tickle vim_mktempdir().
+    matches(tmproot_pat, fn.stdpath('run')) -- Tickle vim_mktempdir().
     -- Assert that broken tmpdir root was handled.
     assert_log('tempdir root has invalid permissions', testlog, 100)
   end)
@@ -381,8 +380,8 @@ describe('tmpdir', function()
     local bigname = ('%s/%s'):format(os_tmpdir, ('x'):rep(666))
     mkdir(bigname)
     clear({ env = { NVIM_LOG_FILE = testlog, TMPDIR = bigname } })
-    matches(tmproot_pat, funcs.stdpath('run')) -- Tickle vim_mktempdir().
-    local len = (funcs.tempname()):len()
+    matches(tmproot_pat, fn.stdpath('run')) -- Tickle vim_mktempdir().
+    local len = (fn.tempname()):len()
     ok(len > 4 and len < 256, '4 < len < 256', tostring(len))
   end)
 
@@ -391,33 +390,33 @@ describe('tmpdir', function()
     assert_nolog('tempdir disappeared', testlog)
 
     local function rm_tmpdir()
-      local tmpname1 = funcs.tempname()
-      local tmpdir1 = funcs.fnamemodify(tmpname1, ':h')
-      eq(funcs.stdpath('run'), tmpdir1)
+      local tmpname1 = fn.tempname()
+      local tmpdir1 = fn.fnamemodify(tmpname1, ':h')
+      eq(fn.stdpath('run'), tmpdir1)
 
       rmdir(tmpdir1)
       retry(nil, 1000, function()
-        eq(0, funcs.isdirectory(tmpdir1))
+        eq(0, fn.isdirectory(tmpdir1))
       end)
-      local tmpname2 = funcs.tempname()
-      local tmpdir2 = funcs.fnamemodify(tmpname2, ':h')
+      local tmpname2 = fn.tempname()
+      local tmpdir2 = fn.fnamemodify(tmpname2, ':h')
       neq(tmpdir1, tmpdir2)
     end
 
     -- Your antivirus hates you...
     rm_tmpdir()
     assert_log('tempdir disappeared', testlog, 100)
-    funcs.tempname()
-    funcs.tempname()
-    funcs.tempname()
-    eq('', meths.get_vvar('errmsg'))
+    fn.tempname()
+    fn.tempname()
+    fn.tempname()
+    eq('', api.nvim_get_vvar('errmsg'))
     rm_tmpdir()
-    funcs.tempname()
-    funcs.tempname()
-    funcs.tempname()
-    eq('E5431: tempdir disappeared (2 times)', meths.get_vvar('errmsg'))
+    fn.tempname()
+    fn.tempname()
+    fn.tempname()
+    eq('E5431: tempdir disappeared (2 times)', api.nvim_get_vvar('errmsg'))
     rm_tmpdir()
-    eq('E5431: tempdir disappeared (3 times)', meths.get_vvar('errmsg'))
+    eq('E5431: tempdir disappeared (3 times)', api.nvim_get_vvar('errmsg'))
   end)
 
   it('$NVIM_APPNAME relative path', function()
@@ -428,6 +427,6 @@ describe('tmpdir', function()
         TMPDIR = os_tmpdir,
       },
     })
-    matches([=[.*[/\\]a%%b%.[^/\\]+]=], funcs.tempname())
+    matches([=[.*[/\\]a%%b%.[^/\\]+]=], fn.tempname())
   end)
 end)

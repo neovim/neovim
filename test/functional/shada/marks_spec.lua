@@ -1,12 +1,6 @@
 -- ShaDa marks saving/reading support
 local helpers = require('test.functional.helpers')(after_each)
-local meths, curwinmeths, curbufmeths, nvim_command, funcs, eq =
-  helpers.meths,
-  helpers.curwinmeths,
-  helpers.curbufmeths,
-  helpers.command,
-  helpers.funcs,
-  helpers.eq
+local api, nvim_command, fn, eq = helpers.api, helpers.command, helpers.fn, helpers.eq
 local feed = helpers.feed
 local exc_exec, exec_capture = helpers.exc_exec, helpers.exec_capture
 local expect_exit = helpers.expect_exit
@@ -15,7 +9,7 @@ local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear = shada_helpers.reset, shada_helpers.clear
 
 local nvim_current_line = function()
-  return curwinmeths.get_cursor()[1]
+  return api.nvim_win_get_cursor(0)[1]
 end
 
 describe('ShaDa support code', function()
@@ -49,7 +43,7 @@ describe('ShaDa support code', function()
     reset()
     nvim_command('rshada')
     nvim_command('normal! `A')
-    eq(testfilename, funcs.fnamemodify(curbufmeths.get_name(), ':t'))
+    eq(testfilename, fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
     eq(1, nvim_current_line())
     nvim_command('normal! `B')
     eq(2, nvim_current_line())
@@ -76,7 +70,7 @@ describe('ShaDa support code', function()
     reset("set shada='0,f0")
     nvim_command('language C')
     nvim_command('normal! `A')
-    eq(testfilename, funcs.fnamemodify(curbufmeths.get_name(), ':t'))
+    eq(testfilename, fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
     eq(1, nvim_current_line())
   end)
 
@@ -89,7 +83,7 @@ describe('ShaDa support code', function()
     reset()
     nvim_command('edit ' .. testfilename)
     nvim_command('normal! `a')
-    eq(testfilename, funcs.fnamemodify(curbufmeths.get_name(), ':t'))
+    eq(testfilename, fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
     eq(1, nvim_current_line())
     nvim_command('normal! `b')
     eq(2, nvim_current_line())
@@ -119,12 +113,12 @@ describe('ShaDa support code', function()
 
   it('is able to populate v:oldfiles', function()
     nvim_command('edit ' .. testfilename)
-    local tf_full = curbufmeths.get_name()
+    local tf_full = api.nvim_buf_get_name(0)
     nvim_command('edit ' .. testfilename_2)
-    local tf_full_2 = curbufmeths.get_name()
+    local tf_full_2 = api.nvim_buf_get_name(0)
     expect_exit(nvim_command, 'qall')
     reset()
-    local oldfiles = meths.get_vvar('oldfiles')
+    local oldfiles = api.nvim_get_vvar('oldfiles')
     table.sort(oldfiles)
     eq(2, #oldfiles)
     eq(testfilename, oldfiles[1]:sub(-#testfilename))
@@ -132,7 +126,7 @@ describe('ShaDa support code', function()
     eq(tf_full, oldfiles[1])
     eq(tf_full_2, oldfiles[2])
     nvim_command('rshada!')
-    oldfiles = meths.get_vvar('oldfiles')
+    oldfiles = api.nvim_get_vvar('oldfiles')
     table.sort(oldfiles)
     eq(2, #oldfiles)
     eq(testfilename, oldfiles[1]:sub(-#testfilename))
@@ -165,8 +159,8 @@ describe('ShaDa support code', function()
     nvim_command('quit')
     nvim_command('rshada')
     nvim_command('normal! \15') -- <C-o>
-    eq(testfilename_2, funcs.bufname('%'))
-    eq({ 2, 0 }, curwinmeths.get_cursor())
+    eq(testfilename_2, fn.bufname('%'))
+    eq({ 2, 0 }, api.nvim_win_get_cursor(0))
   end)
 
   it('is able to dump and restore jump list with different times (slow!)', function()
@@ -185,19 +179,19 @@ describe('ShaDa support code', function()
     reset()
     nvim_command('redraw')
     nvim_command('edit ' .. testfilename)
-    eq(testfilename, funcs.bufname('%'))
+    eq(testfilename, fn.bufname('%'))
     eq(1, nvim_current_line())
     nvim_command('execute "normal! \\<C-o>"')
-    eq(testfilename, funcs.bufname('%'))
+    eq(testfilename, fn.bufname('%'))
     eq(2, nvim_current_line())
     nvim_command('execute "normal! \\<C-o>"')
-    eq(testfilename_2, funcs.bufname('%'))
+    eq(testfilename_2, fn.bufname('%'))
     eq(1, nvim_current_line())
     nvim_command('execute "normal! \\<C-o>"')
-    eq(testfilename_2, funcs.bufname('%'))
+    eq(testfilename_2, fn.bufname('%'))
     eq(2, nvim_current_line())
     nvim_command('execute "normal! \\<C-o>"')
-    eq(testfilename_2, funcs.bufname('%'))
+    eq(testfilename_2, fn.bufname('%'))
     eq(2, nvim_current_line())
   end)
 
@@ -229,14 +223,14 @@ describe('ShaDa support code', function()
       },
       args = {
         '-i',
-        meths.get_var('tmpname'), -- Use same shada file as parent.
+        api.nvim_get_var('tmpname'), -- Use same shada file as parent.
         '--cmd',
         'silent edit ' .. non_existent_testfilename,
         '-c',
         'qall',
       },
     }
-    eq('', funcs.system(argv))
+    eq('', fn.system(argv))
     eq(0, exc_exec('rshada'))
   end)
 
@@ -248,14 +242,14 @@ describe('ShaDa support code', function()
       },
       args = {
         '-i',
-        meths.get_var('tmpname'), -- Use same shada file as parent.
+        api.nvim_get_var('tmpname'), -- Use same shada file as parent.
         '-c',
         'silent edit ' .. non_existent_testfilename,
         '-c',
         'autocmd VimEnter * qall',
       },
     }
-    eq('', funcs.system(argv))
+    eq('', fn.system(argv))
     eq(0, exc_exec('rshada'))
   end)
 

@@ -1,4 +1,3 @@
-local luv = require('luv')
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
@@ -9,7 +8,7 @@ local request = helpers.request
 local is_os = helpers.is_os
 
 describe('autocmd DirChanged and DirChangedPre', function()
-  local curdir = string.gsub(luv.cwd(), '\\', '/')
+  local curdir = vim.uv.cwd():gsub('\\', '/')
   local dirs = {
     curdir .. '/Xtest-functional-autocmd-dirchanged.dir1',
     curdir .. '/Xtest-functional-autocmd-dirchanged.dir2',

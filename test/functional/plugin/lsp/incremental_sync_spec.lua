@@ -1,7 +1,7 @@
 -- Test suite for testing interactions with the incremental sync algorithms powering the LSP client
 local helpers = require('test.functional.helpers')(after_each)
 
-local meths = helpers.meths
+local api = helpers.api
 local clear = helpers.clear
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
@@ -62,7 +62,7 @@ local function test_edit(
   offset_encoding = offset_encoding or 'utf-16'
   line_ending = line_ending or '\n'
 
-  meths.buf_set_lines(0, 0, -1, true, prev_buffer)
+  api.nvim_buf_set_lines(0, 0, -1, true, prev_buffer)
   exec_lua('return test_register(...)', 0, 'test1', offset_encoding, line_ending)
 
   for _, edit in ipairs(edit_operations) do

@@ -8,12 +8,12 @@ local eq = helpers.eq
 local feed = helpers.feed
 local feed_command = helpers.feed_command
 local insert = helpers.insert
-local funcs = helpers.funcs
+local fn = helpers.fn
 local exec = helpers.exec
 local exec_lua = helpers.exec_lua
 
 local function lastmessage()
-  local messages = funcs.split(funcs.execute('messages'), '\n')
+  local messages = fn.split(fn.execute('messages'), '\n')
   return messages[#messages]
 end
 

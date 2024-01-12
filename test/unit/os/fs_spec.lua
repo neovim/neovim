@@ -1,4 +1,4 @@
-local luv = require('luv')
+local uv = vim.uv
 local bit = require('bit')
 
 local helpers = require('test.unit.helpers')(after_each)
@@ -17,7 +17,7 @@ local OK = helpers.OK
 local FAIL = helpers.FAIL
 local NULL = helpers.NULL
 local mkdir = helpers.mkdir
-local endswith = helpers.endswith
+local endswith = vim.endswith
 
 local NODE_NORMAL = 0
 local NODE_WRITABLE = 1
@@ -46,11 +46,11 @@ local function unset_bit(number, to_unset)
 end
 
 local function assert_file_exists(filepath)
-  neq(nil, luv.fs_stat(filepath))
+  neq(nil, uv.fs_stat(filepath))
 end
 
 local function assert_file_does_not_exist(filepath)
-  eq(nil, luv.fs_stat(filepath))
+  eq(nil, uv.fs_stat(filepath))
 end
 
 local function os_setperm(filename, perm)
@@ -73,9 +73,9 @@ describe('fs.c', function()
     io.open('unit-test-directory/test.file', 'w'):close()
 
     io.open('unit-test-directory/test_2.file', 'w'):close()
-    luv.fs_symlink('test.file', 'unit-test-directory/test_link.file')
+    uv.fs_symlink('test.file', 'unit-test-directory/test_link.file')
 
-    luv.fs_symlink('non_existing_file.file', 'unit-test-directory/test_broken_link.file')
+    uv.fs_symlink('non_existing_file.file', 'unit-test-directory/test_broken_link.file')
     -- The tests are invoked with an absolute path to `busted` executable.
     absolute_executable = arg[0]
     -- Split the absolute_executable path into a directory and filename.
@@ -88,19 +88,19 @@ describe('fs.c', function()
     os.remove('unit-test-directory/test_link.file')
     os.remove('unit-test-directory/test_hlink.file')
     os.remove('unit-test-directory/test_broken_link.file')
-    luv.fs_rmdir('unit-test-directory')
+    uv.fs_rmdir('unit-test-directory')
   end)
 
   describe('os_dirname', function()
     itp('returns OK and writes current directory to the buffer', function()
-      local length = string.len(luv.cwd()) + 1
+      local length = string.len(uv.cwd()) + 1
       local buf = cstr(length, '')
       eq(OK, fs.os_dirname(buf, length))
-      eq(luv.cwd(), ffi.string(buf))
+      eq(uv.cwd(), ffi.string(buf))
     end)
 
     itp('returns FAIL if the buffer is too small', function()
-      local length = string.len(luv.cwd()) + 1
+      local length = string.len(uv.cwd()) + 1
       local buf = cstr(length - 1, '')
       eq(FAIL, fs.os_dirname(buf, length - 1))
     end)
@@ -201,20 +201,20 @@ describe('fs.c', function()
     end)
 
     itp('returns the absolute path when given an executable relative to the current dir', function()
-      local old_dir = luv.cwd()
+      local old_dir = uv.cwd()
 
-      luv.chdir(directory)
+      uv.chdir(directory)
 
       -- Rely on currentdir to resolve symlinks, if any. Testing against
       -- the absolute path taken from arg[0] may result in failure where
       -- the path has a symlink in it.
-      local canonical = luv.cwd() .. '/' .. executable_name
+      local canonical = uv.cwd() .. '/' .. executable_name
       local expected = exe(canonical)
       local relative_executable = './' .. executable_name
       local res = exe(relative_executable)
 
       -- Don't test yet; we need to chdir back first.
-      luv.chdir(old_dir)
+      uv.chdir(old_dir)
       eq(expected, res)
     end)
   end)
@@ -276,11 +276,11 @@ describe('fs.c', function()
     describe('os_fchown', function()
       local filename = 'unit-test-directory/test.file'
       itp('does not change owner and group if respective IDs are equal to -1', function()
-        local uid = luv.fs_stat(filename).uid
-        local gid = luv.fs_stat(filename).gid
+        local uid = uv.fs_stat(filename).uid
+        local gid = uv.fs_stat(filename).gid
         eq(0, os_fchown(filename, -1, -1))
-        eq(uid, luv.fs_stat(filename).uid)
-        return eq(gid, luv.fs_stat(filename).gid)
+        eq(uid, uv.fs_stat(filename).uid)
+        return eq(gid, uv.fs_stat(filename).gid)
       end)
 
       -- Some systems may not have `id` utility.
@@ -290,7 +290,7 @@ describe('fs.c', function()
         itp(
           'owner of a file may change the group of the file to any group of which that owner is a member',
           function()
-            local file_gid = luv.fs_stat(filename).gid
+            local file_gid = uv.fs_stat(filename).gid
 
             -- Gets ID of any group of which current user is a member except the
             -- group that owns the file.
@@ -305,7 +305,7 @@ describe('fs.c', function()
             -- In that case we can not perform this test.
             if new_gid then
               eq(0, (os_fchown(filename, -1, new_gid)))
-              eq(new_gid, luv.fs_stat(filename).gid)
+              eq(new_gid, uv.fs_stat(filename).gid)
             end
           end
         )
@@ -554,7 +554,7 @@ describe('fs.c', function()
         --create the file
         local fd = os_open(new_file, ffi.C.kO_CREAT, tonumber('700', 8))
         --verify permissions
-        eq(33216, luv.fs_stat(new_file).mode)
+        eq(33216, uv.fs_stat(new_file).mode)
         eq(0, os_close(fd))
       end)
 
@@ -563,7 +563,7 @@ describe('fs.c', function()
         --create the file
         local fd = os_open(new_file, ffi.C.kO_CREAT, tonumber('600', 8))
         --verify permissions
-        eq(33152, luv.fs_stat(new_file).mode)
+        eq(33152, uv.fs_stat(new_file).mode)
         eq(0, os_close(fd))
       end)
 
@@ -793,7 +793,7 @@ describe('fs.c', function()
         eq(false, (os_isdir('unit-test-directory/new-dir')))
         eq(0, (os_mkdir('unit-test-directory/new-dir', mode)))
         eq(true, (os_isdir('unit-test-directory/new-dir')))
-        luv.fs_rmdir('unit-test-directory/new-dir')
+        uv.fs_rmdir('unit-test-directory/new-dir')
       end)
     end)
 
@@ -831,7 +831,7 @@ describe('fs.c', function()
         eq(nil, failed_dir)
         ok(endswith(created_dir, 'unit-test-directory/new-dir-recurse'))
         eq(true, os_isdir('unit-test-directory/new-dir-recurse'))
-        luv.fs_rmdir('unit-test-directory/new-dir-recurse')
+        uv.fs_rmdir('unit-test-directory/new-dir-recurse')
         eq(false, os_isdir('unit-test-directory/new-dir-recurse'))
       end)
 
@@ -843,7 +843,7 @@ describe('fs.c', function()
         eq(nil, failed_dir)
         ok(endswith(created_dir, 'unit-test-directory/new-dir-recurse'))
         eq(true, os_isdir('unit-test-directory/new-dir-recurse'))
-        luv.fs_rmdir('unit-test-directory/new-dir-recurse')
+        uv.fs_rmdir('unit-test-directory/new-dir-recurse')
         eq(false, os_isdir('unit-test-directory/new-dir-recurse'))
       end)
 
@@ -855,7 +855,7 @@ describe('fs.c', function()
         eq(nil, failed_dir)
         ok(endswith(created_dir, 'unit-test-directory/new-dir-recurse'))
         eq(true, os_isdir('unit-test-directory/new-dir-recurse'))
-        luv.fs_rmdir('unit-test-directory/new-dir-recurse')
+        uv.fs_rmdir('unit-test-directory/new-dir-recurse')
         eq(false, os_isdir('unit-test-directory/new-dir-recurse'))
       end)
 
@@ -870,10 +870,10 @@ describe('fs.c', function()
         eq(true, os_isdir('unit-test-directory/new-dir-recurse/1'))
         eq(true, os_isdir('unit-test-directory/new-dir-recurse/1/2'))
         eq(true, os_isdir('unit-test-directory/new-dir-recurse/1/2/3'))
-        luv.fs_rmdir('unit-test-directory/new-dir-recurse/1/2/3')
-        luv.fs_rmdir('unit-test-directory/new-dir-recurse/1/2')
-        luv.fs_rmdir('unit-test-directory/new-dir-recurse/1')
-        luv.fs_rmdir('unit-test-directory/new-dir-recurse')
+        uv.fs_rmdir('unit-test-directory/new-dir-recurse/1/2/3')
+        uv.fs_rmdir('unit-test-directory/new-dir-recurse/1/2')
+        uv.fs_rmdir('unit-test-directory/new-dir-recurse/1')
+        uv.fs_rmdir('unit-test-directory/new-dir-recurse')
         eq(false, os_isdir('unit-test-directory/new-dir-recurse'))
       end)
     end)
@@ -1038,7 +1038,7 @@ describe('fs.c', function()
         file:write('some bytes to get filesize != 0')
         file:flush()
         file:close()
-        local size = luv.fs_stat(path).size
+        local size = uv.fs_stat(path).size
         local info = file_info_new()
         assert.is_true(fs.os_fileinfo(path, info))
         eq(size, fs.os_fileinfo_size(info))
@@ -1052,7 +1052,7 @@ describe('fs.c', function()
         local info = file_info_new()
         assert.is_true(fs.os_fileinfo(path, info))
         eq(1, fs.os_fileinfo_hardlinks(info))
-        luv.fs_link(path, path_link)
+        uv.fs_link(path, path_link)
         assert.is_true(fs.os_fileinfo(path, info))
         eq(2, fs.os_fileinfo_hardlinks(info))
       end)
@@ -1061,7 +1061,7 @@ describe('fs.c', function()
     describe('os_fileinfo_blocksize', function()
       itp('returns the correct blocksize of a file', function()
         local path = 'unit-test-directory/test.file'
-        local blksize = luv.fs_stat(path).blksize
+        local blksize = uv.fs_stat(path).blksize
         local info = file_info_new()
         assert.is_true(fs.os_fileinfo(path, info))
         if blksize then

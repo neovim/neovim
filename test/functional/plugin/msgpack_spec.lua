@@ -1,10 +1,12 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
-local meths = helpers.meths
-local eq, nvim_eval, nvim_command, exc_exec =
-  helpers.eq, helpers.eval, helpers.command, helpers.exc_exec
+local api = helpers.api
+local eq = helpers.eq
+local nvim_eval = helpers.eval
+local nvim_command = helpers.command
+local exc_exec = helpers.exc_exec
 local ok = helpers.ok
-local NIL = helpers.NIL
+local NIL = vim.NIL
 
 describe('autoload/msgpack.vim', function()
   before_each(function()
@@ -524,17 +526,17 @@ describe('autoload/msgpack.vim', function()
     end)
 
     it('works for special v: values like v:true', function()
-      meths.set_var('true', true)
-      meths.set_var('false', false)
-      meths.set_var('nil', NIL)
+      api.nvim_set_var('true', true)
+      api.nvim_set_var('false', false)
+      api.nvim_set_var('nil', NIL)
 
       nvim_command('let true2 = msgpack#deepcopy(true)')
       nvim_command('let false2 = msgpack#deepcopy(false)')
       nvim_command('let nil2 = msgpack#deepcopy(nil)')
 
-      eq(true, meths.get_var('true'))
-      eq(false, meths.get_var('false'))
-      eq(NIL, meths.get_var('nil'))
+      eq(true, api.nvim_get_var('true'))
+      eq(false, api.nvim_get_var('false'))
+      eq(NIL, api.nvim_get_var('nil'))
     end)
   end)
 

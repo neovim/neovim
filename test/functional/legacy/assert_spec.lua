@@ -1,16 +1,16 @@
 local helpers = require('test.functional.helpers')(after_each)
-local nvim, call = helpers.meths, helpers.call
+local nvim, call = helpers.api, helpers.call
 local clear, eq = helpers.clear, helpers.eq
 local source, command = helpers.source, helpers.command
 local exc_exec = helpers.exc_exec
 local eval = helpers.eval
 
 local function expected_errors(errors)
-  eq(errors, nvim.get_vvar('errors'))
+  eq(errors, nvim.nvim_get_vvar('errors'))
 end
 
 local function expected_empty()
-  eq({}, nvim.get_vvar('errors'))
+  eq({}, nvim.nvim_get_vvar('errors'))
 end
 
 describe('assert function:', function()

@@ -6,7 +6,7 @@ local eq = helpers.eq
 local exc_exec = helpers.exc_exec
 local insert = helpers.insert
 local feed = helpers.feed
-local meths = helpers.meths
+local api = helpers.api
 
 describe("'fillchars'", function()
   local screen
@@ -203,7 +203,7 @@ describe("'listchars'", function()
                                                         |
     ]])
 
-    meths._invalidate_glyph_cache()
+    api.nvim__invalidate_glyph_cache()
     screen:_reset()
     screen:expect([[
       {1:d̞̄̃̒̉̎ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐l̞̀̄̆̌̚d̞̄̃̒̉̎ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐l̞̀̄̆̌̚d̞̄̃̒̉̎ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐l̞̀̄̆̌̚}^x{1:å̲}                        |

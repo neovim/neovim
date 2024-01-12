@@ -4,10 +4,10 @@ local feed, next_msg, eq = helpers.feed, helpers.next_msg, helpers.eq
 local command = helpers.command
 local expect = helpers.expect
 local curbuf_contents = helpers.curbuf_contents
-local meths = helpers.meths
+local api = helpers.api
 local exec_lua = helpers.exec_lua
 local write_file = helpers.write_file
-local funcs = helpers.funcs
+local fn = helpers.fn
 local eval = helpers.eval
 local Screen = require('test.functional.ui.screen')
 
@@ -154,7 +154,7 @@ describe('input split utf sequences', function()
   it('ok', function()
     local str = '►'
     feed('i' .. str:sub(1, 1))
-    helpers.sleep(10)
+    vim.uv.sleep(10)
     feed(str:sub(2, 3))
     expect('►')
   end)
@@ -163,7 +163,7 @@ describe('input split utf sequences', function()
     command('inoremap ► E296BA')
     local str = '►'
     feed('i' .. str:sub(1, 1))
-    helpers.sleep(10)
+    vim.uv.sleep(10)
     feed(str:sub(2, 3))
     expect('E296BA')
   end)
@@ -244,7 +244,7 @@ it('Ctrl-6 is Ctrl-^ vim-patch:8.1.2333', function()
   command('split aaa')
   command('edit bbb')
   feed('<C-6>')
-  eq('aaa', funcs.bufname())
+  eq('aaa', fn.bufname())
 end)
 
 it('c_CTRL-R_CTRL-R, i_CTRL-R_CTRL-R, i_CTRL-G_CTRL-K work properly vim-patch:8.1.2346', function()
@@ -303,7 +303,7 @@ it('unsimplified mapping works when there was a partial match vim-patch:8.2.4504
   command('nnoremap <C-J> a')
   command('nnoremap <NL> x')
   command('nnoremap <C-J>x <Nop>')
-  funcs.setline(1, 'x')
+  fn.setline(1, 'x')
   -- CTRL-J b should have trigger the <C-J> mapping and then insert "b"
   feed('<C-J>b<Esc>')
   expect('xb')
@@ -392,7 +392,7 @@ end)
 
 describe('event processing and input', function()
   it('not blocked by event bursts', function()
-    meths.set_keymap(
+    api.nvim_set_keymap(
       '',
       '<f2>',
       "<cmd>lua vim.rpcnotify(1, 'stop') winning = true <cr>",

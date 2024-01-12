@@ -1,8 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, eval, next_msg, ok, source =
   helpers.clear, helpers.eq, helpers.eval, helpers.next_msg, helpers.ok, helpers.source
-local command, funcs, meths = helpers.command, helpers.funcs, helpers.meths
-local sleep = helpers.sleep
+local command, fn, api = helpers.command, helpers.fn, helpers.api
+local sleep = vim.uv.sleep
 local spawn, nvim_argv = helpers.spawn, helpers.nvim_argv
 local set_session = helpers.set_session
 local nvim_prog = helpers.nvim_prog
@@ -33,12 +33,12 @@ describe('channels', function()
   pending('can connect to socket', function()
     local server = spawn(nvim_argv, nil, nil, true)
     set_session(server)
-    local address = funcs.serverlist()[1]
+    local address = fn.serverlist()[1]
     local client = spawn(nvim_argv, nil, nil, true)
     set_session(client)
     source(init)
 
-    meths.set_var('address', address)
+    api.nvim_set_var('address', address)
     command("let g:id = sockconnect('pipe', address, {'on_data':'OnEvent'})")
     local id = eval('g:id')
     ok(id > 0)
@@ -46,7 +46,7 @@ describe('channels', function()
     command("call chansend(g:id, msgpackdump([[2,'nvim_set_var',['code',23]]]))")
     set_session(server)
     retry(nil, 1000, function()
-      eq(23, meths.get_var('code'))
+      eq(23, api.nvim_get_var('code'))
     end)
     set_session(client)
 
@@ -67,8 +67,8 @@ describe('channels', function()
       \ 'on_exit': function('OnEvent'),
       \ }
     ]])
-    meths.set_var('nvim_prog', nvim_prog)
-    meths.set_var(
+    api.nvim_set_var('nvim_prog', nvim_prog)
+    api.nvim_set_var(
       'code',
       [[
       function! OnEvent(id, data, event) dict
@@ -117,8 +117,8 @@ describe('channels', function()
       \ 'on_exit': function('OnEvent'),
       \ }
     ]])
-    meths.set_var('nvim_prog', nvim_prog)
-    meths.set_var(
+    api.nvim_set_var('nvim_prog', nvim_prog)
+    api.nvim_set_var(
       'code',
       [[
       function! OnStdin(id, data, event) dict
@@ -165,8 +165,8 @@ describe('channels', function()
       \ 'pty': v:true,
       \ }
     ]])
-    meths.set_var('nvim_prog', nvim_prog)
-    meths.set_var(
+    api.nvim_set_var('nvim_prog', nvim_prog)
+    api.nvim_set_var(
       'code',
       [[
       function! OnEvent(id, data, event) dict
@@ -220,8 +220,8 @@ describe('channels', function()
       \ 'rpc': v:true,
       \ }
     ]])
-    meths.set_var('nvim_prog', nvim_prog)
-    meths.set_var(
+    api.nvim_set_var('nvim_prog', nvim_prog)
+    api.nvim_set_var(
       'code',
       [[
       let id = stdioopen({'rpc':v:true})
@@ -250,7 +250,7 @@ describe('channels', function()
   end)
 
   it('can use buffered output mode', function()
-    skip(funcs.executable('grep') == 0, 'missing "grep" command')
+    skip(fn.executable('grep') == 0, 'missing "grep" command')
     source([[
       let g:job_opts = {
       \ 'on_stdout': function('OnEvent'),
@@ -285,7 +285,7 @@ describe('channels', function()
   end)
 
   it('can use buffered output mode with no stream callback', function()
-    skip(funcs.executable('grep') == 0, 'missing "grep" command')
+    skip(fn.executable('grep') == 0, 'missing "grep" command')
     source([[
       function! OnEvent(id, data, event) dict
         call rpcnotify(1, a:event, a:id, a:data, self.stdout)

@@ -1,12 +1,12 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq, ok = helpers.eq, helpers.ok
-local funcs = helpers.funcs
-local buffer, command, eval, nvim, next_msg =
-  helpers.buffer, helpers.command, helpers.eval, helpers.nvim, helpers.next_msg
+local fn = helpers.fn
+local api = helpers.api
+local command, eval, next_msg = helpers.command, helpers.eval, helpers.next_msg
 local nvim_prog = helpers.nvim_prog
 local pcall_err = helpers.pcall_err
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 local write_file = helpers.write_file
 
 local origlines = {
@@ -24,7 +24,7 @@ local function expectn(name, args)
 end
 
 local function sendkeys(keys)
-  nvim('input', keys)
+  api.nvim_input(keys)
   -- give nvim some time to process msgpack requests before possibly sending
   -- more key presses - otherwise they all pile up in the queue and get
   -- processed at once
@@ -37,7 +37,7 @@ local function open(activate, lines)
   local filename = helpers.tmpname()
   write_file(filename, table.concat(lines, '\n') .. '\n', true)
   command('edit ' .. filename)
-  local b = nvim('get_current_buf')
+  local b = api.nvim_get_current_buf()
   -- what is the value of b:changedtick?
   local tick = eval('b:changedtick')
 
@@ -45,7 +45,7 @@ local function open(activate, lines)
   -- arrive as expected
   if activate then
     local firstline = 0
-    ok(buffer('attach', b, true, {}))
+    ok(api.nvim_buf_attach(b, true, {}))
     expectn('nvim_buf_lines_event', { b, tick, firstline, -1, lines, false })
   end
 
@@ -62,12 +62,12 @@ local function editoriginal(activate, lines)
 end
 
 local function reopen(buf, expectedlines)
-  ok(buffer('detach', buf))
+  ok(api.nvim_buf_detach(buf))
   expectn('nvim_buf_detach_event', { buf })
   -- for some reason the :edit! increments tick by 2
   command('edit!')
   local tick = eval('b:changedtick')
-  ok(buffer('attach', buf, true, {}))
+  ok(api.nvim_buf_attach(buf, true, {}))
   local firstline = 0
   expectn('nvim_buf_lines_event', { buf, tick, firstline, -1, expectedlines, false })
   command('normal! gg')
@@ -197,21 +197,21 @@ describe('API: buffer events:', function()
     -- add a line at the start of an empty file
     command('enew')
     tick = eval('b:changedtick')
-    local b2 = nvim('get_current_buf')
-    ok(buffer('attach', b2, true, {}))
+    local b2 = api.nvim_get_current_buf()
+    ok(api.nvim_buf_attach(b2, true, {}))
     expectn('nvim_buf_lines_event', { b2, tick, 0, -1, { '' }, false })
     eval('append(0, ["new line 1"])')
     tick = tick + 1
     expectn('nvim_buf_lines_event', { b2, tick, 0, 0, { 'new line 1' }, false })
 
     -- turn off buffer events manually
-    buffer('detach', b2)
+    api.nvim_buf_detach(b2)
     expectn('nvim_buf_detach_event', { b2 })
 
     -- add multiple lines to a blank file
     command('enew!')
-    local b3 = nvim('get_current_buf')
-    ok(buffer('attach', b3, true, {}))
+    local b3 = api.nvim_get_current_buf()
+    ok(api.nvim_buf_attach(b3, true, {}))
     tick = eval('b:changedtick')
     expectn('nvim_buf_lines_event', { b3, tick, 0, -1, { '' }, false })
     eval('append(0, ["new line 1", "new line 2", "new line 3"])')
@@ -222,7 +222,7 @@ describe('API: buffer events:', function()
     )
 
     -- use the API itself to add a line to the start of the buffer
-    buffer('set_lines', b3, 0, 0, true, { 'New First Line' })
+    api.nvim_buf_set_lines(b3, 0, 0, true, { 'New First Line' })
     tick = tick + 1
     expectn('nvim_buf_lines_event', { b3, tick, 0, 0, { 'New First Line' }, false })
   end)
@@ -306,8 +306,8 @@ describe('API: buffer events:', function()
     command('bdelete!')
     tick = 2
     expectn('nvim_buf_detach_event', { b })
-    local bnew = nvim('get_current_buf')
-    ok(buffer('attach', bnew, true, {}))
+    local bnew = api.nvim_get_current_buf()
+    ok(api.nvim_buf_attach(bnew, true, {}))
     expectn('nvim_buf_lines_event', { bnew, tick, 0, -1, { '' }, false })
     sendkeys('i')
     sendkeys('h')
@@ -472,25 +472,25 @@ describe('API: buffer events:', function()
   end)
 
   it('does not get confused if enabled/disabled many times', function()
-    local channel = nvim('get_api_info')[1]
+    local channel = api.nvim_get_api_info()[1]
     local b, tick = editoriginal(false)
 
     -- Enable buffer events many times.
-    ok(buffer('attach', b, true, {}))
-    ok(buffer('attach', b, true, {}))
-    ok(buffer('attach', b, true, {}))
-    ok(buffer('attach', b, true, {}))
-    ok(buffer('attach', b, true, {}))
+    ok(api.nvim_buf_attach(b, true, {}))
+    ok(api.nvim_buf_attach(b, true, {}))
+    ok(api.nvim_buf_attach(b, true, {}))
+    ok(api.nvim_buf_attach(b, true, {}))
+    ok(api.nvim_buf_attach(b, true, {}))
     expectn('nvim_buf_lines_event', { b, tick, 0, -1, origlines, false })
     eval('rpcnotify(' .. channel .. ', "Hello There")')
     expectn('Hello There', {})
 
     -- Disable buffer events many times.
-    ok(buffer('detach', b))
-    ok(buffer('detach', b))
-    ok(buffer('detach', b))
-    ok(buffer('detach', b))
-    ok(buffer('detach', b))
+    ok(api.nvim_buf_detach(b))
+    ok(api.nvim_buf_detach(b))
+    ok(api.nvim_buf_detach(b))
+    ok(api.nvim_buf_detach(b))
+    ok(api.nvim_buf_detach(b))
     expectn('nvim_buf_detach_event', { b })
     eval('rpcnotify(' .. channel .. ', "Hello Again")')
     expectn('Hello Again', {})
@@ -573,7 +573,7 @@ describe('API: buffer events:', function()
 
   it('works with :diffput and :diffget', function()
     local b1, tick1 = editoriginal(true, { 'AAA', 'BBB' })
-    local channel = nvim('get_api_info')[1]
+    local channel = api.nvim_get_api_info()[1]
     command('diffthis')
     command('rightbelow vsplit')
     local b2, tick2 = open(true, { 'BBB', 'CCC' })
@@ -690,7 +690,7 @@ describe('API: buffer events:', function()
 
   it('detaches if the buffer is closed', function()
     local b, tick = editoriginal(true, { 'AAA' })
-    local channel = nvim('get_api_info')[1]
+    local channel = api.nvim_get_api_info()[1]
 
     -- Test that buffer events are working.
     command('normal! x')
@@ -729,7 +729,7 @@ describe('API: buffer events:', function()
 
   it(':enew! does not detach hidden buffer', function()
     local b, tick = editoriginal(true, { 'AAA', 'BBB' })
-    local channel = nvim('get_api_info')[1]
+    local channel = api.nvim_get_api_info()[1]
 
     command('set undoreload=1 hidden')
     command('normal! x')
@@ -743,7 +743,7 @@ describe('API: buffer events:', function()
 
   it('stays attached if the buffer is hidden', function()
     local b, tick = editoriginal(true, { 'AAA' })
-    local channel = nvim('get_api_info')[1]
+    local channel = api.nvim_get_api_info()[1]
 
     -- Test that buffer events are working.
     command('normal! x')
@@ -790,14 +790,14 @@ describe('API: buffer events:', function()
   it('does not send the buffer content if not requested', function()
     clear()
     local b, tick = editoriginal(false)
-    ok(buffer('attach', b, false, {}))
+    ok(api.nvim_buf_attach(b, false, {}))
     expectn('nvim_buf_changedtick_event', { b, tick })
   end)
 
   it('returns a proper error on nonempty options dict', function()
     clear()
     local b = editoriginal(false)
-    eq("Invalid key: 'builtin'", pcall_err(buffer, 'attach', b, false, { builtin = 'asfd' }))
+    eq("Invalid key: 'builtin'", pcall_err(api.nvim_buf_attach, b, false, { builtin = 'asfd' }))
   end)
 
   it('nvim_buf_attach returns response after delay #8634', function()
@@ -869,12 +869,12 @@ describe('API: buffer events:', function()
   it('when :terminal lines change', function()
     local buffer_lines = {}
     local expected_lines = {}
-    funcs.termopen({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '-n', '-c', 'set shortmess+=A' }, {
+    fn.termopen({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '-n', '-c', 'set shortmess+=A' }, {
       env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
     })
 
-    local b = nvim('get_current_buf')
-    ok(buffer('attach', b, true, {}))
+    local b = api.nvim_get_current_buf()
+    ok(api.nvim_buf_attach(b, true, {}))
 
     for _ = 1, 22 do
       table.insert(expected_lines, '~')

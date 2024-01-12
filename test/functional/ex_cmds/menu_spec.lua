@@ -1,8 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, command, nvim = helpers.clear, helpers.command, helpers.nvim
+local clear, command = helpers.clear, helpers.command
 local expect, feed = helpers.expect, helpers.feed
 local eq, eval = helpers.eq, helpers.eval
-local funcs = helpers.funcs
+local fn = helpers.fn
 
 describe(':emenu', function()
   before_each(function()
@@ -42,12 +42,12 @@ describe(':emenu', function()
     feed('ithis is a sentence<esc>^yiwo<esc>')
 
     -- Invoke "Edit.Paste" in normal-mode.
-    nvim('command', 'emenu Edit.Paste')
+    command('emenu Edit.Paste')
 
     -- Invoke "Edit.Paste" and "Test.Test" in command-mode.
     feed(':')
-    nvim('command', 'emenu Edit.Paste')
-    nvim('command', 'emenu Test.Test')
+    command('emenu Edit.Paste')
+    command('emenu Test.Test')
 
     expect([[
         this is a sentence
@@ -80,7 +80,7 @@ describe('menu_get', function()
   end)
 
   it("path='', modes='a'", function()
-    local m = funcs.menu_get('', 'a')
+    local m = fn.menu_get('', 'a')
     -- HINT: To print the expected table and regenerate the tests:
     -- print(require('vim.inspect')(m))
     local expected = {
@@ -308,7 +308,7 @@ describe('menu_get', function()
   end)
 
   it('matching path, all modes', function()
-    local m = funcs.menu_get('Export', 'a')
+    local m = fn.menu_get('Export', 'a')
     local expected = {
       {
         hidden = 0,
@@ -337,7 +337,7 @@ describe('menu_get', function()
   end)
 
   it('no path, matching modes', function()
-    local m = funcs.menu_get('', 'i')
+    local m = fn.menu_get('', 'i')
     local expected = {
       {
         shortcut = 'T',
@@ -366,7 +366,7 @@ describe('menu_get', function()
   end)
 
   it('matching path and modes', function()
-    local m = funcs.menu_get('Test', 'i')
+    local m = fn.menu_get('Test', 'i')
     local expected = {
       {
         shortcut = 'T',
@@ -412,7 +412,7 @@ describe('menu_get', function()
     command('nnoremenu &Test.Test8 <NoP>')
     command('nnoremenu &Test.Test9 ""')
 
-    local m = funcs.menu_get('')
+    local m = fn.menu_get('')
     local expected = {
       {
         shortcut = 'T',
@@ -565,7 +565,7 @@ describe('menu_get', function()
     command('nnoremenu &Test\\ 1.Test\\ 2 Wargl')
     command('nnoremenu &Test4.Test<Tab>3 i space<Esc>')
 
-    local m = funcs.menu_get('')
+    local m = fn.menu_get('')
     local expected = {
       {
         shortcut = 'T',

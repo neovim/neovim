@@ -6,7 +6,7 @@ local insert = helpers.insert
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local command = helpers.command
-local meths = helpers.meths
+local api = helpers.api
 local eq = helpers.eq
 
 before_each(clear)
@@ -709,11 +709,11 @@ describe('treesitter highlighting (C)', function()
 
   it('@foo.bar groups has the correct fallback behavior', function()
     local get_hl = function(name)
-      return meths.get_hl_by_name(name, 1).foreground
+      return api.nvim_get_hl_by_name(name, 1).foreground
     end
-    meths.set_hl(0, '@foo', { fg = 1 })
-    meths.set_hl(0, '@foo.bar', { fg = 2 })
-    meths.set_hl(0, '@foo.bar.baz', { fg = 3 })
+    api.nvim_set_hl(0, '@foo', { fg = 1 })
+    api.nvim_set_hl(0, '@foo.bar', { fg = 2 })
+    api.nvim_set_hl(0, '@foo.bar.baz', { fg = 3 })
 
     eq(1, get_hl '@foo')
     eq(1, get_hl '@foo.a.b.c.d')
@@ -725,7 +725,7 @@ describe('treesitter highlighting (C)', function()
     -- lookup is case insensitive
     eq(2, get_hl '@FOO.BAR.SPAM')
 
-    meths.set_hl(0, '@foo.missing.exists', { fg = 3 })
+    api.nvim_set_hl(0, '@foo.missing.exists', { fg = 3 })
     eq(1, get_hl '@foo.missing')
     eq(3, get_hl '@foo.missing.exists')
     eq(3, get_hl '@foo.missing.exists.bar')
@@ -772,7 +772,7 @@ describe('treesitter highlighting (help)', function()
     ]],
     }
 
-    helpers.curbufmeths.set_text(0, 1, 0, 5, { 'lua' })
+    helpers.api.nvim_buf_set_text(0, 0, 1, 0, 5, { 'lua' })
 
     screen:expect {
       grid = [[
@@ -785,7 +785,7 @@ describe('treesitter highlighting (help)', function()
     ]],
     }
 
-    helpers.curbufmeths.set_text(0, 1, 0, 4, { 'ruby' })
+    helpers.api.nvim_buf_set_text(0, 0, 1, 0, 4, { 'ruby' })
 
     screen:expect {
       grid = [[

@@ -1,13 +1,13 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
-local funcs = helpers.funcs
-local meths = helpers.meths
+local fn = helpers.fn
+local api = helpers.api
 local eq = helpers.eq
 local eval = helpers.eval
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local pcall_err = helpers.pcall_err
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local source = helpers.source
 
 describe('json_decode() function', function()
@@ -59,13 +59,13 @@ describe('json_decode() function', function()
   before_each(restart)
 
   local speq = function(expected, actual_expr)
-    eq(1, funcs.EvalEq(expected, actual_expr))
+    eq(1, fn.EvalEq(expected, actual_expr))
   end
 
   it('accepts readfile()-style list', function()
     eq(
       { Test = 1 },
-      funcs.json_decode({
+      fn.json_decode({
         '{',
         '\t"Test": 1',
         '}',
@@ -76,7 +76,7 @@ describe('json_decode() function', function()
   it('accepts strings with newlines', function()
     eq(
       { Test = 1 },
-      funcs.json_decode([[
+      fn.json_decode([[
       {
         "Test": 1
       }
@@ -85,9 +85,9 @@ describe('json_decode() function', function()
   end)
 
   it('parses null, true, false', function()
-    eq(NIL, funcs.json_decode('null'))
-    eq(true, funcs.json_decode('true'))
-    eq(false, funcs.json_decode('false'))
+    eq(NIL, fn.json_decode('null'))
+    eq(true, fn.json_decode('true'))
+    eq(false, fn.json_decode('false'))
   end)
 
   it('fails to parse incomplete null, true, false', function()
@@ -109,12 +109,12 @@ describe('json_decode() function', function()
   end)
 
   it('parses integer numbers', function()
-    eq(100000, funcs.json_decode('100000'))
-    eq(-100000, funcs.json_decode('-100000'))
-    eq(100000, funcs.json_decode('  100000  '))
-    eq(-100000, funcs.json_decode('  -100000  '))
-    eq(0, funcs.json_decode('0'))
-    eq(0, funcs.json_decode('-0'))
+    eq(100000, fn.json_decode('100000'))
+    eq(-100000, fn.json_decode('-100000'))
+    eq(100000, fn.json_decode('  100000  '))
+    eq(-100000, fn.json_decode('  -100000  '))
+    eq(0, fn.json_decode('0'))
+    eq(0, fn.json_decode('-0'))
   end)
 
   it('fails to parse +numbers and .number', function()
@@ -158,35 +158,35 @@ describe('json_decode() function', function()
   it('parses floating-point numbers', function()
     -- Also test method call (->) syntax
     eq('100000.0', eval('"100000.0"->json_decode()->string()'))
-    eq(100000.5, funcs.json_decode('100000.5'))
-    eq(-100000.5, funcs.json_decode('-100000.5'))
-    eq(-100000.5e50, funcs.json_decode('-100000.5e50'))
-    eq(100000.5e50, funcs.json_decode('100000.5e50'))
-    eq(100000.5e50, funcs.json_decode('100000.5e+50'))
-    eq(-100000.5e-50, funcs.json_decode('-100000.5e-50'))
-    eq(100000.5e-50, funcs.json_decode('100000.5e-50'))
-    eq(100000e-50, funcs.json_decode('100000e-50'))
-    eq(0.5, funcs.json_decode('0.5'))
-    eq(0.005, funcs.json_decode('0.005'))
-    eq(0.005, funcs.json_decode('0.00500'))
-    eq(0.5, funcs.json_decode('0.00500e+002'))
-    eq(0.00005, funcs.json_decode('0.00500e-002'))
+    eq(100000.5, fn.json_decode('100000.5'))
+    eq(-100000.5, fn.json_decode('-100000.5'))
+    eq(-100000.5e50, fn.json_decode('-100000.5e50'))
+    eq(100000.5e50, fn.json_decode('100000.5e50'))
+    eq(100000.5e50, fn.json_decode('100000.5e+50'))
+    eq(-100000.5e-50, fn.json_decode('-100000.5e-50'))
+    eq(100000.5e-50, fn.json_decode('100000.5e-50'))
+    eq(100000e-50, fn.json_decode('100000e-50'))
+    eq(0.5, fn.json_decode('0.5'))
+    eq(0.005, fn.json_decode('0.005'))
+    eq(0.005, fn.json_decode('0.00500'))
+    eq(0.5, fn.json_decode('0.00500e+002'))
+    eq(0.00005, fn.json_decode('0.00500e-002'))
 
-    eq(-0.0, funcs.json_decode('-0.0'))
-    eq(-0.0, funcs.json_decode('-0.0e0'))
-    eq(-0.0, funcs.json_decode('-0.0e+0'))
-    eq(-0.0, funcs.json_decode('-0.0e-0'))
-    eq(-0.0, funcs.json_decode('-0e-0'))
-    eq(-0.0, funcs.json_decode('-0e-2'))
-    eq(-0.0, funcs.json_decode('-0e+2'))
+    eq(-0.0, fn.json_decode('-0.0'))
+    eq(-0.0, fn.json_decode('-0.0e0'))
+    eq(-0.0, fn.json_decode('-0.0e+0'))
+    eq(-0.0, fn.json_decode('-0.0e-0'))
+    eq(-0.0, fn.json_decode('-0e-0'))
+    eq(-0.0, fn.json_decode('-0e-2'))
+    eq(-0.0, fn.json_decode('-0e+2'))
 
-    eq(0.0, funcs.json_decode('0.0'))
-    eq(0.0, funcs.json_decode('0.0e0'))
-    eq(0.0, funcs.json_decode('0.0e+0'))
-    eq(0.0, funcs.json_decode('0.0e-0'))
-    eq(0.0, funcs.json_decode('0e-0'))
-    eq(0.0, funcs.json_decode('0e-2'))
-    eq(0.0, funcs.json_decode('0e+2'))
+    eq(0.0, fn.json_decode('0.0'))
+    eq(0.0, fn.json_decode('0.0e0'))
+    eq(0.0, fn.json_decode('0.0e+0'))
+    eq(0.0, fn.json_decode('0.0e-0'))
+    eq(0.0, fn.json_decode('0e-0'))
+    eq(0.0, fn.json_decode('0e-2'))
+    eq(0.0, fn.json_decode('0e+2'))
   end)
 
   it('fails to parse numbers with spaces inside', function()
@@ -210,7 +210,7 @@ describe('json_decode() function', function()
   end)
 
   it('parses empty containers', function()
-    eq({}, funcs.json_decode('[]'))
+    eq({}, fn.json_decode('[]'))
     eq('[]', eval('string(json_decode("[]"))'))
   end)
 
@@ -301,12 +301,12 @@ describe('json_decode() function', function()
   end)
 
   it('parses containers', function()
-    eq({ 1 }, funcs.json_decode('[1]'))
-    eq({ NIL, 1 }, funcs.json_decode('[null, 1]'))
-    eq({ ['1'] = 2 }, funcs.json_decode('{"1": 2}'))
+    eq({ 1 }, fn.json_decode('[1]'))
+    eq({ NIL, 1 }, fn.json_decode('[null, 1]'))
+    eq({ ['1'] = 2 }, fn.json_decode('{"1": 2}'))
     eq(
       { ['1'] = 2, ['3'] = { { ['4'] = { ['5'] = { {}, 1 } } } } },
-      funcs.json_decode('{"1": 2, "3": [{"4": {"5": [[], 1]}}]}')
+      fn.json_decode('{"1": 2, "3": [{"4": {"5": [[], 1]}}]}')
     )
   end)
 
@@ -363,10 +363,10 @@ describe('json_decode() function', function()
   end)
 
   it('parses strings properly', function()
-    eq('\n', funcs.json_decode('"\\n"'))
-    eq('', funcs.json_decode('""'))
-    eq('\\/"\t\b\n\r\f', funcs.json_decode([["\\\/\"\t\b\n\r\f"]]))
-    eq('/a', funcs.json_decode([["\/a"]]))
+    eq('\n', fn.json_decode('"\\n"'))
+    eq('', fn.json_decode('""'))
+    eq('\\/"\t\b\n\r\f', fn.json_decode([["\\\/\"\t\b\n\r\f"]]))
+    eq('/a', fn.json_decode([["\/a"]]))
     -- Unicode characters: 2-byte, 3-byte, 4-byte
     eq(
       {
@@ -374,7 +374,7 @@ describe('json_decode() function', function()
         'ફ',
         '\240\144\128\128',
       },
-      funcs.json_decode({
+      fn.json_decode({
         '[',
         '"«",',
         '"ફ",',
@@ -472,29 +472,29 @@ describe('json_decode() function', function()
   end)
 
   it('parses surrogate pairs properly', function()
-    eq('\240\144\128\128', funcs.json_decode('"\\uD800\\uDC00"'))
-    eq('\237\160\128a\237\176\128', funcs.json_decode('"\\uD800a\\uDC00"'))
-    eq('\237\160\128\t\237\176\128', funcs.json_decode('"\\uD800\\t\\uDC00"'))
+    eq('\240\144\128\128', fn.json_decode('"\\uD800\\uDC00"'))
+    eq('\237\160\128a\237\176\128', fn.json_decode('"\\uD800a\\uDC00"'))
+    eq('\237\160\128\t\237\176\128', fn.json_decode('"\\uD800\\t\\uDC00"'))
 
-    eq('\237\160\128', funcs.json_decode('"\\uD800"'))
-    eq('\237\160\128a', funcs.json_decode('"\\uD800a"'))
-    eq('\237\160\128\t', funcs.json_decode('"\\uD800\\t"'))
+    eq('\237\160\128', fn.json_decode('"\\uD800"'))
+    eq('\237\160\128a', fn.json_decode('"\\uD800a"'))
+    eq('\237\160\128\t', fn.json_decode('"\\uD800\\t"'))
 
-    eq('\237\176\128', funcs.json_decode('"\\uDC00"'))
-    eq('\237\176\128a', funcs.json_decode('"\\uDC00a"'))
-    eq('\237\176\128\t', funcs.json_decode('"\\uDC00\\t"'))
+    eq('\237\176\128', fn.json_decode('"\\uDC00"'))
+    eq('\237\176\128a', fn.json_decode('"\\uDC00a"'))
+    eq('\237\176\128\t', fn.json_decode('"\\uDC00\\t"'))
 
-    eq('\237\176\128', funcs.json_decode('"\\uDC00"'))
-    eq('a\237\176\128', funcs.json_decode('"a\\uDC00"'))
-    eq('\t\237\176\128', funcs.json_decode('"\\t\\uDC00"'))
+    eq('\237\176\128', fn.json_decode('"\\uDC00"'))
+    eq('a\237\176\128', fn.json_decode('"a\\uDC00"'))
+    eq('\t\237\176\128', fn.json_decode('"\\t\\uDC00"'))
 
-    eq('\237\160\128¬', funcs.json_decode('"\\uD800\\u00AC"'))
+    eq('\237\160\128¬', fn.json_decode('"\\uD800\\u00AC"'))
 
-    eq('\237\160\128\237\160\128', funcs.json_decode('"\\uD800\\uD800"'))
+    eq('\237\160\128\237\160\128', fn.json_decode('"\\uD800\\uD800"'))
   end)
 
   local sp_decode_eq = function(expected, json)
-    meths.set_var('__json', json)
+    api.nvim_set_var('__json', json)
     speq(expected, 'json_decode(g:__json)')
     command('unlet! g:__json')
   end
@@ -570,10 +570,10 @@ describe('json_decode() function', function()
   end)
 
   it('parses dictionaries with empty keys', function()
-    eq({ [''] = 4 }, funcs.json_decode('{"": 4}'))
+    eq({ [''] = 4 }, fn.json_decode('{"": 4}'))
     eq(
       { b = 3, a = 1, c = 4, d = 2, [''] = 4 },
-      funcs.json_decode('{"b": 3, "a": 1, "c": 4, "d": 2, "": 4}')
+      fn.json_decode('{"b": 3, "a": 1, "c": 4, "d": 2, "": 4}')
     )
   end)
 
@@ -602,7 +602,7 @@ describe('json_decode() function', function()
   end)
 
   it('parses U+00C3 correctly', function()
-    eq('\195\131', funcs.json_decode('"\195\131"'))
+    eq('\195\131', fn.json_decode('"\195\131"'))
   end)
 
   it('fails to parse empty string', function()
@@ -622,7 +622,7 @@ describe('json_decode() function', function()
     local s =
       ' \t\n\r \t\r\n \n\t\r \n\r\t \r\t\n \r\n\t\t \n\r\t \r\n\t\n \r\t\n\r \t\r \n\t\r\n \n \t\r\n \r\t\n\t \r\n\t\r \n\r \t\n\r\t \r \t\n\r \n\t\r\t \n\r\t\n \r\n \t\r\n\t'
     local str = ('%s{%s"key"%s:%s[%s"val"%s,%s"val2"%s]%s,%s"key2"%s:%s1%s}%s'):gsub('%%s', s)
-    eq({ key = { 'val', 'val2' }, key2 = 1 }, funcs.json_decode(str))
+    eq({ key = { 'val', 'val2' }, key2 = 1 }, fn.json_decode(str))
   end)
 
   it('does not overflow when writing error message about decoding ["", ""]', function()
@@ -640,12 +640,12 @@ describe('json_encode() function', function()
   end)
 
   it('dumps strings', function()
-    eq('"Test"', funcs.json_encode('Test'))
-    eq('""', funcs.json_encode(''))
-    eq('"\\t"', funcs.json_encode('\t'))
-    eq('"\\n"', funcs.json_encode('\n'))
-    eq('"\\u001B"', funcs.json_encode('\27'))
-    eq('"þÿþ"', funcs.json_encode('þÿþ'))
+    eq('"Test"', fn.json_encode('Test'))
+    eq('""', fn.json_encode(''))
+    eq('"\\t"', fn.json_encode('\t'))
+    eq('"\\n"', fn.json_encode('\n'))
+    eq('"\\u001B"', fn.json_encode('\27'))
+    eq('"þÿþ"', fn.json_encode('þÿþ'))
   end)
 
   it('dumps blobs', function()
@@ -654,17 +654,17 @@ describe('json_encode() function', function()
   end)
 
   it('dumps numbers', function()
-    eq('0', funcs.json_encode(0))
-    eq('10', funcs.json_encode(10))
-    eq('-10', funcs.json_encode(-10))
+    eq('0', fn.json_encode(0))
+    eq('10', fn.json_encode(10))
+    eq('-10', fn.json_encode(-10))
   end)
 
   it('dumps floats', function()
     -- Also test method call (->) syntax
     eq('0.0', eval('0.0->json_encode()'))
-    eq('10.5', funcs.json_encode(10.5))
-    eq('-10.5', funcs.json_encode(-10.5))
-    eq('-1.0e-5', funcs.json_encode(-1e-5))
+    eq('10.5', fn.json_encode(10.5))
+    eq('-10.5', fn.json_encode(-10.5))
+    eq('-1.0e-5', fn.json_encode(-1e-5))
     eq('1.0e50', eval('1.0e50->json_encode()'))
   end)
 
@@ -684,17 +684,17 @@ describe('json_encode() function', function()
   end)
 
   it('dumps lists', function()
-    eq('[]', funcs.json_encode({}))
-    eq('[[]]', funcs.json_encode({ {} }))
-    eq('[[], []]', funcs.json_encode({ {}, {} }))
+    eq('[]', fn.json_encode({}))
+    eq('[[]]', fn.json_encode({ {} }))
+    eq('[[], []]', fn.json_encode({ {}, {} }))
   end)
 
   it('dumps dictionaries', function()
     eq('{}', eval('json_encode({})'))
-    eq('{"d": []}', funcs.json_encode({ d = {} }))
-    eq('{"d": [], "e": []}', funcs.json_encode({ d = {}, e = {} }))
+    eq('{"d": []}', fn.json_encode({ d = {} }))
+    eq('{"d": [], "e": []}', fn.json_encode({ d = {}, e = {} }))
     -- Empty keys are allowed per JSON spec (and Vim dicts, and msgpack).
-    eq('{"": []}', funcs.json_encode({ [''] = {} }))
+    eq('{"": []}', fn.json_encode({ [''] = {} }))
   end)
 
   it('cannot dump generic mapping with generic mapping keys and values', function()
@@ -892,9 +892,9 @@ describe('json_encode() function', function()
   end)
 
   it('ignores improper values in &isprint', function()
-    meths.set_option_value('isprint', '1', {})
+    api.nvim_set_option_value('isprint', '1', {})
     eq(1, eval('"\1" =~# "\\\\p"'))
-    eq('"\\u0001"', funcs.json_encode('\1'))
+    eq('"\\u0001"', fn.json_encode('\1'))
   end)
 
   it('fails when using surrogate character in a UTF-8 string', function()

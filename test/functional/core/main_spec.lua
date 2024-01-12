@@ -1,4 +1,4 @@
-local luv = require('luv')
+local uv = vim.uv
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
@@ -7,7 +7,7 @@ local matches = helpers.matches
 local feed = helpers.feed
 local eval = helpers.eval
 local clear = helpers.clear
-local funcs = helpers.funcs
+local fn = helpers.fn
 local nvim_prog_abs = helpers.nvim_prog_abs
 local write_file = helpers.write_file
 local is_os = helpers.is_os
@@ -32,8 +32,8 @@ describe('command-line option', function()
     end)
 
     it('treats - as stdin', function()
-      eq(nil, luv.fs_stat(fname))
-      funcs.system({
+      eq(nil, uv.fs_stat(fname))
+      fn.system({
         nvim_prog_abs(),
         '-u',
         'NONE',
@@ -47,15 +47,15 @@ describe('command-line option', function()
         fname,
       }, { ':call setline(1, "42")', ':wqall!', '' })
       eq(0, eval('v:shell_error'))
-      local attrs = luv.fs_stat(fname)
+      local attrs = uv.fs_stat(fname)
       eq(#'42\n', attrs.size)
     end)
 
     it('does not expand $VAR', function()
-      eq(nil, luv.fs_stat(fname))
+      eq(nil, uv.fs_stat(fname))
       eq(true, not not dollar_fname:find('%$%w+'))
       write_file(dollar_fname, ':call setline(1, "100500")\n:wqall!\n')
-      funcs.system({
+      fn.system({
         nvim_prog_abs(),
         '-u',
         'NONE',
@@ -69,7 +69,7 @@ describe('command-line option', function()
         fname,
       })
       eq(0, eval('v:shell_error'))
-      local attrs = luv.fs_stat(fname)
+      local attrs = uv.fs_stat(fname)
       eq(#'100500\n', attrs.size)
     end)
 
@@ -91,7 +91,7 @@ describe('command-line option', function()
 
       -- Need to explicitly pipe to stdin so that the embedded Nvim instance doesn't try to read
       -- data from the terminal #18181
-      funcs.termopen(string.format([[echo "" | %s]], table.concat(args, ' ')), {
+      fn.termopen(string.format([[echo "" | %s]], table.concat(args, ' ')), {
         env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
       })
       screen:expect(
@@ -128,7 +128,7 @@ describe('command-line option', function()
     it('errors out when trying to use nonexistent file with -s', function()
       eq(
         'Cannot open for reading: "' .. nonexistent_fname .. '": no such file or directory\n',
-        funcs.system({
+        fn.system({
           nvim_prog_abs(),
           '-u',
           'NONE',
@@ -151,7 +151,7 @@ describe('command-line option', function()
       write_file(dollar_fname, ':call setline(1, "2")\n:wqall!\n')
       eq(
         'Attempt to open script file again: "-s ' .. dollar_fname .. '"\n',
-        funcs.system({
+        fn.system({
           nvim_prog_abs(),
           '-u',
           'NONE',
@@ -170,14 +170,14 @@ describe('command-line option', function()
         })
       )
       eq(2, eval('v:shell_error'))
-      eq(nil, luv.fs_stat(fname_2))
+      eq(nil, uv.fs_stat(fname_2))
     end)
   end)
 
   it('nvim -v, :version', function()
-    matches('Run ":verbose version"', funcs.execute(':version'))
-    matches('Compilation: .*Run :checkhealth', funcs.execute(':verbose version'))
-    matches('Run "nvim %-V1 %-v"', funcs.system({ nvim_prog_abs(), '-v' }))
-    matches('Compilation: .*Run :checkhealth', funcs.system({ nvim_prog_abs(), '-V1', '-v' }))
+    matches('Run ":verbose version"', fn.execute(':version'))
+    matches('Compilation: .*Run :checkhealth', fn.execute(':verbose version'))
+    matches('Run "nvim %-V1 %-v"', fn.system({ nvim_prog_abs(), '-v' }))
+    matches('Compilation: .*Run :checkhealth', fn.system({ nvim_prog_abs(), '-V1', '-v' }))
   end)
 end)

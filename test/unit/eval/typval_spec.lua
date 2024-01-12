@@ -14,7 +14,7 @@ local cimport = helpers.cimport
 local to_cstr = helpers.to_cstr
 local alloc_log_new = helpers.alloc_log_new
 local concat_tables = helpers.concat_tables
-local map = helpers.tbl_map
+local map = vim.tbl_map
 
 local a = eval_helpers.alloc_logging_helpers
 local int = eval_helpers.int

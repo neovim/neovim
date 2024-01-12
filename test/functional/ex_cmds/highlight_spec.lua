@@ -4,8 +4,8 @@ local eq, command = helpers.eq, helpers.command
 local clear = helpers.clear
 local eval, exc_exec = helpers.eval, helpers.exc_exec
 local exec = helpers.exec
-local funcs = helpers.funcs
-local meths = helpers.meths
+local fn = helpers.fn
+local api = helpers.api
 
 describe(':highlight', function()
   local screen
@@ -53,18 +53,18 @@ describe(':highlight', function()
   end)
 
   it('clear', function()
-    meths.set_var('colors_name', 'foo')
-    eq(1, funcs.exists('g:colors_name'))
+    api.nvim_set_var('colors_name', 'foo')
+    eq(1, fn.exists('g:colors_name'))
     command('hi clear')
-    eq(0, funcs.exists('g:colors_name'))
-    meths.set_var('colors_name', 'foo')
-    eq(1, funcs.exists('g:colors_name'))
+    eq(0, fn.exists('g:colors_name'))
+    api.nvim_set_var('colors_name', 'foo')
+    eq(1, fn.exists('g:colors_name'))
     exec([[
       func HiClear()
         hi clear
       endfunc
     ]])
-    funcs.HiClear()
-    eq(0, funcs.exists('g:colors_name'))
+    fn.HiClear()
+    eq(0, fn.exists('g:colors_name'))
   end)
 end)

@@ -4,11 +4,11 @@ local Screen = require('test.functional.ui.screen')
 local feed = helpers.feed
 local eq = helpers.eq
 local clear = helpers.clear
-local funcs = helpers.funcs
+local fn = helpers.fn
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local write_file = helpers.write_file
-local curbufmeths = helpers.curbufmeths
+local api = helpers.api
 local source = helpers.source
 
 local file_base = 'Xtest-functional-ex_cmds-quickfix_commands'
@@ -20,8 +20,8 @@ for _, c in ipairs({ 'l', 'c' }) do
   local filecmd = c .. 'file'
   local getfcmd = c .. 'getfile'
   local addfcmd = c .. 'addfile'
-  local getlist = (c == 'c') and funcs.getqflist or function()
-    return funcs.getloclist(0)
+  local getlist = (c == 'c') and fn.getqflist or function()
+    return fn.getloclist(0)
   end
 
   describe((':%s*file commands'):format(c), function()
@@ -73,13 +73,13 @@ for _, c in ipairs({ 'l', 'c' }) do
         },
       }
       eq(list, getlist())
-      eq(('%s-1.res'):format(file), funcs.bufname(list[1].bufnr))
-      eq(('%s-2.res'):format(file), funcs.bufname(list[2].bufnr))
+      eq(('%s-1.res'):format(file), fn.bufname(list[1].bufnr))
+      eq(('%s-2.res'):format(file), fn.bufname(list[2].bufnr))
 
       -- Run cfile/lfile from a modified buffer
       command('set nohidden')
       command('enew!')
-      curbufmeths.set_lines(1, 1, true, { 'Quickfix' })
+      api.nvim_buf_set_lines(0, 1, 1, true, { 'Quickfix' })
       eq(
         ('Vim(%s):E37: No write since last change (add ! to override)'):format(filecmd),
         exc_exec(('%s %s'):format(filecmd, file))
@@ -107,7 +107,7 @@ for _, c in ipairs({ 'l', 'c' }) do
         ['type'] = '',
       }
       eq(list, getlist())
-      eq(('%s-3.res'):format(file), funcs.bufname(list[3].bufnr))
+      eq(('%s-3.res'):format(file), fn.bufname(list[3].bufnr))
 
       write_file(
         file,
@@ -149,8 +149,8 @@ for _, c in ipairs({ 'l', 'c' }) do
         },
       }
       eq(list, getlist())
-      eq(('%s-1.res'):format(file), funcs.bufname(list[1].bufnr))
-      eq(('%s-2.res'):format(file), funcs.bufname(list[2].bufnr))
+      eq(('%s-1.res'):format(file), fn.bufname(list[1].bufnr))
+      eq(('%s-2.res'):format(file), fn.bufname(list[2].bufnr))
     end)
   end)
 end
@@ -178,7 +178,7 @@ describe('quickfix', function()
         call append(0, ['New line 1', 'New line 2', 'New line 3'])
         silent ll
     ]])
-    eq({ 0, 6, 1, 0, 1 }, funcs.getcurpos())
+    eq({ 0, 6, 1, 0, 1 }, fn.getcurpos())
   end)
 
   it('BufAdd does not cause E16 when reusing quickfix buffer #18135', function()

@@ -6,12 +6,12 @@ local insert = helpers.insert
 local feed = helpers.feed
 local expect = helpers.expect
 local eq = helpers.eq
-local map = helpers.tbl_map
-local filter = helpers.tbl_filter
+local map = vim.tbl_map
+local filter = vim.tbl_filter
 local feed_command = helpers.feed_command
 local command = helpers.command
 local curbuf_contents = helpers.curbuf_contents
-local funcs = helpers.funcs
+local fn = helpers.fn
 local dedent = helpers.dedent
 
 local function reset()
@@ -21,9 +21,9 @@ local function reset()
   Line of words 2]])
   command('goto 1')
   feed('itest_string.<esc>u')
-  funcs.setreg('a', 'test_stringa', 'V')
-  funcs.setreg('b', 'test_stringb\ntest_stringb\ntest_stringb', 'b')
-  funcs.setreg('"', 'test_string"', 'v')
+  fn.setreg('a', 'test_stringa', 'V')
+  fn.setreg('b', 'test_stringb\ntest_stringb\ntest_stringb', 'b')
+  fn.setreg('"', 'test_string"', 'v')
 end
 
 -- We check the last inserted register ". in each of these tests because it is
@@ -35,12 +35,12 @@ describe('put command', function()
   before_each(reset)
 
   local function visual_marks_zero()
-    for _, v in pairs(funcs.getpos("'<")) do
+    for _, v in pairs(fn.getpos("'<")) do
       if v ~= 0 then
         return false
       end
     end
-    for _, v in pairs(funcs.getpos("'>")) do
+    for _, v in pairs(fn.getpos("'>")) do
       if v ~= 0 then
         return false
       end
@@ -55,7 +55,7 @@ describe('put command', function()
       extra_setup()
     end
     local init_contents = curbuf_contents()
-    local init_cursorpos = funcs.getcurpos()
+    local init_cursorpos = fn.getcurpos()
     local assert_no_change = function(exception_table, after_undo)
       expect(init_contents)
       -- When putting the ". register forwards, undo doesn't move
@@ -65,7 +65,7 @@ describe('put command', function()
       -- one place to the right (unless we were at the end of the
       -- line when we pasted).
       if not (exception_table.undo_position and after_undo) then
-        eq(init_cursorpos, funcs.getcurpos())
+        eq(init_cursorpos, fn.getcurpos())
       end
     end
 
@@ -74,7 +74,7 @@ describe('put command', function()
         if extra_setup then
           extra_setup()
         end
-        local orig_dotstr = funcs.getreg('.')
+        local orig_dotstr = fn.getreg('.')
         helpers.ok(visual_marks_zero())
         -- Make sure every test starts from the same conditions
         assert_no_change(test.exception_table, false)
@@ -89,7 +89,7 @@ describe('put command', function()
         -- If we paste the ". register with a count we can't avoid
         -- changing this register, hence avoid this check.
         if not test.exception_table.dot_reg_changed then
-          eq(orig_dotstr, funcs.getreg('.'))
+          eq(orig_dotstr, fn.getreg('.'))
         end
 
         -- Doing something, undoing it, and then redoing it should
@@ -105,7 +105,7 @@ describe('put command', function()
         end
 
         if test.exception_table.undo_position then
-          funcs.setpos('.', init_cursorpos)
+          fn.setpos('.', init_cursorpos)
         end
         if was_cli then
           feed('@:')
@@ -151,7 +151,7 @@ describe('put command', function()
     -- it was in.
     -- This returns the cursor position that would leave the 'x' in that
     -- place if we feed 'ix<esc>' and the string existed before it.
-    for linenum, line in pairs(funcs.split(expect_string, '\n', 1)) do
+    for linenum, line in pairs(fn.split(expect_string, '\n', 1)) do
       local column = line:find('x')
       if column then
         return { linenum, column }, expect_string:gsub('x', '')
@@ -184,16 +184,16 @@ describe('put command', function()
     return function(exception_table, after_redo)
       expect(expect_string)
 
-      -- Have to use getcurpos() instead of curwinmeths.get_cursor() in
+      -- Have to use getcurpos() instead of api.nvim_win_get_cursor(0) in
       -- order to account for virtualedit.
       -- We always want the curswant element in getcurpos(), which is
       -- sometimes different to the column element in
-      -- curwinmeths.get_cursor().
+      -- api.nvim_win_get_cursor(0).
       -- NOTE: The ".gp command leaves the cursor after the pasted text
       -- when running, but does not when the command is redone with the
       -- '.' command.
       if not (exception_table.redo_position and after_redo) then
-        local actual_position = funcs.getcurpos()
+        local actual_position = fn.getcurpos()
         eq(cursor_position, { actual_position[2], actual_position[5] })
       end
     end
@@ -349,7 +349,7 @@ describe('put command', function()
     local prev_line
     local rettab = {}
     local string_found = false
-    for _, line in pairs(funcs.split(string, '\n', 1)) do
+    for _, line in pairs(fn.split(string, '\n', 1)) do
       if line:find('test_string') then
         string_found = true
         table.insert(rettab, line)
@@ -476,7 +476,7 @@ describe('put command', function()
         local prev_line
         local rettab = {}
         local prev_in_block = false
-        for _, line in pairs(funcs.split(expect_base, '\n', 1)) do
+        for _, line in pairs(fn.split(expect_base, '\n', 1)) do
           if line:find('test_string') then
             if prev_line then
               prev_line = prev_line:gsub('x', '')
@@ -524,10 +524,10 @@ describe('put command', function()
         test_expect(exception_table, after_redo)
         if selection_string then
           if not conversion_table.put_backwards then
-            eq(selection_string, funcs.getreg('"'))
+            eq(selection_string, fn.getreg('"'))
           end
         else
-          eq('test_string"', funcs.getreg('"'))
+          eq('test_string"', fn.getreg('"'))
         end
       end
     end
@@ -657,10 +657,10 @@ describe('put command', function()
         xtest_string"]],
       'put',
       function()
-        funcs.setline('$', '	Line of words 2')
+        fn.setline('$', '	Line of words 2')
         -- Set curswant to '8' to be at the end of the tab character
         -- This is where the cursor is put back after the 'u' command.
-        funcs.setpos('.', { 0, 2, 1, 0, 8 })
+        fn.setpos('.', { 0, 2, 1, 0, 8 })
         command('set autoindent')
       end
     )
@@ -671,9 +671,9 @@ describe('put command', function()
     Line of words 1
        test_stringx"     Line of words 2]]
     run_normal_mode_tests(test_string, 'p', function()
-      funcs.setline('$', '	Line of words 2')
+      fn.setline('$', '	Line of words 2')
       command('setlocal virtualedit=all')
-      funcs.setpos('.', { 0, 2, 1, 2, 3 })
+      fn.setpos('.', { 0, 2, 1, 2, 3 })
     end)
   end)
 
@@ -683,9 +683,9 @@ describe('put command', function()
     Line of words 1  test_stringx"
     	Line of words 2]]
     run_normal_mode_tests(test_string, 'p', function()
-      funcs.setline('$', '	Line of words 2')
+      fn.setline('$', '	Line of words 2')
       command('setlocal virtualedit=all')
-      funcs.setpos('.', { 0, 1, 16, 1, 17 })
+      fn.setpos('.', { 0, 1, 16, 1, 17 })
     end, true)
   end)
 
@@ -699,7 +699,7 @@ describe('put command', function()
     describe('over trailing newline', function()
       local test_string = 'Line of test_stringx"Line of words 2'
       run_normal_mode_tests(test_string, 'v$p', function()
-        funcs.setpos('.', { 0, 1, 9, 0, 9 })
+        fn.setpos('.', { 0, 1, 9, 0, 9 })
       end, nil, 'words 1\n')
     end)
     describe('linewise mode', function()
@@ -720,7 +720,7 @@ describe('put command', function()
           expect_vis_linewise
         ),
         function()
-          funcs.setpos('.', { 0, 1, 1, 0, 1 })
+          fn.setpos('.', { 0, 1, 1, 0, 1 })
         end
       )
 
@@ -732,7 +732,7 @@ describe('put command', function()
           return function(exception_table, after_redo)
             test_expect(exception_table, after_redo)
             if not conversion_table.put_backwards then
-              eq('Line of words 1\n', funcs.getreg('"'))
+              eq('Line of words 1\n', fn.getreg('"'))
             end
           end
         end
@@ -749,7 +749,7 @@ describe('put command', function()
           ),
           function()
             feed('i    test_string.<esc>u')
-            funcs.setreg('"', '    test_string"', 'v')
+            fn.setreg('"', '    test_string"', 'v')
           end
         )
       end)
@@ -767,7 +767,7 @@ describe('put command', function()
         return function(e, c)
           test_expect(e, c)
           if not conversion_table.put_backwards then
-            eq('Lin\nLin', funcs.getreg('"'))
+            eq('Lin\nLin', fn.getreg('"'))
           end
         end
       end
@@ -804,7 +804,7 @@ describe('put command', function()
           expect_block_creator
         ),
         function()
-          funcs.setpos('.', { 0, 2, 1, 0, 1 })
+          fn.setpos('.', { 0, 2, 1, 0, 1 })
         end
       )
 
@@ -820,16 +820,16 @@ describe('put command', function()
             feed('u')
             -- Have to use feed('u') here to set curswant, because
             -- ex_undo() doesn't do that.
-            eq({ 0, 1, 1, 0, 1 }, funcs.getcurpos())
+            eq({ 0, 1, 1, 0, 1 }, fn.getcurpos())
             feed('<C-r>')
-            eq({ 0, 1, 1, 0, 1 }, funcs.getcurpos())
+            eq({ 0, 1, 1, 0, 1 }, fn.getcurpos())
           end
         end
 
         run_test_variations(
           create_test_defs(undo_redo_no, '<C-v>kllp', create_p_action, test_base, assertion_creator),
           function()
-            funcs.setpos('.', { 0, 2, 1, 0, 1 })
+            fn.setpos('.', { 0, 2, 1, 0, 1 })
           end
         )
       end)
@@ -841,9 +841,9 @@ describe('put command', function()
         Line of words 1
           test_stringx"     Line of words 2]]
         run_normal_mode_tests(base_expect_string, 'vp', function()
-          funcs.setline('$', '	Line of words 2')
+          fn.setline('$', '	Line of words 2')
           command('setlocal virtualedit=all')
-          funcs.setpos('.', { 0, 2, 1, 2, 3 })
+          fn.setpos('.', { 0, 2, 1, 2, 3 })
         end, nil, ' ')
       end)
       describe('after end of line', function()
@@ -852,7 +852,7 @@ describe('put command', function()
         Line of words 2]]
         run_normal_mode_tests(base_expect_string, 'vp', function()
           command('setlocal virtualedit=all')
-          funcs.setpos('.', { 0, 1, 16, 2, 18 })
+          fn.setpos('.', { 0, 1, 16, 2, 18 })
         end, true, ' ')
       end)
     end)
@@ -917,14 +917,14 @@ describe('put command', function()
 
       -- Even if the last character is a multibyte character.
       reset()
-      funcs.setline(1, 'helloม')
+      fn.setline(1, 'helloม')
       bell_test(function()
         feed('$".gp')
       end)
     end)
 
     it('should not ring the bell with gp and end of file', function()
-      funcs.setpos('.', { 0, 2, 1, 0 })
+      fn.setpos('.', { 0, 2, 1, 0 })
       bell_test(function()
         feed('$vl".gp')
       end)
@@ -942,9 +942,9 @@ describe('put command', function()
     end)
 
     it('should restore cursor position after undo of ".p', function()
-      local origpos = funcs.getcurpos()
+      local origpos = fn.getcurpos()
       feed('".pu')
-      eq(origpos, funcs.getcurpos())
+      eq(origpos, fn.getcurpos())
     end)
 
     it("should be unaffected by 'autoindent' with V\".2p", function()

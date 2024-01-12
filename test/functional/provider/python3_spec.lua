@@ -8,7 +8,7 @@ local source = helpers.source
 local missing_provider = helpers.missing_provider
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
-local funcs = helpers.funcs
+local fn = helpers.fn
 local dedent = helpers.dedent
 
 do
@@ -113,7 +113,7 @@ describe('python3 provider', function()
 
   describe('py3eval()', function()
     it('works', function()
-      eq({ 1, 2, { ['key'] = 'val' } }, funcs.py3eval('[1, 2, {"key": "val"}]'))
+      eq({ 1, 2, { ['key'] = 'val' } }, fn.py3eval('[1, 2, {"key": "val"}]'))
     end)
 
     it('errors out when given non-string', function()
@@ -166,11 +166,11 @@ end)
 describe('python2 feature test', function()
   -- python2 is not supported, so correct behaviour is to return 0
   it('works', function()
-    eq(0, funcs.has('python2'))
-    eq(0, funcs.has('python'))
-    eq(0, funcs.has('python_compiled'))
-    eq(0, funcs.has('python_dynamic'))
-    eq(0, funcs.has('python_dynamic_'))
-    eq(0, funcs.has('python_'))
+    eq(0, fn.has('python2'))
+    eq(0, fn.has('python'))
+    eq(0, fn.has('python_compiled'))
+    eq(0, fn.has('python_dynamic'))
+    eq(0, fn.has('python_dynamic_'))
+    eq(0, fn.has('python_'))
   end)
 end)

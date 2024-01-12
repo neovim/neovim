@@ -1,11 +1,11 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local neq, eq, command = helpers.neq, helpers.eq, helpers.command
-local clear, curbufmeths = helpers.clear, helpers.curbufmeths
+local clear = helpers.clear
 local exc_exec, expect, eval = helpers.exc_exec, helpers.expect, helpers.eval
 local insert, pcall_err = helpers.insert, helpers.pcall_err
 local matches = helpers.matches
-local meths = helpers.meths
+local api = helpers.api
 local feed = helpers.feed
 
 describe('eval-API', function()
@@ -80,36 +80,36 @@ describe('eval-API', function()
     -- Text-changing functions gave a "Failed to save undo information" error when called from an
     -- <expr> mapping outside do_cmdline() (msg_list == NULL), so use feed() to test this.
     command("inoremap <expr> <f2> nvim_buf_set_text(0, 0, 0, 0, 0, ['hi'])")
-    meths.set_vvar('errmsg', '')
+    api.nvim_set_vvar('errmsg', '')
     feed('i<f2><esc>')
     eq(
       'E5555: API call: E565: Not allowed to change text or change window',
-      meths.get_vvar('errmsg')
+      api.nvim_get_vvar('errmsg')
     )
 
     -- Some functions checking textlock (usually those that may change the current window or buffer)
     -- also ought to not be usable in the cmdwin.
-    local old_win = meths.get_current_win()
+    local old_win = api.nvim_get_current_win()
     feed('q:')
     eq(
       'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-      pcall_err(meths.set_current_win, old_win)
+      pcall_err(api.nvim_set_current_win, old_win)
     )
 
     -- But others, like nvim_buf_set_lines(), which just changes text, is OK.
-    curbufmeths.set_lines(0, -1, 1, { 'wow!' })
-    eq({ 'wow!' }, curbufmeths.get_lines(0, -1, 1))
+    api.nvim_buf_set_lines(0, 0, -1, 1, { 'wow!' })
+    eq({ 'wow!' }, api.nvim_buf_get_lines(0, 0, -1, 1))
 
     -- Turning the cmdwin buffer into a terminal buffer would be pretty weird.
     eq(
       'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-      pcall_err(meths.open_term, 0, {})
+      pcall_err(api.nvim_open_term, 0, {})
     )
 
     -- But turning a different buffer into a terminal from the cmdwin is OK.
-    local term_buf = meths.create_buf(false, true)
-    meths.open_term(term_buf, {})
-    eq('terminal', meths.get_option_value('buftype', { buf = term_buf }))
+    local term_buf = api.nvim_create_buf(false, true)
+    api.nvim_open_term(term_buf, {})
+    eq('terminal', api.nvim_get_option_value('buftype', { buf = term_buf }))
   end)
 
   it('use buffer numbers and windows ids as handles', function()
@@ -143,11 +143,11 @@ describe('eval-API', function()
   end)
 
   it('get_lines and set_lines use NL to represent NUL', function()
-    curbufmeths.set_lines(0, -1, true, { 'aa\0', 'b\0b' })
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'aa\0', 'b\0b' })
     eq({ 'aa\n', 'b\nb' }, eval('nvim_buf_get_lines(0, 0, -1, 1)'))
 
     command('call nvim_buf_set_lines(0, 1, 2, v:true, ["xx", "\\nyy"])')
-    eq({ 'aa\0', 'xx', '\0yy' }, curbufmeths.get_lines(0, -1, 1))
+    eq({ 'aa\0', 'xx', '\0yy' }, api.nvim_buf_get_lines(0, 0, -1, 1))
   end)
 
   it('that are FUNC_ATTR_NOEVAL cannot be called', function()
@@ -207,7 +207,7 @@ describe('eval-API', function()
       'Vim(call):E48: Not allowed in sandbox',
       pcall_err(command, "sandbox call nvim_input('ievil')")
     )
-    eq({ '' }, meths.buf_get_lines(0, 0, -1, true))
+    eq({ '' }, api.nvim_buf_get_lines(0, 0, -1, true))
   end)
 
   it('converts blobs to API strings', function()

@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
-local eq, clear, eval, feed, meths, retry =
-  helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.meths, helpers.retry
+local eq, clear, eval, feed, api, retry =
+  helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.api, helpers.retry
 
 describe('K', function()
   local test_file = 'K_spec_out'
@@ -36,7 +36,7 @@ describe('K', function()
     end)
     eq({ 'fnord' }, eval("readfile('" .. test_file .. "')"))
     -- Confirm that Neovim is still in terminal mode after K is pressed (#16692).
-    helpers.sleep(500)
+    vim.uv.sleep(500)
     eq('t', eval('mode()'))
     feed('<space>') -- Any key, not just <space>, can be used here to escape.
     eq('n', eval('mode()'))
@@ -50,7 +50,7 @@ describe('K', function()
     -- Confirm that an arbitrary keypress doesn't escape (i.e., the process is
     -- still running). If the process were no longer running, an arbitrary
     -- keypress would escape.
-    helpers.sleep(500)
+    vim.uv.sleep(500)
     feed('<space>')
     eq('t', eval('mode()'))
     -- Confirm that <esc> kills the buffer for the running command.
@@ -61,9 +61,9 @@ describe('K', function()
   end)
 
   it('empty string falls back to :help #19298', function()
-    meths.set_option_value('keywordprg', '', {})
-    meths.buf_set_lines(0, 0, -1, true, { 'doesnotexist' })
+    api.nvim_set_option_value('keywordprg', '', {})
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'doesnotexist' })
     feed('K')
-    eq('E149: Sorry, no help for doesnotexist', meths.get_vvar('errmsg'))
+    eq('E149: Sorry, no help for doesnotexist', api.nvim_get_vvar('errmsg'))
   end)
 end)

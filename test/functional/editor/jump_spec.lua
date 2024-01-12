@@ -4,11 +4,11 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
-local funcs = helpers.funcs
+local fn = helpers.fn
 local feed = helpers.feed
 local exec_capture = helpers.exec_capture
 local write_file = helpers.write_file
-local curbufmeths = helpers.curbufmeths
+local api = helpers.api
 
 describe('jumplist', function()
   local fname1 = 'Xtest-functional-normal-jump'
@@ -20,7 +20,7 @@ describe('jumplist', function()
   end)
 
   it('does not add a new entry on startup', function()
-    eq('\n jump line  col file/text\n>', funcs.execute('jumps'))
+    eq('\n jump line  col file/text\n>', fn.execute('jumps'))
   end)
 
   it('does not require two <C-O> strokes to jump back', function()
@@ -28,25 +28,25 @@ describe('jumplist', function()
     write_file(fname2, 'second file contents')
 
     command('args ' .. fname1 .. ' ' .. fname2)
-    local buf1 = funcs.bufnr(fname1)
-    local buf2 = funcs.bufnr(fname2)
+    local buf1 = fn.bufnr(fname1)
+    local buf2 = fn.bufnr(fname2)
 
     command('next')
     feed('<C-O>')
-    eq(buf1, funcs.bufnr('%'))
+    eq(buf1, fn.bufnr('%'))
 
     command('first')
     command('snext')
     feed('<C-O>')
-    eq(buf1, funcs.bufnr('%'))
+    eq(buf1, fn.bufnr('%'))
     feed('<C-I>')
-    eq(buf2, funcs.bufnr('%'))
+    eq(buf2, fn.bufnr('%'))
     feed('<C-O>')
-    eq(buf1, funcs.bufnr('%'))
+    eq(buf1, fn.bufnr('%'))
 
     command('drop ' .. fname2)
     feed('<C-O>')
-    eq(buf1, funcs.bufnr('%'))
+    eq(buf1, fn.bufnr('%'))
   end)
 
   it('<C-O> scrolls cursor halfway when switching buffer #25763', function()
@@ -284,7 +284,7 @@ describe('jumpoptions=view', function()
     screen:attach()
     command('edit ' .. file1)
     feed('7GzbG')
-    curbufmeths.set_lines(0, 2, true, {})
+    api.nvim_buf_set_lines(0, 0, 2, true, {})
     -- Move to line 7, and set it as the last line visible on the view with zb, meaning to recover
     -- the view it needs to put the cursor 7 lines from the top line. Then go to the end of the
     -- file, delete 2 lines before line 7, meaning the jump/mark is moved 2 lines up to line 5.

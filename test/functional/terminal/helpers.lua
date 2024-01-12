@@ -5,7 +5,7 @@ local helpers = require('test.functional.helpers')(nil)
 local Screen = require('test.functional.ui.screen')
 local testprg = helpers.testprg
 local exec_lua = helpers.exec_lua
-local nvim = helpers.nvim
+local api = helpers.api
 local nvim_prog = helpers.nvim_prog
 
 local function feed_data(data)
@@ -89,8 +89,8 @@ local function screen_setup(extra_rows, command, cols, env, screen_opts)
   command = command and command or default_command
   cols = cols and cols or 50
 
-  nvim('command', 'highlight TermCursor cterm=reverse')
-  nvim('command', 'highlight TermCursorNC ctermbg=11')
+  api.nvim_command('highlight TermCursor cterm=reverse')
+  api.nvim_command('highlight TermCursorNC ctermbg=11')
 
   local screen = Screen.new(cols, 7 + extra_rows)
   screen:set_default_attr_ids({
@@ -113,17 +113,17 @@ local function screen_setup(extra_rows, command, cols, env, screen_opts)
 
   screen:attach(screen_opts or { rgb = false })
 
-  nvim('command', 'enew')
-  nvim('call_function', 'termopen', { command, env and { env = env } or nil })
-  nvim('input', '<CR>')
-  local vim_errmsg = nvim('eval', 'v:errmsg')
+  api.nvim_command('enew')
+  api.nvim_call_function('termopen', { command, env and { env = env } or nil })
+  api.nvim_input('<CR>')
+  local vim_errmsg = api.nvim_eval('v:errmsg')
   if vim_errmsg and '' ~= vim_errmsg then
     error(vim_errmsg)
   end
 
-  nvim('command', 'setlocal scrollback=10')
-  nvim('command', 'startinsert')
-  nvim('input', '<Ignore>') -- Add input to separate two RPC requests
+  api.nvim_command('setlocal scrollback=10')
+  api.nvim_command('startinsert')
+  api.nvim_input('<Ignore>') -- Add input to separate two RPC requests
 
   -- tty-test puts the terminal into raw mode and echoes input. Tests work by
   -- feeding termcodes to control the display and asserting by screen:expect.
@@ -147,7 +147,7 @@ local function screen_setup(extra_rows, command, cols, env, screen_opts)
     screen:expect(table.concat(expected, '|\n') .. '|')
   else
     -- This eval also acts as a poke_eventloop().
-    if 0 == nvim('eval', "exists('b:terminal_job_id')") then
+    if 0 == api.nvim_eval("exists('b:terminal_job_id')") then
       error('terminal job failed to start')
     end
   end

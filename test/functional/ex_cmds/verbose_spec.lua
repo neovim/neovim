@@ -5,7 +5,7 @@ local eq = helpers.eq
 local exec = helpers.exec
 local exec_capture = helpers.exec_capture
 local write_file = helpers.write_file
-local call_viml_function = helpers.meths.call_function
+local call_viml_function = helpers.api.nvim_call_function
 
 local function last_set_tests(cmd)
   local script_location, script_file

@@ -2,12 +2,12 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local eq = helpers.eq
-local funcs = helpers.funcs
+local fn = helpers.fn
 local neq = helpers.neq
 local nvim_argv = helpers.nvim_argv
 local request = helpers.request
 local retry = helpers.retry
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local is_os = helpers.is_os
 
 describe('API', function()
@@ -15,28 +15,28 @@ describe('API', function()
 
   describe('nvim_get_proc_children', function()
     it('returns child process ids', function()
-      local this_pid = funcs.getpid()
+      local this_pid = fn.getpid()
 
       -- Might be non-zero already (left-over from some other test?),
       -- but this is not what is tested here.
       local initial_children = request('nvim_get_proc_children', this_pid)
 
-      local job1 = funcs.jobstart(nvim_argv)
+      local job1 = fn.jobstart(nvim_argv)
       retry(nil, nil, function()
         eq(#initial_children + 1, #request('nvim_get_proc_children', this_pid))
       end)
 
-      local job2 = funcs.jobstart(nvim_argv)
+      local job2 = fn.jobstart(nvim_argv)
       retry(nil, nil, function()
         eq(#initial_children + 2, #request('nvim_get_proc_children', this_pid))
       end)
 
-      funcs.jobstop(job1)
+      fn.jobstop(job1)
       retry(nil, nil, function()
         eq(#initial_children + 1, #request('nvim_get_proc_children', this_pid))
       end)
 
-      funcs.jobstop(job2)
+      fn.jobstop(job2)
       retry(nil, nil, function()
         eq(#initial_children, #request('nvim_get_proc_children', this_pid))
       end)
@@ -60,7 +60,7 @@ describe('API', function()
 
   describe('nvim_get_proc', function()
     it('returns process info', function()
-      local pid = funcs.getpid()
+      local pid = fn.getpid()
       local pinfo = request('nvim_get_proc', pid)
       eq((is_os('win') and 'nvim.exe' or 'nvim'), pinfo.name)
       eq(pid, pinfo.pid)

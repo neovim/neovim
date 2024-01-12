@@ -3,9 +3,10 @@ local Screen = require('test.functional.ui.screen')
 
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, neq = helpers.command, helpers.neq
-local meths = helpers.meths
-local curbufmeths, eq = helpers.curbufmeths, helpers.eq
+local api = helpers.api
+local eq = helpers.eq
 local pcall_err = helpers.pcall_err
+local set_virtual_text = api.nvim_buf_set_virtual_text
 
 describe('Buffer highlighting', function()
   local screen
@@ -39,8 +40,8 @@ describe('Buffer highlighting', function()
     })
   end)
 
-  local add_highlight = curbufmeths.add_highlight
-  local clear_namespace = curbufmeths.clear_namespace
+  local add_highlight = api.nvim_buf_add_highlight
+  local clear_namespace = api.nvim_buf_clear_namespace
 
   it('works', function()
     insert([[
@@ -55,8 +56,8 @@ describe('Buffer highlighting', function()
                                               |
     ]])
 
-    add_highlight(-1, 'String', 0, 10, 14)
-    add_highlight(-1, 'Statement', 1, 5, -1)
+    add_highlight(0, -1, 'String', 0, 10, 14)
+    add_highlight(0, -1, 'Statement', 1, 5, -1)
 
     screen:expect([[
       these are {2:some} lines                    |
@@ -74,7 +75,7 @@ describe('Buffer highlighting', function()
                                               |
     ]])
 
-    clear_namespace(-1, 0, -1)
+    clear_namespace(0, -1, 0, -1)
     screen:expect([[
       these are some lines                    |
       ^                                        |
@@ -94,21 +95,21 @@ describe('Buffer highlighting', function()
         from different sources]])
 
       command('hi ImportantWord gui=bold cterm=bold')
-      id1 = add_highlight(0, 'ImportantWord', 0, 2, 8)
-      add_highlight(id1, 'ImportantWord', 1, 12, -1)
-      add_highlight(id1, 'ImportantWord', 2, 0, 9)
-      add_highlight(id1, 'ImportantWord', 3, 5, 14)
+      id1 = add_highlight(0, 0, 'ImportantWord', 0, 2, 8)
+      add_highlight(0, id1, 'ImportantWord', 1, 12, -1)
+      add_highlight(0, id1, 'ImportantWord', 2, 0, 9)
+      add_highlight(0, id1, 'ImportantWord', 3, 5, 14)
 
       -- add_highlight can be called like this to get a new source
       -- without adding any highlight
-      id2 = add_highlight(0, '', 0, 0, 0)
+      id2 = add_highlight(0, 0, '', 0, 0, 0)
       neq(id1, id2)
 
-      add_highlight(id2, 'Special', 0, 2, 8)
-      add_highlight(id2, 'Identifier', 1, 3, 8)
-      add_highlight(id2, 'Special', 1, 14, 20)
-      add_highlight(id2, 'Underlined', 2, 6, 12)
-      add_highlight(id2, 'Underlined', 3, 0, 9)
+      add_highlight(0, id2, 'Special', 0, 2, 8)
+      add_highlight(0, id2, 'Identifier', 1, 3, 8)
+      add_highlight(0, id2, 'Special', 1, 14, 20)
+      add_highlight(0, id2, 'Underlined', 2, 6, 12)
+      add_highlight(0, id2, 'Underlined', 3, 0, 9)
 
       screen:expect([[
         a {5:longer} example                        |
@@ -121,7 +122,7 @@ describe('Buffer highlighting', function()
     end)
 
     it('and clearing the first added', function()
-      clear_namespace(id1, 0, -1)
+      clear_namespace(0, id1, 0, -1)
       screen:expect([[
         a {4:longer} example                        |
         in {6:order} to de{4:monstr}ate                 |
@@ -133,7 +134,7 @@ describe('Buffer highlighting', function()
     end)
 
     it('and clearing using deprecated name', function()
-      curbufmeths.clear_highlight(id1, 0, -1)
+      api.nvim_buf_clear_highlight(0, id1, 0, -1)
       screen:expect([[
         a {4:longer} example                        |
         in {6:order} to de{4:monstr}ate                 |
@@ -145,7 +146,7 @@ describe('Buffer highlighting', function()
     end)
 
     it('and clearing the second added', function()
-      clear_namespace(id2, 0, -1)
+      clear_namespace(0, id2, 0, -1)
       screen:expect([[
         a {7:longer} example                        |
         in order to {7:demonstrate}                 |
@@ -157,9 +158,9 @@ describe('Buffer highlighting', function()
     end)
 
     it('and clearing line ranges', function()
-      clear_namespace(-1, 0, 1)
-      clear_namespace(id1, 1, 2)
-      clear_namespace(id2, 2, -1)
+      clear_namespace(0, -1, 0, 1)
+      clear_namespace(0, id1, 1, 2)
+      clear_namespace(0, id2, 2, -1)
       screen:expect([[
         a longer example                        |
         in {6:order} to de{4:monstr}ate                 |
@@ -449,9 +450,9 @@ describe('Buffer highlighting', function()
   pending('prioritizes latest added highlight', function()
     insert([[
       three overlapping colors]])
-    add_highlight(0, 'Identifier', 0, 6, 17)
-    add_highlight(0, 'String', 0, 14, 23)
-    local id = add_highlight(0, 'Special', 0, 0, 9)
+    add_highlight(0, 0, 'Identifier', 0, 6, 17)
+    add_highlight(0, 0, 'String', 0, 14, 23)
+    local id = add_highlight(0, 0, 'Special', 0, 0, 9)
 
     screen:expect([[
       {4:three ove}{6:rlapp}{2:ing color}^s                |
@@ -459,7 +460,7 @@ describe('Buffer highlighting', function()
                                               |
     ]])
 
-    clear_namespace(id, 0, 1)
+    clear_namespace(0, id, 0, 1)
     screen:expect([[
       three {6:overlapp}{2:ing color}^s                |
       {1:~                                       }|*6
@@ -470,9 +471,9 @@ describe('Buffer highlighting', function()
   it('prioritizes earlier highlight groups (TEMP)', function()
     insert([[
       three overlapping colors]])
-    add_highlight(0, 'Identifier', 0, 6, 17)
-    add_highlight(0, 'String', 0, 14, 23)
-    local id = add_highlight(0, 'Special', 0, 0, 9)
+    add_highlight(0, 0, 'Identifier', 0, 6, 17)
+    add_highlight(0, 0, 'String', 0, 14, 23)
+    local id = add_highlight(0, 0, 'Special', 0, 0, 9)
 
     screen:expect {
       grid = [[
@@ -482,7 +483,7 @@ describe('Buffer highlighting', function()
     ]],
     }
 
-    clear_namespace(id, 0, 1)
+    clear_namespace(0, id, 0, 1)
     screen:expect {
       grid = [[
       three {6:overlapp}{2:ing color}^s                |
@@ -493,17 +494,16 @@ describe('Buffer highlighting', function()
   end)
 
   it('respects priority', function()
-    local set_extmark = curbufmeths.set_extmark
-    local id = meths.create_namespace('')
+    local id = api.nvim_create_namespace('')
     insert [[foobar]]
 
-    set_extmark(id, 0, 0, {
+    api.nvim_buf_set_extmark(0, id, 0, 0, {
       end_line = 0,
       end_col = 5,
       hl_group = 'Statement',
       priority = 100,
     })
-    set_extmark(id, 0, 0, {
+    api.nvim_buf_set_extmark(0, id, 0, 0, {
       end_line = 0,
       end_col = 6,
       hl_group = 'String',
@@ -516,7 +516,7 @@ describe('Buffer highlighting', function()
                                               |
     ]]
 
-    clear_namespace(id, 0, -1)
+    clear_namespace(0, id, 0, -1)
     screen:expect {
       grid = [[
       fooba^r                                  |
@@ -525,13 +525,13 @@ describe('Buffer highlighting', function()
     ]],
     }
 
-    set_extmark(id, 0, 0, {
+    api.nvim_buf_set_extmark(0, id, 0, 0, {
       end_line = 0,
       end_col = 6,
       hl_group = 'String',
       priority = 1,
     })
-    set_extmark(id, 0, 0, {
+    api.nvim_buf_set_extmark(0, id, 0, 0, {
       end_line = 0,
       end_col = 5,
       hl_group = 'Statement',
@@ -548,8 +548,8 @@ describe('Buffer highlighting', function()
   it('works with multibyte text', function()
     insert([[
       Ta båten över sjön!]])
-    add_highlight(-1, 'Identifier', 0, 3, 9)
-    add_highlight(-1, 'String', 0, 16, 21)
+    add_highlight(0, -1, 'Identifier', 0, 3, 9)
+    add_highlight(0, -1, 'String', 0, 16, 21)
 
     screen:expect([[
       Ta {6:båten} över {2:sjön}^!                     |
@@ -561,7 +561,7 @@ describe('Buffer highlighting', function()
   it('works with new syntax groups', function()
     insert([[
       fancy code in a new fancy language]])
-    add_highlight(-1, 'FancyLangItem', 0, 0, 5)
+    add_highlight(0, -1, 'FancyLangItem', 0, 0, 5)
     screen:expect([[
       fancy code in a new fancy languag^e      |
       {1:~                                       }|*6
@@ -577,7 +577,6 @@ describe('Buffer highlighting', function()
   end)
 
   describe('virtual text decorations', function()
-    local set_virtual_text = curbufmeths.set_virtual_text
     local id1, id2
     before_each(function()
       insert([[
@@ -595,9 +594,9 @@ describe('Buffer highlighting', function()
                                                 |
       ]])
 
-      id1 = set_virtual_text(0, 0, { { '=', 'Statement' }, { ' 3', 'Number' } }, {})
-      set_virtual_text(id1, 1, { { 'ERROR:', 'ErrorMsg' }, { ' invalid syntax' } }, {})
-      id2 = set_virtual_text(0, 2, {
+      id1 = set_virtual_text(0, 0, 0, { { '=', 'Statement' }, { ' 3', 'Number' } }, {})
+      set_virtual_text(0, id1, 1, { { 'ERROR:', 'ErrorMsg' }, { ' invalid syntax' } }, {})
+      id2 = set_virtual_text(0, 0, 2, {
         {
           'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
         },
@@ -616,7 +615,7 @@ describe('Buffer highlighting', function()
                                                 |
       ]])
 
-      clear_namespace(id1, 0, -1)
+      clear_namespace(0, id1, 0, -1)
       screen:expect([[
         ^1 + 2                                   |
         3 +                                     |
@@ -632,6 +631,7 @@ describe('Buffer highlighting', function()
       eq(
         -1,
         set_virtual_text(
+          0,
           -1,
           1,
           { { '暗x事zz速野谷質結育副住新覚丸活解終事', 'Comment' } },
@@ -687,22 +687,22 @@ describe('Buffer highlighting', function()
       -- this used to leak memory
       eq(
         "Invalid 'chunk': expected Array, got String",
-        pcall_err(set_virtual_text, id1, 0, { 'texty' }, {})
+        pcall_err(set_virtual_text, 0, id1, 0, { 'texty' }, {})
       )
       eq(
         "Invalid 'chunk': expected Array, got String",
-        pcall_err(set_virtual_text, id1, 0, { { 'very' }, 'texty' }, {})
+        pcall_err(set_virtual_text, 0, id1, 0, { { 'very' }, 'texty' }, {})
       )
     end)
 
     it('can be retrieved', function()
-      local get_extmarks = curbufmeths.get_extmarks
-      local line_count = curbufmeths.line_count
+      local get_extmarks = api.nvim_buf_get_extmarks
+      local line_count = api.nvim_buf_line_count
 
       local s1 = { { 'Köttbullar', 'Comment' }, { 'Kräuterbutter' } }
       local s2 = { { 'こんにちは', 'Comment' } }
 
-      set_virtual_text(id1, 0, s1, {})
+      set_virtual_text(0, id1, 0, s1, {})
       eq({
         {
           1,
@@ -719,10 +719,10 @@ describe('Buffer highlighting', function()
             virt_text_hide = false,
           },
         },
-      }, get_extmarks(id1, { 0, 0 }, { 0, -1 }, { details = true }))
+      }, get_extmarks(0, id1, { 0, 0 }, { 0, -1 }, { details = true }))
 
-      local lastline = line_count()
-      set_virtual_text(id1, line_count(), s2, {})
+      local lastline = line_count(0)
+      set_virtual_text(0, id1, line_count(0), s2, {})
       eq({
         {
           3,
@@ -739,9 +739,9 @@ describe('Buffer highlighting', function()
             virt_text_hide = false,
           },
         },
-      }, get_extmarks(id1, { lastline, 0 }, { lastline, -1 }, { details = true }))
+      }, get_extmarks(0, id1, { lastline, 0 }, { lastline, -1 }, { details = true }))
 
-      eq({}, get_extmarks(id1, { lastline + 9000, 0 }, { lastline + 9000, -1 }, {}))
+      eq({}, get_extmarks(0, id1, { lastline + 9000, 0 }, { lastline + 9000, -1 }, {}))
     end)
 
     it('is not highlighted by visual selection', function()
@@ -814,7 +814,7 @@ describe('Buffer highlighting', function()
                                                 |
       ]])
 
-      clear_namespace(-1, 0, -1)
+      clear_namespace(0, -1, 0, -1)
       screen:expect([[
         ^1 + 2{1:$}                                  |
         3 +{1:$}                                    |
@@ -869,7 +869,7 @@ describe('Buffer highlighting', function()
     end)
 
     it('works with color column', function()
-      eq(-1, set_virtual_text(-1, 3, { { '暗x事', 'Comment' } }, {}))
+      eq(-1, set_virtual_text(0, -1, 3, { { '暗x事', 'Comment' } }, {}))
       screen:expect {
         grid = [[
         ^1 + 2 {3:=}{2: 3}                               |
@@ -898,12 +898,11 @@ describe('Buffer highlighting', function()
   end)
 
   it('and virtual text use the same namespace counter', function()
-    local set_virtual_text = curbufmeths.set_virtual_text
-    eq(1, add_highlight(0, 'String', 0, 0, -1))
-    eq(2, set_virtual_text(0, 0, { { '= text', 'Comment' } }, {}))
-    eq(3, meths.create_namespace('my-ns'))
-    eq(4, add_highlight(0, 'String', 0, 0, -1))
-    eq(5, set_virtual_text(0, 0, { { '= text', 'Comment' } }, {}))
-    eq(6, meths.create_namespace('other-ns'))
+    eq(1, add_highlight(0, 0, 'String', 0, 0, -1))
+    eq(2, set_virtual_text(0, 0, 0, { { '= text', 'Comment' } }, {}))
+    eq(3, api.nvim_create_namespace('my-ns'))
+    eq(4, add_highlight(0, 0, 'String', 0, 0, -1))
+    eq(5, set_virtual_text(0, 0, 0, { { '= text', 'Comment' } }, {}))
+    eq(6, api.nvim_create_namespace('other-ns'))
   end)
 end)

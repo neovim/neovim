@@ -1,19 +1,17 @@
 local helpers = require('test.functional.helpers')(after_each)
 
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local clear = helpers.clear
 local command = helpers.command
-local curbufmeths = helpers.curbufmeths
 local eq = helpers.eq
-local meths = helpers.meths
-local bufmeths = helpers.bufmeths
+local api = helpers.api
 local matches = helpers.matches
 local source = helpers.source
 local pcall_err = helpers.pcall_err
 local exec_lua = helpers.exec_lua
 local assert_alive = helpers.assert_alive
 local feed = helpers.feed
-local funcs = helpers.funcs
+local fn = helpers.fn
 
 describe('nvim_get_commands', function()
   local cmd_dict = {
@@ -51,39 +49,39 @@ describe('nvim_get_commands', function()
   before_each(clear)
 
   it('gets empty list if no commands were defined', function()
-    eq({}, meths.get_commands({ builtin = false }))
+    eq({}, api.nvim_get_commands({ builtin = false }))
   end)
 
   it('validation', function()
-    eq('builtin=true not implemented', pcall_err(meths.get_commands, { builtin = true }))
-    eq("Invalid key: 'foo'", pcall_err(meths.get_commands, { foo = 'blah' }))
+    eq('builtin=true not implemented', pcall_err(api.nvim_get_commands, { builtin = true }))
+    eq("Invalid key: 'foo'", pcall_err(api.nvim_get_commands, { foo = 'blah' }))
   end)
 
   it('gets global user-defined commands', function()
     -- Define a command.
     command('command -nargs=1 Hello echo "Hello World"')
-    eq({ Hello = cmd_dict }, meths.get_commands({ builtin = false }))
+    eq({ Hello = cmd_dict }, api.nvim_get_commands({ builtin = false }))
     -- Define another command.
     command('command -nargs=? Pwd pwd')
-    eq({ Hello = cmd_dict, Pwd = cmd_dict2 }, meths.get_commands({ builtin = false }))
+    eq({ Hello = cmd_dict, Pwd = cmd_dict2 }, api.nvim_get_commands({ builtin = false }))
     -- Delete a command.
     command('delcommand Pwd')
-    eq({ Hello = cmd_dict }, meths.get_commands({ builtin = false }))
+    eq({ Hello = cmd_dict }, api.nvim_get_commands({ builtin = false }))
   end)
 
   it('gets buffer-local user-defined commands', function()
     -- Define a buffer-local command.
     command('command -buffer -nargs=1 Hello echo "Hello World"')
-    eq({ Hello = cmd_dict }, curbufmeths.get_commands({ builtin = false }))
+    eq({ Hello = cmd_dict }, api.nvim_buf_get_commands(0, { builtin = false }))
     -- Define another buffer-local command.
     command('command -buffer -nargs=? Pwd pwd')
-    eq({ Hello = cmd_dict, Pwd = cmd_dict2 }, curbufmeths.get_commands({ builtin = false }))
+    eq({ Hello = cmd_dict, Pwd = cmd_dict2 }, api.nvim_buf_get_commands(0, { builtin = false }))
     -- Delete a command.
     command('delcommand Pwd')
-    eq({ Hello = cmd_dict }, curbufmeths.get_commands({ builtin = false }))
+    eq({ Hello = cmd_dict }, api.nvim_buf_get_commands(0, { builtin = false }))
 
     -- {builtin=true} always returns empty for buffer-local case.
-    eq({}, curbufmeths.get_commands({ builtin = true }))
+    eq({}, api.nvim_buf_get_commands(0, { builtin = true }))
   end)
 
   it('gets various command attributes', function()
@@ -171,9 +169,9 @@ describe('nvim_get_commands', function()
       let s:foo = 1
       command -complete=custom,ListUsers -nargs=+ Finger !finger <args>
     ]])
-    eq({ Finger = cmd1 }, meths.get_commands({ builtin = false }))
+    eq({ Finger = cmd1 }, api.nvim_get_commands({ builtin = false }))
     command('command -nargs=1 -complete=dir -addr=arguments -count=10 TestCmd pwd <args>')
-    eq({ Finger = cmd1, TestCmd = cmd0 }, meths.get_commands({ builtin = false }))
+    eq({ Finger = cmd1, TestCmd = cmd0 }, api.nvim_get_commands({ builtin = false }))
 
     source([[
       function! s:foo() abort
@@ -193,7 +191,7 @@ describe('nvim_get_commands', function()
     -- TODO(justinmk): Order is stable but undefined. Sort before return?
     eq(
       { Cmd2 = cmd2, Cmd3 = cmd3, Cmd4 = cmd4, Finger = cmd1, TestCmd = cmd0 },
-      meths.get_commands({ builtin = false })
+      api.nvim_get_commands({ builtin = false })
     )
   end)
 end)
@@ -202,9 +200,9 @@ describe('nvim_create_user_command', function()
   before_each(clear)
 
   it('works with strings', function()
-    meths.create_user_command('SomeCommand', 'let g:command_fired = <args>', { nargs = 1 })
-    meths.command('SomeCommand 42')
-    eq(42, meths.eval('g:command_fired'))
+    api.nvim_create_user_command('SomeCommand', 'let g:command_fired = <args>', { nargs = 1 })
+    command('SomeCommand 42')
+    eq(42, api.nvim_eval('g:command_fired'))
   end)
 
   it('works with Lua functions', function()
@@ -646,11 +644,11 @@ describe('nvim_create_user_command', function()
   end)
 
   it('can define buffer-local commands', function()
-    local bufnr = meths.create_buf(false, false)
-    bufmeths.create_user_command(bufnr, 'Hello', '', {})
-    matches('Not an editor command: Hello', pcall_err(meths.command, 'Hello'))
-    meths.set_current_buf(bufnr)
-    meths.command('Hello')
+    local bufnr = api.nvim_create_buf(false, false)
+    api.nvim_buf_create_user_command(bufnr, 'Hello', '', {})
+    matches('Not an editor command: Hello', pcall_err(command, 'Hello'))
+    api.nvim_set_current_buf(bufnr)
+    command('Hello')
     assert_alive()
   end)
 
@@ -672,9 +670,9 @@ describe('nvim_create_user_command', function()
     ]]
 
     feed(':Test a<Tab>')
-    eq('Test aaa', funcs.getcmdline())
+    eq('Test aaa', fn.getcmdline())
     feed('<C-U>Test b<Tab>')
-    eq('Test bbb', funcs.getcmdline())
+    eq('Test bbb', fn.getcmdline())
   end)
 
   it('does not allow invalid command names', function()
@@ -731,29 +729,29 @@ describe('nvim_create_user_command', function()
         vim.api.nvim_cmd({ cmd = 'echo', args = { '&verbose' }, mods = opts.smods }, {})
       end, {})
     ]]
-    eq('3', meths.cmd({ cmd = 'MyEcho', mods = { verbose = 3 } }, { output = true }))
+    eq('3', api.nvim_cmd({ cmd = 'MyEcho', mods = { verbose = 3 } }, { output = true }))
 
-    eq(1, #meths.list_tabpages())
+    eq(1, #api.nvim_list_tabpages())
     exec_lua [[
       vim.api.nvim_create_user_command('MySplit', function(opts)
         vim.api.nvim_cmd({ cmd = 'split', mods = opts.smods }, {})
       end, {})
     ]]
-    meths.cmd({ cmd = 'MySplit' }, {})
-    eq(1, #meths.list_tabpages())
-    eq(2, #meths.list_wins())
-    meths.cmd({ cmd = 'MySplit', mods = { tab = 1 } }, {})
-    eq(2, #meths.list_tabpages())
-    eq(2, funcs.tabpagenr())
-    meths.cmd({ cmd = 'MySplit', mods = { tab = 1 } }, {})
-    eq(3, #meths.list_tabpages())
-    eq(2, funcs.tabpagenr())
-    meths.cmd({ cmd = 'MySplit', mods = { tab = 3 } }, {})
-    eq(4, #meths.list_tabpages())
-    eq(4, funcs.tabpagenr())
-    meths.cmd({ cmd = 'MySplit', mods = { tab = 0 } }, {})
-    eq(5, #meths.list_tabpages())
-    eq(1, funcs.tabpagenr())
+    api.nvim_cmd({ cmd = 'MySplit' }, {})
+    eq(1, #api.nvim_list_tabpages())
+    eq(2, #api.nvim_list_wins())
+    api.nvim_cmd({ cmd = 'MySplit', mods = { tab = 1 } }, {})
+    eq(2, #api.nvim_list_tabpages())
+    eq(2, fn.tabpagenr())
+    api.nvim_cmd({ cmd = 'MySplit', mods = { tab = 1 } }, {})
+    eq(3, #api.nvim_list_tabpages())
+    eq(2, fn.tabpagenr())
+    api.nvim_cmd({ cmd = 'MySplit', mods = { tab = 3 } }, {})
+    eq(4, #api.nvim_list_tabpages())
+    eq(4, fn.tabpagenr())
+    api.nvim_cmd({ cmd = 'MySplit', mods = { tab = 0 } }, {})
+    eq(5, #api.nvim_list_tabpages())
+    eq(1, fn.tabpagenr())
   end)
 end)
 
@@ -761,16 +759,16 @@ describe('nvim_del_user_command', function()
   before_each(clear)
 
   it('can delete global commands', function()
-    meths.create_user_command('Hello', 'echo "Hi"', {})
-    meths.command('Hello')
-    meths.del_user_command('Hello')
-    matches('Not an editor command: Hello', pcall_err(meths.command, 'Hello'))
+    api.nvim_create_user_command('Hello', 'echo "Hi"', {})
+    command('Hello')
+    api.nvim_del_user_command('Hello')
+    matches('Not an editor command: Hello', pcall_err(command, 'Hello'))
   end)
 
   it('can delete buffer-local commands', function()
-    bufmeths.create_user_command(0, 'Hello', 'echo "Hi"', {})
-    meths.command('Hello')
-    bufmeths.del_user_command(0, 'Hello')
-    matches('Not an editor command: Hello', pcall_err(meths.command, 'Hello'))
+    api.nvim_buf_create_user_command(0, 'Hello', 'echo "Hi"', {})
+    command('Hello')
+    api.nvim_buf_del_user_command(0, 'Hello')
+    matches('Not an editor command: Hello', pcall_err(command, 'Hello'))
   end)
 end)

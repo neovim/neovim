@@ -2,9 +2,9 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local feed, eq, eval, ok = helpers.feed, helpers.eq, helpers.eval, helpers.ok
 local source, nvim_async, run = helpers.source, helpers.nvim_async, helpers.run
-local clear, command, funcs = helpers.clear, helpers.command, helpers.funcs
+local clear, command, fn = helpers.clear, helpers.command, helpers.fn
 local exc_exec = helpers.exc_exec
-local curbufmeths = helpers.curbufmeths
+local api = helpers.api
 local load_adjust = helpers.load_adjust
 local retry = helpers.retry
 
@@ -111,7 +111,7 @@ describe('timers', function()
       [1] = { bold = true, foreground = Screen.colors.Blue },
     })
 
-    curbufmeths.set_lines(0, -1, true, { 'ITEM 1', 'ITEM 2' })
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'ITEM 1', 'ITEM 2' })
     source([[
       let g:cont = 0
       func! AddItem(timer)
@@ -165,7 +165,7 @@ describe('timers', function()
     local t_init_val = eval("[timer_start(5, 'MyHandler', {'repeat': -1}), g:val]")
     eq(0, t_init_val[2])
     run(nil, nil, nil, load_adjust(30))
-    funcs.timer_stop(t_init_val[1])
+    fn.timer_stop(t_init_val[1])
     local count = eval('g:val')
     run(nil, load_adjust(300), nil, load_adjust(30))
     local count2 = eval('g:val')

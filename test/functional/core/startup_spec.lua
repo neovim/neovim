@@ -13,8 +13,8 @@ local exec = helpers.exec
 local exec_capture = helpers.exec_capture
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
-local funcs = helpers.funcs
-local pesc = helpers.pesc
+local fn = helpers.fn
+local pesc = vim.pesc
 local mkdir = helpers.mkdir
 local mkdir_p = helpers.mkdir_p
 local nvim_prog = helpers.nvim_prog
@@ -22,24 +22,24 @@ local nvim_set = helpers.nvim_set
 local read_file = helpers.read_file
 local retry = helpers.retry
 local rmdir = helpers.rmdir
-local sleep = helpers.sleep
-local startswith = helpers.startswith
+local sleep = vim.uv.sleep
+local startswith = vim.startswith
 local write_file = helpers.write_file
-local meths = helpers.meths
+local api = helpers.api
 local alter_slashes = helpers.alter_slashes
 local is_os = helpers.is_os
 local dedent = helpers.dedent
-local tbl_map = helpers.tbl_map
-local tbl_filter = helpers.tbl_filter
-local endswith = helpers.endswith
+local tbl_map = vim.tbl_map
+local tbl_filter = vim.tbl_filter
+local endswith = vim.endswith
 
 describe('startup', function()
   it('--clean', function()
     clear()
     ok(
       string.find(
-        alter_slashes(meths.get_option_value('runtimepath', {})),
-        funcs.stdpath('config'),
+        alter_slashes(api.nvim_get_option_value('runtimepath', {})),
+        fn.stdpath('config'),
         1,
         true
       ) ~= nil
@@ -47,8 +47,8 @@ describe('startup', function()
     clear('--clean')
     ok(
       string.find(
-        alter_slashes(meths.get_option_value('runtimepath', {})),
-        funcs.stdpath('config'),
+        alter_slashes(api.nvim_get_option_value('runtimepath', {})),
+        fn.stdpath('config'),
         1,
         true
       ) == nil
@@ -60,7 +60,7 @@ describe('startup', function()
     local screen
     screen = Screen.new(84, 3)
     screen:attach()
-    funcs.termopen({ nvim_prog, '-u', 'NONE', '--server', eval('v:servername'), '--remote-ui' })
+    fn.termopen({ nvim_prog, '-u', 'NONE', '--server', eval('v:servername'), '--remote-ui' })
     screen:expect([[
       ^Cannot attach UI of :terminal child to its parent. (Unset $NVIM to skip this check) |
                                                                                           |*2
@@ -82,7 +82,7 @@ describe('startup', function()
     local screen
     screen = Screen.new(60, 7)
     screen:attach()
-    local id = funcs.termopen({
+    local id = fn.termopen({
       nvim_prog,
       '-u',
       'NONE',
@@ -105,7 +105,7 @@ describe('startup', function()
       >                                                           |
                                                                   |
     ]])
-    funcs.chansend(id, 'cont\n')
+    fn.chansend(id, 'cont\n')
     screen:expect([[
       ^                                                            |
       ~                                                           |*3
@@ -124,13 +124,13 @@ describe('startup', function()
       vim.list_extend(args, nvim_args or {})
       vim.list_extend(args, { '-l', (script or 'test/functional/fixtures/startup.lua') })
       vim.list_extend(args, lua_args or {})
-      local out = funcs.system(args, input):gsub('\r\n', '\n')
+      local out = fn.system(args, input):gsub('\r\n', '\n')
       return eq(dedent(expected), out)
     end
 
     it('failure modes', function()
       -- nvim -l <empty>
-      matches('nvim%.?e?x?e?: Argument missing after: "%-l"', funcs.system({ nvim_prog, '-l' }))
+      matches('nvim%.?e?x?e?: Argument missing after: "%-l"', fn.system({ nvim_prog, '-l' }))
       eq(1, eval('v:shell_error'))
     end)
 
@@ -161,12 +161,12 @@ describe('startup', function()
       eq(0, eval('v:shell_error'))
       matches(
         'E5113: .* my pearls!!',
-        funcs.system({ nvim_prog, '-l', 'test/functional/fixtures/startup-fail.lua' })
+        fn.system({ nvim_prog, '-l', 'test/functional/fixtures/startup-fail.lua' })
       )
       eq(1, eval('v:shell_error'))
       matches(
         'E5113: .* %[string "error%("whoa"%)"%]:1: whoa',
-        funcs.system({ nvim_prog, '-l', '-' }, 'error("whoa")')
+        fn.system({ nvim_prog, '-l', '-' }, 'error("whoa")')
       )
       eq(1, eval('v:shell_error'))
     end)
@@ -286,7 +286,7 @@ describe('startup', function()
   end)
 
   it('--cmd/-c/+ do not truncate long Lua print() message with --headless', function()
-    local out = funcs.system({
+    local out = fn.system({
       nvim_prog,
       '-u',
       'NONE',
@@ -305,7 +305,7 @@ describe('startup', function()
 
   it('pipe at both ends: has("ttyin")==0 has("ttyout")==0', function()
     -- system() puts a pipe at both ends.
-    local out = funcs.system({
+    local out = fn.system({
       nvim_prog,
       '-u',
       'NONE',
@@ -340,7 +340,7 @@ describe('startup', function()
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
-    funcs.termopen({
+    fn.termopen({
       nvim_prog,
       '-u',
       'NONE',
@@ -372,7 +372,7 @@ describe('startup', function()
       os.remove('Xtest_startup_ttyout')
     end)
     -- Running in :terminal
-    funcs.termopen(
+    fn.termopen(
       (
         [["%s" -u NONE -i NONE --cmd "%s"]]
         .. [[ -c "call writefile([has('ttyin'), has('ttyout')], 'Xtest_startup_ttyout')"]]
@@ -402,7 +402,7 @@ describe('startup', function()
       os.remove('Xtest_startup_ttyout')
     end)
     -- Running in :terminal
-    funcs.termopen(
+    fn.termopen(
       (
         [[echo foo | ]] -- Input from a pipe.
         .. [["%s" -u NONE -i NONE --cmd "%s"]]
@@ -431,7 +431,7 @@ describe('startup', function()
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
-    funcs.termopen(
+    fn.termopen(
       (
         [[echo foo | ]]
         .. [["%s" -u NONE -i NONE --cmd "%s"]]
@@ -454,7 +454,7 @@ describe('startup', function()
   it('input from pipe + file args #7679', function()
     eq(
       'ohyeah\r\n0 0 bufs=3',
-      funcs.system({
+      fn.system({
         nvim_prog,
         '-n',
         '-u',
@@ -475,7 +475,7 @@ describe('startup', function()
   it('if stdin is empty: selects buffer 2, deletes buffer 1 #8561', function()
     eq(
       '\r\n  2 %a   "file1"                        line 0\r\n  3      "file2"                        line 0',
-      funcs.system({
+      fn.system({
         nvim_prog,
         '-n',
         '-u',
@@ -501,7 +501,7 @@ describe('startup', function()
     --
     eq(
       'partylikeits1999\n',
-      funcs.system({
+      fn.system({
         nvim_prog,
         '-n',
         '-u',
@@ -513,16 +513,16 @@ describe('startup', function()
         'test/functional/fixtures/tty-test.c',
       }, { 'partylikeits1999', '' })
     )
-    eq(inputstr, funcs.system({ nvim_prog, '-i', 'NONE', '-Es', '+%print', '-' }, input))
+    eq(inputstr, fn.system({ nvim_prog, '-i', 'NONE', '-Es', '+%print', '-' }, input))
     -- with `-u NORC`
     eq(
       'thepartycontinues\n',
-      funcs.system({ nvim_prog, '-n', '-u', 'NORC', '-Es', '+.print' }, { 'thepartycontinues', '' })
+      fn.system({ nvim_prog, '-n', '-u', 'NORC', '-Es', '+.print' }, { 'thepartycontinues', '' })
     )
     -- without `-u`
     eq(
       'thepartycontinues\n',
-      funcs.system({ nvim_prog, '-n', '-Es', '+.print' }, { 'thepartycontinues', '' })
+      fn.system({ nvim_prog, '-n', '-Es', '+.print' }, { 'thepartycontinues', '' })
     )
 
     --
@@ -530,7 +530,7 @@ describe('startup', function()
     --
     eq(
       '  encoding=utf-8\n',
-      funcs.system({
+      fn.system({
         nvim_prog,
         '-n',
         '-u',
@@ -541,19 +541,19 @@ describe('startup', function()
         'test/functional/fixtures/tty-test.c',
       }, { 'set encoding', '' })
     )
-    eq('line1\nline2\n', funcs.system({ nvim_prog, '-i', 'NONE', '-es', '-' }, input))
+    eq('line1\nline2\n', fn.system({ nvim_prog, '-i', 'NONE', '-es', '-' }, input))
     -- with `-u NORC`
     eq(
       '  encoding=utf-8\n',
-      funcs.system({ nvim_prog, '-n', '-u', 'NORC', '-es' }, { 'set encoding', '' })
+      fn.system({ nvim_prog, '-n', '-u', 'NORC', '-es' }, { 'set encoding', '' })
     )
     -- without `-u`
-    eq('  encoding=utf-8\n', funcs.system({ nvim_prog, '-n', '-es' }, { 'set encoding', '' }))
+    eq('  encoding=utf-8\n', fn.system({ nvim_prog, '-n', '-es' }, { 'set encoding', '' }))
   end)
 
   it('-es/-Es disables swapfile, user config #8540', function()
     for _, arg in ipairs({ '-es', '-Es' }) do
-      local out = funcs.system({
+      local out = fn.system({
         nvim_prog,
         arg,
         '+set swapfile? updatecount? shadafile?',
@@ -572,15 +572,15 @@ describe('startup', function()
   it('fails on --embed with -es/-Es/-l', function()
     matches(
       'nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
-      funcs.system({ nvim_prog, '--embed', '-es' })
+      fn.system({ nvim_prog, '--embed', '-es' })
     )
     matches(
       'nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
-      funcs.system({ nvim_prog, '--embed', '-Es' })
+      fn.system({ nvim_prog, '--embed', '-Es' })
     )
     matches(
       'nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
-      funcs.system({ nvim_prog, '--embed', '-l', 'foo.lua' })
+      fn.system({ nvim_prog, '--embed', '-l', 'foo.lua' })
     )
   end)
 
@@ -588,7 +588,7 @@ describe('startup', function()
     local screen
     screen = Screen.new(60, 6)
     screen:attach()
-    local id = funcs.termopen({
+    local id = fn.termopen({
       nvim_prog,
       '-u',
       'NONE',
@@ -611,7 +611,7 @@ describe('startup', function()
       Press ENTER or type command to continue                     |
                                                                   |
     ]])
-    funcs.chansend(id, '\n')
+    fn.chansend(id, '\n')
     screen:expect([[
       ^                                                            |
       ~                                                           |*2
@@ -651,7 +651,7 @@ describe('startup', function()
       expected,
       -- FIXME(codehex): We should really set a timeout for the system function.
       -- If this test fails, there will be a waiting input state.
-      funcs.system({
+      fn.system({
         nvim_prog,
         '-u',
         'NONE',
@@ -663,7 +663,7 @@ describe('startup', function()
   end)
 
   it('get command line arguments from v:argv', function()
-    local out = funcs.system({
+    local out = fn.system({
       nvim_prog,
       '-u',
       'NONE',
@@ -715,7 +715,7 @@ describe('startup', function()
       :put =mode(1)            |
     ]])
 
-    eq('cv\n', funcs.system({ nvim_prog, '-n', '-es' }, { 'put =mode(1)', 'print', '' }))
+    eq('cv\n', fn.system({ nvim_prog, '-n', '-es' }, { 'put =mode(1)', 'print', '' }))
   end)
 
   it('-d does not diff non-arglist windows #13720 #21289', function()
@@ -737,11 +737,11 @@ describe('startup', function()
       os.remove('Xdiff.vim')
     end)
     clear { args = { '-u', 'Xdiff.vim', '-d', 'Xdiff.vim', 'Xdiff.vim' } }
-    eq(true, meths.get_option_value('diff', { win = funcs.win_getid(1) }))
-    eq(true, meths.get_option_value('diff', { win = funcs.win_getid(2) }))
-    local float_win = funcs.win_getid(3)
-    eq('editor', meths.win_get_config(float_win).relative)
-    eq(false, meths.get_option_value('diff', { win = float_win }))
+    eq(true, api.nvim_get_option_value('diff', { win = fn.win_getid(1) }))
+    eq(true, api.nvim_get_option_value('diff', { win = fn.win_getid(2) }))
+    local float_win = fn.win_getid(3)
+    eq('editor', api.nvim_win_get_config(float_win).relative)
+    eq(false, api.nvim_get_option_value('diff', { win = float_win }))
   end)
 
   it('does not crash if --embed is given twice', function()
@@ -870,7 +870,7 @@ describe('startup', function()
       exec_lua [[ return _G.test_loadorder ]]
     )
 
-    local rtp = meths.get_option_value('rtp', {})
+    local rtp = api.nvim_get_option_value('rtp', {})
     ok(
       startswith(
         rtp,
@@ -963,9 +963,9 @@ describe('startup', function()
       os.remove('Xtab2.noft')
     end)
     clear({ args = { '-p', 'Xtab1.noft', 'Xtab2.noft' } })
-    eq(81, meths.win_get_width(0))
+    eq(81, api.nvim_win_get_width(0))
     command('tabnext')
-    eq(81, meths.win_get_width(0))
+    eq(81, api.nvim_win_get_width(0))
   end)
 end)
 
@@ -1062,7 +1062,7 @@ describe('user config init', function()
     clear { args_rm = { '-u' }, env = xenv }
 
     eq(1, eval('g:lua_rc'))
-    eq(funcs.fnamemodify(init_lua_path, ':p'), eval('$MYVIMRC'))
+    eq(fn.fnamemodify(init_lua_path, ':p'), eval('$MYVIMRC'))
   end)
 
   describe('loads existing', function()
@@ -1122,7 +1122,7 @@ describe('user config init', function()
 
         local screen = Screen.new(50, 8)
         screen:attach()
-        funcs.termopen({ nvim_prog }, {
+        fn.termopen({ nvim_prog }, {
           env = {
             VIMRUNTIME = os.getenv('VIMRUNTIME'),
           },
@@ -1245,7 +1245,7 @@ describe('runtime:', function()
     -- Check if plugin_file_path is listed in getscriptinfo()
     local scripts = tbl_map(function(s)
       return s.name
-    end, funcs.getscriptinfo())
+    end, fn.getscriptinfo())
     ok(#tbl_filter(function(s)
       return endswith(s, plugin_file_path)
     end, scripts) > 0)
@@ -1369,13 +1369,13 @@ describe('inccommand on ex mode', function()
     local screen
     screen = Screen.new(60, 10)
     screen:attach()
-    local id = funcs.termopen(
+    local id = fn.termopen(
       { nvim_prog, '-u', 'NONE', '-c', 'set termguicolors', '-E', 'test/README.md' },
       {
         env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
       }
     )
-    funcs.chansend(id, '%s/N')
+    fn.chansend(id, '%s/N')
     screen:expect {
       grid = [[
       {1:^                                                            }|

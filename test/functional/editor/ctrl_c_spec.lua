@@ -3,7 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, source = helpers.clear, helpers.feed, helpers.source
 local command = helpers.command
 local poke_eventloop = helpers.poke_eventloop
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 
 describe('CTRL-C (mapped)', function()
   local screen

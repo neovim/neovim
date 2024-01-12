@@ -1,16 +1,15 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local meths = helpers.meths
-local curbufmeths = helpers.curbufmeths
+local api = helpers.api
 local clear = helpers.clear
 local command = helpers.command
-local funcs = helpers.funcs
+local fn = helpers.fn
 local eq = helpers.eq
 local feed = helpers.feed
 local write_file = helpers.write_file
 local pcall_err = helpers.pcall_err
 local cursor = function()
-  return helpers.meths.win_get_cursor(0)
+  return helpers.api.nvim_win_get_cursor(0)
 end
 
 describe('named marks', function()
@@ -29,13 +28,13 @@ describe('named marks', function()
   it('can be set', function()
     command('edit ' .. file1)
     command('mark a')
-    eq({ 1, 0 }, curbufmeths.get_mark('a'))
+    eq({ 1, 0 }, api.nvim_buf_get_mark(0, 'a'))
     feed('jmb')
-    eq({ 2, 0 }, curbufmeths.get_mark('b'))
+    eq({ 2, 0 }, api.nvim_buf_get_mark(0, 'b'))
     feed('jmB')
-    eq({ 3, 0 }, curbufmeths.get_mark('B'))
+    eq({ 3, 0 }, api.nvim_buf_get_mark(0, 'B'))
     command('4kc')
-    eq({ 4, 0 }, curbufmeths.get_mark('c'))
+    eq({ 4, 0 }, api.nvim_buf_get_mark(0, 'c'))
   end)
 
   it('errors when set out of range with :mark', function()
@@ -105,7 +104,7 @@ describe('named marks', function()
     feed('mA')
     command('next')
     feed("'A")
-    eq(1, meths.get_current_buf().id)
+    eq(1, api.nvim_get_current_buf().id)
     eq({ 2, 0 }, cursor())
   end)
 
@@ -118,7 +117,7 @@ describe('named marks', function()
     feed('mA')
     command('next')
     feed('`A')
-    eq(1, meths.get_current_buf().id)
+    eq(1, api.nvim_get_current_buf().id)
     eq({ 2, 2 }, cursor())
   end)
 
@@ -131,7 +130,7 @@ describe('named marks', function()
     feed('mA')
     command('next')
     feed("g'A")
-    eq(1, meths.get_current_buf().id)
+    eq(1, api.nvim_get_current_buf().id)
     eq({ 2, 0 }, cursor())
   end)
 
@@ -144,7 +143,7 @@ describe('named marks', function()
     feed('mA')
     command('next')
     feed('g`A')
-    eq(1, meths.get_current_buf().id)
+    eq(1, api.nvim_get_current_buf().id)
     eq({ 2, 2 }, cursor())
   end)
 
@@ -158,7 +157,7 @@ describe('named marks', function()
     feed('mA')
     command('next')
     command("'A")
-    eq(1, meths.get_current_buf().id)
+    eq(1, api.nvim_get_current_buf().id)
     eq({ 2, 0 }, cursor())
   end)
 
@@ -268,59 +267,59 @@ describe('named marks', function()
     feed('jzfG') -- Fold from the second line to the end
     command('3mark a')
     feed('G') -- On top of the fold
-    assert(funcs.foldclosed('.') ~= -1) -- folded
+    assert(fn.foldclosed('.') ~= -1) -- folded
     feed("'a")
-    eq(-1, funcs.foldclosed('.'))
+    eq(-1, fn.foldclosed('.'))
 
     feed('zc')
-    assert(funcs.foldclosed('.') ~= -1) -- folded
+    assert(fn.foldclosed('.') ~= -1) -- folded
     -- TODO: remove this workaround after fixing #15873
     feed('k`a')
-    eq(-1, funcs.foldclosed('.'))
+    eq(-1, fn.foldclosed('.'))
 
     feed('zc')
-    assert(funcs.foldclosed('.') ~= -1) -- folded
+    assert(fn.foldclosed('.') ~= -1) -- folded
     feed("kg'a")
-    eq(-1, funcs.foldclosed('.'))
+    eq(-1, fn.foldclosed('.'))
 
     feed('zc')
-    assert(funcs.foldclosed('.') ~= -1) -- folded
+    assert(fn.foldclosed('.') ~= -1) -- folded
     feed('kg`a')
-    eq(-1, funcs.foldclosed('.'))
+    eq(-1, fn.foldclosed('.'))
   end)
 
   it("do not open folds when moving to them doesn't move the cursor", function()
     command('edit ' .. file1)
     feed('jzfG') -- Fold from the second line to the end
-    assert(funcs.foldclosed('.') == 2) -- folded
+    assert(fn.foldclosed('.') == 2) -- folded
     feed('ma')
     feed("'a")
     feed('`a')
     feed("g'a")
     feed('g`a')
     -- should still be folded
-    eq(2, funcs.foldclosed('.'))
+    eq(2, fn.foldclosed('.'))
   end)
 
   it("getting '{ '} '( ') does not move cursor", function()
-    meths.buf_set_lines(0, 0, 0, true, { 'aaaaa', 'bbbbb', 'ccccc', 'ddddd', 'eeeee' })
-    meths.win_set_cursor(0, { 2, 0 })
-    funcs.getpos("'{")
-    eq({ 2, 0 }, meths.win_get_cursor(0))
-    funcs.getpos("'}")
-    eq({ 2, 0 }, meths.win_get_cursor(0))
-    funcs.getpos("'(")
-    eq({ 2, 0 }, meths.win_get_cursor(0))
-    funcs.getpos("')")
-    eq({ 2, 0 }, meths.win_get_cursor(0))
+    api.nvim_buf_set_lines(0, 0, 0, true, { 'aaaaa', 'bbbbb', 'ccccc', 'ddddd', 'eeeee' })
+    api.nvim_win_set_cursor(0, { 2, 0 })
+    fn.getpos("'{")
+    eq({ 2, 0 }, api.nvim_win_get_cursor(0))
+    fn.getpos("'}")
+    eq({ 2, 0 }, api.nvim_win_get_cursor(0))
+    fn.getpos("'(")
+    eq({ 2, 0 }, api.nvim_win_get_cursor(0))
+    fn.getpos("')")
+    eq({ 2, 0 }, api.nvim_win_get_cursor(0))
   end)
 
   it('in command range does not move cursor #19248', function()
-    meths.create_user_command('Test', ':', { range = true })
-    meths.buf_set_lines(0, 0, 0, true, { 'aaaaa', 'bbbbb', 'ccccc', 'ddddd', 'eeeee' })
-    meths.win_set_cursor(0, { 2, 0 })
+    api.nvim_create_user_command('Test', ':', { range = true })
+    api.nvim_buf_set_lines(0, 0, 0, true, { 'aaaaa', 'bbbbb', 'ccccc', 'ddddd', 'eeeee' })
+    api.nvim_win_set_cursor(0, { 2, 0 })
     command([['{,'}Test]])
-    eq({ 2, 0 }, meths.win_get_cursor(0))
+    eq({ 2, 0 }, api.nvim_win_get_cursor(0))
   end)
 end)
 

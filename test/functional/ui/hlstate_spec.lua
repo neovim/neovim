@@ -3,7 +3,7 @@ local Screen = require('test.functional.ui.screen')
 
 local clear, insert = helpers.clear, helpers.insert
 local command = helpers.command
-local meths = helpers.meths
+local api = helpers.api
 local testprg = helpers.testprg
 local thelpers = require('test.functional.terminal.helpers')
 local skip = helpers.skip
@@ -28,8 +28,8 @@ describe('ext_hlstate detailed highlights', function()
     insert([[
       these are some lines
       with colorful text]])
-    meths.buf_add_highlight(0, -1, 'String', 0, 10, 14)
-    meths.buf_add_highlight(0, -1, 'Statement', 1, 5, -1)
+    api.nvim_buf_add_highlight(0, -1, 'String', 0, 10, 14)
+    api.nvim_buf_add_highlight(0, -1, 'Statement', 1, 5, -1)
     command('/th co')
 
     screen:expect(

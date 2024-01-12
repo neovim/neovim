@@ -1,16 +1,14 @@
 local helpers = require('test.functional.helpers')(after_each)
 local screen = require('test.functional.ui.screen')
 
-local curbufmeths = helpers.curbufmeths
-local curwinmeths = helpers.curwinmeths
 local testprg = helpers.testprg
 local command = helpers.command
-local funcs = helpers.funcs
-local meths = helpers.meths
+local fn = helpers.fn
+local api = helpers.api
 local clear = helpers.clear
 local eq = helpers.eq
 local matches = helpers.matches
-local pesc = helpers.pesc
+local pesc = vim.pesc
 
 describe(':edit term://*', function()
   local get_screen = function(columns, lines)
@@ -21,17 +19,17 @@ describe(':edit term://*', function()
 
   before_each(function()
     clear()
-    meths.set_option_value('shell', testprg('shell-test'), {})
-    meths.set_option_value('shellcmdflag', 'EXE', {})
+    api.nvim_set_option_value('shell', testprg('shell-test'), {})
+    api.nvim_set_option_value('shellcmdflag', 'EXE', {})
   end)
 
   it('runs TermOpen event', function()
-    meths.set_var('termopen_runs', {})
+    api.nvim_set_var('termopen_runs', {})
     command('autocmd TermOpen * :call add(g:termopen_runs, expand("<amatch>"))')
     command('edit term://')
-    local termopen_runs = meths.get_var('termopen_runs')
+    local termopen_runs = api.nvim_get_var('termopen_runs')
     eq(1, #termopen_runs)
-    local cwd = funcs.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
+    local cwd = fn.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
     matches('^term://' .. pesc(cwd) .. '//%d+:$', termopen_runs[1])
   end)
 
@@ -39,7 +37,7 @@ describe(':edit term://*', function()
     local columns, lines = 20, 4
     local scr = get_screen(columns, lines)
     local rep = 97
-    meths.set_option_value('shellcmdflag', 'REP ' .. rep, {})
+    api.nvim_set_option_value('shellcmdflag', 'REP ' .. rep, {})
     command('set shellxquote=') -- win: avoid extra quotes
     local sb = 10
     command(
@@ -48,7 +46,7 @@ describe(':edit term://*', function()
     command('edit term://foobar')
 
     local bufcontents = {}
-    local winheight = curwinmeths.get_height()
+    local winheight = api.nvim_win_get_height(0)
     local buf_cont_start = rep - sb - winheight + 2
     for i = buf_cont_start, (rep - 1) do
       bufcontents[#bufcontents + 1] = ('%d: foobar'):format(i)
@@ -65,6 +63,6 @@ describe(':edit term://*', function()
 
     exp_screen = exp_screen .. (' '):rep(columns) .. '|\n'
     scr:expect(exp_screen)
-    eq(bufcontents, curbufmeths.get_lines(0, -1, true))
+    eq(bufcontents, api.nvim_buf_get_lines(0, 0, -1, true))
   end)
 end)

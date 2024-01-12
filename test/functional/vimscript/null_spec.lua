@@ -1,23 +1,22 @@
 local helpers = require('test.functional.helpers')(after_each)
 
-local curbufmeths = helpers.curbufmeths
 local exc_exec = helpers.exc_exec
 local command = helpers.command
 local clear = helpers.clear
-local meths = helpers.meths
-local funcs = helpers.funcs
+local api = helpers.api
+local fn = helpers.fn
 local eq = helpers.eq
 
 local function redir_exec(cmd)
-  meths.set_var('__redir_exec_cmd', cmd)
+  api.nvim_set_var('__redir_exec_cmd', cmd)
   command([[
     redir => g:__redir_exec_output
       silent! execute g:__redir_exec_cmd
     redir END
   ]])
-  local ret = meths.get_var('__redir_exec_output')
-  meths.del_var('__redir_exec_output')
-  meths.del_var('__redir_exec_cmd')
+  local ret = api.nvim_get_var('__redir_exec_output')
+  api.nvim_del_var('__redir_exec_output')
+  api.nvim_del_var('__redir_exec_cmd')
   return ret
 end
 
@@ -42,9 +41,9 @@ describe('NULL', function()
     it(name, function()
       eq((err == 0) and '' or ('\n' .. err), redir_exec('let g:_var = ' .. expr))
       if val == nil then
-        eq(0, funcs.exists('g:_var'))
+        eq(0, fn.exists('g:_var'))
       else
-        eq(val, meths.get_var('_var'))
+        eq(val, api.nvim_get_var('_var'))
       end
       if after ~= nil then
         after()
@@ -72,10 +71,10 @@ describe('NULL', function()
     null_expr_test('is not locked', 'islocked("v:_null_list")', 0, 0)
     null_test('is accepted by :for', 'for x in L|throw x|endfor', 0)
     null_expr_test('does not crash append()', 'append(0, L)', 0, 0, function()
-      eq({ '' }, curbufmeths.get_lines(0, -1, false))
+      eq({ '' }, api.nvim_buf_get_lines(0, 0, -1, false))
     end)
     null_expr_test('does not crash setline()', 'setline(1, L)', 0, 0, function()
-      eq({ '' }, curbufmeths.get_lines(0, -1, false))
+      eq({ '' }, api.nvim_buf_get_lines(0, 0, -1, false))
     end)
     null_expr_test('is identical to itself', 'L is L', 0, 1)
     null_expr_test('can be sliced', 'L[:]', 0, {})
@@ -184,7 +183,7 @@ describe('NULL', function()
       0,
       '',
       function()
-        eq({ '' }, curbufmeths.get_lines(0, -1, false))
+        eq({ '' }, api.nvim_buf_get_lines(0, 0, -1, false))
       end
     )
     null_expr_test('is accepted by setmatches()', 'setmatches(L)', 0, 0)

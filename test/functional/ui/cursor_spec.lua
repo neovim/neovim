@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, meths = helpers.clear, helpers.meths
+local clear, api = helpers.clear, helpers.api
 local eq = helpers.eq
 local command = helpers.command
 
@@ -299,7 +299,7 @@ describe('ui/cursor', function()
     }
 
     -- Another cursor style.
-    meths.set_option_value(
+    api.nvim_set_option_value(
       'guicursor',
       'n-v-c:ver35-blinkwait171-blinkoff172-blinkon173'
         .. ',ve:hor35,o:ver50,i-ci:block,r-cr:hor90,sm:ver42',
@@ -326,7 +326,7 @@ describe('ui/cursor', function()
     end)
 
     -- If there is no setting for guicursor, it becomes the default setting.
-    meths.set_option_value(
+    api.nvim_set_option_value(
       'guicursor',
       'n:ver35-blinkwait171-blinkoff172-blinkon173-Cursor/lCursor',
       {}
@@ -346,7 +346,7 @@ describe('ui/cursor', function()
   end)
 
   it("empty 'guicursor' sets cursor_shape=block in all modes", function()
-    meths.set_option_value('guicursor', '', {})
+    api.nvim_set_option_value('guicursor', '', {})
     screen:expect(function()
       -- Empty 'guicursor' sets enabled=false.
       eq(false, screen._cursor_style_enabled)

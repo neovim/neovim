@@ -6,8 +6,8 @@ local exec = helpers.exec
 local exec_lua = helpers.exec_lua
 local expect_exit = helpers.expect_exit
 local feed = helpers.feed
-local funcs = helpers.funcs
-local meths = helpers.meths
+local fn = helpers.fn
+local api = helpers.api
 local read_file = helpers.read_file
 local source = helpers.source
 local eq = helpers.eq
@@ -24,7 +24,7 @@ end
 describe('Ex command', function()
   before_each(clear)
   after_each(function()
-    eq({}, meths.get_vvar('errors'))
+    eq({}, api.nvim_get_vvar('errors'))
   end)
 
   it('checks for address line overflow', function()
@@ -340,7 +340,7 @@ describe(':confirm command dialog', function()
     feed('<CR>') -- suppress hit-enter prompt
 
     -- Try to write with read-only file permissions.
-    funcs.setfperm('Xconfirm_write_ro', 'r--r--r--')
+    fn.setfperm('Xconfirm_write_ro', 'r--r--r--')
     feed(':set noro | silent undo | confirm w\n')
     screen:expect([[
       foobar                                                                     |

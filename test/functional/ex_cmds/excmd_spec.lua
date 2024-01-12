@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local command = helpers.command
 local eq = helpers.eq
 local clear = helpers.clear
-local funcs = helpers.funcs
+local fn = helpers.fn
 local pcall_err = helpers.pcall_err
 local assert_alive = helpers.assert_alive
 
@@ -49,15 +49,15 @@ describe('Ex cmds', function()
 
   it(':def is an unknown command #23149', function()
     eq('Vim:E492: Not an editor command: def', pcall_err(command, 'def'))
-    eq(1, funcs.exists(':d'))
-    eq('delete', funcs.fullcommand('d'))
-    eq(1, funcs.exists(':de'))
-    eq('delete', funcs.fullcommand('de'))
-    eq(0, funcs.exists(':def'))
-    eq('', funcs.fullcommand('def'))
-    eq(1, funcs.exists(':defe'))
-    eq('defer', funcs.fullcommand('defe'))
-    eq(2, funcs.exists(':defer'))
-    eq('defer', funcs.fullcommand('defer'))
+    eq(1, fn.exists(':d'))
+    eq('delete', fn.fullcommand('d'))
+    eq(1, fn.exists(':de'))
+    eq('delete', fn.fullcommand('de'))
+    eq(0, fn.exists(':def'))
+    eq('', fn.fullcommand('def'))
+    eq(1, fn.exists(':defe'))
+    eq('defer', fn.fullcommand('defe'))
+    eq(2, fn.exists(':defer'))
+    eq('defer', fn.fullcommand('defer'))
   end)
 end)

@@ -1,14 +1,13 @@
 local helpers = require('test.functional.helpers')(after_each)
-local luv = require('luv')
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
-local funcs = helpers.funcs
+local fn = helpers.fn
 local rmdir = helpers.rmdir
 local mkdir = helpers.mkdir
 
 describe(':file', function()
-  local swapdir = luv.cwd() .. '/Xtest-file_spec'
+  local swapdir = vim.uv.cwd() .. '/Xtest-file_spec'
   before_each(function()
     clear()
     rmdir(swapdir)
@@ -30,6 +29,6 @@ describe(':file', function()
     command('edit! ' .. testfile)
     -- Before #6487 this gave "E301: Oops, lost the swap file !!!" on Windows.
     command('file ' .. testfile_renamed)
-    eq(testfile_renamed .. '.swp', string.match(funcs.execute('swapname'), '[^%%]+$'))
+    eq(testfile_renamed .. '.swp', string.match(fn.execute('swapname'), '[^%%]+$'))
   end)
 end)

@@ -9,7 +9,7 @@ local write_file = helpers.write_file
 local dedent = helpers.dedent
 local exec = helpers.exec
 local eq = helpers.eq
-local meths = helpers.meths
+local api = helpers.api
 
 before_each(clear)
 
@@ -1053,7 +1053,7 @@ AAAB]]
     write_file(fname, 'aaa\nbbb\nccc\n\nxx', false)
     write_file(fname_2, 'aaa\nbbb\nccc\n\nyy', false)
     reread()
-    local buf = meths.get_current_buf()
+    local buf = api.nvim_get_current_buf()
     command('botright new')
     screen:expect {
       grid = [[
@@ -1071,7 +1071,7 @@ AAAB]]
     ]],
     }
 
-    meths.buf_set_lines(buf, 1, 2, true, { 'BBB' })
+    api.nvim_buf_set_lines(buf, 1, 2, true, { 'BBB' })
     screen:expect {
       grid = [[
       {1:  }aaa               │{1:  }aaa              |
@@ -1093,7 +1093,7 @@ AAAB]]
     write_file(fname, 'aaa\nbbb\nccc\n\nxx', false)
     write_file(fname_2, 'aaa\nbbb\nccc\n\nyy', false)
     reread()
-    local buf = meths.get_current_buf()
+    local buf = api.nvim_get_current_buf()
     command('botright split | diffoff')
     screen:expect {
       grid = [[
@@ -1115,7 +1115,7 @@ AAAB]]
     ]],
     }
 
-    meths.buf_set_lines(buf, 1, 2, true, { 'BBB' })
+    api.nvim_buf_set_lines(buf, 1, 2, true, { 'BBB' })
     screen:expect {
       grid = [[
       {1:  }aaa               │{1:  }aaa              |
@@ -1372,14 +1372,14 @@ it("diff mode doesn't restore invalid 'foldcolumn' value #21647", function()
     [0] = { foreground = Screen.colors.Blue, bold = true },
   })
   screen:attach()
-  eq('0', meths.get_option_value('foldcolumn', {}))
+  eq('0', api.nvim_get_option_value('foldcolumn', {}))
   command('diffsplit | bd')
   screen:expect([[
     ^                                                            |
     {0:~                                                           }|*4
                                                                 |
   ]])
-  eq('0', meths.get_option_value('foldcolumn', {}))
+  eq('0', api.nvim_get_option_value('foldcolumn', {}))
 end)
 
 -- oldtest: Test_diff_binary()

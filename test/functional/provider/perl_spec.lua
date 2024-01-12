@@ -5,7 +5,7 @@ local command = helpers.command
 local write_file = helpers.write_file
 local eval = helpers.eval
 local retry = helpers.retry
-local meths = helpers.meths
+local api = helpers.api
 local insert = helpers.insert
 local expect = helpers.expect
 local feed = helpers.feed
@@ -48,7 +48,7 @@ describe('legacy perl provider', function()
     -- :perldo 1; doesn't change $_,
     -- the buffer should not be changed
     command('normal :perldo 1;')
-    eq(false, meths.get_option_value('modified', {}))
+    eq(false, api.nvim_get_option_value('modified', {}))
     -- insert some text
     insert('abc\ndef\nghi')
     expect([[

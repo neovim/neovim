@@ -4,10 +4,9 @@ local assert_alive = helpers.assert_alive
 local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
 local feed_command, source, expect = helpers.feed_command, helpers.source, helpers.expect
-local funcs = helpers.funcs
-local curbufmeths = helpers.curbufmeths
+local fn = helpers.fn
 local command = helpers.command
-local meths = helpers.meths
+local api = helpers.api
 local poke_eventloop = helpers.poke_eventloop
 
 describe('completion', function()
@@ -691,7 +690,7 @@ describe('completion', function()
     ]])
     -- Works for unindenting too.
     feed('ounin<C-X><C-N>')
-    helpers.poke_eventloop()
+    poke_eventloop()
     feed('<BS>d')
     screen:expect([[
       inc uninc indent unindent                                   |
@@ -821,23 +820,23 @@ describe('completion', function()
     end)
 
     it('provides completion from `getcompletion()`', function()
-      eq({ 'vim' }, funcs.getcompletion('vi', 'lua'))
-      eq({ 'api' }, funcs.getcompletion('vim.ap', 'lua'))
-      eq({ 'tbl_filter' }, funcs.getcompletion('vim.tbl_fil', 'lua'))
-      eq({ 'vim' }, funcs.getcompletion('print(vi', 'lua'))
+      eq({ 'vim' }, fn.getcompletion('vi', 'lua'))
+      eq({ 'api' }, fn.getcompletion('vim.ap', 'lua'))
+      eq({ 'tbl_filter' }, fn.getcompletion('vim.tbl_fil', 'lua'))
+      eq({ 'vim' }, fn.getcompletion('print(vi', 'lua'))
       -- fuzzy completion is not supported, so the result should be the same
       command('set wildoptions+=fuzzy')
-      eq({ 'vim' }, funcs.getcompletion('vi', 'lua'))
+      eq({ 'vim' }, fn.getcompletion('vi', 'lua'))
     end)
   end)
 
   it('cmdline completion supports various string options', function()
-    eq('auto', funcs.getcompletion('set foldcolumn=', 'cmdline')[2])
-    eq({ 'nosplit', 'split' }, funcs.getcompletion('set inccommand=', 'cmdline'))
-    eq({ 'ver:3,hor:6', 'hor:', 'ver:' }, funcs.getcompletion('set mousescroll=', 'cmdline'))
-    eq('BS', funcs.getcompletion('set termpastefilter=', 'cmdline')[2])
-    eq('SpecialKey', funcs.getcompletion('set winhighlight=', 'cmdline')[1])
-    eq('SpecialKey', funcs.getcompletion('set winhighlight=NonText:', 'cmdline')[1])
+    eq('auto', fn.getcompletion('set foldcolumn=', 'cmdline')[2])
+    eq({ 'nosplit', 'split' }, fn.getcompletion('set inccommand=', 'cmdline'))
+    eq({ 'ver:3,hor:6', 'hor:', 'ver:' }, fn.getcompletion('set mousescroll=', 'cmdline'))
+    eq('BS', fn.getcompletion('set termpastefilter=', 'cmdline')[2])
+    eq('SpecialKey', fn.getcompletion('set winhighlight=', 'cmdline')[1])
+    eq('SpecialKey', fn.getcompletion('set winhighlight=NonText:', 'cmdline')[1])
   end)
 
   describe('from the commandline window', function()
@@ -883,8 +882,8 @@ describe('completion', function()
           return ''
         endfunction
       ]])
-      meths.set_option_value('completeopt', 'menuone,noselect', {})
-      meths.set_var('_complist', {
+      api.nvim_set_option_value('completeopt', 'menuone,noselect', {})
+      api.nvim_set_var('_complist', {
         {
           word = 0,
           abbr = 1,
@@ -928,7 +927,7 @@ describe('completion', function()
   end)
 
   it('CompleteChanged autocommand', function()
-    curbufmeths.set_lines(0, 1, false, { 'foo', 'bar', 'foobar', '' })
+    api.nvim_buf_set_lines(0, 0, 1, false, { 'foo', 'bar', 'foobar', '' })
     source([[
       set complete=. completeopt=noinsert,noselect,menuone
       function! OnPumChange()
@@ -1067,7 +1066,7 @@ describe('completion', function()
       {3:-- }{4:match 1 of 3}                 |
     ]])
     command([[call timer_start(100, { -> execute('stopinsert') })]])
-    helpers.sleep(200)
+    vim.uv.sleep(200)
     feed('k') -- cursor should move up in Normal mode
     screen:expect([[
       hello                           |

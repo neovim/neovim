@@ -2,12 +2,12 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local command = helpers.command
-local curwin = helpers.curwin
+local curwin = helpers.api.nvim_get_current_win
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
-local funcs = helpers.funcs
-local meths = helpers.meths
+local fn = helpers.fn
+local api = helpers.api
 local is_os = helpers.is_os
 
 describe('title', function()
@@ -44,7 +44,7 @@ describe('title', function()
 
     before_each(function()
       command('edit ' .. file1)
-      buf2 = funcs.bufadd(file2)
+      buf2 = fn.bufadd(file2)
       command('set title')
     end)
 
@@ -58,7 +58,7 @@ describe('title', function()
     end)
 
     it('an RPC call to nvim_set_option_value in a hidden buffer', function()
-      meths.set_option_value('autoindent', true, { buf = buf2 })
+      api.nvim_set_option_value('autoindent', true, { buf = buf2 })
       command('redraw!')
       screen:expect(function()
         eq(expected, screen.title)
@@ -98,7 +98,7 @@ describe('title', function()
     it('setting the buffer of another window using RPC', function()
       local oldwin = curwin().id
       command('split')
-      meths.win_set_buf(oldwin, buf2)
+      api.nvim_win_set_buf(oldwin, buf2)
       command('redraw!')
       screen:expect(function()
         eq(expected, screen.title)
@@ -124,7 +124,7 @@ describe('title', function()
     end)
 
     it('creating a floating window using RPC', function()
-      meths.open_win(buf2, false, {
+      api.nvim_open_win(buf2, false, {
         relative = 'editor',
         width = 5,
         height = 5,

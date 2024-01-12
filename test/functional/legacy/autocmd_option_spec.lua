@@ -1,8 +1,9 @@
 local helpers = require('test.functional.helpers')(after_each)
-local nvim = helpers.meths
+local nvim = helpers.api
 local clear, eq, neq, eval = helpers.clear, helpers.eq, helpers.neq, helpers.eval
-local curbuf, buf = helpers.curbuf, helpers.bufmeths
-local curwin = helpers.curwin
+local api = helpers.api
+local curbuf = helpers.api.nvim_get_current_buf
+local curwin = helpers.api.nvim_get_current_win
 local exec_capture = helpers.exec_capture
 local source, command = helpers.source, helpers.command
 
@@ -38,7 +39,7 @@ local function init_var()
 end
 
 local function get_result()
-  local ret = nvim.get_var('ret')
+  local ret = nvim.nvim_get_var('ret')
   init_var()
   return ret
 end
@@ -210,7 +211,7 @@ describe('au OptionSet', function()
 
       it('should trigger if the current buffer is different from the targeted buffer', function()
         local new_buffer = make_buffer()
-        local new_bufnr = buf.get_number(new_buffer)
+        local new_bufnr = api.nvim_buf_get_number(new_buffer)
 
         command('call setbufvar(' .. new_bufnr .. ', "&buftype", "nofile")')
         expected_combination({
@@ -647,7 +648,7 @@ describe('au OptionSet', function()
         set_hook('buftype')
 
         local new_buffer = make_buffer()
-        local new_bufnr = buf.get_number(new_buffer)
+        local new_bufnr = api.nvim_buf_get_number(new_buffer)
 
         command('call setbufvar(' .. new_bufnr .. ', "&buftype", "nofile")')
         expected_combination({
@@ -696,24 +697,24 @@ describe('au OptionSet', function()
       it('should trigger if a boolean option be set globally', function()
         set_hook('autochdir')
 
-        nvim.set_option_value('autochdir', true, { scope = 'global' })
-        eq(true, nvim.get_option_value('autochdir', { scope = 'global' }))
+        nvim.nvim_set_option_value('autochdir', true, { scope = 'global' })
+        eq(true, nvim.nvim_get_option_value('autochdir', { scope = 'global' }))
         expected_combination({ 'autochdir', false, '', false, true, 'global', 'setglobal' })
       end)
 
       it('should trigger if a number option be set globally', function()
         set_hook('cmdheight')
 
-        nvim.set_option_value('cmdheight', 5, { scope = 'global' })
-        eq(5, nvim.get_option_value('cmdheight', { scope = 'global' }))
+        nvim.nvim_set_option_value('cmdheight', 5, { scope = 'global' })
+        eq(5, nvim.nvim_get_option_value('cmdheight', { scope = 'global' }))
         expected_combination({ 'cmdheight', 1, '', 1, 5, 'global', 'setglobal' })
       end)
 
       it('should trigger if a string option be set globally', function()
         set_hook('ambiwidth')
 
-        nvim.set_option_value('ambiwidth', 'double', { scope = 'global' })
-        eq('double', nvim.get_option_value('ambiwidth', { scope = 'global' }))
+        nvim.nvim_set_option_value('ambiwidth', 'double', { scope = 'global' })
+        eq('double', nvim.nvim_get_option_value('ambiwidth', { scope = 'global' }))
         expected_combination({
           'ambiwidth',
           'single',

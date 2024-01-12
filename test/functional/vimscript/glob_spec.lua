@@ -1,4 +1,3 @@
-local luv = require('luv')
 local helpers = require('test.functional.helpers')(after_each)
 local clear, command, eval, eq = helpers.clear, helpers.command, helpers.eval, helpers.eq
 local mkdir = helpers.mkdir
@@ -12,7 +11,7 @@ before_each(function()
 end)
 
 after_each(function()
-  luv.fs_rmdir('test-glob')
+  vim.uv.fs_rmdir('test-glob')
 end)
 
 describe('glob()', function()

@@ -8,7 +8,7 @@ local pcall_err = helpers.pcall_err
 local feed = helpers.feed
 local poke_eventloop = helpers.poke_eventloop
 local is_os = helpers.is_os
-local meths = helpers.meths
+local api = helpers.api
 local async_meths = helpers.async_meths
 local testprg = helpers.testprg
 local assert_alive = helpers.assert_alive
@@ -140,7 +140,7 @@ describe('no crash when TermOpen autocommand', function()
 
   before_each(function()
     clear()
-    meths.set_option_value('shell', testprg('shell-test'), {})
+    api.nvim_set_option_value('shell', testprg('shell-test'), {})
     command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
     screen = Screen.new(60, 4)
     screen:set_default_attr_ids({
@@ -232,11 +232,11 @@ describe('nvim_open_term', function()
   end)
 
   it('with force_crlf=true converts newlines', function()
-    local win = meths.get_current_win()
-    local buf = meths.create_buf(false, true)
-    local term = meths.open_term(buf, { force_crlf = true })
-    meths.win_set_buf(win, buf)
-    meths.chan_send(term, 'here\nthere\nfoo\r\nbar\n\ntest')
+    local win = api.nvim_get_current_win()
+    local buf = api.nvim_create_buf(false, true)
+    local term = api.nvim_open_term(buf, { force_crlf = true })
+    api.nvim_win_set_buf(win, buf)
+    api.nvim_chan_send(term, 'here\nthere\nfoo\r\nbar\n\ntest')
     screen:expect {
       grid = [[
       ^here        |
@@ -248,7 +248,7 @@ describe('nvim_open_term', function()
                   |*4
     ]],
     }
-    meths.chan_send(term, '\nfirst')
+    api.nvim_chan_send(term, '\nfirst')
     screen:expect {
       grid = [[
       ^here        |
@@ -264,11 +264,11 @@ describe('nvim_open_term', function()
   end)
 
   it('with force_crlf=false does not convert newlines', function()
-    local win = meths.get_current_win()
-    local buf = meths.create_buf(false, true)
-    local term = meths.open_term(buf, { force_crlf = false })
-    meths.win_set_buf(win, buf)
-    meths.chan_send(term, 'here\nthere')
+    local win = api.nvim_get_current_win()
+    local buf = api.nvim_create_buf(false, true)
+    local term = api.nvim_open_term(buf, { force_crlf = false })
+    api.nvim_win_set_buf(win, buf)
+    api.nvim_chan_send(term, 'here\nthere')
     screen:expect { grid = [[
       ^here        |
           there   |

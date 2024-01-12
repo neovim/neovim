@@ -5,7 +5,7 @@ local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
-local meths = helpers.meths
+local api = helpers.api
 local poke_eventloop = helpers.poke_eventloop
 
 before_each(clear)
@@ -16,7 +16,7 @@ describe('Ex mode', function()
       feed('gQ' .. cmd .. '<C-b>"<CR>')
       local ret = eval('@:[1:]') -- Remove leading quote.
       feed('visual<CR>')
-      eq(meths.replace_termcodes(expected, true, true, true), ret)
+      eq(api.nvim_replace_termcodes(expected, true, true, true), ret)
     end
     command('set sw=2')
     test_ex_edit('bar', 'foo bar<C-u>bar')

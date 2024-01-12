@@ -22,8 +22,8 @@ local exec_capture = helpers.exec_capture
 local eval = helpers.eval
 local command = helpers.command
 local write_file = helpers.write_file
-local meths = helpers.meths
-local sleep = helpers.sleep
+local api = helpers.api
+local sleep = vim.uv.sleep
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
 local assert_alive = helpers.assert_alive
@@ -33,13 +33,13 @@ local expect_exit = helpers.expect_exit
 
 describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
   local max_func_args = 20 -- from eval.h
-  local range = helpers.funcs.range
+  local range = helpers.fn.range
 
   before_each(clear)
 
   it('printf()', function()
-    local printf = helpers.funcs.printf
-    local rep = helpers.funcs['repeat']
+    local printf = helpers.fn.printf
+    local rep = helpers.fn['repeat']
     local expected = '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,'
     eq(expected, printf(rep('%d,', max_func_args - 1), unpack(range(2, max_func_args))))
     local ret = exc_exec('call printf("", 2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21)')
@@ -47,7 +47,7 @@ describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
   end)
 
   it('rpcnotify()', function()
-    local rpcnotify = helpers.funcs.rpcnotify
+    local rpcnotify = helpers.fn.rpcnotify
     local ret = rpcnotify(0, 'foo', unpack(range(3, max_func_args)))
     eq(1, ret)
     ret = exc_exec('call rpcnotify(0, "foo", 3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21)')
@@ -121,7 +121,7 @@ describe('List support code', function()
         let bl = range(%u)
         let dur = reltimestr(reltime(rt))
       ]]):format(len))
-      dur = tonumber(meths.get_var('dur'))
+      dur = tonumber(api.nvim_get_var('dur'))
       if dur >= min_dur then
         -- print(('Using len %u, dur %g'):format(len, dur))
         break
@@ -136,7 +136,7 @@ describe('List support code', function()
     feed('<C-c>')
     poke_eventloop()
     command('let t_dur = reltimestr(reltime(t_rt))')
-    local t_dur = tonumber(meths.get_var('t_dur'))
+    local t_dur = tonumber(api.nvim_get_var('t_dur'))
     if t_dur >= dur / 8 then
       eq(nil, ('Took too long to cancel: %g >= %g'):format(t_dur, dur / 8))
     end
@@ -147,7 +147,7 @@ describe('List support code', function()
     feed('<C-c>')
     poke_eventloop()
     command('let t_dur = reltimestr(reltime(t_rt))')
-    local t_dur = tonumber(meths.get_var('t_dur'))
+    local t_dur = tonumber(api.nvim_get_var('t_dur'))
     print(('t_dur: %g'):format(t_dur))
     if t_dur >= dur / 8 then
       eq(nil, ('Took too long to cancel: %g >= %g'):format(t_dur, dur / 8))

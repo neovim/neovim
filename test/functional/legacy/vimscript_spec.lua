@@ -3,7 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local exec = helpers.exec
 local feed = helpers.feed
-local meths = helpers.meths
+local api = helpers.api
 
 before_each(clear)
 
@@ -12,7 +12,7 @@ describe('Vim script', function()
   it('Error when if/for/while/try/function is nested too deep', function()
     local screen = Screen.new(80, 24)
     screen:attach()
-    meths.set_option_value('laststatus', 2, {})
+    api.nvim_set_option_value('laststatus', 2, {})
     exec([[
       " Deep nesting of if ... endif
       func Test1()

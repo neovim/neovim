@@ -5,7 +5,7 @@ local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
-local funcs = helpers.funcs
+local fn = helpers.fn
 local poke_eventloop = helpers.poke_eventloop
 local exec = helpers.exec
 
@@ -27,7 +27,7 @@ describe('search cmdline', function()
   end)
 
   local function tenlines()
-    funcs.setline(1, {
+    fn.setline(1, {
       '  1',
       '  2 these',
       '  3 the',
@@ -68,7 +68,7 @@ describe('search cmdline', function()
           3 {inc:the}             |
         /the^                |
       ]])
-      eq({ 0, 0, 0, 0 }, funcs.getpos('"'))
+      eq({ 0, 0, 0, 0 }, fn.getpos('"'))
       feed('<C-G>')
       screen:expect([[
           3 the             |
@@ -125,7 +125,7 @@ describe('search cmdline', function()
           end,
         }
         feed('<CR>')
-        eq({ 0, 0, 0, 0 }, funcs.getpos('"'))
+        eq({ 0, 0, 0, 0 }, fn.getpos('"'))
       end
     end
 
@@ -368,7 +368,7 @@ describe('search cmdline', function()
   end)
 
   it('can traverse matches in the same line with <C-G>/<C-T>', function()
-    funcs.setline(1, { '  1', '  2 these', '  3 the theother' })
+    fn.setline(1, { '  1', '  2 these', '  3 the theother' })
     command('1')
     command('set incsearch')
 
@@ -465,7 +465,7 @@ describe('search cmdline', function()
       coladd = 0,
       skipcol = 0,
       curswant = 4,
-    }, funcs.winsaveview())
+    }, fn.winsaveview())
   end)
 
   it('restores original view after failed search', function()
@@ -500,14 +500,14 @@ describe('search cmdline', function()
       coladd = 0,
       skipcol = 0,
       curswant = 0,
-    }, funcs.winsaveview())
+    }, fn.winsaveview())
   end)
 
   -- oldtest: Test_search_cmdline4().
   it("CTRL-G with 'incsearch' and ? goes in the right direction", function()
     screen:try_resize(40, 4)
     command('enew!')
-    funcs.setline(1, { '  1 the first', '  2 the second', '  3 the third' })
+    fn.setline(1, { '  1 the first', '  2 the second', '  3 the third' })
     command('set laststatus=0 shortmess+=s')
     command('set incsearch')
     command('$')
@@ -608,7 +608,7 @@ describe('search cmdline', function()
   it('incsearch works with :sort', function()
     screen:try_resize(20, 4)
     command('set incsearch hlsearch scrolloff=0')
-    funcs.setline(1, { 'another one 2', 'that one 3', 'the one 1' })
+    fn.setline(1, { 'another one 2', 'that one 3', 'the one 1' })
 
     feed(':sort ni u /on')
     screen:expect([[
@@ -624,7 +624,7 @@ describe('search cmdline', function()
   it('incsearch works with :vimgrep family', function()
     screen:try_resize(30, 4)
     command('set incsearch hlsearch scrolloff=0')
-    funcs.setline(1, { 'another one 2', 'that one 3', 'the one 1' })
+    fn.setline(1, { 'another one 2', 'that one 3', 'the one 1' })
 
     feed(':vimgrep on')
     screen:expect([[

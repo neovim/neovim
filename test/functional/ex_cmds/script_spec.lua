@@ -5,7 +5,7 @@ local neq = helpers.neq
 local command = helpers.command
 local exec_capture = helpers.exec_capture
 local write_file = helpers.write_file
-local meths = helpers.meths
+local api = helpers.api
 local clear = helpers.clear
 local dedent = helpers.dedent
 local exc_exec = helpers.exc_exec
@@ -83,7 +83,7 @@ describe('script_get-based command', function()
           ]])):format(cmd, garbage)
             )
           )
-          neq(0, meths.get_var('exc'))
+          neq(0, api.nvim_get_var('exc'))
         end
       end)
     end)

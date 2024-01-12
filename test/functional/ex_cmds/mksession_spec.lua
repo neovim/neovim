@@ -6,12 +6,12 @@ local command = helpers.command
 local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
 local neq = helpers.neq
-local funcs = helpers.funcs
+local fn = helpers.fn
 local matches = helpers.matches
-local pesc = helpers.pesc
+local pesc = vim.pesc
 local rmdir = helpers.rmdir
-local sleep = helpers.sleep
-local meths = helpers.meths
+local sleep = vim.uv.sleep
+local api = helpers.api
 local skip = helpers.skip
 local is_os = helpers.is_os
 local mkdir = helpers.mkdir
@@ -54,8 +54,8 @@ describe(':mksession', function()
     -- Restore session.
     command('source ' .. session_file)
 
-    eq(funcs.winbufnr(1), funcs.winbufnr(2))
-    neq(funcs.winbufnr(1), funcs.winbufnr(3))
+    eq(fn.winbufnr(1), fn.winbufnr(2))
+    neq(fn.winbufnr(1), fn.winbufnr(3))
   end)
 
   -- common testing procedure for testing "sessionoptions-=terminal"
@@ -70,7 +70,7 @@ describe(':mksession', function()
     -- Restore session.
     command('source ' .. session_file)
 
-    eq(expected_buf_count, #meths.list_bufs())
+    eq(expected_buf_count, #api.nvim_list_bufs())
   end
 
   it(
@@ -80,54 +80,54 @@ describe(':mksession', function()
       command('edit ' .. tmpfile_base)
       command('terminal')
 
-      local buf_count = #meths.list_bufs()
+      local buf_count = #api.nvim_list_bufs()
       eq(2, buf_count)
 
-      eq('terminal', meths.get_option_value('buftype', {}))
+      eq('terminal', api.nvim_get_option_value('buftype', {}))
 
       test_terminal_session_disabled(2)
 
       -- no terminal should be set. As a side effect we end up with a blank buffer
-      eq('', meths.get_option_value('buftype', { buf = meths.list_bufs()[1] }))
-      eq('', meths.get_option_value('buftype', { buf = meths.list_bufs()[2] }))
+      eq('', api.nvim_get_option_value('buftype', { buf = api.nvim_list_bufs()[1] }))
+      eq('', api.nvim_get_option_value('buftype', { buf = api.nvim_list_bufs()[2] }))
     end
   )
 
   it('do not restore :terminal if not set in sessionoptions, terminal hidden #13078', function()
     command('terminal')
-    local terminal_bufnr = meths.get_current_buf()
+    local terminal_bufnr = api.nvim_get_current_buf()
 
     local tmpfile_base = file_prefix .. '-tmpfile'
     -- make terminal hidden by opening a new file
     command('edit ' .. tmpfile_base .. '1')
 
-    local buf_count = #meths.list_bufs()
+    local buf_count = #api.nvim_list_bufs()
     eq(2, buf_count)
 
-    eq(1, funcs.getbufinfo(terminal_bufnr)[1].hidden)
+    eq(1, fn.getbufinfo(terminal_bufnr)[1].hidden)
 
     test_terminal_session_disabled(1)
 
     -- no terminal should exist here
-    neq('', meths.buf_get_name(meths.list_bufs()[1]))
+    neq('', api.nvim_buf_get_name(api.nvim_list_bufs()[1]))
   end)
 
   it('do not restore :terminal if not set in sessionoptions, only buffer #13078', function()
     command('terminal')
-    eq('terminal', meths.get_option_value('buftype', {}))
+    eq('terminal', api.nvim_get_option_value('buftype', {}))
 
-    local buf_count = #meths.list_bufs()
+    local buf_count = #api.nvim_list_bufs()
     eq(1, buf_count)
 
     test_terminal_session_disabled(1)
 
     -- no terminal should be set
-    eq('', meths.get_option_value('buftype', {}))
+    eq('', api.nvim_get_option_value('buftype', {}))
   end)
 
   it('restores tab-local working directories', function()
     local tmpfile_base = file_prefix .. '-tmpfile'
-    local cwd_dir = funcs.getcwd()
+    local cwd_dir = fn.getcwd()
 
     -- :mksession does not save empty tabs, so create some buffers.
     command('edit ' .. tmpfile_base .. '1')
@@ -143,15 +143,15 @@ describe(':mksession', function()
     command('source ' .. session_file)
     -- First tab should have the original working directory.
     command('tabnext 1')
-    eq(cwd_dir, funcs.getcwd())
+    eq(cwd_dir, fn.getcwd())
     -- Second tab should have the tab-local working directory.
     command('tabnext 2')
-    eq(cwd_dir .. get_pathsep() .. tab_dir, funcs.getcwd())
+    eq(cwd_dir .. get_pathsep() .. tab_dir, fn.getcwd())
   end)
 
   it('restores buffers with tab-local CWD', function()
     local tmpfile_base = file_prefix .. '-tmpfile'
-    local cwd_dir = funcs.getcwd()
+    local cwd_dir = fn.getcwd()
     local session_path = cwd_dir .. get_pathsep() .. session_file
 
     command('edit ' .. tmpfile_base .. '1')
@@ -167,13 +167,13 @@ describe(':mksession', function()
     -- Use :silent to avoid press-enter prompt due to long path
     command('silent source ' .. session_path)
     command('tabnext 1')
-    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '1', funcs.expand('%:p'))
+    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '1', fn.expand('%:p'))
     command('tabnext 2')
-    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '2', funcs.expand('%:p'))
+    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '2', fn.expand('%:p'))
   end)
 
   it('restores CWD for :terminal buffers #11288', function()
-    local cwd_dir = funcs.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
+    local cwd_dir = fn.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
     cwd_dir = cwd_dir:gsub([[\]], '/') -- :mksession always uses unix slashes.
     local session_path = cwd_dir .. '/' .. session_file
 
@@ -191,7 +191,7 @@ describe(':mksession', function()
     command('silent source ' .. session_path)
 
     local expected_cwd = cwd_dir .. '/' .. tab_dir
-    matches('^term://' .. pesc(expected_cwd) .. '//%d+:', funcs.expand('%'))
+    matches('^term://' .. pesc(expected_cwd) .. '//%d+:', fn.expand('%'))
     command('%bwipeout!')
     if is_os('win') then
       sleep(100) -- Make sure all child processes have exited.
@@ -202,7 +202,7 @@ describe(':mksession', function()
     skip(is_os('win'), 'N/A for Windows')
 
     local screen
-    local cwd_dir = funcs.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
+    local cwd_dir = fn.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
     local session_path = cwd_dir .. '/' .. session_file
 
     screen = Screen.new(50, 6)
@@ -238,7 +238,7 @@ describe(':mksession', function()
     local tmpfile = file_prefix .. '-tmpfile-float'
 
     command('edit ' .. tmpfile)
-    local buf = meths.create_buf(false, true)
+    local buf = api.nvim_create_buf(false, true)
     local config = {
       relative = 'editor',
       focusable = false,
@@ -248,8 +248,8 @@ describe(':mksession', function()
       col = 1,
       style = 'minimal',
     }
-    meths.open_win(buf, false, config)
-    local cmdheight = meths.get_option_value('cmdheight', {})
+    api.nvim_open_win(buf, false, config)
+    local cmdheight = api.nvim_get_option_value('cmdheight', {})
     command('mksession ' .. session_file)
 
     -- Create a new test instance of Nvim.
@@ -257,12 +257,12 @@ describe(':mksession', function()
 
     command('source ' .. session_file)
 
-    eq(tmpfile, funcs.expand('%'))
+    eq(tmpfile, fn.expand('%'))
     -- Check that there is only a single window, which indicates the floating
     -- window was not restored.
-    eq(1, funcs.winnr('$'))
+    eq(1, fn.winnr('$'))
     -- The command-line height should remain the same as it was.
-    eq(cmdheight, meths.get_option_value('cmdheight', {}))
+    eq(cmdheight, api.nvim_get_option_value('cmdheight', {}))
 
     os.remove(tmpfile)
   end)

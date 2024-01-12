@@ -1,11 +1,11 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local eq = helpers.eq
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local eval = helpers.eval
 local clear = helpers.clear
-local meths = helpers.meths
-local funcs = helpers.funcs
+local api = helpers.api
+local fn = helpers.fn
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local pcall_err = helpers.pcall_err
@@ -21,7 +21,7 @@ describe('sort()', function()
   end)
 
   it('sorts “wrong” values between -0.0001 and 0.0001, preserving order', function()
-    meths.set_var('list', {
+    api.nvim_set_var('list', {
       true,
       false,
       NIL,
@@ -32,7 +32,7 @@ describe('sort()', function()
       -0.0001,
     })
     command('call insert(g:list, function("tr"))')
-    local error_lines = funcs.split(funcs.execute('silent! call sort(g:list, "f")'), '\n')
+    local error_lines = fn.split(fn.execute('silent! call sort(g:list, "f")'), '\n')
     local errors = {}
     for _, err in ipairs(error_lines) do
       errors[err] = true

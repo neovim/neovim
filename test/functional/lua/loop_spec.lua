@@ -1,10 +1,10 @@
 -- Test suite for testing interactions with API bindings
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local funcs = helpers.funcs
-local meths = helpers.meths
+local fn = helpers.fn
+local api = helpers.api
 local clear = helpers.clear
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 local feed = helpers.feed
 local eq = helpers.eq
 local eval = helpers.eval
@@ -16,21 +16,19 @@ before_each(clear)
 
 describe('vim.uv', function()
   it('version', function()
-    assert(funcs.luaeval('vim.uv.version()') >= 72961, 'libuv version too old')
-    matches('(%d+)%.(%d+)%.(%d+)', funcs.luaeval('vim.uv.version_string()'))
+    assert(fn.luaeval('vim.uv.version()') >= 72961, 'libuv version too old')
+    matches('(%d+)%.(%d+)%.(%d+)', fn.luaeval('vim.uv.version_string()'))
   end)
 
   it('timer', function()
     exec_lua('vim.api.nvim_set_var("coroutine_cnt", 0)', {})
 
     local code = [[
-      local uv = vim.uv
-
       local touch = 0
       local function wait(ms)
         local this = coroutine.running()
         assert(this)
-        local timer = uv.new_timer()
+        local timer = vim.uv.new_timer()
         timer:start(ms, 0, vim.schedule_wrap(function ()
           timer:close()
           touch = touch + 1
@@ -50,13 +48,13 @@ describe('vim.uv', function()
       end)()
     ]]
 
-    eq(0, meths.get_var('coroutine_cnt'))
+    eq(0, api.nvim_get_var('coroutine_cnt'))
     exec_lua(code)
     retry(2, nil, function()
       sleep(50)
-      eq(2, meths.get_var('coroutine_cnt'))
+      eq(2, api.nvim_get_var('coroutine_cnt'))
     end)
-    eq(3, meths.get_var('coroutine_cnt_1'))
+    eq(3, api.nvim_get_var('coroutine_cnt_1'))
   end)
 
   it('is API safe', function()

@@ -4,7 +4,7 @@ local eq = helpers.eq
 local clear = helpers.clear
 local command = helpers.command
 local eval = helpers.eval
-local meths = helpers.meths
+local api = helpers.api
 local exec = helpers.exec
 local exec_capture = helpers.exec_capture
 local expect_exit = helpers.expect_exit
@@ -15,12 +15,12 @@ before_each(clear)
 
 describe(':let', function()
   it('correctly lists variables with curly-braces', function()
-    meths.set_var('v', { 0 })
+    api.nvim_set_var('v', { 0 })
     eq('v                     [0]', exec_capture('let {"v"}'))
   end)
 
   it('correctly lists variables with subscript', function()
-    meths.set_var('v', { 0 })
+    api.nvim_set_var('v', { 0 })
     eq('v[0]                  #0', exec_capture('let v[0]'))
     eq('g:["v"][0]            #0', exec_capture('let g:["v"][0]'))
     eq('{"g:"}["v"][0]        #0', exec_capture('let {"g:"}["v"][0]'))
@@ -100,17 +100,17 @@ describe(':let', function()
   end)
 
   it('can apply operator to boolean option', function()
-    eq(true, meths.get_option_value('equalalways', {}))
+    eq(true, api.nvim_get_option_value('equalalways', {}))
     command('let &equalalways -= 1')
-    eq(false, meths.get_option_value('equalalways', {}))
+    eq(false, api.nvim_get_option_value('equalalways', {}))
     command('let &equalalways += 1')
-    eq(true, meths.get_option_value('equalalways', {}))
+    eq(true, api.nvim_get_option_value('equalalways', {}))
     command('let &equalalways *= 1')
-    eq(true, meths.get_option_value('equalalways', {}))
+    eq(true, api.nvim_get_option_value('equalalways', {}))
     command('let &equalalways /= 1')
-    eq(true, meths.get_option_value('equalalways', {}))
+    eq(true, api.nvim_get_option_value('equalalways', {}))
     command('let &equalalways %= 1')
-    eq(false, meths.get_option_value('equalalways', {}))
+    eq(false, api.nvim_get_option_value('equalalways', {}))
   end)
 end)
 

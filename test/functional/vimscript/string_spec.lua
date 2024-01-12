@@ -2,12 +2,12 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq = helpers.eq
 local command = helpers.command
-local meths = helpers.meths
+local api = helpers.api
 local eval = helpers.eval
 local exc_exec = helpers.exc_exec
 local pcall_err = helpers.pcall_err
-local funcs = helpers.funcs
-local NIL = helpers.NIL
+local fn = helpers.fn
+local NIL = vim.NIL
 local source = helpers.source
 
 describe('string() function', function()
@@ -24,8 +24,8 @@ describe('string() function', function()
     end)
 
     it('dumps regular values', function()
-      eq('1.5', funcs.string(1.5))
-      eq('1.56e-20', funcs.string(1.56000e-020))
+      eq('1.5', fn.string(1.5))
+      eq('1.56e-20', fn.string(1.56000e-020))
       eq('0.0', eval('string(0.0)'))
     end)
 
@@ -33,58 +33,58 @@ describe('string() function', function()
       eq('v:true', eval('string(v:true)'))
       eq('v:false', eval('string(v:false)'))
       eq('v:null', eval('string(v:null)'))
-      eq('v:true', funcs.string(true))
-      eq('v:false', funcs.string(false))
-      eq('v:null', funcs.string(NIL))
+      eq('v:true', fn.string(true))
+      eq('v:false', fn.string(false))
+      eq('v:null', fn.string(NIL))
     end)
 
     it('dumps values with at most six digits after the decimal point', function()
-      eq('1.234568e-20', funcs.string(1.23456789123456789123456789e-020))
-      eq('1.234568', funcs.string(1.23456789123456789123456789))
+      eq('1.234568e-20', fn.string(1.23456789123456789123456789e-020))
+      eq('1.234568', fn.string(1.23456789123456789123456789))
     end)
 
     it('dumps values with at most seven digits before the decimal point', function()
-      eq('1234567.891235', funcs.string(1234567.89123456789123456789))
-      eq('1.234568e7', funcs.string(12345678.9123456789123456789))
+      eq('1234567.891235', fn.string(1234567.89123456789123456789))
+      eq('1.234568e7', fn.string(12345678.9123456789123456789))
     end)
 
     it('dumps negative values', function()
-      eq('-1.5', funcs.string(-1.5))
-      eq('-1.56e-20', funcs.string(-1.56000e-020))
-      eq('-1.234568e-20', funcs.string(-1.23456789123456789123456789e-020))
-      eq('-1.234568', funcs.string(-1.23456789123456789123456789))
-      eq('-1234567.891235', funcs.string(-1234567.89123456789123456789))
-      eq('-1.234568e7', funcs.string(-12345678.9123456789123456789))
+      eq('-1.5', fn.string(-1.5))
+      eq('-1.56e-20', fn.string(-1.56000e-020))
+      eq('-1.234568e-20', fn.string(-1.23456789123456789123456789e-020))
+      eq('-1.234568', fn.string(-1.23456789123456789123456789))
+      eq('-1234567.891235', fn.string(-1234567.89123456789123456789))
+      eq('-1.234568e7', fn.string(-12345678.9123456789123456789))
     end)
   end)
 
   describe('used to represent numbers', function()
     it('dumps regular values', function()
-      eq('0', funcs.string(0))
-      eq('-1', funcs.string(-1))
-      eq('1', funcs.string(1))
+      eq('0', fn.string(0))
+      eq('-1', fn.string(-1))
+      eq('1', fn.string(1))
     end)
 
     it('dumps large values', function()
-      eq('2147483647', funcs.string(2 ^ 31 - 1))
-      eq('-2147483648', funcs.string(-2 ^ 31))
+      eq('2147483647', fn.string(2 ^ 31 - 1))
+      eq('-2147483648', fn.string(-2 ^ 31))
     end)
   end)
 
   describe('used to represent strings', function()
     it('dumps regular strings', function()
-      eq("'test'", funcs.string('test'))
+      eq("'test'", fn.string('test'))
     end)
 
     it('dumps empty strings', function()
-      eq("''", funcs.string(''))
+      eq("''", fn.string(''))
     end)
 
     it("dumps strings with ' inside", function()
-      eq("''''''''", funcs.string("'''"))
-      eq("'a''b'''''", funcs.string("a'b''"))
-      eq("'''b''''d'", funcs.string("'b''d"))
-      eq("'a''b''c''d'", funcs.string("a'b'c'd"))
+      eq("''''''''", fn.string("'''"))
+      eq("'a''b'''''", fn.string("a'b''"))
+      eq("'''b''''d'", fn.string("'b''d"))
+      eq("'a''b''c''d'", fn.string("a'b'c'd"))
     end)
 
     it('dumps NULL strings', function()
@@ -161,7 +161,7 @@ describe('string() function', function()
     end)
 
     it('does not crash or halt when dumping partials with reference cycles in self', function()
-      meths.set_var('d', { v = true })
+      api.nvim_set_var('d', { v = true })
       eq(
         [[Vim(echo):E724: unable to correctly dump variable with self-referencing container]],
         pcall_err(command, 'echo string(extend(extend(g:d, {"f": g:Test2_f}), {"p": g:d.f}))')
@@ -186,7 +186,7 @@ describe('string() function', function()
     end)
 
     it('does not crash or halt when dumping partials with reference cycles in arguments', function()
-      meths.set_var('l', {})
+      api.nvim_set_var('l', {})
       eval('add(l, l)')
       -- Regression: the below line used to crash (add returns original list and
       -- there was error in dumping partials). Tested explicitly in
@@ -201,8 +201,8 @@ describe('string() function', function()
     it(
       'does not crash or halt when dumping partials with reference cycles in self and arguments',
       function()
-        meths.set_var('d', { v = true })
-        meths.set_var('l', {})
+        api.nvim_set_var('d', { v = true })
+        api.nvim_set_var('l', {})
         eval('add(l, l)')
         eval('add(l, function("Test1", l))')
         eval('add(l, function("Test1", d))')
@@ -219,19 +219,19 @@ describe('string() function', function()
 
   describe('used to represent lists', function()
     it('dumps empty list', function()
-      eq('[]', funcs.string({}))
+      eq('[]', fn.string({}))
     end)
 
     it('dumps nested lists', function()
-      eq('[[[[[]]]]]', funcs.string({ { { { {} } } } }))
+      eq('[[[[[]]]]]', fn.string({ { { { {} } } } }))
     end)
 
     it('dumps nested non-empty lists', function()
-      eq('[1, [[3, [[5], 4]], 2]]', funcs.string({ 1, { { 3, { { 5 }, 4 } }, 2 } }))
+      eq('[1, [[3, [[5], 4]], 2]]', fn.string({ 1, { { 3, { { 5 }, 4 } }, 2 } }))
     end)
 
     it('errors when dumping recursive lists', function()
-      meths.set_var('l', {})
+      api.nvim_set_var('l', {})
       eval('add(l, l)')
       eq(
         'Vim(echo):E724: unable to correctly dump variable with self-referencing container',
@@ -240,7 +240,7 @@ describe('string() function', function()
     end)
 
     it('dumps recursive lists despite the error', function()
-      meths.set_var('l', {})
+      api.nvim_set_var('l', {})
       eval('add(l, l)')
       eq(
         'Vim(echo):E724: unable to correctly dump variable with self-referencing container',
@@ -266,11 +266,11 @@ describe('string() function', function()
     end)
 
     it('dumps non-empty dictionary', function()
-      eq("{'t''est': 1}", funcs.string({ ["t'est"] = 1 }))
+      eq("{'t''est': 1}", fn.string({ ["t'est"] = 1 }))
     end)
 
     it('errors when dumping recursive dictionaries', function()
-      meths.set_var('d', { d = 1 })
+      api.nvim_set_var('d', { d = 1 })
       eval('extend(d, {"d": d})')
       eq(
         'Vim(echo):E724: unable to correctly dump variable with self-referencing container',
@@ -279,7 +279,7 @@ describe('string() function', function()
     end)
 
     it('dumps recursive dictionaries despite the error', function()
-      meths.set_var('d', { d = 1 })
+      api.nvim_set_var('d', { d = 1 })
       eval('extend(d, {"d": d})')
       eq(
         'Vim(echo):E724: unable to correctly dump variable with self-referencing container',

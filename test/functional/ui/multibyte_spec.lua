@@ -5,9 +5,9 @@ local command = helpers.command
 local feed = helpers.feed
 local feed_command = helpers.feed_command
 local insert = helpers.insert
-local funcs = helpers.funcs
-local meths = helpers.meths
-local split = helpers.split
+local fn = helpers.fn
+local api = helpers.api
+local split = vim.split
 local dedent = helpers.dedent
 
 describe('multibyte rendering', function()
@@ -85,7 +85,7 @@ describe('multibyte rendering', function()
     ]])
 
     -- check double-with char is temporarily hidden when overlapped
-    funcs.complete(4, { 'xx', 'yy' })
+    fn.complete(4, { 'xx', 'yy' })
     screen:expect([[
       ab xx^                                                       |
       - {2: xx             }                                          |
@@ -118,7 +118,7 @@ describe('multibyte rendering', function()
 
   it('works with a lot of unicode (zalgo) text', function()
     screen:try_resize(65, 10)
-    meths.buf_set_lines(
+    api.nvim_buf_set_lines(
       0,
       0,
       -1,
@@ -156,7 +156,7 @@ describe('multibyte rendering', function()
 
     -- nvim will reset the zalgo text^W^W glyph cache if it gets too full.
     -- this should be exceedingly rare, but fake it to make sure it works
-    meths._invalidate_glyph_cache()
+    api.nvim__invalidate_glyph_cache()
     screen:expect {
       grid = [[
       ^L̓̉̑̒̌̚ơ̗̌̒̄̀ŕ̈̈̎̐̕è̇̅̄̄̐m̖̟̟̅̄̚ ̛̓̑̆̇̍i̗̟̞̜̅̐p̗̞̜̉̆̕s̟̜̘̍̑̏ū̟̞̎̃̉ḿ̘̙́́̐ ̖̍̌̇̉̚d̞̄̃̒̉̎ò́̌̌̂̐l̞̀̄̆̌̚ȯ̖̞̋̀̐r̓̇̌̃̃̚ ̗̘̀̏̍́s̜̀̎̎̑̕i̟̗̐̄̄̚t̝̎̆̓̐̒ ̘̇̔̓̊̚ȃ̛̟̗̏̅m̜̟̙̞̈̓é̘̞̟̔̆t̝̂̂̈̑̔,̜̜̖̅̄̍ ̛̗̊̓̆̚c̟̍̆̍̈̔ȯ̖̖̝̑̀n̜̟̎̊̃̚s̟̏̇̎̒̚e̙̐̈̓̌̚c̙̍̈̏̅̕ť̇̄̇̆̓e̛̓̌̈̓̈t̟̍̀̉̆̅u̝̞̎̂̄̚r̘̀̅̈̅̐ ̝̞̓́̇̉ã̏̀̆̅̕d̛̆̐̉̆̋ȉ̞̟̍̃̚p̛̜̊̍̂̓ȋ̏̅̃̋̚ṥ̛̏̃̕č̛̞̝̀̂í̗̘̌́̎n̔̎́̒̂̕ǧ̗̜̋̇̂ ̛̜̔̄̎̃ê̛̔̆̇̕l̘̝̏̐̊̏ĩ̛̍̏̏̄t̟̐́̀̐̎,̙̘̍̆̉̐ ̋̂̏̄̌̅s̙̓̌̈́̇e̛̗̋̒̎̏d̜̗̊̍̊̚     |
@@ -227,7 +227,7 @@ describe('multibyte rendering', function()
     -- If we would increase the schar_t size, say from 32 to 64 bytes, we need to extend the
     -- test text with even more zalgo energy to still touch this edge case.
 
-    meths.buf_set_lines(0, 0, -1, true, { 'سلام့̀́̂̃̄̅̆̇̈̉̊̋̌' })
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'سلام့̀́̂̃̄̅̆̇̈̉̊̋̌' })
     command('set noarabicshape')
 
     screen:expect {

@@ -1,10 +1,9 @@
 -- Test suite for testing interactions with API bindings
 local helpers = require('test.functional.helpers')(after_each)
-local luv = require('luv')
 
 local command = helpers.command
-local meths = helpers.meths
-local funcs = helpers.funcs
+local api = helpers.api
+local fn = helpers.fn
 local clear = helpers.clear
 local eq = helpers.eq
 local fail = helpers.fail
@@ -55,9 +54,9 @@ end)
 describe('lua buffer event callbacks: on_lines', function()
   local function setup_eventcheck(verify, utf_sizes, lines)
     local lastsize
-    meths.buf_set_lines(0, 0, -1, true, lines)
+    api.nvim_buf_set_lines(0, 0, -1, true, lines)
     if verify then
-      lastsize = meths.buf_get_offset(0, meths.buf_line_count(0))
+      lastsize = api.nvim_buf_get_offset(0, api.nvim_buf_line_count(0))
     end
     exec_lua('return test_register(...)', 0, 'on_lines', 'test1', false, utf_sizes)
     local verify_name = 'test1'
@@ -77,8 +76,9 @@ describe('lua buffer event callbacks: on_lines', function()
         for _, event in ipairs(events) do
           if event[1] == verify_name and event[2] == 'lines' then
             local startline, endline = event[5], event[7]
-            local newrange = meths.buf_get_offset(0, endline) - meths.buf_get_offset(0, startline)
-            local newsize = meths.buf_get_offset(0, meths.buf_line_count(0))
+            local newrange = api.nvim_buf_get_offset(0, endline)
+              - api.nvim_buf_get_offset(0, startline)
+            local newsize = api.nvim_buf_get_offset(0, api.nvim_buf_line_count(0))
             local oldrange = newrange + lastsize - newsize
             eq(oldrange, event[8])
             lastsize = newsize
@@ -98,13 +98,13 @@ describe('lua buffer event callbacks: on_lines', function()
   local function check(verify, utf_sizes)
     local check_events, verify_name = setup_eventcheck(verify, utf_sizes, origlines)
 
-    local tick = meths.buf_get_changedtick(0)
+    local tick = api.nvim_buf_get_changedtick(0)
     command('set autoindent')
     command('normal! GyyggP')
     tick = tick + 1
     check_events { { 'test1', 'lines', 1, tick, 0, 0, 1, 0 } }
 
-    meths.buf_set_lines(0, 3, 5, true, { 'changed line' })
+    api.nvim_buf_set_lines(0, 3, 5, true, { 'changed line' })
     tick = tick + 1
     check_events { { 'test1', 'lines', 1, tick, 3, 5, 4, 32 } }
 
@@ -142,7 +142,7 @@ describe('lua buffer event callbacks: on_lines', function()
     -- simulate next callback returning true
     exec_lua("test_unreg = 'test1'")
 
-    meths.buf_set_lines(0, 6, 7, true, { 'x1', 'x2', 'x3' })
+    api.nvim_buf_set_lines(0, 6, 7, true, { 'x1', 'x2', 'x3' })
     tick = tick + 1
 
     -- plugins can opt in to receive changedtick events, or choose
@@ -154,7 +154,7 @@ describe('lua buffer event callbacks: on_lines', function()
 
     verify_name 'test2'
 
-    meths.buf_set_lines(0, 1, 1, true, { 'added' })
+    api.nvim_buf_set_lines(0, 1, 1, true, { 'added' })
     tick = tick + 1
     check_events { { 'test2', 'lines', 1, tick, 1, 1, 2, 0 } }
 
@@ -206,7 +206,7 @@ describe('lua buffer event callbacks: on_lines', function()
     }
     local check_events, verify_name = setup_eventcheck(verify, true, unicode_text)
 
-    local tick = meths.buf_get_changedtick(0)
+    local tick = api.nvim_buf_get_changedtick(0)
 
     feed('ggdd')
     tick = tick + 1
@@ -254,7 +254,7 @@ describe('lua buffer event callbacks: on_lines', function()
   end)
 
   it('has valid cursor position while shifting', function()
-    meths.buf_set_lines(0, 0, -1, true, { 'line1' })
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'line1' })
     exec_lua([[
       vim.api.nvim_buf_attach(0, false, {
         on_lines = function()
@@ -263,15 +263,15 @@ describe('lua buffer event callbacks: on_lines', function()
       })
     ]])
     feed('>>')
-    eq(1, meths.get_var('listener_cursor_line'))
+    eq(1, api.nvim_get_var('listener_cursor_line'))
   end)
 
   it('has valid cursor position while deleting lines', function()
-    meths.buf_set_lines(0, 0, -1, true, { 'line_1', 'line_2', 'line_3', 'line_4' })
-    meths.win_set_cursor(0, { 2, 0 })
-    eq(2, meths.win_get_cursor(0)[1])
-    meths.buf_set_lines(0, 0, -1, true, { 'line_1', 'line_2', 'line_3' })
-    eq(2, meths.win_get_cursor(0)[1])
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'line_1', 'line_2', 'line_3', 'line_4' })
+    api.nvim_win_set_cursor(0, { 2, 0 })
+    eq(2, api.nvim_win_get_cursor(0)[1])
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'line_1', 'line_2', 'line_3' })
+    eq(2, api.nvim_win_get_cursor(0)[1])
   end)
 
   it('does not SEGFAULT when accessing window buffer info in on_detach #14998', function()
@@ -299,7 +299,7 @@ describe('lua buffer event callbacks: on_lines', function()
   end)
 
   it('#12718 lnume', function()
-    meths.buf_set_lines(0, 0, -1, true, { '1', '2', '3' })
+    api.nvim_buf_set_lines(0, 0, -1, true, { '1', '2', '3' })
     exec_lua([[
       vim.api.nvim_buf_attach(0, false, {
         on_lines = function(...)
@@ -312,15 +312,15 @@ describe('lua buffer event callbacks: on_lines', function()
     feed('G0')
     feed('p')
     -- Is the last arg old_byte_size correct? Doesn't matter for this PR
-    eq(meths.get_var('linesev'), { 'lines', 1, 4, 2, 3, 5, 4 })
+    eq(api.nvim_get_var('linesev'), { 'lines', 1, 4, 2, 3, 5, 4 })
 
     feed('2G0')
     feed('p')
-    eq(meths.get_var('linesev'), { 'lines', 1, 5, 1, 4, 4, 8 })
+    eq(api.nvim_get_var('linesev'), { 'lines', 1, 5, 1, 4, 4, 8 })
 
     feed('1G0')
     feed('P')
-    eq(meths.get_var('linesev'), { 'lines', 1, 6, 0, 3, 3, 9 })
+    eq(api.nvim_get_var('linesev'), { 'lines', 1, 6, 0, 3, 3, 9 })
   end)
 
   it(
@@ -334,7 +334,7 @@ describe('lua buffer event callbacks: on_lines', function()
       })
     ]])
       feed('itest123<Esc><C-A>')
-      eq('test124', meths.get_current_line())
+      eq('test124', api.nvim_get_current_line())
     end
   )
 end)
@@ -346,19 +346,19 @@ describe('lua: nvim_buf_attach on_bytes', function()
   -- test both ways.
   local function setup_eventcheck(verify, start_txt)
     if start_txt then
-      meths.buf_set_lines(0, 0, -1, true, start_txt)
+      api.nvim_buf_set_lines(0, 0, -1, true, start_txt)
     else
-      start_txt = meths.buf_get_lines(0, 0, -1, true)
+      start_txt = api.nvim_buf_get_lines(0, 0, -1, true)
     end
     local shadowbytes = table.concat(start_txt, '\n') .. '\n'
     -- TODO: while we are brewing the real strong coffee,
     -- verify should check buf_get_offset after every check_events
     if verify then
-      local len = meths.buf_get_offset(0, meths.buf_line_count(0))
+      local len = api.nvim_buf_get_offset(0, api.nvim_buf_line_count(0))
       eq(len == -1 and 1 or len, string.len(shadowbytes))
     end
     exec_lua('return test_register(...)', 0, 'on_bytes', 'test1', false, false, true)
-    meths.buf_get_changedtick(0)
+    api.nvim_buf_get_changedtick(0)
 
     local verify_name = 'test1'
     local function check_events(expected)
@@ -385,11 +385,11 @@ describe('lua: nvim_buf_attach on_bytes', function()
           local after = string.sub(shadowbytes, start_byte + old_byte + 1)
           shadowbytes = before .. unknown .. after
         elseif event[1] == verify_name and event[2] == 'reload' then
-          shadowbytes = table.concat(meths.buf_get_lines(0, 0, -1, true), '\n') .. '\n'
+          shadowbytes = table.concat(api.nvim_buf_get_lines(0, 0, -1, true), '\n') .. '\n'
         end
       end
 
-      local text = meths.buf_get_lines(0, 0, -1, true)
+      local text = api.nvim_buf_get_lines(0, 0, -1, true)
       local bytes = table.concat(text, '\n') .. '\n'
 
       eq(
@@ -426,7 +426,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     it('opening lines', function()
       local check_events = setup_eventcheck(verify, origlines)
-      -- meths.set_option_value('autoindent', true, {})
+      -- api.nvim_set_option_value('autoindent', true, {})
       feed 'Go'
       check_events {
         { 'test1', 'bytes', 1, 3, 7, 0, 114, 0, 0, 0, 1, 0, 1 },
@@ -439,7 +439,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     it('opening lines with autoindent', function()
       local check_events = setup_eventcheck(verify, origlines)
-      meths.set_option_value('autoindent', true, {})
+      api.nvim_set_option_value('autoindent', true, {})
       feed 'Go'
       check_events {
         { 'test1', 'bytes', 1, 3, 7, 0, 114, 0, 0, 0, 1, 0, 5 },
@@ -453,19 +453,19 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     it('setline(num, line)', function()
       local check_events = setup_eventcheck(verify, origlines)
-      funcs.setline(2, 'babla')
+      fn.setline(2, 'babla')
       check_events {
         { 'test1', 'bytes', 1, 3, 1, 0, 16, 0, 15, 15, 0, 5, 5 },
       }
 
-      funcs.setline(2, { 'foo', 'bar' })
+      fn.setline(2, { 'foo', 'bar' })
       check_events {
         { 'test1', 'bytes', 1, 4, 1, 0, 16, 0, 5, 5, 0, 3, 3 },
         { 'test1', 'bytes', 1, 5, 2, 0, 20, 0, 15, 15, 0, 3, 3 },
       }
 
-      local buf_len = meths.buf_line_count(0)
-      funcs.setline(buf_len + 1, 'baz')
+      local buf_len = api.nvim_buf_line_count(0)
+      fn.setline(buf_len + 1, 'baz')
       check_events {
         { 'test1', 'bytes', 1, 6, 7, 0, 90, 0, 0, 0, 1, 0, 4 },
       }
@@ -473,8 +473,8 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     it('continuing comments with fo=or', function()
       local check_events = setup_eventcheck(verify, { '// Comment' })
-      meths.set_option_value('formatoptions', 'ro', {})
-      meths.set_option_value('filetype', 'c', {})
+      api.nvim_set_option_value('formatoptions', 'ro', {})
+      api.nvim_set_option_value('filetype', 'c', {})
       feed 'A<CR>'
       check_events {
         { 'test1', 'bytes', 1, 4, 0, 10, 10, 0, 0, 0, 1, 3, 4 },
@@ -555,7 +555,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     it('visual charwise paste', function()
       local check_events = setup_eventcheck(verify, { '1234567890' })
-      funcs.setreg('a', '___')
+      fn.setreg('a', '___')
 
       feed '1G1|vll'
       check_events {}
@@ -612,7 +612,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     it('inccomand=nosplit and substitute', function()
       local check_events = setup_eventcheck(verify, { 'abcde', '12345' })
-      meths.set_option_value('inccommand', 'nosplit', {})
+      api.nvim_set_option_value('inccommand', 'nosplit', {})
 
       -- linewise substitute
       feed(':%s/bcd/')
@@ -697,41 +697,41 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     it('nvim_buf_set_text insert', function()
       local check_events = setup_eventcheck(verify, { 'bastext' })
-      meths.buf_set_text(0, 0, 3, 0, 3, { 'fiol', 'kontra' })
+      api.nvim_buf_set_text(0, 0, 3, 0, 3, { 'fiol', 'kontra' })
       check_events {
         { 'test1', 'bytes', 1, 3, 0, 3, 3, 0, 0, 0, 1, 6, 11 },
       }
 
-      meths.buf_set_text(0, 1, 6, 1, 6, { 'punkt', 'syntgitarr', 'övnings' })
+      api.nvim_buf_set_text(0, 1, 6, 1, 6, { 'punkt', 'syntgitarr', 'övnings' })
       check_events {
         { 'test1', 'bytes', 1, 4, 1, 6, 14, 0, 0, 0, 2, 8, 25 },
       }
 
       eq(
         { 'basfiol', 'kontrapunkt', 'syntgitarr', 'övningstext' },
-        meths.buf_get_lines(0, 0, -1, true)
+        api.nvim_buf_get_lines(0, 0, -1, true)
       )
     end)
 
     it('nvim_buf_set_text replace', function()
       local check_events = setup_eventcheck(verify, origlines)
 
-      meths.buf_set_text(0, 2, 3, 2, 8, { 'very text' })
+      api.nvim_buf_set_text(0, 2, 3, 2, 8, { 'very text' })
       check_events {
         { 'test1', 'bytes', 1, 3, 2, 3, 35, 0, 5, 5, 0, 9, 9 },
       }
 
-      meths.buf_set_text(0, 3, 5, 3, 7, { ' splitty', 'line ' })
+      api.nvim_buf_set_text(0, 3, 5, 3, 7, { ' splitty', 'line ' })
       check_events {
         { 'test1', 'bytes', 1, 4, 3, 5, 57, 0, 2, 2, 1, 5, 14 },
       }
 
-      meths.buf_set_text(0, 0, 8, 1, 2, { 'JOINY' })
+      api.nvim_buf_set_text(0, 0, 8, 1, 2, { 'JOINY' })
       check_events {
         { 'test1', 'bytes', 1, 5, 0, 8, 8, 1, 2, 10, 0, 5, 5 },
       }
 
-      meths.buf_set_text(0, 4, 0, 6, 0, { 'was 5,6', '' })
+      api.nvim_buf_set_text(0, 4, 0, 6, 0, { 'was 5,6', '' })
       check_events {
         { 'test1', 'bytes', 1, 6, 4, 0, 75, 2, 0, 32, 1, 0, 8 },
       }
@@ -743,20 +743,20 @@ describe('lua: nvim_buf_attach on_bytes', function()
         'line l line 4',
         'was 5,6',
         '    indented line',
-      }, meths.buf_get_lines(0, 0, -1, true))
+      }, api.nvim_buf_get_lines(0, 0, -1, true))
     end)
 
     it('nvim_buf_set_text delete', function()
       local check_events = setup_eventcheck(verify, origlines)
 
       -- really {""} but accepts {} as a shorthand
-      meths.buf_set_text(0, 0, 0, 1, 0, {})
+      api.nvim_buf_set_text(0, 0, 0, 1, 0, {})
       check_events {
         { 'test1', 'bytes', 1, 3, 0, 0, 0, 1, 0, 16, 0, 0, 0 },
       }
 
       -- TODO(bfredl): this works but is not as convenient as set_lines
-      meths.buf_set_text(0, 4, 15, 5, 17, { '' })
+      api.nvim_buf_set_text(0, 4, 15, 5, 17, { '' })
       check_events {
         { 'test1', 'bytes', 1, 4, 4, 15, 79, 1, 17, 18, 0, 0, 0 },
       }
@@ -766,7 +766,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
         'original line 4',
         'original line 5',
         'original line 6',
-      }, meths.buf_get_lines(0, 0, -1, true))
+      }, api.nvim_buf_get_lines(0, 0, -1, true))
     end)
 
     it('checktime autoread', function()
@@ -777,7 +777,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
         old line 2]]
       )
       local atime = os.time() - 10
-      luv.fs_utime('Xtest-reload', atime, atime)
+      vim.uv.fs_utime('Xtest-reload', atime, atime)
       command 'e Xtest-reload'
       command 'set autoread'
 
@@ -801,7 +801,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
         { 'test1', 'bytes', 1, 5, 0, 10, 10, 1, 0, 1, 0, 1, 1 },
       }
 
-      eq({ 'new line 1 new line 2', 'new line 3' }, meths.buf_get_lines(0, 0, -1, true))
+      eq({ 'new line 1 new line 2', 'new line 3' }, api.nvim_buf_get_lines(0, 0, -1, true))
 
       -- check we can undo and redo a reload event.
       feed 'u'
@@ -925,19 +925,19 @@ describe('lua: nvim_buf_attach on_bytes', function()
       command('set undodir=. | set undofile')
 
       local ns = helpers.request('nvim_create_namespace', 'ns1')
-      meths.buf_set_extmark(0, ns, 0, 0, {})
+      api.nvim_buf_set_extmark(0, ns, 0, 0, {})
 
-      eq({ '12345', 'hello world' }, meths.buf_get_lines(0, 0, -1, true))
+      eq({ '12345', 'hello world' }, api.nvim_buf_get_lines(0, 0, -1, true))
 
       -- splice
       feed('gg0d2l')
 
-      eq({ '345', 'hello world' }, meths.buf_get_lines(0, 0, -1, true))
+      eq({ '345', 'hello world' }, api.nvim_buf_get_lines(0, 0, -1, true))
 
       -- move
       command('.m+1')
 
-      eq({ 'hello world', '345' }, meths.buf_get_lines(0, 0, -1, true))
+      eq({ 'hello world', '345' }, api.nvim_buf_get_lines(0, 0, -1, true))
 
       -- reload undofile and undo changes
       command('w')
@@ -950,7 +950,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
       local check_events = setup_eventcheck(verify, nil)
 
       feed('u')
-      eq({ '345', 'hello world' }, meths.buf_get_lines(0, 0, -1, true))
+      eq({ '345', 'hello world' }, api.nvim_buf_get_lines(0, 0, -1, true))
 
       check_events {
         { 'test1', 'bytes', 2, 6, 1, 0, 12, 1, 0, 4, 0, 0, 0 },
@@ -958,7 +958,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
 
       feed('u')
-      eq({ '12345', 'hello world' }, meths.buf_get_lines(0, 0, -1, true))
+      eq({ '12345', 'hello world' }, api.nvim_buf_get_lines(0, 0, -1, true))
 
       check_events {
         { 'test1', 'bytes', 2, 8, 0, 0, 0, 0, 0, 0, 0, 2, 2 },
@@ -969,7 +969,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
     it('blockwise paste with uneven line lengths', function()
       local check_events = setup_eventcheck(verify, { 'aaaa', 'aaa', 'aaa' })
 
-      -- eq({}, meths.buf_get_lines(0, 0, -1, true))
+      -- eq({}, api.nvim_buf_get_lines(0, 0, -1, true))
       feed('gg0<c-v>jj$d')
 
       check_events {
@@ -1023,7 +1023,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
     it('virtual edit', function()
       local check_events = setup_eventcheck(verify, { '', '	' })
 
-      meths.set_option_value('virtualedit', 'all', {})
+      api.nvim_set_option_value('virtualedit', 'all', {})
 
       feed [[<Right><Right>iab<ESC>]]
 
@@ -1042,7 +1042,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     it('block visual paste', function()
       local check_events = setup_eventcheck(verify, { 'AAA', 'BBB', 'CCC', 'DDD', 'EEE', 'FFF' })
-      funcs.setreg('a', '___')
+      fn.setreg('a', '___')
       feed([[gg0l<c-v>3jl"ap]])
 
       check_events {
@@ -1077,20 +1077,20 @@ describe('lua: nvim_buf_attach on_bytes', function()
       local check_events = setup_eventcheck(verify, { 'AAA', 'BBB' })
 
       -- delete
-      meths.buf_set_lines(0, 0, 1, true, {})
+      api.nvim_buf_set_lines(0, 0, 1, true, {})
 
       check_events {
         { 'test1', 'bytes', 1, 3, 0, 0, 0, 1, 0, 4, 0, 0, 0 },
       }
 
       -- add
-      meths.buf_set_lines(0, 0, 0, true, { 'asdf' })
+      api.nvim_buf_set_lines(0, 0, 0, true, { 'asdf' })
       check_events {
         { 'test1', 'bytes', 1, 4, 0, 0, 0, 0, 0, 0, 1, 0, 5 },
       }
 
       -- replace
-      meths.buf_set_lines(0, 0, 1, true, { 'asdf', 'fdsa' })
+      api.nvim_buf_set_lines(0, 0, 1, true, { 'asdf', 'fdsa' })
       check_events {
         { 'test1', 'bytes', 1, 5, 0, 0, 0, 1, 0, 5, 2, 0, 10 },
       }
@@ -1202,13 +1202,13 @@ describe('lua: nvim_buf_attach on_bytes', function()
       command('diffthis')
       command('new')
       command('diffthis')
-      meths.buf_set_lines(0, 0, -1, true, { 'AAA', 'BBB' })
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'AAA', 'BBB' })
       feed('G')
       command('diffput')
       check_events {
         { 'test1', 'bytes', 1, 3, 1, 0, 4, 0, 0, 0, 1, 0, 4 },
       }
-      meths.buf_set_lines(0, 0, -1, true, { 'AAA', 'CCC' })
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'AAA', 'CCC' })
       feed('<C-w>pG')
       command('diffget')
       check_events {
@@ -1250,7 +1250,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
           { 'test1', 'bytes', 1, 5, 3, 0, 10, 1, 0, 1, 0, 0, 0 },
         }
 
-        eq('CCC|BBBB|', table.concat(meths.buf_get_lines(0, 0, -1, true), '|'))
+        eq('CCC|BBBB|', table.concat(api.nvim_buf_get_lines(0, 0, -1, true), '|'))
       end)
     end
 

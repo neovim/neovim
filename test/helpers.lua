@@ -1,18 +1,19 @@
-local shared = vim
 local luaassert = require('luassert')
 local busted = require('busted')
-local luv = require('luv')
+local uv = vim.uv
 local Paths = require('test.cmakeconfig.paths')
 
 luaassert:set_parameter('TableFormatLevel', 100)
 
 local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
+
+--- @param str string
+--- @return string
 local function shell_quote(str)
   if string.find(str, quote_me) or str == '' then
     return '"' .. str:gsub('[$%%"\\]', '\\%0') .. '"'
-  else
-    return str
   end
+  return str
 end
 
 --- @class test.helpers
@@ -24,7 +25,7 @@ local module = {
 --- @return string
 local function relpath(p)
   p = vim.fs.normalize(p)
-  local cwd = luv.cwd()
+  local cwd = uv.cwd()
   return p:gsub('^' .. cwd)
 end
 
@@ -34,7 +35,7 @@ function module.isdir(path)
   if not path then
     return false
   end
-  local stat = luv.fs_stat(path)
+  local stat = uv.fs_stat(path)
   if not stat then
     return false
   end
@@ -47,7 +48,7 @@ function module.isfile(path)
   if not path then
     return false
   end
-  local stat = luv.fs_stat(path)
+  local stat = uv.fs_stat(path)
   if not stat then
     return false
   end
@@ -74,11 +75,6 @@ function module.popen_r(...)
   return io.popen(module.argss_to_cmd(...), 'r')
 end
 
--- sleeps the test runner (_not_ the nvim instance)
-function module.sleep(ms)
-  luv.sleep(ms)
-end
-
 -- Calls fn() until it succeeds, up to `max` times or until `max_ms`
 -- milliseconds have passed.
 function module.retry(max, max_ms, fn)
@@ -86,18 +82,18 @@ function module.retry(max, max_ms, fn)
   luaassert(max_ms == nil or max_ms > 0)
   local tries = 1
   local timeout = (max_ms and max_ms or 10000)
-  local start_time = luv.now()
+  local start_time = uv.now()
   while true do
     local status, result = pcall(fn)
     if status then
       return result
     end
-    luv.update_time() -- Update cached value of luv.now() (libuv: uv_now()).
-    if (max and tries >= max) or (luv.now() - start_time > timeout) then
+    uv.update_time() -- Update cached value of luv.now() (libuv: uv_now()).
+    if (max and tries >= max) or (uv.now() - start_time > timeout) then
       busted.fail(string.format('retry() attempts: %d\n%s', tries, tostring(result)), 2)
     end
     tries = tries + 1
-    luv.sleep(20) -- Avoid hot loop...
+    uv.sleep(20) -- Avoid hot loop...
   end
 end
 
@@ -290,7 +286,7 @@ function module.glob(initial_path, re, exc_re)
       local full_path = cur_path .. '/' .. e
       local checked_path = full_path:sub(#initial_path + 1)
       if (not is_excluded(checked_path)) and e:sub(1, 1) ~= '.' then
-        local stat = luv.fs_stat(full_path)
+        local stat = uv.fs_stat(full_path)
         if stat then
           local check_key = stat.dev .. ':' .. tostring(stat.ino)
           if not checked_files[check_key] then
@@ -357,7 +353,7 @@ function module.check_logs()
 end
 
 function module.sysname()
-  local platform = luv.os_uname()
+  local platform = uv.os_uname()
   if platform and platform.sysname then
     return platform.sysname:lower()
   end
@@ -377,7 +373,7 @@ function module.is_os(s)
 end
 
 function module.is_arch(s)
-  local machine = luv.os_uname().machine
+  local machine = uv.os_uname().machine
   if s == 'arm64' or s == 'aarch64' then
     return machine == 'arm64' or machine == 'aarch64'
   end
@@ -949,11 +945,13 @@ function module.read_nvim_log(logfile, ci_rename)
   return log
 end
 
+--- @param path string
+--- @return string
 function module.mkdir(path)
   -- 493 is 0755 in decimal
-  return luv.fs_mkdir(path, 493)
+  return uv.fs_mkdir(path, 493)
 end
 
-module = shared.tbl_extend('error', module, Paths, shared, require('test.deprecated'))
+module = vim.tbl_extend('error', module, Paths, require('test.deprecated'))
 
 return module

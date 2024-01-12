@@ -3,7 +3,7 @@ local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
 local clear = helpers.clear
-local funcs = helpers.funcs
+local fn = helpers.fn
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 
@@ -12,7 +12,7 @@ before_each(clear)
 describe('setmatches()', function()
   it('correctly handles case when both group and pattern entries are numbers', function()
     command('hi def link 1 PreProc')
-    eq(0, funcs.setmatches({ { group = 1, pattern = 2, id = 3, priority = 4 } }))
+    eq(0, fn.setmatches({ { group = 1, pattern = 2, id = 3, priority = 4 } }))
     eq({
       {
         group = '1',
@@ -20,8 +20,8 @@ describe('setmatches()', function()
         id = 3,
         priority = 4,
       },
-    }, funcs.getmatches())
-    eq(0, funcs.setmatches({ { group = 1, pattern = 2, id = 3, priority = 4, conceal = 5 } }))
+    }, fn.getmatches())
+    eq(0, fn.setmatches({ { group = 1, pattern = 2, id = 3, priority = 4, conceal = 5 } }))
     eq({
       {
         group = '1',
@@ -30,10 +30,10 @@ describe('setmatches()', function()
         priority = 4,
         conceal = '5',
       },
-    }, funcs.getmatches())
+    }, fn.getmatches())
     eq(
       0,
-      funcs.setmatches({
+      fn.setmatches({
         { group = 1, pos1 = { 2 }, pos2 = { 6 }, id = 3, priority = 4, conceal = 5 },
       })
     )
@@ -46,21 +46,21 @@ describe('setmatches()', function()
         priority = 4,
         conceal = '5',
       },
-    }, funcs.getmatches())
+    }, fn.getmatches())
   end)
 
   it('does not fail if highlight group is not defined', function()
-    eq(0, funcs.setmatches { { group = 1, pattern = 2, id = 3, priority = 4 } })
-    eq({ { group = '1', pattern = '2', id = 3, priority = 4 } }, funcs.getmatches())
+    eq(0, fn.setmatches { { group = 1, pattern = 2, id = 3, priority = 4 } })
+    eq({ { group = '1', pattern = '2', id = 3, priority = 4 } }, fn.getmatches())
     eq(
       0,
-      funcs.setmatches {
+      fn.setmatches {
         { group = 1, pos1 = { 2 }, pos2 = { 6 }, id = 3, priority = 4, conceal = 5 },
       }
     )
     eq(
       { { group = '1', pos1 = { 2 }, pos2 = { 6 }, id = 3, priority = 4, conceal = '5' } },
-      funcs.getmatches()
+      fn.getmatches()
     )
   end)
 end)
@@ -68,7 +68,7 @@ end)
 describe('matchadd()', function()
   it('correctly works when first two arguments and conceal are numbers at once', function()
     command('hi def link 1 PreProc')
-    eq(4, funcs.matchadd(1, 2, 3, 4, { conceal = 5 }))
+    eq(4, fn.matchadd(1, 2, 3, 4, { conceal = 5 }))
     eq({
       {
         group = '1',
@@ -77,7 +77,7 @@ describe('matchadd()', function()
         id = 4,
         conceal = '5',
       },
-    }, funcs.getmatches())
+    }, fn.getmatches())
   end)
 end)
 
@@ -99,7 +99,7 @@ describe('matchaddpos()', function()
   end)
   it('works with 0 lnum', function()
     command('hi clear PreProc')
-    eq(4, funcs.matchaddpos('PreProc', { 1 }, 3, 4))
+    eq(4, fn.matchaddpos('PreProc', { 1 }, 3, 4))
     eq({
       {
         group = 'PreProc',
@@ -107,9 +107,9 @@ describe('matchaddpos()', function()
         priority = 3,
         id = 4,
       },
-    }, funcs.getmatches())
-    funcs.matchdelete(4)
-    eq(4, funcs.matchaddpos('PreProc', { { 0 }, 1 }, 3, 4))
+    }, fn.getmatches())
+    fn.matchdelete(4)
+    eq(4, fn.matchaddpos('PreProc', { { 0 }, 1 }, 3, 4))
     eq({
       {
         group = 'PreProc',
@@ -117,9 +117,9 @@ describe('matchaddpos()', function()
         priority = 3,
         id = 4,
       },
-    }, funcs.getmatches())
-    funcs.matchdelete(4)
-    eq(4, funcs.matchaddpos('PreProc', { 0, 1 }, 3, 4))
+    }, fn.getmatches())
+    fn.matchdelete(4)
+    eq(4, fn.matchaddpos('PreProc', { 0, 1 }, 3, 4))
     eq({
       {
         group = 'PreProc',
@@ -127,11 +127,11 @@ describe('matchaddpos()', function()
         priority = 3,
         id = 4,
       },
-    }, funcs.getmatches())
+    }, fn.getmatches())
   end)
   it('works with negative numbers', function()
     command('hi clear PreProc')
-    eq(4, funcs.matchaddpos('PreProc', { -10, 1 }, 3, 4))
+    eq(4, fn.matchaddpos('PreProc', { -10, 1 }, 3, 4))
     eq({
       {
         group = 'PreProc',
@@ -139,9 +139,9 @@ describe('matchaddpos()', function()
         priority = 3,
         id = 4,
       },
-    }, funcs.getmatches())
-    funcs.matchdelete(4)
-    eq(4, funcs.matchaddpos('PreProc', { { -10 }, 1 }, 3, 4))
+    }, fn.getmatches())
+    fn.matchdelete(4)
+    eq(4, fn.matchaddpos('PreProc', { { -10 }, 1 }, 3, 4))
     eq({
       {
         group = 'PreProc',
@@ -149,9 +149,9 @@ describe('matchaddpos()', function()
         priority = 3,
         id = 4,
       },
-    }, funcs.getmatches())
-    funcs.matchdelete(4)
-    eq(4, funcs.matchaddpos('PreProc', { { 2, -1 }, 1 }, 3, 4))
+    }, fn.getmatches())
+    fn.matchdelete(4)
+    eq(4, fn.matchaddpos('PreProc', { { 2, -1 }, 1 }, 3, 4))
     eq({
       {
         group = 'PreProc',
@@ -159,9 +159,9 @@ describe('matchaddpos()', function()
         priority = 3,
         id = 4,
       },
-    }, funcs.getmatches())
-    funcs.matchdelete(4)
-    eq(4, funcs.matchaddpos('PreProc', { { 2, 0, -1 }, 1 }, 3, 4))
+    }, fn.getmatches())
+    fn.matchdelete(4)
+    eq(4, fn.matchaddpos('PreProc', { { 2, 0, -1 }, 1 }, 3, 4))
     eq({
       {
         group = 'PreProc',
@@ -169,14 +169,14 @@ describe('matchaddpos()', function()
         priority = 3,
         id = 4,
       },
-    }, funcs.getmatches())
+    }, fn.getmatches())
   end)
   it('works with zero length', function()
     local screen = Screen.new(40, 5)
     screen:attach()
-    funcs.setline(1, 'abcdef')
+    fn.setline(1, 'abcdef')
     command('hi PreProc guifg=Red')
-    eq(4, funcs.matchaddpos('PreProc', { { 1, 2, 0 } }, 3, 4))
+    eq(4, fn.matchaddpos('PreProc', { { 1, 2, 0 } }, 3, 4))
     eq({
       {
         group = 'PreProc',
@@ -184,7 +184,7 @@ describe('matchaddpos()', function()
         priority = 3,
         id = 4,
       },
-    }, funcs.getmatches())
+    }, fn.getmatches())
     screen:expect(
       [[
       ^a{1:b}cdef                                  |

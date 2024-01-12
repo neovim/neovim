@@ -4,15 +4,13 @@ local Screen = require('test.functional.ui.screen')
 local request = helpers.request
 local eq = helpers.eq
 local ok = helpers.ok
-local curbufmeths = helpers.curbufmeths
-local bufmeths = helpers.bufmeths
 local pcall_err = helpers.pcall_err
 local insert = helpers.insert
 local feed = helpers.feed
 local clear = helpers.clear
 local command = helpers.command
 local exec = helpers.exec
-local meths = helpers.meths
+local api = helpers.api
 local assert_alive = helpers.assert_alive
 
 local function expect(contents)
@@ -26,21 +24,21 @@ local function set_extmark(ns_id, id, line, col, opts)
   if id ~= nil and id ~= 0 then
     opts.id = id
   end
-  return curbufmeths.set_extmark(ns_id, line, col, opts)
+  return api.nvim_buf_set_extmark(0, ns_id, line, col, opts)
 end
 
 local function get_extmarks(ns_id, start, end_, opts)
   if opts == nil then
     opts = {}
   end
-  return curbufmeths.get_extmarks(ns_id, start, end_, opts)
+  return api.nvim_buf_get_extmarks(0, ns_id, start, end_, opts)
 end
 
 local function get_extmark_by_id(ns_id, id, opts)
   if opts == nil then
     opts = {}
   end
-  return curbufmeths.get_extmark_by_id(ns_id, id, opts)
+  return api.nvim_buf_get_extmark_by_id(0, ns_id, id, opts)
 end
 
 local function check_undo_redo(ns, mark, sr, sc, er, ec) --s = start, e = end
@@ -198,11 +196,11 @@ describe('API/extmarks', function()
     eq({ row, col }, rv)
 
     -- remove the test marks
-    eq(true, curbufmeths.del_extmark(ns, marks[1]))
-    eq(false, curbufmeths.del_extmark(ns, marks[1]))
-    eq(true, curbufmeths.del_extmark(ns, marks[2]))
-    eq(false, curbufmeths.del_extmark(ns, marks[3]))
-    eq(false, curbufmeths.del_extmark(ns, 1000))
+    eq(true, api.nvim_buf_del_extmark(0, ns, marks[1]))
+    eq(false, api.nvim_buf_del_extmark(0, ns, marks[1]))
+    eq(true, api.nvim_buf_del_extmark(0, ns, marks[2]))
+    eq(false, api.nvim_buf_del_extmark(0, ns, marks[3]))
+    eq(false, api.nvim_buf_del_extmark(0, ns, 1000))
   end)
 
   it('can clear a specific namespace range', function()
@@ -210,7 +208,7 @@ describe('API/extmarks', function()
     set_extmark(ns2, 1, 0, 1)
     -- force a new undo buffer
     feed('o<esc>')
-    curbufmeths.clear_namespace(ns2, 0, -1)
+    api.nvim_buf_clear_namespace(0, ns2, 0, -1)
     eq({ { 1, 0, 1 } }, get_extmarks(ns, { 0, 0 }, { -1, -1 }))
     eq({}, get_extmarks(ns2, { 0, 0 }, { -1, -1 }))
     feed('u')
@@ -226,7 +224,7 @@ describe('API/extmarks', function()
     set_extmark(ns2, 1, 0, 1)
     -- force a new undo buffer
     feed('o<esc>')
-    curbufmeths.clear_namespace(-1, 0, -1)
+    api.nvim_buf_clear_namespace(0, -1, 0, -1)
     eq({}, get_extmarks(ns, { 0, 0 }, { -1, -1 }))
     eq({}, get_extmarks(ns2, { 0, 0 }, { -1, -1 }))
     feed('u')
@@ -244,14 +242,14 @@ describe('API/extmarks', function()
     eq({ { 1, 0, 0 }, { 2, 1, 0 } }, get_extmarks(ns, { 0, 0 }, { -1, -1 }))
     feed('dd')
     eq({ { 1, 1, 0 }, { 2, 1, 0 } }, get_extmarks(ns, { 0, 0 }, { -1, -1 }))
-    curbufmeths.clear_namespace(ns, 0, -1)
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
     eq({}, get_extmarks(ns, { 0, 0 }, { -1, -1 }))
     set_extmark(ns, 1, 0, 0, { right_gravity = false })
     set_extmark(ns, 2, 1, 0, { right_gravity = false })
     eq({ { 1, 0, 0 }, { 2, 1, 0 } }, get_extmarks(ns, { 0, 0 }, { -1, -1 }))
     feed('u')
     eq({ { 1, 0, 0 }, { 2, 1, 0 } }, get_extmarks(ns, { 0, 0 }, { -1, -1 }))
-    curbufmeths.clear_namespace(ns, 0, -1)
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
   end)
 
   it('querying for information and ranges', function()
@@ -933,7 +931,7 @@ describe('API/extmarks', function()
 
     -- Test unset
     feed('o<esc>')
-    curbufmeths.del_extmark(ns, marks[3])
+    api.nvim_buf_del_extmark(0, ns, marks[3])
     feed('u')
     rv = get_extmarks(ns, { 0, 0 }, { -1, -1 })
     -- undo does NOT restore deleted marks
@@ -989,10 +987,10 @@ describe('API/extmarks', function()
     rv = get_extmarks(ns2, positions[2], positions[1])
     eq(2, #rv)
 
-    curbufmeths.del_extmark(ns, marks[1])
+    api.nvim_buf_del_extmark(0, ns, marks[1])
     rv = get_extmarks(ns, { 0, 0 }, { -1, -1 })
     eq(2, #rv)
-    curbufmeths.del_extmark(ns2, marks[1])
+    api.nvim_buf_del_extmark(0, ns2, marks[1])
     rv = get_extmarks(ns2, { 0, 0 }, { -1, -1 })
     eq(2, #rv)
   end)
@@ -1429,7 +1427,7 @@ describe('API/extmarks', function()
       "Invalid 'ns_id': 3",
       pcall_err(set_extmark, ns_invalid, marks[1], positions[1][1], positions[1][2])
     )
-    eq("Invalid 'ns_id': 3", pcall_err(curbufmeths.del_extmark, ns_invalid, marks[1]))
+    eq("Invalid 'ns_id': 3", pcall_err(api.nvim_buf_del_extmark, 0, ns_invalid, marks[1]))
     eq("Invalid 'ns_id': 3", pcall_err(get_extmarks, ns_invalid, positions[1], positions[2]))
     eq("Invalid 'ns_id': 3", pcall_err(get_extmark_by_id, ns_invalid, marks[1]))
   end)
@@ -1472,7 +1470,7 @@ describe('API/extmarks', function()
 
   it('in read-only buffer', function()
     command('view! runtime/doc/help.txt')
-    eq(true, meths.get_option_value('ro', {}))
+    eq(true, api.nvim_get_option_value('ro', {}))
     local id = set_extmark(ns, 0, 0, 2)
     eq({ { id, 0, 2 } }, get_extmarks(ns, 0, -1))
   end)
@@ -1480,8 +1478,8 @@ describe('API/extmarks', function()
   it('can set a mark to other buffer', function()
     local buf = request('nvim_create_buf', 0, 1)
     request('nvim_buf_set_lines', buf, 0, -1, 1, { '', '' })
-    local id = bufmeths.set_extmark(buf, ns, 1, 0, {})
-    eq({ { id, 1, 0 } }, bufmeths.get_extmarks(buf, ns, 0, -1, {}))
+    local id = api.nvim_buf_set_extmark(buf, ns, 1, 0, {})
+    eq({ { id, 1, 0 } }, api.nvim_buf_get_extmarks(buf, ns, 0, -1, {}))
   end)
 
   it('does not crash with append/delete/undo sequence', function()
@@ -1497,30 +1495,30 @@ describe('API/extmarks', function()
   it('works with left and right gravity', function()
     -- right gravity should move with inserted text, while
     -- left gravity should stay in place.
-    curbufmeths.set_extmark(ns, 0, 5, { right_gravity = false })
-    curbufmeths.set_extmark(ns, 0, 5, { right_gravity = true })
+    api.nvim_buf_set_extmark(0, ns, 0, 5, { right_gravity = false })
+    api.nvim_buf_set_extmark(0, ns, 0, 5, { right_gravity = true })
     feed([[Aasdfasdf]])
 
-    eq({ { 1, 0, 5 }, { 2, 0, 13 } }, curbufmeths.get_extmarks(ns, 0, -1, {}))
+    eq({ { 1, 0, 5 }, { 2, 0, 13 } }, api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
 
     -- but both move when text is inserted before
     feed([[<esc>Iasdf<esc>]])
-    -- eq({}, curbufmeths.get_lines(0, -1, true))
-    eq({ { 1, 0, 9 }, { 2, 0, 17 } }, curbufmeths.get_extmarks(ns, 0, -1, {}))
+    -- eq({}, api.nvim_buf_get_lines(0, 0, -1, true))
+    eq({ { 1, 0, 9 }, { 2, 0, 17 } }, api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
 
     -- clear text
-    curbufmeths.set_text(0, 0, 0, 17, {})
+    api.nvim_buf_set_text(0, 0, 0, 0, 17, {})
 
     -- handles set_text correctly as well
-    eq({ { 1, 0, 0 }, { 2, 0, 0 } }, meths.buf_get_extmarks(0, ns, 0, -1, {}))
-    curbufmeths.set_text(0, 0, 0, 0, { 'asdfasdf' })
-    eq({ { 1, 0, 0 }, { 2, 0, 8 } }, curbufmeths.get_extmarks(ns, 0, -1, {}))
+    eq({ { 1, 0, 0 }, { 2, 0, 0 } }, api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
+    api.nvim_buf_set_text(0, 0, 0, 0, 0, { 'asdfasdf' })
+    eq({ { 1, 0, 0 }, { 2, 0, 8 } }, api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
 
     feed('u')
     -- handles pasting
     exec([[let @a='asdfasdf']])
     feed([["ap]])
-    eq({ { 1, 0, 0 }, { 2, 0, 8 } }, meths.buf_get_extmarks(0, ns, 0, -1, {}))
+    eq({ { 1, 0, 0 }, { 2, 0, 8 } }, api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
   end)
 
   it('can accept "end_row" or "end_line" #16548', function()
@@ -1547,7 +1545,7 @@ describe('API/extmarks', function()
   it('in prompt buffer', function()
     feed('dd')
     local id = set_extmark(ns, marks[1], 0, 0, {})
-    meths.set_option_value('buftype', 'prompt', {})
+    api.nvim_set_option_value('buftype', 'prompt', {})
     feed('i<esc>')
     eq({ { id, 0, 2 } }, get_extmarks(ns, 0, -1))
   end)
@@ -1641,7 +1639,7 @@ describe('API/extmarks', function()
         right_gravity = true,
       },
     }, get_extmark_by_id(ns, marks[3], { details = true }))
-    curbufmeths.clear_namespace(ns, 0, -1)
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
     -- legacy sign mark includes sign name
     command('sign define sign1 text=s1 texthl=Title linehl=LineNR numhl=Normal culhl=CursorLine')
     command('sign place 1 name=sign1 line=1')
@@ -1695,7 +1693,7 @@ describe('API/extmarks', function()
     screen = Screen.new(40, 6)
     screen:attach()
     feed('dd6iaaa bbb ccc<CR><ESC>gg')
-    meths.set_option_value('signcolumn', 'auto:2', {})
+    api.nvim_set_option_value('signcolumn', 'auto:2', {})
     set_extmark(ns, 1, 0, 0, { invalidate = true, sign_text = 'S1', end_row = 1 })
     set_extmark(ns, 2, 1, 0, { invalidate = true, sign_text = 'S2', end_row = 2 })
     -- mark with invalidate is removed
@@ -1770,7 +1768,7 @@ describe('Extmarks buffer api with many marks', function()
     for i = 1, 30 do
       lines[#lines + 1] = string.rep('x ', i)
     end
-    curbufmeths.set_lines(0, -1, true, lines)
+    api.nvim_buf_set_lines(0, 0, -1, true, lines)
     local ns = ns1
     local q = 0
     for i = 0, 29 do
@@ -1804,16 +1802,16 @@ describe('Extmarks buffer api with many marks', function()
   end)
 
   it('can clear all marks in ns', function()
-    curbufmeths.clear_namespace(ns1, 0, -1)
+    api.nvim_buf_clear_namespace(0, ns1, 0, -1)
     eq({}, get_marks(ns1))
     eq(ns_marks[ns2], get_marks(ns2))
-    curbufmeths.clear_namespace(ns2, 0, -1)
+    api.nvim_buf_clear_namespace(0, ns2, 0, -1)
     eq({}, get_marks(ns1))
     eq({}, get_marks(ns2))
   end)
 
   it('can clear line range', function()
-    curbufmeths.clear_namespace(ns1, 10, 20)
+    api.nvim_buf_clear_namespace(0, ns1, 10, 20)
     for id, mark in pairs(ns_marks[ns1]) do
       if 10 <= mark[1] and mark[1] < 20 then
         ns_marks[ns1][id] = nil

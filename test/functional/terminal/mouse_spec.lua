@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear, eq, eval = helpers.clear, helpers.eq, helpers.eval
-local feed, nvim, command = helpers.feed, helpers.nvim, helpers.command
+local feed, api, command = helpers.feed, helpers.api, helpers.command
 local feed_data = thelpers.feed_data
 local is_os = helpers.is_os
 local skip = helpers.skip
@@ -11,7 +11,7 @@ describe(':terminal mouse', function()
 
   before_each(function()
     clear()
-    nvim('set_option_value', 'statusline', '==========', {})
+    api.nvim_set_option_value('statusline', '==========', {})
     command('highlight StatusLine cterm=NONE')
     command('highlight StatusLineNC cterm=NONE')
     command('highlight VertSplit cterm=NONE')
@@ -514,7 +514,7 @@ describe(':terminal mouse', function()
       end)
 
       it('handles terminal size when switching buffers', function()
-        nvim('set_option_value', 'hidden', true, {})
+        api.nvim_set_option_value('hidden', true, {})
         feed('<c-\\><c-n><c-w><c-w>')
         screen:expect([[
           {7: 27 }line                 │line30                  |

@@ -2,21 +2,21 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
 local assert_alive = helpers.assert_alive
-local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
+local feed, clear = helpers.feed, helpers.clear
 local poke_eventloop = helpers.poke_eventloop
 local nvim_prog = helpers.nvim_prog
 local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.source
 local pcall_err = helpers.pcall_err
 local eq, neq = helpers.eq, helpers.neq
-local meths = helpers.meths
+local api = helpers.api
 local retry = helpers.retry
 local write_file = helpers.write_file
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local matches = helpers.matches
 local exec_lua = helpers.exec_lua
-local sleep = helpers.sleep
-local funcs = helpers.funcs
+local sleep = vim.uv.sleep
+local fn = helpers.fn
 local is_os = helpers.is_os
 local skip = helpers.skip
 
@@ -92,12 +92,12 @@ describe(':terminal buffer', function()
     end)
 
     it('does not create swap files', function()
-      local swapfile = nvim('exec', 'swapname', true):gsub('\n', '')
+      local swapfile = api.nvim_exec('swapname', true):gsub('\n', '')
       eq(nil, io.open(swapfile))
     end)
 
     it('does not create undofiles files', function()
-      local undofile = nvim('eval', 'undofile(bufname("%"))')
+      local undofile = api.nvim_eval('undofile(bufname("%"))')
       eq(nil, io.open(undofile))
     end)
   end)
@@ -172,7 +172,7 @@ describe(':terminal buffer', function()
 
   it('handles loss of focus gracefully', function()
     -- Change the statusline to avoid printing the file name, which varies.
-    nvim('set_option_value', 'statusline', '==========', {})
+    api.nvim_set_option_value('statusline', '==========', {})
 
     -- Save the buffer number of the terminal for later testing.
     local tbuf = eval('bufnr("%")')
@@ -277,7 +277,7 @@ describe(':terminal buffer', function()
   end)
 
   it([[can use temporary normal mode <c-\><c-o>]], function()
-    eq('t', funcs.mode(1))
+    eq('t', fn.mode(1))
     feed [[<c-\><c-o>]]
     screen:expect {
       grid = [[
@@ -287,7 +287,7 @@ describe(':terminal buffer', function()
       {3:-- (terminal) --}                                  |
     ]],
     }
-    eq('ntT', funcs.mode(1))
+    eq('ntT', fn.mode(1))
 
     feed [[:let g:x = 17]]
     screen:expect {
@@ -308,7 +308,7 @@ describe(':terminal buffer', function()
       {3:-- TERMINAL --}                                    |
     ]],
     }
-    eq('t', funcs.mode(1))
+    eq('t', fn.mode(1))
   end)
 
   it('writing to an existing file with :w fails #13549', function()
@@ -321,18 +321,18 @@ describe(':terminal buffer', function()
   it('emits TermRequest events #26972', function()
     command('split')
     command('enew')
-    local term = meths.open_term(0, {})
-    local termbuf = meths.get_current_buf().id
+    local term = api.nvim_open_term(0, {})
+    local termbuf = api.nvim_get_current_buf().id
 
     -- Test that autocommand buffer is associated with the terminal buffer, not the current buffer
     command('au TermRequest * let g:termbuf = +expand("<abuf>")')
     command('wincmd p')
 
     -- cwd will be inserted in a file URI, which cannot contain backs
-    local cwd = funcs.getcwd():gsub('\\', '/')
+    local cwd = fn.getcwd():gsub('\\', '/')
     local parent = cwd:match('^(.+/)')
     local expected = '\027]7;file://host' .. parent
-    meths.chan_send(term, string.format('%s\027\\', expected))
+    api.nvim_chan_send(term, string.format('%s\027\\', expected))
     eq(expected, eval('v:termrequest'))
     eq(termbuf, eval('g:termbuf'))
   end)
@@ -405,11 +405,11 @@ end)
 
 it('terminal truncates number of composing characters to 5', function()
   clear()
-  local chan = meths.open_term(0, {})
+  local chan = api.nvim_open_term(0, {})
   local composing = ('a̳'):sub(2)
-  meths.chan_send(chan, 'a' .. composing:rep(8))
+  api.nvim_chan_send(chan, 'a' .. composing:rep(8))
   retry(nil, nil, function()
-    eq('a' .. composing:rep(5), meths.get_current_line())
+    eq('a' .. composing:rep(5), api.nvim_get_current_line())
   end)
 end)
 
@@ -512,7 +512,7 @@ describe('terminal input', function()
     }) do
       feed('<CR><C-V>' .. key)
       retry(nil, nil, function()
-        eq(key, meths.get_current_line())
+        eq(key, api.nvim_get_current_line())
       end)
     end
   end)
@@ -599,7 +599,7 @@ describe('termopen()', function()
     feed('q:')
     eq(
       'Vim:E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-      pcall_err(funcs.termopen, 'bar')
+      pcall_err(fn.termopen, 'bar')
     )
   end)
 
@@ -610,13 +610,13 @@ describe('termopen()', function()
 
     before_each(function()
       -- Outer value should never be propagated to :terminal
-      funcs.setenv('COLORTERM', 'wrongvalue')
+      fn.setenv('COLORTERM', 'wrongvalue')
     end)
 
     local function test_term_colorterm(expected, opts)
       local screen = Screen.new(50, 4)
       screen:attach()
-      funcs.termopen({
+      fn.termopen({
         nvim_prog,
         '-u',
         'NONE',

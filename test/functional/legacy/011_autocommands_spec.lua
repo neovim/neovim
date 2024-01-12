@@ -13,7 +13,6 @@
 -- being modified outside of Vim (noticed on Solaris).
 
 local helpers = require('test.functional.helpers')(after_each)
-local luv = require('luv')
 local clear, feed_command, expect, eq, neq, dedent, write_file, feed =
   helpers.clear,
   helpers.feed_command,
@@ -37,8 +36,8 @@ local function prepare_gz_file(name, text)
   -- Compress the file with gzip.
   command([[call system(['gzip', '--force', ']] .. name .. [['])]])
   -- This should create the .gz file and delete the original.
-  neq(nil, luv.fs_stat(name .. '.gz'))
-  eq(nil, luv.fs_stat(name))
+  neq(nil, vim.uv.fs_stat(name .. '.gz'))
+  eq(nil, vim.uv.fs_stat(name))
 end
 
 describe('file reading, writing and bufnew and filter autocommands', function()

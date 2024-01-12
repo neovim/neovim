@@ -1,8 +1,8 @@
 -- Tests for :setlocal and :setglobal
 
 local helpers = require('test.functional.helpers')(after_each)
-local clear, feed_command, eval, eq, meths =
-  helpers.clear, helpers.feed_command, helpers.eval, helpers.eq, helpers.meths
+local clear, feed_command, eval, eq, api =
+  helpers.clear, helpers.feed_command, helpers.eval, helpers.eq, helpers.api
 
 local function should_fail(opt, value, errmsg)
   feed_command('setglobal ' .. opt .. '=' .. value)
@@ -11,7 +11,7 @@ local function should_fail(opt, value, errmsg)
   feed_command('setlocal ' .. opt .. '=' .. value)
   eq(errmsg, eval('v:errmsg'):match('E%d*'))
   feed_command('let v:errmsg = ""')
-  local status, err = pcall(meths.set_option_value, opt, value, {})
+  local status, err = pcall(api.nvim_set_option_value, opt, value, {})
   eq(status, false)
   eq(errmsg, err:match('E%d*'))
   eq('', eval('v:errmsg'))
@@ -20,8 +20,8 @@ end
 local function should_succeed(opt, value)
   feed_command('setglobal ' .. opt .. '=' .. value)
   feed_command('setlocal ' .. opt .. '=' .. value)
-  meths.set_option_value(opt, value, {})
-  eq(value, meths.get_option_value(opt, {}))
+  api.nvim_set_option_value(opt, value, {})
+  eq(value, api.nvim_get_option_value(opt, {}))
   eq('', eval('v:errmsg'))
 end
 
@@ -29,12 +29,12 @@ describe(':setlocal', function()
   before_each(clear)
 
   it('setlocal sets only local value', function()
-    eq(0, meths.get_option_value('iminsert', { scope = 'global' }))
+    eq(0, api.nvim_get_option_value('iminsert', { scope = 'global' }))
     feed_command('setlocal iminsert=1')
-    eq(0, meths.get_option_value('iminsert', { scope = 'global' }))
-    eq(-1, meths.get_option_value('imsearch', { scope = 'global' }))
+    eq(0, api.nvim_get_option_value('iminsert', { scope = 'global' }))
+    eq(-1, api.nvim_get_option_value('imsearch', { scope = 'global' }))
     feed_command('setlocal imsearch=1')
-    eq(-1, meths.get_option_value('imsearch', { scope = 'global' }))
+    eq(-1, api.nvim_get_option_value('imsearch', { scope = 'global' }))
   end)
 end)
 
@@ -77,8 +77,8 @@ describe(':set validation', function()
 
     -- If smaller than 1 this one is set to 'lines'-1
     feed_command('setglobal window=-10')
-    meths.set_option_value('window', -10, {})
-    eq(23, meths.get_option_value('window', {}))
+    api.nvim_set_option_value('window', -10, {})
+    eq(23, api.nvim_get_option_value('window', {}))
     eq('', eval('v:errmsg'))
 
     -- 'scrolloff' and 'sidescrolloff' can have a -1 value when
@@ -112,8 +112,8 @@ describe(':set validation', function()
     local function setto(value)
       feed_command('setglobal maxcombine=' .. value)
       feed_command('setlocal maxcombine=' .. value)
-      meths.set_option_value('maxcombine', value, {})
-      eq(6, meths.get_option_value('maxcombine', {}))
+      api.nvim_set_option_value('maxcombine', value, {})
+      eq(6, api.nvim_get_option_value('maxcombine', {}))
       eq('', eval('v:errmsg'))
     end
     setto(0)

@@ -3,9 +3,9 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local feed, command, insert = helpers.feed, helpers.command, helpers.insert
 local eq = helpers.eq
-local funcs = helpers.funcs
-local meths = helpers.meths
-local curwin = helpers.curwin
+local fn = helpers.fn
+local api = helpers.api
+local curwin = helpers.api.nvim_get_current_win
 local poke_eventloop = helpers.poke_eventloop
 
 
@@ -454,17 +454,17 @@ describe('ext_multigrid', function()
     end)
 
     it('winwidth() winheight() getwininfo() return inner width and height #19743', function()
-      eq(60, funcs.winwidth(0))
-      eq(20, funcs.winheight(0))
-      local win_info = funcs.getwininfo(curwin().id)[1]
+      eq(60, fn.winwidth(0))
+      eq(20, fn.winheight(0))
+      local win_info = fn.getwininfo(curwin().id)[1]
       eq(60, win_info.width)
       eq(20, win_info.height)
     end)
 
     it("'scroll' option works properly", function()
-      eq(10, meths.get_option_value('scroll', { win = 0 }))
-      meths.set_option_value('scroll', 15, { win = 0 })
-      eq(15, meths.get_option_value('scroll', { win = 0 }))
+      eq(10, api.nvim_get_option_value('scroll', { win = 0 }))
+      api.nvim_set_option_value('scroll', 15, { win = 0 })
+      eq(15, api.nvim_get_option_value('scroll', { win = 0 }))
     end)
 
     it('gets written till grid width', function()
@@ -592,8 +592,8 @@ describe('ext_multigrid', function()
       ## grid 3
                                                              |
       ]]}
-      local float_buf = meths.create_buf(false, false)
-      meths.open_win(float_buf, false, {
+      local float_buf = api.nvim_create_buf(false, false)
+      api.nvim_open_win(float_buf, false, {
         relative = 'win',
         win = curwin(),
         bufpos = {0, 1018},
@@ -984,7 +984,7 @@ describe('ext_multigrid', function()
                                                            |
     ]]}
 
-    meths.input_mouse('left', 'press', '', 2, 0, 5)
+    api.nvim_input_mouse('left', 'press', '', 2, 0, 5)
     screen:expect{grid=[[
     ## grid 1
       [2:-----------------------------------------------------]|*12
@@ -1020,7 +1020,7 @@ describe('ext_multigrid', function()
       {1:~                                                    }|*4
     ]]}
 
-    meths.input_mouse('left', 'press', '', 2, 1, 6)
+    api.nvim_input_mouse('left', 'press', '', 2, 1, 6)
     screen:expect{grid=[[
     ## grid 1
       [4:-----------------------------------------------------]|*6
@@ -1040,7 +1040,7 @@ describe('ext_multigrid', function()
       {1:~                                                    }|*4
     ]]}
 
-    meths.input_mouse('left', 'press', '', 4, 1, 4)
+    api.nvim_input_mouse('left', 'press', '', 4, 1, 4)
     screen:expect{grid=[[
     ## grid 1
       [4:-----------------------------------------------------]|*6
@@ -1079,7 +1079,7 @@ describe('ext_multigrid', function()
       {1:~                                                                               }|
     ]]}
 
-    meths.input_mouse('left', 'press', '', 4, 0, 64)
+    api.nvim_input_mouse('left', 'press', '', 4, 0, 64)
     screen:expect{grid=[[
     ## grid 1
       [4:-----------------------------------------------------]|*6
@@ -1099,12 +1099,12 @@ describe('ext_multigrid', function()
     ]]}
 
     -- XXX: mouse_check_grid() doesn't work properly when clicking on grid 1
-    meths.input_mouse('left', 'press', '', 1, 6, 20)
+    api.nvim_input_mouse('left', 'press', '', 1, 6, 20)
     -- TODO(bfredl): "batching" input_mouse is formally not supported yet.
     -- Normally it should work fine in async context when nvim is not blocked,
     -- but add a poke_eventloop be sure.
     poke_eventloop()
-    meths.input_mouse('left', 'drag', '', 1, 4, 20)
+    api.nvim_input_mouse('left', 'drag', '', 1, 4, 20)
     screen:expect{grid=[[
     ## grid 1
       [4:-----------------------------------------------------]|*4
@@ -1146,9 +1146,9 @@ describe('ext_multigrid', function()
       {1:~                         }|*5
     ]]}
 
-    meths.input_mouse('left', 'press', '', 1, 8, 26)
+    api.nvim_input_mouse('left', 'press', '', 1, 8, 26)
     poke_eventloop()
-    meths.input_mouse('left', 'drag', '', 1, 6, 30)
+    api.nvim_input_mouse('left', 'drag', '', 1, 6, 30)
     screen:expect{grid=[[
     ## grid 1
       [4:-----------------------------------------------------]|*4
@@ -1173,8 +1173,8 @@ describe('ext_multigrid', function()
 
     command('aunmenu PopUp | vmenu PopUp.Copy y')
 
-    funcs.setreg('"', '')
-    meths.input_mouse('left', 'press', '2', 2, 1, 6)
+    fn.setreg('"', '')
+    api.nvim_input_mouse('left', 'press', '2', 2, 1, 6)
     screen:expect{grid=[[
     ## grid 1
       [4:-----------------------------------------------------]|*4
@@ -1196,8 +1196,8 @@ describe('ext_multigrid', function()
       to be {20:clicked}                 |
       {1:~                             }|*5
     ]]}
-    meths.input_mouse('right', 'press', '', 2, 1, 6)
-    meths.input_mouse('right', 'release', '', 2, 1, 6)
+    api.nvim_input_mouse('right', 'press', '', 2, 1, 6)
+    api.nvim_input_mouse('right', 'release', '', 2, 1, 6)
     screen:expect{grid=[[
     ## grid 1
       [4:-----------------------------------------------------]|*4
@@ -1245,10 +1245,10 @@ describe('ext_multigrid', function()
       to be clicked                 |
       {1:~                             }|*5
     ]]}
-    eq('clicked', funcs.getreg('"'))
+    eq('clicked', fn.getreg('"'))
 
-    funcs.setreg('"', '')
-    meths.input_mouse('left', 'press', '2', 4, 0, 64)
+    fn.setreg('"', '')
+    api.nvim_input_mouse('left', 'press', '2', 4, 0, 64)
     screen:expect{grid=[[
     ## grid 1
       [4:-----------------------------------------------------]|*4
@@ -1270,8 +1270,8 @@ describe('ext_multigrid', function()
       to be clicked                 |
       {1:~                             }|*5
     ]]}
-    meths.input_mouse('right', 'press', '', 4, 0, 64)
-    meths.input_mouse('right', 'release', '', 4, 0, 64)
+    api.nvim_input_mouse('right', 'press', '', 4, 0, 64)
+    api.nvim_input_mouse('right', 'release', '', 4, 0, 64)
     screen:expect{grid=[[
     ## grid 1
       [4:-----------------------------------------------------]|*4
@@ -1319,7 +1319,7 @@ describe('ext_multigrid', function()
       to be clicked                 |
       {1:~                             }|*5
     ]]}
-    eq('eiusmo', funcs.getreg('"'))
+    eq('eiusmo', fn.getreg('"'))
 
     command('wincmd J')
     screen:try_resize_grid(4, 7, 10)
@@ -1353,8 +1353,8 @@ describe('ext_multigrid', function()
       {1:~                             }|*3
     ]]}
 
-    funcs.setreg('"', '')
-    meths.input_mouse('left', 'press', '2', 4, 9, 1)
+    fn.setreg('"', '')
+    api.nvim_input_mouse('left', 'press', '2', 4, 9, 1)
     screen:expect{grid=[[
     ## grid 1
       [5:------------------------------]│[2:----------------------]|*5
@@ -1384,8 +1384,8 @@ describe('ext_multigrid', function()
       to be clicked                 |
       {1:~                             }|*3
     ]]}
-    meths.input_mouse('right', 'press', '', 4, 9, 1)
-    meths.input_mouse('right', 'release', '', 4, 9, 1)
+    api.nvim_input_mouse('right', 'press', '', 4, 9, 1)
+    api.nvim_input_mouse('right', 'release', '', 4, 9, 1)
     screen:expect{grid=[[
     ## grid 1
       [5:------------------------------]│[2:----------------------]|*5
@@ -1449,7 +1449,7 @@ describe('ext_multigrid', function()
       to be clicked                 |
       {1:~                             }|*3
     ]]}
-    eq('eiusmo', funcs.getreg('"'))
+    eq('eiusmo', fn.getreg('"'))
 
     screen:try_resize_grid(4, 7, 11)
     screen:expect{grid=[[
@@ -1483,8 +1483,8 @@ describe('ext_multigrid', function()
       {1:~                             }|*3
     ]]}
 
-    funcs.setreg('"', '')
-    meths.input_mouse('left', 'press', '2', 4, 9, 1)
+    fn.setreg('"', '')
+    api.nvim_input_mouse('left', 'press', '2', 4, 9, 1)
     screen:expect{grid=[[
     ## grid 1
       [5:------------------------------]│[2:----------------------]|*5
@@ -1515,8 +1515,8 @@ describe('ext_multigrid', function()
       to be clicked                 |
       {1:~                             }|*3
     ]]}
-    meths.input_mouse('right', 'press', '', 4, 9, 1)
-    meths.input_mouse('right', 'release', '', 4, 9, 1)
+    api.nvim_input_mouse('right', 'press', '', 4, 9, 1)
+    api.nvim_input_mouse('right', 'release', '', 4, 9, 1)
     screen:expect{grid=[[
     ## grid 1
       [5:------------------------------]│[2:----------------------]|*5
@@ -1582,7 +1582,7 @@ describe('ext_multigrid', function()
       to be clicked                 |
       {1:~                             }|*3
     ]]}
-    eq('eiusmo', funcs.getreg('"'))
+    eq('eiusmo', fn.getreg('"'))
   end)
 
   it('supports mouse drag with mouse=a', function()
@@ -1593,9 +1593,9 @@ describe('ext_multigrid', function()
     command('enew')
     feed('ifoo\nbar<esc>')
 
-    meths.input_mouse('left', 'press', '', 5, 0, 0)
+    api.nvim_input_mouse('left', 'press', '', 5, 0, 0)
     poke_eventloop()
-    meths.input_mouse('left', 'drag', '', 5, 1, 2)
+    api.nvim_input_mouse('left', 'drag', '', 5, 1, 2)
 
     screen:expect{grid=[[
     ## grid 1
@@ -1752,7 +1752,7 @@ describe('ext_multigrid', function()
     }}
 
     -- handles non-current window
-    meths.win_set_cursor(1000, {1, 10})
+    api.nvim_win_set_cursor(1000, {1, 10})
     screen:expect{grid=[[
     ## grid 1
       [4:------------------------------------------------]|*3
@@ -2257,9 +2257,9 @@ describe('ext_multigrid', function()
       [2] = {win = {id = 1000}, topline = 5, botline = 11, curline = 10, curcol = 7, linecount = 11, sum_scroll_delta = 5},
     }}
 
-    meths.input_mouse('left', 'press', '', 1,5, 1)
+    api.nvim_input_mouse('left', 'press', '', 1,5, 1)
     poke_eventloop()
-    meths.input_mouse('left', 'drag', '', 1, 6, 1)
+    api.nvim_input_mouse('left', 'drag', '', 1, 6, 1)
 
     screen:expect{grid=[[
     ## grid 1
@@ -2357,7 +2357,7 @@ describe('ext_multigrid', function()
   end)
 
   it('with winbar dragging statusline with mouse works correctly', function()
-    meths.set_option_value('winbar', 'Set Up The Bars', {})
+    api.nvim_set_option_value('winbar', 'Set Up The Bars', {})
     command('split')
     screen:expect([[
     ## grid 1
@@ -2378,9 +2378,9 @@ describe('ext_multigrid', function()
       {1:~                                                    }|*4
     ]])
 
-    meths.input_mouse('left', 'press', '', 1, 6, 20)
+    api.nvim_input_mouse('left', 'press', '', 1, 6, 20)
     poke_eventloop()
-    meths.input_mouse('left', 'drag', '', 1, 7, 20)
+    api.nvim_input_mouse('left', 'drag', '', 1, 7, 20)
     screen:expect([[
     ## grid 1
       [4:-----------------------------------------------------]|*7
@@ -2400,7 +2400,7 @@ describe('ext_multigrid', function()
       {1:~                                                    }|*5
     ]])
 
-    meths.input_mouse('left', 'drag', '', 1, 4, 20)
+    api.nvim_input_mouse('left', 'drag', '', 1, 4, 20)
     screen:expect([[
     ## grid 1
       [4:-----------------------------------------------------]|*4
@@ -2420,9 +2420,9 @@ describe('ext_multigrid', function()
       {1:~                                                    }|*2
     ]])
 
-    meths.input_mouse('left', 'press', '', 1, 12, 10)
+    api.nvim_input_mouse('left', 'press', '', 1, 12, 10)
     poke_eventloop()
-    meths.input_mouse('left', 'drag', '', 1, 10, 10)
+    api.nvim_input_mouse('left', 'drag', '', 1, 10, 10)
     screen:expect([[
     ## grid 1
       [4:-----------------------------------------------------]|*4
@@ -2441,9 +2441,9 @@ describe('ext_multigrid', function()
       ^                                                     |
       {1:~                                                    }|*2
     ]])
-    eq(3, meths.get_option_value('cmdheight', {}))
+    eq(3, api.nvim_get_option_value('cmdheight', {}))
 
-    meths.input_mouse('left', 'drag', '', 1, 12, 10)
+    api.nvim_input_mouse('left', 'drag', '', 1, 12, 10)
     screen:expect([[
     ## grid 1
       [4:-----------------------------------------------------]|*4
@@ -2462,6 +2462,6 @@ describe('ext_multigrid', function()
       ^                                                     |
       {1:~                                                    }|*2
     ]])
-    eq(1, meths.get_option_value('cmdheight', {}))
+    eq(1, api.nvim_get_option_value('cmdheight', {}))
   end)
 end)

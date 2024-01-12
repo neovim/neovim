@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed, meths = helpers.clear, helpers.feed, helpers.meths
+local clear, feed, api = helpers.clear, helpers.feed, helpers.api
 local insert, command = helpers.insert, helpers.command
 
 describe('quickfix selection highlight', function()
@@ -26,7 +26,7 @@ describe('quickfix selection highlight', function()
       [12] = { foreground = Screen.colors.Brown, background = Screen.colors.Fuchsia },
     })
 
-    meths.set_option_value('errorformat', '%m %l', {})
+    api.nvim_set_option_value('errorformat', '%m %l', {})
     command('syntax on')
     command('highlight Search guibg=Green')
 

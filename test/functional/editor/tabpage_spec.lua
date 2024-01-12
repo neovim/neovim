@@ -8,9 +8,9 @@ local neq = helpers.neq
 local feed = helpers.feed
 local eval = helpers.eval
 local exec = helpers.exec
-local funcs = helpers.funcs
-local meths = helpers.meths
-local curwin = helpers.curwin
+local fn = helpers.fn
+local api = helpers.api
+local curwin = helpers.api.nvim_get_current_win
 local assert_alive = helpers.assert_alive
 
 describe('tabpage', function()
@@ -74,29 +74,29 @@ describe('tabpage', function()
   end)
 
   it('nvim_win_close and nvim_win_hide update tabline #20285', function()
-    eq(1, #meths.list_tabpages())
-    eq({ 1, 1 }, funcs.win_screenpos(0))
+    eq(1, #api.nvim_list_tabpages())
+    eq({ 1, 1 }, fn.win_screenpos(0))
     local win1 = curwin().id
 
     command('tabnew')
-    eq(2, #meths.list_tabpages())
-    eq({ 2, 1 }, funcs.win_screenpos(0))
+    eq(2, #api.nvim_list_tabpages())
+    eq({ 2, 1 }, fn.win_screenpos(0))
     local win2 = curwin().id
 
-    meths.win_close(win1, true)
+    api.nvim_win_close(win1, true)
     eq(win2, curwin().id)
-    eq(1, #meths.list_tabpages())
-    eq({ 1, 1 }, funcs.win_screenpos(0))
+    eq(1, #api.nvim_list_tabpages())
+    eq({ 1, 1 }, fn.win_screenpos(0))
 
     command('tabnew')
-    eq(2, #meths.list_tabpages())
-    eq({ 2, 1 }, funcs.win_screenpos(0))
+    eq(2, #api.nvim_list_tabpages())
+    eq({ 2, 1 }, fn.win_screenpos(0))
     local win3 = curwin().id
 
-    meths.win_hide(win2)
+    api.nvim_win_hide(win2)
     eq(win3, curwin().id)
-    eq(1, #meths.list_tabpages())
-    eq({ 1, 1 }, funcs.win_screenpos(0))
+    eq(1, #api.nvim_list_tabpages())
+    eq({ 1, 1 }, fn.win_screenpos(0))
   end)
 
   it('switching tabpage after setting laststatus=3 #19591', function()
@@ -135,15 +135,15 @@ describe('tabpage', function()
 
   it(':tabmove handles modifiers and addr', function()
     command('tabnew | tabnew | tabnew')
-    eq(4, funcs.nvim_tabpage_get_number(0))
+    eq(4, fn.nvim_tabpage_get_number(0))
     command('     silent      :keepalt   :: :::    silent!    -    tabmove')
-    eq(3, funcs.nvim_tabpage_get_number(0))
+    eq(3, fn.nvim_tabpage_get_number(0))
     command('     silent      :keepalt   :: :::    silent!    -2    tabmove')
-    eq(1, funcs.nvim_tabpage_get_number(0))
+    eq(1, fn.nvim_tabpage_get_number(0))
   end)
 
   it(':tabs does not overflow IObuff with long path with comma #20850', function()
-    meths.buf_set_name(0, ('x'):rep(1024) .. ',' .. ('x'):rep(1024))
+    api.nvim_buf_set_name(0, ('x'):rep(1024) .. ',' .. ('x'):rep(1024))
     command('tabs')
     assert_alive()
   end)

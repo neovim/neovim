@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local assert_alive = helpers.assert_alive
-local clear, nvim, source = helpers.clear, helpers.nvim, helpers.source
+local clear, source = helpers.clear, helpers.source
+local api = helpers.api
 local insert = helpers.insert
 local eq, next_msg = helpers.eq, helpers.next_msg
 local exc_exec = helpers.exc_exec
@@ -13,8 +14,8 @@ describe('Vimscript dictionary notifications', function()
 
   before_each(function()
     clear()
-    channel = nvim('get_api_info')[1]
-    nvim('set_var', 'channel', channel)
+    channel = api.nvim_get_api_info()[1]
+    api.nvim_set_var('channel', channel)
   end)
 
   -- the same set of tests are applied to top-level dictionaries(g:, b:, w: and
@@ -59,7 +60,7 @@ describe('Vimscript dictionary notifications', function()
     local function verify_echo()
       -- helper to verify that no notifications are sent after certain change
       -- to a dict
-      nvim('command', "call rpcnotify(g:channel, 'echo')")
+      command("call rpcnotify(g:channel, 'echo')")
       eq({ 'notification', 'echo', {} }, next_msg())
     end
 
@@ -134,7 +135,7 @@ describe('Vimscript dictionary notifications', function()
       it('is triggered by remove()', function()
         update('= "test"')
         verify_value({ new = 'test' })
-        nvim('command', 'call remove(' .. dict_expr .. ', "watched")')
+        command('call remove(' .. dict_expr .. ', "watched")')
         verify_value({ old = 'test' })
       end)
 
@@ -142,14 +143,14 @@ describe('Vimscript dictionary notifications', function()
         it('is triggered by remove() when updated with nvim_*_var', function()
           update_with_api('"test"')
           verify_value({ new = 'test' })
-          nvim('command', 'call remove(' .. dict_expr .. ', "watched")')
+          command('call remove(' .. dict_expr .. ', "watched")')
           verify_value({ old = 'test' })
         end)
 
         it('is triggered by remove() when updated with vim.g', function()
           update_with_vim_g('= "test"')
           verify_value({ new = 'test' })
-          nvim('command', 'call remove(' .. dict_expr .. ', "watched")')
+          command('call remove(' .. dict_expr .. ', "watched")')
           verify_value({ old = 'test' })
         end)
       end
@@ -157,7 +158,7 @@ describe('Vimscript dictionary notifications', function()
       it('is triggered by extend()', function()
         update('= "xtend"')
         verify_value({ new = 'xtend' })
-        nvim('command', [[
+        command([[
           call extend(]] .. dict_expr .. [[, {'watched': 'xtend2', 'watched2': 5, 'watched3': 'a'})
         ]])
         verify_value({ old = 'xtend', new = 'xtend2' })
@@ -293,17 +294,17 @@ describe('Vimscript dictionary notifications', function()
     end)
 
     it('invokes all callbacks when the key is changed', function()
-      nvim('command', 'let g:key = "value"')
+      command('let g:key = "value"')
       eq({ 'notification', '1', { 'key', { new = 'value' } } }, next_msg())
       eq({ 'notification', '2', { 'key', { new = 'value' } } }, next_msg())
     end)
 
     it('only removes watchers that fully match dict, key and callback', function()
-      nvim('command', 'let g:key = "value"')
+      command('let g:key = "value"')
       eq({ 'notification', '1', { 'key', { new = 'value' } } }, next_msg())
       eq({ 'notification', '2', { 'key', { new = 'value' } } }, next_msg())
-      nvim('command', 'call dictwatcherdel(g:, "key", "g:Watcher1")')
-      nvim('command', 'let g:key = "v2"')
+      command('call dictwatcherdel(g:, "key", "g:Watcher1")')
+      command('let g:key = "v2"')
       eq({ 'notification', '2', { 'key', { old = 'value', new = 'v2' } } }, next_msg())
     end)
   end)

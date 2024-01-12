@@ -8,14 +8,14 @@ local expect = helpers.expect
 local eval = helpers.eval
 local next_msg = helpers.next_msg
 local feed = helpers.feed
-local meths = helpers.meths
+local api = helpers.api
 
 describe('cmdline autocommands', function()
   local channel
   before_each(function()
     clear()
-    channel = meths.get_api_info()[1]
-    meths.set_var('channel', channel)
+    channel = api.nvim_get_api_info()[1]
+    api.nvim_set_var('channel', channel)
     command("autocmd CmdlineEnter * call rpcnotify(g:channel, 'CmdlineEnter', v:event)")
     command("autocmd CmdlineLeave * call rpcnotify(g:channel, 'CmdlineLeave', v:event)")
     command("autocmd CmdWinEnter * call rpcnotify(g:channel, 'CmdWinEnter', v:event)")

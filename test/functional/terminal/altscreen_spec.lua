@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
-local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
+local clear, eq, api = helpers.clear, helpers.eq, helpers.api
 local feed = helpers.feed
 local feed_data = thelpers.feed_data
 local enter_altscreen = thelpers.enter_altscreen
@@ -42,7 +42,7 @@ describe(':terminal altscreen', function()
       {1: }                                                 |
       {3:-- TERMINAL --}                                    |
     ]])
-    eq(10, curbuf('line_count'))
+    eq(10, api.nvim_buf_line_count(0))
   end)
 
   it('wont clear lines already in the scrollback', function()
@@ -107,7 +107,7 @@ describe(':terminal altscreen', function()
     end)
 
     it('wont modify line count', function()
-      eq(10, curbuf('line_count'))
+      eq(10, api.nvim_buf_line_count(0))
     end)
 
     it('wont modify lines in the scrollback', function()
@@ -144,7 +144,7 @@ describe(':terminal altscreen', function()
         rows: 4, cols: 50                                 |
                                                           |
       ]])
-      eq(9, curbuf('line_count'))
+      eq(9, api.nvim_buf_line_count(0))
     end)
 
     describe('and after exit', function()

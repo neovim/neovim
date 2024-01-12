@@ -4,14 +4,14 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local assert_alive = helpers.assert_alive
 local testprg = helpers.testprg
-local eq, call, clear, eval, feed_command, feed, nvim =
+local eq, call, clear, eval, feed_command, feed, api =
   helpers.eq,
   helpers.call,
   helpers.clear,
   helpers.eval,
   helpers.feed_command,
   helpers.feed,
-  helpers.nvim
+  helpers.api
 local command = helpers.command
 local insert = helpers.insert
 local expect = helpers.expect
@@ -220,8 +220,8 @@ describe('system()', function()
     end)
 
     it('prints verbose information', function()
-      nvim('set_option_value', 'shell', 'fake_shell', {})
-      nvim('set_option_value', 'shellcmdflag', 'cmdflag', {})
+      api.nvim_set_option_value('shell', 'fake_shell', {})
+      api.nvim_set_option_value('shellcmdflag', 'cmdflag', {})
 
       screen:try_resize(72, 14)
       feed(':4verbose echo system("echo hi")<cr>')
@@ -247,8 +247,8 @@ describe('system()', function()
 
       feed(':edit ' .. tempfile .. '<cr>')
 
-      local command_total_time = tonumber(helpers.funcs.split(helpers.funcs.getline(7))[2])
-      local command_self_time = tonumber(helpers.funcs.split(helpers.funcs.getline(7))[3])
+      local command_total_time = tonumber(helpers.fn.split(helpers.fn.getline(7))[2])
+      local command_self_time = tonumber(helpers.fn.split(helpers.fn.getline(7))[3])
 
       helpers.neq(nil, command_total_time)
       helpers.neq(nil, command_self_time)
@@ -346,7 +346,7 @@ describe('system()', function()
         input[#input + 1] = '01234567890ABCDEFabcdef'
       end
       input = table.concat(input, '\n')
-      nvim('set_var', 'input', input)
+      api.nvim_set_var('input', input)
       eq(input, eval('system("cat -", g:input)'))
     end)
   end)
@@ -480,7 +480,7 @@ describe('systemlist()', function()
       for _ = 1, 0xffff do
         input[#input + 1] = '01234567890ABCDEFabcdef'
       end
-      nvim('set_var', 'input', input)
+      api.nvim_set_var('input', input)
       eq(input, eval('systemlist("cat -", g:input)'))
     end)
   end)

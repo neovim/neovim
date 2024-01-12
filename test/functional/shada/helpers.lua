@@ -1,9 +1,7 @@
 local helpers = require('test.functional.helpers')(nil)
-local meths = helpers.meths
+local api = helpers.api
 local write_file = helpers.write_file
 local concat_tables = helpers.concat_tables
-
-local mpack = require('mpack')
 
 local tmpname = helpers.tmpname()
 
@@ -30,7 +28,7 @@ local function reset(o)
     args_rm = args_rm,
     args = args,
   }
-  meths.set_var('tmpname', tmpname)
+  api.nvim_set_var('tmpname', tmpname)
 end
 
 local clear = function()
@@ -64,7 +62,7 @@ local read_shada_file = function(fname)
   local fd = io.open(fname, 'r')
   local mstring = fd:read('*a')
   fd:close()
-  local unpack = mpack.Unpacker()
+  local unpack = vim.mpack.Unpacker()
   local ret = {}
   local cur, val
   local i = 0

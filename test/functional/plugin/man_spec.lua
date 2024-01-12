@@ -3,13 +3,13 @@ local Screen = require('test.functional.ui.screen')
 local command, rawfeed = helpers.command, helpers.rawfeed
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
-local funcs = helpers.funcs
+local fn = helpers.fn
 local nvim_prog = helpers.nvim_prog
 local matches = helpers.matches
 local write_file = helpers.write_file
 local tmpname = helpers.tmpname
 local eq = helpers.eq
-local pesc = helpers.pesc
+local pesc = vim.pesc
 local skip = helpers.skip
 local is_ci = helpers.is_ci
 
@@ -33,7 +33,7 @@ local function get_search_history(name)
 end
 
 clear()
-if funcs.executable('man') == 0 then
+if fn.executable('man') == 0 then
   pending('missing "man" command', function() end)
   return
 end
@@ -192,7 +192,7 @@ describe(':Man', function()
       '+Man!',
       '+call nvim_input("q")',
     }
-    matches('quit works!!', funcs.system(args, { 'manpage contents' }))
+    matches('quit works!!', fn.system(args, { 'manpage contents' }))
   end)
 
   it('reports non-existent man pages for absolute paths', function()
@@ -206,7 +206,7 @@ describe(':Man', function()
       ('Error detected while processing command line:\r\n' .. 'man.lua: "no manual entry for %s"'):format(
         pesc(actual_file)
       ),
-      funcs.system(args, { '' })
+      fn.system(args, { '' })
     )
     os.remove(actual_file)
   end)

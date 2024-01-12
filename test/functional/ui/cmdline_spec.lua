@@ -9,7 +9,7 @@ local exec = helpers.exec
 local eval = helpers.eval
 local eq = helpers.eq
 local is_os = helpers.is_os
-local meths = helpers.meths
+local api = helpers.api
 
 local function new_screen(opt)
   local screen = Screen.new(25, 5)
@@ -922,7 +922,7 @@ describe('cmdline redraw', function()
 
   it('with rightleftcmd', function()
     command('set rightleft rightleftcmd=search shortmess+=s')
-    meths.buf_set_lines(0, 0, -1, true, { "let's rock!" })
+    api.nvim_buf_set_lines(0, 0, -1, true, { "let's rock!" })
     screen:expect {
       grid = [[
                     !kcor s'te^l|
@@ -1531,7 +1531,7 @@ describe('cmdheight=0', function()
   it('with multigrid', function()
     clear { args = { '--cmd', 'set cmdheight=0' } }
     screen:attach { ext_multigrid = true }
-    meths.buf_set_lines(0, 0, -1, true, { 'p' })
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'p' })
     screen:expect {
       grid = [[
     ## grid 1
@@ -1701,9 +1701,9 @@ describe('cmdheight=0', function()
       {1:~                        }|*3
       {3:[No Name]                }|
     ]])
-    meths.input_mouse('left', 'press', '', 0, 6, 10)
+    api.nvim_input_mouse('left', 'press', '', 0, 6, 10)
     poke_eventloop()
-    meths.input_mouse('left', 'drag', '', 0, 5, 10)
+    api.nvim_input_mouse('left', 'drag', '', 0, 5, 10)
     screen:expect_unchanged()
   end)
 end)

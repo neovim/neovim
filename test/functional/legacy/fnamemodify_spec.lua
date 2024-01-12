@@ -2,10 +2,10 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, source = helpers.clear, helpers.source
-local call, eq, nvim = helpers.call, helpers.eq, helpers.meths
+local call, eq, nvim = helpers.call, helpers.eq, helpers.api
 
 local function expected_empty()
-  eq({}, nvim.get_vvar('errors'))
+  eq({}, nvim.nvim_get_vvar('errors'))
 end
 
 describe('filename modifiers', function()

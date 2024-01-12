@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')(after_each)
-local luv = require('luv')
 local clear = helpers.clear
 local command, eq, neq, write_file = helpers.command, helpers.eq, helpers.neq, helpers.write_file
 local read_file = helpers.read_file
@@ -26,10 +25,10 @@ describe(':wshada', function()
 
   it('creates a shada file', function()
     -- file should _not_ exist
-    eq(nil, luv.fs_stat(shada_file))
+    eq(nil, vim.uv.fs_stat(shada_file))
     command('wsh! ' .. shada_file)
     -- file _should_ exist
-    neq(nil, luv.fs_stat(shada_file))
+    neq(nil, vim.uv.fs_stat(shada_file))
   end)
 
   it('overwrites existing files', function()
@@ -40,7 +39,7 @@ describe(':wshada', function()
 
     -- sanity check
     eq(text, read_file(shada_file))
-    neq(nil, luv.fs_stat(shada_file))
+    neq(nil, vim.uv.fs_stat(shada_file))
 
     command('wsh! ' .. shada_file)
 

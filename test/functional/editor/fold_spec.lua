@@ -5,7 +5,7 @@ local insert = helpers.insert
 local feed = helpers.feed
 local expect = helpers.expect
 local command = helpers.command
-local funcs = helpers.funcs
+local fn = helpers.fn
 local eq = helpers.eq
 local neq = helpers.neq
 
@@ -75,8 +75,8 @@ describe('Folds', function()
 
     local function get_folds()
       local rettab = {}
-      for i = 1, funcs.line('$') do
-        table.insert(rettab, funcs.foldlevel(i))
+      for i = 1, fn.line('$') do
+        table.insert(rettab, fn.foldlevel(i))
       end
       return rettab
     end
@@ -140,21 +140,21 @@ a
 	a
 	a]])
       -- lines are not closed, folds are correct
-      for i = 1, funcs.line('$') do
-        eq(-1, funcs.foldclosed(i))
+      for i = 1, fn.line('$') do
+        eq(-1, fn.foldclosed(i))
         if i == 1 or i == 7 or i == 13 then
-          eq(0, funcs.foldlevel(i))
+          eq(0, fn.foldlevel(i))
         elseif i == 4 then
-          eq(2, funcs.foldlevel(i))
+          eq(2, fn.foldlevel(i))
         else
-          eq(1, funcs.foldlevel(i))
+          eq(1, fn.foldlevel(i))
         end
       end
       -- folds are not corrupted
       feed('zM')
-      eq(6, funcs.foldclosedend(2))
-      eq(12, funcs.foldclosedend(8))
-      eq(18, funcs.foldclosedend(14))
+      eq(6, fn.foldclosedend(2))
+      eq(12, fn.foldclosedend(8))
+      eq(18, fn.foldclosedend(14))
     end)
 
     it("doesn't split a fold when the move is within it", function()
@@ -330,13 +330,13 @@ a]],
     	a
     ]])
     for i = 1, 2 do
-      eq(1, funcs.foldlevel(i))
+      eq(1, fn.foldlevel(i))
     end
     for i = 3, 5 do
-      eq(0, funcs.foldlevel(i))
+      eq(0, fn.foldlevel(i))
     end
     for i = 6, 8 do
-      eq(1, funcs.foldlevel(i))
+      eq(1, fn.foldlevel(i))
     end
   end)
 
@@ -354,7 +354,7 @@ a]],
     ]])
     command('setlocal foldmethod=indent')
     command('3,5d')
-    eq(5, funcs.foldclosedend(1))
+    eq(5, fn.foldclosedend(1))
   end)
 
   it("doesn't combine folds that have a specified end", function()
@@ -371,7 +371,7 @@ a]],
     command('setlocal foldmethod=marker')
     command('3,5d')
     command('%foldclose')
-    eq(2, funcs.foldclosedend(1))
+    eq(2, fn.foldclosedend(1))
   end)
 
   it('splits folds according to >N and <N with foldexpr', function()
@@ -415,20 +415,20 @@ a]],
     command('foldopen')
     command('read ' .. tempfname)
     command('%foldclose')
-    eq(2, funcs.foldclosedend(1))
-    eq(0, funcs.foldlevel(3))
-    eq(0, funcs.foldlevel(4))
-    eq(6, funcs.foldclosedend(5))
-    eq(10, funcs.foldclosedend(7))
-    eq(14, funcs.foldclosedend(11))
+    eq(2, fn.foldclosedend(1))
+    eq(0, fn.foldlevel(3))
+    eq(0, fn.foldlevel(4))
+    eq(6, fn.foldclosedend(5))
+    eq(10, fn.foldclosedend(7))
+    eq(14, fn.foldclosedend(11))
   end)
 
   it('no folds remain if :delete makes buffer empty #19671', function()
     command('setlocal foldmethod=manual')
-    funcs.setline(1, { 'foo', 'bar', 'baz' })
+    fn.setline(1, { 'foo', 'bar', 'baz' })
     command('2,3fold')
     command('%delete')
-    eq(0, funcs.foldlevel(1))
+    eq(0, fn.foldlevel(1))
   end)
 
   it('multibyte fold markers work #20438', function()
@@ -442,7 +442,7 @@ a]],
       bbbbb/*«*/
       bbbbb
       bbbbb/*»*/]])
-    eq(1, funcs.foldlevel(1))
+    eq(1, fn.foldlevel(1))
   end)
 
   it('updates correctly with indent method and visual blockwise insertion #22898', function()
@@ -452,8 +452,8 @@ a]],
     ]])
     command('setlocal foldmethod=indent shiftwidth=2')
     feed('gg0<C-v>jI  <Esc>') -- indent both lines using visual blockwise mode
-    eq(1, funcs.foldlevel(1))
-    eq(1, funcs.foldlevel(2))
+    eq(1, fn.foldlevel(1))
+    eq(1, fn.foldlevel(2))
   end)
 
   it("doesn't open folds with indent method when inserting lower foldlevel line", function()
@@ -464,22 +464,22 @@ a]],
         keep this line folded 2
     ]])
     command('set foldmethod=indent shiftwidth=2 noautoindent')
-    eq(1, funcs.foldlevel(1))
-    eq(1, funcs.foldlevel(2))
-    eq(2, funcs.foldlevel(3))
-    eq(2, funcs.foldlevel(4))
+    eq(1, fn.foldlevel(1))
+    eq(1, fn.foldlevel(2))
+    eq(2, fn.foldlevel(3))
+    eq(2, fn.foldlevel(4))
 
     feed('zo') -- open the outer fold
-    neq(-1, funcs.foldclosed(3)) -- make sure the inner fold is not open
+    neq(-1, fn.foldclosed(3)) -- make sure the inner fold is not open
 
     feed('gg0oa<Esc>') -- insert unindented line
 
-    eq(1, funcs.foldlevel(1)) --|  insert an unindented line under this line
-    eq(0, funcs.foldlevel(2)) --|a
-    eq(1, funcs.foldlevel(3)) --|  keep the lines under this line folded
-    eq(2, funcs.foldlevel(4)) --|    keep this line folded 1
-    eq(2, funcs.foldlevel(5)) --|    keep this line folded 2
+    eq(1, fn.foldlevel(1)) --|  insert an unindented line under this line
+    eq(0, fn.foldlevel(2)) --|a
+    eq(1, fn.foldlevel(3)) --|  keep the lines under this line folded
+    eq(2, fn.foldlevel(4)) --|    keep this line folded 1
+    eq(2, fn.foldlevel(5)) --|    keep this line folded 2
 
-    neq(-1, funcs.foldclosed(4)) -- make sure the inner fold is still not open
+    neq(-1, fn.foldclosed(4)) -- make sure the inner fold is still not open
   end)
 end)

@@ -7,14 +7,14 @@ local eq = helpers.eq
 local feed = helpers.feed
 local feed_command = helpers.feed_command
 local next_msg = helpers.next_msg
-local nvim = helpers.nvim
+local api = helpers.api
 local source = helpers.source
 local pcall_err = helpers.pcall_err
 
 before_each(function()
   clear()
-  local channel = nvim('get_api_info')[1]
-  nvim('set_var', 'channel', channel)
+  local channel = api.nvim_get_api_info()[1]
+  api.nvim_set_var('channel', channel)
 end)
 
 describe('wait()', function()
@@ -61,13 +61,13 @@ describe('wait()', function()
 
     -- XXX: flaky (#11137)
     helpers.retry(nil, nil, function()
-      nvim('set_var', 'counter', 0)
+      api.nvim_set_var('counter', 0)
       eq(-1, call('wait', 20, 'Count() >= 5', 99999))
     end)
 
-    nvim('set_var', 'counter', 0)
+    api.nvim_set_var('counter', 0)
     eq(0, call('wait', 10000, 'Count() >= 5', 5))
-    eq(5, nvim('get_var', 'counter'))
+    eq(5, api.nvim_get_var('counter'))
   end)
 
   it('validates args', function()

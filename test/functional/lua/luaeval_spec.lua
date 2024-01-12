@@ -7,12 +7,12 @@ local exc_exec = helpers.exc_exec
 local remove_trace = helpers.remove_trace
 local exec_lua = helpers.exec_lua
 local command = helpers.command
-local meths = helpers.meths
-local funcs = helpers.funcs
+local api = helpers.api
+local fn = helpers.fn
 local clear = helpers.clear
 local eval = helpers.eval
 local feed = helpers.feed
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local eq = helpers.eq
 
 before_each(clear)
@@ -39,7 +39,7 @@ describe('luaeval()', function()
   describe('second argument', function()
     it('is successfully received', function()
       local t = {t=true, f=false, --[[n=NIL,]] d={l={'string', 42, 0.42}}}
-      eq(t, funcs.luaeval("_A", t))
+      eq(t, fn.luaeval("_A", t))
       -- Not tested: nil, funcrefs, returned object identity: behaviour will
       -- most likely change.
     end)
@@ -47,37 +47,37 @@ describe('luaeval()', function()
   describe('lua values', function()
     it('are successfully transformed', function()
       eq({n=1, f=1.5, s='string', l={4, 2}},
-         funcs.luaeval('{n=1, f=1.5, s="string", l={4, 2}}'))
+         fn.luaeval('{n=1, f=1.5, s="string", l={4, 2}}'))
       -- Not tested: nil inside containers: behaviour will most likely change.
-      eq(NIL, funcs.luaeval('nil'))
-      eq({['']=1}, funcs.luaeval('{[""]=1}'))
+      eq(NIL, fn.luaeval('nil'))
+      eq({['']=1}, fn.luaeval('{[""]=1}'))
     end)
   end)
   describe('recursive lua values', function()
     it('are successfully transformed', function()
       command('lua rawset(_G, "d", {})')
       command('lua rawset(d, "d", d)')
-      eq('\n{\'d\': {...@0}}', funcs.execute('echo luaeval("d")'))
+      eq('\n{\'d\': {...@0}}', fn.execute('echo luaeval("d")'))
 
       command('lua rawset(_G, "l", {})')
       command('lua table.insert(l, l)')
-      eq('\n[[...@0]]', funcs.execute('echo luaeval("l")'))
+      eq('\n[[...@0]]', fn.execute('echo luaeval("l")'))
     end)
   end)
   describe('strings with NULs', function()
     it('are successfully converted to blobs', function()
       command([[let s = luaeval('"\0"')]])
-      eq('\000', meths.get_var('s'))
+      eq('\000', api.nvim_get_var('s'))
     end)
     it('are successfully converted to special dictionaries in table keys', function()
       command([[let d = luaeval('{["\0"]=1}')]])
-      eq({_TYPE={}, _VAL={{{_TYPE={}, _VAL={'\n'}}, 1}}}, meths.get_var('d'))
-      eq(1, funcs.eval('d._TYPE is v:msgpack_types.map'))
-      eq(1, funcs.eval('d._VAL[0][0]._TYPE is v:msgpack_types.string'))
+      eq({_TYPE={}, _VAL={{{_TYPE={}, _VAL={'\n'}}, 1}}}, api.nvim_get_var('d'))
+      eq(1, fn.eval('d._TYPE is v:msgpack_types.map'))
+      eq(1, fn.eval('d._VAL[0][0]._TYPE is v:msgpack_types.string'))
     end)
     it('are successfully converted to blobs from a list', function()
       command([[let l = luaeval('{"abc", "a\0b", "c\0d", "def"}')]])
-      eq({'abc', 'a\000b', 'c\000d', 'def'}, meths.get_var('l'))
+      eq({'abc', 'a\000b', 'c\000d', 'def'}, api.nvim_get_var('l'))
     end)
   end)
 
@@ -86,68 +86,68 @@ describe('luaeval()', function()
 
   it('correctly evaluates scalars', function()
     -- Also test method call (->) syntax
-    eq(1, funcs.luaeval('1'))
+    eq(1, fn.luaeval('1'))
     eq(0, eval('"1"->luaeval()->type()'))
 
-    eq(1.5, funcs.luaeval('1.5'))
+    eq(1.5, fn.luaeval('1.5'))
     eq(5, eval('"1.5"->luaeval()->type()'))
 
-    eq("test", funcs.luaeval('"test"'))
+    eq("test", fn.luaeval('"test"'))
     eq(1, eval('"\'test\'"->luaeval()->type()'))
 
-    eq('', funcs.luaeval('""'))
-    eq('\000', funcs.luaeval([['\0']]))
-    eq('\000\n\000', funcs.luaeval([['\0\n\0']]))
+    eq('', fn.luaeval('""'))
+    eq('\000', fn.luaeval([['\0']]))
+    eq('\000\n\000', fn.luaeval([['\0\n\0']]))
     eq(10, eval([[type(luaeval("'\\0\\n\\0'"))]]))
 
-    eq(true, funcs.luaeval('true'))
-    eq(false, funcs.luaeval('false'))
-    eq(NIL, funcs.luaeval('nil'))
+    eq(true, fn.luaeval('true'))
+    eq(false, fn.luaeval('false'))
+    eq(NIL, fn.luaeval('nil'))
   end)
 
   it('correctly evaluates containers', function()
-    eq({}, funcs.luaeval('{}'))
+    eq({}, fn.luaeval('{}'))
     eq(3, eval('type(luaeval("{}"))'))
 
-    eq({test=1, foo=2}, funcs.luaeval('{test=1, foo=2}'))
+    eq({test=1, foo=2}, fn.luaeval('{test=1, foo=2}'))
     eq(4, eval('type(luaeval("{test=1, foo=2}"))'))
 
-    eq({4, 2}, funcs.luaeval('{4, 2}'))
+    eq({4, 2}, fn.luaeval('{4, 2}'))
     eq(3, eval('type(luaeval("{4, 2}"))'))
 
-    eq({NIL, 20}, funcs.luaeval('{[2] = 20}'))
+    eq({NIL, 20}, fn.luaeval('{[2] = 20}'))
     eq(3, eval('type(luaeval("{[2] = 20}"))'))
 
-    eq({10, NIL, 30}, funcs.luaeval('{[1] = 10, [3] = 30}'))
+    eq({10, NIL, 30}, fn.luaeval('{[1] = 10, [3] = 30}'))
     eq(3, eval('type(luaeval("{[1] = 10, [3] = 30}"))'))
 
     local level = 30
-    eq(nested_by_level[level].o, funcs.luaeval(nested_by_level[level].s))
+    eq(nested_by_level[level].o, fn.luaeval(nested_by_level[level].s))
 
     eq({_TYPE={}, _VAL={{{_TYPE={}, _VAL={'\n', '\n'}}, '\000\n\000\000'}}},
-       funcs.luaeval([[{['\0\n\0']='\0\n\0\0'}]]))
+       fn.luaeval([[{['\0\n\0']='\0\n\0\0'}]]))
     eq(1, eval([[luaeval('{["\0\n\0"]="\0\n\0\0"}')._TYPE is v:msgpack_types.map]]))
     eq(1, eval([[luaeval('{["\0\n\0"]="\0\n\0\0"}')._VAL[0][0]._TYPE is v:msgpack_types.string]]))
     eq({nested={{_TYPE={}, _VAL={{{_TYPE={}, _VAL={'\n', '\n'}}, '\000\n\000\000'}}}}},
-       funcs.luaeval([[{nested={{['\0\n\0']='\0\n\0\0'}}}]]))
+       fn.luaeval([[{nested={{['\0\n\0']='\0\n\0\0'}}}]]))
   end)
 
   it('correctly passes scalars as argument', function()
-    eq(1, funcs.luaeval('_A', 1))
-    eq(1.5, funcs.luaeval('_A', 1.5))
-    eq('', funcs.luaeval('_A', ''))
-    eq('test', funcs.luaeval('_A', 'test'))
-    eq(NIL, funcs.luaeval('_A', NIL))
-    eq(true, funcs.luaeval('_A', true))
-    eq(false, funcs.luaeval('_A', false))
+    eq(1, fn.luaeval('_A', 1))
+    eq(1.5, fn.luaeval('_A', 1.5))
+    eq('', fn.luaeval('_A', ''))
+    eq('test', fn.luaeval('_A', 'test'))
+    eq(NIL, fn.luaeval('_A', NIL))
+    eq(true, fn.luaeval('_A', true))
+    eq(false, fn.luaeval('_A', false))
   end)
 
   it('correctly passes containers as argument', function()
-    eq({}, funcs.luaeval('_A', {}))
-    eq({test=1}, funcs.luaeval('_A', {test=1}))
-    eq({4, 2}, funcs.luaeval('_A', {4, 2}))
+    eq({}, fn.luaeval('_A', {}))
+    eq({test=1}, fn.luaeval('_A', {test=1}))
+    eq({4, 2}, fn.luaeval('_A', {4, 2}))
     local level = 28
-    eq(nested_by_level[level].o, funcs.luaeval('_A', nested_by_level[level].o))
+    eq(nested_by_level[level].o, fn.luaeval('_A', nested_by_level[level].o))
   end)
 
   local function sp(typ, val)
@@ -399,26 +399,26 @@ describe('luaeval()', function()
     eq(4, eval([[type(luaeval('{[vim.type_idx]=vim.types.dictionary}'))]]))
     eq(3, eval([[type(luaeval('{[vim.type_idx]=vim.types.array}'))]]))
 
-    eq({}, funcs.luaeval('{[vim.type_idx]=vim.types.array}'))
+    eq({}, fn.luaeval('{[vim.type_idx]=vim.types.array}'))
 
     -- Presence of type_idx makes Vim ignore some keys
-    eq({42}, funcs.luaeval('{[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}'))
-    eq({foo=2}, funcs.luaeval('{[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}'))
-    eq(10, funcs.luaeval('{[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}'))
+    eq({42}, fn.luaeval('{[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}'))
+    eq({foo=2}, fn.luaeval('{[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}'))
+    eq(10, fn.luaeval('{[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}'))
 
     -- The following should not crash
-    eq({}, funcs.luaeval('{[vim.type_idx]=vim.types.dictionary}'))
+    eq({}, fn.luaeval('{[vim.type_idx]=vim.types.dictionary}'))
   end)
 
   it('correctly converts self-containing containers', function()
-    meths.set_var('l', {})
+    api.nvim_set_var('l', {})
     eval('add(l, l)')
     eq(true, eval('luaeval("_A == _A[1]", l)'))
     eq(true, eval('luaeval("_A[1] == _A[1][1]", [l])'))
     eq(true, eval('luaeval("_A.d == _A.d[1]", {"d": l})'))
     eq(true, eval('luaeval("_A ~= _A[1]", [l])'))
 
-    meths.set_var('d', {foo=42})
+    api.nvim_set_var('d', {foo=42})
     eval('extend(d, {"d": d})')
     eq(true, eval('luaeval("_A == _A.d", d)'))
     eq(true, eval('luaeval("_A[1] == _A[1].d", [d])'))
@@ -441,7 +441,7 @@ describe('luaeval()', function()
     local s = ('x'):rep(65536)
     eq('Vim(call):E5107: Error loading lua [string "luaeval()"]:1: unexpected symbol near \')\'',
        exc_exec([[call luaeval("(']] .. s ..[[' + )")]]))
-    eq(s, funcs.luaeval('"' .. s .. '"'))
+    eq(s, fn.luaeval('"' .. s .. '"'))
   end)
 end)
 
@@ -478,7 +478,7 @@ describe('v:lua', function()
     eq(7, eval('v:lua.foo(3,4,v:null)'))
     eq(true, exec_lua([[return _G.val == vim.NIL]]))
     eq(NIL, eval('v:lua.mymod.noisy("eval")'))
-    eq("hey eval", meths.get_current_line())
+    eq("hey eval", api.nvim_get_current_line())
     eq("string: abc", eval('v:lua.mymod.whatis(0z616263)'))
     eq("string: ", eval('v:lua.mymod.whatis(v:_null_blob)'))
 
@@ -494,7 +494,7 @@ describe('v:lua', function()
     eq("boop", exec_lua([[return _G.val]]))
 
     eq(NIL, eval('"there"->v:lua.mymod.noisy()'))
-    eq("hey there", meths.get_current_line())
+    eq("hey there", api.nvim_get_current_line())
     eq({5, 10, 15, 20}, eval('[[1], [2, 3], [4]]->v:lua.vim.tbl_flatten()->map({_, v -> v * 5})'))
 
     eq("Vim:E5108: Error executing lua [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
@@ -503,7 +503,7 @@ describe('v:lua', function()
 
   it('works in :call', function()
     command(":call v:lua.mymod.noisy('command')")
-    eq("hey command", meths.get_current_line())
+    eq("hey command", api.nvim_get_current_line())
     eq("Vim(call):E5108: Error executing lua [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
        pcall_err(command, 'call v:lua.mymod.crashy()'))
   end)
@@ -518,7 +518,7 @@ describe('v:lua', function()
       [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
     })
     screen:attach()
-    meths.set_option_value('omnifunc', 'v:lua.mymod.omni', {})
+    api.nvim_set_option_value('omnifunc', 'v:lua.mymod.omni', {})
     feed('isome st<c-x><c-o>')
     screen:expect{grid=[[
       some stuff^                                                  |
@@ -528,9 +528,9 @@ describe('v:lua', function()
       {1:~                                                           }|*3
       {4:-- Omni completion (^O^N^P) }{5:match 1 of 3}                    |
     ]]}
-    meths.set_option_value('operatorfunc', 'v:lua.mymod.noisy', {})
+    api.nvim_set_option_value('operatorfunc', 'v:lua.mymod.noisy', {})
     feed('<Esc>g@g@')
-    eq("hey line", meths.get_current_line())
+    eq("hey line", api.nvim_get_current_line())
   end)
 
   it('supports packages', function()

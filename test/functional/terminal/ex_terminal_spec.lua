@@ -1,11 +1,12 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local assert_alive = helpers.assert_alive
-local clear, poke_eventloop, nvim = helpers.clear, helpers.poke_eventloop, helpers.nvim
+local clear, poke_eventloop = helpers.clear, helpers.poke_eventloop
 local testprg, source, eq = helpers.testprg, helpers.source, helpers.eq
 local feed = helpers.feed
 local feed_command, eval = helpers.feed_command, helpers.eval
-local funcs = helpers.funcs
+local fn = helpers.fn
+local api = helpers.api
 local retry = helpers.retry
 local ok = helpers.ok
 local command = helpers.command
@@ -35,7 +36,7 @@ describe(':terminal', function()
     poke_eventloop()
     -- Wait for some terminal activity.
     retry(nil, 4000, function()
-      ok(funcs.line('$') > 6)
+      ok(fn.line('$') > 6)
     end)
     feed_command('messages')
     screen:expect([[
@@ -79,7 +80,7 @@ describe(':terminal', function()
   it('Enter/Leave does not increment jumplist #3723', function()
     feed_command('terminal')
     local function enter_and_leave()
-      local lines_before = funcs.line('$')
+      local lines_before = fn.line('$')
       -- Create a new line (in the shell). For a normal buffer this
       -- increments the jumplist; for a terminal-buffer it should not. #3723
       feed('i')
@@ -90,44 +91,44 @@ describe(':terminal', function()
       poke_eventloop()
       -- Wait for >=1 lines to be created.
       retry(nil, 4000, function()
-        ok(funcs.line('$') > lines_before)
+        ok(fn.line('$') > lines_before)
       end)
     end
     enter_and_leave()
     enter_and_leave()
     enter_and_leave()
-    ok(funcs.line('$') > 6) -- Verify assumption.
-    local jumps = funcs.split(funcs.execute('jumps'), '\n')
+    ok(fn.line('$') > 6) -- Verify assumption.
+    local jumps = fn.split(fn.execute('jumps'), '\n')
     eq(' jump line  col file/text', jumps[1])
     eq(3, #jumps)
   end)
 
   it('nvim_get_mode() in :terminal', function()
     command('terminal')
-    eq({ blocking = false, mode = 'nt' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'nt' }, api.nvim_get_mode())
     feed('i')
-    eq({ blocking = false, mode = 't' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
     feed([[<C-\><C-N>]])
-    eq({ blocking = false, mode = 'nt' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'nt' }, api.nvim_get_mode())
   end)
 
   it(':stopinsert RPC request exits terminal-mode #7807', function()
     command('terminal')
     feed('i[tui] insert-mode')
-    eq({ blocking = false, mode = 't' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
     command('stopinsert')
     feed('<Ignore>') -- Add input to separate two RPC requests
-    eq({ blocking = false, mode = 'nt' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'nt' }, api.nvim_get_mode())
   end)
 
   it(":stopinsert in normal mode doesn't break insert mode #9889", function()
     command('terminal')
-    eq({ blocking = false, mode = 'nt' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'nt' }, api.nvim_get_mode())
     command('stopinsert')
     feed('<Ignore>') -- Add input to separate two RPC requests
-    eq({ blocking = false, mode = 'nt' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'nt' }, api.nvim_get_mode())
     feed('a')
-    eq({ blocking = false, mode = 't' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
   end)
 
   it('switching to terminal buffer in Insert mode goes to Terminal mode #7164', function()
@@ -138,9 +139,9 @@ describe(':terminal', function()
     command('autocmd InsertLeave * let g:events += ["InsertLeave"]')
     command('autocmd TermEnter * let g:events += ["TermEnter"]')
     command('inoremap <F2> <Cmd>wincmd p<CR>')
-    eq({ blocking = false, mode = 'i' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'i' }, api.nvim_get_mode())
     feed('<F2>')
-    eq({ blocking = false, mode = 't' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
     eq({ 'InsertLeave', 'TermEnter' }, eval('g:events'))
   end)
 end)
@@ -158,9 +159,9 @@ local function test_terminal_with_fake_shell(backslash)
     clear()
     screen = Screen.new(50, 4)
     screen:attach({ rgb = false })
-    nvim('set_option_value', 'shell', shell_path, {})
-    nvim('set_option_value', 'shellcmdflag', 'EXE', {})
-    nvim('set_option_value', 'shellxquote', '', {})
+    api.nvim_set_option_value('shell', shell_path, {})
+    api.nvim_set_option_value('shellcmdflag', 'EXE', {})
+    api.nvim_set_option_value('shellxquote', '', {})
   end)
 
   it('with no argument, acts like termopen()', function()
@@ -177,7 +178,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it("with no argument, and 'shell' is set to empty string", function()
-    nvim('set_option_value', 'shell', '', {})
+    api.nvim_set_option_value('shell', '', {})
     feed_command('terminal')
     screen:expect([[
       ^                                                  |
@@ -187,7 +188,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it("with no argument, but 'shell' has arguments, acts like termopen()", function()
-    nvim('set_option_value', 'shell', shell_path .. ' INTERACT', {})
+    api.nvim_set_option_value('shell', shell_path .. ' INTERACT', {})
     feed_command('terminal')
     screen:expect([[
       ^interact $                                        |
@@ -208,7 +209,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it("executes a given command through the shell, when 'shell' has arguments", function()
-    nvim('set_option_value', 'shell', shell_path .. ' -t jeff', {})
+    api.nvim_set_option_value('shell', shell_path .. ' -t jeff', {})
     command('set shellxquote=') -- win: avoid extra quotes
     feed_command('terminal echo hi')
     screen:expect([[

@@ -1,8 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
-local mpack = require('mpack')
-local clear, funcs, eq = helpers.clear, helpers.funcs, helpers.eq
-local call = helpers.call
-local meths = helpers.meths
+local clear, fn, eq = helpers.clear, helpers.fn, helpers.eq
+local api = helpers.api
 
 local function read_mpack_file(fname)
   local fd = io.open(fname, 'rb')
@@ -12,7 +10,7 @@ local function read_mpack_file(fname)
 
   local data = fd:read('*a')
   fd:close()
-  local unpack = mpack.Unpacker()
+  local unpack = vim.mpack.Unpacker()
   return unpack(data)
 end
 
@@ -20,7 +18,7 @@ describe("api_info()['version']", function()
   before_each(clear)
 
   it('returns API level', function()
-    local version = call('api_info')['version']
+    local version = fn.api_info()['version']
     local current = version['api_level']
     local compat = version['api_compatible']
     eq('number', type(current))
@@ -29,7 +27,7 @@ describe("api_info()['version']", function()
   end)
 
   it('returns Nvim version', function()
-    local version = call('api_info')['version']
+    local version = fn.api_info()['version']
     local major = version['major']
     local minor = version['minor']
     local patch = version['patch']
@@ -39,10 +37,10 @@ describe("api_info()['version']", function()
     eq('number', type(minor))
     eq('number', type(patch))
     eq('boolean', type(prerelease))
-    eq(1, funcs.has('nvim-' .. major .. '.' .. minor .. '.' .. patch))
-    eq(0, funcs.has('nvim-' .. major .. '.' .. minor .. '.' .. (patch + 1)))
-    eq(0, funcs.has('nvim-' .. major .. '.' .. (minor + 1) .. '.' .. patch))
-    eq(0, funcs.has('nvim-' .. (major + 1) .. '.' .. minor .. '.' .. patch))
+    eq(1, fn.has('nvim-' .. major .. '.' .. minor .. '.' .. patch))
+    eq(0, fn.has('nvim-' .. major .. '.' .. minor .. '.' .. (patch + 1)))
+    eq(0, fn.has('nvim-' .. major .. '.' .. (minor + 1) .. '.' .. patch))
+    eq(0, fn.has('nvim-' .. (major + 1) .. '.' .. minor .. '.' .. patch))
     assert(build == nil or type(build) == 'string')
   end)
 end)
@@ -91,14 +89,14 @@ describe('api metadata', function()
     end
   end
 
-  local api, compat, stable, api_level
+  local api_info, compat, stable, api_level
   local old_api = {}
   setup(function()
     clear() -- Ensure a session before requesting api_info.
-    api = meths.get_api_info()[2]
-    compat = api.version.api_compatible
-    api_level = api.version.api_level
-    if api.version.api_prerelease then
+    api_info = api.nvim_get_api_info()[2]
+    compat = api_info.version.api_compatible
+    api_level = api_info.version.api_level
+    if api_info.version.api_prerelease then
       stable = api_level - 1
     else
       stable = api_level
@@ -109,7 +107,7 @@ describe('api metadata', function()
       old_api[level] = read_mpack_file(path)
       if old_api[level] == nil then
         local errstr = 'missing metadata fixture for stable level ' .. level .. '. '
-        if level == api_level and not api.version.api_prerelease then
+        if level == api_level and not api_info.version.api_prerelease then
           errstr = (
             errstr
             .. 'If NVIM_API_CURRENT was bumped, '
@@ -126,7 +124,7 @@ describe('api metadata', function()
   end)
 
   it('functions are compatible with old metadata or have new level', function()
-    local funcs_new = name_table(api.functions)
+    local funcs_new = name_table(api_info.functions)
     local funcs_compat = {}
     for level = compat, stable do
       for _, f in ipairs(old_api[level].functions) do
@@ -147,7 +145,7 @@ describe('api metadata', function()
       funcs_compat[level] = name_table(old_api[level].functions)
     end
 
-    for _, f in ipairs(api.functions) do
+    for _, f in ipairs(api_info.functions) do
       if f.since <= stable then
         local f_old = funcs_compat[f.since][f.name]
         if f_old == nil then
@@ -160,7 +158,7 @@ describe('api metadata', function()
               .. (stable + 1)
               .. '.'
             )
-            if not api.version.api_prerelease then
+            if not api_info.version.api_prerelease then
               errstr = (
                 errstr
                 .. ' Also bump NVIM_API_CURRENT and set '
@@ -173,7 +171,7 @@ describe('api metadata', function()
           end
         end
       elseif f.since > api_level then
-        if api.version.api_prerelease then
+        if api_info.version.api_prerelease then
           error('New function ' .. f.name .. ' should use since value ' .. api_level)
         else
           error(
@@ -189,7 +187,7 @@ describe('api metadata', function()
   end)
 
   it('UI events are compatible with old metadata or have new level', function()
-    local ui_events_new = name_table(api.ui_events)
+    local ui_events_new = name_table(api_info.ui_events)
     local ui_events_compat = {}
 
     -- UI events were formalized in level 3
@@ -203,7 +201,7 @@ describe('api metadata', function()
       ui_events_compat[level] = name_table(old_api[level].ui_events)
     end
 
-    for _, e in ipairs(api.ui_events) do
+    for _, e in ipairs(api_info.ui_events) do
       if e.since <= stable then
         local e_old = ui_events_compat[e.since][e.name]
         if e_old == nil then
@@ -215,7 +213,7 @@ describe('api metadata', function()
             .. (stable + 1)
             .. '.'
           )
-          if not api.version.api_prerelease then
+          if not api_info.version.api_prerelease then
             errstr = (
               errstr
               .. ' Also bump NVIM_API_CURRENT and set '
@@ -225,7 +223,7 @@ describe('api metadata', function()
           error(errstr)
         end
       elseif e.since > api_level then
-        if api.version.api_prerelease then
+        if api_info.version.api_prerelease then
           error('New UI event ' .. e.name .. ' should use since value ' .. api_level)
         else
           error(
@@ -242,7 +240,7 @@ describe('api metadata', function()
 
   it('ui_options are preserved from older levels', function()
     local available_options = {}
-    for _, option in ipairs(api.ui_options) do
+    for _, option in ipairs(api_info.ui_options) do
       available_options[option] = true
     end
     -- UI options were versioned from level 4

@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
-local meths = helpers.meths
+local api = helpers.api
 local clear = helpers.clear
 local pathroot = helpers.pathroot
 local command = helpers.command
@@ -165,6 +165,6 @@ describe('filetype.lua', function()
     clear({
       args = { '--clean', '--cmd', 'autocmd BufRead *.md set filetype=notmarkdown', 'README.md' },
     })
-    eq('notmarkdown', meths.get_option_value('filetype', {}))
+    eq('notmarkdown', api.nvim_get_option_value('filetype', {}))
   end)
 end)

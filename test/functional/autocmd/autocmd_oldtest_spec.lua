@@ -3,8 +3,8 @@ local Screen = require('test.functional.ui.screen')
 
 local clear = helpers.clear
 local eq = helpers.eq
-local meths = helpers.meths
-local funcs = helpers.funcs
+local api = helpers.api
+local fn = helpers.fn
 local exec = helpers.exec
 local feed = helpers.feed
 
@@ -12,7 +12,7 @@ describe('oldtests', function()
   before_each(clear)
 
   local exec_lines = function(str)
-    return funcs.split(funcs.execute(str), '\n')
+    return fn.split(fn.execute(str), '\n')
   end
 
   local add_an_autocmd = function()
@@ -23,7 +23,7 @@ describe('oldtests', function()
     ]]
 
     eq(3, #exec_lines('au vimBarTest'))
-    eq(1, #meths.get_autocmds({ group = 'vimBarTest' }))
+    eq(1, #api.nvim_get_autocmds({ group = 'vimBarTest' }))
   end
 
   it('should recognize a bar before the {event}', function()
@@ -31,7 +31,7 @@ describe('oldtests', function()
     add_an_autocmd()
     exec [[ augroup vimBarTest | au! | augroup END ]]
     eq(1, #exec_lines('au vimBarTest'))
-    eq({}, meths.get_autocmds({ group = 'vimBarTest' }))
+    eq({}, api.nvim_get_autocmds({ group = 'vimBarTest' }))
 
     -- Sad spacing
     add_an_autocmd()
@@ -49,8 +49,8 @@ describe('oldtests', function()
   end)
 
   it('should fire on unload buf', function()
-    funcs.writefile({ 'Test file Xxx1' }, 'Xxx1')
-    funcs.writefile({ 'Test file Xxx2' }, 'Xxx2')
+    fn.writefile({ 'Test file Xxx1' }, 'Xxx1')
+    fn.writefile({ 'Test file Xxx2' }, 'Xxx2')
     local fname = 'Xtest_functional_autocmd_unload'
 
     local content = [[
@@ -71,16 +71,16 @@ describe('oldtests', function()
       q
     ]]
 
-    funcs.writefile(funcs.split(content, '\n'), fname)
+    fn.writefile(fn.split(content, '\n'), fname)
 
-    funcs.delete('Xout')
-    funcs.system(string.format('%s --clean -N -S %s', meths.get_vvar('progpath'), fname))
-    eq(1, funcs.filereadable('Xout'))
+    fn.delete('Xout')
+    fn.system(string.format('%s --clean -N -S %s', api.nvim_get_vvar('progpath'), fname))
+    eq(1, fn.filereadable('Xout'))
 
-    funcs.delete('Xxx1')
-    funcs.delete('Xxx2')
-    funcs.delete(fname)
-    funcs.delete('Xout')
+    fn.delete('Xxx1')
+    fn.delete('Xxx2')
+    fn.delete(fname)
+    fn.delete('Xout')
   end)
 
   -- oldtest: Test_delete_ml_get_errors()

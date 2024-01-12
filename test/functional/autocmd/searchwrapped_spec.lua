@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local command = helpers.command
-local curbufmeths = helpers.curbufmeths
+local api = helpers.api
 local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
@@ -13,7 +13,7 @@ describe('autocmd SearchWrapped', function()
     command('set ignorecase')
     command('let g:test = 0')
     command('autocmd! SearchWrapped * let g:test += 1')
-    curbufmeths.set_lines(0, 1, false, {
+    api.nvim_buf_set_lines(0, 0, 1, false, {
       'The quick brown fox',
       'jumps over the lazy dog',
     })

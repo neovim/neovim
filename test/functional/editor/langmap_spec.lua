@@ -4,7 +4,7 @@ local eq, neq, call = helpers.eq, helpers.neq, helpers.call
 local eval, feed, clear = helpers.eval, helpers.feed, helpers.clear
 local command, insert, expect = helpers.command, helpers.insert, helpers.expect
 local feed_command = helpers.feed_command
-local curwin = helpers.curwin
+local curwin = helpers.api.nvim_get_current_win
 
 describe("'langmap'", function()
   before_each(function()
@@ -215,7 +215,7 @@ describe("'langmap'", function()
     feed('qa' .. command_string .. 'q')
     expect(expect_string)
     eq(
-      expect_macro or helpers.funcs.nvim_replace_termcodes(command_string, true, true, true),
+      expect_macro or helpers.fn.nvim_replace_termcodes(command_string, true, true, true),
       eval('@a')
     )
     if setup_function then

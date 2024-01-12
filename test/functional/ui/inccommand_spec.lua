@@ -7,15 +7,14 @@ local eval = helpers.eval
 local expect = helpers.expect
 local feed = helpers.feed
 local insert = helpers.insert
-local funcs = helpers.funcs
-local meths = helpers.meths
+local fn = helpers.fn
+local api = helpers.api
 local neq = helpers.neq
 local ok = helpers.ok
 local retry = helpers.retry
 local source = helpers.source
 local poke_eventloop = helpers.poke_eventloop
-local nvim = helpers.nvim
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 local testprg = helpers.testprg
 local assert_alive = helpers.assert_alive
 
@@ -158,19 +157,19 @@ describe(":substitute, 'inccommand' preserves", function()
     common_setup(screen, 'nosplit', ('abc\ndef\n'):rep(50))
 
     feed('ggyG')
-    local X = meths.get_vvar('maxcol')
-    eq({ 0, 1, 1, 0 }, funcs.getpos("'["))
-    eq({ 0, 101, X, 0 }, funcs.getpos("']"))
+    local X = api.nvim_get_vvar('maxcol')
+    eq({ 0, 1, 1, 0 }, fn.getpos("'["))
+    eq({ 0, 101, X, 0 }, fn.getpos("']"))
 
     feed(":'[,']s/def/")
     poke_eventloop()
-    eq({ 0, 1, 1, 0 }, funcs.getpos("'["))
-    eq({ 0, 101, X, 0 }, funcs.getpos("']"))
+    eq({ 0, 1, 1, 0 }, fn.getpos("'["))
+    eq({ 0, 101, X, 0 }, fn.getpos("']"))
 
     feed('DEF/g')
     poke_eventloop()
-    eq({ 0, 1, 1, 0 }, funcs.getpos("'["))
-    eq({ 0, 101, X, 0 }, funcs.getpos("']"))
+    eq({ 0, 1, 1, 0 }, fn.getpos("'["))
+    eq({ 0, 101, X, 0 }, fn.getpos("']"))
 
     feed('<CR>')
     expect(('abc\nDEF\n'):rep(50))
@@ -205,8 +204,8 @@ describe(":substitute, 'inccommand' preserves", function()
       feed(':%s/as/glork/')
       poke_eventloop()
       feed('<enter>')
-      eq(meths.get_option_value('undolevels', { scope = 'global' }), 139)
-      eq(meths.get_option_value('undolevels', { buf = 0 }), 34)
+      eq(api.nvim_get_option_value('undolevels', { scope = 'global' }), 139)
+      eq(api.nvim_get_option_value('undolevels', { buf = 0 }), 34)
     end)
   end
 
@@ -1099,7 +1098,7 @@ describe(':substitute, inccommand=split', function()
     feed('<CR>')
     poke_eventloop()
     feed(':vs tmp<enter>')
-    eq(3, funcs.bufnr('$'))
+    eq(3, fn.bufnr('$'))
   end)
 
   it('works with the n flag', function()
@@ -1119,7 +1118,7 @@ describe(':substitute, inccommand=split', function()
 
   it("deactivates if 'redrawtime' is exceeded #5602", function()
     -- prevent redraws from 'incsearch'
-    meths.set_option_value('incsearch', false, {})
+    api.nvim_set_option_value('incsearch', false, {})
     -- Assert that 'inccommand' is ENABLED initially.
     eq('split', eval('&inccommand'))
     -- Set 'redrawtime' to minimal value, to ensure timeout is triggered.
@@ -1752,7 +1751,7 @@ describe("'inccommand' autocommands", function()
   end
 
   local function register_autocmd(event)
-    meths.set_var(event .. '_fired', {})
+    api.nvim_set_var(event .. '_fired', {})
     command('autocmd ' .. event .. ' * call add(g:' .. event .. "_fired, expand('<abuf>'))")
   end
 
@@ -1768,14 +1767,14 @@ describe("'inccommand' autocommands", function()
     feed(':%s/tw')
 
     for event, _ in pairs(eventsExpected) do
-      eventsObserved[event].open = meths.get_var(event .. '_fired')
-      meths.set_var(event .. '_fired', {})
+      eventsObserved[event].open = api.nvim_get_var(event .. '_fired')
+      api.nvim_set_var(event .. '_fired', {})
     end
 
     feed('/<enter>')
 
     for event, _ in pairs(eventsExpected) do
-      eventsObserved[event].close = meths.get_var(event .. '_fired')
+      eventsObserved[event].close = api.nvim_get_var(event .. '_fired')
     end
 
     for event, _ in pairs(eventsExpected) do
@@ -1898,20 +1897,20 @@ describe("'inccommand' with 'gdefault'", function()
     common_setup(nil, 'nosplit', '{')
     command('set gdefault')
     feed(':s/{\\n')
-    eq({ mode = 'c', blocking = false }, nvim('get_mode'))
+    eq({ mode = 'c', blocking = false }, api.nvim_get_mode())
     feed('/A<Enter>')
     expect('A')
-    eq({ mode = 'n', blocking = false }, nvim('get_mode'))
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
   end)
 
   it('with multiline text and range, does not lock up #7244', function()
     common_setup(nil, 'nosplit', '{\n\n{')
     command('set gdefault')
     feed(':%s/{\\n')
-    eq({ mode = 'c', blocking = false }, nvim('get_mode'))
+    eq({ mode = 'c', blocking = false }, api.nvim_get_mode())
     feed('/A<Enter>')
     expect('A\nA')
-    eq({ mode = 'n', blocking = false }, nvim('get_mode'))
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
   end)
 
   it('does not crash on zero-width matches #7485', function()
@@ -1920,9 +1919,9 @@ describe("'inccommand' with 'gdefault'", function()
     feed('gg')
     feed('Vj')
     feed(':s/\\%V')
-    eq({ mode = 'c', blocking = false }, nvim('get_mode'))
+    eq({ mode = 'c', blocking = false }, api.nvim_get_mode())
     feed('<Esc>')
-    eq({ mode = 'n', blocking = false }, nvim('get_mode'))
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
   end)
 
   it('removes highlights after abort for a zero-width match', function()
@@ -2614,8 +2613,8 @@ it(':substitute with inccommand, allows :redraw before first separator is typed 
   local screen = Screen.new(30, 6)
   common_setup(screen, 'split', 'foo bar baz\nbar baz fox\nbar foo baz')
   command('hi! link NormalFloat CursorLine')
-  local float_buf = meths.create_buf(false, true)
-  meths.open_win(float_buf, false, {
+  local float_buf = api.nvim_create_buf(false, true)
+  api.nvim_open_win(float_buf, false, {
     relative = 'editor',
     height = 1,
     width = 5,
@@ -2641,7 +2640,7 @@ it(':substitute with inccommand, allows :redraw before first separator is typed 
     {15:~                             }|
     :%s^                           |
   ]])
-  meths.buf_set_lines(float_buf, 0, -1, true, { 'foo' })
+  api.nvim_buf_set_lines(float_buf, 0, -1, true, { 'foo' })
   command('redraw')
   screen:expect([[
     foo bar baz                   |
@@ -2745,7 +2744,7 @@ it(':substitute with inccommand works properly if undo is not synced #20029', fu
   clear()
   local screen = Screen.new(30, 6)
   common_setup(screen, 'nosplit', 'foo\nbar\nbaz')
-  meths.set_keymap('x', '<F2>', '<Esc>`<Oaaaaa asdf<Esc>`>obbbbb asdf<Esc>V`<k:s/asdf/', {})
+  api.nvim_set_keymap('x', '<F2>', '<Esc>`<Oaaaaa asdf<Esc>`>obbbbb asdf<Esc>V`<k:s/asdf/', {})
   feed('gg0<C-V>lljj<F2>')
   screen:expect([[
     aaaaa                         |

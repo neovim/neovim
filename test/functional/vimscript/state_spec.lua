@@ -4,7 +4,7 @@ local eq = helpers.eq
 local exec = helpers.exec
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
-local meths = helpers.meths
+local api = helpers.api
 local poke_eventloop = helpers.poke_eventloop
 
 before_each(clear)
@@ -12,7 +12,7 @@ before_each(clear)
 describe('state() function', function()
   -- oldtest: Test_state()
   it('works', function()
-    meths.ui_attach(80, 24, {}) -- Allow hit-enter-prompt
+    api.nvim_ui_attach(80, 24, {}) -- Allow hit-enter-prompt
 
     exec_lua([[
       function _G.Get_state_mode()
@@ -48,7 +48,7 @@ describe('state() function', function()
 
     -- Halfway a mapping
     feed([[:call v:lua.Run_timer()<CR>;]])
-    meths.get_mode() -- Process pending input and luv timer callback
+    api.nvim_get_mode() -- Process pending input and luv timer callback
     feed(';')
     eq({ 'mS', 'n' }, exec_lua('return _G.res'))
 
@@ -79,7 +79,7 @@ describe('state() function', function()
 
     -- messages scrolled
     feed([[:call v:lua.Run_timer() | echo "one\ntwo\nthree"<CR>]])
-    meths.get_mode() -- Process pending input and luv timer callback
+    api.nvim_get_mode() -- Process pending input and luv timer callback
     feed('<CR>')
     eq({ 'Ss', 'r' }, exec_lua('return _G.res'))
   end)

@@ -3,11 +3,11 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local feed = helpers.feed
 local clear = helpers.clear
-local funcs = helpers.funcs
-local meths = helpers.meths
+local fn = helpers.fn
+local api = helpers.api
 local command = helpers.command
 local write_file = helpers.write_file
 local exec_capture = helpers.exec_capture
@@ -25,15 +25,15 @@ end)
 
 describe('print', function()
   it('returns nothing', function()
-    eq(NIL, funcs.luaeval('print("abc")'))
-    eq(0, funcs.luaeval('select("#", print("abc"))'))
+    eq(NIL, fn.luaeval('print("abc")'))
+    eq(0, fn.luaeval('select("#", print("abc"))'))
   end)
   it('allows catching printed text with :execute', function()
-    eq('\nabc', funcs.execute('lua print("abc")'))
-    eq('\nabc', funcs.execute('luado print("abc")'))
-    eq('\nabc', funcs.execute('call luaeval("print(\'abc\')")'))
+    eq('\nabc', fn.execute('lua print("abc")'))
+    eq('\nabc', fn.execute('luado print("abc")'))
+    eq('\nabc', fn.execute('call luaeval("print(\'abc\')")'))
     write_file(fname, 'print("abc")')
-    eq('\nabc', funcs.execute('luafile ' .. fname))
+    eq('\nabc', fn.execute('luafile ' .. fname))
 
     eq('abc', exec_capture('lua print("abc")'))
     eq('abc', exec_capture('luado print("abc")'))
@@ -113,7 +113,7 @@ describe('print', function()
     eq('Vim(lua):E5108: Error executing lua [NULL]', pcall_err(command, 'lua bad_custom_error()'))
   end)
   it('prints strings with NULs and NLs correctly', function()
-    meths.set_option_value('more', true, {})
+    api.nvim_set_option_value('more', true, {})
     eq(
       'abc ^@ def\nghi^@^@^@jkl\nTEST\n\n\nT\n',
       exec_capture([[lua print("abc \0 def\nghi\0\0\0jkl\nTEST\n\n\nT\n")]])
@@ -332,17 +332,17 @@ end)
 
 describe('os.getenv', function()
   it('returns nothing for undefined env var', function()
-    eq(NIL, funcs.luaeval('os.getenv("XTEST_1")'))
+    eq(NIL, fn.luaeval('os.getenv("XTEST_1")'))
   end)
   it('returns env var set by the parent process', function()
     local value = 'foo'
     clear({ env = { ['XTEST_1'] = value } })
-    eq(value, funcs.luaeval('os.getenv("XTEST_1")'))
+    eq(value, fn.luaeval('os.getenv("XTEST_1")'))
   end)
   it('returns env var set by let', function()
     local value = 'foo'
-    meths.command('let $XTEST_1 = "' .. value .. '"')
-    eq(value, funcs.luaeval('os.getenv("XTEST_1")'))
+    command('let $XTEST_1 = "' .. value .. '"')
+    eq(value, fn.luaeval('os.getenv("XTEST_1")'))
   end)
 end)
 

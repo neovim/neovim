@@ -1,12 +1,12 @@
 local helpers = require('test.functional.helpers')(after_each)
 
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local command = helpers.command
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
-local nvim = helpers.nvim
 local matches = helpers.matches
+local api = helpers.api
 local pcall_err = helpers.pcall_err
 
 describe('vim.diagnostic', function()
@@ -1563,8 +1563,8 @@ describe('vim.diagnostic', function()
 
     it('can perform updates after insert_leave', function()
       exec_lua [[vim.api.nvim_set_current_buf(diagnostic_bufnr)]]
-      nvim('input', 'o')
-      eq({ mode = 'i', blocking = false }, nvim('get_mode'))
+      api.nvim_input('o')
+      eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
 
       -- Save the diagnostics
       exec_lua [[
@@ -1577,15 +1577,15 @@ describe('vim.diagnostic', function()
       ]]
 
       -- No diagnostics displayed yet.
-      eq({ mode = 'i', blocking = false }, nvim('get_mode'))
+      eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
       eq(
         1,
         exec_lua [[return count_diagnostics(diagnostic_bufnr, vim.diagnostic.severity.ERROR, diagnostic_ns)]]
       )
       eq(0, exec_lua [[return count_extmarks(diagnostic_bufnr, diagnostic_ns)]])
 
-      nvim('input', '<esc>')
-      eq({ mode = 'n', blocking = false }, nvim('get_mode'))
+      api.nvim_input('<esc>')
+      eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
 
       eq(
         1,
@@ -1596,8 +1596,8 @@ describe('vim.diagnostic', function()
 
     it('does not perform updates when not needed', function()
       exec_lua [[vim.api.nvim_set_current_buf(diagnostic_bufnr)]]
-      nvim('input', 'o')
-      eq({ mode = 'i', blocking = false }, nvim('get_mode'))
+      api.nvim_input('o')
+      eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
 
       -- Save the diagnostics
       exec_lua [[
@@ -1619,7 +1619,7 @@ describe('vim.diagnostic', function()
       ]]
 
       -- No diagnostics displayed yet.
-      eq({ mode = 'i', blocking = false }, nvim('get_mode'))
+      eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
       eq(
         1,
         exec_lua [[return count_diagnostics(diagnostic_bufnr, vim.diagnostic.severity.ERROR, diagnostic_ns)]]
@@ -1627,8 +1627,8 @@ describe('vim.diagnostic', function()
       eq(0, exec_lua [[return count_extmarks(diagnostic_bufnr, diagnostic_ns)]])
       eq(0, exec_lua [[return DisplayCount]])
 
-      nvim('input', '<esc>')
-      eq({ mode = 'n', blocking = false }, nvim('get_mode'))
+      api.nvim_input('<esc>')
+      eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
 
       eq(
         1,
@@ -1638,11 +1638,11 @@ describe('vim.diagnostic', function()
       eq(1, exec_lua [[return DisplayCount]])
 
       -- Go in and out of insert mode one more time.
-      nvim('input', 'o')
-      eq({ mode = 'i', blocking = false }, nvim('get_mode'))
+      api.nvim_input('o')
+      eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
 
-      nvim('input', '<esc>')
-      eq({ mode = 'n', blocking = false }, nvim('get_mode'))
+      api.nvim_input('<esc>')
+      eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
 
       -- Should not have set the virtual text again.
       eq(1, exec_lua [[return DisplayCount]])
@@ -1650,8 +1650,8 @@ describe('vim.diagnostic', function()
 
     it('never sets virtual text, in combination with insert leave', function()
       exec_lua [[vim.api.nvim_set_current_buf(diagnostic_bufnr)]]
-      nvim('input', 'o')
-      eq({ mode = 'i', blocking = false }, nvim('get_mode'))
+      api.nvim_input('o')
+      eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
 
       -- Save the diagnostics
       exec_lua [[
@@ -1674,7 +1674,7 @@ describe('vim.diagnostic', function()
       ]]
 
       -- No diagnostics displayed yet.
-      eq({ mode = 'i', blocking = false }, nvim('get_mode'))
+      eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
       eq(
         1,
         exec_lua [[return count_diagnostics(diagnostic_bufnr, vim.diagnostic.severity.ERROR, diagnostic_ns)]]
@@ -1682,8 +1682,8 @@ describe('vim.diagnostic', function()
       eq(0, exec_lua [[return count_extmarks(diagnostic_bufnr, diagnostic_ns)]])
       eq(0, exec_lua [[return DisplayCount]])
 
-      nvim('input', '<esc>')
-      eq({ mode = 'n', blocking = false }, nvim('get_mode'))
+      api.nvim_input('<esc>')
+      eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
 
       eq(
         1,
@@ -1693,11 +1693,11 @@ describe('vim.diagnostic', function()
       eq(0, exec_lua [[return DisplayCount]])
 
       -- Go in and out of insert mode one more time.
-      nvim('input', 'o')
-      eq({ mode = 'i', blocking = false }, nvim('get_mode'))
+      api.nvim_input('o')
+      eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
 
-      nvim('input', '<esc>')
-      eq({ mode = 'n', blocking = false }, nvim('get_mode'))
+      api.nvim_input('<esc>')
+      eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
 
       -- Should not have set the virtual text still.
       eq(0, exec_lua [[return DisplayCount]])
@@ -1705,8 +1705,8 @@ describe('vim.diagnostic', function()
 
     it('can perform updates while in insert mode, if desired', function()
       exec_lua [[vim.api.nvim_set_current_buf(diagnostic_bufnr)]]
-      nvim('input', 'o')
-      eq({ mode = 'i', blocking = false }, nvim('get_mode'))
+      api.nvim_input('o')
+      eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
 
       -- Save the diagnostics
       exec_lua [[
@@ -1720,15 +1720,15 @@ describe('vim.diagnostic', function()
       ]]
 
       -- Diagnostics are displayed, because the user wanted them that way!
-      eq({ mode = 'i', blocking = false }, nvim('get_mode'))
+      eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
       eq(
         1,
         exec_lua [[return count_diagnostics(diagnostic_bufnr, vim.diagnostic.severity.ERROR, diagnostic_ns)]]
       )
       eq(2, exec_lua [[return count_extmarks(diagnostic_bufnr, diagnostic_ns)]])
 
-      nvim('input', '<esc>')
-      eq({ mode = 'n', blocking = false }, nvim('get_mode'))
+      api.nvim_input('<esc>')
+      eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
 
       eq(
         1,
@@ -1825,7 +1825,7 @@ describe('vim.diagnostic', function()
 
     it('respects legacy signs placed with :sign define or sign_define #26618', function()
       -- Legacy signs for diagnostics were deprecated in 0.10 and will be removed in 0.12
-      eq(0, helpers.funcs.has('nvim-0.12'))
+      eq(0, helpers.fn.has('nvim-0.12'))
 
       helpers.command(
         'sign define DiagnosticSignError text= texthl= linehl=ErrorMsg numhl=ErrorMsg'

@@ -7,7 +7,7 @@ local feed = helpers.feed
 local eval = helpers.eval
 local eq = helpers.eq
 local run = helpers.run
-local funcs = helpers.funcs
+local fn = helpers.fn
 local nvim_prog = helpers.nvim_prog
 local pcall_err = helpers.pcall_err
 local exec_capture = helpers.exec_capture
@@ -18,7 +18,7 @@ describe('v:exiting', function()
 
   before_each(function()
     helpers.clear()
-    cid = helpers.nvim('get_api_info')[1]
+    cid = helpers.api.nvim_get_api_info()[1]
   end)
 
   it('defaults to v:null', function()
@@ -68,7 +68,7 @@ describe(':cquit', function()
       poke_eventloop()
       assert_alive()
     else
-      funcs.system({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--cmd', cmdline })
+      fn.system({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--cmd', cmdline })
       eq(exit_code, eval('v:shell_error'))
     end
   end

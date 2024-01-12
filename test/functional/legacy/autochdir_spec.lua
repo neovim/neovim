@@ -1,11 +1,11 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, matches = helpers.clear, helpers.eq, helpers.matches
-local eval, command, call, meths = helpers.eval, helpers.command, helpers.call, helpers.meths
+local eval, command, call, api = helpers.eval, helpers.command, helpers.call, helpers.api
 local source, exec_capture = helpers.source, helpers.exec_capture
 local mkdir = helpers.mkdir
 
 local function expected_empty()
-  eq({}, meths.get_vvar('errors'))
+  eq({}, api.nvim_get_vvar('errors'))
 end
 
 describe('autochdir behavior', function()

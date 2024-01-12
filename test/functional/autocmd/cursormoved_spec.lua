@@ -3,7 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
-local meths = helpers.meths
+local api = helpers.api
 local source = helpers.source
 local command = helpers.command
 
@@ -41,9 +41,9 @@ describe('CursorMoved', function()
       vsplit foo
       autocmd CursorMoved * let g:cursormoved += 1
     ]])
-    meths.buf_set_lines(eval('g:buf'), 0, -1, true, { 'aaa' })
+    api.nvim_buf_set_lines(eval('g:buf'), 0, -1, true, { 'aaa' })
     eq(0, eval('g:cursormoved'))
-    eq({ 'aaa' }, meths.buf_get_lines(eval('g:buf'), 0, -1, true))
+    eq({ 'aaa' }, api.nvim_buf_get_lines(eval('g:buf'), 0, -1, true))
     eq(0, eval('g:cursormoved'))
   end)
 

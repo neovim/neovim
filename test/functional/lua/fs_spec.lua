@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')(after_each)
-local uv = require('luv')
 
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
@@ -293,7 +292,7 @@ describe('vim.fs', function()
       eq('/', vim.fs.normalize('/'))
     end)
     it('works with ~', function()
-      eq(vim.fs.normalize(uv.os_homedir()) .. '/src/foo', vim.fs.normalize('~/src/foo'))
+      eq(vim.fs.normalize(vim.uv.os_homedir()) .. '/src/foo', vim.fs.normalize('~/src/foo'))
     end)
     it('works with environment variables', function()
       local xdg_config_home = test_build_dir .. '/.config'

@@ -1,15 +1,13 @@
 -- Other ShaDa tests
 local helpers = require('test.functional.helpers')(after_each)
-local meths, nvim_command, funcs, eq = helpers.meths, helpers.command, helpers.funcs, helpers.eq
+local api, nvim_command, fn, eq = helpers.api, helpers.command, helpers.fn, helpers.eq
 local write_file, spawn, set_session, nvim_prog, exc_exec =
   helpers.write_file, helpers.spawn, helpers.set_session, helpers.nvim_prog, helpers.exc_exec
 local is_os = helpers.is_os
 local skip = helpers.skip
 
-local luv = require('luv')
+local uv = vim.uv
 local paths = require('test.cmakeconfig.paths')
-
-local mpack = require('mpack')
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear, get_shada_rw =
@@ -26,7 +24,7 @@ describe('ShaDa support code', function()
   after_each(function()
     clear()
     clean()
-    luv.fs_rmdir(dirname)
+    uv.fs_rmdir(dirname)
   end)
 
   it('preserves `s` item size limit with unknown entries', function()
@@ -59,8 +57,8 @@ describe('ShaDa support code', function()
     local hist1 = ('-'):rep(1024 - 5)
     local hist2 = ('-'):rep(1025 - 5)
     nvim_command('set shada-=s10 shada+=s1')
-    funcs.histadd(':', hist1)
-    funcs.histadd(':', hist2)
+    fn.histadd(':', hist1)
+    fn.histadd(':', hist2)
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -87,7 +85,7 @@ describe('ShaDa support code', function()
       wshada('Some text file')
       eq(0, exc_exec('wshada! ' .. shada_fname))
       eq(1, read_shada_file(shada_fname)[1].type)
-      eq(nil, luv.fs_stat(shada_fname .. '.tmp.a'))
+      eq(nil, uv.fs_stat(shada_fname .. '.tmp.a'))
     end
   )
 
@@ -148,11 +146,11 @@ describe('ShaDa support code', function()
     wshada(s .. table.concat(msgpack, e .. s) .. e)
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
-    local typ = mpack.decode(s)
+    local typ = vim.mpack.decode(s)
     for _, v in ipairs(read_shada_file(shada_fname)) do
       if v.type == typ then
         found = found + 1
-        eq(mpack.decode(msgpack[found]), v.timestamp)
+        eq(vim.mpack.decode(msgpack[found]), v.timestamp)
       end
     end
     eq(#msgpack, found)
@@ -177,7 +175,7 @@ describe('ShaDa support code', function()
 
   it('correctly uses shada-r option', function()
     nvim_command('set shellslash')
-    meths.set_var('__home', paths.test_source_path)
+    api.nvim_set_var('__home', paths.test_source_path)
     nvim_command('let $HOME = __home')
     nvim_command('unlet __home')
     nvim_command('edit ~/README.md')
@@ -185,7 +183,7 @@ describe('ShaDa support code', function()
     nvim_command('undo')
     nvim_command('set shada+=%')
     nvim_command('wshada! ' .. shada_fname)
-    local readme_fname = funcs.resolve(paths.test_source_path) .. '/README.md'
+    local readme_fname = fn.resolve(paths.test_source_path) .. '/README.md'
     eq({ [7] = 2, [8] = 2, [9] = 1, [10] = 4, [11] = 1 }, find_file(readme_fname))
     nvim_command('set shada+=r~')
     nvim_command('wshada! ' .. shada_fname)
@@ -193,21 +191,19 @@ describe('ShaDa support code', function()
     nvim_command('set shada-=r~')
     nvim_command('wshada! ' .. shada_fname)
     eq({ [7] = 2, [8] = 2, [9] = 1, [10] = 4, [11] = 1 }, find_file(readme_fname))
-    nvim_command(
-      'set shada+=r' .. funcs.escape(funcs.escape(paths.test_source_path, '$~'), ' "\\,')
-    )
+    nvim_command('set shada+=r' .. fn.escape(fn.escape(paths.test_source_path, '$~'), ' "\\,'))
     nvim_command('wshada! ' .. shada_fname)
     eq({}, find_file(readme_fname))
   end)
 
   it('correctly ignores case with shada-r option', function()
     nvim_command('set shellslash')
-    local pwd = funcs.getcwd()
+    local pwd = fn.getcwd()
     local relfname = 'абв/test'
     local fname = pwd .. '/' .. relfname
-    meths.set_var('__fname', fname)
+    api.nvim_set_var('__fname', fname)
     nvim_command('silent! edit `=__fname`')
-    funcs.setline(1, { 'a', 'b', 'c', 'd' })
+    fn.setline(1, { 'a', 'b', 'c', 'd' })
     nvim_command('normal! GmAggmaAabc')
     nvim_command('undo')
     nvim_command('set shada+=%')
@@ -219,30 +215,30 @@ describe('ShaDa support code', function()
   end)
 
   it('is able to set &shada after &viminfo', function()
-    meths.set_option_value('viminfo', "'10", {})
-    eq("'10", meths.get_option_value('viminfo', {}))
-    eq("'10", meths.get_option_value('shada', {}))
-    meths.set_option_value('shada', '', {})
-    eq('', meths.get_option_value('viminfo', {}))
-    eq('', meths.get_option_value('shada', {}))
+    api.nvim_set_option_value('viminfo', "'10", {})
+    eq("'10", api.nvim_get_option_value('viminfo', {}))
+    eq("'10", api.nvim_get_option_value('shada', {}))
+    api.nvim_set_option_value('shada', '', {})
+    eq('', api.nvim_get_option_value('viminfo', {}))
+    eq('', api.nvim_get_option_value('shada', {}))
   end)
 
   it('is able to set all& after setting &shada', function()
-    meths.set_option_value('shada', "'10", {})
-    eq("'10", meths.get_option_value('viminfo', {}))
-    eq("'10", meths.get_option_value('shada', {}))
+    api.nvim_set_option_value('shada', "'10", {})
+    eq("'10", api.nvim_get_option_value('viminfo', {}))
+    eq("'10", api.nvim_get_option_value('shada', {}))
     nvim_command('set all&')
-    eq("!,'100,<50,s10,h", meths.get_option_value('viminfo', {}))
-    eq("!,'100,<50,s10,h", meths.get_option_value('shada', {}))
+    eq("!,'100,<50,s10,h", api.nvim_get_option_value('viminfo', {}))
+    eq("!,'100,<50,s10,h", api.nvim_get_option_value('shada', {}))
   end)
 
   it('is able to set &shada after &viminfo using :set', function()
     nvim_command("set viminfo='10")
-    eq("'10", meths.get_option_value('viminfo', {}))
-    eq("'10", meths.get_option_value('shada', {}))
+    eq("'10", api.nvim_get_option_value('viminfo', {}))
+    eq("'10", api.nvim_get_option_value('shada', {}))
     nvim_command('set shada=')
-    eq('', meths.get_option_value('viminfo', {}))
-    eq('', meths.get_option_value('shada', {}))
+    eq('', api.nvim_get_option_value('viminfo', {}))
+    eq('', api.nvim_get_option_value('shada', {}))
   end)
 
   it('setting &shada gives proper error message on missing number', function()
@@ -258,17 +254,17 @@ describe('ShaDa support code', function()
   it('does not crash when ShaDa file directory is not writable', function()
     skip(is_os('win'))
 
-    funcs.mkdir(dirname, '', 0)
-    eq(0, funcs.filewritable(dirname))
+    fn.mkdir(dirname, '', 0)
+    eq(0, fn.filewritable(dirname))
     reset { shadafile = dirshada, args = { '--cmd', 'set shada=' } }
-    meths.set_option_value('shada', "'10", {})
+    api.nvim_set_option_value('shada', "'10", {})
     eq(
       'Vim(wshada):E886: System error while opening ShaDa file '
         .. 'Xtest-functional-shada-shada.d/main.shada for reading to merge '
         .. 'before writing it: permission denied',
       exc_exec('wshada')
     )
-    meths.set_option_value('shada', '', {})
+    api.nvim_set_option_value('shada', '', {})
   end)
 end)
 
@@ -279,15 +275,15 @@ describe('ShaDa support code', function()
       true
     )
     session:close()
-    eq(nil, luv.fs_stat('NONE'))
-    eq(nil, luv.fs_stat('NONE.tmp.a'))
+    eq(nil, uv.fs_stat('NONE'))
+    eq(nil, uv.fs_stat('NONE.tmp.a'))
   end)
 
   it('does not read NONE file', function()
     write_file('NONE', '\005\001\015\131\161na\162rX\194\162rc\145\196\001-')
     local session = spawn({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed', '--headless' }, true)
     set_session(session)
-    eq('', funcs.getreg('a'))
+    eq('', fn.getreg('a'))
     session:close()
     os.remove('NONE')
   end)

@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local eq = helpers.eq
 local clear = helpers.clear
-local meths = helpers.meths
+local api = helpers.api
 local exc_exec = helpers.exc_exec
 local rmdir = helpers.rmdir
 local write_file = helpers.write_file
@@ -24,7 +24,7 @@ describe('spellfile', function()
   --                   │       ┌ Spell file version (#VIMSPELLVERSION)
   local spellheader = 'VIMspell\050'
   it('errors out when prefcond section is truncated', function()
-    meths.set_option_value('runtimepath', testdir, {})
+    api.nvim_set_option_value('runtimepath', testdir, {})
     -- stylua: ignore
     write_file(testdir .. '/spell/en.ascii.spl',
     --                         ┌ Section identifier (#SN_PREFCOND)
@@ -35,11 +35,11 @@ describe('spellfile', function()
     --             │       ┌ Condition length (1 byte)
     --             │       │   ┌ Condition regex (missing!)
                .. '\000\001\001')
-    meths.set_option_value('spelllang', 'en', {})
+    api.nvim_set_option_value('spelllang', 'en', {})
     eq('Vim(set):E758: Truncated spell file', exc_exec('set spell'))
   end)
   it('errors out when prefcond regexp contains NUL byte', function()
-    meths.set_option_value('runtimepath', testdir, {})
+    api.nvim_set_option_value('runtimepath', testdir, {})
     -- stylua: ignore
     write_file(testdir .. '/spell/en.ascii.spl',
     --                         ┌ Section identifier (#SN_PREFCOND)
@@ -55,11 +55,11 @@ describe('spellfile', function()
     --             │               ┌ KWORDTREE tree length (4 bytes)
     --             │               │               ┌ PREFIXTREE tree length
                .. '\000\000\000\000\000\000\000\000\000\000\000\000')
-    meths.set_option_value('spelllang', 'en', {})
+    api.nvim_set_option_value('spelllang', 'en', {})
     eq('Vim(set):E759: Format error in spell file', exc_exec('set spell'))
   end)
   it('errors out when region contains NUL byte', function()
-    meths.set_option_value('runtimepath', testdir, {})
+    api.nvim_set_option_value('runtimepath', testdir, {})
     -- stylua: ignore
     write_file(testdir .. '/spell/en.ascii.spl',
     --                         ┌ Section identifier (#SN_REGION)
@@ -72,11 +72,11 @@ describe('spellfile', function()
     --             │               ┌ KWORDTREE tree length (4 bytes)
     --             │               │               ┌ PREFIXTREE tree length
                .. '\000\000\000\000\000\000\000\000\000\000\000\000')
-    meths.set_option_value('spelllang', 'en', {})
+    api.nvim_set_option_value('spelllang', 'en', {})
     eq('Vim(set):E759: Format error in spell file', exc_exec('set spell'))
   end)
   it('errors out when SAL section contains NUL byte', function()
-    meths.set_option_value('runtimepath', testdir, {})
+    api.nvim_set_option_value('runtimepath', testdir, {})
     -- stylua: ignore
     write_file(testdir .. '/spell/en.ascii.spl',
     --                         ┌ Section identifier (#SN_SAL)
@@ -96,13 +96,13 @@ describe('spellfile', function()
     --             │               ┌ KWORDTREE tree length (4 bytes)
     --             │               │               ┌ PREFIXTREE tree length
                .. '\000\000\000\000\000\000\000\000\000\000\000\000')
-    meths.set_option_value('spelllang', 'en', {})
+    api.nvim_set_option_value('spelllang', 'en', {})
     eq('Vim(set):E759: Format error in spell file', exc_exec('set spell'))
   end)
   it('errors out when spell header contains NUL bytes', function()
-    meths.set_option_value('runtimepath', testdir, {})
+    api.nvim_set_option_value('runtimepath', testdir, {})
     write_file(testdir .. '/spell/en.ascii.spl', spellheader:sub(1, -3) .. '\000\000')
-    meths.set_option_value('spelllang', 'en', {})
+    api.nvim_set_option_value('spelllang', 'en', {})
     eq('Vim(set):E757: This does not look like a spell file', exc_exec('set spell'))
   end)
 end)

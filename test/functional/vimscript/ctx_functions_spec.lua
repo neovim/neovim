@@ -6,12 +6,12 @@ local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
-local map = helpers.tbl_map
-local nvim = helpers.nvim
+local map = vim.tbl_map
+local api = helpers.api
 local parse_context = helpers.parse_context
 local exec_capture = helpers.exec_capture
 local source = helpers.source
-local trim = helpers.trim
+local trim = vim.trim
 local write_file = helpers.write_file
 local pcall_err = helpers.pcall_err
 
@@ -126,16 +126,16 @@ describe('context functions', function()
     end)
 
     it('saves and restores global variables properly', function()
-      nvim('set_var', 'one', 1)
-      nvim('set_var', 'Two', 2)
-      nvim('set_var', 'THREE', 3)
+      api.nvim_set_var('one', 1)
+      api.nvim_set_var('Two', 2)
+      api.nvim_set_var('THREE', 3)
       eq({ 1, 2, 3 }, eval('[g:one, g:Two, g:THREE]'))
       call('ctxpush')
       call('ctxpush', { 'gvars' })
 
-      nvim('del_var', 'one')
-      nvim('del_var', 'Two')
-      nvim('del_var', 'THREE')
+      api.nvim_del_var('one')
+      api.nvim_del_var('Two')
+      api.nvim_del_var('THREE')
       eq('Vim:E121: Undefined variable: g:one', pcall_err(eval, 'g:one'))
       eq('Vim:E121: Undefined variable: g:Two', pcall_err(eval, 'g:Two'))
       eq('Vim:E121: Undefined variable: g:THREE', pcall_err(eval, 'g:THREE'))
@@ -143,9 +143,9 @@ describe('context functions', function()
       call('ctxpop')
       eq({ 1, 2, 3 }, eval('[g:one, g:Two, g:THREE]'))
 
-      nvim('del_var', 'one')
-      nvim('del_var', 'Two')
-      nvim('del_var', 'THREE')
+      api.nvim_del_var('one')
+      api.nvim_del_var('Two')
+      api.nvim_del_var('THREE')
       eq('Vim:E121: Undefined variable: g:one', pcall_err(eval, 'g:one'))
       eq('Vim:E121: Undefined variable: g:Two', pcall_err(eval, 'g:Two'))
       eq('Vim:E121: Undefined variable: g:THREE', pcall_err(eval, 'g:THREE'))
@@ -300,9 +300,9 @@ describe('context functions', function()
       feed('G')
       feed('gg')
       command('edit ' .. fname2)
-      nvim('set_var', 'one', 1)
-      nvim('set_var', 'Two', 2)
-      nvim('set_var', 'THREE', 3)
+      api.nvim_set_var('one', 1)
+      api.nvim_set_var('Two', 2)
+      api.nvim_set_var('THREE', 3)
 
       local with_regs = {
         ['regs'] = {
@@ -412,14 +412,14 @@ describe('context functions', function()
     end)
 
     it('sets context dictionary at index in context stack', function()
-      nvim('set_var', 'one', 1)
-      nvim('set_var', 'Two', 2)
-      nvim('set_var', 'THREE', 3)
+      api.nvim_set_var('one', 1)
+      api.nvim_set_var('Two', 2)
+      api.nvim_set_var('THREE', 3)
       call('ctxpush')
       local ctx1 = call('ctxget')
-      nvim('set_var', 'one', 'a')
-      nvim('set_var', 'Two', 'b')
-      nvim('set_var', 'THREE', 'c')
+      api.nvim_set_var('one', 'a')
+      api.nvim_set_var('Two', 'b')
+      api.nvim_set_var('THREE', 'c')
       call('ctxpush')
       call('ctxpush')
       local ctx2 = call('ctxget')
@@ -431,7 +431,7 @@ describe('context functions', function()
       eq({ 1, 2, 3 }, eval('[g:one, g:Two, g:THREE]'))
       call('ctxpop')
       eq({ 'a', 'b', 'c' }, eval('[g:one, g:Two, g:THREE]'))
-      nvim('set_var', 'one', 1.5)
+      api.nvim_set_var('one', 1.5)
       eq({ 1.5, 'b', 'c' }, eval('[g:one, g:Two, g:THREE]'))
       call('ctxpop')
       eq({ 'a', 'b', 'c' }, eval('[g:one, g:Two, g:THREE]'))

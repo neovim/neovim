@@ -1118,9 +1118,9 @@ describe('regressions', function()
     screen = Screen.new(100, 20)
     screen:attach()
     -- line must be greater than MATCH_CHAR_MAX_LEN
-    helpers.curbufmeths.set_lines(0, -1, false, { string.rep('a', 1000) .. 'hello' })
+    helpers.api.nvim_buf_set_lines(0, 0, -1, false, { string.rep('a', 1000) .. 'hello' })
     helpers.exec 'vnew'
-    helpers.curbufmeths.set_lines(0, -1, false, { string.rep('a', 1010) .. 'world' })
+    helpers.api.nvim_buf_set_lines(0, 0, -1, false, { string.rep('a', 1010) .. 'world' })
     helpers.exec 'windo diffthis'
   end)
 
@@ -1133,9 +1133,9 @@ describe('regressions', function()
     for i = 0, 29 do
       lines[#lines + 1] = tostring(i)
     end
-    helpers.curbufmeths.set_lines(0, -1, false, lines)
+    helpers.api.nvim_buf_set_lines(0, 0, -1, false, lines)
     helpers.exec 'vnew'
-    helpers.curbufmeths.set_lines(0, -1, false, { '00', '29' })
+    helpers.api.nvim_buf_set_lines(0, 0, -1, false, { '00', '29' })
     helpers.exec 'windo diffthis'
     feed('<C-e>')
     screen:expect {

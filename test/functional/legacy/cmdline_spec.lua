@@ -5,8 +5,8 @@ local command = helpers.command
 local feed = helpers.feed
 local feed_command = helpers.feed_command
 local exec = helpers.exec
-local meths = helpers.meths
-local pesc = helpers.pesc
+local api = helpers.api
+local pesc = vim.pesc
 
 describe('cmdline', function()
   before_each(clear)
@@ -198,9 +198,9 @@ describe('cmdline', function()
       [3] = { reverse = true }, -- TabLineFill
     })
     screen:attach()
-    meths.set_option_value('laststatus', 2, {})
-    meths.set_option_value('showtabline', 2, {})
-    meths.set_option_value('cmdheight', 1, {})
+    api.nvim_set_option_value('laststatus', 2, {})
+    api.nvim_set_option_value('showtabline', 2, {})
+    api.nvim_set_option_value('cmdheight', 1, {})
     screen:expect([[
       {2: [No Name] }{3:                                                 }|
       ^                                                            |
@@ -217,10 +217,10 @@ describe('cmdline', function()
       [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
     }
     screen:attach()
-    meths.set_option_value('ruler', true, {})
-    meths.set_option_value('rulerformat', 'longish', {})
-    meths.set_option_value('laststatus', 0, {})
-    meths.set_option_value('winwidth', 1, {})
+    api.nvim_set_option_value('ruler', true, {})
+    api.nvim_set_option_value('rulerformat', 'longish', {})
+    api.nvim_set_option_value('laststatus', 0, {})
+    api.nvim_set_option_value('winwidth', 1, {})
     feed [[<C-W>v<C-W>|<C-W>p]]
     screen:expect [[
                         │^ |

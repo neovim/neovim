@@ -4,7 +4,7 @@ local spawn, set_session, clear = helpers.spawn, helpers.set_session, helpers.cl
 local feed, command = helpers.feed, helpers.command
 local insert = helpers.insert
 local eq = helpers.eq
-local funcs, meths = helpers.funcs, helpers.meths
+local fn, api = helpers.fn, helpers.api
 
 describe('screen', function()
   local screen
@@ -597,7 +597,7 @@ local function screen_tests(linegrid)
       command([[autocmd VimResized * redrawtabline]])
       command([[autocmd VimResized * lua vim.api.nvim_echo({ { 'Hello' } }, false, {})]])
       command([[autocmd VimResized * let g:echospace = v:echospace]])
-      meths.set_option_value('showtabline', 2, {})
+      api.nvim_set_option_value('showtabline', 2, {})
       screen:expect([[
         {2: + [No Name] }{3:            }|
         resiz^e                   |
@@ -611,7 +611,7 @@ local function screen_tests(linegrid)
         {0:~                             }|*3
                                       |
       ]])
-      eq(29, meths.get_var('echospace'))
+      eq(29, api.nvim_get_var('echospace'))
     end)
 
     it('messages from the same Ex command as resize are visible #22225', function()
@@ -779,33 +779,33 @@ it('CTRL-F or CTRL-B scrolls a page after UI attach/resize #20605', function()
   clear()
   local screen = Screen.new(100, 100)
   screen:attach()
-  eq(100, meths.get_option_value('lines', {}))
-  eq(99, meths.get_option_value('window', {}))
-  eq(99, meths.win_get_height(0))
+  eq(100, api.nvim_get_option_value('lines', {}))
+  eq(99, api.nvim_get_option_value('window', {}))
+  eq(99, api.nvim_win_get_height(0))
   feed('1000o<Esc>')
-  eq(903, funcs.line('w0'))
+  eq(903, fn.line('w0'))
   feed('<C-B>')
-  eq(806, funcs.line('w0'))
+  eq(806, fn.line('w0'))
   feed('<C-B>')
-  eq(709, funcs.line('w0'))
+  eq(709, fn.line('w0'))
   feed('<C-F>')
-  eq(806, funcs.line('w0'))
+  eq(806, fn.line('w0'))
   feed('<C-F>')
-  eq(903, funcs.line('w0'))
+  eq(903, fn.line('w0'))
   feed('G')
   screen:try_resize(50, 50)
-  eq(50, meths.get_option_value('lines', {}))
-  eq(49, meths.get_option_value('window', {}))
-  eq(49, meths.win_get_height(0))
-  eq(953, funcs.line('w0'))
+  eq(50, api.nvim_get_option_value('lines', {}))
+  eq(49, api.nvim_get_option_value('window', {}))
+  eq(49, api.nvim_win_get_height(0))
+  eq(953, fn.line('w0'))
   feed('<C-B>')
-  eq(906, funcs.line('w0'))
+  eq(906, fn.line('w0'))
   feed('<C-B>')
-  eq(859, funcs.line('w0'))
+  eq(859, fn.line('w0'))
   feed('<C-F>')
-  eq(906, funcs.line('w0'))
+  eq(906, fn.line('w0'))
   feed('<C-F>')
-  eq(953, funcs.line('w0'))
+  eq(953, fn.line('w0'))
 end)
 
 it("showcmd doesn't cause empty grid_line with redrawdebug=compositor #22593", function()
