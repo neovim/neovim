@@ -11477,7 +11477,7 @@ endfun
 "  netrw#RFC2396: converts %xx into characters {{{2
 fun! netrw#RFC2396(fname)
 "  call Dfunc("netrw#RFC2396(fname<".a:fname.">)")
-  let fname = escape(substitute(a:fname,'%\(\x\x\)','\=nr2char("0x".submatch(1))','ge')," \t")
+  let fname = escape(substitute(a:fname,'%\(\x\x\)','\=printf("%c","0x".submatch(1))','ge')," \t")
 "  call Dret("netrw#RFC2396 ".fname)
   return fname
 endfun
