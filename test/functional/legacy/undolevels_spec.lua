@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local source, clear = helpers.source, helpers.clear
-local eq, nvim = helpers.eq, helpers.meths
+local eq, nvim = helpers.eq, helpers.api
 
 describe('undolevel', function()
   setup(clear)

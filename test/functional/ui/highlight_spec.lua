@@ -5,8 +5,8 @@ local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, exec = helpers.command, helpers.exec
 local eval = helpers.eval
 local feed_command, eq = helpers.feed_command, helpers.eq
-local funcs = helpers.funcs
-local meths = helpers.meths
+local fn = helpers.fn
+local api = helpers.api
 local exec_lua = helpers.exec_lua
 
 describe('colorscheme compatibility', function()
@@ -15,8 +15,8 @@ describe('colorscheme compatibility', function()
   end)
 
   it('&t_Co exists and is set to 256 by default', function()
-    eq(1, funcs.exists('&t_Co'))
-    eq(1, funcs.exists('+t_Co'))
+    eq(1, fn.exists('&t_Co'))
+    eq(1, fn.exists('+t_Co'))
     eq('256', eval('&t_Co'))
   end)
 end)
@@ -2087,7 +2087,7 @@ describe("'winhighlight' highlight", function()
   end)
 
   it('can override NonText, Conceal and EndOfBuffer', function()
-    meths.nvim_buf_set_lines(0, 0, -1, true, { 'raa\000' })
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'raa\000' })
     command('call matchaddpos("Conceal", [[1,2]], 0, -1, {"conceal": "#"})')
     command('set cole=2 cocu=nvic')
     command('split')
@@ -2402,13 +2402,13 @@ describe('highlight namespaces', function()
       [10] = { bold = true, foreground = Screen.colors.SeaGreen },
     }
 
-    ns1 = meths.nvim_create_namespace 'grungy'
-    ns2 = meths.nvim_create_namespace 'ultrared'
+    ns1 = api.nvim_create_namespace 'grungy'
+    ns2 = api.nvim_create_namespace 'ultrared'
 
-    meths.nvim_set_hl(ns1, 'Normal', { bg = 'DarkGrey' })
-    meths.nvim_set_hl(ns1, 'NonText', { bg = 'DarkOrange4', fg = 'DarkCyan', italic = true })
-    meths.nvim_set_hl(ns2, 'Normal', { bg = 'DarkMagenta' })
-    meths.nvim_set_hl(ns2, 'NonText', { fg = 'Crimson' })
+    api.nvim_set_hl(ns1, 'Normal', { bg = 'DarkGrey' })
+    api.nvim_set_hl(ns1, 'NonText', { bg = 'DarkOrange4', fg = 'DarkCyan', italic = true })
+    api.nvim_set_hl(ns2, 'Normal', { bg = 'DarkMagenta' })
+    api.nvim_set_hl(ns2, 'NonText', { fg = 'Crimson' })
   end)
 
   it('can be used globally', function()
@@ -2420,7 +2420,7 @@ describe('highlight namespaces', function()
     ]],
     }
 
-    meths.nvim_set_hl_ns(ns1)
+    api.nvim_set_hl_ns(ns1)
     screen:expect {
       grid = [[
       {2:^                         }|
@@ -2429,7 +2429,7 @@ describe('highlight namespaces', function()
     ]],
     }
 
-    meths.nvim_set_hl_ns(ns2)
+    api.nvim_set_hl_ns(ns2)
     screen:expect {
       grid = [[
       {4:^                         }|
@@ -2438,7 +2438,7 @@ describe('highlight namespaces', function()
     ]],
     }
 
-    meths.nvim_set_hl_ns(0)
+    api.nvim_set_hl_ns(0)
     screen:expect {
       grid = [[
       ^                         |
@@ -2449,13 +2449,13 @@ describe('highlight namespaces', function()
   end)
 
   it('can be used per window', function()
-    local win1 = meths.nvim_get_current_win()
+    local win1 = api.nvim_get_current_win()
     command 'split'
-    local win2 = meths.nvim_get_current_win()
+    local win2 = api.nvim_get_current_win()
     command 'split'
 
-    meths.nvim_win_set_hl_ns(win1, ns1)
-    meths.nvim_win_set_hl_ns(win2, ns2)
+    api.nvim_win_set_hl_ns(win1, ns1)
+    api.nvim_win_set_hl_ns(win2, ns2)
 
     screen:expect {
       grid = [[
@@ -2482,7 +2482,7 @@ describe('highlight namespaces', function()
     ]],
     }
 
-    meths.nvim_set_hl(0, 'EndOfBuffer', { fg = '#333333' })
+    api.nvim_set_hl(0, 'EndOfBuffer', { fg = '#333333' })
     screen:expect {
       grid = [[
       ^                         |
@@ -2507,7 +2507,7 @@ describe('highlight namespaces', function()
 
   it('Normal in set_hl #25474', function()
     command('highlight Ignore guifg=bg ctermfg=White')
-    meths.nvim_set_hl(0, 'Normal', { bg = '#333333' })
+    api.nvim_set_hl(0, 'Normal', { bg = '#333333' })
     command('highlight Ignore')
     screen:expect {
       grid = [[

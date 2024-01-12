@@ -4,7 +4,7 @@ local command = helpers.command
 local exec_lua = helpers.exec_lua
 local eval = helpers.eval
 local expect = helpers.expect
-local funcs = helpers.funcs
+local fn = helpers.fn
 local eq = helpers.eq
 
 describe('meta-keys #8226 #13042', function()
@@ -66,11 +66,11 @@ describe('meta-keys #8226 #13042', function()
     command('inoremap <A-j> alt-j')
     feed('i<M-l> xxx <A-j><M-h>a<A-h>')
     expect('meta-l xxx alt-j')
-    eq({ 0, 1, 14, 0 }, funcs.getpos('.'))
+    eq({ 0, 1, 14, 0 }, fn.getpos('.'))
     -- Unmapped ALT-chord behaves as ESC+c.
     command('iunmap <M-l>')
     feed('0i<M-l>')
-    eq({ 0, 1, 2, 0 }, funcs.getpos('.'))
+    eq({ 0, 1, 2, 0 }, fn.getpos('.'))
     -- Unmapped ALT-chord has same `undo` characteristics as ESC+<key>
     command('0,$d')
     feed('ahello<M-.>')
@@ -101,7 +101,7 @@ describe('meta-keys #8226 #13042', function()
     eq(meta_l_seq .. 'yyy' .. meta_l_seq .. 'alt-j', exec_lua([[return _G.input_data]]))
     eq('t', eval('mode(1)'))
     feed('<Esc>j')
-    eq({ 0, 2, 1, 0 }, funcs.getpos('.'))
+    eq({ 0, 2, 1, 0 }, fn.getpos('.'))
     eq('nt', eval('mode(1)'))
   end)
 

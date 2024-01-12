@@ -3,10 +3,10 @@ local Screen = require('test.functional.ui.screen')
 
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, neq = helpers.command, helpers.neq
-local meths = helpers.meths
+local api = helpers.api
 local eq = helpers.eq
 local pcall_err = helpers.pcall_err
-local set_virtual_text = meths.nvim_buf_set_virtual_text
+local set_virtual_text = api.nvim_buf_set_virtual_text
 
 describe('Buffer highlighting', function()
   local screen
@@ -40,8 +40,8 @@ describe('Buffer highlighting', function()
     })
   end)
 
-  local add_highlight = meths.nvim_buf_add_highlight
-  local clear_namespace = meths.nvim_buf_clear_namespace
+  local add_highlight = api.nvim_buf_add_highlight
+  local clear_namespace = api.nvim_buf_clear_namespace
 
   it('works', function()
     insert([[
@@ -134,7 +134,7 @@ describe('Buffer highlighting', function()
     end)
 
     it('and clearing using deprecated name', function()
-      meths.nvim_buf_clear_highlight(0, id1, 0, -1)
+      api.nvim_buf_clear_highlight(0, id1, 0, -1)
       screen:expect([[
         a {4:longer} example                        |
         in {6:order} to de{4:monstr}ate                 |
@@ -494,16 +494,16 @@ describe('Buffer highlighting', function()
   end)
 
   it('respects priority', function()
-    local id = meths.nvim_create_namespace('')
+    local id = api.nvim_create_namespace('')
     insert [[foobar]]
 
-    meths.nvim_buf_set_extmark(0, id, 0, 0, {
+    api.nvim_buf_set_extmark(0, id, 0, 0, {
       end_line = 0,
       end_col = 5,
       hl_group = 'Statement',
       priority = 100,
     })
-    meths.nvim_buf_set_extmark(0, id, 0, 0, {
+    api.nvim_buf_set_extmark(0, id, 0, 0, {
       end_line = 0,
       end_col = 6,
       hl_group = 'String',
@@ -525,13 +525,13 @@ describe('Buffer highlighting', function()
     ]],
     }
 
-    meths.nvim_buf_set_extmark(0, id, 0, 0, {
+    api.nvim_buf_set_extmark(0, id, 0, 0, {
       end_line = 0,
       end_col = 6,
       hl_group = 'String',
       priority = 1,
     })
-    meths.nvim_buf_set_extmark(0, id, 0, 0, {
+    api.nvim_buf_set_extmark(0, id, 0, 0, {
       end_line = 0,
       end_col = 5,
       hl_group = 'Statement',
@@ -696,8 +696,8 @@ describe('Buffer highlighting', function()
     end)
 
     it('can be retrieved', function()
-      local get_extmarks = meths.nvim_buf_get_extmarks
-      local line_count = meths.nvim_buf_line_count
+      local get_extmarks = api.nvim_buf_get_extmarks
+      local line_count = api.nvim_buf_line_count
 
       local s1 = { { 'Köttbullar', 'Comment' }, { 'Kräuterbutter' } }
       local s2 = { { 'こんにちは', 'Comment' } }
@@ -900,9 +900,9 @@ describe('Buffer highlighting', function()
   it('and virtual text use the same namespace counter', function()
     eq(1, add_highlight(0, 0, 'String', 0, 0, -1))
     eq(2, set_virtual_text(0, 0, 0, { { '= text', 'Comment' } }, {}))
-    eq(3, meths.nvim_create_namespace('my-ns'))
+    eq(3, api.nvim_create_namespace('my-ns'))
     eq(4, add_highlight(0, 0, 'String', 0, 0, -1))
     eq(5, set_virtual_text(0, 0, 0, { { '= text', 'Comment' } }, {}))
-    eq(6, meths.nvim_create_namespace('other-ns'))
+    eq(6, api.nvim_create_namespace('other-ns'))
   end)
 end)

@@ -4,7 +4,7 @@ local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
-local funcs = helpers.funcs
+local fn = helpers.fn
 local insert = helpers.insert
 local is_os = helpers.is_os
 local mkdir = helpers.mkdir
@@ -167,7 +167,7 @@ describe('file search', function()
     else
       write_file(expected, '')
     end
-    eq(expected, funcs[funcname](item, d:gsub(' ', [[\ ]])))
+    eq(expected, fn[funcname](item, d:gsub(' ', [[\ ]])))
   end
 
   it('finddir()', function()

@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
-local eq, clear, eval, feed, meths, retry =
-  helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.meths, helpers.retry
+local eq, clear, eval, feed, api, retry =
+  helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.api, helpers.retry
 
 describe('K', function()
   local test_file = 'K_spec_out'
@@ -61,9 +61,9 @@ describe('K', function()
   end)
 
   it('empty string falls back to :help #19298', function()
-    meths.nvim_set_option_value('keywordprg', '', {})
-    meths.nvim_buf_set_lines(0, 0, -1, true, { 'doesnotexist' })
+    api.nvim_set_option_value('keywordprg', '', {})
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'doesnotexist' })
     feed('K')
-    eq('E149: Sorry, no help for doesnotexist', meths.nvim_get_vvar('errmsg'))
+    eq('E149: Sorry, no help for doesnotexist', api.nvim_get_vvar('errmsg'))
   end)
 end)

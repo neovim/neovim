@@ -1,13 +1,13 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq = helpers.eq
-local environ = helpers.funcs.environ
-local exists = helpers.funcs.exists
-local system = helpers.funcs.system
+local environ = helpers.fn.environ
+local exists = helpers.fn.exists
+local system = helpers.fn.system
 local nvim_prog = helpers.nvim_prog
 local command = helpers.command
 local eval = helpers.eval
-local setenv = helpers.funcs.setenv
+local setenv = helpers.fn.setenv
 
 describe('environment variables', function()
   it('environ() handles empty env variable', function()

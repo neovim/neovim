@@ -7,7 +7,7 @@ local eval, eq, neq, retry = helpers.eval, helpers.eq, helpers.neq, helpers.retr
 local matches = helpers.matches
 local ok = helpers.ok
 local feed = helpers.feed
-local meths = helpers.meths
+local api = helpers.api
 local pcall_err = helpers.pcall_err
 local assert_alive = helpers.assert_alive
 local skip = helpers.skip
@@ -16,13 +16,13 @@ local is_os = helpers.is_os
 describe('autocmd TermClose', function()
   before_each(function()
     clear()
-    meths.nvim_set_option_value('shell', testprg('shell-test'), {})
+    api.nvim_set_option_value('shell', testprg('shell-test'), {})
     command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
   end)
 
   local function test_termclose_delete_own_buf()
     -- The terminal process needs to keep running so that TermClose isn't triggered immediately.
-    meths.nvim_set_option_value('shell', string.format('"%s" INTERACT', testprg('shell-test')), {})
+    api.nvim_set_option_value('shell', string.format('"%s" INTERACT', testprg('shell-test')), {})
     command('autocmd TermClose * bdelete!')
     command('terminal')
     matches(
@@ -56,7 +56,7 @@ describe('autocmd TermClose', function()
 
   it('triggers when long-running terminal job gets stopped', function()
     skip(is_os('win'))
-    meths.nvim_set_option_value('shell', is_os('win') and 'cmd.exe' or 'sh', {})
+    api.nvim_set_option_value('shell', is_os('win') and 'cmd.exe' or 'sh', {})
     command('autocmd TermClose * let g:test_termclose = 23')
     command('terminal')
     command('call jobstop(b:terminal_job_id)')
@@ -67,8 +67,8 @@ describe('autocmd TermClose', function()
 
   it('kills job trapping SIGTERM', function()
     skip(is_os('win'))
-    meths.nvim_set_option_value('shell', 'sh', {})
-    meths.nvim_set_option_value('shellcmdflag', '-c', {})
+    api.nvim_set_option_value('shell', 'sh', {})
+    api.nvim_set_option_value('shellcmdflag', '-c', {})
     command(
       [[ let g:test_job = jobstart('trap "" TERM && echo 1 && sleep 60', { ]]
         .. [[ 'on_stdout': {-> execute('let g:test_job_started = 1')}, ]]
@@ -93,8 +93,8 @@ describe('autocmd TermClose', function()
 
   it('kills PTY job trapping SIGHUP and SIGTERM', function()
     skip(is_os('win'))
-    meths.nvim_set_option_value('shell', 'sh', {})
-    meths.nvim_set_option_value('shellcmdflag', '-c', {})
+    api.nvim_set_option_value('shell', 'sh', {})
+    api.nvim_set_option_value('shellcmdflag', '-c', {})
     command(
       [[ let g:test_job = jobstart('trap "" HUP TERM && echo 1 && sleep 60', { ]]
         .. [[ 'pty': 1,]]
@@ -204,7 +204,7 @@ describe('autocmd TextChangedT', function()
     command('autocmd TextChangedT * ++once let g:called = 1')
     thelpers.feed_data('a')
     retry(nil, nil, function()
-      eq(1, meths.nvim_get_var('called'))
+      eq(1, api.nvim_get_var('called'))
     end)
   end)
 
@@ -214,7 +214,7 @@ describe('autocmd TextChangedT', function()
     screen:expect({ any = 'E937: ' })
     matches(
       '^E937: Attempt to delete a buffer that is in use: term://',
-      meths.nvim_get_vvar('errmsg')
+      api.nvim_get_vvar('errmsg')
     )
   end)
 end)

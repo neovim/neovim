@@ -6,7 +6,7 @@ local eq = helpers.eq
 local exec_capture = helpers.exec_capture
 local exec_lua = helpers.exec_lua
 local expect = helpers.expect
-local funcs = helpers.funcs
+local fn = helpers.fn
 local insert = helpers.insert
 local nvim_prog = helpers.nvim_prog
 local new_argv = helpers.new_argv
@@ -42,7 +42,7 @@ describe('Remote', function()
     -- Run a `nvim --remote*` command and return { stdout, stderr } of the process
     local function run_remote(...)
       set_session(server)
-      local addr = funcs.serverlist()[1]
+      local addr = fn.serverlist()[1]
 
       -- Create an nvim instance just to run the remote-invoking nvim. We want
       -- to wait for the remote instance to exit and calling jobwait blocks
@@ -81,20 +81,20 @@ describe('Remote', function()
     it('edit a single file', function()
       eq({ '', '' }, run_remote('--remote', fname))
       expect(contents)
-      eq(2, #funcs.getbufinfo())
+      eq(2, #fn.getbufinfo())
     end)
 
     it('tab edit a single file with a non-changed buffer', function()
       eq({ '', '' }, run_remote('--remote-tab', fname))
       expect(contents)
-      eq(1, #funcs.gettabinfo())
+      eq(1, #fn.gettabinfo())
     end)
 
     it('tab edit a single file with a changed buffer', function()
       insert('hello')
       eq({ '', '' }, run_remote('--remote-tab', fname))
       expect(contents)
-      eq(2, #funcs.gettabinfo())
+      eq(2, #fn.gettabinfo())
     end)
 
     it('edit multiple files', function()
@@ -102,15 +102,15 @@ describe('Remote', function()
       expect(contents)
       command('next')
       expect(other_contents)
-      eq(3, #funcs.getbufinfo())
+      eq(3, #fn.getbufinfo())
     end)
 
     it('send keys', function()
       eq({ '', '' }, run_remote('--remote-send', ':edit ' .. fname .. '<CR><C-W>v'))
       expect(contents)
-      eq(2, #funcs.getwininfo())
+      eq(2, #fn.getwininfo())
       -- Only a single buffer as we're using edit and not drop like --remote does
-      eq(1, #funcs.getbufinfo())
+      eq(1, #fn.getbufinfo())
     end)
 
     it('evaluate expressions', function()
@@ -127,7 +127,7 @@ describe('Remote', function()
   it('creates server if not found', function()
     clear('--remote', fname)
     expect(contents)
-    eq(1, #funcs.getbufinfo())
+    eq(1, #fn.getbufinfo())
     -- Since we didn't pass silent, we should get a complaint
     neq(nil, string.find(exec_capture('messages'), 'E247:'))
   end)
@@ -135,8 +135,8 @@ describe('Remote', function()
   it('creates server if not found with tabs', function()
     clear('--remote-tab-silent', fname, other_fname)
     expect(contents)
-    eq(2, #funcs.gettabinfo())
-    eq(2, #funcs.getbufinfo())
+    eq(2, #fn.gettabinfo())
+    eq(2, #fn.getbufinfo())
     -- We passed silent, so no message should be issued about the server not being found
     eq(nil, string.find(exec_capture('messages'), 'E247:'))
   end)

@@ -3,7 +3,7 @@ local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
 local feed = helpers.feed
-local meths = helpers.meths
+local api = helpers.api
 local clear = helpers.clear
 local source = helpers.source
 local command = helpers.command
@@ -110,7 +110,7 @@ describe('input()', function()
   end)
   it('allows unequal numeric values when using {opts} dictionary', function()
     command('echohl Test')
-    meths.nvim_set_var('opts', { prompt = 1, default = 2, cancelreturn = 3 })
+    api.nvim_set_var('opts', { prompt = 1, default = 2, cancelreturn = 3 })
     feed([[:echo input(opts)<CR>]])
     screen:expect([[
                                |
@@ -132,7 +132,7 @@ describe('input()', function()
   end)
   it('works with redraw', function()
     command('echohl Test')
-    meths.nvim_set_var('opts', { prompt = 'Foo>', default = 'Bar' })
+    api.nvim_set_var('opts', { prompt = 'Foo>', default = 'Bar' })
     feed([[:echo inputdialog(opts)<CR>]])
     screen:expect([[
                                |
@@ -176,34 +176,34 @@ describe('input()', function()
   it('supports completion', function()
     feed(':let var = input("", "", "custom,CustomCompl")<CR>')
     feed('<Tab><CR>')
-    eq('TEST', meths.nvim_get_var('var'))
+    eq('TEST', api.nvim_get_var('var'))
 
     feed(':let var = input({"completion": "customlist,CustomListCompl"})<CR>')
     feed('<Tab><CR>')
-    eq('FOO', meths.nvim_get_var('var'))
+    eq('FOO', api.nvim_get_var('var'))
   end)
   it('supports cancelreturn', function()
     feed(':let var = input({"cancelreturn": "BAR"})<CR>')
     feed('<Esc>')
-    eq('BAR', meths.nvim_get_var('var'))
+    eq('BAR', api.nvim_get_var('var'))
     feed(':let var = input({"cancelreturn": []})<CR>')
     feed('<Esc>')
-    eq({}, meths.nvim_get_var('var'))
+    eq({}, api.nvim_get_var('var'))
     feed(':let var = input({"cancelreturn": v:false})<CR>')
     feed('<Esc>')
-    eq(false, meths.nvim_get_var('var'))
+    eq(false, api.nvim_get_var('var'))
     feed(':let var = input({"cancelreturn": v:null})<CR>')
     feed('<Esc>')
-    eq(NIL, meths.nvim_get_var('var'))
+    eq(NIL, api.nvim_get_var('var'))
   end)
   it('supports default string', function()
     feed(':let var = input("", "DEF1")<CR>')
     feed('<CR>')
-    eq('DEF1', meths.nvim_get_var('var'))
+    eq('DEF1', api.nvim_get_var('var'))
 
     feed(':let var = input({"default": "DEF2"})<CR>')
     feed('<CR>')
-    eq('DEF2', meths.nvim_get_var('var'))
+    eq('DEF2', api.nvim_get_var('var'))
   end)
   it('errors out on invalid inputs', function()
     eq('Vim(call):E730: Using a List as a String', exc_exec('call input([])'))
@@ -292,7 +292,7 @@ describe('inputdialog()', function()
   end)
   it('allows unequal numeric values when using {opts} dictionary', function()
     command('echohl Test')
-    meths.nvim_set_var('opts', { prompt = 1, default = 2, cancelreturn = 3 })
+    api.nvim_set_var('opts', { prompt = 1, default = 2, cancelreturn = 3 })
     feed([[:echo input(opts)<CR>]])
     screen:expect([[
                                |
@@ -314,7 +314,7 @@ describe('inputdialog()', function()
   end)
   it('works with redraw', function()
     command('echohl Test')
-    meths.nvim_set_var('opts', { prompt = 'Foo>', default = 'Bar' })
+    api.nvim_set_var('opts', { prompt = 'Foo>', default = 'Bar' })
     feed([[:echo input(opts)<CR>]])
     screen:expect([[
                                |
@@ -358,25 +358,25 @@ describe('inputdialog()', function()
   it('supports completion', function()
     feed(':let var = inputdialog({"completion": "customlist,CustomListCompl"})<CR>')
     feed('<Tab><CR>')
-    eq('FOO', meths.nvim_get_var('var'))
+    eq('FOO', api.nvim_get_var('var'))
   end)
   it('supports cancelreturn', function()
     feed(':let var = inputdialog("", "", "CR1")<CR>')
     feed('<Esc>')
-    eq('CR1', meths.nvim_get_var('var'))
+    eq('CR1', api.nvim_get_var('var'))
 
     feed(':let var = inputdialog({"cancelreturn": "BAR"})<CR>')
     feed('<Esc>')
-    eq('BAR', meths.nvim_get_var('var'))
+    eq('BAR', api.nvim_get_var('var'))
   end)
   it('supports default string', function()
     feed(':let var = inputdialog("", "DEF1")<CR>')
     feed('<CR>')
-    eq('DEF1', meths.nvim_get_var('var'))
+    eq('DEF1', api.nvim_get_var('var'))
 
     feed(':let var = inputdialog({"default": "DEF2"})<CR>')
     feed('<CR>')
-    eq('DEF2', meths.nvim_get_var('var'))
+    eq('DEF2', api.nvim_get_var('var'))
   end)
   it('errors out on invalid inputs', function()
     eq('Vim(call):E730: Using a List as a String', exc_exec('call inputdialog([])'))
@@ -409,8 +409,8 @@ end)
 describe('confirm()', function()
   -- oldtest: Test_confirm()
   it('works', function()
-    meths.nvim_set_option_value('more', false, {}) -- Avoid hit-enter prompt
-    meths.nvim_set_option_value('laststatus', 2, {})
+    api.nvim_set_option_value('more', false, {}) -- Avoid hit-enter prompt
+    api.nvim_set_option_value('laststatus', 2, {})
     -- screen:expect() calls are needed to avoid feeding input too early
     screen:expect({ any = '%[No Name%]' })
 
@@ -418,19 +418,19 @@ describe('confirm()', function()
     screen:expect({ any = '{CONFIRM:.+: }' })
     feed('o')
     screen:expect({ any = '%[No Name%]' })
-    eq(1, meths.nvim_get_var('a'))
+    eq(1, api.nvim_get_var('a'))
 
     async_meths.command([[let a = 'Are you sure?'->confirm("&Yes\n&No")]])
     screen:expect({ any = '{CONFIRM:.+: }' })
     feed('y')
     screen:expect({ any = '%[No Name%]' })
-    eq(1, meths.nvim_get_var('a'))
+    eq(1, api.nvim_get_var('a'))
 
     async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No")]])
     screen:expect({ any = '{CONFIRM:.+: }' })
     feed('n')
     screen:expect({ any = '%[No Name%]' })
-    eq(2, meths.nvim_get_var('a'))
+    eq(2, api.nvim_get_var('a'))
 
     -- Not possible to match Vim's CTRL-C test here as CTRL-C always sets got_int in Nvim.
 
@@ -439,26 +439,26 @@ describe('confirm()', function()
     screen:expect({ any = '{CONFIRM:.+: }' })
     feed('<Esc>')
     screen:expect({ any = '%[No Name%]' })
-    eq(0, meths.nvim_get_var('a'))
+    eq(0, api.nvim_get_var('a'))
 
     -- Default choice is returned when pressing <CR>.
     async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No")]])
     screen:expect({ any = '{CONFIRM:.+: }' })
     feed('<CR>')
     screen:expect({ any = '%[No Name%]' })
-    eq(1, meths.nvim_get_var('a'))
+    eq(1, api.nvim_get_var('a'))
 
     async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No", 2)]])
     screen:expect({ any = '{CONFIRM:.+: }' })
     feed('<CR>')
     screen:expect({ any = '%[No Name%]' })
-    eq(2, meths.nvim_get_var('a'))
+    eq(2, api.nvim_get_var('a'))
 
     async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No", 0)]])
     screen:expect({ any = '{CONFIRM:.+: }' })
     feed('<CR>')
     screen:expect({ any = '%[No Name%]' })
-    eq(0, meths.nvim_get_var('a'))
+    eq(0, api.nvim_get_var('a'))
 
     -- Test with the {type} 4th argument
     for _, type in ipairs({ 'Error', 'Question', 'Info', 'Warning', 'Generic' }) do
@@ -466,7 +466,7 @@ describe('confirm()', function()
       screen:expect({ any = '{CONFIRM:.+: }' })
       feed('y')
       screen:expect({ any = '%[No Name%]' })
-      eq(1, meths.nvim_get_var('a'))
+      eq(1, api.nvim_get_var('a'))
     end
 
     eq('Vim(call):E730: Using a List as a String', pcall_err(command, 'call confirm([])'))

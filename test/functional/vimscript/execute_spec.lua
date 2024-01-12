@@ -5,7 +5,7 @@ local clear = helpers.clear
 local source = helpers.source
 local exc_exec = helpers.exc_exec
 local pcall_err = helpers.pcall_err
-local funcs = helpers.funcs
+local fn = helpers.fn
 local Screen = require('test.functional.ui.screen')
 local command = helpers.command
 local feed = helpers.feed
@@ -22,16 +22,16 @@ describe('execute()', function()
         silent! messages
       redir END
     ]])
-    eq(eval('g:__redir_output'), funcs.execute('messages'))
+    eq(eval('g:__redir_output'), fn.execute('messages'))
   end)
 
   it('captures the concatenated outputs of a List of commands', function()
-    eq('foobar', funcs.execute({ 'echon "foo"', 'echon "bar"' }))
-    eq('\nfoo\nbar', funcs.execute({ 'echo "foo"', 'echo "bar"' }))
+    eq('foobar', fn.execute({ 'echon "foo"', 'echon "bar"' }))
+    eq('\nfoo\nbar', fn.execute({ 'echo "foo"', 'echo "bar"' }))
   end)
 
   it('supports nested execute("execute(...)")', function()
-    eq('42', funcs.execute([[echon execute("echon execute('echon 42')")]]))
+    eq('42', fn.execute([[echon execute("echon execute('echon 42')")]]))
   end)
 
   it('supports nested :redir to a variable', function()
@@ -54,7 +54,7 @@ describe('execute()', function()
       return a
     endfunction
     ]])
-    eq('top1bar1foobar2bar3', funcs.execute('echon "top1"|call g:Bar()'))
+    eq('top1bar1foobar2bar3', fn.execute('echon "top1"|call g:Bar()'))
   end)
 
   it('supports nested :redir to a register', function()
@@ -76,17 +76,17 @@ describe('execute()', function()
       return @a
     endfunction
     ]])
-    eq('top1bar1foobar2bar3', funcs.execute('echon "top1"|call g:Bar()'))
+    eq('top1bar1foobar2bar3', fn.execute('echon "top1"|call g:Bar()'))
     -- :redir itself doesn't nest, so the redirection ends in g:Foo
     eq('bar1foo', eval('@a'))
   end)
 
   it('captures a transformed string', function()
-    eq('^A', funcs.execute('echon "\\<C-a>"'))
+    eq('^A', fn.execute('echon "\\<C-a>"'))
   end)
 
   it('returns empty string if the argument list is empty', function()
-    eq('', funcs.execute({}))
+    eq('', fn.execute({}))
     eq(0, exc_exec('let g:ret = execute(v:_null_list)'))
     eq('', eval('g:ret'))
   end)
@@ -255,7 +255,7 @@ describe('execute()', function()
   -- with how nvim currently displays the output.
   it('captures shell-command output', function()
     local win_lf = is_os('win') and '\13' or ''
-    eq('\n:!echo foo\r\n\nfoo' .. win_lf .. '\n', funcs.execute('!echo foo'))
+    eq('\n:!echo foo\r\n\nfoo' .. win_lf .. '\n', fn.execute('!echo foo'))
   end)
 
   describe('{silent} argument', function()
@@ -275,11 +275,11 @@ describe('execute()', function()
       command('split')
       eq(
         'Vim(windo):E493: Backwards range given: 2,1windo echo',
-        pcall_err(funcs.execute, '2,1windo echo', '')
+        pcall_err(fn.execute, '2,1windo echo', '')
       )
       eq(
         'Vim(windo):E493: Backwards range given: 2,1windo echo',
-        pcall_err(funcs.execute, { '2,1windo echo' }, '')
+        pcall_err(fn.execute, { '2,1windo echo' }, '')
       )
     end)
 

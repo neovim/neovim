@@ -3,7 +3,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local source, command = helpers.source, helpers.command
 local call, clear = helpers.call, helpers.clear
-local eq, nvim = helpers.eq, helpers.meths
+local eq, nvim = helpers.eq, helpers.api
 
 describe('Ctrl-A/Ctrl-X on visual selections', function()
   before_each(function()

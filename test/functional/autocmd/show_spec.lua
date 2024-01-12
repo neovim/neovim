@@ -5,7 +5,7 @@ local clear = helpers.clear
 local command = helpers.command
 local dedent = helpers.dedent
 local eq = helpers.eq
-local funcs = helpers.funcs
+local fn = helpers.fn
 local eval = helpers.eval
 local exec = helpers.exec
 local feed = helpers.feed
@@ -36,7 +36,7 @@ describe(':autocmd', function()
        TestingOne  BufEnter
            *         :echo "Line 1"
                      :echo "Line 2"]]),
-      funcs.execute('autocmd BufEnter')
+      fn.execute('autocmd BufEnter')
     )
   end)
 
@@ -160,7 +160,7 @@ describe(':autocmd', function()
           A         echo "A2"
       test_3  User
           A         echo "A3"]]),
-      funcs.execute('autocmd User A')
+      fn.execute('autocmd User A')
     )
     eq(
       dedent([[
@@ -178,7 +178,7 @@ describe(':autocmd', function()
           B         echo "B2"
       test_3  User
           B         echo "B3"]]),
-      funcs.execute('autocmd * B')
+      fn.execute('autocmd * B')
     )
     eq(
       dedent([[
@@ -188,7 +188,7 @@ describe(':autocmd', function()
           B         echo "B3"
       test_3  User
           B         echo "B3"]]),
-      funcs.execute('autocmd test_3 * B')
+      fn.execute('autocmd test_3 * B')
     )
   end)
 

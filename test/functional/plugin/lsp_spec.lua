@@ -13,14 +13,14 @@ local matches = helpers.matches
 local pcall_err = helpers.pcall_err
 local pesc = vim.pesc
 local insert = helpers.insert
-local funcs = helpers.funcs
+local fn = helpers.fn
 local retry = helpers.retry
 local stop = helpers.stop
 local NIL = vim.NIL
 local read_file = require('test.helpers').read_file
 local write_file = require('test.helpers').write_file
 local is_ci = helpers.is_ci
-local meths = helpers.meths
+local api = helpers.api
 local is_os = helpers.is_os
 local skip = helpers.skip
 local mkdir = helpers.mkdir
@@ -363,9 +363,9 @@ describe('LSP', function()
         end,
         on_handler = function(_, _, ctx)
           if ctx.method == 'finish' then
-            eq('basic_init', meths.nvim_get_var('lsp_attached'))
+            eq('basic_init', api.nvim_get_var('lsp_attached'))
             exec_lua('return lsp.buf_detach_client(BUFFER, TEST_RPC_CLIENT_ID)')
-            eq('basic_init', meths.nvim_get_var('lsp_detached'))
+            eq('basic_init', api.nvim_get_var('lsp_detached'))
             client.stop()
           end
         end,
@@ -1877,7 +1877,7 @@ describe('LSP', function()
 
     describe('cursor position', function()
       it("don't fix the cursor if the range contains the cursor", function()
-        funcs.nvim_win_set_cursor(0, { 2, 6 })
+        fn.nvim_win_set_cursor(0, { 2, 6 })
         local edits = {
           make_edit(1, 0, 1, 19, 'Second line of text'),
         }
@@ -1889,11 +1889,11 @@ describe('LSP', function()
           'Fourth line of text',
           'å å ɧ 汉语 ↥ 🤦 🦄',
         }, buf_lines(1))
-        eq({ 2, 6 }, funcs.nvim_win_get_cursor(0))
+        eq({ 2, 6 }, fn.nvim_win_get_cursor(0))
       end)
 
       it('fix the cursor to the valid col if the content was removed', function()
-        funcs.nvim_win_set_cursor(0, { 2, 6 })
+        fn.nvim_win_set_cursor(0, { 2, 6 })
         local edits = {
           make_edit(1, 0, 1, 6, ''),
           make_edit(1, 6, 1, 19, ''),
@@ -1906,11 +1906,11 @@ describe('LSP', function()
           'Fourth line of text',
           'å å ɧ 汉语 ↥ 🤦 🦄',
         }, buf_lines(1))
-        eq({ 2, 0 }, funcs.nvim_win_get_cursor(0))
+        eq({ 2, 0 }, fn.nvim_win_get_cursor(0))
       end)
 
       it('fix the cursor to the valid row if the content was removed', function()
-        funcs.nvim_win_set_cursor(0, { 2, 6 })
+        fn.nvim_win_set_cursor(0, { 2, 6 })
         local edits = {
           make_edit(1, 0, 1, 6, ''),
           make_edit(0, 18, 5, 0, ''),
@@ -1919,11 +1919,11 @@ describe('LSP', function()
         eq({
           'First line of text',
         }, buf_lines(1))
-        eq({ 1, 17 }, funcs.nvim_win_get_cursor(0))
+        eq({ 1, 17 }, fn.nvim_win_get_cursor(0))
       end)
 
       it('fix the cursor row', function()
-        funcs.nvim_win_set_cursor(0, { 3, 0 })
+        fn.nvim_win_set_cursor(0, { 3, 0 })
         local edits = {
           make_edit(1, 0, 2, 0, ''),
         }
@@ -1934,14 +1934,14 @@ describe('LSP', function()
           'Fourth line of text',
           'å å ɧ 汉语 ↥ 🤦 🦄',
         }, buf_lines(1))
-        eq({ 2, 0 }, funcs.nvim_win_get_cursor(0))
+        eq({ 2, 0 }, fn.nvim_win_get_cursor(0))
       end)
 
       it('fix the cursor col', function()
         -- append empty last line. See #22636
         exec_lua('vim.api.nvim_buf_set_lines(...)', 1, -1, -1, true, { '' })
 
-        funcs.nvim_win_set_cursor(0, { 2, 11 })
+        fn.nvim_win_set_cursor(0, { 2, 11 })
         local edits = {
           make_edit(1, 7, 1, 11, ''),
         }
@@ -1954,11 +1954,11 @@ describe('LSP', function()
           'å å ɧ 汉语 ↥ 🤦 🦄',
           '',
         }, buf_lines(1))
-        eq({ 2, 7 }, funcs.nvim_win_get_cursor(0))
+        eq({ 2, 7 }, fn.nvim_win_get_cursor(0))
       end)
 
       it('fix the cursor row and col', function()
-        funcs.nvim_win_set_cursor(0, { 2, 12 })
+        fn.nvim_win_set_cursor(0, { 2, 12 })
         local edits = {
           make_edit(0, 11, 1, 12, ''),
         }
@@ -1969,7 +1969,7 @@ describe('LSP', function()
           'Fourth line of text',
           'å å ɧ 汉语 ↥ 🤦 🦄',
         }, buf_lines(1))
-        eq({ 1, 11 }, funcs.nvim_win_get_cursor(0))
+        eq({ 1, 11 }, fn.nvim_win_get_cursor(0))
       end)
     end)
 
@@ -2946,14 +2946,14 @@ describe('LSP', function()
     end)
 
     it('adds current position to jumplist before jumping', function()
-      funcs.nvim_win_set_buf(0, target_bufnr)
-      local mark = funcs.nvim_buf_get_mark(target_bufnr, "'")
+      fn.nvim_win_set_buf(0, target_bufnr)
+      local mark = fn.nvim_buf_get_mark(target_bufnr, "'")
       eq({ 1, 0 }, mark)
 
-      funcs.nvim_win_set_cursor(0, { 2, 3 })
+      fn.nvim_win_set_cursor(0, { 2, 3 })
       jump(location(0, 9, 0, 9))
 
-      mark = funcs.nvim_buf_get_mark(target_bufnr, "'")
+      mark = fn.nvim_buf_get_mark(target_bufnr, "'")
       eq({ 2, 3 }, mark)
     end)
   end)
@@ -3047,101 +3047,101 @@ describe('LSP', function()
     end)
 
     it('does not add current position to jumplist if not focus', function()
-      funcs.nvim_win_set_buf(0, target_bufnr)
-      local mark = funcs.nvim_buf_get_mark(target_bufnr, "'")
+      fn.nvim_win_set_buf(0, target_bufnr)
+      local mark = fn.nvim_buf_get_mark(target_bufnr, "'")
       eq({ 1, 0 }, mark)
 
-      funcs.nvim_win_set_cursor(0, { 2, 3 })
+      fn.nvim_win_set_cursor(0, { 2, 3 })
       show_document(location(0, 9, 0, 9), false, true)
       show_document(location(0, 9, 0, 9, true), false, true)
 
-      mark = funcs.nvim_buf_get_mark(target_bufnr, "'")
+      mark = fn.nvim_buf_get_mark(target_bufnr, "'")
       eq({ 1, 0 }, mark)
     end)
 
     it('does not change cursor position if not focus and not reuse_win', function()
-      funcs.nvim_win_set_buf(0, target_bufnr)
-      local cursor = funcs.nvim_win_get_cursor(0)
+      fn.nvim_win_set_buf(0, target_bufnr)
+      local cursor = fn.nvim_win_get_cursor(0)
 
       show_document(location(0, 9, 0, 9), false, false)
-      eq(cursor, funcs.nvim_win_get_cursor(0))
+      eq(cursor, fn.nvim_win_get_cursor(0))
     end)
 
     it('does not change window if not focus', function()
-      funcs.nvim_win_set_buf(0, target_bufnr)
-      local win = funcs.nvim_get_current_win()
+      fn.nvim_win_set_buf(0, target_bufnr)
+      local win = fn.nvim_get_current_win()
 
       -- same document/bufnr
       show_document(location(0, 9, 0, 9), false, true)
-      eq(win, funcs.nvim_get_current_win())
+      eq(win, fn.nvim_get_current_win())
 
       -- different document/bufnr, new window/split
       show_document(location(0, 9, 0, 9, true), false, true)
-      eq(2, #funcs.nvim_list_wins())
-      eq(win, funcs.nvim_get_current_win())
+      eq(2, #fn.nvim_list_wins())
+      eq(win, fn.nvim_get_current_win())
     end)
 
     it("respects 'reuse_win' parameter", function()
-      funcs.nvim_win_set_buf(0, target_bufnr)
+      fn.nvim_win_set_buf(0, target_bufnr)
 
       -- does not create a new window if the buffer is already open
       show_document(location(0, 9, 0, 9), false, true)
-      eq(1, #funcs.nvim_list_wins())
+      eq(1, #fn.nvim_list_wins())
 
       -- creates a new window even if the buffer is already open
       show_document(location(0, 9, 0, 9), false, false)
-      eq(2, #funcs.nvim_list_wins())
+      eq(2, #fn.nvim_list_wins())
     end)
 
     it('correctly sets the cursor of the split if range is given without focus', function()
-      funcs.nvim_win_set_buf(0, target_bufnr)
+      fn.nvim_win_set_buf(0, target_bufnr)
 
       show_document(location(0, 9, 0, 9, true), false, true)
 
-      local wins = funcs.nvim_list_wins()
+      local wins = fn.nvim_list_wins()
       eq(2, #wins)
       table.sort(wins)
 
-      eq({ 1, 0 }, funcs.nvim_win_get_cursor(wins[1]))
-      eq({ 1, 9 }, funcs.nvim_win_get_cursor(wins[2]))
+      eq({ 1, 0 }, fn.nvim_win_get_cursor(wins[1]))
+      eq({ 1, 9 }, fn.nvim_win_get_cursor(wins[2]))
     end)
 
     it('does not change cursor of the split if not range and not focus', function()
-      funcs.nvim_win_set_buf(0, target_bufnr)
-      funcs.nvim_win_set_cursor(0, { 2, 3 })
+      fn.nvim_win_set_buf(0, target_bufnr)
+      fn.nvim_win_set_cursor(0, { 2, 3 })
 
       exec_lua([[vim.cmd.new()]])
-      funcs.nvim_win_set_buf(0, target_bufnr2)
-      funcs.nvim_win_set_cursor(0, { 2, 3 })
+      fn.nvim_win_set_buf(0, target_bufnr2)
+      fn.nvim_win_set_cursor(0, { 2, 3 })
 
       show_document({ uri = 'file:///fake/uri2' }, false, true)
 
-      local wins = funcs.nvim_list_wins()
+      local wins = fn.nvim_list_wins()
       eq(2, #wins)
-      eq({ 2, 3 }, funcs.nvim_win_get_cursor(wins[1]))
-      eq({ 2, 3 }, funcs.nvim_win_get_cursor(wins[2]))
+      eq({ 2, 3 }, fn.nvim_win_get_cursor(wins[1]))
+      eq({ 2, 3 }, fn.nvim_win_get_cursor(wins[2]))
     end)
 
     it('respects existing buffers', function()
-      funcs.nvim_win_set_buf(0, target_bufnr)
-      local win = funcs.nvim_get_current_win()
+      fn.nvim_win_set_buf(0, target_bufnr)
+      local win = fn.nvim_get_current_win()
 
       exec_lua([[vim.cmd.new()]])
-      funcs.nvim_win_set_buf(0, target_bufnr2)
-      funcs.nvim_win_set_cursor(0, { 2, 3 })
-      local split = funcs.nvim_get_current_win()
+      fn.nvim_win_set_buf(0, target_bufnr2)
+      fn.nvim_win_set_cursor(0, { 2, 3 })
+      local split = fn.nvim_get_current_win()
 
       -- reuse win for open document/bufnr if called from split
       show_document(location(0, 9, 0, 9, true), false, true)
-      eq({ 1, 9 }, funcs.nvim_win_get_cursor(split))
-      eq(2, #funcs.nvim_list_wins())
+      eq({ 1, 9 }, fn.nvim_win_get_cursor(split))
+      eq(2, #fn.nvim_list_wins())
 
-      funcs.nvim_set_current_win(win)
+      fn.nvim_set_current_win(win)
 
       -- reuse win for open document/bufnr if called outside the split
       show_document(location(0, 9, 0, 9, true), false, true)
-      eq({ 1, 9 }, funcs.nvim_win_get_cursor(split))
-      eq(2, #funcs.nvim_list_wins())
+      eq({ 1, 9 }, fn.nvim_win_get_cursor(split))
+      eq(2, #fn.nvim_list_wins())
     end)
   end)
 

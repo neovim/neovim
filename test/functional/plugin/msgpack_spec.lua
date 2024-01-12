@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
-local meths = helpers.meths
+local api = helpers.api
 local eq = helpers.eq
 local nvim_eval = helpers.eval
 local nvim_command = helpers.command
@@ -526,17 +526,17 @@ describe('autoload/msgpack.vim', function()
     end)
 
     it('works for special v: values like v:true', function()
-      meths.nvim_set_var('true', true)
-      meths.nvim_set_var('false', false)
-      meths.nvim_set_var('nil', NIL)
+      api.nvim_set_var('true', true)
+      api.nvim_set_var('false', false)
+      api.nvim_set_var('nil', NIL)
 
       nvim_command('let true2 = msgpack#deepcopy(true)')
       nvim_command('let false2 = msgpack#deepcopy(false)')
       nvim_command('let nil2 = msgpack#deepcopy(nil)')
 
-      eq(true, meths.nvim_get_var('true'))
-      eq(false, meths.nvim_get_var('false'))
-      eq(NIL, meths.nvim_get_var('nil'))
+      eq(true, api.nvim_get_var('true'))
+      eq(false, api.nvim_get_var('false'))
+      eq(NIL, api.nvim_get_var('nil'))
     end)
   end)
 

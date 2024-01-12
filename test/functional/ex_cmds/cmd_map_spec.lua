@@ -4,7 +4,7 @@ local feed = helpers.feed
 local eq = helpers.eq
 local expect = helpers.expect
 local eval = helpers.eval
-local funcs = helpers.funcs
+local fn = helpers.fn
 local insert = helpers.insert
 local write_file = helpers.write_file
 local exc_exec = helpers.exc_exec
@@ -329,12 +329,12 @@ describe('mappings with <Cmd>', function()
       {1:~                                                                }|*5
       {4:-- VISUAL --}                                                     |
     ]])
-    eq('v', funcs.mode(1))
+    eq('v', fn.mode(1))
 
     -- can invoke operator, ending visual mode
     feed('<F5>')
-    eq('n', funcs.mode(1))
-    eq({ 'some short l' }, funcs.getreg('a', 1, 1))
+    eq('n', fn.mode(1))
+    eq({ 'some short l' }, fn.getreg('a', 1, 1))
 
     -- error doesn't interrupt visual mode
     feed('ggvw<F6>')
@@ -356,7 +356,7 @@ describe('mappings with <Cmd>', function()
       {1:~                                                                }|*5
       {4:-- VISUAL --}                                                     |
     ]])
-    eq('v', funcs.mode(1))
+    eq('v', fn.mode(1))
     feed('<F7>')
     screen:expect([[
       so{5:me short lines}                                                 |
@@ -364,7 +364,7 @@ describe('mappings with <Cmd>', function()
       {1:~                                                                }|*5
       {4:-- VISUAL --}                                                     |
     ]])
-    eq('v', funcs.mode(1))
+    eq('v', fn.mode(1))
 
     -- startinsert gives "-- (insert) VISUAL --" mode
     feed('<F8>')
@@ -390,17 +390,17 @@ describe('mappings with <Cmd>', function()
       {1:~                                                                }|*5
       {4:-- SELECT --}                                                     |
     ]])
-    eq('s', funcs.mode(1))
+    eq('s', fn.mode(1))
 
     -- visual mapping in select mode restart select mode after operator
     feed('<F5>')
-    eq('s', funcs.mode(1))
-    eq({ 'some short l' }, funcs.getreg('a', 1, 1))
+    eq('s', fn.mode(1))
+    eq({ 'some short l' }, fn.getreg('a', 1, 1))
 
     -- select mode mapping works, and does not restart select mode
     feed('<F2>')
-    eq('n', funcs.mode(1))
-    eq({ 'some short l' }, funcs.getreg('b', 1, 1))
+    eq('n', fn.mode(1))
+    eq({ 'some short l' }, fn.getreg('b', 1, 1))
 
     -- error doesn't interrupt temporary visual mode
     feed('<esc>ggvw<c-g><F6>')
@@ -423,7 +423,7 @@ describe('mappings with <Cmd>', function()
       {4:-- VISUAL --}                                                     |
     ]])
     -- quirk: restoration of select mode is not performed
-    eq('v', funcs.mode(1))
+    eq('v', fn.mode(1))
 
     -- error doesn't interrupt select mode
     feed('<esc>ggvw<c-g><F1>')
@@ -446,7 +446,7 @@ describe('mappings with <Cmd>', function()
       {4:-- SELECT --}                                                     |
     ]])
     -- quirk: restoration of select mode is not performed
-    eq('s', funcs.mode(1))
+    eq('s', fn.mode(1))
 
     feed('<F7>')
     screen:expect([[
@@ -455,7 +455,7 @@ describe('mappings with <Cmd>', function()
       {1:~                                                                }|*5
       {4:-- SELECT --}                                                     |
     ]])
-    eq('s', funcs.mode(1))
+    eq('s', fn.mode(1))
 
     -- startinsert gives "-- SELECT (insert) --" mode
     feed('<F8>')
@@ -475,11 +475,11 @@ describe('mappings with <Cmd>', function()
     expect([[
         lines
         of test text]])
-    eq({ 'some short ' }, funcs.getreg('"', 1, 1))
+    eq({ 'some short ' }, fn.getreg('"', 1, 1))
     feed('.')
     expect([[
         test text]])
-    eq({ 'lines', 'of ' }, funcs.getreg('"', 1, 1))
+    eq({ 'lines', 'of ' }, fn.getreg('"', 1, 1))
     feed('uu')
     expect([[
         some short lines
@@ -505,7 +505,7 @@ describe('mappings with <Cmd>', function()
     feed('"bd<F7>')
     expect([[
         soest text]])
-    eq(funcs.getreg('b', 1, 1), { 'me short lines', 'of t' })
+    eq(fn.getreg('b', 1, 1), { 'me short lines', 'of t' })
 
     -- startinsert aborts operator
     feed('d<F8>')
@@ -561,7 +561,7 @@ describe('mappings with <Cmd>', function()
       of stuff test text]])
 
     feed('<F5>')
-    eq(funcs.getreg('a', 1, 1), { 'deed some short little lines', 'of stuff t' })
+    eq(fn.getreg('a', 1, 1), { 'deed some short little lines', 'of stuff t' })
 
     -- still in insert
     screen:expect([[

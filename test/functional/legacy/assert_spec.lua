@@ -1,5 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
-local nvim, call = helpers.meths, helpers.call
+local nvim, call = helpers.api, helpers.call
 local clear, eq = helpers.clear, helpers.eq
 local source, command = helpers.source, helpers.command
 local exc_exec = helpers.exc_exec

@@ -4,7 +4,7 @@ local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
 local exec = helpers.exec
-local funcs = helpers.funcs
+local fn = helpers.fn
 local mkdir_p = helpers.mkdir_p
 local rmdir = helpers.rmdir
 local write_file = helpers.write_file
@@ -48,8 +48,8 @@ describe('runtime:', function()
       local colorscheme_file = table.concat({ colorscheme_folder, 'new_colorscheme.lua' }, sep)
       write_file(colorscheme_file, [[vim.g.lua_colorscheme = 1]])
 
-      eq({ 'new_colorscheme' }, funcs.getcompletion('new_c', 'color'))
-      eq({ 'colors/new_colorscheme.lua' }, funcs.getcompletion('colors/new_c', 'runtime'))
+      eq({ 'new_colorscheme' }, fn.getcompletion('new_c', 'color'))
+      eq({ 'colors/new_colorscheme.lua' }, fn.getcompletion('colors/new_c', 'runtime'))
 
       exec('colorscheme new_colorscheme')
 
@@ -126,8 +126,8 @@ describe('runtime:', function()
       local compiler_file = compiler_folder .. sep .. 'new_compiler.lua'
       write_file(compiler_file, [[vim.b.lua_compiler = 1]])
 
-      eq({ 'new_compiler' }, funcs.getcompletion('new_c', 'compiler'))
-      eq({ 'compiler/new_compiler.lua' }, funcs.getcompletion('compiler/new_c', 'runtime'))
+      eq({ 'new_compiler' }, fn.getcompletion('new_c', 'compiler'))
+      eq({ 'compiler/new_compiler.lua' }, fn.getcompletion('compiler/new_c', 'runtime'))
 
       exec('compiler new_compiler')
 
@@ -168,8 +168,8 @@ describe('runtime:', function()
       local ftplugin_file = table.concat({ ftplugin_folder, 'new-ft.lua' }, sep)
       write_file(ftplugin_file, [[vim.b.lua_ftplugin = 1]])
 
-      eq({ 'new-ft' }, funcs.getcompletion('new-f', 'filetype'))
-      eq({ 'ftplugin/new-ft.lua' }, funcs.getcompletion('ftplugin/new-f', 'runtime'))
+      eq({ 'new-ft' }, fn.getcompletion('new-f', 'filetype'))
+      eq({ 'ftplugin/new-ft.lua' }, fn.getcompletion('ftplugin/new-f', 'runtime'))
 
       exec [[set filetype=new-ft]]
       eq(1, eval('b:lua_ftplugin'))
@@ -281,8 +281,8 @@ describe('runtime:', function()
       local indent_file = table.concat({ indent_folder, 'new-ft.lua' }, sep)
       write_file(indent_file, [[vim.b.lua_indent = 1]])
 
-      eq({ 'new-ft' }, funcs.getcompletion('new-f', 'filetype'))
-      eq({ 'indent/new-ft.lua' }, funcs.getcompletion('indent/new-f', 'runtime'))
+      eq({ 'new-ft' }, fn.getcompletion('new-f', 'filetype'))
+      eq({ 'indent/new-ft.lua' }, fn.getcompletion('indent/new-f', 'runtime'))
 
       exec [[set filetype=new-ft]]
       eq(1, eval('b:lua_indent'))
@@ -338,9 +338,9 @@ describe('runtime:', function()
     end)
 
     it('lua syntaxes are included in cmdline completion', function()
-      eq({ 'my-lang' }, funcs.getcompletion('my-l', 'filetype'))
-      eq({ 'my-lang' }, funcs.getcompletion('my-l', 'syntax'))
-      eq({ 'syntax/my-lang.lua' }, funcs.getcompletion('syntax/my-l', 'runtime'))
+      eq({ 'my-lang' }, fn.getcompletion('my-l', 'filetype'))
+      eq({ 'my-lang' }, fn.getcompletion('my-l', 'syntax'))
+      eq({ 'syntax/my-lang.lua' }, fn.getcompletion('syntax/my-l', 'runtime'))
     end)
 
     it("'rtp' order is respected", function()

@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
-local funcs = helpers.funcs
+local fn = helpers.fn
 
 describe('cfilter.lua', function()
   before_each(function()
@@ -13,16 +13,16 @@ describe('cfilter.lua', function()
   for _, list in ipairs({
     {
       name = 'Cfilter',
-      get = funcs.getqflist,
-      set = funcs.setqflist,
+      get = fn.getqflist,
+      set = fn.setqflist,
     },
     {
       name = 'Lfilter',
       get = function()
-        return funcs.getloclist(0)
+        return fn.getloclist(0)
       end,
       set = function(items)
-        return funcs.setloclist(0, items)
+        return fn.setloclist(0, items)
       end,
     },
   }) do
@@ -39,7 +39,7 @@ describe('cfilter.lua', function()
     describe((':%s'):format(list.name), function()
       it('does not error on empty list', function()
         filter('nothing')
-        eq({}, funcs.getqflist())
+        eq({}, fn.getqflist())
       end)
 
       it('requires an argument', function()
@@ -66,7 +66,7 @@ describe('cfilter.lua', function()
       end
 
       local toname = function(qflist)
-        return funcs.map(qflist, 'v:val.text')
+        return fn.map(qflist, 'v:val.text')
       end
 
       test('filters with no matches', 'does not match', {})
@@ -83,7 +83,7 @@ describe('cfilter.lua', function()
           { filename = 'foo', lnum = 3, text = 'zed' },
         })
 
-        funcs.setreg('/', 'ba')
+        fn.setreg('/', 'ba')
         filter('/')
 
         eq({ 'bar', 'baz' }, toname(list.get()))
@@ -96,7 +96,7 @@ describe('cfilter.lua', function()
           { filename = 'foo', lnum = 3, text = 'zed' },
         })
 
-        funcs.setreg('/', 'ba')
+        fn.setreg('/', 'ba')
         filter('/', true)
 
         eq({ 'zed' }, toname(list.get()))

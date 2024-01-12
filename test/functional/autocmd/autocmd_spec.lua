@@ -10,9 +10,9 @@ local eval = helpers.eval
 local feed = helpers.feed
 local clear = helpers.clear
 local matches = helpers.matches
-local meths = helpers.meths
+local api = helpers.api
 local pcall_err = helpers.pcall_err
-local funcs = helpers.funcs
+local fn = helpers.fn
 local expect = helpers.expect
 local command = helpers.command
 local exc_exec = helpers.exc_exec
@@ -142,8 +142,8 @@ describe('autocmd', function()
 
   describe('BufLeave autocommand', function()
     it('can wipe out the buffer created by :edit which triggered autocmd', function()
-      meths.nvim_set_option_value('hidden', true, {})
-      meths.nvim_buf_set_lines(0, 0, 1, false, {
+      api.nvim_set_option_value('hidden', true, {})
+      api.nvim_buf_set_lines(0, 0, 1, false, {
         'start of test file xx',
         'end of test file xx',
       })
@@ -188,7 +188,7 @@ describe('autocmd', function()
                      :call add(g:foo, "Once2")
                      :call add(g:foo, "Many2")
                      :call add(g:foo, "Once3")]]),
-      funcs.execute('autocmd Tabnew')
+      fn.execute('autocmd Tabnew')
     )
     command('tabnew')
     command('tabnew')
@@ -201,7 +201,7 @@ describe('autocmd', function()
        TabNew
            *         :call add(g:foo, "Many1")
                      :call add(g:foo, "Many2")]]),
-      funcs.execute('autocmd Tabnew')
+      fn.execute('autocmd Tabnew')
     )
 
     --
@@ -247,7 +247,7 @@ describe('autocmd', function()
       dedent([[
 
        --- Autocommands ---]]),
-      funcs.execute('autocmd Tabnew')
+      fn.execute('autocmd Tabnew')
     )
   end)
 
@@ -415,7 +415,7 @@ describe('autocmd', function()
     end)
 
     it('gives E814 when there are other floating windows', function()
-      meths.nvim_open_win(
+      api.nvim_open_win(
         0,
         true,
         { width = 10, height = 10, relative = 'editor', row = 10, col = 10 }
@@ -513,17 +513,17 @@ describe('autocmd', function()
   describe('v:event is readonly #18063', function()
     it('during ChanOpen event', function()
       command('autocmd ChanOpen * let v:event.info.id = 0')
-      funcs.jobstart({ 'cat' })
+      fn.jobstart({ 'cat' })
       retry(nil, nil, function()
-        eq('E46: Cannot change read-only variable "v:event.info"', meths.nvim_get_vvar('errmsg'))
+        eq('E46: Cannot change read-only variable "v:event.info"', api.nvim_get_vvar('errmsg'))
       end)
     end)
 
     it('during ChanOpen event', function()
       command('autocmd ChanInfo * let v:event.info.id = 0')
-      meths.nvim_set_client_info('foo', {}, 'remote', {}, {})
+      api.nvim_set_client_info('foo', {}, 'remote', {}, {})
       retry(nil, nil, function()
-        eq('E46: Cannot change read-only variable "v:event.info"', meths.nvim_get_vvar('errmsg'))
+        eq('E46: Cannot change read-only variable "v:event.info"', api.nvim_get_vvar('errmsg'))
       end)
     end)
 
@@ -577,7 +577,7 @@ describe('autocmd', function()
         call assert_fails('au WinNew * ++once ++once echo bad', 'E983:')
       ]]
 
-      meths.nvim_set_var('did_split', 0)
+      api.nvim_set_var('did_split', 0)
 
       source [[
         augroup Testing
@@ -589,11 +589,11 @@ describe('autocmd', function()
         split
       ]]
 
-      eq(2, meths.nvim_get_var('did_split'))
-      eq(1, funcs.exists('#WinNew'))
+      eq(2, api.nvim_get_var('did_split'))
+      eq(1, fn.exists('#WinNew'))
 
       -- Now with once
-      meths.nvim_set_var('did_split', 0)
+      api.nvim_set_var('did_split', 0)
 
       source [[
         augroup Testing
@@ -605,8 +605,8 @@ describe('autocmd', function()
         split
       ]]
 
-      eq(1, meths.nvim_get_var('did_split'))
-      eq(0, funcs.exists('#WinNew'))
+      eq(1, api.nvim_get_var('did_split'))
+      eq(0, fn.exists('#WinNew'))
 
       -- call assert_fails('au WinNew * ++once ++once echo bad', 'E983:')
       local ok, msg = pcall(
@@ -622,7 +622,7 @@ describe('autocmd', function()
 
     it('should have autocmds in filetypedetect group', function()
       source [[filetype on]]
-      neq({}, meths.nvim_get_autocmds { group = 'filetypedetect' })
+      neq({}, api.nvim_get_autocmds { group = 'filetypedetect' })
     end)
 
     it('should allow comma-separated patterns', function()
@@ -634,7 +634,7 @@ describe('autocmd', function()
         augroup END
       ]]
 
-      eq(4, #meths.nvim_get_autocmds { event = 'BufReadCmd', group = 'TestingPatterns' })
+      eq(4, #api.nvim_get_autocmds { event = 'BufReadCmd', group = 'TestingPatterns' })
     end)
   end)
 

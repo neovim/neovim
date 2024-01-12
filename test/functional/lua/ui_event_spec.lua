@@ -4,7 +4,7 @@ local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local clear = helpers.clear
 local feed = helpers.feed
-local funcs = helpers.funcs
+local fn = helpers.fn
 
 describe('vim.ui_attach', function()
   local screen
@@ -51,7 +51,7 @@ describe('vim.ui_attach', function()
     ]],
     }
 
-    funcs.complete(1, { 'food', 'foobar', 'foo' })
+    fn.complete(1, { 'food', 'foobar', 'foo' })
     screen:expect {
       grid = [[
       food^                                    |
@@ -107,7 +107,7 @@ describe('vim.ui_attach', function()
   end)
 
   it('does not crash on exit', function()
-    funcs.system({
+    fn.system({
       helpers.nvim_prog,
       '-u',
       'NONE',

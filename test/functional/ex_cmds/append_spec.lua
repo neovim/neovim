@@ -5,20 +5,20 @@ local dedent = helpers.dedent
 local exec = helpers.exec
 local feed = helpers.feed
 local clear = helpers.clear
-local funcs = helpers.funcs
+local fn = helpers.fn
 local command = helpers.command
-local meths = helpers.meths
+local api = helpers.api
 local Screen = require('test.functional.ui.screen')
 
 local cmdtest = function(cmd, prep, ret1)
   describe(':' .. cmd, function()
     before_each(function()
       clear()
-      meths.nvim_buf_set_lines(0, 0, 1, true, { 'foo', 'bar', 'baz' })
+      api.nvim_buf_set_lines(0, 0, 1, true, { 'foo', 'bar', 'baz' })
     end)
 
     local buffer_contents = function()
-      return meths.nvim_buf_get_lines(0, 0, -1, false)
+      return api.nvim_buf_get_lines(0, 0, -1, false)
     end
 
     it(cmd .. 's' .. prep .. ' the current line by default', function()
@@ -38,15 +38,15 @@ local cmdtest = function(cmd, prep, ret1)
       feed(':' .. hisline .. '<CR>')
       feed(':' .. cmd .. '<CR>abc<CR>def<C-f>')
       eq({ 'def' }, buffer_contents())
-      eq(hisline, funcs.histget(':', -2))
-      eq(cmd, funcs.histget(':'))
+      eq(hisline, fn.histget(':', -2))
+      eq(cmd, fn.histget(':'))
       -- Test that command-line window was launched
-      eq('nofile', meths.nvim_get_option_value('buftype', {}))
-      eq('n', funcs.mode(1))
+      eq('nofile', api.nvim_get_option_value('buftype', {}))
+      eq('n', fn.mode(1))
       feed('<CR>')
-      eq('c', funcs.mode(1))
+      eq('c', fn.mode(1))
       feed('.<CR>')
-      eq('n', funcs.mode(1))
+      eq('n', fn.mode(1))
       eq(ret1, buffer_contents())
     end)
   end)

@@ -5,7 +5,7 @@ local command = helpers.command
 local feed_command = helpers.feed_command
 local eq = helpers.eq
 local eval = helpers.eval
-local funcs = helpers.funcs
+local fn = helpers.fn
 local testprg = helpers.testprg
 
 describe('search highlighting', function()
@@ -458,13 +458,13 @@ describe('search highlighting', function()
     command([[let @/ = 'i']])
     -- moves to next match of previous search pattern, just like /<cr>
     feed('/<c-g><cr>')
-    eq({ 0, 1, 6, 0 }, funcs.getpos('.'))
+    eq({ 0, 1, 6, 0 }, fn.getpos('.'))
     -- moves to next match of previous search pattern, just like /<cr>
     feed('/<cr>')
-    eq({ 0, 1, 12, 0 }, funcs.getpos('.'))
+    eq({ 0, 1, 12, 0 }, fn.getpos('.'))
     -- moves to next match of previous search pattern, just like /<cr>
     feed('/<c-t><cr>')
-    eq({ 0, 2, 1, 0 }, funcs.getpos('.'))
+    eq({ 0, 2, 1, 0 }, fn.getpos('.'))
 
     -- 8.0.1304, test that C-g and C-t works with incsearch and empty pattern
     feed('<esc>/fi<CR>')

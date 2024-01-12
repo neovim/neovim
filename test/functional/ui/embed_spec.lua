@@ -8,7 +8,7 @@ local eq = helpers.eq
 local neq = helpers.neq
 local clear = helpers.clear
 local ok = helpers.ok
-local funcs = helpers.funcs
+local fn = helpers.fn
 local nvim_prog = helpers.nvim_prog
 local retry = helpers.retry
 
@@ -178,7 +178,7 @@ describe('--embed --listen UI', function()
     helpers.skip(helpers.is_os('win'))
     clear()
     local child_server = assert(helpers.new_pipename())
-    funcs.jobstart({
+    fn.jobstart({
       nvim_prog,
       '--embed',
       '--listen',

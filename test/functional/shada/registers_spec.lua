@@ -1,6 +1,6 @@
 -- ShaDa registers saving/reading support
 local helpers = require('test.functional.helpers')(after_each)
-local nvim_command, funcs, eq = helpers.command, helpers.funcs, helpers.eq
+local nvim_command, fn, eq = helpers.command, helpers.fn, helpers.eq
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear = shada_helpers.reset, shada_helpers.clear
@@ -10,13 +10,13 @@ local setreg = function(name, contents, typ)
   if type(contents) == 'string' then
     contents = { contents }
   end
-  funcs.setreg(name, contents, typ)
+  fn.setreg(name, contents, typ)
 end
 
 local getreg = function(name)
   return {
-    funcs.getreg(name, 1, 1),
-    funcs.getregtype(name),
+    fn.getreg(name, 1, 1),
+    fn.getregtype(name),
   }
 end
 

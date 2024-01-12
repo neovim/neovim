@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eq = helpers.clear, helpers.eq
-local meths = helpers.meths
+local api = helpers.api
 local command = helpers.command
 
 describe('TabClosed', function()
@@ -14,11 +14,11 @@ describe('TabClosed', function()
         )
         repeat
           command('tabnew')
-        until meths.nvim_eval('tabpagenr()') == 6 -- current tab is now 6
-        eq('tabclosed:6:6:5', meths.nvim_exec('tabclose', true)) -- close last 6, current tab is now 5
-        eq('tabclosed:5:5:4', meths.nvim_exec('close', true)) -- close last window on tab, closes tab
-        eq('tabclosed:2:2:3', meths.nvim_exec('2tabclose', true)) -- close tab 2, current tab is now 3
-        eq('tabclosed:1:1:2\ntabclosed:1:1:1', meths.nvim_exec('tabonly', true)) -- close tabs 1 and 2
+        until api.nvim_eval('tabpagenr()') == 6 -- current tab is now 6
+        eq('tabclosed:6:6:5', api.nvim_exec('tabclose', true)) -- close last 6, current tab is now 5
+        eq('tabclosed:5:5:4', api.nvim_exec('close', true)) -- close last window on tab, closes tab
+        eq('tabclosed:2:2:3', api.nvim_exec('2tabclose', true)) -- close tab 2, current tab is now 3
+        eq('tabclosed:1:1:2\ntabclosed:1:1:1', api.nvim_exec('tabonly', true)) -- close tabs 1 and 2
       end)
 
       it('is triggered when closing a window via bdelete from another tab', function()
@@ -28,9 +28,9 @@ describe('TabClosed', function()
         command('1tabedit Xtestfile')
         command('1tabedit Xtestfile')
         command('normal! 1gt')
-        eq({ 1, 3 }, meths.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
-        eq('tabclosed:2:2:1\ntabclosed:2:2:1', meths.nvim_exec('bdelete Xtestfile', true))
-        eq({ 1, 1 }, meths.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
+        eq({ 1, 3 }, api.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
+        eq('tabclosed:2:2:1\ntabclosed:2:2:1', api.nvim_exec('bdelete Xtestfile', true))
+        eq({ 1, 1 }, api.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
       end)
 
       it('is triggered when closing a window via bdelete from current tab', function()
@@ -42,9 +42,9 @@ describe('TabClosed', function()
         command('1tabedit Xtestfile2')
 
         -- Only one tab is closed, and the alternate file is used for the other.
-        eq({ 2, 3 }, meths.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
-        eq('tabclosed:2:2:2', meths.nvim_exec('bdelete Xtestfile2', true))
-        eq('Xtestfile1', meths.nvim_eval('bufname("")'))
+        eq({ 2, 3 }, api.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
+        eq('tabclosed:2:2:2', api.nvim_exec('bdelete Xtestfile2', true))
+        eq('Xtestfile1', api.nvim_eval('bufname("")'))
       end)
     end)
 
@@ -56,11 +56,11 @@ describe('TabClosed', function()
         command('au! TabClosed 2 echom "tabclosed:match"')
         repeat
           command('tabnew')
-        until meths.nvim_eval('tabpagenr()') == 7 -- current tab is now 7
+        until api.nvim_eval('tabpagenr()') == 7 -- current tab is now 7
         -- sanity check, we shouldn't match on tabs with numbers other than 2
-        eq('tabclosed:7:7:6', meths.nvim_exec('tabclose', true))
+        eq('tabclosed:7:7:6', api.nvim_exec('tabclose', true))
         -- close tab page 2, current tab is now 5
-        eq('tabclosed:2:2:5\ntabclosed:match', meths.nvim_exec('2tabclose', true))
+        eq('tabclosed:2:2:5\ntabclosed:match', api.nvim_exec('2tabclose', true))
       end)
     end)
 
@@ -70,9 +70,9 @@ describe('TabClosed', function()
           'au! TabClosed * echom "tabclosed:".expand("<afile>").":".expand("<amatch>").":".tabpagenr()'
         )
         command('tabedit Xtestfile')
-        eq({ 2, 2 }, meths.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
-        eq('tabclosed:2:2:1', meths.nvim_exec('close', true))
-        eq({ 1, 1 }, meths.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
+        eq({ 2, 2 }, api.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
+        eq('tabclosed:2:2:1', api.nvim_exec('close', true))
+        eq({ 1, 1 }, api.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
       end)
     end)
   end)

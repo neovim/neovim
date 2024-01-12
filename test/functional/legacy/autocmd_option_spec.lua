@@ -1,9 +1,9 @@
 local helpers = require('test.functional.helpers')(after_each)
-local nvim = helpers.meths
+local nvim = helpers.api
 local clear, eq, neq, eval = helpers.clear, helpers.eq, helpers.neq, helpers.eval
-local meths = helpers.meths
-local curbuf = helpers.meths.nvim_get_current_buf
-local curwin = helpers.meths.nvim_get_current_win
+local api = helpers.api
+local curbuf = helpers.api.nvim_get_current_buf
+local curwin = helpers.api.nvim_get_current_win
 local exec_capture = helpers.exec_capture
 local source, command = helpers.source, helpers.command
 
@@ -211,7 +211,7 @@ describe('au OptionSet', function()
 
       it('should trigger if the current buffer is different from the targeted buffer', function()
         local new_buffer = make_buffer()
-        local new_bufnr = meths.nvim_buf_get_number(new_buffer)
+        local new_bufnr = api.nvim_buf_get_number(new_buffer)
 
         command('call setbufvar(' .. new_bufnr .. ', "&buftype", "nofile")')
         expected_combination({
@@ -648,7 +648,7 @@ describe('au OptionSet', function()
         set_hook('buftype')
 
         local new_buffer = make_buffer()
-        local new_bufnr = meths.nvim_buf_get_number(new_buffer)
+        local new_bufnr = api.nvim_buf_get_number(new_buffer)
 
         command('call setbufvar(' .. new_bufnr .. ', "&buftype", "nofile")')
         expected_combination({

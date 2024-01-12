@@ -1,5 +1,5 @@
 local helpers = require('test.functional.helpers')(nil)
-local meths = helpers.meths
+local api = helpers.api
 local write_file = helpers.write_file
 local concat_tables = helpers.concat_tables
 
@@ -28,7 +28,7 @@ local function reset(o)
     args_rm = args_rm,
     args = args,
   }
-  meths.nvim_set_var('tmpname', tmpname)
+  api.nvim_set_var('tmpname', tmpname)
 end
 
 local clear = function()

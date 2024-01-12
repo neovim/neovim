@@ -622,7 +622,7 @@ end
 module.async_meths = module.create_callindex(module.nvim_async)
 module.uimeths = module.create_callindex(ui)
 
-local function create_api(request, call)
+local function create_bridge(request, call)
   local function nvim(method, ...)
     if vim.startswith(method, 'nvim_') then
       return request(method, ...)
@@ -631,18 +631,13 @@ local function create_api(request, call)
   end
 
   return {
-    funcs = module.create_callindex(call),
-    meths = module.create_callindex(nvim),
+    fn = module.create_callindex(call),
+    api = module.create_callindex(nvim),
   }
 end
 
-module.rpc = {
-  api = create_api(module.request, module.call),
-}
-
-module.lua = {
-  api = create_api(module.request_lua, module.call_lua),
-}
+module.rpc = create_bridge(module.request, module.call)
+module.lua = create_bridge(module.request_lua, module.call_lua)
 
 module.describe_lua_and_rpc = function(describe)
   return function(what, tests)
@@ -658,16 +653,16 @@ module.describe_lua_and_rpc = function(describe)
 end
 
 --- add for typing. The for loop after will overwrite this
-module.meths = vim.api
-module.funcs = vim.fn
+module.api = vim.api
+module.fn = vim.fn
 
-for name, fn in pairs(module.rpc.api) do
-  module[name] = fn
+for name, fns in pairs(module.rpc) do
+  module[name] = fns
 end
 
 -- Executes an ex-command. Vimscript errors manifest as client (lua) errors, but
 -- v:errmsg will not be updated.
-module.command = module.meths.nvim_command
+module.command = module.api.nvim_command
 
 function module.poke_eventloop()
   -- Execute 'nvim_eval' (a deferred function) to
@@ -682,7 +677,7 @@ end
 ---@see buf_lines()
 function module.curbuf_contents()
   module.poke_eventloop() -- Before inspecting the buffer, do whatever.
-  return table.concat(module.meths.nvim_buf_get_lines(0, 0, -1, true), '\n')
+  return table.concat(module.api.nvim_buf_get_lines(0, 0, -1, true), '\n')
 end
 
 function module.expect(contents)
@@ -719,15 +714,15 @@ end
 -- Asserts that buffer is loaded and visible in the current tabpage.
 function module.assert_visible(bufnr, visible)
   assert(type(visible) == 'boolean')
-  eq(visible, module.meths.nvim_buf_is_loaded(bufnr))
+  eq(visible, module.api.nvim_buf_is_loaded(bufnr))
   if visible then
     assert(
-      -1 ~= module.funcs.bufwinnr(bufnr),
+      -1 ~= module.fn.bufwinnr(bufnr),
       'expected buffer to be visible in current tabpage: ' .. tostring(bufnr)
     )
   else
     assert(
-      -1 == module.funcs.bufwinnr(bufnr),
+      -1 == module.fn.bufwinnr(bufnr),
       'expected buffer NOT visible in current tabpage: ' .. tostring(bufnr)
     )
   end
@@ -827,17 +822,17 @@ function module.skip_fragile(pending_fn, cond)
 end
 
 function module.exec(code)
-  module.meths.nvim_exec2(code, {})
+  module.api.nvim_exec2(code, {})
 end
 
 function module.exec_capture(code)
-  return module.meths.nvim_exec2(code, { output = true }).output
+  return module.api.nvim_exec2(code, { output = true }).output
 end
 
 --- @param code string
 --- @return any
 function module.exec_lua(code, ...)
-  return module.meths.exec_lua(code, { ... })
+  return module.api.exec_lua(code, { ... })
 end
 
 function module.get_pathsep()
@@ -869,7 +864,7 @@ end
 function module.new_pipename()
   -- HACK: Start a server temporarily, get the name, then stop it.
   local pipename = module.eval('serverstart()')
-  module.funcs.serverstop(pipename)
+  module.fn.serverstop(pipename)
   -- Remove the pipe so that trying to connect to it without a server listening
   -- will be an error instead of a hang.
   os.remove(pipename)
@@ -878,11 +873,11 @@ end
 
 function module.missing_provider(provider)
   if provider == 'ruby' or provider == 'node' or provider == 'perl' then
-    local e = module.funcs['provider#' .. provider .. '#Detect']()[2]
+    local e = module.fn['provider#' .. provider .. '#Detect']()[2]
     return e ~= '' and e or false
   elseif provider == 'python' or provider == 'python3' then
     local py_major_version = (provider == 'python3' and 3 or 2)
-    local e = module.funcs['provider#pythonx#Detect'](py_major_version)[2]
+    local e = module.fn['provider#pythonx#Detect'](py_major_version)[2]
     return e ~= '' and e or false
   else
     assert(false, 'Unknown provider: ' .. provider)

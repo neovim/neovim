@@ -8,8 +8,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local eq = helpers.eq
 local neq = helpers.neq
 local poke_eventloop = helpers.poke_eventloop
-local funcs = helpers.funcs
-local meths = helpers.meths
+local fn = helpers.fn
+local api = helpers.api
 local clear = helpers.clear
 local insert = helpers.insert
 local command = helpers.command
@@ -56,21 +56,21 @@ describe("'directory' option", function()
       line 3 Abcdefghij
       end of testfile]])
 
-    meths.nvim_set_option_value('swapfile', true, {})
-    meths.nvim_set_option_value('swapfile', true, {})
-    meths.nvim_set_option_value('directory', '.', {})
+    api.nvim_set_option_value('swapfile', true, {})
+    api.nvim_set_option_value('swapfile', true, {})
+    api.nvim_set_option_value('directory', '.', {})
 
     -- sanity check: files should not exist yet.
     eq(nil, vim.uv.fs_stat('.Xtest1.swp'))
 
     command('edit! Xtest1')
     poke_eventloop()
-    eq('Xtest1', funcs.buffer_name('%'))
+    eq('Xtest1', fn.buffer_name('%'))
     -- Verify that the swapfile exists. In the legacy test this was done by
     -- reading the output from :!ls.
     neq(nil, vim.uv.fs_stat('.Xtest1.swp'))
 
-    meths.nvim_set_option_value('directory', './Xtest2,.', {})
+    api.nvim_set_option_value('directory', './Xtest2,.', {})
     command('edit Xtest1')
     poke_eventloop()
 
@@ -79,10 +79,10 @@ describe("'directory' option", function()
 
     eq({ 'Xtest1.swp', 'Xtest3' }, ls_dir_sorted('Xtest2'))
 
-    meths.nvim_set_option_value('directory', 'Xtest.je', {})
+    api.nvim_set_option_value('directory', 'Xtest.je', {})
     command('bdelete')
     command('edit Xtest2/Xtest3')
-    eq(true, meths.nvim_get_option_value('swapfile', {}))
+    eq(true, api.nvim_get_option_value('swapfile', {}))
     poke_eventloop()
 
     eq({ 'Xtest3' }, ls_dir_sorted('Xtest2'))

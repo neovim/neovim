@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local assert_alive = helpers.assert_alive
 local clear, source = helpers.clear, helpers.source
-local meths = helpers.meths
+local api = helpers.api
 local insert = helpers.insert
 local eq, next_msg = helpers.eq, helpers.next_msg
 local exc_exec = helpers.exc_exec
@@ -14,8 +14,8 @@ describe('Vimscript dictionary notifications', function()
 
   before_each(function()
     clear()
-    channel = meths.nvim_get_api_info()[1]
-    meths.nvim_set_var('channel', channel)
+    channel = api.nvim_get_api_info()[1]
+    api.nvim_set_var('channel', channel)
   end)
 
   -- the same set of tests are applied to top-level dictionaries(g:, b:, w: and

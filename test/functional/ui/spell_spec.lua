@@ -6,7 +6,7 @@ local clear = helpers.clear
 local exec = helpers.exec
 local feed = helpers.feed
 local insert = helpers.insert
-local meths = helpers.meths
+local api = helpers.api
 local is_os = helpers.is_os
 
 describe("'spell'", function()
@@ -259,9 +259,9 @@ describe("'spell'", function()
       {6:search hit BOTTOM, continuing at TOP}                                            |
     ]])
     exec('echo ""')
-    local ns = meths.nvim_create_namespace('spell')
+    local ns = api.nvim_create_namespace('spell')
     -- extmark with spell=true enables spell
-    local id = meths.nvim_buf_set_extmark(0, ns, 1, 4, { end_row = 1, end_col = 10, spell = true })
+    local id = api.nvim_buf_set_extmark(0, ns, 1, 4, { end_row = 1, end_col = 10, spell = true })
     screen:expect([[
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} {1:func}({5:void});                                                                |
@@ -277,9 +277,9 @@ describe("'spell'", function()
       {0:~                                                                               }|*4
                                                                                       |
     ]])
-    meths.nvim_buf_del_extmark(0, ns, id)
+    api.nvim_buf_del_extmark(0, ns, id)
     -- extmark with spell=false disables spell
-    id = meths.nvim_buf_set_extmark(0, ns, 2, 18, { end_row = 2, end_col = 26, spell = false })
+    id = api.nvim_buf_set_extmark(0, ns, 2, 18, { end_row = 2, end_col = 26, spell = false })
     screen:expect([[
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} ^func({5:void});                                                                |
@@ -296,7 +296,7 @@ describe("'spell'", function()
       {6:search hit TOP, continuing at BOTTOM}                                            |
     ]])
     exec('echo ""')
-    meths.nvim_buf_del_extmark(0, ns, id)
+    api.nvim_buf_del_extmark(0, ns, id)
     screen:expect([[
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} func({5:void});                                                                |
@@ -367,8 +367,8 @@ describe("'spell'", function()
       syntax match Constant "^.*$"
       call setline(1, "This is some text without any spell errors.")
     ]])
-    local ns = meths.nvim_create_namespace('spell')
-    meths.nvim_buf_set_extmark(0, ns, 0, 0, { hl_group = 'WarningMsg', end_col = 43 })
+    local ns = api.nvim_create_namespace('spell')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { hl_group = 'WarningMsg', end_col = 43 })
     screen:expect([[
       {6:^This is some text without any spell errors.}|
       {0:~                                          }|

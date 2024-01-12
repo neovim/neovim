@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local eval, command = helpers.eval, helpers.command
 local eq, run, stop = helpers.eq, helpers.run, helpers.stop
 local clear = helpers.clear
-local meths = helpers.meths
+local api = helpers.api
 
 local function get_prefix(sync)
   if sync then
@@ -362,7 +362,7 @@ local function function_specs_for(fn, sync, first_arg_factory, init)
 end
 
 local function channel()
-  return meths.nvim_get_api_info()[1]
+  return api.nvim_get_api_info()[1]
 end
 
 local function host()

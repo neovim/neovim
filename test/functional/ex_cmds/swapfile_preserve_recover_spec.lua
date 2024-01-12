@@ -6,7 +6,7 @@ local assert_alive = helpers.assert_alive
 local clear = helpers.clear
 local command = helpers.command
 local feed = helpers.feed
-local funcs = helpers.funcs
+local fn = helpers.fn
 local nvim_prog = helpers.nvim_prog
 local ok = helpers.ok
 local rmdir = helpers.rmdir
@@ -21,7 +21,7 @@ local expect_msg_seq = helpers.expect_msg_seq
 local pcall_err = helpers.pcall_err
 local mkdir = helpers.mkdir
 local poke_eventloop = helpers.poke_eventloop
-local meths = helpers.meths
+local api = helpers.api
 local retry = helpers.retry
 local write_file = helpers.write_file
 
@@ -114,7 +114,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
     local screen0 = Screen.new()
     screen0:attach()
     local child_server = new_pipename()
-    funcs.termopen({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--listen', child_server }, {
+    fn.termopen({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--listen', child_server }, {
       env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
     })
     screen0:expect({ any = pesc('[No Name]') }) -- Wait for the child process to start.
@@ -246,7 +246,7 @@ describe('swapfile detection', function()
     command('edit Xfile1')
     command("put ='some text...'")
     command('preserve') -- Make sure the swap file exists.
-    local nvimpid = funcs.getpid()
+    local nvimpid = fn.getpid()
 
     local nvim1 = spawn(new_argv(), true, nil, true)
     set_session(nvim1)
@@ -352,7 +352,7 @@ describe('swapfile detection', function()
       edit Xswaptest
       call setline(1, ['a', 'b', 'c'])
     ]])
-    local swname = funcs.CopySwapfile()
+    local swname = fn.CopySwapfile()
 
     -- Forget we edited this file
     exec([[
@@ -438,7 +438,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
     feed('Gisometext<esc>')
     poke_eventloop()
     clear() -- Leaves a swap file behind
-    meths.nvim_ui_attach(80, 30, {})
+    api.nvim_ui_attach(80, 30, {})
   end)
   after_each(function()
     rmdir(swapdir)
@@ -447,7 +447,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
   end)
 
   it('(Q)uit at first file argument', function()
-    local chan = funcs.termopen(
+    local chan = fn.termopen(
       { nvim_prog, '-u', 'NONE', '-i', 'NONE', '--cmd', init_dir, '--cmd', init_set, testfile },
       {
         env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
@@ -459,7 +459,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
         eval("getline('$')->trim(' ', 2)")
       )
     end)
-    meths.nvim_chan_send(chan, 'q')
+    api.nvim_chan_send(chan, 'q')
     retry(nil, nil, function()
       eq(
         { '', '[Process exited 1]', '' },
@@ -469,7 +469,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
   end)
 
   it('(A)bort at second file argument with -p', function()
-    local chan = funcs.termopen({
+    local chan = fn.termopen({
       nvim_prog,
       '-u',
       'NONE',
@@ -491,7 +491,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
         eval("getline('$')->trim(' ', 2)")
       )
     end)
-    meths.nvim_chan_send(chan, 'a')
+    api.nvim_chan_send(chan, 'a')
     retry(nil, nil, function()
       eq(
         { '', '[Process exited 1]', '' },
@@ -509,7 +509,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
       second	%s	/^  \zssecond$/
       third	%s	/^  \zsthird$/]]):format(testfile, testfile, testfile)
     )
-    local chan = funcs.termopen({
+    local chan = fn.termopen({
       nvim_prog,
       '-u',
       'NONE',
@@ -531,11 +531,11 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
         eval("getline('$')->trim(' ', 2)")
       )
     end)
-    meths.nvim_chan_send(chan, 'q')
+    api.nvim_chan_send(chan, 'q')
     retry(nil, nil, function()
       eq('Press ENTER or type command to continue', eval("getline('$')->trim(' ', 2)"))
     end)
-    meths.nvim_chan_send(chan, '\r')
+    api.nvim_chan_send(chan, '\r')
     retry(nil, nil, function()
       eq(
         { '', '[Process exited 1]', '' },

@@ -18,10 +18,10 @@ local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
 local assert_alive = helpers.assert_alive
 local command = helpers.command
-local funcs = helpers.funcs
+local fn = helpers.fn
 local os_kill = helpers.os_kill
 local retry = helpers.retry
-local meths = helpers.meths
+local api = helpers.api
 local NIL = vim.NIL
 local poke_eventloop = helpers.poke_eventloop
 local get_pathsep = helpers.get_pathsep
@@ -42,8 +42,8 @@ describe('jobs', function()
   before_each(function()
     clear()
 
-    channel = meths.nvim_get_api_info()[1]
-    meths.nvim_set_var('channel', channel)
+    channel = api.nvim_get_api_info()[1]
+    api.nvim_set_var('channel', channel)
     source([[
     function! Normalize(data) abort
       " Windows: remove ^M and term escape sequences
@@ -235,7 +235,7 @@ describe('jobs', function()
 
     local dir = 'Xtest_not_executable_dir'
     mkdir(dir)
-    funcs.setfperm(dir, 'rw-------')
+    fn.setfperm(dir, 'rw-------')
     matches(
       '^Vim%(call%):E903: Process failed to start: permission denied: .*',
       pcall_err(command, "call jobstart(['pwd'], {'cwd': '" .. dir .. "'})")
@@ -402,11 +402,11 @@ describe('jobs', function()
   it('can get the pid value using getpid', function()
     command("let j =  jobstart(['cat', '-'], g:job_opts)")
     local pid = eval('jobpid(j)')
-    neq(NIL, meths.nvim_get_proc(pid))
+    neq(NIL, api.nvim_get_proc(pid))
     command('call jobstop(j)')
     eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
     eq({ 'notification', 'exit', { 0, 143 } }, next_msg())
-    eq(NIL, meths.nvim_get_proc(pid))
+    eq(NIL, api.nvim_get_proc(pid))
   end)
 
   it('disposed on Nvim exit', function()
@@ -415,9 +415,9 @@ describe('jobs', function()
       "let g:j =  jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)"
     )
     local pid = eval('jobpid(g:j)')
-    neq(NIL, meths.nvim_get_proc(pid))
+    neq(NIL, api.nvim_get_proc(pid))
     clear()
-    eq(NIL, meths.nvim_get_proc(pid))
+    eq(NIL, api.nvim_get_proc(pid))
   end)
 
   it('can survive the exit of nvim with "detach"', function()
@@ -426,9 +426,9 @@ describe('jobs', function()
       "let g:j = jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)"
     )
     local pid = eval('jobpid(g:j)')
-    neq(NIL, meths.nvim_get_proc(pid))
+    neq(NIL, api.nvim_get_proc(pid))
     clear()
-    neq(NIL, meths.nvim_get_proc(pid))
+    neq(NIL, api.nvim_get_proc(pid))
     -- clean up after ourselves
     eq(0, os_kill(pid))
   end)
@@ -880,7 +880,7 @@ describe('jobs', function()
         r = next_msg()
         eq('job ' .. i .. ' exited', r[3][1])
       end
-      eq(10, meths.nvim_eval('g:counter'))
+      eq(10, api.nvim_eval('g:counter'))
     end)
 
     describe('with timeout argument', function()
@@ -945,15 +945,15 @@ describe('jobs', function()
       ]],
       }
       feed('<CR>')
-      funcs.jobstop(meths.nvim_get_var('id'))
+      fn.jobstop(api.nvim_get_var('id'))
     end)
   end)
 
   pending('exit event follows stdout, stderr', function()
     command("let g:job_opts.on_stderr  = function('OnEvent')")
     command("let j = jobstart(['cat', '-'], g:job_opts)")
-    meths.nvim_eval('jobsend(j, "abcdef")')
-    meths.nvim_eval('jobstop(j)')
+    api.nvim_eval('jobsend(j, "abcdef")')
+    api.nvim_eval('jobstop(j)')
     expect_msg_seq(
       {
         { 'notification', 'stdout', { 0, { 'abcdef' } } },
@@ -1059,11 +1059,11 @@ describe('jobs', function()
     end
     local sleep_cmd = (is_os('win') and 'ping -n 31 127.0.0.1' or 'sleep 30')
     local j = eval("jobstart('" .. sleep_cmd .. ' | ' .. sleep_cmd .. ' | ' .. sleep_cmd .. "')")
-    local ppid = funcs.jobpid(j)
+    local ppid = fn.jobpid(j)
     local children
     if is_os('win') then
       local status, result = pcall(retry, nil, nil, function()
-        children = meths.nvim_get_proc_children(ppid)
+        children = api.nvim_get_proc_children(ppid)
         -- On Windows conhost.exe may exist, and
         -- e.g. vctip.exe might appear.  #10783
         ok(#children >= 3 and #children <= 5)
@@ -1075,22 +1075,22 @@ describe('jobs', function()
       end
     else
       retry(nil, nil, function()
-        children = meths.nvim_get_proc_children(ppid)
+        children = api.nvim_get_proc_children(ppid)
         eq(3, #children)
       end)
     end
     -- Assert that nvim_get_proc() sees the children.
     for _, child_pid in ipairs(children) do
-      local info = meths.nvim_get_proc(child_pid)
+      local info = api.nvim_get_proc(child_pid)
       -- eq((is_os('win') and 'nvim.exe' or 'nvim'), info.name)
       eq(ppid, info.ppid)
     end
     -- Kill the root of the tree.
-    eq(1, funcs.jobstop(j))
+    eq(1, fn.jobstop(j))
     -- Assert that the children were killed.
     retry(nil, nil, function()
       for _, child_pid in ipairs(children) do
-        eq(NIL, meths.nvim_get_proc(child_pid))
+        eq(NIL, api.nvim_get_proc(child_pid))
       end
     end)
   end)
@@ -1126,7 +1126,7 @@ describe('jobs', function()
     local j
     local function send(str)
       -- check no nvim_chan_free double free with pty job (#14198)
-      meths.nvim_chan_send(j, str)
+      api.nvim_chan_send(j, str)
     end
 
     before_each(function()
@@ -1241,7 +1241,7 @@ describe('pty process teardown', function()
   it('does not prevent/delay exit. #4798 #4900', function()
     skip(is_os('win'))
     -- Use a nested nvim (in :term) to test without --headless.
-    funcs.termopen({
+    fn.termopen({
       helpers.nvim_prog,
       '-u',
       'NONE',

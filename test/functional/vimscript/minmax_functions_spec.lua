@@ -4,7 +4,7 @@ local eq = helpers.eq
 local eval = helpers.eval
 local command = helpers.command
 local clear = helpers.clear
-local funcs = helpers.funcs
+local fn = helpers.fn
 local pcall_err = helpers.pcall_err
 
 before_each(clear)
@@ -30,12 +30,12 @@ for _, func in ipairs({ 'min', 'max' }) do
       end
     end)
     it('works with arrays/dictionaries with zero items', function()
-      eq(0, funcs[func]({}))
+      eq(0, fn[func]({}))
       eq(0, eval(func .. '({})'))
     end)
     it('works with arrays/dictionaries with one item', function()
-      eq(5, funcs[func]({ 5 }))
-      eq(5, funcs[func]({ test = 5 }))
+      eq(5, fn[func]({ 5 }))
+      eq(5, fn[func]({ test = 5 }))
     end)
     it('works with NULL arrays/dictionaries', function()
       eq(0, eval(func .. '(v:_null_list)'))
