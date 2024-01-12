@@ -82,7 +82,7 @@ local dedent = helpers.dedent
 local get_session = helpers.get_session
 local create_callindex = helpers.create_callindex
 
-local inspect = require('vim.inspect')
+local inspect = vim.inspect
 
 local function isempty(v)
   return type(v) == 'table' and next(v) == nil

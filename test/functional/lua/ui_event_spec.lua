@@ -5,7 +5,6 @@ local exec_lua = helpers.exec_lua
 local clear = helpers.clear
 local feed = helpers.feed
 local funcs = helpers.funcs
-local inspect = require 'vim.inspect'
 
 describe('vim.ui_attach', function()
   local screen
@@ -38,7 +37,7 @@ describe('vim.ui_attach', function()
 
   local function expect_events(expected)
     local evs = exec_lua 'return get_events(...)'
-    eq(expected, evs, inspect(evs))
+    eq(expected, evs, vim.inspect(evs))
   end
 
   it('can receive popupmenu events', function()
@@ -148,6 +147,6 @@ describe('vim.ui_attach', function()
           { 'echomsg', { { 0, 'message3' } } },
         },
       },
-    }, actual, inspect(actual))
+    }, actual, vim.inspect(actual))
   end)
 end)

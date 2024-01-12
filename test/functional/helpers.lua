@@ -730,17 +730,16 @@ function module.expect_any(contents)
 end
 
 function module.expect_events(expected, received, kind)
-  local inspect = require 'vim.inspect'
   if not pcall(eq, expected, received) then
     local msg = 'unexpected ' .. kind .. ' received.\n\n'
 
     msg = msg .. 'received events:\n'
     for _, e in ipairs(received) do
-      msg = msg .. '  ' .. inspect(e) .. ';\n'
+      msg = msg .. '  ' .. vim.inspect(e) .. ';\n'
     end
     msg = msg .. '\nexpected events:\n'
     for _, e in ipairs(expected) do
-      msg = msg .. '  ' .. inspect(e) .. ';\n'
+      msg = msg .. '  ' .. vim.inspect(e) .. ';\n'
     end
     fail(msg)
   end
