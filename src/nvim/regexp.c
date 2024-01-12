@@ -140,7 +140,9 @@ struct regengine {
   int (*regexec_nl)(regmatch_T *, uint8_t *, colnr_T, bool);
   /// bt_regexec_mult or nfa_regexec_mult
   int (*regexec_multi)(regmmatch_T *, win_T *, buf_T *, linenr_T, colnr_T, proftime_T *, int *);
-  // uint8_t *expr;
+#ifdef REGEXP_DEBUG
+  uint8_t *expr;
+#endif
 };
 
 // Structure used to save the current input state, when it needs to be
@@ -6426,15 +6428,33 @@ static bool regmatch(uint8_t *scan, const proftime_T *tm, int *timed_out)
         break;
 
         case ANYOF:
-        case ANYBUT:
+        case ANYBUT: {
+          uint8_t *q = OPERAND(scan);
+
           if (c == NUL) {
             status = RA_NOMATCH;
-          } else if ((cstrchr((char *)OPERAND(scan), c) == NULL) == (op == ANYOF)) {
+          } else if ((cstrchr((char *)q, c) == NULL) == (op == ANYOF)) {
             status = RA_NOMATCH;
-          } else {
-            ADVANCE_REGINPUT();
+          } else {  // Check following combining characters
+            int len = utfc_ptr2len((char *)q) - utf_ptr2len((char *)q);
+
+            rex.input += utf_ptr2len((char *)rex.input);
+            q += utf_ptr2len((char *)q);
+
+            if (len == 0) {
+              break;
+            }
+
+            for (int i = 0; i < len; i++) {
+              if (q[i] != rex.input[i]) {
+                status = RA_NOMATCH;
+                break;
+              }
+            }
+            rex.input += len;
           }
           break;
+        }
 
         case MULTIBYTECODE: {
           int i, len;
@@ -10448,13 +10468,39 @@ collection:
           } else {
             if (got_coll_char == true && startc == 0) {
               EMIT(0x0a);
+              EMIT(NFA_CONCAT);
             } else {
               EMIT(startc);
+              if (utf_ptr2len(regparse) == utfc_ptr2len(regparse)) {
+                EMIT(NFA_CONCAT);
+              }
             }
-            EMIT(NFA_CONCAT);
           }
         }
 
+        int plen;
+        if (utf_ptr2len(regparse) != (plen = utfc_ptr2len(regparse))) {
+          int i = utf_ptr2len(regparse);
+
+          c = utf_ptr2char(regparse + i);
+
+          // Add composing characters
+          while (true) {
+            if (c == 0) {
+              // \x00 is translated to \x0a, start at \x01.
+              EMIT(1);
+            } else {
+              EMIT(c);
+            }
+            EMIT(NFA_CONCAT);
+            if ((i += utf_char2len(c)) >= plen) {
+              break;
+            }
+            c = utf_ptr2char(regparse + i);
+          }
+          EMIT(NFA_COMPOSING);
+          EMIT(NFA_CONCAT);
+        }
         MB_PTR_ADV(regparse);
       }           // while (p < endp)
 
@@ -14503,6 +14549,78 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         state = t->state->out;
         result_if_matched = (t->state->c == NFA_START_COLL);
         while (true) {
+          if (state->c == NFA_COMPOSING) {
+            int mc = curc;
+            int len = 0;
+            nfa_state_T *end;
+            nfa_state_T *sta;
+            int cchars[MAX_MCO];
+            int ccount = 0;
+            int j;
+
+            sta = t->state->out->out;
+            if (utf_iscomposing(sta->c)) {
+              // Only match composing character(s), ignore base
+              // character.  Used for ".{composing}" and "{composing}"
+              // (no preceding character).
+              len += utf_char2len(mc);
+            }
+            if (rex.reg_icombine && len == 0) {
+              // If \Z was present, then ignore composing characters.
+              // When ignoring the base character this always matches.
+              if (sta->c != curc) {
+                result = FAIL;
+              } else {
+                result = OK;
+              }
+              while (sta->c != NFA_END_COMPOSING) {
+                sta = sta->out;
+              }
+            }
+            // Check base character matches first, unless ignored.
+            else if (len > 0 || mc == sta->c) {
+              if (len == 0) {
+                len += utf_char2len(mc);
+                sta = sta->out;
+              }
+
+              // We don't care about the order of composing characters.
+              // Get them into cchars[] first.
+              while (len < clen) {
+                mc = utf_ptr2char((char *)rex.input + len);
+                cchars[ccount++] = mc;
+                len += utf_char2len(mc);
+                if (ccount == MAX_MCO) {
+                  break;
+                }
+              }
+
+              // Check that each composing char in the pattern matches a
+              // composing char in the text.  We do not check if all
+              // composing chars are matched.
+              result = OK;
+              while (sta->c != NFA_END_COMPOSING) {
+                for (j = 0; j < ccount; j++) {
+                  if (cchars[j] == sta->c) {
+                    break;
+                  }
+                }
+                if (j == ccount) {
+                  result = FAIL;
+                  break;
+                }
+                sta = sta->out;
+              }
+            } else {
+              result = FAIL;
+            }
+
+            if (t->state->out->out1->c == NFA_END_COMPOSING) {
+              end = t->state->out->out1;
+              ADD_STATE_IF_MATCH(end);
+            }
+            break;
+          }
           if (state->c == NFA_END_COLL) {
             result = !result_if_matched;
             break;
@@ -15645,6 +15763,9 @@ static regengine_T bt_regengine = {
   bt_regfree,
   bt_regexec_nl,
   bt_regexec_multi,
+#ifdef REGEXP_DEBUG
+  "",
+#endif
 };
 
 static regengine_T nfa_regengine = {
@@ -15652,6 +15773,9 @@ static regengine_T nfa_regengine = {
   nfa_regfree,
   nfa_regexec_nl,
   nfa_regexec_multi,
+#ifdef REGEXP_DEBUG
+  "",
+#endif
 };
 
 // Which regexp engine to use? Needed for vim_regcomp().
