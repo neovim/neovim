@@ -67,6 +67,7 @@
 // Uncomment the next line for including the u_check() function.  This warns
 // for errors in the debug information.
 // #define U_DEBUG 1
+#include "nvim/marktree.h"
 #define UH_MAGIC 0x18dade       // value for uh_magic when in use
 #define UE_MAGIC 0xabc123       // value for ue_magic when in use
 
@@ -2390,7 +2391,7 @@ static void u_undoredo(bool undo, bool do_buf_event)
     // may have SpellCap that should be removed or it needs to be
     // displayed.  Schedule the next line for redrawing just in case.
     // Also just in case the line had a sign which needs to be removed.
-    if ((spell_check_window(curwin) || curbuf->b_signs_with_text)
+    if ((spell_check_window(curwin) || buf_meta_total(curbuf, kMTMetaSignText))
         && bot <= curbuf->b_ml.ml_line_count) {
       redrawWinline(curwin, bot);
     }
@@ -2431,7 +2432,7 @@ static void u_undoredo(bool undo, bool do_buf_event)
   int row3 = -1;
   // Tricky: ExtmarkSavePos may come after ExtmarkSplice which does call
   // buf_signcols_count_range() but then misses the yet unrestored marks.
-  if (curbuf->b_signcols.autom && curbuf->b_signs_with_text) {
+  if (curbuf->b_signcols.autom && buf_meta_total(curbuf, kMTMetaSignText)) {
     for (int i = 0; i < (int)kv_size(curhead->uh_extmark); i++) {
       ExtmarkUndoObject undo_info = kv_A(curhead->uh_extmark, i);
       if (undo_info.type == kExtmarkSplice) {

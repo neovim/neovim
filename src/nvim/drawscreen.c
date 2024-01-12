@@ -88,6 +88,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/insexpand.h"
+#include "nvim/marktree.h"
 #include "nvim/match.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -1220,7 +1221,7 @@ static bool win_redraw_signcols(win_T *wp)
   if (rebuild_stc) {
     wp->w_nrwidth_line_count = 0;
   } else if (wp->w_minscwidth == 0 && wp->w_maxscwidth == 1) {
-    width = buf->b_signs_with_text > 0;
+    width = buf_meta_total(buf, kMTMetaSignText) > 0;
   }
 
   int scwidth = wp->w_scwidth;
@@ -2628,7 +2629,7 @@ int number_width(win_T *wp)
 
   // If 'signcolumn' is set to 'number' and there is a sign to display, then
   // the minimal width for the number column is 2.
-  if (n < 2 && wp->w_buffer->b_signs_with_text && wp->w_minscwidth == SCL_NUM) {
+  if (n < 2 && buf_meta_total(wp->w_buffer, kMTMetaSignText) && wp->w_minscwidth == SCL_NUM) {
     n = 2;
   }
 

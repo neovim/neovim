@@ -81,3 +81,8 @@ static inline varnumber_T buf_get_changedtick(const buf_T *const buf)
 {
   return buf->changedtick_di.di_tv.vval.v_number;
 }
+
+static inline uint32_t buf_meta_total(const buf_T *b, MetaIndex m)
+{
+  return b->b_marktree->meta_root[m];
+}

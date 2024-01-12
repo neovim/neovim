@@ -32,6 +32,7 @@
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
 #include "nvim/mark_defs.h"
+#include "nvim/marktree.h"
 #include "nvim/memline.h"
 #include "nvim/memline_defs.h"
 #include "nvim/memory.h"
@@ -1282,7 +1283,7 @@ Dictionary nvim__buf_stats(Buffer buffer, Error *err)
   // this exists to debug issues
   PUT(rv, "dirty_bytes", INTEGER_OBJ((Integer)buf->deleted_bytes));
   PUT(rv, "dirty_bytes2", INTEGER_OBJ((Integer)buf->deleted_bytes2));
-  PUT(rv, "virt_blocks", INTEGER_OBJ((Integer)buf->b_virt_line_blocks));
+  PUT(rv, "virt_blocks", INTEGER_OBJ((Integer)buf_meta_total(buf, kMTMetaLines)));
 
   u_header_T *uhp = NULL;
   if (buf->b_u_curhead != NULL) {

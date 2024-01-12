@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/decoration.h"
@@ -75,6 +76,7 @@ int linetabsize(win_T *wp, linenr_T lnum)
   return win_linetabsize(wp, lnum, ml_get_buf(wp->w_buffer, lnum), (colnr_T)MAXCOL);
 }
 
+const uint32_t inline_filter[4] = {[kMTMetaInline] = kMTFilterSelect };
 /// Prepare the structure passed to charsize functions.
 ///
 /// "line" is the start of the line.
@@ -90,10 +92,9 @@ CSType init_charsize_arg(CharsizeArg *csarg, win_T *wp, linenr_T lnum, char *lin
   csarg->indent_width = INT_MIN;
   csarg->use_tabstop = !wp->w_p_list || wp->w_p_lcs_chars.tab1;
 
-  if (lnum > 0 && wp->w_buffer->b_virt_text_inline > 0) {
-    marktree_itr_get(wp->w_buffer->b_marktree, lnum - 1, 0, csarg->iter);
-    MTKey mark = marktree_itr_current(csarg->iter);
-    if (mark.pos.row == lnum - 1) {
+  if (lnum > 0) {
+    if (marktree_itr_get_filter(wp->w_buffer->b_marktree, lnum - 1, 0, lnum, 0,
+                                inline_filter, csarg->iter)) {
       csarg->virt_row = lnum - 1;
     }
   }
@@ -173,7 +174,8 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
           }
         }
       }
-      marktree_itr_next(wp->w_buffer->b_marktree, csarg->iter);
+      marktree_itr_next_filter(wp->w_buffer->b_marktree, csarg->iter, csarg->virt_row + 1, 0,
+                               inline_filter);
     }
   }
 
@@ -661,7 +663,8 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left, colnr_T *right
 /// Check if there may be filler lines anywhere in window "wp".
 bool win_may_fill(win_T *wp)
 {
-  return (wp->w_p_diff && diffopt_filler()) || wp->w_buffer->b_virt_line_blocks;
+  return ((wp->w_p_diff && diffopt_filler())
+          || buf_meta_total(wp->w_buffer, kMTMetaLines));
 }
 
 /// Return the number of filler lines above "lnum".

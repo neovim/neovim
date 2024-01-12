@@ -41,6 +41,7 @@
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
 #include "nvim/mark_defs.h"
+#include "nvim/marktree.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
@@ -240,7 +241,7 @@ static void insert_enter(InsertState *s)
 
   // need to position cursor again when on a TAB and
   // when on a char with inline virtual text
-  if (gchar_cursor() == TAB || curbuf->b_virt_text_inline > 0) {
+  if (gchar_cursor() == TAB || buf_meta_total(curbuf, kMTMetaInline) > 0) {
     curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL);
   }
 
@@ -3472,7 +3473,7 @@ static bool ins_esc(int *count, int cmdchar, bool nomove)
   may_trigger_modechanged();
   // need to position cursor again when on a TAB and
   // when on a char with inline virtual text
-  if (gchar_cursor() == TAB || curbuf->b_virt_text_inline > 0) {
+  if (gchar_cursor() == TAB || buf_meta_total(curbuf, kMTMetaInline) > 0) {
     curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL);
   }
 

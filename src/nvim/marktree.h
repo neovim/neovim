@@ -125,6 +125,11 @@ static inline DecorInline mt_decor(MTKey key)
   return (DecorInline){ .ext = key.flags & MT_FLAG_DECOR_EXT, .data = key.decor_data };
 }
 
+static inline DecorVirtText *mt_decor_virt(MTKey mark)
+{
+  return (mark.flags & MT_FLAG_DECOR_EXT) ? mark.decor_data.ext.vt : NULL;
+}
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "marktree.h.generated.h"
 #endif

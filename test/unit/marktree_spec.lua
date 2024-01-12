@@ -34,21 +34,8 @@ local function shadoworder(tree, shadow, iter, giveorder)
     local mark = lib.marktree_itr_current(iter)
     local id = tonumber(mark.id)
     local spos = shadow[id]
-    if mark.pos.row ~= spos[1] or mark.pos.col ~= spos[2] then
-      error(
-        'invalid pos for '
-          .. id
-          .. ':('
-          .. mark.pos.row
-          .. ', '
-          .. mark.pos.col
-          .. ') instead of ('
-          .. spos[1]
-          .. ', '
-          .. spos[2]
-          .. ')'
-      )
-    end
+    eq(mark.pos.row, spos[1], mark.id)
+    eq(mark.pos.col, spos[2], mark.id)
     if lib.mt_right_test(mark) ~= spos[3] then
       error('invalid gravity for ' .. id .. ':(' .. mark.pos.row .. ', ' .. mark.pos.col .. ')')
     end
@@ -100,31 +87,31 @@ local function shadowsplice(shadow, start, old_extent, new_extent)
   end
 end
 
-local function dosplice(tree, shadow, start, old_extent, new_extent)
-  lib.marktree_splice(
-    tree,
-    start[1],
-    start[2],
-    old_extent[1],
-    old_extent[2],
-    new_extent[1],
-    new_extent[2]
-  )
-  shadowsplice(shadow, start, old_extent, new_extent)
+local function dosplice(tree, shadow, start, old, new)
+  lib.marktree_splice(tree, start[1], start[2], old[1], old[2], new[1], new[2])
+  shadowsplice(shadow, start, old, new)
 end
 
 local ns = 10
 local last_id = nil
 
-local function put(tree, row, col, gravitate, end_row, end_col, end_gravitate)
+local function put(tree, row, col, gravity, end_row, end_col, end_gravity)
   last_id = last_id + 1
   local my_id = last_id
 
   end_row = end_row or -1
   end_col = end_col or -1
-  end_gravitate = end_gravitate or false
+  end_gravity = end_gravity or false
 
-  lib.marktree_put_test(tree, ns, my_id, row, col, gravitate, end_row, end_col, end_gravitate)
+  lib.marktree_put_test(tree, ns, my_id, row, col, gravity, end_row, end_col, end_gravity, false)
+  return my_id
+end
+
+local function put_meta(tree, row, col, gravitate, meta)
+  last_id = last_id + 1
+  local my_id = last_id
+
+  lib.marktree_put_test(tree, ns, my_id, row, col, gravitate, -1, -1, false, meta)
   return my_id
 end
 
@@ -579,5 +566,76 @@ describe('marktree', function()
         check_intersections(tree)
       end
     end
+  end)
+
+  itp('works with meta counts', function()
+    local tree = ffi.new('MarkTree[1]') -- zero initialized by luajit
+
+    -- add
+    local shadow = {}
+    for i = 1, 100 do
+      for j = 1, 100 do
+        local gravitate = (i % 2) > 0
+        local inline = (j == 3 or j == 50 or j == 51 or j == 55) and i % 11 == 1
+        inline = inline or ((j >= 80 and j < 85) and i % 3 == 1)
+        local id = put_meta(tree, j, i, gravitate, inline)
+        if inline then
+          shadow[id] = { j, i, gravitate }
+        end
+      end
+      -- checking every insert is too slow, but this is ok
+      lib.marktree_check(tree)
+    end
+
+    lib.marktree_check(tree)
+    local iter = ffi.new('MarkTreeIter[1]')
+    local filter = ffi.new('uint32_t[4]')
+    filter[0] = -1
+    ok(lib.marktree_itr_get_filter(tree, 0, 0, 101, 0, filter, iter))
+    local seen = {}
+    repeat
+      local mark = lib.marktree_itr_current(iter)
+      eq(nil, seen[mark.id])
+      seen[mark.id] = true
+      eq(mark.pos.row, shadow[mark.id][1])
+      eq(mark.pos.col, shadow[mark.id][2])
+    until not lib.marktree_itr_next_filter(tree, iter, 101, 0, filter)
+    eq(tablelength(seen), tablelength(shadow))
+
+    -- delete
+    for id = 1, 10000, 2 do
+      lib.marktree_lookup_ns(tree, ns, id, false, iter)
+      if shadow[id] then
+        local mark = lib.marktree_itr_current(iter)
+        eq(mark.pos.row, shadow[id][1])
+        eq(mark.pos.col, shadow[id][2])
+        shadow[id] = nil
+      end
+      lib.marktree_del_itr(tree, iter, false)
+      if id % 100 == 1 then
+        lib.marktree_check(tree)
+      end
+    end
+
+    -- Splice!
+    dosplice(tree, shadow, { 82, 0 }, { 0, 50 }, { 0, 0 })
+    lib.marktree_check(tree)
+
+    dosplice(tree, shadow, { 81, 50 }, { 2, 50 }, { 1, 0 })
+    lib.marktree_check(tree)
+
+    dosplice(tree, shadow, { 2, 50 }, { 1, 50 }, { 0, 10 })
+    lib.marktree_check(tree)
+
+    ok(lib.marktree_itr_get_filter(tree, 0, 0, 101, 0, filter, iter))
+    seen = {}
+    repeat
+      local mark = lib.marktree_itr_current(iter)
+      eq(nil, seen[mark.id])
+      seen[mark.id] = true
+      eq(mark.pos.row, shadow[mark.id][1])
+      eq(mark.pos.col, shadow[mark.id][2])
+    until not lib.marktree_itr_next_filter(tree, iter, 101, 0, filter)
+    eq(tablelength(seen), tablelength(shadow))
   end)
 end)

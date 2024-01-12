@@ -22,6 +22,21 @@ typedef struct {
 } MTPos;
 #define MTPos(r, c) ((MTPos){ .row = (r), .col = (c) })
 
+// Currently there are four counts, which makes for a uint32_t[4] per node
+// which makes for nice autovectorization into a single XMM or NEON register
+typedef enum {
+  kMTMetaInline,
+  kMTMetaLines,
+  kMTMetaSignHL,
+  kMTMetaSignText,
+  kMTMetaCount,  // sentinel, must be last
+} MetaIndex;
+
+#define kMTFilterSelect ((uint32_t)-1)
+
+// a filter should be set to kMTFilterSelect for the selected kinds, zero otherwise
+typedef const uint32_t *MetaFilter;
+
 typedef struct mtnode_s MTNode;
 
 typedef struct {
@@ -63,20 +78,26 @@ typedef struct {
 
 typedef kvec_withinit_t(uint64_t, 4) Intersection;
 
+// part of mtnode_s which is only allocated for inner nodes:
+// pointer to children as well as their meta counts
+struct mtnode_inner_s {
+  MTNode *i_ptr[2 * MT_BRANCH_FACTOR];
+  uint32_t i_meta[2 * MT_BRANCH_FACTOR][kMTMetaCount];
+};
+
 struct mtnode_s {
   int32_t n;
   int16_t level;
   int16_t p_idx;  // index in parent
   Intersection intersect;
-  // TODO(bfredl): we could consider having a only-sometimes-valid
-  // index into parent for faster "cached" lookup.
   MTNode *parent;
   MTKey key[2 * MT_BRANCH_FACTOR - 1];
-  MTNode *ptr[];
+  struct mtnode_inner_s s[];
 };
 
 typedef struct {
   MTNode *root;
+  uint32_t meta_root[kMTMetaCount];
   size_t n_keys, n_nodes;
   PMap(uint64_t) id2node[1];
 } MarkTree;
