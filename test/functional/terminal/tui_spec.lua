@@ -1889,6 +1889,37 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
   end)
+
+  it('emits hyperlinks with OSC 8', function()
+    exec_lua([[
+      local buf = vim.api.nvim_get_current_buf()
+      _G.urls = {}
+      vim.api.nvim_create_autocmd('TermRequest', {
+        buffer = buf,
+        callback = function(args)
+          local req = args.data
+          if not req then
+            return
+          end
+          local url = req:match('\027]8;;(.*)$')
+          if url ~= nil then
+            table.insert(_G.urls, url)
+          end
+        end,
+      })
+    ]])
+    child_exec_lua([[
+      vim.api.nvim_buf_set_lines(0, 0, 0, true, {'Hello'})
+      local ns = vim.api.nvim_create_namespace('test')
+      vim.api.nvim_buf_set_extmark(0, ns, 0, 1, {
+        end_col = 3,
+        url = 'https://example.com',
+      })
+    ]])
+    retry(nil, 1000, function()
+      eq({ 'https://example.com', '' }, exec_lua([[return _G.urls]]))
+    end)
+  end)
 end)
 
 describe('TUI', function()

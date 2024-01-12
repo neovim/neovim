@@ -2205,6 +2205,31 @@ describe('extmark decorations', function()
                                               |
     ]]}
   end)
+
+  it('supports URLs', function()
+    insert(example_text)
+    api.nvim_buf_set_extmark(0, ns, 1, 4, {
+      end_col = 14,
+      url = 'https://example.com',
+    })
+    screen:expect{grid=[[
+      for _,item in ipairs(items) do                    |
+          {UNEXPECTED url = https://example.com:local text}, hl_id_cell, count = unpack(item)  |
+          if hl_id_cell ~= nil then                     |
+              hl_id = hl_id_cell                        |
+          end                                           |
+          for _ = 1, (count or 1) do                    |
+              local cell = line[colpos]                 |
+              cell.text = text                          |
+              cell.hl_id = hl_id                        |
+              colpos = colpos+1                         |
+          end                                           |
+      en^d                                               |
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+  end)
 end)
 
 describe('decorations: inline virtual text', function()

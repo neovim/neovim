@@ -33,7 +33,8 @@ static inline bool equal_String(String a, String b)
   if (a.size != b.size) {
     return false;
   }
-  return memcmp(a.data, b.data, a.size) == 0;
+
+  return (a.size == 0) || (memcmp(a.data, b.data, a.size) == 0);
 }
 
 #define Set(type) Set_##type

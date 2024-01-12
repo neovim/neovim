@@ -301,6 +301,10 @@ The following new APIs and features were added.
 
 • |vim.version.le()| and |vim.version.ge()| are added to |vim.version|.
 
+• |extmarks| can be associated with a URL and URLs are included as a new
+  highlight attribute. The TUI will display URLs using the OSC 8 control
+  sequence, enabling clickable text in supporting terminals.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

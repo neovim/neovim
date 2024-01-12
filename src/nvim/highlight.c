@@ -42,6 +42,7 @@ static Set(HlEntry) attr_entries = SET_INIT;
 static Map(int, int) combine_attr_entries = MAP_INIT;
 static Map(int, int) blend_attr_entries = MAP_INIT;
 static Map(int, int) blendthrough_attr_entries = MAP_INIT;
+static Set(String) urls = SET_INIT;
 
 #define attr_entry(i) attr_entries.keys[i]
 
@@ -475,11 +476,39 @@ int hl_get_underline(void)
       .rgb_bg_color = -1,
       .rgb_sp_color = -1,
       .hl_blend = -1,
+      .url = STRING_INIT,
     },
     .kind = kHlUI,
     .id1 = 0,
     .id2 = 0,
   });
+}
+
+/// Augment an existing attribute with the beginning or end of a URL hyperlink.
+///
+/// @param attr Existing attribute to combine with
+/// @param url The URL to associate with the highlight attribute
+/// @return Combined attribute
+int hl_add_url(int attr, String url)
+{
+  HlAttrs attrs = HLATTRS_INIT;
+
+  String *urlp = NULL;
+  if (set_put_ref(String, &urls, url, &urlp)) {
+    *urlp = copy_string(url, NULL);
+  }
+
+  assert(urlp != NULL);
+  attrs.url = *urlp;
+
+  int new = get_attr_entry((HlEntry){
+    .attr = attrs,
+    .kind = kHlUI,
+    .id1 = 0,
+    .id2 = 0,
+  });
+
+  return hl_combine_attr(attr, new);
 }
 
 /// Get attribute code for forwarded :terminal highlights.
@@ -492,12 +521,18 @@ int hl_get_term_attr(HlAttrs *aep)
 /// Clear all highlight tables.
 void clear_hl_tables(bool reinit)
 {
+  String url;
+  set_foreach(&urls, url, {
+    api_free_string(url);
+  });
+
   if (reinit) {
     set_clear(HlEntry, &attr_entries);
     highlight_init();
     map_clear(int, &combine_attr_entries);
     map_clear(int, &blend_attr_entries);
     map_clear(int, &blendthrough_attr_entries);
+    set_clear(String, &urls);
     memset(highlight_attr_last, -1, sizeof(highlight_attr_last));
     highlight_attr_set_all();
     highlight_changed();
@@ -508,6 +543,7 @@ void clear_hl_tables(bool reinit)
     map_destroy(int, &blend_attr_entries);
     map_destroy(int, &blendthrough_attr_entries);
     map_destroy(ColorKey, &ns_hls);
+    set_destroy(String, &urls);
   }
 }
 
@@ -597,6 +633,11 @@ int hl_combine_attr(int char_attr, int prim_attr)
 
   if (prim_aep.hl_blend >= 0) {
     new_en.hl_blend = prim_aep.hl_blend;
+  }
+
+  if ((new_en.url.data == NULL) && (prim_aep.url.data != NULL)) {
+    // Combined attributes borrow the string from the primary attribute
+    new_en.url = prim_aep.url;
   }
 
   id = get_attr_entry((HlEntry){ .attr = new_en, .kind = kHlCombine,
@@ -936,6 +977,10 @@ void hlattrs2dict(Dictionary *hl, Dictionary *hl_attrs, HlAttrs ae, bool use_rgb
 
   if (ae.hl_blend > -1 && (use_rgb || !short_keys)) {
     PUT_C(*hl, "blend", INTEGER_OBJ(ae.hl_blend));
+  }
+
+  if (ae.url.data != NULL) {
+    PUT_C(*hl, "url", STRING_OBJ(ae.url));
   }
 }
 

@@ -54,6 +54,7 @@ typedef struct {
   Boolean spell;
   Boolean ui_watched;
   Boolean undo_restore;
+  String url;
 } Dict(set_extmark);
 
 typedef struct {
@@ -183,6 +184,7 @@ typedef struct {
   Boolean fg_indexed;
   Boolean bg_indexed;
   Boolean force;
+  String url;
 } Dict(highlight);
 
 typedef struct {
