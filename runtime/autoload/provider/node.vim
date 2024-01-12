@@ -1,22 +1,6 @@
 if exists('g:loaded_node_provider')
   finish
 endif
-let g:loaded_node_provider = 1
-
-function! s:is_minimum_version(version, min_version) abort
-  if empty(a:version)
-    let nodejs_version = get(split(system(['node', '-v']), "\n"), 0, '')
-    if v:shell_error || nodejs_version[0] !=# 'v'
-      return 0
-    endif
-  else
-    let nodejs_version = a:version
-  endif
-  " Remove surrounding junk.  Example: 'v4.12.0' => '4.12.0'
-  let nodejs_version = matchstr(nodejs_version, '\(\d\.\?\)\+')
-  " [major, minor, patch]
-  return !v:lua.vim.version.lt(nodejs_version, a:min_version)
-endfunction
 
 let s:NodeHandler = {
 \ 'stdout_buffered': v:true,
@@ -28,21 +12,6 @@ function! s:NodeHandler.on_exit(job_id, data, event) abort
   let self.result = filereadable(entry_point) ? entry_point : ''
 endfunction
 
-" Support for --inspect-brk requires node 6.12+ or 7.6+ or 8+
-" Return 1 if it is supported
-" Return 0 otherwise
-function! provider#node#can_inspect() abort
-  if !executable('node')
-    return 0
-  endif
-  let ver = get(split(system(['node', '-v']), "\n"), 0, '')
-  if v:shell_error || ver[0] !=# 'v'
-    return 0
-  endif
-  return (ver[1] ==# '6' && s:is_minimum_version(ver, '6.12.0'))
-    \ || s:is_minimum_version(ver, '7.6.0')
-endfunction
-
 function! provider#node#Detect() abort
   let minver = '6.0.0'
   if exists('g:node_host_prog')
@@ -51,7 +20,7 @@ function! provider#node#Detect() abort
   if !executable('node')
     return ['', 'node not found (or not executable)']
   endif
-  if !s:is_minimum_version(v:null, minver)
+  if !v:lua.vim.provider.node.is_minimum_version(v:null, minver)
     return ['', printf('node version %s not found', minver)]
   endif
 
@@ -60,6 +29,14 @@ function! provider#node#Detect() abort
     let npm_opts = deepcopy(s:NodeHandler)
     let npm_opts.entry_point = '/neovim/bin/cli.js'
     let npm_opts.job_id = jobstart('npm --loglevel silent root -g', npm_opts)
+  endif
+
+  " npm returns the directory faster, so let's check that first
+  if !empty(npm_opts)
+    let result = jobwait([npm_opts.job_id])
+    if result[0] == 0 && npm_opts.result != ''
+      return [npm_opts.result, '']
+    endif
   endif
 
   let yarn_opts = {}
@@ -76,26 +53,18 @@ function! provider#node#Detect() abort
     let yarn_opts.job_id = jobstart('yarn global dir', yarn_opts)
   endif
 
-  let pnpm_opts = {}
-  if executable('pnpm')
-    let pnpm_opts = deepcopy(s:NodeHandler)
-    let pnpm_opts.entry_point = '/neovim/bin/cli.js'
-    let pnpm_opts.job_id = jobstart('pnpm --loglevel silent root -g', pnpm_opts)
-  endif
-
-  " npm returns the directory faster, so let's check that first
-  if !empty(npm_opts)
-    let result = jobwait([npm_opts.job_id])
-    if result[0] == 0 && npm_opts.result != ''
-      return [npm_opts.result, '']
-    endif
-  endif
-
   if !empty(yarn_opts)
     let result = jobwait([yarn_opts.job_id])
     if result[0] == 0 && yarn_opts.result != ''
       return [yarn_opts.result, '']
     endif
+  endif
+
+  let pnpm_opts = {}
+  if executable('pnpm')
+    let pnpm_opts = deepcopy(s:NodeHandler)
+    let pnpm_opts.entry_point = '/neovim/bin/cli.js'
+    let pnpm_opts.job_id = jobstart('pnpm --loglevel silent root -g', pnpm_opts)
   endif
 
   if !empty(pnpm_opts)
@@ -105,57 +74,18 @@ function! provider#node#Detect() abort
     endif
   endif
 
-  return ['', 'failed to detect node']
-endfunction
-
-function! provider#node#Prog() abort
-  return s:prog
+  return v:lua.vim.provider.node.detect()
 endfunction
 
 function! provider#node#Require(host) abort
-  if s:err != ''
-    echoerr s:err
-    return
-  endif
-
-  let args = ['node']
-
-  if !empty($NVIM_NODE_HOST_DEBUG) && provider#node#can_inspect()
-    call add(args, '--inspect-brk')
-  endif
-
-  call add(args, provider#node#Prog())
-
-  return provider#Poll(args, a:host.orig_name, '$NVIM_NODE_LOG_FILE')
+  return v:lua.vim.provider.node.require(a:host)
 endfunction
 
 function! provider#node#Call(method, args) abort
-  if s:err != ''
-    echoerr s:err
-    return
-  endif
-
-  if !exists('s:host')
-    try
-      let s:host = remote#host#Require('node')
-    catch
-      let s:err = v:exception
-      echohl WarningMsg
-      echomsg v:exception
-      echohl None
-      return
-    endtry
-  endif
-  return call('rpcrequest', insert(insert(a:args, 'node_'.a:method), s:host))
+  return v:lua.vim.provider.node.call(a:method, a:args)
 endfunction
-
 
 let s:err = ''
 let [s:prog, s:_] = provider#node#Detect()
 let g:loaded_node_provider = empty(s:prog) ? 1 : 2
-
-if g:loaded_node_provider != 2
-  let s:err = 'Cannot find the "neovim" node package. Try :checkhealth'
-endif
-
-call remote#host#RegisterPlugin('node-provider', 'node', [])
+call v:lua.vim.provider.node.start()

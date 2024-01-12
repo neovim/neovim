@@ -33,7 +33,7 @@ function M.check()
     -- Skip further checks, they are nonsense if nodejs is too old.
     return
   end
-  if vim.fn['provider#node#can_inspect']() == 0 then
+  if not require('vim.provider.node').can_inspect() then
     health.warn(
       'node.js on this system does not support --inspect-brk so $NVIM_NODE_HOST_DEBUG is ignored.'
     )
