@@ -11,12 +11,12 @@ local eq = helpers.eq
 local eval = helpers.eval
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
-local pesc = helpers.pesc
+local pesc = vim.pesc
 local insert = helpers.insert
 local funcs = helpers.funcs
 local retry = helpers.retry
 local stop = helpers.stop
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local read_file = require('test.helpers').read_file
 local write_file = require('test.helpers').write_file
 local is_ci = helpers.is_ci
@@ -24,6 +24,7 @@ local meths = helpers.meths
 local is_os = helpers.is_os
 local skip = helpers.skip
 local mkdir = helpers.mkdir
+local tmpname = helpers.tmpname
 
 local clear_notrace = lsp_helpers.clear_notrace
 local create_server_definition = lsp_helpers.create_server_definition
@@ -728,8 +729,8 @@ describe('LSP', function()
         on_handler = function(err, result, ctx)
           eq(table.remove(expected_handlers), { err, result, ctx }, 'expected handler')
           if ctx.method == 'start' then
-            local tmpfile_old = helpers.tmpname()
-            local tmpfile_new = helpers.tmpname()
+            local tmpfile_old = tmpname()
+            local tmpfile_new = tmpname()
             os.remove(tmpfile_new)
             exec_lua(
               [=[
@@ -2278,7 +2279,7 @@ describe('LSP', function()
       )
     end)
     it('Supports file creation with CreateFile payload', function()
-      local tmpfile = helpers.tmpname()
+      local tmpfile = tmpname()
       os.remove(tmpfile) -- Should not exist, only interested in a tmpname
       local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
       local edit = {
@@ -2295,7 +2296,7 @@ describe('LSP', function()
     it(
       'Supports file creation in folder that needs to be created with CreateFile payload',
       function()
-        local tmpfile = helpers.tmpname()
+        local tmpfile = tmpname()
         os.remove(tmpfile) -- Should not exist, only interested in a tmpname
         tmpfile = tmpfile .. '/dummy/x/'
         local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
@@ -2312,7 +2313,7 @@ describe('LSP', function()
       end
     )
     it('createFile does not touch file if it exists and ignoreIfExists is set', function()
-      local tmpfile = helpers.tmpname()
+      local tmpfile = tmpname()
       write_file(tmpfile, 'Dummy content')
       local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
       local edit = {
@@ -2331,7 +2332,7 @@ describe('LSP', function()
       eq('Dummy content', read_file(tmpfile))
     end)
     it('createFile overrides file if overwrite is set', function()
-      local tmpfile = helpers.tmpname()
+      local tmpfile = tmpname()
       write_file(tmpfile, 'Dummy content')
       local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
       local edit = {
@@ -2351,7 +2352,7 @@ describe('LSP', function()
       eq('', read_file(tmpfile))
     end)
     it('DeleteFile delete file and buffer', function()
-      local tmpfile = helpers.tmpname()
+      local tmpfile = tmpname()
       write_file(tmpfile, 'Be gone')
       local uri = exec_lua(
         [[
@@ -2375,7 +2376,7 @@ describe('LSP', function()
       eq(false, exec_lua('return vim.api.nvim_buf_is_loaded(vim.fn.bufadd(...))', tmpfile))
     end)
     it('DeleteFile fails if file does not exist and ignoreIfNotExists is false', function()
-      local tmpfile = helpers.tmpname()
+      local tmpfile = tmpname()
       os.remove(tmpfile)
       local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
       local edit = {
@@ -2398,9 +2399,9 @@ describe('LSP', function()
     local pathsep = helpers.get_pathsep()
 
     it('Can rename an existing file', function()
-      local old = helpers.tmpname()
+      local old = tmpname()
       write_file(old, 'Test content')
-      local new = helpers.tmpname()
+      local new = tmpname()
       os.remove(new) -- only reserve the name, file must not exist for the test scenario
       local lines = exec_lua(
         [[
@@ -2424,9 +2425,9 @@ describe('LSP', function()
       os.remove(new)
     end)
     it('Kills old buffer after renaming an existing file', function()
-      local old = helpers.tmpname()
+      local old = tmpname()
       write_file(old, 'Test content')
-      local new = helpers.tmpname()
+      local new = tmpname()
       os.remove(new) -- only reserve the name, file must not exist for the test scenario
       local lines = exec_lua(
         [[
@@ -2444,8 +2445,8 @@ describe('LSP', function()
     end)
     it('Can rename a directory', function()
       -- only reserve the name, file must not exist for the test scenario
-      local old_dir = helpers.tmpname()
-      local new_dir = helpers.tmpname()
+      local old_dir = tmpname()
+      local new_dir = tmpname()
       os.remove(old_dir)
       os.remove(new_dir)
 
@@ -2479,9 +2480,9 @@ describe('LSP', function()
     it(
       'Does not rename file if target exists and ignoreIfExists is set or overwrite is false',
       function()
-        local old = helpers.tmpname()
+        local old = tmpname()
         write_file(old, 'Old File')
-        local new = helpers.tmpname()
+        local new = tmpname()
         write_file(new, 'New file')
 
         exec_lua(
@@ -2514,9 +2515,9 @@ describe('LSP', function()
       end
     )
     it('Does override target if overwrite is true', function()
-      local old = helpers.tmpname()
+      local old = tmpname()
       write_file(old, 'Old file')
-      local new = helpers.tmpname()
+      local new = tmpname()
       write_file(new, 'New file')
       exec_lua(
         [[
@@ -4043,7 +4044,7 @@ describe('LSP', function()
       if is_os('win') then
         tmpfile = '\\\\.\\\\pipe\\pipe.test'
       else
-        tmpfile = helpers.tmpname()
+        tmpfile = tmpname()
         os.remove(tmpfile)
       end
       local result = exec_lua(
@@ -4150,7 +4151,7 @@ describe('LSP', function()
   describe('#dynamic vim.lsp._dynamic', function()
     it('supports dynamic registration', function()
       ---@type string
-      local root_dir = helpers.tmpname()
+      local root_dir = tmpname()
       os.remove(root_dir)
       mkdir(root_dir)
       local tmpfile = root_dir .. '/dynamic.foo'
@@ -4261,7 +4262,7 @@ describe('LSP', function()
   describe('vim.lsp._watchfiles', function()
     it('sends notifications when files change', function()
       skip(is_os('bsd'), 'bsd only reports rename on folders if file inside change')
-      local root_dir = helpers.tmpname()
+      local root_dir = tmpname()
       os.remove(root_dir)
       mkdir(root_dir)
 

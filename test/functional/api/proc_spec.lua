@@ -7,7 +7,7 @@ local neq = helpers.neq
 local nvim_argv = helpers.nvim_argv
 local request = helpers.request
 local retry = helpers.retry
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local is_os = helpers.is_os
 
 describe('API', function()

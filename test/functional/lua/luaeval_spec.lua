@@ -12,7 +12,7 @@ local funcs = helpers.funcs
 local clear = helpers.clear
 local eval = helpers.eval
 local feed = helpers.feed
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local eq = helpers.eq
 
 before_each(clear)

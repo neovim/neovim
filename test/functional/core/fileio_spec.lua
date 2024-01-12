@@ -1,4 +1,4 @@
-local luv = require('luv')
+local uv = vim.uv
 local helpers = require('test.functional.helpers')(after_each)
 
 local assert_log = helpers.assert_log
@@ -19,7 +19,7 @@ local meths = helpers.meths
 local mkdir = helpers.mkdir
 local sleep = helpers.sleep
 local read_file = helpers.read_file
-local trim = helpers.trim
+local trim = vim.trim
 local currentdir = helpers.funcs.getcwd
 local assert_alive = helpers.assert_alive
 local check_close = helpers.check_close
@@ -210,7 +210,7 @@ describe('fileio', function()
     local backup_file_name = link_file_name .. '~'
 
     write_file('Xtest_startup_file1', initial_content, false)
-    luv.fs_symlink('Xtest_startup_file1', link_file_name)
+    uv.fs_symlink('Xtest_startup_file1', link_file_name)
     command('set backup')
     command('set backupcopy=yes')
     command('edit ' .. link_file_name)
@@ -233,7 +233,7 @@ describe('fileio', function()
     local backup_file_name = backup_dir .. sep .. link_file_name .. '~'
 
     write_file('Xtest_startup_file1', initial_content, false)
-    luv.fs_symlink('Xtest_startup_file1', link_file_name)
+    uv.fs_symlink('Xtest_startup_file1', link_file_name)
     mkdir(backup_dir)
     command('set backup')
     command('set backupcopy=yes')

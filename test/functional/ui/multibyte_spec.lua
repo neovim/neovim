@@ -7,7 +7,7 @@ local feed_command = helpers.feed_command
 local insert = helpers.insert
 local funcs = helpers.funcs
 local meths = helpers.meths
-local split = helpers.split
+local split = vim.split
 local dedent = helpers.dedent
 
 describe('multibyte rendering', function()

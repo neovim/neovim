@@ -6,7 +6,7 @@ local feed = helpers.feed
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local next_msg = helpers.next_msg
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local pcall_err = helpers.pcall_err
 
 describe('thread', function()

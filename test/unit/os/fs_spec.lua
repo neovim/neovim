@@ -17,7 +17,7 @@ local OK = helpers.OK
 local FAIL = helpers.FAIL
 local NULL = helpers.NULL
 local mkdir = helpers.mkdir
-local endswith = helpers.endswith
+local endswith = vim.endswith
 
 local NODE_NORMAL = 0
 local NODE_WRITABLE = 1

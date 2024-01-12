@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, neq = helpers.clear, helpers.eq, helpers.neq
 local command, meths, funcs = helpers.command, helpers.meths, helpers.funcs
-local tbl_deep_extend = helpers.tbl_deep_extend
+local tbl_deep_extend = vim.tbl_deep_extend
 
 -- Set up two overlapping floating windows
 local setup_floating_windows = function()

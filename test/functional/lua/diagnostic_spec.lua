@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local command = helpers.command
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua

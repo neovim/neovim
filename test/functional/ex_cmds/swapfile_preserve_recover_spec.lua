@@ -1,6 +1,6 @@
 local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
-local luv = require('luv')
+local uv = vim.uv
 local eq, eval, expect, exec = helpers.eq, helpers.eval, helpers.expect, helpers.exec
 local assert_alive = helpers.assert_alive
 local clear = helpers.clear
@@ -12,7 +12,7 @@ local ok = helpers.ok
 local rmdir = helpers.rmdir
 local new_argv = helpers.new_argv
 local new_pipename = helpers.new_pipename
-local pesc = helpers.pesc
+local pesc = vim.pesc
 local os_kill = helpers.os_kill
 local set_session = helpers.set_session
 local spawn = helpers.spawn
@@ -42,7 +42,7 @@ describe(':recover', function()
 end)
 
 describe("preserve and (R)ecover with custom 'directory'", function()
-  local swapdir = luv.cwd() .. '/Xtest_recover_dir'
+  local swapdir = uv.cwd() .. '/Xtest_recover_dir'
   local testfile = 'Xtest_recover_file1'
   -- Put swapdir at the start of the 'directory' list. #1836
   -- Note: `set swapfile` *must* go after `set directory`: otherwise it may
@@ -129,7 +129,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
 end)
 
 describe('swapfile detection', function()
-  local swapdir = luv.cwd() .. '/Xtest_swapdialog_dir'
+  local swapdir = uv.cwd() .. '/Xtest_swapdialog_dir'
   local nvim0
   -- Put swapdir at the start of the 'directory' list. #1836
   -- Note: `set swapfile` *must* go after `set directory`: otherwise it may
@@ -376,8 +376,8 @@ describe('swapfile detection', function()
     ]])
 
     -- pretend that the swapfile was created before boot
-    local atime = os.time() - luv.uptime() - 10
-    luv.fs_utime(swname, atime, atime)
+    local atime = os.time() - uv.uptime() - 10
+    uv.fs_utime(swname, atime, atime)
 
     feed(':edit Xswaptest<CR>')
     screen:expect({
@@ -412,7 +412,7 @@ describe('swapfile detection', function()
 end)
 
 describe('quitting swapfile dialog on startup stops TUI properly', function()
-  local swapdir = luv.cwd() .. '/Xtest_swapquit_dir'
+  local swapdir = uv.cwd() .. '/Xtest_swapquit_dir'
   local testfile = 'Xtest_swapquit_file1'
   local otherfile = 'Xtest_swapquit_file2'
   -- Put swapdir at the start of the 'directory' list. #1836

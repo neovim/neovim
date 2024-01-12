@@ -1,29 +1,29 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
-local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim, testprg, ok, source, write_file, mkdir, rmdir =
-  helpers.clear,
-  helpers.eq,
-  helpers.eval,
-  helpers.exc_exec,
-  helpers.feed_command,
-  helpers.feed,
-  helpers.insert,
-  helpers.neq,
-  helpers.next_msg,
-  helpers.nvim,
-  helpers.testprg,
-  helpers.ok,
-  helpers.source,
-  helpers.write_file,
-  helpers.mkdir,
-  helpers.rmdir
+
+local clear = helpers.clear
+local eq = helpers.eq
+local eval = helpers.eval
+local exc_exec = helpers.exc_exec
+local feed_command = helpers.feed_command
+local feed = helpers.feed
+local insert = helpers.insert
+local neq = helpers.neq
+local next_msg = helpers.next_msg
+local nvim = helpers.nvim
+local testprg = helpers.testprg
+local ok = helpers.ok
+local source = helpers.source
+local write_file = helpers.write_file
+local mkdir = helpers.mkdir
+local rmdir = helpers.rmdir
 local assert_alive = helpers.assert_alive
 local command = helpers.command
 local funcs = helpers.funcs
 local os_kill = helpers.os_kill
 local retry = helpers.retry
 local meths = helpers.meths
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local poke_eventloop = helpers.poke_eventloop
 local get_pathsep = helpers.get_pathsep
 local pathroot = helpers.pathroot

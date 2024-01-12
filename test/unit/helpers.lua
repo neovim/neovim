@@ -10,9 +10,9 @@ local say = require('say')
 local check_cores = global_helpers.check_cores
 local dedent = global_helpers.dedent
 local neq = global_helpers.neq
-local map = global_helpers.tbl_map
+local map = vim.tbl_map
 local eq = global_helpers.eq
-local trim = global_helpers.trim
+local trim = vim.trim
 
 -- add some standard header locations
 for _, p in ipairs(Paths.include_paths) do
@@ -904,7 +904,7 @@ local module = {
   is_asan = is_asan,
 }
 --- @class test.unit.helpers: test.unit.helpers.module, test.helpers
-module = global_helpers.tbl_extend('error', module, global_helpers)
+module = vim.tbl_extend('error', module, global_helpers)
 
 return function()
   return module

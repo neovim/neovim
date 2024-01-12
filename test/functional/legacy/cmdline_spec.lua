@@ -6,7 +6,7 @@ local feed = helpers.feed
 local feed_command = helpers.feed_command
 local exec = helpers.exec
 local meths = helpers.meths
-local pesc = helpers.pesc
+local pesc = vim.pesc
 
 describe('cmdline', function()
   before_each(clear)

@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local global_helpers = require('test.helpers')
 local os = require('os')
 local clear, feed = helpers.clear, helpers.feed
 local assert_alive = helpers.assert_alive
@@ -17,9 +16,9 @@ local curbufmeths = helpers.curbufmeths
 local funcs = helpers.funcs
 local run = helpers.run
 local pcall_err = helpers.pcall_err
-local tbl_contains = global_helpers.tbl_contains
+local tbl_contains = vim.tbl_contains
 local curbuf, curwin, curtab = helpers.curbuf, helpers.curwin, helpers.curtab
-local NIL = helpers.NIL
+local NIL = vim.NIL
 
 describe('float window', function()
   before_each(function()

@@ -14,7 +14,7 @@ local exec_capture = helpers.exec_capture
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local funcs = helpers.funcs
-local pesc = helpers.pesc
+local pesc = vim.pesc
 local mkdir = helpers.mkdir
 local mkdir_p = helpers.mkdir_p
 local nvim_prog = helpers.nvim_prog
@@ -23,15 +23,15 @@ local read_file = helpers.read_file
 local retry = helpers.retry
 local rmdir = helpers.rmdir
 local sleep = helpers.sleep
-local startswith = helpers.startswith
+local startswith = vim.startswith
 local write_file = helpers.write_file
 local meths = helpers.meths
 local alter_slashes = helpers.alter_slashes
 local is_os = helpers.is_os
 local dedent = helpers.dedent
-local tbl_map = helpers.tbl_map
-local tbl_filter = helpers.tbl_filter
-local endswith = helpers.endswith
+local tbl_map = vim.tbl_map
+local tbl_filter = vim.tbl_filter
+local endswith = vim.endswith
 
 describe('startup', function()
   it('--clean', function()

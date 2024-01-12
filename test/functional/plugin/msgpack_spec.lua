@@ -1,10 +1,12 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local meths = helpers.meths
-local eq, nvim_eval, nvim_command, exc_exec =
-  helpers.eq, helpers.eval, helpers.command, helpers.exc_exec
+local eq = helpers.eq
+local nvim_eval = helpers.eval
+local nvim_command = helpers.command
+local exc_exec = helpers.exc_exec
 local ok = helpers.ok
-local NIL = helpers.NIL
+local NIL = vim.NIL
 
 describe('autoload/msgpack.vim', function()
   before_each(function()

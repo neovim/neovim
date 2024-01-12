@@ -3,7 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local feed = helpers.feed
 local clear = helpers.clear
 local funcs = helpers.funcs

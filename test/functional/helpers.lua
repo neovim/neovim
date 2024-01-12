@@ -1,4 +1,4 @@
-local luv = require('luv')
+local uv = vim.uv
 local global_helpers = require('test.helpers')
 
 local Session = require('test.client.session')
@@ -10,17 +10,13 @@ local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
 local dedent = global_helpers.dedent
 local eq = global_helpers.eq
-local filter = global_helpers.tbl_filter
 local is_os = global_helpers.is_os
-local map = global_helpers.tbl_map
 local ok = global_helpers.ok
 local sleep = global_helpers.sleep
-local tbl_contains = global_helpers.tbl_contains
 local fail = global_helpers.fail
 
 local module = {}
 
-local start_dir = luv.cwd()
 local runtime_set = 'set runtimepath^=./build/lib/nvim/'
 module.nvim_prog = (os.getenv('NVIM_PRG') or global_helpers.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
@@ -98,8 +94,8 @@ end
 local session, loop_running, last_error, method_error
 
 if not is_os('win') then
-  local sigpipe_handler = luv.new_signal()
-  luv.signal_start(sigpipe_handler, 'sigpipe', function()
+  local sigpipe_handler = uv.new_signal()
+  uv.signal_start(sigpipe_handler, 'sigpipe', function()
     print('warning: got SIGPIPE signal. Likely related to a crash in nvim')
   end)
 end
@@ -204,7 +200,7 @@ function module.expect_msg_seq(...)
             )
           )
         )
-      elseif tbl_contains(ignore, msg_type) then
+      elseif vim.tbl_contains(ignore, msg_type) then
         nr_ignored = nr_ignored + 1
       else
         table.insert(actual_seq, msg)
@@ -408,11 +404,11 @@ local function remove_args(args, args_rm)
   end
   local last = ''
   for _, arg in ipairs(args) do
-    if tbl_contains(skip_following, last) then
+    if vim.tbl_contains(skip_following, last) then
       last = ''
-    elseif tbl_contains(args_rm, arg) then
+    elseif vim.tbl_contains(args_rm, arg) then
       last = arg
-    elseif arg == runtime_set and tbl_contains(args_rm, 'runtimepath') then
+    elseif arg == runtime_set and vim.tbl_contains(args_rm, 'runtimepath') then
       table.remove(new_args) -- Remove the preceding "--cmd".
       last = ''
     else
@@ -426,10 +422,10 @@ function module.check_close()
   if not session then
     return
   end
-  local start_time = luv.now()
+  local start_time = uv.now()
   session:close()
-  luv.update_time() -- Update cached value of luv.now() (libuv: uv_now()).
-  local end_time = luv.now()
+  uv.update_time() -- Update cached value of luv.now() (libuv: uv_now()).
+  local end_time = uv.now()
   local delta = end_time - start_time
   if delta > 500 then
     print(
@@ -774,7 +770,7 @@ function module.assert_visible(bufnr, visible)
 end
 
 local function do_rmdir(path)
-  local stat = luv.fs_stat(path)
+  local stat = uv.fs_stat(path)
   if stat == nil then
     return
   end
@@ -803,11 +799,13 @@ local function do_rmdir(path)
       end
     end
   end
-  local ret, err = luv.fs_rmdir(path)
+  local ret, err = uv.fs_rmdir(path)
   if not ret then
     error('luv.fs_rmdir(' .. path .. '): ' .. err)
   end
 end
+
+local start_dir = uv.cwd()
 
 function module.rmdir(path)
   local ret, _ = pcall(do_rmdir, path)
@@ -959,12 +957,12 @@ end
 function module.parse_context(ctx)
   local parsed = {}
   for _, item in ipairs({ 'regs', 'jumps', 'bufs', 'gvars' }) do
-    parsed[item] = filter(function(v)
+    parsed[item] = vim.tbl_filter(function(v)
       return type(v) == 'table'
     end, module.call('msgpackparse', ctx[item]))
   end
   parsed['bufs'] = parsed['bufs'][1]
-  return map(function(v)
+  return vim.tbl_map(function(v)
     if #v == 0 then
       return nil
     end
@@ -993,7 +991,7 @@ function module.mkdir_p(path)
 end
 
 --- @class test.functional.helpers: test.helpers
-module = global_helpers.tbl_extend('error', module, global_helpers)
+module = vim.tbl_extend('error', module, global_helpers)
 
 --- @return test.functional.helpers
 return function(after_each)

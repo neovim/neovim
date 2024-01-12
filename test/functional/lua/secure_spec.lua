@@ -73,7 +73,7 @@ describe('vim.secure', function()
 
       local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
       eq(string.format('! %s', cwd .. pathsep .. 'Xfile'), vim.trim(trust))
-      eq(helpers.NIL, exec_lua([[return vim.secure.read('Xfile')]]))
+      eq(vim.NIL, exec_lua([[return vim.secure.read('Xfile')]]))
 
       os.remove(funcs.stdpath('state') .. pathsep .. 'trust')
 
@@ -103,7 +103,7 @@ describe('vim.secure', function()
       local hash = funcs.sha256(helpers.read_file('Xfile'))
       trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
       eq(string.format('%s %s', hash, cwd .. pathsep .. 'Xfile'), vim.trim(trust))
-      eq(helpers.NIL, exec_lua([[vim.secure.read('Xfile')]]))
+      eq(vim.NIL, exec_lua([[vim.secure.read('Xfile')]]))
 
       os.remove(funcs.stdpath('state') .. pathsep .. 'trust')
 

@@ -7,7 +7,7 @@ local eval = helpers.eval
 local exc_exec = helpers.exc_exec
 local pcall_err = helpers.pcall_err
 local funcs = helpers.funcs
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local source = helpers.source
 
 describe('string() function', function()

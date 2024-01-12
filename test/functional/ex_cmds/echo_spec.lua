@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local eq = helpers.eq
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local eval = helpers.eval
 local clear = helpers.clear
 local meths = helpers.meths

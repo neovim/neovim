@@ -10,7 +10,7 @@ local meths = helpers.meths
 local clear = helpers.clear
 local eq = helpers.eq
 local matches = helpers.matches
-local pesc = helpers.pesc
+local pesc = vim.pesc
 
 describe(':edit term://*', function()
   local get_screen = function(columns, lines)

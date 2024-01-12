@@ -1,11 +1,11 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local luv = require('luv')
+local uv = vim.uv
 
 local fmt = string.format
 local dedent = helpers.dedent
 local assert_alive = helpers.assert_alive
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
 local command = helpers.command
 local exec = helpers.exec
@@ -15,7 +15,7 @@ local expect = helpers.expect
 local funcs = helpers.funcs
 local meths = helpers.meths
 local matches = helpers.matches
-local pesc = helpers.pesc
+local pesc = vim.pesc
 local mkdir_p = helpers.mkdir_p
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
 local is_os = helpers.is_os
@@ -35,7 +35,7 @@ local pcall_err = helpers.pcall_err
 local format_string = helpers.format_string
 local intchar2lua = helpers.intchar2lua
 local mergedicts_copy = helpers.mergedicts_copy
-local endswith = helpers.endswith
+local endswith = vim.endswith
 
 describe('API', function()
   before_each(clear)
@@ -4647,7 +4647,7 @@ describe('API', function()
         end, { nargs = 1 })
       ]])
       eq(
-        luv.cwd(),
+        uv.cwd(),
         meths.cmd({ cmd = 'Foo', args = { '%:p:h' }, magic = { file = true } }, { output = true })
       )
     end)
@@ -4806,9 +4806,9 @@ describe('API', function()
         eq(1, meths.get_current_buf().id)
       end)
       it('works with :sleep using milliseconds', function()
-        local start = luv.now()
+        local start = uv.now()
         meths.cmd({ cmd = 'sleep', args = { '100m' } }, {})
-        ok(luv.now() - start <= 300)
+        ok(uv.now() - start <= 300)
       end)
     end)
     it(':call with unknown function does not crash #26289', function()

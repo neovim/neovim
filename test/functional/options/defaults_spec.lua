@@ -18,7 +18,7 @@ local neq = helpers.neq
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
 local alter_slashes = helpers.alter_slashes
-local tbl_contains = helpers.tbl_contains
+local tbl_contains = vim.tbl_contains
 local expect_exit = helpers.expect_exit
 local is_os = helpers.is_os
 

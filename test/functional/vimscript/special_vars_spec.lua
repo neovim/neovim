@@ -6,7 +6,7 @@ local clear = helpers.clear
 local eval = helpers.eval
 local eq = helpers.eq
 local meths = helpers.meths
-local NIL = helpers.NIL
+local NIL = vim.NIL
 
 describe('Special values', function()
   before_each(clear)

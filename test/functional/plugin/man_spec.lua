@@ -9,7 +9,7 @@ local matches = helpers.matches
 local write_file = helpers.write_file
 local tmpname = helpers.tmpname
 local eq = helpers.eq
-local pesc = helpers.pesc
+local pesc = vim.pesc
 local skip = helpers.skip
 local is_ci = helpers.is_ci
 

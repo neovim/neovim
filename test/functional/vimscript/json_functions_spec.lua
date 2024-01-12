@@ -7,7 +7,7 @@ local eval = helpers.eval
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local pcall_err = helpers.pcall_err
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local source = helpers.source
 
 describe('json_decode() function', function()

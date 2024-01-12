@@ -4,7 +4,7 @@ local clear, nvim, tabpage, curtab, eq, ok =
 local curtabmeths = helpers.curtabmeths
 local funcs = helpers.funcs
 local request = helpers.request
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local pcall_err = helpers.pcall_err
 local command = helpers.command
 

@@ -6,12 +6,12 @@ local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
-local map = helpers.tbl_map
+local map = vim.tbl_map
 local nvim = helpers.nvim
 local parse_context = helpers.parse_context
 local exec_capture = helpers.exec_capture
 local source = helpers.source
-local trim = helpers.trim
+local trim = vim.trim
 local write_file = helpers.write_file
 local pcall_err = helpers.pcall_err
 

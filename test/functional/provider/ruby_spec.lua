@@ -116,7 +116,7 @@ describe('rubyeval()', function()
   end)
 
   it('returns nil for empty strings', function()
-    eq(helpers.NIL, funcs.rubyeval(''))
+    eq(vim.NIL, funcs.rubyeval(''))
   end)
 
   it('errors out when given non-string', function()

@@ -1,4 +1,3 @@
-local shared = vim
 local luaassert = require('luassert')
 local busted = require('busted')
 local luv = require('luv')
@@ -954,6 +953,6 @@ function module.mkdir(path)
   return luv.fs_mkdir(path, 493)
 end
 
-module = shared.tbl_extend('error', module, Paths, shared, require('test.deprecated'))
+module = vim.tbl_extend('error', module, Paths, require('test.deprecated'))
 
 return module

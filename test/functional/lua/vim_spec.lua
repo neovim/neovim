@@ -11,14 +11,14 @@ local insert = helpers.insert
 local clear = helpers.clear
 local eq = helpers.eq
 local ok = helpers.ok
-local pesc = helpers.pesc
+local pesc = vim.pesc
 local eval = helpers.eval
 local feed = helpers.feed
 local pcall_err = helpers.pcall_err
 local exec_lua = helpers.exec_lua
 local matches = helpers.matches
 local exec = helpers.exec
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local retry = helpers.retry
 local next_msg = helpers.next_msg
 local remove_trace = helpers.remove_trace
@@ -1196,7 +1196,7 @@ describe('lua stdlib', function()
       end)
     ]])
 
-    helpers.poke_eventloop()
+    poke_eventloop()
     eq('hello', exec_lua [[return vim.g.fnres]])
   end)
 
