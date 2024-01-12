@@ -203,7 +203,7 @@ describe("'listchars'", function()
                                                         |
     ]])
 
-    meths._invalidate_glyph_cache()
+    meths.nvim__invalidate_glyph_cache()
     screen:_reset()
     screen:expect([[
       {1:d̞̄̃̒̉̎ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐l̞̀̄̆̌̚d̞̄̃̒̉̎ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐l̞̀̄̆̌̚d̞̄̃̒̉̎ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐ò́̌̌̂̐l̞̀̄̆̌̚}^x{1:å̲}                        |

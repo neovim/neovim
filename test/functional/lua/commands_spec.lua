@@ -76,7 +76,7 @@ describe(':lua command', function()
   it('accepts embedded NLs without heredoc', function()
     -- Such code is usually used for `:execute 'lua' {generated_string}`:
     -- heredocs do not work in this case.
-    meths.command([[
+    meths.nvim_command([[
       lua
         vim.api.nvim_buf_set_lines(1, 1, 2, false, {"ETTS"})
         vim.api.nvim_buf_set_lines(1, 2, 3, false, {"TTSE"})

@@ -23,7 +23,7 @@ describe('oldtests', function()
     ]]
 
     eq(3, #exec_lines('au vimBarTest'))
-    eq(1, #meths.get_autocmds({ group = 'vimBarTest' }))
+    eq(1, #meths.nvim_get_autocmds({ group = 'vimBarTest' }))
   end
 
   it('should recognize a bar before the {event}', function()
@@ -31,7 +31,7 @@ describe('oldtests', function()
     add_an_autocmd()
     exec [[ augroup vimBarTest | au! | augroup END ]]
     eq(1, #exec_lines('au vimBarTest'))
-    eq({}, meths.get_autocmds({ group = 'vimBarTest' }))
+    eq({}, meths.nvim_get_autocmds({ group = 'vimBarTest' }))
 
     -- Sad spacing
     add_an_autocmd()
@@ -74,7 +74,7 @@ describe('oldtests', function()
     funcs.writefile(funcs.split(content, '\n'), fname)
 
     funcs.delete('Xout')
-    funcs.system(string.format('%s --clean -N -S %s', meths.get_vvar('progpath'), fname))
+    funcs.system(string.format('%s --clean -N -S %s', meths.nvim_get_vvar('progpath'), fname))
     eq(1, funcs.filereadable('Xout'))
 
     funcs.delete('Xxx1')

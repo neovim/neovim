@@ -30,9 +30,9 @@ describe('float window', function()
     -- Create three windows and test that ":wincmd <direction>" changes to the
     -- first window, if the previous window is invalid.
     command('split')
-    meths.open_win(0, true, {width=10, height=10, relative='editor', row=0, col=0})
+    meths.nvim_open_win(0, true, {width=10, height=10, relative='editor', row=0, col=0})
     eq(1002, funcs.win_getid())
-    eq('editor', meths.win_get_config(1002).relative)
+    eq('editor', meths.nvim_win_get_config(1002).relative)
     command([[
       call nvim_win_close(1001, v:false)
       wincmd j
@@ -41,9 +41,9 @@ describe('float window', function()
   end)
 
   it('win_execute() should work' , function()
-    local buf = meths.create_buf(false, false)
-    meths.buf_set_lines(buf, 0, -1, true, {'the floatwin', 'abc', 'def'})
-    local win = meths.open_win(buf, false, {relative='win', width=16, height=1, row=0, col=10})
+    local buf = meths.nvim_create_buf(false, false)
+    meths.nvim_buf_set_lines(buf, 0, -1, true, {'the floatwin', 'abc', 'def'})
+    local win = meths.nvim_open_win(buf, false, {relative='win', width=16, height=1, row=0, col=10})
     local line = funcs.win_execute(win, 'echo getline(1)')
     eq('\nthe floatwin', line)
     eq('\n1', funcs.win_execute(win, 'echo line(".",'..win.id..')'))
@@ -54,9 +54,9 @@ describe('float window', function()
 
   it("win_execute() call commands that are not allowed when 'hidden' is not set" , function()
     command('set nohidden')
-    local buf = meths.create_buf(false, false)
-    meths.buf_set_lines(buf, 0, -1, true, {'the floatwin'})
-    local win = meths.open_win(buf, true, {relative='win', width=16, height=1, row=0, col=10})
+    local buf = meths.nvim_create_buf(false, false)
+    meths.nvim_buf_set_lines(buf, 0, -1, true, {'the floatwin'})
+    local win = meths.nvim_open_win(buf, true, {relative='win', width=16, height=1, row=0, col=10})
     eq('Vim(close):E37: No write since last change (add ! to override)', pcall_err(funcs.win_execute, win, 'close'))
     eq('Vim(bdelete):E89: No write since last change for buffer 2 (add ! to override)', pcall_err(funcs.win_execute, win, 'bdelete'))
     funcs.win_execute(win, 'bwipe!')
@@ -192,7 +192,7 @@ describe('float window', function()
   end)
 
   it('opened with correct position relative to the mouse', function()
-    meths.input_mouse('left', 'press', '', 0, 10, 10)
+    meths.nvim_input_mouse('left', 'press', '', 0, 10, 10)
     local pos = exec_lua([[
       local bufnr = vim.api.nvim_create_buf(false, true)
 
@@ -479,67 +479,67 @@ describe('float window', function()
 
   it('no crash with bufpos and non-existent window', function()
     command('new')
-    local closed_win = meths.get_current_win().id
+    local closed_win = meths.nvim_get_current_win().id
     command('close')
-    local buf = meths.create_buf(false,false)
-    meths.open_win(buf, true, {relative='win', win=closed_win, width=1, height=1, bufpos={0,0}})
+    local buf = meths.nvim_create_buf(false,false)
+    meths.nvim_open_win(buf, true, {relative='win', win=closed_win, width=1, height=1, bufpos={0,0}})
     assert_alive()
   end)
 
   it("no segfault when setting minimal style after clearing local 'fillchars' #19510", function()
     local float_opts = {relative = 'editor', row = 1, col = 1, width = 1, height = 1}
-    local float_win = meths.open_win(0, true, float_opts)
-    meths.set_option_value('fillchars', NIL, {win=float_win.id})
+    local float_win = meths.nvim_open_win(0, true, float_opts)
+    meths.nvim_set_option_value('fillchars', NIL, {win=float_win.id})
     float_opts.style = 'minimal'
-    meths.win_set_config(float_win, float_opts)
+    meths.nvim_win_set_config(float_win, float_opts)
     assert_alive()
     end)
 
     it("should re-apply 'style' when present", function()
     local float_opts = {style = 'minimal', relative = 'editor', row = 1, col = 1, width = 1, height = 1}
-    local float_win = meths.open_win(0, true, float_opts)
-    meths.set_option_value('number', true, { win = float_win })
+    local float_win = meths.nvim_open_win(0, true, float_opts)
+    meths.nvim_set_option_value('number', true, { win = float_win })
     float_opts.row = 2
-    meths.win_set_config(float_win, float_opts)
-    eq(false, meths.get_option_value('number', { win = float_win }))
+    meths.nvim_win_set_config(float_win, float_opts)
+    eq(false, meths.nvim_get_option_value('number', { win = float_win }))
   end)
 
   it("should not re-apply 'style' when missing", function()
     local float_opts = {style = 'minimal', relative = 'editor', row = 1, col = 1, width = 1, height = 1}
-    local float_win = meths.open_win(0, true, float_opts)
-    meths.set_option_value('number', true, { win = float_win })
+    local float_win = meths.nvim_open_win(0, true, float_opts)
+    meths.nvim_set_option_value('number', true, { win = float_win })
     float_opts.row = 2
     float_opts.style = nil
-    meths.win_set_config(float_win, float_opts)
-    eq(true, meths.get_option_value('number', { win = float_win }))
+    meths.nvim_win_set_config(float_win, float_opts)
+    eq(true, meths.nvim_get_option_value('number', { win = float_win }))
   end)
 
   it("'scroll' is computed correctly when opening float with splitkeep=screen #20684", function()
-    meths.set_option_value('splitkeep', 'screen', {})
+    meths.nvim_set_option_value('splitkeep', 'screen', {})
     local float_opts = {relative = 'editor', row = 1, col = 1, width = 10, height = 10}
-    local float_win = meths.open_win(0, true, float_opts)
-    eq(5, meths.get_option_value('scroll', {win=float_win.id}))
+    local float_win = meths.nvim_open_win(0, true, float_opts)
+    eq(5, meths.nvim_get_option_value('scroll', {win=float_win.id}))
   end)
 
   it(':unhide works when there are floating windows', function()
     local float_opts = {relative = 'editor', row = 1, col = 1, width = 5, height = 5}
     local w0 = curwin()
-    meths.open_win(0, false, float_opts)
-    meths.open_win(0, false, float_opts)
-    eq(3, #meths.list_wins())
+    meths.nvim_open_win(0, false, float_opts)
+    meths.nvim_open_win(0, false, float_opts)
+    eq(3, #meths.nvim_list_wins())
     command('unhide')
-    eq({ w0 }, meths.list_wins())
+    eq({ w0 }, meths.nvim_list_wins())
   end)
 
   it(':all works when there are floating windows', function()
     command('args Xa.txt')
     local float_opts = {relative = 'editor', row = 1, col = 1, width = 5, height = 5}
     local w0 = curwin()
-    meths.open_win(0, false, float_opts)
-    meths.open_win(0, false, float_opts)
-    eq(3, #meths.list_wins())
+    meths.nvim_open_win(0, false, float_opts)
+    meths.nvim_open_win(0, false, float_opts)
+    eq(3, #meths.nvim_list_wins())
     command('all')
-    eq({ w0 }, meths.list_wins())
+    eq({ w0 }, meths.nvim_list_wins())
   end)
 
   describe('with only one tabpage,', function()
@@ -552,37 +552,37 @@ describe('float window', function()
     end)
     describe('closing the last non-floating window gives E444', function()
       before_each(function()
-        meths.open_win(old_buf, true, float_opts)
+        meths.nvim_open_win(old_buf, true, float_opts)
       end)
       it('if called from non-floating window', function()
-        meths.set_current_win(old_win)
+        meths.nvim_set_current_win(old_win)
         eq('Vim:E444: Cannot close last window',
-           pcall_err(meths.win_close, old_win, false))
+           pcall_err(meths.nvim_win_close, old_win, false))
       end)
       it('if called from floating window', function()
         eq('Vim:E444: Cannot close last window',
-           pcall_err(meths.win_close, old_win, false))
+           pcall_err(meths.nvim_win_close, old_win, false))
       end)
     end)
     describe("deleting the last non-floating window's buffer", function()
       describe('leaves one window with an empty buffer when there is only one buffer', function()
         local same_buf_float
         before_each(function()
-          same_buf_float = meths.open_win(old_buf, false, float_opts).id
+          same_buf_float = meths.nvim_open_win(old_buf, false, float_opts).id
         end)
         after_each(function()
           eq(old_win, curwin().id)
           expect('')
-          eq(1, #meths.list_wins())
+          eq(1, #meths.nvim_list_wins())
         end)
         it('if called from non-floating window', function()
-          meths.buf_delete(old_buf, {force = true})
+          meths.nvim_buf_delete(old_buf, {force = true})
         end)
         it('if called from floating window', function()
-          meths.set_current_win(same_buf_float)
+          meths.nvim_set_current_win(same_buf_float)
           command('autocmd WinLeave * let g:win_leave = nvim_get_current_win()')
           command('autocmd WinEnter * let g:win_enter = nvim_get_current_win()')
-          meths.buf_delete(old_buf, {force = true})
+          meths.nvim_buf_delete(old_buf, {force = true})
           eq(same_buf_float, eval('g:win_leave'))
           eq(old_win, eval('g:win_enter'))
         end)
@@ -590,67 +590,67 @@ describe('float window', function()
       describe('closes other windows with that buffer when there are other buffers', function()
         local same_buf_float, other_buf, other_buf_float
         before_each(function()
-          same_buf_float = meths.open_win(old_buf, false, float_opts).id
-          other_buf = meths.create_buf(true, false).id
-          other_buf_float = meths.open_win(other_buf, true, float_opts).id
+          same_buf_float = meths.nvim_open_win(old_buf, false, float_opts).id
+          other_buf = meths.nvim_create_buf(true, false).id
+          other_buf_float = meths.nvim_open_win(other_buf, true, float_opts).id
           insert('bar')
-          meths.set_current_win(old_win)
+          meths.nvim_set_current_win(old_win)
         end)
         after_each(function()
           eq(other_buf, curbuf().id)
           expect('bar')
-          eq(2, #meths.list_wins())
+          eq(2, #meths.nvim_list_wins())
         end)
         it('if called from non-floating window', function()
-          meths.buf_delete(old_buf, {force = true})
+          meths.nvim_buf_delete(old_buf, {force = true})
           eq(old_win, curwin().id)
         end)
         it('if called from floating window with the same buffer', function()
-          meths.set_current_win(same_buf_float)
+          meths.nvim_set_current_win(same_buf_float)
           command('autocmd WinLeave * let g:win_leave = nvim_get_current_win()')
           command('autocmd WinEnter * let g:win_enter = nvim_get_current_win()')
-          meths.buf_delete(old_buf, {force = true})
+          meths.nvim_buf_delete(old_buf, {force = true})
           eq(same_buf_float, eval('g:win_leave'))
           eq(old_win, eval('g:win_enter'))
           eq(old_win, curwin().id)
         end)
         -- TODO: this case is too hard to deal with
         pending('if called from floating window with another buffer', function()
-          meths.set_current_win(other_buf_float)
-          meths.buf_delete(old_buf, {force = true})
+          meths.nvim_set_current_win(other_buf_float)
+          meths.nvim_buf_delete(old_buf, {force = true})
         end)
       end)
       describe('creates an empty buffer when there is only one listed buffer', function()
         local same_buf_float, unlisted_buf_float
         before_each(function()
-          same_buf_float = meths.open_win(old_buf, false, float_opts).id
-          local unlisted_buf = meths.create_buf(true, false).id
-          unlisted_buf_float = meths.open_win(unlisted_buf, true, float_opts).id
+          same_buf_float = meths.nvim_open_win(old_buf, false, float_opts).id
+          local unlisted_buf = meths.nvim_create_buf(true, false).id
+          unlisted_buf_float = meths.nvim_open_win(unlisted_buf, true, float_opts).id
           insert('unlisted')
           command('set nobuflisted')
-          meths.set_current_win(old_win)
+          meths.nvim_set_current_win(old_win)
         end)
         after_each(function()
           expect('')
-          eq(2, #meths.list_wins())
+          eq(2, #meths.nvim_list_wins())
         end)
         it('if called from non-floating window', function()
-          meths.buf_delete(old_buf, {force = true})
+          meths.nvim_buf_delete(old_buf, {force = true})
           eq(old_win, curwin().id)
         end)
         it('if called from floating window with the same buffer', function()
-          meths.set_current_win(same_buf_float)
+          meths.nvim_set_current_win(same_buf_float)
           command('autocmd WinLeave * let g:win_leave = nvim_get_current_win()')
           command('autocmd WinEnter * let g:win_enter = nvim_get_current_win()')
-          meths.buf_delete(old_buf, {force = true})
+          meths.nvim_buf_delete(old_buf, {force = true})
           eq(same_buf_float, eval('g:win_leave'))
           eq(old_win, eval('g:win_enter'))
           eq(old_win, curwin().id)
         end)
         -- TODO: this case is too hard to deal with
         pending('if called from floating window with an unlisted buffer', function()
-          meths.set_current_win(unlisted_buf_float)
-          meths.buf_delete(old_buf, {force = true})
+          meths.nvim_set_current_win(unlisted_buf_float)
+          meths.nvim_buf_delete(old_buf, {force = true})
         end)
       end)
     end)
@@ -661,20 +661,20 @@ describe('float window', function()
           command('botright vnew')
           insert('unlisted')
           command('set nobuflisted')
-          meths.set_current_win(old_win)
-          same_buf_float = meths.open_win(old_buf, false, float_opts).id
+          meths.nvim_set_current_win(old_win)
+          same_buf_float = meths.nvim_open_win(old_buf, false, float_opts).id
         end)
         after_each(function()
           expect('')
-          eq(2, #meths.list_wins())
+          eq(2, #meths.nvim_list_wins())
         end)
         it('if called from non-floating window with the deleted buffer', function()
-          meths.buf_delete(old_buf, {force = true})
+          meths.nvim_buf_delete(old_buf, {force = true})
           eq(old_win, curwin().id)
         end)
         it('if called from floating window with the deleted buffer', function()
-          meths.set_current_win(same_buf_float)
-          meths.buf_delete(old_buf, {force = true})
+          meths.nvim_set_current_win(same_buf_float)
+          meths.nvim_buf_delete(old_buf, {force = true})
           eq(same_buf_float, curwin().id)
         end)
       end)
@@ -696,28 +696,28 @@ describe('float window', function()
     describe('without splits, deleting the last listed buffer creates an empty buffer', function()
       local same_buf_float
       before_each(function()
-        meths.set_current_win(old_win)
-        same_buf_float = meths.open_win(old_buf, false, float_opts).id
+        meths.nvim_set_current_win(old_win)
+        same_buf_float = meths.nvim_open_win(old_buf, false, float_opts).id
       end)
       after_each(function()
         expect('')
-        eq(2, #meths.list_wins())
-        eq(2, #meths.list_tabpages())
+        eq(2, #meths.nvim_list_wins())
+        eq(2, #meths.nvim_list_tabpages())
       end)
       it('if called from non-floating window', function()
-        meths.buf_delete(old_buf, {force = true})
+        meths.nvim_buf_delete(old_buf, {force = true})
         eq(old_win, curwin().id)
       end)
       it('if called from non-floating window in another tabpage', function()
         command('tab split')
-        eq(3, #meths.list_tabpages())
-        meths.buf_delete(old_buf, {force = true})
+        eq(3, #meths.nvim_list_tabpages())
+        meths.nvim_buf_delete(old_buf, {force = true})
       end)
       it('if called from floating window with the same buffer', function()
-        meths.set_current_win(same_buf_float)
+        meths.nvim_set_current_win(same_buf_float)
         command('autocmd WinLeave * let g:win_leave = nvim_get_current_win()')
         command('autocmd WinEnter * let g:win_enter = nvim_get_current_win()')
-        meths.buf_delete(old_buf, {force = true})
+        meths.nvim_buf_delete(old_buf, {force = true})
         eq(same_buf_float, eval('g:win_leave'))
         eq(old_win, eval('g:win_enter'))
         eq(old_win, curwin().id)
@@ -727,22 +727,22 @@ describe('float window', function()
       local same_buf_float
       before_each(function()
         command('botright vsplit')
-        meths.set_current_buf(unlisted_buf)
-        meths.set_current_win(old_win)
-        same_buf_float = meths.open_win(old_buf, false, float_opts).id
+        meths.nvim_set_current_buf(unlisted_buf)
+        meths.nvim_set_current_win(old_win)
+        same_buf_float = meths.nvim_open_win(old_buf, false, float_opts).id
       end)
       after_each(function()
         expect('')
-        eq(3, #meths.list_wins())
-        eq(2, #meths.list_tabpages())
+        eq(3, #meths.nvim_list_wins())
+        eq(2, #meths.nvim_list_tabpages())
       end)
       it('if called from non-floating window with the deleted buffer', function()
-        meths.buf_delete(old_buf, {force = true})
+        meths.nvim_buf_delete(old_buf, {force = true})
         eq(old_win, curwin().id)
       end)
       it('if called from floating window with the deleted buffer', function()
-        meths.set_current_win(same_buf_float)
-        meths.buf_delete(old_buf, {force = true})
+        meths.nvim_set_current_win(same_buf_float)
+        meths.nvim_buf_delete(old_buf, {force = true})
         eq(same_buf_float, curwin().id)
       end)
     end)
@@ -762,38 +762,38 @@ describe('float window', function()
       describe('closes the tabpage when all floating windows are closeable', function()
         local same_buf_float
         before_each(function()
-          same_buf_float = meths.open_win(old_buf, false, float_opts).id
+          same_buf_float = meths.nvim_open_win(old_buf, false, float_opts).id
         end)
         after_each(function()
           eq(old_tabpage, curtab().id)
           expect('oldtab')
-          eq(1, #meths.list_tabpages())
+          eq(1, #meths.nvim_list_tabpages())
         end)
         it('if called from non-floating window', function()
-          meths.win_close(old_win, false)
+          meths.nvim_win_close(old_win, false)
         end)
         it('if called from floating window', function()
-          meths.set_current_win(same_buf_float)
-          meths.win_close(old_win, false)
+          meths.nvim_set_current_win(same_buf_float)
+          meths.nvim_win_close(old_win, false)
         end)
       end)
       describe('gives E5601 when there are non-closeable floating windows', function()
         local other_buf_float
         before_each(function()
           command('set nohidden')
-          local other_buf = meths.create_buf(true, false).id
-          other_buf_float = meths.open_win(other_buf, true, float_opts).id
+          local other_buf = meths.nvim_create_buf(true, false).id
+          other_buf_float = meths.nvim_open_win(other_buf, true, float_opts).id
           insert('foo')
-          meths.set_current_win(old_win)
+          meths.nvim_set_current_win(old_win)
         end)
         it('if called from non-floating window', function()
           eq('Vim:E5601: Cannot close window, only floating window would remain',
-             pcall_err(meths.win_close, old_win, false))
+             pcall_err(meths.nvim_win_close, old_win, false))
         end)
         it('if called from floating window', function()
-          meths.set_current_win(other_buf_float)
+          meths.nvim_set_current_win(other_buf_float)
           eq('Vim:E5601: Cannot close window, only floating window would remain',
-             pcall_err(meths.win_close, old_win, false))
+             pcall_err(meths.nvim_win_close, old_win, false))
         end)
       end)
     end)
@@ -801,27 +801,27 @@ describe('float window', function()
       describe('closes the tabpage when all floating windows are closeable', function()
         local same_buf_float, other_buf, other_buf_float
         before_each(function()
-          same_buf_float = meths.open_win(old_buf, false, float_opts).id
-          other_buf = meths.create_buf(true, false).id
-          other_buf_float = meths.open_win(other_buf, true, float_opts).id
-          meths.set_current_win(old_win)
+          same_buf_float = meths.nvim_open_win(old_buf, false, float_opts).id
+          other_buf = meths.nvim_create_buf(true, false).id
+          other_buf_float = meths.nvim_open_win(other_buf, true, float_opts).id
+          meths.nvim_set_current_win(old_win)
         end)
         after_each(function()
           eq(old_tabpage, curtab().id)
           expect('oldtab')
-          eq(1, #meths.list_tabpages())
+          eq(1, #meths.nvim_list_tabpages())
         end)
         it('if called from non-floating window', function()
-          meths.buf_delete(old_buf, {force = false})
+          meths.nvim_buf_delete(old_buf, {force = false})
         end)
         it('if called from floating window with the same buffer', function()
-          meths.set_current_win(same_buf_float)
-          meths.buf_delete(old_buf, {force = false})
+          meths.nvim_set_current_win(same_buf_float)
+          meths.nvim_buf_delete(old_buf, {force = false})
         end)
         -- TODO: this case is too hard to deal with
         pending('if called from floating window with another buffer', function()
-          meths.set_current_win(other_buf_float)
-          meths.buf_delete(old_buf, {force = false})
+          meths.nvim_set_current_win(other_buf_float)
+          meths.nvim_buf_delete(old_buf, {force = false})
         end)
       end)
       -- TODO: what to do when there are non-closeable floating windows?
@@ -868,8 +868,8 @@ describe('float window', function()
     end)
 
     it('can be created and reconfigured', function()
-      local buf = meths.create_buf(false,false)
-      local win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
+      local buf = meths.nvim_create_buf(false,false)
+      local win = meths.nvim_open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
       local expected_pos = {
           [4]={{id=1001}, 'NW', 1, 2, 5, true},
       }
@@ -900,7 +900,7 @@ describe('float window', function()
       end
 
 
-      meths.win_set_config(win, {relative='editor', row=0, col=10})
+      meths.nvim_win_set_config(win, {relative='editor', row=0, col=10})
       expected_pos[4][4] = 0
       expected_pos[4][5] = 10
       if multigrid then
@@ -926,7 +926,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_close(win, false)
+      meths.nvim_win_close(win, false)
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -949,8 +949,8 @@ describe('float window', function()
 
     it('window position fixed', function()
       command('rightbelow 20vsplit')
-      local buf = meths.create_buf(false,false)
-      local win = meths.open_win(buf, false, {
+      local buf = meths.nvim_create_buf(false,false)
+      local win = meths.nvim_open_win(buf, false, {
         relative='win', width=15, height=2, row=2, col=10, anchor='NW', fixed=true})
 
       if multigrid then
@@ -985,7 +985,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_set_config(win, {fixed=false})
+      meths.nvim_win_set_config(win, {fixed=false})
 
       if multigrid then
         screen:expect_unchanged()
@@ -1009,8 +1009,8 @@ describe('float window', function()
       -- or something.
       command("set redrawdebug=compositor")
       command("set wd=1")
-      local buf = meths.create_buf(false,false)
-      local win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
+      local buf = meths.nvim_create_buf(false,false)
+      local win = meths.nvim_open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
       local expected_pos = {
           [4]={{id=1001}, 'NW', 1, 2, 5, true},
       }
@@ -1041,7 +1041,7 @@ describe('float window', function()
       end
 
 
-      meths.win_set_config(win, {relative='editor', row=0, col=10})
+      meths.nvim_win_set_config(win, {relative='editor', row=0, col=10})
       expected_pos[4][4] = 0
       expected_pos[4][5] = 10
       if multigrid then
@@ -1067,7 +1067,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_close(win, false)
+      meths.nvim_win_close(win, false)
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1089,16 +1089,16 @@ describe('float window', function()
     end)
 
     it('return their configuration', function()
-      local buf = meths.create_buf(false, false)
-      local win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=3, col=5, zindex=60})
+      local buf = meths.nvim_create_buf(false, false)
+      local win = meths.nvim_open_win(buf, false, {relative='editor', width=20, height=2, row=3, col=5, zindex=60})
       local expected = {anchor='NW', col=5, external=false, focusable=true, height=2, relative='editor', row=3, width=20, zindex=60, hide=false}
-      eq(expected, meths.win_get_config(win))
+      eq(expected, meths.nvim_win_get_config(win))
 
-      eq({relative='', external=false, focusable=true, hide=false}, meths.win_get_config(0))
+      eq({relative='', external=false, focusable=true, hide=false}, meths.nvim_win_get_config(0))
 
       if multigrid then
-        meths.win_set_config(win, {external=true, width=10, height=1})
-        eq({external=true,focusable=true,width=10,height=1,relative='',hide=false}, meths.win_get_config(win))
+        meths.nvim_win_set_config(win, {external=true, width=10, height=1})
+        eq({external=true,focusable=true,width=10,height=1,relative='',hide=false}, meths.nvim_win_get_config(win))
       end
     end)
 
@@ -1106,7 +1106,7 @@ describe('float window', function()
       command('set number')
       command('hi NormalFloat guibg=#333333 guifg=NONE')
       feed('ix<cr>y<cr><esc>gg')
-      local win = meths.open_win(0, false, {relative='editor', width=20, height=4, row=4, col=10})
+      local win = meths.nvim_open_win(0, false, {relative='editor', width=20, height=4, row=4, col=10})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1137,8 +1137,8 @@ describe('float window', function()
         ]])
       end
 
-      local buf = meths.create_buf(false, true)
-      meths.win_set_buf(win, buf)
+      local buf = meths.nvim_create_buf(false, true)
+      meths.nvim_win_set_buf(win, buf)
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1174,7 +1174,7 @@ describe('float window', function()
       command('set foldcolumn=1')
       command('hi NormalFloat guibg=#333333 guifg=NONE')
       feed('ix<cr>y<cr><esc>gg')
-      local win = meths.open_win(0, false, {relative='editor', width=20, height=4, row=4, col=10, style='minimal'})
+      local win = meths.nvim_open_win(0, false, {relative='editor', width=20, height=4, row=4, col=10, style='minimal'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1238,8 +1238,8 @@ describe('float window', function()
       end
       command('sign unplace 1 buffer=1')
 
-      local buf = meths.create_buf(false, true)
-      meths.win_set_buf(win, buf)
+      local buf = meths.nvim_create_buf(false, true)
+      meths.nvim_win_set_buf(win, buf)
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1274,7 +1274,7 @@ describe('float window', function()
       command('set foldcolumn=1')
       command('hi NormalFloat guibg=#333333 guifg=NONE')
       feed('ix<cr>y<cr><esc>gg')
-      local win = meths.open_win(0, false, {relative='editor', width=20, height=4, row=4, col=10, style='minimal'})
+      local win = meths.nvim_open_win(0, false, {relative='editor', width=20, height=4, row=4, col=10, style='minimal'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1338,8 +1338,8 @@ describe('float window', function()
       end
       command('sign unplace 1 buffer=1')
 
-      local buf = meths.create_buf(false, true)
-      meths.win_set_buf(win, buf)
+      local buf = meths.nvim_create_buf(false, true)
+      meths.nvim_win_set_buf(win, buf)
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1375,7 +1375,7 @@ describe('float window', function()
       command('set statuscolumn=%l%s%C')
       command('hi NormalFloat guibg=#333333 guifg=NONE')
       feed('ix<cr>y<cr><esc>gg')
-      meths.open_win(0, false, {relative='editor', width=20, height=4, row=4, col=10, style='minimal'})
+      meths.nvim_open_win(0, false, {relative='editor', width=20, height=4, row=4, col=10, style='minimal'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1406,10 +1406,10 @@ describe('float window', function()
     end)
 
     it('can have border', function()
-      local buf = meths.create_buf(false, false)
-      meths.buf_set_lines(buf, 0, -1, true, {' halloj! ',
+      local buf = meths.nvim_create_buf(false, false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {' halloj! ',
                                              ' BORDAA  '})
-      local win = meths.open_win(buf, false, {relative='editor', width=9, height=2, row=2, col=5, border="double"})
+      local win = meths.nvim_open_win(buf, false, {relative='editor', width=9, height=2, row=2, col=5, border="double"})
 
       if multigrid then
         screen:expect{grid=[[
@@ -1444,7 +1444,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {border="single"})
+      meths.nvim_win_set_config(win, {border="single"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1478,7 +1478,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {border="rounded"})
+      meths.nvim_win_set_config(win, {border="rounded"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1512,7 +1512,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {border="solid"})
+      meths.nvim_win_set_config(win, {border="solid"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1547,7 +1547,7 @@ describe('float window', function()
       end
 
       -- support: ascii char, UTF-8 char, composed char, highlight per char
-      meths.win_set_config(win, {border={"x", {"å", "ErrorMsg"}, {"\\"}, {"n̈̊", "Search"}}})
+      meths.nvim_win_set_config(win, {border={"x", {"å", "ErrorMsg"}, {"\\"}, {"n̈̊", "Search"}}})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1581,7 +1581,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {border="none"})
+      meths.nvim_win_set_config(win, {border="none"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1612,7 +1612,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {border={"", "", "", ">", "", "", "", "<"}})
+      meths.nvim_win_set_config(win, {border={"", "", "", ">", "", "", "", "<"}})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1643,7 +1643,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {border={"", "_", "", "", "", "-", "", ""}})
+      meths.nvim_win_set_config(win, {border={"", "_", "", "", "", "-", "", ""}})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1685,7 +1685,7 @@ describe('float window', function()
         of border shadow
       ]]
 
-      meths.win_set_config(win, {border="shadow"})
+      meths.nvim_win_set_config(win, {border="shadow"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1724,13 +1724,13 @@ describe('float window', function()
     end)
 
     it('validates title title_pos', function()
-      local buf = meths.create_buf(false,false)
+      local buf = meths.nvim_create_buf(false,false)
       eq("title requires border to be set",
-         pcall_err(meths.open_win,buf, false, {
+         pcall_err(meths.nvim_open_win,buf, false, {
           relative='editor', width=9, height=2, row=2, col=5, title='Title',
          }))
       eq("title_pos requires title to be set",
-         pcall_err(meths.open_win,buf, false, {
+         pcall_err(meths.nvim_open_win,buf, false, {
           relative='editor', width=9, height=2, row=2, col=5,
           border='single', title_pos='left',
          }))
@@ -1758,13 +1758,13 @@ describe('float window', function()
     end)
 
     it('validates footer footer_pos', function()
-      local buf = meths.create_buf(false,false)
+      local buf = meths.nvim_create_buf(false,false)
       eq("footer requires border to be set",
-         pcall_err(meths.open_win,buf, false, {
+         pcall_err(meths.nvim_open_win,buf, false, {
           relative='editor', width=9, height=2, row=2, col=5, footer='Footer',
          }))
       eq("footer_pos requires footer to be set",
-         pcall_err(meths.open_win,buf, false, {
+         pcall_err(meths.nvim_open_win,buf, false, {
           relative='editor', width=9, height=2, row=2, col=5,
           border='single', footer_pos='left',
          }))
@@ -1792,10 +1792,10 @@ describe('float window', function()
     end)
 
     it('center aligned title longer than window width #25746', function()
-      local buf = meths.create_buf(false, false)
-      meths.buf_set_lines(buf, 0, -1, true, {' halloj! ',
+      local buf = meths.nvim_create_buf(false, false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {' halloj! ',
                                              ' BORDAA  '})
-      local win = meths.open_win(buf, false, {
+      local win = meths.nvim_open_win(buf, false, {
         relative='editor', width=9, height=2, row=2, col=5, border="double",
         title = "abcdefghijklmnopqrstuvwxyz",title_pos = "center",
       })
@@ -1833,15 +1833,15 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_close(win, false)
+      meths.nvim_win_close(win, false)
       assert_alive()
     end)
 
     it('border with title', function()
-      local buf = meths.create_buf(false, false)
-      meths.buf_set_lines(buf, 0, -1, true, {' halloj! ',
+      local buf = meths.nvim_create_buf(false, false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {' halloj! ',
                                              ' BORDAA  '})
-      local win = meths.open_win(buf, false, {
+      local win = meths.nvim_open_win(buf, false, {
         relative='editor', width=9, height=2, row=2, col=5, border="double",
         title = "Left",title_pos = "left",
       })
@@ -1879,7 +1879,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {title= "Center",title_pos="center"})
+      meths.nvim_win_set_config(win, {title= "Center",title_pos="center"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1913,7 +1913,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {title= "Right",title_pos="right"})
+      meths.nvim_win_set_config(win, {title= "Right",title_pos="right"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1947,7 +1947,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {title= { {"🦄"},{"BB"}},title_pos="right"})
+      meths.nvim_win_set_config(win, {title= { {"🦄"},{"BB"}},title_pos="right"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -1983,10 +1983,10 @@ describe('float window', function()
     end)
 
     it('border with footer', function()
-      local buf = meths.create_buf(false, false)
-      meths.buf_set_lines(buf, 0, -1, true, {' halloj! ',
+      local buf = meths.nvim_create_buf(false, false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {' halloj! ',
                                              ' BORDAA  '})
-      local win = meths.open_win(buf, false, {
+      local win = meths.nvim_open_win(buf, false, {
         relative='editor', width=9, height=2, row=2, col=5, border="double",
         footer = "Left",footer_pos = "left",
       })
@@ -2024,7 +2024,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {footer= "Center",footer_pos="center"})
+      meths.nvim_win_set_config(win, {footer= "Center",footer_pos="center"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -2058,7 +2058,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {footer= "Right",footer_pos="right"})
+      meths.nvim_win_set_config(win, {footer= "Right",footer_pos="right"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -2092,7 +2092,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {footer= { {"🦄"},{"BB"}},footer_pos="right"})
+      meths.nvim_win_set_config(win, {footer= { {"🦄"},{"BB"}},footer_pos="right"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -2128,10 +2128,10 @@ describe('float window', function()
     end)
 
     it('border with title and footer', function()
-      local buf = meths.create_buf(false, false)
-      meths.buf_set_lines(buf, 0, -1, true, {' halloj! ',
+      local buf = meths.nvim_create_buf(false, false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {' halloj! ',
                                              ' BORDAA  '})
-      local win = meths.open_win(buf, false, {
+      local win = meths.nvim_open_win(buf, false, {
         relative='editor', width=9, height=2, row=2, col=5, border="double",
         title = "Left", title_pos = "left", footer = "Right", footer_pos = "right",
       })
@@ -2169,7 +2169,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {title= "Center",title_pos="center",footer= "Center",footer_pos="center"})
+      meths.nvim_win_set_config(win, {title= "Center",title_pos="center",footer= "Center",footer_pos="center"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -2203,7 +2203,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {title= "Right",title_pos="right",footer= "Left",footer_pos="left"})
+      meths.nvim_win_set_config(win, {title= "Right",title_pos="right",footer= "Left",footer_pos="left"})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -2239,7 +2239,7 @@ describe('float window', function()
 
       command('hi B0 guibg=Red guifg=Black')
       command('hi B1 guifg=White')
-      meths.win_set_config(win, {
+      meths.nvim_win_set_config(win, {
         title = {{"🦄"}, {"BB", {"B0", "B1"}}}, title_pos = "right",
         footer= {{"🦄"}, {"BB", {"B0", "B1"}}}, footer_pos = "right",
       })
@@ -2278,8 +2278,8 @@ describe('float window', function()
     end)
 
     it('terminates border on edge of viewport when window extends past viewport', function()
-      local buf = meths.create_buf(false, false)
-      meths.open_win(buf, false, {relative='editor', width=40, height=7, row=0, col=0, border="single", zindex=201})
+      local buf = meths.nvim_create_buf(false, false)
+      meths.nvim_open_win(buf, false, {relative='editor', width=40, height=7, row=0, col=0, border="single", zindex=201})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -2313,10 +2313,10 @@ describe('float window', function()
 
     it('with border show popupmenu', function()
       screen:try_resize(40,10)
-      local buf = meths.create_buf(false, false)
-      meths.buf_set_lines(buf, 0, -1, true, {'aaa aab ',
+      local buf = meths.nvim_create_buf(false, false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {'aaa aab ',
                                              'abb acc ', ''})
-      meths.open_win(buf, true, {relative='editor', width=9, height=3, row=0, col=5, border="double"})
+      meths.nvim_open_win(buf, true, {relative='editor', width=9, height=3, row=0, col=5, border="double"})
       feed 'G'
 
       if multigrid then
@@ -2482,10 +2482,10 @@ describe('float window', function()
 
     it('show ruler of current floating window', function()
       command 'set ruler'
-      local buf = meths.create_buf(false, false)
-      meths.buf_set_lines(buf, 0, -1, true, {'aaa aab ',
+      local buf = meths.nvim_create_buf(false, false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {'aaa aab ',
                                              'abb acc '})
-      meths.open_win(buf, true, {relative='editor', width=9, height=3, row=0, col=5})
+      meths.nvim_open_win(buf, true, {relative='editor', width=9, height=3, row=0, col=5})
       feed 'gg'
 
       if multigrid then
@@ -2552,7 +2552,7 @@ describe('float window', function()
 
     it("correct ruler position in current float with 'rulerformat' set", function()
       command 'set ruler rulerformat=fish:<><'
-      meths.open_win(0, true, {relative='editor', width=9, height=3, row=0, col=5})
+      meths.nvim_open_win(0, true, {relative='editor', width=9, height=3, row=0, col=5})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -2585,10 +2585,10 @@ describe('float window', function()
     it('does not show ruler of not-last current float during ins-completion', function()
       screen:try_resize(50,9)
       command 'set ruler showmode'
-      meths.open_win(0, false, {relative='editor', width=3, height=3, row=0, col=0})
-      meths.open_win(0, false, {relative='editor', width=3, height=3, row=0, col=5})
+      meths.nvim_open_win(0, false, {relative='editor', width=3, height=3, row=0, col=0})
+      meths.nvim_open_win(0, false, {relative='editor', width=3, height=3, row=0, col=5})
       feed '<c-w>w'
-      neq('', meths.win_get_config(0).relative)
+      neq('', meths.nvim_win_get_config(0).relative)
       neq(funcs.winnr '$', funcs.winnr())
       if multigrid then
         screen:expect{grid=[[
@@ -2659,9 +2659,9 @@ describe('float window', function()
 
     it('can have minimum size', function()
       insert("the background text")
-      local buf = meths.create_buf(false, true)
-      meths.buf_set_lines(buf, 0, -1, true, {'x'})
-      local win = meths.open_win(buf, false, {relative='win', width=1, height=1, row=0, col=4, focusable=false})
+      local buf = meths.nvim_create_buf(false, true)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {'x'})
+      local win = meths.nvim_open_win(buf, false, {relative='win', width=1, height=1, row=0, col=4, focusable=false})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -2685,7 +2685,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_set_config(win, {relative='win', row=0, col=15})
+      meths.nvim_win_set_config(win, {relative='win', row=0, col=15})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -2709,7 +2709,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_close(win,false)
+      meths.nvim_win_close(win,false)
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -2745,8 +2745,8 @@ describe('float window', function()
         command('sargument 6')
 
         local float_opts = { relative = 'editor', row = 6, col = 0, width = 40, height = 1 }
-        meths.win_set_config(w3, float_opts)
-        meths.win_set_config(w4, float_opts)
+        meths.nvim_win_set_config(w3, float_opts)
+        meths.nvim_win_set_config(w4, float_opts)
         command('wincmd =')
         if multigrid then
           screen:expect{grid=[[
@@ -2875,36 +2875,36 @@ describe('float window', function()
     end)
 
     it('API has proper error messages', function()
-      local buf = meths.create_buf(false,false)
+      local buf = meths.nvim_create_buf(false,false)
       eq("Invalid key: 'bork'",
-         pcall_err(meths.open_win,buf, false, {width=20,height=2,bork=true}))
+         pcall_err(meths.nvim_open_win,buf, false, {width=20,height=2,bork=true}))
       eq("'win' key is only valid with relative='win'",
-         pcall_err(meths.open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,win=0}))
+         pcall_err(meths.nvim_open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,win=0}))
       eq("Only one of 'relative' and 'external' must be used",
-         pcall_err(meths.open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,external=true}))
+         pcall_err(meths.nvim_open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,external=true}))
       eq("Invalid value of 'relative' key",
-         pcall_err(meths.open_win,buf, false, {width=20,height=2,relative='shell',row=0,col=0}))
+         pcall_err(meths.nvim_open_win,buf, false, {width=20,height=2,relative='shell',row=0,col=0}))
       eq("Invalid value of 'anchor' key",
-         pcall_err(meths.open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,anchor='bottom'}))
+         pcall_err(meths.nvim_open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,anchor='bottom'}))
       eq("'relative' requires 'row'/'col' or 'bufpos'",
-         pcall_err(meths.open_win,buf, false, {width=20,height=2,relative='editor'}))
+         pcall_err(meths.nvim_open_win,buf, false, {width=20,height=2,relative='editor'}))
       eq("'width' key must be a positive Integer",
-         pcall_err(meths.open_win,buf, false, {width=-1,height=2,relative='editor', row=0, col=0}))
+         pcall_err(meths.nvim_open_win,buf, false, {width=-1,height=2,relative='editor', row=0, col=0}))
       eq("'height' key must be a positive Integer",
-         pcall_err(meths.open_win,buf, false, {width=20,height=-1,relative='editor', row=0, col=0}))
+         pcall_err(meths.nvim_open_win,buf, false, {width=20,height=-1,relative='editor', row=0, col=0}))
       eq("'height' key must be a positive Integer",
-         pcall_err(meths.open_win,buf, false, {width=20,height=0,relative='editor', row=0, col=0}))
+         pcall_err(meths.nvim_open_win,buf, false, {width=20,height=0,relative='editor', row=0, col=0}))
       eq("Must specify 'width'",
-         pcall_err(meths.open_win,buf, false, {relative='editor', row=0, col=0}))
+         pcall_err(meths.nvim_open_win,buf, false, {relative='editor', row=0, col=0}))
       eq("Must specify 'height'",
-         pcall_err(meths.open_win,buf, false, {relative='editor', row=0, col=0, width=2}))
+         pcall_err(meths.nvim_open_win,buf, false, {relative='editor', row=0, col=0, width=2}))
     end)
 
     it('can be placed relative window or cursor', function()
       screen:try_resize(40,9)
-      meths.buf_set_lines(0, 0, -1, true, {'just some', 'example text'})
+      meths.nvim_buf_set_lines(0, 0, -1, true, {'just some', 'example text'})
       feed('gge')
-      local oldwin = meths.get_current_win()
+      local oldwin = meths.nvim_get_current_win()
       command('below split')
       if multigrid then
         screen:expect([[
@@ -2939,9 +2939,9 @@ describe('float window', function()
         ]])
       end
 
-      local buf = meths.create_buf(false,false)
+      local buf = meths.nvim_create_buf(false,false)
       -- no 'win' arg, relative default window
-      local win = meths.open_win(buf, false, {relative='win', width=20, height=2, row=0, col=10})
+      local win = meths.nvim_open_win(buf, false, {relative='win', width=20, height=2, row=0, col=10})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -2980,7 +2980,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_set_config(win, {relative='cursor', row=1, col=-2})
+      meths.nvim_win_set_config(win, {relative='cursor', row=1, col=-2})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -3019,7 +3019,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_set_config(win, {relative='cursor', row=0, col=0, anchor='SW'})
+      meths.nvim_win_set_config(win, {relative='cursor', row=0, col=0, anchor='SW'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -3058,7 +3058,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_set_config(win, {relative='win', win=oldwin, row=1, col=10, anchor='NW'})
+      meths.nvim_win_set_config(win, {relative='win', win=oldwin, row=1, col=10, anchor='NW'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -3097,7 +3097,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_set_config(win, {relative='win', win=oldwin, row=3, col=39, anchor='SE'})
+      meths.nvim_win_set_config(win, {relative='win', win=oldwin, row=3, col=39, anchor='SE'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -3136,7 +3136,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_set_config(win, {relative='win', win=0, row=0, col=50, anchor='NE'})
+      meths.nvim_win_set_config(win, {relative='win', win=0, row=0, col=50, anchor='NE'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -3206,7 +3206,7 @@ describe('float window', function()
 
     it('always anchor to corner including border', function()
       screen:try_resize(40,13)
-      meths.buf_set_lines(0, 0, -1, true, {'just some example text', 'some more example text'})
+      meths.nvim_buf_set_lines(0, 0, -1, true, {'just some example text', 'some more example text'})
       feed('ggeee')
       command('below split')
       if multigrid then
@@ -3242,10 +3242,10 @@ describe('float window', function()
         ]])
       end
 
-      local buf = meths.create_buf(false, false)
-      meths.buf_set_lines(buf, 0, -1, true, {' halloj! ',
+      local buf = meths.nvim_create_buf(false, false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {' halloj! ',
                                              ' BORDAA  '})
-      local win = meths.open_win(buf, false, {relative='cursor', width=9, height=2, row=1, col=-2, border="double"})
+      local win = meths.nvim_open_win(buf, false, {relative='cursor', width=9, height=2, row=1, col=-2, border="double"})
 
       if multigrid then
         screen:expect{grid=[[
@@ -3289,7 +3289,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_set_config(win, {relative='cursor', row=0, col=-2, anchor='NE'})
+      meths.nvim_win_set_config(win, {relative='cursor', row=0, col=-2, anchor='NE'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -3332,7 +3332,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_set_config(win, {relative='cursor', row=1, col=-2, anchor='SE'})
+      meths.nvim_win_set_config(win, {relative='cursor', row=1, col=-2, anchor='SE'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -3375,7 +3375,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_set_config(win, {relative='cursor', row=0, col=-2, anchor='SW'})
+      meths.nvim_win_set_config(win, {relative='cursor', row=0, col=-2, anchor='SW'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -3595,8 +3595,8 @@ describe('float window', function()
 
     it('can be placed relative text in a window', function()
       screen:try_resize(30,5)
-      local firstwin = meths.get_current_win().id
-      meths.buf_set_lines(0, 0, -1, true, {'just some', 'example text that is wider than the window', '', '', 'more text'})
+      local firstwin = meths.nvim_get_current_win().id
+      meths.nvim_buf_set_lines(0, 0, -1, true, {'just some', 'example text that is wider than the window', '', '', 'more text'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -3619,10 +3619,10 @@ describe('float window', function()
         ]]}
       end
 
-      local buf = meths.create_buf(false,false)
-      meths.buf_set_lines(buf, 0, -1, true, {'some info!'})
+      local buf = meths.nvim_create_buf(false,false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {'some info!'})
 
-      local win = meths.open_win(buf, false, {relative='win', width=12, height=1, bufpos={1,32}})
+      local win = meths.nvim_open_win(buf, false, {relative='win', width=12, height=1, bufpos={1,32}})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -3650,7 +3650,7 @@ describe('float window', function()
         ]]}
       end
       eq({relative='win', width=12, height=1, bufpos={1,32}, anchor='NW', hide=false,
-          external=false, col=0, row=1, win=firstwin, focusable=true, zindex=50}, meths.win_get_config(win))
+          external=false, col=0, row=1, win=firstwin, focusable=true, zindex=50}, meths.nvim_win_get_config(win))
 
       feed('<c-e>')
       if multigrid then
@@ -3738,7 +3738,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {relative='win', bufpos={1,32}, anchor='SW'})
+      meths.nvim_win_set_config(win, {relative='win', bufpos={1,32}, anchor='SW'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -3811,7 +3811,7 @@ describe('float window', function()
       end
       command('close')
 
-      meths.win_set_config(win, {relative='win', bufpos={1,32}, anchor='NW', col=-2})
+      meths.nvim_win_set_config(win, {relative='win', bufpos={1,32}, anchor='NW', col=-2})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -3842,7 +3842,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {relative='win', bufpos={1,32}, row=2})
+      meths.nvim_win_set_config(win, {relative='win', bufpos={1,32}, row=2})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -3923,9 +3923,9 @@ describe('float window', function()
         ]])
       end
 
-      local buf = meths.create_buf(false,true)
-      meths.buf_set_lines(buf, 0, -1, true, {'some floaty text'})
-      meths.open_win(buf, false, {relative='editor', width=20, height=1, row=3, col=1})
+      local buf = meths.nvim_create_buf(false,true)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {'some floaty text'})
+      meths.nvim_open_win(buf, false, {relative='editor', width=20, height=1, row=3, col=1})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -3958,8 +3958,8 @@ describe('float window', function()
         local screen2 = Screen.new(40,7)
         screen2:attach(nil, session2)
         screen2:set_default_attr_ids(attrs)
-        local buf = meths.create_buf(false,false)
-        meths.open_win(buf, true, {relative='editor', width=20, height=2, row=2, col=5})
+        local buf = meths.nvim_create_buf(false,false)
+        meths.nvim_open_win(buf, true, {relative='editor', width=20, height=2, row=2, col=5})
         local expected_pos = {
           [2]={{id=1001}, 'NW', 1, 2, 5}
         }
@@ -3985,9 +3985,9 @@ describe('float window', function()
 
 
     it('handles resized screen', function()
-      local buf = meths.create_buf(false,false)
-      meths.buf_set_lines(buf, 0, -1, true, {'such', 'very', 'float'})
-      local win = meths.open_win(buf, false, {relative='editor', width=15, height=4, row=2, col=10})
+      local buf = meths.nvim_create_buf(false,false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {'such', 'very', 'float'})
+      local win = meths.nvim_open_win(buf, false, {relative='editor', width=15, height=4, row=2, col=10})
       local expected_pos = {
           [4]={{id=1001}, 'NW', 1, 2, 10, true},
       }
@@ -4150,7 +4150,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_set_config(win, {height=3})
+      meths.nvim_win_set_config(win, {height=3})
       feed('gg')
       if multigrid then
         screen:expect{grid=[[
@@ -4435,8 +4435,8 @@ describe('float window', function()
       command("set inccommand=split")
       command("set laststatus=2")
 
-      local buf = meths.create_buf(false,false)
-      meths.open_win(buf, true, {relative='editor', width=30, height=3, row=2, col=0})
+      local buf = meths.nvim_create_buf(false,false)
+      meths.nvim_open_win(buf, true, {relative='editor', width=30, height=3, row=2, col=0})
 
       insert([[
       foo
@@ -4532,17 +4532,17 @@ describe('float window', function()
     end)
 
     it('does not crash when set cmdheight #9680', function()
-      local buf = meths.create_buf(false,false)
-      meths.open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
+      local buf = meths.nvim_create_buf(false,false)
+      meths.nvim_open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
       command("set cmdheight=2")
-      eq(1, meths.eval('1'))
+      eq(1, meths.nvim_eval('1'))
     end)
 
     describe('and completion', function()
       before_each(function()
-        local buf = meths.create_buf(false,false)
-        local win = meths.open_win(buf, true, {relative='editor', width=12, height=4, row=2, col=5}).id
-        meths.set_option_value('winhl', 'Normal:ErrorMsg', {win=win})
+        local buf = meths.nvim_create_buf(false,false)
+        local win = meths.nvim_open_win(buf, true, {relative='editor', width=12, height=4, row=2, col=5}).id
+        meths.nvim_set_option_value('winhl', 'Normal:ErrorMsg', {win=win})
         if multigrid then
           screen:expect{grid=[[
           ## grid 1
@@ -4890,9 +4890,9 @@ describe('float window', function()
           ]])
         end
 
-        local buf = meths.create_buf(false,true)
-        meths.buf_set_lines(buf,0,-1,true,{"some info", "about item"})
-        win = meths.open_win(buf, false, {relative='cursor', width=12, height=2, row=1, col=10})
+        local buf = meths.nvim_create_buf(false,true)
+        meths.nvim_buf_set_lines(buf,0,-1,true,{"some info", "about item"})
+        win = meths.nvim_open_win(buf, false, {relative='cursor', width=12, height=2, row=1, col=10})
         if multigrid then
           screen:expect{grid=[[
           ## grid 1
@@ -4954,7 +4954,7 @@ describe('float window', function()
           ]])
         end
 
-        meths.win_close(win, false)
+        meths.nvim_win_close(win, false)
         if multigrid then
           screen:expect([[
           ## grid 1
@@ -4976,7 +4976,7 @@ describe('float window', function()
       end)
 
       it('and close float first', function()
-        meths.win_close(win, false)
+        meths.nvim_win_close(win, false)
         if multigrid then
           screen:expect{grid=[[
           ## grid 1
@@ -5028,10 +5028,10 @@ describe('float window', function()
     end)
 
     it("can use Normal as background", function()
-      local buf = meths.create_buf(false,false)
-      meths.buf_set_lines(buf,0,-1,true,{"here", "float"})
-      local win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
-      meths.set_option_value('winhl', 'Normal:Normal', {win=win})
+      local buf = meths.nvim_create_buf(false,false)
+      meths.nvim_buf_set_lines(buf,0,-1,true,{"here", "float"})
+      local win = meths.nvim_open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
+      meths.nvim_set_option_value('winhl', 'Normal:Normal', {win=win})
 
       if multigrid then
         screen:expect{grid=[[
@@ -5071,10 +5071,10 @@ describe('float window', function()
         -- the default, but be explicit:
         command("set laststatus=1")
         command("set hidden")
-        meths.buf_set_lines(0,0,-1,true,{"x"})
-        local buf = meths.create_buf(false,false)
-        win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
-        meths.buf_set_lines(buf,0,-1,true,{"y"})
+        meths.nvim_buf_set_lines(0,0,-1,true,{"x"})
+        local buf = meths.nvim_create_buf(false,false)
+        win = meths.nvim_open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
+        meths.nvim_buf_set_lines(buf,0,-1,true,{"y"})
         expected_pos = {
           [4]={{id=1001}, 'NW', 1, 2, 5, true}
         }
@@ -5159,7 +5159,7 @@ describe('float window', function()
       end)
 
       it("w with focusable=false", function()
-        meths.win_set_config(win, {focusable=false})
+        meths.nvim_win_set_config(win, {focusable=false})
         expected_pos[4][6] = false
         feed("<c-w>wi") -- i to provoke redraw
         if multigrid then
@@ -5270,7 +5270,7 @@ describe('float window', function()
 
       it("focus by mouse", function()
         if multigrid then
-          meths.input_mouse('left', 'press', '', 4, 0, 0)
+          meths.nvim_input_mouse('left', 'press', '', 4, 0, 0)
           screen:expect{grid=[[
           ## grid 1
             [2:----------------------------------------]|*6
@@ -5285,7 +5285,7 @@ describe('float window', function()
             {2:~                   }|
           ]], float_pos=expected_pos}
         else
-          meths.input_mouse('left', 'press', '', 0, 2, 5)
+          meths.nvim_input_mouse('left', 'press', '', 0, 2, 5)
           screen:expect([[
             x                                       |
             {0:~                                       }|
@@ -5297,7 +5297,7 @@ describe('float window', function()
         end
 
         if multigrid then
-          meths.input_mouse('left', 'press', '', 2, 0, 0)
+          meths.nvim_input_mouse('left', 'press', '', 2, 0, 0)
           screen:expect{grid=[[
           ## grid 1
             [2:----------------------------------------]|*6
@@ -5312,7 +5312,7 @@ describe('float window', function()
             {2:~                   }|
           ]], float_pos=expected_pos}
         else
-          meths.input_mouse('left', 'press', '', 0, 0, 0)
+          meths.nvim_input_mouse('left', 'press', '', 0, 0, 0)
           screen:expect([[
             ^x                                       |
             {0:~                                       }|
@@ -5325,11 +5325,11 @@ describe('float window', function()
       end)
 
       it("focus by mouse (focusable=false)", function()
-        meths.win_set_config(win, {focusable=false})
-        meths.buf_set_lines(0, -1, -1, true, {"a"})
+        meths.nvim_win_set_config(win, {focusable=false})
+        meths.nvim_buf_set_lines(0, -1, -1, true, {"a"})
         expected_pos[4][6] = false
         if multigrid then
-          meths.input_mouse('left', 'press', '', 4, 0, 0)
+          meths.nvim_input_mouse('left', 'press', '', 4, 0, 0)
           screen:expect{grid=[[
           ## grid 1
             [2:----------------------------------------]|*6
@@ -5345,7 +5345,7 @@ describe('float window', function()
             {2:~                   }|
           ]], float_pos=expected_pos}
         else
-          meths.input_mouse('left', 'press', '', 0, 2, 5)
+          meths.nvim_input_mouse('left', 'press', '', 0, 2, 5)
           screen:expect([[
             x                                       |
             ^a                                       |
@@ -5357,7 +5357,7 @@ describe('float window', function()
         end
 
         if multigrid then
-          meths.input_mouse('left', 'press', '', 2, 0, 0)
+          meths.nvim_input_mouse('left', 'press', '', 2, 0, 0)
           screen:expect{grid=[[
           ## grid 1
             [2:----------------------------------------]|*6
@@ -5373,7 +5373,7 @@ describe('float window', function()
             {2:~                   }|
           ]], float_pos=expected_pos, unchanged=true}
         else
-          meths.input_mouse('left', 'press', '', 0, 0, 0)
+          meths.nvim_input_mouse('left', 'press', '', 0, 0, 0)
           screen:expect([[
             ^x                                       |
             a                                       |
@@ -6155,7 +6155,7 @@ describe('float window', function()
         -- enter first float
         feed('<c-w><c-w>')
         -- enter second float
-        meths.open_win(0, true, {relative='editor', width=20, height=2, row=4, col=8})
+        meths.nvim_open_win(0, true, {relative='editor', width=20, height=2, row=4, col=8})
         if multigrid then
           screen:expect{grid=[[
           ## grid 1
@@ -6475,7 +6475,7 @@ describe('float window', function()
         end
 
         if multigrid then
-          meths.win_set_config(0, {external=true, width=30, height=2})
+          meths.nvim_win_set_config(0, {external=true, width=30, height=2})
           expected_pos = {[4]={external=true}}
           screen:expect{grid=[[
           ## grid 1
@@ -6493,7 +6493,7 @@ describe('float window', function()
           ]], float_pos=expected_pos}
         else
           eq("UI doesn't support external windows",
-             pcall_err(meths.win_set_config, 0, {external=true, width=30, height=2}))
+             pcall_err(meths.nvim_win_set_config, 0, {external=true, width=30, height=2}))
           return
         end
 
@@ -6519,7 +6519,7 @@ describe('float window', function()
       end)
 
       it('J (float with border)', function()
-        meths.win_set_config(win, {relative='editor', width=20, height=2, row=2, col=5, border='single'})
+        meths.nvim_win_set_config(win, {relative='editor', width=20, height=2, row=2, col=5, border='single'})
         if multigrid then
           screen:expect{grid=[[
           ## grid 1
@@ -6791,7 +6791,7 @@ describe('float window', function()
       it(":tabnew and :tabnext (external)", function()
         if multigrid then
           -- also test external window wider than main screen
-          meths.win_set_config(win, {external=true, width=65, height=4})
+          meths.nvim_win_set_config(win, {external=true, width=65, height=4})
           expected_pos = {[4]={external=true}}
           feed(":tabnew<cr>")
           screen:expect{grid=[[
@@ -6813,7 +6813,7 @@ describe('float window', function()
         ]], float_pos=expected_pos}
         else
           eq("UI doesn't support external windows",
-             pcall_err(meths.win_set_config, 0, {external=true, width=65, height=4}))
+             pcall_err(meths.nvim_win_set_config, 0, {external=true, width=65, height=4}))
         end
 
         feed(":tabnext<cr>")
@@ -6861,9 +6861,9 @@ describe('float window', function()
     end)
 
     it("left drag changes visual selection in float window", function()
-      local buf = meths.create_buf(false,false)
-      meths.buf_set_lines(buf, 0, -1, true, {'foo', 'bar', 'baz'})
-      meths.open_win(buf, false, {relative='editor', width=20, height=3, row=2, col=5})
+      local buf = meths.nvim_create_buf(false,false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {'foo', 'bar', 'baz'})
+      meths.nvim_open_win(buf, false, {relative='editor', width=20, height=3, row=2, col=5})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -6885,7 +6885,7 @@ describe('float window', function()
           [4] = {win = {id = 1001}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0};
         }}
 
-        meths.input_mouse('left', 'press', '', 4, 0, 0)
+        meths.nvim_input_mouse('left', 'press', '', 4, 0, 0)
         screen:expect{grid=[[
         ## grid 1
           [2:----------------------------------------]|*6
@@ -6906,7 +6906,7 @@ describe('float window', function()
           [4] = {win = {id = 1001}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0};
         }}
 
-        meths.input_mouse('left', 'drag', '', 4, 1, 2)
+        meths.nvim_input_mouse('left', 'drag', '', 4, 1, 2)
         screen:expect{grid=[[
         ## grid 1
           [2:----------------------------------------]|*6
@@ -6937,7 +6937,7 @@ describe('float window', function()
                                                   |
         ]]}
 
-        meths.input_mouse('left', 'press', '', 0, 2, 5)
+        meths.nvim_input_mouse('left', 'press', '', 0, 2, 5)
         screen:expect{grid=[[
                                                   |
           {0:~                                       }|
@@ -6948,7 +6948,7 @@ describe('float window', function()
                                                   |
         ]]}
 
-        meths.input_mouse('left', 'drag', '', 0, 3, 7)
+        meths.nvim_input_mouse('left', 'drag', '', 0, 3, 7)
         screen:expect{grid=[[
                                                   |
           {0:~                                       }|
@@ -6962,9 +6962,9 @@ describe('float window', function()
     end)
 
     it("left drag changes visual selection in float window with border", function()
-      local buf = meths.create_buf(false,false)
-      meths.buf_set_lines(buf, 0, -1, true, {'foo', 'bar', 'baz'})
-      meths.open_win(buf, false, {relative='editor', width=20, height=3, row=0, col=5, border='single'})
+      local buf = meths.nvim_create_buf(false,false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {'foo', 'bar', 'baz'})
+      meths.nvim_open_win(buf, false, {relative='editor', width=20, height=3, row=0, col=5, border='single'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -6988,7 +6988,7 @@ describe('float window', function()
           [4] = {win = {id = 1001}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0};
         }}
 
-        meths.input_mouse('left', 'press', '', 4, 1, 1)
+        meths.nvim_input_mouse('left', 'press', '', 4, 1, 1)
         screen:expect{grid=[[
         ## grid 1
           [2:----------------------------------------]|*6
@@ -7011,7 +7011,7 @@ describe('float window', function()
           [4] = {win = {id = 1001}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0};
         }}
 
-        meths.input_mouse('left', 'drag', '', 4, 2, 3)
+        meths.nvim_input_mouse('left', 'drag', '', 4, 2, 3)
         screen:expect{grid=[[
         ## grid 1
           [2:----------------------------------------]|*6
@@ -7044,7 +7044,7 @@ describe('float window', function()
                                                   |
         ]]}
 
-        meths.input_mouse('left', 'press', '', 0, 1, 6)
+        meths.nvim_input_mouse('left', 'press', '', 0, 1, 6)
         screen:expect{grid=[[
                {5:┌────────────────────┐}             |
           {0:~    }{5:│}{1:^foo                 }{5:│}{0:             }|
@@ -7055,7 +7055,7 @@ describe('float window', function()
                                                   |
         ]]}
 
-        meths.input_mouse('left', 'drag', '', 0, 2, 8)
+        meths.nvim_input_mouse('left', 'drag', '', 0, 2, 8)
         screen:expect{grid=[[
                {5:┌────────────────────┐}             |
           {0:~    }{5:│}{27:foo}{1:                 }{5:│}{0:             }|
@@ -7069,10 +7069,10 @@ describe('float window', function()
     end)
 
     it("left drag changes visual selection in float window with winbar", function()
-      local buf = meths.create_buf(false,false)
-      meths.buf_set_lines(buf, 0, -1, true, {'foo', 'bar', 'baz'})
-      local float_win = meths.open_win(buf, false, {relative='editor', width=20, height=4, row=1, col=5})
-      meths.set_option_value('winbar', 'floaty bar', {win=float_win.id})
+      local buf = meths.nvim_create_buf(false,false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {'foo', 'bar', 'baz'})
+      local float_win = meths.nvim_open_win(buf, false, {relative='editor', width=20, height=4, row=1, col=5})
+      meths.nvim_set_option_value('winbar', 'floaty bar', {win=float_win.id})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -7095,7 +7095,7 @@ describe('float window', function()
           [4] = {win = {id = 1001}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0};
         }}
 
-        meths.input_mouse('left', 'press', '', 4, 1, 0)
+        meths.nvim_input_mouse('left', 'press', '', 4, 1, 0)
         screen:expect{grid=[[
         ## grid 1
           [2:----------------------------------------]|*6
@@ -7117,7 +7117,7 @@ describe('float window', function()
           [4] = {win = {id = 1001}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0};
         }}
 
-        meths.input_mouse('left', 'drag', '', 4, 2, 2)
+        meths.nvim_input_mouse('left', 'drag', '', 4, 2, 2)
         screen:expect{grid=[[
         ## grid 1
           [2:----------------------------------------]|*6
@@ -7149,7 +7149,7 @@ describe('float window', function()
                                                   |
         ]]}
 
-        meths.input_mouse('left', 'press', '', 0, 2, 5)
+        meths.nvim_input_mouse('left', 'press', '', 0, 2, 5)
         screen:expect{grid=[[
                                                   |
           {0:~    }{3:floaty bar          }{0:               }|
@@ -7160,7 +7160,7 @@ describe('float window', function()
                                                   |
         ]]}
 
-        meths.input_mouse('left', 'drag', '', 0, 3, 7)
+        meths.nvim_input_mouse('left', 'drag', '', 0, 3, 7)
         screen:expect{grid=[[
                                                   |
           {0:~    }{3:floaty bar          }{0:               }|
@@ -7174,9 +7174,9 @@ describe('float window', function()
     end)
 
     it('left drag changes visual selection if float window is turned into a split', function()
-      local buf = meths.create_buf(false,false)
-      meths.buf_set_lines(buf, 0, -1, true, {'foo', 'bar', 'baz'})
-      meths.open_win(buf, true, {relative='editor', width=20, height=3, row=2, col=5})
+      local buf = meths.nvim_create_buf(false,false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {'foo', 'bar', 'baz'})
+      meths.nvim_open_win(buf, true, {relative='editor', width=20, height=3, row=2, col=5})
       command('wincmd L')
       if multigrid then
         screen:expect([[
@@ -7196,7 +7196,7 @@ describe('float window', function()
           {0:~                   }|*2
         ]])
 
-        meths.input_mouse('left', 'press', '', 4, 2, 2)
+        meths.nvim_input_mouse('left', 'press', '', 4, 2, 2)
         screen:expect([[
         ## grid 1
           [2:-------------------]{5:│}[4:--------------------]|*5
@@ -7214,7 +7214,7 @@ describe('float window', function()
           {0:~                   }|*2
         ]])
 
-        meths.input_mouse('left', 'drag', '', 4, 1, 1)
+        meths.nvim_input_mouse('left', 'drag', '', 4, 1, 1)
         screen:expect([[
         ## grid 1
           [2:-------------------]{5:│}[4:--------------------]|*5
@@ -7241,7 +7241,7 @@ describe('float window', function()
                                                   |
         ]])
 
-        meths.input_mouse('left', 'press', '', 0, 2, 22)
+        meths.nvim_input_mouse('left', 'press', '', 0, 2, 22)
         screen:expect([[
                              {5:│}foo                 |
           {0:~                  }{5:│}bar                 |
@@ -7251,7 +7251,7 @@ describe('float window', function()
                                                   |
         ]])
 
-        meths.input_mouse('left', 'drag', '', 0, 1, 21)
+        meths.nvim_input_mouse('left', 'drag', '', 0, 1, 21)
         screen:expect([[
                              {5:│}foo                 |
           {0:~                  }{5:│}b^a{27:r}                 |
@@ -7264,9 +7264,9 @@ describe('float window', function()
     end)
 
     it('left click sets correct curswant in float window with border', function()
-      local buf = meths.create_buf(false,false)
-      meths.buf_set_lines(buf, 0, -1, true, {'', '', ''})
-      meths.open_win(buf, false, {relative='editor', width=20, height=3, row=0, col=5, border='single'})
+      local buf = meths.nvim_create_buf(false,false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {'', '', ''})
+      meths.nvim_open_win(buf, false, {relative='editor', width=20, height=3, row=0, col=5, border='single'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -7298,23 +7298,23 @@ describe('float window', function()
       end
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 3, 1)
+        meths.nvim_input_mouse('left', 'press', '', 4, 3, 1)
       else
-        meths.input_mouse('left', 'press', '', 0, 3, 6)
+        meths.nvim_input_mouse('left', 'press', '', 0, 3, 6)
       end
       eq({0, 3, 1, 0, 1}, funcs.getcurpos())
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 3, 2)
+        meths.nvim_input_mouse('left', 'press', '', 4, 3, 2)
       else
-        meths.input_mouse('left', 'press', '', 0, 3, 7)
+        meths.nvim_input_mouse('left', 'press', '', 0, 3, 7)
       end
       eq({0, 3, 1, 0, 2}, funcs.getcurpos())
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 3, 10)
+        meths.nvim_input_mouse('left', 'press', '', 4, 3, 10)
       else
-        meths.input_mouse('left', 'press', '', 0, 3, 15)
+        meths.nvim_input_mouse('left', 'press', '', 0, 3, 15)
       end
       eq({0, 3, 1, 0, 10}, funcs.getcurpos())
 
@@ -7355,7 +7355,7 @@ describe('float window', function()
       end
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 2, 1)
+        meths.nvim_input_mouse('left', 'press', '', 4, 2, 1)
         screen:expect{grid=[[
         ## grid 1
           [2:----------------------------------------]|*6
@@ -7378,7 +7378,7 @@ describe('float window', function()
           [4] = {win = {id = 1001}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0};
         }}
       else
-        meths.input_mouse('left', 'press', '', 0, 2, 6)
+        meths.nvim_input_mouse('left', 'press', '', 0, 2, 6)
         screen:expect{grid=[[
                {5:┌────────────────────┐}             |
           {0:~    }{5:│}{19: }{1:^                   }{5:│}{0:             }|
@@ -7391,23 +7391,23 @@ describe('float window', function()
       end
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 2, 2)
+        meths.nvim_input_mouse('left', 'press', '', 4, 2, 2)
       else
-        meths.input_mouse('left', 'press', '', 0, 2, 7)
+        meths.nvim_input_mouse('left', 'press', '', 0, 2, 7)
       end
       eq({0, 2, 1, 0, 1}, funcs.getcurpos())
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 2, 3)
+        meths.nvim_input_mouse('left', 'press', '', 4, 2, 3)
       else
-        meths.input_mouse('left', 'press', '', 0, 2, 8)
+        meths.nvim_input_mouse('left', 'press', '', 0, 2, 8)
       end
       eq({0, 2, 1, 0, 2}, funcs.getcurpos())
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 2, 11)
+        meths.nvim_input_mouse('left', 'press', '', 4, 2, 11)
       else
-        meths.input_mouse('left', 'press', '', 0, 2, 16)
+        meths.nvim_input_mouse('left', 'press', '', 0, 2, 16)
       end
       eq({0, 2, 1, 0, 10}, funcs.getcurpos())
     end)
@@ -7453,9 +7453,9 @@ describe('float window', function()
         occaecat cupidatat non proident, sunt in culpa
         qui officia deserunt mollit anim id est
         laborum.]])
-      local buf = meths.create_buf(false,false)
-      meths.buf_set_lines(buf, 0, -1, true, {"test", "", "popup    text"})
-      local win = meths.open_win(buf, false, {relative='editor', width=15, height=3, row=2, col=5})
+      local buf = meths.nvim_create_buf(false,false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {"test", "", "popup    text"})
+      local win = meths.nvim_open_win(buf, false, {relative='editor', width=15, height=3, row=2, col=5})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -7491,7 +7491,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.set_option_value("winblend", 30, {win=win.id})
+      meths.nvim_set_option_value("winblend", 30, {win=win.id})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -7528,7 +7528,7 @@ describe('float window', function()
       end
 
       -- Check that 'winblend' works with NormalNC highlight
-      meths.set_option_value('winhighlight', 'NormalNC:Visual', {win = win})
+      meths.nvim_set_option_value('winhighlight', 'NormalNC:Visual', {win = win})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -7573,7 +7573,7 @@ describe('float window', function()
       command('hi clear NormalNC')
 
       command('hi SpecialRegion guifg=Red blend=0')
-      meths.buf_add_highlight(buf, -1, "SpecialRegion", 2, 0, -1)
+      meths.nvim_buf_add_highlight(buf, -1, "SpecialRegion", 2, 0, -1)
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -7647,7 +7647,7 @@ describe('float window', function()
 
       -- Test scrolling by mouse
       if multigrid then
-        meths.input_mouse('wheel', 'down', '', 4, 2, 2)
+        meths.nvim_input_mouse('wheel', 'down', '', 4, 2, 2)
         screen:expect{grid=[[
         ## grid 1
           [2:--------------------------------------------------]|*8
@@ -7668,7 +7668,7 @@ describe('float window', function()
           {12:~              }|*2
         ]], float_pos={[4] = {{id = 1001}, "NW", 1, 2, 5, true}}}
       else
-        meths.input_mouse('wheel', 'down', '', 0, 4, 7)
+        meths.nvim_input_mouse('wheel', 'down', '', 0, 4, 7)
         screen:expect([[
           Ut enim ad minim veniam, quis nostrud             |
           exercitation ullamco laboris nisi ut aliquip ex   |
@@ -7683,9 +7683,9 @@ describe('float window', function()
       end
 
       -- Check that 'winblend' applies to border/title/footer
-      meths.win_set_config(win, {border='single', title='Title', footer='Footer'})
-      meths.set_option_value('winblend', 100, {win=win.id})
-      meths.set_option_value("cursorline", true, {win=0})
+      meths.nvim_win_set_config(win, {border='single', title='Title', footer='Footer'})
+      meths.nvim_set_option_value('winblend', 100, {win=win.id})
+      meths.nvim_set_option_value("cursorline", true, {win=0})
       command('hi clear VertSplit')
       feed('k0')
       if multigrid then
@@ -7729,9 +7729,9 @@ describe('float window', function()
       insert([[
         # TODO: 测试字典信息的准确性
         # FIXME: 测试字典信息的准确性]])
-      local buf = meths.create_buf(false,false)
-      meths.buf_set_lines(buf, 0, -1, true, {'口', '口'})
-      local win = meths.open_win(buf, false, {relative='editor', width=5, height=3, row=0, col=11, style='minimal'})
+      local buf = meths.nvim_create_buf(false,false)
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {'口', '口'})
+      local win = meths.nvim_open_win(buf, false, {relative='editor', width=5, height=3, row=0, col=11, style='minimal'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -7757,7 +7757,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_close(win, false)
+      meths.nvim_win_close(win, false)
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -7782,9 +7782,9 @@ describe('float window', function()
       -- The interaction between 'winblend' and doublewidth chars in the background
       -- does not look very good. But check no chars get incorrectly placed
       -- at least. Also check invisible EndOfBuffer region blends correctly.
-      meths.buf_set_lines(buf, 0, -1, true, {" x x  x   xx", "  x x  x   x"})
-      win = meths.open_win(buf, false, {relative='editor', width=12, height=3, row=0, col=11, style='minimal'})
-      meths.set_option_value('winblend', 30, {win=win.id})
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {" x x  x   xx", "  x x  x   x"})
+      win = meths.nvim_open_win(buf, false, {relative='editor', width=12, height=3, row=0, col=11, style='minimal'})
+      meths.nvim_set_option_value('winblend', 30, {win=win.id})
       screen:set_default_attr_ids({
         [1] = {foreground = tonumber('0xb282b2'), background = tonumber('0xffcfff')},
         [2] = {foreground = Screen.colors.Grey0, background = tonumber('0xffcfff')},
@@ -7820,7 +7820,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_set_config(win, {relative='editor', row=0, col=12})
+      meths.nvim_win_set_config(win, {relative='editor', row=0, col=12})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -7974,9 +7974,9 @@ describe('float window', function()
     end)
 
     it("correctly orders multiple opened floats (current last)", function()
-      local buf = meths.create_buf(false,false)
-      local win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
-      meths.set_option_value("winhl", "Normal:ErrorMsg,EndOfBuffer:ErrorMsg", {win=win.id})
+      local buf = meths.nvim_create_buf(false,false)
+      local win = meths.nvim_open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
+      meths.nvim_set_option_value("winhl", "Normal:ErrorMsg,EndOfBuffer:ErrorMsg", {win=win.id})
 
       if multigrid then
         screen:expect{grid=[[
@@ -8060,9 +8060,9 @@ describe('float window', function()
     end)
 
     it("correctly orders multiple opened floats (non-current last)", function()
-      local buf = meths.create_buf(false,false)
-      local win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
-      meths.set_option_value("winhl", "Normal:ErrorMsg,EndOfBuffer:ErrorMsg", {win=win.id})
+      local buf = meths.nvim_create_buf(false,false)
+      local win = meths.nvim_open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
+      meths.nvim_set_option_value("winhl", "Normal:ErrorMsg,EndOfBuffer:ErrorMsg", {win=win.id})
 
       if multigrid then
         screen:expect{grid=[[
@@ -8146,13 +8146,13 @@ describe('float window', function()
     end)
 
     it('can use z-index', function()
-      local buf = meths.create_buf(false,false)
-      local win1 = meths.open_win(buf, false, {relative='editor', width=20, height=3, row=1, col=5, zindex=30})
-      meths.set_option_value("winhl", "Normal:ErrorMsg,EndOfBuffer:ErrorMsg", {win=win1.id})
-      local win2 = meths.open_win(buf, false, {relative='editor', width=20, height=3, row=2, col=6, zindex=50})
-      meths.set_option_value("winhl", "Normal:Search,EndOfBuffer:Search", {win=win2.id})
-      local win3 = meths.open_win(buf, false, {relative='editor', width=20, height=3, row=3, col=7, zindex=40})
-      meths.set_option_value("winhl", "Normal:Question,EndOfBuffer:Question", {win=win3.id})
+      local buf = meths.nvim_create_buf(false,false)
+      local win1 = meths.nvim_open_win(buf, false, {relative='editor', width=20, height=3, row=1, col=5, zindex=30})
+      meths.nvim_set_option_value("winhl", "Normal:ErrorMsg,EndOfBuffer:ErrorMsg", {win=win1.id})
+      local win2 = meths.nvim_open_win(buf, false, {relative='editor', width=20, height=3, row=2, col=6, zindex=50})
+      meths.nvim_set_option_value("winhl", "Normal:Search,EndOfBuffer:Search", {win=win2.id})
+      local win3 = meths.nvim_open_win(buf, false, {relative='editor', width=20, height=3, row=3, col=7, zindex=40})
+      meths.nvim_set_option_value("winhl", "Normal:Question,EndOfBuffer:Question", {win=win3.id})
 
       if multigrid then
         screen:expect{grid=[[
@@ -8197,9 +8197,9 @@ describe('float window', function()
     end)
 
     it('can use winbar', function()
-      local buf = meths.create_buf(false,false)
-      local win1 = meths.open_win(buf, false, {relative='editor', width=15, height=3, row=1, col=5})
-      meths.set_option_value('winbar', 'floaty bar', {win=win1.id})
+      local buf = meths.nvim_create_buf(false,false)
+      local win1 = meths.nvim_open_win(buf, false, {relative='editor', width=15, height=3, row=1, col=5})
+      meths.nvim_set_option_value('winbar', 'floaty bar', {win=win1.id})
 
       if multigrid then
         screen:expect{grid=[[
@@ -8233,7 +8233,7 @@ describe('float window', function()
       end
 
       -- resize and add a border
-      meths.win_set_config(win1, {relative='editor', width=15, height=4, row=0, col=4, border = 'single'})
+      meths.nvim_win_set_config(win1, {relative='editor', width=15, height=4, row=0, col=4, border = 'single'})
 
       if multigrid then
         screen:expect{grid=[[
@@ -8272,8 +8272,8 @@ describe('float window', function()
     it('it can be resized with messages and cmdheight=0 #20106', function()
       screen:try_resize(40,9)
       command 'set cmdheight=0'
-      local buf = meths.create_buf(false,true)
-      local win = meths.open_win(buf, false, {relative='editor', width=40, height=4, anchor='SW', row=9, col=0, style='minimal', border="single", noautocmd=true})
+      local buf = meths.nvim_create_buf(false,true)
+      local win = meths.nvim_open_win(buf, false, {relative='editor', width=40, height=4, anchor='SW', row=9, col=0, style='minimal', border="single", noautocmd=true})
 
       if multigrid then
         screen:expect{grid=[[
@@ -8338,7 +8338,7 @@ describe('float window', function()
 
       end
 
-      meths.win_close(win, true)
+      meths.nvim_win_close(win, true)
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -8360,8 +8360,8 @@ describe('float window', function()
 
     it('it can be resized with messages and cmdheight=1', function()
       screen:try_resize(40,9)
-      local buf = meths.create_buf(false,true)
-      local win = meths.open_win(buf, false, {relative='editor', width=40, height=4, anchor='SW', row=8, col=0, style='minimal', border="single", noautocmd=true})
+      local buf = meths.nvim_create_buf(false,true)
+      local win = meths.nvim_open_win(buf, false, {relative='editor', width=40, height=4, anchor='SW', row=8, col=0, style='minimal', border="single", noautocmd=true})
 
       if multigrid then
         screen:expect{grid=[[
@@ -8468,7 +8468,7 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_close(win, true)
+      meths.nvim_win_close(win, true)
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -8494,7 +8494,7 @@ describe('float window', function()
     describe('no crash after moving and closing float window #21547', function()
       local function test_float_move_close(cmd)
         local float_opts = {relative = 'editor', row = 1, col = 1, width = 10, height = 10}
-        meths.open_win(meths.create_buf(false, false), true, float_opts)
+        meths.nvim_open_win(meths.nvim_create_buf(false, false), true, float_opts)
         if multigrid then
           screen:expect({float_pos = {[4] = {{id = 1001}, 'NW', 1, 1, 1, true}}})
         end
@@ -8521,7 +8521,7 @@ describe('float window', function()
 
     it(':sleep cursor placement #22639', function()
       local float_opts = {relative = 'editor', row = 1, col = 1, width = 4, height = 3}
-      local win = meths.open_win(meths.create_buf(false, false), true, float_opts)
+      local win = meths.nvim_open_win(meths.nvim_create_buf(false, false), true, float_opts)
       feed('iab<CR>cd<Esc>')
       feed(':sleep 100')
       if multigrid then
@@ -8589,7 +8589,7 @@ describe('float window', function()
       feed('<C-C>')
       screen:expect_unchanged()
 
-      meths.win_set_config(win, {border = 'single'})
+      meths.nvim_win_set_config(win, {border = 'single'})
       feed(':sleep 100')
       if multigrid then
         screen:expect{grid=[[
@@ -8738,7 +8738,7 @@ describe('float window', function()
 
     it('with rightleft and border #22640', function()
       local float_opts = {relative='editor', width=5, height=3, row=1, col=1, border='single'}
-      meths.open_win(meths.create_buf(false, false), true, float_opts)
+      meths.nvim_open_win(meths.nvim_create_buf(false, false), true, float_opts)
       command('setlocal rightleft')
       feed('iabc<CR>def<Esc>')
       if multigrid then
@@ -8777,8 +8777,8 @@ describe('float window', function()
     end)
 
     it('float window with hide option', function()
-      local buf = meths.create_buf(false,false)
-      local win = meths.open_win(buf, false, {relative='editor', width=10, height=2, row=2, col=5, hide = true})
+      local buf = meths.nvim_create_buf(false,false)
+      local win = meths.nvim_open_win(buf, false, {relative='editor', width=10, height=2, row=2, col=5, hide = true})
       local expected_pos = {
           [4]={{id=1001}, 'NW', 1, 2, 5, true},
       }
@@ -8806,7 +8806,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_set_config(win, {hide = false})
+      meths.nvim_win_set_config(win, {hide = false})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -8833,7 +8833,7 @@ describe('float window', function()
         ]])
       end
 
-      meths.win_set_config(win, {hide=true})
+      meths.nvim_win_set_config(win, {hide=true})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -8859,18 +8859,18 @@ describe('float window', function()
     end)
 
     it(':fclose command #9663', function()
-      local buf_a = meths.create_buf(false,false)
-      local buf_b = meths.create_buf(false,false)
-      local buf_c = meths.create_buf(false,false)
-      local buf_d = meths.create_buf(false,false)
+      local buf_a = meths.nvim_create_buf(false,false)
+      local buf_b = meths.nvim_create_buf(false,false)
+      local buf_c = meths.nvim_create_buf(false,false)
+      local buf_d = meths.nvim_create_buf(false,false)
       local config_a = {relative='editor', width=11, height=11, row=5, col=5, border ='single', zindex=50}
       local config_b = {relative='editor', width=8, height=8, row=7, col=7, border ='single', zindex=70}
       local config_c = {relative='editor', width=4, height=4, row=9, col=9, border ='single',zindex=90}
       local config_d = {relative='editor', width=2, height=2, row=10, col=10, border ='single',zindex=100}
-      meths.open_win(buf_a, false, config_a)
-      meths.open_win(buf_b, false, config_b)
-      meths.open_win(buf_c, false, config_c)
-      meths.open_win(buf_d, false, config_d)
+      meths.nvim_open_win(buf_a, false, config_a)
+      meths.nvim_open_win(buf_b, false, config_b)
+      meths.nvim_open_win(buf_c, false, config_c)
+      meths.nvim_open_win(buf_d, false, config_d)
       local expected_pos = {
           [4]={{id=1001}, 'NW', 1, 5, 5, true, 50},
           [5]={{id=1002}, 'NW', 1, 7, 7, true, 70},

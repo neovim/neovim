@@ -28,8 +28,8 @@ describe('ext_hlstate detailed highlights', function()
     insert([[
       these are some lines
       with colorful text]])
-    meths.buf_add_highlight(0, -1, 'String', 0, 10, 14)
-    meths.buf_add_highlight(0, -1, 'Statement', 1, 5, -1)
+    meths.nvim_buf_add_highlight(0, -1, 'String', 0, 10, 14)
+    meths.nvim_buf_add_highlight(0, -1, 'Statement', 1, 5, -1)
     command('/th co')
 
     screen:expect(

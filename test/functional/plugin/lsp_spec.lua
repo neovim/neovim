@@ -363,9 +363,9 @@ describe('LSP', function()
         end,
         on_handler = function(_, _, ctx)
           if ctx.method == 'finish' then
-            eq('basic_init', meths.get_var('lsp_attached'))
+            eq('basic_init', meths.nvim_get_var('lsp_attached'))
             exec_lua('return lsp.buf_detach_client(BUFFER, TEST_RPC_CLIENT_ID)')
-            eq('basic_init', meths.get_var('lsp_detached'))
+            eq('basic_init', meths.nvim_get_var('lsp_detached'))
             client.stop()
           end
         end,

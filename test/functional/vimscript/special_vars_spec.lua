@@ -107,8 +107,8 @@ describe('Special values', function()
   end)
 
   it('does not work with +=/-=/.=', function()
-    meths.set_var('true', true)
-    meths.set_var('false', false)
+    meths.nvim_set_var('true', true)
+    meths.nvim_set_var('false', false)
     command('let null = v:null')
 
     eq('Vim(let):E734: Wrong variable type for +=', exc_exec('let true  += 1'))
@@ -172,7 +172,7 @@ describe('Special values', function()
       'Expected False but got v:null',
       'Expected True but got v:false',
       'Expected True but got v:null',
-    }, meths.get_vvar('errors'))
+    }, meths.nvim_get_vvar('errors'))
   end)
 
   describe('compat', function()

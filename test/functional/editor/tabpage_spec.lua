@@ -74,28 +74,28 @@ describe('tabpage', function()
   end)
 
   it('nvim_win_close and nvim_win_hide update tabline #20285', function()
-    eq(1, #meths.list_tabpages())
+    eq(1, #meths.nvim_list_tabpages())
     eq({ 1, 1 }, funcs.win_screenpos(0))
     local win1 = curwin().id
 
     command('tabnew')
-    eq(2, #meths.list_tabpages())
+    eq(2, #meths.nvim_list_tabpages())
     eq({ 2, 1 }, funcs.win_screenpos(0))
     local win2 = curwin().id
 
-    meths.win_close(win1, true)
+    meths.nvim_win_close(win1, true)
     eq(win2, curwin().id)
-    eq(1, #meths.list_tabpages())
+    eq(1, #meths.nvim_list_tabpages())
     eq({ 1, 1 }, funcs.win_screenpos(0))
 
     command('tabnew')
-    eq(2, #meths.list_tabpages())
+    eq(2, #meths.nvim_list_tabpages())
     eq({ 2, 1 }, funcs.win_screenpos(0))
     local win3 = curwin().id
 
-    meths.win_hide(win2)
+    meths.nvim_win_hide(win2)
     eq(win3, curwin().id)
-    eq(1, #meths.list_tabpages())
+    eq(1, #meths.nvim_list_tabpages())
     eq({ 1, 1 }, funcs.win_screenpos(0))
   end)
 
@@ -143,7 +143,7 @@ describe('tabpage', function()
   end)
 
   it(':tabs does not overflow IObuff with long path with comma #20850', function()
-    meths.buf_set_name(0, ('x'):rep(1024) .. ',' .. ('x'):rep(1024))
+    meths.nvim_buf_set_name(0, ('x'):rep(1024) .. ',' .. ('x'):rep(1024))
     command('tabs')
     assert_alive()
   end)

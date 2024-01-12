@@ -16,7 +16,7 @@ describe('Ex mode', function()
       feed('gQ' .. cmd .. '<C-b>"<CR>')
       local ret = eval('@:[1:]') -- Remove leading quote.
       feed('visual<CR>')
-      eq(meths.replace_termcodes(expected, true, true, true), ret)
+      eq(meths.nvim_replace_termcodes(expected, true, true, true), ret)
     end
     command('set sw=2')
     test_ex_edit('bar', 'foo bar<C-u>bar')

@@ -5,7 +5,7 @@ local source, exec_capture = helpers.source, helpers.exec_capture
 local mkdir = helpers.mkdir
 
 local function expected_empty()
-  eq({}, meths.get_vvar('errors'))
+  eq({}, meths.nvim_get_vvar('errors'))
 end
 
 describe('autochdir behavior', function()

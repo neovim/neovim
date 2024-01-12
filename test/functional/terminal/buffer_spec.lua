@@ -321,8 +321,8 @@ describe(':terminal buffer', function()
   it('emits TermRequest events #26972', function()
     command('split')
     command('enew')
-    local term = meths.open_term(0, {})
-    local termbuf = meths.get_current_buf().id
+    local term = meths.nvim_open_term(0, {})
+    local termbuf = meths.nvim_get_current_buf().id
 
     -- Test that autocommand buffer is associated with the terminal buffer, not the current buffer
     command('au TermRequest * let g:termbuf = +expand("<abuf>")')
@@ -332,7 +332,7 @@ describe(':terminal buffer', function()
     local cwd = funcs.getcwd():gsub('\\', '/')
     local parent = cwd:match('^(.+/)')
     local expected = '\027]7;file://host' .. parent
-    meths.chan_send(term, string.format('%s\027\\', expected))
+    meths.nvim_chan_send(term, string.format('%s\027\\', expected))
     eq(expected, eval('v:termrequest'))
     eq(termbuf, eval('g:termbuf'))
   end)
@@ -405,11 +405,11 @@ end)
 
 it('terminal truncates number of composing characters to 5', function()
   clear()
-  local chan = meths.open_term(0, {})
+  local chan = meths.nvim_open_term(0, {})
   local composing = ('a̳'):sub(2)
-  meths.chan_send(chan, 'a' .. composing:rep(8))
+  meths.nvim_chan_send(chan, 'a' .. composing:rep(8))
   retry(nil, nil, function()
-    eq('a' .. composing:rep(5), meths.get_current_line())
+    eq('a' .. composing:rep(5), meths.nvim_get_current_line())
   end)
 end)
 
@@ -512,7 +512,7 @@ describe('terminal input', function()
     }) do
       feed('<CR><C-V>' .. key)
       retry(nil, nil, function()
-        eq(key, meths.get_current_line())
+        eq(key, meths.nvim_get_current_line())
       end)
     end
   end)

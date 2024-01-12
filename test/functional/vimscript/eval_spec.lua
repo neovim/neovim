@@ -121,7 +121,7 @@ describe('List support code', function()
         let bl = range(%u)
         let dur = reltimestr(reltime(rt))
       ]]):format(len))
-      dur = tonumber(meths.get_var('dur'))
+      dur = tonumber(meths.nvim_get_var('dur'))
       if dur >= min_dur then
         -- print(('Using len %u, dur %g'):format(len, dur))
         break
@@ -136,7 +136,7 @@ describe('List support code', function()
     feed('<C-c>')
     poke_eventloop()
     command('let t_dur = reltimestr(reltime(t_rt))')
-    local t_dur = tonumber(meths.get_var('t_dur'))
+    local t_dur = tonumber(meths.nvim_get_var('t_dur'))
     if t_dur >= dur / 8 then
       eq(nil, ('Took too long to cancel: %g >= %g'):format(t_dur, dur / 8))
     end
@@ -147,7 +147,7 @@ describe('List support code', function()
     feed('<C-c>')
     poke_eventloop()
     command('let t_dur = reltimestr(reltime(t_rt))')
-    local t_dur = tonumber(meths.get_var('t_dur'))
+    local t_dur = tonumber(meths.nvim_get_var('t_dur'))
     print(('t_dur: %g'):format(t_dur))
     if t_dur >= dur / 8 then
       eq(nil, ('Took too long to cancel: %g >= %g'):format(t_dur, dur / 8))

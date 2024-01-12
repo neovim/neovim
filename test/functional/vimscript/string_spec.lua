@@ -161,7 +161,7 @@ describe('string() function', function()
     end)
 
     it('does not crash or halt when dumping partials with reference cycles in self', function()
-      meths.set_var('d', { v = true })
+      meths.nvim_set_var('d', { v = true })
       eq(
         [[Vim(echo):E724: unable to correctly dump variable with self-referencing container]],
         pcall_err(command, 'echo string(extend(extend(g:d, {"f": g:Test2_f}), {"p": g:d.f}))')
@@ -186,7 +186,7 @@ describe('string() function', function()
     end)
 
     it('does not crash or halt when dumping partials with reference cycles in arguments', function()
-      meths.set_var('l', {})
+      meths.nvim_set_var('l', {})
       eval('add(l, l)')
       -- Regression: the below line used to crash (add returns original list and
       -- there was error in dumping partials). Tested explicitly in
@@ -201,8 +201,8 @@ describe('string() function', function()
     it(
       'does not crash or halt when dumping partials with reference cycles in self and arguments',
       function()
-        meths.set_var('d', { v = true })
-        meths.set_var('l', {})
+        meths.nvim_set_var('d', { v = true })
+        meths.nvim_set_var('l', {})
         eval('add(l, l)')
         eval('add(l, function("Test1", l))')
         eval('add(l, function("Test1", d))')
@@ -231,7 +231,7 @@ describe('string() function', function()
     end)
 
     it('errors when dumping recursive lists', function()
-      meths.set_var('l', {})
+      meths.nvim_set_var('l', {})
       eval('add(l, l)')
       eq(
         'Vim(echo):E724: unable to correctly dump variable with self-referencing container',
@@ -240,7 +240,7 @@ describe('string() function', function()
     end)
 
     it('dumps recursive lists despite the error', function()
-      meths.set_var('l', {})
+      meths.nvim_set_var('l', {})
       eval('add(l, l)')
       eq(
         'Vim(echo):E724: unable to correctly dump variable with self-referencing container',
@@ -270,7 +270,7 @@ describe('string() function', function()
     end)
 
     it('errors when dumping recursive dictionaries', function()
-      meths.set_var('d', { d = 1 })
+      meths.nvim_set_var('d', { d = 1 })
       eval('extend(d, {"d": d})')
       eq(
         'Vim(echo):E724: unable to correctly dump variable with self-referencing container',
@@ -279,7 +279,7 @@ describe('string() function', function()
     end)
 
     it('dumps recursive dictionaries despite the error', function()
-      meths.set_var('d', { d = 1 })
+      meths.nvim_set_var('d', { d = 1 })
       eval('extend(d, {"d": d})')
       eq(
         'Vim(echo):E724: unable to correctly dump variable with self-referencing container',

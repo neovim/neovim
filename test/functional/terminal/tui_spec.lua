@@ -375,7 +375,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<65;8;1M')
     else
-      meths.input_mouse('wheel', 'down', '', 0, 0, 7)
+      meths.nvim_input_mouse('wheel', 'down', '', 0, 0, 7)
     end
     screen:expect([[
       {11:  2 }{1:0}----1----2----3----4│{11:  1 }0----1----2----3----|
@@ -390,7 +390,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<65;48;1M')
     else
-      meths.input_mouse('wheel', 'down', '', 0, 0, 47)
+      meths.nvim_input_mouse('wheel', 'down', '', 0, 0, 47)
     end
     screen:expect([[
       {11:  2 }{1:0}----1----2----3----4│{11:  2 }0----1----2----3----|
@@ -405,7 +405,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<67;8;1M')
     else
-      meths.input_mouse('wheel', 'right', '', 0, 0, 7)
+      meths.nvim_input_mouse('wheel', 'right', '', 0, 0, 7)
     end
     screen:expect([[
       {11:  2 }{1:-}---1----2----3----4-│{11:  2 }0----1----2----3----|
@@ -420,7 +420,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<67;48;1M')
     else
-      meths.input_mouse('wheel', 'right', '', 0, 0, 47)
+      meths.nvim_input_mouse('wheel', 'right', '', 0, 0, 47)
     end
     screen:expect([[
       {11:  2 }{1:-}---1----2----3----4-│{11:  2 }----1----2----3----4|
@@ -435,7 +435,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<69;8;1M')
     else
-      meths.input_mouse('wheel', 'down', 'S', 0, 0, 7)
+      meths.nvim_input_mouse('wheel', 'down', 'S', 0, 0, 7)
     end
     screen:expect([[
       {11:  5 }{1:-}---1----2----3----4-│{11:  2 }----1----2----3----4|
@@ -450,7 +450,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<69;48;1M')
     else
-      meths.input_mouse('wheel', 'down', 'S', 0, 0, 47)
+      meths.nvim_input_mouse('wheel', 'down', 'S', 0, 0, 47)
     end
     screen:expect([[
       {11:  5 }{1:-}---1----2----3----4-│{11:  5 }----1----2----3----4|
@@ -465,7 +465,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<71;8;1M')
     else
-      meths.input_mouse('wheel', 'right', 'S', 0, 0, 7)
+      meths.nvim_input_mouse('wheel', 'right', 'S', 0, 0, 7)
     end
     screen:expect([[
       {11:  5 }{1:-}---6----7----8----9 │{11:  5 }----1----2----3----4|
@@ -480,7 +480,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<71;48;1M')
     else
-      meths.input_mouse('wheel', 'right', 'S', 0, 0, 47)
+      meths.nvim_input_mouse('wheel', 'right', 'S', 0, 0, 47)
     end
     screen:expect([[
       {11:  5 }{1:-}---6----7----8----9 │{11:  5 }5----6----7----8----|
@@ -495,7 +495,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<64;8;1M')
     else
-      meths.input_mouse('wheel', 'up', '', 0, 0, 7)
+      meths.nvim_input_mouse('wheel', 'up', '', 0, 0, 7)
     end
     screen:expect([[
       {11:  4 }----6----7----8----9 │{11:  5 }5----6----7----8----|
@@ -510,7 +510,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<64;48;1M')
     else
-      meths.input_mouse('wheel', 'up', '', 0, 0, 47)
+      meths.nvim_input_mouse('wheel', 'up', '', 0, 0, 47)
     end
     screen:expect([[
       {11:  4 }----6----7----8----9 │{11:  4 }5----6----7----8----|
@@ -525,7 +525,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<66;8;1M')
     else
-      meths.input_mouse('wheel', 'left', '', 0, 0, 7)
+      meths.nvim_input_mouse('wheel', 'left', '', 0, 0, 7)
     end
     screen:expect([[
       {11:  4 }5----6----7----8----9│{11:  4 }5----6----7----8----|
@@ -540,7 +540,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<66;48;1M')
     else
-      meths.input_mouse('wheel', 'left', '', 0, 0, 47)
+      meths.nvim_input_mouse('wheel', 'left', '', 0, 0, 47)
     end
     screen:expect([[
       {11:  4 }5----6----7----8----9│{11:  4 }-5----6----7----8---|
@@ -555,7 +555,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<68;8;1M')
     else
-      meths.input_mouse('wheel', 'up', 'S', 0, 0, 7)
+      meths.nvim_input_mouse('wheel', 'up', 'S', 0, 0, 7)
     end
     screen:expect([[
       {11:  1 }5----6----7----8----9│{11:  4 }-5----6----7----8---|
@@ -570,7 +570,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<68;48;1M')
     else
-      meths.input_mouse('wheel', 'up', 'S', 0, 0, 47)
+      meths.nvim_input_mouse('wheel', 'up', 'S', 0, 0, 47)
     end
     screen:expect([[
       {11:  1 }5----6----7----8----9│{11:  1 }-5----6----7----8---|
@@ -585,7 +585,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<70;8;1M')
     else
-      meths.input_mouse('wheel', 'left', 'S', 0, 0, 7)
+      meths.nvim_input_mouse('wheel', 'left', 'S', 0, 0, 7)
     end
     screen:expect([[
       {11:  1 }0----1----2----3----4│{11:  1 }-5----6----7----8---|
@@ -600,7 +600,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<70;48;1M')
     else
-      meths.input_mouse('wheel', 'left', 'S', 0, 0, 47)
+      meths.nvim_input_mouse('wheel', 'left', 'S', 0, 0, 47)
     end
     screen:expect([[
       {11:  1 }0----1----2----3----4│{11:  1 }0----1----2----3----|
@@ -642,7 +642,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<2;5;1M')
     else
-      meths.input_mouse('right', 'press', '', 0, 0, 4)
+      meths.nvim_input_mouse('right', 'press', '', 0, 0, 4)
     end
     screen:expect([[
       {1:p}opup menu test                                   |
@@ -656,13 +656,13 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<2;5;1m')
     else
-      meths.input_mouse('right', 'release', '', 0, 0, 4)
+      meths.nvim_input_mouse('right', 'release', '', 0, 0, 4)
     end
     screen:expect_unchanged()
     if esc then
       feed_data('\027[<35;7;4M')
     else
-      meths.input_mouse('move', '', '', 0, 3, 6)
+      meths.nvim_input_mouse('move', '', '', 0, 3, 6)
     end
     screen:expect([[
       {1:p}opup menu test                                   |
@@ -676,7 +676,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<0;7;3M')
     else
-      meths.input_mouse('left', 'press', '', 0, 2, 6)
+      meths.nvim_input_mouse('left', 'press', '', 0, 2, 6)
     end
     screen:expect([[
       {1:p}opup menu test                                   |
@@ -688,13 +688,13 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<0;7;3m')
     else
-      meths.input_mouse('left', 'release', '', 0, 2, 6)
+      meths.nvim_input_mouse('left', 'release', '', 0, 2, 6)
     end
     screen:expect_unchanged()
     if esc then
       feed_data('\027[<2;45;3M')
     else
-      meths.input_mouse('right', 'press', '', 0, 2, 44)
+      meths.nvim_input_mouse('right', 'press', '', 0, 2, 44)
     end
     screen:expect([[
       {1:p}opup menu test                                   |
@@ -707,7 +707,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<34;48;6M')
     else
-      meths.input_mouse('right', 'drag', '', 0, 5, 47)
+      meths.nvim_input_mouse('right', 'drag', '', 0, 5, 47)
     end
     screen:expect([[
       {1:p}opup menu test                                   |
@@ -720,7 +720,7 @@ describe('TUI', function()
     if esc then
       feed_data('\027[<2;48;6m')
     else
-      meths.input_mouse('right', 'release', '', 0, 5, 47)
+      meths.nvim_input_mouse('right', 'release', '', 0, 5, 47)
     end
     screen:expect([[
       {1:p}opup menu test                                   |
@@ -2989,7 +2989,7 @@ describe('TUI as a client', function()
     local client_super = spawn_argv(true)
 
     set_session(server)
-    local server_pipe = meths.get_vvar('servername')
+    local server_pipe = meths.nvim_get_vvar('servername')
     server:request('nvim_input', 'iHalloj!<Esc>')
     server:request('nvim_command', 'set notermguicolors')
 
@@ -3022,10 +3022,10 @@ describe('TUI as a client', function()
     ]],
     }
 
-    eq(0, meths.get_vvar('shell_error'))
+    eq(0, meths.nvim_get_vvar('shell_error'))
     -- exits on input eof #22244
     funcs.system({ nvim_prog, '--server', server_pipe, '--remote-ui' })
-    eq(1, meths.get_vvar('shell_error'))
+    eq(1, meths.nvim_get_vvar('shell_error'))
 
     client_super:close()
     server:close()

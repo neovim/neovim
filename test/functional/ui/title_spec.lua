@@ -58,7 +58,7 @@ describe('title', function()
     end)
 
     it('an RPC call to nvim_set_option_value in a hidden buffer', function()
-      meths.set_option_value('autoindent', true, { buf = buf2 })
+      meths.nvim_set_option_value('autoindent', true, { buf = buf2 })
       command('redraw!')
       screen:expect(function()
         eq(expected, screen.title)
@@ -98,7 +98,7 @@ describe('title', function()
     it('setting the buffer of another window using RPC', function()
       local oldwin = curwin().id
       command('split')
-      meths.win_set_buf(oldwin, buf2)
+      meths.nvim_win_set_buf(oldwin, buf2)
       command('redraw!')
       screen:expect(function()
         eq(expected, screen.title)
@@ -124,7 +124,7 @@ describe('title', function()
     end)
 
     it('creating a floating window using RPC', function()
-      meths.open_win(buf2, false, {
+      meths.nvim_open_win(buf2, false, {
         relative = 'editor',
         width = 5,
         height = 5,

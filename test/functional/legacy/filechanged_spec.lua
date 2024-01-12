@@ -5,15 +5,15 @@ local is_os = helpers.is_os
 local skip = helpers.skip
 
 local function expected_empty()
-  eq({}, meths.get_vvar('errors'))
+  eq({}, meths.nvim_get_vvar('errors'))
 end
 
 describe('file changed dialog', function()
   before_each(function()
     clear()
-    meths.ui_attach(80, 24, {})
-    meths.set_option_value('autoread', false, {})
-    meths.set_option_value('fsync', true, {})
+    meths.nvim_ui_attach(80, 24, {})
+    meths.nvim_set_option_value('autoread', false, {})
+    meths.nvim_set_option_value('fsync', true, {})
   end)
 
   it('works', function()

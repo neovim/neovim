@@ -13,7 +13,7 @@ local function test_case(name, expected)
   local filename = testdir .. pathsep .. name
   command('edit ' .. filename)
   for opt, val in pairs(expected) do
-    eq(val, meths.get_option_value(opt, { buf = 0 }), name)
+    eq(val, meths.nvim_get_option_value(opt, { buf = 0 }), name)
   end
 end
 
@@ -195,15 +195,15 @@ But not this one
   end)
 
   it('can be disabled globally', function()
-    meths.set_var('editorconfig', false)
-    meths.set_option_value('shiftwidth', 42, {})
+    meths.nvim_set_var('editorconfig', false)
+    meths.nvim_set_option_value('shiftwidth', 42, {})
     test_case('3_space.txt', { shiftwidth = 42 })
   end)
 
   it('can be disabled per-buffer', function()
-    meths.set_option_value('shiftwidth', 42, {})
+    meths.nvim_set_option_value('shiftwidth', 42, {})
     local bufnr = funcs.bufadd(testdir .. pathsep .. '3_space.txt')
-    meths.buf_set_var(bufnr, 'editorconfig', false)
+    meths.nvim_buf_set_var(bufnr, 'editorconfig', false)
     test_case('3_space.txt', { shiftwidth = 42 })
     test_case('4_space.py', { shiftwidth = 4 })
   end)

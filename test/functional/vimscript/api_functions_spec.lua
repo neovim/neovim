@@ -80,20 +80,20 @@ describe('eval-API', function()
     -- Text-changing functions gave a "Failed to save undo information" error when called from an
     -- <expr> mapping outside do_cmdline() (msg_list == NULL), so use feed() to test this.
     command("inoremap <expr> <f2> nvim_buf_set_text(0, 0, 0, 0, 0, ['hi'])")
-    meths.set_vvar('errmsg', '')
+    meths.nvim_set_vvar('errmsg', '')
     feed('i<f2><esc>')
     eq(
       'E5555: API call: E565: Not allowed to change text or change window',
-      meths.get_vvar('errmsg')
+      meths.nvim_get_vvar('errmsg')
     )
 
     -- Some functions checking textlock (usually those that may change the current window or buffer)
     -- also ought to not be usable in the cmdwin.
-    local old_win = meths.get_current_win()
+    local old_win = meths.nvim_get_current_win()
     feed('q:')
     eq(
       'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-      pcall_err(meths.set_current_win, old_win)
+      pcall_err(meths.nvim_set_current_win, old_win)
     )
 
     -- But others, like nvim_buf_set_lines(), which just changes text, is OK.
@@ -103,13 +103,13 @@ describe('eval-API', function()
     -- Turning the cmdwin buffer into a terminal buffer would be pretty weird.
     eq(
       'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-      pcall_err(meths.open_term, 0, {})
+      pcall_err(meths.nvim_open_term, 0, {})
     )
 
     -- But turning a different buffer into a terminal from the cmdwin is OK.
-    local term_buf = meths.create_buf(false, true)
-    meths.open_term(term_buf, {})
-    eq('terminal', meths.get_option_value('buftype', { buf = term_buf }))
+    local term_buf = meths.nvim_create_buf(false, true)
+    meths.nvim_open_term(term_buf, {})
+    eq('terminal', meths.nvim_get_option_value('buftype', { buf = term_buf }))
   end)
 
   it('use buffer numbers and windows ids as handles', function()
@@ -207,7 +207,7 @@ describe('eval-API', function()
       'Vim(call):E48: Not allowed in sandbox',
       pcall_err(command, "sandbox call nvim_input('ievil')")
     )
-    eq({ '' }, meths.buf_get_lines(0, 0, -1, true))
+    eq({ '' }, meths.nvim_buf_get_lines(0, 0, -1, true))
   end)
 
   it('converts blobs to API strings', function()

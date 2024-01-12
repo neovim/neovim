@@ -56,9 +56,9 @@ describe("'directory' option", function()
       line 3 Abcdefghij
       end of testfile]])
 
-    meths.set_option_value('swapfile', true, {})
-    meths.set_option_value('swapfile', true, {})
-    meths.set_option_value('directory', '.', {})
+    meths.nvim_set_option_value('swapfile', true, {})
+    meths.nvim_set_option_value('swapfile', true, {})
+    meths.nvim_set_option_value('directory', '.', {})
 
     -- sanity check: files should not exist yet.
     eq(nil, vim.uv.fs_stat('.Xtest1.swp'))
@@ -70,7 +70,7 @@ describe("'directory' option", function()
     -- reading the output from :!ls.
     neq(nil, vim.uv.fs_stat('.Xtest1.swp'))
 
-    meths.set_option_value('directory', './Xtest2,.', {})
+    meths.nvim_set_option_value('directory', './Xtest2,.', {})
     command('edit Xtest1')
     poke_eventloop()
 
@@ -79,10 +79,10 @@ describe("'directory' option", function()
 
     eq({ 'Xtest1.swp', 'Xtest3' }, ls_dir_sorted('Xtest2'))
 
-    meths.set_option_value('directory', 'Xtest.je', {})
+    meths.nvim_set_option_value('directory', 'Xtest.je', {})
     command('bdelete')
     command('edit Xtest2/Xtest3')
-    eq(true, meths.get_option_value('swapfile', {}))
+    eq(true, meths.nvim_get_option_value('swapfile', {}))
     poke_eventloop()
 
     eq({ 'Xtest3' }, ls_dir_sorted('Xtest2'))

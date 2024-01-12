@@ -139,7 +139,7 @@ describe('immediately after a macro has finished executing,', function()
 
     it('if the macro does not end with a <Nop> mapping', function()
       feed('@asq') -- "q" from "s" mapping should start recording a macro instead of being no-op
-      eq({ mode = 'n', blocking = false }, meths.get_mode())
+      eq({ mode = 'n', blocking = false }, meths.nvim_get_mode())
       expect('')
       eq('', eval('@a'))
     end)
@@ -147,7 +147,7 @@ describe('immediately after a macro has finished executing,', function()
     it('if the macro ends with a <Nop> mapping', function()
       command('nnoremap 0 <Nop>')
       feed('@asq') -- "q" from "s" mapping should start recording a macro instead of being no-op
-      eq({ mode = 'n', blocking = false }, meths.get_mode())
+      eq({ mode = 'n', blocking = false }, meths.nvim_get_mode())
       expect('')
       eq('', eval('@a'))
     end)

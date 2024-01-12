@@ -42,7 +42,7 @@ describe(':oldfiles', function()
     feed_command('edit testfile2')
     feed_command('wshada')
     feed_command('rshada!')
-    local oldfiles = helpers.meths.get_vvar('oldfiles')
+    local oldfiles = helpers.meths.nvim_get_vvar('oldfiles')
     feed_command('oldfiles')
     screen:expect([[
                                                                                                           |
@@ -108,7 +108,7 @@ describe(':browse oldfiles', function()
     -- Ensure v:oldfiles isn't busted.  Since things happen so fast,
     -- the ordering of v:oldfiles is unstable (it uses qsort() under-the-hood).
     -- Let's verify the contents and the length of v:oldfiles before moving on.
-    oldfiles = helpers.meths.get_vvar('oldfiles')
+    oldfiles = helpers.meths.nvim_get_vvar('oldfiles')
     eq(2, #oldfiles)
     ok(filename == oldfiles[1] or filename == oldfiles[2])
     ok(filename2 == oldfiles[1] or filename2 == oldfiles[2])

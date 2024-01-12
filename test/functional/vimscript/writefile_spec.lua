@@ -100,7 +100,7 @@ describe('writefile()', function()
   end)
 
   it('shows correct file name when supplied numbers', function()
-    meths.set_current_dir(dname)
+    meths.nvim_set_current_dir(dname)
     eq(
       "Vim(call):E482: Can't open file 2 for writing: illegal operation on a directory",
       pcall_err(command, ('call writefile([42], %s)'):format(ddname_tail))

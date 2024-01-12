@@ -83,7 +83,7 @@ describe('script_get-based command', function()
           ]])):format(cmd, garbage)
             )
           )
-          neq(0, meths.get_var('exc'))
+          neq(0, meths.nvim_get_var('exc'))
         end
       end)
     end)

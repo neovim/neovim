@@ -494,7 +494,7 @@ describe('json_decode() function', function()
   end)
 
   local sp_decode_eq = function(expected, json)
-    meths.set_var('__json', json)
+    meths.nvim_set_var('__json', json)
     speq(expected, 'json_decode(g:__json)')
     command('unlet! g:__json')
   end
@@ -892,7 +892,7 @@ describe('json_encode() function', function()
   end)
 
   it('ignores improper values in &isprint', function()
-    meths.set_option_value('isprint', '1', {})
+    meths.nvim_set_option_value('isprint', '1', {})
     eq(1, eval('"\1" =~# "\\\\p"'))
     eq('"\\u0001"', funcs.json_encode('\1'))
   end)

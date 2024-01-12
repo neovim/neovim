@@ -494,7 +494,7 @@ describe('Buffer highlighting', function()
 
   it('respects priority', function()
     local set_extmark = curbufmeths.set_extmark
-    local id = meths.create_namespace('')
+    local id = meths.nvim_create_namespace('')
     insert [[foobar]]
 
     set_extmark(id, 0, 0, {
@@ -901,9 +901,9 @@ describe('Buffer highlighting', function()
     local set_virtual_text = curbufmeths.set_virtual_text
     eq(1, add_highlight(0, 'String', 0, 0, -1))
     eq(2, set_virtual_text(0, 0, { { '= text', 'Comment' } }, {}))
-    eq(3, meths.create_namespace('my-ns'))
+    eq(3, meths.nvim_create_namespace('my-ns'))
     eq(4, add_highlight(0, 'String', 0, 0, -1))
     eq(5, set_virtual_text(0, 0, { { '= text', 'Comment' } }, {}))
-    eq(6, meths.create_namespace('other-ns'))
+    eq(6, meths.nvim_create_namespace('other-ns'))
   end)
 end)

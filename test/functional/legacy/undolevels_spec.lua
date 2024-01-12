@@ -57,6 +57,6 @@ describe('undolevel', function()
       call Test_global_local_undolevels()
     ]])
 
-    eq({}, nvim.get_vvar('errors'))
+    eq({}, nvim.nvim_get_vvar('errors'))
   end)
 end)

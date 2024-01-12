@@ -47,9 +47,11 @@ describe('notify', function()
     end)
 
     it('does not crash for deeply nested variable', function()
-      meths.set_var('l', {})
+      meths.nvim_set_var('l', {})
       local nest_level = 1000
-      meths.command(('call map(range(%u), "extend(g:, {\'l\': [g:l]})")'):format(nest_level - 1))
+      meths.nvim_command(
+        ('call map(range(%u), "extend(g:, {\'l\': [g:l]})")'):format(nest_level - 1)
+      )
       eval('rpcnotify(' .. channel .. ', "event", g:l)')
       local msg = next_msg()
       eq('notification', msg[1])
@@ -106,7 +108,7 @@ describe('notify', function()
       exec_lua([[ return {pcall(vim.rpcrequest, ..., 'nvim_eval', '1+1')}]], catchan)
     )
     retry(nil, 3000, function()
-      eq({}, meths.get_chan_info(catchan))
+      eq({}, meths.nvim_get_chan_info(catchan))
     end) -- cat be dead :(
   end)
 end)

@@ -413,12 +413,12 @@ describe("'wildmenu'", function()
     }
 
     -- Wildcharm? where we are going we aint't no need no wildcharm.
-    eq(0, meths.get_option_value('wildcharm', {}))
+    eq(0, meths.nvim_get_option_value('wildcharm', {}))
     -- Don't mess the defaults yet (neovim is about backwards compatibility)
-    eq(9, meths.get_option_value('wildchar', {}))
+    eq(9, meths.nvim_get_option_value('wildchar', {}))
     -- Lol what is cnoremap? Some say it can define mappings.
     command 'set wildchar=0'
-    eq(0, meths.get_option_value('wildchar', {}))
+    eq(0, meths.nvim_get_option_value('wildchar', {}))
 
     command 'cnoremap <f2> <c-z>'
     feed(':syntax <f2>')
@@ -525,9 +525,9 @@ describe('command line completion', function()
   end)
 
   it('does not leak memory with <S-Tab> with wildmenu and only one match #19874', function()
-    meths.set_option_value('wildmenu', true, {})
-    meths.set_option_value('wildmode', 'full', {})
-    meths.set_option_value('wildoptions', 'pum', {})
+    meths.nvim_set_option_value('wildmenu', true, {})
+    meths.nvim_set_option_value('wildmode', 'full', {})
+    meths.nvim_set_option_value('wildoptions', 'pum', {})
 
     feed(':sign unpla<S-Tab>')
     screen:expect([[
@@ -545,8 +545,8 @@ describe('command line completion', function()
   end)
 
   it('does not show matches with <S-Tab> without wildmenu with wildmode=full', function()
-    meths.set_option_value('wildmenu', false, {})
-    meths.set_option_value('wildmode', 'full', {})
+    meths.nvim_set_option_value('wildmenu', false, {})
+    meths.nvim_set_option_value('wildmode', 'full', {})
 
     feed(':sign <S-Tab>')
     screen:expect([[
@@ -557,8 +557,8 @@ describe('command line completion', function()
   end)
 
   it('shows matches with <S-Tab> without wildmenu with wildmode=list', function()
-    meths.set_option_value('wildmenu', false, {})
-    meths.set_option_value('wildmode', 'list', {})
+    meths.nvim_set_option_value('wildmenu', false, {})
+    meths.nvim_set_option_value('wildmode', 'list', {})
 
     feed(':sign <S-Tab>')
     screen:expect([[

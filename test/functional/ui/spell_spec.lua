@@ -260,7 +260,7 @@ describe("'spell'", function()
       {6:search hit BOTTOM, continuing at TOP}                                            |
     ]])
     exec('echo ""')
-    local ns = meths.create_namespace('spell')
+    local ns = meths.nvim_create_namespace('spell')
     -- extmark with spell=true enables spell
     local id = curbufmeths.set_extmark(ns, 1, 4, { end_row = 1, end_col = 10, spell = true })
     screen:expect([[
@@ -368,7 +368,7 @@ describe("'spell'", function()
       syntax match Constant "^.*$"
       call setline(1, "This is some text without any spell errors.")
     ]])
-    local ns = meths.create_namespace('spell')
+    local ns = meths.nvim_create_namespace('spell')
     curbufmeths.set_extmark(ns, 0, 0, { hl_group = 'WarningMsg', end_col = 43 })
     screen:expect([[
       {6:^This is some text without any spell errors.}|

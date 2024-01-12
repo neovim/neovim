@@ -1205,7 +1205,7 @@ describe('lua stdlib', function()
       chan = vim.fn.jobstart({'cat'}, {rpc=true})
       vim.rpcrequest(chan, 'nvim_set_current_line', 'meow')
     ]])
-    eq('meow', meths.get_current_line())
+    eq('meow', meths.nvim_get_current_line())
     command("let x = [3, 'aa', v:true, v:null]")
     eq(
       true,
@@ -1250,7 +1250,7 @@ describe('lua stdlib', function()
     ]])
     )
     retry(10, nil, function()
-      eq('foo', meths.get_current_line())
+      eq('foo', meths.nvim_get_current_line())
     end)
 
     local screen = Screen.new(50, 7)
@@ -1282,7 +1282,7 @@ describe('lua stdlib', function()
     ]],
     }
     feed('<cr>')
-    eq({ 3, NIL }, meths.get_var('yy'))
+    eq({ 3, NIL }, meths.nvim_get_var('yy'))
 
     exec_lua([[timer:close()]])
   end)
@@ -1845,18 +1845,18 @@ describe('lua stdlib', function()
     eq({}, eval('v:oldfiles'))
 
     feed('i foo foo foo<Esc>0/foo<CR>')
-    eq({ 1, 1 }, meths.win_get_cursor(0))
+    eq({ 1, 1 }, meths.nvim_win_get_cursor(0))
     eq(1, eval('v:searchforward'))
     feed('n')
-    eq({ 1, 5 }, meths.win_get_cursor(0))
+    eq({ 1, 5 }, meths.nvim_win_get_cursor(0))
     exec_lua([[vim.v.searchforward = 0]])
     eq(0, eval('v:searchforward'))
     feed('n')
-    eq({ 1, 1 }, meths.win_get_cursor(0))
+    eq({ 1, 1 }, meths.nvim_win_get_cursor(0))
     exec_lua([[vim.v.searchforward = 1]])
     eq(1, eval('v:searchforward'))
     feed('n')
-    eq({ 1, 5 }, meths.win_get_cursor(0))
+    eq({ 1, 5 }, meths.nvim_win_get_cursor(0))
 
     local screen = Screen.new(60, 3)
     screen:set_default_attr_ids({
@@ -2886,7 +2886,7 @@ describe('lua stdlib', function()
     eq({}, exec_lua [[return {re1:match_str("x ac")}]])
     eq({ 3, 7 }, exec_lua [[return {re1:match_str("ac abbc")}]])
 
-    meths.buf_set_lines(0, 0, -1, true, { 'yy', 'abc abbc' })
+    meths.nvim_buf_set_lines(0, 0, -1, true, { 'yy', 'abc abbc' })
     eq({}, exec_lua [[return {re1:match_line(0, 0)}]])
     eq({ 0, 3 }, exec_lua [[return {re1:match_line(0, 1)}]])
     eq({ 3, 7 }, exec_lua [[return {re1:match_line(0, 1, 1)}]])
@@ -2970,10 +2970,10 @@ describe('lua stdlib', function()
 
     it('allows removing on_key listeners', function()
       -- Create some unused namespaces
-      meths.create_namespace('unused1')
-      meths.create_namespace('unused2')
-      meths.create_namespace('unused3')
-      meths.create_namespace('unused4')
+      meths.nvim_create_namespace('unused1')
+      meths.nvim_create_namespace('unused2')
+      meths.nvim_create_namespace('unused3')
+      meths.nvim_create_namespace('unused4')
 
       insert([[hello world]])
 
@@ -3303,8 +3303,8 @@ describe('lua stdlib', function()
 
     describe('returns -2 when interrupted', function()
       before_each(function()
-        local channel = meths.get_api_info()[1]
-        meths.set_var('channel', channel)
+        local channel = meths.nvim_get_api_info()[1]
+        meths.nvim_set_var('channel', channel)
       end)
 
       it('without callback', function()
@@ -3408,14 +3408,14 @@ describe('lua stdlib', function()
 
   describe('vim.api.nvim_buf_call', function()
     it('can access buf options', function()
-      local buf1 = meths.get_current_buf().id
+      local buf1 = meths.nvim_get_current_buf().id
       local buf2 = exec_lua [[
         buf2 = vim.api.nvim_create_buf(false, true)
         return buf2
       ]]
 
-      eq(false, meths.get_option_value('autoindent', { buf = buf1 }))
-      eq(false, meths.get_option_value('autoindent', { buf = buf2 }))
+      eq(false, meths.nvim_get_option_value('autoindent', { buf = buf1 }))
+      eq(false, meths.nvim_get_option_value('autoindent', { buf = buf2 }))
 
       local val = exec_lua [[
         return vim.api.nvim_buf_call(buf2, function()
@@ -3424,9 +3424,9 @@ describe('lua stdlib', function()
         end)
       ]]
 
-      eq(false, meths.get_option_value('autoindent', { buf = buf1 }))
-      eq(true, meths.get_option_value('autoindent', { buf = buf2 }))
-      eq(buf1, meths.get_current_buf().id)
+      eq(false, meths.nvim_get_option_value('autoindent', { buf = buf1 }))
+      eq(true, meths.nvim_get_option_value('autoindent', { buf = buf2 }))
+      eq(buf1, meths.nvim_get_current_buf().id)
       eq(buf2, val)
     end)
 
@@ -3488,7 +3488,7 @@ describe('lua stdlib', function()
   describe('vim.api.nvim_win_call', function()
     it('can access window options', function()
       command('vsplit')
-      local win1 = meths.get_current_win().id
+      local win1 = meths.nvim_get_current_win().id
       command('wincmd w')
       local win2 = exec_lua [[
         win2 = vim.api.nvim_get_current_win()
@@ -3496,8 +3496,8 @@ describe('lua stdlib', function()
       ]]
       command('wincmd p')
 
-      eq('', meths.get_option_value('winhighlight', { win = win1 }))
-      eq('', meths.get_option_value('winhighlight', { win = win2 }))
+      eq('', meths.nvim_get_option_value('winhighlight', { win = win1 }))
+      eq('', meths.nvim_get_option_value('winhighlight', { win = win2 }))
 
       local val = exec_lua [[
         return vim.api.nvim_win_call(win2, function()
@@ -3506,9 +3506,9 @@ describe('lua stdlib', function()
         end)
       ]]
 
-      eq('', meths.get_option_value('winhighlight', { win = win1 }))
-      eq('Normal:Normal', meths.get_option_value('winhighlight', { win = win2 }))
-      eq(win1, meths.get_current_win().id)
+      eq('', meths.nvim_get_option_value('winhighlight', { win = win1 }))
+      eq('Normal:Normal', meths.nvim_get_option_value('winhighlight', { win = win2 }))
+      eq(win1, meths.nvim_get_current_win().id)
       eq(win2, val)
     end)
 
@@ -3882,7 +3882,7 @@ describe('vim.keymap', function()
 
     feed('aa')
 
-    eq({ 'π<M-π>foo<' }, meths.buf_get_lines(0, 0, -1, false))
+    eq({ 'π<M-π>foo<' }, meths.nvim_buf_get_lines(0, 0, -1, false))
   end)
 
   it('can overwrite a mapping', function()

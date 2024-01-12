@@ -70,7 +70,7 @@ describe(':mksession', function()
     -- Restore session.
     command('source ' .. session_file)
 
-    eq(expected_buf_count, #meths.list_bufs())
+    eq(expected_buf_count, #meths.nvim_list_bufs())
   end
 
   it(
@@ -80,28 +80,28 @@ describe(':mksession', function()
       command('edit ' .. tmpfile_base)
       command('terminal')
 
-      local buf_count = #meths.list_bufs()
+      local buf_count = #meths.nvim_list_bufs()
       eq(2, buf_count)
 
-      eq('terminal', meths.get_option_value('buftype', {}))
+      eq('terminal', meths.nvim_get_option_value('buftype', {}))
 
       test_terminal_session_disabled(2)
 
       -- no terminal should be set. As a side effect we end up with a blank buffer
-      eq('', meths.get_option_value('buftype', { buf = meths.list_bufs()[1] }))
-      eq('', meths.get_option_value('buftype', { buf = meths.list_bufs()[2] }))
+      eq('', meths.nvim_get_option_value('buftype', { buf = meths.nvim_list_bufs()[1] }))
+      eq('', meths.nvim_get_option_value('buftype', { buf = meths.nvim_list_bufs()[2] }))
     end
   )
 
   it('do not restore :terminal if not set in sessionoptions, terminal hidden #13078', function()
     command('terminal')
-    local terminal_bufnr = meths.get_current_buf()
+    local terminal_bufnr = meths.nvim_get_current_buf()
 
     local tmpfile_base = file_prefix .. '-tmpfile'
     -- make terminal hidden by opening a new file
     command('edit ' .. tmpfile_base .. '1')
 
-    local buf_count = #meths.list_bufs()
+    local buf_count = #meths.nvim_list_bufs()
     eq(2, buf_count)
 
     eq(1, funcs.getbufinfo(terminal_bufnr)[1].hidden)
@@ -109,20 +109,20 @@ describe(':mksession', function()
     test_terminal_session_disabled(1)
 
     -- no terminal should exist here
-    neq('', meths.buf_get_name(meths.list_bufs()[1]))
+    neq('', meths.nvim_buf_get_name(meths.nvim_list_bufs()[1]))
   end)
 
   it('do not restore :terminal if not set in sessionoptions, only buffer #13078', function()
     command('terminal')
-    eq('terminal', meths.get_option_value('buftype', {}))
+    eq('terminal', meths.nvim_get_option_value('buftype', {}))
 
-    local buf_count = #meths.list_bufs()
+    local buf_count = #meths.nvim_list_bufs()
     eq(1, buf_count)
 
     test_terminal_session_disabled(1)
 
     -- no terminal should be set
-    eq('', meths.get_option_value('buftype', {}))
+    eq('', meths.nvim_get_option_value('buftype', {}))
   end)
 
   it('restores tab-local working directories', function()
@@ -238,7 +238,7 @@ describe(':mksession', function()
     local tmpfile = file_prefix .. '-tmpfile-float'
 
     command('edit ' .. tmpfile)
-    local buf = meths.create_buf(false, true)
+    local buf = meths.nvim_create_buf(false, true)
     local config = {
       relative = 'editor',
       focusable = false,
@@ -248,8 +248,8 @@ describe(':mksession', function()
       col = 1,
       style = 'minimal',
     }
-    meths.open_win(buf, false, config)
-    local cmdheight = meths.get_option_value('cmdheight', {})
+    meths.nvim_open_win(buf, false, config)
+    local cmdheight = meths.nvim_get_option_value('cmdheight', {})
     command('mksession ' .. session_file)
 
     -- Create a new test instance of Nvim.
@@ -262,7 +262,7 @@ describe(':mksession', function()
     -- window was not restored.
     eq(1, funcs.winnr('$'))
     -- The command-line height should remain the same as it was.
-    eq(cmdheight, meths.get_option_value('cmdheight', {}))
+    eq(cmdheight, meths.nvim_get_option_value('cmdheight', {}))
 
     os.remove(tmpfile)
   end)

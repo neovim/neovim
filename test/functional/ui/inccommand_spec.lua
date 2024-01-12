@@ -158,7 +158,7 @@ describe(":substitute, 'inccommand' preserves", function()
     common_setup(screen, 'nosplit', ('abc\ndef\n'):rep(50))
 
     feed('ggyG')
-    local X = meths.get_vvar('maxcol')
+    local X = meths.nvim_get_vvar('maxcol')
     eq({ 0, 1, 1, 0 }, funcs.getpos("'["))
     eq({ 0, 101, X, 0 }, funcs.getpos("']"))
 
@@ -205,8 +205,8 @@ describe(":substitute, 'inccommand' preserves", function()
       feed(':%s/as/glork/')
       poke_eventloop()
       feed('<enter>')
-      eq(meths.get_option_value('undolevels', { scope = 'global' }), 139)
-      eq(meths.get_option_value('undolevels', { buf = 0 }), 34)
+      eq(meths.nvim_get_option_value('undolevels', { scope = 'global' }), 139)
+      eq(meths.nvim_get_option_value('undolevels', { buf = 0 }), 34)
     end)
   end
 
@@ -1119,7 +1119,7 @@ describe(':substitute, inccommand=split', function()
 
   it("deactivates if 'redrawtime' is exceeded #5602", function()
     -- prevent redraws from 'incsearch'
-    meths.set_option_value('incsearch', false, {})
+    meths.nvim_set_option_value('incsearch', false, {})
     -- Assert that 'inccommand' is ENABLED initially.
     eq('split', eval('&inccommand'))
     -- Set 'redrawtime' to minimal value, to ensure timeout is triggered.
@@ -1752,7 +1752,7 @@ describe("'inccommand' autocommands", function()
   end
 
   local function register_autocmd(event)
-    meths.set_var(event .. '_fired', {})
+    meths.nvim_set_var(event .. '_fired', {})
     command('autocmd ' .. event .. ' * call add(g:' .. event .. "_fired, expand('<abuf>'))")
   end
 
@@ -1768,14 +1768,14 @@ describe("'inccommand' autocommands", function()
     feed(':%s/tw')
 
     for event, _ in pairs(eventsExpected) do
-      eventsObserved[event].open = meths.get_var(event .. '_fired')
-      meths.set_var(event .. '_fired', {})
+      eventsObserved[event].open = meths.nvim_get_var(event .. '_fired')
+      meths.nvim_set_var(event .. '_fired', {})
     end
 
     feed('/<enter>')
 
     for event, _ in pairs(eventsExpected) do
-      eventsObserved[event].close = meths.get_var(event .. '_fired')
+      eventsObserved[event].close = meths.nvim_get_var(event .. '_fired')
     end
 
     for event, _ in pairs(eventsExpected) do
@@ -2614,8 +2614,8 @@ it(':substitute with inccommand, allows :redraw before first separator is typed 
   local screen = Screen.new(30, 6)
   common_setup(screen, 'split', 'foo bar baz\nbar baz fox\nbar foo baz')
   command('hi! link NormalFloat CursorLine')
-  local float_buf = meths.create_buf(false, true)
-  meths.open_win(float_buf, false, {
+  local float_buf = meths.nvim_create_buf(false, true)
+  meths.nvim_open_win(float_buf, false, {
     relative = 'editor',
     height = 1,
     width = 5,
@@ -2641,7 +2641,7 @@ it(':substitute with inccommand, allows :redraw before first separator is typed 
     {15:~                             }|
     :%s^                           |
   ]])
-  meths.buf_set_lines(float_buf, 0, -1, true, { 'foo' })
+  meths.nvim_buf_set_lines(float_buf, 0, -1, true, { 'foo' })
   command('redraw')
   screen:expect([[
     foo bar baz                   |
@@ -2745,7 +2745,7 @@ it(':substitute with inccommand works properly if undo is not synced #20029', fu
   clear()
   local screen = Screen.new(30, 6)
   common_setup(screen, 'nosplit', 'foo\nbar\nbaz')
-  meths.set_keymap('x', '<F2>', '<Esc>`<Oaaaaa asdf<Esc>`>obbbbb asdf<Esc>V`<k:s/asdf/', {})
+  meths.nvim_set_keymap('x', '<F2>', '<Esc>`<Oaaaaa asdf<Esc>`>obbbbb asdf<Esc>V`<k:s/asdf/', {})
   feed('gg0<C-V>lljj<F2>')
   screen:expect([[
     aaaaa                         |

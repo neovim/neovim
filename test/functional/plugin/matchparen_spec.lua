@@ -22,7 +22,7 @@ describe('matchparen', function()
 
   it('uses correct column after i_<Up>. Vim patch 7.4.1296', function()
     command('set noautoindent nosmartindent nocindent laststatus=0')
-    eq(1, meths.get_var('loaded_matchparen'))
+    eq(1, meths.nvim_get_var('loaded_matchparen'))
     feed('ivoid f_test()<cr>')
     feed('{<cr>')
     feed('}')

@@ -21,7 +21,7 @@ describe('sort()', function()
   end)
 
   it('sorts “wrong” values between -0.0001 and 0.0001, preserving order', function()
-    meths.set_var('list', {
+    meths.nvim_set_var('list', {
       true,
       false,
       NIL,

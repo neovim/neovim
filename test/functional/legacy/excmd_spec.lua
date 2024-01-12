@@ -24,7 +24,7 @@ end
 describe('Ex command', function()
   before_each(clear)
   after_each(function()
-    eq({}, meths.get_vvar('errors'))
+    eq({}, meths.nvim_get_vvar('errors'))
   end)
 
   it('checks for address line overflow', function()

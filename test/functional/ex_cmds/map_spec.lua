@@ -16,13 +16,13 @@ describe(':*map', function()
   before_each(clear)
 
   it('are not affected by &isident', function()
-    meths.set_var('counter', 0)
+    meths.nvim_set_var('counter', 0)
     command('nnoremap <C-x> :let counter+=1<CR>')
-    meths.set_option_value('isident', ('%u'):format(('>'):byte()), {})
+    meths.nvim_set_option_value('isident', ('%u'):format(('>'):byte()), {})
     command('nnoremap <C-y> :let counter+=1<CR>')
     -- &isident used to disable keycode parsing here as well
     feed('\24\25<C-x><C-y>')
-    eq(4, meths.get_var('counter'))
+    eq(4, meths.nvim_get_var('counter'))
   end)
 
   it(':imap <M-">', function()
@@ -42,9 +42,9 @@ n  asdf          <Nop>]],
   end)
 
   it('mappings with description can be filtered', function()
-    meths.set_keymap('n', 'asdf1', 'qwert', { desc = 'do the one thing' })
-    meths.set_keymap('n', 'asdf2', 'qwert', { desc = 'doesnot really do anything' })
-    meths.set_keymap('n', 'asdf3', 'qwert', { desc = 'do the other thing' })
+    meths.nvim_set_keymap('n', 'asdf1', 'qwert', { desc = 'do the one thing' })
+    meths.nvim_set_keymap('n', 'asdf2', 'qwert', { desc = 'doesnot really do anything' })
+    meths.nvim_set_keymap('n', 'asdf3', 'qwert', { desc = 'do the other thing' })
     eq(
       [[
 
@@ -58,21 +58,21 @@ n  asdf1         qwert
 
   it('<Plug> mappings ignore nore', function()
     command('let x = 0')
-    eq(0, meths.eval('x'))
+    eq(0, meths.nvim_eval('x'))
     command [[
       nnoremap <Plug>(Increase_x) <cmd>let x+=1<cr>
       nmap increase_x_remap <Plug>(Increase_x)
       nnoremap increase_x_noremap <Plug>(Increase_x)
     ]]
     feed('increase_x_remap')
-    eq(1, meths.eval('x'))
+    eq(1, meths.nvim_eval('x'))
     feed('increase_x_noremap')
-    eq(2, meths.eval('x'))
+    eq(2, meths.nvim_eval('x'))
   end)
 
   it("Doesn't auto ignore nore for keys before or after <Plug> mapping", function()
     command('let x = 0')
-    eq(0, meths.eval('x'))
+    eq(0, meths.nvim_eval('x'))
     command [[
       nnoremap x <nop>
       nnoremap <Plug>(Increase_x) <cmd>let x+=1<cr>
@@ -83,10 +83,10 @@ n  asdf1         qwert
     eq('Some text', eval("getline('.')"))
 
     feed('increase_x_remap')
-    eq(1, meths.eval('x'))
+    eq(1, meths.nvim_eval('x'))
     eq('Some text', eval("getline('.')"))
     feed('increase_x_noremap')
-    eq(2, meths.eval('x'))
+    eq(2, meths.nvim_eval('x'))
     eq('Some te', eval("getline('.')"))
   end)
 

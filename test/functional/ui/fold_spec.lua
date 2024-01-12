@@ -317,7 +317,7 @@ describe('folded lines', function()
 
       feed_command('set norightleft')
       if multigrid then
-        meths.input_mouse('left', 'press', '', 2, 0, 1)
+        meths.nvim_input_mouse('left', 'press', '', 2, 0, 1)
         screen:expect([[
         ## grid 1
           [2:---------------------------------------------]|*7
@@ -330,7 +330,7 @@ describe('folded lines', function()
           :set norightleft                             |
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 0, 1)
+        meths.nvim_input_mouse('left', 'press', '', 0, 0, 1)
         screen:expect([[
           {7:▾▸}{5:^+---  5 lines: aa··························}|
           {7:│ }ff                                         |
@@ -340,7 +340,7 @@ describe('folded lines', function()
       end
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 2, 0, 0)
+        meths.nvim_input_mouse('left', 'press', '', 2, 0, 0)
         screen:expect([[
         ## grid 1
           [2:---------------------------------------------]|*7
@@ -352,7 +352,7 @@ describe('folded lines', function()
           :set norightleft                             |
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 0, 0)
+        meths.nvim_input_mouse('left', 'press', '', 0, 0, 0)
         screen:expect([[
           {7:▸ }{5:^+--  6 lines: aa···························}|
           {1:~                                            }|*6
@@ -363,7 +363,7 @@ describe('folded lines', function()
       -- Add a winbar to avoid double-clicks
       command('setlocal winbar=!!!!!!')
       if multigrid then
-        meths.input_mouse('left', 'press', '', 2, 1, 0)
+        meths.nvim_input_mouse('left', 'press', '', 2, 1, 0)
         screen:expect([[
         ## grid 1
           [2:---------------------------------------------]|*7
@@ -377,7 +377,7 @@ describe('folded lines', function()
           :set norightleft                             |
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 1, 0)
+        meths.nvim_input_mouse('left', 'press', '', 0, 1, 0)
         screen:expect([[
           {11:!!!!!!                                       }|
           {7:▾▸}{5:^+---  5 lines: aa··························}|
@@ -388,7 +388,7 @@ describe('folded lines', function()
       end
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 2, 1, 1)
+        meths.nvim_input_mouse('left', 'press', '', 2, 1, 1)
         screen:expect([[
         ## grid 1
           [2:---------------------------------------------]|*7
@@ -405,7 +405,7 @@ describe('folded lines', function()
           :set norightleft                             |
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 1, 1)
+        meths.nvim_input_mouse('left', 'press', '', 0, 1, 1)
         screen:expect([[
           {11:!!!!!!                                       }|
           {7:▾▾}^aa                                         |
@@ -447,7 +447,7 @@ describe('folded lines', function()
       feed_command('1')
       feed('zf2j')
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 0, 0)
+        meths.nvim_input_mouse('left', 'press', '', 4, 0, 0)
         screen:expect([[
         ## grid 1
           [2:---------------------------------------------]|*2
@@ -466,7 +466,7 @@ describe('folded lines', function()
           {7:│}ff                                          |
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 3, 0)
+        meths.nvim_input_mouse('left', 'press', '', 0, 3, 0)
         screen:expect([[
           {7:-}aa                                          |
           {7:-}bb                                          |
@@ -480,7 +480,7 @@ describe('folded lines', function()
       end
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 1, 0)
+        meths.nvim_input_mouse('left', 'press', '', 4, 1, 0)
         screen:expect([[
         ## grid 1
           [2:---------------------------------------------]|*2
@@ -499,7 +499,7 @@ describe('folded lines', function()
           {7:2}cc                                          |
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 4, 0)
+        meths.nvim_input_mouse('left', 'press', '', 0, 4, 0)
         screen:expect([[
           {7:-}aa                                          |
           {7:-}bb                                          |
@@ -513,7 +513,7 @@ describe('folded lines', function()
       end
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 2, 1, 0)
+        meths.nvim_input_mouse('left', 'press', '', 2, 1, 0)
         screen:expect([[
         ## grid 1
           [2:---------------------------------------------]|*2
@@ -532,7 +532,7 @@ describe('folded lines', function()
           {7:2}cc                                          |
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 1, 0)
+        meths.nvim_input_mouse('left', 'press', '', 0, 1, 0)
         screen:expect([[
           {7:-}aa                                          |
           {7:+}{5:^+---  4 lines: bb···························}|
@@ -546,7 +546,7 @@ describe('folded lines', function()
       end
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 2, 0, 0)
+        meths.nvim_input_mouse('left', 'press', '', 2, 0, 0)
         screen:expect([[
         ## grid 1
           [2:---------------------------------------------]|*2
@@ -565,7 +565,7 @@ describe('folded lines', function()
           {7:2}cc                                          |
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 0, 0)
+        meths.nvim_input_mouse('left', 'press', '', 0, 0, 0)
         screen:expect([[
           {7:+}{5:^+--  6 lines: aa····························}|
           {1:~                                            }|
@@ -607,7 +607,7 @@ describe('folded lines', function()
       feed_command('1')
       feed('zf2j')
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 0, 0)
+        meths.nvim_input_mouse('left', 'press', '', 4, 0, 0)
         screen:expect([[
         ## grid 1
           [2:----------------------]{2:│}[4:----------------------]|*6
@@ -629,7 +629,7 @@ describe('folded lines', function()
           {1:~                     }|*3
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 0, 23)
+        meths.nvim_input_mouse('left', 'press', '', 0, 0, 23)
         screen:expect([[
           {7:-}aa                   {2:│}{7:-}^aa                   |
           {7:-}bb                   {2:│}{7:+}{5:+---  4 lines: bb····}|
@@ -643,7 +643,7 @@ describe('folded lines', function()
       end
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 1, 0)
+        meths.nvim_input_mouse('left', 'press', '', 4, 1, 0)
         screen:expect([[
         ## grid 1
           [2:----------------------]{2:│}[4:----------------------]|*6
@@ -667,7 +667,7 @@ describe('folded lines', function()
           {7:│}ff                   |
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 1, 23)
+        meths.nvim_input_mouse('left', 'press', '', 0, 1, 23)
         screen:expect([[
           {7:-}aa                   {2:│}{7:-}^aa                   |
           {7:-}bb                   {2:│}{7:-}bb                   |
@@ -681,7 +681,7 @@ describe('folded lines', function()
       end
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 2, 1, 0)
+        meths.nvim_input_mouse('left', 'press', '', 2, 1, 0)
         screen:expect([[
         ## grid 1
           [2:----------------------]{2:│}[4:----------------------]|*6
@@ -703,7 +703,7 @@ describe('folded lines', function()
           {7:│}ff                   |
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 1, 0)
+        meths.nvim_input_mouse('left', 'press', '', 0, 1, 0)
         screen:expect([[
           {7:-}aa                   {2:│}{7:-}aa                   |
           {7:+}{5:^+---  4 lines: bb····}{2:│}{7:-}bb                   |
@@ -717,7 +717,7 @@ describe('folded lines', function()
       end
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 2, 0, 0)
+        meths.nvim_input_mouse('left', 'press', '', 2, 0, 0)
         screen:expect([[
         ## grid 1
           [2:----------------------]{2:│}[4:----------------------]|*6
@@ -737,7 +737,7 @@ describe('folded lines', function()
           {7:│}ff                   |
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 0, 0)
+        meths.nvim_input_mouse('left', 'press', '', 0, 0, 0)
         screen:expect([[
           {7:+}{5:^+--  6 lines: aa·····}{2:│}{7:-}aa                   |
           {1:~                     }{2:│}{7:-}bb                   |
@@ -767,7 +767,7 @@ describe('folded lines', function()
       feed('zO')
       feed_command('tab split')
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 1, 1)
+        meths.nvim_input_mouse('left', 'press', '', 4, 1, 1)
         screen:expect([[
         ## grid 1
           {10: + [No Name] }{11: + [No Name] }{2:                  }{10:X}|
@@ -790,7 +790,7 @@ describe('folded lines', function()
           {1:~                                            }|*3
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 2, 1)
+        meths.nvim_input_mouse('left', 'press', '', 0, 2, 1)
         screen:expect([[
           {10: + [No Name] }{11: + [No Name] }{2:                  }{10:X}|
           {7:- }^aa                                         |
@@ -802,7 +802,7 @@ describe('folded lines', function()
       end
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 0, 0)
+        meths.nvim_input_mouse('left', 'press', '', 4, 0, 0)
         screen:expect([[
         ## grid 1
           {10: + [No Name] }{11: + [No Name] }{2:                  }{10:X}|
@@ -823,7 +823,7 @@ describe('folded lines', function()
           {1:~                                            }|*5
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 1, 0)
+        meths.nvim_input_mouse('left', 'press', '', 0, 1, 0)
         screen:expect([[
           {10: + [No Name] }{11: + [No Name] }{2:                  }{10:X}|
           {7:+ }{5:^+--  6 lines: aa···························}|
@@ -834,7 +834,7 @@ describe('folded lines', function()
 
       feed_command('tabnext')
       if multigrid then
-        meths.input_mouse('left', 'press', '', 2, 1, 1)
+        meths.nvim_input_mouse('left', 'press', '', 2, 1, 1)
         screen:expect([[
         ## grid 1
           {11: + [No Name] }{10: + [No Name] }{2:                  }{10:X}|
@@ -852,7 +852,7 @@ describe('folded lines', function()
           {1:~                                            }|*5
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 2, 1)
+        meths.nvim_input_mouse('left', 'press', '', 0, 2, 1)
         screen:expect([[
           {11: + [No Name] }{10: + [No Name] }{2:                  }{10:X}|
           {7:- }^aa                                         |
@@ -864,7 +864,7 @@ describe('folded lines', function()
       end
 
       if multigrid then
-        meths.input_mouse('left', 'press', '', 2, 0, 0)
+        meths.nvim_input_mouse('left', 'press', '', 2, 0, 0)
         screen:expect([[
         ## grid 1
           {11: + [No Name] }{10: + [No Name] }{2:                  }{10:X}|
@@ -880,7 +880,7 @@ describe('folded lines', function()
           {1:~                                            }|*5
         ]])
       else
-        meths.input_mouse('left', 'press', '', 0, 1, 0)
+        meths.nvim_input_mouse('left', 'press', '', 0, 1, 0)
         screen:expect([[
           {11: + [No Name] }{10: + [No Name] }{2:                  }{10:X}|
           {7:+ }{5:^+--  6 lines: aa···························}|
@@ -891,7 +891,7 @@ describe('folded lines', function()
     end)
 
     it('works with multibyte text', function()
-      eq(true, meths.get_option_value('arabicshape', {}))
+      eq(true, meths.nvim_get_option_value('arabicshape', {}))
       insert([[
         å 语 x̨̣̘̫̲͚͎̎͂̀̂͛͛̾͢͟ العَرَبِيَّة
         möre text]])
@@ -1531,23 +1531,35 @@ describe('folded lines', function()
       funcs.setline(3, 'line 3')
       funcs.setline(4, 'line 4')
       feed('zfj')
-      local ns = meths.create_namespace('ns')
-      meths.buf_set_extmark(
+      local ns = meths.nvim_create_namespace('ns')
+      meths.nvim_buf_set_extmark(
         0,
         ns,
         0,
         0,
         { virt_lines_above = true, virt_lines = { { { 'virt_line above line 1', '' } } } }
       )
-      meths.buf_set_extmark(0, ns, 1, 0, { virt_lines = { { { 'virt_line below line 2', '' } } } })
-      meths.buf_set_extmark(
+      meths.nvim_buf_set_extmark(
+        0,
+        ns,
+        1,
+        0,
+        { virt_lines = { { { 'virt_line below line 2', '' } } } }
+      )
+      meths.nvim_buf_set_extmark(
         0,
         ns,
         2,
         0,
         { virt_lines_above = true, virt_lines = { { { 'virt_line above line 3', '' } } } }
       )
-      meths.buf_set_extmark(0, ns, 3, 0, { virt_lines = { { { 'virt_line below line 4', '' } } } })
+      meths.nvim_buf_set_extmark(
+        0,
+        ns,
+        3,
+        0,
+        { virt_lines = { { { 'virt_line below line 4', '' } } } }
+      )
       if multigrid then
         screen:expect {
           grid = [[
@@ -1667,7 +1679,7 @@ describe('folded lines', function()
         ]])
       end
 
-      meths.input_mouse('left', 'press', '', multigrid and 2 or 0, 4, 0)
+      meths.nvim_input_mouse('left', 'press', '', multigrid and 2 or 0, 4, 0)
       eq({
         screencol = 1,
         screenrow = 5,
@@ -1679,7 +1691,7 @@ describe('folded lines', function()
         coladd = 0,
       }, funcs.getmousepos())
 
-      meths.buf_set_extmark(
+      meths.nvim_buf_set_extmark(
         0,
         ns,
         1,
@@ -1953,7 +1965,7 @@ describe('folded lines', function()
         ]])
       end
 
-      meths.input_mouse('left', 'press', '3', multigrid and 2 or 0, 3, 0)
+      meths.nvim_input_mouse('left', 'press', '3', multigrid and 2 or 0, 3, 0)
       if multigrid then
         screen:expect {
           grid = [[
@@ -1992,7 +2004,7 @@ describe('folded lines', function()
         ]])
       end
 
-      meths.input_mouse('left', 'drag', '3', multigrid and 2 or 0, 7, 0)
+      meths.nvim_input_mouse('left', 'drag', '3', multigrid and 2 or 0, 7, 0)
       if multigrid then
         screen:expect {
           grid = [[
@@ -2029,7 +2041,7 @@ describe('folded lines', function()
         ]])
       end
 
-      meths.input_mouse('left', 'drag', '3', multigrid and 2 or 0, 7, 5)
+      meths.nvim_input_mouse('left', 'drag', '3', multigrid and 2 or 0, 7, 5)
       if multigrid then
         screen:expect {
           grid = [[
@@ -2419,9 +2431,9 @@ describe('folded lines', function()
       command('hi! CursorLine guibg=NONE guifg=Red gui=NONE')
       command('hi F0 guibg=Red guifg=Black')
       command('hi F1 guifg=White')
-      meths.set_option_value('cursorline', true, {})
-      meths.set_option_value('foldcolumn', '4', {})
-      meths.set_option_value(
+      meths.nvim_set_option_value('cursorline', true, {})
+      meths.nvim_set_option_value('foldcolumn', '4', {})
+      meths.nvim_set_option_value(
         'foldtext',
         '['
           .. '["▶", ["F0", "F1"]], '
@@ -2511,7 +2523,7 @@ describe('folded lines', function()
         ]])
       end
 
-      meths.set_option_value('rightleft', true, {})
+      meths.nvim_set_option_value('rightleft', true, {})
       if multigrid then
         screen:expect([[
         ## grid 1

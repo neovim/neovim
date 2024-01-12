@@ -65,12 +65,12 @@ describe('printf()', function()
     local seen_rets = {}
     -- Collect all args in an array to avoid possible allocation of the same
     -- address after freeing unreferenced values.
-    meths.set_var('__args', {})
+    meths.nvim_set_var('__args', {})
     local function check_printf(expr, is_null)
       eq(0, exc_exec('call add(__args, ' .. expr .. ')'))
       eq(0, exc_exec('let __result = printf("%p", __args[-1])'))
       local id_ret = eval('id(__args[-1])')
-      eq(id_ret, meths.get_var('__result'))
+      eq(id_ret, meths.nvim_get_var('__result'))
       if is_null then
         if null_ret then
           eq(null_ret, id_ret)
@@ -81,7 +81,7 @@ describe('printf()', function()
         eq(nil, seen_rets[id_ret])
         seen_rets[id_ret] = expr
       end
-      meths.del_var('__result')
+      meths.nvim_del_var('__result')
     end
     check_printf('v:_null_list', true)
     check_printf('v:_null_dict', true)

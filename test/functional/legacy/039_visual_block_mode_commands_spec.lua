@@ -204,7 +204,7 @@ describe('Visual block mode', function()
     feed('G2l')
     feed('2k<C-v>$gj<ESC>')
     feed_command([[let cpos=getpos("'>")]])
-    local cpos = nvim.get_var('cpos')
+    local cpos = nvim.nvim_get_var('cpos')
     local expected = {
       col = 4,
       off = 0,

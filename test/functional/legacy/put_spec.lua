@@ -16,7 +16,7 @@ end
 describe('put', function()
   before_each(clear)
   after_each(function()
-    eq({}, meths.get_vvar('errors'))
+    eq({}, meths.nvim_get_vvar('errors'))
   end)
 
   it('very large count 64-bit', function()

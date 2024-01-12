@@ -2403,13 +2403,13 @@ describe('highlight namespaces', function()
       [10] = { bold = true, foreground = Screen.colors.SeaGreen },
     }
 
-    ns1 = meths.create_namespace 'grungy'
-    ns2 = meths.create_namespace 'ultrared'
+    ns1 = meths.nvim_create_namespace 'grungy'
+    ns2 = meths.nvim_create_namespace 'ultrared'
 
-    meths.set_hl(ns1, 'Normal', { bg = 'DarkGrey' })
-    meths.set_hl(ns1, 'NonText', { bg = 'DarkOrange4', fg = 'DarkCyan', italic = true })
-    meths.set_hl(ns2, 'Normal', { bg = 'DarkMagenta' })
-    meths.set_hl(ns2, 'NonText', { fg = 'Crimson' })
+    meths.nvim_set_hl(ns1, 'Normal', { bg = 'DarkGrey' })
+    meths.nvim_set_hl(ns1, 'NonText', { bg = 'DarkOrange4', fg = 'DarkCyan', italic = true })
+    meths.nvim_set_hl(ns2, 'Normal', { bg = 'DarkMagenta' })
+    meths.nvim_set_hl(ns2, 'NonText', { fg = 'Crimson' })
   end)
 
   it('can be used globally', function()
@@ -2421,7 +2421,7 @@ describe('highlight namespaces', function()
     ]],
     }
 
-    meths.set_hl_ns(ns1)
+    meths.nvim_set_hl_ns(ns1)
     screen:expect {
       grid = [[
       {2:^                         }|
@@ -2430,7 +2430,7 @@ describe('highlight namespaces', function()
     ]],
     }
 
-    meths.set_hl_ns(ns2)
+    meths.nvim_set_hl_ns(ns2)
     screen:expect {
       grid = [[
       {4:^                         }|
@@ -2439,7 +2439,7 @@ describe('highlight namespaces', function()
     ]],
     }
 
-    meths.set_hl_ns(0)
+    meths.nvim_set_hl_ns(0)
     screen:expect {
       grid = [[
       ^                         |
@@ -2450,13 +2450,13 @@ describe('highlight namespaces', function()
   end)
 
   it('can be used per window', function()
-    local win1 = meths.get_current_win()
+    local win1 = meths.nvim_get_current_win()
     command 'split'
-    local win2 = meths.get_current_win()
+    local win2 = meths.nvim_get_current_win()
     command 'split'
 
-    meths.win_set_hl_ns(win1, ns1)
-    meths.win_set_hl_ns(win2, ns2)
+    meths.nvim_win_set_hl_ns(win1, ns1)
+    meths.nvim_win_set_hl_ns(win2, ns2)
 
     screen:expect {
       grid = [[
@@ -2483,7 +2483,7 @@ describe('highlight namespaces', function()
     ]],
     }
 
-    meths.set_hl(0, 'EndOfBuffer', { fg = '#333333' })
+    meths.nvim_set_hl(0, 'EndOfBuffer', { fg = '#333333' })
     screen:expect {
       grid = [[
       ^                         |
@@ -2508,7 +2508,7 @@ describe('highlight namespaces', function()
 
   it('Normal in set_hl #25474', function()
     command('highlight Ignore guifg=bg ctermfg=White')
-    meths.set_hl(0, 'Normal', { bg = '#333333' })
+    meths.nvim_set_hl(0, 'Normal', { bg = '#333333' })
     command('highlight Ignore')
     screen:expect {
       grid = [[

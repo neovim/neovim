@@ -49,7 +49,7 @@ describe(':source', function()
       pending("'shellslash' only works on Windows")
       return
     end
-    meths.set_option_value('shellslash', false, {})
+    meths.nvim_set_option_value('shellslash', false, {})
     mkdir('Xshellslash')
 
     write_file(
@@ -65,9 +65,9 @@ describe(':source', function()
 
     for _ = 1, 2 do
       command([[source Xshellslash/Xstack.vim]])
-      matches([[Xshellslash\Xstack%.vim]], meths.get_var('stack1'))
-      matches([[Xshellslash/Xstack%.vim]], meths.get_var('stack2'))
-      matches([[Xshellslash\Xstack%.vim]], meths.get_var('stack3'))
+      matches([[Xshellslash\Xstack%.vim]], meths.nvim_get_var('stack1'))
+      matches([[Xshellslash/Xstack%.vim]], meths.nvim_get_var('stack2'))
+      matches([[Xshellslash\Xstack%.vim]], meths.nvim_get_var('stack3'))
     end
 
     write_file(
@@ -83,9 +83,9 @@ describe(':source', function()
 
     for _ = 1, 2 do
       command([[source Xshellslash/Xstack.lua]])
-      matches([[Xshellslash\Xstack%.lua]], meths.get_var('stack1'))
-      matches([[Xshellslash/Xstack%.lua]], meths.get_var('stack2'))
-      matches([[Xshellslash\Xstack%.lua]], meths.get_var('stack3'))
+      matches([[Xshellslash\Xstack%.lua]], meths.nvim_get_var('stack1'))
+      matches([[Xshellslash/Xstack%.lua]], meths.nvim_get_var('stack2'))
+      matches([[Xshellslash\Xstack%.lua]], meths.nvim_get_var('stack3'))
     end
 
     rmdir('Xshellslash')
@@ -182,9 +182,9 @@ describe(':source', function()
     command('set shellslash')
     command('source ' .. test_file)
     eq(1, eval('g:sourced_lua'))
-    matches([[/test%.lua$]], meths.get_var('sfile_value'))
-    matches([[/test%.lua$]], meths.get_var('stack_value'))
-    matches([[/test%.lua$]], meths.get_var('script_value'))
+    matches([[/test%.lua$]], meths.nvim_get_var('sfile_value'))
+    matches([[/test%.lua$]], meths.nvim_get_var('stack_value'))
+    matches([[/test%.lua$]], meths.nvim_get_var('script_value'))
 
     os.remove(test_file)
   end)
@@ -229,9 +229,9 @@ describe(':source', function()
 
         eq(12, eval('g:c'))
         eq('    \\ 1\n   "\\ 2', exec_lua('return _G.a'))
-        eq(':source (no file)', meths.get_var('sfile_value'))
-        eq(':source (no file)', meths.get_var('stack_value'))
-        eq(':source (no file)', meths.get_var('script_value'))
+        eq(':source (no file)', meths.nvim_get_var('sfile_value'))
+        eq(':source (no file)', meths.nvim_get_var('stack_value'))
+        eq(':source (no file)', meths.nvim_get_var('script_value'))
       end)
     end
 

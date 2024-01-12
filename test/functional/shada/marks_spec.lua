@@ -124,7 +124,7 @@ describe('ShaDa support code', function()
     local tf_full_2 = curbufmeths.get_name()
     expect_exit(nvim_command, 'qall')
     reset()
-    local oldfiles = meths.get_vvar('oldfiles')
+    local oldfiles = meths.nvim_get_vvar('oldfiles')
     table.sort(oldfiles)
     eq(2, #oldfiles)
     eq(testfilename, oldfiles[1]:sub(-#testfilename))
@@ -132,7 +132,7 @@ describe('ShaDa support code', function()
     eq(tf_full, oldfiles[1])
     eq(tf_full_2, oldfiles[2])
     nvim_command('rshada!')
-    oldfiles = meths.get_vvar('oldfiles')
+    oldfiles = meths.nvim_get_vvar('oldfiles')
     table.sort(oldfiles)
     eq(2, #oldfiles)
     eq(testfilename, oldfiles[1]:sub(-#testfilename))
@@ -229,7 +229,7 @@ describe('ShaDa support code', function()
       },
       args = {
         '-i',
-        meths.get_var('tmpname'), -- Use same shada file as parent.
+        meths.nvim_get_var('tmpname'), -- Use same shada file as parent.
         '--cmd',
         'silent edit ' .. non_existent_testfilename,
         '-c',
@@ -248,7 +248,7 @@ describe('ShaDa support code', function()
       },
       args = {
         '-i',
-        meths.get_var('tmpname'), -- Use same shada file as parent.
+        meths.nvim_get_var('tmpname'), -- Use same shada file as parent.
         '-c',
         'silent edit ' .. non_existent_testfilename,
         '-c',

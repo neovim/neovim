@@ -113,7 +113,7 @@ describe('print', function()
     eq('Vim(lua):E5108: Error executing lua [NULL]', pcall_err(command, 'lua bad_custom_error()'))
   end)
   it('prints strings with NULs and NLs correctly', function()
-    meths.set_option_value('more', true, {})
+    meths.nvim_set_option_value('more', true, {})
     eq(
       'abc ^@ def\nghi^@^@^@jkl\nTEST\n\n\nT\n',
       exec_capture([[lua print("abc \0 def\nghi\0\0\0jkl\nTEST\n\n\nT\n")]])
@@ -341,7 +341,7 @@ describe('os.getenv', function()
   end)
   it('returns env var set by let', function()
     local value = 'foo'
-    meths.command('let $XTEST_1 = "' .. value .. '"')
+    meths.nvim_command('let $XTEST_1 = "' .. value .. '"')
     eq(value, funcs.luaeval('os.getenv("XTEST_1")'))
   end)
 end)

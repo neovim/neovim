@@ -19,7 +19,7 @@ describe(':terminal', function()
     clear()
     -- set the statusline to a constant value because of variables like pid
     -- and current directory and to improve visibility of splits
-    meths.set_option_value('statusline', '==========', {})
+    meths.nvim_set_option_value('statusline', '==========', {})
     command('highlight StatusLine cterm=NONE')
     command('highlight StatusLineNC cterm=NONE')
     command('highlight VertSplit cterm=NONE')
@@ -69,10 +69,10 @@ describe(':terminal', function()
   end)
 
   it('does not change size if updated when not visible in any window #19665', function()
-    local channel = meths.get_option_value('channel', {})
+    local channel = meths.nvim_get_option_value('channel', {})
     command('enew')
     sleep(100)
-    meths.chan_send(channel, 'foo')
+    meths.nvim_chan_send(channel, 'foo')
     sleep(100)
     command('bprevious')
     screen:expect([[

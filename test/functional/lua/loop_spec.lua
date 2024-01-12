@@ -48,13 +48,13 @@ describe('vim.uv', function()
       end)()
     ]]
 
-    eq(0, meths.get_var('coroutine_cnt'))
+    eq(0, meths.nvim_get_var('coroutine_cnt'))
     exec_lua(code)
     retry(2, nil, function()
       sleep(50)
-      eq(2, meths.get_var('coroutine_cnt'))
+      eq(2, meths.nvim_get_var('coroutine_cnt'))
     end)
-    eq(3, meths.get_var('coroutine_cnt_1'))
+    eq(3, meths.nvim_get_var('coroutine_cnt_1'))
   end)
 
   it('is API safe', function()

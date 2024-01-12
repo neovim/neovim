@@ -38,7 +38,7 @@ describe('startup', function()
     clear()
     ok(
       string.find(
-        alter_slashes(meths.get_option_value('runtimepath', {})),
+        alter_slashes(meths.nvim_get_option_value('runtimepath', {})),
         funcs.stdpath('config'),
         1,
         true
@@ -47,7 +47,7 @@ describe('startup', function()
     clear('--clean')
     ok(
       string.find(
-        alter_slashes(meths.get_option_value('runtimepath', {})),
+        alter_slashes(meths.nvim_get_option_value('runtimepath', {})),
         funcs.stdpath('config'),
         1,
         true
@@ -737,11 +737,11 @@ describe('startup', function()
       os.remove('Xdiff.vim')
     end)
     clear { args = { '-u', 'Xdiff.vim', '-d', 'Xdiff.vim', 'Xdiff.vim' } }
-    eq(true, meths.get_option_value('diff', { win = funcs.win_getid(1) }))
-    eq(true, meths.get_option_value('diff', { win = funcs.win_getid(2) }))
+    eq(true, meths.nvim_get_option_value('diff', { win = funcs.win_getid(1) }))
+    eq(true, meths.nvim_get_option_value('diff', { win = funcs.win_getid(2) }))
     local float_win = funcs.win_getid(3)
-    eq('editor', meths.win_get_config(float_win).relative)
-    eq(false, meths.get_option_value('diff', { win = float_win }))
+    eq('editor', meths.nvim_win_get_config(float_win).relative)
+    eq(false, meths.nvim_get_option_value('diff', { win = float_win }))
   end)
 
   it('does not crash if --embed is given twice', function()
@@ -870,7 +870,7 @@ describe('startup', function()
       exec_lua [[ return _G.test_loadorder ]]
     )
 
-    local rtp = meths.get_option_value('rtp', {})
+    local rtp = meths.nvim_get_option_value('rtp', {})
     ok(
       startswith(
         rtp,
@@ -963,9 +963,9 @@ describe('startup', function()
       os.remove('Xtab2.noft')
     end)
     clear({ args = { '-p', 'Xtab1.noft', 'Xtab2.noft' } })
-    eq(81, meths.win_get_width(0))
+    eq(81, meths.nvim_win_get_width(0))
     command('tabnext')
-    eq(81, meths.win_get_width(0))
+    eq(81, meths.nvim_win_get_width(0))
   end)
 end)
 

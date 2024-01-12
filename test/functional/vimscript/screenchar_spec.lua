@@ -14,15 +14,15 @@ local setup_floating_windows = function()
     border = 'none',
   }
 
-  local bufnr_1 = meths.create_buf(false, true)
-  meths.buf_set_lines(bufnr_1, 0, -1, true, { 'aa' })
+  local bufnr_1 = meths.nvim_create_buf(false, true)
+  meths.nvim_buf_set_lines(bufnr_1, 0, -1, true, { 'aa' })
   local opts_1 = tbl_deep_extend('force', { row = 0, col = 0, zindex = 11 }, base_opts)
-  meths.open_win(bufnr_1, false, opts_1)
+  meths.nvim_open_win(bufnr_1, false, opts_1)
 
-  local bufnr_2 = meths.create_buf(false, true)
-  meths.buf_set_lines(bufnr_2, 0, -1, true, { 'bb' })
+  local bufnr_2 = meths.nvim_create_buf(false, true)
+  meths.nvim_buf_set_lines(bufnr_2, 0, -1, true, { 'bb' })
   local opts_2 = tbl_deep_extend('force', { row = 0, col = 1, zindex = 10 }, base_opts)
-  meths.open_win(bufnr_2, false, opts_2)
+  meths.nvim_open_win(bufnr_2, false, opts_2)
 
   command('redraw')
 end
@@ -32,7 +32,7 @@ describe('screenchar() and family respect floating windows', function()
     clear()
     -- These commands result into visible text `aabc`.
     -- `aab` - from floating windows, `c` - from text in regular window.
-    meths.buf_set_lines(0, 0, -1, true, { 'cccc' })
+    meths.nvim_buf_set_lines(0, 0, -1, true, { 'cccc' })
     setup_floating_windows()
   end)
 

@@ -38,7 +38,7 @@ describe('channels', function()
     set_session(client)
     source(init)
 
-    meths.set_var('address', address)
+    meths.nvim_set_var('address', address)
     command("let g:id = sockconnect('pipe', address, {'on_data':'OnEvent'})")
     local id = eval('g:id')
     ok(id > 0)
@@ -46,7 +46,7 @@ describe('channels', function()
     command("call chansend(g:id, msgpackdump([[2,'nvim_set_var',['code',23]]]))")
     set_session(server)
     retry(nil, 1000, function()
-      eq(23, meths.get_var('code'))
+      eq(23, meths.nvim_get_var('code'))
     end)
     set_session(client)
 
@@ -67,8 +67,8 @@ describe('channels', function()
       \ 'on_exit': function('OnEvent'),
       \ }
     ]])
-    meths.set_var('nvim_prog', nvim_prog)
-    meths.set_var(
+    meths.nvim_set_var('nvim_prog', nvim_prog)
+    meths.nvim_set_var(
       'code',
       [[
       function! OnEvent(id, data, event) dict
@@ -117,8 +117,8 @@ describe('channels', function()
       \ 'on_exit': function('OnEvent'),
       \ }
     ]])
-    meths.set_var('nvim_prog', nvim_prog)
-    meths.set_var(
+    meths.nvim_set_var('nvim_prog', nvim_prog)
+    meths.nvim_set_var(
       'code',
       [[
       function! OnStdin(id, data, event) dict
@@ -165,8 +165,8 @@ describe('channels', function()
       \ 'pty': v:true,
       \ }
     ]])
-    meths.set_var('nvim_prog', nvim_prog)
-    meths.set_var(
+    meths.nvim_set_var('nvim_prog', nvim_prog)
+    meths.nvim_set_var(
       'code',
       [[
       function! OnEvent(id, data, event) dict
@@ -220,8 +220,8 @@ describe('channels', function()
       \ 'rpc': v:true,
       \ }
     ]])
-    meths.set_var('nvim_prog', nvim_prog)
-    meths.set_var(
+    meths.nvim_set_var('nvim_prog', nvim_prog)
+    meths.nvim_set_var(
       'code',
       [[
       let id = stdioopen({'rpc':v:true})

@@ -223,7 +223,7 @@ describe(':echo :echon :echomsg :echoerr', function()
     end)
 
     it('does not crash or halt when dumping partials with reference cycles in self', function()
-      meths.set_var('d', { v = true })
+      meths.nvim_set_var('d', { v = true })
       eq(
         dedent(
           [[
@@ -251,7 +251,7 @@ describe(':echo :echon :echomsg :echoerr', function()
     end)
 
     it('does not crash or halt when dumping partials with reference cycles in arguments', function()
-      meths.set_var('l', {})
+      meths.nvim_set_var('l', {})
       eval('add(l, l)')
       -- Regression: the below line used to crash (add returns original list and
       -- there was error in dumping partials). Tested explicitly in
@@ -269,8 +269,8 @@ describe(':echo :echon :echomsg :echoerr', function()
     it(
       'does not crash or halt when dumping partials with reference cycles in self and arguments',
       function()
-        meths.set_var('d', { v = true })
-        meths.set_var('l', {})
+        meths.nvim_set_var('d', { v = true })
+        meths.nvim_set_var('l', {})
         eval('add(l, l)')
         eval('add(l, function("Test1", l))')
         eval('add(l, function("Test1", d))')
@@ -305,13 +305,13 @@ describe(':echo :echon :echomsg :echoerr', function()
     end)
 
     it('does not error when dumping recursive lists', function()
-      meths.set_var('l', {})
+      meths.nvim_set_var('l', {})
       eval('add(l, l)')
       eq(0, exc_exec('echo String(l)'))
     end)
 
     it('dumps recursive lists without error', function()
-      meths.set_var('l', {})
+      meths.nvim_set_var('l', {})
       eval('add(l, l)')
       eq('[[...@0]]', exec_capture('echo String(l)'))
       eq('[[[...@1]]]', exec_capture('echo String([l])'))
@@ -335,13 +335,13 @@ describe(':echo :echon :echomsg :echoerr', function()
     end)
 
     it('does not error when dumping recursive dictionaries', function()
-      meths.set_var('d', { d = 1 })
+      meths.nvim_set_var('d', { d = 1 })
       eval('extend(d, {"d": d})')
       eq(0, exc_exec('echo String(d)'))
     end)
 
     it('dumps recursive dictionaries without the error', function()
-      meths.set_var('d', { d = 1 })
+      meths.nvim_set_var('d', { d = 1 })
       eval('extend(d, {"d": d})')
       eq("{'d': {...@0}}", exec_capture('echo String(d)'))
       eq("{'out': {'d': {...@1}}}", exec_capture('echo String({"out": d})'))

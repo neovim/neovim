@@ -157,16 +157,16 @@ before_each(function()
 end)
 
 local function set_color_cb(funcname, callback_return, id)
-  meths.set_var('id', id or '')
+  meths.nvim_set_var('id', id or '')
   if id and id ~= '' and funcs.exists('*' .. funcname .. 'N') then
     command(('let g:Nvim_color_input%s = {cmdline -> %sN(%s, cmdline)}'):format(id, funcname, id))
     if callback_return then
-      meths.set_var('callback_return' .. id, callback_return)
+      meths.nvim_set_var('callback_return' .. id, callback_return)
     end
   else
-    meths.set_var('Nvim_color_input', funcname)
+    meths.nvim_set_var('Nvim_color_input', funcname)
     if callback_return then
-      meths.set_var('callback_return', callback_return)
+      meths.nvim_set_var('callback_return', callback_return)
     end
   end
 end
@@ -177,7 +177,7 @@ end
 describe('Command-line coloring', function()
   it('works', function()
     set_color_cb('RainBowParens')
-    meths.set_option_value('more', false, {})
+    meths.nvim_set_option_value('more', false, {})
     start_prompt()
     screen:expect([[
                                               |
@@ -362,7 +362,7 @@ describe('Command-line coloring', function()
                                               |
     ]])
     feed('\n')
-    eq('let x = "«»«»«»«»«»"', meths.get_var('out'))
+    eq('let x = "«»«»«»«»«»"', meths.nvim_get_var('out'))
     local msg = '\nE5405: Chunk 0 start 10 splits multibyte character'
     eq(msg:rep(1), funcs.execute('messages'))
   end)
@@ -398,7 +398,7 @@ describe('Command-line coloring', function()
       :echo 42                                |
     ]])
     feed('\n')
-    eq('echo 42', meths.get_var('out'))
+    eq('echo 42', meths.nvim_get_var('out'))
     feed('<C-c>')
     screen:expect([[
       ^                                        |
@@ -564,16 +564,16 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|*6
                                               |
     ]])
-    eq('1234', meths.get_var('out'))
-    eq('234', meths.get_var('out1'))
-    eq('34', meths.get_var('out2'))
-    eq('4', meths.get_var('out3'))
+    eq('1234', meths.nvim_get_var('out'))
+    eq('234', meths.nvim_get_var('out1'))
+    eq('34', meths.nvim_get_var('out2'))
+    eq('4', meths.nvim_get_var('out3'))
     eq(0, funcs.exists('g:out4'))
   end)
   it('runs callback with the same data only once', function()
     local function new_recording_calls(...)
-      eq({ ... }, meths.get_var('recording_calls'))
-      meths.set_var('recording_calls', {})
+      eq({ ... }, meths.nvim_get_var('recording_calls'))
+      meths.nvim_set_var('recording_calls', {})
     end
     set_color_cb('Recording')
     start_prompt('')
@@ -594,7 +594,7 @@ describe('Command-line coloring', function()
     feed('<BS>')
     new_recording_calls() -- ('a')
     feed('<CR><CR>')
-    eq('', meths.get_var('out'))
+    eq('', meths.nvim_get_var('out'))
   end)
   it('does not crash when callback has caught not-a-editor-command exception', function()
     source([[
@@ -609,12 +609,12 @@ describe('Command-line coloring', function()
     ]])
     set_color_cb('CaughtExc')
     start_prompt('1')
-    eq(1, meths.eval('1'))
+    eq(1, meths.nvim_eval('1'))
   end)
 end)
 describe('Ex commands coloring', function()
   it('works', function()
-    meths.set_var('Nvim_color_cmdline', 'RainBowParens')
+    meths.nvim_set_var('Nvim_color_cmdline', 'RainBowParens')
     feed(':echo (((1)))')
     screen:expect([[
                                               |
@@ -623,9 +623,9 @@ describe('Ex commands coloring', function()
     ]])
   end)
   it('still executes command-line even if errored out', function()
-    meths.set_var('Nvim_color_cmdline', 'SplitMultibyteStart')
+    meths.nvim_set_var('Nvim_color_cmdline', 'SplitMultibyteStart')
     feed(':let x = "«"\n')
-    eq('«', meths.get_var('x'))
+    eq('«', meths.nvim_get_var('x'))
     local msg = 'E5405: Chunk 0 start 10 splits multibyte character'
     eq('\n' .. msg, funcs.execute('messages'))
   end)
@@ -709,7 +709,7 @@ describe('Ex commands coloring', function()
     )
   end)
   it('errors out when failing to get callback', function()
-    meths.set_var('Nvim_color_cmdline', 42)
+    meths.nvim_set_var('Nvim_color_cmdline', 42)
     feed(':#')
     screen:expect([[
                                               |
@@ -725,10 +725,10 @@ describe('Ex commands coloring', function()
 end)
 describe('Expressions coloring support', function()
   it('works', function()
-    meths.command('hi clear NvimNumber')
-    meths.command('hi clear NvimNestingParenthesis')
-    meths.command('hi NvimNumber guifg=Blue2')
-    meths.command('hi NvimNestingParenthesis guifg=Yellow')
+    meths.nvim_command('hi clear NvimNumber')
+    meths.nvim_command('hi clear NvimNestingParenthesis')
+    meths.nvim_command('hi NvimNumber guifg=Blue2')
+    meths.nvim_command('hi NvimNestingParenthesis guifg=Yellow')
     feed(':echo <C-r>=(((1)))')
     screen:expect([[
                                               |
@@ -737,10 +737,10 @@ describe('Expressions coloring support', function()
     ]])
   end)
   it('does not use Nvim_color_expr', function()
-    meths.set_var('Nvim_color_expr', 42)
+    meths.nvim_set_var('Nvim_color_expr', 42)
     -- Used to error out due to failing to get callback.
-    meths.command('hi clear NvimNumber')
-    meths.command('hi NvimNumber guifg=Blue2')
+    meths.nvim_command('hi clear NvimNumber')
+    meths.nvim_command('hi NvimNumber guifg=Blue2')
     feed(':<C-r>=1')
     screen:expect([[
                                               |
@@ -749,12 +749,12 @@ describe('Expressions coloring support', function()
     ]])
   end)
   it('works correctly with non-ASCII and control characters', function()
-    meths.command('hi clear NvimStringBody')
-    meths.command('hi clear NvimStringQuote')
-    meths.command('hi clear NvimInvalid')
-    meths.command('hi NvimStringQuote guifg=Blue3')
-    meths.command('hi NvimStringBody guifg=Blue4')
-    meths.command('hi NvimInvalid guifg=Red guibg=Blue')
+    meths.nvim_command('hi clear NvimStringBody')
+    meths.nvim_command('hi clear NvimStringQuote')
+    meths.nvim_command('hi clear NvimInvalid')
+    meths.nvim_command('hi NvimStringQuote guifg=Blue3')
+    meths.nvim_command('hi NvimStringBody guifg=Blue4')
+    meths.nvim_command('hi NvimInvalid guifg=Red guibg=Blue')
     feed('i<C-r>="«»"«»')
     screen:expect([[
                                               |

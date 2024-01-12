@@ -85,7 +85,7 @@ describe('cmdline', function()
     it('correctly clears end of the history', function()
       -- Regression test: check absence of the memory leak when clearing end of
       -- the history using cmdhist.c/clr_history().
-      meths.set_option_value('history', 1, {})
+      meths.nvim_set_option_value('history', 1, {})
       eq(1, funcs.histadd(':', 'foo'))
       eq(1, funcs.histdel(':'))
       eq('', funcs.histget(':', -1))

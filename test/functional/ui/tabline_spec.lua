@@ -138,7 +138,7 @@ describe('tabline', function()
     command('tabnew')
     insert('tab2')
     command('tabprev')
-    meths.set_option_value('tabline', '%1T口口%2Ta' .. ('b'):rep(38) .. '%999Xc', {})
+    meths.nvim_set_option_value('tabline', '%1T口口%2Ta' .. ('b'):rep(38) .. '%999Xc', {})
     screen:expect {
       grid = [[
       {1:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
@@ -148,7 +148,7 @@ describe('tabline', function()
     ]],
     }
     assert_alive()
-    meths.input_mouse('left', 'press', '', 0, 0, 1)
+    meths.nvim_input_mouse('left', 'press', '', 0, 0, 1)
     screen:expect {
       grid = [[
       {1:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
@@ -157,7 +157,7 @@ describe('tabline', function()
                                                 |
     ]],
     }
-    meths.input_mouse('left', 'press', '', 0, 0, 0)
+    meths.nvim_input_mouse('left', 'press', '', 0, 0, 0)
     screen:expect {
       grid = [[
       {1:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
@@ -166,7 +166,7 @@ describe('tabline', function()
                                                 |
     ]],
     }
-    meths.input_mouse('left', 'press', '', 0, 0, 39)
+    meths.nvim_input_mouse('left', 'press', '', 0, 0, 39)
     screen:expect {
       grid = [[
       {1:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
@@ -175,7 +175,7 @@ describe('tabline', function()
                                                 |
     ]],
     }
-    meths.input_mouse('left', 'press', '', 0, 0, 40)
+    meths.nvim_input_mouse('left', 'press', '', 0, 0, 40)
     screen:expect {
       grid = [[
       tab^1                                      |

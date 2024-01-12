@@ -28,7 +28,7 @@ local function reset(o)
     args_rm = args_rm,
     args = args,
   }
-  meths.set_var('tmpname', tmpname)
+  meths.nvim_set_var('tmpname', tmpname)
 end
 
 local clear = function()

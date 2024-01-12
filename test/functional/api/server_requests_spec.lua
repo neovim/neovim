@@ -244,7 +244,7 @@ describe('server -> client', function()
         \ 'rpc': v:true
         \ }
       ]])
-      meths.set_var('args', {
+      meths.nvim_set_var('args', {
         nvim_prog,
         '-ll',
         'test/functional/api/rpc_fixture.lua',
@@ -296,7 +296,7 @@ describe('server -> client', function()
 
       set_session(server)
       eq(serverpid, funcs.getpid())
-      eq('hello', meths.get_current_line())
+      eq('hello', meths.nvim_get_current_line())
 
       -- method calls work both ways
       funcs.rpcrequest(client_id, 'nvim_set_current_line', 'howdy!')
@@ -304,7 +304,7 @@ describe('server -> client', function()
 
       set_session(client)
       eq(clientpid, funcs.getpid())
-      eq('howdy!', meths.get_current_line())
+      eq('howdy!', meths.nvim_get_current_line())
 
       server:close()
       client:close()
@@ -375,7 +375,7 @@ describe('server -> client', function()
       local id = funcs.sockconnect('pipe', address, { rpc = true })
 
       funcs.rpcrequest(id, 'nvim_set_current_line', 'hello')
-      eq('hello', meths.get_current_line())
+      eq('hello', meths.nvim_get_current_line())
       eq(serverpid, funcs.rpcrequest(id, 'nvim_eval', 'getpid()'))
 
       eq(id, funcs.rpcrequest(id, 'nvim_get_api_info')[1])

@@ -41,9 +41,9 @@ describe('CursorMoved', function()
       vsplit foo
       autocmd CursorMoved * let g:cursormoved += 1
     ]])
-    meths.buf_set_lines(eval('g:buf'), 0, -1, true, { 'aaa' })
+    meths.nvim_buf_set_lines(eval('g:buf'), 0, -1, true, { 'aaa' })
     eq(0, eval('g:cursormoved'))
-    eq({ 'aaa' }, meths.buf_get_lines(eval('g:buf'), 0, -1, true))
+    eq({ 'aaa' }, meths.nvim_buf_get_lines(eval('g:buf'), 0, -1, true))
     eq(0, eval('g:cursormoved'))
   end)
 

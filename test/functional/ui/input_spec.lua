@@ -392,7 +392,7 @@ end)
 
 describe('event processing and input', function()
   it('not blocked by event bursts', function()
-    meths.set_keymap(
+    meths.nvim_set_keymap(
       '',
       '<f2>',
       "<cmd>lua vim.rpcnotify(1, 'stop') winning = true <cr>",

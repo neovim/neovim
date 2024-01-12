@@ -48,7 +48,7 @@ describe('legacy perl provider', function()
     -- :perldo 1; doesn't change $_,
     -- the buffer should not be changed
     command('normal :perldo 1;')
-    eq(false, meths.get_option_value('modified', {}))
+    eq(false, meths.nvim_get_option_value('modified', {}))
     -- insert some text
     insert('abc\ndef\nghi')
     expect([[

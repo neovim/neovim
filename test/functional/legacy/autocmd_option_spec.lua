@@ -38,7 +38,7 @@ local function init_var()
 end
 
 local function get_result()
-  local ret = nvim.get_var('ret')
+  local ret = nvim.nvim_get_var('ret')
   init_var()
   return ret
 end
@@ -696,24 +696,24 @@ describe('au OptionSet', function()
       it('should trigger if a boolean option be set globally', function()
         set_hook('autochdir')
 
-        nvim.set_option_value('autochdir', true, { scope = 'global' })
-        eq(true, nvim.get_option_value('autochdir', { scope = 'global' }))
+        nvim.nvim_set_option_value('autochdir', true, { scope = 'global' })
+        eq(true, nvim.nvim_get_option_value('autochdir', { scope = 'global' }))
         expected_combination({ 'autochdir', false, '', false, true, 'global', 'setglobal' })
       end)
 
       it('should trigger if a number option be set globally', function()
         set_hook('cmdheight')
 
-        nvim.set_option_value('cmdheight', 5, { scope = 'global' })
-        eq(5, nvim.get_option_value('cmdheight', { scope = 'global' }))
+        nvim.nvim_set_option_value('cmdheight', 5, { scope = 'global' })
+        eq(5, nvim.nvim_get_option_value('cmdheight', { scope = 'global' }))
         expected_combination({ 'cmdheight', 1, '', 1, 5, 'global', 'setglobal' })
       end)
 
       it('should trigger if a string option be set globally', function()
         set_hook('ambiwidth')
 
-        nvim.set_option_value('ambiwidth', 'double', { scope = 'global' })
-        eq('double', nvim.get_option_value('ambiwidth', { scope = 'global' }))
+        nvim.nvim_set_option_value('ambiwidth', 'double', { scope = 'global' })
+        eq('double', nvim.nvim_get_option_value('ambiwidth', { scope = 'global' }))
         expected_combination({
           'ambiwidth',
           'single',

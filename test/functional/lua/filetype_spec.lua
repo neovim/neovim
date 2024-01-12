@@ -165,6 +165,6 @@ describe('filetype.lua', function()
     clear({
       args = { '--clean', '--cmd', 'autocmd BufRead *.md set filetype=notmarkdown', 'README.md' },
     })
-    eq('notmarkdown', meths.get_option_value('filetype', {}))
+    eq('notmarkdown', meths.nvim_get_option_value('filetype', {}))
   end)
 end)

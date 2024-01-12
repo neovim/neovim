@@ -52,7 +52,7 @@ describe('server', function()
 
   it('sets v:servername at startup or if all servers were stopped', function()
     clear()
-    local initial_server = meths.get_vvar('servername')
+    local initial_server = meths.nvim_get_vvar('servername')
     assert(initial_server ~= nil and initial_server:len() > 0, 'v:servername was not initialized')
 
     -- v:servername is readonly so we cannot unset it--but we can test that it
@@ -63,11 +63,11 @@ describe('server', function()
 
     -- serverstop() does _not_ modify v:servername...
     eq(1, funcs.serverstop(s))
-    eq(initial_server, meths.get_vvar('servername'))
+    eq(initial_server, meths.nvim_get_vvar('servername'))
 
     -- ...unless we stop _all_ servers.
     eq(1, funcs.serverstop(funcs.serverlist()[1]))
-    eq('', meths.get_vvar('servername'))
+    eq('', meths.nvim_get_vvar('servername'))
 
     -- v:servername and $NVIM take the next available server.
     local servername = (
@@ -75,7 +75,7 @@ describe('server', function()
       or './Xtest-functional-server-socket'
     )
     funcs.serverstart(servername)
-    eq(servername, meths.get_vvar('servername'))
+    eq(servername, meths.nvim_get_vvar('servername'))
     -- Not set in the current process, only in children.
     eq('', eval('$NVIM'))
   end)
@@ -185,10 +185,10 @@ describe('startup --listen', function()
   it('sets v:servername, overrides $NVIM_LISTEN_ADDRESS', function()
     local addr = (is_os('win') and [[\\.\pipe\Xtest-listen-pipe]] or './Xtest-listen-pipe')
     clear({ env = { NVIM_LISTEN_ADDRESS = './Xtest-env-pipe' }, args = { '--listen', addr } })
-    eq(addr, meths.get_vvar('servername'))
+    eq(addr, meths.nvim_get_vvar('servername'))
 
     -- Address without slashes is a "name" which is appended to a generated path. #8519
     clear({ args = { '--listen', 'test-name' } })
-    matches([[.*[/\\]test%-name[^/\\]*]], meths.get_vvar('servername'))
+    matches([[.*[/\\]test%-name[^/\\]*]], meths.nvim_get_vvar('servername'))
   end)
 end)

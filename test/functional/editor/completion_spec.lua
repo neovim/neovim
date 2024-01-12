@@ -883,8 +883,8 @@ describe('completion', function()
           return ''
         endfunction
       ]])
-      meths.set_option_value('completeopt', 'menuone,noselect', {})
-      meths.set_var('_complist', {
+      meths.nvim_set_option_value('completeopt', 'menuone,noselect', {})
+      meths.nvim_set_var('_complist', {
         {
           word = 0,
           abbr = 1,

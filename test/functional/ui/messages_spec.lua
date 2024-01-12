@@ -1445,7 +1445,7 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
 
   it('prints lines in Ex mode correctly with a burst of carriage returns #19341', function()
     command('set number')
-    meths.buf_set_lines(0, 0, 0, true, { 'aaa', 'bbb', 'ccc' })
+    meths.nvim_buf_set_lines(0, 0, 0, true, { 'aaa', 'bbb', 'ccc' })
     feed('gggQ<CR><CR>1<CR><CR>vi')
     screen:expect([[
       Entering Ex mode.  Type "visual" to go to Normal mode.      |
@@ -1542,7 +1542,7 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
       {1:~                                                           }|*5
                                                                   |
     ]])
-    eq(1, meths.get_option_value('cmdheight', {}))
+    eq(1, meths.nvim_get_option_value('cmdheight', {}))
   end)
 
   it('using nvim_echo in VimResized does not cause hit-enter prompt #26139', function()
@@ -1553,7 +1553,7 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
       {1:~                                                           }|*3
                                                                   |
     ]])
-    eq({ mode = 'n', blocking = false }, meths.get_mode())
+    eq({ mode = 'n', blocking = false }, meths.nvim_get_mode())
   end)
 end)
 
@@ -1675,9 +1675,9 @@ describe('ui/ext_messages', function()
     })
 
     feed(':set mouse=a<cr>')
-    meths.input_mouse('left', 'press', '', 0, 12, 10)
+    meths.nvim_input_mouse('left', 'press', '', 0, 12, 10)
     poke_eventloop()
-    meths.input_mouse('left', 'drag', '', 0, 11, 10)
+    meths.nvim_input_mouse('left', 'drag', '', 0, 11, 10)
     feed('<c-l>')
     feed(':set cmdheight<cr>')
     screen:expect({

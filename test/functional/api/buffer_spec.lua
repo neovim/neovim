@@ -42,9 +42,9 @@ describe('api/buf', function()
     end)
 
     it("doesn't crash just after set undolevels=1 #24894", function()
-      local buf = meths.create_buf(false, true)
-      meths.buf_set_option(buf, 'undolevels', -1)
-      meths.buf_set_lines(buf, 0, 1, false, {})
+      local buf = meths.nvim_create_buf(false, true)
+      meths.nvim_buf_set_option(buf, 'undolevels', -1)
+      meths.nvim_buf_set_lines(buf, 0, 1, false, {})
 
       assert_alive()
     end)
@@ -85,35 +85,41 @@ describe('api/buf', function()
     end)
 
     it('cursor position is maintained in non-current window', function()
-      meths.buf_set_lines(0, 0, -1, 1, { 'line1', 'line2', 'line3', 'line4' })
-      meths.win_set_cursor(0, { 3, 2 })
-      local win = meths.get_current_win()
-      local buf = meths.get_current_buf()
+      meths.nvim_buf_set_lines(0, 0, -1, 1, { 'line1', 'line2', 'line3', 'line4' })
+      meths.nvim_win_set_cursor(0, { 3, 2 })
+      local win = meths.nvim_get_current_win()
+      local buf = meths.nvim_get_current_buf()
 
       command('new')
 
-      meths.buf_set_lines(buf, 1, 2, 1, { 'line5', 'line6' })
-      eq({ 'line1', 'line5', 'line6', 'line3', 'line4' }, meths.buf_get_lines(buf, 0, -1, true))
-      eq({ 4, 2 }, meths.win_get_cursor(win))
+      meths.nvim_buf_set_lines(buf, 1, 2, 1, { 'line5', 'line6' })
+      eq(
+        { 'line1', 'line5', 'line6', 'line3', 'line4' },
+        meths.nvim_buf_get_lines(buf, 0, -1, true)
+      )
+      eq({ 4, 2 }, meths.nvim_win_get_cursor(win))
     end)
 
     it('cursor position is maintained in TWO non-current windows', function()
-      meths.buf_set_lines(0, 0, -1, 1, { 'line1', 'line2', 'line3', 'line4' })
-      meths.win_set_cursor(0, { 3, 2 })
-      local win = meths.get_current_win()
-      local buf = meths.get_current_buf()
+      meths.nvim_buf_set_lines(0, 0, -1, 1, { 'line1', 'line2', 'line3', 'line4' })
+      meths.nvim_win_set_cursor(0, { 3, 2 })
+      local win = meths.nvim_get_current_win()
+      local buf = meths.nvim_get_current_buf()
 
       command('split')
-      meths.win_set_cursor(0, { 4, 2 })
-      local win2 = meths.get_current_win()
+      meths.nvim_win_set_cursor(0, { 4, 2 })
+      local win2 = meths.nvim_get_current_win()
 
       -- set current window to third one with another buffer
       command('new')
 
-      meths.buf_set_lines(buf, 1, 2, 1, { 'line5', 'line6' })
-      eq({ 'line1', 'line5', 'line6', 'line3', 'line4' }, meths.buf_get_lines(buf, 0, -1, true))
-      eq({ 4, 2 }, meths.win_get_cursor(win))
-      eq({ 5, 2 }, meths.win_get_cursor(win2))
+      meths.nvim_buf_set_lines(buf, 1, 2, 1, { 'line5', 'line6' })
+      eq(
+        { 'line1', 'line5', 'line6', 'line3', 'line4' },
+        meths.nvim_buf_get_lines(buf, 0, -1, true)
+      )
+      eq({ 4, 2 }, meths.nvim_win_get_cursor(win))
+      eq({ 5, 2 }, meths.nvim_win_get_cursor(win2))
     end)
 
     it('line_count has defined behaviour for unloaded buffers', function()
@@ -156,16 +162,22 @@ describe('api/buf', function()
           [3] = { reverse = true },
         }
         screen:attach()
-        meths.buf_set_lines(0, 0, -1, 1, { 'aaa', 'bbb', 'ccc', 'ddd', 'www', 'xxx', 'yyy', 'zzz' })
-        meths.set_option_value('modified', false, {})
+        meths.nvim_buf_set_lines(
+          0,
+          0,
+          -1,
+          1,
+          { 'aaa', 'bbb', 'ccc', 'ddd', 'www', 'xxx', 'yyy', 'zzz' }
+        )
+        meths.nvim_set_option_value('modified', false, {})
       end)
 
       it('of current window', function()
-        local win = meths.get_current_win()
-        local buf = meths.get_current_buf()
+        local win = meths.nvim_get_current_win()
+        local buf = meths.nvim_get_current_buf()
 
         command('new | wincmd w')
-        meths.win_set_cursor(win, { 8, 0 })
+        meths.nvim_win_set_cursor(win, { 8, 0 })
 
         screen:expect {
           grid = [[
@@ -181,7 +193,7 @@ describe('api/buf', function()
         ]],
         }
 
-        meths.buf_set_lines(buf, 0, 2, true, { 'aaabbb' })
+        meths.nvim_buf_set_lines(buf, 0, 2, true, { 'aaabbb' })
         screen:expect {
           grid = [[
                               |
@@ -197,7 +209,7 @@ describe('api/buf', function()
         }
 
         -- replacing topline keeps it the topline
-        meths.buf_set_lines(buf, 3, 4, true, { 'wwweeee' })
+        meths.nvim_buf_set_lines(buf, 3, 4, true, { 'wwweeee' })
         screen:expect {
           grid = [[
                               |
@@ -213,7 +225,7 @@ describe('api/buf', function()
         }
 
         -- inserting just before topline does not scroll up if cursor would be moved
-        meths.buf_set_lines(buf, 3, 3, true, { 'mmm' })
+        meths.nvim_buf_set_lines(buf, 3, 3, true, { 'mmm' })
         screen:expect {
           grid = [[
                               |
@@ -229,7 +241,7 @@ describe('api/buf', function()
           unchanged = true,
         }
 
-        meths.win_set_cursor(0, { 7, 0 })
+        meths.nvim_win_set_cursor(0, { 7, 0 })
         screen:expect {
           grid = [[
                               |
@@ -244,7 +256,7 @@ describe('api/buf', function()
         ]],
         }
 
-        meths.buf_set_lines(buf, 4, 4, true, { 'mmmeeeee' })
+        meths.nvim_buf_set_lines(buf, 4, 4, true, { 'mmmeeeee' })
         screen:expect {
           grid = [[
                               |
@@ -261,11 +273,11 @@ describe('api/buf', function()
       end)
 
       it('of non-current window', function()
-        local win = meths.get_current_win()
-        local buf = meths.get_current_buf()
+        local win = meths.nvim_get_current_win()
+        local buf = meths.nvim_get_current_buf()
 
         command('new')
-        meths.win_set_cursor(win, { 8, 0 })
+        meths.nvim_win_set_cursor(win, { 8, 0 })
 
         screen:expect {
           grid = [[
@@ -281,7 +293,7 @@ describe('api/buf', function()
         ]],
         }
 
-        meths.buf_set_lines(buf, 0, 2, true, { 'aaabbb' })
+        meths.nvim_buf_set_lines(buf, 0, 2, true, { 'aaabbb' })
         screen:expect {
           grid = [[
           ^                    |
@@ -297,7 +309,7 @@ describe('api/buf', function()
         }
 
         -- replacing topline keeps it the topline
-        meths.buf_set_lines(buf, 3, 4, true, { 'wwweeee' })
+        meths.nvim_buf_set_lines(buf, 3, 4, true, { 'wwweeee' })
         screen:expect {
           grid = [[
           ^                    |
@@ -313,7 +325,7 @@ describe('api/buf', function()
         }
 
         -- inserting just before topline scrolls up
-        meths.buf_set_lines(buf, 3, 3, true, { 'mmm' })
+        meths.nvim_buf_set_lines(buf, 3, 3, true, { 'mmm' })
         screen:expect {
           grid = [[
           ^                    |
@@ -330,12 +342,12 @@ describe('api/buf', function()
       end)
 
       it('of split windows with same buffer', function()
-        local win = meths.get_current_win()
-        local buf = meths.get_current_buf()
+        local win = meths.nvim_get_current_win()
+        local buf = meths.nvim_get_current_buf()
 
         command('split')
-        meths.win_set_cursor(win, { 8, 0 })
-        meths.win_set_cursor(0, { 1, 0 })
+        meths.nvim_win_set_cursor(win, { 8, 0 })
+        meths.nvim_win_set_cursor(0, { 1, 0 })
 
         screen:expect {
           grid = [[
@@ -353,7 +365,7 @@ describe('api/buf', function()
                               |
         ]],
         }
-        meths.buf_set_lines(buf, 0, 2, true, { 'aaabbb' })
+        meths.nvim_buf_set_lines(buf, 0, 2, true, { 'aaabbb' })
 
         screen:expect {
           grid = [[
@@ -373,7 +385,7 @@ describe('api/buf', function()
         }
 
         -- replacing topline keeps it the topline
-        meths.buf_set_lines(buf, 3, 4, true, { 'wwweeee' })
+        meths.nvim_buf_set_lines(buf, 3, 4, true, { 'wwweeee' })
         screen:expect {
           grid = [[
           ^aaabbb              |
@@ -392,7 +404,7 @@ describe('api/buf', function()
         }
 
         -- inserting just before topline scrolls up
-        meths.buf_set_lines(buf, 3, 3, true, { 'mmm' })
+        meths.nvim_buf_set_lines(buf, 3, 3, true, { 'mmm' })
         screen:expect {
           grid = [[
           ^aaabbb              |
@@ -413,15 +425,15 @@ describe('api/buf', function()
     end)
 
     it('handles clearing out non-current buffer #24911', function()
-      local buf = meths.get_current_buf()
-      meths.buf_set_lines(buf, 0, -1, true, { 'aaa', 'bbb', 'ccc' })
+      local buf = meths.nvim_get_current_buf()
+      meths.nvim_buf_set_lines(buf, 0, -1, true, { 'aaa', 'bbb', 'ccc' })
       command('new')
 
-      meths.buf_set_lines(0, 0, -1, true, { 'xxx', 'yyy', 'zzz' })
+      meths.nvim_buf_set_lines(0, 0, -1, true, { 'xxx', 'yyy', 'zzz' })
 
-      meths.buf_set_lines(buf, 0, -1, true, {})
-      eq({ 'xxx', 'yyy', 'zzz' }, meths.buf_get_lines(0, 0, -1, true))
-      eq({ '' }, meths.buf_get_lines(buf, 0, -1, true))
+      meths.nvim_buf_set_lines(buf, 0, -1, true, {})
+      eq({ 'xxx', 'yyy', 'zzz' }, meths.nvim_buf_get_lines(0, 0, -1, true))
+      eq({ '' }, meths.nvim_buf_get_lines(buf, 0, -1, true))
     end)
   end)
 
@@ -676,7 +688,7 @@ describe('api/buf', function()
         Who would win?
         A real window
         with proper text]])
-      local buf = api.meths.create_buf(false, true)
+      local buf = api.meths.nvim_create_buf(false, true)
       screen:expect([[
         Who would win?      |
         A real window       |
@@ -685,7 +697,7 @@ describe('api/buf', function()
                             |
       ]])
 
-      api.meths.buf_set_lines(buf, 0, -1, true, { 'or some', 'scratchy text' })
+      api.meths.nvim_buf_set_lines(buf, 0, -1, true, { 'or some', 'scratchy text' })
       feed('i') -- provoke redraw
       screen:expect([[
         Who would win?      |
@@ -701,22 +713,22 @@ describe('api/buf', function()
         visible buffer line 1
         line 2
       ]])
-      local hiddenbuf = api.meths.create_buf(false, true)
+      local hiddenbuf = api.meths.nvim_create_buf(false, true)
       command('vsplit')
       command('vsplit')
       feed('<c-w>l<c-w>l<c-w>l')
       eq(3, funcs.winnr())
       feed('<c-w>h')
       eq(2, funcs.winnr())
-      api.meths.buf_set_lines(hiddenbuf, 0, -1, true, { 'hidden buffer line 1', 'line 2' })
+      api.meths.nvim_buf_set_lines(hiddenbuf, 0, -1, true, { 'hidden buffer line 1', 'line 2' })
       feed('<c-w>p')
       eq(3, funcs.winnr())
     end)
 
     it('set_lines on unloaded buffer #8659 #22670', function()
       local bufnr = curbuf('get_number')
-      meths.buf_set_lines(bufnr, 0, -1, false, { 'a', 'b', 'c' })
-      meths.buf_set_name(bufnr, 'set_lines')
+      meths.nvim_buf_set_lines(bufnr, 0, -1, false, { 'a', 'b', 'c' })
+      meths.nvim_buf_set_name(bufnr, 'set_lines')
       finally(function()
         os.remove('set_lines')
       end)
@@ -724,8 +736,8 @@ describe('api/buf', function()
       command('new')
       command('bunload! ' .. bufnr)
       local new_bufnr = funcs.bufnr('set_lines', true)
-      meths.buf_set_lines(new_bufnr, 0, -1, false, {})
-      eq({ '' }, meths.buf_get_lines(new_bufnr, 0, -1, false))
+      meths.nvim_buf_set_lines(new_bufnr, 0, -1, false, {})
+      eq({ '' }, meths.nvim_buf_get_lines(new_bufnr, 0, -1, false))
     end)
   end)
 
@@ -822,18 +834,18 @@ describe('api/buf', function()
       hello world!]])
 
       -- position the cursor on `!`
-      meths.win_set_cursor(0, { 1, 11 })
+      meths.nvim_win_set_cursor(0, { 1, 11 })
 
-      local win = meths.get_current_win()
-      local buf = meths.get_current_buf()
+      local win = meths.nvim_get_current_win()
+      local buf = meths.nvim_get_current_buf()
 
       command('new')
 
       -- replace 'world' with 'foo'
-      meths.buf_set_text(buf, 0, 6, 0, 11, { 'foo' })
-      eq({ 'hello foo!' }, meths.buf_get_lines(buf, 0, -1, true))
+      meths.nvim_buf_set_text(buf, 0, 6, 0, 11, { 'foo' })
+      eq({ 'hello foo!' }, meths.nvim_buf_get_lines(buf, 0, -1, true))
       -- cursor should be moved left by two columns (replacement is shorter by 2 chars)
-      eq({ 1, 9 }, meths.win_get_cursor(win))
+      eq({ 1, 9 }, meths.nvim_win_get_cursor(win))
     end)
 
     it('updates the cursor position in TWO non-current windows', function()
@@ -841,24 +853,24 @@ describe('api/buf', function()
       hello world!]])
 
       -- position the cursor on `!`
-      meths.win_set_cursor(0, { 1, 11 })
-      local win = meths.get_current_win()
-      local buf = meths.get_current_buf()
+      meths.nvim_win_set_cursor(0, { 1, 11 })
+      local win = meths.nvim_get_current_win()
+      local buf = meths.nvim_get_current_buf()
 
       command('split')
-      local win2 = meths.get_current_win()
+      local win2 = meths.nvim_get_current_win()
       -- position the cursor on `w`
-      meths.win_set_cursor(0, { 1, 6 })
+      meths.nvim_win_set_cursor(0, { 1, 6 })
 
       command('new')
 
       -- replace 'hello' with 'foo'
-      meths.buf_set_text(buf, 0, 0, 0, 5, { 'foo' })
-      eq({ 'foo world!' }, meths.buf_get_lines(buf, 0, -1, true))
+      meths.nvim_buf_set_text(buf, 0, 0, 0, 5, { 'foo' })
+      eq({ 'foo world!' }, meths.nvim_buf_get_lines(buf, 0, -1, true))
 
       -- both cursors should be moved left by two columns (replacement is shorter by 2 chars)
-      eq({ 1, 9 }, meths.win_get_cursor(win))
-      eq({ 1, 4 }, meths.win_get_cursor(win2))
+      eq({ 1, 9 }, meths.nvim_win_get_cursor(win))
+      eq({ 1, 4 }, meths.nvim_win_get_cursor(win2))
     end)
 
     describe('when text is being added right at cursor position #22526', function()
@@ -1693,7 +1705,7 @@ describe('api/buf', function()
     it('no heap-use-after-free when called consecutively #19643', function()
       set_text(0, 0, 0, 0, { 'one', '', '', 'two' })
       eq({ 'one', '', '', 'two' }, get_lines(0, 4, true))
-      meths.win_set_cursor(0, { 1, 0 })
+      meths.nvim_win_set_cursor(0, { 1, 0 })
       exec_lua([[
         vim.api.nvim_buf_set_text(0, 0, 3, 1, 0, {''})
         vim.api.nvim_buf_set_text(0, 0, 3, 1, 0, {''})
@@ -1711,16 +1723,22 @@ describe('api/buf', function()
           [3] = { reverse = true },
         }
         screen:attach()
-        meths.buf_set_lines(0, 0, -1, 1, { 'aaa', 'bbb', 'ccc', 'ddd', 'www', 'xxx', 'yyy', 'zzz' })
-        meths.set_option_value('modified', false, {})
+        meths.nvim_buf_set_lines(
+          0,
+          0,
+          -1,
+          1,
+          { 'aaa', 'bbb', 'ccc', 'ddd', 'www', 'xxx', 'yyy', 'zzz' }
+        )
+        meths.nvim_set_option_value('modified', false, {})
       end)
 
       it('of current window', function()
-        local win = meths.get_current_win()
-        local buf = meths.get_current_buf()
+        local win = meths.nvim_get_current_win()
+        local buf = meths.nvim_get_current_buf()
 
         command('new | wincmd w')
-        meths.win_set_cursor(win, { 8, 0 })
+        meths.nvim_win_set_cursor(win, { 8, 0 })
 
         screen:expect {
           grid = [[
@@ -1735,7 +1753,7 @@ describe('api/buf', function()
                               |
         ]],
         }
-        meths.buf_set_text(buf, 0, 3, 1, 0, { 'X' })
+        meths.nvim_buf_set_text(buf, 0, 3, 1, 0, { 'X' })
 
         screen:expect {
           grid = [[
@@ -1753,11 +1771,11 @@ describe('api/buf', function()
       end)
 
       it('of non-current window', function()
-        local win = meths.get_current_win()
-        local buf = meths.get_current_buf()
+        local win = meths.nvim_get_current_win()
+        local buf = meths.nvim_get_current_buf()
 
         command('new')
-        meths.win_set_cursor(win, { 8, 0 })
+        meths.nvim_win_set_cursor(win, { 8, 0 })
 
         screen:expect {
           grid = [[
@@ -1773,7 +1791,7 @@ describe('api/buf', function()
         ]],
         }
 
-        meths.buf_set_text(buf, 0, 3, 1, 0, { 'X' })
+        meths.nvim_buf_set_text(buf, 0, 3, 1, 0, { 'X' })
         screen:expect {
           grid = [[
           ^                    |
@@ -1790,12 +1808,12 @@ describe('api/buf', function()
       end)
 
       it('of split windows with same buffer', function()
-        local win = meths.get_current_win()
-        local buf = meths.get_current_buf()
+        local win = meths.nvim_get_current_win()
+        local buf = meths.nvim_get_current_buf()
 
         command('split')
-        meths.win_set_cursor(win, { 8, 0 })
-        meths.win_set_cursor(0, { 1, 1 })
+        meths.nvim_win_set_cursor(win, { 8, 0 })
+        meths.nvim_win_set_cursor(0, { 1, 1 })
 
         screen:expect {
           grid = [[
@@ -1813,7 +1831,7 @@ describe('api/buf', function()
                               |
         ]],
         }
-        meths.buf_set_text(buf, 0, 3, 1, 0, { 'X' })
+        meths.nvim_buf_set_text(buf, 0, 3, 1, 0, { 'X' })
 
         screen:expect {
           grid = [[
@@ -1861,7 +1879,7 @@ describe('api/buf', function()
       eq('Index out of bounds', pcall_err(get_text, 0, 0, 3, 0, {}))
       eq('Index out of bounds', pcall_err(get_text, 0, 0, -4, 0, {}))
       -- no ml_get errors should happen #19017
-      eq('', meths.get_vvar('errmsg'))
+      eq('', meths.nvim_get_vvar('errmsg'))
     end)
 
     it('errors when start is greater than end', function()
@@ -1884,19 +1902,19 @@ describe('api/buf', function()
       eq('Index out of bounds', pcall_err(get_offset, 6))
       eq('Index out of bounds', pcall_err(get_offset, -1))
 
-      meths.set_option_value('eol', false, {})
-      meths.set_option_value('fixeol', false, {})
+      meths.nvim_set_option_value('eol', false, {})
+      meths.nvim_set_option_value('fixeol', false, {})
       eq(28, get_offset(5))
 
       -- fileformat is ignored
-      meths.set_option_value('fileformat', 'dos', {})
+      meths.nvim_set_option_value('fileformat', 'dos', {})
       eq(0, get_offset(0))
       eq(6, get_offset(1))
       eq(15, get_offset(2))
       eq(16, get_offset(3))
       eq(24, get_offset(4))
       eq(28, get_offset(5))
-      meths.set_option_value('eol', true, {})
+      meths.nvim_set_option_value('eol', true, {})
       eq(29, get_offset(5))
 
       command('set hidden')
@@ -2077,7 +2095,7 @@ describe('api/buf', function()
       eq(false, pcall(curbufmeths.set_mark, 'fail', 1, 0, {}))
     end)
     it('fails when invalid buffer number is used', function()
-      eq(false, pcall(meths.buf_set_mark, 99, 'a', 1, 1, {}))
+      eq(false, pcall(meths.nvim_buf_set_mark, 99, 'a', 1, 1, {}))
     end)
   end)
 
@@ -2095,7 +2113,7 @@ describe('api/buf', function()
       eq({ 0, 0 }, curbufmeths.get_mark('Z'))
     end)
     it('returns false in marks not set in this buffer', function()
-      local abuf = meths.create_buf(false, true)
+      local abuf = meths.nvim_create_buf(false, true)
       bufmeths.set_lines(abuf, -1, -1, true, { 'a', 'bit of', 'text' })
       bufmeths.set_mark(abuf, 'A', 2, 2, {})
       eq(false, curbufmeths.del_mark('A'))
@@ -2112,7 +2130,7 @@ describe('api/buf', function()
       eq(false, pcall(curbufmeths.del_mark, 'fail'))
     end)
     it('fails when invalid buffer number is used', function()
-      eq(false, pcall(meths.buf_del_mark, 99, 'a'))
+      eq(false, pcall(meths.nvim_buf_del_mark, 99, 'a'))
     end)
   end)
 end)

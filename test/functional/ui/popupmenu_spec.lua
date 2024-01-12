@@ -117,7 +117,7 @@ describe('ui/ext_popupmenu', function()
       },
     }
 
-    meths.select_popupmenu_item(1, false, false, {})
+    meths.nvim_select_popupmenu_item(1, false, false, {})
     screen:expect {
       grid = [[
                                                                   |
@@ -132,7 +132,7 @@ describe('ui/ext_popupmenu', function()
       },
     }
 
-    meths.select_popupmenu_item(2, true, false, {})
+    meths.nvim_select_popupmenu_item(2, true, false, {})
     screen:expect {
       grid = [[
                                                                   |
@@ -147,7 +147,7 @@ describe('ui/ext_popupmenu', function()
       },
     }
 
-    meths.select_popupmenu_item(0, true, true, {})
+    meths.nvim_select_popupmenu_item(0, true, true, {})
     screen:expect([[
                                                                   |
       foo^                                                         |
@@ -170,7 +170,7 @@ describe('ui/ext_popupmenu', function()
       },
     }
 
-    meths.select_popupmenu_item(-1, false, false, {})
+    meths.nvim_select_popupmenu_item(-1, false, false, {})
     screen:expect {
       grid = [[
                                                                   |
@@ -185,7 +185,7 @@ describe('ui/ext_popupmenu', function()
       },
     }
 
-    meths.select_popupmenu_item(1, true, false, {})
+    meths.nvim_select_popupmenu_item(1, true, false, {})
     screen:expect {
       grid = [[
                                                                   |
@@ -200,7 +200,7 @@ describe('ui/ext_popupmenu', function()
       },
     }
 
-    meths.select_popupmenu_item(-1, true, false, {})
+    meths.nvim_select_popupmenu_item(-1, true, false, {})
     screen:expect {
       grid = [[
                                                                   |
@@ -215,7 +215,7 @@ describe('ui/ext_popupmenu', function()
       },
     }
 
-    meths.select_popupmenu_item(0, true, false, {})
+    meths.nvim_select_popupmenu_item(0, true, false, {})
     screen:expect {
       grid = [[
                                                                   |
@@ -230,7 +230,7 @@ describe('ui/ext_popupmenu', function()
       },
     }
 
-    meths.select_popupmenu_item(-1, true, true, {})
+    meths.nvim_select_popupmenu_item(-1, true, true, {})
     screen:expect([[
                                                                   |
       ^                                                            |
@@ -262,7 +262,7 @@ describe('ui/ext_popupmenu', function()
       },
     })
 
-    meths.select_popupmenu_item(-1, true, false, {})
+    meths.nvim_select_popupmenu_item(-1, true, false, {})
     screen:expect({
       grid = [[
                                                                   |*2
@@ -276,7 +276,7 @@ describe('ui/ext_popupmenu', function()
       },
     })
 
-    meths.select_popupmenu_item(5, true, false, {})
+    meths.nvim_select_popupmenu_item(5, true, false, {})
     screen:expect({
       grid = [[
                                                                   |*2
@@ -290,7 +290,7 @@ describe('ui/ext_popupmenu', function()
       },
     })
 
-    meths.select_popupmenu_item(-1, true, true, {})
+    meths.nvim_select_popupmenu_item(-1, true, true, {})
     screen:expect({
       grid = [[
                                                                   |*2
@@ -313,7 +313,7 @@ describe('ui/ext_popupmenu', function()
       },
     })
 
-    meths.select_popupmenu_item(5, true, true, {})
+    meths.nvim_select_popupmenu_item(5, true, true, {})
     screen:expect({
       grid = [[
                                                                   |*2
@@ -608,7 +608,7 @@ describe('ui/ext_popupmenu', function()
       }
       local pum_height = 6
       feed('o<C-r>=TestCompleteMonth()<CR>')
-      meths.ui_pum_set_height(pum_height)
+      meths.nvim_ui_pum_set_height(pum_height)
       feed('<PageDown>')
       -- pos becomes pum_height-2 because it is subtracting 2 to keep some
       -- context in ins_compl_key2count()
@@ -628,14 +628,14 @@ describe('ui/ext_popupmenu', function()
     end)
 
     it('an error occurs if set 0 or less', function()
-      meths.ui_pum_set_height(1)
-      eq('Expected pum height > 0', pcall_err(meths.ui_pum_set_height, 0))
+      meths.nvim_ui_pum_set_height(1)
+      eq('Expected pum height > 0', pcall_err(meths.nvim_ui_pum_set_height, 0))
     end)
 
     it('an error occurs when ext_popupmenu is false', function()
-      meths.ui_pum_set_height(1)
+      meths.nvim_ui_pum_set_height(1)
       screen:set_option('ext_popupmenu', false)
-      eq('It must support the ext_popupmenu option', pcall_err(meths.ui_pum_set_height, 1))
+      eq('It must support the ext_popupmenu option', pcall_err(meths.nvim_ui_pum_set_height, 1))
     end)
   end)
 
@@ -658,9 +658,9 @@ describe('ui/ext_popupmenu', function()
       }
       local pum_height = 6
       feed('o<C-r>=TestCompleteMonth()<CR>')
-      meths.ui_pum_set_height(pum_height)
+      meths.nvim_ui_pum_set_height(pum_height)
       -- set bounds w h r c
-      meths.ui_pum_set_bounds(10.5, 5.2, 6.3, 7.4)
+      meths.nvim_ui_pum_set_bounds(10.5, 5.2, 6.3, 7.4)
       feed('<PageDown>')
       -- pos becomes pum_height-2 because it is subtracting 2 to keep some
       -- context in ins_compl_key2count()
@@ -680,23 +680,23 @@ describe('ui/ext_popupmenu', function()
     end)
 
     it('no error occurs if row or col set less than 0', function()
-      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
-      meths.ui_pum_set_bounds(1.0, 1.0, -1.0, 0.0)
-      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, -1.0)
+      meths.nvim_ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
+      meths.nvim_ui_pum_set_bounds(1.0, 1.0, -1.0, 0.0)
+      meths.nvim_ui_pum_set_bounds(1.0, 1.0, 0.0, -1.0)
     end)
 
     it('an error occurs if width or height set 0 or less', function()
-      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
-      eq('Expected width > 0', pcall_err(meths.ui_pum_set_bounds, 0.0, 1.0, 1.0, 0.0))
-      eq('Expected height > 0', pcall_err(meths.ui_pum_set_bounds, 1.0, -1.0, 1.0, 0.0))
+      meths.nvim_ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
+      eq('Expected width > 0', pcall_err(meths.nvim_ui_pum_set_bounds, 0.0, 1.0, 1.0, 0.0))
+      eq('Expected height > 0', pcall_err(meths.nvim_ui_pum_set_bounds, 1.0, -1.0, 1.0, 0.0))
     end)
 
     it('an error occurs when ext_popupmenu is false', function()
-      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
+      meths.nvim_ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
       screen:set_option('ext_popupmenu', false)
       eq(
         'UI must support the ext_popupmenu option',
-        pcall_err(meths.ui_pum_set_bounds, 1.0, 1.0, 0.0, 1.5)
+        pcall_err(meths.nvim_ui_pum_set_bounds, 1.0, 1.0, 0.0, 1.5)
       )
     end)
   end)
@@ -1055,7 +1055,7 @@ describe("builtin popupmenu 'pumblend'", function()
       {20:-- Keyword Local completion (^N^P) }{21:match 1 of 65}            |
     ]])
 
-    meths.input_mouse('wheel', 'down', '', 0, 9, 40)
+    meths.nvim_input_mouse('wheel', 'down', '', 0, 9, 40)
     screen:expect([[
       Lorem ipsum d{1:ol}or sit amet, consectetur                     |
       adipisicing elit, sed do eiusmod tempor                     |
@@ -2014,7 +2014,7 @@ describe('builtin popupmenu', function()
           {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
         ]])
 
-        meths.input_mouse('wheel', 'down', '', 0, 9, 40)
+        meths.nvim_input_mouse('wheel', 'down', '', 0, 9, 40)
         screen:expect([[
           Est ^                                                        |
             L{n: sunt           }{s: }sit amet, consectetur                   |
@@ -2050,7 +2050,7 @@ describe('builtin popupmenu', function()
           {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
         ]])
 
-        meths.input_mouse('wheel', 'up', '', 0, 9, 40)
+        meths.nvim_input_mouse('wheel', 'up', '', 0, 9, 40)
         screen:expect([[
           Est e^                                                       |
             L{n: elit           } sit amet, consectetur                   |
@@ -2086,7 +2086,7 @@ describe('builtin popupmenu', function()
           {2:-- Keyword Local completion (^N^P) }{5:match 1 of 65}            |
         ]])
 
-        meths.input_mouse('wheel', 'down', '', 0, 9, 40)
+        meths.nvim_input_mouse('wheel', 'down', '', 0, 9, 40)
         screen:expect([[
           Est es^                                                      |
             L{n: esse           } sit amet, consectetur                   |
@@ -2140,7 +2140,7 @@ describe('builtin popupmenu', function()
           {2:-- Keyword Local completion (^N^P) }{5:match 22 of 65}           |
         ]])
 
-        meths.input_mouse('wheel', 'down', '', 0, 9, 40)
+        meths.nvim_input_mouse('wheel', 'down', '', 0, 9, 40)
         screen:expect([[
           Est eu^                                                      |
             L{n: elit           } sit amet, consectetur                   |
@@ -2663,7 +2663,7 @@ describe('builtin popupmenu', function()
           {2:-- INSERT --}                            |
         ]])
 
-        meths.input_mouse('wheel', 'down', '', 0, 6, 15)
+        meths.nvim_input_mouse('wheel', 'down', '', 0, 6, 15)
         screen:expect {
           grid = [[
           xx                                      |
@@ -3347,7 +3347,7 @@ describe('builtin popupmenu', function()
 
       it('wildoptions=pum with a wrapped line in buffer vim-patch:8.2.4655', function()
         screen:try_resize(32, 10)
-        meths.buf_set_lines(0, 0, -1, true, { ('a'):rep(100) })
+        meths.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(100) })
         command('set wildoptions+=pum')
         feed('$')
         feed(':sign <Tab>')
@@ -3631,7 +3631,7 @@ describe('builtin popupmenu', function()
       ]])
 
       if multigrid then
-        meths.input_mouse('right', 'press', '', 2, 0, 4)
+        meths.nvim_input_mouse('right', 'press', '', 2, 0, 4)
         screen:expect({
           grid = [[
         ## grid 1
@@ -3739,10 +3739,10 @@ describe('builtin popupmenu', function()
           :let g:menustr = 'bar'          |
         ]])
       end
-      eq('bar', meths.get_var('menustr'))
+      eq('bar', meths.nvim_get_var('menustr'))
 
       if multigrid then
-        meths.input_mouse('right', 'press', '', 2, 2, 20)
+        meths.nvim_input_mouse('right', 'press', '', 2, 2, 20)
         screen:expect({
           grid = [[
         ## grid 1
@@ -3771,7 +3771,7 @@ describe('builtin popupmenu', function()
         ]])
       end
       if multigrid then
-        meths.input_mouse('right', 'press', '', 2, 0, 18)
+        meths.nvim_input_mouse('right', 'press', '', 2, 0, 18)
         screen:expect {
           grid = [[
         ## grid 1
@@ -3803,7 +3803,7 @@ describe('builtin popupmenu', function()
         ]])
       end
       if multigrid then
-        meths.input_mouse('right', 'press', '', 4, 1, 3)
+        meths.nvim_input_mouse('right', 'press', '', 4, 1, 3)
         screen:expect({
           grid = [[
         ## grid 1
@@ -3832,7 +3832,7 @@ describe('builtin popupmenu', function()
         ]])
       end
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 2, 2)
+        meths.nvim_input_mouse('left', 'press', '', 4, 2, 2)
         screen:expect({
           grid = [[
         ## grid 1
@@ -3853,10 +3853,10 @@ describe('builtin popupmenu', function()
           :let g:menustr = 'baz'          |
         ]])
       end
-      eq('baz', meths.get_var('menustr'))
+      eq('baz', meths.nvim_get_var('menustr'))
 
       if multigrid then
-        meths.input_mouse('right', 'press', '', 2, 0, 4)
+        meths.nvim_input_mouse('right', 'press', '', 2, 0, 4)
         screen:expect({
           grid = [[
         ## grid 1
@@ -3886,7 +3886,7 @@ describe('builtin popupmenu', function()
         ]])
       end
       if multigrid then
-        meths.input_mouse('right', 'drag', '', 2, 3, 6)
+        meths.nvim_input_mouse('right', 'drag', '', 2, 3, 6)
         screen:expect({
           grid = [[
         ## grid 1
@@ -3916,7 +3916,7 @@ describe('builtin popupmenu', function()
         ]])
       end
       if multigrid then
-        meths.input_mouse('right', 'release', '', 2, 1, 6)
+        meths.nvim_input_mouse('right', 'release', '', 2, 1, 6)
         screen:expect({
           grid = [[
         ## grid 1
@@ -3937,11 +3937,11 @@ describe('builtin popupmenu', function()
           :let g:menustr = 'foo'          |
         ]])
       end
-      eq('foo', meths.get_var('menustr'))
+      eq('foo', meths.nvim_get_var('menustr'))
 
       eq(false, screen.options.mousemoveevent)
       if multigrid then
-        meths.input_mouse('right', 'press', '', 2, 0, 4)
+        meths.nvim_input_mouse('right', 'press', '', 2, 0, 4)
         screen:expect({
           grid = [[
         ## grid 1
@@ -3972,7 +3972,7 @@ describe('builtin popupmenu', function()
       end
       eq(true, screen.options.mousemoveevent)
       if multigrid then
-        meths.input_mouse('move', '', '', 2, 3, 6)
+        meths.nvim_input_mouse('move', '', '', 2, 3, 6)
         screen:expect({
           grid = [[
         ## grid 1
@@ -4003,7 +4003,7 @@ describe('builtin popupmenu', function()
       end
       eq(true, screen.options.mousemoveevent)
       if multigrid then
-        meths.input_mouse('left', 'press', '', 2, 2, 6)
+        meths.nvim_input_mouse('left', 'press', '', 2, 2, 6)
         screen:expect({
           grid = [[
         ## grid 1
@@ -4025,11 +4025,11 @@ describe('builtin popupmenu', function()
         ]])
       end
       eq(false, screen.options.mousemoveevent)
-      eq('bar', meths.get_var('menustr'))
+      eq('bar', meths.nvim_get_var('menustr'))
 
       command('set laststatus=0 | botright split')
       if multigrid then
-        meths.input_mouse('right', 'press', '', 5, 1, 20)
+        meths.nvim_input_mouse('right', 'press', '', 5, 1, 20)
         screen:expect({
           grid = [[
         ## grid 1
@@ -4064,7 +4064,7 @@ describe('builtin popupmenu', function()
         ]])
       end
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 2, 2)
+        meths.nvim_input_mouse('left', 'press', '', 4, 2, 2)
         screen:expect({
           grid = [[
         ## grid 1
@@ -4093,11 +4093,11 @@ describe('builtin popupmenu', function()
           :let g:menustr = 'baz'          |
         ]])
       end
-      eq('baz', meths.get_var('menustr'))
+      eq('baz', meths.nvim_get_var('menustr'))
 
       command('set winwidth=1 | rightbelow vsplit')
       if multigrid then
-        meths.input_mouse('right', 'press', '', 6, 1, 14)
+        meths.nvim_input_mouse('right', 'press', '', 6, 1, 14)
         screen:expect({
           grid = [[
         ## grid 1
@@ -4135,7 +4135,7 @@ describe('builtin popupmenu', function()
         ]])
       end
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 0, 2)
+        meths.nvim_input_mouse('left', 'press', '', 4, 0, 2)
         screen:expect({
           grid = [[
         ## grid 1
@@ -4167,11 +4167,11 @@ describe('builtin popupmenu', function()
           :let g:menustr = 'foo'          |
         ]])
       end
-      eq('foo', meths.get_var('menustr'))
+      eq('foo', meths.nvim_get_var('menustr'))
 
       command('setlocal winbar=WINBAR')
       if multigrid then
-        meths.input_mouse('right', 'press', '', 6, 1, 14)
+        meths.nvim_input_mouse('right', 'press', '', 6, 1, 14)
         screen:expect({
           grid = [[
         ## grid 1
@@ -4209,7 +4209,7 @@ describe('builtin popupmenu', function()
         ]])
       end
       if multigrid then
-        meths.input_mouse('left', 'press', '', 4, 1, 2)
+        meths.nvim_input_mouse('left', 'press', '', 4, 1, 2)
         screen:expect({
           grid = [[
         ## grid 1
@@ -4241,7 +4241,7 @@ describe('builtin popupmenu', function()
           :let g:menustr = 'bar'          |
         ]])
       end
-      eq('bar', meths.get_var('menustr'))
+      eq('bar', meths.nvim_get_var('menustr'))
     end)
 
     if not multigrid then

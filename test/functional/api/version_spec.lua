@@ -94,7 +94,7 @@ describe('api metadata', function()
   local old_api = {}
   setup(function()
     clear() -- Ensure a session before requesting api_info.
-    api = meths.get_api_info()[2]
+    api = meths.nvim_get_api_info()[2]
     compat = api.version.api_compatible
     api_level = api.version.api_level
     if api.version.api_prerelease then

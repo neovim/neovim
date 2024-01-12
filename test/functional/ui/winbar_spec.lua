@@ -40,7 +40,7 @@ describe('winbar', function()
         foreground = Screen.colors.Magenta,
       },
     })
-    meths.set_option_value('winbar', 'Set Up The Bars', {})
+    meths.nvim_set_option_value('winbar', 'Set Up The Bars', {})
   end)
 
   it('works', function()
@@ -185,7 +185,7 @@ describe('winbar', function()
     insert [[
       just some
       random text]]
-    meths.set_option_value('winbar', 'Hello, I am a ruler: %l,%c', {})
+    meths.nvim_set_option_value('winbar', 'Hello, I am a ruler: %l,%c', {})
     screen:expect {
       grid = [[
       {1:Hello, I am a ruler: 2,11                                   }|
@@ -265,7 +265,7 @@ describe('winbar', function()
       line sin(theta)
       line 8]])
 
-    meths.input_mouse('left', 'press', '', 0, 5, 1)
+    meths.nvim_input_mouse('left', 'press', '', 0, 5, 1)
     screen:expect([[
       {1:Set Up The Bars                                             }|
       line 1                                                      |
@@ -279,9 +279,9 @@ describe('winbar', function()
       {3:~                                                           }|*3
                                                                   |
     ]])
-    eq({ 5, 1 }, meths.win_get_cursor(0))
+    eq({ 5, 1 }, meths.nvim_win_get_cursor(0))
 
-    meths.input_mouse('left', 'drag', '', 0, 6, 2)
+    meths.nvim_input_mouse('left', 'drag', '', 0, 6, 2)
     screen:expect([[
       {1:Set Up The Bars                                             }|
       line 1                                                      |
@@ -295,9 +295,9 @@ describe('winbar', function()
       {3:~                                                           }|*3
       {1:-- VISUAL --}                                                |
     ]])
-    eq({ 6, 2 }, meths.win_get_cursor(0))
+    eq({ 6, 2 }, meths.nvim_win_get_cursor(0))
 
-    meths.input_mouse('left', 'drag', '', 0, 1, 2)
+    meths.nvim_input_mouse('left', 'drag', '', 0, 1, 2)
     screen:expect([[
       {1:Set Up The Bars                                             }|
       li^n{7:e 1}                                                      |
@@ -311,11 +311,11 @@ describe('winbar', function()
       {3:~                                                           }|*3
       {1:-- VISUAL --}                                                |
     ]])
-    eq({ 1, 2 }, meths.win_get_cursor(0))
+    eq({ 1, 2 }, meths.nvim_win_get_cursor(0))
 
-    meths.input_mouse('left', 'drag', '', 0, 0, 2)
+    meths.nvim_input_mouse('left', 'drag', '', 0, 0, 2)
     screen:expect_unchanged()
-    eq({ 1, 2 }, meths.win_get_cursor(0))
+    eq({ 1, 2 }, meths.nvim_win_get_cursor(0))
   end)
 
   it('dragging statusline with mouse works correctly', function()
@@ -332,9 +332,9 @@ describe('winbar', function()
                                                                   |
     ]])
 
-    meths.input_mouse('left', 'press', '', 1, 5, 10)
+    meths.nvim_input_mouse('left', 'press', '', 1, 5, 10)
     poke_eventloop()
-    meths.input_mouse('left', 'drag', '', 1, 6, 10)
+    meths.nvim_input_mouse('left', 'drag', '', 1, 6, 10)
     screen:expect([[
       {1:Set Up The Bars                                             }|
       ^                                                            |
@@ -347,7 +347,7 @@ describe('winbar', function()
                                                                   |
     ]])
 
-    meths.input_mouse('left', 'drag', '', 1, 4, 10)
+    meths.nvim_input_mouse('left', 'drag', '', 1, 4, 10)
     screen:expect([[
       {1:Set Up The Bars                                             }|
       ^                                                            |
@@ -360,9 +360,9 @@ describe('winbar', function()
                                                                   |
     ]])
 
-    meths.input_mouse('left', 'press', '', 1, 11, 10)
+    meths.nvim_input_mouse('left', 'press', '', 1, 11, 10)
     poke_eventloop()
-    meths.input_mouse('left', 'drag', '', 1, 9, 10)
+    meths.nvim_input_mouse('left', 'drag', '', 1, 9, 10)
     screen:expect([[
       {1:Set Up The Bars                                             }|
       ^                                                            |
@@ -374,9 +374,9 @@ describe('winbar', function()
       {2:[No Name]                                                   }|
                                                                   |*3
     ]])
-    eq(3, meths.get_option_value('cmdheight', {}))
+    eq(3, meths.nvim_get_option_value('cmdheight', {}))
 
-    meths.input_mouse('left', 'drag', '', 1, 11, 10)
+    meths.nvim_input_mouse('left', 'drag', '', 1, 11, 10)
     screen:expect([[
       {1:Set Up The Bars                                             }|
       ^                                                            |
@@ -388,7 +388,7 @@ describe('winbar', function()
       {2:[No Name]                                                   }|
                                                                   |
     ]])
-    eq(1, meths.get_option_value('cmdheight', {}))
+    eq(1, meths.nvim_get_option_value('cmdheight', {}))
   end)
 
   it('properly equalizes window height for window-local value', function()
@@ -413,9 +413,12 @@ describe('winbar', function()
   end)
 
   it('requires window-local value for floating windows', function()
-    local win =
-      meths.open_win(0, false, { relative = 'editor', row = 2, col = 10, height = 7, width = 30 })
-    meths.set_option_value('winbar', 'bar', {})
+    local win = meths.nvim_open_win(
+      0,
+      false,
+      { relative = 'editor', row = 2, col = 10, height = 7, width = 30 }
+    )
+    meths.nvim_set_option_value('winbar', 'bar', {})
     screen:expect {
       grid = [[
       {1:bar                                                         }|
@@ -426,7 +429,7 @@ describe('winbar', function()
                                                                   |
     ]],
     }
-    meths.set_option_value('winbar', 'floaty bar', { scope = 'local', win = win.id })
+    meths.nvim_set_option_value('winbar', 'floaty bar', { scope = 'local', win = win.id })
     screen:expect {
       grid = [[
       {1:bar                                                         }|
@@ -529,7 +532,7 @@ describe('local winbar with tabs', function()
       [3] = { bold = true, foreground = Screen.colors.Blue },
       [4] = { underline = true, background = Screen.colors.LightGray },
     })
-    meths.set_option_value('winbar', 'foo', { scope = 'local', win = 0 })
+    meths.nvim_set_option_value('winbar', 'foo', { scope = 'local', win = 0 })
   end)
 
   it('works', function()

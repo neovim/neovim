@@ -140,7 +140,7 @@ describe('no crash when TermOpen autocommand', function()
 
   before_each(function()
     clear()
-    meths.set_option_value('shell', testprg('shell-test'), {})
+    meths.nvim_set_option_value('shell', testprg('shell-test'), {})
     command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
     screen = Screen.new(60, 4)
     screen:set_default_attr_ids({
@@ -232,11 +232,11 @@ describe('nvim_open_term', function()
   end)
 
   it('with force_crlf=true converts newlines', function()
-    local win = meths.get_current_win()
-    local buf = meths.create_buf(false, true)
-    local term = meths.open_term(buf, { force_crlf = true })
-    meths.win_set_buf(win, buf)
-    meths.chan_send(term, 'here\nthere\nfoo\r\nbar\n\ntest')
+    local win = meths.nvim_get_current_win()
+    local buf = meths.nvim_create_buf(false, true)
+    local term = meths.nvim_open_term(buf, { force_crlf = true })
+    meths.nvim_win_set_buf(win, buf)
+    meths.nvim_chan_send(term, 'here\nthere\nfoo\r\nbar\n\ntest')
     screen:expect {
       grid = [[
       ^here        |
@@ -248,7 +248,7 @@ describe('nvim_open_term', function()
                   |*4
     ]],
     }
-    meths.chan_send(term, '\nfirst')
+    meths.nvim_chan_send(term, '\nfirst')
     screen:expect {
       grid = [[
       ^here        |
@@ -264,11 +264,11 @@ describe('nvim_open_term', function()
   end)
 
   it('with force_crlf=false does not convert newlines', function()
-    local win = meths.get_current_win()
-    local buf = meths.create_buf(false, true)
-    local term = meths.open_term(buf, { force_crlf = false })
-    meths.win_set_buf(win, buf)
-    meths.chan_send(term, 'here\nthere')
+    local win = meths.nvim_get_current_win()
+    local buf = meths.nvim_create_buf(false, true)
+    local term = meths.nvim_open_term(buf, { force_crlf = false })
+    meths.nvim_win_set_buf(win, buf)
+    meths.nvim_chan_send(term, 'here\nthere')
     screen:expect { grid = [[
       ^here        |
           there   |

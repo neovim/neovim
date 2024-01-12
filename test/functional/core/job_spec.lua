@@ -403,11 +403,11 @@ describe('jobs', function()
   it('can get the pid value using getpid', function()
     nvim('command', "let j =  jobstart(['cat', '-'], g:job_opts)")
     local pid = eval('jobpid(j)')
-    neq(NIL, meths.get_proc(pid))
+    neq(NIL, meths.nvim_get_proc(pid))
     nvim('command', 'call jobstop(j)')
     eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
     eq({ 'notification', 'exit', { 0, 143 } }, next_msg())
-    eq(NIL, meths.get_proc(pid))
+    eq(NIL, meths.nvim_get_proc(pid))
   end)
 
   it('disposed on Nvim exit', function()
@@ -417,9 +417,9 @@ describe('jobs', function()
       "let g:j =  jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)"
     )
     local pid = eval('jobpid(g:j)')
-    neq(NIL, meths.get_proc(pid))
+    neq(NIL, meths.nvim_get_proc(pid))
     clear()
-    eq(NIL, meths.get_proc(pid))
+    eq(NIL, meths.nvim_get_proc(pid))
   end)
 
   it('can survive the exit of nvim with "detach"', function()
@@ -429,9 +429,9 @@ describe('jobs', function()
       "let g:j = jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)"
     )
     local pid = eval('jobpid(g:j)')
-    neq(NIL, meths.get_proc(pid))
+    neq(NIL, meths.nvim_get_proc(pid))
     clear()
-    neq(NIL, meths.get_proc(pid))
+    neq(NIL, meths.nvim_get_proc(pid))
     -- clean up after ourselves
     eq(0, os_kill(pid))
   end)
@@ -948,7 +948,7 @@ describe('jobs', function()
       ]],
       }
       feed('<CR>')
-      funcs.jobstop(meths.get_var('id'))
+      funcs.jobstop(meths.nvim_get_var('id'))
     end)
   end)
 
@@ -1066,7 +1066,7 @@ describe('jobs', function()
     local children
     if is_os('win') then
       local status, result = pcall(retry, nil, nil, function()
-        children = meths.get_proc_children(ppid)
+        children = meths.nvim_get_proc_children(ppid)
         -- On Windows conhost.exe may exist, and
         -- e.g. vctip.exe might appear.  #10783
         ok(#children >= 3 and #children <= 5)
@@ -1078,13 +1078,13 @@ describe('jobs', function()
       end
     else
       retry(nil, nil, function()
-        children = meths.get_proc_children(ppid)
+        children = meths.nvim_get_proc_children(ppid)
         eq(3, #children)
       end)
     end
     -- Assert that nvim_get_proc() sees the children.
     for _, child_pid in ipairs(children) do
-      local info = meths.get_proc(child_pid)
+      local info = meths.nvim_get_proc(child_pid)
       -- eq((is_os('win') and 'nvim.exe' or 'nvim'), info.name)
       eq(ppid, info.ppid)
     end
@@ -1093,7 +1093,7 @@ describe('jobs', function()
     -- Assert that the children were killed.
     retry(nil, nil, function()
       for _, child_pid in ipairs(children) do
-        eq(NIL, meths.get_proc(child_pid))
+        eq(NIL, meths.nvim_get_proc(child_pid))
       end
     end)
   end)
@@ -1129,7 +1129,7 @@ describe('jobs', function()
     local j
     local function send(str)
       -- check no nvim_chan_free double free with pty job (#14198)
-      meths.chan_send(j, str)
+      meths.nvim_chan_send(j, str)
     end
 
     before_each(function()

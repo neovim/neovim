@@ -21,15 +21,15 @@ describe(':edit term://*', function()
 
   before_each(function()
     clear()
-    meths.set_option_value('shell', testprg('shell-test'), {})
-    meths.set_option_value('shellcmdflag', 'EXE', {})
+    meths.nvim_set_option_value('shell', testprg('shell-test'), {})
+    meths.nvim_set_option_value('shellcmdflag', 'EXE', {})
   end)
 
   it('runs TermOpen event', function()
-    meths.set_var('termopen_runs', {})
+    meths.nvim_set_var('termopen_runs', {})
     command('autocmd TermOpen * :call add(g:termopen_runs, expand("<amatch>"))')
     command('edit term://')
-    local termopen_runs = meths.get_var('termopen_runs')
+    local termopen_runs = meths.nvim_get_var('termopen_runs')
     eq(1, #termopen_runs)
     local cwd = funcs.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
     matches('^term://' .. pesc(cwd) .. '//%d+:$', termopen_runs[1])
@@ -39,7 +39,7 @@ describe(':edit term://*', function()
     local columns, lines = 20, 4
     local scr = get_screen(columns, lines)
     local rep = 97
-    meths.set_option_value('shellcmdflag', 'REP ' .. rep, {})
+    meths.nvim_set_option_value('shellcmdflag', 'REP ' .. rep, {})
     command('set shellxquote=') -- win: avoid extra quotes
     local sb = 10
     command(

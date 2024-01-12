@@ -53,11 +53,11 @@ describe(':highlight', function()
   end)
 
   it('clear', function()
-    meths.set_var('colors_name', 'foo')
+    meths.nvim_set_var('colors_name', 'foo')
     eq(1, funcs.exists('g:colors_name'))
     command('hi clear')
     eq(0, funcs.exists('g:colors_name'))
-    meths.set_var('colors_name', 'foo')
+    meths.nvim_set_var('colors_name', 'foo')
     eq(1, funcs.exists('g:colors_name'))
     exec([[
       func HiClear()

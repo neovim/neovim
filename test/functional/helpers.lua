@@ -631,6 +631,9 @@ module.uimeths = module.create_callindex(ui)
 local function create_api(request, call)
   local m = {}
   function m.nvim(method, ...)
+    if vim.startswith(method, 'nvim_') then
+      return request(method, ...)
+    end
     return request('nvim_' .. method, ...)
   end
 
@@ -699,6 +702,9 @@ module.describe_lua_and_rpc = function(describe)
     d('lua')
   end
 end
+
+--- add for typing. The for loop after will overwrite this
+module.meths = vim.api
 
 for name, fn in pairs(module.rpc.api) do
   module[name] = fn
@@ -862,11 +868,11 @@ function module.skip_fragile(pending_fn, cond)
 end
 
 function module.exec(code)
-  module.meths.exec2(code, {})
+  module.meths.nvim_exec2(code, {})
 end
 
 function module.exec_capture(code)
-  return module.meths.exec2(code, { output = true }).output
+  return module.meths.nvim_exec2(code, { output = true }).output
 end
 
 --- @param code string

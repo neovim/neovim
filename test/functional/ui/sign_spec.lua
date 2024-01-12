@@ -423,7 +423,7 @@ describe('Signs', function()
         {0:~                                                    }|*7
                                                              |
       ]])
-      meths.buf_set_extmark(0, meths.create_namespace('test'), 0, 0, {
+      meths.nvim_buf_set_extmark(0, meths.nvim_create_namespace('test'), 0, 0, {
         virt_lines = { { { 'VIRT LINES' } } },
         virt_lines_above = true,
       })
@@ -468,7 +468,7 @@ describe('Signs', function()
   end)
 
   it('signcolumn width is updated when removing all signs after deleting lines', function()
-    meths.buf_set_lines(0, 0, 1, true, { 'a', 'b', 'c', 'd', 'e' })
+    meths.nvim_buf_set_lines(0, 0, 1, true, { 'a', 'b', 'c', 'd', 'e' })
     exec('sign define piet text=>>')
     exec('sign place 10001 line=1 name=piet')
     exec('sign place 10002 line=5 name=piet')
@@ -494,7 +494,7 @@ describe('Signs', function()
   end)
 
   it('signcolumn width is updated when removing all signs after inserting lines', function()
-    meths.buf_set_lines(0, 0, 1, true, { 'a', 'b', 'c', 'd', 'e' })
+    meths.nvim_buf_set_lines(0, 0, 1, true, { 'a', 'b', 'c', 'd', 'e' })
     exec('sign define piet text=>>')
     exec('sign place 10001 line=1 name=piet')
     exec('sign place 10002 line=5 name=piet')
