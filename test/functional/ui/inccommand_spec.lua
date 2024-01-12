@@ -15,7 +15,7 @@ local retry = helpers.retry
 local source = helpers.source
 local poke_eventloop = helpers.poke_eventloop
 local nvim = helpers.nvim
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 local testprg = helpers.testprg
 local assert_alive = helpers.assert_alive
 

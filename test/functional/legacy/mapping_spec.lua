@@ -4,7 +4,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local expect, poke_eventloop = helpers.expect, helpers.poke_eventloop
 local command, eq, eval, meths = helpers.command, helpers.eq, helpers.eval, helpers.meths
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 
 describe('mapping', function()
   before_each(clear)

@@ -10,7 +10,7 @@ local meths = helpers.meths
 local exec = helpers.exec
 local exec_lua = helpers.exec_lua
 local eval = helpers.eval
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 
 local mousemodels = { 'extend', 'popup', 'popup_setpos' }
 

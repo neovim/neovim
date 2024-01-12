@@ -1706,7 +1706,7 @@ describe('extmark decorations', function()
     ]]
 
     for _ = 1, 3 do
-      helpers.sleep(10)
+      vim.uv.sleep(10)
       feed 'j'
     end
 

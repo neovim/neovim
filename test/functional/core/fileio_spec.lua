@@ -17,7 +17,7 @@ local rmdir = helpers.rmdir
 local matches = helpers.matches
 local meths = helpers.meths
 local mkdir = helpers.mkdir
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 local read_file = helpers.read_file
 local trim = vim.trim
 local currentdir = helpers.funcs.getcwd
@@ -295,7 +295,6 @@ describe('fileio', function()
     local future_time = cur_unix_time + 999999
     -- Set the file's access/update time to be
     -- greater than the time at which it was created.
-    local uv = require('luv')
     uv.fs_utime('Xtest-overwrite-forced', future_time, future_time)
     -- use async feed_command because nvim basically hangs on the prompt
     feed_command('w')

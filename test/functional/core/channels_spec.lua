@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, eval, next_msg, ok, source =
   helpers.clear, helpers.eq, helpers.eval, helpers.next_msg, helpers.ok, helpers.source
 local command, funcs, meths = helpers.command, helpers.funcs, helpers.meths
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 local spawn, nvim_argv = helpers.spawn, helpers.nvim_argv
 local set_session = helpers.set_session
 local nvim_prog = helpers.nvim_prog

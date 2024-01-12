@@ -8,7 +8,7 @@ local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 local meths = helpers.meths
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 local retry = helpers.retry
 local is_os = helpers.is_os
 

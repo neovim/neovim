@@ -1177,7 +1177,7 @@ describe('jobs', function()
       -- Have to wait so that the SIGHUP can be processed by tty-test on time.
       -- Can't wait for the next message in case this test fails, if it fails
       -- there won't be any more messages, and the test would hang.
-      helpers.sleep(100)
+      vim.uv.sleep(100)
       local err = exc_exec('call jobpid(j)')
       eq('Vim(call):E900: Invalid channel id', err)
 

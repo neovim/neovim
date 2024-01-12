@@ -36,7 +36,7 @@ describe('K', function()
     end)
     eq({ 'fnord' }, eval("readfile('" .. test_file .. "')"))
     -- Confirm that Neovim is still in terminal mode after K is pressed (#16692).
-    helpers.sleep(500)
+    vim.uv.sleep(500)
     eq('t', eval('mode()'))
     feed('<space>') -- Any key, not just <space>, can be used here to escape.
     eq('n', eval('mode()'))
@@ -50,7 +50,7 @@ describe('K', function()
     -- Confirm that an arbitrary keypress doesn't escape (i.e., the process is
     -- still running). If the process were no longer running, an arbitrary
     -- keypress would escape.
-    helpers.sleep(500)
+    vim.uv.sleep(500)
     feed('<space>')
     eq('t', eval('mode()'))
     -- Confirm that <esc> kills the buffer for the running command.

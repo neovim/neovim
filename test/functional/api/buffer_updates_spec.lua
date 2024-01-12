@@ -6,7 +6,7 @@ local buffer, command, eval, nvim, next_msg =
   helpers.buffer, helpers.command, helpers.eval, helpers.nvim, helpers.next_msg
 local nvim_prog = helpers.nvim_prog
 local pcall_err = helpers.pcall_err
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 local write_file = helpers.write_file
 
 local origlines = {

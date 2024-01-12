@@ -7,7 +7,7 @@ local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 
 describe('vim.snippet', function()
   before_each(function()

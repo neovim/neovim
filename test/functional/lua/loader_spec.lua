@@ -30,7 +30,7 @@ describe('vim.loader', function()
     )
 
     -- fs latency
-    helpers.sleep(10)
+    vim.uv.sleep(10)
 
     eq(
       2,

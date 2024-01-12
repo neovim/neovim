@@ -1650,7 +1650,7 @@ describe('builtin popupmenu', function()
 
         -- test nvim_complete_set_info
         feed('<C-N><C-N>')
-        helpers.sleep(10)
+        vim.uv.sleep(10)
         if multigrid then
           screen:expect {
             grid = [[

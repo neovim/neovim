@@ -14,7 +14,7 @@ local source = helpers.source
 local pcall_err = helpers.pcall_err
 
 local shallowcopy = helpers.shallowcopy
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 
 local sid_api_client = -9
 local sid_lua = -8

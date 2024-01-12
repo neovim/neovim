@@ -12,7 +12,7 @@ local dedent = global_helpers.dedent
 local eq = global_helpers.eq
 local is_os = global_helpers.is_os
 local ok = global_helpers.ok
-local sleep = global_helpers.sleep
+local sleep = uv.sleep
 local fail = global_helpers.fail
 
 local module = {}

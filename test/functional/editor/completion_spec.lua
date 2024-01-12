@@ -691,7 +691,7 @@ describe('completion', function()
     ]])
     -- Works for unindenting too.
     feed('ounin<C-X><C-N>')
-    helpers.poke_eventloop()
+    poke_eventloop()
     feed('<BS>d')
     screen:expect([[
       inc uninc indent unindent                                   |
@@ -1067,7 +1067,7 @@ describe('completion', function()
       {3:-- }{4:match 1 of 3}                 |
     ]])
     command([[call timer_start(100, { -> execute('stopinsert') })]])
-    helpers.sleep(200)
+    vim.uv.sleep(200)
     feed('k') -- cursor should move up in Normal mode
     screen:expect([[
       hello                           |

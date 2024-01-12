@@ -5,7 +5,7 @@ local eq = helpers.eq
 local feed = helpers.feed
 local retry = helpers.retry
 local exec = helpers.source
-local sleep = helpers.sleep
+local sleep = vim.uv.sleep
 local meths = helpers.meths
 
 before_each(clear)
