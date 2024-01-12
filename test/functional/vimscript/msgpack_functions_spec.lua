@@ -3,7 +3,7 @@ local clear = helpers.clear
 local funcs = helpers.funcs
 local eval, eq = helpers.eval, helpers.eq
 local command = helpers.command
-local nvim = helpers.nvim
+local meths = helpers.meths
 local exc_exec = helpers.exc_exec
 local is_os = helpers.is_os
 
@@ -12,7 +12,7 @@ describe('msgpack*() functions', function()
 
   local obj_test = function(msg, obj)
     it(msg, function()
-      nvim('set_var', 'obj', obj)
+      meths.nvim_set_var('obj', obj)
       eq(obj, eval('msgpackparse(msgpackdump(g:obj))'))
       eq(obj, eval('msgpackparse(msgpackdump(g:obj, "B"))'))
     end)

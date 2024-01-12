@@ -1,8 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, nvim, buffer = helpers.clear, helpers.nvim, helpers.buffer
-local curbuf, curwin, eq = helpers.curbuf, helpers.curwin, helpers.eq
-local curbufmeths, ok = helpers.curbufmeths, helpers.ok
+local clear = helpers.clear
+local eq = helpers.eq
+local ok = helpers.ok
 local describe_lua_and_rpc = helpers.describe_lua_and_rpc(describe)
 local meths = helpers.meths
 local funcs = helpers.funcs
@@ -13,7 +13,6 @@ local feed_command = helpers.feed_command
 local insert = helpers.insert
 local NIL = vim.NIL
 local command = helpers.command
-local bufmeths = helpers.bufmeths
 local feed = helpers.feed
 local pcall_err = helpers.pcall_err
 local assert_alive = helpers.assert_alive
@@ -51,48 +50,54 @@ describe('api/buf', function()
 
     it('cursor position is maintained after lines are inserted #9961', function()
       -- replace the buffer contents with these three lines.
-      request('nvim_buf_set_lines', 0, 0, -1, 1, { 'line1', 'line2', 'line3', 'line4' })
+      meths.nvim_buf_set_lines(0, 0, -1, true, { 'line1', 'line2', 'line3', 'line4' })
       -- Set the current cursor to {3, 2}.
-      curwin('set_cursor', { 3, 2 })
+      meths.nvim_win_set_cursor(0, { 3, 2 })
 
       -- add 2 lines and delete 1 line above the current cursor position.
-      request('nvim_buf_set_lines', 0, 1, 2, 1, { 'line5', 'line6' })
+      meths.nvim_buf_set_lines(0, 1, 2, true, { 'line5', 'line6' })
       -- check the current set of lines in the buffer.
-      eq({ 'line1', 'line5', 'line6', 'line3', 'line4' }, buffer('get_lines', 0, 0, -1, 1))
+      eq({ 'line1', 'line5', 'line6', 'line3', 'line4' }, meths.nvim_buf_get_lines(0, 0, -1, true))
       -- cursor should be moved below by 1 line.
-      eq({ 4, 2 }, curwin('get_cursor'))
+      eq({ 4, 2 }, meths.nvim_win_get_cursor(0))
 
       -- add a line after the current cursor position.
-      request('nvim_buf_set_lines', 0, 5, 5, 1, { 'line7' })
+      meths.nvim_buf_set_lines(0, 5, 5, true, { 'line7' })
       -- check the current set of lines in the buffer.
-      eq({ 'line1', 'line5', 'line6', 'line3', 'line4', 'line7' }, buffer('get_lines', 0, 0, -1, 1))
+      eq(
+        { 'line1', 'line5', 'line6', 'line3', 'line4', 'line7' },
+        meths.nvim_buf_get_lines(0, 0, -1, true)
+      )
       -- cursor position is unchanged.
-      eq({ 4, 2 }, curwin('get_cursor'))
+      eq({ 4, 2 }, meths.nvim_win_get_cursor(0))
 
       -- overwrite current cursor line.
-      request('nvim_buf_set_lines', 0, 3, 5, 1, { 'line8', 'line9' })
+      meths.nvim_buf_set_lines(0, 3, 5, true, { 'line8', 'line9' })
       -- check the current set of lines in the buffer.
-      eq({ 'line1', 'line5', 'line6', 'line8', 'line9', 'line7' }, buffer('get_lines', 0, 0, -1, 1))
+      eq(
+        { 'line1', 'line5', 'line6', 'line8', 'line9', 'line7' },
+        meths.nvim_buf_get_lines(0, 0, -1, true)
+      )
       -- cursor position is unchanged.
-      eq({ 4, 2 }, curwin('get_cursor'))
+      eq({ 4, 2 }, meths.nvim_win_get_cursor(0))
 
       -- delete current cursor line.
-      request('nvim_buf_set_lines', 0, 3, 5, 1, {})
+      meths.nvim_buf_set_lines(0, 3, 5, true, {})
       -- check the current set of lines in the buffer.
-      eq({ 'line1', 'line5', 'line6', 'line7' }, buffer('get_lines', 0, 0, -1, 1))
+      eq({ 'line1', 'line5', 'line6', 'line7' }, meths.nvim_buf_get_lines(0, 0, -1, true))
       -- cursor position is unchanged.
-      eq({ 4, 2 }, curwin('get_cursor'))
+      eq({ 4, 2 }, meths.nvim_win_get_cursor(0))
     end)
 
     it('cursor position is maintained in non-current window', function()
-      meths.nvim_buf_set_lines(0, 0, -1, 1, { 'line1', 'line2', 'line3', 'line4' })
+      meths.nvim_buf_set_lines(0, 0, -1, true, { 'line1', 'line2', 'line3', 'line4' })
       meths.nvim_win_set_cursor(0, { 3, 2 })
       local win = meths.nvim_get_current_win()
       local buf = meths.nvim_get_current_buf()
 
       command('new')
 
-      meths.nvim_buf_set_lines(buf, 1, 2, 1, { 'line5', 'line6' })
+      meths.nvim_buf_set_lines(buf, 1, 2, true, { 'line5', 'line6' })
       eq(
         { 'line1', 'line5', 'line6', 'line3', 'line4' },
         meths.nvim_buf_get_lines(buf, 0, -1, true)
@@ -101,7 +106,7 @@ describe('api/buf', function()
     end)
 
     it('cursor position is maintained in TWO non-current windows', function()
-      meths.nvim_buf_set_lines(0, 0, -1, 1, { 'line1', 'line2', 'line3', 'line4' })
+      meths.nvim_buf_set_lines(0, 0, -1, true, { 'line1', 'line2', 'line3', 'line4' })
       meths.nvim_win_set_cursor(0, { 3, 2 })
       local win = meths.nvim_get_current_win()
       local buf = meths.nvim_get_current_buf()
@@ -113,7 +118,7 @@ describe('api/buf', function()
       -- set current window to third one with another buffer
       command('new')
 
-      meths.nvim_buf_set_lines(buf, 1, 2, 1, { 'line5', 'line6' })
+      meths.nvim_buf_set_lines(buf, 1, 2, true, { 'line5', 'line6' })
       eq(
         { 'line1', 'line5', 'line6', 'line3', 'line4' },
         meths.nvim_buf_get_lines(buf, 0, -1, true)
@@ -124,32 +129,32 @@ describe('api/buf', function()
 
     it('line_count has defined behaviour for unloaded buffers', function()
       -- we'll need to know our bufnr for when it gets unloaded
-      local bufnr = curbuf('get_number')
+      local bufnr = meths.nvim_buf_get_number(0)
       -- replace the buffer contents with these three lines
-      request('nvim_buf_set_lines', bufnr, 0, -1, 1, { 'line1', 'line2', 'line3', 'line4' })
+      meths.nvim_buf_set_lines(bufnr, 0, -1, true, { 'line1', 'line2', 'line3', 'line4' })
       -- check the line count is correct
-      eq(4, request('nvim_buf_line_count', bufnr))
+      eq(4, meths.nvim_buf_line_count(bufnr))
       -- force unload the buffer (this will discard changes)
       command('new')
       command('bunload! ' .. bufnr)
       -- line count for an unloaded buffer should always be 0
-      eq(0, request('nvim_buf_line_count', bufnr))
+      eq(0, meths.nvim_buf_line_count(bufnr))
     end)
 
     it('get_lines has defined behaviour for unloaded buffers', function()
       -- we'll need to know our bufnr for when it gets unloaded
-      local bufnr = curbuf('get_number')
+      local bufnr = meths.nvim_buf_get_number(0)
       -- replace the buffer contents with these three lines
-      buffer('set_lines', bufnr, 0, -1, 1, { 'line1', 'line2', 'line3', 'line4' })
+      meths.nvim_buf_set_lines(bufnr, 0, -1, true, { 'line1', 'line2', 'line3', 'line4' })
       -- confirm that getting lines works
-      eq({ 'line2', 'line3' }, buffer('get_lines', bufnr, 1, 3, 1))
+      eq({ 'line2', 'line3' }, meths.nvim_buf_get_lines(bufnr, 1, 3, true))
       -- force unload the buffer (this will discard changes)
       command('new')
       command('bunload! ' .. bufnr)
       -- attempting to get lines now always gives empty list
-      eq({}, buffer('get_lines', bufnr, 1, 3, 1))
+      eq({}, meths.nvim_buf_get_lines(bufnr, 1, 3, true))
       -- it's impossible to get out-of-bounds errors for an unloaded buffer
-      eq({}, buffer('get_lines', bufnr, 8888, 9999, 1))
+      eq({}, meths.nvim_buf_get_lines(bufnr, 8888, 9999, true))
     end)
 
     describe('handles topline', function()
@@ -166,7 +171,7 @@ describe('api/buf', function()
           0,
           0,
           -1,
-          1,
+          true,
           { 'aaa', 'bbb', 'ccc', 'ddd', 'www', 'xxx', 'yyy', 'zzz' }
         )
         meths.nvim_set_option_value('modified', false, {})
@@ -516,15 +521,23 @@ describe('api/buf', function()
   end)
 
   describe_lua_and_rpc('nvim_buf_get_lines, nvim_buf_set_lines', function(api)
-    local get_lines = api.curbufmeths.get_lines
-    local set_lines = api.curbufmeths.set_lines
-    local line_count = api.curbufmeths.line_count
+    local function get_lines(...)
+      return api.meths.nvim_buf_get_lines(0, ...)
+    end
+
+    local function set_lines(...)
+      return api.meths.nvim_buf_set_lines(0, ...)
+    end
+
+    local function line_count()
+      return api.meths.nvim_buf_line_count(0)
+    end
 
     it('fails correctly when input is not valid', function()
-      eq(1, api.curbufmeths.get_number())
+      eq(1, api.meths.nvim_buf_get_number(0))
       eq(
         [['replacement string' item contains newlines]],
-        pcall_err(bufmeths.set_lines, 1, 1, 2, false, { 'b\na' })
+        pcall_err(api.meths.nvim_buf_set_lines, 1, 1, 2, false, { 'b\na' })
       )
     end)
 
@@ -532,7 +545,7 @@ describe('api/buf', function()
       command('set nomodifiable')
       eq(
         [[Buffer is not 'modifiable']],
-        pcall_err(api.bufmeths.set_lines, 1, 1, 2, false, { 'a', 'b' })
+        pcall_err(api.meths.nvim_buf_set_lines, 1, 1, 2, false, { 'a', 'b' })
       )
     end)
 
@@ -726,7 +739,7 @@ describe('api/buf', function()
     end)
 
     it('set_lines on unloaded buffer #8659 #22670', function()
-      local bufnr = curbuf('get_number')
+      local bufnr = meths.nvim_buf_get_number(0)
       meths.nvim_buf_set_lines(bufnr, 0, -1, false, { 'a', 'b', 'c' })
       meths.nvim_buf_set_name(bufnr, 'set_lines')
       finally(function()
@@ -742,7 +755,13 @@ describe('api/buf', function()
   end)
 
   describe('nvim_buf_set_text', function()
-    local get_lines, set_text = curbufmeths.get_lines, curbufmeths.set_text
+    local function get_lines(...)
+      return meths.nvim_buf_get_lines(0, ...)
+    end
+
+    local function set_text(...)
+      return meths.nvim_buf_set_text(0, ...)
+    end
 
     it('works', function()
       insert([[
@@ -821,12 +840,12 @@ describe('api/buf', function()
       ]])
 
       -- position the cursor on `!`
-      curwin('set_cursor', { 1, 11 })
+      meths.nvim_win_set_cursor(0, { 1, 11 })
       -- replace 'world' with 'foo'
       set_text(0, 6, 0, 11, { 'foo' })
       eq('hello foo!', curbuf_depr('get_line', 0))
       -- cursor should be moved left by two columns (replacement is shorter by 2 chars)
-      eq({ 1, 9 }, curwin('get_cursor'))
+      eq({ 1, 9 }, meths.nvim_win_get_cursor(0))
     end)
 
     it('updates the cursor position in non-current window', function()
@@ -879,12 +898,12 @@ describe('api/buf', function()
         abcd]])
 
         -- position the cursor on 'c'
-        curwin('set_cursor', { 1, 2 })
+        meths.nvim_win_set_cursor(0, { 1, 2 })
         -- add 'xxx' before 'c'
         set_text(0, 2, 0, 2, { 'xxx' })
         eq({ 'abxxxcd' }, get_lines(0, -1, true))
         -- cursor should be on 'c'
-        eq({ 1, 5 }, curwin('get_cursor'))
+        eq({ 1, 5 }, meths.nvim_win_get_cursor(0))
       end)
 
       it('updates the cursor position only in non-current window when in INSERT mode', function()
@@ -892,7 +911,7 @@ describe('api/buf', function()
         abcd]])
 
         -- position the cursor on 'c'
-        curwin('set_cursor', { 1, 2 })
+        meths.nvim_win_set_cursor(0, { 1, 2 })
         -- open vertical split
         feed('<c-w>v')
         -- get into INSERT mode to treat cursor
@@ -902,13 +921,13 @@ describe('api/buf', function()
         set_text(0, 2, 0, 2, { 'xxx' })
         eq({ 'abxxxcd' }, get_lines(0, -1, true))
         -- in the current window cursor should stay after 'b'
-        eq({ 1, 2 }, curwin('get_cursor'))
+        eq({ 1, 2 }, meths.nvim_win_get_cursor(0))
         -- quit INSERT mode
         feed('<esc>')
         -- close current window
         feed('<c-w>c')
         -- in another window cursor should be on 'c'
-        eq({ 1, 5 }, curwin('get_cursor'))
+        eq({ 1, 5 }, meths.nvim_win_get_cursor(0))
       end)
     end)
 
@@ -918,12 +937,12 @@ describe('api/buf', function()
         abcd]])
 
         -- position the cursor on 'b'
-        curwin('set_cursor', { 1, 1 })
+        meths.nvim_win_set_cursor(0, { 1, 1 })
         -- delete 'b'
         set_text(0, 1, 0, 2, {})
         eq({ 'acd' }, get_lines(0, -1, true))
         -- cursor is now on 'c'
-        eq({ 1, 1 }, curwin('get_cursor'))
+        eq({ 1, 1 }, meths.nvim_win_get_cursor(0))
       end)
 
       it('maintains INSERT-mode cursor position current/non-current window', function()
@@ -931,7 +950,7 @@ describe('api/buf', function()
         abcd]])
 
         -- position the cursor on 'b'
-        curwin('set_cursor', { 1, 1 })
+        meths.nvim_win_set_cursor(0, { 1, 1 })
         -- open vertical split
         feed('<c-w>v')
         -- get into INSERT mode to treat cursor
@@ -941,13 +960,13 @@ describe('api/buf', function()
         set_text(0, 1, 0, 2, {})
         eq({ 'acd' }, get_lines(0, -1, true))
         -- cursor in the current window should stay after 'a'
-        eq({ 1, 1 }, curwin('get_cursor'))
+        eq({ 1, 1 }, meths.nvim_win_get_cursor(0))
         -- quit INSERT mode
         feed('<esc>')
         -- close current window
         feed('<c-w>c')
         -- cursor in non-current window should stay on 'c'
-        eq({ 1, 1 }, curwin('get_cursor'))
+        eq({ 1, 1 }, meths.nvim_win_get_cursor(0))
       end)
     end)
 
@@ -959,7 +978,7 @@ describe('api/buf', function()
         and finally the last one]])
 
         -- position the cursor on ' ' before 'first'
-        curwin('set_cursor', { 1, 14 })
+        meths.nvim_win_set_cursor(0, { 1, 14 })
 
         set_text(0, 15, 2, 11, {
           'the line we do not want',
@@ -971,7 +990,7 @@ describe('api/buf', function()
           'but hopefully the last one',
         }, get_lines(0, -1, true))
         -- cursor should stay at the same position
-        eq({ 1, 14 }, curwin('get_cursor'))
+        eq({ 1, 14 }, meths.nvim_win_get_cursor(0))
       end)
 
       it('maintains cursor position if at start_row and column is still valid', function()
@@ -981,7 +1000,7 @@ describe('api/buf', function()
         and finally the last one]])
 
         -- position the cursor on 'f' in 'first'
-        curwin('set_cursor', { 1, 15 })
+        meths.nvim_win_set_cursor(0, { 1, 15 })
 
         set_text(0, 15, 2, 11, {
           'the line we do not want',
@@ -993,7 +1012,7 @@ describe('api/buf', function()
           'but hopefully the last one',
         }, get_lines(0, -1, true))
         -- cursor should stay at the same position
-        eq({ 1, 15 }, curwin('get_cursor'))
+        eq({ 1, 15 }, meths.nvim_win_get_cursor(0))
       end)
 
       it('adjusts cursor column to keep it valid if start_row got smaller', function()
@@ -1003,7 +1022,7 @@ describe('api/buf', function()
         and finally the last one]])
 
         -- position the cursor on 't' in 'first'
-        curwin('set_cursor', { 1, 19 })
+        meths.nvim_win_set_cursor(0, { 1, 19 })
 
         local cursor = exec_lua([[
           vim.api.nvim_buf_set_text(0, 0, 15, 2, 24, {'last'})
@@ -1012,7 +1031,7 @@ describe('api/buf', function()
 
         eq({ 'This should be last' }, get_lines(0, -1, true))
         -- cursor should end up on 't' in 'last'
-        eq({ 1, 18 }, curwin('get_cursor'))
+        eq({ 1, 18 }, meths.nvim_win_get_cursor(0))
         -- immediate call to nvim_win_get_cursor should have returned the same position
         eq({ 1, 18 }, cursor)
       end)
@@ -1024,7 +1043,7 @@ describe('api/buf', function()
         and finally the last one]])
 
         -- position the cursor on 't' in 'first'
-        curwin('set_cursor', { 1, 19 })
+        meths.nvim_win_set_cursor(0, { 1, 19 })
         -- enter INSERT mode to treat cursor as being after 't'
         feed('a')
 
@@ -1035,7 +1054,7 @@ describe('api/buf', function()
 
         eq({ 'This should be last' }, get_lines(0, -1, true))
         -- cursor should end up after 't' in 'last'
-        eq({ 1, 19 }, curwin('get_cursor'))
+        eq({ 1, 19 }, meths.nvim_win_get_cursor(0))
         -- immediate call to nvim_win_get_cursor should have returned the same position
         eq({ 1, 19 }, cursor)
       end)
@@ -1047,7 +1066,7 @@ describe('api/buf', function()
         and finally the last one]])
 
         -- position the cursor on 'w' in 'want'
-        curwin('set_cursor', { 2, 31 })
+        meths.nvim_win_set_cursor(0, { 2, 31 })
 
         local cursor = exec_lua([[
           vim.api.nvim_buf_set_text(0, 0, 15, 2, 11, {
@@ -1064,7 +1083,7 @@ describe('api/buf', function()
           'and then the last one',
         }, get_lines(0, -1, true))
         -- cursor column should end up at the end of a row
-        eq({ 2, 5 }, curwin('get_cursor'))
+        eq({ 2, 5 }, meths.nvim_win_get_cursor(0))
         -- immediate call to nvim_win_get_cursor should have returned the same position
         eq({ 2, 5 }, cursor)
       end)
@@ -1078,7 +1097,7 @@ describe('api/buf', function()
         and finally the last one]])
 
           -- position the cursor on 'w' in 'want'
-          curwin('set_cursor', { 2, 31 })
+          meths.nvim_win_set_cursor(0, { 2, 31 })
           -- enter INSERT mode
           feed('a')
 
@@ -1097,7 +1116,7 @@ describe('api/buf', function()
             'and then the last one',
           }, get_lines(0, -1, true))
           -- cursor column should end up at the end of a row
-          eq({ 2, 6 }, curwin('get_cursor'))
+          eq({ 2, 6 }, meths.nvim_win_get_cursor(0))
           -- immediate call to nvim_win_get_cursor should have returned the same position
           eq({ 2, 6 }, cursor)
         end
@@ -1110,7 +1129,7 @@ describe('api/buf', function()
         and finally the last one]])
 
         -- position the cursor on 'n' in 'finally'
-        curwin('set_cursor', { 3, 6 })
+        meths.nvim_win_set_cursor(0, { 3, 6 })
 
         local cursor = exec_lua([[
           vim.api.nvim_buf_set_text(0, 0, 15, 2, 11, {
@@ -1126,7 +1145,7 @@ describe('api/buf', function()
         }, get_lines(0, -1, true))
         -- cursor should end up on 'y' in 'hopefully'
         -- to stay in the range, because it got smaller
-        eq({ 2, 12 }, curwin('get_cursor'))
+        eq({ 2, 12 }, meths.nvim_win_get_cursor(0))
         -- immediate call to nvim_win_get_cursor should have returned the same position
         eq({ 2, 12 }, cursor)
       end)
@@ -1138,7 +1157,7 @@ describe('api/buf', function()
         and finally the last one]])
 
         -- position the cursor on 'r' in 'there'
-        curwin('set_cursor', { 2, 8 })
+        meths.nvim_win_set_cursor(0, { 2, 8 })
 
         local cursor = exec_lua([[
           vim.api.nvim_buf_set_text(0, 0, 15, 2, 12, {})
@@ -1147,7 +1166,7 @@ describe('api/buf', function()
 
         eq({ 'This should be the last one' }, get_lines(0, -1, true))
         -- cursor should end up on the next column after deleted range
-        eq({ 1, 15 }, curwin('get_cursor'))
+        eq({ 1, 15 }, meths.nvim_win_get_cursor(0))
         -- immediate call to nvim_win_get_cursor should have returned the same position
         eq({ 1, 15 }, cursor)
       end)
@@ -1159,7 +1178,7 @@ describe('api/buf', function()
         and finally the last one]])
 
         -- position the cursor on 'r' in 'there'
-        curwin('set_cursor', { 2, 8 })
+        meths.nvim_win_set_cursor(0, { 2, 8 })
 
         local cursor = exec_lua([[
           vim.api.nvim_buf_set_text(0, 0, 0, 2, 4, {})
@@ -1168,7 +1187,7 @@ describe('api/buf', function()
 
         eq({ 'finally the last one' }, get_lines(0, -1, true))
         -- cursor should end up in column 0
-        eq({ 1, 0 }, curwin('get_cursor'))
+        eq({ 1, 0 }, meths.nvim_win_get_cursor(0))
         -- immediate call to nvim_win_get_cursor should have returned the same position
         eq({ 1, 0 }, cursor)
       end)
@@ -1180,7 +1199,7 @@ describe('api/buf', function()
         and finally the last one]])
 
         -- position the cursor on 'y' in 'finally'
-        curwin('set_cursor', { 3, 10 })
+        meths.nvim_win_set_cursor(0, { 3, 10 })
         set_text(0, 15, 2, 11, { '1', 'this 2', 'and then' })
 
         eq({
@@ -1189,7 +1208,7 @@ describe('api/buf', function()
           'and then the last one',
         }, get_lines(0, -1, true))
         -- cursor should end up on 'n' in 'then'
-        eq({ 3, 7 }, curwin('get_cursor'))
+        eq({ 3, 7 }, meths.nvim_win_get_cursor(0))
       end)
 
       it(
@@ -1201,7 +1220,7 @@ describe('api/buf', function()
         and finally the last one]])
 
           -- position the cursor on 'y' at 'finally'
-          curwin('set_cursor', { 3, 10 })
+          meths.nvim_win_set_cursor(0, { 3, 10 })
           -- enter INSERT mode to treat cursor as being between 'l' and 'y'
           feed('i')
           set_text(0, 15, 2, 11, { '1', 'this 2', 'and then' })
@@ -1212,7 +1231,7 @@ describe('api/buf', function()
             'and then the last one',
           }, get_lines(0, -1, true))
           -- cursor should end up after 'n' in 'then'
-          eq({ 3, 8 }, curwin('get_cursor'))
+          eq({ 3, 8 }, meths.nvim_win_get_cursor(0))
         end
       )
 
@@ -1223,7 +1242,7 @@ describe('api/buf', function()
         and finally the last one]])
 
         -- position the cursor on 'y' in 'finally'
-        curwin('set_cursor', { 3, 10 })
+        meths.nvim_win_set_cursor(0, { 3, 10 })
         set_text(2, 4, 2, 11, { 'then' })
 
         eq({
@@ -1232,7 +1251,7 @@ describe('api/buf', function()
           'and then the last one',
         }, get_lines(0, -1, true))
         -- cursor should end up on 'n' in 'then'
-        eq({ 3, 7 }, curwin('get_cursor'))
+        eq({ 3, 7 }, meths.nvim_win_get_cursor(0))
       end)
 
       it('does not move cursor column after end of a line', function()
@@ -1241,7 +1260,7 @@ describe('api/buf', function()
         !!!]])
 
         -- position cursor on the last '1'
-        curwin('set_cursor', { 2, 2 })
+        meths.nvim_win_set_cursor(0, { 2, 2 })
 
         local cursor = exec_lua([[
           vim.api.nvim_buf_set_text(0, 0, 33, 1, 3, {})
@@ -1250,7 +1269,7 @@ describe('api/buf', function()
 
         eq({ 'This should be the only line here' }, get_lines(0, -1, true))
         -- cursor should end up on '!'
-        eq({ 1, 32 }, curwin('get_cursor'))
+        eq({ 1, 32 }, meths.nvim_win_get_cursor(0))
         -- immediate call to nvim_win_get_cursor should have returned the same position
         eq({ 1, 32 }, cursor)
       end)
@@ -1259,7 +1278,7 @@ describe('api/buf', function()
         insert('\n!!!')
 
         -- position cursor on the last '1'
-        curwin('set_cursor', { 2, 2 })
+        meths.nvim_win_set_cursor(0, { 2, 2 })
 
         local cursor = exec_lua([[
           vim.api.nvim_buf_set_text(0, 0, 0, 1, 3, {})
@@ -1268,7 +1287,7 @@ describe('api/buf', function()
 
         eq({ '' }, get_lines(0, -1, true))
         -- cursor should end up on '!'
-        eq({ 1, 0 }, curwin('get_cursor'))
+        eq({ 1, 0 }, meths.nvim_win_get_cursor(0))
         -- immediate call to nvim_win_get_cursor should have returned the same position
         eq({ 1, 0 }, cursor)
       end)
@@ -1281,7 +1300,7 @@ describe('api/buf', function()
           and finally the last one]])
 
           -- position cursor on 't' in 'want'
-          curwin('set_cursor', { 2, 34 })
+          meths.nvim_win_set_cursor(0, { 2, 34 })
           -- turn on virtualedit
           command('set virtualedit=all')
 
@@ -1299,7 +1318,7 @@ describe('api/buf', function()
           }, get_lines(0, -1, true))
           -- cursor should end up on 'y' in 'hopefully'
           -- to stay in the range
-          eq({ 2, 12 }, curwin('get_cursor'))
+          eq({ 2, 12 }, meths.nvim_win_get_cursor(0))
           -- immediate call to nvim_win_get_cursor should have returned the same position
           eq({ 2, 12 }, cursor)
           -- coladd should be 0
@@ -1318,7 +1337,7 @@ describe('api/buf', function()
           and finally the last one]])
 
           -- position cursor on 't' in 'want'
-          curwin('set_cursor', { 2, 34 })
+          meths.nvim_win_set_cursor(0, { 2, 34 })
           -- turn on virtualedit
           command('set virtualedit=all')
           -- move cursor after eol
@@ -1339,7 +1358,7 @@ describe('api/buf', function()
             'but hopefully the last one',
           }, get_lines(0, -1, true))
           -- cursor should end up at eol of a new row
-          eq({ 2, 26 }, curwin('get_cursor'))
+          eq({ 2, 26 }, meths.nvim_win_get_cursor(0))
           -- immediate call to nvim_win_get_cursor should have returned the same position
           eq({ 2, 26 }, cursor)
           -- coladd should be increased so that cursor stays in the same screen column
@@ -1360,7 +1379,7 @@ describe('api/buf', function()
           and finally the last one]])
 
             -- position cursor on 't' in 'first'
-            curwin('set_cursor', { 1, 19 })
+            meths.nvim_win_set_cursor(0, { 1, 19 })
             -- turn on virtualedit
             command('set virtualedit=all')
             -- move cursor after eol
@@ -1381,7 +1400,7 @@ describe('api/buf', function()
               'but hopefully the last one',
             }, get_lines(0, -1, true))
             -- cursor should end up at eol of a new row
-            eq({ 1, 38 }, curwin('get_cursor'))
+            eq({ 1, 38 }, meths.nvim_win_get_cursor(0))
             -- immediate call to nvim_win_get_cursor should have returned the same position
             eq({ 1, 38 }, cursor)
             -- coladd should be increased so that cursor stays in the same screen column
@@ -1403,7 +1422,7 @@ describe('api/buf', function()
           and finally the last one]])
 
             -- position cursor on 't' in 'first'
-            curwin('set_cursor', { 1, 19 })
+            meths.nvim_win_set_cursor(0, { 1, 19 })
             -- turn on virtualedit
             command('set virtualedit=all')
             -- move cursor after eol just a bit
@@ -1424,7 +1443,7 @@ describe('api/buf', function()
               'but hopefully the last one',
             }, get_lines(0, -1, true))
             -- cursor should stay at the same screen column
-            eq({ 1, 22 }, curwin('get_cursor'))
+            eq({ 1, 22 }, meths.nvim_win_get_cursor(0))
             -- immediate call to nvim_win_get_cursor should have returned the same position
             eq({ 1, 22 }, cursor)
             -- coladd should become 0
@@ -1447,7 +1466,7 @@ describe('api/buf', function()
           and finally the last one]])
 
             -- position cursor on 'e' in 'more'
-            curwin('set_cursor', { 3, 11 })
+            meths.nvim_win_set_cursor(0, { 3, 11 })
             -- turn on virtualedit
             command('set virtualedit=all')
             -- move cursor after eol
@@ -1468,7 +1487,7 @@ describe('api/buf', function()
               'but hopefully the last one',
             }, get_lines(0, -1, true))
             -- cursor should end up at eol of a new row
-            eq({ 2, 26 }, curwin('get_cursor'))
+            eq({ 2, 26 }, meths.nvim_win_get_cursor(0))
             -- immediate call to nvim_win_get_cursor should have returned the same position
             eq({ 2, 26 }, cursor)
             -- coladd should be increased so that cursor stays in the same screen column
@@ -1491,17 +1510,17 @@ describe('api/buf', function()
          line]])
 
         -- position the cursor on 'i'
-        curwin('set_cursor', { 3, 2 })
+        meths.nvim_win_set_cursor(0, { 3, 2 })
         set_text(1, 6, 2, 0, {})
         eq({ 'first line', 'second line' }, get_lines(0, -1, true))
         -- cursor should stay on 'i'
-        eq({ 2, 8 }, curwin('get_cursor'))
+        eq({ 2, 8 }, meths.nvim_win_get_cursor(0))
 
         -- add a newline back
         set_text(1, 6, 1, 6, { '', '' })
         eq({ 'first line', 'second', ' line' }, get_lines(0, -1, true))
         -- cursor should return back to the original position
-        eq({ 3, 2 }, curwin('get_cursor'))
+        eq({ 3, 2 }, meths.nvim_win_get_cursor(0))
       end)
 
       it(
@@ -1513,11 +1532,11 @@ describe('api/buf', function()
         and finally the last one]])
 
           -- position the cursor on 'h' in 'the'
-          curwin('set_cursor', { 3, 13 })
+          meths.nvim_win_set_cursor(0, { 3, 13 })
           set_text(0, 14, 2, 11, {})
           eq({ 'This should be the last one' }, get_lines(0, -1, true))
           -- cursor should stay on 'h'
-          eq({ 1, 16 }, curwin('get_cursor'))
+          eq({ 1, 16 }, meths.nvim_win_get_cursor(0))
           -- add deleted lines back
           set_text(0, 14, 0, 14, {
             ' first',
@@ -1530,7 +1549,7 @@ describe('api/buf', function()
             'and finally the last one',
           }, get_lines(0, -1, true))
           -- cursor should return back to the original position
-          eq({ 3, 13 }, curwin('get_cursor'))
+          eq({ 3, 13 }, meths.nvim_win_get_cursor(0))
         end
       )
 
@@ -1543,7 +1562,7 @@ describe('api/buf', function()
         and finally the last one]])
 
           -- position the cursor on 's' in 'last'
-          curwin('set_cursor', { 3, 18 })
+          meths.nvim_win_set_cursor(0, { 3, 18 })
           set_text(0, 15, 2, 11, {
             'the line we do not want',
             'but hopefully',
@@ -1554,7 +1573,7 @@ describe('api/buf', function()
             'but hopefully the last one',
           }, get_lines(0, -1, true))
           -- cursor should stay on 's'
-          eq({ 2, 20 }, curwin('get_cursor'))
+          eq({ 2, 20 }, meths.nvim_win_get_cursor(0))
 
           set_text(0, 15, 1, 13, {
             'first',
@@ -1568,7 +1587,7 @@ describe('api/buf', function()
             'and finally the last one',
           }, get_lines(0, -1, true))
           -- cursor should return back to the original position
-          eq({ 3, 18 }, curwin('get_cursor'))
+          eq({ 3, 18 }, meths.nvim_win_get_cursor(0))
         end
       )
 
@@ -1578,7 +1597,7 @@ describe('api/buf', function()
         ]])
 
         -- position cursor at the empty line
-        curwin('set_cursor', { 2, 0 })
+        meths.nvim_win_set_cursor(0, { 2, 0 })
 
         local cursor = exec_lua([[
           vim.api.nvim_buf_set_text(0, 0, 33, 1, 0, {'!'})
@@ -1587,7 +1606,7 @@ describe('api/buf', function()
 
         eq({ 'This should be the only line here!' }, get_lines(0, -1, true))
         -- cursor should end up on '!'
-        eq({ 1, 33 }, curwin('get_cursor'))
+        eq({ 1, 33 }, meths.nvim_win_get_cursor(0))
         -- immediate call to nvim_win_get_cursor should have returned the same position
         eq({ 1, 33 }, cursor)
       end)
@@ -1598,7 +1617,7 @@ describe('api/buf', function()
         eq({ '', '' }, get_lines(0, -1, true))
 
         -- position cursor on the last '1'
-        curwin('set_cursor', { 2, 2 })
+        meths.nvim_win_set_cursor(0, { 2, 2 })
 
         local cursor = exec_lua([[
           vim.api.nvim_buf_set_text(0, 0, 0, 1, 0, {''})
@@ -1607,7 +1626,7 @@ describe('api/buf', function()
 
         eq({ '' }, get_lines(0, -1, true))
         -- cursor should end up on '!'
-        eq({ 1, 0 }, curwin('get_cursor'))
+        eq({ 1, 0 }, meths.nvim_win_get_cursor(0))
         -- immediate call to nvim_win_get_cursor should have returned the same position
         eq({ 1, 0 }, cursor)
       end)
@@ -1619,46 +1638,46 @@ describe('api/buf', function()
     end)
 
     it('adjusts extmarks', function()
-      local ns = request('nvim_create_namespace', 'my-fancy-plugin')
+      local ns = meths.nvim_create_namespace('my-fancy-plugin')
       insert([[
       foo bar
       baz
       ]])
-      local id1 = curbufmeths.set_extmark(ns, 0, 1, {})
-      local id2 = curbufmeths.set_extmark(ns, 0, 7, {})
-      local id3 = curbufmeths.set_extmark(ns, 1, 1, {})
+      local id1 = meths.nvim_buf_set_extmark(0, ns, 0, 1, {})
+      local id2 = meths.nvim_buf_set_extmark(0, ns, 0, 7, {})
+      local id3 = meths.nvim_buf_set_extmark(0, ns, 1, 1, {})
       set_text(0, 4, 0, 7, { 'q' })
 
       eq({ 'foo q', 'baz' }, get_lines(0, 2, true))
       -- mark before replacement point is unaffected
-      eq({ 0, 1 }, curbufmeths.get_extmark_by_id(ns, id1, {}))
+      eq({ 0, 1 }, meths.nvim_buf_get_extmark_by_id(0, ns, id1, {}))
       -- mark gets shifted back because the replacement was shorter
-      eq({ 0, 5 }, curbufmeths.get_extmark_by_id(ns, id2, {}))
+      eq({ 0, 5 }, meths.nvim_buf_get_extmark_by_id(0, ns, id2, {}))
       -- mark on the next line is unaffected
-      eq({ 1, 1 }, curbufmeths.get_extmark_by_id(ns, id3, {}))
+      eq({ 1, 1 }, meths.nvim_buf_get_extmark_by_id(0, ns, id3, {}))
 
       -- replacing the text spanning two lines will adjust the mark on the next line
       set_text(0, 3, 1, 3, { 'qux' })
       eq({ 'fooqux', '' }, get_lines(0, 2, true))
-      eq({ 0, 6 }, curbufmeths.get_extmark_by_id(ns, id3, {}))
+      eq({ 0, 6 }, meths.nvim_buf_get_extmark_by_id(0, ns, id3, {}))
       -- but mark before replacement point is still unaffected
-      eq({ 0, 1 }, curbufmeths.get_extmark_by_id(ns, id1, {}))
+      eq({ 0, 1 }, meths.nvim_buf_get_extmark_by_id(0, ns, id1, {}))
       -- and the mark in the middle was shifted to the end of the insertion
-      eq({ 0, 6 }, curbufmeths.get_extmark_by_id(ns, id2, {}))
+      eq({ 0, 6 }, meths.nvim_buf_get_extmark_by_id(0, ns, id2, {}))
 
       -- marks should be put back into the same place after undoing
       set_text(0, 0, 0, 2, { '' })
       feed('u')
-      eq({ 0, 1 }, curbufmeths.get_extmark_by_id(ns, id1, {}))
-      eq({ 0, 6 }, curbufmeths.get_extmark_by_id(ns, id2, {}))
-      eq({ 0, 6 }, curbufmeths.get_extmark_by_id(ns, id3, {}))
+      eq({ 0, 1 }, meths.nvim_buf_get_extmark_by_id(0, ns, id1, {}))
+      eq({ 0, 6 }, meths.nvim_buf_get_extmark_by_id(0, ns, id2, {}))
+      eq({ 0, 6 }, meths.nvim_buf_get_extmark_by_id(0, ns, id3, {}))
 
       -- marks should be shifted over by the correct number of bytes for multibyte
       -- chars
       set_text(0, 0, 0, 0, { 'Ø' })
-      eq({ 0, 3 }, curbufmeths.get_extmark_by_id(ns, id1, {}))
-      eq({ 0, 8 }, curbufmeths.get_extmark_by_id(ns, id2, {}))
-      eq({ 0, 8 }, curbufmeths.get_extmark_by_id(ns, id3, {}))
+      eq({ 0, 3 }, meths.nvim_buf_get_extmark_by_id(0, ns, id1, {}))
+      eq({ 0, 8 }, meths.nvim_buf_get_extmark_by_id(0, ns, id2, {}))
+      eq({ 0, 8 }, meths.nvim_buf_get_extmark_by_id(0, ns, id3, {}))
     end)
 
     it('correctly marks changed region for redraw #13890', function()
@@ -1670,7 +1689,7 @@ describe('api/buf', function()
       BBB
       ]])
 
-      curbufmeths.set_text(0, 0, 1, 3, { 'XXX', 'YYY' })
+      meths.nvim_buf_set_text(0, 0, 0, 1, 3, { 'XXX', 'YYY' })
 
       screen:expect([[
   XXX                 |
@@ -1727,7 +1746,7 @@ describe('api/buf', function()
           0,
           0,
           -1,
-          1,
+          true,
           { 'aaa', 'bbb', 'ccc', 'ddd', 'www', 'xxx', 'yyy', 'zzz' }
         )
         meths.nvim_set_option_value('modified', false, {})
@@ -1854,7 +1873,7 @@ describe('api/buf', function()
   end)
 
   describe_lua_and_rpc('nvim_buf_get_text', function(api)
-    local get_text = api.curbufmeths.get_text
+    local get_text = api.meths.nvim_buf_get_text
     before_each(function()
       insert([[
       hello foo!
@@ -1863,105 +1882,105 @@ describe('api/buf', function()
     end)
 
     it('works', function()
-      eq({ 'hello' }, get_text(0, 0, 0, 5, {}))
-      eq({ 'hello foo!' }, get_text(0, 0, 0, 42, {}))
-      eq({ 'foo!' }, get_text(0, 6, 0, 10, {}))
-      eq({ 'foo!', 'tex' }, get_text(0, 6, 1, 3, {}))
-      eq({ 'foo!', 'tex' }, get_text(-3, 6, -2, 3, {}))
-      eq({ '' }, get_text(0, 18, 0, 20, {}))
-      eq({ 'ext' }, get_text(-2, 1, -2, 4, {}))
-      eq({ 'hello foo!', 'text', 'm' }, get_text(0, 0, 2, 1, {}))
+      eq({ 'hello' }, get_text(0, 0, 0, 0, 5, {}))
+      eq({ 'hello foo!' }, get_text(0, 0, 0, 0, 42, {}))
+      eq({ 'foo!' }, get_text(0, 0, 6, 0, 10, {}))
+      eq({ 'foo!', 'tex' }, get_text(0, 0, 6, 1, 3, {}))
+      eq({ 'foo!', 'tex' }, get_text(0, -3, 6, -2, 3, {}))
+      eq({ '' }, get_text(0, 0, 18, 0, 20, {}))
+      eq({ 'ext' }, get_text(0, -2, 1, -2, 4, {}))
+      eq({ 'hello foo!', 'text', 'm' }, get_text(0, 0, 0, 2, 1, {}))
     end)
 
     it('errors on out-of-range', function()
-      eq('Index out of bounds', pcall_err(get_text, 2, 0, 4, 0, {}))
-      eq('Index out of bounds', pcall_err(get_text, -4, 0, 0, 0, {}))
-      eq('Index out of bounds', pcall_err(get_text, 0, 0, 3, 0, {}))
-      eq('Index out of bounds', pcall_err(get_text, 0, 0, -4, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, 0, 2, 0, 4, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, 0, -4, 0, 0, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, 0, 0, 0, 3, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, 0, 0, 0, -4, 0, {}))
       -- no ml_get errors should happen #19017
       eq('', meths.nvim_get_vvar('errmsg'))
     end)
 
     it('errors when start is greater than end', function()
-      eq("'start' is higher than 'end'", pcall_err(get_text, 1, 0, 0, 0, {}))
-      eq('start_col must be less than end_col', pcall_err(get_text, 0, 1, 0, 0, {}))
+      eq("'start' is higher than 'end'", pcall_err(get_text, 0, 1, 0, 0, 0, {}))
+      eq('start_col must be less than end_col', pcall_err(get_text, 0, 0, 1, 0, 0, {}))
     end)
   end)
 
   describe('nvim_buf_get_offset', function()
-    local get_offset = curbufmeths.get_offset
+    local get_offset = meths.nvim_buf_get_offset
     it('works', function()
-      curbufmeths.set_lines(0, -1, true, { 'Some\r', 'exa\000mple', '', 'buf\rfer', 'text' })
-      eq(5, curbufmeths.line_count())
-      eq(0, get_offset(0))
-      eq(6, get_offset(1))
-      eq(15, get_offset(2))
-      eq(16, get_offset(3))
-      eq(24, get_offset(4))
-      eq(29, get_offset(5))
-      eq('Index out of bounds', pcall_err(get_offset, 6))
-      eq('Index out of bounds', pcall_err(get_offset, -1))
+      meths.nvim_buf_set_lines(0, 0, -1, true, { 'Some\r', 'exa\000mple', '', 'buf\rfer', 'text' })
+      eq(5, meths.nvim_buf_line_count(0))
+      eq(0, get_offset(0, 0))
+      eq(6, get_offset(0, 1))
+      eq(15, get_offset(0, 2))
+      eq(16, get_offset(0, 3))
+      eq(24, get_offset(0, 4))
+      eq(29, get_offset(0, 5))
+      eq('Index out of bounds', pcall_err(get_offset, 0, 6))
+      eq('Index out of bounds', pcall_err(get_offset, 0, -1))
 
       meths.nvim_set_option_value('eol', false, {})
       meths.nvim_set_option_value('fixeol', false, {})
-      eq(28, get_offset(5))
+      eq(28, get_offset(0, 5))
 
       -- fileformat is ignored
       meths.nvim_set_option_value('fileformat', 'dos', {})
-      eq(0, get_offset(0))
-      eq(6, get_offset(1))
-      eq(15, get_offset(2))
-      eq(16, get_offset(3))
-      eq(24, get_offset(4))
-      eq(28, get_offset(5))
+      eq(0, get_offset(0, 0))
+      eq(6, get_offset(0, 1))
+      eq(15, get_offset(0, 2))
+      eq(16, get_offset(0, 3))
+      eq(24, get_offset(0, 4))
+      eq(28, get_offset(0, 5))
       meths.nvim_set_option_value('eol', true, {})
-      eq(29, get_offset(5))
+      eq(29, get_offset(0, 5))
 
       command('set hidden')
       command('enew')
-      eq(6, bufmeths.get_offset(1, 1))
+      eq(6, meths.nvim_buf_get_offset(1, 1))
       command('bunload! 1')
-      eq(-1, bufmeths.get_offset(1, 1))
-      eq(-1, bufmeths.get_offset(1, 0))
+      eq(-1, meths.nvim_buf_get_offset(1, 1))
+      eq(-1, meths.nvim_buf_get_offset(1, 0))
     end)
 
     it('works in empty buffer', function()
-      eq(0, get_offset(0))
-      eq(1, get_offset(1))
+      eq(0, get_offset(0, 0))
+      eq(1, get_offset(0, 1))
       eq(-1, funcs.line2byte('$'))
     end)
 
     it('works in buffer with one line inserted', function()
       feed('itext')
-      eq(0, get_offset(0))
-      eq(5, get_offset(1))
+      eq(0, get_offset(0, 0))
+      eq(5, get_offset(0, 1))
     end)
   end)
 
   describe('nvim_buf_get_var, nvim_buf_set_var, nvim_buf_del_var', function()
     it('works', function()
-      curbuf('set_var', 'lua', { 1, 2, { ['3'] = 1 } })
-      eq({ 1, 2, { ['3'] = 1 } }, curbuf('get_var', 'lua'))
-      eq({ 1, 2, { ['3'] = 1 } }, nvim('eval', 'b:lua'))
+      meths.nvim_buf_set_var(0, 'lua', { 1, 2, { ['3'] = 1 } })
+      eq({ 1, 2, { ['3'] = 1 } }, meths.nvim_buf_get_var(0, 'lua'))
+      eq({ 1, 2, { ['3'] = 1 } }, meths.nvim_eval('b:lua'))
       eq(1, funcs.exists('b:lua'))
-      curbufmeths.del_var('lua')
+      meths.nvim_buf_del_var(0, 'lua')
       eq(0, funcs.exists('b:lua'))
-      eq('Key not found: lua', pcall_err(curbufmeths.del_var, 'lua'))
-      curbufmeths.set_var('lua', 1)
+      eq('Key not found: lua', pcall_err(meths.nvim_buf_del_var, 0, 'lua'))
+      meths.nvim_buf_set_var(0, 'lua', 1)
       command('lockvar b:lua')
-      eq('Key is locked: lua', pcall_err(curbufmeths.del_var, 'lua'))
-      eq('Key is locked: lua', pcall_err(curbufmeths.set_var, 'lua', 1))
-      eq('Key is read-only: changedtick', pcall_err(curbufmeths.del_var, 'changedtick'))
-      eq('Key is read-only: changedtick', pcall_err(curbufmeths.set_var, 'changedtick', 1))
+      eq('Key is locked: lua', pcall_err(meths.nvim_buf_del_var, 0, 'lua'))
+      eq('Key is locked: lua', pcall_err(meths.nvim_buf_set_var, 0, 'lua', 1))
+      eq('Key is read-only: changedtick', pcall_err(meths.nvim_buf_del_var, 0, 'changedtick'))
+      eq('Key is read-only: changedtick', pcall_err(meths.nvim_buf_set_var, 0, 'changedtick', 1))
     end)
   end)
 
   describe('nvim_buf_get_changedtick', function()
     it('works', function()
-      eq(2, curbufmeths.get_changedtick())
-      curbufmeths.set_lines(0, 1, false, { 'abc\0', '\0def', 'ghi' })
-      eq(3, curbufmeths.get_changedtick())
-      eq(3, curbufmeths.get_var('changedtick'))
+      eq(2, meths.nvim_buf_get_changedtick(0))
+      meths.nvim_buf_set_lines(0, 0, 1, false, { 'abc\0', '\0def', 'ghi' })
+      eq(3, meths.nvim_buf_get_changedtick(0))
+      eq(3, meths.nvim_buf_get_var(0, 'changedtick'))
     end)
 
     it('buffer_set_var returns the old value', function()
@@ -1982,32 +2001,32 @@ describe('api/buf', function()
 
   describe('nvim_get_option_value, nvim_set_option_value', function()
     it('works', function()
-      eq(8, nvim('get_option_value', 'shiftwidth', {}))
-      nvim('set_option_value', 'shiftwidth', 4, {})
-      eq(4, nvim('get_option_value', 'shiftwidth', {}))
+      eq(8, meths.nvim_get_option_value('shiftwidth', {}))
+      meths.nvim_set_option_value('shiftwidth', 4, {})
+      eq(4, meths.nvim_get_option_value('shiftwidth', {}))
       -- global-local option
-      nvim('set_option_value', 'define', 'test', { buf = 0 })
-      eq('test', nvim('get_option_value', 'define', { buf = 0 }))
+      meths.nvim_set_option_value('define', 'test', { buf = 0 })
+      eq('test', meths.nvim_get_option_value('define', { buf = 0 }))
       -- Doesn't change the global value
-      eq('', nvim('get_option_value', 'define', { scope = 'global' }))
+      eq('', meths.nvim_get_option_value('define', { scope = 'global' }))
     end)
 
     it('returns values for unset local options', function()
       -- 'undolevels' is only set to its "unset" value when a new buffer is
       -- created
       command('enew')
-      eq(-123456, nvim('get_option_value', 'undolevels', { buf = 0 }))
+      eq(-123456, meths.nvim_get_option_value('undolevels', { buf = 0 }))
     end)
   end)
 
   describe('nvim_buf_get_name, nvim_buf_set_name', function()
     it('works', function()
-      nvim('command', 'new')
-      eq('', curbuf('get_name'))
-      local new_name = nvim('eval', 'resolve(tempname())')
-      curbuf('set_name', new_name)
-      eq(new_name, curbuf('get_name'))
-      nvim('command', 'w!')
+      command('new')
+      eq('', meths.nvim_buf_get_name(0))
+      local new_name = meths.nvim_eval('resolve(tempname())')
+      meths.nvim_buf_set_name(0, new_name)
+      eq(new_name, meths.nvim_buf_get_name(0))
+      command('w!')
       eq(1, funcs.filereadable(new_name))
       os.remove(new_name)
     end)
@@ -2016,83 +2035,83 @@ describe('api/buf', function()
   describe('nvim_buf_is_loaded', function()
     it('works', function()
       -- record our buffer number for when we unload it
-      local bufnr = curbuf('get_number')
+      local bufnr = meths.nvim_buf_get_number(0)
       -- api should report that the buffer is loaded
-      ok(buffer('is_loaded', bufnr))
+      ok(meths.nvim_buf_is_loaded(bufnr))
       -- hide the current buffer by switching to a new empty buffer
       -- Careful! we need to modify the buffer first or vim will just reuse it
-      buffer('set_lines', bufnr, 0, -1, 1, { 'line1' })
+      meths.nvim_buf_set_lines(bufnr, 0, -1, true, { 'line1' })
       command('hide enew')
       -- confirm the buffer is hidden, but still loaded
-      local infolist = nvim('eval', 'getbufinfo(' .. bufnr .. ')')
+      local infolist = meths.nvim_eval('getbufinfo(' .. bufnr .. ')')
       eq(1, #infolist)
       eq(1, infolist[1].hidden)
       eq(1, infolist[1].loaded)
       -- now force unload the buffer
       command('bunload! ' .. bufnr)
       -- confirm the buffer is unloaded
-      infolist = nvim('eval', 'getbufinfo(' .. bufnr .. ')')
+      infolist = meths.nvim_eval('getbufinfo(' .. bufnr .. ')')
       eq(0, infolist[1].loaded)
       -- nvim_buf_is_loaded() should also report the buffer as unloaded
-      eq(false, buffer('is_loaded', bufnr))
+      eq(false, meths.nvim_buf_is_loaded(bufnr))
     end)
   end)
 
   describe('nvim_buf_is_valid', function()
     it('works', function()
-      nvim('command', 'new')
-      local b = nvim('get_current_buf')
-      ok(buffer('is_valid', b))
-      nvim('command', 'bw!')
-      ok(not buffer('is_valid', b))
+      command('new')
+      local b = meths.nvim_get_current_buf()
+      ok(meths.nvim_buf_is_valid(b))
+      command('bw!')
+      ok(not meths.nvim_buf_is_valid(b))
     end)
   end)
 
   describe('nvim_buf_delete', function()
     it('allows for just deleting', function()
-      nvim('command', 'new')
-      local b = nvim('get_current_buf')
-      ok(buffer('is_valid', b))
-      nvim('buf_delete', b, {})
-      ok(not buffer('is_loaded', b))
-      ok(not buffer('is_valid', b))
+      command('new')
+      local b = meths.nvim_get_current_buf()
+      ok(meths.nvim_buf_is_valid(b))
+      meths.nvim_buf_delete(b, {})
+      ok(not meths.nvim_buf_is_loaded(b))
+      ok(not meths.nvim_buf_is_valid(b))
     end)
 
     it('allows for just unloading', function()
-      nvim('command', 'new')
-      local b = nvim('get_current_buf')
-      ok(buffer('is_valid', b))
-      nvim('buf_delete', b, { unload = true })
-      ok(not buffer('is_loaded', b))
-      ok(buffer('is_valid', b))
+      command('new')
+      local b = meths.nvim_get_current_buf()
+      ok(meths.nvim_buf_is_valid(b))
+      meths.nvim_buf_delete(b, { unload = true })
+      ok(not meths.nvim_buf_is_loaded(b))
+      ok(meths.nvim_buf_is_valid(b))
     end)
   end)
 
   describe('nvim_buf_get_mark', function()
     it('works', function()
-      curbuf('set_lines', -1, -1, true, { 'a', 'bit of', 'text' })
-      curwin('set_cursor', { 3, 4 })
-      nvim('command', 'mark v')
-      eq({ 3, 0 }, curbuf('get_mark', 'v'))
+      meths.nvim_buf_set_lines(0, -1, -1, true, { 'a', 'bit of', 'text' })
+      meths.nvim_win_set_cursor(0, { 3, 4 })
+      command('mark v')
+      eq({ 3, 0 }, meths.nvim_buf_get_mark(0, 'v'))
     end)
   end)
 
   describe('nvim_buf_set_mark', function()
     it('works with buffer local marks', function()
-      curbufmeths.set_lines(-1, -1, true, { 'a', 'bit of', 'text' })
-      eq(true, curbufmeths.set_mark('z', 1, 1, {}))
-      eq({ 1, 1 }, curbufmeths.get_mark('z'))
+      meths.nvim_buf_set_lines(0, -1, -1, true, { 'a', 'bit of', 'text' })
+      eq(true, meths.nvim_buf_set_mark(0, 'z', 1, 1, {}))
+      eq({ 1, 1 }, meths.nvim_buf_get_mark(0, 'z'))
       eq({ 0, 1, 2, 0 }, funcs.getpos("'z"))
     end)
     it('works with file/uppercase marks', function()
-      curbufmeths.set_lines(-1, -1, true, { 'a', 'bit of', 'text' })
-      eq(true, curbufmeths.set_mark('Z', 3, 2, {}))
-      eq({ 3, 2 }, curbufmeths.get_mark('Z'))
-      eq({ curbuf().id, 3, 3, 0 }, funcs.getpos("'Z"))
+      meths.nvim_buf_set_lines(0, -1, -1, true, { 'a', 'bit of', 'text' })
+      eq(true, meths.nvim_buf_set_mark(0, 'Z', 3, 2, {}))
+      eq({ 3, 2 }, meths.nvim_buf_get_mark(0, 'Z'))
+      eq({ meths.nvim_get_current_buf().id, 3, 3, 0 }, funcs.getpos("'Z"))
     end)
     it('fails when invalid marks names are used', function()
-      eq(false, pcall(curbufmeths.set_mark, '!', 1, 0, {}))
-      eq(false, pcall(curbufmeths.set_mark, 'fail', 1, 0, {}))
+      eq(false, pcall(meths.nvim_buf_set_mark, 0, '!', 1, 0, {}))
+      eq(false, pcall(meths.nvim_buf_set_mark, 0, 'fail', 1, 0, {}))
     end)
     it('fails when invalid buffer number is used', function()
       eq(false, pcall(meths.nvim_buf_set_mark, 99, 'a', 1, 1, {}))
@@ -2101,33 +2120,33 @@ describe('api/buf', function()
 
   describe('nvim_buf_del_mark', function()
     it('works with buffer local marks', function()
-      curbufmeths.set_lines(-1, -1, true, { 'a', 'bit of', 'text' })
-      curbufmeths.set_mark('z', 3, 1, {})
-      eq(true, curbufmeths.del_mark('z'))
-      eq({ 0, 0 }, curbufmeths.get_mark('z'))
+      meths.nvim_buf_set_lines(0, -1, -1, true, { 'a', 'bit of', 'text' })
+      meths.nvim_buf_set_mark(0, 'z', 3, 1, {})
+      eq(true, meths.nvim_buf_del_mark(0, 'z'))
+      eq({ 0, 0 }, meths.nvim_buf_get_mark(0, 'z'))
     end)
     it('works with file/uppercase marks', function()
-      curbufmeths.set_lines(-1, -1, true, { 'a', 'bit of', 'text' })
-      curbufmeths.set_mark('Z', 3, 3, {})
-      eq(true, curbufmeths.del_mark('Z'))
-      eq({ 0, 0 }, curbufmeths.get_mark('Z'))
+      meths.nvim_buf_set_lines(0, -1, -1, true, { 'a', 'bit of', 'text' })
+      meths.nvim_buf_set_mark(0, 'Z', 3, 3, {})
+      eq(true, meths.nvim_buf_del_mark(0, 'Z'))
+      eq({ 0, 0 }, meths.nvim_buf_get_mark(0, 'Z'))
     end)
     it('returns false in marks not set in this buffer', function()
       local abuf = meths.nvim_create_buf(false, true)
-      bufmeths.set_lines(abuf, -1, -1, true, { 'a', 'bit of', 'text' })
-      bufmeths.set_mark(abuf, 'A', 2, 2, {})
-      eq(false, curbufmeths.del_mark('A'))
-      eq({ 2, 2 }, bufmeths.get_mark(abuf, 'A'))
+      meths.nvim_buf_set_lines(abuf, -1, -1, true, { 'a', 'bit of', 'text' })
+      meths.nvim_buf_set_mark(abuf, 'A', 2, 2, {})
+      eq(false, meths.nvim_buf_del_mark(0, 'A'))
+      eq({ 2, 2 }, meths.nvim_buf_get_mark(abuf, 'A'))
     end)
     it('returns false if mark was not deleted', function()
-      curbufmeths.set_lines(-1, -1, true, { 'a', 'bit of', 'text' })
-      curbufmeths.set_mark('z', 3, 1, {})
-      eq(true, curbufmeths.del_mark('z'))
-      eq(false, curbufmeths.del_mark('z')) -- Mark was already deleted
+      meths.nvim_buf_set_lines(0, -1, -1, true, { 'a', 'bit of', 'text' })
+      meths.nvim_buf_set_mark(0, 'z', 3, 1, {})
+      eq(true, meths.nvim_buf_del_mark(0, 'z'))
+      eq(false, meths.nvim_buf_del_mark(0, 'z')) -- Mark was already deleted
     end)
     it('fails when invalid marks names are used', function()
-      eq(false, pcall(curbufmeths.del_mark, '!'))
-      eq(false, pcall(curbufmeths.del_mark, 'fail'))
+      eq(false, pcall(meths.nvim_buf_del_mark, 0, '!'))
+      eq(false, pcall(meths.nvim_buf_del_mark, 0, 'fail'))
     end)
     it('fails when invalid buffer number is used', function()
       eq(false, pcall(meths.nvim_buf_del_mark, 99, 'a'))

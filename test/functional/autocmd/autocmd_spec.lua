@@ -17,7 +17,6 @@ local expect = helpers.expect
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local exec_lua = helpers.exec_lua
-local curbufmeths = helpers.curbufmeths
 local retry = helpers.retry
 local source = helpers.source
 
@@ -144,7 +143,7 @@ describe('autocmd', function()
   describe('BufLeave autocommand', function()
     it('can wipe out the buffer created by :edit which triggered autocmd', function()
       meths.nvim_set_option_value('hidden', true, {})
-      curbufmeths.set_lines(0, 1, false, {
+      meths.nvim_buf_set_lines(0, 0, 1, false, {
         'start of test file xx',
         'end of test file xx',
       })

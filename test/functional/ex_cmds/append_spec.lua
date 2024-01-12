@@ -7,7 +7,6 @@ local feed = helpers.feed
 local clear = helpers.clear
 local funcs = helpers.funcs
 local command = helpers.command
-local curbufmeths = helpers.curbufmeths
 local meths = helpers.meths
 local Screen = require('test.functional.ui.screen')
 
@@ -15,11 +14,11 @@ local cmdtest = function(cmd, prep, ret1)
   describe(':' .. cmd, function()
     before_each(function()
       clear()
-      curbufmeths.set_lines(0, 1, true, { 'foo', 'bar', 'baz' })
+      meths.nvim_buf_set_lines(0, 0, 1, true, { 'foo', 'bar', 'baz' })
     end)
 
     local buffer_contents = function()
-      return curbufmeths.get_lines(0, -1, false)
+      return meths.nvim_buf_get_lines(0, 0, -1, false)
     end
 
     it(cmd .. 's' .. prep .. ' the current line by default', function()

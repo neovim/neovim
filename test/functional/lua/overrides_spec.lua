@@ -341,7 +341,7 @@ describe('os.getenv', function()
   end)
   it('returns env var set by let', function()
     local value = 'foo'
-    meths.nvim_command('let $XTEST_1 = "' .. value .. '"')
+    command('let $XTEST_1 = "' .. value .. '"')
     eq(value, funcs.luaeval('os.getenv("XTEST_1")'))
   end)
 end)

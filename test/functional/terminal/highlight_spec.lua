@@ -1,7 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
-local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
+local feed, clear = helpers.feed, helpers.clear
+local meths = helpers.meths
 local testprg, command = helpers.testprg, helpers.command
 local nvim_prog_abs = helpers.nvim_prog_abs
 local eq, eval = helpers.eq, helpers.eval
@@ -250,7 +251,7 @@ describe(':terminal highlight with custom palette', function()
       [9] = { bold = true },
     })
     screen:attach({ rgb = true })
-    nvim('set_var', 'terminal_color_3', '#123456')
+    meths.nvim_set_var('terminal_color_3', '#123456')
     command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
     feed('i')
     screen:expect([[

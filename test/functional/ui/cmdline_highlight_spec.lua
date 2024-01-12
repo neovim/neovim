@@ -10,7 +10,6 @@ local source = helpers.source
 local exec_capture = helpers.exec_capture
 local dedent = helpers.dedent
 local command = helpers.command
-local curbufmeths = helpers.curbufmeths
 
 local screen
 
@@ -503,7 +502,7 @@ describe('Command-line coloring', function()
     ]]))
     eq(
       { '', ':', 'E888 detected for  \\ze*', ':', 'E888 detected for  \\zs*' },
-      curbufmeths.get_lines(0, -1, false)
+      meths.nvim_buf_get_lines(0, 0, -1, false)
     )
     eq('', funcs.execute('messages'))
   end)
@@ -646,7 +645,7 @@ describe('Ex commands coloring', function()
     ]]))
     eq(
       { '', 'E888 detected for  \\ze*', 'E888 detected for  \\zs*' },
-      curbufmeths.get_lines(0, -1, false)
+      meths.nvim_buf_get_lines(0, 0, -1, false)
     )
     eq('', funcs.execute('messages'))
   end)
@@ -725,10 +724,10 @@ describe('Ex commands coloring', function()
 end)
 describe('Expressions coloring support', function()
   it('works', function()
-    meths.nvim_command('hi clear NvimNumber')
-    meths.nvim_command('hi clear NvimNestingParenthesis')
-    meths.nvim_command('hi NvimNumber guifg=Blue2')
-    meths.nvim_command('hi NvimNestingParenthesis guifg=Yellow')
+    command('hi clear NvimNumber')
+    command('hi clear NvimNestingParenthesis')
+    command('hi NvimNumber guifg=Blue2')
+    command('hi NvimNestingParenthesis guifg=Yellow')
     feed(':echo <C-r>=(((1)))')
     screen:expect([[
                                               |
@@ -739,8 +738,8 @@ describe('Expressions coloring support', function()
   it('does not use Nvim_color_expr', function()
     meths.nvim_set_var('Nvim_color_expr', 42)
     -- Used to error out due to failing to get callback.
-    meths.nvim_command('hi clear NvimNumber')
-    meths.nvim_command('hi NvimNumber guifg=Blue2')
+    command('hi clear NvimNumber')
+    command('hi NvimNumber guifg=Blue2')
     feed(':<C-r>=1')
     screen:expect([[
                                               |
@@ -749,12 +748,12 @@ describe('Expressions coloring support', function()
     ]])
   end)
   it('works correctly with non-ASCII and control characters', function()
-    meths.nvim_command('hi clear NvimStringBody')
-    meths.nvim_command('hi clear NvimStringQuote')
-    meths.nvim_command('hi clear NvimInvalid')
-    meths.nvim_command('hi NvimStringQuote guifg=Blue3')
-    meths.nvim_command('hi NvimStringBody guifg=Blue4')
-    meths.nvim_command('hi NvimInvalid guifg=Red guibg=Blue')
+    command('hi clear NvimStringBody')
+    command('hi clear NvimStringQuote')
+    command('hi clear NvimInvalid')
+    command('hi NvimStringQuote guifg=Blue3')
+    command('hi NvimStringBody guifg=Blue4')
+    command('hi NvimInvalid guifg=Red guibg=Blue')
     feed('i<C-r>="«»"«»')
     screen:expect([[
                                               |

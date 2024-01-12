@@ -8,7 +8,6 @@ local eq = helpers.eq
 local poke_eventloop = helpers.poke_eventloop
 local feed = helpers.feed
 local funcs = helpers.funcs
-local curwin = helpers.curwin
 local pcall_err = helpers.pcall_err
 
 describe('winbar', function()
@@ -52,7 +51,7 @@ describe('winbar', function()
     ]])
     -- winbar is excluded from the heights returned by winheight() and getwininfo()
     eq(11, funcs.winheight(0))
-    local win_info = funcs.getwininfo(curwin().id)[1]
+    local win_info = funcs.getwininfo(meths.nvim_get_current_win().id)[1]
     eq(11, win_info.height)
     eq(1, win_info.winbar)
   end)

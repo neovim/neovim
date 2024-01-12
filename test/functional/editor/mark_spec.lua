@@ -1,7 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local meths = helpers.meths
-local curbufmeths = helpers.curbufmeths
 local clear = helpers.clear
 local command = helpers.command
 local funcs = helpers.funcs
@@ -29,13 +28,13 @@ describe('named marks', function()
   it('can be set', function()
     command('edit ' .. file1)
     command('mark a')
-    eq({ 1, 0 }, curbufmeths.get_mark('a'))
+    eq({ 1, 0 }, meths.nvim_buf_get_mark(0, 'a'))
     feed('jmb')
-    eq({ 2, 0 }, curbufmeths.get_mark('b'))
+    eq({ 2, 0 }, meths.nvim_buf_get_mark(0, 'b'))
     feed('jmB')
-    eq({ 3, 0 }, curbufmeths.get_mark('B'))
+    eq({ 3, 0 }, meths.nvim_buf_get_mark(0, 'B'))
     command('4kc')
-    eq({ 4, 0 }, curbufmeths.get_mark('c'))
+    eq({ 4, 0 }, meths.nvim_buf_get_mark(0, 'c'))
   end)
 
   it('errors when set out of range with :mark', function()

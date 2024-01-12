@@ -14,7 +14,6 @@ local ok = helpers.ok
 local retry = helpers.retry
 local source = helpers.source
 local poke_eventloop = helpers.poke_eventloop
-local nvim = helpers.nvim
 local sleep = vim.uv.sleep
 local testprg = helpers.testprg
 local assert_alive = helpers.assert_alive
@@ -1898,20 +1897,20 @@ describe("'inccommand' with 'gdefault'", function()
     common_setup(nil, 'nosplit', '{')
     command('set gdefault')
     feed(':s/{\\n')
-    eq({ mode = 'c', blocking = false }, nvim('get_mode'))
+    eq({ mode = 'c', blocking = false }, meths.nvim_get_mode())
     feed('/A<Enter>')
     expect('A')
-    eq({ mode = 'n', blocking = false }, nvim('get_mode'))
+    eq({ mode = 'n', blocking = false }, meths.nvim_get_mode())
   end)
 
   it('with multiline text and range, does not lock up #7244', function()
     common_setup(nil, 'nosplit', '{\n\n{')
     command('set gdefault')
     feed(':%s/{\\n')
-    eq({ mode = 'c', blocking = false }, nvim('get_mode'))
+    eq({ mode = 'c', blocking = false }, meths.nvim_get_mode())
     feed('/A<Enter>')
     expect('A\nA')
-    eq({ mode = 'n', blocking = false }, nvim('get_mode'))
+    eq({ mode = 'n', blocking = false }, meths.nvim_get_mode())
   end)
 
   it('does not crash on zero-width matches #7485', function()
@@ -1920,9 +1919,9 @@ describe("'inccommand' with 'gdefault'", function()
     feed('gg')
     feed('Vj')
     feed(':s/\\%V')
-    eq({ mode = 'c', blocking = false }, nvim('get_mode'))
+    eq({ mode = 'c', blocking = false }, meths.nvim_get_mode())
     feed('<Esc>')
-    eq({ mode = 'n', blocking = false }, nvim('get_mode'))
+    eq({ mode = 'n', blocking = false }, meths.nvim_get_mode())
   end)
 
   it('removes highlights after abort for a zero-width match', function()

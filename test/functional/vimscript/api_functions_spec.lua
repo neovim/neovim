@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local neq, eq, command = helpers.neq, helpers.eq, helpers.command
-local clear, curbufmeths = helpers.clear, helpers.curbufmeths
+local clear = helpers.clear
 local exc_exec, expect, eval = helpers.exc_exec, helpers.expect, helpers.eval
 local insert, pcall_err = helpers.insert, helpers.pcall_err
 local matches = helpers.matches
@@ -97,8 +97,8 @@ describe('eval-API', function()
     )
 
     -- But others, like nvim_buf_set_lines(), which just changes text, is OK.
-    curbufmeths.set_lines(0, -1, 1, { 'wow!' })
-    eq({ 'wow!' }, curbufmeths.get_lines(0, -1, 1))
+    meths.nvim_buf_set_lines(0, 0, -1, 1, { 'wow!' })
+    eq({ 'wow!' }, meths.nvim_buf_get_lines(0, 0, -1, 1))
 
     -- Turning the cmdwin buffer into a terminal buffer would be pretty weird.
     eq(
@@ -143,11 +143,11 @@ describe('eval-API', function()
   end)
 
   it('get_lines and set_lines use NL to represent NUL', function()
-    curbufmeths.set_lines(0, -1, true, { 'aa\0', 'b\0b' })
+    meths.nvim_buf_set_lines(0, 0, -1, true, { 'aa\0', 'b\0b' })
     eq({ 'aa\n', 'b\nb' }, eval('nvim_buf_get_lines(0, 0, -1, 1)'))
 
     command('call nvim_buf_set_lines(0, 1, 2, v:true, ["xx", "\\nyy"])')
-    eq({ 'aa\0', 'xx', '\0yy' }, curbufmeths.get_lines(0, -1, 1))
+    eq({ 'aa\0', 'xx', '\0yy' }, meths.nvim_buf_get_lines(0, 0, -1, 1))
   end)
 
   it('that are FUNC_ATTR_NOEVAL cannot be called', function()

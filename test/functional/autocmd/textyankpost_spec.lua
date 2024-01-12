@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eval, eq = helpers.clear, helpers.eval, helpers.eq
 local feed, command, expect = helpers.feed, helpers.command, helpers.expect
-local curbufmeths, funcs, neq = helpers.curbufmeths, helpers.funcs, helpers.neq
+local meths, funcs, neq = helpers.meths, helpers.funcs, helpers.neq
 
 describe('TextYankPost', function()
   before_each(function()
@@ -14,7 +14,7 @@ describe('TextYankPost', function()
     command('autocmd TextYankPost * let g:event = copy(v:event)')
     command('autocmd TextYankPost * let g:count += 1')
 
-    curbufmeths.set_lines(0, -1, true, {
+    meths.nvim_buf_set_lines(0, 0, -1, true, {
       'foo\0bar',
       'baz text',
     })

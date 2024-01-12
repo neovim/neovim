@@ -5,7 +5,7 @@ local feed, command, insert = helpers.feed, helpers.command, helpers.insert
 local eq = helpers.eq
 local funcs = helpers.funcs
 local meths = helpers.meths
-local curwin = helpers.curwin
+local curwin = helpers.meths.nvim_get_current_win
 local poke_eventloop = helpers.poke_eventloop
 
 

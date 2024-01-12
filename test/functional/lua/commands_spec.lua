@@ -18,7 +18,6 @@ local command = helpers.command
 local exc_exec = helpers.exc_exec
 local pcall_err = helpers.pcall_err
 local write_file = helpers.write_file
-local curbufmeths = helpers.curbufmeths
 local remove_trace = helpers.remove_trace
 
 before_each(clear)
@@ -26,23 +25,23 @@ before_each(clear)
 describe(':lua command', function()
   it('works', function()
     eq('', exec_capture('lua vim.api.nvim_buf_set_lines(1, 1, 2, false, {"TEST"})'))
-    eq({ '', 'TEST' }, curbufmeths.get_lines(0, 100, false))
+    eq({ '', 'TEST' }, meths.nvim_buf_get_lines(0, 0, 100, false))
     source([[
       lua << EOF
         vim.api.nvim_buf_set_lines(1, 1, 2, false, {"TSET"})
       EOF]])
-    eq({ '', 'TSET' }, curbufmeths.get_lines(0, 100, false))
+    eq({ '', 'TSET' }, meths.nvim_buf_get_lines(0, 0, 100, false))
     source([[
       lua << EOF
         vim.api.nvim_buf_set_lines(1, 1, 2, false, {"SETT"})]])
-    eq({ '', 'SETT' }, curbufmeths.get_lines(0, 100, false))
+    eq({ '', 'SETT' }, meths.nvim_buf_get_lines(0, 0, 100, false))
     source([[
       lua << EOF
         vim.api.nvim_buf_set_lines(1, 1, 2, false, {"ETTS"})
         vim.api.nvim_buf_set_lines(1, 2, 3, false, {"TTSE"})
         vim.api.nvim_buf_set_lines(1, 3, 4, false, {"STTE"})
       EOF]])
-    eq({ '', 'ETTS', 'TTSE', 'STTE' }, curbufmeths.get_lines(0, 100, false))
+    eq({ '', 'ETTS', 'TTSE', 'STTE' }, meths.nvim_buf_get_lines(0, 0, 100, false))
     matches(
       '.*Vim%(lua%):E15: Invalid expression: .*',
       pcall_err(
@@ -68,7 +67,7 @@ describe(':lua command', function()
       [[Vim(lua):E5108: Error executing lua [string ":lua"]:1: Invalid buffer id: -10]],
       remove_trace(exc_exec('lua vim.api.nvim_buf_set_lines(-10, 1, 1, false, {"TEST"})'))
     )
-    eq({ '' }, curbufmeths.get_lines(0, 100, false))
+    eq({ '' }, meths.nvim_buf_get_lines(0, 0, 100, false))
   end)
   it('works with NULL errors', function()
     eq([=[Vim(lua):E5108: Error executing lua [NULL]]=], exc_exec('lua error(nil)'))
@@ -76,13 +75,13 @@ describe(':lua command', function()
   it('accepts embedded NLs without heredoc', function()
     -- Such code is usually used for `:execute 'lua' {generated_string}`:
     -- heredocs do not work in this case.
-    meths.nvim_command([[
+    command([[
       lua
         vim.api.nvim_buf_set_lines(1, 1, 2, false, {"ETTS"})
         vim.api.nvim_buf_set_lines(1, 2, 3, false, {"TTSE"})
         vim.api.nvim_buf_set_lines(1, 3, 4, false, {"STTE"})
     ]])
-    eq({ '', 'ETTS', 'TTSE', 'STTE' }, curbufmeths.get_lines(0, 100, false))
+    eq({ '', 'ETTS', 'TTSE', 'STTE' }, meths.nvim_buf_get_lines(0, 0, 100, false))
   end)
   it('preserves global and not preserves local variables', function()
     eq('', exec_capture('lua gvar = 42'))
@@ -97,10 +96,10 @@ describe(':lua command', function()
       'Vim(lua):E5107: Error loading lua [string ":lua"]:0: unfinished string near \'<eof>\'',
       pcall_err(command, ('lua vim.api.nvim_buf_set_lines(1, 1, 2, false, {"%s})'):format(s))
     )
-    eq({ '' }, curbufmeths.get_lines(0, -1, false))
+    eq({ '' }, meths.nvim_buf_get_lines(0, 0, -1, false))
 
     eq('', exec_capture(('lua vim.api.nvim_buf_set_lines(1, 1, 2, false, {"%s"})'):format(s)))
-    eq({ '', s }, curbufmeths.get_lines(0, -1, false))
+    eq({ '', s }, meths.nvim_buf_get_lines(0, 0, -1, false))
   end)
 
   it('can show multiline error messages', function()
@@ -197,31 +196,31 @@ end)
 
 describe(':luado command', function()
   it('works', function()
-    curbufmeths.set_lines(0, 1, false, { 'ABC', 'def', 'gHi' })
+    meths.nvim_buf_set_lines(0, 0, 1, false, { 'ABC', 'def', 'gHi' })
     eq('', exec_capture('luado lines = (lines or {}) lines[#lines + 1] = {linenr, line}'))
-    eq({ 'ABC', 'def', 'gHi' }, curbufmeths.get_lines(0, -1, false))
+    eq({ 'ABC', 'def', 'gHi' }, meths.nvim_buf_get_lines(0, 0, -1, false))
     eq({ { 1, 'ABC' }, { 2, 'def' }, { 3, 'gHi' } }, funcs.luaeval('lines'))
 
     -- Automatic transformation of numbers
     eq('', exec_capture('luado return linenr'))
-    eq({ '1', '2', '3' }, curbufmeths.get_lines(0, -1, false))
+    eq({ '1', '2', '3' }, meths.nvim_buf_get_lines(0, 0, -1, false))
 
     eq('', exec_capture('luado return ("<%02x>"):format(line:byte())'))
-    eq({ '<31>', '<32>', '<33>' }, curbufmeths.get_lines(0, -1, false))
+    eq({ '<31>', '<32>', '<33>' }, meths.nvim_buf_get_lines(0, 0, -1, false))
   end)
   it('stops processing lines when suddenly out of lines', function()
-    curbufmeths.set_lines(0, 1, false, { 'ABC', 'def', 'gHi' })
+    meths.nvim_buf_set_lines(0, 0, 1, false, { 'ABC', 'def', 'gHi' })
     eq('', exec_capture('2,$luado runs = ((runs or 0) + 1) vim.api.nvim_command("%d")'))
-    eq({ '' }, curbufmeths.get_lines(0, -1, false))
+    eq({ '' }, meths.nvim_buf_get_lines(0, 0, -1, false))
     eq(1, funcs.luaeval('runs'))
   end)
   it('works correctly when changing lines out of range', function()
-    curbufmeths.set_lines(0, 1, false, { 'ABC', 'def', 'gHi' })
+    meths.nvim_buf_set_lines(0, 0, 1, false, { 'ABC', 'def', 'gHi' })
     eq(
       'Vim(luado):E322: Line number out of range: 1 past the end',
       pcall_err(command, '2,$luado vim.api.nvim_command("%d") return linenr')
     )
-    eq({ '' }, curbufmeths.get_lines(0, -1, false))
+    eq({ '' }, meths.nvim_buf_get_lines(0, 0, -1, false))
   end)
   it('fails on errors', function()
     eq(
@@ -237,7 +236,7 @@ describe(':luado command', function()
     eq([=[Vim(luado):E5111: Error calling lua: [NULL]]=], exc_exec('luado error(nil)'))
   end)
   it('fails in sandbox when needed', function()
-    curbufmeths.set_lines(0, 1, false, { 'ABC', 'def', 'gHi' })
+    meths.nvim_buf_set_lines(0, 0, 1, false, { 'ABC', 'def', 'gHi' })
     eq(
       'Vim(luado):E48: Not allowed in sandbox: sandbox luado runs = (runs or 0) + 1',
       pcall_err(command, 'sandbox luado runs = (runs or 0) + 1')
@@ -251,10 +250,10 @@ describe(':luado command', function()
       'Vim(luado):E5109: Error loading lua: [string ":luado"]:0: unfinished string near \'<eof>\'',
       pcall_err(command, ('luado return "%s'):format(s))
     )
-    eq({ '' }, curbufmeths.get_lines(0, -1, false))
+    eq({ '' }, meths.nvim_buf_get_lines(0, 0, -1, false))
 
     eq('', exec_capture(('luado return "%s"'):format(s)))
-    eq({ s }, curbufmeths.get_lines(0, -1, false))
+    eq({ s }, meths.nvim_buf_get_lines(0, 0, -1, false))
   end)
 end)
 
@@ -275,7 +274,7 @@ describe(':luafile', function()
     ]]
     )
     eq('', exec_capture('luafile ' .. fname))
-    eq({ '', 'ETTS', 'TTSE', 'STTE' }, curbufmeths.get_lines(0, 100, false))
+    eq({ '', 'ETTS', 'TTSE', 'STTE' }, meths.nvim_buf_get_lines(0, 0, 100, false))
   end)
 
   it('correctly errors out', function()

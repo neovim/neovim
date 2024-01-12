@@ -772,7 +772,7 @@ describe('treesitter highlighting (help)', function()
     ]],
     }
 
-    helpers.curbufmeths.set_text(0, 1, 0, 5, { 'lua' })
+    helpers.meths.nvim_buf_set_text(0, 0, 1, 0, 5, { 'lua' })
 
     screen:expect {
       grid = [[
@@ -785,7 +785,7 @@ describe('treesitter highlighting (help)', function()
     ]],
     }
 
-    helpers.curbufmeths.set_text(0, 1, 0, 4, { 'ruby' })
+    helpers.meths.nvim_buf_set_text(0, 0, 1, 0, 4, { 'ruby' })
 
     screen:expect {
       grid = [[

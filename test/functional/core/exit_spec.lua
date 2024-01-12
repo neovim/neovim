@@ -18,7 +18,7 @@ describe('v:exiting', function()
 
   before_each(function()
     helpers.clear()
-    cid = helpers.nvim('get_api_info')[1]
+    cid = helpers.meths.nvim_get_api_info()[1]
   end)
 
   it('defaults to v:null', function()

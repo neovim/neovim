@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
 
-local curbufmeths = helpers.curbufmeths
 local exc_exec = helpers.exc_exec
 local command = helpers.command
 local clear = helpers.clear
@@ -72,10 +71,10 @@ describe('NULL', function()
     null_expr_test('is not locked', 'islocked("v:_null_list")', 0, 0)
     null_test('is accepted by :for', 'for x in L|throw x|endfor', 0)
     null_expr_test('does not crash append()', 'append(0, L)', 0, 0, function()
-      eq({ '' }, curbufmeths.get_lines(0, -1, false))
+      eq({ '' }, meths.nvim_buf_get_lines(0, 0, -1, false))
     end)
     null_expr_test('does not crash setline()', 'setline(1, L)', 0, 0, function()
-      eq({ '' }, curbufmeths.get_lines(0, -1, false))
+      eq({ '' }, meths.nvim_buf_get_lines(0, 0, -1, false))
     end)
     null_expr_test('is identical to itself', 'L is L', 0, 1)
     null_expr_test('can be sliced', 'L[:]', 0, {})
@@ -184,7 +183,7 @@ describe('NULL', function()
       0,
       '',
       function()
-        eq({ '' }, curbufmeths.get_lines(0, -1, false))
+        eq({ '' }, meths.nvim_buf_get_lines(0, 0, -1, false))
       end
     )
     null_expr_test('is accepted by setmatches()', 'setmatches(L)', 0, 0)

@@ -1,5 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, command, nvim = helpers.clear, helpers.command, helpers.nvim
+local clear, command = helpers.clear, helpers.command
 local expect, feed = helpers.expect, helpers.feed
 local eq, eval = helpers.eq, helpers.eval
 local funcs = helpers.funcs
@@ -42,12 +42,12 @@ describe(':emenu', function()
     feed('ithis is a sentence<esc>^yiwo<esc>')
 
     -- Invoke "Edit.Paste" in normal-mode.
-    nvim('command', 'emenu Edit.Paste')
+    command('emenu Edit.Paste')
 
     -- Invoke "Edit.Paste" and "Test.Test" in command-mode.
     feed(':')
-    nvim('command', 'emenu Edit.Paste')
-    nvim('command', 'emenu Test.Test')
+    command('emenu Edit.Paste')
+    command('emenu Test.Test')
 
     expect([[
         this is a sentence

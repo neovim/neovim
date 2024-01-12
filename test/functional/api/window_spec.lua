@@ -1,21 +1,17 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, nvim, curbuf, curbuf_contents, window, curwin, eq, neq, ok, feed, insert, eval, tabpage =
+local clear, curbuf, curbuf_contents, curwin, eq, neq, ok, feed, insert, eval =
   helpers.clear,
-  helpers.nvim,
-  helpers.curbuf,
+  helpers.meths.nvim_get_current_buf,
   helpers.curbuf_contents,
-  helpers.window,
-  helpers.curwin,
+  helpers.meths.nvim_get_current_win,
   helpers.eq,
   helpers.neq,
   helpers.ok,
   helpers.feed,
   helpers.insert,
-  helpers.eval,
-  helpers.tabpage
+  helpers.eval
 local poke_eventloop = helpers.poke_eventloop
-local curwinmeths = helpers.curwinmeths
 local exec = helpers.exec
 local funcs = helpers.funcs
 local request = helpers.request
@@ -30,26 +26,35 @@ describe('API/win', function()
 
   describe('get_buf', function()
     it('works', function()
-      eq(curbuf(), window('get_buf', nvim('list_wins')[1]))
-      nvim('command', 'new')
-      nvim('set_current_win', nvim('list_wins')[2])
-      eq(curbuf(), window('get_buf', nvim('list_wins')[2]))
-      neq(window('get_buf', nvim('list_wins')[1]), window('get_buf', nvim('list_wins')[2]))
+      eq(curbuf(), meths.nvim_win_get_buf(meths.nvim_list_wins()[1]))
+      command('new')
+      meths.nvim_set_current_win(meths.nvim_list_wins()[2])
+      eq(curbuf(), meths.nvim_win_get_buf(meths.nvim_list_wins()[2]))
+      neq(
+        meths.nvim_win_get_buf(meths.nvim_list_wins()[1]),
+        meths.nvim_win_get_buf(meths.nvim_list_wins()[2])
+      )
     end)
   end)
 
   describe('set_buf', function()
     it('works', function()
-      nvim('command', 'new')
-      local windows = nvim('list_wins')
-      neq(window('get_buf', windows[2]), window('get_buf', windows[1]))
-      window('set_buf', windows[2], window('get_buf', windows[1]))
-      eq(window('get_buf', windows[2]), window('get_buf', windows[1]))
+      command('new')
+      local windows = meths.nvim_list_wins()
+      neq(meths.nvim_win_get_buf(windows[2]), meths.nvim_win_get_buf(windows[1]))
+      meths.nvim_win_set_buf(windows[2], meths.nvim_win_get_buf(windows[1]))
+      eq(meths.nvim_win_get_buf(windows[2]), meths.nvim_win_get_buf(windows[1]))
     end)
 
     it('validates args', function()
-      eq('Invalid buffer id: 23', pcall_err(window, 'set_buf', nvim('get_current_win'), 23))
-      eq('Invalid window id: 23', pcall_err(window, 'set_buf', 23, nvim('get_current_buf')))
+      eq(
+        'Invalid buffer id: 23',
+        pcall_err(meths.nvim_win_set_buf, meths.nvim_get_current_win(), 23)
+      )
+      eq(
+        'Invalid window id: 23',
+        pcall_err(meths.nvim_win_set_buf, 23, meths.nvim_get_current_buf())
+      )
     end)
 
     it('disallowed in cmdwin if win={old_}curwin or buf=curbuf', function()
@@ -84,12 +89,12 @@ describe('API/win', function()
 
   describe('{get,set}_cursor', function()
     it('works', function()
-      eq({ 1, 0 }, curwin('get_cursor'))
-      nvim('command', 'normal ityping\027o  some text')
+      eq({ 1, 0 }, meths.nvim_win_get_cursor(0))
+      command('normal ityping\027o  some text')
       eq('typing\n  some text', curbuf_contents())
-      eq({ 2, 10 }, curwin('get_cursor'))
-      curwin('set_cursor', { 2, 6 })
-      nvim('command', 'normal i dumb')
+      eq({ 2, 10 }, meths.nvim_win_get_cursor(0))
+      meths.nvim_win_set_cursor(0, { 2, 6 })
+      command('normal i dumb')
       eq('typing\n  some dumb text', curbuf_contents())
     end)
 
@@ -119,10 +124,10 @@ describe('API/win', function()
       ]],
       }
       -- cursor position is at beginning
-      eq({ 1, 0 }, window('get_cursor', win))
+      eq({ 1, 0 }, meths.nvim_win_get_cursor(win))
 
       -- move cursor to end
-      window('set_cursor', win, { 101, 0 })
+      meths.nvim_win_set_cursor(win, { 101, 0 })
       screen:expect {
         grid = [[
                                       |*7
@@ -132,7 +137,7 @@ describe('API/win', function()
       }
 
       -- move cursor to the beginning again
-      window('set_cursor', win, { 1, 0 })
+      meths.nvim_win_set_cursor(win, { 1, 0 })
       screen:expect {
         grid = [[
         ^prologue                      |
@@ -141,11 +146,11 @@ describe('API/win', function()
       }
 
       -- move focus to new window
-      nvim('command', 'new')
+      command('new')
       neq(win, curwin())
 
       -- sanity check, cursor position is kept
-      eq({ 1, 0 }, window('get_cursor', win))
+      eq({ 1, 0 }, meths.nvim_win_get_cursor(win))
       screen:expect {
         grid = [[
         ^                              |
@@ -159,7 +164,7 @@ describe('API/win', function()
       }
 
       -- move cursor to end
-      window('set_cursor', win, { 101, 0 })
+      meths.nvim_win_set_cursor(win, { 101, 0 })
       screen:expect {
         grid = [[
         ^                              |
@@ -173,7 +178,7 @@ describe('API/win', function()
       }
 
       -- move cursor to the beginning again
-      window('set_cursor', win, { 1, 0 })
+      meths.nvim_win_set_cursor(win, { 1, 0 })
       screen:expect {
         grid = [[
         ^                              |
@@ -200,17 +205,17 @@ describe('API/win', function()
 
       -- cursor position is at beginning
       local win = curwin()
-      eq({ 1, 0 }, window('get_cursor', win))
+      eq({ 1, 0 }, meths.nvim_win_get_cursor(win))
 
       -- move cursor to column 5
-      window('set_cursor', win, { 1, 5 })
+      meths.nvim_win_set_cursor(win, { 1, 5 })
 
       -- move down a line
       feed('j')
       poke_eventloop() -- let nvim process the 'j' command
 
       -- cursor is still in column 5
-      eq({ 2, 5 }, window('get_cursor', win))
+      eq({ 2, 5 }, meths.nvim_win_get_cursor(win))
     end)
 
     it('updates cursorline and statusline ruler in non-current window', function()
@@ -240,7 +245,7 @@ describe('API/win', function()
         {3:[No Name] [+]  4,3         All }{4:[No Name] [+]  4,3        All}|
                                                                     |
       ]])
-      window('set_cursor', oldwin, { 1, 0 })
+      meths.nvim_win_set_cursor(oldwin, { 1, 0 })
       screen:expect([[
         aaa                           │{2:aaa                          }|
         bbb                           │bbb                          |
@@ -278,7 +283,7 @@ describe('API/win', function()
         {3:[No Name] [+]                  }{4:[No Name] [+]                }|
                                                                     |
       ]])
-      window('set_cursor', oldwin, { 2, 0 })
+      meths.nvim_win_set_cursor(oldwin, { 2, 0 })
       screen:expect([[
         aa{2:a}                           │{2:a}aa                          |
         bb{2:b}                           │bbb                          |
@@ -293,32 +298,35 @@ describe('API/win', function()
 
   describe('{get,set}_height', function()
     it('works', function()
-      nvim('command', 'vsplit')
-      eq(window('get_height', nvim('list_wins')[2]), window('get_height', nvim('list_wins')[1]))
-      nvim('set_current_win', nvim('list_wins')[2])
-      nvim('command', 'split')
+      command('vsplit')
       eq(
-        window('get_height', nvim('list_wins')[2]),
-        math.floor(window('get_height', nvim('list_wins')[1]) / 2)
+        meths.nvim_win_get_height(meths.nvim_list_wins()[2]),
+        meths.nvim_win_get_height(meths.nvim_list_wins()[1])
       )
-      window('set_height', nvim('list_wins')[2], 2)
-      eq(2, window('get_height', nvim('list_wins')[2]))
+      meths.nvim_set_current_win(meths.nvim_list_wins()[2])
+      command('split')
+      eq(
+        meths.nvim_win_get_height(meths.nvim_list_wins()[2]),
+        math.floor(meths.nvim_win_get_height(meths.nvim_list_wins()[1]) / 2)
+      )
+      meths.nvim_win_set_height(meths.nvim_list_wins()[2], 2)
+      eq(2, meths.nvim_win_get_height(meths.nvim_list_wins()[2]))
     end)
 
     it('correctly handles height=1', function()
-      nvim('command', 'split')
-      nvim('set_current_win', nvim('list_wins')[1])
-      window('set_height', nvim('list_wins')[2], 1)
-      eq(1, window('get_height', nvim('list_wins')[2]))
+      command('split')
+      meths.nvim_set_current_win(meths.nvim_list_wins()[1])
+      meths.nvim_win_set_height(meths.nvim_list_wins()[2], 1)
+      eq(1, meths.nvim_win_get_height(meths.nvim_list_wins()[2]))
     end)
 
     it('correctly handles height=1 with a winbar', function()
-      nvim('command', 'set winbar=foobar')
-      nvim('command', 'set winminheight=0')
-      nvim('command', 'split')
-      nvim('set_current_win', nvim('list_wins')[1])
-      window('set_height', nvim('list_wins')[2], 1)
-      eq(1, window('get_height', nvim('list_wins')[2]))
+      command('set winbar=foobar')
+      command('set winminheight=0')
+      command('split')
+      meths.nvim_set_current_win(meths.nvim_list_wins()[1])
+      meths.nvim_win_set_height(meths.nvim_list_wins()[2], 1)
+      eq(1, meths.nvim_win_get_height(meths.nvim_list_wins()[2]))
     end)
 
     it('do not cause ml_get errors with foldmethod=expr #19989', function()
@@ -340,16 +348,19 @@ describe('API/win', function()
 
   describe('{get,set}_width', function()
     it('works', function()
-      nvim('command', 'split')
-      eq(window('get_width', nvim('list_wins')[2]), window('get_width', nvim('list_wins')[1]))
-      nvim('set_current_win', nvim('list_wins')[2])
-      nvim('command', 'vsplit')
+      command('split')
       eq(
-        window('get_width', nvim('list_wins')[2]),
-        math.floor(window('get_width', nvim('list_wins')[1]) / 2)
+        meths.nvim_win_get_width(meths.nvim_list_wins()[2]),
+        meths.nvim_win_get_width(meths.nvim_list_wins()[1])
       )
-      window('set_width', nvim('list_wins')[2], 2)
-      eq(2, window('get_width', nvim('list_wins')[2]))
+      meths.nvim_set_current_win(meths.nvim_list_wins()[2])
+      command('vsplit')
+      eq(
+        meths.nvim_win_get_width(meths.nvim_list_wins()[2]),
+        math.floor(meths.nvim_win_get_width(meths.nvim_list_wins()[1]) / 2)
+      )
+      meths.nvim_win_set_width(meths.nvim_list_wins()[2], 2)
+      eq(2, meths.nvim_win_get_width(meths.nvim_list_wins()[2]))
     end)
 
     it('do not cause ml_get errors with foldmethod=expr #19989', function()
@@ -371,17 +382,17 @@ describe('API/win', function()
 
   describe('{get,set,del}_var', function()
     it('works', function()
-      curwin('set_var', 'lua', { 1, 2, { ['3'] = 1 } })
-      eq({ 1, 2, { ['3'] = 1 } }, curwin('get_var', 'lua'))
-      eq({ 1, 2, { ['3'] = 1 } }, nvim('eval', 'w:lua'))
+      meths.nvim_win_set_var(0, 'lua', { 1, 2, { ['3'] = 1 } })
+      eq({ 1, 2, { ['3'] = 1 } }, meths.nvim_win_get_var(0, 'lua'))
+      eq({ 1, 2, { ['3'] = 1 } }, meths.nvim_eval('w:lua'))
       eq(1, funcs.exists('w:lua'))
-      curwinmeths.del_var('lua')
+      meths.nvim_win_del_var(0, 'lua')
       eq(0, funcs.exists('w:lua'))
-      eq('Key not found: lua', pcall_err(curwinmeths.del_var, 'lua'))
-      curwinmeths.set_var('lua', 1)
+      eq('Key not found: lua', pcall_err(meths.nvim_win_del_var, 0, 'lua'))
+      meths.nvim_win_set_var(0, 'lua', 1)
       command('lockvar w:lua')
-      eq('Key is locked: lua', pcall_err(curwinmeths.del_var, 'lua'))
-      eq('Key is locked: lua', pcall_err(curwinmeths.set_var, 'lua', 1))
+      eq('Key is locked: lua', pcall_err(meths.nvim_win_del_var, 0, 'lua'))
+      eq('Key is locked: lua', pcall_err(meths.nvim_win_set_var, 0, 'lua', 1))
     end)
 
     it('window_set_var returns the old value', function()
@@ -402,51 +413,51 @@ describe('API/win', function()
 
   describe('nvim_get_option_value, nvim_set_option_value', function()
     it('works', function()
-      nvim('set_option_value', 'colorcolumn', '4,3', {})
-      eq('4,3', nvim('get_option_value', 'colorcolumn', {}))
+      meths.nvim_set_option_value('colorcolumn', '4,3', {})
+      eq('4,3', meths.nvim_get_option_value('colorcolumn', {}))
       command('set modified hidden')
       command('enew') -- edit new buffer, window option is preserved
-      eq('4,3', nvim('get_option_value', 'colorcolumn', {}))
+      eq('4,3', meths.nvim_get_option_value('colorcolumn', {}))
 
       -- global-local option
-      nvim('set_option_value', 'statusline', 'window-status', { win = 0 })
-      eq('window-status', nvim('get_option_value', 'statusline', { win = 0 }))
-      eq('', nvim('get_option_value', 'statusline', { scope = 'global' }))
+      meths.nvim_set_option_value('statusline', 'window-status', { win = 0 })
+      eq('window-status', meths.nvim_get_option_value('statusline', { win = 0 }))
+      eq('', meths.nvim_get_option_value('statusline', { scope = 'global' }))
       command('set modified')
       command('enew') -- global-local: not preserved in new buffer
       -- confirm local value was not copied
-      eq('', nvim('get_option_value', 'statusline', { win = 0 }))
+      eq('', meths.nvim_get_option_value('statusline', { win = 0 }))
       eq('', eval('&l:statusline'))
     end)
 
     it('after switching windows #15390', function()
-      nvim('command', 'tabnew')
-      local tab1 = unpack(nvim('list_tabpages'))
-      local win1 = unpack(tabpage('list_wins', tab1))
-      nvim('set_option_value', 'statusline', 'window-status', { win = win1.id })
-      nvim('command', 'split')
-      nvim('command', 'wincmd J')
-      nvim('command', 'wincmd j')
-      eq('window-status', nvim('get_option_value', 'statusline', { win = win1.id }))
+      command('tabnew')
+      local tab1 = unpack(meths.nvim_list_tabpages())
+      local win1 = unpack(meths.nvim_tabpage_list_wins(tab1))
+      meths.nvim_set_option_value('statusline', 'window-status', { win = win1.id })
+      command('split')
+      command('wincmd J')
+      command('wincmd j')
+      eq('window-status', meths.nvim_get_option_value('statusline', { win = win1.id }))
       assert_alive()
     end)
 
     it('returns values for unset local options', function()
-      eq(-1, nvim('get_option_value', 'scrolloff', { win = 0, scope = 'local' }))
+      eq(-1, meths.nvim_get_option_value('scrolloff', { win = 0, scope = 'local' }))
     end)
   end)
 
   describe('get_position', function()
     it('works', function()
-      local height = window('get_height', nvim('list_wins')[1])
-      local width = window('get_width', nvim('list_wins')[1])
-      nvim('command', 'split')
-      nvim('command', 'vsplit')
-      eq({ 0, 0 }, window('get_position', nvim('list_wins')[1]))
+      local height = meths.nvim_win_get_height(meths.nvim_list_wins()[1])
+      local width = meths.nvim_win_get_width(meths.nvim_list_wins()[1])
+      command('split')
+      command('vsplit')
+      eq({ 0, 0 }, meths.nvim_win_get_position(meths.nvim_list_wins()[1]))
       local vsplit_pos = math.floor(width / 2)
       local split_pos = math.floor(height / 2)
-      local win2row, win2col = unpack(window('get_position', nvim('list_wins')[2]))
-      local win3row, win3col = unpack(window('get_position', nvim('list_wins')[3]))
+      local win2row, win2col = unpack(meths.nvim_win_get_position(meths.nvim_list_wins()[2]))
+      local win3row, win3col = unpack(meths.nvim_win_get_position(meths.nvim_list_wins()[3]))
       eq(0, win2row)
       eq(0, win3col)
       ok(vsplit_pos - 1 <= win2col and win2col <= vsplit_pos + 1)
@@ -456,46 +467,46 @@ describe('API/win', function()
 
   describe('get_position', function()
     it('works', function()
-      nvim('command', 'tabnew')
-      nvim('command', 'vsplit')
-      eq(window('get_tabpage', nvim('list_wins')[1]), nvim('list_tabpages')[1])
-      eq(window('get_tabpage', nvim('list_wins')[2]), nvim('list_tabpages')[2])
-      eq(window('get_tabpage', nvim('list_wins')[3]), nvim('list_tabpages')[2])
+      command('tabnew')
+      command('vsplit')
+      eq(meths.nvim_win_get_tabpage(meths.nvim_list_wins()[1]), meths.nvim_list_tabpages()[1])
+      eq(meths.nvim_win_get_tabpage(meths.nvim_list_wins()[2]), meths.nvim_list_tabpages()[2])
+      eq(meths.nvim_win_get_tabpage(meths.nvim_list_wins()[3]), meths.nvim_list_tabpages()[2])
     end)
   end)
 
   describe('get_number', function()
     it('works', function()
-      local wins = nvim('list_wins')
-      eq(1, window('get_number', wins[1]))
+      local wins = meths.nvim_list_wins()
+      eq(1, meths.nvim_win_get_number(wins[1]))
 
-      nvim('command', 'split')
-      local win1, win2 = unpack(nvim('list_wins'))
-      eq(1, window('get_number', win1))
-      eq(2, window('get_number', win2))
+      command('split')
+      local win1, win2 = unpack(meths.nvim_list_wins())
+      eq(1, meths.nvim_win_get_number(win1))
+      eq(2, meths.nvim_win_get_number(win2))
 
-      nvim('command', 'wincmd J')
-      eq(2, window('get_number', win1))
-      eq(1, window('get_number', win2))
+      command('wincmd J')
+      eq(2, meths.nvim_win_get_number(win1))
+      eq(1, meths.nvim_win_get_number(win2))
 
-      nvim('command', 'tabnew')
-      local win3 = nvim('list_wins')[3]
+      command('tabnew')
+      local win3 = meths.nvim_list_wins()[3]
       -- First tab page
-      eq(2, window('get_number', win1))
-      eq(1, window('get_number', win2))
+      eq(2, meths.nvim_win_get_number(win1))
+      eq(1, meths.nvim_win_get_number(win2))
       -- Second tab page
-      eq(1, window('get_number', win3))
+      eq(1, meths.nvim_win_get_number(win3))
     end)
   end)
 
   describe('is_valid', function()
     it('works', function()
-      nvim('command', 'split')
-      local win = nvim('list_wins')[2]
-      nvim('set_current_win', win)
-      ok(window('is_valid', win))
-      nvim('command', 'close')
-      ok(not window('is_valid', win))
+      command('split')
+      local win = meths.nvim_list_wins()[2]
+      meths.nvim_set_current_win(win)
+      ok(meths.nvim_win_is_valid(win))
+      command('close')
+      ok(not meths.nvim_win_is_valid(win))
     end)
   end)
 
@@ -671,42 +682,43 @@ describe('API/win', function()
         ddd
         eee]])
       eq('Invalid window id: 23', pcall_err(meths.nvim_win_text_height, 23, {}))
-      eq('Line index out of bounds', pcall_err(curwinmeths.text_height, { start_row = 5 }))
-      eq('Line index out of bounds', pcall_err(curwinmeths.text_height, { start_row = -6 }))
-      eq('Line index out of bounds', pcall_err(curwinmeths.text_height, { end_row = 5 }))
-      eq('Line index out of bounds', pcall_err(curwinmeths.text_height, { end_row = -6 }))
+      eq('Line index out of bounds', pcall_err(meths.nvim_win_text_height, 0, { start_row = 5 }))
+      eq('Line index out of bounds', pcall_err(meths.nvim_win_text_height, 0, { start_row = -6 }))
+      eq('Line index out of bounds', pcall_err(meths.nvim_win_text_height, 0, { end_row = 5 }))
+      eq('Line index out of bounds', pcall_err(meths.nvim_win_text_height, 0, { end_row = -6 }))
       eq(
         "'start_row' is higher than 'end_row'",
-        pcall_err(curwinmeths.text_height, { start_row = 3, end_row = 1 })
+        pcall_err(meths.nvim_win_text_height, 0, { start_row = 3, end_row = 1 })
       )
       eq(
         "'start_vcol' specified without 'start_row'",
-        pcall_err(curwinmeths.text_height, { end_row = 2, start_vcol = 0 })
+        pcall_err(meths.nvim_win_text_height, 0, { end_row = 2, start_vcol = 0 })
       )
       eq(
         "'end_vcol' specified without 'end_row'",
-        pcall_err(curwinmeths.text_height, { start_row = 2, end_vcol = 0 })
+        pcall_err(meths.nvim_win_text_height, 0, { start_row = 2, end_vcol = 0 })
       )
       eq(
         "Invalid 'start_vcol': out of range",
-        pcall_err(curwinmeths.text_height, { start_row = 2, start_vcol = -1 })
+        pcall_err(meths.nvim_win_text_height, 0, { start_row = 2, start_vcol = -1 })
       )
       eq(
         "Invalid 'start_vcol': out of range",
-        pcall_err(curwinmeths.text_height, { start_row = 2, start_vcol = X + 1 })
+        pcall_err(meths.nvim_win_text_height, 0, { start_row = 2, start_vcol = X + 1 })
       )
       eq(
         "Invalid 'end_vcol': out of range",
-        pcall_err(curwinmeths.text_height, { end_row = 2, end_vcol = -1 })
+        pcall_err(meths.nvim_win_text_height, 0, { end_row = 2, end_vcol = -1 })
       )
       eq(
         "Invalid 'end_vcol': out of range",
-        pcall_err(curwinmeths.text_height, { end_row = 2, end_vcol = X + 1 })
+        pcall_err(meths.nvim_win_text_height, 0, { end_row = 2, end_vcol = X + 1 })
       )
       eq(
         "'start_vcol' is higher than 'end_vcol'",
         pcall_err(
-          curwinmeths.text_height,
+          meths.nvim_win_text_height,
+          0,
           { start_row = 2, end_row = 2, start_vcol = 10, end_vcol = 5 }
         )
       )

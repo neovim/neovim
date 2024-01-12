@@ -1,8 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local screen = require('test.functional.ui.screen')
 
-local curbufmeths = helpers.curbufmeths
-local curwinmeths = helpers.curwinmeths
 local testprg = helpers.testprg
 local command = helpers.command
 local funcs = helpers.funcs
@@ -48,7 +46,7 @@ describe(':edit term://*', function()
     command('edit term://foobar')
 
     local bufcontents = {}
-    local winheight = curwinmeths.get_height()
+    local winheight = meths.nvim_win_get_height(0)
     local buf_cont_start = rep - sb - winheight + 2
     for i = buf_cont_start, (rep - 1) do
       bufcontents[#bufcontents + 1] = ('%d: foobar'):format(i)
@@ -65,6 +63,6 @@ describe(':edit term://*', function()
 
     exp_screen = exp_screen .. (' '):rep(columns) .. '|\n'
     scr:expect(exp_screen)
-    eq(bufcontents, curbufmeths.get_lines(0, -1, true))
+    eq(bufcontents, meths.nvim_buf_get_lines(0, 0, -1, true))
   end)
 end)

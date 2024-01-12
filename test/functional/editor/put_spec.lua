@@ -184,11 +184,11 @@ describe('put command', function()
     return function(exception_table, after_redo)
       expect(expect_string)
 
-      -- Have to use getcurpos() instead of curwinmeths.get_cursor() in
+      -- Have to use getcurpos() instead of meths.nvim_win_get_cursor(0) in
       -- order to account for virtualedit.
       -- We always want the curswant element in getcurpos(), which is
       -- sometimes different to the column element in
-      -- curwinmeths.get_cursor().
+      -- meths.nvim_win_get_cursor(0).
       -- NOTE: The ".gp command leaves the cursor after the pasted text
       -- when running, but does not when the command is redone with the
       -- '.' command.

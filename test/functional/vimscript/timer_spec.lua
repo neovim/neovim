@@ -4,7 +4,7 @@ local feed, eq, eval, ok = helpers.feed, helpers.eq, helpers.eval, helpers.ok
 local source, nvim_async, run = helpers.source, helpers.nvim_async, helpers.run
 local clear, command, funcs = helpers.clear, helpers.command, helpers.funcs
 local exc_exec = helpers.exc_exec
-local curbufmeths = helpers.curbufmeths
+local meths = helpers.meths
 local load_adjust = helpers.load_adjust
 local retry = helpers.retry
 
@@ -111,7 +111,7 @@ describe('timers', function()
       [1] = { bold = true, foreground = Screen.colors.Blue },
     })
 
-    curbufmeths.set_lines(0, -1, true, { 'ITEM 1', 'ITEM 2' })
+    meths.nvim_buf_set_lines(0, 0, -1, true, { 'ITEM 1', 'ITEM 2' })
     source([[
       let g:cont = 0
       func! AddItem(timer)

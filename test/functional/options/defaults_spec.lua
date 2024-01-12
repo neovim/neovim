@@ -221,9 +221,9 @@ describe('startup defaults', function()
     eq(meths.nvim_get_option_value('runtimepath', {}), meths.nvim_get_option_value('packpath', {}))
 
     -- Does not follow modifications to runtimepath.
-    meths.nvim_command('set runtimepath+=foo')
+    command('set runtimepath+=foo')
     neq(meths.nvim_get_option_value('runtimepath', {}), meths.nvim_get_option_value('packpath', {}))
-    meths.nvim_command('set packpath+=foo')
+    command('set packpath+=foo')
     eq(meths.nvim_get_option_value('runtimepath', {}), meths.nvim_get_option_value('packpath', {}))
   end)
 
@@ -430,11 +430,11 @@ describe('XDG defaults', function()
         ),
         (meths.nvim_get_option_value('runtimepath', {})):gsub('\\', '/')
       )
-      meths.nvim_command('set runtimepath&')
-      meths.nvim_command('set backupdir&')
-      meths.nvim_command('set directory&')
-      meths.nvim_command('set undodir&')
-      meths.nvim_command('set viewdir&')
+      command('set runtimepath&')
+      command('set backupdir&')
+      command('set directory&')
+      command('set undodir&')
+      command('set viewdir&')
       eq(
         (
           (
@@ -573,11 +573,11 @@ describe('XDG defaults', function()
         ),
         (meths.nvim_get_option_value('runtimepath', {})):gsub('\\', '/')
       )
-      meths.nvim_command('set runtimepath&')
-      meths.nvim_command('set backupdir&')
-      meths.nvim_command('set directory&')
-      meths.nvim_command('set undodir&')
-      meths.nvim_command('set viewdir&')
+      command('set runtimepath&')
+      command('set backupdir&')
+      command('set directory&')
+      command('set undodir&')
+      command('set viewdir&')
       eq(
         (
           (
@@ -617,7 +617,7 @@ describe('XDG defaults', function()
         ('$XDG_CONFIG_HOME/' .. state_dir .. '/view//'),
         meths.nvim_get_option_value('viewdir', {}):gsub('\\', '/')
       )
-      meths.nvim_command('set all&')
+      command('set all&')
       eq(
         (
           '$XDG_DATA_HOME/nvim'
@@ -745,11 +745,11 @@ describe('XDG defaults', function()
         ),
         meths.nvim_get_option_value('runtimepath', {})
       )
-      meths.nvim_command('set runtimepath&')
-      meths.nvim_command('set backupdir&')
-      meths.nvim_command('set directory&')
-      meths.nvim_command('set undodir&')
-      meths.nvim_command('set viewdir&')
+      command('set runtimepath&')
+      command('set backupdir&')
+      command('set directory&')
+      command('set undodir&')
+      command('set viewdir&')
       eq(
         (
           '\\, \\, \\,'

@@ -9,7 +9,6 @@ local expect = helpers.expect
 local feed = helpers.feed
 local funcs = helpers.funcs
 local meths = helpers.meths
-local nvim = helpers.nvim
 local source = helpers.source
 local command = helpers.command
 local exec_capture = helpers.exec_capture
@@ -37,16 +36,16 @@ describe('maparg()', function()
   }
 
   it('returns a dictionary', function()
-    nvim('command', 'nnoremap foo bar')
+    command('nnoremap foo bar')
     eq('bar', funcs.maparg('foo'))
     eq(foo_bar_map_table, funcs.maparg('foo', 'n', false, true))
   end)
 
   it('returns 1 for silent when <silent> is used', function()
-    nvim('command', 'nnoremap <silent> foo bar')
+    command('nnoremap <silent> foo bar')
     eq(1, funcs.maparg('foo', 'n', false, true)['silent'])
 
-    nvim('command', 'nnoremap baz bat')
+    command('nnoremap baz bat')
     eq(0, funcs.maparg('baz', 'n', false, true)['silent'])
   end)
 
@@ -59,8 +58,8 @@ describe('maparg()', function()
   end)
 
   it('returns the same value for noremap and <script>', function()
-    nvim('command', 'inoremap <script> hello world')
-    nvim('command', 'inoremap this that')
+    command('inoremap <script> hello world')
+    command('inoremap this that')
     eq(
       funcs.maparg('hello', 'i', false, true)['noremap'],
       funcs.maparg('this', 'i', false, true)['noremap']
@@ -69,14 +68,14 @@ describe('maparg()', function()
 
   it('returns a boolean for buffer', function()
     -- Open enough windows to know we aren't on buffer number 1
-    nvim('command', 'new')
-    nvim('command', 'new')
-    nvim('command', 'new')
-    nvim('command', 'cnoremap <buffer> this that')
+    command('new')
+    command('new')
+    command('new')
+    command('cnoremap <buffer> this that')
     eq(1, funcs.maparg('this', 'c', false, true)['buffer'])
 
     -- Global will return 0 always
-    nvim('command', 'nnoremap other another')
+    command('nnoremap other another')
     eq(0, funcs.maparg('other', 'n', false, true)['buffer'])
   end)
 
@@ -89,7 +88,7 @@ describe('maparg()', function()
       nnoremap fizz :call <SID>maparg_test_function()<CR>
     ]])
     eq(1, funcs.maparg('fizz', 'n', false, true)['sid'])
-    eq('testing', nvim('call_function', '<SNR>1_maparg_test_function', {}))
+    eq('testing', meths.nvim_call_function('<SNR>1_maparg_test_function', {}))
   end)
 
   it('works with <F12> and others', function()

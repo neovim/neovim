@@ -109,12 +109,12 @@ describe('autocmd api', function()
         buffer = 0,
       })
 
-      meths.nvim_command 'set filetype=txt'
+      command 'set filetype=txt'
       eq(1, meths.nvim_get_var('called'))
 
       -- switch to a new buffer
-      meths.nvim_command 'new'
-      meths.nvim_command 'set filetype=python'
+      command 'new'
+      command 'set filetype=python'
 
       eq(1, meths.nvim_get_var('called'))
     end)
@@ -938,7 +938,7 @@ describe('autocmd api', function()
       meths.nvim_exec_autocmds('CursorHold', { buffer = 1 })
       eq('none', meths.nvim_get_var('filename_executed'))
 
-      meths.nvim_command('edit __init__.py')
+      command('edit __init__.py')
       eq('__init__.py', meths.nvim_get_var('filename_executed'))
     end)
 
@@ -955,8 +955,8 @@ describe('autocmd api', function()
       meths.nvim_set_var('filename_executed', 'none')
       eq('none', meths.nvim_get_var('filename_executed'))
 
-      meths.nvim_command('edit other_file.txt')
-      meths.nvim_command('edit __init__.py')
+      command('edit other_file.txt')
+      command('edit __init__.py')
       eq('none', meths.nvim_get_var('filename_executed'))
 
       meths.nvim_create_autocmd('CursorHoldI', {

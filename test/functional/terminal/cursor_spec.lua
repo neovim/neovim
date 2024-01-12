@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
-local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
+local feed, clear = helpers.feed, helpers.clear
 local testprg, command = helpers.testprg, helpers.command
 local eq, eval = helpers.eq, helpers.eval
 local matches = helpers.matches
@@ -118,8 +118,8 @@ describe('cursor with customized highlighting', function()
 
   before_each(function()
     clear()
-    nvim('command', 'highlight TermCursor ctermfg=45 ctermbg=46 cterm=NONE')
-    nvim('command', 'highlight TermCursorNC ctermfg=55 ctermbg=56 cterm=NONE')
+    command('highlight TermCursor ctermfg=45 ctermbg=46 cterm=NONE')
+    command('highlight TermCursorNC ctermfg=55 ctermbg=56 cterm=NONE')
     screen = Screen.new(50, 7)
     screen:set_default_attr_ids({
       [1] = { foreground = 45, background = 46 },

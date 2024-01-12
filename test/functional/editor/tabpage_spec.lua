@@ -10,7 +10,7 @@ local eval = helpers.eval
 local exec = helpers.exec
 local funcs = helpers.funcs
 local meths = helpers.meths
-local curwin = helpers.curwin
+local curwin = helpers.meths.nvim_get_current_win
 local assert_alive = helpers.assert_alive
 
 describe('tabpage', function()

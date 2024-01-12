@@ -2,7 +2,7 @@
 -- `rpcrequest` calls we need the client event loop to be running.
 local helpers = require('test.functional.helpers')(after_each)
 
-local clear, nvim, eval = helpers.clear, helpers.nvim, helpers.eval
+local clear, eval = helpers.clear, helpers.eval
 local eq, neq, run, stop = helpers.eq, helpers.neq, helpers.run, helpers.stop
 local nvim_prog, command, funcs = helpers.nvim_prog, helpers.command, helpers.funcs
 local source, next_msg = helpers.source, helpers.next_msg
@@ -18,7 +18,7 @@ describe('server -> client', function()
 
   before_each(function()
     clear()
-    cid = nvim('get_api_info')[1]
+    cid = meths.nvim_get_api_info()[1]
   end)
 
   it('handles unexpected closed stream while preparing RPC response', function()
@@ -47,7 +47,7 @@ describe('server -> client', function()
       local function on_request(method, args)
         eq('scall', method)
         eq({ 1, 2, 3 }, args)
-        nvim('command', 'let g:result = [4, 5, 6]')
+        command('let g:result = [4, 5, 6]')
         return eval('g:result')
       end
       run(on_request, nil, on_setup)
@@ -77,15 +77,15 @@ describe('server -> client', function()
   describe('recursive call', function()
     it('works', function()
       local function on_setup()
-        nvim('set_var', 'result1', 0)
-        nvim('set_var', 'result2', 0)
-        nvim('set_var', 'result3', 0)
-        nvim('set_var', 'result4', 0)
-        nvim('command', 'let g:result1 = rpcrequest(' .. cid .. ', "rcall", 2)')
-        eq(4, nvim('get_var', 'result1'))
-        eq(8, nvim('get_var', 'result2'))
-        eq(16, nvim('get_var', 'result3'))
-        eq(32, nvim('get_var', 'result4'))
+        meths.nvim_set_var('result1', 0)
+        meths.nvim_set_var('result2', 0)
+        meths.nvim_set_var('result3', 0)
+        meths.nvim_set_var('result4', 0)
+        command('let g:result1 = rpcrequest(' .. cid .. ', "rcall", 2)')
+        eq(4, meths.nvim_get_var('result1'))
+        eq(8, meths.nvim_get_var('result2'))
+        eq(16, meths.nvim_get_var('result3'))
+        eq(32, meths.nvim_get_var('result4'))
         stop()
       end
 
@@ -101,7 +101,7 @@ describe('server -> client', function()
           elseif n == 16 then
             cmd = 'let g:result4 = rpcrequest(' .. cid .. ', "rcall", ' .. n .. ')'
           end
-          nvim('command', cmd)
+          command(cmd)
         end
         return n
       end
@@ -195,10 +195,10 @@ describe('server -> client', function()
     end)
 
     it('can send/receive notifications and make requests', function()
-      nvim('command', "call rpcnotify(vim, 'vim_set_current_line', 'SOME TEXT')")
+      command("call rpcnotify(vim, 'vim_set_current_line', 'SOME TEXT')")
 
       -- Wait for the notification to complete.
-      nvim('command', "call rpcrequest(vim, 'vim_eval', '0')")
+      command("call rpcrequest(vim, 'vim_eval', '0')")
 
       eq('SOME TEXT', eval("rpcrequest(vim, 'vim_get_current_line')"))
     end)
@@ -212,7 +212,7 @@ describe('server -> client', function()
       eq(1, buf)
 
       eval("rpcnotify(vim, 'buffer_set_line', " .. buf .. ", 0, 'SOME TEXT')")
-      nvim('command', "call rpcrequest(vim, 'vim_eval', '0')") -- wait
+      command("call rpcrequest(vim, 'vim_eval', '0')") -- wait
 
       eq('SOME TEXT', eval("rpcrequest(vim, 'buffer_get_line', " .. buf .. ', 0)'))
 
@@ -231,8 +231,8 @@ describe('server -> client', function()
   describe('jobstart()', function()
     local jobid
     before_each(function()
-      local channel = nvim('get_api_info')[1]
-      nvim('set_var', 'channel', channel)
+      local channel = meths.nvim_get_api_info()[1]
+      meths.nvim_set_var('channel', channel)
       source([[
         function! s:OnEvent(id, data, event)
           call rpcnotify(g:channel, a:event, 0, a:data)

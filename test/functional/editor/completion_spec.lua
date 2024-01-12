@@ -5,7 +5,6 @@ local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
 local feed_command, source, expect = helpers.feed_command, helpers.source, helpers.expect
 local funcs = helpers.funcs
-local curbufmeths = helpers.curbufmeths
 local command = helpers.command
 local meths = helpers.meths
 local poke_eventloop = helpers.poke_eventloop
@@ -928,7 +927,7 @@ describe('completion', function()
   end)
 
   it('CompleteChanged autocommand', function()
-    curbufmeths.set_lines(0, 1, false, { 'foo', 'bar', 'foobar', '' })
+    meths.nvim_buf_set_lines(0, 0, 1, false, { 'foo', 'bar', 'foobar', '' })
     source([[
       set complete=. completeopt=noinsert,noselect,menuone
       function! OnPumChange()

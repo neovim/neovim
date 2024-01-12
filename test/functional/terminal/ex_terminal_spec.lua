@@ -1,11 +1,12 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local assert_alive = helpers.assert_alive
-local clear, poke_eventloop, nvim = helpers.clear, helpers.poke_eventloop, helpers.nvim
+local clear, poke_eventloop = helpers.clear, helpers.poke_eventloop
 local testprg, source, eq = helpers.testprg, helpers.source, helpers.eq
 local feed = helpers.feed
 local feed_command, eval = helpers.feed_command, helpers.eval
 local funcs = helpers.funcs
+local meths = helpers.meths
 local retry = helpers.retry
 local ok = helpers.ok
 local command = helpers.command
@@ -104,30 +105,30 @@ describe(':terminal', function()
 
   it('nvim_get_mode() in :terminal', function()
     command('terminal')
-    eq({ blocking = false, mode = 'nt' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'nt' }, meths.nvim_get_mode())
     feed('i')
-    eq({ blocking = false, mode = 't' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 't' }, meths.nvim_get_mode())
     feed([[<C-\><C-N>]])
-    eq({ blocking = false, mode = 'nt' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'nt' }, meths.nvim_get_mode())
   end)
 
   it(':stopinsert RPC request exits terminal-mode #7807', function()
     command('terminal')
     feed('i[tui] insert-mode')
-    eq({ blocking = false, mode = 't' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 't' }, meths.nvim_get_mode())
     command('stopinsert')
     feed('<Ignore>') -- Add input to separate two RPC requests
-    eq({ blocking = false, mode = 'nt' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'nt' }, meths.nvim_get_mode())
   end)
 
   it(":stopinsert in normal mode doesn't break insert mode #9889", function()
     command('terminal')
-    eq({ blocking = false, mode = 'nt' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'nt' }, meths.nvim_get_mode())
     command('stopinsert')
     feed('<Ignore>') -- Add input to separate two RPC requests
-    eq({ blocking = false, mode = 'nt' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'nt' }, meths.nvim_get_mode())
     feed('a')
-    eq({ blocking = false, mode = 't' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 't' }, meths.nvim_get_mode())
   end)
 
   it('switching to terminal buffer in Insert mode goes to Terminal mode #7164', function()
@@ -138,9 +139,9 @@ describe(':terminal', function()
     command('autocmd InsertLeave * let g:events += ["InsertLeave"]')
     command('autocmd TermEnter * let g:events += ["TermEnter"]')
     command('inoremap <F2> <Cmd>wincmd p<CR>')
-    eq({ blocking = false, mode = 'i' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'i' }, meths.nvim_get_mode())
     feed('<F2>')
-    eq({ blocking = false, mode = 't' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 't' }, meths.nvim_get_mode())
     eq({ 'InsertLeave', 'TermEnter' }, eval('g:events'))
   end)
 end)
@@ -158,9 +159,9 @@ local function test_terminal_with_fake_shell(backslash)
     clear()
     screen = Screen.new(50, 4)
     screen:attach({ rgb = false })
-    nvim('set_option_value', 'shell', shell_path, {})
-    nvim('set_option_value', 'shellcmdflag', 'EXE', {})
-    nvim('set_option_value', 'shellxquote', '', {})
+    meths.nvim_set_option_value('shell', shell_path, {})
+    meths.nvim_set_option_value('shellcmdflag', 'EXE', {})
+    meths.nvim_set_option_value('shellxquote', '', {})
   end)
 
   it('with no argument, acts like termopen()', function()
@@ -177,7 +178,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it("with no argument, and 'shell' is set to empty string", function()
-    nvim('set_option_value', 'shell', '', {})
+    meths.nvim_set_option_value('shell', '', {})
     feed_command('terminal')
     screen:expect([[
       ^                                                  |
@@ -187,7 +188,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it("with no argument, but 'shell' has arguments, acts like termopen()", function()
-    nvim('set_option_value', 'shell', shell_path .. ' INTERACT', {})
+    meths.nvim_set_option_value('shell', shell_path .. ' INTERACT', {})
     feed_command('terminal')
     screen:expect([[
       ^interact $                                        |
@@ -208,7 +209,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it("executes a given command through the shell, when 'shell' has arguments", function()
-    nvim('set_option_value', 'shell', shell_path .. ' -t jeff', {})
+    meths.nvim_set_option_value('shell', shell_path .. ' -t jeff', {})
     command('set shellxquote=') -- win: avoid extra quotes
     feed_command('terminal echo hi')
     screen:expect([[

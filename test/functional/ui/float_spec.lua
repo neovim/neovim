@@ -12,12 +12,13 @@ local exec = helpers.exec
 local exec_lua = helpers.exec_lua
 local insert = helpers.insert
 local meths = helpers.meths
-local curbufmeths = helpers.curbufmeths
 local funcs = helpers.funcs
 local run = helpers.run
 local pcall_err = helpers.pcall_err
 local tbl_contains = vim.tbl_contains
-local curbuf, curwin, curtab = helpers.curbuf, helpers.curwin, helpers.curtab
+local curbuf = helpers.meths.nvim_get_current_buf
+local curwin = helpers.meths.nvim_get_current_win
+local curtab = helpers.meths.nvim_get_current_tabpage
 local NIL = vim.NIL
 
 describe('float window', function()
@@ -6624,7 +6625,7 @@ describe('float window', function()
         for i = 1,5 do
           feed(i.."<c-w>w")
           feed_command("enew")
-          curbufmeths.set_lines(0,-1,true,{tostring(i)})
+          meths.nvim_buf_set_lines(0, 0,-1,true,{tostring(i)})
         end
 
         if multigrid then

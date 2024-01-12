@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local assert_log = helpers.assert_log
-local eq, clear, eval, command, nvim, next_msg =
-  helpers.eq, helpers.clear, helpers.eval, helpers.command, helpers.nvim, helpers.next_msg
+local eq, clear, eval, command, next_msg =
+  helpers.eq, helpers.clear, helpers.eval, helpers.command, helpers.next_msg
 local meths = helpers.meths
 local exec_lua = helpers.exec_lua
 local retry = helpers.retry
@@ -14,7 +14,7 @@ describe('notify', function()
 
   before_each(function()
     clear()
-    channel = nvim('get_api_info')[1]
+    channel = meths.nvim_get_api_info()[1]
   end)
 
   after_each(function()
@@ -33,14 +33,14 @@ describe('notify', function()
 
   describe('passing 0 as the channel id', function()
     it('sends the notification/args to all subscribed channels', function()
-      nvim('subscribe', 'event2')
+      meths.nvim_subscribe('event2')
       eval('rpcnotify(0, "event1", 1, 2, 3)')
       eval('rpcnotify(0, "event2", 4, 5, 6)')
       eval('rpcnotify(0, "event2", 7, 8, 9)')
       eq({ 'notification', 'event2', { 4, 5, 6 } }, next_msg())
       eq({ 'notification', 'event2', { 7, 8, 9 } }, next_msg())
-      nvim('unsubscribe', 'event2')
-      nvim('subscribe', 'event1')
+      meths.nvim_unsubscribe('event2')
+      meths.nvim_subscribe('event1')
       eval('rpcnotify(0, "event2", 10, 11, 12)')
       eval('rpcnotify(0, "event1", 13, 14, 15)')
       eq({ 'notification', 'event1', { 13, 14, 15 } }, next_msg())
@@ -49,9 +49,7 @@ describe('notify', function()
     it('does not crash for deeply nested variable', function()
       meths.nvim_set_var('l', {})
       local nest_level = 1000
-      meths.nvim_command(
-        ('call map(range(%u), "extend(g:, {\'l\': [g:l]})")'):format(nest_level - 1)
-      )
+      command(('call map(range(%u), "extend(g:, {\'l\': [g:l]})")'):format(nest_level - 1))
       eval('rpcnotify(' .. channel .. ', "event", g:l)')
       local msg = next_msg()
       eq('notification', msg[1])
@@ -81,10 +79,10 @@ describe('notify', function()
     clear { env = {
       NVIM_LOG_FILE = testlog,
     } }
-    nvim('subscribe', 'event1')
-    nvim('unsubscribe', 'doesnotexist')
+    meths.nvim_subscribe('event1')
+    meths.nvim_unsubscribe('doesnotexist')
     assert_log("tried to unsubscribe unknown event 'doesnotexist'", testlog, 10)
-    nvim('unsubscribe', 'event1')
+    meths.nvim_unsubscribe('event1')
     assert_alive()
   end)
 

@@ -8,7 +8,7 @@ local funcs = helpers.funcs
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local write_file = helpers.write_file
-local curbufmeths = helpers.curbufmeths
+local meths = helpers.meths
 local source = helpers.source
 
 local file_base = 'Xtest-functional-ex_cmds-quickfix_commands'
@@ -79,7 +79,7 @@ for _, c in ipairs({ 'l', 'c' }) do
       -- Run cfile/lfile from a modified buffer
       command('set nohidden')
       command('enew!')
-      curbufmeths.set_lines(1, 1, true, { 'Quickfix' })
+      meths.nvim_buf_set_lines(0, 1, 1, true, { 'Quickfix' })
       eq(
         ('Vim(%s):E37: No write since last change (add ! to override)'):format(filecmd),
         exc_exec(('%s %s'):format(filecmd, file))

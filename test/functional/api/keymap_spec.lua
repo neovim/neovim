@@ -1,9 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 
-local bufmeths = helpers.bufmeths
 local clear = helpers.clear
 local command = helpers.command
-local curbufmeths = helpers.curbufmeths
 local eq, neq = helpers.eq, helpers.neq
 local exec_lua = helpers.exec_lua
 local exec = helpers.exec
@@ -112,7 +110,7 @@ describe('nvim_get_keymap', function()
 
     -- The buffer mapping should not show up
     eq({ foolong_bar_map_table }, meths.nvim_get_keymap('n'))
-    eq({ buffer_table }, curbufmeths.get_keymap('n'))
+    eq({ buffer_table }, meths.nvim_buf_get_keymap(0, 'n'))
   end)
 
   it('considers scope for overlapping maps', function()
@@ -124,11 +122,11 @@ describe('nvim_get_keymap', function()
     command('nnoremap <buffer> foo bar')
 
     eq({ foo_bar_map_table }, meths.nvim_get_keymap('n'))
-    eq({ buffer_table }, curbufmeths.get_keymap('n'))
+    eq({ buffer_table }, meths.nvim_buf_get_keymap(0, 'n'))
   end)
 
   it('can retrieve mapping for different buffers', function()
-    local original_buffer = curbufmeths.get_number()
+    local original_buffer = meths.nvim_buf_get_number(0)
     -- Place something in each of the buffers to make sure they stick around
     -- and set hidden so we can leave them
     command('set hidden')
@@ -137,7 +135,7 @@ describe('nvim_get_keymap', function()
     command('new')
     command('normal! ihello 3')
 
-    local final_buffer = curbufmeths.get_number()
+    local final_buffer = meths.nvim_buf_get_number(0)
 
     command('nnoremap <buffer> foo bar')
     -- Final buffer will have buffer mappings
@@ -147,10 +145,10 @@ describe('nvim_get_keymap', function()
     eq({ buffer_table }, meths.nvim_buf_get_keymap(0, 'n'))
 
     command('buffer ' .. original_buffer)
-    eq(original_buffer, curbufmeths.get_number())
+    eq(original_buffer, meths.nvim_buf_get_number(0))
     -- Original buffer won't have any mappings
     eq({}, meths.nvim_get_keymap('n'))
-    eq({}, curbufmeths.get_keymap('n'))
+    eq({}, meths.nvim_buf_get_keymap(0, 'n'))
     eq({ buffer_table }, meths.nvim_buf_get_keymap(final_buffer, 'n'))
   end)
 
@@ -209,7 +207,7 @@ describe('nvim_get_keymap', function()
       function()
         make_new_windows(new_windows)
         command(map .. ' <buffer> ' .. option_token .. ' foo bar')
-        local result = curbufmeths.get_keymap(mode)[1][option]
+        local result = meths.nvim_buf_get_keymap(0, mode)[1][option]
         eq(buffer_on_result, result)
       end
     )
@@ -246,7 +244,7 @@ describe('nvim_get_keymap', function()
           make_new_windows(new_windows)
           command(map .. ' <buffer> foo bar')
 
-          local result = curbufmeths.get_keymap(mode)[1][option]
+          local result = meths.nvim_buf_get_keymap(0, mode)[1][option]
           eq(buffer_off_result, result)
         end
       )
@@ -290,7 +288,7 @@ describe('nvim_get_keymap', function()
 
       nnoremap <buffer> fizz :call <SID>maparg_test_function()<CR>
     ]])
-    local sid_result = curbufmeths.get_keymap('n')[1]['sid']
+    local sid_result = meths.nvim_buf_get_keymap(0, 'n')[1]['sid']
     eq(1, sid_result)
     eq('testing', meths.nvim_call_function('<SNR>' .. sid_result .. '_maparg_test_function', {}))
   end)
@@ -698,33 +696,33 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   it('can set mappings whose RHS is a <Nop>', function()
     meths.nvim_set_keymap('i', 'lhs', '<Nop>', {})
     command('normal ilhs')
-    eq({ '' }, curbufmeths.get_lines(0, -1, 0)) -- imap to <Nop> does nothing
+    eq({ '' }, meths.nvim_buf_get_lines(0, 0, -1, 0)) -- imap to <Nop> does nothing
     eq(generate_mapargs('i', 'lhs', '<Nop>', {}), get_mapargs('i', 'lhs'))
 
     -- also test for case insensitivity
     meths.nvim_set_keymap('i', 'lhs', '<nOp>', {})
     command('normal ilhs')
-    eq({ '' }, curbufmeths.get_lines(0, -1, 0))
+    eq({ '' }, meths.nvim_buf_get_lines(0, 0, -1, 0))
     -- note: RHS in returned mapargs() dict reflects the original RHS
     -- provided by the user
     eq(generate_mapargs('i', 'lhs', '<nOp>', {}), get_mapargs('i', 'lhs'))
 
     meths.nvim_set_keymap('i', 'lhs', '<NOP>', {})
     command('normal ilhs')
-    eq({ '' }, curbufmeths.get_lines(0, -1, 0))
+    eq({ '' }, meths.nvim_buf_get_lines(0, 0, -1, 0))
     eq(generate_mapargs('i', 'lhs', '<NOP>', {}), get_mapargs('i', 'lhs'))
 
     -- a single ^V in RHS is also <Nop> (see :h map-empty-rhs)
     meths.nvim_set_keymap('i', 'lhs', '\022', {})
     command('normal ilhs')
-    eq({ '' }, curbufmeths.get_lines(0, -1, 0))
+    eq({ '' }, meths.nvim_buf_get_lines(0, 0, -1, 0))
     eq(generate_mapargs('i', 'lhs', '\022', {}), get_mapargs('i', 'lhs'))
   end)
 
   it('treats an empty RHS in a mapping like a <Nop>', function()
     meths.nvim_set_keymap('i', 'lhs', '', {})
     command('normal ilhs')
-    eq({ '' }, curbufmeths.get_lines(0, -1, 0))
+    eq({ '' }, meths.nvim_buf_get_lines(0, 0, -1, 0))
     eq(generate_mapargs('i', 'lhs', '', {}), get_mapargs('i', 'lhs'))
   end)
 
@@ -743,7 +741,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       command([[call nvim_set_keymap('i', "\<space>", "\<tab>", {})]])
       eq(generate_mapargs('i', '<Space>', '\t', { sid = 0 }), get_mapargs('i', '<Space>'))
       feed('i ')
-      eq({ '\t' }, curbufmeths.get_lines(0, -1, 0))
+      eq({ '\t' }, meths.nvim_buf_get_lines(0, 0, -1, 0))
     end
   )
 
@@ -772,12 +770,12 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
     meths.nvim_set_keymap('i', 'lhs', 'FlipFlop()', { expr = true })
     command('normal ilhs')
-    eq({ '1' }, curbufmeths.get_lines(0, -1, 0))
+    eq({ '1' }, meths.nvim_buf_get_lines(0, 0, -1, 0))
 
     command('normal! ggVGd')
 
     command('normal ilhs')
-    eq({ '0' }, curbufmeths.get_lines(0, -1, 0))
+    eq({ '0' }, meths.nvim_buf_get_lines(0, 0, -1, 0))
   end)
 
   it('can set mappings that do trigger other mappings', function()
@@ -785,12 +783,12 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     meths.nvim_set_keymap('i', 'lhs', 'mhs', {})
 
     command('normal imhs')
-    eq({ 'rhs' }, curbufmeths.get_lines(0, -1, 0))
+    eq({ 'rhs' }, meths.nvim_buf_get_lines(0, 0, -1, 0))
 
     command('normal! ggVGd')
 
     command('normal ilhs')
-    eq({ 'rhs' }, curbufmeths.get_lines(0, -1, 0))
+    eq({ 'rhs' }, meths.nvim_buf_get_lines(0, 0, -1, 0))
   end)
 
   it("can set noremap mappings that don't trigger other mappings", function()
@@ -798,12 +796,12 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     meths.nvim_set_keymap('i', 'lhs', 'mhs', { noremap = true })
 
     command('normal imhs')
-    eq({ 'rhs' }, curbufmeths.get_lines(0, -1, 0))
+    eq({ 'rhs' }, meths.nvim_buf_get_lines(0, 0, -1, 0))
 
     command('normal! ggVGd')
 
     command('normal ilhs') -- shouldn't trigger mhs-to-rhs mapping
-    eq({ 'mhs' }, curbufmeths.get_lines(0, -1, 0))
+    eq({ 'mhs' }, meths.nvim_buf_get_lines(0, 0, -1, 0))
   end)
 
   it('can set nowait mappings that fire without waiting', function()
@@ -817,7 +815,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       feed(c)
       sleep(5)
     end
-    eq({ 'shorter456' }, curbufmeths.get_lines(0, -1, 0))
+    eq({ 'shorter456' }, meths.nvim_buf_get_lines(0, 0, -1, 0))
   end)
 
   -- Perform exhaustive tests of basic functionality
@@ -1181,66 +1179,66 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
   it('rejects negative bufnr values', function()
     eq(
       'Wrong type for argument 1 when calling nvim_buf_set_keymap, expecting Buffer',
-      pcall_err(bufmeths.set_keymap, -1, '', 'lhs', 'rhs', {})
+      pcall_err(meths.nvim_buf_set_keymap, -1, '', 'lhs', 'rhs', {})
     )
   end)
 
   it('can set mappings active in the current buffer but not others', function()
     local first, second = make_two_buffers(true)
 
-    bufmeths.set_keymap(0, '', 'lhs', 'irhs<Esc>', {})
+    meths.nvim_buf_set_keymap(0, '', 'lhs', 'irhs<Esc>', {})
     command('normal lhs')
-    eq({ 'rhs' }, bufmeths.get_lines(0, 0, 1, 1))
+    eq({ 'rhs' }, meths.nvim_buf_get_lines(0, 0, 1, 1))
 
     -- mapping should have no effect in new buffer
     switch_to_buf(second)
     command('normal lhs')
-    eq({ '' }, bufmeths.get_lines(0, 0, 1, 1))
+    eq({ '' }, meths.nvim_buf_get_lines(0, 0, 1, 1))
 
     -- mapping should remain active in old buffer
     switch_to_buf(first)
     command('normal ^lhs')
-    eq({ 'rhsrhs' }, bufmeths.get_lines(0, 0, 1, 1))
+    eq({ 'rhsrhs' }, meths.nvim_buf_get_lines(0, 0, 1, 1))
   end)
 
   it('can set local mappings in buffer other than current', function()
     local first = make_two_buffers(false)
-    bufmeths.set_keymap(first, '', 'lhs', 'irhs<Esc>', {})
+    meths.nvim_buf_set_keymap(first, '', 'lhs', 'irhs<Esc>', {})
 
     -- shouldn't do anything
     command('normal lhs')
-    eq({ '' }, bufmeths.get_lines(0, 0, 1, 1))
+    eq({ '' }, meths.nvim_buf_get_lines(0, 0, 1, 1))
 
     -- should take effect
     switch_to_buf(first)
     command('normal lhs')
-    eq({ 'rhs' }, bufmeths.get_lines(0, 0, 1, 1))
+    eq({ 'rhs' }, meths.nvim_buf_get_lines(0, 0, 1, 1))
   end)
 
   it('can disable mappings made in another buffer, inside that buffer', function()
     local first = make_two_buffers(false)
-    bufmeths.set_keymap(first, '', 'lhs', 'irhs<Esc>', {})
-    bufmeths.del_keymap(first, '', 'lhs')
+    meths.nvim_buf_set_keymap(first, '', 'lhs', 'irhs<Esc>', {})
+    meths.nvim_buf_del_keymap(first, '', 'lhs')
     switch_to_buf(first)
 
     -- shouldn't do anything
     command('normal lhs')
-    eq({ '' }, bufmeths.get_lines(0, 0, 1, 1))
+    eq({ '' }, meths.nvim_buf_get_lines(0, 0, 1, 1))
   end)
 
   it("can't disable mappings given wrong buffer handle", function()
     local first, second = make_two_buffers(false)
-    bufmeths.set_keymap(first, '', 'lhs', 'irhs<Esc>', {})
-    eq('E31: No such mapping', pcall_err(bufmeths.del_keymap, second, '', 'lhs'))
+    meths.nvim_buf_set_keymap(first, '', 'lhs', 'irhs<Esc>', {})
+    eq('E31: No such mapping', pcall_err(meths.nvim_buf_del_keymap, second, '', 'lhs'))
 
     -- should still work
     switch_to_buf(first)
     command('normal lhs')
-    eq({ 'rhs' }, bufmeths.get_lines(0, 0, 1, 1))
+    eq({ 'rhs' }, meths.nvim_buf_get_lines(0, 0, 1, 1))
   end)
 
   it('does not crash when setting mapping in a non-existing buffer #13541', function()
-    pcall_err(bufmeths.set_keymap, 100, '', 'lsh', 'irhs<Esc>', {})
+    pcall_err(meths.nvim_buf_set_keymap, 100, '', 'lsh', 'irhs<Esc>', {})
     helpers.assert_alive()
   end)
 

@@ -290,12 +290,6 @@ function module.nvim_prog_abs()
   end
 end
 
--- Executes an ex-command. Vimscript errors manifest as client (lua) errors, but
--- v:errmsg will not be updated.
-function module.command(cmd)
-  module.request('nvim_command', cmd)
-end
-
 -- Use for commands which expect nvim to quit.
 -- The first argument can also be a timeout.
 function module.expect_exit(fn_or_timeout, ...)
@@ -629,57 +623,17 @@ module.async_meths = module.create_callindex(module.nvim_async)
 module.uimeths = module.create_callindex(ui)
 
 local function create_api(request, call)
-  local m = {}
-  function m.nvim(method, ...)
+  local function nvim(method, ...)
     if vim.startswith(method, 'nvim_') then
       return request(method, ...)
     end
     return request('nvim_' .. method, ...)
   end
 
-  function m.buffer(method, ...)
-    return request('nvim_buf_' .. method, ...)
-  end
-
-  function m.window(method, ...)
-    return request('nvim_win_' .. method, ...)
-  end
-
-  function m.tabpage(method, ...)
-    return request('nvim_tabpage_' .. method, ...)
-  end
-
-  function m.curbuf(method, ...)
-    if not method then
-      return m.nvim('get_current_buf')
-    end
-    return m.buffer(method, 0, ...)
-  end
-
-  function m.curwin(method, ...)
-    if not method then
-      return m.nvim('get_current_win')
-    end
-    return m.window(method, 0, ...)
-  end
-
-  function m.curtab(method, ...)
-    if not method then
-      return m.nvim('get_current_tabpage')
-    end
-    return m.tabpage(method, 0, ...)
-  end
-
-  m.funcs = module.create_callindex(call)
-  m.meths = module.create_callindex(m.nvim)
-  m.bufmeths = module.create_callindex(m.buffer)
-  m.winmeths = module.create_callindex(m.window)
-  m.tabmeths = module.create_callindex(m.tabpage)
-  m.curbufmeths = module.create_callindex(m.curbuf)
-  m.curwinmeths = module.create_callindex(m.curwin)
-  m.curtabmeths = module.create_callindex(m.curtab)
-
-  return m
+  return {
+    funcs = module.create_callindex(call),
+    meths = module.create_callindex(nvim),
+  }
 end
 
 module.rpc = {
@@ -705,10 +659,15 @@ end
 
 --- add for typing. The for loop after will overwrite this
 module.meths = vim.api
+module.funcs = vim.fn
 
 for name, fn in pairs(module.rpc.api) do
   module[name] = fn
 end
+
+-- Executes an ex-command. Vimscript errors manifest as client (lua) errors, but
+-- v:errmsg will not be updated.
+module.command = module.meths.nvim_command
 
 function module.poke_eventloop()
   -- Execute 'nvim_eval' (a deferred function) to
@@ -723,7 +682,7 @@ end
 ---@see buf_lines()
 function module.curbuf_contents()
   module.poke_eventloop() -- Before inspecting the buffer, do whatever.
-  return table.concat(module.curbuf('get_lines', 0, -1, true), '\n')
+  return table.concat(module.meths.nvim_buf_get_lines(0, 0, -1, true), '\n')
 end
 
 function module.expect(contents)
@@ -760,7 +719,7 @@ end
 -- Asserts that buffer is loaded and visible in the current tabpage.
 function module.assert_visible(bufnr, visible)
   assert(type(visible) == 'boolean')
-  eq(visible, module.bufmeths.is_loaded(bufnr))
+  eq(visible, module.meths.nvim_buf_is_loaded(bufnr))
   if visible then
     assert(
       -1 ~= module.funcs.bufwinnr(bufnr),

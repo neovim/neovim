@@ -10,14 +10,13 @@ local command = helpers.command
 local exc_exec = helpers.exc_exec
 local pcall_err = helpers.pcall_err
 local exec_capture = helpers.exec_capture
-local curbufmeths = helpers.curbufmeths
 
 before_each(clear)
 
 local function changedtick()
-  local ct = curbufmeths.get_changedtick()
-  eq(ct, curbufmeths.get_var('changedtick'))
-  eq(ct, curbufmeths.get_var('changedtick'))
+  local ct = meths.nvim_buf_get_changedtick(0)
+  eq(ct, meths.nvim_buf_get_var(0, 'changedtick'))
+  eq(ct, meths.nvim_buf_get_var(0, 'changedtick'))
   eq(ct, eval('b:changedtick'))
   eq(ct, eval('b:["changedtick"]'))
   eq(ct, eval('b:.changedtick'))
@@ -46,11 +45,11 @@ describe('b:changedtick', function()
   it('increments at bdel', function()
     command('new')
     eq(2, changedtick())
-    local bnr = curbufmeths.get_number()
+    local bnr = meths.nvim_buf_get_number(0)
     eq(2, bnr)
     command('bdel')
     eq(3, funcs.getbufvar(bnr, 'changedtick'))
-    eq(1, curbufmeths.get_number())
+    eq(1, meths.nvim_buf_get_number(0))
   end)
   it('fails to be changed by user', function()
     local ct = changedtick()
@@ -72,7 +71,7 @@ describe('b:changedtick', function()
       'Vim(let):E46: Cannot change read-only variable "d.changedtick"',
       pcall_err(command, 'let d.changedtick = ' .. ctn)
     )
-    eq('Key is read-only: changedtick', pcall_err(curbufmeths.set_var, 'changedtick', ctn))
+    eq('Key is read-only: changedtick', pcall_err(meths.nvim_buf_set_var, 0, 'changedtick', ctn))
 
     eq(
       'Vim(unlet):E795: Cannot delete variable b:changedtick',
@@ -90,7 +89,7 @@ describe('b:changedtick', function()
       'Vim(unlet):E46: Cannot change read-only variable "d.changedtick"',
       pcall_err(command, 'unlet d.changedtick')
     )
-    eq('Key is read-only: changedtick', pcall_err(curbufmeths.del_var, 'changedtick'))
+    eq('Key is read-only: changedtick', pcall_err(meths.nvim_buf_del_var, 0, 'changedtick'))
     eq(ct, changedtick())
 
     eq(

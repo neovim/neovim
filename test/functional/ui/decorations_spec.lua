@@ -9,7 +9,6 @@ local exec = helpers.exec
 local expect_events = helpers.expect_events
 local meths = helpers.meths
 local funcs = helpers.funcs
-local curbufmeths = helpers.curbufmeths
 local command = helpers.command
 local eq = helpers.eq
 local assert_alive = helpers.assert_alive
@@ -244,7 +243,7 @@ describe('decorations providers', function()
 
     -- spell=false with higher priority does disable spell
     local ns = meths.nvim_create_namespace "spell"
-    local id = curbufmeths.set_extmark(ns, 0, 0, { priority = 30, end_row = 2, end_col = 23, spell = false })
+    local id = meths.nvim_buf_set_extmark(0, ns, 0, 0, { priority = 30, end_row = 2, end_col = 23, spell = false })
 
     screen:expect{grid=[[
       I am well written text.                 |
@@ -267,7 +266,7 @@ describe('decorations providers', function()
     command('echo ""')
 
     -- spell=false with lower priority doesn't disable spell
-    curbufmeths.set_extmark(ns, 0, 0, { id = id, priority = 10, end_row = 2, end_col = 23, spell = false })
+    meths.nvim_buf_set_extmark(0, ns, 0, 0, { id = id, priority = 10, end_row = 2, end_col = 23, spell = false })
 
     screen:expect{grid=[[
       I am well written text.                 |

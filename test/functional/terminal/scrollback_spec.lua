@@ -1,14 +1,13 @@
 local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
-local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
+local clear, eq = helpers.clear, helpers.eq
 local feed, testprg = helpers.feed, helpers.testprg
 local eval = helpers.eval
 local command = helpers.command
 local poke_eventloop = helpers.poke_eventloop
 local retry = helpers.retry
 local meths = helpers.meths
-local nvim = helpers.nvim
 local feed_data = thelpers.feed_data
 local pcall_err = helpers.pcall_err
 local exec_lua = helpers.exec_lua
@@ -86,7 +85,7 @@ describe(':terminal scrollback', function()
           {1: }                             |
           {3:-- TERMINAL --}                |
         ]])
-        eq(7, curbuf('line_count'))
+        eq(7, meths.nvim_buf_line_count(0))
       end)
 
       describe('and then 3 more lines are printed', function()
@@ -170,7 +169,7 @@ describe(':terminal scrollback', function()
             {2:^ }                         |
                                       |
           ]])
-          eq(8, curbuf('line_count'))
+          eq(8, meths.nvim_buf_line_count(0))
           feed([[3k]])
           screen:expect([[
             ^line4                     |
@@ -204,7 +203,7 @@ describe(':terminal scrollback', function()
                                         |
           {3:-- TERMINAL --}                |
         ]])
-        eq(4, curbuf('line_count'))
+        eq(4, meths.nvim_buf_line_count(0))
       end
 
       it('will delete the last two empty lines', will_delete_last_two_lines)
@@ -222,7 +221,7 @@ describe(':terminal scrollback', function()
             {1: }                             |
             {3:-- TERMINAL --}                |
           ]])
-          eq(4, curbuf('line_count'))
+          eq(4, meths.nvim_buf_line_count(0))
           feed('<c-\\><c-n>gg')
           screen:expect([[
             ^tty ready                     |
@@ -261,7 +260,7 @@ describe(':terminal scrollback', function()
         {1: }                             |
         {3:-- TERMINAL --}                |
       ]])
-      eq(7, curbuf('line_count'))
+      eq(7, meths.nvim_buf_line_count(0))
     end)
 
     describe('and the height is increased by 1', function()
@@ -287,7 +286,7 @@ describe(':terminal scrollback', function()
       describe('and then by 3', function()
         before_each(function()
           pop_then_push()
-          eq(8, curbuf('line_count'))
+          eq(8, meths.nvim_buf_line_count(0))
           screen:try_resize(screen._width, screen._height + 3)
         end)
 
@@ -302,7 +301,7 @@ describe(':terminal scrollback', function()
             {1: }                             |
             {3:-- TERMINAL --}                |
           ]])
-          eq(9, curbuf('line_count'))
+          eq(9, meths.nvim_buf_line_count(0))
           feed('<c-\\><c-n>gg')
           screen:expect([[
             ^tty ready                     |
@@ -342,7 +341,7 @@ describe(':terminal scrollback', function()
             ]])
             -- since there's an empty line after the cursor, the buffer line
             -- count equals the terminal screen height
-            eq(11, curbuf('line_count'))
+            eq(11, meths.nvim_buf_line_count(0))
           end)
         end)
       end)
@@ -381,7 +380,7 @@ describe("'scrollback' option", function()
   end)
 
   local function set_fake_shell()
-    nvim('set_option_value', 'shell', string.format('"%s" INTERACT', testprg('shell-test')), {})
+    meths.nvim_set_option_value('shell', string.format('"%s" INTERACT', testprg('shell-test')), {})
   end
 
   local function expect_lines(expected, epsilon)

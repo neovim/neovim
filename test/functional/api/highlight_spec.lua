@@ -1,5 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, nvim = helpers.clear, helpers.nvim
+local clear = helpers.clear
 local Screen = require('test.functional.ui.screen')
 local eq, eval = helpers.eq, helpers.eval
 local command = helpers.command
@@ -52,22 +52,22 @@ describe('API: highlight', function()
 
   it('nvim_get_hl_by_id', function()
     local hl_id = eval("hlID('NewHighlight')")
-    eq(expected_cterm, nvim('get_hl_by_id', hl_id, false))
+    eq(expected_cterm, meths.nvim_get_hl_by_id(hl_id, false))
 
     hl_id = eval("hlID('NewHighlight')")
     -- Test valid id.
-    eq(expected_rgb, nvim('get_hl_by_id', hl_id, true))
+    eq(expected_rgb, meths.nvim_get_hl_by_id(hl_id, true))
 
     -- Test invalid id.
     eq('Invalid highlight id: 30000', pcall_err(meths.nvim_get_hl_by_id, 30000, false))
 
     -- Test all highlight properties.
     command('hi NewHighlight gui=underline,bold,italic,reverse,strikethrough,altfont,nocombine')
-    eq(expected_rgb2, nvim('get_hl_by_id', hl_id, true))
+    eq(expected_rgb2, meths.nvim_get_hl_by_id(hl_id, true))
 
     -- Test undercurl
     command('hi NewHighlight gui=undercurl')
-    eq(expected_undercurl, nvim('get_hl_by_id', hl_id, true))
+    eq(expected_undercurl, meths.nvim_get_hl_by_id(hl_id, true))
 
     -- Test nil argument.
     eq(
@@ -102,14 +102,14 @@ describe('API: highlight', function()
     local expected_normal = { background = Screen.colors.Yellow, foreground = Screen.colors.Red }
 
     -- Test `Normal` default values.
-    eq({}, nvim('get_hl_by_name', 'Normal', true))
+    eq({}, meths.nvim_get_hl_by_name('Normal', true))
 
-    eq(expected_cterm, nvim('get_hl_by_name', 'NewHighlight', false))
-    eq(expected_rgb, nvim('get_hl_by_name', 'NewHighlight', true))
+    eq(expected_cterm, meths.nvim_get_hl_by_name('NewHighlight', false))
+    eq(expected_rgb, meths.nvim_get_hl_by_name('NewHighlight', true))
 
     -- Test `Normal` modified values.
     command('hi Normal guifg=red guibg=yellow')
-    eq(expected_normal, nvim('get_hl_by_name', 'Normal', true))
+    eq(expected_normal, meths.nvim_get_hl_by_name('Normal', true))
 
     -- Test invalid name.
     eq(
@@ -137,10 +137,10 @@ describe('API: highlight', function()
     meths.nvim_set_hl(0, 'Normal', { ctermfg = 17, ctermbg = 213 })
     meths.nvim_set_hl(0, 'NotNormal', { ctermfg = 17, ctermbg = 213, nocombine = true })
     -- Note colors are "cterm" values, not rgb-as-ints
-    eq({ foreground = 17, background = 213 }, nvim('get_hl_by_name', 'Normal', false))
+    eq({ foreground = 17, background = 213 }, meths.nvim_get_hl_by_name('Normal', false))
     eq(
       { foreground = 17, background = 213, nocombine = true },
-      nvim('get_hl_by_name', 'NotNormal', false)
+      meths.nvim_get_hl_by_name('NotNormal', false)
     )
   end)
 
@@ -378,7 +378,7 @@ describe('API: set highlight', function()
   it("correctly sets 'Normal' internal properties", function()
     -- Normal has some special handling internally. #18024
     meths.nvim_set_hl(0, 'Normal', { fg = '#000083', bg = '#0000F3' })
-    eq({ foreground = 131, background = 243 }, nvim('get_hl_by_name', 'Normal', true))
+    eq({ foreground = 131, background = 243 }, meths.nvim_get_hl_by_name('Normal', true))
   end)
 
   it('does not segfault on invalid group name #20009', function()
@@ -475,7 +475,7 @@ describe('API: get highlight', function()
   end)
 
   it('nvim_get_hl with create flag', function()
-    eq({}, nvim('get_hl', 0, { name = 'Foo', create = false }))
+    eq({}, meths.nvim_get_hl(0, { name = 'Foo', create = false }))
     eq(0, funcs.hlexists('Foo'))
     meths.nvim_get_hl(0, { name = 'Bar', create = true })
     eq(1, funcs.hlexists('Bar'))

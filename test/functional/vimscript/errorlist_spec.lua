@@ -4,7 +4,7 @@ local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
 local exc_exec = helpers.exc_exec
-local get_cur_win_var = helpers.curwinmeths.get_var
+local get_win_var = helpers.meths.nvim_win_get_var
 
 describe('setqflist()', function()
   local setqflist = helpers.funcs.setqflist
@@ -26,15 +26,15 @@ describe('setqflist()', function()
   it('sets w:quickfix_title', function()
     setqflist({ '' }, 'r', 'foo')
     command('copen')
-    eq('foo', get_cur_win_var('quickfix_title'))
+    eq('foo', get_win_var(0, 'quickfix_title'))
     setqflist({}, 'r', { ['title'] = 'qf_title' })
-    eq('qf_title', get_cur_win_var('quickfix_title'))
+    eq('qf_title', get_win_var(0, 'quickfix_title'))
   end)
 
   it('allows string {what} for backwards compatibility', function()
     setqflist({}, 'r', '5')
     command('copen')
-    eq('5', get_cur_win_var('quickfix_title'))
+    eq('5', get_win_var(0, 'quickfix_title'))
   end)
 
   it('requires a dict for {what}', function()
@@ -67,9 +67,9 @@ describe('setloclist()', function()
     setloclist(1, {}, 'r', 'foo')
     setloclist(2, {}, 'r', 'bar')
     command('lopen')
-    eq('bar', get_cur_win_var('quickfix_title'))
+    eq('bar', get_win_var(0, 'quickfix_title'))
     command('lclose | wincmd w | lopen')
-    eq('foo', get_cur_win_var('quickfix_title'))
+    eq('foo', get_win_var(0, 'quickfix_title'))
   end)
 
   it("doesn't crash when when window is closed in the middle #13721", function()

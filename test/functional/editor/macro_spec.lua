@@ -9,7 +9,6 @@ local command = helpers.command
 local funcs = helpers.funcs
 local meths = helpers.meths
 local insert = helpers.insert
-local curbufmeths = helpers.curbufmeths
 
 describe('macros', function()
   before_each(function()
@@ -41,16 +40,19 @@ hello]]
     feed [[gg]]
 
     feed [[qqAFOO<esc>q]]
-    eq({ 'helloFOO', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
+    eq({ 'helloFOO', 'hello', 'hello' }, meths.nvim_buf_get_lines(0, 0, -1, false))
 
     feed [[Q]]
-    eq({ 'helloFOOFOO', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
+    eq({ 'helloFOOFOO', 'hello', 'hello' }, meths.nvim_buf_get_lines(0, 0, -1, false))
 
     feed [[G3Q]]
-    eq({ 'helloFOOFOO', 'hello', 'helloFOOFOOFOO' }, curbufmeths.get_lines(0, -1, false))
+    eq({ 'helloFOOFOO', 'hello', 'helloFOOFOOFOO' }, meths.nvim_buf_get_lines(0, 0, -1, false))
 
     feed [[ggV3jQ]]
-    eq({ 'helloFOOFOOFOO', 'helloFOO', 'helloFOOFOOFOOFOO' }, curbufmeths.get_lines(0, -1, false))
+    eq(
+      { 'helloFOOFOOFOO', 'helloFOO', 'helloFOOFOOFOOFOO' },
+      meths.nvim_buf_get_lines(0, 0, -1, false)
+    )
   end)
 
   it('can be replayed with @', function()
@@ -60,16 +62,19 @@ hello]]
     feed [[gg]]
 
     feed [[qqAFOO<esc>q]]
-    eq({ 'helloFOO', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
+    eq({ 'helloFOO', 'hello', 'hello' }, meths.nvim_buf_get_lines(0, 0, -1, false))
 
     feed [[Q]]
-    eq({ 'helloFOOFOO', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
+    eq({ 'helloFOOFOO', 'hello', 'hello' }, meths.nvim_buf_get_lines(0, 0, -1, false))
 
     feed [[G3@@]]
-    eq({ 'helloFOOFOO', 'hello', 'helloFOOFOOFOO' }, curbufmeths.get_lines(0, -1, false))
+    eq({ 'helloFOOFOO', 'hello', 'helloFOOFOOFOO' }, meths.nvim_buf_get_lines(0, 0, -1, false))
 
     feed [[ggV2j@@]]
-    eq({ 'helloFOOFOOFOO', 'helloFOO', 'helloFOOFOOFOOFOO' }, curbufmeths.get_lines(0, -1, false))
+    eq(
+      { 'helloFOOFOOFOO', 'helloFOO', 'helloFOOFOOFOOFOO' },
+      meths.nvim_buf_get_lines(0, 0, -1, false)
+    )
   end)
 
   it('can be replayed with @q and @w', function()
@@ -79,17 +84,17 @@ hello]]
     feed [[gg]]
 
     feed [[qqAFOO<esc>qu]]
-    eq({ 'hello', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
+    eq({ 'hello', 'hello', 'hello' }, meths.nvim_buf_get_lines(0, 0, -1, false))
 
     feed [[qwA123<esc>qu]]
-    eq({ 'hello', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
+    eq({ 'hello', 'hello', 'hello' }, meths.nvim_buf_get_lines(0, 0, -1, false))
 
     feed [[V3j@q]]
-    eq({ 'helloFOO', 'helloFOO', 'helloFOO' }, curbufmeths.get_lines(0, -1, false))
+    eq({ 'helloFOO', 'helloFOO', 'helloFOO' }, meths.nvim_buf_get_lines(0, 0, -1, false))
 
     feed [[gg]]
     feed [[Vj@w]]
-    eq({ 'helloFOO123', 'helloFOO123', 'helloFOO' }, curbufmeths.get_lines(0, -1, false))
+    eq({ 'helloFOO123', 'helloFOO123', 'helloFOO' }, meths.nvim_buf_get_lines(0, 0, -1, false))
   end)
 
   it('can be replayed with @q and @w visual-block', function()
@@ -99,17 +104,17 @@ hello]]
     feed [[gg]]
 
     feed [[qqAFOO<esc>qu]]
-    eq({ 'hello', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
+    eq({ 'hello', 'hello', 'hello' }, meths.nvim_buf_get_lines(0, 0, -1, false))
 
     feed [[qwA123<esc>qu]]
-    eq({ 'hello', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
+    eq({ 'hello', 'hello', 'hello' }, meths.nvim_buf_get_lines(0, 0, -1, false))
 
     feed [[<C-v>3j@q]]
-    eq({ 'helloFOO', 'helloFOO', 'helloFOO' }, curbufmeths.get_lines(0, -1, false))
+    eq({ 'helloFOO', 'helloFOO', 'helloFOO' }, meths.nvim_buf_get_lines(0, 0, -1, false))
 
     feed [[gg]]
     feed [[<C-v>j@w]]
-    eq({ 'helloFOO123', 'helloFOO123', 'helloFOO' }, curbufmeths.get_lines(0, -1, false))
+    eq({ 'helloFOO123', 'helloFOO123', 'helloFOO' }, meths.nvim_buf_get_lines(0, 0, -1, false))
   end)
 end)
 

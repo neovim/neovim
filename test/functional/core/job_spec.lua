@@ -10,7 +10,6 @@ local feed = helpers.feed
 local insert = helpers.insert
 local neq = helpers.neq
 local next_msg = helpers.next_msg
-local nvim = helpers.nvim
 local testprg = helpers.testprg
 local ok = helpers.ok
 local source = helpers.source
@@ -43,8 +42,8 @@ describe('jobs', function()
   before_each(function()
     clear()
 
-    channel = nvim('get_api_info')[1]
-    nvim('set_var', 'channel', channel)
+    channel = meths.nvim_get_api_info()[1]
+    meths.nvim_set_var('channel', channel)
     source([[
     function! Normalize(data) abort
       " Windows: remove ^M and term escape sequences
@@ -69,22 +68,22 @@ describe('jobs', function()
     command('let g:job_opts.env = v:true')
     local _, err = pcall(function()
       if is_os('win') then
-        nvim('command', "let j = jobstart('set', g:job_opts)")
+        command("let j = jobstart('set', g:job_opts)")
       else
-        nvim('command', "let j = jobstart('env', g:job_opts)")
+        command("let j = jobstart('env', g:job_opts)")
       end
     end)
     ok(string.find(err, 'E475: Invalid argument: env') ~= nil)
   end)
 
   it('append environment #env', function()
-    nvim('command', "let $VAR = 'abc'")
-    nvim('command', "let $TOTO = 'goodbye world'")
-    nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
+    command("let $VAR = 'abc'")
+    command("let $TOTO = 'goodbye world'")
+    command("let g:job_opts.env = {'TOTO': 'hello world'}")
     if is_os('win') then
-      nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
+      command([[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
     else
-      nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
+      command([[call jobstart('echo $TOTO $VAR', g:job_opts)]])
     end
 
     expect_msg_seq({
@@ -97,14 +96,14 @@ describe('jobs', function()
   end)
 
   it('append environment with pty #env', function()
-    nvim('command', "let $VAR = 'abc'")
-    nvim('command', "let $TOTO = 'goodbye world'")
-    nvim('command', 'let g:job_opts.pty = v:true')
-    nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
+    command("let $VAR = 'abc'")
+    command("let $TOTO = 'goodbye world'")
+    command('let g:job_opts.pty = v:true')
+    command("let g:job_opts.env = {'TOTO': 'hello world'}")
     if is_os('win') then
-      nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
+      command([[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
     else
-      nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
+      command([[call jobstart('echo $TOTO $VAR', g:job_opts)]])
     end
     expect_msg_seq({
       { 'notification', 'stdout', { 0, { 'hello world abc' } } },
@@ -116,10 +115,10 @@ describe('jobs', function()
   end)
 
   it('replace environment #env', function()
-    nvim('command', "let $VAR = 'abc'")
-    nvim('command', "let $TOTO = 'goodbye world'")
-    nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
-    nvim('command', 'let g:job_opts.clear_env = 1')
+    command("let $VAR = 'abc'")
+    command("let $TOTO = 'goodbye world'")
+    command("let g:job_opts.env = {'TOTO': 'hello world'}")
+    command('let g:job_opts.clear_env = 1')
 
     -- libuv ensures that certain "required" environment variables are
     -- preserved if the user doesn't provide them in a custom environment
@@ -129,13 +128,13 @@ describe('jobs', function()
     -- Rather than expecting a completely empty environment, ensure that $VAR
     -- is *not* in the environment but $TOTO is.
     if is_os('win') then
-      nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
+      command([[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
       expect_msg_seq({
         { 'notification', 'stdout', { 0, { 'hello world %VAR%', '' } } },
       })
     else
-      nvim('command', 'set shell=/bin/sh')
-      nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
+      command('set shell=/bin/sh')
+      command([[call jobstart('echo $TOTO $VAR', g:job_opts)]])
       expect_msg_seq({
         { 'notification', 'stdout', { 0, { 'hello world', '' } } },
       })
@@ -143,17 +142,17 @@ describe('jobs', function()
   end)
 
   it('handles case-insensitively matching #env vars', function()
-    nvim('command', "let $TOTO = 'abc'")
+    command("let $TOTO = 'abc'")
     -- Since $Toto is being set in the job, it should take precedence over the
     -- global $TOTO on Windows
-    nvim('command', "let g:job_opts = {'env': {'Toto': 'def'}, 'stdout_buffered': v:true}")
+    command("let g:job_opts = {'env': {'Toto': 'def'}, 'stdout_buffered': v:true}")
     if is_os('win') then
-      nvim('command', [[let j = jobstart('set | find /I "toto="', g:job_opts)]])
+      command([[let j = jobstart('set | find /I "toto="', g:job_opts)]])
     else
-      nvim('command', [[let j = jobstart('env | grep -i toto=', g:job_opts)]])
+      command([[let j = jobstart('env | grep -i toto=', g:job_opts)]])
     end
-    nvim('command', 'call jobwait([j])')
-    nvim('command', 'let g:output = Normalize(g:job_opts.stdout)')
+    command('call jobwait([j])')
+    command('let g:output = Normalize(g:job_opts.stdout)')
     local actual = eval('g:output')
     local expected
     if is_os('win') then
@@ -169,11 +168,11 @@ describe('jobs', function()
   end)
 
   it('uses &shell and &shellcmdflag if passed a string', function()
-    nvim('command', "let $VAR = 'abc'")
+    command("let $VAR = 'abc'")
     if is_os('win') then
-      nvim('command', "let j = jobstart('echo %VAR%', g:job_opts)")
+      command("let j = jobstart('echo %VAR%', g:job_opts)")
     else
-      nvim('command', "let j = jobstart('echo $VAR', g:job_opts)")
+      command("let j = jobstart('echo $VAR', g:job_opts)")
     end
     eq({ 'notification', 'stdout', { 0, { 'abc', '' } } }, next_msg())
     eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
@@ -181,11 +180,11 @@ describe('jobs', function()
   end)
 
   it('changes to given / directory', function()
-    nvim('command', "let g:job_opts.cwd = '/'")
+    command("let g:job_opts.cwd = '/'")
     if is_os('win') then
-      nvim('command', "let j = jobstart('cd', g:job_opts)")
+      command("let j = jobstart('cd', g:job_opts)")
     else
-      nvim('command', "let j = jobstart('pwd', g:job_opts)")
+      command("let j = jobstart('pwd', g:job_opts)")
     end
     eq({ 'notification', 'stdout', { 0, { pathroot(), '' } } }, next_msg())
     eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
@@ -195,11 +194,11 @@ describe('jobs', function()
   it('changes to given `cwd` directory', function()
     local dir = eval('resolve(tempname())'):gsub('/', get_pathsep())
     mkdir(dir)
-    nvim('command', "let g:job_opts.cwd = '" .. dir .. "'")
+    command("let g:job_opts.cwd = '" .. dir .. "'")
     if is_os('win') then
-      nvim('command', "let j = jobstart('cd', g:job_opts)")
+      command("let j = jobstart('cd', g:job_opts)")
     else
-      nvim('command', "let j = jobstart('pwd', g:job_opts)")
+      command("let j = jobstart('pwd', g:job_opts)")
     end
     expect_msg_seq(
       {
@@ -221,11 +220,11 @@ describe('jobs', function()
   it('fails to change to invalid `cwd`', function()
     local dir = eval('resolve(tempname())."-bogus"')
     local _, err = pcall(function()
-      nvim('command', "let g:job_opts.cwd = '" .. dir .. "'")
+      command("let g:job_opts.cwd = '" .. dir .. "'")
       if is_os('win') then
-        nvim('command', "let j = jobstart('cd', g:job_opts)")
+        command("let j = jobstart('cd', g:job_opts)")
       else
-        nvim('command', "let j = jobstart('pwd', g:job_opts)")
+        command("let j = jobstart('pwd', g:job_opts)")
       end
     end)
     ok(string.find(err, 'E475: Invalid argument: expected valid directory$') ~= nil)
@@ -239,7 +238,7 @@ describe('jobs', function()
     funcs.setfperm(dir, 'rw-------')
     matches(
       '^Vim%(call%):E903: Process failed to start: permission denied: .*',
-      pcall_err(nvim, 'command', "call jobstart(['pwd'], {'cwd': '" .. dir .. "'})")
+      pcall_err(command, "call jobstart(['pwd'], {'cwd': '" .. dir .. "'})")
     )
     rmdir(dir)
   end)
@@ -269,8 +268,8 @@ describe('jobs', function()
   end)
 
   it('invokes callbacks when the job writes and exits', function()
-    nvim('command', "let g:job_opts.on_stderr  = function('OnEvent')")
-    nvim('command', [[call jobstart(has('win32') ? 'echo:' : 'echo', g:job_opts)]])
+    command("let g:job_opts.on_stderr  = function('OnEvent')")
+    command([[call jobstart(has('win32') ? 'echo:' : 'echo', g:job_opts)]])
     expect_twostreams({
       { 'notification', 'stdout', { 0, { '', '' } } },
       { 'notification', 'stdout', { 0, { '' } } },
@@ -279,11 +278,11 @@ describe('jobs', function()
   end)
 
   it('interactive commands', function()
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
+    command("let j = jobstart(['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
-    nvim('command', 'call jobsend(j, "abc\\n")')
+    command('call jobsend(j, "abc\\n")')
     eq({ 'notification', 'stdout', { 0, { 'abc', '' } } }, next_msg())
-    nvim('command', 'call jobsend(j, "123\\nxyz\\n")')
+    command('call jobsend(j, "123\\nxyz\\n")')
     expect_msg_seq(
       { { 'notification', 'stdout', { 0, { '123', 'xyz', '' } } } },
       -- Alternative sequence:
@@ -292,7 +291,7 @@ describe('jobs', function()
         { 'notification', 'stdout', { 0, { 'xyz', '' } } },
       }
     )
-    nvim('command', 'call jobsend(j, [123, "xyz", ""])')
+    command('call jobsend(j, [123, "xyz", ""])')
     expect_msg_seq(
       { { 'notification', 'stdout', { 0, { '123', 'xyz', '' } } } },
       -- Alternative sequence:
@@ -301,7 +300,7 @@ describe('jobs', function()
         { 'notification', 'stdout', { 0, { 'xyz', '' } } },
       }
     )
-    nvim('command', 'call jobstop(j)')
+    command('call jobstop(j)')
     eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
     eq({ 'notification', 'exit', { 0, 143 } }, next_msg())
   end)
@@ -311,75 +310,75 @@ describe('jobs', function()
     local filename = helpers.tmpname()
     write_file(filename, 'abc\0def\n')
 
-    nvim('command', "let j = jobstart(['cat', '" .. filename .. "'], g:job_opts)")
+    command("let j = jobstart(['cat', '" .. filename .. "'], g:job_opts)")
     eq({ 'notification', 'stdout', { 0, { 'abc\ndef', '' } } }, next_msg())
     eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
     eq({ 'notification', 'exit', { 0, 0 } }, next_msg())
     os.remove(filename)
 
     -- jobsend() preserves NULs.
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
-    nvim('command', [[call jobsend(j, ["123\n456",""])]])
+    command("let j = jobstart(['cat', '-'], g:job_opts)")
+    command([[call jobsend(j, ["123\n456",""])]])
     eq({ 'notification', 'stdout', { 0, { '123\n456', '' } } }, next_msg())
-    nvim('command', 'call jobstop(j)')
+    command('call jobstop(j)')
   end)
 
   it('emits partial lines (does NOT buffer data lacking newlines)', function()
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
-    nvim('command', 'call jobsend(j, "abc\\nxyz")')
+    command("let j = jobstart(['cat', '-'], g:job_opts)")
+    command('call jobsend(j, "abc\\nxyz")')
     eq({ 'notification', 'stdout', { 0, { 'abc', 'xyz' } } }, next_msg())
-    nvim('command', 'call jobstop(j)')
+    command('call jobstop(j)')
     eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
     eq({ 'notification', 'exit', { 0, 143 } }, next_msg())
   end)
 
   it('preserves newlines', function()
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
-    nvim('command', 'call jobsend(j, "a\\n\\nc\\n\\n\\n\\nb\\n\\n")')
+    command("let j = jobstart(['cat', '-'], g:job_opts)")
+    command('call jobsend(j, "a\\n\\nc\\n\\n\\n\\nb\\n\\n")')
     eq({ 'notification', 'stdout', { 0, { 'a', '', 'c', '', '', '', 'b', '', '' } } }, next_msg())
   end)
 
   it('preserves NULs', function()
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
-    nvim('command', 'call jobsend(j, ["\n123\n", "abc\\nxyz\n", ""])')
+    command("let j = jobstart(['cat', '-'], g:job_opts)")
+    command('call jobsend(j, ["\n123\n", "abc\\nxyz\n", ""])')
     eq({ 'notification', 'stdout', { 0, { '\n123\n', 'abc\nxyz\n', '' } } }, next_msg())
-    nvim('command', 'call jobstop(j)')
+    command('call jobstop(j)')
     eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
     eq({ 'notification', 'exit', { 0, 143 } }, next_msg())
   end)
 
   it('avoids sending final newline', function()
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
-    nvim('command', 'call jobsend(j, ["some data", "without\nfinal nl"])')
+    command("let j = jobstart(['cat', '-'], g:job_opts)")
+    command('call jobsend(j, ["some data", "without\nfinal nl"])')
     eq({ 'notification', 'stdout', { 0, { 'some data', 'without\nfinal nl' } } }, next_msg())
-    nvim('command', 'call jobstop(j)')
+    command('call jobstop(j)')
     eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
     eq({ 'notification', 'exit', { 0, 143 } }, next_msg())
   end)
 
   it('closes the job streams with jobclose', function()
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
-    nvim('command', 'call jobclose(j, "stdin")')
+    command("let j = jobstart(['cat', '-'], g:job_opts)")
+    command('call jobclose(j, "stdin")')
     eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
     eq({ 'notification', 'exit', { 0, 0 } }, next_msg())
   end)
 
   it('disallows jobsend on a job that closed stdin', function()
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
-    nvim('command', 'call jobclose(j, "stdin")')
+    command("let j = jobstart(['cat', '-'], g:job_opts)")
+    command('call jobclose(j, "stdin")')
     eq(
       false,
       pcall(function()
-        nvim('command', 'call jobsend(j, ["some data"])')
+        command('call jobsend(j, ["some data"])')
       end)
     )
 
     command("let g:job_opts.stdin = 'null'")
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
+    command("let j = jobstart(['cat', '-'], g:job_opts)")
     eq(
       false,
       pcall(function()
-        nvim('command', 'call jobsend(j, ["some data"])')
+        command('call jobsend(j, ["some data"])')
       end)
     )
   end)
@@ -390,21 +389,21 @@ describe('jobs', function()
   end)
 
   it('jobstop twice on the stopped or exited job return 0', function()
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
+    command("let j = jobstart(['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
     eq(1, eval('jobstop(j)'))
     eq(0, eval('jobstop(j)'))
   end)
 
   it('will not leak memory if we leave a job running', function()
-    nvim('command', "call jobstart(['cat', '-'], g:job_opts)")
+    command("call jobstart(['cat', '-'], g:job_opts)")
   end)
 
   it('can get the pid value using getpid', function()
-    nvim('command', "let j =  jobstart(['cat', '-'], g:job_opts)")
+    command("let j =  jobstart(['cat', '-'], g:job_opts)")
     local pid = eval('jobpid(j)')
     neq(NIL, meths.nvim_get_proc(pid))
-    nvim('command', 'call jobstop(j)')
+    command('call jobstop(j)')
     eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
     eq({ 'notification', 'exit', { 0, 143 } }, next_msg())
     eq(NIL, meths.nvim_get_proc(pid))
@@ -412,8 +411,7 @@ describe('jobs', function()
 
   it('disposed on Nvim exit', function()
     -- use sleep, which doesn't die on stdin close
-    nvim(
-      'command',
+    command(
       "let g:j =  jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)"
     )
     local pid = eval('jobpid(g:j)')
@@ -423,9 +421,8 @@ describe('jobs', function()
   end)
 
   it('can survive the exit of nvim with "detach"', function()
-    nvim('command', 'let g:job_opts.detach = 1')
-    nvim(
-      'command',
+    command('let g:job_opts.detach = 1')
+    command(
       "let g:j = jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)"
     )
     local pid = eval('jobpid(g:j)')
@@ -437,8 +434,8 @@ describe('jobs', function()
   end)
 
   it('can pass user data to the callback', function()
-    nvim('command', 'let g:job_opts.user = {"n": 5, "s": "str", "l": [1]}')
-    nvim('command', [[call jobstart('echo foo', g:job_opts)]])
+    command('let g:job_opts.user = {"n": 5, "s": "str", "l": [1]}')
+    command([[call jobstart('echo foo', g:job_opts)]])
     local data = { n = 5, s = 'str', l = { 1 } }
     expect_msg_seq(
       {
@@ -456,16 +453,16 @@ describe('jobs', function()
   end)
 
   it('can omit data callbacks', function()
-    nvim('command', 'unlet g:job_opts.on_stdout')
-    nvim('command', 'let g:job_opts.user = 5')
-    nvim('command', [[call jobstart('echo foo', g:job_opts)]])
+    command('unlet g:job_opts.on_stdout')
+    command('let g:job_opts.user = 5')
+    command([[call jobstart('echo foo', g:job_opts)]])
     eq({ 'notification', 'exit', { 5, 0 } }, next_msg())
   end)
 
   it('can omit exit callback', function()
-    nvim('command', 'unlet g:job_opts.on_exit')
-    nvim('command', 'let g:job_opts.user = 5')
-    nvim('command', [[call jobstart('echo foo', g:job_opts)]])
+    command('unlet g:job_opts.on_exit')
+    command('let g:job_opts.user = 5')
+    command([[call jobstart('echo foo', g:job_opts)]])
     expect_msg_seq(
       {
         { 'notification', 'stdout', { 5, { 'foo', '' } } },
@@ -481,8 +478,8 @@ describe('jobs', function()
   end)
 
   it('will pass return code with the exit event', function()
-    nvim('command', 'let g:job_opts.user = 5')
-    nvim('command', "call jobstart('exit 55', g:job_opts)")
+    command('let g:job_opts.user = 5')
+    command("call jobstart('exit 55', g:job_opts)")
     eq({ 'notification', 'stdout', { 5, { '' } } }, next_msg())
     eq({ 'notification', 'exit', { 5, 55 } }, next_msg())
   end)
@@ -883,7 +880,7 @@ describe('jobs', function()
         r = next_msg()
         eq('job ' .. i .. ' exited', r[3][1])
       end
-      eq(10, nvim('eval', 'g:counter'))
+      eq(10, meths.nvim_eval('g:counter'))
     end)
 
     describe('with timeout argument', function()
@@ -953,10 +950,10 @@ describe('jobs', function()
   end)
 
   pending('exit event follows stdout, stderr', function()
-    nvim('command', "let g:job_opts.on_stderr  = function('OnEvent')")
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
-    nvim('eval', 'jobsend(j, "abcdef")')
-    nvim('eval', 'jobstop(j)')
+    command("let g:job_opts.on_stderr  = function('OnEvent')")
+    command("let j = jobstart(['cat', '-'], g:job_opts)")
+    meths.nvim_eval('jobsend(j, "abcdef")')
+    meths.nvim_eval('jobstop(j)')
     expect_msg_seq(
       {
         { 'notification', 'stdout', { 0, { 'abcdef' } } },
@@ -1099,7 +1096,7 @@ describe('jobs', function()
   end)
 
   it('jobstop on same id before stopped', function()
-    nvim('command', 'let j = jobstart(["cat", "-"], g:job_opts)')
+    command('let j = jobstart(["cat", "-"], g:job_opts)')
     neq(0, eval('j'))
 
     eq({ 1, 0 }, eval('[jobstop(j), jobstop(j)]'))
@@ -1140,9 +1137,9 @@ describe('jobs', function()
       endfunction
       ]])
       insert(testprg('tty-test'))
-      nvim('command', 'let g:job_opts.pty = 1')
-      nvim('command', 'let exec = [expand("<cfile>:p")]')
-      nvim('command', 'let j = jobstart(exec, g:job_opts)')
+      command('let g:job_opts.pty = 1')
+      command('let exec = [expand("<cfile>:p")]')
+      command('let j = jobstart(exec, g:job_opts)')
       j = eval 'j'
       eq('tty ready', next_chunk())
     end)
@@ -1153,14 +1150,14 @@ describe('jobs', function()
     end)
 
     it('resizing window', function()
-      nvim('command', 'call jobresize(j, 40, 10)')
+      command('call jobresize(j, 40, 10)')
       eq('rows: 10, cols: 40', next_chunk())
-      nvim('command', 'call jobresize(j, 10, 40)')
+      command('call jobresize(j, 10, 40)')
       eq('rows: 40, cols: 10', next_chunk())
     end)
 
     it('jobclose() sends SIGHUP', function()
-      nvim('command', 'call jobclose(j)')
+      command('call jobclose(j)')
       local msg = next_msg()
       msg = (msg[2] == 'stdout') and next_msg() or msg -- Skip stdout, if any.
       eq({ 'notification', 'exit', { 0, 42 } }, msg)

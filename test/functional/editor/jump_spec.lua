@@ -8,7 +8,7 @@ local funcs = helpers.funcs
 local feed = helpers.feed
 local exec_capture = helpers.exec_capture
 local write_file = helpers.write_file
-local curbufmeths = helpers.curbufmeths
+local meths = helpers.meths
 
 describe('jumplist', function()
   local fname1 = 'Xtest-functional-normal-jump'
@@ -284,7 +284,7 @@ describe('jumpoptions=view', function()
     screen:attach()
     command('edit ' .. file1)
     feed('7GzbG')
-    curbufmeths.set_lines(0, 2, true, {})
+    meths.nvim_buf_set_lines(0, 0, 2, true, {})
     -- Move to line 7, and set it as the last line visible on the view with zb, meaning to recover
     -- the view it needs to put the cursor 7 lines from the top line. Then go to the end of the
     -- file, delete 2 lines before line 7, meaning the jump/mark is moved 2 lines up to line 5.

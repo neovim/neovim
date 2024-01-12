@@ -5,7 +5,6 @@ local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, exec = helpers.command, helpers.exec
 local eval = helpers.eval
 local feed_command, eq = helpers.feed_command, helpers.eq
-local curbufmeths = helpers.curbufmeths
 local funcs = helpers.funcs
 local meths = helpers.meths
 local exec_lua = helpers.exec_lua
@@ -2088,7 +2087,7 @@ describe("'winhighlight' highlight", function()
   end)
 
   it('can override NonText, Conceal and EndOfBuffer', function()
-    curbufmeths.set_lines(0, -1, true, { 'raa\000' })
+    meths.nvim_buf_set_lines(0, 0, -1, true, { 'raa\000' })
     command('call matchaddpos("Conceal", [[1,2]], 0, -1, {"conceal": "#"})')
     command('set cole=2 cocu=nvic')
     command('split')

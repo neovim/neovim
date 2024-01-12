@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
 local assert_alive = helpers.assert_alive
-local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
+local feed, clear = helpers.feed, helpers.clear
 local poke_eventloop = helpers.poke_eventloop
 local nvim_prog = helpers.nvim_prog
 local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.source
@@ -92,12 +92,12 @@ describe(':terminal buffer', function()
     end)
 
     it('does not create swap files', function()
-      local swapfile = nvim('exec', 'swapname', true):gsub('\n', '')
+      local swapfile = meths.nvim_exec('swapname', true):gsub('\n', '')
       eq(nil, io.open(swapfile))
     end)
 
     it('does not create undofiles files', function()
-      local undofile = nvim('eval', 'undofile(bufname("%"))')
+      local undofile = meths.nvim_eval('undofile(bufname("%"))')
       eq(nil, io.open(undofile))
     end)
   end)
@@ -172,7 +172,7 @@ describe(':terminal buffer', function()
 
   it('handles loss of focus gracefully', function()
     -- Change the statusline to avoid printing the file name, which varies.
-    nvim('set_option_value', 'statusline', '==========', {})
+    meths.nvim_set_option_value('statusline', '==========', {})
 
     -- Save the buffer number of the terminal for later testing.
     local tbuf = eval('bufnr("%")')

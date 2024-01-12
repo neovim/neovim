@@ -1,16 +1,14 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
-local eq, meths, nvim_eval, nvim_command, nvim, exc_exec, funcs, nvim_feed, curbuf =
+local eq, meths, nvim_eval, nvim_command, exc_exec, funcs, nvim_feed =
   helpers.eq,
   helpers.meths,
   helpers.eval,
   helpers.command,
-  helpers.nvim,
   helpers.exc_exec,
   helpers.funcs,
-  helpers.feed,
-  helpers.curbuf
+  helpers.feed
 local neq = helpers.neq
 local read_file = helpers.read_file
 
@@ -1581,7 +1579,7 @@ describe('autoload/shada.vim', function()
 
   describe('function shada#strings_to_sd', function()
     local strings2sd_eq = function(expected, input)
-      nvim('set_var', '__input', input)
+      meths.nvim_set_var('__input', input)
       nvim_command(
         'let g:__actual = map(shada#strings_to_sd(g:__input), '
           .. '"filter(v:val, \\"v:key[0] isnot# \'_\' '
@@ -1589,7 +1587,7 @@ describe('autoload/shada.vim', function()
       )
       -- print()
       if type(expected) == 'table' then
-        nvim('set_var', '__expected', expected)
+        meths.nvim_set_var('__expected', expected)
         nvim_command('let g:__expected = ModifyVal(g:__expected)')
         expected = 'g:__expected'
         -- print(nvim_eval('msgpack#string(g:__expected)'))
@@ -2534,7 +2532,7 @@ describe('autoload/shada.vim', function()
     end
 
     it('works', function()
-      local version = nvim('get_vvar', 'version')
+      local version = meths.nvim_get_vvar('version')
       getbstrings_eq({
         {
           timestamp = 'current',
@@ -2560,7 +2558,7 @@ describe('autoload/shada.vim', function()
         '  % Key______  Value',
         '  + generator  "test"',
       })
-      nvim('set_var', 'shada#add_own_header', 1)
+      meths.nvim_set_var('shada#add_own_header', 1)
       getbstrings_eq({
         {
           timestamp = 'current',
@@ -2586,14 +2584,14 @@ describe('autoload/shada.vim', function()
         '  % Key______  Value',
         '  + generator  "test"',
       })
-      nvim('set_var', 'shada#add_own_header', 0)
+      meths.nvim_set_var('shada#add_own_header', 0)
       getbstrings_eq({}, {})
       getbstrings_eq({ { timestamp = 0, type = 1, value = { generator = 'test' } } }, {
         'Header with timestamp ' .. epoch .. ':',
         '  % Key______  Value',
         '  + generator  "test"',
       })
-      nvim('set_var', 'shada#keep_old_header', 0)
+      meths.nvim_set_var('shada#keep_old_header', 0)
       getbstrings_eq({}, {
         'Header with timestamp ' .. epoch .. ':',
         '  % Key______  Value',
@@ -2661,8 +2659,8 @@ describe('plugin/shada.vim', function()
       '  - contents      "ab"',
       '  -               "a"',
     }, nvim_eval('getline(1, "$")'))
-    eq(false, nvim('get_option_value', 'modified', {}))
-    eq('shada', nvim('get_option_value', 'filetype', {}))
+    eq(false, meths.nvim_get_option_value('modified', {}))
+    eq('shada', meths.nvim_get_option_value('filetype', {}))
     nvim_command('edit ' .. fname_tmp)
     eq({
       'History entry with timestamp ' .. epoch .. ':',
@@ -2671,8 +2669,8 @@ describe('plugin/shada.vim', function()
       '  - contents      "ab"',
       '  -               "b"',
     }, nvim_eval('getline(1, "$")'))
-    eq(false, nvim('get_option_value', 'modified', {}))
-    eq('shada', nvim('get_option_value', 'filetype', {}))
+    eq(false, meths.nvim_get_option_value('modified', {}))
+    eq('shada', meths.nvim_get_option_value('filetype', {}))
     eq('++opt not supported', exc_exec('edit ++enc=latin1 ' .. fname))
     neq({
       'History entry with timestamp ' .. epoch .. ':',
@@ -2681,7 +2679,7 @@ describe('plugin/shada.vim', function()
       '  - contents      "ab"',
       '  -               "a"',
     }, nvim_eval('getline(1, "$")'))
-    neq(true, nvim('get_option_value', 'modified', {}))
+    neq(true, meths.nvim_get_option_value('modified', {}))
   end)
 
   it('event FileReadCmd', function()
@@ -2697,8 +2695,8 @@ describe('plugin/shada.vim', function()
       '  - contents      "ab"',
       '  -               "a"',
     }, nvim_eval('getline(1, "$")'))
-    eq(true, nvim('get_option_value', 'modified', {}))
-    neq('shada', nvim('get_option_value', 'filetype', {}))
+    eq(true, meths.nvim_get_option_value('modified', {}))
+    neq('shada', meths.nvim_get_option_value('filetype', {}))
     nvim_command('1,$read ' .. fname_tmp)
     eq({
       '',
@@ -2713,9 +2711,9 @@ describe('plugin/shada.vim', function()
       '  - contents      "ab"',
       '  -               "b"',
     }, nvim_eval('getline(1, "$")'))
-    eq(true, nvim('get_option_value', 'modified', {}))
-    neq('shada', nvim('get_option_value', 'filetype', {}))
-    nvim('set_option_value', 'modified', false, {})
+    eq(true, meths.nvim_get_option_value('modified', {}))
+    neq('shada', meths.nvim_get_option_value('filetype', {}))
+    meths.nvim_set_option_value('modified', false, {})
     eq('++opt not supported', exc_exec('$read ++enc=latin1 ' .. fname))
     eq({
       '',
@@ -2730,13 +2728,13 @@ describe('plugin/shada.vim', function()
       '  - contents      "ab"',
       '  -               "b"',
     }, nvim_eval('getline(1, "$")'))
-    neq(true, nvim('get_option_value', 'modified', {}))
+    neq(true, meths.nvim_get_option_value('modified', {}))
   end)
 
   it('event BufWriteCmd', function()
     reset()
-    nvim('set_var', 'shada#add_own_header', 0)
-    curbuf('set_lines', 0, 1, true, {
+    meths.nvim_set_var('shada#add_own_header', 0)
+    meths.nvim_buf_set_lines(0, 0, 1, true, {
       'Jump with timestamp ' .. epoch .. ':',
       '  % Key________  Description  Value',
       "  + n            name         'A'",
@@ -2796,8 +2794,8 @@ describe('plugin/shada.vim', function()
 
   it('event FileWriteCmd', function()
     reset()
-    nvim('set_var', 'shada#add_own_header', 0)
-    curbuf('set_lines', 0, 1, true, {
+    meths.nvim_set_var('shada#add_own_header', 0)
+    meths.nvim_buf_set_lines(0, 0, 1, true, {
       'Jump with timestamp ' .. epoch .. ':',
       '  % Key________  Description  Value',
       "  + n            name         'A'",
@@ -2840,8 +2838,8 @@ describe('plugin/shada.vim', function()
 
   it('event FileAppendCmd', function()
     reset()
-    nvim('set_var', 'shada#add_own_header', 0)
-    curbuf('set_lines', 0, 1, true, {
+    meths.nvim_set_var('shada#add_own_header', 0)
+    meths.nvim_buf_set_lines(0, 0, 1, true, {
       'Jump with timestamp ' .. epoch .. ':',
       '  % Key________  Description  Value',
       "  + n            name         'A'",
@@ -3017,10 +3015,10 @@ describe('ftplugin/shada.vim', function()
   it('sets options correctly', function()
     nvim_command('filetype plugin indent on')
     nvim_command('setlocal filetype=shada')
-    eq(true, nvim('get_option_value', 'expandtab', {}))
-    eq(2, nvim('get_option_value', 'tabstop', {}))
-    eq(2, nvim('get_option_value', 'softtabstop', {}))
-    eq(2, nvim('get_option_value', 'shiftwidth', {}))
+    eq(true, meths.nvim_get_option_value('expandtab', {}))
+    eq(2, meths.nvim_get_option_value('tabstop', {}))
+    eq(2, meths.nvim_get_option_value('softtabstop', {}))
+    eq(2, meths.nvim_get_option_value('shiftwidth', {}))
   end)
 
   it('sets indentkeys correctly', function()
@@ -3028,17 +3026,17 @@ describe('ftplugin/shada.vim', function()
     nvim_command('setlocal filetype=shada')
     funcs.setline(1, '  Replacement with timestamp ' .. epoch)
     nvim_feed('ggA:\027')
-    eq('Replacement with timestamp ' .. epoch .. ':', curbuf('get_lines', 0, 1, true)[1])
+    eq('Replacement with timestamp ' .. epoch .. ':', meths.nvim_buf_get_lines(0, 0, 1, true)[1])
     nvim_feed('o-\027')
-    eq({ '  -' }, curbuf('get_lines', 1, 2, true))
+    eq({ '  -' }, meths.nvim_buf_get_lines(0, 1, 2, true))
     nvim_feed('ggO+\027')
-    eq({ '+' }, curbuf('get_lines', 0, 1, true))
+    eq({ '+' }, meths.nvim_buf_get_lines(0, 0, 1, true))
     nvim_feed('GO*\027')
-    eq({ '  *' }, curbuf('get_lines', 2, 3, true))
+    eq({ '  *' }, meths.nvim_buf_get_lines(0, 2, 3, true))
     nvim_feed('ggO  /\027')
-    eq({ '  /' }, curbuf('get_lines', 0, 1, true))
+    eq({ '  /' }, meths.nvim_buf_get_lines(0, 0, 1, true))
     nvim_feed('ggOx\027')
-    eq({ 'x' }, curbuf('get_lines', 0, 1, true))
+    eq({ 'x' }, meths.nvim_buf_get_lines(0, 0, 1, true))
   end)
 end)
 
@@ -3063,7 +3061,7 @@ describe('syntax/shada.vim', function()
     }
     screen:attach()
 
-    curbuf('set_lines', 0, 1, true, {
+    meths.nvim_buf_set_lines(0, 0, 1, true, {
       'Header with timestamp ' .. epoch .. ':',
       '  % Key  Value',
       '  + t    "test"',
