@@ -838,5 +838,88 @@ func Test_replay_charsearch_omap()
   bwipe!
 endfunc
 
+" Make sure that y_append is correctly reset
+" and the previous register is working as expected
+func Test_register_y_append_reset()
+  new
+  call setline(1, ['1',
+    \ '2 ----------------------------------------------------',
+    \ '3',
+    \ '4',
+    \ '5 ----------------------------------------------------',
+    \ '6',
+    \ '7',
+    \ '8 ----------------------------------------------------',
+    \ '9',
+    \ '10 aaaaaaa 4.',
+    \ '11 Game Dbl-Figures Leaders:',
+    \ '12 Player Pts FG% 3P% FT% RB AS BL ST TO PF EFF',
+    \ '13 bbbbbbbbb 12 (50 /0 /67 )/ 7/ 3/ 0/ 2/ 3/ 4/+15',
+    \ '14 cccccc 12 (57 /67 /100)/ 2/ 1/ 1/ 0/ 1/ 3/+12',
+    \ '15 ddddddd 10 (63 /0 /0 )/ 1/ 3/ 0/ 3/ 5/ 3/ +9',
+    \ '16 4 5-15 0-3 2-2 5-12 1-1 3-4 33.3 0.0 100 41.7 100 75 12 14',
+    \ '17 F 23-55 2-10 9-11 23-52 3-13 26-29 41.8 20 81.8 44.2 23.1 89.7 57 75',
+    \ '18 4 3 6 3 2 3 3 4 3 3 7 3 1 4 6 -1 -1 +2 -1 -2',
+    \ '19 F 13 19 5 10 4 17 22 9 14 32 13 4 20 17 -1 -13 -4 -3 -3 +5'])
+  11
+  exe "norm! \"a5dd"
+  norm! j
+  exe "norm! \"bY"
+  norm! 2j
+  exe "norm! \"BY"
+  norm! 4k
+  norm! 5dd
+  norm! 3k
+  " The next put should put the content of the unnamed register, not of
+  " register b!
+  norm! p
+  call assert_equal(['1',
+    \ '2 ----------------------------------------------------',
+    \ '3',
+    \ '4',
+    \ '5 ----------------------------------------------------',
+    \ '6',
+    \ '10 aaaaaaa 4.',
+    \ '16 4 5-15 0-3 2-2 5-12 1-1 3-4 33.3 0.0 100 41.7 100 75 12 14',
+    \ '17 F 23-55 2-10 9-11 23-52 3-13 26-29 41.8 20 81.8 44.2 23.1 89.7 57 75',
+    \ '18 4 3 6 3 2 3 3 4 3 3 7 3 1 4 6 -1 -1 +2 -1 -2',
+    \ '19 F 13 19 5 10 4 17 22 9 14 32 13 4 20 17 -1 -13 -4 -3 -3 +5',
+    \ '7',
+    \ '8 ----------------------------------------------------',
+    \ '9'], getline(1,'$'))
+  bwipe!
+endfunc
+
+func Test_insert_small_delete_replace_mode()
+  new
+  call setline(1, ['foo', 'bar', 'foobar',  'bar'])
+  let @- = 'foo'
+  call cursor(2, 1)
+  exe ":norm! R\<C-R>-\<C-R>-"
+  call assert_equal('foofoo', getline(2))
+  call cursor(3, 1)
+  norm! D
+  call assert_equal(['foo', 'foofoo', '',  'bar'], getline(1, 4))
+  call cursor(4, 2)
+  exe ":norm! R\<C-R>-ZZZZ"
+  call assert_equal(['foo', 'foofoo', '',  'bfoobarZZZZ'], getline(1, 4))
+  call cursor(1, 1)
+  let @- = ''
+  exe ":norm! R\<C-R>-ZZZ"
+  call assert_equal(['ZZZ', 'foofoo', '',  'bfoobarZZZZ'], getline(1, 4))
+  let @- = 'βbβ'
+  call cursor(4, 1)
+  exe ":norm! R\<C-R>-"
+  call assert_equal(['ZZZ', 'foofoo', '',  'βbβobarZZZZ'], getline(1, 4))
+  let @- = 'bβb'
+  call cursor(4, 1)
+  exe ":norm! R\<C-R>-"
+  call assert_equal(['ZZZ', 'foofoo', '',  'bβbobarZZZZ'], getline(1, 4))
+  let @- = 'βbβ'
+  call cursor(4, 1)
+  exe ":norm! R\<C-R>-"
+  call assert_equal(['ZZZ', 'foofoo', '',  'βbβobarZZZZ'], getline(1, 4))
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
