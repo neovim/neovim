@@ -3170,7 +3170,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
         } else {
           // TODO(@brammool): multi-byte
           if (keytyped == (int)(uint8_t)p[-1]
-              || (icase && keytyped < 256
+              || (icase && keytyped < 256 && keytyped >= 0
                   && TOLOWER_LOC(keytyped) == TOLOWER_LOC((uint8_t)p[-1]))) {
             char *line = get_cursor_pos_ptr();
             assert(p >= look && (uintmax_t)(p - look) <= SIZE_MAX);
