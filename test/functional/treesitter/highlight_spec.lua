@@ -891,3 +891,46 @@ vim.cmd([[
     }
   end)
 end)
+
+describe('treesitter highlighting (markdown)', function()
+  local screen
+
+  before_each(function()
+    screen = Screen.new(40, 6)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = { foreground = Screen.colors.Blue1 },
+      [2] = { bold = true, foreground = Screen.colors.Blue1 },
+      [3] = { bold = true, foreground = Screen.colors.Brown },
+      [4] = { foreground = Screen.colors.Cyan4 },
+      [5] = { foreground = Screen.colors.Magenta1 },
+    }
+  end)
+
+  it('supports hyperlinks', function()
+    local url = 'https://example.com'
+    insert(string.format('[This link text](%s) is a hyperlink.', url))
+    exec_lua([[
+      vim.bo.filetype = 'markdown'
+      vim.treesitter.start()
+    ]])
+
+    screen:expect {
+      grid = [[
+      {4:[}{6:This link text}{4:](}{7:https://example.com}{4:)} is|
+       a hyperlink^.                           |
+      {2:~                                       }|*3
+                                              |
+    ]],
+      attr_ids = {
+        [1] = { foreground = Screen.colors.Blue1 },
+        [2] = { bold = true, foreground = Screen.colors.Blue1 },
+        [3] = { bold = true, foreground = Screen.colors.Brown },
+        [4] = { foreground = Screen.colors.Cyan4 },
+        [5] = { foreground = Screen.colors.Magenta },
+        [6] = { foreground = Screen.colors.Cyan4, url = url },
+        [7] = { underline = true, foreground = Screen.colors.SlateBlue },
+      },
+    }
+  end)
+end)
