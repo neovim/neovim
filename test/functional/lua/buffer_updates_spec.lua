@@ -1073,6 +1073,15 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it('visual paste 2: splitting an empty line', function()
+      local check_events = setup_eventcheck(verify, { 'abc', '{', 'def', '}' })
+      feed('ggyyjjvi{p')
+      check_events {
+        { 'test1', 'bytes', 1, 6, 2, 0, 6, 1, 0, 4, 0, 0, 0 },
+        { 'test1', 'bytes', 1, 6, 2, 0, 6, 0, 0, 0, 2, 0, 5 },
+      }
+    end)
+
     it('nvim_buf_set_lines', function()
       local check_events = setup_eventcheck(verify, { 'AAA', 'BBB' })
 

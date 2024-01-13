@@ -349,6 +349,16 @@ describe('API: buffer events:', function()
     expectn('nvim_buf_lines_event', { b, tick, 3, 4, {}, false })
   end)
 
+  it('visual paste split empty line', function()
+    local b, tick = editoriginal(true, { 'abc', '{', 'def', '}' })
+    command('normal! ggyyjjvi{p')
+    expectn('nvim_buf_lines_event', { b, tick + 1, 2, 3, { '' }, false })
+    expectn('nvim_buf_lines_event', { b, tick + 2, 2, 3, { '}' }, false })
+    expectn('nvim_buf_lines_event', { b, tick + 3, 3, 4, {}, false })
+    expectn('nvim_buf_lines_event', { b, tick + 3, 2, 3, { '' }, false })
+    expectn('nvim_buf_lines_event', { b, tick + 4, 3, 3, { 'abc', '}' }, false })
+  end)
+
   it('when lines are filtered', function()
     -- Test filtering lines with !cat
     local b, tick = editoriginal(true, { 'A', 'C', 'E', 'B', 'D', 'F' })
