@@ -332,9 +332,6 @@ void extmark_splice_delete(buf_T *buf, int l_row, colnr_T l_col, int u_row, coln
     // Invalidate/delete mark
     if (!only_copy && !mt_invalid(mark) && mt_invalidate(mark) && !mt_end(mark)) {
       MTPos endpos = marktree_get_altpos(buf->b_marktree, mark, NULL);
-      if (endpos.row < 0) {
-        endpos = mark.pos;
-      }
       // Invalidate unpaired marks in deleted lines and paired marks whose entire
       // range has been deleted.
       if ((!mt_paired(mark) && mark.pos.row < u_row)
@@ -404,7 +401,7 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
         MTKey mark = marktree_lookup(curbuf->b_marktree, pos.mark, itr);
         mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_INVALID;
         MTPos end = marktree_get_altpos(curbuf->b_marktree, mark, itr);
-        buf_put_decor(curbuf, mt_decor(mark), mark.pos.row, end.row < 0 ? mark.pos.row : end.row);
+        buf_put_decor(curbuf, mt_decor(mark), mark.pos.row, end.row);
       }
       // Redo
     } else {

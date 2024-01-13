@@ -612,10 +612,6 @@ int decor_redraw_col(win_T *wp, int col, int win_col, bool hidden, DecorState *s
     }
 
     MTPos endpos = marktree_get_altpos(buf->b_marktree, mark, NULL);
-    if (endpos.row == -1) {
-      endpos = mark.pos;
-    }
-
     decor_range_add_from_inline(state, mark.pos.row, mark.pos.col, endpos.row, endpos.col,
                                 mt_decor(mark), false, mark.ns, mark.id);
 
@@ -842,7 +838,7 @@ static void buf_signcols_validate_range(buf_T *buf, int row1, int row2, int add)
     // Increment overlap array for the start and range of a paired sign mark.
     if (!mt_invalid(mark) && !mt_end(mark) && (mark.flags & MT_FLAG_DECOR_SIGNTEXT)) {
       MTPos end = marktree_get_altpos(buf->b_marktree, mark, NULL);
-      for (int i = currow; i <= MIN(row2, end.row < 0 ? currow : end.row); i++) {
+      for (int i = currow; i <= MIN(row2, end.row); i++) {
         overlap[i - row1]++;
       }
     }
