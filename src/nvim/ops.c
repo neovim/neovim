@@ -1286,7 +1286,10 @@ int insert_reg(int regname, bool literally_arg)
           if ((State & REPLACE_FLAG) != 0) {
             pos_T curpos;
             u_save_cursor();
-            del_bytes((colnr_T)strlen(reg->y_array[0]), true, false);
+            if (u_save_cursor() == FAIL) {
+              return FAIL;
+            }
+            del_chars(mb_charlen(reg->y_array[0]), true);
             curpos = curwin->w_cursor;
             if (oneright() == FAIL) {
               // hit end of line, need to put forward (after the current position)
