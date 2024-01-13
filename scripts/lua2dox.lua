@@ -136,8 +136,16 @@ end
 
 -- input filter
 --- @class Lua2DoxFilter
-local Lua2DoxFilter = {}
+local Lua2DoxFilter = {
+  generics = {}, --- @type table<string,string>
+  block_ignore = false, --- @type boolean
+}
 setmetatable(Lua2DoxFilter, { __index = Lua2DoxFilter })
+
+function Lua2DoxFilter:reset()
+  self.generics = {}
+  self.block_ignore = false
+end
 
 --- trim comment off end of string
 ---
@@ -239,12 +247,15 @@ end
 --- Processes "@…" directives in a docstring line.
 ---
 --- @param line string
---- @param generics table<string,string>
 --- @return string?
-local function process_magic(line, generics)
+function Lua2DoxFilter:process_magic(line)
   line = line:gsub('^%s+@', '@')
   line = line:gsub('@package', '@private')
   line = line:gsub('@nodoc', '@private')
+
+  if self.block_ignore then
+    return '// gg:" ' .. line .. '"'
+  end
 
   if not vim.startswith(line, '@') then -- it's a magic comment
     return '/// ' .. line
@@ -269,6 +280,12 @@ local function process_magic(line, generics)
     return '/// ' .. line:gsub('%.', '-dot-')
   end
 
+  if directive == '@alias' then
+    -- this contiguous block should be all ignored.
+    self.block_ignore = true
+    return '// gg:"' .. line .. '"'
+  end
+
   -- preprocess line before parsing
   if directive == '@param' or directive == '@return' then
     for _, type in ipairs(TYPES) do
@@ -289,12 +306,12 @@ local function process_magic(line, generics)
   local kind = parsed.kind
 
   if kind == 'generic' then
-    generics[parsed.name] = parsed.type or 'any'
+    self.generics[parsed.name] = parsed.type or 'any'
     return
   elseif kind == 'param' then
-    return process_param(parsed --[[@as luacats.Param]], generics)
+    return process_param(parsed --[[@as luacats.Param]], self.generics)
   elseif kind == 'return' then
-    return process_return(parsed --[[@as luacats.Return]], generics)
+    return process_return(parsed --[[@as luacats.Return]], self.generics)
   end
 
   error(string.format('unhandled parsed line %q: %s', line, parsed))
@@ -303,7 +320,7 @@ end
 --- @param line string
 --- @param in_stream StreamRead
 --- @return string
-local function process_block_comment(line, in_stream)
+function Lua2DoxFilter:process_block_comment(line, in_stream)
   local comment_parts = {} --- @type string[]
   local done --- @type boolean?
 
@@ -337,7 +354,7 @@ end
 
 --- @param line string
 --- @return string
-local function process_function_header(line)
+function Lua2DoxFilter:process_function_header(line)
   local pos_fn = assert(line:find('function'))
   -- we've got a function
   local fn = removeCommentFromLine(vim.trim(line:sub(pos_fn + 8)))
@@ -385,18 +402,17 @@ end
 
 --- @param line string
 --- @param in_stream StreamRead
---- @param generics table<string,string>>
 --- @return string?
-local function process_line(line, in_stream, generics)
+function Lua2DoxFilter:process_line(line, in_stream)
   local line_raw = line
   line = vim.trim(line)
 
   if vim.startswith(line, '---') then
-    return process_magic(line:sub(4), generics)
+    return Lua2DoxFilter:process_magic(line:sub(4))
   end
 
   if vim.startswith(line, '--' .. '[[') then -- it's a long comment
-    return process_block_comment(line:sub(5), in_stream)
+    return Lua2DoxFilter:process_block_comment(line:sub(5), in_stream)
   end
 
   -- Hax... I'm sorry
@@ -406,7 +422,7 @@ local function process_line(line, in_stream, generics)
   line = line:gsub('^(.+) = .*_memoize%([^,]+, function%((.*)%)$', 'function %1(%2)')
 
   if line:find('^function') or line:find('^local%s+function') then
-    return process_function_header(line)
+    return Lua2DoxFilter:process_function_header(line)
   end
 
   if not line:match('^local') then
@@ -429,15 +445,13 @@ end
 function Lua2DoxFilter:filter(filename)
   local in_stream = StreamRead.new(filename)
 
-  local generics = {} --- @type table<string,string>
-
   while not in_stream:eof() do
     local line = in_stream:getLine()
 
-    local out_line = process_line(line, in_stream, generics)
+    local out_line = self:process_line(line, in_stream)
 
     if not vim.startswith(vim.trim(line), '---') then
-      generics = {}
+      self:reset()
     end
 
     if out_line then
