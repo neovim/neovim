@@ -354,41 +354,35 @@ local function render_eval_meta(f, fun, write)
 
   local params = process_params(fun.params)
 
-  if fun.signature then
-    write('')
-    if fun.deprecated then
-      write('--- @deprecated')
-    end
-
-    local desc = fun.desc
-
-    if desc then
-      --- @type string
-      desc = desc:gsub('\n%s*\n%s*$', '\n')
-      for _, l in ipairs(split(desc)) do
-        l = l:gsub('^      ', ''):gsub('\t', '  '):gsub('@', '\\@')
-        write('--- ' .. l)
-      end
-    end
-
-    local req_args = type(fun.args) == 'table' and fun.args[1] or fun.args or 0
-
-    for i, param in ipairs(params) do
-      local pname, ptype = param[1], param[2]
-      local optional = (pname ~= '...' and i > req_args) and '?' or ''
-      write(string.format('--- @param %s%s %s', pname, optional, ptype))
-    end
-
-    if fun.returns ~= false then
-      write('--- @return ' .. (fun.returns or 'any'))
-    end
-
-    write(render_fun_sig(funname, params))
-
-    return
+  write('')
+  if fun.deprecated then
+    write('--- @deprecated')
   end
 
-  print('no doc for', funname)
+  local desc = fun.desc
+
+  if desc then
+    --- @type string
+    desc = desc:gsub('\n%s*\n%s*$', '\n')
+    for _, l in ipairs(split(desc)) do
+      l = l:gsub('^      ', ''):gsub('\t', '  '):gsub('@', '\\@')
+      write('--- ' .. l)
+    end
+  end
+
+  local req_args = type(fun.args) == 'table' and fun.args[1] or fun.args or 0
+
+  for i, param in ipairs(params) do
+    local pname, ptype = param[1], param[2]
+    local optional = (pname ~= '...' and i > req_args) and '?' or ''
+    write(string.format('--- @param %s%s %s', pname, optional, ptype))
+  end
+
+  if fun.returns ~= false then
+    write('--- @return ' .. (fun.returns or 'any'))
+  end
+
+  write(render_fun_sig(funname, params))
 end
 
 --- @type table<string,true>
@@ -398,6 +392,10 @@ local rendered_tags = {}
 --- @param fun vim.EvalFn
 --- @param write fun(line: string)
 local function render_sig_and_tag(name, fun, write)
+  if not fun.signature then
+    return
+  end
+
   local tags = { '*' .. name .. '()*' }
 
   if fun.tags then
