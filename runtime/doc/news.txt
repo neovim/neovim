@@ -99,8 +99,8 @@ The following changes may require adaptations in user config or plugins.
   a meaningfully different way and might need an update:
   • |hl-FloatBorder| is linked to |hl-NormalFloat| instead of |hl-WinSeparator|.
   • |hl-NormalFloat| is not linked to |hl-Pmenu|.
-  • |hl-WinBar| is linked to |hl-StatusLine|.
-  • |hl-WinBarNC| is linked to |hl-StatusLineNC| instead of |hl-WinBar|.
+  • |hl-WinBar| has different background.
+  • |hl-WinBarNC| is similar to |hl-WinBar| but not bold.
   • |hl-WinSeparator| is linked to |hl-Normal| instead of |hl-VertSplit|.
 
   This also might result into some color schemes looking differently due to

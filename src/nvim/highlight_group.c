@@ -178,15 +178,13 @@ static const char *highlight_init_both[] = {
   "default link PmenuKindSel   PmenuSel",
   "default link PmenuSbar      Pmenu",
   "default link Substitute     Search",
-  "default link TabLine        StatusLine",
+  "default link TabLine        StatusLineNC",
   "default link TabLineFill    TabLine",
   "default link TermCursorNC   NONE",
   "default link VertSplit      WinSeparator",
   "default link VisualNOS      Visual",
   "default link Whitespace     NonText",
   "default link WildMenu       PmenuSel",
-  "default link WinBar         StatusLine",
-  "default link WinBarNC       StatusLineNC",
   "default link WinSeparator   Normal",
 
   // Syntax
@@ -351,10 +349,12 @@ static const char *highlight_init_light[] = {
   "SpellCap             guisp=NvimDarkYellow gui=undercurl                   cterm=undercurl",
   "SpellLocal           guisp=NvimDarkGreen  gui=undercurl                   cterm=undercurl",
   "SpellRare            guisp=NvimDarkCyan   gui=undercurl                   cterm=undercurl",
-  "StatusLine           guifg=NvimDarkGrey3  guibg=NvimLightGrey1            cterm=reverse",
-  "StatusLineNC         guifg=NvimDarkGrey4  guibg=NvimLightGrey1            cterm=bold",
+  "StatusLine           guifg=NvimLightGrey3 guibg=NvimDarkGrey3             cterm=reverse",
+  "StatusLineNC         guifg=NvimDarkGrey3  guibg=NvimLightGrey3            cterm=bold",
   "Visual                                    guibg=NvimLightGrey4            ctermfg=15 ctermbg=0",
   "WarningMsg           guifg=NvimDarkYellow                                 ctermfg=3",
+  "WinBar               guifg=NvimDarkGrey4  guibg=NvimLightGrey1  gui=bold  cterm=bold",
+  "WinBarNC             guifg=NvimDarkGrey4  guibg=NvimLightGrey1            cterm=bold",
 
   // Syntax
   "Comment    guifg=NvimDarkGrey4",
@@ -423,10 +423,12 @@ static const char *highlight_init_dark[] = {
   "SpellCap             guisp=NvimLightYellow gui=undercurl                 cterm=undercurl",
   "SpellLocal           guisp=NvimLightGreen  gui=undercurl                 cterm=undercurl",
   "SpellRare            guisp=NvimLightCyan   gui=undercurl                 cterm=undercurl",
-  "StatusLine           guifg=NvimLightGrey3  guibg=NvimDarkGrey1           cterm=reverse",
-  "StatusLineNC         guifg=NvimLightGrey4  guibg=NvimDarkGrey1           cterm=bold",
+  "StatusLine           guifg=NvimDarkGrey3   guibg=NvimLightGrey3          cterm=reverse",
+  "StatusLineNC         guifg=NvimLightGrey3  guibg=NvimDarkGrey3           cterm=bold",
   "Visual                                     guibg=NvimDarkGrey4           ctermfg=0 ctermbg=15",
   "WarningMsg           guifg=NvimLightYellow                               ctermfg=11",
+  "WinBar               guifg=NvimLightGrey4  guibg=NvimDarkGrey1  gui=bold cterm=bold",
+  "WinBarNC             guifg=NvimLightGrey4  guibg=NvimDarkGrey1           cterm=bold",
 
   // Syntax
   "Comment    guifg=NvimLightGrey4",
