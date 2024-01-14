@@ -574,6 +574,7 @@ Autocommands:
   https://github.com/neovim/neovim/issues/23368
 - |TermResponse| is fired for any OSC sequence received from the terminal,
   instead of the Primary Device Attributes response. |v:termresponse|
+- |InsertCharPre| doesn't get activated by |i_CTRL-]|
 
 ==============================================================================
 Missing features					 *nvim-missing*
