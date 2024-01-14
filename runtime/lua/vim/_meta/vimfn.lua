@@ -5152,6 +5152,12 @@ function vim.fn.maplist() end
 --- @return any
 function vim.fn.mapnew(expr1, expr2) end
 
+--- @param mode string
+--- @param abbr? any
+--- @param dict? any
+--- @return any
+function vim.fn.mapset(mode, abbr, dict) end
+
 --- Restore a mapping from a dictionary, possibly returned by
 --- |maparg()| or |maplist()|.  A buffer mapping, when dict.buffer
 --- is true, is set on the current buffer; it is up to the caller
@@ -5187,11 +5193,9 @@ function vim.fn.mapnew(expr1, expr2) end
 ---       call mapset(d)
 ---   endfor
 ---
---- @param mode string
---- @param abbr? any
---- @param dict? any
+--- @param dict any
 --- @return any
-function vim.fn.mapset(mode, abbr, dict) end
+function vim.fn.mapset(dict) end
 
 --- When {expr} is a |List| then this returns the index of the
 --- first item where {pat} matches.  Each item is used as a
