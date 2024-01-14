@@ -43,6 +43,6 @@ jobs:
             runuser -u qemuci -- git switch pr &&
             runuser -u qemuci -- cmake -S cmake.deps -B .deps -G Ninja -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON &&
             runuser -u qemuci -- cmake --build .deps &&
-            runuser -u qemuci -- cmake -B build -G Ninja -D PREFER_LUA=ON &&
+            runuser -u qemuci -- cmake -B build -G Ninja -D CI_BUILD=ON -D PREFER_LUA=ON &&
             runuser -u qemuci -- make ${{ matrix.test }}
             "
