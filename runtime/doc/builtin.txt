@@ -4273,7 +4273,8 @@ mapnew({expr1}, {expr2})                                              *mapnew()*
 		unchanged.  Items can still be changed by {expr2}, if you
 		don't want that use |deepcopy()| first.
 
-mapset({mode}, {abbr}, {dict})                                        *mapset()*
+mapset({mode}, {abbr}, {dict})
+mapset({dict})                                                        *mapset()*
 		Restore a mapping from a dictionary, possibly returned by
 		|maparg()| or |maplist()|.  A buffer mapping, when dict.buffer
 		is true, is set on the current buffer; it is up to the caller

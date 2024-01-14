@@ -6317,6 +6317,13 @@ M.funcs = {
   mapset = {
     args = { 1, 3 },
     base = 1,
+    name = 'mapset',
+    params = { { 'mode', 'string' }, { 'abbr', 'any' }, { 'dict', 'any' } },
+    signature = 'mapset({mode}, {abbr}, {dict})',
+  },
+  mapset__1 = {
+    args = { 1, 3 },
+    base = 1,
     desc = [=[
       Restore a mapping from a dictionary, possibly returned by
       |maparg()| or |maplist()|.  A buffer mapping, when dict.buffer
@@ -6354,8 +6361,8 @@ M.funcs = {
       	endfor
     ]=],
     name = 'mapset',
-    params = { { 'mode', 'string' }, { 'abbr', 'any' }, { 'dict', 'any' } },
-    signature = 'mapset({mode}, {abbr}, {dict})',
+    params = { { 'dict', 'any' } },
+    signature = 'mapset({dict})',
   },
   match = {
     args = { 2, 4 },
