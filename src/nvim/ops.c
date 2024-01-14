@@ -1286,7 +1286,6 @@ int insert_reg(int regname, bool literally_arg)
           Direction dir = BACKWARD;
           if ((State & REPLACE_FLAG) != 0) {
             pos_T curpos;
-            u_save_cursor();
             if (u_save_cursor() == FAIL) {
               return FAIL;
             }
