@@ -26,8 +26,7 @@ local module = {
 --- @return string
 local function relpath(p)
   p = vim.fs.normalize(p)
-  local cwd = uv.cwd()
-  return p:gsub('^' .. cwd)
+  return (p:gsub('^' .. uv.cwd, ''))
 end
 
 --- @param path string
