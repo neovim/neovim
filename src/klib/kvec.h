@@ -105,11 +105,12 @@
   } while (0)
 
 #define kv_concat_len(v, data, len) \
-  do { \
+  if (len > 0) { \
     kv_ensure_space(v, len); \
+    assert((v).items); \
     memcpy((v).items + (v).size, data, sizeof((v).items[0]) * len); \
     (v).size = (v).size + len; \
-  } while (0)
+  }
 
 #define kv_concat(v, str) kv_concat_len(v, str, strlen(str))
 #define kv_splice(v1, v0) kv_concat_len(v1, (v0).items, (v0).size)
