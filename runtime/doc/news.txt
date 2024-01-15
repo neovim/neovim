@@ -289,6 +289,8 @@ The following new APIs and features were added.
 
 • Terminal buffers respond to OSC background and foreground requests. |default-autocmds|
 
+• |vim.version.le()| and |vim.version.ge()| are added to |vim.version|.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
