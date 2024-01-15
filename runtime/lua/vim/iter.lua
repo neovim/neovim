@@ -181,7 +181,7 @@ end
 --- local bufs = vim.iter(vim.api.nvim_list_bufs()):filter(vim.api.nvim_buf_is_loaded)
 --- ```
 ---
----@param f fun(...):bool Takes all values returned from the previous stage
+---@param f fun(...):boolean Takes all values returned from the previous stage
 ---                       in the pipeline and returns false or nil if the
 ---                       current iterator element should be removed.
 ---@return Iter
@@ -884,7 +884,7 @@ end
 
 --- Returns true if any of the items in the iterator match the given predicate.
 ---
----@param pred fun(...):bool Predicate function. Takes all values returned from the previous
+---@param pred fun(...):boolean Predicate function. Takes all values returned from the previous
 ---                          stage in the pipeline as arguments and returns true if the
 ---                          predicate matches.
 function Iter.any(self, pred)
@@ -908,7 +908,7 @@ end
 
 --- Returns true if all items in the iterator match the given predicate.
 ---
----@param pred fun(...):bool Predicate function. Takes all values returned from the previous
+---@param pred fun(...):boolean Predicate function. Takes all values returned from the previous
 ---                          stage in the pipeline as arguments and returns true if the
 ---                          predicate matches.
 function Iter.all(self, pred)
@@ -1106,7 +1106,7 @@ end
 ---
 ---@see |Iter:filter()|
 ---
----@param f fun(...):bool Filter function. Accepts the current iterator or table values as
+---@param f fun(...):boolean Filter function. Accepts the current iterator or table values as
 ---                       arguments and returns true if those values should be kept in the
 ---                       final table
 ---@param src table|function Table or iterator function to filter

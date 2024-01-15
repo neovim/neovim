@@ -3753,9 +3753,9 @@ filter({f}, {src}, {...})                                  *vim.iter.filter()*
 <
 
     Parameters: ~
-      • {f}    (`fun(...):bool`) Filter function. Accepts the current iterator
-               or table values as arguments and returns true if those values
-               should be kept in the final table
+      • {f}    (`fun(...):boolean`) Filter function. Accepts the current
+               iterator or table values as arguments and returns true if those
+               values should be kept in the final table
       • {src}  (`table|function`) Table or iterator function to filter
 
     Return: ~
@@ -3768,7 +3768,7 @@ Iter:all({pred})                                                  *Iter:all()*
     Returns true if all items in the iterator match the given predicate.
 
     Parameters: ~
-      • {pred}  (`fun(...):bool`) Predicate function. Takes all values
+      • {pred}  (`fun(...):boolean`) Predicate function. Takes all values
                 returned from the previous stage in the pipeline as arguments
                 and returns true if the predicate matches.
 
@@ -3777,7 +3777,7 @@ Iter:any({pred})                                                  *Iter:any()*
     predicate.
 
     Parameters: ~
-      • {pred}  (`fun(...):bool`) Predicate function. Takes all values
+      • {pred}  (`fun(...):boolean`) Predicate function. Takes all values
                 returned from the previous stage in the pipeline as arguments
                 and returns true if the predicate matches.
 
@@ -3826,7 +3826,7 @@ Iter:filter({f})                                               *Iter:filter()*
 <
 
     Parameters: ~
-      • {f}  (`fun(...):bool`) Takes all values returned from the previous
+      • {f}  (`fun(...):boolean`) Takes all values returned from the previous
              stage in the pipeline and returns false or nil if the current
              iterator element should be removed.
 
