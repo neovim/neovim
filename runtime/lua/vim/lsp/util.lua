@@ -2139,7 +2139,7 @@ end
 ---
 ---@param settings table language server settings
 ---@param section  string indicating the field of the settings table
----@return table|string The value of settings accessed via section
+---@return table|string|vim.NIL The value of settings accessed via section. `vim.NIL` if not found.
 function M.lookup_section(settings, section)
   for part in vim.gsplit(section, '.', { plain = true }) do
     settings = settings[part]

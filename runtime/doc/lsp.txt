@@ -1829,7 +1829,8 @@ lookup_section({settings}, {section})          *vim.lsp.util.lookup_section()*
       • {section}   (`string`) indicating the field of the settings table
 
     Return: ~
-        (`table|string`) The value of settings accessed via section
+        (`table|string|vim.NIL`) The value of settings accessed via section.
+        `vim.NIL` if not found.
 
                                   *vim.lsp.util.make_floating_popup_options()*
 make_floating_popup_options({width}, {height}, {opts})

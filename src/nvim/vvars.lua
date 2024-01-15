@@ -469,6 +469,7 @@ M.vars = {
     ]=],
   },
   null = {
+    type = 'vim.NIL',
     desc = [=[
       Special value used to put "null" in JSON and NIL in msgpack.
       See |json_encode()|.  This value is converted to "v:null" when

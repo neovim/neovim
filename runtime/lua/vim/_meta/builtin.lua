@@ -1,6 +1,7 @@
 ---@meta
-
 -- luacheck: no unused args
+
+error('Cannot require a meta file')
 
 ---@defgroup vim.builtin
 ---
@@ -61,6 +62,12 @@
 ---    vim.log.levels.OFF
 ---
 ---</pre>
+
+---@class vim.NIL
+
+---@type vim.NIL
+---@nodoc
+vim.NIL = ...
 
 --- Returns true if the code is executing as part of a "fast" event handler,
 --- where most of the API is disabled. These are low-level events (e.g.
