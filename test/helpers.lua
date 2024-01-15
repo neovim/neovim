@@ -42,20 +42,22 @@ function module.isdir(path)
   return stat.type == 'directory'
 end
 
+--- @param ... string|string[]
 --- @return string
 function module.argss_to_cmd(...)
-  local cmd = ''
+  local cmd = {} --- @type string[]
   for i = 1, select('#', ...) do
     local arg = select(i, ...)
     if type(arg) == 'string' then
-      cmd = cmd .. ' ' .. shell_quote(arg)
+      cmd[#cmd + 1] = shell_quote(arg)
     else
+      --- @cast arg string[]
       for _, subarg in ipairs(arg) do
-        cmd = cmd .. ' ' .. shell_quote(subarg)
+        cmd[#cmd + 1] = shell_quote(subarg)
       end
     end
   end
-  return cmd
+  return table.concat(cmd, ' ')
 end
 
 function module.popen_r(...)
