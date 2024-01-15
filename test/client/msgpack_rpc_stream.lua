@@ -22,6 +22,9 @@ function Response:send(value, is_error)
   self._msgpack_rpc_stream._stream:write(data)
 end
 
+--- @class test.MsgpackRpcStream
+--- @field private _stream test.Stream
+--- @field private __pack table
 local MsgpackRpcStream = {}
 MsgpackRpcStream.__index = MsgpackRpcStream
 

@@ -63,8 +63,12 @@ function module.popen_r(...)
   return io.popen(module.argss_to_cmd(...), 'r')
 end
 
--- Calls fn() until it succeeds, up to `max` times or until `max_ms`
--- milliseconds have passed.
+--- Calls fn() until it succeeds, up to `max` times or until `max_ms`
+--- milliseconds have passed.
+--- @param max integer?
+--- @param max_ms integer?
+--- @param fn function
+--- @return any
 function module.retry(max, max_ms, fn)
   luaassert(max == nil or max > 0)
   luaassert(max_ms == nil or max_ms > 0)
@@ -72,6 +76,7 @@ function module.retry(max, max_ms, fn)
   local timeout = (max_ms and max_ms or 10000)
   local start_time = uv.now()
   while true do
+    --- @type boolean, any
     local status, result = pcall(fn)
     if status then
       return result
@@ -121,6 +126,9 @@ function module.fail(msg)
   return luaassert.epicfail(msg)
 end
 
+--- @param pat string
+--- @param actual string
+--- @return boolean
 function module.matches(pat, actual)
   if nil ~= string.match(actual, pat) then
     return true
@@ -170,10 +178,16 @@ end
 --- Asserts that `pat` does NOT match any line in the tail of `logfile`.
 ---
 --- @see assert_log
+--- @param pat (string) Lua pattern to match lines in the log file
+--- @param logfile? (string) Full path to log file (default=$NVIM_LOG_FILE)
+--- @param nrlines? (number) Search up to this many log lines
 function module.assert_nolog(pat, logfile, nrlines)
   return module.assert_log(pat, logfile, nrlines, true)
 end
 
+--- @param fn fun(...): any
+--- @param ... any
+--- @return boolean, any
 function module.pcall(fn, ...)
   luaassert(type(fn) == 'function')
   local status, rv = pcall(fn, ...)
@@ -221,6 +235,8 @@ end
 --    -- Match Lua pattern.
 --    matches('e[or]+$', pcall_err(function(a, b) error('some error') end, 'arg1', 'arg2'))
 --
+--- @param fn function
+--- @return string
 function module.pcall_err_withfile(fn, ...)
   luaassert(type(fn) == 'function')
   local status, rv = module.pcall(fn, ...)
@@ -230,19 +246,29 @@ function module.pcall_err_withfile(fn, ...)
   return rv
 end
 
+--- @param fn function
+--- @param ... any
+--- @return string
 function module.pcall_err_withtrace(fn, ...)
   local errmsg = module.pcall_err_withfile(fn, ...)
 
-  return errmsg
-    :gsub('^%.%.%./helpers%.lua:0: ', '')
-    :gsub('^Error executing lua:- ', '')
-    :gsub('^%[string "<nvim>"%]:0: ', '')
+  return (
+    errmsg
+      :gsub('^%.%.%./helpers%.lua:0: ', '')
+      :gsub('^Error executing lua:- ', '')
+      :gsub('^%[string "<nvim>"%]:0: ', '')
+  )
 end
 
-function module.pcall_err(...)
-  return module.remove_trace(module.pcall_err_withtrace(...))
+--- @param fn function
+--- @param ... any
+--- @return string
+function module.pcall_err(fn, ...)
+  return module.remove_trace(module.pcall_err_withtrace(fn, ...))
 end
 
+--- @param s string
+--- @return string
 function module.remove_trace(s)
   return (s:gsub('\n%s*stack traceback:.*', ''))
 end
@@ -252,9 +278,9 @@ end
 -- exc_re:        exclude pattern(s) (string or table)
 function module.glob(initial_path, re, exc_re)
   exc_re = type(exc_re) == 'table' and exc_re or { exc_re }
-  local paths_to_check = { initial_path }
-  local ret = {}
-  local checked_files = {}
+  local paths_to_check = { initial_path } --- @type string[]
+  local ret = {} --- @type string[]
+  local checked_files = {} --- @type table<string,true>
   local function is_excluded(path)
     for _, pat in pairs(exc_re) do
       if path:match(pat) then
@@ -301,7 +327,7 @@ function module.check_logs()
         local file = log_dir .. '/' .. tail
         local fd = assert(io.open(file))
         local start_msg = ('='):rep(20) .. ' File ' .. file .. ' ' .. ('='):rep(20)
-        local lines = {}
+        local lines = {} --- @type string[]
         local warning_line = 0
         for line in fd:lines() do
           local cur_warning_line = check_logs_useless_lines[line]
@@ -313,6 +339,7 @@ function module.check_logs()
         end
         fd:close()
         if #lines > 0 then
+          --- @type boolean?, file*?
           local status, f
           local out = io.stdout
           if os.getenv('SYMBOLIZER') then
@@ -320,6 +347,7 @@ function module.check_logs()
           end
           out:write(start_msg .. '\n')
           if status then
+            assert(f)
             for line in f:lines() do
               out:write('= ' .. line .. '\n')
             end
@@ -364,9 +392,11 @@ local function tmpdir_get()
   return os.getenv('TMPDIR') and os.getenv('TMPDIR') or os.getenv('TEMP')
 end
 
--- Is temp directory `dir` defined local to the project workspace?
+--- Is temp directory `dir` defined local to the project workspace?
+--- @param dir string?
+--- @return boolean
 local function tmpdir_is_local(dir)
-  return not not (dir and string.find(dir, 'Xtest'))
+  return not not (dir and dir:find('Xtest'))
 end
 
 --- Creates a new temporary file for use by tests.
@@ -410,6 +440,7 @@ function module.check_cores(app, force) -- luacheck: ignore
     return
   end
   app = app or 'build/bin/nvim' -- luacheck: ignore
+  --- @type string, string?, string[]
   local initial_path, re, exc_re
   local gdb_db_cmd =
     'gdb -n -batch -ex "thread apply all bt full" "$_NVIM_TEST_APP" -c "$_NVIM_TEST_CORE"'
@@ -422,14 +453,14 @@ function module.check_cores(app, force) -- luacheck: ignore
       and relpath(tmpdir_get()):gsub('^[ ./]+', ''):gsub('%/+$', ''):gsub('([^%w])', '%%%1')
     or nil
   )
-  local db_cmd
+  local db_cmd --- @type string
   local test_glob_dir = os.getenv('NVIM_TEST_CORE_GLOB_DIRECTORY')
   if test_glob_dir and test_glob_dir ~= '' then
     initial_path = test_glob_dir
     re = os.getenv('NVIM_TEST_CORE_GLOB_RE')
     exc_re = { os.getenv('NVIM_TEST_CORE_EXC_RE'), local_tmpdir }
     db_cmd = os.getenv('NVIM_TEST_CORE_DB_CMD') or gdb_db_cmd
-    random_skip = os.getenv('NVIM_TEST_CORE_RANDOM_SKIP')
+    random_skip = os.getenv('NVIM_TEST_CORE_RANDOM_SKIP') ~= ''
   elseif module.is_os('mac') then
     initial_path = '/cores'
     re = nil
@@ -487,17 +518,24 @@ function module.repeated_read_cmd(...)
   return nil
 end
 
+--- @generic T
+--- @param orig T
+--- @return T
 function module.shallowcopy(orig)
   if type(orig) ~= 'table' then
     return orig
   end
-  local copy = {}
+  --- @cast orig table<any,any>
+  local copy = {} --- @type table<any,any>
   for orig_key, orig_value in pairs(orig) do
     copy[orig_key] = orig_value
   end
   return copy
 end
 
+--- @param d1 table<any,any>
+--- @param d2 table<any,any>
+--- @return table<any,any>
 function module.mergedicts_copy(d1, d2)
   local ret = module.shallowcopy(d1)
   for k, v in pairs(d2) do
@@ -512,11 +550,13 @@ function module.mergedicts_copy(d1, d2)
   return ret
 end
 
--- dictdiff: find a diff so that mergedicts_copy(d1, diff) is equal to d2
---
--- Note: does not do copies of d2 values used.
+--- dictdiff: find a diff so that mergedicts_copy(d1, diff) is equal to d2
+---
+--- Note: does not do copies of d2 values used.
+--- @param d1 table<any,any>
+--- @param d2 table<any,any>
 function module.dictdiff(d1, d2)
-  local ret = {}
+  local ret = {} --- @type table<any,any>
   local hasdiff = false
   for k, v in pairs(d1) do
     if d2[k] == nil then
@@ -554,8 +594,9 @@ end
 
 -- Concat list-like tables.
 function module.concat_tables(...)
-  local ret = {}
+  local ret = {} --- @type table<any,any>
   for i = 1, select('#', ...) do
+    --- @type table<any,any>
     local tbl = select(i, ...)
     if tbl then
       for _, v in ipairs(tbl) do
@@ -787,10 +828,10 @@ function module.hexdump(str)
   return dump .. hex .. string.rep('   ', 8 - len % 8) .. asc
 end
 
--- Reads text lines from `filename` into a table.
---
--- filename: path to file
--- start: start line (1-indexed), negative means "lines before end" (tail)
+--- Reads text lines from `filename` into a table.
+--- @param filename string path to file
+--- @param start? integer start line (1-indexed), negative means "lines before end" (tail)
+--- @return string[]?
 function module.read_file_list(filename, start)
   local lnum = (start ~= nil and type(start) == 'number') and start or 1
   local tail = (lnum < 0)
@@ -826,9 +867,9 @@ function module.read_file_list(filename, start)
   return lines
 end
 
--- Reads the entire contents of `filename` into a string.
---
--- filename: path to file
+--- Reads the entire contents of `filename` into a string.
+--- @param filename string
+--- @return string?
 function module.read_file(filename)
   local file = io.open(filename, 'r')
   if not file then
@@ -844,6 +885,7 @@ function module.write_file(name, text, no_dedent, append)
   local file = assert(io.open(name, (append and 'a' or 'w')))
   if type(text) == 'table' then
     -- Byte blob
+    --- @type string[]
     local bytes = text
     text = ''
     for _, char in ipairs(bytes) do
@@ -857,6 +899,8 @@ function module.write_file(name, text, no_dedent, append)
   file:close()
 end
 
+--- @param name? 'cirrus'|'github'
+--- @return boolean
 function module.is_ci(name)
   local any = (name == nil)
   luaassert(any or name == 'github' or name == 'cirrus')

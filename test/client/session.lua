@@ -1,6 +1,12 @@
 local uv = vim.uv
 local MsgpackRpcStream = require('test.client.msgpack_rpc_stream')
 
+--- @class test.Session
+--- @field private _pending_messages string[]
+--- @field private _msgpack_rpc_stream test.MsgpackRpcStream
+--- @field private _prepare uv.uv_prepare_t
+--- @field private _timer uv.uv_timer_t
+--- @field private _is_running boolean
 local Session = {}
 Session.__index = Session
 if package.loaded['jit'] then
@@ -26,7 +32,7 @@ end
 
 local function coroutine_exec(func, ...)
   local args = { ... }
-  local on_complete
+  local on_complete --- @type function?
 
   if #args > 0 and type(args[#args]) == 'function' then
     -- completion callback
@@ -54,6 +60,8 @@ function Session.new(stream)
   }, Session)
 end
 
+--- @param timeout integer?
+--- @return string?
 function Session:next_message(timeout)
   local function on_request(method, args, response)
     table.insert(self._pending_messages, { 'request', method, args, response })
@@ -86,6 +94,10 @@ function Session:notify(method, ...)
   self._msgpack_rpc_stream:write(method, { ... })
 end
 
+--- @param method string
+--- @param ... any
+--- @return boolean
+--- @return table
 function Session:request(method, ...)
   local args = { ... }
   local err, result
