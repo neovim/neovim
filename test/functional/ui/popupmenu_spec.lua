@@ -2527,7 +2527,7 @@ describe('builtin popupmenu', function()
         ]])
       end
       feed('<C-E>')
-      async_meths.call_function('input', { '', '', 'sign' })
+      async_meths.nvim_call_function('input', { '', '', 'sign' })
       if multigrid then
         screen:expect {
           grid = [[

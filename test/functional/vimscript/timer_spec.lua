@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local feed, eq, eval, ok = helpers.feed, helpers.eq, helpers.eval, helpers.ok
-local source, nvim_async, run = helpers.source, helpers.nvim_async, helpers.run
+local source, async_meths, run = helpers.source, helpers.async_meths, helpers.run
 local clear, command, fn = helpers.clear, helpers.command, helpers.fn
 local exc_exec = helpers.exc_exec
 local api = helpers.api
@@ -52,9 +52,9 @@ describe('timers', function()
       endfunc
     ]])
     eval("timer_start(10, 'MyHandler', {'repeat': -1})")
-    nvim_async('command', 'sleep 10')
+    async_meths.nvim_command('sleep 10')
     eq(-1, eval('g:val')) -- timer did nothing yet.
-    nvim_async('command', 'let g:val = 0')
+    async_meths.nvim_command('let g:val = 0')
     run(nil, nil, nil, load_adjust(20))
     retry(nil, nil, function()
       eq(2, eval('g:val'))
@@ -70,7 +70,7 @@ describe('timers', function()
   end)
 
   it('can be started during sleep', function()
-    nvim_async('command', 'sleep 10')
+    async_meths.nvim_command('sleep 10')
     -- this also tests that remote requests works during sleep
     eq(0, eval("[timer_start(10, 'MyHandler', {'repeat': 2}), g:val][1]"))
     run(nil, nil, nil, load_adjust(20))
@@ -94,7 +94,7 @@ describe('timers', function()
 
   it('are triggered in blocking getchar() call', function()
     command("call timer_start(5, 'MyHandler', {'repeat': -1})")
-    nvim_async('command', 'let g:val = 0 | let g:c = getchar()')
+    async_meths.nvim_command('let g:val = 0 | let g:c = getchar()')
     retry(nil, nil, function()
       local val = eval('g:val')
       ok(val >= 2, '>= 2', tostring(val))
@@ -128,8 +128,10 @@ describe('timers', function()
         redraw
       endfunc
     ]])
-    nvim_async('command', 'let g:c2 = getchar()')
-    nvim_async('command', 'call timer_start(' .. load_adjust(100) .. ", 'AddItem', {'repeat': -1})")
+    async_meths.nvim_command('let g:c2 = getchar()')
+    async_meths.nvim_command(
+      'call timer_start(' .. load_adjust(100) .. ", 'AddItem', {'repeat': -1})"
+    )
 
     screen:expect([[
       ^ITEM 1                                  |
@@ -137,7 +139,7 @@ describe('timers', function()
       {1:~                                       }|*3
                                               |
     ]])
-    nvim_async('command', 'let g:cont = 1')
+    async_meths.nvim_command('let g:cont = 1')
 
     screen:expect([[
       ^ITEM 1                                  |

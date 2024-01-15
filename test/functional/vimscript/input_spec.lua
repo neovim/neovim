@@ -414,19 +414,19 @@ describe('confirm()', function()
     -- screen:expect() calls are needed to avoid feeding input too early
     screen:expect({ any = '%[No Name%]' })
 
-    async_meths.command([[let a = confirm('Press O to proceed')]])
+    async_meths.nvim_command([[let a = confirm('Press O to proceed')]])
     screen:expect({ any = '{CONFIRM:.+: }' })
     feed('o')
     screen:expect({ any = '%[No Name%]' })
     eq(1, api.nvim_get_var('a'))
 
-    async_meths.command([[let a = 'Are you sure?'->confirm("&Yes\n&No")]])
+    async_meths.nvim_command([[let a = 'Are you sure?'->confirm("&Yes\n&No")]])
     screen:expect({ any = '{CONFIRM:.+: }' })
     feed('y')
     screen:expect({ any = '%[No Name%]' })
     eq(1, api.nvim_get_var('a'))
 
-    async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No")]])
+    async_meths.nvim_command([[let a = confirm('Are you sure?', "&Yes\n&No")]])
     screen:expect({ any = '{CONFIRM:.+: }' })
     feed('n')
     screen:expect({ any = '%[No Name%]' })
@@ -435,26 +435,26 @@ describe('confirm()', function()
     -- Not possible to match Vim's CTRL-C test here as CTRL-C always sets got_int in Nvim.
 
     -- confirm() should return 0 when pressing ESC.
-    async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No")]])
+    async_meths.nvim_command([[let a = confirm('Are you sure?', "&Yes\n&No")]])
     screen:expect({ any = '{CONFIRM:.+: }' })
     feed('<Esc>')
     screen:expect({ any = '%[No Name%]' })
     eq(0, api.nvim_get_var('a'))
 
     -- Default choice is returned when pressing <CR>.
-    async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No")]])
+    async_meths.nvim_command([[let a = confirm('Are you sure?', "&Yes\n&No")]])
     screen:expect({ any = '{CONFIRM:.+: }' })
     feed('<CR>')
     screen:expect({ any = '%[No Name%]' })
     eq(1, api.nvim_get_var('a'))
 
-    async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No", 2)]])
+    async_meths.nvim_command([[let a = confirm('Are you sure?', "&Yes\n&No", 2)]])
     screen:expect({ any = '{CONFIRM:.+: }' })
     feed('<CR>')
     screen:expect({ any = '%[No Name%]' })
     eq(2, api.nvim_get_var('a'))
 
-    async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No", 0)]])
+    async_meths.nvim_command([[let a = confirm('Are you sure?', "&Yes\n&No", 0)]])
     screen:expect({ any = '{CONFIRM:.+: }' })
     feed('<CR>')
     screen:expect({ any = '%[No Name%]' })
@@ -462,7 +462,9 @@ describe('confirm()', function()
 
     -- Test with the {type} 4th argument
     for _, type in ipairs({ 'Error', 'Question', 'Info', 'Warning', 'Generic' }) do
-      async_meths.command(([[let a = confirm('Are you sure?', "&Yes\n&No", 1, '%s')]]):format(type))
+      async_meths.nvim_command(
+        ([[let a = confirm('Are you sure?', "&Yes\n&No", 1, '%s')]]):format(type)
+      )
       screen:expect({ any = '{CONFIRM:.+: }' })
       feed('y')
       screen:expect({ any = '%[No Name%]' })
@@ -518,7 +520,7 @@ describe('confirm()', function()
     feed(':call nvim_command("edit x")<cr>')
     check_and_clear(':call nvim_command("edit |\n')
 
-    async_meths.command('edit x')
+    async_meths.nvim_command('edit x')
     check_and_clear('                         |\n')
   end)
 end)

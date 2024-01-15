@@ -162,7 +162,7 @@ describe('luaeval()', function()
     return sp('map', '[' .. val .. ']')
   end
   local function luaevalarg(argexpr, expr)
-    return eval(([=[
+    return eval((([=[
       [
         extend(g:, {'_ret': luaeval(%s, %s)})._ret,
         type(g:_ret)==type({})&&has_key(g:_ret, '_TYPE')
@@ -172,7 +172,7 @@ describe('luaeval()', function()
           get(g:_ret, '_VAL', g:_ret)
         ]
         : [0, g:_ret]][1]
-    ]=]):format(expr or '"_A"', argexpr):gsub('\n', ''))
+    ]=]):format(expr or '"_A"', argexpr):gsub('\n', '')))
   end
 
   it('correctly passes special dictionaries', function()

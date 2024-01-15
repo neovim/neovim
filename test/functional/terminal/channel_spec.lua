@@ -151,7 +151,7 @@ describe('no crash when TermOpen autocommand', function()
 
   it('processes job exit event when using termopen()', function()
     command([[autocmd TermOpen * call input('')]])
-    async_meths.command('terminal foobar')
+    async_meths.nvim_command('terminal foobar')
     screen:expect {
       grid = [[
                                                                   |
@@ -181,7 +181,7 @@ describe('no crash when TermOpen autocommand', function()
 
   it('wipes buffer and processes events when using termopen()', function()
     command([[autocmd TermOpen * bwipe! | call input('')]])
-    async_meths.command('terminal foobar')
+    async_meths.nvim_command('terminal foobar')
     screen:expect {
       grid = [[
                                                                   |
@@ -202,7 +202,7 @@ describe('no crash when TermOpen autocommand', function()
 
   it('wipes buffer and processes events when using nvim_open_term()', function()
     command([[autocmd TermOpen * bwipe! | call input('')]])
-    async_meths.open_term(0, {})
+    async_meths.nvim_open_term(0, {})
     screen:expect {
       grid = [[
                                                                   |

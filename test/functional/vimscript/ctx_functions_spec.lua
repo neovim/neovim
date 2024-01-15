@@ -314,13 +314,13 @@ describe('context functions', function()
       }
 
       local with_jumps = {
-        ['jumps'] = eval(([[
+        ['jumps'] = eval((([[
         filter(map(add(
         getjumplist()[0], { 'bufnr': bufnr('%'), 'lnum': getcurpos()[1] }),
         'filter(
         { "f": expand("#".v:val.bufnr.":p"), "l": v:val.lnum },
         { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
-        ]]):gsub('\n', '')),
+        ]]):gsub('\n', ''))),
       }
 
       local with_bufs = {

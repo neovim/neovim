@@ -311,18 +311,6 @@ function module.expect_exit(fn_or_timeout, ...)
   end
 end
 
--- Evaluates a Vimscript expression.
--- Fails on Vimscript error, but does not update v:errmsg.
-function module.eval(expr)
-  return module.request('nvim_eval', expr)
-end
-
--- Executes a Vimscript function via RPC.
--- Fails on Vimscript error, but does not update v:errmsg.
-function module.call(name, ...)
-  return module.request('nvim_call_function', name, { ... })
-end
-
 -- Executes a Vimscript function via Lua.
 -- Fails on Vimscript error, but does not update v:errmsg.
 function module.call_lua(name, ...)
@@ -598,8 +586,7 @@ function module.set_shell_powershell(fake)
 end
 
 function module.create_callindex(func)
-  local table = {}
-  setmetatable(table, {
+  return setmetatable({}, {
     __index = function(tbl, arg1)
       local ret = function(...)
         return func(arg1, ...)
@@ -608,36 +595,29 @@ function module.create_callindex(func)
       return ret
     end,
   })
-  return table
-end
-
-local function ui(method, ...)
-  return module.request('nvim_ui_' .. method, ...)
 end
 
 function module.nvim_async(method, ...)
-  session:notify('nvim_' .. method, ...)
+  session:notify(method, ...)
+end
+
+-- Executes a Vimscript function via RPC.
+-- Fails on Vimscript error, but does not update v:errmsg.
+function module.call(name, ...)
+  return module.request('nvim_call_function', name, { ... })
 end
 
 module.async_meths = module.create_callindex(module.nvim_async)
-module.uimeths = module.create_callindex(ui)
 
-local function create_bridge(request, call)
-  local function nvim(method, ...)
-    if vim.startswith(method, 'nvim_') then
-      return request(method, ...)
-    end
-    return request('nvim_' .. method, ...)
-  end
+module.rpc = {
+  fn = module.create_callindex(module.call),
+  api = module.create_callindex(module.request),
+}
 
-  return {
-    fn = module.create_callindex(call),
-    api = module.create_callindex(nvim),
-  }
-end
-
-module.rpc = create_bridge(module.request, module.call)
-module.lua = create_bridge(module.request_lua, module.call_lua)
+module.lua = {
+  fn = module.create_callindex(module.call_lua),
+  api = module.create_callindex(module.request_lua),
+}
 
 module.describe_lua_and_rpc = function(describe)
   return function(what, tests)
@@ -664,10 +644,14 @@ end
 -- v:errmsg will not be updated.
 module.command = module.api.nvim_command
 
+-- Evaluates a Vimscript expression.
+-- Fails on Vimscript error, but does not update v:errmsg.
+module.eval = module.api.nvim_eval
+
 function module.poke_eventloop()
   -- Execute 'nvim_eval' (a deferred function) to
   -- force at least one main_loop iteration
-  session:request('nvim_eval', '1')
+  module.api.nvim_eval('1')
 end
 
 function module.buf_lines(bufnr)
@@ -832,7 +816,7 @@ end
 --- @param code string
 --- @return any
 function module.exec_lua(code, ...)
-  return module.api.exec_lua(code, { ... })
+  return module.api.nvim_exec_lua(code, { ... })
 end
 
 function module.get_pathsep()
