@@ -259,11 +259,12 @@ end
 --- print(r:has(vim.version())) -- check against current Nvim version
 --- ```
 ---
---- Or use cmp(), eq(), lt(), and gt() to compare `.to` and `.from` directly:
+--- Or use cmp(), le(), lt(), ge(), gt(), and/or eq() to compare a version
+--- against `.to` and `.from` directly:
 ---
 --- ```lua
---- local r = vim.version.range('1.0.0 - 2.0.0')
---- print(vim.version.gt({1,0,3}, r.from) and vim.version.lt({1,0,3}, r.to))
+--- local r = vim.version.range('1.0.0 - 2.0.0') -- >=1.0, <2.0
+--- print(vim.version.ge({1,0,3}, r.from) and vim.version.lt({1,0,3}, r.to))
 --- ```
 ---
 --- @see # https://github.com/npm/node-semver#ranges
@@ -364,8 +365,8 @@ end
 ---
 --- @note Per semver, build metadata is ignored when comparing two otherwise-equivalent versions.
 ---
----@param v1 Version|number[] Version object.
----@param v2 Version|number[] Version to compare with `v1`.
+---@param v1 Version|number[]|string Version object.
+---@param v2 Version|number[]|string Version to compare with `v1`.
 ---@return integer -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
 function M.cmp(v1, v2)
   local v1_parsed = assert(M._version(v1), create_err_msg(v1))
@@ -380,24 +381,40 @@ function M.cmp(v1, v2)
 end
 
 ---Returns `true` if the given versions are equal. See |vim.version.cmp()| for usage.
----@param v1 Version|number[]
----@param v2 Version|number[]
+---@param v1 Version|number[]|string
+---@param v2 Version|number[]|string
 ---@return boolean
 function M.eq(v1, v2)
   return M.cmp(v1, v2) == 0
 end
 
+---Returns `true` if `v1 <= v2`. See |vim.version.cmp()| for usage.
+---@param v1 Version|number[]|string
+---@param v2 Version|number[]|string
+---@return boolean
+function M.le(v1, v2)
+  return M.cmp(v1, v2) <= 0
+end
+
 ---Returns `true` if `v1 < v2`. See |vim.version.cmp()| for usage.
----@param v1 Version|number[]
----@param v2 Version|number[]
+---@param v1 Version|number[]|string
+---@param v2 Version|number[]|string
 ---@return boolean
 function M.lt(v1, v2)
   return M.cmp(v1, v2) == -1
 end
 
+---Returns `true` if `v1 >= v2`. See |vim.version.cmp()| for usage.
+---@param v1 Version|number[]|string
+---@param v2 Version|number[]|string
+---@return boolean
+function M.ge(v1, v2)
+  return M.cmp(v1, v2) >= 0
+end
+
 ---Returns `true` if `v1 > v2`. See |vim.version.cmp()| for usage.
----@param v1 Version|number[]
----@param v2 Version|number[]
+---@param v1 Version|number[]|string
+---@param v2 Version|number[]|string
 ---@return boolean
 function M.gt(v1, v2)
   return M.cmp(v1, v2) == 1
@@ -417,7 +434,7 @@ end
 ---                      - strict (boolean):  Default false. If `true`, no coercion is attempted on
 ---                      input not conforming to semver v2.0.0. If `false`, `parse()` attempts to
 ---                      coerce input such as "1.0", "0-x", "tmux 3.2a" into valid versions.
----@return table|nil parsed_version Version object or `nil` if input is invalid.
+---@return Version? parsed_version Version object or `nil` if input is invalid.
 function M.parse(version, opts)
   assert(type(version) == 'string', create_err_msg(version))
   opts = opts or { strict = false }
@@ -426,6 +443,7 @@ end
 
 setmetatable(M, {
   --- Returns the current Nvim version.
+  ---@return Version
   __call = function()
     local version = vim.fn.api_info().version
     -- Workaround: vim.fn.api_info().version reports "prerelease" as a boolean.
