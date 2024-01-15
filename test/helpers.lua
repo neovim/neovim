@@ -952,6 +952,6 @@ function module.mkdir(path)
   return uv.fs_mkdir(path, 493)
 end
 
-module = vim.tbl_extend('error', module, Paths, require('test.deprecated'))
+module = vim.tbl_extend('error', module, Paths)
 
 return module
