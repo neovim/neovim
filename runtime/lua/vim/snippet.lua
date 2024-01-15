@@ -346,6 +346,11 @@ local function setup_autocmds(bufnr)
     desc = 'Update active tabstops when buffer text changes',
     buffer = bufnr,
     callback = function()
+
+      if not M.active() then
+        return true
+      end
+
       -- Check that the snippet hasn't been deleted.
       local snippet_range = get_extmark_range(M._session.bufnr, M._session.extmark_id)
       if
@@ -353,10 +358,6 @@ local function setup_autocmds(bufnr)
         or snippet_range[3] + 1 > vim.fn.line('$')
       then
         M.exit()
-      end
-
-      if not M.active() then
-        return true
       end
 
       -- Sync the tabstops in the current group.
