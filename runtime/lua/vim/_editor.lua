@@ -1033,21 +1033,44 @@ end
 ---
 ---@return string|nil # Deprecated message, or nil if no message was shown.
 function vim.deprecate(name, alternative, version, plugin, backtrace)
+  vim.validate {
+    name = { name, 'string' },
+    alternative = { alternative, 'string', true },
+    version = { version, 'string', true },
+    plugin = { plugin, 'string', true },
+  }
+  plugin = plugin or 'Nvim'
+
   -- Only issue warning if feature is hard-deprecated as specified by MAINTAIN.md.
-  if plugin == nil then
-    local current_version = vim.version()
-    local deprecated_version = assert(vim.version.parse(version))
-    local soft_deprecated_version =
-      { deprecated_version.major, deprecated_version.minor - 1, deprecated_version.patch }
-    local deprecate = vim.version.lt(current_version, soft_deprecated_version)
-    if deprecate then
+  -- e.g., when planned to be removed in version = '0.12' (soft-deprecated since 0.10-dev),
+  -- show warnings since 0.11, including 0.11-dev (hard_deprecated_since = 0.11-dev).
+  if plugin == 'Nvim' then
+    local current_version = vim.version() ---@type Version
+    local removal_version = assert(vim.version.parse(version))
+    local is_hard_deprecated ---@type boolean
+
+    if removal_version.minor > 0 then
+      local hard_deprecated_since = assert(vim.version._version({
+        major = removal_version.major,
+        minor = removal_version.minor - 1,
+        patch = 0,
+        prerelease = 'dev', -- Show deprecation warnings in devel (nightly) version as well
+      }))
+      is_hard_deprecated = (current_version >= hard_deprecated_since)
+    else
+      -- Assume there will be no next minor version before bumping up the major version;
+      -- therefore we can always show a warning.
+      assert(removal_version.minor == 0, vim.inspect(removal_version))
+      is_hard_deprecated = true
+    end
+
+    if not is_hard_deprecated then
       return
     end
   end
 
   local msg = ('%s is deprecated'):format(name)
-  plugin = plugin or 'Nvim'
-  msg = alternative and ('%s, use %s instead.'):format(msg, alternative) or msg
+  msg = alternative and ('%s, use %s instead.'):format(msg, alternative) or (msg .. '.')
   msg = ('%s%s\nThis feature will be removed in %s version %s'):format(
     msg,
     (plugin == 'Nvim' and ' :help deprecated' or ''),
