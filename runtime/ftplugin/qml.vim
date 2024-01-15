@@ -2,6 +2,7 @@
 " Language: QML
 " Maintainer: Chase Knowlden <haroldknowlden@gmail.com>
 " Last Change: 2023 Aug 16
+" 	       2023 Aug 23 by Vim Project (browsefilter)
 
 if exists( 'b:did_ftplugin' )
    finish
@@ -14,10 +15,15 @@ set cpoptions&vim
 " command for undo
 let b:undo_ftplugin = "setlocal formatoptions< comments< commentstring<"
 
-if (has("gui_win32") || has("gui_gtk")) && !exists( 'b:browsefilter' )
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
    let b:browsefilter =
-      \ 'QML Files (*.qml,*.qbs)\t*.qml;*.qbs\n' .
-      \ 'All Files\t*\n'
+      \ "QML Files (*.qml, *.qbs)\t*.qml;*.qbs\n"
+   if has("win32")
+      let b:browsefilter .= "All Files (*.*)\t*\n"
+   else
+      let b:browsefilter .= "All Files (*)\t*\n"
+   endif
+   let b:undo_ftplugin .= " | unlet! b:browsefilter"
 endif
 
 " Set 'comments' to format dashed lists in comments.

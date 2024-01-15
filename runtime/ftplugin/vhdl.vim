@@ -3,6 +3,7 @@
 " Maintainer:  R.Shankar <shankar.pec?gmail.com>
 " Modified By: Gerald Lai <laigera+vim?gmail.com>
 " Last Change: 2011 Dec 11
+"              2024 Jan 14 by Vim Project (browsefilter)
 "              2023 Aug 28 by Vim Project (undo_ftplugin, commentstring)
 
 " Only do this when not done yet for this buffer
@@ -28,14 +29,15 @@ setlocal commentstring=--\ %s
 " Format comments to be up to 78 characters long
 "setlocal tw=75
 
-" let b:undo_ftplugin = "setl cms< com< fo< tw<"
-
 let b:undo_ftplugin = "setl cms< "
 
-" Win32 can filter files in the browse dialog
-"if has("gui_win32") && !exists("b:browsefilter")
-"  let b:browsefilter = "Verilog Source Files (*.v)\t*.v\n" .
-"   \ "All Files (*.*)\t*.*\n"
+" Win32 and GTK can filter files in the browse dialog
+"if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
+"  if has("win32")
+"    let b:browsefilter ..= "All Files (*.*)\t*\n"
+"  else
+"    let b:browsefilter ..= "All Files (*)\t*\n"
+"  endif
 "  let b:undo_ftplugin .= " | unlet! b:browsefilter"
 "endif
 

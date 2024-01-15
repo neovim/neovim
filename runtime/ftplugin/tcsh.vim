@@ -2,7 +2,7 @@
 " Language:		tcsh
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Dan Sharp
-" Last Change:		2023 Oct 09
+" Last Change:		2024 Jan 14
 
 if exists("b:did_ftplugin")
   finish
@@ -13,8 +13,12 @@ set cpo-=C
 
 " Define some defaults in case the included ftplugins don't set them.
 let s:undo_ftplugin = ""
-let s:browsefilter = "csh Files (*.csh)\t*.csh\n" ..
-      \		     "All Files (*.*)\t*.*\n"
+let s:browsefilter = "csh Files (*.csh)\t*.csh\n"
+if has("win32")
+    let s:browsefilter ..= "All Files (*.*)\t*\n"
+else
+    let s:browsefilter ..= "All Files (*)\t*\n"
+endif
 
 runtime! ftplugin/csh.vim ftplugin/csh_*.vim ftplugin/csh/*.vim
 let b:did_ftplugin = 1

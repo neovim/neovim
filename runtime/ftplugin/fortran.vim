@@ -9,6 +9,8 @@
 "  Since then, useful suggestions and contributions have been made, in order, by:
 "  Stefano Zacchiroli, Hendrik Merx, Ben Fritz, David Barnett, Eisuke Kawashima,
 "  Doug Kearns, and Fritz Reese.
+" Last Change:	2023 Dec 22
+"		2024 Jan 14 by Vim Project (browsefilter)
 
 " Only do these settings when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -135,8 +137,12 @@ endif
 
 " File filters for :browse e
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Fortran Files (*.f;*.for;*.f77;*.f90;*.f95;*.f03;*.f08;*.fpp;*.ftn)\t*.f;*.for;*.f77;*.f90;*.f95;*.f03;*.f08;*.fpp;*.ftn\n" .
-    \ "All Files (*.*)\t*.*\n"
+  let b:browsefilter = "Fortran Files (*.f, *.for, *.f77, *.f90, *.f95, *.f03, *.f08, *.fpp, *.ftn)\t*.f;*.for;*.f77;*.f90;*.f95;*.f03;*.f08;*.fpp;*.ftn\n"
+  if has("win32")
+    let b:browsefilter .= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter .= "All Files (*)\t*\n"
+  endif
 endif
 
 let b:undo_ftplugin = "setl fo< com< tw< cms< et< inc< sua<"

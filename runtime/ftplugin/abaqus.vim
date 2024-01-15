@@ -2,6 +2,7 @@
 " Language:     Abaqus finite element input file (www.abaqus.com)
 " Maintainer:   Carl Osterwisch <costerwi@gmail.com>
 " Last Change:  2022 Oct 08
+"               2024 Jan 14 by Vim Project (browsefilter)
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin") | finish | endif
@@ -49,8 +50,12 @@ endif
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
     let b:browsefilter = "Abaqus Input Files (*.inp *.inc)\t*.inp;*.inc\n" .
     \ "Abaqus Results (*.dat)\t*.dat\n" .
-    \ "Abaqus Messages (*.pre *.msg *.sta)\t*.pre;*.msg;*.sta\n" .
-    \ "All Files (*.*)\t*.*\n"
+    \ "Abaqus Messages (*.pre, *.msg, *.sta)\t*.pre;*.msg;*.sta\n"
+    if has("win32")
+        let b:browsefilter .= "All Files (*.*)\t*\n"
+    else
+        let b:browsefilter .= "All Files (*)\t*\n"
+    endif
     let b:undo_ftplugin .= "|unlet! b:browsefilter"
 endif
 

@@ -1,7 +1,8 @@
 " Vim filetype plugin file
 " Language:	PostScript
 " Maintainer:	Mike Williams <mrw@eandem.co.uk>
-" Last Change:  24th April 2012
+" Last Change:	24th April 2012
+"		2024 Jan 14 by Vim Project (browsefilter)
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -25,14 +26,18 @@ if !exists("b:match_words")
 endif
 
 " Define patterns for the browse file filter
-if has("gui_win32") && !exists("b:browsefilter")
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:browsefilter = "PostScript Files (*.ps)\t*.ps\n" .
-    \ "EPS Files (*.eps)\t*.eps\n" .
-    \ "All Files (*.*)\t*.*\n"
+    \ "EPS Files (*.eps)\t*.eps\n"
+  if has("win32")
+    let b:browsefilter .= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter .= "All Files (*)\t*\n"
+  endif
 endif
 
 let b:undo_ftplugin = "setlocal comments< formatoptions<"
-    \ . "| unlet! b:browsefiler b:match_ignorecase b:match_words"
+    \ . "| unlet! b:browsefilter b:match_ignorecase b:match_words"
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

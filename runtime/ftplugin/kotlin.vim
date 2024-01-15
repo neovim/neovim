@@ -3,7 +3,7 @@
 " Maintainer:   Alexander Udalov
 " URL:          https://github.com/udalov/kotlin-vim
 " Last Change:  7 November 2021
-"               2023 Sep 17 by Vim Project (browsefilter)
+"               2024 Jan 14 by Vim Project (browsefilter)
 
 if exists('b:did_ftplugin') | finish | endif
 let b:did_ftplugin = 1
@@ -24,8 +24,12 @@ let b:undo_ftplugin = "setlocal comments< commentstring< ".
     \ "formatoptions< includeexpr< suffixesadd<"
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Kotlin Source Files (*.kt, *kts)\t*.kt;*.kts\n" .
-	\ "All Files (*.*)\t*.*\n"
+  let b:browsefilter = "Kotlin Source Files (*.kt, *kts)\t*.kt;*.kts\n"
+  if has("win32")
+      let b:browsefilter .= "All Files (*.*)\t*\n"
+  else
+      let b:browsefilter .= "All Files (*)\t*\n"
+  endif
   let b:undo_ftplugin .= " | unlet! b:browsefilter"
 endif
 

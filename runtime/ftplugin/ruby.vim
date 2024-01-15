@@ -3,6 +3,7 @@
 " Maintainer:		Tim Pope <vimNOSPAM@tpope.org>
 " URL:			https://github.com/vim-ruby/vim-ruby
 " Last Change:		2023 Dec 31
+"			2024 Jan 14 by Vim Project (browsefilter)
 
 if (exists("b:did_ftplugin"))
   finish
@@ -147,8 +148,12 @@ if exists('s:ruby_paths') && stridx(&l:tags, join(map(copy(s:ruby_paths),'v:val.
 endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Ruby Source Files (*.rb)\t*.rb\n" .
-                     \ "All Files (*.*)\t*.*\n"
+  let b:browsefilter = "Ruby Source Files (*.rb)\t*.rb\n"
+  if has("win32")
+    let b:browsefilter .= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter .= "All Files (*)\t*\n"
+  endif
 endif
 
 let b:undo_ftplugin = "setl inc= sua= path= tags= fo< com< cms< kp="

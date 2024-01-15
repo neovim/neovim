@@ -14,5 +14,5 @@ let b:did_ftplugin = 1
 
 " Change the :browse e filter to primarily show xsd-related files.
 if (has("gui_win32") || has("gui_gtk")) && exists("b:browsefilter")
-  let b:browsefilter = "XSLT Files (*.xsl,*.xslt)\t*.xsl;*.xslt\n" . b:browsefilter
+  let b:browsefilter = "XSLT Files (*.xsl, *.xslt)\t*.xsl;*.xslt\n" . b:browsefilter
 endif

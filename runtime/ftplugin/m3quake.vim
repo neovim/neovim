@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	Modula-3 Quake
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2022 June 12
+" Last Change:	2024 Jan 14
 
 if exists("b:did_ftplugin")
   finish
@@ -23,8 +23,12 @@ if exists("loaded_matchit") && !exists("b:match_words")
 endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Modula-3 Quake Source Files (*.quake)\t*.quake\n" ..
-	\	       "All Files (*.*)\t*.*\n"
+  let b:browsefilter = "Modula-3 Quake Source Files (*.quake)\t*.quake\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
   let b:m3quake_set_browsefilter = 1
   let b:undo_ftplugin ..= " | unlet! b:browsefilter b:m3quake_set_browsefilter"
 endif

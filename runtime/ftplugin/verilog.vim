@@ -2,6 +2,7 @@
 " Language:	Verilog HDL
 " Maintainer:	Chih-Tsun Huang <cthuang@cs.nthu.edu.tw>
 " Last Change:	2017 Aug 25 by Chih-Tsun Huang
+"		2024 Jan 14 by Vim Project (browsefilter)
 " URL:	    	http://www.cs.nthu.edu.tw/~cthuang/vim/ftplugin/verilog.vim
 "
 " Credits:
@@ -36,10 +37,14 @@ if &textwidth == 0
   setlocal tw=78
 endif
 
-" Win32 can filter files in the browse dialog
-if has("gui_win32") && !exists("b:browsefilter")
-  let b:browsefilter = "Verilog Source Files (*.v)\t*.v\n" .
-	\ "All Files (*.*)\t*.*\n"
+" Win32 and GTK can filter files in the browse dialog
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
+  let b:browsefilter = "Verilog Source Files (*.v)\t*.v\n"
+  if has("win32")
+    let b:browsefilter .= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter .= "All Files (*)\t*\n"
+  endif
 endif
 
 " Let the matchit plugin know what items can be matched.

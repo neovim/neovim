@@ -2,7 +2,7 @@
 " Language:		readline(3) configuration file
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
-" Last Change:		2022 Dec 09
+" Last Change:		2023 Aug 22
 
 if exists("b:did_ftplugin")
   finish
@@ -25,8 +25,12 @@ if exists("loaded_matchit") && !exists("b:match_words")
 endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Readline Initialization Files (inputrc .inputrc)\tinputrc;*.inputrc\n" ..
-	\	       "All Files (*.*)\t*.*\n"
+  let b:browsefilter = "Readline Intialization Files (inputrc, .inputrc)\tinputrc;*.inputrc\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
 

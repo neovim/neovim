@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	Wget2 configuration file (/etc/wget2rc ~/.wget2rc)
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2022 Apr 28
+" Last Change:	2024 Jan 14
 
 if exists("b:did_ftplugin")
   finish
@@ -18,8 +18,12 @@ setlocal formatoptions-=t formatoptions+=croql
 let b:undo_ftplugin = "setl fo< com< cms<"
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Wget2 Configuration File (wget2rc, .wget2rc)\twget2rc;.wget2rc\n" ..
-	\	       "All Files (*.*)\t*.*\n"
+  let b:browsefilter = "Wget2 Configuration File (wget2rc, .wget2rc)\twget2rc;.wget2rc\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
 

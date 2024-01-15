@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	BASIC (QuickBASIC 4.5)
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2022 Jun 22
+" Last Change:	2024 Jan 14
 
 if exists("b:did_ftplugin")
   finish
@@ -45,8 +45,12 @@ endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:browsefilter = "BASIC Source Files (*.bas)\t*.bas\n" ..
-		\      "BASIC Include Files (*.bi, *.bm)\t*.bi;*.bm\n" ..
-		\      "All Files (*.*)\t*.*\n"
+		\      "BASIC Include Files (*.bi, *.bm)\t*.bi;*.bm\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
   let b:basic_set_browsefilter = 1
   let b:undo_ftplugin ..= " | unlet! b:browsefilter b:basic_set_browsefilter"
 endif

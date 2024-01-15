@@ -2,7 +2,7 @@
 " Language:		Pascal
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Dan Sharp
-" Last Change:		2021 Apr 23
+" Last Change:		2024 Jan 14
 
 if exists("b:did_ftplugin") | finish | endif
 let b:did_ftplugin = 1
@@ -37,8 +37,12 @@ if exists("loaded_matchit")
 endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Pascal Source Files (*.pas *.pp *.inc)\t*.pas;*.pp;*.inc\n" .
-		     \ "All Files (*.*)\t*.*\n"
+  let b:browsefilter = "Pascal Source Files (*.pas, *.pp, *.inc)\t*.pas;*.pp;*.inc\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
 endif
 
 let b:undo_ftplugin = "setl fo< cms< com< " ..

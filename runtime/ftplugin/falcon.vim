@@ -4,6 +4,7 @@
 " Copyright:    Copyright (c) 2009-2013 Steven Oliver
 " License:      You may redistribute this under the same terms as Vim itself
 " Last Update:  2020 Oct 10
+"               2024 Jan 14 by Vim Project (browsefilter)
 " --------------------------------------------------------------------------
 
 " Only do this when not done yet for this buffer
@@ -34,14 +35,18 @@ endif
 setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
 
 " Windows allows you to filter the open file dialog
-if has("gui_win32") && !exists("b:browsefilter")
-  let b:browsefilter = "Falcon Source Files (*.fal *.ftd)\t*.fal;*.ftd\n" .
-                     \ "All Files (*.*)\t*.*\n"
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
+  let b:browsefilter = "Falcon Source Files (*.fal, *.ftd)\t*.fal;*.ftd\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
 endif
 
 let b:undo_ftplugin = "setlocal tabstop< shiftwidth< expandtab< fileencoding<"
 	\ . " suffixesadd< comments<"
-	\ . "| unlet! b:browsefiler"
+	\ . "| unlet! b:browsefilter"
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

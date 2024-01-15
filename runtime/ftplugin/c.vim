@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	C
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2023 Aug 10
+" Last Change:	2023 Aug 22
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Only do this when not done yet for this buffer
@@ -43,24 +43,26 @@ if !exists("b:match_words")
   let b:undo_ftplugin ..= " | unlet! b:match_skip b:match_words"
 endif
 
-" Win32 can filter files in the browse dialog
+" Win32 and GTK can filter files in the browse dialog
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   if &ft == "cpp"
-    let b:browsefilter = "C++ Source Files (*.cpp *.c++)\t*.cpp;*.c++\n" .
-	  \ "C Header Files (*.h)\t*.h\n" .
-	  \ "C Source Files (*.c)\t*.c\n" .
-	  \ "All Files (*.*)\t*.*\n"
+    let b:browsefilter = "C++ Source Files (*.cpp, *.c++)\t*.cpp;*.c++\n" ..
+	  \ "C Header Files (*.h)\t*.h\n" ..
+	  \ "C Source Files (*.c)\t*.c\n"
   elseif &ft == "ch"
-    let b:browsefilter = "Ch Source Files (*.ch *.chf)\t*.ch;*.chf\n" .
-	  \ "C Header Files (*.h)\t*.h\n" .
-	  \ "C Source Files (*.c)\t*.c\n" .
-	  \ "All Files (*.*)\t*.*\n"
+    let b:browsefilter = "Ch Source Files (*.ch, *.chf)\t*.ch;*.chf\n" ..
+	  \ "C Header Files (*.h)\t*.h\n" ..
+	  \ "C Source Files (*.c)\t*.c\n"
   else
-    let b:browsefilter = "C Source Files (*.c)\t*.c\n" .
-	  \ "C Header Files (*.h)\t*.h\n" .
-	  \ "Ch Source Files (*.ch *.chf)\t*.ch;*.chf\n" .
-	  \ "C++ Source Files (*.cpp *.c++)\t*.cpp;*.c++\n" .
-	  \ "All Files (*.*)\t*.*\n"
+    let b:browsefilter = "C Source Files (*.c)\t*.c\n" ..
+	  \ "C Header Files (*.h)\t*.h\n" ..
+	  \ "Ch Source Files (*.ch, *.chf)\t*.ch;*.chf\n" ..
+	  \ "C++ Source Files (*.cpp, *.c++)\t*.cpp;*.c++\n"
+  endif
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
   endif
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
