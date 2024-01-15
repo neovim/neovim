@@ -427,7 +427,7 @@ vim.v.msgpack_types = ...
 --- In some places `v:null` can be used for a List, Dict, etc.
 --- that is not set.  That is slightly different than an empty
 --- List, Dict, etc.
---- @type any
+--- @type vim.NIL
 vim.v.null = ...
 
 --- Maximum value of a number.
