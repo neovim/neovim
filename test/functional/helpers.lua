@@ -18,7 +18,7 @@ local fail = global_helpers.fail
 local module = {}
 
 local runtime_set = 'set runtimepath^=./build/lib/nvim/'
-module.nvim_prog = (os.getenv('NVIM_PRG') or global_helpers.test_build_dir .. '/bin/nvim')
+module.nvim_prog = (os.getenv('NVIM_PRG') or global_helpers.paths.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
 module.nvim_set = (
   'set shortmess+=IS background=light termguicolors noswapfile noautoindent startofline'
@@ -915,7 +915,7 @@ end
 
 function module.add_builddir_to_rtp()
   -- Add runtime from build dir for doc/tags (used with :help).
-  module.command(string.format([[set rtp+=%s/runtime]], module.test_build_dir))
+  module.command(string.format([[set rtp+=%s/runtime]], module.paths.test_build_dir))
 end
 
 -- Kill (reap) a process by PID.

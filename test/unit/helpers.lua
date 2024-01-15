@@ -2,8 +2,8 @@ local ffi = require('ffi')
 local formatc = require('test.unit.formatc')
 local Set = require('test.unit.set')
 local Preprocess = require('test.unit.preprocess')
-local Paths = require('test.cmakeconfig.paths')
 local global_helpers = require('test.helpers')
+local paths = global_helpers.paths
 local assert = require('luassert')
 local say = require('say')
 
@@ -15,7 +15,7 @@ local eq = global_helpers.eq
 local trim = vim.trim
 
 -- add some standard header locations
-for _, p in ipairs(Paths.include_paths) do
+for _, p in ipairs(paths.include_paths) do
   Preprocess.add_to_include_path(p)
 end
 
@@ -728,7 +728,7 @@ local function check_child_err(rd)
         --- @type string
         err = err .. '\nNo end of trace occurred'
       end
-      local cc_err, cc_emsg = pcall(check_cores, Paths.test_luajit_prg, true)
+      local cc_err, cc_emsg = pcall(check_cores, paths.test_luajit_prg, true)
       if not cc_err then
         --- @type string
         err = err .. '\ncheck_cores failed: ' .. cc_emsg
@@ -749,7 +749,7 @@ local function itp_parent(rd, pid, allow_failure, location)
       io.stderr:write('Errorred out (' .. status .. '):\n' .. tostring(emsg) .. '\n')
       os.execute([[
         sh -c "source ci/common/test.sh
-        check_core_dumps --delete \"]] .. Paths.test_luajit_prg .. [[\""]])
+        check_core_dumps --delete \"]] .. paths.test_luajit_prg .. [[\""]])
     else
       error(tostring(emsg) .. '\nexit code: ' .. status)
     end
@@ -797,7 +797,7 @@ local function gen_itp(it)
 end
 
 local function cppimport(path)
-  return cimport(Paths.test_source_path .. '/test/includes/pre/' .. path)
+  return cimport(paths.test_source_path .. '/test/includes/pre/' .. path)
 end
 
 cimport(

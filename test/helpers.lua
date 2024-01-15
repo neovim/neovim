@@ -19,6 +19,7 @@ end
 --- @class test.helpers
 local module = {
   REMOVE_THIS = {},
+  paths = Paths,
 }
 
 --- @param p string
@@ -951,7 +952,5 @@ function module.mkdir(path)
   -- 493 is 0755 in decimal
   return uv.fs_mkdir(path, 493)
 end
-
-module = vim.tbl_extend('error', module, Paths)
 
 return module
