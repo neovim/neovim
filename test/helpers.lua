@@ -769,10 +769,10 @@ function module.read_nvim_log(logfile, ci_rename)
 end
 
 --- @param path string
---- @return string
+--- @return boolean?
 function module.mkdir(path)
   -- 493 is 0755 in decimal
-  return uv.fs_mkdir(path, 493)
+  return (uv.fs_mkdir(path, 493))
 end
 
 return module
