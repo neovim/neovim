@@ -369,10 +369,7 @@ function module.check_logs()
 end
 
 function module.sysname()
-  local platform = uv.os_uname()
-  if platform and platform.sysname then
-    return platform.sysname:lower()
-  end
+  return uv.os_uname().sysname:lower()
 end
 
 function module.is_os(s)
