@@ -419,6 +419,55 @@ function M.dtrace(_, bufnr)
   return 'd'
 end
 
+--- @param bufnr integer
+--- @return boolean
+local function is_modula2(bufnr)
+  return matchregex(nextnonblank(bufnr, 1), [[\<MODULE\s\+\w\+\s*;\|^\s*(\*]])
+end
+
+--- @param bufnr integer
+--- @return string, fun(b: integer)
+local function modula2(bufnr)
+  local dialect = vim.g.modula2_default_dialect or 'pim'
+  local extension = vim.g.modula2_default_extension or ''
+
+  -- ignore unknown dialects or badly formatted tags
+  for _, line in ipairs(getlines(bufnr, 1, 200)) do
+    local matched_dialect, matched_extension = line:match('%(%*!m2(%w+)%+(%w+)%*%)')
+    if not matched_dialect then
+      matched_dialect = line:match('%(%*!m2(%w+)%*%)')
+    end
+    if matched_dialect then
+      if vim.tbl_contains({ 'iso', 'pim', 'r10' }, matched_dialect) then
+        dialect = matched_dialect
+      end
+      if vim.tbl_contains({ 'gm2' }, matched_extension) then
+        extension = matched_extension
+      end
+      break
+    end
+  end
+
+  return 'modula2',
+    function(b)
+      vim.api.nvim_buf_call(b, function()
+        fn['modula2#SetDialect'](dialect, extension)
+      end)
+    end
+end
+
+--- @type vim.filetype.mapfn
+function M.def(_, bufnr)
+  if vim.g.filetype_def == 'modula2' or is_modula2(bufnr) then
+    return modula2(bufnr)
+  end
+
+  if vim.g.filetype_def then
+    return vim.g.filetype_def
+  end
+  return 'def'
+end
+
 --- @type vim.filetype.mapfn
 function M.e(_, bufnr)
   if vim.g.filetype_euphoria then
@@ -906,14 +955,16 @@ end
 --- Determine if *.mod is ABB RAPID, LambdaProlog, Modula-2, Modsim III or go.mod
 --- @type vim.filetype.mapfn
 function M.mod(path, bufnr)
+  if vim.g.filetype_mod == 'modula2' or is_modula2(bufnr) then
+    return modula2(bufnr)
+  end
+
   if vim.g.filetype_mod then
     return vim.g.filetype_mod
   elseif matchregex(path, [[\c\<go\.mod$]]) then
     return 'gomod'
   elseif is_lprolog(bufnr) then
     return 'lprolog'
-  elseif matchregex(nextnonblank(bufnr, 1), [[\%(\<MODULE\s\+\w\+\s*;\|^\s*(\*\)]]) then
-    return 'modula2'
   elseif is_rapid(bufnr) then
     return 'rapid'
   end
