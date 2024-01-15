@@ -807,7 +807,7 @@ static int parse_sign_cmd_args(int cmd, char *arg, char **name, int *id, char **
   }
 
   if (filename != NULL && *buf == NULL) {
-    semsg(_("E158: Invalid buffer name: %s"), filename);
+    semsg(_(e_invalid_buffer_name_str), filename);
     return FAIL;
   }
 

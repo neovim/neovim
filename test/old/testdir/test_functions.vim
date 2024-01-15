@@ -1044,6 +1044,192 @@ func Test_matchstrpos()
   call assert_equal(['', -1, -1], matchstrpos(v:_null_list, '\a'))
 endfunc
 
+" Test for matchstrlist()
+func Test_matchstrlist()
+  let lines =<< trim END
+    #" Basic match
+    call assert_equal([{'idx': 0, 'byteidx': 1, 'text': 'bout'},
+          \ {'idx': 1, 'byteidx': 1, 'text': 'bove'}],
+          \ matchstrlist(['about', 'above'], 'bo.*'))
+    #" no match
+    call assert_equal([], matchstrlist(['about', 'above'], 'xy.*'))
+    #" empty string
+    call assert_equal([], matchstrlist([''], '.'))
+    #" empty pattern
+    call assert_equal([{'idx': 0, 'byteidx': 0, 'text': ''}], matchstrlist(['abc'], ''))
+    #" method call
+    call assert_equal([{'idx': 0, 'byteidx': 2, 'text': 'it'}], ['editor']->matchstrlist('ed\zsit\zeor'))
+    #" single character matches
+    call assert_equal([{'idx': 0, 'byteidx': 5, 'text': 'r'}],
+          \ ['editor']->matchstrlist('r'))
+    call assert_equal([{'idx': 0, 'byteidx': 0, 'text': 'a'}], ['a']->matchstrlist('a'))
+    call assert_equal([{'idx': 0, 'byteidx': 0, 'text': ''}],
+          \ matchstrlist(['foobar'], '\zs'))
+    #" string with tabs
+    call assert_equal([{'idx': 0, 'byteidx': 1, 'text': 'foo'}],
+          \ matchstrlist(["\tfoobar"], 'foo'))
+    #" string with multibyte characters
+    call assert_equal([{'idx': 0, 'byteidx': 2, 'text': '😊😊'}],
+          \ matchstrlist(["\t\t😊😊"], '\k\+'))
+
+    #" null string
+    call assert_equal([], matchstrlist(v:_null_list, 'abc'))
+    call assert_equal([], matchstrlist([v:_null_string], 'abc'))
+    call assert_equal([{'idx': 0, 'byteidx': 0, 'text': ''}],
+          \ matchstrlist(['abc'], v:_null_string))
+
+    #" sub matches
+    call assert_equal([{'idx': 0, 'byteidx': 0, 'text': 'acd', 'submatches': ['a', '', 'c', 'd', '', '', '', '', '']}], matchstrlist(['acd'], '\(a\)\?\(b\)\?\(c\)\?\(.*\)', {'submatches': v:true}))
+
+    #" null dict argument
+    call assert_equal([{'idx': 0, 'byteidx': 0, 'text': 'vim'}],
+          \ matchstrlist(['vim'], '\w\+', v:_null_dict))
+
+    #" Error cases
+    call assert_fails("echo matchstrlist('abc', 'a')", 'E1211: List required for argument 1')
+    call assert_fails("echo matchstrlist(['abc'], {})", 'E1174: String required for argument 2')
+    call assert_fails("echo matchstrlist(['abc'], '.', [])", 'E1206: Dictionary required for argument 3')
+    call assert_fails("echo matchstrlist(['abc'], 'a', {'submatches': []})", 'E475: Invalid value for argument submatches')
+    call assert_fails("echo matchstrlist(['abc'], '\\@=')", 'E866: (NFA regexp) Misplaced @')
+  END
+  call CheckLegacyAndVim9Success(lines)
+
+  let lines =<< trim END
+    vim9script
+    # non string items
+    matchstrlist([0z10, {'a': 'x'}], 'x')
+  END
+  call CheckSourceSuccess(lines)
+
+  let lines =<< trim END
+    vim9script
+    def Foo()
+      # non string items
+      assert_equal([], matchstrlist([0z10, {'a': 'x'}], 'x'))
+    enddef
+    Foo()
+  END
+  call CheckSourceFailure(lines, 'E1013: Argument 1: type mismatch, expected list<string> but got list<any>', 2)
+endfunc
+
+" Test for matchbufline()
+func Test_matchbufline()
+  let lines =<< trim END
+    #" Basic match
+    new
+    call setline(1, ['about', 'above', 'below'])
+    VAR bnr = bufnr()
+    wincmd w
+    call assert_equal([{'lnum': 1, 'byteidx': 1, 'text': 'bout'},
+          \ {'lnum': 2, 'byteidx': 1, 'text': 'bove'}],
+          \ matchbufline(bnr, 'bo.*', 1, '$'))
+    #" multiple matches in a line
+    call setbufline(bnr, 1, ['about about', 'above above', 'below'])
+    call assert_equal([{'lnum': 1, 'byteidx': 1, 'text': 'bout'},
+          \ {'lnum': 1, 'byteidx': 7, 'text': 'bout'},
+          \ {'lnum': 2, 'byteidx': 1, 'text': 'bove'},
+          \ {'lnum': 2, 'byteidx': 7, 'text': 'bove'}],
+          \ matchbufline(bnr, 'bo\k\+', 1, '$'))
+    #" no match
+    call assert_equal([], matchbufline(bnr, 'xy.*', 1, '$'))
+    #" match on a particular line
+    call assert_equal([{'lnum': 2, 'byteidx': 7, 'text': 'bove'}],
+          \ matchbufline(bnr, 'bo\k\+$', 2, 2))
+    #" match on a particular line
+    call assert_equal([], matchbufline(bnr, 'bo.*', 3, 3))
+    #" empty string
+    call deletebufline(bnr, 1, '$')
+    call assert_equal([], matchbufline(bnr, '.', 1, '$'))
+    #" empty pattern
+    call setbufline(bnr, 1, 'abc')
+    call assert_equal([{'lnum': 1, 'byteidx': 0, 'text': ''}],
+          \ matchbufline(bnr, '', 1, '$'))
+    #" method call
+    call setbufline(bnr, 1, 'editor')
+    call assert_equal([{'lnum': 1, 'byteidx': 2, 'text': 'it'}],
+          \ bnr->matchbufline('ed\zsit\zeor', 1, 1))
+    #" single character matches
+    call assert_equal([{'lnum': 1, 'byteidx': 5, 'text': 'r'}],
+          \ matchbufline(bnr, 'r', 1, '$'))
+    call setbufline(bnr, 1, 'a')
+    call assert_equal([{'lnum': 1, 'byteidx': 0, 'text': 'a'}],
+          \ matchbufline(bnr, 'a', 1, '$'))
+    #" zero-width match
+    call assert_equal([{'lnum': 1, 'byteidx': 0, 'text': ''}],
+          \ matchbufline(bnr, '\zs', 1, '$'))
+    #" string with tabs
+    call setbufline(bnr, 1, "\tfoobar")
+    call assert_equal([{'lnum': 1, 'byteidx': 1, 'text': 'foo'}],
+          \ matchbufline(bnr, 'foo', 1, '$'))
+    #" string with multibyte characters
+    call setbufline(bnr, 1, "\t\t😊😊")
+    call assert_equal([{'lnum': 1, 'byteidx': 2, 'text': '😊😊'}],
+          \ matchbufline(bnr, '\k\+', 1, '$'))
+    #" empty buffer
+    call deletebufline(bnr, 1, '$')
+    call assert_equal([], matchbufline(bnr, 'abc', 1, '$'))
+
+    #" Non existing buffer
+    call setbufline(bnr, 1, 'abc')
+    call assert_fails("echo matchbufline(5000, 'abc', 1, 1)", 'E158: Invalid buffer name: 5000')
+    #" null string
+    call assert_equal([{'lnum': 1, 'byteidx': 0, 'text': ''}],
+          \ matchbufline(bnr, v:_null_string, 1, 1))
+    #" invalid starting line number
+    call assert_equal([], matchbufline(bnr, 'abc', 100, 100))
+    #" ending line number greater than the last line
+    call assert_equal([{'lnum': 1, 'byteidx': 0, 'text': 'abc'}],
+          \ matchbufline(bnr, 'abc', 1, 100))
+    #" ending line number greater than the starting line number
+    call setbufline(bnr, 1, ['one', 'two'])
+    call assert_fails($"echo matchbufline({bnr}, 'abc', 2, 1)", 'E475: Invalid value for argument end_lnum')
+
+    #" sub matches
+    call deletebufline(bnr, 1, '$')
+    call setbufline(bnr, 1, 'acd')
+    call assert_equal([{'lnum': 1, 'byteidx': 0, 'text': 'acd', 'submatches': ['a', '', 'c', 'd', '', '', '', '', '']}],
+          \ matchbufline(bnr, '\(a\)\?\(b\)\?\(c\)\?\(.*\)', 1, '$', {'submatches': v:true}))
+
+    #" null dict argument
+    call assert_equal([{'lnum': 1, 'byteidx': 0, 'text': 'acd'}],
+          \ matchbufline(bnr, '\w\+', '$', '$', v:_null_dict))
+
+    #" Error cases
+    call assert_fails("echo matchbufline([1], 'abc', 1, 1)", 'E1220: String or Number required for argument 1')
+    call assert_fails("echo matchbufline(1, {}, 1, 1)", 'E1174: String required for argument 2')
+    call assert_fails("echo matchbufline(1, 'abc', {}, 1)", 'E1220: String or Number required for argument 3')
+    call assert_fails("echo matchbufline(1, 'abc', 1, {})", 'E1220: String or Number required for argument 4')
+    call assert_fails($"echo matchbufline({bnr}, 'abc', -1, '$')", 'E475: Invalid value for argument lnum')
+    call assert_fails($"echo matchbufline({bnr}, 'abc', 1, -1)", 'E475: Invalid value for argument end_lnum')
+    call assert_fails($"echo matchbufline({bnr}, '\\@=', 1, 1)", 'E866: (NFA regexp) Misplaced @')
+    call assert_fails($"echo matchbufline({bnr}, 'abc', 1, 1, {{'submatches': []}})", 'E475: Invalid value for argument submatches')
+    :%bdelete!
+    call assert_fails($"echo matchbufline({bnr}, 'abc', 1, '$'))", 'E681: Buffer is not loaded')
+  END
+  call CheckLegacyAndVim9Success(lines)
+
+  call assert_fails($"echo matchbufline('', 'abc', 'abc', 1)", 'E475: Invalid value for argument lnum')
+  call assert_fails($"echo matchbufline('', 'abc', 1, 'abc')", 'E475: Invalid value for argument end_lnum')
+
+  let lines =<< trim END
+    vim9script
+    def Foo()
+      echo matchbufline('', 'abc', 'abc', 1)
+    enddef
+    Foo()
+  END
+  call CheckSourceFailure(lines, 'E1030: Using a String as a Number: "abc"', 1)
+
+  let lines =<< trim END
+    vim9script
+    def Foo()
+      echo matchbufline('', 'abc', 1, 'abc')
+    enddef
+    Foo()
+  END
+  call CheckSourceFailure(lines, 'E1030: Using a String as a Number: "abc"', 1)
+endfunc
+
 func Test_nextnonblank_prevnonblank()
   new
 insert
@@ -2104,7 +2290,7 @@ func Test_trim()
   call assert_equal(" \tabcd\t     xxxx   tail", trim(" \tabcd\t     xxxx   tail", "abx"))
   call assert_equal("RESERVE", trim("你RESERVE好", "你好"))
   call assert_equal("您R E SER V E早", trim("你好您R E SER V E早好你你", "你好"))
-  call assert_equal("你好您R E SER V E早好你你", trim(" \n\r\r   你好您R E SER V E早好你你    \t  \x0B"))
+  call assert_equal("你好您R E SER V E早好你你", trim(" \n\r\r   你好您R E SER V E早好你你    \t  \x0B", ))
   call assert_equal("您R E SER V E早好你你    \t  \x0B", trim("    你好您R E SER V E早好你你    \t  \x0B", " 你好"))
   call assert_equal("您R E SER V E早好你你    \t  \x0B", trim("    tteesstttt你好您R E SER V E早好你你    \t  \x0B ttestt", " 你好tes"))
   call assert_equal("您R E SER V E早好你你    \t  \x0B", trim("    tteesstttt你好您R E SER V E早好你你    \t  \x0B ttestt", "   你你你好好好tttsses"))

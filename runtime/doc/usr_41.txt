@@ -610,10 +610,13 @@ String manipulation:					*string-functions*
 	toupper()		turn a string to uppercase
 	charclass()		class of a character
 	match()			position where a pattern matches in a string
+	matchbufline()		all the matches of a pattern in a buffer
 	matchend()		position where a pattern match ends in a string
 	matchfuzzy()		fuzzy matches a string in a list of strings
 	matchfuzzypos()		fuzzy matches a string in a list of strings
 	matchstr()		match of a pattern in a string
+	matchstrlist()		all the matches of a pattern in a List of
+				strings
 	matchstrpos()		match and positions of a pattern in a string
 	matchlist()		like matchstr() and also return submatches
 	stridx()		first index of a short string in a long string

@@ -5412,6 +5412,54 @@ function vim.fn.matchaddpos(group, pos, priority, id, dict) end
 --- @return any
 function vim.fn.matcharg(nr) end
 
+--- Returns the |List| of matches in lines from {lnum} to {end} in
+--- buffer {buf} where {pat} matches.
+---
+--- {lnum} and {end} can either be a line number or the string "$"
+--- to refer to the last line in {buf}.
+---
+--- The {dict} argument supports following items:
+---     submatches  include submatch information (|/\(|)
+---
+--- For each match, a |Dict| with the following items is returned:
+---     byteidx  starting byte index of the match
+---     lnum  line number where there is a match
+---     text  matched string
+--- Note that there can be multiple matches in a single line.
+---
+--- This function works only for loaded buffers. First call
+--- |bufload()| if needed.
+---
+--- When {buf} is not a valid buffer, the buffer is not loaded or
+--- {lnum} or {end} is not valid then an error is given and an
+--- empty |List| is returned.
+---
+--- Examples: >vim
+---     " Assuming line 3 in buffer 5 contains "a"
+---     :echo matchbufline(5, '\<\k\+\>', 3, 3)
+---     [{'lnum': 3, 'byteidx': 0, 'text': 'a'}]
+---     " Assuming line 4 in buffer 10 contains "tik tok"
+---     :echo matchbufline(10, '\<\k\+\>', 1, 4)
+---     [{'lnum': 4, 'byteidx': 0, 'text': 'tik'}, {'lnum': 4, 'byteidx': 4, 'text': 'tok'}]
+--- <
+--- If {submatch} is present and is v:true, then submatches like
+--- "\1", "\2", etc. are also returned.  Example: >vim
+---     " Assuming line 2 in buffer 2 contains "acd"
+---     :echo matchbufline(2, '\(a\)\?\(b\)\?\(c\)\?\(.*\)', 2, 2
+---         \ {'submatches': v:true})
+---     [{'lnum': 2, 'byteidx': 0, 'text': 'acd', 'submatches': ['a', '', 'c', 'd', '', '', '', '', '']}]
+--- <The "submatches" List always contains 9 items.  If a submatch
+--- is not found, then an empty string is returned for that
+--- submatch.
+---
+--- @param buf string|integer
+--- @param pat string
+--- @param lnum string|integer
+--- @param end_ string|integer
+--- @param dict? table
+--- @return any
+function vim.fn.matchbufline(buf, pat, lnum, end_, dict) end
+
 --- Deletes a match with ID {id} previously defined by |matchadd()|
 --- or one of the |:match| commands.  Returns 0 if successful,
 --- otherwise -1.  See example for |matchadd()|.  All matches can
@@ -5581,6 +5629,41 @@ function vim.fn.matchlist(expr, pat, start, count) end
 --- @return any
 function vim.fn.matchstr(expr, pat, start, count) end
 
+--- Returns the |List| of matches in {list} where {pat} matches.
+--- {list} is a |List| of strings.  {pat} is matched against each
+--- string in {list}.
+---
+--- The {dict} argument supports following items:
+---     submatches  include submatch information (|/\(|)
+---
+--- For each match, a |Dict| with the following items is returned:
+---     byteidx  starting byte index of the match.
+---     idx    index in {list} of the match.
+---     text  matched string
+---     submatches  a List of submatches.  Present only if
+---     "submatches" is set to v:true in {dict}.
+---
+--- Example: >vim
+---     :echo matchstrlist(['tik tok'], '\<\k\+\>')
+---     [{'idx': 0, 'byteidx': 0, 'text': 'tik'}, {'idx': 0, 'byteidx': 4, 'text': 'tok'}]
+---     :echo matchstrlist(['a', 'b'], '\<\k\+\>')
+---     [{'idx': 0, 'byteidx': 0, 'text': 'a'}, {'idx': 1, 'byteidx': 0, 'text': 'b'}]
+--- <
+--- If "submatches" is present and is v:true, then submatches like
+--- "\1", "\2", etc. are also returned.  Example: >vim
+---     :echo matchstrlist(['acd'], '\(a\)\?\(b\)\?\(c\)\?\(.*\)',
+---         \ #{submatches: v:true})
+---     [{'idx': 0, 'byteidx': 0, 'text': 'acd', 'submatches': ['a', '', 'c', 'd', '', '', '', '', '']}]
+--- <The "submatches" List always contains 9 items.  If a submatch
+--- is not found, then an empty string is returned for that
+--- submatch.
+---
+--- @param list string[]
+--- @param pat string
+--- @param dict? table
+--- @return any
+function vim.fn.matchstrlist(list, pat, dict) end
+
 --- Same as |matchstr()|, but return the matched string, the start
 --- position and the end position of the match.  Example: >vim
 ---   echo matchstrpos("testing", "ing")
@@ -5612,7 +5695,7 @@ function vim.fn.matchstrpos(expr, pat, start, count) end
 --- it returns the maximum of all values in the Dictionary.
 --- If {expr} is neither a List nor a Dictionary, or one of the
 --- items in {expr} cannot be used as a Number this results in
----                 an error.  An empty |List| or |Dictionary| results in zero.
+--- an error.  An empty |List| or |Dictionary| results in zero.
 ---
 --- @param expr any
 --- @return any

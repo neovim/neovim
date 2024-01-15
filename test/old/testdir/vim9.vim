@@ -42,6 +42,49 @@ func CheckScriptSuccess(lines)
   endtry
 endfunc
 
+" :source a list of "lines" and check whether it fails with "error"
+func CheckSourceFailure(lines, error, lnum = -3)
+  if get(a:lines, 0, '') ==# 'vim9script'
+    return
+  endif
+  new
+  call setline(1, a:lines)
+  try
+    call assert_fails('source', a:error, a:lines, a:lnum)
+  finally
+    bw!
+  endtry
+endfunc
+
+" :source a list of "lines" and check whether it fails with the list of
+" "errors"
+func CheckSourceFailureList(lines, errors, lnum = -3)
+  if get(a:lines, 0, '') ==# 'vim9script'
+    return
+  endif
+  new
+  call setline(1, a:lines)
+  try
+    call assert_fails('source', a:errors, a:lines, a:lnum)
+  finally
+    bw!
+  endtry
+endfunc
+
+" :source a list of "lines" and check whether it succeeds
+func CheckSourceSuccess(lines)
+  if get(a:lines, 0, '') ==# 'vim9script'
+    return
+  endif
+  new
+  call setline(1, a:lines)
+  try
+    :source
+  finally
+    bw!
+  endtry
+endfunc
+
 func CheckDefAndScriptSuccess(lines)
   return
 endfunc
