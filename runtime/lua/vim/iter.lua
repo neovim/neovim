@@ -1011,6 +1011,109 @@ function ListIter.enumerate(self)
   return self
 end
 
+--- Reduces the elements of the iterator to a single value, using a callback function.
+--- If an `initialValue` is provided, it is used as the initial accumulator value.
+---
+--- Example:
+---
+--- ```lua
+--- local it = vim.iter({ 1, 2, 3, 4, 5 })
+--- local sum = it:reduce(
+---   function(accumulator, currentKey, currentValue, index, previousKey, previousValue, self)
+---     return accumulator + currentValue
+---   end,
+---   0
+--- )
+--- -- sum will be 15
+---
+--- -- Reduce with a map-like table
+--- local it2 = vim.iter({ a = 1, b = 2, c = 3 })
+--- local mapTable = it2:reduce(
+---   function(accum, currentKey, currentValue)
+---     if currentValue % 2 ~= 0 then
+---       accum[currentKey:upper()] = currentValue * 2
+---     end
+---     return accum
+---   end,
+---   {}
+--- )
+--- -- mapTable will be { A = 2, C = 6 }
+--- ```
+---
+--- @param callbackFn function The callback function with the following parameters:
+---               - accumulator (any): The accumulated result of previous callback calls.
+---               - currentKey (string | nil): The key of the current element (for map-like tables).
+---               - currentValue (any): The value of the current element.
+---               - index (number): The index position of the current element.
+---               - previousKey (string | nil): The key of the previous element (for map-like tables).
+---               - previousValue (any): The value of the previous element.
+---               - self (table): The iterator itself.
+--- @param initialValue any (optional) The initial accumulator value.
+--- @return accumulator any The final accumulated result.
+function Iter.reduce(self, callbackFn, initialValue)
+  local accumulator = initialValue
+  local index = 0
+  local previousKey, previousValue = nil, nil
+
+  local function getNextValue()
+    local key, value = self:next()
+    if key == nil then
+      return nil
+    end
+    return key, value
+  end
+
+  while true do
+    local currentKey, currentValue = getNextValue()
+    if currentKey == nil then
+      break
+    end
+
+    if index == 0 and accumulator == nil then
+      accumulator = currentValue
+    else
+      accumulator =
+        callbackFn(accumulator, currentKey, currentValue, index, previousKey, previousValue, self)
+    end
+
+    previousKey, previousValue = currentKey, currentValue
+    index = index + 1
+  end
+
+  if index == 0 and initialValue == nil then
+    error('Reduce of empty iterator with no initial value')
+  end
+
+  return accumulator
+end
+
+---@private
+function ListIter.reduce(self, callbackFn, initialValue)
+  local accumulator = initialValue
+  local index = 0
+  local previousValue = nil
+
+  local inc = self._head < self._tail and 1 or -1
+  for i = self._head, self._tail - inc, inc do
+    local currentValue = self._table[i]
+
+    if index == 0 and accumulator == nil then
+      accumulator = currentValue
+    else
+      accumulator = callbackFn(accumulator, currentValue, index, previousValue, self)
+    end
+
+    previousValue = currentValue
+    index = index + 1
+  end
+
+  if index == 0 and initialValue == nil then
+    error('Reduce of empty list iterator with no initial value')
+  end
+
+  return accumulator
+end
+
 --- Creates a new Iter object from a table or other |iterable|.
 ---
 ---@param src table|function Table or iterator to drain values from

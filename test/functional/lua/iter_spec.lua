@@ -538,4 +538,43 @@ describe('vim.iter', function()
       { item_3 = 'test' },
     }, output)
   end)
+
+  it('reduce()', function()
+    -- Test case 1: Reduce with an initial accumulator value (0)
+    local list1 = vim.iter({1, 2, 3, 4, 5})
+    local sum = list1:reduce(function(accum, value)
+      return accum + value
+    end, 0)
+    eq(15, sum)
+
+    -- Test case 2: Reduce without an initial accumulator value (uses the first element, 1)
+    local list2 = vim.iter({1, 2, 3, 4, 5})
+    local product = list2:reduce(function(accum, value)
+      return accum * value
+    end)
+    eq(120, product)
+
+    -- Test case 3: Reduce with a custom initial accumulator value ("Start: ")
+    local list3 = vim.iter({1, 2, 3, 4, 5})
+    local result = list3:reduce(function(accum, value)
+      return accum .. tostring(value)
+    end, "Start: ")
+    eq("Start: 12345", result)
+
+    -- Test case 4: Reduce with an empty list (should return the initial accumulator value, 0)
+    local list4 = vim.iter({})
+    local emptySum = list4:reduce(function(accum, value)
+      return accum + value
+    end, 0)
+    eq(0, emptySum)
+
+    -- Test case 5: Reduce with map-like table
+    local mapTable = vim.iter({ a = 1, b = 2, c = 3 }):reduce(function(accum, key, value)
+      if value % 2 ~= 0 then
+        accum[key:upper()] = value * 2
+      end
+      return accum
+    end, {})
+    eq({ A = 2, C = 6 }, mapTable)
+  end)
 end)

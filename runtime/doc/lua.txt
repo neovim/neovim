@@ -4052,6 +4052,56 @@ Iter:peekback()                                              *Iter:peekback()*
     Return: ~
         (`any`)
 
+Iter:reduce({callbackFn}, {initialValue})                      *Iter:reduce()*
+    Reduces the elements of the iterator to a single value, using a callback
+    function. If an `initialValue` is provided, it is used as the initial
+    accumulator value.
+
+    Example: >lua
+        local it = vim.iter({ 1, 2, 3, 4, 5 })
+        local sum = it:reduce(
+          function(accumulator, currentKey, currentValue, index, previousKey, previousValue, self)
+            return accumulator + currentValue
+          end,
+          0
+        )
+        -- sum will be 15
+
+        -- Reduce with a map-like table
+        local it2 = vim.iter({ a = 1, b = 2, c = 3 })
+        local mapTable = it2:reduce(
+          function(accum, currentKey, currentValue)
+            if currentValue % 2 ~= 0 then
+              accum[currentKey:upper()] = currentValue * 2
+            end
+            return accum
+          end,
+          {}
+        )
+        -- mapTable will be { A = 2, C = 6 }
+<
+
+    Parameters: ~
+      • {callbackFn}    (`function`) The callback function with the following
+                        parameters:
+                        • accumulator (any): The accumulated result of
+                          previous callback calls.
+                        • currentKey (string | nil): The key of the current
+                          element (for map-like tables).
+                        • currentValue (any): The value of the current
+                          element.
+                        • index (number): The index position of the current
+                          element.
+                        • previousKey (string | nil): The key of the previous
+                          element (for map-like tables).
+                        • previousValue (any): The value of the previous
+                          element.
+                        • self (table): The iterator itself.
+      • {initialValue}  (`any`) (optional) The initial accumulator value.
+
+    Return: ~
+        (`accumulator`) any The final accumulated result.
+
 Iter:rev()                                                        *Iter:rev()*
     Reverses a |list-iterator| pipeline.
 
