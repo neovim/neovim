@@ -346,7 +346,6 @@ local function setup_autocmds(bufnr)
     desc = 'Update active tabstops when buffer text changes',
     buffer = bufnr,
     callback = function()
-
       if not M.active() then
         return true
       end
