@@ -11,7 +11,6 @@
 #include "nvim/drawscreen.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
-#include "nvim/macros_defs.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -22,6 +21,8 @@
 #include "nvim/plines.h"
 #include "nvim/pos_defs.h"
 #include "nvim/state.h"
+#include "nvim/state_defs.h"
+#include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -291,7 +292,7 @@ linenr_T get_cursor_rel_lnum(win_T *wp, linenr_T lnum)
   // Loop until we reach to_line, skipping folds.
   for (; from_line < to_line; from_line++, retval++) {
     // If from_line is in a fold, set it to the last line of that fold.
-    (void)hasFoldingWin(wp, from_line, NULL, &from_line, true, NULL);
+    hasFoldingWin(wp, from_line, NULL, &from_line, true, NULL);
   }
 
   // If to_line is in a closed fold, the line count is off by +1. Correct it.

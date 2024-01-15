@@ -3,10 +3,14 @@
 
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/event/defs.h"
+#include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/ex_getln.h"
 #include "nvim/getchar.h"
@@ -73,7 +77,7 @@ getkey:
       // Call `os_inchar` directly to block for events or user input without
       // consuming anything from `input_buffer`(os/input.c) or calling the
       // mapping engine.
-      (void)os_inchar(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
+      os_inchar(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
       // If an event was put into the queue, we send K_EVENT directly.
       if (!multiqueue_empty(main_loop.events)) {
         key = K_EVENT;

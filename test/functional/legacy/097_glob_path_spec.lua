@@ -11,13 +11,13 @@ describe('glob() and globpath()', function()
 
   setup(function()
     if helpers.is_os('win') then
-      os.execute("md sautest\\autoload")
-      os.execute(".>sautest\\autoload\\Test104.vim 2>nul")
-      os.execute(".>sautest\\autoload\\footest.vim 2>nul")
+      os.execute('md sautest\\autoload')
+      os.execute('.>sautest\\autoload\\Test104.vim 2>nul')
+      os.execute('.>sautest\\autoload\\footest.vim 2>nul')
     else
-      os.execute("mkdir -p sautest/autoload")
-      os.execute("touch sautest/autoload/Test104.vim")
-      os.execute("touch sautest/autoload/footest.vim")
+      os.execute('mkdir -p sautest/autoload')
+      os.execute('touch sautest/autoload/Test104.vim')
+      os.execute('touch sautest/autoload/footest.vim')
     end
   end)
 
@@ -76,7 +76,7 @@ describe('glob() and globpath()', function()
       os.execute('del /q/f Xxx{ Xxx$')
       os.execute('rd /q /s sautest')
     else
-      os.execute("rm -rf sautest Xxx{ Xxx$")
+      os.execute('rm -rf sautest Xxx{ Xxx$')
     end
   end)
 end)

@@ -1,4 +1,4 @@
-local wf = require('vim.lsp._watchfiles')
+local glob = require('vim.glob')
 
 --- @class lsp.DynamicCapabilities
 --- @field capabilities table<string, lsp.Registration[]>
@@ -55,7 +55,7 @@ function M:unregister(unregisterations)
 end
 
 --- @param method string
---- @param opts? {bufnr?: number}
+--- @param opts? {bufnr: integer?}
 --- @return lsp.Registration? (table|nil) the registration if found
 --- @private
 function M:get(method, opts)
@@ -69,14 +69,14 @@ function M:get(method, opts)
     if not documentSelector then
       return reg
     end
-    if M.match(opts.bufnr, documentSelector) then
+    if self:match(opts.bufnr, documentSelector) then
       return reg
     end
   end
 end
 
 --- @param method string
---- @param opts? {bufnr?: number}
+--- @param opts? {bufnr: integer?}
 --- @private
 function M:supports(method, opts)
   return self:get(method, opts) ~= nil
@@ -85,19 +85,23 @@ end
 --- @param bufnr number
 --- @param documentSelector lsp.DocumentSelector
 --- @private
-function M.match(bufnr, documentSelector)
-  local ft = vim.bo[bufnr].filetype
+function M:match(bufnr, documentSelector)
+  local client = vim.lsp.get_client_by_id(self.client_id)
+  if not client then
+    return false
+  end
+  local language = client.config.get_language_id(bufnr, vim.bo[bufnr].filetype)
   local uri = vim.uri_from_bufnr(bufnr)
   local fname = vim.uri_to_fname(uri)
   for _, filter in ipairs(documentSelector) do
     local matches = true
-    if filter.language and ft ~= filter.language then
+    if filter.language and language ~= filter.language then
       matches = false
     end
     if matches and filter.scheme and not vim.startswith(uri, filter.scheme .. ':') then
       matches = false
     end
-    if matches and filter.pattern and not wf._match(filter.pattern, fname) then
+    if matches and filter.pattern and not glob.to_lpeg(filter.pattern):match(fname) then
       matches = false
     end
     if matches then

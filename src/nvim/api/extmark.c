@@ -20,6 +20,7 @@
 #include "nvim/grid.h"
 #include "nvim/highlight_group.h"
 #include "nvim/marktree.h"
+#include "nvim/marktree_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -150,7 +151,7 @@ static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_na
 
     PUT(dict, "right_gravity", BOOLEAN_OBJ(mt_right(start)));
 
-    if (extmark.end_pos.row >= 0) {
+    if (mt_paired(start)) {
       PUT(dict, "end_row", INTEGER_OBJ(extmark.end_pos.row));
       PUT(dict, "end_col", INTEGER_OBJ(extmark.end_pos.col));
       PUT(dict, "end_right_gravity", BOOLEAN_OBJ(extmark.end_right_gravity));
@@ -391,6 +392,8 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                                  text is selected or hidden because of
 ///                                  scrolling with 'nowrap' or 'smoothscroll'.
 ///                                  Currently only affects "overlay" virt_text.
+///               - virt_text_repeat_linebreak : repeat the virtual text on
+///                                              wrapped lines.
 ///               - hl_mode : control how highlights are combined with the
 ///                           highlights of the text. Currently only affects
 ///                           virt_text highlights, but might affect `hl_group`
@@ -613,7 +616,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   hl.flags |= opts->hl_eol ? kSHHlEol : 0;
-  virt_text.flags |= opts->virt_text_hide ? kVTHide : 0;
+  virt_text.flags |= ((opts->virt_text_hide ? kVTHide : 0)
+                      | (opts->virt_text_repeat_linebreak ? kVTRepeatLinebreak : 0));
 
   if (HAS_KEY(opts, set_extmark, hl_mode)) {
     String str = opts->hl_mode;
@@ -665,9 +669,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   if (HAS_KEY(opts, set_extmark, sign_text)) {
-    sign.text.ptr = NULL;
-    VALIDATE_S(init_sign_text(NULL, &sign.text.ptr, opts->sign_text.data),
-               "sign_text", "", {
+    sign.text[0] = 0;
+    VALIDATE_S(init_sign_text(NULL, sign.text, opts->sign_text.data), "sign_text", "", {
       goto error;
     });
     sign.flags |= kSHIsSign;
@@ -785,7 +788,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     uint32_t decor_indexed = DECOR_ID_INVALID;
     if (sign.flags & kSHIsSign) {
       decor_indexed = decor_put_sh(sign);
-      if (sign.text.ptr != NULL) {
+      if (sign.text[0]) {
         decor_flags |= MT_FLAG_DECOR_SIGNTEXT;
       }
       if (sign.number_hl_id || sign.line_hl_id || sign.cursorline_hl_id) {
@@ -1007,10 +1010,8 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 ///             - on_buf: called for each buffer being redrawn (before
 ///                 window callbacks)
 ///                 ["buf", bufnr, tick]
-///             - on_win: called when starting to redraw a
-///                 specific window. botline_guess is an approximation
-///                 that does not exceed the last line number.
-///                 ["win", winid, bufnr, topline, botline_guess]
+///             - on_win: called when starting to redraw a specific window.
+///                 ["win", winid, bufnr, topline, botline]
 ///             - on_line: called for each buffer line being redrawn.
 ///                 (The interaction with fold lines is subject to change)
 ///                 ["win", winid, bufnr, row]
@@ -1051,7 +1052,7 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
     *v = LUA_NOREF;
   }
 
-  p->active = true;
+  p->state = kDecorProviderActive;
   p->hl_valid++;
   p->hl_cached = false;
 }

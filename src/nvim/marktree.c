@@ -47,7 +47,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
+#include <uv.h>
 
 #include "klib/kvec.h"
 #include "nvim/macros_defs.h"
@@ -59,6 +59,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 
 #define T MT_BRANCH_FACTOR
 #define ILEN (sizeof(MTNode) + (2 * T) * sizeof(void *))
@@ -146,7 +147,8 @@ static inline int marktree_getp_aux(const MTNode *x, MTKey k, bool *match)
   bool dummy_match;
   bool *m = match ? match : &dummy_match;
 
-  int begin = 0, end = x->n;
+  int begin = 0;
+  int end = x->n;
   if (x->n == 0) {
     *m = false;
     return -1;
@@ -303,7 +305,8 @@ void marktree_put(MarkTree *b, MTKey key, int end_row, int end_col, bool end_rig
                                |(uint16_t)(end_right ? MT_FLAG_RIGHT_GRAVITY : 0));
     end_key.pos = (MTPos){ end_row, end_col };
     marktree_put_key(b, end_key);
-    MarkTreeIter itr[1] = { 0 }, end_itr[1] = { 0 };
+    MarkTreeIter itr[1] = { 0 };
+    MarkTreeIter end_itr[1] = { 0 };
     marktree_lookup(b, mt_lookup_key(key), itr);
     marktree_lookup(b, mt_lookup_key(end_key), end_itr);
 
@@ -684,8 +687,10 @@ uint64_t marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
 static void intersect_merge(Intersection *restrict m, Intersection *restrict x,
                             Intersection *restrict y)
 {
-  size_t xi = 0, yi = 0;
-  size_t xn = 0, yn = 0;
+  size_t xi = 0;
+  size_t yi = 0;
+  size_t xn = 0;
+  size_t yn = 0;
   while (xi < kv_size(*x) && yi < kv_size(*y)) {
     if (kv_A(*x, xi) == kv_A(*y, yi)) {
       // TODO(bfredl): kvi_pushp is actually quite complex, break out kvi_resize() to a function?
@@ -717,8 +722,10 @@ static void intersect_merge(Intersection *restrict m, Intersection *restrict x,
 static void intersect_mov(Intersection *restrict x, Intersection *restrict y,
                           Intersection *restrict w, Intersection *restrict d)
 {
-  size_t wi = 0, yi = 0;
-  size_t wn = 0, yn = 0;
+  size_t wi = 0;
+  size_t yi = 0;
+  size_t wn = 0;
+  size_t yn = 0;
   size_t xi = 0;
   while (wi < kv_size(*w) || xi < kv_size(*x)) {
     if (wi < kv_size(*w) && (xi >= kv_size(*x) || kv_A(*x, xi) >= kv_A(*w, wi))) {
@@ -810,7 +817,8 @@ bool intersect_mov_test(const uint64_t *x, size_t nx, const uint64_t *y, size_t 
 /// intersection: i = x & y
 static void intersect_common(Intersection *i, Intersection *x, Intersection *y)
 {
-  size_t xi = 0, yi = 0;
+  size_t xi = 0;
+  size_t yi = 0;
   while (xi < kv_size(*x) && yi < kv_size(*y)) {
     if (kv_A(*x, xi) == kv_A(*y, yi)) {
       kvi_push(*i, kv_A(*x, xi));
@@ -827,7 +835,8 @@ static void intersect_common(Intersection *i, Intersection *x, Intersection *y)
 // inplace union: x |= y
 static void intersect_add(Intersection *x, Intersection *y)
 {
-  size_t xi = 0, yi = 0;
+  size_t xi = 0;
+  size_t yi = 0;
   while (xi < kv_size(*x) && yi < kv_size(*y)) {
     if (kv_A(*x, xi) == kv_A(*y, yi)) {
       xi++;
@@ -854,7 +863,8 @@ static void intersect_add(Intersection *x, Intersection *y)
 // inplace asymmetric difference: x &= ~y
 static void intersect_sub(Intersection *restrict x, Intersection *restrict y)
 {
-  size_t xi = 0, yi = 0;
+  size_t xi = 0;
+  size_t yi = 0;
   size_t xn = 0;
   while (xi < kv_size(*x) && yi < kv_size(*y)) {
     if (kv_A(*x, xi) == kv_A(*y, yi)) {
@@ -898,7 +908,8 @@ static void bubble_up(MTNode *x)
 
 static MTNode *merge_node(MarkTree *b, MTNode *p, int i)
 {
-  MTNode *x = p->ptr[i], *y = p->ptr[i + 1];
+  MTNode *x = p->ptr[i];
+  MTNode *y = p->ptr[i + 1];
   Intersection m;
   kvi_init(m);
 
@@ -975,7 +986,8 @@ void kvi_move(Intersection *dest, Intersection *src)
 // key inside x, if x is the first leaf)
 static void pivot_right(MarkTree *b, MTPos p_pos, MTNode *p, const int i)
 {
-  MTNode *x = p->ptr[i], *y = p->ptr[i + 1];
+  MTNode *x = p->ptr[i];
+  MTNode *y = p->ptr[i + 1];
   memmove(&y->key[1], y->key, (size_t)y->n * sizeof(MTKey));
   if (y->level) {
     memmove(&y->ptr[1], y->ptr, ((size_t)y->n + 1) * sizeof(MTNode *));
@@ -1040,7 +1052,8 @@ static void pivot_right(MarkTree *b, MTPos p_pos, MTNode *p, const int i)
 
 static void pivot_left(MarkTree *b, MTPos p_pos, MTNode *p, int i)
 {
-  MTNode *x = p->ptr[i], *y = p->ptr[i + 1];
+  MTNode *x = p->ptr[i];
+  MTNode *y = p->ptr[i + 1];
 
   // reverse from how we "always" do it. but pivot_left
   // is just the inverse of pivot_right, so reverse it literally.
@@ -1603,7 +1616,8 @@ static void swap_keys(MarkTree *b, MarkTreeIter *itr1, MarkTreeIter *itr2, Damag
 
 static int damage_cmp(const void *s1, const void *s2)
 {
-  Damage *d1 = (Damage *)s1, *d2 = (Damage *)s2;
+  Damage *d1 = (Damage *)s1;
+  Damage *d2 = (Damage *)s2;
   assert(d1->id != d2->id);
   return d1->id > d2->id ? 1 : -1;
 }
@@ -1619,7 +1633,8 @@ bool marktree_splice(MarkTree *b, int32_t start_line, int start_col, int old_ext
   bool same_line = old_extent.row == 0 && new_extent.row == 0;
   unrelative(start, &old_extent);
   unrelative(start, &new_extent);
-  MarkTreeIter itr[1] = { 0 }, enditr[1] = { 0 };
+  MarkTreeIter itr[1] = { 0 };
+  MarkTreeIter enditr[1] = { 0 };
 
   MTPos oldbase[MT_MAX_DEPTH] = { 0 };
 
@@ -1824,7 +1839,8 @@ past_continue_same_node:
 void marktree_move_region(MarkTree *b, int start_row, colnr_T start_col, int extent_row,
                           colnr_T extent_col, int new_row, colnr_T new_col)
 {
-  MTPos start = { start_row, start_col }, size = { extent_row, extent_col };
+  MTPos start = { start_row, start_col };
+  MTPos size = { extent_row, extent_col };
   MTPos end = size;
   unrelative(start, &end);
   MarkTreeIter itr[1] = { 0 };
@@ -1956,13 +1972,10 @@ MTPos marktree_get_altpos(MarkTree *b, MTKey mark, MarkTreeIter *itr)
   return marktree_get_alt(b, mark, itr).pos;
 }
 
+/// @return alt mark for a paired mark or mark itself for unpaired mark
 MTKey marktree_get_alt(MarkTree *b, MTKey mark, MarkTreeIter *itr)
 {
-  MTKey end = MT_INVALID_KEY;
-  if (mt_paired(mark)) {
-    end = marktree_lookup_ns(b, mark.ns, mark.id, !mt_end(mark), itr);
-  }
-  return end;
+  return mt_paired(mark) ? marktree_lookup_ns(b, mark.ns, mark.id, !mt_end(mark), itr) : mark;
 }
 
 static void marktree_itr_fix_pos(MarkTree *b, MarkTreeIter *itr)

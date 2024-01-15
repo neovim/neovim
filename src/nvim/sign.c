@@ -18,21 +18,27 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/extmark.h"
 #include "nvim/fold.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
+#include "nvim/grid.h"
+#include "nvim/grid_defs.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
 #include "nvim/marktree.h"
+#include "nvim/marktree_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -106,7 +112,7 @@ static void buf_set_sign(buf_T *buf, uint32_t *id, char *group, int prio, linenr
   DecorSignHighlight sign = DECOR_SIGN_HIGHLIGHT_INIT;
 
   sign.flags |= kSHIsSign;
-  sign.text.ptr = sp->sn_text ? xstrdup(sp->sn_text) : NULL;
+  memcpy(sign.text, sp->sn_text, SIGN_WIDTH * sizeof(schar_T));
   sign.sign_name = xstrdup(sp->sn_name);
   sign.hl_id = sp->sn_text_hl;
   sign.line_hl_id = sp->sn_line_hl;
@@ -115,7 +121,7 @@ static void buf_set_sign(buf_T *buf, uint32_t *id, char *group, int prio, linenr
   sign.priority = (DecorPriority)prio;
 
   bool has_hl = (sp->sn_line_hl || sp->sn_num_hl || sp->sn_cul_hl);
-  uint16_t decor_flags = (sp->sn_text ? MT_FLAG_DECOR_SIGNTEXT : 0)
+  uint16_t decor_flags = (sp->sn_text[0] ? MT_FLAG_DECOR_SIGNTEXT : 0)
                          | (has_hl ? MT_FLAG_DECOR_SIGNHL : 0);
 
   DecorInline decor = { .ext = true, .data.ext = { .vt = NULL, .sh_idx = decor_put_sh(sign) } };
@@ -335,9 +341,24 @@ static int sign_cmd_idx(char *begin_cmd, char *end_cmd)
   return idx;
 }
 
+/// buf must be SIGN_WIDTH * MAX_SCHAR_SIZE (no extra +1 needed)
+size_t describe_sign_text(char *buf, schar_T *sign_text)
+{
+  size_t p = 0;
+  for (int i = 0; i < SIGN_WIDTH; i++) {
+    schar_get(buf + p, sign_text[i]);
+    size_t len = strlen(buf + p);
+    if (len == 0) {
+      break;
+    }
+    p += len;
+  }
+  return p;
+}
+
 /// Initialize the "text" for a new sign and store in "sign_text".
 /// "sp" is NULL for signs added through nvim_buf_set_extmark().
-int init_sign_text(sign_T *sp, char **sign_text, char *text)
+int init_sign_text(sign_T *sp, schar_T *sign_text, char *text)
 {
   char *s;
   char *endp = text + (int)strlen(text);
@@ -352,34 +373,29 @@ int init_sign_text(sign_T *sp, char **sign_text, char *text)
   // Count cells and check for non-printable chars
   int cells = 0;
   for (s = text; s < endp; s += utfc_ptr2len(s)) {
-    if (!vim_isprintc(utf_ptr2char(s))) {
+    int c;
+    sign_text[cells] = utfc_ptr2schar(s, &c);
+    if (!vim_isprintc(c)) {
       break;
     }
-    cells += utf_ptr2cells(s);
+    int width = utf_char2cells(c);
+    if (width == 2) {
+      sign_text[cells + 1] = 0;
+    }
+    cells += width;
   }
   // Currently must be empty, one or two display cells
-  if (s != endp || cells > 2) {
+  if (s != endp || cells > SIGN_WIDTH) {
     if (sp != NULL) {
       semsg(_("E239: Invalid sign text: %s"), text);
     }
     return FAIL;
   }
+
   if (cells < 1) {
-    if (sp != NULL) {
-      sp->sn_text = NULL;
-    }
-    return OK;
-  }
-
-  if (sp != NULL) {
-    xfree(sp->sn_text);
-  }
-  // Allocate one byte more if we need to pad up with a space.
-  size_t len = (size_t)(endp - text + (cells == 1));
-  *sign_text = xstrnsave(text, len);
-
-  if (cells == 1) {
-    STRCPY(*sign_text + len - 1, " ");
+    sign_text[0] = 0;
+  } else if (cells == 1) {
+    sign_text[1] = schar_from_ascii(' ');
   }
 
   return OK;
@@ -413,7 +429,7 @@ static int sign_define_by_name(char *name, char *icon, char *text, char *linehl,
     backslash_halve((*sp)->sn_icon);
   }
 
-  if (text != NULL && (init_sign_text(*sp, &(*sp)->sn_text, text) == FAIL)) {
+  if (text != NULL && (init_sign_text(*sp, (*sp)->sn_text, text) == FAIL)) {
     return FAIL;
   }
 
@@ -438,7 +454,6 @@ static int sign_undefine_by_name(const char *name)
   }
 
   xfree(sp->sn_name);
-  xfree(sp->sn_text);
   xfree(sp->sn_icon);
   xfree(sp);
   return OK;
@@ -453,9 +468,11 @@ static void sign_list_defined(sign_T *sp)
     msg_outtrans(sp->sn_icon, 0);
     msg_puts(_(" (not supported)"));
   }
-  if (sp->sn_text != NULL) {
+  if (sp->sn_text[0]) {
     msg_puts(" text=");
-    msg_outtrans(sp->sn_text, 0);
+    char buf[SIGN_WIDTH * MAX_SCHAR_SIZE];
+    describe_sign_text(buf, sp->sn_text);
+    msg_outtrans(buf, 0);
   }
   static char *arg[] = { " linehl=", " texthl=", " culhl=", " numhl=" };
   int hl[] = { sp->sn_line_hl, sp->sn_text_hl, sp->sn_cul_hl, sp->sn_num_hl };
@@ -709,7 +726,7 @@ static void sign_jump_cmd(buf_T *buf, linenr_T lnum, const char *name, int id, c
     return;
   }
 
-  (void)sign_jump(id, group, buf);
+  sign_jump(id, group, buf);
 }
 
 /// Parse the command line arguments for the ":sign place", ":sign unplace" and
@@ -721,7 +738,7 @@ static int parse_sign_cmd_args(int cmd, char *arg, char **name, int *id, char **
 {
   char *arg1 = arg;
   char *filename = NULL;
-  int lnum_arg = false;
+  bool lnum_arg = false;
 
   // first arg could be placed sign id
   if (ascii_isdigit(*arg)) {
@@ -882,8 +899,10 @@ static dict_T *sign_get_info_dict(sign_T *sp)
   if (sp->sn_icon != NULL) {
     tv_dict_add_str(d, S_LEN("icon"), sp->sn_icon);
   }
-  if (sp->sn_text != NULL) {
-    tv_dict_add_str(d, S_LEN("text"), sp->sn_text);
+  if (sp->sn_text[0]) {
+    char buf[SIGN_WIDTH * MAX_SCHAR_SIZE];
+    describe_sign_text(buf, sp->sn_text);
+    tv_dict_add_str(d, S_LEN("text"), buf);
   }
   static char *arg[] = { "linehl", "texthl", "culhl", "numhl" };
   int hl[] = { sp->sn_line_hl, sp->sn_text_hl, sp->sn_cul_hl, sp->sn_num_hl };

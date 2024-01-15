@@ -10,9 +10,13 @@
 #include <string.h>
 
 #include "nvim/arglist.h"
+#include "nvim/arglist_defs.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
@@ -20,20 +24,24 @@
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
-#include "nvim/garray.h"
-#include "nvim/gettext.h"
+#include "nvim/garray_defs.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mapping.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/runtime.h"
+#include "nvim/strings.h"
+#include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
@@ -59,7 +67,7 @@ static int put_view_curpos(FILE *fd, const win_T *wp, char *spaces)
   return r >= 0;
 }
 
-static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
+static int ses_winsizes(FILE *fd, bool restore_size, win_T *tab_firstwin)
 {
   if (restore_size && (ssop_flags & SSOP_WINSIZE)) {
     int n = 0;
@@ -208,7 +216,7 @@ static int ses_do_win(win_T *wp)
 /// @param flagp
 ///
 /// @returns FAIL if writing fails.
-static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname, unsigned *flagp)
+static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, bool fullname, unsigned *flagp)
 {
   char *buf = NULL;
 
@@ -221,7 +229,7 @@ static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname, unsigne
     if (s != NULL) {
       if (fullname) {
         buf = xmalloc(MAXPATHL);
-        (void)vim_FullName(s, buf, MAXPATHL, false);
+        vim_FullName(s, buf, MAXPATHL, false);
         s = buf;
       }
       char *fname_esc = ses_escape_fname(s, flagp);
@@ -314,11 +322,11 @@ static int ses_put_fname(FILE *fd, char *name, unsigned *flagp)
 static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int current_arg_idx)
 {
   int f;
-  int did_next = false;
+  bool did_next = false;
 
   // Always restore cursor position for ":mksession".  For ":mkview" only
   // when 'viewoptions' contains "cursor".
-  int do_cursor = (flagp == &ssop_flags || *flagp & SSOP_CURSOR);
+  bool do_cursor = (flagp == &ssop_flags || *flagp & SSOP_CURSOR);
 
   // Local argument list.
   if (wp->w_alist == &global_alist) {
@@ -517,6 +525,50 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
   return OK;
 }
 
+static int store_session_globals(FILE *fd)
+{
+  TV_DICT_ITER(&globvardict, this_var, {
+    if ((this_var->di_tv.v_type == VAR_NUMBER
+         || this_var->di_tv.v_type == VAR_STRING)
+        && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
+      // Escape special characters with a backslash.  Turn a LF and
+      // CR into \n and \r.
+      char *const p = vim_strsave_escaped(tv_get_string(&this_var->di_tv), "\\\"\n\r");
+      for (char *t = p; *t != NUL; t++) {
+        if (*t == '\n') {
+          *t = 'n';
+        } else if (*t == '\r') {
+          *t = 'r';
+        }
+      }
+      if ((fprintf(fd, "let %s = %c%s%c",
+                   this_var->di_key,
+                   ((this_var->di_tv.v_type == VAR_STRING) ? '"' : ' '),
+                   p,
+                   ((this_var->di_tv.v_type == VAR_STRING) ? '"' : ' ')) < 0)
+          || put_eol(fd) == FAIL) {
+        xfree(p);
+        return FAIL;
+      }
+      xfree(p);
+    } else if (this_var->di_tv.v_type == VAR_FLOAT
+               && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
+      float_T f = this_var->di_tv.vval.v_float;
+      int sign = ' ';
+
+      if (f < 0) {
+        f = -f;
+        sign = '-';
+      }
+      if ((fprintf(fd, "let %s = %c%f", this_var->di_key, sign, f) < 0)
+          || put_eol(fd) == FAIL) {
+        return FAIL;
+      }
+    }
+  });
+  return OK;
+}
+
 /// Writes commands for restoring the current buffers, for :mksession.
 ///
 /// Legacy 'sessionoptions'/'viewoptions' flags SSOP_UNIX, SSOP_SLASH are
@@ -528,8 +580,8 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
 /// @return FAIL on error, OK otherwise.
 static int makeopens(FILE *fd, char *dirnow)
 {
-  int only_save_windows = true;
-  int restore_size = true;
+  bool only_save_windows = true;
+  bool restore_size = true;
   win_T *edited_win = NULL;
   win_T *tab_firstwin;
   frame_T *tab_topframe;
@@ -627,7 +679,7 @@ static int makeopens(FILE *fd, char *dirnow)
     }
   }
 
-  int restore_stal = false;
+  bool restore_stal = false;
   // When there are two or more tabpages and 'showtabline' is 1 the tabline
   // will be displayed when creating the next tab.  That resizes the windows
   // in the first tab, which may cause problems.  Set 'showtabline' to 2
@@ -886,7 +938,7 @@ void ex_loadview(exarg_T *eap)
 ///   - SSOP_SLASH: filenames are written with "/" slash
 void ex_mkrc(exarg_T *eap)
 {
-  int view_session = false;  // :mkview, :mksession
+  bool view_session = false;  // :mkview, :mksession
   int using_vdir = false;  // using 'viewdir'?
   char *viewFile = NULL;
 
@@ -927,7 +979,7 @@ void ex_mkrc(exarg_T *eap)
 
   FILE *fd = open_exfile(fname, eap->forceit, WRITEBIN);
   if (fd != NULL) {
-    int failed = false;
+    bool failed = false;
     unsigned *flagp;
     if (eap->cmdidx == CMD_mkview) {
       flagp = &vop_flags;
@@ -937,7 +989,7 @@ void ex_mkrc(exarg_T *eap)
 
     // Write the version command for :mkvimrc
     if (eap->cmdidx == CMD_mkvimrc) {
-      (void)put_line(fd, "version 6.0");
+      put_line(fd, "version 6.0");
     }
 
     if (eap->cmdidx == CMD_mksession) {

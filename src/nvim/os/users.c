@@ -9,8 +9,10 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/memory.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/vim_defs.h"
 #ifdef HAVE_PWD_FUNCS
 # include <pwd.h>
@@ -190,7 +192,7 @@ void free_users(void)
 /// Done only once and then cached.
 static void init_users(void)
 {
-  static int lazy_init_done = false;
+  static bool lazy_init_done = false;
 
   if (lazy_init_done) {
     return;

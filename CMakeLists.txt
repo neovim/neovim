@@ -33,10 +33,19 @@ include(InstallHelpers)
 include(PreventInTreeBuilds)
 include(Util)
 
+#-------------------------------------------------------------------------------
+# Variables
+#-------------------------------------------------------------------------------
+set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
+set(GENERATED_RUNTIME_DIR ${PROJECT_BINARY_DIR}/runtime)
+set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
+
+# GENERATED_RUNTIME_DIR
+set(GENERATED_HELP_TAGS ${GENERATED_RUNTIME_DIR}/doc/tags)
+set(GENERATED_SYN_VIM ${GENERATED_RUNTIME_DIR}/syntax/vim/generated.vim)
+
 set_directory_properties(PROPERTIES
   EP_PREFIX "${DEPS_BUILD_DIR}")
-
-set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
 
 find_program(CCACHE_PRG ccache)
 if(CCACHE_PRG)
@@ -113,6 +122,7 @@ if (MINGW)
 else()
   option(ENABLE_LTO "enable link time optimization" ON)
 endif()
+option(ENABLE_LIBINTL "enable libintl" ON)
 
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
@@ -217,22 +227,24 @@ endif()
 find_program(SHELLCHECK_PRG shellcheck ${LINT_REQUIRED})
 find_program(STYLUA_PRG stylua ${LINT_REQUIRED})
 
+set(STYLUA_DIRS runtime scripts src test)
+
 add_glob_target(
   TARGET lintlua-luacheck
   COMMAND $<TARGET_FILE:nvim>
   FLAGS -ll ${PROJECT_SOURCE_DIR}/test/lua_runner.lua ${CMAKE_BINARY_DIR}/usr luacheck -q
-  GLOB_DIRS runtime/ scripts/ src/ test/
+  GLOB_DIRS runtime scripts src test
   GLOB_PAT *.lua
-  TOUCH_STRATEGY SINGLE)
+  TOUCH_STRATEGY PER_DIR)
 add_dependencies(lintlua-luacheck lua-dev-deps)
 
 add_glob_target(
   TARGET lintlua-stylua
   COMMAND ${STYLUA_PRG}
   FLAGS --color=always --check --respect-ignores
-  GLOB_DIRS runtime/ scripts/ src/ test/unit/
+  GLOB_DIRS ${STYLUA_DIRS}
   GLOB_PAT *.lua
-  TOUCH_STRATEGY SINGLE)
+  TOUCH_STRATEGY PER_DIR)
 
 add_custom_target(lintlua)
 add_dependencies(lintlua lintlua-luacheck lintlua-stylua)
@@ -243,7 +255,7 @@ add_glob_target(
   FLAGS -x -a
   GLOB_DIRS scripts
   GLOB_PAT *.sh
-  TOUCH_STRATEGY SINGLE)
+  TOUCH_STRATEGY PER_DIR)
 
 add_custom_target(lintcommit
   COMMAND $<TARGET_FILE:nvim> -u NONE -l ${PROJECT_SOURCE_DIR}/scripts/lintcommit.lua main)
@@ -257,8 +269,9 @@ add_glob_target(
   TARGET formatlua
   COMMAND ${STYLUA_PRG}
   FLAGS --respect-ignores
-  GLOB_DIRS runtime/ scripts/ src/ test/unit/
-  GLOB_PAT *.lua)
+  GLOB_DIRS ${STYLUA_DIRS}
+  GLOB_PAT *.lua
+  TOUCH_STRATEGY PER_DIR)
 
 add_custom_target(format)
 add_dependencies(format formatc formatlua)

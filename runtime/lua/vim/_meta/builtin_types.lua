@@ -118,7 +118,7 @@
 --- @field topfill? integer
 --- @field topline? integer
 
---- @class vim.fn.winsaveview.ret
+--- @class vim.fn.winsaveview.ret: vim.fn.winrestview.dict
 --- @field col integer
 --- @field coladd integer
 --- @field curswant integer

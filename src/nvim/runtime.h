@@ -9,7 +9,7 @@
 #include "nvim/garray_defs.h"
 #include "nvim/option_defs.h"  // IWYU pragma: keep
 #include "nvim/pos_defs.h"  // IWYU pragma: keep
-#include "nvim/runtime_defs.h"  // IWYU pragma: export
+#include "nvim/runtime_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
 /// Stack of execution contexts.  Each entry is an estack_T.

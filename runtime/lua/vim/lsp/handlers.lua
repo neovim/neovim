@@ -516,7 +516,7 @@ end
 ---
 --- Displays call hierarchy in the quickfix window.
 ---
----@param direction `"from"` for incoming calls and `"to"` for outgoing calls
+---@param direction 'from'|'to' `"from"` for incoming calls and `"to"` for outgoing calls
 ---@return function
 --- `CallHierarchyIncomingCall[]` if {direction} is `"from"`,
 --- `CallHierarchyOutgoingCall[]` if {direction} is `"to"`,

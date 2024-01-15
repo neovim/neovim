@@ -1,19 +1,19 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, source = helpers.clear, helpers.source
-local call, eq, meths = helpers.call, helpers.eq, helpers.meths
+local call, eq, api = helpers.call, helpers.eq, helpers.api
 local is_os = helpers.is_os
 local skip = helpers.skip
 
 local function expected_empty()
-  eq({}, meths.get_vvar('errors'))
+  eq({}, api.nvim_get_vvar('errors'))
 end
 
 describe('file changed dialog', function()
   before_each(function()
     clear()
-    meths.ui_attach(80, 24, {})
-    meths.set_option_value('autoread', false, {})
-    meths.set_option_value('fsync', true, {})
+    api.nvim_ui_attach(80, 24, {})
+    api.nvim_set_option_value('autoread', false, {})
+    api.nvim_set_option_value('fsync', true, {})
   end)
 
   it('works', function()

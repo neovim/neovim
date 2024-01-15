@@ -17,6 +17,7 @@
 #include "nvim/api/private/validate.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
@@ -25,18 +26,23 @@
 #include "nvim/drawscreen.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/extmark.h"
+#include "nvim/extmark_defs.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/memline.h"
+#include "nvim/memline_defs.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/move.h"
 #include "nvim/ops.h"
 #include "nvim/pos_defs.h"
 #include "nvim/state_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/undo.h"
+#include "nvim/undo_defs.h"
 #include "nvim/vim_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -127,11 +133,13 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///               - start column of the changed text
 ///               - byte offset of the changed text (from the start of
 ///                   the buffer)
-///               - old end row of the changed text
+///               - old end row of the changed text (offset from start row)
 ///               - old end column of the changed text
+///                 (if old end row = 0, offset from start column)
 ///               - old end byte length of the changed text
-///               - new end row of the changed text
+///               - new end row of the changed text (offset from start row)
 ///               - new end column of the changed text
+///                 (if new end row = 0, offset from start column)
 ///               - new end byte length of the changed text
 ///             - on_changedtick: Lua callback invoked on changedtick
 ///               increment without text change. Args:
@@ -334,12 +342,10 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
     return;
   }
 
-  // load buffer first if it's not loaded
-  if (buf->b_ml.ml_mfp == NULL) {
-    if (!buf_ensure_loaded(buf)) {
-      api_set_error(err, kErrorTypeException, "Failed to load buffer");
-      return;
-    }
+  // Load buffer if necessary. #22670
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return;
   }
 
   bool oob = false;
@@ -516,12 +522,10 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
     return;
   }
 
-  // load buffer first if it's not loaded
-  if (buf->b_ml.ml_mfp == NULL) {
-    if (!buf_ensure_loaded(buf)) {
-      api_set_error(err, kErrorTypeException, "Failed to load buffer");
-      return;
-    }
+  // Load buffer if necessary. #22670
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return;
   }
 
   bool oob = false;

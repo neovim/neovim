@@ -12,6 +12,7 @@ for s in (package.cpath .. ';'):gmatch('[^;]*;') do
   end
 end
 
+--- @param name string
 function vim._load_package(name)
   local basename = name:gsub('%.', '/')
   local paths = { 'lua/' .. basename .. '.lua', 'lua/' .. basename .. '/init.lua' }
@@ -55,6 +56,7 @@ vim._submodules = {
   inspect = true,
   version = true,
   fs = true,
+  glob = true,
   iter = true,
   re = true,
   text = true,

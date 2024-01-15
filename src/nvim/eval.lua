@@ -17,7 +17,7 @@
 --- @field deprecated? true
 --- @field returns? string|false
 --- @field returns_desc? string
---- @field signature string
+--- @field signature? string
 --- @field desc? string
 --- @field params {[1]:string, [2]:string, [3]:string}[]
 --- @field lua? false Do not render type information
@@ -2348,9 +2348,20 @@ M.funcs = {
 
     ]=],
     name = 'expand',
-    params = { { 'string', 'string' }, { 'nosuf', 'boolean' }, { 'list', 'any' } },
-    returns = 'string|string[]',
+    params = { { 'string', 'string' }, { 'nosuf', 'boolean' }, { 'list', 'nil|false' } },
     signature = 'expand({string} [, {nosuf} [, {list}]])',
+    returns = 'string',
+  },
+  expand__1 = {
+    args = { 3 },
+    base = 1,
+    name = 'expand',
+    params = {
+      { 'string', 'string' },
+      { 'nosuf', 'boolean' },
+      { 'list', 'true|number|string|table' },
+    },
+    returns = 'string|string[]',
   },
   expandcmd = {
     args = { 1, 2 },
@@ -3609,6 +3620,7 @@ M.funcs = {
       help		help subjects
       highlight	highlight groups
       history		|:history| suboptions
+      keymap		keyboard mappings
       locale		locale names (as output of locale -a)
       mapclear	buffer argument
       mapping		mapping name
@@ -3917,9 +3929,16 @@ M.funcs = {
       |getbufoneline()|
     ]=],
     name = 'getline',
-    params = { { 'lnum', 'integer' }, { 'end', 'any' } },
-    returns = 'string|string[]',
+    params = { { 'lnum', 'integer' }, { 'end', 'nil|false' } },
     signature = 'getline({lnum} [, {end}])',
+    returns = 'string',
+  },
+  getline__1 = {
+    args = { 2 },
+    base = 1,
+    name = 'getline',
+    params = { { 'lnum', 'integer' }, { 'end', 'true|number|string|table' } },
+    returns = 'string|string[]',
   },
   getloclist = {
     args = { 1, 2 },
@@ -4248,9 +4267,16 @@ M.funcs = {
 
     ]=],
     name = 'getreg',
-    params = { { 'regname', 'string' }, { 'list', 'any' } },
-    returns = 'string|string[]',
+    params = { { 'regname', 'string' }, { 'list', 'nil|false' } },
     signature = 'getreg([{regname} [, 1 [, {list}]]])',
+    returns = 'string',
+  },
+  getreg__1 = {
+    args = { 3 },
+    base = 1,
+    name = 'getreg',
+    params = { { 'regname', 'string' }, { 'list', 'true|number|string|table' } },
+    returns = 'string|string[]',
   },
   getreginfo = {
     args = { 0, 1 },
@@ -6217,10 +6243,22 @@ M.funcs = {
       { 'name', 'string' },
       { 'mode', 'string' },
       { 'abbr', 'boolean' },
-      { 'dict', 'boolean' },
+      { 'dict', 'false' },
+    },
+    signature = 'maparg({name} [, {mode} [, {abbr} [, {dict}]]])',
+    returns = 'string',
+  },
+  maparg__1 = {
+    args = { 4 },
+    base = 1,
+    name = 'maparg',
+    params = {
+      { 'name', 'string' },
+      { 'mode', 'string' },
+      { 'abbr', 'boolean' },
+      { 'dict', 'true' },
     },
     returns = 'string|table<string,any>',
-    signature = 'maparg({name} [, {mode} [, {abbr} [, {dict}]]])',
   },
   mapcheck = {
     args = { 1, 3 },
@@ -6316,6 +6354,13 @@ M.funcs = {
   mapset = {
     args = { 1, 3 },
     base = 1,
+    name = 'mapset',
+    params = { { 'mode', 'string' }, { 'abbr', 'any' }, { 'dict', 'any' } },
+    signature = 'mapset({mode}, {abbr}, {dict})',
+  },
+  mapset__1 = {
+    args = { 1, 3 },
+    base = 1,
     desc = [=[
       Restore a mapping from a dictionary, possibly returned by
       |maparg()| or |maplist()|.  A buffer mapping, when dict.buffer
@@ -6353,8 +6398,8 @@ M.funcs = {
       	endfor
     ]=],
     name = 'mapset',
-    params = { { 'mode', 'string' }, { 'abbr', 'any' }, { 'dict', 'any' } },
-    signature = 'mapset({mode}, {abbr}, {dict})',
+    params = { { 'dict', 'any' } },
+    signature = 'mapset({dict})',
   },
   match = {
     args = { 2, 4 },
@@ -7057,7 +7102,7 @@ M.funcs = {
 
     ]=],
     name = 'mode',
-    params = {},
+    params = { { 'expr', 'any' } },
     signature = 'mode([expr])',
   },
   msgpackdump = {
@@ -11112,9 +11157,16 @@ M.funcs = {
 
     ]=],
     name = 'submatch',
+    params = { { 'nr', 'integer' }, { 'list', 'nil' } },
+    signature = 'submatch({nr} [, {list}])',
+    returns = 'string',
+  },
+  submatch__1 = {
+    args = { 2 },
+    base = 1,
+    name = 'submatch',
     params = { { 'nr', 'integer' }, { 'list', 'integer' } },
     returns = 'string|string[]',
-    signature = 'submatch({nr} [, {list}])',
   },
   substitute = {
     args = 4,

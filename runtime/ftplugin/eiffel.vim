@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	Eiffel
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2010 Aug 29
+" Last Change:	2024 Jan 14
 
 if (exists("b:did_ftplugin"))
   finish
@@ -18,8 +18,12 @@ setlocal formatoptions-=t formatoptions+=croql
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:browsefilter = "Eiffel Source Files (*.e)\t*.e\n" .
-		     \ "Eiffel Control Files (*.ecf, *.ace, *.xace)\t*.ecf;*.ace;*.xace\n" .
-		     \ "All Files (*.*)\t*.*\n"
+		     \ "Eiffel Control Files (*.ecf, *.ace, *.xace)\t*.ecf;*.ace;*.xace\n"
+  if has("win32")
+    let b:browsefilter .= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter .= "All Files (*)\t*\n"
+  endif
 endif
 
 if exists("loaded_matchit") && !exists("b:match_words")

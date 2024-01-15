@@ -32,8 +32,9 @@ Defaults					            *nvim-defaults*
   ":syntax off" to |init.vim|.
 - Default color scheme has been updated. This can result in color schemes
   looking differently due to them relying on how highlight groups are defined
-  by default. Add ":colorscheme vim" to |init.vim| or your color scheme file to
-  restore the old default links and colors.
+  by default. Add ":colorscheme vim" to |init.vim| or
+  ":source $VIMRUNTIME/colors/vim.lua" to your color scheme file to restore
+  the old default links and colors.
 
 - 'autoindent' is enabled
 - 'autoread' is enabled (works in all UIs, including terminal)
@@ -128,6 +129,8 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
 - <C-W> |i_CTRL-W-default|
 - <C-L> |CTRL-L-default|
 - & |&-default|
+- Q |v_Q-default|
+- @ |v_@-default|
 - # |v_#-default|
 - * |v_star-default|
 - Nvim LSP client defaults |lsp-defaults|
@@ -299,8 +302,6 @@ Options:
   global-local string options work.
 
   'autoread'    works in the terminal (if it supports "focus" events)
-  'background'  colorscheme is only reloaded if value is changed, not every
-                time it is set
   'cpoptions'   flags: |cpo-_|
   'diffopt'     "linematch" feature
   'exrc'        searches for ".nvim.lua", ".nvimrc", or ".exrc" files. The
@@ -674,7 +675,7 @@ Options:
   bioskey (MS-DOS)
   conskey (MS-DOS)
   *'cp'* *'nocompatible'* *'nocp'* *'compatible'* (Nvim is always "nocompatible".)
-  'cpoptions' (gjkHw<*- and all POSIX flags were removed)
+  'cpoptions' (gjpkHw<*- and all POSIX flags were removed)
   *'cryptmethod'* *'cm'* *'key'* (Vim encryption implementation)
   cscopepathcomp
   cscopeprg

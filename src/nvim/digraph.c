@@ -19,12 +19,14 @@
 #include "nvim/ex_getln.h"
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/keycodes.h"
 #include "nvim/mapping.h"
 #include "nvim/mbyte.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/normal.h"
@@ -38,7 +40,7 @@
 
 typedef int result_T;
 
-typedef struct digraph {
+typedef struct {
   uint8_t char1;
   uint8_t char2;
   result_T result;
@@ -2042,13 +2044,10 @@ char *keymap_init(void)
     keymap_unload();
     do_cmdline_cmd("unlet! b:keymap_name");
   } else {
-    char *buf;
-    size_t buflen;
-
     // Source the keymap file.  It will contain a ":loadkeymap" command
     // which will call ex_loadkeymap() below.
-    buflen = strlen(curbuf->b_p_keymap) + strlen(p_enc) + 14;
-    buf = xmalloc(buflen);
+    size_t buflen = strlen(curbuf->b_p_keymap) + strlen(p_enc) + 14;
+    char *buf = xmalloc(buflen);
 
     // try finding "keymap/'keymap'_'encoding'.vim"  in 'runtimepath'
     vim_snprintf(buf, buflen, "keymap/%s_%s.vim",
@@ -2130,7 +2129,7 @@ void ex_loadkeymap(exarg_T *eap)
     vim_snprintf(buf, sizeof(buf), "<buffer> %s %s",
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].from,
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].to);
-    (void)do_map(MAPTYPE_MAP, buf, MODE_LANGMAP, false);
+    do_map(MAPTYPE_MAP, buf, MODE_LANGMAP, false);
   }
 
   p_cpo = save_cpo;
@@ -2167,7 +2166,7 @@ static void keymap_unload(void)
 
   for (int i = 0; i < curbuf->b_kmap_ga.ga_len; i++) {
     vim_snprintf(buf, sizeof(buf), "<buffer> %s", kp[i].from);
-    (void)do_map(MAPTYPE_UNMAP, buf, MODE_LANGMAP, false);
+    do_map(MAPTYPE_UNMAP, buf, MODE_LANGMAP, false);
   }
   keymap_ga_clear(&curbuf->b_kmap_ga);
 
@@ -2193,13 +2192,12 @@ bool get_keymap_str(win_T *wp, char *fmt, char *buf, int len)
 
   buf_T *old_curbuf = curbuf;
   win_T *old_curwin = curwin;
-  char *s;
 
   curbuf = wp->w_buffer;
   curwin = wp;
   STRCPY(buf, "b:keymap_name");       // must be writable
   emsg_skip++;
-  s = p = eval_to_string(buf, false);
+  char *s = p = eval_to_string(buf, false);
   emsg_skip--;
   curbuf = old_curbuf;
   curwin = old_curwin;

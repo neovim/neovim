@@ -10,7 +10,8 @@
 
 set background=light
 
-hi clear
+" hi clear
+source $VIMRUNTIME/colors/vim.lua " Nvim: revert to Vim default color scheme
 let g:colors_name = 'delek'
 
 let s:t_Co = &t_Co

@@ -1,5 +1,4 @@
-#ifndef AUTO_CONFIG_H
-#define AUTO_CONFIG_H
+#pragma once
 
 #cmakedefine SIZEOF_INT @SIZEOF_INT@
 #cmakedefine SIZEOF_INTMAX_T @SIZEOF_INTMAX_T@
@@ -53,5 +52,3 @@
 #cmakedefine HAVE_EXECINFO_BACKTRACE
 #cmakedefine HAVE_BUILTIN_ADD_OVERFLOW
 #cmakedefine HAVE_WIMPLICIT_FALLTHROUGH_FLAG
-
-#endif  // AUTO_CONFIG_H

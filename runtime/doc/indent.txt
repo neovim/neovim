@@ -708,15 +708,16 @@ clojure-mode.el:
 
 FORTRAN							*ft-fortran-indent*
 
-Block if, select case, where, and forall constructs are indented.  So are
-type, interface, associate, block, and enum constructs.  The indenting of
-subroutines, functions, modules, and program blocks is optional.  Comments,
-labeled statements, and continuation lines are indented if the Fortran is in
-free source form, whereas they are not indented if the Fortran is in fixed
-source form because of the left margin requirements.  Hence manual indent
-corrections will be necessary for labeled statements and continuation lines
-when fixed source form is being used.  For further discussion of the method
-used for the detection of source format see |ft-fortran-syntax|.
+Block if, select case, select type, select rank,  where, forall, type,
+interface, associate, block, enum, critical, and change team constructs are
+indented. The indenting of subroutines, functions, modules, and program blocks
+is optional. Comments, labeled statements, and continuation lines are indented
+if the Fortran is in free source form, whereas they are not indented if the
+Fortran is in fixed source form because of the left margin requirements. Hence
+manual indent corrections will be necessary for labeled statements and
+continuation lines when fixed source form is being used.  For further
+discussion of the method used for the detection of source format see
+|ft-fortran-syntax|.
 
 Do loops ~
 All do loops are left unindented by default.  Do loops can be unstructured in
@@ -1031,8 +1032,8 @@ r_indent_comment_column, as in the example below:
    let r_indent_comment_column = 30
 <
 Any code after a line that ends with "<-" is indented. Emacs/ESS does not
-indent the code if it is a top level function. If you prefer that the
-Vim-R-plugin behaves like Emacs/ESS in this regard, put in your |vimrc|:
+indent the code if it is a top-level function. If you prefer a behavior like
+Emacs/ESS one in this regard, put in your |vimrc|:
 >
    let r_indent_ess_compatible = 1
 <

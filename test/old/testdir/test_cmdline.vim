@@ -431,11 +431,11 @@ func Test_highlight_completion()
 
   " A cleared group does not show up in completions.
   hi Anders ctermfg=green
-  call assert_equal(['Aardig', 'Anders'], getcompletion('A', 'highlight'))
+  call assert_equal(['Aardig', 'Added', 'Anders'], getcompletion('A', 'highlight'))
   hi clear Aardig
-  call assert_equal(['Anders'], getcompletion('A', 'highlight'))
+  call assert_equal(['Added', 'Anders'], getcompletion('A', 'highlight'))
   hi clear Anders
-  call assert_equal([], getcompletion('A', 'highlight'))
+  call assert_equal(['Added'], getcompletion('A', 'highlight'))
 endfunc
 
 func Test_getcompletion()
@@ -531,6 +531,13 @@ func Test_getcompletion()
   call assert_true(index(l, 'hamster') >= 0)
   let l = getcompletion('horse', 'filetype')
   call assert_equal([], l)
+
+  if has('keymap')
+    let l = getcompletion('acc', 'keymap')
+    call assert_true(index(l, 'accents') >= 0)
+    let l = getcompletion('nullkeymap', 'keymap')
+    call assert_equal([], l)
+  endif
 
   let l = getcompletion('z', 'syntax')
   call assert_true(index(l, 'zimbu') >= 0)

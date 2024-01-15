@@ -1,10 +1,6 @@
 #pragma once
 
-#include "nvim/buffer_defs.h"  // IWYU pragma: keep
-#include "nvim/eval/typval_defs.h"
-#include "nvim/ex_cmds_defs.h"  // IWYU pragma: export
-#include "nvim/os/time_defs.h"
-#include "nvim/pos_defs.h"  // IWYU pragma: keep
+#include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 
 /// flags for do_ecmd()
 enum {
@@ -23,13 +19,6 @@ enum {
   ECMD_LAST  = -1,  ///< use last position in all files
   ECMD_ONE   = 1,   ///< use first line
 };
-
-/// Previous :substitute replacement string definition
-typedef struct {
-  char *sub;            ///< Previous replacement string.
-  Timestamp timestamp;  ///< Time when it was last set.
-  list_T *additional_elements;  ///< Additional data left from ShaDa file.
-} SubReplacementString;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.h.generated.h"

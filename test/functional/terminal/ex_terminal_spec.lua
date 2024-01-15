@@ -1,11 +1,12 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local assert_alive = helpers.assert_alive
-local clear, poke_eventloop, nvim = helpers.clear, helpers.poke_eventloop, helpers.nvim
+local clear, poke_eventloop = helpers.clear, helpers.poke_eventloop
 local testprg, source, eq = helpers.testprg, helpers.source, helpers.eq
 local feed = helpers.feed
 local feed_command, eval = helpers.feed_command, helpers.eval
-local funcs = helpers.funcs
+local fn = helpers.fn
+local api = helpers.api
 local retry = helpers.retry
 local ok = helpers.ok
 local command = helpers.command
@@ -19,10 +20,10 @@ describe(':terminal', function()
   before_each(function()
     clear()
     screen = Screen.new(50, 4)
-    screen:attach({rgb=false})
+    screen:attach({ rgb = false })
   end)
 
-  it("does not interrupt Press-ENTER prompt #2748", function()
+  it('does not interrupt Press-ENTER prompt #2748', function()
     -- Ensure that :messages shows Press-ENTER.
     source([[
       echomsg "msg1"
@@ -30,14 +31,14 @@ describe(':terminal', function()
       echomsg "msg3"
     ]])
     -- Invoke a command that emits frequent terminal activity.
-    feed([[:terminal "]]..testprg('shell-test')..[[" REP 9999 !terminal_output!<cr>]])
+    feed([[:terminal "]] .. testprg('shell-test') .. [[" REP 9999 !terminal_output!<cr>]])
     feed([[<C-\><C-N>]])
     poke_eventloop()
     -- Wait for some terminal activity.
     retry(nil, 4000, function()
-      ok(funcs.line('$') > 6)
+      ok(fn.line('$') > 6)
     end)
-    feed_command("messages")
+    feed_command('messages')
     screen:expect([[
       msg1                                              |
       msg2                                              |
@@ -46,36 +47,40 @@ describe(':terminal', function()
     ]])
   end)
 
-  it("reads output buffer on terminal reporting #4151", function()
+  it('reads output buffer on terminal reporting #4151', function()
     skip(is_ci('cirrus') or is_os('win'))
     if is_os('win') then
-      feed_command([[terminal powershell -NoProfile -NoLogo -Command Write-Host -NoNewline "\"$([char]27)[6n\""; Start-Sleep -Milliseconds 500 ]])
+      feed_command(
+        [[terminal powershell -NoProfile -NoLogo -Command Write-Host -NoNewline "\"$([char]27)[6n\""; Start-Sleep -Milliseconds 500 ]]
+      )
     else
       feed_command([[terminal printf '\e[6n'; sleep 0.5 ]])
     end
-    screen:expect{any='%^%[%[1;1R'}
+    screen:expect { any = '%^%[%[1;1R' }
   end)
 
-  it("in normal-mode :split does not move cursor", function()
+  it('in normal-mode :split does not move cursor', function()
     if is_os('win') then
-      feed_command([[terminal for /L \\%I in (1,0,2) do ( echo foo & ping -w 100 -n 1 127.0.0.1 > nul )]])
+      feed_command(
+        [[terminal for /L \\%I in (1,0,2) do ( echo foo & ping -w 100 -n 1 127.0.0.1 > nul )]]
+      )
     else
       feed_command([[terminal while true; do echo foo; sleep .1; done]])
     end
-    feed([[<C-\><C-N>M]])  -- move cursor away from last line
+    feed([[<C-\><C-N>M]]) -- move cursor away from last line
     poke_eventloop()
-    eq(3, eval("line('$')"))  -- window height
-    eq(2, eval("line('.')"))  -- cursor is in the middle
+    eq(3, eval("line('$')")) -- window height
+    eq(2, eval("line('.')")) -- cursor is in the middle
     feed_command('vsplit')
-    eq(2, eval("line('.')"))  -- cursor stays where we put it
+    eq(2, eval("line('.')")) -- cursor stays where we put it
     feed_command('split')
-    eq(2, eval("line('.')"))  -- cursor stays where we put it
+    eq(2, eval("line('.')")) -- cursor stays where we put it
   end)
 
   it('Enter/Leave does not increment jumplist #3723', function()
     feed_command('terminal')
     local function enter_and_leave()
-      local lines_before = funcs.line('$')
+      local lines_before = fn.line('$')
       -- Create a new line (in the shell). For a normal buffer this
       -- increments the jumplist; for a terminal-buffer it should not. #3723
       feed('i')
@@ -86,44 +91,44 @@ describe(':terminal', function()
       poke_eventloop()
       -- Wait for >=1 lines to be created.
       retry(nil, 4000, function()
-        ok(funcs.line('$') > lines_before)
+        ok(fn.line('$') > lines_before)
       end)
     end
     enter_and_leave()
     enter_and_leave()
     enter_and_leave()
-    ok(funcs.line('$') > 6)   -- Verify assumption.
-    local jumps = funcs.split(funcs.execute('jumps'), '\n')
+    ok(fn.line('$') > 6) -- Verify assumption.
+    local jumps = fn.split(fn.execute('jumps'), '\n')
     eq(' jump line  col file/text', jumps[1])
     eq(3, #jumps)
   end)
 
   it('nvim_get_mode() in :terminal', function()
     command('terminal')
-    eq({ blocking=false, mode='nt' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'nt' }, api.nvim_get_mode())
     feed('i')
-    eq({ blocking=false, mode='t' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
     feed([[<C-\><C-N>]])
-    eq({ blocking=false, mode='nt' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'nt' }, api.nvim_get_mode())
   end)
 
   it(':stopinsert RPC request exits terminal-mode #7807', function()
     command('terminal')
     feed('i[tui] insert-mode')
-    eq({ blocking=false, mode='t' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
     command('stopinsert')
-    feed('<Ignore>')  -- Add input to separate two RPC requests
-    eq({ blocking=false, mode='nt' }, nvim('get_mode'))
+    feed('<Ignore>') -- Add input to separate two RPC requests
+    eq({ blocking = false, mode = 'nt' }, api.nvim_get_mode())
   end)
 
-  it(':stopinsert in normal mode doesn\'t break insert mode #9889', function()
+  it(":stopinsert in normal mode doesn't break insert mode #9889", function()
     command('terminal')
-    eq({ blocking=false, mode='nt' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'nt' }, api.nvim_get_mode())
     command('stopinsert')
-    feed('<Ignore>')  -- Add input to separate two RPC requests
-    eq({ blocking=false, mode='nt' }, nvim('get_mode'))
+    feed('<Ignore>') -- Add input to separate two RPC requests
+    eq({ blocking = false, mode = 'nt' }, api.nvim_get_mode())
     feed('a')
-    eq({ blocking=false, mode='t' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
   end)
 
   it('switching to terminal buffer in Insert mode goes to Terminal mode #7164', function()
@@ -134,10 +139,10 @@ describe(':terminal', function()
     command('autocmd InsertLeave * let g:events += ["InsertLeave"]')
     command('autocmd TermEnter * let g:events += ["TermEnter"]')
     command('inoremap <F2> <Cmd>wincmd p<CR>')
-    eq({ blocking=false, mode='i' }, nvim('get_mode'))
+    eq({ blocking = false, mode = 'i' }, api.nvim_get_mode())
     feed('<F2>')
-    eq({ blocking=false, mode='t' }, nvim('get_mode'))
-    eq({'InsertLeave', 'TermEnter'}, eval('g:events'))
+    eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
+    eq({ 'InsertLeave', 'TermEnter' }, eval('g:events'))
   end)
 end)
 
@@ -153,17 +158,17 @@ local function test_terminal_with_fake_shell(backslash)
   before_each(function()
     clear()
     screen = Screen.new(50, 4)
-    screen:attach({rgb=false})
-    nvim('set_option_value', 'shell', shell_path, {})
-    nvim('set_option_value', 'shellcmdflag', 'EXE', {})
-    nvim('set_option_value', 'shellxquote', '', {})
+    screen:attach({ rgb = false })
+    api.nvim_set_option_value('shell', shell_path, {})
+    api.nvim_set_option_value('shellcmdflag', 'EXE', {})
+    api.nvim_set_option_value('shellxquote', '', {})
   end)
 
   it('with no argument, acts like termopen()', function()
     command('autocmd! nvim_terminal TermClose')
     feed_command('terminal')
     retry(nil, 4 * screen.timeout, function()
-    screen:expect([[
+      screen:expect([[
       ^ready $                                           |
       [Process exited 0]                                |
                                                         |
@@ -173,7 +178,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it("with no argument, and 'shell' is set to empty string", function()
-    nvim('set_option_value', 'shell', '', {})
+    api.nvim_set_option_value('shell', '', {})
     feed_command('terminal')
     screen:expect([[
       ^                                                  |
@@ -183,7 +188,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it("with no argument, but 'shell' has arguments, acts like termopen()", function()
-    nvim('set_option_value', 'shell', shell_path ..' INTERACT', {})
+    api.nvim_set_option_value('shell', shell_path .. ' INTERACT', {})
     feed_command('terminal')
     screen:expect([[
       ^interact $                                        |
@@ -193,7 +198,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it('executes a given command through the shell', function()
-    command('set shellxquote=')   -- win: avoid extra quotes
+    command('set shellxquote=') -- win: avoid extra quotes
     feed_command('terminal echo hi')
     screen:expect([[
       ^ready $ echo hi                                   |
@@ -204,8 +209,8 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it("executes a given command through the shell, when 'shell' has arguments", function()
-    nvim('set_option_value', 'shell', shell_path ..' -t jeff', {})
-    command('set shellxquote=')   -- win: avoid extra quotes
+    api.nvim_set_option_value('shell', shell_path .. ' -t jeff', {})
+    command('set shellxquote=') -- win: avoid extra quotes
     feed_command('terminal echo hi')
     screen:expect([[
       ^jeff $ echo hi                                    |
@@ -216,7 +221,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it('allows quotes and slashes', function()
-    command('set shellxquote=')   -- win: avoid extra quotes
+    command('set shellxquote=') -- win: avoid extra quotes
     feed_command([[terminal echo 'hello' \ "world"]])
     screen:expect([[
       ^ready $ echo 'hello' \ "world"                    |
@@ -230,7 +235,7 @@ local function test_terminal_with_fake_shell(backslash)
     source([[
       autocmd BufNew * set shell=foo
       terminal]])
-      -- Verify that BufNew actually fired (else the test is invalid).
+    -- Verify that BufNew actually fired (else the test is invalid).
     eq('foo', eval('&shell'))
   end)
 
@@ -249,7 +254,7 @@ local function test_terminal_with_fake_shell(backslash)
   it('works with findfile()', function()
     command('autocmd! nvim_terminal TermClose')
     feed_command('terminal')
-    eq('term://', string.match(eval('bufname("%")'), "^term://"))
+    eq('term://', string.match(eval('bufname("%")'), '^term://'))
     eq('scripts/shadacat.py', eval('findfile("scripts/shadacat.py", ".")'))
   end)
 
@@ -262,7 +267,7 @@ local function test_terminal_with_fake_shell(backslash)
                                                         |
       :terminal                                         |
     ]])
-    eq('term://', string.match(eval('bufname("%")'), "^term://"))
+    eq('term://', string.match(eval('bufname("%")'), '^term://'))
     feed([[<C-\><C-N>]])
     feed_command([[find */shadacat.py]])
     if is_os('win') then
@@ -273,10 +278,10 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it('works with gf', function()
-    command('set shellxquote=')   -- win: avoid extra quotes
+    command('set shellxquote=') -- win: avoid extra quotes
     feed_command([[terminal echo "scripts/shadacat.py"]])
     retry(nil, 4 * screen.timeout, function()
-    screen:expect([[
+      screen:expect([[
       ^ready $ echo "scripts/shadacat.py"                |
                                                         |
       [Process exited 0]                                |
@@ -284,7 +289,7 @@ local function test_terminal_with_fake_shell(backslash)
     ]])
     end)
     feed([[<C-\><C-N>]])
-    eq('term://', string.match(eval('bufname("%")'), "^term://"))
+    eq('term://', string.match(eval('bufname("%")'), '^term://'))
     feed([[ggf"lgf]])
     eq('scripts/shadacat.py', eval('bufname("%")'))
   end)

@@ -59,11 +59,7 @@ typedef struct {
   uint16_t flags;
   DecorPriority priority;
   int hl_id;  // if sign: highlight of sign text
-  // TODO(bfredl): Later signs should use sc[2] as well.
-  union {
-    char *ptr;  // sign
-    schar_T sc[2];  // conceal text (only sc[0] used)
-  } text;
+  schar_T text[SIGN_WIDTH];  // conceal text only uses text[0]
   // NOTE: if more functionality is added to a Highlight these should be overloaded
   // or restructured
   char *sign_name;
@@ -74,13 +70,14 @@ typedef struct {
   uint32_t next;
 } DecorSignHighlight;
 
-#define DECOR_SIGN_HIGHLIGHT_INIT { 0, DECOR_PRIORITY_BASE, 0, { .ptr = NULL }, NULL, 0, 0, 0, 0, \
+#define DECOR_SIGN_HIGHLIGHT_INIT { 0, DECOR_PRIORITY_BASE, 0, { 0, 0 }, NULL, 0, 0, 0, 0, \
                                     DECOR_ID_INVALID }
 
 enum {
   kVTIsLines = 1,
   kVTHide = 2,
   kVTLinesAbove = 4,
+  kVTRepeatLinebreak = 8,
 };
 
 typedef struct DecorVirtText DecorVirtText;
@@ -125,3 +122,26 @@ typedef struct {
 
 // initializes in a valid state for the DecorHighlightInline branch
 #define DECOR_INLINE_INIT { .ext = false, .data.hl = DECOR_HIGHLIGHT_INLINE_INIT }
+
+typedef struct {
+  NS ns_id;
+
+  enum {
+    kDecorProviderActive = 1,
+    kDecorProviderWinDisabled = 2,
+    kDecorProviderRedrawDisabled = 3,
+    kDecorProviderDisabled = 4,
+  } state;
+
+  LuaRef redraw_start;
+  LuaRef redraw_buf;
+  LuaRef redraw_win;
+  LuaRef redraw_line;
+  LuaRef redraw_end;
+  LuaRef hl_def;
+  LuaRef spell_nav;
+  int hl_valid;
+  bool hl_cached;
+
+  uint8_t error_count;
+} DecorProvider;

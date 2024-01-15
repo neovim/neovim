@@ -10,11 +10,13 @@
 #include "nvim/api/win_config.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/globals.h"
-#include "nvim/grid.h"
+#include "nvim/grid_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
@@ -23,7 +25,9 @@
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
+#include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_defs.h"
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 
@@ -67,7 +71,6 @@
 /// ```lua
 /// vim.api.nvim_open_win(0, false,
 ///   {relative='win', width=12, height=3, bufpos={100,10}})
-/// })
 /// ```
 ///
 /// @param buffer Buffer to display, or 0 for current buffer

@@ -5,7 +5,7 @@
 /// Structure used for growing arrays.
 /// This is used to store information that only grows, is deleted all at
 /// once, and needs to be accessed by index.  See ga_clear() and ga_grow().
-typedef struct growarray {
+typedef struct {
   int ga_len;                       // current number of items used
   int ga_maxlen;                    // maximum number of items possible
   int ga_itemsize;                  // sizeof(item)

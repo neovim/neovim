@@ -39,7 +39,6 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
 #include <time.h>
 #include <uv.h>
 
@@ -47,6 +46,7 @@
 #include "klib/kvec.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
@@ -57,9 +57,10 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/input.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
@@ -67,16 +68,21 @@
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memfile.h"
+#include "nvim/memfile_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
+#include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
+#include "nvim/os/fs_defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/process.h"
 #include "nvim/os/time.h"
+#include "nvim/os/time_defs.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/spell.h"
@@ -330,7 +336,7 @@ int ml_open(buf_T *buf)
     b0p->b0_dirty = buf->b_changed ? B0_DIRTY : 0;
     b0p->b0_flags = (char)(get_fileformat(buf) + 1);
     set_b0_fname(b0p, buf);
-    (void)os_get_username(b0p->b0_uname, B0_UNAME_SIZE);
+    os_get_username(b0p->b0_uname, B0_UNAME_SIZE);
     b0p->b0_uname[B0_UNAME_SIZE - 1] = NUL;
     os_get_hostname(b0p->b0_hname, B0_HNAME_SIZE);
     b0p->b0_hname[B0_HNAME_SIZE - 1] = NUL;
@@ -344,7 +350,7 @@ int ml_open(buf_T *buf)
   // is created.
   mf_put(mfp, hp, true, false);
   if (!buf->b_help && !buf->b_spell) {
-    (void)mf_sync(mfp, 0);
+    mf_sync(mfp, 0);
   }
 
   // Fill in root pointer block and write page 1.
@@ -450,7 +456,7 @@ void ml_setname(buf_T *buf)
       emsg(_("E301: Oops, lost the swap file!!!"));
       return;
     }
-    (void)os_set_cloexec(mfp->mf_fd);
+    os_set_cloexec(mfp->mf_fd);
   }
   if (!success) {
     emsg(_("E302: Could not rename swap file"));
@@ -485,7 +491,7 @@ void ml_open_file(buf_T *buf)
   if (buf->b_spell) {
     char *fname = vim_tempname();
     if (fname != NULL) {
-      (void)mf_open_file(mfp, fname);           // consumes fname!
+      mf_open_file(mfp, fname);           // consumes fname!
     }
     buf->b_may_swap = false;
     return;
@@ -529,8 +535,8 @@ void ml_open_file(buf_T *buf)
   if (*p_dir != NUL && mfp->mf_fname == NULL) {
     need_wait_return = true;  // call wait_return() later
     no_wait_return++;
-    (void)semsg(_("E303: Unable to open swap file for \"%s\", recovery impossible"),
-                buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname);
+    semsg(_("E303: Unable to open swap file for \"%s\", recovery impossible"),
+          buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname);
     no_wait_return--;
   }
 
@@ -794,7 +800,7 @@ void ml_recover(bool checkext)
       i = 1;
     } else {  // several swapfiles found, choose
       // list the names of the swapfiles
-      (void)recover_names(fname, true, NULL, 0, NULL);
+      recover_names(fname, true, NULL, 0, NULL);
       msg_putchar('\n');
       msg_puts(_("Enter number of swap file to use (0 to quit): "));
       i = get_number(false, NULL);
@@ -803,7 +809,7 @@ void ml_recover(bool checkext)
       }
     }
     // get the swapfile name that will be used
-    (void)recover_names(fname, false, NULL, i, &fname_used);
+    recover_names(fname, false, NULL, i, &fname_used);
   }
   if (fname_used == NULL) {
     goto theend;  // user chose invalid number.
@@ -1291,7 +1297,7 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
     // Isolate a directory name from *dirp and put it in dir_name (we know
     // it is large enough, so use 31000 for length).
     // Advance dirp to next directory name.
-    (void)copy_option_part(&dirp, dir_name, 31000, ",");
+    copy_option_part(&dirp, dir_name, 31000, ",");
 
     if (dir_name[0] == '.' && dir_name[1] == NUL) {     // check current dir
       if (fname == NULL) {
@@ -1402,7 +1408,7 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
           msg_puts(".    ");
           msg_puts(path_tail(files[i]));
           msg_putchar('\n');
-          (void)swapfile_info(files[i]);
+          swapfile_info(files[i]);
         }
       } else {
         msg_puts(_("      -- none --\n"));
@@ -1641,7 +1647,7 @@ static bool swapfile_unchanged(char *fname)
   return ret;
 }
 
-static int recov_file_names(char **names, char *path, int prepend_dot)
+static int recov_file_names(char **names, char *path, bool prepend_dot)
   FUNC_ATTR_NONNULL_ALL
 {
   int num_names = 0;
@@ -1690,7 +1696,7 @@ void ml_sync_all(int check_file, int check_char, bool do_fsync)
     }
     ml_flush_line(buf);                     // flush buffered line
                                             // flush locked block
-    (void)ml_find_line(buf, 0, ML_FLUSH);
+    ml_find_line(buf, 0, ML_FLUSH);
     if (bufIsChanged(buf) && check_file && mf_need_trans(buf->b_ml.ml_mfp)
         && buf->b_ffname != NULL) {
       // If the original file does not exist anymore or has been changed
@@ -1706,8 +1712,8 @@ void ml_sync_all(int check_file, int check_char, bool do_fsync)
       }
     }
     if (buf->b_ml.ml_mfp->mf_dirty == MF_DIRTY_YES) {
-      (void)mf_sync(buf->b_ml.ml_mfp, (check_char ? MFS_STOP : 0)
-                    | (do_fsync && bufIsChanged(buf) ? MFS_FLUSH : 0));
+      mf_sync(buf->b_ml.ml_mfp, (check_char ? MFS_STOP : 0)
+              | (do_fsync && bufIsChanged(buf) ? MFS_FLUSH : 0));
       if (check_char && os_char_avail()) {      // character available now
         break;
       }
@@ -1723,7 +1729,7 @@ void ml_sync_all(int check_file, int check_char, bool do_fsync)
 /// changed or deleted.
 ///
 /// @param message  if true, the success of preserving is reported.
-void ml_preserve(buf_T *buf, int message, bool do_fsync)
+void ml_preserve(buf_T *buf, bool message, bool do_fsync)
 {
   memfile_T *mfp = buf->b_ml.ml_mfp;
   int got_int_save = got_int;
@@ -1740,7 +1746,7 @@ void ml_preserve(buf_T *buf, int message, bool do_fsync)
   got_int = false;
 
   ml_flush_line(buf);                               // flush buffered line
-  (void)ml_find_line(buf, 0, ML_FLUSH);   // flush locked block
+  ml_find_line(buf, 0, ML_FLUSH);   // flush locked block
   int status = mf_sync(mfp, MFS_ALL | (do_fsync ? MFS_FLUSH : 0));
 
   // stack is invalid after mf_sync(.., MFS_ALL)
@@ -1767,7 +1773,7 @@ void ml_preserve(buf_T *buf, int message, bool do_fsync)
       CHECK(buf->b_ml.ml_locked_low != lnum, "low != lnum");
       lnum = buf->b_ml.ml_locked_high + 1;
     }
-    (void)ml_find_line(buf, 0, ML_FLUSH);  // flush locked block
+    ml_find_line(buf, 0, ML_FLUSH);  // flush locked block
     // sync the updated pointer blocks
     if (mf_sync(mfp, MFS_ALL | (do_fsync ? MFS_FLUSH : 0)) == FAIL) {
       status = FAIL;
@@ -1988,7 +1994,8 @@ int ml_append_buf(buf_T *buf, linenr_T lnum, char *line, colnr_T len, bool newfi
 /// @param len  length of line, including NUL, or 0
 /// @param newfile  flag, see above
 /// @param mark  mark the new line
-static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, bool newfile, int mark)
+static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, bool newfile,
+                         bool mark)
 {
   // lnum out of range
   if (lnum > buf->b_ml.ml_line_count || buf->b_ml.ml_mfp == NULL) {
@@ -2241,7 +2248,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
     // pointer blocks is done below
     int lineadd = buf->b_ml.ml_locked_lineadd;
     buf->b_ml.ml_locked_lineadd = 0;
-    (void)ml_find_line(buf, 0, ML_FLUSH);  // flush data block
+    ml_find_line(buf, 0, ML_FLUSH);  // flush data block
 
     // update pointer blocks for the new data block
     for (stack_idx = buf->b_ml.ml_stack_top - 1; stack_idx >= 0; stack_idx--) {
@@ -2288,8 +2295,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
           // fix line count for rest of blocks in the stack
           ml_lineadd(buf, lineadd);
           // fix stack itself
-          buf->b_ml.ml_stack[buf->b_ml.ml_stack_top].ip_high +=
-            lineadd;
+          buf->b_ml.ml_stack[buf->b_ml.ml_stack_top].ip_high += lineadd;
           (buf->b_ml.ml_stack_top)++;
         }
 
@@ -2787,9 +2793,9 @@ static void ml_flush_line(buf_T *buf)
         // that has only one line.
         // Don't forget to copy the mark!
         // How about handling errors???
-        (void)ml_append_int(buf, lnum, new_line, new_len, false,
-                            (int)(dp->db_index[idx] & DB_MARKED));
-        (void)ml_delete_int(buf, lnum, false);
+        ml_append_int(buf, lnum, new_line, new_len, false,
+                      (int)(dp->db_index[idx] & DB_MARKED));
+        ml_delete_int(buf, lnum, false);
       }
     }
     xfree(new_line);
@@ -3207,7 +3213,7 @@ static void attention_message(buf_T *buf, char *fname)
   assert(buf->b_fname != NULL);
 
   no_wait_return++;
-  (void)emsg(_("E325: ATTENTION"));
+  emsg(_("E325: ATTENTION"));
   msg_puts(_("\nFound a swap file by the name \""));
   msg_home_replace(fname);
   msg_puts("\"\n");
@@ -3310,7 +3316,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
   // First allocate some memory to put the directory name in.
   const size_t dir_len = strlen(*dirp) + 1;
   char *dir_name = xmalloc(dir_len);
-  (void)copy_option_part(dirp, dir_name, dir_len, ",");
+  copy_option_part(dirp, dir_name, dir_len, ",");
 
   // We try different swapfile names until we find one that does not exist yet.
   char *fname = makeswapname(buf_fname, buf->b_ffname, buf, dir_name);
@@ -3347,7 +3353,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
       if (!recoverymode && buf_fname != NULL && !buf->b_help && !(buf->b_flags & BF_DUMMY)) {
         int fd;
         ZeroBlock b0;
-        int differ = false;
+        bool differ = false;
 
         // Try to read block 0 from the swapfile to get the original file name (and inode number).
         fd = os_open(fname, O_RDONLY, 0);
@@ -3386,7 +3392,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
         // Show the ATTENTION message when:
         //  - there is an old swapfile for the current file
         //  - the buffer was not recovered
-        if (differ == false && !(curbuf->b_flags & BF_RECOVERED)
+        if (!differ && !(curbuf->b_flags & BF_RECOVERED)
             && vim_strchr(p_shm, SHM_ATTENTION) == NULL) {
           sea_choice_T choice = SEA_CHOICE_NONE;
 

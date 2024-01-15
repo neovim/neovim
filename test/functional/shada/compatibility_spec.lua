@@ -1,11 +1,11 @@
 -- ShaDa compatibility support
 local helpers = require('test.functional.helpers')(after_each)
-local nvim_command, funcs, eq = helpers.command, helpers.funcs, helpers.eq
+local nvim_command, fn, eq = helpers.command, helpers.fn, helpers.eq
 local exc_exec = helpers.exc_exec
 
 local shada_helpers = require('test.functional.shada.helpers')
-local reset, clear, get_shada_rw = shada_helpers.reset, shada_helpers.clear,
-  shada_helpers.get_shada_rw
+local reset, clear, get_shada_rw =
+  shada_helpers.reset, shada_helpers.clear, shada_helpers.get_shada_rw
 local read_shada_file = shada_helpers.read_shada_file
 
 local wshada, sdrcmd, shada_fname = get_shada_rw('Xtest-functional-shada-compatibility.shada')
@@ -49,11 +49,11 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(true, found)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
     nvim_command('rshada! ' .. shada_fname)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
   end)
 
   it('works with s/search pattern item with BOOL unknown (sX) key value', function()
@@ -81,11 +81,11 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(true, found)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
     nvim_command('rshada!' .. shada_fname)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
   end)
 
   it('works with replacement item with BOOL additional value in list', function()
@@ -114,22 +114,32 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(true, found)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
     nvim_command('rshada!' .. shada_fname)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
   end)
 
-  for _, v in ipairs({{name='global mark', mpack='\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161nA'},
-                      {name='jump', mpack='\008\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\002'},
-                      {name='local mark', mpack='\010\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161na'},
-                      {name='change', mpack='\011\001\015\130\162mX\195\161f\196\006' .. mock_file_path .. 'c'},
-                     }) do
+  for _, v in ipairs({
+    {
+      name = 'global mark',
+      mpack = '\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161nA',
+    },
+    {
+      name = 'jump',
+      mpack = '\008\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\002',
+    },
+    {
+      name = 'local mark',
+      mpack = '\010\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161na',
+    },
+    { name = 'change', mpack = '\011\001\015\130\162mX\195\161f\196\006' .. mock_file_path .. 'c' },
+  }) do
     it('works with ' .. v.name .. ' item with BOOL unknown (mX) key value', function()
       nvim_command('silent noautocmd edit ' .. mock_file_path .. 'c')
-      eq('' .. mock_file_path .. 'c', funcs.bufname('%'))
-      funcs.setline('.', {'1', '2', '3'})
+      eq('' .. mock_file_path .. 'c', fn.bufname('%'))
+      fn.setline('.', { '1', '2', '3' })
       wshada(v.mpack)
       eq(0, exc_exec(sdrcmd(true)))
       os.remove(shada_fname)
@@ -145,7 +155,7 @@ describe('ShaDa forward compatibility support code', function()
       eq(true, found)
       eq(0, exc_exec(sdrcmd()))
       nvim_command('bwipeout!')
-      funcs.setpos('\'A', {0, 1, 1, 0})
+      fn.setpos("'A", { 0, 1, 1, 0 })
       os.remove(shada_fname)
       nvim_command('wshada ' .. shada_fname)
       found = false
@@ -157,21 +167,25 @@ describe('ShaDa forward compatibility support code', function()
         end
       end
       eq(false, found)
-      funcs.garbagecollect(1)
-      funcs.garbagecollect(1)
+      fn.garbagecollect(1)
+      fn.garbagecollect(1)
       nvim_command('rshada!' .. shada_fname)
-      funcs.garbagecollect(1)
-      funcs.garbagecollect(1)
+      fn.garbagecollect(1)
+      fn.garbagecollect(1)
     end)
 
     if v.name == 'global mark' or v.name == 'local mark' then
       it('works with ' .. v.name .. ' item with <C-a> name', function()
         nvim_command('silent noautocmd edit ' .. mock_file_path .. 'c')
-        eq('' .. mock_file_path .. 'c', funcs.bufname('%'))
-        funcs.setline('.', {'1', '2', '3'})
-        wshada(v.mpack:gsub('n.$', 'n\001')
-               .. v.mpack:gsub('n.$', 'n\002')
-               .. v.mpack:gsub('n.$', 'n\003'):gsub('' .. mock_file_path .. 'c', '' .. mock_file_path2 .. 'f'))
+        eq('' .. mock_file_path .. 'c', fn.bufname('%'))
+        fn.setline('.', { '1', '2', '3' })
+        wshada(
+          v.mpack:gsub('n.$', 'n\001')
+            .. v.mpack:gsub('n.$', 'n\002')
+            .. v.mpack
+              :gsub('n.$', 'n\003')
+              :gsub('' .. mock_file_path .. 'c', '' .. mock_file_path2 .. 'f')
+        )
         eq(0, exc_exec(sdrcmd(true)))
         nvim_command('wshada ' .. shada_fname)
         local found = 0
@@ -199,11 +213,11 @@ describe('ShaDa forward compatibility support code', function()
           end
         end
         eq(0, found)
-        funcs.garbagecollect(1)
-        funcs.garbagecollect(1)
+        fn.garbagecollect(1)
+        fn.garbagecollect(1)
         nvim_command('rshada!' .. shada_fname)
-        funcs.garbagecollect(1)
-        funcs.garbagecollect(1)
+        fn.garbagecollect(1)
+        fn.garbagecollect(1)
       end)
     end
   end
@@ -231,11 +245,11 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(false, found)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
     nvim_command('rshada!' .. shada_fname)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
   end)
 
   it('works with register item with <C-a> name', function()
@@ -267,18 +281,18 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(0, found)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
     nvim_command('rshada!' .. shada_fname)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
   end)
 
   it('works with register item with type 10', function()
     wshada('\005\001\019\132\161na\162rX\194\162rc\145\196\001-\162rt\010')
     eq(0, exc_exec(sdrcmd(true)))
-    eq({}, funcs.getreg('a', 1, 1))
-    eq('', funcs.getregtype('a'))
+    eq({}, fn.getreg('a', 1, 1))
+    eq('', fn.getregtype('a'))
     nvim_command('wshada ' .. shada_fname)
     local found = 0
     for i, v in ipairs(read_shada_file(shada_fname)) do
@@ -305,19 +319,19 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(0, found)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
     nvim_command('rshada!' .. shada_fname)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
   end)
 
   it('works with buffer list item with BOOL unknown (bX) key', function()
     nvim_command('set shada+=%')
     wshada('\009\000\016\145\130\161f\196\006' .. mock_file_path .. 'c\162bX\195')
     eq(0, exc_exec(sdrcmd()))
-    eq(2, funcs.bufnr('$'))
-    eq('' .. mock_file_path .. 'c', funcs.bufname(2))
+    eq(2, fn.bufnr('$'))
+    eq('' .. mock_file_path .. 'c', fn.bufname(2))
     os.remove(shada_fname)
     nvim_command('wshada ' .. shada_fname)
     local found = false
@@ -340,11 +354,11 @@ describe('ShaDa forward compatibility support code', function()
     end
     eq(false, found)
     nvim_command('bwipeout!')
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
     nvim_command('rshada!' .. shada_fname)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
   end)
 
   it('works with history item with BOOL additional value in list', function()
@@ -363,8 +377,8 @@ describe('ShaDa forward compatibility support code', function()
     eq(true, found)
     eq(0, exc_exec(sdrcmd()))
     os.remove(shada_fname)
-    funcs.histadd(':', '--')
-    funcs.histadd(':', '-')
+    fn.histadd(':', '--')
+    fn.histadd(':', '-')
     nvim_command('wshada ' .. shada_fname)
     found = false
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -374,11 +388,11 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(true, found)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
     nvim_command('rshada!' .. shada_fname)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
   end)
 
   it('works with history item with type 10', function()
@@ -411,11 +425,11 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(0, found)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
     nvim_command('rshada!' .. shada_fname)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
   end)
 
   it('works with item with 100 type', function()
@@ -448,10 +462,10 @@ describe('ShaDa forward compatibility support code', function()
       end
     end
     eq(0, found)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
     nvim_command('rshada!' .. shada_fname)
-    funcs.garbagecollect(1)
-    funcs.garbagecollect(1)
+    fn.garbagecollect(1)
+    fn.garbagecollect(1)
   end)
 end)

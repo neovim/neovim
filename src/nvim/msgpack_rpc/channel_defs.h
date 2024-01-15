@@ -4,11 +4,7 @@
 #include <stdbool.h>
 #include <uv.h>
 
-#include "klib/kvec.h"
-#include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
-#include "nvim/event/process.h"
-#include "nvim/event/socket.h"
 #include "nvim/map_defs.h"
 
 typedef struct Channel Channel;

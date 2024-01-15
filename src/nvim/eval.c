@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/types.h>
+#include <uv.h>
 
 #include "auto/config.h"
 #include "nvim/api/private/converter.h"
@@ -30,28 +30,31 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
+#include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/process.h"
+#include "nvim/event/time.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
-#include "nvim/ex_session.h"
 #include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid_defs.h"
 #include "nvim/hashtab.h"
 #include "nvim/highlight_group.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
-#include "nvim/lib/queue.h"
+#include "nvim/lib/queue_defs.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
 #include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -64,8 +67,10 @@
 #include "nvim/optionstr.h"
 #include "nvim/os/fileio.h"
 #include "nvim/os/fs.h"
+#include "nvim/os/fs_defs.h"
 #include "nvim/os/lang.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/stdpaths_defs.h"
 #include "nvim/path.h"
@@ -73,13 +78,16 @@
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
+#include "nvim/regexp_defs.h"
 #include "nvim/runtime.h"
+#include "nvim/runtime_defs.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
+#include "nvim/ui_defs.h"
 #include "nvim/usercmd.h"
 #include "nvim/version.h"
 #include "nvim/vim_defs.h"
@@ -88,8 +96,6 @@
 // TODO(ZyX-I): Remove DICT_MAXNEST, make users be non-recursive instead
 
 #define DICT_MAXNEST 100        // maximum nesting of lists and dicts
-
-#define MAX_CALLBACK_DEPTH 20
 
 static const char *e_missbrac = N_("E111: Missing ']'");
 static const char *e_list_end = N_("E697: Missing end of List ']': %s");
@@ -188,6 +194,7 @@ static struct vimvar {
   VV(VV_VERSION,          "version",          VAR_NUMBER, VV_COMPAT + VV_RO),
   VV(VV_LNUM,             "lnum",             VAR_NUMBER, VV_RO_SBX),
   VV(VV_TERMRESPONSE,     "termresponse",     VAR_STRING, VV_RO),
+  VV(VV_TERMREQUEST,      "termrequest",      VAR_STRING, VV_RO),
   VV(VV_FNAME,            "fname",            VAR_STRING, VV_RO),
   VV(VV_LANG,             "lang",             VAR_STRING, VV_RO),
   VV(VV_LC_TIME,          "lc_time",          VAR_STRING, VV_RO),
@@ -532,7 +539,7 @@ void eval_clear(void)
   free_autoload_scriptnames();
 
   // unreferenced lists and dicts
-  (void)garbage_collect(false);
+  garbage_collect(false);
 
   // functions not garbage collected
   free_all_functions();
@@ -563,7 +570,7 @@ static char *redir_varname = NULL;
 /// @param append  append to an existing variable
 ///
 /// @return  OK if successfully completed the setup.  FAIL otherwise.
-int var_redir_start(char *name, int append)
+int var_redir_start(char *name, bool append)
 {
   // Catch a bad name early.
   if (!eval_isnamec1(*name)) {
@@ -764,7 +771,7 @@ void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
 /// @param skip  only parse, don't execute
 ///
 /// @return  true or false.
-int eval_to_bool(char *arg, bool *error, exarg_T *eap, int skip)
+bool eval_to_bool(char *arg, bool *error, exarg_T *eap, bool skip)
 {
   typval_T tv;
   bool retval = false;
@@ -1729,7 +1736,7 @@ void clear_lval(lval_T *lp)
 /// @param endp  points to just after the parsed name.
 /// @param op    NULL, "+" for "+=", "-" for "-=", "*" for "*=", "/" for "/=",
 ///              "%" for "%=", "." for ".=" or "=" for "=".
-void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool is_const,
+void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, bool copy, const bool is_const,
                   const char *op)
 {
   int cc;
@@ -1798,8 +1805,8 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
       return;
     }
 
-    (void)tv_list_assign_range(lp->ll_list, rettv->vval.v_list,
-                               lp->ll_n1, lp->ll_n2, lp->ll_empty2, op, lp->ll_name);
+    tv_list_assign_range(lp->ll_list, rettv->vval.v_list,
+                         lp->ll_n1, lp->ll_n2, lp->ll_empty2, op, lp->ll_name);
   } else {
     typval_T oldtv = TV_INITIAL_VALUE;
     dict_T *dict = lp->ll_dict;
@@ -2862,7 +2869,8 @@ static int eval5(char **arg, typval_T *rettv, evalarg_T *const evalarg)
       } else {
         bool error = false;
         varnumber_T n1, n2;
-        float_T f1 = 0, f2 = 0;
+        float_T f1 = 0;
+        float_T f2 = 0;
 
         if (rettv->v_type == VAR_FLOAT) {
           f1 = rettv->vval.v_float;
@@ -2953,7 +2961,8 @@ static int eval6(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
     }
 
     varnumber_T n1, n2;
-    float_T f1 = 0, f2 = 0;
+    float_T f1 = 0;
+    float_T f2 = 0;
     bool error = false;
     const bool evaluate = evalarg == NULL ? 0 : (evalarg->eval_flags & EVAL_EVALUATE);
     if (evaluate) {
@@ -6059,7 +6068,7 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
                    typval_T *const rettv)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (callback_depth > MAX_CALLBACK_DEPTH) {
+  if (callback_depth > p_mfd) {
     emsg(_(e_command_too_recursive));
     return false;
   }
@@ -8160,7 +8169,7 @@ const char *find_option_var_end(const char **const arg, OptIndex *const opt_idxp
   return end;
 }
 
-static var_flavour_T var_flavour(char *varname)
+var_flavour_T var_flavour(char *varname)
   FUNC_ATTR_PURE
 {
   char *p = varname;
@@ -8176,48 +8185,6 @@ static var_flavour_T var_flavour(char *varname)
   return VAR_FLAVOUR_DEFAULT;
 }
 
-/// Iterate over global variables
-///
-/// @warning No modifications to global variable dictionary must be performed
-///          while iteration is in progress.
-///
-/// @param[in]   iter   Iterator. Pass NULL to start iteration.
-/// @param[out]  name   Variable name.
-/// @param[out]  rettv  Variable value.
-///
-/// @return Pointer that needs to be passed to next `var_shada_iter` invocation
-///         or NULL to indicate that iteration is over.
-const void *var_shada_iter(const void *const iter, const char **const name, typval_T *rettv,
-                           var_flavour_T flavour)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
-{
-  const hashitem_T *hi;
-  const hashitem_T *hifirst = globvarht.ht_array;
-  const size_t hinum = (size_t)globvarht.ht_mask + 1;
-  *name = NULL;
-  if (iter == NULL) {
-    hi = globvarht.ht_array;
-    while ((size_t)(hi - hifirst) < hinum
-           && (HASHITEM_EMPTY(hi)
-               || !(var_flavour(hi->hi_key) & flavour))) {
-      hi++;
-    }
-    if ((size_t)(hi - hifirst) == hinum) {
-      return NULL;
-    }
-  } else {
-    hi = (const hashitem_T *)iter;
-  }
-  *name = TV_DICT_HI2DI(hi)->di_key;
-  tv_copy(&TV_DICT_HI2DI(hi)->di_tv, rettv);
-  while ((size_t)(++hi - hifirst) < hinum) {
-    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flavour)) {
-      return hi;
-    }
-  }
-  return NULL;
-}
-
 void var_set_global(const char *const name, typval_T vartv)
 {
   funccal_entry_T funccall_entry;
@@ -8225,50 +8192,6 @@ void var_set_global(const char *const name, typval_T vartv)
   save_funccal(&funccall_entry);
   set_var(name, strlen(name), &vartv, false);
   restore_funccal();
-}
-
-int store_session_globals(FILE *fd)
-{
-  TV_DICT_ITER(&globvardict, this_var, {
-    if ((this_var->di_tv.v_type == VAR_NUMBER
-         || this_var->di_tv.v_type == VAR_STRING)
-        && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
-      // Escape special characters with a backslash.  Turn a LF and
-      // CR into \n and \r.
-      char *const p = vim_strsave_escaped(tv_get_string(&this_var->di_tv), "\\\"\n\r");
-      for (char *t = p; *t != NUL; t++) {
-        if (*t == '\n') {
-          *t = 'n';
-        } else if (*t == '\r') {
-          *t = 'r';
-        }
-      }
-      if ((fprintf(fd, "let %s = %c%s%c",
-                   this_var->di_key,
-                   ((this_var->di_tv.v_type == VAR_STRING) ? '"' : ' '),
-                   p,
-                   ((this_var->di_tv.v_type == VAR_STRING) ? '"' : ' ')) < 0)
-          || put_eol(fd) == FAIL) {
-        xfree(p);
-        return FAIL;
-      }
-      xfree(p);
-    } else if (this_var->di_tv.v_type == VAR_FLOAT
-               && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
-      float_T f = this_var->di_tv.vval.v_float;
-      int sign = ' ';
-
-      if (f < 0) {
-        f = -f;
-        sign = '-';
-      }
-      if ((fprintf(fd, "let %s = %c%f", this_var->di_key, sign, f) < 0)
-          || put_eol(fd) == FAIL) {
-        return FAIL;
-      }
-    }
-  });
-  return OK;
 }
 
 /// Display script name where an item was last set.
@@ -8672,9 +8595,9 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
       int i = (int)(regmatch.startp[0] - tail);
       memmove((char *)ga.ga_data + ga.ga_len, tail, (size_t)i);
       // add the substituted text
-      (void)vim_regsub(&regmatch, sub, expr,
-                       (char *)ga.ga_data + ga.ga_len + i, sublen,
-                       REGSUB_COPY | REGSUB_MAGIC);
+      vim_regsub(&regmatch, sub, expr,
+                 (char *)ga.ga_data + ga.ga_len + i, sublen,
+                 REGSUB_COPY | REGSUB_MAGIC);
       ga.ga_len += i + sublen - 1;
       tail = regmatch.endp[0];
       if (*tail == NUL) {
@@ -8814,7 +8737,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
   funcexe.fe_firstline = curwin->w_cursor.lnum;
   funcexe.fe_lastline = curwin->w_cursor.lnum;
   funcexe.fe_evaluate = true;
-  (void)call_func(func, name_len, &rettv, 2, argvars, &funcexe);
+  call_func(func, name_len, &rettv, 2, argvars, &funcexe);
 
   tv_list_unref(arguments);
   // Restore caller scope information
@@ -8895,32 +8818,6 @@ void eval_fmt_source_name_line(char *buf, size_t bufsize)
   } else {
     snprintf(buf, bufsize, "?");
   }
-}
-
-/// ":checkhealth [plugins]"
-void ex_checkhealth(exarg_T *eap)
-{
-  Error err = ERROR_INIT;
-  MAXSIZE_TEMP_ARRAY(args, 1);
-  ADD_C(args, CSTR_AS_OBJ(eap->arg));
-  NLUA_EXEC_STATIC("return vim.health._check(...)", args, &err);
-  if (!ERROR_SET(&err)) {
-    return;
-  }
-
-  const char *vimruntime_env = os_getenv("VIMRUNTIME");
-  if (vimruntime_env == NULL) {
-    emsg(_("E5009: $VIMRUNTIME is empty or unset"));
-  } else {
-    bool rtp_ok = NULL != strstr(p_rtp, vimruntime_env);
-    if (rtp_ok) {
-      semsg(_("E5009: Invalid $VIMRUNTIME: %s"), vimruntime_env);
-    } else {
-      emsg(_("E5009: Invalid 'runtimepath'"));
-    }
-  }
-  semsg_multiline(err.msg);
-  api_clear_error(&err);
 }
 
 void invoke_prompt_callback(void)

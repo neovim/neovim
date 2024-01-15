@@ -1,19 +1,18 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <uv.h>
 
 #include "klib/klist.h"
-#include "nvim/event/multiqueue.h"
-#include "nvim/os/time.h"
+#include "nvim/event/defs.h"  // IWYU pragma: keep
+#include "nvim/types_defs.h"  // IWYU pragma: keep
 
 typedef void *WatcherPtr;
 
 #define _NOOP(x)
 KLIST_INIT(WatcherPtr, WatcherPtr, _NOOP)
 
-typedef struct loop {
+struct loop {
   uv_loop_t uv;
   MultiQueue *events;
   MultiQueue *thread_events;
@@ -42,46 +41,7 @@ typedef struct loop {
   uv_mutex_t mutex;
   int recursive;
   bool closing;  ///< Set to true if loop_close() has been called
-} Loop;
-
-#define CREATE_EVENT(multiqueue, handler, ...) \
-  do { \
-    if (multiqueue) { \
-      multiqueue_put((multiqueue), (handler), __VA_ARGS__); \
-    } else { \
-      void *argv[] = { __VA_ARGS__ }; \
-      (handler)(argv); \
-    } \
-  } while (0)
-
-// Poll for events until a condition or timeout
-#define LOOP_PROCESS_EVENTS_UNTIL(loop, multiqueue, timeout, condition) \
-  do { \
-    int64_t remaining = timeout; \
-    uint64_t before = (remaining > 0) ? os_hrtime() : 0; \
-    while (!(condition)) { \
-      LOOP_PROCESS_EVENTS(loop, multiqueue, remaining); \
-      if (remaining == 0) { \
-        break; \
-      } else if (remaining > 0) { \
-        uint64_t now = os_hrtime(); \
-        remaining -= (int64_t)((now - before) / 1000000); \
-        before = now; \
-        if (remaining <= 0) { \
-          break; \
-        } \
-      } \
-    } \
-  } while (0)
-
-#define LOOP_PROCESS_EVENTS(loop, multiqueue, timeout) \
-  do { \
-    if (multiqueue && !multiqueue_empty(multiqueue)) { \
-      multiqueue_process_events(multiqueue); \
-    } else { \
-      loop_poll_events(loop, timeout); \
-    } \
-  } while (0)
+};
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/loop.h.generated.h"

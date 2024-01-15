@@ -258,7 +258,7 @@ end
 --- Validates a client configuration as given to |vim.lsp.start_client()|.
 ---
 ---@param config (lsp.ClientConfig)
----@return (string|fun(dispatchers:vim.rpc.Dispatchers):RpcClientPublic?) Command
+---@return (string|fun(dispatchers:vim.rpc.Dispatchers):vim.lsp.rpc.PublicClient?) Command
 ---@return string[] Arguments
 ---@return string Encoding.
 local function validate_client_config(config)
@@ -291,7 +291,7 @@ local function validate_client_config(config)
     'flags.debounce_text_changes must be a number with the debounce time in milliseconds'
   )
 
-  local cmd, cmd_args --- @type (string|fun(dispatchers:vim.rpc.Dispatchers):RpcClientPublic), string[]
+  local cmd, cmd_args --- @type (string|fun(dispatchers:vim.rpc.Dispatchers):vim.lsp.rpc.PublicClient), string[]
   local config_cmd = config.cmd
   if type(config_cmd) == 'function' then
     cmd = config_cmd
@@ -329,11 +329,11 @@ end
 ---@param fn (T) Function to run
 ---@return T
 local function once(fn)
-  local value --- @type any
+  local value --- @type function
   local ran = false
   return function(...)
     if not ran then
-      value = fn(...)
+      value = fn(...) --- @type function
       ran = true
     end
     return value
@@ -424,6 +424,12 @@ end
 ---  - on_attach(client, bufnr)
 ---     Runs the on_attach function from the client's config if it was defined.
 ---     Useful for buffer-local setup.
+---
+---  - supports_method(method, [opts]): boolean
+---     Checks if a client supports a given method.
+---     Always returns true for unknown off-spec methods.
+---     [opts] is a optional `{bufnr?: integer}` table.
+---     Some language server capabilities can be file specific.
 ---
 --- - Members
 ---  - {id} (number): The id allocated to the client.
@@ -820,6 +826,8 @@ function lsp.start_client(config)
   ---
   ---@param method (string) LSP method name
   ---@param params (table) The parameters for that method
+  ---@return any result
+  ---@return lsp.ResponseError error code and message set in case an exception happens during the request.
   function dispatch.server_request(method, params)
     if log.trace() then
       log.trace('server_request', method, params)
@@ -947,7 +955,7 @@ function lsp.start_client(config)
   end
 
   -- Start the RPC client.
-  local rpc --- @type RpcClientPublic?
+  local rpc --- @type vim.lsp.rpc.PublicClient?
   if type(cmd) == 'function' then
     rpc = cmd(dispatch)
   else
@@ -1073,7 +1081,7 @@ function lsp.start_client(config)
     end
 
     --- @param method string
-    --- @param opts? {bufnr?: number}
+    --- @param opts? {bufnr: integer?}
     client.supports_method = function(method, opts)
       opts = opts or {}
       local required_capability = lsp._request_name_to_capability[method]
@@ -1347,7 +1355,7 @@ function lsp.start_client(config)
   ---@param context? {bufnr: integer}
   ---@param handler? lsp.Handler only called if a server command
   function client._exec_cmd(command, context, handler)
-    context = vim.deepcopy(context or {}) --[[@as lsp.HandlerContext]]
+    context = vim.deepcopy(context or {}, true) --[[@as lsp.HandlerContext]]
     context.bufnr = context.bufnr or api.nvim_get_current_buf()
     context.client_id = client.id
     local cmdname = command.command
@@ -1740,7 +1748,7 @@ end
 ---@private
 ---@deprecated
 function lsp.get_active_clients(filter)
-  -- TODO: add vim.deprecate call after 0.10 is out for removal in 0.12
+  vim.deprecate('vim.lsp.get_active_clients()', 'vim.lsp.get_clients()', '0.12')
   return lsp.get_clients(filter)
 end
 
@@ -2051,6 +2059,7 @@ end
 ---@return table result is table of (client_id, client) pairs
 ---@deprecated Use |vim.lsp.get_clients()| instead.
 function lsp.buf_get_clients(bufnr)
+  vim.deprecate('vim.lsp.buf_get_clients()', 'vim.lsp.get_clients()', '0.12')
   local result = {} --- @type table<integer,lsp.Client>
   for _, client in ipairs(lsp.get_clients({ bufnr = resolve_bufnr(bufnr) })) do
     result[client.id] = client
@@ -2101,6 +2110,11 @@ end
 ---                   buffer number as arguments.
 ---@deprecated use lsp.get_clients({ bufnr = bufnr }) with regular loop
 function lsp.for_each_buffer_client(bufnr, fn)
+  vim.deprecate(
+    'vim.lsp.for_each_buffer_client()',
+    'lsp.get_clients({ bufnr = bufnr }) with regular loop',
+    '0.12'
+  )
   return for_each_buffer_client(bufnr, fn)
 end
 

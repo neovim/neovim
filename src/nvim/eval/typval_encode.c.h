@@ -246,11 +246,12 @@
 #include <inttypes.h>
 #include <stddef.h>
 
+#include "klib/kvec.h"
+#include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_encode.h"
 #include "nvim/func_attr.h"
-#include "klib/kvec.h"
 
 /// Dummy variable used because some macros need lvalue
 ///

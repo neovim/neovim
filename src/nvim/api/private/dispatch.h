@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "nvim/api/private/defs.h"
+#include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/memory_defs.h"
 #include "nvim/types_defs.h"
 
@@ -26,6 +26,6 @@ extern const MsgpackRpcRequestHandler method_handlers[];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/dispatch.h.generated.h"
-# include "api/private/dispatch_wrappers.h.generated.h"  // IWYU pragma: export
+# include "api/private/dispatch_wrappers.h.generated.h"
 # include "keysets_defs.generated.h"
 #endif

@@ -10,6 +10,7 @@
 
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
@@ -20,19 +21,23 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/indent_c.h"
 #include "nvim/insexpand.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -53,6 +58,7 @@
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/ui.h"
+#include "nvim/ui_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
@@ -91,7 +97,7 @@ static const char e_search_hit_bottom_without_match_for_str[]
 // one for other searches.  last_idx points to the one that was used the last
 // time.
 
-static struct spat spats[2] = {
+static SearchPattern spats[2] = {
   // Last used search pattern
   [0] = { NULL, true, false, 0, { '/', false, false, 0 }, NULL },
   // Last used substitute pattern
@@ -102,12 +108,12 @@ static int last_idx = 0;        // index in spats[] for RE_LAST
 
 static uint8_t lastc[2] = { NUL, NUL };   // last character searched for
 static Direction lastcdir = FORWARD;      // last direction of character search
-static int last_t_cmd = true;             // last search t_cmd
+static bool last_t_cmd = true;            // last search t_cmd
 static char lastc_bytes[MB_MAXBYTES + 1];
 static int lastc_bytelen = 1;             // >1 for multi-byte char
 
 // copy of spats[], for keeping the search patterns while executing autocmds
-static struct spat saved_spats[2];
+static SearchPattern saved_spats[2];
 static char *saved_mr_pattern = NULL;
 static int saved_spats_last_idx = 0;
 static bool saved_spats_no_hlsearch = false;
@@ -117,7 +123,7 @@ static char *mr_pattern = NULL;
 
 // Type used by find_pattern_in_path() to remember which included files have
 // been searched already.
-typedef struct SearchedFile {
+typedef struct {
   FILE *fp;              // File pointer
   char *name;            // Full name of file
   linenr_T lnum;                // Line we were up to in file
@@ -271,7 +277,7 @@ void restore_search_patterns(void)
   set_no_hlsearch(saved_spats_no_hlsearch);
 }
 
-static inline void free_spat(struct spat *const spat)
+static inline void free_spat(SearchPattern *const spat)
 {
   xfree(spat->pat);
   tv_dict_unref(spat->additional_data);
@@ -292,7 +298,7 @@ void free_search_patterns(void)
 
 // copy of spats[RE_SEARCH], for keeping the search patterns while incremental
 // searching
-static struct spat saved_last_search_spat;
+static SearchPattern saved_last_search_spat;
 static int did_save_last_search_spat = 0;
 static int saved_last_idx = 0;
 static bool saved_no_hlsearch = false;
@@ -389,7 +395,7 @@ bool pat_has_uppercase(char *pat)
   magic_T magic_val = MAGIC_ON;
 
   // get the magicness of the pattern
-  (void)skip_regexp_ex(pat, NUL, magic_isset(), NULL, NULL, &magic_val);
+  skip_regexp_ex(pat, NUL, magic_isset(), NULL, NULL, &magic_val);
 
   while (*p != NUL) {
     const int l = utfc_ptr2len(p);
@@ -437,7 +443,7 @@ int last_csearch_forward(void)
 
 int last_csearch_until(void)
 {
-  return last_t_cmd == true;
+  return last_t_cmd;
 }
 
 void set_last_csearch(int c, char *s, int len)
@@ -475,7 +481,7 @@ void reset_search_dir(void)
 
 // Set the last search pattern.  For ":let @/ =" and ShaDa file.
 // Also set the saved search pattern, so that this works in an autocommand.
-void set_last_search_pat(const char *s, int idx, int magic, int setlast)
+void set_last_search_pat(const char *s, int idx, int magic, bool setlast)
 {
   free_spat(&spats[idx]);
   // An empty string means that nothing should be matched.
@@ -522,7 +528,7 @@ void last_pat_prog(regmmatch_T *regmatch)
     return;
   }
   emsg_off++;           // So it doesn't beep if bad expr
-  (void)search_regcomp("", NULL, 0, last_idx, SEARCH_KEEP, regmatch);
+  search_regcomp("", NULL, 0, last_idx, SEARCH_KEEP, regmatch);
   emsg_off--;
 }
 
@@ -1048,7 +1054,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, int count, in
 
   // Save the values for when (options & SEARCH_KEEP) is used.
   // (there is no "if ()" around this because gcc wants them initialized)
-  struct soffset old_off = spats[0].off;
+  SearchOffset old_off = spats[0].off;
 
   pos = curwin->w_cursor;       // start searching at the cursor position
 
@@ -1496,7 +1502,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
 /// position of the character, otherwise move to just before the char.
 /// Do this "cap->count1" times.
 /// Return FAIL or OK.
-int searchc(cmdarg_T *cap, int t_cmd)
+int searchc(cmdarg_T *cap, bool t_cmd)
   FUNC_ATTR_NONNULL_ALL
 {
   int c = cap->nchar;                   // char to search for
@@ -2519,7 +2525,7 @@ int current_search(int count, bool forward)
 /// else from position "cur".
 /// "direction" is FORWARD or BACKWARD.
 /// Returns true, false or -1 for failure.
-static int is_zero_width(char *pattern, int move, pos_T *cur, Direction direction)
+static int is_zero_width(char *pattern, bool move, pos_T *cur, Direction direction)
 {
   regmmatch_T regmatch;
   int result = -1;
@@ -2575,8 +2581,8 @@ static int is_zero_width(char *pattern, int move, pos_T *cur, Direction directio
   return result;
 }
 
-/// return true if line 'lnum' is empty or has white chars only.
-int linewhite(linenr_T lnum)
+/// @return  true if line 'lnum' is empty or has white chars only.
+bool linewhite(linenr_T lnum)
 {
   char *p = skipwhite(ml_get(lnum));
   return *p == NUL;
@@ -3558,7 +3564,6 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
   char *curr_fname = curbuf->b_fname;
   char *prev_fname = NULL;
   int depth_displayed;                  // For type==CHECK_PATH
-  int already_searched;
   char *p;
   bool define_matched;
   regmatch_T regmatch;
@@ -3644,7 +3649,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
                                       FNAME_EXP|FNAME_INCL|FNAME_REL, 1, p_fname,
                                       NULL);
       }
-      already_searched = false;
+      bool already_searched = false;
       if (new_fname != NULL) {
         // Check whether we have already searched in this file
         for (i = 0;; i++) {

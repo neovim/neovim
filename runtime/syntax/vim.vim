@@ -149,7 +149,7 @@ syn match vimNumber	'0[0-7]\+'		       skipwhite nextgroup=vimGlobal,vimSubst,vi
 syn match vimNumber	'0[bB][01]\+'		       skipwhite nextgroup=vimGlobal,vimSubst,vimCommand,vimComment,vim9Comment
 
 " All vimCommands are contained by vimIsCommand. {{{2
-syn match vimCmdSep	"[:|]\+"	skipwhite nextgroup=vimAddress,vimAutoCmd,vimEcho,vimIsCommand,vimExtCmd,vimFilter,vimLet,vimMap,vimMark,vimSet,vimSyntax,vimUserCmd
+syn match vimCmdSep	"[:|]\+"	skipwhite nextgroup=vimAbb,vimAddress,vimAutoCmd,vimAugroup,vimBehave,vimEcho,vimEchoHL,vimExecute,vimIsCommand,vimExtCmd,vimFilter,vimGlobal,vimHighlight,vimLet,vimMap,vimMark,vimNorm,vimSet,vimSyntax,vimUnlet,vimUnmap,vimUserCmd
 syn match vimIsCommand	"\<\h\w*\>"	contains=vimCommand
 syn match vimVar	      contained	"\<\h[a-zA-Z0-9#_]*\>"
 syn match vimVar		"\<[bwglstav]:\h[a-zA-Z0-9#_]*\>"
@@ -187,7 +187,7 @@ syn keyword vimFTOption contained	detect indent off on plugin
 
 " Augroup : vimAugroupError removed because long augroups caused sync'ing problems. {{{2
 " ======= : Trade-off: Increasing synclines with slower editing vs augroup END error checking.
-syn cluster vimAugroupList	contains=vimAugroup,vimIsCommand,vimUserCmd,vimExecute,vimNotFunc,vimFuncName,vimFunction,vimFunctionError,vimLineComment,vimNotFunc,vimMap,vimSpecFile,vimOper,vimNumber,vimOperParen,vimComment,vim9Comment,vimString,vimSubst,vimMark,vimRegister,vimAddress,vimFilter,vimCmplxRepeat,vimComment,vim9Comment,vimLet,vimSet,vimAutoCmd,vimRegion,vimSynLine,vimNotation,vimCtrlChar,vimFuncVar,vimContinue,vimSetEqual,vimOption
+syn cluster vimAugroupList	contains=vimAugroup,vimIsCommand,vimUserCmd,vimExecute,vimNotFunc,vimFuncName,vimFunction,vimFunctionError,vimLineComment,vimNotFunc,vimMap,vimSpecFile,vimOper,vimNumber,vimOperParen,vimComment,vim9Comment,vimString,vimSubst,vimMark,vimRegister,vimAddress,vimFilter,vimCmplxRepeat,vimComment,vim9Comment,vimLet,vimSet,vimAutoCmd,vimRegion,vimSynLine,vimNotation,vimCtrlChar,vimFuncVar,vimContinue,vimOption
 if exists("g:vimsyn_folding") && g:vimsyn_folding =~# 'a'
  syn region  vimAugroup	fold matchgroup=vimAugroupKey start="\<aug\%[roup]\>\ze\s\+\K\k*" end="\<aug\%[roup]\>\ze\s\+[eE][nN][dD]\>"	contains=vimAutoCmd,@vimAugroupList
 else
@@ -436,7 +436,7 @@ syn match	vimMenuBang	"!"	contained skipwhite nextgroup=@vimMenuList
 " Angle-Bracket Notation: (tnx to Michael Geddes) {{{2
 " ======================
 syn case ignore
-syn match	vimNotation	"\%#=1\(\\\|<lt>\)\=<\([scamd]-\)\{0,4}x\=\(f\d\{1,2}\|[^ \t:]\|cmd\|cr\|lf\|linefeed\|return\|enter\|k\=del\%[ete]\|bs\|backspace\|tab\|esc\|right\|left\|help\|undo\|insert\|ins\|mouse\|k\=home\|k\=end\|kplus\|kminus\|kdivide\|kmultiply\|kenter\|kpoint\|space\|k\=\(page\)\=\(\|down\|up\|k\d\>\)\)>" contains=vimBracket
+syn match	vimNotation	"\%#=1\(\\\|<lt>\)\=<\([scamd]-\)\{0,4}x\=\(f\d\{1,2}\|[^ \t:]\|cmd\|scriptcmd\|cr\|lf\|linefeed\|return\|enter\|k\=del\%[ete]\|bs\|backspace\|tab\|esc\|right\|left\|help\|undo\|insert\|ins\|mouse\|k\=home\|k\=end\|kplus\|kminus\|kdivide\|kmultiply\|kenter\|kpoint\|space\|k\=\(page\)\=\(\|down\|up\|k\d\>\)\)>" contains=vimBracket
 syn match	vimNotation	"\%#=1\(\\\|<lt>\)\=<\([scam2-4]-\)\{0,4}\(right\|left\|middle\)\(mouse\)\=\(drag\|release\)\=>"	contains=vimBracket
 syn match	vimNotation	"\%#=1\(\\\|<lt>\)\=<\(bslash\|plug\|sid\|space\|bar\|nop\|nul\|lt\)>"			contains=vimBracket
 syn match	vimNotation	'\(\\\|<lt>\)\=<C-R>[0-9a-z"%#:.\-=]'he=e-1				contains=vimBracket
@@ -504,6 +504,13 @@ syn region	vimClusterName	contained	matchgroup=vimGroupName start="\h\w*" skip="
 syn match	vimGroupAdd	contained	"add="	nextgroup=vimGroupList
 syn match	vimGroupRem	contained	"remove="	nextgroup=vimGroupList
 syn cluster vimFuncBodyList add=vimSynType,vimGroupAdd,vimGroupRem
+
+" Syntax: foldlevel {{{2
+syn keyword	vimSynType	contained	foldlevel	skipwhite nextgroup=vimSynFoldMethod,vimSynFoldMethodError
+if !exists("g:vimsyn_noerror") && !exists("g:vimsyn_novimsynfoldmethoderror")
+ syn match	vimSynFoldMethodError	contained	"\i\+"
+endif
+syn keyword	vimSynFoldMethod	contained	start	minimum
 
 " Syntax: iskeyword {{{2
 syn keyword	vimSynType	contained	iskeyword	skipwhite nextgroup=vimIskList
@@ -853,6 +860,7 @@ if !exists("skip_vim_syntax_inits")
   hi def link vimMapModErr	vimError
   hi def link vimSubstFlagErr	vimError
   hi def link vimSynCaseError	vimError
+  hi def link vimSynFoldMethodError	vimError
   hi def link vimBufnrWarn	vimWarn
  endif
 
@@ -989,6 +997,8 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimSyncNone	Type
  hi def link vimSynContains	vimSynOption
  hi def link vimSynError	Error
+ hi def link vimSynFoldMethodError	Error
+ hi def link vimSynFoldMethod	Type
  hi def link vimSynKeyContainedin	vimSynContains
  hi def link vimSynKeyOpt	vimSynOption
  hi def link vimSynMtchGrp	vimSynOption

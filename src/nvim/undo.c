@@ -77,7 +77,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <time.h>
 #include <uv.h>
 
@@ -86,9 +85,11 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/change.h"
 #include "nvim/cursor.h"
+#include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/eval/funcs.h"
@@ -97,24 +98,32 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
+#include "nvim/extmark_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
+#include "nvim/mark_defs.h"
+#include "nvim/mbyte.h"
 #include "nvim/memline.h"
+#include "nvim/memline_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
+#include "nvim/os/fs_defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/time.h"
+#include "nvim/os/time_defs.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/sha256.h"
@@ -344,7 +353,7 @@ static inline void zero_fmark_additional_data(fmark_T *fmarks)
 /// "reload" is true when saving for a buffer reload.
 /// Careful: may trigger autocommands that reload the buffer.
 /// Returns FAIL when lines could not be saved, OK otherwise.
-int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, int reload)
+int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, bool reload)
 {
   if (!reload) {
     // When making changes is not allowed return FAIL.  It's a crude way
@@ -934,7 +943,7 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi, const char *file_name)
     default:
       // Field not supported, skip it.
       while (--len >= 0) {
-        (void)undo_read_byte(bi);
+        undo_read_byte(bi);
       }
     }
   }
@@ -963,12 +972,11 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi, const char *file_name)
   }
 
   // Unserialize all extmark undo information
-  ExtmarkUndoObject *extup;
   kv_init(uhp->uh_extmark);
 
   while ((c = undo_read_2c(bi)) == UF_ENTRY_MAGIC) {
     bool error = false;
-    extup = unserialize_extmark(bi, &error, file_name);
+    ExtmarkUndoObject *extup = unserialize_extmark(bi, &error, file_name);
     if (error) {
       kv_destroy(uhp->uh_extmark);
       xfree(extup);
@@ -1256,7 +1264,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
     semsg(_(e_not_open), file_name);
     goto theend;
   }
-  (void)os_setperm(file_name, perm);
+  os_setperm(file_name, perm);
   if (p_verbose > 0) {
     verbose_enter();
     smsg(0, _("Writing undo file: %s"), file_name);
@@ -1501,7 +1509,7 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
     default:
       // field not supported, skip
       while (--len >= 0) {
-        (void)undo_read_byte(&bi);
+        undo_read_byte(&bi);
       }
     }
   }
@@ -1553,7 +1561,9 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
   // We have put all of the headers into a table. Now we iterate through the
   // table and swizzle each sequence number we have stored in uh_*_seq into
   // a pointer corresponding to the header with that sequence number.
-  int16_t old_idx = -1, new_idx = -1, cur_idx = -1;
+  int16_t old_idx = -1;
+  int16_t new_idx = -1;
+  int16_t cur_idx = -1;
   for (int i = 0; i < num_head; i++) {
     u_header_T *uhp = uhp_table[i];
     if (uhp == NULL) {
@@ -2249,7 +2259,7 @@ target_zero:
 ///
 /// @param undo If `true`, go up the tree. Down if `false`.
 /// @param do_buf_event If `true`, send buffer updates.
-static void u_undoredo(int undo, bool do_buf_event)
+static void u_undoredo(bool undo, bool do_buf_event)
 {
   char **newarray = NULL;
   linenr_T newlnum = MAXLNUM;
@@ -2414,17 +2424,38 @@ static void u_undoredo(int undo, bool do_buf_event)
     curbuf->b_op_end.lnum = curbuf->b_ml.ml_line_count;
   }
 
+  int row1 = MAXLNUM;
+  int row2 = -1;
+  int row3 = -1;
+  // Tricky: ExtmarkSavePos may come after ExtmarkSplice which does call
+  // buf_signcols_count_range() but then misses the yet unrestored marks.
+  if (curbuf->b_signcols.autom && curbuf->b_signs_with_text) {
+    for (int i = 0; i < (int)kv_size(curhead->uh_extmark); i++) {
+      ExtmarkUndoObject undo_info = kv_A(curhead->uh_extmark, i);
+      if (undo_info.type == kExtmarkSplice) {
+        ExtmarkSplice s = undo_info.data.splice;
+        if (s.old_row > 0 || s.new_row > 0) {
+          row1 = MIN(row1, s.start_row);
+          row2 = MAX(row2, s.start_row + (undo ? s.new_row : s.old_row) + 1);
+          row3 = MAX(row3, s.start_row + (undo ? s.old_row : s.new_row) + 1);
+        }
+      }
+    }
+    if (row2 != -1) {
+      // Remove signs inside edited region from "b_signcols.count".
+      buf_signcols_count_range(curbuf, row1, row2, 0, kTrue);
+    }
+  }
   // Adjust Extmarks
-  ExtmarkUndoObject undo_info;
   if (undo) {
     for (int i = (int)kv_size(curhead->uh_extmark) - 1; i > -1; i--) {
-      undo_info = kv_A(curhead->uh_extmark, i);
+      ExtmarkUndoObject undo_info = kv_A(curhead->uh_extmark, i);
       extmark_apply_undo(undo_info, undo);
     }
     // redo
   } else {
     for (int i = 0; i < (int)kv_size(curhead->uh_extmark); i++) {
-      undo_info = kv_A(curhead->uh_extmark, i);
+      ExtmarkUndoObject undo_info = kv_A(curhead->uh_extmark, i);
       extmark_apply_undo(undo_info, undo);
     }
   }
@@ -2433,7 +2464,10 @@ static void u_undoredo(int undo, bool do_buf_event)
     // should have all info to send a buffer-reloaing on_lines/on_bytes event
     buf_updates_unload(curbuf, true);
   }
-  // finish Adjusting extmarks
+  // Finish adjusting extmarks: add signs inside edited region to "b_signcols.count".
+  if (row2 != -1) {
+    buf_signcols_count_range(curbuf, row1, row3, 0, kNone);
+  }
 
   curhead->uh_entry = newlist;
   curhead->uh_flags = new_flags;

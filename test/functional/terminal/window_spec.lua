@@ -22,13 +22,15 @@ describe(':terminal window', function()
     skip(is_os('win'))
     -- Test has hardcoded assumptions of dimensions.
     eq(7, eval('&lines'))
-    feed_data('\n\n\n')  -- Add blank lines.
+    feed_data('\n\n\n') -- Add blank lines.
     -- Terminal/shell contents must exceed the height of this window.
     command('topleft 1split')
     eq('terminal', eval('&buftype'))
     feed([[i<cr>]])
     -- Check topline _while_ in terminal-mode.
-    retry(nil, nil, function() eq(6, eval('winsaveview()["topline"]')) end)
+    retry(nil, nil, function()
+      eq(6, eval('winsaveview()["topline"]'))
+    end)
   end)
 
   describe("with 'number'", function()
@@ -139,7 +141,7 @@ describe(':terminal window', function()
   describe('with fold set', function()
     before_each(function()
       feed([[<C-\><C-N>:set foldenable foldmethod=manual<CR>i]])
-      feed_data({'line1', 'line2', 'line3', 'line4', ''})
+      feed_data({ 'line1', 'line2', 'line3', 'line4', '' })
       screen:expect([[
         tty ready                                         |
         line1                                             |
@@ -172,7 +174,7 @@ describe(':terminal with multigrid', function()
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup(0, nil, 50, nil, {ext_multigrid=true})
+    screen = thelpers.screen_setup(0, nil, 50, nil, { ext_multigrid = true })
   end)
 
   it('resizes to requested size', function()
@@ -190,7 +192,7 @@ describe(':terminal with multigrid', function()
 
     screen:try_resize_grid(2, 20, 10)
     if is_os('win') then
-      screen:expect{any="rows: 10, cols: 20"}
+      screen:expect { any = 'rows: 10, cols: 20' }
     else
       screen:expect([[
       ## grid 1
@@ -208,7 +210,7 @@ describe(':terminal with multigrid', function()
 
     screen:try_resize_grid(2, 70, 3)
     if is_os('win') then
-      screen:expect{any="rows: 3, cols: 70"}
+      screen:expect { any = 'rows: 3, cols: 70' }
     else
       screen:expect([[
       ## grid 1
@@ -225,7 +227,7 @@ describe(':terminal with multigrid', function()
 
     screen:try_resize_grid(2, 0, 0)
     if is_os('win') then
-      screen:expect{any="rows: 6, cols: 50"}
+      screen:expect { any = 'rows: 6, cols: 50' }
     else
       screen:expect([[
       ## grid 1

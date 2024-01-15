@@ -2240,7 +2240,7 @@ func Test_normal29_brace()
   [DATA]
   call assert_equal(expected, getline(1, '$'))
 
-  " Test with { in cpooptions
+  " Test with { in cpoptions
   %d
   call append(0, text)
   " Nvim: no "{" flag in 'cpoptions'.
@@ -4169,4 +4169,21 @@ func Test_normal34_zet_large()
   norm! z9765405999999999999
 endfunc
 
-" vim: shiftwidth=2 sts=2 expandtab
+" Test for { and } paragraph movements in a single line
+func Test_brace_single_line()
+  let text =<< trim [DATA]
+    foobar one two three
+  [DATA]
+
+  new
+  call setline(1, text)
+  1
+  norm! 0}
+
+  call assert_equal([0, 1, 20, 0], getpos('.'))
+  norm! {
+  call assert_equal([0, 1, 1, 0], getpos('.'))
+  bw!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab nofoldenable

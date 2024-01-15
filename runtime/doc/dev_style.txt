@@ -41,17 +41,43 @@ All header files should start with `#pragma once` to prevent multiple inclusion.
         #pragma once
 <
 
+Headers system ~
 
-Constants ~
+Nvim uses two types of headers. There are "normal" headers and "defs" headers.
+Typically, each normal header will have a corresponding defs header, e.g.
+`fileio.h` and `fileio_defs.h`. This distinction is done to minimize
+recompilation on change. The goal is to achieve the following:
 
-Do not use macros to define constants in headers.
+- All headers (defs and normal) must include only defs headers, system
+  headers, and generated declarations. In other words, headers must not
+  include normal headers.
 
-Macro constants in header files cannot be used by unit tests.
+- Source (.c) files may include all headers, but should only include normal
+  headers if they need symbols and not types.
 
-However, you are allowed to define a macro that holds the same value as a
-non-enum constant (defined in the same header) if the value of the constant
-represents the size of an array.
+Use the following guideline to determine what to put where:
 
+Symbols:
+  - regular function declarations
+  - `extern` variables (including the `EXTERN` macro)
+
+Non-symbols:
+  - macros, i.e. `#define`.
+  - static inline functions, but only if its function declaration has a
+    `REAL_FATTR_ALWAYS_INLINE` attribute.
+  - typedefs
+  - structs
+  - enums
+
+
+- All symbols must be moved to normal headers.
+
+- Non-symbols used by multiple headers should be moved to defs headers. This
+  is to ensure headers only include defs headers. Conversely, non-symbols used
+  by only a single header should be moved to that header.
+
+- EXCEPTION: if the macro calls a function, then it must be moved to a normal
+  header.
 
 ==============================================================================
 Scoping                                                 *dev-style-scope*
@@ -72,6 +98,24 @@ should be used instead of declaration and assignment, e.g. >c
 
     int j = g();  // GOOD: declaration has initialization.
 
+
+Initialization ~
+
+Multiple declarations can be defined in one line if they aren't initialized,
+but each initialization should be done on a separate line.
+
+>c
+    int i;
+    int j; // GOOD
+
+    int i, j;   // GOOD: multiple declarations, no initialization.
+
+    int i = 0;
+    int j = 0;  // GOOD: one initialization per line.
+
+    int i = 0, j;  // BAD: multiple declarations with initialization.
+
+    int i = 0, j = 0;  // BAD: multiple declarations with initialization.
 
 ==============================================================================
 Nvim-Specific Magic
@@ -773,47 +817,6 @@ example, `"\uFEFF"`, is the Unicode zero-width no-break space character, which
 would be invisible if included in the source as straight UTF-8.
 
 
-Function Calls ~
-
-On one line if it fits; otherwise, wrap arguments at the parenthesis.
-
-Function calls have the following format: >c
-
-    bool retval = do_something(argument1, argument2, argument3);
-
-If the arguments do not all fit on one line, they should be broken up onto
-multiple lines, with each subsequent line aligned with the first argument. Do
-not add spaces after the open paren or before the close paren: >c
-
-    bool retval = do_something(averyveryveryverylongargument1,
-                               argument2, argument3);
-
-If the function has many arguments, consider having one per line if this makes
-the code more readable: >c
-
-    bool retval = do_something(argument1,
-                               argument2,
-                               argument3,
-                               argument4);
-
-Arguments may optionally all be placed on subsequent lines, with one line per
-argument: >c
-
-    if (...) {
-      ...
-      ...
-      if (...) {
-        do_something(
-            argument1,  // 4 space indent
-            argument2,
-            argument3,
-            argument4);
-      }
-
-In particular, this should be done if the function signature is so long that
-it cannot fit within the maximum line length.
-
-
 Braced Initializer Lists ~
 
 Format a braced list exactly like you would format a function call in its
@@ -915,11 +918,6 @@ Horizontal Whitespace ~
 
 Use of horizontal whitespace depends on location.
 
-    General ~
->c
-        int x[] = { 0 };  // Spaces inside braces for braced-init-list.
-<
-
     Variables ~
 >c
         int long_variable = 0;  // Don't align assignments.
@@ -935,26 +933,6 @@ Use of horizontal whitespace depends on location.
           { "Emma",      "Mason",   2  },
         };
 <
-
-
-    Operators ~
->c
-        x = 0;            // Assignment operators always have spaces around
-                          // them.
-        x = -5;           // No spaces separating unary operators and their
-        x++;              // arguments.
-        if (x && !y)
-<
-
-Vertical Whitespace ~
-
-Minimize use of vertical whitespace.
-
-The basic principle is: The more code that fits on one screen, the easier it
-is to follow and understand the control flow of the program. Of course,
-readability can suffer from code being too dense as well as too spread out, so
-use your judgment. But in general, minimize use of vertical whitespace.
-
 
 ==============================================================================
 Parting Words

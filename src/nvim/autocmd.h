@@ -6,13 +6,14 @@
 
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
-#include "nvim/autocmd_defs.h"  // IWYU pragma: export
+#include "nvim/autocmd_defs.h"  // IWYU pragma: keep
 #include "nvim/buffer_defs.h"
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/pos_defs.h"
+#include "nvim/types_defs.h"
 
 // Set by the apply_autocmds_group function if the given event is equal to
 // EVENT_FILETYPE. Used by the readfile function in order to determine if
@@ -76,7 +77,7 @@ enum { BUFLOCAL_PAT_LEN = 25, };
 
 /// Iterates over all the events for auto commands
 #define FOR_ALL_AUEVENTS(event) \
-  for (event_T event = (event_T)0; (int)event < (int)NUM_EVENTS; event = (event_T)((int)event + 1))  // NOLINT
+  for (event_T event = (event_T)0; (int)event < (int)NUM_EVENTS; event = (event_T)((int)event + 1))
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "autocmd.h.generated.h"

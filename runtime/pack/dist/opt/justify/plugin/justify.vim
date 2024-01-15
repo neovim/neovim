@@ -80,7 +80,7 @@
 " conformant with :left, :right and :center.
 "
 " If joinspaces is set, an extra space is added after '.', '?' and  '!'.
-" If 'cpooptions' include 'j', extra space  is  only  added  after  '.'.
+" If 'cpoptions' include 'j', extra space  is  only  added  after  '.'.
 " (This may on occasion conflict with maxspaces.)
 
 

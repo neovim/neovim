@@ -1,17 +1,12 @@
 #pragma once
 
-#include "nvim/highlight_defs.h"
+#include "nvim/buffer_defs.h"
 
 #define SST_MIN_ENTRIES 150    // minimal size for state stack array
 #define SST_MAX_ENTRIES 1000   // maximal size for state stack array
 #define SST_FIX_STATES  7      // size of sst_stack[].
 #define SST_DIST        16     // normal distance between entries
 #define SST_INVALID    ((synstate_T *)-1)      // invalid syn_state pointer
-
-typedef struct syn_state synstate_T;
-
-#include "nvim/buffer_defs.h"
-#include "nvim/regexp_defs.h"
 
 // struct passed to in_id_list()
 struct sp_syn {
@@ -33,7 +28,7 @@ struct keyentry {
 };
 
 // Struct used to store one state of the state stack.
-typedef struct buf_state {
+typedef struct {
   int bs_idx;                    // index of pattern
   int bs_flags;                  // flags for pattern
   int bs_seqnr;                  // stores si_seqnr

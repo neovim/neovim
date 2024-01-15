@@ -9,14 +9,16 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
+#include <uv.h>
 
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
@@ -305,7 +307,8 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
   startcol = MAX(startcol, 0);
   // in case we start on the right half of a double-width char, we need to
   // check the left half. But skip it in output if it wasn't doublewidth.
-  int skipstart = 0, skipend = 0;
+  int skipstart = 0;
+  int skipend = 0;
   if (startcol > 0 && (flags & kLineFlagInvalid)) {
     startcol--;
     skipstart = 1;

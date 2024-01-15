@@ -1,16 +1,16 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, source = helpers.clear, helpers.source
-local call, eq, meths = helpers.call, helpers.eq, helpers.meths
+local call, eq, api = helpers.call, helpers.eq, helpers.api
 
 local function expected_empty()
-  eq({}, meths.get_vvar('errors'))
+  eq({}, api.nvim_get_vvar('errors'))
 end
 
 describe('buffer', function()
   before_each(function()
     clear()
-    meths.ui_attach(80, 24, {})
-    meths.set_option_value('hidden', false, {})
+    api.nvim_ui_attach(80, 24, {})
+    api.nvim_set_option_value('hidden', false, {})
   end)
 
   it('deleting a modified buffer with :confirm', function()

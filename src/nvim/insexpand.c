@@ -12,32 +12,40 @@
 #include "klib/kvec.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
+#include "nvim/extmark_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
-#include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -52,9 +60,11 @@
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
+#include "nvim/regexp_defs.h"
 #include "nvim/search.h"
 #include "nvim/spell.h"
 #include "nvim/state.h"
+#include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/textformat.h"
@@ -597,7 +607,6 @@ static char *ins_compl_infercase_gettext(const char *str, int char_len, int comp
                                          int min_len, char **tofree)
 {
   bool has_lower = false;
-  bool was_letter = false;
 
   // Allocate wide character array for the completion and fill it.
   int *const wca = xmalloc((size_t)char_len * sizeof(*wca));
@@ -629,6 +638,7 @@ static char *ins_compl_infercase_gettext(const char *str, int char_len, int comp
   // Rule 2: No lower case, 2nd consecutive letter converted to
   // upper case.
   if (!has_lower) {
+    bool was_letter = false;
     const char *p = compl_orig_text;
     for (int i = 0; i < min_len; i++) {
       const int c = mb_ptr2char_adv(&p);
@@ -919,13 +929,11 @@ static bool ins_compl_equal(compl_T *match, char *str, size_t len)
 /// Reduce the longest common string for match "match".
 static void ins_compl_longest_match(compl_T *match)
 {
-  int had_match;
-
   if (compl_leader == NULL) {
     // First match, use it as a whole.
     compl_leader = xstrdup(match->cp_str);
 
-    had_match = (curwin->w_cursor.col > compl_col);
+    bool had_match = (curwin->w_cursor.col > compl_col);
     ins_compl_delete();
     ins_bytes(compl_leader + get_compl_len());
     ins_redraw(false);
@@ -959,7 +967,7 @@ static void ins_compl_longest_match(compl_T *match)
   if (*p != NUL) {
     // Leader was shortened, need to change the inserted text.
     *p = NUL;
-    had_match = (curwin->w_cursor.col > compl_col);
+    bool had_match = (curwin->w_cursor.col > compl_col);
     ins_compl_delete();
     ins_bytes(compl_leader + get_compl_len());
     ins_redraw(false);
@@ -1321,7 +1329,7 @@ void compl_set_info(int pum_idx)
 ///
 /// @param flags      DICT_FIRST and/or DICT_EXACT
 /// @param thesaurus  Thesaurus completion
-static void ins_compl_dictionaries(char *dict_start, char *pat, int flags, int thesaurus)
+static void ins_compl_dictionaries(char *dict_start, char *pat, int flags, bool thesaurus)
 {
   char *dict = dict_start;
   char *ptr;
@@ -1464,8 +1472,8 @@ static int thesaurus_add_words_in_line(char *fname, char **buf_arg, int dir, con
 
 /// Process "count" dictionary/thesaurus "files" and add the text matching
 /// "regmatch".
-static void ins_compl_files(int count, char **files, int thesaurus, int flags, regmatch_T *regmatch,
-                            char *buf, Direction *dir)
+static void ins_compl_files(int count, char **files, bool thesaurus, int flags,
+                            regmatch_T *regmatch, char *buf, Direction *dir)
   FUNC_ATTR_NONNULL_ARG(2, 7)
 {
   for (int i = 0; i < count && !got_int && !compl_interrupted; i++) {
@@ -1474,7 +1482,7 @@ static void ins_compl_files(int count, char **files, int thesaurus, int flags, r
       msg_hist_off = true;  // reset in msg_trunc()
       vim_snprintf(IObuff, IOSIZE,
                    _("Scanning dictionary: %s"), files[i]);
-      (void)msg_trunc(IObuff, true, HL_ATTR(HLF_R));
+      msg_trunc(IObuff, true, HL_ATTR(HLF_R));
     }
 
     if (fp == NULL) {
@@ -2954,7 +2962,7 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
                    : st->ins_buf->b_sfname == NULL
                    ? st->ins_buf->b_fname
                    : st->ins_buf->b_sfname);
-      (void)msg_trunc(IObuff, true, HL_ATTR(HLF_R));
+      msg_trunc(IObuff, true, HL_ATTR(HLF_R));
     }
   } else if (*st->e_cpt == NUL) {
     status = INS_COMPL_CPT_END;
@@ -2982,12 +2990,12 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
       if (!shortmess(SHM_COMPLETIONSCAN)) {
         msg_hist_off = true;  // reset in msg_trunc()
         vim_snprintf(IObuff, IOSIZE, "%s", _("Scanning tags."));
-        (void)msg_trunc(IObuff, true, HL_ATTR(HLF_R));
+        msg_trunc(IObuff, true, HL_ATTR(HLF_R));
       }
     }
 
     // in any case e_cpt is advanced to the next entry
-    (void)copy_option_part(&st->e_cpt, IObuff, IOSIZE, ",");
+    copy_option_part(&st->e_cpt, IObuff, IOSIZE, ",");
 
     st->found_all = true;
     if (compl_type == -1) {
@@ -3814,8 +3822,8 @@ void ins_compl_check_keys(int frequency, bool in_compl_func)
     if (vim_is_ctrl_x_key(c) && c != Ctrl_X && c != Ctrl_R) {
       c = safe_vgetc();         // Eat the character
       compl_shows_dir = ins_compl_key2dir(c);
-      (void)ins_compl_next(false, ins_compl_key2count(c),
-                           c != K_UP && c != K_DOWN, in_compl_func);
+      ins_compl_next(false, ins_compl_key2count(c),
+                     c != K_UP && c != K_DOWN, in_compl_func);
     } else {
       // Need to get the character to have KeyTyped set.  We'll put it
       // back with vungetc() below.  But skip K_IGNORE.
@@ -3835,7 +3843,7 @@ void ins_compl_check_keys(int frequency, bool in_compl_func)
     int todo = compl_pending > 0 ? compl_pending : -compl_pending;
 
     compl_pending = 0;
-    (void)ins_compl_next(false, todo, true, in_compl_func);
+    ins_compl_next(false, todo, true, in_compl_func);
   }
 }
 
@@ -3937,8 +3945,8 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
       prefix = "";
     }
     STRCPY(compl_pattern, prefix);
-    (void)quote_meta(compl_pattern + strlen(prefix),
-                     line + compl_col, compl_length);
+    quote_meta(compl_pattern + strlen(prefix),
+               line + compl_col, compl_length);
   } else if (--startcol < 0
              || !vim_iswordp(mb_prevptr(line, line + startcol + 1))) {
     // Match any word of at least two chars
@@ -3965,12 +3973,12 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
       // xmalloc(7) is enough  -- Acevedo
       compl_pattern = xmalloc(7);
       STRCPY(compl_pattern, "\\<");
-      (void)quote_meta(compl_pattern + 2, line + compl_col, 1);
+      quote_meta(compl_pattern + 2, line + compl_col, 1);
       STRCAT(compl_pattern, "\\k");
     } else {
       compl_pattern = xmalloc(quote_meta(NULL, line + compl_col, compl_length) + 2);
       STRCPY(compl_pattern, "\\<");
-      (void)quote_meta(compl_pattern + 2, line + compl_col, compl_length);
+      quote_meta(compl_pattern + 2, line + compl_col, compl_length);
     }
   }
 
@@ -4449,7 +4457,7 @@ int ins_complete(int c, bool enable_pum)
   // Eat the ESC that vgetc() returns after a CTRL-C to avoid leaving Insert
   // mode.
   if (got_int && !global_busy) {
-    (void)vgetc();
+    vgetc();
     got_int = false;
   }
 

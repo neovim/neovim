@@ -9,7 +9,7 @@ local assert_alive = helpers.assert_alive
 before_each(clear)
 
 local function lua_eval(lua_expr)
-  return exec_lua("return " .. lua_expr)
+  return exec_lua('return ' .. lua_expr)
 end
 
 describe('treesitter node API', function()

@@ -18,9 +18,10 @@
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
+#include "nvim/grid_defs.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
-#include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -37,7 +38,9 @@
 #include "nvim/pos_defs.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
+#include "nvim/state_defs.h"
 #include "nvim/statusline.h"
+#include "nvim/statusline_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
@@ -188,7 +191,7 @@ static void call_click_def_func(StlClickDefinition *click_defs, int col, int whi
     }
   };
   typval_T rettv;
-  (void)call_vim_function(click_defs[col].func, ARRAY_SIZE(argv), argv, &rettv);
+  call_vim_function(click_defs[col].func, ARRAY_SIZE(argv), argv, &rettv);
   tv_clear(&rettv);
   // Make sure next click does not register as drag when callback absorbs the release event.
   got_click = false;
@@ -230,7 +233,7 @@ static int get_fpos_of_mouse(pos_T *mpos)
     return IN_STATUS_LINE;
   }
 
-  if (winrow == -1 && wp->w_winbar_height != 0) {
+  if (winrow < 0 && winrow + wp->w_winbar_height >= 0) {
     return MOUSE_WINBAR;
   }
 
@@ -1011,7 +1014,7 @@ void do_mousescroll(cmdarg_T *cap)
     // Vertical scrolling
     if ((State & MODE_NORMAL) && shift_or_ctrl) {
       // whole page up or down
-      (void)onepage(cap->arg ? FORWARD : BACKWARD, 1);
+      onepage(cap->arg ? FORWARD : BACKWARD, 1);
     } else {
       if (shift_or_ctrl) {
         // whole page up or down
@@ -1031,7 +1034,7 @@ void do_mousescroll(cmdarg_T *cap)
     if (leftcol < 0) {
       leftcol = 0;
     }
-    (void)do_mousescroll_horiz(leftcol);
+    do_mousescroll_horiz(leftcol);
   }
 }
 
@@ -1250,7 +1253,7 @@ retnomove:
   bool below_window = grid == DEFAULT_GRID_HANDLE && row + wp->w_winbar_height >= wp->w_height;
   on_status_line = below_window && row + wp->w_winbar_height - wp->w_height + 1 == 1;
   on_sep_line = grid == DEFAULT_GRID_HANDLE && col >= wp->w_width && col - wp->w_width + 1 == 1;
-  on_winbar = row == -1 && wp->w_winbar_height != 0;
+  on_winbar = row < 0 && row + wp->w_winbar_height >= 0;
   on_statuscol = !below_window && !on_status_line && !on_sep_line && !on_winbar
                  && *wp->w_p_stc != NUL
                  && (wp->w_p_rl
@@ -1417,7 +1420,7 @@ retnomove:
           break;
         }
         first = false;
-        (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
+        hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
         if (curwin->w_topfill < win_get_fill(curwin, curwin->w_topline)) {
           curwin->w_topfill++;
         } else {
@@ -1578,7 +1581,7 @@ void nv_mousescroll(cmdarg_T *cap)
 /// Mouse clicks and drags.
 void nv_mouse(cmdarg_T *cap)
 {
-  (void)do_mouse(cap->oap, cap->cmdchar, BACKWARD, cap->count1, 0);
+  do_mouse(cap->oap, cap->cmdchar, BACKWARD, cap->count1, 0);
 }
 
 /// Compute the position in the buffer line from the posn on the screen in
@@ -1627,7 +1630,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
       break;            // Position is in this buffer line.
     }
 
-    (void)hasFoldingWin(win, lnum, NULL, &lnum, true, NULL);
+    hasFoldingWin(win, lnum, NULL, &lnum, true, NULL);
 
     if (lnum == win->w_buffer->b_ml.ml_line_count) {
       retval = true;
@@ -1849,13 +1852,13 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
   int click_col = mouse_col;
 
   // XXX: this doesn't change click_grid if it is 1, even with multigrid
-  win_T *wp = mouse_find_win(&click_grid, &click_row, &click_col);
-  // Only use vcols[] after the window was redrawn.  Mainly matters
-  // for tests, a user would not click before redrawing.
-  if (wp == NULL || wp->w_redr_type != 0) {
+  if (mouse_find_win(&click_grid, &click_row, &click_col) != curwin
+      // Only use vcols[] after the window was redrawn.  Mainly matters
+      // for tests, a user would not click before redrawing.
+      || curwin->w_redr_type != 0) {
     return;
   }
-  ScreenGrid *gp = &wp->w_grid;
+  ScreenGrid *gp = &curwin->w_grid;
   int start_row = 0;
   int start_col = 0;
   grid_adjust(&gp, &start_row, &start_col);
@@ -1891,12 +1894,12 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
       if (eol_vcol < 0) {
         // Empty line or whole line before w_leftcol,
         // with columns before buffer text
-        eol_vcol = wp->w_leftcol - 1;
+        eol_vcol = curwin->w_leftcol - 1;
       }
       *vcolp = eol_vcol + (int)(off - off_r);
     } else {
       // Empty line or whole line before w_leftcol
-      *vcolp = click_col - start_col + wp->w_leftcol;
+      *vcolp = click_col - start_col + curwin->w_leftcol;
     }
   } else if (col_from_screen >= 0) {
     // Use the virtual column from vcols[], it is accurate also after
@@ -1940,7 +1943,7 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       winrow = row + 1 + wp->w_winrow_off;  // Adjust by 1 for top border
       wincol = col + 1 + wp->w_wincol_off;  // Adjust by 1 for left border
       if (row >= 0 && row < wp->w_height && col >= 0 && col < wp->w_width) {
-        (void)mouse_comp_pos(wp, &row, &col, &lnum);
+        mouse_comp_pos(wp, &row, &col, &lnum);
         col = vcol2col(wp, lnum, col, &coladd);
         column = col + 1;
       }

@@ -6,14 +6,16 @@
 #include <string.h>
 
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/diff.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
 #include "nvim/indent.h"
 #include "nvim/macros_defs.h"
-#include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/marktree.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -23,6 +25,7 @@
 #include "nvim/plines.h"
 #include "nvim/pos_defs.h"
 #include "nvim/state.h"
+#include "nvim/state_defs.h"
 #include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -107,7 +110,7 @@ void win_linetabsize_cts(chartabsize_T *cts, colnr_T len)
   }
   // check for inline virtual text after the end of the line
   if (len == MAXCOL && cts->cts_has_virt_text && *cts->cts_ptr == NUL) {
-    (void)win_lbr_chartabsize(cts, NULL);
+    win_lbr_chartabsize(cts, NULL);
     cts->cts_vcol += cts->cts_cur_text_width_left + cts->cts_cur_text_width_right;
   }
 }

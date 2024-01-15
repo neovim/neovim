@@ -1843,7 +1843,13 @@ function vim.fn.exp(expr) end
 ---
 --- @param string string
 --- @param nosuf? boolean
---- @param list? any
+--- @param list? nil|false
+--- @return string
+function vim.fn.expand(string, nosuf, list) end
+
+--- @param string string
+--- @param nosuf boolean
+--- @param list true|number|string|table
 --- @return string|string[]
 function vim.fn.expand(string, nosuf, list) end
 
@@ -2889,6 +2895,7 @@ function vim.fn.getcmdwintype() end
 --- help    help subjects
 --- highlight  highlight groups
 --- history    |:history| suboptions
+--- keymap    keyboard mappings
 --- locale    locale names (as output of locale -a)
 --- mapclear  buffer argument
 --- mapping    mapping name
@@ -3137,7 +3144,12 @@ function vim.fn.getjumplist(winnr, tabnr) end
 --- |getbufoneline()|
 ---
 --- @param lnum integer
---- @param end_? any
+--- @param end_? nil|false
+--- @return string
+function vim.fn.getline(lnum, end_) end
+
+--- @param lnum integer
+--- @param end_ true|number|string|table
 --- @return string|string[]
 function vim.fn.getline(lnum, end_) end
 
@@ -3435,7 +3447,12 @@ function vim.fn.getqflist(what) end
 --- If {regname} is not specified, |v:register| is used.
 ---
 --- @param regname? string
---- @param list? any
+--- @param list? nil|false
+--- @return string
+function vim.fn.getreg(regname, list) end
+
+--- @param regname string
+--- @param list true|number|string|table
 --- @return string|string[]
 function vim.fn.getreg(regname, list) end
 
@@ -5066,7 +5083,14 @@ function vim.fn.map(expr1, expr2) end
 --- @param name string
 --- @param mode? string
 --- @param abbr? boolean
---- @param dict? boolean
+--- @param dict? false
+--- @return string
+function vim.fn.maparg(name, mode, abbr, dict) end
+
+--- @param name string
+--- @param mode string
+--- @param abbr boolean
+--- @param dict true
 --- @return string|table<string,any>
 function vim.fn.maparg(name, mode, abbr, dict) end
 
@@ -5151,6 +5175,12 @@ function vim.fn.maplist() end
 --- @return any
 function vim.fn.mapnew(expr1, expr2) end
 
+--- @param mode string
+--- @param abbr? any
+--- @param dict? any
+--- @return any
+function vim.fn.mapset(mode, abbr, dict) end
+
 --- Restore a mapping from a dictionary, possibly returned by
 --- |maparg()| or |maplist()|.  A buffer mapping, when dict.buffer
 --- is true, is set on the current buffer; it is up to the caller
@@ -5186,11 +5216,9 @@ function vim.fn.mapnew(expr1, expr2) end
 ---       call mapset(d)
 ---   endfor
 ---
---- @param mode string
---- @param abbr? any
---- @param dict? any
+--- @param dict any
 --- @return any
-function vim.fn.mapset(mode, abbr, dict) end
+function vim.fn.mapset(dict) end
 
 --- When {expr} is a |List| then this returns the index of the
 --- first item where {pat} matches.  Each item is used as a
@@ -5829,8 +5857,9 @@ function vim.fn.mkdir(name, flags, prot) end
 --- the leading character(s).
 --- Also see |visualmode()|.
 ---
+--- @param expr? any
 --- @return any
-function vim.fn.mode() end
+function vim.fn.mode(expr) end
 
 --- Convert a list of Vimscript objects to msgpack. Returned value is a
 --- |readfile()|-style list. When {type} contains "B", a |Blob| is
@@ -9311,7 +9340,12 @@ function vim.fn.strwidth(string) end
 --- A line break is included as a newline character.
 ---
 --- @param nr integer
---- @param list? integer
+--- @param list? nil
+--- @return string
+function vim.fn.submatch(nr, list) end
+
+--- @param nr integer
+--- @param list integer
 --- @return string|string[]
 function vim.fn.submatch(nr, list) end
 

@@ -213,7 +213,7 @@ int rbuffer_cmp(RBuffer *buf, const char *str, size_t count)
 {
   assert(count <= buf->size);
   size_t rcnt;
-  (void)rbuffer_read_ptr(buf, &rcnt);
+  rbuffer_read_ptr(buf, &rcnt);
   size_t n = MIN(count, rcnt);
   int rv = memcmp(str, buf->read_ptr, n);
   count -= n;

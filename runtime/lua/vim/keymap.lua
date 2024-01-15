@@ -44,7 +44,7 @@ function keymap.set(mode, lhs, rhs, opts)
     opts = { opts, 't', true },
   })
 
-  opts = vim.deepcopy(opts or {})
+  opts = vim.deepcopy(opts or {}, true)
 
   ---@cast mode string[]
   mode = type(mode) == 'string' and { mode } or mode

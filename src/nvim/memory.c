@@ -13,13 +13,14 @@
 #include "nvim/api/ui.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/channel.h"
 #include "nvim/context.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/drawline.h"
 #include "nvim/eval.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
@@ -36,6 +37,7 @@
 #include "nvim/sign.h"
 #include "nvim/state_defs.h"
 #include "nvim/statusline.h"
+#include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
 #include "nvim/ui_compositor.h"
@@ -286,7 +288,8 @@ void strchrsub(char *str, char c, char x)
 void memchrsub(void *data, char c, char x, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *p = data, *end = (char *)data + len;
+  char *p = data;
+  char *end = (char *)data + len;
   while ((p = memchr(p, c, (size_t)(end - p)))) {
     *p++ = x;
   }
@@ -321,7 +324,8 @@ size_t memcnt(const void *data, char c, size_t len)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   size_t cnt = 0;
-  const char *ptr = data, *end = ptr + len;
+  const char *ptr = data;
+  const char *end = ptr + len;
   while ((ptr = memchr(ptr, c, (size_t)(end - ptr))) != NULL) {
     cnt++;
     ptr++;  // Skip the instance of c.

@@ -17,6 +17,8 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/debugger.h"
@@ -26,15 +28,18 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
+#include "nvim/ex_eval_defs.h"
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
+#include "nvim/hashtab_defs.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
 #include "nvim/mbyte.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -44,11 +49,13 @@
 #include "nvim/os/fs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/stdpaths_defs.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
+#include "nvim/regexp_defs.h"
 #include "nvim/runtime.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -302,7 +309,7 @@ static bool source_callback_vim_lua(int num_fnames, char **fnames, bool all, voi
 
   for (int i = 0; i < num_fnames; i++) {
     if (path_with_extension(fnames[i], "vim")) {
-      (void)do_source(fnames[i], false, DOSO_NONE, cookie);
+      do_source(fnames[i], false, DOSO_NONE, cookie);
       did_one = true;
       if (!all) {
         return true;
@@ -312,7 +319,7 @@ static bool source_callback_vim_lua(int num_fnames, char **fnames, bool all, voi
 
   for (int i = 0; i < num_fnames; i++) {
     if (path_with_extension(fnames[i], "lua")) {
-      (void)do_source(fnames[i], false, DOSO_NONE, cookie);
+      do_source(fnames[i], false, DOSO_NONE, cookie);
       did_one = true;
       if (!all) {
         return true;
@@ -336,7 +343,7 @@ static bool source_callback(int num_fnames, char **fnames, bool all, void *cooki
   for (int i = 0; i < num_fnames; i++) {
     if (!path_with_extension(fnames[i], "vim")
         && !path_with_extension(fnames[i], "lua")) {
-      (void)do_source(fnames[i], false, DOSO_NONE, cookie);
+      do_source(fnames[i], false, DOSO_NONE, cookie);
       did_one = true;
       if (!all) {
         return true;
@@ -1084,7 +1091,7 @@ static int load_pack_plugin(bool opt, char *fname)
   size_t len = strlen(ffname) + sizeof(plugpat);
   char *pat = xmallocz(len);
 
-  vim_snprintf(pat, len, plugpat, ffname);  // NOLINT
+  vim_snprintf(pat, len, plugpat, ffname);
   gen_expand_wildcards_and_cb(1, &pat, EW_FILE, true, source_callback_vim_lua, NULL);
 
   char *cmd = xstrdup("g:did_load_filetypes");
@@ -1803,7 +1810,7 @@ void ex_options(exarg_T *eap)
   bool multi_mods = 0;
 
   buf[0] = NUL;
-  (void)add_win_cmd_modifiers(buf, &cmdmod, &multi_mods);
+  add_win_cmd_modifiers(buf, &cmdmod, &multi_mods);
 
   os_setenv("OPTWIN_CMD", buf, 1);
   cmd_source(SYS_OPTWIN_FILE, NULL);
@@ -1844,7 +1851,7 @@ static FILE *fopen_noinh_readbin(char *filename)
     return NULL;
   }
 
-  (void)os_set_cloexec(fd_tmp);
+  os_set_cloexec(fd_tmp);
 
   return fdopen(fd_tmp, READBIN);
 }
@@ -2622,7 +2629,7 @@ static char *get_one_sourceline(struct source_cookie *sp)
   int c;
   char *buf;
 #ifdef USE_CRNL
-  int has_cr;                           // CR-LF found
+  bool has_cr;                           // CR-LF found
 #endif
   bool have_read = false;
 
@@ -2757,7 +2764,7 @@ void ex_finish(exarg_T *eap)
 /// Mark a sourced file as finished.  Possibly makes the ":finish" pending.
 /// Also called for a pending finish at the ":endtry" or after returning from
 /// an extra do_cmdline().  "reanimate" is used in the latter case.
-void do_finish(exarg_T *eap, int reanimate)
+void do_finish(exarg_T *eap, bool reanimate)
 {
   if (reanimate) {
     ((struct source_cookie *)getline_cookie(eap->getline,

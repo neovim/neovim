@@ -17,15 +17,15 @@ describe('ModeChanged', function()
     feed('i')
     eq({
       old_mode = 'nt',
-      new_mode = 't'
+      new_mode = 't',
     }, eval('g:event'))
     feed('<c-\\><c-n>')
     eq({
       old_mode = 't',
-      new_mode = 'nt'
+      new_mode = 'nt',
     }, eval('g:event'))
     eq(3, eval('g:count'))
-    command("bd!")
+    command('bd!')
 
     -- v:event is cleared after the autocommand is done
     eq({}, eval('v:event'))

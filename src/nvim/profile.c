@@ -16,9 +16,10 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
+#include "nvim/hashtab_defs.h"
 #include "nvim/keycodes.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -35,7 +36,7 @@
 #endif
 
 /// Struct used in sn_prl_ga for every line of a script.
-typedef struct sn_prl_S {
+typedef struct {
   int snp_count;                ///< nr of times line was executed
   proftime_T sn_prl_total;      ///< time spent in a line + children
   proftime_T sn_prl_self;       ///< time spent in a line itself
@@ -254,7 +255,7 @@ void profile_reset(void)
   size_t todo = functbl->ht_used;
   hashitem_T *hi = functbl->ht_array;
 
-  for (; todo > (size_t)0; hi++) {
+  for (; todo > 0; hi++) {
     if (!HASHITEM_EMPTY(hi)) {
       todo--;
       ufunc_T *uf = HI2UF(hi);
@@ -797,7 +798,7 @@ void script_line_start(void)
   if (si->sn_prof_on && SOURCING_LNUM >= 1) {
     // Grow the array before starting the timer, so that the time spent
     // here isn't counted.
-    (void)ga_grow(&si->sn_prl_ga, SOURCING_LNUM - si->sn_prl_ga.ga_len);
+    ga_grow(&si->sn_prl_ga, SOURCING_LNUM - si->sn_prl_ga.ga_len);
     si->sn_prl_idx = SOURCING_LNUM - 1;
     while (si->sn_prl_ga.ga_len <= si->sn_prl_idx
            && si->sn_prl_ga.ga_len < si->sn_prl_ga.ga_maxlen) {

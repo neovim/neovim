@@ -1,6 +1,6 @@
 local uv = vim.uv
 
---- @class SystemOpts
+--- @class vim.SystemOpts
 --- @field stdin? string|string[]|true
 --- @field stdout? fun(err:string?, data: string?)|false
 --- @field stderr? fun(err:string?, data: string?)|false
@@ -61,7 +61,7 @@ end
 --- @field wait fun(self: vim.SystemObj, timeout?: integer): vim.SystemCompleted
 --- @field kill fun(self: vim.SystemObj, signal: integer|string)
 --- @field write fun(self: vim.SystemObj, data?: string|string[])
---- @field is_closing fun(self: vim.SystemObj): boolean?
+--- @field is_closing fun(self: vim.SystemObj): boolean
 local SystemObj = {}
 
 --- @param state vim.SystemState
@@ -140,7 +140,7 @@ end
 --- @return boolean
 function SystemObj:is_closing()
   local handle = self._state.handle
-  return handle == nil or handle:is_closing()
+  return handle == nil or handle:is_closing() or false
 end
 
 ---@param output fun(err:string?, data: string?)|false
@@ -302,7 +302,7 @@ end
 --- Run a system command
 ---
 --- @param cmd string[]
---- @param opts? SystemOpts
+--- @param opts? vim.SystemOpts
 --- @param on_exit? fun(out: vim.SystemCompleted)
 --- @return vim.SystemObj
 function M.run(cmd, opts, on_exit)

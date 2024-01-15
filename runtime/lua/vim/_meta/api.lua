@@ -73,6 +73,9 @@ function vim.api.nvim__id_dictionary(dct) end
 function vim.api.nvim__id_float(flt) end
 
 --- @private
+--- NB: if your UI doesn't use hlstate, this will not return hlstate first
+--- time.
+---
 --- @param grid integer
 --- @param row integer
 --- @param col integer
@@ -152,7 +155,8 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 ---                    will be `nvim_buf_changedtick_event`. Not for Lua
 ---                    callbacks.
 --- @param opts vim.api.keyset.buf_attach Optional parameters.
----                    • on_lines: Lua callback invoked on change. Return `true` to detach. Args:
+---                    • on_lines: Lua callback invoked on change. Return `true` to
+---                      detach. Args:
 ---                      • the string "lines"
 ---                      • buffer handle
 ---                      • b:changedtick
@@ -165,7 +169,8 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 ---
 ---                    • on_bytes: Lua callback invoked on change. This
 ---                      callback receives more granular information about the
----                      change compared to on_lines. Return `true` to detach. Args:
+---                      change compared to on_lines. Return `true` to
+---                      detach. Args:
 ---                      • the string "bytes"
 ---                      • buffer handle
 ---                      • b:changedtick
@@ -173,11 +178,15 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 ---                      • start column of the changed text
 ---                      • byte offset of the changed text (from the start of
 ---                        the buffer)
----                      • old end row of the changed text
----                      • old end column of the changed text
+---                      • old end row of the changed text (offset from start
+---                        row)
+---                      • old end column of the changed text (if old end row
+---                        = 0, offset from start column)
 ---                      • old end byte length of the changed text
----                      • new end row of the changed text
----                      • new end column of the changed text
+---                      • new end row of the changed text (offset from start
+---                        row)
+---                      • new end column of the changed text (if new end row
+---                        = 0, offset from start column)
 ---                      • new end byte length of the changed text
 ---
 ---                    • on_changedtick: Lua callback invoked on changedtick
@@ -519,9 +528,12 @@ function vim.api.nvim_buf_line_count(buffer) end
 ---                 text is selected or hidden because of scrolling with
 ---                 'nowrap' or 'smoothscroll'. Currently only affects
 ---                 "overlay" virt_text.
+---               • virt_text_repeat_linebreak : repeat the virtual text on
+---                 wrapped lines.
 ---               • hl_mode : control how highlights are combined with the
 ---                 highlights of the text. Currently only affects virt_text
----                 highlights, but might affect `hl_group` in later versions.
+---                 highlights, but might affect `hl_group` in
+---                 later versions.
 ---                 • "replace": only show the virt_text color. This is the
 ---                   default.
 ---                 • "combine": combine with background text color.
@@ -731,7 +743,8 @@ function vim.api.nvim_chan_send(chan, data) end
 ---               • NOTE: Cannot be used with {pattern}
 ---
 ---             • group: (string|int) The augroup name or id.
----               • NOTE: If not passed, will only delete autocmds not in any group.
+---               • NOTE: If not passed, will only delete autocmds not in any
+---                 group.
 function vim.api.nvim_clear_autocmds(opts) end
 
 --- Executes an Ex command.
@@ -799,7 +812,8 @@ function vim.api.nvim_complete_set(index, opts) end
 --- @return integer
 function vim.api.nvim_create_augroup(name, opts) end
 
---- Creates an `autocommand` event handler, defined by `callback` (Lua function or Vimscript function name string) or `command` (Ex command string).
+--- Creates an `autocommand` event handler, defined by `callback` (Lua function
+--- or Vimscript function name string) or `command` (Ex command string).
 --- Example using Lua callback:
 ---
 --- ```lua
@@ -1375,7 +1389,7 @@ function vim.api.nvim_input(keys) end
 --- processed soon by the event loop.
 ---
 --- @param button string Mouse button: one of "left", "right", "middle", "wheel",
----                 "move".
+---                 "move", "x1", "x2".
 --- @param action string For ordinary buttons, one of "press", "drag", "release".
 ---                 For the wheel, one of "up", "down", "left", "right".
 ---                 Ignored for "move".
@@ -1491,7 +1505,6 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- ```lua
 ---     vim.api.nvim_open_win(0, false,
 ---       {relative='win', width=12, height=3, bufpos={100,10}})
----     })
 --- ```
 ---
 --- @param buffer integer Buffer to display, or 0 for current buffer
@@ -1517,8 +1530,8 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---               • height: Window height (in character cells). Minimum of 1.
 ---               • bufpos: Places float relative to buffer text (only when
 ---                 relative="win"). Takes a tuple of zero-indexed [line,
----                 column]. `row` and `col` if given are applied relative to this position, else they
----                 default to:
+---                 column]. `row` and `col` if given are
+---                 applied relative to this position, else they default to:
 ---                 • `row=1` and `col=0` if `anchor` is "NW" or "NE"
 ---                 • `row=0` and `col=0` if `anchor` is "SW" or "SE" (thus
 ---                   like a tooltip near the buffer text).
@@ -1533,8 +1546,9 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---               • external: GUI should display the window as an external
 ---                 top-level window. Currently accepts no other positioning
 ---                 configuration together with this.
----               • zindex: Stacking order. floats with higher `zindex` go on top on floats with lower indices. Must be larger
----                 than zero. The following screen elements have hard-coded
+---               • zindex: Stacking order. floats with higher `zindex` go on
+---                 top on floats with lower indices. Must be larger than
+---                 zero. The following screen elements have hard-coded
 ---                 z-indices:
 ---                 • 100: insert completion popupmenu
 ---                 • 200: message scrollback
@@ -1653,7 +1667,8 @@ function vim.api.nvim_parse_expression(expr, flags, highlight) end
 --- @param data string Multiline input. May be binary (containing NUL bytes).
 --- @param crlf boolean Also break lines at CR and CRLF.
 --- @param phase integer -1: paste in a single call (i.e. without streaming). To
----              "stream" a paste, call `nvim_paste` sequentially with these `phase` values:
+---              "stream" a paste, call `nvim_paste` sequentially
+---              with these `phase` values:
 ---              • 1: starts the paste (exactly once)
 ---              • 2: continues the paste (zero or more times)
 ---              • 3: ends the paste (exactly once)
@@ -1756,9 +1771,7 @@ function vim.api.nvim_set_current_win(window) end
 ---              • on_buf: called for each buffer being redrawn (before window
 ---                callbacks) ["buf", bufnr, tick]
 ---              • on_win: called when starting to redraw a specific window.
----                botline_guess is an approximation that does not exceed the
----                last line number. ["win", winid, bufnr, topline,
----                botline_guess]
+---                ["win", winid, bufnr, topline, botline]
 ---              • on_line: called for each buffer line being redrawn. (The
 ---                interaction with fold lines is subject to change) ["win",
 ---                winid, bufnr, row]

@@ -15,7 +15,7 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_getln.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"
@@ -23,6 +23,7 @@
 #include "nvim/option_vars.h"
 #include "nvim/os/time.h"
 #include "nvim/regexp.h"
+#include "nvim/regexp_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
@@ -374,7 +375,7 @@ static int calc_hist_idx(int histype, int num)
 
   histentry_T *hist = history[histype];
   if (num > 0) {
-    int wrapped = false;
+    bool wrapped = false;
     while (hist[i].hisnum > num) {
       if (--i < 0) {
         if (wrapped) {

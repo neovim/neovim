@@ -17,39 +17,50 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/cmdhist.h"
 #include "nvim/eval.h"
 #include "nvim/eval/decode.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
-#include "nvim/gettext.h"
+#include "nvim/garray_defs.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
+#include "nvim/hashtab_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
 #include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/normal.h"
+#include "nvim/normal_defs.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fileio.h"
+#include "nvim/os/fileio_defs.h"
 #include "nvim/os/fs.h"
+#include "nvim/os/fs_defs.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/time.h"
+#include "nvim/os/time_defs.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/search.h"
 #include "nvim/shada.h"
 #include "nvim/strings.h"
+#include "nvim/types_defs.h"
 #include "nvim/version.h"
 #include "nvim/vim_defs.h"
 
@@ -346,25 +357,25 @@ typedef struct {
   PMap(cstr_t) file_marks;  ///< All file marks.
 } WriteMergerState;
 
-struct sd_read_def;
+typedef struct sd_read_def ShaDaReadDef;
 
 /// Function used to close files defined by ShaDaReadDef
-typedef void (*ShaDaReadCloser)(struct sd_read_def *const sd_reader)
+typedef void (*ShaDaReadCloser)(ShaDaReadDef *const sd_reader)
   REAL_FATTR_NONNULL_ALL;
 
 /// Function used to read ShaDa files
-typedef ptrdiff_t (*ShaDaFileReader)(struct sd_read_def *const sd_reader,
+typedef ptrdiff_t (*ShaDaFileReader)(ShaDaReadDef *const sd_reader,
                                      void *const dest,
                                      const size_t size)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Function used to skip in ShaDa files
-typedef int (*ShaDaFileSkipper)(struct sd_read_def *const sd_reader,
+typedef int (*ShaDaFileSkipper)(ShaDaReadDef *const sd_reader,
                                 const size_t offset)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Structure containing necessary pointers for reading ShaDa files
-typedef struct sd_read_def {
+struct sd_read_def {
   ShaDaFileReader read;   ///< Reader function.
   ShaDaReadCloser close;  ///< Close function.
   ShaDaFileSkipper skip;  ///< Function used to skip some bytes.
@@ -373,27 +384,27 @@ typedef struct sd_read_def {
   const char *error;      ///< Error message in case of error.
   uintmax_t fpos;         ///< Current position (amount of bytes read since
                           ///< reader structure initialization). May overflow.
-} ShaDaReadDef;
+};
 
-struct sd_write_def;
+typedef struct sd_write_def ShaDaWriteDef;
 
 /// Function used to close files defined by ShaDaWriteDef
-typedef void (*ShaDaWriteCloser)(struct sd_write_def *const sd_writer)
+typedef void (*ShaDaWriteCloser)(ShaDaWriteDef *const sd_writer)
   REAL_FATTR_NONNULL_ALL;
 
 /// Function used to write ShaDa files
-typedef ptrdiff_t (*ShaDaFileWriter)(struct sd_write_def *const sd_writer,
+typedef ptrdiff_t (*ShaDaFileWriter)(ShaDaWriteDef *const sd_writer,
                                      const void *const src,
                                      const size_t size)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Structure containing necessary pointers for writing ShaDa files
-typedef struct sd_write_def {
+struct sd_write_def {
   ShaDaFileWriter write;   ///< Writer function.
   ShaDaWriteCloser close;  ///< Close function.
   void *cookie;            ///< Data describing object written to.
   const char *error;       ///< Error message in case of error.
-} ShaDaWriteDef;
+};
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "shada.c.generated.h"
@@ -996,6 +1007,48 @@ static inline void hms_dealloc(HistoryMergerState *const hms_p)
 #define HMS_ITER(hms_p, cur_entry, code) \
   HMLL_FORALL(&((hms_p)->hmll), cur_entry, code)
 
+/// Iterate over global variables
+///
+/// @warning No modifications to global variable dictionary must be performed
+///          while iteration is in progress.
+///
+/// @param[in]   iter   Iterator. Pass NULL to start iteration.
+/// @param[out]  name   Variable name.
+/// @param[out]  rettv  Variable value.
+///
+/// @return Pointer that needs to be passed to next `var_shada_iter` invocation
+///         or NULL to indicate that iteration is over.
+static const void *var_shada_iter(const void *const iter, const char **const name, typval_T *rettv,
+                                  var_flavour_T flavour)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
+{
+  const hashitem_T *hi;
+  const hashitem_T *hifirst = globvarht.ht_array;
+  const size_t hinum = (size_t)globvarht.ht_mask + 1;
+  *name = NULL;
+  if (iter == NULL) {
+    hi = globvarht.ht_array;
+    while ((size_t)(hi - hifirst) < hinum
+           && (HASHITEM_EMPTY(hi)
+               || !(var_flavour(hi->hi_key) & flavour))) {
+      hi++;
+    }
+    if ((size_t)(hi - hifirst) == hinum) {
+      return NULL;
+    }
+  } else {
+    hi = (const hashitem_T *)iter;
+  }
+  *name = TV_DICT_HI2DI(hi)->di_key;
+  tv_copy(&TV_DICT_HI2DI(hi)->di_tv, rettv);
+  while ((size_t)(++hi - hifirst) < hinum) {
+    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flavour)) {
+      return hi;
+    }
+  }
+  return NULL;
+}
+
 /// Find buffer for given buffer name (cached)
 ///
 /// @param[in,out]  fname_bufs  Cache containing fname to buffer mapping.
@@ -1210,7 +1263,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       // string is close to useless: you can only use it with :& or :~ and
       // that’s all because s//~ is not available until the first call to
       // regtilde. Vim was not calling this for some reason.
-      (void)regtilde(cur_entry.data.sub_string.sub, magic_isset(), false);
+      regtilde(cur_entry.data.sub_string.sub, magic_isset(), false);
       // Do not free shada entry: its allocated memory was saved above.
       break;
     case kSDItemHistoryEntry:
@@ -3357,7 +3410,7 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
     CLEAR_GA_AND_ERROR_OUT(ad_ga); \
   }
 #define CHECKED_KEY(un, entry_name, name, error_desc, tgt, condition, attr, proc) \
-  else if (CHECK_KEY((un).data.via.map.ptr[i].key, name))  /* NOLINT(readability/braces) */ \
+  else if (CHECK_KEY((un).data.via.map.ptr[i].key, name)) \
   { \
     CHECKED_ENTRY(condition, \
                   "has " name " key value " error_desc, \
@@ -3388,7 +3441,7 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
 #define INTEGER_KEY(un, entry_name, name, tgt) \
   INT_KEY(un, entry_name, name, tgt, TOINT)
 #define ADDITIONAL_KEY(un) \
-  else {  /* NOLINT(readability/braces) */ \
+  else { \
     ga_grow(&ad_ga, 1); \
     memcpy(((char *)ad_ga.ga_data) + ((size_t)ad_ga.ga_len \
                                       * sizeof(*(un).data.via.map.ptr)), \
@@ -3982,7 +4035,7 @@ static bool shada_removable(const char *name)
 
   char *new_name = home_replace_save(NULL, name);
   for (char *p = p_shada; *p;) {
-    (void)copy_option_part(&p, part, ARRAY_SIZE(part), ", ");
+    copy_option_part(&p, part, ARRAY_SIZE(part), ", ");
     if (part[0] == 'r') {
       home_replace(NULL, part + 1, NameBuff, MAXPATHL, true);
       size_t n = strlen(NameBuff);

@@ -17,10 +17,9 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
-#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_eval.h"
-#include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
@@ -28,11 +27,13 @@
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/message.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_defs.h"
 #include "nvim/version.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -139,7 +140,7 @@ bool try_end(Error *err)
     api_set_error(err, kErrorTypeException, "Keyboard interrupt");
     got_int = false;
   } else if (msg_list != NULL && *msg_list != NULL) {
-    int should_free;
+    bool should_free;
     char *msg = get_exception_string(*msg_list,
                                      ET_ERROR,
                                      NULL,
@@ -1045,7 +1046,7 @@ bool set_mark(buf_T *buf, String name, Integer line, Integer col, Error *err)
     }
   }
   assert(INT32_MIN <= line && line <= INT32_MAX);
-  pos_T pos = { (linenr_T)line, (int)col, (int)col };
+  pos_T pos = { (linenr_T)line, (int)col, 0 };
   res = setmark_pos(*name.data, &pos, buf->handle, NULL);
   if (!res) {
     if (deleting) {

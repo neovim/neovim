@@ -2,8 +2,9 @@
 
 #include <stdio.h>  // IWYU pragma: keep
 
-#include "nvim/buffer_defs.h"  // IWYU pragma: keep
-#include "nvim/fold_defs.h"  // IWYU pragma: export
+#include "nvim/decoration_defs.h"  // IWYU pragma: keep
+#include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
+#include "nvim/fold_defs.h"  // IWYU pragma: keep
 #include "nvim/garray_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/pos_defs.h"  // IWYU pragma: keep

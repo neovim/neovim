@@ -13,9 +13,9 @@ describe('Visual highlight', function()
   before_each(function()
     screen = Screen.new(50, 6)
     screen:set_default_attr_ids({
-      [0] = {foreground = Screen.colors.Blue, bold = true},  -- NonText
-      [1] = {bold = true},  -- ModeMsg
-      [2] = {background = Screen.colors.LightGrey},  -- Visual
+      [0] = { foreground = Screen.colors.Blue, bold = true }, -- NonText
+      [1] = { bold = true }, -- ModeMsg
+      [2] = { background = Screen.colors.LightGrey }, -- Visual
     })
     screen:attach()
   end)

@@ -29,9 +29,6 @@
 /// @return `s, sizeof(s) - 1`
 #define S_LEN(s) (s), (sizeof(s) - 1)
 
-/// LINEEMPTY() - return true if the line is empty
-#define LINEEMPTY(p) (*ml_get(p) == NUL)
-
 // toupper() and tolower() that use the current locale.
 // Careful: Only call TOUPPER_LOC() and TOLOWER_LOC() with a character in the
 // range 0 - 255.  toupper()/tolower() on some systems can't handle others.
@@ -54,47 +51,11 @@
 // Returns empty string if it is NULL.
 #define EMPTY_IF_NULL(x) ((x) ? (x) : "")
 
-/// Adjust chars in a language according to 'langmap' option.
-/// NOTE that there is no noticeable overhead if 'langmap' is not set.
-/// When set the overhead for characters < 256 is small.
-/// Don't apply 'langmap' if the character comes from the Stuff buffer or from a
-/// mapping and the langnoremap option was set.
-/// The do-while is just to ignore a ';' after the macro.
-#define LANGMAP_ADJUST(c, condition) \
-  do { \
-    if (*p_langmap \
-        && (condition) \
-        && (p_lrm || (vgetc_busy ? typebuf_maplen() == 0 : KeyTyped)) \
-        && !KeyStuffed \
-        && (c) >= 0) \
-    { \
-      if ((c) < 256) \
-      c = langmap_mapchar[c]; \
-      else \
-      c = langmap_adjust_mb(c); \
-    } \
-  } while (0)
-
 #define WRITEBIN   "wb"        // no CR-LF translation
 #define READBIN    "rb"
 #define APPENDBIN  "ab"
 
 #define REPLACE_NORMAL(s) (((s)& REPLACE_FLAG) && !((s)& VREPLACE_FLAG))
-
-// MB_PTR_ADV(): advance a pointer to the next character, taking care of
-// multi-byte characters if needed. Skip over composing chars.
-#define MB_PTR_ADV(p)      (p += utfc_ptr2len((char *)p))
-
-// Advance multi-byte pointer, do not skip over composing chars.
-#define MB_CPTR_ADV(p)     (p += utf_ptr2len((char *)p))
-
-// MB_PTR_BACK(): backup a pointer to the previous character, taking care of
-// multi-byte characters if needed. Only use with "p" > "s" !
-#define MB_PTR_BACK(s, p) \
-  (p -= utf_head_off((char *)(s), (char *)(p) - 1) + 1)
-
-// MB_CHAR2BYTES(): convert character to bytes and advance pointer to bytes
-#define MB_CHAR2BYTES(c, b) ((b) += utf_char2bytes((c), ((char *)b)))
 
 #define RESET_BINDING(wp) \
   do { \

@@ -5,7 +5,8 @@
 " Contributors: Ricardo Catalinas Jiménez <jimenezrick@gmail.com>
 "               Eduardo Lopez (http://github.com/tapichu)
 "               Arvid Bjurklint (http://github.com/slarwise)
-" Last Update:  2021-Nov-22
+"               Paweł Zacharek (http://github.com/subc2)
+" Last Update:  2023-Dec-20
 " License:      Vim license
 " URL:          https://github.com/vim-erlang/vim-erlang-runtime
 
@@ -57,7 +58,7 @@ setlocal suffixesadd=.erl,.hrl
 let &l:include = '^\s*-\%(include\|include_lib\)\s*("\zs\f*\ze")'
 let &l:define  = '^\s*-\%(define\|record\|type\|opaque\)'
 
-let s:erlang_fun_begin = '^\a\w*(.*$'
+let s:erlang_fun_begin = '^\l[A-Za-z0-9_@]*(.*$'
 let s:erlang_fun_end   = '^[^%]*\.\s*\(%.*\)\?$'
 
 if !exists('*GetErlangFold')
@@ -95,9 +96,22 @@ if !exists('*ErlangFoldText')
   endfunction
 endif
 
+" The following lines enable the macros/matchit.vim plugin for extended
+" matching with the % key.
+let b:match_ignorecase = 0
+let b:match_words =
+  \ '\<\%(begin\|case\|fun\|if\|maybe\|receive\|try\)\>' .
+  \ ':\<\%(after\|catch\|else\|of\)\>' .
+  \ ':\<end\>,' .
+  \ '^\l[A-Za-z0-9_@]*' .
+  \ ':^\%(\%(\t\| \{' . shiftwidth() .
+  \ '}\)\%([^\t\ %][^%]*\)\?\)\?;\s*\%(%.*\)\?$\|\.[\t\ %]\|\.$'
+let b:match_skip = 's:comment\|string\|erlangmodifier\|erlangquotedatom'
+
 let b:undo_ftplugin = "setlocal keywordprg< foldmethod< foldexpr< foldtext<"
       \ . " comments< commentstring< formatoptions< suffixesadd< include<"
       \ . " define<"
+      \ . " | unlet b:match_ignorecase b:match_words b:match_skip"
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

@@ -14,7 +14,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <time.h>
 #include <uv.h>
 
@@ -27,9 +26,11 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/assert_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/channel.h"
+#include "nvim/channel_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdexpand_defs.h"
@@ -48,21 +49,26 @@
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
 #include "nvim/eval/window.h"
+#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/process.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_cmds.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/getchar_defs.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
+#include "nvim/grid_defs.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
@@ -74,24 +80,34 @@
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/math.h"
 #include "nvim/mbyte.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/menu.h"
+#include "nvim/menu_defs.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/normal.h"
+#include "nvim/normal_defs.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
+#include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
 #include "nvim/os/dl.h"
 #include "nvim/os/fileio.h"
+#include "nvim/os/fileio_defs.h"
 #include "nvim/os/fs.h"
+#include "nvim/os/fs_defs.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/pty_process.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/stdpaths_defs.h"
@@ -102,12 +118,15 @@
 #include "nvim/pos_defs.h"
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
+#include "nvim/regexp_defs.h"
 #include "nvim/runtime.h"
+#include "nvim/runtime_defs.h"
 #include "nvim/search.h"
 #include "nvim/sha256.h"
 #include "nvim/spell.h"
 #include "nvim/spellsuggest.h"
 #include "nvim/state.h"
+#include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
@@ -304,7 +323,7 @@ int call_internal_method(const char *const fname, const int argcount, typval_T *
 }
 
 /// @return  true for a non-zero Number and a non-empty String.
-static int non_zero_arg(typval_T *argvars)
+static bool non_zero_arg(typval_T *argvars)
 {
   return ((argvars[0].v_type == VAR_NUMBER
            && argvars[0].vval.v_number != 0)
@@ -1671,7 +1690,7 @@ static void f_exepath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   char *path = NULL;
 
-  (void)os_can_exe(tv_get_string(&argvars[0]), &path, true);
+  os_can_exe(tv_get_string(&argvars[0]), &path, true);
 
 #ifdef BACKSLASH_IN_FILENAME
   if (path != NULL) {
@@ -2217,8 +2236,8 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     len = strlen(fname);
     if (*mods != NUL) {
       size_t usedlen = 0;
-      (void)modify_fname((char *)mods, false, &usedlen,
-                         (char **)&fname, &fbuf, &len);
+      modify_fname((char *)mods, false, &usedlen,
+                   (char **)&fname, &fbuf, &len);
     }
   }
 
@@ -2442,7 +2461,7 @@ static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos, bool
                             : (varnumber_T)0));
   tv_list_append_number(l, (fp != NULL) ? (varnumber_T)fp->coladd : (varnumber_T)0);
   if (getcurpos) {
-    const int save_set_curswant = curwin->w_set_curswant;
+    const bool save_set_curswant = curwin->w_set_curswant;
     const colnr_T save_curswant = curwin->w_curswant;
     const colnr_T save_virtcol = curwin->w_virtcol;
 
@@ -3637,7 +3656,7 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   });
 
   // Ask for choice.
-  int mouse_used;
+  bool mouse_used;
   int selected = prompt_for_number(&mouse_used);
   if (mouse_used) {
     selected -= lines_left;
@@ -4053,8 +4072,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   bool clear_env = false;
   bool overlapped = false;
   ChannelStdinMode stdin_mode = kChannelStdinPipe;
-  CallbackReader on_stdout = CALLBACK_READER_INIT,
-                 on_stderr = CALLBACK_READER_INIT;
+  CallbackReader on_stdout = CALLBACK_READER_INIT;
+  CallbackReader on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
   char *cwd = NULL;
   dictitem_T *job_env = NULL;
@@ -4117,7 +4136,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
   }
 
-  uint16_t width = 0, height = 0;
+  uint16_t width = 0;
+  uint16_t height = 0;
   char *term_name = NULL;
 
   if (pty) {
@@ -4165,7 +4185,7 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const char *error = NULL;
   if (data->is_rpc) {
     // Ignore return code, but show error later.
-    (void)channel_close(data->id, kChannelPartRpc, &error);
+    channel_close(data->id, kChannelPartRpc, &error);
   }
   process_stop(&data->stream.proc);
   rettv->vval.v_number = 1;
@@ -5213,7 +5233,7 @@ static void f_printf(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (!did_emsg) {
       char *s = xmalloc((size_t)len + 1);
       rettv->vval.v_string = s;
-      (void)vim_vsnprintf_typval(s, (size_t)len + 1, fmt, dummy_ap, argvars + 1);
+      vim_vsnprintf_typval(s, (size_t)len + 1, fmt, dummy_ap, argvars + 1);
     }
     did_emsg |= saved_did_emsg;
   }
@@ -5804,7 +5824,7 @@ static void f_getreginfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (list == NULL) {
     return;
   }
-  (void)tv_dict_add_list(dict, S_LEN("regcontents"), list);
+  tv_dict_add_list(dict, S_LEN("regcontents"), list);
 
   char buf[NUMBUFLEN + 2];
   buf[0] = NUL;
@@ -5823,15 +5843,15 @@ static void f_getreginfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   case kMTUnknown:
     abort();
   }
-  (void)tv_dict_add_str(dict, S_LEN("regtype"), buf);
+  tv_dict_add_str(dict, S_LEN("regtype"), buf);
 
   buf[0] = (char)get_register_name(get_unname_register());
   buf[1] = NUL;
   if (regname == '"') {
-    (void)tv_dict_add_str(dict, S_LEN("points_to"), buf);
+    tv_dict_add_str(dict, S_LEN("points_to"), buf);
   } else {
-    (void)tv_dict_add_bool(dict, S_LEN("isunnamed"),
-                           regname == buf[0] ? kBoolVarTrue : kBoolVarFalse);
+    tv_dict_add_bool(dict, S_LEN("isunnamed"),
+                     regname == buf[0] ? kBoolVarTrue : kBoolVarFalse);
   }
 }
 
@@ -6883,15 +6903,8 @@ static void f_screenchar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   ScreenGrid *grid;
   screenchar_adjust(&grid, &row, &col);
 
-  int c;
-  if (row < 0 || row >= grid->rows || col < 0 || col >= grid->cols) {
-    c = -1;
-  } else {
-    char buf[MAX_SCHAR_SIZE + 1];
-    schar_get(buf, grid_getchar(grid, row, col, NULL));
-    c = utf_ptr2char(buf);
-  }
-  rettv->vval.v_number = c;
+  rettv->vval.v_number = (row < 0 || row >= grid->rows || col < 0 || col >= grid->cols)
+                         ? -1 : schar_get_first_codepoint(grid_getchar(grid, row, col, NULL));
 }
 
 /// "screenchars()" function
@@ -8084,7 +8097,7 @@ static void f_str2float(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (*p == '+' || *p == '-') {
     p = skipwhite(p + 1);
   }
-  (void)string2float(p, &rettv->vval.v_float);
+  string2float(p, &rettv->vval.v_float);
   if (isneg) {
     rettv->vval.v_float *= -1;
   }
@@ -8385,7 +8398,6 @@ static void f_synIDtrans(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void f_synconcealed(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   int syntax_flags = 0;
-  int cchar;
   int matchid = 0;
   char str[NUMBUFLEN];
 
@@ -8399,19 +8411,18 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 
   if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count && col >= 0
       && (size_t)col <= strlen(ml_get(lnum)) && curwin->w_p_cole > 0) {
-    (void)syn_get_id(curwin, lnum, col, false, NULL, false);
+    syn_get_id(curwin, lnum, col, false, NULL, false);
     syntax_flags = get_syntax_info(&matchid);
 
     // get the conceal character
     if ((syntax_flags & HL_CONCEAL) && curwin->w_p_cole < 3) {
-      cchar = syn_get_sub_char();
+      schar_T cchar = schar_from_char(syn_get_sub_char());
       if (cchar == NUL && curwin->w_p_cole == 1) {
         cchar = (curwin->w_p_lcs_chars.conceal == NUL)
-                ? ' '
-                : curwin->w_p_lcs_chars.conceal;
+                ? schar_from_ascii(' ') : curwin->w_p_lcs_chars.conceal;
       }
       if (cchar != NUL) {
-        utf_char2bytes(cchar, str);
+        schar_get(str, cchar);
       }
     }
   }
@@ -8437,7 +8448,7 @@ static void f_synstack(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       && col >= 0
       && (size_t)col <= strlen(ml_get(lnum))) {
     tv_list_alloc_ret(rettv, kListLenMayKnow);
-    (void)syn_get_id(curwin, lnum, col, false, NULL, true);
+    syn_get_id(curwin, lnum, col, false, NULL, true);
 
     int id;
     int i = 0;
@@ -8511,8 +8522,8 @@ static void f_taglist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (argvars[1].v_type != VAR_UNKNOWN) {
     fname = tv_get_string(&argvars[1]);
   }
-  (void)get_tags(tv_list_alloc_ret(rettv, kListLenUnknown),
-                 (char *)tag_pattern, (char *)fname);
+  get_tags(tv_list_alloc_ret(rettv, kListLenUnknown),
+           (char *)tag_pattern, (char *)fname);
 }
 
 /// "tempname()" function
@@ -8552,8 +8563,8 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  CallbackReader on_stdout = CALLBACK_READER_INIT,
-                 on_stderr = CALLBACK_READER_INIT;
+  CallbackReader on_stdout = CALLBACK_READER_INIT;
+  CallbackReader on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
   dict_T *job_opts = NULL;
   const char *cwd = ".";
@@ -8631,7 +8642,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   curbuf->b_p_swf = false;
 
   apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
-  (void)setfname(curbuf, NameBuff, NULL, true);
+  setfname(curbuf, NameBuff, NULL, true);
   apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
 
   // Save the job id and pid in b:terminal_job_{id,pid}

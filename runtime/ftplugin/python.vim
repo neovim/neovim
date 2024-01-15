@@ -4,6 +4,7 @@
 " Previous Maintainer: James Sully <sullyj3@gmail.com>
 " Previous Maintainer: Johannes Zellner <johannes@zellner.org>
 " Last Change:	Mon, 5 October 2020
+"		2024 Jan 14 by Vim Project (browsefilter)
 " https://github.com/tpict/vim-ftplugin-python
 
 if exists("b:did_ftplugin") | finish | endif
@@ -110,8 +111,12 @@ if !exists('*<SID>Python_jump')
 endif
 
 if has("browsefilter") && !exists("b:browsefilter")
-    let b:browsefilter = "Python Files (*.py)\t*.py\n" .
-                \ "All Files (*.*)\t*.*\n"
+    let b:browsefilter = "Python Files (*.py)\t*.py\n"
+    if has("win32")
+	let b:browsefilter .= "All Files (*.*)\t*\n"
+    else
+	let b:browsefilter .= "All Files (*)\t*\n"
+    endif
 endif
 
 if !exists("g:python_recommended_style") || g:python_recommended_style != 0

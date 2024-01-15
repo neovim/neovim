@@ -1,1 +1,1 @@
-table.insert(_G.test_loadorder, "FANCY")
+table.insert(_G.test_loadorder, 'FANCY')

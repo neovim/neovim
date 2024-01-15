@@ -12,6 +12,7 @@ cmake -B build -G Ninja \
   -D CMAKE_BUILD_TYPE=${NVIM_BUILD_TYPE} \
   -D CMAKE_OSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET} \
   -D CMAKE_OSX_ARCHITECTURES=arm64\;x86_64 \
+  -D ENABLE_LIBINTL=OFF \
   -D CMAKE_FIND_FRAMEWORK=NEVER
 cmake --build build
 # Make sure we build everything for M1 as well

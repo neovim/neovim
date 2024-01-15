@@ -6,7 +6,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/garray.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/message.h"
 #include "nvim/strings.h"

@@ -4,10 +4,12 @@
 #include <uv.h>
 #include <uv/version.h>
 
+#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
 #include "nvim/log.h"
 #include "nvim/rbuffer.h"
+#include "nvim/types_defs.h"
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"
 #endif

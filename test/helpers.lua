@@ -1,18 +1,19 @@
-local shared = vim
-local assert = require('luassert')
+local luaassert = require('luassert')
 local busted = require('busted')
-local luv = require('luv')
+local uv = vim.uv
 local Paths = require('test.cmakeconfig.paths')
 
-assert:set_parameter('TableFormatLevel', 100)
+luaassert:set_parameter('TableFormatLevel', 100)
 
 local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
+
+--- @param str string
+--- @return string
 local function shell_quote(str)
   if string.find(str, quote_me) or str == '' then
     return '"' .. str:gsub('[$%%"\\]', '\\%0') .. '"'
-  else
-    return str
   end
+  return str
 end
 
 --- @class test.helpers
@@ -24,7 +25,7 @@ local module = {
 --- @return string
 local function relpath(p)
   p = vim.fs.normalize(p)
-  local cwd = luv.cwd()
+  local cwd = uv.cwd()
   return p:gsub('^' .. cwd)
 end
 
@@ -34,7 +35,7 @@ function module.isdir(path)
   if not path then
     return false
   end
-  local stat = luv.fs_stat(path)
+  local stat = uv.fs_stat(path)
   if not stat then
     return false
   end
@@ -47,7 +48,7 @@ function module.isfile(path)
   if not path then
     return false
   end
-  local stat = luv.fs_stat(path)
+  local stat = uv.fs_stat(path)
   if not stat then
     return false
   end
@@ -74,30 +75,25 @@ function module.popen_r(...)
   return io.popen(module.argss_to_cmd(...), 'r')
 end
 
--- sleeps the test runner (_not_ the nvim instance)
-function module.sleep(ms)
-  luv.sleep(ms)
-end
-
 -- Calls fn() until it succeeds, up to `max` times or until `max_ms`
 -- milliseconds have passed.
 function module.retry(max, max_ms, fn)
-  assert(max == nil or max > 0)
-  assert(max_ms == nil or max_ms > 0)
+  luaassert(max == nil or max > 0)
+  luaassert(max_ms == nil or max_ms > 0)
   local tries = 1
   local timeout = (max_ms and max_ms or 10000)
-  local start_time = luv.now()
+  local start_time = uv.now()
   while true do
     local status, result = pcall(fn)
     if status then
       return result
     end
-    luv.update_time() -- Update cached value of luv.now() (libuv: uv_now()).
-    if (max and tries >= max) or (luv.now() - start_time > timeout) then
+    uv.update_time() -- Update cached value of luv.now() (libuv: uv_now()).
+    if (max and tries >= max) or (uv.now() - start_time > timeout) then
       busted.fail(string.format('retry() attempts: %d\n%s', tries, tostring(result)), 2)
     end
     tries = tries + 1
-    luv.sleep(20) -- Avoid hot loop...
+    uv.sleep(20) -- Avoid hot loop...
   end
 end
 
@@ -108,10 +104,10 @@ local check_logs_useless_lines = {
 }
 
 function module.eq(expected, actual, context)
-  return assert.are.same(expected, actual, context)
+  return luaassert.are.same(expected, actual, context)
 end
 function module.neq(expected, actual, context)
-  return assert.are_not.same(expected, actual, context)
+  return luaassert.are_not.same(expected, actual, context)
 end
 
 --- Asserts that `cond` is true, or prints a message.
@@ -120,21 +116,21 @@ end
 --- @param expected (any) description of expected result
 --- @param actual (any) description of actual result
 function module.ok(cond, expected, actual)
-  assert(
+  luaassert(
     (not expected and not actual) or (expected and actual),
     'if "expected" is given, "actual" is also required'
   )
   local msg = expected and ('expected %s, got: %s'):format(expected, tostring(actual)) or nil
-  return assert(cond, msg)
+  return luaassert(cond, msg)
 end
 
 local function epicfail(state, arguments, _)
   state.failure_message = arguments[1]
   return false
 end
-assert:register('assertion', 'epicfail', epicfail)
+luaassert:register('assertion', 'epicfail', epicfail)
 function module.fail(msg)
-  return assert.epicfail(msg)
+  return luaassert.epicfail(msg)
 end
 
 function module.matches(pat, actual)
@@ -154,7 +150,7 @@ end
 ---@param inverse? (boolean) Assert that the pattern does NOT match.
 function module.assert_log(pat, logfile, nrlines, inverse)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
-  assert(logfile ~= nil, 'no logfile')
+  luaassert(logfile ~= nil, 'no logfile')
   nrlines = nrlines or 10
   inverse = inverse or false
 
@@ -191,7 +187,7 @@ function module.assert_nolog(pat, logfile, nrlines)
 end
 
 function module.pcall(fn, ...)
-  assert(type(fn) == 'function')
+  luaassert(type(fn) == 'function')
   local status, rv = pcall(fn, ...)
   if status then
     return status, rv
@@ -238,7 +234,7 @@ end
 --    matches('e[or]+$', pcall_err(function(a, b) error('some error') end, 'arg1', 'arg2'))
 --
 function module.pcall_err_withfile(fn, ...)
-  assert(type(fn) == 'function')
+  luaassert(type(fn) == 'function')
   local status, rv = module.pcall(fn, ...)
   if status == true then
     error('expected failure, but got success')
@@ -290,7 +286,7 @@ function module.glob(initial_path, re, exc_re)
       local full_path = cur_path .. '/' .. e
       local checked_path = full_path:sub(#initial_path + 1)
       if (not is_excluded(checked_path)) and e:sub(1, 1) ~= '.' then
-        local stat = luv.fs_stat(full_path)
+        local stat = uv.fs_stat(full_path)
         if stat then
           local check_key = stat.dev .. ':' .. tostring(stat.ino)
           if not checked_files[check_key] then
@@ -315,7 +311,7 @@ function module.check_logs()
     for tail in vim.fs.dir(log_dir) do
       if tail:sub(1, 30) == 'valgrind-' or tail:find('san%.') then
         local file = log_dir .. '/' .. tail
-        local fd = io.open(file)
+        local fd = assert(io.open(file))
         local start_msg = ('='):rep(20) .. ' File ' .. file .. ' ' .. ('='):rep(20)
         local lines = {}
         local warning_line = 0
@@ -350,14 +346,14 @@ function module.check_logs()
       end
     end
   end
-  assert(
+  luaassert(
     0 == #runtime_errors,
     string.format('Found runtime errors in logfile(s): %s', table.concat(runtime_errors, ', '))
   )
 end
 
 function module.sysname()
-  local platform = luv.os_uname()
+  local platform = uv.os_uname()
   if platform and platform.sysname then
     return platform.sysname:lower()
   end
@@ -377,7 +373,7 @@ function module.is_os(s)
 end
 
 function module.is_arch(s)
-  local machine = luv.os_uname().machine
+  local machine = uv.os_uname().machine
   if s == 'arm64' or s == 'aarch64' then
     return machine == 'arm64' or machine == 'aarch64'
   end
@@ -757,7 +753,7 @@ function module.format_luav(v, indent, opts)
   else
     print(type(v))
     -- Not implemented yet
-    assert(false)
+    luaassert(false)
   end
   return ret
 end
@@ -805,7 +801,7 @@ end
 
 local fixtbl_metatable = {
   __newindex = function()
-    assert(false)
+    luaassert(false)
   end,
 }
 
@@ -902,7 +898,7 @@ end
 
 -- Dedent the given text and write it to the file name.
 function module.write_file(name, text, no_dedent, append)
-  local file = io.open(name, (append and 'a' or 'w'))
+  local file = assert(io.open(name, (append and 'a' or 'w')))
   if type(text) == 'table' then
     -- Byte blob
     local bytes = text
@@ -920,7 +916,7 @@ end
 
 function module.is_ci(name)
   local any = (name == nil)
-  assert(any or name == 'github' or name == 'cirrus')
+  luaassert(any or name == 'github' or name == 'cirrus')
   local gh = ((any or name == 'github') and nil ~= os.getenv('GITHUB_ACTIONS'))
   local cirrus = ((any or name == 'cirrus') and nil ~= os.getenv('CIRRUS_CI'))
   return gh or cirrus
@@ -949,11 +945,13 @@ function module.read_nvim_log(logfile, ci_rename)
   return log
 end
 
+--- @param path string
+--- @return string
 function module.mkdir(path)
   -- 493 is 0755 in decimal
-  return luv.fs_mkdir(path, 493)
+  return uv.fs_mkdir(path, 493)
 end
 
-module = shared.tbl_extend('error', module, Paths, shared, require('test.deprecated'))
+module = vim.tbl_extend('error', module, Paths, require('test.deprecated'))
 
 return module

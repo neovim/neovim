@@ -207,6 +207,22 @@ if fname:find('.*/src/nvim/.*%.c$') then
 // IWYU pragma: private, include "%s"
 ]]):format(header_fname:gsub('.*/src/nvim/', 'nvim/')) .. non_static
   end
+elseif non_static_fname:find('/include/api/private/dispatch_wrappers%.h%.generated%.h$') then
+  non_static = [[
+// IWYU pragma: private, include "nvim/api/private/dispatch.h"
+]] .. non_static
+elseif non_static_fname:find('/include/ui_events_call%.h%.generated%.h$') then
+  non_static = [[
+// IWYU pragma: private, include "nvim/ui.h"
+]] .. non_static
+elseif non_static_fname:find('/include/ui_events_client%.h%.generated%.h$') then
+  non_static = [[
+// IWYU pragma: private, include "nvim/ui_client.h"
+]] .. non_static
+elseif non_static_fname:find('/include/ui_events_remote%.h%.generated%.h$') then
+  non_static = [[
+// IWYU pragma: private, include "nvim/api/ui.h"
+]] .. non_static
 end
 
 local filepattern = '^#%a* (%d+) "([^"]-)/?([^"/]+)"'

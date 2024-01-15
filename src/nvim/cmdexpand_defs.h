@@ -4,7 +4,6 @@
 #include <stddef.h>
 
 #include "nvim/eval/typval_defs.h"
-#include "nvim/types_defs.h"
 
 typedef enum {
   XP_PREFIX_NONE,  ///< prefix not used
@@ -15,7 +14,7 @@ typedef enum {
 enum { EXPAND_BUF_LEN = 256, };
 
 /// used for completion on the command line
-typedef struct expand {
+typedef struct {
   char *xp_pattern;             ///< start of item to expand, guaranteed
                                 ///< to be part of xp_line
   int xp_context;               ///< type of expansion
@@ -105,6 +104,7 @@ enum {
   EXPAND_STRING_SETTING,
   EXPAND_SETTING_SUBTRACT,
   EXPAND_ARGOPT,
+  EXPAND_KEYMAP,
   EXPAND_CHECKHEALTH,
   EXPAND_LUA,
 };

@@ -3,7 +3,7 @@ local command = helpers.command
 local insert = helpers.insert
 local eq = helpers.eq
 local clear = helpers.clear
-local meths = helpers.meths
+local api = helpers.api
 local feed = helpers.feed
 local feed_command = helpers.feed_command
 local write_file = helpers.write_file
@@ -49,37 +49,43 @@ describe(':source', function()
       pending("'shellslash' only works on Windows")
       return
     end
-    meths.set_option_value('shellslash', false, {})
+    api.nvim_set_option_value('shellslash', false, {})
     mkdir('Xshellslash')
 
-    write_file([[Xshellslash/Xstack.vim]], [[
+    write_file(
+      [[Xshellslash/Xstack.vim]],
+      [[
       let g:stack1 = expand('<stack>')
       set shellslash
       let g:stack2 = expand('<stack>')
       set noshellslash
       let g:stack3 = expand('<stack>')
-    ]])
+    ]]
+    )
 
     for _ = 1, 2 do
       command([[source Xshellslash/Xstack.vim]])
-      matches([[Xshellslash\Xstack%.vim]], meths.get_var('stack1'))
-      matches([[Xshellslash/Xstack%.vim]], meths.get_var('stack2'))
-      matches([[Xshellslash\Xstack%.vim]], meths.get_var('stack3'))
+      matches([[Xshellslash\Xstack%.vim]], api.nvim_get_var('stack1'))
+      matches([[Xshellslash/Xstack%.vim]], api.nvim_get_var('stack2'))
+      matches([[Xshellslash\Xstack%.vim]], api.nvim_get_var('stack3'))
     end
 
-    write_file([[Xshellslash/Xstack.lua]], [[
+    write_file(
+      [[Xshellslash/Xstack.lua]],
+      [[
       vim.g.stack1 = vim.fn.expand('<stack>')
       vim.o.shellslash = true
       vim.g.stack2 = vim.fn.expand('<stack>')
       vim.o.shellslash = false
       vim.g.stack3 = vim.fn.expand('<stack>')
-    ]])
+    ]]
+    )
 
     for _ = 1, 2 do
       command([[source Xshellslash/Xstack.lua]])
-      matches([[Xshellslash\Xstack%.lua]], meths.get_var('stack1'))
-      matches([[Xshellslash/Xstack%.lua]], meths.get_var('stack2'))
-      matches([[Xshellslash\Xstack%.lua]], meths.get_var('stack3'))
+      matches([[Xshellslash\Xstack%.lua]], api.nvim_get_var('stack1'))
+      matches([[Xshellslash/Xstack%.lua]], api.nvim_get_var('stack2'))
+      matches([[Xshellslash\Xstack%.lua]], api.nvim_get_var('stack3'))
     end
 
     rmdir('Xshellslash')
@@ -101,11 +107,11 @@ describe(':source', function()
     eq("{'k': 'v'}", exec_capture('echo b'))
 
     -- Script items are created only on script var access
-    eq("1", exec_capture('echo c'))
-    eq("0zBEEFCAFE", exec_capture('echo d'))
+    eq('1', exec_capture('echo c'))
+    eq('0zBEEFCAFE', exec_capture('echo d'))
 
     exec('set cpoptions+=C')
-    eq('Vim(let):E723: Missing end of Dictionary \'}\': ', exc_exec('source'))
+    eq("Vim(let):E723: Missing end of Dictionary '}': ", exc_exec('source'))
   end)
 
   it('selection in current buffer', function()
@@ -132,14 +138,14 @@ describe(':source', function()
     feed_command(':source')
     eq('4', exec_capture('echo a'))
     eq("{'K': 'V'}", exec_capture('echo b'))
-    eq("<SNR>1_C()", exec_capture('echo D()'))
+    eq('<SNR>1_C()', exec_capture('echo D()'))
 
     -- Source last line only
     feed_command(':$source')
     eq('Vim(echo):E117: Unknown function: s:C', exc_exec('echo D()'))
 
     exec('set cpoptions+=C')
-    eq('Vim(let):E723: Missing end of Dictionary \'}\': ', exc_exec("'<,'>source"))
+    eq("Vim(let):E723: Missing end of Dictionary '}': ", exc_exec("'<,'>source"))
   end)
 
   it('does not break if current buffer is modified while sourced', function()
@@ -163,19 +169,22 @@ describe(':source', function()
 
   it('can source lua files', function()
     local test_file = 'test.lua'
-    write_file(test_file, [[
+    write_file(
+      test_file,
+      [[
       vim.g.sourced_lua = 1
       vim.g.sfile_value = vim.fn.expand('<sfile>')
       vim.g.stack_value = vim.fn.expand('<stack>')
       vim.g.script_value = vim.fn.expand('<script>')
-    ]])
+    ]]
+    )
 
     command('set shellslash')
     command('source ' .. test_file)
     eq(1, eval('g:sourced_lua'))
-    matches([[/test%.lua$]], meths.get_var('sfile_value'))
-    matches([[/test%.lua$]], meths.get_var('stack_value'))
-    matches([[/test%.lua$]], meths.get_var('script_value'))
+    matches([[/test%.lua$]], api.nvim_get_var('sfile_value'))
+    matches([[/test%.lua$]], api.nvim_get_var('stack_value'))
+    matches([[/test%.lua$]], api.nvim_get_var('script_value'))
 
     os.remove(test_file)
   end)
@@ -220,9 +229,9 @@ describe(':source', function()
 
         eq(12, eval('g:c'))
         eq('    \\ 1\n   "\\ 2', exec_lua('return _G.a'))
-        eq(':source (no file)', meths.get_var('sfile_value'))
-        eq(':source (no file)', meths.get_var('stack_value'))
-        eq(':source (no file)', meths.get_var('script_value'))
+        eq(':source (no file)', api.nvim_get_var('sfile_value'))
+        eq(':source (no file)', api.nvim_get_var('stack_value'))
+        eq(':source (no file)', api.nvim_get_var('script_value'))
       end)
     end
 
@@ -245,22 +254,22 @@ describe(':source', function()
     local test_file = 'test.lua'
 
     -- Does throw E484 for unreadable files
-    local ok, result = pcall(exec_capture, ":source "..test_file ..'noexisting')
+    local ok, result = pcall(exec_capture, ':source ' .. test_file .. 'noexisting')
     eq(false, ok)
-    neq(nil, result:find("E484"))
+    neq(nil, result:find('E484'))
 
     -- Doesn't throw for parsing error
-    write_file (test_file, "vim.g.c = ")
-    ok, result = pcall(exec_capture, ":source "..test_file)
+    write_file(test_file, 'vim.g.c = ')
+    ok, result = pcall(exec_capture, ':source ' .. test_file)
     eq(false, ok)
-    eq(nil, result:find("E484"))
+    eq(nil, result:find('E484'))
     os.remove(test_file)
 
     -- Doesn't throw for runtime error
-    write_file (test_file, "error('Cause error anyway :D')")
-    ok, result = pcall(exec_capture, ":source "..test_file)
+    write_file(test_file, "error('Cause error anyway :D')")
+    ok, result = pcall(exec_capture, ':source ' .. test_file)
     eq(false, ok)
-    eq(nil, result:find("E484"))
+    eq(nil, result:find('E484'))
     os.remove(test_file)
   end)
 end)

@@ -334,9 +334,28 @@ static int load_terminfo(TermKeyTI *ti)
   }
 
   /* Finally mouse mode */
-  try_load_terminfo_key(ti, "key_mouse", &(struct keyinfo){
-      .type = TERMKEY_TYPE_MOUSE,
-  });
+  {
+    const char *value = NULL;
+
+#ifdef HAVE_UNIBILIUM
+    if(ti->unibi)
+      value = unibi_get_str_by_name(ti->unibi, "key_mouse");
+#else
+    if(ti->term)
+      value = tigetstr("key_mouse");
+#endif
+
+    if(ti->tk->ti_getstr_hook)
+      value = (ti->tk->ti_getstr_hook)("key_mouse", value, ti->tk->ti_getstr_hook_data);
+
+    /* Some terminfos (e.g. xterm-1006) claim a different key_mouse that won't
+     * give X10 encoding. We'll only accept this if it's exactly "\e[M"
+     */
+    if(value && streq(value, "\x1b[M")) {
+      struct trie_node *node = new_node_key(TERMKEY_TYPE_MOUSE, 0, 0, 0);
+      insert_seq(ti, value, node);
+    }
+  }
 
   /* Take copies of these terminfo strings, in case we build multiple termkey
    * instances for multiple different termtypes, and it's different by the

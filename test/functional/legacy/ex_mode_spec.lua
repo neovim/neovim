@@ -5,7 +5,7 @@ local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
-local meths = helpers.meths
+local api = helpers.api
 local poke_eventloop = helpers.poke_eventloop
 
 before_each(clear)
@@ -14,9 +14,9 @@ describe('Ex mode', function()
   it('supports command line editing', function()
     local function test_ex_edit(expected, cmd)
       feed('gQ' .. cmd .. '<C-b>"<CR>')
-      local ret = eval('@:[1:]')  -- Remove leading quote.
+      local ret = eval('@:[1:]') -- Remove leading quote.
       feed('visual<CR>')
-      eq(meths.replace_termcodes(expected, true, true, true), ret)
+      eq(api.nvim_replace_termcodes(expected, true, true, true), ret)
     end
     command('set sw=2')
     test_ex_edit('bar', 'foo bar<C-u>bar')
@@ -46,9 +46,9 @@ describe('Ex mode', function()
     command('set noincsearch nohlsearch inccommand=')
     local screen = Screen.new(60, 6)
     screen:set_default_attr_ids({
-      [0] = {bold = true, reverse = true},  -- MsgSeparator
-      [1] = {foreground = Screen.colors.Brown},  -- LineNr
-      [2] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [0] = { bold = true, reverse = true }, -- MsgSeparator
+      [1] = { foreground = Screen.colors.Brown }, -- LineNr
+      [2] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
     })
     screen:attach()
     command([[call setline(1, ['foo foo', 'foo foo', 'foo foo'])]])
@@ -126,8 +126,8 @@ describe('Ex mode', function()
   it('pressing Ctrl-C in :append inside a loop in Ex mode does not hang', function()
     local screen = Screen.new(60, 6)
     screen:set_default_attr_ids({
-      [0] = {bold = true, reverse = true},  -- MsgSeparator
-      [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [0] = { bold = true, reverse = true }, -- MsgSeparator
+      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
     })
     screen:attach()
     feed('gQ')
@@ -142,7 +142,7 @@ describe('Ex mode', function()
       ^                                                            |
     ]])
     feed('<C-C>')
-    poke_eventloop()  -- Wait for input to be flushed
+    poke_eventloop() -- Wait for input to be flushed
     feed('foo<CR>')
     screen:expect([[
       Entering Ex mode.  Type "visual" to go to Normal mode.      |

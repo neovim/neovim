@@ -15,10 +15,10 @@
 #include "nvim/drawscreen.h"
 #include "nvim/eval/window.h"
 #include "nvim/ex_docmd.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"
-#include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
 #include "nvim/plines.h"
@@ -435,10 +435,12 @@ Object nvim_win_call(Window window, LuaRef fun, Error *err)
 
   try_start();
   Object res = OBJECT_INIT;
-  WIN_EXECUTE(win, tabpage, {
+  win_execute_T win_execute_args;
+  if (win_execute_before(&win_execute_args, win, tabpage)) {
     Array args = ARRAY_DICT_INIT;
     res = nlua_call_ref(fun, NULL, args, true, err);
-  });
+  }
+  win_execute_after(&win_execute_args);
   try_end(err);
   return res;
 }

@@ -63,7 +63,9 @@
 
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
@@ -74,25 +76,31 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/garray.h"
-#include "nvim/gettext.h"
+#include "nvim/garray_defs.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
+#include "nvim/hashtab_defs.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/insexpand.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
-#include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
+#include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/input.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
+#include "nvim/regexp_defs.h"
 #include "nvim/runtime.h"
 #include "nvim/search.h"
 #include "nvim/spell.h"
@@ -123,7 +131,7 @@ slang_T *first_lang = NULL;
 char *int_wordlist = NULL;
 
 // Structure to store info for word matching.
-typedef struct matchinf_S {
+typedef struct {
   langp_T *mi_lp;                   // info for language and region
 
   // pointers to original text to be checked
@@ -162,20 +170,20 @@ typedef struct matchinf_S {
 } matchinf_T;
 
 // Structure used for the cookie argument of do_in_runtimepath().
-typedef struct spelload_S {
+typedef struct {
   char sl_lang[MAXWLEN + 1];            // language name
   slang_T *sl_slang;                    // resulting slang_T struct
   int sl_nobreak;                       // NOBREAK language found
 } spelload_T;
 
 #define SY_MAXLEN   30
-typedef struct syl_item_S {
+typedef struct {
   char sy_chars[SY_MAXLEN];               // the sequence of chars
   int sy_len;
 } syl_item_T;
 
 spelltab_T spelltab;
-int did_set_spelltab;
+bool did_set_spelltab;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "spell.c.generated.h"
@@ -296,8 +304,8 @@ size_t spell_check(win_T *wp, char *ptr, hlf_T *attrp, int *capcol, bool docount
     MB_PTR_ADV(mi.mi_fend);
   }
 
-  (void)spell_casefold(wp, ptr, (int)(mi.mi_fend - ptr), mi.mi_fword,
-                       MAXWLEN + 1);
+  spell_casefold(wp, ptr, (int)(mi.mi_fend - ptr), mi.mi_fword,
+                 MAXWLEN + 1);
   mi.mi_fwordlen = (int)strlen(mi.mi_fword);
 
   if (is_camel_case && mi.mi_fwordlen > 0) {
@@ -362,7 +370,7 @@ size_t spell_check(win_T *wp, char *ptr, hlf_T *attrp, int *capcol, bool docount
         // Check for end of sentence.
         regmatch.regprog = wp->w_s->b_cap_prog;
         regmatch.rm_ic = false;
-        int r = vim_regexec(&regmatch, ptr, 0);
+        bool r = vim_regexec(&regmatch, ptr, 0);
         wp->w_s->b_cap_prog = regmatch.regprog;
         if (r) {
           *capcol = (int)(regmatch.endp[0] - ptr);
@@ -801,7 +809,7 @@ static void find_word(matchinf_T *mip, int mode)
           if (slang->sl_compsylmax < MAXWLEN) {
             // "fword" is only needed for checking syllables.
             if (ptr == mip->mi_word) {
-              (void)spell_casefold(mip->mi_win, ptr, wlen, fword, MAXWLEN);
+              spell_casefold(mip->mi_win, ptr, wlen, fword, MAXWLEN);
             } else {
               xstrlcpy(fword, ptr, (size_t)endlen[endidxcnt] + 1);
             }
@@ -1211,9 +1219,9 @@ static int fold_more(matchinf_T *mip)
     MB_PTR_ADV(mip->mi_fend);
   }
 
-  (void)spell_casefold(mip->mi_win, p, (int)(mip->mi_fend - p),
-                       mip->mi_fword + mip->mi_fwordlen,
-                       MAXWLEN - mip->mi_fwordlen);
+  spell_casefold(mip->mi_win, p, (int)(mip->mi_fend - p),
+                 mip->mi_fword + mip->mi_fwordlen,
+                 MAXWLEN - mip->mi_fwordlen);
   int flen = (int)strlen(mip->mi_fword + mip->mi_fwordlen);
   mip->mi_fwordlen += flen;
   return flen;
@@ -1271,7 +1279,7 @@ static TriState decor_spell_nav_col(win_T *wp, linenr_T lnum, linenr_T *decor_ln
 static inline bool can_syn_spell(win_T *wp, linenr_T lnum, int col)
 {
   bool can_spell;
-  (void)syn_get_id(wp, lnum, col, false, &can_spell, false);
+  syn_get_id(wp, lnum, col, false, &can_spell, false);
   return can_spell;
 }
 
@@ -1292,7 +1300,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
   size_t found_len = 0;
   hlf_T attr = HLF_COUNT;
   size_t len;
-  int has_syntax = syntax_present(wp);
+  bool has_syntax = syntax_present(wp);
   colnr_T col;
   char *buf = NULL;
   size_t buflen = 0;
@@ -2028,7 +2036,7 @@ char *parse_spelllang(win_T *wp)
     // If not found try loading the language now.
     if (slang == NULL) {
       if (filename) {
-        (void)spell_load_file(lang, lang, NULL, false);
+        spell_load_file(lang, lang, NULL, false);
       } else {
         spell_load_lang(lang);
         // SpellFileMissing autocommands may do anything, including
@@ -2373,7 +2381,7 @@ void spell_reload(void)
     // window for this buffer in which 'spell' is set.
     if (*wp->w_s->b_p_spl != NUL) {
       if (wp->w_p_spell) {
-        (void)parse_spelllang(wp);
+        parse_spelllang(wp);
         break;
       }
     }
@@ -2833,7 +2841,7 @@ void spell_soundfold(slang_T *slang, char *inword, bool folded, char *res)
     if (folded) {
       word = inword;
     } else {
-      (void)spell_casefold(curwin, inword, (int)strlen(inword), fword, MAXWLEN);
+      spell_casefold(curwin, inword, (int)strlen(inword), fword, MAXWLEN);
       word = fword;
     }
 

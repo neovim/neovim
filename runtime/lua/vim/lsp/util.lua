@@ -180,6 +180,7 @@ local _str_byteindex_enc = M._str_byteindex_enc
 ---@param new_lines (table) list of strings to replace the original
 ---@return table The modified {lines} object
 function M.set_lines(lines, A, B, new_lines)
+  vim.deprecate('vim.lsp.util.set_lines()', 'nil', '0.12')
   -- 0-indexing to 1-indexing
   local i_0 = A[1] + 1
   -- If it extends past the end, truncate it to the end. This is because the
@@ -346,7 +347,7 @@ end
 ---@private
 ---@deprecated Use vim.lsp.status() or access client.progress directly
 function M.get_progress_messages()
-  vim.deprecate('vim.lsp.util.get_progress_messages', 'vim.lsp.status', '0.11.0')
+  vim.deprecate('vim.lsp.util.get_progress_messages()', 'vim.lsp.status()', '0.11')
   local new_messages = {}
   local progress_remove = {}
 
@@ -552,7 +553,7 @@ end
 ---@return lsp.CompletionItem[] List of completion items
 ---@see https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 function M.extract_completion_items(result)
-  vim.deprecate('vim.lsp.util.extract_completion_items', nil, '0.11')
+  vim.deprecate('vim.lsp.util.extract_completion_items()', nil, '0.11')
   if type(result) == 'table' and result.items then
     -- result is a `CompletionList`
     return result.items
@@ -612,7 +613,7 @@ end
 ---@param input string unparsed snippet
 ---@return string parsed snippet
 function M.parse_snippet(input)
-  vim.deprecate('vim.lsp.util.parse_snippet', nil, '0.11')
+  vim.deprecate('vim.lsp.util.parse_snippet()', nil, '0.11')
   local ok, parsed = pcall(function()
     return snippet.parse(input)
   end)
@@ -634,7 +635,7 @@ end
 ---@return table[] items
 ---@see complete-items
 function M.text_document_completion_list_to_complete_items(result, prefix)
-  vim.deprecate('vim.lsp.util.text_document_completion_list_to_complete_items', nil, '0.11')
+  vim.deprecate('vim.lsp.util.text_document_completion_list_to_complete_items()', nil, '0.11')
   return require('vim.lsp._completion')._lsp_to_complete_items(result, prefix)
 end
 
@@ -789,7 +790,7 @@ end
 --- Note that if the input is of type `MarkupContent` and its kind is `plaintext`,
 --- then the corresponding value is returned without further modifications.
 ---
----@param input (`MarkedString` | `MarkedString[]` | `MarkupContent`)
+---@param input (lsp.MarkedString | lsp.MarkedString[] | lsp.MarkupContent)
 ---@param contents (table|nil) List of strings to extend with converted lines. Defaults to {}.
 ---@return string[] extended with lines of converted markdown.
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
@@ -1068,7 +1069,7 @@ function M.show_document(location, offset_encoding, opts)
   -- location may be Location or LocationLink
   local range = location.range or location.targetSelectionRange
   if range then
-    --- Jump to new location (adjusting for encoding of characters)
+    -- Jump to new location (adjusting for encoding of characters)
     local row = range.start.line
     local col = get_line_byte_from_position(bufnr, range.start, offset_encoding)
     api.nvim_win_set_cursor(win, { row + 1, col })
@@ -1754,6 +1755,13 @@ local position_sort = sort_by_key(function(v)
   return { v.start.line, v.start.character }
 end)
 
+---@class vim.lsp.util.LocationItem
+---@field filename string
+---@field lnum integer 1-indexed line number
+---@field col integer 1-indexed column
+---@field text string
+---@field user_data lsp.Location|lsp.LocationLink
+
 --- Returns the items with the byte position calculated correctly and in sorted
 --- order, for display in quickfix and location lists.
 ---
@@ -1763,10 +1771,10 @@ end)
 --- The result can be passed to the {list} argument of |setqflist()| or
 --- |setloclist()|.
 ---
----@param locations table list of `Location`s or `LocationLink`s
+---@param locations lsp.Location[]|lsp.LocationLink[]
 ---@param offset_encoding string offset_encoding for locations utf-8|utf-16|utf-32
 ---                              default to first client of buffer
----@return table list of items
+---@return vim.lsp.util.LocationItem[] list of items
 function M.locations_to_items(locations, offset_encoding)
   if offset_encoding == nil then
     vim.notify_once(
@@ -1777,6 +1785,7 @@ function M.locations_to_items(locations, offset_encoding)
   end
 
   local items = {}
+  ---@type table<string, {start: lsp.Position, location: lsp.Location|lsp.LocationLink}[]>
   local grouped = setmetatable({}, {
     __index = function(t, k)
       local v = {}
@@ -1791,6 +1800,7 @@ function M.locations_to_items(locations, offset_encoding)
     table.insert(grouped[uri], { start = range.start, location = d })
   end
 
+  ---@type string[]
   local keys = vim.tbl_keys(grouped)
   table.sort(keys)
   -- TODO(ashkan) I wish we could do this lazily.
@@ -1799,16 +1809,13 @@ function M.locations_to_items(locations, offset_encoding)
     table.sort(rows, position_sort)
     local filename = vim.uri_to_fname(uri)
 
-    -- list of row numbers
-    local uri_rows = {}
+    local line_numbers = {}
     for _, temp in ipairs(rows) do
-      local pos = temp.start
-      local row = pos.line
-      table.insert(uri_rows, row)
+      table.insert(line_numbers, temp.start.line)
     end
 
     -- get all the lines for this uri
-    local lines = get_lines(vim.uri_to_bufnr(uri), uri_rows)
+    local lines = get_lines(vim.uri_to_bufnr(uri), line_numbers)
 
     for _, temp in ipairs(rows) do
       local pos = temp.start
@@ -1879,6 +1886,7 @@ end
 ---@param lines table list of lines to trim
 ---@return table trimmed list of lines
 function M.trim_empty_lines(lines)
+  vim.deprecate('vim.lsp.util.trim_empty_lines()', 'vim.split() with `trimempty`', '0.12')
   local start = 1
   for i = 1, #lines do
     if lines[i] ~= nil and #lines[i] > 0 then
@@ -1905,6 +1913,7 @@ end
 ---@param lines table list of lines
 ---@return string filetype or "markdown" if it was unchanged.
 function M.try_trim_markdown_code_blocks(lines)
+  vim.deprecate('vim.lsp.util.try_trim_markdown_code_blocks()', 'nil', '0.12')
   local language_id = lines[1]:match('^```(.*)')
   if language_id then
     local has_inner_code_fence = false
@@ -2106,8 +2115,8 @@ end
 --- Returns the UTF-32 and UTF-16 offsets for a position in a certain buffer.
 ---
 ---@param buf integer buffer number (0 for current)
----@param row 0-indexed line
----@param col 0-indexed byte offset in line
+---@param row integer 0-indexed line
+---@param col integer 0-indexed byte offset in line
 ---@param offset_encoding string utf-8|utf-16|utf-32 defaults to `offset_encoding` of first client of `buf`
 ---@return integer `offset_encoding` index of the character in line {row} column {col} in buffer {buf}
 function M.character_offset(buf, row, col, offset_encoding)
@@ -2130,7 +2139,7 @@ end
 ---
 ---@param settings table language server settings
 ---@param section  string indicating the field of the settings table
----@return table|string The value of settings accessed via section
+---@return table|string|vim.NIL The value of settings accessed via section. `vim.NIL` if not found.
 function M.lookup_section(settings, section)
   for part in vim.gsplit(section, '.', { plain = true }) do
     settings = settings[part]

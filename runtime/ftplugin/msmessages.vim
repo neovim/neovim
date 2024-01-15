@@ -2,6 +2,7 @@
 " Language:	MS Message files (*.mc)
 " Maintainer:	Kevin Locke <kwl7@cornell.edu>
 " Last Change:	2008 April 09
+"		2024 Jan 14 by Vim Project (browsefilter)
 " Location:	http://kevinlocke.name/programs/vim/syntax/msmessages.vim
 
 " Based on c.vim
@@ -29,11 +30,15 @@ setlocal fo-=ct fo+=roql
 setlocal comments=:;,:;//,:;\ //,s:;\ /*\ ,m:;\ \ *\ ,e:;\ \ */
 setlocal commentstring=;\ //\ %s
 
-" Win32 can filter files in the browse dialog
-if has("gui_win32") && !exists("b:browsefilter")
+" Win32 and GTK can filter files in the browse dialog
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:browsefilter = "MS Message Files (*.mc)\t*.mc\n" .
-	\ "Resource Files (*.rc)\t*.rc\n" .
-	\ "All Files (*.*)\t*.*\n"
+	\ "Resource Files (*.rc)\t*.rc\n"
+  if has("win32")
+    let b:browsefilter .= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter .= "All Files (*)\t*\n"
+  endif
 endif
 
 let &cpo = s:cpo_save

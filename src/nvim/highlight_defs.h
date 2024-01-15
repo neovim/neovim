@@ -33,7 +33,7 @@ typedef enum {
 
 /// Stores a complete highlighting entry, including colors and attributes
 /// for both TUI and GUI.
-typedef struct attr_entry {
+typedef struct {
   int16_t rgb_ae_attr, cterm_ae_attr;  ///< HlAttrFlags
   RgbValue rgb_fg_color, rgb_bg_color, rgb_sp_color;
   int cterm_fg_color, cterm_bg_color;

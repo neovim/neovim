@@ -16,6 +16,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
@@ -33,8 +34,9 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_getln.h"
 #include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/keycodes.h"
 #include "nvim/lua/converter.h"
@@ -45,21 +47,29 @@
 #include "nvim/main.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/message.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fileio.h"
+#include "nvim/os/fileio_defs.h"
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/profile.h"
 #include "nvim/runtime.h"
+#include "nvim/runtime_defs.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
+#include "nvim/ui_defs.h"
 #include "nvim/undo.h"
 #include "nvim/usercmd.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+
+#ifndef MSWIN
+# include <pthread.h>
+#endif
 
 static int in_fast_callback = 0;
 static bool in_script = false;
@@ -254,8 +264,7 @@ static int nlua_luv_thread_common_cfpcall(lua_State *lstate, int nargs, int nres
     if (status == LUA_ERRMEM && !(flags & LUVF_CALLBACK_NOEXIT)) {
       // Terminate this thread, as the main thread may be able to continue
       // execution.
-      os_errmsg(e_outofmem);
-      os_errmsg("\n");
+      fprintf(stderr, "%s\n", e_outofmem);
       lua_close(lstate);
 #ifdef MSWIN
       ExitThread(0);
@@ -642,8 +651,7 @@ static bool nlua_init_packages(lua_State *lstate, bool is_standalone)
   lua_getglobal(lstate, "require");
   lua_pushstring(lstate, "vim._init_packages");
   if (nlua_pcall(lstate, 1, 0)) {
-    os_errmsg(lua_tostring(lstate, -1));
-    os_errmsg("\n");
+    fprintf(stderr, "%s\n", lua_tostring(lstate, -1));
     return false;
   }
 
@@ -817,12 +825,12 @@ void nlua_init(char **argv, int argc, int lua_arg0)
 
   lua_State *lstate = luaL_newstate();
   if (lstate == NULL) {
-    os_errmsg(_("E970: Failed to initialize lua interpreter\n"));
+    fprintf(stderr, _("E970: Failed to initialize lua interpreter\n"));
     os_exit(1);
   }
   luaL_openlibs(lstate);
   if (!nlua_state_init(lstate)) {
-    os_errmsg(_("E970: Failed to initialize builtin lua modules\n"));
+    fprintf(stderr, _("E970: Failed to initialize builtin lua modules\n"));
 #ifdef EXITFREE
     nlua_common_free_all_mem(lstate);
 #endif
@@ -2176,7 +2184,7 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   // every possible modifier (with room to spare). If the list of possible
   // modifiers grows this may need to be updated.
   char buf[200] = { 0 };
-  (void)uc_mods(buf, &cmdmod, false);
+  uc_mods(buf, &cmdmod, false);
   lua_pushstring(lstate, buf);
   lua_setfield(lstate, -2, "mods");
 
@@ -2309,8 +2317,7 @@ void nlua_init_defaults(void)
   lua_getglobal(L, "require");
   lua_pushstring(L, "vim._defaults");
   if (nlua_pcall(L, 1, 0)) {
-    os_errmsg(lua_tostring(L, -1));
-    os_errmsg("\n");
+    fprintf(stderr, "%s\n", lua_tostring(L, -1));
   }
 }
 

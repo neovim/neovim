@@ -21,20 +21,26 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/channel.h"
+#include "nvim/channel_defs.h"
 #include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
+#include "nvim/getchar_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
+#include "nvim/grid_defs.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
@@ -42,25 +48,33 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/message.h"
+#include "nvim/message_defs.h"
 #include "nvim/move.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
+#include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
 #include "nvim/os/input.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/process.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/runtime.h"
-#include "nvim/sign.h"
+#include "nvim/sign_defs.h"
 #include "nvim/state.h"
+#include "nvim/state_defs.h"
 #include "nvim/statusline.h"
+#include "nvim/statusline_defs.h"
 #include "nvim/strings.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
@@ -344,7 +358,8 @@ Integer nvim_input(String keys)
 ///       mouse input in a GUI. The deprecated pseudokey form
 ///       ("<LeftMouse><col,row>") of |nvim_input()| has the same limitation.
 ///
-/// @param button Mouse button: one of "left", "right", "middle", "wheel", "move".
+/// @param button Mouse button: one of "left", "right", "middle", "wheel", "move",
+///               "x1", "x2".
 /// @param action For ordinary buttons, one of "press", "drag", "release".
 ///               For the wheel, one of "up", "down", "left", "right". Ignored for "move".
 /// @param modifier String of modifiers each represented by a single char.
@@ -375,6 +390,10 @@ void nvim_input_mouse(String button, String action, String modifier, Integer gri
     code = KE_RIGHTMOUSE;
   } else if (strequal(button.data, "wheel")) {
     code = KE_MOUSEDOWN;
+  } else if (strequal(button.data, "x1")) {
+    code = KE_X1MOUSE;
+  } else if (strequal(button.data, "x2")) {
+    code = KE_X2MOUSE;
   } else if (strequal(button.data, "move")) {
     code = KE_MOUSEMOVE;
   } else {
@@ -455,7 +474,7 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Bool
   }
 
   char *ptr = NULL;
-  replace_termcodes(str.data, str.size, &ptr, 0, flags, NULL, CPO_TO_CPO_FLAGS);
+  replace_termcodes(str.data, str.size, &ptr, 0, flags, NULL, p_cpo);
   return cstr_as_string(ptr);
 }
 
@@ -593,7 +612,7 @@ ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, E
   if (opts->do_source) {
     for (size_t i = 0; i < res.size; i++) {
       String name = res.items[i].data.string;
-      (void)do_source(name.data, false, DOSO_NONE, NULL);
+      do_source(name.data, false, DOSO_NONE, NULL);
     }
   }
 
@@ -2126,7 +2145,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   Dictionary result = ARRAY_DICT_INIT;
 
   int maxwidth;
-  int fillchar = 0;
+  schar_T fillchar = 0;
   int statuscol_lnum = 0;
   Window window = 0;
 
@@ -2142,11 +2161,13 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   }
   if (HAS_KEY(opts, eval_statusline, fillchar)) {
     VALIDATE_EXP((*opts->fillchar.data != 0
-                  && ((size_t)utf_ptr2len(opts->fillchar.data) == opts->fillchar.size)),
+                  && ((size_t)utfc_ptr2len(opts->fillchar.data) == opts->fillchar.size)),
                  "fillchar", "single character", NULL, {
       return result;
     });
-    fillchar = utf_ptr2char(opts->fillchar.data);
+    int c;
+    fillchar = utfc_ptr2schar(opts->fillchar.data, &c);
+    // TODO(bfredl): actually check c is single width
   }
 
   int use_bools = (int)opts->use_winbar + (int)opts->use_tabline;
@@ -2175,7 +2196,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   SignTextAttrs sattrs[SIGN_SHOW_MAX] = { 0 };
 
   if (opts->use_tabline) {
-    fillchar = ' ';
+    fillchar = schar_from_ascii(' ');
   } else {
     if (fillchar == 0) {
       if (opts->use_winbar) {
@@ -2236,16 +2257,8 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   int p_crb_save = wp->w_p_crb;
   wp->w_p_crb = false;
 
-  int width = build_stl_str_hl(wp,
-                               buf,
-                               sizeof(buf),
-                               str.data,
-                               -1,
-                               0,
-                               fillchar,
-                               maxwidth,
-                               opts->highlights ? &hltab : NULL,
-                               NULL,
+  int width = build_stl_str_hl(wp, buf, sizeof(buf), str.data, -1, 0, fillchar, maxwidth,
+                               opts->highlights ? &hltab : NULL, NULL,
                                statuscol_lnum ? &statuscol : NULL);
 
   PUT(result, "width", INTEGER_OBJ(width));

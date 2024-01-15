@@ -37,6 +37,11 @@ end
 
 ---@deprecated
 function M.require_language(lang, path, silent, symbol_name)
+  vim.deprecate(
+    'vim.treesitter.language.require_language()',
+    'vim.treesitter.language.add()',
+    '0.12'
+  )
   local opts = {
     silent = silent,
     path = path,
@@ -114,6 +119,10 @@ local function ensure_list(x)
 end
 
 --- Register a parser named {lang} to be used for {filetype}(s).
+---
+--- Note: this adds or overrides the mapping for {filetype}, any existing mappings from other
+--- filetypes to {lang} will be preserved.
+---
 --- @param lang string Name of parser
 --- @param filetype string|string[] Filetype(s) to associate with lang
 function M.register(lang, filetype)

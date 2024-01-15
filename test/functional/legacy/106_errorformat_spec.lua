@@ -8,7 +8,7 @@ describe('errorformat', function()
   setup(clear)
 
   it('is working', function()
-    command("set efm=%EEEE%m,%WWWW%m,%+CCCC%.%#,%-GGGG%.%#")
+    command('set efm=%EEEE%m,%WWWW%m,%+CCCC%.%#,%-GGGG%.%#')
     command("cgetexpr ['WWWW', 'EEEE', 'CCCC']")
     command("$put =strtrans(string(map(getqflist(), '[v:val.text, v:val.valid]')))")
     command("cgetexpr ['WWWW', 'GGGG', 'EEEE', 'CCCC']")

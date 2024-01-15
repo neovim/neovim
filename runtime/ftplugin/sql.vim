@@ -3,6 +3,7 @@
 " Version:     12.0
 " Maintainer:  David Fishburn <dfishburn dot vim at gmail dot com>
 " Last Change: 2017 Mar 07
+"              2024 Jan 14 by Vim Project (browsefilter)
 " Download:    http://vim.sourceforge.net/script.php?script_id=454
 
 " For more details please use:
@@ -272,10 +273,14 @@ let b:undo_ftplugin = "setl comments< formatoptions< define< omnifunc<" .
 let b:did_ftplugin     = 1
 let b:current_ftplugin = 'sql'
 
-" Win32 can filter files in the browse dialog
-if has("gui_win32") && !exists("b:browsefilter")
-    let b:browsefilter = "SQL Files (*.sql)\t*.sql\n" .
-                \ "All Files (*.*)\t*.*\n"
+" Win32 and GTK can filter files in the browse dialog
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
+    let b:browsefilter = "SQL Files (*.sql)\t*.sql\n"
+    if has("win32")
+	let b:browsefilter .= "All Files (*.*)\t*\n"
+    else
+	let b:browsefilter .= "All Files (*)\t*\n"
+    endif
 endif
 
 " Some standard expressions for use with the matchit strings

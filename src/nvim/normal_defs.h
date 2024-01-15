@@ -16,7 +16,7 @@ typedef enum {
 } MotionType;
 
 /// Arguments for operators.
-typedef struct oparg_S {
+typedef struct {
   int op_type;             ///< current pending operator type
   int regname;             ///< register to use for the operator
   MotionType motion_type;  ///< type of the current cursor motion
@@ -42,7 +42,7 @@ typedef struct oparg_S {
 } oparg_T;
 
 /// Arguments for Normal mode commands.
-typedef struct cmdarg_S {
+typedef struct {
   oparg_T *oap;     ///< Operator arguments
   int prechar;      ///< prefix character (optional, always 'g')
   int cmdchar;      ///< command character

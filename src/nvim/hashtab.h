@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 
-#include "nvim/hashtab_defs.h"  // IWYU pragma: export
+#include "nvim/hashtab_defs.h"  // IWYU pragma: keep
 
 /// Magic number used for hashitem "hi_key" value indicating a deleted item
 ///

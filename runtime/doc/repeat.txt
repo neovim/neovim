@@ -148,9 +148,19 @@ q			Stops recording.
 							*@@* *E748*
 @@			Repeat the previous @{0-9a-z":*} [count] times.
 
+							*v_@-default*
+{Visual}@{0-9a-z".=*+}	In Visual mode, execute the contents of the register
+{Visual}@@		but for each selected line.
+			See |visual-repeat|, |default-mappings|.
+
 							*Q*
 Q			Repeat the last recorded register [count] times.
 			See |reg_recorded()|.
+
+							*v_Q-default*
+{Visual}Q		In Visual mode, repeat the last recorded register for
+			each selected line.
+			See |visual-repeat|, |default-mappings|.
 
 							*:@*
 :[addr]@{0-9a-z".=*+}	Execute the contents of register {0-9a-z".=*+} as an Ex

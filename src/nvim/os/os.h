@@ -1,24 +1,18 @@
 #pragma once
 
-#include <stddef.h>  // IWYU pragma: keep
-#include <stdint.h>  // IWYU pragma: keep
-#include <uv.h>  // IWYU pragma: keep
+#include <stddef.h>
+#include <stdint.h>
+#include <uv.h>
 
-#include "nvim/buffer_defs.h"  // IWYU pragma: keep
-#include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
-#include "nvim/garray_defs.h"  // IWYU pragma: keep
-#include "nvim/os/os_defs.h"  // IWYU pragma: export
-#include "nvim/os/stdpaths_defs.h"  // IWYU pragma: keep
+#include "nvim/cmdexpand_defs.h"
+#include "nvim/garray_defs.h"
+#include "nvim/os/os_defs.h"
+#include "nvim/os/stdpaths_defs.h"
+#include "nvim/types_defs.h"
 
-#define HAVE_PATHDEF
-
-// Some file names are stored in pathdef.c, which is generated from the
-// Makefile to make their value depend on the Makefile.
-#ifdef HAVE_PATHDEF
 extern char *default_vim_dir;
 extern char *default_vimruntime_dir;
 extern char *default_lib_dir;
-#endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 // IWYU pragma: begin_exports

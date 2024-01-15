@@ -16,7 +16,7 @@ describe('vim.highlight.on_yank', function()
       vim.highlight.on_yank({timeout = 10, on_macro = true, event = {operator = "y", regtype = "v"}})
       vim.cmd('bwipeout!')
     ]])
-    helpers.sleep(10)
+    vim.uv.sleep(10)
     helpers.feed('<cr>') -- avoid hang if error message exists
     eq('', eval('v:errmsg'))
   end)

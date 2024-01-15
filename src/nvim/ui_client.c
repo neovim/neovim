@@ -5,22 +5,29 @@
 #include <stdlib.h>
 
 #include "nvim/api/keysets_defs.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/channel.h"
+#include "nvim/channel_defs.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
-#include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/tui/tui.h"
+#include "nvim/tui/tui_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
+#include "nvim/ui_defs.h"
 
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"
@@ -203,7 +210,9 @@ void ui_client_event_grid_line(Array args)
 
 void ui_client_event_raw_line(GridLineEvent *g)
 {
-  int grid = g->args[0], row = g->args[1], startcol = g->args[2];
+  int grid = g->args[0];
+  int row = g->args[1];
+  int startcol = g->args[2];
   Integer endcol = startcol + g->coloff;
   Integer clearcol = endcol + g->clear_width;
   LineFlags lineflags = g->wrap ? kLineFlagWrap : 0;

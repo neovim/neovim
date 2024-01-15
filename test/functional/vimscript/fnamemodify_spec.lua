@@ -1,8 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq = helpers.eq
-local fnamemodify = helpers.funcs.fnamemodify
-local getcwd = helpers.funcs.getcwd
+local fnamemodify = helpers.fn.fnamemodify
+local getcwd = helpers.fn.getcwd
 local command = helpers.command
 local write_file = helpers.write_file
 local alter_slashes = helpers.alter_slashes
@@ -31,7 +31,7 @@ describe('fnamemodify()', function()
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))
       command('set shellslash')
-      root = string.sub(root, 1, -2)..'/'
+      root = string.sub(root, 1, -2) .. '/'
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))
       eq(root, fnamemodify([[/]], ':p:h'))
@@ -44,7 +44,7 @@ describe('fnamemodify()', function()
   end)
 
   it('handles examples from ":help filename-modifiers"', function()
-    local filename = "src/version.c"
+    local filename = 'src/version.c'
     local cwd = getcwd()
 
     eq_slashconvert(cwd .. '/src/version.c', fnamemodify(filename, ':p'))
@@ -70,7 +70,7 @@ describe('fnamemodify()', function()
   end)
 
   it('handles advanced examples from ":help filename-modifiers"', function()
-    local filename = "src/version.c.gz"
+    local filename = 'src/version.c.gz'
 
     eq('gz', fnamemodify(filename, ':e'))
     eq('c.gz', fnamemodify(filename, ':e:e'))

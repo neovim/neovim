@@ -46,7 +46,6 @@ Checks: >
   -cppcoreguidelines-init-variables,
   -llvm-header-guard, We use #pragma once,
   -llvmlibc-restrict-system-libc-headers, We want to use glibc,
-  -misc-header-include-cycle, Looks useful but redundant with IWYU. We may replace IWYU with this one day,
   -misc-include-cleaner, Looks useful but redundant with IWYU. We may replace IWYU with this one day,
   -misc-misplaced-const,
   -misc-no-recursion,

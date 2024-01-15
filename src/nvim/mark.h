@@ -1,20 +1,50 @@
 #pragma once
 
-#include <stdbool.h>
-#include <stddef.h>
+#include <locale.h>
 
 #include "nvim/ascii_defs.h"
-#include "nvim/buffer_defs.h"
-#include "nvim/ex_cmds_defs.h"
-#include "nvim/extmark_defs.h"
+#include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
+#include "nvim/extmark_defs.h"  // IWYU pragma: keep
 #include "nvim/func_attr.h"
 #include "nvim/macros_defs.h"
-#include "nvim/mark_defs.h"  // IWYU pragma: export
-#include "nvim/memory.h"
+#include "nvim/mark_defs.h"  // IWYU pragma: keep
 #include "nvim/os/time.h"
-#include "nvim/pos_defs.h"
 
-/// Set fmark using given value
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "mark.h.generated.h"
+#endif
+
+static inline int mark_global_index(char name)
+  REAL_FATTR_CONST;
+/// Convert mark name to the offset
+static inline int mark_global_index(const char name)
+{
+  return (ASCII_ISUPPER(name)
+          ? (name - 'A')
+          : (ascii_isdigit(name)
+             ? (NMARKS + (name - '0'))
+             : -1));
+}
+
+static inline int mark_local_index(char name)
+  REAL_FATTR_CONST;
+/// Convert local mark name to the offset
+static inline int mark_local_index(const char name)
+{
+  return (ASCII_ISLOWER(name)
+          ? (name - 'a')
+          : (name == '"'
+             ? NMARKS
+             : (name == '^'
+                ? NMARKS + 1
+                : (name == '.'
+                   ? NMARKS + 2
+                   : -1))));
+}
+
+/// Global marks (marks with file number or name)
+EXTERN xfmark_T namedfm[NGLOBALMARKS] INIT( = { 0 });
+
 #define SET_FMARK(fmarkp_, mark_, fnum_, view_) \
   do { \
     fmark_T *const fmarkp__ = fmarkp_; \
@@ -49,81 +79,3 @@
     xfmarkp__->fname = fname_; \
     SET_FMARK(&(xfmarkp__->fmark), mark_, fnum_, view_); \
   } while (0)
-
-static inline int mark_global_index(char name)
-  REAL_FATTR_CONST;
-
-/// Convert mark name to the offset
-static inline int mark_global_index(const char name)
-{
-  return (ASCII_ISUPPER(name)
-          ? (name - 'A')
-          : (ascii_isdigit(name)
-             ? (NMARKS + (name - '0'))
-             : -1));
-}
-
-static inline int mark_local_index(char name)
-  REAL_FATTR_CONST;
-
-/// Convert local mark name to the offset
-static inline int mark_local_index(const char name)
-{
-  return (ASCII_ISLOWER(name)
-          ? (name - 'a')
-          : (name == '"'
-             ? NMARKS
-             : (name == '^'
-                ? NMARKS + 1
-                : (name == '.'
-                   ? NMARKS + 2
-                   : -1))));
-}
-
-static inline bool lt(pos_T a, pos_T b)
-  REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
-static inline bool equalpos(pos_T a, pos_T b)
-  REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
-static inline bool ltoreq(pos_T a, pos_T b)
-  REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
-static inline void clearpos(pos_T *a)
-  REAL_FATTR_ALWAYS_INLINE;
-
-/// Return true if position a is before (less than) position b.
-static inline bool lt(pos_T a, pos_T b)
-{
-  if (a.lnum != b.lnum) {
-    return a.lnum < b.lnum;
-  } else if (a.col != b.col) {
-    return a.col < b.col;
-  } else {
-    return a.coladd < b.coladd;
-  }
-}
-
-/// Return true if position a and b are equal.
-static inline bool equalpos(pos_T a, pos_T b)
-{
-  return (a.lnum == b.lnum) && (a.col == b.col) && (a.coladd == b.coladd);
-}
-
-/// Return true if position a is less than or equal to b.
-static inline bool ltoreq(pos_T a, pos_T b)
-{
-  return lt(a, b) || equalpos(a, b);
-}
-
-/// Clear the pos_T structure pointed to by a.
-static inline void clearpos(pos_T *a)
-{
-  a->lnum = 0;
-  a->col = 0;
-  a->coladd = 0;
-}
-
-/// Global marks (marks with file number or name)
-EXTERN xfmark_T namedfm[NGLOBALMARKS] INIT( = { 0 });
-
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "mark.h.generated.h"
-#endif

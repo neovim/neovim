@@ -4,7 +4,7 @@
 " Previous Maintainer:	Dan Sharp
 " Contributor:		Enno Nagel <ennonagel+vim@gmail.com>
 "			Eisuke Kawashima
-" Last Change:		2023 Sep 28
+" Last Change:		2024 Jan 14
 
 if exists("b:did_ftplugin")
   finish
@@ -33,10 +33,14 @@ if exists("loaded_matchit") && !exists("b:match_words")
 endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Bourne Shell Scripts (*.sh)\t*.sh\n" ..
-	\	       "Korn Shell Scripts (*.ksh)\t*.ksh\n" ..
-	\	       "Bash Shell Scripts (*.bash)\t*.bash\n" ..
-	\	       "All Files (*.*)\t*.*\n"
+  let  b:browsefilter = "Bourne Shell Scripts (*.sh)\t*.sh\n" ..
+	\		"Korn Shell Scripts (*.ksh)\t*.ksh\n" ..
+	\		"Bash Shell Scripts (*.bash)\t*.bash\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
 

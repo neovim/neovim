@@ -6,7 +6,9 @@
 #include "klib/klist.h"
 #include "nvim/event/libuv_process.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/event/process.h"
+#include "nvim/event/stream.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
@@ -14,7 +16,7 @@
 #include "nvim/os/pty_process.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/time.h"
-#include "nvim/rbuffer.h"
+#include "nvim/rbuffer_defs.h"
 #include "nvim/ui_client.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

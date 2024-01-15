@@ -3,13 +3,14 @@
 #include <stddef.h>  // IWYU pragma: keep
 #include <stdint.h>
 
+#include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/garray_defs.h"
-#include "nvim/types_defs.h"  // IWYU pragma: keep
+#include "nvim/types_defs.h"
 
-typedef struct ucmd {
+typedef struct {
   char *uc_name;             ///< The command name
   uint32_t uc_argt;          ///< The argument type
   char *uc_rep;              ///< The command's replacement string

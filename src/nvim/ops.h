@@ -86,7 +86,7 @@ enum GRegFlags {
 };
 
 /// Definition of one register
-typedef struct yankreg {
+typedef struct {
   char **y_array;           ///< Pointer to an array of line pointers.
   size_t y_size;            ///< Number of lines in y_array.
   MotionType y_type;        ///< Register type

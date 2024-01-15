@@ -51,6 +51,7 @@ function M.watch(path, opts, callback)
   local uvflags = opts and opts.uvflags or {}
   local handle, new_err = vim.uv.new_fs_event()
   assert(not new_err, new_err)
+  handle = assert(handle)
   local _, start_err = handle:start(path, uvflags, function(err, filename, events)
     assert(not err, err)
     local fullpath = path

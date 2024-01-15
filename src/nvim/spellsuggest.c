@@ -16,17 +16,20 @@
 #include "nvim/cursor.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
+#include "nvim/hashtab_defs.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/input.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -35,14 +38,17 @@
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/input.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/pos_defs.h"
 #include "nvim/profile.h"
 #include "nvim/spell.h"
+#include "nvim/spell_defs.h"
 #include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_defs.h"
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 
@@ -62,7 +68,7 @@
 #define WF_MIXCAP   0x20        // mix of upper and lower case: macaRONI
 
 /// Information used when looking for suggestions.
-typedef struct suginfo_S {
+typedef struct {
   garray_T su_ga;                  ///< suggestions, contains "suggest_T"
   int su_maxcount;                 ///< max. number of suggestions displayed
   int su_maxscore;                 ///< maximum score for adding to su_ga
@@ -185,7 +191,7 @@ typedef enum {
 } state_T;
 
 /// Struct to keep the state at each level in suggest_try_change().
-typedef struct trystate_S {
+typedef struct {
   state_T ts_state;          ///< state at this level, STATE_
   int ts_score;              ///< score
   idx_T ts_arridx;           ///< index in tree array, start of node
@@ -441,7 +447,7 @@ void spell_suggest(int count)
   char wcopy[MAXWLEN + 2];
   suginfo_T sug;
   suggest_T *stp;
-  int mouse_used;
+  bool mouse_used;
   int limit;
   int selected = count;
   int badlen = 0;
@@ -729,8 +735,8 @@ static void spell_find_suggest(char *badptr, int badlen, suginfo_T *su, int maxc
     su->su_badlen = MAXWLEN - 1;        // just in case
   }
   xstrlcpy(su->su_badword, su->su_badptr, (size_t)su->su_badlen + 1);
-  (void)spell_casefold(curwin, su->su_badptr, su->su_badlen, su->su_fbadword,
-                       MAXWLEN);
+  spell_casefold(curwin, su->su_badptr, su->su_badlen, su->su_fbadword,
+                 MAXWLEN);
 
   // TODO(vim): make this work if the case-folded text is longer than the
   // original text. Currently an illegal byte causes wrong pointer
@@ -844,7 +850,7 @@ static void spell_suggest_expr(suginfo_T *su, char *expr)
 
   // Remove bogus suggestions, sort and truncate at "maxcount".
   check_suggestions(su, &su->su_ga);
-  (void)cleanup_suggestions(&su->su_ga, su->su_maxscore, su->su_maxcount);
+  cleanup_suggestions(&su->su_ga, su->su_maxscore, su->su_maxcount);
 }
 
 /// Find suggestions in file "fname".  Used for "file:" in 'spellsuggest'.
@@ -891,7 +897,7 @@ static void spell_suggest_file(suginfo_T *su, char *fname)
 
   // Remove bogus suggestions, sort and truncate at "maxcount".
   check_suggestions(su, &su->su_ga);
-  (void)cleanup_suggestions(&su->su_ga, su->su_maxscore, su->su_maxcount);
+  cleanup_suggestions(&su->su_ga, su->su_maxscore, su->su_maxcount);
 }
 
 /// Find suggestions for the internal method indicated by "sps_flags".
@@ -955,7 +961,7 @@ static void spell_suggest_intern(suginfo_T *su, bool interactive)
   // got_int when using a command, not for spellsuggest().
   os_breakcheck();
   if (interactive && got_int) {
-    (void)vgetc();
+    vgetc();
     got_int = false;
   }
 
@@ -967,7 +973,7 @@ static void spell_suggest_intern(suginfo_T *su, bool interactive)
 
     // Remove bogus suggestions, sort and truncate at "maxcount".
     check_suggestions(su, &su->su_ga);
-    (void)cleanup_suggestions(&su->su_ga, su->su_maxscore, su->su_maxcount);
+    cleanup_suggestions(&su->su_ga, su->su_maxscore, su->su_maxcount);
   }
 }
 
@@ -1063,7 +1069,7 @@ static void suggest_try_change(suginfo_T *su)
   STRCPY(fword, su->su_fbadword);
   int n = (int)strlen(fword);
   char *p = su->su_badptr + su->su_badlen;
-  (void)spell_casefold(curwin, p, (int)strlen(p), fword + n, MAXWLEN - n);
+  spell_casefold(curwin, p, (int)strlen(p), fword + n, MAXWLEN - n);
 
   // Make sure the resulting text is not longer than the original text.
   n = (int)strlen(su->su_badptr);
@@ -1271,10 +1277,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
         break;
       }
 
-      int fword_ends = (fword[sp->ts_fidx] == NUL
-                        || (soundfold
-                            ? ascii_iswhite(fword[sp->ts_fidx])
-                            : !spell_iswordp(fword + sp->ts_fidx, curwin)));
+      bool fword_ends = (fword[sp->ts_fidx] == NUL
+                         || (soundfold
+                             ? ascii_iswhite(fword[sp->ts_fidx])
+                             : !spell_iswordp(fword + sp->ts_fidx, curwin)));
       tword[sp->ts_twordlen] = NUL;
 
       if (sp->ts_prefixdepth <= PFD_NOTSPECIAL
@@ -2537,8 +2543,8 @@ static void score_combine(suginfo_T *su)
   }
 
   if (slang == NULL) {  // Using "double" without sound folding.
-    (void)cleanup_suggestions(&su->su_ga, su->su_maxscore,
-                              su->su_maxcount);
+    cleanup_suggestions(&su->su_ga, su->su_maxscore,
+                        su->su_maxcount);
     return;
   }
 
@@ -2557,9 +2563,9 @@ static void score_combine(suginfo_T *su)
   // Remove bad suggestions, sort the suggestions and truncate at "maxcount"
   // for both lists.
   check_suggestions(su, &su->su_ga);
-  (void)cleanup_suggestions(&su->su_ga, su->su_maxscore, su->su_maxcount);
+  cleanup_suggestions(&su->su_ga, su->su_maxscore, su->su_maxcount);
   check_suggestions(su, &su->su_sga);
-  (void)cleanup_suggestions(&su->su_sga, su->su_maxscore, su->su_maxcount);
+  cleanup_suggestions(&su->su_sga, su->su_maxscore, su->su_maxcount);
 
   ga_init(&ga, (int)sizeof(suginfo_T), 1);
   ga_grow(&ga, su->su_ga.ga_len + su->su_sga.ga_len);
@@ -2620,7 +2626,7 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char *ba
     pbad = badsound;
   } else {
     // soundfold the bad word with more characters following
-    (void)spell_casefold(curwin, su->su_badptr, stp->st_orglen, fword, MAXWLEN);
+    spell_casefold(curwin, su->su_badptr, stp->st_orglen, fword, MAXWLEN);
 
     // When joining two words the sound often changes a lot.  E.g., "t he"
     // sounds like "t h" while "the" sounds like "@".  Avoid that by
@@ -3147,7 +3153,7 @@ static void check_suggestions(suginfo_T *su, garray_T *gap)
     int len = stp[i].st_wordlen;
     xstrlcpy(longword + len, su->su_badptr + stp[i].st_orglen, MAXWLEN + 1 - (size_t)len);
     hlf_T attr = HLF_COUNT;
-    (void)spell_check(curwin, longword, &attr, NULL, false);
+    spell_check(curwin, longword, &attr, NULL, false);
     if (attr != HLF_COUNT) {
       // Remove this entry.
       xfree(stp[i].st_word);

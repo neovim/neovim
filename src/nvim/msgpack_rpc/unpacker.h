@@ -1,19 +1,17 @@
 #pragma once
 
 #include <inttypes.h>
-#include <stdbool.h>
 #include <string.h>
 
 #include "mpack/mpack_core.h"
 #include "mpack/object.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
-#include "nvim/api/private/helpers.h"
 #include "nvim/grid_defs.h"
 #include "nvim/memory_defs.h"
-#include "nvim/msgpack_rpc/channel_defs.h"
+#include "nvim/msgpack_rpc/channel_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"
-#include "nvim/ui_client.h"
+#include "nvim/ui_defs.h"
 
 struct Unpacker {
   mpack_parser_t parser;

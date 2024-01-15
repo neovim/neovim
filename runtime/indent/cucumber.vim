@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Cucumber
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
-" Last Change:	2017 Jun 13
+" Last Change:	2023 Dec 28
 
 if exists("b:did_indent")
   finish
@@ -19,57 +19,80 @@ if exists("*GetCucumberIndent")
   finish
 endif
 
-function! s:syn(lnum)
-  return synIDattr(synID(a:lnum,1+indent(a:lnum),1),'name')
+let s:headings = {
+      \ 'Feature': 'feature',
+      \ 'Rule': 'rule',
+      \ 'Background': 'bg_or_scenario',
+      \ 'Scenario': 'bg_or_scenario',
+      \ 'ScenarioOutline': 'bg_or_scenario',
+      \ 'Examples': 'examples',
+      \ 'Scenarios': 'examples'}
+
+function! s:Line(lnum) abort
+  if getline(a:lnum) =~# ':'
+    let group = matchstr(synIDattr(synID(a:lnum,1+indent(a:lnum), 1), 'name'), '^cucumber\zs.*')
+    if !has_key(s:headings, group)
+      let group = substitute(matchstr(getline(a:lnum), '^\s*\zs\%([^:]\+\)\ze:\S\@!'), '\s\+', '', 'g')
+    endif
+  else
+    let group = ''
+  endif
+  let char = matchstr(getline(a:lnum), '^\s*\zs[[:punct:]]')
+  return {
+        \ 'lnum': a:lnum,
+        \ 'indent': indent(a:lnum),
+        \ 'heading': get(s:headings, group, ''),
+        \ 'tag': char ==# '@',
+        \ 'table': char ==# '|',
+        \ 'comment': char ==# '#',
+        \ }
 endfunction
 
-function! GetCucumberIndent()
-  let line  = getline(prevnonblank(v:lnum-1))
-  let cline = getline(v:lnum)
-  let nline = getline(nextnonblank(v:lnum+1))
-  let sw = exists('*shiftwidth') ? shiftwidth() : shiftwidth()
-  let syn = s:syn(prevnonblank(v:lnum-1))
-  let csyn = s:syn(v:lnum)
-  let nsyn = s:syn(nextnonblank(v:lnum+1))
-  if csyn ==# 'cucumberFeature' || cline =~# '^\s*Feature:'
+function! GetCucumberIndent(...) abort
+  let lnum = a:0 ? a:1 : v:lnum
+  let sw = shiftwidth()
+  let prev = s:Line(prevnonblank(lnum-1))
+  let curr = s:Line(lnum)
+  let next = s:Line(nextnonblank(lnum+1))
+  if curr.heading ==# 'feature'
     " feature heading
     return 0
-  elseif csyn ==# 'cucumberExamples' || cline =~# '^\s*\%(Examples\|Scenarios\):'
+  elseif curr.heading ==# 'examples'
     " examples heading
     return 2 * sw
-  elseif csyn =~# '^cucumber\%(Background\|Scenario\|ScenarioOutline\)$' || cline =~# '^\s*\%(Background\|Scenario\|Scenario Outline\):'
+  elseif curr.heading ==# 'bg_or_scenario'
     " background, scenario or outline heading
     return sw
-  elseif syn ==# 'cucumberFeature' || line =~# '^\s*Feature:'
+  elseif prev.heading ==# 'feature'
     " line after feature heading
     return sw
-  elseif syn ==# 'cucumberExamples' || line =~# '^\s*\%(Examples\|Scenarios\):'
+  elseif prev.heading ==# 'examples'
     " line after examples heading
     return 3 * sw
-  elseif syn =~# '^cucumber\%(Background\|Scenario\|ScenarioOutline\)$' || line =~# '^\s*\%(Background\|Scenario\|Scenario Outline\):'
+  elseif prev.heading ==# 'bg_or_scenario'
     " line after background, scenario or outline heading
     return 2 * sw
-  elseif cline =~# '^\s*[@#]' && (nsyn == 'cucumberFeature' || nline =~# '^\s*Feature:' || indent(prevnonblank(v:lnum-1)) <= 0)
+  elseif (curr.tag || curr.comment) && (next.heading ==# 'feature' || prev.indent <= 0)
     " tag or comment before a feature heading
     return 0
-  elseif cline =~# '^\s*@'
+  elseif curr.tag
     " other tags
     return sw
-  elseif cline =~# '^\s*[#|]' && line =~# '^\s*|'
+  elseif (curr.table || curr.comment) && prev.table
     " mid-table
     " preserve indent
-    return indent(prevnonblank(v:lnum-1))
-  elseif cline =~# '^\s*|' && line =~# '^\s*[^|]'
+    return prev.indent
+  elseif curr.table && !prev.table
     " first line of a table, relative indent
-    return indent(prevnonblank(v:lnum-1)) + sw
-  elseif cline =~# '^\s*[^|]' && line =~# '^\s*|'
+    return prev.indent + sw
+  elseif !curr.table && prev.table
     " line after a table, relative unindent
-    return indent(prevnonblank(v:lnum-1)) - sw
-  elseif cline =~# '^\s*#' && getline(v:lnum-1) =~ '^\s*$' && (nsyn =~# '^cucumber\%(Background\|Scenario\|ScenarioOutline\)$' || nline =~# '^\s*\%(Background\|Scenario\|Scenario Outline\):')
+    return prev.indent - sw
+  elseif curr.comment && getline(v:lnum-1) =~# '^\s*$' && next.heading ==# 'bg_or_scenario'
     " comments on scenarios
     return sw
   endif
-  return indent(prevnonblank(v:lnum-1))
+  return prev.indent < 0 ? 0 : prev.indent
 endfunction
 
 " vim:set sts=2 sw=2:

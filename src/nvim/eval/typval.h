@@ -6,14 +6,13 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "nvim/eval/typval_defs.h"  // IWYU pragma: export
+#include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/func_attr.h"
-#include "nvim/garray_defs.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/hashtab.h"
-#include "nvim/lib/queue.h"
+#include "nvim/lib/queue_defs.h"
 #include "nvim/macros_defs.h"
-#include "nvim/mbyte_defs.h"
+#include "nvim/mbyte_defs.h"  // IWYU pragma: keep
 #include "nvim/message.h"
 #include "nvim/types_defs.h"
 
@@ -361,7 +360,7 @@ extern bool tv_in_free_unref_items;
 /// @param  li  Name of the variable with current listitem_T entry.
 /// @param  code  Cycle body.
 #define TV_LIST_ITER(l, li, code) \
-  TV_LIST_ITER_MOD( , l, li, code)  // NOLINT(whitespace/parens)
+  TV_LIST_ITER_MOD( , l, li, code)
 
 /// Iterate over a list
 ///

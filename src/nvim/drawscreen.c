@@ -1,5 +1,5 @@
 // drawscreen.c: Code for updating all the windows on the screen.
-// This is the top level, drawline.c is the middle and grid.c/screen.c the lower level.
+// This is the top level, drawline.c is the middle and grid.c the lower level.
 
 // update_screen() is the function that updates all windows and status lines.
 // It is called from the main loop when must_redraw is non-zero.  It may be
@@ -63,11 +63,13 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
@@ -76,11 +78,14 @@
 #include "nvim/eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fold.h"
+#include "nvim/fold_defs.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
+#include "nvim/grid_defs.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/insexpand.h"
 #include "nvim/match.h"
@@ -89,17 +94,19 @@
 #include "nvim/message.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
+#include "nvim/normal_defs.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/plines.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/search.h"
-#include "nvim/sign_defs.h"
 #include "nvim/spell.h"
 #include "nvim/state.h"
+#include "nvim/state_defs.h"
 #include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
@@ -107,6 +114,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
+#include "nvim/ui_defs.h"
 #include "nvim/version.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -442,7 +450,7 @@ int update_screen(void)
   // will be redrawn later or in win_update().
   must_redraw = 0;
 
-  updating_screen = 1;
+  updating_screen = true;
 
   display_tick++;  // let syntax code know we're in a next round of
                    // display updating
@@ -546,13 +554,12 @@ int update_screen(void)
 
   // might need to clear space on default_grid for the message area.
   if (type == UPD_NOT_VALID && clear_cmdline && !ui_has(kUIMessages)) {
-    grid_fill(&default_grid, Rows - (int)p_ch, Rows, 0, Columns, ' ', ' ', 0);
+    grid_clear(&default_grid, Rows - (int)p_ch, Rows, 0, Columns, 0);
   }
 
   ui_comp_set_screen_valid(true);
 
-  DecorProviders providers;
-  decor_providers_start(&providers);
+  decor_providers_start();
 
   // "start" callback could have changed highlights for global elements
   if (win_check_ns_hl(NULL)) {
@@ -599,7 +606,7 @@ int update_screen(void)
       }
 
       if (buf->b_mod_tick_decor < display_tick) {
-        decor_providers_invoke_buf(buf, &providers);
+        decor_providers_invoke_buf(buf);
         buf->b_mod_tick_decor = display_tick;
       }
     }
@@ -629,7 +636,7 @@ int update_screen(void)
         did_one = true;
         start_search_hl();
       }
-      win_update(wp, &providers);
+      win_update(wp);
     }
 
     // redraw status line and window bar after the window to minimize cursor movement
@@ -656,7 +663,7 @@ int update_screen(void)
     wp->w_buffer->b_signcols.resized = false;
   }
 
-  updating_screen = 0;
+  updating_screen = false;
 
   // Clear or redraw the command line.  Done last, because scrolling may
   // mess up the command line.
@@ -670,8 +677,7 @@ int update_screen(void)
   }
   did_intro = true;
 
-  decor_providers_invoke_end(&providers);
-  kvi_destroy(providers);
+  decor_providers_invoke_end();
 
   // either cmdline is cleared, not drawn or mode is last drawn
   cmdline_was_last_drawn = false;
@@ -919,15 +925,14 @@ int showmode(void)
 
   msg_grid_validate();
 
-  int do_mode = ((p_smd && msg_silent == 0)
-                 && ((State & MODE_TERMINAL)
-                     || (State & MODE_INSERT)
-                     || restart_edit != NUL
-                     || VIsual_active));
+  bool do_mode = ((p_smd && msg_silent == 0)
+                  && ((State & MODE_TERMINAL)
+                      || (State & MODE_INSERT)
+                      || restart_edit != NUL
+                      || VIsual_active));
 
   bool can_show_mode = (p_ch != 0 || ui_has(kUIMessages));
   if ((do_mode || reg_recording != 0) && can_show_mode) {
-    int sub_attr;
     if (skip_showmode()) {
       return 0;  // show mode later
     }
@@ -980,7 +985,8 @@ int showmode(void)
           }
           if (edit_submode_extra != NULL) {
             msg_puts_attr(" ", attr);  // Add a space in between.
-            if ((int)edit_submode_highl < HLF_COUNT) {
+            int sub_attr;
+            if (edit_submode_highl < HLF_COUNT) {
               sub_attr = win_hl_attr(curwin, (int)edit_submode_highl);
             } else {
               sub_attr = attr;
@@ -1195,27 +1201,30 @@ void comp_col(void)
 /// Redraw entire window "wp" if configured 'signcolumn' width changes.
 static bool win_redraw_signcols(win_T *wp)
 {
-  int width;
-  bool rebuild_stc = false;
   buf_T *buf = wp->w_buffer;
 
-  if (wp->w_minscwidth <= SCL_NO) {
-    if (*wp->w_p_stc) {
-      buf_signcols_validate(wp, buf, true);
-      if (buf->b_signcols.resized) {
-        rebuild_stc = true;
-        wp->w_nrwidth_line_count = 0;
-      }
-    }
-    width = 0;
-  } else if (wp->w_maxscwidth <= 1 && buf->b_signs_with_text >= (size_t)wp->w_maxscwidth) {
-    width = wp->w_maxscwidth;
-  } else {
-    width = buf_signcols_validate(wp, buf, false);
+  if (!buf->b_signcols.autom
+      && (*wp->w_p_stc != NUL || (wp->w_maxscwidth > 1 && wp->w_minscwidth != wp->w_maxscwidth))) {
+    buf->b_signcols.autom = true;
+    buf_signcols_count_range(buf, 0, buf->b_ml.ml_line_count, MAXLNUM, kNone);
+  }
+
+  while (buf->b_signcols.max > 0 && buf->b_signcols.count[buf->b_signcols.max - 1] == 0) {
+    buf->b_signcols.resized = true;
+    buf->b_signcols.max--;
+  }
+
+  int width = MIN(wp->w_maxscwidth, buf->b_signcols.max);
+  bool rebuild_stc = buf->b_signcols.resized && *wp->w_p_stc != NUL;
+
+  if (rebuild_stc) {
+    wp->w_nrwidth_line_count = 0;
+  } else if (wp->w_minscwidth == 0 && wp->w_maxscwidth == 1) {
+    width = buf->b_signs_with_text > 0;
   }
 
   int scwidth = wp->w_scwidth;
-  wp->w_scwidth = MAX(wp->w_minscwidth, width);
+  wp->w_scwidth = MAX(MAX(0, wp->w_minscwidth), width);
   return (wp->w_scwidth != scwidth || rebuild_stc);
 }
 
@@ -1298,10 +1307,11 @@ static void draw_vsep_win(win_T *wp)
   }
 
   // draw the vertical separator right of this window
-  int hl = win_hl_attr(wp, HLF_C);
-  int c = wp->w_p_fcs_chars.vert;
-  grid_fill(&default_grid, wp->w_winrow, W_ENDROW(wp),
-            W_ENDCOL(wp), W_ENDCOL(wp) + 1, c, ' ', hl);
+  for (int row = wp->w_winrow; row < W_ENDROW(wp); row++) {
+    grid_line_start(&default_grid, row);
+    grid_line_put_schar(W_ENDCOL(wp), wp->w_p_fcs_chars.vert, win_hl_attr(wp, HLF_C));
+    grid_line_flush();
+  }
 }
 
 /// Draw the horizontal separator below window "wp"
@@ -1312,10 +1322,9 @@ static void draw_hsep_win(win_T *wp)
   }
 
   // draw the horizontal separator below this window
-  int hl = win_hl_attr(wp, HLF_C);
-  int c = wp->w_p_fcs_chars.horiz;
-  grid_fill(&default_grid, W_ENDROW(wp), W_ENDROW(wp) + 1,
-            wp->w_wincol, W_ENDCOL(wp), c, c, hl);
+  grid_line_start(&default_grid, W_ENDROW(wp));
+  grid_line_fill(wp->w_wincol, W_ENDCOL(wp), wp->w_p_fcs_chars.horiz, win_hl_attr(wp, HLF_C));
+  grid_line_flush();
 }
 
 /// Get the separator connector for specified window corner of window "wp"
@@ -1323,21 +1332,19 @@ static schar_T get_corner_sep_connector(win_T *wp, WindowCorner corner)
 {
   // It's impossible for windows to be connected neither vertically nor horizontally
   // So if they're not vertically connected, assume they're horizontally connected
-  int c;
   if (vsep_connected(wp, corner)) {
     if (hsep_connected(wp, corner)) {
-      c = wp->w_p_fcs_chars.verthoriz;
+      return wp->w_p_fcs_chars.verthoriz;
     } else if (corner == WC_TOP_LEFT || corner == WC_BOTTOM_LEFT) {
-      c = wp->w_p_fcs_chars.vertright;
+      return wp->w_p_fcs_chars.vertright;
     } else {
-      c = wp->w_p_fcs_chars.vertleft;
+      return wp->w_p_fcs_chars.vertleft;
     }
   } else if (corner == WC_TOP_LEFT || corner == WC_TOP_RIGHT) {
-    c = wp->w_p_fcs_chars.horizdown;
+    return wp->w_p_fcs_chars.horizdown;
   } else {
-    c = wp->w_p_fcs_chars.horizup;
+    return wp->w_p_fcs_chars.horizup;
   }
-  return schar_from_char(c);
 }
 
 /// Draw separator connecting characters on the corners of window "wp"
@@ -1426,7 +1433,7 @@ static void draw_sep_connectors_win(win_T *wp)
 /// top: from first row to top_end (when scrolled down)
 /// mid: from mid_start to mid_end (update inversion or changed text)
 /// bot: from bot_start to last row (when scrolled up)
-static void win_update(win_T *wp, DecorProviders *providers)
+static void win_update(win_T *wp)
 {
   int top_end = 0;              // Below last row of the top area that needs
                                 // updating.  0 when no top area updating.
@@ -1493,8 +1500,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
   decor_redraw_reset(wp, &decor_state);
 
-  DecorProviders line_providers;
-  decor_providers_invoke_win(wp, providers, &line_providers);
+  decor_providers_invoke_win(wp);
 
   if (win_redraw_signcols(wp)) {
     wp->w_lines_valid = 0;
@@ -1611,14 +1617,14 @@ static void win_update(win_T *wp, DecorProviders *providers)
         }
       }
 
-      (void)hasFoldingWin(wp, mod_top, &mod_top, NULL, true, NULL);
+      hasFoldingWin(wp, mod_top, &mod_top, NULL, true, NULL);
       if (mod_top > lnumt) {
         mod_top = lnumt;
       }
 
       // Now do the same for the bottom line (one above mod_bot).
       mod_bot--;
-      (void)hasFoldingWin(wp, mod_bot, NULL, &mod_bot, true, NULL);
+      hasFoldingWin(wp, mod_bot, NULL, &mod_bot, true, NULL);
       mod_bot++;
       if (mod_bot < lnumb) {
         mod_bot = lnumb;
@@ -1689,17 +1695,15 @@ static void win_update(win_T *wp, DecorProviders *providers)
       // New topline is above old topline: May scroll down.
       int j;
       if (hasAnyFolding(wp)) {
-        linenr_T ln;
-
         // count the number of lines we are off, counting a sequence
         // of folded lines as one
         j = 0;
-        for (ln = wp->w_topline; ln < wp->w_lines[0].wl_lnum; ln++) {
+        for (linenr_T ln = wp->w_topline; ln < wp->w_lines[0].wl_lnum; ln++) {
           j++;
           if (j >= wp->w_grid.rows - 2) {
             break;
           }
-          (void)hasFoldingWin(wp, ln, NULL, &ln, true, NULL);
+          hasFoldingWin(wp, ln, NULL, &ln, true, NULL);
         }
       } else {
         j = wp->w_lines[0].wl_lnum - wp->w_topline;
@@ -2283,7 +2287,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         spellvars_T zero_spv = { 0 };
         row = win_line(wp, lnum, srow, wp->w_grid.rows, false,
                        foldinfo.fi_lines > 0 ? &zero_spv : &spv,
-                       foldinfo, &line_providers);
+                       foldinfo);
 
         if (foldinfo.fi_lines == 0) {
           wp->w_lines[idx].wl_folded = false;
@@ -2321,7 +2325,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         // text doesn't need to be drawn, but the number column does.
         foldinfo_T info = wp->w_p_cul && lnum == wp->w_cursor.lnum
                           ? cursorline_fi : fold_info(wp, lnum);
-        (void)win_line(wp, lnum, srow, wp->w_grid.rows, true, &spv, info, &line_providers);
+        win_line(wp, lnum, srow, wp->w_grid.rows, true, &spv, info);
       }
 
       // This line does not need to be drawn, advance to the next one.
@@ -2343,7 +2347,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
       wp->w_lines_valid = 0;
       wp->w_valid &= ~VALID_WCOL;
       decor_redraw_reset(wp, &decor_state);
-      decor_providers_invoke_win(wp, providers, &line_providers);
+      decor_providers_invoke_win(wp);
       continue;
     }
 
@@ -2389,7 +2393,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
       // Last line isn't finished: Display "@@@" in the last screen line.
       grid_line_start(&wp->w_grid, wp->w_grid.rows - 1);
       grid_line_fill(0, MIN(wp->w_grid.cols, 3), wp->w_p_fcs_chars.lastline, at_attr);
-      grid_line_fill(3, wp->w_grid.cols, ' ', at_attr);
+      grid_line_fill(3, wp->w_grid.cols, schar_from_ascii(' '), at_attr);
       grid_line_flush();
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
@@ -2404,7 +2408,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
-      win_draw_end(wp, wp->w_p_fcs_chars.lastline, ' ', true, srow, wp->w_grid.rows, HLF_AT);
+      win_draw_end(wp, wp->w_p_fcs_chars.lastline, true, srow,
+                   wp->w_grid.rows, HLF_AT);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     }
@@ -2418,7 +2423,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         spellvars_T zero_spv = { 0 };
         foldinfo_T zero_foldinfo = { 0 };
         row = win_line(wp, wp->w_botline, row, wp->w_grid.rows, false, &zero_spv,
-                       zero_foldinfo, &line_providers);
+                       zero_foldinfo);
       }
     } else if (dollar_vcol == -1) {
       wp->w_botline = lnum;
@@ -2437,12 +2442,11 @@ static void win_update(win_T *wp, DecorProviders *providers)
       lastline = 0;
     }
 
-    win_draw_end(wp, wp->w_p_fcs_chars.eob, ' ', false, MAX(lastline, row), wp->w_grid.rows,
+    win_draw_end(wp, wp->w_p_fcs_chars.eob, false, MAX(lastline, row),
+                 wp->w_grid.rows,
                  HLF_EOB);
     set_empty_rows(wp, row);
   }
-
-  kvi_destroy(line_providers);
 
   if (wp->w_redr_type >= UPD_REDRAW_TOP) {
     draw_vsep_win(wp);
@@ -2484,7 +2488,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         // Don't update for changes in buffer again.
         int mod_set = curbuf->b_mod_set;
         curbuf->b_mod_set = false;
-        win_update(curwin, providers);
+        win_update(curwin);
         must_redraw = 0;
         curbuf->b_mod_set = mod_set;
       }
@@ -2526,63 +2530,43 @@ void win_scroll_lines(win_T *wp, int row, int line_count)
   }
 }
 
-/// Call grid_fill() with columns adjusted for 'rightleft' if needed.
-/// Return the new offset.
-static int win_fill_end(win_T *wp, int c1, int c2, int off, int width, int row, int endrow,
-                        int attr)
-{
-  int nn = off + width;
-  const int endcol = wp->w_grid.cols;
-
-  if (nn > endcol) {
-    nn = endcol;
-  }
-
-  if (wp->w_p_rl) {
-    grid_fill(&wp->w_grid, row, endrow, endcol - nn, endcol - off, c1, c2, attr);
-  } else {
-    grid_fill(&wp->w_grid, row, endrow, off, nn, c1, c2, attr);
-  }
-
-  return nn;
-}
-
 /// Clear lines near the end of the window and mark the unused lines with "c1".
-/// Use "c2" as filler character.
 /// When "draw_margin" is true, then draw the sign/fold/number columns.
-void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row, int endrow, hlf_T hl)
+void win_draw_end(win_T *wp, schar_T c1, bool draw_margin, int startrow, int endrow, hlf_T hl)
 {
   assert(hl >= 0 && hl < HLF_COUNT);
-  int n = 0;
+  for (int row = startrow; row < endrow; row++) {
+    grid_line_start(&wp->w_grid, row);
 
-  if (draw_margin) {
-    // draw the fold column
-    int fdc = compute_foldcolumn(wp, 0);
-    if (fdc > 0) {
-      n = win_fill_end(wp, ' ', ' ', n, fdc, row, endrow,
-                       win_hl_attr(wp, HLF_FC));
-    }
-    // draw the sign column
-    int count = wp->w_scwidth;
-    if (count > 0) {
-      n = win_fill_end(wp, ' ', ' ', n, SIGN_WIDTH * count, row,
-                       endrow, win_hl_attr(wp, HLF_SC));
-    }
-    // draw the number column
-    if ((wp->w_p_nu || wp->w_p_rnu) && vim_strchr(p_cpo, CPO_NUMCOL) == NULL) {
-      n = win_fill_end(wp, ' ', ' ', n, number_width(wp) + 1, row, endrow,
-                       win_hl_attr(wp, HLF_N));
-    }
-  }
+    int n = 0;
+    if (draw_margin) {
+      // draw the fold column
+      int fdc = MAX(0, compute_foldcolumn(wp, 0));
+      n = grid_line_fill(n, n + fdc, schar_from_ascii(' '), win_hl_attr(wp, HLF_FC));
 
-  int attr = hl_combine_attr(win_bg_attr(wp), win_hl_attr(wp, (int)hl));
+      // draw the sign column
+      n = grid_line_fill(n, n + wp->w_scwidth, schar_from_ascii(' '), win_hl_attr(wp, HLF_FC));
 
-  const int endcol = wp->w_grid.cols;
-  if (wp->w_p_rl) {
-    grid_fill(&wp->w_grid, row, endrow, 0, endcol - 1 - n, c2, c2, attr);
-    grid_fill(&wp->w_grid, row, endrow, endcol - 1 - n, endcol - n, c1, c2, attr);
-  } else {
-    grid_fill(&wp->w_grid, row, endrow, n, endcol, c1, c2, attr);
+      // draw the number column
+      if ((wp->w_p_nu || wp->w_p_rnu) && vim_strchr(p_cpo, CPO_NUMCOL) == NULL) {
+        int width = number_width(wp) + 1;
+        n = grid_line_fill(n, n + width, schar_from_ascii(' '), win_hl_attr(wp, HLF_N));
+      }
+    }
+
+    int attr = hl_combine_attr(win_bg_attr(wp), win_hl_attr(wp, (int)hl));
+
+    if (n < wp->w_grid.cols) {
+      grid_line_put_schar(n, c1, 0);  // base attr is inherited from clear
+      n++;
+    }
+
+    grid_line_clear_end(n, wp->w_grid.cols, attr);
+
+    if (wp->w_p_rl) {
+      grid_line_mirror();
+    }
+    grid_line_flush();
   }
 }
 

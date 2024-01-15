@@ -4,7 +4,6 @@
 
 #include "nvim/extmark_defs.h"
 #include "nvim/mark_defs.h"
-#include "nvim/pos_defs.h"
 
 enum { UNDO_HASH_SIZE = 32, };  ///< Size in bytes of the hash used in the undo file.
 
@@ -17,8 +16,6 @@ typedef struct {
   int vi_mode;          ///< VIsual_mode of last VIsual
   colnr_T vi_curswant;  ///< MAXCOL from w_curswant
 } visualinfo_T;
-
-#include "nvim/buffer_defs.h"
 
 typedef struct u_entry u_entry_T;
 struct u_entry {

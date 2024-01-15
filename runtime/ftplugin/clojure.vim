@@ -6,6 +6,7 @@
 " URL:                https://github.com/clojure-vim/clojure.vim
 " License:            Vim (see :h license)
 " Last Change:        2022-03-24
+"                     2024 Jan 14 by Vim Project (browsefilter)
 
 if exists("b:did_ftplugin")
 	finish
@@ -66,10 +67,14 @@ endif
 
 " Filter files in the browse dialog
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-	let b:browsefilter = "All Files\t*\n" .
-				\ "Clojure Files\t*.clj;*.cljc;*.cljs;*.cljx\n" .
+	let b:browsefilter = "Clojure Files\t*.clj;*.cljc;*.cljs;*.cljx\n" .
 				\ "EDN Files\t*.edn\n" .
 				\ "Java Files\t*.java\n"
+	if has("win32")
+		let b:browsefilter .= "All Files (*.*)\t*\n"
+	else
+		let b:browsefilter .= "All Files (*)\t*\n"
+	endif
 	let b:undo_ftplugin .= ' | unlet! b:browsefilter'
 endif
 

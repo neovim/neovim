@@ -11,6 +11,7 @@
 #include "nvim/drawscreen.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
+#include "nvim/grid_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"
 #include "nvim/mouse.h"
@@ -19,7 +20,9 @@
 #include "nvim/optionstr.h"
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
+#include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
@@ -56,7 +59,7 @@ win_T *win_new_float(win_T *wp, bool last, FloatConfig fconfig, Error *err)
     int dir;
     winframe_remove(wp, &dir, NULL);
     XFREE_CLEAR(wp->w_frame);
-    (void)win_comp_pos();  // recompute window positions
+    win_comp_pos();  // recompute window positions
     win_remove(wp, NULL);
     win_append(lastwin_nofloating(), wp);
   }
@@ -146,7 +149,9 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
     fconfig.col += curwin->w_wcol;
     fconfig.window = curwin->handle;
   } else if (fconfig.relative == kFloatRelativeMouse) {
-    int row = mouse_row, col = mouse_col, grid = mouse_grid;
+    int row = mouse_row;
+    int col = mouse_col;
+    int grid = mouse_grid;
     win_T *mouse_win = mouse_find_win(&grid, &row, &col);
     if (mouse_win != NULL) {
       fconfig.relative = kFloatRelativeWindow;
@@ -197,7 +202,8 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
       row += parent->w_winrow;
       col += parent->w_wincol;
       ScreenGrid *grid = &parent->w_grid;
-      int row_off = 0, col_off = 0;
+      int row_off = 0;
+      int col_off = 0;
       grid_adjust(&grid, &row_off, &col_off);
       row += row_off;
       col += col_off;
@@ -236,7 +242,9 @@ void win_float_remove(bool bang, int count)
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
     kv_push(float_win_arr, wp);
   }
-  qsort(float_win_arr.items, float_win_arr.size, sizeof(win_T *), float_zindex_cmp);
+  if (float_win_arr.size > 0) {
+    qsort(float_win_arr.items, float_win_arr.size, sizeof(win_T *), float_zindex_cmp);
+  }
   for (size_t i = 0; i < float_win_arr.size; i++) {
     if (win_close(float_win_arr.items[i], false, false) == FAIL) {
       break;

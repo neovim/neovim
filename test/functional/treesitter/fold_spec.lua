@@ -40,7 +40,9 @@ void ui_refresh(void)
 }]]
 
   local function parse(lang)
-    exec_lua(([[vim.treesitter.get_parser(0, %s):parse()]]):format(lang and '"' .. lang .. '"' or 'nil'))
+    exec_lua(
+      ([[vim.treesitter.get_parser(0, %s):parse()]]):format(lang and '"' .. lang .. '"' or 'nil')
+    )
   end
 
   local function get_fold_levels()
@@ -53,7 +55,7 @@ void ui_refresh(void)
     ]])
   end
 
-  it("can compute fold levels", function()
+  it('can compute fold levels', function()
     insert(test_text)
 
     parse('c')
@@ -79,10 +81,9 @@ void ui_refresh(void)
       [18] = '2',
       [19] = '1',
     }, get_fold_levels())
-
   end)
 
-  it("recomputes fold levels after lines are added/removed", function()
+  it('recomputes fold levels after lines are added/removed', function()
     insert(test_text)
 
     parse('c')
@@ -136,7 +137,7 @@ void ui_refresh(void)
     }, get_fold_levels())
   end)
 
-  it("handles changes close to start/end of folds", function()
+  it('handles changes close to start/end of folds', function()
     insert([[
 # h1
 t1
@@ -233,10 +234,9 @@ t2]])
       [3] = '>1',
       [4] = '1',
     }, get_fold_levels())
-
   end)
 
-  it("handles changes that trigger multiple on_bytes", function()
+  it('handles changes that trigger multiple on_bytes', function()
     insert([[
 function f()
   asdf()
@@ -244,7 +244,9 @@ function f()
 end
 -- comment]])
 
-    exec_lua([[vim.treesitter.query.set('lua', 'folds', '[(function_declaration) (parameters) (arguments)] @fold')]])
+    exec_lua(
+      [[vim.treesitter.query.set('lua', 'folds', '[(function_declaration) (parameters) (arguments)] @fold')]]
+    )
     parse('lua')
 
     eq({
@@ -273,10 +275,9 @@ end
       [4] = '1',
       [5] = '0',
     }, get_fold_levels())
-
   end)
 
-  it("handles multiple folds that overlap at the end and start", function()
+  it('handles multiple folds that overlap at the end and start', function()
     insert([[
 function f()
   g(
@@ -287,7 +288,9 @@ function f()
   )
 end]])
 
-    exec_lua([[vim.treesitter.query.set('lua', 'folds', '[(function_declaration) (function_definition) (parameters) (arguments)] @fold')]])
+    exec_lua(
+      [[vim.treesitter.query.set('lua', 'folds', '[(function_declaration) (function_definition) (parameters) (arguments)] @fold')]]
+    )
     parse('lua')
 
     -- If fold1.stop = fold2.start, then move fold1's stop up so that fold2.start gets proper level.
@@ -316,10 +319,9 @@ end]])
       [7] = '2',
       [8] = '1',
     }, get_fold_levels())
-
   end)
 
-  it("handles multiple folds that start at the same line", function()
+  it('handles multiple folds that start at the same line', function()
     insert([[
 function f(a)
   if #(g({
@@ -329,7 +331,9 @@ function f(a)
   end
 end]])
 
-    exec_lua([[vim.treesitter.query.set('lua', 'folds', '[(if_statement) (function_declaration) (parameters) (arguments) (table_constructor)] @fold')]])
+    exec_lua(
+      [[vim.treesitter.query.set('lua', 'folds', '[(if_statement) (function_declaration) (parameters) (arguments) (table_constructor)] @fold')]]
+    )
     parse('lua')
 
     eq({
@@ -363,10 +367,9 @@ end]])
       [6] = '2',
       [7] = '1',
     }, get_fold_levels())
-
   end)
 
-  it("takes account of relevant options", function()
+  it('takes account of relevant options', function()
     insert([[
 # h1
 t1
@@ -399,26 +402,26 @@ t3]])
       [5] = '1',
       [6] = '1',
     }, get_fold_levels())
-
   end)
 
-  it("updates folds in all windows", function()
+  it('updates folds in all windows', function()
     local screen = Screen.new(60, 48)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = {background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue};
-      [2] = {bold = true, foreground = Screen.colors.Blue1};
-      [3] = {bold = true, reverse = true};
-      [4] = {reverse = true};
+      [1] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue },
+      [2] = { bold = true, foreground = Screen.colors.Blue1 },
+      [3] = { bold = true, reverse = true },
+      [4] = { reverse = true },
     })
 
-    parse("c")
+    parse('c')
     command([[set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr() foldcolumn=1]])
     command('split')
 
     insert(test_text)
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {1:-}void ui_refresh(void)                                      |
       {1:│}{                                                          |
       {1:│}  int width = INT_MAX, height = INT_MAX;                   |
@@ -462,11 +465,13 @@ t3]])
       {2:~                                                           }|*3
       {4:[No Name] [+]                                               }|
                                                                   |
-    ]]}
+    ]],
+    }
 
     command('1,2d')
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {1: }  ^int width = INT_MAX, height = INT_MAX;                   |
       {1: }  bool ext_widgets[kUIExtCount];                           |
       {1:-}  for (UIExtension i = 0; (int)i < kUIExtCount; i++) {     |
@@ -506,12 +511,13 @@ t3]])
       {2:~                                                           }|*5
       {4:[No Name] [+]                                               }|
                                                                   |
-    ]]}
-
+    ]],
+    }
 
     feed([[O<C-u><C-r>"<BS><Esc>]])
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {1:-}void ui_refresh(void)                                      |
       {1:│}^{                                                          |
       {1:│}  int width = INT_MAX, height = INT_MAX;                   |
@@ -555,16 +561,18 @@ t3]])
       {2:~                                                           }|*3
       {4:[No Name] [+]                                               }|
                                                                   |
-    ]]}
-
+    ]],
+    }
   end)
 
   it("doesn't open folds in diff mode", function()
     local screen = Screen.new(60, 36)
     screen:attach()
 
-    parse("c")
-    command([[set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr() foldcolumn=1 foldlevel=9]])
+    parse('c')
+    command(
+      [[set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr() foldcolumn=1 foldlevel=9]]
+    )
     insert(test_text)
     command('16d')
 
@@ -574,7 +582,8 @@ t3]])
     command('windo diffthis')
     feed('do')
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {1:+ }{2:+--  9 lines: void ui_refresh(void)·······················}|
       {1:  }  for (size_t i = 0; i < ui_count; i++) {                 |
       {1:  }    UI *ui = uis[i];                                      |
@@ -602,22 +611,24 @@ t3]])
       {3:~                                                           }|*5
       {5:[No Name] [+]                                               }|
                                                                   |
-    ]], attr_ids={
-      [1] = {background = Screen.colors.Grey, foreground = Screen.colors.Blue4};
-      [2] = {background = Screen.colors.LightGrey, foreground = Screen.colors.Blue4};
-      [3] = {foreground = Screen.colors.Blue, bold = true};
-      [4] = {reverse = true};
-      [5] = {reverse = true, bold = true};
-    }}
+    ]],
+      attr_ids = {
+        [1] = { background = Screen.colors.Grey, foreground = Screen.colors.Blue4 },
+        [2] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Blue4 },
+        [3] = { foreground = Screen.colors.Blue, bold = true },
+        [4] = { reverse = true },
+        [5] = { reverse = true, bold = true },
+      },
+    }
   end)
 
   it("doesn't open folds that are not touched", function()
     local screen = Screen.new(40, 8)
     screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Gray};
-      [2] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGray};
-      [3] = {foreground = Screen.colors.Blue1, bold = true};
-      [4] = {bold = true};
+      [1] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Gray },
+      [2] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGray },
+      [3] = { foreground = Screen.colors.Blue1, bold = true },
+      [4] = { bold = true },
     })
     screen:attach()
 
@@ -628,20 +639,23 @@ t1
 t2]])
     exec_lua([[vim.treesitter.query.set('markdown', 'folds', '(section) @fold')]])
     parse('markdown')
-    command([[set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr() foldcolumn=1 foldlevel=0]])
-
+    command(
+      [[set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr() foldcolumn=1 foldlevel=0]]
+    )
 
     feed('ggzojo')
     poke_eventloop()
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {1:-}# h1                                   |
       {1:│}t1                                     |
       {1:│}^                                       |
       {1:+}{2:+--  2 lines: # h2·····················}|
       {3:~                                       }|*3
       {4:-- INSERT --}                            |
-    ]]}
+    ]],
+    }
 
     feed('<Esc>u')
     -- TODO(tomtomjhj): `u` spuriously opens the fold (#26499).
@@ -650,13 +664,15 @@ t2]])
     feed('dd')
     poke_eventloop()
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {1:-}^t1                                     |
       {1:-}# h2                                   |
       {1:│}t2                                     |
       {3:~                                       }|*4
       1 line less; before #2  {MATCH:.*}|
-    ]]}
+    ]],
+    }
   end)
 end)
 
@@ -686,17 +702,21 @@ void qsort(void *base, size_t nel, size_t width, int (*compar)(const void *, con
   before_each(function()
     screen = Screen.new(60, 5)
     screen:set_default_attr_ids({
-      [0] = {foreground = Screen.colors.Blue, bold = true},
-      [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGray};
-      [2] = {bold = true, background = Screen.colors.LightGray, foreground = Screen.colors.SeaGreen};
-      [3] = {foreground = Screen.colors.DarkCyan, background = Screen.colors.LightGray};
-      [4] = {foreground = Screen.colors.SlateBlue, background = Screen.colors.LightGray};
-      [5] = {bold = true, background = Screen.colors.LightGray, foreground = Screen.colors.Brown};
-      [6] = {background = Screen.colors.Red1};
-      [7] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Red};
-      [8] = {foreground = Screen.colors.Brown, bold = true, background = Screen.colors.Red};
-      [9] = {foreground = Screen.colors.SlateBlue, background = Screen.colors.Red};
-      [10] = {bold = true};
+      [0] = { foreground = Screen.colors.Blue, bold = true },
+      [1] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGray },
+      [2] = {
+        bold = true,
+        background = Screen.colors.LightGray,
+        foreground = Screen.colors.SeaGreen,
+      },
+      [3] = { foreground = Screen.colors.DarkCyan, background = Screen.colors.LightGray },
+      [4] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.LightGray },
+      [5] = { bold = true, background = Screen.colors.LightGray, foreground = Screen.colors.Brown },
+      [6] = { background = Screen.colors.Red1 },
+      [7] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Red },
+      [8] = { foreground = Screen.colors.Brown, bold = true, background = Screen.colors.Red },
+      [9] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.Red },
+      [10] = { bold = true },
     })
     screen:attach()
   end)
@@ -707,11 +727,13 @@ void qsort(void *base, size_t nel, size_t width, int (*compar)(const void *, con
     exec_lua([[vim.treesitter.get_parser(0, "c")]])
 
     feed('ggVGzf')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {2:^void}{1: }{3:qsort}{4:(}{2:void}{1: }{5:*}{3:base}{4:,}{1: }{2:size_t}{1: }{3:nel}{4:,}{1: }{2:size_t}{1: }{3:width}{4:,}{1: }{2:int}{1: }{4:(}{5:*}{3:compa}|
       {0:~                                                           }|*3
                                                                   |
-    ]]}
+    ]],
+    }
   end)
 
   it('handles deep nested captures', function()
@@ -728,32 +750,38 @@ end]])
     exec_lua([[vim.treesitter.get_parser(0, "lua")]])
 
     feed('ggjVGkzfgg')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       ^function FoldInfo.new()                                     |
       {1:  }{5:return}{1: }{4:setmetatable({}{1:·····································}|
       end                                                         |
       {0:~                                                           }|
                                                                   |
-    ]]}
+    ]],
+    }
 
     command('hi! Visual guibg=Red')
     feed('GVgg')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       ^f{6:unction FoldInfo.new()}                                     |
       {7:  }{8:return}{7: }{9:setmetatable({}{7:·····································}|
       {6:end}                                                         |
       {0:~                                                           }|
       {10:-- VISUAL LINE --}                                           |
-    ]]}
+    ]],
+    }
 
     feed('10l<C-V>')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {6:function F}^oldInfo.new()                                     |
       {7:  }{8:return}{7: }{9:se}{4:tmetatable({}{1:·····································}|
       {6:end}                                                         |
       {0:~                                                           }|
       {10:-- VISUAL BLOCK --}                                          |
-    ]]}
+    ]],
+    }
   end)
 
   it('falls back to default', function()
@@ -761,10 +789,12 @@ end]])
     insert(test_text)
 
     feed('ggVGzf')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {1:^+-- 19 lines: void qsort(void *base, size_t nel, size_t widt}|
       {0:~                                                           }|*3
                                                                   |
-    ]]}
+    ]],
+    }
   end)
 end)

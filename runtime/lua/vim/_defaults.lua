@@ -67,6 +67,21 @@ do
   --- See |&-default|
   vim.keymap.set('n', '&', ':&&<CR>', { desc = ':help &-default' })
 
+  --- Use Q in visual mode to execute a macro on each line of the selection. #21422
+  ---
+  --- Applies to @x and includes @@ too.
+  vim.keymap.set(
+    'x',
+    'Q',
+    ':normal! @<C-R>=reg_recorded()<CR><CR>',
+    { silent = true, desc = ':help v_Q-default' }
+  )
+  vim.keymap.set(
+    'x',
+    '@',
+    "':normal! @'.getcharstr().'<CR>'",
+    { silent = true, expr = true, desc = ':help v_@-default' }
+  )
   --- Map |gx| to call |vim.ui.open| on the identifier under the cursor
   do
     -- TODO: use vim.region() when it lands... #13896 #16843
@@ -175,11 +190,13 @@ for _, ui in ipairs(vim.api.nvim_list_uis()) do
 end
 
 if tty then
+  local group = vim.api.nvim_create_augroup('nvim_tty', {})
+
   --- Set an option after startup (so that OptionSet is fired), but only if not
   --- already set by the user.
   ---
   --- @param option string Option name
-  --- @param value string Option value
+  --- @param value any Option value
   local function setoption(option, value)
     if vim.api.nvim_get_option_info2(option, {}).was_set then
       -- Don't do anything if option is already set
@@ -192,6 +209,7 @@ if tty then
       vim.o[option] = value
     else
       vim.api.nvim_create_autocmd('VimEnter', {
+        group = group,
         once = true,
         nested = true,
         callback = function()
@@ -280,6 +298,7 @@ if tty then
     local timer = assert(vim.uv.new_timer())
 
     local id = vim.api.nvim_create_autocmd('TermResponse', {
+      group = group,
       nested = true,
       callback = function(args)
         local resp = args.data ---@type string
@@ -355,6 +374,7 @@ if tty then
       local b = 3
 
       local id = vim.api.nvim_create_autocmd('TermResponse', {
+        group = group,
         nested = true,
         callback = function(args)
           local resp = args.data ---@type string

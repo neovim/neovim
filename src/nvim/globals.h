@@ -11,10 +11,9 @@
 #include "nvim/getchar_defs.h"
 #include "nvim/iconv_defs.h"
 #include "nvim/macros_defs.h"
-#include "nvim/mbyte.h"
 #include "nvim/menu_defs.h"
 #include "nvim/os/os_defs.h"
-#include "nvim/runtime.h"
+#include "nvim/runtime_defs.h"
 #include "nvim/state_defs.h"
 #include "nvim/syntax_defs.h"
 #include "nvim/types_defs.h"
@@ -124,7 +123,7 @@ EXTERN bool redraw_cmdline INIT( = false);          // cmdline must be redrawn
 EXTERN bool redraw_mode INIT( = false);             // mode must be redrawn
 EXTERN bool clear_cmdline INIT( = false);           // cmdline must be cleared
 EXTERN bool mode_displayed INIT( = false);          // mode is being displayed
-EXTERN int cmdline_star INIT( = false);             // cmdline is encrypted
+EXTERN int cmdline_star INIT( = 0);                 // cmdline is encrypted
 EXTERN bool redrawing_cmdline INIT( = false);       // cmdline is being redrawn
 EXTERN bool cmdline_was_last_drawn INIT( = false);  // cmdline was last drawn
 
@@ -367,7 +366,7 @@ EXTERN win_T *lastwin;               // last window
 EXTERN win_T *prevwin INIT( = NULL);  // previous window
 #define ONE_WINDOW (firstwin == lastwin)
 #define FOR_ALL_FRAMES(frp, first_frame) \
-  for ((frp) = first_frame; (frp) != NULL; (frp) = (frp)->fr_next)  // NOLINT
+  for ((frp) = first_frame; (frp) != NULL; (frp) = (frp)->fr_next)
 
 // When using this macro "break" only breaks out of the inner loop. Use "goto"
 // to break out of the tabpage loop.
@@ -409,7 +408,7 @@ EXTERN buf_T *curbuf INIT( = NULL);    // currently active buffer
   for (buf_T *buf = lastbuf; buf != NULL; buf = buf->b_prev)
 
 #define FOR_ALL_BUF_WININFO(buf, wip) \
-  for ((wip) = (buf)->b_wininfo; (wip) != NULL; (wip) = (wip)->wi_next)   // NOLINT
+  for ((wip) = (buf)->b_wininfo; (wip) != NULL; (wip) = (wip)->wi_next)
 
 // List of files being edited (global argument list).  curwin->w_alist points
 // to this when the window is using the global argument list.
@@ -591,9 +590,9 @@ EXTERN int reg_executing INIT( = 0);     // register being executed or zero
 EXTERN bool pending_end_reg_executing INIT( = false);
 EXTERN int reg_recorded INIT( = 0);      // last recorded register or zero
 
-EXTERN int no_mapping INIT( = false);    // currently no mapping allowed
+EXTERN int no_mapping INIT( = 0);        // currently no mapping allowed
 EXTERN int no_zero_mapping INIT( = 0);   // mapping zero not allowed
-EXTERN int allow_keys INIT( = false);    // allow key codes when no_mapping is set
+EXTERN int allow_keys INIT( = 0);        // allow key codes when no_mapping is set
 EXTERN int no_u_sync INIT( = 0);         // Don't call u_sync()
 EXTERN int u_sync_once INIT( = 0);       // Call u_sync() once when evaluating
                                          // an expression.
@@ -601,10 +600,10 @@ EXTERN int u_sync_once INIT( = 0);       // Call u_sync() once when evaluating
 EXTERN bool force_restart_edit INIT( = false);  // force restart_edit after
                                                 // ex_normal returns
 EXTERN int restart_edit INIT( = 0);      // call edit when next cmd finished
-EXTERN int arrow_used;                  // Normally false, set to true after
-                                        // hitting cursor key in insert mode.
-                                        // Used by vgetorpeek() to decide when
-                                        // to call u_sync()
+EXTERN bool arrow_used;                  // Normally false, set to true after
+                                         // hitting cursor key in insert mode.
+                                         // Used by vgetorpeek() to decide when
+                                         // to call u_sync()
 EXTERN bool ins_at_eol INIT( = false);   // put cursor after eol when
                                          // restarting edit after CTRL-O
 
@@ -659,9 +658,9 @@ EXTERN bool typebuf_was_empty INIT( = false);
 EXTERN int ex_normal_busy INIT( = 0);      // recursiveness of ex_normal()
 EXTERN int expr_map_lock INIT( = 0);       // running expr mapping, prevent use of ex_normal() and text changes
 EXTERN bool ignore_script INIT( = false);  // ignore script input
-EXTERN int stop_insert_mode;              // for ":stopinsert"
-EXTERN bool KeyTyped;                     // true if user typed current char
-EXTERN int KeyStuffed;                    // true if current char from stuffbuf
+EXTERN bool stop_insert_mode;              // for ":stopinsert"
+EXTERN bool KeyTyped;                      // true if user typed current char
+EXTERN int KeyStuffed;                     // true if current char from stuffbuf
 EXTERN int maptick INIT( = 0);             // tick for each non-mapped char
 
 EXTERN int must_redraw INIT( = 0);           // type of redraw necessary
@@ -725,7 +724,7 @@ EXTERN char *empty_string_option INIT( = "");
 EXTERN bool redir_off INIT( = false);        // no redirection for a moment
 EXTERN FILE *redir_fd INIT( = NULL);         // message redirection file
 EXTERN int redir_reg INIT( = 0);             // message redirection register
-EXTERN int redir_vname INIT( = 0);           // message redirection variable
+EXTERN bool redir_vname INIT( = false);      // message redirection variable
 EXTERN garray_T *capture_ga INIT( = NULL);   // captured output for execute()
 
 EXTERN uint8_t langmap_mapchar[256];     // mapping for language keys

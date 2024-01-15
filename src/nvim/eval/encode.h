@@ -1,11 +1,8 @@
 #pragma once
 
-#include <msgpack.h>
 #include <msgpack/pack.h>
-#include <stddef.h>
 #include <string.h>
 
-#include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/garray_defs.h"
 
@@ -34,22 +31,6 @@ typedef struct {
   size_t offset;  ///< Byte offset inside the read item.
   size_t li_length;  ///< Length of the string inside the read item.
 } ListReaderState;
-
-static inline ListReaderState encode_init_lrstate(const list_T *list)
-  REAL_FATTR_NONNULL_ALL;
-
-/// Initialize ListReaderState structure
-static inline ListReaderState encode_init_lrstate(const list_T *const list)
-{
-  return (ListReaderState) {
-    .list = list,
-    .li = tv_list_first(list),
-    .offset = 0,
-    .li_length = (TV_LIST_ITEM_TV(tv_list_first(list))->vval.v_string == NULL
-                  ? 0
-                  : strlen(TV_LIST_ITEM_TV(tv_list_first(list))->vval.v_string)),
-  };
-}
 
 /// Array mapping values from SpecialVarValue enum to names
 extern const char *const encode_bool_var_names[];

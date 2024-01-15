@@ -5,12 +5,13 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
-#include <sys/types.h>
+#include <uv.h>
 
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
@@ -22,13 +23,15 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/extmark.h"
+#include "nvim/extmark_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
@@ -37,13 +40,16 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
+#include "nvim/normal_defs.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
@@ -53,6 +59,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
+#include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/terminal.h"
@@ -60,11 +67,12 @@
 #include "nvim/textobject.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_defs.h"
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-typedef struct insert_state {
+typedef struct {
   VimState state;
   cmdarg_T *ca;
   int mincol;
@@ -112,7 +120,7 @@ static int did_restart_edit;            // "restart_edit" when calling edit()
 
 static bool can_cindent;                // may do cindenting on this line
 
-static int revins_on;                   // reverse insert mode on
+static bool revins_on;                  // reverse insert mode on
 static int revins_chars;                // how much to skip after edit
 static int revins_legal;                // was the last char 'legal'?
 static int revins_scol;                 // start column of revins session
@@ -458,8 +466,7 @@ static int insert_check(VimState *state)
     if (curwin->w_wcol < s->mincol - tabstop_at(get_nolist_virtcol(),
                                                 curbuf->b_p_ts,
                                                 curbuf->b_p_vts_array)
-        && curwin->w_wrow == curwin->w_winrow
-        + curwin->w_height_inner - 1 - get_scrolloff_value(curwin)
+        && curwin->w_wrow == curwin->w_height_inner - 1 - get_scrolloff_value(curwin)
         && (curwin->w_cursor.lnum != curwin->w_topline
             || curwin->w_topfill > 0)) {
       if (curwin->w_topfill > 0) {
@@ -1598,7 +1605,7 @@ void undisplay_dollar(void)
 /// @param round               if true, round the indent to 'shiftwidth' (only with _INC and _Dec).
 /// @param replaced            replaced character, put on replace stack
 /// @param call_changed_bytes  call changed_bytes()
-void change_indent(int type, int amount, int round, int replaced, int call_changed_bytes)
+void change_indent(int type, int amount, int round, int replaced, bool call_changed_bytes)
 {
   int insstart_less;                    // reduction for Insstart.col
   colnr_T orig_col = 0;                 // init for GCC
@@ -1640,7 +1647,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
 
   // Set the new indent.  The cursor will be put on the first non-blank.
   if (type == INDENT_SET) {
-    (void)set_indent(amount, call_changed_bytes ? SIN_CHANGED : 0);
+    set_indent(amount, call_changed_bytes ? SIN_CHANGED : 0);
   } else {
     int save_State = State;
 
@@ -2138,11 +2145,10 @@ void insertchar(int c, int flags, int second_indent)
       && !p_ri) {
 #define INPUT_BUFLEN 100
     char buf[INPUT_BUFLEN + 1];
-    int i;
     colnr_T virtcol = 0;
 
     buf[0] = (char)c;
-    i = 1;
+    int i = 1;
     if (textwidth > 0) {
       virtcol = get_nolist_virtcol();
     }
@@ -2456,9 +2462,7 @@ void beginline(int flags)
     curwin->w_cursor.coladd = 0;
 
     if (flags & (BL_WHITE | BL_SOL)) {
-      char *ptr;
-
-      for (ptr = get_cursor_line_ptr(); ascii_iswhite(*ptr)
+      for (char *ptr = get_cursor_line_ptr(); ascii_iswhite(*ptr)
            && !((flags & BL_FIX) && ptr[1] == NUL); ptr++) {
         curwin->w_cursor.col++;
       }
@@ -2571,7 +2575,7 @@ void cursor_up_inner(win_T *wp, linenr_T n)
     // Count each sequence of folded lines as one logical line.
 
     // go to the start of the current fold
-    (void)hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
+    hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
 
     while (n--) {
       // move up one line
@@ -2583,7 +2587,7 @@ void cursor_up_inner(win_T *wp, linenr_T n)
       // Insert mode or when 'foldopen' contains "all": it will open
       // in a moment.
       if (n > 0 || !((State & MODE_INSERT) || (fdo_flags & FDO_ALL))) {
-        (void)hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
+        hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
       }
     }
     if (lnum < 1) {
@@ -2597,7 +2601,7 @@ void cursor_up_inner(win_T *wp, linenr_T n)
 }
 
 /// @param upd_topline  When true: update topline
-int cursor_up(linenr_T n, int upd_topline)
+int cursor_up(linenr_T n, bool upd_topline)
 {
   // This fails if the cursor is already in the first line.
   if (n > 0 && curwin->w_cursor.lnum <= 1) {
@@ -2650,7 +2654,7 @@ void cursor_down_inner(win_T *wp, int n)
 }
 
 /// @param upd_topline  When true: update topline
-int cursor_down(int n, int upd_topline)
+int cursor_down(int n, bool upd_topline)
 {
   // This fails if the cursor is already in the last line.
   if (n > 0 && curwin->w_cursor.lnum >= curwin->w_buffer->b_ml.ml_line_count) {
@@ -2947,7 +2951,7 @@ static void replace_do_bs(int limit_col)
       getvcol(curwin, &curwin->w_cursor, NULL, &start_vcol, NULL);
       orig_vcols = win_chartabsize(curwin, get_cursor_pos_ptr(), start_vcol);
     }
-    (void)del_char_after_col(limit_col);
+    del_char_after_col(limit_col);
     if (l_State & VREPLACE_FLAG) {
       orig_len = (int)strlen(get_cursor_pos_ptr());
     }
@@ -2978,7 +2982,7 @@ static void replace_do_bs(int limit_col)
     // mark the buffer as changed and prepare for displaying
     changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
   } else if (cc == 0) {
-    (void)del_char_after_col(limit_col);
+    del_char_after_col(limit_col);
   }
 }
 
@@ -3005,10 +3009,9 @@ bool cindent_on(void)
 bool in_cinkeys(int keytyped, int when, bool line_is_empty)
 {
   char *look;
-  int try_match;
-  int try_match_word;
+  bool try_match;
+  bool try_match_word;
   char *p;
-  char *line;
   bool icase;
 
   if (keytyped == NUL) {
@@ -3150,7 +3153,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
 
           // Just completed a word, check if it starts with "look".
           // search back for the start of a word.
-          line = get_cursor_line_ptr();
+          char *line = get_cursor_line_ptr();
           for (s = line + curwin->w_cursor.col; s > line; s = n) {
             n = mb_prevptr(line, s);
             if (!vim_iswordp(n)) {
@@ -3167,9 +3170,9 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
         } else {
           // TODO(@brammool): multi-byte
           if (keytyped == (int)(uint8_t)p[-1]
-              || (icase && keytyped < 256
+              || (icase && keytyped < 256 && keytyped >= 0
                   && TOLOWER_LOC(keytyped) == TOLOWER_LOC((uint8_t)p[-1]))) {
-            line = get_cursor_pos_ptr();
+            char *line = get_cursor_pos_ptr();
             assert(p >= look && (uintmax_t)(p - look) <= SIZE_MAX);
             if ((curwin->w_cursor.col == (colnr_T)(p - look)
                  || !vim_iswordc((uint8_t)line[-(p - look) - 1]))
@@ -3413,7 +3416,7 @@ static bool ins_esc(int *count, int cmdchar, bool nomove)
         State &= ~REPLACE_FLAG;
       }
 
-      (void)start_redo_ins();
+      start_redo_ins();
       if (cmdchar == 'r' || cmdchar == 'v') {
         stuffRedoReadbuff(ESC_STR);  // No ESC in redo buffer
       }
@@ -3603,7 +3606,7 @@ static void ins_shift(int c, int lastc)
   if (c == Ctrl_D && (lastc == '0' || lastc == '^')
       && curwin->w_cursor.col > 0) {
     curwin->w_cursor.col--;
-    (void)del_char(false);              // delete the '^' or '0'
+    del_char(false);              // delete the '^' or '0'
     // In Replace mode, restore the characters that '^' or '0' replaced.
     if (State & REPLACE_FLAG) {
       replace_pop_ins();
@@ -3668,7 +3671,7 @@ static void ins_bs_one(colnr_T *vcolp)
       replace_do_bs(-1);
     }
   } else {
-    (void)del_char(false);
+    del_char(false);
   }
 }
 
@@ -3709,7 +3712,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   if (stop_arrow() == FAIL) {
     return false;
   }
-  int in_indent = inindent(0);
+  bool in_indent = inindent(0);
   if (in_indent) {
     can_cindent = false;
   }
@@ -3767,9 +3770,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         if (has_format_option(FO_AUTO)
             && has_format_option(FO_WHITE_PAR)) {
           char *ptr = ml_get_buf_mut(curbuf, curwin->w_cursor.lnum);
-          int len;
-
-          len = (int)strlen(ptr);
+          int len = (int)strlen(ptr);
           if (len > 0 && ptr[len - 1] == ' ') {
             ptr[len - 1] = NUL;
           }
@@ -3919,7 +3920,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
             char *p0 = get_cursor_pos_ptr();
             has_composing = utf_composinglike(p0, p0 + utf_ptr2len(p0));
           }
-          (void)del_char(false);
+          del_char(false);
           // If there are combining characters and 'delcombine' is set
           // move the cursor back.  Don't back up before the base character.
           if (has_composing) {
@@ -4063,7 +4064,7 @@ static void ins_s_left(void)
     if (!end_change) {
       AppendCharToRedobuff(K_S_LEFT);
     }
-    (void)bck_word(1, false, false);
+    bck_word(1, false, false);
     curwin->w_set_curswant = true;
   } else {
     vim_beep(BO_CRSR);
@@ -4122,7 +4123,7 @@ static void ins_s_right(void)
     if (!end_change) {
       AppendCharToRedobuff(K_S_RIGHT);
     }
-    (void)fwd_word(1, false, 0);
+    fwd_word(1, false, 0);
     curwin->w_set_curswant = true;
   } else {
     vim_beep(BO_CRSR);
@@ -4235,7 +4236,7 @@ static bool ins_tab(void)
     return false;
   }
 
-  int ind = inindent(0);
+  bool ind = inindent(0);
   if (ind) {
     can_cindent = false;
   }
@@ -4658,7 +4659,7 @@ static void ins_try_si(int c)
       if (State & VREPLACE_FLAG) {
         change_indent(INDENT_SET, i, false, NUL, true);
       } else {
-        (void)set_indent(i, SIN_CHANGED);
+        set_indent(i, SIN_CHANGED);
       }
     } else if (curwin->w_cursor.col > 0) {
       // when inserting '{' after "O" reduce indent, but not
@@ -4690,7 +4691,7 @@ static void ins_try_si(int c)
   if (curwin->w_cursor.col > 0 && can_si && c == '#' && inindent(0)) {
     // remember current indent for next line
     old_indent = get_indent();
-    (void)set_indent(0, SIN_CHANGED);
+    set_indent(0, SIN_CHANGED);
   }
 
   // Adjust ai_col, the char at this position can be deleted.

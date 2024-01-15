@@ -12,12 +12,12 @@ describe('example', function()
   local screen
   before_each(function()
     clear()
-    screen = Screen.new(20,5)
+    screen = Screen.new(20, 5)
     screen:attach()
-    screen:set_default_attr_ids( {
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {bold=true, foreground=Screen.colors.Brown}
-    } )
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { bold = true, foreground = Screen.colors.Brown },
+    })
   end)
 
   it('screen test', function()
@@ -47,7 +47,7 @@ describe('example', function()
     -- For this example, we enable `ext_tabline`:
     screen:detach()
     screen = Screen.new(25, 5)
-    screen:attach({rgb=true, ext_tabline=true})
+    screen:attach({ rgb = true, ext_tabline = true })
 
     -- From ":help ui" we find that `tabline_update` receives `curtab` and
     -- `tabs` objects. So we declare the UI handler like this:
@@ -60,13 +60,14 @@ describe('example', function()
     command('tabedit foo')
 
     -- Use screen:expect{condition=…} to check the result.
-    screen:expect{condition=function()
-      eq({ id = 2 }, event_curtab)
-      eq({
-          {tab = { id = 1 }, name = '[No Name]'},
-          {tab = { id = 2 }, name = 'foo'},
-        },
-        event_tabs)
-    end}
+    screen:expect {
+      condition = function()
+        eq({ id = 2 }, event_curtab)
+        eq({
+          { tab = { id = 1 }, name = '[No Name]' },
+          { tab = { id = 2 }, name = 'foo' },
+        }, event_tabs)
+      end,
+    }
   end)
 end)

@@ -5,7 +5,7 @@ local neq = helpers.neq
 local command = helpers.command
 local exec_capture = helpers.exec_capture
 local write_file = helpers.write_file
-local meths = helpers.meths
+local api = helpers.api
 local clear = helpers.clear
 local dedent = helpers.dedent
 local exc_exec = helpers.exc_exec
@@ -17,7 +17,7 @@ before_each(clear)
 
 local function source(code)
   write_file(tmpfile, code)
-  command('source '..tmpfile)
+  command('source ' .. tmpfile)
 end
 
 describe('script_get-based command', function()
@@ -30,29 +30,48 @@ describe('script_get-based command', function()
   local function test_garbage_exec(cmd, check_neq)
     describe(cmd, function()
       it('works correctly when skipping oneline variant', function()
-        eq(true, pcall(source, (dedent([[
+        eq(
+          true,
+          pcall(
+            source,
+            (dedent([[
           if 0
             %s %s
           endif
-        ]])):format(cmd, garbage)))
+        ]])):format(cmd, garbage)
+          )
+        )
         eq('', exec_capture('messages'))
         if check_neq then
-          neq(0, exc_exec(dedent([[
+          neq(
+            0,
+            exc_exec(dedent([[
             %s %s
-          ]])):format(cmd, garbage))
+          ]])):format(cmd, garbage)
+          )
         end
       end)
       it('works correctly when skipping HEREdoc variant', function()
-        eq(true, pcall(source, (dedent([[
+        eq(
+          true,
+          pcall(
+            source,
+            (dedent([[
           if 0
           %s << EOF
           %s
           EOF
           endif
-        ]])):format(cmd, garbage)))
+        ]])):format(cmd, garbage)
+          )
+        )
         eq('', exec_capture('messages'))
         if check_neq then
-          eq(true, pcall(source, (dedent([[
+          eq(
+            true,
+            pcall(
+              source,
+              (dedent([[
             let g:exc = 0
             try
             %s << EOF
@@ -61,8 +80,10 @@ describe('script_get-based command', function()
             catch
             let g:exc = v:exception
             endtry
-          ]])):format(cmd, garbage)))
-          neq(0, meths.get_var('exc'))
+          ]])):format(cmd, garbage)
+            )
+          )
+          neq(0, api.nvim_get_var('exc'))
         end
       end)
     end)

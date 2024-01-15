@@ -7,7 +7,7 @@ local feed = helpers.feed
 local eval = helpers.eval
 local eq = helpers.eq
 local run = helpers.run
-local funcs = helpers.funcs
+local fn = helpers.fn
 local nvim_prog = helpers.nvim_prog
 local pcall_err = helpers.pcall_err
 local exec_capture = helpers.exec_capture
@@ -18,7 +18,7 @@ describe('v:exiting', function()
 
   before_each(function()
     helpers.clear()
-    cid = helpers.nvim('get_api_info')[1]
+    cid = helpers.api.nvim_get_api_info()[1]
   end)
 
   it('defaults to v:null', function()
@@ -27,8 +27,8 @@ describe('v:exiting', function()
 
   local function test_exiting(setup_fn)
     local function on_setup()
-      command('autocmd VimLeavePre * call rpcrequest('..cid..', "exit", "VimLeavePre")')
-      command('autocmd VimLeave    * call rpcrequest('..cid..', "exit", "VimLeave")')
+      command('autocmd VimLeavePre * call rpcrequest(' .. cid .. ', "exit", "VimLeavePre")')
+      command('autocmd VimLeave    * call rpcrequest(' .. cid .. ', "exit", "VimLeave")')
       setup_fn()
     end
     local requests_args = {}
@@ -39,7 +39,7 @@ describe('v:exiting', function()
       return ''
     end
     run(on_request, nil, on_setup)
-    eq({{'VimLeavePre'}, {'VimLeave'}}, requests_args)
+    eq({ { 'VimLeavePre' }, { 'VimLeave' } }, requests_args)
   end
 
   it('is 0 on normal exit', function()
@@ -59,11 +59,16 @@ end)
 describe(':cquit', function()
   local function test_cq(cmdline, exit_code, redir_msg)
     if redir_msg then
-      eq(redir_msg, pcall_err(function() return exec_capture(cmdline) end))
+      eq(
+        redir_msg,
+        pcall_err(function()
+          return exec_capture(cmdline)
+        end)
+      )
       poke_eventloop()
       assert_alive()
     else
-      funcs.system({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--cmd', cmdline})
+      fn.system({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--cmd', cmdline })
       eq(exit_code, eval('v:shell_error'))
     end
   end

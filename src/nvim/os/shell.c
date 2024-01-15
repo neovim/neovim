@@ -8,9 +8,11 @@
 #include "auto/config.h"
 #include "klib/kvec.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/event/defs.h"
 #include "nvim/event/libuv_process.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
@@ -20,7 +22,7 @@
 #include "nvim/event/wstream.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/fileio.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
@@ -30,6 +32,7 @@
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
 #include "nvim/os/time.h"
@@ -37,6 +40,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/profile.h"
 #include "nvim/rbuffer.h"
+#include "nvim/rbuffer_defs.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
@@ -117,14 +121,10 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   int i;
   size_t len;
   char *p;
-  bool dir;
   char *extra_shell_arg = NULL;
   ShellOpts shellopts = kShellOptExpand | kShellOptSilent;
   int j;
   char *tempname;
-  char *command;
-  FILE *fd;
-  char *buffer;
 #define STYLE_ECHO      0       // use "echo", the default
 #define STYLE_GLOB      1       // use "glob", for csh
 #define STYLE_VIMGLOB   2       // use "vimglob", for Posix sh
@@ -240,7 +240,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     len += sizeof("egin;" " end") - 1;
   }
 
-  command = xmalloc(len);
+  char *command = xmalloc(len);
 
   // Build the shell command:
   // - Set $nonomatch depending on EW_NOTFOUND (hopefully the shell
@@ -388,7 +388,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   }
 
   // read the names from the file into memory
-  fd = fopen(tempname, READBIN);
+  FILE *fd = fopen(tempname, READBIN);
   if (fd == NULL) {
     // Something went wrong, perhaps a file name with a special char.
     if (!(flags & EW_SILENT)) {
@@ -415,7 +415,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
 #endif
   len = (size_t)templen;
   fseek(fd, 0, SEEK_SET);
-  buffer = xmalloc(len + 1);
+  char *buffer = xmalloc(len + 1);
   // fread() doesn't terminate buffer with NUL;
   // appropriate termination (not always NUL) is done below.
   size_t readlen = fread(buffer, 1, len, fd);
@@ -536,7 +536,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     }
 
     // check if this entry should be included
-    dir = (os_isdir((*file)[i]));
+    bool dir = (os_isdir((*file)[i]));
     if ((dir && !(flags & EW_DIR)) || (!dir && !(flags & EW_FILE))) {
       continue;
     }
@@ -669,7 +669,8 @@ char *shell_argv_to_str(char **const argv)
 int os_call_shell(char *cmd, ShellOpts opts, char *extra_args)
 {
   DynamicBuffer input = DYNAMIC_BUFFER_INIT;
-  char *output = NULL, **output_ptr = NULL;
+  char *output = NULL;
+  char **output_ptr = NULL;
   int current_state = State;
   bool forward_output = true;
 
@@ -701,7 +702,7 @@ int os_call_shell(char *cmd, ShellOpts opts, char *extra_args)
   xfree(input.data);
 
   if (output) {
-    (void)write_output(output, nread, true);
+    write_output(output, nread, true);
     xfree(output);
   }
 
@@ -1121,7 +1122,8 @@ static void out_data_ring(char *output, size_t size)
 static void out_data_append_to_screen(char *output, size_t *count, bool eof)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *p = output, *end = output + *count;
+  char *p = output;
+  char *end = output + *count;
   while (p < end) {
     if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
       msg_putchar_attr((uint8_t)(*p), 0);
@@ -1140,7 +1142,7 @@ static void out_data_append_to_screen(char *output, size_t *count, bool eof)
         goto end;
       }
 
-      (void)msg_outtrans_len(p, i, 0);
+      msg_outtrans_len(p, i, 0);
       p += i;
     }
   }
@@ -1234,7 +1236,8 @@ static size_t word_length(const char *str)
 /// before we finish writing.
 static void read_input(DynamicBuffer *buf)
 {
-  size_t written = 0, len = 0;
+  size_t written = 0;
+  size_t len = 0;
   linenr_T lnum = curbuf->b_op_start.lnum;
   char *lp = ml_get(lnum);
 

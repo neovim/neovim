@@ -9,7 +9,9 @@ describe('exists() and has() functions', function()
   setup(function()
     clear()
     -- Create a temporary script needed for the test.
-    write_file('test60.vim', [[
+    write_file(
+      'test60.vim',
+      [[
       " Vim script for exists() function test
       " Script-local variables are checked here
 
@@ -107,7 +109,8 @@ describe('exists() and has() functions', function()
           echo "FAILED"
       endif
       unlet str
-      ]])
+      ]]
+    )
   end)
   teardown(function()
     os.remove('test.out')
@@ -115,7 +118,6 @@ describe('exists() and has() functions', function()
   end)
 
   it('is working', function()
-
     source([=[
       " Add the special directory with test scripts to &rtp
       set rtp+=test/functional/fixtures
@@ -850,6 +852,5 @@ describe('exists() and has() functions', function()
        g:footest#x = 1
          footest#F() 0
       UndefFun() 0]])
-
   end)
 end)

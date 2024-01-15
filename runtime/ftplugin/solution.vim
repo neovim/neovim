@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	Microsoft Visual Studio Solution
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2021 Dec 15
+" Last Change:	2024 Jan 14
 
 if exists("b:did_ftplugin")
   finish
@@ -26,8 +26,12 @@ if exists("loaded_matchit") && !exists("b:match_words")
 endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Microsoft Visual Studio Solution Files\t*.sln\n" ..
-	\	       "All Files (*.*)\t*.*\n"
+  let b:browsefilter = "Microsoft Visual Studio Solution Files(*.sln)\t*.sln\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
 

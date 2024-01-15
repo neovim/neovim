@@ -237,33 +237,42 @@
 #include "nvim/arglist.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/drawscreen.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
-#include "nvim/gettext.h"
+#include "nvim/garray_defs.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
+#include "nvim/hashtab_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
+#include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/time.h"
+#include "nvim/os/time_defs.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/runtime.h"
+#include "nvim/runtime_defs.h"
 #include "nvim/spell.h"
 #include "nvim/spell_defs.h"
 #include "nvim/spellfile.h"
 #include "nvim/strings.h"
+#include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
@@ -333,7 +342,7 @@ static const char *msg_compressing = N_("Compressing word tree...");
 #define MAXLINELEN  500         // Maximum length in bytes of a line in a .aff
                                 // and .dic file.
 // Main structure to store the contents of a ".aff" file.
-typedef struct afffile_S {
+typedef struct {
   char *af_enc;                 // "SET", normalized, alloc'ed string or NULL
   int af_flagtype;              // AFT_CHAR, AFT_LONG, AFT_NUM or AFT_CAPLONG
   unsigned af_rare;             // RARE ID for rare word
@@ -375,7 +384,7 @@ struct affentry_S {
 #define AH_KEY_LEN 17          // 2 x 8 bytes + NUL
 
 // Affix header from ".aff" file.  Used for af_pref and af_suff.
-typedef struct affheader_S {
+typedef struct {
   char ah_key[AH_KEY_LEN];      // key for hashtab == name of affix
   unsigned ah_flag;             // affix name as number, uses "af_flagtype"
   int ah_newID;                 // prefix ID after renumbering; 0 if not used
@@ -387,7 +396,7 @@ typedef struct affheader_S {
 #define HI2AH(hi)   ((affheader_T *)(hi)->hi_key)
 
 // Flag used in compound items.
-typedef struct compitem_S {
+typedef struct {
   char ci_key[AH_KEY_LEN];      // key for hashtab == name of compound
   unsigned ci_flag;             // affix name as number, uses "af_flagtype"
   int ci_newID;                 // affix ID after renumbering.
@@ -448,7 +457,7 @@ struct wordnode_S {
 #define HI2WN(hi)    (wordnode_T *)((hi)->hi_key)
 
 // Info used while reading the spell files.
-typedef struct spellinfo_S {
+typedef struct {
   wordnode_T *si_foldroot;     // tree with case-folded words
   int si_foldwcount;           // nr of words in si_foldroot
 
@@ -573,7 +582,7 @@ static inline int spell_check_magic_string(FILE *const fd)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   char buf[VIMSPELLMAGICL];
-  SPELL_READ_BYTES(buf, VIMSPELLMAGICL, fd,; );  // NOLINT(whitespace/parens)
+  SPELL_READ_BYTES(buf, VIMSPELLMAGICL, fd,; );
   if (memcmp(buf, VIMSPELLMAGIC, VIMSPELLMAGICL) != 0) {
     return SP_FORMERROR;
   }
@@ -1035,7 +1044,7 @@ static int read_region_section(FILE *fd, slang_T *lp, int len)
   if (len > MAXREGIONS * 2) {
     return SP_FORMERROR;
   }
-  SPELL_READ_NONNUL_BYTES(lp->sl_regions, (size_t)len, fd,; );  // NOLINT(whitespace/parens)
+  SPELL_READ_NONNUL_BYTES(lp->sl_regions, (size_t)len, fd,; );
   lp->sl_regions[len] = NUL;
   return 0;
 }
@@ -1100,7 +1109,7 @@ static int read_prefcond_section(FILE *fd, slang_T *lp)
     if (n > 0) {
       char buf[MAXWLEN + 1];
       buf[0] = '^';  // always match at one position only
-      SPELL_READ_NONNUL_BYTES(buf + 1, (size_t)n, fd,; );  // NOLINT(whitespace/parens)
+      SPELL_READ_NONNUL_BYTES(buf + 1, (size_t)n, fd,; );
       buf[n + 1] = NUL;
       lp->sl_prefprog[i] = vim_regcomp(buf, RE_MAGIC | RE_STRING);
     }
@@ -1535,7 +1544,7 @@ static int set_sofo(slang_T *lp, const char *from, const char *to)
   // sl_sal_first[] for this.
   for (p = from, s = to; *p != NUL && *s != NUL;) {
     const int c = mb_cptr2char_adv(&p);
-    MB_CPTR_ADV(s);
+    s += utf_ptr2len(s);
     if (c >= 256) {
       lp->sl_sal_first[c & 0xff]++;
     }
@@ -2014,16 +2023,16 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
   spell_message(spin, IObuff);
 
   // Only do REP lines when not done in another .aff file already.
-  int do_rep = GA_EMPTY(&spin->si_rep);
+  bool do_rep = GA_EMPTY(&spin->si_rep);
 
   // Only do REPSAL lines when not done in another .aff file already.
-  int do_repsal = GA_EMPTY(&spin->si_repsal);
+  bool do_repsal = GA_EMPTY(&spin->si_repsal);
 
   // Only do SAL lines when not done in another .aff file already.
-  int do_sal = GA_EMPTY(&spin->si_sal);
+  bool do_sal = GA_EMPTY(&spin->si_sal);
 
   // Only do MAP lines when not done in another .aff file already.
-  int do_mapline = GA_EMPTY(&spin->si_map);
+  bool do_mapline = GA_EMPTY(&spin->si_map);
 
   // Allocate and init the afffile_T structure.
   afffile_T *aff = getroom(spin, sizeof(*aff), true);
@@ -2966,9 +2975,9 @@ static void add_fromto(spellinfo_T *spin, garray_T *gap, char *from, char *to)
   char word[MAXWLEN];
 
   fromto_T *ftp = GA_APPEND_VIA_PTR(fromto_T, gap);
-  (void)spell_casefold(curwin, from, (int)strlen(from), word, MAXWLEN);
+  spell_casefold(curwin, from, (int)strlen(from), word, MAXWLEN);
   ftp->ft_from = getroom_save(spin, word);
-  (void)spell_casefold(curwin, to, (int)strlen(to), word, MAXWLEN);
+  spell_casefold(curwin, to, (int)strlen(to), word, MAXWLEN);
   ftp->ft_to = getroom_save(spin, word);
 }
 
@@ -3613,11 +3622,9 @@ static int spell_read_wordfile(spellinfo_T *spin, char *fname)
           smsg(0, _("/encoding= line after word ignored in %s line %" PRIdLINENR ": %s"),
                fname, lnum, line - 1);
         } else {
-          char *enc;
-
           // Setup for conversion to 'encoding'.
           line += 9;
-          enc = enc_canonize(line);
+          char *enc = enc_canonize(line);
           if (!spin->si_ascii
               && convert_setup(&spin->si_conv, enc, p_enc) == FAIL) {
             smsg(0, _("Conversion in %s not supported: from %s to %s"),
@@ -3819,7 +3826,7 @@ static int store_word(spellinfo_T *spin, char *word, int flags, int region, cons
     return FAIL;
   }
 
-  (void)spell_casefold(curwin, word, len, foldword, MAXWLEN);
+  spell_casefold(curwin, word, len, foldword, MAXWLEN);
   for (const char *p = pfxlist; res == OK; p++) {
     if (!need_affix || (p != NULL && *p != NUL)) {
       res = tree_add_word(spin, foldword, spin->si_foldroot, ct | flags,
@@ -3979,7 +3986,7 @@ static int tree_add_word(spellinfo_T *spin, const char *word, wordnode_T *root, 
   //    (si_compress_cnt == 1) and the number of free nodes drops below the
   //    maximum word length.
 #ifndef SPELL_COMPRESS_ALWAYS
-  if (spin->si_compress_cnt == 1       // NOLINT(readability/braces)
+  if (spin->si_compress_cnt == 1
       ? spin->si_free_count < MAXWLEN
       : spin->si_blocks_cnt >= compress_start)
 #endif
@@ -4592,7 +4599,7 @@ static int write_vim_spell(spellinfo_T *spin, char *fname)
     spin->si_memtot += (int)(nodecount + nodecount * sizeof(int));
 
     // Write the nodes.
-    (void)put_node(fd, tree, 0, regionmask, round == 3);
+    put_node(fd, tree, 0, regionmask, round == 3);
   }
 
   // Write another byte to check for errors (file system full).
@@ -5097,7 +5104,7 @@ static void sug_write(spellinfo_T *spin, char *fname)
   spin->si_memtot += (int)(nodecount + nodecount * sizeof(int));
 
   // Write the nodes.
-  (void)put_node(fd, tree, 0, 0, false);
+  put_node(fd, tree, 0, 0, false);
 
   // <SUGTABLE>: <sugwcount> <sugline> ...
   linenr_T wcount = spin->si_spellbuf->b_ml.ml_line_count;
@@ -5637,7 +5644,7 @@ static void set_spell_charflags(const char *flags_in, int cnt, const char *fol)
     }
   }
 
-  (void)set_spell_finish(&new_st);
+  set_spell_finish(&new_st);
 }
 
 static int set_spell_finish(spelltab_T *new_st)

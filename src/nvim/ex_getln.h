@@ -4,7 +4,7 @@
 
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
-#include "nvim/ex_getln_defs.h"  // IWYU pragma: export
+#include "nvim/ex_getln_defs.h"  // IWYU pragma: keep
 #include "nvim/option_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 

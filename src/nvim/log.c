@@ -25,6 +25,7 @@
 #include "nvim/message.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/stdpaths_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/path.h"

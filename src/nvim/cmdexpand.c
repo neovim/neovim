@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
+#include <uv.h>
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
@@ -14,6 +14,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdhist.h"
@@ -24,17 +25,20 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_cmds.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/hashtab.h"
+#include "nvim/hashtab_defs.h"
 #include "nvim/help.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
@@ -42,6 +46,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mapping.h"
 #include "nvim/mbyte.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/memory.h"
 #include "nvim/menu.h"
 #include "nvim/message.h"
@@ -50,11 +55,13 @@
 #include "nvim/os/fs.h"
 #include "nvim/os/lang.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/path.h"
 #include "nvim/popupmenu.h"
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/runtime.h"
+#include "nvim/runtime_defs.h"
 #include "nvim/search.h"
 #include "nvim/sign.h"
 #include "nvim/statusline.h"
@@ -63,6 +70,7 @@
 #include "nvim/tag.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_defs.h"
 #include "nvim/usercmd.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -74,7 +82,7 @@ typedef void *(*user_expand_func_T)(const char *, int, typval_T *);
 # include "cmdexpand.c.generated.h"
 #endif
 
-static int cmd_showtail;  ///< Only show path tail in lists ?
+static bool cmd_showtail;  ///< Only show path tail in lists ?
 
 /// "compl_match_array" points the currently displayed list of entries in the
 /// popup menu.  It is NULL when there is no popup menu.
@@ -100,6 +108,7 @@ static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
          && xp->xp_context != EXPAND_FILES_IN_PATH
          && xp->xp_context != EXPAND_FILETYPE
          && xp->xp_context != EXPAND_HELP
+         && xp->xp_context != EXPAND_KEYMAP
          && xp->xp_context != EXPAND_LUA
          && xp->xp_context != EXPAND_OLD_SETTING
          && xp->xp_context != EXPAND_STRING_SETTING
@@ -326,7 +335,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     beep_flush();
   } else if (xp->xp_numfiles == 1) {
     // free expanded pattern
-    (void)ExpandOne(xp, NULL, NULL, 0, WILD_FREE);
+    ExpandOne(xp, NULL, NULL, 0, WILD_FREE);
   }
 
   return OK;
@@ -335,7 +344,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 /// Create and display a cmdline completion popup menu with items from
 /// "matches".
 static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches, int numMatches,
-                              int showtail)
+                              bool showtail)
 {
   assert(numMatches >= 0);
   // Add all the completion matches
@@ -442,7 +451,7 @@ static int wildmenu_match_len(expand_T *xp, char *s)
 /// If inversion is possible we use it. Else '=' characters are used.
 ///
 /// @param matches  list of matches
-static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int match, int showtail)
+static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int match, bool showtail)
 {
   int len;
   int clen;                     // length in screen cells
@@ -508,7 +517,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
     }
   }
 
-  int fillchar = fillchar_status(&attr, curwin);
+  schar_T fillchar = fillchar_status(&attr, curwin);
 
   if (first_match == 0) {
     *buf = NUL;
@@ -841,7 +850,7 @@ static char *find_longest_match(expand_T *xp, int options)
 char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
 {
   char *ss = NULL;
-  int orig_saved = false;
+  bool orig_saved = false;
 
   // first handle the case of using an old match
   if (mode == WILD_NEXT || mode == WILD_PREV
@@ -965,7 +974,7 @@ void ExpandCleanup(expand_T *xp)
 /// @param showtail     display only the tail of the full path of a file name
 /// @param dir_attr     highlight attribute to use for directory names
 static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, int lines, int linenr,
-                                int maxlen, int showtail, int dir_attr)
+                                int maxlen, bool showtail, int dir_attr)
 {
   char *p;
   int lastlen = 999;
@@ -1024,7 +1033,7 @@ static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, in
 /// Show all matches for completion on the command line.
 /// Returns EXPAND_NOTHING when the character that triggered expansion should
 /// be inserted like a normal character.
-int showmatches(expand_T *xp, int wildmenu)
+int showmatches(expand_T *xp, bool wildmenu)
 {
   CmdlineInfo *const ccline = get_cmdline_info();
   int numMatches;
@@ -1033,8 +1042,7 @@ int showmatches(expand_T *xp, int wildmenu)
   int maxlen;
   int lines;
   int columns;
-  int attr;
-  int showtail;
+  bool showtail;
 
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
@@ -1103,7 +1111,7 @@ int showmatches(expand_T *xp, int wildmenu)
       lines = (numMatches + columns - 1) / columns;
     }
 
-    attr = HL_ATTR(HLF_D);      // find out highlighting for directories
+    int attr = HL_ATTR(HLF_D);      // find out highlighting for directories
 
     if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
       msg_puts_attr(_("tagname"), HL_ATTR(HLF_T));
@@ -1217,6 +1225,7 @@ char *addstar(char *fname, size_t len, int context)
         || context == EXPAND_COMPILER
         || context == EXPAND_OWNSYNTAX
         || context == EXPAND_FILETYPE
+        || context == EXPAND_KEYMAP
         || context == EXPAND_PACKADD
         || context == EXPAND_RUNTIME
         || ((context == EXPAND_TAGS_LISTFILES || context == EXPAND_TAGS)
@@ -2743,6 +2752,10 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
     char *directories[] = { "syntax", "indent", "ftplugin", NULL };
     return ExpandRTDir(pat, 0, numMatches, matches, directories);
   }
+  if (xp->xp_context == EXPAND_KEYMAP) {
+    char *directories[] = { "keymap", NULL };
+    return ExpandRTDir(pat, 0, numMatches, matches, directories);
+  }
   if (xp->xp_context == EXPAND_USER_LIST) {
     return ExpandUserList(xp, matches, numMatches);
   }
@@ -3241,11 +3254,11 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
     copy_option_part(&path, buf, MAXPATHL, ",");
     if (strlen(buf) + strlen(file) + 2 < MAXPATHL) {
       add_pathsep(buf);
-      STRCAT(buf, file);  // NOLINT
+      STRCAT(buf, file);
 
       char **p;
       int num_p = 0;
-      (void)ExpandFromContext(&xpc, buf, &p, &num_p, WILD_SILENT | expand_options);
+      ExpandFromContext(&xpc, buf, &p, &num_p, WILD_SILENT | expand_options);
       if (num_p > 0) {
         ExpandEscape(&xpc, buf, num_p, p, WILD_SILENT | expand_options);
 
@@ -3265,7 +3278,7 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
 }
 
 /// Translate some keys pressed when 'wildmenu' is used.
-int wildmenu_translate_key(CmdlineInfo *cclp, int key, expand_T *xp, int did_wild_list)
+int wildmenu_translate_key(CmdlineInfo *cclp, int key, expand_T *xp, bool did_wild_list)
 {
   int c = key;
 
@@ -3311,7 +3324,7 @@ static int wildmenu_process_key_menunames(CmdlineInfo *cclp, int key, expand_T *
   } else if (key == K_UP) {
     // Hitting <Up>: Remove one submenu name in front of the
     // cursor
-    int found = false;
+    bool found = false;
 
     int j = (int)(xp->xp_pattern - cclp->cmdbuff);
     int i = 0;
@@ -3367,7 +3380,7 @@ static int wildmenu_process_key_filenames(CmdlineInfo *cclp, int key, expand_T *
     KeyTyped = true;  // in case the key was mapped
   } else if (strncmp(xp->xp_pattern, upseg + 1, 3) == 0 && key == K_DOWN) {
     // If in a direct ancestor, strip off one ../ to go down
-    int found = false;
+    bool found = false;
 
     int j = cclp->cmdpos;
     int i = (int)(xp->xp_pattern - cclp->cmdbuff);
@@ -3388,7 +3401,7 @@ static int wildmenu_process_key_filenames(CmdlineInfo *cclp, int key, expand_T *
     }
   } else if (key == K_UP) {
     // go up a directory
-    int found = false;
+    bool found = false;
 
     int j = cclp->cmdpos - 1;
     int i = (int)(xp->xp_pattern - cclp->cmdbuff);

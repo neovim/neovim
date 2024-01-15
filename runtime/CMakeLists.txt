@@ -1,9 +1,5 @@
 set(SYN_VIM_GENERATOR ${PROJECT_SOURCE_DIR}/src/nvim/generators/gen_vimvim.lua)
-set(GENERATED_RUNTIME_DIR ${PROJECT_BINARY_DIR}/runtime)
-set(GENERATED_SYN_VIM ${GENERATED_RUNTIME_DIR}/syntax/vim/generated.vim)
-set(GENERATED_HELP_TAGS ${GENERATED_RUNTIME_DIR}/doc/tags)
 set(GENERATED_PACKAGE_DIR ${GENERATED_RUNTIME_DIR}/pack/dist/opt)
-set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
 
 file(MAKE_DIRECTORY ${GENERATED_RUNTIME_DIR}/syntax/vim)
 

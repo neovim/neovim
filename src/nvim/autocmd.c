@@ -19,16 +19,19 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
+#include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/getchar_defs.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/hashtab.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/insexpand.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
@@ -36,17 +39,22 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
+#include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/time.h"
+#include "nvim/os/time_defs.h"
 #include "nvim/path.h"
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/runtime.h"
+#include "nvim/runtime_defs.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
+#include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
@@ -529,7 +537,7 @@ bool augroup_exists(const char *name)
 }
 
 /// ":augroup {name}".
-void do_augroup(char *arg, int del_group)
+void do_augroup(char *arg, bool del_group)
 {
   if (del_group) {
     if (*arg == NUL) {
@@ -704,7 +712,7 @@ char *au_event_disable(char *what)
   } else {
     STRCAT(new_ei, what);
   }
-  set_string_option_direct(kOptEventignore, new_ei, OPT_FREE, SID_NONE);
+  set_string_option_direct(kOptEventignore, new_ei, 0, SID_NONE);
   xfree(new_ei);
   return save_ei;
 }
@@ -712,7 +720,7 @@ char *au_event_disable(char *what)
 void au_event_restore(char *old_ei)
 {
   if (old_ei != NULL) {
-    set_string_option_direct(kOptEventignore, old_ei, OPT_FREE, SID_NONE);
+    set_string_option_direct(kOptEventignore, old_ei, 0, SID_NONE);
     xfree(old_ei);
   }
 }
@@ -754,7 +762,7 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
   char *arg = arg_in;
   char *envpat = NULL;
   char *cmd;
-  int need_free = false;
+  bool need_free = false;
   bool nested = false;
   bool once = false;
   int group;
@@ -913,7 +921,7 @@ int do_autocmd_event(event_T event, const char *pat, bool once, int nested, char
   int patlen = (int)aucmd_pattern_length(pat);
   while (patlen) {
     // detect special <buffer[=X]> buffer-local patterns
-    int is_buflocal = aupat_is_buflocal(pat, patlen);
+    bool is_buflocal = aupat_is_buflocal(pat, patlen);
     if (is_buflocal) {
       const int buflocal_nr = aupat_get_buflocal_nr(pat, patlen);
 
@@ -977,7 +985,7 @@ int autocmd_register(int64_t id, event_T event, const char *pat, int patlen, int
   const int findgroup = group == AUGROUP_ALL ? current_augroup : group;
 
   // detect special <buffer[=X]> buffer-local patterns
-  const int is_buflocal = aupat_is_buflocal(pat, patlen);
+  const bool is_buflocal = aupat_is_buflocal(pat, patlen);
   int buflocal_nr = 0;
 
   char buflocal_pat[BUFLOCAL_PAT_LEN];  // for "<buffer=X>"
@@ -1221,7 +1229,7 @@ void ex_doautoall(exarg_T *eap)
 
   // Execute autocommands for the current buffer last.
   if (retval == OK) {
-    (void)do_doautocmd(arg, false, &did_aucmd);
+    do_doautocmd(arg, false, &did_aucmd);
     if (call_do_modelines && did_aucmd) {
       do_modelines(0);
     }
@@ -1567,12 +1575,11 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   bool retval = false;
   static int nesting = 0;
   char *save_cmdarg;
-  varnumber_T save_cmdbang;
-  static int filechangeshell_busy = false;
+  static bool filechangeshell_busy = false;
   proftime_T wait_time;
   bool did_save_redobuff = false;
   save_redo_T save_redo;
-  const bool save_KeyTyped = KeyTyped;  // NOLINT
+  const bool save_KeyTyped = KeyTyped;
 
   // Quickly return if there are no autocommands for this event or
   // autocommands are blocked.
@@ -1781,7 +1788,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     patcmd.data = data;
 
     // set v:cmdarg (only when there is a matching pattern)
-    save_cmdbang = get_vim_var_nr(VV_CMDBANG);
+    varnumber_T save_cmdbang = get_vim_var_nr(VV_CMDBANG);
     if (eap != NULL) {
       save_cmdarg = set_cmdarg(eap, NULL);
       set_vim_var_nr(VV_CMDBANG, eap->forceit);
@@ -1814,7 +1821,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     }
 
     if (eap != NULL) {
-      (void)set_cmdarg(NULL, save_cmdarg);
+      set_cmdarg(NULL, save_cmdarg);
       set_vim_var_nr(VV_CMDBANG, save_cmdbang);
     }
     // delete from active_apc_list
@@ -2163,7 +2170,7 @@ char *expand_get_augroup_name(expand_T *xp, int idx)
 }
 
 /// @param doautocmd  true for :doauto*, false for :autocmd
-char *set_context_in_autocmd(expand_T *xp, char *arg, int doautocmd)
+char *set_context_in_autocmd(expand_T *xp, char *arg, bool doautocmd)
 {
   // check for a group name, skip it if present
   autocmd_include_groups = false;
@@ -2477,7 +2484,7 @@ bool au_event_is_empty(event_T event)
 
 /// Scan over the events.  "*" stands for all events.
 /// true when group name was found
-static char *arg_event_skip(char *arg, int have_group)
+static char *arg_event_skip(char *arg, bool have_group)
 {
   char *pat;
   char *p;

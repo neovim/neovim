@@ -1,4 +1,4 @@
-local uv = require('luv')
+local uv = vim.uv
 local MsgpackRpcStream = require('test.client.msgpack_rpc_stream')
 
 local Session = {}

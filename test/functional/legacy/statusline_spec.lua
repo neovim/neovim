@@ -16,9 +16,9 @@ describe('statusline', function()
 
   it('is updated in cmdline mode when using window-local statusline vim-patch:8.2.2737', function()
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [2] = {bold = true, reverse = true},  -- StatusLine
-      [3] = {reverse = true},  -- StatusLineNC
+      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [2] = { bold = true, reverse = true }, -- StatusLine
+      [3] = { reverse = true }, -- StatusLineNC
     })
     exec([[
       setlocal statusline=-%{mode()}-
@@ -48,9 +48,9 @@ describe('statusline', function()
 
   it('truncated item does not cause off-by-one highlight vim-patch:8.2.4929', function()
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [2] = {foreground = Screen.colors.Blue},  -- User1
-      [3] = {background = Screen.colors.Red, foreground = Screen.colors.White},  -- User2
+      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [2] = { foreground = Screen.colors.Blue }, -- User1
+      [3] = { background = Screen.colors.Red, foreground = Screen.colors.White }, -- User2
     })
     exec([[
       set laststatus=2
@@ -69,11 +69,11 @@ describe('statusline', function()
   -- oldtest: Test_statusline_showcmd()
   it('showcmdloc=statusline works', function()
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {background = Screen.colors.LightGrey},  -- Visual
-      [2] = {bold = true},  -- MoreMsg
-      [3] = {bold = true, reverse = true},  -- StatusLine
-      [5] = {background = Screen.colors.LightGrey, foreground = Screen.colors.DarkBlue},  -- Folded
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { background = Screen.colors.LightGrey }, -- Visual
+      [2] = { bold = true }, -- MoreMsg
+      [3] = { bold = true, reverse = true }, -- StatusLine
+      [5] = { background = Screen.colors.LightGrey, foreground = Screen.colors.DarkBlue }, -- Folded
     })
     exec([[
       func MyStatusLine()

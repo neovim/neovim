@@ -15,10 +15,10 @@ describe('folding', function()
 
     screen = Screen.new(45, 8)
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [2] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},  -- Folded
-      [3] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Grey},  -- FoldColumn
-      [4] = {foreground = Screen.colors.Brown},  -- LineNr
+      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [2] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey }, -- Folded
+      [3] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Grey }, -- FoldColumn
+      [4] = { foreground = Screen.colors.Brown }, -- LineNr
     })
     screen:attach()
   end)
@@ -50,7 +50,7 @@ describe('folding', function()
       1 aa]])
   end)
 
-  it("foldmethod=marker", function()
+  it('foldmethod=marker', function()
     screen:try_resize(20, 10)
     insert([[
       dd {{{
@@ -78,10 +78,9 @@ describe('folding', function()
       1                   |*2
                           |
     ]])
-
   end)
 
-  it("foldmethod=indent", function()
+  it('foldmethod=indent', function()
     screen:try_resize(20, 8)
     feed_command('set fdm=indent sw=2')
     insert([[
@@ -107,7 +106,7 @@ describe('folding', function()
     ]])
   end)
 
-  it("foldmethod=syntax", function()
+  it('foldmethod=syntax', function()
     screen:try_resize(35, 15)
     insert([[
       1 aa
@@ -146,7 +145,7 @@ describe('folding', function()
       a jj]])
   end)
 
-  it("foldmethod=expression", function()
+  it('foldmethod=expression', function()
     insert([[
       1 aa
       2 bb
@@ -228,7 +227,7 @@ describe('folding', function()
       {1:~                                            }|*5
                                                    |
     ]])
-    feed("j")
+    feed('j')
     screen:expect([[
       {3:+ }{4:  1 }{2:+--  2 lines: ·························}|
       {3:+ }{4:  0 }{2:^+--  2 lines: ·························}|

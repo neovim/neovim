@@ -4,7 +4,15 @@
 #include <stdint.h>
 #include <stdio.h>
 
-typedef struct file_buffer buf_T;
+#include "nvim/arglist_defs.h"
+#include "nvim/grid_defs.h"
+#include "nvim/mapping_defs.h"
+#include "nvim/marktree_defs.h"
+#include "nvim/memline_defs.h"
+#include "nvim/option_defs.h"
+#include "nvim/os/fs_defs.h"
+#include "nvim/statusline_defs.h"
+#include "nvim/undo_defs.h"
 
 /// Reference to a buffer that stores the value of buf_free_count.
 /// bufref_valid() only needs to check "buf" when the count differs.
@@ -13,24 +21,6 @@ typedef struct {
   int br_fnum;
   int br_buf_free_count;
 } bufref_T;
-
-#include "klib/kvec.h"
-#include "nvim/api/private/defs.h"
-#include "nvim/arglist_defs.h"
-#include "nvim/eval/typval_defs.h"
-#include "nvim/extmark_defs.h"
-#include "nvim/garray_defs.h"
-#include "nvim/grid_defs.h"
-#include "nvim/hashtab_defs.h"
-#include "nvim/highlight_defs.h"
-#include "nvim/map_defs.h"
-#include "nvim/mapping_defs.h"
-#include "nvim/mark_defs.h"
-#include "nvim/marktree_defs.h"
-#include "nvim/option_vars.h"
-#include "nvim/pos_defs.h"
-#include "nvim/statusline_defs.h"
-#include "nvim/undo_defs.h"
 
 #define GETFILE_SUCCESS(x)    ((x) <= 0)
 #define MODIFIABLE(buf) (buf->b_p_ma)
@@ -80,20 +70,12 @@ typedef struct {
 // Mask to check for flags that prevent normal writing
 #define BF_WRITE_MASK   (BF_NOTEDITED + BF_NEW + BF_READERR)
 
-typedef struct window_S win_T;
 typedef struct wininfo_S wininfo_T;
 typedef struct frame_S frame_T;
 typedef uint64_t disptick_T;  // display tick type
 
-#include "nvim/memline_defs.h"
-#include "nvim/os/fs_defs.h"
-#include "nvim/regexp_defs.h"
-#include "nvim/sign_defs.h"
-#include "nvim/syntax_defs.h"
-#include "nvim/terminal.h"
-
 // The taggy struct is used to store the information about a :tag command.
-typedef struct taggy {
+typedef struct {
   char *tagname;                // tag name
   fmark_T fmark;                // cursor position BEFORE ":tag"
   int cur_match;                // match number
@@ -703,10 +685,12 @@ struct file_buffer {
                                 // may use a different synblock_T.
 
   struct {
-    int max;                         // maximum number of signs on a single line
-    int max_count;                   // number of lines with max number of signs
-    bool resized;                    // whether max changed at start of redraw
-    Map(int, SignRange) invalid[1];  // map of invalid ranges to be checked
+    int max;                    // maximum number of signs on a single line
+    int count[SIGN_SHOW_MAX];   // number of lines with number of signs
+    bool resized;               // whether max changed at start of redraw
+    bool autom;                 // whether 'signcolumn' is displayed in "auto:n>1"
+                                // configured window. "b_signcols" calculation
+                                // is skipped if false.
   } b_signcols;
 
   Terminal *terminal;           // Terminal instance associated with the buffer
@@ -813,7 +797,7 @@ struct tabpage_S {
 // may not reflect what is actually in the buffer.  When wl_valid is false,
 // the entries can only be used to count the number of displayed lines used.
 // wl_lnum and wl_lastlnum are invalid too.
-typedef struct w_line {
+typedef struct {
   linenr_T wl_lnum;             // buffer line number for logical line
   uint16_t wl_size;             // height in screen lines
   char wl_valid;                // true values are valid for text in buffer
@@ -976,41 +960,41 @@ typedef struct {
 
 /// Characters from the 'listchars' option.
 typedef struct {
-  int eol;
-  int ext;
-  int prec;
-  int nbsp;
-  int space;
-  int tab1;  ///< first tab character
-  int tab2;  ///< second tab character
-  int tab3;  ///< third tab character
-  int lead;
-  int trail;
-  int *multispace;
-  int *leadmultispace;
-  int conceal;
+  schar_T eol;
+  schar_T ext;
+  schar_T prec;
+  schar_T nbsp;
+  schar_T space;
+  schar_T tab1;  ///< first tab character
+  schar_T tab2;  ///< second tab character
+  schar_T tab3;  ///< third tab character
+  schar_T lead;
+  schar_T trail;
+  schar_T *multispace;
+  schar_T *leadmultispace;
+  schar_T conceal;
 } lcs_chars_T;
 
 /// Characters from the 'fillchars' option.
 typedef struct {
-  int stl;
-  int stlnc;
-  int wbr;
-  int horiz;
-  int horizup;
-  int horizdown;
-  int vert;
-  int vertleft;
-  int vertright;
-  int verthoriz;
-  int fold;
-  int foldopen;    ///< when fold is open
-  int foldclosed;  ///< when fold is closed
-  int foldsep;     ///< continuous fold marker
-  int diff;
-  int msgsep;
-  int eob;
-  int lastline;
+  schar_T stl;
+  schar_T stlnc;
+  schar_T wbr;
+  schar_T horiz;
+  schar_T horizup;
+  schar_T horizdown;
+  schar_T vert;
+  schar_T vertleft;
+  schar_T vertright;
+  schar_T verthoriz;
+  schar_T fold;
+  schar_T foldopen;    ///< when fold is open
+  schar_T foldclosed;  ///< when fold is closed
+  schar_T foldsep;     ///< continuous fold marker
+  schar_T diff;
+  schar_T msgsep;
+  schar_T eob;
+  schar_T lastline;
 } fcs_chars_T;
 
 /// Structure which contains all information that belongs to a window.
@@ -1321,9 +1305,3 @@ struct window_S {
   // Size of the w_statuscol_click_defs array
   size_t w_statuscol_click_defs_size;
 };
-
-/// Macros defined in Vim, but not in Neovim
-// uncrustify:off
-#define CHANGEDTICK(buf) \
-  (=== Include buffer.h & use buf_(get|set|inc) _changedtick ===)
-// uncrustify:on

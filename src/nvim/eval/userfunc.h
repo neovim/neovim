@@ -4,14 +4,12 @@
 #include <stddef.h>
 
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
-#include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/hashtab_defs.h"  // IWYU pragma: keep
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"  // IWYU pragma: keep
-
-struct funccal_entry;
 
 // From user function to hashitem and back.
 #define UF2HIKEY(fp) ((fp)->uf_name)

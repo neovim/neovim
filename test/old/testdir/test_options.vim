@@ -439,6 +439,14 @@ func Test_set_completion()
   call assert_equal('"set syntax=sshdconfig', @:)
   call feedkeys(":set syntax=a\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"set syntax=' .. getcompletion('a*', 'syntax')->join(), @:)
+
+  if has('keymap')
+    " Expand values for 'keymap'
+    call feedkeys(":set keymap=acc\<Tab>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"set keymap=accents', @:)
+    call feedkeys(":set keymap=a\<C-A>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"set keymap=' .. getcompletion('a*', 'keymap')->join(), @:)
+  endif
 endfunc
 
 " Test handling of expanding individual string option values

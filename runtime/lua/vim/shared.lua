@@ -9,43 +9,36 @@
 ---@diagnostic disable-next-line: lowercase-global
 vim = vim or {}
 
-local function _id(v)
-  return v
-end
-
-local deepcopy
-
-local deepcopy_funcs = {
-  table = function(orig, cache)
-    if cache[orig] then
-      return cache[orig]
-    end
-    local copy = {}
-
-    cache[orig] = copy
-    local mt = getmetatable(orig)
-    for k, v in pairs(orig) do
-      copy[deepcopy(k, cache)] = deepcopy(v, cache)
-    end
-    return setmetatable(copy, mt)
-  end,
-  number = _id,
-  string = _id,
-  ['nil'] = _id,
-  boolean = _id,
-  ['function'] = _id,
-}
-
-deepcopy = function(orig, _cache)
-  local f = deepcopy_funcs[type(orig)]
-  if f then
-    return f(orig, _cache or {})
-  else
-    if type(orig) == 'userdata' and orig == vim.NIL then
-      return vim.NIL
-    end
+---@generic T
+---@param orig T
+---@param cache? table<any,any>
+---@return T
+local function deepcopy(orig, cache)
+  if orig == vim.NIL then
+    return vim.NIL
+  elseif type(orig) == 'userdata' or type(orig) == 'thread' then
     error('Cannot deepcopy object of type ' .. type(orig))
+  elseif type(orig) ~= 'table' then
+    return orig
   end
+
+  --- @cast orig table<any,any>
+
+  if cache and cache[orig] then
+    return cache[orig]
+  end
+
+  local copy = {} --- @type table<any,any>
+
+  if cache then
+    cache[orig] = copy
+  end
+
+  for k, v in pairs(orig) do
+    copy[deepcopy(k, cache)] = deepcopy(v, cache)
+  end
+
+  return setmetatable(copy, getmetatable(orig))
 end
 
 --- Returns a deep copy of the given object. Non-table objects are copied as
@@ -54,11 +47,20 @@ end
 --- same functions as those in the input table. Userdata and threads are not
 --- copied and will throw an error.
 ---
+--- Note: `noref=true` is much more performant on tables with unique table
+--- fields, while `noref=false` is more performant on tables that reuse table
+--- fields.
+---
 ---@generic T: table
 ---@param orig T Table to copy
+---@param noref? boolean
+--- When `false` (default) a contained table is only copied once and all
+--- references point to this single copy. When `true` every occurrence of a
+--- table results in a new copy. This also means that a cyclic reference can
+--- cause `deepcopy()` to fail.
 ---@return T Table of copied keys and (nested) values.
-function vim.deepcopy(orig)
-  return deepcopy(orig)
+function vim.deepcopy(orig, noref)
+  return deepcopy(orig, not noref and {} or nil)
 end
 
 --- Gets an |iterator| that splits a string at each instance of a separator, in "lazy" fashion
@@ -579,7 +581,7 @@ function vim.tbl_isarray(t)
   local count = 0
 
   for k, _ in pairs(t) do
-    --- Check if the number k is an integer
+    -- Check if the number k is an integer
     if type(k) == 'number' and k == math.floor(k) then
       count = count + 1
     else
@@ -617,11 +619,6 @@ function vim.tbl_islist(t)
   local num_elem = vim.tbl_count(t)
 
   if num_elem == 0 then
-    -- TODO(bfredl): in the future, we will always be inside nvim
-    -- then this check can be deleted.
-    if vim._empty_dict_mt == nil then
-      return nil
-    end
     return getmetatable(t) ~= vim._empty_dict_mt
   else
     for i = 1, num_elem do
@@ -878,7 +875,7 @@ end
 --- a.b.c = 1
 --- ```
 ---
----@param createfn function?(key:any):any Provides the value for a missing `key`.
+---@param createfn? fun(key:any):any Provides the value for a missing `key`.
 ---@return table # Empty table with `__index` metamethod.
 function vim.defaulttable(createfn)
   createfn = createfn or function(_)

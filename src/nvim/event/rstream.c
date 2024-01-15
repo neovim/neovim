@@ -2,10 +2,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <sys/types.h>
 #include <uv.h>
 
-#include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/stream.h"
 #include "nvim/log.h"
@@ -13,6 +12,8 @@
 #include "nvim/main.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/rbuffer.h"
+#include "nvim/rbuffer_defs.h"
+#include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/rstream.c.generated.h"

@@ -167,6 +167,7 @@ variables can be used to overrule the filetype used for certain extensions:
 	`*.sh`		g:bash_is_sh		|ft-sh-syntax|
 	`*.tex`		g:tex_flavor		|ft-tex-plugin|
 	`*.typ`		g:filetype_typ
+	`*.v`		g:filetype_v
 	`*.w`		g:filetype_w		|ft-cweb-syntax|
 
 For a few filetypes the global variable is used only when the filetype could
@@ -733,6 +734,14 @@ The following formatting setting are optionally available: >
 
 To enable this behavior, set the following variable in your vimrc: >
 	let g:rst_style = 1
+
+
+RNOWEB							      *ft-rnoweb-plugin*
+
+The 'formatexpr' option is set dynamically with different values for R code
+and for LaTeX code. If you prefer that 'formatexpr' is not set, add to your
+|vimrc|: >
+	let rnw_dynamic_comments = 0
 
 
 RPM SPEC						*ft-spec-plugin*

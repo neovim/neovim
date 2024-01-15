@@ -1,12 +1,14 @@
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <uv.h>
 
-#include "nvim/event/loop.h"
+#include "nvim/event/defs.h"
 #include "nvim/event/stream.h"
 #include "nvim/event/wstream.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"
+#include "nvim/types_defs.h"
 
 #define DEFAULT_MAXMEM 1024 * 1024 * 2000
 

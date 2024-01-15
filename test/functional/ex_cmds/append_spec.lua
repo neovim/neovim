@@ -5,21 +5,20 @@ local dedent = helpers.dedent
 local exec = helpers.exec
 local feed = helpers.feed
 local clear = helpers.clear
-local funcs = helpers.funcs
+local fn = helpers.fn
 local command = helpers.command
-local curbufmeths = helpers.curbufmeths
-local meths = helpers.meths
+local api = helpers.api
 local Screen = require('test.functional.ui.screen')
 
 local cmdtest = function(cmd, prep, ret1)
   describe(':' .. cmd, function()
     before_each(function()
       clear()
-      curbufmeths.set_lines(0, 1, true, { 'foo', 'bar', 'baz' })
+      api.nvim_buf_set_lines(0, 0, 1, true, { 'foo', 'bar', 'baz' })
     end)
 
     local buffer_contents = function()
-      return curbufmeths.get_lines(0, -1, false)
+      return api.nvim_buf_get_lines(0, 0, -1, false)
     end
 
     it(cmd .. 's' .. prep .. ' the current line by default', function()
@@ -29,8 +28,7 @@ local cmdtest = function(cmd, prep, ret1)
     -- Used to crash because this invokes history processing which uses
     -- hist_char2type which after fdb68e35e4c729c7ed097d8ade1da29e5b3f4b31
     -- crashed.
-    it(cmd .. 's' .. prep .. ' the current line by default when feeding',
-    function()
+    it(cmd .. 's' .. prep .. ' the current line by default when feeding', function()
       feed(':' .. cmd .. '\nabc\ndef\n.\n')
       eq(ret1, buffer_contents())
     end)
@@ -40,15 +38,15 @@ local cmdtest = function(cmd, prep, ret1)
       feed(':' .. hisline .. '<CR>')
       feed(':' .. cmd .. '<CR>abc<CR>def<C-f>')
       eq({ 'def' }, buffer_contents())
-      eq(hisline, funcs.histget(':', -2))
-      eq(cmd, funcs.histget(':'))
+      eq(hisline, fn.histget(':', -2))
+      eq(cmd, fn.histget(':'))
       -- Test that command-line window was launched
-      eq('nofile', meths.get_option_value('buftype', {}))
-      eq('n', funcs.mode(1))
+      eq('nofile', api.nvim_get_option_value('buftype', {}))
+      eq('n', fn.mode(1))
       feed('<CR>')
-      eq('c', funcs.mode(1))
+      eq('c', fn.mode(1))
       feed('.<CR>')
-      eq('n', funcs.mode(1))
+      eq('n', fn.mode(1))
       eq(ret1, buffer_contents())
     end)
   end)
@@ -63,8 +61,8 @@ describe('the first line is redrawn correctly after inserting text in an empty b
     clear()
     screen = Screen.new(20, 8)
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue},
-      [2] = {bold = true, reverse = true},
+      [1] = { bold = true, foreground = Screen.colors.Blue },
+      [2] = { bold = true, reverse = true },
     })
     screen:attach()
   end)

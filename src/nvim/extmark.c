@@ -32,6 +32,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/globals.h"
@@ -39,7 +40,9 @@
 #include "nvim/marktree.h"
 #include "nvim/memline.h"
 #include "nvim/pos_defs.h"
+#include "nvim/types_defs.h"
 #include "nvim/undo.h"
+#include "nvim/undo_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "extmark.c.generated.h"
@@ -329,9 +332,6 @@ void extmark_splice_delete(buf_T *buf, int l_row, colnr_T l_col, int u_row, coln
     // Invalidate/delete mark
     if (!only_copy && !mt_invalid(mark) && mt_invalidate(mark) && !mt_end(mark)) {
       MTPos endpos = marktree_get_altpos(buf->b_marktree, mark, NULL);
-      if (endpos.row < 0) {
-        endpos = mark.pos;
-      }
       // Invalidate unpaired marks in deleted lines and paired marks whose entire
       // range has been deleted.
       if ((!mt_paired(mark) && mark.pos.row < u_row)
@@ -401,7 +401,7 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
         MTKey mark = marktree_lookup(curbuf->b_marktree, pos.mark, itr);
         mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_INVALID;
         MTPos end = marktree_get_altpos(curbuf->b_marktree, mark, itr);
-        buf_put_decor(curbuf, mt_decor(mark), mark.pos.row, end.row < 0 ? mark.pos.row : end.row);
+        buf_put_decor(curbuf, mt_decor(mark), mark.pos.row, end.row);
       }
       // Redo
     } else {
@@ -435,8 +435,10 @@ void extmark_adjust(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount,
     return;
   }
   bcount_t start_byte = ml_find_line_or_offset(buf, line1, NULL, true);
-  bcount_t old_byte = 0, new_byte = 0;
-  int old_row, new_row;
+  bcount_t old_byte = 0;
+  bcount_t new_byte = 0;
+  int old_row;
+  int new_row;
   if (amount == MAXLNUM) {
     old_row = line2 - line1 + 1;
     // TODO(bfredl): ej kasta?
@@ -519,9 +521,18 @@ void extmark_splice_impl(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
     extmark_splice_delete(buf, start_row, start_col, end_row, end_col, uvp, false, undo);
   }
 
+  // Remove signs inside edited region from "b_signcols.count", add after splicing.
+  if (old_row > 0 || new_row > 0) {
+    buf_signcols_count_range(buf, start_row, start_row + old_row + 1, 0, kTrue);
+  }
+
   marktree_splice(buf->b_marktree, (int32_t)start_row, start_col,
                   old_row, old_col,
                   new_row, new_col);
+
+  if (old_row > 0 || new_row > 0) {
+    buf_signcols_count_range(buf, start_row, start_row + new_row + 1, 0, kNone);
+  }
 
   if (undo == kExtmarkUndo) {
     u_header_T *uhp = u_force_get_undo_header(buf);
@@ -601,9 +612,15 @@ void extmark_move_region(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
                           extent_row, extent_col, extent_byte,
                           0, 0, 0);
 
+  int row1 = MIN(start_row, new_row);
+  int row2 = MAX(start_row, new_row) + extent_row;
+  buf_signcols_count_range(buf, row1, row2, 0, kTrue);
+
   marktree_move_region(buf->b_marktree, start_row, start_col,
                        extent_row, extent_col,
                        new_row, new_col);
+
+  buf_signcols_count_range(buf, row1, row2, 0, kNone);
 
   buf_updates_send_splice(buf, new_row, new_col, new_byte,
                           0, 0, 0,

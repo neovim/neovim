@@ -4,7 +4,7 @@
 #include <uv.h>
 
 #include "nvim/event/process.h"
-#include "nvim/lib/queue.h"
+#include "nvim/lib/queue_defs.h"
 #include "nvim/os/pty_conpty_win.h"
 
 typedef struct pty_process {
@@ -21,18 +21,6 @@ typedef struct arg_node {
   char *arg;  // pointer to argument.
   QUEUE node;  // QUEUE structure.
 } ArgNode;
-
-static inline PtyProcess pty_process_init(Loop *loop, void *data)
-{
-  PtyProcess rv;
-  rv.process = process_init(loop, kProcessTypePty, data);
-  rv.width = 80;
-  rv.height = 24;
-  rv.conpty = NULL;
-  rv.finish_wait = NULL;
-  rv.process_handle = NULL;
-  return rv;
-}
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/pty_process_win.h.generated.h"

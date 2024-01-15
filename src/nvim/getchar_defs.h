@@ -6,22 +6,19 @@
 
 #include "nvim/api/private/defs.h"
 
-typedef struct buffblock buffblock_T;
-typedef struct buffheader buffheader_T;
-
 /// structure used to store one block of the stuff/redo/recording buffers
-struct buffblock {
-  buffblock_T *b_next;  ///< pointer to next buffblock
+typedef struct buffblock {
+  struct buffblock *b_next;  ///< pointer to next buffblock
   char b_str[1];        ///< contents (actually longer)
-};
+} buffblock_T;
 
 /// header used for the stuff buffer and the redo buffer
-struct buffheader {
+typedef struct {
   buffblock_T bh_first;  ///< first (dummy) block of list
   buffblock_T *bh_curr;  ///< buffblock for appending
   size_t bh_index;       ///< index for reading
   size_t bh_space;       ///< space in bh_curr for appending
-};
+} buffheader_T;
 
 typedef struct {
   buffheader_T sr_redobuff;

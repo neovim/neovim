@@ -8,6 +8,7 @@
 
 #include "auto/config.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/eval.h"
@@ -16,20 +17,24 @@
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
+#include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
+#include "nvim/os/fs_defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
 #include "nvim/regexp.h"
+#include "nvim/regexp_defs.h"
 #include "nvim/strings.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -236,9 +241,9 @@ char *get_past_head(const char *path)
   return (char *)retval;
 }
 
-/// Return true if 'c' is a path separator.
+/// @return true if 'c' is a path separator.
 /// Note that for MS-Windows this includes the colon.
-int vim_ispathsep(int c)
+bool vim_ispathsep(int c)
 {
 #ifdef UNIX
   return c == '/';          // Unix has ':' inside file names
@@ -252,7 +257,7 @@ int vim_ispathsep(int c)
 }
 
 // Like vim_ispathsep(c), but exclude the colon for MS-Windows.
-int vim_ispathsep_nocolon(int c)
+bool vim_ispathsep_nocolon(int c)
 {
   return vim_ispathsep(c)
 #ifdef BACKSLASH_IN_FILENAME
@@ -261,8 +266,8 @@ int vim_ispathsep_nocolon(int c)
   ;
 }
 
-/// return true if 'c' is a path list separator.
-int vim_ispathlistsep(int c)
+/// @return true if 'c' is a path list separator.
+bool vim_ispathlistsep(int c)
 {
 #ifdef UNIX
   return c == ':';
@@ -650,7 +655,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
                && (vim_strchr("*?[{~$", (uint8_t)(*path_end)) != NULL
                    || (!p_fic && (flags & EW_ICASE) && mb_isalpha(utf_ptr2char(path_end))))
 #endif
-               ) {  // NOLINT(whitespace/parens)
+               ) {
       e = p;
     }
     len = (size_t)(utfc_ptr2len(path_end));
@@ -716,7 +721,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
       && *path_end == '/') {
     STRCPY(s, path_end + 1);
     stardepth++;
-    (void)do_path_expand(gap, buf, (size_t)(s - buf), flags, true);
+    do_path_expand(gap, buf, (size_t)(s - buf), flags, true);
     stardepth--;
   }
   *s = NUL;
@@ -745,7 +750,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
           STRCPY(buf + len, "/**");  // NOLINT
           STRCPY(buf + len + 3, path_end);
           stardepth++;
-          (void)do_path_expand(gap, buf, len + 1, flags, true);
+          do_path_expand(gap, buf, len + 1, flags, true);
           stardepth--;
         }
 
@@ -753,7 +758,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
         if (path_has_exp_wildcard(path_end)) {      // handle more wildcards
           // need to expand another component of the path
           // remove backslashes for the remaining components only
-          (void)do_path_expand(gap, buf, len + 1, flags, false);
+          do_path_expand(gap, buf, len + 1, flags, false);
         } else {
           FileInfo file_info;
 
@@ -906,7 +911,7 @@ static char *get_path_cutoff(char *fname, garray_T *gap)
 #ifdef MSWIN
             || (vim_ispathsep(fname[j]) && vim_ispathsep(path_part[i][j]))
 #endif
-            )  // NOLINT(whitespace/parens)
+            )
            && fname[j] != NUL && path_part[i][j] != NUL) {
       j++;
     }
@@ -970,20 +975,17 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
 
   for (int i = 0; i < gap->ga_len && !got_int; i++) {
     char *path = fnames[i];
-    int is_in_curdir;
     const char *dir_end = gettail_dir(path);
-    char *pathsep_p;
-    char *path_cutoff;
 
     len = strlen(path);
-    is_in_curdir = path_fnamencmp(curdir, path, (size_t)(dir_end - path)) == 0
-                   && curdir[dir_end - path] == NUL;
+    bool is_in_curdir = path_fnamencmp(curdir, path, (size_t)(dir_end - path)) == 0
+                        && curdir[dir_end - path] == NUL;
     if (is_in_curdir) {
       in_curdir[i] = xstrdup(path);
     }
 
     // Shorten the filename while maintaining its uniqueness
-    path_cutoff = get_path_cutoff(path, &path_ga);
+    char *path_cutoff = get_path_cutoff(path, &path_ga);
 
     // Don't assume all files can be reached without path when search
     // pattern starts with **/, so only remove path_cutoff
@@ -998,7 +1000,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
     } else {
       // Here all files can be reached without path, so get shortest
       // unique path.  We start at the end of the path. */
-      pathsep_p = path + len - 1;
+      char *pathsep_p = path + len - 1;
       while (find_previous_pathsep(path, &pathsep_p)) {
         if (vim_regexec(&regmatch, pathsep_p + 1, 0)
             && is_unique(pathsep_p + 1, gap, i)
@@ -1353,7 +1355,7 @@ void FreeWild(int count, char **files)
 }
 
 /// @return  true if we can expand this backtick thing here.
-static int vim_backtick(char *p)
+static bool vim_backtick(char *p)
 {
   return *p == '`' && *(p + 1) != NUL && *(p + strlen(p) - 1) == '`';
 }
@@ -1967,7 +1969,7 @@ bool same_directory(char *f1, char *f2)
     return false;
   }
 
-  (void)vim_FullName(f1, ffname, MAXPATHL, false);
+  vim_FullName(f1, ffname, MAXPATHL, false);
   t1 = path_tail_with_sep(ffname);
   t2 = path_tail_with_sep(f2);
   return t1 - ffname == t2 - f2
@@ -2237,7 +2239,7 @@ int expand_wildcards(int num_pat, char **pat, int *num_files, char ***files, int
 }
 
 /// @return  true if "fname" matches with an entry in 'suffixes'.
-int match_suffix(char *fname)
+bool match_suffix(char *fname)
 {
 #define MAXSUFLEN 30  // maximum length of a file suffix
   char suf_buf[MAXSUFLEN];
@@ -2392,7 +2394,7 @@ static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
 /// Check if file `fname` is a full (absolute) path.
 ///
 /// @return `true` if "fname" is absolute.
-int path_is_absolute(const char *fname)
+bool path_is_absolute(const char *fname)
 {
 #ifdef MSWIN
   if (*fname == NUL) {

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
+#include <uv.h>
 
 #include "nvim/ascii_defs.h"
 #include "nvim/assert_defs.h"
@@ -20,10 +20,11 @@
 #include "nvim/eval/vars.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
-#include "nvim/lib/queue.h"
+#include "nvim/hashtab_defs.h"
+#include "nvim/lib/queue_defs.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
@@ -2910,7 +2911,7 @@ static int tv_blob_index(const blob_T *blob, int len, varnumber_T idx, typval_T 
   return OK;
 }
 
-int tv_blob_slice_or_index(const blob_T *blob, int is_range, varnumber_T n1, varnumber_T n2,
+int tv_blob_slice_or_index(const blob_T *blob, bool is_range, varnumber_T n1, varnumber_T n2,
                            bool exclusive, typval_T *rettv)
 {
   int len = tv_blob_len(rettv->vval.v_blob);

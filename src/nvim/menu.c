@@ -8,21 +8,28 @@
 
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/getchar_defs.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/memory.h"
 #include "nvim/menu.h"
 #include "nvim/menu_defs.h"
@@ -31,6 +38,7 @@
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/state.h"
+#include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
@@ -68,7 +76,7 @@ void ex_menu(exarg_T *eap)
   char *map_to;            // command mapped to the menu entry
   int noremap;
   bool silent = false;
-  int unmenu;
+  bool unmenu;
   char *map_buf;
   char *p;
   int i;
@@ -225,7 +233,7 @@ void ex_menu(exarg_T *eap)
     } else {
       map_buf = NULL;
       map_to = replace_termcodes(map_to, strlen(map_to), &map_buf, 0,
-                                 REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
+                                 REPTERM_DO_LT, NULL, p_cpo);
     }
     menuarg.modes = modes;
     menuarg.noremap[0] = noremap;
@@ -867,7 +875,7 @@ char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool for
   char *after_dot;
   char *p;
   char *path_name = NULL;
-  int unmenu;
+  bool unmenu;
   vimmenu_T *menu;
 
   xp->xp_context = EXPAND_UNSUCCESSFUL;
@@ -968,7 +976,7 @@ char *get_menu_name(expand_T *xp, int idx)
 {
   static vimmenu_T *menu = NULL;
   char *str;
-  static int should_advance = false;
+  static bool should_advance = false;
 
   if (idx == 0) {           // first call: start at first item
     menu = expand_menu;
@@ -1131,7 +1139,7 @@ static bool menu_namecmp(const char *const name, const char *const mname)
 ///                     to whether the command is a "nore" command.
 /// @param[out] unmenu  If not NULL, the flag it points to is set according
 ///                     to whether the command is an "unmenu" command.
-int get_menu_cmd_modes(const char *cmd, bool forceit, int *noremap, int *unmenu)
+int get_menu_cmd_modes(const char *cmd, bool forceit, int *noremap, bool *unmenu)
 {
   int modes;
 
@@ -1334,9 +1342,9 @@ bool menu_is_toolbar(const char *const name)
   return strncmp(name, "ToolBar", 7) == 0;
 }
 
-/// Return true if the name is a menu separator identifier: Starts and ends
-/// with '-'
-int menu_is_separator(char *name)
+/// @return  true if the name is a menu separator identifier: Starts and ends
+///          with '-'
+bool menu_is_separator(char *name)
 {
   return name[0] == '-' && name[strlen(name) - 1] == '-';
 }
@@ -1344,7 +1352,7 @@ int menu_is_separator(char *name)
 /// True if a popup menu or starts with \ref MNU_HIDDEN_CHAR
 ///
 /// @return true if the menu is hidden
-static int menu_is_hidden(char *name)
+static bool menu_is_hidden(char *name)
 {
   return (name[0] == MNU_HIDDEN_CHAR)
          || (menu_is_popup(name) && name[5] != NUL);

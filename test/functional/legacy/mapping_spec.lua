@@ -3,8 +3,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local expect, poke_eventloop = helpers.expect, helpers.poke_eventloop
-local command, eq, eval, meths = helpers.command, helpers.eq, helpers.eval, helpers.meths
-local sleep = helpers.sleep
+local command, eq, eval, api = helpers.command, helpers.eq, helpers.eval, helpers.api
+local sleep = vim.uv.sleep
 
 describe('mapping', function()
   before_each(clear)
@@ -110,7 +110,9 @@ describe('mapping', function()
     command('imapclear')
     command('set whichwrap=<,>,[,]')
     feed('G3o<esc>2k')
-    command([[:exe ":norm! iTest3: text with a (parenthesis here\<C-G>U\<Right>new line here\<esc>\<up>\<up>."]])
+    command(
+      [[:exe ":norm! iTest3: text with a (parenthesis here\<C-G>U\<Right>new line here\<esc>\<up>\<up>."]]
+    )
 
     expect([[
 
@@ -132,9 +134,9 @@ describe('mapping', function()
 
     command('nnoremap <LeftDrag> <LeftDrag><Cmd><CR>')
     poke_eventloop()
-    meths.input_mouse('left', 'press', '', 0, 0, 0)
+    api.nvim_input_mouse('left', 'press', '', 0, 0, 0)
     poke_eventloop()
-    meths.input_mouse('left', 'drag', '', 0, 0, 1)
+    api.nvim_input_mouse('left', 'drag', '', 0, 0, 1)
     poke_eventloop()
     eq('s', eval('mode()'))
   end)
@@ -145,9 +147,9 @@ describe('mapping', function()
     command('inoremap <LeftDrag> <LeftDrag><Cmd>let g:dragged = 1<CR>')
     feed('i')
     poke_eventloop()
-    meths.input_mouse('left', 'press', '', 0, 0, 0)
+    api.nvim_input_mouse('left', 'press', '', 0, 0, 0)
     poke_eventloop()
-    meths.input_mouse('left', 'drag', '', 0, 0, 1)
+    api.nvim_input_mouse('left', 'drag', '', 0, 0, 1)
     poke_eventloop()
     eq(1, eval('g:dragged'))
     eq('v', eval('mode()'))
@@ -156,9 +158,9 @@ describe('mapping', function()
     command([[inoremap <LeftDrag> <LeftDrag><C-\><C-N>]])
     feed('i')
     poke_eventloop()
-    meths.input_mouse('left', 'press', '', 0, 0, 0)
+    api.nvim_input_mouse('left', 'press', '', 0, 0, 0)
     poke_eventloop()
-    meths.input_mouse('left', 'drag', '', 0, 0, 1)
+    api.nvim_input_mouse('left', 'drag', '', 0, 0, 1)
     poke_eventloop()
     eq('n', eval('mode()'))
   end)

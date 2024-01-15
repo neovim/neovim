@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>  // IWYU pragma: keep
 
@@ -8,8 +9,8 @@
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
-#include "nvim/math.h"
-#include "nvim/option_defs.h"  // IWYU pragma: export
+#include "nvim/macros_defs.h"
+#include "nvim/option_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
 /// The options that are local to a window or buffer have "indir" set to one of
@@ -38,7 +39,7 @@ typedef enum {
 // buffers.  Indicate this by setting "var" to VAR_WIN.
 #define VAR_WIN ((char *)-1)
 
-typedef struct vimoption {
+typedef struct {
   char *fullname;           ///< full option name
   char *shortname;          ///< permissible abbreviation
   uint32_t flags;           ///< see above
@@ -75,16 +76,14 @@ enum {
 /// When OPT_GLOBAL and OPT_LOCAL are both missing, set both local and global
 /// values, get local value.
 typedef enum {
-  // TODO(famiu): See if `OPT_FREE` is really necessary and remove it if not.
-  OPT_FREE      = 0x01,   ///< Free old value if it was allocated.
-  OPT_GLOBAL    = 0x02,   ///< Use global value.
-  OPT_LOCAL     = 0x04,   ///< Use local value.
-  OPT_MODELINE  = 0x08,   ///< Option in modeline.
-  OPT_WINONLY   = 0x10,   ///< Only set window-local options.
-  OPT_NOWIN     = 0x20,   ///< Don’t set window-local options.
-  OPT_ONECOLUMN = 0x40,   ///< list options one per line
-  OPT_NO_REDRAW = 0x80,   ///< ignore redraw flags on option
-  OPT_SKIPRTP   = 0x100,  ///< "skiprtp" in 'sessionoptions'
+  OPT_GLOBAL    = 0x01,  ///< Use global value.
+  OPT_LOCAL     = 0x02,  ///< Use local value.
+  OPT_MODELINE  = 0x04,  ///< Option in modeline.
+  OPT_WINONLY   = 0x08,  ///< Only set window-local options.
+  OPT_NOWIN     = 0x10,  ///< Don’t set window-local options.
+  OPT_ONECOLUMN = 0x20,  ///< list options one per line
+  OPT_NO_REDRAW = 0x40,  ///< ignore redraw flags on option
+  OPT_SKIPRTP   = 0x80,  ///< "skiprtp" in 'sessionoptions'
 } OptionSetFlags;
 
 /// Return value from get_option_attrs().
@@ -124,24 +123,3 @@ static inline const char *optval_type_get_name(const OptValType type)
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.h.generated.h"
 #endif
-
-/// Check if option supports a specific type.
-static inline bool option_has_type(OptIndex opt_idx, OptValType type)
-{
-  // Ensure that type flags variable can hold all types.
-  STATIC_ASSERT(kOptValTypeSize <= sizeof(OptTypeFlags) * 8,
-                "Option type_flags cannot fit all option types");
-  // Ensure that the type is valid before accessing type_flags.
-  assert(type > kOptValTypeNil && type < kOptValTypeSize);
-  // Bitshift 1 by the value of type to get the type's corresponding flag, and check if it's set in
-  // the type_flags bit field.
-  return get_option(opt_idx)->type_flags & (1 << type);
-}
-
-/// Check if option is multitype (supports multiple types).
-static inline bool option_is_multitype(OptIndex opt_idx)
-{
-  const OptTypeFlags type_flags = get_option(opt_idx)->type_flags;
-  assert(type_flags != 0);
-  return !is_power_of_two(type_flags);
-}

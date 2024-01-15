@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
@@ -13,8 +14,8 @@
 #include "nvim/fold.h"
 #include "nvim/globals.h"
 #include "nvim/indent.h"
-#include "nvim/macros_defs.h"
 #include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -169,14 +170,13 @@ found:
 /// @return       true if the next paragraph or section was found.
 bool findpar(bool *pincl, int dir, int count, int what, bool both)
 {
-  linenr_T curr;
   bool first;               // true on first line
   linenr_T fold_first;      // first line of a closed fold
   linenr_T fold_last;       // last line of a closed fold
   bool fold_skipped;        // true if a closed fold was skipped this
                             // iteration
 
-  curr = curwin->w_cursor.lnum;
+  linenr_T curr = curwin->w_cursor.lnum;
 
   while (count--) {
     bool did_skip = false;  // true after separating lines have been skipped
@@ -213,7 +213,7 @@ bool findpar(bool *pincl, int dir, int count, int what, bool both)
     curr++;
   }
   curwin->w_cursor.lnum = curr;
-  if (curr == curbuf->b_ml.ml_line_count && what != '}') {
+  if (curr == curbuf->b_ml.ml_line_count && what != '}' && dir == FORWARD) {
     char *line = ml_get(curr);
 
     // Put the cursor on the last character in the last line and make the
@@ -259,9 +259,7 @@ static bool inmacro(char *opt, const char *s)
 /// If 'both' is true also stop at '}'
 bool startPS(linenr_T lnum, int para, bool both)
 {
-  char *s;
-
-  s = ml_get(lnum);
+  char *s = ml_get(lnum);
   if ((uint8_t)(*s) == para || *s == '\f' || (both && *s == '}')) {
     return true;
   }
@@ -293,9 +291,7 @@ static bool cls_bigword;  ///< true for "W", "B" or "E"
 /// boundaries are of interest.
 static int cls(void)
 {
-  int c;
-
-  c = gchar_cursor();
+  int c = gchar_cursor();
   if (c == ' ' || c == '\t' || c == NUL) {
     return 0;
   }
@@ -534,9 +530,7 @@ static bool skip_chars(int cclass, int dir)
 /// Go back to the start of the word or the start of white space
 static void back_in_line(void)
 {
-  int sclass;                       // starting class
-
-  sclass = cls();
+  int sclass = cls();  // starting class
   while (true) {
     if (curwin->w_cursor.col == 0) {        // stop at start of line
       break;
@@ -586,7 +580,7 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
 {
   pos_T start_pos;
   bool inclusive = true;
-  int include_white = false;
+  bool include_white = false;
 
   cls_bigword = bigword;
   clearpos(&start_pos);
@@ -723,15 +717,13 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
 /// When Visual active, extend it by one or more sentences.
 int current_sent(oparg_T *oap, int count, bool include)
 {
-  pos_T start_pos;
-  pos_T pos;
   bool start_blank;
   int c;
   bool at_start_sent;
   int ncount;
 
-  start_pos = curwin->w_cursor;
-  pos = start_pos;
+  pos_T start_pos = curwin->w_cursor;
+  pos_T pos = start_pos;
   findsent(FORWARD, 1);        // Find start of next sentence.
 
   // When the Visual area is bigger than one character: Extend it.
@@ -964,6 +956,13 @@ int current_block(oparg_T *oap, int count, bool include, int what, int other)
       }
     }
 
+    // In Visual mode, when resulting area is empty
+    // i.e. there is no inner block to select, abort.
+    if (equalpos(start_pos, *end_pos) && VIsual_active) {
+      curwin->w_cursor = old_pos;
+      return FAIL;
+    }
+
     // In Visual mode, when the resulting area is not bigger than what we
     // started with, extend it to the next block, and then exclude again.
     // Don't try to expand the area if the area is empty.
@@ -1079,7 +1078,7 @@ int current_tagblock(oparg_T *oap, int count_arg, bool include)
   bool do_include = include;
   bool save_p_ws = p_ws;
   int retval = FAIL;
-  int is_inclusive = true;
+  bool is_inclusive = true;
 
   p_ws = false;
 
@@ -1314,7 +1313,7 @@ extend:
   }
 
   // First move back to the start_lnum of the paragraph or white lines
-  int white_in_front = linewhite(start_lnum);
+  bool white_in_front = linewhite(start_lnum);
   while (start_lnum > 1) {
     if (white_in_front) {           // stop at first white line
       if (!linewhite(start_lnum - 1)) {

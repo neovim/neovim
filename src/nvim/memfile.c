@@ -47,7 +47,7 @@
 #include "nvim/assert_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/fileio.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/map_defs.h"
 #include "nvim/memfile.h"
@@ -56,10 +56,12 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/os/fs.h"
+#include "nvim/os/fs_defs.h"
 #include "nvim/os/input.h"
-#include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
+#include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
 #define MEMFILE_PAGE_SIZE 4096       /// default page size
@@ -204,7 +206,7 @@ void mf_close_file(buf_T *buf, bool getlines)
   if (getlines) {
     // get all blocks in memory by accessing all lines (clumsy!)
     for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-      (void)ml_get_buf(buf, lnum);
+      ml_get_buf(buf, lnum);
     }
   }
 
@@ -271,7 +273,7 @@ bhdr_T *mf_new(memfile_T *mfp, bool negative, unsigned page_count)
 
   // Init the data to all zero, to avoid reading uninitialized data.
   // This also avoids that the passwd file ends up in the swap file!
-  (void)memset(hp->bh_data, 0, (size_t)mfp->mf_page_size * page_count);
+  memset(hp->bh_data, 0, (size_t)mfp->mf_page_size * page_count);
 
   return hp;
 }
@@ -390,7 +392,7 @@ int mf_sync(memfile_T *mfp, int flags)
   // Then we only try to write blocks within the existing file. If that also
   // fails then we give up.
   int status = OK;
-  bhdr_T *hp;
+  bhdr_T *hp = NULL;
   // note, "last" block is typically earlier in the hash list
   map_foreach_value(&mfp->mf_hash, hp, {
     if (((flags & MFS_ALL) || hp->bh_bnum >= 0)
@@ -757,7 +759,7 @@ static bool mf_do_open(memfile_T *mfp, char *fname, int flags)
     return false;
   }
 
-  (void)os_set_cloexec(mfp->mf_fd);
+  os_set_cloexec(mfp->mf_fd);
 
   return true;
 }

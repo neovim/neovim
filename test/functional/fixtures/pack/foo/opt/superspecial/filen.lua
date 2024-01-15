@@ -1,1 +1,1 @@
-table.insert(_G.test_loadorder, "SuperSpecial")
+table.insert(_G.test_loadorder, 'SuperSpecial')

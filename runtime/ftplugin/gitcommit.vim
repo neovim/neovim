@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	git commit file
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
-" Last Change:	2022 Jan 05
+" Last Change:	2023 Dec 28
 
 " Only do this when not done yet for this buffer
 if (exists("b:did_ftplugin"))
@@ -12,7 +12,7 @@ let b:did_ftplugin = 1
 
 setlocal nomodeline tabstop=8 formatoptions+=tl textwidth=72
 setlocal formatoptions-=c formatoptions-=r formatoptions-=o formatoptions-=q formatoptions+=n
-setlocal formatlistpat+=\\\|^\\s*[-*+]\\s\\+
+setlocal formatlistpat=^\\s*\\d\\+[\\]:.)}]\\s\\+\\\|^\\s*[-*+]\\s\\+
 setlocal include=^+++
 setlocal includeexpr=substitute(v:fname,'^[bi]/','','')
 
@@ -42,6 +42,11 @@ function! s:diffcomplete(A, L, P) abort
   return args
 endfunction
 
+function! s:setupdiff() abort
+  command! -bang -bar -buffer -complete=custom,s:diffcomplete -nargs=* DiffGitCached :call s:gitdiffcached(<bang>0, <f-args>)
+  setlocal buftype=nowrite nobuflisted noswapfile nomodifiable filetype=git
+endfunction
+
 function! s:gitdiffcached(bang, ...) abort
   let name = tempname()
   if a:0
@@ -50,8 +55,6 @@ function! s:gitdiffcached(bang, ...) abort
     let extra = "-p --stat=".&columns
   endif
   call system("git diff --cached --no-color --no-ext-diff ".extra." > ".shellescape(name))
-  exe "pedit " . fnameescape(name)
-  wincmd P
-  command! -bang -bar -buffer -complete=custom,s:diffcomplete -nargs=* DiffGitCached :call s:gitdiffcached(<bang>0, <f-args>)
-  setlocal buftype=nowrite nobuflisted noswapfile nomodifiable filetype=git
+  exe 'pedit +call\ s:setupdiff()' fnameescape(name)
+  silent! wincmd P
 endfunction

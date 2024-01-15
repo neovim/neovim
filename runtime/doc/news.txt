@@ -15,7 +15,7 @@ BREAKING CHANGES                                                *news-breaking*
 
 The following changes may require adaptations in user config or plugins.
 
-• In some cases, the cursor in the Nvim |TUI| would blink even without
+• In some cases, the cursor in the Nvim |TUI| used to blink even without
   configuring 'guicursor' as mentioned in |cursor-blinking|. This was a bug
   that has now been fixed. If your cursor has stopped blinking, add the
   following (or similar, adapted to user preference) to your |config| file: >vim
@@ -99,14 +99,15 @@ The following changes may require adaptations in user config or plugins.
   a meaningfully different way and might need an update:
   • |hl-FloatBorder| is linked to |hl-NormalFloat| instead of |hl-WinSeparator|.
   • |hl-NormalFloat| is not linked to |hl-Pmenu|.
-  • |hl-WinBar| is linked to |hl-StatusLine|.
-  • |hl-WinBarNC| is linked to |hl-StatusLineNC| instead of |hl-WinBar|.
+  • |hl-WinBar| has different background.
+  • |hl-WinBarNC| is similar to |hl-WinBar| but not bold.
   • |hl-WinSeparator| is linked to |hl-Normal| instead of |hl-VertSplit|.
 
   This also might result into some color schemes looking differently due to
   them relying on an implicit assumptions about how highlight groups are
   defined by default. To account for this, define all attributes of highlight
-  groups explicitly or use `:colorscheme vim` to restore previous definitions.
+  groups explicitly. Alternatively, use `:colorscheme vim` or
+  `:source $VIMRUNTIME/colors/vim.lua` to restore previous definitions.
 
 • 'termguicolors' is enabled by default when Nvim is able to determine that
   the host terminal emulator supports 24-bit color.
@@ -192,6 +193,8 @@ The following new APIs and features were added.
     windows.
   • |vim.lsp.util.locations_to_items()| sets the `user_data` of each item to
     the original LSP `Location` or `LocationLink`.
+  • Added support for connecting to servers using named pipes (Windows) or
+    unix domain sockets (Unix) via |vim.lsp.rpc.domain_socket_connect()|.
 
 • Treesitter
   • Bundled parsers and queries (highlight, folds) for Markdown, Python, and
@@ -223,6 +226,7 @@ The following new APIs and features were added.
   • `vim.*`
   • `vim.fn.*`
   • `vim.api.*`
+  • `vim.v.*`
 
 • Improved messages for type errors in `vim.api.*` calls (including `opts` params)
 
@@ -238,7 +242,7 @@ The following new APIs and features were added.
 • Floating windows can now be hidden by setting `hide` in |nvim_open_win()| or
   |nvim_win_set_config()|.
 
-• The |:terminal| command now accepts some |:command-modifiers| (specifically
+• |:terminal| command now accepts some |:command-modifiers| (specifically
   |:horizontal| and those that affect splitting a window).
 
 • |$NVIM_APPNAME| can be set to a relative path instead of only a name.
@@ -259,14 +263,29 @@ The following new APIs and features were added.
   clipboard is now bundled by default and will be automatically enabled under
   certain conditions. |clipboard-osc52|
 
-• The 'termsync' option asks the terminal emulator to buffer screen updates
-  until the redraw cycle is complete. Requires support from the terminal.
+• 'termsync' option asks the terminal emulator to buffer screen updates until
+  the redraw cycle is complete. Requires support from the terminal.
 
 • |vim.text.hexencode()| and |vim.text.hexdecode()| convert strings to and
   from byte representations.
 
-• 'completeopt' option supports "popup" flags to show extra information in
-  in floating window.
+• 'completeopt' option supports "popup" flag to show extra information in a
+  floating window.
+
+• |nvim_input_mouse()| supports mouse buttons "x1" and "x2".
+
+• |v_Q-default| and |v_@-default| repeat a register for each line of a visual
+  selection.
+
+• |vim.diagnostic.count()| returns the number of diagnostics for a given
+  buffer and/or namespace, by severity. This is a faster alternative to
+  |vim.diagnostic.get()| when only the number of diagnostics is needed, but
+  not the diagnostics themselves.
+
+• |vim.deepcopy()| has a `noref` argument to avoid hashing table values.
+
+• Terminal buffers emit a |TermRequest| autocommand event when the child
+  process emits an OSC or DCS control sequence.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
@@ -293,6 +312,7 @@ The following changes to existing APIs or features add new behavior.
 <
   • Enabled treesitter highlighting for treesitter query files.
   • Enabled treesitter highlighting for help files.
+  • Enabled treesitter highlighting for Lua files.
 
 • The `workspace/didChangeWatchedFiles` LSP client capability is now enabled
   by default.
@@ -335,11 +355,10 @@ The following changes to existing APIs or features add new behavior.
   In addition, |nvim_buf_get_extmarks()| has gained an "overlap" option to
   return such ranges even if they started before the specified position.
 
-• Extmarks can opt-out of precise undo tracking using the new "undo_restore"
-  flag to |nvim_buf_set_extmark()|
-
-• Extmarks can be automatically hidden or removed using the new "invalidate"
-  flag to |nvim_buf_set_extmark()|
+• The following flags were added to |nvim_buf_set_extmark()|:
+  - "undo_restore": opt-out extmarks of precise undo tracking.
+  - "invalidate": automatically hide or delete extmarks.
+  - "virt_text_repeat_linebreak": repeat virtual text on wrapped lines.
 
 • LSP hover and signature help now use Treesitter for highlighting of Markdown
   content.
@@ -357,13 +376,13 @@ The following changes to existing APIs or features add new behavior.
 
 • Vimscript function |exists()| supports checking |v:lua| functions.
 
-• Diagnostic sign text is no longer configured with |sign_define()|.
-  Use |vim.diagnostic.config()| instead.
-
 • Added "force_crlf" option field in |nvim_open_term()|.
 
 • Attempting to set an invalid keycode option (e.g. `set t_foo=123`) no longer
   gives an error.
+
+• |:checkhealth| buffer can now be opened in a split window using modifiers like
+  |:vertical|, |:horizontal| and |:botright|.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
@@ -386,6 +405,9 @@ DEPRECATIONS                                                *news-deprecations*
 
 The following functions are now deprecated and will be removed in a future
 release.
+
+• Configuring |diagnostic-signs| using |:sign-define| or |sign_define()|. Use
+  the "signs" key of |vim.diagnostic.config()| instead.
 
 • Checkhealth functions:
   - |health#report_error|, |vim.health.report_error()|	Use |vim.health.error()| instead.

@@ -4,7 +4,7 @@ local eq = helpers.eq
 local clear = helpers.clear
 local command = helpers.command
 local eval = helpers.eval
-local meths = helpers.meths
+local api = helpers.api
 local exec = helpers.exec
 local exec_capture = helpers.exec_capture
 local expect_exit = helpers.expect_exit
@@ -15,21 +15,24 @@ before_each(clear)
 
 describe(':let', function()
   it('correctly lists variables with curly-braces', function()
-    meths.set_var('v', {0})
+    api.nvim_set_var('v', { 0 })
     eq('v                     [0]', exec_capture('let {"v"}'))
   end)
 
   it('correctly lists variables with subscript', function()
-    meths.set_var('v', {0})
+    api.nvim_set_var('v', { 0 })
     eq('v[0]                  #0', exec_capture('let v[0]'))
     eq('g:["v"][0]            #0', exec_capture('let g:["v"][0]'))
     eq('{"g:"}["v"][0]        #0', exec_capture('let {"g:"}["v"][0]'))
   end)
 
-  it(":unlet self-referencing node in a List graph #6070", function()
+  it(':unlet self-referencing node in a List graph #6070', function()
     -- :unlet-ing a self-referencing List must not allow GC on indirectly
     -- referenced in-scope Lists. Before #6070 this caused use-after-free.
-    expect_exit(1000, source, [=[
+    expect_exit(
+      1000,
+      source,
+      [=[
       let [l1, l2] = [[], []]
       echo 'l1:' . id(l1)
       echo 'l2:' . id(l2)
@@ -45,10 +48,11 @@ describe(':let', function()
       unlet l4
       call garbagecollect(1)
       call feedkeys(":\e:echo l1 l3\n:echo 42\n:cq\n", "t")
-    ]=])
+    ]=]
+    )
   end)
 
-  it("multibyte env var #8398 #9267", function()
+  it('multibyte env var #8398 #9267', function()
     command("let $NVIM_TEST_LET = 'AìaB'")
     eq('AìaB', eval('$NVIM_TEST_LET'))
     command("let $NVIM_TEST_LET = 'AaあB'")
@@ -56,12 +60,14 @@ describe(':let', function()
     local mbyte = [[\p* .ม .ม .ม .ม่ .ม่ .ม่ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ ֹֻ
                     .ֹֻ .ֹֻ .ֹֻ ֹֻ ֹֻ ֹֻ .ֹֻ .ֹֻ .ֹֻ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ
                     .ֹֻ .ֹֻ .ֹֻ a a a ca ca ca à à à]]
-    command("let $NVIM_TEST_LET = '"..mbyte.."'")
+    command("let $NVIM_TEST_LET = '" .. mbyte .. "'")
     eq(mbyte, eval('$NVIM_TEST_LET'))
   end)
 
-  it("multibyte env var to child process #8398 #9267",  function()
-    local cmd_get_child_env = ("let g:env_from_child = system(['%s', 'NVIM_TEST_LET'])"):format(testprg('printenv-test'))
+  it('multibyte env var to child process #8398 #9267', function()
+    local cmd_get_child_env = ("let g:env_from_child = system(['%s', 'NVIM_TEST_LET'])"):format(
+      testprg('printenv-test')
+    )
     command("let $NVIM_TEST_LET = 'AìaB'")
     command(cmd_get_child_env)
     eq(eval('$NVIM_TEST_LET'), eval('g:env_from_child'))
@@ -73,12 +79,12 @@ describe(':let', function()
     local mbyte = [[\p* .ม .ม .ม .ม่ .ม่ .ม่ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ ֹֻ
                     .ֹֻ .ֹֻ .ֹֻ ֹֻ ֹֻ ֹֻ .ֹֻ .ֹֻ .ֹֻ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ
                     .ֹֻ .ֹֻ .ֹֻ a a a ca ca ca à à à]]
-    command("let $NVIM_TEST_LET = '"..mbyte.."'")
+    command("let $NVIM_TEST_LET = '" .. mbyte .. "'")
     command(cmd_get_child_env)
     eq(eval('$NVIM_TEST_LET'), eval('g:env_from_child'))
   end)
 
-  it("release of list assigned to l: variable does not trigger assertion #12387, #12430", function()
+  it('release of list assigned to l: variable does not trigger assertion #12387, #12430', function()
     source([[
       func! s:f()
         let l:x = [1]
@@ -94,17 +100,17 @@ describe(':let', function()
   end)
 
   it('can apply operator to boolean option', function()
-    eq(true, meths.get_option_value('equalalways', {}))
+    eq(true, api.nvim_get_option_value('equalalways', {}))
     command('let &equalalways -= 1')
-    eq(false, meths.get_option_value('equalalways', {}))
+    eq(false, api.nvim_get_option_value('equalalways', {}))
     command('let &equalalways += 1')
-    eq(true, meths.get_option_value('equalalways', {}))
+    eq(true, api.nvim_get_option_value('equalalways', {}))
     command('let &equalalways *= 1')
-    eq(true, meths.get_option_value('equalalways', {}))
+    eq(true, api.nvim_get_option_value('equalalways', {}))
     command('let &equalalways /= 1')
-    eq(true, meths.get_option_value('equalalways', {}))
+    eq(true, api.nvim_get_option_value('equalalways', {}))
     command('let &equalalways %= 1')
-    eq(false, meths.get_option_value('equalalways', {}))
+    eq(false, api.nvim_get_option_value('equalalways', {}))
   end)
 end)
 

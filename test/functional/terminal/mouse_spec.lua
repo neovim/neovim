@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear, eq, eval = helpers.clear, helpers.eq, helpers.eval
-local feed, nvim, command = helpers.feed, helpers.nvim, helpers.command
+local feed, api, command = helpers.feed, helpers.api, helpers.command
 local feed_data = thelpers.feed_data
 local is_os = helpers.is_os
 local skip = helpers.skip
@@ -11,14 +11,14 @@ describe(':terminal mouse', function()
 
   before_each(function()
     clear()
-    nvim('set_option_value', 'statusline', '==========', {})
+    api.nvim_set_option_value('statusline', '==========', {})
     command('highlight StatusLine cterm=NONE')
     command('highlight StatusLineNC cterm=NONE')
     command('highlight VertSplit cterm=NONE')
     screen = thelpers.screen_setup()
     local lines = {}
     for i = 1, 30 do
-      table.insert(lines, 'line'..tostring(i))
+      table.insert(lines, 'line' .. tostring(i))
     end
     table.insert(lines, '')
     feed_data(lines)
@@ -243,6 +243,134 @@ describe(':terminal mouse', function()
           {3:-- TERMINAL --}                                    |
         ]])
       end)
+
+      it('will lose focus if statusline is clicked', function()
+        command('set laststatus=2')
+        screen:expect([[
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+          rows: 5, cols: 50                                 |
+          {1: }                                                 |
+          ==========                                        |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<LeftMouse><0,5>')
+        screen:expect([[
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+          rows: 5, cols: 50                                 |
+          {2:^ }                                                 |
+          ==========                                        |
+                                                            |
+        ]])
+        feed('<LeftDrag><0,4>')
+        screen:expect([[
+          mouse enabled                                     |
+          rows: 5, cols: 50                                 |
+          rows: 4, cols: 50                                 |
+          {2:^ }                                                 |
+          ==========                                        |
+                                                            |*2
+        ]])
+      end)
+
+      it('will lose focus if right separator is clicked', function()
+        command('rightbelow vnew | wincmd p | startinsert')
+        screen:expect([[
+          line29                  │                         |
+          line30                  │{4:~                        }|
+          mouse enabled           │{4:~                        }|
+          rows: 5, cols: 24       │{4:~                        }|
+          {1: }                       │{4:~                        }|
+          ==========               ==========               |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<LeftMouse><24,0>')
+        screen:expect([[
+          line29                  │                         |
+          line30                  │{4:~                        }|
+          mouse enabled           │{4:~                        }|
+          rows: 5, cols: 24       │{4:~                        }|
+          {2:^ }                       │{4:~                        }|
+          ==========               ==========               |
+                                                            |
+        ]])
+        feed('<LeftDrag><23,0>')
+        screen:expect([[
+          line30                 │                          |
+          mouse enabled          │{4:~                         }|
+          rows: 5, cols: 24      │{4:~                         }|
+          rows: 5, cols: 23      │{4:~                         }|
+          {2:^ }                      │{4:~                         }|
+          ==========              ==========                |
+                                                            |
+        ]])
+      end)
+
+      it('will lose focus if winbar/tabline is clicked', function()
+        command('setlocal winbar=WINBAR')
+        screen:expect([[
+          {3:WINBAR                                            }|
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+          rows: 5, cols: 50                                 |
+          {1: }                                                 |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<LeftMouse><0,0>')
+        screen:expect([[
+          {3:WINBAR                                            }|
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+          rows: 5, cols: 50                                 |
+          {2:^ }                                                 |
+                                                            |
+        ]])
+        command('set showtabline=2 tabline=TABLINE | startinsert')
+        screen:expect([[
+          {1:TABLINE                                           }|
+          {3:WINBAR                                            }|
+          mouse enabled                                     |
+          rows: 5, cols: 50                                 |
+          rows: 4, cols: 50                                 |
+          {1: }                                                 |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<LeftMouse><0,0>')
+        screen:expect([[
+          {1:TABLINE                                           }|
+          {3:WINBAR                                            }|
+          mouse enabled                                     |
+          rows: 5, cols: 50                                 |
+          rows: 4, cols: 50                                 |
+          {2:^ }                                                 |
+                                                            |
+        ]])
+        command('setlocal winbar= | startinsert')
+        screen:expect([[
+          {1:TABLINE                                           }|
+          mouse enabled                                     |
+          rows: 5, cols: 50                                 |
+          rows: 4, cols: 50                                 |
+          rows: 5, cols: 50                                 |
+          {1: }                                                 |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<LeftMouse><0,0>')
+        screen:expect([[
+          {1:TABLINE                                           }|
+          mouse enabled                                     |
+          rows: 5, cols: 50                                 |
+          rows: 4, cols: 50                                 |
+          rows: 5, cols: 50                                 |
+          {2:^ }                                                 |
+                                                            |
+        ]])
+      end)
     end)
 
     describe('with a split window and other buffer', function()
@@ -386,7 +514,7 @@ describe(':terminal mouse', function()
       end)
 
       it('handles terminal size when switching buffers', function()
-        nvim('set_option_value', 'hidden', true, {})
+        api.nvim_set_option_value('hidden', true, {})
         feed('<c-\\><c-n><c-w><c-w>')
         screen:expect([[
           {7: 27 }line                 │line30                  |

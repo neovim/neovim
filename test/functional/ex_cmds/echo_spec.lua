@@ -1,11 +1,11 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local eq = helpers.eq
-local NIL = helpers.NIL
+local NIL = vim.NIL
 local eval = helpers.eval
 local clear = helpers.clear
-local meths = helpers.meths
-local funcs = helpers.funcs
+local api = helpers.api
+local fn = helpers.fn
 local source = helpers.source
 local dedent = helpers.dedent
 local command = helpers.command
@@ -14,15 +14,15 @@ local exec_capture = helpers.exec_capture
 local matches = helpers.matches
 
 describe(':echo :echon :echomsg :echoerr', function()
-  local fn_tbl = {'String', 'StringN', 'StringMsg', 'StringErr'}
+  local fn_tbl = { 'String', 'StringN', 'StringMsg', 'StringErr' }
   local function assert_same_echo_dump(expected, input, use_eval)
-    for _,v in pairs(fn_tbl) do
-      eq(expected, use_eval and eval(v..'('..input..')') or funcs[v](input))
+    for _, v in pairs(fn_tbl) do
+      eq(expected, use_eval and eval(v .. '(' .. input .. ')') or fn[v](input))
     end
   end
   local function assert_matches_echo_dump(expected, input, use_eval)
-    for _,v in pairs(fn_tbl) do
-      matches(expected, use_eval and eval(v..'('..input..')') or funcs[v](input))
+    for _, v in pairs(fn_tbl) do
+      matches(expected, use_eval and eval(v .. '(' .. input .. ')') or fn[v](input))
     end
   end
 
@@ -68,31 +68,29 @@ describe(':echo :echon :echomsg :echoerr', function()
       eq('v:true', eval('String(v:true)'))
       eq('v:false', eval('String(v:false)'))
       eq('v:null', eval('String(v:null)'))
-      eq('v:true', funcs.String(true))
-      eq('v:false', funcs.String(false))
-      eq('v:null', funcs.String(NIL))
+      eq('v:true', fn.String(true))
+      eq('v:false', fn.String(false))
+      eq('v:null', fn.String(NIL))
       eq('v:true', eval('StringMsg(v:true)'))
       eq('v:false', eval('StringMsg(v:false)'))
       eq('v:null', eval('StringMsg(v:null)'))
-      eq('v:true', funcs.StringMsg(true))
-      eq('v:false', funcs.StringMsg(false))
-      eq('v:null', funcs.StringMsg(NIL))
+      eq('v:true', fn.StringMsg(true))
+      eq('v:false', fn.StringMsg(false))
+      eq('v:null', fn.StringMsg(NIL))
       eq('v:true', eval('StringErr(v:true)'))
       eq('v:false', eval('StringErr(v:false)'))
       eq('v:null', eval('StringErr(v:null)'))
-      eq('v:true', funcs.StringErr(true))
-      eq('v:false', funcs.StringErr(false))
-      eq('v:null', funcs.StringErr(NIL))
+      eq('v:true', fn.StringErr(true))
+      eq('v:false', fn.StringErr(false))
+      eq('v:null', fn.StringErr(NIL))
     end)
 
-    it('dumps values with at most six digits after the decimal point',
-    function()
+    it('dumps values with at most six digits after the decimal point', function()
       assert_same_echo_dump('1.234568e-20', 1.23456789123456789123456789e-020)
       assert_same_echo_dump('1.234568', 1.23456789123456789123456789)
     end)
 
-    it('dumps values with at most seven digits before the decimal point',
-    function()
+    it('dumps values with at most seven digits before the decimal point', function()
       assert_same_echo_dump('1234567.891235', 1234567.89123456789123456789)
       assert_same_echo_dump('1.234568e7', 12345678.9123456789123456789)
     end)
@@ -115,8 +113,8 @@ describe(':echo :echon :echomsg :echoerr', function()
     end)
 
     it('dumps large values', function()
-      assert_same_echo_dump('2147483647', 2^31-1)
-      assert_same_echo_dump('-2147483648', -2^31)
+      assert_same_echo_dump('2147483647', 2 ^ 31 - 1)
+      assert_same_echo_dump('-2147483648', -2 ^ 31)
     end)
   end)
 
@@ -198,75 +196,95 @@ describe(':echo :echon :echomsg :echoerr', function()
         let TestDictRef = function('TestDict', d)
         let d.tdr = TestDictRef
       ]])
-      eq(dedent([[
+      eq(
+        dedent([[
           function('TestDict', {'tdr': function('TestDict', {...@1})})]]),
-         exec_capture('echo String(d.tdr)'))
+        exec_capture('echo String(d.tdr)')
+      )
     end)
 
     it('dumps automatically created partials', function()
       assert_same_echo_dump(
         "function('<SNR>1_Test2', {'f': function('<SNR>1_Test2')})",
         '{"f": Test2_f}.f',
-        true)
+        true
+      )
       assert_same_echo_dump(
         "function('<SNR>1_Test2', [1], {'f': function('<SNR>1_Test2', [1])})",
         '{"f": function(Test2_f, [1])}.f',
-        true)
+        true
+      )
     end)
 
     it('dumps manually created partials', function()
-      assert_same_echo_dump("function('Test3', [1, 2], {})",
-                            "function('Test3', [1, 2], {})", true)
-      assert_same_echo_dump("function('Test3', [1, 2])",
-                            "function('Test3', [1, 2])", true)
-      assert_same_echo_dump("function('Test3', {})",
-                            "function('Test3', {})", true)
+      assert_same_echo_dump("function('Test3', [1, 2], {})", "function('Test3', [1, 2], {})", true)
+      assert_same_echo_dump("function('Test3', [1, 2])", "function('Test3', [1, 2])", true)
+      assert_same_echo_dump("function('Test3', {})", "function('Test3', {})", true)
     end)
 
-    it('does not crash or halt when dumping partials with reference cycles in self',
-    function()
-      meths.set_var('d', {v=true})
-      eq(dedent([[
-          {'p': function('<SNR>1_Test2', {...@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]]),
-        exec_capture('echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": g:d.f}))'))
+    it('does not crash or halt when dumping partials with reference cycles in self', function()
+      api.nvim_set_var('d', { v = true })
+      eq(
+        dedent(
+          [[
+          {'p': function('<SNR>1_Test2', {...@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]]
+        ),
+        exec_capture('echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": g:d.f}))')
+      )
     end)
 
-    it('does not show errors when dumping partials referencing the same dictionary',
-    function()
+    it('does not show errors when dumping partials referencing the same dictionary', function()
       command('let d = {}')
       -- Regression for “eval/typval_encode: Dump empty dictionary before
       -- checking for refcycle”, results in error.
-      eq('[function(\'tr\', {}), function(\'tr\', {})]', eval('String([function("tr", d), function("tr", d)])'))
+      eq(
+        "[function('tr', {}), function('tr', {})]",
+        eval('String([function("tr", d), function("tr", d)])')
+      )
       -- Regression for “eval: Work with reference cycles in partials (self)
       -- properly”, results in crash.
       eval('extend(d, {"a": 1})')
-      eq('[function(\'tr\', {\'a\': 1}), function(\'tr\', {\'a\': 1})]', eval('String([function("tr", d), function("tr", d)])'))
+      eq(
+        "[function('tr', {'a': 1}), function('tr', {'a': 1})]",
+        eval('String([function("tr", d), function("tr", d)])')
+      )
     end)
 
-    it('does not crash or halt when dumping partials with reference cycles in arguments',
-    function()
-      meths.set_var('l', {})
+    it('does not crash or halt when dumping partials with reference cycles in arguments', function()
+      api.nvim_set_var('l', {})
       eval('add(l, l)')
       -- Regression: the below line used to crash (add returns original list and
       -- there was error in dumping partials). Tested explicitly in
       -- test/unit/api/private_helpers_spec.lua.
       eval('add(l, function("Test1", l))')
-      eq(dedent([=[
-          function('Test1', [[[...@2], function('Test1', [[...@2]])], function('Test1', [[[...@4], function('Test1', [[...@4]])]])])]=]),
-        exec_capture('echo String(function("Test1", l))'))
+      eq(
+        dedent(
+          [=[
+          function('Test1', [[[...@2], function('Test1', [[...@2]])], function('Test1', [[[...@4], function('Test1', [[...@4]])]])])]=]
+        ),
+        exec_capture('echo String(function("Test1", l))')
+      )
     end)
 
-    it('does not crash or halt when dumping partials with reference cycles in self and arguments',
-    function()
-      meths.set_var('d', {v=true})
-      meths.set_var('l', {})
-      eval('add(l, l)')
-      eval('add(l, function("Test1", l))')
-      eval('add(l, function("Test1", d))')
-      eq(dedent([=[
-          {'p': function('<SNR>1_Test2', [[[...@3], function('Test1', [[...@3]]), function('Test1', {...@0})], function('Test1', [[[...@5], function('Test1', [[...@5]]), function('Test1', {...@0})]]), function('Test1', {...@0})], {...@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]=]),
-        exec_capture('echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": function(g:d.f, l)}))'))
-    end)
+    it(
+      'does not crash or halt when dumping partials with reference cycles in self and arguments',
+      function()
+        api.nvim_set_var('d', { v = true })
+        api.nvim_set_var('l', {})
+        eval('add(l, l)')
+        eval('add(l, function("Test1", l))')
+        eval('add(l, function("Test1", d))')
+        eq(
+          dedent(
+            [=[
+          {'p': function('<SNR>1_Test2', [[[...@3], function('Test1', [[...@3]]), function('Test1', {...@0})], function('Test1', [[[...@5], function('Test1', [[...@5]]), function('Test1', {...@0})]]), function('Test1', {...@0})], {...@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]=]
+          ),
+          exec_capture(
+            'echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": function(g:d.f, l)}))'
+          )
+        )
+      end
+    )
   end)
 
   describe('used to represent lists', function()
@@ -275,25 +293,25 @@ describe(':echo :echon :echomsg :echoerr', function()
     end)
 
     it('dumps non-empty list', function()
-      assert_same_echo_dump('[1, 2]', {1,2})
+      assert_same_echo_dump('[1, 2]', { 1, 2 })
     end)
 
     it('dumps nested lists', function()
-      assert_same_echo_dump('[[[[[]]]]]', {{{{{}}}}})
+      assert_same_echo_dump('[[[[[]]]]]', { { { { {} } } } })
     end)
 
     it('dumps nested non-empty lists', function()
-      assert_same_echo_dump('[1, [[3, [[5], 4]], 2]]', {1, {{3, {{5}, 4}}, 2}})
+      assert_same_echo_dump('[1, [[3, [[5], 4]], 2]]', { 1, { { 3, { { 5 }, 4 } }, 2 } })
     end)
 
     it('does not error when dumping recursive lists', function()
-      meths.set_var('l', {})
+      api.nvim_set_var('l', {})
       eval('add(l, l)')
       eq(0, exc_exec('echo String(l)'))
     end)
 
     it('dumps recursive lists without error', function()
-      meths.set_var('l', {})
+      api.nvim_set_var('l', {})
       eval('add(l, l)')
       eq('[[...@0]]', exec_capture('echo String(l)'))
       eq('[[[...@1]]]', exec_capture('echo String([l])'))
@@ -308,27 +326,25 @@ describe(':echo :echon :echomsg :echoerr', function()
     it('dumps list with two same empty dictionaries, also in partials', function()
       command('let d = {}')
       assert_same_echo_dump('[{}, {}]', '[d, d]', true)
-      eq('[function(\'tr\', {}), {}]', eval('String([function("tr", d), d])'))
-      eq('[{}, function(\'tr\', {})]', eval('String([d, function("tr", d)])'))
+      eq("[function('tr', {}), {}]", eval('String([function("tr", d), d])'))
+      eq("[{}, function('tr', {})]", eval('String([d, function("tr", d)])'))
     end)
 
     it('dumps non-empty dictionary', function()
-      assert_same_echo_dump("{'t''est': 1}", {["t'est"]=1})
+      assert_same_echo_dump("{'t''est': 1}", { ["t'est"] = 1 })
     end)
 
     it('does not error when dumping recursive dictionaries', function()
-      meths.set_var('d', {d=1})
+      api.nvim_set_var('d', { d = 1 })
       eval('extend(d, {"d": d})')
       eq(0, exc_exec('echo String(d)'))
     end)
 
     it('dumps recursive dictionaries without the error', function()
-      meths.set_var('d', {d=1})
+      api.nvim_set_var('d', { d = 1 })
       eval('extend(d, {"d": d})')
-      eq('{\'d\': {...@0}}',
-         exec_capture('echo String(d)'))
-      eq('{\'out\': {\'d\': {...@1}}}',
-         exec_capture('echo String({"out": d})'))
+      eq("{'d': {...@0}}", exec_capture('echo String(d)'))
+      eq("{'out': {'d': {...@1}}}", exec_capture('echo String({"out": d})'))
     end)
   end)
 
@@ -342,43 +358,43 @@ describe(':echo :echon :echomsg :echoerr', function()
     it('displays hex as hex', function()
       -- Regression: due to missing (uint8_t) cast \x80 was represented as
       -- ~@<80>.
-      eq('<80>', funcs.String(chr(0x80)))
-      eq('<81>', funcs.String(chr(0x81)))
-      eq('<8e>', funcs.String(chr(0x8e)))
-      eq('<c2>', funcs.String(('«'):sub(1, 1)))
-      eq('«', funcs.String(('«'):sub(1, 2)))
+      eq('<80>', fn.String(chr(0x80)))
+      eq('<81>', fn.String(chr(0x81)))
+      eq('<8e>', fn.String(chr(0x8e)))
+      eq('<c2>', fn.String(('«'):sub(1, 1)))
+      eq('«', fn.String(('«'):sub(1, 2)))
 
-      eq('<80>', funcs.StringMsg(chr(0x80)))
-      eq('<81>', funcs.StringMsg(chr(0x81)))
-      eq('<8e>', funcs.StringMsg(chr(0x8e)))
-      eq('<c2>', funcs.StringMsg(('«'):sub(1, 1)))
-      eq('«', funcs.StringMsg(('«'):sub(1, 2)))
+      eq('<80>', fn.StringMsg(chr(0x80)))
+      eq('<81>', fn.StringMsg(chr(0x81)))
+      eq('<8e>', fn.StringMsg(chr(0x8e)))
+      eq('<c2>', fn.StringMsg(('«'):sub(1, 1)))
+      eq('«', fn.StringMsg(('«'):sub(1, 2)))
     end)
     it('displays ASCII control characters using ^X notation', function()
-      eq('^C', funcs.String(ctrl('c')))
-      eq('^A', funcs.String(ctrl('a')))
-      eq('^F', funcs.String(ctrl('f')))
-      eq('^C', funcs.StringMsg(ctrl('c')))
-      eq('^A', funcs.StringMsg(ctrl('a')))
-      eq('^F', funcs.StringMsg(ctrl('f')))
+      eq('^C', fn.String(ctrl('c')))
+      eq('^A', fn.String(ctrl('a')))
+      eq('^F', fn.String(ctrl('f')))
+      eq('^C', fn.StringMsg(ctrl('c')))
+      eq('^A', fn.StringMsg(ctrl('a')))
+      eq('^F', fn.StringMsg(ctrl('f')))
     end)
     it('prints CR, NL and tab as-is', function()
-      eq('\n', funcs.String('\n'))
-      eq('\r', funcs.String('\r'))
-      eq('\t', funcs.String('\t'))
+      eq('\n', fn.String('\n'))
+      eq('\r', fn.String('\r'))
+      eq('\t', fn.String('\t'))
     end)
     it('prints non-printable UTF-8 in <> notation', function()
       -- SINGLE SHIFT TWO, unicode control
-      eq('<8e>', funcs.String(funcs.nr2char(0x8E)))
-      eq('<8e>', funcs.StringMsg(funcs.nr2char(0x8E)))
+      eq('<8e>', fn.String(fn.nr2char(0x8E)))
+      eq('<8e>', fn.StringMsg(fn.nr2char(0x8E)))
       -- Surrogate pair: U+1F0A0 PLAYING CARD BACK is represented in UTF-16 as
       -- 0xD83C 0xDCA0. This is not valid in UTF-8.
-      eq('<d83c>', funcs.String(funcs.nr2char(0xD83C)))
-      eq('<dca0>', funcs.String(funcs.nr2char(0xDCA0)))
-      eq('<d83c><dca0>', funcs.String(funcs.nr2char(0xD83C) .. funcs.nr2char(0xDCA0)))
-      eq('<d83c>', funcs.StringMsg(funcs.nr2char(0xD83C)))
-      eq('<dca0>', funcs.StringMsg(funcs.nr2char(0xDCA0)))
-      eq('<d83c><dca0>', funcs.StringMsg(funcs.nr2char(0xD83C) .. funcs.nr2char(0xDCA0)))
+      eq('<d83c>', fn.String(fn.nr2char(0xD83C)))
+      eq('<dca0>', fn.String(fn.nr2char(0xDCA0)))
+      eq('<d83c><dca0>', fn.String(fn.nr2char(0xD83C) .. fn.nr2char(0xDCA0)))
+      eq('<d83c>', fn.StringMsg(fn.nr2char(0xD83C)))
+      eq('<dca0>', fn.StringMsg(fn.nr2char(0xDCA0)))
+      eq('<d83c><dca0>', fn.StringMsg(fn.nr2char(0xD83C) .. fn.nr2char(0xDCA0)))
     end)
   end)
 end)
