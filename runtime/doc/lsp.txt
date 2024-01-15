@@ -1821,17 +1821,6 @@ locations_to_items({locations}, {offset_encoding})
     Return: ~
         (`vim.lsp.util.LocationItem[]`) list of items
 
-lookup_section({settings}, {section})          *vim.lsp.util.lookup_section()*
-    Helper function to return nested values in language server settings
-
-    Parameters: ~
-      • {settings}  (`table`) language server settings
-      • {section}   (`string`) indicating the field of the settings table
-
-    Return: ~
-        (`table|string|vim.NIL`) The value of settings accessed via section.
-        `vim.NIL` if not found.
-
                                   *vim.lsp.util.make_floating_popup_options()*
 make_floating_popup_options({width}, {height}, {opts})
     Creates a table with sensible default options for a floating window. The

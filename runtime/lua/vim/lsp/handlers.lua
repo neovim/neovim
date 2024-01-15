@@ -170,6 +170,14 @@ M[ms.workspace_applyEdit] = function(_, workspace_edit, ctx)
   }
 end
 
+---@param table   table e.g., { foo = { bar = "z" } }
+---@param section string indicating the field of the table, e.g., "foo.bar"
+---@return any|nil setting value read from the table, or `nil` not found
+local function lookup_section(table, section)
+  local keys = vim.split(section, '.', { plain = true }) --- @type string[]
+  return vim.tbl_get(table, unpack(keys))
+end
+
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_configuration
 M[ms.workspace_configuration] = function(_, result, ctx)
   local client_id = ctx.client_id
@@ -189,10 +197,13 @@ M[ms.workspace_configuration] = function(_, result, ctx)
   local response = {}
   for _, item in ipairs(result.items) do
     if item.section then
-      local value = util.lookup_section(client.config.settings, item.section)
+      local value = lookup_section(client.config.settings, item.section)
       -- For empty sections with no explicit '' key, return settings as is
-      if value == vim.NIL and item.section == '' then
-        value = client.config.settings or vim.NIL
+      if value == nil and item.section == '' then
+        value = client.config.settings
+      end
+      if value == nil then
+        value = vim.NIL
       end
       table.insert(response, value)
     end

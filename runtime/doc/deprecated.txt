@@ -144,6 +144,8 @@ LSP FUNCTIONS
 						`progress` of |vim.lsp.client|
 - *vim.lsp.get_active_clients()*		Use |vim.lsp.get_clients()|
 - *vim.lsp.for_each_buffer_client()*		Use |vim.lsp.get_clients()|
+- *vim.lsp.util.lookup_section()*		Use |vim.tbl_get()| and
+						|vim.split()| with {plain=true} instead.
 - *vim.lsp.util.trim_empty_lines()*		Use |vim.split()| with `trimempty` instead.
 - *vim.lsp.util.try_trim_markdown_code_blocks()*
 - *vim.lsp.util.set_lines()*
