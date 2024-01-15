@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	JSON5
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2023 Oct 19
+" Last Change:	2024 Jan 14
 
 if exists("b:did_ftplugin")
   finish
@@ -19,8 +19,12 @@ let b:undo_ftplugin = "setl fo< com< cms<"
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:browsefilter = "JSON5 Files (*.json5)\t*.json5\n" ..
-	\	       "JSON Files (*.json)\t*.json\n" ..
-	\	       "All Files (*.*)\t*.*\n"
+	\	       "JSON Files (*.json)\t*.json\n"
+  if has("win32")
+      let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+      let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
 

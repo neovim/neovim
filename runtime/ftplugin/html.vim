@@ -2,7 +2,7 @@
 " Language:		HTML
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Dan Sharp
-" Last Changed:		2022 Jul 20
+" Last Change:		2024 Jan 14
 
 if exists("b:did_ftplugin")
   finish
@@ -43,10 +43,14 @@ endif
 
 " Change the :browse e filter to primarily show HTML-related files.
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let  b:browsefilter = "HTML Files (*.html *.htm)\t*.htm;*.html\n" ..
+  let  b:browsefilter = "HTML Files (*.html, *.htm)\t*.html;*.htm\n" ..
 	\		"JavaScript Files (*.js)\t*.js\n" ..
-	\		"Cascading StyleSheets (*.css)\t*.css\n" ..
-	\		"All Files (*.*)\t*.*\n"
+	\		"Cascading StyleSheets (*.css)\t*.css\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
   let b:html_set_browsefilter = 1
   let b:undo_ftplugin ..= " | unlet! b:browsefilter b:html_set_browsefilter"
 endif

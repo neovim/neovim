@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	Modula-2
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2021 Apr 08
+" Last Change:	2024 Jan 14
 
 if exists("b:did_ftplugin")
   finish
@@ -26,8 +26,12 @@ if exists("loaded_matchit") && !exists("b:match_words")
 endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Modula-2 Source Files (*.def *.mod)\t*.def;*.mod\n" ..
-		     \ "All Files (*.*)\t*.*\n"
+  let b:browsefilter = "Modula-2 Source Files (*.def *.mod)\t*.def;*.mod\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
 endif
 
 let b:undo_ftplugin = "setl com< cms< fo< " ..

@@ -2,6 +2,7 @@
 " Language:         Tcl
 " Maintainer:       Robert L Hicks <sigzero@gmail.com>
 " Latest Revision:  2009-05-01
+"                   2024 Jan 14 by Vim Project (browsefilter)
 
 if exists("b:did_ftplugin")
   finish
@@ -18,10 +19,14 @@ setlocal commentstring=#%s
 setlocal formatoptions+=croql
 
 " Change the browse dialog on Windows to show mainly Tcl-related files
-if has("gui_win32")
-    let b:browsefilter = "Tcl Source Files (.tcl)\t*.tcl\n" .
-                \ "Tcl Test Files (.test)\t*.test\n" .
-                \ "All Files (*.*)\t*.*\n"
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
+    let b:browsefilter = "Tcl Source Files (*.tcl)\t*.tcl\n" .
+                \ "Tcl Test Files (*.test)\t*.test\n"
+    if has("win32")
+        let b:browsefilter .= "All Files (*.*)\t*\n"
+    else
+        let b:browsefilter .= "All Files (*)\t*\n"
+    endif
 endif
 
 "-----------------------------------------------------------------------------

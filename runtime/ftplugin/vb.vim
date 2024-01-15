@@ -2,7 +2,7 @@
 " Language:		Visual Basic (ft=vb)
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Johannes Zellner <johannes@zellner.org>
-" Last Change:		2021 Nov 17
+" Last Change:		2024 Jan 14
 
 if exists("b:did_ftplugin")
   finish
@@ -62,8 +62,12 @@ endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:browsefilter = "Visual Basic Source Files (*.bas)\t*.bas\n" .
-	\	       "Visual Basic Form Files (*.frm)\t*.frm\n" .
-	\	       "All Files (*.*)\t*.*\n"
+	\	       "Visual Basic Form Files (*.frm)\t*.frm\n"
+  if has("win32")
+    let b:browsefilter .= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter .= "All Files (*)\t*\n"
+  endif
   let b:undo_ftplugin .= " | unlet! b:browsefilter"
 endif
 

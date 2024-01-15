@@ -3,6 +3,7 @@
 " Maintainer: Ankit Jain <ajatkj@yahoo.co.in>
 "     (formerly Tim Pope <vimNOSPAM@tpope.info>)
 " Last Update:	By Ankit Jain (add gtk support) on 15.08.2020
+"		2024 Jan 14 by Vim Project (browsefilter)
 
 " Insert mode mappings: <C-T> <C-D> <Tab>
 " Normal mode mappings: < > << >> [[ ]] [] ][
@@ -39,8 +40,12 @@ endif
 
 " add gtk support
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "COBOL Source Files (*.cbl, *.cob)\t*.cbl;*.cob;*.lib\n".
-		     \ "All Files (*.*)\t*.*\n"
+  let b:browsefilter = "COBOL Source Files (*.cbl, *.cob)\t*.cbl;*.cob;*.lib\n"
+  if has("win32")
+    let b:browsefilter .= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter .= "All Files (*)\t*\n"
+  endif
 endif
 
 let b:undo_ftplugin = "setlocal com< cms< fo< et< tw<" .

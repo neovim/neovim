@@ -2,6 +2,7 @@
 " Language:    MS-DOS/Windows .bat files
 " Maintainer:  Mike Williams <mrmrdubya@gmail.com>
 " Last Change: 12th February 2023
+"              2024 Jan 14 by Vim Project (browsefilter)
 "
 " Options Flags:
 " dosbatch_colons_comment       - any value to treat :: as comment line
@@ -37,12 +38,17 @@ if executable('help.exe')
 endif
 
 " Define patterns for the browse file filter
-if has("gui_win32") && !exists("b:browsefilter")
-  let b:browsefilter = "DOS Batch Files (*.bat, *.cmd)\t*.bat;*.cmd\nAll Files (*.*)\t*.*\n"
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
+  let b:browsefilter = "DOS Batch Files (*.bat, *.cmd)\t*.bat;*.cmd\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
 endif
 
 let b:undo_ftplugin = "setlocal comments< formatoptions< keywordprg<"
-    \ . "| unlet! b:browsefiler"
+    \ . "| unlet! b:browsefilter"
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

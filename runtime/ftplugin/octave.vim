@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	GNU Octave
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2021 Sep 02
+" Last Change:	2024 Jan 14
 
 if exists("b:did_ftplugin")
   finish
@@ -50,8 +50,12 @@ if exists("loaded_matchit") && !exists("b:match_words")
 endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "GNU Octave Source Files (*.m)\t*.m\n" ..
-		     \ "All Files (*.*)\t*.*\n"
+  let b:browsefilter = "GNU Octave Source Files (*.m)\t*.m\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
 endif
 
 let b:undo_ftplugin = "setl com< cms< fo< kp< " ..

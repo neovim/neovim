@@ -3,6 +3,7 @@
 " Maintainer:	David Bürgin <dbuergin@gluet.ch>
 " URL:		https://gitlab.com/glts/vim-j
 " Last Change:	2022-08-06
+"		2024 Jan 14 by Vim Project (browsefilter)
 
 if exists('b:did_ftplugin')
   finish
@@ -67,7 +68,11 @@ endif
 " Browse dialog filter on Windows and GTK (see ":help browsefilter")
 if (has('gui_win32') || has('gui_gtk')) && !exists('b:browsefilter')
   let b:browsefilter = "J Script Files (*.ijs)\t*.ijs\n"
-                   \ . "All Files (*.*)\t*.*\n"
+  if has("win32")
+    let b:browsefilter .= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter .= "All Files (*)\t*\n"
+  endif
   let b:undo_ftplugin .= ' | unlet! b:browsefilter'
 endif
 

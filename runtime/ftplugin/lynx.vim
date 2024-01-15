@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	Lynx Web Browser Configuration
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2023 Nov 09
+" Last Change:	2024 Jan 14
 
 if exists("b:did_ftplugin")
   finish
@@ -18,8 +18,12 @@ setlocal formatoptions-=t formatoptions+=croql
 let b:undo_ftplugin = "setl cms< com< fo<"
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Lynx Configuration Files (lynx.cfg, .lynxrc)\tlynx.cfg;.lynxrc\n" ..
-	\	       "All Files (*.*)\t*.*\n"
+  let b:browsefilter = "Lynx Configuration Files (lynx.cfg, .lynxrc)\tlynx.cfg;.lynxrc\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
 

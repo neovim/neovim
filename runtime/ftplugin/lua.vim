@@ -5,7 +5,7 @@
 " Contributor:		Dorai Sitaram <ds26@gte.com>
 "			C.D. MacEachern <craig.daniel.maceachern@gmail.com>
 "			Tyler Miller <tmillr@proton.me>
-" Last Change:		2023 Mar 24
+" Last Change:		2024 Jan 14
 
 if exists("b:did_ftplugin")
   finish
@@ -39,8 +39,12 @@ if exists("loaded_matchit") && !exists("b:match_words")
 endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Lua Source Files (*.lua)\t*.lua\n" ..
-	\	       "All Files (*.*)\t*.*\n"
+  let b:browsefilter = "Lua Source Files (*.lua)\t*.lua\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
 

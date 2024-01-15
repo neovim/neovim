@@ -1,10 +1,11 @@
 " Vim filetype plugin file
-" Language:	aspvbs
+" Language:		aspvbs
 "
 " This runtime file is looking for a new maintainer.
 "
 " Former maintainer:	Dan Sharp
-" Last Changed: 20 Jan 2009
+" Last Change:		2009 Jan 20
+"			2024 Jan 14 by Vim Project (browsefilter)
 
 if exists("b:did_ftplugin") | finish | endif
 
@@ -15,8 +16,12 @@ set cpo-=C
 
 " Define some defaults in case the included ftplugins don't set them.
 let s:undo_ftplugin = ""
-let s:browsefilter = "HTML Files (*.html, *.htm)\t*.htm*\n" .
-	    \	     "All Files (*.*)\t*.*\n"
+let s:browsefilter = "HTML Files (*.html, *.htm)\t*.htm*\n"
+if has("win32")
+    let s:browsefilter .= "All Files (*.*)\t*\n"
+else
+    let s:browsefilter .= "All Files (*)\t*\n"
+endif
 let s:match_words = ""
 
 runtime! ftplugin/html.vim ftplugin/html_*.vim ftplugin/html/*.vim
@@ -51,7 +56,7 @@ if exists("loaded_matchit")
 endif
 
 " Change the :browse e filter to primarily show ASP-related files.
-if has("gui_win32")
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
     let  b:browsefilter="ASP Files (*.asp)\t*.asp\n" . s:browsefilter
 endif
 

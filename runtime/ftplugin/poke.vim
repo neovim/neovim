@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	GNU Poke
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2021 March 11
+" Last Change:	2024 Jan 14
 
 if exists("b:did_ftplugin")
     finish
@@ -18,13 +18,17 @@ setlocal formatoptions-=t formatoptions+=croql
 setlocal include=load
 setlocal suffixesadd=.pk
 
-if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Poke Files (*.pk)\t*.pk\n" .
-		     \ "All Files (*.*)\t*.*\n"
-endif
+let b:undo_ftplugin = "setl fo< com< cms< inc< sua<"
 
-let b:undo_ftplugin = "setl fo< com< cms< inc< sua<" .
-		    \ " | unlet! b:browsefilter"
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
+  let b:browsefilter = "Poke Files (*.pk)\t*.pk\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
+  let b:undo_ftplugin ..= " | unlet! b:browsefilter"
+endif
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

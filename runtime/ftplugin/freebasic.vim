@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	FreeBASIC
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2022 Jun 24
+" Last Change:	2023 Aug 22
 
 " Setup {{{1
 if exists("b:did_ftplugin")
@@ -70,8 +70,12 @@ endif
 
 if (has("gui_win32") || has("gui_gtk")) && exists("b:basic_set_browsefilter")
   let b:browsefilter = "FreeBASIC Source Files (*.bas)\t*.bas\n" ..
-		\      "FreeBASIC Header Files (*.bi)\t*.bi\n" ..
-		\      "All Files (*.*)\t*.*\n"
+		\      "FreeBASIC Header Files (*.bi)\t*.bi\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
 endif
 
 " Cleanup {{{1

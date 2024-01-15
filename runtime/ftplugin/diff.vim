@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	Diff
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2023 Aug 10
+" Last Change:	2023 Aug 22
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Only do this when not done yet for this buffer
@@ -19,6 +19,11 @@ setlocal nomodeline
 let &l:commentstring = "# %s"
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Diff Files (*.diff)\t*.diff\nPatch Files (*.patch)\t*.h\nAll Files (*.*)\t*.*\n"
+  let b:browsefilter = "Diff Files (*.diff)\t*.diff\nPatch Files (*.patch)\t*.h\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
