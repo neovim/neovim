@@ -655,6 +655,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
   // two-cell character in the same grid, truncate that into a '>'.
   if (col > 0 && grid->chars[off_to + (size_t)col] == 0) {
     linebuf_char[col - 1] = schar_from_ascii('>');
+    linebuf_attr[col - 1] = grid->attrs[off_to + (size_t)col - 1];
     col--;
   }
 
@@ -676,7 +677,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
     }
   }
 
-  redraw_next = grid_char_needs_redraw(grid, col, (size_t)col + off_to, endcol - col);
+  redraw_next = grid_char_needs_redraw(grid, col, off_to + (size_t)col, endcol - col);
 
   int start_dirty = -1;
   int end_dirty = 0;
@@ -688,7 +689,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
       char_cells = 2;
     }
     bool redraw_this = redraw_next;  // Does character need redraw?
-    size_t off = (size_t)col + off_to;
+    size_t off = off_to + (size_t)col;
     redraw_next = grid_char_needs_redraw(grid, col + char_cells,
                                          off + (size_t)char_cells,
                                          endcol - col - char_cells);
@@ -732,8 +733,14 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
   if (clear_next) {
     // Clear the second half of a double-wide character of which the left
     // half was overwritten with a single-wide character.
-    grid->chars[(size_t)col + off_to] = schar_from_ascii(' ');
+    grid->chars[off_to + (size_t)col] = schar_from_ascii(' ');
     end_dirty++;
+  }
+
+  // When clearing the left half of a double-wide char also clear the right half.
+  if (off_to + (size_t)clear_width < max_off_to
+      && grid->chars[off_to + (size_t)clear_width] == 0) {
+    clear_width++;
   }
 
   int clear_dirty_start = -1, clear_end = -1;
@@ -741,7 +748,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
   // TODO(bfredl): we could cache winline widths
   col = clear_start;
   while (col < clear_width) {
-    size_t off = (size_t)col + off_to;
+    size_t off = off_to + (size_t)col;
     if (grid->chars[off] != schar_from_ascii(' ')
         || grid->attrs[off] != bg_attr
         || rdb_flags & RDB_NODELTA) {

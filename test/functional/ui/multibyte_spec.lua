@@ -22,6 +22,8 @@ describe('multibyte rendering', function()
       [3] = { background = Screen.colors.LightMagenta },
       [4] = { bold = true },
       [5] = { foreground = Screen.colors.Blue },
+      [6] = { reverse = true, bold = true },
+      [7] = { reverse = true },
     })
   end)
 
@@ -84,7 +86,7 @@ describe('multibyte rendering', function()
       {4:-- INSERT --}                                                |
     ]])
 
-    -- check double-with char is temporarily hidden when overlapped
+    -- check double-width char is temporarily hidden when overlapped
     fn.complete(4, { 'xx', 'yy' })
     screen:expect([[
       ab xx^                                                       |
@@ -101,6 +103,34 @@ describe('multibyte rendering', function()
       -馬                                                         |
       {1:~                                                           }|*3
       {4:-- INSERT --}                                                |
+    ]])
+  end)
+
+  it('no stray chars when splitting left of window with double-width chars', function()
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      ('口'):rep(16),
+      'a' .. ('口'):rep(16),
+      'aa' .. ('口'):rep(16),
+      'aaa' .. ('口'):rep(16),
+      'aaaa' .. ('口'):rep(16),
+    })
+    screen:expect([[
+      ^口口口口口口口口口口口口口口口口                            |
+      a口口口口口口口口口口口口口口口口                           |
+      aa口口口口口口口口口口口口口口口口                          |
+      aaa口口口口口口口口口口口口口口口口                         |
+      aaaa口口口口口口口口口口口口口口口口                        |
+                                                                  |
+    ]])
+
+    command('20vnew')
+    screen:expect([[
+      ^                    │口口口口口口口口口口口口口口口口       |
+      {1:~                   }│a口口口口口口口口口口口口口口口口      |
+      {1:~                   }│aa口口口口口口口口口口口口口口口口     |
+      {1:~                   }│aaa口口口口口口口口口口口口口口口口    |
+      {6:[No Name]            }{7:[No Name] [+]                          }|
+                                                                  |
     ]])
   end)
 
