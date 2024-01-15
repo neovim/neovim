@@ -357,6 +357,7 @@ local function setup_autocmds(bufnr)
         or snippet_range[3] + 1 > vim.fn.line('$')
       then
         M.exit()
+        return true
       end
 
       -- Sync the tabstops in the current group.
