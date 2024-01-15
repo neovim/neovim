@@ -2140,7 +2140,9 @@ end
 ---@param settings table language server settings
 ---@param section  string indicating the field of the settings table
 ---@return table|string|vim.NIL The value of settings accessed via section. `vim.NIL` if not found.
+---@deprecated
 function M.lookup_section(settings, section)
+  vim.deprecate('vim.lsp.util.lookup_section()', 'vim.tbl_get() with `vim.split`', '0.12')
   for part in vim.gsplit(section, '.', { plain = true }) do
     settings = settings[part]
     if settings == nil then
