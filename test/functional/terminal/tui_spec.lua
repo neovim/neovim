@@ -8,6 +8,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local Screen = require('test.functional.ui.screen')
 local eq = helpers.eq
+local feed_command = helpers.feed_command
 local feed_data = thelpers.feed_data
 local clear = helpers.clear
 local command = helpers.command
@@ -2126,7 +2127,7 @@ describe('TUI FocusGained/FocusLost', function()
       '--cmd',
       'colorscheme vim',
       '--cmd',
-      'set noswapfile noshowcmd noruler notermguicolors',
+      'set noswapfile noshowcmd noruler notermguicolors background=dark',
     })
 
     screen:expect([[
@@ -2776,10 +2777,73 @@ describe('TUI', function()
 end)
 
 describe('TUI bg color', function()
-  local screen
+  before_each(clear)
 
-  local function setup_bg_test()
-    clear()
+  local attr_ids = {
+    [1] = { reverse = true },
+    [2] = { bold = true },
+    [3] = { reverse = true, bold = true },
+    [4] = { foreground = tonumber('0x00000a') },
+  }
+
+  it('is properly set in a nested Nvim instance when background=dark', function()
+    command('highlight clear Normal')
+    command('set background=dark') -- set outer Nvim background
+    local screen = thelpers.setup_child_nvim({
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--cmd',
+      'colorscheme vim',
+      '--cmd',
+      'set noswapfile',
+    })
+    screen:set_default_attr_ids(attr_ids)
+    retry(nil, 30000, function() -- wait for automatic background processing
+      screen:sleep(20)
+      feed_command('set background?') -- check nested Nvim background
+      screen:expect([[
+      {1: }                                                 |
+      {2:~}                                                 |
+      {2:~}                                                 |
+      {2:~}                                                 |
+      {3:[No Name]                       0,0-1          All}|
+        background=dark                                 |
+      {4:-- TERMINAL --}                                    |
+      ]])
+    end)
+  end)
+
+  it('is properly set in a nested Nvim instance when background=light', function()
+    command('highlight clear Normal')
+    command('set background=light') -- set outer Nvim background
+    local screen = thelpers.setup_child_nvim({
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--cmd',
+      'colorscheme vim',
+      '--cmd',
+      'set noswapfile',
+    })
+    retry(nil, 30000, function() -- wait for automatic background processing
+      screen:sleep(20)
+      feed_command('set background?') -- check nested Nvim background
+      screen:expect([[
+      {1: }                                                 |
+      {3:~}                                                 |
+      {3:~}                                                 |
+      {3:~}                                                 |
+      {5:[No Name]                       0,0-1          All}|
+        background=light                                |
+      {3:-- TERMINAL --}                                    |
+      ]])
+    end)
+  end)
+
+  it('queries the terminal for background color', function()
     exec_lua([[
       vim.api.nvim_create_autocmd('TermRequest', {
         callback = function(args)
@@ -2791,8 +2855,7 @@ describe('TUI bg color', function()
         end,
       })
     ]])
-
-    screen = thelpers.setup_child_nvim({
+    thelpers.setup_child_nvim({
       '-u',
       'NONE',
       '-i',
@@ -2800,109 +2863,38 @@ describe('TUI bg color', function()
       '--cmd',
       'colorscheme vim',
       '--cmd',
-      'set noswapfile notermguicolors',
-      '-c',
-      'autocmd OptionSet background echo "did OptionSet, yay!"',
+      'set noswapfile',
     })
-  end
-
-  before_each(setup_bg_test)
-
-  it('queries the terminal for background color', function()
     retry(nil, 1000, function()
       eq(true, eval("get(g:, 'oscrequest', v:false)"))
     end)
   end)
 
-  it('triggers OptionSet event on unsplit terminal-response', function()
-    screen:expect([[
+  it('triggers OptionSet from automatic background processing', function()
+    local screen = thelpers.setup_child_nvim({
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--cmd',
+      'colorscheme vim',
+      '--cmd',
+      'set noswapfile',
+      '-c',
+      'autocmd OptionSet background echo "did OptionSet, yay!"',
+    })
+    retry(nil, 30000, function() -- wait for automatic background processing
+      screen:sleep(20)
+      screen:expect([[
       {1: }                                                 |
-      {4:~                                                 }|*3
+      {3:~}                                                 |
+      {3:~}                                                 |
+      {3:~}                                                 |
       {5:[No Name]                       0,0-1          All}|
-                                                        |
+      did OptionSet, yay!                               |
       {3:-- TERMINAL --}                                    |
-    ]])
-    feed_data('\027]11;rgb:ffff/ffff/ffff\027\\')
-    screen:expect { any = 'did OptionSet, yay!' }
-
-    feed_data(':echo "new_bg=".&background\n')
-    screen:expect { any = 'new_bg=light' }
-
-    setup_bg_test()
-    screen:expect([[
-      {1: }                                                 |
-      {4:~                                                 }|*3
-      {5:[No Name]                       0,0-1          All}|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]])
-    feed_data('\027]11;rgba:ffff/ffff/ffff/8000\027\\')
-    screen:expect { any = 'did OptionSet, yay!' }
-
-    feed_data(':echo "new_bg=".&background\n')
-    screen:expect { any = 'new_bg=light' }
-  end)
-
-  it('triggers OptionSet event with split terminal-response', function()
-    screen:expect([[
-      {1: }                                                 |
-      {4:~                                                 }|*3
-      {5:[No Name]                       0,0-1          All}|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]])
-    -- Send a background response with the OSC command part split.
-    feed_data('\027]11;rgb')
-    feed_data(':ffff/ffff/ffff\027\\')
-    screen:expect { any = 'did OptionSet, yay!' }
-
-    feed_data(':echo "new_bg=".&background\n')
-    screen:expect { any = 'new_bg=light' }
-
-    setup_bg_test()
-    screen:expect([[
-      {1: }                                                 |
-      {4:~                                                 }|*3
-      {5:[No Name]                       0,0-1          All}|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]])
-    -- Send a background response with the Pt portion split.
-    feed_data('\027]11;rgba:ffff/fff')
-    feed_data('f/ffff/8000\027\\')
-    screen:expect { any = 'did OptionSet, yay!' }
-
-    feed_data(':echo "new_bg=".&background\n')
-    screen:expect { any = 'new_bg=light' }
-  end)
-
-  it('not triggers OptionSet event with invalid terminal-response', function()
-    screen:expect([[
-      {1: }                                                 |
-      {4:~                                                 }|*3
-      {5:[No Name]                       0,0-1          All}|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]])
-    feed_data('\027]11;rgb:ffff/ffff/ffff/8000\027\\')
-    screen:expect_unchanged()
-
-    feed_data(':echo "new_bg=".&background\n')
-    screen:expect { any = 'new_bg=dark' }
-
-    setup_bg_test()
-    screen:expect([[
-      {1: }                                                 |
-      {4:~                                                 }|*3
-      {5:[No Name]                       0,0-1          All}|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]])
-    feed_data('\027]11;rgba:ffff/foo/ffff/8000\027\\')
-    screen:expect_unchanged()
-
-    feed_data(':echo "new_bg=".&background\n')
-    screen:expect { any = 'new_bg=dark' }
+      ]])
+    end)
   end)
 end)
 

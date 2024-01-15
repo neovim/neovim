@@ -287,6 +287,8 @@ The following new APIs and features were added.
 • Terminal buffers emit a |TermRequest| autocommand event when the child
   process emits an OSC or DCS control sequence.
 
+• Terminal buffers respond to OSC background and foreground requests. |default-autocmds|
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
