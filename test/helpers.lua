@@ -43,19 +43,6 @@ function module.isdir(path)
   return stat.type == 'directory'
 end
 
---- @param path string
---- @return boolean
-function module.isfile(path)
-  if not path then
-    return false
-  end
-  local stat = uv.fs_stat(path)
-  if not stat then
-    return false
-  end
-  return stat.type == 'file'
-end
-
 --- @return string
 function module.argss_to_cmd(...)
   local cmd = ''
@@ -373,19 +360,6 @@ function module.is_os(s)
   )
 end
 
-function module.is_arch(s)
-  local machine = uv.os_uname().machine
-  if s == 'arm64' or s == 'aarch64' then
-    return machine == 'arm64' or machine == 'aarch64'
-  end
-
-  if s == 'x86' or s == 'x86_64' or s == 'amd64' then
-    return machine == 'x86_64'
-  end
-
-  return machine == s
-end
-
 local function tmpdir_get()
   return os.getenv('TMPDIR') and os.getenv('TMPDIR') or os.getenv('TEMP')
 end
@@ -423,14 +397,6 @@ module.tmpname = (function()
   end
 end)()
 
-function module.hasenv(name)
-  local env = os.getenv(name)
-  if env and env ~= '' then
-    return env
-  end
-  return nil
-end
-
 local function deps_prefix()
   local env = os.getenv('DEPS_PREFIX')
   return (env and env ~= '') and env or '.deps/usr'
@@ -457,8 +423,9 @@ function module.check_cores(app, force) -- luacheck: ignore
     or nil
   )
   local db_cmd
-  if module.hasenv('NVIM_TEST_CORE_GLOB_DIRECTORY') then
-    initial_path = os.getenv('NVIM_TEST_CORE_GLOB_DIRECTORY')
+  local test_glob_dir = os.getenv('NVIM_TEST_CORE_GLOB_DIRECTORY')
+  if test_glob_dir and test_glob_dir ~= '' then
+    initial_path = test_glob_dir
     re = os.getenv('NVIM_TEST_CORE_GLOB_RE')
     exc_re = { os.getenv('NVIM_TEST_CORE_EXC_RE'), local_tmpdir }
     db_cmd = os.getenv('NVIM_TEST_CORE_DB_CMD') or gdb_db_cmd
@@ -583,13 +550,6 @@ function module.dictdiff(d1, d2)
   else
     return nil
   end
-end
-
-function module.updated(d, d2)
-  for k, v in pairs(d2) do
-    d[k] = v
-  end
-  return d
 end
 
 -- Concat list-like tables.
@@ -800,26 +760,8 @@ function module.intchar2lua(ch)
   return (20 <= ch and ch < 127) and ('%c'):format(ch) or ch
 end
 
-local fixtbl_metatable = {
-  __newindex = function()
-    luaassert(false)
-  end,
-}
-
-function module.fixtbl(tbl)
-  return setmetatable(tbl, fixtbl_metatable)
-end
-
-function module.fixtbl_rec(tbl)
-  local fixtbl_rec = module.fixtbl_rec
-  for _, v in pairs(tbl) do
-    if type(v) == 'table' then
-      fixtbl_rec(v)
-    end
-  end
-  return module.fixtbl(tbl)
-end
-
+--- @param str string
+--- @return string
 function module.hexdump(str)
   local len = string.len(str)
   local dump = ''
