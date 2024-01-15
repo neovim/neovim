@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "nvim/ascii_defs.h"
@@ -2751,13 +2752,14 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
             while (*s != NUL && *s != ',') {
               schar_T c1 = get_encoded_char_adv(&s);
               if (c1 == 0) {
-                return e_invarg;
+                return "E475: Invalid value for argument 'listchars.multispace'";
               }
               multispace_len++;
             }
             if (multispace_len == 0) {
               // lcs-multispace cannot be an empty string
-              return e_invarg;
+              
+              return "E475: Invalid value for argument 'listchars.multispace': null";
             }
             p = s;
           } else {
@@ -2782,13 +2784,13 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
             while (*s != NUL && *s != ',') {
               schar_T c1 = get_encoded_char_adv(&s);
               if (c1 == 0) {
-                return e_invarg;
+                return "E475: Invalid value for argument 'listchars.lead_multispace'";
               }
               lead_multispace_len++;
             }
             if (lead_multispace_len == 0) {
               // lcs-leadmultispace cannot be an empty string
-              return e_invarg;
+              return "E475: Invalid value for argument 'listchars.lead_multispace': Null";
             }
             p = s;
           } else {
@@ -2807,22 +2809,22 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
         const char *s = p + len + 1;
         schar_T c1 = get_encoded_char_adv(&s);
         if (c1 == 0) {
-          return e_invarg;
+          return "E475: Invalid value for 'listchars.tab' (hint: tab requires a string of at least two characters, unlike other listchars options";
         }
         schar_T c2 = 0;
         schar_T c3 = 0;
         if (tab[i].cp == &lcs_chars.tab2) {
           if (*s == NUL) {
-            return e_invarg;
+            return "E475: Invalid value for 'listchars.tab'";
           }
           c2 = get_encoded_char_adv(&s);
           if (c2 == 0) {
-            return e_invarg;
+            return "E475: Invalid value for 'listchars.tab'";
           }
           if (!(*s == ',' || *s == NUL)) {
             c3 = get_encoded_char_adv(&s);
             if (c3 == 0) {
-              return e_invarg;
+              return "E475: Invalid value for 'listchars.tab'";
             }
           }
         }
@@ -2843,7 +2845,7 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
       }
 
       if (i == entries) {
-        return e_invarg;
+        return "E475: Invalid value for 'listchars'";
       }
 
       if (*p == ',') {

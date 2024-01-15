@@ -11,4 +11,7 @@ for name, url in pairs{
   vim.opt.runtimepath:append(install_path)
 end
 
+vim.opt.listchars = {
+  tab = "t"
+}
 -- ADD INIT.LUA SETTINGS _NECESSARY_ FOR REPRODUCING THE ISSUE
