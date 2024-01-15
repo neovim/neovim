@@ -34,7 +34,7 @@ local insert = helpers.insert
 local skip = helpers.skip
 
 local pcall_err = helpers.pcall_err
-local format_string = helpers.format_string
+local format_string = require('test.format_string').format_string
 local intchar2lua = helpers.intchar2lua
 local mergedicts_copy = helpers.mergedicts_copy
 local endswith = vim.endswith

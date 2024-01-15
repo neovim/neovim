@@ -1,6 +1,4 @@
-local global_helpers = require('test.helpers')
-
-local REMOVE_THIS = global_helpers.REMOVE_THIS
+local REMOVE_THIS = vim.NIL
 
 return function(itp, _check_parsing, hl, fmtn)
   local function check_parsing(...)
