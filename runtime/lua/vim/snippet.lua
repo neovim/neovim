@@ -307,6 +307,10 @@ local function setup_autocmds(bufnr)
         return
       end
 
+      if not M.active() then
+        return true
+      end
+
       local cursor_row, cursor_col = cursor_pos()
 
       -- The cursor left the snippet region.
