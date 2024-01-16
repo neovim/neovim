@@ -2,6 +2,10 @@
 " Use a different file name for each run.
 let s:sequence = 1
 
+func CheckDefSuccess(lines)
+  return
+endfunc
+
 func CheckDefFailure(lines, error, lnum = -3)
   return
 endfunc

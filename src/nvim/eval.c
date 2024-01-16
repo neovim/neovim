@@ -308,11 +308,12 @@ static partial_T *vvlua_partial;
 /// v: hashtab
 #define vimvarht  vimvardict.dv_hashtab
 
-/// Enum used by filter(), map() and mapnew()
+/// Enum used by filter(), map(), mapnew() and foreach()
 typedef enum {
   FILTERMAP_FILTER,
   FILTERMAP_MAP,
   FILTERMAP_MAPNEW,
+  FILTERMAP_FOREACH,
 } filtermap_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -5098,7 +5099,8 @@ void assert_error(garray_T *gap)
   tv_list_append_string(vimvars[VV_ERRORS].vv_list, gap->ga_data, (ptrdiff_t)gap->ga_len);
 }
 
-/// Implementation of map() and filter() for a Dict.
+/// Implementation of map(), filter(), foreach() for a Dict.  Apply "expr" to
+/// every item in Dict "d" and return the result in "rettv".
 static void filter_map_dict(dict_T *d, filtermap_T filtermap, const char *func_name,
                             const char *arg_errmsg, typval_T *expr, typval_T *rettv)
 {
@@ -5166,7 +5168,7 @@ static void filter_map_dict(dict_T *d, filtermap_T filtermap, const char *func_n
   d->dv_lock = prev_lock;
 }
 
-/// Implementation of map() and filter() for a Blob.
+/// Implementation of map(), filter(), foreach() for a Blob.
 static void filter_map_blob(blob_T *blob_arg, filtermap_T filtermap, typval_T *expr,
                             const char *arg_errmsg, typval_T *rettv)
 {
@@ -5209,20 +5211,22 @@ static void filter_map_blob(blob_T *blob_arg, filtermap_T filtermap, typval_T *e
         || did_emsg) {
       break;
     }
-    if (newtv.v_type != VAR_NUMBER && newtv.v_type != VAR_BOOL) {
-      tv_clear(&newtv);
-      emsg(_(e_invalblob));
-      break;
-    }
-    if (filtermap != FILTERMAP_FILTER) {
-      if (newtv.vval.v_number != val) {
-        tv_blob_set(b_ret, i, (uint8_t)newtv.vval.v_number);
+    if (filtermap != FILTERMAP_FOREACH) {
+      if (newtv.v_type != VAR_NUMBER && newtv.v_type != VAR_BOOL) {
+        tv_clear(&newtv);
+        emsg(_(e_invalblob));
+        break;
       }
-    } else if (rem) {
-      char *const p = (char *)blob_arg->bv_ga.ga_data;
-      memmove(p + i, p + i + 1, (size_t)(b->bv_ga.ga_len - i - 1));
-      b->bv_ga.ga_len--;
-      i--;
+      if (filtermap != FILTERMAP_FILTER) {
+        if (newtv.vval.v_number != val) {
+          tv_blob_set(b_ret, i, (uint8_t)newtv.vval.v_number);
+        }
+      } else if (rem) {
+        char *const p = (char *)blob_arg->bv_ga.ga_data;
+        memmove(p + i, p + i + 1, (size_t)(b->bv_ga.ga_len - i - 1));
+        b->bv_ga.ga_len--;
+        i--;
+      }
     }
     idx++;
   }
@@ -5230,7 +5234,7 @@ static void filter_map_blob(blob_T *blob_arg, filtermap_T filtermap, typval_T *e
   b->bv_lock = prev_lock;
 }
 
-/// Implementation of map() and filter() for a String.
+/// Implementation of map(), filter(), foreach() for a String.
 static void filter_map_string(const char *str, filtermap_T filtermap, typval_T *expr,
                               typval_T *rettv)
 {
@@ -5259,7 +5263,8 @@ static void filter_map_string(const char *str, filtermap_T filtermap, typval_T *
       tv_clear(&newtv);
       tv_clear(&tv);
       break;
-    } else if (filtermap != FILTERMAP_FILTER) {
+    }
+    if (filtermap == FILTERMAP_MAP || filtermap == FILTERMAP_MAPNEW) {
       if (newtv.v_type != VAR_STRING) {
         tv_clear(&newtv);
         tv_clear(&tv);
@@ -5268,7 +5273,7 @@ static void filter_map_string(const char *str, filtermap_T filtermap, typval_T *
       } else {
         ga_concat(&ga, newtv.vval.v_string);
       }
-    } else if (!rem) {
+    } else if (filtermap == FILTERMAP_FOREACH || !rem) {
       ga_concat(&ga, tv.vval.v_string);
     }
 
@@ -5281,7 +5286,8 @@ static void filter_map_string(const char *str, filtermap_T filtermap, typval_T *
   rettv->vval.v_string = ga.ga_data;
 }
 
-/// Implementation of map() and filter() for a List.
+/// Implementation of map(), filter(), foreach() for a List.  Apply "expr" to
+/// every item in List "l" and return the result in "rettv".
 static void filter_map_list(list_T *l, filtermap_T filtermap, const char *func_name,
                             const char *arg_errmsg, typval_T *expr, typval_T *rettv)
 {
@@ -5345,21 +5351,25 @@ static void filter_map_list(list_T *l, filtermap_T filtermap, const char *func_n
   tv_list_set_lock(l, prev_lock);
 }
 
-/// Implementation of map() and filter().
+/// Implementation of map(), filter() and foreach().
 static void filter_map(typval_T *argvars, typval_T *rettv, filtermap_T filtermap)
 {
   const char *const func_name = (filtermap == FILTERMAP_MAP
                                  ? "map()"
                                  : (filtermap == FILTERMAP_MAPNEW
                                     ? "mapnew()"
-                                    : "filter()"));
+                                    : (filtermap == FILTERMAP_FILTER
+                                       ? "filter()"
+                                       : "foreach()")));
   const char *const arg_errmsg = (filtermap == FILTERMAP_MAP
                                   ? N_("map() argument")
                                   : (filtermap == FILTERMAP_MAPNEW
                                      ? N_("mapnew() argument")
-                                     : N_("filter() argument")));
+                                     : (filtermap == FILTERMAP_FILTER
+                                        ? N_("filter() argument")
+                                        : N_("foreach() argument"))));
 
-  // map() and filter() return the first argument, also on failure.
+  // map(), filter(), foreach() return the first argument, also on failure.
   if (filtermap != FILTERMAP_MAPNEW && argvars[0].v_type != VAR_STRING) {
     tv_copy(&argvars[0], rettv);
   }
@@ -5407,7 +5417,7 @@ static void filter_map(typval_T *argvars, typval_T *rettv, filtermap_T filtermap
   }
 }
 
-/// Handle one item for map() and filter().
+/// Handle one item for map(), filter(), foreach().
 /// Sets v:val to "tv".  Caller must set v:key.
 ///
 /// @param tv     original value
@@ -5422,6 +5432,17 @@ static int filter_map_one(typval_T *tv, typval_T *expr, const filtermap_T filter
   int retval = FAIL;
 
   tv_copy(tv, &vimvars[VV_VAL].vv_tv);
+
+  newtv->v_type = VAR_UNKNOWN;
+  if (filtermap == FILTERMAP_FOREACH && expr->v_type == VAR_STRING) {
+    // foreach() is not limited to an expression
+    do_cmdline_cmd(expr->vval.v_string);
+    if (!did_emsg) {
+      retval = OK;
+    }
+    goto theend;
+  }
+
   argv[0] = vimvars[VV_KEY].vv_tv;
   argv[1] = vimvars[VV_VAL].vv_tv;
   if (eval_expr_typval(expr, false, argv, 2, newtv) == FAIL) {
@@ -5438,6 +5459,8 @@ static int filter_map_one(typval_T *tv, typval_T *expr, const filtermap_T filter
     if (error) {
       goto theend;
     }
+  } else if (filtermap == FILTERMAP_FOREACH) {
+    tv_clear(newtv);
   }
   retval = OK;
 theend:
@@ -5461,6 +5484,12 @@ void f_map(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 void f_mapnew(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   filter_map(argvars, rettv, FILTERMAP_MAPNEW);
+}
+
+/// "foreach()" function
+void f_foreach(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  filter_map(argvars, rettv, FILTERMAP_FOREACH);
 }
 
 /// "function()" function
