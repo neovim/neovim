@@ -4,6 +4,7 @@ local feed = helpers.feed
 local source = helpers.source
 local clear = helpers.clear
 local command = helpers.command
+local expect = helpers.expect
 local poke_eventloop = helpers.poke_eventloop
 local api = helpers.api
 local eq = helpers.eq
@@ -216,5 +217,25 @@ describe('prompt buffer', function()
     eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
     command('call DoAppend()')
     eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
+  end)
+
+  -- oldtest: Test_prompt_close_modify_hidden()
+  it('modifying hidden buffer does not prevent prompt buffer mode change', function()
+    source([[
+      file hidden
+      set bufhidden=hide
+      enew
+      new prompt
+      set buftype=prompt
+
+      inoremap <buffer> q <Cmd>bwipe!<CR>
+      autocmd BufWinLeave prompt call setbufline('hidden', 1, 'Test')
+    ]])
+    feed('a')
+    eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
+    feed('q')
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
+    command('bwipe!')
+    expect('Test')
   end)
 end)
