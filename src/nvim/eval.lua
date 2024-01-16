@@ -2940,7 +2940,7 @@ M.funcs = {
       the current item.  For a |Blob| |v:key| has the index of the
       current byte. For a |String| |v:key| has the index of the
       current character.
-      Examples: >
+      Examples: >vim
       	call foreach(mylist, 'let used[v:val] = v:true')
       <This records the items that are in the {expr1} list.
 
@@ -2968,7 +2968,6 @@ M.funcs = {
   foreground = {
     args = 0,
     params = {},
-    signature = '',
     lua = false,
   },
   fullcommand = {
@@ -11887,7 +11886,6 @@ M.funcs = {
   test_write_list_log = {
     args = 1,
     params = { { 'fname', 'string' } },
-    signature = '',
     lua = false,
   },
   timer_info = {

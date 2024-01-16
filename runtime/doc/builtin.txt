@@ -1880,7 +1880,7 @@ foreach({expr1}, {expr2})                                            *foreach()*
 		the current item.  For a |Blob| |v:key| has the index of the
 		current byte. For a |String| |v:key| has the index of the
 		current character.
-		Examples: >
+		Examples: >vim
 			call foreach(mylist, 'let used[v:val] = v:true')
 <		This records the items that are in the {expr1} list.
 
@@ -1900,7 +1900,6 @@ foreach({expr1}, {expr2})                                            *foreach()*
 		further items in {expr1} are processed.
 		When {expr2} is a Funcref errors inside a function are ignored,
 		unless it was defined with the "abort" flag.
-
 
 fullcommand({name})                                              *fullcommand()*
 		Get the full command name from a short abbreviated command
@@ -8362,7 +8361,6 @@ test_garbagecollect_now()                            *test_garbagecollect_now()*
 		only be called directly to avoid any structure to exist
 		internally, and |v:testing| must have been set before calling
 		any function.
-
 
 timer_info([{id}])                                                *timer_info()*
 		Return a list with information about timers.
