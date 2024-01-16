@@ -190,12 +190,18 @@ function vim._os_proc_children(ppid)
   return children
 end
 
+--- @class vim.inspect.Opts
+--- @field depth? integer
+--- @field newline? string
+--- @field process? fun(item:any, path: string[]): any
+
 --- Gets a human-readable representation of the given object.
 ---
 ---@see |vim.print()|
 ---@see https://github.com/kikito/inspect.lua
 ---@see https://github.com/mpeterv/vinspect
 ---@return string
+---@overload fun(x: any, opts?: vim.inspect.Opts): string
 vim.inspect = vim.inspect
 
 do
