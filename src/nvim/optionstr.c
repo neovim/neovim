@@ -2815,7 +2815,7 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
         schar_T c3 = 0;
         if (tab[i].cp == &lcs_chars.tab2) {
           if (*s == NUL) {
-            return "E475: Invalid value for 'listchars.tab'";
+            return "E475: Invalid value for 'listchars.tab' (unlike other listchars arguments, tab requires a string of more than one character)";
           }
           c2 = get_encoded_char_adv(&s);
           if (c2 == 0) {
