@@ -813,7 +813,7 @@ describe('ui/mouse/input', function()
   it('dragging vertical separator', function()
     screen:try_resize(45, 5)
     command('setlocal nowrap')
-    local oldwin = api.nvim_get_current_win().id
+    local oldwin = api.nvim_get_current_win()
     command('rightbelow vnew')
     screen:expect([[
       testing               │{0:^$}                     |
@@ -1688,7 +1688,7 @@ describe('ui/mouse/input', function()
         local col = win_col + opts.col
         api.nvim_input_mouse('left', 'press', '', 0, row, col)
         local mousepos = fn.getmousepos()
-        eq(float.id, mousepos.winid)
+        eq(float, mousepos.winid)
         eq(win_row + 1, mousepos.winrow)
         eq(win_col + 1, mousepos.wincol)
         local line = 0
@@ -1723,7 +1723,7 @@ describe('ui/mouse/input', function()
         local col = win_col + opts.col
         api.nvim_input_mouse('left', 'press', '', 0, row, col)
         local mousepos = fn.getmousepos()
-        eq(float.id, mousepos.winid)
+        eq(float, mousepos.winid)
         eq(win_row + 1, mousepos.winrow)
         eq(win_col + 1, mousepos.wincol)
         local line = math.min(win_row + 1, fn.line('$'))

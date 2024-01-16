@@ -49,7 +49,7 @@ describe('search highlighting', function()
     ]],
       win_viewport = {
         [2] = {
-          win = { id = 1000 },
+          win = 1000,
           topline = 0,
           botline = 3,
           curline = 0,
@@ -617,7 +617,7 @@ describe('search highlighting', function()
     ]],
       win_viewport = {
         [2] = {
-          win = { id = 1000 },
+          win = 1000,
           topline = 0,
           botline = 3,
           curline = 0,

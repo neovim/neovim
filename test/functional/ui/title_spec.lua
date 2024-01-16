@@ -96,7 +96,7 @@ describe('title', function()
     end)
 
     it('setting the buffer of another window using RPC', function()
-      local oldwin = curwin().id
+      local oldwin = curwin()
       command('split')
       api.nvim_win_set_buf(oldwin, buf2)
       command('redraw!')
@@ -106,7 +106,7 @@ describe('title', function()
     end)
 
     it('setting the buffer of another window using Lua callback', function()
-      local oldwin = curwin().id
+      local oldwin = curwin()
       command('split')
       exec_lua(string.format(
         [[

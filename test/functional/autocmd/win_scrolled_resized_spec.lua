@@ -45,7 +45,7 @@ describe('WinScrolled', function()
   local win_id
 
   before_each(function()
-    win_id = api.nvim_get_current_win().id
+    win_id = api.nvim_get_current_win()
     command(string.format('autocmd WinScrolled %d let g:matched = v:true', win_id))
     exec([[
       let g:scrolled = 0
@@ -313,7 +313,7 @@ describe('WinScrolled', function()
       style = 'minimal',
     })
     screen:expect({ any = '@' })
-    local winid_str = tostring(win.id)
+    local winid_str = tostring(win)
     -- WinScrolled should not be triggered when creating a new floating window
     eq(0, eval('g:scrolled'))
 
@@ -327,7 +327,7 @@ describe('WinScrolled', function()
 
     api.nvim_input_mouse('wheel', 'up', '', 0, 3, 3)
     eq(2, eval('g:scrolled'))
-    eq(tostring(win.id), eval('g:amatch'))
+    eq(tostring(win), eval('g:amatch'))
     eq({
       all = { leftcol = 0, topline = 3, topfill = 0, width = 0, height = 0, skipcol = 0 },
       [winid_str] = { leftcol = 0, topline = -3, topfill = 0, width = 0, height = 0, skipcol = 0 },

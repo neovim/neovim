@@ -76,25 +76,25 @@ describe('tabpage', function()
   it('nvim_win_close and nvim_win_hide update tabline #20285', function()
     eq(1, #api.nvim_list_tabpages())
     eq({ 1, 1 }, fn.win_screenpos(0))
-    local win1 = curwin().id
+    local win1 = curwin()
 
     command('tabnew')
     eq(2, #api.nvim_list_tabpages())
     eq({ 2, 1 }, fn.win_screenpos(0))
-    local win2 = curwin().id
+    local win2 = curwin()
 
     api.nvim_win_close(win1, true)
-    eq(win2, curwin().id)
+    eq(win2, curwin())
     eq(1, #api.nvim_list_tabpages())
     eq({ 1, 1 }, fn.win_screenpos(0))
 
     command('tabnew')
     eq(2, #api.nvim_list_tabpages())
     eq({ 2, 1 }, fn.win_screenpos(0))
-    local win3 = curwin().id
+    local win3 = curwin()
 
     api.nvim_win_hide(win2)
-    eq(win3, curwin().id)
+    eq(win3, curwin())
     eq(1, #api.nvim_list_tabpages())
     eq({ 1, 1 }, fn.win_screenpos(0))
   end)

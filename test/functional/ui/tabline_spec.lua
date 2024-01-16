@@ -25,8 +25,8 @@ describe('ui/ext_tabline', function()
     command('tabedit another-tab')
 
     local expected_tabs = {
-      { tab = { id = 1 }, name = '[No Name]' },
-      { tab = { id = 2 }, name = 'another-tab' },
+      { tab = 1, name = '[No Name]' },
+      { tab = 2, name = 'another-tab' },
     }
     screen:expect {
       grid = [[
@@ -35,7 +35,7 @@ describe('ui/ext_tabline', function()
                                |
     ]],
       condition = function()
-        eq({ id = 2 }, event_curtab)
+        eq(2, event_curtab)
         eq(expected_tabs, event_tabs)
       end,
     }
@@ -48,7 +48,7 @@ describe('ui/ext_tabline', function()
                                |
     ]],
       condition = function()
-        eq({ id = 1 }, event_curtab)
+        eq(1, event_curtab)
         eq(expected_tabs, event_tabs)
       end,
     }
@@ -56,7 +56,7 @@ describe('ui/ext_tabline', function()
 
   it('buffer UI events', function()
     local expected_buffers_initial = {
-      { buffer = { id = 1 }, name = '[No Name]' },
+      { buffer = 1, name = '[No Name]' },
     }
 
     screen:expect {
@@ -66,7 +66,7 @@ describe('ui/ext_tabline', function()
                                |
     ]],
       condition = function()
-        eq({ id = 1 }, event_curbuf)
+        eq(1, event_curbuf)
         eq(expected_buffers_initial, event_buffers)
       end,
     }
@@ -75,8 +75,8 @@ describe('ui/ext_tabline', function()
     command('bnext')
 
     local expected_buffers = {
-      { buffer = { id = 1 }, name = '[No Name]' },
-      { buffer = { id = 2 }, name = 'another-buffer' },
+      { buffer = 1, name = '[No Name]' },
+      { buffer = 2, name = 'another-buffer' },
     }
     screen:expect {
       grid = [[
@@ -85,7 +85,7 @@ describe('ui/ext_tabline', function()
                                |
     ]],
       condition = function()
-        eq({ id = 2 }, event_curbuf)
+        eq(2, event_curbuf)
         eq(expected_buffers, event_buffers)
       end,
     }

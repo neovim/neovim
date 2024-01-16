@@ -138,7 +138,7 @@ for _, model in ipairs(mousemodels) do
       command('tabnew | tabprevious')
       api.nvim_set_option_value('statusline', '%2TNot clicky stuff%T', {})
       api.nvim_input_mouse('left', 'press', '', 0, 6, 0)
-      eq(1, api.nvim_get_current_tabpage().id)
+      eq(1, api.nvim_get_current_tabpage())
       api.nvim_set_option_value('statusline', '%2XNot clicky stuff%X', {})
       api.nvim_input_mouse('left', 'press', '', 0, 6, 0)
       eq(2, #api.nvim_list_tabpages())

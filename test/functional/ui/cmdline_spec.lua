@@ -1543,7 +1543,7 @@ describe('cmdheight=0', function()
     ]],
       win_viewport = {
         [2] = {
-          win = { id = 1000 },
+          win = 1000,
           topline = 0,
           botline = 2,
           curline = 0,
@@ -1568,7 +1568,7 @@ describe('cmdheight=0', function()
     ]],
       win_viewport = {
         [2] = {
-          win = { id = 1000 },
+          win = 1000,
           topline = 0,
           botline = 2,
           curline = 0,

@@ -1697,19 +1697,20 @@ describe('API', function()
 
     it('get buffer or window-local options', function()
       command('new')
-      local buf = api.nvim_get_current_buf().id
+      local buf = api.nvim_get_current_buf()
       api.nvim_set_option_value('tagfunc', 'foobar', { buf = buf })
       eq('foobar', api.nvim_get_option_value('tagfunc', { buf = buf }))
 
-      local win = api.nvim_get_current_win().id
+      local win = api.nvim_get_current_win()
       api.nvim_set_option_value('number', true, { win = win })
       eq(true, api.nvim_get_option_value('number', { win = win }))
     end)
 
     it('getting current buffer option does not adjust cursor #19381', function()
       command('new')
-      local buf = api.nvim_get_current_buf().id
-      local win = api.nvim_get_current_win().id
+      local buf = api.nvim_get_current_buf()
+      print(vim.inspect(api.nvim_get_current_buf()))
+      local win = api.nvim_get_current_win()
       insert('some text')
       feed('0v$')
       eq({ 1, 9 }, api.nvim_win_get_cursor(win))
@@ -2503,7 +2504,7 @@ describe('API', function()
 
     it('stream=job :terminal channel', function()
       command(':terminal')
-      eq({ id = 1 }, api.nvim_get_current_buf())
+      eq(1, api.nvim_get_current_buf())
       eq(3, api.nvim_get_option_value('channel', { buf = 1 }))
 
       local info = {
@@ -2520,7 +2521,7 @@ describe('API', function()
         neq(nil, string.match(info.pty, '^/dev/'))
       end
       eq({ info = info }, event)
-      info.buffer = { id = 1 }
+      info.buffer = 1
       eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_list_chans())
       eq(info, api.nvim_get_chan_info(3))
 
@@ -2989,15 +2990,15 @@ describe('API', function()
 
   describe('nvim_create_buf', function()
     it('works', function()
-      eq({ id = 2 }, api.nvim_create_buf(true, false))
-      eq({ id = 3 }, api.nvim_create_buf(false, false))
+      eq(2, api.nvim_create_buf(true, false))
+      eq(3, api.nvim_create_buf(false, false))
       eq(
         '  1 %a   "[No Name]"                    line 1\n'
           .. '  2  h   "[No Name]"                    line 0',
         command_output('ls')
       )
       -- current buffer didn't change
-      eq({ id = 1 }, api.nvim_get_current_buf())
+      eq(1, api.nvim_get_current_buf())
 
       local screen = Screen.new(20, 4)
       screen:attach()
@@ -3017,21 +3018,21 @@ describe('API', function()
 
     it('can change buftype before visiting', function()
       api.nvim_set_option_value('hidden', false, {})
-      eq({ id = 2 }, api.nvim_create_buf(true, false))
+      eq(2, api.nvim_create_buf(true, false))
       api.nvim_set_option_value('buftype', 'nofile', { buf = 2 })
       api.nvim_buf_set_lines(2, 0, -1, true, { 'test text' })
       command('split | buffer 2')
-      eq({ id = 2 }, api.nvim_get_current_buf())
+      eq(2, api.nvim_get_current_buf())
       -- if the buf_set_option("buftype") didn't work, this would error out.
       command('close')
-      eq({ id = 1 }, api.nvim_get_current_buf())
+      eq(1, api.nvim_get_current_buf())
     end)
 
     it('does not trigger BufEnter, BufWinEnter', function()
       command('let g:fired = v:false')
       command('au BufEnter,BufWinEnter * let g:fired = v:true')
 
-      eq({ id = 2 }, api.nvim_create_buf(true, false))
+      eq(2, api.nvim_create_buf(true, false))
       api.nvim_buf_set_lines(2, 0, -1, true, { 'test', 'text' })
 
       eq(false, eval('g:fired'))
@@ -3050,9 +3051,9 @@ describe('API', function()
     end)
 
     it('scratch-buffer', function()
-      eq({ id = 2 }, api.nvim_create_buf(false, true))
-      eq({ id = 3 }, api.nvim_create_buf(true, true))
-      eq({ id = 4 }, api.nvim_create_buf(true, true))
+      eq(2, api.nvim_create_buf(false, true))
+      eq(3, api.nvim_create_buf(true, true))
+      eq(4, api.nvim_create_buf(true, true))
       local scratch_bufs = { 2, 3, 4 }
       eq(
         '  1 %a   "[No Name]"                    line 1\n'
@@ -3061,7 +3062,7 @@ describe('API', function()
         exec_capture('ls')
       )
       -- current buffer didn't change
-      eq({ id = 1 }, api.nvim_get_current_buf())
+      eq(1, api.nvim_get_current_buf())
 
       local screen = Screen.new(20, 4)
       screen:set_default_attr_ids({
@@ -3295,13 +3296,13 @@ describe('API', function()
       bufs = api.nvim_list_bufs()
       wins = api.nvim_list_wins()
 
-      api.nvim_win_set_buf(wins[1].id, bufs[1].id)
-      api.nvim_win_set_buf(wins[2].id, bufs[2].id)
+      api.nvim_win_set_buf(wins[1], bufs[1])
+      api.nvim_win_set_buf(wins[2], bufs[2])
 
-      api.nvim_set_current_win(wins[2].id)
+      api.nvim_set_current_win(wins[2])
       api.nvim_exec('source ' .. fname, false)
 
-      api.nvim_set_current_win(wins[1].id)
+      api.nvim_set_current_win(wins[1])
     end)
 
     after_each(function()
@@ -3343,7 +3344,7 @@ describe('API', function()
       for _, t in pairs(tests) do
         it(t.desc, function()
           -- Switch to the target buffer/window so that curbuf/curwin are used.
-          api.nvim_set_current_win(wins[2].id)
+          api.nvim_set_current_win(wins[2])
           local info = api.nvim_get_option_info2(unpack(t.args))
           eq(t.linenr, info.last_set_linenr)
           eq(t.sid, info.last_set_sid)
@@ -3351,13 +3352,13 @@ describe('API', function()
       end
 
       it('is provided for cross-buffer requests', function()
-        local info = api.nvim_get_option_info2('formatprg', { buf = bufs[2].id })
+        local info = api.nvim_get_option_info2('formatprg', { buf = bufs[2] })
         eq(2, info.last_set_linenr)
         eq(1, info.last_set_sid)
       end)
 
       it('is provided for cross-window requests', function()
-        local info = api.nvim_get_option_info2('listchars', { win = wins[2].id })
+        local info = api.nvim_get_option_info2('listchars', { win = wins[2] })
         eq(6, info.last_set_linenr)
         eq(1, info.last_set_sid)
       end)
@@ -3597,7 +3598,7 @@ describe('API', function()
       local mark = api.nvim_get_mark('F', {})
       -- Compare the path tail only
       assert(string.find(mark[4], 'mybuf$'))
-      eq({ 2, 2, buf.id, mark[4] }, mark)
+      eq({ 2, 2, buf, mark[4] }, mark)
     end)
     it('validation', function()
       eq("Invalid mark name (must be file/uppercase): 'f'", pcall_err(api.nvim_get_mark, 'f', {}))
@@ -3619,7 +3620,7 @@ describe('API', function()
 
       api.nvim_buf_set_mark(buf, 'F', 2, 2, {})
       command('new') -- Create new buf to avoid :bd failing
-      command('bd! ' .. buf.id)
+      command('bd! ' .. buf)
       os.remove(fname)
 
       local mark = api.nvim_get_mark('F', {})
@@ -3628,7 +3629,7 @@ describe('API', function()
       local tail_patt = [[[\/][^\/]*$]]
       -- tail of paths should be equals
       eq(fname:match(tail_patt), mfname:match(tail_patt))
-      eq({ 2, 2, buf.id, mark[4] }, mark)
+      eq({ 2, 2, buf, mark[4] }, mark)
     end)
   end)
   describe('nvim_eval_statusline', function()
@@ -3743,7 +3744,7 @@ describe('API', function()
           },
           api.nvim_eval_statusline(
             'TextWithNoHighlight%#WarningMsg#TextWithWarningHighlight',
-            { winid = api.nvim_list_wins()[2].id, highlights = true }
+            { winid = api.nvim_list_wins()[2], highlights = true }
           )
         )
       end)
@@ -4824,7 +4825,7 @@ describe('API', function()
       it('works', function()
         command('vsplit | enew')
         api.nvim_cmd({ cmd = 'bdelete', args = { api.nvim_get_current_buf() } }, {})
-        eq(1, api.nvim_get_current_buf().id)
+        eq(1, api.nvim_get_current_buf())
       end)
       it('works with :sleep using milliseconds', function()
         local start = uv.now()

@@ -1578,7 +1578,7 @@ describe('folded lines', function()
         ]],
           win_viewport = {
             [2] = {
-              win = { id = 1000 },
+              win = 1000,
               topline = 0,
               botline = 5,
               curline = 0,
@@ -1616,7 +1616,7 @@ describe('folded lines', function()
         ]],
           win_viewport = {
             [2] = {
-              win = { id = 1000 },
+              win = 1000,
               topline = 0,
               botline = 5,
               curline = 2,
@@ -1656,7 +1656,7 @@ describe('folded lines', function()
         ]],
           win_viewport = {
             [2] = {
-              win = { id = 1000 },
+              win = 1000,
               topline = 0,
               botline = 6,
               curline = 0,
@@ -1718,7 +1718,7 @@ describe('folded lines', function()
         ]],
           win_viewport = {
             [2] = {
-              win = { id = 1000 },
+              win = 1000,
               topline = 0,
               botline = 6,
               curline = 4,
@@ -1760,7 +1760,7 @@ describe('folded lines', function()
         ]],
           win_viewport = {
             [2] = {
-              win = { id = 1000 },
+              win = 1000,
               topline = 1,
               botline = 6,
               curline = 4,
@@ -1800,7 +1800,7 @@ describe('folded lines', function()
         ]],
           win_viewport = {
             [2] = {
-              win = { id = 1000 },
+              win = 1000,
               topline = 2,
               botline = 6,
               curline = 4,
@@ -1838,7 +1838,7 @@ describe('folded lines', function()
         ]],
           win_viewport = {
             [2] = {
-              win = { id = 1000 },
+              win = 1000,
               topline = 2,
               botline = 6,
               curline = 4,
@@ -1874,7 +1874,7 @@ describe('folded lines', function()
         ]],
           win_viewport = {
             [2] = {
-              win = { id = 1000 },
+              win = 1000,
               topline = 2,
               botline = 6,
               curline = 4,
@@ -1908,7 +1908,7 @@ describe('folded lines', function()
         ]],
           win_viewport = {
             [2] = {
-              win = { id = 1000 },
+              win = 1000,
               topline = 4,
               botline = 6,
               curline = 4,
@@ -1944,7 +1944,7 @@ describe('folded lines', function()
         ]],
           win_viewport = {
             [2] = {
-              win = { id = 1000 },
+              win = 1000,
               topline = 2,
               botline = 6,
               curline = 4,
@@ -1983,7 +1983,7 @@ describe('folded lines', function()
         ]],
           win_viewport = {
             [2] = {
-              win = { id = 1000 },
+              win = 1000,
               topline = 2,
               botline = 6,
               curline = 4,
@@ -2021,7 +2021,7 @@ describe('folded lines', function()
         ]],
           win_viewport = {
             [2] = {
-              win = { id = 1000 },
+              win = 1000,
               topline = 2,
               botline = 6,
               curline = 4,
@@ -2057,7 +2057,7 @@ describe('folded lines', function()
         ]],
           win_viewport = {
             [2] = {
-              win = { id = 1000 },
+              win = 1000,
               topline = 2,
               botline = 6,
               curline = 4,
@@ -2099,7 +2099,7 @@ describe('folded lines', function()
         ]],
           win_viewport = {
             [2] = {
-              win = { id = 1000 },
+              win = 1000,
               topline = 0,
               botline = 3,
               curline = 0,
@@ -2108,7 +2108,7 @@ describe('folded lines', function()
               sum_scroll_delta = 0,
             },
             [4] = {
-              win = { id = 1001 },
+              win = 1001,
               topline = 0,
               botline = 2,
               curline = 0,
@@ -2153,7 +2153,7 @@ describe('folded lines', function()
         ]],
           win_viewport = {
             [2] = {
-              win = { id = 1000 },
+              win = 1000,
               topline = 0,
               botline = 3,
               curline = 0,
@@ -2162,7 +2162,7 @@ describe('folded lines', function()
               sum_scroll_delta = -1,
             },
             [4] = {
-              win = { id = 1001 },
+              win = 1001,
               topline = 0,
               botline = 2,
               curline = 0,
