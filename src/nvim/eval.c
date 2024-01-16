@@ -1095,17 +1095,19 @@ bool is_compatht(const hashtab_T *ht)
 }
 
 /// Prepare v: variable "idx" to be used.
-/// Save the current typeval in "save_tv".
+/// Save the current typeval in "save_tv" and clear it.
 /// When not used yet add the variable to the v: hashtable.
 void prepare_vimvar(int idx, typval_T *save_tv)
 {
   *save_tv = vimvars[idx].vv_tv;
+  vimvars[idx].vv_str = NULL;  // don't free it now
   if (vimvars[idx].vv_type == VAR_UNKNOWN) {
     hash_add(&vimvarht, vimvars[idx].vv_di.di_key);
   }
 }
 
 /// Restore v: variable "idx" to typeval "save_tv".
+/// Note that the v: variable must have been cleared already.
 /// When no longer defined, remove the variable from the v: hashtable.
 void restore_vimvar(int idx, typval_T *save_tv)
 {
