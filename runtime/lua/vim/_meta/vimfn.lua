@@ -2321,7 +2321,7 @@ function vim.fn.foldtextresult(lnum) end
 --- the current item.  For a |Blob| |v:key| has the index of the
 --- current byte. For a |String| |v:key| has the index of the
 --- current character.
---- Examples: >
+--- Examples: >vim
 ---   call foreach(mylist, 'let used[v:val] = v:true')
 --- <This records the items that are in the {expr1} list.
 ---
