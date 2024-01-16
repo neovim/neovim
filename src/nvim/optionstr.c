@@ -2809,13 +2809,13 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
         const char *s = p + len + 1;
         schar_T c1 = get_encoded_char_adv(&s);
         if (c1 == 0) {
-          return "E475: Invalid value for 'listchars.tab' (hint: tab requires a string of at least two characters, unlike other listchars options";
+          return "E475: Invalid value for 'listchars.tab'";
         }
         schar_T c2 = 0;
         schar_T c3 = 0;
         if (tab[i].cp == &lcs_chars.tab2) {
           if (*s == NUL) {
-            return "E475: Invalid value for 'listchars.tab' (unlike other listchars arguments, tab requires a string of more than one character)";
+            return "E475: Invalid value for 'listchars.tab' (unlike other listchars arguments, tab requires a string of two or three characters)";
           }
           c2 = get_encoded_char_adv(&s);
           if (c2 == 0) {
@@ -2845,7 +2845,7 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
       }
 
       if (i == entries) {
-        return "E475: Invalid value for 'listchars'";
+        return "E475: Invalid value for 'listchars.tab' (unlike other listchars arguments, tab requires a string of two or three characters)";
       }
 
       if (*p == ',') {
