@@ -1,8 +1,8 @@
 " Vim support file to define the syntax selection menu
 " This file is normally sourced from menu.vim.
 "
-" Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2023 Aug 10
+" Maintainer:		The Vim Project <https://github.com/vim/vim>
+" Last Change:		2024 Jan 04
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Define the SetSyn function, used for the Syntax menu entries.
@@ -16,6 +16,9 @@ fun! SetSyn(name)
     let use_fvwm_2 = 1
     let use_fvwm_1 = 0
     let name = "fvwm"
+  elseif a:name =~ '^modula2:\w\+$'
+    let [name, dialect] = split(a:name, ":")
+    call modula2#SetDialect(dialect)
   else
     let name = a:name
   endif
@@ -364,25 +367,27 @@ an 50.70.340 &Syntax.M.MMIX :cal SetSyn("mmix")<CR>
 an 50.70.350 &Syntax.M.Modconf :cal SetSyn("modconf")<CR>
 an 50.70.360 &Syntax.M.Model :cal SetSyn("model")<CR>
 an 50.70.370 &Syntax.M.Modsim\ III :cal SetSyn("modsim3")<CR>
-an 50.70.380 &Syntax.M.Modula\ 2 :cal SetSyn("modula2")<CR>
-an 50.70.390 &Syntax.M.Modula\ 3 :cal SetSyn("modula3")<CR>
-an 50.70.400 &Syntax.M.Monk :cal SetSyn("monk")<CR>
-an 50.70.410 &Syntax.M.Motorola\ S-Record :cal SetSyn("srec")<CR>
-an 50.70.420 &Syntax.M.Mplayer\ config :cal SetSyn("mplayerconf")<CR>
-an 50.70.430 &Syntax.M.MOO :cal SetSyn("moo")<CR>
-an 50.70.440 &Syntax.M.Mrxvtrc :cal SetSyn("mrxvtrc")<CR>
-an 50.70.450 &Syntax.M.MS-DOS/Windows.4DOS\ \.bat\ file :cal SetSyn("btm")<CR>
-an 50.70.460 &Syntax.M.MS-DOS/Windows.\.bat\/\.cmd\ file :cal SetSyn("dosbatch")<CR>
-an 50.70.470 &Syntax.M.MS-DOS/Windows.\.ini\ file :cal SetSyn("dosini")<CR>
-an 50.70.480 &Syntax.M.MS-DOS/Windows.Message\ text :cal SetSyn("msmessages")<CR>
-an 50.70.490 &Syntax.M.MS-DOS/Windows.Module\ Definition :cal SetSyn("def")<CR>
-an 50.70.500 &Syntax.M.MS-DOS/Windows.Registry :cal SetSyn("registry")<CR>
-an 50.70.510 &Syntax.M.MS-DOS/Windows.Resource\ file :cal SetSyn("rc")<CR>
-an 50.70.520 &Syntax.M.Msql :cal SetSyn("msql")<CR>
-an 50.70.530 &Syntax.M.MuPAD :cal SetSyn("mupad")<CR>
-an 50.70.540 &Syntax.M.Murphi :cal SetSyn("murphi")<CR>
-an 50.70.550 &Syntax.M.MUSHcode :cal SetSyn("mush")<CR>
-an 50.70.560 &Syntax.M.Muttrc :cal SetSyn("muttrc")<CR>
+an 50.70.380 &Syntax.M.Modula-2.R10\ (2010) :cal SetSyn("modula2:r10")<CR>
+an 50.70.390 &Syntax.M.Modula-2.ISO\ (1994) :cal SetSyn("modula2:iso")<CR>
+an 50.70.400 &Syntax.M.Modula-2.PIM\ (1985) :cal SetSyn("modula2:pim")<CR>
+an 50.70.410 &Syntax.M.Modula-3 :cal SetSyn("modula3")<CR>
+an 50.70.420 &Syntax.M.Monk :cal SetSyn("monk")<CR>
+an 50.70.430 &Syntax.M.Motorola\ S-Record :cal SetSyn("srec")<CR>
+an 50.70.440 &Syntax.M.Mplayer\ config :cal SetSyn("mplayerconf")<CR>
+an 50.70.450 &Syntax.M.MOO :cal SetSyn("moo")<CR>
+an 50.70.460 &Syntax.M.Mrxvtrc :cal SetSyn("mrxvtrc")<CR>
+an 50.70.470 &Syntax.M.MS-DOS/Windows.4DOS\ \.bat\ file :cal SetSyn("btm")<CR>
+an 50.70.480 &Syntax.M.MS-DOS/Windows.\.bat\/\.cmd\ file :cal SetSyn("dosbatch")<CR>
+an 50.70.490 &Syntax.M.MS-DOS/Windows.\.ini\ file :cal SetSyn("dosini")<CR>
+an 50.70.500 &Syntax.M.MS-DOS/Windows.Message\ text :cal SetSyn("msmessages")<CR>
+an 50.70.510 &Syntax.M.MS-DOS/Windows.Module\ Definition :cal SetSyn("def")<CR>
+an 50.70.520 &Syntax.M.MS-DOS/Windows.Registry :cal SetSyn("registry")<CR>
+an 50.70.530 &Syntax.M.MS-DOS/Windows.Resource\ file :cal SetSyn("rc")<CR>
+an 50.70.540 &Syntax.M.Msql :cal SetSyn("msql")<CR>
+an 50.70.550 &Syntax.M.MuPAD :cal SetSyn("mupad")<CR>
+an 50.70.560 &Syntax.M.Murphi :cal SetSyn("murphi")<CR>
+an 50.70.570 &Syntax.M.MUSHcode :cal SetSyn("mush")<CR>
+an 50.70.580 &Syntax.M.Muttrc :cal SetSyn("muttrc")<CR>
 an 50.80.100 &Syntax.NO.N1QL :cal SetSyn("n1ql")<CR>
 an 50.80.110 &Syntax.NO.Nanorc :cal SetSyn("nanorc")<CR>
 an 50.80.120 &Syntax.NO.Nastran\ input/DMAP :cal SetSyn("nastran")<CR>

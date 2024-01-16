@@ -2206,6 +2206,56 @@ have the following in your vimrc: >
 	let filetype_m = "mma"
 
 
+MODULA2					*modula2.vim* *ft-modula2-syntax*
+
+Vim will recognise comments with dialect tags to automatically select a given
+dialect.
+
+The syntax for a dialect tag comment is: >
+
+	taggedComment :=
+	  '(*!' dialectTag '*)'
+	  ;
+
+	dialectTag :=
+	  m2pim | m2iso | m2r10
+	  ;
+
+	reserved words
+	  m2pim = 'm2pim', m2iso = 'm2iso', m2r10 = 'm2r10'
+
+A dialect tag comment is recognised by Vim if it occurs within the first 200
+lines of the source file. Only the very first such comment is recognised, any
+additional dialect tag comments are ignored.
+
+Example: >
+
+	DEFINITION MODULE FooLib; (*!m2pim*)
+	...
+
+Variable g:modula2_default_dialect sets the default Modula-2 dialect when the
+dialect cannot be determined from the contents of the Modula-2 file: if
+defined and set to 'm2pim', the default dialect is PIM.
+
+Example: >
+
+	let g:modula2_default_dialect = 'm2pim'
+
+
+Highlighting is further configurable for each dialect via the following
+variables.
+
+Variable			Highlight ~
+*modula2_iso_allow_lowline*	allow low line in identifiers
+*modula2_iso_disallow_octals*	disallow octal integer literals
+*modula2_iso_disallow_synonyms*	disallow "@", "&" and "~" synonyms
+
+*modula2_pim_allow_lowline*	allow low line in identifiers
+*modula2_pim_disallow_octals*	disallow octal integer literals
+*modula2_pim_disallow_synonyms*	disallow "&" and "~" synonyms
+
+*modula2_r10_allow_lowline*	allow low line in identifiers
+
 MOO						*moo.vim* *ft-moo-syntax*
 
 If you use C-style comments inside expressions and find it mangles your

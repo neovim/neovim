@@ -146,6 +146,7 @@ variables can be used to overrule the filetype used for certain extensions:
 	`*.cls`		g:filetype_cls
 	`*.csh`		g:filetype_csh		|ft-csh-syntax|
 	`*.dat`		g:filetype_dat
+	`*.def`		g:filetype_def
 	`*.f`		g:filetype_f		|ft-forth-syntax|
 	`*.frm`		g:filetype_frm		|ft-form-syntax|
 	`*.fs`		g:filetype_fs		|ft-forth-syntax|
