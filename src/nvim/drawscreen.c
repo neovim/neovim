@@ -1206,7 +1206,7 @@ static bool win_redraw_signcols(win_T *wp)
   if (!buf->b_signcols.autom
       && (*wp->w_p_stc != NUL || (wp->w_maxscwidth > 1 && wp->w_minscwidth != wp->w_maxscwidth))) {
     buf->b_signcols.autom = true;
-    buf_signcols_count_range(buf, 0, buf->b_ml.ml_line_count, MAXLNUM, kNone);
+    buf_signcols_count_range(buf, 0, buf->b_ml.ml_line_count, MAXLNUM, kFalse);
   }
 
   while (buf->b_signcols.max > 0 && buf->b_signcols.count[buf->b_signcols.max - 1] == 0) {
