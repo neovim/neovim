@@ -2153,5 +2153,4 @@ func Test_edit_Ctrl_RSB()
   bwipe!
 endfunc
 
-
 " vim: shiftwidth=2 sts=2 expandtab
