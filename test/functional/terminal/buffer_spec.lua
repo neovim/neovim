@@ -322,7 +322,7 @@ describe(':terminal buffer', function()
     command('split')
     command('enew')
     local term = api.nvim_open_term(0, {})
-    local termbuf = api.nvim_get_current_buf().id
+    local termbuf = api.nvim_get_current_buf()
 
     -- Test that autocommand buffer is associated with the terminal buffer, not the current buffer
     command('au TermRequest * let g:termbuf = +expand("<abuf>")')

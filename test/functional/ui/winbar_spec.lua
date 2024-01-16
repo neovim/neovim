@@ -51,7 +51,7 @@ describe('winbar', function()
     ]])
     -- winbar is excluded from the heights returned by winheight() and getwininfo()
     eq(11, fn.winheight(0))
-    local win_info = fn.getwininfo(api.nvim_get_current_win().id)[1]
+    local win_info = fn.getwininfo(api.nvim_get_current_win())[1]
     eq(11, win_info.height)
     eq(1, win_info.winbar)
   end)
@@ -428,7 +428,7 @@ describe('winbar', function()
                                                                   |
     ]],
     }
-    api.nvim_set_option_value('winbar', 'floaty bar', { scope = 'local', win = win.id })
+    api.nvim_set_option_value('winbar', 'floaty bar', { scope = 'local', win = win })
     screen:expect {
       grid = [[
       {1:bar                                                         }|

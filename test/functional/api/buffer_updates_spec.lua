@@ -820,7 +820,7 @@ describe('API: buffer events:', function()
       [1] = 'notification',
       [2] = 'nvim_buf_changedtick_event',
       [3] = {
-        [1] = { id = 1 },
+        [1] = 1,
         [2] = 2,
       },
     }, next_msg())

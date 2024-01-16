@@ -62,10 +62,10 @@ describe('example', function()
     -- Use screen:expect{condition=…} to check the result.
     screen:expect {
       condition = function()
-        eq({ id = 2 }, event_curtab)
+        eq(2, event_curtab)
         eq({
-          { tab = { id = 1 }, name = '[No Name]' },
-          { tab = { id = 2 }, name = 'foo' },
+          { tab = 1, name = '[No Name]' },
+          { tab = 2, name = 'foo' },
         }, event_tabs)
       end,
     }

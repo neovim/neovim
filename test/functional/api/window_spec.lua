@@ -428,11 +428,11 @@ describe('API/win', function()
       command('tabnew')
       local tab1 = unpack(api.nvim_list_tabpages())
       local win1 = unpack(api.nvim_tabpage_list_wins(tab1))
-      api.nvim_set_option_value('statusline', 'window-status', { win = win1.id })
+      api.nvim_set_option_value('statusline', 'window-status', { win = win1 })
       command('split')
       command('wincmd J')
       command('wincmd j')
-      eq('window-status', api.nvim_get_option_value('statusline', { win = win1.id }))
+      eq('window-status', api.nvim_get_option_value('statusline', { win = win1 }))
       assert_alive()
     end)
 
@@ -575,7 +575,7 @@ describe('API/win', function()
     it('closing current (float) window of another tabpage #15313', function()
       command('tabedit')
       command('botright split')
-      local prevwin = curwin().id
+      local prevwin = curwin()
       eq(2, eval('tabpagenr()'))
       local win = api.nvim_open_win(0, true, {
         relative = 'editor',
@@ -589,7 +589,7 @@ describe('API/win', function()
       eq(1, eval('tabpagenr()'))
       api.nvim_win_close(win, false)
 
-      eq(prevwin, api.nvim_tabpage_get_win(tab).id)
+      eq(prevwin, api.nvim_tabpage_get_win(tab))
       assert_alive()
     end)
   end)
@@ -627,7 +627,7 @@ describe('API/win', function()
     it('deletes the buffer when bufhidden=wipe', function()
       local oldwin = api.nvim_get_current_win()
       local oldbuf = api.nvim_get_current_buf()
-      local buf = api.nvim_create_buf(true, false).id
+      local buf = api.nvim_create_buf(true, false)
       local newwin = api.nvim_open_win(buf, true, {
         relative = 'win',
         row = 3,

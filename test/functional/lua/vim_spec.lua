@@ -3408,7 +3408,7 @@ describe('lua stdlib', function()
 
   describe('vim.api.nvim_buf_call', function()
     it('can access buf options', function()
-      local buf1 = api.nvim_get_current_buf().id
+      local buf1 = api.nvim_get_current_buf()
       local buf2 = exec_lua [[
         buf2 = vim.api.nvim_create_buf(false, true)
         return buf2
@@ -3426,7 +3426,7 @@ describe('lua stdlib', function()
 
       eq(false, api.nvim_get_option_value('autoindent', { buf = buf1 }))
       eq(true, api.nvim_get_option_value('autoindent', { buf = buf2 }))
-      eq(buf1, api.nvim_get_current_buf().id)
+      eq(buf1, api.nvim_get_current_buf())
       eq(buf2, val)
     end)
 
@@ -3488,7 +3488,7 @@ describe('lua stdlib', function()
   describe('vim.api.nvim_win_call', function()
     it('can access window options', function()
       command('vsplit')
-      local win1 = api.nvim_get_current_win().id
+      local win1 = api.nvim_get_current_win()
       command('wincmd w')
       local win2 = exec_lua [[
         win2 = vim.api.nvim_get_current_win()
@@ -3508,7 +3508,7 @@ describe('lua stdlib', function()
 
       eq('', api.nvim_get_option_value('winhighlight', { win = win1 }))
       eq('Normal:Normal', api.nvim_get_option_value('winhighlight', { win = win2 }))
-      eq(win1, api.nvim_get_current_win().id)
+      eq(win1, api.nvim_get_current_win())
       eq(win2, val)
     end)
 

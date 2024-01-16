@@ -75,8 +75,8 @@ describe('ext_multigrid', function()
       {1:~                         }|*11
     ]], condition=function()
       eq({
-        [2] = { win = {id=1000}, startrow = 0, startcol = 27, width = 26, height = 12 },
-        [4] = { win = {id=1001}, startrow = 0, startcol =  0, width = 26, height = 12 }
+        [2] = { win = 1000, startrow = 0, startcol = 27, width = 26, height = 12 },
+        [4] = { win = 1001, startrow = 0, startcol =  0, width = 26, height = 12 }
       }, screen.win_position)
     end}
     command('wincmd l')
@@ -101,9 +101,9 @@ describe('ext_multigrid', function()
       {1:~                         }|*5
     ]], condition=function()
       eq({
-        [2] = { win = {id=1000}, startrow = 7, startcol = 27, width = 26, height =  5 },
-        [4] = { win = {id=1001}, startrow = 0, startcol =  0, width = 26, height = 12 },
-        [5] = { win = {id=1002}, startrow = 0, startcol = 27, width = 26, height =  6 }
+        [2] = { win = 1000, startrow = 7, startcol = 27, width = 26, height =  5 },
+        [4] = { win = 1001, startrow = 0, startcol =  0, width = 26, height = 12 },
+        [5] = { win = 1002, startrow = 0, startcol = 27, width = 26, height =  6 }
       }, screen.win_position)
     end}
     command('wincmd h')
@@ -125,8 +125,8 @@ describe('ext_multigrid', function()
       {1:~                                                    }|*5
     ]], condition=function()
       eq({
-        [2] = { win = {id=1000}, startrow = 7, startcol = 0, width = 53, height =  5 },
-        [5] = { win = {id=1002}, startrow = 0, startcol = 0, width = 53, height =  6 }
+        [2] = { win = 1000, startrow = 7, startcol = 0, width = 53, height =  5 },
+        [5] = { win = 1002, startrow = 0, startcol = 0, width = 53, height =  6 }
       }, screen.win_position)
     end}
   end)
@@ -456,7 +456,7 @@ describe('ext_multigrid', function()
     it('winwidth() winheight() getwininfo() return inner width and height #19743', function()
       eq(60, fn.winwidth(0))
       eq(20, fn.winheight(0))
-      local win_info = fn.getwininfo(curwin().id)[1]
+      local win_info = fn.getwininfo(curwin())[1]
       eq(60, win_info.width)
       eq(20, win_info.height)
     end)
@@ -616,7 +616,7 @@ describe('ext_multigrid', function()
         {21:     }|
         {22:~    }|*4
       ]], float_pos={
-        [4] = {{id = 1001}, "SE", 2, 16, 58, true, 50};
+        [4] = {1001, "SE", 2, 16, 58, true, 50};
       }}
     end)
 
@@ -638,7 +638,7 @@ describe('ext_multigrid', function()
         {24: foo}|
         {21: bar}|
       ]], float_pos={
-        [4] = {{id = -1}, "NW", 2, 15, 55, false, 100};
+        [4] = {-1, "NW", 2, 15, 55, false, 100};
       }}
       feed('<C-E><Esc>')
 
@@ -660,7 +660,7 @@ describe('ext_multigrid', function()
         {24:            oof}|
         {21:            rab}|
       ]], float_pos={
-        [4] = {{id = -1}, "NW", 2, 16, 45, false, 100};
+        [4] = {-1, "NW", 2, 16, 45, false, 100};
       }}
       feed('<C-E><Esc>')
 
@@ -682,7 +682,7 @@ describe('ext_multigrid', function()
         {24: undefine       }|
         {21: unplace        }|
       ]], float_pos={
-        [4] = {{id = -1}, "SW", 1, 13, 5, false, 250};
+        [4] = {-1, "SW", 1, 13, 5, false, 250};
       }}
     end)
   end)
@@ -1221,7 +1221,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {{id = -1}, "NW", 2, 2, 5, false, 250};
+      [6] = {-1, "NW", 2, 2, 5, false, 250};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[
@@ -1295,7 +1295,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {{id = -1}, "NW", 4, 1, 63, false, 250};
+      [6] = {-1, "NW", 4, 1, 63, false, 250};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[
@@ -1417,7 +1417,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {{id = -1}, "SW", 4, 9, 0, false, 250};
+      [6] = {-1, "SW", 4, 9, 0, false, 250};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[
@@ -1549,7 +1549,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {{id = -1}, "NW", 4, 10, 0, false, 250};
+      [6] = {-1, "NW", 4, 10, 0, false, 250};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[
@@ -1632,7 +1632,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                       |
     ]], win_viewport={
-      [2] = {win = { id = 1000 }, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0}
+      [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0}
     }}
     insert([[
       Lorem ipsum dolor sit amet, consectetur
@@ -1662,7 +1662,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                       |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 5, botline = 11, curline = 10, curcol = 7, linecount = 11, sum_scroll_delta = 5},
+      [2] = {win = 1000, topline = 5, botline = 11, curline = 10, curcol = 7, linecount = 11, sum_scroll_delta = 5},
     }}
 
 
@@ -1682,7 +1682,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                       |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 2, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 2},
+      [2] = {win = 1000, topline = 2, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 2},
     }}
 
     command("split")
@@ -1703,8 +1703,8 @@ describe('ext_multigrid', function()
       reprehenderit in voluptate velit esse cillum    |
       ^dolore eu fugiat nulla pariatur. Excepteur sint |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 6, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 6},
-      [4] = {win = {id = 1001}, topline = 5, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 5},
+      [2] = {win = 1000, topline = 6, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 6},
+      [4] = {win = 1001, topline = 5, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 5},
     }}
 
     feed("b")
@@ -1725,8 +1725,8 @@ describe('ext_multigrid', function()
       reprehenderit in voluptate velit esse ^cillum    |
       dolore eu fugiat nulla pariatur. Excepteur sint |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 6, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 6},
-      [4] = {win = {id = 1001}, topline = 5, botline = 9, curline = 6, curcol = 38, linecount = 11, sum_scroll_delta = 5},
+      [2] = {win = 1000, topline = 6, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 6},
+      [4] = {win = 1001, topline = 5, botline = 9, curline = 6, curcol = 38, linecount = 11, sum_scroll_delta = 5},
     }}
 
     feed("2k")
@@ -1747,8 +1747,8 @@ describe('ext_multigrid', function()
       ea commodo consequat. Duis aute irure dolor in  |
       reprehenderit in voluptate velit esse cillum    |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 6, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 6},
-      [4] = {win = {id = 1001}, topline = 4, botline = 8, curline = 4, curcol = 38, linecount = 11, sum_scroll_delta = 4},
+      [2] = {win = 1000, topline = 6, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 6},
+      [4] = {win = 1001, topline = 4, botline = 8, curline = 4, curcol = 38, linecount = 11, sum_scroll_delta = 4},
     }}
 
     -- handles non-current window
@@ -1770,8 +1770,8 @@ describe('ext_multigrid', function()
       ea commodo consequat. Duis aute irure dolor in  |
       reprehenderit in voluptate velit esse cillum    |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0},
-      [4] = {win = {id = 1001}, topline = 4, botline = 8, curline = 4, curcol = 38, linecount = 11, sum_scroll_delta = 4},
+      [2] = {win = 1000, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0},
+      [4] = {win = 1001, topline = 4, botline = 8, curline = 4, curcol = 38, linecount = 11, sum_scroll_delta = 4},
     }}
 
     -- sum_scroll_delta works with folds
@@ -1793,8 +1793,8 @@ describe('ext_multigrid', function()
       reprehenderit in voluptate velit esse cillum    |
       dolore eu fugiat nulla pariatur. Excepteur sint |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0},
-      [4] = {win = {id = 1001}, topline = 4, botline = 9, curline = 4, curcol = 38, linecount = 11, sum_scroll_delta = 4},
+      [2] = {win = 1000, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0},
+      [4] = {win = 1001, topline = 4, botline = 9, curline = 4, curcol = 38, linecount = 11, sum_scroll_delta = 4},
     }}
 
     feed('<c-e>')
@@ -1815,8 +1815,8 @@ describe('ext_multigrid', function()
       dolore eu fugiat nulla pariatur. Excepteur sint |
       occaecat cupidatat non proident, sunt in culpa  |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0},
-      [4] = {win = {id = 1001}, topline = 6, botline = 10, curline = 6, curcol = 0, linecount = 11, sum_scroll_delta = 5},
+      [2] = {win = 1000, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0},
+      [4] = {win = 1001, topline = 6, botline = 10, curline = 6, curcol = 0, linecount = 11, sum_scroll_delta = 5},
     }}
 
     command('close | 21vsplit | setlocal number smoothscroll')
@@ -1842,8 +1842,8 @@ describe('ext_multigrid', function()
       {19:    } sed do eiusmod t|
       {19:    }empor            |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
+      [2] = {win = 1000, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
+      [5] = {win = 1002, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
     }}
 
     feed('5<C-E>')
@@ -1869,8 +1869,8 @@ describe('ext_multigrid', function()
       {19:  4 }Ut enim ad minim |
       {19:    }veniam, quis n{1:@@@}|
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 1, botline = 4, curline = 1, curcol = 38, linecount = 11, sum_scroll_delta = 5};
+      [2] = {win = 1000, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
+      [5] = {win = 1002, topline = 1, botline = 4, curline = 1, curcol = 38, linecount = 11, sum_scroll_delta = 5};
     }}
 
     feed('<C-Y>')
@@ -1896,8 +1896,8 @@ describe('ext_multigrid', function()
       {19:    }na aliqua.       |
       {19:  4 }Ut enim ad min{1:@@@}|
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 1, botline = 4, curline = 1, curcol = 38, linecount = 11, sum_scroll_delta = 4};
+      [2] = {win = 1000, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
+      [5] = {win = 1002, topline = 1, botline = 4, curline = 1, curcol = 38, linecount = 11, sum_scroll_delta = 4};
     }}
 
     command('set cpoptions+=n')
@@ -1923,8 +1923,8 @@ describe('ext_multigrid', function()
       liqua.               |
       {19:  4 }Ut enim ad min{1:@@@}|
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 1, botline = 4, curline = 1, curcol = 38, linecount = 11, sum_scroll_delta = 4};
+      [2] = {win = 1000, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
+      [5] = {win = 1002, topline = 1, botline = 4, curline = 1, curcol = 38, linecount = 11, sum_scroll_delta = 4};
     }}
 
     feed('4<C-E>')
@@ -1950,8 +1950,8 @@ describe('ext_multigrid', function()
       mco laboris nisi ut a|
       liquip ex            |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 2, botline = 6, curline = 2, curcol = 43, linecount = 11, sum_scroll_delta = 8};
+      [2] = {win = 1000, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
+      [5] = {win = 1002, topline = 2, botline = 6, curline = 2, curcol = 43, linecount = 11, sum_scroll_delta = 8};
     }}
 
     feed('2<C-Y>')
@@ -1977,8 +1977,8 @@ describe('ext_multigrid', function()
       veniam, quis nostrud |
       {19:  5 }exercitation u{1:@@@}|
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 2, botline = 5, curline = 2, curcol = 43, linecount = 11, sum_scroll_delta = 6};
+      [2] = {win = 1000, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
+      [5] = {win = 1002, topline = 2, botline = 5, curline = 2, curcol = 43, linecount = 11, sum_scroll_delta = 6};
     }}
 
     command('setlocal numberwidth=12')
@@ -2004,8 +2004,8 @@ describe('ext_multigrid', function()
       d minim veniam, quis |
       nostrud              |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 2, botline = 5, curline = 2, curcol = 43, linecount = 11, sum_scroll_delta = 6};
+      [2] = {win = 1000, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
+      [5] = {win = 1002, topline = 2, botline = 5, curline = 2, curcol = 43, linecount = 11, sum_scroll_delta = 6};
     }}
 
     feed('2<C-E>')
@@ -2031,8 +2031,8 @@ describe('ext_multigrid', function()
       {19:          5 }exercitat|
       ion ullamco labori{1:@@@}|
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 2, botline = 5, curline = 2, curcol = 43, linecount = 11, sum_scroll_delta = 8};
+      [2] = {win = 1000, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
+      [5] = {win = 1002, topline = 2, botline = 5, curline = 2, curcol = 43, linecount = 11, sum_scroll_delta = 8};
     }}
 
     feed('<C-E>')
@@ -2058,8 +2058,8 @@ describe('ext_multigrid', function()
       ion ullamco laboris n|
       isi ut aliquip ex    |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
-      [5] = {win = {id = 1002}, topline = 3, botline = 6, curline = 3, curcol = 36, linecount = 11, sum_scroll_delta = 9};
+      [2] = {win = 1000, topline = 0, botline = 4, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0};
+      [5] = {win = 1002, topline = 3, botline = 6, curline = 3, curcol = 36, linecount = 11, sum_scroll_delta = 9};
     }}
   end)
 
@@ -2087,7 +2087,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                            |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 13, curline = 0, curcol = 0, linecount = 30592, sum_scroll_delta = 0};
+      [2] = {win = 1000, topline = 0, botline = 13, curline = 0, curcol = 0, linecount = 30592, sum_scroll_delta = 0};
     }}
     feed('G')
     screen:expect{grid=[[
@@ -2111,7 +2111,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                            |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 30580, botline = 30592, curline = 30591, curcol = 0, linecount = 30592, sum_scroll_delta = 30580};
+      [2] = {win = 1000, topline = 30580, botline = 30592, curline = 30591, curcol = 0, linecount = 30592, sum_scroll_delta = 30580};
     }}
     feed('gg')
     screen:expect{grid=[[
@@ -2135,7 +2135,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                            |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 13, curline = 0, curcol = 0, linecount = 30592, sum_scroll_delta = 0};
+      [2] = {win = 1000, topline = 0, botline = 13, curline = 0, curcol = 0, linecount = 30592, sum_scroll_delta = 0};
     }}
     command('setlocal wrap')
     screen:expect{grid=[[
@@ -2159,7 +2159,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                            |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 10, curline = 0, curcol = 0, linecount = 30592, sum_scroll_delta = 0};
+      [2] = {win = 1000, topline = 0, botline = 10, curline = 0, curcol = 0, linecount = 30592, sum_scroll_delta = 0};
     }}
     feed('G')
     screen:expect{grid=[[
@@ -2183,7 +2183,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                            |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 30586, botline = 30592, curline = 30591, curcol = 0, linecount = 30592, sum_scroll_delta = 30588};
+      [2] = {win = 1000, topline = 30586, botline = 30592, curline = 30591, curcol = 0, linecount = 30592, sum_scroll_delta = 30588};
     }}
     feed('gg')
     screen:expect{grid=[[
@@ -2207,7 +2207,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                            |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 10, curline = 0, curcol = 0, linecount = 30592, sum_scroll_delta = 0};
+      [2] = {win = 1000, topline = 0, botline = 10, curline = 0, curcol = 0, linecount = 30592, sum_scroll_delta = 0};
     }}
   end)
 
@@ -2224,7 +2224,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                       |
     ]], win_viewport={
-      [2] = {win = { id = 1000 }, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0}
+      [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0}
     }}
     insert([[
       Lorem ipsum dolor sit amet, consectetur
@@ -2254,7 +2254,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                       |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 5, botline = 11, curline = 10, curcol = 7, linecount = 11, sum_scroll_delta = 5},
+      [2] = {win = 1000, topline = 5, botline = 11, curline = 10, curcol = 7, linecount = 11, sum_scroll_delta = 5},
     }}
 
     api.nvim_input_mouse('left', 'press', '', 1,5, 1)
@@ -2276,7 +2276,7 @@ describe('ext_multigrid', function()
     ## grid 3
       {7:-- VISUAL --}                                    |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 6, botline = 12, curline = 10, curcol = 1, linecount = 11, sum_scroll_delta = 6},
+      [2] = {win = 1000, topline = 6, botline = 12, curline = 10, curcol = 1, linecount = 11, sum_scroll_delta = 6},
     }}
   end)
 
@@ -2298,8 +2298,8 @@ describe('ext_multigrid', function()
       ^                                                     |
       {1:~                                                    }|*5
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
-      [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+      [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+      [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
     }}
 
     -- XXX: hack to get notifications. Could use next_msg() also.
@@ -2328,8 +2328,8 @@ describe('ext_multigrid', function()
       ^                                                     |
       {1:~                                                    }|*4
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
-      [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+      [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+      [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
     }}
     eq({}, win_pos)
 
@@ -2350,8 +2350,8 @@ describe('ext_multigrid', function()
       ^                                                     |
       {1:~                                                    }|*5
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
-      [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+      [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+      [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
     }}
     eq({}, win_pos)
   end)

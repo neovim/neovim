@@ -1484,9 +1484,9 @@ local function fmt_ext_state(name, state)
         str
         .. '  ['
         .. k
-        .. '] = {win = {id = '
-        .. v.win.id
-        .. '}, topline = '
+        .. '] = {win = '
+        .. v.win
+        .. ', topline = '
         .. v.topline
         .. ', botline = '
         .. v.botline
@@ -1505,7 +1505,7 @@ local function fmt_ext_state(name, state)
   elseif name == 'float_pos' then
     local str = '{\n'
     for k, v in pairs(state) do
-      str = str .. '  [' .. k .. '] = {{id = ' .. v[1].id .. '}'
+      str = str .. '  [' .. k .. '] = {' .. v[1]
       for i = 2, #v do
         str = str .. ', ' .. inspect(v[i])
       end

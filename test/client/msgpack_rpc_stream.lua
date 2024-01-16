@@ -1,22 +1,5 @@
 local mpack = vim.mpack
 
--- temporary hack to be able to manipulate buffer/window/tabpage
-local Buffer = {}
-Buffer.__index = Buffer
-function Buffer.new(id)
-  return setmetatable({ id = id }, Buffer)
-end
-local Window = {}
-Window.__index = Window
-function Window.new(id)
-  return setmetatable({ id = id }, Window)
-end
-local Tabpage = {}
-Tabpage.__index = Tabpage
-function Tabpage.new(id)
-  return setmetatable({ id = id }, Tabpage)
-end
-
 local Response = {}
 Response.__index = Response
 
@@ -45,30 +28,21 @@ MsgpackRpcStream.__index = MsgpackRpcStream
 function MsgpackRpcStream.new(stream)
   return setmetatable({
     _stream = stream,
-    _pack = mpack.Packer({
-      ext = {
-        [Buffer] = function(o)
-          return 0, mpack.encode(o.id)
-        end,
-        [Window] = function(o)
-          return 1, mpack.encode(o.id)
-        end,
-        [Tabpage] = function(o)
-          return 2, mpack.encode(o.id)
-        end,
-      },
-    }),
+    _pack = mpack.Packer(),
     _session = mpack.Session({
       unpack = mpack.Unpacker({
         ext = {
+          -- Buffer
           [0] = function(_c, s)
-            return Buffer.new(mpack.decode(s))
+            return mpack.decode(s)
           end,
+          -- Window
           [1] = function(_c, s)
-            return Window.new(mpack.decode(s))
+            return mpack.decode(s)
           end,
+          -- Tabpage
           [2] = function(_c, s)
-            return Tabpage.new(mpack.decode(s))
+            return mpack.decode(s)
           end,
         },
       }),
