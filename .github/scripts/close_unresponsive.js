@@ -41,6 +41,7 @@ module.exports = async ({ github, context }) => {
         owner: owner,
         repo: repo,
         issue_number: number,
+        state_reason: "not_planned",
         state: "closed",
       });
 
