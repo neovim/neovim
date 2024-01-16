@@ -2308,6 +2308,45 @@ function vim.fn.foldtext() end
 --- @return string
 function vim.fn.foldtextresult(lnum) end
 
+--- {expr1} must be a |List|, |String|, |Blob| or |Dictionary|.
+--- For each item in {expr1} execute {expr2}. {expr1} is not
+--- modified; its values may be, as with |:lockvar| 1. |E741|
+--- See |map()| and |filter()| to modify {expr1}.
+---
+--- {expr2} must be a |string| or |Funcref|.
+---
+--- If {expr2} is a |string|, inside {expr2} |v:val| has the value
+--- of the current item.  For a |Dictionary| |v:key| has the key
+--- of the current item and for a |List| |v:key| has the index of
+--- the current item.  For a |Blob| |v:key| has the index of the
+--- current byte. For a |String| |v:key| has the index of the
+--- current character.
+--- Examples: >
+---   call foreach(mylist, 'let used[v:val] = v:true')
+--- <This records the items that are in the {expr1} list.
+---
+--- Note that {expr2} is the result of expression and is then used
+--- as a command.  Often it is good to use a |literal-string| to
+--- avoid having to double backslashes.
+---
+--- If {expr2} is a |Funcref| it must take two arguments:
+---   1. the key or the index of the current item.
+---   2. the value of the current item.
+--- With a lambda you don't get an error if it only accepts one
+--- argument.
+--- If the function returns a value, it is ignored.
+---
+--- Returns {expr1} in all cases.
+--- When an error is encountered while executing {expr2} no
+--- further items in {expr1} are processed.
+--- When {expr2} is a Funcref errors inside a function are ignored,
+--- unless it was defined with the "abort" flag.
+---
+--- @param expr1 any
+--- @param expr2 any
+--- @return any
+function vim.fn.foreach(expr1, expr2) end
+
 --- Get the full command name from a short abbreviated command
 --- name; see |20.2| for details on command abbreviations.
 ---
