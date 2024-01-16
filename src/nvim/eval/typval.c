@@ -4346,6 +4346,22 @@ int tv_check_for_string_or_number_arg(const typval_T *const args, const int idx)
   return OK;
 }
 
+/// Give an error and return FAIL unless "args[idx]" is a buffer number.
+/// Buffer number can be a number or a string.
+int tv_check_for_buffer_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  return tv_check_for_string_or_number_arg(args, idx);
+}
+
+/// Give an error and return FAIL unless "args[idx]" is a line number.
+/// Line number can be a number or a string.
+int tv_check_for_lnum_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  return tv_check_for_string_or_number_arg(args, idx);
+}
+
 /// Give an error and return FAIL unless "args[idx]" is a string or a list.
 int tv_check_for_string_or_list_arg(const typval_T *const args, const int idx)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE

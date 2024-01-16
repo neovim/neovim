@@ -6916,7 +6916,7 @@ static int cbuffer_process_args(exarg_T *eap, buf_T **bufp, linenr_T *line1, lin
   }
 
   if (buf->b_ml.ml_mfp == NULL) {
-    emsg(_("E681: Buffer is not loaded"));
+    emsg(_(e_buffer_is_not_loaded));
     return FAIL;
   }
 
