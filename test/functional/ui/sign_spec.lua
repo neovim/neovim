@@ -539,4 +539,13 @@ describe('Signs', function()
                                                            |
     ]])
   end)
+
+  it('no negative b_signcols.count with undo after initializing', function()
+    exec([[
+      set signcolumn=auto:2
+      call setline(1, 'a')
+      call nvim_buf_set_extmark(0, nvim_create_namespace(''), 0, 0, {'sign_text':'S1'})
+      delete | redraw | undo
+    ]])
+  end)
 end)
