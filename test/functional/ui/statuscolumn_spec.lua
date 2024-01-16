@@ -510,6 +510,28 @@ describe('statuscolumn', function()
       {0:~                                                    }|
                                                            |
     ]])
+    -- Also test "col_rows" code path for 'relativenumber' cursor movement
+    command([[
+      set cpoptions-=n nocursorline relativenumber
+      set stc=%{v:virtnum<0?'virtual':(!v:virtnum?'buffer':'wrapped')}%=%{'\ '.v:virtnum.'\ '.v:lnum.'\ '.v:relnum}
+    ]])
+    feed('kk')
+    screen:expect([[
+      {1:buffer  0 12 1}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 1 12 1}aaaaaaaaaaa                            |
+      {1:buffer  0 13 0}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 1 13 0}aaaaaaaaaa^a                            |
+      {1:buffer  0 14 1}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 1 14 1}aaaaaaaaaaa                            |
+      {1:buffer  0 15 2}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 1 15 2}aaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 2 15 2}aaaaaaaaaaaaaaaaaaaaaaa                |
+      {1:virtual-3 15 2}virt_line1                             |
+      {1:virtual-2 15 2}virt_line2                             |
+      {1:virtual-1 15 2}END                                    |
+      {0:~                                                    }|
+                                                           |
+    ]])
   end)
 
   it('does not corrupt the screen with minwid sign item', function()
