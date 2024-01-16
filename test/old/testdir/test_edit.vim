@@ -2118,5 +2118,39 @@ func Test_edit_overlong_file_name()
   bwipe!
 endfunc
 
+func Test_edit_Ctrl_RSB()
+  new
+  let g:triggered = []
+  autocmd InsertCharPre <buffer> let g:triggered += [v:char]
+
+  " i_CTRL-] should not trigger InsertCharPre
+  exe "normal! A\<C-]>"
+  call assert_equal([], g:triggered)
+
+  " i_CTRL-] should expand abbreviations but not trigger InsertCharPre
+  inoreabbr <buffer> f foo
+  exe "normal! Af\<C-]>a"
+  call assert_equal(['f', 'f', 'o', 'o', 'a'], g:triggered)
+  call assert_equal('fooa', getline(1))
+
+  " CTRL-] followed by i_CTRL-V should not expand abbreviations
+  " i_CTRL-V doesn't trigger InsertCharPre
+  call setline(1, '')
+  exe "normal! Af\<C-V>\<C-]>"
+  call assert_equal("f\<C-]>", getline(1))
+
+  let g:triggered = []
+  call setline(1, '')
+
+  " Also test assigning to v:char
+  autocmd InsertCharPre <buffer> let v:char = 'f'
+  exe "normal! Ag\<C-]>h"
+  call assert_equal(['g', 'f', 'o', 'o', 'h'], g:triggered)
+  call assert_equal('ffff', getline(1))
+
+  autocmd! InsertCharPre
+  unlet g:triggered
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
