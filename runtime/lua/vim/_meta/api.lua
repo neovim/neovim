@@ -323,8 +323,8 @@ function vim.api.nvim_buf_get_commands(buffer, opts) end
 --- @return integer[]
 function vim.api.nvim_buf_get_extmark_by_id(buffer, ns_id, id, opts) end
 
---- Gets `extmarks` (including `signs`) in "traversal order" from a `charwise`
---- region defined by buffer positions (inclusive, 0-indexed `api-indexing`).
+--- Gets `extmarks` in "traversal order" from a `charwise` region defined by
+--- buffer positions (inclusive, 0-indexed `api-indexing`).
 --- Region can be given as (row,col) tuples, or valid extmark ids (whose
 --- positions define the bounds). 0 and -1 are understood as (0,0) and (-1,-1)
 --- respectively, thus the following are equivalent:
@@ -339,6 +339,9 @@ function vim.api.nvim_buf_get_extmark_by_id(buffer, ns_id, id, opts) end
 --- Note: when using extmark ranges (marks with a end_row/end_col position)
 --- the `overlap` option might be useful. Otherwise only the start position of
 --- an extmark will be considered.
+--- Note: legacy signs placed through the `:sign` commands are implemented as
+--- extmarks and will show up here. Their details array will contain a
+--- `sign_name` field.
 --- Example:
 ---
 --- ```lua
@@ -567,7 +570,9 @@ function vim.api.nvim_buf_line_count(buffer) end
 ---                 text around the mark was deleted and then restored by
 ---                 undo. Defaults to true.
 ---               • invalidate : boolean that indicates whether to hide the
----                 extmark if the entirety of its range is deleted. If
+---                 extmark if the entirety of its range is deleted. For
+---                 hidden marks, an "invalid" key is added to the "details"
+---                 array of `nvim_buf_get_extmarks()` and family. If
 ---                 "undo_restore" is false, the extmark is deleted instead.
 ---               • priority: a priority value for the highlight group or sign
 ---                 attribute. For example treesitter highlighting uses a
