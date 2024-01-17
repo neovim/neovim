@@ -766,7 +766,7 @@ describe('treesitter highlighting (help)', function()
       {1:>ruby}                                   |
       {1:  -- comment}                            |
       {1:  local this_is = 'actually_lua'}        |
-      <                                       |
+      {1:<}                                       |
       ^                                        |
                                               |
     ]],
@@ -779,7 +779,7 @@ describe('treesitter highlighting (help)', function()
       {1:>lua}                                    |
       {1:  -- comment}                            |
       {1:  }{3:local}{1: }{4:this_is}{1: }{3:=}{1: }{5:'actually_lua'}        |
-      <                                       |
+      {1:<}                                       |
       ^                                        |
                                               |
     ]],
@@ -792,7 +792,7 @@ describe('treesitter highlighting (help)', function()
       {1:>ruby}                                   |
       {1:  -- comment}                            |
       {1:  local this_is = 'actually_lua'}        |
-      <                                       |
+      {1:<}                                       |
       ^                                        |
                                               |
     ]],

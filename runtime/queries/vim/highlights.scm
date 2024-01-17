@@ -1,15 +1,15 @@
 (identifier) @variable
+
 ((identifier) @constant
- (#lua-match? @constant "^[A-Z][A-Z_0-9]*$"))
+  (#lua-match? @constant "^[A-Z][A-Z_0-9]*$"))
 
-;; Keywords
-
+; Keywords
 [
   "if"
   "else"
   "elseif"
   "endif"
-] @conditional
+] @keyword.conditional
 
 [
   "try"
@@ -17,7 +17,7 @@
   "finally"
   "endtry"
   "throw"
-] @exception
+] @keyword.exception
 
 [
   "for"
@@ -27,31 +27,50 @@
   "endwhile"
   "break"
   "continue"
-] @repeat
+] @keyword.repeat
 
 [
   "function"
   "endfunction"
 ] @keyword.function
 
-;; Function related
-(function_declaration name: (_) @function)
-(call_expression function: (identifier) @function.call)
-(call_expression function: (scoped_identifier (identifier) @function.call))
-(parameters (identifier) @parameter)
-(default_parameter (identifier) @parameter)
+; Function related
+(function_declaration
+  name: (_) @function)
 
-[ (bang) (spread) ] @punctuation.special
+(call_expression
+  function: (identifier) @function.call)
 
-[ (no_option) (inv_option) (default_option) (option_name) ] @variable.builtin
+(call_expression
+  function:
+    (scoped_identifier
+      (identifier) @function.call))
+
+(parameters
+  (identifier) @variable.parameter)
+
+(default_parameter
+  (identifier) @variable.parameter)
+
+[
+  (bang)
+  (spread)
+] @punctuation.special
+
+[
+  (no_option)
+  (inv_option)
+  (default_option)
+  (option_name)
+] @variable.builtin
+
 [
   (scope)
   "a:"
   "$"
-] @namespace
+] @module
 
-;; Commands and user defined commands
-
+; Commands and user defined commands
 [
   "let"
   "unlet"
@@ -83,6 +102,7 @@
   "delcommand"
   "comclear"
   "colorscheme"
+  "scriptencoding"
   "startinsert"
   "stopinsert"
   "global"
@@ -106,41 +126,48 @@
   "visual"
   "view"
   "eval"
+  "sign"
 ] @keyword
-(map_statement cmd: _ @keyword)
+
+(map_statement
+  cmd: _ @keyword)
+
 (command_name) @function.macro
 
-;; Filetype command
+; Filetype command
+(filetype_statement
+  [
+    "detect"
+    "plugin"
+    "indent"
+    "on"
+    "off"
+  ] @keyword)
 
-(filetype_statement [
-  "detect"
-  "plugin"
-  "indent"
-  "on"
-  "off"
-] @keyword)
+; Syntax command
+(syntax_statement
+  (keyword) @string)
 
-;; Syntax command
+(syntax_statement
+  [
+    "enable"
+    "on"
+    "off"
+    "reset"
+    "case"
+    "spell"
+    "foldlevel"
+    "iskeyword"
+    "keyword"
+    "match"
+    "cluster"
+    "region"
+    "clear"
+    "include"
+  ] @keyword)
 
-(syntax_statement (keyword) @string)
-(syntax_statement [
-  "enable"
-  "on"
-  "off"
-  "reset"
-  "case"
-  "spell"
-  "foldlevel"
-  "iskeyword"
-  "keyword"
-  "match"
-  "cluster"
-  "region"
-  "clear"
-  "include"
-] @keyword)
-
-(syntax_argument name: _ @keyword)
+(syntax_argument
+  name: _ @keyword)
 
 [
   "<buffer>"
@@ -151,69 +178,95 @@
   "<unique>"
 ] @constant.builtin
 
-(augroup_name) @namespace
+(augroup_name) @module
 
 (au_event) @constant
-(normal_statement (commands) @constant)
 
-;; Highlight command
+(normal_statement
+  (commands) @constant)
 
+; Highlight command
 (hl_attribute
   key: _ @property
   val: _ @constant)
 
 (hl_group) @type
 
-(highlight_statement [
-  "default"
-  "link"
-  "clear"
-] @keyword)
+(highlight_statement
+  [
+    "default"
+    "link"
+    "clear"
+  ] @keyword)
 
-;; Command command
-
+; Command command
 (command) @string
 
 (command_attribute
   name: _ @property
-  val: (behavior
-    name: _ @constant
-    val: (identifier)? @function)?)
+  val:
+    (behavior
+      name: _ @constant
+      val: (identifier)? @function)?)
 
-;; Edit command
+; Edit command
 (plus_plus_opt
   val: _? @constant) @property
-(plus_cmd "+" @property) @property
 
-;; Runtime command
+(plus_cmd
+  "+" @property) @property
 
-(runtime_statement (where) @keyword.operator)
+; Runtime command
+(runtime_statement
+  (where) @keyword.operator)
 
-;; Colorscheme command
+; Colorscheme command
+(colorscheme_statement
+  (name) @string)
 
-(colorscheme_statement (name) @string)
+; Scriptencoding command
+(scriptencoding_statement
+  (encoding) @string.special)
 
-;; Literals
-
+; Literals
 (string_literal) @string
+
 (integer_literal) @number
-(float_literal) @float
+
+(float_literal) @number.float
+
 (comment) @comment @spell
+
 (line_continuation_comment) @comment @spell
+
 (pattern) @string.special
-(pattern_multi) @string.regex
-(filename) @string
-(heredoc (body) @string)
-(heredoc (parameter) @keyword)
-[ (marker_definition) (endmarker) ] @label
-(literal_dictionary (literal_key) @label)
+
+(pattern_multi) @string.regexp
+
+(filename) @string.special.path
+
+(heredoc
+  (body) @string)
+
+(heredoc
+  (parameter) @keyword)
+
+[
+  (marker_definition)
+  (endmarker)
+] @label
+
+(literal_dictionary
+  (literal_key) @property)
+
 ((scoped_identifier
-  (scope) @_scope . (identifier) @boolean)
- (#eq? @_scope "v:")
- (#any-of? @boolean "true" "false"))
+  (scope) @_scope
+  .
+  (identifier) @boolean)
+  (#eq? @_scope "v:")
+  (#any-of? @boolean "true" "false"))
 
-;; Operators
-
+; Operators
 [
   "||"
   "&&"
@@ -248,12 +301,13 @@
 ] @operator
 
 ; Some characters have different meanings based on the context
-(unary_operation "!" @operator)
-(binary_operation "." @operator)
+(unary_operation
+  "!" @operator)
 
+(binary_operation
+  "." @operator)
 
-;; Punctuation
-
+; Punctuation
 [
   "("
   ")"
@@ -264,27 +318,31 @@
   "#{"
 ] @punctuation.bracket
 
-(field_expression "." @punctuation.delimiter)
+(field_expression
+  "." @punctuation.delimiter)
 
 [
   ","
   ":"
 ] @punctuation.delimiter
 
-(ternary_expression ["?" ":"] @conditional.ternary)
+(ternary_expression
+  [
+    "?"
+    ":"
+  ] @keyword.conditional.ternary)
 
 ; Options
 ((set_value) @number
- (#lua-match? @number "^[%d]+(%.[%d]+)?$"))
+  (#lua-match? @number "^[%d]+(%.[%d]+)?$"))
 
-(inv_option "!" @operator)
-(set_item "?" @operator)
+(inv_option
+  "!" @operator)
+
+(set_item
+  "?" @operator)
 
 ((set_item
-   option: (option_name) @_option
-   value: (set_value) @function)
-  (#any-of? @_option
-    "tagfunc" "tfu"
-    "completefunc" "cfu"
-    "omnifunc" "ofu"
-    "operatorfunc" "opfunc"))
+  option: (option_name) @_option
+  value: (set_value) @function)
+  (#any-of? @_option "tagfunc" "tfu" "completefunc" "cfu" "omnifunc" "ofu" "operatorfunc" "opfunc"))
