@@ -253,12 +253,12 @@ func Test_eob_fillchars()
   " default value
   " call assert_match('eob:\~', &fillchars)
   " invalid values
-  call assert_fails(':set fillchars=eob:', 'E474:')
-  call assert_fails(':set fillchars=eob:xy', 'E474:')
-  call assert_fails(':set fillchars=eob:\255', 'E474:')
-  call assert_fails(':set fillchars=eob:<ff>', 'E474:')
-  call assert_fails(":set fillchars=eob:\x01", 'E474:')
-  call assert_fails(':set fillchars=eob:\\x01', 'E474:')
+  call assert_fails(':set fillchars=eob:', 'E1511:')
+  call assert_fails(':set fillchars=eob:xy', 'E1511:')
+  call assert_fails(':set fillchars=eob:\255', 'E1511:')
+  call assert_fails(':set fillchars=eob:<ff>', 'E1511:')
+  call assert_fails(":set fillchars=eob:\x01", 'E1512:')
+  call assert_fails(':set fillchars=eob:\\x01', 'E1512:')
   " default is ~
   new
   redraw
@@ -412,14 +412,16 @@ func Run_Test_display_lastline(euro)
   call StopVimInTerminal(buf)
 endfunc
 
-func Test_display_lastline()
+func Test_display_lastline_dump()
   CheckScreendump
 
   call Run_Test_display_lastline('')
   call Run_Test_display_lastline('euro_')
+endfunc
 
-  call assert_fails(':set fillchars=lastline:', 'E474:')
-  call assert_fails(':set fillchars=lastline:〇', 'E474:')
+func Test_display_lastline_fails()
+  call assert_fails(':set fillchars=lastline:', 'E1511:')
+  call assert_fails(':set fillchars=lastline:〇', 'E1512:')
 endfunc
 
 func Test_display_long_lastline()

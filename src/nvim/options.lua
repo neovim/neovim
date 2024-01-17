@@ -2818,7 +2818,7 @@ return {
         Characters to fill the statuslines, vertical separators and special
         lines in the window.
         It is a comma-separated list of items.  Each item has a name, a colon
-        and the value of that item:
+        and the value of that item: |E1511|
 
           item		default		Used for ~
           stl		' '		statusline of the current window
@@ -2856,7 +2856,7 @@ return {
         <
         For the "stl", "stlnc", "foldopen", "foldclose" and "foldsep" items
         single-byte and multibyte characters are supported.  But double-width
-        characters are not supported.
+        characters are not supported. |E1512|
 
         The highlighting used for these items:
           item		highlight group ~
@@ -4879,7 +4879,7 @@ return {
       deny_duplicates = true,
       desc = [=[
         Strings to use in 'list' mode and for the |:list| command.  It is a
-        comma-separated list of string settings.
+        comma-separated list of string settings. *E1511*
 
         						*lcs-eol*
           eol:c		Character to show at the end of each line.  When
@@ -4958,7 +4958,7 @@ return {
         		omitted.
 
         The characters ':' and ',' should not be used.  UTF-8 characters can
-        be used.  All characters must be single width.
+        be used.  All characters must be single width. *E1512*
 
         Each character can be specified as hex: >vim
         	set listchars=eol:\\x24

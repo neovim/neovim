@@ -62,6 +62,10 @@ static const char e_backupext_and_patchmode_are_equal[]
   = N_("E589: 'backupext' and 'patchmode' are equal");
 static const char e_showbreak_contains_unprintable_or_wide_character[]
   = N_("E595: 'showbreak' contains unprintable or wide character");
+static const char e_wrong_number_of_characters_for_field_str[]
+  = N_("E1511: Wrong number of characters for field \"%s\"");
+static const char e_wrong_character_width_for_field_str[]
+  = N_("E1512: Wrong character width for field \"%s\"");
 
 static char *(p_ambw_values[]) = { "single", "double", NULL };
 static char *(p_bg_values[]) = { "light", "dark", NULL };
@@ -879,14 +883,16 @@ int expand_set_casemap(optexpand_T *args, int *numMatches, char ***matches)
 
 /// The global 'listchars' or 'fillchars' option is changed.
 static const char *did_set_global_chars_option(win_T *win, char *val, CharsOption what,
-                                               int opt_flags)
+                                               int opt_flags, char *errbuf, size_t errbuflen)
 {
   const char *errmsg = NULL;
   char **local_ptr = (what == kListchars) ? &win->w_p_lcs : &win->w_p_fcs;
 
   // only apply the global value to "win" when it does not have a
   // local value
-  errmsg = set_chars_option(win, val, what, **local_ptr == NUL || !(opt_flags & OPT_GLOBAL));
+  errmsg = set_chars_option(win, val, what,
+                            **local_ptr == NUL || !(opt_flags & OPT_GLOBAL),
+                            errbuf, errbuflen);
   if (errmsg != NULL) {
     return errmsg;
   }
@@ -904,7 +910,7 @@ static const char *did_set_global_chars_option(win_T *win, char *val, CharsOptio
     // here, so ignore the return value.
     char *opt = (what == kListchars) ? wp->w_p_lcs : wp->w_p_fcs;
     if (*opt == NUL) {
-      set_chars_option(wp, opt, what, true);
+      set_chars_option(wp, opt, what, true, errbuf, errbuflen);
     }
   }
 
@@ -921,13 +927,17 @@ const char *did_set_chars_option(optset_T *args)
   const char *errmsg = NULL;
 
   if (varp == &p_lcs) {      // global 'listchars'
-    errmsg = did_set_global_chars_option(win, *varp, kListchars, args->os_flags);
+    errmsg = did_set_global_chars_option(win, *varp, kListchars, args->os_flags,
+                                         args->os_errbuf, args->os_errbuflen);
   } else if (varp == &p_fcs) {  // global 'fillchars'
-    errmsg = did_set_global_chars_option(win, *varp, kFillchars, args->os_flags);
+    errmsg = did_set_global_chars_option(win, *varp, kFillchars, args->os_flags,
+                                         args->os_errbuf, args->os_errbuflen);
   } else if (varp == &win->w_p_lcs) {  // local 'listchars'
-    errmsg = set_chars_option(win, *varp, kListchars, true);
+    errmsg = set_chars_option(win, *varp, kListchars, true,
+                              args->os_errbuf, args->os_errbuflen);
   } else if (varp == &win->w_p_fcs) {  // local 'fillchars'
-    errmsg = set_chars_option(win, *varp, kFillchars, true);
+    errmsg = set_chars_option(win, *varp, kFillchars, true,
+                              args->os_errbuf, args->os_errbuflen);
   }
 
   return errmsg;
@@ -2668,14 +2678,27 @@ static const struct chars_tab lcs_tab[] = {
   { NULL,               "leadmultispace", NULL, NULL },
 };
 
+static char *field_value_err(char *errbuf, size_t errbuflen, const char *fmt, const char *field)
+{
+  if (errbuf == NULL) {
+    return "";
+  }
+  vim_snprintf(errbuf, errbuflen, _(fmt), field);
+  return errbuf;
+}
+
 /// Handle setting 'listchars' or 'fillchars'.
 /// Assume monocell characters
 ///
-/// @param value  points to either the global or the window-local value.
-/// @param what   kListchars or kFillchars
-/// @param apply  if false, do not store the flags, only check for errors.
+/// @param value      points to either the global or the window-local value.
+/// @param what       kListchars or kFillchars
+/// @param apply      if false, do not store the flags, only check for errors.
+/// @param errbuf     buffer for error message, can be NULL if it won't be used.
+/// @param errbuflen  size of error buffer.
+///
 /// @return error message, NULL if it's OK.
-const char *set_chars_option(win_T *wp, const char *value, CharsOption what, bool apply)
+const char *set_chars_option(win_T *wp, const char *value, CharsOption what, bool apply,
+                             char *errbuf, size_t errbuflen)
 {
   const char *last_multispace = NULL;   // Last occurrence of "multispace:"
   const char *last_lmultispace = NULL;  // Last occurrence of "leadmultispace:"
@@ -2736,9 +2759,7 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
       int i;
       for (i = 0; i < entries; i++) {
         const size_t len = strlen(tab[i].name);
-        if (!(strncmp(p, tab[i].name, len) == 0
-              && p[len] == ':'
-              && p[len + 1] != NUL)) {
+        if (!(strncmp(p, tab[i].name, len) == 0 && p[len] == ':')) {
           continue;
         }
 
@@ -2751,13 +2772,17 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
             while (*s != NUL && *s != ',') {
               schar_T c1 = get_encoded_char_adv(&s);
               if (c1 == 0) {
-                return e_invarg;
+                return field_value_err(errbuf, errbuflen,
+                                       e_wrong_character_width_for_field_str,
+                                       tab[i].name);
               }
               multispace_len++;
             }
             if (multispace_len == 0) {
               // lcs-multispace cannot be an empty string
-              return e_invarg;
+              return field_value_err(errbuf, errbuflen,
+                                     e_wrong_number_of_characters_for_field_str,
+                                     tab[i].name);
             }
             p = s;
           } else {
@@ -2782,13 +2807,17 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
             while (*s != NUL && *s != ',') {
               schar_T c1 = get_encoded_char_adv(&s);
               if (c1 == 0) {
-                return e_invarg;
+                return field_value_err(errbuf, errbuflen,
+                                       e_wrong_character_width_for_field_str,
+                                       tab[i].name);
               }
               lead_multispace_len++;
             }
             if (lead_multispace_len == 0) {
               // lcs-leadmultispace cannot be an empty string
-              return e_invarg;
+              return field_value_err(errbuf, errbuflen,
+                                     e_wrong_number_of_characters_for_field_str,
+                                     tab[i].name);
             }
             p = s;
           } else {
@@ -2805,24 +2834,37 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
         }
 
         const char *s = p + len + 1;
+        if (*s == NUL) {
+          return field_value_err(errbuf, errbuflen,
+                                 e_wrong_number_of_characters_for_field_str,
+                                 tab[i].name);
+        }
         schar_T c1 = get_encoded_char_adv(&s);
         if (c1 == 0) {
-          return e_invarg;
+          return field_value_err(errbuf, errbuflen,
+                                 e_wrong_character_width_for_field_str,
+                                 tab[i].name);
         }
         schar_T c2 = 0;
         schar_T c3 = 0;
         if (tab[i].cp == &lcs_chars.tab2) {
           if (*s == NUL) {
-            return e_invarg;
+            return field_value_err(errbuf, errbuflen,
+                                   e_wrong_number_of_characters_for_field_str,
+                                   tab[i].name);
           }
           c2 = get_encoded_char_adv(&s);
           if (c2 == 0) {
-            return e_invarg;
+            return field_value_err(errbuf, errbuflen,
+                                   e_wrong_character_width_for_field_str,
+                                   tab[i].name);
           }
           if (!(*s == ',' || *s == NUL)) {
             c3 = get_encoded_char_adv(&s);
             if (c3 == 0) {
-              return e_invarg;
+              return field_value_err(errbuf, errbuflen,
+                                     e_wrong_character_width_for_field_str,
+                                     tab[i].name);
             }
           }
         }
@@ -2839,6 +2881,10 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
           }
           p = s;
           break;
+        } else {
+          return field_value_err(errbuf, errbuflen,
+                                 e_wrong_number_of_characters_for_field_str,
+                                 tab[i].name);
         }
       }
 
@@ -2893,17 +2939,17 @@ char *get_listchars_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 /// @return  an untranslated error message if any of them is invalid, NULL otherwise.
 const char *check_chars_options(void)
 {
-  if (set_chars_option(curwin, p_lcs, kListchars, false) != NULL) {
+  if (set_chars_option(curwin, p_lcs, kListchars, false, NULL, 0) != NULL) {
     return e_conflicts_with_value_of_listchars;
   }
-  if (set_chars_option(curwin, p_fcs, kFillchars, false) != NULL) {
+  if (set_chars_option(curwin, p_fcs, kFillchars, false, NULL, 0) != NULL) {
     return e_conflicts_with_value_of_fillchars;
   }
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (set_chars_option(wp, wp->w_p_lcs, kListchars, true) != NULL) {
+    if (set_chars_option(wp, wp->w_p_lcs, kListchars, true, NULL, 0) != NULL) {
       return e_conflicts_with_value_of_listchars;
     }
-    if (set_chars_option(wp, wp->w_p_fcs, kFillchars, true) != NULL) {
+    if (set_chars_option(wp, wp->w_p_fcs, kFillchars, true, NULL, 0) != NULL) {
       return e_conflicts_with_value_of_fillchars;
     }
   }
