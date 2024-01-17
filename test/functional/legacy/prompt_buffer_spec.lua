@@ -219,7 +219,7 @@ describe('prompt buffer', function()
     eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
   end)
 
-  -- oldtest: Test_prompt_close_modify_hidden()
+  -- oldtest: Test_prompt_leave_modify_hidden()
   it('modifying hidden buffer does not prevent prompt buffer mode change', function()
     source([[
       file hidden
@@ -228,14 +228,26 @@ describe('prompt buffer', function()
       new prompt
       set buftype=prompt
 
+      inoremap <buffer> w <Cmd>wincmd w<CR>
       inoremap <buffer> q <Cmd>bwipe!<CR>
-      autocmd BufWinLeave prompt call setbufline('hidden', 1, 'Test')
+      autocmd BufLeave prompt call appendbufline('hidden', '$', 'Leave')
+      autocmd BufEnter prompt call appendbufline('hidden', '$', 'Enter')
+      autocmd BufWinLeave prompt call appendbufline('hidden', '$', 'Close')
     ]])
     feed('a')
+    eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
+    feed('w')
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
+    feed('<C-W>w')
     eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
     feed('q')
     eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
     command('bwipe!')
-    expect('Test')
+    expect([[
+
+      Leave
+      Enter
+      Leave
+      Close]])
   end)
 end)

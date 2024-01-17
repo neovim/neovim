@@ -1302,9 +1302,11 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
   }
 
   aco->save_curwin_handle = curwin->handle;
-  aco->save_curbuf = curbuf;
   aco->save_prevwin_handle = prevwin == NULL ? 0 : prevwin->handle;
   aco->save_State = State;
+  if (bt_prompt(curbuf)) {
+    aco->save_prompt_insert = curbuf->b_prompt_insert;
+  }
 
   if (win != NULL) {
     // There is a window for "buf" in the current tab page, make it the
@@ -1417,6 +1419,9 @@ win_found:
     curbuf = curwin->w_buffer;
     // May need to restore insert mode for a prompt buffer.
     entering_window(curwin);
+    if (bt_prompt(curbuf)) {
+      curbuf->b_prompt_insert = aco->save_prompt_insert;
+    }
 
     prevwin = win_find_by_handle(aco->save_prevwin_handle);
     vars_clear(&awp->w_vars->dv_hashtab);         // free all w: variables
