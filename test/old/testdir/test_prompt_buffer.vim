@@ -298,4 +298,36 @@ func Test_prompt_appending_while_hidden()
   call StopVimInTerminal(buf)
 endfunc
 
+" Modifying a hidden buffer while closing a prompt buffer should not prevent
+" stopping of Insert mode.
+func Test_prompt_close_modify_hidden()
+  call CanTestPromptBuffer()
+
+  let script =<< trim END
+      file hidden
+      set bufhidden=hide
+      enew
+      new prompt
+      set buftype=prompt
+
+      inoremap <buffer> q <Cmd>bwipe!<CR>
+      autocmd BufWinLeave prompt call setbufline('hidden', 1, 'Test')
+  END
+  call writefile(script, 'XpromptCloseModifyHidden', 'D')
+
+  let buf = RunVimInTerminal('-S XpromptCloseModifyHidden', {'rows': 10})
+  call TermWait(buf)
+
+  call term_sendkeys(buf, "a")
+  call WaitForAssert({-> assert_match('-- INSERT --', term_getline(buf, 10))})
+
+  call term_sendkeys(buf, "q")
+  call WaitForAssert({-> assert_notmatch('-- INSERT --', term_getline(buf, 10))})
+
+  call term_sendkeys(buf, ":bwipe!\<CR>")
+  call WaitForAssert({-> assert_equal('Test', term_getline(buf, 1))})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
