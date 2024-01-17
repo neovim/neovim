@@ -222,7 +222,7 @@ describe('swapfile detection', function()
     screen2:expect(expected_no_dialog)
 
     -- With API call and shortmess+=F
-    async_meths.command('edit %')
+    async_meths.nvim_command('edit %')
     screen2:expect {
       any = [[Found a swap file by the name ".*]]
         .. [[Xtest_swapdialog_dir[/\].*]]

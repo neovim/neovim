@@ -7,7 +7,7 @@ local command = helpers.command
 local set_method_error = helpers.set_method_error
 local api = helpers.api
 local async_meths = helpers.async_meths
-local test_build_dir = helpers.test_build_dir
+local test_build_dir = helpers.paths.test_build_dir
 local nvim_prog = helpers.nvim_prog
 local exec = helpers.exec
 local exec_capture = helpers.exec_capture
@@ -1039,7 +1039,7 @@ stack traceback:
   end)
 
   it('supports nvim_echo messages with multiple attrs', function()
-    async_meths.echo(
+    async_meths.nvim_echo(
       { { 'wow, ', 'Search' }, { 'such\n\nvery ', 'ErrorMsg' }, { 'color', 'LineNr' } },
       true,
       {}
@@ -1403,7 +1403,7 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
   end)
 
   it('supports nvim_echo messages with multiple attrs', function()
-    async_meths.echo(
+    async_meths.nvim_echo(
       { { 'wow, ', 'Search' }, { 'such\n\nvery ', 'ErrorMsg' }, { 'color', 'LineNr' } },
       true,
       {}
@@ -1521,7 +1521,7 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
   end)
 
   it('consecutive calls to win_move_statusline() work after multiline message #21014', function()
-    async_meths.exec(
+    async_meths.nvim_exec(
       [[
       echo "\n"
       call win_move_statusline(0, -4)
@@ -2196,7 +2196,7 @@ aliquip ex ea commodo consequat.]]
     }
 
     -- not processed while command is executing
-    async_meths.ui_try_resize(35, 5)
+    async_meths.nvim_ui_try_resize(35, 5)
 
     -- TODO(bfredl): ideally it should be processed just
     -- before the "press ENTER" prompt though

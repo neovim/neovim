@@ -14,8 +14,8 @@ local ffi = helpers.ffi
 local neq = helpers.neq
 local eq = helpers.eq
 local mergedicts_copy = helpers.mergedicts_copy
-local format_string = helpers.format_string
-local format_luav = helpers.format_luav
+local format_string = require('test.format_string').format_string
+local format_luav = require('test.format_string').format_luav
 local intchar2lua = helpers.intchar2lua
 local dictdiff = helpers.dictdiff
 

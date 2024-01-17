@@ -525,7 +525,7 @@ describe('ShaDa marks support code', function()
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
       if v.type == 7 and v.value.f == mock_file_path .. '-' then
-        print(require('test.helpers').format_luav(v))
+        print(require('test.format_string').format_luav(v))
         found = found + 1
       end
     end

@@ -18,15 +18,14 @@ end
 
 --- @class test.helpers
 local module = {
-  REMOVE_THIS = {},
+  paths = Paths,
 }
 
 --- @param p string
 --- @return string
 local function relpath(p)
   p = vim.fs.normalize(p)
-  local cwd = uv.cwd()
-  return p:gsub('^' .. cwd)
+  return (p:gsub('^' .. uv.cwd, ''))
 end
 
 --- @param path string
@@ -42,41 +41,34 @@ function module.isdir(path)
   return stat.type == 'directory'
 end
 
---- @param path string
---- @return boolean
-function module.isfile(path)
-  if not path then
-    return false
-  end
-  local stat = uv.fs_stat(path)
-  if not stat then
-    return false
-  end
-  return stat.type == 'file'
-end
-
+--- @param ... string|string[]
 --- @return string
 function module.argss_to_cmd(...)
-  local cmd = ''
+  local cmd = {} --- @type string[]
   for i = 1, select('#', ...) do
     local arg = select(i, ...)
     if type(arg) == 'string' then
-      cmd = cmd .. ' ' .. shell_quote(arg)
+      cmd[#cmd + 1] = shell_quote(arg)
     else
+      --- @cast arg string[]
       for _, subarg in ipairs(arg) do
-        cmd = cmd .. ' ' .. shell_quote(subarg)
+        cmd[#cmd + 1] = shell_quote(subarg)
       end
     end
   end
-  return cmd
+  return table.concat(cmd, ' ')
 end
 
 function module.popen_r(...)
   return io.popen(module.argss_to_cmd(...), 'r')
 end
 
--- Calls fn() until it succeeds, up to `max` times or until `max_ms`
--- milliseconds have passed.
+--- Calls fn() until it succeeds, up to `max` times or until `max_ms`
+--- milliseconds have passed.
+--- @param max integer?
+--- @param max_ms integer?
+--- @param fn function
+--- @return any
 function module.retry(max, max_ms, fn)
   luaassert(max == nil or max > 0)
   luaassert(max_ms == nil or max_ms > 0)
@@ -84,6 +76,7 @@ function module.retry(max, max_ms, fn)
   local timeout = (max_ms and max_ms or 10000)
   local start_time = uv.now()
   while true do
+    --- @type boolean, any
     local status, result = pcall(fn)
     if status then
       return result
@@ -133,6 +126,9 @@ function module.fail(msg)
   return luaassert.epicfail(msg)
 end
 
+--- @param pat string
+--- @param actual string
+--- @return boolean
 function module.matches(pat, actual)
   if nil ~= string.match(actual, pat) then
     return true
@@ -182,10 +178,16 @@ end
 --- Asserts that `pat` does NOT match any line in the tail of `logfile`.
 ---
 --- @see assert_log
+--- @param pat (string) Lua pattern to match lines in the log file
+--- @param logfile? (string) Full path to log file (default=$NVIM_LOG_FILE)
+--- @param nrlines? (number) Search up to this many log lines
 function module.assert_nolog(pat, logfile, nrlines)
   return module.assert_log(pat, logfile, nrlines, true)
 end
 
+--- @param fn fun(...): any
+--- @param ... any
+--- @return boolean, any
 function module.pcall(fn, ...)
   luaassert(type(fn) == 'function')
   local status, rv = pcall(fn, ...)
@@ -233,6 +235,8 @@ end
 --    -- Match Lua pattern.
 --    matches('e[or]+$', pcall_err(function(a, b) error('some error') end, 'arg1', 'arg2'))
 --
+--- @param fn function
+--- @return string
 function module.pcall_err_withfile(fn, ...)
   luaassert(type(fn) == 'function')
   local status, rv = module.pcall(fn, ...)
@@ -242,19 +246,29 @@ function module.pcall_err_withfile(fn, ...)
   return rv
 end
 
+--- @param fn function
+--- @param ... any
+--- @return string
 function module.pcall_err_withtrace(fn, ...)
   local errmsg = module.pcall_err_withfile(fn, ...)
 
-  return errmsg
-    :gsub('^%.%.%./helpers%.lua:0: ', '')
-    :gsub('^Error executing lua:- ', '')
-    :gsub('^%[string "<nvim>"%]:0: ', '')
+  return (
+    errmsg
+      :gsub('^%.%.%./helpers%.lua:0: ', '')
+      :gsub('^Error executing lua:- ', '')
+      :gsub('^%[string "<nvim>"%]:0: ', '')
+  )
 end
 
-function module.pcall_err(...)
-  return module.remove_trace(module.pcall_err_withtrace(...))
+--- @param fn function
+--- @param ... any
+--- @return string
+function module.pcall_err(fn, ...)
+  return module.remove_trace(module.pcall_err_withtrace(fn, ...))
 end
 
+--- @param s string
+--- @return string
 function module.remove_trace(s)
   return (s:gsub('\n%s*stack traceback:.*', ''))
 end
@@ -264,9 +278,9 @@ end
 -- exc_re:        exclude pattern(s) (string or table)
 function module.glob(initial_path, re, exc_re)
   exc_re = type(exc_re) == 'table' and exc_re or { exc_re }
-  local paths_to_check = { initial_path }
-  local ret = {}
-  local checked_files = {}
+  local paths_to_check = { initial_path } --- @type string[]
+  local ret = {} --- @type string[]
+  local checked_files = {} --- @type table<string,true>
   local function is_excluded(path)
     for _, pat in pairs(exc_re) do
       if path:match(pat) then
@@ -313,7 +327,7 @@ function module.check_logs()
         local file = log_dir .. '/' .. tail
         local fd = assert(io.open(file))
         local start_msg = ('='):rep(20) .. ' File ' .. file .. ' ' .. ('='):rep(20)
-        local lines = {}
+        local lines = {} --- @type string[]
         local warning_line = 0
         for line in fd:lines() do
           local cur_warning_line = check_logs_useless_lines[line]
@@ -325,6 +339,7 @@ function module.check_logs()
         end
         fd:close()
         if #lines > 0 then
+          --- @type boolean?, file*?
           local status, f
           local out = io.stdout
           if os.getenv('SYMBOLIZER') then
@@ -332,6 +347,7 @@ function module.check_logs()
           end
           out:write(start_msg .. '\n')
           if status then
+            assert(f)
             for line in f:lines() do
               out:write('= ' .. line .. '\n')
             end
@@ -353,10 +369,7 @@ function module.check_logs()
 end
 
 function module.sysname()
-  local platform = uv.os_uname()
-  if platform and platform.sysname then
-    return platform.sysname:lower()
-  end
+  return uv.os_uname().sysname:lower()
 end
 
 function module.is_os(s)
@@ -372,26 +385,15 @@ function module.is_os(s)
   )
 end
 
-function module.is_arch(s)
-  local machine = uv.os_uname().machine
-  if s == 'arm64' or s == 'aarch64' then
-    return machine == 'arm64' or machine == 'aarch64'
-  end
-
-  if s == 'x86' or s == 'x86_64' or s == 'amd64' then
-    return machine == 'x86_64'
-  end
-
-  return machine == s
-end
-
 local function tmpdir_get()
   return os.getenv('TMPDIR') and os.getenv('TMPDIR') or os.getenv('TEMP')
 end
 
--- Is temp directory `dir` defined local to the project workspace?
+--- Is temp directory `dir` defined local to the project workspace?
+--- @param dir string?
+--- @return boolean
 local function tmpdir_is_local(dir)
-  return not not (dir and string.find(dir, 'Xtest'))
+  return not not (dir and dir:find('Xtest'))
 end
 
 --- Creates a new temporary file for use by tests.
@@ -422,14 +424,6 @@ module.tmpname = (function()
   end
 end)()
 
-function module.hasenv(name)
-  local env = os.getenv(name)
-  if env and env ~= '' then
-    return env
-  end
-  return nil
-end
-
 local function deps_prefix()
   local env = os.getenv('DEPS_PREFIX')
   return (env and env ~= '') and env or '.deps/usr'
@@ -443,6 +437,7 @@ function module.check_cores(app, force) -- luacheck: ignore
     return
   end
   app = app or 'build/bin/nvim' -- luacheck: ignore
+  --- @type string, string?, string[]
   local initial_path, re, exc_re
   local gdb_db_cmd =
     'gdb -n -batch -ex "thread apply all bt full" "$_NVIM_TEST_APP" -c "$_NVIM_TEST_CORE"'
@@ -455,13 +450,14 @@ function module.check_cores(app, force) -- luacheck: ignore
       and relpath(tmpdir_get()):gsub('^[ ./]+', ''):gsub('%/+$', ''):gsub('([^%w])', '%%%1')
     or nil
   )
-  local db_cmd
-  if module.hasenv('NVIM_TEST_CORE_GLOB_DIRECTORY') then
-    initial_path = os.getenv('NVIM_TEST_CORE_GLOB_DIRECTORY')
+  local db_cmd --- @type string
+  local test_glob_dir = os.getenv('NVIM_TEST_CORE_GLOB_DIRECTORY')
+  if test_glob_dir and test_glob_dir ~= '' then
+    initial_path = test_glob_dir
     re = os.getenv('NVIM_TEST_CORE_GLOB_RE')
     exc_re = { os.getenv('NVIM_TEST_CORE_EXC_RE'), local_tmpdir }
     db_cmd = os.getenv('NVIM_TEST_CORE_DB_CMD') or gdb_db_cmd
-    random_skip = os.getenv('NVIM_TEST_CORE_RANDOM_SKIP')
+    random_skip = os.getenv('NVIM_TEST_CORE_RANDOM_SKIP') ~= ''
   elseif module.is_os('mac') then
     initial_path = '/cores'
     re = nil
@@ -519,21 +515,28 @@ function module.repeated_read_cmd(...)
   return nil
 end
 
+--- @generic T
+--- @param orig T
+--- @return T
 function module.shallowcopy(orig)
   if type(orig) ~= 'table' then
     return orig
   end
-  local copy = {}
+  --- @cast orig table<any,any>
+  local copy = {} --- @type table<any,any>
   for orig_key, orig_value in pairs(orig) do
     copy[orig_key] = orig_value
   end
   return copy
 end
 
+--- @param d1 table<any,any>
+--- @param d2 table<any,any>
+--- @return table<any,any>
 function module.mergedicts_copy(d1, d2)
   local ret = module.shallowcopy(d1)
   for k, v in pairs(d2) do
-    if d2[k] == module.REMOVE_THIS then
+    if d2[k] == vim.NIL then
       ret[k] = nil
     elseif type(d1[k]) == 'table' and type(v) == 'table' then
       ret[k] = module.mergedicts_copy(d1[k], v)
@@ -544,16 +547,18 @@ function module.mergedicts_copy(d1, d2)
   return ret
 end
 
--- dictdiff: find a diff so that mergedicts_copy(d1, diff) is equal to d2
---
--- Note: does not do copies of d2 values used.
+--- dictdiff: find a diff so that mergedicts_copy(d1, diff) is equal to d2
+---
+--- Note: does not do copies of d2 values used.
+--- @param d1 table<any,any>
+--- @param d2 table<any,any>
 function module.dictdiff(d1, d2)
-  local ret = {}
+  local ret = {} --- @type table<any,any>
   local hasdiff = false
   for k, v in pairs(d1) do
     if d2[k] == nil then
       hasdiff = true
-      ret[k] = module.REMOVE_THIS
+      ret[k] = vim.NIL
     elseif type(v) == type(d2[k]) then
       if type(v) == 'table' then
         local subdiff = module.dictdiff(v, d2[k])
@@ -584,17 +589,11 @@ function module.dictdiff(d1, d2)
   end
 end
 
-function module.updated(d, d2)
-  for k, v in pairs(d2) do
-    d[k] = v
-  end
-  return d
-end
-
 -- Concat list-like tables.
 function module.concat_tables(...)
-  local ret = {}
+  local ret = {} --- @type table<any,any>
   for i = 1, select('#', ...) do
+    --- @type table<any,any>
     local tbl = select(i, ...)
     if tbl then
       for _, v in ipairs(tbl) do
@@ -633,192 +632,13 @@ function module.dedent(str, leave_indent)
   return str
 end
 
-local function format_float(v)
-  -- On windows exponent appears to have three digits and not two
-  local ret = ('%.6e'):format(v)
-  local l, f, es, e = ret:match('^(%-?%d)%.(%d+)e([+%-])0*(%d%d+)$')
-  return l .. '.' .. f .. 'e' .. es .. e
-end
-
-local SUBTBL = {
-  '\\000',
-  '\\001',
-  '\\002',
-  '\\003',
-  '\\004',
-  '\\005',
-  '\\006',
-  '\\007',
-  '\\008',
-  '\\t',
-  '\\n',
-  '\\011',
-  '\\012',
-  '\\r',
-  '\\014',
-  '\\015',
-  '\\016',
-  '\\017',
-  '\\018',
-  '\\019',
-  '\\020',
-  '\\021',
-  '\\022',
-  '\\023',
-  '\\024',
-  '\\025',
-  '\\026',
-  '\\027',
-  '\\028',
-  '\\029',
-  '\\030',
-  '\\031',
-}
-
--- Formats Lua value `v`.
---
--- TODO(justinmk): redundant with vim.inspect() ?
---
--- "Nice table formatting similar to screen:snapshot_util()".
--- Commit: 520c0b91a528
-function module.format_luav(v, indent, opts)
-  opts = opts or {}
-  local linesep = '\n'
-  local next_indent_arg = nil
-  local indent_shift = opts.indent_shift or '  '
-  local next_indent
-  local nl = '\n'
-  if indent == nil then
-    indent = ''
-    linesep = ''
-    next_indent = ''
-    nl = ' '
-  else
-    next_indent_arg = indent .. indent_shift
-    next_indent = indent .. indent_shift
-  end
-  local ret = ''
-  if type(v) == 'string' then
-    if opts.literal_strings then
-      ret = v
-    else
-      local quote = opts.dquote_strings and '"' or "'"
-      ret = quote
-        .. tostring(v)
-          :gsub(opts.dquote_strings and '["\\]' or "['\\]", '\\%0')
-          :gsub('[%z\1-\31]', function(match)
-            return SUBTBL[match:byte() + 1]
-          end)
-        .. quote
-    end
-  elseif type(v) == 'table' then
-    if v == module.REMOVE_THIS then
-      ret = 'REMOVE_THIS'
-    else
-      local processed_keys = {}
-      ret = '{' .. linesep
-      local non_empty = false
-      local format_luav = module.format_luav
-      for i, subv in ipairs(v) do
-        ret = ('%s%s%s,%s'):format(ret, next_indent, format_luav(subv, next_indent_arg, opts), nl)
-        processed_keys[i] = true
-        non_empty = true
-      end
-      for k, subv in pairs(v) do
-        if not processed_keys[k] then
-          if type(k) == 'string' and k:match('^[a-zA-Z_][a-zA-Z0-9_]*$') then
-            ret = ret .. next_indent .. k .. ' = '
-          else
-            ret = ('%s%s[%s] = '):format(ret, next_indent, format_luav(k, nil, opts))
-          end
-          ret = ret .. format_luav(subv, next_indent_arg, opts) .. ',' .. nl
-          non_empty = true
-        end
-      end
-      if nl == ' ' and non_empty then
-        ret = ret:sub(1, -3)
-      end
-      ret = ret .. indent .. '}'
-    end
-  elseif type(v) == 'number' then
-    if v % 1 == 0 then
-      ret = ('%d'):format(v)
-    else
-      ret = format_float(v)
-    end
-  elseif type(v) == 'nil' then
-    ret = 'nil'
-  elseif type(v) == 'boolean' then
-    ret = (v and 'true' or 'false')
-  else
-    print(type(v))
-    -- Not implemented yet
-    luaassert(false)
-  end
-  return ret
-end
-
--- Like Python repr(), "{!r}".format(s)
---
--- Commit: 520c0b91a528
-function module.format_string(fmt, ...)
-  local i = 0
-  local args = { ... }
-  local function getarg()
-    i = i + 1
-    return args[i]
-  end
-  local ret = fmt:gsub('%%[0-9*]*%.?[0-9*]*[cdEefgGiouXxqsr%%]', function(match)
-    local subfmt = match:gsub('%*', function()
-      return tostring(getarg())
-    end)
-    local arg = nil
-    if subfmt:sub(-1) ~= '%' then
-      arg = getarg()
-    end
-    if subfmt:sub(-1) == 'r' or subfmt:sub(-1) == 'q' then
-      -- %r is like built-in %q, but it is supposed to single-quote strings and
-      -- not double-quote them, and also work not only for strings.
-      -- Builtin %q is replaced here as it gives invalid and inconsistent with
-      -- luajit results for e.g. "\e" on lua: luajit transforms that into `\27`,
-      -- lua leaves as-is.
-      arg = module.format_luav(arg, nil, { dquote_strings = (subfmt:sub(-1) == 'q') })
-      subfmt = subfmt:sub(1, -2) .. 's'
-    end
-    if subfmt == '%e' then
-      return format_float(arg)
-    else
-      return subfmt:format(arg)
-    end
-  end)
-  return ret
-end
-
 function module.intchar2lua(ch)
   ch = tonumber(ch)
   return (20 <= ch and ch < 127) and ('%c'):format(ch) or ch
 end
 
-local fixtbl_metatable = {
-  __newindex = function()
-    luaassert(false)
-  end,
-}
-
-function module.fixtbl(tbl)
-  return setmetatable(tbl, fixtbl_metatable)
-end
-
-function module.fixtbl_rec(tbl)
-  local fixtbl_rec = module.fixtbl_rec
-  for _, v in pairs(tbl) do
-    if type(v) == 'table' then
-      fixtbl_rec(v)
-    end
-  end
-  return module.fixtbl(tbl)
-end
-
+--- @param str string
+--- @return string
 function module.hexdump(str)
   local len = string.len(str)
   local dump = ''
@@ -844,10 +664,10 @@ function module.hexdump(str)
   return dump .. hex .. string.rep('   ', 8 - len % 8) .. asc
 end
 
--- Reads text lines from `filename` into a table.
---
--- filename: path to file
--- start: start line (1-indexed), negative means "lines before end" (tail)
+--- Reads text lines from `filename` into a table.
+--- @param filename string path to file
+--- @param start? integer start line (1-indexed), negative means "lines before end" (tail)
+--- @return string[]?
 function module.read_file_list(filename, start)
   local lnum = (start ~= nil and type(start) == 'number') and start or 1
   local tail = (lnum < 0)
@@ -883,9 +703,9 @@ function module.read_file_list(filename, start)
   return lines
 end
 
--- Reads the entire contents of `filename` into a string.
---
--- filename: path to file
+--- Reads the entire contents of `filename` into a string.
+--- @param filename string
+--- @return string?
 function module.read_file(filename)
   local file = io.open(filename, 'r')
   if not file then
@@ -901,6 +721,7 @@ function module.write_file(name, text, no_dedent, append)
   local file = assert(io.open(name, (append and 'a' or 'w')))
   if type(text) == 'table' then
     -- Byte blob
+    --- @type string[]
     local bytes = text
     text = ''
     for _, char in ipairs(bytes) do
@@ -914,6 +735,8 @@ function module.write_file(name, text, no_dedent, append)
   file:close()
 end
 
+--- @param name? 'cirrus'|'github'
+--- @return boolean
 function module.is_ci(name)
   local any = (name == nil)
   luaassert(any or name == 'github' or name == 'cirrus')
@@ -946,12 +769,10 @@ function module.read_nvim_log(logfile, ci_rename)
 end
 
 --- @param path string
---- @return string
+--- @return boolean?
 function module.mkdir(path)
   -- 493 is 0755 in decimal
-  return uv.fs_mkdir(path, 493)
+  return (uv.fs_mkdir(path, 493))
 end
-
-module = vim.tbl_extend('error', module, Paths, require('test.deprecated'))
 
 return module

@@ -18,7 +18,7 @@ local fail = global_helpers.fail
 local module = {}
 
 local runtime_set = 'set runtimepath^=./build/lib/nvim/'
-module.nvim_prog = (os.getenv('NVIM_PRG') or global_helpers.test_build_dir .. '/bin/nvim')
+module.nvim_prog = (os.getenv('NVIM_PRG') or global_helpers.paths.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
 module.nvim_set = (
   'set shortmess+=IS background=light termguicolors noswapfile noautoindent startofline'
@@ -55,7 +55,7 @@ if module.nvim_dir == module.nvim_prog then
   module.nvim_dir = '.'
 end
 
-local prepend_argv
+local prepend_argv --- @type string[]?
 
 if os.getenv('VALGRIND') then
   local log_file = os.getenv('VALGRIND_LOG') or 'valgrind-%p.log'
@@ -79,7 +79,7 @@ elseif os.getenv('GDB') then
 end
 
 if prepend_argv then
-  local new_nvim_argv = {}
+  local new_nvim_argv = {} --- @type string[]
   local len = #prepend_argv
   for i = 1, len do
     new_nvim_argv[i] = prepend_argv[i]
@@ -91,10 +91,13 @@ if prepend_argv then
   module.prepend_argv = prepend_argv
 end
 
-local session, loop_running, last_error, method_error
+local session --- @type test.Session?
+local loop_running --- @type boolean?
+local last_error --- @type string?
+local method_error --- @type string?
 
 if not is_os('win') then
-  local sigpipe_handler = uv.new_signal()
+  local sigpipe_handler = assert(uv.new_signal())
   uv.signal_start(sigpipe_handler, 'sigpipe', function()
     print('warning: got SIGPIPE signal. Likely related to a crash in nvim')
   end)
@@ -108,10 +111,15 @@ function module.set_session(s)
   session = s
 end
 
+--- @param method string
+--- @param ... any
+--- @return any
 function module.request(method, ...)
+  assert(session)
   local status, rv = session:request(method, ...)
   if not status then
     if loop_running then
+      --- @type string
       last_error = rv[2]
       session:stop()
     else
@@ -121,12 +129,18 @@ function module.request(method, ...)
   return rv
 end
 
+--- @param method string
+--- @param ... any
+--- @return any
 function module.request_lua(method, ...)
   return module.exec_lua([[return vim.api[...](select(2, ...))]], method, ...)
 end
 
+--- @param timeout? integer
+--- @return string?
 function module.next_msg(timeout)
-  return session:next_message(timeout and timeout or 10000)
+  assert(session)
+  return session:next_message(timeout or 10000)
 end
 
 function module.expect_twostreams(msgs1, msgs2)
@@ -164,6 +178,7 @@ function module.expect_msg_seq(...)
     error('invalid args')
   end
   local ignore = arg1['ignore'] and arg1['ignore'] or {}
+  --- @type string[]
   local seqs = arg1['seqs'] and arg1['seqs'] or { ... }
   if type(ignore) ~= 'table' then
     error("'ignore' arg must be a list of strings")
@@ -213,6 +228,7 @@ function module.expect_msg_seq(...)
     local message = result
     if type(result) == 'table' then
       -- 'eq' returns several things
+      --- @type string
       message = result.message
     end
     final_error = cat_err(final_error, message)
@@ -234,8 +250,16 @@ function module.set_method_error(err)
   method_error = err
 end
 
+--- @param lsession test.Session
+--- @param request_cb function
+--- @param notification_cb function
+--- @param setup_cb function
+--- @param timeout integer
+--- @return {[1]: integer, [2]: string}
 function module.run_session(lsession, request_cb, notification_cb, setup_cb, timeout)
-  local on_request, on_notification, on_setup
+  local on_request --- @type function?
+  local on_notification --- @type function?
+  local on_setup --- @type function?
 
   if request_cb then
     function on_request(method, args)
@@ -273,11 +297,12 @@ function module.run_session(lsession, request_cb, notification_cb, setup_cb, tim
 end
 
 function module.run(request_cb, notification_cb, setup_cb, timeout)
+  assert(session)
   return module.run_session(session, request_cb, notification_cb, setup_cb, timeout)
 end
 
 function module.stop()
-  session:stop()
+  assert(session):stop()
 end
 
 function module.nvim_prog_abs()
@@ -301,6 +326,7 @@ function module.expect_exit(fn_or_timeout, ...)
       eof_err_msg,
       module.pcall_err(function(timeout, fn, ...)
         fn(...)
+        assert(session)
         while session:next_message(timeout) do
         end
         if session.eof_err then
@@ -311,26 +337,18 @@ function module.expect_exit(fn_or_timeout, ...)
   end
 end
 
--- Evaluates a Vimscript expression.
--- Fails on Vimscript error, but does not update v:errmsg.
-function module.eval(expr)
-  return module.request('nvim_eval', expr)
-end
-
--- Executes a Vimscript function via RPC.
--- Fails on Vimscript error, but does not update v:errmsg.
-function module.call(name, ...)
-  return module.request('nvim_call_function', name, { ... })
-end
-
--- Executes a Vimscript function via Lua.
--- Fails on Vimscript error, but does not update v:errmsg.
+--- Executes a Vimscript function via Lua.
+--- Fails on Vimscript error, but does not update v:errmsg.
+--- @param name string
+--- @param ... any
+--- @return any
 function module.call_lua(name, ...)
   return module.exec_lua([[return vim.call(...)]], name, ...)
 end
 
--- Sends user input to Nvim.
--- Does not fail on Vimscript error, but v:errmsg will be updated.
+--- Sends user input to Nvim.
+--- Does not fail on Vimscript error, but v:errmsg will be updated.
+--- @param input string
 local function nvim_feed(input)
   while #input > 0 do
     local written = module.request('nvim_input', input)
@@ -342,22 +360,27 @@ local function nvim_feed(input)
   end
 end
 
+--- @param ... string
 function module.feed(...)
   for _, v in ipairs({ ... }) do
     nvim_feed(dedent(v))
   end
 end
 
+--- @param ... string
 function module.rawfeed(...)
   for _, v in ipairs({ ... }) do
     nvim_feed(dedent(v))
   end
 end
 
+---@param ... string[]?
+---@return string[]
 function module.merge_args(...)
   local i = 1
-  local argv = {}
+  local argv = {} --- @type string[]
   for anum = 1, select('#', ...) do
+    --- @type string[]?
     local args = select(anum, ...)
     if args then
       for _, arg in ipairs(args) do
@@ -369,26 +392,29 @@ function module.merge_args(...)
   return argv
 end
 
---  Removes Nvim startup args from `args` matching items in `args_rm`.
---
---  - Special case: "-u", "-i", "--cmd" are treated specially: their "values" are also removed.
---  - Special case: "runtimepath" will remove only { '--cmd', 'set runtimepath^=…', }
---
---  Example:
---      args={'--headless', '-u', 'NONE'}
---      args_rm={'--cmd', '-u'}
---  Result:
---      {'--headless'}
---
---  All matching cases are removed.
---
---  Example:
---      args={'--cmd', 'foo', '-N', '--cmd', 'bar'}
---      args_rm={'--cmd', '-u'}
---  Result:
---      {'-N'}
+--- Removes Nvim startup args from `args` matching items in `args_rm`.
+---
+--- - Special case: "-u", "-i", "--cmd" are treated specially: their "values" are also removed.
+--- - Special case: "runtimepath" will remove only { '--cmd', 'set runtimepath^=…', }
+---
+--- Example:
+---     args={'--headless', '-u', 'NONE'}
+---     args_rm={'--cmd', '-u'}
+--- Result:
+---     {'--headless'}
+---
+--- All matching cases are removed.
+---
+--- Example:
+---     args={'--cmd', 'foo', '-N', '--cmd', 'bar'}
+---     args_rm={'--cmd', '-u'}
+--- Result:
+---     {'-N'}
+--- @param args string[]
+--- @param args_rm string[]
+--- @return string[]
 local function remove_args(args, args_rm)
-  local new_args = {}
+  local new_args = {} --- @type string[]
   local skip_following = { '-u', '-i', '-c', '--cmd', '-s', '--listen' }
   if not args_rm or #args_rm == 0 then
     return { unpack(args) }
@@ -433,7 +459,12 @@ function module.check_close()
   session = nil
 end
 
---- @param io_extra used for stdin_fd, see :help ui-option
+--- @param argv string[]
+--- @param merge boolean?
+--- @param env string[]?
+--- @param keep boolean
+--- @param io_extra uv.uv_pipe_t? used for stdin_fd, see :help ui-option
+--- @return test.Session
 function module.spawn(argv, merge, env, keep, io_extra)
   if not keep then
     module.check_close()
@@ -469,16 +500,27 @@ function module.clear(...)
   return module.get_session()
 end
 
--- same params as clear, but does returns the session instead
--- of replacing the default session
+--- same params as clear, but does returns the session instead
+--- of replacing the default session
+--- @return test.Session
 function module.spawn_argv(keep, ...)
   local argv, env, io_extra = module.new_argv(...)
   return module.spawn(argv, nil, env, keep, io_extra)
 end
 
--- Builds an argument list for use in clear().
---
----@see clear() for parameters.
+--- @class test.new_argv.Opts
+--- @field args? string[]
+--- @field args_rm? string[]
+--- @field env? table<string,string>
+--- @field io_extra? uv.uv_pipe_t
+
+--- Builds an argument list for use in clear().
+---
+--- @see clear() for parameters.
+--- @param ... string
+--- @return string[]
+--- @return string[]?
+--- @return uv.uv_pipe_t?
 function module.new_argv(...)
   local args = { unpack(module.nvim_argv) }
   table.insert(args, '--headless')
@@ -487,16 +529,17 @@ function module.new_argv(...)
     table.insert(args, '--listen')
     table.insert(args, _G._nvim_test_id)
   end
-  local new_args
-  local io_extra
-  local env = nil
+  local new_args --- @type string[]
+  local io_extra --- @type uv.uv_pipe_t?
+  local env --- @type string[]?
+  --- @type test.new_argv.Opts|string
   local opts = select(1, ...)
   if type(opts) ~= 'table' then
     new_args = { ... }
   else
     args = remove_args(args, opts.args_rm)
     if opts.env then
-      local env_opt = {}
+      local env_opt = {} --- @type table<string,string>
       for k, v in pairs(opts.env) do
         assert(type(k) == 'string')
         assert(type(v) == 'string')
@@ -535,6 +578,7 @@ function module.new_argv(...)
   return args, env, io_extra
 end
 
+--- @param ... string
 function module.insert(...)
   nvim_feed('i')
   for _, v in ipairs({ ... }) do
@@ -544,8 +588,9 @@ function module.insert(...)
   nvim_feed('<ESC>')
 end
 
--- Executes an ex-command by user input. Because nvim_input() is used, Vimscript
--- errors will not manifest as client (lua) errors. Use command() for that.
+--- Executes an ex-command by user input. Because nvim_input() is used, Vimscript
+--- errors will not manifest as client (lua) errors. Use command() for that.
+--- @param ... string
 function module.feed_command(...)
   for _, v in ipairs({ ... }) do
     if v:sub(1, 1) ~= '/' then
@@ -598,8 +643,10 @@ function module.set_shell_powershell(fake)
 end
 
 function module.create_callindex(func)
-  local table = {}
-  setmetatable(table, {
+  return setmetatable({}, {
+    --- @param tbl table<any,function>
+    --- @param arg1 string
+    --- @return function
     __index = function(tbl, arg1)
       local ret = function(...)
         return func(arg1, ...)
@@ -608,36 +655,34 @@ function module.create_callindex(func)
       return ret
     end,
   })
-  return table
 end
 
-local function ui(method, ...)
-  return module.request('nvim_ui_' .. method, ...)
-end
-
+--- @param method string
+--- @param ... any
 function module.nvim_async(method, ...)
-  session:notify('nvim_' .. method, ...)
+  assert(session):notify(method, ...)
+end
+
+--- Executes a Vimscript function via RPC.
+--- Fails on Vimscript error, but does not update v:errmsg.
+--- @param name string
+--- @param ... any
+--- @return any
+function module.call(name, ...)
+  return module.request('nvim_call_function', name, { ... })
 end
 
 module.async_meths = module.create_callindex(module.nvim_async)
-module.uimeths = module.create_callindex(ui)
 
-local function create_bridge(request, call)
-  local function nvim(method, ...)
-    if vim.startswith(method, 'nvim_') then
-      return request(method, ...)
-    end
-    return request('nvim_' .. method, ...)
-  end
+module.rpc = {
+  fn = module.create_callindex(module.call),
+  api = module.create_callindex(module.request),
+}
 
-  return {
-    fn = module.create_callindex(call),
-    api = module.create_callindex(nvim),
-  }
-end
-
-module.rpc = create_bridge(module.request, module.call)
-module.lua = create_bridge(module.request_lua, module.call_lua)
+module.lua = {
+  fn = module.create_callindex(module.call_lua),
+  api = module.create_callindex(module.request_lua),
+}
 
 module.describe_lua_and_rpc = function(describe)
   return function(what, tests)
@@ -657,6 +702,7 @@ module.api = vim.api
 module.fn = vim.fn
 
 for name, fns in pairs(module.rpc) do
+  --- @diagnostic disable-next-line:no-unknown
   module[name] = fns
 end
 
@@ -664,10 +710,14 @@ end
 -- v:errmsg will not be updated.
 module.command = module.api.nvim_command
 
+-- Evaluates a Vimscript expression.
+-- Fails on Vimscript error, but does not update v:errmsg.
+module.eval = module.api.nvim_eval
+
 function module.poke_eventloop()
   -- Execute 'nvim_eval' (a deferred function) to
   -- force at least one main_loop iteration
-  session:request('nvim_eval', '1')
+  module.api.nvim_eval('1')
 end
 
 function module.buf_lines(bufnr)
@@ -689,6 +739,10 @@ function module.expect_any(contents)
   return ok(nil ~= string.find(module.curbuf_contents(), contents, 1, true))
 end
 
+--- @param expected any[]
+--- @param received any[]
+--- @param kind string
+--- @return any
 function module.expect_events(expected, received, kind)
   if not pcall(eq, expected, received) then
     local msg = 'unexpected ' .. kind .. ' received.\n\n'
@@ -728,6 +782,7 @@ function module.assert_visible(bufnr, visible)
   end
 end
 
+--- @param path string
 local function do_rmdir(path)
   local stat = uv.fs_stat(path)
   if stat == nil then
@@ -795,14 +850,17 @@ function module.exc_exec(cmd)
   return ret
 end
 
+--- @param cond boolean
+--- @param reason string
+--- @return boolean
 function module.skip(cond, reason)
   if cond then
+    --- @type fun(reason: string)
     local pending = getfenv(2).pending
     pending(reason or 'FIXME')
     return true
-  else
-    return false
   end
+  return false
 end
 
 -- Calls pending() and returns `true` if the system is too slow to
@@ -825,6 +883,8 @@ function module.exec(code)
   module.api.nvim_exec2(code, {})
 end
 
+--- @param code string
+--- @return string
 function module.exec_capture(code)
   return module.api.nvim_exec2(code, { output = true }).output
 end
@@ -832,7 +892,7 @@ end
 --- @param code string
 --- @return any
 function module.exec_lua(code, ...)
-  return module.api.exec_lua(code, { ... })
+  return module.api.nvim_exec_lua(code, { ... })
 end
 
 function module.get_pathsep()
@@ -871,19 +931,24 @@ function module.new_pipename()
   return pipename
 end
 
+--- @param provider string
+--- @return string|false?
 function module.missing_provider(provider)
   if provider == 'ruby' or provider == 'node' or provider == 'perl' then
+    --- @type string?
     local e = module.fn['provider#' .. provider .. '#Detect']()[2]
     return e ~= '' and e or false
   elseif provider == 'python' or provider == 'python3' then
     local py_major_version = (provider == 'python3' and 3 or 2)
+    --- @type string?
     local e = module.fn['provider#pythonx#Detect'](py_major_version)[2]
     return e ~= '' and e or false
-  else
-    assert(false, 'Unknown provider: ' .. provider)
   end
+  assert(false, 'Unknown provider: ' .. provider)
 end
 
+--- @param obj string|table
+--- @return any
 function module.alter_slashes(obj)
   if not is_os('win') then
     return obj
@@ -892,14 +957,14 @@ function module.alter_slashes(obj)
     local ret = obj:gsub('/', '\\')
     return ret
   elseif type(obj) == 'table' then
-    local ret = {}
+    --- @cast obj table<any,any>
+    local ret = {} --- @type table<any,any>
     for k, v in pairs(obj) do
       ret[k] = module.alter_slashes(v)
     end
     return ret
-  else
-    assert(false, 'expected string or table of strings, got ' .. type(obj))
   end
+  assert(false, 'expected string or table of strings, got ' .. type(obj))
 end
 
 local load_factor = 1
@@ -909,18 +974,25 @@ if global_helpers.is_ci() then
   module.request('nvim_command', 'source test/old/testdir/load.vim')
   load_factor = module.request('nvim_eval', 'g:test_load_factor')
 end
+
+--- @param num number
+--- @return number
 function module.load_adjust(num)
   return math.ceil(num * load_factor)
 end
 
+--- @param ctx table<string,any>
+--- @return table
 function module.parse_context(ctx)
-  local parsed = {}
+  local parsed = {} --- @type table<string,any>
   for _, item in ipairs({ 'regs', 'jumps', 'bufs', 'gvars' }) do
+    --- @param v any
     parsed[item] = vim.tbl_filter(function(v)
       return type(v) == 'table'
     end, module.call('msgpackparse', ctx[item]))
   end
   parsed['bufs'] = parsed['bufs'][1]
+  --- @param v any
   return vim.tbl_map(function(v)
     if #v == 0 then
       return nil
@@ -931,10 +1003,12 @@ end
 
 function module.add_builddir_to_rtp()
   -- Add runtime from build dir for doc/tags (used with :help).
-  module.command(string.format([[set rtp+=%s/runtime]], module.test_build_dir))
+  module.command(string.format([[set rtp+=%s/runtime]], module.paths.test_build_dir))
 end
 
--- Kill (reap) a process by PID.
+--- Kill (reap) a process by PID.
+--- @param pid string
+--- @return boolean?
 function module.os_kill(pid)
   return os.execute(
     (
@@ -944,7 +1018,9 @@ function module.os_kill(pid)
   )
 end
 
--- Create folder with non existing parents
+--- Create folder with non existing parents
+--- @param path string
+--- @return boolean?
 function module.mkdir_p(path)
   return os.execute((is_os('win') and 'mkdir ' .. path or 'mkdir -p ' .. path))
 end

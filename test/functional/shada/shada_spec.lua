@@ -7,7 +7,7 @@ local is_os = helpers.is_os
 local skip = helpers.skip
 
 local uv = vim.uv
-local paths = require('test.cmakeconfig.paths')
+local paths = helpers.paths
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear, get_shada_rw =

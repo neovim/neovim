@@ -8,7 +8,7 @@ local assert_alive = helpers.assert_alive
 local NIL = vim.NIL
 local clear, eq, neq = helpers.clear, helpers.eq, helpers.neq
 local command = helpers.command
-local command_output = helpers.api.command_output
+local command_output = helpers.api.nvim_command_output
 local exec = helpers.exec
 local exec_capture = helpers.exec_capture
 local eval = helpers.eval
@@ -19,6 +19,7 @@ local matches = helpers.matches
 local pesc = vim.pesc
 local mkdir_p = helpers.mkdir_p
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
+local async_meths = helpers.async_meths
 local is_os = helpers.is_os
 local parse_context = helpers.parse_context
 local request = helpers.request
@@ -33,7 +34,7 @@ local insert = helpers.insert
 local skip = helpers.skip
 
 local pcall_err = helpers.pcall_err
-local format_string = helpers.format_string
+local format_string = require('test.format_string').format_string
 local intchar2lua = helpers.intchar2lua
 local mergedicts_copy = helpers.mergedicts_copy
 local endswith = vim.endswith
@@ -76,7 +77,7 @@ describe('API', function()
     eq({
       'notification',
       'nvim_error_event',
-      { error_types.Exception.id, 'Invalid method: nvim_bogus' },
+      { error_types.Exception.id, 'Invalid method: bogus' },
     }, next_msg())
     -- error didn't close channel.
     assert_alive()
@@ -84,7 +85,7 @@ describe('API', function()
 
   it('failed async request emits nvim_error_event', function()
     local error_types = api.nvim_get_api_info()[2].error_types
-    nvim_async('command', 'bogus')
+    async_meths.nvim_command('bogus')
     eq({
       'notification',
       'nvim_error_event',
@@ -2081,13 +2082,13 @@ describe('API', function()
           { ['rc'] = { 'hjkl' }, ['n'] = 97 },
         },
 
-        ['jumps'] = eval(([[
+        ['jumps'] = eval((([[
         filter(map(add(
         getjumplist()[0], { 'bufnr': bufnr('%'), 'lnum': getcurpos()[1] }),
         'filter(
         { "f": expand("#".v:val.bufnr.":p"), "l": v:val.lnum },
         { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
-        ]]):gsub('\n', '')),
+        ]]):gsub('\n', ''))),
 
         ['bufs'] = eval([[
         filter(map(getbufinfo(), '{ "f": v:val.name }'), '!empty(v:val.f)')
@@ -2301,7 +2302,7 @@ describe('API', function()
     end)
 
     it('can show one line', function()
-      nvim_async('err_write', 'has bork\n')
+      async_meths.nvim_err_write('has bork\n')
       screen:expect([[
         ^                                        |
         {0:~                                       }|*6
@@ -2310,7 +2311,7 @@ describe('API', function()
     end)
 
     it('shows return prompt when more than &cmdheight lines', function()
-      nvim_async('err_write', 'something happened\nvery bad\n')
+      async_meths.nvim_err_write('something happened\nvery bad\n')
       screen:expect([[
                                                 |
         {0:~                                       }|*3
@@ -2322,7 +2323,7 @@ describe('API', function()
     end)
 
     it('shows return prompt after all lines are shown', function()
-      nvim_async('err_write', 'FAILURE\nERROR\nEXCEPTION\nTRACEBACK\n')
+      async_meths.nvim_err_write('FAILURE\nERROR\nEXCEPTION\nTRACEBACK\n')
       screen:expect([[
                                                 |
         {0:~                                       }|
@@ -2337,8 +2338,8 @@ describe('API', function()
 
     it('handles multiple calls', function()
       -- without linebreak text is joined to one line
-      nvim_async('err_write', 'very ')
-      nvim_async('err_write', 'fail\n')
+      async_meths.nvim_err_write('very ')
+      async_meths.nvim_err_write('fail\n')
       screen:expect([[
         ^                                        |
         {0:~                                       }|*6
@@ -2347,7 +2348,7 @@ describe('API', function()
       helpers.poke_eventloop()
 
       -- shows up to &cmdheight lines
-      nvim_async('err_write', 'more fail\ntoo fail\n')
+      async_meths.nvim_err_write('more fail\ntoo fail\n')
       screen:expect([[
                                                 |
         {0:~                                       }|*3
@@ -2360,7 +2361,7 @@ describe('API', function()
     end)
 
     it('NUL bytes in message', function()
-      nvim_async('err_write', 'aaa\0bbb\0\0ccc\nddd\0\0\0eee\n')
+      async_meths.nvim_err_write('aaa\0bbb\0\0ccc\nddd\0\0\0eee\n')
       screen:expect {
         grid = [[
                                                 |
@@ -2389,7 +2390,7 @@ describe('API', function()
     end)
 
     it('shows only one return prompt after all lines are shown', function()
-      nvim_async('err_writeln', 'FAILURE\nERROR\nEXCEPTION\nTRACEBACK')
+      async_meths.nvim_err_writeln('FAILURE\nERROR\nEXCEPTION\nTRACEBACK')
       screen:expect([[
                                                 |
         {0:~                                       }|
@@ -3394,8 +3395,7 @@ describe('API', function()
     end)
 
     it('can show highlighted line', function()
-      nvim_async(
-        'echo',
+      async_meths.nvim_echo(
         { { 'msg_a' }, { 'msg_b', 'Statement' }, { 'msg_c', 'Special' } },
         true,
         {}
@@ -3410,7 +3410,7 @@ describe('API', function()
     end)
 
     it('can show highlighted multiline', function()
-      nvim_async('echo', { { 'msg_a\nmsg_a', 'Statement' }, { 'msg_b', 'Special' } }, true, {})
+      async_meths.nvim_echo({ { 'msg_a\nmsg_a', 'Statement' }, { 'msg_b', 'Special' } }, true, {})
       screen:expect {
         grid = [[
                                                 |
@@ -3431,7 +3431,7 @@ describe('API', function()
 
     it('can disable saving message history', function()
       command('set cmdheight=2') -- suppress Press ENTER
-      nvim_async('echo', { { 'msg\nmsg' }, { 'msg' } }, false, {})
+      async_meths.nvim_echo({ { 'msg\nmsg' }, { 'msg' } }, false, {})
       eq('', exec_capture('messages'))
     end)
   end)
