@@ -729,7 +729,7 @@ void qsort(void *base, size_t nel, size_t width, int (*compar)(const void *, con
     feed('ggVGzf')
     screen:expect {
       grid = [[
-      {2:^void}{1: }{3:qsort}{4:(}{2:void}{1: }{5:*}{3:base}{4:,}{1: }{2:size_t}{1: }{3:nel}{4:,}{1: }{2:size_t}{1: }{3:width}{4:,}{1: }{2:int}{1: }{4:(}{5:*}{3:compa}|
+      {4:^void}{1: }{3:qsort}{4:(void}{1: }{5:*}{3:base}{4:,}{1: }{4:size_t}{1: }{3:nel}{4:,}{1: }{4:size_t}{1: }{3:width}{4:,}{1: }{4:int}{1: }{4:(}{5:*}{3:compa}|
       {0:~                                                           }|*3
                                                                   |
     ]],

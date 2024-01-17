@@ -112,6 +112,11 @@ The following changes may require adaptations in user config or plugins.
 • 'termguicolors' is enabled by default when Nvim is able to determine that
   the host terminal emulator supports 24-bit color.
 
+• Treesitter highlight groups have been renamed to be more in line with
+  upstream tree-sitter and Helix to make it easier to share queries. The full
+  list is documented in |treesitter-highlight-groups|.
+
+
 ==============================================================================
 BREAKING CHANGES IN HEAD                                    *news-breaking-dev*
 

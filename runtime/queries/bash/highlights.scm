@@ -1,81 +1,100 @@
-(simple_expansion) @none
-(expansion
-  "${" @punctuation.special
-  "}" @punctuation.special) @none
 [
- "("
- ")"
- "(("
- "))"
- "{"
- "}"
- "["
- "]"
- "[["
- "]]"
- ] @punctuation.bracket
+  "("
+  ")"
+  "{"
+  "}"
+  "["
+  "]"
+  "[["
+  "]]"
+  "(("
+  "))"
+] @punctuation.bracket
 
 [
- ";"
- ";;"
- (heredoc_start)
- ] @punctuation.delimiter
+  ";"
+  ";;"
+  ";&"
+  ";;&"
+  "&"
+] @punctuation.delimiter
 
 [
- "$"
-] @punctuation.special
+  ">"
+  ">>"
+  "<"
+  "<<"
+  "&&"
+  "|"
+  "|&"
+  "||"
+  "="
+  "+="
+  "=~"
+  "=="
+  "!="
+  "&>"
+  "&>>"
+  "<&"
+  ">&"
+  ">|"
+  "<&-"
+  ">&-"
+  "<<-"
+  "<<<"
+  ".."
+] @operator
+
+; Do *not* spell check strings since they typically have some sort of
+; interpolation in them, or, are typically used for things like filenames, URLs,
+; flags and file content.
+[
+  (string)
+  (raw_string)
+  (ansi_c_string)
+  (heredoc_body)
+] @string
 
 [
- ">"
- ">>"
- "<"
- "<<"
- "&"
- "&&"
- "|"
- "||"
- "="
- "=~"
- "=="
- "!="
- ] @operator
+  (heredoc_start)
+  (heredoc_end)
+] @label
+
+(variable_assignment
+  (word) @string)
+
+(command
+  argument: "$" @string) ; bare dollar
 
 [
- (string)
- (raw_string)
- (ansi_c_string)
- (heredoc_body)
-] @string @spell
-
-(variable_assignment (word) @string)
-
-[
- "if"
- "then"
- "else"
- "elif"
- "fi"
- "case"
- "in"
- "esac"
- ] @conditional
+  "if"
+  "then"
+  "else"
+  "elif"
+  "fi"
+  "case"
+  "in"
+  "esac"
+] @keyword.conditional
 
 [
- "for"
- "do"
- "done"
- "select"
- "until"
- "while"
- ] @repeat
+  "for"
+  "do"
+  "done"
+  "select"
+  "until"
+  "while"
+] @keyword.repeat
 
 [
- "declare"
- "export"
- "local"
- "readonly"
- "unset"
- ] @keyword
+  "declare"
+  "typeset"
+  "export"
+  "readonly"
+  "local"
+  "unset"
+  "unsetenv"
+] @keyword
 
 "function" @keyword.function
 
@@ -83,28 +102,56 @@
 
 ; trap -l
 ((word) @constant.builtin
- (#match? @constant.builtin "^SIG(HUP|INT|QUIT|ILL|TRAP|ABRT|BUS|FPE|KILL|USR[12]|SEGV|PIPE|ALRM|TERM|STKFLT|CHLD|CONT|STOP|TSTP|TT(IN|OU)|URG|XCPU|XFSZ|VTALRM|PROF|WINCH|IO|PWR|SYS|RTMIN([+]([1-9]|1[0-5]))?|RTMAX(-([1-9]|1[0-4]))?)$"))
+  (#match? @constant.builtin "^SIG(HUP|INT|QUIT|ILL|TRAP|ABRT|BUS|FPE|KILL|USR[12]|SEGV|PIPE|ALRM|TERM|STKFLT|CHLD|CONT|STOP|TSTP|TT(IN|OU)|URG|XCPU|XFSZ|VTALRM|PROF|WINCH|IO|PWR|SYS|RTMIN([+]([1-9]|1[0-5]))?|RTMAX(-([1-9]|1[0-4]))?)$"))
 
 ((word) @boolean
   (#any-of? @boolean "true" "false"))
 
 (comment) @comment @spell
-(test_operator) @string
+
+(test_operator) @operator
 
 (command_substitution
-  [ "$(" ")" ] @punctuation.bracket)
+  "$(" @punctuation.bracket)
 
 (process_substitution
-  [ "<(" ")" ] @punctuation.bracket)
+  "<(" @punctuation.bracket)
 
+(arithmetic_expansion
+  [
+    "$(("
+    "(("
+  ] @punctuation.special
+  "))" @punctuation.special)
+
+(arithmetic_expansion
+  "," @punctuation.delimiter)
+
+(ternary_expression
+  [
+    "?"
+    ":"
+  ] @keyword.conditional.ternary)
+
+(binary_expression
+  operator: _ @operator)
+
+(unary_expression
+  operator: _ @operator)
+
+(postfix_expression
+  operator: _ @operator)
 
 (function_definition
   name: (word) @function)
 
-(command_name (word) @function.call)
+(command_name
+  (word) @function.call)
 
-((command_name (word) @function.builtin)
- (#any-of? @function.builtin
+((command_name
+  (word) @function.builtin)
+  ; format-ignore
+  (#any-of? @function.builtin
     "alias" "bg" "bind" "break" "builtin" "caller" "cd"
     "command" "compgen" "complete" "compopt" "continue"
     "coproc" "dirs" "disown" "echo" "enable" "eval"
@@ -116,30 +163,59 @@
     "ulimit" "umask" "unalias" "wait"))
 
 (command
-  argument: [
-             (word) @parameter
-             (concatenation (word) @parameter)
-             ])
+  argument:
+    [
+      (word) @variable.parameter
+      (concatenation
+        (word) @variable.parameter)
+    ])
+
+(number) @number
 
 ((word) @number
   (#lua-match? @number "^[0-9]+$"))
 
 (file_redirect
-  descriptor: (file_descriptor) @operator
-  destination: (word) @parameter)
+  destination: (word) @variable.parameter)
+
+(file_descriptor) @operator
+
+(simple_expansion
+  "$" @punctuation.special) @none
 
 (expansion
-  [ "${" "}" ] @punctuation.bracket)
+  "${" @punctuation.special
+  "}" @punctuation.special) @none
+
+(expansion
+  operator: _ @punctuation.special)
+
+(expansion
+  "@"
+  .
+  operator: _ @character.special)
+
+((expansion
+  (subscript
+    index: (word) @character.special))
+  (#any-of? @character.special "@" "*"))
+
+"``" @punctuation.special
 
 (variable_name) @variable
 
 ((variable_name) @constant
- (#lua-match? @constant "^[A-Z][A-Z_0-9]*$"))
+  (#lua-match? @constant "^[A-Z][A-Z_0-9]*$"))
 
 (case_item
-  value: (word) @parameter)
+  value: (word) @variable.parameter)
 
-(regex) @string.regex
+[
+  (regex)
+  (extglob_pattern)
+] @string.regexp
 
-((program . (comment) @preproc)
-  (#lua-match? @preproc "^#!/"))
+((program
+  .
+  (comment) @keyword.directive)
+  (#lua-match? @keyword.directive "^#!/"))
