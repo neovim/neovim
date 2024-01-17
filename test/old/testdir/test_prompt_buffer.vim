@@ -298,9 +298,10 @@ func Test_prompt_appending_while_hidden()
   call StopVimInTerminal(buf)
 endfunc
 
-" Modifying a hidden buffer while closing a prompt buffer should not prevent
-" stopping of Insert mode.
-func Test_prompt_close_modify_hidden()
+" Modifying a hidden buffer while leaving a prompt buffer should not prevent
+" stopping of Insert mode, and returning to the prompt buffer later should
+" restore Insert mode.
+func Test_prompt_leave_modify_hidden()
   call CanTestPromptBuffer()
 
   let script =<< trim END
@@ -310,22 +311,34 @@ func Test_prompt_close_modify_hidden()
       new prompt
       set buftype=prompt
 
+      inoremap <buffer> w <Cmd>wincmd w<CR>
       inoremap <buffer> q <Cmd>bwipe!<CR>
-      autocmd BufWinLeave prompt call setbufline('hidden', 1, 'Test')
+      autocmd BufLeave prompt call appendbufline('hidden', '$', 'Leave')
+      autocmd BufEnter prompt call appendbufline('hidden', '$', 'Enter')
+      autocmd BufWinLeave prompt call appendbufline('hidden', '$', 'Close')
   END
-  call writefile(script, 'XpromptCloseModifyHidden', 'D')
+  call writefile(script, 'XpromptLeaveModifyHidden', 'D')
 
-  let buf = RunVimInTerminal('-S XpromptCloseModifyHidden', {'rows': 10})
+  let buf = RunVimInTerminal('-S XpromptLeaveModifyHidden', {'rows': 10})
   call TermWait(buf)
 
   call term_sendkeys(buf, "a")
+  call WaitForAssert({-> assert_match('-- INSERT --', term_getline(buf, 10))})
+
+  call term_sendkeys(buf, "w")
+  call WaitForAssert({-> assert_notmatch('-- INSERT --', term_getline(buf, 10))})
+
+  call term_sendkeys(buf, "\<C-W>w")
   call WaitForAssert({-> assert_match('-- INSERT --', term_getline(buf, 10))})
 
   call term_sendkeys(buf, "q")
   call WaitForAssert({-> assert_notmatch('-- INSERT --', term_getline(buf, 10))})
 
   call term_sendkeys(buf, ":bwipe!\<CR>")
-  call WaitForAssert({-> assert_equal('Test', term_getline(buf, 1))})
+  call WaitForAssert({-> assert_equal('Leave', term_getline(buf, 2))})
+  call WaitForAssert({-> assert_equal('Enter', term_getline(buf, 3))})
+  call WaitForAssert({-> assert_equal('Leave', term_getline(buf, 4))})
+  call WaitForAssert({-> assert_equal('Close', term_getline(buf, 5))})
 
   call StopVimInTerminal(buf)
 endfunc
