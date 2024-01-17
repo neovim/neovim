@@ -62,9 +62,15 @@ local LUA_KEYWORDS = {
   ['and'] = true,
   ['end'] = true,
   ['function'] = true,
+  ['return'] = true,
   ['or'] = true,
   ['if'] = true,
+  ['else'] = true,
+  ['elseif'] = true,
   ['while'] = true,
+  ['for'] = true,
+  ['do'] = true,
+  ['break'] = true,
   ['repeat'] = true,
   ['true'] = true,
   ['false'] = true,
@@ -385,6 +391,46 @@ local function render_eval_meta(f, fun, write)
   write(render_fun_sig(funname, params))
 end
 
+--- @return table<string, vim.ExCmd>
+local function get_excmd_meta()
+  --- @type vim.ExCmd[]
+  local cmds = require('src/nvim/ex_cmds').cmds
+  local cmd_table = {} ---@type table<string, vim.ExCmd>
+  for _, value in ipairs(cmds) do
+    cmd_table[value.command] = value
+  end
+  return cmd_table
+end
+
+--- @param cmd_name string
+--- @param cmd vim.ExCmd
+--- @param write fun(line: string)
+local function render_excmd_meta(cmd_name, cmd, write)
+  assert(cmd_name == cmd.command)
+  if cmd.removed then
+    -- skip deprecated or removed (E319) commands
+    return
+  end
+
+  local function write_vimcmd_fun(name, full_name)
+    write('')
+    write(
+      ('---' .. (full_name and ('|:%s|\n---'):format(full_name) or ''))
+        .. (cmd.desc or 'TODO: Document for Ex-cmd is missing')
+    )
+
+    if name:match('[^a-zA-Z0-9]') or LUA_KEYWORDS[name] then
+      write(string.format("vim.cmd['%s'] = function(...) end", name))
+    else
+      write(string.format('function vim.cmd.%s(...) end', name))
+    end
+  end
+  if cmd.short_command and cmd.short_command ~= cmd.command then
+    write_vimcmd_fun(cmd.short_command, cmd.command)
+  end
+  write_vimcmd_fun(cmd.command)
+end
+
 --- @type table<string,true>
 local rendered_tags = {}
 
@@ -625,6 +671,8 @@ end
 
 --- @return table<string,vim.option_meta>
 local function get_option_meta()
+  ---@diagnostic disable-next-line: no-unknown
+  package.loaded['src/nvim/options'] = nil
   local opts = require('src/nvim/options').options
   local optinfo = vim.api.nvim_get_all_options_info()
   local ret = {} --- @type table<string,vim.option_meta>
@@ -647,6 +695,8 @@ end
 
 --- @return table<string,vim.option_meta>
 local function get_vvar_meta()
+  ---@diagnostic disable-next-line: no-unknown
+  package.loaded['src/nvim/vvars'] = nil
   local info = require('src/nvim/vvars').vars
   local ret = {} --- @type table<string,vim.option_meta>
   for name, o in pairs(info) do
@@ -781,6 +831,12 @@ local CONFIG = {
     header = LUA_META_HEADER,
     funcs = get_eval_meta,
     render = render_eval_meta,
+  },
+  {
+    path = 'runtime/lua/vim/_meta/vimcmd.lua',
+    header = LUA_META_HEADER,
+    funcs = get_excmd_meta,
+    render = render_excmd_meta,
   },
   {
     path = 'runtime/lua/vim/_meta/api.lua',

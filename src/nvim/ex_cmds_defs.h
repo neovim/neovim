@@ -32,9 +32,12 @@
 //    All keys not described in the above table are reserved for future use.
 //
 // 2. Add a "case: CMD_xxx" in the big switch in ex_docmd.c.
-// 3. Add an entry in the index for Ex commands at ":help ex-cmd-index".
-// 4. Add documentation in ../doc/xxx.txt.  Add a tag for both the short and
+// 3. Add documentation in ../doc/xxx.txt.  Add a tag for both the short and
 //    long name of the command.
+//
+// 4. Auto-generate the lua meta file (runtime/lua/vim/_meta/vimcmd.lua)
+//    and the index for Ex commands at ":help ex-cmd-index",
+//    by running `scripts/gen_eval_files.lua`.
 
 #define EX_RANGE           0x001u  // allow a linespecs
 #define EX_BANG            0x002u  // allow a ! after the command name
