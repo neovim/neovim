@@ -180,10 +180,8 @@ local all_namespaces = {}
 ---@return vim.diagnostic.Severity?
 local function to_severity(severity)
   if type(severity) == 'string' then
-    return assert(
-      M.severity[string.upper(severity)],
-      string.format('Invalid severity: %s', severity)
-    )
+    assert(M.severity[string.upper(severity)], string.format('Invalid severity: %s', severity))
+    return M.severity[string.upper(severity)]
   end
   return severity
 end
