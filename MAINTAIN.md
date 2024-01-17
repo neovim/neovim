@@ -73,7 +73,7 @@ When a (non-experimental) feature is slated to be removed it should:
 
 1. Be _soft_ deprecated in the _next_ release
   - Use of the deprecated feature will still work.
-  - This means deprecating via documentation and annotation (`@deprecated`) only.
+  - This means deprecating via documentation and annotation (`@deprecated`).
   - Include a note in `news.txt` under `DEPRECATIONS`.
   - For Lua features, use `vim.deprecate()`. The specified version is the
     current minor version + 2. For example, if the current version is
