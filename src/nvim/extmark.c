@@ -150,7 +150,11 @@ void extmark_del(buf_T *buf, MarkTreeIter *itr, MTKey key, bool restore)
   }
 
   if (mt_decor_any(key)) {
-    buf_decor_remove(buf, key.pos.row, key2.pos.row, mt_decor(key), true);
+    if (mt_invalid(key)) {
+      decor_free(mt_decor(key));
+    } else {
+      buf_decor_remove(buf, key.pos.row, key2.pos.row, mt_decor(key), true);
+    }
   }
 
   // TODO(bfredl): delete it from current undo header, opportunistically?
@@ -393,10 +397,9 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
   } else if (undo_info.type == kExtmarkSavePos) {
     ExtmarkSavePos pos = undo_info.data.savepos;
     if (undo) {
-      if (pos.old_row >= 0) {
-        extmark_setraw(curbuf, pos.mark, pos.old_row, pos.old_col);
-      }
-      if (pos.invalidated) {
+      if (pos.old_row >= 0
+          && extmark_setraw(curbuf, pos.mark, pos.old_row, pos.old_col)
+          && pos.invalidated) {
         MarkTreeIter itr[1] = { 0 };
         MTKey mark = marktree_lookup(curbuf->b_marktree, pos.mark, itr);
         mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_INVALID;
