@@ -220,9 +220,6 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
 /// Configures window layout. Currently only for floating and external windows
 /// (including changing a split window to those layouts).
 ///
-/// When reconfiguring a floating window, absent option keys will not be
-/// changed.  `row`/`col` and `relative` must be reconfigured together.
-///
 /// @see |nvim_open_win()|
 ///
 /// @param      window  Window handle, or 0 for current window
@@ -673,7 +670,7 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
   }
 
   if (HAS_KEY_X(config, row)) {
-    if (!has_relative) {
+    if (!has_relative && !reconf) {
       api_set_error(err, kErrorTypeValidation, "non-float cannot have 'row'");
       return false;
     }
@@ -681,7 +678,7 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
   }
 
   if (HAS_KEY_X(config, col)) {
-    if (!has_relative) {
+    if (!has_relative && !reconf) {
       api_set_error(err, kErrorTypeValidation, "non-float cannot have 'col'");
       return false;
     }
@@ -689,7 +686,7 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
   }
 
   if (HAS_KEY_X(config, bufpos)) {
-    if (!has_relative) {
+    if (!has_relative && !reconf) {
       api_set_error(err, kErrorTypeValidation, "non-float cannot have 'bufpos'");
       return false;
     } else {
