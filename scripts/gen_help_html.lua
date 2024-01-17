@@ -1123,10 +1123,8 @@ function M._test()
       'if "expected" is given, "actual" is also required'
     )
     if expected then
-      return assert(
-        cond,
-        ('expected %s, got: %s'):format(vim.inspect(expected), vim.inspect(actual))
-      )
+      assert(cond, ('expected %s, got: %s'):format(vim.inspect(expected), vim.inspect(actual)))
+      return cond
     else
       return assert(cond)
     end

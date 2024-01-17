@@ -77,7 +77,8 @@ function M.to_lpeg(pattern)
   })
 
   local lpeg_pattern = p:match(pattern) --[[@as vim.lpeg.Pattern?]]
-  return assert(lpeg_pattern, 'Invalid glob')
+  assert(lpeg_pattern, 'Invalid glob')
+  return lpeg_pattern
 end
 
 return M
