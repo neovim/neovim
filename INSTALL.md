@@ -203,7 +203,6 @@ Neovim can be installed with:
 
     sudo -H Compile NeoVim
 
-
 ### Nix / NixOS
 
 Neovim can be installed with:
@@ -251,9 +250,6 @@ Neovim is in [PLD Linux](https://github.com/pld-linux/neovim):
 ### Slackware
 
 See [neovim on SlackBuilds](https://slackbuilds.org/apps/neovim/).
-
-For instructions on how to install the Python modules, see [`:help provider-python`].
-
 
 ### Source Mage
 
@@ -322,8 +318,6 @@ If you're using an older version Ubuntu you must use:
     sudo apt-get install python-dev python-pip python3-dev
     sudo apt-get install python3-setuptools
     sudo easy_install3 pip
-
-For instructions to install the Python modules, see [`:help provider-python`].
 
 ### Void-Linux
 
@@ -397,7 +391,3 @@ Alternatively, just delete the `CMAKE_INSTALL_PREFIX` artifacts:
 sudo rm /usr/local/bin/nvim
 sudo rm -r /usr/local/share/nvim/
 ```
-
-
-
-[`:help provider-python`]: https://neovim.io/doc/user/provider.html#provider-python

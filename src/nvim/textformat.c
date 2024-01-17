@@ -81,7 +81,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
   bool do_comments = (flags & INSCHAR_DO_COM);
   int has_lbr = curwin->w_p_lbr;
 
-  // make sure win_lbr_chartabsize() counts correctly
+  // make sure win_charsize() counts correctly
   curwin->w_p_lbr = false;
 
   // When 'ai' is off we don't want a space under the cursor to be
