@@ -17,6 +17,7 @@
 #include "nvim/eval/typval_encode.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/gettext_defs.h"
+#include "nvim/highlight_group.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
@@ -1324,7 +1325,14 @@ void nlua_pop_keydict(lua_State *L, void *retval, FieldHashfn hashy, char **err_
     if (field->type == kObjectTypeNil) {
       *(Object *)mem = nlua_pop_Object(L, true, err);
     } else if (field->type == kObjectTypeInteger) {
-      *(Integer *)mem = nlua_pop_Integer(L, err);
+      if (field->is_hlgroup && lua_type(L, -1) == LUA_TSTRING) {
+        size_t name_len;
+        const char *name = lua_tolstring(L, -1, &name_len);
+        lua_pop(L, 1);
+        *(Integer *)mem = name_len > 0 ? syn_check_group(name, name_len) : 0;
+      } else {
+        *(Integer *)mem = nlua_pop_Integer(L, err);
+      }
     } else if (field->type == kObjectTypeBoolean) {
       *(Boolean *)mem = nlua_pop_Boolean_strict(L, err);
     } else if (field->type == kObjectTypeString) {

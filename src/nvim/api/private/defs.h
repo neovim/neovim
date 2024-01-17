@@ -135,6 +135,7 @@ typedef struct {
   size_t ptr_off;
   ObjectType type;  // kObjectTypeNil == untyped
   int opt_index;
+  bool is_hlgroup;
 } KeySetLink;
 
 typedef KeySetLink *(*FieldHashfn)(const char *str, size_t len);

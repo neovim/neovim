@@ -936,13 +936,26 @@ bool api_dict_to_keydict(void *retval, FieldHashfn hashy, Dictionary dict, Error
 
     char *mem = ((char *)retval + field->ptr_off);
     Object *value = &dict.items[i].value;
+
     if (field->type == kObjectTypeNil) {
       *(Object *)mem = *value;
     } else if (field->type == kObjectTypeInteger) {
-      VALIDATE_T(field->str, kObjectTypeInteger, value->type, {
-        return false;
-      });
-      *(Integer *)mem = value->data.integer;
+      if (field->is_hlgroup) {
+        int hl_id = 0;
+        if (value->type != kObjectTypeNil) {
+          hl_id = object_to_hl_id(*value, k.data, err);
+          if (ERROR_SET(err)) {
+            return false;
+          }
+        }
+        *(Integer *)mem = hl_id;
+      } else {
+        VALIDATE_T(field->str, kObjectTypeInteger, value->type, {
+          return false;
+        });
+
+        *(Integer *)mem = value->data.integer;
+      }
     } else if (field->type == kObjectTypeFloat) {
       Float *val = (Float *)mem;
       if (value->type == kObjectTypeInteger) {

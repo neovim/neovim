@@ -72,6 +72,7 @@ local keysets = {}
 local function add_keyset(val)
   local keys = {}
   local types = {}
+  local hlgroups = {}
   local is_set_name = 'is_set__' .. val.keyset_name .. '_'
   local has_optional = false
   for i, field in ipairs(val.fields) do
@@ -80,6 +81,7 @@ local function add_keyset(val)
     end
     if field.name ~= is_set_name and field.type ~= 'OptionalKeys' then
       table.insert(keys, field.name)
+      hlgroups[field.name] = field.name:find('hl_group') and true or false
     else
       if i > 1 then
         error("'is_set__{type}_' must be first if present")
@@ -91,10 +93,13 @@ local function add_keyset(val)
       has_optional = true
     end
   end
-  table.insert(
-    keysets,
-    { name = val.keyset_name, keys = keys, types = types, has_optional = has_optional }
-  )
+  table.insert(keysets, {
+    name = val.keyset_name,
+    keys = keys,
+    types = types,
+    hlgroups = hlgroups,
+    has_optional = has_optional,
+  })
 end
 
 -- read each input file, parse and append to the api metadata
@@ -305,10 +310,12 @@ for _, k in ipairs(keysets) do
         .. typename(k.types[key])
         .. ', '
         .. ind
+        .. ', '
+        .. (k.hlgroups[key] and 'true' or 'false')
         .. '},\n'
     )
   end
-  output:write('  {NULL, 0, kObjectTypeNil, -1},\n')
+  output:write('  {NULL, 0, kObjectTypeNil, -1, false},\n')
   output:write('};\n\n')
 
   output:write(hashfun)
