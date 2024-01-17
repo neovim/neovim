@@ -1923,6 +1923,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         // Get extmark and syntax attributes, unless still at the start of the line
         // (double-wide char that doesn't fit).
         v = ptr - line;
+        const ptrdiff_t prev_v = prev_ptr - line;
         if (has_syntax && v > 0) {
           // Get the syntax attribute for the character.  If there
           // is an error, disable syntax highlighting.
@@ -1947,6 +1948,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           // have made it invalid.
           line = ml_get_buf(wp->w_buffer, lnum);
           ptr = line + v;
+          prev_ptr = line + prev_v;
 
           // no concealing past the end of the line, it interferes
           // with line highlighting.
