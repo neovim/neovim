@@ -1321,7 +1321,7 @@ func Test_listdict_index()
   call CheckLegacyAndVim9Failure(['VAR l = [1, 2, 3]', 'LET l[1.1] = 4'], ['E805:', 'E1012:', 'E805:'])
   call CheckLegacyAndVim9Failure(['VAR l = [1, 2, 3]', 'LET l[: i] = [4, 5]'], ['E121:', 'E1001:', 'E121:'])
   call CheckLegacyAndVim9Failure(['VAR l = [1, 2, 3]', 'LET l[: 3.2] = [4, 5]'], ['E805:', 'E1012:', 'E805:'])
-  " call CheckLegacyAndVim9Failure(['VAR t = test_unknown()', 'echo t[0]'], 'E685:')
+  " call CheckLegacyAndVim9Failure(['VAR t = test_unknown()', 'echo t[0]'], ['E685:', 'E909:', 'E685:'])
 endfunc
 
 " Test for a null list
