@@ -4261,7 +4261,10 @@ describe('LSP', function()
 
   describe('vim.lsp._watchfiles', function()
     it('sends notifications when files change', function()
-      skip(is_os('bsd'), 'bsd only reports rename on folders if file inside change')
+      skip(
+        is_os('bsd'),
+        'kqueue only reports events on watched folder itself, not contained files #26110'
+      )
       local root_dir = tmpname()
       os.remove(root_dir)
       mkdir(root_dir)

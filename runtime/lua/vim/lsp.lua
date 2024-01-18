@@ -488,8 +488,7 @@ end
 --- See |vim.lsp.start_client()| for all available options. The most important are:
 ---
 --- - `name` arbitrary name for the LSP client. Should be unique per language server.
---- - `cmd` command (in list form) used to start the language server. Must be absolute, or found on
----   `$PATH`. Shell constructs like `~` are not expanded.
+--- - `cmd` command string[] or function, described at |vim.lsp.start_client()|.
 --- - `root_dir` path to the project root. By default this is used to decide if an existing client
 ---   should be re-used. The example above uses |vim.fs.find()| and |vim.fs.dirname()| to detect the
 ---   root by traversing the file system upwards starting from the current directory until either
@@ -666,13 +665,13 @@ end
 --- Field `cmd` in {config} is required.
 ---
 ---@param config (lsp.ClientConfig) Configuration for the server:
---- - cmd: (string[]|fun(dispatchers: table):table) command a list of
----       strings treated like |jobstart()|. The command must launch the language server
----       process. `cmd` can also be a function that creates an RPC client.
----       The function receives a dispatchers table and must return a table with the
----       functions `request`, `notify`, `is_closing` and `terminate`
----       See |vim.lsp.rpc.request()| and |vim.lsp.rpc.notify()|
----       For TCP there is a built-in rpc client factory: |vim.lsp.rpc.connect()|
+--- - cmd: (string[]|fun(dispatchers: table):table) command string[] that launches the language
+---       server (treated as in |jobstart()|, must be absolute or on `$PATH`, shell constructs like
+---       "~" are not expanded), or function that creates an RPC client. Function receives
+---       a `dispatchers` table and returns a table with member functions `request`, `notify`,
+---       `is_closing` and `terminate`.
+---       See |vim.lsp.rpc.request()|, |vim.lsp.rpc.notify()|.
+---       For TCP there is a builtin RPC client factory: |vim.lsp.rpc.connect()|
 ---
 --- - cmd_cwd: (string, default=|getcwd()|) Directory to launch
 ---       the `cmd` process. Not related to `root_dir`.

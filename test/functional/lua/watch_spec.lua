@@ -99,7 +99,10 @@ describe('vim._watch', function()
 
   describe('poll', function()
     it('detects file changes', function()
-      skip(is_os('bsd'), 'bsd only reports rename on folders if file inside change')
+      skip(
+        is_os('bsd'),
+        'kqueue only reports events on watched folder itself, not contained files #26110'
+      )
       local root_dir = vim.uv.fs_mkdtemp(vim.fs.dirname(helpers.tmpname()) .. '/nvim_XXXXXXXXXX')
 
       local result = exec_lua(
