@@ -2,8 +2,8 @@
 " Language: sway config file
 " Original Author: Josef Litos (JosefLitos/i3config.vim)
 " Maintainer: James Eapen <james.eapen@vai.org>
-" Version: 1.0.0
-" Last Change: 2023-09-14
+" Version: 1.0.2
+" Last Change: 2023-12-28
 
 " References:
 " http://i3wm.org/docs/userguide.html#configuring
@@ -42,6 +42,12 @@ syn region swayConfigExecBlock start=/exec\(_always\)\? {/ end=/^}$/ contains=i3
 
 syn keyword swayConfigFloatingModifierOpts normal inverse contained
 syn match i3ConfigKeyword /^floating_modifier [$a-zA-Z0-9+]\+ \(normal\|inverse\)$/ contains=i3ConfigVariable,i3ConfigBindModkey,swayConfigFloatingModifierOpts
+
+syn keyword swayConfigSmartGapsOpts toggle contained
+syn match i3ConfigKeyword /^smart_gaps toggle$/ contains=i3ConfigSmartGapOpts,i3ConfigBoolean,swayConfigSmartGapsOpts
+
+syn keyword swayConfigFocusFollowsMouseOpts always contained
+syn match i3ConfigKeyword /^focus_follows_mouse always$/ contains=i3ConfigBoolean,swayConfigFocusFollowsMouseOpts
 
 syn match i3ConfigKeyword /^hide_edge_borders --i3 \w*$/ contains=i3ConfigEdgeKeyword,i3ConfigShParam
 
@@ -118,7 +124,9 @@ syn region swayConfigOutput start=/^output/ skip=/\\$/ end=/$/  contains=swayCon
 syn region swayConfigOutput start=/^output .* {$/ end=/}$/  contains=swayConfigOutputKeyword,swayConfigOutputMode,swayConfigOutputOpts,swayConfigOutputOptVals,i3ConfigVariable,i3ConfigNumber,i3ConfigString,i3ConfigColor,i3ConfigBoolean,swayConfigDeviceOps,i3ConfigParen keepend extend
 
 " Define the highlighting.
+hi def link swayConfigSmartGapsOpts          i3ConfigOption
 hi def link swayConfigFloatingModifierOpts   i3ConfigOption
+hi def link swayConfigFocusFollowsMouseOpts  i3ConfigOption
 hi def link swayConfigBindKeyword            i3ConfigBindKeyword
 hi def link swayConfigXOpt                   i3ConfigOption
 hi def link swayConfigInhibitKeyword         i3ConfigCommand
