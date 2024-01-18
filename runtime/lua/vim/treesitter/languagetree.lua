@@ -757,6 +757,11 @@ end)
 ---@param alias string language or filetype name
 ---@return string? # resolved parser name
 local function resolve_lang(alias)
+  -- validate that `alias` is a legal language
+  if not (alias and alias:match('[%w_]+') == alias) then
+    return
+  end
+
   if has_parser(alias) then
     return alias
   end
