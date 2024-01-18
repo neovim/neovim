@@ -67,18 +67,16 @@ describe('glob', function()
       eq(true, match('dir/*/file.txt', 'dir/subdir/file.txt'))
       eq(false, match('dir/*/file.txt', 'dir/subdir/subdir/file.txt'))
 
-      -- TODO: The spec does not describe this, but VSCode only interprets ** when it's by
+      -- The spec does not describe this, but VSCode only interprets ** when it's by
       -- itself in a path segment, and otherwise interprets ** as consecutive * directives.
-      -- The following tests show how this behavior should work, but is not yet fully implemented.
-      -- Currently, "a**" parses incorrectly as "a" "**" and "**a" parses correctly as "*" "*" "a".
       -- see: https://github.com/microsoft/vscode/blob/eef30e7165e19b33daa1e15e92fa34ff4a5df0d3/src/vs/base/common/glob.ts#L112
       eq(true, match('a**', 'abc')) -- '**' should parse as two '*'s when not by itself in a path segment
       eq(true, match('**c', 'abc'))
-      -- eq(false, match('a**', 'ab')) -- each '*' should still represent at least one character
+      eq(false, match('a**', 'ab')) -- each '*' should still represent at least one character
       eq(false, match('**c', 'bc'))
       eq(true, match('a**', 'abcd'))
       eq(true, match('**d', 'abcd'))
-      -- eq(false, match('a**', 'abc/d'))
+      eq(false, match('a**', 'abc/d'))
       eq(false, match('**d', 'abc/d'))
     end)
 

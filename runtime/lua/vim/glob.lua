@@ -1,6 +1,10 @@
 local lpeg = vim.lpeg
+local P, S, V, R, B = lpeg.P, lpeg.S, lpeg.V, lpeg.R, lpeg.B
+local C, Cc, Ct, Cf = lpeg.C, lpeg.Cc, lpeg.Ct, lpeg.Cf
 
 local M = {}
+
+local pathsep = P('/')
 
 --- Parses a raw glob into an |lua-lpeg| pattern.
 ---
@@ -17,18 +21,8 @@ local M = {}
 ---@param pattern string The raw glob pattern
 ---@return vim.lpeg.Pattern pattern An |lua-lpeg| representation of the pattern
 function M.to_lpeg(pattern)
-  local l = lpeg
-
-  local P, S, V = lpeg.P, lpeg.S, lpeg.V
-  local C, Cc, Ct, Cf = lpeg.C, lpeg.Cc, lpeg.Ct, lpeg.Cf
-
-  local pathsep = '/'
-
   local function class(inv, ranges)
-    for i, r in ipairs(ranges) do
-      ranges[i] = r[1] .. r[2]
-    end
-    local patt = l.R(unpack(ranges))
+    local patt = R(unpack(vim.tbl_map(table.concat, ranges)))
     if inv == '!' then
       patt = P(1) - patt
     end
@@ -44,11 +38,11 @@ function M.to_lpeg(pattern)
   end
 
   local function star(stars, after)
-    return (-after * (l.P(1) - pathsep)) ^ #stars * after
+    return (-after * (P(1) - pathsep)) ^ #stars * after
   end
 
   local function dstar(after)
-    return (-after * l.P(1)) ^ 0 * after
+    return (-after * P(1)) ^ 0 * after
   end
 
   local p = P({
@@ -59,11 +53,17 @@ function M.to_lpeg(pattern)
         * (V('Elem') + V('End')),
       mul
     ),
-    DStar = P('**') * (P(pathsep) * (V('Elem') + V('End')) + V('End')) / dstar,
+    DStar = (B(pathsep) + -B(P(1)))
+      * P('**')
+      * (pathsep * (V('Elem') + V('End')) + V('End'))
+      / dstar,
     Star = C(P('*') ^ 1) * (V('Elem') + V('End')) / star,
-    Ques = P('?') * Cc(l.P(1) - pathsep),
-    Class = P('[') * C(P('!') ^ -1) * Ct(Ct(C(1) * '-' * C(P(1) - ']')) ^ 1 * ']') / class,
-    CondList = P('{') * Cf(V('Cond') * (P(',') * V('Cond')) ^ 0, add) * '}',
+    Ques = P('?') * Cc(P(1) - pathsep),
+    Class = P('[')
+      * C(P('!') ^ -1)
+      * Ct(Ct(C(P(1)) * P('-') * C(P(1) - P(']'))) ^ 1 * P(']'))
+      / class,
+    CondList = P('{') * Cf(V('Cond') * (P(',') * V('Cond')) ^ 0, add) * P('}'),
     -- TODO: '*' inside a {} condition is interpreted literally but should probably have the same
     -- wildcard semantics it usually has.
     -- Fixing this is non-trivial because '*' should match non-greedily up to "the rest of the
@@ -71,9 +71,9 @@ function M.to_lpeg(pattern)
     -- condition means "everything after the {}" where several other options separated by ',' may
     -- exist in between that should not be matched by '*'.
     Cond = Cf((V('Ques') + V('Class') + V('CondList') + (V('Literal') - S(',}'))) ^ 1, mul)
-      + Cc(l.P(0)),
-    Literal = P(1) / l.P,
-    End = P(-1) * Cc(l.P(-1)),
+      + Cc(P(0)),
+    Literal = P(1) / P,
+    End = P(-1) * Cc(P(-1)),
   })
 
   local lpeg_pattern = p:match(pattern) --[[@as vim.lpeg.Pattern?]]
