@@ -47,7 +47,7 @@ import subprocess
 import sys
 import textwrap
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple, NamedTuple
 from xml.dom import minidom
 
 if sys.version_info >= (3, 8):
@@ -124,7 +124,11 @@ FunctionName = str
 
 @dataclasses.dataclass
 class Config:
-    """Config for documentation."""
+    """Base config for vimdoc generation."""
+
+@dataclasses.dataclass
+class DoxygenConfig(Config):
+    """Doxygen config for vimdoc generation."""
 
     mode: Literal['c', 'lua']
 
@@ -166,8 +170,8 @@ class Config:
     include_tables: bool = True
 
 
-CONFIG: Dict[str, Config] = {
-    'api': Config(
+CONFIG: Dict[str, DoxygenConfig] = {
+    'api': DoxygenConfig(
         mode='c',
         filename = 'api.txt',
         # Section ordering.
@@ -197,7 +201,7 @@ CONFIG: Dict[str, Config] = {
         module_override={},
         append_only=[],
     ),
-    'lua': Config(
+    'lua': DoxygenConfig(
         mode='lua',
         filename='lua.txt',
         section_order=[
@@ -323,7 +327,7 @@ CONFIG: Dict[str, Config] = {
             'shared.lua',
         ],
     ),
-    'lsp': Config(
+    'lsp': DoxygenConfig(
         mode='lua',
         filename='lsp.txt',
         section_order=[
@@ -363,7 +367,7 @@ CONFIG: Dict[str, Config] = {
         module_override={},
         append_only=[],
     ),
-    'diagnostic': Config(
+    'diagnostic': DoxygenConfig(
         mode='lua',
         filename='diagnostic.txt',
         section_order=[
@@ -380,7 +384,7 @@ CONFIG: Dict[str, Config] = {
         module_override={},
         append_only=[],
     ),
-    'treesitter': Config(
+    'treesitter': DoxygenConfig(
         mode='lua',
         filename='treesitter.txt',
         section_order=[
@@ -1101,7 +1105,7 @@ def extract_from_xml(filename, target, *,
     The `fmt_vimhelp` variable controls some special cases for use by
     fmt_doxygen_xml_as_vimhelp(). (TODO: ugly :)
     """
-    config: Config = CONFIG[target]
+    config: DoxygenConfig = CONFIG[target]
 
     fns: Dict[FunctionName, FunctionDoc] = {}
     deprecated_fns: Dict[FunctionName, FunctionDoc] = {}
@@ -1311,7 +1315,7 @@ def fmt_doxygen_xml_as_vimhelp(filename, target) -> Tuple[Docstring, Docstring]:
       1. Vim help text for functions found in `filename`.
       2. Vim help text for deprecated functions.
     """
-    config: Config = CONFIG[target]
+    config: DoxygenConfig = CONFIG[target]
 
     fns_txt = {}  # Map of func_name:vim-help-text.
     deprecated_fns_txt = {}  # Map of func_name:vim-help-text.
@@ -1481,7 +1485,7 @@ class Section:
         return f"Section(title='{self.title}', helptag='{self.helptag}')"
 
     @classmethod
-    def make_from(cls, filename: str, config: Config,
+    def make_from(cls, filename: str, config: DoxygenConfig,
                   section_docs: Dict[SectionName, str],
                   *,
                   functions_text: Docstring,
@@ -1539,30 +1543,19 @@ class Section:
                     (INCLUDE_DEPRECATED and self.deprecated_functions_text))
 
 
-def main(doxygen_config, args):
-    """Generates:
+def generate(target: str, config: Config, doxygen_config, args):
+    output_dir = out_dir.format(target=target)
+    log.info("Generating documentation for %s in folder %s",
+            target, output_dir)
+    debug = args.log_level >= logging.DEBUG
 
-    1. Vim :help docs
-    2. *.mpack files for use by API clients
+    class DocgenWriteSpec(NamedTuple):
+        first_section_tag: str
+        docs: Docstring
+        fn_map_full: Dict[FunctionName, FunctionDoc] | None
 
-    Doxygen is called and configured through stdin.
-    """
-    for target in CONFIG:
-        if args.target is not None and target != args.target:
-            continue
-
-        config: Config = CONFIG[target]
-
-        mpack_file = os.path.join(
-            base_dir, 'runtime', 'doc',
-            config.filename.replace('.txt', '.mpack'))
-        if os.path.exists(mpack_file):
-            os.remove(mpack_file)
-
-        output_dir = out_dir.format(target=target)
-        log.info("Generating documentation for %s in folder %s",
-                 target, output_dir)
-        debug = args.log_level >= logging.DEBUG
+    def doxygen(config: DoxygenConfig) -> DocgenWriteSpec:
+        """A strategy that reads function metadata via Doxygen."""
         p = subprocess.Popen(
                 ['doxygen', '-'],
                 stdin=subprocess.PIPE,
@@ -1578,7 +1571,9 @@ def main(doxygen_config, args):
             .encode('utf8')
         )
         if p.returncode:
-            sys.exit(p.returncode)
+            raise subprocess.CalledProcessError(
+                p.returncode, 'doxygen',
+                p.stderr.read() if p.stderr else None)
 
         # Collects all functions as each module is processed.
         fn_map_full: Dict[FunctionName, FunctionDoc] = {}
@@ -1658,21 +1653,58 @@ def main(doxygen_config, args):
         docs = docs.rstrip() + '\n\n'
         docs += f' vim:tw=78:ts=8:sw={indentation}:sts={indentation}:et:ft=help:norl:\n'
 
-        doc_file = os.path.join(base_dir, 'runtime', 'doc', config.filename)
+        return DocgenWriteSpec(first_section_tag, docs=docs, fn_map_full=fn_map_full)
 
-        if os.path.exists(doc_file):
-            delete_lines_below(doc_file, first_section_tag)
-        with open(doc_file, 'ab') as fp:
-            fp.write(docs.encode('utf8'))
+    # Now call either strategy and write the doc.
+    if isinstance(config, DoxygenConfig):
+        spec: DocgenWriteSpec = doxygen(config)
+
+        # Write doc/{filename}.txt
+        doc_file: Path = Path(base_dir) / 'runtime/doc' / config.filename
+        if doc_file.exists():
+            delete_lines_below(doc_file, spec.first_section_tag)
+        with open(doc_file, 'at', encoding='utf-8') as fp:
+            fp.write(spec.docs)
+        msg(f"Successfully written to: {doc_file.relative_to(base_dir)}, "
+            f"section: {spec.first_section_tag}")
+    else:
+        assert False, f"{target}: docs is empty. Check if something is wrong."
+
+    if spec.fn_map_full:
+        # Write doc/{filename}.mpack
+        mpack_file: Path = Path(base_dir) / 'runtime/doc' / (
+            re.sub(r'\.txt$', '.mpack', config.filename))
+        assert str(mpack_file).endswith('.mpack'), mpack_file
+
+        if mpack_file.exists():
+            mpack_file.unlink()
 
         fn_map_full_exported = collections.OrderedDict(sorted(
-            (name, fn_doc.export_mpack()) for (name, fn_doc) in fn_map_full.items()
+            (name, fn_doc.export_mpack())
+            for (name, fn_doc) in spec.fn_map_full.items()
         ))
         with open(mpack_file, 'wb') as fp:
             fp.write(msgpack.packb(fn_map_full_exported, use_bin_type=True))  # type: ignore
+        msg(f"Successfully written to: {mpack_file.relative_to(base_dir)}")
 
-        if not args.keep_tmpfiles:
-            shutil.rmtree(output_dir)
+    if not args.keep_tmpfiles:
+        shutil.rmtree(output_dir)
+
+
+def main(doxygen_config, args):
+    """Generates:
+
+    1. Vim :help docs
+    2. *.mpack files for use by API clients
+
+    Doxygen is called and configured through stdin.
+    """
+    for target in CONFIG:
+        if args.target is not None and target != args.target:
+            continue
+
+        config: Config = CONFIG[target]
+        generate(target, config, doxygen_config, args)
 
     msg_report()
 
