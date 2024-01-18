@@ -919,8 +919,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
              foldinfo_T foldinfo)
 {
   colnr_T vcol_prev = -1;             // "wlv.vcol" of previous character
-  char *line;                         // current line
-  char *ptr;                          // current position in "line"
   ScreenGrid *grid = &wp->w_grid;     // grid specific to the window
 
   static char *at_end_str = "";       // used for p_extra when displaying curwin->w_p_lcs_chars.eol
@@ -934,7 +932,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   int fromcol_prev = -2;                // start of inverting after cursor
   bool noinvcur = false;                // don't invert the cursor
   bool lnum_in_visual_area = false;
-  pos_T pos;
 
   bool attr_pri = false;                // char_attr has priority
   bool area_highlighting = false;       // Visual or incsearch highlighting in this line
@@ -945,7 +942,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   int decor_attr = 0;                   // attributes desired by syntax and extmarks
   bool has_syntax = false;              // this buffer has syntax highl.
   int folded_attr = 0;                  // attributes for folded line
-  int save_did_emsg;
   int eol_hl_off = 0;                   // 1 if highlighted char after EOL
 #define SPWORDLEN 150
   char nextline[SPWORDLEN * 2];         // text with start of the next line
@@ -964,8 +960,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   int change_end = -1;                  // last col of changed area
   bool in_multispace = false;           // in multiple consecutive spaces
   int multispace_pos = 0;               // position in lcs-multispace string
-  int line_attr_save;
-  int line_attr_lowprio_save;
 
   bool search_attr_from_match = false;  // if search_attr is from :match
   bool has_decor = false;               // this buffer has decoration
@@ -1025,7 +1019,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         && !has_fold && !end_fill) {
       // Prepare for syntax highlighting in this line.  When there is an
       // error, stop syntax highlighting.
-      save_did_emsg = did_emsg;
+      int save_did_emsg = did_emsg;
       did_emsg = false;
       syntax_start(wp, lnum);
       if (did_emsg) {
@@ -1093,7 +1087,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           } else if (bot->col == MAXCOL) {
             wlv.tocol = MAXCOL;
           } else {
-            pos = *bot;
+            pos_T pos = *bot;
             if (*p_sel == 'e') {
               getvvcol(wp, &pos, (colnr_T *)&wlv.tocol, NULL, NULL);
             } else {
@@ -1128,8 +1122,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         wlv.fromcol = 0;
       }
       if (lnum == curwin->w_cursor.lnum + search_match_lines) {
-        pos.lnum = lnum;
-        pos.col = search_match_endcol;
+        pos_T pos = {
+          .lnum = lnum,
+          .col = search_match_endcol,
+        };
         getvcol(curwin, &pos, (colnr_T *)&wlv.tocol, NULL, NULL);
       }
       // do at least one character; happens when past end of line
@@ -1222,10 +1218,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     area_highlighting = true;
   }
 
-  if (cul_screenline) {
-    line_attr_save = wlv.line_attr;
-    line_attr_lowprio_save = wlv.line_attr_lowprio;
-  }
+  int line_attr_save = wlv.line_attr;
+  int line_attr_lowprio_save = wlv.line_attr_lowprio;
 
   if (spv->spv_has_spell && col_rows == 0) {
     // Prepare for spell checking.
@@ -1250,14 +1244,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     // Trick: skip a few chars for C/shell/Vim comments
     nextline[SPWORDLEN] = NUL;
     if (lnum < wp->w_buffer->b_ml.ml_line_count) {
-      line = ml_get_buf(wp->w_buffer, lnum + 1);
+      char *line = ml_get_buf(wp->w_buffer, lnum + 1);
       spell_cat_line(nextline + SPWORDLEN, line, SPWORDLEN);
     }
     assert(!end_fill);
-    line = ml_get_buf(wp->w_buffer, lnum);
+    char *line = ml_get_buf(wp->w_buffer, lnum);
 
     // If current line is empty, check first word in next line for capital.
-    ptr = skipwhite(line);
+    char *ptr = skipwhite(line);
     if (*ptr == NUL) {
       spv->spv_cap_col = 0;
       spv->spv_capcol_lnum = lnum + 1;
@@ -1289,8 +1283,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     }
   }
 
-  line = end_fill ? "" : ml_get_buf(wp->w_buffer, lnum);
-  ptr = line;
+  // current line
+  char *line = end_fill ? "" : ml_get_buf(wp->w_buffer, lnum);
+  // current position in "line"
+  char *ptr = line;
 
   colnr_T trailcol = MAXCOL;  // start of trailing spaces
   colnr_T leadcol = 0;        // start of leading spaces
@@ -1395,14 +1391,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     // When spell checking a word we need to figure out the start of the
     // word and if it's badly spelled or not.
     if (spv->spv_has_spell) {
-      size_t len;
       colnr_T linecol = (colnr_T)(ptr - line);
       hlf_T spell_hlf = HLF_COUNT;
 
-      pos = wp->w_cursor;
+      pos_T pos = wp->w_cursor;
       wp->w_cursor.lnum = lnum;
       wp->w_cursor.col = linecol;
-      len = spell_move_to(wp, FORWARD, true, true, &spell_hlf);
+      size_t len = spell_move_to(wp, FORWARD, true, true, &spell_hlf);
 
       // spell_move_to() may call ml_get() and make "line" invalid
       line = ml_get_buf(wp->w_buffer, lnum);
@@ -1924,7 +1919,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         if (has_syntax && v > 0) {
           // Get the syntax attribute for the character.  If there
           // is an error, disable syntax highlighting.
-          save_did_emsg = did_emsg;
+          int save_did_emsg = did_emsg;
           did_emsg = false;
 
           decor_attr = get_syntax_attr(v - 1, spv->spv_has_spell ? &can_spell : NULL, false);
