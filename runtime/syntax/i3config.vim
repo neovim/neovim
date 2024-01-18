@@ -2,8 +2,8 @@
 " Language: i3 config file
 " Original Author: Josef Litos (JosefLitos/i3config.vim)
 " Maintainer: Quentin Hibon (github user hiqua)
-" Version: 1.0.0
-" Last Change: 2023-11-11
+" Version: 1.0.2
+" Last Change: 2023-12-28
 
 " References:
 " http://i3wm.org/docs/userguide.html#configuring
@@ -137,8 +137,7 @@ syn match i3ConfigIpcKeyword /ipc-socket/ contained
 syn match i3ConfigParamLine /^ipc-socket .*$/ contains=i3ConfigIpcKeyword
 
 " 4.24 Focus follows mouse
-syn keyword i3ConfigFocusFollowsMouseOpts always contained
-syn match i3ConfigKeyword /^focus_follows_mouse \(yes\|no\|always\)$/ contains=i3ConfigBoolean,i3ConfigFocusFollowsMouseOpts
+syn match i3ConfigKeyword /^focus_follows_mouse \(yes\|no\)$/ contains=i3ConfigBoolean
 
 " 4.25 Mouse warping
 syn keyword i3ConfigMouseWarpingOpts output container none contained
@@ -298,7 +297,6 @@ hi def link i3ConfigWorkspaceDir                    i3ConfigOption
 hi def link i3ConfigDotOperator                     i3ConfigOperator
 hi def link i3ConfigClientOpts                      i3ConfigOption
 hi def link i3ConfigIpcKeyword                      i3ConfigKeyword
-hi def link i3ConfigFocusFollowsMouseOpts           i3ConfigOption
 hi def link i3ConfigMouseWarpingOpts                i3ConfigOption
 hi def link i3ConfigPopupFullscreenOpts             i3ConfigOption
 hi def link i3ConfigFocusWrappingOpts               i3ConfigOption
