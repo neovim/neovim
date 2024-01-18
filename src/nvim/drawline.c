@@ -1831,7 +1831,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       // skip writing the buffer line itself
       mb_schar = NUL;
     } else {
-      char *prev_ptr = ptr;
+      const char *prev_ptr = ptr;
 
       // first byte of next char
       int c0 = (uint8_t)(*ptr);
@@ -1909,7 +1909,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
       decor_attr = 0;
       if (extra_check) {
-        bool no_plain_buffer = (wp->w_s->b_p_spo_flags & SPO_NPBUFFER) != 0;
+        const bool no_plain_buffer = (wp->w_s->b_p_spo_flags & SPO_NPBUFFER) != 0;
         bool can_spell = !no_plain_buffer;
 
         // Get extmark and syntax attributes, unless still at the start of the line
@@ -1988,7 +1988,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
             if ((prev_ptr - line) - nextlinecol >= 0) {
               p = nextline + ((prev_ptr - line) - nextlinecol);
             } else {
-              p = prev_ptr;
+              p = (char *)prev_ptr;
             }
             spv->spv_cap_col -= (int)(prev_ptr - line);
             size_t tmplen = spell_check(wp, p, &spell_hlf, &spv->spv_cap_col, spv->spv_unchanged);
@@ -2441,8 +2441,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     if (mb_schar == NUL && eol_hl_off == 0) {
       // flag to indicate whether prevcol equals startcol of search_hl or
       // one of the matches
-      bool prevcol_hl_flag = get_prevcol_hl_flag(wp, &screen_search_hl,
-                                                 (colnr_T)(ptr - line) - 1);
+      const bool prevcol_hl_flag = get_prevcol_hl_flag(wp, &screen_search_hl,
+                                                       (colnr_T)(ptr - line) - 1);
 
       // Invert at least one char, used for Visual and empty line or
       // highlight match at end of line. If it's beyond the last
@@ -2478,10 +2478,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
                               &wlv.char_attr);
         }
 
-        int eol_attr = wlv.char_attr;
-        if (wlv.cul_attr) {
-          eol_attr = hl_combine_attr(wlv.cul_attr, eol_attr);
-        }
+        const int eol_attr = wlv.cul_attr
+                             ? hl_combine_attr(wlv.cul_attr, wlv.char_attr)
+                             : wlv.char_attr;
+
         linebuf_attr[wlv.off] = eol_attr;
         linebuf_vcol[wlv.off] = MAXCOL;
         wlv.col++;
@@ -2509,7 +2509,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       bool has_virttext = false;
       // Make sure alignment is the same regardless
       // if listchars=eol:X is used or not.
-      int eol_skip = (lcs_eol_todo && eol_hl_off == 0 ? 1 : 0);
+      const int eol_skip = (lcs_eol_todo && eol_hl_off == 0 ? 1 : 0);
 
       if (has_decor) {
         has_virttext = decor_redraw_eol(wp, &decor_state, &wlv.line_attr, wlv.col + eol_skip);
@@ -2536,18 +2536,18 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           }
         }
 
-        int cuc_attr = win_hl_attr(wp, HLF_CUC);
-        int mc_attr = win_hl_attr(wp, HLF_MC);
+        const int cuc_attr = win_hl_attr(wp, HLF_CUC);
+        const int mc_attr = win_hl_attr(wp, HLF_MC);
 
-        int diff_attr = 0;
         if (wlv.diff_hlf == HLF_TXD) {
           wlv.diff_hlf = HLF_CHD;
         }
-        if (wlv.diff_hlf != 0) {
-          diff_attr = win_hl_attr(wp, (int)wlv.diff_hlf);
-        }
 
-        int base_attr = hl_combine_attr(wlv.line_attr_lowprio, diff_attr);
+        const int diff_attr = wlv.diff_hlf != 0
+                              ? win_hl_attr(wp, (int)wlv.diff_hlf)
+                              : 0;
+
+        const int base_attr = hl_combine_attr(wlv.line_attr_lowprio, diff_attr);
         if (base_attr || wlv.line_attr || has_virttext) {
           rightmost_vcol = INT_MAX;
         }
@@ -2796,13 +2796,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
                 && wlv.p_extra != at_end_str)
             || (wlv.n_extra != 0 && (wlv.sc_extra != NUL || *wlv.p_extra != NUL))
             || has_more_inline_virt(&wlv, ptr - line))) {
-      bool wrap = wp->w_p_wrap       // Wrapping enabled.
-                  && wlv.filler_todo <= 0          // Not drawing diff filler lines.
-                  && lcs_eol_todo                  // Haven't printed the lcs_eol character.
-                  && wlv.row != endrow - 1     // Not the last line being displayed.
-                  && (grid->cols == Columns  // Window spans the width of the screen,
-                      || ui_has(kUIMultigrid))  // or has dedicated grid.
-                  && !wp->w_p_rl;              // Not right-to-left.
+      const bool wrap = wp->w_p_wrap                  // Wrapping enabled.
+                        && wlv.filler_todo <= 0       // Not drawing diff filler lines.
+                        && lcs_eol_todo               // Haven't printed the lcs_eol character.
+                        && wlv.row != endrow - 1      // Not the last line being displayed.
+                        && (grid->cols == Columns     // Window spans the width of the screen,
+                            || ui_has(kUIMultigrid))  // or has dedicated grid.
+                        && !wp->w_p_rl;               // Not right-to-left.
 
       int draw_col = wlv.col - wlv.boguscols;
       if (virt_line_offset >= 0) {
