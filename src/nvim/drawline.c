@@ -901,6 +901,26 @@ static void fix_for_boguscols(winlinevars_T *wlv)
   wlv->boguscols = 0;
 }
 
+static int get_rightmost_vcol(win_T *wp, const int *color_cols)
+{
+  int ret = 0;
+
+  if (wp->w_p_cuc) {
+    ret = wp->w_virtcol;
+  }
+
+  if (color_cols) {
+    // determine rightmost colorcolumn to possibly draw
+    for (int i = 0; color_cols[i] >= 0; i++) {
+      if (ret < color_cols[i]) {
+        ret = color_cols[i];
+      }
+    }
+  }
+
+  return ret;
+}
+
 /// Display line "lnum" of window "wp" on the screen.
 /// wp->w_virtcol needs to be valid.
 ///
@@ -2521,21 +2541,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
             && lnum != wp->w_cursor.lnum)
            || wlv.color_cols || wlv.line_attr_lowprio || wlv.line_attr
            || wlv.diff_hlf != 0 || has_virttext)) {
-        int rightmost_vcol = 0;
-
-        if (wp->w_p_cuc) {
-          rightmost_vcol = wp->w_virtcol;
-        }
-
-        if (wlv.color_cols) {
-          // determine rightmost colorcolumn to possibly draw
-          for (int i = 0; wlv.color_cols[i] >= 0; i++) {
-            if (rightmost_vcol < wlv.color_cols[i]) {
-              rightmost_vcol = wlv.color_cols[i];
-            }
-          }
-        }
-
+        int rightmost_vcol = get_rightmost_vcol(wp, wlv.color_cols);
         const int cuc_attr = win_hl_attr(wp, HLF_CUC);
         const int mc_attr = win_hl_attr(wp, HLF_MC);
 
