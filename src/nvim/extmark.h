@@ -45,8 +45,6 @@ typedef struct {
   uint64_t mark;  // raw mark id of the marktree
   int old_row;
   colnr_T old_col;
-  int row;
-  colnr_T col;
   bool invalidated;
 } ExtmarkSavePos;
 
