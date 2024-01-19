@@ -1,6 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+local api = helpers.api
 local clear = helpers.clear
+local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local insert = helpers.insert
 local feed = helpers.feed
@@ -494,6 +496,22 @@ describe("'inccommand' for user commands", function()
       command('inoremap . .<Cmd>let &l:undolevels = &l:undolevels<CR>')
       test_preview_break_undo()
     end)
+  end)
+
+  it('disables preview if preview buffer cannot be created #27086', function()
+    command('set inccommand=split')
+    api.nvim_buf_set_name(0, '[Preview]')
+    exec_lua([[
+      vim.api.nvim_create_user_command('Test', function() end, {
+        nargs = '*',
+        preview = function(_, _, _)
+          return 2
+        end
+      })
+    ]])
+    eq('split', api.nvim_get_option_value('inccommand', {}))
+    feed(':Test')
+    eq('nosplit', api.nvim_get_option_value('inccommand', {}))
   end)
 end)
 
