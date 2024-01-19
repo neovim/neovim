@@ -33,6 +33,7 @@
 # include <sys/xattr.h>
 #endif
 
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
@@ -44,6 +45,7 @@
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/types_defs.h"
+#include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 
 #ifdef HAVE_SYS_UIO_H
@@ -90,7 +92,11 @@ int os_chdir(const char *path)
     smsg(0, "chdir(%s)", path);
     verbose_leave();
   }
-  return uv_chdir(path);
+  int err = uv_chdir(path);
+  if (err == 0) {
+    ui_call_chdir(cstr_as_string((char *)path));
+  }
+  return err;
 }
 
 /// Get the name of current directory.
