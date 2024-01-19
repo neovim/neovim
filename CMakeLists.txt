@@ -37,12 +37,7 @@ include(Util)
 # Variables
 #-------------------------------------------------------------------------------
 set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
-set(GENERATED_RUNTIME_DIR ${PROJECT_BINARY_DIR}/runtime)
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
-
-# GENERATED_RUNTIME_DIR
-set(GENERATED_HELP_TAGS ${GENERATED_RUNTIME_DIR}/doc/tags)
-set(GENERATED_SYN_VIM ${GENERATED_RUNTIME_DIR}/syntax/vim/generated.vim)
 
 set_directory_properties(PROPERTIES
   EP_PREFIX "${DEPS_BUILD_DIR}")
@@ -58,6 +53,12 @@ endif()
 
 if(${CMAKE_VERSION} VERSION_LESS 3.20)
   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+endif()
+
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.26)
+  set(COPY_DIRECTORY copy_directory_if_different)
+else()
+  set(COPY_DIRECTORY copy_directory)
 endif()
 
 # Prefer our bundled versions of dependencies.
@@ -231,7 +232,7 @@ set(STYLUA_DIRS runtime scripts src test)
 
 add_glob_target(
   TARGET lintlua-luacheck
-  COMMAND $<TARGET_FILE:nvim>
+  COMMAND $<TARGET_FILE:nvim_bin>
   FLAGS -ll ${PROJECT_SOURCE_DIR}/test/lua_runner.lua ${CMAKE_BINARY_DIR}/usr luacheck -q
   GLOB_DIRS runtime scripts src test
   GLOB_PAT *.lua
@@ -258,8 +259,8 @@ add_glob_target(
   TOUCH_STRATEGY PER_DIR)
 
 add_custom_target(lintcommit
-  COMMAND $<TARGET_FILE:nvim> -u NONE -l ${PROJECT_SOURCE_DIR}/scripts/lintcommit.lua main)
-add_dependencies(lintcommit nvim)
+  COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l ${PROJECT_SOURCE_DIR}/scripts/lintcommit.lua main)
+add_dependencies(lintcommit nvim_bin)
 
 add_custom_target(lint)
 add_dependencies(lint lintc lintlua lintsh lintcommit)
@@ -279,6 +280,9 @@ add_dependencies(format formatc formatlua)
 install_helper(
   FILES ${CMAKE_SOURCE_DIR}/src/man/nvim.1
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+
+add_custom_target(nvim ALL)
+add_dependencies(nvim nvim_bin nvim_runtime_deps nvim_runtime)
 
 add_subdirectory(src/nvim)
 add_subdirectory(cmake.config)

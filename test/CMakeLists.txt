@@ -7,7 +7,7 @@ set(TEST_OPTIONS
       -D CIRRUS_CI=$ENV{CIRRUS_CI}
       -D CI_BUILD=${CI_BUILD}
       -D DEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
-      -D NVIM_PRG=$<TARGET_FILE:nvim>
+      -D NVIM_PRG=$<TARGET_FILE:nvim_bin>
       -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}
       -D WORKING_DIR=${PROJECT_SOURCE_DIR})
 
@@ -18,9 +18,8 @@ if(LUA_HAS_FFI)
       -D TEST_TYPE=unit
       ${TEST_OPTIONS}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS nvim
     USES_TERMINAL)
-  add_dependencies(unittest lua-dev-deps)
+  add_dependencies(unittest lua-dev-deps nvim)
 else()
   message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
 endif()
@@ -34,16 +33,15 @@ add_custom_target(functionaltest
     -D TEST_TYPE=functional
     ${TEST_OPTIONS}
     -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-  DEPENDS nvim printenv-test printargs-test shell-test pwsh-test streams-test tty-test ${GENERATED_HELP_TAGS} ${GENERATED_SYN_VIM}
+  DEPENDS printenv-test printargs-test shell-test pwsh-test streams-test tty-test
   USES_TERMINAL)
+add_dependencies(functionaltest lua-dev-deps nvim)
 
 add_custom_target(benchmark
   COMMAND ${CMAKE_COMMAND}
     -D TEST_TYPE=benchmark
     ${TEST_OPTIONS}
     -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-  DEPENDS nvim tty-test
+  DEPENDS tty-test
   USES_TERMINAL)
-
-add_dependencies(functionaltest lua-dev-deps)
-add_dependencies(benchmark lua-dev-deps)
+add_dependencies(benchmark lua-dev-deps nvim)
