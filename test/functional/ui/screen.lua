@@ -1109,8 +1109,8 @@ function Screen:_handle_option_set(name, value)
   self.options[name] = value
 end
 
-function Screen:_handle_chdir(name)
-  self.pwd = vim.fs.normalize(name, { expand_env = false })
+function Screen:_handle_chdir(path)
+  self.pwd = vim.fs.normalize(path, { expand_env = false })
 end
 
 function Screen:_handle_popupmenu_show(items, selected, row, col, grid)

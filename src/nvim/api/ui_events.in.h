@@ -39,7 +39,7 @@ void screenshot(String path)
   FUNC_API_SINCE(7);
 void option_set(String name, Object value)
   FUNC_API_SINCE(4);
-void chdir(String name)
+void chdir(String path)
   FUNC_API_SINCE(12);
 // Stop event is not exported as such, represented by EOF in the msgpack stream.
 void stop(void)

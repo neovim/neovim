@@ -228,9 +228,9 @@ the editor.
 	however a UI might still use such options when rendering raw text
 	sent from Nvim, like for |ui-cmdline|.
 
-["chdir", name] ~
+["chdir", path] ~
 	The |current-directory| of the embedded Nvim process changed to
-	`name`.
+	`path`.
 
 ["mode_change", mode, mode_idx] ~
 	Editor mode changed.  The `mode` parameter is a string representing
