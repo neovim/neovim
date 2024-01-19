@@ -150,7 +150,11 @@ void extmark_del(buf_T *buf, MarkTreeIter *itr, MTKey key, bool restore)
   }
 
   if (mt_decor_any(key)) {
-    buf_decor_remove(buf, key.pos.row, key2.pos.row, mt_decor(key), true);
+    if (mt_invalid(key)) {
+      decor_free(mt_decor(key));
+    } else {
+      buf_decor_remove(buf, key.pos.row, key2.pos.row, mt_decor(key), true);
+    }
   }
 
   // TODO(bfredl): delete it from current undo header, opportunistically?
@@ -352,14 +356,12 @@ void extmark_splice_delete(buf_T *buf, int l_row, colnr_T l_col, int u_row, coln
 
     // Push mark to undo header
     if (only_copy || (uvp != NULL && op == kExtmarkUndo && !mt_no_undo(mark))) {
-      ExtmarkSavePos pos;
-      pos.mark = mt_lookup_key(mark);
-      pos.invalidated = invalidated;
-      pos.old_row = mark.pos.row;
-      pos.old_col = mark.pos.col;
-      pos.row = -1;
-      pos.col = -1;
-
+      ExtmarkSavePos pos = {
+        .mark = mt_lookup_key(mark),
+        .invalidated = invalidated,
+        .old_row = mark.pos.row,
+        .old_col = mark.pos.col
+      };
       undo.data.savepos = pos;
       undo.type = kExtmarkSavePos;
       kv_push(*uvp, undo);
@@ -393,22 +395,17 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
   } else if (undo_info.type == kExtmarkSavePos) {
     ExtmarkSavePos pos = undo_info.data.savepos;
     if (undo) {
-      if (pos.old_row >= 0) {
-        extmark_setraw(curbuf, pos.mark, pos.old_row, pos.old_col);
-      }
-      if (pos.invalidated) {
+      if (pos.old_row >= 0
+          && extmark_setraw(curbuf, pos.mark, pos.old_row, pos.old_col)
+          && pos.invalidated) {
         MarkTreeIter itr[1] = { 0 };
         MTKey mark = marktree_lookup(curbuf->b_marktree, pos.mark, itr);
         mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_INVALID;
         MTPos end = marktree_get_altpos(curbuf->b_marktree, mark, itr);
         buf_put_decor(curbuf, mt_decor(mark), mark.pos.row, end.row);
       }
-      // Redo
-    } else {
-      if (pos.row >= 0) {
-        extmark_setraw(curbuf, pos.mark, pos.row, pos.col);
-      }
     }
+    // No Redo since kExtmarkSplice will move marks back
   } else if (undo_info.type == kExtmarkMove) {
     ExtmarkMove move = undo_info.data.move;
     if (undo) {

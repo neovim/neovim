@@ -1712,6 +1712,10 @@ describe('API/extmarks', function()
           aaa bbb ccc                         |*2
                                               |
     ]])
+    -- decor is not removed twice
+    command('d3')
+    api.nvim_buf_del_extmark(0, ns, 1)
+    command('silent undo')
     -- mark is deleted with undo_restore == false
     set_extmark(ns, 1, 0, 0, { invalidate = true, undo_restore = false, sign_text = 'S1' })
     set_extmark(ns, 2, 1, 0, { invalidate = true, undo_restore = false, sign_text = 'S2' })
