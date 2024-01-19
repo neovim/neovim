@@ -2999,6 +2999,79 @@ The LPeg library for parsing expression grammars is included as `vim.lpeg`
 In addition, its regex-like interface is available as |vim.re|
 (https://www.inf.puc-rio.br/~roberto/lpeg/re.html).
 
+                                                                 *vim.lpeg.op*
+                                                *vim.lpeg.op.len* *vim.lpeg.#*
+ Returns a pattern that matches only if the input string matches patt, but
+ without consuming any input, independently of success or failure.
+
+ This pattern never produces any capture.
+
+                                    *vim.lpeg.op.unary-sub* *vim.lpeg.unary.-*
+ Returns a pattern that matches only if the input string does not match patt.
+ It does not consume any input, independently of success or failure.
+
+ As an example, the pattern -lpeg.P(1) matches only the end of string.
+
+ This pattern never produces any captures, because either patt fails or -patt
+ fails. (A failing pattern never produces captures.)
+
+ Note that -patt is equivalent to lpeg.P("") - patt.
+
+                                                *vim.lpeg.op.add* *vim.lpeg.+*
+ Returns a pattern equivalent to an ordered choice of patt1 and patt2. It
+ matches either patt1 or patt2, with no backtracking once one of them succeeds.
+
+                                                *vim.lpeg.op.sub* *vim.lpeg.-*
+ Returns a pattern that asserts that the input does not match patt2 and then
+ matches patt1.
+
+ When successful, this pattern produces all captures from patt1. It never
+ produces any capture from patt2.
+
+                                            *vim.lpeg.op.star* *vim.lpeg.star*
+ Returns a pattern that matches patt1 and then matches patt2, starting where
+ patt1 finished.
+
+                                                *vim.lpeg.op.pow* *vim.lpeg.^*
+ If n is nonnegative then it matches n or more occurrences of patt.
+
+ Otherwise, when n is negative, then it matches at most |n| occurrences of
+ patt.
+
+ In particular, patt^0 is equivalent to patt* in regex, patt^1 is equivalent
+ to patt+ in regex, and patt^-1 is equivalent to patt? in regex.
+
+ In all cases, the resulting pattern is greedy with no backtracking (also
+ called a possessive repetition). That is, it matches only the longest
+ possible sequence of matches for patt.
+
+                                                *vim.lpeg.op.div* *vim.lpeg./*
+ Does different things depending on the type of the denominator.
+
+ When the denominator is a string, it creates a capture string based on
+ string. The captured value is a copy of string, except that the character %
+ works as an escape character: any sequence in string of the form n, with n
+ between 1 and 9, stands for the match of the n-th capture in patt. The
+ sequence %0 stands for the whole match.
+
+ When the denominator is a number, for a non-zero number, the captured value
+ is the n-th value captured by patt. When number is zero, there are no
+ captured values.
+
+ When the denominator is a function, it calls the given function passing all
+ captures made by patt as arguments, or the whole match if patt made no
+ capture. The values returned by the function are the final values of the
+ capture. In particular, if function returns no value, there is no captured
+ value.
+
+                                                *vim.lpeg.op.mod* *vim.lpeg.%*
+ Creates an accumulator capture. This pattern behaves similarly to a function
+ capture, with the following differences: The last captured value before patt
+ is added as a first argument to the call; the return of the function is
+ adjusted to one single value; that value replaces the last captured value.
+ Note that the capture itself produces no values; it only changes the value
+ of its previous capture.
+
 vim.lpeg.B({pattern})                                           *vim.lpeg.B()*
     Returns a pattern that matches only if the input string at the current
     position is preceded by `patt`. Pattern `patt` must match only strings
