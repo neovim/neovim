@@ -178,7 +178,11 @@ describe('--embed UI', function()
     local screen = Screen.new(40, 8)
     screen:attach()
 
-    eq(helpers.paths.test_source_path, screen.pwd)
+    screen:expect {
+      condition = function()
+        eq(helpers.paths.test_source_path, screen.pwd)
+      end,
+    }
 
     -- Change global cwd
     helpers.command(string.format('cd %s/src/nvim', helpers.paths.test_source_path))

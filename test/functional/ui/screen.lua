@@ -213,7 +213,6 @@ function Screen:attach(options, session)
   if options.ext_linegrid == nil then
     options.ext_linegrid = true
   end
-  self.pwd = vim.fs.normalize(vim.uv.cwd() or '')
   self._session = session
   self._options = options
   self._clear_attrs = (not options.ext_linegrid) and {} or nil
