@@ -4,6 +4,7 @@ local feed = helpers.feed
 local source = helpers.source
 local clear = helpers.clear
 local command = helpers.command
+local expect = helpers.expect
 local poke_eventloop = helpers.poke_eventloop
 local meths = helpers.meths
 local eq = helpers.eq
@@ -262,5 +263,37 @@ describe('prompt buffer', function()
     eq({ mode = 'i', blocking = false }, meths.get_mode())
     command('call DoAppend()')
     eq({ mode = 'i', blocking = false }, meths.get_mode())
+  end)
+
+  -- oldtest: Test_prompt_leave_modify_hidden()
+  it('modifying hidden buffer does not prevent prompt buffer mode change', function()
+    source([[
+      file hidden
+      set bufhidden=hide
+      enew
+      new prompt
+      set buftype=prompt
+
+      inoremap <buffer> w <Cmd>wincmd w<CR>
+      inoremap <buffer> q <Cmd>bwipe!<CR>
+      autocmd BufLeave prompt call appendbufline('hidden', '$', 'Leave')
+      autocmd BufEnter prompt call appendbufline('hidden', '$', 'Enter')
+      autocmd BufWinLeave prompt call appendbufline('hidden', '$', 'Close')
+    ]])
+    feed('a')
+    eq({ mode = 'i', blocking = false }, meths.get_mode())
+    feed('w')
+    eq({ mode = 'n', blocking = false }, meths.get_mode())
+    feed('<C-W>w')
+    eq({ mode = 'i', blocking = false }, meths.get_mode())
+    feed('q')
+    eq({ mode = 'n', blocking = false }, meths.get_mode())
+    command('bwipe!')
+    expect([[
+
+      Leave
+      Enter
+      Leave
+      Close]])
   end)
 end)

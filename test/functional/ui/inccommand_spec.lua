@@ -3250,3 +3250,54 @@ it("with 'inccommand' typing :filter doesn't segfault or leak memory #19057", fu
   feed('i')
   assert_alive()
 end)
+
+it("'inccommand' value can be changed multiple times #27086", function()
+  clear()
+  local screen = Screen.new(30, 20)
+  common_setup(screen, 'split', 'foo1\nfoo2\nfoo3')
+  for _ = 1, 3 do
+    feed(':%s/foo/bar')
+    screen:expect([[
+      {12:bar}1                          |
+      {12:bar}2                          |
+      {12:bar}3                          |
+      {15:~                             }|*7
+      {11:[No Name] [+]                 }|
+      |1| {12:bar}1                      |
+      |2| {12:bar}2                      |
+      |3| {12:bar}3                      |
+      {15:~                             }|*4
+      {10:[Preview]                     }|
+      :%s/foo/bar^                   |
+    ]])
+    feed('<Esc>')
+    command('set inccommand=nosplit')
+    feed(':%s/foo/bar')
+    screen:expect([[
+      {12:bar}1                          |
+      {12:bar}2                          |
+      {12:bar}3                          |
+      {15:~                             }|*16
+      :%s/foo/bar^                   |
+    ]])
+    feed('<Esc>')
+    command('set inccommand=split')
+  end
+end)
+
+it("'inccommand' disables preview if preview buffer can't be created #27086", function()
+  clear()
+  meths.buf_set_name(0, '[Preview]')
+  local screen = Screen.new(30, 20)
+  common_setup(screen, 'split', 'foo1\nfoo2\nfoo3')
+  eq('split', meths.get_option_value('inccommand', {}))
+  feed(':%s/foo/bar')
+  screen:expect([[
+    {12:bar}1                          |
+    {12:bar}2                          |
+    {12:bar}3                          |
+    {15:~                             }|*16
+    :%s/foo/bar^                   |
+  ]])
+  eq('nosplit', meths.get_option_value('inccommand', {}))
+end)
