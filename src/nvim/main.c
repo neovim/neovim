@@ -1510,7 +1510,7 @@ static void init_startuptime(mparm_T *paramp)
   }
   for (int i = 1; i < paramp->argc - 1; i++) {
     if (STRICMP(paramp->argv[i], "--startuptime") == 0) {
-      time_init(paramp->argv[i + 1], is_main_process ? "Main" : "TUI");
+      time_init(paramp->argv[i + 1], is_main_process ? "Main" : "Primary/TUI");
       time_start("--- NVIM STARTING ---");
       break;
     }

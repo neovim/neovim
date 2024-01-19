@@ -965,7 +965,7 @@ void time_init(const char *startup_time_file, const char *process_name)
     semsg("Error initializing startup time");
     return;
   }
-  fprintf(time_fd, "--- Startup times for %s process ---\n", process_name);
+  fprintf(time_fd, "--- Startup times for process: %s ---\n", process_name);
 }
 
 /// Flushes the startuptimes to disk for the current process
