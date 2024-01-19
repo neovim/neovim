@@ -384,6 +384,12 @@ void ui_attach_impl(UI *ui, uint64_t chanid)
   ui_refresh_options();
   resettitle();
 
+  char cwd[MAXPATHL];
+  size_t cwdlen = sizeof(cwd);
+  if (uv_cwd(cwd, &cwdlen) == 0) {
+    ui_call_chdir((String){ .data = cwd, .size = cwdlen });
+  }
+
   for (UIExtension i = kUIGlobalCount; (int)i < kUIExtCount; i++) {
     ui_set_ext_option(ui, i, ui->ui_ext[i]);
   }

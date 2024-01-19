@@ -1500,6 +1500,14 @@ void tui_option_set(TUIData *tui, String name, Object value)
   }
 }
 
+void tui_chdir(TUIData *tui, String path)
+{
+  int err = uv_chdir(path.data);
+  if (err != 0) {
+    ELOG("Failed to chdir to %s: %s", path.data, strerror(err));
+  }
+}
+
 void tui_raw_line(TUIData *tui, Integer g, Integer linerow, Integer startcol, Integer endcol,
                   Integer clearcol, Integer clearattr, LineFlags flags, const schar_T *chunk,
                   const sattr_T *attrs)

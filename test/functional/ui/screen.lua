@@ -140,6 +140,7 @@ function Screen.new(width, height)
     suspended = false,
     mode = 'normal',
     options = {},
+    pwd = '',
     popupmenu = nil,
     cmdline = {},
     cmdline_block = {},
@@ -212,7 +213,6 @@ function Screen:attach(options, session)
   if options.ext_linegrid == nil then
     options.ext_linegrid = true
   end
-
   self._session = session
   self._options = options
   self._clear_attrs = (not options.ext_linegrid) and {} or nil
@@ -1106,6 +1106,10 @@ end
 
 function Screen:_handle_option_set(name, value)
   self.options[name] = value
+end
+
+function Screen:_handle_chdir(path)
+  self.pwd = vim.fs.normalize(path, { expand_env = false })
 end
 
 function Screen:_handle_popupmenu_show(items, selected, row, col, grid)

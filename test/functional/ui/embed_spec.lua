@@ -171,6 +171,56 @@ describe('--embed UI', function()
     }
     eq({ [16711935] = true }, seen) -- we only saw the last one, despite 16777215 was set internally earlier
   end)
+
+  it('updates cwd of attached UI #21771', function()
+    clear { args_rm = { '--headless' } }
+
+    local screen = Screen.new(40, 8)
+    screen:attach()
+
+    screen:expect {
+      condition = function()
+        eq(helpers.paths.test_source_path, screen.pwd)
+      end,
+    }
+
+    -- Change global cwd
+    helpers.command(string.format('cd %s/src/nvim', helpers.paths.test_source_path))
+
+    screen:expect {
+      condition = function()
+        eq(string.format('%s/src/nvim', helpers.paths.test_source_path), screen.pwd)
+      end,
+    }
+
+    -- Split the window and change the cwd in the split
+    helpers.command('new')
+    helpers.command(string.format('lcd %s/test', helpers.paths.test_source_path))
+
+    screen:expect {
+      condition = function()
+        eq(string.format('%s/test', helpers.paths.test_source_path), screen.pwd)
+      end,
+    }
+
+    -- Move to the original window
+    helpers.command('wincmd p')
+
+    screen:expect {
+      condition = function()
+        eq(string.format('%s/src/nvim', helpers.paths.test_source_path), screen.pwd)
+      end,
+    }
+
+    -- Change global cwd again
+    helpers.command(string.format('cd %s', helpers.paths.test_source_path))
+
+    screen:expect {
+      condition = function()
+        eq(helpers.paths.test_source_path, screen.pwd)
+      end,
+    }
+  end)
 end)
 
 describe('--embed --listen UI', function()
