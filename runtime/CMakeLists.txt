@@ -1,5 +1,9 @@
-set(SYN_VIM_GENERATOR ${PROJECT_SOURCE_DIR}/src/nvim/generators/gen_vimvim.lua)
+set(GENERATED_RUNTIME_DIR ${PROJECT_BINARY_DIR}/runtime)
+
+set(GENERATED_HELP_TAGS ${GENERATED_RUNTIME_DIR}/doc/tags)
 set(GENERATED_PACKAGE_DIR ${GENERATED_RUNTIME_DIR}/pack/dist/opt)
+set(GENERATED_SYN_VIM ${GENERATED_RUNTIME_DIR}/syntax/vim/generated.vim)
+set(SYN_VIM_GENERATOR ${PROJECT_SOURCE_DIR}/src/nvim/generators/gen_vimvim.lua)
 
 file(MAKE_DIRECTORY ${GENERATED_RUNTIME_DIR}/syntax/vim)
 
@@ -32,7 +36,7 @@ foreach(PACKAGE ${PACKAGES})
       COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
         -u NONE -i NONE -e --headless -c "helptags doc" -c quit
       DEPENDS
-        nvim
+        nvim_bin
         nvim_runtime_deps
       WORKING_DIRECTORY "${GENERATED_PACKAGE_DIR}/${PACKNAME}"
     )
@@ -66,7 +70,7 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
   COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
     -u NONE -i NONE -e --headless -c "helptags ++t doc" -c quit
   DEPENDS
-    nvim
+    nvim_bin
     nvim_runtime_deps
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}"
 )
@@ -81,7 +85,7 @@ add_custom_target(doc_html
 )
 
 add_custom_target(
-  runtime ALL
+  nvim_runtime
   DEPENDS
     ${GENERATED_SYN_VIM}
     ${GENERATED_HELP_TAGS}

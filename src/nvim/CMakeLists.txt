@@ -1,7 +1,11 @@
 add_library(main_lib INTERFACE)
-add_executable(nvim)
 
-set_target_properties(nvim
+# Internally we need to make a distinction between "nvim without runtime files"
+# (nvim_bin) and "nvim with runtime files" (nvim).
+add_executable(nvim_bin EXCLUDE_FROM_ALL)
+set_target_properties(nvim_bin PROPERTIES OUTPUT_NAME nvim)
+
+set_target_properties(nvim_bin
   PROPERTIES
   EXPORT_COMPILE_COMMANDS ON
   ENABLE_EXPORTS TRUE)
@@ -115,7 +119,7 @@ elseif(MINGW)
   target_compile_definitions(main_lib INTERFACE __USE_MINGW_ANSI_STDIO)
 
   # Enable wmain
-  target_link_libraries(nvim PRIVATE -municode)
+  target_link_libraries(nvim_bin PRIVATE -municode)
 elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   if(CMAKE_C_COMPILER_VERSION VERSION_LESS 10)
     target_compile_options(main_lib INTERFACE -Wno-conversion)
@@ -134,7 +138,7 @@ elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
 
   # workaround for clang-11 on macOS, supported on later versions
   if(NOT APPLE)
-    target_link_libraries(nvim PRIVATE -Wl,--no-undefined)
+    target_link_libraries(nvim_bin PRIVATE -Wl,--no-undefined)
   endif()
 endif()
 
@@ -150,16 +154,16 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   target_compile_definitions(main_lib INTERFACE _WIN32_WINNT=0x0602 MSWIN)
   target_link_libraries(main_lib INTERFACE netapi32)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-  target_link_libraries(nvim PRIVATE "-framework CoreServices")
+  target_link_libraries(nvim_bin PRIVATE "-framework CoreServices")
 
   # Actually export symbols - symbols may not be visible even though
   # ENABLE_EXPORTS is set to true. See
   # https://github.com/neovim/neovim/issues/25295
-  target_link_options(nvim PRIVATE "-Wl,-export_dynamic")
+  target_link_options(nvim_bin PRIVATE "-Wl,-export_dynamic")
 elseif(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
   target_link_libraries(main_lib INTERFACE pthread c++abi)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
-  target_link_libraries(nvim PRIVATE -lsocket)
+  target_link_libraries(nvim_bin PRIVATE -lsocket)
 endif()
 
 check_c_compiler_flag(-Wimplicit-fallthrough HAVE_WIMPLICIT_FALLTHROUGH_FLAG)
@@ -205,35 +209,35 @@ if(ENABLE_ASAN_UBSAN)
   if(NOT MSVC)
     if(CI_BUILD)
       # Try to recover from all sanitize issues so we get reports about all failures
-      target_compile_options(nvim PRIVATE -fsanitize-recover=all)
+      target_compile_options(nvim_bin PRIVATE -fsanitize-recover=all)
     else()
-      target_compile_options(nvim PRIVATE -fno-sanitize-recover=all)
+      target_compile_options(nvim_bin PRIVATE -fno-sanitize-recover=all)
     endif()
-    target_compile_options(nvim PRIVATE
+    target_compile_options(nvim_bin PRIVATE
       -fno-omit-frame-pointer
       -fno-optimize-sibling-calls
       -fsanitize=undefined)
   endif()
 
-  target_compile_options(nvim PRIVATE -fsanitize=address)
-  target_link_libraries(nvim PRIVATE -fsanitize=address -fsanitize=undefined)
-  target_compile_definitions(nvim PRIVATE ENABLE_ASAN_UBSAN)
+  target_compile_options(nvim_bin PRIVATE -fsanitize=address)
+  target_link_libraries(nvim_bin PRIVATE -fsanitize=address -fsanitize=undefined)
+  target_compile_definitions(nvim_bin PRIVATE ENABLE_ASAN_UBSAN)
 endif()
 
 if(ENABLE_MSAN)
   message(STATUS "Enabling memory sanitizer for nvim.")
-  target_compile_options(nvim PRIVATE
+  target_compile_options(nvim_bin PRIVATE
     -fsanitize=memory
     -fsanitize-memory-track-origins
     -fno-omit-frame-pointer
     -fno-optimize-sibling-calls)
-  target_link_libraries(nvim PRIVATE -fsanitize=memory -fsanitize-memory-track-origins)
+  target_link_libraries(nvim_bin PRIVATE -fsanitize=memory -fsanitize-memory-track-origins)
 endif()
 
 if(ENABLE_TSAN)
   message(STATUS "Enabling thread sanitizer for nvim.")
-  target_compile_options(nvim PRIVATE -fsanitize=thread -fPIE)
-  target_link_libraries(nvim PRIVATE -fsanitize=thread)
+  target_compile_options(nvim_bin PRIVATE -fsanitize=thread -fPIE)
+  target_link_libraries(nvim_bin PRIVATE -fsanitize=thread)
 endif()
 
 option(CI_BUILD "CI, extra flags will be set" OFF)
@@ -254,7 +258,7 @@ if(ENABLE_IWYU)
   string(APPEND iwyu_flags "-Xiwyu;--no_fwd_decls;")
   string(APPEND iwyu_flags "-Xiwyu;--mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/mapping.imp")
 
-  set_target_properties(nvim PROPERTIES C_INCLUDE_WHAT_YOU_USE "${iwyu_flags}")
+  set_target_properties(nvim_bin PROPERTIES C_INCLUDE_WHAT_YOU_USE "${iwyu_flags}")
   target_compile_definitions(main_lib INTERFACE EXITFREE)
 endif()
 
@@ -284,7 +288,7 @@ endif()
 #-------------------------------------------------------------------------------
 
 set(API_METADATA ${PROJECT_BINARY_DIR}/api_metadata.mpack)
-set(BINARY_LIB_DIR ${PROJECT_BINARY_DIR}/lib/nvim/)
+set(BINARY_LIB_DIR ${PROJECT_BINARY_DIR}/lib/nvim)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
 set(GENERATOR_DIR ${CMAKE_CURRENT_LIST_DIR}/generators)
@@ -436,7 +440,7 @@ if(CI_BUILD)
   # TODO(bfredl): debug log level also exposes some errors with EXITFREE in ASAN build.
 else()
   # Minimize logging for release-type builds.
-  target_compile_definitions(nvim PRIVATE $<$<CONFIG:Debug>:NVIM_LOG_DEBUG>)
+  target_compile_definitions(nvim_bin PRIVATE $<$<CONFIG:Debug>:NVIM_LOG_DEBUG>)
 endif()
 
 if(ENABLE_ASAN_UBSAN OR ENABLE_MSAN OR ENABLE_TSAN)
@@ -685,8 +689,8 @@ if(PREFER_LUA)
   message(STATUS "luajit not used, skipping unit tests")
 else()
   file(GLOB UNIT_TEST_FIXTURES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
-  target_sources(nvim PRIVATE ${UNIT_TEST_FIXTURES})
-  target_compile_definitions(nvim PRIVATE UNIT_TESTING)
+  target_sources(nvim_bin PRIVATE ${UNIT_TEST_FIXTURES})
+  target_compile_definitions(nvim_bin PRIVATE UNIT_TESTING)
 endif()
 
 target_sources(main_lib INTERFACE
@@ -700,32 +704,33 @@ target_sources(main_lib INTERFACE
 
 target_sources(nlua0 PUBLIC ${NLUA0_SOURCES})
 
-target_link_libraries(nvim PRIVATE main_lib PUBLIC libuv)
-install_helper(TARGETS nvim)
+target_link_libraries(nvim_bin PRIVATE main_lib PUBLIC libuv)
+install_helper(TARGETS nvim_bin)
 if(MSVC)
-  install(FILES $<TARGET_PDB_FILE:nvim> DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
+  install(FILES $<TARGET_PDB_FILE:nvim_bin> DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
 endif()
 
 if(ENABLE_LTO)
   include(CheckIPOSupported)
   check_ipo_supported(RESULT IPO_SUPPORTED)
   if(IPO_SUPPORTED)
-    set_target_properties(nvim PROPERTIES
+    set_target_properties(nvim_bin PROPERTIES
       INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
       INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE
       INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL TRUE)
   endif()
 endif()
 
+add_custom_target(nvim_runtime_deps)
 if(WIN32)
   # Copy DLLs and third-party tools to bin/ and install them along with nvim
-  add_custom_target(nvim_runtime_deps ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+  add_custom_command(TARGET nvim_runtime_deps
+    COMMAND ${CMAKE_COMMAND} -E ${COPY_DIRECTORY} ${PROJECT_BINARY_DIR}/windows_runtime_deps/
       ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   install(DIRECTORY ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-  add_custom_target(nvim_dll_deps DEPENDS nvim
+  add_custom_target(nvim_dll_deps DEPENDS nvim_bin
     COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/windows_runtime_deps
     COMMAND ${CMAKE_COMMAND}
       -D CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
@@ -755,18 +760,11 @@ if(WIN32)
   add_custom_target(external_blobs
     COMMAND ${CMAKE_COMMAND} -P ${PROJECT_BINARY_DIR}/external_blobs.cmake)
   add_dependencies(nvim_runtime_deps external_blobs)
-else()
-  add_custom_target(nvim_runtime_deps)  # Stub target to avoid CMP0046.
 endif()
-
-file(MAKE_DIRECTORY ${BINARY_LIB_DIR})
 
 # install treesitter parser if bundled
 if(EXISTS ${DEPS_PREFIX}/lib/nvim/parser)
-  file(GLOB TREESITTER_PARSERS CONFIGURE_DEPENDS ${DEPS_PREFIX}/lib/nvim/parser/*)
-  foreach(parser_lib ${TREESITTER_PARSERS})
-    file(COPY ${parser_lib} DESTINATION ${BINARY_LIB_DIR}/parser)
-  endforeach()
+  add_custom_command(TARGET nvim_runtime_deps COMMAND ${CMAKE_COMMAND} -E ${COPY_DIRECTORY} ${DEPS_PREFIX}/lib/nvim/parser ${BINARY_LIB_DIR}/parser)
 endif()
 
 install(DIRECTORY ${BINARY_LIB_DIR}
@@ -842,7 +840,7 @@ add_glob_target(
 
 add_custom_target(copy_compile_commands
   COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/compile_commands.json ${PROJECT_SOURCE_DIR}/compile_commands.json)
-add_dependencies(copy_compile_commands nvim)
+add_dependencies(copy_compile_commands nvim_bin)
 add_dependencies(lintc-clang-tidy copy_compile_commands)
 add_dependencies(clang-analyzer copy_compile_commands)
 
@@ -926,7 +924,7 @@ add_custom_command(
   OUTPUT ${MPACK_FILES}
   COMMAND ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.py
   DEPENDS
-    nvim
+    nvim_bin
     ${API_SOURCES}
     ${LUA_SOURCES}
     ${VIMDOC_FILES}
@@ -938,7 +936,7 @@ add_custom_command(
 add_custom_command(
   OUTPUT ${GEN_EVAL_TOUCH}
   COMMAND ${CMAKE_COMMAND} -E touch ${GEN_EVAL_TOUCH}
-  COMMAND $<TARGET_FILE:nvim> -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
+  COMMAND $<TARGET_FILE:nvim_bin> -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
   DEPENDS
     ${API_METADATA}
     ${NVIM_RUNTIME_DIR}/doc/api.mpack
