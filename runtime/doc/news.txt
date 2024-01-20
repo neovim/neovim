@@ -159,7 +159,7 @@ The following new APIs and features were added.
 • |nvim_win_text_height()| computes the number of screen lines occupied
   by a range of text in a given window.
 
-• |nvim_set_keymap()| and |nvim_del_keymap()| now support abbreviations.
+• Mapping APIs now support abbreviations when mode short-name has suffix "a".
 
 • Better cmdline completion for string option value. |complete-set-option|
 

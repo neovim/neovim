@@ -460,6 +460,57 @@ describe('nvim_get_keymap', function()
       desc = 'map description',
     }, api.nvim_get_keymap('n')[1])
   end)
+
+  it('can get abbreviations', function()
+    command('inoreabbr foo bar')
+    command('cnoreabbr <buffer> foo baz')
+
+    local mapargs_i = {
+      abbr = 1,
+      buffer = 0,
+      expr = 0,
+      lhs = 'foo',
+      lhsraw = 'foo',
+      lnum = 0,
+      mode = 'i',
+      mode_bits = 0x10,
+      noremap = 1,
+      nowait = 0,
+      rhs = 'bar',
+      script = 0,
+      scriptversion = 1,
+      sid = 0,
+      silent = 0,
+    }
+    local mapargs_c = {
+      abbr = 1,
+      buffer = 1,
+      expr = 0,
+      lhs = 'foo',
+      lhsraw = 'foo',
+      lnum = 0,
+      mode = 'c',
+      mode_bits = 0x08,
+      noremap = 1,
+      nowait = 0,
+      rhs = 'baz',
+      script = 0,
+      scriptversion = 1,
+      sid = 0,
+      silent = 0,
+    }
+
+    local curbuf = api.nvim_get_current_buf()
+
+    eq({ mapargs_i }, api.nvim_get_keymap('ia'))
+    eq({}, api.nvim_buf_get_keymap(curbuf, 'ia'))
+
+    eq({}, api.nvim_get_keymap('ca'))
+    eq({ mapargs_c }, api.nvim_buf_get_keymap(curbuf, 'ca'))
+
+    eq({ mapargs_i }, api.nvim_get_keymap('!a'))
+    eq({ mapargs_c }, api.nvim_buf_get_keymap(curbuf, '!a'))
+  end)
 end)
 
 describe('nvim_set_keymap, nvim_del_keymap', function()
