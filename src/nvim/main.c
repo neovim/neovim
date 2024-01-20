@@ -1501,16 +1501,16 @@ static void init_startuptime(mparm_T *paramp)
 {
   // check if we are currently running as the tui or the main process
   // the main process is always called with the --embed flag
-  bool is_main_process = false;
+  bool is_embeded_process = false;
   for (int i = 1; i < paramp->argc - 1; i++) {
     if (STRICMP(paramp->argv[i], "--embed") == 0) {
-      is_main_process = true;
+      is_embeded_process = true;
       break;
     }
   }
   for (int i = 1; i < paramp->argc - 1; i++) {
     if (STRICMP(paramp->argv[i], "--startuptime") == 0) {
-      time_init(paramp->argv[i + 1], is_main_process ? "Main" : "Primary/TUI");
+      time_init(paramp->argv[i + 1], is_embeded_process ? "Embeded" : "Primary/TUI");
       time_start("--- NVIM STARTING ---");
       break;
     }
