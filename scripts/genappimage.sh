@@ -26,8 +26,8 @@ APP_DIR="$APP.AppDir"
 ########################################################################
 
 # Build and install nvim into the AppImage
-make CMAKE_BUILD_TYPE="${NVIM_BUILD_TYPE}" CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=${APP_DIR}/usr -DCMAKE_INSTALL_MANDIR=man"
-make install
+make CMAKE_BUILD_TYPE="${NVIM_BUILD_TYPE}"
+cmake --install build --prefix="$APP_BUILD_DIR/${APP_DIR}/usr"
 
 ########################################################################
 # Get helper functions and move to AppDir
@@ -52,7 +52,7 @@ fi
 chmod +x "$APP_BUILD_DIR"/linuxdeploy-x86_64.AppImage
 
 # metainfo is not packaged automatically by linuxdeploy
-mkdir "$APP_DIR/usr/share/metainfo/"
+mkdir -p "$APP_DIR/usr/share/metainfo/"
 cp "$ROOT_DIR/runtime/nvim.appdata.xml" "$APP_DIR/usr/share/metainfo/"
 
 cd "$APP_DIR" || exit
