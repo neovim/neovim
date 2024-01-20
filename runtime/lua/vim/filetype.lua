@@ -267,6 +267,7 @@ local extension = {
   crdpro = 'chordpro',
   cho = 'chordpro',
   chordpro = 'chordpro',
+  ck = 'chuck',
   eni = 'cl',
   icl = 'clean',
   cljx = 'clojure',
