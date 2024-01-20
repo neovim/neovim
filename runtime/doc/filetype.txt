@@ -687,7 +687,7 @@ To disable this behavior, set the following variable in your vimrc: >
 QUERY					                *ft-query-plugin*
 
 
-Linting of tree-sitter queries for installed parsers using
+Linting of treesitter queries for installed parsers using
 |vim.treesitter.query.lint()| is enabled by default on `BufEnter` and
 `BufWrite`. To change the events that trigger linting, use >lua
 

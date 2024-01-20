@@ -1,5 +1,5 @@
-// lua bindings for tree-sitter.
-// NB: this file mostly contains a generic lua interface for tree-sitter
+// lua bindings for treesitter.
+// NB: this file mostly contains a generic lua interface for treesitter
 // trees and nodes, and could be broken out as a reusable lua package
 
 #include <assert.h>

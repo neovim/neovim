@@ -14,7 +14,7 @@ local M = {}
 local TSTreeView = {}
 
 ---@class TSP.Node
----@field node TSNode Tree-sitter node
+---@field node TSNode Treesitter node
 ---@field field string? Node field
 ---@field depth integer Depth of this node in the tree
 ---@field text string? Text displayed in the inspector for this node. Not computed until the

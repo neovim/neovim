@@ -1,5 +1,5 @@
 -- Neovim filetype plugin file
--- Language:	Tree-sitter query
+-- Language:	Treesitter query
 -- Last Change:	2023 Aug 23
 
 if vim.b.did_ftplugin == 1 then
