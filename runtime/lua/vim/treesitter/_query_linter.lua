@@ -92,7 +92,7 @@ local function get_error_entry(err, node)
     end_col = end_col + #underlined
   elseif msg:match('^Invalid') then
     -- Use the length of the problematic type/capture/field
-    end_col = end_col + #msg:match('"([^"]+)"')
+    end_col = end_col + #(msg:match('"([^"]+)"') or '')
   end
 
   return {
