@@ -1499,8 +1499,6 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
 /// Initialize global startuptime file if "--startuptime" passed as an argument.
 static void init_startuptime(mparm_T *paramp)
 {
-  // check if we are currently running as the tui or the main process
-  // the main process is always called with the --embed flag
   bool is_embedded_process = false;
   for (int i = 1; i < paramp->argc - 1; i++) {
     if (STRICMP(paramp->argv[i], "--embed") == 0) {

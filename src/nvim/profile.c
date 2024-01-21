@@ -948,7 +948,7 @@ void time_msg(const char *mesg, const proftime_T *start)
 /// Initializes the time time_fd stream used to write startup times
 ///
 /// @param startup_time_file the startuptime report file path
-/// @param process_name the name of the current process to write in the report. Example: "Main" or "TUI"
+/// @param process_name the name of the current process to write in the report.
 void time_init(const char *startup_time_file, const char *process_name)
 {
   time_fd = fopen(startup_time_file, "a");
