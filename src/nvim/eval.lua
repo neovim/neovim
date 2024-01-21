@@ -11549,7 +11549,7 @@ M.funcs = {
     ]=],
     name = 'synconcealed',
     params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
-    returns = '{[1]: integer, [2]: string, [3]: integer}[]',
+    returns = '{[1]: integer, [2]: string, [3]: integer}',
     signature = 'synconcealed({lnum}, {col})',
   },
   synstack = {
