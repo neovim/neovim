@@ -36,8 +36,9 @@
 //    long name of the command.
 //
 // 4. Auto-generate the lua meta file (runtime/lua/vim/_meta/vimcmd.lua)
-//    and the index for Ex commands at ":help ex-cmd-index",
 //    by running `scripts/gen_eval_files.lua`.
+// 5. Auto-generate vimdoc: the index for Ex commands at ":help ex-cmd-index"
+//    by running `make doc` or `python "scripts/gen_vimdoc.py" -t index`.
 
 #define EX_RANGE           0x001u  // allow a linespecs
 #define EX_BANG            0x002u  // allow a ! after the command name

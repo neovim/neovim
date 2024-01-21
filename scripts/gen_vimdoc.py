@@ -47,7 +47,7 @@ import subprocess
 import sys
 import textwrap
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Tuple, NamedTuple
+from typing import cast, Any, Callable, Dict, List, Tuple, NamedTuple
 from xml.dom import minidom
 
 if sys.version_info >= (3, 8):
@@ -121,19 +121,22 @@ Docstring = str  # Represents (formatted) vimdoc string
 
 FunctionName = str
 
+LuaScript = str
+
 
 @dataclasses.dataclass
 class Config:
     """Base config for vimdoc generation."""
+
+    filename: str
+    """Generated documentation target, e.g. api.txt"""
+
 
 @dataclasses.dataclass
 class DoxygenConfig(Config):
     """Doxygen config for vimdoc generation."""
 
     mode: Literal['c', 'lua']
-
-    filename: str
-    """Generated documentation target, e.g. api.txt"""
 
     section_order: List[str]
     """Section ordering."""
@@ -170,7 +173,21 @@ class DoxygenConfig(Config):
     include_tables: bool = True
 
 
-CONFIG: Dict[str, DoxygenConfig] = {
+@dataclasses.dataclass
+class LuaScriptGenConfig(Config):
+    """Run a Lua script to generate a chunk of vimdoc."""
+
+    script: LuaScript | Path
+    """A lua script to execute with `nvim -l`.
+
+    If a string is given, execute as a Lua script.
+    If a Path to lua file is given, execute the file.
+    """  # TODO: allow arguments.
+
+    first_section_tag: str  # TODO: allow multiple sections.
+
+
+CONFIG: Dict[str, Config] = {
     'api': DoxygenConfig(
         mode='c',
         filename = 'api.txt',
@@ -418,6 +435,11 @@ CONFIG: Dict[str, DoxygenConfig] = {
             else f'*vim.treesitter.{fstem}.{name}()*'),
         module_override={},
         append_only=[],
+    ),
+    'index': LuaScriptGenConfig(
+        filename='index.txt',
+        script=Path('./scripts/gendoc_ex_cmd_index.lua'),
+        first_section_tag='*ex-cmd-index*',
     ),
 }
 
@@ -1405,7 +1427,9 @@ def delete_lines_below(filename, tokenstr):
             found = True
             break
     if not found:
-        raise RuntimeError(f'not found: "{tokenstr}"')
+        basename = os.path.basename(filename)
+        raise RuntimeError(f'not found in `{basename}`: "{tokenstr}"')
+
     i = max(0, i - 2)
     with open(filename, 'wt') as fp:
         fp.writelines(lines[0:i])
@@ -1655,14 +1679,58 @@ def generate(target: str, config: Config, doxygen_config, args):
 
         return DocgenWriteSpec(first_section_tag, docs=docs, fn_map_full=fn_map_full)
 
-    # Now call either strategy and write the doc.
-    if isinstance(config, DoxygenConfig):
-        spec: DocgenWriteSpec = doxygen(config)
+    def luascript(config: LuaScriptGenConfig) -> DocgenWriteSpec:
+        """Run an arbitrary lua code, and write stdout as a vimdoc."""
 
-        # Write doc/{filename}.txt
+        script_file = (
+            '-' if isinstance(config.script, str) # stdin
+            else str(config.script))
+        cmd = [
+            nvim, '--clean', '-i', 'NONE', '-n', '--headless',
+            '-l', script_file,
+        ]
+
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        script: LuaScript = (
+            # Do not write into :messages, but write into stdout (fd=1)
+            '_G.print = function(...) io.stdout:write(...) end;\n' +
+            cast(str, config.script)
+        ) if script_file == '-' else ''
+        stdout: bytes = p.communicate(script.encode("utf-8"))[0]
+        if p.returncode != 0:
+            raise subprocess.CalledProcessError(
+                p.returncode, cmd,
+                p.stderr.read() if p.stderr else None)
+
+        assert p.stdout is not None
+
+        docs: str = stdout.decode('utf-8')
+        if not docs.strip():
+            raise ValueError(f"{target}: the lua script did not produce any output.")
+        docs += '\n\n'
+        docs += ' vim:tw=78:ts=8:noet:ft=help:norl:\n'
+        return DocgenWriteSpec(
+            first_section_tag=config.first_section_tag,
+            docs=docs,
+            fn_map_full=None,
+        )
+
+
+    # Now call either strategy and write the doc.
+    spec: DocgenWriteSpec
+    if isinstance(config, DoxygenConfig):
+        spec = doxygen(config)
+    elif isinstance(config, LuaScriptGenConfig):
+        spec = luascript(config)
+    else:
+        raise NotImplementedError(f"Unknown type: {config}")
+
+    # Write doc/{filename}.txt
+    if spec.docs:
         doc_file: Path = Path(base_dir) / 'runtime/doc' / config.filename
         if doc_file.exists():
             delete_lines_below(doc_file, spec.first_section_tag)
+
         with open(doc_file, 'at', encoding='utf-8') as fp:
             fp.write(spec.docs)
         msg(f"Successfully written to: {doc_file.relative_to(base_dir)}, "
@@ -1670,8 +1738,8 @@ def generate(target: str, config: Config, doxygen_config, args):
     else:
         assert False, f"{target}: docs is empty. Check if something is wrong."
 
+    # Write doc/{filename}.mpack
     if spec.fn_map_full:
-        # Write doc/{filename}.mpack
         mpack_file: Path = Path(base_dir) / 'runtime/doc' / (
             re.sub(r'\.txt$', '.mpack', config.filename))
         assert str(mpack_file).endswith('.mpack'), mpack_file
@@ -1687,7 +1755,7 @@ def generate(target: str, config: Config, doxygen_config, args):
             fp.write(msgpack.packb(fn_map_full_exported, use_bin_type=True))  # type: ignore
         msg(f"Successfully written to: {mpack_file.relative_to(base_dir)}")
 
-    if not args.keep_tmpfiles:
+    if not args.keep_tmpfiles and os.path.exists(output_dir):
         shutil.rmtree(output_dir)
 
 
