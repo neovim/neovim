@@ -302,17 +302,10 @@ static const char *highlight_init_both[] = {
   "@markup.strikethrough  gui=strikethrough, cterm=strikethrough",
   "@markup.underline      gui=underline,     cterm=underline",
 
-  "default link @markup.heading  Title",
-
-  "default link @markup.raw          Comment",
-  "default link @markup.quote        Comment",
-  "default link @markup.math         Comment",
-  "default link @markup.environment  Comment",
-
-  "default link @markup.link        Underlined",
-  "default link @markup.link.label  Identifier",
-
-  "default link @markup.list            Special",
+  "default link @markup                 Special",  // fallback for subgroups; never used itself
+  "default link @markup.heading         Title",
+  "default link @markup.environment     Structure",
+  "default link @markup.link            Underlined",
   "default link @markup.list.checked    DiagnosticOk",
   "default link @markup.list.unchecked  DiagnosticWarn",
 
