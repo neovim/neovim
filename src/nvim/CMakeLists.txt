@@ -762,6 +762,8 @@ if(WIN32)
   add_dependencies(nvim_runtime_deps external_blobs)
 endif()
 
+file(MAKE_DIRECTORY ${BINARY_LIB_DIR})
+
 # install treesitter parser if bundled
 if(EXISTS ${DEPS_PREFIX}/lib/nvim/parser)
   add_custom_command(TARGET nvim_runtime_deps COMMAND ${CMAKE_COMMAND} -E ${COPY_DIRECTORY} ${DEPS_PREFIX}/lib/nvim/parser ${BINARY_LIB_DIR}/parser)
