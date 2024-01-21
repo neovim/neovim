@@ -21,6 +21,7 @@ typedef struct {
   char *line;                ///< Start of the line.
 
   bool use_tabstop;          ///< Use 'tabstop' instead of char2cells() for a TAB.
+  int8_t lbr_skip_count;     ///< Positive - skip next n line breaks, negative - not calculated.
   int indent_width;          ///< Width of 'showbreak' and 'breakindent' on wrapped
                              ///< parts of lines, INT_MIN if not yet calculated.
 

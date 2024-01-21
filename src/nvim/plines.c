@@ -93,6 +93,7 @@ CSType init_charsize_arg(CharsizeArg *csarg, win_T *wp, linenr_T lnum, char *lin
   csarg->virt_row = -1;
   csarg->indent_width = INT_MIN;
   csarg->use_tabstop = !wp->w_p_list || wp->w_p_lcs_chars.tab1;
+  csarg->lbr_skip_count = -1;
 
   if (lnum > 0) {
     if (marktree_itr_get_filter(wp->w_buffer->b_marktree, lnum - 1, 0, lnum, 0,
@@ -278,51 +279,101 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
   }
 
   bool need_lbr = false;
-  // If 'linebreak' set check at a blank before a non-blank if the line
-  // needs a break here.
-  if (wp->w_p_lbr && wp->w_p_wrap && wp->w_width_inner != 0
-      && vim_isbreak((uint8_t)cur[0]) && !vim_isbreak((uint8_t)cur[1])) {
-    char *t = csarg->line;
-    while (vim_isbreak((uint8_t)t[0])) {
-      t++;
+  if (wp->w_p_wrap && wp->w_p_lbr && wp->w_width_inner != 0) {
+    // note: cur[1] may be a part of current char.
+    need_lbr = vim_isbreak((uint8_t)cur[0]) && !vim_isbreak((uint8_t)cur[1]);
+
+    // Determine if a line break should be skipped.
+    // If the line starts with 'breakat' characters
+    // then the first line break is skipped.
+    if (csarg->lbr_skip_count < 0) {
+      if (cur == csarg->line) {
+        // If iterating from the start of the line,
+        // the first time a possible linebreak position is encountered
+        // would be the first such position for the entire line.
+        csarg->lbr_skip_count = vim_isbreak((uint8_t)cur[0]) ? 1 : 0;
+      } else if (need_lbr) {
+        // CharsizeArg is initialized in the middle of the line.
+        // Need to scan the line from the start to find if there was a
+        // possible linebreak position before this one.
+
+        char *first_word = csarg->line;
+        while (vim_isbreak((uint8_t)(*first_word))) {
+          first_word++;
+        }
+        csarg->lbr_skip_count = cur < first_word ? 1 : 0;
+      }
     }
-    // 'linebreak' is only needed when not in leading whitespace.
-    need_lbr = cur >= t;
   }
-  if (need_lbr) {
-    char *s = cur;
-    // Count all characters from first non-blank after a blank up to next
-    // non-blank after a blank.
-    int numberextra = win_col_off(wp);
-    colnr_T col_adj = size - 1;
-    colnr_T colmax = (colnr_T)(wp->w_width_inner - numberextra - col_adj);
-    if (vcol >= colmax) {
-      colmax += col_adj;
-      int n = colmax + win_col_off2(wp);
-      if (n > 0) {
-        colmax += (((vcol - colmax) / n) + 1) * n - col_adj;
+
+  if (need_lbr && csarg->lbr_skip_count > 0) {
+    csarg->lbr_skip_count--;
+  } else if (need_lbr) {
+    int const width = wp->w_width_inner - win_col_off(wp);
+
+    int cur_vcol = vcol + size;  // start of the word (next character)
+
+    bool can_break;
+    int colmax;
+    if (width <= 0 || cur_vcol == width) {
+      can_break = false;
+    } else if (cur_vcol < width) {
+      can_break = true;
+      colmax = width;
+    } else {
+      int const width2 = width + win_col_off2(wp);
+      assert(width2 != 0);  // win_col__off2() >= 0, width > 0
+
+      int const line_count = (cur_vcol - width) / width2;
+      int const line_vcol = (cur_vcol - width) % width2;
+      if (line_vcol == 0) {  // next char is at the start of the line
+        can_break = false;
+      } else {
+        can_break = true;
+        colmax = width + (line_count + 1) * width2;
       }
     }
 
-    colnr_T vcol2 = vcol;
-    while (true) {
-      char *ps = s;
-      MB_PTR_ADV(s);
-      int c = (uint8_t)(*s);
-      if (!(c != NUL
-            && (vim_isbreak(c) || vcol2 == vcol || !vim_isbreak((uint8_t)(*ps))))) {
-        break;
-      }
+    if (can_break) {
+      int const start_vcol = cur_vcol;
+      bool const tabstop = csarg->use_tabstop;
 
-      vcol2 += win_chartabsize(wp, s, vcol2);
-      if (vcol2 >= colmax) {  // doesn't fit
-        size = colmax - vcol + col_adj;
-        break;
+      StrCharInfo sci = utf_ptr2StrCharInfo(cur);
+      bool prev_break = true;
+
+      // Count all characters from first non-blank after a blank up to next
+      // non-blank after a blank.
+      // note: doesn't consider inline virtual text
+      while (true) {
+        sci = utfc_next(sci);
+        bool const cur_break = vim_isbreak((uint8_t)(*sci.ptr));
+        if (*sci.ptr == NUL || (prev_break && !cur_break && cur_vcol != start_vcol)) {
+          break;
+        }
+        prev_break = cur_break;
+        cur_vcol += charsize_nowrap(buf, tabstop, cur_vcol, sci.chr.value);
+        if (cur_vcol > colmax) {
+          size = colmax - vcol;
+          break;
+        }
       }
     }
   }
 
   return (CharSize){ .width = size, .head = head };
+}
+
+/// Return the number of cells the cur_char will take on the screen.
+int charsize_nowrap(buf_T *buf, bool use_tabstop, int vcol, int32_t cur_char)
+  FUNC_ATTR_PURE
+{
+  if (cur_char == TAB && use_tabstop) {
+    return tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array);
+  } else if (cur_char < 0) {
+    return kInvalidByteCells;
+  } else {
+    return char2cells(cur_char);
+  }
 }
 
 /// Like charsize_regular(), except it doesn't handle inline virtual text,
