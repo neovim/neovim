@@ -975,19 +975,19 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
   if (sh_hl.hl_id) {
     PUT(*dict, "hl_group", hl_group_name(sh_hl.hl_id, hl_name));
     PUT(*dict, "hl_eol", BOOLEAN_OBJ(sh_hl.flags & kSHHlEol));
-    if (sh_hl.flags & kSHConceal) {
-      char buf[MAX_SCHAR_SIZE];
-      schar_get(buf, sh_hl.text[0]);
-      PUT(*dict, "conceal", CSTR_TO_OBJ(buf));
-    }
-
-    if (sh_hl.flags & kSHSpellOn) {
-      PUT(*dict, "spell", BOOLEAN_OBJ(true));
-    } else if (sh_hl.flags & kSHSpellOff) {
-      PUT(*dict, "spell", BOOLEAN_OBJ(false));
-    }
-
     priority = sh_hl.priority;
+  }
+
+  if (sh_hl.flags & kSHConceal) {
+    char buf[MAX_SCHAR_SIZE];
+    schar_get(buf, sh_hl.text[0]);
+    PUT(*dict, "conceal", CSTR_TO_OBJ(buf));
+  }
+
+  if (sh_hl.flags & kSHSpellOn) {
+    PUT(*dict, "spell", BOOLEAN_OBJ(true));
+  } else if (sh_hl.flags & kSHSpellOff) {
+    PUT(*dict, "spell", BOOLEAN_OBJ(false));
   }
 
   if (sh_hl.flags & kSHUIWatched) {

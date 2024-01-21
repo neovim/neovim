@@ -1639,6 +1639,40 @@ describe('API/extmarks', function()
         right_gravity = true,
       },
     }, get_extmark_by_id(ns, marks[3], { details = true }))
+    set_extmark(ns, marks[4], 0, 0, {
+      end_col = 1,
+      conceal = 'a',
+      spell = true,
+    })
+    eq({
+      0,
+      0,
+      {
+        conceal = 'a',
+        end_col = 1,
+        end_right_gravity = false,
+        end_row = 0,
+        ns_id = 1,
+        right_gravity = true,
+        spell = true,
+      },
+    }, get_extmark_by_id(ns, marks[4], { details = true }))
+    set_extmark(ns, marks[5], 0, 0, {
+      end_col = 1,
+      spell = false,
+    })
+    eq({
+      0,
+      0,
+      {
+        end_col = 1,
+        end_right_gravity = false,
+        end_row = 0,
+        ns_id = 1,
+        right_gravity = true,
+        spell = false,
+      },
+    }, get_extmark_by_id(ns, marks[5], { details = true }))
     api.nvim_buf_clear_namespace(0, ns, 0, -1)
     -- legacy sign mark includes sign name
     command('sign define sign1 text=s1 texthl=Title linehl=LineNR numhl=Normal culhl=CursorLine')
