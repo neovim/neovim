@@ -2283,22 +2283,28 @@ static void win_update(win_T *wp)
           syntax_end_parsing(wp, syntax_last_parsed + 1);
         }
 
+        bool display_buf_line = (foldinfo.fi_lines == 0 || *wp->w_p_fdt == NUL);
+
         // Display one line
         spellvars_T zero_spv = { 0 };
         row = win_line(wp, lnum, srow, wp->w_grid.rows, 0,
-                       foldinfo.fi_lines > 0 ? &zero_spv : &spv, foldinfo);
+                       display_buf_line ? &spv : &zero_spv, foldinfo);
+
+        if (display_buf_line) {
+          syntax_last_parsed = lnum;
+        } else {
+          spv.spv_capcol_lnum = 0;
+        }
 
         if (foldinfo.fi_lines == 0) {
           wp->w_lines[idx].wl_folded = false;
           wp->w_lines[idx].wl_lastlnum = lnum;
           did_update = DID_LINE;
-          syntax_last_parsed = lnum;
         } else {
           foldinfo.fi_lines--;
           wp->w_lines[idx].wl_folded = true;
           wp->w_lines[idx].wl_lastlnum = lnum + foldinfo.fi_lines;
           did_update = DID_FOLD;
-          spv.spv_capcol_lnum = 0;
         }
       }
 

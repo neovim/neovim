@@ -2714,6 +2714,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	It is not allowed to change text or jump to another window while
 	evaluating 'foldtext' |textlock|.
 
+	When set to an empty string, foldtext is disabled, and the line
+	is displayed normally with highlighting and no line wrapping.
+
 						*'formatexpr'* *'fex'*
 'formatexpr' 'fex'	string	(default "")
 			local to buffer

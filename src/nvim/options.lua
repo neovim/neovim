@@ -3181,6 +3181,9 @@ return {
 
         It is not allowed to change text or jump to another window while
         evaluating 'foldtext' |textlock|.
+
+        When set to an empty string, foldtext is disabled, and the line
+        is displayed normally with highlighting and no line wrapping.
       ]=],
       full_name = 'foldtext',
       modelineexpr = true,
