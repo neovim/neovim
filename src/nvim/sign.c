@@ -250,11 +250,16 @@ static int buf_delete_signs(buf_T *buf, char *group, int id, linenr_T atlnum)
 
   // When deleting the last sign need to redraw the windows to remove the
   // sign column. Not when curwin is NULL (this means we're exiting).
-  if (!buf->b_signs_with_text && curwin != NULL) {
+  if (!buf_meta_total(buf, kMTMetaSignText) && curwin != NULL) {
     changed_line_abv_curs();
   }
 
   return OK;
+}
+
+bool buf_has_signs(const buf_T *buf)
+{
+  return (buf_meta_total(buf, kMTMetaSignHL) + buf_meta_total(buf, kMTMetaSignText));
 }
 
 /// List placed signs for "rbuf".  If "rbuf" is NULL do it for all buffers.
@@ -270,7 +275,7 @@ static void sign_list_placed(buf_T *rbuf, char *group)
   msg_putchar('\n');
 
   while (buf != NULL && !got_int) {
-    if (buf->b_signs) {
+    if (buf_has_signs(buf)) {
       vim_snprintf(lbuf, MSG_BUF_LEN, _("Signs for %s:"), buf->b_fname);
       msg_puts_attr(lbuf, HL_ATTR(HLF_D));
       msg_putchar('\n');
@@ -415,7 +420,7 @@ static int sign_define_by_name(char *name, char *icon, char *text, char *linehl,
   } else {
     // Signs may already exist, a redraw is needed in windows with a non-empty sign list.
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (wp->w_buffer->b_signs) {
+      if (buf_has_signs(wp->w_buffer)) {
         redraw_buf_later(wp->w_buffer, UPD_NOT_VALID);
       }
     }
@@ -542,7 +547,7 @@ static int sign_place(uint32_t *id, char *group, char *name, buf_T *buf, linenr_
 
 static int sign_unplace_inner(buf_T *buf, int id, char *group, linenr_T atlnum)
 {
-  if (!buf->b_signs) {  // No signs in the buffer
+  if (!buf_has_signs(buf)) {  // No signs in the buffer
     return FAIL;
   }
 
@@ -562,7 +567,7 @@ static int sign_unplace_inner(buf_T *buf, int id, char *group, linenr_T atlnum)
   // When all the signs in a buffer are removed, force recomputing the
   // number column width (if enabled) in all the windows displaying the
   // buffer if 'signcolumn' is set to 'number' in that window.
-  if (!buf->b_signs_with_text) {
+  if (!buf_meta_total(buf, kMTMetaSignText)) {
     may_force_numberwidth_recompute(buf, true);
   }
 
@@ -962,7 +967,7 @@ static void sign_get_placed_in_buf(buf_T *buf, linenr_T lnum, int sign_id, const
   tv_dict_add_list(d, S_LEN("signs"), l);
 
   int64_t ns = group_get_ns(group);
-  if (!buf->b_signs || ns < 0) {
+  if (!buf_has_signs(buf) || ns < 0) {
     return;
   }
 
@@ -1006,7 +1011,7 @@ static void sign_get_placed(buf_T *buf, linenr_T lnum, int id, const char *group
     sign_get_placed_in_buf(buf, lnum, id, group, retlist);
   } else {
     FOR_ALL_BUFFERS(cbuf) {
-      if (cbuf->b_signs) {
+      if (buf_has_signs(cbuf)) {
         sign_get_placed_in_buf(cbuf, 0, id, group, retlist);
       }
     }

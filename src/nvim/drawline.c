@@ -32,6 +32,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/mark_defs.h"
+#include "nvim/marktree.h"
 #include "nvim/match.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -1645,7 +1646,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
                                           &decor_state);
         }
 
-        if (!has_foldtext && wp->w_buffer->b_virt_text_inline > 0) {
+        if (!has_foldtext && buf_meta_total(wp->w_buffer, kMTMetaInline) > 0) {
           handle_inline_virtual_text(wp, &wlv, ptr - line);
           if (wlv.n_extra > 0 && wlv.virt_inline_hl_mode <= kHlModeReplace) {
             // restore search_attr and area_attr when n_extra is down to zero
@@ -1662,9 +1663,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         }
       }
 
-      int *area_attr_p
-        = wlv.extra_for_extmark && wlv.virt_inline_hl_mode <= kHlModeReplace
-          ? &saved_area_attr : &area_attr;
+      int *area_attr_p = wlv.extra_for_extmark && wlv.virt_inline_hl_mode <= kHlModeReplace
+                         ? &saved_area_attr : &area_attr;
 
       // handle Visual or match highlighting in this line
       if (wlv.vcol == wlv.fromcol

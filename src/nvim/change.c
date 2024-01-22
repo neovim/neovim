@@ -33,6 +33,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
 #include "nvim/mark_defs.h"
+#include "nvim/marktree.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
@@ -329,7 +330,7 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
             // changed line may become invalid.
             if (i == 0 || wp->w_lines[i].wl_lnum < lnume
                 || (wp->w_lines[i].wl_lnum == lnume
-                    && wp->w_buffer->b_virt_line_blocks > 0)) {
+                    && buf_meta_total(wp->w_buffer, kMTMetaLines) > 0)) {
               // line included in change
               wp->w_lines[i].wl_valid = false;
             } else if (xtra != 0) {

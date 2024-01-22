@@ -8,6 +8,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
@@ -170,12 +171,6 @@ DecorSignHighlight decor_sh_from_inline(DecorHighlightInline item)
 void buf_put_decor(buf_T *buf, DecorInline decor, int row, int row2)
 {
   if (decor.ext) {
-    DecorVirtText *vt = decor.data.ext.vt;
-    while (vt) {
-      buf_put_decor_virt(buf, vt);
-      vt = vt->next;
-    }
-
     uint32_t idx = decor.data.ext.sh_idx;
     while (idx != DECOR_ID_INVALID) {
       DecorSignHighlight *sh = &kv_A(decor_items, idx);
@@ -185,28 +180,12 @@ void buf_put_decor(buf_T *buf, DecorInline decor, int row, int row2)
   }
 }
 
-void buf_put_decor_virt(buf_T *buf, DecorVirtText *vt)
-{
-  if (vt->flags &kVTIsLines) {
-    buf->b_virt_line_blocks++;
-  } else {
-    if (vt->pos == kVPosInline) {
-      buf->b_virt_text_inline++;
-    }
-  }
-  if (vt->next) {
-    buf_put_decor_virt(buf, vt->next);
-  }
-}
-
 static int sign_add_id = 0;
 void buf_put_decor_sh(buf_T *buf, DecorSignHighlight *sh, int row1, int row2)
 {
   if (sh->flags & kSHIsSign) {
     sh->sign_add_id = sign_add_id++;
-    buf->b_signs++;
     if (sh->text[0]) {
-      buf->b_signs_with_text++;
       buf_signcols_count_range(buf, row1, row2, 1, kFalse);
     }
   }
@@ -216,11 +195,6 @@ void buf_decor_remove(buf_T *buf, int row1, int row2, DecorInline decor, bool fr
 {
   decor_redraw(buf, row1, row2, decor);
   if (decor.ext) {
-    DecorVirtText *vt = decor.data.ext.vt;
-    while (vt) {
-      buf_remove_decor_virt(buf, vt);
-      vt = vt->next;
-    }
     uint32_t idx = decor.data.ext.sh_idx;
     while (idx != DECOR_ID_INVALID) {
       DecorSignHighlight *sh = &kv_A(decor_items, idx);
@@ -233,28 +207,11 @@ void buf_decor_remove(buf_T *buf, int row1, int row2, DecorInline decor, bool fr
   }
 }
 
-void buf_remove_decor_virt(buf_T *buf, DecorVirtText *vt)
-{
-  if (vt->flags &kVTIsLines) {
-    assert(buf->b_virt_line_blocks > 0);
-    buf->b_virt_line_blocks--;
-  } else {
-    if (vt->pos == kVPosInline) {
-      assert(buf->b_virt_text_inline > 0);
-      buf->b_virt_text_inline--;
-    }
-  }
-}
-
 void buf_remove_decor_sh(buf_T *buf, int row1, int row2, DecorSignHighlight *sh)
 {
   if (sh->flags & kSHIsSign) {
-    assert(buf->b_signs > 0);
-    buf->b_signs--;
     if (sh->text[0]) {
-      assert(buf->b_signs_with_text > 0);
-      buf->b_signs_with_text--;
-      if (buf->b_signs_with_text) {
+      if (buf_meta_total(buf, kMTMetaSignText)) {
         buf_signcols_count_range(buf, row1, row2, -1, kFalse);
       } else {
         buf->b_signcols.resized = true;
@@ -395,10 +352,10 @@ DecorVirtText *decor_find_virttext(buf_T *buf, int row, uint64_t ns_id)
     MTKey mark = marktree_itr_current(itr);
     if (mark.pos.row < 0 || mark.pos.row > row) {
       break;
-    } else if (mt_invalid(mark) || !(mark.flags & MT_FLAG_DECOR_EXT)) {
+    } else if (mt_invalid(mark)) {
       goto next_mark;
     }
-    DecorVirtText *decor = mark.decor_data.ext.vt;
+    DecorVirtText *decor = mt_decor_virt(mark);
     while (decor && (decor->flags & kVTIsLines)) {
       decor = decor->next;
     }
@@ -705,6 +662,9 @@ int sign_item_cmp(const void *p1, const void *p2)
          ? n : (s2->sh->sign_add_id - s1->sh->sign_add_id);
 }
 
+const uint32_t sign_filter[4] = {[kMTMetaSignText] = kMTFilterSelect,
+                                 [kMTMetaSignHL] = kMTFilterSelect };
+
 /// Return the sign attributes on the currently refreshed row.
 ///
 /// @param[out] sattrs Output array for sign text and texthl id
@@ -731,6 +691,8 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
     }
   }
 
+  marktree_itr_step_out_filter(buf->b_marktree, itr, sign_filter);
+
   while (itr->x) {
     MTKey mark = marktree_itr_current(itr);
     if (mark.pos.row != row) {
@@ -742,7 +704,7 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
       kv_push(signs, ((SignItem){ sh, mark.id }));
     }
 
-    marktree_itr_next(buf->b_marktree, itr);
+    marktree_itr_next_filter(buf->b_marktree, itr, row + 1, 0, sign_filter);
   }
 
   if (kv_size(signs)) {
@@ -788,6 +750,8 @@ DecorSignHighlight *decor_find_sign(DecorInline decor)
   }
 }
 
+const uint32_t signtext_filter[4] = {[kMTMetaSignText] = kMTFilterSelect };
+
 /// Count the number of signs in a range after adding/removing a sign, or to
 /// (re-)initialize a range in "b_signcols.count".
 ///
@@ -795,7 +759,7 @@ DecorSignHighlight *decor_find_sign(DecorInline decor)
 /// @param clear  kFalse, kTrue or kNone for an, added/deleted, cleared, or initialized range.
 void buf_signcols_count_range(buf_T *buf, int row1, int row2, int add, TriState clear)
 {
-  if (!buf->b_signcols.autom || !buf->b_signs_with_text) {
+  if (!buf->b_signcols.autom || !buf_meta_total(buf, kMTMetaSignText)) {
     return;
   }
 
@@ -821,6 +785,8 @@ void buf_signcols_count_range(buf_T *buf, int row1, int row2, int add, TriState 
     }
   }
 
+  marktree_itr_step_out_filter(buf->b_marktree, itr, signtext_filter);
+
   // Continue traversing the marktree until beyond "row2".
   while (itr->x) {
     MTKey mark = marktree_itr_current(itr);
@@ -835,7 +801,7 @@ void buf_signcols_count_range(buf_T *buf, int row1, int row2, int add, TriState 
       }
     }
 
-    marktree_itr_next(buf->b_marktree, itr);
+    marktree_itr_next_filter(buf->b_marktree, itr, row2 + 1, 0, signtext_filter);
   }
 
   // For each row increment "b_signcols.count" at the number of counted signs,
@@ -884,11 +850,13 @@ bool decor_redraw_eol(win_T *wp, DecorState *state, int *eol_attr, int eol_col)
   return has_virt_pos;
 }
 
+uint32_t lines_filter[4] = {[kMTMetaLines] = kMTFilterSelect };
+
 /// @param has_fold  whether line "lnum" has a fold, or kNone when not calculated yet
 int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fold)
 {
   buf_T *buf = wp->w_buffer;
-  if (!buf->b_virt_line_blocks) {
+  if (!buf_meta_total(buf, kMTMetaLines)) {
     // Only pay for what you use: in case virt_lines feature is not active
     // in a buffer, plines do not need to access the marktree at all
     return 0;
@@ -907,17 +875,15 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fo
     return 0;
   }
 
-  int virt_lines = 0;
   MarkTreeIter itr[1] = { 0 };
-  marktree_itr_get(buf->b_marktree, start_row, 0, itr);
+  if (!marktree_itr_get_filter(buf->b_marktree, start_row, 0, end_row, 0, lines_filter, itr)) {
+    return 0;
+  }
+
+  int virt_lines = 0;
   while (true) {
     MTKey mark = marktree_itr_current(itr);
-    if (mark.pos.row < 0 || mark.pos.row >= end_row) {
-      break;
-    } else if (mt_end(mark) || !(mark.flags & MT_FLAG_DECOR_VIRT_LINES)) {
-      goto next_mark;
-    }
-    DecorVirtText *vt = mark.decor_data.ext.vt;
+    DecorVirtText *vt = mt_decor_virt(mark);
     while (vt) {
       if (vt->flags & kVTIsLines) {
         bool above = vt->flags & kVTLinesAbove;
@@ -931,8 +897,10 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fo
       }
       vt = vt->next;
     }
-next_mark:
-    marktree_itr_next(buf->b_marktree, itr);
+
+    if (!marktree_itr_next_filter(buf->b_marktree, itr, end_row, 0, lines_filter)) {
+      break;
+    }
   }
 
   return virt_lines;

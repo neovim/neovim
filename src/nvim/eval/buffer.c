@@ -507,7 +507,7 @@ static dict_T *get_buffer_info(buf_T *buf)
   }
   tv_dict_add_list(dict, S_LEN("windows"), windows);
 
-  if (buf->b_signs) {
+  if (buf_has_signs(buf)) {
     // List of signs placed in this buffer
     tv_dict_add_list(dict, S_LEN("signs"), get_buffer_signs(buf));
   }
