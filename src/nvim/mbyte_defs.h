@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "nvim/iconv_defs.h"
 
@@ -55,3 +56,13 @@ typedef struct {
   bool vc_fail;   ///< What to do with invalid characters: if true, fail,
                   ///< otherwise use '?'.
 } vimconv_T;
+
+typedef struct {
+  int32_t value;  ///< code point
+  int len;        ///< length in bytes
+} CharInfo;
+
+typedef struct {
+  char *ptr;     ///< pointer to the first byte of the character
+  CharInfo chr;  ///< the character
+} StrCharInfo;

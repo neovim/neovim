@@ -1755,22 +1755,23 @@ colnr_T vcol2col(win_T *wp, linenr_T lnum, colnr_T vcol, colnr_T *coladdp)
 {
   // try to advance to the specified column
   char *line = ml_get_buf(wp->w_buffer, lnum);
-  chartabsize_T cts;
-  init_chartabsize_arg(&cts, wp, lnum, 0, line, line);
-  while (cts.cts_vcol < vcol && *cts.cts_ptr != NUL) {
-    int size = win_lbr_chartabsize(&cts, NULL);
-    if (cts.cts_vcol + size > vcol) {
+  CharsizeArg arg;
+  CSType cstype = init_charsize_arg(&arg, wp, lnum, line);
+  StrCharInfo ci = utf_ptr2StrCharInfo(line);
+  int cur_vcol = 0;
+  while (cur_vcol < vcol && *ci.ptr != NUL) {
+    int next_vcol = cur_vcol + win_charsize(cstype, cur_vcol, ci.ptr, ci.chr.value, &arg).width;
+    if (next_vcol > vcol) {
       break;
     }
-    cts.cts_vcol += size;
-    MB_PTR_ADV(cts.cts_ptr);
+    cur_vcol = next_vcol;
+    ci = utfc_next(ci);
   }
-  clear_chartabsize_arg(&cts);
 
   if (coladdp != NULL) {
-    *coladdp = vcol - cts.cts_vcol;
+    *coladdp = vcol - cur_vcol;
   }
-  return (colnr_T)(cts.cts_ptr - line);
+  return (colnr_T)(ci.ptr - line);
 }
 
 /// Set UI mouse depending on current mode and 'mouse'.

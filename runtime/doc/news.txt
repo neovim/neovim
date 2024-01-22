@@ -137,6 +137,8 @@ The following new APIs and features were added.
   • Treesitter highlighting now parses injections incrementally during
     screen redraws only for the line range being rendered. This significantly
     improves performance in large files with many injections.
+  • 'breakindent' performance is significantly improved for wrapped lines.
+  • Cursor movement, insertion with [count] and |screenpos()| are now faster.
 
 • |vim.iter()| provides a generic iterator interface for tables and Lua
   iterators |for-in|.

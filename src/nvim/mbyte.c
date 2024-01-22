@@ -528,6 +528,74 @@ int utf_ptr2cells(const char *p)
   return 1;
 }
 
+/// Convert a UTF-8 byte sequence to a character number.
+/// Doesn't handle ascii! only multibyte and illegal sequences.
+///
+/// @param[in]  p      String to convert.
+/// @param[in]  len    Length of the character in bytes, 0 or 1 if illegal.
+///
+/// @return Unicode codepoint. A negative value When the sequence is illegal.
+int32_t utf_ptr2CharInfo_impl(uint8_t const *p, uintptr_t const len)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+// uint8_t is a reminder for clang to use smaller cmp
+#define CHECK \
+  do { \
+    if (EXPECT((uint8_t)(cur & 0xC0U) != 0x80U, false)) { \
+      return -1; \
+    } \
+  } while (0)
+
+  static uint32_t const corrections[] = {
+    (1U << 31),  // invalid - set invalid bits (safe to add as first 2 bytes
+    (1U << 31),  // won't affect highest bit in normal ret)
+    -(0x80U + (0xC0U << 6)),  // multibyte - subtract added UTF8 bits (1..10xxx and 10xxx)
+    -(0x80U + (0x80U << 6) + (0xE0U << 12)),
+    -(0x80U + (0x80U << 6) + (0x80U << 12) + (0xF0U << 18)),
+    -(0x80U + (0x80U << 6) + (0x80U << 12) + (0x80U << 18) + (0xF8U << 24)),
+    -(0x80U + (0x80U << 6) + (0x80U << 12) + (0x80U << 18) + (0x80U << 24)),  // + (0xFCU << 30)
+  };
+
+  // len is 0-6, but declared uintptr_t to avoid zeroing out upper bits
+  uint32_t const corr = corrections[len];
+  uint8_t cur;
+
+  // reading second byte unconditionally, safe for invalid
+  // as it cannot be the last byte, not safe for ascii
+  uint32_t code_point = ((uint32_t)p[0] << 6) + (cur = p[1]);
+  CHECK;
+  if ((uint32_t)len < 3) {
+    goto ret;  // len == 0, 1, 2
+  }
+
+  code_point = (code_point << 6) + (cur = p[2]);
+  CHECK;
+  if ((uint32_t)len == 3) {
+    goto ret;
+  }
+
+  code_point = (code_point << 6) + (cur = p[3]);
+  CHECK;
+  if ((uint32_t)len == 4) {
+    goto ret;
+  }
+
+  code_point = (code_point << 6) + (cur = p[4]);
+  CHECK;
+  if ((uint32_t)len == 5) {
+    goto ret;
+  }
+
+  code_point = (code_point << 6) + (cur = p[5]);
+  CHECK;
+  // len == 6
+
+ret:
+  return (int32_t)(code_point + corr);
+
+#undef CHECK
+}
+
 /// Like utf_ptr2cells(), but limit string length to "size".
 /// For an empty string or truncated character returns 1.
 int utf_ptr2cells_len(const char *p, int size)
@@ -597,45 +665,62 @@ size_t mb_string2cells_len(const char *str, size_t size)
 ///
 /// @return Unicode codepoint or byte value.
 int utf_ptr2char(const char *const p_in)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   uint8_t *p = (uint8_t *)p_in;
-  if (p[0] < 0x80) {  // Be quick for ASCII.
-    return p[0];
+
+  uint32_t const v0 = p[0];
+  if (EXPECT(v0 < 0x80U, true)) {  // Be quick for ASCII.
+    return (int)v0;
   }
 
-  const uint8_t len = utf8len_tab_zero[p[0]];
-  if (len > 1 && (p[1] & 0xc0) == 0x80) {
-    if (len == 2) {
-      return ((p[0] & 0x1f) << 6) + (p[1] & 0x3f);
-    }
-    if ((p[2] & 0xc0) == 0x80) {
-      if (len == 3) {
-        return (((p[0] & 0x0f) << 12) + ((p[1] & 0x3f) << 6)
-                + (p[2] & 0x3f));
-      }
-      if ((p[3] & 0xc0) == 0x80) {
-        if (len == 4) {
-          return (((p[0] & 0x07) << 18) + ((p[1] & 0x3f) << 12)
-                  + ((p[2] & 0x3f) << 6) + (p[3] & 0x3f));
-        }
-        if ((p[4] & 0xc0) == 0x80) {
-          if (len == 5) {
-            return (((p[0] & 0x03) << 24) + ((p[1] & 0x3f) << 18)
-                    + ((p[2] & 0x3f) << 12) + ((p[3] & 0x3f) << 6)
-                    + (p[4] & 0x3f));
-          }
-          if ((p[5] & 0xc0) == 0x80 && len == 6) {
-            return (((p[0] & 0x01) << 30) + ((p[1] & 0x3f) << 24)
-                    + ((p[2] & 0x3f) << 18) + ((p[3] & 0x3f) << 12)
-                    + ((p[4] & 0x3f) << 6) + (p[5] & 0x3f));
-          }
-        }
-      }
-    }
+  const uint8_t len = utf8len_tab[v0];
+  if (EXPECT(len < 2, false)) {
+    return (int)v0;
   }
-  // Illegal value: just return the first byte.
-  return p[0];
+
+#define CHECK(v) \
+  do { \
+    if (EXPECT((uint8_t)((v) & 0xC0U) != 0x80U, false)) { \
+      return (int)v0; \
+    } \
+  } while (0)
+#define LEN_RETURN(len_v, result) \
+  do { \
+    if (len == (len_v)) { \
+      return (int)(result); \
+    } \
+  } while (0)
+#define S(s) ((uint32_t)0x80U << (s))
+
+  uint32_t const v1 = p[1];
+  CHECK(v1);
+  LEN_RETURN(2, (v0 << 6) + v1 - ((0xC0U << 6) + S(0)));
+
+  uint32_t const v2 = p[2];
+  CHECK(v2);
+  LEN_RETURN(3, (v0 << 12) + (v1 << 6) + v2 - ((0xE0U << 12) + S(6) + S(0)));
+
+  uint32_t const v3 = p[3];
+  CHECK(v3);
+  LEN_RETURN(4, (v0 << 18) + (v1 << 12) + (v2 << 6) + v3
+             - ((0xF0U << 18) + S(12) + S(6) + S(0)));
+
+  uint32_t const v4 = p[4];
+  CHECK(v4);
+  LEN_RETURN(5, (v0 << 24) + (v1 << 18) + (v2 << 12) + (v3 << 6) + v4
+             - ((0xF8U << 24) + S(18) + S(12) + S(6) + S(0)));
+
+  uint32_t const v5 = p[5];
+  CHECK(v5);
+  // len == 6
+  return (int)((v0 << 30) + (v1 << 24) + (v2 << 18) + (v3 << 12) + (v4 << 6) + v5
+               // - (0xFCU << 30)
+               - (S(24) + S(18) + S(12) + S(6) + S(0)));
+
+#undef S
+#undef CHECK
+#undef LEN_RETURN
 }
 
 // Convert a UTF-8 byte sequence to a wide character.
@@ -720,6 +805,16 @@ bool utf_composinglike(const char *p1, const char *p2)
     return false;
   }
   return arabic_combine(utf_ptr2char(p1), c2);
+}
+
+/// Check if the next character is a composing character when it
+/// comes after the first. For Arabic sometimes "ab" is replaced with "c", which
+/// behaves like a composing character.
+/// returns false for negative values
+bool utf_char_composinglike(int32_t const first, int32_t const next)
+  FUNC_ATTR_PURE
+{
+  return utf_iscomposing(next) || arabic_combine(first, next);
 }
 
 /// Get the screen char at the beginning of a string
@@ -988,9 +1083,10 @@ int utf_char2bytes(const int c, char *const buf)
   }
 }
 
-// Return true if "c" is a composing UTF-8 character.  This means it will be
-// drawn on top of the preceding character.
-// Based on code from Markus Kuhn.
+/// Return true if "c" is a composing UTF-8 character.
+/// This means it will be drawn on top of the preceding character.
+/// Based on code from Markus Kuhn.
+/// Returns false for negative values.
 bool utf_iscomposing(int c)
 {
   return intable(combining, ARRAY_SIZE(combining), c);

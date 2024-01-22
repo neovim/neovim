@@ -1679,33 +1679,37 @@ void change_indent(int type, int amount, int round, int replaced, bool call_chan
   } else {
     // Compute the screen column where the cursor should be.
     vcol = get_indent() - vcol;
-    curwin->w_virtcol = (colnr_T)((vcol < 0) ? 0 : vcol);
+    int const end_vcol = (colnr_T)((vcol < 0) ? 0 : vcol);
+    curwin->w_virtcol = end_vcol;
 
     // Advance the cursor until we reach the right screen column.
-    int last_vcol = 0;
-    char *ptr = get_cursor_line_ptr();
-    chartabsize_T cts;
-    init_chartabsize_arg(&cts, curwin, 0, 0, ptr, ptr);
-    while (cts.cts_vcol <= (int)curwin->w_virtcol) {
-      last_vcol = cts.cts_vcol;
-      if (cts.cts_vcol > 0) {
-        MB_PTR_ADV(cts.cts_ptr);
+    new_cursor_col = 0;
+    char *const line = get_cursor_line_ptr();
+    vcol = 0;
+    if (*line != NUL) {
+      CharsizeArg arg;
+      CSType cstype = init_charsize_arg(&arg, curwin, 0, line);
+      StrCharInfo ci = utf_ptr2StrCharInfo(line);
+      while (true) {
+        int next_vcol = vcol + win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &arg).width;
+        if (next_vcol > end_vcol) {
+          break;
+        }
+        vcol = next_vcol;
+        ci = utfc_next(ci);
+        if (*ci.ptr == NUL) {
+          break;
+        }
       }
-      if (*cts.cts_ptr == NUL) {
-        break;
-      }
-      cts.cts_vcol += lbr_chartabsize(&cts);
+      new_cursor_col = (int)(ci.ptr - line);
     }
-    vcol = last_vcol;
-    new_cursor_col = (int)(cts.cts_ptr - cts.cts_line);
-    clear_chartabsize_arg(&cts);
 
     // May need to insert spaces to be able to position the cursor on
     // the right screen column.
     if (vcol != (int)curwin->w_virtcol) {
       curwin->w_cursor.col = (colnr_T)new_cursor_col;
       size_t i = (size_t)(curwin->w_virtcol - vcol);
-      ptr = xmallocz(i);
+      char *ptr = xmallocz(i);
       memset(ptr, ' ', i);
       new_cursor_col += (int)i;
       ins_str(ptr);
@@ -4347,14 +4351,16 @@ static bool ins_tab(void)
     getvcol(curwin, cursor, &want_vcol, NULL, NULL);
 
     char *tab = "\t";
-    chartabsize_T cts;
-    init_chartabsize_arg(&cts, curwin, 0, vcol, tab, tab);
+    int32_t tab_v = (uint8_t)(*tab);
+
+    CharsizeArg arg;
+    CSType cstype = init_charsize_arg(&arg, curwin, 0, tab);
 
     // Use as many TABs as possible.  Beware of 'breakindent', 'showbreak'
     // and 'linebreak' adding extra virtual columns.
     while (ascii_iswhite(*ptr)) {
-      int i = lbr_chartabsize(&cts);
-      if (cts.cts_vcol + i > want_vcol) {
+      int i = win_charsize(cstype, vcol, tab, tab_v, &arg).width;
+      if (vcol + i > want_vcol) {
         break;
       }
       if (*ptr != TAB) {
@@ -4369,23 +4375,18 @@ static bool ins_tab(void)
       }
       fpos.col++;
       ptr++;
-      cts.cts_vcol += i;
+      vcol += i;
     }
-    vcol = cts.cts_vcol;
-    clear_chartabsize_arg(&cts);
 
     if (change_col >= 0) {
       int repl_off = 0;
       // Skip over the spaces we need.
-      init_chartabsize_arg(&cts, curwin, 0, vcol, ptr, ptr);
-      while (cts.cts_vcol < want_vcol && *cts.cts_ptr == ' ') {
-        cts.cts_vcol += lbr_chartabsize(&cts);
-        cts.cts_ptr++;
+      cstype = init_charsize_arg(&arg, curwin, 0, ptr);
+      while (vcol < want_vcol && *ptr == ' ') {
+        vcol += win_charsize(cstype, vcol, ptr, (uint8_t)(' '), &arg).width;
+        ptr++;
         repl_off++;
       }
-      ptr = cts.cts_ptr;
-      vcol = cts.cts_vcol;
-      clear_chartabsize_arg(&cts);
 
       if (vcol > want_vcol) {
         // Must have a char with 'showbreak' just before it.
@@ -4556,8 +4557,6 @@ static int ins_digraph(void)
 // Returns the char to be inserted, or NUL if none found.
 int ins_copychar(linenr_T lnum)
 {
-  char *ptr;
-
   if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count) {
     vim_beep(BO_COPY);
     return NUL;
@@ -4565,24 +4564,22 @@ int ins_copychar(linenr_T lnum)
 
   // try to advance to the cursor column
   validate_virtcol();
+  int const end_vcol = curwin->w_virtcol;
   char *line = ml_get(lnum);
-  char *prev_ptr = line;
 
-  chartabsize_T cts;
-  init_chartabsize_arg(&cts, curwin, lnum, 0, line, line);
-  while (cts.cts_vcol < curwin->w_virtcol && *cts.cts_ptr != NUL) {
-    prev_ptr = cts.cts_ptr;
-    cts.cts_vcol += lbr_chartabsize_adv(&cts);
+  CharsizeArg arg;
+  CSType cstype = init_charsize_arg(&arg, curwin, lnum, line);
+  StrCharInfo ci = utf_ptr2StrCharInfo(line);
+  int vcol = 0;
+  while (vcol < end_vcol && *ci.ptr != NUL) {
+    vcol += win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &arg).width;
+    if (vcol > end_vcol) {
+      break;
+    }
+    ci = utfc_next(ci);
   }
 
-  if (cts.cts_vcol > curwin->w_virtcol) {
-    ptr = prev_ptr;
-  } else {
-    ptr = cts.cts_ptr;
-  }
-  clear_chartabsize_arg(&cts);
-
-  int c = utf_ptr2char(ptr);
+  int c = ci.chr.value < 0 ? (uint8_t)(*ci.ptr) : ci.chr.value;
   if (c == NUL) {
     vim_beep(BO_COPY);
   }

@@ -257,6 +257,7 @@ bool arabic_maycombine(int two)
 }
 
 /// Check whether we are dealing with Arabic combining characters.
+/// Returns false for negative values.
 /// Note: these are NOT really composing characters!
 ///
 /// @param one First character.

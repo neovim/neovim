@@ -387,17 +387,18 @@ static void shift_block(oparg_T *oap, int amount)
     }
 
     // TODO(vim): is passing bd.textstart for start of the line OK?
-    chartabsize_T cts;
-    init_chartabsize_arg(&cts, curwin, curwin->w_cursor.lnum,
-                         bd.start_vcol, bd.textstart, bd.textstart);
-    while (ascii_iswhite(*cts.cts_ptr)) {
-      incr = lbr_chartabsize_adv(&cts);
+    CharsizeArg arg;
+    CSType cstype = init_charsize_arg(&arg, curwin, curwin->w_cursor.lnum, bd.textstart);
+    StrCharInfo ci = utf_ptr2StrCharInfo(bd.textstart);
+    int vcol = bd.start_vcol;
+    while (ascii_iswhite(ci.chr.value)) {
+      incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &arg).width;
+      ci = utfc_next(ci);
       total += incr;
-      cts.cts_vcol += incr;
+      vcol += incr;
     }
-    bd.textstart = cts.cts_ptr;
-    bd.start_vcol = cts.cts_vcol;
-    clear_chartabsize_arg(&cts);
+    bd.textstart = ci.ptr;
+    bd.start_vcol = vcol;
 
     int tabs = 0;
     int spaces = 0;
@@ -448,16 +449,13 @@ static void shift_block(oparg_T *oap, int amount)
     // The character's column is in "bd.start_vcol".
     colnr_T non_white_col = bd.start_vcol;
 
-    chartabsize_T cts;
-    init_chartabsize_arg(&cts, curwin, curwin->w_cursor.lnum,
-                         non_white_col, bd.textstart, non_white);
-    while (ascii_iswhite(*cts.cts_ptr)) {
-      incr = lbr_chartabsize_adv(&cts);
-      cts.cts_vcol += incr;
+    CharsizeArg arg;
+    CSType cstype = init_charsize_arg(&arg, curwin, curwin->w_cursor.lnum, bd.textstart);
+    while (ascii_iswhite(*non_white)) {
+      incr = win_charsize(cstype, non_white_col, non_white, (uint8_t)(*non_white), &arg).width;
+      non_white_col += incr;
+      non_white++;
     }
-    non_white_col = cts.cts_vcol;
-    non_white = cts.cts_ptr;
-    clear_chartabsize_arg(&cts);
 
     const colnr_T block_space_width = non_white_col - oap->start_vcol;
     // We will shift by "total" or "block_space_width", whichever is less.
@@ -478,19 +476,17 @@ static void shift_block(oparg_T *oap, int amount)
     if (bd.startspaces) {
       verbatim_copy_width -= bd.start_char_vcols;
     }
-    init_chartabsize_arg(&cts, curwin, 0, verbatim_copy_width,
-                         bd.textstart, verbatim_copy_end);
-    while (cts.cts_vcol < destination_col) {
-      incr = lbr_chartabsize(&cts);
-      if (cts.cts_vcol + incr > destination_col) {
+    cstype = init_charsize_arg(&arg, curwin, 0, bd.textstart);
+    StrCharInfo ci = utf_ptr2StrCharInfo(verbatim_copy_end);
+    while (verbatim_copy_width < destination_col) {
+      incr = win_charsize(cstype, verbatim_copy_width, ci.ptr, ci.chr.value, &arg).width;
+      if (verbatim_copy_width + incr > destination_col) {
         break;
       }
-      cts.cts_vcol += incr;
-      MB_PTR_ADV(cts.cts_ptr);
+      verbatim_copy_width += incr;
+      ci = utfc_next(ci);
     }
-    verbatim_copy_width = cts.cts_vcol;
-    verbatim_copy_end = cts.cts_ptr;
-    clear_chartabsize_arg(&cts);
+    verbatim_copy_end = ci.ptr;
 
     // If "destination_col" is different from the width of the initial
     // part of the line that will be copied, it means we encountered a tab
@@ -3250,19 +3246,19 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
       }
       // get the old line and advance to the position to insert at
       char *oldp = get_cursor_line_ptr();
-      size_t oldlen = strlen(oldp);
-      chartabsize_T cts;
-      init_chartabsize_arg(&cts, curwin, curwin->w_cursor.lnum, 0, oldp, oldp);
 
-      while (cts.cts_vcol < col && *cts.cts_ptr != NUL) {
-        // Count a tab for what it's worth (if list mode not on)
-        incr = lbr_chartabsize_adv(&cts);
-        cts.cts_vcol += incr;
+      CharsizeArg arg;
+      CSType cstype = init_charsize_arg(&arg, curwin, curwin->w_cursor.lnum, oldp);
+      StrCharInfo ci = utf_ptr2StrCharInfo(oldp);
+      vcol = 0;
+      while (vcol < col && *ci.ptr != NUL) {
+        incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &arg).width;
+        vcol += incr;
+        ci = utfc_next(ci);
       }
-      vcol = cts.cts_vcol;
-      char *ptr = cts.cts_ptr;
+      size_t oldlen = (size_t)(ci.ptr - oldp) + strlen(ci.ptr);
+      char *ptr = ci.ptr;
       bd.textcol = (colnr_T)(ptr - oldp);
-      clear_chartabsize_arg(&cts);
 
       shortline = (vcol < col) || (vcol == col && !*ptr);
 
@@ -3286,16 +3282,15 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
       yanklen = (int)strlen(y_array[i]);
 
       if ((flags & PUT_BLOCK_INNER) == 0) {
-        // calculate number of spaces required to fill right side of
-        // block
+        // calculate number of spaces required to fill right side of block
         spaces = y_width + 1;
-        init_chartabsize_arg(&cts, curwin, 0, 0, y_array[i], y_array[i]);
-        for (int j = 0; j < yanklen; j++) {
-          spaces -= lbr_chartabsize(&cts);
-          cts.cts_ptr++;
-          cts.cts_vcol = 0;
+
+        cstype = init_charsize_arg(&arg, curwin, 0, y_array[i]);
+        ci = utf_ptr2StrCharInfo(y_array[i]);
+        while (*ci.ptr != NUL) {
+          spaces -= win_charsize(cstype, 0, ci.ptr, ci.chr.value, &arg).width;
+          ci = utfc_next(ci);
         }
-        clear_chartabsize_arg(&cts);
         if (spaces < 0) {
           spaces = 0;
         }
@@ -4228,25 +4223,25 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool 
   char *line = ml_get(lnum);
   char *prev_pstart = line;
 
-  chartabsize_T cts;
-  init_chartabsize_arg(&cts, curwin, lnum, bdp->start_vcol, line, line);
-  while (cts.cts_vcol < oap->start_vcol && *cts.cts_ptr != NUL) {
-    // Count a tab for what it's worth (if list mode not on)
-    incr = lbr_chartabsize(&cts);
-    cts.cts_vcol += incr;
-    if (ascii_iswhite(*cts.cts_ptr)) {
+  CharsizeArg arg;
+  CSType cstype = init_charsize_arg(&arg, curwin, lnum, line);
+  StrCharInfo ci = utf_ptr2StrCharInfo(line);
+  int vcol = bdp->start_vcol;
+  while (vcol < oap->start_vcol && *ci.ptr != NUL) {
+    incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &arg).width;
+    vcol += incr;
+    if (ascii_iswhite(ci.chr.value)) {
       bdp->pre_whitesp += incr;
       bdp->pre_whitesp_c++;
     } else {
       bdp->pre_whitesp = 0;
       bdp->pre_whitesp_c = 0;
     }
-    prev_pstart = cts.cts_ptr;
-    MB_PTR_ADV(cts.cts_ptr);
+    prev_pstart = ci.ptr;
+    ci = utfc_next(ci);
   }
-  bdp->start_vcol = cts.cts_vcol;
-  char *pstart = cts.cts_ptr;
-  clear_chartabsize_arg(&cts);
+  bdp->start_vcol = vcol;
+  char *pstart = ci.ptr;
 
   bdp->start_char_vcols = incr;
   if (bdp->start_vcol < oap->start_vcol) {      // line too short
@@ -4283,17 +4278,18 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool 
         }
       }
     } else {
-      init_chartabsize_arg(&cts, curwin, lnum, bdp->end_vcol, line, pend);
+      cstype = init_charsize_arg(&arg, curwin, lnum, line);
+      ci = utf_ptr2StrCharInfo(pend);
+      vcol = bdp->end_vcol;
       char *prev_pend = pend;
-      while (cts.cts_vcol <= oap->end_vcol && *cts.cts_ptr != NUL) {
-        // Count a tab for what it's worth (if list mode not on)
-        prev_pend = cts.cts_ptr;
-        incr = lbr_chartabsize_adv(&cts);
-        cts.cts_vcol += incr;
+      while (vcol <= oap->end_vcol && *ci.ptr != NUL) {
+        prev_pend = ci.ptr;
+        incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &arg).width;
+        vcol += incr;
+        ci = utfc_next(ci);
       }
-      bdp->end_vcol = cts.cts_vcol;
-      pend = cts.cts_ptr;
-      clear_chartabsize_arg(&cts);
+      bdp->end_vcol = vcol;
+      pend = ci.ptr;
 
       if (bdp->end_vcol <= oap->end_vcol
           && (!is_del

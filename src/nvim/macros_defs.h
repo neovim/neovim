@@ -111,10 +111,13 @@
 #endif
 
 #if defined(__clang__) || defined(__GNUC__)
+# define EXPECT(cond, value) __builtin_expect((cond), (value))
 # define UNREACHABLE __builtin_unreachable()
-#elif defined(_MSVC_VER)
+#elif defined(_MSC_VER)
+# define EXPECT(cond, value) (cond)
 # define UNREACHABLE __assume(false)
 #else
+# define EXPECT(cond, value) (cond)
 # define UNREACHABLE
 #endif
 
