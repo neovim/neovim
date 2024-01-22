@@ -5,7 +5,7 @@
 " go.vim: Vim syntax file for Go.
 " Language:             Go
 " Maintainer:           Billie Cleek <bhcleek@gmail.com>
-" Latest Revision:      2023-08-21
+" Latest Revision:      2024-01-21
 " License:              BSD-style. See LICENSE file in source repository.
 " Repository:           https://github.com/fatih/vim-go
 
@@ -230,21 +230,31 @@ endif
 " import
 if s:FoldEnable('import')
   syn region    goImport            start='import (' end=')' transparent fold contains=goImport,goImportString,goComment
+  syn match     goImport            /^import ()/ transparent fold contains=goImport
 else
   syn region    goImport            start='import (' end=')' transparent contains=goImport,goImportString,goComment
+  syn match     goImport            /^import ()/ transparent contains=goImport
 endif
 
 " var, const
 if s:FoldEnable('varconst')
   syn region    goVar               start='var ('   end='^\s*)$' transparent fold
-                        \ contains=ALLBUT,goParen,goBlock,goFunction,goTypeName,goReceiverType,goReceiverVar,goParamName,goParamType,goSimpleParams,goPointerOperator
+                                  \ contains=ALLBUT,goParen,goBlock,goFunction,goTypeName,goReceiverType,goReceiverVar,goParamName,goParamType,goSimpleParams,goPointerOperator
+  syn match     goVar               /var ()/ transparent fold
+                                  \ contains=goVar
   syn region    goConst             start='const (' end='^\s*)$' transparent fold
-                        \ contains=ALLBUT,goParen,goBlock,goFunction,goTypeName,goReceiverType,goReceiverVar,goParamName,goParamType,goSimpleParams,goPointerOperator
+                                  \ contains=ALLBUT,goParen,goBlock,goFunction,goTypeName,goReceiverType,goReceiverVar,goParamName,goParamType,goSimpleParams,goPointerOperator
+  syn match     goConst             /const ()/ transparent fold
+                                  \ contains=goConst
 else
   syn region    goVar               start='var ('   end='^\s*)$' transparent
-                        \ contains=ALLBUT,goParen,goBlock,goFunction,goTypeName,goReceiverType,goReceiverVar,goParamName,goParamType,goSimpleParams,goPointerOperator
+                                  \ contains=ALLBUT,goParen,goBlock,goFunction,goTypeName,goReceiverType,goReceiverVar,goParamName,goParamType,goSimpleParams,goPointerOperator
+  syn match     goVar               /var ()/ transparent
+                                  \ contains=goVar
   syn region    goConst             start='const (' end='^\s*)$' transparent
-                        \ contains=ALLBUT,goParen,goBlock,goFunction,goTypeName,goReceiverType,goReceiverVar,goParamName,goParamType,goSimpleParams,goPointerOperator
+                                  \ contains=ALLBUT,goParen,goBlock,goFunction,goTypeName,goReceiverType,goReceiverVar,goParamName,goParamType,goSimpleParams,goPointerOperator
+  syn match     goConst             /const ()/ transparent
+                                  \ contains=goConst
 endif
 
 " Single-line var, const, and import.
