@@ -9,19 +9,14 @@ function M.check()
     return
   end
 
-  local perl_detect_table = vim.fn['provider#perl#Detect']()
-  local perl_exec = perl_detect_table[1]
-  local perl_warnings = perl_detect_table[2]
+  local perl_exec, perl_warnings = require('vim.provider.perl').detect()
 
-  if perl_exec:find('^%s*$') then
-    if perl_warnings:find('%S') then
-      health.warn(perl_warnings, {
-        'See :help provider-perl for more information.',
-        'You may disable this provider (and warning) by adding `let g:loaded_perl_provider = 0` to your init.vim',
-      })
-    else
-      health.warn('No usable perl executable found')
-    end
+  if not perl_exec then
+    health.warn(assert(perl_warnings), {
+      'See :help provider-perl for more information.',
+      'You may disable this provider (and warning) by adding `let g:loaded_perl_provider = 0` to your init.vim',
+    })
+    health.warn('No usable perl executable found')
     return
   end
 
