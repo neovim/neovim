@@ -91,10 +91,12 @@ local function add_keyset(val)
       has_optional = true
     end
   end
-  table.insert(
-    keysets,
-    { name = val.keyset_name, keys = keys, types = types, has_optional = has_optional }
-  )
+  table.insert(keysets, {
+    name = val.keyset_name,
+    keys = keys,
+    types = types,
+    has_optional = has_optional,
+  })
 end
 
 -- read each input file, parse and append to the api metadata
@@ -280,7 +282,9 @@ for _, k in ipairs(keysets) do
   keysets_defs:write('extern KeySetLink ' .. k.name .. '_table[];\n')
 
   local function typename(type)
-    if type ~= nil then
+    if type == 'HLGroupID' then
+      return 'kObjectTypeInteger'
+    elseif type ~= nil then
       return 'kObjectType' .. type
     else
       return 'kObjectTypeNil'
@@ -305,10 +309,12 @@ for _, k in ipairs(keysets) do
         .. typename(k.types[key])
         .. ', '
         .. ind
+        .. ', '
+        .. (k.types[key] == 'HLGroupID' and 'true' or 'false')
         .. '},\n'
     )
   end
-  output:write('  {NULL, 0, kObjectTypeNil, -1},\n')
+  output:write('  {NULL, 0, kObjectTypeNil, -1, false},\n')
   output:write('};\n\n')
 
   output:write(hashfun)

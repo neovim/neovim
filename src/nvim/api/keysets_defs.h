@@ -28,7 +28,7 @@ typedef struct {
   Integer end_line;
   Integer end_row;
   Integer end_col;
-  Object hl_group;
+  HLGroupID hl_group;
   Array virt_text;
   String virt_text_pos;
   Integer virt_text_win_col;
@@ -46,10 +46,10 @@ typedef struct {
   Boolean virt_lines_leftcol;
   Boolean strict;
   String sign_text;
-  Object sign_hl_group;
-  Object number_hl_group;
-  Object line_hl_group;
-  Object cursorline_hl_group;
+  HLGroupID sign_hl_group;
+  HLGroupID number_hl_group;
+  HLGroupID line_hl_group;
+  HLGroupID cursorline_hl_group;
   String conceal;
   Boolean spell;
   Boolean ui_watched;

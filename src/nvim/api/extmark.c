@@ -14,6 +14,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/drawscreen.h"
 #include "nvim/extmark.h"
@@ -546,36 +547,15 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     col2 = (int)val;
   }
 
-  // uncrustify:off
+  hl.hl_id = (int)opts->hl_group;
+  has_hl = hl.hl_id > 0;
+  sign.hl_id = (int)opts->sign_hl_group;
+  sign.cursorline_hl_id = (int)opts->cursorline_hl_group;
+  sign.number_hl_id = (int)opts->number_hl_group;
+  sign.line_hl_id = (int)opts->line_hl_group;
 
-  // TODO(bfredl): keyset type alias for hl_group? (nil|int|string)
-  struct {
-    const char *name;
-    Object *opt;
-    int *dest;
-  } hls[] = {
-    { "hl_group"           , &opts->hl_group           , &hl.hl_id            },
-    { "sign_hl_group"      , &opts->sign_hl_group      , &sign.hl_id       },
-    { "number_hl_group"    , &opts->number_hl_group    , &sign.number_hl_id     },
-    { "line_hl_group"      , &opts->line_hl_group      , &sign.line_hl_id       },
-    { "cursorline_hl_group", &opts->cursorline_hl_group, &sign.cursorline_hl_id },
-    { NULL, NULL, NULL },
-  };
-
-  // uncrustify:on
-
-  for (int j = 0; hls[j].name && hls[j].dest; j++) {
-    if (hls[j].opt->type != kObjectTypeNil) {
-      if (j > 0) {
-        sign.flags |= kSHIsSign;
-      } else {
-        has_hl = true;
-      }
-      *hls[j].dest = object_to_hl_id(*hls[j].opt, hls[j].name, err);
-      if (ERROR_SET(err)) {
-        goto error;
-      }
-    }
+  if (sign.hl_id || sign.cursorline_hl_id || sign.number_hl_id || sign.line_hl_id) {
+    sign.flags |= kSHIsSign;
   }
 
   if (HAS_KEY(opts, set_extmark, conceal)) {

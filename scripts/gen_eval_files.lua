@@ -88,6 +88,7 @@ local API_TYPES = {
   LuaRef = 'function',
   Dictionary = 'table<string,any>',
   Float = 'number',
+  HLGroupID = 'number|string',
   void = '',
 }
 
