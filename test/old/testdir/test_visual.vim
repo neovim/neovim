@@ -1626,4 +1626,12 @@ func Test_visual_drag_out_of_window()
   bwipe!
 endfunc
 
+func Test_visual_substitute_visual()
+  new
+  call setline(1, ['one', 'two', 'three'])
+  call feedkeys("Gk\<C-V>j$:s/\\%V\\_.*\\%V/foobar\<CR>", 'tx')
+  call assert_equal(['one', 'foobar'], getline(1, '$'))
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
