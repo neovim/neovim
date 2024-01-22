@@ -449,18 +449,21 @@ static void decor_range_add_from_inline(DecorState *state, int start_row, int st
   if (decor.ext) {
     DecorVirtText *vt = decor.data.ext.vt;
     while (vt) {
-      decor_range_add_virt(state, start_row, start_col, end_row, end_col, vt, owned);
+      decor_range_add_virt(state, start_row, start_col, end_row, end_col, vt, owned,
+                           DECOR_PRIORITY_BASE);
       vt = vt->next;
     }
     uint32_t idx = decor.data.ext.sh_idx;
     while (idx != DECOR_ID_INVALID) {
       DecorSignHighlight *sh = &kv_A(decor_items, idx);
-      decor_range_add_sh(state, start_row, start_col, end_row, end_col, sh, owned, ns, mark_id);
+      decor_range_add_sh(state, start_row, start_col, end_row, end_col, sh, owned, ns, mark_id,
+                         DECOR_PRIORITY_BASE);
       idx = sh->next;
     }
   } else {
     DecorSignHighlight sh = decor_sh_from_inline(decor.data.hl);
-    decor_range_add_sh(state, start_row, start_col, end_row, end_col, &sh, owned, ns, mark_id);
+    decor_range_add_sh(state, start_row, start_col, end_row, end_col, &sh, owned, ns, mark_id,
+                       DECOR_PRIORITY_BASE);
   }
 }
 
@@ -470,7 +473,8 @@ static void decor_range_insert(DecorState *state, DecorRange range)
   size_t index;
   for (index = kv_size(state->active) - 1; index > 0; index--) {
     DecorRange item = kv_A(state->active, index - 1);
-    if (item.priority <= range.priority) {
+    if ((item.priority < range.priority)
+        || ((item.priority == range.priority) && (item.subpriority <= range.subpriority))) {
       break;
     }
     kv_A(state->active, index) = kv_A(state->active, index - 1);
@@ -479,7 +483,7 @@ static void decor_range_insert(DecorState *state, DecorRange range)
 }
 
 void decor_range_add_virt(DecorState *state, int start_row, int start_col, int end_row, int end_col,
-                          DecorVirtText *vt, bool owned)
+                          DecorVirtText *vt, bool owned, DecorPriority subpriority)
 {
   bool is_lines = vt->flags & kVTIsLines;
   DecorRange range = {
@@ -489,13 +493,15 @@ void decor_range_add_virt(DecorState *state, int start_row, int start_col, int e
     .attr_id = 0,
     .owned = owned,
     .priority = vt->priority,
+    .subpriority = subpriority,
     .draw_col = -10,
   };
   decor_range_insert(state, range);
 }
 
 void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end_row, int end_col,
-                        DecorSignHighlight *sh, bool owned, uint32_t ns, uint32_t mark_id)
+                        DecorSignHighlight *sh, bool owned, uint32_t ns, uint32_t mark_id,
+                        DecorPriority subpriority)
 {
   if (sh->flags & kSHIsSign) {
     return;
@@ -508,6 +514,7 @@ void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end
     .attr_id = 0,
     .owned = owned,
     .priority = sh->priority,
+    .subpriority = subpriority,
     .draw_col = -10,
   };
 
