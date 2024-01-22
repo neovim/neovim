@@ -1,13 +1,4 @@
 ---@diagnostic disable: invisible
-local default_handlers = require('vim.lsp.handlers')
-local log = require('vim.lsp.log')
-local lsp_rpc = require('vim.lsp.rpc')
-local protocol = require('vim.lsp.protocol')
-local ms = protocol.Methods
-local util = require('vim.lsp.util')
-local changetracking = require('vim.lsp._changetracking')
-local semantic_tokens = require('vim.lsp.semantic_tokens')
-
 local api = vim.api
 local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_exec_autocmds =
   api.nvim_err_writeln, api.nvim_buf_get_lines, api.nvim_command, api.nvim_exec_autocmds
@@ -16,24 +7,34 @@ local tbl_isempty, tbl_extend = vim.tbl_isempty, vim.tbl_extend
 local validate = vim.validate
 local if_nil = vim.F.if_nil
 
-local lsp = {
-  protocol = protocol,
+local lsp = vim._defer_require('vim.lsp', {
+  _changetracking = ..., --- @module 'vim.lsp._changetracking'
+  _completion = ..., --- @module 'vim.lsp._completion'
+  _dynamic = ..., --- @module 'vim.lsp._dynamic'
+  _snippet_grammar = ..., --- @module 'vim.lsp._snippet_grammar'
+  _watchfiles = ..., --- @module 'vim.lsp._watchfiles'
+  buf = ..., --- @module 'vim.lsp.buf'
+  codelens = ..., --- @module 'vim.lsp.codelens'
+  diagnostic = ..., --- @module 'vim.lsp.diagnostic'
+  handlers = ..., --- @module 'vim.lsp.handlers'
+  inlay_hint = ..., --- @module 'vim.lsp.inlay_hint'
+  log = ..., --- @module 'vim.lsp.log'
+  protocol = ..., --- @module 'vim.lsp.protocol'
+  rpc = ..., --- @module 'vim.lsp.rpc'
+  semantic_tokens = ..., --- @module 'vim.lsp.semantic_tokens'
+  tagfunc = ..., --- @module 'vim.lsp.tagfunc'
+  util = ..., --- @module 'vim.lsp.util'
+})
 
-  handlers = default_handlers,
+local log = lsp.log
+local protocol = lsp.protocol
+local ms = protocol.Methods
+local util = lsp.util
+local changetracking = lsp._changetracking
 
-  buf = require('vim.lsp.buf'),
-  diagnostic = require('vim.lsp.diagnostic'),
-  codelens = require('vim.lsp.codelens'),
-  inlay_hint = require('vim.lsp.inlay_hint'),
-  semantic_tokens = semantic_tokens,
-  util = util,
-
-  -- Allow raw RPC access.
-  rpc = lsp_rpc,
-
-  -- Export these directly from rpc.
-  rpc_response_error = lsp_rpc.rpc_response_error,
-}
+-- Export these directly from rpc.
+---@nodoc
+lsp.rpc_response_error = lsp.rpc.rpc_response_error
 
 -- maps request name to the required server_capability in the client.
 lsp._request_name_to_capability = {
@@ -189,11 +190,11 @@ end
 --- @nodoc
 lsp.client_errors = tbl_extend(
   'error',
-  lsp_rpc.client_errors,
+  lsp.rpc.client_errors,
   vim.tbl_add_reverse_lookup({
-    BEFORE_INIT_CALLBACK_ERROR = table.maxn(lsp_rpc.client_errors) + 1,
-    ON_INIT_CALLBACK_ERROR = table.maxn(lsp_rpc.client_errors) + 2,
-    ON_ATTACH_ERROR = table.maxn(lsp_rpc.client_errors) + 3,
+    BEFORE_INIT_CALLBACK_ERROR = table.maxn(lsp.rpc.client_errors) + 1,
+    ON_INIT_CALLBACK_ERROR = table.maxn(lsp.rpc.client_errors) + 2,
+    ON_ATTACH_ERROR = table.maxn(lsp.rpc.client_errors) + 3,
   })
 )
 
@@ -800,7 +801,7 @@ function lsp.start_client(config)
   ---@param method (string) LSP method name
   ---@return lsp.Handler|nil handler for the given method, if defined, or the default from |vim.lsp.handlers|
   local function resolve_handler(method)
-    return handlers[method] or default_handlers[method]
+    return handlers[method] or lsp.handlers[method]
   end
 
   ---@private
@@ -958,7 +959,7 @@ function lsp.start_client(config)
   if type(cmd) == 'function' then
     rpc = cmd(dispatch)
   else
-    rpc = lsp_rpc.start(cmd, cmd_args, dispatch, {
+    rpc = lsp.rpc.start(cmd, cmd_args, dispatch, {
       cwd = config.cmd_cwd,
       env = config.cmd_env,
       detached = config.detached,
@@ -999,7 +1000,7 @@ function lsp.start_client(config)
 
     ---@deprecated use client.progress instead
     messages = { name = name, messages = {}, progress = {}, status = {} },
-    dynamic_capabilities = require('vim.lsp._dynamic').new(client_id),
+    dynamic_capabilities = vim.lsp._dynamic.new(client_id),
   }
 
   ---@type table<string|integer, string> title of unfinished progress sequences by token
@@ -1412,7 +1413,7 @@ function lsp.start_client(config)
     -- opt-out (deleting the semanticTokensProvider from capabilities)
     vim.schedule(function()
       if vim.tbl_get(client.server_capabilities, 'semanticTokensProvider', 'full') then
-        semantic_tokens.start(bufnr, client.id)
+        lsp.semantic_tokens.start(bufnr, client.id)
       end
     end)
 
@@ -1969,7 +1970,7 @@ function lsp.omnifunc(findstart, base)
   if log.debug() then
     log.debug('omnifunc.findstart', { findstart = findstart, base = base })
   end
-  return require('vim.lsp._completion').omnifunc(findstart, base)
+  return vim.lsp._completion.omnifunc(findstart, base)
 end
 
 --- Provides an interface between the built-in client and a `formatexpr` function.
@@ -2039,7 +2040,7 @@ end
 ---
 ---@return table[] tags A list of matching tags
 function lsp.tagfunc(pattern, flags)
-  return require('vim.lsp.tagfunc')(pattern, flags)
+  return vim.lsp.tagfunc(pattern, flags)
 end
 
 ---Checks whether a client is stopped.

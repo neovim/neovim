@@ -1,4 +1,4 @@
-local glob = require('vim.glob')
+local glob = vim.glob
 
 --- @class lsp.DynamicCapabilities
 --- @field capabilities table<string, lsp.Registration[]>

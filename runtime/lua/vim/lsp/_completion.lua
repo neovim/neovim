@@ -8,7 +8,7 @@ local ms = protocol.Methods
 ---@return string parsed snippet
 local function parse_snippet(input)
   local ok, parsed = pcall(function()
-    return require('vim.lsp._snippet_grammar').parse(input)
+    return vim.lsp._snippet_grammar.parse(input)
   end)
   return ok and tostring(parsed) or input
 end
@@ -206,7 +206,7 @@ function M.omnifunc(findstart, base)
     local params = util.make_position_params(win, client.offset_encoding)
     client.request(ms.textDocument_completion, params, function(err, result)
       if err then
-        require('vim.lsp.log').warn(err.message)
+        vim.lsp.log.warn(err.message)
       end
       if result and vim.fn.mode() == 'i' then
         local matches

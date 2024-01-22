@@ -1,6 +1,5 @@
 local api = vim.api
 
----@class vim.treesitter.language
 local M = {}
 
 ---@type table<string,string>

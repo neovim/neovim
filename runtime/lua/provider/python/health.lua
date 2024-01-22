@@ -238,7 +238,7 @@ function M.check()
   end
 
   local pythonx_warnings
-  pyname, pythonx_warnings = require('vim.provider.python').detect_by_module('neovim')
+  pyname, pythonx_warnings = vim.provider.python.detect_by_module('neovim')
 
   if not pyname then
     health.warn(
@@ -363,7 +363,7 @@ function M.check()
     -- can import 'pynvim'. If so, that Python failed to import 'neovim' as
     -- well, which is most probably due to a failed pip upgrade:
     -- https://github.com/neovim/neovim/wiki/Following-HEAD#20181118
-    local pynvim_exe = require('vim.provider.python').detect_by_module('pynvim')
+    local pynvim_exe = vim.provider.python.detect_by_module('pynvim')
     if pynvim_exe then
       local message = 'Detected pip upgrade failure: Python executable can import "pynvim" but not "neovim": '
         .. pynvim_exe

@@ -1,6 +1,6 @@
 local M = {}
 local ts = vim.treesitter
-local health = require('vim.health')
+local health = vim.health
 
 --- Performs a healthcheck for treesitter integration
 function M.check()
