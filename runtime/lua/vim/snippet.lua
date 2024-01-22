@@ -1,4 +1,4 @@
-local G = require('vim.lsp._snippet_grammar')
+local G = vim.lsp._snippet_grammar
 local snippet_group = vim.api.nvim_create_augroup('vim/snippet', {})
 local snippet_ns = vim.api.nvim_create_namespace('vim/snippet')
 

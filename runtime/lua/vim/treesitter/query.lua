@@ -12,7 +12,6 @@ Query.__index = Query
 ---@field captures table
 ---@field patterns table<string,any[][]>
 
----@class vim.treesitter.query
 local M = {}
 
 ---@param files string[]
@@ -799,9 +798,9 @@ end
 ---   - clear (boolean) if `true`, just clear current lint errors
 function M.lint(buf, opts)
   if opts and opts.clear then
-    require('vim.treesitter._query_linter').clear(buf)
+    vim.treesitter._query_linter.clear(buf)
   else
-    require('vim.treesitter._query_linter').lint(buf, opts)
+    vim.treesitter._query_linter.lint(buf, opts)
   end
 end
 
@@ -814,7 +813,7 @@ end
 --- ```
 ---
 function M.omnifunc(findstart, base)
-  return require('vim.treesitter._query_linter').omnifunc(findstart, base)
+  return vim.treesitter._query_linter.omnifunc(findstart, base)
 end
 
 --- Opens a live editor to query the buffer you started from.
@@ -827,7 +826,7 @@ end
 ---
 --- @param lang? string language to open the query editor for. If omitted, inferred from the current buffer's filetype.
 function M.edit(lang)
-  require('vim.treesitter.dev').edit_query(lang)
+  vim.treesitter.dev.edit_query(lang)
 end
 
 return M

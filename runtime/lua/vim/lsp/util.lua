@@ -3,7 +3,7 @@ local snippet = require('vim.lsp._snippet_grammar')
 local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
-local highlight = require('vim.highlight')
+local highlight = vim.highlight
 local uv = vim.uv
 
 local npcall = vim.F.npcall
@@ -636,7 +636,7 @@ end
 ---@see complete-items
 function M.text_document_completion_list_to_complete_items(result, prefix)
   vim.deprecate('vim.lsp.util.text_document_completion_list_to_complete_items()', nil, '0.11')
-  return require('vim.lsp._completion')._lsp_to_complete_items(result, prefix)
+  return vim.lsp._completion._lsp_to_complete_items(result, prefix)
 end
 
 --- Like vim.fn.bufwinid except it works across tabpages.

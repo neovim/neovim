@@ -1,43 +1,20 @@
 local api = vim.api
-local LanguageTree = require('vim.treesitter.languagetree')
-local Range = require('vim.treesitter._range')
 
 ---@type table<integer,LanguageTree>
 local parsers = setmetatable({}, { __mode = 'v' })
 
----@class vim.treesitter
----@field highlighter vim.treesitter.highlighter
----@field query vim.treesitter.query
----@field language vim.treesitter.language
-local M = setmetatable({}, {
-  __index = function(t, k)
-    ---@diagnostic disable:no-unknown
-    if k == 'highlighter' then
-      t[k] = require('vim.treesitter.highlighter')
-      return t[k]
-    elseif k == 'language' then
-      t[k] = require('vim.treesitter.language')
-      return t[k]
-    elseif k == 'query' then
-      t[k] = require('vim.treesitter.query')
-      return t[k]
-    end
-
-    local query = require('vim.treesitter.query')
-    if query[k] then
-      vim.deprecate('vim.treesitter.' .. k .. '()', 'vim.treesitter.query.' .. k .. '()', '0.10')
-      t[k] = query[k]
-      return t[k]
-    end
-
-    local language = require('vim.treesitter.language')
-    if language[k] then
-      vim.deprecate('vim.treesitter.' .. k .. '()', 'vim.treesitter.language.' .. k .. '()', '0.10')
-      t[k] = language[k]
-      return t[k]
-    end
-  end,
+local M = vim._defer_require('vim.treesitter', {
+  _fold = ..., --- @module 'vim.treesitter._fold'
+  _query_linter = ..., --- @module 'vim.treesitter._query_linter'
+  _range = ..., --- @module 'vim.treesitter._range'
+  dev = ..., --- @module 'vim.treesitter.dev'
+  highlighter = ..., --- @module 'vim.treesitter.highlighter'
+  language = ..., --- @module 'vim.treesitter.language'
+  languagetree = ..., --- @module 'vim.treesitter.languagetree'
+  query = ..., --- @module 'vim.treesitter.query'
 })
+
+local LanguageTree = M.languagetree
 
 --- @nodoc
 M.language_version = vim._ts_get_language_version()
@@ -200,7 +177,7 @@ end
 function M.get_range(node, source, metadata)
   if metadata and metadata.range then
     assert(source)
-    return Range.add_bytes(source, metadata.range)
+    return M._range.add_bytes(source, metadata.range)
   end
   return { node:range(true) }
 end
@@ -209,7 +186,7 @@ end
 ---@param range Range
 ---@returns string
 local function buf_range_get_text(buf, range)
-  local start_row, start_col, end_row, end_col = Range.unpack4(range)
+  local start_row, start_col, end_row, end_col = M._range.unpack4(range)
   if end_col == 0 then
     if start_row == end_row then
       start_col = -1
@@ -237,7 +214,7 @@ function M.get_node_text(node, source, opts)
   if metadata.text then
     return metadata.text
   elseif type(source) == 'number' then
-    local range = vim.treesitter.get_range(node, source, metadata)
+    local range = M.get_range(node, source, metadata)
     return buf_range_get_text(source, range)
   end
 
@@ -266,9 +243,9 @@ function M.node_contains(node, range)
   vim.validate({
     -- allow a table so nodes can be mocked
     node = { node, { 'userdata', 'table' } },
-    range = { range, Range.validate, 'integer list with 4 or 6 elements' },
+    range = { range, M._range.validate, 'integer list with 4 or 6 elements' },
   })
-  return Range.contains({ node:range() }, range)
+  return M._range.contains({ node:range() }, range)
 end
 
 --- Returns a list of highlight captures at the given position
@@ -502,7 +479,7 @@ end
 ---                        argument and should return a string.
 function M.inspect_tree(opts)
   ---@diagnostic disable-next-line: invisible
-  require('vim.treesitter.dev').inspect_tree(opts)
+  M.dev.inspect_tree(opts)
 end
 
 --- Returns the fold level for {lnum} in the current buffer. Can be set directly to 'foldexpr':
@@ -514,7 +491,7 @@ end
 ---@param lnum integer|nil Line number to calculate fold level for
 ---@return string
 function M.foldexpr(lnum)
-  return require('vim.treesitter._fold').foldexpr(lnum)
+  return M._fold.foldexpr(lnum)
 end
 
 return M

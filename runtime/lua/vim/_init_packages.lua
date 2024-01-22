@@ -60,6 +60,7 @@ vim._submodules = {
   iter = true,
   re = true,
   text = true,
+  provider = true,
 }
 
 -- These are for loading runtime modules in the vim namespace lazily.

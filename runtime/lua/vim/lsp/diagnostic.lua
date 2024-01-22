@@ -1,8 +1,6 @@
 ---@brief lsp-diagnostic
 
-local util = require('vim.lsp.util')
 local protocol = require('vim.lsp.protocol')
-local log = require('vim.lsp.log')
 local ms = protocol.Methods
 
 local api = vim.api
@@ -95,7 +93,7 @@ local function tags_lsp_to_vim(diagnostic, client_id)
       tags = tags or {}
       tags.deprecated = true
     else
-      log.info(string.format('Unknown DiagnosticTag %d from LSP client %d', tag, client_id))
+      vim.lsp.log.info(string.format('Unknown DiagnosticTag %d from LSP client %d', tag, client_id))
     end
   end
   return tags
@@ -425,7 +423,7 @@ end
 local function _refresh(bufnr, opts)
   opts = opts or {}
   opts['bufnr'] = bufnr
-  util._refresh(ms.textDocument_diagnostic, opts)
+  vim.lsp.util._refresh(ms.textDocument_diagnostic, opts)
 end
 
 --- Enable pull diagnostics for a buffer

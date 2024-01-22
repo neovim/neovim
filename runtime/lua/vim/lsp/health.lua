@@ -5,7 +5,7 @@ function M.check()
   local report_info = vim.health.info
   local report_warn = vim.health.warn
 
-  local log = require('vim.lsp.log')
+  local log = vim.lsp.log
   local current_log_level = log.get_level()
   local log_level_string = log.levels[current_log_level]
   report_info(string.format('LSP log level : %s', log_level_string))
