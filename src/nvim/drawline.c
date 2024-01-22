@@ -2636,7 +2636,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
     // Show "extends" character from 'listchars' if beyond the line end and
     // 'list' is set.
-    // Do not show for transparent 'foldtext' since the line cannot be scrolled.
+    // Don't show this with 'wrap' as the line can't be scrolled horizontally.
     if (wp->w_p_lcs_chars.ext != NUL
         && wp->w_p_list
         && !wp->w_p_wrap
