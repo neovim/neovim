@@ -4998,6 +4998,29 @@ l5
                           |
     ]]}
   end)
+
+  it('correct width after wiping a buffer', function()
+    screen:try_resize(20, 4)
+    insert(example_test3)
+    feed('gg')
+    local buf = api.nvim_get_current_buf()
+    api.nvim_buf_set_extmark(buf, ns, 0, 0, { sign_text = 'h' })
+    screen:expect{grid=[[
+      h ^l1                |
+      {1:  }l2                |
+      {1:  }l3                |
+                          |
+    ]]}
+    api.nvim_win_set_buf(0, api.nvim_create_buf(false, true))
+    api.nvim_buf_delete(buf, {unload=true, force=true})
+    api.nvim_buf_set_lines(buf, 0, -1, false, {''})
+    api.nvim_win_set_buf(0, buf)
+    screen:expect{grid=[[
+      ^                    |
+      {2:~                   }|*2
+                          |
+    ]]}
+  end)
 end)
 
 describe('decorations: virt_text', function()
