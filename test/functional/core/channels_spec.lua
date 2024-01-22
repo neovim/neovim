@@ -63,10 +63,10 @@ describe('channels', function()
     local client = get_session()
     local server = spawn(nvim_argv, nil, nil, true)
     set_session(server)
-    local address = funcs.serverlist()[1]
+    local address = fn.serverlist()[1]
     set_session(client)
 
-    meths.set_var('address', address)
+    api.nvim_set_var('address', address)
     command("let g:id = sockconnect('pipe', address, {'on_data':'OnEvent'})")
     local id = eval('g:id')
     ok(id > 0)
