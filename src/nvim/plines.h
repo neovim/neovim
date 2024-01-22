@@ -42,7 +42,7 @@ typedef struct {
 #endif
 
 static inline CharSize win_charsize(CSType cstype, int vcol, char *ptr, int32_t chr,
-                                    CharsizeArg *arg)
+                                    CharsizeArg *csarg)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
 
 /// Get the number of cells taken up on the screen by the given character at vcol.
@@ -54,12 +54,12 @@ static inline CharSize win_charsize(CSType cstype, int vcol, char *ptr, int32_t 
 /// When "arg->max_head_vcol" is negative, only count in "head" the size
 /// of 'showbreak'/'breakindent' before where cursor should be placed.
 static inline CharSize win_charsize(CSType cstype, int vcol, char *ptr, int32_t chr,
-                                    CharsizeArg *arg)
+                                    CharsizeArg *csarg)
 {
   if (cstype == kCharsizeFast) {
-    return charsize_fast(arg, vcol, chr);
+    return charsize_fast(csarg, vcol, chr);
   } else {
-    return charsize_regular(arg, ptr, vcol, chr);
+    return charsize_regular(csarg, ptr, vcol, chr);
   }
 }
 
@@ -89,11 +89,11 @@ static inline int win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T 
 /// @return Number of characters the string will take on the screen.
 static inline int win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T len)
 {
-  CharsizeArg arg;
-  CSType const cstype = init_charsize_arg(&arg, wp, lnum, line);
+  CharsizeArg csarg;
+  CSType const cstype = init_charsize_arg(&csarg, wp, lnum, line);
   if (cstype == kCharsizeFast) {
-    return linesize_fast(&arg, 0, len);
+    return linesize_fast(&csarg, 0, len);
   } else {
-    return linesize_regular(&arg, 0, len);
+    return linesize_regular(&csarg, 0, len);
   }
 }

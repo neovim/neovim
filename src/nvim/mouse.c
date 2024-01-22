@@ -1755,12 +1755,12 @@ colnr_T vcol2col(win_T *wp, linenr_T lnum, colnr_T vcol, colnr_T *coladdp)
 {
   // try to advance to the specified column
   char *line = ml_get_buf(wp->w_buffer, lnum);
-  CharsizeArg arg;
-  CSType cstype = init_charsize_arg(&arg, wp, lnum, line);
+  CharsizeArg csarg;
+  CSType cstype = init_charsize_arg(&csarg, wp, lnum, line);
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   int cur_vcol = 0;
   while (cur_vcol < vcol && *ci.ptr != NUL) {
-    int next_vcol = cur_vcol + win_charsize(cstype, cur_vcol, ci.ptr, ci.chr.value, &arg).width;
+    int next_vcol = cur_vcol + win_charsize(cstype, cur_vcol, ci.ptr, ci.chr.value, &csarg).width;
     if (next_vcol > vcol) {
       break;
     }

@@ -2507,15 +2507,15 @@ static int vgetorpeek(bool advance)
                 ptr = get_cursor_line_ptr();
                 char *endptr = ptr + curwin->w_cursor.col;
 
-                CharsizeArg arg;
-                CSType cstype = init_charsize_arg(&arg, curwin, curwin->w_cursor.lnum, ptr);
+                CharsizeArg csarg;
+                CSType cstype = init_charsize_arg(&csarg, curwin, curwin->w_cursor.lnum, ptr);
                 StrCharInfo ci = utf_ptr2StrCharInfo(ptr);
                 int vcol = 0;
                 while (ci.ptr < endptr) {
                   if (!ascii_iswhite(ci.chr.value)) {
                     curwin->w_wcol = vcol;
                   }
-                  vcol += win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &arg).width;
+                  vcol += win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
                   ci = utfc_next(ci);
                 }
 

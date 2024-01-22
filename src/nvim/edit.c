@@ -1687,11 +1687,11 @@ void change_indent(int type, int amount, int round, int replaced, bool call_chan
     char *const line = get_cursor_line_ptr();
     vcol = 0;
     if (*line != NUL) {
-      CharsizeArg arg;
-      CSType cstype = init_charsize_arg(&arg, curwin, 0, line);
+      CharsizeArg csarg;
+      CSType cstype = init_charsize_arg(&csarg, curwin, 0, line);
       StrCharInfo ci = utf_ptr2StrCharInfo(line);
       while (true) {
-        int next_vcol = vcol + win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &arg).width;
+        int next_vcol = vcol + win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
         if (next_vcol > end_vcol) {
           break;
         }
@@ -4353,13 +4353,13 @@ static bool ins_tab(void)
     char *tab = "\t";
     int32_t tab_v = (uint8_t)(*tab);
 
-    CharsizeArg arg;
-    CSType cstype = init_charsize_arg(&arg, curwin, 0, tab);
+    CharsizeArg csarg;
+    CSType cstype = init_charsize_arg(&csarg, curwin, 0, tab);
 
     // Use as many TABs as possible.  Beware of 'breakindent', 'showbreak'
     // and 'linebreak' adding extra virtual columns.
     while (ascii_iswhite(*ptr)) {
-      int i = win_charsize(cstype, vcol, tab, tab_v, &arg).width;
+      int i = win_charsize(cstype, vcol, tab, tab_v, &csarg).width;
       if (vcol + i > want_vcol) {
         break;
       }
@@ -4381,9 +4381,9 @@ static bool ins_tab(void)
     if (change_col >= 0) {
       int repl_off = 0;
       // Skip over the spaces we need.
-      cstype = init_charsize_arg(&arg, curwin, 0, ptr);
+      cstype = init_charsize_arg(&csarg, curwin, 0, ptr);
       while (vcol < want_vcol && *ptr == ' ') {
-        vcol += win_charsize(cstype, vcol, ptr, (uint8_t)(' '), &arg).width;
+        vcol += win_charsize(cstype, vcol, ptr, (uint8_t)(' '), &csarg).width;
         ptr++;
         repl_off++;
       }
@@ -4567,12 +4567,12 @@ int ins_copychar(linenr_T lnum)
   int const end_vcol = curwin->w_virtcol;
   char *line = ml_get(lnum);
 
-  CharsizeArg arg;
-  CSType cstype = init_charsize_arg(&arg, curwin, lnum, line);
+  CharsizeArg csarg;
+  CSType cstype = init_charsize_arg(&csarg, curwin, lnum, line);
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   int vcol = 0;
   while (vcol < end_vcol && *ci.ptr != NUL) {
-    vcol += win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &arg).width;
+    vcol += win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
     if (vcol > end_vcol) {
       break;
     }
