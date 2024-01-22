@@ -387,12 +387,12 @@ static void shift_block(oparg_T *oap, int amount)
     }
 
     // TODO(vim): is passing bd.textstart for start of the line OK?
-    CharsizeArg arg;
-    CSType cstype = init_charsize_arg(&arg, curwin, curwin->w_cursor.lnum, bd.textstart);
+    CharsizeArg csarg;
+    CSType cstype = init_charsize_arg(&csarg, curwin, curwin->w_cursor.lnum, bd.textstart);
     StrCharInfo ci = utf_ptr2StrCharInfo(bd.textstart);
     int vcol = bd.start_vcol;
     while (ascii_iswhite(ci.chr.value)) {
-      incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &arg).width;
+      incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
       ci = utfc_next(ci);
       total += incr;
       vcol += incr;
@@ -449,10 +449,10 @@ static void shift_block(oparg_T *oap, int amount)
     // The character's column is in "bd.start_vcol".
     colnr_T non_white_col = bd.start_vcol;
 
-    CharsizeArg arg;
-    CSType cstype = init_charsize_arg(&arg, curwin, curwin->w_cursor.lnum, bd.textstart);
+    CharsizeArg csarg;
+    CSType cstype = init_charsize_arg(&csarg, curwin, curwin->w_cursor.lnum, bd.textstart);
     while (ascii_iswhite(*non_white)) {
-      incr = win_charsize(cstype, non_white_col, non_white, (uint8_t)(*non_white), &arg).width;
+      incr = win_charsize(cstype, non_white_col, non_white, (uint8_t)(*non_white), &csarg).width;
       non_white_col += incr;
       non_white++;
     }
@@ -476,10 +476,10 @@ static void shift_block(oparg_T *oap, int amount)
     if (bd.startspaces) {
       verbatim_copy_width -= bd.start_char_vcols;
     }
-    cstype = init_charsize_arg(&arg, curwin, 0, bd.textstart);
+    cstype = init_charsize_arg(&csarg, curwin, 0, bd.textstart);
     StrCharInfo ci = utf_ptr2StrCharInfo(verbatim_copy_end);
     while (verbatim_copy_width < destination_col) {
-      incr = win_charsize(cstype, verbatim_copy_width, ci.ptr, ci.chr.value, &arg).width;
+      incr = win_charsize(cstype, verbatim_copy_width, ci.ptr, ci.chr.value, &csarg).width;
       if (verbatim_copy_width + incr > destination_col) {
         break;
       }
@@ -3247,12 +3247,12 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
       // get the old line and advance to the position to insert at
       char *oldp = get_cursor_line_ptr();
 
-      CharsizeArg arg;
-      CSType cstype = init_charsize_arg(&arg, curwin, curwin->w_cursor.lnum, oldp);
+      CharsizeArg csarg;
+      CSType cstype = init_charsize_arg(&csarg, curwin, curwin->w_cursor.lnum, oldp);
       StrCharInfo ci = utf_ptr2StrCharInfo(oldp);
       vcol = 0;
       while (vcol < col && *ci.ptr != NUL) {
-        incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &arg).width;
+        incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
         vcol += incr;
         ci = utfc_next(ci);
       }
@@ -3285,10 +3285,10 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
         // calculate number of spaces required to fill right side of block
         spaces = y_width + 1;
 
-        cstype = init_charsize_arg(&arg, curwin, 0, y_array[i]);
+        cstype = init_charsize_arg(&csarg, curwin, 0, y_array[i]);
         ci = utf_ptr2StrCharInfo(y_array[i]);
         while (*ci.ptr != NUL) {
-          spaces -= win_charsize(cstype, 0, ci.ptr, ci.chr.value, &arg).width;
+          spaces -= win_charsize(cstype, 0, ci.ptr, ci.chr.value, &csarg).width;
           ci = utfc_next(ci);
         }
         if (spaces < 0) {
@@ -4223,12 +4223,12 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool 
   char *line = ml_get(lnum);
   char *prev_pstart = line;
 
-  CharsizeArg arg;
-  CSType cstype = init_charsize_arg(&arg, curwin, lnum, line);
+  CharsizeArg csarg;
+  CSType cstype = init_charsize_arg(&csarg, curwin, lnum, line);
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   int vcol = bdp->start_vcol;
   while (vcol < oap->start_vcol && *ci.ptr != NUL) {
-    incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &arg).width;
+    incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
     vcol += incr;
     if (ascii_iswhite(ci.chr.value)) {
       bdp->pre_whitesp += incr;
@@ -4278,13 +4278,13 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool 
         }
       }
     } else {
-      cstype = init_charsize_arg(&arg, curwin, lnum, line);
+      cstype = init_charsize_arg(&csarg, curwin, lnum, line);
       ci = utf_ptr2StrCharInfo(pend);
       vcol = bdp->end_vcol;
       char *prev_pend = pend;
       while (vcol <= oap->end_vcol && *ci.ptr != NUL) {
         prev_pend = ci.ptr;
-        incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &arg).width;
+        incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
         vcol += incr;
         ci = utfc_next(ci);
       }

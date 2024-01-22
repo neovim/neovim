@@ -1248,13 +1248,13 @@ int get_lisp_indent(void)
 
       char *line = get_cursor_line_ptr();
 
-      CharsizeArg arg;
-      CSType cstype = init_charsize_arg(&arg, curwin, pos->lnum, line);
+      CharsizeArg csarg;
+      CSType cstype = init_charsize_arg(&csarg, curwin, pos->lnum, line);
 
       StrCharInfo sci = utf_ptr2StrCharInfo(line);
       amount = 0;
       while (*sci.ptr != NUL && col > 0) {
-        amount += win_charsize(cstype, amount, sci.ptr, sci.chr.value, &arg).width;
+        amount += win_charsize(cstype, amount, sci.ptr, sci.chr.value, &csarg).width;
         sci = utfc_next(sci);
         col--;
       }
@@ -1274,7 +1274,7 @@ int get_lisp_indent(void)
         colnr_T firsttry = amount;
 
         while (ascii_iswhite(*that)) {
-          amount += win_charsize(cstype, amount, that, (uint8_t)(*that), &arg).width;
+          amount += win_charsize(cstype, amount, that, (uint8_t)(*that), &csarg).width;
           that++;
         }
 
@@ -1303,13 +1303,13 @@ int get_lisp_indent(void)
                 parencount--;
               }
               if ((ci.value == '\\') && (*(that + 1) != NUL)) {
-                amount += win_charsize(cstype, amount, that, ci.value, &arg).width;
+                amount += win_charsize(cstype, amount, that, ci.value, &csarg).width;
                 StrCharInfo next_sci = utfc_next((StrCharInfo){ that, ci });
                 that = next_sci.ptr;
                 ci = next_sci.chr;
               }
 
-              amount += win_charsize(cstype, amount, that, ci.value, &arg).width;
+              amount += win_charsize(cstype, amount, that, ci.value, &csarg).width;
               StrCharInfo next_sci = utfc_next((StrCharInfo){ that, ci });
               that = next_sci.ptr;
               ci = next_sci.chr;
@@ -1317,7 +1317,7 @@ int get_lisp_indent(void)
           }
 
           while (ascii_iswhite(*that)) {
-            amount += win_charsize(cstype, amount, that, (uint8_t)(*that), &arg).width;
+            amount += win_charsize(cstype, amount, that, (uint8_t)(*that), &csarg).width;
             that++;
           }
 

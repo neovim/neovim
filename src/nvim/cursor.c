@@ -141,12 +141,12 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
       }
     }
 
-    CharsizeArg arg;
-    CSType cstype = init_charsize_arg(&arg, curwin, pos->lnum, line);
+    CharsizeArg csarg;
+    CSType cstype = init_charsize_arg(&csarg, curwin, pos->lnum, line);
     StrCharInfo ci = utf_ptr2StrCharInfo(line);
     col = 0;
     while (col <= wcol && *ci.ptr != NUL) {
-      CharSize cs = win_charsize(cstype, col, ci.ptr, ci.chr.value, &arg);
+      CharSize cs = win_charsize(cstype, col, ci.ptr, ci.chr.value, &csarg);
       csize = cs.width;
       head = cs.head;
       col += cs.width;

@@ -1338,13 +1338,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     char *prev_ptr = ptr;
     CharSize cs = { 0 };
 
-    CharsizeArg arg;
-    CSType cstype = init_charsize_arg(&arg, wp, lnum, line);
-    arg.max_head_vcol = start_col;
+    CharsizeArg csarg;
+    CSType cstype = init_charsize_arg(&csarg, wp, lnum, line);
+    csarg.max_head_vcol = start_col;
     int vcol = wlv.vcol;
     StrCharInfo ci = utf_ptr2StrCharInfo(ptr);
     while (vcol < start_col && *ci.ptr != NUL) {
-      cs = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &arg);
+      cs = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg);
       vcol += cs.width;
       prev_ptr = ci.ptr;
       ci = utfc_next(ci);
@@ -2083,11 +2083,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           int mb_off = utf_head_off(line, ptr - 1);
           char *p = ptr - (mb_off + 1);
 
-          CharsizeArg arg;
+          CharsizeArg csarg;
           // lnum == 0, do not want virtual text to be counted here
-          CSType cstype = init_charsize_arg(&arg, wp, 0, line);
+          CSType cstype = init_charsize_arg(&csarg, wp, 0, line);
           wlv.n_extra = win_charsize(cstype, wlv.vcol, p, utf_ptr2CharInfo(p).value,
-                                     &arg).width - 1;
+                                     &csarg).width - 1;
 
           if (on_last_col && mb_c != TAB) {
             // Do not continue search/match highlighting over the
