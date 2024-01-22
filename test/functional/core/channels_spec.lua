@@ -72,7 +72,7 @@ describe('channels', function()
     ok(id > 0)
 
     command("call chansend(g:id, 'F')")
-    eq({'notification', 'data', {id, {''}}}, next_msg())
+    eq({ 'notification', 'data', { id, { '' } } }, next_msg())
     set_session(server)
     assert_alive()
 
@@ -87,7 +87,7 @@ describe('channels', function()
     assert_alive()
     set_session(client)
     command("call chansend(g:id, 'F')")
-    eq({'notification', 'data', {id, {''}}}, next_msg())
+    eq({ 'notification', 'data', { id, { '' } } }, next_msg())
 
     set_session(server)
     assert_alive()
