@@ -30,7 +30,7 @@
 
 local M = {}
 
-local VARARGS = { { '...', 'any' } }
+local VARARGS = { { "...", "any" } }
 
 --- @type table<string,vim.EvalFn>
 M.funcs = {
@@ -51,10 +51,10 @@ M.funcs = {
       <	4
 
     ]=],
-    name = 'abs',
-    params = { { 'expr', 'any' } },
-    signature = 'abs({expr})',
-    returns = 'number',
+    name = "abs",
+    params = { { "expr", "any" } },
+    signature = "abs({expr})",
+    returns = "number",
   },
   acos = {
     args = 1,
@@ -73,11 +73,11 @@ M.funcs = {
       <	2.094395
 
     ]=],
-    float_func = 'acos',
-    name = 'acos',
-    params = { { 'expr', 'any' } },
-    returns = 'number',
-    signature = 'acos({expr})',
+    float_func = "acos",
+    name = "acos",
+    params = { { "expr", "any" } },
+    returns = "number",
+    signature = "acos({expr})",
   },
   add = {
     args = 2,
@@ -94,12 +94,12 @@ M.funcs = {
       Returns 1 if {object} is not a |List| or a |Blob|.
 
     ]=],
-    name = 'add',
-    params = { { 'object', 'any' }, { 'expr', 'any' } },
-    returns = 'any',
-    signature = 'add({object}, {expr})',
+    name = "add",
+    params = { { "object", "any" }, { "expr", "any" } },
+    returns = "any",
+    signature = "add({object}, {expr})",
   },
-  ['and'] = {
+  ["and"] = {
     args = 2,
     base = 1,
     desc = [=[
@@ -110,10 +110,10 @@ M.funcs = {
       	let flag = and(bits, 0x80)
       <
     ]=],
-    name = 'and',
-    params = { { 'expr', 'any' }, { 'expr', 'any' } },
-    returns = 'integer',
-    signature = 'and({expr}, {expr})',
+    name = "and",
+    params = { { "expr", "any" }, { "expr", "any" } },
+    returns = "integer",
+    signature = "and({expr}, {expr})",
   },
   api_info = {
     desc = [=[
@@ -124,10 +124,10 @@ M.funcs = {
       <
     ]=],
     fast = true,
-    name = 'api_info',
+    name = "api_info",
     params = {},
-    returns = 'table',
-    signature = 'api_info()',
+    returns = "table",
+    signature = "api_info()",
   },
   append = {
     args = 2,
@@ -148,10 +148,10 @@ M.funcs = {
       <
 
     ]=],
-    name = 'append',
-    params = { { 'lnum', 'integer' }, { 'text', 'any' } },
-    returns = '0|1',
-    signature = 'append({lnum}, {text})',
+    name = "append",
+    params = { { "lnum", "integer" }, { "text", "any" } },
+    returns = "0|1",
+    signature = "append({lnum}, {text})",
   },
   appendbufline = {
     args = 3,
@@ -178,10 +178,10 @@ M.funcs = {
       for an invalid {lnum}, since {lnum} isn't actually used.
 
     ]=],
-    name = 'appendbufline',
-    params = { { 'buf', 'any' }, { 'lnum', 'integer' }, { 'text', 'string' } },
-    returns = '0|1',
-    signature = 'appendbufline({buf}, {lnum}, {text})',
+    name = "appendbufline",
+    params = { { "buf", "any" }, { "lnum", "integer" }, { "text", "string" } },
+    returns = "0|1",
+    signature = "appendbufline({buf}, {lnum}, {text})",
   },
   argc = {
     args = { 0, 1 },
@@ -195,20 +195,20 @@ M.funcs = {
       list is used: either the window number or the window ID.
       Returns -1 if the {winid} argument is invalid.
     ]=],
-    name = 'argc',
-    params = { { 'winid', 'integer' } },
-    returns = 'integer',
-    signature = 'argc([{winid}])',
+    name = "argc",
+    params = { { "winid", "integer" } },
+    returns = "integer",
+    signature = "argc([{winid}])",
   },
   argidx = {
     desc = [=[
       The result is the current index in the argument list.  0 is
       the first file.  argc() - 1 is the last one.  See |arglist|.
     ]=],
-    name = 'argidx',
+    name = "argidx",
     params = {},
-    returns = 'integer',
-    signature = 'argidx()',
+    returns = "integer",
+    signature = "argidx()",
   },
   arglistid = {
     args = { 0, 2 },
@@ -224,10 +224,10 @@ M.funcs = {
       page.
       {winnr} can be the window number or the |window-ID|.
     ]=],
-    name = 'arglistid',
-    params = { { 'winnr', 'integer' }, { 'tabnr', 'integer' } },
-    returns = 'integer',
-    signature = 'arglistid([{winnr} [, {tabnr}]])',
+    name = "arglistid",
+    params = { { "winnr", "integer" }, { "tabnr", "integer" } },
+    returns = "integer",
+    signature = "arglistid([{winnr} [, {tabnr}]])",
   },
   argv = {
     args = { 0, 2 },
@@ -250,10 +250,10 @@ M.funcs = {
       the argument list.  Returns an empty List if the {winid}
       argument is invalid.
     ]=],
-    name = 'argv',
-    params = { { 'nr', 'integer' }, { 'winid', 'integer' } },
-    returns = 'string|string[]',
-    signature = 'argv([{nr} [, {winid}]])',
+    name = "argv",
+    params = { { "nr", "integer" }, { "winid", "integer" } },
+    returns = "string|string[]",
+    signature = "argv([{nr} [, {winid}]])",
   },
   asin = {
     args = 1,
@@ -272,11 +272,11 @@ M.funcs = {
       <	-0.523599
 
     ]=],
-    float_func = 'asin',
-    name = 'asin',
-    params = { { 'expr', 'any' } },
-    returns = 'number',
-    signature = 'asin({expr})',
+    float_func = "asin",
+    name = "asin",
+    params = { { "expr", "any" } },
+    returns = "number",
+    signature = "asin({expr})",
   },
   assert_beeps = {
     args = 1,
@@ -288,10 +288,10 @@ M.funcs = {
       |assert-return|.
 
     ]=],
-    name = 'assert_beeps',
-    params = { { 'cmd', 'any' } },
-    returns = '0|1',
-    signature = 'assert_beeps({cmd})',
+    name = "assert_beeps",
+    params = { { "cmd", "any" } },
+    returns = "0|1",
+    signature = "assert_beeps({cmd})",
   },
   assert_equal = {
     args = { 2, 3 },
@@ -313,10 +313,10 @@ M.funcs = {
       	test.vim line 12: Expected 'foo' but got 'bar' ~
 
     ]=],
-    name = 'assert_equal',
-    params = { { 'expected', 'any' }, { 'actual', 'any' }, { 'msg', 'any' } },
-    returns = '0|1',
-    signature = 'assert_equal({expected}, {actual} [, {msg}])',
+    name = "assert_equal",
+    params = { { "expected", "any" }, { "actual", "any" }, { "msg", "any" } },
+    returns = "0|1",
+    signature = "assert_equal({expected}, {actual} [, {msg}])",
   },
   assert_equalfile = {
     args = { 2, 3 },
@@ -329,10 +329,10 @@ M.funcs = {
       mention that.
 
     ]=],
-    name = 'assert_equalfile',
+    name = "assert_equalfile",
     params = {},
-    returns = '0|1',
-    signature = 'assert_equalfile({fname-one}, {fname-two})',
+    returns = "0|1",
+    signature = "assert_equalfile({fname-one}, {fname-two})",
   },
   assert_exception = {
     args = { 1, 2 },
@@ -350,10 +350,10 @@ M.funcs = {
       	endtry
       <
     ]=],
-    name = 'assert_exception',
-    params = { { 'error', 'any' }, { 'msg', 'any' } },
-    returns = '0|1',
-    signature = 'assert_exception({error} [, {msg}])',
+    name = "assert_exception",
+    params = { { "error", "any" }, { "msg", "any" } },
+    returns = "0|1",
+    signature = "assert_exception({error} [, {msg}])",
   },
   assert_fails = {
     args = { 1, 5 },
@@ -393,16 +393,16 @@ M.funcs = {
       commands only beep.  Use |assert_beeps()| for those.
 
     ]=],
-    name = 'assert_fails',
+    name = "assert_fails",
     params = {
-      { 'cmd', 'any' },
-      { 'error', 'any' },
-      { 'msg', 'any' },
-      { 'lnum', 'integer' },
-      { 'context', 'any' },
+      { "cmd", "any" },
+      { "error", "any" },
+      { "msg", "any" },
+      { "lnum", "integer" },
+      { "context", "any" },
     },
-    returns = '0|1',
-    signature = 'assert_fails({cmd} [, {error} [, {msg} [, {lnum} [, {context}]]]])',
+    returns = "0|1",
+    signature = "assert_fails({cmd} [, {error} [, {msg} [, {lnum} [, {context}]]]])",
   },
   assert_false = {
     args = { 1, 2 },
@@ -418,10 +418,10 @@ M.funcs = {
       number the assert fails.
 
     ]=],
-    name = 'assert_false',
-    params = { { 'actual', 'any' }, { 'msg', 'any' } },
-    returns = '0|1',
-    signature = 'assert_false({actual} [, {msg}])',
+    name = "assert_false",
+    params = { { "actual", "any" }, { "msg", "any" } },
+    returns = "0|1",
+    signature = "assert_false({actual} [, {msg}])",
   },
   assert_inrange = {
     args = { 3, 4 },
@@ -434,10 +434,10 @@ M.funcs = {
       but got {actual}".  When {msg} is present it is prefixed to
       that.
     ]=],
-    name = 'assert_inrange',
-    params = { { 'lower', 'any' }, { 'upper', 'any' }, { 'actual', 'any' }, { 'msg', 'any' } },
-    returns = '0|1',
-    signature = 'assert_inrange({lower}, {upper}, {actual} [, {msg}])',
+    name = "assert_inrange",
+    params = { { "lower", "any" }, { "upper", "any" }, { "actual", "any" }, { "msg", "any" } },
+    returns = "0|1",
+    signature = "assert_inrange({lower}, {upper}, {actual} [, {msg}])",
   },
   assert_match = {
     args = { 2, 3 },
@@ -462,10 +462,10 @@ M.funcs = {
       	test.vim line 12: Pattern '^f.*o$' does not match 'foobar' ~
 
     ]=],
-    name = 'assert_match',
-    params = { { 'pattern', 'any' }, { 'actual', 'any' }, { 'msg', 'any' } },
-    returns = '0|1',
-    signature = 'assert_match({pattern}, {actual} [, {msg}])',
+    name = "assert_match",
+    params = { { "pattern", "any" }, { "actual", "any" }, { "msg", "any" } },
+    returns = "0|1",
+    signature = "assert_match({pattern}, {actual} [, {msg}])",
   },
   assert_nobeep = {
     args = 1,
@@ -476,10 +476,10 @@ M.funcs = {
       Also see |assert_beeps()|.
 
     ]=],
-    name = 'assert_nobeep',
-    params = { { 'cmd', 'any' } },
-    returns = '0|1',
-    signature = 'assert_nobeep({cmd})',
+    name = "assert_nobeep",
+    params = { { "cmd", "any" } },
+    returns = "0|1",
+    signature = "assert_nobeep({cmd})",
   },
   assert_notequal = {
     args = { 2, 3 },
@@ -490,10 +490,10 @@ M.funcs = {
       Also see |assert-return|.
 
     ]=],
-    name = 'assert_notequal',
-    params = { { 'expected', 'any' }, { 'actual', 'any' }, { 'msg', 'any' } },
-    returns = '0|1',
-    signature = 'assert_notequal({expected}, {actual} [, {msg}])',
+    name = "assert_notequal",
+    params = { { "expected", "any" }, { "actual", "any" }, { "msg", "any" } },
+    returns = "0|1",
+    signature = "assert_notequal({expected}, {actual} [, {msg}])",
   },
   assert_notmatch = {
     args = { 2, 3 },
@@ -504,10 +504,10 @@ M.funcs = {
       Also see |assert-return|.
 
     ]=],
-    name = 'assert_notmatch',
-    params = { { 'pattern', 'any' }, { 'actual', 'any' }, { 'msg', 'any' } },
-    returns = '0|1',
-    signature = 'assert_notmatch({pattern}, {actual} [, {msg}])',
+    name = "assert_notmatch",
+    params = { { "pattern", "any" }, { "actual", "any" }, { "msg", "any" } },
+    returns = "0|1",
+    signature = "assert_notmatch({pattern}, {actual} [, {msg}])",
   },
   assert_report = {
     args = 1,
@@ -517,10 +517,10 @@ M.funcs = {
       Always returns one.
 
     ]=],
-    name = 'assert_report',
-    params = { { 'msg', 'any' } },
-    returns = '0|1',
-    signature = 'assert_report({msg})',
+    name = "assert_report",
+    params = { { "msg", "any" } },
+    returns = "0|1",
+    signature = "assert_report({msg})",
   },
   assert_true = {
     args = { 1, 2 },
@@ -534,10 +534,10 @@ M.funcs = {
       When {msg} is given it precedes the default message.
 
     ]=],
-    name = 'assert_true',
-    params = { { 'actual', 'any' }, { 'msg', 'any' } },
-    returns = '0|1',
-    signature = 'assert_true({actual} [, {msg}])',
+    name = "assert_true",
+    params = { { "actual", "any" }, { "msg", "any" } },
+    returns = "0|1",
+    signature = "assert_true({actual} [, {msg}])",
   },
   atan = {
     args = 1,
@@ -554,11 +554,11 @@ M.funcs = {
       <	-1.326405
 
     ]=],
-    float_func = 'atan',
-    name = 'atan',
-    params = { { 'expr', 'any' } },
-    returns = 'number',
-    signature = 'atan({expr})',
+    float_func = "atan",
+    name = "atan",
+    params = { { "expr", "any" } },
+    returns = "number",
+    signature = "atan({expr})",
   },
   atan2 = {
     args = 2,
@@ -576,10 +576,10 @@ M.funcs = {
       <	2.356194
 
     ]=],
-    name = 'atan2',
-    params = { { 'expr1', 'any' }, { 'expr2', 'any' } },
-    returns = 'number',
-    signature = 'atan2({expr1}, {expr2})',
+    name = "atan2",
+    params = { { "expr1", "any" }, { "expr2", "any" } },
+    returns = "number",
+    signature = "atan2({expr1}, {expr2})",
   },
   blob2list = {
     args = 1,
@@ -593,10 +593,10 @@ M.funcs = {
       opposite.
 
     ]=],
-    name = 'blob2list',
-    params = { { 'blob', 'any' } },
-    returns = 'any[]',
-    signature = 'blob2list({blob})',
+    name = "blob2list",
+    params = { { "blob", "any" } },
+    returns = "any[]",
+    signature = "blob2list({blob})",
   },
   browse = {
     args = 4,
@@ -611,10 +611,10 @@ M.funcs = {
       An empty string is returned when the "Cancel" button is hit,
       something went wrong, or browsing is not possible.
     ]=],
-    name = 'browse',
-    params = { { 'save', 'any' }, { 'title', 'any' }, { 'initdir', 'any' }, { 'default', 'any' } },
-    returns = '0|1',
-    signature = 'browse({save}, {title}, {initdir}, {default})',
+    name = "browse",
+    params = { { "save", "any" }, { "title", "any" }, { "initdir", "any" }, { "default", "any" } },
+    returns = "0|1",
+    signature = "browse({save}, {title}, {initdir}, {default})",
   },
   browsedir = {
     args = 2,
@@ -630,10 +630,10 @@ M.funcs = {
       When the "Cancel" button is hit, something went wrong, or
       browsing is not possible, an empty string is returned.
     ]=],
-    name = 'browsedir',
-    params = { { 'title', 'any' }, { 'initdir', 'any' } },
-    returns = '0|1',
-    signature = 'browsedir({title}, {initdir})',
+    name = "browsedir",
+    params = { { "title", "any" }, { "initdir", "any" } },
+    returns = "0|1",
+    signature = "browsedir({title}, {initdir})",
   },
   bufadd = {
     args = 1,
@@ -652,10 +652,10 @@ M.funcs = {
       	call setbufline(bufnr, 1, ['some', 'text'])
       <Returns 0 on error.
     ]=],
-    name = 'bufadd',
-    params = { { 'name', 'string' } },
-    returns = 'integer',
-    signature = 'bufadd({name})',
+    name = "bufadd",
+    params = { { "name", "string" } },
+    returns = "integer",
+    signature = "bufadd({name})",
   },
   bufexists = {
     args = 1,
@@ -683,10 +683,10 @@ M.funcs = {
       file name.
 
     ]=],
-    name = 'bufexists',
-    params = { { 'buf', 'any' } },
-    returns = '0|1',
-    signature = 'bufexists({buf})',
+    name = "bufexists",
+    params = { { "buf", "any" } },
+    returns = "0|1",
+    signature = "bufexists({buf})",
   },
   buffer_exists = {
     args = 1,
@@ -695,11 +695,11 @@ M.funcs = {
     desc = [=[
       Obsolete name for |bufexists()|.
     ]=],
-    func = 'f_bufexists',
-    name = 'buffer_exists',
+    func = "f_bufexists",
+    name = "buffer_exists",
     params = VARARGS,
-    returns = '0|1',
-    signature = 'buffer_exists({buf})',
+    returns = "0|1",
+    signature = "buffer_exists({buf})",
   },
   buffer_name = {
     args = { 0, 1 },
@@ -708,11 +708,11 @@ M.funcs = {
     desc = [=[
       Obsolete name for |bufname()|.
     ]=],
-    func = 'f_bufname',
-    name = 'buffer_name',
+    func = "f_bufname",
+    name = "buffer_name",
     params = VARARGS,
-    returns = 'string',
-    signature = 'buffer_name([{buf}])',
+    returns = "string",
+    signature = "buffer_name([{buf}])",
   },
   buffer_number = {
     args = { 0, 1 },
@@ -721,11 +721,11 @@ M.funcs = {
     desc = [=[
       Obsolete name for |bufnr()|.
     ]=],
-    func = 'f_bufnr',
-    name = 'buffer_number',
+    func = "f_bufnr",
+    name = "buffer_number",
     params = VARARGS,
-    returns = 'integer',
-    signature = 'buffer_number([{buf} [, {create}]])',
+    returns = "integer",
+    signature = "buffer_number([{buf} [, {create}]])",
   },
   buflisted = {
     args = 1,
@@ -736,10 +736,10 @@ M.funcs = {
       The {buf} argument is used like with |bufexists()|.
 
     ]=],
-    name = 'buflisted',
-    params = { { 'buf', 'any' } },
-    returns = '0|1',
-    signature = 'buflisted({buf})',
+    name = "buflisted",
+    params = { { "buf", "any" } },
+    returns = "0|1",
+    signature = "buflisted({buf})",
   },
   bufload = {
     args = 1,
@@ -755,10 +755,10 @@ M.funcs = {
       The {buf} argument is used like with |bufexists()|.
 
     ]=],
-    name = 'bufload',
-    params = { { 'buf', 'any' } },
+    name = "bufload",
+    params = { { "buf", "any" } },
     returns = false,
-    signature = 'bufload({buf})',
+    signature = "bufload({buf})",
   },
   bufloaded = {
     args = 1,
@@ -769,10 +769,10 @@ M.funcs = {
       The {buf} argument is used like with |bufexists()|.
 
     ]=],
-    name = 'bufloaded',
-    params = { { 'buf', 'any' } },
-    returns = '0|1',
-    signature = 'bufloaded({buf})',
+    name = "bufloaded",
+    params = { { "buf", "any" } },
+    returns = "0|1",
+    signature = "bufloaded({buf})",
   },
   bufname = {
     args = { 0, 1 },
@@ -808,10 +808,10 @@ M.funcs = {
       	echo bufname("file2")	" name of buffer where "file2" matches.
       <
     ]=],
-    name = 'bufname',
-    params = { { 'buf', 'any' } },
-    returns = 'string',
-    signature = 'bufname([{buf}])',
+    name = "bufname",
+    params = { { "buf", "any" } },
+    returns = "string",
+    signature = "bufname([{buf}])",
   },
   bufnr = {
     args = { 0, 2 },
@@ -831,10 +831,10 @@ M.funcs = {
       them.  Use bufexists() to test for the existence of a buffer.
 
     ]=],
-    name = 'bufnr',
-    params = { { 'buf', 'any' }, { 'create', 'any' } },
-    returns = 'integer',
-    signature = 'bufnr([{buf} [, {create}]])',
+    name = "bufnr",
+    params = { { "buf", "any" }, { "create", "any" } },
+    returns = "integer",
+    signature = "bufnr([{buf} [, {create}]])",
   },
   bufwinid = {
     args = 1,
@@ -851,10 +851,10 @@ M.funcs = {
       finding more.
 
     ]=],
-    name = 'bufwinid',
-    params = { { 'buf', 'any' } },
-    returns = 'integer',
-    signature = 'bufwinid({buf})',
+    name = "bufwinid",
+    params = { { "buf", "any" } },
+    returns = "integer",
+    signature = "bufwinid({buf})",
   },
   bufwinnr = {
     args = 1,
@@ -871,10 +871,10 @@ M.funcs = {
       |:wincmd|.
 
     ]=],
-    name = 'bufwinnr',
-    params = { { 'buf', 'any' } },
-    returns = 'integer',
-    signature = 'bufwinnr({buf})',
+    name = "bufwinnr",
+    params = { { "buf", "any" } },
+    returns = "integer",
+    signature = "bufwinnr({buf})",
   },
   byte2line = {
     args = 1,
@@ -890,10 +890,10 @@ M.funcs = {
       Returns -1 if the {byte} value is invalid.
 
     ]=],
-    name = 'byte2line',
-    params = { { 'byte', 'any' } },
-    returns = 'integer',
-    signature = 'byte2line({byte})',
+    name = "byte2line",
+    params = { { "byte", "any" } },
+    returns = "integer",
+    signature = "byte2line({byte})",
   },
   byteidx = {
     args = { 2, 3 },
@@ -935,10 +935,10 @@ M.funcs = {
       <
     ]=],
     fast = true,
-    name = 'byteidx',
-    params = { { 'expr', 'any' }, { 'nr', 'integer' }, { 'utf16', 'any' } },
-    returns = 'integer',
-    signature = 'byteidx({expr}, {nr} [, {utf16}])',
+    name = "byteidx",
+    params = { { "expr", "any" }, { "nr", "integer" }, { "utf16", "any" } },
+    returns = "integer",
+    signature = "byteidx({expr}, {nr} [, {utf16}])",
   },
   byteidxcomp = {
     args = { 2, 3 },
@@ -956,10 +956,10 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'byteidxcomp',
-    params = { { 'expr', 'any' }, { 'nr', 'integer' }, { 'utf16', 'any' } },
-    returns = 'integer',
-    signature = 'byteidxcomp({expr}, {nr} [, {utf16}])',
+    name = "byteidxcomp",
+    params = { { "expr", "any" }, { "nr", "integer" }, { "utf16", "any" } },
+    returns = "integer",
+    signature = "byteidxcomp({expr}, {nr} [, {utf16}])",
   },
   call = {
     args = { 2, 3 },
@@ -974,11 +974,11 @@ M.funcs = {
       used to set the local variable "self". |Dictionary-function|
 
     ]=],
-    name = 'call',
-    params = { { 'func', 'any' }, { 'arglist', 'any' }, { 'dict', 'any' } },
-    returns = 'any',
-    signature = 'call({func}, {arglist} [, {dict}])',
-    tags = { 'E699' },
+    name = "call",
+    params = { { "func", "any" }, { "arglist", "any" }, { "dict", "any" } },
+    returns = "any",
+    signature = "call({func}, {arglist} [, {dict}])",
+    tags = { "E699" },
   },
   ceil = {
     args = 1,
@@ -998,11 +998,11 @@ M.funcs = {
       Returns 0.0 if {expr} is not a |Float| or a |Number|.
 
     ]=],
-    float_func = 'ceil',
-    name = 'ceil',
-    params = { { 'expr', 'any' } },
-    returns = 'number',
-    signature = 'ceil({expr})',
+    float_func = "ceil",
+    name = "ceil",
+    params = { { "expr", "any" } },
+    returns = "number",
+    signature = "ceil({expr})",
   },
   chanclose = {
     args = { 1, 2 },
@@ -1016,10 +1016,10 @@ M.funcs = {
       For a socket, there is only one stream, and {stream} should be
       omitted.
     ]=],
-    name = 'chanclose',
-    params = { { 'id', 'any' }, { 'stream', 'any' } },
-    returns = '0|1',
-    signature = 'chanclose({id} [, {stream}])',
+    name = "chanclose",
+    params = { { "id", "any" }, { "stream", "any" } },
+    returns = "0|1",
+    signature = "chanclose({id} [, {stream}])",
   },
   changenr = {
     desc = [=[
@@ -1031,10 +1031,10 @@ M.funcs = {
       one less than the number of the undone change.
       Returns 0 if the undo list is empty.
     ]=],
-    name = 'changenr',
+    name = "changenr",
     params = {},
-    returns = 'integer',
-    signature = 'changenr()',
+    returns = "integer",
+    signature = "changenr()",
   },
   chansend = {
     args = 2,
@@ -1056,10 +1056,10 @@ M.funcs = {
       was created with `"rpc":v:true` then the channel expects RPC
       messages, use |rpcnotify()| and |rpcrequest()| instead.
     ]=],
-    name = 'chansend',
-    params = { { 'id', 'any' }, { 'data', 'any' } },
-    returns = '0|1',
-    signature = 'chansend({id}, {data})',
+    name = "chansend",
+    params = { { "id", "any" }, { "data", "any" } },
+    returns = "0|1",
+    signature = "chansend({id}, {data})",
   },
   char2nr = {
     args = { 1, 2 },
@@ -1081,10 +1081,10 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'char2nr',
-    params = { { 'string', 'string' }, { 'utf8', 'any' } },
-    returns = '0|1',
-    signature = 'char2nr({string} [, {utf8}])',
+    name = "char2nr",
+    params = { { "string", "string" }, { "utf8", "any" } },
+    returns = "0|1",
+    signature = "char2nr({string} [, {utf8}])",
   },
   charclass = {
     args = 1,
@@ -1100,10 +1100,10 @@ M.funcs = {
       The class is used in patterns and word motions.
       Returns 0 if {string} is not a |String|.
     ]=],
-    name = 'charclass',
-    params = { { 'string', 'string' } },
+    name = "charclass",
+    params = { { "string", "string" } },
     returns = "0|1|2|3|'other'",
-    signature = 'charclass({string})',
+    signature = "charclass({string})",
   },
   charcol = {
     args = { 1, 2 },
@@ -1118,10 +1118,10 @@ M.funcs = {
       	echo col('.')		" returns 7
 
     ]=],
-    name = 'charcol',
-    params = { { 'expr', 'any' }, { 'winid', 'integer' } },
-    returns = 'integer',
-    signature = 'charcol({expr} [, {winid}])',
+    name = "charcol",
+    params = { { "expr", "any" }, { "winid", "integer" } },
+    returns = "integer",
+    signature = "charcol({expr} [, {winid}])",
   },
   charidx = {
     args = { 2, 4 },
@@ -1160,15 +1160,15 @@ M.funcs = {
       	echo charidx('a😊😊', 4, 0, 1)	" returns 2
       <
     ]=],
-    name = 'charidx',
+    name = "charidx",
     params = {
-      { 'string', 'string' },
-      { 'idx', 'integer' },
-      { 'countcc', 'any' },
-      { 'utf16', 'any' },
+      { "string", "string" },
+      { "idx", "integer" },
+      { "countcc", "any" },
+      { "utf16", "any" },
     },
-    returns = 'integer',
-    signature = 'charidx({string}, {idx} [, {countcc} [, {utf16}]])',
+    returns = "integer",
+    signature = "charidx({string}, {idx} [, {countcc} [, {utf16}]])",
   },
   chdir = {
     args = 1,
@@ -1196,10 +1196,10 @@ M.funcs = {
       	endif
 
     ]=],
-    name = 'chdir',
-    params = { { 'dir', 'string' } },
-    returns = 'string',
-    signature = 'chdir({dir})',
+    name = "chdir",
+    params = { { "dir", "string" } },
+    returns = "string",
+    signature = "chdir({dir})",
   },
   cindent = {
     args = 1,
@@ -1213,10 +1213,10 @@ M.funcs = {
       See |C-indenting|.
 
     ]=],
-    name = 'cindent',
-    params = { { 'lnum', 'integer' } },
-    returns = 'integer',
-    signature = 'cindent({lnum})',
+    name = "cindent",
+    params = { { "lnum", "integer" } },
+    returns = "integer",
+    signature = "cindent({lnum})",
   },
   clearmatches = {
     args = { 0, 1 },
@@ -1228,10 +1228,10 @@ M.funcs = {
       window ID instead of the current window.
 
     ]=],
-    name = 'clearmatches',
-    params = { { 'win', 'any' } },
+    name = "clearmatches",
+    params = { { "win", "any" } },
     returns = false,
-    signature = 'clearmatches([{win}])',
+    signature = "clearmatches([{win}])",
   },
   col = {
     args = { 1, 2 },
@@ -1275,10 +1275,10 @@ M.funcs = {
       	imap <F2> <Cmd>echo col(".").."\n"<CR>
 
     ]=],
-    name = 'col',
-    params = { { 'expr', 'any' }, { 'winid', 'integer' } },
-    returns = 'integer',
-    signature = 'col({expr} [, {winid}])',
+    name = "col",
+    params = { { "expr", "any" }, { "winid", "integer" } },
+    returns = "integer",
+    signature = "col({expr} [, {winid}])",
   },
   complete = {
     args = 2,
@@ -1314,11 +1314,11 @@ M.funcs = {
       an empty string is returned to avoid a zero being inserted.
 
     ]=],
-    name = 'complete',
-    params = { { 'startcol', 'any' }, { 'matches', 'any' } },
+    name = "complete",
+    params = { { "startcol", "any" }, { "matches", "any" } },
     returns = false,
-    signature = 'complete({startcol}, {matches})',
-    tags = { 'E785' },
+    signature = "complete({startcol}, {matches})",
+    tags = { "E785" },
   },
   complete_add = {
     args = 1,
@@ -1333,10 +1333,10 @@ M.funcs = {
       the same as one item in the list that 'omnifunc' would return.
 
     ]=],
-    name = 'complete_add',
-    params = { { 'expr', 'any' } },
-    returns = '0|1|2',
-    signature = 'complete_add({expr})',
+    name = "complete_add",
+    params = { { "expr", "any" } },
+    returns = "0|1|2",
+    signature = "complete_add({expr})",
   },
   complete_check = {
     desc = [=[
@@ -1347,10 +1347,10 @@ M.funcs = {
       Only to be used by the function specified with the
       'completefunc' option.
     ]=],
-    name = 'complete_check',
+    name = "complete_check",
     params = {},
-    returns = '0|1',
-    signature = 'complete_check()',
+    returns = "0|1",
+    signature = "complete_check()",
   },
   complete_info = {
     args = { 0, 1 },
@@ -1416,10 +1416,10 @@ M.funcs = {
       	call complete_info(['mode', 'pum_visible'])
 
     ]=],
-    name = 'complete_info',
-    params = { { 'what', 'any' } },
-    returns = 'table',
-    signature = 'complete_info([{what}])',
+    name = "complete_info",
+    params = { { "what", "any" } },
+    returns = "table",
+    signature = "complete_info([{what}])",
   },
   confirm = {
     args = { 1, 4 },
@@ -1477,10 +1477,10 @@ M.funcs = {
       the horizontal layout is always used.
 
     ]=],
-    name = 'confirm',
-    params = { { 'msg', 'any' }, { 'choices', 'any' }, { 'default', 'any' }, { 'type', 'any' } },
-    returns = 'integer',
-    signature = 'confirm({msg} [, {choices} [, {default} [, {type}]]])',
+    name = "confirm",
+    params = { { "msg", "any" }, { "choices", "any" }, { "default", "any" }, { "type", "any" } },
+    returns = "integer",
+    signature = "confirm({msg} [, {choices} [, {default} [, {type}]]])",
   },
   copy = {
     args = 1,
@@ -1495,10 +1495,10 @@ M.funcs = {
       A |Dictionary| is copied in a similar way as a |List|.
       Also see |deepcopy()|.
     ]=],
-    name = 'copy',
-    params = { { 'expr', 'any' } },
-    returns = 'any',
-    signature = 'copy({expr})',
+    name = "copy",
+    params = { { "expr", "any" } },
+    returns = "any",
+    signature = "copy({expr})",
   },
   cos = {
     args = 1,
@@ -1514,11 +1514,11 @@ M.funcs = {
       <	-0.646043
 
     ]=],
-    float_func = 'cos',
-    name = 'cos',
-    params = { { 'expr', 'any' } },
-    returns = 'number',
-    signature = 'cos({expr})',
+    float_func = "cos",
+    name = "cos",
+    params = { { "expr", "any" } },
+    returns = "number",
+    signature = "cos({expr})",
   },
   cosh = {
     args = 1,
@@ -1535,16 +1535,16 @@ M.funcs = {
       <	-1.127626
 
     ]=],
-    float_func = 'cosh',
-    name = 'cosh',
-    params = { { 'expr', 'any' } },
-    returns = 'number',
-    signature = 'cosh({expr})',
+    float_func = "cosh",
+    name = "cosh",
+    params = { { "expr", "any" } },
+    returns = "number",
+    signature = "cosh({expr})",
   },
   count = {
     args = { 2, 4 },
     base = 1,
-    tags = { 'E706' },
+    tags = { "E706" },
     desc = [=[
       Return the number of times an item with value {expr} appears
       in |String|, |List| or |Dictionary| {comp}.
@@ -1559,10 +1559,10 @@ M.funcs = {
       {expr} is an empty string.
 
     ]=],
-    name = 'count',
-    params = { { 'comp', 'any' }, { 'expr', 'any' }, { 'ic', 'any' }, { 'start', 'any' } },
-    returns = 'integer',
-    signature = 'count({comp}, {expr} [, {ic} [, {start}]])',
+    name = "count",
+    params = { { "comp", "any" }, { "expr", "any" }, { "ic", "any" }, { "start", "any" } },
+    returns = "integer",
+    signature = "count({comp}, {expr} [, {ic} [, {start}]])",
   },
   ctxget = {
     args = { 0, 1 },
@@ -1571,19 +1571,19 @@ M.funcs = {
       from the top of the |context-stack| (see |context-dict|).
       If {index} is not given, it is assumed to be 0 (i.e.: top).
     ]=],
-    name = 'ctxget',
-    params = { { 'index', 'any' } },
-    returns = 'table',
-    signature = 'ctxget([{index}])',
+    name = "ctxget",
+    params = { { "index", "any" } },
+    returns = "table",
+    signature = "ctxget([{index}])",
   },
   ctxpop = {
     desc = [=[
       Pops and restores the |context| at the top of the
       |context-stack|.
     ]=],
-    name = 'ctxpop',
+    name = "ctxpop",
     params = {},
-    signature = 'ctxpop()',
+    signature = "ctxpop()",
   },
   ctxpush = {
     args = { 0, 1 },
@@ -1594,9 +1594,9 @@ M.funcs = {
       which |context-types| to include in the pushed context.
       Otherwise, all context types are included.
     ]=],
-    name = 'ctxpush',
-    params = { { 'types', 'any' } },
-    signature = 'ctxpush([{types}])',
+    name = "ctxpush",
+    params = { { "types", "any" } },
+    signature = "ctxpush([{types}])",
   },
   ctxset = {
     args = { 1, 2 },
@@ -1606,24 +1606,24 @@ M.funcs = {
       {context} is a Dictionary with context data (|context-dict|).
       If {index} is not given, it is assumed to be 0 (i.e.: top).
     ]=],
-    name = 'ctxset',
-    params = { { 'context', 'any' }, { 'index', 'any' } },
-    signature = 'ctxset({context} [, {index}])',
+    name = "ctxset",
+    params = { { "context", "any" }, { "index", "any" } },
+    signature = "ctxset({context} [, {index}])",
   },
   ctxsize = {
     desc = [=[
       Returns the size of the |context-stack|.
     ]=],
-    name = 'ctxsize',
+    name = "ctxsize",
     params = {},
-    signature = 'ctxsize()',
+    signature = "ctxsize()",
   },
   cursor = {
     args = { 1, 3 },
     base = 1,
-    name = 'cursor',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' }, { 'off', 'any' } },
-    signature = 'cursor({lnum}, {col} [, {off}])',
+    name = "cursor",
+    params = { { "lnum", "integer" }, { "col", "integer" }, { "off", "any" } },
+    signature = "cursor({lnum}, {col} [, {off}])",
   },
   cursor__1 = {
     args = { 1, 3 },
@@ -1661,9 +1661,9 @@ M.funcs = {
       Returns 0 when the position could be set, -1 otherwise.
 
     ]=],
-    name = 'cursor',
-    params = { { 'list', 'any' } },
-    signature = 'cursor({list})',
+    name = "cursor",
+    params = { { "list", "any" } },
+    signature = "cursor({list})",
   },
   debugbreak = {
     args = { 1, 1 },
@@ -1678,14 +1678,14 @@ M.funcs = {
       Otherwise returns |FALSE|.
 
     ]=],
-    name = 'debugbreak',
-    params = { { 'pid', 'any' } },
-    signature = 'debugbreak({pid})',
+    name = "debugbreak",
+    params = { { "pid", "any" } },
+    signature = "debugbreak({pid})",
   },
   deepcopy = {
     args = { 1, 2 },
     base = 1,
-    tags = { 'E698' },
+    tags = { "E698" },
     desc = [=[
       Make a copy of {expr}.  For Numbers and Strings this isn't
       different from using {expr} directly.
@@ -1707,9 +1707,9 @@ M.funcs = {
       Also see |copy()|.
 
     ]=],
-    name = 'deepcopy',
-    params = { { 'expr', 'any' }, { 'noref', 'any' } },
-    signature = 'deepcopy({expr} [, {noref}])',
+    name = "deepcopy",
+    params = { { "expr", "any" }, { "noref", "any" } },
+    signature = "deepcopy({expr} [, {noref}])",
   },
   delete = {
     args = { 1, 2 },
@@ -1734,10 +1734,10 @@ M.funcs = {
       or partly failed.
 
     ]=],
-    name = 'delete',
-    params = { { 'fname', 'string' }, { 'flags', 'string' } },
-    returns = 'integer',
-    signature = 'delete({fname} [, {flags}])',
+    name = "delete",
+    params = { { "fname", "string" }, { "flags", "string" } },
+    returns = "integer",
+    signature = "delete({fname} [, {flags}])",
   },
   deletebufline = {
     args = { 2, 3 },
@@ -1757,9 +1757,9 @@ M.funcs = {
       to refer to the last line in buffer {buf}.
 
     ]=],
-    name = 'deletebufline',
-    params = { { 'buf', 'any' }, { 'first', 'any' }, { 'last', 'any' } },
-    signature = 'deletebufline({buf}, {first} [, {last}])',
+    name = "deletebufline",
+    params = { { "buf", "any" }, { "first", "any" }, { "last", "any" } },
+    signature = "deletebufline({buf}, {first} [, {last}])",
   },
   dictwatcheradd = {
     args = 3,
@@ -1803,9 +1803,9 @@ M.funcs = {
       This function can be used by plugins to implement options with
       validation and parsing logic.
     ]=],
-    name = 'dictwatcheradd',
-    params = { { 'dict', 'any' }, { 'pattern', 'any' }, { 'callback', 'any' } },
-    signature = 'dictwatcheradd({dict}, {pattern}, {callback})',
+    name = "dictwatcheradd",
+    params = { { "dict", "any" }, { "pattern", "any" }, { "callback", "any" } },
+    signature = "dictwatcheradd({dict}, {pattern}, {callback})",
   },
   dictwatcherdel = {
     args = 3,
@@ -1814,9 +1814,9 @@ M.funcs = {
       arguments must match the ones passed to |dictwatcheradd()| in
       order for the watcher to be successfully deleted.
     ]=],
-    name = 'dictwatcherdel',
-    params = { { 'dict', 'any' }, { 'pattern', 'any' }, { 'callback', 'any' } },
-    signature = 'dictwatcherdel({dict}, {pattern}, {callback})',
+    name = "dictwatcherdel",
+    params = { { "dict", "any" }, { "pattern", "any" }, { "callback", "any" } },
+    signature = "dictwatcherdel({dict}, {pattern}, {callback})",
   },
   did_filetype = {
     desc = [=[
@@ -1832,9 +1832,9 @@ M.funcs = {
       file.
     ]=],
     fast = true,
-    name = 'did_filetype',
+    name = "did_filetype",
     params = {},
-    signature = 'did_filetype()',
+    signature = "did_filetype()",
   },
   diff_filler = {
     args = 1,
@@ -1849,9 +1849,9 @@ M.funcs = {
       Returns 0 if the current window is not in diff mode.
 
     ]=],
-    name = 'diff_filler',
-    params = { { 'lnum', 'integer' } },
-    signature = 'diff_filler({lnum})',
+    name = "diff_filler",
+    params = { { "lnum", "integer" } },
+    signature = "diff_filler({lnum})",
   },
   diff_hlID = {
     args = 2,
@@ -1868,14 +1868,14 @@ M.funcs = {
       syntax information about the highlighting.
 
     ]=],
-    name = 'diff_hlID',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
-    signature = 'diff_hlID({lnum}, {col})',
+    name = "diff_hlID",
+    params = { { "lnum", "integer" }, { "col", "integer" } },
+    signature = "diff_hlID({lnum}, {col})",
   },
   digraph_get = {
     args = 1,
     base = 1,
-    tags = { 'E1214' },
+    tags = { "E1214" },
     desc = [=[
       Return the digraph of {chars}.  This should be a string with
       exactly two characters.  If {chars} are not just two
@@ -1893,9 +1893,9 @@ M.funcs = {
       echo digraph_get('aa')		" Returns 'あ'
       <
     ]=],
-    name = 'digraph_get',
-    params = { { 'chars', 'any' } },
-    signature = 'digraph_get({chars})',
+    name = "digraph_get",
+    params = { { "chars", "any" } },
+    signature = "digraph_get({chars})",
   },
   digraph_getlist = {
     args = { 0, 1 },
@@ -1915,9 +1915,9 @@ M.funcs = {
       echo digraph_getlist(1)
       <
     ]=],
-    name = 'digraph_getlist',
-    params = { { 'listall', 'any' } },
-    signature = 'digraph_getlist([{listall}])',
+    name = "digraph_getlist",
+    params = { { "listall", "any" } },
+    signature = "digraph_getlist([{listall}])",
   },
   digraph_set = {
     args = 2,
@@ -1943,9 +1943,9 @@ M.funcs = {
       	GetString()->digraph_set('あ')
       <
     ]=],
-    name = 'digraph_set',
-    params = { { 'chars', 'any' }, { 'digraph', 'any' } },
-    signature = 'digraph_set({chars}, {digraph})',
+    name = "digraph_set",
+    params = { { "chars", "any" }, { "digraph", "any" } },
+    signature = "digraph_set({chars}, {digraph})",
   },
   digraph_setlist = {
     args = 1,
@@ -1969,9 +1969,9 @@ M.funcs = {
           GetList()->digraph_setlist()
       <
     ]=],
-    name = 'digraph_setlist',
-    params = { { 'digraphlist', 'any' } },
-    signature = 'digraph_setlist({digraphlist})',
+    name = "digraph_setlist",
+    params = { { "digraphlist", "any" } },
+    signature = "digraph_setlist({digraphlist})",
   },
   empty = {
     args = 1,
@@ -1986,9 +1986,9 @@ M.funcs = {
       - A |Blob| is empty when its length is zero.
 
     ]=],
-    name = 'empty',
-    params = { { 'expr', 'any' } },
-    signature = 'empty({expr})',
+    name = "empty",
+    params = { { "expr", "any" } },
+    signature = "empty({expr})",
   },
   environ = {
     desc = [=[
@@ -2001,9 +2001,9 @@ M.funcs = {
       <
     ]=],
     fast = true,
-    name = 'environ',
+    name = "environ",
     params = {},
-    signature = 'environ()',
+    signature = "environ()",
   },
   escape = {
     args = 2,
@@ -2018,9 +2018,9 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'escape',
-    params = { { 'string', 'string' }, { 'chars', 'any' } },
-    signature = 'escape({string}, {chars})',
+    name = "escape",
+    params = { { "string", "string" }, { "chars", "any" } },
+    signature = "escape({string}, {chars})",
   },
   eval = {
     args = 1,
@@ -2033,9 +2033,9 @@ M.funcs = {
       functions.
 
     ]=],
-    name = 'eval',
-    params = { { 'string', 'string' } },
-    signature = 'eval({string})',
+    name = "eval",
+    params = { { "string", "string" } },
+    signature = "eval({string})",
   },
   eventhandler = {
     desc = [=[
@@ -2044,9 +2044,9 @@ M.funcs = {
       e.g., when dropping a file on Vim.  This means interactive
       commands cannot be used.  Otherwise zero is returned.
     ]=],
-    name = 'eventhandler',
+    name = "eventhandler",
     params = {},
-    signature = 'eventhandler()',
+    signature = "eventhandler()",
   },
   executable = {
     args = 1,
@@ -2076,10 +2076,10 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'executable',
-    params = { { 'expr', 'any' } },
-    returns = '0|1|-1',
-    signature = 'executable({expr})',
+    name = "executable",
+    params = { { "expr", "any" } },
+    returns = "0|1|-1",
+    signature = "executable({expr})",
   },
   execute = {
     args = { 1, 2 },
@@ -2113,13 +2113,13 @@ M.funcs = {
       use `win_execute()`.
 
     ]=],
-    name = 'execute',
+    name = "execute",
     params = {
-      { 'command', 'string|string[]' },
-      { 'silent', "''|'silent'|'silent!'" },
+      { "command", "string|string[]" },
+      { "silent", "''|'silent'|'silent!'" },
     },
-    returns = 'string',
-    signature = 'execute({command} [, {silent}])',
+    returns = "string",
+    signature = "execute({command} [, {silent}])",
   },
   exepath = {
     args = 1,
@@ -2131,9 +2131,9 @@ M.funcs = {
       If {expr} starts with "./" the |current-directory| is used.
 
     ]=],
-    name = 'exepath',
-    params = { { 'expr', 'any' } },
-    signature = 'exepath({expr})',
+    name = "exepath",
+    params = { { "expr", "any" } },
+    signature = "exepath({expr})",
   },
   exists = {
     args = 1,
@@ -2202,6 +2202,7 @@ M.funcs = {
       	echo exists("*strftime")
       	echo exists("*s:MyFunc")
       	echo exists("*MyFunc")
+      	echo exists("*v:lua.Func")
       	echo exists("bufcount")
       	echo exists(":Make")
       	echo exists("#CursorHold")
@@ -2227,10 +2228,10 @@ M.funcs = {
       but gets the value of "bufcount", and checks if that exists.
 
     ]=],
-    name = 'exists',
-    params = { { 'expr', 'any' } },
-    returns = '0|1',
-    signature = 'exists({expr})',
+    name = "exists",
+    params = { { "expr", "any" } },
+    returns = "0|1",
+    signature = "exists({expr})",
   },
   exp = {
     args = 1,
@@ -2247,10 +2248,10 @@ M.funcs = {
       <	0.367879
 
     ]=],
-    float_func = 'exp',
-    name = 'exp',
-    params = { { 'expr', 'any' } },
-    signature = 'exp({expr})',
+    float_func = "exp",
+    name = "exp",
+    params = { { "expr", "any" } },
+    signature = "exp({expr})",
   },
   expand = {
     args = { 1, 3 },
@@ -2347,21 +2348,21 @@ M.funcs = {
       getting the raw output of an external command.
 
     ]=],
-    name = 'expand',
-    params = { { 'string', 'string' }, { 'nosuf', 'boolean' }, { 'list', 'nil|false' } },
-    signature = 'expand({string} [, {nosuf} [, {list}]])',
-    returns = 'string',
+    name = "expand",
+    params = { { "string", "string" }, { "nosuf", "boolean" }, { "list", "nil|false" } },
+    signature = "expand({string} [, {nosuf} [, {list}]])",
+    returns = "string",
   },
   expand__1 = {
     args = { 3 },
     base = 1,
-    name = 'expand',
+    name = "expand",
     params = {
-      { 'string', 'string' },
-      { 'nosuf', 'boolean' },
-      { 'list', 'true|number|string|table' },
+      { "string", "string" },
+      { "nosuf", "boolean" },
+      { "list", "true|number|string|table" },
     },
-    returns = 'string|string[]',
+    returns = "string|string[]",
   },
   expandcmd = {
     args = { 1, 2 },
@@ -2390,9 +2391,9 @@ M.funcs = {
       	echo expandcmd('make %<.o', {'errmsg': v:true})
       <
     ]=],
-    name = 'expandcmd',
-    params = { { 'string', 'string' }, { 'options', 'table' } },
-    signature = 'expandcmd({string} [, {options}])',
+    name = "expandcmd",
+    params = { { "string", "string" }, { "options", "table" } },
+    signature = "expandcmd({string} [, {options}])",
   },
   extend = {
     args = { 2, 3 },
@@ -2434,9 +2435,9 @@ M.funcs = {
       Returns {expr1}.  Returns 0 on error.
 
     ]=],
-    name = 'extend',
-    params = { { 'expr1', 'any' }, { 'expr2', 'any' }, { 'expr3', 'any' } },
-    signature = 'extend({expr1}, {expr2} [, {expr3}])',
+    name = "extend",
+    params = { { "expr1", "any" }, { "expr2", "any" }, { "expr3", "any" } },
+    signature = "extend({expr1}, {expr2} [, {expr3}])",
   },
   extendnew = {
     args = { 2, 3 },
@@ -2446,9 +2447,9 @@ M.funcs = {
       List or Dictionary is created and returned.  {expr1} remains
       unchanged.
     ]=],
-    name = 'extendnew',
-    params = { { 'expr1', 'any' }, { 'expr2', 'any' }, { 'expr3', 'any' } },
-    signature = 'extendnew({expr1}, {expr2} [, {expr3}])',
+    name = "extendnew",
+    params = { { "expr1", "any" }, { "expr2", "any" }, { "expr3", "any" } },
+    signature = "extendnew({expr1}, {expr2} [, {expr3}])",
   },
   feedkeys = {
     args = { 1, 2 },
@@ -2499,9 +2500,9 @@ M.funcs = {
       Return value is always 0.
 
     ]=],
-    name = 'feedkeys',
-    params = { { 'string', 'string' }, { 'mode', 'string' } },
-    signature = 'feedkeys({string} [, {mode}])',
+    name = "feedkeys",
+    params = { { "string", "string" }, { "mode", "string" } },
+    signature = "feedkeys({string} [, {mode}])",
   },
   file_readable = {
     args = 1,
@@ -2510,10 +2511,10 @@ M.funcs = {
     desc = [=[
       Obsolete name for |filereadable()|.
     ]=],
-    func = 'f_filereadable',
-    name = 'file_readable',
-    params = { { 'file', 'string' } },
-    signature = 'file_readable({file})',
+    func = "f_filereadable",
+    name = "file_readable",
+    params = { { "file", "string" } },
+    signature = "file_readable({file})",
   },
   filereadable = {
     args = 1,
@@ -2537,10 +2538,10 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'filereadable',
-    params = { { 'file', 'string' } },
-    returns = '0|1',
-    signature = 'filereadable({file})',
+    name = "filereadable",
+    params = { { "file", "string" } },
+    returns = "0|1",
+    signature = "filereadable({file})",
   },
   filewritable = {
     args = 1,
@@ -2553,10 +2554,10 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'filewritable',
-    params = { { 'file', 'string' } },
-    returns = '0|1',
-    signature = 'filewritable({file})',
+    name = "filewritable",
+    params = { { "file", "string" } },
+    returns = "0|1",
+    signature = "filewritable({file})",
   },
   filter = {
     args = 2,
@@ -2615,9 +2616,9 @@ M.funcs = {
       unless it was defined with the "abort" flag.
 
     ]=],
-    name = 'filter',
-    params = { { 'expr1', 'any' }, { 'expr2', 'any' } },
-    signature = 'filter({expr1}, {expr2})',
+    name = "filter",
+    params = { { "expr1", "any" }, { "expr2", "any" } },
+    signature = "filter({expr1}, {expr2})",
   },
   finddir = {
     args = { 1, 3 },
@@ -2641,9 +2642,9 @@ M.funcs = {
       This is quite similar to the ex-command `:find`.
 
     ]=],
-    name = 'finddir',
-    params = { { 'name', 'string' }, { 'path', 'string' }, { 'count', 'any' } },
-    signature = 'finddir({name} [, {path} [, {count}]])',
+    name = "finddir",
+    params = { { "name", "string" }, { "path", "string" }, { "count", "any" } },
+    signature = "finddir({name} [, {path} [, {count}]])",
   },
   findfile = {
     args = { 1, 3 },
@@ -2657,9 +2658,9 @@ M.funcs = {
       it finds the file "tags.vim".
 
     ]=],
-    name = 'findfile',
-    params = { { 'name', 'string' }, { 'path', 'string' }, { 'count', 'any' } },
-    signature = 'findfile({name} [, {path} [, {count}]])',
+    name = "findfile",
+    params = { { "name", "string" }, { "path", "string" }, { "count", "any" } },
+    signature = "findfile({name} [, {path} [, {count}]])",
   },
   flatten = {
     args = { 1, 2 },
@@ -2684,10 +2685,10 @@ M.funcs = {
       <	[1, 2, [3, 4], 5]
 
     ]=],
-    name = 'flatten',
-    params = { { 'list', 'any' }, { 'maxdepth', 'any' } },
-    returns = 'any[]|0',
-    signature = 'flatten({list} [, {maxdepth}])',
+    name = "flatten",
+    params = { { "list", "any" }, { "maxdepth", "any" } },
+    returns = "any[]|0",
+    signature = "flatten({list} [, {maxdepth}])",
   },
   flattennew = {
     args = { 1, 2 },
@@ -2695,10 +2696,10 @@ M.funcs = {
     desc = [=[
       Like |flatten()| but first make a copy of {list}.
     ]=],
-    name = 'flattennew',
-    params = { { 'list', 'any' }, { 'maxdepth', 'any' } },
-    returns = 'any[]|0',
-    signature = 'flattennew({list} [, {maxdepth}])',
+    name = "flattennew",
+    params = { { "list", "any" }, { "maxdepth", "any" } },
+    returns = "any[]|0",
+    signature = "flattennew({list} [, {maxdepth}])",
   },
   float2nr = {
     args = 1,
@@ -2726,9 +2727,9 @@ M.funcs = {
       <	0
 
     ]=],
-    name = 'float2nr',
-    params = { { 'expr', 'any' } },
-    signature = 'float2nr({expr})',
+    name = "float2nr",
+    params = { { "expr", "any" } },
+    signature = "float2nr({expr})",
   },
   floor = {
     args = 1,
@@ -2747,10 +2748,10 @@ M.funcs = {
       <	4.0
 
     ]=],
-    float_func = 'floor',
-    name = 'floor',
-    params = { { 'expr', 'any' } },
-    signature = 'floor({expr})',
+    float_func = "floor",
+    name = "floor",
+    params = { { "expr", "any" } },
+    signature = "floor({expr})",
   },
   fmod = {
     args = 2,
@@ -2772,9 +2773,9 @@ M.funcs = {
       <	-0.13
 
     ]=],
-    name = 'fmod',
-    params = { { 'expr1', 'any' }, { 'expr2', 'any' } },
-    signature = 'fmod({expr1}, {expr2})',
+    name = "fmod",
+    params = { { "expr1", "any" }, { "expr2", "any" } },
+    signature = "fmod({expr1}, {expr2})",
   },
   fnameescape = {
     args = 1,
@@ -2797,10 +2798,10 @@ M.funcs = {
       <
     ]=],
     fast = true,
-    name = 'fnameescape',
-    params = { { 'string', 'string' } },
-    returns = 'string',
-    signature = 'fnameescape({string})',
+    name = "fnameescape",
+    params = { { "string", "string" } },
+    returns = "string",
+    signature = "fnameescape({string})",
   },
   fnamemodify = {
     args = 2,
@@ -2824,10 +2825,10 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'fnamemodify',
-    params = { { 'fname', 'string' }, { 'mods', 'string' } },
-    returns = 'string',
-    signature = 'fnamemodify({fname}, {mods})',
+    name = "fnamemodify",
+    params = { { "fname", "string" }, { "mods", "string" } },
+    returns = "string",
+    signature = "fnamemodify({fname}, {mods})",
   },
   foldclosed = {
     args = 1,
@@ -2840,10 +2841,10 @@ M.funcs = {
       line, "'m" mark m, etc.
 
     ]=],
-    name = 'foldclosed',
-    params = { { 'lnum', 'integer' } },
-    returns = 'integer',
-    signature = 'foldclosed({lnum})',
+    name = "foldclosed",
+    params = { { "lnum", "integer" } },
+    returns = "integer",
+    signature = "foldclosed({lnum})",
   },
   foldclosedend = {
     args = 1,
@@ -2856,10 +2857,10 @@ M.funcs = {
       line, "'m" mark m, etc.
 
     ]=],
-    name = 'foldclosedend',
-    params = { { 'lnum', 'integer' } },
-    returns = 'integer',
-    signature = 'foldclosedend({lnum})',
+    name = "foldclosedend",
+    params = { { "lnum", "integer" } },
+    returns = "integer",
+    signature = "foldclosedend({lnum})",
   },
   foldlevel = {
     args = 1,
@@ -2877,10 +2878,10 @@ M.funcs = {
       line, "'m" mark m, etc.
 
     ]=],
-    name = 'foldlevel',
-    params = { { 'lnum', 'integer' } },
-    returns = 'integer',
-    signature = 'foldlevel({lnum})',
+    name = "foldlevel",
+    params = { { "lnum", "integer" } },
+    returns = "integer",
+    signature = "foldlevel({lnum})",
   },
   foldtext = {
     desc = [=[
@@ -2900,10 +2901,10 @@ M.funcs = {
       setting.
       Returns an empty string when there is no fold.
     ]=],
-    name = 'foldtext',
+    name = "foldtext",
     params = {},
-    returns = 'string',
-    signature = 'foldtext()',
+    returns = "string",
+    signature = "foldtext()",
   },
   foldtextresult = {
     args = 1,
@@ -2918,10 +2919,10 @@ M.funcs = {
       Useful when exporting folded text, e.g., to HTML.
 
     ]=],
-    name = 'foldtextresult',
-    params = { { 'lnum', 'integer' } },
-    returns = 'string',
-    signature = 'foldtextresult({lnum})',
+    name = "foldtextresult",
+    params = { { "lnum", "integer" } },
+    returns = "string",
+    signature = "foldtextresult({lnum})",
   },
   foreach = {
     args = 2,
@@ -2961,9 +2962,9 @@ M.funcs = {
       When {expr2} is a Funcref errors inside a function are ignored,
       unless it was defined with the "abort" flag.
     ]=],
-    name = 'foreach',
-    params = { { 'expr1', 'any' }, { 'expr2', 'any' } },
-    signature = 'foreach({expr1}, {expr2})',
+    name = "foreach",
+    params = { { "expr1", "any" }, { "expr2", "any" } },
+    signature = "foreach({expr1}, {expr2})",
   },
   foreground = {
     args = 0,
@@ -2986,10 +2987,10 @@ M.funcs = {
       `fullcommand(':%substitute')` all return "substitute".
 
     ]=],
-    name = 'fullcommand',
-    params = { { 'name', 'string' } },
-    returns = 'string',
-    signature = 'fullcommand({name})',
+    name = "fullcommand",
+    params = { { "name", "string" } },
+    returns = "string",
+    signature = "fullcommand({name})",
   },
   funcref = {
     args = { 1, 3 },
@@ -3007,11 +3008,11 @@ M.funcs = {
       Returns 0 on error.
 
     ]=],
-    name = 'funcref',
-    params = { { 'name', 'string' }, { 'arglist', 'any' }, { 'dict', 'any' } },
-    signature = 'funcref({name} [, {arglist}] [, {dict}])',
+    name = "funcref",
+    params = { { "name", "string" }, { "arglist", "any" }, { "dict", "any" } },
+    signature = "funcref({name} [, {arglist}] [, {dict}])",
   },
-  ['function'] = {
+  ["function"] = {
     args = { 1, 3 },
     base = 1,
     desc = [=[
@@ -3097,10 +3098,10 @@ M.funcs = {
       Returns 0 on error.
 
     ]=],
-    name = 'function',
-    params = { { 'name', 'string' }, { 'arglist', 'any' }, { 'dict', 'any' } },
-    signature = 'function({name} [, {arglist}] [, {dict}])',
-    tags = { 'partial', 'E700', 'E923' },
+    name = "function",
+    params = { { "name", "string" }, { "arglist", "any" }, { "dict", "any" } },
+    signature = "function({name} [, {arglist}] [, {dict}])",
+    tags = { "partial", "E700", "E923" },
   },
   garbagecollect = {
     args = { 0, 1 },
@@ -3124,9 +3125,9 @@ M.funcs = {
       it's safe to perform.  This is when waiting for the user to
       type a character.
     ]=],
-    name = 'garbagecollect',
-    params = { { 'atexit', 'any' } },
-    signature = 'garbagecollect([{atexit}])',
+    name = "garbagecollect",
+    params = { { "atexit", "any" } },
+    signature = "garbagecollect([{atexit}])",
   },
   get = {
     args = { 2, 3 },
@@ -3136,9 +3137,9 @@ M.funcs = {
       available return {default}.  Return zero when {default} is
       omitted.
     ]=],
-    name = 'get',
-    params = { { 'list', 'any[]' }, { 'idx', 'integer' }, { 'default', 'any' } },
-    signature = 'get({list}, {idx} [, {default}])',
+    name = "get",
+    params = { { "list", "any[]" }, { "idx", "integer" }, { "default", "any" } },
+    signature = "get({list}, {idx} [, {default}])",
   },
   get__1 = {
     args = { 2, 3 },
@@ -3148,9 +3149,9 @@ M.funcs = {
       available return {default}.  Return -1 when {default} is
       omitted.
     ]=],
-    name = 'get',
-    params = { { 'blob', 'string' }, { 'idx', 'integer' }, { 'default', 'any' } },
-    signature = 'get({blob}, {idx} [, {default}])',
+    name = "get",
+    params = { { "blob", "string" }, { "idx", "integer" }, { "default", "any" } },
+    signature = "get({blob}, {idx} [, {default}])",
   },
   get__2 = {
     args = { 2, 3 },
@@ -3163,9 +3164,9 @@ M.funcs = {
       <This gets the value of g:var_name if it exists, and uses
       "default" when it does not exist.
     ]=],
-    name = 'get',
-    params = { { 'dict', 'table<string,any>' }, { 'key', 'string' }, { 'default', 'any' } },
-    signature = 'get({dict}, {key} [, {default}])',
+    name = "get",
+    params = { { "dict", "table<string,any>" }, { "key", "string" }, { "default", "any" } },
+    signature = "get({dict}, {key} [, {default}])",
   },
   get__3 = {
     args = { 2, 3 },
@@ -3179,18 +3180,18 @@ M.funcs = {
       	"args"	The list with arguments
       Returns zero on error.
     ]=],
-    name = 'get',
-    params = { { 'func', 'function' }, { 'what', 'string' } },
-    returns = 'any',
-    signature = 'get({func}, {what})',
+    name = "get",
+    params = { { "func", "function" }, { "what", "string" } },
+    returns = "any",
+    signature = "get({func}, {what})",
   },
   getbufinfo = {
     args = { 0, 1 },
     base = 1,
-    name = 'getbufinfo',
-    params = { { 'buf', 'integer|string' } },
-    signature = 'getbufinfo([{buf}])',
-    returns = 'vim.fn.getbufinfo.ret.item[]',
+    name = "getbufinfo",
+    params = { { "buf", "integer|string" } },
+    signature = "getbufinfo([{buf}])",
+    returns = "vim.fn.getbufinfo.ret.item[]",
   },
   getbufinfo__1 = {
     args = { 0, 1 },
@@ -3261,10 +3262,10 @@ M.funcs = {
       	getbufvar({bufnr}, '&option_name')
       <
     ]=],
-    name = 'getbufinfo',
-    params = { { 'dict', 'vim.fn.getbufinfo.dict' } },
-    signature = 'getbufinfo([{dict}])',
-    returns = 'vim.fn.getbufinfo.ret.item[]',
+    name = "getbufinfo",
+    params = { { "dict", "vim.fn.getbufinfo.dict" } },
+    signature = "getbufinfo([{dict}])",
+    returns = "vim.fn.getbufinfo.ret.item[]",
   },
   getbufline = {
     args = { 2, 3 },
@@ -3295,9 +3296,9 @@ M.funcs = {
       	let lines = getbufline(bufnr("myfile"), 1, "$")
 
     ]=],
-    name = 'getbufline',
-    params = { { 'buf', 'any' }, { 'lnum', 'integer' }, { 'end', 'integer' } },
-    signature = 'getbufline({buf}, {lnum} [, {end}])',
+    name = "getbufline",
+    params = { { "buf", "any" }, { "lnum", "integer" }, { "end", "integer" } },
+    signature = "getbufline({buf}, {lnum} [, {end}])",
   },
   getbufoneline = {
     args = 2,
@@ -3306,10 +3307,10 @@ M.funcs = {
       Just like `getbufline()` but only get one line and return it
       as a string.
     ]=],
-    name = 'getbufoneline',
-    params = { { 'buf', 'integer|string' }, { 'lnum', 'integer' } },
-    signature = 'getbufoneline({buf}, {lnum})',
-    returns = 'string',
+    name = "getbufoneline",
+    params = { { "buf", "integer|string" }, { "lnum", "integer" } },
+    signature = "getbufoneline({buf}, {lnum})",
+    returns = "string",
   },
   getbufvar = {
     args = { 2, 3 },
@@ -3336,9 +3337,9 @@ M.funcs = {
       	echo "todo myvar = " .. getbufvar("todo", "myvar")
 
     ]=],
-    name = 'getbufvar',
-    params = { { 'buf', 'any' }, { 'varname', 'string' }, { 'def', 'any' } },
-    signature = 'getbufvar({buf}, {varname} [, {def}])',
+    name = "getbufvar",
+    params = { { "buf", "any" }, { "varname", "string" }, { "def", "any" } },
+    signature = "getbufvar({buf}, {varname} [, {def}])",
   },
   getcellwidths = {
     desc = [=[
@@ -3347,9 +3348,9 @@ M.funcs = {
       |setcellwidths()|.  If no character ranges have their cell
       widths overridden, an empty List is returned.
     ]=],
-    name = 'getcellwidths',
+    name = "getcellwidths",
     params = {},
-    signature = 'getcellwidths()',
+    signature = "getcellwidths()",
   },
   getchangelist = {
     args = { 0, 1 },
@@ -3371,10 +3372,10 @@ M.funcs = {
       buffers, it is set to the length of the list.
 
     ]=],
-    name = 'getchangelist',
-    params = { { 'buf', 'integer|string' } },
-    returns = 'table[]',
-    signature = 'getchangelist([{buf}])',
+    name = "getchangelist",
+    params = { { "buf", "integer|string" } },
+    returns = "table[]",
+    signature = "getchangelist([{buf}])",
   },
   getchar = {
     args = { 0, 1 },
@@ -3443,10 +3444,10 @@ M.funcs = {
       	endfunction
       <
     ]=],
-    name = 'getchar',
+    name = "getchar",
     params = {},
-    returns = 'integer',
-    signature = 'getchar([expr])',
+    returns = "integer",
+    signature = "getchar([expr])",
   },
   getcharmod = {
     desc = [=[
@@ -3465,10 +3466,10 @@ M.funcs = {
       character itself are obtained.  Thus Shift-a results in "A"
       without a modifier.  Returns 0 if no modifiers are used.
     ]=],
-    name = 'getcharmod',
+    name = "getcharmod",
     params = {},
-    returns = 'integer',
-    signature = 'getcharmod()',
+    returns = "integer",
+    signature = "getcharmod()",
   },
   getcharpos = {
     args = 1,
@@ -3487,10 +3488,10 @@ M.funcs = {
       	getpos('.')		returns [0, 5, 7, 0]
       <
     ]=],
-    name = 'getcharpos',
-    params = { { 'expr', 'any' } },
-    returns = 'integer[]',
-    signature = 'getcharpos({expr})',
+    name = "getcharpos",
+    params = { { "expr", "any" } },
+    returns = "integer[]",
+    signature = "getcharpos({expr})",
   },
   getcharsearch = {
     desc = [=[
@@ -3513,10 +3514,10 @@ M.funcs = {
       	nnoremap <expr> , getcharsearch().forward ? ',' : ';'
       <Also see |setcharsearch()|.
     ]=],
-    name = 'getcharsearch',
+    name = "getcharsearch",
     params = {},
-    returns = 'table[]',
-    signature = 'getcharsearch()',
+    returns = "table[]",
+    signature = "getcharsearch()",
   },
   getcharstr = {
     args = { 0, 1 },
@@ -3532,10 +3533,10 @@ M.funcs = {
       Otherwise this works like |getchar()|, except that a number
       result is converted to a string.
     ]=],
-    name = 'getcharstr',
+    name = "getcharstr",
     params = {},
-    returns = 'string',
-    signature = 'getcharstr([expr])',
+    returns = "string",
+    signature = "getcharstr([expr])",
   },
   getcmdcompltype = {
     desc = [=[
@@ -3547,10 +3548,10 @@ M.funcs = {
       |setcmdline()|.
       Returns an empty string when completion is not defined.
     ]=],
-    name = 'getcmdcompltype',
+    name = "getcmdcompltype",
     params = {},
-    returns = 'string',
-    signature = 'getcmdcompltype()',
+    returns = "string",
+    signature = "getcmdcompltype()",
   },
   getcmdline = {
     desc = [=[
@@ -3564,10 +3565,10 @@ M.funcs = {
       Returns an empty string when entering a password or using
       |inputsecret()|.
     ]=],
-    name = 'getcmdline',
+    name = "getcmdline",
     params = {},
-    returns = 'string',
-    signature = 'getcmdline()',
+    returns = "string",
+    signature = "getcmdline()",
   },
   getcmdpos = {
     desc = [=[
@@ -3579,10 +3580,10 @@ M.funcs = {
       Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()| and
       |setcmdline()|.
     ]=],
-    name = 'getcmdpos',
+    name = "getcmdpos",
     params = {},
-    returns = 'integer',
-    signature = 'getcmdpos()',
+    returns = "integer",
+    signature = "getcmdpos()",
   },
   getcmdscreenpos = {
     desc = [=[
@@ -3595,9 +3596,9 @@ M.funcs = {
       Also see |getcmdpos()|, |setcmdpos()|, |getcmdline()| and
       |setcmdline()|.
     ]=],
-    name = 'getcmdscreenpos',
+    name = "getcmdscreenpos",
     params = {},
-    signature = 'getcmdscreenpos()',
+    signature = "getcmdscreenpos()",
   },
   getcmdtype = {
     desc = [=[
@@ -3615,10 +3616,10 @@ M.funcs = {
       Returns an empty string otherwise.
       Also see |getcmdpos()|, |setcmdpos()| and |getcmdline()|.
     ]=],
-    name = 'getcmdtype',
+    name = "getcmdtype",
     params = {},
     returns = "':'|'>'|'/'|'?'|'@'|'-'|'='",
-    signature = 'getcmdtype()',
+    signature = "getcmdtype()",
   },
   getcmdwintype = {
     desc = [=[
@@ -3626,10 +3627,10 @@ M.funcs = {
       values are the same as |getcmdtype()|. Returns an empty string
       when not in the command-line window.
     ]=],
-    name = 'getcmdwintype',
+    name = "getcmdwintype",
     params = {},
     returns = "':'|'>'|'/'|'?'|'@'|'-'|'='",
-    signature = 'getcmdwintype()',
+    signature = "getcmdwintype()",
   },
   getcompletion = {
     args = { 2, 3 },
@@ -3704,10 +3705,10 @@ M.funcs = {
       invalid value for {type} produces an error.
 
     ]=],
-    name = 'getcompletion',
-    params = { { 'pat', 'any' }, { 'type', 'any' }, { 'filtered', 'any' } },
-    returns = 'string[]',
-    signature = 'getcompletion({pat}, {type} [, {filtered}])',
+    name = "getcompletion",
+    params = { { "pat", "any" }, { "type", "any" }, { "filtered", "any" } },
+    returns = "string[]",
+    signature = "getcompletion({pat}, {type} [, {filtered}])",
   },
   getcurpos = {
     args = { 0, 1 },
@@ -3738,9 +3739,9 @@ M.funcs = {
       |winrestview()| for restoring more state.
 
     ]=],
-    name = 'getcurpos',
-    params = { { 'winid', 'integer' } },
-    signature = 'getcurpos([{winid}])',
+    name = "getcurpos",
+    params = { { "winid", "integer" } },
+    signature = "getcurpos([{winid}])",
   },
   getcursorcharpos = {
     args = { 0, 1 },
@@ -3755,9 +3756,9 @@ M.funcs = {
       	getcurpos()		" returns [0, 3, 4, 0, 3]
       <
     ]=],
-    name = 'getcursorcharpos',
-    params = { { 'winid', 'integer' } },
-    signature = 'getcursorcharpos([{winid}])',
+    name = "getcursorcharpos",
+    params = { { "winid", "integer" } },
+    signature = "getcursorcharpos([{winid}])",
   },
   getcwd = {
     args = { 0, 2 },
@@ -3779,10 +3780,10 @@ M.funcs = {
       Throw error if the arguments are invalid. |E5000| |E5001| |E5002|
 
     ]=],
-    name = 'getcwd',
-    params = { { 'winnr', 'integer' }, { 'tabnr', 'integer' } },
-    returns = 'string',
-    signature = 'getcwd([{winnr} [, {tabnr}]])',
+    name = "getcwd",
+    params = { { "winnr", "integer" }, { "tabnr", "integer" } },
+    returns = "string",
+    signature = "getcwd([{winnr} [, {tabnr}]])",
   },
   getenv = {
     args = 1,
@@ -3797,10 +3798,10 @@ M.funcs = {
       See also |expr-env|.
 
     ]=],
-    name = 'getenv',
-    params = { { 'name', 'string' } },
-    returns = 'string',
-    signature = 'getenv({name})',
+    name = "getenv",
+    params = { { "name", "string" } },
+    returns = "string",
+    signature = "getenv({name})",
   },
   getfontname = {
     args = { 0, 1 },
@@ -3816,10 +3817,10 @@ M.funcs = {
       gvimrc file.  Use the |GUIEnter| autocommand to use this
       function just after the GUI has started.
     ]=],
-    name = 'getfontname',
-    params = { { 'name', 'string' } },
-    returns = 'string',
-    signature = 'getfontname([{name}])',
+    name = "getfontname",
+    params = { { "name", "string" } },
+    returns = "string",
+    signature = "getfontname([{name}])",
   },
   getfperm = {
     args = 1,
@@ -3842,10 +3843,10 @@ M.funcs = {
       For setting permissions use |setfperm()|.
     ]=],
     fast = true,
-    name = 'getfperm',
-    params = { { 'fname', 'string' } },
-    returns = 'string',
-    signature = 'getfperm({fname})',
+    name = "getfperm",
+    params = { { "fname", "string" } },
+    returns = "string",
+    signature = "getfperm({fname})",
   },
   getfsize = {
     args = 1,
@@ -3860,10 +3861,10 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'getfsize',
-    params = { { 'fname', 'string' } },
-    returns = 'integer',
-    signature = 'getfsize({fname})',
+    name = "getfsize",
+    params = { { "fname", "string" } },
+    returns = "integer",
+    signature = "getfsize({fname})",
   },
   getftime = {
     args = 1,
@@ -3877,10 +3878,10 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'getftime',
-    params = { { 'fname', 'string' } },
-    returns = 'integer',
-    signature = 'getftime({fname})',
+    name = "getftime",
+    params = { { "fname", "string" } },
+    returns = "integer",
+    signature = "getftime({fname})",
   },
   getftype = {
     args = 1,
@@ -3907,10 +3908,10 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'getftype',
-    params = { { 'fname', 'string' } },
+    name = "getftype",
+    params = { { "fname", "string" } },
     returns = "'file'|'dir'|'link'|'bdev'|'cdev'|'socket'|'fifo'|'other'",
-    signature = 'getftype({fname})',
+    signature = "getftype({fname})",
   },
   getjumplist = {
     args = { 0, 2 },
@@ -3936,10 +3937,10 @@ M.funcs = {
       	lnum		line number
 
     ]=],
-    name = 'getjumplist',
-    params = { { 'winnr', 'integer' }, { 'tabnr', 'integer' } },
-    signature = 'getjumplist([{winnr} [, {tabnr}]])',
-    returns = 'vim.fn.getjumplist.ret',
+    name = "getjumplist",
+    params = { { "winnr", "integer" }, { "tabnr", "integer" } },
+    signature = "getjumplist([{winnr} [, {tabnr}]])",
+    returns = "vim.fn.getjumplist.ret",
   },
   getline = {
     args = { 1, 2 },
@@ -3969,17 +3970,17 @@ M.funcs = {
       <To get lines from another buffer see |getbufline()| and
       |getbufoneline()|
     ]=],
-    name = 'getline',
-    params = { { 'lnum', 'integer' }, { 'end', 'nil|false' } },
-    signature = 'getline({lnum} [, {end}])',
-    returns = 'string',
+    name = "getline",
+    params = { { "lnum", "integer" }, { "end", "nil|false" } },
+    signature = "getline({lnum} [, {end}])",
+    returns = "string",
   },
   getline__1 = {
     args = { 2 },
     base = 1,
-    name = 'getline',
-    params = { { 'lnum', 'integer' }, { 'end', 'true|number|string|table' } },
-    returns = 'string|string[]',
+    name = "getline",
+    params = { { "lnum", "integer" }, { "end", "true|number|string|table" } },
+    returns = "string|string[]",
   },
   getloclist = {
     args = { 1, 2 },
@@ -4015,9 +4016,9 @@ M.funcs = {
       	echo getloclist(5, {'filewinid': 0})
       <
     ]=],
-    name = 'getloclist',
-    params = { { 'nr', 'integer' }, { 'what', 'any' } },
-    signature = 'getloclist({nr} [, {what}])',
+    name = "getloclist",
+    params = { { "nr", "integer" }, { "what", "any" } },
+    signature = "getloclist({nr} [, {what}])",
   },
   getmarklist = {
     args = { 0, 1 },
@@ -4042,9 +4043,9 @@ M.funcs = {
       mark.
 
     ]=],
-    name = 'getmarklist',
-    params = { { 'buf', 'any' } },
-    signature = 'getmarklist([{buf}])',
+    name = "getmarklist",
+    params = { { "buf", "any" } },
+    signature = "getmarklist([{buf}])",
   },
   getmatches = {
     args = { 0, 1 },
@@ -4080,9 +4081,9 @@ M.funcs = {
       	unlet m
       <
     ]=],
-    name = 'getmatches',
-    params = { { 'win', 'any' } },
-    signature = 'getmatches([{win}])',
+    name = "getmatches",
+    params = { { "win", "any" } },
+    signature = "getmatches([{win}])",
   },
   getmousepos = {
     desc = [=[
@@ -4116,10 +4117,10 @@ M.funcs = {
       When using |getchar()| the Vim variables |v:mouse_lnum|,
       |v:mouse_col| and |v:mouse_winid| also provide these values.
     ]=],
-    name = 'getmousepos',
+    name = "getmousepos",
     params = {},
-    signature = 'getmousepos()',
-    returns = 'vim.fn.getmousepos.ret',
+    signature = "getmousepos()",
+    returns = "vim.fn.getmousepos.ret",
   },
   getpid = {
     desc = [=[
@@ -4127,10 +4128,10 @@ M.funcs = {
       This is a unique number, until Vim exits.
     ]=],
     fast = true,
-    name = 'getpid',
+    name = "getpid",
     params = {},
-    returns = 'integer',
-    signature = 'getpid()',
+    returns = "integer",
+    signature = "getpid()",
   },
   getpos = {
     args = 1,
@@ -4165,10 +4166,10 @@ M.funcs = {
       <Also see |getcharpos()|, |getcurpos()| and |setpos()|.
 
     ]=],
-    name = 'getpos',
-    params = { { 'expr', 'string' } },
-    returns = 'integer[]',
-    signature = 'getpos({expr})',
+    name = "getpos",
+    params = { { "expr", "string" } },
+    returns = "integer[]",
+    signature = "getpos({expr})",
   },
   getqflist = {
     args = { 0, 1 },
@@ -4276,9 +4277,9 @@ M.funcs = {
       	echo getqflist({'lines' : ["F1:10:L10"]})
       <
     ]=],
-    name = 'getqflist',
-    params = { { 'what', 'any' } },
-    signature = 'getqflist([{what}])',
+    name = "getqflist",
+    params = { { "what", "any" } },
+    signature = "getqflist([{what}])",
   },
   getreg = {
     args = { 0, 3 },
@@ -4307,17 +4308,17 @@ M.funcs = {
       If {regname} is not specified, |v:register| is used.
 
     ]=],
-    name = 'getreg',
-    params = { { 'regname', 'string' }, { 'list', 'nil|false' } },
-    signature = 'getreg([{regname} [, 1 [, {list}]]])',
-    returns = 'string',
+    name = "getreg",
+    params = { { "regname", "string" }, { "list", "nil|false" } },
+    signature = "getreg([{regname} [, 1 [, {list}]]])",
+    returns = "string",
   },
   getreg__1 = {
     args = { 3 },
     base = 1,
-    name = 'getreg',
-    params = { { 'regname', 'string' }, { 'list', 'true|number|string|table' } },
-    returns = 'string|string[]',
+    name = "getreg",
+    params = { { "regname", "string" }, { "list", "true|number|string|table" } },
+    returns = "string|string[]",
   },
   getreginfo = {
     args = { 0, 1 },
@@ -4347,10 +4348,10 @@ M.funcs = {
       The returned Dictionary can be passed to |setreg()|.
 
     ]=],
-    name = 'getreginfo',
-    params = { { 'regname', 'string' } },
-    returns = 'table',
-    signature = 'getreginfo([{regname}])',
+    name = "getreginfo",
+    params = { { "regname", "string" } },
+    returns = "table",
+    signature = "getreginfo([{regname}])",
   },
   getregtype = {
     args = { 0, 1 },
@@ -4367,10 +4368,10 @@ M.funcs = {
       specified, |v:register| is used.
 
     ]=],
-    name = 'getregtype',
-    params = { { 'regname', 'string' } },
-    returns = 'string',
-    signature = 'getregtype([{regname}])',
+    name = "getregtype",
+    params = { { "regname", "string" } },
+    returns = "string",
+    signature = "getregtype([{regname}])",
   },
   getscriptinfo = {
     args = { 0, 1 },
@@ -4411,9 +4412,9 @@ M.funcs = {
       	echo getscriptinfo({'sid': 15}).variables
       <
     ]=],
-    name = 'getscriptinfo',
-    params = { { 'opts', 'table' } },
-    signature = 'getscriptinfo([{opts}])',
+    name = "getscriptinfo",
+    params = { { "opts", "table" } },
+    signature = "getscriptinfo([{opts}])",
   },
   gettabinfo = {
     args = { 0, 1 },
@@ -4432,9 +4433,9 @@ M.funcs = {
       	windows		List of |window-ID|s in the tab page.
 
     ]=],
-    name = 'gettabinfo',
-    params = { { 'tabnr', 'integer' } },
-    signature = 'gettabinfo([{tabnr}])',
+    name = "gettabinfo",
+    params = { { "tabnr", "integer" } },
+    signature = "gettabinfo([{tabnr}])",
   },
   gettabvar = {
     args = { 2, 3 },
@@ -4450,9 +4451,9 @@ M.funcs = {
       string is returned, there is no error message.
 
     ]=],
-    name = 'gettabvar',
-    params = { { 'tabnr', 'integer' }, { 'varname', 'string' }, { 'def', 'any' } },
-    signature = 'gettabvar({tabnr}, {varname} [, {def}])',
+    name = "gettabvar",
+    params = { { "tabnr", "integer" }, { "varname", "string" }, { "def", "any" } },
+    signature = "gettabvar({tabnr}, {varname} [, {def}])",
   },
   gettabwinvar = {
     args = { 3, 4 },
@@ -4484,14 +4485,14 @@ M.funcs = {
       	gettabwinvar({tabnr}, {winnr}, '&')
       <
     ]=],
-    name = 'gettabwinvar',
+    name = "gettabwinvar",
     params = {
-      { 'tabnr', 'integer' },
-      { 'winnr', 'integer' },
-      { 'varname', 'string' },
-      { 'def', 'any' },
+      { "tabnr", "integer" },
+      { "winnr", "integer" },
+      { "varname", "string" },
+      { "def", "any" },
     },
-    signature = 'gettabwinvar({tabnr}, {winnr}, {varname} [, {def}])',
+    signature = "gettabwinvar({tabnr}, {winnr}, {varname} [, {def}])",
   },
   gettagstack = {
     args = { 0, 1 },
@@ -4525,9 +4526,9 @@ M.funcs = {
       See |tagstack| for more information about the tag stack.
 
     ]=],
-    name = 'gettagstack',
-    params = { { 'winnr', 'integer' } },
-    signature = 'gettagstack([{winnr}])',
+    name = "gettagstack",
+    params = { { "winnr", "integer" } },
+    signature = "gettagstack([{winnr}])",
   },
   gettext = {
     args = 1,
@@ -4543,9 +4544,9 @@ M.funcs = {
       xgettext does not understand escaping in single quoted
       strings.
     ]=],
-    name = 'gettext',
-    params = { { 'text', 'any' } },
-    signature = 'gettext({text})',
+    name = "gettext",
+    params = { { "text", "any" } },
+    signature = "gettext({text})",
   },
   getwininfo = {
     args = { 0, 1 },
@@ -4585,10 +4586,10 @@ M.funcs = {
       			"row" from |win_screenpos()|
 
     ]=],
-    name = 'getwininfo',
-    params = { { 'winid', 'integer' } },
-    signature = 'getwininfo([{winid}])',
-    returns = 'vim.fn.getwininfo.ret.item[]',
+    name = "getwininfo",
+    params = { { "winid", "integer" } },
+    signature = "getwininfo([{winid}])",
+    returns = "vim.fn.getwininfo.ret.item[]",
   },
   getwinpos = {
     args = { 0, 1 },
@@ -4614,9 +4615,9 @@ M.funcs = {
       	endwhile
       <
     ]=],
-    name = 'getwinpos',
-    params = { { 'timeout', 'integer' } },
-    signature = 'getwinpos([{timeout}])',
+    name = "getwinpos",
+    params = { { "timeout", "integer" } },
+    signature = "getwinpos([{timeout}])",
   },
   getwinposx = {
     desc = [=[
@@ -4625,10 +4626,10 @@ M.funcs = {
       -1 if the information is not available.
       The value can be used with `:winpos`.
     ]=],
-    name = 'getwinposx',
+    name = "getwinposx",
     params = {},
-    returns = 'integer',
-    signature = 'getwinposx()',
+    returns = "integer",
+    signature = "getwinposx()",
   },
   getwinposy = {
     desc = [=[
@@ -4637,10 +4638,10 @@ M.funcs = {
       information is not available.
       The value can be used with `:winpos`.
     ]=],
-    name = 'getwinposy',
+    name = "getwinposy",
     params = {},
-    returns = 'integer',
-    signature = 'getwinposy()',
+    returns = "integer",
+    signature = "getwinposy()",
   },
   getwinvar = {
     args = { 2, 3 },
@@ -4652,9 +4653,9 @@ M.funcs = {
       	echo "myvar = " .. getwinvar(1, 'myvar')
 
     ]=],
-    name = 'getwinvar',
-    params = { { 'winnr', 'integer' }, { 'varname', 'string' }, { 'def', 'any' } },
-    signature = 'getwinvar({winnr}, {varname} [, {def}])',
+    name = "getwinvar",
+    params = { { "winnr", "integer" }, { "varname", "string" }, { "def", "any" } },
+    signature = "getwinvar({winnr}, {varname} [, {def}])",
   },
   glob = {
     args = { 1, 4 },
@@ -4696,9 +4697,9 @@ M.funcs = {
       |system()| for getting the raw output of an external command.
 
     ]=],
-    name = 'glob',
-    params = { { 'expr', 'any' }, { 'nosuf', 'boolean' }, { 'list', 'any' }, { 'alllinks', 'any' } },
-    signature = 'glob({expr} [, {nosuf} [, {list} [, {alllinks}]]])',
+    name = "glob",
+    params = { { "expr", "any" }, { "nosuf", "boolean" }, { "list", "any" }, { "alllinks", "any" } },
+    signature = "glob({expr} [, {nosuf} [, {list} [, {alllinks}]]])",
   },
   glob2regpat = {
     args = 1,
@@ -4720,9 +4721,9 @@ M.funcs = {
       a backslash usually means a path separator.
 
     ]=],
-    name = 'glob2regpat',
-    params = { { 'string', 'string' } },
-    signature = 'glob2regpat({string})',
+    name = "glob2regpat",
+    params = { { "string", "string" } },
+    signature = "glob2regpat({string})",
   },
   globpath = {
     args = { 2, 5 },
@@ -4763,15 +4764,15 @@ M.funcs = {
       supported, thus using 'path' will not always work properly.
 
     ]=],
-    name = 'globpath',
+    name = "globpath",
     params = {
-      { 'path', 'string' },
-      { 'expr', 'any' },
-      { 'nosuf', 'boolean' },
-      { 'list', 'any' },
-      { 'allinks', 'any' },
+      { "path", "string" },
+      { "expr", "any" },
+      { "nosuf", "boolean" },
+      { "list", "any" },
+      { "allinks", "any" },
     },
-    signature = 'globpath({path}, {expr} [, {nosuf} [, {list} [, {allinks}]]])',
+    signature = "globpath({path}, {expr} [, {nosuf} [, {list} [, {allinks}]]])",
   },
   has = {
     args = 1,
@@ -4843,10 +4844,10 @@ M.funcs = {
       	endif
       <
     ]=],
-    name = 'has',
-    params = { { 'feature', 'any' } },
-    returns = '0|1',
-    signature = 'has({feature})',
+    name = "has",
+    params = { { "feature", "any" } },
+    returns = "0|1",
+    signature = "has({feature})",
   },
   has_key = {
     args = 2,
@@ -4857,10 +4858,10 @@ M.funcs = {
       argument is a string.
 
     ]=],
-    name = 'has_key',
-    params = { { 'dict', 'any' }, { 'key', 'any' } },
-    returns = '0|1',
-    signature = 'has_key({dict}, {key})',
+    name = "has_key",
+    params = { { "dict", "any" }, { "key", "any" } },
+    returns = "0|1",
+    signature = "has_key({dict}, {key})",
   },
   haslocaldir = {
     args = { 0, 2 },
@@ -4883,10 +4884,10 @@ M.funcs = {
       Throw error if the arguments are invalid. |E5000| |E5001| |E5002|
 
     ]=],
-    name = 'haslocaldir',
-    params = { { 'winnr', 'integer' }, { 'tabnr', 'integer' } },
-    returns = '0|1',
-    signature = 'haslocaldir([{winnr} [, {tabnr}]])',
+    name = "haslocaldir",
+    params = { { "winnr", "integer" }, { "tabnr", "integer" } },
+    returns = "0|1",
+    signature = "haslocaldir([{winnr} [, {tabnr}]])",
   },
   hasmapto = {
     args = { 1, 3 },
@@ -4923,10 +4924,10 @@ M.funcs = {
       already a mapping to "\ABCdoit".
 
     ]=],
-    name = 'hasmapto',
-    params = { { 'what', 'any' }, { 'mode', 'string' }, { 'abbr', 'any' } },
-    returns = '0|1',
-    signature = 'hasmapto({what} [, {mode} [, {abbr}]])',
+    name = "hasmapto",
+    params = { { "what", "any" }, { "mode", "string" }, { "abbr", "any" } },
+    returns = "0|1",
+    signature = "hasmapto({what} [, {mode} [, {abbr}]])",
   },
   highlightID = {
     args = 1,
@@ -4935,9 +4936,9 @@ M.funcs = {
     desc = [=[
       Obsolete name for |hlID()|.
     ]=],
-    func = 'f_hlID',
-    params = { { 'name', 'string' } },
-    signature = 'highlightID({name})',
+    func = "f_hlID",
+    params = { { "name", "string" } },
+    signature = "highlightID({name})",
   },
   highlight_exists = {
     args = 1,
@@ -4946,9 +4947,9 @@ M.funcs = {
     desc = [=[
       Obsolete name for |hlexists()|.
     ]=],
-    func = 'f_hlexists',
-    params = { { 'name', 'string' } },
-    signature = 'highlight_exists({name})',
+    func = "f_hlexists",
+    params = { { "name", "string" } },
+    signature = "highlight_exists({name})",
   },
   histadd = {
     args = 2,
@@ -4975,10 +4976,10 @@ M.funcs = {
       <This function is not available in the |sandbox|.
 
     ]=],
-    name = 'histadd',
-    params = { { 'history', 'any' }, { 'item', 'any' } },
-    returns = '0|1',
-    signature = 'histadd({history}, {item})',
+    name = "histadd",
+    params = { { "history", "any" }, { "item", "any" } },
+    returns = "0|1",
+    signature = "histadd({history}, {item})",
   },
   histdel = {
     args = { 1, 2 },
@@ -5016,10 +5017,10 @@ M.funcs = {
       	let @/ = histget("search", -1)
       <
     ]=],
-    name = 'histdel',
-    params = { { 'history', 'any' }, { 'item', 'any' } },
-    returns = '0|1',
-    signature = 'histdel({history} [, {item}])',
+    name = "histdel",
+    params = { { "history", "any" }, { "item", "any" } },
+    returns = "0|1",
+    signature = "histdel({history} [, {item}])",
   },
   histget = {
     args = { 1, 2 },
@@ -5040,10 +5041,10 @@ M.funcs = {
       	command -nargs=1 H execute histget("cmd", 0+<args>)
       <
     ]=],
-    name = 'histget',
-    params = { { 'history', 'any' }, { 'index', 'any' } },
-    returns = 'string',
-    signature = 'histget({history} [, {index}])',
+    name = "histget",
+    params = { { "history", "any" }, { "index", "any" } },
+    returns = "string",
+    signature = "histget({history} [, {index}])",
   },
   histnr = {
     args = 1,
@@ -5057,10 +5058,10 @@ M.funcs = {
       	let inp_index = histnr("expr")
 
     ]=],
-    name = 'histnr',
-    params = { { 'history', 'any' } },
-    returns = 'integer',
-    signature = 'histnr({history})',
+    name = "histnr",
+    params = { { "history", "any" } },
+    returns = "integer",
+    signature = "histnr({history})",
   },
   hlID = {
     args = 1,
@@ -5075,10 +5076,10 @@ M.funcs = {
       	echo synIDattr(synIDtrans(hlID("Comment")), "bg")
       <
     ]=],
-    name = 'hlID',
-    params = { { 'name', 'string' } },
-    returns = 'integer',
-    signature = 'hlID({name})',
+    name = "hlID",
+    params = { { "name", "string" } },
+    returns = "integer",
+    signature = "hlID({name})",
   },
   hlexists = {
     args = 1,
@@ -5091,10 +5092,10 @@ M.funcs = {
       item.
 
     ]=],
-    name = 'hlexists',
-    params = { { 'name', 'string' } },
-    returns = '0|1',
-    signature = 'hlexists({name})',
+    name = "hlexists",
+    params = { { "name", "string" } },
+    returns = "0|1",
+    signature = "hlexists({name})",
   },
   hostname = {
     desc = [=[
@@ -5103,10 +5104,10 @@ M.funcs = {
       256 characters long are truncated.
     ]=],
     fast = true,
-    name = 'hostname',
+    name = "hostname",
     params = {},
-    returns = 'string',
-    signature = 'hostname()',
+    returns = "string",
+    signature = "hostname()",
   },
   iconv = {
     args = 3,
@@ -5125,9 +5126,9 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'iconv',
-    params = { { 'string', 'string' }, { 'from', 'any' }, { 'to', 'any' } },
-    signature = 'iconv({string}, {from}, {to})',
+    name = "iconv",
+    params = { { "string", "string" }, { "from", "any" }, { "to", "any" } },
+    signature = "iconv({string}, {from}, {to})",
   },
   id = {
     args = 1,
@@ -5148,9 +5149,9 @@ M.funcs = {
       will not be equal to some other `id()`: new containers may
       reuse identifiers of the garbage-collected ones.
     ]=],
-    name = 'id',
-    params = { { 'expr', 'any' } },
-    signature = 'id({expr})',
+    name = "id",
+    params = { { "expr", "any" } },
+    signature = "id({expr})",
   },
   indent = {
     args = 1,
@@ -5163,10 +5164,10 @@ M.funcs = {
       When {lnum} is invalid -1 is returned.
 
     ]=],
-    name = 'indent',
-    params = { { 'lnum', 'integer' } },
-    returns = 'integer',
-    signature = 'indent({lnum})',
+    name = "indent",
+    params = { { "lnum", "integer" } },
+    returns = "integer",
+    signature = "indent({lnum})",
   },
   index = {
     args = { 2, 4 },
@@ -5199,9 +5200,9 @@ M.funcs = {
       	endif
 
     ]=],
-    name = 'index',
-    params = { { 'object', 'any' }, { 'expr', 'any' }, { 'start', 'any' }, { 'ic', 'any' } },
-    signature = 'index({object}, {expr} [, {start} [, {ic}]])',
+    name = "index",
+    params = { { "object", "any" }, { "expr", "any" }, { "start", "any" }, { "ic", "any" } },
+    signature = "index({object}, {expr} [, {start} [, {ic}]])",
   },
   indexof = {
     args = { 2, 3 },
@@ -5245,17 +5246,17 @@ M.funcs = {
       	echo indexof(l, "v:val.n == 20", #{startidx: 1})
 
     ]=],
-    name = 'indexof',
-    params = { { 'object', 'any' }, { 'expr', 'any' }, { 'opts', 'table' } },
-    signature = 'indexof({object}, {expr} [, {opts}])',
+    name = "indexof",
+    params = { { "object", "any" }, { "expr", "any" }, { "opts", "table" } },
+    signature = "indexof({object}, {expr} [, {opts}])",
   },
   input = {
     args = { 1, 3 },
     base = 1,
-    desc = '',
-    name = 'input',
-    params = { { 'prompt', 'any' }, { 'text', 'any' }, { 'completion', 'any' } },
-    signature = 'input({prompt} [, {text} [, {completion}]])',
+    desc = "",
+    name = "input",
+    params = { { "prompt", "any" }, { "text", "any" }, { "completion", "any" } },
+    signature = "input({prompt} [, {text} [, {completion}]])",
   },
   input__1 = {
     args = { 1, 3 },
@@ -5371,9 +5372,9 @@ M.funcs = {
       	endfunction
 
     ]=],
-    name = 'input',
-    params = { { 'opts', 'table' } },
-    signature = 'input({opts})',
+    name = "input",
+    params = { { "opts", "table" } },
+    signature = "input({opts})",
   },
   inputdialog = {
     args = { 1, 3 },
@@ -5383,7 +5384,7 @@ M.funcs = {
       Use |input()| instead.
     ]=],
     params = VARARGS,
-    signature = 'input(...)',
+    signature = "input(...)",
   },
   inputlist = {
     args = 1,
@@ -5406,9 +5407,9 @@ M.funcs = {
       		\ '2. green', '3. blue'])
 
     ]=],
-    name = 'inputlist',
-    params = { { 'textlist', 'any' } },
-    signature = 'inputlist({textlist})',
+    name = "inputlist",
+    params = { { "textlist", "any" } },
+    signature = "inputlist({textlist})",
   },
   inputrestore = {
     desc = [=[
@@ -5417,9 +5418,9 @@ M.funcs = {
       called.  Calling it more often is harmless though.
       Returns TRUE when there is nothing to restore, FALSE otherwise.
     ]=],
-    name = 'inputrestore',
+    name = "inputrestore",
     params = {},
-    signature = 'inputrestore()',
+    signature = "inputrestore()",
   },
   inputsave = {
     desc = [=[
@@ -5430,9 +5431,9 @@ M.funcs = {
       many inputrestore() calls.
       Returns TRUE when out of memory, FALSE otherwise.
     ]=],
-    name = 'inputsave',
+    name = "inputsave",
     params = {},
-    signature = 'inputsave()',
+    signature = "inputsave()",
   },
   inputsecret = {
     args = { 1, 2 },
@@ -5449,9 +5450,9 @@ M.funcs = {
       NOTE: Command-line completion is not supported.
 
     ]=],
-    name = 'inputsecret',
-    params = { { 'prompt', 'any' }, { 'text', 'any' } },
-    signature = 'inputsecret({prompt} [, {text}])',
+    name = "inputsecret",
+    params = { { "prompt", "any" }, { "text", "any" } },
+    signature = "inputsecret({prompt} [, {text}])",
   },
   insert = {
     args = { 2, 3 },
@@ -5474,9 +5475,9 @@ M.funcs = {
       item.  Use |extend()| to concatenate |Lists|.
 
     ]=],
-    name = 'insert',
-    params = { { 'object', 'any' }, { 'item', 'any' }, { 'idx', 'integer' } },
-    signature = 'insert({object}, {item} [, {idx}])',
+    name = "insert",
+    params = { { "object", "any" }, { "item", "any" }, { "idx", "integer" } },
+    signature = "insert({object}, {item} [, {idx}])",
   },
   interrupt = {
     args = 0,
@@ -5494,9 +5495,9 @@ M.funcs = {
       au BufWritePre * call s:check_typoname(expand('<amatch>'))
       <
     ]=],
-    name = 'interrupt',
+    name = "interrupt",
     params = {},
-    signature = 'interrupt()',
+    signature = "interrupt()",
   },
   invert = {
     args = 1,
@@ -5507,9 +5508,9 @@ M.funcs = {
       	let bits = invert(bits)
       <
     ]=],
-    name = 'invert',
-    params = { { 'expr', 'any' } },
-    signature = 'invert({expr})',
+    name = "invert",
+    params = { { "expr", "any" } },
+    signature = "invert({expr})",
   },
   isdirectory = {
     args = 1,
@@ -5522,10 +5523,10 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'isdirectory',
-    params = { { 'directory', 'any' } },
-    returns = '0|1',
-    signature = 'isdirectory({directory})',
+    name = "isdirectory",
+    params = { { "directory", "any" } },
+    returns = "0|1",
+    signature = "isdirectory({directory})",
   },
   isinf = {
     args = 1,
@@ -5539,10 +5540,10 @@ M.funcs = {
       <	-1
 
     ]=],
-    name = 'isinf',
-    params = { { 'expr', 'any' } },
-    returns = '1|0|-1',
-    signature = 'isinf({expr})',
+    name = "isinf",
+    params = { { "expr", "any" } },
+    returns = "1|0|-1",
+    signature = "isinf({expr})",
   },
   islocked = {
     args = 1,
@@ -5562,11 +5563,11 @@ M.funcs = {
       message.  Use |exists()| to check for existence.
 
     ]=],
-    name = 'islocked',
-    params = { { 'expr', 'any' } },
-    returns = '0|1',
-    signature = 'islocked({expr})',
-    tags = { 'E786' },
+    name = "islocked",
+    params = { { "expr", "any" } },
+    returns = "0|1",
+    signature = "islocked({expr})",
+    tags = { "E786" },
   },
   isnan = {
     args = 1,
@@ -5577,10 +5578,10 @@ M.funcs = {
       <	1
 
     ]=],
-    name = 'isnan',
-    params = { { 'expr', 'any' } },
-    returns = '0|1',
-    signature = 'isnan({expr})',
+    name = "isnan",
+    params = { { "expr", "any" } },
+    returns = "0|1",
+    signature = "isnan({expr})",
   },
   items = {
     args = 1,
@@ -5596,9 +5597,9 @@ M.funcs = {
       	endfor
 
     ]=],
-    name = 'items',
-    params = { { 'dict', 'any' } },
-    signature = 'items({dict})',
+    name = "items",
+    params = { { "dict", "any" } },
+    signature = "items({dict})",
   },
   jobclose = {
     args = { 1, 2 },
@@ -5606,19 +5607,19 @@ M.funcs = {
     desc = [=[
       Obsolete name for |chanclose()|
     ]=],
-    func = 'f_chanclose',
+    func = "f_chanclose",
     params = VARARGS,
-    signature = 'jobclose({id} [, {stream}])',
+    signature = "jobclose({id} [, {stream}])",
   },
   jobpid = {
     args = 1,
     desc = [=[
       Return the PID (process id) of |job-id| {job}.
     ]=],
-    name = 'jobpid',
-    params = { { 'job', 'any' } },
-    returns = 'integer',
-    signature = 'jobpid({job})',
+    name = "jobpid",
+    params = { { "job", "any" } },
+    returns = "integer",
+    signature = "jobpid({job})",
   },
   jobresize = {
     args = 3,
@@ -5627,9 +5628,9 @@ M.funcs = {
       columns and {height} rows.
       Fails if the job was not started with `"pty":v:true`.
     ]=],
-    name = 'jobresize',
-    params = { { 'job', 'any' }, { 'width', 'integer' }, { 'height', 'integer' } },
-    signature = 'jobresize({job}, {width}, {height})',
+    name = "jobresize",
+    params = { { "job", "any" }, { "width", "integer" }, { "height", "integer" } },
+    signature = "jobresize({job}, {width}, {height})",
   },
   jobsend = {
     args = 2,
@@ -5637,9 +5638,9 @@ M.funcs = {
     desc = [=[
       Obsolete name for |chansend()|
     ]=],
-    func = 'f_chansend',
+    func = "f_chansend",
     params = VARARGS,
-    signature = 'jobsend({id}, {data})',
+    signature = "jobsend({id}, {data})",
   },
   jobstart = {
     args = { 1, 2 },
@@ -5729,9 +5730,9 @@ M.funcs = {
         - -1 if {cmd}[0] is not executable.
       See also |job-control|, |channel|, |msgpack-rpc|.
     ]=],
-    name = 'jobstart',
-    params = { { 'cmd', 'any' }, { 'opts', 'table' } },
-    signature = 'jobstart({cmd} [, {opts}])',
+    name = "jobstart",
+    params = { { "cmd", "any" }, { "opts", "table" } },
+    signature = "jobstart({cmd} [, {opts}])",
   },
   jobstop = {
     args = 1,
@@ -5745,9 +5746,9 @@ M.funcs = {
       Returns 1 for valid job id, 0 for invalid id, including jobs have
       exited or stopped.
     ]=],
-    name = 'jobstop',
-    params = { { 'id', 'any' } },
-    signature = 'jobstop({id})',
+    name = "jobstop",
+    params = { { "id", "any" } },
+    signature = "jobstop({id})",
   },
   jobwait = {
     args = { 1, 2 },
@@ -5772,9 +5773,9 @@ M.funcs = {
       	-2 if the job was interrupted (by |CTRL-C|)
       	-3 if the job-id is invalid
     ]=],
-    name = 'jobwait',
-    params = { { 'jobs', 'any' }, { 'timeout', 'integer' } },
-    signature = 'jobwait({jobs} [, {timeout}])',
+    name = "jobwait",
+    params = { { "jobs", "any" }, { "timeout", "integer" } },
+    signature = "jobwait({jobs} [, {timeout}])",
   },
   join = {
     args = { 1, 2 },
@@ -5791,9 +5792,9 @@ M.funcs = {
       The opposite function is |split()|.
 
     ]=],
-    name = 'join',
-    params = { { 'list', 'any' }, { 'sep', 'any' } },
-    signature = 'join({list} [, {sep}])',
+    name = "join",
+    params = { { "list", "any" }, { "sep", "any" } },
+    signature = "join({list} [, {sep}])",
   },
   json_decode = {
     args = 1,
@@ -5814,9 +5815,9 @@ M.funcs = {
       Non-UTF-8 characters are an error.
 
     ]=],
-    name = 'json_decode',
-    params = { { 'expr', 'any' } },
-    signature = 'json_decode({expr})',
+    name = "json_decode",
+    params = { { "expr", "any" } },
+    signature = "json_decode({expr})",
   },
   json_encode = {
     args = 1,
@@ -5834,9 +5835,9 @@ M.funcs = {
       |Blob|s are converted to arrays of the individual bytes.
 
     ]=],
-    name = 'json_encode',
-    params = { { 'expr', 'any' } },
-    signature = 'json_encode({expr})',
+    name = "json_encode",
+    params = { { "expr", "any" } },
+    signature = "json_encode({expr})",
   },
   keys = {
     args = 1,
@@ -5846,9 +5847,9 @@ M.funcs = {
       arbitrary order.  Also see |items()| and |values()|.
 
     ]=],
-    name = 'keys',
-    params = { { 'dict', 'any' } },
-    signature = 'keys({dict})',
+    name = "keys",
+    params = { { "dict", "any" } },
+    signature = "keys({dict})",
   },
   keytrans = {
     args = 1,
@@ -5861,9 +5862,9 @@ M.funcs = {
       <	<C-Home>
 
     ]=],
-    name = 'keytrans',
-    params = { { 'string', 'string' } },
-    signature = 'keytrans({string})',
+    name = "keytrans",
+    params = { { "string", "string" } },
+    signature = "keytrans({string})",
   },
   last_buffer_nr = {
     deprecated = true,
@@ -5871,7 +5872,7 @@ M.funcs = {
       Obsolete name for bufnr("$").
     ]=],
     params = {},
-    signature = 'last_buffer_nr()',
+    signature = "last_buffer_nr()",
   },
   len = {
     args = 1,
@@ -5888,10 +5889,10 @@ M.funcs = {
       Otherwise an error is given and returns zero.
 
     ]=],
-    name = 'len',
-    params = { { 'expr', 'any' } },
-    signature = 'len({expr})',
-    tags = { 'E701' },
+    name = "len",
+    params = { { "expr", "any" } },
+    signature = "len({expr})",
+    tags = { "E701" },
   },
   libcall = {
     args = 3,
@@ -5939,10 +5940,10 @@ M.funcs = {
       	echo libcall("libc.so", "getenv", "HOME")
 
     ]=],
-    name = 'libcall',
-    params = { { 'libname', 'string' }, { 'funcname', 'string' }, { 'argument', 'any' } },
-    signature = 'libcall({libname}, {funcname}, {argument})',
-    tags = { 'E364', 'E368' },
+    name = "libcall",
+    params = { { "libname", "string" }, { "funcname", "string" }, { "argument", "any" } },
+    signature = "libcall({libname}, {funcname}, {argument})",
+    tags = { "E364", "E368" },
   },
   libcallnr = {
     args = 3,
@@ -5956,9 +5957,9 @@ M.funcs = {
       	call libcallnr("libc.so", "sleep", 10)
       <
     ]=],
-    name = 'libcallnr',
-    params = { { 'libname', 'string' }, { 'funcname', 'string' }, { 'argument', 'any' } },
-    signature = 'libcallnr({libname}, {funcname}, {argument})',
+    name = "libcallnr",
+    params = { { "libname", "string" }, { "funcname", "string" }, { "argument", "any" } },
+    signature = "libcallnr({libname}, {funcname}, {argument})",
   },
   line = {
     args = { 1, 2 },
@@ -5996,10 +5997,10 @@ M.funcs = {
       |last-position-jump|.
 
     ]=],
-    name = 'line',
-    params = { { 'expr', 'any' }, { 'winid', 'integer' } },
-    returns = 'integer',
-    signature = 'line({expr} [, {winid}])',
+    name = "line",
+    params = { { "expr", "any" }, { "winid", "integer" } },
+    returns = "integer",
+    signature = "line({expr} [, {winid}])",
   },
   line2byte = {
     args = 1,
@@ -6018,10 +6019,10 @@ M.funcs = {
       Also see |byte2line()|, |go| and |:goto|.
 
     ]=],
-    name = 'line2byte',
-    params = { { 'lnum', 'integer' } },
-    returns = 'integer',
-    signature = 'line2byte({lnum})',
+    name = "line2byte",
+    params = { { "lnum", "integer" } },
+    returns = "integer",
+    signature = "line2byte({lnum})",
   },
   lispindent = {
     args = 1,
@@ -6034,9 +6035,9 @@ M.funcs = {
       When {lnum} is invalid, -1 is returned.
 
     ]=],
-    name = 'lispindent',
-    params = { { 'lnum', 'integer' } },
-    signature = 'lispindent({lnum})',
+    name = "lispindent",
+    params = { { "lnum", "integer" } },
+    signature = "lispindent({lnum})",
   },
   list2blob = {
     args = 1,
@@ -6052,9 +6053,9 @@ M.funcs = {
       |blob2list()| does the opposite.
 
     ]=],
-    name = 'list2blob',
-    params = { { 'list', 'any' } },
-    signature = 'list2blob({list})',
+    name = "list2blob",
+    params = { { "list", "any" } },
+    signature = "list2blob({list})",
   },
   list2str = {
     args = { 1, 2 },
@@ -6076,18 +6077,18 @@ M.funcs = {
       Returns an empty string on error.
 
     ]=],
-    name = 'list2str',
-    params = { { 'list', 'any' }, { 'utf8', 'any' } },
-    signature = 'list2str({list} [, {utf8}])',
+    name = "list2str",
+    params = { { "list", "any" }, { "utf8", "any" } },
+    signature = "list2str({list} [, {utf8}])",
   },
   localtime = {
     desc = [=[
       Return the current time, measured as seconds since 1st Jan
       1970.  See also |strftime()|, |strptime()| and |getftime()|.
     ]=],
-    name = 'localtime',
+    name = "localtime",
     params = {},
-    signature = 'localtime()',
+    signature = "localtime()",
   },
   log = {
     args = 1,
@@ -6104,10 +6105,10 @@ M.funcs = {
       <	5.0
 
     ]=],
-    float_func = 'log',
-    name = 'log',
-    params = { { 'expr', 'any' } },
-    signature = 'log({expr})',
+    float_func = "log",
+    name = "log",
+    params = { { "expr", "any" } },
+    signature = "log({expr})",
   },
   log10 = {
     args = 1,
@@ -6123,10 +6124,10 @@ M.funcs = {
       <	-2.0
 
     ]=],
-    float_func = 'log10',
-    name = 'log10',
-    params = { { 'expr', 'any' } },
-    signature = 'log10({expr})',
+    float_func = "log10",
+    name = "log10",
+    params = { { "expr", "any" } },
+    signature = "log10({expr})",
   },
   luaeval = {
     args = { 1, 2 },
@@ -6137,9 +6138,9 @@ M.funcs = {
 
     ]=],
     lua = false,
-    name = 'luaeval',
-    params = { { 'expr', 'any' }, { 'expr', 'any' } },
-    signature = 'luaeval({expr} [, {expr}])',
+    name = "luaeval",
+    params = { { "expr", "any" }, { "expr", "any" } },
+    signature = "luaeval({expr} [, {expr}])",
   },
   map = {
     args = 2,
@@ -6199,9 +6200,9 @@ M.funcs = {
       unless it was defined with the "abort" flag.
 
     ]=],
-    name = 'map',
-    params = { { 'expr1', 'any' }, { 'expr2', 'any' } },
-    signature = 'map({expr1}, {expr2})',
+    name = "map",
+    params = { { "expr1", "any" }, { "expr2", "any" } },
+    signature = "map({expr1}, {expr2})",
   },
   maparg = {
     args = { 1, 4 },
@@ -6279,27 +6280,27 @@ M.funcs = {
       	exe 'nnoremap <Tab> ==' .. maparg('<Tab>', 'n')
 
     ]=],
-    name = 'maparg',
+    name = "maparg",
     params = {
-      { 'name', 'string' },
-      { 'mode', 'string' },
-      { 'abbr', 'boolean' },
-      { 'dict', 'false' },
+      { "name", "string" },
+      { "mode", "string" },
+      { "abbr", "boolean" },
+      { "dict", "false" },
     },
-    signature = 'maparg({name} [, {mode} [, {abbr} [, {dict}]]])',
-    returns = 'string',
+    signature = "maparg({name} [, {mode} [, {abbr} [, {dict}]]])",
+    returns = "string",
   },
   maparg__1 = {
     args = { 4 },
     base = 1,
-    name = 'maparg',
+    name = "maparg",
     params = {
-      { 'name', 'string' },
-      { 'mode', 'string' },
-      { 'abbr', 'boolean' },
-      { 'dict', 'true' },
+      { "name", "string" },
+      { "mode", "string" },
+      { "abbr", "boolean" },
+      { "dict", "true" },
     },
-    returns = 'string|table<string,any>',
+    returns = "string|table<string,any>",
   },
   mapcheck = {
     args = { 1, 3 },
@@ -6338,9 +6339,9 @@ M.funcs = {
       mapping for "_v" or for "_vvv".
 
     ]=],
-    name = 'mapcheck',
-    params = { { 'name', 'string' }, { 'mode', 'string' }, { 'abbr', 'any' } },
-    signature = 'mapcheck({name} [, {mode} [, {abbr}]])',
+    name = "mapcheck",
+    params = { { "name", "string" }, { "mode", "string" }, { "abbr", "any" } },
+    signature = "mapcheck({name} [, {mode} [, {abbr}]])",
   },
   maplist = {
     args = { 0, 1 },
@@ -6375,9 +6376,9 @@ M.funcs = {
       	ounmap xyzzy
       	echo printf("Operator-pending mode bit: 0x%x", op_bit)
     ]],
-    name = 'maplist',
+    name = "maplist",
     params = {},
-    signature = 'maplist([{abbr}])',
+    signature = "maplist([{abbr}])",
   },
   mapnew = {
     args = 2,
@@ -6388,16 +6389,16 @@ M.funcs = {
       unchanged.  Items can still be changed by {expr2}, if you
       don't want that use |deepcopy()| first.
     ]=],
-    name = 'mapnew',
-    params = { { 'expr1', 'any' }, { 'expr2', 'any' } },
-    signature = 'mapnew({expr1}, {expr2})',
+    name = "mapnew",
+    params = { { "expr1", "any" }, { "expr2", "any" } },
+    signature = "mapnew({expr1}, {expr2})",
   },
   mapset = {
     args = { 1, 3 },
     base = 1,
-    name = 'mapset',
-    params = { { 'mode', 'string' }, { 'abbr', 'any' }, { 'dict', 'any' } },
-    signature = 'mapset({mode}, {abbr}, {dict})',
+    name = "mapset",
+    params = { { "mode", "string" }, { "abbr", "any" }, { "dict", "any" } },
+    signature = "mapset({mode}, {abbr}, {dict})",
   },
   mapset__1 = {
     args = { 1, 3 },
@@ -6438,9 +6439,9 @@ M.funcs = {
       	    call mapset(d)
       	endfor
     ]=],
-    name = 'mapset',
-    params = { { 'dict', 'any' } },
-    signature = 'mapset({dict})',
+    name = "mapset",
+    params = { { "dict", "any" } },
+    signature = "mapset({dict})",
   },
   match = {
     args = { 2, 4 },
@@ -6508,9 +6509,9 @@ M.funcs = {
       further down in the text.
 
     ]=],
-    name = 'match',
-    params = { { 'expr', 'any' }, { 'pat', 'any' }, { 'start', 'any' }, { 'count', 'any' } },
-    signature = 'match({expr}, {pat} [, {start} [, {count}]])',
+    name = "match",
+    params = { { "expr", "any" }, { "pat", "any" }, { "start", "any" }, { "count", "any" } },
+    signature = "match({expr}, {pat} [, {start} [, {count}]])",
   },
   matchadd = {
     args = { 2, 5 },
@@ -6574,16 +6575,16 @@ M.funcs = {
       one operation by |clearmatches()|.
 
     ]=],
-    name = 'matchadd',
+    name = "matchadd",
     params = {
-      { 'group', 'any' },
-      { 'pattern', 'any' },
-      { 'priority', 'any' },
-      { 'id', 'any' },
-      { 'dict', 'any' },
+      { "group", "any" },
+      { "pattern", "any" },
+      { "priority", "any" },
+      { "id", "any" },
+      { "dict", "any" },
     },
-    signature = 'matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])',
-    tags = { 'E798', 'E799', 'E801', 'E957' },
+    signature = "matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])",
+    tags = { "E798", "E799", "E801", "E957" },
   },
   matchaddpos = {
     args = { 2, 5 },
@@ -6626,15 +6627,15 @@ M.funcs = {
       |getmatches()|.
 
     ]=],
-    name = 'matchaddpos',
+    name = "matchaddpos",
     params = {
-      { 'group', 'any' },
-      { 'pos', 'any' },
-      { 'priority', 'any' },
-      { 'id', 'any' },
-      { 'dict', 'any' },
+      { "group", "any" },
+      { "pos", "any" },
+      { "priority", "any" },
+      { "id", "any" },
+      { "dict", "any" },
     },
-    signature = 'matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])',
+    signature = "matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])",
   },
   matcharg = {
     args = 1,
@@ -6652,9 +6653,9 @@ M.funcs = {
       to three matches. |matchadd()| does not have this limitation.
 
     ]=],
-    name = 'matcharg',
-    params = { { 'nr', 'integer' } },
-    signature = 'matcharg({nr})',
+    name = "matcharg",
+    params = { { "nr", "integer" } },
+    signature = "matcharg({nr})",
   },
   matchbufline = {
     args = { 4, 5 },
@@ -6700,15 +6701,15 @@ M.funcs = {
       is not found, then an empty string is returned for that
       submatch.
     ]=],
-    name = 'matchbufline',
+    name = "matchbufline",
     params = {
-      { 'buf', 'string|integer' },
-      { 'pat', 'string' },
-      { 'lnum', 'string|integer' },
-      { 'end', 'string|integer' },
-      { 'dict', 'table' },
+      { "buf", "string|integer" },
+      { "pat", "string" },
+      { "lnum", "string|integer" },
+      { "end", "string|integer" },
+      { "dict", "table" },
     },
-    signature = 'matchbufline({buf}, {pat}, {lnum}, {end}, [, {dict}])',
+    signature = "matchbufline({buf}, {pat}, {lnum}, {end}, [, {dict}])",
   },
   matchdelete = {
     args = { 1, 2 },
@@ -6722,10 +6723,10 @@ M.funcs = {
       window ID instead of the current window.
 
     ]=],
-    name = 'matchdelete',
-    params = { { 'id', 'any' }, { 'win', 'any' } },
-    signature = 'matchdelete({id} [, {win}])',
-    tags = { 'E802', 'E803' },
+    name = "matchdelete",
+    params = { { "id", "any" }, { "win", "any" } },
+    signature = "matchdelete({id} [, {win}])",
+    tags = { "E802", "E803" },
   },
   matchend = {
     args = { 2, 4 },
@@ -6750,9 +6751,9 @@ M.funcs = {
       When {expr} is a |List| the result is equal to |match()|.
 
     ]=],
-    name = 'matchend',
-    params = { { 'expr', 'any' }, { 'pat', 'any' }, { 'start', 'any' }, { 'count', 'any' } },
-    signature = 'matchend({expr}, {pat} [, {start} [, {count}]])',
+    name = "matchend",
+    params = { { "expr", "any" }, { "pat", "any" }, { "start", "any" }, { "count", "any" } },
+    signature = "matchend({expr}, {pat} [, {start} [, {count}]])",
   },
   matchfuzzy = {
     args = { 2, 3 },
@@ -6820,9 +6821,9 @@ M.funcs = {
       				\ {'matchseq': 1})
       <results in `['two one']`.
     ]=],
-    name = 'matchfuzzy',
-    params = { { 'list', 'any' }, { 'str', 'any' }, { 'dict', 'any' } },
-    signature = 'matchfuzzy({list}, {str} [, {dict}])',
+    name = "matchfuzzy",
+    params = { { "list", "any" }, { "str", "any" }, { "dict", "any" } },
+    signature = "matchfuzzy({list}, {str} [, {dict}])",
   },
   matchfuzzypos = {
     args = { 2, 3 },
@@ -6849,9 +6850,9 @@ M.funcs = {
       		\ ->matchfuzzypos('ll', {'key' : 'text'})
       <results in `[[{"id": 10, "text": "hello"}], [[2, 3]], [127]]`
     ]=],
-    name = 'matchfuzzypos',
-    params = { { 'list', 'any' }, { 'str', 'any' }, { 'dict', 'any' } },
-    signature = 'matchfuzzypos({list}, {str} [, {dict}])',
+    name = "matchfuzzypos",
+    params = { { "list", "any" }, { "str", "any" }, { "dict", "any" } },
+    signature = "matchfuzzypos({list}, {str} [, {dict}])",
   },
   matchlist = {
     args = { 2, 4 },
@@ -6869,9 +6870,9 @@ M.funcs = {
       You can pass in a List, but that is not very useful.
 
     ]=],
-    name = 'matchlist',
-    params = { { 'expr', 'any' }, { 'pat', 'any' }, { 'start', 'any' }, { 'count', 'any' } },
-    signature = 'matchlist({expr}, {pat} [, {start} [, {count}]])',
+    name = "matchlist",
+    params = { { "expr", "any" }, { "pat", "any" }, { "start", "any" }, { "count", "any" } },
+    signature = "matchlist({expr}, {pat} [, {start} [, {count}]])",
   },
   matchstr = {
     args = { 2, 4 },
@@ -6890,9 +6891,9 @@ M.funcs = {
       The type isn't changed, it's not necessarily a String.
 
     ]=],
-    name = 'matchstr',
-    params = { { 'expr', 'any' }, { 'pat', 'any' }, { 'start', 'any' }, { 'count', 'any' } },
-    signature = 'matchstr({expr}, {pat} [, {start} [, {count}]])',
+    name = "matchstr",
+    params = { { "expr", "any" }, { "pat", "any" }, { "start", "any" }, { "count", "any" } },
+    signature = "matchstr({expr}, {pat} [, {start} [, {count}]])",
   },
   matchstrlist = {
     args = { 2, 3 },
@@ -6927,9 +6928,9 @@ M.funcs = {
       is not found, then an empty string is returned for that
       submatch.
     ]=],
-    name = 'matchstrlist',
-    params = { { 'list', 'string[]' }, { 'pat', 'string' }, { 'dict', 'table' } },
-    signature = 'matchstrlist({list}, {pat} [, {dict}])',
+    name = "matchstrlist",
+    params = { { "list", "string[]" }, { "pat", "string" }, { "dict", "table" } },
+    signature = "matchstrlist({list}, {pat} [, {dict}])",
   },
   matchstrpos = {
     args = { 2, 4 },
@@ -6953,9 +6954,9 @@ M.funcs = {
       The type isn't changed, it's not necessarily a String.
 
     ]=],
-    name = 'matchstrpos',
-    params = { { 'expr', 'any' }, { 'pat', 'any' }, { 'start', 'any' }, { 'count', 'any' } },
-    signature = 'matchstrpos({expr}, {pat} [, {start} [, {count}]])',
+    name = "matchstrpos",
+    params = { { "expr", "any" }, { "pat", "any" }, { "start", "any" }, { "count", "any" } },
+    signature = "matchstrpos({expr}, {pat} [, {start} [, {count}]])",
   },
   max = {
     args = 1,
@@ -6971,9 +6972,9 @@ M.funcs = {
       an error.  An empty |List| or |Dictionary| results in zero.
 
     ]=],
-    name = 'max',
-    params = { { 'expr', 'any' } },
-    signature = 'max({expr})',
+    name = "max",
+    params = { { "expr", "any" } },
+    signature = "max({expr})",
   },
   menu_get = {
     args = { 1, 2 },
@@ -7023,9 +7024,9 @@ M.funcs = {
       	} ]
       <
     ]=],
-    name = 'menu_get',
-    params = { { 'path', 'string' }, { 'modes', 'any' } },
-    signature = 'menu_get({path} [, {modes}])',
+    name = "menu_get",
+    params = { { "path", "string" }, { "modes", "any" } },
+    signature = "menu_get({path} [, {modes}])",
   },
   menu_info = {
     args = { 1, 2 },
@@ -7101,9 +7102,9 @@ M.funcs = {
       	endfor
       <
     ]=],
-    name = 'menu_info',
-    params = { { 'name', 'string' }, { 'mode', 'string' } },
-    signature = 'menu_info({name} [, {mode}])',
+    name = "menu_info",
+    params = { { "name", "string" }, { "mode", "string" } },
+    signature = "menu_info({name} [, {mode}])",
   },
   min = {
     args = 1,
@@ -7119,9 +7120,9 @@ M.funcs = {
       an error.  An empty |List| or |Dictionary| results in zero.
 
     ]=],
-    name = 'min',
-    params = { { 'expr', 'any' } },
-    signature = 'min({expr})',
+    name = "min",
+    params = { { "expr", "any" } },
+    signature = "min({expr})",
   },
   mkdir = {
     args = { 1, 3 },
@@ -7170,10 +7171,10 @@ M.funcs = {
       failed.
 
     ]=],
-    name = 'mkdir',
-    params = { { 'name', 'string' }, { 'flags', 'string' }, { 'prot', 'any' } },
-    signature = 'mkdir({name} [, {flags} [, {prot}]])',
-    tags = { 'E739' },
+    name = "mkdir",
+    params = { { "name", "string" }, { "flags", "string" }, { "prot", "any" } },
+    signature = "mkdir({name} [, {flags} [, {prot}]])",
+    tags = { "E739" },
   },
   mode = {
     args = { 0, 1 },
@@ -7233,9 +7234,9 @@ M.funcs = {
       Also see |visualmode()|.
 
     ]=],
-    name = 'mode',
-    params = { { 'expr', 'any' } },
-    signature = 'mode([expr])',
+    name = "mode",
+    params = { { "expr", "any" } },
+    signature = "mode([expr])",
   },
   msgpackdump = {
     args = { 1, 2 },
@@ -7258,9 +7259,9 @@ M.funcs = {
       4. Other strings and |Blob|s are always dumped as BIN strings.
       5. Points 3. and 4. do not apply to |msgpack-special-dict|s.
     ]=],
-    name = 'msgpackdump',
-    params = { { 'list', 'any' }, { 'type', 'any' } },
-    signature = 'msgpackdump({list} [, {type}])',
+    name = "msgpackdump",
+    params = { { "list", "any" }, { "type", "any" } },
+    signature = "msgpackdump({list} [, {type}])",
   },
   msgpackparse = {
     args = 1,
@@ -7337,9 +7338,9 @@ M.funcs = {
       	representing extension type. Second is
       	|readfile()|-style list of strings.
     ]=],
-    name = 'msgpackparse',
-    params = { { 'data', 'any' } },
-    signature = 'msgpackparse({data})',
+    name = "msgpackparse",
+    params = { { "data", "any" } },
+    signature = "msgpackparse({data})",
   },
   nextnonblank = {
     args = 1,
@@ -7354,9 +7355,9 @@ M.funcs = {
       See also |prevnonblank()|.
 
     ]=],
-    name = 'nextnonblank',
-    params = { { 'lnum', 'integer' } },
-    signature = 'nextnonblank({lnum})',
+    name = "nextnonblank",
+    params = { { "lnum", "integer" } },
+    signature = "nextnonblank({lnum})",
   },
   nr2char = {
     args = { 1, 2 },
@@ -7377,9 +7378,9 @@ M.funcs = {
       string, thus results in an empty string.
 
     ]=],
-    name = 'nr2char',
-    params = { { 'expr', 'any' }, { 'utf8', 'any' } },
-    signature = 'nr2char({expr} [, {utf8}])',
+    name = "nr2char",
+    params = { { "expr", "any" }, { "utf8", "any" } },
+    signature = "nr2char({expr} [, {utf8}])",
   },
   nvim_api__ = {
     args = 1,
@@ -7396,12 +7397,12 @@ M.funcs = {
       (focused) object.
     ]=],
     lua = false,
-    name = 'nvim_...',
+    name = "nvim_...",
     params = VARARGS,
-    signature = 'nvim_...({...})',
-    tags = { 'E5555', 'eval-api' },
+    signature = "nvim_...({...})",
+    tags = { "E5555", "eval-api" },
   },
-  ['or'] = {
+  ["or"] = {
     args = 2,
     base = 1,
     desc = [=[
@@ -7416,9 +7417,9 @@ M.funcs = {
       to separate commands.  In many places it would not be clear if
       "|" is an operator or a command separator.
     ]=],
-    name = 'or',
-    params = { { 'expr', 'any' }, { 'expr', 'any' } },
-    signature = 'or({expr}, {expr})',
+    name = "or",
+    params = { { "expr", "any" }, { "expr", "any" } },
+    signature = "or({expr}, {expr})",
   },
   pathshorten = {
     args = { 1, 2 },
@@ -7438,9 +7439,9 @@ M.funcs = {
       Returns an empty string on error.
 
     ]=],
-    name = 'pathshorten',
-    params = { { 'path', 'string' }, { 'len', 'any' } },
-    signature = 'pathshorten({path} [, {len}])',
+    name = "pathshorten",
+    params = { { "path", "string" }, { "len", "any" } },
+    signature = "pathshorten({path} [, {len}])",
   },
   perleval = {
     args = 1,
@@ -7461,9 +7462,9 @@ M.funcs = {
       <	[1, 2, 3, 4]
 
     ]=],
-    name = 'perleval',
-    params = { { 'expr', 'any' } },
-    signature = 'perleval({expr})',
+    name = "perleval",
+    params = { { "expr", "any" } },
+    signature = "perleval({expr})",
   },
   pow = {
     args = 2,
@@ -7481,9 +7482,9 @@ M.funcs = {
       <	2.0
 
     ]=],
-    name = 'pow',
-    params = { { 'x', 'any' }, { 'y', 'any' } },
-    signature = 'pow({x}, {y})',
+    name = "pow",
+    params = { { "x", "any" }, { "y", "any" } },
+    signature = "pow({x}, {y})",
   },
   prevnonblank = {
     args = 1,
@@ -7498,9 +7499,9 @@ M.funcs = {
       Also see |nextnonblank()|.
 
     ]=],
-    name = 'prevnonblank',
-    params = { { 'lnum', 'integer' } },
-    signature = 'prevnonblank({lnum})',
+    name = "prevnonblank",
+    params = { { "lnum", "integer" } },
+    signature = "prevnonblank({lnum})",
   },
   printf = {
     args = { 1 },
@@ -7826,9 +7827,9 @@ M.funcs = {
       were used.
 
     ]=],
-    name = 'printf',
-    params = { { 'fmt', 'any' }, { 'expr1', 'any' } },
-    signature = 'printf({fmt}, {expr1} ...)',
+    name = "printf",
+    params = { { "fmt", "any" }, { "expr1", "any" } },
+    signature = "printf({fmt}, {expr1} ...)",
   },
   prompt_getprompt = {
     args = 1,
@@ -7841,9 +7842,9 @@ M.funcs = {
       string is returned.
 
     ]=],
-    name = 'prompt_getprompt',
-    params = { { 'buf', 'any' } },
-    signature = 'prompt_getprompt({buf})',
+    name = "prompt_getprompt",
+    params = { { "buf", "any" } },
+    signature = "prompt_getprompt({buf})",
   },
   prompt_setcallback = {
     args = { 2, 2 },
@@ -7881,9 +7882,9 @@ M.funcs = {
          call prompt_setcallback(bufnr(), function('s:TextEntered'))
 
     ]=],
-    name = 'prompt_setcallback',
-    params = { { 'buf', 'any' }, { 'expr', 'any' } },
-    signature = 'prompt_setcallback({buf}, {expr})',
+    name = "prompt_setcallback",
+    params = { { "buf", "any" }, { "expr", "any" } },
+    signature = "prompt_setcallback({buf}, {expr})",
   },
   prompt_setinterrupt = {
     args = { 2, 2 },
@@ -7898,9 +7899,9 @@ M.funcs = {
       as in any buffer.
 
     ]=],
-    name = 'prompt_setinterrupt',
-    params = { { 'buf', 'any' }, { 'expr', 'any' } },
-    signature = 'prompt_setinterrupt({buf}, {expr})',
+    name = "prompt_setinterrupt",
+    params = { { "buf", "any" }, { "expr", "any" } },
+    signature = "prompt_setinterrupt({buf}, {expr})",
   },
   prompt_setprompt = {
     args = { 2, 2 },
@@ -7913,9 +7914,9 @@ M.funcs = {
       	call prompt_setprompt(bufnr(''), 'command: ')
       <
     ]=],
-    name = 'prompt_setprompt',
-    params = { { 'buf', 'any' }, { 'text', 'any' } },
-    signature = 'prompt_setprompt({buf}, {text})',
+    name = "prompt_setprompt",
+    params = { { "buf", "any" }, { "text", "any" } },
+    signature = "prompt_setprompt({buf}, {text})",
   },
   pum_getpos = {
     desc = [=[
@@ -7931,9 +7932,9 @@ M.funcs = {
 
       The values are the same as in |v:event| during |CompleteChanged|.
     ]=],
-    name = 'pum_getpos',
+    name = "pum_getpos",
     params = {},
-    signature = 'pum_getpos()',
+    signature = "pum_getpos()",
   },
   pumvisible = {
     desc = [=[
@@ -7942,9 +7943,9 @@ M.funcs = {
       This can be used to avoid some things that would remove the
       popup menu.
     ]=],
-    name = 'pumvisible',
+    name = "pumvisible",
     params = {},
-    signature = 'pumvisible()',
+    signature = "pumvisible()",
   },
   py3eval = {
     args = 1,
@@ -7960,9 +7961,9 @@ M.funcs = {
       keys converted to strings.
 
     ]=],
-    name = 'py3eval',
-    params = { { 'expr', 'any' } },
-    signature = 'py3eval({expr})',
+    name = "py3eval",
+    params = { { "expr", "any" } },
+    signature = "py3eval({expr})",
   },
   pyeval = {
     args = 1,
@@ -7977,11 +7978,11 @@ M.funcs = {
       non-string keys result in error.
 
     ]=],
-    func = 'f_py3eval',
-    name = 'pyeval',
-    params = { { 'expr', 'any' } },
-    signature = 'pyeval({expr})',
-    tags = { 'E858', 'E859' },
+    func = "f_py3eval",
+    name = "pyeval",
+    params = { { "expr", "any" } },
+    signature = "pyeval({expr})",
+    tags = { "E858", "E859" },
   },
   pyxeval = {
     args = 1,
@@ -7993,10 +7994,10 @@ M.funcs = {
       See also: |pyeval()|, |py3eval()|
 
     ]=],
-    func = 'f_py3eval',
-    name = 'pyxeval',
-    params = { { 'expr', 'any' } },
-    signature = 'pyxeval({expr})',
+    func = "f_py3eval",
+    name = "pyxeval",
+    params = { { "expr", "any" } },
+    signature = "pyxeval({expr})",
   },
   rand = {
     args = { 0, 1 },
@@ -8017,9 +8018,9 @@ M.funcs = {
       	echo rand(seed) % 16  " random number 0 - 15
       <
     ]=],
-    name = 'rand',
-    params = { { 'expr', 'any' } },
-    signature = 'rand([{expr}])',
+    name = "rand",
+    params = { { "expr", "any" } },
+    signature = "rand([{expr}])",
   },
   range = {
     args = { 1, 3 },
@@ -8043,10 +8044,10 @@ M.funcs = {
       	echo range(2, 0)	" error!
       <
     ]=],
-    name = 'range',
-    params = { { 'expr', 'any' }, { 'max', 'any' }, { 'stride', 'any' } },
-    signature = 'range({expr} [, {max} [, {stride}]])',
-    tags = { 'E726', 'E727' },
+    name = "range",
+    params = { { "expr", "any" }, { "max", "any" }, { "stride", "any" } },
+    signature = "range({expr} [, {max} [, {stride}]])",
+    tags = { "E726", "E727" },
   },
   readblob = {
     args = { 1, 3 },
@@ -8075,9 +8076,9 @@ M.funcs = {
       is truncated.
       Also see |readfile()| and |writefile()|.
     ]=],
-    name = 'readblob',
-    params = { { 'fname', 'string' }, { 'offset', 'any' }, { 'size', 'any' } },
-    signature = 'readblob({fname} [, {offset} [, {size}]])',
+    name = "readblob",
+    params = { { "fname", "string" }, { "offset", "any" }, { "size", "any" } },
+    signature = "readblob({fname} [, {offset} [, {size}]])",
   },
   readdir = {
     args = { 1, 2 },
@@ -8113,9 +8114,9 @@ M.funcs = {
       Returns an empty List on error.
 
     ]=],
-    name = 'readdir',
-    params = { { 'directory', 'any' }, { 'expr', 'any' } },
-    signature = 'readdir({directory} [, {expr}])',
+    name = "readdir",
+    params = { { "directory", "any" }, { "expr", "any" } },
+    signature = "readdir({directory} [, {expr}])",
   },
   readfile = {
     args = { 1, 3 },
@@ -8154,14 +8155,14 @@ M.funcs = {
       Also see |writefile()|.
 
     ]=],
-    name = 'readfile',
-    params = { { 'fname', 'string' }, { 'type', 'any' }, { 'max', 'any' } },
-    signature = 'readfile({fname} [, {type} [, {max}]])',
+    name = "readfile",
+    params = { { "fname", "string" }, { "type", "any" }, { "max", "any" } },
+    signature = "readfile({fname} [, {type} [, {max}]])",
   },
   reduce = {
     args = { 2, 3 },
     base = 1,
-    tags = { 'E998' },
+    tags = { "E998" },
     desc = [=[
       {func} is called for every item in {object}, which can be a
       |String|, |List| or a |Blob|.  {func} is called with two
@@ -8180,9 +8181,9 @@ M.funcs = {
       	echo reduce('xyz', { acc, val -> acc .. ',' .. val })
       <
     ]=],
-    name = 'reduce',
-    params = { { 'object', 'any' }, { 'func', 'any' }, { 'initial', 'any' } },
-    signature = 'reduce({object}, {func} [, {initial}])',
+    name = "reduce",
+    params = { { "object", "any" }, { "func", "any" }, { "initial", "any" } },
+    signature = "reduce({object}, {func} [, {initial}])",
   },
   reg_executing = {
     desc = [=[
@@ -8190,9 +8191,9 @@ M.funcs = {
       Returns an empty string when no register is being executed.
       See |@|.
     ]=],
-    name = 'reg_executing',
+    name = "reg_executing",
     params = {},
-    signature = 'reg_executing()',
+    signature = "reg_executing()",
   },
   reg_recorded = {
     desc = [=[
@@ -8200,34 +8201,34 @@ M.funcs = {
       Returns an empty string when nothing was recorded yet.
       See |q| and |Q|.
     ]=],
-    name = 'reg_recorded',
+    name = "reg_recorded",
     params = {},
-    signature = 'reg_recorded()',
+    signature = "reg_recorded()",
   },
   reg_recording = {
     desc = [=[
       Returns the single letter name of the register being recorded.
       Returns an empty string when not recording.  See |q|.
     ]=],
-    name = 'reg_recording',
+    name = "reg_recording",
     params = {},
-    signature = 'reg_recording()',
+    signature = "reg_recording()",
   },
   reltime = {
     args = { 0, 2 },
     base = 1,
     fast = true,
-    name = 'reltime',
+    name = "reltime",
     params = {},
-    signature = 'reltime()',
+    signature = "reltime()",
   },
   reltime__1 = {
     args = { 0, 2 },
     base = 1,
     fast = true,
-    name = 'reltime',
-    params = { { 'start', 'any' } },
-    signature = 'reltime({start})',
+    name = "reltime",
+    params = { { "start", "any" } },
+    signature = "reltime({start})",
   },
   reltime__2 = {
     args = { 0, 2 },
@@ -8253,9 +8254,9 @@ M.funcs = {
       Note: |localtime()| returns the current (non-relative) time.
     ]=],
     fast = true,
-    name = 'reltime',
-    params = { { 'start', 'any' }, { 'end', 'any' } },
-    signature = 'reltime({start}, {end})',
+    name = "reltime",
+    params = { { "start", "any" }, { "end", "any" } },
+    signature = "reltime({start}, {end})",
   },
   reltimefloat = {
     args = 1,
@@ -8273,9 +8274,9 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'reltimefloat',
-    params = { { 'time', 'any' } },
-    signature = 'reltimefloat({time})',
+    name = "reltimefloat",
+    params = { { "time", "any" } },
+    signature = "reltimefloat({time})",
   },
   reltimestr = {
     args = 1,
@@ -8296,16 +8297,16 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'reltimestr',
-    params = { { 'time', 'any' } },
-    signature = 'reltimestr({time})',
+    name = "reltimestr",
+    params = { { "time", "any" } },
+    signature = "reltimestr({time})",
   },
   remove = {
     args = { 2, 3 },
     base = 1,
-    name = 'remove',
-    params = { { 'list', 'any' }, { 'idx', 'integer' } },
-    signature = 'remove({list}, {idx})',
+    name = "remove",
+    params = { { "list", "any" }, { "idx", "integer" } },
+    signature = "remove({list}, {idx})",
   },
   remove__1 = {
     args = { 2, 3 },
@@ -8326,16 +8327,16 @@ M.funcs = {
       Use |delete()| to remove a file.
 
     ]=],
-    name = 'remove',
-    params = { { 'list', 'any' }, { 'idx', 'integer' }, { 'end', 'any' } },
-    signature = 'remove({list}, {idx}, {end})',
+    name = "remove",
+    params = { { "list", "any" }, { "idx", "integer" }, { "end", "any" } },
+    signature = "remove({list}, {idx}, {end})",
   },
   remove__2 = {
     args = { 2, 3 },
     base = 1,
-    name = 'remove',
-    params = { { 'blob', 'any' }, { 'idx', 'integer' } },
-    signature = 'remove({blob}, {idx})',
+    name = "remove",
+    params = { { "blob", "any" }, { "idx", "integer" } },
+    signature = "remove({blob}, {idx})",
   },
   remove__3 = {
     args = { 2, 3 },
@@ -8353,9 +8354,9 @@ M.funcs = {
       	call remove(mylist, 0, 9)
       <
     ]=],
-    name = 'remove',
-    params = { { 'blob', 'any' }, { 'idx', 'integer' }, { 'end', 'any' } },
-    signature = 'remove({blob}, {idx}, {end})',
+    name = "remove",
+    params = { { "blob", "any" }, { "idx", "integer" }, { "end", "any" } },
+    signature = "remove({blob}, {idx}, {end})",
   },
   remove__4 = {
     args = { 2, 3 },
@@ -8367,9 +8368,9 @@ M.funcs = {
       <If there is no {key} in {dict} this is an error.
       Returns zero on error.
     ]=],
-    name = 'remove',
-    params = { { 'dict', 'any' }, { 'key', 'any' } },
-    signature = 'remove({dict}, {key})',
+    name = "remove",
+    params = { { "dict", "any" }, { "key", "any" } },
+    signature = "remove({dict}, {key})",
   },
   rename = {
     args = 2,
@@ -8383,11 +8384,11 @@ M.funcs = {
       This function is not available in the |sandbox|.
 
     ]=],
-    name = 'rename',
-    params = { { 'from', 'any' }, { 'to', 'any' } },
-    signature = 'rename({from}, {to})',
+    name = "rename",
+    params = { { "from", "any" }, { "to", "any" } },
+    signature = "rename({from}, {to})",
   },
-  ['repeat'] = {
+  ["repeat"] = {
     args = 2,
     base = 1,
     desc = [=[
@@ -8402,14 +8403,14 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'repeat',
-    params = { { 'expr', 'any' }, { 'count', 'any' } },
-    signature = 'repeat({expr}, {count})',
+    name = "repeat",
+    params = { { "expr", "any" }, { "count", "any" } },
+    signature = "repeat({expr}, {count})",
   },
   resolve = {
     args = 1,
     base = 1,
-    tags = { 'E655' },
+    tags = { "E655" },
     desc = [=[
       On MS-Windows, when {filename} is a shortcut (a .lnk file),
       returns the path the shortcut points to in a simplified form.
@@ -8425,9 +8426,9 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'resolve',
-    params = { { 'filename', 'any' } },
-    signature = 'resolve({filename})',
+    name = "resolve",
+    params = { { "filename", "any" } },
+    signature = "resolve({filename})",
   },
   reverse = {
     args = 1,
@@ -8443,9 +8444,9 @@ M.funcs = {
       	let revlist = reverse(copy(mylist))
       <
     ]=],
-    name = 'reverse',
-    params = { { 'object', 'any' } },
-    signature = 'reverse({object})',
+    name = "reverse",
+    params = { { "object", "any" } },
+    signature = "reverse({object})",
   },
   round = {
     args = 1,
@@ -8465,10 +8466,10 @@ M.funcs = {
       <	-5.0
 
     ]=],
-    float_func = 'round',
-    name = 'round',
-    params = { { 'expr', 'any' } },
-    signature = 'round({expr})',
+    float_func = "round",
+    name = "round",
+    params = { { "expr", "any" } },
+    signature = "round({expr})",
   },
   rpcnotify = {
     args = { 2 },
@@ -8479,9 +8480,9 @@ M.funcs = {
       	au VimLeave call rpcnotify(0, "leaving")
       <
     ]=],
-    name = 'rpcnotify',
-    params = { { 'channel', 'any' }, { 'event', 'any' }, { 'args', 'any' } },
-    signature = 'rpcnotify({channel}, {event} [, {args}...])',
+    name = "rpcnotify",
+    params = { { "channel", "any" }, { "event", "any" }, { "args", "any" } },
+    signature = "rpcnotify({channel}, {event} [, {args}...])",
   },
   rpcrequest = {
     args = { 2 },
@@ -8492,9 +8493,9 @@ M.funcs = {
       	let result = rpcrequest(rpc_chan, "func", 1, 2, 3)
       <
     ]=],
-    name = 'rpcrequest',
-    params = { { 'channel', 'any' }, { 'method', 'any' }, { 'args', 'any' } },
-    signature = 'rpcrequest({channel}, {method} [, {args}...])',
+    name = "rpcrequest",
+    params = { { "channel", "any" }, { "method", "any" }, { "args", "any" } },
+    signature = "rpcrequest({channel}, {method} [, {args}...])",
   },
   rpcstart = {
     args = { 1, 2 },
@@ -8505,9 +8506,9 @@ M.funcs = {
       	let id = jobstart(['prog', 'arg1', 'arg2'], {'rpc': v:true})
       <
     ]=],
-    name = 'rpcstart',
-    params = { { 'prog', 'any' }, { 'argv', 'any' } },
-    signature = 'rpcstart({prog} [, {argv}])',
+    name = "rpcstart",
+    params = { { "prog", "any" }, { "argv", "any" } },
+    signature = "rpcstart({prog} [, {argv}])",
   },
   rpcstop = {
     args = 1,
@@ -8519,7 +8520,7 @@ M.funcs = {
       any socket.
     ]=],
     params = VARARGS,
-    signature = 'rpcstop(...)',
+    signature = "rpcstop(...)",
   },
   rubyeval = {
     args = 1,
@@ -8535,9 +8536,9 @@ M.funcs = {
       "Object#to_s" method.
 
     ]=],
-    name = 'rubyeval',
-    params = { { 'expr', 'any' } },
-    signature = 'rubyeval({expr})',
+    name = "rubyeval",
+    params = { { "expr", "any" } },
+    signature = "rubyeval({expr})",
   },
   screenattr = {
     args = 2,
@@ -8549,9 +8550,9 @@ M.funcs = {
       Returns -1 when row or col is out of range.
 
     ]=],
-    name = 'screenattr',
-    params = { { 'row', 'any' }, { 'col', 'integer' } },
-    signature = 'screenattr({row}, {col})',
+    name = "screenattr",
+    params = { { "row", "any" }, { "col", "integer" } },
+    signature = "screenattr({row}, {col})",
   },
   screenchar = {
     args = 2,
@@ -8567,9 +8568,9 @@ M.funcs = {
       Returns -1 when row or col is out of range.
 
     ]=],
-    name = 'screenchar',
-    params = { { 'row', 'any' }, { 'col', 'integer' } },
-    signature = 'screenchar({row}, {col})',
+    name = "screenchar",
+    params = { { "row", "any" }, { "col", "integer" } },
+    signature = "screenchar({row}, {col})",
   },
   screenchars = {
     args = 2,
@@ -8582,9 +8583,9 @@ M.funcs = {
       Returns an empty List when row or col is out of range.
 
     ]=],
-    name = 'screenchars',
-    params = { { 'row', 'any' }, { 'col', 'integer' } },
-    signature = 'screenchars({row}, {col})',
+    name = "screenchars",
+    params = { { "row", "any" }, { "col", "integer" } },
+    signature = "screenchars({row}, {col})",
   },
   screencol = {
     desc = [=[
@@ -8602,9 +8603,9 @@ M.funcs = {
       	noremap GG <Cmd>echom screencol()<Cr>
       <
     ]=],
-    name = 'screencol',
+    name = "screencol",
     params = {},
-    signature = 'screencol()',
+    signature = "screencol()",
   },
   screenpos = {
     args = 3,
@@ -8634,9 +8635,9 @@ M.funcs = {
       Returns an empty Dict if {winid} is invalid.
 
     ]=],
-    name = 'screenpos',
-    params = { { 'winid', 'integer' }, { 'lnum', 'integer' }, { 'col', 'integer' } },
-    signature = 'screenpos({winid}, {lnum}, {col})',
+    name = "screenpos",
+    params = { { "winid", "integer" }, { "lnum", "integer" }, { "col", "integer" } },
+    signature = "screenpos({winid}, {lnum}, {col})",
   },
   screenrow = {
     desc = [=[
@@ -8647,9 +8648,9 @@ M.funcs = {
 
       Note: Same restrictions as with |screencol()|.
     ]=],
-    name = 'screenrow',
+    name = "screenrow",
     params = {},
-    signature = 'screenrow()',
+    signature = "screenrow()",
   },
   screenstring = {
     args = 2,
@@ -8663,9 +8664,9 @@ M.funcs = {
       Returns an empty String when row or col is out of range.
 
     ]=],
-    name = 'screenstring',
-    params = { { 'row', 'any' }, { 'col', 'integer' } },
-    signature = 'screenstring({row}, {col})',
+    name = "screenstring",
+    params = { { "row", "any" }, { "col", "integer" } },
+    signature = "screenstring({row}, {col})",
   },
   search = {
     args = { 1, 5 },
@@ -8772,15 +8773,15 @@ M.funcs = {
       The 'n' flag tells the function not to move the cursor.
 
     ]=],
-    name = 'search',
+    name = "search",
     params = {
-      { 'pattern', 'any' },
-      { 'flags', 'string' },
-      { 'stopline', 'any' },
-      { 'timeout', 'integer' },
-      { 'skip', 'any' },
+      { "pattern", "any" },
+      { "flags", "string" },
+      { "stopline", "any" },
+      { "timeout", "integer" },
+      { "skip", "any" },
     },
-    signature = 'search({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])',
+    signature = "search({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])",
   },
   searchcount = {
     args = { 0, 1 },
@@ -8907,9 +8908,9 @@ M.funcs = {
       				(default: cursor's position)
 
     ]=],
-    name = 'searchcount',
-    params = { { 'options', 'table' } },
-    signature = 'searchcount([{options}])',
+    name = "searchcount",
+    params = { { "options", "table" } },
+    signature = "searchcount([{options}])",
   },
   searchdecl = {
     args = { 1, 3 },
@@ -8933,9 +8934,9 @@ M.funcs = {
       	endif
       <
     ]=],
-    name = 'searchdecl',
-    params = { { 'name', 'string' }, { 'global', 'any' }, { 'thisblock', 'any' } },
-    signature = 'searchdecl({name} [, {global} [, {thisblock}]])',
+    name = "searchdecl",
+    params = { { "name", "string" }, { "global", "any" }, { "thisblock", "any" } },
+    signature = "searchdecl({name} [, {global} [, {thisblock}]])",
   },
   searchpair = {
     args = { 3, 7 },
@@ -9024,9 +9025,9 @@ M.funcs = {
       	     \ 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string"')
       <
     ]=],
-    name = 'searchpair',
+    name = "searchpair",
     params = {},
-    signature = 'searchpair({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeout}]]]])',
+    signature = "searchpair({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeout}]]]])",
   },
   searchpairpos = {
     args = { 3, 7 },
@@ -9041,9 +9042,9 @@ M.funcs = {
       <
       See |match-parens| for a bigger and more useful example.
     ]=],
-    name = 'searchpairpos',
+    name = "searchpairpos",
     params = {},
-    signature = 'searchpairpos({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeout}]]]])',
+    signature = "searchpairpos({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeout}]]]])",
   },
   searchpos = {
     args = { 1, 5 },
@@ -9064,15 +9065,15 @@ M.funcs = {
       found |/\l|, 3 when an uppercase letter is found |/\u|.
 
     ]=],
-    name = 'searchpos',
+    name = "searchpos",
     params = {
-      { 'pattern', 'any' },
-      { 'flags', 'string' },
-      { 'stopline', 'any' },
-      { 'timeout', 'integer' },
-      { 'skip', 'any' },
+      { "pattern", "any" },
+      { "flags", "string" },
+      { "stopline", "any" },
+      { "timeout", "integer" },
+      { "skip", "any" },
     },
-    signature = 'searchpos({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])',
+    signature = "searchpos({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])",
   },
   serverlist = {
     desc = [=[
@@ -9082,9 +9083,9 @@ M.funcs = {
       	echo serverlist()
       <
     ]=],
-    name = 'serverlist',
+    name = "serverlist",
     params = {},
-    signature = 'serverlist()',
+    signature = "serverlist()",
   },
   serverstart = {
     args = { 0, 1 },
@@ -9122,9 +9123,9 @@ M.funcs = {
       	echo serverstart('::1:12345')
       <
     ]=],
-    name = 'serverstart',
-    params = { { 'address', 'any' } },
-    signature = 'serverstart([{address}])',
+    name = "serverstart",
+    params = { { "address", "any" } },
+    signature = "serverstart([{address}])",
   },
   serverstop = {
     args = 1,
@@ -9134,9 +9135,9 @@ M.funcs = {
       If |v:servername| is stopped it is set to the next available
       address in |serverlist()|.
     ]=],
-    name = 'serverstop',
-    params = { { 'address', 'any' } },
-    signature = 'serverstop({address})',
+    name = "serverstop",
+    params = { { "address", "any" } },
+    signature = "serverstop({address})",
   },
   setbufline = {
     args = 3,
@@ -9167,9 +9168,9 @@ M.funcs = {
       error message is given.
 
     ]=],
-    name = 'setbufline',
-    params = { { 'buf', 'any' }, { 'lnum', 'integer' }, { 'text', 'any' } },
-    signature = 'setbufline({buf}, {lnum}, {text})',
+    name = "setbufline",
+    params = { { "buf", "any" }, { "lnum", "integer" }, { "text", "any" } },
+    signature = "setbufline({buf}, {lnum}, {text})",
   },
   setbufvar = {
     args = 3,
@@ -9189,9 +9190,9 @@ M.funcs = {
       <This function is not available in the |sandbox|.
 
     ]=],
-    name = 'setbufvar',
-    params = { { 'buf', 'any' }, { 'varname', 'string' }, { 'val', 'any' } },
-    signature = 'setbufvar({buf}, {varname}, {val})',
+    name = "setbufvar",
+    params = { { "buf", "any" }, { "varname", "string" }, { "val", "any" } },
+    signature = "setbufvar({buf}, {varname}, {val})",
   },
   setcellwidths = {
     args = 1,
@@ -9230,9 +9231,9 @@ M.funcs = {
       match with what Vim knows about each emoji.  If it doesn't
       look right you need to adjust the {list} argument.
     ]=],
-    name = 'setcellwidths',
-    params = { { 'list', 'any' } },
-    signature = 'setcellwidths({list})',
+    name = "setcellwidths",
+    params = { { "list", "any" } },
+    signature = "setcellwidths({list})",
   },
   setcharpos = {
     args = 2,
@@ -9249,9 +9250,9 @@ M.funcs = {
       <positions the cursor on the second character '보'.
 
     ]=],
-    name = 'setcharpos',
-    params = { { 'expr', 'any' }, { 'list', 'any' } },
-    signature = 'setcharpos({expr}, {list})',
+    name = "setcharpos",
+    params = { { "expr", "any" }, { "list", "any" } },
+    signature = "setcharpos({expr}, {list})",
   },
   setcharsearch = {
     args = 1,
@@ -9277,9 +9278,9 @@ M.funcs = {
       <Also see |getcharsearch()|.
 
     ]=],
-    name = 'setcharsearch',
-    params = { { 'dict', 'any' } },
-    signature = 'setcharsearch({dict})',
+    name = "setcharsearch",
+    params = { { "dict", "any" } },
+    signature = "setcharsearch({dict})",
   },
   setcmdline = {
     args = { 1, 2 },
@@ -9292,9 +9293,9 @@ M.funcs = {
       line.
 
     ]=],
-    name = 'setcmdline',
-    params = { { 'str', 'any' }, { 'pos', 'any' } },
-    signature = 'setcmdline({str} [, {pos}])',
+    name = "setcmdline",
+    params = { { "str", "any" }, { "pos", "any" } },
+    signature = "setcmdline({str} [, {pos}])",
   },
   setcmdpos = {
     args = 1,
@@ -9315,16 +9316,16 @@ M.funcs = {
       line.
 
     ]=],
-    name = 'setcmdpos',
-    params = { { 'pos', 'any' } },
-    signature = 'setcmdpos({pos})',
+    name = "setcmdpos",
+    params = { { "pos", "any" } },
+    signature = "setcmdpos({pos})",
   },
   setcursorcharpos = {
     args = { 1, 3 },
     base = 1,
-    name = 'setcursorcharpos',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' }, { 'off', 'any' } },
-    signature = 'setcursorcharpos({lnum}, {col} [, {off}])',
+    name = "setcursorcharpos",
+    params = { { "lnum", "integer" }, { "col", "integer" }, { "off", "any" } },
+    signature = "setcursorcharpos({lnum}, {col} [, {off}])",
   },
   setcursorcharpos__1 = {
     args = { 1, 3 },
@@ -9341,9 +9342,9 @@ M.funcs = {
       <positions the cursor on the first character '여'.
 
     ]=],
-    name = 'setcursorcharpos',
-    params = { { 'list', 'any' } },
-    signature = 'setcursorcharpos({list})',
+    name = "setcursorcharpos",
+    params = { { "list", "any" } },
+    signature = "setcursorcharpos({list})",
   },
   setenv = {
     args = 2,
@@ -9356,14 +9357,14 @@ M.funcs = {
       See also |expr-env|.
 
     ]=],
-    name = 'setenv',
-    params = { { 'name', 'string' }, { 'val', 'any' } },
-    signature = 'setenv({name}, {val})',
+    name = "setenv",
+    params = { { "name", "string" }, { "val", "any" } },
+    signature = "setenv({name}, {val})",
   },
   setfperm = {
     args = 2,
     base = 1,
-    tags = { 'chmod' },
+    tags = { "chmod" },
     desc = [=[
       Set the file permissions for {fname} to {mode}.
       {mode} must be a string with 9 characters.  It is of the form
@@ -9381,9 +9382,9 @@ M.funcs = {
 
       To read permissions see |getfperm()|.
     ]=],
-    name = 'setfperm',
-    params = { { 'fname', 'string' }, { 'mode', 'string' } },
-    signature = 'setfperm({fname}, {mode})',
+    name = "setfperm",
+    params = { { "fname", "string" }, { "mode", "string" } },
+    signature = "setfperm({fname}, {mode})",
   },
   setline = {
     args = 2,
@@ -9417,9 +9418,9 @@ M.funcs = {
       <Note: The '[ and '] marks are not set.
 
     ]=],
-    name = 'setline',
-    params = { { 'lnum', 'integer' }, { 'text', 'any' } },
-    signature = 'setline({lnum}, {text})',
+    name = "setline",
+    params = { { "lnum", "integer" }, { "text", "any" } },
+    signature = "setline({lnum}, {text})",
   },
   setloclist = {
     args = { 2, 4 },
@@ -9441,9 +9442,9 @@ M.funcs = {
       for the list of supported keys in {what}.
 
     ]=],
-    name = 'setloclist',
-    params = { { 'nr', 'integer' }, { 'list', 'any' }, { 'action', 'any' }, { 'what', 'any' } },
-    signature = 'setloclist({nr}, {list} [, {action} [, {what}]])',
+    name = "setloclist",
+    params = { { "nr", "integer" }, { "list", "any" }, { "action", "any" }, { "what", "any" } },
+    signature = "setloclist({nr}, {list} [, {action} [, {what}]])",
   },
   setmatches = {
     args = { 1, 2 },
@@ -9457,9 +9458,9 @@ M.funcs = {
       window ID instead of the current window.
 
     ]=],
-    name = 'setmatches',
-    params = { { 'list', 'any' }, { 'win', 'any' } },
-    signature = 'setmatches({list} [, {win}])',
+    name = "setmatches",
+    params = { { "list", "any" }, { "win", "any" } },
+    signature = "setmatches({list} [, {win}])",
   },
   setpos = {
     args = 2,
@@ -9514,9 +9515,9 @@ M.funcs = {
       |winrestview()|.
 
     ]=],
-    name = 'setpos',
-    params = { { 'expr', 'any' }, { 'list', 'any' } },
-    signature = 'setpos({expr}, {list})',
+    name = "setpos",
+    params = { { "expr", "any" }, { "list", "any" } },
+    signature = "setpos({expr}, {list})",
   },
   setqflist = {
     args = { 1, 3 },
@@ -9636,9 +9637,9 @@ M.funcs = {
       `:cc 1` to jump to the first position.
 
     ]=],
-    name = 'setqflist',
-    params = { { 'list', 'any' }, { 'action', 'any' }, { 'what', 'any' } },
-    signature = 'setqflist({list} [, {action} [, {what}]])',
+    name = "setqflist",
+    params = { { "list", "any" }, { "action", "any" }, { "what", "any" } },
+    signature = "setqflist({list} [, {action} [, {what}]])",
   },
   setreg = {
     args = { 2, 3 },
@@ -9700,9 +9701,9 @@ M.funcs = {
       	call setreg('a', '', 'al')
 
     ]=],
-    name = 'setreg',
-    params = { { 'regname', 'string' }, { 'value', 'any' }, { 'options', 'table' } },
-    signature = 'setreg({regname}, {value} [, {options}])',
+    name = "setreg",
+    params = { { "regname", "string" }, { "value", "any" }, { "options", "table" } },
+    signature = "setreg({regname}, {value} [, {options}])",
   },
   settabvar = {
     args = 3,
@@ -9716,9 +9717,9 @@ M.funcs = {
       This function is not available in the |sandbox|.
 
     ]=],
-    name = 'settabvar',
-    params = { { 'tabnr', 'integer' }, { 'varname', 'string' }, { 'val', 'any' } },
-    signature = 'settabvar({tabnr}, {varname}, {val})',
+    name = "settabvar",
+    params = { { "tabnr", "integer" }, { "varname", "string" }, { "val", "any" } },
+    signature = "settabvar({tabnr}, {varname}, {val})",
   },
   settabwinvar = {
     args = 4,
@@ -9740,14 +9741,14 @@ M.funcs = {
       <This function is not available in the |sandbox|.
 
     ]=],
-    name = 'settabwinvar',
+    name = "settabwinvar",
     params = {
-      { 'tabnr', 'integer' },
-      { 'winnr', 'integer' },
-      { 'varname', 'string' },
-      { 'val', 'any' },
+      { "tabnr", "integer" },
+      { "winnr", "integer" },
+      { "varname", "string" },
+      { "val", "any" },
     },
-    signature = 'settabwinvar({tabnr}, {winnr}, {varname}, {val})',
+    signature = "settabwinvar({tabnr}, {winnr}, {varname}, {val})",
   },
   settagstack = {
     args = { 2, 3 },
@@ -9786,9 +9787,9 @@ M.funcs = {
       	unlet stack
       <
     ]=],
-    name = 'settagstack',
-    params = { { 'nr', 'integer' }, { 'dict', 'any' }, { 'action', 'any' } },
-    signature = 'settagstack({nr}, {dict} [, {action}])',
+    name = "settagstack",
+    params = { { "nr", "integer" }, { "dict", "any" }, { "action", "any" } },
+    signature = "settagstack({nr}, {dict} [, {action}])",
   },
   setwinvar = {
     args = 3,
@@ -9800,9 +9801,9 @@ M.funcs = {
       	call setwinvar(2, "myvar", "foobar")
 
     ]=],
-    name = 'setwinvar',
-    params = { { 'nr', 'integer' }, { 'varname', 'string' }, { 'val', 'any' } },
-    signature = 'setwinvar({nr}, {varname}, {val})',
+    name = "setwinvar",
+    params = { { "nr", "integer" }, { "varname", "string" }, { "val", "any" } },
+    signature = "setwinvar({nr}, {varname}, {val})",
   },
   sha256 = {
     args = 1,
@@ -9812,9 +9813,9 @@ M.funcs = {
       checksum of {string}.
 
     ]=],
-    name = 'sha256',
-    params = { { 'string', 'string' } },
-    signature = 'sha256({string})',
+    name = "sha256",
+    params = { { "string", "string" } },
+    signature = "sha256({string})",
   },
   shellescape = {
     args = { 1, 2 },
@@ -9851,9 +9852,9 @@ M.funcs = {
       <See also |::S|.
 
     ]=],
-    name = 'shellescape',
-    params = { { 'string', 'string' }, { 'special', 'any' } },
-    signature = 'shellescape({string} [, {special}])',
+    name = "shellescape",
+    params = { { "string", "string" }, { "special", "any" } },
+    signature = "shellescape({string} [, {special}])",
   },
   shiftwidth = {
     args = { 0, 1 },
@@ -9880,18 +9881,18 @@ M.funcs = {
       will be assumed.
 
     ]=],
-    name = 'shiftwidth',
-    params = { { 'col', 'integer' } },
-    signature = 'shiftwidth([{col}])',
-    returns = 'integer',
+    name = "shiftwidth",
+    params = { { "col", "integer" } },
+    signature = "shiftwidth([{col}])",
+    returns = "integer",
   },
   sign_define = {
     args = { 1, 2 },
     base = 1,
-    name = 'sign_define',
-    params = { { 'name', 'string' }, { 'dict', 'vim.fn.sign_define.dict' } },
-    signature = 'sign_define({name} [, {dict}])',
-    returns = '0|-1',
+    name = "sign_define",
+    params = { { "name", "string" }, { "dict", "vim.fn.sign_define.dict" } },
+    signature = "sign_define({name} [, {dict}])",
+    returns = "0|-1",
   },
   sign_define__1 = {
     args = { 1, 2 },
@@ -9942,10 +9943,10 @@ M.funcs = {
       		\ ])
       <
     ]=],
-    name = 'sign_define',
-    params = { { 'list', 'vim.fn.sign_define.dict[]' } },
-    signature = 'sign_define({list})',
-    returns = '(0|-1)[]',
+    name = "sign_define",
+    params = { { "list", "vim.fn.sign_define.dict[]" } },
+    signature = "sign_define({list})",
+    returns = "(0|-1)[]",
   },
   sign_getdefined = {
     args = { 0, 1 },
@@ -9986,10 +9987,10 @@ M.funcs = {
       	echo sign_getdefined("mySign")
       <
     ]=],
-    name = 'sign_getdefined',
-    params = { { 'name', 'string' } },
-    signature = 'sign_getdefined([{name}])',
-    returns = 'vim.fn.sign_getdefined.ret.item[]',
+    name = "sign_getdefined",
+    params = { { "name", "string" } },
+    signature = "sign_getdefined([{name}])",
+    returns = "vim.fn.sign_getdefined.ret.item[]",
   },
   sign_getplaced = {
     args = { 0, 2 },
@@ -10055,10 +10056,10 @@ M.funcs = {
       	echo sign_getplaced()
       <
     ]=],
-    name = 'sign_getplaced',
-    params = { { 'buf', 'any' }, { 'dict', 'vim.fn.sign_getplaced.dict' } },
-    signature = 'sign_getplaced([{buf} [, {dict}]])',
-    returns = 'vim.fn.sign_getplaced.ret.item[]',
+    name = "sign_getplaced",
+    params = { { "buf", "any" }, { "dict", "vim.fn.sign_getplaced.dict" } },
+    signature = "sign_getplaced([{buf} [, {dict}]])",
+    returns = "vim.fn.sign_getplaced.ret.item[]",
   },
   sign_jump = {
     args = 3,
@@ -10079,10 +10080,10 @@ M.funcs = {
       	call sign_jump(10, '', '')
       <
     ]=],
-    name = 'sign_jump',
-    params = { { 'id', 'integer' }, { 'group', 'string' }, { 'buf', 'integer|string' } },
-    signature = 'sign_jump({id}, {group}, {buf})',
-    returns = 'integer',
+    name = "sign_jump",
+    params = { { "id", "integer" }, { "group", "string" }, { "buf", "integer|string" } },
+    signature = "sign_jump({id}, {group}, {buf})",
+    returns = "integer",
   },
   sign_place = {
     args = { 4, 5 },
@@ -10136,16 +10137,16 @@ M.funcs = {
       			\ {'lnum' : 40, 'priority' : 90})
       <
     ]=],
-    name = 'sign_place',
+    name = "sign_place",
     params = {
-      { 'id', 'any' },
-      { 'group', 'any' },
-      { 'name', 'string' },
-      { 'buf', 'any' },
-      { 'dict', 'vim.fn.sign_place.dict' },
+      { "id", "any" },
+      { "group", "any" },
+      { "name", "string" },
+      { "buf", "any" },
+      { "dict", "vim.fn.sign_place.dict" },
     },
-    signature = 'sign_place({id}, {group}, {name}, {buf} [, {dict}])',
-    returns = 'integer',
+    signature = "sign_place({id}, {group}, {name}, {buf} [, {dict}])",
+    returns = "integer",
   },
   sign_placelist = {
     args = 1,
@@ -10209,18 +10210,18 @@ M.funcs = {
       		\ ])
       <
     ]=],
-    name = 'sign_placelist',
-    params = { { 'list', 'vim.fn.sign_placelist.list.item[]' } },
-    signature = 'sign_placelist({list})',
-    returns = 'integer[]',
+    name = "sign_placelist",
+    params = { { "list", "vim.fn.sign_placelist.list.item[]" } },
+    signature = "sign_placelist({list})",
+    returns = "integer[]",
   },
   sign_undefine = {
     args = { 0, 1 },
     base = 1,
-    name = 'sign_undefine',
-    params = { { 'name', 'string' } },
-    signature = 'sign_undefine([{name}])',
-    returns = '0|-1',
+    name = "sign_undefine",
+    params = { { "name", "string" } },
+    signature = "sign_undefine([{name}])",
+    returns = "0|-1",
   },
   sign_undefine__1 = {
     args = { 0, 1 },
@@ -10248,10 +10249,10 @@ M.funcs = {
       	call sign_undefine()
       <
     ]=],
-    name = 'sign_undefine',
-    params = { { 'list', 'string[]' } },
-    signature = 'sign_undefine({list})',
-    returns = 'integer[]',
+    name = "sign_undefine",
+    params = { { "list", "string[]" } },
+    signature = "sign_undefine({list})",
+    returns = "integer[]",
   },
   sign_unplace = {
     args = { 1, 2 },
@@ -10299,10 +10300,10 @@ M.funcs = {
       	call sign_unplace('*')
 
     ]=],
-    name = 'sign_unplace',
-    params = { { 'group', 'string' }, { 'dict', 'vim.fn.sign_unplace.dict' } },
-    signature = 'sign_unplace({group} [, {dict}])',
-    returns = '0|-1',
+    name = "sign_unplace",
+    params = { { "group", "string" }, { "dict", "vim.fn.sign_unplace.dict" } },
+    signature = "sign_unplace({group} [, {dict}])",
+    returns = "0|-1",
   },
   sign_unplacelist = {
     args = 1,
@@ -10336,10 +10337,10 @@ M.funcs = {
       		\ ])
       <
     ]=],
-    name = 'sign_unplacelist',
-    params = { { 'list', 'vim.fn.sign_unplacelist.list.item' } },
-    signature = 'sign_unplacelist({list})',
-    returns = '(0|-1)[]',
+    name = "sign_unplacelist",
+    params = { { "list", "vim.fn.sign_unplacelist.list.item" } },
+    signature = "sign_unplacelist({list})",
+    returns = "(0|-1)[]",
   },
   simplify = {
     args = 1,
@@ -10362,9 +10363,9 @@ M.funcs = {
       links before simplifying the path name, use |resolve()|.
 
     ]=],
-    name = 'simplify',
-    params = { { 'filename', 'any' } },
-    signature = 'simplify({filename})',
+    name = "simplify",
+    params = { { "filename", "any" } },
+    signature = "simplify({filename})",
   },
   sin = {
     args = 1,
@@ -10380,10 +10381,10 @@ M.funcs = {
       <	0.763301
 
     ]=],
-    float_func = 'sin',
-    name = 'sin',
-    params = { { 'expr', 'any' } },
-    signature = 'sin({expr})',
+    float_func = "sin",
+    name = "sin",
+    params = { { "expr", "any" } },
+    signature = "sin({expr})",
   },
   sinh = {
     args = 1,
@@ -10400,10 +10401,10 @@ M.funcs = {
       <	-1.026517
 
     ]=],
-    float_func = 'sinh',
-    name = 'sinh',
-    params = { { 'expr', 'any' } },
-    signature = 'sinh({expr})',
+    float_func = "sinh",
+    name = "sinh",
+    params = { { "expr", "any" } },
+    signature = "sinh({expr})",
   },
   slice = {
     args = { 2, 3 },
@@ -10418,9 +10419,9 @@ M.funcs = {
       Returns an empty value if {start} or {end} are invalid.
 
     ]=],
-    name = 'slice',
-    params = { { 'expr', 'any' }, { 'start', 'any' }, { 'end', 'any' } },
-    signature = 'slice({expr}, {start} [, {end}])',
+    name = "slice",
+    params = { { "expr", "any" }, { "start", "any" }, { "end", "any" } },
+    signature = "slice({expr}, {start} [, {end}])",
   },
   sockconnect = {
     args = { 2, 3 },
@@ -10449,14 +10450,14 @@ M.funcs = {
         - The channel ID on success (greater than zero)
         - 0 on invalid arguments or connection failure.
     ]=],
-    name = 'sockconnect',
-    params = { { 'mode', 'string' }, { 'address', 'any' }, { 'opts', 'table' } },
-    signature = 'sockconnect({mode}, {address} [, {opts}])',
+    name = "sockconnect",
+    params = { { "mode", "string" }, { "address", "any" }, { "opts", "table" } },
+    signature = "sockconnect({mode}, {address} [, {opts}])",
   },
   sort = {
     args = { 1, 3 },
     base = 1,
-    tags = { 'E702' },
+    tags = { "E702" },
     desc = [=[
       Sort the items in {list} in-place.  Returns {list}.
 
@@ -10530,9 +10531,9 @@ M.funcs = {
       	eval mylist->sort({i1, i2 -> i1 - i2})
       <
     ]=],
-    name = 'sort',
-    params = { { 'list', 'any' }, { 'how', 'any' }, { 'dict', 'any' } },
-    signature = 'sort({list} [, {how} [, {dict}]])',
+    name = "sort",
+    params = { { "list", "any" }, { "how", "any" }, { "dict", "any" } },
+    signature = "sort({list} [, {how} [, {dict}]])",
   },
   soundfold = {
     args = 1,
@@ -10546,9 +10547,9 @@ M.funcs = {
       the method can be quite slow.
 
     ]=],
-    name = 'soundfold',
-    params = { { 'word', 'any' } },
-    signature = 'soundfold({word})',
+    name = "soundfold",
+    params = { { "word", "any" } },
+    signature = "soundfold({word})",
   },
   spellbadword = {
     args = { 0, 1 },
@@ -10578,9 +10579,9 @@ M.funcs = {
       of 'spelllang' are used.
 
     ]=],
-    name = 'spellbadword',
-    params = { { 'sentence', 'any' } },
-    signature = 'spellbadword([{sentence}])',
+    name = "spellbadword",
+    params = { { "sentence", "any" } },
+    signature = "spellbadword([{sentence}])",
   },
   spellsuggest = {
     args = { 1, 3 },
@@ -10607,9 +10608,9 @@ M.funcs = {
       values of 'spelllang' and 'spellsuggest' are used.
 
     ]=],
-    name = 'spellsuggest',
-    params = { { 'word', 'any' }, { 'max', 'any' }, { 'capital', 'any' } },
-    signature = 'spellsuggest({word} [, {max} [, {capital}]])',
+    name = "spellsuggest",
+    params = { { "word", "any" }, { "max", "any" }, { "capital", "any" } },
+    signature = "spellsuggest({word} [, {max} [, {capital}]])",
   },
   split = {
     args = { 1, 3 },
@@ -10640,9 +10641,9 @@ M.funcs = {
       <The opposite function is |join()|.
 
     ]=],
-    name = 'split',
-    params = { { 'string', 'string' }, { 'pattern', 'any' }, { 'keepempty', 'any' } },
-    signature = 'split({string} [, {pattern} [, {keepempty}]])',
+    name = "split",
+    params = { { "string", "string" }, { "pattern", "any" }, { "keepempty", "any" } },
+    signature = "split({string} [, {pattern} [, {keepempty}]])",
   },
   sqrt = {
     args = 1,
@@ -10661,10 +10662,10 @@ M.funcs = {
       NaN may be different, it depends on system libraries.
 
     ]=],
-    float_func = 'sqrt',
-    name = 'sqrt',
-    params = { { 'expr', 'any' } },
-    signature = 'sqrt({expr})',
+    float_func = "sqrt",
+    name = "sqrt",
+    params = { { "expr", "any" } },
+    signature = "sqrt({expr})",
   },
   srand = {
     args = { 0, 1 },
@@ -10684,9 +10685,9 @@ M.funcs = {
       	echo rand(seed)
       <
     ]=],
-    name = 'srand',
-    params = { { 'expr', 'any' } },
-    signature = 'srand([{expr}])',
+    name = "srand",
+    params = { { "expr", "any" } },
+    signature = "srand([{expr}])",
   },
   stdioopen = {
     args = 1,
@@ -10711,13 +10712,13 @@ M.funcs = {
         - |channel-id| on success (value is always 1)
         - 0 on invalid arguments
     ]=],
-    name = 'stdioopen',
-    params = { { 'opts', 'table' } },
-    signature = 'stdioopen({opts})',
+    name = "stdioopen",
+    params = { { "opts", "table" } },
+    signature = "stdioopen({opts})",
   },
   stdpath = {
     args = 1,
-    tags = { 'E6100' },
+    tags = { "E6100" },
     desc = [=[
       Returns |standard-path| locations of various default files and
       directories.
@@ -10741,10 +10742,10 @@ M.funcs = {
       <
     ]=],
     fast = true,
-    name = 'stdpath',
-    params = { { 'what', "'cache'|'config'|'config_dirs'|'data'|'data_dirs'|'log'|'run'|'state'" } },
-    returns = 'string|string[]',
-    signature = 'stdpath({what})',
+    name = "stdpath",
+    params = { { "what", "'cache'|'config'|'config_dirs'|'data'|'data_dirs'|'log'|'run'|'state'" } },
+    returns = "string|string[]",
+    signature = "stdpath({what})",
   },
   state = {
     args = { 0, 1 },
@@ -10780,9 +10781,9 @@ M.funcs = {
           s	screen has scrolled for messages
     ]=],
     fast = true,
-    name = 'state',
-    params = { { 'what', 'string' } },
-    signature = 'state([{what}])',
+    name = "state",
+    params = { { "what", "string" } },
+    signature = "state([{what}])",
   },
   str2float = {
     args = 1,
@@ -10807,9 +10808,9 @@ M.funcs = {
       Returns 0.0 if the conversion fails.
 
     ]=],
-    name = 'str2float',
-    params = { { 'string', 'string' }, { 'quoted', 'any' } },
-    signature = 'str2float({string} [, {quoted}])',
+    name = "str2float",
+    params = { { "string", "string" }, { "quoted", "any" } },
+    signature = "str2float({string} [, {quoted}])",
   },
   str2list = {
     args = { 1, 2 },
@@ -10827,9 +10828,9 @@ M.funcs = {
       	echo str2list("á")		" returns [97, 769]
 
     ]=],
-    name = 'str2list',
-    params = { { 'string', 'string' }, { 'utf8', 'any' } },
-    signature = 'str2list({string} [, {utf8}])',
+    name = "str2list",
+    params = { { "string", "string" }, { "utf8", "any" } },
+    signature = "str2list({string} [, {utf8}])",
   },
   str2nr = {
     args = { 1, 3 },
@@ -10854,9 +10855,9 @@ M.funcs = {
       Returns 0 if {string} is empty or on error.
 
     ]=],
-    name = 'str2nr',
-    params = { { 'string', 'string' }, { 'base', 'any' } },
-    signature = 'str2nr({string} [, {base}])',
+    name = "str2nr",
+    params = { { "string", "string" }, { "base", "any" } },
+    signature = "str2nr({string} [, {base}])",
   },
   strcharlen = {
     args = 1,
@@ -10872,9 +10873,9 @@ M.funcs = {
       Also see |strlen()|, |strdisplaywidth()| and |strwidth()|.
 
     ]=],
-    name = 'strcharlen',
-    params = { { 'string', 'string' } },
-    signature = 'strcharlen({string})',
+    name = "strcharlen",
+    params = { { "string", "string" } },
+    signature = "strcharlen({string})",
   },
   strcharpart = {
     args = { 2, 4 },
@@ -10896,9 +10897,9 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'strcharpart',
-    params = { { 'src', 'any' }, { 'start', 'any' }, { 'len', 'any' }, { 'skipcc', 'any' } },
-    signature = 'strcharpart({src}, {start} [, {len} [, {skipcc}]])',
+    name = "strcharpart",
+    params = { { "src", "any" }, { "start", "any" }, { "len", "any" }, { "skipcc", "any" } },
+    signature = "strcharpart({src}, {start} [, {len} [, {skipcc}]])",
   },
   strchars = {
     args = { 1, 2 },
@@ -10932,10 +10933,10 @@ M.funcs = {
           endif
       <
     ]=],
-    name = 'strchars',
-    params = { { 'string', 'string' }, { 'skipcc', 'any' } },
-    returns = 'integer',
-    signature = 'strchars({string} [, {skipcc}])',
+    name = "strchars",
+    params = { { "string", "string" }, { "skipcc", "any" } },
+    returns = "integer",
+    signature = "strchars({string} [, {skipcc}])",
   },
   strdisplaywidth = {
     args = { 1, 2 },
@@ -10955,10 +10956,10 @@ M.funcs = {
       Also see |strlen()|, |strwidth()| and |strchars()|.
 
     ]=],
-    name = 'strdisplaywidth',
-    params = { { 'string', 'string' }, { 'col', 'integer' } },
-    returns = 'integer',
-    signature = 'strdisplaywidth({string} [, {col}])',
+    name = "strdisplaywidth",
+    params = { { "string", "string" }, { "col", "integer" } },
+    returns = "integer",
+    signature = "strdisplaywidth({string} [, {col}])",
   },
   strftime = {
     args = { 1, 2 },
@@ -10981,10 +10982,10 @@ M.funcs = {
       				   " Show mod time of file.c.
 
     ]=],
-    name = 'strftime',
-    params = { { 'format', 'any' }, { 'time', 'any' } },
-    returns = 'string',
-    signature = 'strftime({format} [, {time}])',
+    name = "strftime",
+    params = { { "format", "any" }, { "time", "any" } },
+    returns = "string",
+    signature = "strftime({format} [, {time}])",
   },
   strgetchar = {
     args = 2,
@@ -10999,10 +11000,10 @@ M.funcs = {
       Also see |strcharpart()| and |strchars()|.
 
     ]=],
-    name = 'strgetchar',
-    params = { { 'str', 'string' }, { 'index', 'integer' } },
-    returns = 'integer',
-    signature = 'strgetchar({str}, {index})',
+    name = "strgetchar",
+    params = { { "str", "string" }, { "index", "integer" } },
+    returns = "integer",
+    signature = "strgetchar({str}, {index})",
   },
   stridx = {
     args = { 2, 3 },
@@ -11028,10 +11029,10 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'stridx',
-    params = { { 'haystack', 'string' }, { 'needle', 'string' }, { 'start', 'integer' } },
-    returns = 'integer',
-    signature = 'stridx({haystack}, {needle} [, {start}])',
+    name = "stridx",
+    params = { { "haystack", "string" }, { "needle", "string" }, { "start", "integer" } },
+    returns = "integer",
+    signature = "stridx({haystack}, {needle} [, {start}])",
   },
   string = {
     args = 1,
@@ -11061,10 +11062,10 @@ M.funcs = {
       share data with other application.
 
     ]=],
-    name = 'string',
-    params = { { 'expr', 'any' } },
-    returns = 'string',
-    signature = 'string({expr})',
+    name = "string",
+    params = { { "expr", "any" } },
+    returns = "string",
+    signature = "string({expr})",
   },
   strlen = {
     args = 1,
@@ -11079,10 +11080,10 @@ M.funcs = {
       Also see |len()|, |strdisplaywidth()| and |strwidth()|.
 
     ]=],
-    name = 'strlen',
-    params = { { 'string', 'string' } },
-    returns = 'integer',
-    signature = 'strlen({string})',
+    name = "strlen",
+    params = { { "string", "string" } },
+    returns = "integer",
+    signature = "strlen({string})",
   },
   strpart = {
     args = { 2, 4 },
@@ -11114,15 +11115,15 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'strpart',
+    name = "strpart",
     params = {
-      { 'src', 'string' },
-      { 'start', 'integer' },
-      { 'len', 'integer' },
-      { 'chars', '0|1' },
+      { "src", "string" },
+      { "start", "integer" },
+      { "len", "integer" },
+      { "chars", "0|1" },
     },
-    returns = 'string',
-    signature = 'strpart({src}, {start} [, {len} [, {chars}]])',
+    returns = "string",
+    signature = "strpart({src}, {start} [, {len} [, {chars}]])",
   },
   strptime = {
     args = 2,
@@ -11152,10 +11153,10 @@ M.funcs = {
       <  Sun Apr 27 12:53:55 1997
 
     ]=],
-    name = 'strptime',
-    params = { { 'format', 'string' }, { 'timestring', 'string' } },
-    returns = 'integer',
-    signature = 'strptime({format}, {timestring})',
+    name = "strptime",
+    params = { { "format", "string" }, { "timestring", "string" } },
+    returns = "integer",
+    signature = "strptime({format}, {timestring})",
   },
   strridx = {
     args = { 2, 3 },
@@ -11179,14 +11180,14 @@ M.funcs = {
       function strrchr().
 
     ]=],
-    name = 'strridx',
+    name = "strridx",
     params = {
-      { 'haystack', 'string' },
-      { 'needle', 'string' },
-      { 'start', 'integer' },
+      { "haystack", "string" },
+      { "needle", "string" },
+      { "start", "integer" },
     },
-    returns = 'integer',
-    signature = 'strridx({haystack}, {needle} [, {start}])',
+    returns = "integer",
+    signature = "strridx({haystack}, {needle} [, {start}])",
   },
   strtrans = {
     args = 1,
@@ -11203,10 +11204,10 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'strtrans',
-    params = { { 'string', 'string' } },
-    returns = 'string',
-    signature = 'strtrans({string})',
+    name = "strtrans",
+    params = { { "string", "string" } },
+    returns = "string",
+    signature = "strtrans({string})",
   },
   strutf16len = {
     args = { 1, 2 },
@@ -11231,10 +11232,10 @@ M.funcs = {
           echo strutf16len('ą́', v:true)	" returns 3
       <
     ]=],
-    name = 'strutf16len',
-    params = { { 'string', 'string' }, { 'countcc', '0|1' } },
-    returns = 'integer',
-    signature = 'strutf16len({string} [, {countcc}])',
+    name = "strutf16len",
+    params = { { "string", "string" }, { "countcc", "0|1" } },
+    returns = "integer",
+    signature = "strutf16len({string} [, {countcc}])",
   },
   strwidth = {
     args = 1,
@@ -11250,15 +11251,15 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'strwidth',
-    params = { { 'string', 'string' } },
-    returns = 'integer',
-    signature = 'strwidth({string})',
+    name = "strwidth",
+    params = { { "string", "string" } },
+    returns = "integer",
+    signature = "strwidth({string})",
   },
   submatch = {
     args = { 1, 2 },
     base = 1,
-    tags = { 'E935' },
+    tags = { "E935" },
     desc = [=[
       Only for an expression in a |:substitute| command or
       substitute() function.
@@ -11288,17 +11289,17 @@ M.funcs = {
       A line break is included as a newline character.
 
     ]=],
-    name = 'submatch',
-    params = { { 'nr', 'integer' }, { 'list', 'nil' } },
-    signature = 'submatch({nr} [, {list}])',
-    returns = 'string',
+    name = "submatch",
+    params = { { "nr", "integer" }, { "list", "nil" } },
+    signature = "submatch({nr} [, {list}])",
+    returns = "string",
   },
   submatch__1 = {
     args = { 2 },
     base = 1,
-    name = 'submatch',
-    params = { { 'nr', 'integer' }, { 'list', 'integer' } },
-    returns = 'string|string[]',
+    name = "submatch",
+    params = { { "nr", "integer" }, { "list", "integer" } },
+    returns = "string|string[]",
   },
   substitute = {
     args = 4,
@@ -11347,15 +11348,15 @@ M.funcs = {
       <Returns an empty string on error.
 
     ]=],
-    name = 'substitute',
+    name = "substitute",
     params = {
-      { 'string', 'string' },
-      { 'pat', 'string' },
-      { 'sub', 'string' },
-      { 'flags', 'string' },
+      { "string", "string" },
+      { "pat", "string" },
+      { "sub", "string" },
+      { "flags", "string" },
     },
-    returns = 'string',
-    signature = 'substitute({string}, {pat}, {sub}, {flags})',
+    returns = "string",
+    signature = "substitute({string}, {pat}, {sub}, {flags})",
   },
   swapfilelist = {
     desc = [=[
@@ -11369,10 +11370,10 @@ M.funcs = {
       	let swapfiles = swapfilelist()
       	let &directory = save_dir
     ]=],
-    name = 'swapfilelist',
+    name = "swapfilelist",
     params = {},
-    returns = 'string[]',
-    signature = 'swapfilelist()',
+    returns = "string[]",
+    signature = "swapfilelist()",
   },
   swapinfo = {
     args = 1,
@@ -11396,9 +11397,9 @@ M.funcs = {
       	Magic number mismatch: Info in first block is invalid
 
     ]=],
-    name = 'swapinfo',
-    params = { { 'fname', 'string' } },
-    signature = 'swapinfo({fname})',
+    name = "swapinfo",
+    params = { { "fname", "string" } },
+    signature = "swapinfo({fname})",
   },
   swapname = {
     args = 1,
@@ -11411,10 +11412,10 @@ M.funcs = {
       If buffer {buf} has no swap file, returns an empty string.
 
     ]=],
-    name = 'swapname',
-    params = { { 'buf', 'integer|string' } },
-    returns = 'string',
-    signature = 'swapname({buf})',
+    name = "swapname",
+    params = { { "buf", "integer|string" } },
+    returns = "string",
+    signature = "swapname({buf})",
   },
   synID = {
     args = 3,
@@ -11444,10 +11445,10 @@ M.funcs = {
       	echo synIDattr(synID(line("."), col("."), 1), "name")
       <
     ]=],
-    name = 'synID',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' }, { 'trans', '0|1' } },
-    returns = 'integer',
-    signature = 'synID({lnum}, {col}, {trans})',
+    name = "synID",
+    params = { { "lnum", "integer" }, { "col", "integer" }, { "trans", "0|1" } },
+    returns = "integer",
+    signature = "synID({lnum}, {col}, {trans})",
   },
   synIDattr = {
     args = { 2, 3 },
@@ -11498,10 +11499,10 @@ M.funcs = {
       	echo synID(line("."), col("."), 1)->synIDtrans()->synIDattr("fg")
       <
     ]=],
-    name = 'synIDattr',
-    params = { { 'synID', 'integer' }, { 'what', 'string' }, { 'mode', 'string' } },
-    returns = 'string',
-    signature = 'synIDattr({synID}, {what} [, {mode}])',
+    name = "synIDattr",
+    params = { { "synID", "integer" }, { "what", "string" }, { "mode", "string" } },
+    returns = "string",
+    signature = "synIDattr({synID}, {what} [, {mode}])",
   },
   synIDtrans = {
     args = 1,
@@ -11515,10 +11516,10 @@ M.funcs = {
       Returns zero on error.
 
     ]=],
-    name = 'synIDtrans',
-    params = { { 'synID', 'integer' } },
-    returns = 'integer',
-    signature = 'synIDtrans({synID})',
+    name = "synIDtrans",
+    params = { { "synID", "integer" } },
+    returns = "integer",
+    signature = "synIDtrans({synID})",
   },
   synconcealed = {
     args = 2,
@@ -11547,10 +11548,10 @@ M.funcs = {
       	synconcealed(lnum, 5)   [1, 'X', 2]
       	synconcealed(lnum, 6)   [0, '', 0]
     ]=],
-    name = 'synconcealed',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
-    returns = '{[1]: integer, [2]: string, [3]: integer}[]',
-    signature = 'synconcealed({lnum}, {col})',
+    name = "synconcealed",
+    params = { { "lnum", "integer" }, { "col", "integer" } },
+    returns = "{[1]: integer, [2]: string, [3]: integer}[]",
+    signature = "synconcealed({lnum}, {col})",
   },
   synstack = {
     args = 2,
@@ -11573,15 +11574,15 @@ M.funcs = {
       character in a line and the first column in an empty line are
       valid positions.
     ]=],
-    name = 'synstack',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
-    returns = 'integer[]',
-    signature = 'synstack({lnum}, {col})',
+    name = "synstack",
+    params = { { "lnum", "integer" }, { "col", "integer" } },
+    returns = "integer[]",
+    signature = "synstack({lnum}, {col})",
   },
   system = {
     args = { 1, 2 },
     base = 1,
-    tags = { 'E677' },
+    tags = { "E677" },
     desc = [=[
       Note: Prefer |vim.system()| in Lua.
 
@@ -11632,13 +11633,13 @@ M.funcs = {
       Use |:checktime| to force a check.
 
     ]=],
-    name = 'system',
+    name = "system",
     params = {
-      { 'cmd', 'string|string[]' },
-      { 'input', 'string|string[]|integer' },
+      { "cmd", "string|string[]" },
+      { "input", "string|string[]|integer" },
     },
-    returns = 'string',
-    signature = 'system({cmd} [, {input}])',
+    returns = "string",
+    signature = "system({cmd} [, {input}])",
   },
   systemlist = {
     args = { 1, 3 },
@@ -11658,16 +11659,16 @@ M.funcs = {
       Returns an empty string on error.
 
     ]=],
-    name = 'systemlist',
+    name = "systemlist",
     params = {
-      { 'cmd', 'string|string[]' },
-      { 'input', 'string|string[]|integer' },
-      { 'keepempty', 'integer' },
+      { "cmd", "string|string[]" },
+      { "input", "string|string[]|integer" },
+      { "keepempty", "integer" },
     },
     -- TODO(lewis6991): Not sure the '' return case is possible via vim.fn
     -- returns = "string[]|''",
-    returns = 'string[]',
-    signature = 'systemlist({cmd} [, {input} [, {keepempty}]])',
+    returns = "string[]",
+    signature = "systemlist({cmd} [, {input} [, {keepempty}]])",
   },
   tabpagebuflist = {
     args = { 0, 1 },
@@ -11686,9 +11687,9 @@ M.funcs = {
       <Note that a buffer may appear in more than one window.
 
     ]=],
-    name = 'tabpagebuflist',
-    params = { { 'arg', 'any' } },
-    signature = 'tabpagebuflist([{arg}])',
+    name = "tabpagebuflist",
+    params = { { "arg", "any" } },
+    signature = "tabpagebuflist([{arg}])",
   },
   tabpagenr = {
     args = { 0, 1 },
@@ -11706,10 +11707,10 @@ M.funcs = {
 
       Returns zero on error.
     ]=],
-    name = 'tabpagenr',
-    params = { { 'arg', "'$'|'#'" } },
-    returns = 'integer',
-    signature = 'tabpagenr([{arg}])',
+    name = "tabpagenr",
+    params = { { "arg", "'$'|'#'" } },
+    returns = "integer",
+    signature = "tabpagenr([{arg}])",
   },
   tabpagewinnr = {
     args = { 1, 2 },
@@ -11728,20 +11729,20 @@ M.funcs = {
       <When {tabarg} is invalid zero is returned.
 
     ]=],
-    name = 'tabpagewinnr',
-    params = { { 'tabarg', 'integer' }, { 'arg', "'$'|'#'" } },
-    returns = 'integer',
-    signature = 'tabpagewinnr({tabarg} [, {arg}])',
+    name = "tabpagewinnr",
+    params = { { "tabarg", "integer" }, { "arg", "'$'|'#'" } },
+    returns = "integer",
+    signature = "tabpagewinnr({tabarg} [, {arg}])",
   },
   tagfiles = {
     desc = [=[
       Returns a |List| with the file names used to search for tags
       for the current buffer.  This is the 'tags' option expanded.
     ]=],
-    name = 'tagfiles',
+    name = "tagfiles",
     params = {},
-    returns = 'string[]',
-    signature = 'tagfiles()',
+    returns = "string[]",
+    signature = "tagfiles()",
   },
   taglist = {
     args = { 1, 2 },
@@ -11790,9 +11791,9 @@ M.funcs = {
       the tags file generated by the different ctags tools.
 
     ]=],
-    name = 'taglist',
-    params = { { 'expr', 'any' }, { 'filename', 'string' } },
-    signature = 'taglist({expr} [, {filename}])',
+    name = "taglist",
+    params = { { "expr", "any" }, { "filename", "string" } },
+    signature = "taglist({expr} [, {filename}])",
   },
   tan = {
     args = 1,
@@ -11809,11 +11810,11 @@ M.funcs = {
       <	-1.181502
 
     ]=],
-    float_func = 'tan',
-    name = 'tan',
-    params = { { 'expr', 'number' } },
-    returns = 'number',
-    signature = 'tan({expr})',
+    float_func = "tan",
+    name = "tan",
+    params = { { "expr", "number" } },
+    returns = "number",
+    signature = "tan({expr})",
   },
   tanh = {
     args = 1,
@@ -11830,11 +11831,11 @@ M.funcs = {
       <	-0.761594
 
     ]=],
-    float_func = 'tanh',
-    name = 'tanh',
-    params = { { 'expr', 'number' } },
-    returns = 'number',
-    signature = 'tanh({expr})',
+    float_func = "tanh",
+    name = "tanh",
+    params = { { "expr", "number" } },
+    returns = "number",
+    signature = "tanh({expr})",
   },
   tempname = {
     desc = [=[
@@ -11845,10 +11846,10 @@ M.funcs = {
       	exe "redir > " .. tmpfile
       <
     ]=],
-    name = 'tempname',
+    name = "tempname",
     params = {},
-    returns = 'string',
-    signature = 'tempname()',
+    returns = "string",
+    signature = "tempname()",
   },
   termopen = {
     args = { 1, 2 },
@@ -11867,9 +11868,9 @@ M.funcs = {
       except $TERM is set to "xterm-256color". Full behavior is
       described in |terminal|.
     ]=],
-    name = 'termopen',
-    params = { { 'cmd', 'any' }, { 'opts', 'table' } },
-    signature = 'termopen({cmd} [, {opts}])',
+    name = "termopen",
+    params = { { "cmd", "any" }, { "opts", "table" } },
+    signature = "termopen({cmd} [, {opts}])",
   },
   test_garbagecollect_now = {
     args = 0,
@@ -11880,12 +11881,12 @@ M.funcs = {
       any function.
     ]=],
     params = {},
-    signature = 'test_garbagecollect_now()',
+    signature = "test_garbagecollect_now()",
     lua = false,
   },
   test_write_list_log = {
     args = 1,
-    params = { { 'fname', 'string' } },
+    params = { { "fname", "string" } },
     lua = false,
   },
   timer_info = {
@@ -11907,9 +11908,9 @@ M.funcs = {
           "callback"	    the callback
 
     ]=],
-    name = 'timer_info',
-    params = { { 'id', 'any' } },
-    signature = 'timer_info([{id}])',
+    name = "timer_info",
+    params = { { "id", "any" } },
+    signature = "timer_info([{id}])",
   },
   timer_pause = {
     args = 2,
@@ -11928,14 +11929,14 @@ M.funcs = {
       See |non-zero-arg|.
 
     ]=],
-    name = 'timer_pause',
-    params = { { 'timer', 'any' }, { 'paused', 'any' } },
-    signature = 'timer_pause({timer}, {paused})',
+    name = "timer_pause",
+    params = { { "timer", "any" }, { "paused", "any" } },
+    signature = "timer_pause({timer}, {paused})",
   },
   timer_start = {
     args = { 2, 3 },
     base = 1,
-    tags = { 'timer' },
+    tags = { "timer" },
     desc = [=[
       Create a timer and return the timer ID.
 
@@ -11967,9 +11968,9 @@ M.funcs = {
       <This invokes MyHandler() three times at 500 msec intervals.
 
     ]=],
-    name = 'timer_start',
-    params = { { 'time', 'any' }, { 'callback', 'any' }, { 'options', 'table' } },
-    signature = 'timer_start({time}, {callback} [, {options}])',
+    name = "timer_start",
+    params = { { "time", "any" }, { "callback", "any" }, { "options", "table" } },
+    signature = "timer_start({time}, {callback} [, {options}])",
   },
   timer_stop = {
     args = 1,
@@ -11980,9 +11981,9 @@ M.funcs = {
       Number.  If {timer} does not exist there is no error.
 
     ]=],
-    name = 'timer_stop',
-    params = { { 'timer', 'any' } },
-    signature = 'timer_stop({timer})',
+    name = "timer_stop",
+    params = { { "timer", "any" } },
+    signature = "timer_stop({timer})",
   },
   timer_stopall = {
     args = 0,
@@ -11991,9 +11992,9 @@ M.funcs = {
       invoked.  Useful if some timers is misbehaving.  If there are
       no timers there is no error.
     ]=],
-    name = 'timer_stopall',
+    name = "timer_stopall",
     params = {},
-    signature = 'timer_stopall()',
+    signature = "timer_stopall()",
   },
   tolower = {
     args = 1,
@@ -12005,10 +12006,10 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'tolower',
-    params = { { 'expr', 'any' } },
-    returns = 'string',
-    signature = 'tolower({expr})',
+    name = "tolower",
+    params = { { "expr", "any" } },
+    returns = "string",
+    signature = "tolower({expr})",
   },
   toupper = {
     args = 1,
@@ -12020,10 +12021,10 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'toupper',
-    params = { { 'expr', 'any' } },
-    returns = 'string',
-    signature = 'toupper({expr})',
+    name = "toupper",
+    params = { { "expr", "any" } },
+    returns = "string",
+    signature = "toupper({expr})",
   },
   tr = {
     args = 3,
@@ -12045,10 +12046,10 @@ M.funcs = {
       <returns "{blob}"
 
     ]=],
-    name = 'tr',
-    params = { { 'src', 'string' }, { 'fromstr', 'string' }, { 'tostr', 'string' } },
-    returns = 'string',
-    signature = 'tr({src}, {fromstr}, {tostr})',
+    name = "tr",
+    params = { { "src", "string" }, { "fromstr", "string" }, { "tostr", "string" } },
+    returns = "string",
+    signature = "tr({src}, {fromstr}, {tostr})",
   },
   trim = {
     args = { 1, 3 },
@@ -12082,10 +12083,10 @@ M.funcs = {
       <returns "  vim"
 
     ]=],
-    name = 'trim',
-    params = { { 'text', 'any' }, { 'mask', 'string' }, { 'dir', '0|1|2' } },
-    returns = 'string',
-    signature = 'trim({text} [, {mask} [, {dir}]])',
+    name = "trim",
+    params = { { "text", "any" }, { "mask", "string" }, { "dir", "0|1|2" } },
+    returns = "string",
+    signature = "trim({text} [, {mask} [, {dir}]])",
   },
   trunc = {
     args = 1,
@@ -12104,11 +12105,11 @@ M.funcs = {
       <	4.0
 
     ]=],
-    float_func = 'trunc',
-    name = 'trunc',
-    params = { { 'expr', 'any' } },
-    returns = 'integer',
-    signature = 'trunc({expr})',
+    float_func = "trunc",
+    name = "trunc",
+    params = { { "expr", "any" } },
+    returns = "integer",
+    signature = "trunc({expr})",
   },
   type = {
     args = 1,
@@ -12142,10 +12143,10 @@ M.funcs = {
 
     ]=],
     fast = true,
-    name = 'type',
-    params = { { 'expr', 'any' } },
-    returns = 'integer',
-    signature = 'type({expr})',
+    name = "type",
+    params = { { "expr", "any" } },
+    returns = "integer",
+    signature = "type({expr})",
   },
   undofile = {
     args = 1,
@@ -12162,10 +12163,10 @@ M.funcs = {
       Useful in combination with |:wundo| and |:rundo|.
 
     ]=],
-    name = 'undofile',
-    params = { { 'name', 'string' } },
-    returns = 'string',
-    signature = 'undofile({name})',
+    name = "undofile",
+    params = { { "name", "string" } },
+    returns = "string",
+    signature = "undofile({name})",
   },
   undotree = {
     args = { 0, 1 },
@@ -12214,14 +12215,14 @@ M.funcs = {
       		blocks.  Each item may again have an "alt"
       		item.
     ]=],
-    name = 'undotree',
-    params = { { 'buf', 'integer|string' } },
-    signature = 'undotree([{buf}])',
+    name = "undotree",
+    params = { { "buf", "integer|string" } },
+    signature = "undotree([{buf}])",
   },
   uniq = {
     args = { 1, 3 },
     base = 1,
-    tags = { 'E882' },
+    tags = { "E882" },
     desc = [=[
       Remove second and succeeding copies of repeated adjacent
       {list} items in-place.  Returns {list}.  If you want a list
@@ -12233,10 +12234,10 @@ M.funcs = {
       Returns zero if {list} is not a |List|.
 
     ]=],
-    name = 'uniq',
-    params = { { 'list', 'any' }, { 'func', 'any' }, { 'dict', 'any' } },
-    returns = 'any[]|0',
-    signature = 'uniq({list} [, {func} [, {dict}]])',
+    name = "uniq",
+    params = { { "list", "any" }, { "func", "any" }, { "dict", "any" } },
+    returns = "any[]|0",
+    signature = "uniq({list} [, {func} [, {dict}]])",
   },
   utf16idx = {
     args = { 2, 4 },
@@ -12269,15 +12270,15 @@ M.funcs = {
       	echo utf16idx('a😊😊', 9)	" returns -1
       <
     ]=],
-    name = 'utf16idx',
+    name = "utf16idx",
     params = {
-      { 'string', 'string' },
-      { 'idx', 'integer' },
-      { 'countcc', 'any' },
-      { 'charidx', 'any' },
+      { "string", "string" },
+      { "idx", "integer" },
+      { "countcc", "any" },
+      { "charidx", "any" },
     },
-    returns = 'integer',
-    signature = 'utf16idx({string}, {idx} [, {countcc} [, {charidx}]])',
+    returns = "integer",
+    signature = "utf16idx({string}, {idx} [, {countcc} [, {charidx}]])",
   },
   values = {
     args = 1,
@@ -12288,9 +12289,9 @@ M.funcs = {
       Returns zero if {dict} is not a |Dict|.
 
     ]=],
-    name = 'values',
-    params = { { 'dict', 'any' } },
-    signature = 'values({dict})',
+    name = "values",
+    params = { { "dict", "any" } },
+    signature = "values({dict})",
   },
   virtcol = {
     args = { 1, 3 },
@@ -12351,9 +12352,9 @@ M.funcs = {
           echo max(map(range(1, line('$')), "virtcol([v:val, '$'])"))
 
     ]=],
-    name = 'virtcol',
-    params = { { 'expr', 'any' }, { 'list', 'any' }, { 'winid', 'integer' } },
-    signature = 'virtcol({expr} [, {list} [, {winid}]])',
+    name = "virtcol",
+    params = { { "expr", "any" }, { "list", "any" }, { "winid", "integer" } },
+    signature = "virtcol({expr} [, {list} [, {winid}]])",
   },
   virtcol2col = {
     args = 3,
@@ -12381,9 +12382,9 @@ M.funcs = {
       See also |screenpos()|, |virtcol()| and |col()|.
 
     ]=],
-    name = 'virtcol2col',
-    params = { { 'winid', 'integer' }, { 'lnum', 'integer' }, { 'col', 'integer' } },
-    signature = 'virtcol2col({winid}, {lnum}, {col})',
+    name = "virtcol2col",
+    params = { { "winid", "integer" }, { "lnum", "integer" }, { "col", "integer" } },
+    signature = "virtcol2col({winid}, {lnum}, {col})",
   },
   visualmode = {
     args = { 0, 1 },
@@ -12405,9 +12406,9 @@ M.funcs = {
       a non-empty String, then the Visual mode will be cleared and
       the old value is returned.  See |non-zero-arg|.
     ]=],
-    name = 'visualmode',
-    params = { { 'expr', 'any' } },
-    signature = 'visualmode([{expr}])',
+    name = "visualmode",
+    params = { { "expr", "any" } },
+    signature = "visualmode([{expr}])",
   },
   wait = {
     args = { 2, 3 },
@@ -12427,9 +12428,9 @@ M.funcs = {
       	-2 if the function was interrupted (by |CTRL-C|)
       	-3 if an error occurred
     ]=],
-    name = 'wait',
-    params = { { 'timeout', 'integer' }, { 'condition', 'any' }, { 'interval', 'any' } },
-    signature = 'wait({timeout}, {condition} [, {interval}])',
+    name = "wait",
+    params = { { "timeout", "integer" }, { "condition", "any" }, { "interval", "any" } },
+    signature = "wait({timeout}, {condition} [, {interval}])",
   },
   wildmenumode = {
     desc = [=[
@@ -12443,9 +12444,9 @@ M.funcs = {
       <
       (Note, this needs the 'wildcharm' option set appropriately).
     ]=],
-    name = 'wildmenumode',
+    name = "wildmenumode",
     params = {},
-    signature = 'wildmenumode()',
+    signature = "wildmenumode()",
   },
   win_execute = {
     args = { 2, 3 },
@@ -12465,9 +12466,9 @@ M.funcs = {
       an empty string is returned.
 
     ]=],
-    name = 'win_execute',
-    params = { { 'id', 'any' }, { 'command', 'any' }, { 'silent', 'boolean' } },
-    signature = 'win_execute({id}, {command} [, {silent}])',
+    name = "win_execute",
+    params = { { "id", "any" }, { "command", "any" }, { "silent", "boolean" } },
+    signature = "win_execute({id}, {command} [, {silent}])",
   },
   win_findbuf = {
     args = 1,
@@ -12477,10 +12478,10 @@ M.funcs = {
       buffer {bufnr}.  When there is none the list is empty.
 
     ]=],
-    name = 'win_findbuf',
-    params = { { 'bufnr', 'any' } },
-    returns = 'integer[]',
-    signature = 'win_findbuf({bufnr})',
+    name = "win_findbuf",
+    params = { { "bufnr", "any" } },
+    returns = "integer[]",
+    signature = "win_findbuf({bufnr})",
   },
   win_getid = {
     args = { 0, 2 },
@@ -12495,10 +12496,10 @@ M.funcs = {
       Return zero if the window cannot be found.
 
     ]=],
-    name = 'win_getid',
-    params = { { 'win', 'any' }, { 'tab', 'any' } },
-    returns = 'integer',
-    signature = 'win_getid([{win} [, {tab}]])',
+    name = "win_getid",
+    params = { { "win", "any" }, { "tab", "any" } },
+    returns = "integer",
+    signature = "win_getid([{win} [, {tab}]])",
   },
   win_gettype = {
     args = { 0, 1 },
@@ -12522,10 +12523,10 @@ M.funcs = {
       Also see the 'buftype' option.
 
     ]=],
-    name = 'win_gettype',
-    params = { { 'nr', 'integer' } },
+    name = "win_gettype",
+    params = { { "nr", "integer" } },
     returns = "'autocmd'|'command'|''|'loclist'|'popup'|'preview'|'quickfix'|'unknown'",
-    signature = 'win_gettype([{nr}])',
+    signature = "win_gettype([{nr}])",
   },
   win_gotoid = {
     args = 1,
@@ -12536,10 +12537,10 @@ M.funcs = {
       Return TRUE if successful, FALSE if the window cannot be found.
 
     ]=],
-    name = 'win_gotoid',
-    params = { { 'expr', 'any' } },
-    returns = '0|1',
-    signature = 'win_gotoid({expr})',
+    name = "win_gotoid",
+    params = { { "expr", "any" } },
+    returns = "0|1",
+    signature = "win_gotoid({expr})",
   },
   win_id2tabwin = {
     args = 1,
@@ -12550,9 +12551,9 @@ M.funcs = {
       Return [0, 0] if the window cannot be found.
 
     ]=],
-    name = 'win_id2tabwin',
-    params = { { 'expr', 'any' } },
-    signature = 'win_id2tabwin({expr})',
+    name = "win_id2tabwin",
+    params = { { "expr", "any" } },
+    signature = "win_id2tabwin({expr})",
   },
   win_id2win = {
     args = 1,
@@ -12562,9 +12563,9 @@ M.funcs = {
       Return 0 if the window cannot be found in the current tabpage.
 
     ]=],
-    name = 'win_id2win',
-    params = { { 'expr', 'any' } },
-    signature = 'win_id2win({expr})',
+    name = "win_id2win",
+    params = { { "expr", "any" } },
+    signature = "win_id2win({expr})",
   },
   win_move_separator = {
     args = 2,
@@ -12585,9 +12586,9 @@ M.funcs = {
       Only works for the current tab page. *E1308*
 
     ]=],
-    name = 'win_move_separator',
-    params = { { 'nr', 'integer' }, { 'offset', 'any' } },
-    signature = 'win_move_separator({nr}, {offset})',
+    name = "win_move_separator",
+    params = { { "nr", "integer" }, { "offset", "any" } },
+    signature = "win_move_separator({nr}, {offset})",
   },
   win_move_statusline = {
     args = 2,
@@ -12605,9 +12606,9 @@ M.funcs = {
       Only works for the current tab page.
 
     ]=],
-    name = 'win_move_statusline',
-    params = { { 'nr', 'integer' }, { 'offset', 'any' } },
-    signature = 'win_move_statusline({nr}, {offset})',
+    name = "win_move_statusline",
+    params = { { "nr", "integer" }, { "offset", "any" } },
+    signature = "win_move_statusline({nr}, {offset})",
   },
   win_screenpos = {
     args = 1,
@@ -12622,9 +12623,9 @@ M.funcs = {
       tabpage.
 
     ]=],
-    name = 'win_screenpos',
-    params = { { 'nr', 'integer' } },
-    signature = 'win_screenpos({nr})',
+    name = "win_screenpos",
+    params = { { "nr", "integer" } },
+    signature = "win_screenpos({nr})",
   },
   win_splitmove = {
     args = { 2, 3 },
@@ -12650,9 +12651,9 @@ M.funcs = {
       		'splitright' are used.
 
     ]=],
-    name = 'win_splitmove',
-    params = { { 'nr', 'integer' }, { 'target', 'any' }, { 'options', 'table' } },
-    signature = 'win_splitmove({nr}, {target} [, {options}])',
+    name = "win_splitmove",
+    params = { { "nr", "integer" }, { "target", "any" }, { "options", "table" } },
+    signature = "win_splitmove({nr}, {target} [, {options}])",
   },
   winbufnr = {
     args = 1,
@@ -12668,10 +12669,10 @@ M.funcs = {
         echo "The file in the current window is " .. bufname(winbufnr(0))
       <
     ]=],
-    name = 'winbufnr',
-    params = { { 'nr', 'integer' } },
-    returns = 'integer',
-    signature = 'winbufnr({nr})',
+    name = "winbufnr",
+    params = { { "nr", "integer" } },
+    returns = "integer",
+    signature = "winbufnr({nr})",
   },
   wincol = {
     desc = [=[
@@ -12679,10 +12680,10 @@ M.funcs = {
       cursor in the window.  This is counting screen cells from the
       left side of the window.  The leftmost column is one.
     ]=],
-    name = 'wincol',
+    name = "wincol",
     params = {},
-    returns = 'integer',
-    signature = 'wincol()',
+    returns = "integer",
+    signature = "wincol()",
   },
   windowsversion = {
     desc = [=[
@@ -12692,10 +12693,10 @@ M.funcs = {
       an empty string.
     ]=],
     fast = true,
-    name = 'windowsversion',
+    name = "windowsversion",
     params = {},
-    returns = 'string',
-    signature = 'windowsversion()',
+    returns = "string",
+    signature = "windowsversion()",
   },
   winheight = {
     args = 1,
@@ -12711,10 +12712,10 @@ M.funcs = {
         echo "The current window has " .. winheight(0) .. " lines."
 
     ]=],
-    name = 'winheight',
-    params = { { 'nr', 'integer' } },
-    returns = 'integer',
-    signature = 'winheight({nr})',
+    name = "winheight",
+    params = { { "nr", "integer" } },
+    returns = "integer",
+    signature = "winheight({nr})",
   },
   winlayout = {
     args = { 0, 1 },
@@ -12756,9 +12757,9 @@ M.funcs = {
       			    ['leaf', 1001]]], ['leaf', 1000]]]
       <
     ]=],
-    name = 'winlayout',
-    params = { { 'tabnr', 'integer' } },
-    signature = 'winlayout([{tabnr}])',
+    name = "winlayout",
+    params = { { "tabnr", "integer" } },
+    signature = "winlayout([{tabnr}])",
   },
   winline = {
     desc = [=[
@@ -12768,10 +12769,10 @@ M.funcs = {
       If the cursor was moved the view on the file will be updated
       first, this may cause a scroll.
     ]=],
-    name = 'winline',
+    name = "winline",
     params = {},
-    returns = 'integer',
-    signature = 'winline()',
+    returns = "integer",
+    signature = "winline()",
   },
   winnr = {
     args = { 0, 1 },
@@ -12806,9 +12807,9 @@ M.funcs = {
       	let wnum = winnr('3k')
 
     ]=],
-    name = 'winnr',
-    params = { { 'arg', 'any' } },
-    signature = 'winnr([{arg}])',
+    name = "winnr",
+    params = { { "arg", "any" } },
+    signature = "winnr([{arg}])",
   },
   winrestcmd = {
     desc = [=[
@@ -12822,9 +12823,9 @@ M.funcs = {
       	exe cmd
       <
     ]=],
-    name = 'winrestcmd',
+    name = "winrestcmd",
     params = {},
-    signature = 'winrestcmd()',
+    signature = "winrestcmd()",
   },
   winrestview = {
     args = 1,
@@ -12846,9 +12847,9 @@ M.funcs = {
       If the window size changed the result won't be the same.
 
     ]=],
-    name = 'winrestview',
-    params = { { 'dict', 'vim.fn.winrestview.dict' } },
-    signature = 'winrestview({dict})',
+    name = "winrestview",
+    params = { { "dict", "vim.fn.winrestview.dict" } },
+    signature = "winrestview({dict})",
   },
   winsaveview = {
     desc = [=[
@@ -12878,10 +12879,10 @@ M.funcs = {
       	skipcol		columns skipped
       Note that no option values are saved.
     ]=],
-    name = 'winsaveview',
+    name = "winsaveview",
     params = {},
-    signature = 'winsaveview()',
-    returns = 'vim.fn.winsaveview.ret',
+    signature = "winsaveview()",
+    returns = "vim.fn.winsaveview.ret",
   },
   winwidth = {
     args = 1,
@@ -12901,9 +12902,9 @@ M.funcs = {
       option.
 
     ]=],
-    name = 'winwidth',
-    params = { { 'nr', 'integer' } },
-    signature = 'winwidth({nr})',
+    name = "winwidth",
+    params = { { "nr", "integer" } },
+    signature = "winwidth({nr})",
   },
   wordcount = {
     desc = [=[
@@ -12927,9 +12928,9 @@ M.funcs = {
       	visual_words    Number of words visually selected
       			(only in Visual mode)
     ]=],
-    name = 'wordcount',
+    name = "wordcount",
     params = {},
-    signature = 'wordcount()',
+    signature = "wordcount()",
   },
   writefile = {
     args = { 2, 3 },
@@ -12981,9 +12982,9 @@ M.funcs = {
       	call writefile(fl, "foocopy", "b")
 
     ]=],
-    name = 'writefile',
-    params = { { 'object', 'any' }, { 'fname', 'string' }, { 'flags', 'string' } },
-    signature = 'writefile({object}, {fname} [, {flags}])',
+    name = "writefile",
+    params = { { "object", "any" }, { "fname", "string" }, { "flags", "string" } },
+    signature = "writefile({object}, {fname} [, {flags}])",
   },
   xor = {
     args = 2,
@@ -12996,9 +12997,9 @@ M.funcs = {
       	let bits = xor(bits, 0x80)
       <
     ]=],
-    name = 'xor',
-    params = { { 'expr', 'any' }, { 'expr', 'any' } },
-    signature = 'xor({expr}, {expr})',
+    name = "xor",
+    params = { { "expr", "any" }, { "expr", "any" } },
+    signature = "xor({expr}, {expr})",
   },
 }
 

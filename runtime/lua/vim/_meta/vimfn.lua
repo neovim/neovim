@@ -1709,6 +1709,7 @@ function vim.fn.exepath(expr) end
 ---   echo exists("*strftime")
 ---   echo exists("*s:MyFunc")
 ---   echo exists("*MyFunc")
+---   echo exists("*v:lua.Func")
 ---   echo exists("bufcount")
 ---   echo exists(":Make")
 ---   echo exists("#CursorHold")
