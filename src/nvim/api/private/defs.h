@@ -124,6 +124,7 @@ struct key_value_pair {
 };
 
 typedef uint64_t OptionalKeys;
+typedef Integer HLGroupID;
 
 // this is the prefix of all keysets with optional keys
 typedef struct {

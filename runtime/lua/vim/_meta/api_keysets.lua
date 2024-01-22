@@ -246,7 +246,7 @@ error('Cannot require a meta file')
 --- @field end_line? integer
 --- @field end_row? integer
 --- @field end_col? integer
---- @field hl_group? integer
+--- @field hl_group? number|string
 --- @field virt_text? any[]
 --- @field virt_text_pos? string
 --- @field virt_text_win_col? integer
@@ -264,10 +264,10 @@ error('Cannot require a meta file')
 --- @field virt_lines_leftcol? boolean
 --- @field strict? boolean
 --- @field sign_text? string
---- @field sign_hl_group? integer
---- @field number_hl_group? integer
---- @field line_hl_group? integer
---- @field cursorline_hl_group? integer
+--- @field sign_hl_group? number|string
+--- @field number_hl_group? number|string
+--- @field line_hl_group? number|string
+--- @field cursorline_hl_group? number|string
 --- @field conceal? string
 --- @field spell? boolean
 --- @field ui_watched? boolean
