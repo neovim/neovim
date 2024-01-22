@@ -936,17 +936,14 @@ end
 --- @param provider string
 --- @return string|boolean?
 function module.missing_provider(provider)
-  if provider == 'ruby' then
+  if provider == 'ruby' or provider == 'perl' then
     --- @type string?
-    local e = module.fn['provider#ruby#Detect']()[2]
+    local e = module.exec_lua("return {require('vim.provider." .. provider .. "').detect()}")[2]
     return e ~= '' and e or false
   elseif provider == 'node' then
     --- @type string?
     local e = module.fn['provider#node#Detect']()[2]
     return e ~= '' and e or false
-  elseif provider == 'perl' then
-    --- @type string?
-    return module.exec_lua([[return {require('vim.provider.perl').detect()}]])[2]
   elseif provider == 'python' then
     return module.exec_lua([[return {require('vim.provider.python').detect_by_module('neovim')}]])[2]
   end

@@ -20,7 +20,7 @@ function M.check()
   end
   health.info('Ruby: ' .. health.system({ 'ruby', '-v' }))
 
-  local ruby_detect_table = vim.fn['provider#ruby#Detect']()
+  local ruby_detect_table = require('vim.provider.ruby').detect()
   local host = ruby_detect_table[1]
   if host:find('^%s*$') then
     health.warn('`neovim-ruby-host` not found.', {
