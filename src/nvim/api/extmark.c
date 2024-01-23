@@ -755,11 +755,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_lines, NULL), true);
     }
     if (url != NULL) {
-      DecorSignHighlight sh = {
-        .priority = DECOR_PRIORITY_BASE,
-        .next = DECOR_ID_INVALID,
-        .url = url,
-      };
+      DecorSignHighlight sh = DECOR_SIGN_HIGHLIGHT_INIT;
+      sh.url = url;
       decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, 0, 0);
     }
     if (has_hl) {
@@ -788,10 +785,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
     uint32_t decor_indexed = DECOR_ID_INVALID;
     if (url != NULL) {
-      DecorSignHighlight sh = {
-        .priority = DECOR_PRIORITY_BASE,
-        .url = url,
-      };
+      DecorSignHighlight sh = DECOR_SIGN_HIGHLIGHT_INIT;
+      sh.url = url;
       sh.next = decor_indexed;
       decor_indexed = decor_put_sh(sh);
     }
