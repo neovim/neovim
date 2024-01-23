@@ -5,10 +5,10 @@ local Range = require('vim.treesitter._range')
 ---@type table<integer,LanguageTree>
 local parsers = setmetatable({}, { __mode = 'v' })
 
----@class TreesitterModule
----@field highlighter TSHighlighter
----@field query TSQueryModule
----@field language TSLanguageModule
+---@class vim.treesitter
+---@field highlighter vim.treesitter.highlighter
+---@field query vim.treesitter.query
+---@field language vim.treesitter.language
 local M = setmetatable({}, {
   __index = function(t, k)
     ---@diagnostic disable:no-unknown
