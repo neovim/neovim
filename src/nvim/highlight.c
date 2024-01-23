@@ -978,10 +978,6 @@ void hlattrs2dict(Dictionary *hl, Dictionary *hl_attrs, HlAttrs ae, bool use_rgb
   if (ae.hl_blend > -1 && (use_rgb || !short_keys)) {
     PUT_C(*hl, "blend", INTEGER_OBJ(ae.hl_blend));
   }
-
-  if (ae.url.data != NULL) {
-    PUT_C(*hl, "url", STRING_OBJ(ae.url));
-  }
 }
 
 HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *err)

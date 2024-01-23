@@ -784,6 +784,12 @@ void remote_ui_hl_attr_define(UI *ui, Integer id, HlAttrs rgb_attrs, HlAttrs cte
   MAXSIZE_TEMP_DICT(cterm, HLATTRS_DICT_SIZE);
   hlattrs2dict(&rgb, NULL, rgb_attrs, true, false);
   hlattrs2dict(&cterm, NULL, rgb_attrs, false, false);
+
+  // TODO(gpanders): write a comment if this works
+  if (rgb_attrs.url.data != NULL) {
+    PUT_C(rgb, "url", STRING_OBJ(rgb_attrs.url));
+  }
+
   ADD_C(args, DICTIONARY_OBJ(rgb));
   ADD_C(args, DICTIONARY_OBJ(cterm));
 
