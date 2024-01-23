@@ -1419,7 +1419,7 @@ bool marktree_itr_get_ext(MarkTree *b, MTPos p, MarkTreeIter *itr, bool last, bo
     return marktree_itr_prev(b, itr);
   } else if (itr->i >= itr->x->n) {
     // no need for "meta_filter" here, this just goes up one step
-    return marktree_itr_next(b, itr);
+    return marktree_itr_next_skip(b, itr, true, false, NULL, NULL);
   }
   return true;
 }
