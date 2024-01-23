@@ -421,6 +421,10 @@ function Client:handle_body(body)
   end
   log_debug('rpc.receive', decoded)
 
+  if body == nil or decoded == nil then
+    return
+  end
+
   if type(decoded.method) == 'string' and decoded.id then
     local err --- @type lsp.ResponseError|nil
     -- Schedule here so that the users functions don't trigger an error and
