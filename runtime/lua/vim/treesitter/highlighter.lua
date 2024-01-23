@@ -4,9 +4,9 @@ local Range = require('vim.treesitter._range')
 
 local ns = api.nvim_create_namespace('treesitter/highlighter')
 
----@alias vim.TSHlIter fun(end_line: integer|nil): integer, TSNode, TSMetadata
+---@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil): integer, TSNode, TSMetadata
 
----@class vim.TSHighlighterQuery
+---@class vim.treesitter.highlighter.Query
 ---@field private _query Query?
 ---@field private lang string
 ---@field private hl_cache table<integer,integer>
@@ -16,7 +16,7 @@ TSHighlighterQuery.__index = TSHighlighterQuery
 ---@private
 ---@param lang string
 ---@param query_string string?
----@return vim.TSHighlighterQuery
+---@return vim.treesitter.highlighter.Query
 function TSHighlighterQuery.new(lang, query_string)
   local self = setmetatable({}, TSHighlighterQuery)
   self.lang = lang
@@ -52,20 +52,20 @@ function TSHighlighterQuery:query()
   return self._query
 end
 
----@class vim.TSHighlightState
+---@class vim.treesitter.highlighter.State
 ---@field tstree TSTree
 ---@field next_row integer
----@field iter vim.TSHlIter?
----@field highlighter_query vim.TSHighlighterQuery
+---@field iter vim.treesitter.highlighter.Iter?
+---@field highlighter_query vim.treesitter.highlighter.Query
 
----@class vim.TSHighlighter
----@field active table<integer,vim.TSHighlighter>
+---@class vim.treesitter.highlighter
+---@field active table<integer,vim.treesitter.highlighter>
 ---@field bufnr integer
 ---@field orig_spelloptions string
 --- A map of highlight states.
 --- This state is kept during rendering across each line update.
----@field _highlight_states vim.TSHighlightState[]
----@field _queries table<string,vim.TSHighlighterQuery>
+---@field _highlight_states vim.treesitter.highlighter.State[]
+---@field _queries table<string,vim.treesitter.highlighter.Query>
 ---@field tree LanguageTree
 ---@field redraw_count integer
 local TSHighlighter = {
@@ -81,7 +81,7 @@ TSHighlighter.__index = TSHighlighter
 ---@param tree LanguageTree parser object to use for highlighting
 ---@param opts (table|nil) Configuration of the highlighter:
 ---           - queries table overwrite queries used by the highlighter
----@return vim.TSHighlighter Created highlighter object
+---@return vim.treesitter.highlighter Created highlighter object
 function TSHighlighter.new(tree, opts)
   local self = setmetatable({}, TSHighlighter)
 
@@ -202,7 +202,7 @@ function TSHighlighter:prepare_highlight_states(srow, erow)
   end)
 end
 
----@param fn fun(state: vim.TSHighlightState)
+---@param fn fun(state: vim.treesitter.highlighter.State)
 ---@package
 function TSHighlighter:for_each_highlight_state(fn)
   for _, state in ipairs(self._highlight_states) do
@@ -234,7 +234,7 @@ end
 --
 ---@package
 ---@param lang string Language used by the highlighter.
----@return vim.TSHighlighterQuery
+---@return vim.treesitter.highlighter.Query
 function TSHighlighter:get_query(lang)
   if not self._queries[lang] then
     self._queries[lang] = TSHighlighterQuery.new(lang)
@@ -243,7 +243,7 @@ function TSHighlighter:get_query(lang)
   return self._queries[lang]
 end
 
----@param self vim.TSHighlighter
+---@param self vim.treesitter.highlighter
 ---@param buf integer
 ---@param line integer
 ---@param is_spell_nav boolean

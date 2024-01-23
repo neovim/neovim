@@ -12,7 +12,7 @@ Query.__index = Query
 ---@field captures table
 ---@field patterns table<string,any[][]>
 
----@class TSQueryModule
+---@class vim.treesitter.query
 local M = {}
 
 ---@param files string[]

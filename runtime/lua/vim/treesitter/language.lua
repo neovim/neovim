@@ -1,6 +1,6 @@
 local api = vim.api
 
----@class TSLanguageModule
+---@class vim.treesitter.language
 local M = {}
 
 ---@type table<string,string>
@@ -57,7 +57,7 @@ function M.require_language(lang, path, silent, symbol_name)
   return true
 end
 
----@class treesitter.RequireLangOpts
+---@class vim.treesitter.language.RequireLangOpts
 ---@field path? string
 ---@field silent? boolean
 ---@field filetype? string|string[]
@@ -74,7 +74,7 @@ end
 ---                        - path (string|nil) Optional path the parser is located at
 ---                        - symbol_name (string|nil) Internal symbol name for the language to load
 function M.add(lang, opts)
-  ---@cast opts treesitter.RequireLangOpts
+  ---@cast opts vim.treesitter.language.RequireLangOpts
   opts = opts or {}
   local path = opts.path
   local filetype = opts.filetype or lang
