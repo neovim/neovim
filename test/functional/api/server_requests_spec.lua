@@ -291,8 +291,19 @@ describe('server -> client', function()
       local id = fn.sockconnect(mode, address, { rpc = true })
       ok(id > 0)
 
+      -- nvim_buf_set_name(1, "a9")
+      --local req="\\148\\0\\0\\177\\110\\118\\105\\109\\95\\98\\117\\102\\95\\115\\101\\116\\95\\110\\97\\109\\101\\146\\212\\0\\1\\162\\97\\57"
+      local req = "\\x94\\x0\\x0"--\\xb1\\x6e\\x76\\x69\\x6d\\x5f\\x62\\x75\\x66\\x5f\\x73\\x65\\x74\\x5f\\x6e\\x61\\x6d\\x65\\x92\\xd4\\x0\\x1\\xa2\\x61\\x39"
+
+      
+      local s = "printf \""..req.."\" | socat - UNIX-CLIENT:"..address
+      --local s = "echo |ncat -U "..address
+      fn.system(s)
       fn.rpcrequest(id, 'nvim_set_current_line', 'hello')
       local client_id = fn.rpcrequest(id, 'nvim_get_api_info')[1]
+      --fn.rpcrequest(client_id, 'nvim_buf_set_name', 1, "x")
+      local bname = fn.rpcrequest(client_id, 'nvim_buf_get_name', 1)
+      eq(bname, "a9")
 
       set_session(server)
       eq(serverpid, fn.getpid())
