@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed, exec, api = helpers.clear, helpers.feed, helpers.exec, helpers.api
+local api, clear, eq = helpers.api, helpers.clear, helpers.eq
+local eval, exec, feed = helpers.eval, helpers.exec, helpers.feed
 
 describe('Signs', function()
   local screen
@@ -564,5 +565,14 @@ describe('Signs', function()
       {0:~                                                    }|*9
                                                            |
     ]])
+  end)
+
+  it('sign_undefine() frees all signs', function()
+    exec([[
+      sign define 1 text=1
+      sign define 2 text=2
+      call sign_undefine()
+    ]])
+    eq({}, eval('sign_getdefined()'))
   end)
 end)
