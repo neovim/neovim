@@ -731,8 +731,8 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
     }
 
     cattrs.cterm_bg_color = fattrs.cterm_bg_color;
-    cattrs.cterm_fg_color = cterm_blend(ratio, battrs.cterm_fg_color,
-                                        fattrs.cterm_bg_color);
+    cattrs.cterm_fg_color = (int16_t)cterm_blend(ratio, battrs.cterm_fg_color,
+                                                 fattrs.cterm_bg_color);
     cattrs.rgb_ae_attr &= ~(HL_FG_INDEXED | HL_BG_INDEXED);
   } else {
     cattrs = fattrs;
@@ -780,7 +780,7 @@ static int rgb_blend(int ratio, int rgb1, int rgb2)
   return (mr << 16) + (mg << 8) + mb;
 }
 
-static int16_t cterm_blend(int ratio, int16_t c1, int16_t c2)
+static int cterm_blend(int ratio, int16_t c1, int16_t c2)
 {
   // 1. Convert cterm color numbers to RGB.
   // 2. Blend the RGB colors.
@@ -792,11 +792,11 @@ static int16_t cterm_blend(int ratio, int16_t c1, int16_t c2)
 }
 
 /// Converts RGB color to 8-bit color (0-255).
-static int16_t hl_rgb2cterm_color(int rgb)
+static int hl_rgb2cterm_color(int rgb)
 {
-  int16_t r = (rgb & 0xFF0000) >> 16;
-  int16_t g = (rgb & 0x00FF00) >> 8;
-  int16_t b = (rgb & 0x0000FF) >> 0;
+  int r = (rgb & 0xFF0000) >> 16;
+  int g = (rgb & 0x00FF00) >> 8;
+  int b = (rgb & 0x0000FF) >> 0;
 
   return (r * 6 / 256) * 36 + (g * 6 / 256) * 6 + (b * 6 / 256);
 }
