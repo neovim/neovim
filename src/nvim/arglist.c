@@ -477,7 +477,7 @@ static int do_arglist(char *str, int what, int after, bool will_edit)
 /// Redefine the argument list.
 void set_arglist(char *str)
 {
-  do_arglist(str, AL_SET, 0, false);
+  do_arglist(str, AL_SET, 0, true);
 }
 
 /// @return  true if window "win" is editing the file at the current argument
