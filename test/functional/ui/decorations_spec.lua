@@ -4548,6 +4548,7 @@ describe('decorations: signs', function()
       [1] = {foreground = Screen.colors.Blue4, background = Screen.colors.Grey};
       [2] = {foreground = Screen.colors.Blue1, bold = true};
       [3] = {background = Screen.colors.Yellow1, foreground = Screen.colors.Blue1};
+      [4] = {foreground = Screen.colors.Gray100, background = Screen.colors.Red};
     }
 
     ns = api.nvim_create_namespace 'test'
@@ -5017,6 +5018,21 @@ l5
     api.nvim_win_set_buf(0, buf)
     screen:expect{grid=[[
       ^                    |
+      {2:~                   }|*2
+                          |
+    ]]}
+  end)
+
+  it('no crash with sign after many marks #27137', function()
+    screen:try_resize(20, 4)
+    insert('a')
+    for _ = 0, 104 do
+      api.nvim_buf_set_extmark(0, ns, 0, 0, {hl_group = 'Error', end_col = 1})
+    end
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {sign_text = 'S1'})
+
+    screen:expect{grid=[[
+      S1{4:^a}                 |
       {2:~                   }|*2
                           |
     ]]}
