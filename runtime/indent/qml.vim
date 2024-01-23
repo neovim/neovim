@@ -40,10 +40,10 @@ function! s:GetQmlIndent()
 
   " bracket/brace/paren blocks
   if pline =~ '[{[(]$'
-    let ind += &sw
+    let ind += shiftwidth()
   endif
   if line =~ '^[}\])]'
-    let ind -= &sw
+    let ind -= shiftwidth()
   endif
 
   " '/*' comments
