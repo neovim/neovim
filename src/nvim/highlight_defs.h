@@ -40,7 +40,7 @@ typedef struct {
   RgbValue rgb_fg_color, rgb_bg_color, rgb_sp_color;
   int cterm_fg_color, cterm_bg_color;
   int hl_blend;
-  String url;
+  const char *url;
 } HlAttrs;
 
 #define HLATTRS_INIT (HlAttrs) { \
@@ -52,7 +52,7 @@ typedef struct {
   .cterm_fg_color = 0, \
   .cterm_bg_color = 0, \
   .hl_blend = -1, \
-  .url = STRING_INIT, \
+  .url = NULL, \
 }
 
 /// Values for index in highlight_attr[].

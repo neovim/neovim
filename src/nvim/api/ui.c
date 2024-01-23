@@ -786,8 +786,8 @@ void remote_ui_hl_attr_define(UI *ui, Integer id, HlAttrs rgb_attrs, HlAttrs cte
   hlattrs2dict(&cterm, NULL, rgb_attrs, false, false);
 
   // TODO(gpanders): write a comment if this works
-  if (rgb_attrs.url.data != NULL) {
-    PUT_C(rgb, "url", STRING_OBJ(rgb_attrs.url));
+  if (rgb_attrs.url != NULL) {
+    PUT_C(rgb, "url", STRING_OBJ(cstr_as_string((char *)rgb_attrs.url)));
   }
 
   ADD_C(args, DICTIONARY_OBJ(rgb));

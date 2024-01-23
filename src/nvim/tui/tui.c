@@ -140,7 +140,7 @@ struct TUIData {
   int width;
   int height;
   bool rgb;
-  String url;  ///< URL currently being printed, if any
+  const char *url;  ///< URL currently being printed, if any
   StringBuilder urlbuf;  ///< Re-usable buffer for writing OSC 8 control sequences
 };
 
@@ -150,7 +150,7 @@ static bool cursor_style_enabled = false;
 # include "tui/tui.c.generated.h"
 #endif
 
-static Set(String) urls = SET_INIT;
+static Set(cstr_t) urls = SET_INIT;
 
 void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
   FUNC_ATTR_NONNULL_ALL
@@ -161,7 +161,7 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
   tui->stopped = false;
   tui->seen_error_exit = 0;
   tui->loop = &main_loop;
-  tui->url = NULL_STRING;
+  tui->url = NULL;
   kv_init(tui->invalid_regions);
   kv_init(tui->urlbuf);
   signal_watcher_init(tui->loop, &tui->winch_handle, tui);
@@ -530,11 +530,11 @@ void tui_free_all_mem(TUIData *tui)
   ugrid_free(&tui->grid);
   kv_destroy(tui->invalid_regions);
 
-  String url;
+  const char *url;
   set_foreach(&urls, url, {
-    api_free_string(url);
+    xfree(url);
   });
-  set_destroy(String, &urls);
+  set_destroy(cstr_t, &urls);
 
   kv_destroy(tui->attrs);
   kv_destroy(tui->urlbuf);
@@ -565,7 +565,7 @@ static bool attrs_differ(TUIData *tui, int id1, int id2, bool rgb)
   HlAttrs a1 = kv_A(tui->attrs, (size_t)id1);
   HlAttrs a2 = kv_A(tui->attrs, (size_t)id2);
 
-  if (!equal_String(a1.url, a2.url)) {
+  if (!strequal(a1.url, a2.url)) {
     return true;
   }
 
@@ -728,10 +728,10 @@ static void update_attrs(TUIData *tui, int attr_id)
     }
   }
 
-  if (!equal_String(tui->url, attrs.url)) {
-    if (attrs.url.data != NULL) {
+  if (!strequal(tui->url, attrs.url)) {
+    if (attrs.url != NULL) {
       kv_size(tui->urlbuf) = 0;
-      kv_printf(tui->urlbuf, "\x1b]8;;%s\x1b\\", attrs.url.data);
+      kv_printf(tui->urlbuf, "\x1b]8;;%s\x1b\\", attrs.url);
       out(tui, tui->urlbuf.items, kv_size(tui->urlbuf));
     } else {
       out(tui, S_LEN("\x1b]8;;\x1b\\"));
@@ -818,9 +818,9 @@ static void cursor_goto(TUIData *tui, int row, int col)
   }
 
   // If an OSC 8 sequence is active terminate it before moving the cursor
-  if (tui->url.data != NULL) {
+  if (tui->url != NULL) {
     out(tui, S_LEN("\x1b]8;;\x1b\\"));
-    tui->url = NULL_STRING;
+    tui->url = NULL;
   }
 
   if (0 == row && 0 == col) {
@@ -1325,10 +1325,10 @@ void tui_hl_attr_define(TUIData *tui, Integer id, HlAttrs attrs, HlAttrs cterm_a
   attrs.cterm_fg_color = cterm_attrs.cterm_fg_color;
   attrs.cterm_bg_color = cterm_attrs.cterm_bg_color;
 
-  if (attrs.url.data != NULL) {
-    String *url = NULL;
-    if (set_put_ref(String, &urls, attrs.url, &url)) {
-      *url = copy_string(attrs.url, NULL);
+  if (attrs.url != NULL) {
+    const char **url = NULL;
+    if (set_put_ref(cstr_t, &urls, attrs.url, &url)) {
+      *url = xstrdup(attrs.url);
     }
     assert(url != NULL);
     attrs.url = *url;

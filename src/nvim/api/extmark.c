@@ -496,7 +496,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   DecorSignHighlight sign = DECOR_SIGN_HIGHLIGHT_INIT;
   DecorVirtText virt_text = DECOR_VIRT_TEXT_INIT;
   DecorVirtText virt_lines = DECOR_VIRT_LINES_INIT;
-  String url = STRING_INIT;
+  char *url = NULL;
   bool has_hl = false;
 
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -682,7 +682,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   if (HAS_KEY(opts, set_extmark, url)) {
-    url = copy_string(opts->url, NULL);
+    url = string_to_cstr(opts->url);
   }
 
   if (opts->ui_watched) {
@@ -754,7 +754,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     if (kv_size(virt_lines.data.virt_lines)) {
       decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_lines, NULL), true);
     }
-    if (url.data != NULL) {
+    if (url != NULL) {
       DecorSignHighlight sh = {
         .priority = DECOR_PRIORITY_BASE,
         .next = DECOR_ID_INVALID,
@@ -787,7 +787,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     }
 
     uint32_t decor_indexed = DECOR_ID_INVALID;
-    if (url.data != NULL) {
+    if (url != NULL) {
       DecorSignHighlight sh = {
         .priority = DECOR_PRIORITY_BASE,
         .url = url,
@@ -838,7 +838,9 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 error:
   clear_virttext(&virt_text.data.virt_text);
   clear_virtlines(&virt_lines.data.virt_lines);
-  api_free_string(url);
+  if (url != NULL) {
+    xfree(url);
+  }
 
   return 0;
 }

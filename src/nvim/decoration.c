@@ -118,7 +118,7 @@ void decor_redraw(buf_T *buf, int row1, int row2, DecorInline decor)
 
 void decor_redraw_sh(buf_T *buf, int row1, int row2, DecorSignHighlight sh)
 {
-  if (sh.hl_id || (sh.url.data != NULL) || (sh.flags & (kSHIsSign|kSHSpellOn|kSHSpellOff))) {
+  if (sh.hl_id || (sh.url != NULL) || (sh.flags & (kSHIsSign|kSHSpellOn|kSHSpellOff))) {
     if (row2 >= row1) {
       redraw_buf_range_later(buf, row1 + 1, row2 + 1);
     }
@@ -273,7 +273,9 @@ static void decor_free_inner(DecorVirtText *vt, uint32_t first_idx)
       xfree(sh->sign_name);
     }
     sh->flags = 0;
-    api_free_string(sh->url);
+    if (sh->url != NULL) {
+      XFREE_CLEAR(sh->url);
+    }
     if (sh->next == DECOR_ID_INVALID) {
       sh->next = decor_freelist;
       decor_freelist = first_idx;
@@ -510,7 +512,7 @@ void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end
     .draw_col = -10,
   };
 
-  if (sh->hl_id || (sh->url.data != NULL)
+  if (sh->hl_id || (sh->url != NULL)
       || (sh->flags & (kSHConceal | kSHSpellOn | kSHSpellOff))) {
     if (sh->hl_id) {
       range.attr_id = syn_id2attr(sh->hl_id);
@@ -629,7 +631,7 @@ next_mark:
         spell = kFalse;
       }
     }
-    if (active && item.data.sh.url.data != NULL) {
+    if (active && item.data.sh.url != NULL) {
       attr = hl_add_url(attr, item.data.sh.url);
     }
     if (item.start_row == state->row && item.start_col <= col
@@ -643,7 +645,7 @@ next_mark:
         clear_virttext(&item.data.vt->data.virt_text);
         xfree(item.data.vt);
       } else if (item.kind == kDecorKindHighlight) {
-        api_free_string(item.data.sh.url);
+        xfree((void *)item.data.sh.url);
       }
     }
   }
@@ -971,8 +973,8 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
     PUT(*dict, "ui_watched", BOOLEAN_OBJ(true));
   }
 
-  if (sh_hl.url.data != NULL) {
-    PUT(*dict, "url", STRING_OBJ(copy_string(sh_hl.url, NULL)));
+  if (sh_hl.url != NULL) {
+    PUT(*dict, "url", STRING_OBJ(cstr_to_string(sh_hl.url)));
   }
 
   if (virt_text) {

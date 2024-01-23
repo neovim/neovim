@@ -42,7 +42,7 @@ static Set(HlEntry) attr_entries = SET_INIT;
 static Map(int, int) combine_attr_entries = MAP_INIT;
 static Map(int, int) blend_attr_entries = MAP_INIT;
 static Map(int, int) blendthrough_attr_entries = MAP_INIT;
-static Set(String) urls = SET_INIT;
+static Set(cstr_t) urls = SET_INIT;
 
 #define attr_entry(i) attr_entries.keys[i]
 
@@ -476,7 +476,7 @@ int hl_get_underline(void)
       .rgb_bg_color = -1,
       .rgb_sp_color = -1,
       .hl_blend = -1,
-      .url = STRING_INIT,
+      .url = NULL,
     },
     .kind = kHlUI,
     .id1 = 0,
@@ -489,16 +489,16 @@ int hl_get_underline(void)
 /// @param attr Existing attribute to combine with
 /// @param url The URL to associate with the highlight attribute
 /// @return Combined attribute
-int hl_add_url(int attr, String url)
+int hl_add_url(int attr, const char *url)
 {
   HlAttrs attrs = HLATTRS_INIT;
 
-  String *urlp = NULL;
-  if (set_put_ref(String, &urls, url, &urlp)) {
-    *urlp = copy_string(url, NULL);
+  const char **urlp = NULL;
+  if (set_put_ref(cstr_t, &urls, url, &urlp)) {
+    *urlp = xstrdup(url);
   }
 
-  assert(urlp != NULL);
+  assert(*urlp != NULL);
   attrs.url = *urlp;
 
   int new = get_attr_entry((HlEntry){
@@ -521,9 +521,9 @@ int hl_get_term_attr(HlAttrs *aep)
 /// Clear all highlight tables.
 void clear_hl_tables(bool reinit)
 {
-  String url;
+  const char *url = NULL;
   set_foreach(&urls, url, {
-    api_free_string(url);
+    xfree((void *)url);
   });
 
   if (reinit) {
@@ -532,7 +532,7 @@ void clear_hl_tables(bool reinit)
     map_clear(int, &combine_attr_entries);
     map_clear(int, &blend_attr_entries);
     map_clear(int, &blendthrough_attr_entries);
-    set_clear(String, &urls);
+    set_clear(cstr_t, &urls);
     memset(highlight_attr_last, -1, sizeof(highlight_attr_last));
     highlight_attr_set_all();
     highlight_changed();
@@ -543,7 +543,7 @@ void clear_hl_tables(bool reinit)
     map_destroy(int, &blend_attr_entries);
     map_destroy(int, &blendthrough_attr_entries);
     map_destroy(ColorKey, &ns_hls);
-    set_destroy(String, &urls);
+    set_destroy(cstr_t, &urls);
   }
 }
 
@@ -635,7 +635,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
     new_en.hl_blend = prim_aep.hl_blend;
   }
 
-  if ((new_en.url.data == NULL) && (prim_aep.url.data != NULL)) {
+  if ((new_en.url == NULL) && (prim_aep.url != NULL)) {
     // Combined attributes borrow the string from the primary attribute
     new_en.url = prim_aep.url;
   }
