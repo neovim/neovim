@@ -144,6 +144,9 @@ jobs:
           sudo cpanm -n Neovim::Ext || cat "$HOME/.cpanm/build.log"
           perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
 
+          # Can I force it like this just for now?
+          sudo apt-get install -y socat
+
       - name: Build third-party deps
         run: |
           cmake -S cmake.deps --preset ci ${{ matrix.build.deps_flags }}
