@@ -957,7 +957,14 @@ void time_init(const char *startup_time_file, const char *process_name)
     return;
   }
   startuptime_buf = xmalloc(sizeof(char) * (STARTUP_TIME_BUF_SIZE + 1));
-  // set a large buffer so that flushing only happens after initialization
+  // the startuptime file is (potentially) bein written by several nvim processes concurrently.
+  // in order to avoid messing up the file with concurrent writes all startuptimes are written
+  // to a memory buffer first and flushed to disk only after the process is done with the
+  // is done with the initialization.
+  // in order to achieve this we set a large-enough buffer to the file stream, big enough to store
+  // all startup times. The _IOFBF mode makes sure that the buffer is not automatically flushed
+  // ("controlled buffering").
+  // The times are flushed to disk manually when "time_finish" is called.
   if (setvbuf(time_fd, startuptime_buf, _IOFBF, STARTUP_TIME_BUF_SIZE + 1) != 0) {
     xfree(startuptime_buf);
     fclose(time_fd);
