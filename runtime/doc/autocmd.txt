@@ -873,7 +873,7 @@ SafeState			When nothing is pending, going to wait for the
 				- Command line completion is active
 				You can use `mode()` to find out what state
 				Vim is in.  That may be:
-				- VIsual mode
+				- Visual mode
 				- Normal mode
 				- Insert mode
 				- Command-line mode
