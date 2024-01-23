@@ -38,7 +38,7 @@ local M = {}
 --- @field scope? 'line'|'buffer'|'cursor'|'c'|'l'|'b'
 --- @field pos? integer|{[1]:integer,[2]:integer}
 --- @field severity_sort? boolean|{reverse?:boolean}
---- @field severity? vim.diagnostic.Severity
+--- @field severity? vim.diagnostic.SeverityFilter
 --- @field header? string|{[1]:string,[2]:any}
 --- @field source? boolean|string
 --- @field format? fun(diagnostic:vim.Diagnostic): string
@@ -47,10 +47,10 @@ local M = {}
 --- @field focus_id? string
 
 --- @class vim.diagnostic.Opts.Underline
---- @field severity? vim.diagnostic.Severity
+--- @field severity? vim.diagnostic.SeverityFilter
 
 --- @class vim.diagnostic.Opts.VirtualText
---- @field severity? vim.diagnostic.Severity
+--- @field severity? vim.diagnostic.SeverityFilter
 --- @field source? boolean|string
 --- @field prefix? string|function
 --- @field suffix? string|function
@@ -63,7 +63,7 @@ local M = {}
 --- @field virt_text_hide? boolean
 
 --- @class vim.diagnostic.Opts.Signs
---- @field severity? vim.diagnostic.Severity
+--- @field severity? vim.diagnostic.SeverityFilter
 --- @field priority? integer
 --- @field text? table<vim.diagnostic.Severity,string>
 --- @field numhl? table<vim.diagnostic.Severity,string>
@@ -83,6 +83,9 @@ M.severity = {
 }
 
 --- @alias vim.diagnostic.SeverityInt 1|2|3|4
+
+--- See |diagnostic-severity| and |vim.diagnostic.get()|
+--- @alias vim.diagnostic.SeverityFilter vim.diagnostic.Severity|vim.diagnostic.Severity[]|{min:vim.diagnostic.Severity,max:vim.diagnostic.Severity}
 
 -- Mappings from qflist/loclist error types to severities
 M.severity.E = M.severity.ERROR
@@ -186,7 +189,7 @@ local function to_severity(severity)
   return severity
 end
 
---- @param severity vim.diagnostic.Severity|vim.diagnostic.Severity[]|{min:vim.diagnostic.Severity,max:vim.diagnostic.Severity}
+--- @param severity vim.diagnostic.SeverityFilter
 --- @param diagnostics vim.Diagnostic[]
 --- @return vim.Diagnostic[]
 local function filter_by_severity(severity, diagnostics)
@@ -1016,7 +1019,7 @@ end
 --- @class vim.diagnostic.GetOpts
 --- @field namespace? integer
 --- @field lnum? integer
---- @field severity? vim.diagnostic.Severity
+--- @field severity? vim.diagnostic.SeverityFilter
 
 --- @class vim.diagnostic.GotoOpts : vim.diagnostic.GetOpts
 --- @field cursor_position? {[1]:integer,[2]:integer}
@@ -1258,7 +1261,7 @@ M.handlers.virtual_text = {
       return
     end
 
-    local severity --- @type vim.diagnostic.Severity?
+    local severity --- @type vim.diagnostic.SeverityFilter?
     if opts.virtual_text then
       if opts.virtual_text.format then
         diagnostics = reformat_diagnostics(opts.virtual_text.format, diagnostics)
