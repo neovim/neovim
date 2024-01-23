@@ -1576,7 +1576,9 @@ bool marktree_itr_step_out_filter(MarkTree *b, MarkTreeIter *itr, MetaFilter met
     }
 
     itr->i = itr->x->n;
-    marktree_itr_next(b, itr);  // no filter, just reuse the code for step to parent
+
+    // no filter needed, just reuse the code path for step to parent
+    marktree_itr_next_skip(b, itr, true, false, NULL, NULL);
   }
 
   return itr->x;
