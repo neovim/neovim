@@ -476,7 +476,7 @@ int hl_get_underline(void)
       .rgb_bg_color = -1,
       .rgb_sp_color = -1,
       .hl_blend = -1,
-      .url = NULL,
+      .url = -1,
     },
     .kind = kHlUI,
     .id1 = 0,
@@ -493,13 +493,13 @@ int hl_add_url(int attr, const char *url)
 {
   HlAttrs attrs = HLATTRS_INIT;
 
-  const char **urlp = NULL;
-  if (set_put_ref(cstr_t, &urls, url, &urlp)) {
-    *urlp = xstrdup(url);
+  MHPutStatus status;
+  uint32_t k = set_put_idx(cstr_t, &urls, url, &status);
+  if (status != kMHExisting) {
+    urls.keys[k] = xstrdup(url);
   }
 
-  assert(*urlp != NULL);
-  attrs.url = *urlp;
+  attrs.url = (int)k;
 
   int new = get_attr_entry((HlEntry){
     .attr = attrs,
@@ -509,6 +509,16 @@ int hl_add_url(int attr, const char *url)
   });
 
   return hl_combine_attr(attr, new);
+}
+
+/// Get a URL by its index.
+///
+/// @param index URL index
+/// @return URL
+const char *hl_get_url(uint32_t index)
+{
+  assert(urls.keys);
+  return urls.keys[index];
 }
 
 /// Get attribute code for forwarded :terminal highlights.
@@ -635,7 +645,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
     new_en.hl_blend = prim_aep.hl_blend;
   }
 
-  if ((new_en.url == NULL) && (prim_aep.url != NULL)) {
+  if ((new_en.url == -1) && (prim_aep.url >= 0)) {
     // Combined attributes borrow the string from the primary attribute
     new_en.url = prim_aep.url;
   }
