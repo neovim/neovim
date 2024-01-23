@@ -38,9 +38,9 @@ typedef enum {
 typedef struct {
   int16_t rgb_ae_attr, cterm_ae_attr;  ///< HlAttrFlags
   RgbValue rgb_fg_color, rgb_bg_color, rgb_sp_color;
-  int cterm_fg_color, cterm_bg_color;
-  int hl_blend;
-  int url;
+  int16_t cterm_fg_color, cterm_bg_color;
+  int32_t hl_blend;
+  int32_t url;
 } HlAttrs;
 
 #define HLATTRS_INIT (HlAttrs) { \

@@ -1320,14 +1320,24 @@ void tui_grid_scroll(TUIData *tui, Integer g, Integer startrow, Integer endrow, 
   }
 }
 
-uint32_t tui_add_url(TUIData *tui, const char *url)
+/// Add a URL to be used in an OSC 8 hyperlink.
+///
+/// @param tui TUIData
+/// @param url URL to add
+/// @return Index of new URL, or -1 if URL is invalid
+int32_t tui_add_url(TUIData *tui, const char *url)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
+  if (url == NULL) {
+    return -1;
+  }
+
   MHPutStatus status;
   uint32_t k = set_put_idx(cstr_t, &urls, url, &status);
   if (status != kMHExisting) {
     urls.keys[k] = xstrdup(url);
   }
-  return k;
+  return (int32_t)k;
 }
 
 void tui_hl_attr_define(TUIData *tui, Integer id, HlAttrs attrs, HlAttrs cterm_attrs, Array info)
@@ -1352,11 +1362,11 @@ void tui_visual_bell(TUIData *tui)
 void tui_default_colors_set(TUIData *tui, Integer rgb_fg, Integer rgb_bg, Integer rgb_sp,
                             Integer cterm_fg, Integer cterm_bg)
 {
-  tui->clear_attrs.rgb_fg_color = (int)rgb_fg;
-  tui->clear_attrs.rgb_bg_color = (int)rgb_bg;
-  tui->clear_attrs.rgb_sp_color = (int)rgb_sp;
-  tui->clear_attrs.cterm_fg_color = (int)cterm_fg;
-  tui->clear_attrs.cterm_bg_color = (int)cterm_bg;
+  tui->clear_attrs.rgb_fg_color = (RgbValue)rgb_fg;
+  tui->clear_attrs.rgb_bg_color = (RgbValue)rgb_bg;
+  tui->clear_attrs.rgb_sp_color = (RgbValue)rgb_sp;
+  tui->clear_attrs.cterm_fg_color = (int16_t)cterm_fg;
+  tui->clear_attrs.cterm_bg_color = (int16_t)cterm_bg;
 
   tui->print_attr_id = -1;
   invalidate(tui, 0, tui->grid.height, 0, tui->grid.width);

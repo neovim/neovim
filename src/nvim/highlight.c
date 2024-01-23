@@ -499,7 +499,7 @@ int hl_add_url(int attr, const char *url)
     urls.keys[k] = xstrdup(url);
   }
 
-  attrs.url = (int)k;
+  attrs.url = (int32_t)k;
 
   int new = get_attr_entry((HlEntry){
     .attr = attrs,
@@ -780,7 +780,7 @@ static int rgb_blend(int ratio, int rgb1, int rgb2)
   return (mr << 16) + (mg << 8) + mb;
 }
 
-static int cterm_blend(int ratio, int c1, int c2)
+static int16_t cterm_blend(int ratio, int16_t c1, int16_t c2)
 {
   // 1. Convert cterm color numbers to RGB.
   // 2. Blend the RGB colors.
@@ -792,11 +792,11 @@ static int cterm_blend(int ratio, int c1, int c2)
 }
 
 /// Converts RGB color to 8-bit color (0-255).
-static int hl_rgb2cterm_color(int rgb)
+static int16_t hl_rgb2cterm_color(int rgb)
 {
-  int r = (rgb & 0xFF0000) >> 16;
-  int g = (rgb & 0x00FF00) >> 8;
-  int b = (rgb & 0x0000FF) >> 0;
+  int16_t r = (rgb & 0xFF0000) >> 16;
+  int16_t g = (rgb & 0x00FF00) >> 8;
+  int16_t b = (rgb & 0x0000FF) >> 0;
 
   return (r * 6 / 256) * 36 + (g * 6 / 256) * 6 + (b * 6 / 256);
 }
@@ -1136,12 +1136,12 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     hlattrs.rgb_fg_color = fg;
     hlattrs.rgb_sp_color = sp;
     hlattrs.hl_blend = blend;
-    hlattrs.cterm_bg_color = ctermbg == -1 ? 0 : ctermbg + 1;
-    hlattrs.cterm_fg_color = ctermfg == -1 ? 0 : ctermfg + 1;
+    hlattrs.cterm_bg_color = ctermbg == -1 ? 0 : (int16_t)(ctermbg + 1);
+    hlattrs.cterm_fg_color = ctermfg == -1 ? 0 : (int16_t)(ctermfg + 1);
     hlattrs.cterm_ae_attr = cterm_mask;
   } else {
-    hlattrs.cterm_bg_color = bg == -1 ? 0 : bg + 1;
-    hlattrs.cterm_fg_color = fg == -1 ? 0 : fg + 1;
+    hlattrs.cterm_bg_color = bg == -1 ? 0 : (int16_t)(bg + 1);
+    hlattrs.cterm_fg_color = fg == -1 ? 0 : (int16_t)(fg + 1);
     hlattrs.cterm_ae_attr = mask;
   }
 
