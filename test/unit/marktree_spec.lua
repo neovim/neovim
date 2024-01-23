@@ -602,6 +602,13 @@ describe('marktree', function()
     until not lib.marktree_itr_next_filter(tree, iter, 101, 0, filter)
     eq(tablelength(seen), tablelength(shadow))
 
+    -- test skipping subtrees to find the filtered mark at line 50
+    for i = 4, 50 do
+      ok(lib.marktree_itr_get_filter(tree, i, 0, 60, 0, filter, iter))
+      local mark = lib.marktree_itr_current(iter)
+      eq({ 50, 50, 1 }, { mark.id, mark.pos.row, mark.pos.col })
+    end
+
     -- delete
     for id = 1, 10000, 2 do
       lib.marktree_lookup_ns(tree, ns, id, false, iter)
