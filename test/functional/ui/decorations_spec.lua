@@ -2208,13 +2208,23 @@ describe('extmark decorations', function()
 
   it('supports URLs', function()
     insert(example_text)
+
+    local url = 'https://example.com'
+
+    local attrs = screen:get_default_attr_ids()
+    table.insert(attrs, {
+      url = url,
+    })
+    screen:set_default_attr_ids(attrs)
+
     api.nvim_buf_set_extmark(0, ns, 1, 4, {
       end_col = 14,
-      url = 'https://example.com',
+      url = url,
     })
+
     screen:expect{grid=[[
       for _,item in ipairs(items) do                    |
-          {UNEXPECTED url = https://example.com:local text}, hl_id_cell, count = unpack(item)  |
+          {44:local text}, hl_id_cell, count = unpack(item)  |
           if hl_id_cell ~= nil then                     |
               hl_id = hl_id_cell                        |
           end                                           |
