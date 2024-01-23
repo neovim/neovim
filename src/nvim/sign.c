@@ -1021,9 +1021,14 @@ static void sign_get_placed(buf_T *buf, linenr_T lnum, int id, const char *group
 void free_signs(void)
 {
   cstr_t name;
+  kvec_t(cstr_t) names = KV_INITIAL_VALUE;
   map_foreach_key(&sign_map, name, {
-    sign_undefine_by_name(name);
+    kv_push(names, name);
   });
+  for (size_t i = 0; i < kv_size(names); i++) {
+    sign_undefine_by_name(kv_A(names, i));
+  }
+  kv_destroy(names);
 }
 
 static enum {
