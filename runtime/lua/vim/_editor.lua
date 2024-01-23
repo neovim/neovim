@@ -352,7 +352,7 @@ function vim.schedule_wrap(fn)
 end
 
 -- vim.fn.{func}(...)
----@private
+---@nodoc
 vim.fn = setmetatable({}, {
   __index = function(t, key)
     local _fn
