@@ -956,10 +956,10 @@ void time_init(const char *startup_time_file, const char *process_name)
     semsg(_(e_notopen), startup_time_file);
     return;
   }
-  startup_time_buf = xmalloc(sizeof(char) * (STARTUP_TIME_BUF_SIZE + 1));
+  startuptime_buf = xmalloc(sizeof(char) * (STARTUP_TIME_BUF_SIZE + 1));
   // set a large buffer so that flushing only happens after initialization
-  if (setvbuf(time_fd, startup_time_buf, _IOFBF, STARTUP_TIME_BUF_SIZE + 1) != 0) {
-    xfree(startup_time_buf);
+  if (setvbuf(time_fd, startuptime_buf, _IOFBF, STARTUP_TIME_BUF_SIZE + 1) != 0) {
+    xfree(startuptime_buf);
     fclose(time_fd);
     time_fd = NULL;
     semsg("Error initializing startup time");
@@ -974,13 +974,13 @@ void time_finish(void)
   if (time_fd == NULL) {
     return;
   }
-  assert(startup_time_buf != NULL);
+  assert(startuptime_buf != NULL);
   TIME_MSG("--- NVIM STARTED ---\n");
 
   // flush buffer to disk
   fclose(time_fd);
   time_fd = NULL;
 
-  xfree(startup_time_buf);
-  startup_time_buf = NULL;
+  xfree(startuptime_buf);
+  startuptime_buf = NULL;
 }
