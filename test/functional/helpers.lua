@@ -251,9 +251,9 @@ function module.set_method_error(err)
 end
 
 --- @param lsession test.Session
---- @param request_cb function
---- @param notification_cb function
---- @param setup_cb function
+--- @param request_cb function?
+--- @param notification_cb function?
+--- @param setup_cb function?
 --- @param timeout integer
 --- @return {[1]: integer, [2]: string}
 function module.run_session(lsession, request_cb, notification_cb, setup_cb, timeout)
@@ -642,6 +642,8 @@ function module.set_shell_powershell(fake)
   return found
 end
 
+---@param func function
+---@return table<string,function>
 function module.create_callindex(func)
   return setmetatable({}, {
     --- @param tbl table<any,function>
