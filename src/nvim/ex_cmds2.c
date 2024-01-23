@@ -799,8 +799,7 @@ static void script_host_do_range(char *name, exarg_T *eap)
 }
 
 /// ":drop"
-/// Opens the first argument in a window.  When there are two or more arguments
-/// the argument list is redefined.
+/// Opens the first argument in a window, and the argument list is redefined.
 void ex_drop(exarg_T *eap)
 {
   bool split = false;
@@ -825,6 +824,8 @@ void ex_drop(exarg_T *eap)
     // edited in a window yet.  It's like ":tab all" but without closing
     // windows or tabs.
     ex_all(eap);
+    cmdmod.cmod_tab = 0;
+    ex_rewind(eap);
     return;
   }
 
@@ -845,6 +846,7 @@ void ex_drop(exarg_T *eap)
         buf_check_timestamp(curbuf);
         curbuf->b_p_ar = save_ar;
       }
+      ex_rewind(eap);
       return;
     }
   }

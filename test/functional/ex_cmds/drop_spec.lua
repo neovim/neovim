@@ -38,7 +38,7 @@ describe(':drop', function()
                     │^                    |
       {0:~             }│{0:~                   }|*7
       {2:tmp2           }{1:tmp1                }|
-      :drop tmp1                         |
+      "tmp1" [New]                       |
     ]])
   end)
 
