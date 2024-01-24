@@ -1146,6 +1146,8 @@ tag		command		action ~
 |:>|		:>		shift lines one 'shiftwidth' right
 |:@|		:@		execute contents of a register
 |:@@|		:@@		repeat the previous ":@"
+|:2match|	:2mat[ch]	define a second match to highlight
+|:3match|	:3mat[ch]	define a third match to highlight
 |:Next|		:N[ext]		go to previous file in the argument list
 |:append|	:a[ppend]	append text
 |:abbreviate|	:ab[breviate]	enter abbreviation
