@@ -4,6 +4,7 @@ local eq = helpers.eq
 local clear = helpers.clear
 local api = helpers.api
 local exc_exec = helpers.exc_exec
+local fn = helpers.fn
 local rmdir = helpers.rmdir
 local write_file = helpers.write_file
 local mkdir = helpers.mkdir
@@ -104,5 +105,15 @@ describe('spellfile', function()
     write_file(testdir .. '/spell/en.ascii.spl', spellheader:sub(1, -3) .. '\000\000')
     api.nvim_set_option_value('spelllang', 'en', {})
     eq('Vim(set):E757: This does not look like a spell file', exc_exec('set spell'))
+  end)
+
+  it('can be set to a relative path', function()
+    local fname = testdir .. '/spell/spell.add'
+    api.nvim_set_option_value('spellfile', fname, {})
+  end)
+
+  it('can be set to an absolute path', function()
+    local fname = fn.fnamemodify(testdir .. '/spell/spell.add', ':p')
+    api.nvim_set_option_value('spellfile', fname, {})
   end)
 end)
