@@ -1557,13 +1557,11 @@ edit F# or Fortran at all, use this in your startup vimrc: >
 FORTRAN					*fortran.vim* *ft-fortran-syntax*
 
 Default highlighting and dialect ~
-Vim highlights according to Fortran 2023 (the most recent standard) by
-default.  This choice should be appropriate for most users most of the time
-because Fortran 2023 is almost a superset of previous versions (Fortran 2018,
-2008, 2003, 95, 90, and 77).  A small number of features new to Fortran 2018
-and Fortran 2023 may have been omitted at present; the transition to Fortran
-2023 will be completed in the near future. A few legacy constructs deleted or
-declared obsolescent in recent Fortran standards are highlighted as todo
+Vim highlights according to Fortran 2023 (the most recent standard). This
+choice should be appropriate for most users most of the time because Fortran
+2023 is almost a superset of previous versions (Fortran 2018, 2008, 2003, 95,
+90, 77, and 66).  A few legacy constructs deleted or declared obsolescent,
+respectively, in recent Fortran standards are highlighted as errors and todo
 items.
 
 The syntax script no longer supports Fortran dialects.  The variable
