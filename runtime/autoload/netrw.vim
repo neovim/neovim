@@ -1973,7 +1973,7 @@ fun! NetrwStatusLine()
 
   if !exists("w:netrw_explore_bufnr") || w:netrw_explore_bufnr != bufnr("%") || !exists("w:netrw_explore_line") || w:netrw_explore_line != line(".") || !exists("w:netrw_explore_list")
    " restore user's status line
-   let &stl        = s:netrw_users_stl
+   let &l:stl      = s:netrw_users_stl
    let &laststatus = s:netrw_users_ls
    if exists("w:netrw_explore_bufnr")|unlet w:netrw_explore_bufnr|endif
    if exists("w:netrw_explore_line") |unlet w:netrw_explore_line |endif
@@ -2770,7 +2770,7 @@ fun! netrw#NetWrite(...) range
 
   if a:firstline == 1 && a:lastline == line("$")
    " restore modifiability; usually equivalent to set nomod
-   let &mod= mod
+   let &l:mod= mod
 "   call Decho(" ro=".&l:ro." ma=".&l:ma." mod=".&l:mod." wrap=".&l:wrap." (filename<".expand("%")."> win#".winnr()." ft<".&ft.">)",'~'.expand("<slnum>"))
   elseif !exists("leavemod")
    " indicate that the buffer has not been modified since last written
@@ -2959,7 +2959,7 @@ fun! s:NetrwGetFile(readcmd, tfile, method)
    setl isk-=/
    filetype detect
 "   call Decho("..local filetype<".&ft."> for buf#".bufnr()."<".bufname().">")
-   let &isk= iskkeep
+   let &l:isk= iskkeep
 "   call Dredir("ls!","NetrwGetFile (renamed buffer back to remote filename<".rfile."> : expand(%)<".expand("%").">)")
    let line1 = 1
    let line2 = line("$")
@@ -10101,7 +10101,7 @@ fun! s:SetupNetrwStatusLine(statline)
   " set up status line (may use User9 highlighting)
   " insure that windows have a statusline
   " make sure statusline is displayed
-  let &stl=a:statline
+  let &l:stl=a:statline
   setl laststatus=2
 "  call Decho("stl=".&stl,'~'.expand("<slnum>"))
   redraw
@@ -10217,7 +10217,7 @@ fun! s:NetrwRemoteFtpCmd(path,listcmd)
    setl ff=unix
 
    " restore settings
-   let &ff= ffkeep
+   let &l:ff= ffkeep
 "   call Dret("NetrwRemoteFtpCmd")
    return
 
@@ -10254,7 +10254,7 @@ fun! s:NetrwRemoteFtpCmd(path,listcmd)
   endif
 
   " restore settings " {{{3
-  let &ff= ffkeep
+  let &l:ff= ffkeep
 "  call Dret("NetrwRemoteFtpCmd")
 endfun
 
