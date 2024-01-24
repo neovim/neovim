@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "klib/kvec.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/types_defs.h"
 
 #define DECOR_ID_INVALID UINT32_MAX
@@ -68,10 +69,11 @@ typedef struct {
   int line_hl_id;
   int cursorline_hl_id;
   uint32_t next;
+  const char *url;
 } DecorSignHighlight;
 
 #define DECOR_SIGN_HIGHLIGHT_INIT { 0, DECOR_PRIORITY_BASE, 0, { 0, 0 }, NULL, 0, 0, 0, 0, \
-                                    DECOR_ID_INVALID }
+                                    DECOR_ID_INVALID, NULL }
 
 enum {
   kVTIsLines = 1,

@@ -1890,6 +1890,7 @@ function Screen:_equal_attrs(a, b)
     and a.strikethrough == b.strikethrough
     and a.fg_indexed == b.fg_indexed
     and a.bg_indexed == b.bg_indexed
+    and a.url == b.url
 end
 
 function Screen:_equal_info(a, b)

@@ -481,6 +481,8 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   by a UI. When set, the UI will receive win_extmark events.
 ///                   Note: the mark is positioned by virt_text attributes. Can be
 ///                   used together with virt_text.
+///               - url: A URL to associate with this extmark. In the TUI, the OSC 8 control
+///                   sequence is used to generate a clickable hyperlink to this URL.
 ///
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
@@ -494,6 +496,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   DecorSignHighlight sign = DECOR_SIGN_HIGHLIGHT_INIT;
   DecorVirtText virt_text = DECOR_VIRT_TEXT_INIT;
   DecorVirtText virt_lines = DECOR_VIRT_LINES_INIT;
+  char *url = NULL;
   bool has_hl = false;
 
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -678,6 +681,10 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     has_hl = true;
   }
 
+  if (HAS_KEY(opts, set_extmark, url)) {
+    url = string_to_cstr(opts->url);
+  }
+
   if (opts->ui_watched) {
     hl.flags |= kSHUIWatched;
     if (virt_text.pos == kVPosOverlay) {
@@ -747,6 +754,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     if (kv_size(virt_lines.data.virt_lines)) {
       decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_lines, NULL), true);
     }
+    if (url != NULL) {
+      DecorSignHighlight sh = DECOR_SIGN_HIGHLIGHT_INIT;
+      sh.url = url;
+      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, 0, 0);
+    }
     if (has_hl) {
       DecorSignHighlight sh = decor_sh_from_inline(hl);
       decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, (uint32_t)ns_id, id);
@@ -772,7 +784,14 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     }
 
     uint32_t decor_indexed = DECOR_ID_INVALID;
+    if (url != NULL) {
+      DecorSignHighlight sh = DECOR_SIGN_HIGHLIGHT_INIT;
+      sh.url = url;
+      sh.next = decor_indexed;
+      decor_indexed = decor_put_sh(sh);
+    }
     if (sign.flags & kSHIsSign) {
+      sign.next = decor_indexed;
       decor_indexed = decor_put_sh(sign);
       if (sign.text[0]) {
         decor_flags |= MT_FLAG_DECOR_SIGNTEXT;
@@ -814,6 +833,10 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 error:
   clear_virttext(&virt_text.data.virt_text);
   clear_virtlines(&virt_lines.data.virt_lines);
+  if (url != NULL) {
+    xfree(url);
+  }
+
   return 0;
 }
 

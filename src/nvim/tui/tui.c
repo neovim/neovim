@@ -32,6 +32,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
+#include "nvim/strings.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/tui/tui.h"
@@ -139,6 +140,8 @@ struct TUIData {
   int width;
   int height;
   bool rgb;
+  int url;  ///< Index of URL currently being printed, if any
+  StringBuilder urlbuf;  ///< Re-usable buffer for writing OSC 8 control sequences
 };
 
 static int got_winch = 0;
@@ -146,6 +149,8 @@ static bool cursor_style_enabled = false;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.c.generated.h"
 #endif
+
+static Set(cstr_t) urls = SET_INIT;
 
 void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
   FUNC_ATTR_NONNULL_ALL
@@ -156,7 +161,9 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
   tui->stopped = false;
   tui->seen_error_exit = 0;
   tui->loop = &main_loop;
+  tui->url = -1;
   kv_init(tui->invalid_regions);
+  kv_init(tui->urlbuf);
   signal_watcher_init(tui->loop, &tui->winch_handle, tui);
 
   // TODO(bfredl): zero hl is empty, send this explicitly?
@@ -412,7 +419,7 @@ static void terminfo_start(TUIData *tui)
 static void terminfo_stop(TUIData *tui)
 {
   // Destroy output stuff
-  tui_mode_change(tui, (String)STRING_INIT, SHAPE_IDX_N);
+  tui_mode_change(tui, NULL_STRING, SHAPE_IDX_N);
   tui_mouse_off(tui);
   unibi_out(tui, unibi_exit_attribute_mode);
   // Reset cursor to normal before exiting alternate screen.
@@ -423,7 +430,7 @@ static void terminfo_stop(TUIData *tui)
   tui_reset_key_encoding(tui);
 
   // May restore old title before exiting alternate screen.
-  tui_set_title(tui, (String)STRING_INIT);
+  tui_set_title(tui, NULL_STRING);
   if (ui_client_exit_status == 0) {
     ui_client_exit_status = tui->seen_error_exit;
   }
@@ -522,7 +529,15 @@ void tui_free_all_mem(TUIData *tui)
 {
   ugrid_free(&tui->grid);
   kv_destroy(tui->invalid_regions);
+
+  const char *url;
+  set_foreach(&urls, url, {
+    xfree((void *)url);
+  });
+  set_destroy(cstr_t, &urls);
+
   kv_destroy(tui->attrs);
+  kv_destroy(tui->urlbuf);
   xfree(tui->space_buf);
   xfree(tui->term);
   xfree(tui);
@@ -549,6 +564,10 @@ static bool attrs_differ(TUIData *tui, int id1, int id2, bool rgb)
   }
   HlAttrs a1 = kv_A(tui->attrs, (size_t)id1);
   HlAttrs a2 = kv_A(tui->attrs, (size_t)id2);
+
+  if (a1.url != a2.url) {
+    return true;
+  }
 
   if (rgb) {
     return a1.rgb_fg_color != a2.rgb_fg_color
@@ -709,6 +728,19 @@ static void update_attrs(TUIData *tui, int attr_id)
     }
   }
 
+  if (tui->url != attrs.url) {
+    if (attrs.url >= 0) {
+      const char *url = urls.keys[attrs.url];
+      kv_size(tui->urlbuf) = 0;
+      kv_printf(tui->urlbuf, "\x1b]8;;%s\x1b\\", url);
+      out(tui, tui->urlbuf.items, kv_size(tui->urlbuf));
+    } else {
+      out(tui, S_LEN("\x1b]8;;\x1b\\"));
+    }
+
+    tui->url = attrs.url;
+  }
+
   tui->default_attr = fg == -1 && bg == -1
                       && !bold && !italic && !has_any_underline && !reverse && !standout
                       && !strikethrough;
@@ -785,6 +817,13 @@ static void cursor_goto(TUIData *tui, int row, int col)
   if (row == grid->row && col == grid->col) {
     return;
   }
+
+  // If an OSC 8 sequence is active terminate it before moving the cursor
+  if (tui->url >= 0) {
+    out(tui, S_LEN("\x1b]8;;\x1b\\"));
+    tui->url = -1;
+  }
+
   if (0 == row && 0 == col) {
     unibi_out(tui, unibi_cursor_home);
     ugrid_goto(grid, row, col);
@@ -1281,11 +1320,32 @@ void tui_grid_scroll(TUIData *tui, Integer g, Integer startrow, Integer endrow, 
   }
 }
 
+/// Add a URL to be used in an OSC 8 hyperlink.
+///
+/// @param tui TUIData
+/// @param url URL to add
+/// @return Index of new URL, or -1 if URL is invalid
+int32_t tui_add_url(TUIData *tui, const char *url)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  if (url == NULL) {
+    return -1;
+  }
+
+  MHPutStatus status;
+  uint32_t k = set_put_idx(cstr_t, &urls, url, &status);
+  if (status != kMHExisting) {
+    urls.keys[k] = xstrdup(url);
+  }
+  return (int32_t)k;
+}
+
 void tui_hl_attr_define(TUIData *tui, Integer id, HlAttrs attrs, HlAttrs cterm_attrs, Array info)
 {
   attrs.cterm_ae_attr = cterm_attrs.cterm_ae_attr;
   attrs.cterm_fg_color = cterm_attrs.cterm_fg_color;
   attrs.cterm_bg_color = cterm_attrs.cterm_bg_color;
+
   kv_a(tui->attrs, (size_t)id) = attrs;
 }
 
@@ -1302,11 +1362,11 @@ void tui_visual_bell(TUIData *tui)
 void tui_default_colors_set(TUIData *tui, Integer rgb_fg, Integer rgb_bg, Integer rgb_sp,
                             Integer cterm_fg, Integer cterm_bg)
 {
-  tui->clear_attrs.rgb_fg_color = (int)rgb_fg;
-  tui->clear_attrs.rgb_bg_color = (int)rgb_bg;
-  tui->clear_attrs.rgb_sp_color = (int)rgb_sp;
-  tui->clear_attrs.cterm_fg_color = (int)cterm_fg;
-  tui->clear_attrs.cterm_bg_color = (int)cterm_bg;
+  tui->clear_attrs.rgb_fg_color = (RgbValue)rgb_fg;
+  tui->clear_attrs.rgb_bg_color = (RgbValue)rgb_bg;
+  tui->clear_attrs.rgb_sp_color = (RgbValue)rgb_sp;
+  tui->clear_attrs.cterm_fg_color = (int16_t)cterm_fg;
+  tui->clear_attrs.cterm_bg_color = (int16_t)cterm_bg;
 
   tui->print_attr_id = -1;
   invalidate(tui, 0, tui->grid.height, 0, tui->grid.width);

@@ -175,7 +175,14 @@ static HlAttrs ui_client_dict2hlattrs(Dictionary d, bool rgb)
     // TODO(bfredl): log "err"
     return HLATTRS_INIT;
   }
-  return dict2hlattrs(&dict, rgb, NULL, &err);
+
+  HlAttrs attrs = dict2hlattrs(&dict, rgb, NULL, &err);
+
+  if (HAS_KEY(&dict, highlight, url)) {
+    attrs.url = tui_add_url(tui, dict.url.data);
+  }
+
+  return attrs;
 }
 
 void ui_client_event_grid_resize(Array args)

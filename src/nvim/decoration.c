@@ -118,7 +118,7 @@ void decor_redraw(buf_T *buf, int row1, int row2, DecorInline decor)
 
 void decor_redraw_sh(buf_T *buf, int row1, int row2, DecorSignHighlight sh)
 {
-  if (sh.hl_id || (sh.flags & (kSHIsSign|kSHSpellOn|kSHSpellOff))) {
+  if (sh.hl_id || (sh.url != NULL) || (sh.flags & (kSHIsSign|kSHSpellOn|kSHSpellOff))) {
     if (row2 >= row1) {
       redraw_buf_range_later(buf, row1 + 1, row2 + 1);
     }
@@ -253,7 +253,7 @@ void decor_free(DecorInline decor)
   }
 }
 
-void decor_free_inner(DecorVirtText *vt, uint32_t first_idx)
+static void decor_free_inner(DecorVirtText *vt, uint32_t first_idx)
 {
   while (vt) {
     if (vt->flags & kVTIsLines) {
@@ -273,6 +273,9 @@ void decor_free_inner(DecorVirtText *vt, uint32_t first_idx)
       xfree(sh->sign_name);
     }
     sh->flags = 0;
+    if (sh->url != NULL) {
+      XFREE_CLEAR(sh->url);
+    }
     if (sh->next == DECOR_ID_INVALID) {
       sh->next = decor_freelist;
       decor_freelist = first_idx;
@@ -509,7 +512,8 @@ void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end
     .draw_col = -10,
   };
 
-  if (sh->hl_id || (sh->flags & (kSHConceal | kSHSpellOn | kSHSpellOff))) {
+  if (sh->hl_id || (sh->url != NULL)
+      || (sh->flags & (kSHConceal | kSHSpellOn | kSHSpellOff))) {
     if (sh->hl_id) {
       range.attr_id = syn_id2attr(sh->hl_id);
     }
@@ -627,15 +631,22 @@ next_mark:
         spell = kFalse;
       }
     }
+    if (active && item.data.sh.url != NULL) {
+      attr = hl_add_url(attr, item.data.sh.url);
+    }
     if (item.start_row == state->row && item.start_col <= col
         && decor_virt_pos(&item) && item.draw_col == -10) {
       decor_init_draw_col(win_col, hidden, &item);
     }
     if (keep) {
       kv_A(state->active, j++) = item;
-    } else if (item.owned && item.kind == kDecorKindVirtText) {
-      clear_virttext(&item.data.vt->data.virt_text);
-      xfree(item.data.vt);
+    } else if (item.owned) {
+      if (item.kind == kDecorKindVirtText) {
+        clear_virttext(&item.data.vt->data.virt_text);
+        xfree(item.data.vt);
+      } else if (item.kind == kDecorKindHighlight) {
+        xfree((void *)item.data.sh.url);
+      }
     }
   }
   kv_size(state->active) = j;
@@ -960,6 +971,10 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
 
   if (sh_hl.flags & kSHUIWatched) {
     PUT(*dict, "ui_watched", BOOLEAN_OBJ(true));
+  }
+
+  if (sh_hl.url != NULL) {
+    PUT(*dict, "url", STRING_OBJ(cstr_to_string(sh_hl.url)));
   }
 
   if (virt_text) {

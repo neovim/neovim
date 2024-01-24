@@ -42,6 +42,7 @@ static Set(HlEntry) attr_entries = SET_INIT;
 static Map(int, int) combine_attr_entries = MAP_INIT;
 static Map(int, int) blend_attr_entries = MAP_INIT;
 static Map(int, int) blendthrough_attr_entries = MAP_INIT;
+static Set(cstr_t) urls = SET_INIT;
 
 #define attr_entry(i) attr_entries.keys[i]
 
@@ -475,11 +476,49 @@ int hl_get_underline(void)
       .rgb_bg_color = -1,
       .rgb_sp_color = -1,
       .hl_blend = -1,
+      .url = -1,
     },
     .kind = kHlUI,
     .id1 = 0,
     .id2 = 0,
   });
+}
+
+/// Augment an existing attribute with the beginning or end of a URL hyperlink.
+///
+/// @param attr Existing attribute to combine with
+/// @param url The URL to associate with the highlight attribute
+/// @return Combined attribute
+int hl_add_url(int attr, const char *url)
+{
+  HlAttrs attrs = HLATTRS_INIT;
+
+  MHPutStatus status;
+  uint32_t k = set_put_idx(cstr_t, &urls, url, &status);
+  if (status != kMHExisting) {
+    urls.keys[k] = xstrdup(url);
+  }
+
+  attrs.url = (int32_t)k;
+
+  int new = get_attr_entry((HlEntry){
+    .attr = attrs,
+    .kind = kHlUI,
+    .id1 = 0,
+    .id2 = 0,
+  });
+
+  return hl_combine_attr(attr, new);
+}
+
+/// Get a URL by its index.
+///
+/// @param index URL index
+/// @return URL
+const char *hl_get_url(uint32_t index)
+{
+  assert(urls.keys);
+  return urls.keys[index];
 }
 
 /// Get attribute code for forwarded :terminal highlights.
@@ -492,12 +531,18 @@ int hl_get_term_attr(HlAttrs *aep)
 /// Clear all highlight tables.
 void clear_hl_tables(bool reinit)
 {
+  const char *url = NULL;
+  set_foreach(&urls, url, {
+    xfree((void *)url);
+  });
+
   if (reinit) {
     set_clear(HlEntry, &attr_entries);
     highlight_init();
     map_clear(int, &combine_attr_entries);
     map_clear(int, &blend_attr_entries);
     map_clear(int, &blendthrough_attr_entries);
+    set_clear(cstr_t, &urls);
     memset(highlight_attr_last, -1, sizeof(highlight_attr_last));
     highlight_attr_set_all();
     highlight_changed();
@@ -508,6 +553,7 @@ void clear_hl_tables(bool reinit)
     map_destroy(int, &blend_attr_entries);
     map_destroy(int, &blendthrough_attr_entries);
     map_destroy(ColorKey, &ns_hls);
+    set_destroy(cstr_t, &urls);
   }
 }
 
@@ -599,6 +645,11 @@ int hl_combine_attr(int char_attr, int prim_attr)
     new_en.hl_blend = prim_aep.hl_blend;
   }
 
+  if ((new_en.url == -1) && (prim_aep.url >= 0)) {
+    // Combined attributes borrow the string from the primary attribute
+    new_en.url = prim_aep.url;
+  }
+
   id = get_attr_entry((HlEntry){ .attr = new_en, .kind = kHlCombine,
                                  .id1 = char_attr, .id2 = prim_attr });
   if (id > 0) {
@@ -680,8 +731,8 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
     }
 
     cattrs.cterm_bg_color = fattrs.cterm_bg_color;
-    cattrs.cterm_fg_color = cterm_blend(ratio, battrs.cterm_fg_color,
-                                        fattrs.cterm_bg_color);
+    cattrs.cterm_fg_color = (int16_t)cterm_blend(ratio, battrs.cterm_fg_color,
+                                                 fattrs.cterm_bg_color);
     cattrs.rgb_ae_attr &= ~(HL_FG_INDEXED | HL_BG_INDEXED);
   } else {
     cattrs = fattrs;
@@ -729,7 +780,7 @@ static int rgb_blend(int ratio, int rgb1, int rgb2)
   return (mr << 16) + (mg << 8) + mb;
 }
 
-static int cterm_blend(int ratio, int c1, int c2)
+static int cterm_blend(int ratio, int16_t c1, int16_t c2)
 {
   // 1. Convert cterm color numbers to RGB.
   // 2. Blend the RGB colors.
@@ -1085,12 +1136,12 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     hlattrs.rgb_fg_color = fg;
     hlattrs.rgb_sp_color = sp;
     hlattrs.hl_blend = blend;
-    hlattrs.cterm_bg_color = ctermbg == -1 ? 0 : ctermbg + 1;
-    hlattrs.cterm_fg_color = ctermfg == -1 ? 0 : ctermfg + 1;
+    hlattrs.cterm_bg_color = ctermbg == -1 ? 0 : (int16_t)(ctermbg + 1);
+    hlattrs.cterm_fg_color = ctermfg == -1 ? 0 : (int16_t)(ctermfg + 1);
     hlattrs.cterm_ae_attr = cterm_mask;
   } else {
-    hlattrs.cterm_bg_color = bg == -1 ? 0 : bg + 1;
-    hlattrs.cterm_fg_color = fg == -1 ? 0 : fg + 1;
+    hlattrs.cterm_bg_color = bg == -1 ? 0 : (int16_t)(bg + 1);
+    hlattrs.cterm_fg_color = fg == -1 ? 0 : (int16_t)(fg + 1);
     hlattrs.cterm_ae_attr = mask;
   }
 

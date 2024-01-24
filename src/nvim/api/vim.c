@@ -176,6 +176,12 @@ void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
   });
   int link_id = -1;
 
+  // Setting URLs directly through highlight attributes is not supported
+  if (HAS_KEY(val, highlight, url)) {
+    api_free_string(val->url);
+    val->url = NULL_STRING;
+  }
+
   HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
   if (!ERROR_SET(err)) {
     ns_hl_def((NS)ns_id, hl_id, attrs, link_id, val);
