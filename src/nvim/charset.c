@@ -849,11 +849,11 @@ bool vim_isfilec(int c)
 }
 
 /// Check if "c" is a valid file-name character, including characters left
-/// out of 'isfname' to make "gf" work, such as comma, space, '@', etc.
+/// out of 'isfname' to make "gf" work, such as ',', ' ', '@', ':', etc.
 bool vim_is_fname_char(int c)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return vim_isfilec(c) || c == ',' || c == ' ' || c == '@';
+  return vim_isfilec(c) || c == ',' || c == ' ' || c == '@' || c == ':';
 }
 
 /// Check that "c" is a valid file-name character or a wildcard character
