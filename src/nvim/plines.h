@@ -1,11 +1,11 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stdint.h>  // IWYU pragma: keep
+#include <stdint.h>
 
+#include "nvim/func_attr.h"
 #include "nvim/marktree_defs.h"
-#include "nvim/mbyte_defs.h"
-#include "nvim/pos_defs.h"  // IWYU pragma: keep
+#include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 
 typedef bool CSType;

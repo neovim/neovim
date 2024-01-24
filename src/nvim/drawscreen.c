@@ -88,7 +88,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/insexpand.h"
-#include "nvim/marktree.h"
+#include "nvim/marktree_defs.h"
 #include "nvim/match.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"

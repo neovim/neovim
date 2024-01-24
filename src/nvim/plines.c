@@ -19,6 +19,7 @@
 #include "nvim/mark_defs.h"
 #include "nvim/marktree.h"
 #include "nvim/mbyte.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
@@ -76,7 +77,8 @@ int linetabsize(win_T *wp, linenr_T lnum)
   return win_linetabsize(wp, lnum, ml_get_buf(wp->w_buffer, lnum), (colnr_T)MAXCOL);
 }
 
-const uint32_t inline_filter[4] = {[kMTMetaInline] = kMTFilterSelect };
+static const uint32_t inline_filter[4] = {[kMTMetaInline] = kMTFilterSelect };
+
 /// Prepare the structure passed to charsize functions.
 ///
 /// "line" is the start of the line.

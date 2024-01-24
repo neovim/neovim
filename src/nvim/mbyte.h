@@ -1,11 +1,13 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>  // IWYU pragma: keep
 #include <uv.h>  // IWYU pragma: keep
 
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
+#include "nvim/func_attr.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep

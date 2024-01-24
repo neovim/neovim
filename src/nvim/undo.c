@@ -67,7 +67,6 @@
 // Uncomment the next line for including the u_check() function.  This warns
 // for errors in the debug information.
 // #define U_DEBUG 1
-#include "nvim/marktree.h"
 #define UH_MAGIC 0x18dade       // value for uh_magic when in use
 #define UE_MAGIC 0xabc123       // value for ue_magic when in use
 
@@ -112,6 +111,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
 #include "nvim/mark_defs.h"
+#include "nvim/marktree_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memline_defs.h"
