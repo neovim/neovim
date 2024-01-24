@@ -1,11 +1,14 @@
 #pragma once
 
+#include <stdint.h>
+
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/func_attr.h"
 #include "nvim/gettext_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
+#include "nvim/marktree_defs.h"
 #include "nvim/types_defs.h"
 
 /// Values for buflist_getfile()

@@ -22,7 +22,6 @@
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
-#include "nvim/highlight_defs.h"
 #include "nvim/log.h"
 #include "nvim/map_defs.h"
 #include "nvim/mbyte.h"

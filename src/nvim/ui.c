@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <uv.h>
 
 #include "klib/kvec.h"
 #include "nvim/api/private/helpers.h"
@@ -31,6 +32,7 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"

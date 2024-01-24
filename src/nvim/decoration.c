@@ -18,7 +18,6 @@
 #include "nvim/grid_defs.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
-#include "nvim/map_defs.h"
 #include "nvim/marktree.h"
 #include "nvim/memory.h"
 #include "nvim/move.h"
@@ -673,8 +672,8 @@ int sign_item_cmp(const void *p1, const void *p2)
          ? n : (s2->sh->sign_add_id - s1->sh->sign_add_id);
 }
 
-const uint32_t sign_filter[4] = {[kMTMetaSignText] = kMTFilterSelect,
-                                 [kMTMetaSignHL] = kMTFilterSelect };
+static const uint32_t sign_filter[4] = {[kMTMetaSignText] = kMTFilterSelect,
+                                        [kMTMetaSignHL] = kMTFilterSelect };
 
 /// Return the sign attributes on the currently refreshed row.
 ///
@@ -761,7 +760,7 @@ DecorSignHighlight *decor_find_sign(DecorInline decor)
   }
 }
 
-const uint32_t signtext_filter[4] = {[kMTMetaSignText] = kMTFilterSelect };
+static const uint32_t signtext_filter[4] = {[kMTMetaSignText] = kMTFilterSelect };
 
 /// Count the number of signs in a range after adding/removing a sign, or to
 /// (re-)initialize a range in "b_signcols.count".
@@ -861,7 +860,7 @@ bool decor_redraw_eol(win_T *wp, DecorState *state, int *eol_attr, int eol_col)
   return has_virt_pos;
 }
 
-uint32_t lines_filter[4] = {[kMTMetaLines] = kMTFilterSelect };
+static const uint32_t lines_filter[4] = {[kMTMetaLines] = kMTFilterSelect };
 
 /// @param has_fold  whether line "lnum" has a fold, or kNone when not calculated yet
 int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fold)
