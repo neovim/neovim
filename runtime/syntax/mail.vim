@@ -2,7 +2,7 @@
 " Language:		Mail file
 " Previous Maintainer:	Felix von Leitner <leitner@math.fu-berlin.de>
 " Maintainer:		GI <a@b.c>, where a='gi1242+vim', b='gmail', c='com'
-" Last Change:		Wed 14 Aug 2013 08:24:52 AM PDT
+" Last Change:		Thu 18 Jan 2024 06:34:38 PM EST
 
 " Quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -11,6 +11,8 @@ endif
 
 let s:cpo_save = &cpo
 set cpo&vim
+
+syn spell toplevel
 
 " The mail header is recognized starting with a "keyword:" line and ending
 " with an empty line or other line that can't be in the header. All lines of
@@ -61,6 +63,9 @@ syn region	mailVerbatim	contains=@mailQuoteExps,@NoSpell keepend start="^\z(\(> 
 syn match mailURL contains=@NoSpell `\v<(((https?|ftp|gopher)://|(mailto|file|news):)[^' 	<>"]+|(www|web|w3)[a-z0-9_-]*\.[a-z0-9._-]+\.[^' 	<>"]+)[a-z0-9/]`
 syn match mailEmail contains=@NoSpell "\v[_=a-z\./+0-9-]+\@[a-z0-9._-]+\a{2}"
 
+" Don't spell emojis
+syn match mailEmoji contains=@NoSpell "\v[\U1f300-\U1f64f\U1f900-\U1f9ff]"
+
 " Make sure quote markers in regions (header / signature) have correct color
 syn match mailQuoteExp1	contained "\v^(\> ?)"
 syn match mailQuoteExp2	contained "\v^(\> ?){2}"
@@ -86,14 +91,14 @@ endif
 
 " Define the default highlighting.
 hi def link mailVerbatim	Special
-hi def link mailHeader		Statement
+hi def link mailHeader		PreProc
 hi def link mailHeaderKey	Type
-hi def link mailSignature	PreProc
+hi def link mailSignature	Comment
 hi def link mailHeaderEmail	mailEmail
-hi def link mailEmail		Special
-hi def link mailURL		String
-hi def link mailSubject		Title
-hi def link mailQuoted1		Comment
+hi def link mailEmail		String
+hi def link mailURL		Constant
+hi def link mailSubject		Statement
+hi def link mailQuoted1		Function
 hi def link mailQuoted3		mailQuoted1
 hi def link mailQuoted5		mailQuoted1
 hi def link mailQuoted2		Identifier
