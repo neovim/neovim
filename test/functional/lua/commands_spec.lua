@@ -55,6 +55,12 @@ describe(':lua command', function()
     )
   end)
   it('throws catchable errors', function()
+    for _, cmd in ipairs({ 'lua', '1lua chunk' }) do
+      eq(
+        'Vim(lua):E475: Invalid argument: exactly one of {chunk} and {range} required',
+        pcall_err(command, cmd)
+      )
+    end
     eq(
       [[Vim(lua):E5107: Error loading lua [string ":lua"]:0: unexpected symbol near ')']],
       pcall_err(command, 'lua ()')
@@ -191,6 +197,25 @@ describe(':lua command', function()
       Error message]],
       exec_capture('=x(false)')
     )
+  end)
+
+  it('works with range in current buffer', function()
+    local screen = Screen.new(40, 10)
+    screen:attach()
+    api.nvim_buf_set_lines(0, 0, 0, 0, { 'function x() print "hello" end', 'x()' })
+    feed(':1,2lua<CR>')
+    screen:expect {
+      grid = [[
+        function x() print "hello" end          |
+        x()                                     |
+        ^                                        |
+        {1:~                                       }|*6
+        hello                                   |
+      ]],
+      attr_ids = {
+        [1] = { foreground = Screen.colors.Blue, bold = true },
+      },
+    }
   end)
 end)
 
