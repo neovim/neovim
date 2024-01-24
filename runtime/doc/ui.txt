@@ -328,9 +328,11 @@ numerical highlight ids to the actual attributes.
 	`underdotted`:		underdotted text. The dots have `special` color.
 	`underdashed`:		underdashed text. The dashes have `special` color.
 	`altfont`:		alternative font.
-	`blend`:		Blend level (0-100). Could be used by UIs to
+	`blend`:		blend level (0-100). Could be used by UIs to
 				support blending floating windows to the
 				background or to signal a transparent cursor.
+	`url`:			a URL associated with this highlight. UIs can
+				display this URL however they wish.
 
 	For absent color keys the default color should be used. Don't store
 	the default value in the table, rather a sentinel value, so that
