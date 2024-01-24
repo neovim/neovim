@@ -61,7 +61,7 @@ end
 --- @return fun(): string
 local function macros(s)
   return function()
-    return s
+    return '.string=' .. s
   end
 end
 
@@ -69,7 +69,7 @@ end
 --- @return fun(): string
 local function imacros(s)
   return function()
-    return '(intptr_t)' .. s
+    return '.number=' .. s
   end
 end
 
@@ -1271,7 +1271,7 @@ return {
       abbreviation = 'co',
       cb = 'did_set_lines_or_columns',
       defaults = {
-        if_true = macros('DFLT_COLS'),
+        if_true = imacros('DFLT_COLS'),
         doc = '80 or terminal width',
       },
       desc = [=[
@@ -4024,7 +4024,7 @@ return {
     {
       abbreviation = 'imi',
       cb = 'did_set_iminsert',
-      defaults = { if_true = macros('B_IMODE_NONE') },
+      defaults = { if_true = imacros('B_IMODE_NONE') },
       desc = [=[
         Specifies whether :lmap or an Input Method (IM) is to be used in
         Insert mode.  Valid values:
@@ -4050,7 +4050,7 @@ return {
     },
     {
       abbreviation = 'ims',
-      defaults = { if_true = macros('B_IMODE_USE_INSERT') },
+      defaults = { if_true = imacros('B_IMODE_USE_INSERT') },
       desc = [=[
         Specifies whether :lmap or an Input Method (IM) is to be used when
         entering a search pattern.  Valid values:
@@ -4747,7 +4747,7 @@ return {
     {
       cb = 'did_set_lines_or_columns',
       defaults = {
-        if_true = macros('DFLT_ROWS'),
+        if_true = imacros('DFLT_ROWS'),
         doc = '24 or terminal height',
       },
       desc = [=[

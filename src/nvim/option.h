@@ -60,7 +60,12 @@ typedef struct {
   opt_expand_cb_T opt_expand_cb;
 
   // TODO(famiu): Use OptVal for def_val.
-  void *def_val;     ///< default values for variable (neovim!!)
+  union {
+    int boolean;
+    OptInt number;
+    char *string;
+  } def_val;         ///< default value for variable
+
   LastSet last_set;  ///< script in which the option was last set
 } vimoption_T;
 
