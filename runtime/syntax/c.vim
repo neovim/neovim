@@ -444,6 +444,14 @@ syn match	cUserLabel	display "\I\i*" contained
 syn match	cBitField	display "^\s*\zs\I\i*\s*:\s*[1-9]"me=e-1 contains=cType
 syn match	cBitField	display ";\s*\zs\I\i*\s*:\s*[1-9]"me=e-1 contains=cType
 
+if exists("c_functions")
+  syn match cFunction "\<\h\w*\ze\_s*("
+ endif
+
+if exists("c_function_pointers")
+  syn match cFunctionPointer "\%((\s*\*\s*\)\@<=\h\w*\ze\s*)\_s*(.*)"
+endif
+
 if exists("c_minlines")
   let b:c_minlines = c_minlines
 else
@@ -513,6 +521,8 @@ hi def link cCppOutSkip		cCppOutIf2
 hi def link cCppInElse2		cCppOutIf2
 hi def link cCppOutIf2		cCppOut
 hi def link cCppOut		Comment
+hi def link cFunction		Function
+hi def link cFunctionPointer	Function
 
 let b:current_syntax = "c"
 
