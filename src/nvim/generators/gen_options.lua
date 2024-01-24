@@ -125,31 +125,28 @@ local function get_cond(c, base_string)
   return cond_string
 end
 
-local value_dumpers = {
-  ['function'] = function(v)
-    return v()
-  end,
-  string = cstr,
-  boolean = function(v)
-    return v and 'true' or 'false'
-  end,
-  number = function(v)
-    return ('%iL'):format(v)
-  end,
-  ['nil'] = function(_)
-    return '0'
-  end,
-}
-
-local get_value = function(v)
-  return '(void *) ' .. value_dumpers[type(v)](v)
-end
-
 local get_defaults = function(d, n)
   if d == nil then
     error("option '" .. n .. "' should have a default value")
   end
-  return get_value(d)
+
+  local value_dumpers = {
+    ['function'] = function(v)
+      return v()
+    end,
+    string = cstr,
+    boolean = function(v)
+      return '(intptr_t)' .. (v and 'true' or 'false')
+    end,
+    number = function(v)
+      return '(intptr_t)' .. ('%iL'):format(v)
+    end,
+    ['nil'] = function(_)
+      return '0'
+    end,
+  }
+
+  return '(void *)' .. value_dumpers[type(d)](d)
 end
 
 --- @type {[1]:string,[2]:string}[]
