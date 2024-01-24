@@ -9684,7 +9684,7 @@ function vim.fn.synIDtrans(synID) end
 ---
 --- @param lnum integer
 --- @param col integer
---- @return {[1]: integer, [2]: string, [3]: integer}[]
+--- @return {[1]: integer, [2]: string, [3]: integer}
 function vim.fn.synconcealed(lnum, col) end
 
 --- Return a |List|, which is the stack of syntax items at the

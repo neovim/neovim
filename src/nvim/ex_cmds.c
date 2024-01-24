@@ -3274,7 +3274,7 @@ static int check_regexp_delim(int c)
 ///
 /// @param cmdpreview_ns  The namespace to show 'inccommand' preview highlights.
 ///                       If <= 0, preview shouldn't be shown.
-/// @return 0, 1 or 2. See show_cmdpreview() for more information on what the return value means.
+/// @return  0, 1 or 2. See cmdpreview_may_show() for more information on the meaning.
 static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_ns,
                   const handle_T cmdpreview_bufnr)
 {

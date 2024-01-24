@@ -35,14 +35,14 @@
 
 /// Functions calculating horizontal size of text, when displayed in a window.
 
-/// Return the number of characters 'c' will take on the screen, taking
-/// into account the size of a tab.
+/// Return the number of cells the first char in "p" will take on the screen,
+/// taking into account the size of a tab.
 /// Also see getvcol()
 ///
 /// @param p
 /// @param col
 ///
-/// @return Number of characters.
+/// @return Number of cells.
 int win_chartabsize(win_T *wp, char *p, colnr_T col)
 {
   buf_T *buf = wp->w_buffer;
@@ -57,7 +57,7 @@ int win_chartabsize(win_T *wp, char *p, colnr_T col)
 /// @param startcol
 /// @param s
 ///
-/// @return Number of characters the string will take on the screen.
+/// @return Number of cells the string will take on the screen.
 int linetabsize_col(int startvcol, char *s)
 {
   CharsizeArg csarg;
@@ -107,14 +107,13 @@ CSType init_charsize_arg(CharsizeArg *csarg, win_T *wp, linenr_T lnum, char *lin
   }
 }
 
-/// Get the number of characters taken up on the screen for the given cts and position.
-/// "cts->cur_text_width_left" and "cts->cur_text_width_right" are set
+/// Get the number of cells taken up on the screen for the given arguments.
+/// "csarg->cur_text_width_left" and "csarg->cur_text_width_right" are set
 /// to the extra size for inline virtual text.
-/// This function is used very often, keep it fast!!!!
 ///
-/// When "cts->max_head_vcol" is positive, only count in "head" the size
-/// of 'showbreak'/'breakindent' before "cts->max_head_vcol".
-/// When "cts->max_head_vcol" is negative, only count in "head" the size
+/// When "csarg->max_head_vcol" is positive, only count in "head" the size
+/// of 'showbreak'/'breakindent' before "csarg->max_head_vcol".
+/// When "csarg->max_head_vcol" is negative, only count in "head" the size
 /// of 'showbreak'/'breakindent' before where cursor should be placed.
 CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vcol,
                           int32_t const cur_char)
@@ -326,8 +325,9 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
   return (CharSize){ .width = size, .head = head };
 }
 
-/// Like charsize_regular(), except it doesn't handle virtual text,
-/// linebreak, breakindent and showbreak. Handles normal characters, tabs and wrapping.
+/// Like charsize_regular(), except it doesn't handle inline virtual text,
+/// 'linebreak', 'breakindent' or 'showbreak'.
+/// Handles normal characters, tabs and wrapping.
 /// This function is always inlined.
 ///
 /// @see charsize_regular
@@ -360,9 +360,12 @@ static inline CharSize charsize_fast_impl(win_T *const wp, bool use_tabstop, col
   }
 }
 
-/// Like charsize_regular(), except it doesn't handle virtual text,
-/// linebreak, breakindent and showbreak. Handles normal characters, tabs and wrapping.
+/// Like charsize_regular(), except it doesn't handle inline virtual text,
+/// 'linebreak', 'breakindent' or 'showbreak'.
+/// Handles normal characters, tabs and wrapping.
 /// Can be used if CSType is kCharsizeFast.
+///
+/// @see charsize_regular
 CharSize charsize_fast(CharsizeArg *csarg, colnr_T const vcol, int32_t const cur_char)
   FUNC_ATTR_PURE
 {
@@ -397,14 +400,14 @@ static bool in_win_border(win_T *wp, colnr_T vcol)
   return (vcol - width1) % width2 == width2 - 1;
 }
 
-/// Calculate virtual column until the given 'len'.
+/// Calculate virtual column until the given "len".
 ///
 /// @param arg  Argument to charsize functions.
 /// @param vcol Starting virtual column.
 /// @param len  First byte of the end character, or MAXCOL.
 ///
-/// @return virtual column before the character at 'len',
-/// or full size of the line if 'len' is MAXCOL.
+/// @return virtual column before the character at "len",
+/// or full size of the line if "len" is MAXCOL.
 int linesize_regular(CharsizeArg *const csarg, int vcol, colnr_T const len)
 {
   char *const line = csarg->line;
@@ -424,9 +427,9 @@ int linesize_regular(CharsizeArg *const csarg, int vcol, colnr_T const len)
   return vcol;
 }
 
-/// Like win_linesize_regular, but can be used when CStype is kCharsizeFast.
+/// Like linesize_regular(), but can be used when CStype is kCharsizeFast.
 ///
-/// @see win_linesize_regular
+/// @see linesize_regular
 int linesize_fast(CharsizeArg const *const csarg, int vcol, colnr_T const len)
 {
   win_T *const wp = csarg->win;

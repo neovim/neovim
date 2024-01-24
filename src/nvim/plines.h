@@ -46,12 +46,12 @@ static inline CharSize win_charsize(CSType cstype, int vcol, char *ptr, int32_t 
   REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
 
 /// Get the number of cells taken up on the screen by the given character at vcol.
-/// "arg->cur_text_width_left" and "arg->cur_text_width_right" are set
+/// "csarg->cur_text_width_left" and "csarg->cur_text_width_right" are set
 /// to the extra size for inline virtual text.
 ///
-/// When "arg->max_head_vcol" is positive, only count in "head" the size
-/// of 'showbreak'/'breakindent' before "arg->max_head_vcol".
-/// When "arg->max_head_vcol" is negative, only count in "head" the size
+/// When "csarg->max_head_vcol" is positive, only count in "head" the size
+/// of 'showbreak'/'breakindent' before "csarg->max_head_vcol".
+/// When "csarg->max_head_vcol" is negative, only count in "head" the size
 /// of 'showbreak'/'breakindent' before where cursor should be placed.
 static inline CharSize win_charsize(CSType cstype, int vcol, char *ptr, int32_t chr,
                                     CharsizeArg *csarg)
@@ -66,12 +66,12 @@ static inline CharSize win_charsize(CSType cstype, int vcol, char *ptr, int32_t 
 static inline int linetabsize_str(char *s)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
 
-/// Return the number of characters the string 's' will take on the screen,
+/// Return the number of cells the string "s" will take on the screen,
 /// taking into account the size of a tab.
 ///
 /// @param s
 ///
-/// @return Number of characters the string will take on the screen.
+/// @return Number of cells the string will take on the screen.
 static inline int linetabsize_str(char *s)
 {
   return linetabsize_col(0, s);
@@ -86,7 +86,7 @@ static inline int win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T 
 /// @param line
 /// @param len
 ///
-/// @return Number of characters the string will take on the screen.
+/// @return Number of cells the string will take on the screen.
 static inline int win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T len)
 {
   CharsizeArg csarg;
