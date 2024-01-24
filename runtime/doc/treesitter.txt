@@ -210,22 +210,25 @@ TREESITTER QUERY PREDICATES                            *treesitter-predicates*
 Predicates are special scheme nodes that are evaluated to conditionally capture
 nodes. For example, the `eq?` predicate can be used as follows: >query
 
-    ((identifier) @foo (#eq? @foo "foo"))
+    ((identifier) @variable.builtin
+      (#eq? @variable.builtin "self"))
 <
-to only match identifier corresponding to the `"foo"` text.
+to only match identifier corresponding to the `"self"` text. Such queries can
+be used to highlight built-in functions or variables differently, for instance.
 
 The following predicates are built in:
 
     `eq?`                                            *treesitter-predicate-eq?*
         Match a string against the text corresponding to a node: >query
-            ((identifier) @foo (#eq? @foo "foo"))
+            ((identifier) @variable.builtin (#eq? @variable.builtin "self"))
             ((node1) @left (node2) @right (#eq? @left @right))
 <
     `match?`                                      *treesitter-predicate-match?*
     `vim-match?`                              *treesitter-predicate-vim-match?*
          Match a |regexp| against the text corresponding to a node: >query
             ((identifier) @constant (#match? @constant "^[A-Z_]+$"))
-<         Note: The `^` and `$` anchors will match the start and end of the
+<
+         Note: The `^` and `$` anchors will match the start and end of the
                node's text.
 
     `lua-match?`                              *treesitter-predicate-lua-match?*
@@ -288,11 +291,12 @@ The following directives are built in:
         Examples: >query
             ((identifier) @foo (#set! @foo "kind" "parameter"))
             ((node1) @left (node2) @right (#set! "type" "pair"))
+            ((codeblock) @markup.raw.block (#set! "priority" 90))
 <
     `offset!`                                      *treesitter-directive-offset!*
         Takes the range of the captured node and applies an offset. This will
-        generate a new range object for the captured node as
-        `metadata[capture_id].range`.
+        set a new `Range4` object for the captured node with `capture_id` as
+        `metadata[capture_id].range`. Useful for |treesitter-language-injections|.
 
         Parameters: ~
             {capture_id}
@@ -305,12 +309,13 @@ The following directives are built in:
             ((identifier) @constant (#offset! @constant 0 1 0 -1))
 <
     `gsub!`                                          *treesitter-directive-gsub!*
-        Transforms the content of the node using a Lua pattern. This will set
+        Transforms the content of the node using a |lua-pattern|. This will set
         a new `metadata[capture_id].text`.
 
         Parameters: ~
             {capture_id}
             {pattern}
+            {replacement}
 
         Example: >query
             (#gsub! @_node ".*%.(.*)" "%1")
@@ -352,13 +357,13 @@ currently supported modeline alternatives:
 Note: These modeline comments must be at the top of the query, but can be
 repeated, for example, the following two modeline blocks are both valid:
 >query
-    ;; inherits: foo,bar
+    ;; inherits: typescript,jsx
     ;; extends
 <
 >query
     ;; extends
     ;;
-    ;; inherits: baz
+    ;; inherits: css
 <
 ==============================================================================
 TREESITTER SYNTAX HIGHLIGHTING                          *treesitter-highlight*
@@ -367,30 +372,47 @@ Syntax highlighting is specified through queries named `highlights.scm`,
 which match a |TSNode| in the parsed |TSTree| to a `capture` that can be
 assigned a highlight group. For example, the query >query
 
-    (parameters (identifier) @parameter)
+    (parameters (identifier) @variable.parameter)
 <
-matches any `identifier` node inside a function `parameter` node (e.g., the
-`bar` in `foo(bar)`) to the capture named `@parameter`. It is also possible to
-match literal expressions (provided the parser returns them): >query
+matches any `identifier` node inside a function `parameters` node to the
+capture named `@variable.parameter`. For example, for a Lua code >lua
 
-    "return" @keyword.return
+    function f(foo, bar) end
+<
+which will be parsed as (see |:InspectTree|): >query
+
+    (function_declaration ; [1:1 - 24]
+      name: (identifier) ; [1:10 - 10]
+      parameters: (parameters ; [1:11 - 20]
+        name: (identifier) ; [1:12 - 14]
+        name: (identifier))) ; [1:17 - 19]
+<
+the above query will highlight `foo` and `bar` as `@variable.parameter`.
+
+It is also possible to match literal expressions (provided the parser returns
+them):
+>query
+    [
+      "if"
+      "else"
+    ] @keyword.conditional
 <
 Assuming a suitable parser and `highlights.scm` query is found in runtimepath,
 treesitter highlighting for the current buffer can be enabled simply via
 |vim.treesitter.start()|.
 
                                                  *treesitter-highlight-groups*
-The capture names, with `@` included, are directly usable as highlight groups.
+The capture names, prefixed with `@`, are directly usable as highlight groups.
 For many commonly used captures, the corresponding highlight groups are linked
-to Nvim's standard |highlight-groups| by default but can be overridden in
-colorschemes.
+to Nvim's standard |highlight-groups| by default (e.g., `@comment` links to
+`Comment`) but can be overridden in colorschemes.
 
 A fallback system is implemented, so that more specific groups fallback to
-more generic ones. For instance, in a language that has separate doc comments,
-`@comment.doc` could be used. If this group is not defined, the highlighting
-for an ordinary `@comment` is used. This way, existing color schemes already
-work out of the box, but it is possible to add more specific variants for
-queries that make them available.
+more generic ones. For instance, in a language that has separate doc comments
+(e.g., c, java, etc.), `@comment.documentation` could be used. If this group
+is not defined, the highlighting for an ordinary `@comment` is used. This way,
+existing color schemes already work out of the box, but it is possible to add
+more specific variants for queries that make them available.
 
 As an additional rule, capture highlights can always be specialized by
 language, by appending the language name after an additional dot. For
@@ -398,13 +420,13 @@ instance, to highlight comments differently per language: >vim
 
     hi @comment.c guifg=Blue
     hi @comment.lua guifg=DarkBlue
-    hi link @comment.doc.java String
+    hi link @comment.documentation.java String
 <
 The following captures are linked by default to standard |group-name|s (use
 |:Inspect| on a group to see the current link):
 
 @variable               various variable names
-@variable.builtin       built-in variable names (e.g. `this`)
+@variable.builtin       built-in variable names (e.g. `this` / `self`)
 @variable.parameter     parameters of a function
 @variable.member        object and struct fields
 
@@ -475,10 +497,10 @@ The following captures are linked by default to standard |group-name|s (use
 @comment                line and block comments
 @comment.documentation  comments documenting code
 
-@comment.error          error-type comments (e.g. `ERROR`, `FIXME`, `DEPRECATED:`)
-@comment.warning        warning-type comments (e.g. `WARNING:`, `FIX:`, `HACK:`)
-@comment.todo           todo-type comments (e.g. `TODO:`, `WIP:`, `FIXME:`)
-@comment.note           note-type comments (e.g. `NOTE:`, `INFO:`, `XXX`)
+@comment.error          error-type comments (e.g. `ERROR`, `FIXME`, `DEPRECATED`)
+@comment.warning        warning-type comments (e.g. `WARNING`, `FIX`, `HACK`)
+@comment.todo           todo-type comments (e.g. `TODO`, `WIP`, `FIXME`)
+@comment.note           note-type comments (e.g. `NOTE`, `INFO`, `XXX`)
 
 @markup.strong          bold text
 @markup.italic          italic text
