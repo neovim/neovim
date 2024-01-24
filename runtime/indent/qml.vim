@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:     QML
 " Maintainer:   Chase Knowlden <haroldknowlden@gmail.com>
-" Last Change:  2023 Aug 16
+" Last Change:  2024 Jan 24 by Vim Project
 "
 " Improved JavaScript indent script.
 
@@ -40,10 +40,10 @@ function! s:GetQmlIndent()
 
   " bracket/brace/paren blocks
   if pline =~ '[{[(]$'
-    let ind += &sw
+    let ind += shiftwidth()
   endif
   if line =~ '^[}\])]'
-    let ind -= &sw
+    let ind -= shiftwidth()
   endif
 
   " '/*' comments
