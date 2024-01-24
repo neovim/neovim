@@ -484,7 +484,7 @@ int hl_get_underline(void)
   });
 }
 
-/// Augment an existing attribute with the beginning or end of a URL hyperlink.
+/// Augment an existing attribute with a URL.
 ///
 /// @param attr Existing attribute to combine with
 /// @param url The URL to associate with the highlight attribute
@@ -646,7 +646,6 @@ int hl_combine_attr(int char_attr, int prim_attr)
   }
 
   if ((new_en.url == -1) && (prim_aep.url >= 0)) {
-    // Combined attributes borrow the string from the primary attribute
     new_en.url = prim_aep.url;
   }
 
