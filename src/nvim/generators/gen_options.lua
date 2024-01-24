@@ -125,31 +125,27 @@ local function get_cond(c, base_string)
   return cond_string
 end
 
-local value_dumpers = {
-  ['function'] = function(v)
-    return v()
-  end,
-  string = cstr,
-  boolean = function(v)
-    return v and 'true' or 'false'
-  end,
-  number = function(v)
-    return ('%iL'):format(v)
-  end,
-  ['nil'] = function(_)
-    return '0'
-  end,
-}
-
-local get_value = function(v)
-  return '(void *) ' .. value_dumpers[type(v)](v)
-end
-
 local get_defaults = function(d, n)
   if d == nil then
     error("option '" .. n .. "' should have a default value")
   end
-  return get_value(d)
+
+  local value_dumpers = {
+    ['function'] = function(v)
+      return v()
+    end,
+    string = function(v)
+      return '.string=' .. cstr(v)
+    end,
+    boolean = function(v)
+      return '.boolean=' .. (v and 'true' or 'false')
+    end,
+    number = function(v)
+      return ('.number=%iL'):format(v)
+    end,
+  }
+
+  return value_dumpers[type(d)](d)
 end
 
 --- @type {[1]:string,[2]:string}[]
@@ -213,11 +209,11 @@ local function dump_option(i, o)
     if o.defaults.condition then
       w(get_cond(o.defaults.condition))
     end
-    w('    .def_val=' .. get_defaults(o.defaults.if_true, o.full_name))
+    w('    .def_val' .. get_defaults(o.defaults.if_true, o.full_name))
     if o.defaults.condition then
       if o.defaults.if_false then
         w('#else')
-        w('    .def_val=' .. get_defaults(o.defaults.if_false, o.full_name))
+        w('    .def_val' .. get_defaults(o.defaults.if_false, o.full_name))
       end
       w('#endif')
     end

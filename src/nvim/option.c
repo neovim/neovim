@@ -174,7 +174,7 @@ static int p_paste_dep_opts[] = {
 void set_init_tablocal(void)
 {
   // susy baka: cmdheight calls itself OPT_GLOBAL but is really tablocal!
-  p_ch = (OptInt)(intptr_t)options[kOptCmdheight].def_val;
+  p_ch = options[kOptCmdheight].def_val.number;
 }
 
 /// Initialize the 'shell' option to a default value.
@@ -275,13 +275,8 @@ static void set_init_default_cdpath(void)
     }
   }
   buf[j] = NUL;
-  OptIndex opt_idx = kOptCdpath;
-  if (opt_idx != kOptInvalid) {
-    options[opt_idx].def_val = buf;
-    options[opt_idx].flags |= P_DEF_ALLOCED;
-  } else {
-    xfree(buf);           // cannot happen
-  }
+  options[kOptCdpath].def_val.string = buf;
+  options[kOptCdpath].flags |= P_DEF_ALLOCED;
   xfree(cdpath);
 }
 
@@ -309,9 +304,9 @@ static void set_init_expand_env(void)
       p = xstrdup(p);
       *(char **)opt->var = p;
       if (opt->flags & P_DEF_ALLOCED) {
-        xfree(opt->def_val);
+        xfree(opt->def_val.string);
       }
-      opt->def_val = p;
+      opt->def_val.string = p;
       opt->flags |= P_DEF_ALLOCED;
     }
   }
@@ -438,19 +433,19 @@ static void set_option_default(const OptIndex opt_idx, int opt_flags)
       // Use set_string_option_direct() for local options to handle freeing and allocating the
       // value.
       if (opt->indir != PV_NONE) {
-        set_string_option_direct(opt_idx, opt->def_val, opt_flags, 0);
+        set_string_option_direct(opt_idx, opt->def_val.string, opt_flags, 0);
       } else {
         if (flags & P_ALLOCED) {
           free_string_option(*(char **)(varp));
         }
-        *(char **)varp = opt->def_val;
+        *(char **)varp = opt->def_val.string;
         opt->flags &= ~P_ALLOCED;
       }
     } else if (option_has_type(opt_idx, kOptValTypeNumber)) {
       if (opt->indir == PV_SCROLL) {
         win_comp_scroll(curwin);
       } else {
-        OptInt def_val = (OptInt)(intptr_t)opt->def_val;
+        OptInt def_val = opt->def_val.number;
         if ((OptInt *)varp == &curwin->w_p_so
             || (OptInt *)varp == &curwin->w_p_siso) {
           // 'scrolloff' and 'sidescrolloff' local values have a
@@ -465,7 +460,7 @@ static void set_option_default(const OptIndex opt_idx, int opt_flags)
         }
       }
     } else {  // boolean
-      *(int *)varp = (int)(intptr_t)opt->def_val;
+      *(int *)varp = opt->def_val.boolean;
 #ifdef UNIX
       // 'modeline' defaults to off for root
       if (opt->indir == PV_ML && getuid() == ROOT_UID) {
@@ -521,10 +516,10 @@ static void set_string_default(OptIndex opt_idx, char *val, bool allocated)
 
   vimoption_T *opt = &options[opt_idx];
   if (opt->flags & P_DEF_ALLOCED) {
-    xfree(opt->def_val);
+    xfree(opt->def_val.string);
   }
 
-  opt->def_val = allocated ? val : xstrdup(val);
+  opt->def_val.string = allocated ? val : xstrdup(val);
   opt->flags |= P_DEF_ALLOCED;
 }
 
@@ -564,7 +559,7 @@ static char *find_dup_item(char *origval, const char *newval, uint32_t flags)
 void set_number_default(OptIndex opt_idx, OptInt val)
 {
   if (opt_idx != kOptInvalid) {
-    options[opt_idx].def_val = (void *)(intptr_t)val;
+    options[opt_idx].def_val.number = val;
   }
 }
 
@@ -639,11 +634,11 @@ void set_init_3(void)
         || path_fnamecmp(p, "tcsh") == 0) {
       if (do_sp) {
         p_sp = "|& tee";
-        options[kOptShellpipe].def_val = p_sp;
+        options[kOptShellpipe].def_val.string = p_sp;
       }
       if (do_srr) {
         p_srr = ">&";
-        options[kOptShellredir].def_val = p_srr;
+        options[kOptShellredir].def_val.string = p_srr;
       }
     } else if (path_fnamecmp(p, "sh") == 0
                || path_fnamecmp(p, "ksh") == 0
@@ -658,11 +653,11 @@ void set_init_3(void)
       // Always use POSIX shell style redirection if we reach this
       if (do_sp) {
         p_sp = "2>&1| tee";
-        options[kOptShellpipe].def_val = p_sp;
+        options[kOptShellpipe].def_val.string = p_sp;
       }
       if (do_srr) {
         p_srr = ">%s 2>&1";
-        options[kOptShellredir].def_val = p_srr;
+        options[kOptShellredir].def_val.string = p_srr;
       }
     }
     xfree(p);
@@ -724,12 +719,12 @@ void set_title_defaults(void)
   // icon name.  Saves a bit of time, because the X11 display server does
   // not need to be contacted.
   if (!(options[kOptTitle].flags & P_WAS_SET)) {
-    options[kOptTitle].def_val = 0;
-    p_title = 0;
+    options[kOptTitle].def_val.boolean = false;
+    p_title = false;
   }
   if (!(options[kOptIcon].flags & P_WAS_SET)) {
-    options[kOptIcon].def_val = 0;
-    p_icon = 0;
+    options[kOptIcon].def_val.boolean = false;
+    p_icon = false;
   }
 }
 
@@ -751,7 +746,7 @@ void ex_set(exarg_T *eap)
 /// Get the default value for a string option.
 static char *stropt_get_default_val(OptIndex opt_idx, uint64_t flags)
 {
-  char *newval = options[opt_idx].def_val;
+  char *newval = options[opt_idx].def_val.string;
   // expand environment variables and ~ since the default value was
   // already expanded, only required when an environment variable was set
   // later
@@ -1178,7 +1173,7 @@ static OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T pr
         break;
       }
     } else if (nextchar == '&') {
-      newval_bool = TRISTATE_FROM_INT((int)(intptr_t)options[opt_idx].def_val);
+      newval_bool = TRISTATE_FROM_INT(options[opt_idx].def_val.boolean);
     } else if (nextchar == '<') {
       // For 'autoread', kNone means to use global value.
       if ((int *)varp == &curbuf->b_p_ar && opt_flags == OPT_LOCAL) {
@@ -1212,7 +1207,7 @@ static OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T pr
     // other        error
     arg++;
     if (nextchar == '&') {
-      newval_num = (OptInt)(intptr_t)options[opt_idx].def_val;
+      newval_num = options[opt_idx].def_val.number;
     } else if (nextchar == '<') {
       if ((OptInt *)varp == &curbuf->b_p_ul && opt_flags == OPT_LOCAL) {
         // for 'undolevels' NO_LOCAL_UNDOLEVEL means using the global newval_num
@@ -5311,7 +5306,7 @@ void reset_modifiable(void)
 {
   curbuf->b_p_ma = false;
   p_ma = false;
-  options[kOptModifiable].def_val = false;
+  options[kOptModifiable].def_val.boolean = false;
 }
 
 /// Set the global value for 'iminsert' to the local value.
