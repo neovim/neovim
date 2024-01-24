@@ -33,10 +33,10 @@ func Test_set_linebreak()
   call setline(1, "\tabcdef hijklmn\tpqrstuvwxyz_1060ABCDEFGHIJKLMNOP ")
   let lines = s:screen_lines([1, 4], winwidth(0))
   let expect = [
-\ "    abcdef          ",
-\ "+hijklmn            ",
+\ "    abcdef hijklmn  ",
 \ "+pqrstuvwxyz_1060ABC",
 \ "+DEFGHIJKLMNOP      ",
+\ "~                   ",
 \ ]
   call s:compare_lines(expect, lines)
   call s:close_windows()
@@ -64,10 +64,10 @@ func Test_linebreak_with_nolist()
   call setline(1, "\tabcdef hijklmn\tpqrstuvwxyz_1060ABCDEFGHIJKLMNOP ")
   let lines = s:screen_lines([1, 4], winwidth(0))
   let expect = [
-\ "    abcdef          ",
-\ "+hijklmn            ",
+\ "    abcdef hijklmn  ",
 \ "+pqrstuvwxyz_1060ABC",
 \ "+DEFGHIJKLMNOP      ",
+\ "~                   ",
 \ ]
   call s:compare_lines(expect, lines)
   call s:close_windows()

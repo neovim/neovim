@@ -46,10 +46,10 @@ func Test_linebreak_with_fancy_listchars()
   redraw!
   let lines = s:screen_lines([1, 4], winwidth(0))
   let expect = [
-\ "▕———abcdef          ",
-\ "+hijklmn▕———        ",
+\ "▕———abcdef hijklmn▕—",
 \ "+pqrstuvwxyz␣1060ABC",
 \ "+DEFGHIJKLMNOPˑ¶    ",
+\ "~                   ",
 \ ]
   call s:compare_lines(expect, lines)
   call s:close_windows()
