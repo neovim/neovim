@@ -12,6 +12,16 @@ func Test_put_block()
   bwipe!
 endfunc
 
+func Test_put_block_unicode()
+  new
+  call setreg('a', "À\nÀÀ\naaaaaaaaaaaa", "\<C-V>")
+  call setline(1, [' 1', ' 2', ' 3'])
+  exe "norm! \<C-V>jj\"ap"
+  let expected = ['À           1', 'ÀÀ          2', 'aaaaaaaaaaaa3']
+  call assert_equal(expected, getline(1, 3))
+  bw!
+endfunc
+
 func Test_put_char_block()
   new
   call setline(1, ['Line 1', 'Line 2'])
