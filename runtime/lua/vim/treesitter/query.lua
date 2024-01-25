@@ -1,18 +1,48 @@
 local api = vim.api
 local language = require('vim.treesitter.language')
 
----@class Query
----@field captures string[] List of captures used in query
----@field info TSQueryInfo Contains used queries, predicates, directives
----@field query userdata Parsed query
+local M = {}
+
+---Parsed query, see |vim.treesitter.query.parse()|
+---
+---@class vim.treesitter.Query
+---@field lang string name of the language for this parser
+---@field captures string[] list of (unique) capture names defined in query
+---@field info vim.treesitter.QueryInfo contains information used in the query (e.g. captures, predicates, directives)
+---@field query TSQuery userdata query object
 local Query = {}
 Query.__index = Query
 
----@class TSQueryInfo
----@field captures table
----@field patterns table<string,any[][]>
+---@package
+---@see vim.treesitter.query.parse
+---@param lang string
+---@param ts_query TSQuery
+---@return vim.treesitter.Query
+function Query.new(lang, ts_query)
+  local self = setmetatable({}, Query)
+  local query_info = ts_query:inspect() ---@type TSQueryInfo
+  self.query = ts_query
+  self.lang = lang
+  self.info = {
+    captures = query_info.captures,
+    patterns = query_info.patterns,
+  }
+  self.captures = self.info.captures
+  return self
+end
 
-local M = {}
+---Information for Query, see |vim.treesitter.query.parse()|
+---@class vim.treesitter.QueryInfo
+---
+---List of (unique) capture names defined in query.
+---@field captures string[]
+---
+---Contains information about predicates and directives.
+---Key is pattern id, and value is list of predicates or directives defined in the pattern.
+---A predicate or directive is a list of (integer|string); integer represents `capture_id`, and
+---string represents (literal) arguments to predicate/directive. See |treesitter-predicates|
+---and |treesitter-directives| for more details.
+---@field patterns table<integer, (integer|string)[][]>
 
 ---@param files string[]
 ---@return string[]
@@ -162,7 +192,7 @@ local function read_query_files(filenames)
 end
 
 -- The explicitly set queries from |vim.treesitter.query.set()|
----@type table<string,table<string,Query>>
+---@type table<string,table<string,vim.treesitter.Query>>
 local explicit_queries = setmetatable({}, {
   __index = function(t, k)
     local lang_queries = {}
@@ -201,7 +231,7 @@ end
 ---@param lang string Language to use for the query
 ---@param query_name string Name of the query (e.g. "highlights")
 ---
----@return Query|nil Parsed query
+---@return vim.treesitter.Query|nil -- Parsed query. `nil` if no query files are found.
 M.get = vim.func._memoize('concat-2', function(lang, query_name)
   if explicit_queries[lang][query_name] then
     return explicit_queries[lang][query_name]
@@ -228,26 +258,24 @@ end
 ---
 --- Returns a `Query` (see |lua-treesitter-query|) object which can be used to
 --- search nodes in the syntax tree for the patterns defined in {query}
---- using `iter_*` methods below.
+--- using the `iter_captures` and `iter_matches` methods.
 ---
 --- Exposes `info` and `captures` with additional context about {query}.
----   - `captures` contains the list of unique capture names defined in
----     {query}.
----   -` info.captures` also points to `captures`.
+---   - `captures` contains the list of unique capture names defined in {query}.
+---   - `info.captures` also points to `captures`.
 ---   - `info.patterns` contains information about predicates.
 ---
 ---@param lang string Language to use for the query
 ---@param query string Query in s-expr syntax
 ---
----@return Query Parsed query
+---@return vim.treesitter.Query Parsed query
+---
+---@see |vim.treesitter.query.get()|
 M.parse = vim.func._memoize('concat-2', function(lang, query)
   language.add(lang)
 
-  local self = setmetatable({}, Query)
-  self.query = vim._ts_parse_query(lang, query)
-  self.info = self.query:inspect()
-  self.captures = self.info.captures
-  return self
+  local ts_query = vim._ts_parse_query(lang, query)
+  return Query.new(lang, ts_query)
 end)
 
 ---@deprecated

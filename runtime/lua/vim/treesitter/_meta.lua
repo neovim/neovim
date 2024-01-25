@@ -1,4 +1,5 @@
 ---@meta
+error('Cannot require a meta file')
 
 ---@class TSNode: userdata
 ---@field id fun(self: TSNode): string
@@ -33,7 +34,7 @@
 ---@field byte_length fun(self: TSNode): integer
 local TSNode = {}
 
----@param query userdata
+---@param query TSQuery
 ---@param captures true
 ---@param start? integer
 ---@param end_? integer
@@ -41,17 +42,17 @@ local TSNode = {}
 ---@return fun(): integer, TSNode, any
 function TSNode:_rawquery(query, captures, start, end_, opts) end
 
----@param query userdata
+---@param query TSQuery
 ---@param captures false
 ---@param start? integer
 ---@param end_? integer
 ---@param opts? table
----@return fun(): string, any
+---@return fun(): integer, any
 function TSNode:_rawquery(query, captures, start, end_, opts) end
 
 ---@alias TSLoggerCallback fun(logtype: 'parse'|'lex', msg: string)
 
----@class TSParser
+---@class TSParser: userdata
 ---@field parse fun(self: TSParser, tree: TSTree?, source: integer|string, include_bytes: true): TSTree, Range6[]
 ---@field parse fun(self: TSParser, tree: TSTree?, source: integer|string, include_bytes: false|nil): TSTree, Range4[]
 ---@field reset fun(self: TSParser)
@@ -62,18 +63,30 @@ function TSNode:_rawquery(query, captures, start, end_, opts) end
 ---@field _set_logger fun(self: TSParser, lex: boolean, parse: boolean, cb: TSLoggerCallback)
 ---@field _logger fun(self: TSParser): TSLoggerCallback
 
----@class TSTree
+---@class TSTree: userdata
 ---@field root fun(self: TSTree): TSNode
 ---@field edit fun(self: TSTree, _: integer, _: integer, _: integer, _: integer, _: integer, _: integer, _: integer, _: integer, _:integer)
 ---@field copy fun(self: TSTree): TSTree
 ---@field included_ranges fun(self: TSTree, include_bytes: true): Range6[]
 ---@field included_ranges fun(self: TSTree, include_bytes: false): Range4[]
 
+---@class TSQuery: userdata
+---@field inspect fun(self: TSQuery): TSQueryInfo
+
+---@class (exact) TSQueryInfo
+---@field captures string[]
+---@field patterns table<integer, (integer|string)[][]>
+
 ---@return integer
 vim._ts_get_language_version = function() end
 
 ---@return integer
 vim._ts_get_minimum_language_version = function() end
+
+---@param lang string Language to use for the query
+---@param query string Query string in s-expr syntax
+---@return TSQuery
+vim._ts_parse_query = function(lang, query) end
 
 ---@param lang string
 ---@return TSParser
