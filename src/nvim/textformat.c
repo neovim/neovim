@@ -106,9 +106,14 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     colnr_T col;
     bool did_do_comment = false;
 
-    colnr_T virtcol = get_nolist_virtcol() + char2cells(c != NUL ? c : gchar_cursor());
-    if (virtcol <= (colnr_T)textwidth) {
-      break;
+    // Cursor is currently at the end of line. No need to format
+    // if line length is less than textwidth (8 * textwidth for
+    // utf safety)
+    if (curwin->w_cursor.col < 8 * textwidth) {
+      colnr_T virtcol = get_nolist_virtcol() + char2cells(c != NUL ? c : gchar_cursor());
+      if (virtcol <= (colnr_T)textwidth) {
+        break;
+      }
     }
 
     if (no_leader) {
@@ -156,9 +161,16 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     coladvance((colnr_T)textwidth);
     wantcol = curwin->w_cursor.col;
 
-    curwin->w_cursor.col = startcol;
+    // If startcol is large (a long line), formatting takes too much
+    // time. The algorithm is O(n^2), it walks from the end of the
+    // line to textwidth border every time for each line break.
+    //
+    // Ceil to 8 * textwidth to optimize.
+    curwin->w_cursor.col = startcol < 8 * textwidth ? startcol : 8 * textwidth;
+
     foundcol = 0;
     int skip_pos = 0;
+    bool first_pass = true;
 
     // Find position to break at.
     // Stop at first entered white when 'formatoptions' has 'v'
@@ -166,8 +178,9 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
            || (flags & INSCHAR_FORMAT)
            || curwin->w_cursor.lnum != Insstart.lnum
            || curwin->w_cursor.col >= Insstart.col) {
-      if (curwin->w_cursor.col == startcol && c != NUL) {
+      if (first_pass && c != NUL) {
         cc = c;
+        first_pass = false;
       } else {
         cc = gchar_cursor();
       }
