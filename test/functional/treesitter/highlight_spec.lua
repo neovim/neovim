@@ -745,7 +745,6 @@ describe('treesitter highlighting (help)', function()
       [3] = { bold = true, foreground = Screen.colors.Brown },
       [4] = { foreground = Screen.colors.Cyan4 },
       [5] = { foreground = Screen.colors.Magenta1 },
-      [6] = { foreground = Screen.colors.SlateBlue },
     }
   end)
 
@@ -764,10 +763,10 @@ describe('treesitter highlighting (help)', function()
 
     screen:expect {
       grid = [[
-      {6:>ruby}                                   |
-      {6:  -- comment}                            |
-      {6:  local this_is = 'actually_lua'}        |
-      {6:<}                                       |
+      {1:>ruby}                                   |
+      {1:  -- comment}                            |
+      {1:  local this_is = 'actually_lua'}        |
+      {1:<}                                       |
       ^                                        |
                                               |
     ]],
@@ -777,10 +776,10 @@ describe('treesitter highlighting (help)', function()
 
     screen:expect {
       grid = [[
-      {6:>lua}                                    |
-      {6:  }{1:-- comment}                            |
-      {6:  }{3:local}{6: }{4:this_is}{6: }{3:=}{6: }{5:'actually_lua'}        |
-      {6:<}                                       |
+      {1:>lua}                                    |
+      {1:  -- comment}                            |
+      {1:  }{3:local}{1: }{4:this_is}{1: }{3:=}{1: }{5:'actually_lua'}        |
+      {1:<}                                       |
       ^                                        |
                                               |
     ]],
@@ -790,10 +789,10 @@ describe('treesitter highlighting (help)', function()
 
     screen:expect {
       grid = [[
-      {6:>ruby}                                   |
-      {6:  -- comment}                            |
-      {6:  local this_is = 'actually_lua'}        |
-      {6:<}                                       |
+      {1:>ruby}                                   |
+      {1:  -- comment}                            |
+      {1:  local this_is = 'actually_lua'}        |
+      {1:<}                                       |
       ^                                        |
                                               |
     ]],
