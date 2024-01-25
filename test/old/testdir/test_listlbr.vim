@@ -375,13 +375,13 @@ endfunc
 
 func Test_linebreak_no_break_after_whitespace_only()
   call s:test_windows('setl ts=4 linebreak wrap')
-  call setline(1, "\tabcdefghijklmnopqrstuvwxyz" ..
+  call setline(1, "\t  abcdefghijklmnopqrstuvwxyz" ..
         \ "abcdefghijklmnopqrstuvwxyz")
   let lines = s:screen_lines([1, 4], winwidth(0))
   let expect = [
-\ "    abcdefghijklmnop",
-\ "qrstuvwxyzabcdefghij",
-\ "klmnopqrstuvwxyz    ",
+\ "      abcdefghijklmn",
+\ "opqrstuvwxyzabcdefgh",
+\ "ijklmnopqrstuvwxyz  ",
 \ "~                   ",
 \ ]
   call s:compare_lines(expect, lines)
