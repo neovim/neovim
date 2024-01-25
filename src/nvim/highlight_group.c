@@ -223,89 +223,66 @@ static const char *highlight_init_both[] = {
   "default link DiagnosticUnnecessary      Comment",
 
   // Treesitter standard groups
-  "default link @variable.builtin    Special",
-  "default link @variable.parameter  Identifier",
-  "default link @variable.member     Identifier",
+  "default link @variable.builtin Special",
 
-  "default link @constant          Constant",
-  "default link @constant.builtin  Special",
-  "default link @constant.macro    Define",
+  "default link @constant         Constant",
+  "default link @constant.builtin Special",
 
-  "default link @module  Structure",
-  "default link @label   Label",
+  "default link @module         Structure",
+  "default link @module.builtin Special",
+  "default link @label          Label",
 
-  "default link @string                 String",
-  "default link @string.regexp          SpecialChar",
-  "default link @string.escape          SpecialChar",
-  "default link @string.special         SpecialChar",
-  "default link @string.special.symbol  Constant",
-  "default link @string.special.url     Underlined",
+  "default link @string             String",
+  "default link @string.regexp      @string.special",
+  "default link @string.escape      @string.special",
+  "default link @string.special     SpecialChar",
+  "default link @string.special.url Underlined",
 
-  "default link @character          Character",
-  "default link @character.special  SpecialChar",
+  "default link @character         Character",
+  "default link @character.special SpecialChar",
 
-  "default link @boolean       Boolean",
-  "default link @number        Number",
-  "default link @number.float  Float",
+  "default link @boolean      Boolean",
+  "default link @number       Number",
+  "default link @number.float Float",
 
-  "default link @type             Type",
-  "default link @type.builtin     Special",
-  "default link @type.definition  Typedef",
-  "default link @type.qualifier   StorageClass",
+  "default link @type         Type",
+  "default link @type.builtin Special",
 
-  "default link @attribute  Macro",
-  "default link @property   Identifier",
+  "default link @attribute Macro",
+  "default link @property  Identifier",
 
-  "default link @function          Function",
-  "default link @function.builtin  Special",
-  "default link @function.macro    Macro",
+  "default link @function         Function",
+  "default link @function.builtin Special",
 
-  "default link @constructor   Special",
-  "default link @operator      Operator",
+  "default link @constructor Special",
+  "default link @operator    Operator",
 
-  "default link @keyword            Keyword",
-  "default link @keyword.function   Statement",
-  "default link @keyword.operator   Operator",
-  "default link @keyword.import     Include",
-  "default link @keyword.storage    StorageClass",
-  "default link @keyword.repeat     Repeat",
-  "default link @keyword.debug      Debug",
-  "default link @keyword.exception  Exception",
+  "default link @keyword Keyword",
 
-  "default link @keyword.conditional    Conditional",
+  "default link @punctuation         Delimiter",  // fallback for subgroups; never used itself
+  "default link @punctuation.special Special",
 
-  "default link @keyword.directive         Preproc",
-  "default link @keyword.directive.define  Define",
+  "default link @comment Comment",
 
-  "default link @punctuation.delimiter  Delimiter",
-  "default link @punctuation.bracket    Delimiter",
-  "default link @punctuation.special    Special",
+  "default link @comment.error   DiagnosticError",
+  "default link @comment.warning DiagnosticWarn",
+  "default link @comment.note    DiagnosticInfo",
+  "default link @comment.todo    Todo",
 
-  "default link @comment   Comment",
+  "@markup.strong        gui=bold          cterm=bold",
+  "@markup.italic        gui=italic        cterm=italic",
+  "@markup.strikethrough gui=strikethrough cterm=strikethrough",
+  "@markup.underline     gui=underline     cterm=underline",
 
-  "default link @comment.error    DiagnosticError",
-  "default link @comment.warning  DiagnosticWarn",
-  "default link @comment.note     DiagnosticInfo",
-  "default link @comment.todo     Todo",
+  "default link @markup         Special",  // fallback for subgroups; never used itself
+  "default link @markup.heading Title",
+  "default link @markup.link    Underlined",
 
-  "@markup.strong         gui=bold           cterm=bold",
-  "@markup.italic         gui=italic         cterm=italic",
-  "@markup.strikethrough  gui=strikethrough, cterm=strikethrough",
-  "@markup.underline      gui=underline,     cterm=underline",
+  "default link @diff.plus  Added",
+  "default link @diff.minus Removed",
+  "default link @diff.delta Changed",
 
-  "default link @markup                 Special",  // fallback for subgroups; never used itself
-  "default link @markup.heading         Title",
-  "default link @markup.environment     Structure",
-  "default link @markup.link            Underlined",
-  "default link @markup.list.checked    DiagnosticOk",
-  "default link @markup.list.unchecked  DiagnosticWarn",
-
-  "default link @diff.plus   Added",
-  "default link @diff.minus  Removed",
-  "default link @diff.delta  Changed",
-
-  "default link @tag            Tag",
-  "default link @tag.delimiter  Delimiter",
+  "default link @tag Tag",
 
   // LSP semantic tokens
   "default link @lsp.type.class         @type",
