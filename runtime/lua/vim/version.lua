@@ -69,6 +69,9 @@ Version.__index = Version
 
 --- Compares prerelease strings: per semver, number parts must be must be treated as numbers:
 --- "pre1.10" is greater than "pre1.2". https://semver.org/#spec-item-11
+--- @param prerel1 string
+--- @param prerel2 string
+--- @return integer
 local function cmp_prerel(prerel1, prerel2)
   if not prerel1 or not prerel2 then
     return prerel1 and -1 or (prerel2 and 1 or 0)

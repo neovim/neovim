@@ -1,5 +1,5 @@
-local pathtrails = {}
-vim._so_trails = {}
+local pathtrails = {} --- @type table<string,true> ta
+vim._so_trails = {} --- @type string[]
 for s in (package.cpath .. ';'):gmatch('[^;]*;') do
   s = s:sub(1, -2) -- Strip trailing semicolon
   -- Find out path patterns. pathtrail should contain something like

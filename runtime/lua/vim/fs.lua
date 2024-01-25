@@ -148,11 +148,11 @@ function M.dir(path, opts)
 end
 
 --- @class vim.fs.find.opts
---- @field path string
---- @field upward boolean
---- @field stop string
---- @field type string
---- @field limit number
+--- @field path? string
+--- @field upward? boolean
+--- @field stop? string
+--- @field type? string
+--- @field limit? number
 
 --- Find files or directories (or other items as specified by `opts.type`) in the given path.
 ---
@@ -224,7 +224,7 @@ function M.find(names, opts)
     names = { names }
   end
 
-  local path = opts.path or vim.uv.cwd()
+  local path = opts.path or assert(vim.uv.cwd())
   local stop = opts.stop
   local limit = opts.limit or 1
 

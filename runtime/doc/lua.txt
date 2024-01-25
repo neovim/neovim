@@ -887,6 +887,9 @@ vim.empty_dict()                                            *vim.empty_dict()*
     Note: If numeric keys are present in the table, Nvim ignores the metatable
     marker and converts the dict to a list/array anyway.
 
+    Return: ~
+        (`table`)
+
 vim.iconv({str}, {from}, {to}, {opts})                           *vim.iconv()*
     The result is a String, which is the text {str} converted from encoding
     {from} to encoding {to}. When the conversion fails `nil` is returned. When
@@ -907,8 +910,11 @@ vim.in_fast_event()                                      *vim.in_fast_event()*
     Returns true if the code is executing as part of a "fast" event handler,
     where most of the API is disabled. These are low-level events (e.g.
     |lua-loop-callbacks|) which can be invoked whenever Nvim polls for input.
-    When this is `false` most API functions are callable (but may be subject
-    to other restrictions such as |textlock|).
+    When this is `false` most API functions are callable (but may be subject to
+    other restrictions such as |textlock|).
+
+    Return: ~
+        (`boolean`)
 
 vim.rpcnotify({channel}, {method}, {args}, {...})            *vim.rpcnotify()*
     Sends {event} to {channel} via |RPC| and returns immediately. If {channel}
@@ -935,6 +941,9 @@ vim.rpcrequest({channel}, {method}, {args}, {...})          *vim.rpcrequest()*
       • {args}     (`any[]?`)
       • {...}      (`any?`)
 
+    Return: ~
+        (`any`)
+
 vim.schedule({fn})                                            *vim.schedule()*
     Schedules {fn} to be invoked soon by the main event-loop. Useful to avoid
     |textlock| or other temporary restrictions.
@@ -954,6 +963,9 @@ vim.str_byteindex({str}, {index}, {use_utf16})           *vim.str_byteindex()*
       • {str}        (`string`)
       • {index}      (`number`)
       • {use_utf16}  (`any?`)
+
+    Return: ~
+        (`integer`)
 
 vim.str_utf_end({str}, {index})                            *vim.str_utf_end()*
     Gets the distance (in bytes) from the last byte of the codepoint
@@ -1419,9 +1431,6 @@ vim.env                                                              *vim.env*
         vim.env.FOO = 'bar'
         print(vim.env.TERM)
 <
-
-    Parameters: ~
-      • {var}  (`string`)
 
 vim.go                                                                *vim.go*
     Get or set global |options|. Like `:setglobal`. Invalid key is an error.
@@ -1959,7 +1968,7 @@ vim.list_contains({t}, {value})                          *vim.list_contains()*
     Checks if a list-like table (integer keys without gaps) contains `value`.
 
     Parameters: ~
-      • {t}      (`table`) Table to check (must be list-like, not validated)
+      • {t}      (`any[]`) Table to check (must be list-like, not validated)
       • {value}  (`any`) Value to compare
 
     Return: ~

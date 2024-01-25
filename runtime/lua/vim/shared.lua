@@ -63,6 +63,10 @@ function vim.deepcopy(orig, noref)
   return deepcopy(orig, not noref and {} or nil)
 end
 
+--- @class vim.gsplit.Opts
+--- @field plain? boolean
+--- @field trimempty? boolean
+
 --- Gets an |iterator| that splits a string at each instance of a separator, in "lazy" fashion
 --- (as opposed to |vim.split()| which is "eager").
 ---
@@ -91,18 +95,17 @@ end
 ---
 --- @param s string String to split
 --- @param sep string Separator or pattern
---- @param opts (table|nil) Keyword arguments |kwargs|:
+--- @param opts? vim.gsplit.Opts (table) Keyword arguments |kwargs|:
 ---       - plain: (boolean) Use `sep` literally (as in string.find).
 ---       - trimempty: (boolean) Discard empty segments at start and end of the sequence.
----@return fun():string|nil (function) Iterator over the split components
+--- @return fun():string|nil (function) Iterator over the split components
 function vim.gsplit(s, sep, opts)
-  local plain
+  local plain --- @type boolean?
   local trimempty = false
   if type(opts) == 'boolean' then
     plain = opts -- For backwards compatibility.
-  else
+  elseif opts then
     vim.validate({ s = { s, 's' }, sep = { sep, 's' }, opts = { opts, 't', true } })
-    opts = opts or {}
     plain, trimempty = opts.plain, opts.trimempty
   end
 
@@ -113,6 +116,11 @@ function vim.gsplit(s, sep, opts)
   local segs = {}
   local empty_start = true -- Only empty segments seen so far.
 
+  --- @param i integer?
+  --- @param j integer?
+  --- @param ... any
+  --- @return string
+  --- @return any ...
   local function _pass(i, j, ...)
     if i then
       assert(j + 1 > start, 'Infinite loop detected')
@@ -182,7 +190,7 @@ end
 ---
 ---@param s string String to split
 ---@param sep string Separator or pattern
----@param opts (table|nil) Keyword arguments |kwargs| accepted by |vim.gsplit()|
+---@param opts? vim.gsplit.Opts (table) Keyword arguments |kwargs| accepted by |vim.gsplit()|
 ---@return string[] List of split components
 function vim.split(s, sep, opts)
   local t = {}
@@ -197,14 +205,14 @@ end
 ---
 ---@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
----@generic T: table
+---@generic T
 ---@param t table<T, any> (table) Table
 ---@return T[] (list) List of keys
 function vim.tbl_keys(t)
   assert(type(t) == 'table', string.format('Expected table, got %s', type(t)))
 
   local keys = {}
-  for k, _ in pairs(t) do
+  for k in pairs(t) do
     table.insert(keys, k)
   end
   return keys
@@ -282,7 +290,7 @@ end
 function vim.tbl_contains(t, value, opts)
   vim.validate({ t = { t, 't' }, opts = { opts, 't', true } })
 
-  local pred
+  local pred --- @type fun(v: any): boolean?
   if opts and opts.predicate then
     vim.validate({ value = { value, 'c' } })
     pred = value
@@ -304,8 +312,9 @@ end
 ---
 ---@see |vim.tbl_contains()| for checking values in general tables
 ---
----@param t table Table to check (must be list-like, not validated)
----@param value any Value to compare
+---@generic T
+---@param t T[] Table to check (must be list-like, not validated)
+---@param value T Value to compare
 ---@return boolean `true` if `t` contains `value`
 function vim.list_contains(t, value)
   vim.validate({ t = { t, 't' } })
@@ -334,6 +343,10 @@ local function can_merge(v)
   return type(v) == 'table' and (vim.tbl_isempty(v) or not vim.tbl_isarray(v))
 end
 
+---@param behavior 'error'|'keep'|'force'
+---@param deep_extend boolean
+---@param ... table Two or more tables
+---@return table Merged table
 local function tbl_extend(behavior, deep_extend, ...)
   if behavior ~= 'error' and behavior ~= 'keep' and behavior ~= 'force' then
     error('invalid "behavior": ' .. tostring(behavior))
@@ -347,13 +360,13 @@ local function tbl_extend(behavior, deep_extend, ...)
     )
   end
 
-  local ret = {}
+  local ret = {} --- @type
   if vim._empty_dict_mt ~= nil and getmetatable(select(1, ...)) == vim._empty_dict_mt then
     ret = vim.empty_dict()
   end
 
   for i = 1, select('#', ...) do
-    local tbl = select(i, ...)
+    local tbl = select(i, ...) --[[@as table<any,any>]]
     vim.validate({ ['after the second argument'] = { tbl, 't' } })
     if tbl then
       for k, v in pairs(tbl) do
@@ -469,7 +482,6 @@ end
 ---
 ---@param o table Table to index
 ---@param ... any Optional keys (0 or more, variadic) via which to index the table
----
 ---@return any Nested value indexed by key (if it exists), else nil
 function vim.tbl_get(o, ...)
   local keys = { ... }
@@ -477,7 +489,7 @@ function vim.tbl_get(o, ...)
     return nil
   end
   for i, k in ipairs(keys) do
-    o = o[k]
+    o = o[k] --- @diagnostic disable-line:no-unknown
     if o == nil then
       return nil
     elseif type(o) ~= 'table' and next(keys, i) then
@@ -591,14 +603,15 @@ function vim.tbl_isarray(t)
 
   if count > 0 then
     return true
-  else
-    -- TODO(bfredl): in the future, we will always be inside nvim
-    -- then this check can be deleted.
-    if vim._empty_dict_mt == nil then
-      return false
-    end
-    return getmetatable(t) ~= vim._empty_dict_mt
   end
+
+  -- TODO(bfredl): in the future, we will always be inside nvim
+  -- then this check can be deleted.
+  if vim._empty_dict_mt == nil then
+    return false
+  end
+
+  return getmetatable(t) ~= vim._empty_dict_mt
 end
 
 --- Tests if `t` is a "list": a table indexed _only_ by contiguous integers starting from 1 (what
@@ -620,14 +633,15 @@ function vim.tbl_islist(t)
 
   if num_elem == 0 then
     return getmetatable(t) ~= vim._empty_dict_mt
-  else
-    for i = 1, num_elem do
-      if t[i] == nil then
-        return false
-      end
-    end
-    return true
   end
+
+  for i = 1, num_elem do
+    if t[i] == nil then
+      return false
+    end
+  end
+
+  return true
 end
 
 --- Counts the number of non-nil values in table `t`.
@@ -654,8 +668,8 @@ end
 ---
 ---@generic T
 ---@param list T[] (list) Table
----@param start integer|nil Start range of slice
----@param finish integer|nil End range of slice
+---@param start? integer Start range of slice
+---@param finish? integer End range of slice
 ---@return T[] (list) Copy of table sliced from start to finish (inclusive)
 function vim.list_slice(list, start, finish)
   local new_list = {}
@@ -850,6 +864,7 @@ do
     end
   end
 end
+
 --- Returns true if object `f` can be called as a function.
 ---
 ---@param f any Any object

@@ -108,8 +108,22 @@ local key_value_options = {
   winhl = true,
 }
 
+--- @class vim._option.Info
+--- @field allows_duplicates boolean
+--- @field commalist boolean
+--- @field default any
+--- @field flaglist boolean
+--- @field global_local boolean
+--- @field name string
+--- @field scope 'win'|'buf'|'global'
+--- @field shortname string
+--- @field type 'boolean'|'string'|'number'
+--- @field metatype 'boolean'|'string'|'number'|'map'|'array'|'set'
+
 --- Convert a vimoption_T style dictionary to the correct OptionType associated with it.
----@return string
+--- @param name string
+--- @param info vim._option.Info
+--- @return string
 local function get_option_metatype(name, info)
   if info.type == 'string' then
     if info.flaglist then
@@ -127,6 +141,7 @@ end
 
 --- @param name string
 local function get_options_info(name)
+  --- @type vim._option.Info
   local info = api.nvim_get_option_info2(name, {})
   info.metatype = get_option_metatype(name, info)
   return info
@@ -142,8 +157,6 @@ end
 --- vim.env.FOO = 'bar'
 --- print(vim.env.TERM)
 --- ```
----
----@param var string
 vim.env = setmetatable({}, {
   __index = function(_, k)
     local v = vim.fn.getenv(k)
@@ -320,6 +333,7 @@ vim.wo = new_win_opt_accessor()
 
 --- Preserves the order and does not mutate the original list
 local function remove_duplicate_values(t)
+  --- @type table, table<any,true>
   local result, seen = {}, {}
   for _, v in ipairs(t) do
     if not seen[v] then
@@ -332,8 +346,11 @@ local function remove_duplicate_values(t)
   return result
 end
 
--- Check whether the OptionTypes is allowed for vim.opt
--- If it does not match, throw an error which indicates which option causes the error.
+--- Check whether the OptionTypes is allowed for vim.opt
+--- If it does not match, throw an error which indicates which option causes the error.
+--- @param name any
+--- @param value any
+--- @param types string[]
 local function assert_valid_value(name, value, types)
   local type_of_value = type(value)
   for _, valid_type in ipairs(types) do
@@ -388,6 +405,8 @@ local to_vim_value = {
   number = passthrough,
   string = passthrough,
 
+  --- @param info vim._option.Info
+  --- @param value string|table<string,true>
   set = function(info, value)
     if type(value) == 'string' then
       return value
@@ -415,6 +434,8 @@ local to_vim_value = {
     end
   end,
 
+  --- @param info vim._option.Info
+  --- @param value string|string[]
   array = function(info, value)
     if type(value) == 'string' then
       return value
@@ -425,6 +446,7 @@ local to_vim_value = {
     return table.concat(value, ',')
   end,
 
+  --- @param value string|table<string,string>
   map = function(_, value)
     if type(value) == 'string' then
       return value
@@ -458,6 +480,9 @@ local to_lua_value = {
   number = passthrough,
   string = passthrough,
 
+  --- @param info vim._option.Info
+  --- @param value string|string[]
+  --- @return string[]
   array = function(info, value)
     if type(value) == 'table' then
       if not info.allows_duplicates then
@@ -474,7 +499,8 @@ local to_lua_value = {
     end
 
     -- Handles unescaped commas in a list.
-    if string.find(value, ',,,') then
+    if value:find(',,,') then
+      --- @type string, string
       local left, right = unpack(vim.split(value, ',,,'))
 
       local result = {}
@@ -487,8 +513,9 @@ local to_lua_value = {
       return result
     end
 
-    if string.find(value, ',^,,', 1, true) then
-      local left, right = unpack(vim.split(value, ',^,,', true))
+    if value:find(',^,,', 1, true) then
+      --- @type string, string
+      local left, right = unpack(vim.split(value, ',^,,', { plain = true }))
 
       local result = {}
       vim.list_extend(result, vim.split(left, ','))
@@ -503,6 +530,9 @@ local to_lua_value = {
     return vim.split(value, ',')
   end,
 
+  --- @param info vim._option.Info
+  --- @param value string|table<string,true>
+  --- @return table<string,true>
   set = function(info, value)
     if type(value) == 'table' then
       return value
@@ -516,24 +546,25 @@ local to_lua_value = {
 
     assert(info.flaglist, 'That is the only one I know how to handle')
 
+    local result = {} --- @type table<string,true>
+
     if info.flaglist and info.commalist then
       local split_value = vim.split(value, ',')
-      local result = {}
       for _, v in ipairs(split_value) do
         result[v] = true
       end
-
-      return result
     else
-      local result = {}
       for i = 1, #value do
         result[value:sub(i, i)] = true
       end
-
-      return result
     end
+
+    return result
   end,
 
+  --- @param info vim._option.Info
+  --- @param raw_value string|table<string,string>
+  --- @return table<string,string>
   map = function(info, raw_value)
     if type(raw_value) == 'table' then
       return raw_value
@@ -541,10 +572,12 @@ local to_lua_value = {
 
     assert(info.commalist, 'Only commas are supported currently')
 
+    --- @return table<string,string>
     local result = {}
 
     local comma_split = vim.split(raw_value, ',')
     for _, key_value_str in ipairs(comma_split) do
+      --- @type string, string
       local key, value = unpack(vim.split(key_value_str, ':'))
       key = vim.trim(key)
 
@@ -590,14 +623,23 @@ local function prepend_value(info, current, new)
 end
 
 local add_methods = {
+  --- @param left integer
+  --- @param right integer
+  --- @return integer
   number = function(left, right)
     return left + right
   end,
 
+  --- @param left string
+  --- @param right string
+  --- @return string
   string = function(left, right)
     return left .. right
   end,
 
+  --- @param left string[]
+  --- @param right string[]
+  --- @return string[]
   array = function(left, right)
     for _, v in ipairs(right) do
       table.insert(left, v)
@@ -636,6 +678,9 @@ local function remove_one_item(t, val)
 end
 
 local remove_methods = {
+  --- @param left integer
+  --- @param right integer
+  --- @return integer
   number = function(left, right)
     return left - right
   end,
@@ -644,6 +689,9 @@ local remove_methods = {
     error('Subtraction not supported for strings.')
   end,
 
+  --- @param left string[]
+  --- @param right string[]
+  --- @return string[]
   array = function(left, right)
     if type(right) == 'string' then
       remove_one_item(left, right)

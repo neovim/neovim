@@ -74,6 +74,7 @@ vim.NIL = ...
 --- |lua-loop-callbacks|) which can be invoked whenever Nvim polls for input.
 --- When this is `false` most API functions are callable (but may be subject
 --- to other restrictions such as |textlock|).
+--- @return boolean
 function vim.in_fast_event() end
 
 --- Creates a special empty table (marked with a metatable), which Nvim
@@ -83,6 +84,7 @@ function vim.in_fast_event() end
 ---
 --- Note: If numeric keys are present in the table, Nvim ignores the metatable
 --- marker and converts the dict to a list/array anyway.
+--- @return table
 function vim.empty_dict() end
 
 --- Sends {event} to {channel} via |RPC| and returns immediately. If {channel}
@@ -104,6 +106,7 @@ function vim.rpcnotify(channel, method, args, ...) end
 --- @param method string
 --- @param args? any[]
 --- @param ...? any
+--- @return any
 function vim.rpcrequest(channel, method, args, ...) end
 
 --- Compares strings case-insensitively.
@@ -123,6 +126,7 @@ function vim.stricmp(a, b) end
 --- @param str string
 --- @param index number
 --- @param use_utf16? any
+--- @return integer
 function vim.str_byteindex(str, index, use_utf16) end
 
 --- Gets a list of the starting byte positions of each UTF-8 codepoint in the given string.

@@ -2,14 +2,14 @@ local M = {}
 local uv = vim.uv
 
 ---@enum vim._watch.FileChangeType
-local FileChangeType = {
+M.FileChangeType = {
   Created = 1,
   Changed = 2,
   Deleted = 3,
+  [1] = 'Created',
+  [2] = 'Changed',
+  [3] = 'Deleted',
 }
-
---- Enumeration describing the types of events watchers will emit.
-M.FileChangeType = vim.tbl_add_reverse_lookup(FileChangeType)
 
 --- Joins filepath elements by static '/' separator
 ---
@@ -56,7 +56,7 @@ function M.watch(path, opts, callback)
     assert(not err, err)
     local fullpath = path
     if filename then
-      filename = filename:gsub('\\', '/')
+      filename = filename:gsub('\\', '/') --- @type string
       fullpath = filepath_join(fullpath, filename)
     end
     local change_type = events.change and M.FileChangeType.Changed or 0
@@ -83,7 +83,7 @@ end
 --- @field exclude_pattern? vim.lpeg.Pattern
 
 ---@param path string
----@param opts watch.PollOpts
+---@param opts watch.PollOpts?
 ---@param callback function Called on new events
 ---@return function cancel stops the watcher
 local function recurse_watch(path, opts, callback)
@@ -137,10 +137,10 @@ local function recurse_watch(path, opts, callback)
         ---@type vim._watch.FileChangeType
         local change_type
         if stat then
-          change_type = FileChangeType.Created
+          change_type = M.FileChangeType.Created
           for _, event in ipairs(events_list) do
             if event.change then
-              change_type = FileChangeType.Changed
+              change_type = M.FileChangeType.Changed
             end
           end
           if stat.type == 'directory' then
@@ -159,7 +159,7 @@ local function recurse_watch(path, opts, callback)
             end
             handles[fullpath] = nil
           end
-          change_type = FileChangeType.Deleted
+          change_type = M.FileChangeType.Deleted
         end
         callback(fullpath, change_type)
       end)
@@ -198,7 +198,7 @@ end
 --- directory at path.
 ---
 ---@param path (string) The path to watch. Must refer to a directory.
----@param opts (table|nil) Additional options
+---@param opts watch.PollOpts? (table|nil) Additional options
 ---     - debounce (number|nil)
 ---                Time events are debounced in ms. Defaults to 500
 ---     - include_pattern (LPeg pattern|nil)

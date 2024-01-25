@@ -274,6 +274,7 @@ do
       for _, line in ipairs(lines) do
         nchars = nchars + line:len()
       end
+      --- @type integer, integer
       local row, col = unpack(vim.api.nvim_win_get_cursor(0))
       local bufline = vim.api.nvim_buf_get_lines(0, row - 1, row, true)[1]
       local firstline = lines[1]
@@ -619,7 +620,7 @@ function vim.notify(msg, level, opts) -- luacheck: no unused args
 end
 
 do
-  local notified = {}
+  local notified = {} --- @type table<string,true>
 
   --- Displays a notification only one time.
   ---
@@ -640,7 +641,7 @@ do
   end
 end
 
-local on_key_cbs = {}
+local on_key_cbs = {} --- @type table<integer,function>
 
 --- Adds Lua function {fn} with namespace id {ns_id} as a listener to every,
 --- yes every, input key.
@@ -741,7 +742,7 @@ function vim._expand_pat(pat, env)
     if type(final_env) ~= 'table' then
       return {}, 0
     end
-    local key
+    local key --- @type any
 
     -- Normally, we just have a string
     -- Just attempt to get the string directly from the environment
@@ -811,6 +812,7 @@ function vim._expand_pat(pat, env)
 end
 
 --- @param lua_string string
+--- @return (string|string[])[], integer
 vim._expand_pat_get_parts = function(lua_string)
   local parts = {}
 
