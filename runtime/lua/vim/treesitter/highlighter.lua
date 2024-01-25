@@ -7,7 +7,7 @@ local ns = api.nvim_create_namespace('treesitter/highlighter')
 ---@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil): integer, TSNode, TSMetadata
 
 ---@class vim.treesitter.highlighter.Query
----@field private _query Query?
+---@field private _query vim.treesitter.query.Query?
 ---@field private lang string
 ---@field private hl_cache table<integer,integer>
 local TSHighlighterQuery = {}

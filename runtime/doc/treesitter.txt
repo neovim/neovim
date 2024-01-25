@@ -976,7 +976,8 @@ get({lang}, {query_name})                         *vim.treesitter.query.get()*
       • {query_name}  (`string`) Name of the query (e.g. "highlights")
 
     Return: ~
-        (`Query?`) Parsed query
+        (`vim.treesitter.Query?`) Parsed query. `nil` if no query files are
+        found.
 
                                             *vim.treesitter.query.get_files()*
 get_files({lang}, {query_name}, {is_included})
@@ -1040,12 +1041,12 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
     read the contents into a string before calling).
 
     Returns a `Query` (see |lua-treesitter-query|) object which can be used to
-    search nodes in the syntax tree for the patterns defined in {query} using `iter_*` methods
-    below.
+    search nodes in the syntax tree for the patterns defined in {query} using
+    the `iter_captures` and `iter_matches` methods.
 
     Exposes `info` and `captures` with additional context about {query}.
     • `captures` contains the list of unique capture names defined in {query}.
-      -`info.captures` also points to `captures`.
+    • `info.captures` also points to `captures`.
     • `info.patterns` contains information about predicates.
 
     Parameters: ~
@@ -1053,7 +1054,10 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
       • {query}  (`string`) Query in s-expr syntax
 
     Return: ~
-        (`Query`) Parsed query
+        (`vim.treesitter.Query`) Parsed query
+
+    See also: ~
+      • |vim.treesitter.query.get()|
 
                                                        *Query:iter_captures()*
 Query:iter_captures({node}, {source}, {start}, {stop})
