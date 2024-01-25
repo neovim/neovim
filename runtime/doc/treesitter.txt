@@ -422,8 +422,9 @@ instance, to highlight comments differently per language: >vim
     hi @comment.lua guifg=DarkBlue
     hi link @comment.documentation.java String
 <
-The following captures are linked by default to standard |group-name|s (use
-|:Inspect| on a group to see the current link):
+The following is a list of standard captures used in queries for Nvim,
+highlighted according to the current colorscheme (use |:Inspect| on one to see
+the exact definition):
 
 @variable               various variable names
 @variable.builtin       built-in variable names (e.g. `this` / `self`)
