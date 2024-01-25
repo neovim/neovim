@@ -146,16 +146,8 @@ static const char *highlight_init_both[] = {
   "RedrawDebugNormal gui=reverse   cterm=reverse",
   "TabLineSel        gui=bold      cterm=bold",
   "TermCursor        gui=reverse   cterm=reverse",
-  "Title             gui=bold      cterm=bold",
-  "Todo              gui=bold      cterm=bold",
   "Underlined        gui=underline cterm=underline",
   "lCursor           guifg=bg      guibg=fg",
-
-  "Constant   guifg=NONE",
-  "Operator   guifg=NONE",
-  "PreProc    guifg=NONE",
-  "Type       guifg=NONE",
-  "Delimiter  guifg=NONE",
 
   // UI
   "default link CursorIM       Cursor",
@@ -231,7 +223,6 @@ static const char *highlight_init_both[] = {
   "default link DiagnosticUnnecessary      Comment",
 
   // Treesitter standard groups
-  "default link @variable            NONE",  // don't highlight to reduce visual overload
   "default link @variable.builtin    Special",
   "default link @variable.parameter  Identifier",
   "default link @variable.member     Identifier",
@@ -382,19 +373,27 @@ static const char *highlight_init_light[] = {
   "SpellRare            guisp=NvimDarkCyan   gui=undercurl                   cterm=undercurl",
   "StatusLine           guifg=NvimLightGrey3 guibg=NvimDarkGrey3             cterm=reverse",
   "StatusLineNC         guifg=NvimDarkGrey3  guibg=NvimLightGrey3            cterm=bold",
+  "Title                guifg=NvimDarkGrey2                        gui=bold  cterm=bold",
   "Visual                                    guibg=NvimLightGrey4            ctermfg=15 ctermbg=0",
   "WarningMsg           guifg=NvimDarkYellow                                 ctermfg=3",
   "WinBar               guifg=NvimDarkGrey4  guibg=NvimLightGrey1  gui=bold  cterm=bold",
   "WinBarNC             guifg=NvimDarkGrey4  guibg=NvimLightGrey1            cterm=bold",
 
   // Syntax
+  "Constant   guifg=NvimDarkGrey2",  // Use only `Normal` foreground to be usable on different background
+  "Operator   guifg=NvimDarkGrey2",
+  "PreProc    guifg=NvimDarkGrey2",
+  "Type       guifg=NvimDarkGrey2",
+  "Delimiter  guifg=NvimDarkGrey2",
+
   "Comment    guifg=NvimDarkGrey4",
   "String     guifg=NvimDarkGreen                    ctermfg=2",
   "Identifier guifg=NvimDarkBlue                     ctermfg=4",
   "Function   guifg=NvimDarkCyan                     ctermfg=6",
-  "Statement  gui=bold                               cterm=bold",
+  "Statement  guifg=NvimDarkGrey2 gui=bold           cterm=bold",
   "Special    guifg=NvimDarkCyan                     ctermfg=6",
   "Error      guifg=NvimDarkGrey1 guibg=NvimLightRed ctermfg=15 ctermbg=1",
+  "Todo       guifg=NvimDarkGrey2 gui=bold           cterm=bold",
 
   // Diagnostic
   "DiagnosticError          guifg=NvimDarkRed                      ctermfg=1",
@@ -408,6 +407,9 @@ static const char *highlight_init_light[] = {
   "DiagnosticUnderlineHint  guisp=NvimDarkBlue   gui=underline     cterm=underline",
   "DiagnosticUnderlineOk    guisp=NvimDarkGreen  gui=underline     cterm=underline",
   "DiagnosticDeprecated     guisp=NvimDarkRed    gui=strikethrough cterm=strikethrough",
+
+  // Treesitter standard groups
+  "@variable guifg=NvimDarkGrey2",
   NULL
 };
 
@@ -456,19 +458,27 @@ static const char *highlight_init_dark[] = {
   "SpellRare            guisp=NvimLightCyan   gui=undercurl                 cterm=undercurl",
   "StatusLine           guifg=NvimDarkGrey3   guibg=NvimLightGrey3          cterm=reverse",
   "StatusLineNC         guifg=NvimLightGrey3  guibg=NvimDarkGrey3           cterm=bold",
+  "Title                guifg=NvimLightGrey2                       gui=bold cterm=bold",
   "Visual                                     guibg=NvimDarkGrey4           ctermfg=0 ctermbg=15",
   "WarningMsg           guifg=NvimLightYellow                               ctermfg=11",
   "WinBar               guifg=NvimLightGrey4  guibg=NvimDarkGrey1  gui=bold cterm=bold",
   "WinBarNC             guifg=NvimLightGrey4  guibg=NvimDarkGrey1           cterm=bold",
 
   // Syntax
+  "Constant   guifg=NvimLightGrey2",  // Use only `Normal` foreground to be usable on different background
+  "Operator   guifg=NvimLightGrey2",
+  "PreProc    guifg=NvimLightGrey2",
+  "Type       guifg=NvimLightGrey2",
+  "Delimiter  guifg=NvimLightGrey2",
+
   "Comment    guifg=NvimLightGrey4",
   "String     guifg=NvimLightGreen                   ctermfg=10",
   "Identifier guifg=NvimLightBlue                    ctermfg=12",
   "Function   guifg=NvimLightCyan                    ctermfg=14",
-  "Statement  gui=bold                               cterm=bold",
+  "Statement  guifg=NvimLightGrey2 gui=bold          cterm=bold",
   "Special    guifg=NvimLightCyan                    ctermfg=14",
   "Error      guifg=NvimLightGrey1 guibg=NvimDarkRed ctermfg=0 ctermbg=9",
+  "Todo       guifg=NvimLightGrey2 gui=bold          cterm=bold",
 
   // Diagnostic
   "DiagnosticError          guifg=NvimLightRed                      ctermfg=9",
@@ -482,6 +492,9 @@ static const char *highlight_init_dark[] = {
   "DiagnosticUnderlineHint  guisp=NvimLightBlue   gui=underline     cterm=underline",
   "DiagnosticUnderlineOk    guisp=NvimLightGreen  gui=underline     cterm=underline",
   "DiagnosticDeprecated     guisp=NvimLightRed    gui=strikethrough cterm=strikethrough",
+
+  // Treesitter standard groups
+  "@variable guifg=NvimLightGrey2",
   NULL
 };
 
