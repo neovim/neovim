@@ -277,22 +277,20 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
     size += added;
   }
 
-  char *s = cur;
-  colnr_T vcol_start = 0;  // start from where to consider linebreak
+  bool need_lbr = false;
   // If 'linebreak' set check at a blank before a non-blank if the line
-  // needs a break here
-  if (wp->w_p_lbr && wp->w_p_wrap && wp->w_width_inner != 0) {
+  // needs a break here.
+  if (wp->w_p_lbr && wp->w_p_wrap && wp->w_width_inner != 0
+      && vim_isbreak((uint8_t)cur[0]) && !vim_isbreak((uint8_t)cur[1])) {
     char *t = csarg->line;
     while (vim_isbreak((uint8_t)t[0])) {
       t++;
     }
-    vcol_start = (colnr_T)(t - csarg->line);
+    // 'linebreak' is only needed when not in leading whitespace.
+    need_lbr = cur >= t;
   }
-  if (wp->w_p_lbr && vcol_start <= vcol
-      && vim_isbreak((uint8_t)s[0])
-      && !vim_isbreak((uint8_t)s[1])
-      && wp->w_p_wrap
-      && wp->w_width_inner != 0) {
+  if (need_lbr) {
+    char *s = cur;
     // Count all characters from first non-blank after a blank up to next
     // non-blank after a blank.
     int numberextra = win_col_off(wp);
