@@ -57,5 +57,5 @@ TREESITTER_BASH_URL https://github.com/tree-sitter/tree-sitter-bash/archive/v0.2
 TREESITTER_BASH_SHA256 8a86182b9dd66acdce27c1e272247882b5cf910dd8725fbb68a8bf9d808fecba
 TREESITTER_MARKDOWN_URL https://github.com/MDeiml/tree-sitter-markdown/archive/v0.1.7.tar.gz
 TREESITTER_MARKDOWN_SHA256 7d0e7f7ed4516ed0816f9c304e2e7fa93b2c16f9280416c2fb64dc4efd9c5f83
-TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/660481dbf71413eba5a928b0b0ab8da50c1109e0.tar.gz
-TREESITTER_SHA256 2881ad14d9559efaa72638740a78fc0d9884f8b2504e6434d525aee06c43bc57
+TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/v0.20.9.tar.gz
+TREESITTER_SHA256 9b2fd489a7281e3a7e5e7cbbf3a974e5a6a115889ae65676d61b79bdae96464e
