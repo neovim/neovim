@@ -95,7 +95,7 @@ static void cursorhold_event(void **argv)
 static void create_cursorhold_event(bool events_enabled)
 {
   // If events are enabled and the queue has any items, this function should not
-  // have been called(inbuf_poll would return kInputAvail)
+  // have been called (inbuf_poll would return kInputAvail).
   // TODO(tarruda): Cursorhold should be implemented as a timer set during the
   // `state_check` callback for the states where it can be triggered.
   assert(!events_enabled || multiqueue_empty(main_loop.events));
@@ -110,7 +110,7 @@ static void restart_cursorhold_wait(int tb_change_cnt)
 
 /// Low level input function
 ///
-/// wait until either the input buffer is non-empty or, if `events` is not NULL
+/// Wait until either the input buffer is non-empty or, if `events` is not NULL
 /// until `events` is non-empty.
 int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *events)
 {
@@ -543,7 +543,7 @@ bool os_input_ready(MultiQueue *events)
 {
   return (typebuf_was_filled             // API call filled typeahead
           || rbuffer_size(input_buffer)  // Input buffer filled
-          || pending_events(events));          // Events must be processed
+          || pending_events(events));    // Events must be processed
 }
 
 // Exit because of an input read error.

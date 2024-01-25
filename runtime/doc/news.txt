@@ -104,10 +104,10 @@ The following changes may require adaptations in user config or plugins.
   • |hl-WinSeparator| is linked to |hl-Normal| instead of |hl-VertSplit|.
 
   This also might result into some color schemes looking differently due to
-  them relying on an implicit assumptions about how highlight groups are
-  defined by default. To account for this, define all attributes of highlight
-  groups explicitly. Alternatively, use `:colorscheme vim` or
-  `:source $VIMRUNTIME/colors/vim.lua` to restore previous definitions.
+  them relying on implicit assumptions about how highlight groups are defined
+  by default. To account for this, define all attributes of highlight groups
+  explicitly. Alternatively, use `:colorscheme vim` or `:source
+  $VIMRUNTIME/colors/vim.lua` to restore previous definitions.
 
 • 'termguicolors' is enabled by default when Nvim is able to determine that
   the host terminal emulator supports 24-bit color.
@@ -125,7 +125,6 @@ unreleased features on Nvim HEAD.
 
 • Removed `vim.treesitter.foldtext` as transparent foldtext is now supported
   https://github.com/neovim/neovim/pull/20750
-• ...
 
 ==============================================================================
 NEW FEATURES                                                    *news-features*

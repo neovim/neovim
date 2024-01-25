@@ -1023,7 +1023,7 @@ end
 
 --- @class vim.diagnostic.GotoOpts : vim.diagnostic.GetOpts
 --- @field cursor_position? {[1]:integer,[2]:integer}
---- @field wrap? integer
+--- @field wrap? boolean
 --- @field float? boolean|vim.diagnostic.Opts.Float
 --- @field win_id? integer
 
