@@ -91,8 +91,11 @@ jobs:
 
       - name: ${{ matrix.test }}
         timeout-minutes: 20
+        run: make ${{ matrix.test }}
+
+      - name: Show nvim log
         run: |
-          make ${{ matrix.test }}
+          echo $NVIM_LOG_FILE
           cat $NVIM_LOG_FILE
 
       - name: Install
