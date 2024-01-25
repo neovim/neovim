@@ -1045,8 +1045,8 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
 
     Exposes `info` and `captures` with additional context about {query}.
     • `captures` contains the list of unique capture names defined in {query}.
-      -`info.captures` also points to `captures`.
-    • `info.patterns` contains information about predicates.
+    • `info.captures` also points to `captures`.
+    • `info.patterns` contains information about predicates. See TSQueryInfo.
 
     Parameters: ~
       • {lang}   (`string`) Language to use for the query
@@ -1054,6 +1054,9 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
 
     Return: ~
         (`Query`) Parsed query
+
+    See also: ~
+      • |vim.treesitter.query.get()|
 
                                                        *Query:iter_captures()*
 Query:iter_captures({node}, {source}, {start}, {stop})

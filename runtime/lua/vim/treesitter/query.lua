@@ -1,16 +1,13 @@
 local api = vim.api
 local language = require('vim.treesitter.language')
 
+---Parsed query, see |vim.treesitter.query.parse()|
 ---@class Query
----@field captures string[] List of captures used in query
----@field info TSQueryInfo Contains used queries, predicates, directives
----@field query userdata Parsed query
+---@field captures string[] List of (unique) capture names defined in query.
+---@field info TSQueryInfo Contains information used in queries, predicates, directives
+---@field query TSQuery Parsed query object (userdata)
 local Query = {}
 Query.__index = Query
-
----@class TSQueryInfo
----@field captures table
----@field patterns table<string,any[][]>
 
 ---@class vim.treesitter.query
 local M = {}
@@ -232,15 +229,16 @@ end
 --- using `iter_*` methods below.
 ---
 --- Exposes `info` and `captures` with additional context about {query}.
----   - `captures` contains the list of unique capture names defined in
----     {query}.
----   -` info.captures` also points to `captures`.
----   - `info.patterns` contains information about predicates.
+---   - `captures` contains the list of unique capture names defined in {query}.
+---   - `info.captures` also points to `captures`.
+---   - `info.patterns` contains information about predicates. See TSQueryInfo.
 ---
 ---@param lang string Language to use for the query
 ---@param query string Query in s-expr syntax
 ---
 ---@return Query Parsed query
+---
+---@see |vim.treesitter.query.get()|
 M.parse = vim.func._memoize('concat-2', function(lang, query)
   language.add(lang)
 

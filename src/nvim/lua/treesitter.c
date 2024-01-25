@@ -56,6 +56,7 @@ typedef struct {
 # include "lua/treesitter.c.generated.h"
 #endif
 
+// TSParser
 static struct luaL_Reg parser_meta[] = {
   { "__gc", parser_gc },
   { "__tostring", parser_tostring },
@@ -70,6 +71,7 @@ static struct luaL_Reg parser_meta[] = {
   { NULL, NULL }
 };
 
+// TSTree
 static struct luaL_Reg tree_meta[] = {
   { "__gc", tree_gc },
   { "__tostring", tree_tostring },
@@ -80,6 +82,7 @@ static struct luaL_Reg tree_meta[] = {
   { NULL, NULL }
 };
 
+// TSNode
 static struct luaL_Reg node_meta[] = {
   { "__tostring", node_tostring },
   { "__eq", node_eq },
@@ -119,6 +122,7 @@ static struct luaL_Reg node_meta[] = {
   { NULL, NULL }
 };
 
+// TSQuery
 static struct luaL_Reg query_meta[] = {
   { "__gc", query_gc },
   { "__tostring", query_tostring },
