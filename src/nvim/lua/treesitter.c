@@ -1449,10 +1449,7 @@ static int node_rawquery(lua_State *L)
     cursor = ts_query_cursor_new();
   }
 
-#ifdef NVIM_TS_HAS_SET_MAX_START_DEPTH
-  // reset the start depth
   ts_query_cursor_set_max_start_depth(cursor, UINT32_MAX);
-#endif
   ts_query_cursor_set_match_limit(cursor, 256);
   ts_query_cursor_exec(cursor, query, node);
 
@@ -1475,11 +1472,8 @@ static int node_rawquery(lua_State *L)
       if (lua_type(L, -2) == LUA_TSTRING) {
         char *k = (char *)lua_tostring(L, -2);
         if (strequal("max_start_depth", k)) {
-          // TODO(lewis6991): remove ifdef when min TS version is 0.20.9
-#ifdef NVIM_TS_HAS_SET_MAX_START_DEPTH
           uint32_t max_start_depth = (uint32_t)lua_tointeger(L, -1);
           ts_query_cursor_set_max_start_depth(cursor, max_start_depth);
-#endif
         }
       }
       lua_pop(L, 1);  // pop the value; lua_next will pop the key.
