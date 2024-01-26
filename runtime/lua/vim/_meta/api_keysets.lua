@@ -200,6 +200,9 @@ error('Cannot require a meta file')
 --- @class vim.api.keyset.ns_opts
 --- @field wins? any[]
 
+--- @class vim.api.keyset.open_tabpage_opts
+--- @field after? integer
+
 --- @class vim.api.keyset.open_term
 --- @field on_input? fun(_: "input", term: integer, bufnr: integer, data: any)
 --- @field force_crlf? boolean
