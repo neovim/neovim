@@ -1,6 +1,10 @@
-local tty = vim.iter(vim.api.nvim_list_uis()):any(function(ui)
-  return ui.chan == 1 and ui.stdout_tty
-end)
+local tty = false
+for _, ui in ipairs(vim.api.nvim_list_uis()) do
+  if ui.chan == 1 and ui.stdout_tty then
+    tty = true
+    break
+  end
+end
 
 if not tty or vim.g.clipboard ~= nil or vim.o.clipboard ~= '' or not os.getenv('SSH_TTY') then
   return
