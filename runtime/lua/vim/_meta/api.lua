@@ -320,7 +320,7 @@ function vim.api.nvim_buf_get_commands(buffer, opts) end
 ---               • details: Whether to include the details dict
 ---               • hl_name: Whether to include highlight group name instead
 ---                 of id, true if omitted
---- @return integer[]
+--- @return vim.api.keyset.get_extmark_item
 function vim.api.nvim_buf_get_extmark_by_id(buffer, ns_id, id, opts) end
 
 --- Gets `extmarks` in "traversal order" from a `charwise` region defined by
@@ -376,14 +376,14 @@ function vim.api.nvim_buf_get_extmark_by_id(buffer, ns_id, id, opts) end
 ---                 if their start position is less than `start`
 ---               • type: Filter marks by type: "highlight", "sign",
 ---                 "virt_text" and "virt_lines"
---- @return any[]
+--- @return vim.api.keyset.get_extmark_item[]
 function vim.api.nvim_buf_get_extmarks(buffer, ns_id, start, end_, opts) end
 
 --- Gets a list of buffer-local `mapping` definitions.
 ---
 --- @param buffer integer Buffer handle, or 0 for current buffer
 --- @param mode string Mode short-name ("n", "i", "v", ...)
---- @return table<string,any>[]
+--- @return vim.api.keyset.keymap[]
 function vim.api.nvim_buf_get_keymap(buffer, mode) end
 
 --- Gets a line-range from the buffer.
@@ -1153,7 +1153,7 @@ function vim.api.nvim_get_all_options_info() end
 ---             • buffer: Buffer number or list of buffer numbers for buffer
 ---               local autocommands `autocmd-buflocal`. Cannot be used with
 ---               {pattern}
---- @return any[]
+--- @return vim.api.keyset.get_autocmds.ret[]
 function vim.api.nvim_get_autocmds(opts) end
 
 --- Gets information about a channel.
@@ -1179,7 +1179,7 @@ function vim.api.nvim_get_color_by_name(name) end
 --- Keys are color names (e.g. "Aqua") and values are 24-bit RGB color values
 --- (e.g. 65535).
 ---
---- @return table<string,any>
+--- @return table<string,integer>
 function vim.api.nvim_get_color_map() end
 
 --- Gets a map of global (non-buffer-local) Ex commands.
@@ -1229,7 +1229,7 @@ function vim.api.nvim_get_current_win() end
 ---                instead of effective definition `:hi-link`.
 ---              • create: (boolean, default true) When highlight group
 ---                doesn't exist create it.
---- @return table<string,any>
+--- @return vim.api.keyset.hl_info
 function vim.api.nvim_get_hl(ns_id, opts) end
 
 --- @deprecated
@@ -1264,7 +1264,7 @@ function vim.api.nvim_get_hl_ns(opts) end
 --- Gets a list of global (non-buffer-local) `mapping` definitions.
 ---
 --- @param mode string Mode short-name ("n", "i", "v", ...)
---- @return table<string,any>[]
+--- @return vim.api.keyset.keymap[]
 function vim.api.nvim_get_keymap(mode) end
 
 --- Returns a `(row, col, buffer, buffername)` tuple representing the position
@@ -1274,18 +1274,18 @@ function vim.api.nvim_get_keymap(mode) end
 ---
 --- @param name string Mark name
 --- @param opts vim.api.keyset.empty Optional parameters. Reserved for future use.
---- @return any[]
+--- @return vim.api.keyset.get_mark
 function vim.api.nvim_get_mark(name, opts) end
 
 --- Gets the current mode. `mode()` "blocking" is true if Nvim is waiting for
 --- input.
 ---
---- @return table<string,any>
+--- @return vim.api.keyset.get_mode
 function vim.api.nvim_get_mode() end
 
 --- Gets existing, non-anonymous `namespace`s.
 ---
---- @return table<string,any>
+--- @return table<string,integer>
 function vim.api.nvim_get_namespaces() end
 
 --- @deprecated
@@ -1295,7 +1295,7 @@ function vim.api.nvim_get_option(name) end
 
 --- @deprecated
 --- @param name string
---- @return table<string,any>
+--- @return vim.api.keyset.get_option_info
 function vim.api.nvim_get_option_info(name) end
 
 --- Gets the option information for one option from arbitrary buffer or window
@@ -1325,7 +1325,7 @@ function vim.api.nvim_get_option_info(name) end
 ---             • win: `window-ID`. Used for getting window local options.
 ---             • buf: Buffer number. Used for getting buffer local options.
 ---               Implies {scope} is "local".
---- @return table<string,any>
+--- @return vim.api.keyset.get_option_info
 function vim.api.nvim_get_option_info2(name, opts) end
 
 --- Gets the value of an option. The behavior of this function matches that of
@@ -1637,7 +1637,7 @@ function vim.api.nvim_out_write(str) end
 ---
 --- @param str string Command line string to parse. Cannot contain "\n".
 --- @param opts vim.api.keyset.empty Optional parameters. Reserved for future use.
---- @return table<string,any>
+--- @return vim.api.keyset.parse_cmd
 function vim.api.nvim_parse_cmd(str, opts) end
 
 --- Parse a Vimscript expression.
@@ -1985,7 +1985,7 @@ function vim.api.nvim_win_get_buf(window) end
 --- `relative` is empty for normal windows.
 ---
 --- @param window integer Window handle, or 0 for current window
---- @return table<string,any>
+--- @return vim.api.keyset.float_config
 function vim.api.nvim_win_get_config(window) end
 
 --- Gets the (1,0)-indexed, buffer-relative cursor position for a given window

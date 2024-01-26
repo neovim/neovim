@@ -1,3 +1,5 @@
+#!/usr/bin/env -S nvim -l
+
 -- Generator for various vimdoc and Lua type files
 
 local DEP_API_METADATA = 'build/api_metadata.mpack'
@@ -16,6 +18,31 @@ local DEP_API_DOC = 'runtime/doc/api.mpack'
 --- @field method boolean
 --- @field remote boolean
 --- @field since integer
+
+local LUA_API_RETURN_OVERRIDES = {
+  nvim_buf_get_command = 'table<string,vim.api.keyset.command_info>',
+  nvim_buf_get_extmark_by_id = 'vim.api.keyset.get_extmark_item',
+  nvim_buf_get_extmarks = 'vim.api.keyset.get_extmark_item[]',
+  nvim_buf_get_keymap = 'vim.api.keyset.keymap[]',
+  nvim_get_autocmds = 'vim.api.keyset.get_autocmds.ret[]',
+  nvim_get_color_map = 'table<string,integer>',
+  nvim_get_command = 'table<string,vim.api.keyset.command_info>',
+  nvim_get_keymap = 'vim.api.keyset.keymap[]',
+  nvim_get_mark = 'vim.api.keyset.get_mark',
+
+  -- Can also return table<string,vim.api.keyset.hl_info>, however we need to
+  -- pick one to get some benefit.
+  -- REVISIT lewrus01 (26/01/24): we can maybe add
+  -- @overload fun(ns: integer, {}): table<string,vim.api.keyset.hl_info>
+  nvim_get_hl = 'vim.api.keyset.hl_info',
+
+  nvim_get_mode = 'vim.api.keyset.get_mode',
+  nvim_get_namespaces = 'table<string,integer>',
+  nvim_get_option_info = 'vim.api.keyset.get_option_info',
+  nvim_get_option_info2 = 'vim.api.keyset.get_option_info',
+  nvim_parse_cmd = 'vim.api.keyset.parse_cmd',
+  nvim_win_get_config = 'vim.api.keyset.float_config',
+}
 
 local LUA_META_HEADER = {
   '--- @meta _',
@@ -289,11 +316,9 @@ local function render_api_meta(_f, fun, write)
     end
   end
   if fun.returns ~= '' then
-    if fun.returns_desc then
-      write('--- @return ' .. fun.returns .. ' : ' .. fun.returns_desc)
-    else
-      write('--- @return ' .. fun.returns)
-    end
+    local ret_desc = fun.returns_desc and ' : ' .. fun.returns_desc or ''
+    local ret = LUA_API_RETURN_OVERRIDES[fun.name] or fun.returns
+    write('--- @return ' .. ret .. ret_desc)
   end
   local param_str = table.concat(param_names, ', ')
 
