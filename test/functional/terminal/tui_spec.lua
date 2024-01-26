@@ -2778,12 +2778,19 @@ describe('TUI', function()
           local req = args.data
           local payload = req:match('^\027P%+q([%x;]+)$')
           if payload then
-            vim.g.xtgettcap = true
+            local t = {}
+            for cap in vim.gsplit(payload, ';') do
+              local resp = string.format('\027P1+r%s\027\\', payload)
+              vim.api.nvim_chan_send(vim.bo[args.buf].channel, resp)
+              t[vim.text.hexdecode(cap)] = true
+            end
+            vim.g.xtgettcap = t
             return true
           end
         end,
       })
     ]])
+
     screen = thelpers.setup_child_nvim({
       '-u',
       'NONE',
@@ -2801,9 +2808,71 @@ describe('TUI', function()
     })
 
     retry(nil, 1000, function()
-      eq(true, eval("get(g:, 'xtgettcap', v:false)"))
-      eq(1, eval('&termguicolors'))
+      eq({
+        Tc = true,
+        RGB = true,
+        setrgbf = true,
+        setrgbb = true,
+      }, eval("get(g:, 'xtgettcap', '')"))
     end)
+
+    feed_data(':echo &termguicolors\r')
+
+    screen:expect {
+      grid = [[
+      {1: }                                                 |
+      ~                                                 |*3
+      [No Name]                       0,0-1          All|
+      1                                                 |
+      {3:-- TERMINAL --}                                    |
+    ]],
+    }
+  end)
+
+  it('queries the terminal for OSC 52 support', function()
+    clear()
+    exec_lua([[
+      vim.api.nvim_create_autocmd('TermRequest', {
+        callback = function(args)
+          local req = args.data
+          local payload = req:match('^\027P%+q([%x;]+)$')
+          if payload and vim.text.hexdecode(payload) == 'Ms' then
+            vim.g.xtgettcap = 'Ms'
+            local resp = string.format('\027P1+r%s=%s\027\\', payload, vim.text.hexencode('\027]52;;\027\\'))
+            vim.api.nvim_chan_send(vim.bo[args.buf].channel, resp)
+            return true
+          end
+        end,
+      })
+    ]])
+
+    screen = thelpers.setup_child_nvim({
+      -- Use --clean instead of -u NONE to load the osc52 plugin
+      '--clean',
+    }, {
+      env = {
+        VIMRUNTIME = os.getenv('VIMRUNTIME'),
+
+        -- Only queries when SSH_TTY is set
+        SSH_TTY = '/dev/pts/1',
+      },
+    })
+
+    retry(nil, 1000, function()
+      eq('Ms', eval("get(g:, 'xtgettcap', '')"))
+    end)
+
+    feed_data(':echo g:clipboard.name\r')
+
+    screen:expect {
+      grid = [[
+      {1: }                                                 |
+      ~                                                 |*3
+      [No Name]                       0,0-1          All|
+      OSC 52                                            |
+      {3:-- TERMINAL --}                                    |
+    ]],
+    }
   end)
 end)
 
