@@ -629,9 +629,9 @@ next_mark:
       } else if (item.data.sh.flags & kSHSpellOff) {
         spell = kFalse;
       }
-    }
-    if (active && item.data.sh.url != NULL) {
-      attr = hl_add_url(attr, item.data.sh.url);
+      if (item.data.sh.url != NULL) {
+        attr = hl_add_url(attr, item.data.sh.url);
+      }
     }
     if (item.start_row == state->row && item.start_col <= col
         && decor_virt_pos(&item) && item.draw_col == -10) {
