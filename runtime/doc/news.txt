@@ -123,7 +123,8 @@ BREAKING CHANGES IN HEAD                                    *news-breaking-dev*
 The following breaking changes were made during the development cycle to
 unreleased features on Nvim HEAD.
 
-• ...
+• Removed `vim.treesitter.foldtext` as transparent foldtext is now supported
+  https://github.com/neovim/neovim/pull/20750
 • ...
 
 ==============================================================================
@@ -223,8 +224,6 @@ The following new APIs and features were added.
   • |vim.treesitter.query.edit()| allows live editing of treesitter
     queries.
   • Improved error messages for query parsing.
-  • |vim.treesitter.foldtext()| applies treesitter highlighting to
-    foldtext.
 
 • |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
   Windows `explorer`, Linux `xdg-open`, etc.)
