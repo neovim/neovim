@@ -310,7 +310,7 @@ static const char *highlight_init_light[] = {
   "Normal guifg=NvimDarkGrey2 guibg=NvimLightGrey2 ctermfg=NONE ctermbg=NONE",
 
   // UI
-  "Added                guifg=NvimDarGreen                                   ctermfg=2",
+  "Added                guifg=NvimDarkGreen                                  ctermfg=2",
   "Changed              guifg=NvimDarkCyan                                   ctermfg=6",
   "ColorColumn                               guibg=NvimLightGrey4            cterm=reverse",
   "Conceal              guifg=NvimLightGrey4",
