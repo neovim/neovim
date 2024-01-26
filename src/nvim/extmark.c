@@ -70,9 +70,10 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
         extmark_del_id(buf, ns_id, id);
       } else {
         assert(marktree_itr_valid(itr));
+        bool invalid = mt_invalid(old_mark);
         if (old_mark.pos.row == row && old_mark.pos.col == col) {
           // not paired: we can revise in place
-          if (mt_decor_any(old_mark)) {
+          if (!invalid && mt_decor_any(old_mark)) {
             mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_DECOR_SIGNTEXT;
             buf_decor_remove(buf, row, row, mt_decor(old_mark), true);
           }
@@ -82,7 +83,9 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
           goto revised;
         }
         marktree_del_itr(buf->b_marktree, itr, false);
-        buf_decor_remove(buf, old_mark.pos.row, old_mark.pos.row, mt_decor(old_mark), true);
+        if (!invalid) {
+          buf_decor_remove(buf, old_mark.pos.row, old_mark.pos.row, mt_decor(old_mark), true);
+        }
       }
     } else {
       *ns = MAX(*ns, id);
