@@ -338,7 +338,8 @@ end
 ---
 ---@param path (string) Path to normalize
 ---@param opts table|nil Options:
----             - expand_env: boolean Expand environment variables (default: true)
+---             - expand_env: (boolean, default true) Expand environment variables
+---             - collapse_slash: (boolean, default true) Remove duplicated slashes
 ---@return (string) Normalized path
 function M.normalize(path, opts)
   opts = opts or {}
@@ -346,6 +347,7 @@ function M.normalize(path, opts)
   vim.validate({
     path = { path, { 'string' } },
     expand_env = { opts.expand_env, { 'boolean' }, true },
+    collapse_slash = { opts.collapse_slash, { 'boolean' }, true },
   })
 
   if path:sub(1, 1) == '~' then
@@ -360,11 +362,14 @@ function M.normalize(path, opts)
     path = path:gsub('%$([%w_]+)', vim.uv.os_getenv)
   end
 
-  path = path:gsub('\\', '/'):gsub('/+', '/')
-  if iswin and path:match('^%w:/$') then
+  path = path:gsub('\\', '/')
+  if opts.collapse_slash == nil or opts.collapse_slash then
+    path = path:gsub('/+', '/')
+  end
+  if iswin and path:match('^%w:/+$') then
     return path
   end
-  return (path:gsub('(.)/$', '%1'))
+  return (path:gsub('([^/])/+$', '%1'))
 end
 
 return M

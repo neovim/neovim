@@ -2926,6 +2926,8 @@ vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
       • {opts}  (`table?`) Options:
                 • expand_env: boolean Expand environment variables (default:
                   true)
+                • collapse_slash: boolean Remove duplicated slashes (default:
+                  true)
 
     Return: ~
         (`string`) Normalized path
