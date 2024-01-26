@@ -1132,6 +1132,8 @@ This is a brief but complete listing of all the ":" commands, without
 mentioning any arguments.  The optional part of the command name is inside [].
 The commands are sorted on the non-optional part of their name.
 
+Note: the following list of |Ex-commands| is auto-generated.
+
 tag		command		action ~
 ------------------------------------------------------------------------------ ~
 |:|		:		nothing
@@ -1160,20 +1162,22 @@ tag		command		action ~
 				be remapped
 |:args|		:ar[gs]		print the argument list
 |:argadd|	:arga[dd]	add items to the argument list
-|:argdedupe|	:argded[upe]	remove duplicates from the argument list
 |:argdelete|	:argd[elete]	delete items from the argument list
-|:argedit|	:arge[dit]	add item to the argument list and edit it
+|:argdedupe|	:argded[upe]	remove duplicates from the argument list
 |:argdo|	:argdo		do a command on all items in the argument list
+|:argedit|	:arge[dit]	add item to the argument list and edit it
 |:argglobal|	:argg[lobal]	define the global argument list
 |:arglocal|	:argl[ocal]	define a local argument list
 |:argument|	:argu[ment]	go to specific file in the argument list
-|:ascii|	:as[cii]	print ascii value of character under the cursor
+|:ascii|	:as[cii]	print ascii value of character under the
+				cursor
 |:autocmd|	:au[tocmd]	enter or show autocommands
 |:augroup|	:aug[roup]	select the autocommand group to use
 |:aunmenu|	:aun[menu]	remove menu for all modes
 |:buffer|	:b[uffer]	go to specific buffer in the buffer list
 |:bNext|	:bN[ext]	go to previous buffer in the buffer list
-|:ball|		:ba[ll]		open a window for each buffer in the buffer list
+|:ball|		:ba[ll]		open a window for each buffer in the buffer
+				list
 |:badd|		:bad[d]		add buffer to the buffer list
 |:balt|		:balt		like ":badd" but also set the alternate file
 |:bdelete|	:bd[elete]	remove a buffer from the buffer list
@@ -1183,7 +1187,8 @@ tag		command		action ~
 |:bmodified|	:bm[odified]	go to next buffer in the buffer list that has
 				been modified
 |:bnext|	:bn[ext]	go to next buffer in the buffer list
-|:botright|	:bo[tright]	make split window appear at bottom or far right
+|:botright|	:bo[tright]	make split window appear at bottom or far
+				right
 |:bprevious|	:bp[revious]	go to previous buffer in the buffer list
 |:brewind|	:br[ewind]	go to first buffer in the buffer list
 |:break|	:brea[k]	break out of while loop
@@ -1207,31 +1212,32 @@ tag		command		action ~
 |:cafter|	:caf[ter]	go to error after current cursor
 |:call|		:cal[l]		call a function
 |:catch|	:cat[ch]	part of a :try command
+|:cbuffer|	:cb[uffer]	parse error messages and jump to first error
 |:cbefore|	:cbef[ore]	go to error before current cursor
 |:cbelow|	:cbel[ow]	go to error below current line
 |:cbottom|	:cbo[ttom]	scroll to the bottom of the quickfix window
-|:cbuffer|	:cb[uffer]	parse error messages and jump to first error
 |:cc|		:cc		go to specific error
 |:cclose|	:ccl[ose]	close quickfix window
 |:cd|		:cd		change directory
 |:cdo|		:cdo		execute command in each valid error list entry
-|:cfdo|		:cfd[o]		execute command in each file in error list
 |:center|	:ce[nter]	format lines at the center
 |:cexpr|	:cex[pr]	read errors from expr and jump to first
-|:cfile|	:cf[ile]	read file with error messages and jump to first
+|:cfile|	:cf[ile]	read file with error messages and jump to
+				first
+|:cfdo|		:cfd[o]		execute command in each file in error list
 |:cfirst|	:cfir[st]	go to the specified error, default first one
+|:cgetfile|	:cg[etfile]	read file with error messages
 |:cgetbuffer|	:cgetb[uffer]	get errors from buffer
 |:cgetexpr|	:cgete[xpr]	get errors from expr
-|:cgetfile|	:cg[etfile]	read file with error messages
 |:changes|	:changes	print the change list
 |:chdir|	:chd[ir]	change directory
 |:checkhealth|	:che[ckhealth]	run healthchecks
 |:checkpath|	:checkp[ath]	list included files
 |:checktime|	:checkt[ime]	check timestamp of loaded buffers
 |:chistory|	:chi[story]	list the error lists
+|:clist|	:cl[ist]	list all errors
 |:clast|	:cla[st]	go to the specified error, default last one
 |:clearjumps|	:cle[arjumps]	clear the jump list
-|:clist|	:cl[ist]	list all errors
 |:close|	:clo[se]	close current window
 |:cmap|		:cm[ap]		like ":map" but for Command-line mode
 |:cmapclear|	:cmapc[lear]	clear all mappings for Command-line mode
@@ -1261,11 +1267,14 @@ tag		command		action ~
 |:cunmenu|	:cunme[nu]	remove menu for Command-line mode
 |:cwindow|	:cw[indow]	open or close quickfix window
 |:delete|	:d[elete]	delete lines
+|:dp|		:d[elete]p	short for |:delete| with the 'p' flag
 |:debug|	:deb[ug]	run a command in debugging mode
 |:debuggreedy|	:debugg[reedy]	read debug mode commands from normal input
+|:defer|	:defer		call function when current function is done
 |:delcommand|	:delc[ommand]	delete user-defined command
 |:delfunction|	:delf[unction]	delete a user function
 |:delmarks|	:delm[arks]	delete marks
+|:display|	:di[splay]	display registers
 |:diffupdate|	:dif[fupdate]	update 'diff' buffers
 |:diffget|	:diffg[et]	remove differences in current buffer
 |:diffoff|	:diffo[ff]	switch off diff mode
@@ -1274,13 +1283,11 @@ tag		command		action ~
 |:diffsplit|	:diffs[plit]	show differences with another file
 |:diffthis|	:diffthis	make current window a diff window
 |:digraphs|	:dig[raphs]	show or enter digraphs
-|:display|	:di[splay]	display registers
 |:djump|	:dj[ump]	jump to #define
 |:dl|		:dl		short for |:delete| with the 'l' flag
 |:dlist|	:dli[st]	list #defines
 |:doautocmd|	:do[autocmd]	apply autocommands to current buffer
 |:doautoall|	:doautoa[ll]	apply autocommands for all loaded buffers
-|:dp|		:d[elete]p	short for |:delete| with the 'p' flag
 |:drop|		:dr[op]		jump to window editing file or edit file in
 				current window
 |:dsearch|	:ds[earch]	list one #define
@@ -1296,8 +1303,8 @@ tag		command		action ~
 |:elseif|	:elsei[f]	part of an :if command
 |:emenu|	:em[enu]	execute a menu by name
 |:endif|	:en[dif]	end previous :if
-|:endfor|	:endfo[r]	end previous :for
 |:endfunction|	:endf[unction]	end of a user function started with :function
+|:endfor|	:endfo[r]	end previous :for
 |:endtry|	:endt[ry]	end previous :try
 |:endwhile|	:endw[hile]	end previous :while
 |:enew|		:ene[w]		edit a new, unnamed buffer
@@ -1306,8 +1313,8 @@ tag		command		action ~
 |:execute|	:exe[cute]	execute result of expressions
 |:exit|		:exi[t]		same as ":xit"
 |:exusage|	:exu[sage]	overview of Ex commands
-|:fclose|	:fc[lose]	close floating window
 |:file|		:f[ile]		show or set the current file name
+|:fclose|	:fc[lose]	close floating window
 |:files|	:files		list all files in the buffer list
 |:filetype|	:filet[ype]	switch file type detection on/off
 |:filter|	:filt[er]	filter output of following command
@@ -1358,39 +1365,40 @@ tag		command		action ~
 |:join|		:j[oin]		join lines
 |:jumps|	:ju[mps]	print the jump list
 |:k|		:k		set a mark
-|:keepalt|	:keepa[lt]	following command keeps the alternate file
 |:keepmarks|	:kee[pmarks]	following command keeps marks where they are
+|:keepalt|	:keepa[lt]	following command keeps the alternate file
 |:keepjumps|	:keepj[umps]	following command keeps jumplist and marks
 |:keeppatterns|	:keepp[atterns]	following command keeps search pattern history
+|:list|		:l[ist]		print lines
 |:lNext|	:lN[ext]	go to previous entry in location list
 |:lNfile|	:lNf[ile]	go to last entry in previous file
-|:list|		:l[ist]		print lines
+|:last|		:la[st]		go to the last file in the argument list
 |:labove|	:lab[ove]	go to location above current line
 |:laddexpr|	:lad[dexpr]	add locations from expr
 |:laddbuffer|	:laddb[uffer]	add locations from buffer
 |:laddfile|	:laddf[ile]	add locations to current location list
 |:lafter|	:laf[ter]	go to location after current cursor
-|:last|		:la[st]		go to the last file in the argument list
 |:language|	:lan[guage]	set the language (locale)
 |:later|	:lat[er]	go to newer change, redo
+|:lbuffer|	:lb[uffer]	parse locations and jump to first location
 |:lbefore|	:lbef[ore]	go to location before current cursor
 |:lbelow|	:lbel[ow]	go to location below current line
 |:lbottom|	:lbo[ttom]	scroll to the bottom of the location window
-|:lbuffer|	:lb[uffer]	parse locations and jump to first location
 |:lcd|		:lc[d]		change directory locally
 |:lchdir|	:lch[dir]	change directory locally
 |:lclose|	:lcl[ose]	close location window
 |:ldo|		:ld[o]		execute command in valid location list entries
-|:lfdo|		:lfd[o]		execute command in each file in location list
 |:left|		:le[ft]		left align lines
 |:leftabove|	:lefta[bove]	make split window appear left or above
 |:let|		:let		assign a value to a variable or option
 |:lexpr|	:lex[pr]	read locations from expr and jump to first
 |:lfile|	:lf[ile]	read file with locations and jump to first
-|:lfirst|	:lfir[st]	go to the specified location, default first one
+|:lfdo|		:lfd[o]		execute command in each file in location list
+|:lfirst|	:lfir[st]	go to the specified location, default first
+				one
+|:lgetfile|	:lg[etfile]	read file with locations
 |:lgetbuffer|	:lgetb[uffer]	get locations from buffer
 |:lgetexpr|	:lgete[xpr]	get locations from expr
-|:lgetfile|	:lg[etfile]	read file with locations
 |:lgrep|	:lgr[ep]	run 'grepprg' and jump to first match
 |:lgrepadd|	:lgrepa[dd]	like :grep, but append to current list
 |:lhelpgrep|	:lh[elpgrep]	like ":helpgrep" but uses location list
@@ -1398,23 +1406,24 @@ tag		command		action ~
 |:ll|		:ll		go to specific location
 |:llast|	:lla[st]	go to the specified location, default last one
 |:llist|	:lli[st]	list all locations
+|:lmap|		:lm[ap]		like ":map!" but includes Lang-Arg mode
 |:lmake|	:lmak[e]	execute external command 'makeprg' and parse
 				error messages
-|:lmap|		:lm[ap]		like ":map!" but includes Lang-Arg mode
 |:lmapclear|	:lmapc[lear]	like ":mapclear!" but includes Lang-Arg mode
+|:lnoremap|	:ln[oremap]	like ":noremap!" but includes Lang-Arg mode
 |:lnext|	:lne[xt]	go to next location
 |:lnewer|	:lnew[er]	go to newer location list
 |:lnfile|	:lnf[ile]	go to first location in next file
-|:lnoremap|	:ln[oremap]	like ":noremap!" but includes Lang-Arg mode
-|:loadkeymap|	:loadk[eymap]	load the following keymaps until EOF
 |:loadview|	:lo[adview]	load view for current window from a file
+|:loadkeymap|	:loadk[eymap]	load the following keymaps until EOF
 |:lockmarks|	:loc[kmarks]	following command keeps marks where they are
 |:lockvar|	:lockv[ar]	lock variables
 |:lolder|	:lol[der]	go to older location list
 |:lopen|	:lope[n]	open location window
 |:lprevious|	:lp[revious]	go to previous location
 |:lpfile|	:lpf[ile]	go to last location in previous file
-|:lrewind|	:lr[ewind]	go to the specified location, default first one
+|:lrewind|	:lr[ewind]	go to the specified location, default first
+				one
 |:ls|		:ls		list all buffers
 |:ltag|		:lt[ag]		jump to tag and add matching tags to the
 				location list
@@ -1434,7 +1443,7 @@ tag		command		action ~
 |:marks|	:marks		list all marks
 |:match|	:mat[ch]	define a match to highlight
 |:menu|		:me[nu]		enter a new menu item
-|:menutranslate|  :menut[ranslate] add a menu translation item
+|:menutranslate|  :menut[ranslate]  add a menu translation item
 |:messages|	:mes[sages]	view previously displayed messages
 |:mkexrc|	:mk[exrc]	write current mappings and settings to a file
 |:mksession|	:mks[ession]	write session info to a file
@@ -1449,8 +1458,8 @@ tag		command		action ~
 |:nmenu|	:nme[nu]	add menu for Normal mode
 |:nnoremap|	:nn[oremap]	like ":noremap" but for Normal mode
 |:nnoremenu|	:nnoreme[nu]	like ":noremenu" but for Normal mode
-|:noautocmd|	:noa[utocmd]	following commands don't trigger autocommands
 |:noremap|	:no[remap]	enter a mapping that will not be remapped
+|:noautocmd|	:noa[utocmd]	following commands don't trigger autocommands
 |:nohlsearch|	:noh[lsearch]	suspend 'hlsearch' highlighting
 |:noreabbrev|	:norea[bbrev]	enter an abbreviation that will not be
 				remapped
@@ -1471,22 +1480,23 @@ tag		command		action ~
 |:ounmap|	:ou[nmap]	like ":unmap" but for Operator-pending mode
 |:ounmenu|	:ounme[nu]	remove menu for Operator-pending mode
 |:ownsyntax|	:ow[nsyntax]	set new local syntax highlight for this window
+|:print|	:p[rint]	print lines
 |:packadd|	:pa[ckadd]	add a plugin from 'packpath'
 |:packloadall|	:packl[oadall]	load all packages under 'packpath'
 |:pclose|	:pc[lose]	close preview window
-|:pedit|	:ped[it]	edit file in the preview window
 |:perl|		:pe[rl]		execute perl command
+|:pedit|	:ped[it]	edit file in the preview window
 |:perldo|	:perld[o]	execute perl command for each line
 |:perlfile|	:perlf[ile]	execute perl script file
-|:print|	:p[rint]	print lines
-|:profdel|	:profd[el]	stop profiling a function or script
-|:profile|	:prof[ile]	profiling functions and scripts
 |:pop|		:po[p]		jump to older entry in tag stack
 |:popup|	:popu[p]	popup a menu by name
 |:ppop|		:pp[op]		":pop" in preview window
 |:preserve|	:pre[serve]	write all text to swap file
 |:previous|	:prev[ious]	go to previous file in argument list
-|:psearch|	:ps[earch]	like ":ijump" but shows match in preview window
+|:profile|	:prof[ile]	profiling functions and scripts
+|:profdel|	:profd[el]	stop profiling a function or script
+|:psearch|	:ps[earch]	like ":ijump" but shows match in preview
+				window
 |:ptag|		:pt[ag]		show tag in preview window
 |:ptNext|	:ptN[ext]	|:tNext| in preview window
 |:ptfirst|	:ptf[irst]	|:trewind| in preview window
@@ -1498,20 +1508,20 @@ tag		command		action ~
 |:ptselect|	:pts[elect]	|:tselect| and show tag in preview window
 |:put|		:pu[t]		insert contents of register in the text
 |:pwd|		:pw[d]		print current directory
+|:python|	:py[thon]	execute Python command
 |:py3|		:py3		execute Python 3 command
-|:python3|	:python3	same as :py3
 |:py3do|	:py3d[o]	execute Python 3 command for each line
 |:py3file|	:py3f[ile]	execute Python 3 script file
-|:python|	:py[thon]	execute Python command
 |:pydo|		:pyd[o]		execute Python command for each line
 |:pyfile|	:pyf[ile]	execute Python script file
-|:pyx|		:pyx		execute |python_x| command
+|:python3|	:python3	same as :py3
 |:pythonx|	:pythonx	same as :pyx
+|:pyx|		:pyx		execute |python_x| command
 |:pyxdo|	:pyxd[o]	execute |python_x| command for each line
 |:pyxfile|	:pyxf[ile]	execute |python_x| script file
 |:quit|		:q[uit]		quit current window (when one window quit Vim)
-|:quitall|	:quita[ll]	quit Vim
 |:qall|		:qa[ll]		quit Vim
+|:quitall|	:quita[ll]	quit Vim
 |:read|		:r[ead]		read file into the text
 |:recover|	:rec[over]	recover a file from a swap file
 |:redo|		:red[o]		redo one undone change
@@ -1528,18 +1538,18 @@ tag		command		action ~
 |:right|	:ri[ght]	right align text
 |:rightbelow|	:rightb[elow]	make split window appear right or below
 |:rshada|	:rsh[ada]	read from |shada| file
+|:runtime|	:ru[ntime]	source vim scripts in 'runtimepath'
 |:ruby|		:rub[y]		execute Ruby command
 |:rubydo|	:rubyd[o]	execute Ruby command for each line
 |:rubyfile|	:rubyf[ile]	execute Ruby script file
 |:rundo|	:rund[o]	read undo information from a file
-|:runtime|	:ru[ntime]	source vim scripts in 'runtimepath'
 |:substitute|	:s[ubstitute]	find and replace text
 |:sNext|	:sN[ext]	split window and go to previous file in
 				argument list
-|:sandbox|	:san[dbox]	execute a command in the sandbox
 |:sargument|	:sa[rgument]	split window and go to specific file in
 				argument list
 |:sall|		:sal[l]		open a window for each file in argument list
+|:sandbox|	:san[dbox]	execute a command in the sandbox
 |:saveas|	:sav[eas]	save file under another name.
 |:sbuffer|	:sb[uffer]	split window and go to specific file in the
 				buffer list
@@ -1559,7 +1569,7 @@ tag		command		action ~
 |:sbrewind|	:sbr[ewind]	split window and go to first file in the
 				buffer list
 |:scriptnames|	:scr[iptnames]	list names of all sourced Vim scripts
-|:scriptencoding| :scripte[ncoding]  encoding used in sourced Vim script
+|:scriptencoding| :scripte[ncoding] encoding used in sourced Vim script
 |:set|		:se[t]		show or set options
 |:setfiletype|	:setf[iletype]	set 'filetype', unless it was set already
 |:setglobal|	:setg[lobal]	show global values of options
@@ -1581,16 +1591,16 @@ tag		command		action ~
 |:snomagic|	:sno[magic]	:substitute with 'nomagic'
 |:snoremap|	:snor[emap]	like ":noremap" but for Select mode
 |:snoremenu|	:snoreme[nu]	like ":noremenu" but for Select mode
-|:sort|		:sor[t]		sort lines
 |:source|	:so[urce]	read Vim or Ex commands from a file
-|:spelldump|	:spelld[ump]	split window and fill with all correct words
+|:sort|		:sor[t]		sort lines
+|:split|	:sp[lit]	split current window
 |:spellgood|	:spe[llgood]	add good word for spelling
+|:spelldump|	:spelld[ump]	split window and fill with all correct words
 |:spellinfo|	:spelli[nfo]	show info about loaded spell files
-|:spellrare|	:spellra[re]	add rare word for spelling
 |:spellrepall|	:spellr[epall]	replace all bad words like last |z=|
+|:spellrare|	:spellra[re]	add rare word for spelling
 |:spellundo|	:spellu[ndo]	remove good or bad word
 |:spellwrong|	:spellw[rong]	add spelling mistake
-|:split|	:sp[lit]	split current window
 |:sprevious|	:spr[evious]	split window and go to previous file in the
 				argument list
 |:srewind|	:sre[wind]	split window and go to first file in the
@@ -1598,10 +1608,10 @@ tag		command		action ~
 |:stop|		:st[op]		suspend the editor or escape to a shell
 |:stag|		:sta[g]		split window and jump to a tag
 |:startinsert|	:star[tinsert]	start Insert mode
-|:startgreplace|  :startg[replace] start Virtual Replace mode
+|:startgreplace|  :startg[replace]  start Virtual Replace mode
 |:startreplace|	:startr[eplace]	start Replace mode
-|:stopinsert|	:stopi[nsert]	stop Insert mode
 |:stjump|	:stj[ump]	do ":tjump" and split window
+|:stopinsert|	:stopi[nsert]	stop Insert mode
 |:stselect|	:sts[elect]	do ":tselect" and split window
 |:sunhide|	:sun[hide]	same as ":unhide"
 |:sunmap|	:sunm[ap]	like ":unmap" but for Select mode
@@ -1610,10 +1620,12 @@ tag		command		action ~
 |:sview|	:sv[iew]	split window and edit file read-only
 |:swapname|	:sw[apname]	show the name of the current swap file
 |:syntax|	:sy[ntax]	syntax highlighting
-|:syntime|	:synti[me]	measure syntax highlighting speed
 |:syncbind|	:sync[bind]	sync scroll binding
+|:syntime|	:synti[me]	measure syntax highlighting speed
 |:t|		:t		same as ":copy"
 |:tNext|	:tN[ext]	jump to previous matching tag
+|:tag|		:ta[g]		jump to tag
+|:tab|		:tab		create new tab when opening new window
 |:tabNext|	:tabN[ext]	go to previous tab page
 |:tabclose|	:tabc[lose]	close current tab page
 |:tabdo|	:tabdo		execute command in each tab page
@@ -1622,14 +1634,12 @@ tag		command		action ~
 |:tabfirst|	:tabfir[st]	go to first tab page
 |:tablast|	:tabl[ast]	go to last tab page
 |:tabmove|	:tabm[ove]	move tab page to other position
-|:tabnew|	:tabnew		edit a file in a new tab page
 |:tabnext|	:tabn[ext]	go to next tab page
+|:tabnew|	:tabnew		edit a file in a new tab page
 |:tabonly|	:tabo[nly]	close all tab pages except the current one
 |:tabprevious|	:tabp[revious]	go to previous tab page
 |:tabrewind|	:tabr[ewind]	go to first tab page
 |:tabs|		:tabs		list the tab pages and what they contain
-|:tab|		:tab		create new tab when opening new window
-|:tag|		:ta[g]		jump to tag
 |:tags|		:tags		show the contents of the tag stack
 |:tcd|		:tc[d]		change directory for tab page
 |:tchdir|	:tch[dir]	change directory for tab page
@@ -1642,9 +1652,9 @@ tag		command		action ~
 |:tlmenu|	:tlm[enu]	add menu for |Terminal-mode|
 |:tlnoremenu|	:tln[oremenu]	like ":noremenu" but for |Terminal-mode|
 |:tlunmenu|	:tlu[nmenu]	remove menu for |Terminal-mode|
-|:tmapclear|	:tmapc[lear]	remove all mappings for |Terminal-mode|
-|:tmap|		:tma[p]		like ":map" but for |Terminal-mode|
 |:tmenu|	:tm[enu]	define menu tooltip
+|:tmap|		:tma[p]		like ":map" but for |Terminal-mode|
+|:tmapclear|	:tmapc[lear]	remove all mappings for |Terminal-mode|
 |:tnext|	:tn[ext]	jump to next matching tag
 |:tnoremap|	:tno[remap]	like ":noremap" but for |Terminal-mode|
 |:topleft|	:to[pleft]	make split window appear at top or far left
@@ -1653,12 +1663,12 @@ tag		command		action ~
 |:trust|	:trust		add or remove file from trust database
 |:try|		:try		execute commands, abort on error or exception
 |:tselect|	:ts[elect]	list matching tags and select one
-|:tunmap|	:tunma[p]	like ":unmap" but for |Terminal-mode|
 |:tunmenu|	:tu[nmenu]	remove menu tooltip
+|:tunmap|	:tunma[p]	like ":unmap" but for |Terminal-mode|
 |:undo|		:u[ndo]		undo last change(s)
+|:unabbreviate|	:una[bbreviate]	remove abbreviation
 |:undojoin|	:undoj[oin]	join next change with previous undo block
 |:undolist|	:undol[ist]	list leafs of the undo tree
-|:unabbreviate|	:una[bbreviate]	remove abbreviation
 |:unhide|	:unh[ide]	open a window for each loaded file in the
 				buffer list
 |:unlet|	:unl[et]	delete variable
@@ -1671,21 +1681,20 @@ tag		command		action ~
 |:version|	:ve[rsion]	print version number and other info
 |:verbose|	:verb[ose]	execute command with 'verbose' set
 |:vertical|	:vert[ical]	make following command split vertically
+|:visual|	:vi[sual]	same as ":edit", but turns off "Ex" mode
+|:view|		:vie[w]		edit a file read-only
 |:vimgrep|	:vim[grep]	search for pattern in files
 |:vimgrepadd|	:vimgrepa[dd]	like :vimgrep, but append to current list
-|:visual|	:vi[sual]	same as ":edit", but turns off "Ex" mode
 |:viusage|	:viu[sage]	overview of Normal mode commands
-|:view|		:vie[w]		edit a file read-only
 |:vmap|		:vm[ap]		like ":map" but for Visual+Select mode
 |:vmapclear|	:vmapc[lear]	remove all mappings for Visual+Select mode
 |:vmenu|	:vme[nu]	add menu for Visual+Select mode
-|:vnew|		:vne[w]		create a new empty window, vertically split
 |:vnoremap|	:vn[oremap]	like ":noremap" but for Visual+Select mode
+|:vnew|		:vne[w]		create a new empty window, vertically split
 |:vnoremenu|	:vnoreme[nu]	like ":noremenu" but for Visual+Select mode
 |:vsplit|	:vs[plit]	split current window vertically
 |:vunmap|	:vu[nmap]	like ":unmap" but for Visual+Select mode
 |:vunmenu|	:vunme[nu]	remove menu for Visual+Select mode
-|:windo|	:windo		execute command in each window
 |:write|	:w[rite]	write to a file
 |:wNext|	:wN[ext]	write to a file and go to previous file in
 				argument list
@@ -1693,6 +1702,7 @@ tag		command		action ~
 |:while|	:wh[ile]	execute loop for as long as condition met
 |:winsize|	:wi[nsize]	get or set window size (obsolete)
 |:wincmd|	:winc[md]	execute a Window (CTRL-W) command
+|:windo|	:windo		execute command in each window
 |:winpos|	:winp[os]	get or set window position
 |:wnext|	:wn[ext]	write to a file and go to next file in
 				argument list
@@ -1704,8 +1714,8 @@ tag		command		action ~
 |:wundo|	:wu[ndo]	write undo information to a file
 |:xit|		:x[it]		write if buffer changed and close window
 |:xall|		:xa[ll]		same as ":wqall"
-|:xmapclear|	:xmapc[lear]	remove all mappings for Visual mode
 |:xmap|		:xm[ap]		like ":map" but for Visual mode
+|:xmapclear|	:xmapc[lear]	remove all mappings for Visual mode
 |:xmenu|	:xme[nu]	add menu for Visual mode
 |:xnoremap|	:xn[oremap]	like ":noremap" but for Visual mode
 |:xnoremenu|	:xnoreme[nu]	like ":noremenu" but for Visual mode

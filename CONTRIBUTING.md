@@ -281,6 +281,8 @@ If you need to modify or debug the documentation flow, these are the main files:
   src/nvim/eval.lua     =>  runtime/doc/builtin.txt
   src/nvim/options.lua  =>  runtime/doc/options.txt
   ```
+- `./scripts/gendoc_ex_cmd_index.lua`:
+  Generates the index of Ex commands into `runtime/doc/index.txt`, used by `gen_vimdoc.py`.
 
 ### Lua docstrings
 

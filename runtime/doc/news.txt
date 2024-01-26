@@ -236,6 +236,7 @@ The following new APIs and features were added.
   • `vim.*`
   • `vim.fn.*`
   • `vim.api.*`
+  • `vim.cmd.*`
   • `vim.v.*`
 
 • Improved messages for type errors in `vim.api.*` calls (including `opts` params)
