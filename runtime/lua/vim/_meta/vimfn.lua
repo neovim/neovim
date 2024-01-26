@@ -2777,7 +2777,7 @@ function vim.fn.getchar() end
 ---   32  mouse double click
 ---   64  mouse triple click
 ---   96  mouse quadruple click (== 32 + 64)
----   128  command (Macintosh only)
+---   128  command (Mac) or super
 --- Only the modifiers that have not been included in the
 --- character itself are obtained.  Thus Shift-a results in "A"
 --- without a modifier.  Returns 0 if no modifiers are used.
