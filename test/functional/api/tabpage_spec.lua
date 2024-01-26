@@ -32,6 +32,56 @@ describe('api/tabpage', function()
     end)
   end)
 
+  describe('set_win', function()
+    it('works', function()
+      helpers.command('tabnew')
+      helpers.command('vsplit')
+      local tab1, tab2 = unpack(api.nvim_list_tabpages())
+      local win1, win2, win3 = unpack(api.nvim_list_wins())
+      eq({ win1 }, api.nvim_tabpage_list_wins(tab1))
+      eq({ win2, win3 }, api.nvim_tabpage_list_wins(tab2))
+      eq(win2, api.nvim_tabpage_get_win(tab2))
+      api.nvim_tabpage_set_win(tab2, win3)
+      eq(win3, api.nvim_tabpage_get_win(tab2))
+    end)
+
+    it('works in non-current tabgpages', function()
+      helpers.command('tabnew')
+      helpers.command('vsplit')
+      local tab1, tab2 = unpack(api.nvim_list_tabpages())
+      local win1, win2, win3 = unpack(api.nvim_list_wins())
+      eq({ win1 }, api.nvim_tabpage_list_wins(tab1))
+      eq({ win2, win3 }, api.nvim_tabpage_list_wins(tab2))
+      eq(win2, api.nvim_tabpage_get_win(tab2))
+      eq(win2, api.nvim_get_current_win())
+
+      helpers.command('tabprev')
+
+      eq(tab1, api.nvim_get_current_tabpage())
+
+      eq(win2, api.nvim_tabpage_get_win(tab2))
+      api.nvim_tabpage_set_win(tab2, win3)
+      eq(win3, api.nvim_tabpage_get_win(tab2))
+
+      helpers.command('tabnext')
+      eq(win3, api.nvim_get_current_win())
+    end)
+
+    it('throws an error when the window does not belong to the tabpage', function()
+      helpers.command('tabnew')
+      helpers.command('vsplit')
+      local tab1, tab2 = unpack(api.nvim_list_tabpages())
+      local win1, win2, win3 = unpack(api.nvim_list_wins())
+      eq({ win1 }, api.nvim_tabpage_list_wins(tab1))
+      eq({ win2, win3 }, api.nvim_tabpage_list_wins(tab2))
+
+      eq(
+        string.format('Window does not belong to tabpage %d', tab2),
+        pcall_err(api.nvim_tabpage_set_win, tab2, win1)
+      )
+    end)
+  end)
+
   describe('{get,set,del}_var', function()
     it('works', function()
       api.nvim_tabpage_set_var(0, 'lua', { 1, 2, { ['3'] = 1 } })

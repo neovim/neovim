@@ -3336,6 +3336,13 @@ nvim_tabpage_set_var({tabpage}, {name}, {value})
       • {name}     Variable name
       • {value}    Variable value
 
+nvim_tabpage_set_win({tabpage}, {win})                *nvim_tabpage_set_win()*
+    Sets the current window in a tabpage
+
+    Parameters: ~
+      • {tabpage}  Tabpage handle, or 0 for current tabpage
+      • {win}      Window handle, must already belong to {tabpage}
+
 
 ==============================================================================
 Autocmd Functions                                                *api-autocmd*
