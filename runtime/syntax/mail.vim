@@ -2,7 +2,7 @@
 " Language:		Mail file
 " Previous Maintainer:	Felix von Leitner <leitner@math.fu-berlin.de>
 " Maintainer:		GI <a@b.c>, where a='gi1242+vim', b='gmail', c='com'
-" Last Change:		Thu 18 Jan 2024 06:34:38 PM EST
+" Last Change:		Thu 25 Jan 2024 10:34:02 AM EST
 
 " Quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -64,7 +64,7 @@ syn match mailURL contains=@NoSpell `\v<(((https?|ftp|gopher)://|(mailto|file|ne
 syn match mailEmail contains=@NoSpell "\v[_=a-z\./+0-9-]+\@[a-z0-9._-]+\a{2}"
 
 " Don't spell emojis
-syn match mailEmoji contains=@NoSpell "\v[\U1f300-\U1f64f\U1f900-\U1f9ff]"
+syn match mailEmoji contains=@NoSpell "\%#=2\v[\U1f300-\U1f64f\U1f900-\U1f9ff]"
 
 " Make sure quote markers in regions (header / signature) have correct color
 syn match mailQuoteExp1	contained "\v^(\> ?)"
