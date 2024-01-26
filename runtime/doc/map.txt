@@ -849,8 +849,15 @@ For the Meta modifier the "T" character is used.  For example, to map Meta-b
 in Insert mode: >
 	:imap <T-b> terrible
 
+1.12 MAPPING SUPER-KEYS or COMMAND-KEYS		*:map-super-keys* *:map-cmd-key*
 
-1.12 MAPPING AN OPERATOR				*:map-operator*
+The Super / Command modifier is available if the terminal or GUI supports it.
+The character "D" is used for the Super / Command modifier.
+
+For example, to map Command-b in Insert mode: >
+	:imap <D-b> barritone
+
+1.13 MAPPING AN OPERATOR				*:map-operator*
 
 An operator is used before a {motion} command.  To define your own operator
 you must create a mapping that first sets the 'operatorfunc' option and then
