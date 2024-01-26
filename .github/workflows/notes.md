@@ -48,7 +48,7 @@ https://github.com/neovim/neovim-releases.
 
 ### Other
 
-- Install by [package manager](https://github.com/neovim/neovim/wiki/Installing-Neovim)
+- Install by [package manager](https://github.com/neovim/neovim/blob/master/INSTALL.md#install-from-package)
 
 ## SHA256 Checksums
 
