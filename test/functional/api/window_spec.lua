@@ -1276,6 +1276,39 @@ describe('API/win', function()
       }, layout)
     end)
 
+    it(
+      "doesn't change tp_curwin when splitting window in non-current tab with enter=false",
+      function()
+        local tab1 = api.nvim_get_current_tabpage()
+        local tab1_win = api.nvim_get_current_win()
+
+        helpers.command('tabnew')
+        local tab2 = api.nvim_get_current_tabpage()
+        local tab2_win = api.nvim_get_current_win()
+
+        eq({ tab1_win, tab2_win }, api.nvim_list_wins())
+        eq({ tab1, tab2 }, api.nvim_list_tabpages())
+
+        api.nvim_set_current_tabpage(tab1)
+        eq(api.nvim_get_current_win(), tab1_win)
+
+        local tab2_prevwin = fn.tabpagewinnr(tab2, '#')
+
+        -- split in tab2 whine in tab2, with enter = false
+        local tab2_win2 = api.nvim_open_win(api.nvim_create_buf(false, true), false, {
+          win = tab2_win,
+          split = 'right',
+        })
+        eq(api.nvim_get_current_win(), tab1_win) -- we should still be in the first tp
+        eq(api.nvim_tabpage_get_win(tab1), tab1_win)
+
+        eq(api.nvim_tabpage_get_win(tab2), tab2_win) -- tab2's tp_curwin should not have changed
+        eq(fn.tabpagewinnr(tab2, '#'), tab2_prevwin) -- tab2's tp_prevwin should not have changed
+        eq({ tab1_win, tab2_win, tab2_win2 }, api.nvim_list_wins())
+        eq({ tab2_win, tab2_win2 }, api.nvim_tabpage_list_wins(tab2))
+      end
+    )
+
     it('creates splits in the correct location', function()
       local first_win = api.nvim_get_current_win()
       -- specifying window 0 should create a split next to the current window
