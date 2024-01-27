@@ -309,6 +309,33 @@ static void msg_verbose_cmd(linenr_T lnum, char *cmd)
   no_wait_return--;
 }
 
+static int cmdline_call_depth = 0;  ///< recursiveness
+
+/// Start executing an Ex command line.
+///
+/// @return  FAIL if too recursive, OK otherwise.
+static int do_cmdline_start(void)
+{
+  assert(cmdline_call_depth >= 0);
+  // It's possible to create an endless loop with ":execute", catch that
+  // here.  The value of 200 allows nested function calls, ":source", etc.
+  // Allow 200 or 'maxfuncdepth', whatever is larger.
+  if (cmdline_call_depth >= 200 && cmdline_call_depth >= p_mfd) {
+    return FAIL;
+  }
+  cmdline_call_depth++;
+  start_batch_changes();
+  return OK;
+}
+
+/// End executing an Ex command line.
+static void do_cmdline_end(void)
+{
+  cmdline_call_depth--;
+  assert(cmdline_call_depth >= 0);
+  end_batch_changes();
+}
+
 /// Execute a simple command line.  Used for translated commands like "*".
 int do_cmdline_cmd(const char *cmd)
 {
@@ -359,7 +386,6 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   char *(*cmd_getline)(int, void *, int, bool);
   void *cmd_cookie;
   struct loop_cookie cmd_loop_cookie;
-  static int call_depth = 0;            // recursiveness
 
   // For every pair of do_cmdline()/do_one_cmd() calls, use an extra memory
   // location for storing error messages to be converted to an exception.
@@ -371,10 +397,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   msg_list = &private_msg_list;
   private_msg_list = NULL;
 
-  // It's possible to create an endless loop with ":execute", catch that
-  // here.  The value of 200 allows nested function calls, ":source", etc.
-  // Allow 200 or 'maxfuncdepth', whatever is larger.
-  if (call_depth >= 200 && call_depth >= p_mfd) {
+  if (do_cmdline_start() == FAIL) {
     emsg(_(e_command_too_recursive));
     // When converting to an exception, we do not include the command name
     // since this is not an error of the specific command.
@@ -382,8 +405,6 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     msg_list = saved_msg_list;
     return FAIL;
   }
-  call_depth++;
-  start_batch_changes();
 
   ga_init(&lines_ga, (int)sizeof(wcmd_T), 10);
 
@@ -884,8 +905,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
 
   did_endif = false;    // in case do_cmdline used recursively
 
-  call_depth--;
-  end_batch_changes();
+  do_cmdline_end();
   return retval;
 }
 
@@ -1669,9 +1689,13 @@ static int execute_cmd0(int *retv, exarg_T *eap, const char **errormsg, bool pre
 /// @param preview Execute command preview callback instead of actual command
 int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
 {
-  const char *errormsg = NULL;
   int retv = 0;
+  if (do_cmdline_start() == FAIL) {
+    emsg(_(e_command_too_recursive));
+    return retv;
+  }
 
+  const char *errormsg = NULL;
 #undef ERROR
 #define ERROR(msg) \
   do { \
@@ -1738,9 +1762,12 @@ end:
   if (errormsg != NULL && *errormsg != NUL) {
     emsg(errormsg);
   }
+
   // Undo command modifiers
   undo_cmdmod(&cmdmod);
   cmdmod = save_cmdmod;
+
+  do_cmdline_end();
   return retv;
 #undef ERROR
 }

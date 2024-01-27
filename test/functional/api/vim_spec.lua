@@ -399,6 +399,19 @@ describe('API', function()
       ]],
       }
     end)
+
+    it('errors properly when command too recursive', function()
+      exec_lua([[
+        _G.success = false
+        vim.api.nvim_create_user_command('Test', function()
+          vim.api.nvim_exec2('Test', {})
+          _G.success = true
+        end, {})
+      ]])
+      pcall_err(command, 'Test')
+      assert_alive()
+      eq(false, exec_lua('return _G.success'))
+    end)
   end)
 
   describe('nvim_command', function()
@@ -4560,6 +4573,7 @@ describe('API', function()
         line6
       ]]
     end)
+
     it('works with count', function()
       insert [[
         line1
@@ -4577,6 +4591,7 @@ describe('API', function()
         line6
       ]]
     end)
+
     it('works with register', function()
       insert [[
         line1
@@ -4599,11 +4614,13 @@ describe('API', function()
         line6
       ]]
     end)
+
     it('works with bang', function()
       api.nvim_create_user_command('Foo', 'echo "<bang>"', { bang = true })
       eq('!', api.nvim_cmd({ cmd = 'Foo', bang = true }, { output = true }))
       eq('', api.nvim_cmd({ cmd = 'Foo', bang = false }, { output = true }))
     end)
+
     it('works with modifiers', function()
       -- with silent = true output is still captured
       eq(
@@ -4659,6 +4676,7 @@ describe('API', function()
       feed(':call<CR><CR>')
       eq('E471: Argument required', api.nvim_cmd({ cmd = 'messages' }, { output = true }))
     end)
+
     it('works with magic.file', function()
       exec_lua([[
         vim.api.nvim_create_user_command("Foo", function(opts)
@@ -4673,6 +4691,7 @@ describe('API', function()
         )
       )
     end)
+
     it('splits arguments correctly', function()
       exec([[
         function! FooFunc(...)
@@ -4695,6 +4714,7 @@ describe('API', function()
         )
       )
     end)
+
     it('splits arguments correctly for Lua callback', function()
       api.nvim_exec_lua(
         [[
@@ -4721,6 +4741,7 @@ describe('API', function()
         )
       )
     end)
+
     it('works with buffer names', function()
       command('edit foo.txt | edit bar.txt')
       api.nvim_cmd({ cmd = 'buffer', args = { 'foo.txt' } }, {})
@@ -4728,6 +4749,7 @@ describe('API', function()
       api.nvim_cmd({ cmd = 'buffer', args = { 'bar.txt' } }, {})
       eq('bar.txt', fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
     end)
+
     it('triggers CmdUndefined event if command is not found', function()
       api.nvim_exec_lua(
         [[
@@ -4742,13 +4764,16 @@ describe('API', function()
       )
       eq('foo', api.nvim_cmd({ cmd = 'Foo' }, { output = true }))
     end)
+
     it('errors if command is not implemented', function()
       eq('Command not implemented: winpos', pcall_err(api.nvim_cmd, { cmd = 'winpos' }, {}))
     end)
+
     it('works with empty arguments list', function()
       api.nvim_cmd({ cmd = 'update' }, {})
       api.nvim_cmd({ cmd = 'buffer', count = 0 }, {})
     end)
+
     it("doesn't suppress errors when used in keymapping", function()
       api.nvim_exec_lua(
         [[
@@ -4760,6 +4785,7 @@ describe('API', function()
       feed('[l')
       neq(nil, string.find(eval('v:errmsg'), 'E5108:'))
     end)
+
     it('handles 0 range #19608', function()
       api.nvim_buf_set_lines(0, 0, -1, false, { 'aa' })
       api.nvim_cmd({ cmd = 'delete', range = { 0 } }, {})
@@ -4767,12 +4793,14 @@ describe('API', function()
       eq({ 'aa' }, api.nvim_buf_get_lines(0, 0, 1, false))
       assert_alive()
     end)
+
     it('supports filename expansion', function()
       api.nvim_cmd({ cmd = 'argadd', args = { '%:p:h:t', '%:p:h:t' } }, {})
       local arg = fn.expand('%:p:h:t')
       eq({ arg, arg }, fn.argv())
     end)
-    it("'make' command works when argument count isn't 1 #19696", function()
+
+    it(":make command works when argument count isn't 1 #19696", function()
       command('set makeprg=echo')
       command('set shellquote=')
       matches('^:!echo ', api.nvim_cmd({ cmd = 'make' }, { output = true }))
@@ -4789,6 +4817,7 @@ describe('API', function()
       )
       assert_alive()
     end)
+
     it("doesn't display messages when output=true", function()
       local screen = Screen.new(40, 6)
       screen:attach()
@@ -4817,31 +4846,37 @@ describe('API', function()
       ]],
       }
     end)
+
     it('works with non-String args', function()
       eq('2', api.nvim_cmd({ cmd = 'echo', args = { 2 } }, { output = true }))
       eq('1', api.nvim_cmd({ cmd = 'echo', args = { true } }, { output = true }))
     end)
+
     describe('first argument as count', function()
       it('works', function()
         command('vsplit | enew')
         api.nvim_cmd({ cmd = 'bdelete', args = { api.nvim_get_current_buf() } }, {})
         eq(1, api.nvim_get_current_buf())
       end)
+
       it('works with :sleep using milliseconds', function()
         local start = uv.now()
         api.nvim_cmd({ cmd = 'sleep', args = { '100m' } }, {})
         ok(uv.now() - start <= 300)
       end)
     end)
+
     it(':call with unknown function does not crash #26289', function()
       eq(
         'Vim:E117: Unknown function: UnknownFunc',
         pcall_err(api.nvim_cmd, { cmd = 'call', args = { 'UnknownFunc()' } }, {})
       )
     end)
+
     it(':throw does not crash #24556', function()
       eq('42', pcall_err(api.nvim_cmd, { cmd = 'throw', args = { '42' } }, {}))
     end)
+
     it('can use :return #24556', function()
       exec([[
         func Foo()
@@ -4853,6 +4888,19 @@ describe('API', function()
       ]])
       eq('before', api.nvim_get_var('pos'))
       eq({ 1, 2, 3 }, api.nvim_get_var('result'))
+    end)
+
+    it('errors properly when command too recursive #27210', function()
+      exec_lua([[
+        _G.success = false
+        vim.api.nvim_create_user_command('Test', function()
+          vim.api.nvim_cmd({ cmd = 'Test' }, {})
+          _G.success = true
+        end, {})
+      ]])
+      pcall_err(command, 'Test')
+      assert_alive()
+      eq(false, exec_lua('return _G.success'))
     end)
   end)
 end)
