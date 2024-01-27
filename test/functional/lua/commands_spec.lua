@@ -22,7 +22,7 @@ local remove_trace = helpers.remove_trace
 
 before_each(clear)
 
-describe(':lua command', function()
+describe(':lua', function()
   it('works', function()
     eq('', exec_capture('lua vim.api.nvim_buf_set_lines(1, 1, 2, false, {"TEST"})'))
     eq({ '', 'TEST' }, api.nvim_buf_get_lines(0, 0, 100, false))
@@ -54,10 +54,11 @@ describe(':lua command', function()
       )
     )
   end)
+
   it('throws catchable errors', function()
     for _, cmd in ipairs({ 'lua', '1lua chunk' }) do
       eq(
-        'Vim(lua):E475: Invalid argument: exactly one of {chunk} and {range} required',
+        'Vim(lua):E475: Invalid argument: exactly one of {chunk} or {range} required',
         pcall_err(command, cmd)
       )
     end
@@ -75,9 +76,11 @@ describe(':lua command', function()
     )
     eq({ '' }, api.nvim_buf_get_lines(0, 0, 100, false))
   end)
+
   it('works with NULL errors', function()
     eq([=[Vim(lua):E5108: Error executing lua [NULL]]=], exc_exec('lua error(nil)'))
   end)
+
   it('accepts embedded NLs without heredoc', function()
     -- Such code is usually used for `:execute 'lua' {generated_string}`:
     -- heredocs do not work in this case.
@@ -89,12 +92,14 @@ describe(':lua command', function()
     ]])
     eq({ '', 'ETTS', 'TTSE', 'STTE' }, api.nvim_buf_get_lines(0, 0, 100, false))
   end)
+
   it('preserves global and not preserves local variables', function()
     eq('', exec_capture('lua gvar = 42'))
     eq('', exec_capture('lua local lvar = 100500'))
     eq(NIL, fn.luaeval('lvar'))
     eq(42, fn.luaeval('gvar'))
   end)
+
   it('works with long strings', function()
     local s = ('x'):rep(100500)
 
@@ -199,17 +204,26 @@ describe(':lua command', function()
     )
   end)
 
-  it('works with range in current buffer', function()
+  it('with range', function()
     local screen = Screen.new(40, 10)
     screen:attach()
-    api.nvim_buf_set_lines(0, 0, 0, 0, { 'function x() print "hello" end', 'x()' })
-    feed(':1,2lua<CR>')
+    api.nvim_buf_set_lines(0, 0, 0, 0, { 'nonsense', 'function x() print "hello" end', 'x()' })
+
+    -- ":{range}lua" fails on invalid Lua code.
+    eq(
+      [[:{range}lua: Vim(lua):E5107: Error loading lua [string ":{range}lua"]:0: '=' expected near '<eof>']],
+      pcall_err(command, '1lua')
+    )
+
+    -- ":{range}lua" executes valid Lua code.
+    feed(':2,3lua<CR>')
     screen:expect {
       grid = [[
+        nonsense                                |
         function x() print "hello" end          |
         x()                                     |
         ^                                        |
-        {1:~                                       }|*6
+        {1:~                                       }|*5
         hello                                   |
       ]],
       attr_ids = {

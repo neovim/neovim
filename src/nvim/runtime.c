@@ -2014,7 +2014,7 @@ void cmd_source_buffer(const exarg_T *const eap, bool ex_lua)
   };
   if (ex_lua || strequal(curbuf->b_p_ft, "lua")
       || (curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua"))) {
-    char *name = ex_lua ? ":lua (no file)" : ":source (no file)";
+    char *name = ex_lua ? ":{range}lua" : ":source (no file)";
     nlua_source_using_linegetter(get_str_line, (void *)&cookie, name);
   } else {
     source_using_linegetter((void *)&cookie, get_str_line, ":source (no file)");
