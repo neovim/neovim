@@ -1612,7 +1612,7 @@ module.cmds = {
   },
   {
     command = 'lua',
-    flags = bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN, LOCK_OK),
+    flags = bit.bor(RANGE, EXTRA, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_LINES',
     func = 'ex_lua',
   },

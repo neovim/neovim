@@ -1779,7 +1779,7 @@ freeall:
 static void cmd_source(char *fname, exarg_T *eap)
 {
   if (eap != NULL && *fname == NUL) {
-    cmd_source_buffer(eap);
+    cmd_source_buffer(eap, false);
   } else if (eap != NULL && eap->forceit) {
     // ":source!": read Normal mode commands
     // Need to execute the commands directly.  This is required at least
@@ -1989,7 +1989,7 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
   return retval;
 }
 
-static void cmd_source_buffer(const exarg_T *const eap)
+void cmd_source_buffer(const exarg_T *const eap, bool ex_lua)
   FUNC_ATTR_NONNULL_ALL
 {
   if (curbuf == NULL) {
@@ -2012,9 +2012,10 @@ static void cmd_source_buffer(const exarg_T *const eap)
     .buf = ga.ga_data,
     .offset = 0,
   };
-  if (strequal(curbuf->b_p_ft, "lua")
+  if (ex_lua || strequal(curbuf->b_p_ft, "lua")
       || (curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua"))) {
-    nlua_source_using_linegetter(get_str_line, (void *)&cookie, ":source (no file)");
+    char *name = ex_lua ? ":lua (no file)" : ":source (no file)";
+    nlua_source_using_linegetter(get_str_line, (void *)&cookie, name);
   } else {
     source_using_linegetter((void *)&cookie, get_str_line, ":source (no file)");
   }

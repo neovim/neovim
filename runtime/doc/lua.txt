@@ -254,6 +254,11 @@ arguments separated by " " (space) instead of "\t" (tab).
 <    To see the LuaJIT version: >vim
         :lua =jit.version
 <
+:{range}lua
+    Executes the |[range]| in the current buffer as Lua code. Unlike |:source|,
+    this will execute the specified lines regardless of the extension or
+    |'filetype'| of the buffer.
+
                                                                 *:lua-heredoc*
 :lua << [trim] [{endmarker}]
 {script}
