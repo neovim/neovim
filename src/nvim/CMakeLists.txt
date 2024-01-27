@@ -954,9 +954,14 @@ add_custom_target(doc-vim DEPENDS ${VIMDOC_FILES})
 add_custom_target(doc)
 add_dependencies(doc doc-vim doc-eval)
 
-add_custom_target(lintdoc
+set(lintdoc_touch ${TOUCHES_DIR}/lintdoc)
+add_custom_command(
+  OUTPUT ${lintdoc_touch}
+  COMMAND ${CMAKE_COMMAND} -E touch ${lintdoc_touch}
   COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${NVIM_RUNTIME_DIR}"
     $<TARGET_FILE:nvim_bin> --clean -l scripts/lintdoc.lua
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  DEPENDS ${DOCFILES}
   USES_TERMINAL)
+add_custom_target(lintdoc DEPENDS ${lintdoc_touch})
 add_dependencies(lintdoc nvim)
