@@ -701,6 +701,9 @@ void get_local_additions(void)
               const char *const f1 = fnames[i1];
               const char *const t1 = path_tail(f1);
               const char *const e1 = strrchr(t1, '.');
+              if (e1 == NULL) {
+                continue;
+              }
               if (path_fnamecmp(e1, ".txt") != 0
                   && path_fnamecmp(e1, fname + 4) != 0) {
                 // Not .txt and not .abx, remove it.
@@ -715,7 +718,7 @@ void get_local_additions(void)
                 }
                 const char *const t2 = path_tail(f2);
                 const char *const e2 = strrchr(t2, '.');
-                if (e1 == NULL || e2 == NULL) {
+                if (e2 == NULL) {
                   continue;
                 }
                 if (e1 - f1 != e2 - f2
