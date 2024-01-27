@@ -652,16 +652,6 @@ foldexpr({lnum})                                   *vim.treesitter.foldexpr()*
     Return: ~
         (`string`)
 
-foldtext()                                         *vim.treesitter.foldtext()*
-    Returns the highlighted content of the first line of the fold or falls
-    back to |foldtext()| if no treesitter parser is found. Can be set directly
-    to 'foldtext': >lua
-        vim.wo.foldtext = 'v:lua.vim.treesitter.foldtext()'
-<
-
-    Return: ~
-        (`{ [1]: string, [2]: string[] }[]|string`)
-
                                      *vim.treesitter.get_captures_at_cursor()*
 get_captures_at_cursor({winnr})
     Returns a list of highlight capture names under the cursor
