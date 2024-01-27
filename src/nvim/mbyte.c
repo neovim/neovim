@@ -445,24 +445,26 @@ int mb_get_class_tab(const char *p, const uint64_t *const chartab)
 static bool intable(const struct interval *table, size_t n_items, int c)
   FUNC_ATTR_PURE
 {
+  assert(n_items > 0);
   // first quick check for Latin1 etc. characters
   if (c < table[0].first) {
     return false;
   }
 
+  assert(n_items <= SIZE_MAX / 2);
   // binary search in table
-  int bot = 0;
-  int top = (int)(n_items - 1);
-  while (top >= bot) {
-    int mid = (bot + top) / 2;
+  size_t bot = 0;
+  size_t top = n_items;
+  do {
+    size_t mid = (bot + top) >> 1;
     if (table[mid].last < c) {
       bot = mid + 1;
     } else if (table[mid].first > c) {
-      top = mid - 1;
+      top = mid;
     } else {
       return true;
     }
-  }
+  } while (top > bot);
   return false;
 }
 
@@ -476,32 +478,28 @@ static bool intable(const struct interval *table, size_t n_items, int c)
 ///       gen_unicode_tables.lua, which must be manually invoked as needed.
 int utf_char2cells(int c)
 {
-  // Use the value from setcellwidths() at 0x80 and higher, unless the
-  // character is not printable.
-  if (c >= 0x80 && vim_isprintc(c)) {
-    int n = cw_value(c);
-    if (n != 0) {
-      return n;
-    }
+  if (c < 0x80) {
+    return 1;
   }
 
-  if (c >= 0x100) {
-    if (!utf_printable(c)) {
-      return 6;                 // unprintable, displays <xxxx>
-    }
-    if (intable(doublewidth, ARRAY_SIZE(doublewidth), c)) {
-      return 2;
-    }
-    if (p_emoji && intable(emoji_wide, ARRAY_SIZE(emoji_wide), c)) {
-      return 2;
-    }
-  } else if (c >= 0x80 && !vim_isprintc(c)) {
-    // Characters below 0x100 are influenced by 'isprint' option.
-    return 4;                   // unprintable, displays <xx>
+  if (!vim_isprintc(c)) {
+    assert(c <= 0xFFFF);
+    // unprintable is displayed either as <xx> or <xxxx>
+    return c > 0xFF ? 6 : 4;
   }
 
-  if (c >= 0x80 && *p_ambw == 'd'
-      && intable(ambiguous, ARRAY_SIZE(ambiguous), c)) {
+  int n = cw_value(c);
+  if (n != 0) {
+    return n;
+  }
+
+  if (intable(doublewidth, ARRAY_SIZE(doublewidth), c)) {
+    return 2;
+  }
+  if (p_emoji && intable(emoji_wide, ARRAY_SIZE(emoji_wide), c)) {
+    return 2;
+  }
+  if (*p_ambw == 'd' && intable(ambiguous, ARRAY_SIZE(ambiguous), c)) {
     return 2;
   }
 
@@ -1092,9 +1090,52 @@ bool utf_iscomposing(int c)
   return intable(combining, ARRAY_SIZE(combining), c);
 }
 
+#ifdef __SSE2__
+
+# include <emmintrin.h>
+
 // Return true for characters that can be displayed in a normal way.
 // Only for characters of 0x100 and above!
 bool utf_printable(int c)
+  FUNC_ATTR_CONST
+{
+  if (c < 0x180B || c > 0xFFFF) {
+    return c != 0x70F;
+  }
+
+# define L(v) ((int16_t)((v) - 1))  // lower bound (exclusive)
+# define H(v) ((int16_t)(v))  // upper bound (inclusive)
+
+  // Boundaries of unprintable characters.
+  // Some values are negative when converted to int16_t.
+  // Ranges must not wrap around when converted to int16_t.
+  __m128i const lo = _mm_setr_epi16(L(0x180b), L(0x200b), L(0x202a), L(0x2060),
+                                    L(0xd800), L(0xfeff), L(0xfff9), L(0xfffe));
+
+  __m128i const hi = _mm_setr_epi16(H(0x180e), H(0x200f), H(0x202e), H(0x206f),
+                                    H(0xdfff), H(0xfeff), H(0xfffb), H(0xffff));
+
+# undef L
+# undef H
+
+  __m128i value = _mm_set1_epi16((int16_t)c);
+
+  // Using _mm_cmplt_epi16() is less optimal, since it would require
+  // swapping operands (sse2 only has cmpgt instruction),
+  // and only the second operand can be a memory location.
+
+  // Character is printable when it is above/below both bounds of each range
+  // (corresponding bits in both masks are equal).
+  return _mm_movemask_epi8(_mm_cmpgt_epi16(value, lo))
+         == _mm_movemask_epi8(_mm_cmpgt_epi16(value, hi));
+}
+
+#else
+
+// Return true for characters that can be displayed in a normal way.
+// Only for characters of 0x100 and above!
+bool utf_printable(int c)
+  FUNC_ATTR_PURE
 {
   // Sorted list of non-overlapping intervals.
   // 0xd800-0xdfff is reserved for UTF-16, actually illegal.
@@ -1106,6 +1147,8 @@ bool utf_printable(int c)
 
   return !intable(nonprint, ARRAY_SIZE(nonprint), c);
 }
+
+#endif
 
 // Get class of a Unicode character.
 // 0: white space
