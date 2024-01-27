@@ -31,30 +31,30 @@ describe('get_sts_value', function()
   end)
 end)
 
-describe('get_indent_str_vtab()', function()
+describe('indent_size_ts()', function()
   itp('works for spaces', function()
     local line = to_cstr((' '):rep(7) .. 'a ')
-    eq(7, indent.get_indent_str_vtab(line, 100, nil, false))
+    eq(7, indent.indent_size_ts(line, 100, nil))
   end)
 
   itp('works for tabs and spaces', function()
     local line = to_cstr('   \t  \t \t\t   a ')
-    eq(19, indent.get_indent_str_vtab(line, 4, nil, false))
+    eq(19, indent.indent_size_ts(line, 4, nil))
   end)
 
   itp('works for tabs and spaces with empty vts', function()
     local vts = ffi.new('int[1]') -- zero initialized => first element (size) == 0
     local line = to_cstr('   \t  \t \t\t       a ')
-    eq(23, indent.get_indent_str_vtab(line, 4, vts, false))
+    eq(23, indent.indent_size_ts(line, 4, vts))
   end)
 
   itp('works for tabs and spaces with vts', function()
     local vts = ffi.new('int[3]')
-    vts[0] = 2  -- zero indexed
+    vts[0] = 2 -- zero indexed
     vts[1] = 7
     vts[2] = 2
 
     local line = to_cstr('      \t  \t \t\t   a ')
-    eq(18, indent.get_indent_str_vtab(line, 4, vts, false))
+    eq(18, indent.indent_size_ts(line, 4, vts))
   end)
 end)
