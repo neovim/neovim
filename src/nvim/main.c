@@ -1499,16 +1499,16 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
 /// Initialize global startuptime file if "--startuptime" passed as an argument.
 static void init_startuptime(mparm_T *paramp)
 {
-  bool is_embedded_process = false;
+  bool is_embed = false;
   for (int i = 1; i < paramp->argc - 1; i++) {
     if (STRICMP(paramp->argv[i], "--embed") == 0) {
-      is_embedded_process = true;
+      is_embed = true;
       break;
     }
   }
   for (int i = 1; i < paramp->argc - 1; i++) {
     if (STRICMP(paramp->argv[i], "--startuptime") == 0) {
-      time_init(paramp->argv[i + 1], is_embedded_process ? "Embedded" : "Primary/TUI");
+      time_init(paramp->argv[i + 1], is_embed ? "Embedded/server" : "TUI/client");
       time_start("--- NVIM STARTING ---");
       break;
     }
