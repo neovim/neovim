@@ -10,9 +10,9 @@ body:
         - Confirm the problem is reproducible on [**master**](https://github.com/neovim/neovim/releases/nightly) or [**latest stable**](https://github.com/neovim/neovim/releases/stable) release
         - run `make distclean` when encountering build issues
         - search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
-        - check the [FAQ](https://github.com/neovim/neovim/wiki/FAQ)
+        - check the [FAQ](https://neovim.io/doc/user/faq.html)
 
-        Usage or "How to" questions belong on the [stackoverflow](https://vi.stackexchange.com/) and will be closed.
+        Usage or "How to" questions belong on [stackoverflow](https://vi.stackexchange.com/) and will be closed.
   - type: textarea
     attributes:
       label: "Problem"

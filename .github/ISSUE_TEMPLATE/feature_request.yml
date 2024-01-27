@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Before requesting: search [existing issues](https://github.com/neovim/neovim/labels/enhancement) and check the [FAQ](https://github.com/neovim/neovim/wiki/FAQ).
+        Before requesting: search [existing feature requests](https://github.com/neovim/neovim/labels/enhancement) and check the [FAQ](https://neovim.io/doc/user/faq.html).
 
   - type: textarea
     attributes:
