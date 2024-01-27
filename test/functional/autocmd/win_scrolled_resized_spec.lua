@@ -39,6 +39,23 @@ describe('WinResized', function()
     eq(2, eval('g:resized'))
     eq({ windows = { 1002, 1001, 1000 } }, eval('g:v_event'))
   end)
+
+  it('is triggered in terminal mode #21197 #27207', function()
+    exec([[
+      autocmd TermOpen * startinsert
+      let g:resized = 0
+      autocmd WinResized * let g:resized += 1
+    ]])
+    eq(0, eval('g:resized'))
+
+    command('vsplit term://')
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+    eq(1, eval('g:resized'))
+
+    command('split')
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+    eq(2, eval('g:resized'))
+  end)
 end)
 
 describe('WinScrolled', function()

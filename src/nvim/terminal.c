@@ -93,6 +93,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
+#include "nvim/window.h"
 
 typedef struct {
   VimState state;
@@ -614,6 +615,8 @@ static int terminal_check(VimState *state)
 
     curbuf->b_locked--;
   }
+
+  may_trigger_win_scrolled_resized();
 
   if (need_maketitle) {  // Update title in terminal-mode. #7248
     maketitle();
