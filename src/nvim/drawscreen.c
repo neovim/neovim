@@ -1199,7 +1199,7 @@ void comp_col(void)
   set_vim_var_nr(VV_ECHOSPACE, sc_col - 1);
 }
 
-/// Redraw entire window "wp" if configured 'signcolumn' width changes.
+/// Redraw entire window "wp" if "auto" 'signcolumn' width has changed.
 static bool win_redraw_signcols(win_T *wp)
 {
   buf_T *buf = wp->w_buffer;
