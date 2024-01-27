@@ -8,7 +8,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local Screen = require('test.functional.ui.screen')
 local eq = helpers.eq
-local feed_command = helpers.feed_command
 local feed_data = thelpers.feed_data
 local clear = helpers.clear
 local command = helpers.command
@@ -2810,17 +2809,13 @@ end)
 describe('TUI bg color', function()
   before_each(clear)
 
-  local attr_ids = {
-    [1] = { reverse = true },
-    [2] = { bold = true },
-    [3] = { reverse = true, bold = true },
-    [4] = { foreground = tonumber('0x00000a') },
-  }
-
   it('is properly set in a nested Nvim instance when background=dark', function()
     command('highlight clear Normal')
     command('set background=dark') -- set outer Nvim background
+    local child_server = new_pipename()
     local screen = thelpers.setup_child_nvim({
+      '--listen',
+      child_server,
       '-u',
       'NONE',
       '-i',
@@ -2830,26 +2825,20 @@ describe('TUI bg color', function()
       '--cmd',
       'set noswapfile',
     })
-    screen:set_default_attr_ids(attr_ids)
-    retry(nil, 30000, function() -- wait for automatic background processing
-      screen:sleep(20)
-      feed_command('set background?') -- check nested Nvim background
-      screen:expect([[
-      {1: }                                                 |
-      {2:~}                                                 |
-      {2:~}                                                 |
-      {2:~}                                                 |
-      {3:[No Name]                       0,0-1          All}|
-        background=dark                                 |
-      {4:-- TERMINAL --}                                    |
-      ]])
+    screen:expect({ any = '%[No Name%]' })
+    local child_session = helpers.connect(child_server)
+    retry(nil, nil, function()
+      eq({ true, 'dark' }, { child_session:request('nvim_eval', '&background') })
     end)
   end)
 
   it('is properly set in a nested Nvim instance when background=light', function()
     command('highlight clear Normal')
     command('set background=light') -- set outer Nvim background
+    local child_server = new_pipename()
     local screen = thelpers.setup_child_nvim({
+      '--listen',
+      child_server,
       '-u',
       'NONE',
       '-i',
@@ -2859,18 +2848,10 @@ describe('TUI bg color', function()
       '--cmd',
       'set noswapfile',
     })
-    retry(nil, 30000, function() -- wait for automatic background processing
-      screen:sleep(20)
-      feed_command('set background?') -- check nested Nvim background
-      screen:expect([[
-      {1: }                                                 |
-      {3:~}                                                 |
-      {3:~}                                                 |
-      {3:~}                                                 |
-      {5:[No Name]                       0,0-1          All}|
-        background=light                                |
-      {3:-- TERMINAL --}                                    |
-      ]])
+    screen:expect({ any = '%[No Name%]' })
+    local child_session = helpers.connect(child_server)
+    retry(nil, nil, function()
+      eq({ true, 'light' }, { child_session:request('nvim_eval', '&background') })
     end)
   end)
 
@@ -2914,18 +2895,13 @@ describe('TUI bg color', function()
       '-c',
       'autocmd OptionSet background echo "did OptionSet, yay!"',
     })
-    retry(nil, 30000, function() -- wait for automatic background processing
-      screen:sleep(20)
-      screen:expect([[
+    screen:expect([[
       {1: }                                                 |
-      {3:~}                                                 |
-      {3:~}                                                 |
-      {3:~}                                                 |
+      {3:~}                                                 |*3
       {5:[No Name]                       0,0-1          All}|
       did OptionSet, yay!                               |
       {3:-- TERMINAL --}                                    |
-      ]])
-    end)
+    ]])
   end)
 end)
 
