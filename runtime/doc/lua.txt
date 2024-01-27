@@ -255,10 +255,13 @@ arguments separated by " " (space) instead of "\t" (tab).
         :lua =jit.version
 <
 :{range}lua
-    Executes the |[range]| in the current buffer as Lua code. Unlike |:source|,
-    this will execute the specified lines regardless of the extension or
-    |'filetype'| of the buffer.
+    Executes buffer lines in {range} as Lua code. Unlike |:source|, this
+    always treats the lines as Lua code.
 
+    Example: select the following code and type ":lua<Enter>" to execute it: >lua
+        print(string.format(
+            'unix time: %s', os.time()))
+<
                                                                 *:lua-heredoc*
 :lua << [trim] [{endmarker}]
 {script}
@@ -271,10 +274,8 @@ arguments separated by " " (space) instead of "\t" (tab).
         function! CurrentLineInfo()
         lua << EOF
         local linenr = vim.api.nvim_win_get_cursor(0)[1]
-        local curline = vim.api.nvim_buf_get_lines(
-                0, linenr - 1, linenr, false)[1]
-        print(string.format("Current line [%d] has %d bytes",
-                linenr, #curline))
+        local curline = vim.api.nvim_buf_get_lines(0, linenr - 1, linenr, false)[1]
+        print(string.format('Line [%d] has %d bytes', linenr, #curline))
         EOF
         endfunction
 <

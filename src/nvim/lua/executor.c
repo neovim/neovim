@@ -1641,19 +1641,20 @@ bool nlua_is_deferred_safe(void)
   return in_fast_callback == 0;
 }
 
-/// Run lua string
+/// Executes Lua code.
 ///
-/// Used for :lua.
+/// Implements `:lua` and `:lua ={expr}`.
 ///
-/// @param  eap  Vimscript command being run.
+/// @param  eap  Vimscript `:lua {code}`, `:{range}lua`, or `:lua ={expr}` command.
 void ex_lua(exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
+  // ":{range}lua"
   if (eap->addr_count > 0 || *eap->arg == NUL) {
     if (eap->addr_count > 0 && *eap->arg == NUL) {
       cmd_source_buffer(eap, true);
     } else {
-      semsg(_(e_invarg2), "exactly one of {chunk} and {range} required");
+      semsg(_(e_invarg2), "exactly one of {chunk} or {range} required");
     }
     return;
   }
@@ -1664,13 +1665,14 @@ void ex_lua(exarg_T *const eap)
     xfree(code);
     return;
   }
-  // When =expr is used transform it to vim.print(expr)
+
+  // ":lua {code}", ":={expr}" or ":lua ={expr}"
+  //
+  // When "=expr" is used transform it to "vim.print(expr)".
   if (eap->cmdidx == CMD_equal || code[0] == '=') {
     size_t off = (eap->cmdidx == CMD_equal) ? 0 : 1;
     len += sizeof("vim.print()") - 1 - off;
-    // code_buf needs to be 1 char larger then len for null byte in the end.
-    // lua nlua_typval_exec doesn't expect null terminated string so len
-    // needs to end before null byte.
+    // `nlua_typval_exec` doesn't expect NUL-terminated string so `len` must end before NUL byte.
     char *code_buf = xmallocz(len);
     vim_snprintf(code_buf, len + 1, "vim.print(%s)", code + off);
     xfree(code);
@@ -1682,11 +1684,11 @@ void ex_lua(exarg_T *const eap)
   xfree(code);
 }
 
-/// Run lua string for each line in range
+/// Executes Lua code for-each line in a buffer range.
 ///
-/// Used for :luado.
+/// Implements `:luado`.
 ///
-/// @param  eap  Vimscript command being run.
+/// @param  eap  Vimscript `:luado {code}` command.
 void ex_luado(exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1763,11 +1765,11 @@ void ex_luado(exarg_T *const eap)
   redraw_curbuf_later(UPD_NOT_VALID);
 }
 
-/// Run lua file
+/// Executes Lua code from a file location.
 ///
-/// Used for :luafile.
+/// Implements `:luafile`.
 ///
-/// @param  eap  Vimscript command being run.
+/// @param  eap  Vimscript `:luafile {file}` command.
 void ex_luafile(exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
