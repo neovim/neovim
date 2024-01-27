@@ -151,7 +151,7 @@ bool try_end(Error *err)
     if (should_free) {
       xfree(msg);
     }
-  } else if (did_throw) {
+  } else if (did_throw || need_rethrow) {
     if (*current_exception->throw_name != NUL) {
       if (current_exception->throw_lnum != 0) {
         api_set_error(err, kErrorTypeException, "%s, line %" PRIdLINENR ": %s",
