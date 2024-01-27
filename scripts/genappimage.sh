@@ -26,7 +26,7 @@ APP_DIR="$APP.AppDir"
 ########################################################################
 
 # Build and install nvim into the AppImage
-make CMAKE_BUILD_TYPE="${NVIM_BUILD_TYPE}"
+make CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
 cmake --install build --prefix="$APP_BUILD_DIR/${APP_DIR}/usr"
 
 ########################################################################

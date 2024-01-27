@@ -55,8 +55,6 @@ foreach(PACKAGE ${PACKAGES})
   endif()
 endforeach()
 
-file(GLOB DOCFILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/runtime/doc/*.txt)
-
 set(BUILDDOCFILES)
 foreach(DF ${DOCFILES})
   get_filename_component(F ${DF} NAME)
@@ -73,15 +71,6 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
     nvim_bin
     nvim_runtime_deps
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}"
-)
-
-# TODO: This doesn't work. wait for "nvim -l" to land?
-add_custom_target(doc_html
-  COMMAND $<TARGET_FILE:nvim_bin>
-    -V1 -es --clean -c "lua require('scripts.gen_help_html').gen('./build/runtime/doc', './build/doc_html', nil, 'todo_commit_id')" -c "0cq"
-  DEPENDS
-    ${GENERATED_HELP_TAGS}
-  WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}/doc"
 )
 
 add_custom_target(

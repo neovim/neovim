@@ -29,11 +29,11 @@ jobs:
       - run: ./.github/scripts/install_deps.sh
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
         run: |
-          echo 'NVIM_BUILD_TYPE=Release' >> $GITHUB_ENV
+          echo 'CMAKE_BUILD_TYPE=Release' >> $GITHUB_ENV
           echo 'APPIMAGE_TAG=latest' >> $GITHUB_ENV
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
         run: |
-          echo 'NVIM_BUILD_TYPE=RelWithDebInfo' >> $GITHUB_ENV
+          echo 'CMAKE_BUILD_TYPE=RelWithDebInfo' >> $GITHUB_ENV
           echo 'APPIMAGE_TAG=nightly' >> $GITHUB_ENV
       - name: appimage
         run: ./scripts/genappimage.sh ${APPIMAGE_TAG}
@@ -69,9 +69,9 @@ jobs:
       - name: Install dependencies
         run: ./.github/scripts/install_deps.sh
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
-        run: printf 'NVIM_BUILD_TYPE=Release\n' >> $GITHUB_ENV
+        run: printf 'CMAKE_BUILD_TYPE=Release\n' >> $GITHUB_ENV
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
-        run: printf 'NVIM_BUILD_TYPE=RelWithDebInfo\n' >> $GITHUB_ENV
+        run: printf 'CMAKE_BUILD_TYPE=RelWithDebInfo\n' >> $GITHUB_ENV
       - name: Build universal binary
         run: ./.github/scripts/build_universal_macos.sh
       - uses: actions/upload-artifact@v4

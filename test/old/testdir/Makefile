@@ -121,7 +121,8 @@ CLEAN_FILES := *.out \
   .*.swo            \
   .gdbinit          \
   $(TMPDIR)         \
-  del
+  del               \
+  $(ROOT)/runtime/doc/.*.swp
 clean:
 	$(RM) -rf $(CLEAN_FILES)
 
