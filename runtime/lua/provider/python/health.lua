@@ -255,7 +255,7 @@ function M.check()
       'See :help provider-python for more information.',
       'You may disable this provider (and warning) by adding `let g:loaded_python3_provider = 0` to your init.vim',
     })
-  elseif pyname ~= '' and python_exe == '' then
+  elseif pyname and pyname ~= '' and python_exe == '' then
     if not vim.g[host_prog_var] then
       local message = string.format(
         '`g:%s` is not set. Searching for %s in the environment.',
@@ -343,7 +343,7 @@ function M.check()
     end
   end
 
-  if python_exe == '' and pyname ~= '' then
+  if pyname and python_exe == '' and pyname ~= '' then
     -- An error message should have already printed.
     health.error('`' .. pyname .. '` was not found.')
   elseif python_exe ~= '' and not check_bin(python_exe) then
