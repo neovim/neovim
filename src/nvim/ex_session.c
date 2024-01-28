@@ -366,6 +366,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
 
       if (put_line(fd, "enew | setl bt=help") == FAIL
           || fprintf(fd, "help %s", curtag) < 0 || put_eol(fd) == FAIL) {
+        xfree(fname_esc);
         return FAIL;
       }
     } else if (wp->w_buffer->b_ffname != NULL
