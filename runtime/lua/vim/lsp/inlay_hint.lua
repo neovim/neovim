@@ -4,11 +4,17 @@ local ms = require('vim.lsp.protocol').Methods
 local api = vim.api
 local M = {}
 
+---@class vim.lsp.inlay_hint.config
+---@field format_label? fun(label: string|table): string Formatting function for customizing an inlay hint's label
+
 ---@class lsp.inlay_hint.bufstate
 ---@field version? integer
 ---@field client_hint? table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
 ---@field applied table<integer, integer> Last version of hints applied to this line
 ---@field enabled boolean Whether inlay hints are enabled for this buffer
+---@field config vim.lsp.inlay_hint.config?
+
+---buffer_id -> buffer state
 ---@type table<integer, lsp.inlay_hint.bufstate>
 local bufstates = {}
 
@@ -17,10 +23,12 @@ local augroup = api.nvim_create_augroup('vim_lsp_inlayhint', {})
 
 --- |lsp-handler| for the method `textDocument/inlayHint`
 --- Store hints for a specific buffer and client
+---@param err table?
 ---@param result lsp.InlayHint[]?
 ---@param ctx lsp.HandlerContext
+---@param config vim.lsp.inlay_hint.config?
 ---@private
-function M.on_inlayhint(err, result, ctx, _)
+function M.on_inlayhint(err, result, ctx, config)
   if err then
     if log.error() then
       log.error('inlayhint', err)
@@ -42,6 +50,7 @@ function M.on_inlayhint(err, result, ctx, _)
   if not (bufstate.client_hint and bufstate.version) then
     bufstate.client_hint = vim.defaulttable()
     bufstate.version = ctx.version
+    bufstate.config = config
   end
   local hints_by_client = bufstate.client_hint
   local client = assert(vim.lsp.get_client_by_id(client_id))
@@ -321,6 +330,8 @@ api.nvim_set_decoration_provider(namespace, {
     end
     local hints_by_client = assert(bufstate.client_hint)
 
+    local formatter = bufstate.config and bufstate.config.format_label
+
     for lnum = topline, botline do
       if bufstate.applied[lnum] ~= bufstate.version then
         api.nvim_buf_clear_namespace(bufnr, namespace, lnum, lnum + 1)
@@ -330,12 +341,18 @@ api.nvim_set_decoration_provider(namespace, {
             local text = ''
             local label = hint.label
             if type(label) == 'string' then
-              text = label
+              text = formatter and formatter(label) or label
             else
-              for _, part in ipairs(label) do
-                text = text .. part.value
+              -- The label is made of display parts, (we concatenate their values by default).
+              if formatter then
+                text = formatter(label)
+              else
+                for _, part in ipairs(label) do
+                  text = text .. part.value
+                end
               end
             end
+
             local vt = {} --- @type {[1]: string, [2]: string?}[]
             if hint.paddingLeft then
               vt[#vt + 1] = { ' ' }
