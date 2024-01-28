@@ -2791,7 +2791,10 @@ describe('TUI', function()
       })
     ]])
 
+    local child_server = new_pipename()
     screen = thelpers.setup_child_nvim({
+      '--listen',
+      child_server,
       '-u',
       'NONE',
       '-i',
@@ -2807,6 +2810,9 @@ describe('TUI', function()
       },
     })
 
+    screen:expect({ any = '%[No Name%]' })
+
+    local child_session = helpers.connect(child_server)
     retry(nil, 1000, function()
       eq({
         Tc = true,
@@ -2814,19 +2820,8 @@ describe('TUI', function()
         setrgbf = true,
         setrgbb = true,
       }, eval("get(g:, 'xtgettcap', '')"))
+      eq({ true, 1 }, { child_session:request('nvim_eval', '&termguicolors') })
     end)
-
-    feed_data(':echo &termguicolors\r')
-
-    screen:expect {
-      grid = [[
-      {1: }                                                 |
-      ~                                                 |*3
-      [No Name]                       0,0-1          All|
-      1                                                 |
-      {3:-- TERMINAL --}                                    |
-    ]],
-    }
   end)
 
   it('queries the terminal for OSC 52 support', function()
@@ -2846,7 +2841,10 @@ describe('TUI', function()
       })
     ]])
 
+    local child_server = new_pipename()
     screen = thelpers.setup_child_nvim({
+      '--listen',
+      child_server,
       -- Use --clean instead of -u NONE to load the osc52 plugin
       '--clean',
     }, {
@@ -2858,21 +2856,13 @@ describe('TUI', function()
       },
     })
 
+    screen:expect({ any = '%[No Name%]' })
+
+    local child_session = helpers.connect(child_server)
     retry(nil, 1000, function()
       eq('Ms', eval("get(g:, 'xtgettcap', '')"))
+      eq({ true, 'OSC 52' }, { child_session:request('nvim_eval', 'g:clipboard.name') })
     end)
-
-    feed_data(':echo g:clipboard.name\r')
-
-    screen:expect {
-      grid = [[
-      {1: }                                                 |
-      ~                                                 |*3
-      [No Name]                       0,0-1          All|
-      OSC 52                                            |
-      {3:-- TERMINAL --}                                    |
-    ]],
-    }
   end)
 end)
 
