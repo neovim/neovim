@@ -225,6 +225,15 @@ https://github.com/neovim/neovim-backup
       trying to produce images that work in the broadest number of environments,
       and therefore want to use older releases.
 
+### Special labels
+
+Some github labels are used to trigger certain jobs:
+
+* `backport release-x.y` - backport to release branch
+* `ci-s390x` - enable s390x CI
+* `needs:response` - Close PR after a certain amount of time if author doesn't
+  respond
+
 See also
 --------
 
