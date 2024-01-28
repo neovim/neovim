@@ -2777,13 +2777,23 @@ describe('TUI', function()
           local req = args.data
           local payload = req:match('^\027P%+q([%x;]+)$')
           if payload then
-            vim.g.xtgettcap = true
+            local t = {}
+            for cap in vim.gsplit(payload, ';') do
+              local resp = string.format('\027P1+r%s\027\\', payload)
+              vim.api.nvim_chan_send(vim.bo[args.buf].channel, resp)
+              t[vim.text.hexdecode(cap)] = true
+            end
+            vim.g.xtgettcap = t
             return true
           end
         end,
       })
     ]])
+
+    local child_server = new_pipename()
     screen = thelpers.setup_child_nvim({
+      '--listen',
+      child_server,
       '-u',
       'NONE',
       '-i',
@@ -2799,9 +2809,58 @@ describe('TUI', function()
       },
     })
 
+    screen:expect({ any = '%[No Name%]' })
+
+    local child_session = helpers.connect(child_server)
     retry(nil, 1000, function()
-      eq(true, eval("get(g:, 'xtgettcap', v:false)"))
-      eq(1, eval('&termguicolors'))
+      eq({
+        Tc = true,
+        RGB = true,
+        setrgbf = true,
+        setrgbb = true,
+      }, eval("get(g:, 'xtgettcap', '')"))
+      eq({ true, 1 }, { child_session:request('nvim_eval', '&termguicolors') })
+    end)
+  end)
+
+  it('queries the terminal for OSC 52 support', function()
+    clear()
+    exec_lua([[
+      vim.api.nvim_create_autocmd('TermRequest', {
+        callback = function(args)
+          local req = args.data
+          local payload = req:match('^\027P%+q([%x;]+)$')
+          if payload and vim.text.hexdecode(payload) == 'Ms' then
+            vim.g.xtgettcap = 'Ms'
+            local resp = string.format('\027P1+r%s=%s\027\\', payload, vim.text.hexencode('\027]52;;\027\\'))
+            vim.api.nvim_chan_send(vim.bo[args.buf].channel, resp)
+            return true
+          end
+        end,
+      })
+    ]])
+
+    local child_server = new_pipename()
+    screen = thelpers.setup_child_nvim({
+      '--listen',
+      child_server,
+      -- Use --clean instead of -u NONE to load the osc52 plugin
+      '--clean',
+    }, {
+      env = {
+        VIMRUNTIME = os.getenv('VIMRUNTIME'),
+
+        -- Only queries when SSH_TTY is set
+        SSH_TTY = '/dev/pts/1',
+      },
+    })
+
+    screen:expect({ any = '%[No Name%]' })
+
+    local child_session = helpers.connect(child_server)
+    retry(nil, 1000, function()
+      eq('Ms', eval("get(g:, 'xtgettcap', '')"))
+      eq({ true, 'OSC 52' }, { child_session:request('nvim_eval', 'g:clipboard.name') })
     end)
   end)
 end)
