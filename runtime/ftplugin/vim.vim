@@ -49,17 +49,16 @@ setlocal isk+=#
 " Use :help to lookup the keyword under the cursor with K.
 setlocal keywordprg=:help
 
-" if "\n" .. getline(1, 10)->join("\n") =~# '\n\s*vim9\%[script]\>'
-if "\n" .. join(getline(1, 10), "\n") =~# '\n\s*vim9\%[script]\>'
-  " Set 'comments' to format dashed lists in comments
-  setlocal com=sO:#\ -,mO:#\ \ ,eO:##,:#
-  " Comments starts with # in Vim9 script
+" Comments starts with # in Vim9 script.  We have to guess which one to use.
+if "\n" .. getline(1, 10)->join("\n") =~# '\n\s*vim9\%[script]\>'
   setlocal commentstring=#%s
 else
-  setlocal com=sO:\"\ -,mO:\"\ \ ,eO:\"\",:\"
-  " Comments starts with a double quote in legacy script
   setlocal commentstring=\"%s
 endif
+
+" Set 'comments' to format dashed lists in comments, both in Vim9 and legacy
+" script.
+setlocal com=sO:#\ -,mO:#\ \ ,eO:##,:#,sO:\"\ -,mO:\"\ \ ,eO:\"\",:\"
 
 
 " Format comments to be up to 78 characters long
