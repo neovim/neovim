@@ -269,6 +269,10 @@ static void tui_query_kitty_keyboard(TUIData *tui)
   out(tui, S_LEN("\x1b[?u\x1b[c"));
 }
 
+/// Enable the alternate screen and emit other control sequences to start the TUI.
+///
+/// This is also called when the TUI is resumed after being suspended. We reinitialize all state
+/// from terminfo just in case the controlling terminal has changed (#27177).
 static void terminfo_start(TUIData *tui)
 {
   tui->scroll_region_is_full_screen = true;
@@ -418,6 +422,7 @@ static void terminfo_start(TUIData *tui)
   flush_buf(tui);
 }
 
+/// Disable the alternate screen and prepare for the TUI to close.
 static void terminfo_stop(TUIData *tui)
 {
   // Destroy output stuff
@@ -489,7 +494,7 @@ static void tui_terminal_after_startup(TUIData *tui)
   flush_buf(tui);
 }
 
-/// stop the terminal but allow it to restart later (like after suspend)
+/// Stop the terminal but allow it to restart later (like after suspend)
 static void tui_terminal_stop(TUIData *tui)
 {
   if (uv_is_closing((uv_handle_t *)&tui->output_handle)) {
