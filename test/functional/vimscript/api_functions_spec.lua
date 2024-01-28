@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local neq, eq, command = helpers.neq, helpers.eq, helpers.command
 local clear = helpers.clear
 local exc_exec, expect, eval = helpers.exc_exec, helpers.expect, helpers.eval
+local exec_lua = helpers.exec_lua
 local insert, pcall_err = helpers.insert, helpers.pcall_err
 local matches = helpers.matches
 local api = helpers.api
@@ -104,6 +105,19 @@ describe('eval-API', function()
     eq(
       'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
       pcall_err(api.nvim_open_term, 0, {})
+    )
+
+    matches(
+      'E11: Invalid in command%-line window; <CR> executes, CTRL%-C quits$',
+      pcall_err(
+        exec_lua,
+        [[
+         local cmdwin_buf = vim.api.nvim_get_current_buf()
+         vim.api.nvim_buf_call(vim.api.nvim_create_buf(false, true), function()
+           vim.api.nvim_open_term(cmdwin_buf, {})
+         end)
+       ]]
+      )
     )
 
     -- But turning a different buffer into a terminal from the cmdwin is OK.

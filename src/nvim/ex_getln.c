@@ -219,6 +219,9 @@ static int cedit_key = -1;  ///< key value of 'cedit' option
 static handle_T cmdpreview_bufnr = 0;
 static int cmdpreview_ns = 0;
 
+static const char e_active_window_or_buffer_changed_or_deleted[]
+  = N_("E199: Active window or buffer changed or deleted");
+
 static void save_viewstate(win_T *wp, viewstate_T *vs)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -4323,23 +4326,50 @@ static int open_cmdwin(void)
     ga_clear(&winsizes);
     return K_IGNORE;
   }
+  // win_split() autocommands may have messed with the old window or buffer.
+  // Treat it as abandoning this command-line.
+  if (!win_valid(old_curwin) || curwin == old_curwin || !bufref_valid(&old_curbuf)
+      || old_curwin->w_buffer != old_curbuf.br_buf) {
+    beep_flush();
+    ga_clear(&winsizes);
+    return Ctrl_C;
+  }
   // Don't let quitting the More prompt make this fail.
   got_int = false;
 
-  // Set "cmdwin_type" before any autocommands may mess things up.
+  // Set "cmdwin_..." variables before any autocommands may mess things up.
   cmdwin_type = get_cmdline_type();
   cmdwin_level = ccline.level;
+  cmdwin_win = curwin;
   cmdwin_old_curwin = old_curwin;
 
-  // Create empty command-line buffer.
-  if (buf_open_scratch(0, _("[Command Line]")) == FAIL) {
-    // Some autocommand messed it up?
-    win_close(curwin, true, false);
-    ga_clear(&winsizes);
+  // Create empty command-line buffer.  Be especially cautious of BufLeave
+  // autocommands from do_ecmd(), as cmdwin restrictions do not apply to them!
+  const int newbuf_status = buf_open_scratch(0, NULL);
+  const bool cmdwin_valid = win_valid(cmdwin_win);
+  if (newbuf_status == FAIL || !cmdwin_valid || curwin != cmdwin_win || !win_valid(old_curwin)
+      || !bufref_valid(&old_curbuf) || old_curwin->w_buffer != old_curbuf.br_buf) {
+    if (newbuf_status == OK) {
+      set_bufref(&bufref, curbuf);
+    }
+    if (cmdwin_valid && !last_window(cmdwin_win)) {
+      win_close(cmdwin_win, true, false);
+    }
+    // win_close() autocommands may have already deleted the buffer.
+    if (newbuf_status == OK && bufref_valid(&bufref) && bufref.br_buf != curbuf) {
+      close_buffer(NULL, bufref.br_buf, DOBUF_WIPE, false, false);
+    }
+
     cmdwin_type = 0;
+    cmdwin_level = 0;
+    cmdwin_win = NULL;
     cmdwin_old_curwin = NULL;
+    beep_flush();
+    ga_clear(&winsizes);
     return Ctrl_C;
   }
+  cmdwin_buf = curbuf;
+
   // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
   set_option_value_give_err(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL);
   curbuf->b_p_ma = true;
@@ -4434,15 +4464,18 @@ static int open_cmdwin(void)
 
   cmdwin_type = 0;
   cmdwin_level = 0;
+  cmdwin_buf = NULL;
+  cmdwin_win = NULL;
   cmdwin_old_curwin = NULL;
 
   exmode_active = save_exmode;
 
-  // Safety check: The old window or buffer was deleted: It's a bug when
-  // this happens!
-  if (!win_valid(old_curwin) || !bufref_valid(&old_curbuf)) {
+  // Safety check: The old window or buffer was changed or deleted: It's a bug
+  // when this happens!
+  if (!win_valid(old_curwin) || !bufref_valid(&old_curbuf)
+      || old_curwin->w_buffer != old_curbuf.br_buf) {
     cmdwin_result = Ctrl_C;
-    emsg(_("E199: Active window or buffer deleted"));
+    emsg(_(e_active_window_or_buffer_changed_or_deleted));
   } else {
     win_T *wp;
     // autocmds may abort script processing

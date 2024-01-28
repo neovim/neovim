@@ -181,7 +181,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
   if (!buf) {
     return 0;
   }
-  if (cmdwin_type != 0 && (enter || buf == curbuf)) {
+  if ((cmdwin_type != 0 && enter) || buf == cmdwin_buf) {
     api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return 0;
   }

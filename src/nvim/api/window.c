@@ -61,7 +61,7 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   if (!win || !buf) {
     return;
   }
-  if (cmdwin_type != 0 && (win == curwin || win == cmdwin_old_curwin || buf == curbuf)) {
+  if (win == cmdwin_win || win == cmdwin_old_curwin || buf == cmdwin_buf) {
     api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return;
   }
