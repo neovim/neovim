@@ -845,10 +845,10 @@ static void normal_get_additional_char(NormalState *s)
       no_mapping++;
       // Vim may be in a different mode when the user types the next key,
       // but when replaying a recording the next key is already in the
-      // typeahead buffer, so record a <Nop> before that to prevent the
-      // vpeekc() above from applying wrong mappings when replaying.
+      // typeahead buffer, so record an <Ignore> before that to prevent
+      // the vpeekc() above from applying wrong mappings when replaying.
       no_u_sync++;
-      gotchars_nop();
+      gotchars_ignore();
       no_u_sync--;
     }
   }

@@ -1146,10 +1146,10 @@ static void gotchars(const uint8_t *chars, size_t len)
   maptick++;
 }
 
-/// Record a <Nop> key.
-void gotchars_nop(void)
+/// Record an <Ignore> key.
+void gotchars_ignore(void)
 {
-  uint8_t nop_buf[3] = { K_SPECIAL, KS_EXTRA, KE_NOP };
+  uint8_t nop_buf[3] = { K_SPECIAL, KS_EXTRA, KE_IGNORE };
   gotchars(nop_buf, 3);
 }
 
@@ -2746,9 +2746,9 @@ static int vgetorpeek(bool advance)
   }
 
   if (timedout && c == ESC) {
-    // When recording there will be no timeout.  Add a <Nop> after the ESC
-    // to avoid that it forms a key code with following characters.
-    gotchars_nop();
+    // When recording there will be no timeout.  Add an <Ignore> after the
+    // ESC to avoid that it forms a key code with following characters.
+    gotchars_ignore();
   }
 
   vgetc_busy--;
