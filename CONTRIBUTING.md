@@ -24,8 +24,8 @@ Reporting problems
 - If a specific configuration or plugin is necessary to recreate the problem, use the minimal template in `contrib/minimal.lua` with `nvim --clean -u contrib/minimal.lua` after making the necessary changes.
 - [Bisect](https://neovim.io/doc/user/starting.html#bisect) your config: disable plugins incrementally, to narrow down the cause of the issue.
 - [Bisect][git-bisect] Neovim's source code to find the cause of a regression, if you can. This is _extremely_ helpful.
-- When reporting a crash, [include a stacktrace](https://neovim.io/doc/user/faq.html#backtrace-linux).
-- Use [ASAN/UBSAN](#clang-sanitizers-asan-and-ubsan) to get detailed errors for segfaults and undefined behavior.
+- When reporting a crash, [include a stacktrace](https://neovim.io/doc/user/dev_tools.html#dev-tools-backtrace).
+- Use [ASAN/UBSAN](#sanitizers-asan-and-ubsan) to get detailed errors for segfaults and undefined behavior.
 - Check the logs. `:edit $NVIM_LOG_FILE`
 - Include `cmake --system-information` for build-related issues.
 
