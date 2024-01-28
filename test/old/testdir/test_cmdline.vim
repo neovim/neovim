@@ -1885,7 +1885,7 @@ func Test_cmdwin_tabpage()
   tabclose!
 endfunc
 
-func Test_cmdwin_interrupted()
+func Test_cmdwin_interrupted_more_prompt()
   CheckScreendump
 
   " aborting the :smile output caused the cmdline window to use the current

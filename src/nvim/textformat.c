@@ -763,7 +763,7 @@ int comp_textwidth(bool ff)
     // The width is the window width minus 'wrapmargin' minus all the
     // things that add to the margin.
     textwidth = curwin->w_width_inner - (int)curbuf->b_p_wm;
-    if (cmdwin_type != 0) {
+    if (curbuf == cmdwin_buf) {
       textwidth -= 1;
     }
     textwidth -= win_fdccol_count(curwin);

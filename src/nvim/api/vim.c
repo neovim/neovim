@@ -1022,7 +1022,7 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
     return 0;
   }
 
-  if (cmdwin_type != 0 && buf == curbuf) {
+  if (buf == cmdwin_buf) {
     api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return 0;
   }

@@ -1,18 +1,20 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, curbuf, curbuf_contents, curwin, eq, neq, ok, feed, insert, eval =
+local clear, curbuf, curbuf_contents, curwin, eq, neq, matches, ok, feed, insert, eval =
   helpers.clear,
   helpers.api.nvim_get_current_buf,
   helpers.curbuf_contents,
   helpers.api.nvim_get_current_win,
   helpers.eq,
   helpers.neq,
+  helpers.matches,
   helpers.ok,
   helpers.feed,
   helpers.insert,
   helpers.eval
 local poke_eventloop = helpers.poke_eventloop
 local exec = helpers.exec
+local exec_lua = helpers.exec_lua
 local fn = helpers.fn
 local request = helpers.request
 local NIL = vim.NIL
@@ -51,7 +53,7 @@ describe('API/win', function()
       eq('Invalid window id: 23', pcall_err(api.nvim_win_set_buf, 23, api.nvim_get_current_buf()))
     end)
 
-    it('disallowed in cmdwin if win={old_}curwin or buf=curbuf', function()
+    it('disallowed in cmdwin if win=cmdwin_{old_cur}win or buf=cmdwin_buf', function()
       local new_buf = api.nvim_create_buf(true, true)
       local old_win = api.nvim_get_current_win()
       local new_win = api.nvim_open_win(new_buf, false, {
@@ -73,6 +75,36 @@ describe('API/win', function()
       eq(
         'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
         pcall_err(api.nvim_win_set_buf, new_win, 0)
+      )
+      matches(
+        'E11: Invalid in command%-line window; <CR> executes, CTRL%-C quits$',
+        pcall_err(
+          exec_lua,
+          [[
+           local cmdwin_buf = vim.api.nvim_get_current_buf()
+           local new_win, new_buf = ...
+           vim.api.nvim_buf_call(new_buf, function()
+             vim.api.nvim_win_set_buf(new_win, cmdwin_buf)
+           end)
+         ]],
+          new_win,
+          new_buf
+        )
+      )
+      matches(
+        'E11: Invalid in command%-line window; <CR> executes, CTRL%-C quits$',
+        pcall_err(
+          exec_lua,
+          [[
+           local cmdwin_win = vim.api.nvim_get_current_win()
+           local new_win, new_buf = ...
+           vim.api.nvim_win_call(new_win, function()
+             vim.api.nvim_win_set_buf(cmdwin_win, new_buf)
+           end)
+         ]],
+          new_win,
+          new_buf
+        )
       )
 
       local next_buf = api.nvim_create_buf(true, true)
@@ -546,6 +578,7 @@ describe('API/win', function()
     it('in cmdline-window #9767', function()
       command('split')
       eq(2, #api.nvim_list_wins())
+      local oldbuf = api.nvim_get_current_buf()
       local oldwin = api.nvim_get_current_win()
       local otherwin = api.nvim_open_win(0, false, {
         relative = 'editor',
@@ -570,6 +603,46 @@ describe('API/win', function()
       api.nvim_win_close(0, true)
       eq(2, #api.nvim_list_wins())
       eq('', fn.getcmdwintype())
+
+      -- Closing curwin in context of a different window shouldn't close cmdwin.
+      otherwin = api.nvim_open_win(0, false, {
+        relative = 'editor',
+        row = 10,
+        col = 10,
+        width = 10,
+        height = 10,
+      })
+      feed('q:')
+      exec_lua(
+        [[
+        vim.api.nvim_win_call(..., function()
+          vim.api.nvim_win_close(0, true)
+        end)
+      ]],
+        otherwin
+      )
+      eq(false, api.nvim_win_is_valid(otherwin))
+      eq(':', fn.getcmdwintype())
+      -- Closing cmdwin in context of a non-previous window is still OK.
+      otherwin = api.nvim_open_win(oldbuf, false, {
+        relative = 'editor',
+        row = 10,
+        col = 10,
+        width = 10,
+        height = 10,
+      })
+      exec_lua(
+        [[
+        local otherwin, cmdwin = ...
+        vim.api.nvim_win_call(otherwin, function()
+          vim.api.nvim_win_close(cmdwin, true)
+        end)
+      ]],
+        otherwin,
+        api.nvim_get_current_win()
+      )
+      eq('', fn.getcmdwintype())
+      eq(true, api.nvim_win_is_valid(otherwin))
     end)
 
     it('closing current (float) window of another tabpage #15313', function()
@@ -646,6 +719,7 @@ describe('API/win', function()
       api.nvim_win_hide(0)
       eq('', fn.getcmdwintype())
 
+      local old_buf = api.nvim_get_current_buf()
       local old_win = api.nvim_get_current_win()
       local other_win = api.nvim_open_win(0, false, {
         relative = 'win',
@@ -663,6 +737,45 @@ describe('API/win', function()
       -- Can close other windows.
       api.nvim_win_hide(other_win)
       eq(false, api.nvim_win_is_valid(other_win))
+
+      -- Closing curwin in context of a different window shouldn't close cmdwin.
+      other_win = api.nvim_open_win(old_buf, false, {
+        relative = 'editor',
+        row = 10,
+        col = 10,
+        width = 10,
+        height = 10,
+      })
+      exec_lua(
+        [[
+        vim.api.nvim_win_call(..., function()
+          vim.api.nvim_win_hide(0)
+        end)
+      ]],
+        other_win
+      )
+      eq(false, api.nvim_win_is_valid(other_win))
+      eq(':', fn.getcmdwintype())
+      -- Closing cmdwin in context of a non-previous window is still OK.
+      other_win = api.nvim_open_win(old_buf, false, {
+        relative = 'editor',
+        row = 10,
+        col = 10,
+        width = 10,
+        height = 10,
+      })
+      exec_lua(
+        [[
+        local otherwin, cmdwin = ...
+        vim.api.nvim_win_call(otherwin, function()
+          vim.api.nvim_win_hide(cmdwin)
+        end)
+      ]],
+        other_win,
+        api.nvim_get_current_win()
+      )
+      eq('', fn.getcmdwintype())
+      eq(true, api.nvim_win_is_valid(other_win))
     end)
   end)
 
@@ -1055,7 +1168,7 @@ describe('API/win', function()
       eq(1, fn.exists('g:fired'))
     end)
 
-    it('disallowed in cmdwin if enter=true or buf=curbuf', function()
+    it('disallowed in cmdwin if enter=true or buf=cmdwin_buf', function()
       local new_buf = api.nvim_create_buf(true, true)
       feed('q:')
       eq(
@@ -1077,6 +1190,20 @@ describe('API/win', function()
           width = 5,
           height = 5,
         })
+      )
+      matches(
+        'E11: Invalid in command%-line window; <CR> executes, CTRL%-C quits$',
+        pcall_err(
+          exec_lua,
+          [[
+           local cmdwin_buf = vim.api.nvim_get_current_buf()
+           vim.api.nvim_buf_call(vim.api.nvim_create_buf(false, true), function()
+             vim.api.nvim_open_win(cmdwin_buf, false, {
+               relative='editor', row=5, col=5, width=5, height=5,
+             })
+           end)
+         ]]
+        )
       )
 
       eq(

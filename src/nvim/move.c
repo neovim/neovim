@@ -760,7 +760,7 @@ int win_col_off(win_T *wp)
 {
   return ((wp->w_p_nu || wp->w_p_rnu || *wp->w_p_stc != NUL)
           ? (number_width(wp) + (*wp->w_p_stc == NUL)) : 0)
-         + ((cmdwin_type == 0 || wp != curwin) ? 0 : 1)
+         + ((wp != cmdwin_win) ? 0 : 1)
          + win_fdccol_count(wp) + (wp->w_scwidth * SIGN_WIDTH);
 }
 

@@ -1219,7 +1219,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     statuscol.draw = true;
     statuscol.sattrs = wlv.sattrs;
     statuscol.foldinfo = foldinfo;
-    statuscol.width = win_col_off(wp) - (cmdwin_type != 0 && wp == curwin);
+    statuscol.width = win_col_off(wp) - (wp == cmdwin_win);
     statuscol.use_cul = use_cursor_line_highlight(wp, lnum);
     statuscol.sign_cul_id = statuscol.use_cul ? sign_cul_attr : 0;
     statuscol.num_attr = sign_num_attr > 0 ? syn_id2attr(sign_num_attr) : 0;
@@ -1511,7 +1511,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
       assert(wlv.off == 0);
 
-      if (cmdwin_type != 0 && wp == curwin) {
+      if (wp == cmdwin_win) {
         // Draw the cmdline character.
         draw_col_fill(&wlv, schar_from_ascii(cmdwin_type), 1, win_hl_attr(wp, HLF_AT));
       }

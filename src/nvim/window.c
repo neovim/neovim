@@ -2485,7 +2485,7 @@ bool can_close_in_cmdwin(win_T *win, Error *err)
   FUNC_ATTR_NONNULL_ALL
 {
   if (cmdwin_type != 0) {
-    if (win == curwin) {
+    if (win == cmdwin_win) {
       cmdwin_result = Ctrl_C;
       return false;
     } else if (win == cmdwin_old_curwin) {
@@ -3030,6 +3030,9 @@ void win_free_all(void)
 {
   // avoid an error for switching tabpage with the cmdline window open
   cmdwin_type = 0;
+  cmdwin_buf = NULL;
+  cmdwin_win = NULL;
+  cmdwin_old_curwin = NULL;
 
   while (first_tabpage->tp_next != NULL) {
     tabpage_close(true);
