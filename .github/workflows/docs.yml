@@ -7,6 +7,8 @@ on:
       - 'src/nvim/eval.lua'
       - 'runtime/lua/**.lua'
       - 'runtime/doc/**'
+      - 'scripts/gen_vimdoc.py'
+      - 'scripts/gen_help_html.lua'
 jobs:
   docs:
     runs-on: ubuntu-latest
@@ -30,3 +32,6 @@ jobs:
             echo "::error::The doc generation produces the following changes:"
             git diff --color --exit-code
           fi
+
+      - name: Validate docs
+        run: make lintdoc
