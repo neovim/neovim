@@ -58,7 +58,7 @@ endif
 
 " Set 'comments' to format dashed lists in comments, both in Vim9 and legacy
 " script.
-setlocal com=sO:#\ -,mO:#\ \ ,eO:##,:#,sO:\"\ -,mO:\"\ \ ,eO:\"\",:\"
+setlocal com=sO:#\ -,mO:#\ \ ,eO:##,:#\\\ ,:#,sO:\"\ -,mO:\"\ \ ,eO:\"\",:\"\\\ ,:\"
 
 
 " Format comments to be up to 78 characters long
