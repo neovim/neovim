@@ -1524,6 +1524,45 @@ describe('API/win', function()
       })
     end)
 
+    it('correctly moves curwin when moving curwin to a different tabpage', function()
+      local curtab = api.nvim_get_current_tabpage()
+      command('tabnew')
+      local tab2 = api.nvim_get_current_tabpage()
+      local tab2_win = api.nvim_get_current_win()
+
+      command('tabprev') -- return to the initial tab
+
+      local neighbor = api.nvim_get_current_win()
+
+      -- create and enter a new split
+      local win = api.nvim_open_win(0, true, {
+        vertical = false,
+      })
+
+      eq(curtab, api.nvim_win_get_tabpage(win))
+
+      eq({ win, neighbor }, api.nvim_tabpage_list_wins(curtab))
+
+      -- move the current win to a different tabpage
+      api.nvim_win_set_config(win, {
+        split = 'right',
+        win = api.nvim_tabpage_get_win(tab2),
+      })
+
+      eq(api.nvim_get_current_tabpage(), curtab)
+
+      -- win should have moved to tab2
+      eq(tab2, api.nvim_win_get_tabpage(win))
+      -- tp_curwin of tab2 should not have changed
+      eq(tab2_win, api.nvim_tabpage_get_win(tab2))
+      -- win lists should be correct
+      eq({ tab2_win, win }, api.nvim_tabpage_list_wins(tab2))
+      eq({ neighbor }, api.nvim_tabpage_list_wins(curtab))
+
+      -- current win should have moved to neighboring win
+      eq(neighbor, api.nvim_tabpage_get_win(curtab))
+    end)
+
     it('splits windows in non-current tabpage', function()
       local curtab = api.nvim_get_current_tabpage()
       command('tabnew')

@@ -7,6 +7,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/tabpage.h"
 #include "nvim/api/win_config.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
@@ -340,6 +341,7 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
   if (!win) {
     return;
   }
+  tabpage_T *win_tp = win_find_tabpage(win);
   bool was_normal = !win->w_floating;
   bool has_split = HAS_KEY(config, float_config, split);
   bool has_vertical = HAS_KEY(config, float_config, vertical);
@@ -406,6 +408,8 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
     }
 
     if (was_normal) {
+      win_T *new_curwin = NULL;
+
       // If the window is the last in the tabpage or `fconfig.win` is
       // a handle to itself, we can't split it.
       if (win->w_frame->fr_parent == NULL) {
@@ -456,29 +460,34 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
           // If the frame doesn't have a parent, the old frame
           // was the root frame and we need to create a top-level split.
           int dir;
-          winframe_remove(win, &dir, NULL);
+          new_curwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp);
         } else if (n_frames == 2) {
           // There are two windows in the frame, we can just rotate it.
           int dir;
-          neighbor = winframe_remove(win, &dir, NULL);
+          neighbor = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp);
+          new_curwin = neighbor;
         } else {
           // There is only one window in the frame, we can't split it.
           api_set_error(err, kErrorTypeValidation, "Cannot split window into itself");
           return;
         }
-        // Remove the old window from the tree of frames,
-        // and set the parent to whatever the correct
+        // Set the parent to whatever the correct
         // neighbor window was determined to be.
-        win_remove(win, NULL);
         parent = neighbor;
       } else {
         int dir;
-        winframe_remove(win, &dir, NULL);
-        win_remove(win, NULL);
+        new_curwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp);
       }
+      // move to neighboring window if we're moving the current window to a new tabpage
+      if (curwin == win && parent != NULL && new_curwin != NULL
+          && win_tp != win_find_tabpage(parent)) {
+        win_enter(new_curwin, true);
+      }
+      // Remove the old window from the tree of frames,
+      win_remove(win, win_tp == curtab ? NULL : win_tp);
     } else {
       // Remove the old window from the tree of frames
-      win_remove(win, NULL);
+      win_remove(win, win_tp == curtab ? NULL : win_tp);
       ui_comp_remove_grid(&win->w_grid_alloc);
       if (win->w_float_config.external) {
         for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
