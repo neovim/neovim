@@ -140,9 +140,7 @@ void nvim_tabpage_set_win(Tabpage tabpage, Window win, Error *err)
     return;
   }
 
-  tabpage_T *win_tp = win_find_tabpage(wp);
-
-  if (win_tp != tp) {
+  if (!tabpage_win_valid(tp, wp)) {
     api_set_error(err, kErrorTypeException, "Window does not belong to tabpage %d", tp->handle);
     return;
   }

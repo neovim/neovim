@@ -1557,7 +1557,7 @@ bool win_valid(const win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// Check if "win" is a pointer to an existing window in tabpage "tp".
 ///
 /// @param  win  window to check
-static bool tabpage_win_valid(const tabpage_T *tp, const win_T *win)
+bool tabpage_win_valid(const tabpage_T *tp, const win_T *win)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (win == NULL) {
