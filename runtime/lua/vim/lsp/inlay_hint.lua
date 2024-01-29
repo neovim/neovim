@@ -6,7 +6,7 @@ local M = {}
 
 ---@class lsp.inlay_hint.bufstate
 ---@field version? integer
----@field client_hint? table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
+---@field client_hints? table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
 ---@field applied table<integer, integer> Last version of hints applied to this line
 ---@field enabled boolean Whether inlay hints are enabled for this buffer
 ---@type table<integer, lsp.inlay_hint.bufstate>
@@ -39,11 +39,11 @@ function M.on_inlayhint(err, result, ctx, _)
   if not bufstate or not bufstate.enabled then
     return
   end
-  if not (bufstate.client_hint and bufstate.version) then
-    bufstate.client_hint = vim.defaulttable()
+  if not (bufstate.client_hints and bufstate.version) then
+    bufstate.client_hints = vim.defaulttable()
     bufstate.version = ctx.version
   end
-  local hints_by_client = bufstate.client_hint
+  local hints_by_client = bufstate.client_hints
   local client = assert(vim.lsp.get_client_by_id(client_id))
 
   local new_hints_by_lnum = vim.defaulttable()
@@ -162,7 +162,7 @@ function M.get(filter)
   end
 
   local bufstate = bufstates[bufnr]
-  if not (bufstate and bufstate.client_hint) then
+  if not (bufstate and bufstate.client_hints) then
     return {}
   end
 
@@ -185,7 +185,7 @@ function M.get(filter)
   --- @type vim.lsp.inlay_hint.get.ret[]
   local hints = {}
   for _, client in pairs(clients) do
-    local hints_by_lnum = bufstate.client_hint[client.id]
+    local hints_by_lnum = bufstate.client_hints[client.id]
     if hints_by_lnum then
       for lnum = range.start.line, range['end'].line do
         local line_hints = hints_by_lnum[lnum] or {}
@@ -218,11 +218,11 @@ local function clear(bufnr)
     return
   end
   local bufstate = bufstates[bufnr]
-  local client_lens = (bufstate or {}).client_hint or {}
+  local client_lens = (bufstate or {}).client_hints or {}
   local client_ids = vim.tbl_keys(client_lens) --- @type integer[]
   for _, iter_client_id in ipairs(client_ids) do
     if bufstate then
-      bufstate.client_hint[iter_client_id] = {}
+      bufstate.client_hints[iter_client_id] = {}
     end
   end
   api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
@@ -319,7 +319,7 @@ api.nvim_set_decoration_provider(namespace, {
     if bufstate.version ~= util.buf_versions[bufnr] then
       return
     end
-    local hints_by_client = assert(bufstate.client_hint)
+    local hints_by_client = assert(bufstate.client_hints)
 
     for lnum = topline, botline do
       if bufstate.applied[lnum] ~= bufstate.version then
