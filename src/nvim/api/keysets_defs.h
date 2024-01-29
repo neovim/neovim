@@ -23,6 +23,12 @@ typedef struct {
 } Dict(set_decoration_provider);
 
 typedef struct {
+  OptionalKeys is_set__win_fold_;
+  Boolean recursive;
+  Boolean open;
+} Dict(win_fold);
+
+typedef struct {
   OptionalKeys is_set__set_extmark_;
   Integer id;
   Integer end_line;
