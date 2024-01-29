@@ -2407,4 +2407,18 @@ func Test_complete_info_index()
   bwipe!
 endfunc
 
-" vim: shiftwidth=2 sts=2 expandtab
+func Test_complete_changed_complete_info()
+  CheckRunVimInTerminal
+  " this used to crash vim, see #13929
+  let lines =<< trim END
+    set completeopt=menuone
+    autocmd CompleteChanged * call complete_info(['items'])
+    call feedkeys("iii\<cr>\<c-p>")
+  END
+  call writefile(lines, 'Xsegfault', 'D')
+  let buf = RunVimInTerminal('-S Xsegfault', #{rows: 5})
+  call WaitForAssert({-> assert_match('^ii', term_getline(buf, 1))}, 1000)
+  call StopVimInTerminal(buf)
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab nofoldenable
