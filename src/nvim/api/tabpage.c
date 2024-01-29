@@ -122,6 +122,37 @@ Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
   abort();
 }
 
+/// Sets the current window in a tabpage
+///
+/// @param tabpage  Tabpage handle, or 0 for current tabpage
+/// @param win Window handle, must already belong to {tabpage}
+/// @param[out] err Error details, if any
+void nvim_tabpage_set_win(Tabpage tabpage, Window win, Error *err)
+  FUNC_API_SINCE(12)
+{
+  tabpage_T *tp = find_tab_by_handle(tabpage, err);
+  if (!tp) {
+    return;
+  }
+
+  win_T *wp = find_window_by_handle(win, err);
+  if (!wp) {
+    return;
+  }
+
+  if (!tabpage_win_valid(tp, wp)) {
+    api_set_error(err, kErrorTypeException, "Window does not belong to tabpage %d", tp->handle);
+    return;
+  }
+
+  if (tp == curtab) {
+    win_enter(wp, true);
+  } else if (tp->tp_curwin != wp) {
+    tp->tp_prevwin = tp->tp_curwin;
+    tp->tp_curwin = wp;
+  }
+}
+
 /// Gets the tabpage number
 ///
 /// @param tabpage  Tabpage handle, or 0 for current tabpage

@@ -304,6 +304,8 @@ The following new APIs and features were added.
   highlight attribute. The TUI will display URLs using the OSC 8 control
   sequence, enabling clickable text in supporting terminals.
 
+• Added |nvim_tabpage_set_win()| to set the current window of a tabpage.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
