@@ -1183,6 +1183,32 @@ static int empty_curbuf(bool close_others, int forceit, int action)
   return retval;
 }
 
+/// Remove every jump list entry referring to a given buffer.
+/// This function will also adjust the current jump list index.
+void buf_remove_from_jumplist(buf_T *deleted_buf)
+{
+  // Remove all jump list entries that match the deleted buffer.
+  for (int i = curwin->w_jumplistlen - 1; i >= 0; i--) {
+    buf_T *buf = buflist_findnr(curwin->w_jumplist[i].fmark.fnum);
+
+    if (buf == deleted_buf) {
+      // Found an entry that we want to delete.
+      curwin->w_jumplistlen -= 1;
+
+      // If the current jump list index behind the entry we want to
+      // delete, move it back by one.
+      if (curwin->w_jumplistidx > i && curwin->w_jumplistidx > 0) {
+        curwin->w_jumplistidx -= 1;
+      }
+
+      // Actually remove the entry from the jump list.
+      for (int d = i; d < curwin->w_jumplistlen; d++) {
+        curwin->w_jumplist[d] = curwin->w_jumplist[d + 1];
+      }
+    }
+  }
+}
+
 /// Implementation of the commands for the buffer list.
 ///
 /// action == DOBUF_GOTO     go to specified buffer
@@ -1205,6 +1231,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
 {
   buf_T *buf;
   buf_T *bp;
+  bool update_jumplist = true;
   bool unload = (action == DOBUF_UNLOAD || action == DOBUF_DEL
                  || action == DOBUF_WIPE);
 
@@ -1362,7 +1389,11 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
 
     // If the buffer to be deleted is not the current one, delete it here.
     if (buf != curbuf) {
+      // Remove the buffer to be deleted from the jump list.
+      buf_remove_from_jumplist(buf);
+
       close_windows(buf, false);
+
       if (buf != curbuf && bufref_valid(&bufref) && buf->b_nwindows <= 0) {
         close_buffer(NULL, buf, action, false, false);
       }
@@ -1382,40 +1413,53 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     if (au_new_curbuf.br_buf != NULL && bufref_valid(&au_new_curbuf)) {
       buf = au_new_curbuf.br_buf;
     } else if (curwin->w_jumplistlen > 0) {
-      int jumpidx = curwin->w_jumplistidx - 1;
-      if (jumpidx < 0) {
-        jumpidx = curwin->w_jumplistlen - 1;
-      }
+      // Remove the current buffer from the jump list.
+      buf_remove_from_jumplist(curbuf);
 
-      forward = jumpidx;
-      while (jumpidx != curwin->w_jumplistidx) {
-        buf = buflist_findnr(curwin->w_jumplist[jumpidx].fmark.fnum);
-        if (buf != NULL) {
-          // Skip current and unlisted bufs.  Also skip a quickfix
-          // buffer, it might be deleted soon.
-          if (buf == curbuf || !buf->b_p_bl || bt_quickfix(buf)) {
-            buf = NULL;
-          } else if (buf->b_ml.ml_mfp == NULL) {
-            // skip unloaded buf, but may keep it for later
-            if (bp == NULL) {
-              bp = buf;
+      // It's possible that we removed all jump list entries, in that case we need to try another
+      // approach
+      if (curwin->w_jumplistlen > 0) {
+        // If the index is the same as the length, the current position was not yet added to the jump
+        // list. So we can safely go back to the last entry and search from there.
+        if (curwin->w_jumplistidx == curwin->w_jumplistlen) {
+          curwin->w_jumplistidx = curwin->w_jumplistlen - 1;
+        }
+
+        int jumpidx = curwin->w_jumplistidx;
+
+        forward = jumpidx;
+        do {
+          buf = buflist_findnr(curwin->w_jumplist[jumpidx].fmark.fnum);
+
+          if (buf != NULL) {
+            // Skip unlisted bufs.  Also skip a quickfix
+            // buffer, it might be deleted soon.
+            if (!buf->b_p_bl || bt_quickfix(buf)) {
+              buf = NULL;
+            } else if (buf->b_ml.ml_mfp == NULL) {
+              // skip unloaded buf, but may keep it for later
+              if (bp == NULL) {
+                bp = buf;
+              }
+              buf = NULL;
             }
-            buf = NULL;
           }
-        }
-        if (buf != NULL) {         // found a valid buffer: stop searching
-          break;
-        }
-        // advance to older entry in jump list
-        if (!jumpidx && curwin->w_jumplistidx == curwin->w_jumplistlen) {
-          break;
-        }
-        if (--jumpidx < 0) {
-          jumpidx = curwin->w_jumplistlen - 1;
-        }
-        if (jumpidx == forward) {               // List exhausted for sure
-          break;
-        }
+          if (buf != NULL) {         // found a valid buffer: stop searching
+            curwin->w_jumplistidx = jumpidx;
+            update_jumplist = false;
+            break;
+          }
+          // advance to older entry in jump list
+          if (!jumpidx && curwin->w_jumplistidx == curwin->w_jumplistlen) {
+            break;
+          }
+          if (--jumpidx < 0) {
+            jumpidx = curwin->w_jumplistlen - 1;
+          }
+          if (jumpidx == forward) {               // List exhausted for sure
+            break;
+          }
+        } while (jumpidx != curwin->w_jumplistidx);
       }
     }
 
@@ -1511,7 +1555,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
   }
 
   // Go to the other buffer.
-  set_curbuf(buf, action);
+  set_curbuf(buf, action, update_jumplist);
 
   if (action == DOBUF_SPLIT) {
     RESET_BINDING(curwin);      // reset 'scrollbind' and 'cursorbind'
@@ -1533,14 +1577,17 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
 ///                DOBUF_UNLOAD     unload it
 ///                DOBUF_DEL        delete it
 ///                DOBUF_WIPE       wipe it out
-void set_curbuf(buf_T *buf, int action)
+void set_curbuf(buf_T *buf, int action, bool update_jumplist)
 {
   buf_T *prevbuf;
   int unload = (action == DOBUF_UNLOAD || action == DOBUF_DEL
                 || action == DOBUF_WIPE);
   OptInt old_tw = curbuf->b_p_tw;
 
-  setpcmark();
+  if (update_jumplist) {
+    setpcmark();
+  }
+
   if ((cmdmod.cmod_flags & CMOD_KEEPALT) == 0) {
     curwin->w_alt_fnum = curbuf->b_fnum;     // remember alternate file
   }
@@ -3675,7 +3722,7 @@ void ex_buffer_all(exarg_T *eap)
 
       // Open the buffer in this window.
       swap_exists_action = SEA_DIALOG;
-      set_curbuf(buf, DOBUF_GOTO);
+      set_curbuf(buf, DOBUF_GOTO, false);
       if (!bufref_valid(&bufref)) {
         // Autocommands deleted the buffer.
         swap_exists_action = SEA_NONE;

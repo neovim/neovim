@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 
 local clear = helpers.clear
 local command = helpers.command
+local dedent = helpers.dedent
 local eq = helpers.eq
 local fn = helpers.fn
 local feed = helpers.feed
@@ -187,6 +188,131 @@ describe("jumpoptions=stack behaves like 'tagstack'", function()
         .. '   2    50    0 Line 50\n'
         .. '   1    10    0 Line 10\n'
         .. '>',
+      exec_capture('jumps')
+    )
+  end)
+end)
+
+describe('buffer deletion', function()
+  local base_file = 'Xtest-functional-buffer-deletion'
+  local file1 = base_file .. '1'
+  local file2 = base_file .. '2'
+  local file3 = base_file .. '3'
+  local base_content = 'text'
+  local content1 = base_content .. '1'
+  local content2 = base_content .. '2'
+  local content3 = base_content .. '3'
+
+  local function format_jumplist(input)
+    return dedent(input)
+      :gsub('%{file1%}', file1)
+      :gsub('%{file2%}', file2)
+      :gsub('%{file3%}', file3)
+      :gsub('%{content1%}', content1)
+      :gsub('%{content2%}', content2)
+      :gsub('%{content3%}', content3)
+  end
+
+  before_each(function()
+    clear()
+    command('clearjumps')
+
+    write_file(file1, content1, false, false)
+    write_file(file2, content2, false, false)
+    write_file(file3, content3, false, false)
+
+    command('edit ' .. file1)
+    command('edit ' .. file2)
+    command('edit ' .. file3)
+  end)
+
+  it('deletes jump list entries when the current buffer is deleted', function()
+    command('edit ' .. file1)
+
+    eq(
+      format_jumplist([[
+       jump line  col file/text
+         3     1    0 {content1}
+         2     1    0 {file2}
+         1     1    0 {file3}
+      >]]),
+      exec_capture('jumps')
+    )
+
+    command('bwipeout')
+
+    eq(
+      format_jumplist([[
+       jump line  col file/text
+         1     1    0 {file2}
+      >  0     1    0 {content3}]]),
+      exec_capture('jumps')
+    )
+  end)
+
+  it('deletes jump list entries when another buffer is deleted', function()
+    eq(
+      format_jumplist([[
+       jump line  col file/text
+         2     1    0 {file1}
+         1     1    0 {file2}
+      >]]),
+      exec_capture('jumps')
+    )
+
+    command('bwipeout ' .. file2)
+
+    eq(
+      format_jumplist([[
+       jump line  col file/text
+         1     1    0 {file1}
+      >]]),
+      exec_capture('jumps')
+    )
+  end)
+
+  it('sets the correct jump index when the current buffer is deleted', function()
+    feed('<C-O>')
+
+    eq(
+      format_jumplist([[
+       jump line  col file/text
+         1     1    0 {file1}
+      >  0     1    0 {content2}
+         1     1    0 {file3}]]),
+      exec_capture('jumps')
+    )
+
+    command('bw')
+
+    eq(
+      format_jumplist([[
+       jump line  col file/text
+         1     1    0 {file1}
+      >  0     1    0 {content3}]]),
+      exec_capture('jumps')
+    )
+  end)
+
+  it('sets the correct jump index when the another buffer is deleted', function()
+    feed('<C-O>')
+
+    eq(
+      format_jumplist([[
+       jump line  col file/text
+         1     1    0 {file1}
+      >  0     1    0 {content2}
+         1     1    0 {file3}]]),
+      exec_capture('jumps')
+    )
+
+    command('bwipeout ' .. file1)
+
+    eq(
+      format_jumplist([[
+       jump line  col file/text
+      >  0     1    0 {content2}
+         1     1    0 {file3}]]),
       exec_capture('jumps')
     )
   end)
