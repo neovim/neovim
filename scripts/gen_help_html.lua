@@ -42,9 +42,14 @@ local spell_dict = {
   VimL = 'Vimscript',
   vimL = 'Vimscript',
   viml = 'Vimscript',
+  ['tree-sitter'] = 'treesitter',
+  ['Tree-sitter'] = 'Treesitter',
 }
+--- specify the list of keywords to ignore (i.e. allow), or true to disable spell check completely.
+--- @type table<string, true|string[]>
 local spell_ignore_files = {
-  ['backers.txt'] = 'true',
+  ['backers.txt'] = true,
+  ['news.txt'] = { 'tree-sitter' }, -- in news, may refer to the upstream "tree-sitter" library
 }
 local language = nil
 
@@ -398,9 +403,15 @@ local function visit_validate(root, level, lang_tree, opt, stats)
   then
     local text_nopunct = vim.fn.trim(text, '.,', 0) -- Ignore some punctuation.
     local fname_basename = assert(vim.fs.basename(opt.fname))
-    if spell_dict[text_nopunct] and not spell_ignore_files[fname_basename] then
-      invalid_spelling[text_nopunct] = invalid_spelling[text_nopunct] or {}
-      invalid_spelling[text_nopunct][fname_basename] = node_text(root:parent())
+    if spell_dict[text_nopunct] then
+      local should_ignore = (
+        spell_ignore_files[fname_basename] == true
+        or vim.tbl_contains(spell_ignore_files[fname_basename] --[[ @as string[] ]], text_nopunct)
+      )
+      if not should_ignore then
+        invalid_spelling[text_nopunct] = invalid_spelling[text_nopunct] or {}
+        invalid_spelling[text_nopunct][fname_basename] = node_text(root:parent())
+      end
     end
   elseif node_name == 'url' then
     local fixed_url, _ = fix_url(trim(text))

@@ -17,7 +17,7 @@ changes. This documentation may also not fully reflect the latest changes.
 ==============================================================================
 PARSER FILES                                              *treesitter-parsers*
 
-Parsers are the heart of tree-sitter. They are libraries that tree-sitter will
+Parsers are the heart of treesitter. They are libraries that treesitter will
 search for in the `parser` runtime directory. By default, Nvim bundles parsers
 for C, Lua, Vimscript, Vimdoc and Treesitter query files, but parsers can be
 installed via a plugin like https://github.com/nvim-treesitter/nvim-treesitter
@@ -43,7 +43,7 @@ TREESITTER TREES                                             *treesitter-tree*
 
 A "treesitter tree" represents the parsed contents of a buffer, which can be
 used to perform further analysis. It is a |userdata| reference to an object
-held by the tree-sitter library.
+held by the treesitter library.
 
 An instance `TSTree` of a treesitter tree supports the following methods.
 
@@ -59,7 +59,7 @@ TREESITTER NODES                                             *treesitter-node*
 
 A "treesitter node" represents one specific element of the parsed contents of
 a buffer, which can be captured by a |Query| for, e.g., highlighting. It is
-a |userdata| reference to an object held by the tree-sitter library.
+a |userdata| reference to an object held by the treesitter library.
 
 An instance `TSNode` of a treesitter node supports the following methods.
 
@@ -563,7 +563,7 @@ Conceals specified in this way respect 'conceallevel'.
                                                *treesitter-highlight-priority*
 Treesitter uses |nvim_buf_set_extmark()| to set highlights with a default
 priority of 100. This enables plugins to set a highlighting priority lower or
-higher than tree-sitter. It is also possible to change the priority of an
+higher than treesitter. It is also possible to change the priority of an
 individual query pattern manually by setting its `"priority"` metadata
 attribute: >query
 
@@ -624,17 +624,17 @@ associated with patterns:
 VIM.TREESITTER                                                *lua-treesitter*
 
 The remainder of this document is a reference manual for the `vim.treesitter`
-Lua module, which is the main interface for Nvim's tree-sitter integration.
+Lua module, which is the main interface for Nvim's treesitter integration.
 Most of the following content is automatically generated from the function
 documentation.
 
 
                                              *vim.treesitter.language_version*
-The latest parser ABI version that is supported by the bundled tree-sitter
+The latest parser ABI version that is supported by the bundled treesitter
 library.
 
                                      *vim.treesitter.minimum_language_version*
-The earliest parser ABI version that is supported by the bundled tree-sitter
+The earliest parser ABI version that is supported by the bundled treesitter
 library.
 
 ==============================================================================
