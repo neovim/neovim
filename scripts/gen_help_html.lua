@@ -10,13 +10,13 @@
 --
 -- USAGE (GENERATE HTML):
 --   1. `:helptags ALL` first; this script depends on vim.fn.taglist().
---   2. nvim -V1 -es --clean +"lua require('scripts.gen_help_html').gen('$VIMRUNTIME/doc', 'target/dir/')" +q
+--   2. nvim -V1 -es --clean +"lua require('scripts.gen_help_html').gen('./runtime/doc', 'target/dir/')" +q
 --      - Read the docstring at gen().
 --   3. cd target/dir/ && jekyll serve --host 0.0.0.0
 --   4. Visit http://localhost:4000/…/help.txt.html
 --
 -- USAGE (VALIDATE):
---   1. nvim -V1 -es +"lua require('scripts.gen_help_html').validate('$VIMRUNTIME/doc')" +q
+--   1. nvim -V1 -es +"lua require('scripts.gen_help_html').validate('./runtime/doc')" +q
 --      - validate() is 10x faster than gen(), so it is used in CI.
 --
 -- SELF-TEST MODE:
@@ -29,8 +29,8 @@
 --   * visit_validate() is the core function used by validate().
 --   * Files in `new_layout` will be generated with a "flow" layout instead of preformatted/fixed-width layout.
 
-local tagmap = nil
-local helpfiles = nil
+local tagmap = nil ---@type table<string, string>
+local helpfiles = nil ---@type string[]
 local invalid_links = {} ---@type table<string, any>
 local invalid_urls = {} ---@type table<string, any>
 local invalid_spelling = {} ---@type table<string, table<string, string>>
@@ -113,8 +113,9 @@ local function tofile(fname, text)
   end
 end
 
+---@type fun(s: string): string
 local function html_esc(s)
-  return s:gsub('&', '&amp;'):gsub('<', '&lt;'):gsub('>', '&gt;')
+  return (s:gsub('&', '&amp;'):gsub('<', '&lt;'):gsub('>', '&gt;'))
 end
 
 local function url_encode(s)
@@ -129,7 +130,7 @@ local function url_encode(s)
 end
 
 local function expandtabs(s)
-  return s:gsub('\t', (' '):rep(8))
+  return s:gsub('\t', (' '):rep(8)) --[[ @as string ]]
 end
 
 local function to_titlecase(s)
@@ -153,6 +154,7 @@ local function is_blank(s)
   return not not s:find([[^[\t ]*$]])
 end
 
+---@type fun(s: string, dir?:0|1|2): string
 local function trim(s, dir)
   return vim.fn.trim(s, '\r\t\n ', dir or 0)
 end
@@ -274,6 +276,9 @@ local function trim_indent(s)
 end
 
 --- Gets raw buffer text in the node's range (+/- an offset), as a newline-delimited string.
+---@param node TSNode
+---@param bufnr integer
+---@param offset integer
 local function getbuflinestr(node, bufnr, offset)
   local line1, _, line2, _ = node:range()
   line1 = line1 - offset
@@ -284,8 +289,12 @@ end
 
 --- Gets the whitespace just before `node` from the raw buffer text.
 --- Needed for preformatted `old` lines.
+---@param node TSNode
+---@param bufnr integer
+---@return string
 local function getws(node, bufnr)
   local line1, c1, line2, _ = node:range()
+  ---@type string
   local raw = vim.fn.getbufline(bufnr, line1 + 1, line2 + 1)[1]
   local text_before = raw:sub(1, c1)
   local leading_ws = text_before:match('%s+$') or ''
@@ -322,9 +331,10 @@ local function ignore_parse_error(fname, s)
   return s:find("^[`'|*]")
 end
 
+---@param node TSNode
 local function has_ancestor(node, ancestor_name)
-  local p = node
-  while true do
+  local p = node ---@type TSNode?
+  while p do
     p = p:parent()
     if not p or p:type() == 'help_file' then
       break
@@ -336,6 +346,7 @@ local function has_ancestor(node, ancestor_name)
 end
 
 --- Gets the first matching child node matching `name`.
+---@param node TSNode
 local function first(node, name)
   for c, _ in node:iter_children() do
     if c:named() and c:type() == name then
@@ -369,6 +380,11 @@ local function validate_url(text, fname)
 end
 
 --- Traverses the tree at `root` and checks that |tag| links point to valid helptags.
+---@param root TSNode
+---@param level integer
+---@param lang_tree TSTree
+---@param opt table
+---@param stats table
 local function visit_validate(root, level, lang_tree, opt, stats)
   level = level or 0
   local node_name = (root.named and root:named()) and root:type() or nil
@@ -406,7 +422,10 @@ local function visit_validate(root, level, lang_tree, opt, stats)
     if spell_dict[text_nopunct] then
       local should_ignore = (
         spell_ignore_files[fname_basename] == true
-        or vim.tbl_contains(spell_ignore_files[fname_basename] --[[ @as string[] ]], text_nopunct)
+        or vim.tbl_contains(
+          (spell_ignore_files[fname_basename] or {}) --[[ @as string[] ]],
+          text_nopunct
+        )
       )
       if not should_ignore then
         invalid_spelling[text_nopunct] = invalid_spelling[text_nopunct] or {}
@@ -423,6 +442,8 @@ end
 
 -- Fix tab alignment issues caused by concealed characters like |, `, * in tags
 -- and code blocks.
+---@param text string
+---@param next_node_text string
 local function fix_tab_after_conceal(text, next_node_text)
   -- Vim tabs take into account the two concealed characters even though they
   -- are invisible, so we need to add back in the two spaces if this is
@@ -433,7 +454,18 @@ local function fix_tab_after_conceal(text, next_node_text)
   return text
 end
 
+---@class (exact) nvim.gen_help_html.heading
+---@field name string
+---@field subheadings nvim.gen_help_html.heading[]
+---@field tag string
+
 -- Generates HTML from node `root` recursively.
+---@param root TSNode
+---@param level integer
+---@param lang_tree TSTree
+---@param headings nvim.gen_help_html.heading[]
+---@param opt table
+---@param stats table
 local function visit_node(root, level, lang_tree, headings, opt, stats)
   level = level or 0
 
@@ -451,7 +483,6 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
   -- Parent kind (string).
   local parent = root:parent() and root:parent():type() or nil
   local text = ''
-  local trimmed
   -- Gets leading whitespace of `node`.
   local function ws(node)
     node = node or root
@@ -469,6 +500,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     return string.format('%s%s', ws_, vim.treesitter.get_node_text(node, opt.buf))
   end
 
+  local trimmed ---@type string
   if root:named_child_count() == 0 or node_name == 'ERROR' then
     text = node_text()
     trimmed = html_esc(trim(text))
@@ -503,7 +535,9 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     local tagname = tagnode and url_encode(node_text(tagnode:child(1), false))
       or to_heading_tag(hname)
     if node_name == 'h1' or #headings == 0 then
-      table.insert(headings, { name = hname, subheadings = {}, tag = tagname })
+      ---@type nvim.gen_help_html.heading
+      local heading = { name = hname, subheadings = {}, tag = tagname }
+      headings[#headings + 1] = heading
     else
       table.insert(
         headings[#headings].subheadings,
@@ -593,7 +627,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     if is_blank(text) then
       return ''
     end
-    local code
+    local code ---@type string
     if language then
       code = ('<pre><code class="language-%s">%s</code></pre>'):format(
         language,
@@ -718,13 +752,15 @@ end
 ---
 --- @param fname string help file to parse
 --- @param parser_path string? path to non-default vimdoc.so
---- @returns lang_tree, bufnr
+--- @return LanguageTree, integer (lang_tree, bufnr)
 local function parse_buf(fname, parser_path)
-  local buf
+  local buf ---@type integer
   if type(fname) == 'string' then
     vim.cmd('split ' .. vim.fn.fnameescape(fname)) -- Filename.
     buf = vim.api.nvim_get_current_buf()
   else
+    -- Left for debugging
+    ---@diagnostic disable-next-line: no-unknown
     buf = fname
     vim.cmd('sbuffer ' .. tostring(fname)) -- Buffer number.
   end
@@ -741,7 +777,7 @@ end
 ---
 --- @param fname string help file to validate
 --- @param parser_path string? path to non-default vimdoc.so
---- @returns { invalid_links: number, parse_errors: string[] }
+--- @return { invalid_links: number, parse_errors: string[] }
 local function validate_one(fname, parser_path)
   local stats = {
     parse_errors = {},
@@ -762,7 +798,8 @@ end
 --- @param old boolean Preformat paragraphs (for old :help files which are full of arbitrary whitespace)
 --- @param parser_path string? path to non-default vimdoc.so
 ---
---- @returns html, stats
+--- @return string html
+--- @return table stats
 local function gen_one(fname, to_fname, old, commit, parser_path)
   local stats = {
     noise_lines = {},
@@ -770,6 +807,7 @@ local function gen_one(fname, to_fname, old, commit, parser_path)
     first_tags = {}, -- Track the first few tags in doc.
   }
   local lang_tree, buf = parse_buf(fname, parser_path)
+  ---@type nvim.gen_help_html.heading[]
   local headings = {} -- Headings (for ToC). 2-dimensional: h1 contains h2/h3.
   local title = to_titlecase(basename_noext(fname))
 
@@ -903,6 +941,7 @@ local function gen_one(fname, to_fname, old, commit, parser_path)
     main
   )
 
+  ---@type string
   local toc = [[
     <div class="col-narrow toc">
       <div><a href="index.html">Main</a></div>
@@ -916,6 +955,7 @@ local function gen_one(fname, to_fname, old, commit, parser_path)
     n = n + 1 + #h1.subheadings
   end
   for _, h1 in ipairs(headings) do
+    ---@type string
     toc = toc .. ('<div class="help-toc-h1"><a href="#%s">%s</a>\n'):format(h1.tag, h1.name)
     if n < 30 or #headings < 10 then -- Show subheadings only if there aren't too many.
       for _, h2 in ipairs(h1.subheadings) do
