@@ -258,7 +258,7 @@ local function _enable(bufnr)
     bufnr = api.nvim_get_current_buf()
   end
   local bufstate = bufstates[bufnr]
-  if not bufstate then
+  if not bufstate or not bufstate.enabled then
     bufstates[bufnr] = { applied = {}, enabled = true }
     api.nvim_create_autocmd('LspNotify', {
       buffer = bufnr,
@@ -304,7 +304,6 @@ local function _enable(bufnr)
       group = augroup,
     })
   else
-    bufstate.enabled = true
     _refresh(bufnr)
   end
 end
@@ -319,7 +318,11 @@ api.nvim_set_decoration_provider(namespace, {
     if bufstate.version ~= util.buf_versions[bufnr] then
       return
     end
-    local hints_by_client = assert(bufstate.client_hints)
+
+    local hints_by_client = bufstate.client_hints
+    if not hints_by_client then
+      return
+    end
 
     for lnum = topline, botline do
       if bufstate.applied[lnum] ~= bufstate.version then
