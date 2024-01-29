@@ -247,20 +247,30 @@ describe(':luado command', function()
     eq('', exec_capture('luado return ("<%02x>"):format(line:byte())'))
     eq({ '<31>', '<32>', '<33>' }, api.nvim_buf_get_lines(0, 0, -1, false))
   end)
+
   it('stops processing lines when suddenly out of lines', function()
     api.nvim_buf_set_lines(0, 0, 1, false, { 'ABC', 'def', 'gHi' })
     eq('', exec_capture('2,$luado runs = ((runs or 0) + 1) vim.api.nvim_command("%d")'))
     eq({ '' }, api.nvim_buf_get_lines(0, 0, -1, false))
     eq(1, fn.luaeval('runs'))
-  end)
-  it('works correctly when changing lines out of range', function()
-    api.nvim_buf_set_lines(0, 0, 1, false, { 'ABC', 'def', 'gHi' })
-    eq(
-      'Vim(luado):E322: Line number out of range: 1 past the end',
-      pcall_err(command, '2,$luado vim.api.nvim_command("%d") return linenr')
-    )
+
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'one', 'two', 'three' })
+    eq('', exec_capture('luado vim.api.nvim_command("%d")'))
     eq({ '' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'one', 'two', 'three' })
+    eq('', exec_capture('luado vim.api.nvim_command("1,2d")'))
+    eq({ 'three' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'one', 'two', 'three' })
+    eq('', exec_capture('luado vim.api.nvim_command("2,3d"); return "REPLACED"'))
+    eq({ 'REPLACED' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'one', 'two', 'three' })
+    eq('', exec_capture('2,3luado vim.api.nvim_command("1,2d"); return "REPLACED"'))
+    eq({ 'three' }, api.nvim_buf_get_lines(0, 0, -1, false))
   end)
+
   it('fails on errors', function()
     eq(
       [[Vim(luado):E5109: Error loading lua: [string ":luado"]:0: unexpected symbol near ')']],
@@ -271,9 +281,11 @@ describe(':luado command', function()
       pcall_err(command, 'luado return liness + 1')
     )
   end)
+
   it('works with NULL errors', function()
     eq([=[Vim(luado):E5111: Error calling lua: [NULL]]=], exc_exec('luado error(nil)'))
   end)
+
   it('fails in sandbox when needed', function()
     api.nvim_buf_set_lines(0, 0, 1, false, { 'ABC', 'def', 'gHi' })
     eq(
@@ -282,6 +294,7 @@ describe(':luado command', function()
     )
     eq(NIL, fn.luaeval('runs'))
   end)
+
   it('works with long strings', function()
     local s = ('x'):rep(100500)
 
@@ -332,6 +345,7 @@ describe(':luafile', function()
       remove_trace(exc_exec('luafile ' .. fname))
     )
   end)
+
   it('works with NULL errors', function()
     write_file(fname, 'error(nil)')
     eq(

@@ -1732,10 +1732,15 @@ void ex_luado(exarg_T *const eap)
     nlua_error(lstate, _("E5110: Error executing lua: %.*s"));
     return;
   }
+
+  buf_T *const was_curbuf = curbuf;
+
   for (linenr_T l = eap->line1; l <= eap->line2; l++) {
+    // Check the line number, the command may have deleted lines.
     if (l > curbuf->b_ml.ml_line_count) {
       break;
     }
+
     lua_pushvalue(lstate, -1);
     const char *const old_line = ml_get_buf(curbuf, l);
     // Get length of old_line here as calling Lua code may free it.
@@ -1746,6 +1751,13 @@ void ex_luado(exarg_T *const eap)
       nlua_error(lstate, _("E5111: Error calling lua: %.*s"));
       break;
     }
+
+    // Catch the command switching to another buffer.
+    // Check the line number, the command may have deleted lines.
+    if (curbuf != was_curbuf || l > curbuf->b_ml.ml_line_count) {
+      break;
+    }
+
     if (lua_isstring(lstate, -1)) {
       size_t new_line_len;
       const char *const new_line = lua_tolstring(lstate, -1, &new_line_len);
@@ -1760,6 +1772,7 @@ void ex_luado(exarg_T *const eap)
     }
     lua_pop(lstate, 1);
   }
+
   lua_pop(lstate, 1);
   check_cursor();
   redraw_curbuf_later(UPD_NOT_VALID);
