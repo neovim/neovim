@@ -311,6 +311,12 @@ syn match	vimString	contained	+"[^"]*\\$+	skipnl nextgroup=vimStringCont
 syn match	vimStringCont	contained	+\(\\\\\|.\)\{-}[^\\]"+
 syn match	vimEscape	contained	"\\."
 
+syn region	vimString start=+$'+ end=+'+ skip=+''+ oneline contains=vimStringInterpolationBrace,vimStringInterpolationExpr
+syn region	vimString start=+$"+ end=+"+ oneline contains=@vimStringGroup,vimStringInterpolationBrace,vimStringInterpolationExpr
+syn region	vimStringInterpolationExpr matchgroup=vimOperParen start=+{+ end=+}+ oneline contains=vimFunc,vimFuncVar,vimOper,vimNotation,vimOperParen,vimString,vimVar
+syn match	vimStringInterpolationBrace "{{"
+syn match	vimStringInterpolationBrace "}}"
+
 " Substitutions: {{{2
 " =============
 syn cluster	vimSubstList	contains=vimPatSep,vimPatRegion,vimPatSepErr,vimSubstTwoBS,vimSubstRange,vimNotation
@@ -991,6 +997,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimStringCont	vimString
  hi def link vimString	String
  hi def link vimStringEnd	vimString
+ hi def link vimStringInterpolationBrace	vimEscape
  hi def link vimSubst1	vimSubst
  hi def link vimSubstDelim	Delimiter
  hi def link vimSubstFlags	Special
