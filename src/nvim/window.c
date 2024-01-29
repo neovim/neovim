@@ -2553,6 +2553,7 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
 /// "abort_if_last" is passed to close_buffer(): abort closing if all other
 /// windows are closed.
 static void win_close_buffer(win_T *win, int action, bool abort_if_last)
+  FUNC_ATTR_NONNULL_ALL
 {
   // Free independent synblock before the buffer is freed.
   if (win->w_buffer != NULL) {
@@ -2590,6 +2591,7 @@ static void win_close_buffer(win_T *win, int action, bool abort_if_last)
 // Called by :quit, :close, :xit, :wq and findtag().
 // Returns FAIL when the window was not closed.
 int win_close(win_T *win, bool free_buf, bool force)
+  FUNC_ATTR_NONNULL_ALL
 {
   tabpage_T *prev_curtab = curtab;
   frame_T *win_frame = win->w_floating ? NULL : win->w_frame->fr_parent;
@@ -2888,6 +2890,7 @@ static void do_autocmd_winclosed(win_T *win)
 // Caller must check if buffer is hidden and whether the tabline needs to be
 // updated.
 void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
+  FUNC_ATTR_NONNULL_ALL
 {
   // Get here with win->w_buffer == NULL when win_close() detects the tab page
   // changed.
@@ -2989,6 +2992,7 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 ///
 /// @return      a pointer to the window that got the freed up space.
 static win_T *win_free_mem(win_T *win, int *dirp, tabpage_T *tp)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   win_T *wp;
   tabpage_T *win_tp = tp == NULL ? curtab : tp;
@@ -3007,6 +3011,7 @@ static win_T *win_free_mem(win_T *win, int *dirp, tabpage_T *tp)
         wp = firstwin;
       }
     } else {
+      assert(tp != curtab);
       if (tabpage_win_valid(tp, tp->tp_prevwin) && tp->tp_prevwin != win) {
         wp = tp->tp_prevwin;
       } else {
@@ -3079,7 +3084,10 @@ void win_free_all(void)
 ///
 /// @return      a pointer to the window that got the freed up space.
 win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
+  assert(tp == NULL || tp != curtab);
+
   // If there is only one window there is nothing to remove.
   if (tp == NULL ? ONE_WINDOW : tp->tp_firstwin == tp->tp_lastwin) {
     return NULL;
@@ -3226,7 +3234,10 @@ win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp)
 /// @return a pointer to the frame that will receive the empty screen space that
 /// is left over after "win" is closed.
 static frame_T *win_altframe(win_T *win, tabpage_T *tp)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
+  assert(tp == NULL || tp != curtab);
+
   if (tp == NULL ? ONE_WINDOW : tp->tp_firstwin == tp->tp_lastwin) {
     return alt_tabpage()->tp_curwin->w_frame;
   }
@@ -3290,6 +3301,7 @@ static tabpage_T *alt_tabpage(void)
 
 // Find the left-upper window in frame "frp".
 win_T *frame2win(frame_T *frp)
+  FUNC_ATTR_NONNULL_ALL
 {
   while (frp->fr_win == NULL) {
     frp = frp->fr_child;
@@ -5142,7 +5154,10 @@ void win_append(win_T *after, win_T *wp)
 ///
 /// @param tp  tab page "win" is in, NULL for current
 void win_remove(win_T *wp, tabpage_T *tp)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
+  assert(tp == NULL || tp != curtab);
+
   if (wp->w_prev != NULL) {
     wp->w_prev->w_next = wp->w_next;
   } else if (tp == NULL) {
