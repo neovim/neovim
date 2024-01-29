@@ -842,23 +842,29 @@ function Query:iter_captures(node, source, start, stop)
 
   local raw_iter = node:_rawquery(self.query, true, start, stop) ---@type fun(): integer, TSNode, vim.treesitter.query.TSMatch
   local function iter(end_line)
+    ---@type integer, TSNode, vim.treesitter.query.TSMatch|nil
     local capture, captured_node, match = raw_iter()
+    -- TODO: This must be pulled out of the loop, and the same table instance should be reused
+    -- across different captures within the same match (checking with object identity).
+    -- Also when there are no predicates/directives. Write the failing tests first.
     local metadata = {}
 
+    -- match ~= nil if and only if there is a predicate
     if match ~= nil then
       local active = self:match_preds(match, match.pattern, source)
       match.active = active
       if not active then
         if end_line and captured_node:range() > end_line then
+          -- TODO: also need to handle return here. add failing tests first.
           return nil, captured_node, nil
         end
         return iter(end_line) -- tail call: try next match
       end
-
       self:apply_directives(match, match.pattern, source, metadata)
     end
     return capture, captured_node, metadata, match
   end
+
   return iter
 end
 
@@ -914,6 +920,7 @@ function Query:iter_matches(node, source, start, stop, opts)
 
   local raw_iter = node:_rawquery(self.query, false, start, stop, opts) ---@type fun(): integer, vim.treesitter.query.TSMatch
   local function iter()
+    ---@type integer, vim.treesitter.query.TSMatch
     local pattern, match = raw_iter()
     local metadata = {}
 
