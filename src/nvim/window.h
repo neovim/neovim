@@ -29,8 +29,8 @@ enum {
   WSP_HELP    = 0x20,  ///< creating the help window
   WSP_BELOW   = 0x40,  ///< put new window below/right
   WSP_ABOVE   = 0x80,  ///< put new window above/left
-  WSP_NEWLOC  = 0x100,  ///< don't copy location list
-  WSP_NOENTER = 0x200,  ///< don't enter the new window
+  WSP_NEWLOC  = 0x100, ///< don't copy location list
+  WSP_NOENTER = 0x200, ///< don't enter the new window
 };
 
 enum {
