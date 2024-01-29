@@ -55,6 +55,8 @@ typedef struct {
   Boolean ui_watched;
   Boolean undo_restore;
   String url;
+
+  Integer _subpriority;
 } Dict(set_extmark);
 
 typedef struct {

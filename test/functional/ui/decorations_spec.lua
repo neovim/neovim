@@ -687,7 +687,7 @@ describe('decorations providers', function()
     ]]}
   end)
 
-   it('can add new providers during redraw #26652', function()
+  it('can add new providers during redraw #26652', function()
     setup_provider [[
     local ns = api.nvim_create_namespace('test_no_add')
     function on_do(...)
@@ -696,6 +696,47 @@ describe('decorations providers', function()
     ]]
 
     helpers.assert_alive()
+  end)
+
+  it('supports subpriorities (order of definitions in a query file #27131)', function()
+    insert(mulholland)
+    setup_provider [[
+      local test_ns = api.nvim_create_namespace('mulholland')
+      function on_do(event, ...)
+        if event == "line" then
+          local win, buf, line = ...
+          api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
+            end_row = line + 1,
+            hl_eol = true,
+            hl_group = 'Comment',
+            ephemeral = true,
+            priority = 100,
+            _subpriority = 20,
+          })
+
+          -- This extmark is set last but has a lower subpriority, so the first extmark "wins"
+          api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
+            end_row = line + 1,
+            hl_eol = true,
+            hl_group = 'String',
+            ephemeral = true,
+            priority = 100,
+            _subpriority = 10,
+          })
+        end
+      end
+    ]]
+
+    screen:expect{grid=[[
+      {4:// just to see if there was an accident }|
+      {4:// on Mulholland Drive                  }|
+      {4:try_start();                            }|
+      {4:bufref_T save_buf;                      }|
+      {4:switch_buffer(&save_buf, buf);          }|
+      {4:posp = getmark(mark, false);            }|
+      {4:restore_buffer(&save_buf);^              }|
+                                              |
+    ]]}
   end)
 end)
 

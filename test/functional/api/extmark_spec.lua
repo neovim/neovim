@@ -1798,6 +1798,36 @@ describe('API/extmarks', function()
     eq(1, #extmarks)
     eq('https://example.com', extmarks[1][4].url)
   end)
+
+  it('respects priority', function()
+    screen = Screen.new(15, 10)
+    screen:attach()
+
+    set_extmark(ns, marks[1], 0, 0, {
+      hl_group = 'Comment',
+      end_col = 2,
+      priority = 20,
+    })
+
+    -- Extmark defined after first extmark but has lower priority, first extmark "wins"
+    set_extmark(ns, marks[2], 0, 0, {
+      hl_group = 'String',
+      end_col = 2,
+      priority = 10,
+    })
+
+    screen:expect {
+      grid = [[
+      {1:12}34^5          |
+      {2:~              }|*8
+                     |
+    ]],
+      attr_ids = {
+        [1] = { foreground = Screen.colors.Blue1 },
+        [2] = { foreground = Screen.colors.Blue1, bold = true },
+      },
+    }
+  end)
 end)
 
 describe('Extmarks buffer api with many marks', function()
