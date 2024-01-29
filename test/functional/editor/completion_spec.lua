@@ -1078,7 +1078,24 @@ describe('completion', function()
     ]])
   end)
 
-  it('does not crash if text is changed by first call to complete function #17489', function()
+  -- oldtest: Test_complete_changed_complete_info()
+  it('no crash calling complete_info() in CompleteChanged', function()
+    source([[
+      set completeopt=menuone
+      autocmd CompleteChanged * call complete_info(['items'])
+      call feedkeys("iii\<cr>\<c-p>")
+    ]])
+    screen:expect([[
+      ii                                                          |
+      ii^                                                          |
+      {2:ii             }{0:                                             }|
+      {0:~                                                           }|*4
+      {3:-- Keyword completion (^N^P) The only match}                 |
+    ]])
+    assert_alive()
+  end)
+
+  it('no crash if text changed by first call to complete function #17489', function()
     source([[
       func Complete(findstart, base) abort
         if a:findstart
@@ -1097,7 +1114,7 @@ describe('completion', function()
     assert_alive()
   end)
 
-  it('does not crash when using i_CTRL-X_CTRL-V to complete non-existent colorscheme', function()
+  it('no crash using i_CTRL-X_CTRL-V to complete non-existent colorscheme', function()
     feed('icolorscheme NOSUCHCOLORSCHEME<C-X><C-V>')
     expect('colorscheme NOSUCHCOLORSCHEME')
     assert_alive()

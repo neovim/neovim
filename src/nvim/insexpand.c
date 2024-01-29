@@ -2760,9 +2760,11 @@ static int info_add_completion_info(list_T *li)
 
   // Skip the element with the CP_ORIGINAL_TEXT flag at the beginning, in case of
   // forward completion, or at the end, in case of backward completion.
-  match = forward ? match->cp_next
-                  : (compl_no_select && match_at_original_text(match)
-                     ? match->cp_prev : match->cp_prev->cp_prev);
+  match = (forward || match->cp_prev == NULL
+           ? match->cp_next
+           : (compl_no_select && match_at_original_text(match)
+              ? match->cp_prev
+              : match->cp_prev->cp_prev));
 
   while (match != NULL && !match_at_original_text(match)) {
     dict_T *di = tv_dict_alloc();
