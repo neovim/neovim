@@ -250,7 +250,7 @@ local function _enable(bufnr)
     bufnr = api.nvim_get_current_buf()
   end
   local bufstate = bufstates[bufnr]
-  if not bufstate then
+  if not bufstate or not bufstate.enabled then
     bufstates[bufnr] = { applied = {}, enabled = true }
     api.nvim_create_autocmd('LspNotify', {
       buffer = bufnr,
@@ -296,7 +296,6 @@ local function _enable(bufnr)
       group = augroup,
     })
   else
-    bufstate.enabled = true
     _refresh(bufnr)
   end
 end
