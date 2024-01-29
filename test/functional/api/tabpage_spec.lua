@@ -45,7 +45,7 @@ describe('api/tabpage', function()
       eq(win3, api.nvim_tabpage_get_win(tab2))
     end)
 
-    it('works in non-current tabgpages', function()
+    it('works in non-current tabpages', function()
       command('tabnew')
       command('vsplit')
       local tab1, tab2 = unpack(api.nvim_list_tabpages())
