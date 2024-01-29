@@ -698,7 +698,7 @@ describe('decorations providers', function()
     helpers.assert_alive()
   end)
 
-  it('supports subpriorities', function()
+  it('supports subpriorities (order of definitions in a query file #27131)', function()
     insert(mulholland)
     setup_provider [[
       local test_ns = api.nvim_create_namespace('mulholland')
