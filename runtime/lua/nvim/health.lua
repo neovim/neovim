@@ -23,9 +23,15 @@ local function check_runtime()
   health.start('Runtime')
   -- Files from an old installation.
   local bad_files = {
-    ['plugin/man.vim'] = false,
-    ['scripts.vim'] = false,
+    ['plugin/health.vim'] = false,
+    ['autoload/health/nvim.vim'] = false,
+    ['autoload/health/provider.vim'] = false,
     ['autoload/man.vim'] = false,
+    ['plugin/man.vim'] = false,
+    ['queries/help/highlights.scm'] = false,
+    ['queries/help/injections.scm'] = false,
+    ['scripts.vim'] = false,
+    ['syntax/syncolor.vim'] = false,
   }
   local bad_files_msg = ''
   for k, _ in pairs(bad_files) do
@@ -42,10 +48,10 @@ local function check_runtime()
   if not ok then
     health.error(
       string.format(
-        '$VIMRUNTIME has files from an old installation (this can cause weird behavior):\n%s',
+        'Found old files in $VIMRUNTIME (this can cause weird behavior):\n%s',
         bad_files_msg
       ),
-      { 'Delete $VIMRUNTIME (or uninstall Nvim), then reinstall Nvim.' }
+      { 'Delete the $VIMRUNTIME directory (or uninstall Nvim), then reinstall Nvim.' }
     )
   end
 end
