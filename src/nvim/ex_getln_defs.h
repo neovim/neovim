@@ -41,8 +41,9 @@ typedef enum {
 /// structure.
 typedef struct cmdline_info CmdlineInfo;
 struct cmdline_info {
-  char *cmdbuff;               ///< pointer to command line buffer
+  char *cmdbuff;                ///< pointer to command line buffer
   buf_T *cmdfilebuf;            ///< dummy, read-only file-buffer with command line
+  win_T *cmdlinewin;            ///< floating window where cmdline contents live
   int cmdbufflen;               ///< length of cmdbuff
   int cmdlen;                   ///< number of chars in command line
   int cmdpos;                   ///< current cursor position

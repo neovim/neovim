@@ -17,6 +17,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
+#include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdhist.h"
@@ -74,6 +75,7 @@
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 /// Last value of prompt_id, incremented when doing new prompt
 static unsigned last_prompt_id = 0;
@@ -692,7 +694,30 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     s->break_ctrl_c = true;
   }
 
-  init_ccline(s->firstc, s->indent);
+  bool useNew = true;
+
+  if (useNew) {
+    FloatConfig fconfig = FLOAT_CONFIG_INIT;
+    fconfig.height = 1;
+    fconfig.width = Columns;
+    fconfig.row = Rows;
+    fconfig.zindex = kZIndexCmdlinePopupMenu;
+    fconfig.style = kWinStyleMinimal;
+    ccline.cmdlinewin = win_new_float(NULL, false, fconfig, NULL);
+    ccline.cmdfilebuf = buflist_new(NULL, NULL, 1, BLN_NOOPT | BLN_DUMMY);
+    win_enter(ccline.cmdlinewin, true);
+    set_curbuf(ccline.cmdfilebuf, DOBUF_SPLIT);
+    set_option_value(kOptFiletype, STATIC_CSTR_AS_OPTVAL("vim"), OPT_LOCAL);
+    set_option_value(kOptWinhighlight, STATIC_CSTR_AS_OPTVAL("NormalFloat:Normal"), OPT_LOCAL);
+    init_ccline(s->firstc, s->indent);
+    ccline.prompt_id = last_prompt_id++;
+    ccline.level = cmdline_level;
+
+  } else {
+    init_ccline(s->firstc, s->indent);
+  }
+
+
   ccline.prompt_id = last_prompt_id++;
   ccline.level = cmdline_level;
 
@@ -3776,7 +3801,22 @@ static void redrawcmdprompt(void)
 // Redraw what is currently on the command line.
 void redrawcmd(void)
 {
+
   if (cmd_silent) {
+    return;
+  }
+  // TODO(rudiejd) source from config
+  bool useNew = true;
+  // TODO(rudiejd) - move to diff function
+  if (useNew) {
+    char buf[MAXPATHL];
+    buf[0] = (char)ccline.cmdfirstc;
+    xstrlcpy(buf + 1, ccline.cmdbuff, MAXPATHL);
+    ml_replace_buf(ccline.cmdfilebuf, 1, buf, true);
+    changed_lines(ccline.cmdfilebuf, 1, 0, 1, 0, false);
+    ccline.cmdspos = cmd_screencol(ccline.cmdpos);
+    ccline.cmdlinewin->w_cursor.col = ccline.cmdspos;
+    update_screen();
     return;
   }
 
