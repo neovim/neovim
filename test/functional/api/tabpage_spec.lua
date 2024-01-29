@@ -74,10 +74,16 @@ describe('api/tabpage', function()
       local win1, win2, win3 = unpack(api.nvim_list_wins())
       eq({ win1 }, api.nvim_tabpage_list_wins(tab1))
       eq({ win2, win3 }, api.nvim_tabpage_list_wins(tab2))
+      eq(win2, api.nvim_get_current_win())
 
       eq(
         string.format('Window does not belong to tabpage %d', tab2),
         pcall_err(api.nvim_tabpage_set_win, tab2, win1)
+      )
+
+      eq(
+        string.format('Window does not belong to tabpage %d', tab1),
+        pcall_err(api.nvim_tabpage_set_win, tab1, win3)
       )
     end)
   end)
