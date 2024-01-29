@@ -48,6 +48,7 @@ local function execute_lens(lens, bufnr, client_id)
 
   local client = vim.lsp.get_client_by_id(client_id)
   assert(client, 'Client is required to execute lens, client_id=' .. client_id)
+  ---@diagnostic disable-next-line: invisible
   client:_exec_cmd(lens.command, { bufnr = bufnr }, function(...)
     vim.lsp.handlers[ms.workspace_executeCommand](...)
     M.refresh()
@@ -111,7 +112,7 @@ end
 --- Clear the lenses
 ---
 ---@param client_id integer|nil filter by client_id. All clients if nil
----@param bufnr integer|nil filter by buffer. All buffers if nil
+---@param bufnr integer|nil filter by buffer. All buffers if nil, 0 for current buffer
 function M.clear(client_id, bufnr)
   bufnr = bufnr and resolve_bufnr(bufnr)
   local buffers = bufnr and { bufnr }
@@ -277,25 +278,36 @@ function M.on_codelens(err, result, ctx, _)
   end)
 end
 
---- Refresh the codelens for the current buffer
+--- @class vim.lsp.codelens.RefreshOptions
+--- @field bufnr integer? filter by buffer. All buffers if nil, 0 for current buffer
+
+--- Refresh the lenses.
 ---
 --- It is recommended to trigger this using an autocmd or via keymap.
 ---
 --- Example:
 ---
 --- ```vim
---- autocmd BufEnter,CursorHold,InsertLeave <buffer> lua vim.lsp.codelens.refresh()
+--- autocmd BufEnter,CursorHold,InsertLeave <buffer> lua vim.lsp.codelens.refresh({ bufnr = 0 })
 --- ```
-function M.refresh()
+---
+--- @param opts? vim.lsp.codelens.RefreshOptions Table with the following fields:
+---  - `bufnr` (integer|nil): filter by buffer. All buffers if nil, 0 for current buffer
+function M.refresh(opts)
+  opts = opts or {}
+  local bufnr = opts.bufnr and resolve_bufnr(opts.bufnr)
+  local buffers = bufnr and { bufnr }
+    or vim.tbl_filter(api.nvim_buf_is_loaded, api.nvim_list_bufs())
   local params = {
     textDocument = util.make_text_document_params(),
   }
-  local bufnr = api.nvim_get_current_buf()
-  if active_refreshes[bufnr] then
-    return
+
+  for _, buf in ipairs(buffers) do
+    if not active_refreshes[buf] then
+      active_refreshes[buf] = true
+      vim.lsp.buf_request(buf, ms.textDocument_codeLens, params, M.on_codelens)
+    end
   end
-  active_refreshes[bufnr] = true
-  vim.lsp.buf_request(0, ms.textDocument_codeLens, params, M.on_codelens)
 end
 
 return M
