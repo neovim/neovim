@@ -114,8 +114,11 @@ void ui_refresh(void)
   local test_query = [[
     ((call_expression
       function: (identifier) @minfunc
-      (argument_list (identifier) @min_id))
+      (argument_list
+        [ (identifier) (number_literal) ] @min_id)) ; #27239
       (#eq? @minfunc "MIN")
+      (#set! "meta-key" "meta-value") ; #23664
+      (#set! @min_id "belongs" @minfunc) ; #23664
     )
 
     "for" @keyword
@@ -230,21 +233,35 @@ void ui_refresh(void)
 
   it('supports query and iter by capture (iter_captures)', function()
     insert(test_text)
+    exec_lua [[
+      _wrap = function(t)
+        ret = {}
+        for key, value in pairs(t) do
+          if type(key) == "number" then key = "@" .. tostring(key) end
+          ret[key] = value
+        end
+        return ret
+      end
+    ]]
 
-    local res = exec_lua(
+    local captures, metadatas = unpack(exec_lua(
       [[
         cquery = vim.treesitter.query.parse("c", ...)
         parser = vim.treesitter.get_parser(0, "c")
         tree = parser:parse()[1]
-        res = {}
-        for cid, node in cquery:iter_captures(tree:root(), 0, 7, 14) do
+        captures = {}
+        metadatas = {}
+        for cid, node, metadata in cquery:iter_captures(tree:root(), 0, 7, 14) do
           -- can't transmit node over RPC. just check the name and range
-          table.insert(res, { '@' .. cquery.captures[cid], node:type(), node:range() })
+          table.insert(captures, { '@' .. cquery.captures[cid], node:type(), node:range() })
+          -- also can't transmit metadata when there are mixed keys of integer/string,
+          -- so convert all the integer keys (capture id) with string
+          table.insert(metadatas, { '@' .. cquery.captures[cid], _wrap(metadata) })
         end
-        return res
+        return { captures, metadatas }
       ]],
       test_query
-    )
+    ))
 
     eq({
       { '@type', 'primitive_type', 8, 2, 8, 6 }, -- bool
@@ -257,7 +274,28 @@ void ui_refresh(void)
       { '@fieldarg', 'identifier', 12, 17, 12, 19 }, --      ui
       { '@min_id', 'identifier', 12, 29, 12, 35 }, -- height
       { '@fieldarg', 'identifier', 13, 14, 13, 16 }, -- ui   ; in BAR(..)
-    }, res)
+      -- Note: @min_id should not capture "bazaar" because of the predicate. #27239
+    }, captures)
+
+    -- metadata: set by the specific `#set! (@min_id ...)` directive.
+    -- All the captures within the same match must have the same instance of metadata. #23664
+    -- In the first pattern, @minfunc, @min_id are the captures who should have the metadata
+    local metadata = {
+      ['meta-key'] = 'meta-value',
+      ['@2'] = { ['belongs'] = 1 }, -- (#set! @min_id "belongs" @minfunc)
+    }
+    eq({
+      { '@type', {} },
+      { '@keyword', {} },
+      { '@type', {} },
+      { '@minfunc', metadata },
+      { '@fieldarg', {} },
+      { '@min_id', metadata },
+      { '@minfunc', metadata },
+      { '@fieldarg', {} },
+      { '@min_id', metadata },
+      { '@fieldarg', {} },
+    }, metadatas)
   end)
 
   it('supports query and iter by match (iter_matches)', function()
