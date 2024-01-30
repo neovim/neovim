@@ -962,11 +962,14 @@ void time_init(const char *startup_time_file, const char *process_name)
   // we set a buffer big enough to store all startup times. The `_IOFBF` mode ensures the buffer is
   // not auto-flushed ("controlled buffering").
   // The times are flushed to disk manually when "time_finish" is called.
-  if (setvbuf(time_fd, startuptime_buf, _IOFBF, STARTUP_TIME_BUF_SIZE + 1) != 0) {
+  int r = setvbuf(time_fd, startuptime_buf, _IOFBF, STARTUP_TIME_BUF_SIZE + 1);
+  if (r != 0) {
     xfree(startuptime_buf);
     fclose(time_fd);
     time_fd = NULL;
-    semsg("Error initializing startup time");
+    // Might as well ELOG also I guess.
+    ELOG("time_init: setvbuf failed: %d %s", r, uv_err_name(r));
+    semsg("time_init: setvbuf failed: %d %s", r, uv_err_name(r));
     return;
   }
   fprintf(time_fd, "--- Startup times for process: %s ---\n", process_name);
