@@ -226,7 +226,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
     if (!HAS_KEY(config, float_config, win) || config->win != -1) {
       parent = find_window_by_handle(fconfig.window, err);
       if (!parent) {
-        // find_window_by_handle will have set the error
+        // find_window_by_handle has already set the error
         return 0;
       } else if (parent->w_floating) {
         api_set_error(err, kErrorTypeException, "Cannot split a floating window");
@@ -520,7 +520,7 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
         win_execute_after(&args);
         return;
       }
-      // This should be the same ptr as the old split, but we check if for
+      // This should return the same ptr to `win`, but we check for
       // NULL to detect errors.
       win_T *res = win_split_ins(0, flags, win, 0);
       win_execute_after(&args);
