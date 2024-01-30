@@ -985,6 +985,5 @@ void time_finish(void)
   fclose(time_fd);
   time_fd = NULL;
 
-  xfree(startuptime_buf);
-  startuptime_buf = NULL;
+  XFREE_CLEAR(startuptime_buf);
 }
