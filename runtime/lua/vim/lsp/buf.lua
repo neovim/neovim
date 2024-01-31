@@ -194,6 +194,10 @@ end
 ---         (1,0) indexing.
 ---         Defaults to current selection in visual mode
 ---         Defaults to `nil` in other modes, formatting the full buffer
+---
+---     - callback (function|nil):
+---         When called with async=true, call callback after the buffer is edited.
+---         It has no effect if async=false
 function M.format(options)
   options = options or {}
   local bufnr = options.bufnr or api.nvim_get_current_buf()
@@ -231,6 +235,9 @@ function M.format(options)
     local do_format
     do_format = function(idx, client)
       if not client then
+        if options.callback ~= nil then
+          options.callback()
+        end
         return
       end
       local params = set_range(client, util.make_formatting_params(options.formatting_options))

@@ -3899,6 +3899,45 @@ describe('LSP', function()
         end,
       }
     end)
+    it('calls callback when calling async', function()
+      local expected_handlers = {
+        {NIL, {}, {method="shutdown", client_id=1}};
+        {NIL, {}, {method="start", client_id=1}};
+      }
+      local client
+      test_rpc_server {
+        test_name = "basic_formatting",
+        on_init = function(c)
+          client = c
+        end,
+        on_handler = function(_, _, ctx)
+          table.remove(expected_handlers)
+          if ctx.method == "start" then
+            local result = exec_lua([[
+              local bufnr = vim.api.nvim_get_current_buf()
+              vim.lsp.buf_attach_client(bufnr, TEST_RPC_CLIENT_ID)
+
+              local notify_msg
+              local notify = vim.notify
+              vim.notify = function(msg, log_level)
+                notify_msg = msg
+              end
+
+              local callback_called = false
+              local callback = function() callback_called = true end
+              vim.lsp.buf.format({ bufnr = bufnr, async = true, callback = callback })
+              vim.wait(1000, function() return callback_called end)
+
+              vim.notify = notify
+              return {callback_called = callback_called}
+            ]])
+            eq({callback_called=true}, result)
+          elseif ctx.method == "shutdown" then
+            client.stop()
+          end
+        end,
+      }
+    end)
     it('format formats range in visual mode', function()
       exec_lua(create_server_definition)
       local result = exec_lua([[

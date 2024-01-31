@@ -1259,6 +1259,9 @@ format({options})                                       *vim.lsp.buf.format()*
                      indexing. Defaults to current selection in visual mode
                      Defaults to `nil` in other modes, formatting the full
                      buffer
+                   • callback (function|nil): When called with async=true,
+                     call callback after the buffer is edited. It has no
+                     effect if async=false
 
 hover()                                                  *vim.lsp.buf.hover()*
     Displays hover information about the symbol under the cursor in a floating
