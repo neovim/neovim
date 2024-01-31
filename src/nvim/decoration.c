@@ -919,7 +919,9 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fo
 }
 
 /// This assumes maximum one entry of each kind, which will not always be the case.
-void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
+///
+/// NB: assumes caller has allocated enough space in dict for all fields!
+void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name, Arena *arena)
 {
   DecorSignHighlight sh_hl = DECOR_SIGN_HIGHLIGHT_INIT;
   DecorSignHighlight sh_sign = DECOR_SIGN_HIGHLIGHT_INIT;
@@ -953,58 +955,58 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
   }
 
   if (sh_hl.hl_id) {
-    PUT(*dict, "hl_group", hl_group_name(sh_hl.hl_id, hl_name));
-    PUT(*dict, "hl_eol", BOOLEAN_OBJ(sh_hl.flags & kSHHlEol));
+    PUT_C(*dict, "hl_group", hl_group_name(sh_hl.hl_id, hl_name));
+    PUT_C(*dict, "hl_eol", BOOLEAN_OBJ(sh_hl.flags & kSHHlEol));
     priority = sh_hl.priority;
   }
 
   if (sh_hl.flags & kSHConceal) {
     char buf[MAX_SCHAR_SIZE];
     schar_get(buf, sh_hl.text[0]);
-    PUT(*dict, "conceal", CSTR_TO_OBJ(buf));
+    PUT_C(*dict, "conceal", CSTR_TO_ARENA_OBJ(arena, buf));
   }
 
   if (sh_hl.flags & kSHSpellOn) {
-    PUT(*dict, "spell", BOOLEAN_OBJ(true));
+    PUT_C(*dict, "spell", BOOLEAN_OBJ(true));
   } else if (sh_hl.flags & kSHSpellOff) {
-    PUT(*dict, "spell", BOOLEAN_OBJ(false));
+    PUT_C(*dict, "spell", BOOLEAN_OBJ(false));
   }
 
   if (sh_hl.flags & kSHUIWatched) {
-    PUT(*dict, "ui_watched", BOOLEAN_OBJ(true));
+    PUT_C(*dict, "ui_watched", BOOLEAN_OBJ(true));
   }
 
   if (sh_hl.url != NULL) {
-    PUT(*dict, "url", STRING_OBJ(cstr_to_string(sh_hl.url)));
+    PUT_C(*dict, "url", STRING_OBJ(cstr_as_string((char *)sh_hl.url)));
   }
 
   if (virt_text) {
     if (virt_text->hl_mode) {
-      PUT(*dict, "hl_mode", CSTR_TO_OBJ(hl_mode_str[virt_text->hl_mode]));
+      PUT_C(*dict, "hl_mode", CSTR_AS_OBJ((char *)hl_mode_str[virt_text->hl_mode]));
     }
 
-    Array chunks = virt_text_to_array(virt_text->data.virt_text, hl_name);
-    PUT(*dict, "virt_text", ARRAY_OBJ(chunks));
-    PUT(*dict, "virt_text_hide", BOOLEAN_OBJ(virt_text->flags & kVTHide));
-    PUT(*dict, "virt_text_repeat_linebreak", BOOLEAN_OBJ(virt_text->flags & kVTRepeatLinebreak));
+    Array chunks = virt_text_to_array(virt_text->data.virt_text, hl_name, arena);
+    PUT_C(*dict, "virt_text", ARRAY_OBJ(chunks));
+    PUT_C(*dict, "virt_text_hide", BOOLEAN_OBJ(virt_text->flags & kVTHide));
+    PUT_C(*dict, "virt_text_repeat_linebreak", BOOLEAN_OBJ(virt_text->flags & kVTRepeatLinebreak));
     if (virt_text->pos == kVPosWinCol) {
-      PUT(*dict, "virt_text_win_col", INTEGER_OBJ(virt_text->col));
+      PUT_C(*dict, "virt_text_win_col", INTEGER_OBJ(virt_text->col));
     }
-    PUT(*dict, "virt_text_pos", CSTR_TO_OBJ(virt_text_pos_str[virt_text->pos]));
+    PUT_C(*dict, "virt_text_pos", CSTR_AS_OBJ((char *)virt_text_pos_str[virt_text->pos]));
     priority = virt_text->priority;
   }
 
   if (virt_lines) {
-    Array all_chunks = ARRAY_DICT_INIT;
+    Array all_chunks = arena_array(arena, kv_size(virt_lines->data.virt_lines));
     bool virt_lines_leftcol = false;
     for (size_t i = 0; i < kv_size(virt_lines->data.virt_lines); i++) {
       virt_lines_leftcol = kv_A(virt_lines->data.virt_lines, i).left_col;
-      Array chunks = virt_text_to_array(kv_A(virt_lines->data.virt_lines, i).line, hl_name);
+      Array chunks = virt_text_to_array(kv_A(virt_lines->data.virt_lines, i).line, hl_name, arena);
       ADD(all_chunks, ARRAY_OBJ(chunks));
     }
-    PUT(*dict, "virt_lines", ARRAY_OBJ(all_chunks));
-    PUT(*dict, "virt_lines_above", BOOLEAN_OBJ(virt_lines->flags & kVTLinesAbove));
-    PUT(*dict, "virt_lines_leftcol", BOOLEAN_OBJ(virt_lines_leftcol));
+    PUT_C(*dict, "virt_lines", ARRAY_OBJ(all_chunks));
+    PUT_C(*dict, "virt_lines_above", BOOLEAN_OBJ(virt_lines->flags & kVTLinesAbove));
+    PUT_C(*dict, "virt_lines_leftcol", BOOLEAN_OBJ(virt_lines_leftcol));
     priority = virt_lines->priority;
   }
 
@@ -1012,11 +1014,11 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
     if (sh_sign.text[0]) {
       char buf[SIGN_WIDTH * MAX_SCHAR_SIZE];
       describe_sign_text(buf, sh_sign.text);
-      PUT(*dict, "sign_text", CSTR_TO_OBJ(buf));
+      PUT_C(*dict, "sign_text", CSTR_TO_ARENA_OBJ(arena, buf));
     }
 
     if (sh_sign.sign_name) {
-      PUT(*dict, "sign_name", CSTR_TO_OBJ(sh_sign.sign_name));
+      PUT_C(*dict, "sign_name", CSTR_AS_OBJ(sh_sign.sign_name));
     }
 
     // uncrustify:off
@@ -1033,14 +1035,14 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
 
     for (int j = 0; hls[j].name; j++) {
       if (hls[j].val) {
-        PUT(*dict, hls[j].name, hl_group_name(hls[j].val, hl_name));
+        PUT_C(*dict, hls[j].name, hl_group_name(hls[j].val, hl_name));
       }
     }
     priority = sh_sign.priority;
   }
 
   if (priority != -1) {
-    PUT(*dict, "priority", INTEGER_OBJ(priority));
+    PUT_C(*dict, "priority", INTEGER_OBJ(priority));
   }
 }
 
@@ -1068,7 +1070,7 @@ uint16_t decor_type_flags(DecorInline decor)
 Object hl_group_name(int hl_id, bool hl_name)
 {
   if (hl_name) {
-    return CSTR_TO_OBJ(syn_id2name(hl_id));
+    return CSTR_AS_OBJ(syn_id2name(hl_id));
   } else {
     return INTEGER_OBJ(hl_id);
   }

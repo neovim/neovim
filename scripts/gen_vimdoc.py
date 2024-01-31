@@ -1688,7 +1688,7 @@ def filter_source(filename, keep_tmpfiles):
     else:
         """Filters the source to fix macros that confuse Doxygen."""
         with open(filename, 'rt') as fp:
-            print(re.sub(r'^(ArrayOf|DictionaryOf)(\(.*?\))',
+            print(re.sub(r'^(ArrayOf|DictionaryOf|Dict)(\(.*?\))',
                          lambda m: m.group(1)+'_'.join(
                              re.split(r'[^\w]+', m.group(2))),
                          fp.read(), flags=re.M))

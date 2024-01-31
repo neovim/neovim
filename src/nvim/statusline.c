@@ -665,7 +665,7 @@ static void ui_ext_tabline_update(void)
 
     win_T *cwp = (tp == curtab) ? curwin : tp->tp_curwin;
     get_trans_bufname(cwp->w_buffer);
-    PUT_C(tab_info, "name", STRING_OBJ(arena_string(&arena, cstr_as_string(NameBuff))));
+    PUT_C(tab_info, "name", CSTR_TO_ARENA_OBJ(&arena, NameBuff));
 
     ADD_C(tabs, DICTIONARY_OBJ(tab_info));
   }
@@ -686,7 +686,7 @@ static void ui_ext_tabline_update(void)
     PUT_C(buffer_info, "buffer", BUFFER_OBJ(buf->handle));
 
     get_trans_bufname(buf);
-    PUT_C(buffer_info, "name", STRING_OBJ(arena_string(&arena, cstr_as_string(NameBuff))));
+    PUT_C(buffer_info, "name", CSTR_TO_ARENA_OBJ(&arena, NameBuff));
 
     ADD_C(buffers, DICTIONARY_OBJ(buffer_info));
   }

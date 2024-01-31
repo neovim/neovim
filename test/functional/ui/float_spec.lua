@@ -1101,6 +1101,15 @@ describe('float window', function()
       local win = api.nvim_open_win(buf, false, {relative='editor', width=20, height=2, row=3, col=5, zindex=60})
       local expected = {anchor='NW', col=5, external=false, focusable=true, height=2, relative='editor', row=3, width=20, zindex=60, hide=false}
       eq(expected, api.nvim_win_get_config(win))
+      eq(true, exec_lua([[
+        local expected, win = ...
+        local actual = vim.api.nvim_win_get_config(win)
+        for k,v in pairs(expected) do
+          if v ~= actual[k] then
+            error(k)
+          end
+        end
+        return true]], expected, win))
 
       eq({external=false, focusable=true, hide=false, relative='',split="left",width=40,height=6}, api.nvim_win_get_config(0))
 

@@ -212,6 +212,9 @@ for _, f in ipairs(functions) do
       end
       f_exported.parameters[i] = param
     end
+    if startswith(f.return_type, 'Dict(') then
+      f_exported.return_type = 'Dictionary'
+    end
     exported_functions[#exported_functions + 1] = f_exported
   end
 end
@@ -279,7 +282,7 @@ for _, k in ipairs(keysets) do
     return k.name .. '_table[' .. idx .. '].str'
   end)
 
-  keysets_defs:write('extern KeySetLink ' .. k.name .. '_table[];\n')
+  keysets_defs:write('extern KeySetLink ' .. k.name .. '_table[' .. (1 + #neworder) .. '];\n')
 
   local function typename(type)
     if type == 'HLGroupID' then
@@ -596,7 +599,17 @@ for i = 1, #functions do
       output:write(');\n')
     end
 
-    if fn.return_type ~= 'void' then
+    local ret_type = real_type(fn.return_type)
+    if string.match(ret_type, '^KeyDict_') then
+      local table = string.sub(ret_type, 9) .. '_table'
+      output:write(
+        '\n  ret = DICTIONARY_OBJ(api_keydict_to_dict(&rv, '
+          .. table
+          .. ', ARRAY_SIZE('
+          .. table
+          .. '), arena));'
+      )
+    elseif ret_type ~= 'void' then
       output:write('\n  ret = ' .. string.upper(real_type(fn.return_type)) .. '_OBJ(rv);')
     end
     output:write('\n\ncleanup:')
@@ -869,7 +882,7 @@ local function process_function(fn)
       output,
       string.format(
         [[
-    const %s ret = %s(%s);
+    %s ret = %s(%s);
     ]],
         fn.return_type,
         fn.name,
@@ -877,6 +890,7 @@ local function process_function(fn)
       )
     )
 
+    local ret_type = real_type(fn.return_type)
     if fn.has_lua_imp then
       -- only push onto the Lua stack if we haven't already
       write_shifted_output(
@@ -888,6 +902,16 @@ local function process_function(fn)
     }
       ]],
           return_type
+        )
+      )
+    elseif string.match(ret_type, '^KeyDict_') then
+      write_shifted_output(
+        output,
+        string.format(
+          [[
+    nlua_push_keydict(lstate, &ret, %s_table);
+      ]],
+          string.sub(ret_type, 9)
         )
       )
     else
