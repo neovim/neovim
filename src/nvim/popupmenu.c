@@ -427,6 +427,31 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
   pum_redraw();
 }
 
+static char* pum_get_render_text(int round, pumitem_T *item) {
+  switch (round) {
+  case 0:
+    return item->pum_text;
+  case 1:
+    return item->pum_kind;
+  case 2:
+    return item->pum_extra;
+  }
+  return NULL;
+}
+
+static void pum_set_ordering(int rounds[3]) {
+  int len = strlen(p_po);
+  if (len > 3) {
+    len = 3;
+  }
+
+  for (int i = 0; i < len; ++i) {
+    if (isdigit(p_po[i])) {
+      rounds[i] = p_po[i] - '0';
+    }
+  }
+}
+
 /// Redraw the popup menu, using "pum_first" and "pum_selected".
 void pum_redraw(void)
 {
@@ -436,7 +461,6 @@ void pum_redraw(void)
   char *p = NULL;
   int thumb_pos = 0;
   int thumb_height = 1;
-  int n;
 
 #define HA(hlf) (win_hl_attr(curwin, (hlf)))
   //                         "word"       "kind"       "extra text"
@@ -507,10 +531,21 @@ void pum_redraw(void)
                 / (pum_size - pum_height);
   }
 
+  int rounds[3] = {0, 1, 2};
+  pum_set_ordering(rounds);
+  int prefix_pum_widths[3] = {pum_base_width, pum_kind_width, pum_extra_width};
+  for (int r = 0; r < 3; ++r) {
+    if (r > 0) {
+      prefix_pum_widths[rounds[r]] += prefix_pum_widths[rounds[r-1]];
+    } else {
+      prefix_pum_widths[rounds[r]]++;
+    }
+  }
+
   for (int i = 0; i < pum_height; i++) {
     int idx = i + pum_first;
     const int *const attrs = (idx == pum_selected) ? attrsSel : attrsNorm;
-    int attr = attrs[0];  // start with "word" highlight
+    int attr = attrs[rounds[0]];
 
     grid_line_start(&pum_grid, row);
 
@@ -530,20 +565,13 @@ void pum_redraw(void)
     // 2 - extra info
     int grid_col = col_off;
     int totwidth = 0;
-
-    for (int round = 0; round < 3; round++) {
+    for (int r = 0; r < 3; r++) {
+      int round = rounds[r];
       attr = attrs[round];
       int width = 0;
       char *s = NULL;
 
-      switch (round) {
-      case 0:
-        p = pum_array[idx].pum_text; break;
-      case 1:
-        p = pum_array[idx].pum_kind; break;
-      case 2:
-        p = pum_array[idx].pum_extra; break;
-      }
+      p = pum_get_render_text(round, &pum_array[idx]);
 
       if (p != NULL) {
         for (;; MB_PTR_ADV(p)) {
@@ -618,31 +646,26 @@ void pum_redraw(void)
         }
       }
 
-      if (round > 0) {
-        n = pum_kind_width + 1;
-      } else {
-        n = 1;
-      }
-
+      int pw = prefix_pum_widths[round];
       // Stop when there is nothing more to display.
-      if ((round == 2)
-          || ((round == 1)
-              && (pum_array[idx].pum_extra == NULL))
-          || ((round == 0)
-              && (pum_array[idx].pum_kind == NULL)
-              && (pum_array[idx].pum_extra == NULL))
-          || (pum_base_width + n >= pum_width)) {
+      if ((r == 2)
+          || ((r == 1)
+              && (pum_get_render_text(rounds[r+1], &pum_array[idx]) == NULL))
+          || ((r== 0)
+              && (pum_get_render_text(rounds[r+1], &pum_array[idx]) == NULL)
+              && (pum_get_render_text(rounds[r+2], &pum_array[idx]) == NULL))
+          || (pw >= pum_width)) {
         break;
       }
 
       if (pum_rl) {
-        grid_line_fill(col_off - pum_base_width - n + 1, grid_col + 1, schar_from_ascii(' '), attr);
-        grid_col = col_off - pum_base_width - n + 1;
+        grid_line_fill(col_off - pw + 1, grid_col + 1, schar_from_ascii(' '), attr);
+        grid_col = col_off - pw + 1;
       } else {
-        grid_line_fill(grid_col, col_off + pum_base_width + n, schar_from_ascii(' '), attr);
-        grid_col = col_off + pum_base_width + n;
+        grid_line_fill(grid_col, col_off + pw, schar_from_ascii(' '), attr);
+        grid_col = col_off + pw;
       }
-      totwidth = pum_base_width + n;
+      totwidth = pw;
     }
 
     if (pum_rl) {

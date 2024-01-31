@@ -6089,6 +6089,31 @@ return {
       varname = 'p_ph',
     },
     {
+      abbreviation = 'pumo',
+      defaults = { if_true = '012' },
+      desc = [=[
+        This option specify how the popup menu should look like
+
+        The default value:
+        0: word
+        1: kind
+        2: extra
+
+        So the popup menu should look like the following
+        "word"  "kind"  "extra"
+
+        If this value is set to 102, the popup menu would look like this:
+        "kind"  "word"  "extra"
+
+        Note: set values > 2 will result in empty value
+      ]=],
+      full_name = 'pumordering',
+      scope = { 'global' },
+      short_desc = N_('popup menu item ordering'),
+      type = 'string',
+      varname = 'p_po'
+    },
+    {
       abbreviation = 'pw',
       defaults = { if_true = 15 },
       desc = [=[
