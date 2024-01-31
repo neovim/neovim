@@ -58,7 +58,7 @@ unlike most other environment variables.
   Windows/ConEmu              conemu                              Y
   Windows/Cygwin-built Nvim   cygwin                              Y
   Windows/Interix             interix                             Y
-  Windows/VTP console         vtpcon                              Y
+  Windows/VTP console         vtpcon                              N
   Windows/legacy console      win32con                            Y
   xterm or compatible         xterm, xterm-256color               Y
 

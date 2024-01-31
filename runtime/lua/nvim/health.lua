@@ -356,10 +356,7 @@ local function check_terminal()
     and (
       not has('win32')
       or empty(
-        vim.fn.matchstr(
-          out,
-          [[infocmp: couldn't open terminfo file .\+\%(conemu\|vtpcon\|win32con\)]]
-        )
+        vim.fn.matchstr(out, [[infocmp: couldn't open terminfo file .\+\%(conemu\|win32con\)]])
       )
     )
   then
