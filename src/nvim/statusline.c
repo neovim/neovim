@@ -151,14 +151,14 @@ void win_redr_status(win_T *wp)
     }
 
     grid_line_start(&default_grid, is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp));
-    int col = is_stl_global ? 0 : wp->w_wincol;
+    const int off = is_stl_global ? 0 : wp->w_wincol;
 
-    int width = grid_line_puts(col, p, -1, attr);
-    grid_line_fill(width + col, this_ru_col + col, fillchar, attr);
+    int width = grid_line_puts(off, p, -1, attr);
+    grid_line_fill(off + width, off + this_ru_col, fillchar, attr);
 
     if (get_keymap_str(wp, "<%s>", NameBuff, MAXPATHL)
-        && this_ru_col - len > (int)(strlen(NameBuff) + 1)) {
-      grid_line_puts((int)((size_t)this_ru_col - strlen(NameBuff) - 1), NameBuff, -1, attr);
+        && this_ru_col - len > (int)strlen(NameBuff) + 1) {
+      grid_line_puts(off + this_ru_col - (int)strlen(NameBuff) - 1, NameBuff, -1, attr);
     }
 
     win_redr_ruler(wp);
@@ -168,7 +168,7 @@ void win_redr_status(win_T *wp)
       const int sc_width = MIN(10, this_ru_col - len - 2);
 
       if (sc_width > 0) {
-        grid_line_puts(wp->w_wincol + this_ru_col - sc_width - 1, showcmd_buf, sc_width, attr);
+        grid_line_puts(off + this_ru_col - sc_width - 1, showcmd_buf, sc_width, attr);
       }
     }
 
@@ -615,8 +615,8 @@ void win_redr_ruler(win_T *wp)
       }
     }
 
-    int w = grid_line_puts(this_ru_col + off, buffer, -1, attr);
-    grid_line_fill(this_ru_col + off + w, off + width, fillchar, attr);
+    int w = grid_line_puts(off + this_ru_col, buffer, -1, attr);
+    grid_line_fill(off + this_ru_col + w, off + width, fillchar, attr);
   }
 }
 

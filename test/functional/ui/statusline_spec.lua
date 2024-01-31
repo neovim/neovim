@@ -720,3 +720,58 @@ it('uses "stl" and "stlnc" fillchars even if they are the same #19803', function
   ]],
   }
 end)
+
+it('showcmdloc=statusline works with vertical splits', function()
+  clear()
+  local screen = Screen.new(53, 4)
+  screen:set_default_attr_ids {
+    [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+    [2] = { bold = true, reverse = true }, -- StatusLine
+    [3] = { reverse = true }, -- StatusLineNC
+  }
+  screen:attach()
+  command('rightbelow vsplit')
+  command('set showcmd showcmdloc=statusline')
+  feed('1234')
+  screen:expect([[
+                              │^                          |
+    {1:~                         }│{1:~                         }|
+    {3:[No Name]                  }{2:[No Name]      1234       }|
+                                                         |
+  ]])
+  feed('<Esc>')
+  command('set laststatus=3')
+  feed('1234')
+  screen:expect([[
+                              │^                          |
+    {1:~                         }│{1:~                         }|
+    {2:[No Name]                                 1234       }|
+                                                         |
+  ]])
+end)
+
+it('keymap is shown with vertical splits #27269', function()
+  clear()
+  local screen = Screen.new(53, 4)
+  screen:set_default_attr_ids {
+    [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+    [2] = { bold = true, reverse = true }, -- StatusLine
+    [3] = { reverse = true }, -- StatusLineNC
+  }
+  screen:attach()
+  command('setlocal keymap=dvorak')
+  command('rightbelow vsplit')
+  screen:expect([[
+                              │^                          |
+    {1:~                         }│{1:~                         }|
+    {3:[No Name]         <en-dv>  }{2:[No Name]         <en-dv> }|
+                                                         |
+  ]])
+  command('set laststatus=3')
+  screen:expect([[
+                              │^                          |
+    {1:~                         }│{1:~                         }|
+    {2:[No Name]                                    <en-dv> }|
+                                                         |
+  ]])
+end)
