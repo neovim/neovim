@@ -339,7 +339,6 @@ end
 ---@param path (string) Path to normalize
 ---@param opts table|nil Options:
 ---             - expand_env: (boolean, default true) Expand environment variables
----             - collapse_slash: (boolean, default true) Remove duplicated slashes
 ---@return (string) Normalized path
 function M.normalize(path, opts)
   opts = opts or {}
@@ -347,29 +346,27 @@ function M.normalize(path, opts)
   vim.validate({
     path = { path, { 'string' } },
     expand_env = { opts.expand_env, { 'boolean' }, true },
-    collapse_slash = { opts.collapse_slash, { 'boolean' }, true },
   })
 
   if path:sub(1, 1) == '~' then
-    local home = vim.uv.os_homedir() or '~'
-    if home:sub(-1) == '\\' or home:sub(-1) == '/' then
-      home = home:sub(1, -2)
-    end
-    path = home .. path:sub(2)
+    path = (vim.uv.os_homedir() or '~') .. '/' .. path:sub(2)
   end
 
   if opts.expand_env == nil or opts.expand_env then
     path = path:gsub('%$([%w_]+)', vim.uv.os_getenv)
   end
 
-  path = path:gsub('\\', '/')
-  if opts.collapse_slash == nil or opts.collapse_slash then
-    path = path:gsub('/+', '/')
+  local first = path:sub(1, 1)
+  path = (first == '\\' and '/' or first) .. path:sub(2):gsub('[\\/]+', '/'):gsub('/$', '')
+  -- UNC path starts with double (or more) slash, followed by more than one character.
+  -- Therefore ignore first letter from `:gsub('[\\/]+', '/')`.
+  -- `//` is not a valid UNC path, hence converted to `/` with `:gsub('/$', '')`.
+  -- This also keeps traling slash in the case of root `/`, but removes it otherwise.
+
+  if iswin and path:sub(2, 2) == ':' then -- capitalize windows drive name
+    return first:upper() .. ':/' .. path:sub(4)
   end
-  if iswin and path:match('^%w:/+$') then
-    return path
-  end
-  return (path:gsub('([^/])/+$', '%1'))
+  return path
 end
 
 return M

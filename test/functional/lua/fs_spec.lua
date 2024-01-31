@@ -285,23 +285,20 @@ describe('vim.fs', function()
     it('works with backward slashes', function()
       eq('C:/Users/jdoe', vim.fs.normalize('C:\\Users\\jdoe'))
     end)
+    it('works with mixed forward and backward slashes', function()
+      eq('C:/Users/jdoe', vim.fs.normalize('C:\\//Users//\\jdoe//\\'))
+    end)
     it('removes trailing /', function()
       eq('/home/user', vim.fs.normalize('/home/user/'))
     end)
     it('works with /', function()
       eq('/', vim.fs.normalize('/'))
     end)
-    it('works with / (opts.collapse_slash = false)', function()
-      eq('///', vim.fs.normalize('///', { collapse_slash = false }))
+    it('remove unnecessary duplicated slashes', function()
+      eq('/foo/bar', vim.fs.normalize('/foo//bar//'))
     end)
     it('works with ~', function()
       eq(vim.fs.normalize(vim.uv.os_homedir()) .. '/src/foo', vim.fs.normalize('~/src/foo'))
-    end)
-    it('removes duplicated slashes (opts.collapse_slash = true)', function()
-      eq('/home/user', vim.fs.normalize('//home//user//'))
-    end)
-    it('do not remove duplicated slashes (opts.collapse_slash = false)', function()
-      eq('//home//user', vim.fs.normalize('//home//user//', { collapse_slash = false })) -- does remove trailing slashes
     end)
     it('works with environment variables', function()
       local xdg_config_home = test_build_dir .. '/.config'
@@ -316,9 +313,25 @@ describe('vim.fs', function()
         )
       )
     end)
+    it('works with UNC paths', function()
+      -- See https://github.com/neovim/neovim/issues/27068 for more detail
+      eq('//foo', vim.fs.normalize('//foo')) -- UNC path
+      eq('//foo', vim.fs.normalize('///foo')) -- UNC path
+      eq('/foo', vim.fs.normalize('/foo')) -- Not a UNC path
+      eq('/', vim.fs.normalize('/')) -- Not a UNC path
+      eq('/', vim.fs.normalize('//')) -- Not a UNC path
+      eq('/', vim.fs.normalize('///')) -- Not a UNC path
+      eq('//foo/bar', vim.fs.normalize('//foo//bar////')) -- UNC path
+      eq('/foo/bar', vim.fs.normalize('/foo//bar////')) -- Not a UNC path
+      eq('/foo', vim.fs.normalize('/foo//')) -- Not a UNC path
+    end)
     if is_os('win') then
       it('Last slash is not truncated from root drive', function()
         eq('C:/', vim.fs.normalize('C:/'))
+      end)
+      it('Capitalizes drive name on Windows', function()
+        eq('C:/foo/bar', vim.fs.normalize('c:\\foo/bar\\//'))
+        eq('c/this/is/a/relative/path', vim.fs.normalize('c\\this\\is\\a\\relative\\path'))
       end)
     end
   end)
