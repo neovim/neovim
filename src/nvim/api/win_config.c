@@ -272,15 +272,11 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
   restore_win_noblock(&switchwin, true);
   if (enter) {
     goto_tabpage_win(tp, wp);
-    if (!tabpage_win_valid(tp, wp) || curwin != wp) {
-      api_set_error(err, kErrorTypeException, "Failed to enter tabpage");
-      return 0;
-    }
   }
-  if (buf != wp->w_buffer) {
+  if (win_valid_any_tab(wp) && buf != wp->w_buffer) {
     win_set_buf(wp, buf, !enter || fconfig.noautocmd, err);
   }
-  if (!tabpage_win_valid(tp, wp)) {
+  if (!win_valid_any_tab(wp)) {
     api_set_error(err, kErrorTypeException, "Window was closed immediately");
     return 0;
   }
