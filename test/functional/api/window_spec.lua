@@ -1247,7 +1247,7 @@ describe('API/win', function()
       })
       eq(api.nvim_win_get_config(win).relative, '')
 
-      local layout = api.nvim_call_function('winlayout', {})
+      local layout = fn.winlayout()
 
       eq({
         'row',
@@ -1265,7 +1265,7 @@ describe('API/win', function()
       })
       eq(api.nvim_win_get_config(win).relative, '')
 
-      local layout = api.nvim_call_function('winlayout', {})
+      local layout = fn.winlayout()
 
       eq({
         'col',
@@ -1315,7 +1315,7 @@ describe('API/win', function()
       local win = api.nvim_open_win(0, true, {
         vertical = false,
       })
-      local layout = api.nvim_call_function('winlayout', {})
+      local layout = fn.winlayout()
       eq(layout, {
         'col',
         {
@@ -1328,7 +1328,7 @@ describe('API/win', function()
         split = 'left',
         win = -1,
       })
-      layout = api.nvim_call_function('winlayout', {})
+      layout = fn.winlayout()
       eq({
         'row',
         {
@@ -1348,7 +1348,7 @@ describe('API/win', function()
         win = win,
         vertical = false,
       })
-      layout = api.nvim_call_function('winlayout', {})
+      layout = fn.winlayout()
       eq({
         'row',
         {
@@ -1394,10 +1394,10 @@ describe('API/win', function()
       local win = api.nvim_open_win(0, true, {
         split = 'left',
       })
-      local layout = api.nvim_call_function('winlayout', {})
+      local layout = fn.winlayout()
       local config = api.nvim_win_get_config(win)
       api.nvim_win_set_config(win, config)
-      eq(layout, api.nvim_call_function('winlayout', {}))
+      eq(layout, fn.winlayout())
 
       -- nested split layout
       local win2 = api.nvim_open_win(0, true, {
@@ -1407,18 +1407,18 @@ describe('API/win', function()
         win = win2,
         vertical = false,
       })
-      layout = api.nvim_call_function('winlayout', {})
+      layout = fn.winlayout()
       config = api.nvim_win_get_config(win2)
       api.nvim_win_set_config(win2, config)
-      eq(layout, api.nvim_call_function('winlayout', {}))
+      eq(layout, fn.winlayout())
 
       config = api.nvim_win_get_config(win3)
       api.nvim_win_set_config(win3, config)
-      eq(layout, api.nvim_call_function('winlayout', {}))
+      eq(layout, fn.winlayout())
     end)
 
     it('moves a float into a split', function()
-      local layout = api.nvim_call_function('winlayout', {})
+      local layout = fn.winlayout()
       eq('leaf', layout[1])
       local win = api.nvim_open_win(0, true, {
         relative = 'editor',
@@ -1432,14 +1432,14 @@ describe('API/win', function()
         win = -1,
       })
       eq('', api.nvim_win_get_config(win).relative)
-      layout = api.nvim_call_function('winlayout', {})
+      layout = fn.winlayout()
       eq('col', layout[1])
       eq(2, #layout[2])
       eq(win, layout[2][2][2])
     end)
 
     it('respects the "split" option', function()
-      local layout = api.nvim_call_function('winlayout', {})
+      local layout = fn.winlayout()
       eq('leaf', layout[1])
       local first_win = layout[2]
       local win = api.nvim_open_win(0, true, {
@@ -1453,7 +1453,7 @@ describe('API/win', function()
         split = 'right',
         win = first_win,
       })
-      layout = api.nvim_call_function('winlayout', {})
+      layout = fn.winlayout()
       eq('row', layout[1])
       eq(2, #layout[2])
       eq(win, layout[2][2][2])
@@ -1464,7 +1464,7 @@ describe('API/win', function()
         split = 'below',
         win = first_win,
       })
-      layout = api.nvim_call_function('winlayout', {})
+      layout = fn.winlayout()
       eq('col', layout[1])
       eq(2, #layout[2])
       eq(win, layout[2][2][2])
@@ -1481,7 +1481,7 @@ describe('API/win', function()
         vertical = true,
         win = -1,
       })
-      local layout = api.nvim_call_function('winlayout', {})
+      local layout = fn.winlayout()
       eq('row', layout[1])
       eq(2, #layout[2])
       eq(win2, layout[2][1][2])
@@ -1489,7 +1489,7 @@ describe('API/win', function()
         split = 'below',
         win = -1,
       })
-      layout = api.nvim_call_function('winlayout', {})
+      layout = fn.winlayout()
       eq('col', layout[1])
       eq(2, #layout[2])
       eq('row', layout[2][1][1])
@@ -1513,7 +1513,7 @@ describe('API/win', function()
       eq(curtab, api.nvim_get_current_tabpage())
 
       command('tabnext') -- switch to the new tabpage so we can get the layout
-      local layout = api.nvim_call_function('winlayout', {})
+      local layout = fn.winlayout()
 
       eq(layout, {
         'row',
@@ -1588,7 +1588,7 @@ describe('API/win', function()
         vertical = true,
       })
       api.nvim_set_current_win(win)
-      eq(api.nvim_call_function('winlayout', {}), {
+      eq(fn.winlayout(), {
         'row',
         {
           { 'leaf', win2 },
@@ -1614,7 +1614,7 @@ describe('API/win', function()
             },
           },
         },
-      }, api.nvim_call_function('winlayout', {}))
+      }, fn.winlayout())
 
       api.nvim_set_current_win(win2)
       local win3 = api.nvim_open_win(0, true, {
@@ -1635,7 +1635,7 @@ describe('API/win', function()
             },
           },
         },
-      }, api.nvim_call_function('winlayout', {}))
+      }, fn.winlayout())
 
       api.nvim_win_set_config(0, {
         vertical = false,
@@ -1661,7 +1661,7 @@ describe('API/win', function()
             },
           },
         },
-      }, api.nvim_call_function('winlayout', {}))
+      }, fn.winlayout())
     end)
   end)
 
@@ -1801,7 +1801,7 @@ describe('API/win', function()
         win = -1,
       })
 
-      local layout = api.nvim_call_function('winlayout', {})
+      local layout = fn.winlayout()
 
       eq({
         'row',
