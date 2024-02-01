@@ -2153,7 +2153,6 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   int maxwidth;
   schar_T fillchar = 0;
   int statuscol_lnum = 0;
-  Window window = 0;
 
   if (str.size < 2 || memcmp(str.data, "%!", 2) != 0) {
     const char *const errmsg = check_stl_option(str.data);
@@ -2162,9 +2161,8 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     });
   }
 
-  if (HAS_KEY(opts, eval_statusline, winid)) {
-    window = opts->winid;
-  }
+  Window window = opts->winid;
+
   if (HAS_KEY(opts, eval_statusline, fillchar)) {
     VALIDATE_EXP((*opts->fillchar.data != 0
                   && ((size_t)utfc_ptr2len(opts->fillchar.data) == opts->fillchar.size)),

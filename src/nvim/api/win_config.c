@@ -203,6 +203,7 @@
 Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, Error *err)
   FUNC_API_SINCE(6) FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
+#define HAS_KEY_X(d, key) HAS_KEY(d, float_config, key)
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
     return 0;
@@ -217,13 +218,13 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
     return 0;
   }
 
-  bool is_split = HAS_KEY(config, float_config, split) || HAS_KEY(config, float_config, vertical);
+  bool is_split = HAS_KEY_X(config, split) || HAS_KEY_X(config, vertical);
 
   win_T *wp = NULL;
   tabpage_T *tp = curtab;
   if (is_split) {
     win_T *parent = NULL;
-    if (!HAS_KEY(config, float_config, win) || config->win != -1) {
+    if (config->win != -1) {
       parent = find_window_by_handle(fconfig.window, err);
       if (!parent) {
         // find_window_by_handle has already set the error
@@ -234,7 +235,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
       }
     }
 
-    if (HAS_KEY(config, float_config, vertical) && !HAS_KEY(config, float_config, split)) {
+    if (HAS_KEY_X(config, vertical) && !HAS_KEY_X(config, split)) {
       if (config->vertical) {
         fconfig.split = p_spr ? kWinSplitRight : kWinSplitLeft;
       } else {
@@ -286,6 +287,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
     didset_window_options(wp, true);
   }
   return wp->handle;
+#undef HAS_KEY_X
 }
 
 static WinSplit win_split_dir(win_T *win)
@@ -333,20 +335,20 @@ static int win_split_flags(WinSplit split, bool toplevel)
 void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
   FUNC_API_SINCE(6)
 {
+#define HAS_KEY_X(d, key) HAS_KEY(d, float_config, key)
   win_T *win = find_window_by_handle(window, err);
   if (!win) {
     return;
   }
   tabpage_T *win_tp = win_find_tabpage(win);
   bool was_split = !win->w_floating;
-  bool has_split = HAS_KEY(config, float_config, split);
-  bool has_vertical = HAS_KEY(config, float_config, vertical);
+  bool has_split = HAS_KEY_X(config, split);
+  bool has_vertical = HAS_KEY_X(config, vertical);
   // reuse old values, if not overridden
   FloatConfig fconfig = win->w_float_config;
 
-  bool to_split = (!HAS_KEY(config, float_config, relative) || striequal(config->relative.data, ""))
-                  && ((!HAS_KEY(config, float_config, external) && !fconfig.external)
-                      || !config->external)
+  bool to_split = config->relative.size == 0
+                  && !(HAS_KEY_X(config, external) ? config->external : fconfig.external)
                   && (has_split || has_vertical || was_split);
 
   if (!parse_float_config(config, &fconfig, !was_split || to_split, false, err)) {
@@ -359,7 +361,7 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
     redraw_later(win, UPD_NOT_VALID);
   } else if (to_split) {
     win_T *parent = NULL;
-    if (!HAS_KEY(config, float_config, win) || config->win != -1) {
+    if (config->win != -1) {
       parent = find_window_by_handle(fconfig.window, err);
       if (!parent) {
         return;
@@ -387,16 +389,14 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
     }
     win->w_float_config = fconfig;
 
-    // If there's no vertical or split set, or if the split is the same as the old split,
+    // If there's no "vertical" or "split" set, or if "split" is unchanged,
     // then we can just change the size of the window.
     if ((!has_vertical && !has_split)
-        || (was_split
-            && !HAS_KEY(config, float_config,
-                        win) && ((!has_split && !has_vertical) || old_split == fconfig.split))) {
-      if (HAS_KEY(config, float_config, width)) {
+        || (was_split && !HAS_KEY_X(config, win) && old_split == fconfig.split)) {
+      if (HAS_KEY_X(config, width)) {
         win_setwidth_win(fconfig.width, win);
       }
-      if (HAS_KEY(config, float_config, height)) {
+      if (HAS_KEY_X(config, height)) {
         win_setheight_win(fconfig.height, win);
       }
       redraw_later(win, UPD_NOT_VALID);
@@ -518,10 +518,10 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
         return;
       }
     }
-    if (HAS_KEY(config, float_config, width)) {
+    if (HAS_KEY_X(config, width)) {
       win_setwidth_win(fconfig.width, win);
     }
-    if (HAS_KEY(config, float_config, height)) {
+    if (HAS_KEY_X(config, height)) {
       win_setheight_win(fconfig.height, win);
     }
     redraw_later(win, UPD_NOT_VALID);
@@ -530,12 +530,13 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
     win_config_float(win, fconfig);
     win->w_pos_changed = true;
   }
-  if (HAS_KEY(config, float_config, style)) {
+  if (HAS_KEY_X(config, style)) {
     if (fconfig.style == kWinStyleMinimal) {
       win_set_minimal_style(win);
       didset_window_options(win, true);
     }
   }
+#undef HAS_KEY_X
 }
 
 static Dictionary config_put_bordertext(Dictionary config, FloatConfig *fconfig,
@@ -943,7 +944,7 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
 {
 #define HAS_KEY_X(d, key) HAS_KEY(d, float_config, key)
   bool has_relative = false, relative_is_win = false, is_split = false;
-  if (HAS_KEY_X(config, relative) && !striequal(config->relative.data, "")) {
+  if (config->relative.size > 0) {
     if (!parse_float_relative(config->relative, &fconfig->relative)) {
       api_set_error(err, kErrorTypeValidation, "Invalid value of 'relative' key");
       return false;
@@ -961,7 +962,7 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
       relative_is_win = true;
       fconfig->bufpos.lnum = -1;
     }
-  } else if (!HAS_KEY_X(config, external) || !config->external) {
+  } else if (!config->external) {
     if (HAS_KEY_X(config, vertical) || HAS_KEY_X(config, split)) {
       is_split = true;
     } else if (new_win) {
