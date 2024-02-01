@@ -313,8 +313,7 @@ describe('vim.fs', function()
         )
       )
     end)
-    it('works with UNC paths', function()
-      -- See https://github.com/neovim/neovim/issues/27068 for more detail
+    it('works with UNC paths #27068 #27202', function()
       eq('//foo', vim.fs.normalize('//foo')) -- UNC path
       eq('//foo', vim.fs.normalize('///foo')) -- UNC path
       eq('/foo', vim.fs.normalize('/foo')) -- Not a UNC path
