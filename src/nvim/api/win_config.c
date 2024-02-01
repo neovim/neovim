@@ -915,7 +915,8 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
       memcpy(hl_ids + size, hl_ids, sizeof(*hl_ids) * size);
       size <<= 1;
     }
-    if ((chars[7][0] && chars[1][0] && !chars[0][0]) || (chars[1][0] && chars[3][0] && !chars[2][0])
+    if ((chars[7][0] && chars[1][0] && !chars[0][0])
+        || (chars[1][0] && chars[3][0] && !chars[2][0])
         || (chars[3][0] && chars[5][0] && !chars[4][0])
         || (chars[5][0] && chars[7][0] && !chars[6][0])) {
       api_set_error(err, kErrorTypeValidation, "corner between used edges must be specified");

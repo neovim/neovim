@@ -889,7 +889,7 @@ typedef enum {
   kFloatRelativeMouse = 3,
 } FloatRelative;
 
-/// Keep in sync with win_split_str in nvim_win_get_config() (api/win_config.c)
+/// Keep in sync with win_split_str[] in nvim_win_get_config() (api/win_config.c)
 typedef enum {
   kWinSplitLeft = 0,
   kWinSplitRight = 1,
