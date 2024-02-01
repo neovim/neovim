@@ -1968,7 +1968,7 @@ static void set_option_from_tv(const char *varname, typval_T *varp)
 }
 
 /// "setwinvar()" and "settabwinvar()" functions
-static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
+static void setwinvar(typval_T *argvars, int off)
 {
   if (check_secure()) {
     return;
@@ -2077,8 +2077,6 @@ void f_getbufvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "settabvar()" function
 void f_settabvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  rettv->vval.v_number = 0;
-
   if (check_secure()) {
     return;
   }
@@ -2110,13 +2108,13 @@ void f_settabvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "settabwinvar()" function
 void f_settabwinvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  setwinvar(argvars, rettv, 1);
+  setwinvar(argvars, 1);
 }
 
 /// "setwinvar()" function
 void f_setwinvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  setwinvar(argvars, rettv, 0);
+  setwinvar(argvars, 0);
 }
 
 /// "setbufvar()" function
