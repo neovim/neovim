@@ -693,6 +693,9 @@ function M.rename(old_fname, new_fname, opts)
     end)
   end
 
+  local newdir = assert(vim.fs.dirname(new_fname))
+  vim.fn.mkdir(newdir, 'p')
+
   local ok, err = os.rename(old_fname, new_fname)
   assert(ok, err)
 
