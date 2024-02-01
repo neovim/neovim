@@ -356,14 +356,16 @@ function M.normalize(path, opts)
     path = path:gsub('%$([%w_]+)', vim.uv.os_getenv)
   end
 
+  path = path:gsub([[\]], '/') -- Normalize slashes
+
   local first = path:sub(1, 1)
-  path = (first == '\\' and '/' or first) .. path:sub(2):gsub('[\\/]+', '/'):gsub('/$', '')
-  -- UNC path starts with double (or more) slash, followed by more than one character.
-  -- Therefore ignore first letter from `:gsub('[\\/]+', '/')`.
+  path = first .. path:sub(2):gsub('/+', '/'):gsub('/$', '') -- Remove redundant slashes
+  -- UNC path starts with double (or more) slashes, followed by more than one character.
+  -- Therefore ignore first letter from `:gsub('/+', '/')`.
   -- `//` is not a valid UNC path, hence converted to `/` with `:gsub('/$', '')`.
   -- This also keeps traling slash in the case of root `/`, but removes it otherwise.
 
-  if iswin and path:sub(2, 2) == ':' then -- capitalize windows drive name
+  if iswin and path:sub(2, 2) == ':' then -- Capitalize Windows drive name
     return first:upper() .. ':/' .. path:sub(4)
   end
   return path
