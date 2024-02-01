@@ -15,36 +15,36 @@ local mkdir = helpers.mkdir
 local nvim_prog_basename = is_os('win') and 'nvim.exe' or 'nvim'
 
 local test_basename_dirname_eq = {
-  '~/foo/',
-  '~/foo',
-  '~/foo/bar.lua',
-  'foo.lua',
-  ' ',
-  '',
-  '.',
-  '..',
-  '../',
-  '~',
-  '/usr/bin',
-  '/usr/bin/gcc',
-  '/',
-  '/usr/',
-  '/usr',
-  'c:/usr',
-  'c:/',
-  'c:',
-  'c:/users/foo',
-  'c:/users/foo/bar.lua',
-  'c:/users/foo/bar/../',
+  [[~/foo/]],
+  [[~/foo]],
+  [[~/foo/bar.lua]],
+  [[foo.lua]],
+  [[ ]],
+  [[]],
+  [[.]],
+  [[..]],
+  [[../]],
+  [[~]],
+  [[/usr/bin]],
+  [[/usr/bin/gcc]],
+  [[/]],
+  [[/usr/]],
+  [[/usr]],
+  [[c:/usr]],
+  [[c:/]],
+  [[c:]],
+  [[c:/users/foo]],
+  [[c:/users/foo/bar.lua]],
+  [[c:/users/foo/bar/../]],
 }
 
 local tests_windows_paths = {
-  'c:\\usr',
-  'c:\\',
-  'c:',
-  'c:\\users\\foo',
-  'c:\\users\\foo\\bar.lua',
-  'c:\\users\\foo\\bar\\..\\',
+  [[c:\usr]],
+  [[c:\]],
+  [[c:]],
+  [[c:\users\foo]],
+  [[c:\users\foo\bar.lua]],
+  [[c:\users\foo\bar\..\]],
 }
 
 before_each(clear)
@@ -283,10 +283,10 @@ describe('vim.fs', function()
 
   describe('normalize()', function()
     it('works with backward slashes', function()
-      eq('C:/Users/jdoe', vim.fs.normalize('C:\\Users\\jdoe'))
+      eq('C:/Users/jdoe', vim.fs.normalize([[C:\Users\jdoe]]))
     end)
     it('works with mixed forward and backward slashes', function()
-      eq('C:/Users/jdoe', vim.fs.normalize('C:\\//Users//\\jdoe//\\'))
+      eq('C:/Users/jdoe', vim.fs.normalize([[C:\/Users/\jdoe/\]]))
     end)
     it('removes trailing /', function()
       eq('/home/user', vim.fs.normalize('/home/user/'))
@@ -329,8 +329,8 @@ describe('vim.fs', function()
         eq('C:/', vim.fs.normalize('C:/'))
       end)
       it('Capitalizes drive name on Windows', function()
-        eq('C:/foo/bar', vim.fs.normalize('c:\\foo/bar\\//'))
-        eq('c/this/is/a/relative/path', vim.fs.normalize('c\\this\\is\\a\\relative\\path'))
+        eq('C:/foo/bar', vim.fs.normalize([[c:\foo/bar\/]]))
+        eq('c/this/is/a/relative/path', vim.fs.normalize([[c\this\is\a\relative\path]]))
       end)
     end
   end)
