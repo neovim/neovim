@@ -3,7 +3,7 @@
 " Maintainer:           D. Ben Knoble <ben.knoble+github@gmail.com>
 " Previous Maintainer:  Will Langstroth <will@langstroth.com>
 " URL:                  https://github.com/benknoble/vim-racket
-" Last Change:          2024 Jan 30
+" Last Change:          2024 Jan 31
 
 if exists("b:did_indent")
    finish
@@ -66,4 +66,4 @@ setlocal lispwords+=if-view,case-view,cond-view,list-view,dyn-view
 setlocal lispwords+=case/dep
 setlocal lispwords+=define/obs
 
-let b:undo_indent = "setlocal lisp< ai< si< lw<" .. (has('vim9script') ? 'indentexpr< lispoptions<' : '')
+let b:undo_indent = "setlocal lisp< ai< si< lw<" .. (has('vim9script') ? ' indentexpr< lispoptions<' : '')
