@@ -348,20 +348,20 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
   // reuse old values, if not overridden
   FloatConfig fconfig = win->w_float_config;
 
-  bool is_split = (!HAS_KEY(config, float_config, relative) || striequal(config->relative.data, ""))
+  bool to_split = (!HAS_KEY(config, float_config, relative) || striequal(config->relative.data, ""))
                   && ((!HAS_KEY(config, float_config,
                                 external) && !fconfig.external) || !config->external)
                   && (has_split || has_vertical || was_normal);
 
-  if (!parse_float_config(config, &fconfig, !was_normal || is_split, false, err)) {
+  if (!parse_float_config(config, &fconfig, !was_normal || to_split, false, err)) {
     return;
   }
-  if (was_normal && !is_split) {
+  if (was_normal && !to_split) {
     if (!win_new_float(win, false, fconfig, err)) {
       return;
     }
     redraw_later(win, UPD_NOT_VALID);
-  } else if (is_split) {
+  } else if (to_split) {
     win_T *parent = NULL;
     if (!HAS_KEY(config, float_config, win) || config->win != -1) {
       parent = find_window_by_handle(fconfig.window, err);
