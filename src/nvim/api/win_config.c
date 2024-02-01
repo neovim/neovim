@@ -476,10 +476,8 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
           && win_tp != win_find_tabpage(parent)) {
         win_enter(new_curwin, true);
       }
-      // Remove the old window from the tree of frames,
       win_remove(win, win_tp == curtab ? NULL : win_tp);
     } else {
-      // Remove the old window from the tree of frames
       win_remove(win, win_tp == curtab ? NULL : win_tp);
       ui_comp_remove_grid(&win->w_grid_alloc);
       if (win->w_float_config.external) {
