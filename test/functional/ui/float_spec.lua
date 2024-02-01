@@ -1102,7 +1102,6 @@ describe('float window', function()
       local expected = {anchor='NW', col=5, external=false, focusable=true, height=2, relative='editor', row=3, width=20, zindex=60, hide=false}
       eq(expected, api.nvim_win_get_config(win))
 
-      -- eq({relative='', external=false, focusable=true, hide=false}, api.nvim_win_get_config(0))
       eq({external=false, focusable=true, hide=false, relative='',split="left",width=40,height=6}, api.nvim_win_get_config(0))
 
       if multigrid then
