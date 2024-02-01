@@ -1237,7 +1237,7 @@ describe('API/win', function()
       local win = api.nvim_open_win(0, true, {
         vertical = false,
       })
-      eq(api.nvim_win_get_config(win).relative, '')
+      eq('', api.nvim_win_get_config(win).relative)
     end)
 
     it('creates split windows in the correct direction', function()
@@ -1245,7 +1245,7 @@ describe('API/win', function()
       local win = api.nvim_open_win(0, true, {
         vertical = true,
       })
-      eq(api.nvim_win_get_config(win).relative, '')
+      eq('', api.nvim_win_get_config(win).relative)
 
       local layout = fn.winlayout()
 
@@ -1263,7 +1263,7 @@ describe('API/win', function()
       local win = api.nvim_open_win(0, true, {
         split = 'below',
       })
-      eq(api.nvim_win_get_config(win).relative, '')
+      eq('', api.nvim_win_get_config(win).relative)
 
       local layout = fn.winlayout()
 
@@ -1290,7 +1290,7 @@ describe('API/win', function()
         eq({ tab1, tab2 }, api.nvim_list_tabpages())
 
         api.nvim_set_current_tabpage(tab1)
-        eq(api.nvim_get_current_win(), tab1_win)
+        eq(tab1_win, api.nvim_get_current_win())
 
         local tab2_prevwin = fn.tabpagewinnr(tab2, '#')
 
@@ -1299,11 +1299,11 @@ describe('API/win', function()
           win = tab2_win,
           split = 'right',
         })
-        eq(api.nvim_get_current_win(), tab1_win) -- we should still be in the first tp
-        eq(api.nvim_tabpage_get_win(tab1), tab1_win)
+        eq(tab1_win, api.nvim_get_current_win()) -- we should still be in the first tp
+        eq(tab1_win, api.nvim_tabpage_get_win(tab1))
 
-        eq(api.nvim_tabpage_get_win(tab2), tab2_win) -- tab2's tp_curwin should not have changed
-        eq(fn.tabpagewinnr(tab2, '#'), tab2_prevwin) -- tab2's tp_prevwin should not have changed
+        eq(tab2_win, api.nvim_tabpage_get_win(tab2)) -- tab2's tp_curwin should not have changed
+        eq(tab2_prevwin, fn.tabpagewinnr(tab2, '#')) -- tab2's tp_prevwin should not have changed
         eq({ tab1_win, tab2_win, tab2_win2 }, api.nvim_list_wins())
         eq({ tab2_win, tab2_win2 }, api.nvim_tabpage_list_wins(tab2))
       end
@@ -1316,13 +1316,13 @@ describe('API/win', function()
         vertical = false,
       })
       local layout = fn.winlayout()
-      eq(layout, {
+      eq({
         'col',
         {
           { 'leaf', win },
           { 'leaf', first_win },
         },
-      })
+      }, layout)
       -- not specifying a window should create a top-level split
       local win2 = api.nvim_open_win(0, true, {
         split = 'left',
@@ -1371,7 +1371,7 @@ describe('API/win', function()
       local win = api.nvim_open_win(0, true, {
         vertical = false,
       })
-      eq(api.nvim_win_get_config(win).relative, '')
+      eq('', api.nvim_win_get_config(win).relative)
       api.nvim_win_set_config(win, {
         relative = 'editor',
         row = 5,
@@ -1379,7 +1379,7 @@ describe('API/win', function()
         width = 5,
         height = 5,
       })
-      eq(api.nvim_win_get_config(win).relative, 'editor')
+      eq('editor', api.nvim_win_get_config(win).relative)
     end)
 
     it('throws error when attempting to move the last window', function()
@@ -1515,13 +1515,13 @@ describe('API/win', function()
       command('tabnext') -- switch to the new tabpage so we can get the layout
       local layout = fn.winlayout()
 
-      eq(layout, {
+      eq({
         'row',
         {
           { 'leaf', api.nvim_tabpage_get_win(tabnr) },
           { 'leaf', win },
         },
-      })
+      }, layout)
     end)
 
     it('correctly moves curwin when moving curwin to a different tabpage', function()
@@ -1549,7 +1549,7 @@ describe('API/win', function()
         win = api.nvim_tabpage_get_win(tab2),
       })
 
-      eq(api.nvim_get_current_tabpage(), curtab)
+      eq(curtab, api.nvim_get_current_tabpage())
 
       -- win should have moved to tab2
       eq(tab2, api.nvim_win_get_tabpage(win))
@@ -1588,14 +1588,14 @@ describe('API/win', function()
         vertical = true,
       })
       api.nvim_set_current_win(win)
-      eq(fn.winlayout(), {
+      eq({
         'row',
         {
           { 'leaf', win2 },
           { 'leaf', win },
           { 'leaf', initial_win },
         },
-      })
+      }, fn.winlayout())
 
       api.nvim_win_set_config(0, {
         vertical = false,
@@ -1729,22 +1729,22 @@ describe('API/win', function()
         vertical = true,
         win = -1,
       })
-      eq(api.nvim_win_get_config(win).split, 'left')
+      eq('left', api.nvim_win_get_config(win).split)
       api.nvim_win_set_config(win, {
         vertical = false,
         win = -1,
       })
-      eq(api.nvim_win_get_config(win).split, 'above')
+      eq('above', api.nvim_win_get_config(win).split)
       api.nvim_win_set_config(win, {
         split = 'below',
         win = -1,
       })
-      eq(api.nvim_win_get_config(win).split, 'below')
+      eq('below', api.nvim_win_get_config(win).split)
     end)
 
     it('includes split when splitting with ex commands', function()
       local win = api.nvim_get_current_win()
-      eq(api.nvim_win_get_config(win).split, 'left')
+      eq('left', api.nvim_win_get_config(win).split)
 
       command('vsplit')
       local win2 = api.nvim_get_current_win()
@@ -1752,8 +1752,8 @@ describe('API/win', function()
       -- initial window now be marked as right split
       -- since it was split with a vertical split
       -- and 'splitright' is false by default
-      eq(api.nvim_win_get_config(win).split, 'right')
-      eq(api.nvim_win_get_config(win2).split, 'left')
+      eq('right', api.nvim_win_get_config(win).split)
+      eq('left', api.nvim_win_get_config(win2).split)
 
       api.nvim_set_option_value('splitbelow', true, {
         scope = 'global',
@@ -1761,7 +1761,7 @@ describe('API/win', function()
       api.nvim_win_close(win, true)
       command('split')
       local win3 = api.nvim_get_current_win()
-      eq(api.nvim_win_get_config(win3).split, 'below')
+      eq('below', api.nvim_win_get_config(win3).split)
     end)
 
     it("includes the correct 'split' option in complex layouts", function()
@@ -1827,11 +1827,11 @@ describe('API/win', function()
         },
       }, layout)
 
-      eq(api.nvim_win_get_config(win3).split, 'above')
-      eq(api.nvim_win_get_config(win).split, 'left')
-      eq(api.nvim_win_get_config(initial_win).split, 'left')
-      eq(api.nvim_win_get_config(win2).split, 'right')
-      eq(api.nvim_win_get_config(float).split, 'right')
+      eq('above', api.nvim_win_get_config(win3).split)
+      eq('left', api.nvim_win_get_config(win).split)
+      eq('left', api.nvim_win_get_config(initial_win).split)
+      eq('right', api.nvim_win_get_config(win2).split)
+      eq('right', api.nvim_win_get_config(float).split)
     end)
   end)
 
