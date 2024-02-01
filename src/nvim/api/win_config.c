@@ -446,14 +446,8 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
             // └─────────┴─────────┘
             if (fconfig.split == kWinSplitAbove || fconfig.split == kWinSplitLeft) {
               neighbor = win->w_next;
-              while (neighbor->w_floating) {
-                neighbor = neighbor->w_next;
-              }
             } else {
               neighbor = win->w_prev;
-              while (neighbor->w_floating) {
-                neighbor = neighbor->w_prev;
-              }
             }
           }
           // If the frame doesn't have a parent, the old frame
