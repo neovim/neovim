@@ -10558,7 +10558,7 @@ fun! s:NetrwRemoteRmFile(path,rmfile,all)
       NetrwKeepj call netrw#ErrorMsg(s:ERROR,"for some reason b:netrw_curdir doesn't exist!",53)
       let ok="q"
      else
-      let remotedir= substitute(b:netrw_curdir,'^.*//[^/]\+/\(.*\)$','\1','')
+      let remotedir= substitute(b:netrw_curdir,'^.\{-}//[^/]\+/\(.*\)$','\1','')
 "      call Decho("netrw_rm_cmd<".netrw_rm_cmd.">",'~'.expand("<slnum>"))
 "      call Decho("remotedir<".remotedir.">",'~'.expand("<slnum>"))
 "      call Decho("rmfile<".a:rmfile.">",'~'.expand("<slnum>"))
