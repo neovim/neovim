@@ -349,8 +349,7 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
   FloatConfig fconfig = win->w_float_config;
 
   bool to_split = (!HAS_KEY(config, float_config, relative) || striequal(config->relative.data, ""))
-                  && ((!HAS_KEY(config, float_config,
-                                external) && !fconfig.external) || !config->external)
+                  && ((!HAS_KEY(config, float_config, external) && !fconfig.external) || !config->external)
                   && (has_split || has_vertical || was_normal);
 
   if (!parse_float_config(config, &fconfig, !was_normal || to_split, false, err)) {
