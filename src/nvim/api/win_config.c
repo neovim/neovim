@@ -342,7 +342,7 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
     return;
   }
   tabpage_T *win_tp = win_find_tabpage(win);
-  bool was_normal = !win->w_floating;
+  bool was_split = !win->w_floating;
   bool has_split = HAS_KEY(config, float_config, split);
   bool has_vertical = HAS_KEY(config, float_config, vertical);
   // reuse old values, if not overridden
@@ -350,12 +350,12 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
 
   bool to_split = (!HAS_KEY(config, float_config, relative) || striequal(config->relative.data, ""))
                   && ((!HAS_KEY(config, float_config, external) && !fconfig.external) || !config->external)
-                  && (has_split || has_vertical || was_normal);
+                  && (has_split || has_vertical || was_split);
 
-  if (!parse_float_config(config, &fconfig, !was_normal || to_split, false, err)) {
+  if (!parse_float_config(config, &fconfig, !was_split || to_split, false, err)) {
     return;
   }
-  if (was_normal && !to_split) {
+  if (was_split && !to_split) {
     if (!win_new_float(win, false, fconfig, err)) {
       return;
     }
@@ -393,7 +393,7 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
     // If there's no vertical or split set, or if the split is the same as the old split,
     // then we can just change the size of the window.
     if ((!has_vertical && !has_split)
-        || (was_normal
+        || (was_split
             && !HAS_KEY(config, float_config,
                         win) && ((!has_split && !has_vertical) || old_split == fconfig.split))) {
       if (HAS_KEY(config, float_config, width)) {
@@ -406,7 +406,7 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
       return;
     }
 
-    if (was_normal) {
+    if (was_split) {
       win_T *new_curwin = NULL;
 
       // If the window is the last in the tabpage or `fconfig.win` is
