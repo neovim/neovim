@@ -115,10 +115,12 @@ typedef struct {
   Integer height;
   String anchor;
   String relative;
+  String split;
   Window win;
   Array bufpos;
   Boolean external;
   Boolean focusable;
+  Boolean vertical;
   Integer zindex;
   Object border;
   Object title;

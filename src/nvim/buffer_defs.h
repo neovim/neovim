@@ -889,6 +889,14 @@ typedef enum {
   kFloatRelativeMouse = 3,
 } FloatRelative;
 
+/// Keep in sync with win_split_str[] in nvim_win_get_config() (api/win_config.c)
+typedef enum {
+  kWinSplitLeft = 0,
+  kWinSplitRight = 1,
+  kWinSplitAbove = 2,
+  kWinSplitBelow = 3,
+} WinSplit;
+
 typedef enum {
   kWinStyleUnused = 0,
   kWinStyleMinimal,  /// Minimal UI: no number column, eob markers, etc
@@ -914,6 +922,7 @@ typedef struct {
   FloatRelative relative;
   bool external;
   bool focusable;
+  WinSplit split;
   int zindex;
   WinStyle style;
   bool border;
@@ -939,6 +948,7 @@ typedef struct {
                                           .row = 0, .col = 0, .anchor = 0, \
                                           .relative = 0, .external = false, \
                                           .focusable = true, \
+                                          .split = 0, \
                                           .zindex = kZIndexFloatDefault, \
                                           .style = kWinStyleUnused, \
                                           .noautocmd = false, \

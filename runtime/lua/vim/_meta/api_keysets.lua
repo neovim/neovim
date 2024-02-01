@@ -118,10 +118,12 @@ error('Cannot require a meta file')
 --- @field height? integer
 --- @field anchor? string
 --- @field relative? string
+--- @field split? string
 --- @field win? integer
 --- @field bufpos? any[]
 --- @field external? boolean
 --- @field focusable? boolean
+--- @field vertical? boolean
 --- @field zindex? integer
 --- @field border? any
 --- @field title? any
