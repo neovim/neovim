@@ -323,6 +323,10 @@ syn region	vimString	oneline	start="=+"lc=1	skip="\\\\\|\\+" end="+"	contains=@v
 syn match	vimString	contained	+"[^"]*\\$+	skipnl nextgroup=vimStringCont
 syn match	vimStringCont	contained	+\(\\\\\|.\)\{-}[^\\]"+
 syn match	vimEscape	contained	"\\."
+" syn match	vimEscape	contained	+\\[befnrt\"]+
+syn match	vimEscape	contained	"\\\o\{1,3}\|\\[xX]\x\{1,2}\|\\u\x\{1,4}\|\\U\x\{1,8}"
+syn match	vimEscape	contained	"\\<" contains=vimNotation
+syn match	vimEscape	contained	"\\<\*[^>]*>\=>"
 
 syn region	vimString start=+$'+ end=+'+ skip=+''+ oneline contains=vimStringInterpolationBrace,vimStringInterpolationExpr
 syn region	vimString start=+$"+ end=+"+ oneline contains=@vimStringGroup,vimStringInterpolationBrace,vimStringInterpolationExpr
@@ -458,13 +462,23 @@ syn match	vimMenuBang	"!"	contained skipwhite nextgroup=@vimMenuList
 " Angle-Bracket Notation: (tnx to Michael Geddes) {{{2
 " ======================
 syn case ignore
-syn match	vimNotation	"\%#=1\(\\\|<lt>\)\=<\([scamd]-\)\{0,4}x\=\(f\d\{1,2}\|[^ \t:]\|cmd\|scriptcmd\|cr\|lf\|linefeed\|return\|enter\|k\=del\%[ete]\|bs\|backspace\|tab\|esc\|right\|left\|help\|undo\|insert\|ins\|mouse\|k\=home\|k\=end\|kplus\|kminus\|kdivide\|kmultiply\|kenter\|kpoint\|space\|k\=\(page\)\=\(\|down\|up\|k\d\>\)\)>" contains=vimBracket
-syn match	vimNotation	"\%#=1\(\\\|<lt>\)\=<\([scam2-4]-\)\{0,4}\(right\|left\|middle\)\(mouse\)\=\(drag\|release\)\=>"	contains=vimBracket
-syn match	vimNotation	"\%#=1\(\\\|<lt>\)\=<\(bslash\|plug\|sid\|space\|bar\|nop\|nul\|lt\)>"			contains=vimBracket
-syn match	vimNotation	'\(\\\|<lt>\)\=<C-R>[0-9a-z"%#:.\-=]'he=e-1				contains=vimBracket
-syn match	vimNotation	'\%#=1\(\\\|<lt>\)\=<\%(q-\)\=\(line[12]\|count\|bang\|reg\|args\|mods\|f-args\|f-mods\|lt\)>'	contains=vimBracket
-syn match	vimNotation	"\%#=1\(\\\|<lt>\)\=<\([cas]file\|abuf\|amatch\|cword\|cWORD\|client\)>"		contains=vimBracket
-syn match	vimNotation	"\%#=1\(\\\|<lt>\)\=<\%([scamd]-\)\{0,4}char-\%(\d\+\|0\o\+\|0x\x\+\)>"			contains=vimBracket
+syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd]-\)\{0,4}x\=\%(f\d\{1,2}\|[^ \t:]\|space\|bar\|bslash\|nl\|newline\|lf\|linefeed\|cr\|retu\%[rn]\|enter\|k\=del\%[ete]\|bs\|backspace\|tab\|esc\|csi\|right\|paste\%(start\|end\)\|left\|help\|undo\|k\=insert\|ins\|mouse\|[kz]\=home\|[kz]\=end\|kplus\|kminus\|kdivide\|kmultiply\|kenter\|kpoint\|space\|k\=\%(page\)\=\%(\|down\|up\|k\d\>\)\)>" contains=vimBracket
+
+syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}\%(net\|dec\|jsb\|pterm\|urxvt\|sgr\)mouse>"		contains=vimBracket
+syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}\%(left\|middle\|right\)\%(mouse\|drag\|release\)>"	contains=vimBracket
+syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}left\%(mouse\|release\)nm>"			contains=vimBracket
+syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}x[12]\%(mouse\|drag\|release\)>"		contains=vimBracket
+syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}sgrmouserelease>"			contains=vimBracket
+syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}mouse\%(up\|down\|move\)>"			contains=vimBracket
+syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}scrollwheel\%(up\|down\|right\|left\)>"		contains=vimBracket
+
+syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%(sid\|nop\|nul\|lt\|drop\)>"				contains=vimBracket
+syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%(snr\|plug\|cursorhold\|ignore\|cmd\|scriptcmd\|focus\%(gained\|lost\)\)>"	contains=vimBracket
+syn match	vimNotation	'\%(\\\|<lt>\)\=<C-R>[0-9a-z"%#:.\-=]'he=e-1				contains=vimBracket
+syn match	vimNotation	'\%#=1\%(\\\|<lt>\)\=<\%(q-\)\=\%(line[12]\|count\|bang\|reg\|args\|mods\|f-args\|f-mods\|lt\)>'	contains=vimBracket
+syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([cas]file\|abuf\|amatch\|cexpr\|cword\|cWORD\|client\|stack\|script\|sf\=lnum\)>"	contains=vimBracket
+syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd]-\)\{0,4}char-\%(\d\+\|0\o\+\|0x\x\+\)>"		contains=vimBracket
+
 syn match	vimBracket contained	"[\\<>]"
 syn case match
 
