@@ -5099,6 +5099,33 @@ l5
     ]]}
   end)
 
+  it('correct width with moved marks before undo savepos', function()
+    screen:try_resize(20, 4)
+    insert(example_test3)
+    feed('gg')
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace('')
+      vim.api.nvim_buf_set_extmark(0, ns, 0, 0, { sign_text = 'S1' })
+      vim.api.nvim_buf_set_extmark(0, ns, 1, 0, { sign_text = 'S2' })
+      local s3 = vim.api.nvim_buf_set_extmark(0, ns, 2, 0, { sign_text = 'S3' })
+      local s4 = vim.api.nvim_buf_set_extmark(0, ns, 2, 0, { sign_text = 'S4' })
+      vim.schedule(function()
+        vim.cmd('silent d3')
+        vim.api.nvim_buf_set_extmark(0, ns, 2, 0, { id = s3, sign_text = 'S3' })
+        vim.api.nvim_buf_set_extmark(0, ns, 2, 0, { id = s4, sign_text = 'S4' })
+        vim.cmd('silent undo')
+        vim.api.nvim_buf_del_extmark(0, ns, s3)
+      end)
+    ]])
+
+    screen:expect{grid=[[
+      S1^l1                |
+      S2l2                |
+      S4l3                |
+                          |
+    ]]}
+  end)
+
   it('no crash with sign after many marks #27137', function()
     screen:try_resize(20, 4)
     insert('a')

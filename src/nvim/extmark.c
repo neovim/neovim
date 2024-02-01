@@ -107,20 +107,33 @@ revised:
   }
 }
 
-static bool extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col)
+static void extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col, bool invalid)
 {
   MarkTreeIter itr[1] = { 0 };
   MTKey key = marktree_lookup(buf->b_marktree, mark, itr);
-  if (key.pos.row == -1) {
-    return false;
+  if (key.pos.row < 0 || (key.pos.row == row && key.pos.col == col)) {
+    return;
   }
 
-  if (key.pos.row == row && key.pos.col == col) {
-    return true;
+  int row1 = 0;
+  int row2 = 0;
+  if (invalid) {
+    mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_INVALID;
+  } else if (key.flags & MT_FLAG_DECOR_SIGNTEXT && buf->b_signcols.autom) {
+    MTPos end = marktree_get_altpos(buf->b_marktree, key, NULL);
+    row1 = MIN(end.row, MIN(key.pos.row, row));
+    row2 = MAX(end.row, MAX(key.pos.row, row));
+    buf_signcols_count_range(buf, row1, row2, 0, kTrue);
   }
 
   marktree_move(buf->b_marktree, itr, row, col);
-  return true;
+
+  if (invalid) {
+    MTPos end = marktree_get_altpos(buf->b_marktree, key, NULL);
+    buf_put_decor(buf, mt_decor(key), row, end.row);
+  } else if (key.flags & MT_FLAG_DECOR_SIGNTEXT && buf->b_signcols.autom) {
+    buf_signcols_count_range(buf, row1, row2, 0, kNone);
+  }
 }
 
 /// Remove an extmark in "ns_id" by "id"
@@ -401,16 +414,8 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
     // kExtmarkSavePos
   } else if (undo_info.type == kExtmarkSavePos) {
     ExtmarkSavePos pos = undo_info.data.savepos;
-    if (undo) {
-      if (pos.old_row >= 0
-          && extmark_setraw(curbuf, pos.mark, pos.old_row, pos.old_col)
-          && pos.invalidated) {
-        MarkTreeIter itr[1] = { 0 };
-        MTKey mark = marktree_lookup(curbuf->b_marktree, pos.mark, itr);
-        mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_INVALID;
-        MTPos end = marktree_get_altpos(curbuf->b_marktree, mark, itr);
-        buf_put_decor(curbuf, mt_decor(mark), mark.pos.row, end.row);
-      }
+    if (undo && pos.old_row >= 0) {
+      extmark_setraw(curbuf, pos.mark, pos.old_row, pos.old_col, pos.invalidated);
     }
     // No Redo since kExtmarkSplice will move marks back
   } else if (undo_info.type == kExtmarkMove) {
@@ -527,7 +532,7 @@ void extmark_splice_impl(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
 
   // Remove signs inside edited region from "b_signcols.count", add after splicing.
   if (old_row > 0 || new_row > 0) {
-    buf_signcols_count_range(buf, start_row, start_row + old_row + 1, 0, kTrue);
+    buf_signcols_count_range(buf, start_row, start_row + old_row, 0, kTrue);
   }
 
   marktree_splice(buf->b_marktree, (int32_t)start_row, start_col,
@@ -535,7 +540,7 @@ void extmark_splice_impl(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
                   new_row, new_col);
 
   if (old_row > 0 || new_row > 0) {
-    buf_signcols_count_range(buf, start_row, start_row + new_row + 1, 0, kNone);
+    buf_signcols_count_range(buf, start_row, start_row + new_row, 0, kNone);
   }
 
   if (undo == kExtmarkUndo) {

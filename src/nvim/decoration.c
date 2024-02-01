@@ -691,15 +691,16 @@ static const uint32_t sign_filter[4] = {[kMTMetaSignText] = kMTFilterSelect,
 void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], int *line_id,
                         int *cul_id, int *num_id)
 {
-  MarkTreeIter itr[1];
-  if (!marktree_itr_get_overlap(buf->b_marktree, row, 0, itr)) {
+  if (!buf_has_signs(buf)) {
     return;
   }
 
   MTPair pair;
   int num_text = 0;
+  MarkTreeIter itr[1];
   kvec_t(SignItem) signs = KV_INITIAL_VALUE;
   // TODO(bfredl): integrate with main decor loop.
+  marktree_itr_get_overlap(buf->b_marktree, row, 0, itr);
   while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
     if (!mt_invalid(pair.start) && mt_decor_sign(pair.start)) {
       DecorSignHighlight *sh = decor_find_sign(mt_decor(pair.start));
@@ -778,12 +779,6 @@ void buf_signcols_count_range(buf_T *buf, int row1, int row2, int add, TriState 
 {
   if (!buf->b_signcols.autom || !buf_meta_total(buf, kMTMetaSignText)) {
     return;
-  }
-
-  static int nested = 0;
-  // An undo/redo may trigger subsequent calls before its own kNone call.
-  if ((nested += clear) > (0 + (clear == kTrue))) {
-    return;  // Avoid adding signs more than once.
   }
 
   // Allocate an array of integers holding the number of signs in the range.
