@@ -926,6 +926,7 @@ Dictionary channel_info(uint64_t id)
       }
     }
     PUT(info, "argv", ARRAY_OBJ(argv));
+    PUT(info, "exitstatus", INTEGER_OBJ(chan->stream.proc.status));
     break;
   }
 

@@ -43,6 +43,9 @@ describe('terminal channel is closed and later released if', function()
       "Vim(call):Can't send data to closed stream",
       pcall_err(command, [[call chanclose(id) | call chansend(id, 'test')]])
     )
+
+    command('set laststatus=2')
+
     screen:expect({ any = '%[Terminal closed%]' })
     eq(chans, eval('len(nvim_list_chans())'))
     -- delete terminal
@@ -62,6 +65,9 @@ describe('terminal channel is closed and later released if', function()
       "Vim(call):Can't send data to closed stream",
       pcall_err(command, [[call chanclose(id) | call chansend(id, 'test')]])
     )
+
+    command('set laststatus=2')
+
     screen:expect({ any = '%[Terminal closed%]' })
     eq(chans, eval('len(nvim_list_chans())'))
     -- channel still hasn't been released yet
@@ -78,6 +84,9 @@ describe('terminal channel is closed and later released if', function()
     command([[let id = termopen('echo')]])
     local chans = eval('len(nvim_list_chans())')
     -- wait for process to exit
+
+    command('set laststatus=2')
+
     screen:expect({ any = '%[Process exited 0%]' })
     -- process has exited but channel has't been released
     eq(
@@ -99,6 +108,9 @@ describe('terminal channel is closed and later released if', function()
     command([[let id = termopen('echo')]])
     local chans = eval('len(nvim_list_chans())')
     -- wait for process to exit
+
+    command('set laststatus=2')
+
     screen:expect({ any = '%[Process exited 0%]' })
     -- process has exited but channel hasn't been released
     eq(
@@ -160,14 +172,20 @@ describe('no crash when TermOpen autocommand', function()
     ]],
     }
     feed('<CR>')
+
+    command('set laststatus=2')
+
     screen:expect {
       grid = [[
       ^ready $ foobar                                              |
                                                                   |
-      [Process exited 0]                                          |
+      {MATCH:.*}[Process exited 0]{MATCH:.*}|
                                                                   |
     ]],
     }
+
+    command('set laststatus=1')
+
     feed('i<CR>')
     screen:expect {
       grid = [[

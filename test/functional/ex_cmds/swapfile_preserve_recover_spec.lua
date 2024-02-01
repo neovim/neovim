@@ -123,6 +123,9 @@ describe("preserve and (R)ecover with custom 'directory'", function()
     local swappath1 = setup_swapname()
     set_session(nvim0)
     command('call chanclose(&channel)') -- Kill the child process.
+
+    command('set laststatus=2')
+
     screen0:expect({ any = pesc('[Process exited 1]') }) -- Wait for the child process to stop.
     test_recover(swappath1)
   end)
@@ -420,6 +423,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
   -- attempt to create a swapfile in different directory.
   local init_dir = [[set directory^=]] .. swapdir:gsub([[\]], [[\\]]) .. [[//]]
   local init_set = [[set swapfile fileformat=unix nomodified undolevels=-1 nohidden]]
+  local screen
 
   before_each(function()
     clear({ args = { '--cmd', init_dir, '--cmd', init_set } })
@@ -434,11 +438,15 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
 
     ]]
     )
+    command('set laststatus=2')
     command('edit! ' .. testfile)
     feed('Gisometext<esc>')
     poke_eventloop()
+
     clear() -- Leaves a swap file behind
-    api.nvim_ui_attach(80, 30, {})
+    screen = Screen.new(80, 30)
+    screen:attach()
+    command('set laststatus=2')
   end)
   after_each(function()
     rmdir(swapdir)
@@ -453,18 +461,17 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
         env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
       }
     )
+
     retry(nil, nil, function()
-      eq(
-        '[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort:',
-        eval("getline('$')->trim(' ', 2)")
-      )
+      screen:expect({
+        any = pesc('[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort:'),
+      })
     end)
+
     api.nvim_chan_send(chan, 'q')
+
     retry(nil, nil, function()
-      eq(
-        { '', '[Process exited 1]', '' },
-        eval("[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})")
-      )
+      screen:expect({ any = pesc('[Process exited 1]') })
     end)
   end)
 
@@ -485,18 +492,17 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
     }, {
       env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
     })
+
     retry(nil, nil, function()
-      eq(
-        '[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort:',
-        eval("getline('$')->trim(' ', 2)")
-      )
+      screen:expect({
+        any = pesc('[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort:'),
+      })
     end)
+
     api.nvim_chan_send(chan, 'a')
+
     retry(nil, nil, function()
-      eq(
-        { '', '[Process exited 1]', '' },
-        eval("[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})")
-      )
+      screen:expect({ any = pesc('[Process exited 1]') })
     end)
   end)
 
@@ -525,22 +531,22 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
     }, {
       env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
     })
+
     retry(nil, nil, function()
-      eq(
-        '[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort:',
-        eval("getline('$')->trim(' ', 2)")
-      )
+      screen:expect({
+        any = pesc('[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort:'),
+      })
     end)
+
     api.nvim_chan_send(chan, 'q')
+
     retry(nil, nil, function()
-      eq('Press ENTER or type command to continue', eval("getline('$')->trim(' ', 2)"))
+      screen:expect({ any = 'Press ENTER or type command to continue' })
     end)
     api.nvim_chan_send(chan, '\r')
+
     retry(nil, nil, function()
-      eq(
-        { '', '[Process exited 1]', '' },
-        eval("[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})")
-      )
+      screen:expect({ any = pesc('[Process exited 1]') })
     end)
   end)
 end)

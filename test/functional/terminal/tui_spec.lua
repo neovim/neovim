@@ -1769,13 +1769,15 @@ describe('TUI', function()
   end)
 
   it('no assert failure on deadly signal #21896', function()
+    command('set laststatus=2')
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     screen:expect {
       grid = [[
       Vim: Caught deadly signal 'SIGTERM'               |
+                                                        |
+      {1: }                                                 |
                                                         |*2
-      [Process exited 1]{1: }                               |
-                                                        |*2
+      {MATCH:.*}[Process exited 1]{MATCH:.*}|
       {3:-- TERMINAL --}                                    |
     ]],
     }
@@ -2015,13 +2017,15 @@ describe('TUI', function()
       { VIMRUNTIME = os.getenv('VIMRUNTIME') }
     )
     feed_data(':w testF\n:q\n')
+
+    command('set laststatus=2')
     screen:expect([[
       :w testF                                          |
       :q                                                |
       abc                                               |
+      {1: }                                                 |
                                                         |
-      [Process exited 0]{1: }                               |
-                                                        |
+      {MATCH:.*}[Process exited 0]{MATCH:.*}|
       {3:-- TERMINAL --}                                    |
     ]])
   end)
@@ -2288,7 +2292,6 @@ describe('TUI FocusGained/FocusLost', function()
 
   it('in terminal-mode', function()
     feed_data(':set shell=' .. testprg('shell-test') .. ' shellcmdflag=EXE\n')
-    feed_data(':set noshowmode laststatus=0\n')
 
     feed_data(':terminal zia\n')
     -- Wait for terminal to be ready.
@@ -2296,8 +2299,8 @@ describe('TUI FocusGained/FocusLost', function()
       grid = [[
       {1:r}eady $ zia                                       |
                                                         |
-      [Process exited 0]                                |
                                                         |*2
+      {MATCH:.*}[Process exited 0]{MATCH:.*}|
       :terminal zia                                     |
       {3:-- TERMINAL --}                                    |
     ]],
@@ -2308,8 +2311,8 @@ describe('TUI FocusGained/FocusLost', function()
       grid = [[
       {1:r}eady $ zia                                       |
                                                         |
-      [Process exited 0]                                |
                                                         |*2
+      {MATCH:.*}[Process exited 0]{MATCH:.*}|
       gained                                            |
       {3:-- TERMINAL --}                                    |
     ]],
@@ -2320,8 +2323,8 @@ describe('TUI FocusGained/FocusLost', function()
     screen:expect([[
       {1:r}eady $ zia                                       |
                                                         |
-      [Process exited 0]                                |
                                                         |*2
+      {MATCH:.*}[Process exited 0]{MATCH:.*}|
       lost                                              |
       {3:-- TERMINAL --}                                    |
     ]])
@@ -3067,15 +3070,17 @@ describe('TUI as a client', function()
     ]],
     }
 
+    command('set laststatus=2')
     -- No heap-use-after-free when receiving UI events after deadly signal #22184
     server:request('nvim_input', ('a'):rep(1000))
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     screen_client:expect {
       grid = [[
       Vim: Caught deadly signal 'SIGTERM'               |
+                                                        |
+      {1: }                                                 |
                                                         |*2
-      [Process exited 1]{1: }                               |
-                                                        |*2
+      {MATCH:.*}[Process exited 1]{MATCH:.*}|
       {3:-- TERMINAL --}                                    |
     ]],
     }
@@ -3097,11 +3102,12 @@ describe('TUI as a client', function()
       '--remote-ui',
     }, { cols = 60 })
 
+    command('set laststatus=2')
     screen:expect([[
       Remote ui failed to start: {MATCH:.*}|
-                                                                  |
-      [Process exited 1]{1: }                                         |
+      {1: }                                                           |
                                                                   |*3
+      {MATCH:.*}[Process exited 1]{MATCH:.*}|
       {3:-- TERMINAL --}                                              |
     ]])
   end)
@@ -3176,20 +3182,29 @@ describe('TUI as a client', function()
     set_session(server_super)
     feed_data(status and ':' .. status .. 'cquit!\n' or ':quit!\n')
     status = status and status or 0
+    command('set laststatus=2')
     screen_server:expect {
       grid = [[
+      {1: }                                                 |
                                                         |
-      [Process exited ]] .. status .. [[]{1: }{MATCH:%s+}|
-                                                        |*4
+                                                        |
+                                                        |
+                                                        |
+      {MATCH:.*}[Process exited ]] .. status .. [[]{MATCH:.*}|
       {3:-- TERMINAL --}                                    |
     ]],
     }
     -- assert that client has exited
+    set_session(client_super)
+    command('set laststatus=2')
     screen_client:expect {
       grid = [[
+      {1: }                                                 |
                                                         |
-      [Process exited ]] .. status .. [[]{1: }{MATCH:%s+}|
-                                                        |*4
+                                                        |
+                                                        |
+                                                        |
+      {MATCH:.*}[Process exited ]] .. status .. [[]{MATCH:.*}|
       {3:-- TERMINAL --}                                    |
     ]],
     }

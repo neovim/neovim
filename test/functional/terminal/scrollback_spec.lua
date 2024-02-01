@@ -352,24 +352,26 @@ end)
 describe(':terminal prints more lines than the screen height and exits', function()
   it('will push extra lines to scrollback', function()
     clear()
-    local screen = Screen.new(30, 7)
+    local screen = Screen.new(50, 7)
     screen:attach({ rgb = false })
+    command('set laststatus=2')
     command(("call termopen(['%s', '10']) | startinsert"):format(testprg('tty-test')))
     screen:expect([[
-      line6                         |
-      line7                         |
-      line8                         |
-      line9                         |
-                                    |
-      [Process exited 0]            |
-      -- TERMINAL --                |
+      line6                                             |
+      line7                                             |
+      line8                                             |
+      line9                                             |
+                                                        |
+      {MATCH:.*}[Process exited 0]{MATCH:.*}|
+      -- TERMINAL --                                    |
     ]])
     feed('<cr>')
     -- closes the buffer correctly after pressing a key
     screen:expect([[
-      ^                              |
-      ~                             |*5
-                                    |
+      ^                                                  |
+      ~                                                 |*4
+      {MATCH:.*}|
+                                                        |
     ]])
   end)
 end)
@@ -574,7 +576,7 @@ describe('pending scrollback line handling', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(30, 7)
+    screen = Screen.new(50, 7)
     screen:attach()
     screen:set_default_attr_ids {
       [1] = { foreground = Screen.colors.Brown },
@@ -593,23 +595,23 @@ describe('pending scrollback line handling', function()
       api.nvim_win_set_buf(0, buf)
     ]]
     screen:expect [[
-      {1:  1 }^a                         |
-      {1:  2 }a                         |
-      {1:  3 }a                         |
-      {1:  4 }a                         |
-      {1:  5 }a                         |
-      {1:  6 }a                         |
-                                    |
+      {1:  1 }^a                                             |
+      {1:  2 }a                                             |
+      {1:  3 }a                                             |
+      {1:  4 }a                                             |
+      {1:  5 }a                                             |
+      {1:  6 }a                                             |
+                                                        |
     ]]
     feed('G')
     screen:expect [[
-      {1:  7 }a                         |
-      {1:  8 }a                         |
-      {1:  9 }a                         |
-      {1: 10 }a                         |
-      {1: 11 }a                         |
-      {1: 12 }^a                         |
-                                    |
+      {1:  7 }a                                             |
+      {1:  8 }a                                             |
+      {1:  9 }a                                             |
+      {1: 10 }a                                             |
+      {1: 11 }a                                             |
+      {1: 12 }^a                                             |
+                                                        |
     ]]
     assert_alive()
   end)
@@ -628,11 +630,12 @@ describe('pending scrollback line handling', function()
       is_os('win') and { 'cmd.exe', '/c', 'for /L %I in (1,1,12) do @echo hi' }
         or { 'printf', ('hi\n'):rep(12) }
     )
+    command('set laststatus=2')
     screen:expect [[
-      hi                            |*4
-                                    |
-      [Process exited 0]{2: }           |
-      {3:-- TERMINAL --}                |
+      hi                                                |*4
+      {2: }                                                 |
+      {MATCH:.*}[Process exited 0]{MATCH:.*}|
+      {3:-- TERMINAL --}                                    |
     ]]
     assert_alive()
   end)

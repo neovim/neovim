@@ -626,10 +626,14 @@ describe('termopen()', function()
         '-c',
         'echo $COLORTERM | quit',
       }, opts)
+
+      command('set laststatus=2')
+
       screen:expect(([[
         ^%s{MATCH:%%s+}|
-        [Process exited 0]                                |
-                                                          |*2
+                                                          |
+        {MATCH:.*}[Process exited 0]{MATCH:.*}|
+                                                          |
       ]]):format(expected))
     end
 

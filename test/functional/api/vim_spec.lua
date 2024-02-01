@@ -32,6 +32,8 @@ local exec_lua = helpers.exec_lua
 local exc_exec = helpers.exc_exec
 local insert = helpers.insert
 local skip = helpers.skip
+local sleep = vim.uv.sleep
+local testprg = helpers.testprg
 
 local pcall_err = helpers.pcall_err
 local format_string = require('test.format_string').format_string
@@ -2485,6 +2487,7 @@ describe('API', function()
         argv = { catpath },
         mode = 'rpc',
         client = {},
+        exitstatus = -1, -- cat will stall without any arguments
       }
       eq({ info = info }, api.nvim_get_var('opened_event'))
       eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_list_chans())
@@ -2494,6 +2497,7 @@ describe('API', function()
           .. '{"nvim_command":{"n_args":1}},' -- and so on
           .. '{"description":"The Amazing Cat"})'
       )
+
       info = {
         stream = 'job',
         id = 3,
@@ -2506,10 +2510,11 @@ describe('API', function()
           methods = { nvim_command = { n_args = 1 } },
           attributes = { description = 'The Amazing Cat' },
         },
+        exitstatus = -1, -- still stalled, will only finish upon last eval
       }
+
       eq({ info = info }, api.nvim_get_var('info_event'))
       eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_list_chans())
-
       eq(
         "Vim:Error invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1 when calling nvim_set_current_buf, expecting Buffer",
         pcall_err(eval, 'rpcrequest(3, "nvim_set_current_buf", -1)')
@@ -2528,6 +2533,7 @@ describe('API', function()
         mode = 'terminal',
         buffer = 1,
         pty = '?',
+        exitstatus = -1,
       }
       local event = api.nvim_get_var('opened_event')
       if not is_os('win') then
@@ -2562,6 +2568,7 @@ describe('API', function()
         mode = 'terminal',
         buffer = 2,
         pty = '?',
+        exitstatus = -1,
       }
       local actual2 = eval('nvim_get_chan_info(&channel)')
       expected2.pty = actual2.pty
@@ -2571,7 +2578,12 @@ describe('API', function()
       eq(1, eval('jobstop(&channel)'))
       eval('jobwait([&channel], 1000)') -- Wait.
       expected2.pty = (is_os('win') and '?' or '') -- pty stream was closed.
-      eq(expected2, eval('nvim_get_chan_info(&channel)'))
+      local chan = eval('nvim_get_chan_info(&channel)')
+      while chan['exitstatus'] < 0 do
+        chan = eval('nvim_get_chan_info(&channel)')
+        sleep(10)
+      end
+      eq(eval('nvim_get_chan_info(&channel)')['exitstatus'] > 0, true)
     end)
   end)
 
@@ -4901,6 +4913,21 @@ describe('API', function()
       pcall_err(command, 'Test')
       assert_alive()
       eq(false, exec_lua('return _G.success'))
+    end)
+
+    it('get exit status from terminal channel after channel is already closed #14986', function()
+      command(([[terminal "%s" REP 5000 xxx]]):format(testprg('shell-test')))
+      local exitstatus = -1
+      while exitstatus < 0 do
+        local handle = api.nvim_get_current_buf()
+        local chan_id = api.nvim_get_option_value('channel', { buf = handle })
+        local channel = api.nvim_get_chan_info(chan_id)
+        assert(channel['id'] == chan_id)
+        exitstatus = channel['exitstatus']
+        sleep(10)
+      end
+      sleep(60)
+      eq(exitstatus, 0)
     end)
   end)
 end)

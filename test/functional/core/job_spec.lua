@@ -1206,6 +1206,7 @@ describe('jobs', function()
       '-u',
       filename,
     })
+
     -- Wait for startup to complete, so that all terminal responses are received.
     screen:expect([[
       {1: }                                                 |
@@ -1215,11 +1216,13 @@ describe('jobs', function()
       {3:-- TERMINAL --}                                    |
     ]])
 
+    command('set laststatus=2')
+
     feed(':q<CR>')
     screen:expect([[
-                                                        |
-      [Process exited 0]{1: }                               |
+      {1: }                                                 |
                                                         |*4
+      {MATCH:.*}[Process exited 0]{MATCH:.*}|
       {3:-- TERMINAL --}                                    |
     ]])
   end)
@@ -1229,12 +1232,12 @@ describe('pty process teardown', function()
   local screen
   before_each(function()
     clear()
-    screen = Screen.new(30, 6)
+    screen = Screen.new(50, 6)
     screen:attach()
     screen:expect([[
-      ^                              |
-      ~                             |*4
-                                    |
+      ^                                                  |
+      ~                                                 |*4
+                                                        |
     ]])
   end)
 
@@ -1256,11 +1259,14 @@ describe('pty process teardown', function()
       '+qa',
     }, { env = { VIMRUNTIME = os.getenv('VIMRUNTIME') } })
 
+    command('set laststatus=2')
+
     -- Exiting should terminate all descendants (PTY, its children, ...).
     screen:expect([[
-      ^                              |
-      [Process exited 0]            |
-                                    |*4
+      ^                                                  |
+                                                        |*3
+      {MATCH:.*}[Process exited 0]{MATCH:.*}|
+                                                        |
     ]])
   end)
 end)

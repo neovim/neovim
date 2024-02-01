@@ -89,17 +89,22 @@ describe('notify', function()
   it('cancels stale events on channel close', function()
     local catchan = eval("jobstart(['cat'], {'rpc': v:true})")
     local catpath = eval('exepath("cat")')
-    eq(
-      { id = catchan, argv = { catpath }, stream = 'job', mode = 'rpc', client = {} },
-      exec_lua(
-        [[
-      vim.rpcnotify(..., "nvim_call_function", 'chanclose', {..., 'rpc'})
-      vim.rpcnotify(..., "nvim_subscribe", "daily_rant")
-      return vim.api.nvim_get_chan_info(...)
-    ]],
-        catchan
-      )
+    local chan = exec_lua(
+      [[
+        vim.rpcnotify(..., "nvim_call_function", 'chanclose', {..., 'rpc'})
+        vim.rpcnotify(..., "nvim_subscribe", "daily_rant")
+        return vim.api.nvim_get_chan_info(...)
+      ]],
+      catchan
     )
+    eq({
+      id = catchan,
+      argv = { catpath },
+      stream = 'job',
+      mode = 'rpc',
+      client = {},
+      exitstatus = -1,
+    }, chan)
     assert_alive()
     eq(
       { false, 'Invalid channel: ' .. catchan },

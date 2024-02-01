@@ -7,6 +7,7 @@ local matches = helpers.matches
 local feed = helpers.feed
 local eval = helpers.eval
 local clear = helpers.clear
+local command = helpers.command
 local fn = helpers.fn
 local nvim_prog_abs = helpers.nvim_prog_abs
 local write_file = helpers.write_file
@@ -106,10 +107,13 @@ describe('command-line option', function()
         }
       )
       feed('i:cq<CR>')
+
+      command('set laststatus=2')
+
       screen:expect([[
                                                 |
-        [Process exited 1]                      |
                                                 |*5
+        {MATCH:.*}[Process exited 1]{MATCH:.*}|
         -- TERMINAL --                          |
       ]])
       --[=[ Example of incorrect output:
@@ -118,9 +122,9 @@ describe('command-line option', function()
         10.2/work/libuv-1.10.2/src/unix/core.c:5|
         19: uv__close: Assertion `fd > STDERR_FI|
         LENO' failed.                           |
-                                                |
-        [Process exited 6]                      |
                                                 |*2
+        {MATCH:.*}[Process exited 6]{MATCH:.*}|
+                                                |
       ]])
       ]=]
     end)

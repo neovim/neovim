@@ -210,12 +210,15 @@ describe(':mksession', function()
     local expected_screen = [[
       ^/                                                 |
                                                         |
-      [Process exited 0]                                |
-                                                        |*3
+                                                        |*2
+      {MATCH:.*}[Process exited 0]{MATCH:.*}|
+                                                        |
     ]]
 
     command('cd /')
     command('terminal echo $PWD')
+
+    command('set laststatus=2')
 
     -- Verify that the terminal's working directory is "/".
     screen:expect(expected_screen)
@@ -229,6 +232,8 @@ describe(':mksession', function()
     screen = Screen.new(50, 6)
     screen:attach({ rgb = false })
     command('silent source ' .. session_path)
+
+    command('set laststatus=2')
 
     -- Verify that the terminal's working directory is "/".
     screen:expect(expected_screen)
