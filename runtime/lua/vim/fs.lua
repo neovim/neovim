@@ -338,7 +338,7 @@ end
 ---
 ---@param path (string) Path to normalize
 ---@param opts table|nil Options:
----             - expand_env: (boolean, default true) Expand environment variables
+---             - expand_env: (boolean) Expand environment variables. Defaults to true.
 ---@return (string) Normalized path
 function M.normalize(path, opts)
   opts = opts or {}
