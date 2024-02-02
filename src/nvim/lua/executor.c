@@ -1649,12 +1649,12 @@ bool nlua_is_deferred_safe(void)
 void ex_lua(exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
-  // ":{range}lua"
-  if (eap->addr_count > 0 || *eap->arg == NUL) {
-    if (eap->addr_count > 0 && *eap->arg == NUL) {
+  // ":{range}lua", only if no {code}
+  if (*eap->arg == NUL) {
+    if (eap->addr_count > 0) {
       cmd_source_buffer(eap, true);
     } else {
-      semsg(_(e_invarg2), "exactly one of {chunk} or {range} required");
+      emsg(_(e_argreq));
     }
     return;
   }

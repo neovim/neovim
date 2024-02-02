@@ -56,12 +56,7 @@ describe(':lua', function()
   end)
 
   it('throws catchable errors', function()
-    for _, cmd in ipairs({ 'lua', '1lua chunk' }) do
-      eq(
-        'Vim(lua):E475: Invalid argument: exactly one of {chunk} or {range} required',
-        pcall_err(command, cmd)
-      )
-    end
+    eq('Vim(lua):E471: Argument required', pcall_err(command, 'lua'))
     eq(
       [[Vim(lua):E5107: Error loading lua [string ":lua"]:0: unexpected symbol near ')']],
       pcall_err(command, 'lua ()')
@@ -230,6 +225,10 @@ describe(':lua', function()
         [1] = { foreground = Screen.colors.Blue, bold = true },
       },
     }
+
+    -- ":{range}lua {code}" executes {code}, ignoring {range}
+    eq('', exec_capture('1lua gvar = 42'))
+    eq(42, fn.luaeval('gvar'))
   end)
 end)
 
