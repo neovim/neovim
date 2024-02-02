@@ -357,6 +357,9 @@ api.nvim_set_decoration_provider(ns, {
   on_win = TSHighlighter._on_win,
   on_line = TSHighlighter._on_line,
   _on_spell_nav = TSHighlighter._on_spell_nav,
+
+  -- Prevent redraw when module is first loaded (#27266)
+  redraw = false,
 })
 
 return TSHighlighter

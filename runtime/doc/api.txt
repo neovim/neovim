@@ -2859,6 +2859,8 @@ nvim_set_decoration_provider({ns_id}, {*opts})
                    interaction with fold lines is subject to change) ["win",
                    winid, bufnr, row]
                  • on_end: called at the end of a redraw cycle ["end", tick]
+                 • redraw (boolean): redraw immediately after this function is
+                   called (default true)
 
 
 ==============================================================================

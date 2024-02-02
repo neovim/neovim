@@ -355,6 +355,9 @@ api.nvim_set_decoration_provider(namespace, {
       end
     end
   end,
+
+  -- Prevent redraw when module is first loaded (#27266)
+  redraw = false,
 })
 
 --- @param bufnr (integer|nil) Buffer handle, or 0 or nil for current

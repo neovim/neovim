@@ -241,6 +241,7 @@ error('Cannot require a meta file')
 --- @field on_win? function
 --- @field on_line? function
 --- @field on_end? function
+--- @field redraw? boolean
 --- @field _on_hl_def? function
 --- @field _on_spell_nav? function
 

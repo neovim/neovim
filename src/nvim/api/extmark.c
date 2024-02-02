@@ -1038,6 +1038,7 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 ///                 ["win", winid, bufnr, row]
 ///             - on_end: called at the end of a redraw cycle
 ///                 ["end", tick]
+///             - redraw (boolean): redraw immediately after this function is called (default true)
 void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *opts, Error *err)
   FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
 {
@@ -1045,8 +1046,9 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
   assert(p != NULL);
   decor_provider_clear(p);
 
-  // regardless of what happens, it seems good idea to redraw
-  redraw_all_later(UPD_NOT_VALID);  // TODO(bfredl): too soon?
+  if (GET_BOOL_OR_TRUE(opts, set_decoration_provider, redraw)) {
+    redraw_all_later(UPD_NOT_VALID);
+  }
 
   struct {
     const char *name;

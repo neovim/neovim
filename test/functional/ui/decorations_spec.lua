@@ -738,6 +738,45 @@ describe('decorations providers', function()
                                               |
     ]]}
   end)
+
+  it('can avoid an initial redraw if unwanted #27266', function()
+    clear({ args_rm = { '--headless' }, args = { '--cmd', 'set shortmess-=I' }})
+    screen = Screen.new(80, 24)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { foreground = Screen.colors.Blue1 },
+    })
+
+    screen:expect([[
+      ^                                                                                |
+      {1:~                                                                               }|*4
+      {MATCH:.*}|
+      {1:~                                                                               }|
+      {1:~                 }Nvim is open source and freely distributable{1:                  }|
+      {1:~                           }https://neovim.io/#chat{1:                             }|
+      {1:~                                                                               }|
+      {1:~                }type  :help nvim{2:<Enter>}       if you are new! {1:                 }|
+      {1:~                }type  :checkhealth{2:<Enter>}     to optimize Nvim{1:                 }|
+      {1:~                }type  :q{2:<Enter>}               to exit         {1:                 }|
+      {1:~                }type  :help{2:<Enter>}            for help        {1:                 }|
+      {1:~                                                                               }|
+      {1:~{MATCH: +}}type  :help news{2:<Enter>} to see changes in v{MATCH:%d+%.%d+}{1:{MATCH: +}}|
+      {1:~                                                                               }|
+      {MATCH:.*}|*2
+      {1:~                                                                               }|*4
+                                                                                      |
+    ]])
+
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace("ns1")
+      vim.api.nvim_set_decoration_provider(ns, {
+        redraw = false,
+      })
+    ]])
+
+    screen:expect_unchanged()
+  end)
 end)
 
 local example_text = [[

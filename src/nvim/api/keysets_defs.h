@@ -18,6 +18,7 @@ typedef struct {
   LuaRef on_win;
   LuaRef on_line;
   LuaRef on_end;
+  Boolean redraw;
   LuaRef _on_hl_def;
   LuaRef _on_spell_nav;
 } Dict(set_decoration_provider);

@@ -799,6 +799,9 @@ api.nvim_set_decoration_provider(namespace, {
       highlighter:on_win(topline, botline)
     end
   end,
+
+  -- Prevent redraw when module is first loaded (#27266)
+  redraw = false,
 })
 
 --- for testing only! there is no guarantee of API stability with this!

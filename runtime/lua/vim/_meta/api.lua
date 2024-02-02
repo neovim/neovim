@@ -1805,6 +1805,8 @@ function vim.api.nvim_set_current_win(window) end
 ---                interaction with fold lines is subject to change) ["win",
 ---                winid, bufnr, row]
 ---              • on_end: called at the end of a redraw cycle ["end", tick]
+---              • redraw (boolean): redraw immediately after this function is
+---                called (default true)
 function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 
 --- Sets a highlight group.
