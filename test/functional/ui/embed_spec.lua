@@ -3,6 +3,7 @@ local uv = vim.uv
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
+local api = helpers.api
 local feed = helpers.feed
 local eq = helpers.eq
 local neq = helpers.neq
@@ -11,6 +12,7 @@ local ok = helpers.ok
 local fn = helpers.fn
 local nvim_prog = helpers.nvim_prog
 local retry = helpers.retry
+local write_file = helpers.write_file
 
 local function test_embed(ext_linegrid)
   local screen
@@ -113,26 +115,83 @@ describe('--embed UI', function()
       writer:close()
     end)
 
-    screen:expect {
-      grid = [[
+    screen:expect [[
       ^hello nvim                              |
       from external input                     |
       {1:~                                       }|*5
                                               |
-    ]],
-    }
+    ]]
 
     -- stdin (rpc input) still works
     feed 'o'
-    screen:expect {
-      grid = [[
+    screen:expect [[
       hello nvim                              |
       ^                                        |
       from external input                     |
       {1:~                                       }|*4
       {2:-- INSERT --}                            |
-    ]],
+    ]]
+  end)
+
+  it('can pass stdin to -q - #17523', function()
+    write_file(
+      'Xbadfile.c',
+      [[
+      /* some file with an error */
+      main() {
+        functionCall(arg; arg, arg);
+        return 666
+      }
+      ]]
+    )
+    finally(function()
+      os.remove('Xbadfile.c')
+    end)
+
+    local pipe = assert(uv.pipe())
+
+    local writer = assert(uv.new_pipe(false))
+    writer:open(pipe.write)
+
+    clear { args_rm = { '--headless' }, args = { '-q', '-' }, io_extra = pipe.read }
+
+    -- attach immediately after startup, for early UI
+    local screen = Screen.new(60, 8)
+    screen.rpc_async = true -- Avoid hanging. #24888
+    screen:attach { stdin_fd = 3 }
+    screen:set_default_attr_ids {
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { bold = true },
     }
+
+    writer:write [[Xbadfile.c:4:12: error: expected ';' before '}' token]]
+    writer:shutdown(function()
+      writer:close()
+    end)
+
+    screen:expect [[
+      /* some file with an error */                               |
+      main() {                                                    |
+        functionCall(arg; arg, arg);                              |
+        return 66^6                                                |
+      }                                                           |
+      {1:~                                                           }|*2
+      (1 of 1): error: expected ';' before '}' token              |
+    ]]
+
+    -- stdin (rpc input) still works
+    feed 'A'
+    screen:expect [[
+      /* some file with an error */                               |
+      main() {                                                    |
+        functionCall(arg; arg, arg);                              |
+        return 666^                                                |
+      }                                                           |
+      {1:~                                                           }|*2
+      {2:-- INSERT --}                                                |
+    ]]
+
+    eq('-', api.nvim_get_option_value('errorfile', {}))
   end)
 
   it('only sets background colors once even if overridden', function()

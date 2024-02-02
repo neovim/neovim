@@ -25,10 +25,6 @@
 #include "nvim/rbuffer_defs.h"
 #include "nvim/types_defs.h"
 
-#ifdef MSWIN
-# include "nvim/os/os_win_console.h"
-#endif
-
 #ifdef HAVE_SYS_UIO_H
 # include <sys/uio.h>
 #endif
@@ -179,17 +175,7 @@ FileDescriptor *file_open_stdin(void)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int error;
-  int stdin_dup_fd;
-  if (stdin_fd > 0) {
-    stdin_dup_fd = stdin_fd;
-  } else {
-    stdin_dup_fd = os_dup(STDIN_FILENO);
-#ifdef MSWIN
-    // Replace the original stdin with the console input handle.
-    os_replace_stdin_to_conin();
-#endif
-  }
-  FileDescriptor *const stdin_dup = file_open_fd_new(&error, stdin_dup_fd,
+  FileDescriptor *const stdin_dup = file_open_fd_new(&error, os_open_stdin_fd(),
                                                      kFileReadOnly|kFileNonBlocking);
   assert(stdin_dup != NULL);
   if (error != 0) {
