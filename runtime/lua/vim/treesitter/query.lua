@@ -672,14 +672,16 @@ end
 --- Returns the start and stop value if set else the node's range.
 -- When the node's range is used, the stop is incremented by 1
 -- to make the search inclusive.
----@param start integer
----@param stop integer
+---@param start integer|nil
+---@param stop integer|nil
 ---@param node TSNode
 ---@return integer, integer
 local function value_or_node_range(start, stop, node)
-  if start == nil and stop == nil then
-    local node_start, _, node_stop, _ = node:range()
-    return node_start, node_stop + 1 -- Make stop inclusive
+  if start == nil then
+    start = node:start()
+  end
+  if stop == nil then
+    stop = node:end_() + 1 -- Make stop inclusive
   end
 
   return start, stop
@@ -710,8 +712,8 @@ end
 ---
 ---@param node TSNode under which the search will occur
 ---@param source (integer|string) Source buffer or string to extract text from
----@param start integer Starting line for the search
----@param stop integer Stopping line for the search (end-exclusive)
+---@param start? integer Starting line for the search. Defaults to `node:start()`.
+---@param stop? integer Stopping line for the search (end-exclusive). Defaults to `node:end_()`.
 ---
 ---@return (fun(end_line: integer|nil): integer, TSNode, TSMetadata):
 ---        capture id, capture node, metadata
@@ -769,12 +771,11 @@ end
 ---
 ---@param node TSNode under which the search will occur
 ---@param source (integer|string) Source buffer or string to search
----@param start integer Starting line for the search
----@param stop integer Stopping line for the search (end-exclusive)
----@param opts table|nil Options:
+---@param start? integer Starting line for the search. Defaults to `node:start()`.
+---@param stop? integer Stopping line for the search (end-exclusive). Defaults to `node:end_()`.
+---@param opts? table Optional keyword arguments:
 ---   - max_start_depth (integer) if non-zero, sets the maximum start depth
 ---     for each match. This is used to prevent traversing too deep into a tree.
----     Requires treesitter >= 0.20.9.
 ---
 ---@return (fun(): integer, table<integer,TSNode>, table): pattern id, match, metadata
 function Query:iter_matches(node, source, start, stop, opts)
