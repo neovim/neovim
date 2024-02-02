@@ -1082,8 +1082,10 @@ Query:iter_captures({node}, {source}, {start}, {stop})
       • {node}    (`TSNode`) under which the search will occur
       • {source}  (`integer|string`) Source buffer or string to extract text
                   from
-      • {start}   (`integer`) Starting line for the search
-      • {stop}    (`integer`) Stopping line for the search (end-exclusive)
+      • {start}   (`integer?`) Starting line for the search. Defaults to
+                  `node:start()`.
+      • {stop}    (`integer?`) Stopping line for the search (end-exclusive).
+                  Defaults to `node:end_()`.
 
     Return: ~
         (`fun(end_line: integer?): integer, TSNode, TSMetadata`) capture id,
@@ -1115,13 +1117,14 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
     Parameters: ~
       • {node}    (`TSNode`) under which the search will occur
       • {source}  (`integer|string`) Source buffer or string to search
-      • {start}   (`integer`) Starting line for the search
-      • {stop}    (`integer`) Stopping line for the search (end-exclusive)
-      • {opts}    (`table?`) Options:
+      • {start}   (`integer?`) Starting line for the search. Defaults to
+                  `node:start()`.
+      • {stop}    (`integer?`) Stopping line for the search (end-exclusive).
+                  Defaults to `node:end_()`.
+      • {opts}    (`table?`) Optional keyword arguments:
                   • max_start_depth (integer) if non-zero, sets the maximum
                     start depth for each match. This is used to prevent
-                    traversing too deep into a tree. Requires treesitter >=
-                    0.20.9.
+                    traversing too deep into a tree.
 
     Return: ~
         (`fun(): integer, table<integer,TSNode>, table`) pattern id, match,
