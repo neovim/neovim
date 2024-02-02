@@ -2230,6 +2230,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
               mb_c = schar_get_first_codepoint(mb_schar);
               char *p = get_extra_buf(len + 1);
               memset(p, ' ', len);
+              p[len] = NUL;
               wlv.p_extra = p;
               for (int i = 0; i < tab_len; i++) {
                 if (*p == NUL) {
