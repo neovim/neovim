@@ -219,7 +219,7 @@ endif
 syn cluster	vimFuncList	contains=vimCommand,vimFunctionError,vimFuncKey,Tag,vimFuncSID
 syn cluster	vimFuncBodyList	contains=vimAbb,vimAddress,vimAugroupKey,vimAutoCmd,vimCmplxRepeat,vimComment,vim9Comment,vimContinue,vimCtrlChar,vimEcho,vimEchoHL,vimEnvvar,vimExecute,vimIsCommand,vimFBVar,vimFunc,vimFunction,vimFuncVar,vimGlobal,vimHighlight,vimIsCommand,vimLet,vimLetHereDoc,vimLineComment,vimMap,vimMark,vimNorm,vimNotation,vimNotFunc,vimNumber,vimOper,vimOperParen,vimRegion,vimRegister,vimSearch,vimSet,vimSpecFile,vimString,vimSubst,vimSynLine,vimUnmap,vimUserCommand
 syn match	vimFunction	"\<\(fu\%[nction]\)!\=\s\+\%(<[sS][iI][dD]>\|[sSgGbBwWtTlL]:\)\=\%(\i\|[#.]\|{.\{-1,}}\)*\ze\s*("	contains=@vimFuncList nextgroup=vimFuncBody
- syn match	vimFunction	"\<def!\=\ze\s*(" contains=@vimFuncList nextgroup=vimFuncBody
+syn match	vimFunction	"\<def!\=\ze\s*(" contains=@vimFuncList nextgroup=vimFuncBody
 
 if exists("g:vimsyn_folding") && g:vimsyn_folding =~# 'f'
  syn region	vimFuncBody  contained	fold start="\ze\s*("	matchgroup=vimCommand end="\<\(endf\>\|endfu\%[nction]\>\|enddef\>\)"		contains=@vimFuncBodyList
@@ -384,12 +384,13 @@ syn match	vimFilter    contained	"!!\=[^"]\{-}\(|\|\ze\"\|$\)"	contains=vimOper,
 syn match	vimComFilter contained	"|!!\=[^"]\{-}\(|\|\ze\"\|$\)"      contains=vimOper,vimSpecFile
 
 " Complex Repeats: (:h complex-repeat) {{{2
+" ===============
 syn match	vimCmplxRepeat	'[^a-zA-Z_/\\()]q[0-9a-zA-Z"]\>'lc=1
 syn match	vimCmplxRepeat	'@[0-9a-z".=@:]\ze\($\|[^a-zA-Z]\>\)'
 
 " Set command and associated set-options (vimOptions) with comment {{{2
 syn region	vimSet		matchgroup=vimCommand start="\<\%(setl\%[ocal]\|setg\%[lobal]\|se\%[t]\)\>" skip="\%(\\\\\)*\\.\n\@!" end="$" end="|" matchgroup=vimNotation end="<[cC][rR]>" keepend contains=vimSetEqual,vimOption,vimErrSetting,vimComment,vim9Comment,vimSetString,vimSetMod
- syn region	vimSetEqual	contained	start="[=:]\|[-+^]=" skip="\\\\\|\\\s" end="[| \t]"me=e-1 end="$"	contains=vimCtrlChar,vimSetSep,vimNotation,vimEnvvar
+syn region	vimSetEqual	contained	start="[=:]\|[-+^]=" skip="\\\\\|\\\s" end="[| \t]"me=e-1 end="$"	contains=vimCtrlChar,vimSetSep,vimNotation,vimEnvvar
 syn region	vimSetString	contained	start=+="+hs=s+1	skip=+\\\\\|\\"+  end=+"+		contains=vimCtrlChar
 syn match	vimSetSep	contained	"[,:]"
 syn match	vimSetMod	contained	"&vim\=\|[!&?<]\|all&"
@@ -421,7 +422,7 @@ syn match	vimAutoCmdSfxList	contained	"\S*"	skipwhite nextgroup=vimAutoCmdMod
 syn keyword	vimAutoCmd	au[tocmd] do[autocmd] doautoa[ll]	skipwhite nextgroup=vimAutoEventList
 syn match	vimAutoCmdMod	"\(++\)\=\(once\|nested\)"
 
-" Echo and Execute: -- prefer strings! {{{2
+" Echo And Execute: -- prefer strings! {{{2
 " ================
 syn region	vimEcho	oneline excludenl matchgroup=vimCommand start="\<ec\%[ho]\>" skip="\(\\\\\)*\\|" end="$\||" contains=vimFunc,vimFuncVar,vimString,vimVar
 syn region	vimExecute	oneline excludenl matchgroup=vimCommand start="\<exe\%[cute]\>" skip="\(\\\\\)*\\|" end="$\||\|<[cC][rR]>" contains=vimFuncVar,vimIsCommand,vimOper,vimNotation,vimOperParen,vimString,vimVar
@@ -434,10 +435,8 @@ syn case match
 " ====
 syn match	vimMap		"\<map\>!\=\ze\s*[^(]" skipwhite nextgroup=vimMapMod,vimMapLhs
 syn keyword	vimMap		cm[ap] cno[remap] im[ap] ino[remap] lm[ap] ln[oremap] nm[ap] nn[oremap] no[remap] om[ap] ono[remap] smap snor[emap] tno[remap] tm[ap] vm[ap] vmapc[lear] vn[oremap] xm[ap] xn[oremap] skipwhite nextgroup=vimMapBang,vimMapMod,vimMapLhs
-syn keyword	nvimMap		tn[oremap] tm[ap] skipwhite nextgroup=vimMapBang,vimMapMod,vimMapLhs
 syn keyword	vimMap		mapc[lear] smapc[lear]
-syn keyword	vimUnmap		cu[nmap] iu[nmap] lu[nmap] nun[map] ou[nmap] sunm[ap] unm[ap] unm[ap] vu[nmap] xu[nmap] skipwhite nextgroup=vimMapBang,vimMapMod,vimMapLhs
-syn keyword	nvimUnmap 		tunm[ap] skipwhite nextgroup=vimMapBang,vimMapMod,vimMapLhs
+syn keyword	vimUnmap		cu[nmap] iu[nmap] lu[nmap] nun[map] ou[nmap] sunm[ap] tunma[p] unm[ap] unm[ap] vu[nmap] xu[nmap] skipwhite nextgroup=vimMapBang,vimMapMod,vimMapLhs
 syn match	vimMapLhs	contained	"\S\+"			contains=vimNotation,vimCtrlChar skipwhite nextgroup=vimMapRhs
 syn match	vimMapBang	contained	"!"			skipwhite nextgroup=vimMapMod,vimMapLhs
 syn match	vimMapMod	contained	"\%#=1\c<\(buffer\|expr\|\(local\)\=leader\|nowait\|plug\|script\|sid\|unique\|silent\)\+>" contains=vimMapModKey,vimMapModErr skipwhite nextgroup=vimMapMod,vimMapLhs
@@ -1079,8 +1078,6 @@ if !exists("skip_vim_syntax_inits")
 
  hi def link nvimAutoEvent	vimAutoEvent
  hi def link nvimHLGroup	vimHLGroup
- hi def link nvimMap	vimMap
- hi def link nvimUnmap	vimUnmap
 endif
 
 " Current Syntax Variable: {{{2
