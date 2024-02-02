@@ -1065,7 +1065,9 @@ static int qf_setup_state(qfstate_T *pstate, char *restrict enc, const char *res
   }
 
   if (efile != NULL
-      && (pstate->fd = os_fopen(efile, "r")) == NULL) {
+      && (pstate->fd = (strequal(efile, "-")
+                        ? fdopen(os_open_stdin_fd(), "r")
+                        : os_fopen(efile, "r"))) == NULL) {
     semsg(_(e_openerrf), efile);
     return FAIL;
   }

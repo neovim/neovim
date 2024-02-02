@@ -1016,6 +1016,7 @@ static bool edit_stdin(mparm_T *parmp)
                   && !(embedded_mode && stdin_fd <= 0)
                   && (!exmode_active || parmp->input_istext)
                   && !stdin_isatty
+                  && parmp->edit_type <= EDIT_STDIN
                   && parmp->scriptin == NULL;  // `-s -` was not given.
   return parmp->had_stdin_file || implicit;
 }

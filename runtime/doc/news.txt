@@ -409,6 +409,8 @@ The following changes to existing APIs or features add new behavior.
 • |nvim_open_win()| and |nvim_win_set_config()| now support opening normal (split)
   windows, and moving floating windows into split windows.
 
+• 'errorfile' (|-q|) accepts `-` as an alias for stdin.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
