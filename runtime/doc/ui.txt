@@ -369,7 +369,7 @@ numerical highlight ids to the actual attributes.
 ["grid_line", grid, row, col_start, cells, wrap] ~
 	Redraw a continuous part of a `row` on a `grid`, starting at the column
 	`col_start`. `cells` is an array of arrays each with 1 to 3 items:
-	`[text(, hl_id, repeat)]` . `text` is the UTF-8 text that should be put in
+	`[(text, hl_id, repeat)]` . `text` is the UTF-8 text that should be put in
 	a cell, with the highlight `hl_id` defined by a previous `hl_attr_define`
 	call.  If `hl_id` is not present the most recently seen `hl_id` in
 	the same call should be used (it is always sent for the first
