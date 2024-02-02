@@ -145,7 +145,7 @@ syn keyword gpgOption	contained skipwhite nextgroup=gpgArgError
 			\ no-sk-comments no-skip-hidden-recipients
 			\ no-symkey-cache not-dash-escaped no-textmode
 			\ no-throw-keyids no-tty no-use-agent
-			\ no-use-embedded-filename no-utf8-strings no-verbose
+			\ no-utf8-strings no-verbose
 			\ no-version only-sign-text-ids openpgp
 			\ override-compliance-check pgp6 pgp7 pgp8
 			\ preserve-permissions print-dane-records quiet
@@ -155,7 +155,7 @@ syn keyword gpgOption	contained skipwhite nextgroup=gpgArgError
 			\ show-notation show-photos show-policy-url
 			\ show-session-key sk-comments skip-hidden-recipients
 			\ skip-verify textmode throw-keyids try-all-secrets
-			\ unwrap use-agent use-embedded-filename use-keyboxd
+			\ unwrap use-agent use-keyboxd
 			\ use-only-openpgp-card utf8-strings verbose version
 			\ warranty with-colons with-fingerprint
 			\ with-icao-spelling with-key-data with-keygrip
