@@ -41,13 +41,13 @@ ifdef USE_VALGRIND
 	                 --leak-check=yes    \
 	                 --track-origins=yes
 #        VALGRIND_TOOL := exp-sgcheck
-	TOOL := valgrind -q                                     \
-	                 -q                                     \
-	                 $(VALGRIND_TOOL)                       \
-	                 --suppressions=../../.valgrind.supp \
-	                 --error-exitcode=123                   \
-	                 --log-file=valgrind-\%p.$*             \
-	                 $(VGDB)                                \
+	TOOL := valgrind -q                                         \
+	                 -q                                         \
+	                 $(VALGRIND_TOOL)                           \
+	                 --suppressions=../../../src/.valgrind.supp \
+	                 --error-exitcode=123                       \
+	                 --log-file=valgrind-\%p.$*                 \
+	                 $(VGDB)                                    \
 	                 --trace-children=yes
 else
 	ifdef USE_GDB
