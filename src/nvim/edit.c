@@ -1621,8 +1621,18 @@ void change_indent(int type, int amount, int round, int replaced, bool call_chan
   // for the following tricks we don't want list mode
   int save_p_list = curwin->w_p_list;
   curwin->w_p_list = false;
-  colnr_T vc = getvcol_nolist(&curwin->w_cursor);
-  int vcol = vc;
+
+  int vcol = 0;
+  char *line = get_cursor_line_ptr();
+  StrCharInfo sci = utf_ptr2StrCharInfo(line);
+  while (*sci.ptr) {
+    StrCharInfo next = utfc_next(sci);
+    if (next.ptr - line > curwin->w_cursor.col) {
+      break;
+    }
+    vcol += charsize_nowrap(curbuf, true, vcol, sci.chr.value);
+    sci = next;
+  }
 
   // For Replace mode we need to fix the replace stack later, which is only
   // possible when the cursor is in the indent.  Remember the number of
@@ -1681,35 +1691,32 @@ void change_indent(int type, int amount, int round, int replaced, bool call_chan
     // Compute the screen column where the cursor should be.
     vcol = get_indent() - vcol;
     int const end_vcol = (colnr_T)((vcol < 0) ? 0 : vcol);
-    curwin->w_virtcol = end_vcol;
 
     // Advance the cursor until we reach the right screen column.
     new_cursor_col = 0;
-    char *const line = get_cursor_line_ptr();
+    line = get_cursor_line_ptr();  // line was changed
     vcol = 0;
     if (*line != NUL) {
-      CharsizeArg csarg;
-      CSType cstype = init_charsize_arg(&csarg, curwin, 0, line);
-      StrCharInfo ci = utf_ptr2StrCharInfo(line);
+      sci = utf_ptr2StrCharInfo(line);
       while (true) {
-        int next_vcol = vcol + win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
+        int next_vcol = vcol + charsize_nowrap(curbuf, true, vcol, sci.chr.value);
         if (next_vcol > end_vcol) {
           break;
         }
         vcol = next_vcol;
-        ci = utfc_next(ci);
-        if (*ci.ptr == NUL) {
+        sci = utfc_next(sci);
+        if (*sci.ptr == NUL) {
           break;
         }
       }
-      new_cursor_col = (int)(ci.ptr - line);
+      new_cursor_col = (int)(sci.ptr - line);
     }
 
     // May need to insert spaces to be able to position the cursor on
     // the right screen column.
-    if (vcol != (int)curwin->w_virtcol) {
+    if (vcol != end_vcol) {
       curwin->w_cursor.col = (colnr_T)new_cursor_col;
-      size_t i = (size_t)(curwin->w_virtcol - vcol);
+      size_t i = (size_t)(end_vcol - vcol);
       char *ptr = xmallocz(i);
       memset(ptr, ' ', i);
       new_cursor_col += (int)i;

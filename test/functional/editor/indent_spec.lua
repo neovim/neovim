@@ -202,8 +202,6 @@ describe('i_CTRL-T inside indentation', function()
   end)
 
   it("works with 'noexpandtab' and 'bri'", function()
-    pending('skipped (not yet fixed)')
-
     local screen = setup(20, 3)
     feed_command('setl ts=12 sw=12 noexpandtab wrap bri briopt=min:5')
     local t = '\t'
@@ -218,20 +216,18 @@ describe('i_CTRL-T inside indentation', function()
   end)
 
   it('works with inline virtual text', function()
-    pending('skipped (not yet fixed)')
-
-    local screen = setup(70, 1)
+    local screen = setup(80, 1)
     feed_command('setl ts=10 sw=10 nowrap')
     set_lines(0, 1, '\t\t\t\t' .. 'a')
     local ns = api.nvim_create_namespace('')
     api.nvim_buf_set_extmark(0, ns, 0, 0, {
-      virt_text = { { ('a'):rep(50) } },
+      virt_text = { { ('a'):rep(20) } },
       virt_text_pos = 'inline',
     })
     feed('^hi<C-T>') -- last tab before first non-blank
     screen:expect([[
-      --------->---------^>---------aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      -- INSERT --                                                          |
+      >--------->--------->--------->---------^>---------aaaaaaaaaaaaaaaaaaaaa         |
+      -- INSERT --                                                                    |
     ]])
   end)
 end)
