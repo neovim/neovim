@@ -80,17 +80,21 @@ static char *get_mess_env(void)
   return get_locale_val(LC_MESSAGES);
 #else
   char *p = (char *)os_getenv("LC_ALL");
+  if (p != NULL) {
+    return p;
+  }
+
+  p = (char *)os_getenv("LC_MESSAGES");
+  if (p != NULL) {
+    return p;
+  }
+
+  p = (char *)os_getenv("LANG");
+  if (p != NULL && ascii_isdigit(*p)) {
+    p = NULL;  // ignore something like "1043"
+  }
   if (p == NULL) {
-    p = (char *)os_getenv("LC_MESSAGES");
-    if (p == NULL) {
-      p = (char *)os_getenv("LANG");
-      if (p != NULL && ascii_isdigit(*p)) {
-        p = NULL;  // ignore something like "1043"
-      }
-      if (p == NULL) {
-        p = get_locale_val(LC_CTYPE);
-      }
-    }
+    p = get_locale_val(LC_CTYPE);
   }
   return p;
 #endif

@@ -5397,35 +5397,37 @@ static void filter_map(typval_T *argvars, typval_T *rettv, filtermap_T filtermap
   // On type errors, the preceding call has already displayed an error
   // message.  Avoid a misleading error message for an empty string that
   // was not passed as argument.
-  if (expr->v_type != VAR_UNKNOWN) {
-    typval_T save_val;
-    prepare_vimvar(VV_VAL, &save_val);
-
-    // We reset "did_emsg" to be able to detect whether an error
-    // occurred during evaluation of the expression.
-    int save_did_emsg = did_emsg;
-    did_emsg = false;
-
-    typval_T save_key;
-    prepare_vimvar(VV_KEY, &save_key);
-    if (argvars[0].v_type == VAR_DICT) {
-      filter_map_dict(argvars[0].vval.v_dict, filtermap, func_name,
-                      arg_errmsg, expr, rettv);
-    } else if (argvars[0].v_type == VAR_BLOB) {
-      filter_map_blob(argvars[0].vval.v_blob, filtermap, expr, arg_errmsg, rettv);
-    } else if (argvars[0].v_type == VAR_STRING) {
-      filter_map_string(tv_get_string(&argvars[0]), filtermap, expr, rettv);
-    } else {
-      assert(argvars[0].v_type == VAR_LIST);
-      filter_map_list(argvars[0].vval.v_list, filtermap, func_name,
-                      arg_errmsg, expr, rettv);
-    }
-
-    restore_vimvar(VV_KEY, &save_key);
-    restore_vimvar(VV_VAL, &save_val);
-
-    did_emsg |= save_did_emsg;
+  if (expr->v_type == VAR_UNKNOWN) {
+    return;
   }
+
+  typval_T save_val;
+  prepare_vimvar(VV_VAL, &save_val);
+
+  // We reset "did_emsg" to be able to detect whether an error
+  // occurred during evaluation of the expression.
+  int save_did_emsg = did_emsg;
+  did_emsg = false;
+
+  typval_T save_key;
+  prepare_vimvar(VV_KEY, &save_key);
+  if (argvars[0].v_type == VAR_DICT) {
+    filter_map_dict(argvars[0].vval.v_dict, filtermap, func_name,
+                    arg_errmsg, expr, rettv);
+  } else if (argvars[0].v_type == VAR_BLOB) {
+    filter_map_blob(argvars[0].vval.v_blob, filtermap, expr, arg_errmsg, rettv);
+  } else if (argvars[0].v_type == VAR_STRING) {
+    filter_map_string(tv_get_string(&argvars[0]), filtermap, expr, rettv);
+  } else {
+    assert(argvars[0].v_type == VAR_LIST);
+    filter_map_list(argvars[0].vval.v_list, filtermap, func_name,
+                    arg_errmsg, expr, rettv);
+  }
+
+  restore_vimvar(VV_KEY, &save_key);
+  restore_vimvar(VV_VAL, &save_val);
+
+  did_emsg |= save_did_emsg;
 }
 
 /// Handle one item for map(), filter(), foreach().

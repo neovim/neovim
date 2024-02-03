@@ -311,7 +311,8 @@ static bool set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs
   // replace_termcodes() may move the result to allocated memory, which
   // needs to be freed later (*lhs_buf and *rhs_buf).
   // replace_termcodes() also removes CTRL-Vs and sometimes backslashes.
-  // If something like <C-H> is simplified to 0x08 then mark it as simplified.
+  // If something like <C-H> is simplified to 0x08 then mark it as simplified
+  // and also add en entry with a modifier.
   bool did_simplify = false;
   const int flags = REPTERM_FROM_PART | REPTERM_DO_LT;
   char *bufarg = lhs_buf;
