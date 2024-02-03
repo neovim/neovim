@@ -2006,22 +2006,6 @@ static const char *did_set_binary(optset_T *args)
   return NULL;
 }
 
-/// Called when the 'breakat' option changes value.
-static const char *did_set_breakat(optset_T *args FUNC_ATTR_UNUSED)
-{
-  for (int i = 0; i < 256; i++) {
-    breakat_flags[i] = false;
-  }
-
-  if (p_breakat != NULL) {
-    for (char *p = p_breakat; *p; p++) {
-      breakat_flags[(uint8_t)(*p)] = true;
-    }
-  }
-
-  return NULL;
-}
-
 /// Process the updated 'buflisted' option value.
 static const char *did_set_buflisted(optset_T *args)
 {

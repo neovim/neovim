@@ -797,6 +797,22 @@ int expand_set_belloff(optexpand_T *args, int *numMatches, char ***matches)
                                matches);
 }
 
+/// The 'breakat' option is changed.
+const char *did_set_breakat(optset_T *args FUNC_ATTR_UNUSED)
+{
+  for (int i = 0; i < 256; i++) {
+    breakat_flags[i] = false;
+  }
+
+  if (p_breakat != NULL) {
+    for (char *p = p_breakat; *p; p++) {
+      breakat_flags[(uint8_t)(*p)] = true;
+    }
+  }
+
+  return NULL;
+}
+
 /// The 'breakindentopt' option is changed.
 const char *did_set_breakindentopt(optset_T *args)
 {
