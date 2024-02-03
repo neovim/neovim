@@ -5154,7 +5154,7 @@ void ex_cfile(exarg_T *eap)
     }
   }
   if (*eap->arg != NUL) {
-    set_string_option_direct(kOptErrorfile, eap->arg, 0, 0);
+    set_option_direct(kOptErrorfile, CSTR_AS_OPTVAL(eap->arg), 0, 0);
   }
 
   char *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;

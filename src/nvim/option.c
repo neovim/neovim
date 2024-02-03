@@ -430,10 +430,9 @@ static void set_option_default(const OptIndex opt_idx, int opt_flags)
   uint32_t flags = opt->flags;
   if (varp != NULL) {       // skip hidden option, nothing to do for it
     if (option_has_type(opt_idx, kOptValTypeString)) {
-      // Use set_string_option_direct() for local options to handle freeing and allocating the
-      // value.
+      // Use set_option_direct() for local options to handle freeing and allocating the value.
       if (opt->indir != PV_NONE) {
-        set_string_option_direct(opt_idx, opt->def_val.string, opt_flags, 0);
+        set_option_direct(opt_idx, CSTR_AS_OPTVAL(opt->def_val.string), opt_flags, 0);
       } else {
         if (flags & P_ALLOCED) {
           free_string_option(*(char **)(varp));
@@ -765,7 +764,7 @@ static char *stropt_get_default_val(OptIndex opt_idx, uint64_t flags)
 }
 
 /// Copy the new string value into allocated memory for the option.
-/// Can't use set_string_option_direct(), because we need to remove the backslashes.
+/// Can't use set_option_direct(), because we need to remove the backslashes.
 static char *stropt_copy_value(char *origval, char **argp, set_op_T op,
                                uint32_t flags FUNC_ATTR_UNUSED)
 {
@@ -3762,6 +3761,68 @@ static const char *set_option(const OptIndex opt_idx, void *varp, OptVal value, 
   return errmsg;
 }
 
+/// Set option value directly, without processing any side effects.
+///
+/// @param  opt_idx    Option index in options[] table.
+/// @param  value      Option value.
+/// @param  opt_flags  Option flags.
+/// @param  set_sid    Script ID. Special values:
+///                      0: Use current script ID.
+///                      SID_NONE: Don't set script ID.
+void set_option_direct(OptIndex opt_idx, OptVal value, int opt_flags, scid_T set_sid)
+{
+  static char errbuf[IOSIZE];
+
+  vimoption_T *opt = get_option(opt_idx);
+
+  if (opt->var == NULL) {
+    return;
+  }
+
+  const bool scope_both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
+  void *varp = get_varp_scope(opt, scope_both ? OPT_LOCAL : opt_flags);
+
+  set_option(opt_idx, varp, optval_copy(value), opt_flags, set_sid, true, true, errbuf,
+             sizeof(errbuf));
+}
+
+/// Set option value directly for buffer / window, without processing any side effects.
+///
+/// @param      opt_idx    Option index in options[] table.
+/// @param      value      Option value.
+/// @param      opt_flags  Option flags.
+/// @param      set_sid    Script ID. Special values:
+///                          0: Use current script ID.
+///                          SID_NONE: Don't set script ID.
+/// @param      req_scope  Requested option scope. See OptReqScope in option.h.
+/// @param[in]  from       Target buffer/window.
+void set_option_direct_for(OptIndex opt_idx, OptVal value, int opt_flags, scid_T set_sid,
+                           OptReqScope req_scope, void *const from)
+{
+  buf_T *save_curbuf = curbuf;
+  win_T *save_curwin = curwin;
+
+  // Don't use switch_option_context(), as that calls aucmd_prepbuf(), which may have unintended
+  // side-effects when setting an option directly. Just change the values of curbuf and curwin if
+  // needed, no need to properly switch the window / buffer.
+  switch (req_scope) {
+  case kOptReqGlobal:
+    break;
+  case kOptReqBuf:
+    curbuf = (buf_T *)from;
+    break;
+  case kOptReqWin:
+    curwin = (win_T *)from;
+    curbuf = curwin->w_buffer;
+    break;
+  }
+
+  set_option_direct(opt_idx, value, opt_flags, set_sid);
+
+  curwin = save_curwin;
+  curbuf = save_curbuf;
+}
+
 /// Set the value of an option.
 ///
 /// @param      opt_idx    Index in options[] table. Must not be kOptInvalid.
@@ -6244,7 +6305,7 @@ void set_fileformat(int eol_style, int opt_flags)
 
   // p is NULL if "eol_style" is EOL_UNKNOWN.
   if (p != NULL) {
-    set_string_option_direct(kOptFileformat, p, opt_flags, 0);
+    set_option_direct(kOptFileformat, CSTR_AS_OPTVAL(p), opt_flags, 0);
   }
 
   // This may cause the buffer to become (un)modified.
