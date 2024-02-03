@@ -479,49 +479,40 @@ end]]
 
   it('allows to add predicates', function()
     insert([[
-    int main(void) {
-      return 0;
-    }
+      int main(void) {
+        return 0;
+      }
     ]])
 
     local custom_query = '((identifier) @main (#is-main? @main))'
 
     local res = exec_lua(
       [[
-    local query = vim.treesitter.query
+        local function is_main(match, pattern, bufnr, predicate)
+          local node = match[ predicate[2] ]
+          return vim.treesitter.query.get_node_text(node, bufnr) == 'main'
+        end
+        vim.treesitter.add_predicate("is-main?", is_main)
 
-    local function is_main(match, pattern, bufnr, predicate)
-      local node = match[ predicate[2] ]
+        local parser = vim.treesitter.get_parser(0, "c")
+        local query = vim.treesitter.query.parse("c", ...) ---@type Query
 
-      return query.get_node_text(node, bufnr)
-    end
-
-    local parser = vim.treesitter.get_parser(0, "c")
-
-    query.add_predicate("is-main?", is_main)
-
-    local query = query.parse("c", ...)
-
-    local nodes = {}
-    for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
-      table.insert(nodes, {node:range()})
-    end
-
-    return nodes
-    ]],
+        local nodes = {}
+        for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
+          table.insert(nodes, {node:range()})
+        end
+        return nodes
+      ]],
       custom_query
     )
 
-    eq({ { 0, 4, 0, 8 } }, res)
+    eq({ { 0, 6, 0, 10 } }, res)
 
+    -- should list all predicates (including the custom one, is-main?)
     local res_list = exec_lua [[
-    local query = vim.treesitter.query
-
-    local list = query.list_predicates()
-
-    table.sort(list)
-
-    return list
+      local list = vim.treesitter.query.list_predicates()
+      table.sort(list)
+      return list
     ]]
 
     eq({
@@ -814,20 +805,62 @@ int x = INT_MAX;
           { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
-      it('should list all directives', function()
-        local res_list = exec_lua [[
-        local query = vim.treesitter.query
-
-        local list = query.list_directives()
-
-        table.sort(list)
-
-        return list
-        ]]
-
-        eq({ 'gsub!', 'offset!', 'set!', 'trim!' }, res_list)
-      end)
     end)
+  end)
+
+  it('allows to add directives', function()
+    insert([[
+      int main(void) {
+        return 0;
+      }
+    ]])
+
+    -- invalid directive name, not ending with `!`
+    ---@type string
+    local res_error = pcall_err(
+      exec_lua,
+      [[
+        vim.treesitter.query.add_directive("invalid-name", function() end)
+      ]]
+    )
+    eq('.../query.lua:0: Directive name must end with `!`, given `invalid-name`', res_error)
+
+    local custom_query = '((identifier) @main (#zzz-custom! @main))'
+
+    -- add a custom directive (#zzz-custom! @foo)
+    local res = exec_lua(
+      [[
+        local directive = function(match, pattern, source, directive, metadata)
+          local capture_id = directive[2]
+          assert(type(capture_id) == 'number')
+          metadata[capture_id] = metadata[capture_id] or {}
+          metadata[capture_id].text = 'zzz'
+        end
+        vim.treesitter.add_directive("zzz-custom!", directive)
+
+        local query = vim.treesitter.query.parse("c", ...) ---@type Query
+        local parser = vim.treesitter.get_parser(0, "c")
+
+        local a = ''
+        for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0) do
+          for id, _ in pairs(match) do
+            return metadata[id]
+          end
+        end
+        error('no unique match found')
+      ]],
+      custom_query
+    )
+    eq('zzz', res.text)
+
+    -- should list all directives (including the custom one)
+    local res_list = exec_lua [[
+      local list = vim.treesitter.query.list_directives()
+      table.sort(list)
+      return list
+    ]]
+
+    eq({ 'gsub!', 'offset!', 'set!', 'trim!', 'zzz-custom!' }, res_list)
   end)
 
   describe('when getting the language for a range', function()
