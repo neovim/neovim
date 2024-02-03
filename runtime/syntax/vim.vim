@@ -330,7 +330,7 @@ syn match	vimEscape	contained	"\\<\*[^>]*>\=>"
 
 syn region	vimString start=+$'+ end=+'+ skip=+''+ oneline contains=vimStringInterpolationBrace,vimStringInterpolationExpr
 syn region	vimString start=+$"+ end=+"+ oneline contains=@vimStringGroup,vimStringInterpolationBrace,vimStringInterpolationExpr
-syn region	vimStringInterpolationExpr matchgroup=vimOperParen start=+{+ end=+}+ oneline contains=vimFunc,vimFuncVar,vimOper,vimNotation,vimOperParen,vimString,vimVar
+syn region	vimStringInterpolationExpr matchgroup=vimSep start=+{+ end=+}+ oneline contains=vimFunc,vimFuncVar,vimOper,vimOperParen,vimNotation,vimNumber,vimString,vimVar
 syn match	vimStringInterpolationBrace "{{"
 syn match	vimStringInterpolationBrace "}}"
 
