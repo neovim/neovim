@@ -400,7 +400,7 @@ int name_to_mod_mask(int c)
 int simplify_key(const int key, int *modifiers)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  if (!(*modifiers & (MOD_MASK_SHIFT | MOD_MASK_CTRL | MOD_MASK_ALT))) {
+  if (!(*modifiers & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
     return key;
   }
 
