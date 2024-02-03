@@ -228,6 +228,9 @@ The following new APIs and features were added.
     (e.g. `commitCharacters`). Note that this might affect plugins and
     language servers that don't support the feature, and in such cases the
     respective capability can be unset.
+  • |vim.lsp.buf.format()| now supports passing a list of ranges
+    via the `range` parameter (this requires support for the
+    `textDocument/rangesFormatting` request).
 
 • Treesitter
   • Bundled parsers and queries (highlight, folds) for Markdown, Python, and
