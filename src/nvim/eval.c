@@ -758,11 +758,14 @@ void eval_patch(const char *const origfile, const char *const difffile, const ch
 void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
 {
   *evalarg = (evalarg_T){ .eval_flags = skip ? 0 : EVAL_EVALUATE };
-  if (eap != NULL) {
-    if (getline_equal(eap->getline, eap->cookie, getsourceline)) {
-      evalarg->eval_getline = eap->getline;
-      evalarg->eval_cookie = eap->cookie;
-    }
+
+  if (eap == NULL) {
+    return;
+  }
+
+  if (getline_equal(eap->getline, eap->cookie, getsourceline)) {
+    evalarg->eval_getline = eap->getline;
+    evalarg->eval_cookie = eap->cookie;
   }
 }
 
@@ -2326,20 +2329,22 @@ static int eval_func(char **const arg, evalarg_T *const evalarg, char *const nam
 /// After using "evalarg" filled from "eap": free the memory.
 void clear_evalarg(evalarg_T *evalarg, exarg_T *eap)
 {
-  if (evalarg != NULL) {
-    if (evalarg->eval_tofree != NULL) {
-      if (eap != NULL) {
-        // We may need to keep the original command line, e.g. for
-        // ":let" it has the variable names.  But we may also need the
-        // new one, "nextcmd" points into it.  Keep both.
-        xfree(eap->cmdline_tofree);
-        eap->cmdline_tofree = *eap->cmdlinep;
-        *eap->cmdlinep = evalarg->eval_tofree;
-      } else {
-        xfree(evalarg->eval_tofree);
-      }
-      evalarg->eval_tofree = NULL;
+  if (evalarg == NULL) {
+    return;
+  }
+
+  if (evalarg->eval_tofree != NULL) {
+    if (eap != NULL) {
+      // We may need to keep the original command line, e.g. for
+      // ":let" it has the variable names.  But we may also need the
+      // new one, "nextcmd" points into it.  Keep both.
+      xfree(eap->cmdline_tofree);
+      eap->cmdline_tofree = *eap->cmdlinep;
+      *eap->cmdlinep = evalarg->eval_tofree;
+    } else {
+      xfree(evalarg->eval_tofree);
     }
+    evalarg->eval_tofree = NULL;
   }
 }
 
@@ -3626,12 +3631,14 @@ static int check_can_index(typval_T *rettv, bool evaluate, bool verbose)
 /// slice() function
 void f_slice(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (check_can_index(argvars, true, false) == OK) {
-    tv_copy(argvars, rettv);
-    eval_index_inner(rettv, true, argvars + 1,
-                     argvars[2].v_type == VAR_UNKNOWN ? NULL : argvars + 2,
-                     true, NULL, 0, false);
+  if (check_can_index(argvars, true, false) != OK) {
+    return;
   }
+
+  tv_copy(argvars, rettv);
+  eval_index_inner(rettv, true, argvars + 1,
+                   argvars[2].v_type == VAR_UNKNOWN ? NULL : argvars + 2,
+                   true, NULL, 0, false);
 }
 
 /// Apply index or range to "rettv".
@@ -4248,7 +4255,11 @@ static void partial_free(partial_T *pt)
 /// becomes zero.
 void partial_unref(partial_T *pt)
 {
-  if (pt != NULL && --pt->pt_refcount <= 0) {
+  if (pt == NULL) {
+    return;
+  }
+
+  if (--pt->pt_refcount <= 0) {
     partial_free(pt);
   }
 }
@@ -8241,21 +8252,24 @@ void last_set_msg(sctx_T script_ctx)
 /// Should only be invoked when 'verbose' is non-zero.
 void option_last_set_msg(LastSet last_set)
 {
-  if (last_set.script_ctx.sc_sid != 0) {
-    bool should_free;
-    char *p = get_scriptname(last_set, &should_free);
-    verbose_enter();
-    msg_puts(_("\n\tLast set from "));
-    msg_puts(p);
-    if (last_set.script_ctx.sc_lnum > 0) {
-      msg_puts(_(line_msg));
-      msg_outnum(last_set.script_ctx.sc_lnum);
-    }
-    if (should_free) {
-      xfree(p);
-    }
-    verbose_leave();
+  if (last_set.script_ctx.sc_sid == 0) {
+    return;
   }
+
+  bool should_free;
+  char *p = get_scriptname(last_set, &should_free);
+
+  verbose_enter();
+  msg_puts(_("\n\tLast set from "));
+  msg_puts(p);
+  if (last_set.script_ctx.sc_lnum > 0) {
+    msg_puts(_(line_msg));
+    msg_outnum(last_set.script_ctx.sc_lnum);
+  }
+  if (should_free) {
+    xfree(p);
+  }
+  verbose_leave();
 }
 
 // reset v:option_new, v:option_old, v:option_oldlocal, v:option_oldglobal,

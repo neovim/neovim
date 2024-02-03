@@ -1439,45 +1439,47 @@ static int pc_col;
 
 void edit_putchar(int c, bool highlight)
 {
-  if (curwin->w_grid_alloc.chars != NULL || default_grid.chars != NULL) {
-    int attr;
-    update_topline(curwin);  // just in case w_topline isn't valid
-    validate_cursor();
-    if (highlight) {
-      attr = HL_ATTR(HLF_8);
-    } else {
-      attr = 0;
-    }
-    pc_row = curwin->w_wrow;
-    pc_status = PC_STATUS_UNSET;
-    grid_line_start(&curwin->w_grid, pc_row);
-    if (curwin->w_p_rl) {
-      pc_col = curwin->w_grid.cols - 1 - curwin->w_wcol;
-
-      if (grid_line_getchar(pc_col, NULL) == NUL) {
-        grid_line_put_schar(pc_col - 1, schar_from_ascii(' '), attr);
-        curwin->w_wcol--;
-        pc_status = PC_STATUS_RIGHT;
-      }
-    } else {
-      pc_col = curwin->w_wcol;
-
-      if (grid_line_getchar(pc_col + 1, NULL) == NUL) {
-        // pc_col is the left half of a double-width char
-        pc_status = PC_STATUS_LEFT;
-      }
-    }
-
-    // save the character to be able to put it back
-    if (pc_status == PC_STATUS_UNSET) {
-      pc_schar = grid_line_getchar(pc_col, &pc_attr);
-      pc_status = PC_STATUS_SET;
-    }
-
-    char buf[MB_MAXCHAR + 1];
-    grid_line_puts(pc_col, buf, utf_char2bytes(c, buf), attr);
-    grid_line_flush();
+  if (curwin->w_grid_alloc.chars == NULL && default_grid.chars == NULL) {
+    return;
   }
+
+  int attr;
+  update_topline(curwin);  // just in case w_topline isn't valid
+  validate_cursor();
+  if (highlight) {
+    attr = HL_ATTR(HLF_8);
+  } else {
+    attr = 0;
+  }
+  pc_row = curwin->w_wrow;
+  pc_status = PC_STATUS_UNSET;
+  grid_line_start(&curwin->w_grid, pc_row);
+  if (curwin->w_p_rl) {
+    pc_col = curwin->w_grid.cols - 1 - curwin->w_wcol;
+
+    if (grid_line_getchar(pc_col, NULL) == NUL) {
+      grid_line_put_schar(pc_col - 1, schar_from_ascii(' '), attr);
+      curwin->w_wcol--;
+      pc_status = PC_STATUS_RIGHT;
+    }
+  } else {
+    pc_col = curwin->w_wcol;
+
+    if (grid_line_getchar(pc_col + 1, NULL) == NUL) {
+      // pc_col is the left half of a double-width char
+      pc_status = PC_STATUS_LEFT;
+    }
+  }
+
+  // save the character to be able to put it back
+  if (pc_status == PC_STATUS_UNSET) {
+    pc_schar = grid_line_getchar(pc_col, &pc_attr);
+    pc_status = PC_STATUS_SET;
+  }
+
+  char buf[MB_MAXCHAR + 1];
+  grid_line_puts(pc_col, buf, utf_char2bytes(c, buf), attr);
+  grid_line_flush();
 }
 
 /// @return    the effective prompt for the specified buffer.
@@ -1591,10 +1593,12 @@ void display_dollar(colnr_T col_arg)
 // in insert mode.
 void undisplay_dollar(void)
 {
-  if (dollar_vcol >= 0) {
-    dollar_vcol = -1;
-    redrawWinline(curwin, curwin->w_cursor.lnum);
+  if (dollar_vcol < 0) {
+    return;
   }
+
+  dollar_vcol = -1;
+  redrawWinline(curwin, curwin->w_cursor.lnum);
 }
 
 /// Insert an indent (for <Tab> or CTRL-T) or delete an indent (for CTRL-D).
