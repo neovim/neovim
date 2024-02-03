@@ -623,13 +623,14 @@ tv_list_copy_error:
 listitem_T *tv_list_check_range_index_one(list_T *const l, int *const n1, const bool quiet)
 {
   listitem_T *li = tv_list_find_index(l, n1);
-  if (li == NULL) {
-    if (!quiet) {
-      semsg(_(e_list_index_out_of_range_nr), (int64_t)(*n1));
-    }
-    return NULL;
+  if (li != NULL) {
+    return li;
   }
-  return li;
+
+  if (!quiet) {
+    semsg(_(e_list_index_out_of_range_nr), (int64_t)(*n1));
+  }
+  return NULL;
 }
 
 /// Check that "n2" can be used as the second index in a range of list "l".
@@ -1634,11 +1635,13 @@ static listitem_T *tv_list_find_index(list_T *const l, int *const idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   listitem_T *li = tv_list_find(l, *idx);
-  if (li == NULL) {
-    if (*idx < 0) {
-      *idx = 0;
-      li = tv_list_find(l, *idx);
-    }
+  if (li != NULL) {
+    return li;
+  }
+
+  if (*idx < 0) {
+    *idx = 0;
+    li = tv_list_find(l, *idx);
   }
   return li;
 }
@@ -2130,10 +2133,12 @@ void tv_dict_free_dict(dict_T *const d)
 void tv_dict_free(dict_T *const d)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (!tv_in_free_unref_items) {
-    tv_dict_free_contents(d);
-    tv_dict_free_dict(d);
+  if (tv_in_free_unref_items) {
+    return;
   }
+
+  tv_dict_free_contents(d);
+  tv_dict_free_dict(d);
 }
 
 /// Unreference a dictionary
