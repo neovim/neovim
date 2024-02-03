@@ -1937,44 +1937,47 @@ static void extend_list(typval_T *argvars, const char *arg_errmsg, bool is_new, 
 
   list_T *l1 = argvars[0].vval.v_list;
   list_T *const l2 = argvars[1].vval.v_list;
-  if (is_new || !value_check_lock(tv_list_locked(l1), arg_errmsg, TV_TRANSLATE)) {
-    if (is_new) {
-      l1 = tv_list_copy(NULL, l1, false, get_copyID());
-      if (l1 == NULL) {
+
+  if (!is_new && value_check_lock(tv_list_locked(l1), arg_errmsg, TV_TRANSLATE)) {
+    return;
+  }
+
+  if (is_new) {
+    l1 = tv_list_copy(NULL, l1, false, get_copyID());
+    if (l1 == NULL) {
+      return;
+    }
+  }
+
+  listitem_T *item;
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    int before = (int)tv_get_number_chk(&argvars[2], &error);
+    if (error) {
+      return;  // Type error; errmsg already given.
+    }
+
+    if (before == tv_list_len(l1)) {
+      item = NULL;
+    } else {
+      item = tv_list_find(l1, before);
+      if (item == NULL) {
+        semsg(_(e_list_index_out_of_range_nr), (int64_t)before);
         return;
       }
     }
+  } else {
+    item = NULL;
+  }
+  tv_list_extend(l1, l2, item);
 
-    listitem_T *item;
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      int before = (int)tv_get_number_chk(&argvars[2], &error);
-      if (error) {
-        return;  // Type error; errmsg already given.
-      }
-
-      if (before == tv_list_len(l1)) {
-        item = NULL;
-      } else {
-        item = tv_list_find(l1, before);
-        if (item == NULL) {
-          semsg(_(e_list_index_out_of_range_nr), (int64_t)before);
-          return;
-        }
-      }
-    } else {
-      item = NULL;
-    }
-    tv_list_extend(l1, l2, item);
-
-    if (is_new) {
-      *rettv = (typval_T){
-        .v_type = VAR_LIST,
-        .v_lock = VAR_UNLOCKED,
-        .vval.v_list = l1,
-      };
-    } else {
-      tv_copy(&argvars[0], rettv);
-    }
+  if (is_new) {
+    *rettv = (typval_T){
+      .v_type = VAR_LIST,
+      .v_lock = VAR_UNLOCKED,
+      .vval.v_list = l1,
+    };
+  } else {
+    tv_copy(&argvars[0], rettv);
   }
 }
 
@@ -1985,54 +1988,61 @@ static void extend_list(typval_T *argvars, const char *arg_errmsg, bool is_new, 
 static void extend_dict(typval_T *argvars, const char *arg_errmsg, bool is_new, typval_T *rettv)
 {
   dict_T *d1 = argvars[0].vval.v_dict;
-  dict_T *const d2 = argvars[1].vval.v_dict;
   if (d1 == NULL) {
     const bool locked = value_check_lock(VAR_FIXED, arg_errmsg, TV_TRANSLATE);
     (void)locked;
     assert(locked == true);
-  } else if (d2 == NULL) {
+    return;
+  }
+  dict_T *const d2 = argvars[1].vval.v_dict;
+  if (d2 == NULL) {
     // Do nothing
     tv_copy(&argvars[0], rettv);
-  } else if (is_new || !value_check_lock(d1->dv_lock, arg_errmsg, TV_TRANSLATE)) {
-    if (is_new) {
-      d1 = tv_dict_copy(NULL, d1, false, get_copyID());
-      if (d1 == NULL) {
-        return;
+    return;
+  }
+
+  if (!is_new && value_check_lock(d1->dv_lock, arg_errmsg, TV_TRANSLATE)) {
+    return;
+  }
+
+  if (is_new) {
+    d1 = tv_dict_copy(NULL, d1, false, get_copyID());
+    if (d1 == NULL) {
+      return;
+    }
+  }
+
+  const char *action = "force";
+  // Check the third argument.
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    const char *const av[] = { "keep", "force", "error" };
+
+    action = tv_get_string_chk(&argvars[2]);
+    if (action == NULL) {
+      return;  // Type error; error message already given.
+    }
+    size_t i;
+    for (i = 0; i < ARRAY_SIZE(av); i++) {
+      if (strcmp(action, av[i]) == 0) {
+        break;
       }
     }
-
-    const char *action = "force";
-    // Check the third argument.
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      const char *const av[] = { "keep", "force", "error" };
-
-      action = tv_get_string_chk(&argvars[2]);
-      if (action == NULL) {
-        return;  // Type error; error message already given.
-      }
-      size_t i;
-      for (i = 0; i < ARRAY_SIZE(av); i++) {
-        if (strcmp(action, av[i]) == 0) {
-          break;
-        }
-      }
-      if (i == 3) {
-        semsg(_(e_invarg2), action);
-        return;
-      }
+    if (i == 3) {
+      semsg(_(e_invarg2), action);
+      return;
     }
+  }
 
-    tv_dict_extend(d1, d2, action);
+  tv_dict_extend(d1, d2, action);
 
-    if (is_new) {
-      *rettv = (typval_T){
-        .v_type = VAR_DICT,
-        .v_lock = VAR_UNLOCKED,
-        .vval.v_dict = d1,
-      };
-    } else {
-      tv_copy(&argvars[0], rettv);
-    }
+  if (is_new) {
+    *rettv = (typval_T){
+      .v_type = VAR_DICT,
+      .v_lock = VAR_UNLOCKED,
+      .vval.v_dict = d1,
+    };
+  } else {
+    tv_copy(&argvars[0], rettv);
   }
 }
 
