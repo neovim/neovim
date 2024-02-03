@@ -4013,6 +4013,105 @@ describe('LSP', function()
       check_notify('both', true, true)
     end)
   end)
+
+  describe('vim.lsp.tagfunc', function()
+    before_each(function()
+      clear()
+      ---@type lsp.Location[]
+      local mock_locations = {
+        {
+          range = {
+            ['start'] = { line = 5, character = 23 },
+            ['end'] = { line = 10, character = 0 },
+          },
+          uri = 'test://buf',
+        },
+        {
+          range = {
+            ['start'] = { line = 42, character = 10 },
+            ['end'] = { line = 44, character = 0 },
+          },
+          uri = 'test://another-file',
+        },
+      }
+      exec_lua(create_server_definition)
+      exec_lua(
+        [[
+        _G.mock_locations = ...
+        _G.server = _create_server({
+          ---@type lsp.ServerCapabilities
+          capabilities = {
+            definitionProvider = true,
+            workspaceSymbolProvider = true,
+          },
+          handlers = {
+            ---@return lsp.Location[]
+            ['textDocument/definition'] = function()
+              return { _G.mock_locations[1] }
+            end,
+            ---@return lsp.WorkspaceSymbol[]
+            ['workspace/symbol'] = function(_, request)
+              assert(request.query == 'foobar')
+              return {
+                {
+                  name = 'foobar',
+                  kind = 13, ---@type lsp.SymbolKind
+                  location = _G.mock_locations[1],
+                },
+                {
+                  name = 'vim.foobar',
+                  kind = 12, ---@type lsp.SymbolKind
+                  location = _G.mock_locations[2],
+                }
+              }
+            end,
+          },
+        })
+        _G.client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+      ]],
+        mock_locations
+      )
+    end)
+    after_each(function()
+      exec_lua [[
+        vim.lsp.stop_client(_G.client_id)
+      ]]
+    end)
+
+    it('with flags=c, returns matching tags using textDocument/definition', function()
+      local result = exec_lua [[
+        return vim.lsp.tagfunc('foobar', 'c')
+      ]]
+      eq({
+        {
+          cmd = '/\\%6l\\%1c/', -- for location (5, 23)
+          filename = 'test://buf',
+          name = 'foobar',
+        },
+      }, result)
+    end)
+
+    it('without flags=c, returns all matching tags using workspace/symbol', function()
+      local result = exec_lua [[
+        return vim.lsp.tagfunc('foobar', '')
+      ]]
+      eq({
+        {
+          cmd = '/\\%6l\\%1c/', -- for location (5, 23)
+          filename = 'test://buf',
+          kind = 'Variable',
+          name = 'foobar',
+        },
+        {
+          cmd = '/\\%43l\\%1c/', -- for location (42, 10)
+          filename = 'test://another-file',
+          kind = 'Function',
+          name = 'vim.foobar',
+        },
+      }, result)
+    end)
+  end)
+
   describe('cmd', function()
     it('can connect to lsp server via rpc.connect', function()
       local result = exec_lua [[
