@@ -1,6 +1,6 @@
 -- Tests for signs
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local clear, command, expect = helpers.clear, helpers.command, helpers.expect
 
 describe('signs', function()

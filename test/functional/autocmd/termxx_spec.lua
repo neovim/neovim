@@ -1,5 +1,5 @@
 local uv = vim.uv
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 
 local clear, command, testprg = helpers.clear, helpers.command, helpers.testprg

@@ -1,6 +1,6 @@
 -- Test for joining lines
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local clear, eq = helpers.clear, helpers.eq
 local eval, command = helpers.eval, helpers.command
 

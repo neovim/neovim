@@ -1,5 +1,5 @@
 local uv = vim.uv
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 
 local assert_log = helpers.assert_log
 local assert_nolog = helpers.assert_nolog

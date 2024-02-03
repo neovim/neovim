@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local lsp_helpers = require('test.functional.plugin.lsp.helpers')
 local Screen = require('test.functional.ui.screen')
 

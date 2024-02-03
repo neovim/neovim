@@ -1,6 +1,6 @@
 -- Tests for complicated + argument to :edit command
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local clear, insert = helpers.clear, helpers.insert
 local command, expect = helpers.command, helpers.expect
 local poke_eventloop = helpers.poke_eventloop

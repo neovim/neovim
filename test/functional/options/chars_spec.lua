@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, command = helpers.clear, helpers.command
 local pcall_err = helpers.pcall_err

@@ -3,7 +3,7 @@
 -- - "./dir", in directory relative to file
 -- - "dir", in directory relative to current dir
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 
 local eq = helpers.eq
 local neq = helpers.neq

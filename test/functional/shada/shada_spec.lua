@@ -1,5 +1,5 @@
 -- Other ShaDa tests
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local api, nvim_command, fn, eq = helpers.api, helpers.command, helpers.fn, helpers.eq
 local write_file, spawn, set_session, nvim_prog, exc_exec =
   helpers.write_file, helpers.spawn, helpers.set_session, helpers.nvim_prog, helpers.exc_exec

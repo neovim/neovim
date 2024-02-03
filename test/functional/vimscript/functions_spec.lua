@@ -5,7 +5,7 @@
 --
 -- Core "eval" tests live in eval_spec.lua.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 
 local clear = helpers.clear
 local eval = helpers.eval

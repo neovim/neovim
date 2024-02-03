@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local nvim = helpers.api
 local clear, eq, neq, eval = helpers.clear, helpers.eq, helpers.neq, helpers.eval
 local api = helpers.api

@@ -1,5 +1,5 @@
 -- Test suite for testing interactions with API bindings
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 
 local exc_exec = helpers.exc_exec
 local remove_trace = helpers.remove_trace

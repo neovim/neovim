@@ -1,5 +1,5 @@
 local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local child_session = require('test.functional.terminal.helpers')
 local assert_alive = helpers.assert_alive
 local mkdir, write_file, rmdir = helpers.mkdir, helpers.write_file, helpers.rmdir

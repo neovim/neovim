@@ -1,6 +1,6 @@
 -- Test for various eval features.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local assert_alive = helpers.assert_alive
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, command, expect = helpers.clear, helpers.command, helpers.expect

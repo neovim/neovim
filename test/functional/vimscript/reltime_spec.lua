@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local clear, eq, ok = helpers.clear, helpers.eq, helpers.ok
 local neq, command, fn = helpers.neq, helpers.command, helpers.fn
 local reltime, reltimestr, reltimefloat = fn.reltime, fn.reltimestr, fn.reltimefloat

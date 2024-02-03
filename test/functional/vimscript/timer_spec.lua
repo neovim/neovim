@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local Screen = require('test.functional.ui.screen')
 local feed, eq, eval, ok = helpers.feed, helpers.eq, helpers.eval, helpers.ok
 local source, async_meths, run = helpers.source, helpers.async_meths, helpers.run

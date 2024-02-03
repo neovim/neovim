@@ -1,6 +1,6 @@
 -- Test argument list commands
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, command, eq = helpers.clear, helpers.command, helpers.eq
 local expect_exit = helpers.expect_exit

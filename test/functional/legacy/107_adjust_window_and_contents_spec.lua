@@ -1,6 +1,6 @@
 -- Tests for adjusting window and contents
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local poke_eventloop = helpers.poke_eventloop

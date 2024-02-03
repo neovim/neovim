@@ -1,5 +1,5 @@
 local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local eq, command = helpers.eq, helpers.command
 local clear = helpers.clear
 local eval, exc_exec = helpers.eval, helpers.exc_exec

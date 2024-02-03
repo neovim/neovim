@@ -1,6 +1,6 @@
 -- Tests for Unicode manipulations
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, expect = helpers.command, helpers.expect
 local eq, eval = helpers.eq, helpers.eval
@@ -79,7 +79,7 @@ describe('utf8', function()
 
     expect([[
 
-      Test1 
+      Test1
       Test2 あた
       Test3 N]])
   end)

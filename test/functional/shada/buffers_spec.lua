@@ -1,5 +1,5 @@
 -- shada buffer list saving/reading support
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local nvim_command, fn, eq, api = helpers.command, helpers.fn, helpers.eq, helpers.api
 local expect_exit = helpers.expect_exit
 

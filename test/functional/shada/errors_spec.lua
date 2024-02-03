@@ -1,5 +1,5 @@
 -- ShaDa errors handling support
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local nvim_command, eq, exc_exec = helpers.command, helpers.eq, helpers.exc_exec
 
 local shada_helpers = require('test.functional.shada.helpers')

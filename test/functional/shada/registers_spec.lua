@@ -1,5 +1,5 @@
 -- ShaDa registers saving/reading support
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local nvim_command, fn, eq = helpers.command, helpers.fn, helpers.eq
 
 local shada_helpers = require('test.functional.shada.helpers')

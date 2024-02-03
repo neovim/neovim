@@ -1,6 +1,6 @@
 -- Test for benchmarking the RE engine.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local insert, source = helpers.insert, helpers.source
 local clear, command = helpers.clear, helpers.command
 

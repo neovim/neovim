@@ -1,5 +1,5 @@
 -- See also: test/old/testdir/test_options.vim
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local command, clear = helpers.command, helpers.clear
 local source, expect = helpers.source, helpers.expect
 local exc_exec = helpers.exc_exec

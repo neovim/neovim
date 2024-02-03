@@ -1,6 +1,6 @@
 -- Tests for nested function.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local clear, insert = helpers.clear, helpers.insert
 local command, expect, source = helpers.command, helpers.expect, helpers.source
 

@@ -1,7 +1,7 @@
 -- Test for 'lisp'
 -- If the lisp feature is not enabled, this will fail!
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, expect = helpers.command, helpers.expect
 local poke_eventloop = helpers.poke_eventloop

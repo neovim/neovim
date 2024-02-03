@@ -282,7 +282,7 @@ open my $spec_file_handle, ">", $spec_file;
 print $spec_file_handle <<"EOS";
 @{[join "\n", @{$description_lines}]}
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.testunit')
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 

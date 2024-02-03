@@ -2,7 +2,7 @@
 -- Test whether glob()/globpath() return correct results with certain escaped
 -- characters.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local clear = helpers.clear
 local command, expect = helpers.command, helpers.expect
 

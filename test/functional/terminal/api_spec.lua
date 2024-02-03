@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local child_session = require('test.functional.terminal.helpers')
 local ok = helpers.ok
 

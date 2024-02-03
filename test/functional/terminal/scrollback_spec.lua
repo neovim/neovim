@@ -1,5 +1,5 @@
 local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear, eq = helpers.clear, helpers.eq
 local feed, testprg = helpers.feed, helpers.testprg

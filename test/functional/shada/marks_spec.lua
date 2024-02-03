@@ -1,5 +1,5 @@
 -- ShaDa marks saving/reading support
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local api, nvim_command, fn, eq = helpers.api, helpers.command, helpers.fn, helpers.eq
 local feed = helpers.feed
 local exc_exec, exec_capture = helpers.exc_exec, helpers.exec_capture

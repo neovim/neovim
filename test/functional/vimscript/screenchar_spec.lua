@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local clear, eq, neq = helpers.clear, helpers.eq, helpers.neq
 local command, api, fn = helpers.command, helpers.api, helpers.fn
 local tbl_deep_extend = vim.tbl_deep_extend

@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(nil)
+local helpers = require('test.functional.testunit')(nil)
 local api = helpers.api
 local write_file = helpers.write_file
 local concat_tables = helpers.concat_tables

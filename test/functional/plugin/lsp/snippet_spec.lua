@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local snippet = require('vim.lsp._snippet_grammar')
 local type = snippet.NodeType
 

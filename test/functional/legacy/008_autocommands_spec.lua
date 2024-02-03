@@ -1,7 +1,7 @@
 -- Test for BufWritePre autocommand that deletes or unloads the buffer.
 -- Test for BufUnload autocommand that unloads all other buffers.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local source = helpers.source
 local clear, command, expect, eq, eval =
   helpers.clear, helpers.command, helpers.expect, helpers.eq, helpers.eval

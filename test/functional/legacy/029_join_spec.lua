@@ -1,6 +1,6 @@
 -- Test for joining lines with marks in them (and with 'joinspaces' set/reset)
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 
 local feed = helpers.feed
 local clear = helpers.clear

@@ -1,7 +1,7 @@
 require('os')
 local uv = vim.uv
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local eval = helpers.eval
 local command = helpers.command
 local eq, neq = helpers.eq, helpers.neq

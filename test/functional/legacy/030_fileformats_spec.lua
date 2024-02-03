@@ -1,6 +1,6 @@
 -- Test for a lot of variations of the 'fileformats' option
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local feed, clear, command = helpers.feed, helpers.clear, helpers.command
 local eq, write_file = helpers.eq, helpers.write_file
 local poke_eventloop = helpers.poke_eventloop

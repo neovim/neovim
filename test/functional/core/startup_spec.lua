@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local assert_alive = helpers.assert_alive
@@ -260,7 +260,7 @@ describe('startup', function()
         -- luacheck: ignore 611 (Line contains only whitespaces)
         [[
             wrap
-          
+
           bufs:
           nvim args: 7
           lua args: { "-c", "set wrap?",

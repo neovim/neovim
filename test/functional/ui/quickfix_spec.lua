@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, api = helpers.clear, helpers.feed, helpers.api
 local insert, command = helpers.insert, helpers.command

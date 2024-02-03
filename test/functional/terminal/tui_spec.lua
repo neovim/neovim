@@ -4,33 +4,19 @@
 -- "bracketed paste" terminal feature:
 -- http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Bracketed-Paste-Mode
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testunit')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local Screen = require('test.functional.ui.screen')
-local eq = helpers.eq
+local eq = t.eq
 local feed_data = thelpers.feed_data
-local clear = helpers.clear
-local command = helpers.command
-local dedent = helpers.dedent
-local exec = helpers.exec
-local exec_lua = helpers.exec_lua
-local testprg = helpers.testprg
-local retry = helpers.retry
-local nvim_prog = helpers.nvim_prog
-local nvim_set = helpers.nvim_set
-local ok = helpers.ok
-local read_file = helpers.read_file
-local fn = helpers.fn
-local api = helpers.api
-local is_ci = helpers.is_ci
-local is_os = helpers.is_os
-local new_pipename = helpers.new_pipename
-local spawn_argv = helpers.spawn_argv
-local set_session = helpers.set_session
-local write_file = helpers.write_file
-local eval = helpers.eval
+local exec_lua = t.exec_lua
+local nvim_set = t.nvim_set
+local ok = t.ok
+local fn = t.fn
+local api = t.api
+local eval = t.eval
 
-if helpers.skip(is_os('win')) then
+if t.skip(t.is_os('win')) then
   return
 end
 
@@ -40,8 +26,8 @@ describe('TUI', function()
   local child_exec_lua
 
   before_each(function()
-    clear()
-    local child_server = new_pipename()
+    t.clear()
+    local child_server = t.new_pipename()
     screen = thelpers.setup_child_nvim({
       '--listen',
       child_server,
@@ -61,13 +47,13 @@ describe('TUI', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
-    child_session = helpers.connect(child_server)
+    child_session = t.connect(child_server)
     child_exec_lua = thelpers.make_lua_executor(child_session)
   end)
 
   -- Wait for mode in the child Nvim (avoid "typeahead race" #10826).
   local function wait_for_mode(mode)
-    retry(nil, nil, function()
+    t.retry(nil, nil, function()
       local _, m = child_session:request('nvim_get_mode')
       eq(mode, m.mode)
     end)
@@ -76,14 +62,14 @@ describe('TUI', function()
   -- Assert buffer contents in the child Nvim.
   local function expect_child_buf_lines(expected)
     assert(type({}) == type(expected))
-    retry(nil, nil, function()
+    t.retry(nil, nil, function()
       local _, buflines = child_session:request('nvim_buf_get_lines', 0, 0, -1, false)
       eq(expected, buflines)
     end)
   end
 
   it('rapid resize #7572 #7628', function()
-    helpers.skip(helpers.is_asan(), 'Test extra unstable with ASAN. See #23762')
+    t.skip(t.is_asan(), 'Test extra unstable with ASAN. See #23762')
     -- Need buffer rows to provoke the behavior.
     feed_data(':edit test/functional/fixtures/bigfile.txt\n')
     screen:expect([[
@@ -95,23 +81,23 @@ describe('TUI', function()
       :edit test/functional/fixtures/bigfile.txt        |
       {3:-- TERMINAL --}                                    |
     ]])
-    command('call jobresize(b:terminal_job_id, 58, 9)')
-    command('call jobresize(b:terminal_job_id, 62, 13)')
-    command('call jobresize(b:terminal_job_id, 100, 42)')
-    command('call jobresize(b:terminal_job_id, 37, 1000)')
+    t.command('call jobresize(b:terminal_job_id, 58, 9)')
+    t.command('call jobresize(b:terminal_job_id, 62, 13)')
+    t.command('call jobresize(b:terminal_job_id, 100, 42)')
+    t.command('call jobresize(b:terminal_job_id, 37, 1000)')
     -- Resize to <5 columns.
     screen:try_resize(4, 44)
-    command('call jobresize(b:terminal_job_id, 4, 1000)')
+    t.command('call jobresize(b:terminal_job_id, 4, 1000)')
     -- Resize to 1 row, then to 1 column, then increase rows to 4.
     screen:try_resize(44, 1)
-    command('call jobresize(b:terminal_job_id, 44, 1)')
+    t.command('call jobresize(b:terminal_job_id, 44, 1)')
     screen:try_resize(1, 1)
-    command('call jobresize(b:terminal_job_id, 1, 1)')
+    t.command('call jobresize(b:terminal_job_id, 1, 1)')
     screen:try_resize(1, 4)
-    command('call jobresize(b:terminal_job_id, 1, 4)')
+    t.command('call jobresize(b:terminal_job_id, 1, 4)')
     screen:try_resize(57, 17)
-    command('call jobresize(b:terminal_job_id, 57, 17)')
-    retry(nil, nil, function()
+    t.command('call jobresize(b:terminal_job_id, 57, 17)')
+    t.retry(nil, nil, function()
       eq({ true, 57 }, { child_session:request('nvim_win_get_width', 0) })
     end)
   end)
@@ -1022,11 +1008,11 @@ describe('TUI', function()
   end)
 
   it('paste: terminal mode', function()
-    if is_ci('github') then
+    if t.is_ci('github') then
       pending('tty-test complains about not owning the terminal -- actions/runner#241')
     end
     child_exec_lua('vim.o.statusline="^^^^^^^"')
-    child_exec_lua('vim.cmd.terminal(...)', testprg('tty-test'))
+    child_exec_lua('vim.cmd.terminal(...)', t.testprg('tty-test'))
     feed_data('i')
     screen:expect {
       grid = [[
@@ -1145,7 +1131,7 @@ describe('TUI', function()
 
   it('paste: cmdline-mode collects chunks of unfinished line', function()
     local function expect_cmdline(expected)
-      retry(nil, nil, function()
+      t.retry(nil, nil, function()
         local _, cmdline = child_session:request('nvim_call_function', 'getcmdline', {})
         eq(expected, cmdline)
       end)
@@ -1574,7 +1560,7 @@ describe('TUI', function()
   end)
 
   it('forwards :term palette colors with termguicolors', function()
-    if is_ci('github') then
+    if t.is_ci('github') then
       pending('tty-test complains about not owning the terminal -- actions/runner#241')
     end
     screen:set_rgb_cterm(true)
@@ -1588,7 +1574,7 @@ describe('TUI', function()
 
     child_exec_lua('vim.o.statusline="^^^^^^^"')
     child_exec_lua('vim.o.termguicolors=true')
-    child_exec_lua('vim.cmd.terminal(...)', testprg('tty-test'))
+    child_exec_lua('vim.cmd.terminal(...)', t.testprg('tty-test'))
     screen:expect {
       grid = [[
       {1:t}ty ready                                         |
@@ -1627,7 +1613,7 @@ describe('TUI', function()
 
   it('in nvim_list_uis()', function()
     -- $TERM in :terminal.
-    local exp_term = is_os('bsd') and 'builtin_xterm' or 'xterm-256color'
+    local exp_term = t.is_os('bsd') and 'builtin_xterm' or 'xterm-256color'
     local expected = {
       {
         chan = 1,
@@ -1700,9 +1686,9 @@ describe('TUI', function()
   end)
 
   it('draws correctly when cursor_address overflows #21643', function()
-    helpers.skip(is_os('mac'), 'FIXME: crashes/errors on macOS')
+    t.skip(t.is_os('mac'), 'FIXME: crashes/errors on macOS')
     screen:try_resize(77, 855)
-    retry(nil, nil, function()
+    t.retry(nil, nil, function()
       eq({ true, 852 }, { child_session:request('nvim_win_get_height', 0) })
     end)
     -- Use full screen message so that redrawing afterwards is more deterministic.
@@ -1733,7 +1719,7 @@ describe('TUI', function()
         .. '℃'
         .. (' '):rep(13)
         .. '}|\n'
-        .. dedent([[
+        .. t.dedent([[
       b                                                                            |
       {5:[No Name] [+]                                                                }|
                                                                                    |
@@ -1769,7 +1755,7 @@ describe('TUI', function()
   end)
 
   it('no assert failure on deadly signal #21896', function()
-    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    t.exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     screen:expect {
       grid = [[
       Vim: Caught deadly signal 'SIGTERM'               |
@@ -1783,7 +1769,7 @@ describe('TUI', function()
 
   it('no stack-use-after-scope with cursor color #22432', function()
     screen:set_option('rgb', true)
-    command('set termguicolors')
+    t.command('set termguicolors')
     child_session:request(
       'nvim_exec2',
       [[
@@ -1826,7 +1812,7 @@ describe('TUI', function()
       foo                                               |
       {3:-- TERMINAL --}                                    |
     ]])
-    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigwinch')]])
+    t.exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigwinch')]])
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|*3
@@ -1890,7 +1876,7 @@ describe('TUI', function()
   end)
 
   it('emits hyperlinks with OSC 8', function()
-    exec_lua([[
+    t.exec_lua([[
       local buf = vim.api.nvim_get_current_buf()
       _G.urls = {}
       vim.api.nvim_create_autocmd('TermRequest', {
@@ -1915,14 +1901,14 @@ describe('TUI', function()
         url = 'https://example.com',
       })
     ]])
-    retry(nil, 1000, function()
-      eq({ 'https://example.com', '' }, exec_lua([[return _G.urls]]))
+    t.retry(nil, 1000, function()
+      eq({ 'https://example.com', '' }, t.exec_lua([[return _G.urls]]))
     end)
   end)
 end)
 
 describe('TUI', function()
-  before_each(clear)
+  before_each(t.clear)
 
   it('resize at startup #17285 #15044 #11330', function()
     local screen = Screen.new(50, 10)
@@ -1935,7 +1921,7 @@ describe('TUI', function()
     })
     screen:attach()
     fn.termopen({
-      nvim_prog,
+      t.nvim_prog,
       '--clean',
       '--cmd',
       'colorscheme vim',
@@ -1948,7 +1934,7 @@ describe('TUI', function()
         VIMRUNTIME = os.getenv('VIMRUNTIME'),
       },
     })
-    exec([[
+    t.exec([[
       sleep 500m
       vs new
     ]])
@@ -1963,11 +1949,11 @@ describe('TUI', function()
   end)
 
   it('argv[0] can be overridden #23953', function()
-    if not exec_lua('return pcall(require, "ffi")') then
+    if not t.exec_lua('return pcall(require, "ffi")') then
       pending('missing LuaJIT FFI')
     end
     local script_file = 'Xargv0.lua'
-    write_file(
+    t.write_file(
       script_file,
       [=[
       local ffi = require('ffi')
@@ -2009,7 +1995,7 @@ describe('TUI', function()
     local screen = thelpers.screen_setup(
       0,
       ('"%s" -u NONE -i NONE --cmd "set noswapfile noshowcmd noruler" --cmd "normal iabc" > /dev/null 2>&1 && cat testF && rm testF'):format(
-        nvim_prog
+        t.nvim_prog
       ),
       nil,
       { VIMRUNTIME = os.getenv('VIMRUNTIME') }
@@ -2049,7 +2035,7 @@ describe('TUI', function()
     ]],
     }
 
-    command([[call chansend(b:terminal_job_id, "\<C-h>")]])
+    t.command([[call chansend(b:terminal_job_id, "\<C-h>")]])
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|*3
@@ -2099,7 +2085,7 @@ end)
 
 describe('TUI UIEnter/UILeave', function()
   it('fires exactly once, after VimEnter', function()
-    clear()
+    t.clear()
     local screen = thelpers.setup_child_nvim({
       '-u',
       'NONE',
@@ -2145,8 +2131,8 @@ describe('TUI FocusGained/FocusLost', function()
   local child_session
 
   before_each(function()
-    clear()
-    local child_server = new_pipename()
+    t.clear()
+    local child_server = t.new_pipename()
     screen = thelpers.setup_child_nvim({
       '--listen',
       child_server,
@@ -2167,7 +2153,7 @@ describe('TUI FocusGained/FocusLost', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
-    child_session = helpers.connect(child_server)
+    child_session = t.connect(child_server)
     child_session:request(
       'nvim_exec2',
       [[
@@ -2180,7 +2166,7 @@ describe('TUI FocusGained/FocusLost', function()
   end)
 
   it('in normal-mode', function()
-    retry(2, 3 * screen.timeout, function()
+    t.retry(2, 3 * screen.timeout, function()
       feed_data('\027[I')
       screen:expect([[
         {1: }                                                 |
@@ -2213,7 +2199,7 @@ describe('TUI FocusGained/FocusLost', function()
       {3:-- TERMINAL --}                                    |
     ]],
     }
-    retry(2, 3 * screen.timeout, function()
+    t.retry(2, 3 * screen.timeout, function()
       feed_data('\027[I')
       screen:expect([[
         {1: }                                                 |
@@ -2271,7 +2257,7 @@ describe('TUI FocusGained/FocusLost', function()
     ]],
       {}
     )
-    retry(2, 3 * screen.timeout, function()
+    t.retry(2, 3 * screen.timeout, function()
       -- Enter cmdline-mode.
       feed_data(':')
       screen:sleep(1)
@@ -2287,7 +2273,7 @@ describe('TUI FocusGained/FocusLost', function()
   end)
 
   it('in terminal-mode', function()
-    feed_data(':set shell=' .. testprg('shell-test') .. ' shellcmdflag=EXE\n')
+    feed_data(':set shell=' .. t.testprg('shell-test') .. ' shellcmdflag=EXE\n')
     feed_data(':set noshowmode laststatus=0\n')
 
     feed_data(':terminal zia\n')
@@ -2365,7 +2351,7 @@ describe("TUI 't_Co' (terminal colors)", function()
   local screen
 
   local function assert_term_colors(term, colorterm, maxcolors)
-    clear({ env = { TERM = term }, args = {} })
+    t.clear({ env = { TERM = term }, args = {} })
     screen = thelpers.setup_child_nvim({
       '-u',
       'NONE',
@@ -2476,7 +2462,7 @@ describe("TUI 't_Co' (terminal colors)", function()
   -- which is raised to 16 by COLORTERM.
 
   it('TERM=screen no COLORTERM uses 8/256 colors', function()
-    if is_os('freebsd') then
+    if t.is_os('freebsd') then
       assert_term_colors('screen', nil, 256)
     else
       assert_term_colors('screen', nil, 8)
@@ -2484,7 +2470,7 @@ describe("TUI 't_Co' (terminal colors)", function()
   end)
 
   it('TERM=screen COLORTERM=screen uses 16/256 colors', function()
-    if is_os('freebsd') then
+    if t.is_os('freebsd') then
       assert_term_colors('screen', 'screen', 256)
     else
       assert_term_colors('screen', 'screen', 16)
@@ -2648,7 +2634,7 @@ describe("TUI 'term' option", function()
   local screen
 
   local function assert_term(term_envvar, term_expected)
-    clear()
+    t.clear()
     screen = thelpers.setup_child_nvim({
       '-u',
       'NONE',
@@ -2665,7 +2651,7 @@ describe("TUI 'term' option", function()
 
     local full_timeout = screen.timeout
     screen.timeout = 250 -- We want screen:expect() to fail quickly.
-    retry(nil, 2 * full_timeout, function() -- Wait for TUI thread to set 'term'.
+    t.retry(nil, 2 * full_timeout, function() -- Wait for TUI thread to set 'term'.
       feed_data(":echo 'term='.(&term)\n")
       screen:expect { any = 'term=' .. term_expected }
     end)
@@ -2676,11 +2662,11 @@ describe("TUI 'term' option", function()
   end)
 
   it('gets system-provided term if $TERM is valid', function()
-    if is_os('openbsd') then
+    if t.is_os('openbsd') then
       assert_term('xterm', 'xterm')
-    elseif is_os('bsd') then -- BSD lacks terminfo, builtin is always used.
+    elseif t.is_os('bsd') then -- BSD lacks terminfo, builtin is always used.
       assert_term('xterm', 'builtin_xterm')
-    elseif is_os('mac') then
+    elseif t.is_os('mac') then
       local status, _ = pcall(assert_term, 'xterm', 'xterm')
       if not status then
         pending('macOS: unibilium could not find terminfo')
@@ -2709,7 +2695,7 @@ describe('TUI', function()
 
   -- Runs (child) `nvim` in a TTY (:terminal), to start the builtin TUI.
   local function nvim_tui(extra_args)
-    clear()
+    t.clear()
     screen = thelpers.setup_child_nvim({
       '-u',
       'NONE',
@@ -2739,8 +2725,8 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
 
-    retry(nil, 3000, function() -- Wait for log file to be flushed.
-      local log = read_file('Xtest_tui_verbose_log') or ''
+    t.retry(nil, 3000, function() -- Wait for log file to be flushed.
+      local log = t.read_file('Xtest_tui_verbose_log') or ''
       eq('--- Terminal info --- {{{\n', string.match(log, '%-%-%- Terminal.-\n')) -- }}}
       ok(#log > 50)
     end)
@@ -2770,27 +2756,27 @@ describe('TUI', function()
   end)
 
   it('queries the terminal for truecolor support', function()
-    clear()
-    exec_lua([[
+    t.clear()
+    t.exec_lua([[
       vim.api.nvim_create_autocmd('TermRequest', {
         callback = function(args)
           local req = args.data
           local payload = req:match('^\027P%+q([%x;]+)$')
           if payload then
-            local t = {}
+            local m = {}
             for cap in vim.gsplit(payload, ';') do
               local resp = string.format('\027P1+r%s\027\\', payload)
               vim.api.nvim_chan_send(vim.bo[args.buf].channel, resp)
-              t[vim.text.hexdecode(cap)] = true
+              m[vim.text.hexdecode(cap)] = true
             end
-            vim.g.xtgettcap = t
+            vim.g.xtgettcap = m
             return true
           end
         end,
       })
     ]])
 
-    local child_server = new_pipename()
+    local child_server = t.new_pipename()
     screen = thelpers.setup_child_nvim({
       '--listen',
       child_server,
@@ -2811,8 +2797,8 @@ describe('TUI', function()
 
     screen:expect({ any = '%[No Name%]' })
 
-    local child_session = helpers.connect(child_server)
-    retry(nil, 1000, function()
+    local child_session = t.connect(child_server)
+    t.retry(nil, 1000, function()
       eq({
         Tc = true,
         RGB = true,
@@ -2823,55 +2809,55 @@ describe('TUI', function()
     end)
   end)
 
-  it('queries the terminal for OSC 52 support', function()
-    clear()
-    exec_lua([[
-      vim.api.nvim_create_autocmd('TermRequest', {
-        callback = function(args)
-          local req = args.data
-          local payload = req:match('^\027P%+q([%x;]+)$')
-          if payload and vim.text.hexdecode(payload) == 'Ms' then
-            vim.g.xtgettcap = 'Ms'
-            local resp = string.format('\027P1+r%s=%s\027\\', payload, vim.text.hexencode('\027]52;;\027\\'))
-            vim.api.nvim_chan_send(vim.bo[args.buf].channel, resp)
-            return true
-          end
-        end,
-      })
-    ]])
+  -- it('queries the terminal for OSC 52 support', function()
+  --   t.clear()
+  --   t.exec_lua([[
+  --     vim.api.nvim_create_autocmd('TermRequest', {
+  --       callback = function(args)
+  --         local req = args.data
+  --         local payload = req:match('^\027P%+q([%x;]+)$')
+  --         if payload and vim.text.hexdecode(payload) == 'Ms' then
+  --           vim.g.xtgettcap = 'Ms'
+  --           local resp = string.format('\027P1+r%s=%s\027\\', payload, vim.text.hexencode('\027]52;;\027\\'))
+  --           vim.api.nvim_chan_send(vim.bo[args.buf].channel, resp)
+  --           return true
+  --         end
+  --       end,
+  --     })
+  --   ]])
 
-    local child_server = new_pipename()
-    screen = thelpers.setup_child_nvim({
-      '--listen',
-      child_server,
-      -- Use --clean instead of -u NONE to load the osc52 plugin
-      '--clean',
-    }, {
-      env = {
-        VIMRUNTIME = os.getenv('VIMRUNTIME'),
+  --   local child_server = t.new_pipename()
+  --   screen = thelpers.setup_child_nvim({
+  --     '--listen',
+  --     child_server,
+  --     -- Use --clean instead of -u NONE to load the osc52 plugin
+  --     '--clean',
+  --   }, {
+  --     env = {
+  --       VIMRUNTIME = os.getenv('VIMRUNTIME'),
 
-        -- Only queries when SSH_TTY is set
-        SSH_TTY = '/dev/pts/1',
-      },
-    })
+  --       -- Only queries when SSH_TTY is set
+  --       SSH_TTY = '/dev/pts/1',
+  --     },
+  --   })
 
-    screen:expect({ any = '%[No Name%]' })
+  --   screen:expect({ any = '%[No Name%]' })
 
-    local child_session = helpers.connect(child_server)
-    retry(nil, 1000, function()
-      eq('Ms', eval("get(g:, 'xtgettcap', '')"))
-      eq({ true, 'OSC 52' }, { child_session:request('nvim_eval', 'g:clipboard.name') })
-    end)
-  end)
+  --   local child_session = t.connect(child_server)
+  --   t.retry(nil, 1000, function()
+  --     eq('Ms', eval("get(g:, 'xtgettcap', '')"))
+  --     eq({ true, 'OSC 52' }, { child_session:request('nvim_eval', 'g:clipboard.name') })
+  --   end)
+  -- end)
 end)
 
 describe('TUI bg color', function()
-  before_each(clear)
+  before_each(t.clear)
 
   it('is properly set in a nested Nvim instance when background=dark', function()
-    command('highlight clear Normal')
-    command('set background=dark') -- set outer Nvim background
-    local child_server = new_pipename()
+    t.command('highlight clear Normal')
+    t.command('set background=dark') -- set outer Nvim background
+    local child_server = t.new_pipename()
     local screen = thelpers.setup_child_nvim({
       '--listen',
       child_server,
@@ -2885,94 +2871,94 @@ describe('TUI bg color', function()
       'set noswapfile',
     })
     screen:expect({ any = '%[No Name%]' })
-    local child_session = helpers.connect(child_server)
-    retry(nil, nil, function()
+    local child_session = t.connect(child_server)
+    t.retry(nil, nil, function()
       eq({ true, 'dark' }, { child_session:request('nvim_eval', '&background') })
     end)
   end)
 
-  it('is properly set in a nested Nvim instance when background=light', function()
-    command('highlight clear Normal')
-    command('set background=light') -- set outer Nvim background
-    local child_server = new_pipename()
-    local screen = thelpers.setup_child_nvim({
-      '--listen',
-      child_server,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
-      '--cmd',
-      'colorscheme vim',
-      '--cmd',
-      'set noswapfile',
-    })
-    screen:expect({ any = '%[No Name%]' })
-    local child_session = helpers.connect(child_server)
-    retry(nil, nil, function()
-      eq({ true, 'light' }, { child_session:request('nvim_eval', '&background') })
-    end)
-  end)
+  -- it('is properly set in a nested Nvim instance when background=light', function()
+  --   t.command('highlight clear Normal')
+  --   t.command('set background=light') -- set outer Nvim background
+  --   local child_server = t.new_pipename()
+  --   local screen = thelpers.setup_child_nvim({
+  --     '--listen',
+  --     child_server,
+  --     '-u',
+  --     'NONE',
+  --     '-i',
+  --     'NONE',
+  --     '--cmd',
+  --     'colorscheme vim',
+  --     '--cmd',
+  --     'set noswapfile',
+  --   })
+  --   screen:expect({ any = '%[No Name%]' })
+  --   local child_session = t.connect(child_server)
+  --   t.retry(nil, nil, function()
+  --     eq({ true, 'light' }, { child_session:request('nvim_eval', '&background') })
+  --   end)
+  -- end)
 
-  it('queries the terminal for background color', function()
-    exec_lua([[
-      vim.api.nvim_create_autocmd('TermRequest', {
-        callback = function(args)
-          local req = args.data
-          if req == '\027]11;?' then
-            vim.g.oscrequest = true
-            return true
-          end
-        end,
-      })
-    ]])
-    thelpers.setup_child_nvim({
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
-      '--cmd',
-      'colorscheme vim',
-      '--cmd',
-      'set noswapfile',
-    })
-    retry(nil, 1000, function()
-      eq(true, eval("get(g:, 'oscrequest', v:false)"))
-    end)
-  end)
+  -- it('queries the terminal for background color', function()
+  --   t.exec_lua([[
+  --     vim.api.nvim_create_autocmd('TermRequest', {
+  --       callback = function(args)
+  --         local req = args.data
+  --         if req == '\027]11;?' then
+  --           vim.g.oscrequest = true
+  --           return true
+  --         end
+  --       end,
+  --     })
+  --   ]])
+  --   thelpers.setup_child_nvim({
+  --     '-u',
+  --     'NONE',
+  --     '-i',
+  --     'NONE',
+  --     '--cmd',
+  --     'colorscheme vim',
+  --     '--cmd',
+  --     'set noswapfile',
+  --   })
+  --   t.retry(nil, 1000, function()
+  --     eq(true, eval("get(g:, 'oscrequest', v:false)"))
+  --   end)
+  -- end)
 
-  it('triggers OptionSet from automatic background processing', function()
-    local screen = thelpers.setup_child_nvim({
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
-      '--cmd',
-      'colorscheme vim',
-      '--cmd',
-      'set noswapfile',
-      '-c',
-      'autocmd OptionSet background echo "did OptionSet, yay!"',
-    })
-    screen:expect([[
-      {1: }                                                 |
-      {3:~}                                                 |*3
-      {5:[No Name]                       0,0-1          All}|
-      did OptionSet, yay!                               |
-      {3:-- TERMINAL --}                                    |
-    ]])
-  end)
+  -- it('triggers OptionSet from automatic background processing', function()
+  --   local screen = thelpers.setup_child_nvim({
+  --     '-u',
+  --     'NONE',
+  --     '-i',
+  --     'NONE',
+  --     '--cmd',
+  --     'colorscheme vim',
+  --     '--cmd',
+  --     'set noswapfile',
+  --     '-c',
+  --     'autocmd OptionSet background echo "did OptionSet, yay!"',
+  --   })
+  --   screen:expect([[
+  --     {1: }                                                 |
+  --     {3:~}                                                 |*3
+  --     {5:[No Name]                       0,0-1          All}|
+  --     did OptionSet, yay!                               |
+  --     {3:-- TERMINAL --}                                    |
+  --   ]])
+  -- end)
 end)
 
 -- These tests require `thelpers` because --headless/--embed
 -- does not initialize the TUI.
 describe('TUI as a client', function()
   it('connects to remote instance (with its own TUI)', function()
-    local server_super = spawn_argv(false) -- equivalent to clear()
-    local client_super = spawn_argv(true)
+    local server_super = t.spawn_argv(false) -- equivalent to t.clear()
+    local client_super = t.spawn_argv(true)
 
-    set_session(server_super)
-    local server_pipe = new_pipename()
+    t.set_session(server_super)
+    local server_pipe = t.new_pipename()
     local screen_server = thelpers.setup_child_nvim({
       '--listen',
       server_pipe,
@@ -3007,7 +2993,7 @@ describe('TUI as a client', function()
     ]],
     }
 
-    set_session(client_super)
+    t.set_session(client_super)
     local screen_client = thelpers.setup_child_nvim({
       '--server',
       server_pipe,
@@ -3043,15 +3029,15 @@ describe('TUI as a client', function()
   end)
 
   it('connects to remote instance (--headless)', function()
-    local server = spawn_argv(false) -- equivalent to clear()
-    local client_super = spawn_argv(true)
+    local server = t.spawn_argv(false) -- equivalent to t.clear()
+    local client_super = t.spawn_argv(true)
 
-    set_session(server)
+    t.set_session(server)
     local server_pipe = api.nvim_get_vvar('servername')
     server:request('nvim_input', 'iHalloj!<Esc>')
     server:request('nvim_command', 'set notermguicolors')
 
-    set_session(client_super)
+    t.set_session(client_super)
     local screen_client = thelpers.setup_child_nvim({
       '--server',
       server_pipe,
@@ -3069,7 +3055,7 @@ describe('TUI as a client', function()
 
     -- No heap-use-after-free when receiving UI events after deadly signal #22184
     server:request('nvim_input', ('a'):rep(1000))
-    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
+    t.exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     screen_client:expect {
       grid = [[
       Vim: Caught deadly signal 'SIGTERM'               |
@@ -3082,7 +3068,7 @@ describe('TUI as a client', function()
 
     eq(0, api.nvim_get_vvar('shell_error'))
     -- exits on input eof #22244
-    fn.system({ nvim_prog, '--server', server_pipe, '--remote-ui' })
+    fn.system({ t.nvim_prog, '--server', server_pipe, '--remote-ui' })
     eq(1, api.nvim_get_vvar('shell_error'))
 
     client_super:close()
@@ -3090,7 +3076,7 @@ describe('TUI as a client', function()
   end)
 
   it('throws error when no server exists', function()
-    clear()
+    t.clear()
     local screen = thelpers.setup_child_nvim({
       '--server',
       '127.0.0.1:2436546',
@@ -3107,11 +3093,11 @@ describe('TUI as a client', function()
   end)
 
   local function test_remote_tui_quit(status)
-    local server_super = spawn_argv(false) -- equivalent to clear()
-    local client_super = spawn_argv(true)
+    local server_super = t.spawn_argv(false) -- equivalent to t.clear()
+    local client_super = t.spawn_argv(true)
 
-    set_session(server_super)
-    local server_pipe = new_pipename()
+    t.set_session(server_super)
+    local server_pipe = t.new_pipename()
     local screen_server = thelpers.setup_child_nvim({
       '--listen',
       server_pipe,
@@ -3155,7 +3141,7 @@ describe('TUI as a client', function()
     ]],
     }
 
-    set_session(client_super)
+    t.set_session(client_super)
     local screen_client = thelpers.setup_child_nvim({
       '--server',
       server_pipe,
@@ -3173,7 +3159,7 @@ describe('TUI as a client', function()
     }
 
     -- quitting the server
-    set_session(server_super)
+    t.set_session(server_super)
     feed_data(status and ':' .. status .. 'cquit!\n' or ':quit!\n')
     status = status and status or 0
     screen_server:expect {

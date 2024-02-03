@@ -1,7 +1,7 @@
 -- Test for autocommand that deletes the current buffer on BufLeave event.
 -- Also test deleting the last buffer, should give a new, empty buffer.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, expect = helpers.command, helpers.expect
 local poke_eventloop = helpers.poke_eventloop

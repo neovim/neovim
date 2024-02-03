@@ -1,6 +1,6 @@
 -- Specs for :cd, :tcd, :lcd and getcwd()
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 
 local eq = helpers.eq
 local call = helpers.call

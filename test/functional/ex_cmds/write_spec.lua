@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local eq, eval, clear, write_file, source, insert =
   helpers.eq, helpers.eval, helpers.clear, helpers.write_file, helpers.source, helpers.insert
 local pcall_err = helpers.pcall_err

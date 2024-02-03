@@ -1,6 +1,6 @@
 -- Test for user command counts
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local clear, source, expect = helpers.clear, helpers.source, helpers.expect
 local feed_command = helpers.feed_command
 

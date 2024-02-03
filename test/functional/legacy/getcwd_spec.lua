@@ -1,6 +1,6 @@
 -- Tests for getcwd(), haslocaldir(), and :lcd
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local eq, eval, source = helpers.eq, helpers.eval, helpers.source
 local call, clear, command = helpers.call, helpers.clear, helpers.command
 

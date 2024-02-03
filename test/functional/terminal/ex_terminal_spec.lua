@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local Screen = require('test.functional.ui.screen')
 local assert_alive = helpers.assert_alive
 local clear, poke_eventloop = helpers.clear, helpers.poke_eventloop

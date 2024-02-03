@@ -1,6 +1,6 @@
 -- Test for t movement command and 'cpo-;' setting
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local feed_command, expect = helpers.feed_command, helpers.expect
 
@@ -12,7 +12,7 @@ describe('coptions', function()
     insert([[
       aaa two three four
           zzz
-      yyy   
+      yyy
       bbb yee yoo four
       ccc two three four
       ddd yee yoo four]])

@@ -2,7 +2,7 @@
 -- Also test formatting a paragraph.
 -- Also test undo after ":%s" and formatting.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local feed, insert = helpers.feed, helpers.insert
 local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 

@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require('test.functional.testunit')(after_each)
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
 local api = helpers.api
