@@ -939,6 +939,48 @@ function tests.basic_formatting()
   }
 end
 
+function tests.range_formatting()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          documentFormattingProvider = true,
+          documentRangeFormattingProvider = true,
+        },
+      }
+    end,
+    body = function()
+      notify('start')
+      expect_request('textDocument/rangeFormatting', function()
+        return nil, {}
+      end)
+      notify('shutdown')
+    end,
+  }
+end
+
+function tests.ranges_formatting()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          documentFormattingProvider = true,
+          documentRangeFormattingProvider = {
+            rangesSupport = true,
+          },
+        },
+      }
+    end,
+    body = function()
+      notify('start')
+      expect_request('textDocument/rangesFormatting', function()
+        return nil, {}
+      end)
+      notify('shutdown')
+    end,
+  }
+end
+
 function tests.set_defaults_all_capabilities()
   skeleton {
     on_init = function(_)
