@@ -1605,6 +1605,32 @@ save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
 
 
 ==============================================================================
+Lua module: vim.lsp.completion                                *lsp-completion*
+
+*vim.lsp.completion.BufferOpts*
+
+    Fields: ~
+      • {autotrigger}?  (`boolean`) Whether to trigger completion
+                        automatically. Default: false
+
+
+                                                 *vim.lsp.completion.enable()*
+enable({enable}, {client_id}, {bufnr}, {opts})
+    Enables or disables completions from the given language client in the
+    given buffer.
+
+    Parameters: ~
+      • {enable}     (`boolean`) True to enable, false to disable
+      • {client_id}  (`integer`) Client ID
+      • {bufnr}      (`integer`) Buffer handle, or 0 for the current buffer
+      • {opts}       (`vim.lsp.completion.BufferOpts?`) See
+                     |vim.lsp.completion.BufferOpts|.
+
+trigger()                                       *vim.lsp.completion.trigger()*
+    Trigger LSP completion in the current buffer.
+
+
+==============================================================================
 Lua module: vim.lsp.inlay_hint                                *lsp-inlay_hint*
 
 enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*

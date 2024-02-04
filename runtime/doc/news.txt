@@ -95,7 +95,8 @@ EVENTS
 
 LSP
 
-• TODO
+• Completion side effects (including snippet expansion, execution of commands
+  and application of additional text edits) is now built-in.
 
 LUA
 

@@ -21,7 +21,7 @@ local function complete(line, candidates, lnum)
     local line, cursor_col, lnum, result = ...
     local line_to_cursor = line:sub(1, cursor_col)
     local client_start_boundary = vim.fn.match(line_to_cursor, '\\k*$')
-    local items, server_start_boundary = require("vim.lsp._completion")._convert_results(
+    local items, server_start_boundary = require("vim.lsp.completion")._convert_results(
       line,
       lnum,
       cursor_col,
@@ -42,7 +42,7 @@ local function complete(line, candidates, lnum)
   )
 end
 
-describe('vim.lsp._completion', function()
+describe('vim.lsp.completion', function()
   before_each(n.clear)
 
   -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
@@ -159,6 +159,7 @@ describe('vim.lsp._completion', function()
     end, result.items)
     eq(expected, result)
   end)
+
   it('uses correct start boundary', function()
     local completion_list = {
       isIncomplete = false,
