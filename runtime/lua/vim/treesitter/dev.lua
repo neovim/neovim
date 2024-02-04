@@ -460,7 +460,9 @@ function M.inspect_tree(opts)
         return true
       end
 
+      local treeview_opts = treeview.opts
       treeview = assert(TSTreeView:new(buf, opts.lang))
+      treeview.opts = treeview_opts
       treeview:draw(b)
     end,
   })
