@@ -505,7 +505,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
       win->w_pos_changed = true;
     }
 
-    int flags = win_split_flags(fconfig.split, parent == NULL);
+    int flags = win_split_flags(fconfig.split, parent == NULL) | WSP_NOENTER;
 
     if (parent == NULL) {
       if (!win_split_ins(0, flags, win, 0)) {
@@ -514,24 +514,13 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
         return;
       }
     } else {
-      win_execute_T args;
-
-      tabpage_T *tp = win_find_tabpage(parent);
-      if (!win_execute_before(&args, parent, tp)) {
-        // TODO(willothy): how should we handle this / what should the message be?
-        api_set_error(err, kErrorTypeException, "Failed to switch to tabpage %d", tp->handle);
-        win_execute_after(&args);
-        return;
-      }
-      // This should return the same ptr to `win`, but we check for
-      // NULL to detect errors.
-      win_T *res = win_split_ins(0, flags, win, 0);
-      win_execute_after(&args);
-      if (!res) {
-        // TODO(willothy): What should this error message say?
-        api_set_error(err, kErrorTypeException, "Failed to split window");
-        return;
-      }
+      switchwin_T switchwin;
+      // `parent` is valid in its tabpage, so switch_win should not fail.
+      const int result = switch_win(&switchwin, parent, win_find_tabpage(parent), true);
+      (void)result;
+      assert(result == OK);
+      win_split_ins(0, flags, win, 0);
+      restore_win(&switchwin, true);
     }
     if (HAS_KEY_X(config, width)) {
       win_setwidth_win(fconfig.width, win);
@@ -539,7 +528,6 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     if (HAS_KEY_X(config, height)) {
       win_setheight_win(fconfig.height, win);
     }
-    redraw_later(win, UPD_NOT_VALID);
     return;
   } else {
     win_config_float(win, fconfig);

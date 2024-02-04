@@ -1668,7 +1668,7 @@ describe('API/win', function()
       command('split | tabnew')
       local w = api.nvim_get_current_win()
       local t = api.nvim_get_current_tabpage()
-      command('tabfirst | autocmd WinEnter * ++once quit')
+      command('tabfirst | autocmd WinEnter * quit')
       api.nvim_win_set_config(0, { win = w, split = 'left' })
       -- New tabpage is now the only one, as WinEnter closed the new curwin in the original.
       eq(t, api.nvim_get_current_tabpage())
@@ -1683,6 +1683,38 @@ describe('API/win', function()
         'Window to split was closed',
         pcall_err(api.nvim_win_set_config, 0, { win = w, split = 'left' })
       )
+    end)
+
+    it('expected autocmds when moving window to other tabpage', function()
+      local new_curwin = api.nvim_get_current_win()
+      command('split')
+      local win = api.nvim_get_current_win()
+      command('tabnew')
+      local parent = api.nvim_get_current_win()
+      exec([[
+        tabfirst
+        let result = []
+        autocmd WinEnter * let result += ["Enter", win_getid()]
+        autocmd WinLeave * let result += ["Leave", win_getid()]
+        autocmd WinNew * let result += ["New", win_getid()]
+      ]])
+      api.nvim_win_set_config(0, { win = parent, split = 'left' })
+      -- Shouldn't see WinNew, as we're not creating any new windows, just moving existing ones.
+      eq({ 'Leave', win, 'Enter', new_curwin }, eval('result'))
+    end)
+
+    it('no autocmds when moving window within same tabpage', function()
+      local parent = api.nvim_get_current_win()
+      exec([[
+        split
+        let result = []
+        autocmd WinEnter * let result += ["Enter", win_getid()]
+        autocmd WinLeave * let result += ["Leave", win_getid()]
+        autocmd WinNew * let result += ["New", win_getid()]
+      ]])
+      api.nvim_win_set_config(0, { win = parent, split = 'left' })
+      -- Shouldn't see any of those events, as we remain in the same window.
+      eq({}, eval('result'))
     end)
   end)
 
