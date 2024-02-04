@@ -1294,6 +1294,11 @@ void ins_compl_show_pum(void)
   pum_display(compl_match_array, compl_match_arraysize, cur, array_changed, 0);
   curwin->w_cursor.col = col;
 
+  // After adding leader, set the current match to shown match.
+  if (compl_started && compl_curr_match != compl_shown_match) {
+    compl_curr_match = compl_shown_match;
+  }
+
   if (has_event(EVENT_COMPLETECHANGED)) {
     trigger_complete_changed_event(cur);
   }
