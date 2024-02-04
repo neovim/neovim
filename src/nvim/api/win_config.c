@@ -478,12 +478,17 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
         int dir;
         new_curwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp);
       }
+      win_remove(win, win_tp == curtab ? NULL : win_tp);
       // move to neighboring window if we're moving the current window to a new tabpage
       if (curwin == win && parent != NULL && new_curwin != NULL
           && win_tp != win_find_tabpage(parent)) {
         win_enter(new_curwin, true);
+        if (!win_valid_any_tab(parent)) {
+          // win_enter autocommands closed the `parent` to split from.
+          api_set_error(err, kErrorTypeException, "Window to split was closed");
+          return;
+        }
       }
-      win_remove(win, win_tp == curtab ? NULL : win_tp);
     } else {
       win_remove(win, win_tp == curtab ? NULL : win_tp);
       ui_comp_remove_grid(&win->w_grid_alloc);

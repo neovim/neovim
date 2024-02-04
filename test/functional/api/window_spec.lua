@@ -1663,6 +1663,27 @@ describe('API/win', function()
         },
       }, fn.winlayout())
     end)
+
+    it('closing new curwin when moving window to other tabpage works', function()
+      command('split | tabnew')
+      local w = api.nvim_get_current_win()
+      local t = api.nvim_get_current_tabpage()
+      command('tabfirst | autocmd WinEnter * ++once quit')
+      api.nvim_win_set_config(0, { win = w, split = 'left' })
+      -- New tabpage is now the only one, as WinEnter closed the new curwin in the original.
+      eq(t, api.nvim_get_current_tabpage())
+      eq({ t }, api.nvim_list_tabpages())
+    end)
+
+    it('closing split parent when moving window to other tabpage aborts', function()
+      command('split | tabnew')
+      local w = api.nvim_get_current_win()
+      command('tabfirst | autocmd WinEnter * call nvim_win_close(' .. w .. ', 1)')
+      eq(
+        'Window to split was closed',
+        pcall_err(api.nvim_win_set_config, 0, { win = w, split = 'left' })
+      )
+    end)
   end)
 
   describe('get_config', function()
