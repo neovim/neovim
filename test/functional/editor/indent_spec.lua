@@ -159,8 +159,6 @@ describe("i_Tab with 'sw' not equal to 'ts'", function()
   end)
 
   it("works with 'bri'", function()
-    pending('skipped (not yet fixed)')
-
     local screen = setup(20, 4)
     feed_command('setl ts=5 sw=20 bri briopt=min:10')
     set_lines(0, 1, '\t\t\t\t' .. (' '):rep(19) .. 'a')
