@@ -1364,6 +1364,213 @@ describe('API/win', function()
         },
       }, layout)
     end)
+
+    local function setup_tabbed_autocmd_test()
+      local info = {}
+      info.orig_buf = api.nvim_get_current_buf()
+      info.other_buf = api.nvim_create_buf(true, true)
+      info.tab1_curwin = api.nvim_get_current_win()
+      info.tab1 = api.nvim_get_current_tabpage()
+      command('tab split | split')
+      info.tab2_curwin = api.nvim_get_current_win()
+      info.tab2 = api.nvim_get_current_tabpage()
+      exec([=[
+        tabfirst
+        let result = []
+        autocmd TabEnter * let result += [["TabEnter", nvim_get_current_tabpage()]]
+        autocmd TabLeave * let result += [["TabLeave", nvim_get_current_tabpage()]]
+        autocmd WinEnter * let result += [["WinEnter", win_getid()]]
+        autocmd WinLeave * let result += [["WinLeave", win_getid()]]
+        autocmd WinNew * let result += [["WinNew", win_getid()]]
+        autocmd WinClosed * let result += [["WinClosed", str2nr(expand("<afile>"))]]
+        autocmd BufEnter * let result += [["BufEnter", win_getid(), bufnr()]]
+        autocmd BufLeave * let result += [["BufLeave", win_getid(), bufnr()]]
+        autocmd BufWinEnter * let result += [["BufWinEnter", win_getid(), bufnr()]]
+        autocmd BufWinLeave * let result += [["BufWinLeave", win_getid(), bufnr()]]
+      ]=])
+      return info
+    end
+
+    it('fires expected autocmds when creating splits without entering', function()
+      local info = setup_tabbed_autocmd_test()
+
+      -- For these, don't want BufWinEnter if visiting the same buffer, like :{s}buffer.
+      -- Same tabpage, same buffer.
+      local new_win = api.nvim_open_win(0, false, { split = 'left', win = info.tab1_curwin })
+      eq({
+        { 'WinNew', new_win },
+      }, eval('result'))
+      eq(info.tab1_curwin, api.nvim_get_current_win())
+
+      -- Other tabpage, same buffer.
+      command('let result = []')
+      new_win = api.nvim_open_win(0, false, { split = 'left', win = info.tab2_curwin })
+      eq({
+        { 'WinNew', new_win },
+      }, eval('result'))
+      eq(info.tab1_curwin, api.nvim_get_current_win())
+
+      -- Same tabpage, other buffer.
+      command('let result = []')
+      new_win = api.nvim_open_win(info.other_buf, false, { split = 'left', win = info.tab1_curwin })
+      eq({
+        { 'WinNew', new_win },
+        { 'BufWinEnter', new_win, info.other_buf },
+      }, eval('result'))
+      eq(info.tab1_curwin, api.nvim_get_current_win())
+
+      -- Other tabpage, other buffer.
+      command('let result = []')
+      new_win = api.nvim_open_win(info.other_buf, false, { split = 'left', win = info.tab2_curwin })
+      eq({
+        { 'WinNew', new_win },
+        { 'BufWinEnter', new_win, info.other_buf },
+      }, eval('result'))
+      eq(info.tab1_curwin, api.nvim_get_current_win())
+    end)
+
+    it('fires expected autocmds when creating and entering splits', function()
+      local info = setup_tabbed_autocmd_test()
+
+      -- Same tabpage, same buffer.
+      local new_win = api.nvim_open_win(0, true, { split = 'left', win = info.tab1_curwin })
+      eq({
+        { 'WinNew', new_win },
+        { 'WinLeave', info.tab1_curwin },
+        { 'WinEnter', new_win },
+      }, eval('result'))
+
+      -- Same tabpage, other buffer.
+      api.nvim_set_current_win(info.tab1_curwin)
+      command('let result = []')
+      new_win = api.nvim_open_win(info.other_buf, true, { split = 'left', win = info.tab1_curwin })
+      eq({
+        { 'WinNew', new_win },
+        { 'WinLeave', info.tab1_curwin },
+        { 'WinEnter', new_win },
+        { 'BufLeave', new_win, info.orig_buf },
+        { 'BufEnter', new_win, info.other_buf },
+        { 'BufWinEnter', new_win, info.other_buf },
+      }, eval('result'))
+
+      -- For these, the other tabpage's prevwin and curwin will change like we switched from its old
+      -- curwin to the new window, so the extra events near TabEnter reflect that.
+      -- Other tabpage, same buffer.
+      api.nvim_set_current_win(info.tab1_curwin)
+      command('let result = []')
+      new_win = api.nvim_open_win(0, true, { split = 'left', win = info.tab2_curwin })
+      eq({
+        { 'WinNew', new_win },
+        { 'WinLeave', info.tab1_curwin },
+        { 'TabLeave', info.tab1 },
+
+        { 'WinEnter', info.tab2_curwin },
+        { 'TabEnter', info.tab2 },
+        { 'WinLeave', info.tab2_curwin },
+        { 'WinEnter', new_win },
+      }, eval('result'))
+
+      -- Other tabpage, other buffer.
+      api.nvim_set_current_win(info.tab2_curwin)
+      api.nvim_set_current_win(info.tab1_curwin)
+      command('let result = []')
+      new_win = api.nvim_open_win(info.other_buf, true, { split = 'left', win = info.tab2_curwin })
+      eq({
+        { 'WinNew', new_win },
+        { 'WinLeave', info.tab1_curwin },
+        { 'TabLeave', info.tab1 },
+
+        { 'WinEnter', info.tab2_curwin },
+        { 'TabEnter', info.tab2 },
+        { 'WinLeave', info.tab2_curwin },
+        { 'WinEnter', new_win },
+
+        { 'BufLeave', new_win, info.orig_buf },
+        { 'BufEnter', new_win, info.other_buf },
+        { 'BufWinEnter', new_win, info.other_buf },
+      }, eval('result'))
+
+      -- Other tabpage, other buffer; but other tabpage's curwin has a new buffer active.
+      api.nvim_set_current_win(info.tab2_curwin)
+      local new_buf = api.nvim_create_buf(true, true)
+      api.nvim_set_current_buf(new_buf)
+      api.nvim_set_current_win(info.tab1_curwin)
+      command('let result = []')
+      new_win = api.nvim_open_win(info.other_buf, true, { split = 'left', win = info.tab2_curwin })
+      eq({
+        { 'WinNew', new_win },
+        { 'BufLeave', info.tab1_curwin, info.orig_buf },
+        { 'WinLeave', info.tab1_curwin },
+        { 'TabLeave', info.tab1 },
+
+        { 'WinEnter', info.tab2_curwin },
+        { 'TabEnter', info.tab2 },
+        { 'BufEnter', info.tab2_curwin, new_buf },
+        { 'WinLeave', info.tab2_curwin },
+        { 'WinEnter', new_win },
+        { 'BufLeave', new_win, new_buf },
+        { 'BufEnter', new_win, info.other_buf },
+        { 'BufWinEnter', new_win, info.other_buf },
+      }, eval('result'))
+    end)
+
+    it('OK when new window is moved to other tabpage by autocommands', function()
+      -- Use nvim_win_set_config in the autocommands, as other methods of moving a window to a
+      -- different tabpage (e.g: wincmd T) actually creates a new window.
+      local tab0 = api.nvim_get_current_tabpage()
+      local tab0_win = api.nvim_get_current_win()
+      command('tabnew')
+      local new_buf = api.nvim_create_buf(true, true)
+      local tab1 = api.nvim_get_current_tabpage()
+      local tab1_parent = api.nvim_get_current_win()
+      command(
+        'tabfirst | autocmd WinNew * ++once call nvim_win_set_config(0, #{split: "left", win: '
+          .. tab1_parent
+          .. '})'
+      )
+      local new_win = api.nvim_open_win(new_buf, true, { split = 'left' })
+      eq(tab1, api.nvim_get_current_tabpage())
+      eq(new_win, api.nvim_get_current_win())
+      eq(new_buf, api.nvim_get_current_buf())
+
+      -- nvim_win_set_config called after entering. It doesn't follow a curwin that is moved to a
+      -- different tabpage, but instead moves to the win filling the space, which is tab0_win.
+      command(
+        'tabfirst | autocmd WinEnter * ++once call nvim_win_set_config(0, #{split: "left", win: '
+          .. tab1_parent
+          .. '})'
+      )
+      new_win = api.nvim_open_win(new_buf, true, { split = 'left' })
+      eq(tab0, api.nvim_get_current_tabpage())
+      eq(tab0_win, api.nvim_get_current_win())
+      eq(tab1, api.nvim_win_get_tabpage(new_win))
+      eq(new_buf, api.nvim_win_get_buf(new_win))
+
+      command(
+        'tabfirst | autocmd BufEnter * ++once call nvim_win_set_config(0, #{split: "left", win: '
+          .. tab1_parent
+          .. '})'
+      )
+      new_win = api.nvim_open_win(new_buf, true, { split = 'left' })
+      eq(tab0, api.nvim_get_current_tabpage())
+      eq(tab0_win, api.nvim_get_current_win())
+      eq(tab1, api.nvim_win_get_tabpage(new_win))
+      eq(new_buf, api.nvim_win_get_buf(new_win))
+    end)
+
+    it('does not fire BufWinEnter if win_set_buf fails', function()
+      exec([[
+        set nohidden modified
+        autocmd WinNew * ++once only!
+        let fired = v:false
+        autocmd BufWinEnter * ++once let fired = v:true
+      ]])
+      eq(
+        'Failed to set buffer 2',
+        pcall_err(api.nvim_open_win, api.nvim_create_buf(true, true), false, { split = 'left' })
+      )
+      eq(false, eval('fired'))
+    end)
   end)
 
   describe('set_config', function()

@@ -718,6 +718,7 @@ void win_set_buf(win_T *win, buf_T *buf, bool noautocmd, Error *err)
                   kErrorTypeException,
                   "Failed to switch to window %d",
                   win->handle);
+    goto cleanup;
   }
 
   try_start();
@@ -729,10 +730,11 @@ void win_set_buf(win_T *win, buf_T *buf, bool noautocmd, Error *err)
                   buf->handle);
   }
 
-  // If window is not current, state logic will not validate its cursor.
-  // So do it now.
+  // If window is not current, state logic will not validate its cursor. So do it now.
+  // Still needed if do_buffer returns FAIL (e.g: autocmds abort script after buffer was set).
   validate_cursor();
 
+cleanup:
   restore_win_noblock(&switchwin, true);
   if (noautocmd) {
     unblock_autocmds();

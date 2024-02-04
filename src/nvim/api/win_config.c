@@ -261,8 +261,8 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
       switchwin_T switchwin;
       // `parent` is valid in `tp`, so switch_win should not fail.
       const int result = switch_win(&switchwin, parent, tp, true);
-      (void)result;
       assert(result == OK);
+      (void)result;
       wp = win_split_ins(0, flags, NULL, 0);
       restore_win(&switchwin, true);
     }
@@ -276,18 +276,41 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
     api_set_error(err, kErrorTypeException, "Failed to create window");
     return 0;
   }
+
+  // Autocommands may close `wp` or move it to another tabpage, so update and check `tp` after each
+  // event. In each case, `wp` should already be valid in `tp`, so switch_win should not fail.
   switchwin_T switchwin;
-  if (switch_win_noblock(&switchwin, wp, tp, true) == OK) {
-    apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
+  {
+    const int result = switch_win_noblock(&switchwin, wp, tp, true);
+    assert(result == OK);
+    (void)result;
+    if (apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf)) {
+      tp = win_find_tabpage(wp);
+    }
+    restore_win_noblock(&switchwin, true);
   }
-  restore_win_noblock(&switchwin, true);
-  if (enter) {
+  if (tp && enter) {
     goto_tabpage_win(tp, wp);
+    tp = win_find_tabpage(wp);
   }
-  if (win_valid_any_tab(wp) && buf != wp->w_buffer) {
-    win_set_buf(wp, buf, !enter || fconfig.noautocmd, err);
+  if (tp && buf != wp->w_buffer) {
+    const bool noautocmd = !enter || fconfig.noautocmd;
+    win_set_buf(wp, buf, noautocmd, err);
+    if (!noautocmd) {
+      tp = win_find_tabpage(wp);
+    }
+    // win_set_buf autocommands were blocked if we didn't enter, but we still want BufWinEnter.
+    if (noautocmd && !fconfig.noautocmd && wp->w_buffer == buf) {
+      const int result = switch_win_noblock(&switchwin, wp, tp, true);
+      assert(result == OK);
+      (void)result;
+      if (apply_autocmds(EVENT_BUFWINENTER, NULL, NULL, false, buf)) {
+        tp = win_find_tabpage(wp);
+      }
+      restore_win_noblock(&switchwin, true);
+    }
   }
-  if (!win_valid_any_tab(wp)) {
+  if (!tp) {
     api_set_error(err, kErrorTypeException, "Window was closed immediately");
     return 0;
   }
