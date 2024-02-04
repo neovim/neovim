@@ -203,7 +203,12 @@ end
 ---@param query_name string Name of the query (e.g. "highlights")
 ---
 ---@return Query|nil Parsed query
-M.get = vim.func._memoize('concat-2', function(lang, query_name)
+-- M.get = vim.func._memoize('concat-2', function(lang, query_name)
+M.get = (function(lang, query_name)
+  if lang == 'c' then
+    print('ffefewf', debug.traceback())
+  error('hhhhh')
+end
   if explicit_queries[lang][query_name] then
     return explicit_queries[lang][query_name]
   end
@@ -215,7 +220,17 @@ M.get = vim.func._memoize('concat-2', function(lang, query_name)
     return nil
   end
 
-  return M.parse(lang, query_string)
+  local ok, ret = pcall(M.parse, lang, query_string)
+
+  if not ok then
+    local parser_path = language._get_parser_path(lang)
+    error(string.format('Query files %s are not compatible with parser at %s',
+      table.concat(query_files, ', '),
+      parser_path
+    ))
+  end
+
+  return ret
 end)
 
 ---@deprecated

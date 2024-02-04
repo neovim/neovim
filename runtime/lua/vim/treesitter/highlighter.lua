@@ -26,6 +26,19 @@ function TSHighlighterQuery.new(lang, query_string)
     self._query = query.parse(lang, query_string)
   else
     self._query = query.get(lang, 'highlights')
+    -- local ok
+    -- ok, self._query = pcall(function()
+    --   query.get(lang, 'highlights')
+    -- end)
+
+    -- if not ok then
+    --   local query_files = query.get_files(lang, 'highlights')
+    --   local parser_path = vim.treesitter.language._get_parser_path(lang)
+    --   error(string.format('Query file(s) %s are not compatible with parser at %s',
+    --   table.concat(query_files, ', '),
+    --   parser_path
+    --   ))
+    -- end
   end
 
   return self
@@ -61,13 +74,14 @@ end
 ---@class vim.treesitter.highlighter
 ---@field active table<integer,vim.treesitter.highlighter>
 ---@field bufnr integer
----@field orig_spelloptions string
+---@field private orig_spelloptions string
 --- A map of highlight states.
 --- This state is kept during rendering across each line update.
----@field _highlight_states vim.treesitter.highlighter.State[]
----@field _queries table<string,vim.treesitter.highlighter.Query>
+---@field private _highlight_states vim.treesitter.highlighter.State[]
+---@field private _queries table<string,vim.treesitter.highlighter.Query>
 ---@field tree LanguageTree
----@field redraw_count integer
+---@field private redraw_count integer
+---@field private disabled? true
 local TSHighlighter = {
   active = {},
 }
@@ -184,7 +198,14 @@ function TSHighlighter:prepare_highlight_states(srow, erow)
       return
     end
 
-    local highlighter_query = self:get_query(tree:lang())
+    local ok, highlighter_query = pcall(function()
+      return self:get_query(tree:lang())
+    end)
+
+    if not ok then
+      self.disabled = true
+      error(highlighter_query)
+    end
 
     -- Some injected languages may not have highlight queries.
     if not highlighter_query:query() then
@@ -326,7 +347,7 @@ end
 ---@param erow integer
 function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
   local self = TSHighlighter.active[buf]
-  if not self then
+  if not self or self.disabled then
     return
   end
 
@@ -344,7 +365,7 @@ end
 ---@param botline integer
 function TSHighlighter._on_win(_, _win, buf, topline, botline)
   local self = TSHighlighter.active[buf]
-  if not self then
+  if not self or self.disabled then
     return false
   end
   self.tree:parse({ topline, botline + 1 })
