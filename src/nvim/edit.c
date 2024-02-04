@@ -4314,115 +4314,87 @@ static bool ins_tab(void)
   if (!curbuf->b_p_et && (tabstop_count(curbuf->b_p_vsts_array) > 0
                           || get_sts_value() > 0
                           || (p_sta && ind))) {
-    char *saved_line = NULL;         // init for GCC
-    pos_T pos;
-
     buf_T *const buf = curbuf;
-    char *line;
-    pos_T *cursor;
+    char *line = get_cursor_line_ptr();
+    pos_T const cursor = curwin->w_cursor;
 
-    // Get the current line.  For MODE_VREPLACE state, don't make real
+    // For MODE_VREPLACE state, don't make real
     // changes yet, just work on a copy of the line.
     if (State & VREPLACE_FLAG) {
-      pos = curwin->w_cursor;
-      cursor = &pos;
-      line = xstrdup(get_cursor_line_ptr());
-      saved_line = line;
-    } else {
-      line = get_cursor_line_ptr();
-      cursor = &curwin->w_cursor;
+      line = xstrdup(line);
     }
 
-    int save_list = curwin->w_p_list;
+    char *const cursor_ptr = line + cursor.col;
+
     bool use_ts;
     // When 'L' is not in 'cpoptions' a tab always takes up 'ts' spaces.
     if (!curwin->w_p_list || vim_strchr(p_cpo, CPO_LISTWM) == NULL) {
       use_ts = true;
-      curwin->w_p_list = false;
     } else {
       use_ts = curwin->w_p_lcs_chars.tab1;
     }
 
     // Find first white before the cursor
-    pos_T fpos = curwin->w_cursor;
-    char *ptr = line + cursor->col;
-    while (fpos.col > 0 && ascii_iswhite(ptr[-1])) {
-      fpos.col--;
-      ptr--;
+    char *white_ptr = line + cursor.col;
+    while (white_ptr > line && ascii_iswhite(white_ptr[-1])) {
+      white_ptr--;
     }
 
     // In Replace mode, don't change characters before the insert point.
     if ((State & REPLACE_FLAG)
-        && fpos.lnum == Insstart.lnum
-        && fpos.col < Insstart.col) {
-      ptr += Insstart.col - fpos.col;
-      fpos.col = Insstart.col;
+        && cursor.lnum == Insstart.lnum
+        && (white_ptr - line) < Insstart.col) {
+      white_ptr = Insstart.col + line;
     }
 
     char *change_ptr = NULL;
-    int vcol = -1, want_vcol = -1;
-    if (fpos.col < cursor->col) {
+    int white_vcol, cursor_vcol;
+    if (white_ptr < cursor_ptr) {
       // find screen position of first white before cursor
-      char *const white_stop = ptr;
-
-      int white_vcol = 0;
+      white_vcol = 0;
       StrCharInfo sci = utf_ptr2StrCharInfo(line);
-      while (*sci.ptr != NUL) {
-        int next_vcol = white_vcol
-                        + charsize_nowrap(buf, use_ts, white_vcol, sci.chr.value);
-        StrCharInfo next = utfc_next(sci);
-        if (next.ptr > white_stop) {
-          break;
-        }
-        white_vcol = next_vcol;
-        sci = next;
+      while (sci.ptr < white_ptr) {
+        white_vcol += charsize_nowrap(buf, use_ts, white_vcol, sci.chr.value);
+        sci = utfc_next(sci);
       }
 
-      OptInt const ts = buf->b_p_ts;
-      colnr_T *const vts = buf->b_p_vts_array;
-      char *const cursor_ptr = line + cursor->col;
-
       // Replace spaces by tabs
-      char *cur_ptr = sci.ptr;
-      char *replace_ptr = sci.ptr;
-      int replace_vcol = white_vcol;
-
+      char *cur_ptr = white_ptr;
       assert(utf_char2cells(' ') == 1);
       if (EXPECT(use_ts, true)) {
+        OptInt const ts = buf->b_p_ts;
+        colnr_T *const vts = buf->b_p_vts_array;
+
         while (true) {
-          int cur_ts = tabstop_padding(replace_vcol, ts, vts);
+          int cur_ts = tabstop_padding(white_vcol, ts, vts);
 
           int rem_ts = cur_ts;
           while (cur_ptr < cursor_ptr) {
             char c = *cur_ptr++;
-
             if (c == ' ') {
               rem_ts--;
               if (rem_ts == 0) {
                 break;
               }
-            } else if (c == TAB) {
-              rem_ts = 0;
-              break;
             } else {
+              assert(c == TAB);
+              rem_ts = 0;
               break;
             }
           }
 
           if (rem_ts != 0) {
-            ptr = replace_ptr;
-            vcol = replace_vcol;
-            want_vcol = replace_vcol + cur_ts - rem_ts;
+            cursor_vcol = white_vcol + cur_ts - rem_ts;
             break;
           }
 
-          if (*replace_ptr != TAB) {
-            *replace_ptr = TAB;
-            change_ptr = change_ptr ? change_ptr : replace_ptr;
+          if (*white_ptr != TAB) {
+            *white_ptr = TAB;
+            change_ptr = change_ptr ? change_ptr : white_ptr;
           }
 
-          replace_ptr++;
-          replace_vcol += cur_ts;
+          white_ptr++;
+          white_vcol += cur_ts;
         }
       } else {  // tab is ^I or <09>
         int tab_size = char2cells(TAB);
@@ -4431,65 +4403,63 @@ static bool ins_tab(void)
         while (cur_ptr < cursor_ptr) {
           char c = *cur_ptr;
           if (c == ' ') {
+            // remember where first space would've beed replaced
             change_ptr = change_ptr ? change_ptr : cur_ptr;
             sum++;
-          } else if (c == TAB) {
-            sum += tab_size;
           } else {
-            break;
+            assert(c == TAB);
+            sum += tab_size;
           }
           cur_ptr++;
         }
 
         int tab_count = sum / tab_size;
-        want_vcol = white_vcol + sum;
-        vcol = want_vcol - sum % tab_size;
+        cursor_vcol = white_vcol + sum;
+        white_vcol = cursor_vcol - sum % tab_size;
 
-        memset(replace_ptr, TAB, (size_t)tab_count);
-        replace_ptr += tab_count;
-
-        if (change_ptr > replace_ptr) {
+        white_ptr += tab_count;
+        if (change_ptr && change_ptr < white_ptr) {
+          memset(change_ptr, TAB, (size_t)(white_ptr - change_ptr));
+        } else {
           change_ptr = NULL;
         }
-        ptr = replace_ptr;
       }
-
-      fpos.col = (int)(ptr - line);
     }
 
     if (change_ptr) {
-      int change_col = (int)(change_ptr - line);
-      if (fpos.lnum == Insstart.lnum && change_col < Insstart.col) {
+      int const change_col = (int)(change_ptr - line);
+      if (cursor.lnum == Insstart.lnum && change_col < Insstart.col) {
         Insstart.col = change_col;
       }
 
-      int repl_off = 0;
+      int count = 0;
       // Skip over the spaces we need.
-      while (vcol < want_vcol && *ptr == ' ') {
-        vcol++;
-        ptr++;
-        repl_off++;
+      while (white_vcol < cursor_vcol && *white_ptr == ' ') {
+        white_vcol++;
+        count++;
+        white_ptr++;
       }
-
-      fpos.col += repl_off;
 
       // Delete following spaces.
-      int i = cursor->col - fpos.col;
-      if (i > 0) {
-        STRMOVE(ptr, ptr + i);
+      if (cursor_ptr > white_ptr) {
+        STRMOVE(white_ptr, cursor_ptr);
+        if (!(State & VREPLACE_FLAG)) {
+          curwin->w_cursor.col = (colnr_T)(white_ptr - line);
+        }
+
         // correct replace stack.
-        if ((State & REPLACE_FLAG)
-            && !(State & VREPLACE_FLAG)) {
-          for (temp = i; --temp >= 0;) {
-            replace_join(repl_off);
+        if ((State & REPLACE_FLAG) && !(State & VREPLACE_FLAG)) {
+          for (int i = 0; i < cursor_ptr - white_ptr; i++) {
+            replace_join(count);
           }
         }
+
         if (!(State & VREPLACE_FLAG)) {
-          inserted_bytes(fpos.lnum, change_col,
-                         cursor->col - change_col, fpos.col - change_col);
+          inserted_bytes(cursor.lnum, change_col,
+                         (int)(cursor_ptr - change_ptr),
+                         (int)(white_ptr - change_ptr));
         }
       }
-      cursor->col -= i;
 
       // In MODE_VREPLACE state, we haven't changed anything yet.  Do it
       // now by backspacing over the changed spacing and then inserting
@@ -4498,16 +4468,14 @@ static bool ins_tab(void)
         // Backspace from real cursor to change_col
         backspace_until_column(change_col);
 
-        // Insert each char in saved_line from changed_col to
-        // ptr-cursor
-        ins_bytes_len(saved_line + change_col, (size_t)(cursor->col - change_col));
+        // Insert changed chars in saved line
+        ins_bytes_len(change_ptr, (size_t)(white_ptr - change_ptr));
       }
     }
 
     if (State & VREPLACE_FLAG) {
-      xfree(saved_line);
+      xfree(line);
     }
-    curwin->w_p_list = save_list;
   }
 
   return false;
