@@ -1341,6 +1341,7 @@ local filename = {
   ['.hintrc'] = 'jsonc',
   ['.jsfmtrc'] = 'jsonc',
   ['.jshintrc'] = 'jsonc',
+  ['.luaurc'] = 'jsonc',
   ['.swrc'] = 'jsonc',
   ['.justfile'] = 'just',
   Kconfig = 'kconfig',
