@@ -12,6 +12,7 @@ local lsp = vim._defer_require('vim.lsp', {
   _completion = ..., --- @module 'vim.lsp._completion'
   _dynamic = ..., --- @module 'vim.lsp._dynamic'
   _snippet_grammar = ..., --- @module 'vim.lsp._snippet_grammar'
+  _tagfunc = ..., --- @module 'vim.lsp._tagfunc'
   _watchfiles = ..., --- @module 'vim.lsp._watchfiles'
   buf = ..., --- @module 'vim.lsp.buf'
   codelens = ..., --- @module 'vim.lsp.codelens'
@@ -22,7 +23,6 @@ local lsp = vim._defer_require('vim.lsp', {
   protocol = ..., --- @module 'vim.lsp.protocol'
   rpc = ..., --- @module 'vim.lsp.rpc'
   semantic_tokens = ..., --- @module 'vim.lsp.semantic_tokens'
-  tagfunc = ..., --- @module 'vim.lsp.tagfunc'
   util = ..., --- @module 'vim.lsp.util'
 })
 
@@ -2040,7 +2040,7 @@ end
 ---
 ---@return table[] tags A list of matching tags
 function lsp.tagfunc(pattern, flags)
-  return vim.lsp.tagfunc(pattern, flags)
+  return vim.lsp._tagfunc(pattern, flags)
 end
 
 ---Checks whether a client is stopped.
