@@ -55,6 +55,7 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
   local regtype = opts.regtype or 'v'
   local inclusive = opts.inclusive or false
   local priority = opts.priority or M.priorities.user
+  local scoped = opts._scoped or false
 
   -- TODO: in case of 'v', 'V' (not block), this should calculate equivalent
   -- bounds (row, col, end_row, end_col) as multiline regions are natively
@@ -72,12 +73,14 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
       end_col = cols[2],
       priority = priority,
       strict = false,
+      scoped = scoped,
     })
   end
 end
 
 local yank_ns = api.nvim_create_namespace('hlyank')
 local yank_timer
+local yank_cancel
 
 --- Highlight the yanked text
 ---
@@ -120,24 +123,29 @@ function M.on_yank(opts)
   local higroup = opts.higroup or 'IncSearch'
   local timeout = opts.timeout or 150
 
-  local bufnr = api.nvim_get_current_buf()
-  api.nvim_buf_clear_namespace(bufnr, yank_ns, 0, -1)
+  local bufnr = vim.api.nvim_get_current_buf()
+  local winid = vim.api.nvim_get_current_win()
   if yank_timer then
     yank_timer:close()
+    yank_cancel()
   end
 
   M.range(bufnr, yank_ns, higroup, "'[", "']", {
     regtype = event.regtype,
     inclusive = event.inclusive,
     priority = opts.priority or M.priorities.user,
+    _scoped = true,
   })
+  vim.api.nvim_win_add_ns(winid, yank_ns)
 
-  yank_timer = vim.defer_fn(function()
+  yank_cancel = function()
     yank_timer = nil
-    if api.nvim_buf_is_valid(bufnr) then
-      api.nvim_buf_clear_namespace(bufnr, yank_ns, 0, -1)
-    end
-  end, timeout)
+    yank_cancel = nil
+    pcall(vim.api.nvim_buf_clear_namespace, bufnr, yank_ns, 0, -1)
+    pcall(vim.api.nvim_win_remove_ns, winid, yank_ns)
+  end
+
+  yank_timer = vim.defer_fn(yank_cancel, timeout)
 end
 
 return M
