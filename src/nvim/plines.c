@@ -287,7 +287,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
     // If the line starts with 'breakat' characters
     // then the first line break is skipped.
     if (csarg->lbr_skip_count < 0) {
-      if (cur == csarg->line) {
+      if (EXPECT(cur == csarg->line, true)) {
         // If iterating from the start of the line,
         // the first time a possible linebreak position is encountered
         // would be the first such position for the entire line.
@@ -296,7 +296,6 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
         // CharsizeArg is initialized in the middle of the line.
         // Need to scan the line from the start to find if there was a
         // possible linebreak position before this one.
-
         char *first_word = csarg->line;
         while (vim_isbreak((uint8_t)(*first_word))) {
           first_word++;
@@ -310,6 +309,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
     csarg->lbr_skip_count--;
   } else if (need_lbr) {
     int const width = wp->w_width_inner - win_col_off(wp);
+    int const width2 = width + win_col_off2(wp);
 
     int cur_vcol = vcol + size;  // start of the word (next character)
 
@@ -321,8 +321,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
       can_break = true;
       colmax = width;
     } else {
-      int const width2 = width + win_col_off2(wp);
-      assert(width2 != 0);  // win_col__off2() >= 0, width > 0
+      assert(width2 > 0);  // win_col__off2() >= 0, width > 0
 
       int const line_count = (cur_vcol - width) / width2;
       int const line_vcol = (cur_vcol - width) % width2;
@@ -332,6 +331,22 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
         can_break = true;
         colmax = width + (line_count + 1) * width2;
       }
+    }
+
+    if (can_break) {
+      int indent_width = csarg->indent_width;
+      if (indent_width == INT_MIN) {
+        indent_width = 0;
+        if (*sbr != NUL) {
+          indent_width += vim_strsize(sbr);
+        }
+        if (wp->w_p_bri) {
+          indent_width += get_breakindent_win(wp, line);
+        }
+        csarg->indent_width = indent_width;
+      }
+
+      can_break = (width2 - indent_width) > (colmax - cur_vcol);
     }
 
     if (can_break) {

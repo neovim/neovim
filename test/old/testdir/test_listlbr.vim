@@ -373,19 +373,95 @@ func Test_ctrl_char_on_wrap_column()
   call s:close_windows()
 endfunc
 
-func Test_linebreak_no_break_after_whitespace_only()
+func Test_linebreak_break_after_whitespace()
   call s:test_windows('setl ts=4 linebreak wrap')
-  call setline(1, "\t  abcdefghijklmnopqrstuvwxyz" ..
+  setl list listchars=tab:>-,space:.
+  call setline(1, "\t abcdefghijklmnopqrstuvwxyz" ..
         \ "abcdefghijklmnopqrstuvwxyz")
   let lines = s:screen_lines([1, 4], winwidth(0))
   let expect = [
-\ "      abcdefghijklmn",
-\ "opqrstuvwxyzabcdefgh",
-\ "ijklmnopqrstuvwxyz  ",
-\ "~                   ",
-\ ]
+\ ">---.abcdefghijklmno", 
+\ 'pqrstuvwxyzabcdefghi', 
+\ "jklmnopqrstuvwxyz   ", 
+\ "~                   "]
+
   call s:compare_lines(expect, lines)
   call s:close_windows()
 endfunc
+
+func Test_linebreak_with_breakindent()
+  call s:test_windows('setl ts=4 breakindent briopt=min:15 sbr=>>')
+  setl list listchars=tab:>-,space:.
+  call setline(1, "\t a bcdefghijklmnopqrstuvwxyz" ..
+        \ "abcdefghijklmnopqrstuvwxyz")
+  let lines = s:screen_lines([1, 4], winwidth(0))
+  let expect = [
+\ ">---.a.bcdefghijklmn", 
+\ "     >>opqrstuvwxyza", 
+\ "     >>bcdefghijklmn", 
+\ "     >>opqrstuvwxyz "]
+
+  call s:compare_lines(expect, lines)
+  call s:close_windows()
+
+  call s:test_windows('setl ts=4 breakindent briopt=min:16 sbr=>>')
+  setl list listchars=tab:>-,space:.
+  call setline(1, "\t a bcdefghijklmnopqrstuvwxyz" ..
+        \ "abcdefghijklmnopqrstuvwxyz")
+  let lines = s:screen_lines([1, 4], winwidth(0))
+  let expect = [
+\ ">---.a.             ", 
+\ "    >>bcdefghijklmno", 
+\ "    >>pqrstuvwxyzabc", 
+\ "    >>defghijklmnopq"]
+
+  call s:compare_lines(expect, lines)
+  call s:close_windows()
+endfunc
+
+func Test_linebreak_with_showbreak()
+  call s:test_windows('setl ts=4 linebreak showbreak=123456 wrap')
+  setl list listchars=tab:>-,space:.
+  call setline(1, "!@#$ abcdefghijklmnopqrstuvwxyz" ..
+        \ "abcdefghijklmnopqrstuvwxyz")
+  let lines = s:screen_lines([1, 4], winwidth(0))
+  let expect = [
+\ '!@#$.abcdefghijklmno',
+\ '123456pqrstuvwxyzabc',
+\ '123456defghijklmnopq',
+\ '123456rstuvwxyz     ']
+
+  call s:compare_lines(expect, lines)
+  call s:close_windows()
+
+  call s:test_windows('setl ts=4 linebreak showbreak=12345 wrap')
+  setl list listchars=tab:>-,space:.
+  call setline(1, "!@#$ abcdefghijklmnopqrstuvwxyz" ..
+        \ "abcdefghijklmnopqrstuvwxyz")
+  let lines = s:screen_lines([1, 4], winwidth(0))
+  let expect = [
+\ '!@#$.abcdefghijklmno',
+\ '12345pqrstuvwxyzabcd',
+\ '12345efghijklmnopqrs',
+\ '12345tuvwxyz        ']
+
+  call s:compare_lines(expect, lines)
+  call s:close_windows()
+
+  call s:test_windows('setl ts=4 linebreak showbreak=1234 wrap')
+  setl list listchars=tab:>-,space:.
+  call setline(1, "!@#$ abcdefghijklmnopqrstuvwxyz" ..
+        \ "abcdefghijklmnopqrstuvwxyz")
+  let lines = s:screen_lines([1, 4], winwidth(0))
+  let expect = [
+\ '!@#$.               ',
+\ '1234abcdefghijklmnop',
+\ '1234qrstuvwxyzabcdef',
+\ '1234ghijklmnopqrstuv']
+
+  call s:compare_lines(expect, lines)
+  call s:close_windows()
+endfunc
+	
 
 " vim: shiftwidth=2 sts=2 expandtab
