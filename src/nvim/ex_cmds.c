@@ -4592,9 +4592,6 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
   // disable file info message
   set_string_option_direct(kOptShortmess, "F", 0, SID_NONE);
 
-  // Update the topline to ensure that main window is on the correct line
-  update_topline(curwin);
-
   // Place cursor on nearest matching line, to undo do_sub() cursor placement.
   for (size_t i = 0; i < lines.subresults.size; i++) {
     SubResult curres = lines.subresults.items[i];
@@ -4604,6 +4601,9 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
       break;
     }  // Else: All matches are above, do_sub() already placed cursor.
   }
+
+  // Update the topline to ensure that main window is on the correct line
+  update_topline(curwin);
 
   // Width of the "| lnum|..." column which displays the line numbers.
   int col_width = 0;
