@@ -3,15 +3,19 @@ local api = vim.api
 ---@class TSDevModule
 local M = {}
 
+---@private
 ---@class TSTreeView
 ---@field ns integer API namespace
----@field opts table Options table with the following keys:
----                  - anon (boolean): If true, display anonymous nodes
----                  - lang (boolean): If true, display the language alongside each node
----                  - indent (number): Number of spaces to indent nested lines. Default is 2.
+---@field opts TSTreeViewOpts
 ---@field nodes TSP.Node[]
 ---@field named TSP.Node[]
 local TSTreeView = {}
+
+---@private
+---@class TSTreeViewOpts
+---@field anon boolean If true, display anonymous nodes.
+---@field lang boolean If true, display the language alongside each node.
+---@field indent number Number of spaces to indent nested lines.
 
 ---@class TSP.Node
 ---@field node TSNode Treesitter node
@@ -115,6 +119,7 @@ function TSTreeView:new(bufnr, lang)
     ns = api.nvim_create_namespace('treesitter/dev-inspect'),
     nodes = nodes,
     named = named,
+    ---@type TSTreeViewOpts
     opts = {
       anon = false,
       lang = false,
@@ -129,16 +134,12 @@ end
 
 local decor_ns = api.nvim_create_namespace('ts.dev')
 
----@param lnum integer
----@param col integer
----@param end_lnum integer
----@param end_col integer
+---@param range Range4
 ---@return string
-local function get_range_str(lnum, col, end_lnum, end_col)
-  if lnum == end_lnum then
-    return string.format('[%d:%d - %d]', lnum + 1, col + 1, end_col)
-  end
-  return string.format('[%d:%d - %d:%d]', lnum + 1, col + 1, end_lnum + 1, end_col)
+local function range_to_string(range)
+  ---@type integer, integer, integer, integer
+  local row, col, end_row, end_col = unpack(range)
+  return string.format('[%d, %d] - [%d, %d]', row, col, end_row, end_col)
 end
 
 ---@param w integer
@@ -212,7 +213,7 @@ function TSTreeView:draw(bufnr)
   local lang_hl_marks = {} ---@type table[]
 
   for i, item in self:iter() do
-    local range_str = get_range_str(item.node:range())
+    local range_str = range_to_string({ item.node:range() })
     local lang_str = self.opts.lang and string.format(' %s', item.lang) or ''
 
     local text ---@type string
