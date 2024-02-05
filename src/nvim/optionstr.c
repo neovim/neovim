@@ -1541,7 +1541,15 @@ int expand_set_formatoptions(optexpand_T *args, int *numMatches, char ***matches
 /// The 'guicursor' option is changed.
 const char *did_set_guicursor(optset_T *args FUNC_ATTR_UNUSED)
 {
-  return parse_shape_opt(SHAPE_CURSOR);
+  const char *errmsg = parse_shape_opt(SHAPE_CURSOR);
+  if (errmsg != NULL) {
+    return errmsg;
+  }
+  if (VIsual_active) {
+    // In Visual mode cursor may be drawn differently.
+    redrawWinline(curwin, curwin->w_cursor.lnum);
+  }
+  return NULL;
 }
 
 /// The 'helpfile' option is changed.
@@ -1957,6 +1965,10 @@ const char *did_set_selection(optset_T *args FUNC_ATTR_UNUSED)
 {
   if (*p_sel == NUL || check_opt_strings(p_sel, p_sel_values, false) != OK) {
     return e_invarg;
+  }
+  if (VIsual_active) {
+    // In Visual mode cursor may be drawn differently.
+    redrawWinline(curwin, curwin->w_cursor.lnum);
   }
   return NULL;
 }

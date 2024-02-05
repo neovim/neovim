@@ -147,6 +147,9 @@ static void redraw_for_cursorcolumn(win_T *wp)
       // When 'cursorcolumn' is set or "CurSearch" is in use
       // need to redraw with UPD_SOME_VALID.
       redraw_later(wp, UPD_SOME_VALID);
+    } else if (VIsual_active) {
+      // In Visual mode need to redraw with UPD_INVERTED.
+      redraw_later(wp, UPD_INVERTED);
     } else if (wp->w_p_cul && (wp->w_p_culopt_flags & CULOPT_SCRLINE)) {
       // When 'cursorlineopt' contains "screenline" need to redraw with UPD_VALID.
       redraw_later(wp, UPD_VALID);
