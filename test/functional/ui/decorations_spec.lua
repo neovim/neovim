@@ -39,6 +39,7 @@ describe('decorations providers', function()
       [16] = {special = Screen.colors.Red, undercurl = true},
       [17] = {foreground = Screen.colors.Red},
       [18] = {bold = true, foreground = Screen.colors.SeaGreen};
+      [19] = {bold = true};
     }
   end)
 
@@ -737,6 +738,25 @@ describe('decorations providers', function()
       {4:restore_buffer(&save_buf);^              }|
                                               |
     ]]}
+  end)
+
+  it('is not invoked repeatedly in Visual mode with vim.schedule() #20235', function()
+    exec_lua([[_G.cnt = 0]])
+    setup_provider([[
+      function on_do(event, ...)
+        if event == 'win' then
+          vim.schedule(function() end)
+          _G.cnt = _G.cnt + 1
+        end
+      end
+    ]])
+    feed('v')
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*6
+      {19:-- VISUAL --}                            |
+    ]])
+    eq(2, exec_lua([[return _G.cnt]]))
   end)
 end)
 

@@ -1347,10 +1347,6 @@ static void normal_redraw(NormalState *s)
 
   show_cursor_info_later(false);
 
-  if (VIsual_active) {
-    redraw_curbuf_later(UPD_INVERTED);  // update inverted part
-  }
-
   if (must_redraw) {
     update_screen();
   } else {
@@ -5129,6 +5125,7 @@ static void n_start_visual_mode(int c)
     curwin->w_old_cursor_lnum = curwin->w_cursor.lnum;
     curwin->w_old_visual_lnum = curwin->w_cursor.lnum;
   }
+  redraw_curbuf_later(UPD_VALID);
 }
 
 /// CTRL-W: Window commands
