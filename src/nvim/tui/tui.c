@@ -137,6 +137,7 @@ struct TUIData {
     int sync;
   } unibi_ext;
   char *space_buf;
+  size_t space_buf_len;
   bool stopped;
   int seen_error_exit;
   int width;
@@ -1055,10 +1056,7 @@ void tui_grid_resize(TUIData *tui, Integer g, Integer width, Integer height)
 {
   UGrid *grid = &tui->grid;
   ugrid_resize(grid, (int)width, (int)height);
-
-  xfree(tui->space_buf);
-  tui->space_buf = xmalloc((size_t)width * sizeof(*tui->space_buf));
-  memset(tui->space_buf, ' ', (size_t)width);
+  ensure_space_buf_size(tui, (size_t)width);
 
   // resize might not always be followed by a clear before flush
   // so clip the invalid region
@@ -1642,6 +1640,15 @@ static void invalidate(TUIData *tui, int top, int bot, int left, int right)
   }
 }
 
+static void ensure_space_buf_size(TUIData *tui, size_t len)
+{
+  if (len > tui->space_buf_len) {
+    tui->space_buf = xrealloc(tui->space_buf, len * sizeof *tui->space_buf);
+    memset(tui->space_buf + tui->space_buf_len, ' ', len - tui->space_buf_len);
+    tui->space_buf_len = len;
+  }
+}
+
 /// Tries to get the user's wanted dimensions (columns and rows) for the entire
 /// application (i.e., the host terminal).
 void tui_guess_size(TUIData *tui)
@@ -1678,6 +1685,7 @@ void tui_guess_size(TUIData *tui)
 
   tui->width = width;
   tui->height = height;
+  ensure_space_buf_size(tui, (size_t)tui->width);
 
   // Redraw on SIGWINCH event if size didn't change. #23411
   ui_client_set_size(width, height);
