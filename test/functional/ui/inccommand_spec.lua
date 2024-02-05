@@ -1064,11 +1064,11 @@ describe(':substitute, inccommand=split', function()
 
     feed(':%s/tw/X')
     screen:expect([[
+      Inc substitution on           |
       BBo lines                     |
       Inc substitution on           |
       {12:X}o lines                      |
       Inc substitution on           |
-      {12:X}o lines                      |
       {11:[No Name] [+]                 }|
       |1001| {12:X}o lines               |
       |1003| {12:X}o lines               |
