@@ -1967,8 +1967,8 @@ const char *did_set_selection(optset_T *args FUNC_ATTR_UNUSED)
     return e_invarg;
   }
   if (VIsual_active) {
-    // In Visual mode cursor may be drawn differently.
-    redrawWinline(curwin, curwin->w_cursor.lnum);
+    // Visual selection may be drawn differently.
+    redraw_curbuf_later(UPD_INVERTED);
   }
   return NULL;
 }

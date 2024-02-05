@@ -313,35 +313,136 @@ end)
 describe('highlight', function()
   before_each(clear)
 
-  it('visual', function()
-    local screen = Screen.new(20, 4)
+  it('Visual', function()
+    local screen = Screen.new(45, 5)
     screen:attach()
     screen:set_default_attr_ids({
       [1] = { background = Screen.colors.LightGrey },
       [2] = { bold = true, foreground = Screen.colors.Blue1 },
       [3] = { bold = true },
+      [4] = { reverse = true, bold = true },
+      [5] = { reverse = true },
+      [6] = { background = Screen.colors.Grey90 },
     })
     insert([[
       line1 foo bar
+    abcdefghijklmnopqrs
+    ABCDEFGHIJKLMNOPQRS
     ]])
+    feed('gg')
+    command('vsplit')
 
     -- Non-blinking block cursor: does NOT highlight char-at-cursor.
     command('set guicursor=a:block-blinkon0')
-    feed('gg$vhhh')
+    feed('V')
     screen:expect([[
-        line1 foo^ {1:bar}     |
-                          |
-      {2:~                   }|
-      {3:-- VISUAL --}        |
+      {1:  }^l{1:ine1 foo bar}       │{1:  line1 foo bar}       |
+      abcdefghijklmnopqrs   │abcdefghijklmnopqrs   |
+      ABCDEFGHIJKLMNOPQRS   │ABCDEFGHIJKLMNOPQRS   |
+      {4:[No Name] [+]          }{5:[No Name] [+]         }|
+      {3:-- VISUAL LINE --}                            |
+    ]])
+
+    feed('<Esc>$vhhh')
+    screen:expect([[
+        line1 foo^ {1:bar}       │  line1 foo{1: bar}       |
+      abcdefghijklmnopqrs   │abcdefghijklmnopqrs   |
+      ABCDEFGHIJKLMNOPQRS   │ABCDEFGHIJKLMNOPQRS   |
+      {4:[No Name] [+]          }{5:[No Name] [+]         }|
+      {3:-- VISUAL --}                                 |
     ]])
 
     -- Vertical cursor: highlights char-at-cursor. #8983
     command('set guicursor=a:block-blinkon175')
     screen:expect([[
-        line1 foo{1:^ bar}     |
-                          |
-      {2:~                   }|
-      {3:-- VISUAL --}        |
+        line1 foo{1:^ bar}       │  line1 foo{1: bar}       |
+      abcdefghijklmnopqrs   │abcdefghijklmnopqrs   |
+      ABCDEFGHIJKLMNOPQRS   │ABCDEFGHIJKLMNOPQRS   |
+      {4:[No Name] [+]          }{5:[No Name] [+]         }|
+      {3:-- VISUAL --}                                 |
+    ]])
+
+    command('set selection=exclusive')
+    screen:expect([[
+        line1 foo{1:^ ba}r       │  line1 foo{1: ba}r       |
+      abcdefghijklmnopqrs   │abcdefghijklmnopqrs   |
+      ABCDEFGHIJKLMNOPQRS   │ABCDEFGHIJKLMNOPQRS   |
+      {4:[No Name] [+]          }{5:[No Name] [+]         }|
+      {3:-- VISUAL --}                                 |
+    ]])
+
+    feed('o')
+    screen:expect([[
+        line1 foo{1: ba}^r       │  line1 foo{1: ba}r       |
+      abcdefghijklmnopqrs   │abcdefghijklmnopqrs   |
+      ABCDEFGHIJKLMNOPQRS   │ABCDEFGHIJKLMNOPQRS   |
+      {4:[No Name] [+]          }{5:[No Name] [+]         }|
+      {3:-- VISUAL --}                                 |
+    ]])
+
+    feed('V')
+    screen:expect([[
+      {1:  line1 foo ba^r}       │{1:  line1 foo bar}       |
+      abcdefghijklmnopqrs   │abcdefghijklmnopqrs   |
+      ABCDEFGHIJKLMNOPQRS   │ABCDEFGHIJKLMNOPQRS   |
+      {4:[No Name] [+]          }{5:[No Name] [+]         }|
+      {3:-- VISUAL LINE --}                            |
+    ]])
+
+    command('set cursorcolumn')
+    feed('<C-V>')
+    screen:expect([[
+        line1 foo{1: ba}^r       │  line1 foo{1: ba}r       |
+      abcdefghijklmn{6:o}pqrs   │abcdefghijklmnopqrs   |
+      ABCDEFGHIJKLMN{6:O}PQRS   │ABCDEFGHIJKLMNOPQRS   |
+      {4:[No Name] [+]          }{5:[No Name] [+]         }|
+      {3:-- VISUAL BLOCK --}                           |
+    ]])
+
+    command('set selection&')
+    screen:expect([[
+        line1 foo{1: ba^r}       │  line1 foo{1: bar}       |
+      abcdefghijklmn{6:o}pqrs   │abcdefghijklmnopqrs   |
+      ABCDEFGHIJKLMN{6:O}PQRS   │ABCDEFGHIJKLMNOPQRS   |
+      {4:[No Name] [+]          }{5:[No Name] [+]         }|
+      {3:-- VISUAL BLOCK --}                           |
+    ]])
+
+    feed('^')
+    screen:expect([[
+        {1:^line1 foo }bar       │  {1:line1 foo }bar       |
+      ab{6:c}defghijklmnopqrs   │abcdefghijklmnopqrs   |
+      AB{6:C}DEFGHIJKLMNOPQRS   │ABCDEFGHIJKLMNOPQRS   |
+      {4:[No Name] [+]          }{5:[No Name] [+]         }|
+      {3:-- VISUAL BLOCK --}                           |
+    ]])
+
+    feed('2j')
+    screen:expect([[
+        {1:line1 foo }bar       │  {1:line1 foo }bar       |
+      ab{1:cdefghijkl}mnopqrs   │ab{1:cdefghijkl}mnopqrs   |
+      AB{1:^CDEFGHIJKL}MNOPQRS   │AB{1:CDEFGHIJKL}MNOPQRS   |
+      {4:[No Name] [+]          }{5:[No Name] [+]         }|
+      {3:-- VISUAL BLOCK --}                           |
+    ]])
+
+    command('set nocursorcolumn')
+    feed('O')
+    screen:expect([[
+        {1:line1 foo }bar       │  {1:line1 foo }bar       |
+      ab{1:cdefghijkl}mnopqrs   │ab{1:cdefghijkl}mnopqrs   |
+      AB{1:CDEFGHIJK^L}MNOPQRS   │AB{1:CDEFGHIJKL}MNOPQRS   |
+      {4:[No Name] [+]          }{5:[No Name] [+]         }|
+      {3:-- VISUAL BLOCK --}                           |
+    ]])
+
+    command('set selection=exclusive')
+    screen:expect([[
+        {1:line1 foo} bar       │  {1:line1 foo} bar       |
+      ab{1:cdefghijk}lmnopqrs   │ab{1:cdefghijk}lmnopqrs   |
+      AB{1:CDEFGHIJK}^LMNOPQRS   │AB{1:CDEFGHIJK}LMNOPQRS   |
+      {4:[No Name] [+]          }{5:[No Name] [+]         }|
+      {3:-- VISUAL BLOCK --}                           |
     ]])
   end)
 

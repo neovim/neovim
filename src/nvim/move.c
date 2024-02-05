@@ -135,31 +135,42 @@ static void comp_botline(win_T *wp)
   win_check_anchored_floats(wp);
 }
 
-/// Redraw when w_virtcol changes and 'cursorcolumn' is set or 'cursorlineopt'
-/// contains "screenline" or when the "CurSearch" highlight is in use.
-/// Also when concealing is on and 'concealcursor' is active.
+/// Redraw when w_virtcol changes and
+/// - 'cursorcolumn' is set, or
+/// - 'cursorlineopt' contains "screenline", or
+/// - "CurSearch" highlight is in use, or
+/// - 'concealcursor' is active, or
+/// - Visual mode is active.
 static void redraw_for_cursorcolumn(win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  if ((wp->w_valid & VALID_VIRTCOL) == 0 && !pum_visible()) {
-    if (wp->w_p_cuc
-        || (win_hl_attr(wp, HLF_LC) != win_hl_attr(wp, HLF_L) && using_hlsearch())) {
-      // When 'cursorcolumn' is set or "CurSearch" is in use
-      // need to redraw with UPD_SOME_VALID.
-      redraw_later(wp, UPD_SOME_VALID);
-    } else if (VIsual_active) {
-      // In Visual mode need to redraw with UPD_INVERTED.
-      redraw_later(wp, UPD_INVERTED);
-    } else if (wp->w_p_cul && (wp->w_p_culopt_flags & CULOPT_SCRLINE)) {
-      // When 'cursorlineopt' contains "screenline" need to redraw with UPD_VALID.
-      redraw_later(wp, UPD_VALID);
-    }
+  if (wp->w_valid & VALID_VIRTCOL) {
+    return;
   }
+
   // If the cursor moves horizontally when 'concealcursor' is active, then the
-  // current line needs to be redrawn in order to calculate the correct
-  // cursor position.
-  if ((wp->w_valid & VALID_VIRTCOL) == 0 && wp->w_p_cole > 0 && conceal_cursor_line(wp)) {
+  // current line needs to be redrawn to calculate the correct cursor position.
+  if (wp->w_p_cole > 0 && conceal_cursor_line(wp)) {
     redrawWinline(wp, wp->w_cursor.lnum);
+  }
+
+  if (pum_visible()) {
+    return;
+  }
+
+  if (wp->w_p_cuc
+      || (win_hl_attr(wp, HLF_LC) != win_hl_attr(wp, HLF_L) && using_hlsearch())) {
+    // When 'cursorcolumn' is set or "CurSearch" is in use
+    // need to redraw with UPD_SOME_VALID.
+    redraw_later(wp, UPD_SOME_VALID);
+  } else if (wp->w_p_cul && (wp->w_p_culopt_flags & CULOPT_SCRLINE)) {
+    // When 'cursorlineopt' contains "screenline" need to redraw with UPD_VALID.
+    redraw_later(wp, UPD_VALID);
+  }
+
+  // When current buffer's cursor moves in Visual mode, redraw it with UPD_INVERTED.
+  if (VIsual_active && wp->w_buffer == curbuf) {
+    redraw_curbuf_later(UPD_INVERTED);
   }
 }
 
