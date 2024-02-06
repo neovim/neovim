@@ -318,6 +318,10 @@ The following new APIs and features were added.
 
 • Clicking on a tabpage in the tabline with the middle mouse button closes it.
 
+• |namespace| can now have window scopes. |nvim_win_add_ns()|
+
+• |extmarks| option `scoped`: only show the extmarks in its namespace's scope.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

@@ -126,7 +126,7 @@ static void buf_set_sign(buf_T *buf, uint32_t *id, char *group, int prio, linenr
 
   DecorInline decor = { .ext = true, .data.ext = { .vt = NULL, .sh_idx = decor_put_sh(sign) } };
   extmark_set(buf, ns, id, lnum - 1, 0, -1, -1, decor, decor_flags, true,
-              false, true, true, NULL);
+              false, true, true, false, NULL);
 }
 
 /// For an existing, placed sign with "id", modify the sign, group or priority.

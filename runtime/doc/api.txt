@@ -2791,6 +2791,8 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {*opts})
                   • url: A URL to associate with this extmark. In the TUI, the
                     OSC 8 control sequence is used to generate a clickable
                     hyperlink to this URL.
+                  • scoped: boolean that indicates that the extmark should
+                    only be displayed in the namespace scope. (experimental)
 
     Return: ~
         Id of the created/updated extmark
@@ -2864,6 +2866,35 @@ nvim_set_decoration_provider({ns_id}, {*opts})
                    interaction with fold lines is subject to change) ["win",
                    winid, bufnr, row]
                  • on_end: called at the end of a redraw cycle ["end", tick]
+
+nvim_win_add_ns({window}, {ns_id})                         *nvim_win_add_ns()*
+    Adds the namespace scope to the window.
+
+    Parameters: ~
+      • {window}  Window handle, or 0 for current window
+      • {ns_id}   the namespace to add
+
+    Return: ~
+        true if the namespace was added, else false
+
+nvim_win_get_ns({window})                                  *nvim_win_get_ns()*
+    Gets all the namespaces scopes associated with a window.
+
+    Parameters: ~
+      • {window}  Window handle, or 0 for current window
+
+    Return: ~
+        a list of namespaces ids
+
+nvim_win_remove_ns({window}, {ns_id})                   *nvim_win_remove_ns()*
+    Removes the namespace scope from the window.
+
+    Parameters: ~
+      • {window}  Window handle, or 0 for current window
+      • {ns_id}   the namespace to remove
+
+    Return: ~
+        true if the namespace was removed, else false
 
 
 ==============================================================================

@@ -4989,6 +4989,9 @@ win_T *win_alloc(win_T *after, bool hidden)
 
   new_wp->w_ns_hl = -1;
 
+  Set(uint32_t) ns_set = SET_INIT;
+  new_wp->w_ns_set = ns_set;
+
   // use global option for global-local options
   new_wp->w_allbuf_opt.wo_so = new_wp->w_p_so = -1;
   new_wp->w_allbuf_opt.wo_siso = new_wp->w_p_siso = -1;
@@ -5026,6 +5029,8 @@ void win_free(win_T *wp, tabpage_T *tp)
 
   // Don't execute autocommands while the window is halfway being deleted.
   block_autocmds();
+
+  set_destroy(uint32_t, &wp->w_ns_set);
 
   clear_winopt(&wp->w_onebuf_opt);
   clear_winopt(&wp->w_allbuf_opt);

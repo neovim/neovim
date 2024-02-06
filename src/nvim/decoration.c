@@ -88,7 +88,7 @@ void bufhl_add_hl_pos_offset(buf_T *buf, int src_id, int hl_id, lpos_T pos_start
 
     extmark_set(buf, (uint32_t)src_id, NULL,
                 (int)lnum - 1, hl_start, (int)lnum - 1 + end_off, hl_end,
-                decor, MT_FLAG_DECOR_HL, true, false, true, false, NULL);
+                decor, MT_FLAG_DECOR_HL, true, false, true, false, false, NULL);
   }
 }
 
@@ -582,6 +582,10 @@ int decor_redraw_col(win_T *wp, int col, int win_col, bool hidden, DecorState *s
       break;
     }
 
+    if (!mt_scoped_in_win(mark, wp)) {
+      goto next_mark;
+    }
+
     if (mt_invalid(mark) || mt_end(mark) || !mt_decor_any(mark)) {
       goto next_mark;
     }
@@ -726,7 +730,8 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
     if (mark.pos.row != row) {
       break;
     }
-    if (!mt_end(mark) && !mt_invalid(mark) && mt_decor_sign(mark)) {
+    if (!mt_end(mark) && !mt_invalid(mark) && mt_decor_sign(mark)
+        && mt_scoped_in_win(mark, wp)) {
       DecorSignHighlight *sh = decor_find_sign(mt_decor(mark));
       num_text += (sh->text[0] != NUL);
       kv_push(signs, ((SignItem){ sh, mark.id }));
@@ -906,18 +911,20 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fo
   while (true) {
     MTKey mark = marktree_itr_current(itr);
     DecorVirtText *vt = mt_decor_virt(mark);
-    while (vt) {
-      if (vt->flags & kVTIsLines) {
-        bool above = vt->flags & kVTLinesAbove;
-        int draw_row = mark.pos.row + (above ? 0 : 1);
-        if (draw_row == row) {
-          virt_lines += (int)kv_size(vt->data.virt_lines);
-          if (lines) {
-            kv_splice(*lines, vt->data.virt_lines);
+    if (mt_scoped_in_win(mark, wp)) {
+      while (vt) {
+        if (vt->flags & kVTIsLines) {
+          bool above = vt->flags & kVTLinesAbove;
+          int draw_row = mark.pos.row + (above ? 0 : 1);
+          if (draw_row == row) {
+            virt_lines += (int)kv_size(vt->data.virt_lines);
+            if (lines) {
+              kv_splice(*lines, vt->data.virt_lines);
+            }
           }
         }
+        vt = vt->next;
       }
-      vt = vt->next;
     }
 
     if (!marktree_itr_next_filter(buf->b_marktree, itr, end_row, 0, lines_filter)) {
