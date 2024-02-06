@@ -2095,6 +2095,48 @@ describe('TUI', function()
     ]],
     }
   end)
+
+  it('no heap-buffer-overflow when changing &columns', function()
+    -- Set a different bg colour and change $TERM to something dumber so the `print_spaces()`
+    -- codepath in `clear_region()` is hit.
+    local screen = thelpers.setup_child_nvim({
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--cmd',
+      'set notermguicolors | highlight Normal ctermbg=red',
+      '--cmd',
+      'call setline(1, ["a"->repeat(&columns)])',
+    }, { env = { TERM = 'ansi' } })
+
+    screen:expect {
+      grid = [[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      ~                                                 |*3
+      [No Name] [+]                   1,1            All|
+                                                        |
+      -- TERMINAL --                                    |
+    ]],
+      attr_ids = {},
+    }
+
+    feed_data(':set columns=12\n')
+    screen:expect {
+      grid = [[
+      aaaaaaaaaaaa                                      |*4
+      < [+] 1,1                                         |
+                                                        |
+      -- TERMINAL --                                    |
+    ]],
+      attr_ids = {},
+    }
+
+    -- Wider than TUI, so screen state will look weird.
+    -- Wait for the statusline to redraw to confirm that the TUI lives and ASAN is happy.
+    feed_data(':set columns=99|set stl=redrawn%m\n')
+    screen:expect({ any = 'redrawn%[%+%]' })
+  end)
 end)
 
 describe('TUI UIEnter/UILeave', function()
