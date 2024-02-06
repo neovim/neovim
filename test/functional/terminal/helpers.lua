@@ -97,18 +97,19 @@ local function screen_setup(extra_rows, command, cols, env, screen_opts)
     [1] = { reverse = true }, -- focused cursor
     [2] = { background = 11 }, -- unfocused cursor
     [3] = { bold = true },
-    [4] = { foreground = 12 },
+    [4] = { foreground = 12 }, -- NonText in :terminal session
     [5] = { bold = true, reverse = true },
-    -- 6 was a duplicate item
-    [7] = { foreground = 130 },
-    [8] = { foreground = 15, background = 1 }, -- error message
+    [6] = { foreground = 81 }, -- SpecialKey in :terminal session
+    [7] = { foreground = 130 }, -- LineNr in host session
+    [8] = { foreground = 15, background = 1 }, -- ErrorMsg in :terminal session
     [9] = { foreground = 4 },
-    [10] = { foreground = 121 }, -- "Press ENTER" in embedded :terminal session.
-    [11] = { foreground = tonumber('0x00000b') },
+    [10] = { foreground = 121 }, -- MoreMsg in :terminal session
+    [11] = { foreground = 11 }, -- LineNr in :terminal session
     [12] = { underline = true },
     [13] = { underline = true, reverse = true },
     [14] = { underline = true, reverse = true, bold = true },
     [15] = { underline = true, foreground = 12 },
+    [16] = { background = 248, foreground = 0 }, -- Visual in :terminal session
   })
 
   screen:attach(screen_opts or { rgb = false })
