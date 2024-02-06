@@ -1580,7 +1580,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           // win_line_start(wp, &wlv);
           wlv.col = 0;
           wlv.off = 0;
-          draw_cols = true;
           continue;
         } else {
           break;
