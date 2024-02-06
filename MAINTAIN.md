@@ -212,7 +212,7 @@ https://github.com/neovim/neovim-backup
 * Runner versions:
     * For special-purpose jobs where the runner version doesn't really matter,
       prefer `-latest` tags so we don't need to manually bump the versions. An
-      example of a special-purpose workflow is `labeler.yml`.
+      example of a special-purpose workflow is `labeler_pr.yml`.
     * For our testing jobs, which are in `test.yml` and `build.yml`, prefer to
       use the latest stable (i.e. non-beta) version explicitly. Avoid using the
       `-latest` tags here as it makes it difficult to determine from an

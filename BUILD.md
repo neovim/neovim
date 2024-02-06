@@ -290,7 +290,7 @@ Platform-specific requirements are listed below.
 ### Ubuntu / Debian
 
 ```sh
-sudo apt-get install ninja-build gettext cmake unzip curl
+sudo apt-get install ninja-build gettext cmake unzip curl build-essential
 ```
 
 ### CentOS / RHEL / Fedora

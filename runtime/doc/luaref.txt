@@ -932,7 +932,7 @@ implicit extra parameter `self`. Thus, the statement
 
 is syntactic sugar for
 
-       `t.a.b.c:f = function (self, (`  `params`  `)`  `body`  `end`
+       `t.a.b.c:f = function (`  `self`,  `params`  `)`  `body`  `end`
 
 ==============================================================================
 2.6  Visibility Rules                                    *lua-visibility*
