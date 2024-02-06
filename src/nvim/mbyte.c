@@ -534,7 +534,7 @@ int utf_ptr2cells(const char *p)
 /// @param[in]  p      String to convert.
 /// @param[in]  len    Length of the character in bytes, 0 or 1 if illegal.
 ///
-/// @return Unicode codepoint. A negative value When the sequence is illegal.
+/// @return Unicode codepoint. A negative value when the sequence is illegal.
 int32_t utf_ptr2CharInfo_impl(uint8_t const *p, uintptr_t const len)
   FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {

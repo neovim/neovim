@@ -129,7 +129,7 @@ bool keep_msg_more = false;    // keep_msg was set by msgmore()
 //                  Set: When the ruler or typeahead display is overwritten,
 //                  scrolling the screen for some message.
 // keep_msg         Message to be displayed after redrawing the screen, in
-//                  main_loop().
+//                  Normal mode main loop.
 //                  This is an allocated string or NULL when not used.
 
 // Extended msg state, currently used for external UIs with ext_messages

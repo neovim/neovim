@@ -58,11 +58,11 @@ typedef struct {
 } vimconv_T;
 
 typedef struct {
-  int32_t value;  ///< code point
-  int len;        ///< length in bytes
+  int32_t value;  ///< Code point.
+  int len;        ///< Length in bytes.
 } CharInfo;
 
 typedef struct {
-  char *ptr;     ///< pointer to the first byte of the character
-  CharInfo chr;  ///< the character
+  char *ptr;     ///< Pointer to the first byte of the character.
+  CharInfo chr;  ///< Information about the character.
 } StrCharInfo;

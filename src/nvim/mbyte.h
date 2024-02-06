@@ -61,7 +61,7 @@ static inline CharInfo utf_ptr2CharInfo(char const *p_in)
 /// @param[in]  p_in  String to convert.
 ///
 /// @return information abouth the character. When the sequence is illegal,
-/// 'value' is negative, 'len' is 1.
+/// "value" is negative, "len" is 1.
 static inline CharInfo utf_ptr2CharInfo(char const *const p_in)
 {
   uint8_t const *const p = (uint8_t const *)p_in;
@@ -82,11 +82,9 @@ static inline StrCharInfo utfc_next(StrCharInfo cur)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE REAL_FATTR_PURE;
 
 /// Return information about the next character.
-/// Composing and combining characters are
-/// considered a part of the current character.
+/// Composing and combining characters are considered a part of the current character.
 ///
-/// @param[in] cur  Pointer to the current character. Must not point to NUL
-/// @param[in] cur_char Decoded charater at 'cur'.
+/// @param[in] cur  Information about the current character in the string.
 static inline StrCharInfo utfc_next(StrCharInfo cur)
 {
   int32_t prev_code = cur.chr.value;

@@ -18,23 +18,23 @@ enum {
 /// Argument for char size functions.
 typedef struct {
   win_T *win;
-  char *line;                ///< start of the line
+  char *line;                ///< Start of the line.
 
-  bool use_tabstop;          ///< use tabstop for tab insted of counting it as ^I
-  int indent_width;          ///< width of showbreak and breakindent on wrapped lines
-                             ///  INT_MIN if not yet calculated
+  bool use_tabstop;          ///< Use 'tabstop' instead of char2cells() for a TAB.
+  int indent_width;          ///< Width of 'showbreak' and 'breakindent' on wrapped
+                             ///< parts of lines, INT_MIN if not yet calculated.
 
-  int virt_row;              ///< line number, -1 if no virtual text
-  int cur_text_width_left;   ///< width of virtual text left of cursor
-  int cur_text_width_right;  ///< width of virtual text right of cursor
+  int virt_row;              ///< Row for virtual text, -1 if no virtual text.
+  int cur_text_width_left;   ///< Width of virtual text left of cursor.
+  int cur_text_width_right;  ///< Width of virtual text right of cursor.
 
-  int max_head_vcol;         ///< see charsize_regular()
+  int max_head_vcol;         ///< See charsize_regular().
   MarkTreeIter iter[1];
 } CharsizeArg;
 
 typedef struct {
   int width;
-  int head;  // size of breakindent etc. before the character (included in width)
+  int head;  ///< Size of 'breakindent' etc. before the character (included in width).
 } CharSize;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

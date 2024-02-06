@@ -31,7 +31,7 @@ describe('highlight: `:syntax manual`', function()
     clear()
     screen = Screen.new(20, 5)
     screen:attach()
-    --syntax highlight for vimcscripts "echo"
+    -- syntax highlight for vimscript's "echo"
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = Screen.colors.Blue },
       [1] = { bold = true, foreground = Screen.colors.Brown },

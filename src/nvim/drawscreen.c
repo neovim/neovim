@@ -159,8 +159,8 @@ void conceal_check_cursor_line(void)
 /// There may be some time between setting Rows and Columns and (re)allocating
 /// default_grid arrays.  This happens when starting up and when
 /// (manually) changing the screen size.  Always use default_grid.rows and
-/// default_grid.Columns to access items in default_grid.chars[].  Use Rows
-/// and Columns for positioning text etc. where the final size of the screen is
+/// default_grid.cols to access items in default_grid.chars[].  Use Rows and
+/// Columns for positioning text etc. where the final size of the screen is
 /// needed.
 ///
 /// @return  whether resizing has been done

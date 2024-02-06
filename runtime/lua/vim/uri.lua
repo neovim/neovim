@@ -10,14 +10,14 @@ local tohex = require('bit').tohex
 local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):.*'
 local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):[a-zA-Z]:.*'
 local PATTERNS = {
-  ---RFC 2396
-  ---https://tools.ietf.org/html/rfc2396#section-2.2
+  -- RFC 2396
+  -- https://tools.ietf.org/html/rfc2396#section-2.2
   rfc2396 = "^A-Za-z0-9%-_.!~*'()",
-  ---RFC 2732
-  ---https://tools.ietf.org/html/rfc2732
+  -- RFC 2732
+  -- https://tools.ietf.org/html/rfc2732
   rfc2732 = "^A-Za-z0-9%-_.!~*'()[]",
-  ---RFC 3986
-  ---https://tools.ietf.org/html/rfc3986#section-2.2
+  -- RFC 3986
+  -- https://tools.ietf.org/html/rfc3986#section-2.2
   rfc3986 = "^A-Za-z0-9%-._~!$&'()*+,;=:@/",
 }
 
