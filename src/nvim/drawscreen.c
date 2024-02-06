@@ -2346,6 +2346,7 @@ static void win_update(win_T *wp)
 
     // 'statuscolumn' width has changed or errored, start from the top.
     if (wp->w_redr_statuscol) {
+redr_statuscol:
       wp->w_redr_statuscol = false;
       idx = 0;
       row = 0;
@@ -2429,6 +2430,10 @@ static void win_update(win_T *wp)
         spellvars_T zero_spv = { 0 };
         foldinfo_T zero_foldinfo = { 0 };
         row = win_line(wp, wp->w_botline, row, wp->w_grid.rows, 0, &zero_spv, zero_foldinfo);
+        if (wp->w_redr_statuscol) {
+          eof = false;
+          goto redr_statuscol;
+        }
       }
     } else if (dollar_vcol == -1) {
       wp->w_botline = lnum;
