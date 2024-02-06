@@ -225,6 +225,7 @@ The following new APIs and features were added.
   • Improved error messages for query parsing.
   • `:InspectTree` (|vim.treesitter.inspect_tree()|) shows node ranges in
     0-based indexing instead of 1-based indexing.
+  • `:InspectTree` (|vim.treesitter.inspect_tree()|) shows root nodes
 
 • |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
   Windows `explorer`, Linux `xdg-open`, etc.)

@@ -26,9 +26,10 @@ describe('vim.treesitter.inspect_tree', function()
     ]])
 
     expect_tree [[
-      (function_call ; [0, 0] - [0, 7]
-        name: (identifier) ; [0, 0] - [0, 5]
-        arguments: (arguments)) ; [0, 5] - [0, 7]
+      (chunk ; [0, 0] - [2, 0]
+        (function_call ; [0, 0] - [0, 7]
+          name: (identifier) ; [0, 0] - [0, 5]
+          arguments: (arguments))) ; [0, 5] - [0, 7]
       ]]
   end)
 
@@ -44,11 +45,12 @@ describe('vim.treesitter.inspect_tree', function()
     feed('a')
 
     expect_tree [[
-      (function_call ; [0, 0] - [0, 7]
-        name: (identifier) ; [0, 0] - [0, 5]
-        arguments: (arguments ; [0, 5] - [0, 7]
-          "(" ; [0, 5] - [0, 6]
-          ")")) ; [0, 6] - [0, 7]
+      (chunk ; [0, 0] - [2, 0]
+        (function_call ; [0, 0] - [0, 7]
+          name: (identifier) ; [0, 0] - [0, 5]
+          arguments: (arguments ; [0, 5] - [0, 7]
+            "(" ; [0, 5] - [0, 6]
+            ")"))) ; [0, 6] - [0, 7]
       ]]
   end)
 
@@ -66,16 +68,18 @@ describe('vim.treesitter.inspect_tree', function()
     ]])
 
     expect_tree [[
-      (section ; [0, 0] - [4, 0]
-        (fenced_code_block ; [0, 0] - [3, 0]
-          (fenced_code_block_delimiter) ; [0, 0] - [0, 3]
-          (info_string ; [0, 3] - [0, 6]
-            (language)) ; [0, 3] - [0, 6]
-          (block_continuation) ; [1, 0] - [1, 0]
-          (code_fence_content ; [1, 0] - [2, 0]
-            (return_statement) ; [1, 0] - [1, 6]
-            (block_continuation)) ; [2, 0] - [2, 0]
-          (fenced_code_block_delimiter))) ; [2, 0] - [2, 3]
+      (document ; [0, 0] - [4, 0]
+        (section ; [0, 0] - [4, 0]
+          (fenced_code_block ; [0, 0] - [3, 0]
+            (fenced_code_block_delimiter) ; [0, 0] - [0, 3]
+            (info_string ; [0, 3] - [0, 6]
+              (language)) ; [0, 3] - [0, 6]
+            (block_continuation) ; [1, 0] - [1, 0]
+            (code_fence_content ; [1, 0] - [2, 0]
+              (chunk ; [1, 0] - [2, 0]
+                (return_statement)) ; [1, 0] - [1, 6]
+              (block_continuation)) ; [2, 0] - [2, 0]
+            (fenced_code_block_delimiter)))) ; [2, 0] - [2, 3]
       ]]
   end)
 
@@ -94,16 +98,18 @@ describe('vim.treesitter.inspect_tree', function()
     feed('I')
 
     expect_tree [[
-      (section ; [0, 0] - [4, 0] markdown
-        (fenced_code_block ; [0, 0] - [3, 0] markdown
-          (fenced_code_block_delimiter) ; [0, 0] - [0, 3] markdown
-          (info_string ; [0, 3] - [0, 6] markdown
-            (language)) ; [0, 3] - [0, 6] markdown
-          (block_continuation) ; [1, 0] - [1, 0] markdown
-          (code_fence_content ; [1, 0] - [2, 0] markdown
-            (return_statement) ; [1, 0] - [1, 6] lua
-            (block_continuation)) ; [2, 0] - [2, 0] markdown
-          (fenced_code_block_delimiter))) ; [2, 0] - [2, 3] markdown
+      (document ; [0, 0] - [4, 0] markdown
+        (section ; [0, 0] - [4, 0] markdown
+          (fenced_code_block ; [0, 0] - [3, 0] markdown
+            (fenced_code_block_delimiter) ; [0, 0] - [0, 3] markdown
+            (info_string ; [0, 3] - [0, 6] markdown
+              (language)) ; [0, 3] - [0, 6] markdown
+            (block_continuation) ; [1, 0] - [1, 0] markdown
+            (code_fence_content ; [1, 0] - [2, 0] markdown
+              (chunk ; [1, 0] - [2, 0] lua
+                (return_statement)) ; [1, 0] - [1, 6] lua
+              (block_continuation)) ; [2, 0] - [2, 0] markdown
+            (fenced_code_block_delimiter)))) ; [2, 0] - [2, 3] markdown
       ]]
   end)
 end)
