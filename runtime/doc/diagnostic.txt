@@ -742,14 +742,14 @@ open_float({opts}, {...})                        *vim.diagnostic.open_float()*
         (`integer?, integer?`) ({float_bufnr}, {win_id})
 
 reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
+    Remove all diagnostics from the given namespace.
+
     Unlike |vim.diagnostic.hide()|, this function removes all saved
     diagnostics. They cannot be redisplayed using |vim.diagnostic.show()|. To
     simply remove diagnostic decorations in a way that they can be
     re-displayed, use |vim.diagnostic.hide()|.
 
     Parameters: ~
-      • {d}          (`vim.Diagnostic`) Remove all diagnostics from the given
-             namespace.
       • {namespace}  (`integer?`) Diagnostic namespace. When omitted, remove
                      diagnostics from all namespaces.
       • {bufnr}      (`integer?`) Remove diagnostics for the given buffer.
