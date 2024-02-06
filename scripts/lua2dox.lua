@@ -447,6 +447,8 @@ end
 function Lua2DoxFilter:filter(filename)
   local in_stream = StreamRead.new(filename)
 
+  local last_was_magic = false
+
   while not in_stream:eof() do
     local line = in_stream:getLine()
 
@@ -457,6 +459,16 @@ function Lua2DoxFilter:filter(filename)
     end
 
     if out_line then
+      -- Ensure all magic blocks associate with some object to prevent doxygen
+      -- from getting confused.
+      if vim.startswith(out_line, '///') then
+        last_was_magic = true
+      else
+        if last_was_magic and out_line:match('^// zz: [^-]+') then
+          writeln('local_function _ignore() {}')
+        end
+        last_was_magic = false
+      end
       writeln(out_line)
     end
   end
