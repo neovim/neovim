@@ -102,16 +102,17 @@ end
 ---@param diagnostics lsp.Diagnostic[]
 ---@param bufnr integer
 ---@param client_id integer
----@return Diagnostic[]
+---@return vim.Diagnostic[]
 local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
   local buf_lines = get_buf_lines(bufnr)
   local client = vim.lsp.get_client_by_id(client_id)
   local offset_encoding = client and client.offset_encoding or 'utf-16'
-  ---@diagnostic disable-next-line:no-unknown
+  --- @param diagnostic lsp.Diagnostic
+  --- @return vim.Diagnostic
   return vim.tbl_map(function(diagnostic)
-    ---@cast diagnostic lsp.Diagnostic
     local start = diagnostic.range.start
     local _end = diagnostic.range['end']
+    --- @type vim.Diagnostic
     return {
       lnum = start.line,
       col = line_byte_from_position(buf_lines, start.line, start.character, offset_encoding),
@@ -135,12 +136,29 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
   end, diagnostics)
 end
 
---- @param diagnostics Diagnostic[]
+--- @param diagnostic vim.Diagnostic
+--- @return lsp.DiagnosticTag[]?
+local function tags_vim_to_vim(diagnostic)
+  if not diagnostic._tags then
+    return
+  end
+
+  local tags = {} --- @type lsp.DiagnosticTag[]
+  if diagnostic._tags.unnecessary then
+    tags[#tags + 1] = protocol.DiagnosticTag.Unnecessary
+  end
+  if diagnostic._tags.deprecated then
+    tags[#tags + 1] = protocol.DiagnosticTag.Deprecated
+  end
+  return tags
+end
+
+--- @param diagnostics vim.Diagnostic[]
 --- @return lsp.Diagnostic[]
 local function diagnostic_vim_to_lsp(diagnostics)
-  ---@diagnostic disable-next-line:no-unknown
+  ---@param diagnostic vim.Diagnostic
+  ---@return lsp.Diagnostic
   return vim.tbl_map(function(diagnostic)
-    ---@cast diagnostic Diagnostic
     return vim.tbl_extend('keep', {
       -- "keep" the below fields over any duplicate fields in diagnostic.user_data.lsp
       range = {
@@ -157,6 +175,7 @@ local function diagnostic_vim_to_lsp(diagnostics)
       message = diagnostic.message,
       source = diagnostic.source,
       code = diagnostic.code,
+      tags = tags_vim_to_vim(diagnostics),
     }, diagnostic.user_data and (diagnostic.user_data.lsp or {}) or {})
   end, diagnostics)
 end
