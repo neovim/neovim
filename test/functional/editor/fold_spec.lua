@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local insert = helpers.insert
+local exec = helpers.exec
 local feed = helpers.feed
 local expect = helpers.expect
 local command = helpers.command
@@ -9,7 +10,7 @@ local fn = helpers.fn
 local eq = helpers.eq
 local neq = helpers.neq
 
-describe('Folds', function()
+describe('Folding', function()
   local tempfname = 'Xtest-fold.txt'
 
   setup(clear)
@@ -423,6 +424,42 @@ a]],
     eq(14, fn.foldclosedend(11))
   end)
 
+  it('fdm=expr works correctly with :move #18668', function()
+    exec([[
+      set foldmethod=expr foldexpr=indent(v:lnum)
+      let content = ['', '', 'Line1', '  Line2', '  Line3',
+            \ 'Line4', '  Line5', '  Line6',
+            \ 'Line7', '  Line8', '  Line9']
+      call append(0, content)
+      normal! zM
+      call cursor(4, 1)
+      move 2
+      move 1
+    ]])
+    expect([[
+
+      Line2
+      Line3
+
+    Line1
+    Line4
+      Line5
+      Line6
+    Line7
+      Line8
+      Line9
+    ]])
+    eq(0, fn.foldlevel(1))
+    eq(3, fn.foldclosedend(2))
+    eq(0, fn.foldlevel(4))
+    eq(0, fn.foldlevel(5))
+    eq(0, fn.foldlevel(6))
+    eq(8, fn.foldclosedend(7))
+    eq(0, fn.foldlevel(9))
+    eq(11, fn.foldclosedend(10))
+    eq(0, fn.foldlevel(12))
+  end)
+
   it('no folds remain if :delete makes buffer empty #19671', function()
     command('setlocal foldmethod=manual')
     fn.setline(1, { 'foo', 'bar', 'baz' })
@@ -445,7 +482,7 @@ a]],
     eq(1, fn.foldlevel(1))
   end)
 
-  it('updates correctly with indent method and visual blockwise insertion #22898', function()
+  it('fdm=indent updates correctly with visual blockwise insertion #22898', function()
     insert([[
     a
     b
@@ -456,7 +493,7 @@ a]],
     eq(1, fn.foldlevel(2))
   end)
 
-  it("doesn't open folds with indent method when inserting lower foldlevel line", function()
+  it("fdm=indent doesn't open folds when inserting lower foldlevel line", function()
     insert([[
       insert an unindented line under this line
       keep the lines under this line folded
