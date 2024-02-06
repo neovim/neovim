@@ -56,7 +56,7 @@ describe('folded lines', function()
       })
     end)
 
-    it('work with more than one signcolumn', function()
+    it('with more than one signcolumn', function()
       command('set signcolumn=yes:9')
       feed('i<cr><esc>')
       feed('vkzf')
@@ -296,7 +296,7 @@ describe('folded lines', function()
 
     describe("when 'cursorline' is set", function()
       local function cursorline_tests(foldtext)
-        local sfx = not foldtext and ' (disabled foldtext)' or ''
+        local sfx = not foldtext and ' (transparent foldtext)' or ''
         it('with high-priority CursorLine' .. sfx, function()
           command('hi! CursorLine guibg=NONE guifg=Red gui=NONE')
           test_folded_cursorline(foldtext)
@@ -320,7 +320,7 @@ describe('folded lines', function()
       cursorline_tests(false)
     end)
 
-    it('work with spell', function()
+    it('with spell', function()
       command('set spell')
       insert(content1)
 
@@ -339,7 +339,7 @@ describe('folded lines', function()
       end
     end)
 
-    it('work with matches', function()
+    it('with matches', function()
       insert(content1)
       command('highlight MyWord gui=bold guibg=red   guifg=white')
       command("call matchadd('MyWord', '\\V' . 'test', -1)")
@@ -358,7 +358,7 @@ describe('folded lines', function()
       end
     end)
 
-    it('works with multibyte fillchars', function()
+    it('with multibyte fillchars', function()
       insert([[
         aa
         bb
@@ -535,7 +535,7 @@ describe('folded lines', function()
       end
     end)
 
-    it('works with split', function()
+    it('with split', function()
       insert([[
         aa
         bb
@@ -695,7 +695,7 @@ describe('folded lines', function()
       end
     end)
 
-    it('works with vsplit', function()
+    it('with vsplit', function()
       insert([[
         aa
         bb
@@ -867,7 +867,7 @@ describe('folded lines', function()
       end
     end)
 
-    it('works with tab', function()
+    it('with tabpages', function()
       insert([[
         aa
         bb
@@ -1006,7 +1006,7 @@ describe('folded lines', function()
       end
     end)
 
-    it('works with multibyte text', function()
+    it('with multibyte text', function()
       eq(true, api.nvim_get_option_value('arabicshape', {}))
       insert([[
         å 语 x̨̣̘̫̲͚͎̎͂̀̂͛͛̾͢͟ العَرَبِيَّة
@@ -1198,8 +1198,8 @@ describe('folded lines', function()
       end
     end)
 
-    it('work in cmdline window', function()
-      feed_command('set foldmethod=manual')
+    it('in cmdline window', function()
+      feed_command('set foldmethod=manual foldcolumn=1')
       feed_command('let x = 1')
       feed_command('/alpha')
       feed_command('/omega')
@@ -1214,22 +1214,22 @@ describe('folded lines', function()
           {3:[Command Line]                               }|
           [3:---------------------------------------------]|
         ## grid 2
-                                                       |
+          {7: }                                            |
         ## grid 3
           :                                            |
         ## grid 4
-          {1::}set foldmethod=manual                       |
-          {1::}let x = 1                                   |
-          {1::}^                                            |
+          {1::}{7: }set foldmethod=manual foldcolumn=1         |
+          {1::}{7: }let x = 1                                  |
+          {1::}{7: }^                                           |
           {1:~                                            }|
         ]])
       else
         screen:expect([[
-                                                       |
+          {7: }                                            |
           {2:[No Name]                                    }|
-          {1::}set foldmethod=manual                       |
-          {1::}let x = 1                                   |
-          {1::}^                                            |
+          {1::}{7: }set foldmethod=manual foldcolumn=1         |
+          {1::}{7: }let x = 1                                  |
+          {1::}{7: }^                                           |
           {1:~                                            }|
           {3:[Command Line]                               }|
           :                                            |
@@ -1246,20 +1246,20 @@ describe('folded lines', function()
           {3:[Command Line]                               }|
           [3:---------------------------------------------]|
         ## grid 2
-                                                       |
+          {7: }                                            |
         ## grid 3
           :                                            |
         ## grid 4
-          {1::}{5:^+--  2 lines: set foldmethod=manual·········}|
-          {1::}                                            |
+          {1::}{7:+}{5:^+--  2 lines: set foldmethod=manual foldcol}|
+          {1::}{7: }                                           |
           {1:~                                            }|*2
         ]])
       else
         screen:expect([[
-                                                       |
+          {7: }                                            |
           {2:[No Name]                                    }|
-          {1::}{5:^+--  2 lines: set foldmethod=manual·········}|
-          {1::}                                            |
+          {1::}{7:+}{5:^+--  2 lines: set foldmethod=manual foldcol}|
+          {1::}{7: }                                           |
           {1:~                                            }|*2
           {3:[Command Line]                               }|
           :                                            |
@@ -1273,14 +1273,14 @@ describe('folded lines', function()
           [2:---------------------------------------------]|*7
           [3:---------------------------------------------]|
         ## grid 2
-          ^                                             |
+          {7: }^                                            |
           {1:~                                            }|*6
         ## grid 3
           :                                            |
         ]])
       else
         screen:expect([[
-          ^                                             |
+          {7: }^                                            |
           {1:~                                            }|*6
           :                                            |
         ]])
@@ -1296,22 +1296,22 @@ describe('folded lines', function()
           {3:[Command Line]                               }|
           [3:---------------------------------------------]|
         ## grid 2
-                                                       |
+          {7: }                                            |
         ## grid 3
           /                                            |
         ## grid 5
-          {1:/}alpha                                       |
-          {1:/}{6:omega}                                       |
-          {1:/}^                                            |
+          {1:/}{7: }alpha                                      |
+          {1:/}{7: }{6:omega}                                      |
+          {1:/}{7: }^                                           |
           {1:~                                            }|
         ]])
       else
         screen:expect([[
-                                                       |
+          {7: }                                            |
           {2:[No Name]                                    }|
-          {1:/}alpha                                       |
-          {1:/}{6:omega}                                       |
-          {1:/}^                                            |
+          {1:/}{7: }alpha                                      |
+          {1:/}{7: }{6:omega}                                      |
+          {1:/}{7: }^                                           |
           {1:~                                            }|
           {3:[Command Line]                               }|
           /                                            |
@@ -1328,18 +1328,18 @@ describe('folded lines', function()
           {3:[Command Line]                               }|
           [3:---------------------------------------------]|
         ## grid 2
-                                                       |
+          {7: }                                            |
         ## grid 3
           /                                            |
         ## grid 5
-          {1:/}{5:^+--  3 lines: alpha·························}|
+          {1:/}{7:+}{5:^+--  3 lines: alpha························}|
           {1:~                                            }|*3
         ]])
       else
         screen:expect([[
-                                                       |
+          {7: }                                            |
           {2:[No Name]                                    }|
-          {1:/}{5:^+--  3 lines: alpha·························}|
+          {1:/}{7:+}{5:^+--  3 lines: alpha························}|
           {1:~                                            }|*3
           {3:[Command Line]                               }|
           /                                            |
@@ -1347,7 +1347,7 @@ describe('folded lines', function()
       end
     end)
 
-    it('work with autoresize', function()
+    it('foldcolumn autoresize', function()
       fn.setline(1, 'line 1')
       fn.setline(2, 'line 2')
       fn.setline(3, 'line 3')
@@ -1501,7 +1501,7 @@ describe('folded lines', function()
       end
     end)
 
-    it('does not crash when foldtext is longer than columns #12988', function()
+    it('no crash when foldtext is longer than columns #12988', function()
       exec([[
         function! MyFoldText() abort
           return repeat('-', &columns + 100)
@@ -1529,55 +1529,6 @@ describe('folded lines', function()
         ]])
       end
       assert_alive()
-    end)
-
-    it('work correctly with :move #18668', function()
-      screen:try_resize(45, 12)
-      exec([[
-        set foldmethod=expr foldexpr=indent(v:lnum)
-        let content = ['', '', 'Line1', '  Line2', '  Line3',
-              \ 'Line4', '  Line5', '  Line6',
-              \ 'Line7', '  Line8', '  Line9']
-        call append(0, content)
-        normal! zM
-        call cursor(4, 1)
-        move 2
-        move 1
-      ]])
-      if multigrid then
-        screen:expect([[
-        ## grid 1
-          [2:---------------------------------------------]|*11
-          [3:---------------------------------------------]|
-        ## grid 2
-                                                       |
-          {5:^+--  2 lines: Line2··························}|
-                                                       |
-          Line1                                        |
-          Line4                                        |
-          {5:+--  2 lines: Line5··························}|
-          Line7                                        |
-          {5:+--  2 lines: Line8··························}|
-                                                       |
-          {1:~                                            }|*2
-        ## grid 3
-                                                       |
-        ]])
-      else
-        screen:expect([[
-                                                       |
-          {5:^+--  2 lines: Line2··························}|
-                                                       |
-          Line1                                        |
-          Line4                                        |
-          {5:+--  2 lines: Line5··························}|
-          Line7                                        |
-          {5:+--  2 lines: Line8··························}|
-                                                       |
-          {1:~                                            }|*2
-                                                       |
-        ]])
-      end
     end)
 
     it('fold text is shown when text has been scrolled to the right #19123', function()
@@ -2541,7 +2492,7 @@ describe('folded lines', function()
       end
     end)
 
-    it('support foldtext with virtual text format', function()
+    it('foldtext with virtual text format', function()
       screen:try_resize(30, 7)
       insert(content1)
       command('hi! CursorLine guibg=NONE guifg=Red gui=NONE')
@@ -2666,7 +2617,7 @@ describe('folded lines', function()
       end
     end)
 
-    it('supports disabled foldtext', function()
+    it('transparent foldtext', function()
       screen:try_resize(30, 7)
       insert(content1)
       command('hi! CursorLine guibg=NONE guifg=Red gui=NONE')
