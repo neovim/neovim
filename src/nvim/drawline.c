@@ -929,7 +929,8 @@ static int get_rightmost_vcol(win_T *wp, const int *color_cols)
 /// @param lnum         line to display
 /// @param startrow     first row relative to window grid
 /// @param endrow       last grid row to be redrawn
-/// @param col_rows     only update the columns for this amount of rows
+/// @param col_rows     set to the height of the line when only updating the columns,
+///                     otherwise set to 0
 /// @param spv          'spell' related variables kept between calls for "wp"
 /// @param foldinfo     fold info for this line
 /// @param[in, out] providers  decoration providers active this line
@@ -1556,6 +1557,36 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
       win_col_offset = wlv.off;
 
+      // When only updating the columns and that's done, stop here.
+      if (col_rows > 0) {
+        win_put_linebuf(wp, wlv.row, 0, wlv.off, wlv.off, bg_attr, false);
+        // Need to update more screen lines if:
+        // - 'statuscolumn' needs to be drawn, or
+        // - LineNrAbove or LineNrBelow is used, or
+        // - still drawing filler lines.
+        if ((wlv.row + 1 - wlv.startrow < col_rows
+             && (statuscol.draw
+                 || win_hl_attr(wp, HLF_LNA) != win_hl_attr(wp, HLF_N)
+                 || win_hl_attr(wp, HLF_LNB) != win_hl_attr(wp, HLF_N)))
+            || wlv.filler_todo > 0) {
+          wlv.row++;
+          if (wlv.row == endrow) {
+            break;
+          }
+          wlv.filler_todo--;
+          if (wlv.filler_todo == 0 && (wp->w_botfill || end_fill)) {
+            break;
+          }
+          // win_line_start(wp, &wlv);
+          wlv.col = 0;
+          wlv.off = 0;
+          draw_cols = true;
+          continue;
+        } else {
+          break;
+        }
+      }
+
       // Check if 'breakindent' applies and show it.
       if (!wp->w_briopt_sbr) {
         handle_breakindent(wp, &wlv);
@@ -1580,24 +1611,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       apply_cursorline_highlight(wp, &wlv);
     }
 
-    // When still displaying '$' of change command, stop at cursor
-    if (((dollar_vcol >= 0
-          && wp == curwin
-          && lnum == wp->w_cursor.lnum
-          && wlv.vcol >= wp->w_virtcol)
-         || col_rows > 0)
-        && wlv.filler_todo <= 0) {
-      if (col_rows == 0) {
-        draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
-      }
+    // When still displaying '$' of change command, stop at cursor.
+    if (dollar_vcol >= 0 && wp == curwin
+        && lnum == wp->w_cursor.lnum && wlv.vcol >= wp->w_virtcol) {
+      draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
       // don't clear anything after wlv.col
       win_put_linebuf(wp, wlv.row, 0, wlv.col, wlv.col, bg_attr, false);
-      // update the 'statuscolumn' for the entire line size
-      if (col_rows > 0 && statuscol.draw && ++wlv.row - wlv.startrow < col_rows) {
-        draw_cols = true;
-        wlv.off = 0;
-        continue;
-      }
       // Pretend we have finished updating the window.  Except when
       // 'cursorcolumn' is set.
       if (wp->w_p_cuc) {
