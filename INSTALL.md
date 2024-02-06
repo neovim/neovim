@@ -95,20 +95,17 @@ The [Releases](https://github.com/neovim/neovim/releases) page provides pre-buil
 
 ### Pre-built archives
 
-The [Releases](https://github.com/neovim/neovim/releases) page provides pre-built binaries for Linux systems. There are a few ways to install this, the way listed below can be changed to a different directory than the one used here (e.g. `$HOME/.local/bin ` if you do not have root privileges)
+The [Releases](https://github.com/neovim/neovim/releases) page provides pre-built binaries for Linux systems.
 
 ```sh
 curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
-# this is to clean up the files if you have previously installed it here before
 sudo rm -rf /opt/nvim
 sudo tar -C /opt -xzf nvim-linux64.tar.gz
 ```
 
-After this you will need to tell your terminal where to find the `nvim` executable. Add the following line to your `~/.bashrc`:
+After this step add this to `~/.bashrc`:
 
-    export PATH="$PATH:/opt/nvim-linux64.tar.gz"
-
-Restart your terminal or run `source ~/.bashrc` and you can then run `nvim`
+    export PATH="$PATH:/opt/nvim-linux64/bin"
 
 ### AppImage ("universal" Linux package)
 
@@ -117,6 +114,14 @@ The [Releases](https://github.com/neovim/neovim/releases) page provides an [AppI
     curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim.appimage
     chmod u+x nvim.appimage
     ./nvim.appimage
+
+To expose nvim globally:
+
+    mkdir -p $HOME/.local/bin
+    mv nvim.appimage $HOME/.local/bin
+    ln -s $HOME/.local/bin/nvim.appimage $HOME/.local/bin/nvim
+    nvim
+
 
 If the `./nvim.appimage` command fails, try:
 ```sh
@@ -128,18 +133,6 @@ sudo mv squashfs-root /
 sudo ln -s /squashfs-root/AppRun /usr/bin/nvim
 nvim
 ```
-
-If you are able to run the AppImage without extracting the files, a common way to install and run AppImage files is to do the following:
-
-    curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim.appimage
-    chmod u+x nvim.appimage
-    mkdir -p $HOME/.local/bin
-    mv nvim.appimage $HOME/.local/bin
-    ln -s $HOME/.local/bin/nvim.appimage $HOME/.local/bin/nvim
-    nvim
-
-The directory `$HOME/.local/bin` is a place where a user can place user specific or private binaries.
-This can be useful if you do not have root privileges with your current account. If your terminal can't find the executable straight away close and reopen it.
 
 ### Arch Linux
 
