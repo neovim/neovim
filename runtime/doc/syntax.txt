@@ -1294,11 +1294,14 @@ Stack Overflow -
 
 https://stackoverflow.com/questions/12407800/which-comment-style-should-i-use-in-batch-files
 
-To allow the use of the :: idiom for comments in the Windows Command
-Interpreter or working with MS-DOS bat files, set the
-dosbatch_colons_comment variable to anything: >
+To allow the use of the :: idiom for comments in command blocks with the
+Windows Command Interpreter set the dosbatch_colons_comment variable to
+anything: >
 
    :let dosbatch_colons_comment = 1
+
+If this variable is set then a :: comment that is the last line in a command
+block will be highlighted as an error.
 
 There is an option that covers whether `*.btm` files should be detected as type
 "dosbatch" (MS-DOS batch files) or type "btm" (4DOS batch files).  The latter
