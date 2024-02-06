@@ -60,7 +60,7 @@ jobs:
           printf 'END\n' >> $GITHUB_OUTPUT
 
   macOS:
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
       - uses: actions/checkout@v4
         with:
