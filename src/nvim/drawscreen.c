@@ -2864,15 +2864,3 @@ bool win_cursorline_standout(const win_T *wp)
 {
   return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
 }
-
-/// Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
-/// Also when concealing is on and 'concealcursor' is not active.
-void redraw_for_cursorline(win_T *wp)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if ((wp->w_valid & VALID_CROW) == 0 && !pum_visible()
-      && (wp->w_p_rnu || win_cursorline_standout(wp))) {
-    // win_line() will redraw the number column and cursorline only.
-    redraw_later(wp, UPD_VALID);
-  }
-}
