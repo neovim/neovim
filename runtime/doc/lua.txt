@@ -4245,7 +4245,7 @@ vim.snippet.active()                                    *vim.snippet.active()*
 vim.snippet.exit()                                        *vim.snippet.exit()*
     Exits the current snippet.
 
-vim.snippet.expand({input})                             *vim.snippet.expand()*
+vim.snippet.expand({input}, {opts})                     *vim.snippet.expand()*
     Expands the given snippet text. Refer to https://microsoft.github.io/language-server-protocol/specification/#snippet_syntax for
     the specification of valid input.
 
@@ -4253,6 +4253,14 @@ vim.snippet.expand({input})                             *vim.snippet.expand()*
 
     Parameters: ~
       • {input}  (`string`)
+      • {opts}   (`table?`) Options table with keys:
+                 • `variables` (`table`): table containing values for the
+                   template variables. Each of the entries can be either a
+                   string, or a function that returns a string. In either case
+                   if the result is `nil` then the template variables's
+                   default will be used, or an empty string. The function
+                   recieves two arguments, the name of the variable and the
+                   default value from the template.
 
 vim.snippet.jump({direction})                             *vim.snippet.jump()*
     Jumps within the active snippet in the given direction. If the jump isn't

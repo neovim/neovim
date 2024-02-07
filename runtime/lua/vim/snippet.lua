@@ -10,47 +10,27 @@ local function cursor_pos()
   return cursor[1] - 1, cursor[2]
 end
 
---- Resolves variables (like `$name` or `${name:default}`) as follows:
---- - When a variable is unknown (i.e.: its name is not recognized in any of the cases below), return `nil`.
---- - When a variable isn't set, return its default (if any) or an empty string.
+--- Resolves variables (like `$name` or `${name:default}`) by looking up the value of the variable
+--- in the `variables` options table.
+---
+--- - When the variable's value is a function, the function's return value is the variable's value.
+--- - When the variable's value is a string, the string is the variable's value.
+--- - In either case, if the result is still `nil`, use the default value.
 ---
 --- Note that in some cases, the default is ignored since it's not clear how to distinguish an empty
 --- value from an unset value (e.g.: `TM_CURRENT_LINE`).
 ---
 --- @param var string
 --- @param default string
---- @return string?
-local function resolve_variable(var, default)
-  --- @param str string
-  --- @return string
-  local function expand_or_default(str)
-    local expansion = vim.fn.expand(str) --[[@as string]]
-    return expansion == '' and default or expansion
-  end
+--- @return string
+local function resolve_variable(var, default, variables)
+  local variable_value = variables[var] --[[@type (string?)|fun(string): string?]]
 
-  if var == 'TM_SELECTED_TEXT' then
-    -- Snippets are expanded in insert mode only, so there's no selection.
-    return default
-  elseif var == 'TM_CURRENT_LINE' then
-    return vim.api.nvim_get_current_line()
-  elseif var == 'TM_CURRENT_WORD' then
-    return expand_or_default('<cword>')
-  elseif var == 'TM_LINE_INDEX' then
-    return tostring(vim.fn.line('.') - 1)
-  elseif var == 'TM_LINE_NUMBER' then
-    return tostring(vim.fn.line('.'))
-  elseif var == 'TM_FILENAME' then
-    return expand_or_default('%:t')
-  elseif var == 'TM_FILENAME_BASE' then
-    return expand_or_default('%:t:r')
-  elseif var == 'TM_DIRECTORY' then
-    return expand_or_default('%:p:h:t')
-  elseif var == 'TM_FILEPATH' then
-    return expand_or_default('%:p')
+  if type(variable_value) == 'function' then
+    return variable_value(var) or default
+  else
+    return variable_value or default
   end
-
-  -- Unknown variable.
-  return nil
 end
 
 --- Transforms the given text into an array of lines (so no line contains `\n`).
@@ -371,6 +351,43 @@ local function setup_autocmds(bufnr)
   })
 end
 
+--- @param str string
+--- @return string?
+local function expand_or_nil(str)
+  local expansion = vim.fn.expand(str) --[[@as string]]
+  if expansion ~= '' then
+    return expansion
+  end
+end
+
+local default_variables = {
+  -- TM_SELECTED_TEXT is expected to be set by the caller
+  TM_CURRENT_LINE = function()
+    return vim.api.nvim_get_current_line()
+  end,
+  TM_CURRENT_WORD = function()
+    return expand_or_nil('<cword>')
+  end,
+  TM_LINE_INDEX = function()
+    return tostring(vim.fn.line('.') - 1)
+  end,
+  TM_LINE_NUMBER = function()
+    return tostring(vim.fn.line('.'))
+  end,
+  TM_FILENAME = function()
+    return expand_or_nil('%:t')
+  end,
+  TM_FILENAME_BASE = function()
+    return expand_or_nil('%:t:r')
+  end,
+  TM_DIRECTORY = function()
+    return expand_or_nil('%:p:h:t')
+  end,
+  TM_FILEPATH = function()
+    return expand_or_nil('%:p')
+  end,
+}
+
 --- Expands the given snippet text.
 --- Refer to https://microsoft.github.io/language-server-protocol/specification/#snippet_syntax
 --- for the specification of valid input.
@@ -378,7 +395,9 @@ end
 --- Tabstops are highlighted with hl-SnippetTabstop.
 ---
 --- @param input string
-function M.expand(input)
+--- @param options? { variables?: table<string, (string?)|fun(string): string?> }
+function M.expand(input, options)
+  options = vim.tbl_deep_extend('force', { variables = default_variables }, options or {})
   local snippet = G.parse(input)
   local snippet_text = {}
   local base_indent = vim.api.nvim_get_current_line():match('^%s*') or ''
@@ -456,14 +475,8 @@ function M.expand(input)
     elseif type == G.NodeType.Variable then
       --- @cast data vim.snippet.VariableData
       -- Try to get the variable's value.
-      local value = resolve_variable(data.name, data.default and tostring(data.default) or '')
-      if not value then
-        -- Unknown variable, make this a tabstop and use the variable name as a placeholder.
-        value = data.name
-        local tabstop_indexes = vim.tbl_keys(tabstop_data)
-        local index = math.max(unpack((#tabstop_indexes == 0 and { 0 }) or tabstop_indexes)) + 1
-        add_tabstop(index, value)
-      end
+      local default = data.default and tostring(data.default) or ''
+      local value = resolve_variable(data.name, default, options.variables)
       append_to_snippet(value)
     elseif type == G.NodeType.Text then
       --- @cast data vim.snippet.TextData
