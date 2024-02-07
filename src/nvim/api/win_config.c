@@ -361,11 +361,11 @@ static int win_split_flags(WinSplit split, bool toplevel)
   return flags;
 }
 
-/// Configures window layout. Currently only for floating and external windows
-/// (including changing a split window to those layouts).
+/// Configures window layout. Cannot be used to move the last window in a
+/// tabpage to a different one.
 ///
-/// When reconfiguring a floating window, absent option keys will not be
-/// changed.  `row`/`col` and `relative` must be reconfigured together.
+/// When reconfiguring a window, absent option keys will not be changed.
+/// `row`/`col` and `relative` must be reconfigured together.
 ///
 /// @see |nvim_open_win()|
 ///
@@ -1099,10 +1099,14 @@ static bool parse_float_config(Dict(win_config) *config, WinConfig *fconfig, boo
         fconfig->window = config->win;
       }
     }
-  } else if (has_relative) {
-    if (HAS_KEY_X(config, win)) {
+  } else if (HAS_KEY_X(config, win)) {
+    if (has_relative) {
       api_set_error(err, kErrorTypeValidation,
                     "'win' key is only valid with relative='win' and relative=''");
+      return false;
+    } else if (!is_split) {
+      api_set_error(err, kErrorTypeValidation,
+                    "non-float with 'win' requires at least 'split' or 'vertical'");
       return false;
     }
   }

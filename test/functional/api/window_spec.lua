@@ -1727,6 +1727,15 @@ describe('API/win', function()
       config = api.nvim_win_get_config(win)
       eq('', config.relative)
       eq('below', config.split)
+
+      eq(
+        "non-float with 'win' requires at least 'split' or 'vertical'",
+        pcall_err(api.nvim_win_set_config, 0, { win = 0 })
+      )
+      eq(
+        "non-float with 'win' requires at least 'split' or 'vertical'",
+        pcall_err(api.nvim_win_set_config, 0, { win = 0, relative = '' })
+      )
     end)
 
     it('creates top-level splits', function()

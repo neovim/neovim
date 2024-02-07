@@ -2207,11 +2207,11 @@ function vim.api.nvim_win_remove_ns(window, ns_id) end
 --- @param buffer integer Buffer handle
 function vim.api.nvim_win_set_buf(window, buffer) end
 
---- Configures window layout. Currently only for floating and external windows
---- (including changing a split window to those layouts).
+--- Configures window layout. Cannot be used to move the last window in a
+--- tabpage to a different one.
 ---
---- When reconfiguring a floating window, absent option keys will not be
---- changed. `row`/`col` and `relative` must be reconfigured together.
+--- When reconfiguring a window, absent option keys will not be changed.
+--- `row`/`col` and `relative` must be reconfigured together.
 ---
 --- @param window integer Window handle, or 0 for current window
 --- @param config vim.api.keyset.win_config Map defining the window configuration, see `nvim_open_win()`
