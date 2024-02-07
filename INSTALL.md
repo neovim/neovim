@@ -117,11 +117,12 @@ The [Releases](https://github.com/neovim/neovim/releases) page provides an [AppI
 
 To expose nvim globally:
 
-    mkdir -p $HOME/.local/bin
-    mv nvim.appimage $HOME/.local/bin
-    ln -s $HOME/.local/bin/nvim.appimage $HOME/.local/bin/nvim
-    nvim
+    mkdir -p /opt/nvim
+    mv nvim.appimage /opt/nvim/nvim
 
+And the following line to `~/.bashrc`:
+
+    export PATH="$PATH:/opt/nvim/" 
 
 If the `./nvim.appimage` command fails, try:
 ```sh
