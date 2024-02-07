@@ -131,8 +131,10 @@ function M.watchdirs(path, opts, callback)
 
   local timer = assert(uv.new_timer())
 
-  ---@type table[]
-  local changesets = {}
+  --- Map of file path to boolean indicating if the file has been changed
+  --- at some point within the debounce cycle.
+  --- @type table<string, boolean>
+  local filechanges = {}
 
   local process_changes --- @type fun()
 
@@ -146,34 +148,25 @@ function M.watchdirs(path, opts, callback)
         return
       end
 
-      table.insert(changesets, {
-        fullpath = fullpath,
-        events = events,
-      })
+      if not filechanges[fullpath] then
+        filechanges[fullpath] = events.change or false
+      end
       timer:start(debounce, 0, process_changes)
     end
   end
 
   process_changes = function()
-    ---@type table<string, table[]>
-    local filechanges = vim.defaulttable()
-    for i, change in ipairs(changesets) do
-      changesets[i] = nil
-      if not skip(change.fullpath) then
-        table.insert(filechanges[change.fullpath], change.events)
-      end
-    end
-    for fullpath, events_list in pairs(filechanges) do
+    -- Since the callback is debounced it may have also been deleted later on
+    -- so we always need to check the existence of the file:
+    --   stat succeeds, changed=true  -> Changed
+    --   stat succeeds, changed=false -> Created
+    --   stat fails                   -> Removed
+    for fullpath, changed in pairs(filechanges) do
       uv.fs_stat(fullpath, function(_, stat)
         ---@type vim._watch.FileChangeType
         local change_type
         if stat then
-          change_type = M.FileChangeType.Created
-          for _, event in ipairs(events_list) do
-            if event.change then
-              change_type = M.FileChangeType.Changed
-            end
-          end
+          change_type = changed and M.FileChangeType.Changed or M.FileChangeType.Created
           if stat.type == 'directory' then
             local handle = handles[fullpath]
             if not handle then
@@ -195,6 +188,7 @@ function M.watchdirs(path, opts, callback)
         callback(fullpath, change_type)
       end)
     end
+    filechanges = {}
   end
 
   local root_handle = assert(uv.new_fs_event())
