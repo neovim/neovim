@@ -1612,6 +1612,7 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, 
 
 /// Gets information about a channel.
 ///
+/// @param chan channel_id, or 0 for current channel
 /// @returns Dictionary describing a channel, with these keys:
 ///    - "id"       Channel id.
 ///    - "argv"     (optional) Job arguments list.
@@ -1633,11 +1634,16 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, 
 ///                 the RPC channel), if provided by it via
 ///                 |nvim_set_client_info()|.
 ///
-Dictionary nvim_get_chan_info(Integer chan, Error *err)
+Dictionary nvim_get_chan_info(uint64_t channel_id, Integer chan, Error *err)
   FUNC_API_SINCE(4)
 {
   if (chan < 0) {
     return (Dictionary)ARRAY_DICT_INIT;
+  }
+
+  if (chan == 0 && !is_internal_call(channel_id)) {
+    assert(channel_id <= INT64_MAX);
+    chan = (Integer)channel_id;
   }
   return channel_info((uint64_t)chan);
 }

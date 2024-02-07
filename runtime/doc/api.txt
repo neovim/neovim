@@ -888,6 +888,9 @@ nvim_get_api_info()                                      *nvim_get_api_info()*
 nvim_get_chan_info({chan})                              *nvim_get_chan_info()*
     Gets information about a channel.
 
+    Parameters: ~
+      • {chan}  channel_id, or 0 for current channel
+
     Return: ~
         Dictionary describing a channel, with these keys:
         • "id" Channel id.

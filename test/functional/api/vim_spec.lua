@@ -2449,7 +2449,6 @@ describe('API', function()
     }
 
     it('returns {} for invalid channel', function()
-      eq({}, api.nvim_get_chan_info(0))
       eq({}, api.nvim_get_chan_info(-1))
       -- more preallocated numbers might be added, try something high
       eq({}, api.nvim_get_chan_info(10))
@@ -2457,6 +2456,8 @@ describe('API', function()
 
     it('stream=stdio channel', function()
       eq({ [1] = testinfo, [2] = stderr }, api.nvim_list_chans())
+      -- 0 should return current channel
+      eq(testinfo, api.nvim_get_chan_info(0))
       eq(testinfo, api.nvim_get_chan_info(1))
       eq(stderr, api.nvim_get_chan_info(2))
 
@@ -2522,6 +2523,7 @@ describe('API', function()
         "Vim:Error invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1 when calling nvim_set_current_buf, expecting Buffer",
         pcall_err(eval, 'rpcrequest(3, "nvim_set_current_buf", -1)')
       )
+      eq(info, eval('rpcrequest(3, "nvim_get_chan_info", 0)'))
     end)
 
     it('stream=job :terminal channel', function()
