@@ -652,7 +652,7 @@ local function on_code_action_results(results, opts)
     end
     if action.command then
       local command = type(action.command) == 'table' and action.command or action
-      client._exec_cmd(command, ctx)
+      client:_exec_cmd(command, ctx)
     end
   end
 

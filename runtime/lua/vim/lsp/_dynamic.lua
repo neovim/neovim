@@ -6,6 +6,7 @@ local glob = vim.glob
 local M = {}
 
 --- @param client_id number
+--- @return lsp.DynamicCapabilities
 function M.new(client_id)
   return setmetatable({
     capabilities = {},
@@ -37,7 +38,7 @@ function M:register(registrations)
 end
 
 --- @param unregisterations lsp.Unregistration[]
---- @private
+--- @package
 function M:unregister(unregisterations)
   for _, unreg in ipairs(unregisterations) do
     local method = unreg.method
@@ -77,7 +78,7 @@ end
 
 --- @param method string
 --- @param opts? {bufnr: integer?}
---- @private
+--- @package
 function M:supports(method, opts)
   return self:get(method, opts) ~= nil
 end
