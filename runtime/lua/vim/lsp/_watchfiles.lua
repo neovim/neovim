@@ -7,7 +7,11 @@ local lpeg = vim.lpeg
 
 local M = {}
 
-M._watchfunc = (vim.fn.has('win32') == 1 or vim.fn.has('mac') == 1) and watch.watch or watch.poll
+if vim.fn.has('win32') == 1 or vim.fn.has('mac') == 1 then
+  M._watchfunc = watch.watch
+else
+  M._watchfunc = watch.watchdirs
+end
 
 ---@type table<integer, table<string, function[]>> client id -> registration id -> cancel function
 local cancels = vim.defaulttable()
@@ -164,3 +168,4 @@ function M.unregister(unreg, ctx)
 end
 
 return M
+
