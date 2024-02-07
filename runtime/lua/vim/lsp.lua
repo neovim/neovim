@@ -15,6 +15,7 @@ local lsp = vim._defer_require('vim.lsp', {
   _tagfunc = ..., --- @module 'vim.lsp._tagfunc'
   _watchfiles = ..., --- @module 'vim.lsp._watchfiles'
   buf = ..., --- @module 'vim.lsp.buf'
+  client = ..., --- @module 'vim.lsp.client'
   codelens = ..., --- @module 'vim.lsp.codelens'
   diagnostic = ..., --- @module 'vim.lsp.diagnostic'
   handlers = ..., --- @module 'vim.lsp.handlers'
@@ -259,7 +260,7 @@ end
 --- Validates a client configuration as given to |vim.lsp.start_client()|.
 ---
 ---@param config (lsp.ClientConfig)
----@return (string|fun(dispatchers:vim.rpc.Dispatchers):vim.lsp.rpc.PublicClient?) Command
+---@return (string|fun(dispatchers:vim.lsp.rpc.Dispatchers):vim.lsp.rpc.PublicClient?) Command
 ---@return string[] Arguments
 ---@return string Encoding.
 local function validate_client_config(config)
@@ -292,7 +293,7 @@ local function validate_client_config(config)
     'flags.debounce_text_changes must be a number with the debounce time in milliseconds'
   )
 
-  local cmd, cmd_args --- @type (string|fun(dispatchers:vim.rpc.Dispatchers):vim.lsp.rpc.PublicClient), string[]
+  local cmd, cmd_args --- @type (string|fun(dispatchers:vim.lsp.rpc.Dispatchers):vim.lsp.rpc.PublicClient), string[]
   local config_cmd = config.cmd
   if type(config_cmd) == 'function' then
     cmd = config_cmd
@@ -339,42 +340,6 @@ local function once(fn)
     end
     return value
   end
-end
-
---- Default handler for the 'textDocument/didOpen' LSP notification.
----
----@param bufnr integer Number of the buffer, or 0 for current
----@param client lsp.Client Client object
-local function text_document_did_open_handler(bufnr, client)
-  changetracking.init(client, bufnr)
-  if not vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
-    return
-  end
-  if not api.nvim_buf_is_loaded(bufnr) then
-    return
-  end
-  local filetype = vim.bo[bufnr].filetype
-
-  local params = {
-    textDocument = {
-      version = 0,
-      uri = vim.uri_from_bufnr(bufnr),
-      languageId = client.config.get_language_id(bufnr, filetype),
-      text = lsp._buf_get_full_text(bufnr),
-    },
-  }
-  client.notify(ms.textDocument_didOpen, params)
-  util.buf_versions[bufnr] = params.textDocument.version
-
-  -- Next chance we get, we should re-do the diagnostics
-  vim.schedule(function()
-    -- Protect against a race where the buffer disappears
-    -- between `did_open_handler` and the scheduled function firing.
-    if api.nvim_buf_is_valid(bufnr) then
-      local namespace = vim.lsp.diagnostic.get_namespace(client.id)
-      vim.diagnostic.show(namespace, bufnr)
-    end
-  end)
 end
 
 -- FIXME: DOC: Shouldn't need to use a dummy function
@@ -556,7 +521,9 @@ function lsp.status()
   local percentage = nil
   local messages = {} --- @type string[]
   for _, client in ipairs(vim.lsp.get_clients()) do
+    --- @diagnostic disable-next-line:no-unknown
     for progress in client.progress do
+      --- @cast progress {token: lsp.ProgressToken, value: lsp.LSPAny}
       local value = progress.value
       if type(value) == 'table' and value.kind then
         local message = value.message and (value.title .. ': ' .. value.message) or value.title
@@ -654,6 +621,26 @@ end
 --- @field trace 'off'|'messages'|'verbose'|nil
 --- @field flags table
 --- @field root_dir string
+
+--- Reset defaults set by `set_defaults`.
+--- Must only be called if the last client attached to a buffer exits.
+local function reset_defaults(bufnr)
+  if vim.bo[bufnr].tagfunc == 'v:lua.vim.lsp.tagfunc' then
+    vim.bo[bufnr].tagfunc = nil
+  end
+  if vim.bo[bufnr].omnifunc == 'v:lua.vim.lsp.omnifunc' then
+    vim.bo[bufnr].omnifunc = nil
+  end
+  if vim.bo[bufnr].formatexpr == 'v:lua.vim.lsp.formatexpr()' then
+    vim.bo[bufnr].formatexpr = nil
+  end
+  api.nvim_buf_call(bufnr, function()
+    local keymap = vim.fn.maparg('K', 'n', false, true)
+    if keymap and keymap.callback == vim.lsp.buf.hover then
+      vim.keymap.del('n', 'K', { buffer = bufnr })
+    end
+  end)
+end
 
 -- FIXME: DOC: Currently all methods on the `vim.lsp.client` object are
 -- documented twice: Here, and on the methods themselves (e.g.
@@ -875,26 +862,6 @@ function lsp.start_client(config)
     end
   end
 
-  --- Reset defaults set by `set_defaults`.
-  --- Must only be called if the last client attached to a buffer exits.
-  local function reset_defaults(bufnr)
-    if vim.bo[bufnr].tagfunc == 'v:lua.vim.lsp.tagfunc' then
-      vim.bo[bufnr].tagfunc = nil
-    end
-    if vim.bo[bufnr].omnifunc == 'v:lua.vim.lsp.omnifunc' then
-      vim.bo[bufnr].omnifunc = nil
-    end
-    if vim.bo[bufnr].formatexpr == 'v:lua.vim.lsp.formatexpr()' then
-      vim.bo[bufnr].formatexpr = nil
-    end
-    api.nvim_buf_call(bufnr, function()
-      local keymap = vim.fn.maparg('K', 'n', false, true)
-      if keymap and keymap.callback == vim.lsp.buf.hover then
-        vim.keymap.del('n', 'K', { buffer = bufnr })
-      end
-    end)
-  end
-
   ---@private
   --- Invoked on client exit.
   ---
@@ -971,456 +938,26 @@ function lsp.start_client(config)
     return
   end
 
-  ---@class lsp.Client
-  local client = {
-    id = client_id,
-    name = name,
-    rpc = rpc,
-    offset_encoding = offset_encoding,
-    config = config,
-    attached_buffers = {}, --- @type table<integer,true>
+  config.capabilities = config.capabilities or protocol.make_client_capabilities()
 
-    handlers = handlers,
-    --- @type table<string,function>
-    commands = config.commands or {},
-
-    --- @type table<integer,{ type: string, bufnr: integer, method: string}>
-    requests = {},
-
-    --- Contains $/progress report messages.
-    --- They have the format {token: integer|string, value: any}
-    --- For "work done progress", value will be one of:
-    --- - lsp.WorkDoneProgressBegin,
-    --- - lsp.WorkDoneProgressReport (extended with title from Begin)
-    --- - lsp.WorkDoneProgressEnd    (extended with title from Begin)
-    progress = vim.ringbuf(50),
-
-    --- @type lsp.ServerCapabilities
-    server_capabilities = {},
-
-    ---@deprecated use client.progress instead
-    messages = { name = name, messages = {}, progress = {}, status = {} },
-    dynamic_capabilities = vim.lsp._dynamic.new(client_id),
-  }
-
-  ---@type table<string|integer, string> title of unfinished progress sequences by token
-  client.progress.pending = {}
-
-  --- @type lsp.ClientCapabilities
-  client.config.capabilities = config.capabilities or protocol.make_client_capabilities()
+  local client = require('vim.lsp.client').new(client_id, rpc, handlers, offset_encoding, config)
 
   -- Store the uninitialized_clients for cleanup in case we exit before initialize finishes.
   uninitialized_clients[client_id] = client
 
-  local function initialize()
-    local valid_traces = {
-      off = 'off',
-      messages = 'messages',
-      verbose = 'verbose',
-    }
-
-    local workspace_folders --- @type lsp.WorkspaceFolder[]?
-    local root_uri --- @type string?
-    local root_path --- @type string?
-    if config.workspace_folders or config.root_dir then
-      if config.root_dir and not config.workspace_folders then
-        workspace_folders = {
-          {
-            uri = vim.uri_from_fname(config.root_dir),
-            name = string.format('%s', config.root_dir),
-          },
-        }
-      else
-        workspace_folders = config.workspace_folders
-      end
-      root_uri = workspace_folders[1].uri
-      root_path = vim.uri_to_fname(root_uri)
-    else
-      workspace_folders = nil
-      root_uri = nil
-      root_path = nil
-    end
-
-    local initialize_params = {
-      -- The process Id of the parent process that started the server. Is null if
-      -- the process has not been started by another process.  If the parent
-      -- process is not alive then the server should exit (see exit notification)
-      -- its process.
-      processId = uv.os_getpid(),
-      -- Information about the client
-      -- since 3.15.0
-      clientInfo = {
-        name = 'Neovim',
-        version = tostring(vim.version()),
-      },
-      -- The rootPath of the workspace. Is null if no folder is open.
-      --
-      -- @deprecated in favour of rootUri.
-      rootPath = root_path or vim.NIL,
-      -- The rootUri of the workspace. Is null if no folder is open. If both
-      -- `rootPath` and `rootUri` are set `rootUri` wins.
-      rootUri = root_uri or vim.NIL,
-      -- The workspace folders configured in the client when the server starts.
-      -- This property is only available if the client supports workspace folders.
-      -- It can be `null` if the client supports workspace folders but none are
-      -- configured.
-      workspaceFolders = workspace_folders or vim.NIL,
-      -- User provided initialization options.
-      initializationOptions = config.init_options,
-      -- The capabilities provided by the client (editor or tool)
-      capabilities = config.capabilities,
-      -- The initial trace setting. If omitted trace is disabled ("off").
-      -- trace = "off" | "messages" | "verbose";
-      trace = valid_traces[config.trace] or 'off',
-    }
-    if config.before_init then
-      local status, err = pcall(config.before_init, initialize_params, config)
-      if not status then
-        write_error(lsp.client_errors.BEFORE_INIT_CALLBACK_ERROR, err)
+  client:initialize(function()
+    uninitialized_clients[client_id] = nil
+    -- Only assign after initialized.
+    active_clients[client_id] = client
+    -- If we had been registered before we start, then send didOpen This can
+    -- happen if we attach to buffers before initialize finishes or if
+    -- someone restarts a client.
+    for bufnr, client_ids in pairs(all_buffer_active_clients) do
+      if client_ids[client_id] then
+        client.on_attach(bufnr)
       end
     end
-
-    --- @param method string
-    --- @param opts? {bufnr: integer?}
-    client.supports_method = function(method, opts)
-      opts = opts or {}
-      local required_capability = lsp._request_name_to_capability[method]
-      -- if we don't know about the method, assume that the client supports it.
-      if not required_capability then
-        return true
-      end
-      if vim.tbl_get(client.server_capabilities, unpack(required_capability)) then
-        return true
-      else
-        if client.dynamic_capabilities:supports_registration(method) then
-          return client.dynamic_capabilities:supports(method, opts)
-        end
-        return false
-      end
-    end
-
-    if log.trace() then
-      log.trace(log_prefix, 'initialize_params', initialize_params)
-    end
-    rpc.request('initialize', initialize_params, function(init_err, result)
-      assert(not init_err, tostring(init_err))
-      assert(result, 'server sent empty result')
-      rpc.notify('initialized', vim.empty_dict())
-      client.initialized = true
-      uninitialized_clients[client_id] = nil
-      client.workspace_folders = workspace_folders
-
-      -- These are the cleaned up capabilities we use for dynamically deciding
-      -- when to send certain events to clients.
-      client.server_capabilities =
-        assert(result.capabilities, "initialize result doesn't contain capabilities")
-      client.server_capabilities = assert(protocol.resolve_capabilities(client.server_capabilities))
-
-      if client.server_capabilities.positionEncoding then
-        client.offset_encoding = client.server_capabilities.positionEncoding
-      end
-
-      if next(config.settings) then
-        client.notify(ms.workspace_didChangeConfiguration, { settings = config.settings })
-      end
-
-      if config.on_init then
-        local status, err = pcall(config.on_init, client, result)
-        if not status then
-          write_error(lsp.client_errors.ON_INIT_CALLBACK_ERROR, err)
-        end
-      end
-      if log.info() then
-        log.info(
-          log_prefix,
-          'server_capabilities',
-          { server_capabilities = client.server_capabilities }
-        )
-      end
-
-      -- Only assign after initialized.
-      active_clients[client_id] = client
-      -- If we had been registered before we start, then send didOpen This can
-      -- happen if we attach to buffers before initialize finishes or if
-      -- someone restarts a client.
-      for bufnr, client_ids in pairs(all_buffer_active_clients) do
-        if client_ids[client_id] then
-          client._on_attach(bufnr)
-        end
-      end
-    end)
-  end
-
-  ---@nodoc
-  --- Sends a request to the server.
-  ---
-  --- This is a thin wrapper around {client.rpc.request} with some additional
-  --- checks for capabilities and handler availability.
-  ---
-  ---@param method string LSP method name.
-  ---@param params table|nil LSP request params.
-  ---@param handler lsp.Handler|nil Response |lsp-handler| for this method.
-  ---@param bufnr integer Buffer handle (0 for current).
-  ---@return boolean status, integer|nil request_id {status} is a bool indicating
-  ---whether the request was successful. If it is `false`, then it will
-  ---always be `false` (the client has shutdown). If it was
-  ---successful, then it will return {request_id} as the
-  ---second result. You can use this with `client.cancel_request(request_id)`
-  ---to cancel the-request.
-  ---@see |vim.lsp.buf_request_all()|
-  function client.request(method, params, handler, bufnr)
-    if not handler then
-      handler = assert(
-        resolve_handler(method),
-        string.format('not found: %q request handler for client %q.', method, client.name)
-      )
-    end
-    -- Ensure pending didChange notifications are sent so that the server doesn't operate on a stale state
-    changetracking.flush(client, bufnr)
-    local version = util.buf_versions[bufnr]
-    bufnr = resolve_bufnr(bufnr)
-    if log.debug() then
-      log.debug(log_prefix, 'client.request', client_id, method, params, handler, bufnr)
-    end
-    local success, request_id = rpc.request(method, params, function(err, result)
-      local context = {
-        method = method,
-        client_id = client_id,
-        bufnr = bufnr,
-        params = params,
-        version = version,
-      }
-      handler(err, result, context)
-    end, function(request_id)
-      local request = client.requests[request_id]
-      request.type = 'complete'
-      nvim_exec_autocmds('LspRequest', {
-        buffer = api.nvim_buf_is_valid(bufnr) and bufnr or nil,
-        modeline = false,
-        data = { client_id = client_id, request_id = request_id, request = request },
-      })
-      client.requests[request_id] = nil
-    end)
-
-    if success and request_id then
-      local request = { type = 'pending', bufnr = bufnr, method = method }
-      client.requests[request_id] = request
-      nvim_exec_autocmds('LspRequest', {
-        buffer = bufnr,
-        modeline = false,
-        data = { client_id = client_id, request_id = request_id, request = request },
-      })
-    end
-
-    return success, request_id
-  end
-
-  ---@private
-  --- Sends a request to the server and synchronously waits for the response.
-  ---
-  --- This is a wrapper around {client.request}
-  ---
-  ---@param method (string) LSP method name.
-  ---@param params (table) LSP request params.
-  ---@param timeout_ms (integer|nil) Maximum time in milliseconds to wait for
-  ---                               a result. Defaults to 1000
-  ---@param bufnr (integer) Buffer handle (0 for current).
-  ---@return {err: lsp.ResponseError|nil, result:any}|nil, string|nil err # a dictionary, where
-  --- `err` and `result` come from the |lsp-handler|.
-  --- On timeout, cancel or error, returns `(nil, err)` where `err` is a
-  --- string describing the failure reason. If the request was unsuccessful
-  --- returns `nil`.
-  ---@see |vim.lsp.buf_request_sync()|
-  function client.request_sync(method, params, timeout_ms, bufnr)
-    local request_result = nil
-    local function _sync_handler(err, result)
-      request_result = { err = err, result = result }
-    end
-
-    local success, request_id = client.request(method, params, _sync_handler, bufnr)
-    if not success then
-      return nil
-    end
-
-    local wait_result, reason = vim.wait(timeout_ms or 1000, function()
-      return request_result ~= nil
-    end, 10)
-
-    if not wait_result then
-      if request_id then
-        client.cancel_request(request_id)
-      end
-      return nil, wait_result_reason[reason]
-    end
-    return request_result
-  end
-
-  ---@nodoc
-  --- Sends a notification to an LSP server.
-  ---
-  ---@param method string LSP method name.
-  ---@param params table|nil LSP request params.
-  ---@return boolean status true if the notification was successful.
-  ---If it is false, then it will always be false
-  ---(the client has shutdown).
-  function client.notify(method, params)
-    if method ~= ms.textDocument_didChange then
-      changetracking.flush(client)
-    end
-
-    local client_active = rpc.notify(method, params)
-
-    if client_active then
-      vim.schedule(function()
-        nvim_exec_autocmds('LspNotify', {
-          modeline = false,
-          data = {
-            client_id = client.id,
-            method = method,
-            params = params,
-          },
-        })
-      end)
-    end
-
-    return client_active
-  end
-
-  ---@nodoc
-  --- Cancels a request with a given request id.
-  ---
-  ---@param id (integer) id of request to cancel
-  ---@return boolean status true if notification was successful. false otherwise
-  ---@see |vim.lsp.client.notify()|
-  function client.cancel_request(id)
-    validate({ id = { id, 'n' } })
-    local request = client.requests[id]
-    if request and request.type == 'pending' then
-      request.type = 'cancel'
-      nvim_exec_autocmds('LspRequest', {
-        buffer = request.bufnr,
-        modeline = false,
-        data = { client_id = client_id, request_id = id, request = request },
-      })
-    end
-    return rpc.notify(ms.dollar_cancelRequest, { id = id })
-  end
-
-  -- Track this so that we can escalate automatically if we've already tried a
-  -- graceful shutdown
-  local graceful_shutdown_failed = false
-
-  ---@nodoc
-  --- Stops a client, optionally with force.
-  ---
-  ---By default, it will just ask the - server to shutdown without force. If
-  --- you request to stop a client which has previously been requested to
-  --- shutdown, it will automatically escalate and force shutdown.
-  ---
-  ---@param force boolean|nil
-  function client.stop(force)
-    if rpc.is_closing() then
-      return
-    end
-    if force or not client.initialized or graceful_shutdown_failed then
-      rpc.terminate()
-      return
-    end
-    -- Sending a signal after a process has exited is acceptable.
-    rpc.request(ms.shutdown, nil, function(err, _)
-      if err == nil then
-        rpc.notify(ms.exit)
-      else
-        -- If there was an error in the shutdown request, then term to be safe.
-        rpc.terminate()
-        graceful_shutdown_failed = true
-      end
-    end)
-  end
-
-  ---@private
-  --- Checks whether a client is stopped.
-  ---
-  ---@return boolean # true if client is stopped or in the process of being
-  ---stopped; false otherwise
-  function client.is_stopped()
-    return rpc.is_closing()
-  end
-
-  ---@private
-  --- Execute a lsp command, either via client command function (if available)
-  --- or via workspace/executeCommand (if supported by the server)
-  ---
-  ---@param command lsp.Command
-  ---@param context? {bufnr: integer}
-  ---@param handler? lsp.Handler only called if a server command
-  function client._exec_cmd(command, context, handler)
-    context = vim.deepcopy(context or {}, true) --[[@as lsp.HandlerContext]]
-    context.bufnr = context.bufnr or api.nvim_get_current_buf()
-    context.client_id = client.id
-    local cmdname = command.command
-    local fn = client.commands[cmdname] or lsp.commands[cmdname]
-    if fn then
-      fn(command, context)
-      return
-    end
-
-    local command_provider = client.server_capabilities.executeCommandProvider
-    local commands = type(command_provider) == 'table' and command_provider.commands or {}
-    if not vim.list_contains(commands, cmdname) then
-      vim.notify_once(
-        string.format(
-          'Language server `%s` does not support command `%s`. This command may require a client extension.',
-          client.name,
-          cmdname
-        ),
-        vim.log.levels.WARN
-      )
-      return
-    end
-    -- Not using command directly to exclude extra properties,
-    -- see https://github.com/python-lsp/python-lsp-server/issues/146
-    local params = {
-      command = command.command,
-      arguments = command.arguments,
-    }
-    client.request(ms.workspace_executeCommand, params, handler, context.bufnr)
-  end
-
-  ---@private
-  --- Runs the on_attach function from the client's config if it was defined.
-  ---@param bufnr integer Buffer number
-  function client._on_attach(bufnr)
-    text_document_did_open_handler(bufnr, client)
-
-    lsp._set_defaults(client, bufnr)
-
-    nvim_exec_autocmds('LspAttach', {
-      buffer = bufnr,
-      modeline = false,
-      data = { client_id = client.id },
-    })
-
-    if config.on_attach then
-      local status, err = pcall(config.on_attach, client, bufnr)
-      if not status then
-        write_error(lsp.client_errors.ON_ATTACH_ERROR, err)
-      end
-    end
-
-    -- schedule the initialization of semantic tokens to give the above
-    -- on_attach and LspAttach callbacks the ability to schedule wrap the
-    -- opt-out (deleting the semanticTokensProvider from capabilities)
-    vim.schedule(function()
-      if vim.tbl_get(client.server_capabilities, 'semanticTokensProvider', 'full') then
-        lsp.semantic_tokens.start(bufnr, client.id)
-      end
-    end)
-
-    client.attached_buffers[bufnr] = true
-  end
-
-  initialize()
+  end)
 
   return client_id
 end
@@ -1564,7 +1101,7 @@ function lsp.buf_attach_client(bufnr, client_id)
           if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
             client.notify(ms.textDocument_didClose, params)
           end
-          text_document_did_open_handler(bufnr, client)
+          client:_text_document_did_open_handler(bufnr)
         end
       end,
       on_detach = function()
@@ -1596,7 +1133,7 @@ function lsp.buf_attach_client(bufnr, client_id)
   -- Send didOpen for the client if it is initialized. If it isn't initialized
   -- then it will send didOpen on initialize.
   if client then
-    client._on_attach(bufnr)
+    client:_on_attach(bufnr)
   end
   return true
 end

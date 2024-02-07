@@ -895,6 +895,7 @@ do
   ---@field private _idx_read integer
   ---@field private _idx_write integer
   ---@field private _size integer
+  ---@overload fun(self): table?
   local Ringbuf = {}
 
   --- Clear all items
