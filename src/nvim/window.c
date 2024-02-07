@@ -905,19 +905,35 @@ void ui_ext_win_viewport(win_T *wp)
   }
 }
 
-/// If "split_disallowed" is set give an error and return FAIL.
+/// If "split_disallowed" is set or "wp"s buffer is closing, give an error and return FAIL.
 /// Otherwise return OK.
-static int check_split_disallowed(void)
+static int check_split_disallowed(const win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  Error err = ERROR_INIT;
+  const bool ok = check_split_disallowed_err(wp, &err);
+  if (ERROR_SET(&err)) {
+    emsg(_(err.msg));
+    api_clear_error(&err);
+  }
+  return ok ? OK : FAIL;
+}
+
+/// Like `check_split_disallowed`, but set `err` to the (untranslated) error message on failure and
+/// return false. Otherwise return true.
+/// @see check_split_disallowed
+bool check_split_disallowed_err(const win_T *wp, Error *err)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (split_disallowed > 0) {
-    emsg(_("E242: Can't split a window while closing another"));
-    return FAIL;
+    api_set_error(err, kErrorTypeException, "E242: Can't split a window while closing another");
+    return false;
   }
-  if (curwin->w_buffer->b_locked_split) {
-    emsg(_(e_cannot_split_window_when_closing_buffer));
-    return FAIL;
+  if (wp->w_buffer->b_locked_split) {
+    api_set_error(err, kErrorTypeException, "%s", e_cannot_split_window_when_closing_buffer);
+    return false;
   }
-  return OK;
+  return true;
 }
 
 // split the current window, implements CTRL-W s and :split
@@ -936,7 +952,7 @@ static int check_split_disallowed(void)
 // return FAIL for failure, OK otherwise
 int win_split(int size, int flags)
 {
-  if (check_split_disallowed() == FAIL) {
+  if (check_split_disallowed(curwin) == FAIL) {
     return FAIL;
   }
 
@@ -1871,7 +1887,7 @@ static void win_totop(int size, int flags)
   if (is_aucmd_win(curwin)) {
     return;
   }
-  if (check_split_disallowed() == FAIL) {
+  if (check_split_disallowed(curwin) == FAIL) {
     return;
   }
 

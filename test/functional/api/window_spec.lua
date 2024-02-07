@@ -1589,6 +1589,37 @@ describe('API/win', function()
       api.nvim_open_win(new_buf, true, { split = 'left' })
       eq(cur_buf, api.nvim_get_current_buf())
     end)
+
+    it('checks if splitting disallowed', function()
+      command('split | autocmd WinEnter * ++once call nvim_open_win(0, 0, #{split: "right"})')
+      matches("E242: Can't split a window while closing another$", pcall_err(command, 'quit'))
+
+      command('only | autocmd BufHidden * ++once call nvim_open_win(0, 0, #{split: "left"})')
+      matches(
+        'E1159: Cannot split a window when closing the buffer$',
+        pcall_err(command, 'new | quit')
+      )
+
+      local w = api.nvim_get_current_win()
+      command(
+        'only | new | autocmd BufHidden * ++once call nvim_open_win(0, 0, #{split: "left", win: '
+          .. w
+          .. '})'
+      )
+      matches(
+        'E1159: Cannot split a window when closing the buffer$',
+        pcall_err(api.nvim_win_close, w, true)
+      )
+
+      -- OK when using window to different buffer than `win`s.
+      w = api.nvim_get_current_win()
+      command(
+        'only | autocmd BufHidden * ++once call nvim_open_win(0, 0, #{split: "left", win: '
+          .. w
+          .. '})'
+      )
+      command('new | quit')
+    end)
   end)
 
   describe('set_config', function()
@@ -1940,6 +1971,22 @@ describe('API/win', function()
       api.nvim_win_set_config(0, { win = parent, split = 'left' })
       -- Shouldn't see any of those events, as we remain in the same window.
       eq({}, eval('result'))
+    end)
+
+    it('checks if splitting disallowed', function()
+      command('split | autocmd WinEnter * ++once call nvim_win_set_config(0, #{split: "right"})')
+      matches("E242: Can't split a window while closing another$", pcall_err(command, 'quit'))
+
+      command('autocmd BufHidden * ++once call nvim_win_set_config(0, #{split: "left"})')
+      matches(
+        'E1159: Cannot split a window when closing the buffer$',
+        pcall_err(command, 'new | quit')
+      )
+
+      -- OK when using window to different buffer.
+      local w = api.nvim_get_current_win()
+      command('autocmd BufHidden * ++once call nvim_win_set_config(' .. w .. ', #{split: "left"})')
+      command('new | quit')
     end)
   end)
 

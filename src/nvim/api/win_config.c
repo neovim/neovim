@@ -246,6 +246,10 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
       }
     }
 
+    if (!check_split_disallowed_err(parent ? parent : curwin, err)) {
+      return 0;  // error already set
+    }
+
     if (HAS_KEY_X(config, vertical) && !HAS_KEY_X(config, split)) {
       if (config->vertical) {
         fconfig.split = p_spr ? kWinSplitRight : kWinSplitLeft;
@@ -438,6 +442,10 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
       }
       redraw_later(win, UPD_NOT_VALID);
       return;
+    }
+
+    if (!check_split_disallowed_err(win, err)) {
+      return;  // error already set
     }
 
     if (was_split) {
