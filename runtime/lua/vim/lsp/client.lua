@@ -127,7 +127,7 @@ end
 --- @param config lsp.ClientConfig
 --- @return lsp.Client
 function Client.new(id, rpc, handlers, offset_encoding, config)
-  local name = config.name
+  local name = config.name or tostring(id)
 
   --- @class lsp.Client
   local self = {
