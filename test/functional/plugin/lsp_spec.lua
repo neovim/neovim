@@ -4573,6 +4573,8 @@ describe('LSP', function()
 
           wait_for_message()
 
+          vim.lsp.stop_client(client_id)
+
           return server.messages
         ]],
             root_dir,
@@ -4581,7 +4583,7 @@ describe('LSP', function()
 
           local uri = vim.uri_from_fname(root_dir .. '/watch')
 
-          eq(4, #result)
+          eq(6, #result)
 
           eq({
             method = 'workspace/didChangeWatchedFiles',

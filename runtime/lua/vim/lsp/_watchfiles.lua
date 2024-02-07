@@ -167,5 +167,14 @@ function M.unregister(unreg, ctx)
   end
 end
 
+--- @param client_id integer
+function M.cancel(client_id)
+  for _, reg_cancels in pairs(cancels[client_id]) do
+    for _, cancel in pairs(reg_cancels) do
+      cancel()
+    end
+  end
+end
+
 return M
 

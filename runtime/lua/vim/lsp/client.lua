@@ -727,6 +727,7 @@ function Client:_stop(force)
       rpc.terminate()
       self._graceful_shutdown_failed = true
     end
+    vim.lsp._watchfiles.cancel(self.id)
   end)
 end
 
