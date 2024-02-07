@@ -4494,6 +4494,15 @@ describe('LSP', function()
       it(
         string.format('sends notifications when files change (watchfunc=%s)', watchfunc),
         function()
+          if watchfunc == 'fswatch' then
+            skip(
+              not is_ci() and fn.executable('fswatch') == 0,
+              'fswatch not installed and not on CI'
+            )
+            skip(is_os('win'), 'not supported on windows')
+            skip(is_os('mac'), 'flaky')
+          end
+
           skip(
             is_os('bsd'),
             'kqueue only reports events on watched folder itself, not contained files #26110'
@@ -4614,6 +4623,7 @@ describe('LSP', function()
 
     test_filechanges('watch')
     test_filechanges('watchdirs')
+    test_filechanges('fswatch')
 
     it('correctly registers and unregisters', function()
       local root_dir = '/some_dir'
@@ -5078,4 +5088,3 @@ describe('LSP', function()
     end)
   end)
 end)
-

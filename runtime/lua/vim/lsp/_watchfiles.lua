@@ -9,6 +9,8 @@ local M = {}
 
 if vim.fn.has('win32') == 1 or vim.fn.has('mac') == 1 then
   M._watchfunc = watch.watch
+elseif vim.fn.executable('fswatch') == 1 then
+  M._watchfunc = watch.fswatch
 else
   M._watchfunc = watch.watchdirs
 end
@@ -177,4 +179,3 @@ function M.cancel(client_id)
 end
 
 return M
-

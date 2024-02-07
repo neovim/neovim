@@ -30,12 +30,12 @@ if [[ $os == Linux ]]; then
   fi
 
   if [[ -n $TEST ]]; then
-    sudo apt-get install -y locales-all cpanminus attr libattr1-dev gdb
+    sudo apt-get install -y locales-all cpanminus attr libattr1-dev gdb fswatch
   fi
 elif [[ $os == Darwin ]]; then
   brew update --quiet
   brew install ninja
   if [[ -n $TEST ]]; then
-    brew install cpanminus
+    brew install cpanminus fswatch
   fi
 fi
