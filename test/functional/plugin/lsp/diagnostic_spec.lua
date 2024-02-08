@@ -193,7 +193,7 @@ describe('vim.lsp.diagnostic', function()
           PublishDiagnostics = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
             underline = false,
             virtual_text = {
-              severity_limit = ...
+              severity = { min = ... }
             },
           })
 
@@ -212,11 +212,11 @@ describe('vim.lsp.diagnostic', function()
       end
 
       -- No messages with Error or higher
-      eq(0, get_extmark_count_with_severity('Error'))
+      eq(0, get_extmark_count_with_severity('ERROR'))
 
       -- But now we don't filter it
-      eq(1, get_extmark_count_with_severity('Warning'))
-      eq(1, get_extmark_count_with_severity('Hint'))
+      eq(1, get_extmark_count_with_severity('WARN'))
+      eq(1, get_extmark_count_with_severity('HINT'))
     end)
 
     it('correctly handles UTF-16 offsets', function()
