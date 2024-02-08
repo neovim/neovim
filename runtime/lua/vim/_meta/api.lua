@@ -1158,7 +1158,7 @@ function vim.api.nvim_get_autocmds(opts) end
 
 --- Gets information about a channel.
 ---
---- @param chan integer
+--- @param chan integer channel_id, or 0 for current channel
 --- @return table<string,any>
 function vim.api.nvim_get_chan_info(chan) end
 

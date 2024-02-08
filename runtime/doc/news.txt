@@ -405,6 +405,8 @@ The following changes to existing APIs or features add new behavior.
 • Attempting to set an invalid keycode option (e.g. `set t_foo=123`) no longer
   gives an error.
 
+• Passing 0 to |nvim_get_chan_info()| gets info about the current channel.
+
 • |:checkhealth| buffer can now be opened in a split window using modifiers like
   |:vertical|, |:horizontal| and |:botright|.
 
