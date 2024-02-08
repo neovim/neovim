@@ -252,7 +252,9 @@ List concatenation ~
 							*list-concatenation*
 Two lists can be concatenated with the "+" operator: >
 	:let longlist = mylist + [5, 6]
+A list can be concatenated with another one in place using the "+=" operator or |extend()|: >
 	:let mylist += [7, 8]
+	:call extend(mylist, [7, 8])
 
 To prepend or append an item, turn the item into a list by putting [] around
 it.  To change a list in-place, refer to |list-modification| below.
@@ -374,6 +376,19 @@ To change part of a list you can specify the first and last item to be
 modified.  The value must at least have the number of items in the range: >
 	:let list[3:5] = [3, 4, 5]
 
+To add items to a List in-place, you can use the += operator
+|list-concatenation|: >
+	:let listA = [1, 2]
+	:let listA += [3, 4]
+<
+When two variables refer to the same List, changing one List in-place will
+cause the referenced List to be changed in-place: >
+	:let listA = [1, 2]
+	:let listB = listA
+	:let listB += [3, 4]
+	:echo listA
+	[1, 2, 3, 4]
+<
 Adding and removing items from a list is done with functions.  Here are a few
 examples: >
 	:call insert(list, 'a')		" prepend item 'a'
