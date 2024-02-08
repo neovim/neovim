@@ -208,16 +208,54 @@ function M.set_query(...)
   M.set(...)
 end
 
+---@class SetQueryOpts
+---@field inherits (string|string[]|nil)
+---@field extends (boolean|nil)
+
 --- Sets the runtime query named {query_name} for {lang}
 ---
---- This allows users to override any runtime files and/or configuration
+--- This allows users to override or extend any runtime files and/or configuration
 --- set by plugins.
 ---
 ---@param lang string Language to use for the query
 ---@param query_name string Name of the query (e.g., "highlights")
----@param text string Query text (unparsed).
-function M.set(lang, query_name, text)
-  explicit_queries[lang][query_name] = M.parse(lang, text)
+---@param text string Query text (unparsed)
+---@param opts? SetQueryOpts (table) Optional keyword arguments
+---   - inherits (string|string[]|nil) Language(s) this query should inherit
+---     (see |treesitter-query-modeline-inherits|)
+---   - extends (boolean|nil) If `true`, the query should be used as an extension query
+---     (see |treesitter-query-modeline-extends|)
+function M.set(lang, query_name, text, opts)
+  local query ---@type vim.treesitter.Query
+
+  if not opts then
+    query = M.parse(lang, text)
+  else
+    local query_files = {}
+
+    if opts.inherits then
+      local inherits = opts.inherits
+      if type(inherits) == 'string' then
+        inherits = { inherits }
+      end
+      ---@cast inherits string[]
+
+      for _, inherited in ipairs(inherits) do
+        local files = M.get_files(inherited, query_name, true)
+        vim.list_extend(query_files, files)
+      end
+    end
+
+    if opts.extends then
+      local files = M.get_files(lang, query_name)
+      vim.list_extend(query_files, files)
+    end
+
+    local query_string = read_query_files(query_files) .. text
+    query = M.parse(lang, query_string)
+  end
+
+  explicit_queries[lang][query_name] = query
 end
 
 ---@deprecated
