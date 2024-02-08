@@ -118,6 +118,11 @@ function LanguageTree.new(source, lang, opts, parent_lang)
     source = vim.api.nvim_get_current_buf()
   end
 
+  local bufnr = nil
+  if type(source) == 'number' then
+    bufnr = source
+  end
+
   local injections = opts.injections or {}
 
   --- @type LanguageTree
@@ -129,7 +134,7 @@ function LanguageTree.new(source, lang, opts, parent_lang)
     _trees = {},
     _opts = opts,
     _injection_query = injections[lang] and query.parse(lang, injections[lang])
-      or query.get(lang, 'injections'),
+      or query.get(lang, 'injections', bufnr),
     _has_regions = false,
     _injections_processed = false,
     _valid = false,

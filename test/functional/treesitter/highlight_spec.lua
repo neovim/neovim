@@ -523,6 +523,108 @@ describe('treesitter highlighting (C)', function()
     }
   end)
 
+  it('supports extending runtime queries', function()
+    insert([[
+    int x = 2;
+    int y = 2;
+    return x + y;
+    ]])
+
+    exec_lua [[
+      vim.treesitter.query.set("c", "highlights", '[";"] @variable', { extends = true })
+      vim.treesitter.query.set("c", "highlights", '["if"] @extend_query_capture', { extends = true })
+      vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, "c"))
+    ]]
+
+    local captures = exec_lua [[ return vim.treesitter.query.get("c", "highlights").captures ]]
+    assert(vim.list_contains(captures, 'extend_query_capture'))
+
+    screen:expect {
+      grid = [[
+      {5:int} {4:x} {2:=} {3:2}{4:;}                                                       |
+      {5:int} {4:y} {2:=} {3:2}{4:;}                                                       |
+      {2:return} {4:x} {2:+} {4:y;}                                                    |
+      ^                                                                 |
+      {1:~                                                                }|*13
+                                                                       |
+      ]],
+      attr_ids = {
+        [1] = { bold = true, foreground = Screen.colors.Blue },
+        [2] = { bold = true, foreground = Screen.colors.Brown },
+        [3] = { foreground = Screen.colors.Magenta },
+        [4] = { foreground = Screen.colors.Cyan4 },
+        [5] = { foreground = Screen.colors.SlateBlue },
+      },
+    }
+  end)
+
+  it('supports extending overriden queries', function()
+    insert [[ int x = 2; ]]
+
+    exec_lua [[
+      vim.treesitter.query.set("c", "highlights", '[";"] @variable')
+      vim.treesitter.query.set("c", "highlights", '(identifier) @keyword', { extends = true })
+      vim.treesitter.query.set("c", "highlights", '["if"] @extend_query_capture', { extends = true })
+      vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, "c"))
+    ]]
+
+    local captures = exec_lua [[ return vim.treesitter.query.get("c", "highlights").captures ]]
+    assert(vim.list_contains(captures, 'extend_query_capture'))
+
+    screen:expect {
+      grid = [[
+      int {2:x} = 2{3:;}^                                                       |
+      {1:~                                                                }|*16
+                                                                       |
+      ]],
+      attr_ids = {
+        [1] = { bold = true, foreground = Screen.colors.Blue },
+        [2] = { bold = true, foreground = Screen.colors.Brown },
+        [3] = { foreground = Screen.colors.Cyan4 },
+      },
+    }
+  end)
+
+  it('supports extending queries for buffer', function()
+    insert [[ int x = 2; ]]
+
+    exec_lua [[
+      local bufnr = vim.api.nvim_get_current_buf()
+      vim.treesitter.query.set("c", "highlights", '[";"] @variable', { extends = true, bufnr = 0 })
+      vim.treesitter.query.set("c", "highlights", '["case"] @extend_query_global_capture', { extends = true })
+      vim.treesitter.query.set("c", "highlights", '["if"] @extend_query_buf_capture', { extends = true, bufnr = bufnr })
+      vim.treesitter.query.set("c", "highlights", '["else"] @not_extend_query_buf_capture', { extends = true, bufnr = bufnr + 1 })
+      vim.treesitter.query.set("c", "highlights", '["switch"] @query_capture')
+      vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, "c"))
+    ]]
+
+    local global_captures =
+      exec_lua [[ return vim.treesitter.query.get("c", "highlights").captures ]]
+    assert(vim.list_contains(global_captures, 'query_capture'))
+    assert(vim.list_contains(global_captures, 'extend_query_global_capture'))
+    assert(not vim.list_contains(global_captures, 'extend_query_buf_capture'))
+    assert(not vim.list_contains(global_captures, 'not_extend_query_buf_capture'))
+
+    local buf_captures =
+      exec_lua [[ return vim.treesitter.query.get("c", "highlights", 0).captures ]]
+    assert(vim.list_contains(buf_captures, 'query_capture'))
+    assert(vim.list_contains(buf_captures, 'extend_query_global_capture'))
+    assert(vim.list_contains(buf_captures, 'extend_query_buf_capture'))
+    assert(not vim.list_contains(buf_captures, 'not_extend_query_buf_capture'))
+
+    screen:expect {
+      grid = [[
+      int x = 2{2:;}^                                                       |
+      {1:~                                                                }|*16
+                                                                       |
+      ]],
+      attr_ids = {
+        [1] = { bold = true, foreground = Screen.colors.Blue },
+        [2] = { foreground = Screen.colors.Cyan4 },
+      },
+    }
+  end)
+
   it('supports highlighting with custom highlight groups', function()
     insert(hl_text_c)
 

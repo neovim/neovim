@@ -968,12 +968,15 @@ edit({lang})                                     *vim.treesitter.query.edit()*
       • {lang}  (`string?`) language to open the query editor for. If omitted,
                 inferred from the current buffer's filetype.
 
-get({lang}, {query_name})                         *vim.treesitter.query.get()*
+get({lang}, {query_name}, {bufnr})                *vim.treesitter.query.get()*
     Returns the runtime query {query_name} for {lang}.
 
     Parameters: ~
       • {lang}        (`string`) Language to use for the query
       • {query_name}  (`string`) Name of the query (e.g. "highlights")
+      • {bufnr}       (`integer?`) Buffer for per-buffer queries applied with
+                      |vim.treesitter.query.set()| (`0`for current buffer,
+                      `nil` for all buffers for lang)
 
     Return: ~
         (`vim.treesitter.Query?`) Parsed query. `nil` if no query files are
@@ -1134,16 +1137,26 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
         (`fun(): integer, table<integer,TSNode>, table`) pattern id, match,
         metadata
 
-set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
+set({lang}, {query_name}, {text}, {opts})         *vim.treesitter.query.set()*
     Sets the runtime query named {query_name} for {lang}
 
-    This allows users to override any runtime files and/or configuration set
-    by plugins.
+    This allows users to override or extend any runtime files and/or
+    configuration set by plugins.
 
     Parameters: ~
       • {lang}        (`string`) Language to use for the query
       • {query_name}  (`string`) Name of the query (e.g., "highlights")
-      • {text}        (`string`) Query text (unparsed).
+      • {text}        (`string`) Query text (unparsed)
+      • {opts}        (`table?`) Optional keyword arguments
+                      • inherits (string|string[]|nil) Language(s) this query
+                        should inherit (see
+                        |treesitter-query-modeline-inherits|)
+                      • extends (boolean|nil) If `true`, the query should be
+                        used as an extension query (see
+                        |treesitter-query-modeline-extends|)
+                      • bufnr (integer|nil) Buffer this query should apply to
+                        (`0` for current buffer, `nil` for all buffers for
+                        lang)
 
 
 ==============================================================================
