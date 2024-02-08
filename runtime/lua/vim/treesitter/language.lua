@@ -7,6 +7,9 @@ local ft_to_lang = {
   help = 'vimdoc',
 }
 
+---@type table<string,string>
+local parser_paths = {}
+
 --- Get the filetypes associated with the parser named {lang}.
 --- @param lang string Name of parser
 --- @return string[] filetypes
@@ -105,7 +108,15 @@ function M.add(lang, opts)
   end
 
   vim._ts_add_language(path, lang, symbol_name)
+  parser_paths[lang] = path
   M.register(lang, filetype)
+end
+
+--- @package
+--- @param lang string Name of parser
+--- @return string?
+function M._get_parser_path(lang)
+  return parser_paths[lang]
 end
 
 --- @param x string|string[]
