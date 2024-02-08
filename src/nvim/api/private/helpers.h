@@ -32,6 +32,7 @@
 
 #define CSTR_AS_OBJ(s) STRING_OBJ(cstr_as_string(s))
 #define CSTR_TO_OBJ(s) STRING_OBJ(cstr_to_string(s))
+#define CSTR_TO_ARENA_OBJ(arena, s) STRING_OBJ(arena_string(arena, cstr_as_string(s)))
 
 #define BUFFER_OBJ(s) ((Object) { \
     .type = kObjectTypeBuffer, \
@@ -69,6 +70,9 @@
 
 #define PUT_C(dict, k, v) \
   kv_push_c(dict, ((KeyValuePair) { .key = cstr_as_string(k), .value = v }))
+
+#define PUT_KEY(d, typ, key, v) \
+  do { (d).is_set__##typ##_ |= (1 << KEYSET_OPTIDX_##typ##__##key); (d).key = v; } while (0)
 
 #define ADD(array, item) \
   kv_push(array, item)

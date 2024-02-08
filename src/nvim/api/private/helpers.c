@@ -1014,6 +1014,54 @@ bool api_dict_to_keydict(void *retval, FieldHashfn hashy, Dictionary dict, Error
   return true;
 }
 
+Dictionary api_keydict_to_dict(void *value, KeySetLink *table, size_t max_size, Arena *arena)
+{
+  Dictionary rv = arena_dict(arena, max_size);
+  for (size_t i = 0; table[i].str; i++) {
+    KeySetLink *field = &table[i];
+    bool is_set = true;
+    if (field->opt_index >= 0) {
+      OptKeySet *ks = (OptKeySet *)value;
+      is_set = ks->is_set_ & (1ULL << field->opt_index);
+    }
+
+    if (!is_set) {
+      continue;
+    }
+
+    char *mem = ((char *)value + field->ptr_off);
+    Object val = NIL;
+
+    if (field->type == kObjectTypeNil) {
+      val = *(Object *)mem;
+    } else if (field->type == kObjectTypeInteger) {
+      val = INTEGER_OBJ(*(Integer *)mem);
+    } else if (field->type == kObjectTypeFloat) {
+      val = FLOAT_OBJ(*(Float *)mem);
+    } else if (field->type == kObjectTypeBoolean) {
+      val = BOOLEAN_OBJ(*(Boolean *)mem);
+    } else if (field->type == kObjectTypeString) {
+      val = STRING_OBJ(*(String *)mem);
+    } else if (field->type == kObjectTypeArray) {
+      val = ARRAY_OBJ(*(Array *)mem);
+    } else if (field->type == kObjectTypeDictionary) {
+      val = DICTIONARY_OBJ(*(Dictionary *)mem);
+    } else if (field->type == kObjectTypeBuffer || field->type == kObjectTypeWindow
+               || field->type == kObjectTypeTabpage) {
+      val.data.integer = *(Integer *)mem;
+      val.type = field->type;
+    } else if (field->type == kObjectTypeLuaRef) {
+      // do nothing
+    } else {
+      abort();
+    }
+
+    PUT_C(rv, field->str, val);
+  }
+
+  return rv;
+}
+
 void api_free_keydict(void *dict, KeySetLink *table)
 {
   for (size_t i = 0; table[i].str; i++) {

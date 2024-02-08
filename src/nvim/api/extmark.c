@@ -105,73 +105,81 @@ bool ns_initialized(uint32_t ns)
   return ns < (uint32_t)next_namespace_id;
 }
 
-Array virt_text_to_array(VirtText vt, bool hl_name)
+Array virt_text_to_array(VirtText vt, bool hl_name, Arena *arena)
 {
-  Array chunks = ARRAY_DICT_INIT;
-  Array hl_array = ARRAY_DICT_INIT;
+  Array chunks = arena_array(arena, kv_size(vt));
   for (size_t i = 0; i < kv_size(vt); i++) {
+    size_t j = i;
+    for (; j < kv_size(vt); j++) {
+      if (kv_A(vt, j).text != NULL) {
+        break;
+      }
+    }
+
+    Array hl_array = arena_array(arena, i < j ? j - i + 1 : 0);
+    for (; i < j; i++) {
+      int hl_id = kv_A(vt, i).hl_id;
+      if (hl_id > 0) {
+        ADD_C(hl_array, hl_group_name(hl_id, hl_name));
+      }
+    }
+
     char *text = kv_A(vt, i).text;
     int hl_id = kv_A(vt, i).hl_id;
-    if (text == NULL) {
-      if (hl_id > 0) {
-        ADD(hl_array, hl_group_name(hl_id, hl_name));
-      }
-      continue;
-    }
-    Array chunk = ARRAY_DICT_INIT;
-    ADD(chunk, CSTR_TO_OBJ(text));
+    Array chunk = arena_array(arena, 2);
+    ADD_C(chunk, CSTR_AS_OBJ(text));
     if (hl_array.size > 0) {
       if (hl_id > 0) {
-        ADD(hl_array, hl_group_name(hl_id, hl_name));
+        ADD_C(hl_array, hl_group_name(hl_id, hl_name));
       }
-      ADD(chunk, ARRAY_OBJ(hl_array));
-      hl_array = (Array)ARRAY_DICT_INIT;
+      ADD_C(chunk, ARRAY_OBJ(hl_array));
     } else if (hl_id > 0) {
-      ADD(chunk, hl_group_name(hl_id, hl_name));
+      ADD_C(chunk, hl_group_name(hl_id, hl_name));
     }
-    ADD(chunks, ARRAY_OBJ(chunk));
+    ADD_C(chunks, ARRAY_OBJ(chunk));
   }
-  assert(hl_array.size == 0);
   return chunks;
 }
 
-static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_name)
+static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_name, Arena *arena)
 {
   MTKey start = extmark.start;
-  Array rv = ARRAY_DICT_INIT;
+  Array rv = arena_array(arena, 4);
   if (id) {
-    ADD(rv, INTEGER_OBJ((Integer)start.id));
+    ADD_C(rv, INTEGER_OBJ((Integer)start.id));
   }
-  ADD(rv, INTEGER_OBJ(start.pos.row));
-  ADD(rv, INTEGER_OBJ(start.pos.col));
+  ADD_C(rv, INTEGER_OBJ(start.pos.row));
+  ADD_C(rv, INTEGER_OBJ(start.pos.col));
 
   if (add_dict) {
-    Dictionary dict = ARRAY_DICT_INIT;
+    // TODO(bfredl): coding the size like this is a bit fragile.
+    // We want ArrayOf(Dict(set_extmark)) as the return type..
+    Dictionary dict = arena_dict(arena, ARRAY_SIZE(set_extmark_table));
 
-    PUT(dict, "ns_id", INTEGER_OBJ((Integer)start.ns));
+    PUT_C(dict, "ns_id", INTEGER_OBJ((Integer)start.ns));
 
-    PUT(dict, "right_gravity", BOOLEAN_OBJ(mt_right(start)));
+    PUT_C(dict, "right_gravity", BOOLEAN_OBJ(mt_right(start)));
 
     if (mt_paired(start)) {
-      PUT(dict, "end_row", INTEGER_OBJ(extmark.end_pos.row));
-      PUT(dict, "end_col", INTEGER_OBJ(extmark.end_pos.col));
-      PUT(dict, "end_right_gravity", BOOLEAN_OBJ(extmark.end_right_gravity));
+      PUT_C(dict, "end_row", INTEGER_OBJ(extmark.end_pos.row));
+      PUT_C(dict, "end_col", INTEGER_OBJ(extmark.end_pos.col));
+      PUT_C(dict, "end_right_gravity", BOOLEAN_OBJ(extmark.end_right_gravity));
     }
 
     if (mt_no_undo(start)) {
-      PUT(dict, "undo_restore", BOOLEAN_OBJ(false));
+      PUT_C(dict, "undo_restore", BOOLEAN_OBJ(false));
     }
 
     if (mt_invalidate(start)) {
-      PUT(dict, "invalidate", BOOLEAN_OBJ(true));
+      PUT_C(dict, "invalidate", BOOLEAN_OBJ(true));
     }
     if (mt_invalid(start)) {
-      PUT(dict, "invalid", BOOLEAN_OBJ(true));
+      PUT_C(dict, "invalid", BOOLEAN_OBJ(true));
     }
 
-    decor_to_dict_legacy(&dict, mt_decor(start), hl_name);
+    decor_to_dict_legacy(&dict, mt_decor(start), hl_name, arena);
 
-    ADD(rv, DICTIONARY_OBJ(dict));
+    ADD_C(rv, DICTIONARY_OBJ(dict));
   }
 
   return rv;
@@ -190,7 +198,7 @@ static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_na
 /// absent
 ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
                                             Integer id, Dict(get_extmark) *opts,
-                                            Error *err)
+                                            Arena *arena, Error *err)
   FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -213,7 +221,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
   if (extmark.start.pos.row < 0) {
     return rv;
   }
-  return extmark_to_array(extmark, false, details, hl_name);
+  return extmark_to_array(extmark, false, details, hl_name, arena);
 }
 
 /// Gets |extmarks| in "traversal order" from a |charwise| region defined by
@@ -272,7 +280,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 /// @param[out] err   Error details, if any
 /// @return List of [extmark_id, row, col] tuples in "traversal order".
 Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object end,
-                            Dict(get_extmarks) *opts, Error *err)
+                            Dict(get_extmarks) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -336,8 +344,9 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
   ExtmarkInfoArray marks = extmark_get(buf, (uint32_t)ns_id, l_row, l_col, u_row,
                                        u_col, (int64_t)limit, reverse, type, opts->overlap);
 
+  rv = arena_array(arena, kv_size(marks));
   for (size_t i = 0; i < kv_size(marks); i++) {
-    ADD(rv, ARRAY_OBJ(extmark_to_array(kv_A(marks, i), true, details, hl_name)));
+    ADD(rv, ARRAY_OBJ(extmark_to_array(kv_A(marks, i), true, details, hl_name, arena)));
   }
 
   kv_destroy(marks);

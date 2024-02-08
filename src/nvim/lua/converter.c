@@ -1360,3 +1360,46 @@ void nlua_pop_keydict(lua_State *L, void *retval, FieldHashfn hashy, char **err_
   lua_pop(L, 1);
   // []
 }
+
+void nlua_push_keydict(lua_State *L, void *value, KeySetLink *table)
+{
+  lua_createtable(L, 0, 0);
+  for (size_t i = 0; table[i].str; i++) {
+    KeySetLink *field = &table[i];
+    bool is_set = true;
+    if (field->opt_index >= 0) {
+      OptKeySet *ks = (OptKeySet *)value;
+      is_set = ks->is_set_ & (1ULL << field->opt_index);
+    }
+
+    if (!is_set) {
+      continue;
+    }
+
+    char *mem = ((char *)value + field->ptr_off);
+
+    lua_pushstring(L, field->str);
+    if (field->type == kObjectTypeNil) {
+      nlua_push_Object(L, *(Object *)mem, false);
+    } else if (field->type == kObjectTypeInteger || field->type == kObjectTypeBuffer
+               || field->type == kObjectTypeWindow || field->type == kObjectTypeTabpage) {
+      lua_pushinteger(L, *(Integer *)mem);
+    } else if (field->type == kObjectTypeFloat) {
+      lua_pushnumber(L, *(Float *)mem);
+    } else if (field->type == kObjectTypeBoolean) {
+      lua_pushboolean(L, *(Boolean *)mem);
+    } else if (field->type == kObjectTypeString) {
+      nlua_push_String(L, *(String *)mem, false);
+    } else if (field->type == kObjectTypeArray) {
+      nlua_push_Array(L, *(Array *)mem, false);
+    } else if (field->type == kObjectTypeDictionary) {
+      nlua_push_Dictionary(L, *(Dictionary *)mem, false);
+    } else if (field->type == kObjectTypeLuaRef) {
+      nlua_pushref(L, *(LuaRef *)mem);
+    } else {
+      abort();
+    }
+
+    lua_rawset(L, -3);
+  }
+}

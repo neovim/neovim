@@ -212,6 +212,9 @@ for _, f in ipairs(functions) do
       end
       f_exported.parameters[i] = param
     end
+    if startswith(f.return_type, 'Dict(') then
+      f_exported.return_type = 'Dictionary'
+    end
     exported_functions[#exported_functions + 1] = f_exported
   end
 end
@@ -279,7 +282,7 @@ for _, k in ipairs(keysets) do
     return k.name .. '_table[' .. idx .. '].str'
   end)
 
-  keysets_defs:write('extern KeySetLink ' .. k.name .. '_table[];\n')
+  keysets_defs:write('extern KeySetLink ' .. k.name .. '_table[' .. (1 + #neworder) .. '];\n')
 
   local function typename(type)
     if type == 'HLGroupID' then
@@ -596,7 +599,17 @@ for i = 1, #functions do
       output:write(');\n')
     end
 
-    if fn.return_type ~= 'void' then
+    local ret_type = real_type(fn.return_type)
+    if string.match(ret_type, '^KeyDict_') then
+      local table = string.sub(ret_type, 9) .. '_table'
+      output:write(
+        '\n  ret = DICTIONARY_OBJ(api_keydict_to_dict(&rv, '
+          .. table
+          .. ', ARRAY_SIZE('
+          .. table
+          .. '), arena));'
+      )
+    elseif ret_type ~= 'void' then
       output:write('\n  ret = ' .. string.upper(real_type(fn.return_type)) .. '_OBJ(rv);')
     end
     output:write('\n\ncleanup:')
@@ -653,11 +666,11 @@ local function include_headers(output_handle, headers_to_include)
   end
 end
 
-local function write_shifted_output(_, str)
+local function write_shifted_output(str, ...)
   str = str:gsub('\n  ', '\n')
   str = str:gsub('^  ', '')
   str = str:gsub(' +$', '')
-  output:write(str)
+  output:write(string.format(str, ...))
 end
 
 -- start building lua output
@@ -688,9 +701,7 @@ local lua_c_functions = {}
 local function process_function(fn)
   local lua_c_function_name = ('nlua_api_%s'):format(fn.name)
   write_shifted_output(
-    output,
-    string.format(
-      [[
+    [[
 
   static int %s(lua_State *lstate)
   {
@@ -701,11 +712,10 @@ local function process_function(fn)
       goto exit_0;
     }
   ]],
-      lua_c_function_name,
-      #fn.parameters,
-      #fn.parameters,
-      (#fn.parameters == 1) and '' or 's'
-    )
+    lua_c_function_name,
+    #fn.parameters,
+    #fn.parameters,
+    (#fn.parameters == 1) and '' or 's'
   )
   lua_c_functions[#lua_c_functions + 1] = {
     binding = lua_c_function_name,
@@ -714,38 +724,29 @@ local function process_function(fn)
 
   if not fn.fast then
     write_shifted_output(
-      output,
-      string.format(
-        [[
+      [[
     if (!nlua_is_deferred_safe()) {
       return luaL_error(lstate, e_luv_api_disabled, "%s");
     }
     ]],
-        fn.name
-      )
+      fn.name
     )
   end
 
   if fn.textlock then
-    write_shifted_output(
-      output,
-      [[
+    write_shifted_output([[
     if (text_locked()) {
-      api_set_error(&err, kErrorTypeException, "%s", get_text_locked_msg());
+      api_set_error(&err, kErrorTypeException, "%%s", get_text_locked_msg());
       goto exit_0;
     }
-    ]]
-    )
+    ]])
   elseif fn.textlock_allow_cmdwin then
-    write_shifted_output(
-      output,
-      [[
+    write_shifted_output([[
     if (textlock != 0 || expr_map_locked()) {
-      api_set_error(&err, kErrorTypeException, "%s", e_textlock);
+      api_set_error(&err, kErrorTypeException, "%%s", e_textlock);
       goto exit_0;
     }
-    ]]
-    )
+    ]])
   end
 
   local cparams = ''
@@ -763,44 +764,37 @@ local function process_function(fn)
     local seterr = ''
     if string.match(param_type, '^KeyDict_') then
       write_shifted_output(
-        output,
-        string.format(
-          [[
-      %s %s = { 0 }; nlua_pop_keydict(lstate, &%s, %s_get_field, &err_param, &err);]],
-          param_type,
-          cparam,
-          cparam,
-          param_type
-        )
+        [[
+    %s %s = { 0 };
+    nlua_pop_keydict(lstate, &%s, %s_get_field, &err_param, &err);
+    ]],
+        param_type,
+        cparam,
+        cparam,
+        param_type
       )
       cparam = '&' .. cparam
       errshift = 1 -- free incomplete dict on error
     else
       write_shifted_output(
-        output,
-        string.format(
-          [[
-      const %s %s = nlua_pop_%s(lstate, %s&err);]],
-          param[1],
-          cparam,
-          param_type,
-          extra
-        )
+        [[
+    const %s %s = nlua_pop_%s(lstate, %s&err);]],
+        param[1],
+        cparam,
+        param_type,
+        extra
       )
-      seterr = [[
-      err_param = "]] .. param[2] .. [[";]]
+      seterr = '\n      err_param = "' .. param[2] .. '";'
     end
 
-    write_shifted_output(
-      output,
-      string.format([[
+    write_shifted_output([[
 
     if (ERROR_SET(&err)) {]] .. seterr .. [[
+
       goto exit_%u;
     }
 
     ]], #fn.parameters - j + errshift)
-    )
     free_code[#free_code + 1] = ('api_free_%s(%s);'):format(lc_param_type, cparam)
     cparams = cparam .. ', ' .. cparams
   end
@@ -809,12 +803,7 @@ local function process_function(fn)
   end
   if fn.arena_return then
     cparams = cparams .. '&arena, '
-    write_shifted_output(
-      output,
-      [[
-    Arena arena = ARENA_EMPTY;
-    ]]
-    )
+    write_shifted_output('    Arena arena = ARENA_EMPTY;\n')
   end
 
   if fn.has_lua_imp then
@@ -831,27 +820,27 @@ local function process_function(fn)
     local rev_i = #free_code - i + 1
     local code = free_code[rev_i]
     if i == 1 and not string.match(real_type(fn.parameters[1][1]), '^KeyDict_') then
-      free_at_exit_code = free_at_exit_code .. ('\n    %s'):format(code)
+      free_at_exit_code = free_at_exit_code .. ('\n  %s'):format(code)
     else
-      free_at_exit_code = free_at_exit_code .. ('\n  exit_%u:\n    %s'):format(rev_i, code)
+      free_at_exit_code = free_at_exit_code .. ('\nexit_%u:\n  %s'):format(rev_i, code)
     end
   end
   local err_throw_code = [[
 
-  exit_0:
-    if (ERROR_SET(&err)) {
-      luaL_where(lstate, 1);
-      if (err_param) {
-        lua_pushstring(lstate, "Invalid '");
-        lua_pushstring(lstate, err_param);
-        lua_pushstring(lstate, "': ");
-      }
-      lua_pushstring(lstate, err.msg);
-      api_clear_error(&err);
-      lua_concat(lstate, err_param ? 5 : 2);
-      return lua_error(lstate);
+exit_0:
+  if (ERROR_SET(&err)) {
+    luaL_where(lstate, 1);
+    if (err_param) {
+      lua_pushstring(lstate, "Invalid '");
+      lua_pushstring(lstate, err_param);
+      lua_pushstring(lstate, "': ");
     }
-  ]]
+    lua_pushstring(lstate, err.msg);
+    api_clear_error(&err);
+    lua_concat(lstate, err_param ? 5 : 2);
+    return lua_error(lstate);
+  }
+]]
   local return_type
   if fn.return_type ~= 'void' then
     if fn.return_type:match('^ArrayOf') then
@@ -861,86 +850,62 @@ local function process_function(fn)
     end
     local free_retval
     if fn.arena_return then
-      free_retval = 'arena_mem_free(arena_finish(&arena));'
+      free_retval = '  arena_mem_free(arena_finish(&arena));'
     else
-      free_retval = 'api_free_' .. return_type:lower() .. '(ret);'
+      free_retval = '  api_free_' .. return_type:lower() .. '(ret);'
     end
-    write_shifted_output(
-      output,
-      string.format(
-        [[
-    const %s ret = %s(%s);
-    ]],
-        fn.return_type,
-        fn.name,
-        cparams
-      )
-    )
+    write_shifted_output('    %s ret = %s(%s);\n', fn.return_type, fn.name, cparams)
 
+    local ret_type = real_type(fn.return_type)
     if fn.has_lua_imp then
       -- only push onto the Lua stack if we haven't already
-      write_shifted_output(
-        output,
-        string.format(
-          [[
+      write_shifted_output(string.format(
+        [[
     if (lua_gettop(lstate) == 0) {
       nlua_push_%s(lstate, ret, true);
     }
       ]],
-          return_type
-        )
+        return_type
+      ))
+    elseif string.match(ret_type, '^KeyDict_') then
+      write_shifted_output(
+        '     nlua_push_keydict(lstate, &ret, %s_table);\n',
+        string.sub(ret_type, 9)
       )
     else
       local special = (fn.since ~= nil and fn.since < 11)
-      write_shifted_output(
-        output,
-        string.format(
-          [[
-    nlua_push_%s(lstate, ret, %s);
-      ]],
-          return_type,
-          tostring(special)
-        )
-      )
+      write_shifted_output('    nlua_push_%s(lstate, ret, %s);\n', return_type, tostring(special))
     end
 
     write_shifted_output(
-      output,
-      string.format(
-        [[
+
+      [[
   %s
   %s
   %s
     return 1;
     ]],
-        free_retval,
-        free_at_exit_code,
-        err_throw_code
-      )
+      free_retval,
+      free_at_exit_code,
+      err_throw_code
     )
   else
     write_shifted_output(
-      output,
-      string.format(
-        [[
+      [[
     %s(%s);
   %s
   %s
     return 0;
     ]],
-        fn.name,
-        cparams,
-        free_at_exit_code,
-        err_throw_code
-      )
+      fn.name,
+      cparams,
+      free_at_exit_code,
+      err_throw_code
     )
   end
-  write_shifted_output(
-    output,
-    [[
+  write_shifted_output([[
   }
-  ]]
-  )
+  ]])
 end
 
 for _, fn in ipairs(functions) do
