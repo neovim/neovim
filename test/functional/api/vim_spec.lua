@@ -2421,6 +2421,20 @@ describe('API', function()
                                                 |
       ]])
     end)
+
+    it('handle tab character correctly #26466', function()
+      async_meths.nvim_err_writeln('stack traceback:\n\t[string ":lua"]:1: in main chunk')
+      screen:expect {
+        grid = [[
+                                                |
+        {0:~                                       }|*3
+        {3:                                        }|
+        {1:stack traceback:}                        |
+        {1:    [string ":lua"]:1: in main chunk}    |
+        {2:Press ENTER or type command to continue}^ |
+      ]],
+      }
+    end)
   end)
 
   describe('nvim_list_chans, nvim_get_chan_info', function()

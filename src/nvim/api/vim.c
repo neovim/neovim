@@ -1776,7 +1776,15 @@ static void write_msg(String message, bool to_err, bool writeln)
     if (got_int) {
       break;
     }
-    PUSH_CHAR(message.data[i]);
+    char current_char = message.data[i];
+    if (current_char == '\t') {
+      // Assuming a tab should be replaced by 4 spaces.
+      for (size_t space_count = 0; space_count < 4; space_count++) {
+        PUSH_CHAR(' ');
+      }
+    } else {
+      PUSH_CHAR(message.data[i]);
+    }
   }
   if (writeln) {
     PUSH_CHAR(NL);
