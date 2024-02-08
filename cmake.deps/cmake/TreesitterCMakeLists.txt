@@ -13,7 +13,6 @@ target_include_directories(tree-sitter
 
 install(FILES
   lib/include/tree_sitter/api.h
-  lib/include/tree_sitter/parser.h
   DESTINATION include/tree_sitter)
 
 include(GNUInstallDirs)
