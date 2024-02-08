@@ -93,6 +93,20 @@ The [Releases](https://github.com/neovim/neovim/releases) page provides pre-buil
 
 ## Linux
 
+### Pre-built archives
+
+The [Releases](https://github.com/neovim/neovim/releases) page provides pre-built binaries for Linux systems.
+
+```sh
+curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
+sudo rm -rf /opt/nvim
+sudo tar -C /opt -xzf nvim-linux64.tar.gz
+```
+
+After this step add this to `~/.bashrc`:
+
+    export PATH="$PATH:/opt/nvim-linux64/bin"
+
 ### AppImage ("universal" Linux package)
 
 The [Releases](https://github.com/neovim/neovim/releases) page provides an [AppImage](https://appimage.org) that runs on most Linux systems. No installation is needed, just download `nvim.appimage` and run it. (It might not work if your Linux distribution is more than 4 years old.)
@@ -100,6 +114,15 @@ The [Releases](https://github.com/neovim/neovim/releases) page provides an [AppI
     curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim.appimage
     chmod u+x nvim.appimage
     ./nvim.appimage
+
+To expose nvim globally:
+
+    mkdir -p /opt/nvim
+    mv nvim.appimage /opt/nvim/nvim
+
+And the following line to `~/.bashrc`:
+
+    export PATH="$PATH:/opt/nvim/" 
 
 If the `./nvim.appimage` command fails, try:
 ```sh
@@ -111,7 +134,7 @@ sudo mv squashfs-root /
 sudo ln -s /squashfs-root/AppRun /usr/bin/nvim
 nvim
 ```
- 
+
 ### Arch Linux
 
 Neovim can be installed from the community repository:
