@@ -353,20 +353,19 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
       }
 
       // If lines have been added or removed, relative numbering always
-      // requires a redraw.
+      // requires an update even if cursor didn't move.
       if (wp->w_p_rnu && xtra != 0) {
         wp->w_last_cursor_lnum_rnu = 0;
-        redraw_later(wp, UPD_VALID);
       }
 
-      // Cursor line highlighting probably need to be updated with
-      // "UPD_VALID" if it's below the change.
-      // If the cursor line is inside the change we need to redraw more.
-      if (wp->w_p_cul) {
-        if (xtra == 0) {
-          redraw_later(wp, UPD_VALID);
-        } else if (lnum <= wp->w_last_cursorline) {
-          redraw_later(wp, UPD_SOME_VALID);
+      if (wp->w_p_cul && wp->w_last_cursorline >= lnum) {
+        if (wp->w_last_cursorline < lnume) {
+          // If 'cursorline' was inside the change, it has already
+          // been invalidated in w_lines[] by the loop above.
+          wp->w_last_cursorline = 0;
+        } else {
+          // If 'cursorline' was below the change, adjust its lnum.
+          wp->w_last_cursorline += xtra;
         }
       }
     }
