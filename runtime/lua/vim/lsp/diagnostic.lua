@@ -35,7 +35,7 @@ local function severity_vim_to_lsp(severity)
   return severity
 end
 
----@param lines string[]
+---@param lines string[]?
 ---@param lnum integer
 ---@param col integer
 ---@param offset_encoding string
@@ -55,7 +55,7 @@ local function line_byte_from_position(lines, lnum, col, offset_encoding)
 end
 
 ---@param bufnr integer
----@return string[]
+---@return string[]?
 local function get_buf_lines(bufnr)
   if vim.api.nvim_buf_is_loaded(bufnr) then
     return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)

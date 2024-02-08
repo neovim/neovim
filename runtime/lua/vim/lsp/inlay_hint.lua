@@ -22,9 +22,7 @@ local augroup = api.nvim_create_augroup('vim_lsp_inlayhint', {})
 ---@private
 function M.on_inlayhint(err, result, ctx, _)
   if err then
-    if log.error() then
-      log.error('inlayhint', err)
-    end
+    log.error('inlayhint', err)
     return
   end
   local bufnr = assert(ctx.bufnr)

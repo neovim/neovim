@@ -413,9 +413,7 @@ M[ms.textDocument_hover] = M.hover
 ---(`textDocument/definition` can return `Location` or `Location[]`
 local function location_handler(_, result, ctx, config)
   if result == nil or vim.tbl_isempty(result) then
-    if log.info() then
-      log.info(ctx.method, 'No location found')
-    end
+    log.info(ctx.method, 'No location found')
     return nil
   end
   local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
@@ -649,13 +647,14 @@ end
 -- Add boilerplate error validation and logging for all of these.
 for k, fn in pairs(M) do
   M[k] = function(err, result, ctx, config)
-    local _ = log.trace()
-      and log.trace('default_handler', ctx.method, {
+    if log.trace() then
+      log.trace('default_handler', ctx.method, {
         err = err,
         result = result,
         ctx = vim.inspect(ctx),
         config = config,
       })
+    end
 
     if err then
       -- LSP spec:
