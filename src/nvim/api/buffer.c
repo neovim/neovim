@@ -1262,28 +1262,27 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
   return res;
 }
 
-Dictionary nvim__buf_stats(Buffer buffer, Error *err)
+Dictionary nvim__buf_stats(Buffer buffer, Arena *arena, Error *err)
 {
-  Dictionary rv = ARRAY_DICT_INIT;
-
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
-    return rv;
+    return (Dictionary)ARRAY_DICT_INIT;
   }
 
+  Dictionary rv = arena_dict(arena, 7);
   // Number of times the cached line was flushed.
   // This should generally not increase while editing the same
   // line in the same mode.
-  PUT(rv, "flush_count", INTEGER_OBJ(buf->flush_count));
+  PUT_C(rv, "flush_count", INTEGER_OBJ(buf->flush_count));
   // lnum of current line
-  PUT(rv, "current_lnum", INTEGER_OBJ(buf->b_ml.ml_line_lnum));
+  PUT_C(rv, "current_lnum", INTEGER_OBJ(buf->b_ml.ml_line_lnum));
   // whether the line has unflushed changes.
-  PUT(rv, "line_dirty", BOOLEAN_OBJ(buf->b_ml.ml_flags & ML_LINE_DIRTY));
+  PUT_C(rv, "line_dirty", BOOLEAN_OBJ(buf->b_ml.ml_flags & ML_LINE_DIRTY));
   // NB: this should be zero at any time API functions are called,
   // this exists to debug issues
-  PUT(rv, "dirty_bytes", INTEGER_OBJ((Integer)buf->deleted_bytes));
-  PUT(rv, "dirty_bytes2", INTEGER_OBJ((Integer)buf->deleted_bytes2));
-  PUT(rv, "virt_blocks", INTEGER_OBJ((Integer)buf_meta_total(buf, kMTMetaLines)));
+  PUT_C(rv, "dirty_bytes", INTEGER_OBJ((Integer)buf->deleted_bytes));
+  PUT_C(rv, "dirty_bytes2", INTEGER_OBJ((Integer)buf->deleted_bytes2));
+  PUT_C(rv, "virt_blocks", INTEGER_OBJ((Integer)buf_meta_total(buf, kMTMetaLines)));
 
   u_header_T *uhp = NULL;
   if (buf->b_u_curhead != NULL) {
@@ -1292,7 +1291,7 @@ Dictionary nvim__buf_stats(Buffer buffer, Error *err)
     uhp = buf->b_u_newhead;
   }
   if (uhp) {
-    PUT(rv, "uhp_extmark_size", INTEGER_OBJ((Integer)kv_size(uhp->uh_extmark)));
+    PUT_C(rv, "uhp_extmark_size", INTEGER_OBJ((Integer)kv_size(uhp->uh_extmark)));
   }
 
   return rv;

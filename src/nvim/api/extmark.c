@@ -70,15 +70,15 @@ Integer nvim_create_namespace(String name)
 /// Gets existing, non-anonymous |namespace|s.
 ///
 /// @return dict that maps from names to namespace ids.
-Dictionary nvim_get_namespaces(void)
+Dictionary nvim_get_namespaces(Arena *arena)
   FUNC_API_SINCE(5)
 {
-  Dictionary retval = ARRAY_DICT_INIT;
+  Dictionary retval = arena_dict(arena, map_size(&namespace_ids));
   String name;
   handle_T id;
 
   map_foreach(&namespace_ids, name, id, {
-    PUT(retval, name.data, INTEGER_OBJ(id));
+    PUT_C(retval, name.data, INTEGER_OBJ(id));
   })
 
   return retval;

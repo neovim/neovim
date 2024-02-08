@@ -43,6 +43,7 @@ describe('build_stl_str_hl', function()
       maximum_cell_count,
       NULL,
       NULL,
+      NULL,
       NULL
     )
   end

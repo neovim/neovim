@@ -1351,14 +1351,13 @@ Integer nvim_get_color_by_name(String name)
 /// (e.g. 65535).
 ///
 /// @return Map of color names and RGB values.
-Dictionary nvim_get_color_map(void)
+Dictionary nvim_get_color_map(Arena *arena)
   FUNC_API_SINCE(1)
 {
-  Dictionary colors = ARRAY_DICT_INIT;
+  Dictionary colors = arena_dict(arena, ARRAY_SIZE(color_name_table));
 
   for (int i = 0; color_name_table[i].name != NULL; i++) {
-    PUT(colors, color_name_table[i].name,
-        INTEGER_OBJ(color_name_table[i].color));
+    PUT_C(colors, color_name_table[i].name, INTEGER_OBJ(color_name_table[i].color));
   }
   return colors;
 }
@@ -1438,16 +1437,16 @@ Object nvim_load_context(Dictionary dict, Error *err)
 /// "blocking" is true if Nvim is waiting for input.
 ///
 /// @returns Dictionary { "mode": String, "blocking": Boolean }
-Dictionary nvim_get_mode(void)
+Dictionary nvim_get_mode(Arena *arena)
   FUNC_API_SINCE(2) FUNC_API_FAST
 {
-  Dictionary rv = ARRAY_DICT_INIT;
-  char modestr[MODE_MAX_LENGTH];
+  Dictionary rv = arena_dict(arena, 2);
+  char *modestr = arena_alloc(arena, MODE_MAX_LENGTH, false);
   get_mode(modestr);
   bool blocked = input_blocking();
 
-  PUT(rv, "mode", CSTR_TO_OBJ(modestr));
-  PUT(rv, "blocking", BOOLEAN_OBJ(blocked));
+  PUT_C(rv, "mode", CSTR_AS_OBJ(modestr));
+  PUT_C(rv, "blocking", BOOLEAN_OBJ(blocked));
 
   return rv;
 }
@@ -1848,14 +1847,14 @@ Float nvim__id_float(Float flt)
 /// Gets internal stats.
 ///
 /// @return Map of various internal stats.
-Dictionary nvim__stats(void)
+Dictionary nvim__stats(Arena *arena)
 {
-  Dictionary rv = ARRAY_DICT_INIT;
-  PUT(rv, "fsync", INTEGER_OBJ(g_stats.fsync));
-  PUT(rv, "log_skip", INTEGER_OBJ(g_stats.log_skip));
-  PUT(rv, "lua_refcount", INTEGER_OBJ(nlua_get_global_ref_count()));
-  PUT(rv, "redraw", INTEGER_OBJ(g_stats.redraw));
-  PUT(rv, "arena_alloc_count", INTEGER_OBJ((Integer)arena_alloc_count));
+  Dictionary rv = arena_dict(arena, 5);
+  PUT_C(rv, "fsync", INTEGER_OBJ(g_stats.fsync));
+  PUT_C(rv, "log_skip", INTEGER_OBJ(g_stats.log_skip));
+  PUT_C(rv, "lua_refcount", INTEGER_OBJ(nlua_get_global_ref_count()));
+  PUT_C(rv, "redraw", INTEGER_OBJ(g_stats.redraw));
+  PUT_C(rv, "arena_alloc_count", INTEGER_OBJ((Integer)arena_alloc_count));
   return rv;
 }
 
@@ -2151,7 +2150,7 @@ Array nvim_get_mark(String name, Dict(empty) *opts, Error *err)
 ///                     |Dictionary| with these keys:
 ///           - start: (number) Byte index (0-based) of first character that uses the highlight.
 ///           - group: (string) Name of highlight group.
-Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *err)
+Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(8) FUNC_API_FAST
 {
   Dictionary result = ARRAY_DICT_INIT;
@@ -2260,58 +2259,61 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
                                      && global_stl_height() > 0)) ? Columns : wp->w_width;
   }
 
-  char buf[MAXPATHL];
+  result = arena_dict(arena, 3);
+  char *buf = arena_alloc(arena, MAXPATHL, false);
   stl_hlrec_t *hltab;
+  size_t hltab_len = 0;
 
   // Temporarily reset 'cursorbind' to prevent side effects from moving the cursor away and back.
   int p_crb_save = wp->w_p_crb;
   wp->w_p_crb = false;
 
-  int width = build_stl_str_hl(wp, buf, sizeof(buf), str.data, -1, 0, fillchar, maxwidth,
-                               opts->highlights ? &hltab : NULL, NULL,
+  int width = build_stl_str_hl(wp, buf, MAXPATHL, str.data, -1, 0, fillchar, maxwidth,
+                               opts->highlights ? &hltab : NULL, &hltab_len, NULL,
                                statuscol_lnum ? &statuscol : NULL);
 
-  PUT(result, "width", INTEGER_OBJ(width));
+  PUT_C(result, "width", INTEGER_OBJ(width));
 
   // Restore original value of 'cursorbind'
   wp->w_p_crb = p_crb_save;
 
   if (opts->highlights) {
-    Array hl_values = ARRAY_DICT_INIT;
-    const char *grpname;
+    Array hl_values = arena_array(arena, hltab_len + 1);
     char user_group[15];  // strlen("User") + strlen("2147483647") + NUL
 
     // If first character doesn't have a defined highlight,
     // add the default highlight at the beginning of the highlight list
     if (hltab->start == NULL || (hltab->start - buf) != 0) {
-      Dictionary hl_info = ARRAY_DICT_INIT;
-      grpname = get_default_stl_hl(opts->use_tabline ? NULL : wp, opts->use_winbar, stc_hl_id);
+      Dictionary hl_info = arena_dict(arena, 2);
+      const char *grpname = get_default_stl_hl(opts->use_tabline ? NULL : wp,
+                                               opts->use_winbar, stc_hl_id);
 
-      PUT(hl_info, "start", INTEGER_OBJ(0));
-      PUT(hl_info, "group", CSTR_TO_OBJ(grpname));
+      PUT_C(hl_info, "start", INTEGER_OBJ(0));
+      PUT_C(hl_info, "group", CSTR_AS_OBJ((char *)grpname));
 
-      ADD(hl_values, DICTIONARY_OBJ(hl_info));
+      ADD_C(hl_values, DICTIONARY_OBJ(hl_info));
     }
 
     for (stl_hlrec_t *sp = hltab; sp->start != NULL; sp++) {
-      Dictionary hl_info = ARRAY_DICT_INIT;
+      Dictionary hl_info = arena_dict(arena, 2);
 
-      PUT(hl_info, "start", INTEGER_OBJ(sp->start - buf));
+      PUT_C(hl_info, "start", INTEGER_OBJ(sp->start - buf));
 
+      const char *grpname;
       if (sp->userhl == 0) {
         grpname = get_default_stl_hl(opts->use_tabline ? NULL : wp, opts->use_winbar, stc_hl_id);
       } else if (sp->userhl < 0) {
         grpname = syn_id2name(-sp->userhl);
       } else {
         snprintf(user_group, sizeof(user_group), "User%d", sp->userhl);
-        grpname = user_group;
+        grpname = arena_memdupz(arena, user_group, strlen(user_group));
       }
-      PUT(hl_info, "group", CSTR_TO_OBJ(grpname));
-      ADD(hl_values, DICTIONARY_OBJ(hl_info));
+      PUT_C(hl_info, "group", CSTR_AS_OBJ((char *)grpname));
+      ADD_C(hl_values, DICTIONARY_OBJ(hl_info));
     }
-    PUT(result, "highlights", ARRAY_OBJ(hl_values));
+    PUT_C(result, "highlights", ARRAY_OBJ(hl_values));
   }
-  PUT(result, "str", CSTR_TO_OBJ(buf));
+  PUT_C(result, "str", CSTR_AS_OBJ(buf));
 
   return result;
 }
@@ -2336,15 +2338,15 @@ void nvim_error_event(uint64_t channel_id, Integer lvl, String data)
 /// @return Dictionary containing these keys:
 ///       - winid: (number) floating window id
 ///       - bufnr: (number) buffer id in floating window
-Dictionary nvim_complete_set(Integer index, Dict(complete_set) *opts)
+Dictionary nvim_complete_set(Integer index, Dict(complete_set) *opts, Arena *arena)
   FUNC_API_SINCE(12)
 {
-  Dictionary rv = ARRAY_DICT_INIT;
+  Dictionary rv = arena_dict(arena, 2);
   if (HAS_KEY(opts, complete_set, info)) {
     win_T *wp = pum_set_info((int)index, opts->info.data);
     if (wp) {
-      PUT(rv, "winid", WINDOW_OBJ(wp->handle));
-      PUT(rv, "bufnr", BUFFER_OBJ(wp->w_buffer->handle));
+      PUT_C(rv, "winid", WINDOW_OBJ(wp->handle));
+      PUT_C(rv, "bufnr", BUFFER_OBJ(wp->w_buffer->handle));
     }
   }
   return rv;

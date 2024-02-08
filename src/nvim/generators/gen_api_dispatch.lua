@@ -535,7 +535,6 @@ for i = 1, #functions do
     end
 
     -- function call
-    local call_args = table.concat(args, ', ')
     output:write('\n  ')
     if fn.return_type ~= 'void' then
       -- has a return value, prefix the call with a declaration
@@ -545,58 +544,40 @@ for i = 1, #functions do
     -- write the function name and the opening parenthesis
     output:write(fn.name .. '(')
 
+    local call_args = {}
     if fn.receives_channel_id then
-      -- if the function receives the channel id, pass it as first argument
-      if #args > 0 or fn.can_fail then
-        output:write('channel_id, ')
-        if fn.receives_array_args then
-          -- if the function receives the array args, pass it the second argument
-          output:write('args, ')
-        end
-        output:write(call_args)
-      else
-        output:write('channel_id')
-        if fn.receives_array_args then
-          output:write(', args')
-        end
-      end
-    else
-      if fn.receives_array_args then
-        if #args > 0 or fn.call_fail then
-          output:write('args, ' .. call_args)
-        else
-          output:write('args')
-        end
-      else
-        output:write(call_args)
-      end
+      table.insert(call_args, 'channel_id')
+    end
+
+    if fn.receives_array_args then
+      table.insert(call_args, 'args')
+    end
+
+    for _, a in ipairs(args) do
+      table.insert(call_args, a)
     end
 
     if fn.arena_return then
-      output:write(', arena')
+      table.insert(call_args, 'arena')
     end
 
     if fn.has_lua_imp then
-      if #args > 0 then
-        output:write(', NULL')
-      else
-        output:write('NULL')
-      end
+      table.insert(call_args, 'NULL')
     end
 
     if fn.can_fail then
+      table.insert(call_args, 'error')
+    end
+
+    output:write(table.concat(call_args, ', '))
+    output:write(');\n')
+
+    if fn.can_fail then
       -- if the function can fail, also pass a pointer to the local error object
-      if #args > 0 then
-        output:write(', error);\n')
-      else
-        output:write('error);\n')
-      end
       -- and check for the error
       output:write('\n  if (ERROR_SET(error)) {')
       output:write('\n    goto cleanup;')
       output:write('\n  }\n')
-    else
-      output:write(');\n')
     end
 
     local ret_type = real_type(fn.return_type)
