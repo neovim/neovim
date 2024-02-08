@@ -26,24 +26,6 @@ local function format_message_with_content_length(message)
   })
 end
 
-local function log_error(...)
-  if log.error() then
-    log.error(...)
-  end
-end
-
-local function log_info(...)
-  if log.info() then
-    log.info(...)
-  end
-end
-
-local function log_debug(...)
-  if log.debug() then
-    log.debug(...)
-  end
-end
-
 ---@class vim.lsp.rpc.Headers: {string: any}
 ---@field content_length integer
 
@@ -65,7 +47,7 @@ local function parse_headers(header)
       key = key:lower():gsub('%-', '_') --- @type string
       headers[key] = value
     else
-      log_error('invalid header line %q', line)
+      log.error('invalid header line %q', line)
       error(string.format('invalid header line %q', line))
     end
   end
@@ -224,7 +206,7 @@ local default_dispatchers = {
   ---@param method string The invoked LSP method
   ---@param params table Parameters for the invoked LSP method
   notification = function(method, params)
-    log_debug('notification', method, params)
+    log.debug('notification', method, params)
   end,
 
   --- Default dispatcher for requests sent to an LSP server.
@@ -234,7 +216,7 @@ local default_dispatchers = {
   ---@return any result (always nil for the default dispatchers)
   ---@return lsp.ResponseError error `vim.lsp.protocol.ErrorCodes.MethodNotFound`
   server_request = function(method, params)
-    log_debug('server_request', method, params)
+    log.debug('server_request', method, params)
     return nil, M.rpc_response_error(protocol.ErrorCodes.MethodNotFound)
   end,
 
@@ -243,7 +225,7 @@ local default_dispatchers = {
   ---@param code integer Exit code
   ---@param signal integer Number describing the signal used to terminate (if any)
   on_exit = function(code, signal)
-    log_info('client_exit', { code = code, signal = signal })
+    log.info('client_exit', { code = code, signal = signal })
   end,
 
   --- Default dispatcher for client errors.
@@ -251,7 +233,7 @@ local default_dispatchers = {
   ---@param code integer Error code
   ---@param err any Details about the error
   on_error = function(code, err)
-    log_error('client_error:', M.client_errors[code], err)
+    log.error('client_error:', M.client_errors[code], err)
   end,
 }
 
@@ -297,7 +279,7 @@ local Client = {}
 
 ---@private
 function Client:encode_and_send(payload)
-  log_debug('rpc.send', payload)
+  log.debug('rpc.send', payload)
   if self.transport.is_closing() then
     return false
   end
@@ -419,7 +401,7 @@ function Client:handle_body(body)
     self:on_error(M.client_errors.INVALID_SERVER_JSON, decoded)
     return
   end
-  log_debug('rpc.receive', decoded)
+  log.debug('rpc.receive', decoded)
 
   if type(decoded.method) == 'string' and decoded.id then
     local err --- @type lsp.ResponseError|nil
@@ -434,7 +416,7 @@ function Client:handle_body(body)
           decoded.method,
           decoded.params
         )
-        log_debug(
+        log.debug(
           'server_request: callback result',
           { status = status, result = result, err = err }
         )
@@ -490,7 +472,7 @@ function Client:handle_body(body)
     if decoded.error then
       local mute_error = false
       if decoded.error.code == protocol.ErrorCodes.RequestCancelled then
-        log_debug('Received cancellation ack', decoded)
+        log.debug('Received cancellation ack', decoded)
         mute_error = true
       end
 
@@ -526,7 +508,7 @@ function Client:handle_body(body)
       )
     else
       self:on_error(M.client_errors.NO_RESULT_CALLBACK_FOUND, decoded)
-      log_error('No callback found for server response id ' .. result_id)
+      log.error('No callback found for server response id ' .. result_id)
     end
   elseif type(decoded.method) == 'string' then
     -- Notification
@@ -773,7 +755,7 @@ end
 ---   - `is_closing()` returns a boolean indicating if the RPC is closing.
 ---   - `terminate()` terminates the RPC client.
 function M.start(cmd, cmd_args, dispatchers, extra_spawn_params)
-  log_info('Starting RPC client', { cmd = cmd, args = cmd_args, extra = extra_spawn_params })
+  log.info('Starting RPC client', { cmd = cmd, args = cmd_args, extra = extra_spawn_params })
 
   validate({
     cmd = { cmd, 's' },
@@ -813,7 +795,7 @@ function M.start(cmd, cmd_args, dispatchers, extra_spawn_params)
 
   local stderr_handler = function(_, chunk)
     if chunk then
-      log_error('rpc', cmd, 'stderr', chunk)
+      log.error('rpc', cmd, 'stderr', chunk)
     end
   end
 

@@ -262,9 +262,7 @@ end
 function M.on_codelens(err, result, ctx, _)
   if err then
     active_refreshes[assert(ctx.bufnr)] = nil
-    if log.error() then
-      log.error('codelens', err)
-    end
+    log.error('codelens', err)
     return
   end
 

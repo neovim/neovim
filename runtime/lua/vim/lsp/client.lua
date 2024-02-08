@@ -244,9 +244,7 @@ function Client:initialize(cb)
     end
   end
 
-  if log.trace() then
-    log.trace(self._log_prefix, 'initialize_params', initialize_params)
-  end
+  log.trace(self._log_prefix, 'initialize_params', initialize_params)
 
   local rpc = self.rpc
 
@@ -278,13 +276,12 @@ function Client:initialize(cb)
         self:write_error(lsp.client_errors.ON_INIT_CALLBACK_ERROR, err)
       end
     end
-    if log.info() then
-      log.info(
-        self._log_prefix,
-        'server_capabilities',
-        { server_capabilities = self.server_capabilities }
-      )
-    end
+
+    log.info(
+      self._log_prefix,
+      'server_capabilities',
+      { server_capabilities = self.server_capabilities }
+    )
 
     cb()
   end)
@@ -340,9 +337,7 @@ function Client:_request(method, params, handler, bufnr)
   changetracking.flush(self, bufnr)
   local version = lsp.util.buf_versions[bufnr]
   bufnr = resolve_bufnr(bufnr)
-  if log.debug() then
-    log.debug(self._log_prefix, 'client.request', self.id, method, params, handler, bufnr)
-  end
+  log.debug(self._log_prefix, 'client.request', self.id, method, params, handler, bufnr)
   local success, request_id = self.rpc.request(method, params, function(err, result)
     local context = {
       method = method,
@@ -635,9 +630,7 @@ end
 --- @param code integer Error code
 --- @param err any Error arguments
 function Client:write_error(code, err)
-  if log.error() then
-    log.error(self._log_prefix, 'on_error', { code = lsp.client_errors[code], err = err })
-  end
+  log.error(self._log_prefix, 'on_error', { code = lsp.client_errors[code], err = err })
   err_message(self._log_prefix, ': Error ', lsp.client_errors[code], ': ', vim.inspect(err))
 end
 

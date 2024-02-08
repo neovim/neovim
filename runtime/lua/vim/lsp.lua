@@ -798,9 +798,7 @@ function lsp.start_client(config)
   ---@param method (string) LSP method name
   ---@param params (table) The parameters for that method.
   function dispatch.notification(method, params)
-    if log.trace() then
-      log.trace('notification', method, params)
-    end
+    log.trace('notification', method, params)
     local handler = resolve_handler(method)
     if handler then
       -- Method name is provided here for convenience.
@@ -816,19 +814,13 @@ function lsp.start_client(config)
   ---@return any result
   ---@return lsp.ResponseError error code and message set in case an exception happens during the request.
   function dispatch.server_request(method, params)
-    if log.trace() then
-      log.trace('server_request', method, params)
-    end
+    log.trace('server_request', method, params)
     local handler = resolve_handler(method)
     if handler then
-      if log.trace() then
-        log.trace('server_request: found handler for', method)
-      end
+      log.trace('server_request: found handler for', method)
       return handler(nil, params, { method = method, client_id = client_id })
     end
-    if log.warn() then
-      log.warn('server_request: no handler found for', method)
-    end
+    log.warn('server_request: no handler found for', method)
     return nil, lsp.rpc_response_error(protocol.ErrorCodes.MethodNotFound)
   end
 
@@ -836,9 +828,7 @@ function lsp.start_client(config)
   --- @param code integer Error code
   --- @param err any Error arguments
   local function write_error(code, err)
-    if log.error() then
-      log.error(log_prefix, 'on_error', { code = lsp.client_errors[code], err = err })
-    end
+    log.error(log_prefix, 'on_error', { code = lsp.client_errors[code], err = err })
     err_message(log_prefix, ': Error ', lsp.client_errors[code], ': ', vim.inspect(err))
   end
 
@@ -854,9 +844,7 @@ function lsp.start_client(config)
     if config.on_error then
       local status, usererr = pcall(config.on_error, code, err)
       if not status then
-        if log.error() then
-          log.error(log_prefix, 'user on_error failed', { err = usererr })
-        end
+        log.error(log_prefix, 'user on_error failed', { err = usererr })
         err_message(log_prefix, ' user on_error failed: ', tostring(usererr))
       end
     end
@@ -1042,9 +1030,7 @@ function lsp.buf_attach_client(bufnr, client_id)
   })
   bufnr = resolve_bufnr(bufnr)
   if not api.nvim_buf_is_loaded(bufnr) then
-    if log.warn() then
-      log.warn(string.format('buf_attach_client called on unloaded buffer (id: %d): ', bufnr))
-    end
+    log.warn(string.format('buf_attach_client called on unloaded buffer (id: %d): ', bufnr))
     return false
   end
   local buffer_client_ids = all_buffer_active_clients[bufnr]
@@ -1504,9 +1490,7 @@ end
 --- - findstart=0: column where the completion starts, or -2 or -3
 --- - findstart=1: list of matches (actually just calls |complete()|)
 function lsp.omnifunc(findstart, base)
-  if log.debug() then
-    log.debug('omnifunc.findstart', { findstart = findstart, base = base })
-  end
+  log.debug('omnifunc.findstart', { findstart = findstart, base = base })
   return vim.lsp._completion.omnifunc(findstart, base)
 end
 
