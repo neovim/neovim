@@ -1384,6 +1384,7 @@ on_diagnostic({_}, {result}, {ctx}, {config})
 <
 
     Parameters: ~
+      • {result}  (`lsp.DocumentDiagnosticReport`)
       • {ctx}     (`lsp.HandlerContext`)
       • {config}  (`table`) Configuration table (see
                   |vim.diagnostic.config()|).
