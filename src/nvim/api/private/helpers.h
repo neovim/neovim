@@ -32,7 +32,8 @@
 
 #define CSTR_AS_OBJ(s) STRING_OBJ(cstr_as_string(s))
 #define CSTR_TO_OBJ(s) STRING_OBJ(cstr_to_string(s))
-#define CSTR_TO_ARENA_OBJ(arena, s) STRING_OBJ(arena_string(arena, cstr_as_string(s)))
+#define CSTR_TO_ARENA_STR(arena, s) arena_string(arena, cstr_as_string(s))
+#define CSTR_TO_ARENA_OBJ(arena, s) STRING_OBJ(CSTR_TO_ARENA_STR(arena, s))
 
 #define BUFFER_OBJ(s) ((Object) { \
     .type = kObjectTypeBuffer, \
