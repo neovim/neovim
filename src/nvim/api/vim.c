@@ -2005,7 +2005,7 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Arena *arena, E
   ADD_C(ret, DICTIONARY_OBJ(hl_get_attr_by_id(attr, true, arena, err)));
   // will not work first time
   if (!highlight_use_hlstate()) {
-    ADD_C(ret, ARRAY_OBJ(hl_inspect(attr)));
+    ADD_C(ret, ARRAY_OBJ(hl_inspect(attr, arena)));
   }
   return ret;
 }
