@@ -55,8 +55,8 @@
 # include "sign.c.generated.h"
 #endif
 
-static PMap(cstr_t) sign_map INIT( = MAP_INIT);
-static kvec_t(Integer) sign_ns INIT( = MAP_INIT);
+static PMap(cstr_t) sign_map = MAP_INIT;
+static kvec_t(Integer) sign_ns = KV_INITIAL_VALUE;
 
 static char *cmds[] = {
   "define",
