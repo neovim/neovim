@@ -825,15 +825,18 @@ end
 --- the attached server.
 ---
 --- Can be used as 'foldexpr', see also |fold-expr|:
+---
 --- ```vim
 --- set foldexpr=luaeval('vim.lsp.buf.foldexpr('..v:lnum..')')
 --- ```
 ---
 --- Note: To update the folds it is necessary to call
 --- |vim.lsp.buf.refresh_folds()|, for example whenever leaving insert mode:
+---
 --- ```vim
 --- autocmd InsertLeave <buffer> lua vim.lsp.buf.refresh_folds()
 --- ```
+---
 ---@param lnum integer line number |v:lnum|
 ---@return integer fold level
 function M.foldexpr(lnum)

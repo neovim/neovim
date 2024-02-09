@@ -189,6 +189,8 @@ The following new APIs and features were added.
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_inlayHint
   • Implemented pull diagnostic textDocument/diagnostic: |vim.lsp.diagnostic.on_diagnostic()|
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_diagnostic
+  • Implemented document folding: |vim.lsp.buf.foldexpr()|
+    https://microsoft.github.io/language-server-protocol/specification/#textDocument_foldingRange
   • |vim.lsp.status()| consumes the last progress messages as a string.
   • LSP client now always saves and restores named buffer marks when applying
     text edits.

@@ -1227,13 +1227,13 @@ foldexpr({lnum})                                      *vim.lsp.buf.foldexpr()*
     Returns the fold level for a line in the current buffer as determined by
     the attached server.
 
-    Can be used as 'foldexpr', see also |fold-expr|:>vim
-        :set foldexpr=luaeval('vim.lsp.buf.foldexpr('..v:lnum..')')
+    Can be used as 'foldexpr', see also |fold-expr|: >vim
+        set foldexpr=luaeval('vim.lsp.buf.foldexpr('..v:lnum..')')
 <
 
     Note: To update the folds it is necessary to call
-    |vim.lsp.buf.refresh_folds()|, for example whenever leaving insert mode:>vim
-        :autocmd InsertLeave <buffer> lua vim.lsp.buf.document_fold()
+    |vim.lsp.buf.refresh_folds()|, for example whenever leaving insert mode: >vim
+        autocmd InsertLeave <buffer> lua vim.lsp.buf.refresh_folds()
 <
 
     Parameters: ~
