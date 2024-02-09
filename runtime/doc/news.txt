@@ -226,6 +226,8 @@ The following new APIs and features were added.
   • `:InspectTree` (|vim.treesitter.inspect_tree()|) shows node ranges in
     0-based indexing instead of 1-based indexing.
   • `:InspectTree` (|vim.treesitter.inspect_tree()|) shows root nodes
+  • |vim.treesitter.query.set()| can now inherit and/or extend runtime file
+    queries in addition to overriding.
 
 • |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
   Windows `explorer`, Linux `xdg-open`, etc.)
