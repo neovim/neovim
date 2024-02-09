@@ -214,7 +214,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
   }
 
   FloatConfig fconfig = FLOAT_CONFIG_INIT;
-  if (!parse_float_config(config, &fconfig, false, true, err)) {
+  if (!parse_float_config(NULL, config, &fconfig, false, err)) {
     return 0;
   }
 
@@ -351,7 +351,7 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
                   && !(HAS_KEY_X(config, external) ? config->external : fconfig.external)
                   && (has_split || has_vertical || was_split);
 
-  if (!parse_float_config(config, &fconfig, !was_split || to_split, false, err)) {
+  if (!parse_float_config(win, config, &fconfig, !was_split || to_split, err)) {
     return;
   }
   if (was_split && !to_split) {
@@ -937,9 +937,10 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
   }
 }
 
-static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig, bool reconf,
-                               bool new_win, Error *err)
+static bool parse_float_config(win_T *wp, Dict(float_config) *config, FloatConfig *fconfig,
+                               bool reconf, Error *err)
 {
+  bool new_win = wp == NULL;
 #define HAS_KEY_X(d, key) HAS_KEY(d, float_config, key)
   bool has_relative = false, relative_is_win = false, is_split = false;
   if (config->relative.size > 0) {
@@ -1055,7 +1056,18 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
   }
 
   if (relative_is_win || is_split) {
-    fconfig->window = curwin->handle;
+    if (reconf && relative_is_win) {
+      win_T *target_win = find_window_by_handle(config->win, err);
+      if (!target_win) {
+        return false;
+      }
+
+      if (target_win != wp && curwin != wp) {
+        fconfig->window = curwin->handle;
+      }
+    } else {
+      fconfig->window = curwin->handle;
+    }
     if (HAS_KEY_X(config, win)) {
       if (config->win > 0) {
         fconfig->window = config->win;

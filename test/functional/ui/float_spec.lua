@@ -9030,6 +9030,15 @@ describe('float window', function()
         ]])
       end
     end)
+
+    it("fallback to before relative win when it's not set", function()
+      local buf = api.nvim_create_buf(false, true)
+      local winid = api.nvim_open_win(buf, false, { relative='win', width=5, height=2, row=3, col=3 })
+      local relative_winid = api.nvim_get_current_win()
+      api.nvim_set_current_win(winid)
+      api.nvim_win_set_config(winid, { relative = "win",  row = 2, col = 2, width = 2, height = 2 })
+      eq(relative_winid, api.nvim_win_get_config(winid).win)
+    end)
   end
 
   describe('with ext_multigrid', function()
