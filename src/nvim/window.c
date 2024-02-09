@@ -669,7 +669,7 @@ wingotofile:
         beep_flush();
         break;
       }
-      FloatConfig config = FLOAT_CONFIG_INIT;
+      WinConfig config = WIN_CONFIG_INIT;
       config.width = curwin->w_width;
       config.height = curwin->w_height;
       config.external = true;
@@ -763,7 +763,7 @@ void ui_ext_win_position(win_T *wp, bool validate)
     return;
   }
 
-  FloatConfig c = wp->w_float_config;
+  WinConfig c = wp->w_float_config;
   if (!c.external) {
     ScreenGrid *grid = &default_grid;
     Float row = c.row;
@@ -1213,7 +1213,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir)
     new_frame(wp);
     wp->w_floating = false;
     // non-floating window doesn't store float config or have a border.
-    wp->w_float_config = FLOAT_CONFIG_INIT;
+    wp->w_float_config = WIN_CONFIG_INIT;
     CLEAR_FIELD(wp->w_border_adj);
   }
 
@@ -3879,7 +3879,7 @@ void win_alloc_first(void)
 void win_alloc_aucmd_win(int idx)
 {
   Error err = ERROR_INIT;
-  FloatConfig fconfig = FLOAT_CONFIG_INIT;
+  WinConfig fconfig = WIN_CONFIG_INIT;
   fconfig.width = Columns;
   fconfig.height = 5;
   fconfig.focusable = false;
@@ -4983,7 +4983,7 @@ win_T *win_alloc(win_T *after, bool hidden)
   new_wp->w_cursor.lnum = 1;
   new_wp->w_scbind_pos = 1;
   new_wp->w_floating = 0;
-  new_wp->w_float_config = FLOAT_CONFIG_INIT;
+  new_wp->w_float_config = WIN_CONFIG_INIT;
   new_wp->w_viewport_invalid = true;
   new_wp->w_viewport_last_topline = 1;
 

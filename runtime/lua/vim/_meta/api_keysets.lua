@@ -111,30 +111,6 @@ error('Cannot require a meta file')
 --- @class vim.api.keyset.exec_opts
 --- @field output? boolean
 
---- @class vim.api.keyset.float_config
---- @field row? number
---- @field col? number
---- @field width? integer
---- @field height? integer
---- @field anchor? string
---- @field relative? string
---- @field split? string
---- @field win? integer
---- @field bufpos? any[]
---- @field external? boolean
---- @field focusable? boolean
---- @field vertical? boolean
---- @field zindex? integer
---- @field border? any
---- @field title? any
---- @field title_pos? string
---- @field footer? any
---- @field footer_pos? string
---- @field style? string
---- @field noautocmd? boolean
---- @field fixed? boolean
---- @field hide? boolean
-
 --- @class vim.api.keyset.get_autocmds
 --- @field event? any
 --- @field group? any
@@ -291,6 +267,30 @@ error('Cannot require a meta file')
 --- @field preview? any
 --- @field range? any
 --- @field register? boolean
+
+--- @class vim.api.keyset.win_config
+--- @field row? number
+--- @field col? number
+--- @field width? integer
+--- @field height? integer
+--- @field anchor? string
+--- @field relative? string
+--- @field split? string
+--- @field win? integer
+--- @field bufpos? any[]
+--- @field external? boolean
+--- @field focusable? boolean
+--- @field vertical? boolean
+--- @field zindex? integer
+--- @field border? any
+--- @field title? any
+--- @field title_pos? string
+--- @field footer? any
+--- @field footer_pos? string
+--- @field style? string
+--- @field noautocmd? boolean
+--- @field fixed? boolean
+--- @field hide? boolean
 
 --- @class vim.api.keyset.win_text_height
 --- @field start_row? integer

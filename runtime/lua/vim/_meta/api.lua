@@ -1535,7 +1535,7 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---
 --- @param buffer integer Buffer to display, or 0 for current buffer
 --- @param enter boolean Enter the window (make it the current window)
---- @param config vim.api.keyset.float_config Map defining the window configuration. Keys:
+--- @param config vim.api.keyset.win_config Map defining the window configuration. Keys:
 ---               • relative: Sets the window layout to "floating", placed at
 ---                 (row,col) coordinates relative to:
 ---                 • "editor" The global editor grid
@@ -2093,7 +2093,7 @@ function vim.api.nvim_win_set_buf(window, buffer) end
 --- changed. `row`/`col` and `relative` must be reconfigured together.
 ---
 --- @param window integer Window handle, or 0 for current window
---- @param config vim.api.keyset.float_config Map defining the window configuration, see `nvim_open_win()`
+--- @param config vim.api.keyset.win_config Map defining the window configuration, see `nvim_open_win()`
 function vim.api.nvim_win_set_config(window, config) end
 
 --- Sets the (1,0)-indexed cursor position in the window. `api-indexing` This

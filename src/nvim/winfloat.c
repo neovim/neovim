@@ -38,7 +38,7 @@
 /// @param last    make the window the last one in the window list.
 ///                Only used when allocating the autocommand window.
 /// @param config  must already have been validated!
-win_T *win_new_float(win_T *wp, bool last, FloatConfig fconfig, Error *err)
+win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
 {
   if (wp == NULL) {
     wp = win_alloc(last ? lastwin : lastwin_nofloating(), false);
@@ -138,7 +138,7 @@ int win_border_width(win_T *wp)
   return wp->w_border_adj[1] + wp->w_border_adj[3];
 }
 
-void win_config_float(win_T *wp, FloatConfig fconfig)
+void win_config_float(win_T *wp, WinConfig fconfig)
 {
   wp->w_width = MAX(fconfig.width, 1);
   wp->w_height = MAX(fconfig.height, 1);
