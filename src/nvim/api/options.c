@@ -131,24 +131,7 @@ static buf_T *do_ft_buf(char *filetype, aco_save_T *aco, Error *err)
   return ftbuf;
 }
 
-/// Gets the value of an option. The behavior of this function matches that of
-/// |:set|: the local value of an option is returned if it exists; otherwise,
-/// the global value is returned. Local values always correspond to the current
-/// buffer or window, unless "buf" or "win" is set in {opts}.
-///
-/// @param name      Option name
-/// @param opts      Optional parameters
-///                  - scope: One of "global" or "local". Analogous to
-///                  |:setglobal| and |:setlocal|, respectively.
-///                  - win: |window-ID|. Used for getting window local options.
-///                  - buf: Buffer number. Used for getting buffer local options.
-///                         Implies {scope} is "local".
-///                  - filetype: |filetype|. Used to get the default option for a
-///                    specific filetype. Cannot be used with any other option.
-///                    Note: this will trigger |ftplugin| and all |FileType|
-///                    autocommands for the corresponding filetype.
-/// @param[out] err  Error details, if any
-/// @return          Option value
+/// @deprecated use nvim_option_get
 Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
@@ -305,6 +288,30 @@ Dictionary nvim_get_all_options_info(Arena *arena, Error *err)
 Dictionary nvim_get_option_info2(String name, Dict(option) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(11)
 {
+  return nvim_option_get(name, opts, arena, err);
+}
+
+/// Gets the value of an option. The behavior of this function matches that of
+/// |:set|: the local value of an option is returned if it exists; otherwise,
+/// the global value is returned. Local values always correspond to the current
+/// buffer or window, unless "buf" or "win" is set in {opts}.
+///
+/// @param name      Option name
+/// @param opts      Optional parameters
+///                  - scope: One of "global" or "local". Analogous to
+///                  |:setglobal| and |:setlocal|, respectively.
+///                  - win: |window-ID|. Used for getting window local options.
+///                  - buf: Buffer number. Used for getting buffer local options.
+///                         Implies {scope} is "local".
+///                  - filetype: |filetype|. Used to get the default option for a
+///                    specific filetype. Cannot be used with any other option.
+///                    Note: this will trigger |ftplugin| and all |FileType|
+///                    autocommands for the corresponding filetype.
+/// @param[out] err  Error details, if any
+/// @return          Option value
+Dictionary nvim_option_get(String name, Dict(option) *opts, Arena *arena, Error *err)
+  FUNC_API_SINCE(11)
+{
   OptIndex opt_idx = 0;
   int scope = 0;
   OptReqScope req_scope = kOptReqGlobal;
@@ -317,5 +324,8 @@ Dictionary nvim_get_option_info2(String name, Dict(option) *opts, Arena *arena, 
   buf_T *buf = (req_scope == kOptReqBuf) ? (buf_T *)from : curbuf;
   win_T *win = (req_scope == kOptReqWin) ? (win_T *)from : curwin;
 
-  return get_vimoption(name, scope, buf, win, arena, err);
+  Object val = nvim_get_option_value(name, opts, err);
+  Dictionary o = get_vimoption(name, scope, buf, win, arena, err);
+  PUT(o, "val", val);
+  return o;
 }
