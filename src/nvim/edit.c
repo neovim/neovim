@@ -363,7 +363,13 @@ static void insert_enter(InsertState *s)
     ins_apply_autocmds(EVENT_INSERTLEAVE);
   }
   did_cursorhold = false;
-  curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
+
+  // ins_redraw() triggers TextChangedI only when no characters
+  // are in the typeahead buffer, so only reset curbuf->b_last_changedtick
+  // if the TextChangedI was not blocked by char_avail() (e.g. using :norm!)
+  if (!char_avail()) {
+    curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
+  }
 }
 
 static int insert_check(VimState *state)
