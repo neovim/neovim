@@ -3017,7 +3017,7 @@ void msg_ext_ui_flush(void)
 
   msg_ext_emit_chunk();
   if (msg_ext_chunks.size > 0) {
-    ui_call_msg_show(cstr_as_string((char *)msg_ext_kind),
+    ui_call_msg_show(cstr_as_string(msg_ext_kind),
                      msg_ext_chunks, msg_ext_overwrite);
     if (!msg_ext_overwrite) {
       msg_ext_visible++;

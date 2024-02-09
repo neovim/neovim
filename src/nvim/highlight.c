@@ -135,7 +135,7 @@ void ui_send_all_hls(UI *ui)
     api_free_array(inspect);
   }
   for (size_t hlf = 0; hlf < HLF_COUNT; hlf++) {
-    remote_ui_hl_group_set(ui, cstr_as_string((char *)hlf_names[hlf]),
+    remote_ui_hl_group_set(ui, cstr_as_string(hlf_names[hlf]),
                            highlight_attr[hlf]);
   }
 }

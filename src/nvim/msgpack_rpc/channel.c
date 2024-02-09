@@ -547,7 +547,7 @@ static void send_error(Channel *chan, MsgpackRpcRequestHandler handler, MessageT
 
 static void send_request(Channel *channel, uint32_t id, const char *name, Array args)
 {
-  const String method = cstr_as_string((char *)name);
+  const String method = cstr_as_string(name);
   channel_write(channel, serialize_request(channel->id,
                                            id,
                                            method,
@@ -558,7 +558,7 @@ static void send_request(Channel *channel, uint32_t id, const char *name, Array 
 
 static void send_event(Channel *channel, const char *name, Array args)
 {
-  const String method = cstr_as_string((char *)name);
+  const String method = cstr_as_string(name);
   channel_write(channel, serialize_request(channel->id,
                                            0,
                                            method,
@@ -583,7 +583,7 @@ static void broadcast_event(const char *name, Array args)
     goto end;
   }
 
-  const String method = cstr_as_string((char *)name);
+  const String method = cstr_as_string(name);
   WBuffer *buffer = serialize_request(0,
                                       0,
                                       method,

@@ -229,7 +229,7 @@ void ui_refresh(void)
     }
     ui_ext[i] = ext_widgets[i];
     if (i < kUIGlobalCount) {
-      ui_call_option_set(cstr_as_string((char *)ui_ext_names[i]),
+      ui_call_option_set(cstr_as_string(ui_ext_names[i]),
                          BOOLEAN_OBJ(ext_widgets[i]));
     }
   }
@@ -451,8 +451,7 @@ void ui_set_ext_option(UI *ui, UIExtension ext, bool active)
     return;
   }
   if (ui_ext_names[ext][0] != '_' || active) {
-    remote_ui_option_set(ui, cstr_as_string((char *)ui_ext_names[ext]),
-                         BOOLEAN_OBJ(active));
+    remote_ui_option_set(ui, cstr_as_string(ui_ext_names[ext]), BOOLEAN_OBJ(active));
   }
   if (ext == kUITermColors) {
     ui_default_colors_set();

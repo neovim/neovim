@@ -796,7 +796,7 @@ void ui_ext_win_position(win_T *wp, bool validate)
 
     wp->w_grid_alloc.zindex = wp->w_float_config.zindex;
     if (ui_has(kUIMultigrid)) {
-      String anchor = cstr_as_string((char *)float_anchor_str[c.anchor]);
+      String anchor = cstr_as_string(float_anchor_str[c.anchor]);
       if (!c.hide) {
         ui_call_win_float_pos(wp->w_grid_alloc.handle, wp->handle, anchor,
                               grid->handle, row, col, c.focusable,

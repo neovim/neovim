@@ -2289,7 +2289,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *
                                                opts->use_winbar, stc_hl_id);
 
       PUT_C(hl_info, "start", INTEGER_OBJ(0));
-      PUT_C(hl_info, "group", CSTR_AS_OBJ((char *)grpname));
+      PUT_C(hl_info, "group", CSTR_AS_OBJ(grpname));
 
       ADD_C(hl_values, DICTIONARY_OBJ(hl_info));
     }
@@ -2308,7 +2308,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *
         snprintf(user_group, sizeof(user_group), "User%d", sp->userhl);
         grpname = arena_memdupz(arena, user_group, strlen(user_group));
       }
-      PUT_C(hl_info, "group", CSTR_AS_OBJ((char *)grpname));
+      PUT_C(hl_info, "group", CSTR_AS_OBJ(grpname));
       ADD_C(hl_values, DICTIONARY_OBJ(hl_info));
     }
     PUT_C(result, "highlights", ARRAY_OBJ(hl_values));

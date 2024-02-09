@@ -2093,8 +2093,8 @@ static void f_feedkeys(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     flags = tv_get_string_buf(&argvars[1], nbuf);
   }
 
-  nvim_feedkeys(cstr_as_string((char *)keys),
-                cstr_as_string((char *)flags), true);
+  nvim_feedkeys(cstr_as_string(keys),
+                cstr_as_string(flags), true);
 }
 
 /// "filereadable()" function
@@ -4528,7 +4528,7 @@ static void f_luaeval(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  nlua_typval_eval(cstr_as_string((char *)str), &argvars[1], rettv);
+  nlua_typval_eval(cstr_as_string(str), &argvars[1], rettv);
 }
 
 static void find_some_match(typval_T *const argvars, typval_T *const rettv,

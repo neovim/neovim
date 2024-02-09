@@ -84,7 +84,7 @@ static int64_t group_get_ns(const char *group)
     return UINT32_MAX;  // All namespaces
   }
   // Specific or non-existing namespace
-  int ns = map_get(String, int)(&namespace_ids, cstr_as_string((char *)group));
+  int ns = map_get(String, int)(&namespace_ids, cstr_as_string(group));
   return ns ? ns : -1;
 }
 

@@ -789,7 +789,7 @@ void remote_ui_hl_attr_define(UI *ui, Integer id, HlAttrs rgb_attrs, HlAttrs cte
   // system. So we add them here.
   if (rgb_attrs.url >= 0) {
     const char *url = hl_get_url((uint32_t)rgb_attrs.url);
-    PUT_C(rgb, "url", STRING_OBJ(cstr_as_string((char *)url)));
+    PUT_C(rgb, "url", CSTR_AS_OBJ(url));
   }
 
   ADD_C(args, DICTIONARY_OBJ(rgb));
@@ -857,7 +857,7 @@ void remote_ui_put(UI *ui, const char *cell)
   UIData *data = ui->data;
   data->client_col++;
   Array args = data->call_buf;
-  ADD_C(args, CSTR_AS_OBJ((char *)cell));
+  ADD_C(args, CSTR_AS_OBJ(cell));
   push_call(ui, "put", args);
 }
 

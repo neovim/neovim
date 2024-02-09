@@ -121,7 +121,7 @@ static void augroup_map_del(int id, const char *name)
 {
   if (name != NULL) {
     String key;
-    map_del(String, int)(&map_augroup_name_to_id, cstr_as_string((char *)name), &key);
+    map_del(String, int)(&map_augroup_name_to_id, cstr_as_string(name), &key);
     api_free_string(key);
   }
   if (id > 0) {
@@ -476,7 +476,7 @@ void augroup_del(char *name, bool stupid_legacy_mode)
 int augroup_find(const char *name)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  int existing_id = map_get(String, int)(&map_augroup_name_to_id, cstr_as_string((char *)name));
+  int existing_id = map_get(String, int)(&map_augroup_name_to_id, cstr_as_string(name));
   if (existing_id == AUGROUP_DELETED) {
     return existing_id;
   }
