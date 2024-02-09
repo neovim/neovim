@@ -550,7 +550,7 @@ describe('treesitter highlighting (C)', function()
         [3] = { foreground = Screen.colors.Magenta },
         [4] = { foreground = Screen.colors.Cyan4 },
         [5] = { foreground = Screen.colors.SlateBlue },
-      }
+      },
     }
   end)
 
