@@ -200,10 +200,10 @@
 /// @param[out] err Error details, if any
 ///
 /// @return Window handle, or 0 on error
-Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, Error *err)
+Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Error *err)
   FUNC_API_SINCE(6) FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
-#define HAS_KEY_X(d, key) HAS_KEY(d, float_config, key)
+#define HAS_KEY_X(d, key) HAS_KEY(d, win_config, key)
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
     return 0;
@@ -213,7 +213,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
     return 0;
   }
 
-  FloatConfig fconfig = FLOAT_CONFIG_INIT;
+  WinConfig fconfig = WIN_CONFIG_INIT;
   if (!parse_float_config(config, &fconfig, false, true, err)) {
     return 0;
   }
@@ -332,10 +332,10 @@ static int win_split_flags(WinSplit split, bool toplevel)
 /// @param      config  Map defining the window configuration,
 ///                     see |nvim_open_win()|
 /// @param[out] err     Error details, if any
-void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
+void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
   FUNC_API_SINCE(6)
 {
-#define HAS_KEY_X(d, key) HAS_KEY(d, float_config, key)
+#define HAS_KEY_X(d, key) HAS_KEY(d, win_config, key)
   win_T *win = find_window_by_handle(window, err);
   if (!win) {
     return;
@@ -345,7 +345,7 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
   bool has_split = HAS_KEY_X(config, split);
   bool has_vertical = HAS_KEY_X(config, vertical);
   // reuse old values, if not overridden
-  FloatConfig fconfig = win->w_float_config;
+  WinConfig fconfig = win->w_float_config;
 
   bool to_split = config->relative.size == 0
                   && !(HAS_KEY_X(config, external) ? config->external : fconfig.external)
@@ -539,8 +539,8 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
 #undef HAS_KEY_X
 }
 
-#define PUT_KEY_X(d, key, value) PUT_KEY(d, float_config, key, value)
-static void config_put_bordertext(Dict(float_config) *config, FloatConfig *fconfig,
+#define PUT_KEY_X(d, key, value) PUT_KEY(d, win_config, key, value)
+static void config_put_bordertext(Dict(win_config) *config, WinConfig *fconfig,
                                   BorderTextType bordertext_type, Arena *arena)
 {
   VirtText vt;
@@ -591,7 +591,7 @@ static void config_put_bordertext(Dict(float_config) *config, FloatConfig *fconf
 /// @param      window Window handle, or 0 for current window
 /// @param[out] err Error details, if any
 /// @return     Map defining the window configuration, see |nvim_open_win()|
-Dict(float_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
+Dict(win_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
   FUNC_API_SINCE(6)
 {
   /// Keep in sync with FloatRelative in buffer_defs.h
@@ -600,14 +600,14 @@ Dict(float_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
   /// Keep in sync with WinSplit in buffer_defs.h
   static const char *const win_split_str[] = { "left", "right", "above", "below" };
 
-  Dict(float_config) rv = { 0 };
+  Dict(win_config) rv = { 0 };
 
   win_T *wp = find_window_by_handle(window, err);
   if (!wp) {
     return rv;
   }
 
-  FloatConfig *config = &wp->w_float_config;
+  WinConfig *config = &wp->w_float_config;
 
   PUT_KEY_X(rv, focusable, config->focusable);
   PUT_KEY_X(rv, external, config->external);
@@ -734,8 +734,8 @@ static bool parse_float_bufpos(Array bufpos, lpos_T *out)
   return true;
 }
 
-static void parse_bordertext(Object bordertext, BorderTextType bordertext_type,
-                             FloatConfig *fconfig, Error *err)
+static void parse_bordertext(Object bordertext, BorderTextType bordertext_type, WinConfig *fconfig,
+                             Error *err)
 {
   if (bordertext.type != kObjectTypeString && bordertext.type != kObjectTypeArray) {
     api_set_error(err, kErrorTypeValidation, "title/footer must be string or array");
@@ -793,7 +793,7 @@ static void parse_bordertext(Object bordertext, BorderTextType bordertext_type,
 }
 
 static bool parse_bordertext_pos(String bordertext_pos, BorderTextType bordertext_type,
-                                 FloatConfig *fconfig, Error *err)
+                                 WinConfig *fconfig, Error *err)
 {
   AlignTextPos *align;
   switch (bordertext_type) {
@@ -832,7 +832,7 @@ static bool parse_bordertext_pos(String bordertext_pos, BorderTextType bordertex
   return true;
 }
 
-static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
+static void parse_border_style(Object style, WinConfig *fconfig, Error *err)
 {
   struct {
     const char *name;
@@ -937,10 +937,10 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
   }
 }
 
-static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig, bool reconf,
+static bool parse_float_config(Dict(win_config) *config, WinConfig *fconfig, bool reconf,
                                bool new_win, Error *err)
 {
-#define HAS_KEY_X(d, key) HAS_KEY(d, float_config, key)
+#define HAS_KEY_X(d, key) HAS_KEY(d, win_config, key)
   bool has_relative = false, relative_is_win = false, is_split = false;
   if (config->relative.size > 0) {
     if (!parse_float_relative(config->relative, &fconfig->relative)) {

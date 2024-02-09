@@ -108,7 +108,7 @@ typedef struct {
 } Dict(user_command);
 
 typedef struct {
-  OptionalKeys is_set__float_config_;
+  OptionalKeys is_set__win_config_;
   Float row;
   Float col;
   Integer width;
@@ -131,7 +131,7 @@ typedef struct {
   Boolean noautocmd;
   Boolean fixed;
   Boolean hide;
-} Dict(float_config);
+} Dict(win_config);
 
 typedef struct {
   Boolean is_lua;

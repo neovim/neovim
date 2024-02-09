@@ -669,7 +669,7 @@ void pum_redraw(void)
 /// @return  NULL when no enough room to show
 static win_T *pum_create_float_preview(bool enter)
 {
-  FloatConfig config = FLOAT_CONFIG_INIT;
+  WinConfig config = WIN_CONFIG_INIT;
   config.relative = kFloatRelativeEditor;
   // when pum_above is SW otherwise is NW
   config.anchor = pum_above ? kFloatAnchorSouth : 0;
