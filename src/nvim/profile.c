@@ -907,7 +907,7 @@ void time_start(const char *message)
   // initialize the global variables
   g_prev_time = g_start_time = profile_start();
 
-  fprintf(time_fd, "\n\ntimes in msec\n");
+  fprintf(time_fd, "\ntimes in msec\n");
   fprintf(time_fd, " clock   self+sourced   self:  sourced script\n");
   fprintf(time_fd, " clock   elapsed:              other lines\n\n");
 
@@ -943,4 +943,50 @@ void time_msg(const char *mesg, const proftime_T *start)
   // reset `g_prev_time` and print the message
   g_prev_time = now;
   fprintf(time_fd, ": %s\n", mesg);
+}
+
+/// Initializes the time time_fd stream used to write startup times
+///
+/// @param startup_time_file the startuptime report file path
+/// @param process_name the name of the current process to write in the report.
+void time_init(const char *startup_time_file, const char *process_name)
+{
+  time_fd = fopen(startup_time_file, "a");
+  if (time_fd == NULL) {
+    semsg(_(e_notopen), startup_time_file);
+    return;
+  }
+  startuptime_buf = xmalloc(sizeof(char) * (STARTUP_TIME_BUF_SIZE + 1));
+  // The startuptime file is (potentially) written by multiple nvim processes concurrently. So
+  // startuptime info is buffered, and flushed to disk only after startup completed. To achieve that
+  // we set a buffer big enough to store all startup times. The `_IOFBF` mode ensures the buffer is
+  // not auto-flushed ("controlled buffering").
+  // The times are flushed to disk manually when "time_finish" is called.
+  int r = setvbuf(time_fd, startuptime_buf, _IOFBF, STARTUP_TIME_BUF_SIZE + 1);
+  if (r != 0) {
+    xfree(startuptime_buf);
+    fclose(time_fd);
+    time_fd = NULL;
+    // Might as well ELOG also I guess.
+    ELOG("time_init: setvbuf failed: %d %s", r, uv_err_name(r));
+    semsg("time_init: setvbuf failed: %d %s", r, uv_err_name(r));
+    return;
+  }
+  fprintf(time_fd, "--- Startup times for process: %s ---\n", process_name);
+}
+
+/// Flushes the startuptimes to disk for the current process
+void time_finish(void)
+{
+  if (time_fd == NULL) {
+    return;
+  }
+  assert(startuptime_buf != NULL);
+  TIME_MSG("--- NVIM STARTED ---\n");
+
+  // flush buffer to disk
+  fclose(time_fd);
+  time_fd = NULL;
+
+  XFREE_CLEAR(startuptime_buf);
 }

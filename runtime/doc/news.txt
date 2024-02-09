@@ -415,6 +415,8 @@ The following changes to existing APIs or features add new behavior.
 
 • 'errorfile' (|-q|) accepts `-` as an alias for stdin.
 
+• |--startuptime| reports the startup times for both processes (TUI + server) as separate sections.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 

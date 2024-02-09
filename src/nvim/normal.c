@@ -1451,9 +1451,7 @@ static int normal_check(VimState *state)
     // has been done, close any file for startup messages.
     if (time_fd != NULL) {
       TIME_MSG("first screen update");
-      TIME_MSG("--- NVIM STARTED ---");
-      fclose(time_fd);
-      time_fd = NULL;
+      time_finish();
     }
     // After the first screen update may start triggering WinScrolled
     // autocmd events.  Store all the scroll positions and sizes now.
