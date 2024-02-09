@@ -9,6 +9,7 @@ CheckFeature conceal
 CheckFeature signs
 
 source view_util.vim
+source screendump.vim
 
 func s:screen_lines(lnum, width) abort
   return ScreenLines(a:lnum, a:width)
@@ -356,6 +357,26 @@ func Test_unprintable_char_on_wrap_column()
   call assert_equal(len(expect), winline())
   call assert_equal(strwidth(trim(expect[-1], ' ', 2)), wincol())
   call s:close_windows()
+endfunc
+
+" Test that Visual selection is drawn correctly when 'linebreak' is set and
+" selection ends before multibyte 'showbreak'.
+func Test_visual_ends_before_showbreak()
+  CheckScreendump
+
+  let lines =<< trim END
+      vim9script
+      &wrap = true
+      &linebreak = true
+      &showbreak = '↪ '
+      ['xxxxx ' .. 'y'->repeat(&columns - 6) .. ' zzzz']->setline(1)
+      normal! wvel
+  END
+  call writefile(lines, 'XvisualEndsBeforeShowbreak', 'D')
+  let buf = RunVimInTerminal('-S XvisualEndsBeforeShowbreak', #{rows: 6})
+  call VerifyScreenDump(buf, 'Test_visual_ends_before_showbreak', {})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
