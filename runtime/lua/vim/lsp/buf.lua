@@ -810,34 +810,35 @@ function M.code_action(options)
   end
 end
 
---- Creates |folds| for the current buffer.
+--- Requests the attached server to refresh the |folds| for the current buffer.
 ---
---- This will also set 'foldmethod' to "expr" and use |vim.lsp.buf.foldexpr()|
---- for 'foldexpr'.
+--- To make use of the folding capabilities, make sure to set 'foldmethod' to
+--- "expr" and 'foldexpr' as explained in |vim.lsp.buf.foldexpr()|.
 ---
---- Note: The folds are not updated automatically after subsequent changes.
---- To update them whenever leaving insert mode, use
----
---- <pre>
---- vim.api.nvim_command[[autocmd InsertLeave <buffer> lua vim.lsp.buf.document_fold()]]
---- </pre>
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_foldingRange
-function M.document_fold()
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_foldingRange
+function M.refresh_folds()
   local params = { textDocument = vim.lsp.util.make_text_document_params() }
   request('textDocument/foldingRange', params)
 end
 
---- Returns the fold level for a line in the current buffer as determined
---- by a server.
+--- Returns the fold level for a line in the current buffer as determined by
+--- the attached server.
 ---
---- Can be used as 'foldexpr', see |fold-expr|.
+--- Can be used as 'foldexpr', see also |fold-expr|:
+--- ```vim
+--- set foldexpr=luaeval('vim.lsp.buf.foldexpr('..v:lnum..')')
+--- ```
 ---
---- Note: To update the folds it is necessary to call |vim.lsp.buf.document_fold()|.
---@param lnum line number |v:lnum|
---@returns fold level
+--- Note: To update the folds it is necessary to call
+--- |vim.lsp.buf.refresh_folds()|, for example whenever leaving insert mode:
+--- ```vim
+--- autocmd InsertLeave <buffer> lua vim.lsp.buf.refresh_folds()
+--- ```
+---@param lnum integer line number |v:lnum|
+---@return integer fold level
 function M.foldexpr(lnum)
   local bufnr = vim.api.nvim_get_current_buf()
-  return util.get_fold_level(bufnr, lnum)
+  return util._get_fold_level(bufnr, lnum)
 end
 
 --- Executes an LSP server command.
