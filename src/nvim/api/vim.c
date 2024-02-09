@@ -1866,10 +1866,10 @@ Dictionary nvim__stats(Arena *arena)
 ///   - "rgb"     true if the UI uses RGB colors (false implies |cterm-colors|)
 ///   - "ext_..." Requested UI extensions, see |ui-option|
 ///   - "chan"    |channel-id| of remote UI
-Array nvim_list_uis(void)
+Array nvim_list_uis(Arena *arena)
   FUNC_API_SINCE(4)
 {
-  return ui_array();
+  return ui_array(arena);
 }
 
 /// Gets the immediate children of process `pid`.
