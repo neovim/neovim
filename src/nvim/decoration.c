@@ -673,10 +673,20 @@ int sign_item_cmp(const void *p1, const void *p2)
 {
   const SignItem *s1 = (SignItem *)p1;
   const SignItem *s2 = (SignItem *)p2;
-  int n = s2->sh->priority - s1->sh->priority;
 
-  return n ? n : (n = (int)(s2->id - s1->id))
-         ? n : (s2->sh->sign_add_id - s1->sh->sign_add_id);
+  if (s1->sh->priority != s2->sh->priority) {
+    return s1->sh->priority < s2->sh->priority ? 1 : -1;
+  }
+
+  if (s1->id != s2->id) {
+    return s1->id < s2->id ? 1 : -1;
+  }
+
+  if (s1->sh->sign_add_id != s2->sh->sign_add_id) {
+    return s1->sh->sign_add_id > s2->sh->sign_add_id ? 1 : -1;
+  }
+
+  return 0;
 }
 
 static const uint32_t sign_filter[4] = {[kMTMetaSignText] = kMTFilterSelect,

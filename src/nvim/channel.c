@@ -962,10 +962,11 @@ Dictionary channel_info(uint64_t id)
 }
 
 /// Simple int64_t comparison function for use with qsort()
-static int int64_t_cmp(const void *a, const void *b)
+static int int64_t_cmp(const void *pa, const void *pb)
 {
-  int64_t diff = *(int64_t *)a - *(int64_t *)b;
-  return (diff < 0) ? -1 : (diff > 0);
+  const int64_t a = *(const int64_t *)pa;
+  const int64_t b = *(const int64_t *)pb;
+  return a == b ? 0 : a > b ? 1 : -1;
 }
 
 Array channel_all_info(void)

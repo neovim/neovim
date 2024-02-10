@@ -233,7 +233,9 @@ void win_config_float(win_T *wp, WinConfig fconfig)
 
 static int float_zindex_cmp(const void *a, const void *b)
 {
-  return (*(win_T **)b)->w_float_config.zindex - (*(win_T **)a)->w_float_config.zindex;
+  int za = (*(win_T **)a)->w_float_config.zindex;
+  int zb = (*(win_T **)b)->w_float_config.zindex;
+  return za == zb ? 0 : za < zb ? 1 : -1;
 }
 
 void win_float_remove(bool bang, int count)
