@@ -120,6 +120,32 @@ describe('api/tabpage', function()
       }, layout)
     end)
 
+    it('gets the tabpage layout for a non-current tabpage', function()
+      command('tabnew')
+      local tab = api.nvim_get_current_tabpage()
+      local win1 = api.nvim_get_current_win()
+      local win2 = api.nvim_open_win(0, true, {
+        vertical = true,
+      })
+      local win3 = api.nvim_open_win(0, true, {
+        vertical = false,
+      })
+      command('tabprev')
+      eq({
+        'row',
+        {
+          {
+            'col',
+            {
+              { 'leaf', win3 },
+              { 'leaf', win2 },
+            },
+          },
+          { 'leaf', win1 },
+        },
+      }, api.nvim_tabpage_get_layout(tab))
+    end)
+
     it('sets the tabpage layout', function()
       local buf1 = api.nvim_create_buf(false, true)
       local buf2 = api.nvim_create_buf(false, true)
