@@ -673,10 +673,20 @@ int sign_item_cmp(const void *p1, const void *p2)
 {
   const SignItem *s1 = (SignItem *)p1;
   const SignItem *s2 = (SignItem *)p2;
-  int n = s2->sh->priority - s1->sh->priority;
 
-  return n ? n : (n = (int)(s2->id - s1->id))
-         ? n : (s2->sh->sign_add_id - s1->sh->sign_add_id);
+  if (s1->sh->priority != s2->sh->priority) {
+    return s1->sh->priority < s2->sh->priority ? 1 : -1;
+  }
+
+  if (s1->id != s2->id) {
+    return s1->id < s2->id ? 1 : -1;
+  }
+
+  if (s1->sh->sign_add_id != s2->sh->sign_add_id) {
+    return s1->sh->sign_add_id > s2->sh->sign_add_id ? 1 : -1;
+  }
+
+  return 0;
 }
 
 static const uint32_t sign_filter[4] = {[kMTMetaSignText] = kMTFilterSelect,
@@ -977,12 +987,12 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name, Are
   }
 
   if (sh_hl.url != NULL) {
-    PUT_C(*dict, "url", STRING_OBJ(cstr_as_string((char *)sh_hl.url)));
+    PUT_C(*dict, "url", STRING_OBJ(cstr_as_string(sh_hl.url)));
   }
 
   if (virt_text) {
     if (virt_text->hl_mode) {
-      PUT_C(*dict, "hl_mode", CSTR_AS_OBJ((char *)hl_mode_str[virt_text->hl_mode]));
+      PUT_C(*dict, "hl_mode", CSTR_AS_OBJ(hl_mode_str[virt_text->hl_mode]));
     }
 
     Array chunks = virt_text_to_array(virt_text->data.virt_text, hl_name, arena);
@@ -992,7 +1002,7 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name, Are
     if (virt_text->pos == kVPosWinCol) {
       PUT_C(*dict, "virt_text_win_col", INTEGER_OBJ(virt_text->col));
     }
-    PUT_C(*dict, "virt_text_pos", CSTR_AS_OBJ((char *)virt_text_pos_str[virt_text->pos]));
+    PUT_C(*dict, "virt_text_pos", CSTR_AS_OBJ(virt_text_pos_str[virt_text->pos]));
     priority = virt_text->priority;
   }
 

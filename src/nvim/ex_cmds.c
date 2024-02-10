@@ -406,18 +406,16 @@ static int sort_compare(const void *s1, const void *s2)
   // number.
   if (sort_nr) {
     if (l1.st_u.num.is_number != l2.st_u.num.is_number) {
-      result = l1.st_u.num.is_number - l2.st_u.num.is_number;
+      result = l1.st_u.num.is_number > l2.st_u.num.is_number ? 1 : -1;
     } else {
       result = l1.st_u.num.value == l2.st_u.num.value
                ? 0
-               : l1.st_u.num.value > l2.st_u.num.value
-               ? 1
-               : -1;
+               : l1.st_u.num.value > l2.st_u.num.value ? 1 : -1;
     }
   } else if (sort_flt) {
     result = l1.st_u.value_flt == l2.st_u.value_flt
-             ? 0 : l1.st_u.value_flt > l2.st_u.value_flt
-             ? 1 : -1;
+             ? 0
+             : l1.st_u.value_flt > l2.st_u.value_flt ? 1 : -1;
   } else {
     // We need to copy one line into "sortbuf1", because there is no
     // guarantee that the first pointer becomes invalid when obtaining the

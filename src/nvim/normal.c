@@ -375,7 +375,7 @@ static int nv_compare(const void *s1, const void *s2)
   if (c2 < 0) {
     c2 = -c2;
   }
-  return c1 - c2;
+  return c1 == c2 ? 0 : c1 > c2 ? 1 : -1;
 }
 
 /// Initialize the nv_cmd_idx[] table.

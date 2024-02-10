@@ -1790,7 +1790,7 @@ bool valid_name(const char *val, const char *allowed)
 void check_blending(win_T *wp)
 {
   wp->w_grid_alloc.blending =
-    wp->w_p_winbl > 0 || (wp->w_floating && wp->w_float_config.shadow);
+    wp->w_p_winbl > 0 || (wp->w_floating && wp->w_config.shadow);
 }
 
 /// Handle setting `winhighlight' in window "wp"
@@ -6314,32 +6314,33 @@ int get_sidescrolloff_value(win_T *wp)
   return (int)(wp->w_p_siso < 0 ? p_siso : wp->w_p_siso);
 }
 
-Dictionary get_vimoption(String name, int scope, buf_T *buf, win_T *win, Error *err)
+Dictionary get_vimoption(String name, int scope, buf_T *buf, win_T *win, Arena *arena, Error *err)
 {
   OptIndex opt_idx = find_option_len(name.data, name.size);
   VALIDATE_S(opt_idx != kOptInvalid, "option (not found)", name.data, {
     return (Dictionary)ARRAY_DICT_INIT;
   });
 
-  return vimoption2dict(&options[opt_idx], scope, buf, win);
+  return vimoption2dict(&options[opt_idx], scope, buf, win, arena);
 }
 
-Dictionary get_all_vimoptions(void)
+Dictionary get_all_vimoptions(Arena *arena)
 {
-  Dictionary retval = ARRAY_DICT_INIT;
+  Dictionary retval = arena_dict(arena, kOptIndexCount);
   for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
-    Dictionary opt_dict = vimoption2dict(&options[opt_idx], OPT_GLOBAL, curbuf, curwin);
-    PUT(retval, options[opt_idx].fullname, DICTIONARY_OBJ(opt_dict));
+    Dictionary opt_dict = vimoption2dict(&options[opt_idx], OPT_GLOBAL, curbuf, curwin, arena);
+    PUT_C(retval, options[opt_idx].fullname, DICTIONARY_OBJ(opt_dict));
   }
   return retval;
 }
 
-static Dictionary vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, win_T *win)
+static Dictionary vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, win_T *win,
+                                 Arena *arena)
 {
-  Dictionary dict = ARRAY_DICT_INIT;
+  Dictionary dict = arena_dict(arena, 13);
 
-  PUT(dict, "name", CSTR_TO_OBJ(opt->fullname));
-  PUT(dict, "shortname", CSTR_TO_OBJ(opt->shortname));
+  PUT_C(dict, "name", CSTR_AS_OBJ(opt->fullname));
+  PUT_C(dict, "shortname", CSTR_AS_OBJ(opt->shortname));
 
   const char *scope;
   if (opt->indir & PV_BUF) {
@@ -6350,14 +6351,14 @@ static Dictionary vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, wi
     scope = "global";
   }
 
-  PUT(dict, "scope", CSTR_TO_OBJ(scope));
+  PUT_C(dict, "scope", CSTR_AS_OBJ(scope));
 
   // welcome to the jungle
-  PUT(dict, "global_local", BOOLEAN_OBJ(opt->indir & PV_BOTH));
-  PUT(dict, "commalist", BOOLEAN_OBJ(opt->flags & P_COMMA));
-  PUT(dict, "flaglist", BOOLEAN_OBJ(opt->flags & P_FLAGLIST));
+  PUT_C(dict, "global_local", BOOLEAN_OBJ(opt->indir & PV_BOTH));
+  PUT_C(dict, "commalist", BOOLEAN_OBJ(opt->flags & P_COMMA));
+  PUT_C(dict, "flaglist", BOOLEAN_OBJ(opt->flags & P_FLAGLIST));
 
-  PUT(dict, "was_set", BOOLEAN_OBJ(opt->flags & P_WAS_SET));
+  PUT_C(dict, "was_set", BOOLEAN_OBJ(opt->flags & P_WAS_SET));
 
   LastSet last_set = { .channel_id = 0 };
   if (req_scope == OPT_GLOBAL) {
@@ -6375,16 +6376,16 @@ static Dictionary vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, wi
     }
   }
 
-  PUT(dict, "last_set_sid", INTEGER_OBJ(last_set.script_ctx.sc_sid));
-  PUT(dict, "last_set_linenr", INTEGER_OBJ(last_set.script_ctx.sc_lnum));
-  PUT(dict, "last_set_chan", INTEGER_OBJ((int64_t)last_set.channel_id));
+  PUT_C(dict, "last_set_sid", INTEGER_OBJ(last_set.script_ctx.sc_sid));
+  PUT_C(dict, "last_set_linenr", INTEGER_OBJ(last_set.script_ctx.sc_lnum));
+  PUT_C(dict, "last_set_chan", INTEGER_OBJ((int64_t)last_set.channel_id));
 
   // TODO(bfredl): do you even nocp?
   OptVal def = optval_from_varp(get_opt_idx(opt), &opt->def_val);
 
-  PUT(dict, "type", CSTR_TO_OBJ(optval_type_get_name(def.type)));
-  PUT(dict, "default", optval_as_object(optval_copy(def)));
-  PUT(dict, "allows_duplicates", BOOLEAN_OBJ(!(opt->flags & P_NODUP)));
+  PUT_C(dict, "type", CSTR_AS_OBJ(optval_type_get_name(def.type)));
+  PUT_C(dict, "default", optval_as_object(def));
+  PUT_C(dict, "allows_duplicates", BOOLEAN_OBJ(!(opt->flags & P_NODUP)));
 
   return dict;
 }

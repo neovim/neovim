@@ -152,8 +152,10 @@ _ERROR_CATEGORIES = [
     'build/endif_comment',
     'build/header_guard',
     'build/include_defs',
+    'build/defs_header',
     'build/printf_format',
     'build/storage_class',
+    'build/init_macro',
     'readability/bool',
     'readability/multiline_comment',
     'readability/multiline_string',
@@ -2085,6 +2087,11 @@ def CheckLanguage(filename, clean_lines, linenum, error):
                   "Do not use variable-length arrays.  Use an appropriately"
                   " named ('k' followed by CamelCase) compile-time constant for"
                   " the size.")
+
+    # INIT() macro should only be used in header files.
+    if not filename.endswith('.h') and Search(r' INIT\(', line):
+        error(filename, linenum, 'build/init_macro', 4,
+              'INIT() macro should only be used in header files.')
 
     # Detect TRUE and FALSE.
     match = Search(r'\b(TRUE|FALSE)\b', line)

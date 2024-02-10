@@ -55,8 +55,8 @@
 # include "sign.c.generated.h"
 #endif
 
-static PMap(cstr_t) sign_map INIT( = MAP_INIT);
-static kvec_t(Integer) sign_ns INIT( = MAP_INIT);
+static PMap(cstr_t) sign_map = MAP_INIT;
+static kvec_t(Integer) sign_ns = KV_INITIAL_VALUE;
 
 static char *cmds[] = {
   "define",
@@ -84,7 +84,7 @@ static int64_t group_get_ns(const char *group)
     return UINT32_MAX;  // All namespaces
   }
   // Specific or non-existing namespace
-  int ns = map_get(String, int)(&namespace_ids, cstr_as_string((char *)group));
+  int ns = map_get(String, int)(&namespace_ids, cstr_as_string(group));
   return ns ? ns : -1;
 }
 
@@ -172,20 +172,28 @@ int sign_cmp(const void *p1, const void *p2)
 {
   const MTKey *s1 = (MTKey *)p1;
   const MTKey *s2 = (MTKey *)p2;
-  int n = s1->pos.row - s2->pos.row;
 
-  if (n) {
-    return n;
+  if (s1->pos.row != s2->pos.row) {
+    return s1->pos.row > s2->pos.row ? 1 : -1;
   }
 
   DecorSignHighlight *sh1 = decor_find_sign(mt_decor(*s1));
   DecorSignHighlight *sh2 = decor_find_sign(mt_decor(*s2));
   assert(sh1 && sh2);
 
-  n = sh2->priority - sh1->priority;
+  if (sh1->priority != sh2->priority) {
+    return sh1->priority < sh2->priority ? 1 : -1;
+  }
 
-  return n ? n : (n = (int)(s2->id - s1->id))
-         ? n : (sh2->sign_add_id - sh1->sign_add_id);
+  if (s1->id != s2->id) {
+    return s1->id < s2->id ? 1 : -1;
+  }
+
+  if (sh1->sign_add_id != sh2->sign_add_id) {
+    return sh1->sign_add_id < sh2->sign_add_id ? 1 : -1;
+  }
+
+  return 0;
 }
 
 /// Delete the specified sign(s)

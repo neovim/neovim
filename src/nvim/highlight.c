@@ -116,12 +116,13 @@ retry: {}
   // new attr id, send event to remote ui:s
   int id = (int)k;
 
-  Array inspect = hl_inspect(id);
+  Arena arena = ARENA_EMPTY;
+  Array inspect = hl_inspect(id, &arena);
 
   // Note: internally we don't distinguish between cterm and rgb attributes,
   // remote_ui_hl_attr_define will however.
   ui_call_hl_attr_define(id, entry.attr, entry.attr, inspect);
-  api_free_array(inspect);
+  arena_mem_free(arena_finish(&arena));
   return id;
 }
 
@@ -129,13 +130,14 @@ retry: {}
 void ui_send_all_hls(UI *ui)
 {
   for (size_t i = 1; i < set_size(&attr_entries); i++) {
-    Array inspect = hl_inspect((int)i);
+    Arena arena = ARENA_EMPTY;
+    Array inspect = hl_inspect((int)i, &arena);
     HlAttrs attr = attr_entry(i).attr;
     remote_ui_hl_attr_define(ui, (Integer)i, attr, attr, inspect);
-    api_free_array(inspect);
+    arena_mem_free(arena_finish(&arena));
   }
   for (size_t hlf = 0; hlf < HLF_COUNT; hlf++) {
-    remote_ui_hl_group_set(ui, cstr_as_string((char *)hlf_names[hlf]),
+    remote_ui_hl_group_set(ui, cstr_as_string(hlf_names[hlf]),
                            highlight_attr[hlf]);
   }
 }
@@ -204,7 +206,7 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
   if (!valid_item && p->hl_def != LUA_NOREF && !recursive) {
     MAXSIZE_TEMP_ARRAY(args, 3);
     ADD_C(args, INTEGER_OBJ((Integer)ns_id));
-    ADD_C(args, CSTR_TO_OBJ(syn_id2name(hl_id)));
+    ADD_C(args, CSTR_AS_OBJ(syn_id2name(hl_id)));
     ADD_C(args, BOOLEAN_OBJ(link));
     // TODO(bfredl): preload the "global" attr dict?
 
@@ -367,7 +369,7 @@ void update_window_hl(win_T *wp, bool invalid)
   // wp->w_hl_attr_normal group. HL_ATTR(HLF_NFLOAT) is always named.
 
   // determine window specific background set in 'winhighlight'
-  bool float_win = wp->w_floating && !wp->w_float_config.external;
+  bool float_win = wp->w_floating && !wp->w_config.external;
   if (float_win && hl_def[HLF_NFLOAT] != 0) {
     wp->w_hl_attr_normal = hl_def[HLF_NFLOAT];
   } else if (hl_def[HLF_COUNT] > 0) {
@@ -380,19 +382,19 @@ void update_window_hl(win_T *wp, bool invalid)
     wp->w_hl_attr_normal = hl_apply_winblend(wp, wp->w_hl_attr_normal);
   }
 
-  wp->w_float_config.shadow = false;
-  if (wp->w_floating && wp->w_float_config.border) {
+  wp->w_config.shadow = false;
+  if (wp->w_floating && wp->w_config.border) {
     for (int i = 0; i < 8; i++) {
       int attr = hl_def[HLF_BORDER];
-      if (wp->w_float_config.border_hl_ids[i]) {
+      if (wp->w_config.border_hl_ids[i]) {
         attr = hl_get_ui_attr(ns_id, HLF_BORDER,
-                              wp->w_float_config.border_hl_ids[i], false);
+                              wp->w_config.border_hl_ids[i], false);
       }
       attr = hl_apply_winblend(wp, attr);
       if (syn_attr2entry(attr).hl_blend > 0) {
-        wp->w_float_config.shadow = true;
+        wp->w_config.shadow = true;
       }
-      wp->w_float_config.border_attr[i] = attr;
+      wp->w_config.border_attr[i] = attr;
     }
   }
 
@@ -1176,17 +1178,30 @@ int object_to_color(Object val, char *key, bool rgb, Error *err)
   }
 }
 
-Array hl_inspect(int attr)
+Array hl_inspect(int attr, Arena *arena)
 {
-  // TODO(bfredl): use arena allocation
-  Array ret = ARRAY_DICT_INIT;
-  if (hlstate_active) {
-    hl_inspect_impl(&ret, attr);
+  if (!hlstate_active) {
+    return (Array)ARRAY_DICT_INIT;
   }
+  Array ret = arena_array(arena, hl_inspect_size(attr));
+  hl_inspect_impl(&ret, attr, arena);
   return ret;
 }
 
-static void hl_inspect_impl(Array *arr, int attr)
+static size_t hl_inspect_size(int attr)
+{
+  if (attr <= 0 || attr >= (int)set_size(&attr_entries)) {
+    return 0;
+  }
+
+  HlEntry e = attr_entry(attr);
+  if (e.kind == kHlCombine || e.kind == kHlBlend || e.kind == kHlBlendThrough) {
+    return hl_inspect_size(e.id1) + hl_inspect_size(e.id2);
+  }
+  return 1;
+}
+
+static void hl_inspect_impl(Array *arr, int attr, Arena *arena)
 {
   Dictionary item = ARRAY_DICT_INIT;
   if (attr <= 0 || attr >= (int)set_size(&attr_entries)) {
@@ -1196,35 +1211,36 @@ static void hl_inspect_impl(Array *arr, int attr)
   HlEntry e = attr_entry(attr);
   switch (e.kind) {
   case kHlSyntax:
-    PUT(item, "kind", CSTR_TO_OBJ("syntax"));
-    PUT(item, "hi_name",
-        CSTR_TO_OBJ(syn_id2name(e.id1)));
+    item = arena_dict(arena, 3);
+    PUT_C(item, "kind", CSTR_AS_OBJ("syntax"));
+    PUT_C(item, "hi_name", CSTR_AS_OBJ(syn_id2name(e.id1)));
     break;
 
   case kHlUI:
-    PUT(item, "kind", CSTR_TO_OBJ("ui"));
+    item = arena_dict(arena, 4);
+    PUT_C(item, "kind", CSTR_AS_OBJ("ui"));
     const char *ui_name = (e.id1 == -1) ? "Normal" : hlf_names[e.id1];
-    PUT(item, "ui_name", CSTR_TO_OBJ(ui_name));
-    PUT(item, "hi_name",
-        CSTR_TO_OBJ(syn_id2name(e.id2)));
+    PUT_C(item, "ui_name", CSTR_AS_OBJ(ui_name));
+    PUT_C(item, "hi_name", CSTR_AS_OBJ(syn_id2name(e.id2)));
     break;
 
   case kHlTerminal:
-    PUT(item, "kind", CSTR_TO_OBJ("term"));
+    item = arena_dict(arena, 2);
+    PUT_C(item, "kind", CSTR_AS_OBJ("term"));
     break;
 
   case kHlCombine:
   case kHlBlend:
   case kHlBlendThrough:
     // attribute combination is associative, so flatten to an array
-    hl_inspect_impl(arr, e.id1);
-    hl_inspect_impl(arr, e.id2);
+    hl_inspect_impl(arr, e.id1, arena);
+    hl_inspect_impl(arr, e.id2, arena);
     return;
 
   case kHlUnknown:
   case kHlInvalid:
     return;
   }
-  PUT(item, "id", INTEGER_OBJ(attr));
-  ADD(*arr, DICTIONARY_OBJ(item));
+  PUT_C(item, "id", INTEGER_OBJ(attr));
+  ADD_C(*arr, DICTIONARY_OBJ(item));
 }

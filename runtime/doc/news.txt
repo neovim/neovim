@@ -116,6 +116,10 @@ The following changes may require adaptations in user config or plugins.
   upstream tree-sitter and Helix to make it easier to share queries. The full
   list is documented in |treesitter-highlight-groups|.
 
+• |vim.lsp.codelens.refresh()| now takes an `opts` argument. With this change,
+  the default behavior of just refreshing the current buffer has been replaced by
+  refreshing all buffers.
+
 
 ==============================================================================
 BREAKING CHANGES IN HEAD                                    *news-breaking-dev*

@@ -229,7 +229,7 @@ void ui_refresh(void)
     }
     ui_ext[i] = ext_widgets[i];
     if (i < kUIGlobalCount) {
-      ui_call_option_set(cstr_as_string((char *)ui_ext_names[i]),
+      ui_call_option_set(cstr_as_string(ui_ext_names[i]),
                          BOOLEAN_OBJ(ext_widgets[i]));
     }
   }
@@ -451,8 +451,7 @@ void ui_set_ext_option(UI *ui, UIExtension ext, bool active)
     return;
   }
   if (ui_ext_names[ext][0] != '_' || active) {
-    remote_ui_option_set(ui, cstr_as_string((char *)ui_ext_names[ext]),
-                         BOOLEAN_OBJ(active));
+    remote_ui_option_set(ui, cstr_as_string(ui_ext_names[ext]), BOOLEAN_OBJ(active));
   }
   if (ext == kUITermColors) {
     ui_default_colors_set();
@@ -646,34 +645,35 @@ bool ui_has(UIExtension ext)
   return ui_ext[ext];
 }
 
-Array ui_array(void)
+Array ui_array(Arena *arena)
 {
-  Array all_uis = ARRAY_DICT_INIT;
+  Array all_uis = arena_array(arena, ui_count);
   for (size_t i = 0; i < ui_count; i++) {
     UI *ui = uis[i];
-    Dictionary info = ARRAY_DICT_INIT;
-    PUT(info, "width", INTEGER_OBJ(ui->width));
-    PUT(info, "height", INTEGER_OBJ(ui->height));
-    PUT(info, "rgb", BOOLEAN_OBJ(ui->rgb));
-    PUT(info, "override", BOOLEAN_OBJ(ui->override));
+    Dictionary info = arena_dict(arena, 10 + kUIExtCount);
+    PUT_C(info, "width", INTEGER_OBJ(ui->width));
+    PUT_C(info, "height", INTEGER_OBJ(ui->height));
+    PUT_C(info, "rgb", BOOLEAN_OBJ(ui->rgb));
+    PUT_C(info, "override", BOOLEAN_OBJ(ui->override));
 
     // TUI fields. (`stdin_fd` is intentionally omitted.)
-    PUT(info, "term_name", CSTR_TO_OBJ(ui->term_name));
+    PUT_C(info, "term_name", CSTR_AS_OBJ(ui->term_name));
 
     // term_background is deprecated. Populate with an empty string
-    PUT(info, "term_background", CSTR_TO_OBJ(""));
+    PUT_C(info, "term_background", STATIC_CSTR_AS_OBJ(""));
 
-    PUT(info, "term_colors", INTEGER_OBJ(ui->term_colors));
-    PUT(info, "stdin_tty", BOOLEAN_OBJ(ui->stdin_tty));
-    PUT(info, "stdout_tty", BOOLEAN_OBJ(ui->stdout_tty));
+    PUT_C(info, "term_colors", INTEGER_OBJ(ui->term_colors));
+    PUT_C(info, "stdin_tty", BOOLEAN_OBJ(ui->stdin_tty));
+    PUT_C(info, "stdout_tty", BOOLEAN_OBJ(ui->stdout_tty));
 
     for (UIExtension j = 0; j < kUIExtCount; j++) {
       if (ui_ext_names[j][0] != '_' || ui->ui_ext[j]) {
-        PUT(info, ui_ext_names[j], BOOLEAN_OBJ(ui->ui_ext[j]));
+        PUT_C(info, (char *)ui_ext_names[j], BOOLEAN_OBJ(ui->ui_ext[j]));
       }
     }
-    remote_ui_inspect(ui, &info);
-    ADD(all_uis, DICTIONARY_OBJ(info));
+    PUT_C(info, "chan", INTEGER_OBJ((Integer)ui->data->channel_id));
+
+    ADD_C(all_uis, DICTIONARY_OBJ(info));
   }
   return all_uis;
 }
@@ -692,9 +692,9 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *err)
 
   if (wp->w_floating) {
     if (width != wp->w_width || height != wp->w_height) {
-      wp->w_float_config.width = width;
-      wp->w_float_config.height = height;
-      win_config_float(wp, wp->w_float_config);
+      wp->w_config.width = width;
+      wp->w_config.height = height;
+      win_config_float(wp, wp->w_config);
     }
   } else {
     // non-positive indicates no request

@@ -912,7 +912,7 @@ void win_grid_alloc(win_T *wp)
     grid_alloc(grid_allocated, total_rows, total_cols,
                wp->w_grid_alloc.valid, false);
     grid_allocated->valid = true;
-    if (wp->w_floating && wp->w_float_config.border) {
+    if (wp->w_floating && wp->w_config.border) {
       wp->w_redr_border = true;
     }
     was_resized = true;

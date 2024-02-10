@@ -156,10 +156,13 @@ func Test_tabpage_drop()
   tab split f3
   normal! gt
   call assert_equal(1, tabpagenr())
+  tab drop f4
+  call assert_equal(1, tabpagenr('#'))
 
   tab drop f3
-  call assert_equal(3, tabpagenr())
-  call assert_equal(1, tabpagenr('#'))
+  call assert_equal(4, tabpagenr())
+  call assert_equal(2, tabpagenr('#'))
+  bwipe!
   bwipe!
   bwipe!
   bwipe!

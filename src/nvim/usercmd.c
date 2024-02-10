@@ -1136,6 +1136,20 @@ bool uc_split_args_iter(const char *arg, size_t arglen, size_t *end, char *buf, 
   return true;
 }
 
+size_t uc_nargs_upper_bound(const char *arg, size_t arglen)
+{
+  bool was_white = true;  // space before first arg
+  size_t nargs = 0;
+  for (size_t i = 0; i < arglen; i++) {
+    bool is_white = ascii_iswhite(arg[i]);
+    if (was_white && !is_white) {
+      nargs++;
+    }
+    was_white = is_white;
+  }
+  return nargs;
+}
+
 /// split and quote args for <f-args>
 static char *uc_split_args(const char *arg, char **args, const size_t *arglens, size_t argc,
                            size_t *lenp)

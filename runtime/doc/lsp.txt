@@ -1428,7 +1428,8 @@ clear({client_id}, {bufnr})                         *vim.lsp.codelens.clear()*
 
     Parameters: ~
       • {client_id}  (`integer?`) filter by client_id. All clients if nil
-      • {bufnr}      (`integer?`) filter by buffer. All buffers if nil
+      • {bufnr}      (`integer?`) filter by buffer. All buffers if nil, 0 for
+                     current buffer
 
 display({lenses}, {bufnr}, {client_id})           *vim.lsp.codelens.display()*
     Display the lenses using virtual text
@@ -1455,14 +1456,20 @@ on_codelens({err}, {result}, {ctx}, {_})
     Parameters: ~
       • {ctx}  (`lsp.HandlerContext`)
 
-refresh()                                         *vim.lsp.codelens.refresh()*
-    Refresh the codelens for the current buffer
+refresh({opts})                                   *vim.lsp.codelens.refresh()*
+    Refresh the lenses.
 
     It is recommended to trigger this using an autocmd or via keymap.
 
     Example: >vim
-        autocmd BufEnter,CursorHold,InsertLeave <buffer> lua vim.lsp.codelens.refresh()
+        autocmd BufEnter,CursorHold,InsertLeave <buffer> lua vim.lsp.codelens.refresh({ bufnr = 0 })
 <
+
+    Parameters: ~
+      • {opts}  (`vim.lsp.codelens.RefreshOptions?`) Table with the following
+                fields:
+                • `bufnr` (integer|nil): filter by buffer. All buffers if nil,
+                  0 for current buffer
 
 run()                                                 *vim.lsp.codelens.run()*
     Run the code lens in the current line
