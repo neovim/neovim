@@ -120,7 +120,7 @@ The following changes may require adaptations in user config or plugins.
   the default behavior of just refreshing the current buffer has been replaced by
   refreshing all buffers.
 
-• |shm-q| now completely hides recording macro message instead of only shortening it.
+• |shm-q| now fully hides macro recording message instead of only shortening it.
 
 ==============================================================================
 BREAKING CHANGES IN HEAD                                    *news-breaking-dev*

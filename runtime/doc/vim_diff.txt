@@ -582,7 +582,7 @@ Autocommands:
   instead of the Primary Device Attributes response. |v:termresponse|
 
 Options:
-- |shm-q| completely hides recording macro message instead of only shortening it.
+- |shm-q| fully hides macro recording message instead of only shortening it.
 
 ==============================================================================
 Missing features					 *nvim-missing*
