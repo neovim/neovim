@@ -1149,11 +1149,11 @@ void clearmode(void)
 
 static void recording_mode(int attr)
 {
-  msg_puts_attr(_("recording"), attr);
   if (shortmess(SHM_RECORDING)) {
     return;
   }
 
+  msg_puts_attr(_("recording"), attr);
   char s[4];
   snprintf(s, ARRAY_SIZE(s), " @%c", reg_recording);
   msg_puts_attr(s, attr);
