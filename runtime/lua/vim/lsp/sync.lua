@@ -58,8 +58,7 @@ local function byte_to_utf(line, byte, offset_encoding)
   -- convert to 0 based indexing for str_utfindex
   byte = byte - 1
 
-  local utf_idx --- @type integer
-  local _
+  local utf_idx, _ --- @type integer, integer
   -- Convert the byte range to utf-{8,16,32} and convert 1-based (lua) indexing to 0-based
   if offset_encoding == 'utf-16' then
     _, utf_idx = str_utfindex(line, byte)
@@ -77,8 +76,7 @@ end
 ---@param offset_encoding string
 ---@return integer
 local function compute_line_length(line, offset_encoding)
-  local length --- @type integer
-  local _
+  local length, _ --- @type integer, integer
   if offset_encoding == 'utf-16' then
     _, length = str_utfindex(line)
   elseif offset_encoding == 'utf-32' then
@@ -202,9 +200,10 @@ end
 --- prev_end_range is the text range sent to the server representing the changed region.
 --- curr_end_range is the text that should be collected and sent to the server.
 --
----@param prev_lines table list of lines
----@param curr_lines table list of lines
 ---@param start_range table
+---@param prev_lines string[] list of lines
+---@param curr_lines string[] list of lines
+---@param firstline integer
 ---@param lastline integer
 ---@param new_lastline integer
 ---@param offset_encoding string
@@ -253,7 +252,7 @@ local function compute_end_range(
   -- Editing the same line
   -- If the byte offset is zero, that means there is a difference on the last byte (not newline)
   if prev_line_idx == curr_line_idx then
-    local max_length
+    local max_length --- @type integer
     if start_line_idx == prev_line_idx then
       -- Search until beginning of difference
       max_length = min(

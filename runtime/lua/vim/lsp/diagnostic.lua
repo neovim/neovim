@@ -22,7 +22,7 @@ end
 ---@param severity lsp.DiagnosticSeverity
 local function severity_lsp_to_vim(severity)
   if type(severity) == 'string' then
-    severity = protocol.DiagnosticSeverity[severity]
+    severity = protocol.DiagnosticSeverity[severity] --- @type integer
   end
   return severity
 end
@@ -48,7 +48,7 @@ local function line_byte_from_position(lines, lnum, col, offset_encoding)
   local line = lines[lnum + 1]
   local ok, result = pcall(vim.str_byteindex, line, col, offset_encoding == 'utf-16')
   if ok then
-    return result
+    return result --- @type integer
   end
 
   return col
@@ -362,7 +362,7 @@ end
 --- implementation so it's simply marked @private rather than @deprecated.
 ---
 ---@param client_id integer
----@param buffer_client_map table map of buffers to active clients
+---@param buffer_client_map table<integer, table<integer, table>> map of buffers to active clients
 ---@private
 function M.reset(client_id, buffer_client_map)
   buffer_client_map = vim.deepcopy(buffer_client_map)
@@ -462,7 +462,8 @@ function M._enable(bufnr)
           return
         end
         if bufstates[bufnr] and bufstates[bufnr].enabled then
-          _refresh(bufnr, { only_visible = true, client_id = opts.data.client_id })
+          local client_id = opts.data.client_id --- @type integer?
+          _refresh(bufnr, { only_visible = true, client_id = client_id })
         end
       end,
       group = augroup,

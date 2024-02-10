@@ -630,8 +630,9 @@ end
 --- @param code integer Error code
 --- @param err any Error arguments
 function Client:write_error(code, err)
-  log.error(self._log_prefix, 'on_error', { code = lsp.client_errors[code], err = err })
-  err_message(self._log_prefix, ': Error ', lsp.client_errors[code], ': ', vim.inspect(err))
+  local client_error = lsp.client_errors[code] --- @type string|integer
+  log.error(self._log_prefix, 'on_error', { code = client_error, err = err })
+  err_message(self._log_prefix, ': Error ', client_error, ': ', vim.inspect(err))
 end
 
 --- @param method string

@@ -498,7 +498,7 @@ function Client:handle_body(body)
       if decoded.error then
         decoded.error = setmetatable(decoded.error, {
           __tostring = M.format_rpc_error,
-        })
+        }) --- @type table
       end
       self:try_call(
         M.client_errors.SERVER_RESULT_CALLBACK_ERROR,

@@ -1415,8 +1415,9 @@ on_publish_diagnostics({_}, {result}, {ctx}, {config})
 <
 
     Parameters: ~
+      • {result}  (`lsp.PublishDiagnosticsParams`)
       • {ctx}     (`lsp.HandlerContext`)
-      • {config}  (`table`) Configuration table (see
+      • {config}  (`vim.diagnostic.Opts?`) Configuration table (see
                   |vim.diagnostic.config()|).
 
 
