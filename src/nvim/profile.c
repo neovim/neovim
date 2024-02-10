@@ -45,6 +45,7 @@ typedef struct {
 #define PRL_ITEM(si, idx)     (((sn_prl_T *)(si)->sn_prl_ga.ga_data)[(idx)])
 
 static proftime_T prof_wait_time;
+static char *startuptime_buf = NULL;  // --startuptime buffer
 
 /// Gets the current time.
 ///
@@ -945,29 +946,27 @@ void time_msg(const char *mesg, const proftime_T *start)
   fprintf(time_fd, ": %s\n", mesg);
 }
 
-/// Initializes the time time_fd stream used to write startup times
+/// Initializes the `time_fd` stream for the --startuptime report.
 ///
-/// @param startup_time_file the startuptime report file path
-/// @param process_name the name of the current process to write in the report.
-void time_init(const char *startup_time_file, const char *process_name)
+/// @param fname startuptime report file path
+/// @param process_name name of the current Nvim process to write in the report.
+void time_init(const char *fname, const char *process_name)
 {
-  time_fd = fopen(startup_time_file, "a");
+  const size_t bufsize = 8192;  // Big enough for the entire --startuptime report.
+  time_fd = fopen(fname, "a");
   if (time_fd == NULL) {
-    semsg(_(e_notopen), startup_time_file);
+    semsg(_(e_notopen), fname);
     return;
   }
-  startuptime_buf = xmalloc(sizeof(char) * (STARTUP_TIME_BUF_SIZE + 1));
-  // The startuptime file is (potentially) written by multiple nvim processes concurrently. So
-  // startuptime info is buffered, and flushed to disk only after startup completed. To achieve that
-  // we set a buffer big enough to store all startup times. The `_IOFBF` mode ensures the buffer is
-  // not auto-flushed ("controlled buffering").
-  // The times are flushed to disk manually when "time_finish" is called.
-  int r = setvbuf(time_fd, startuptime_buf, _IOFBF, STARTUP_TIME_BUF_SIZE + 1);
+  startuptime_buf = xmalloc(sizeof(char) * (bufsize + 1));
+  // The startuptime file is (potentially) written by multiple Nvim processes concurrently. So each
+  // report is buffered, and flushed to disk (`time_finish`) once after startup. `_IOFBF` mode
+  // ensures the buffer is not auto-flushed ("controlled buffering").
+  int r = setvbuf(time_fd, startuptime_buf, _IOFBF, bufsize + 1);
   if (r != 0) {
-    xfree(startuptime_buf);
+    XFREE_CLEAR(startuptime_buf);
     fclose(time_fd);
     time_fd = NULL;
-    // Might as well ELOG also I guess.
     ELOG("time_init: setvbuf failed: %d %s", r, uv_err_name(r));
     semsg("time_init: setvbuf failed: %d %s", r, uv_err_name(r));
     return;
