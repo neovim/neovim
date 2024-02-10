@@ -3,6 +3,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
+      - '.github/workflows/docs.yml'
       - 'src/nvim/api/*.[ch]'
       - 'src/nvim/eval.lua'
       - 'runtime/lua/**.lua'
@@ -16,13 +17,29 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    env:
+      BIN_DIR: ${{ github.workspace }}/bin
+      DOXYGEN_URL: 'https://github.com/doxygen/doxygen/releases/download/Release_1_9_5/doxygen-1.9.5.linux.bin.tar.gz'
+      DOXYGEN_VERSION: 1.9.5
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
 
       - name: Install dependencies
         run: |
-          sudo apt-get install -y doxygen python3-msgpack
+          sudo apt-get install -y python3-msgpack
+
+      - name: Install doxygen
+        run: |
+          curl --retry 5 --silent --show-error --fail -L -o /tmp/doxygen.tar.gz "$DOXYGEN_URL"
+          mkdir -p "$BIN_DIR" /opt/doxygen
+          tar xfz /tmp/doxygen.tar.gz --strip-components=1 -C /opt/doxygen
+          ln -sfn /opt/doxygen/bin/doxygen "$BIN_DIR/doxygen"
+          doxygen_version="$(doxygen -v)"
+          echo "$doxygen_version" | grep -qF "$DOXYGEN_VERSION" || {
+            echo "Unexpected doxygen version: $doxygen_version";
+            exit 1;
+          }
 
       - name: Generate docs
         run: |

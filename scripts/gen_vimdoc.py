@@ -59,7 +59,7 @@ Element = minidom.Element
 Document = minidom.Document
 
 MIN_PYTHON_VERSION = (3, 7)
-MIN_DOXYGEN_VERSION = (1, 9, 0)
+MIN_DOXYGEN_VERSION = (1, 9, 5)
 
 if sys.version_info < MIN_PYTHON_VERSION:
     print("requires Python {}.{}+".format(*MIN_PYTHON_VERSION))
