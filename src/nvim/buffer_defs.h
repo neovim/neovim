@@ -913,6 +913,7 @@ typedef enum {
   kBorderTextFooter = 1,
 } BorderTextType;
 
+/// See ":help nvim_open_win()" for documentation.
 typedef struct {
   Window window;
   lpos_T bufpos;
