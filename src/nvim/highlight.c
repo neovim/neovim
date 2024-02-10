@@ -369,7 +369,7 @@ void update_window_hl(win_T *wp, bool invalid)
   // wp->w_hl_attr_normal group. HL_ATTR(HLF_NFLOAT) is always named.
 
   // determine window specific background set in 'winhighlight'
-  bool float_win = wp->w_floating && !wp->w_float_config.external;
+  bool float_win = wp->w_floating && !wp->w_config.external;
   if (float_win && hl_def[HLF_NFLOAT] != 0) {
     wp->w_hl_attr_normal = hl_def[HLF_NFLOAT];
   } else if (hl_def[HLF_COUNT] > 0) {
@@ -382,19 +382,19 @@ void update_window_hl(win_T *wp, bool invalid)
     wp->w_hl_attr_normal = hl_apply_winblend(wp, wp->w_hl_attr_normal);
   }
 
-  wp->w_float_config.shadow = false;
-  if (wp->w_floating && wp->w_float_config.border) {
+  wp->w_config.shadow = false;
+  if (wp->w_floating && wp->w_config.border) {
     for (int i = 0; i < 8; i++) {
       int attr = hl_def[HLF_BORDER];
-      if (wp->w_float_config.border_hl_ids[i]) {
+      if (wp->w_config.border_hl_ids[i]) {
         attr = hl_get_ui_attr(ns_id, HLF_BORDER,
-                              wp->w_float_config.border_hl_ids[i], false);
+                              wp->w_config.border_hl_ids[i], false);
       }
       attr = hl_apply_winblend(wp, attr);
       if (syn_attr2entry(attr).hl_blend > 0) {
-        wp->w_float_config.shadow = true;
+        wp->w_config.shadow = true;
       }
-      wp->w_float_config.border_attr[i] = attr;
+      wp->w_config.border_attr[i] = attr;
     }
   }
 

@@ -1790,7 +1790,7 @@ bool valid_name(const char *val, const char *allowed)
 void check_blending(win_T *wp)
 {
   wp->w_grid_alloc.blending =
-    wp->w_p_winbl > 0 || (wp->w_floating && wp->w_float_config.shadow);
+    wp->w_p_winbl > 0 || (wp->w_floating && wp->w_config.shadow);
 }
 
 /// Handle setting `winhighlight' in window "wp"

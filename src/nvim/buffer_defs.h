@@ -913,6 +913,7 @@ typedef enum {
   kBorderTextFooter = 1,
 } BorderTextType;
 
+/// See ":help nvim_open_win()" for documentation.
 typedef struct {
   Window window;
   lpos_T bufpos;
@@ -1278,7 +1279,7 @@ struct window_S {
   bool w_pos_changed;                   // true if window position changed
   bool w_floating;                      ///< whether the window is floating
   bool w_float_is_info;                 // the floating window is info float
-  WinConfig w_float_config;
+  WinConfig w_config;
 
   // w_fraction is the fractional row of the cursor within the window, from
   // 0 at the top row to FRACTION_MULT at the last row.

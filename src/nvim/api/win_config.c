@@ -257,7 +257,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
       restore_win(&switchwin, true);
     }
     if (wp) {
-      wp->w_float_config = fconfig;
+      wp->w_config = fconfig;
     }
   } else {
     wp = win_new_float(NULL, false, fconfig, err);
@@ -345,7 +345,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
   bool has_split = HAS_KEY_X(config, split);
   bool has_vertical = HAS_KEY_X(config, vertical);
   // reuse old values, if not overridden
-  WinConfig fconfig = win->w_float_config;
+  WinConfig fconfig = win->w_config;
 
   bool to_split = config->relative.size == 0
                   && !(HAS_KEY_X(config, external) ? config->external : fconfig.external)
@@ -387,7 +387,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
         }
       }
     }
-    win->w_float_config = fconfig;
+    win->w_config = fconfig;
 
     // If there's no "vertical" or "split" set, or if "split" is unchanged,
     // then we can just change the size of the window.
@@ -477,7 +477,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     } else {
       win_remove(win, win_tp == curtab ? NULL : win_tp);
       ui_comp_remove_grid(&win->w_grid_alloc);
-      if (win->w_float_config.external) {
+      if (win->w_config.external) {
         for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
           if (tp == curtab) {
             continue;
@@ -607,7 +607,7 @@ Dict(win_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
     return rv;
   }
 
-  WinConfig *config = &wp->w_float_config;
+  WinConfig *config = &wp->w_config;
 
   PUT_KEY_X(rv, focusable, config->focusable);
   PUT_KEY_X(rv, external, config->external);

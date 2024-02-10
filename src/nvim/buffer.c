@@ -2773,7 +2773,7 @@ void get_winopts(buf_T *buf)
     curwin->w_changelistidx = wip->wi_changelistidx;
   }
 
-  if (curwin->w_float_config.style == kWinStyleMinimal) {
+  if (curwin->w_config.style == kWinStyleMinimal) {
     didset_window_options(curwin, false);
     win_set_minimal_style(curwin);
   }

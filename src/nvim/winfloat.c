@@ -161,17 +161,17 @@ void win_config_float(win_T *wp, WinConfig fconfig)
     }
   }
 
-  bool change_external = fconfig.external != wp->w_float_config.external;
-  bool change_border = (fconfig.border != wp->w_float_config.border
+  bool change_external = fconfig.external != wp->w_config.external;
+  bool change_border = (fconfig.border != wp->w_config.border
                         || memcmp(fconfig.border_hl_ids,
-                                  wp->w_float_config.border_hl_ids,
+                                  wp->w_config.border_hl_ids,
                                   sizeof fconfig.border_hl_ids) != 0);
 
-  wp->w_float_config = fconfig;
+  wp->w_config = fconfig;
 
-  bool has_border = wp->w_floating && wp->w_float_config.border;
+  bool has_border = wp->w_floating && wp->w_config.border;
   for (int i = 0; i < 4; i++) {
-    int new_adj = has_border && wp->w_float_config.border_chars[2 * i + 1][0];
+    int new_adj = has_border && wp->w_config.border_chars[2 * i + 1][0];
     if (new_adj != wp->w_border_adj[i]) {
       change_border = true;
       wp->w_border_adj[i] = new_adj;
@@ -193,11 +193,11 @@ void win_config_float(win_T *wp, WinConfig fconfig)
   }
 
   // compute initial position
-  if (wp->w_float_config.relative == kFloatRelativeWindow) {
-    int row = (int)wp->w_float_config.row;
-    int col = (int)wp->w_float_config.col;
+  if (wp->w_config.relative == kFloatRelativeWindow) {
+    int row = (int)wp->w_config.row;
+    int col = (int)wp->w_config.col;
     Error dummy = ERROR_INIT;
-    win_T *parent = find_window_by_handle(wp->w_float_config.window, &dummy);
+    win_T *parent = find_window_by_handle(wp->w_config.window, &dummy);
     if (parent) {
       row += parent->w_winrow;
       col += parent->w_wincol;
@@ -207,9 +207,9 @@ void win_config_float(win_T *wp, WinConfig fconfig)
       grid_adjust(&grid, &row_off, &col_off);
       row += row_off;
       col += col_off;
-      if (wp->w_float_config.bufpos.lnum >= 0) {
-        pos_T pos = { wp->w_float_config.bufpos.lnum + 1,
-                      wp->w_float_config.bufpos.col, 0 };
+      if (wp->w_config.bufpos.lnum >= 0) {
+        pos_T pos = { wp->w_config.bufpos.lnum + 1,
+                      wp->w_config.bufpos.col, 0 };
         int trow, tcol, tcolc, tcole;
         textpos2screenpos(parent, &pos, &trow, &tcol, &tcolc, &tcole, true);
         row += trow - 1;
@@ -233,8 +233,8 @@ void win_config_float(win_T *wp, WinConfig fconfig)
 
 static int float_zindex_cmp(const void *a, const void *b)
 {
-  int za = (*(win_T **)a)->w_float_config.zindex;
-  int zb = (*(win_T **)b)->w_float_config.zindex;
+  int za = (*(win_T **)a)->w_config.zindex;
+  int zb = (*(win_T **)b)->w_config.zindex;
   return za == zb ? 0 : za < zb ? 1 : -1;
 }
 
@@ -265,8 +265,8 @@ void win_check_anchored_floats(win_T *win)
 {
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
     // float might be anchored to moved window
-    if (wp->w_float_config.relative == kFloatRelativeWindow
-        && wp->w_float_config.window == win->handle) {
+    if (wp->w_config.relative == kFloatRelativeWindow
+        && wp->w_config.window == win->handle) {
       wp->w_pos_changed = true;
     }
   }
@@ -275,7 +275,7 @@ void win_check_anchored_floats(win_T *win)
 void win_reconfig_floats(void)
 {
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
-    win_config_float(wp, wp->w_float_config);
+    win_config_float(wp, wp->w_config);
   }
 }
 

@@ -738,7 +738,7 @@ int win_get_bordertext_col(int total_col, int text_width, AlignTextPos align)
 static void win_redr_border(win_T *wp)
 {
   wp->w_redr_border = false;
-  if (!(wp->w_floating && wp->w_float_config.border)) {
+  if (!(wp->w_floating && wp->w_config.border)) {
     return;
   }
 
@@ -746,9 +746,9 @@ static void win_redr_border(win_T *wp)
 
   schar_T chars[8];
   for (int i = 0; i < 8; i++) {
-    chars[i] = schar_from_str(wp->w_float_config.border_chars[i]);
+    chars[i] = schar_from_str(wp->w_config.border_chars[i]);
   }
-  int *attrs = wp->w_float_config.border_attr;
+  int *attrs = wp->w_config.border_attr;
 
   int *adj = wp->w_border_adj;
   int irow = wp->w_height_inner + wp->w_winbar_height;
@@ -764,10 +764,10 @@ static void win_redr_border(win_T *wp)
       grid_line_put_schar(i + adj[3], chars[1], attrs[1]);
     }
 
-    if (wp->w_float_config.title) {
-      int title_col = win_get_bordertext_col(icol, wp->w_float_config.title_width,
-                                             wp->w_float_config.title_pos);
-      win_redr_bordertext(wp, wp->w_float_config.title_chunks, title_col);
+    if (wp->w_config.title) {
+      int title_col = win_get_bordertext_col(icol, wp->w_config.title_width,
+                                             wp->w_config.title_pos);
+      win_redr_bordertext(wp, wp->w_config.title_chunks, title_col);
     }
     if (adj[1]) {
       grid_line_put_schar(icol + adj[3], chars[2], attrs[2]);
@@ -800,10 +800,10 @@ static void win_redr_border(win_T *wp)
       grid_line_put_schar(i + adj[3], chars[ic], attrs[ic]);
     }
 
-    if (wp->w_float_config.footer) {
-      int footer_col = win_get_bordertext_col(icol, wp->w_float_config.footer_width,
-                                              wp->w_float_config.footer_pos);
-      win_redr_bordertext(wp, wp->w_float_config.footer_chunks, footer_col);
+    if (wp->w_config.footer) {
+      int footer_col = win_get_bordertext_col(icol, wp->w_config.footer_width,
+                                              wp->w_config.footer_pos);
+      win_redr_bordertext(wp, wp->w_config.footer_chunks, footer_col);
     }
     if (adj[1]) {
       grid_line_put_schar(icol + adj[3], chars[4], attrs[4]);
