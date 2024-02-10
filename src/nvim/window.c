@@ -7359,9 +7359,17 @@ static bool frame_check_width(const frame_T *topfrp, int width)
 }
 
 /// Simple int comparison function for use with qsort()
-static int int_cmp(const void *a, const void *b)
+static int int_cmp(const void *pa, const void *pb)
 {
-  return *(const int *)a - *(const int *)b;
+  const int a = *(const int *)pa;
+  const int b = *(const int *)pb;
+  if (a > b) {
+    return 1;
+  }
+  if (a < b) {
+    return -1;
+  }
+  return 0;
 }
 
 /// Handle setting 'colorcolumn' or 'textwidth' in window "wp".

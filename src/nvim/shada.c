@@ -1875,9 +1875,7 @@ static int compare_file_marks(const void *a, const void *b)
   const FileMarks *const *const b_fms = b;
   return ((*a_fms)->greatest_timestamp == (*b_fms)->greatest_timestamp
           ? 0
-          : ((*a_fms)->greatest_timestamp > (*b_fms)->greatest_timestamp
-             ? -1
-             : 1));
+          : ((*a_fms)->greatest_timestamp > (*b_fms)->greatest_timestamp ? -1 : 1));
 }
 
 /// Parse msgpack object that has given length
