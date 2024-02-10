@@ -245,19 +245,17 @@ void buffer_insert(Buffer buffer, Integer lnum, ArrayOf(String) lines, Error *er
 /// @param index    Line index
 /// @param[out] err Error details, if any
 /// @return Line string
-String buffer_get_line(Buffer buffer, Integer index, Error *err)
+String buffer_get_line(Buffer buffer, Integer index, Arena *arena, Error *err)
   FUNC_API_DEPRECATED_SINCE(1)
 {
   String rv = { .size = 0 };
 
   index = convert_index(index);
-  Array slice = nvim_buf_get_lines(0, buffer, index, index + 1, true, NULL, err);
+  Array slice = nvim_buf_get_lines(0, buffer, index, index + 1, true, arena, NULL, err);
 
   if (!ERROR_SET(err) && slice.size) {
     rv = slice.items[0].data.string;
   }
-
-  xfree(slice.items);
 
   return rv;
 }
@@ -319,12 +317,13 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
                                       Integer end,
                                       Boolean include_start,
                                       Boolean include_end,
+                                      Arena *arena,
                                       Error *err)
   FUNC_API_DEPRECATED_SINCE(1)
 {
   start = convert_index(start) + !include_start;
   end = convert_index(end) + include_end;
-  return nvim_buf_get_lines(0, buffer, start, end, false, NULL, err);
+  return nvim_buf_get_lines(0, buffer, start, end, false, arena, NULL, err);
 }
 
 /// Replaces a line range on the buffer

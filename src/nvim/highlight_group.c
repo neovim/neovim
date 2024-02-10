@@ -1672,10 +1672,7 @@ Dictionary ns_get_hl_defs(NS ns_id, Dict(get_highlight) *opts, Arena *arena, Err
   return rv;
 
 cleanup:
-  api_free_integer(id);
-  api_free_boolean(link);
-  Dictionary empty = ARRAY_DICT_INIT;
-  return empty;
+  return (Dictionary)ARRAY_DICT_INIT;
 }
 
 /// Outputs a highlight when doing ":hi MyHighlight"
