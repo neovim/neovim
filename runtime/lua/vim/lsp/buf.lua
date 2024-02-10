@@ -838,7 +838,7 @@ end
 --- ```
 ---
 ---@param lnum integer line number |v:lnum|
----@return integer fold level
+---@return integer|string fold level
 function M.foldexpr(lnum)
   local bufnr = vim.api.nvim_get_current_buf()
   return util._get_fold_level(bufnr, lnum)

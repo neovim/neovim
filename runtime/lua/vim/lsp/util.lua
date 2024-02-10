@@ -1882,23 +1882,76 @@ function M.symbols_to_items(symbols, bufnr)
 end
 
 do
-  ---@type table<integer, table<integer, integer>>
+  ---@type table<integer, table<integer, string>>
   local foldlevels = {}
 
   ---@private
-  --- Applies a list of fold ranges to a given buffer.
+  --- Applies a list of folding ranges to a given buffer.
   ---
   ---@param bufnr integer buffer id
   ---@param ranges lsp.FoldingRange[] list of `FoldingRange` objects
   function M._update_folds(bufnr, ranges)
     ---@type table<integer, integer>
-    foldlevels[bufnr] = {}
+    local levels = {}
+    ---@type table<integer, integer>
+    local endlevels = {} -- tracks lines where folding levels end
+
+    local starts_level = function(lvl, linenr)
+      return (levels[linenr] or 0) >= lvl
+        and (
+          (levels[linenr - 1] or 0) < lvl
+          or (endlevels[linenr - 1] and endlevels[linenr - 1] <= lvl)
+        )
+    end
+
+    local ends_level = function(lvl, linenr)
+      return endlevels[linenr] and endlevels[linenr] <= lvl
+    end
+
     for _, range in ipairs(ranges) do
-      if range.startLine ~= range.endLine then
-        for linenr = range.startLine + 1, range.endLine + 1 do
-          foldlevels[bufnr][linenr] = (foldlevels[bufnr][linenr] or 0) + 1
+      -- Two folds can never "overlap", i.e. have a non-empty intersection without
+      -- one being a subset of the other. However, LSP servers are not constrained
+      -- to only send non-overlapping ranges. We treat such ranges just like
+      --   :<startLine>,<endLine>fold
+      -- by finding the smallest non-overlapping folding range extending the target range.
+
+      -- find the highest continuous fold level in the range by checking which levels end
+      -- before the range does
+      local maxlvl = levels[range.startLine + 1] or 0
+      for linenr = range.startLine + 1, range.endLine do
+        if endlevels[linenr] and endlevels[linenr] <= maxlvl then
+          maxlvl = endlevels[linenr] - 1
         end
       end
+
+      -- if we're not already on maxlvl, extend the range until the beginning/end of the
+      -- overlapping folds just above maxlvl are found
+      local startLine = range.startLine + 1
+      local endLine = range.endLine + 1
+
+      while (levels[startLine] or 0) > maxlvl and not starts_level(maxlvl + 1, startLine) do
+        startLine = startLine - 1
+      end
+      while (levels[endLine] or 0) > maxlvl and not ends_level(maxlvl + 1, endLine) do
+        endLine = endLine + 1
+      end
+
+      -- fold the final range, making sure endlevels[endLine] tracks the lowest level
+      -- ending on that line
+      for linenr = startLine, endLine do
+        levels[linenr] = (levels[linenr] or 0) + 1
+        if endlevels[linenr] and linenr ~= endLine then
+          endlevels[linenr] = endlevels[linenr] + 1
+        end
+      end
+      endlevels[endLine] = endlevels[endLine] or maxlvl + 1
+    end
+
+    ---@cast levels table<integer, string>
+    foldlevels[bufnr] = levels
+
+    for linenr, level in pairs(endlevels) do
+      foldlevels[bufnr][linenr] = '<' .. level
     end
   end
 
@@ -1906,12 +1959,12 @@ do
   --- Returns the fold level for a line in a buffer.
   ---@param bufnr integer buffer id
   ---@param linenr integer line number (1-indexed)
-  ---@return integer fold level
+  ---@return integer|string fold level
   function M._get_fold_level(bufnr, linenr)
     if not foldlevels[bufnr] then
       return 0
     end
-    return foldlevels[bufnr][linenr]
+    return foldlevels[bufnr][linenr] or 0
   end
 end
 

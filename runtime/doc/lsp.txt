@@ -1240,7 +1240,7 @@ foldexpr({lnum})                                      *vim.lsp.buf.foldexpr()*
       • {lnum}  (`integer`) line number |v:lnum|
 
     Return: ~
-        (`integer`) fold level
+        (`integer|string`) fold level
 
 format({options})                                       *vim.lsp.buf.format()*
     Formats a buffer using the attached (and optionally filtered) language
