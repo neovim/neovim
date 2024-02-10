@@ -2443,6 +2443,90 @@ describe('LSP', function()
       eq(0, lines)
       os.remove(new)
     end)
+    it('Ensures if the new buffer remains unlisted if the old was not in window before', function()
+      local old = tmpname()
+      write_file(old, 'Test content')
+      local new = tmpname()
+      os.remove(new) -- only reserve the name, file must not exist for the test scenario
+      local buflisted = exec_lua(
+        [[
+        local old = select(1, ...)
+	local oldbufnr = vim.fn.bufadd(old)
+	local newbufnr = vim.fn.bufadd(new)
+        local new = select(2, ...)
+        vim.lsp.util.rename(old, new) 
+        return vim.bo[newbufnr].buflisted
+      ]],
+        old,
+        new
+      )
+      eq(false, buflisted)
+      os.remove(new)
+    end)
+    it('Ensures if the new buffer remains unloaded if the old was not in window before', function()
+      local old = tmpname()
+      write_file(old, 'Test content')
+      local new = tmpname()
+      os.remove(new) -- only reserve the name, file must not exist for the test scenario
+      local bufloaded = exec_lua(
+        [[
+        local old = select(1, ...)
+	local oldbufnr = vim.fn.bufadd(old)
+	local newbufnr = vim.fn.bufadd(new)
+        local new = select(2, ...)
+        vim.lsp.util.rename(old, new) 
+        return vim.api.nvim_buf_is_loaded(newbufnr)
+      ]],
+        old,
+        new
+      )
+      eq(false, bufloaded)
+      os.remove(new)
+    end)
+    it('Ensures if the new buffer is listed if the old was in window before', function()
+      local old = tmpname()
+      write_file(old, 'Test content')
+      local new = tmpname()
+      os.remove(new) -- only reserve the name, file must not exist for the test scenario
+      local buflisted = exec_lua(
+        [[
+        local win =  vim.api.nvim_get_current_win()
+        local old = select(1, ...)
+	local oldbufnr = vim.fn.bufadd(old)
+        vim.api.nvim_win_set_buf(win, oldbufnr)
+        local new = select(2, ...)
+        vim.lsp.util.rename(old, new) 
+        local newbufnr = vim.fn.bufadd(new)
+        return vim.bo[newbufnr].buflisted
+      ]],
+        old,
+        new
+      )
+      eq(true, buflisted)
+      os.remove(new)
+    end)
+    it('Ensures if the new buffer is loaded if the old was in window before', function()
+      local old = tmpname()
+      write_file(old, 'Test content')
+      local new = tmpname()
+      os.remove(new) -- only reserve the name, file must not exist for the test scenario
+      local bufloaded = exec_lua(
+        [[
+        local win =  vim.api.nvim_get_current_win()
+        local old = select(1, ...)
+	local oldbufnr = vim.fn.bufadd(old)
+        vim.api.nvim_win_set_buf(win, oldbufnr)
+        local new = select(2, ...)
+        vim.lsp.util.rename(old, new) 
+        local newbufnr = vim.fn.bufadd(new)
+        return vim.api.nvim_buf_is_loaded(newbufnr)
+      ]],
+        old,
+        new
+      )
+      eq(true, bufloaded)
+      os.remove(new)
+    end)
     it('Can rename a directory', function()
       -- only reserve the name, file must not exist for the test scenario
       local old_dir = tmpname()
