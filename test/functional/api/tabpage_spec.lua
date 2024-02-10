@@ -131,18 +131,15 @@ describe('api/tabpage', function()
             'col',
             {
               { 'leaf', buf1 },
-              { 'leaf', buf2, { focused = true } },
+              { 'leaf', buf2 },
             },
           },
           { 'leaf', buf3 },
         },
       }
       local tab = api.nvim_get_current_tabpage()
-      helpers.command('tabnew')
-      local cur_tab = api.nvim_get_current_tabpage()
 
       api.nvim_tabpage_set_layout(tab, layout)
-      eq(api.nvim_get_current_tabpage(), cur_tab)
 
       local win1, win2, win3 = unpack(api.nvim_tabpage_list_wins(tab))
 
@@ -161,11 +158,73 @@ describe('api/tabpage', function()
         },
       }, tab_layout)
 
-      eq(win2, api.nvim_tabpage_get_win(tab))
-
       eq(buf1, api.nvim_win_get_buf(win1))
       eq(buf2, api.nvim_win_get_buf(win2))
       eq(buf3, api.nvim_win_get_buf(win3))
+    end)
+
+    it("sets the tabpage layout with 'focused' option", function()
+      local buf1 = api.nvim_create_buf(false, true)
+      local buf2 = api.nvim_create_buf(false, true)
+      local buf3 = api.nvim_create_buf(false, true)
+      local layout = {
+        'row',
+        {
+          {
+            'col',
+            {
+              { 'leaf', buf1 },
+              { 'leaf', buf2 },
+            },
+          },
+          { 'leaf', buf3, { focused = true } },
+        },
+      }
+      local tab = api.nvim_get_current_tabpage()
+      api.nvim_tabpage_set_layout(tab, layout)
+      local win1, win2, win3 = unpack(api.nvim_tabpage_list_wins(tab))
+      eq(buf1, api.nvim_win_get_buf(win1))
+      eq(buf2, api.nvim_win_get_buf(win2))
+      eq(buf3, api.nvim_win_get_buf(win3))
+
+      eq(win3, api.nvim_tabpage_get_win(tab))
+    end)
+
+    it('sets the layout of non-current tabpage', function()
+      local tab1 = api.nvim_get_current_tabpage()
+      local tab1_layout = api.nvim_tabpage_get_layout(tab1)
+      command('tabnew')
+      local tab2 = api.nvim_get_current_tabpage()
+      api.nvim_set_current_tabpage(tab1)
+
+      local buf1 = api.nvim_create_buf(false, true)
+      local buf2 = api.nvim_create_buf(false, true)
+
+      local layout = {
+        'row',
+        {
+          { 'leaf', buf1 },
+          { 'leaf', buf2 },
+        },
+      }
+      api.nvim_tabpage_set_layout(tab2, layout)
+
+      local win1, win2 = unpack(api.nvim_tabpage_list_wins(tab2))
+      eq(buf1, api.nvim_win_get_buf(win1))
+      eq(buf2, api.nvim_win_get_buf(win2))
+      eq({
+        'row',
+        {
+          { 'leaf', win1 },
+          { 'leaf', win2 },
+        },
+      }, api.nvim_tabpage_get_layout(tab2))
+
+      -- we should not have left the current tabpage
+      eq(tab1, api.nvim_get_current_tabpage())
+
+      -- tab1 layout should not have changed
+      eq(tab1_layout, api.nvim_tabpage_get_layout(tab1))
     end)
   end)
 
