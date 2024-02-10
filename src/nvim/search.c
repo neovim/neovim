@@ -3197,7 +3197,11 @@ static int fuzzy_match_item_compare(const void *const s1, const void *const s2)
   const int idx1 = ((const fuzzyItem_T *)s1)->idx;
   const int idx2 = ((const fuzzyItem_T *)s2)->idx;
 
-  return v1 == v2 ? (idx1 - idx2) : v1 > v2 ? -1 : 1;
+  if (v1 == v2) {
+    return idx1 == idx2 ? 0 : idx1 > idx2 ? 1 : -1;
+  } else {
+    return v1 > v2 ? -1 : 1;
+  }
 }
 
 /// Fuzzy search the string "str" in a list of "items" and return the matching
