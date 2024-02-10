@@ -2792,8 +2792,10 @@ static int tv_nr_compare(const void *a1, const void *a2)
 {
   const listitem_T *const li1 = tv_list_first(*(const list_T **)a1);
   const listitem_T *const li2 = tv_list_first(*(const list_T **)a2);
+  const varnumber_T n1 = TV_LIST_ITEM_TV(li1)->vval.v_number;
+  const varnumber_T n2 = TV_LIST_ITEM_TV(li2)->vval.v_number;
 
-  return (int)(TV_LIST_ITEM_TV(li1)->vval.v_number - TV_LIST_ITEM_TV(li2)->vval.v_number);
+  return n1 == n2 ? 0 : n1 > n2 ? 1 : -1;
 }
 
 /// "setcellwidths()" function
