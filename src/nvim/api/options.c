@@ -263,10 +263,10 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
 /// @see |nvim_get_commands()|
 ///
 /// @return dictionary of all options
-Dictionary nvim_get_all_options_info(Error *err)
+Dictionary nvim_get_all_options_info(Arena *arena, Error *err)
   FUNC_API_SINCE(7)
 {
-  return get_all_vimoptions();
+  return get_all_vimoptions(arena);
 }
 
 /// Gets the option information for one option from arbitrary buffer or window
@@ -302,7 +302,7 @@ Dictionary nvim_get_all_options_info(Error *err)
 ///                         Implies {scope} is "local".
 /// @param[out] err Error details, if any
 /// @return         Option Information
-Dictionary nvim_get_option_info2(String name, Dict(option) *opts, Error *err)
+Dictionary nvim_get_option_info2(String name, Dict(option) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(11)
 {
   OptIndex opt_idx = 0;
@@ -317,5 +317,5 @@ Dictionary nvim_get_option_info2(String name, Dict(option) *opts, Error *err)
   buf_T *buf = (req_scope == kOptReqBuf) ? (buf_T *)from : curbuf;
   win_T *win = (req_scope == kOptReqWin) ? (win_T *)from : curwin;
 
-  return get_vimoption(name, scope, buf, win, err);
+  return get_vimoption(name, scope, buf, win, arena, err);
 }

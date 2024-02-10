@@ -425,12 +425,12 @@ String cstrn_as_string(char *str, size_t maxsize)
 /// @param str the C string to use
 /// @return The resulting String, or an empty String if
 ///           str was NULL
-String cstr_as_string(char *str) FUNC_ATTR_PURE
+String cstr_as_string(const char *str) FUNC_ATTR_PURE
 {
   if (str == NULL) {
     return (String)STRING_INIT;
   }
-  return (String){ .data = str, .size = strlen(str) };
+  return (String){ .data = (char *)str, .size = strlen(str) };
 }
 
 /// Return the owned memory of a ga as a String

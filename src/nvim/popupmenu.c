@@ -488,7 +488,7 @@ void pum_redraw(void)
   if (ui_has(kUIMultigrid)) {
     const char *anchor = pum_above ? "SW" : "NW";
     int row_off = pum_above ? -pum_height : 0;
-    ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string((char *)anchor), pum_anchor_grid,
+    ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string(anchor), pum_anchor_grid,
                           pum_row - row_off, pum_left_col, false, pum_grid.zindex);
   }
 

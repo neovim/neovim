@@ -626,7 +626,7 @@ Dict(win_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
           PUT_KEY_X(rv, bufpos, pos);
         }
       }
-      PUT_KEY_X(rv, anchor, cstr_as_string((char *)float_anchor_str[config->anchor]));
+      PUT_KEY_X(rv, anchor, cstr_as_string(float_anchor_str[config->anchor]));
       PUT_KEY_X(rv, row, config->row);
       PUT_KEY_X(rv, col, config->col);
       PUT_KEY_X(rv, zindex, config->zindex);
@@ -659,12 +659,12 @@ Dict(win_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
     PUT_KEY_X(rv, width, wp->w_width);
     PUT_KEY_X(rv, height, wp->w_height);
     WinSplit split = win_split_dir(wp);
-    PUT_KEY_X(rv, split, cstr_as_string((char *)win_split_str[split]));
+    PUT_KEY_X(rv, split, cstr_as_string(win_split_str[split]));
   }
 
   const char *rel = (wp->w_floating && !config->external
                      ? float_relative_str[config->relative] : "");
-  PUT_KEY_X(rv, relative, cstr_as_string((char *)rel));
+  PUT_KEY_X(rv, relative, cstr_as_string(rel));
 
   return rv;
 }

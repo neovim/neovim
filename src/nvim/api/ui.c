@@ -247,10 +247,9 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dictiona
 void ui_attach(uint64_t channel_id, Integer width, Integer height, Boolean enable_rgb, Error *err)
   FUNC_API_DEPRECATED_SINCE(1)
 {
-  Dictionary opts = ARRAY_DICT_INIT;
-  PUT(opts, "rgb", BOOLEAN_OBJ(enable_rgb));
+  MAXSIZE_TEMP_DICT(opts, 1);
+  PUT_C(opts, "rgb", BOOLEAN_OBJ(enable_rgb));
   nvim_ui_attach(channel_id, width, height, opts, err);
-  api_free_dictionary(opts);
 }
 
 /// Tells the nvim server if focus was gained or lost by the GUI
@@ -789,7 +788,7 @@ void remote_ui_hl_attr_define(UI *ui, Integer id, HlAttrs rgb_attrs, HlAttrs cte
   // system. So we add them here.
   if (rgb_attrs.url >= 0) {
     const char *url = hl_get_url((uint32_t)rgb_attrs.url);
-    PUT_C(rgb, "url", STRING_OBJ(cstr_as_string((char *)url)));
+    PUT_C(rgb, "url", CSTR_AS_OBJ(url));
   }
 
   ADD_C(args, DICTIONARY_OBJ(rgb));
@@ -857,7 +856,7 @@ void remote_ui_put(UI *ui, const char *cell)
   UIData *data = ui->data;
   data->client_col++;
   Array args = data->call_buf;
-  ADD_C(args, CSTR_AS_OBJ((char *)cell));
+  ADD_C(args, CSTR_AS_OBJ(cell));
   push_call(ui, "put", args);
 }
 
@@ -1112,10 +1111,4 @@ void remote_ui_event(UI *ui, char *name, Array args)
 
 free_ret:
   arena_mem_free(arena_finish(&arena));
-}
-
-void remote_ui_inspect(UI *ui, Dictionary *info)
-{
-  UIData *data = ui->data;
-  PUT(*info, "chan", INTEGER_OBJ((Integer)data->channel_id));
 }

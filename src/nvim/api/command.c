@@ -96,15 +96,15 @@
 ///               - "belowright": |:belowright|.
 ///               - "topleft": |:topleft|.
 ///               - "botright": |:botright|.
-Dictionary nvim_parse_cmd(String str, Dict(empty) *opts, Error *err)
+Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(10) FUNC_API_FAST
 {
-  Dictionary result = ARRAY_DICT_INIT;
+  Dict(cmd) result = { 0 };
 
   // Parse command line
   exarg_T ea;
   CmdParseInfo cmdinfo;
-  char *cmdline = string_to_cstr(str);
+  char *cmdline = arena_memdupz(arena, str.data, str.size);
   const char *errormsg = NULL;
 
   if (!parse_cmdline(cmdline, &ea, &cmdinfo, &errormsg)) {
@@ -124,22 +124,23 @@ Dictionary nvim_parse_cmd(String str, Dict(empty) *opts, Error *err)
   // otherwise split arguments by whitespace.
   if (ea.argt & EX_NOSPC) {
     if (*ea.arg != NUL) {
-      ADD(args, STRING_OBJ(cstrn_to_string(ea.arg, length)));
+      args = arena_array(arena, 1);
+      ADD_C(args, STRING_OBJ(cstrn_as_string(ea.arg, length)));
     }
   } else {
     size_t end = 0;
     size_t len = 0;
-    char *buf = xcalloc(length, sizeof(char));
+    char *buf = arena_alloc(arena, length + 1, false);
     bool done = false;
+    args = arena_array(arena, uc_nargs_upper_bound(ea.arg, length));
 
     while (!done) {
       done = uc_split_args_iter(ea.arg, length, &end, buf, &len);
       if (len > 0) {
-        ADD(args, STRING_OBJ(cstrn_to_string(buf, len)));
+        ADD_C(args, STRING_OBJ(cstrn_as_string(buf, len)));
+        buf += len + 1;
       }
     }
-
-    xfree(buf);
   }
 
   ucmd_T *cmd = NULL;
@@ -149,40 +150,32 @@ Dictionary nvim_parse_cmd(String str, Dict(empty) *opts, Error *err)
     cmd = USER_CMD_GA(&curbuf->b_ucmds, ea.useridx);
   }
 
-  if (cmd != NULL) {
-    PUT(result, "cmd", CSTR_TO_OBJ(cmd->uc_name));
-  } else {
-    PUT(result, "cmd", CSTR_TO_OBJ(get_command_name(NULL, ea.cmdidx)));
-  }
+  char *name = (cmd != NULL ? cmd->uc_name : get_command_name(NULL, ea.cmdidx));
+  PUT_KEY(result, cmd, cmd, cstr_as_string(name));
 
   if (ea.argt & EX_RANGE) {
-    Array range = ARRAY_DICT_INIT;
+    Array range = arena_array(arena, 2);
     if (ea.addr_count > 0) {
       if (ea.addr_count > 1) {
-        ADD(range, INTEGER_OBJ(ea.line1));
+        ADD_C(range, INTEGER_OBJ(ea.line1));
       }
-      ADD(range, INTEGER_OBJ(ea.line2));
+      ADD_C(range, INTEGER_OBJ(ea.line2));
     }
-    PUT(result, "range", ARRAY_OBJ(range));
+    PUT_KEY(result, cmd, range, range);
   }
 
   if (ea.argt & EX_COUNT) {
-    if (ea.addr_count > 0) {
-      PUT(result, "count", INTEGER_OBJ(ea.line2));
-    } else if (cmd != NULL) {
-      PUT(result, "count", INTEGER_OBJ(cmd->uc_def));
-    } else {
-      PUT(result, "count", INTEGER_OBJ(0));
-    }
+    Integer count = ea.addr_count > 0 ? ea.line2 : (cmd != NULL ? cmd->uc_def : 0);
+    PUT_KEY(result, cmd, count, count);
   }
 
   if (ea.argt & EX_REGSTR) {
     char reg[2] = { (char)ea.regname, NUL };
-    PUT(result, "reg", CSTR_TO_OBJ(reg));
+    PUT_KEY(result, cmd, reg, CSTR_TO_ARENA_STR(arena, reg));
   }
 
-  PUT(result, "bang", BOOLEAN_OBJ(ea.forceit));
-  PUT(result, "args", ARRAY_OBJ(args));
+  PUT_KEY(result, cmd, bang, ea.forceit);
+  PUT_KEY(result, cmd, args, args);
 
   char nargs[2];
   if (ea.argt & EX_EXTRA) {
@@ -201,9 +194,9 @@ Dictionary nvim_parse_cmd(String str, Dict(empty) *opts, Error *err)
     nargs[0] = '0';
   }
   nargs[1] = '\0';
-  PUT(result, "nargs", CSTR_TO_OBJ(nargs));
+  PUT_KEY(result, cmd, nargs, CSTR_TO_ARENA_OBJ(arena, nargs));
 
-  const char *addr;
+  char *addr;
   switch (ea.addr_type) {
   case ADDR_LINES:
     addr = "line";
@@ -233,38 +226,37 @@ Dictionary nvim_parse_cmd(String str, Dict(empty) *opts, Error *err)
     addr = "?";
     break;
   }
-  PUT(result, "addr", CSTR_TO_OBJ(addr));
-  PUT(result, "nextcmd", CSTR_TO_OBJ(ea.nextcmd));
+  PUT_KEY(result, cmd, addr, CSTR_AS_OBJ(addr));
+  PUT_KEY(result, cmd, nextcmd, CSTR_AS_OBJ(ea.nextcmd));
 
-  Dictionary mods = ARRAY_DICT_INIT;
+  // TODO(bfredl): nested keydict would be nice..
+  Dictionary mods = arena_dict(arena, 20);
 
-  Dictionary filter = ARRAY_DICT_INIT;
-  PUT(filter, "pattern", cmdinfo.cmdmod.cmod_filter_pat
-      ? CSTR_TO_OBJ(cmdinfo.cmdmod.cmod_filter_pat)
-      : STATIC_CSTR_TO_OBJ(""));
-  PUT(filter, "force", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_filter_force));
-  PUT(mods, "filter", DICTIONARY_OBJ(filter));
+  Dictionary filter = arena_dict(arena, 2);
+  PUT_C(filter, "pattern", CSTR_TO_ARENA_OBJ(arena, cmdinfo.cmdmod.cmod_filter_pat));
+  PUT_C(filter, "force", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_filter_force));
+  PUT_C(mods, "filter", DICTIONARY_OBJ(filter));
 
-  PUT(mods, "silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SILENT));
-  PUT(mods, "emsg_silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_ERRSILENT));
-  PUT(mods, "unsilent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_UNSILENT));
-  PUT(mods, "sandbox", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX));
-  PUT(mods, "noautocmd", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOAUTOCMD));
-  PUT(mods, "tab", INTEGER_OBJ(cmdinfo.cmdmod.cmod_tab - 1));
-  PUT(mods, "verbose", INTEGER_OBJ(cmdinfo.cmdmod.cmod_verbose - 1));
-  PUT(mods, "browse", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_BROWSE));
-  PUT(mods, "confirm", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_CONFIRM));
-  PUT(mods, "hide", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_HIDE));
-  PUT(mods, "keepalt", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPALT));
-  PUT(mods, "keepjumps", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPJUMPS));
-  PUT(mods, "keepmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPMARKS));
-  PUT(mods, "keeppatterns", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPPATTERNS));
-  PUT(mods, "lockmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_LOCKMARKS));
-  PUT(mods, "noswapfile", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOSWAPFILE));
-  PUT(mods, "vertical", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_VERT));
-  PUT(mods, "horizontal", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_HOR));
+  PUT_C(mods, "silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SILENT));
+  PUT_C(mods, "emsg_silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_ERRSILENT));
+  PUT_C(mods, "unsilent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_UNSILENT));
+  PUT_C(mods, "sandbox", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX));
+  PUT_C(mods, "noautocmd", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOAUTOCMD));
+  PUT_C(mods, "tab", INTEGER_OBJ(cmdinfo.cmdmod.cmod_tab - 1));
+  PUT_C(mods, "verbose", INTEGER_OBJ(cmdinfo.cmdmod.cmod_verbose - 1));
+  PUT_C(mods, "browse", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_BROWSE));
+  PUT_C(mods, "confirm", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_CONFIRM));
+  PUT_C(mods, "hide", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_HIDE));
+  PUT_C(mods, "keepalt", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPALT));
+  PUT_C(mods, "keepjumps", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPJUMPS));
+  PUT_C(mods, "keepmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPMARKS));
+  PUT_C(mods, "keeppatterns", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPPATTERNS));
+  PUT_C(mods, "lockmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_LOCKMARKS));
+  PUT_C(mods, "noswapfile", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOSWAPFILE));
+  PUT_C(mods, "vertical", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_VERT));
+  PUT_C(mods, "horizontal", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_HOR));
 
-  const char *split;
+  char *split;
   if (cmdinfo.cmdmod.cmod_split & WSP_BOT) {
     split = "botright";
   } else if (cmdinfo.cmdmod.cmod_split & WSP_TOP) {
@@ -276,18 +268,17 @@ Dictionary nvim_parse_cmd(String str, Dict(empty) *opts, Error *err)
   } else {
     split = "";
   }
-  PUT(mods, "split", CSTR_TO_OBJ(split));
+  PUT_C(mods, "split", CSTR_AS_OBJ(split));
 
-  PUT(result, "mods", DICTIONARY_OBJ(mods));
+  PUT_KEY(result, cmd, mods, mods);
 
-  Dictionary magic = ARRAY_DICT_INIT;
-  PUT(magic, "file", BOOLEAN_OBJ(cmdinfo.magic.file));
-  PUT(magic, "bar", BOOLEAN_OBJ(cmdinfo.magic.bar));
-  PUT(result, "magic", DICTIONARY_OBJ(magic));
+  Dictionary magic = arena_dict(arena, 2);
+  PUT_C(magic, "file", BOOLEAN_OBJ(cmdinfo.magic.file));
+  PUT_C(magic, "bar", BOOLEAN_OBJ(cmdinfo.magic.bar));
+  PUT_KEY(result, cmd, magic, magic);
 
   undo_cmdmod(&cmdinfo.cmdmod);
 end:
-  xfree(cmdline);
   return result;
 }
 

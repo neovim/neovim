@@ -95,7 +95,7 @@ int os_chdir(const char *path)
   }
   int err = uv_chdir(path);
   if (err == 0) {
-    ui_call_chdir(cstr_as_string((char *)path));
+    ui_call_chdir(cstr_as_string(path));
   }
   return err;
 }

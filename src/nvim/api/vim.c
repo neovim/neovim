@@ -1866,10 +1866,10 @@ Dictionary nvim__stats(Arena *arena)
 ///   - "rgb"     true if the UI uses RGB colors (false implies |cterm-colors|)
 ///   - "ext_..." Requested UI extensions, see |ui-option|
 ///   - "chan"    |channel-id| of remote UI
-Array nvim_list_uis(void)
+Array nvim_list_uis(Arena *arena)
   FUNC_API_SINCE(4)
 {
-  return ui_array();
+  return ui_array(arena);
 }
 
 /// Gets the immediate children of process `pid`.
@@ -2005,7 +2005,7 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Arena *arena, E
   ADD_C(ret, DICTIONARY_OBJ(hl_get_attr_by_id(attr, true, arena, err)));
   // will not work first time
   if (!highlight_use_hlstate()) {
-    ADD_C(ret, ARRAY_OBJ(hl_inspect(attr)));
+    ADD_C(ret, ARRAY_OBJ(hl_inspect(attr, arena)));
   }
   return ret;
 }
@@ -2289,7 +2289,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *
                                                opts->use_winbar, stc_hl_id);
 
       PUT_C(hl_info, "start", INTEGER_OBJ(0));
-      PUT_C(hl_info, "group", CSTR_AS_OBJ((char *)grpname));
+      PUT_C(hl_info, "group", CSTR_AS_OBJ(grpname));
 
       ADD_C(hl_values, DICTIONARY_OBJ(hl_info));
     }
@@ -2308,7 +2308,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *
         snprintf(user_group, sizeof(user_group), "User%d", sp->userhl);
         grpname = arena_memdupz(arena, user_group, strlen(user_group));
       }
-      PUT_C(hl_info, "group", CSTR_AS_OBJ((char *)grpname));
+      PUT_C(hl_info, "group", CSTR_AS_OBJ(grpname));
       ADD_C(hl_values, DICTIONARY_OBJ(hl_info));
     }
     PUT_C(result, "highlights", ARRAY_OBJ(hl_values));
