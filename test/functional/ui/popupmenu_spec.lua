@@ -3784,9 +3784,7 @@ describe('builtin popupmenu', function()
           {n: bar }|
           {n: baz }|
         ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 1, 17, false, 250 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 17, false, 250 } },
         }
       else
         feed('<RightMouse><18,0>')
@@ -3969,7 +3967,38 @@ describe('builtin popupmenu', function()
       end
       eq(true, screen.options.mousemoveevent)
       if multigrid then
-        api.nvim_input_mouse('move', '', '', 2, 3, 6)
+        api.nvim_input_mouse('wheel', 'up', '', 2, 0, 4)
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*5
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|*4
+        ## grid 3
+          :let g:menustr = 'foo'          |
+        ## grid 4
+          {s: foo }|
+          {n: bar }|
+          {n: baz }|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250 } },
+        })
+      else
+        feed('<ScrollWheelUp><4,0>')
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~  }{s: foo }{1:                        }|
+          {1:~  }{n: bar }{1:                        }|
+          {1:~  }{n: baz }{1:                        }|
+          {1:~                               }|
+          :let g:menustr = 'foo'          |
+        ]])
+      end
+      eq(true, screen.options.mousemoveevent)
+      if multigrid then
+        api.nvim_input_mouse('move', '', '', 4, 2, 3)
         screen:expect({
           grid = [[
         ## grid 1
@@ -4000,7 +4029,38 @@ describe('builtin popupmenu', function()
       end
       eq(true, screen.options.mousemoveevent)
       if multigrid then
-        api.nvim_input_mouse('left', 'press', '', 2, 2, 6)
+        api.nvim_input_mouse('wheel', 'down', '', 4, 2, 3)
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*5
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|*4
+        ## grid 3
+          :let g:menustr = 'foo'          |
+        ## grid 4
+          {n: foo }|
+          {s: bar }|
+          {n: baz }|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250 } },
+        })
+      else
+        feed('<ScrollWheelDown><6,3>')
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~  }{n: foo }{1:                        }|
+          {1:~  }{s: bar }{1:                        }|
+          {1:~  }{n: baz }{1:                        }|
+          {1:~                               }|
+          :let g:menustr = 'foo'          |
+        ]])
+      end
+      eq(true, screen.options.mousemoveevent)
+      if multigrid then
+        api.nvim_input_mouse('left', 'press', '', 4, 1, 3)
         screen:expect({
           grid = [[
         ## grid 1
