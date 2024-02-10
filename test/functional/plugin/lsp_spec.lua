@@ -2454,7 +2454,7 @@ describe('LSP', function()
         local oldbufnr = vim.fn.bufadd(old)
         local newbufnr = vim.fn.bufadd(new)
         local new = select(2, ...)
-        vim.lsp.util.rename(old, new) 
+        vim.lsp.util.rename(old, new)
         return vim.bo[newbufnr].buflisted
       ]],
         old,
@@ -2474,7 +2474,7 @@ describe('LSP', function()
         local oldbufnr = vim.fn.bufadd(old)
         local newbufnr = vim.fn.bufadd(new)
         local new = select(2, ...)
-        vim.lsp.util.rename(old, new) 
+        vim.lsp.util.rename(old, new)
         return vim.api.nvim_buf_is_loaded(newbufnr)
       ]],
         old,
@@ -2495,7 +2495,7 @@ describe('LSP', function()
         local oldbufnr = vim.fn.bufadd(old)
         vim.api.nvim_win_set_buf(win, oldbufnr)
         local new = select(2, ...)
-        vim.lsp.util.rename(old, new) 
+        vim.lsp.util.rename(old, new)
         local newbufnr = vim.fn.bufadd(new)
         return vim.bo[newbufnr].buflisted
       ]],
@@ -2517,7 +2517,7 @@ describe('LSP', function()
         local oldbufnr = vim.fn.bufadd(old)
         vim.api.nvim_win_set_buf(win, oldbufnr)
         local new = select(2, ...)
-        vim.lsp.util.rename(old, new) 
+        vim.lsp.util.rename(old, new)
         local newbufnr = vim.fn.bufadd(new)
         return vim.api.nvim_buf_is_loaded(newbufnr)
       ]],
