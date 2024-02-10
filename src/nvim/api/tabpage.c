@@ -11,6 +11,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/window.h"
 #include "nvim/globals.h"
+#include "nvim/lib/queue_defs.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memory.h"
 #include "nvim/window.h"
@@ -97,8 +98,6 @@ void nvim_tabpage_set_layout(Tabpage tabpage, Array layout, Error *err)
   }
 
   RedrawingDisabled++;
-  autocmd_no_enter++;
-  autocmd_no_leave++;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, tab) {
     if (wp != tab->tp_curwin) {
@@ -116,8 +115,6 @@ void nvim_tabpage_set_layout(Tabpage tabpage, Array layout, Error *err)
 
   NLUA_EXEC_STATIC("vim._set_layout(...)", a, err);
 
-  autocmd_no_enter--;
-  autocmd_no_leave--;
   RedrawingDisabled--;
 }
 
