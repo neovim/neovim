@@ -655,6 +655,20 @@ describe('TUI', function()
     end
     screen:expect_unchanged()
     if esc then
+      feed_data('\027[<64;5;1M')
+    else
+      api.nvim_input_mouse('wheel', 'up', '', 0, 0, 4)
+    end
+    screen:expect([[
+      {1:p}opup menu test                                   |
+      {4:~  }{14: foo }{4:                                          }|
+      {4:~  }{13: bar }{4:                                          }|
+      {4:~  }{13: baz }{4:                                          }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    if esc then
       feed_data('\027[<35;7;4M')
     else
       api.nvim_input_mouse('move', '', '', 0, 3, 6)
@@ -664,6 +678,20 @@ describe('TUI', function()
       {4:~  }{13: foo }{4:                                          }|
       {4:~  }{13: bar }{4:                                          }|
       {4:~  }{14: baz }{4:                                          }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    if esc then
+      feed_data('\027[<65;7;4M')
+    else
+      api.nvim_input_mouse('wheel', 'down', '', 0, 3, 6)
+    end
+    screen:expect([[
+      {1:p}opup menu test                                   |
+      {4:~  }{13: foo }{4:                                          }|
+      {4:~  }{14: bar }{4:                                          }|
+      {4:~  }{13: baz }{4:                                          }|
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
