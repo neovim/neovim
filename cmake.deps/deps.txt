@@ -53,8 +53,8 @@ TREESITTER_QUERY_URL https://github.com/nvim-treesitter/tree-sitter-query/archiv
 TREESITTER_QUERY_SHA256 e2b806f80e8bf1c4f4e5a96248393fe6622fc1fc6189d6896d269658f67f914c
 TREESITTER_PYTHON_URL https://github.com/tree-sitter/tree-sitter-python/archive/v0.20.4.tar.gz
 TREESITTER_PYTHON_SHA256 1e38c991832f461c0da8ca222fbe5be3b82b868fe34025f0295206b5e5789d7a
-TREESITTER_BASH_URL https://github.com/tree-sitter/tree-sitter-bash/archive/v0.20.4.tar.gz
-TREESITTER_BASH_SHA256 8a86182b9dd66acdce27c1e272247882b5cf910dd8725fbb68a8bf9d808fecba
+TREESITTER_BASH_URL https://github.com/tree-sitter/tree-sitter-bash/archive/v0.20.5.tar.gz
+TREESITTER_BASH_SHA256 7bba80ac64a18ec1b3f47e738e6a168f065c3cb4244234eff1b773816008f5a7
 TREESITTER_MARKDOWN_URL https://github.com/MDeiml/tree-sitter-markdown/archive/v0.1.7.tar.gz
 TREESITTER_MARKDOWN_SHA256 7d0e7f7ed4516ed0816f9c304e2e7fa93b2c16f9280416c2fb64dc4efd9c5f83
 TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/v0.20.9.tar.gz
