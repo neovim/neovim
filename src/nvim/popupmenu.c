@@ -744,16 +744,16 @@ static void pum_adjust_float_position(win_T *wp, int height, int width)
 {
   // when floating window in right and right no enough room to show
   // but left has enough room, adjust floating window to left.
-  if (wp->w_float_config.width < width && wp->w_float_config.col > pum_col) {
+  if (wp->w_config.width < width && wp->w_config.col > pum_col) {
     if ((pum_col - 2) > width) {
-      wp->w_float_config.width = width;
-      wp->w_float_config.col = pum_col - width - 1;
+      wp->w_config.width = width;
+      wp->w_config.col = pum_col - width - 1;
     }
   }
-  wp->w_float_config.width = MIN(wp->w_float_config.width, width);
-  wp->w_float_config.height = MIN(Rows, height);
-  wp->w_float_config.hide = false;
-  win_config_float(wp, wp->w_float_config);
+  wp->w_config.width = MIN(wp->w_config.width, width);
+  wp->w_config.height = MIN(Rows, height);
+  wp->w_config.hide = false;
+  win_config_float(wp, wp->w_config);
 }
 
 /// used in nvim_complete_set

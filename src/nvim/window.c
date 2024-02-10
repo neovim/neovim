@@ -328,13 +328,13 @@ newwindow:
             wp = lastwin;  // wrap around
           }
           while (wp != NULL && wp->w_floating
-                 && !wp->w_float_config.focusable) {
+                 && !wp->w_config.focusable) {
             wp = wp->w_prev;
           }
         } else {  // go to next window
           wp = curwin->w_next;
           while (wp != NULL && wp->w_floating
-                 && !wp->w_float_config.focusable) {
+                 && !wp->w_config.focusable) {
             wp = wp->w_next;
           }
           if (wp == NULL) {
@@ -763,7 +763,7 @@ void ui_ext_win_position(win_T *wp, bool validate)
     return;
   }
 
-  WinConfig c = wp->w_float_config;
+  WinConfig c = wp->w_config;
   if (!c.external) {
     ScreenGrid *grid = &default_grid;
     Float row = c.row;
@@ -794,7 +794,7 @@ void ui_ext_win_position(win_T *wp, bool validate)
       }
     }
 
-    wp->w_grid_alloc.zindex = wp->w_float_config.zindex;
+    wp->w_grid_alloc.zindex = wp->w_config.zindex;
     if (ui_has(kUIMultigrid)) {
       String anchor = cstr_as_string(float_anchor_str[c.anchor]);
       if (!c.hide) {
@@ -830,7 +830,7 @@ void ui_ext_win_position(win_T *wp, bool validate)
         ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
                          wp->w_height_outer, wp->w_width_outer, valid, false);
         ui_check_cursor_grid(wp->w_grid_alloc.handle);
-        wp->w_grid_alloc.focusable = wp->w_float_config.focusable;
+        wp->w_grid_alloc.focusable = wp->w_config.focusable;
         if (!valid) {
           wp->w_grid_alloc.valid = false;
           redraw_later(wp, UPD_NOT_VALID);
@@ -1213,7 +1213,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir)
     new_frame(wp);
     wp->w_floating = false;
     // non-floating window doesn't store float config or have a border.
-    wp->w_float_config = WIN_CONFIG_INIT;
+    wp->w_config = WIN_CONFIG_INIT;
     CLEAR_FIELD(wp->w_border_adj);
   }
 
@@ -2757,7 +2757,7 @@ int win_close(win_T *win, bool free_buf, bool force)
   if (win->w_floating) {
     ui_comp_remove_grid(&win->w_grid_alloc);
     assert(first_tabpage != NULL);  // suppress clang "Dereference of NULL pointer"
-    if (win->w_float_config.external) {
+    if (win->w_config.external) {
       for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
         if (tp == curtab) {
           continue;
@@ -4328,7 +4328,7 @@ static void tabpage_check_windows(tabpage_T *old_curtab)
   for (win_T *wp = old_curtab->tp_firstwin; wp; wp = next_wp) {
     next_wp = wp->w_next;
     if (wp->w_floating) {
-      if (wp->w_float_config.external) {
+      if (wp->w_config.external) {
         win_remove(wp, old_curtab);
         win_append(lastwin_nofloating(), wp);
       } else {
@@ -4339,8 +4339,8 @@ static void tabpage_check_windows(tabpage_T *old_curtab)
   }
 
   for (win_T *wp = firstwin; wp; wp = wp->w_next) {
-    if (wp->w_floating && !wp->w_float_config.external) {
-      win_config_float(wp, wp->w_float_config);
+    if (wp->w_floating && !wp->w_config.external) {
+      win_config_float(wp, wp->w_config);
     }
     wp->w_pos_changed = true;
   }
@@ -4983,7 +4983,7 @@ win_T *win_alloc(win_T *after, bool hidden)
   new_wp->w_cursor.lnum = 1;
   new_wp->w_scbind_pos = 1;
   new_wp->w_floating = 0;
-  new_wp->w_float_config = WIN_CONFIG_INIT;
+  new_wp->w_config = WIN_CONFIG_INIT;
   new_wp->w_viewport_invalid = true;
   new_wp->w_viewport_last_topline = 1;
 
@@ -5097,8 +5097,8 @@ void win_free(win_T *wp, tabpage_T *tp)
   }
 
   // free the border text
-  clear_virttext(&wp->w_float_config.title_chunks);
-  clear_virttext(&wp->w_float_config.footer_chunks);
+  clear_virttext(&wp->w_config.title_chunks);
+  clear_virttext(&wp->w_config.footer_chunks);
 
   clear_matches(wp);
 
@@ -5622,7 +5622,7 @@ int win_comp_pos(void)
 
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
     // float might be anchored to moved window
-    if (wp->w_float_config.relative == kFloatRelativeWindow) {
+    if (wp->w_config.relative == kFloatRelativeWindow) {
       wp->w_pos_changed = true;
     }
   }
@@ -5681,8 +5681,8 @@ void win_setheight_win(int height, win_T *win)
   height = MAX(height, (int)(win == curwin ? MAX(p_wmh, 1) : p_wmh) + win->w_winbar_height);
 
   if (win->w_floating) {
-    win->w_float_config.height = height;
-    win_config_float(win, win->w_float_config);
+    win->w_config.height = height;
+    win_config_float(win, win->w_config);
     redraw_later(win, UPD_VALID);
   } else {
     frame_setheight(win->w_frame, height + win->w_hsep_height + win->w_status_height);
@@ -5893,8 +5893,8 @@ void win_setwidth_win(int width, win_T *wp)
     width = 0;
   }
   if (wp->w_floating) {
-    wp->w_float_config.width = width;
-    win_config_float(wp, wp->w_float_config);
+    wp->w_config.width = width;
+    win_config_float(wp, wp->w_config);
     redraw_later(wp, UPD_NOT_VALID);
   } else {
     frame_setwidth(wp->w_frame, width + wp->w_vsep_width);

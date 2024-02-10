@@ -1335,7 +1335,7 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     if (need_append) {
       win_append(lastwin, auc_win);
       pmap_put(int)(&window_handles, auc_win->handle, auc_win);
-      win_config_float(auc_win, auc_win->w_float_config);
+      win_config_float(auc_win, auc_win->w_config);
     }
     // Prevent chdir() call in win_enter_ext(), through do_autochdir()
     int save_acd = p_acd;
