@@ -188,6 +188,9 @@ describe('ui/mouse/input', function()
                                  |
       ]])
       feed('<LeftMouse><11,0>')
+      -- Prevent the case where screen:expect() with "unchanged" returns too early,
+      -- causing the click position to be overwritten by the next drag.
+      poke_eventloop()
       screen:expect {
         grid = [[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
@@ -282,6 +285,9 @@ describe('ui/mouse/input', function()
                                  |
       ]])
       feed('<LeftMouse><11,0>')
+      -- Prevent the case where screen:expect() with "unchanged" returns too early,
+      -- causing the click position to be overwritten by the next drag.
+      poke_eventloop()
       screen:expect {
         grid = [[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
