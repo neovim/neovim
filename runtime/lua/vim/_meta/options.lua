@@ -5797,7 +5797,7 @@ vim.bo.sw = vim.bo.shiftwidth
 --- 	match", "Pattern not found", "Back at original", etc.
 ---   C	don't give messages while scanning for ins-completion	*shm-C*
 --- 	items, for instance "scanning tags"
----   q	use "recording" instead of "recording @a"		*shm-q*
+---   q	do not show "recording @a" when recording a macro	*shm-q*
 ---   F	don't give the file info when editing a file, like	*shm-F*
 --- 	`:silent` was used for the command
 ---   S	do not show search count message when searching, e.g.	*shm-S*
