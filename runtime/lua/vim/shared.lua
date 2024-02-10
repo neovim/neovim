@@ -1010,7 +1010,7 @@ function vim._set_layout(tabpage, layout)
   if layout[1] == 'leaf' then
     -- top-level node is a leaf
     -- simplify the main traversal loop by special-casing this
-    local buf = node[2]
+    local buf = layout[2]
     if type(buf) == 'string' then
       buf = vim.fn.bufadd(buf)
       vim.api.nvim_set_option_value('buflisted', true, {
