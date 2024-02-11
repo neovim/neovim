@@ -358,3 +358,19 @@ typedef struct {
   OptionalKeys is_set__complete_set_;
   String info;
 } Dict(complete_set);
+
+typedef struct {
+  OptionalKeys is_set__xdl_diff_;
+  LuaRef on_hunk;
+  String result_type;
+  String algorithm;
+  Integer ctxlen;
+  Integer interhunkctxlen;
+  Object linematch;
+  Boolean ignore_whitespace;
+  Boolean ignore_whitespace_change;
+  Boolean ignore_whitespace_change_at_eol;
+  Boolean ignore_cr_at_eol;
+  Boolean ignore_blank_lines;
+  Boolean indent_heuristic;
+} Dict(xdl_diff);
