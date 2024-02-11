@@ -2735,7 +2735,7 @@ void maybe_intro_message(void)
       && (curbuf->b_fname == NULL)
       && (firstwin->w_next == NULL)
       && (vim_strchr(p_shm, SHM_INTRO) == NULL)) {
-    intro_message(false);
+    intro_message(&default_grid, false);
   }
 }
 
@@ -2744,7 +2744,8 @@ void maybe_intro_message(void)
 /// Or with the ":intro" command (for Sven :-).
 ///
 /// @param colon true for ":intro"
-void intro_message(int colon)
+/// @return the row below the last line of the message
+static int intro_message(ScreenGrid *grid, int colon)
 {
   static char *(lines[]) = {
     N_(NVIM_VERSION_LONG),
@@ -2821,7 +2822,7 @@ void intro_message(int colon)
       }
 
       if (*mesg != NUL) {
-        do_intro_line(row, mesg, 0);
+        do_intro_line(grid, row, mesg, 0);
       }
       row++;
 
@@ -2830,9 +2831,11 @@ void intro_message(int colon)
       }
     }
   }
+
+  return row;
 }
 
-static void do_intro_line(int row, char *mesg, int attr)
+static void do_intro_line(ScreenGrid *grid, int row, char *mesg, int attr)
 {
   int l;
 
@@ -2845,7 +2848,7 @@ static void do_intro_line(int row, char *mesg, int attr)
     col = 0;
   }
 
-  grid_line_start(&default_grid, row);
+  grid_line_start(grid, row);
   // Split up in parts to highlight <> items differently.
   for (char *p = mesg; *p != NUL; p += l) {
     for (l = 0;
@@ -2853,7 +2856,6 @@ static void do_intro_line(int row, char *mesg, int attr)
          l++) {
       l += utfc_ptr2len(p + l) - 1;
     }
-    assert(row <= INT_MAX && col <= INT_MAX);
     col += grid_line_puts(col, p, l, *p == '<' ? HL_ATTR(HLF_8) : attr);
   }
   grid_line_flush();
@@ -2864,8 +2866,17 @@ static void do_intro_line(int row, char *mesg, int attr)
 /// @param eap
 void ex_intro(exarg_T *eap)
 {
-  // TODO(bfredl): use msg_grid instead!
-  screenclear();
-  intro_message(true);
+  if (!msg_use_grid()) {
+    screenclear();
+    msg_row = intro_message(&default_grid, true);
+  } else {
+    if (msg_do_throttle()) {
+      msg_grid.throttled = true;
+    }
+    msg_grid_set_pos(0, false);
+    grid_clear(&msg_grid, 0, Rows, 0, Columns, HL_ATTR(HLF_MSG));
+    msg_scrolled = Rows - (int)p_ch;
+    msg_row = intro_message(&msg_grid, true);
+  }
   wait_return(true);
 }
