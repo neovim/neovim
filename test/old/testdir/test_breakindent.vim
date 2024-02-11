@@ -450,7 +450,7 @@ func Test_breakindent12()
 	\ "~               ",
 	\ ]
   call s:compare_lines(expect, lines)
-  call s:close_windows('set nuw=4 listchars=')
+  call s:close_windows('set nuw=4 listchars&')
 endfunc
 
 func Test_breakindent12_vartabs()
@@ -467,7 +467,7 @@ func Test_breakindent12_vartabs()
 	\ "~               ",
 	\ ]
   call s:compare_lines(expect, lines)
-  call s:close_windows('set nuw=4 listchars= vts&')
+  call s:close_windows('set nuw=4 listchars& vts&')
 endfunc
 
 func Test_breakindent13()
@@ -1126,5 +1126,51 @@ func Test_linebreak_list()
   bwipe!
 endfunc
 
+func Test_breakindent_change_display_uhex()
+  call s:test_windows('setl briopt=min:0 list listchars=eol:$')
+  redraw!
+  let lines = s:screen_lines(line('.'), 20)
+  let expect = [
+        \ "^Iabcdefghijklmnopqr",
+        \ "  stuvwxyzABCDEFGHIJ",
+        \ "  KLMNOP$           "
+        \ ]
+  call s:compare_lines(expect, lines)
+  set display+=uhex
+  redraw!
+  let lines = s:screen_lines(line('.'), 20)
+  let expect = [
+        \ "<09>abcdefghijklmnop",
+        \ "    qrstuvwxyzABCDEF",
+        \ "    GHIJKLMNOP$     "
+        \ ]
+  call s:compare_lines(expect, lines)
+  set display&
+
+  call s:close_windows()
+endfunc
+
+func Test_breakindent_list_split()
+  10new
+  61vsplit
+  setlocal tabstop=8 breakindent list listchars=tab:<->,eol:$
+  put =s:input
+  30vsplit
+  setlocal listchars=eol:$
+  let expect = [
+      \ "^IabcdefghijklmnopqrstuvwxyzAB|<------>abcdefghijklmnopqrstuv",
+      \ "  CDEFGHIJKLMNOP$             |        wxyzABCDEFGHIJKLMNOP$ ",
+      \ "~                             |~                             "
+      \ ]
+  redraw!
+  let lines = s:screen_lines(line('.'), 61)
+  call s:compare_lines(expect, lines)
+  wincmd p
+  redraw!
+  let lines = s:screen_lines(line('.'), 61)
+  call s:compare_lines(expect, lines)
+
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

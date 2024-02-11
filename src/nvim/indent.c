@@ -806,51 +806,63 @@ int get_breakindent_win(win_T *wp, char *line)
 {
   static int prev_indent = 0;  // cached indent value
   static OptInt prev_ts = 0;  // cached tabstop value
+  static colnr_T *prev_vts = NULL;  // cached vartabs values
   static int prev_fnum = 0;  // cached buffer number
   static char *prev_line = NULL;  // cached copy of "line"
   static varnumber_T prev_tick = 0;  // changedtick of cached value
-  static colnr_T *prev_vts = NULL;  // cached vartabs values
-  static int prev_list = 0;  // cached list value
+  static int prev_list = 0;  // cached list indent
   static int prev_listopt = 0;  // cached w_p_briopt_list value
+  static bool prev_no_ts = false;  // cached no_ts value
+  static unsigned prev_dy_uhex = 0;   // cached 'display' "uhex" value
   static char *prev_flp = NULL;  // cached formatlistpat value
   int bri = 0;
   // window width minus window margin space, i.e. what rests for text
   const int eff_wwidth = wp->w_width_inner -
                          ((wp->w_p_nu || wp->w_p_rnu)
-                          && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL) ? number_width(wp) + 1 : 0);
+                          && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL)
+                          ? number_width(wp) + 1 : 0);
 
-  // used cached indent, unless
-  // - buffer changed
-  // - 'tabstop' changed
-  // - buffer was changed
-  // - 'briopt_list changed' changed or
-  // - 'formatlistpattern' changed
-  // - line changed
-  // - 'vartabs' changed
+  // In list mode, if 'listchars' "tab" isn't set, a TAB is displayed as ^I.
+  const bool no_ts = wp->w_p_list && wp->w_p_lcs_chars.tab1 == NUL;
+
+  // Used cached indent, unless
+  // - buffer changed, or
+  // - 'tabstop' changed, or
+  // - 'vartabstop' changed, or
+  // - buffer was changed, or
+  // - 'breakindentopt' "list" changed, or
+  // - 'list' or 'listchars' "tab" changed, or
+  // - 'display' "uhex" flag changed, or
+  // - 'formatlistpat' changed, or
+  // - line changed.
   if (prev_fnum != wp->w_buffer->b_fnum
       || prev_ts != wp->w_buffer->b_p_ts
+      || prev_vts != wp->w_buffer->b_p_vts_array
       || prev_tick != buf_get_changedtick(wp->w_buffer)
       || prev_listopt != wp->w_briopt_list
+      || prev_no_ts != no_ts
+      || prev_dy_uhex != (dy_flags & DY_UHEX)
       || prev_flp == NULL
       || strcmp(prev_flp, get_flp_value(wp->w_buffer)) != 0
-      || prev_line == NULL || strcmp(prev_line, line) != 0
-      || prev_vts != wp->w_buffer->b_p_vts_array) {
+      || prev_line == NULL || strcmp(prev_line, line) != 0) {
     prev_fnum = wp->w_buffer->b_fnum;
     xfree(prev_line);
     prev_line = xstrdup(line);
     prev_ts = wp->w_buffer->b_p_ts;
-    prev_tick = buf_get_changedtick(wp->w_buffer);
     prev_vts = wp->w_buffer->b_p_vts_array;
     if (wp->w_briopt_vcol == 0) {
-      if (wp->w_p_list && !wp->w_p_lcs_chars.tab1) {
+      if (no_ts) {
         prev_indent = indent_size_no_ts(line);
       } else {
         prev_indent = indent_size_ts(line, wp->w_buffer->b_p_ts,
                                      wp->w_buffer->b_p_vts_array);
       }
     }
+    prev_tick = buf_get_changedtick(wp->w_buffer);
     prev_listopt = wp->w_briopt_list;
     prev_list = 0;
+    prev_no_ts = no_ts;
+    prev_dy_uhex = (dy_flags & DY_UHEX);
     xfree(prev_flp);
     prev_flp = xstrdup(get_flp_value(wp->w_buffer));
     // add additional indent for numbered lists
