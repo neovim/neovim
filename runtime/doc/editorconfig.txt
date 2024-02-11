@@ -87,7 +87,7 @@ Example: >lua
     end
 <
 
-EditorConfig overrides filetype plugins           *ftplugin-vs-editorconfig*
+EditorConfig overrides filetype plugins           *editorconfig-vs-ftplugin*
 
 Nvim's EditorConfig resolution runs after |ftplugin| processing. This means
 that EditorConfig settings override global filetype settings
