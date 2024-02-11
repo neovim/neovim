@@ -1,4 +1,3 @@
----@diagnostic disable: invisible
 local api = vim.api
 local tbl_isempty, tbl_extend = vim.tbl_isempty, vim.tbl_extend
 local validate = vim.validate
@@ -157,35 +156,6 @@ lsp.client_errors = tbl_extend(
     ON_ATTACH_ERROR = table.maxn(lsp.rpc.client_errors) + 3,
   })
 )
-
----@internal
---- Parses a command invocation into the command itself and its args. If there
---- are no arguments, an empty table is returned as the second argument.
----
----@param input string[]
----@return string command, string[] args #the command and arguments
-function lsp._cmd_parts(input)
-  validate({
-    cmd = {
-      input,
-      function()
-        return vim.tbl_islist(input)
-      end,
-      'list',
-    },
-  })
-
-  local cmd = input[1]
-  local cmd_args = {}
-  -- Don't mutate our input.
-  for i, v in ipairs(input) do
-    validate({ ['cmd argument'] = { v, 's' } })
-    if i > 1 then
-      table.insert(cmd_args, v)
-    end
-  end
-  return cmd, cmd_args
-end
 
 ---@private
 --- Returns full text of buffer {bufnr} as a string.
@@ -352,8 +322,8 @@ end
 --- Either use |:au|, |nvim_create_autocmd()| or put the call in a
 --- `ftplugin/<filetype_name>.lua` (See |ftplugin-name|)
 ---
----@param config table Same configuration as documented in |vim.lsp.start_client()|
----@param opts (nil|lsp.StartOpts) Optional keyword arguments:
+---@param config lsp.ClientConfig Same configuration as documented in |vim.lsp.start_client()|
+---@param opts lsp.StartOpts? Optional keyword arguments:
 ---             - reuse_client (fun(client: client, config: table): boolean)
 ---                            Predicate used to decide if a client should be re-used.
 ---                            Used on all running clients.
@@ -362,20 +332,16 @@ end
 ---             - bufnr (number)
 ---                     Buffer handle to attach to if starting or re-using a
 ---                     client (0 for current).
----@return integer|nil client_id
+---@return integer? client_id
 function lsp.start(config, opts)
   opts = opts or {}
   local reuse_client = opts.reuse_client
     or function(client, conf)
       return client.config.root_dir == conf.root_dir and client.name == conf.name
     end
-  if not config.name and type(config.cmd) == 'table' then
-    config.name = config.cmd[1] and vim.fs.basename(config.cmd[1]) or nil
-  end
-  local bufnr = opts.bufnr
-  if bufnr == nil or bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
+
+  local bufnr = resolve_bufnr(opts.bufnr)
+
   for _, clients in ipairs({ uninitialized_clients, lsp.get_clients() }) do
     for _, client in pairs(clients) do
       if reuse_client(client, config) then
@@ -384,10 +350,13 @@ function lsp.start(config, opts)
       end
     end
   end
+
   local client_id = lsp.start_client(config)
-  if client_id == nil then
-    return nil -- lsp.start_client will have printed an error
+
+  if not client_id then
+    return -- lsp.start_client will have printed an error
   end
+
   lsp.buf_attach_client(bufnr, client_id)
   return client_id
 end
@@ -498,12 +467,27 @@ local function reset_defaults(bufnr)
   end)
 end
 
+--- @param client lsp.Client
+local function on_client_init(client)
+  local id = client.id
+  uninitialized_clients[id] = nil
+  -- Only assign after initialized.
+  active_clients[id] = client
+  -- If we had been registered before we start, then send didOpen This can
+  -- happen if we attach to buffers before initialize finishes or if
+  -- someone restarts a client.
+  for bufnr, client_ids in pairs(all_buffer_active_clients) do
+    if client_ids[id] then
+      client.on_attach(bufnr)
+    end
+  end
+end
+
 --- @param code integer
 --- @param signal integer
 --- @param client_id integer
 local function on_client_exit(code, signal, client_id)
-  local client = active_clients[client_id] and active_clients[client_id]
-    or uninitialized_clients[client_id]
+  local client = active_clients[client_id] or uninitialized_clients[client_id]
 
   for bufnr, client_ids in pairs(all_buffer_active_clients) do
     if client_ids[client_id] then
@@ -551,6 +535,20 @@ local function on_client_exit(code, signal, client_id)
       vim.notify(msg, vim.log.levels.WARN)
     end
   end)
+end
+
+--- @generic F: function
+--- @param ... F
+--- @return F
+local function join_cbs(...)
+  local funcs = vim.F.pack_len(...)
+  return function(...)
+    for i = 1, funcs.n do
+      if funcs[i] ~= nil then
+        funcs[i](...)
+      end
+    end
+  end
 end
 
 -- FIXME: DOC: Currently all methods on the `vim.lsp.client` object are
@@ -673,32 +671,22 @@ end
 --- fully initialized. Use `on_init` to do any actions once
 --- the client has been initialized.
 function lsp.start_client(config)
-  local client = require('vim.lsp.client').start(config, on_client_exit)
+  config = vim.deepcopy(config, false)
+  config.on_init = join_cbs(config.on_init, on_client_init)
+  config.on_exit = join_cbs(config.on_exit, on_client_exit)
+
+  local client = require('vim.lsp.client').start(config)
 
   if not client then
     return
   end
 
-  local id = client.id
-
   -- Store the uninitialized_clients for cleanup in case we exit before initialize finishes.
-  uninitialized_clients[id] = client
+  -- TODO(lewis6991): do this on before_init(). Requires API change to before_init() so it
+  -- can access the client_id.
+  uninitialized_clients[client.id] = client
 
-  client:initialize(function()
-    uninitialized_clients[id] = nil
-    -- Only assign after initialized.
-    active_clients[id] = client
-    -- If we had been registered before we start, then send didOpen This can
-    -- happen if we attach to buffers before initialize finishes or if
-    -- someone restarts a client.
-    for bufnr, client_ids in pairs(all_buffer_active_clients) do
-      if client_ids[id] then
-        client.on_attach(bufnr)
-      end
-    end
-  end)
-
-  return id
+  return client.id
 end
 
 --- Notify all attached clients that a buffer has changed.

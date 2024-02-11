@@ -139,30 +139,6 @@ describe('LSP', function()
       end)
     end)
   end)
-
-  describe('lsp._cmd_parts test', function()
-    local function _cmd_parts(input)
-      return exec_lua(
-        [[
-        lsp = require('vim.lsp')
-        return lsp._cmd_parts(...)
-      ]],
-        input
-      )
-    end
-    it('should valid cmd argument', function()
-      eq(true, pcall(_cmd_parts, { 'nvim' }))
-      eq(true, pcall(_cmd_parts, { 'nvim', '--head' }))
-    end)
-
-    it('should invalid cmd argument', function()
-      eq('.../lsp.lua:0: cmd: expected list, got nvim', pcall_err(_cmd_parts, 'nvim'))
-      eq(
-        '.../lsp.lua:0: cmd argument: expected string, got number',
-        pcall_err(_cmd_parts, { 'nvim', 1 })
-      )
-    end)
-  end)
 end)
 
 describe('LSP', function()
