@@ -86,4 +86,11 @@ Example: >lua
       vim.b[bufnr].foo = val
     end
 <
+
+EditorConfig overrides filetype plugins           *ftplugin-vs-editorconfig*
+
+Nvim's EditorConfig resolution runs after |ftplugin| processing. This means
+that EditorConfig settings override global filetype settings
+(such as those in the |after-directory|).
+
  vim:tw=78:ts=8:et:sw=4:ft=help:norl:
