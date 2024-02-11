@@ -55,13 +55,13 @@ local function add_function(fn)
       -- for specifying errors
       fn.parameters[#fn.parameters] = nil
     end
+    if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'lstate' then
+      fn.has_lua_imp = true
+      fn.parameters[#fn.parameters] = nil
+    end
     if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'arena' then
       -- return value is allocated in an arena
       fn.arena_return = true
-      fn.parameters[#fn.parameters] = nil
-    end
-    if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'lstate' then
-      fn.has_lua_imp = true
       fn.parameters[#fn.parameters] = nil
     end
   end

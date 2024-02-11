@@ -656,10 +656,10 @@ void nvim_set_current_dir(String dir, Error *err)
 ///
 /// @param[out] err Error details, if any
 /// @return Current line string
-String nvim_get_current_line(Error *err)
+String nvim_get_current_line(Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
-  return buffer_get_line(curbuf->handle, curwin->w_cursor.lnum - 1, err);
+  return buffer_get_line(curbuf->handle, curwin->w_cursor.lnum - 1, arena, err);
 }
 
 /// Sets the current line.
