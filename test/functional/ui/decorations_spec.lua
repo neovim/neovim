@@ -5160,6 +5160,18 @@ l5
                           |
     ]]}
   end)
+
+  it('correct sort order with multiple namespaces and same id', function()
+    local ns2 = api.nvim_create_namespace('')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {sign_text = 'S1', id = 1})
+    api.nvim_buf_set_extmark(0, ns2, 0, 0, {sign_text = 'S2', id = 1})
+
+    screen:expect{grid=[[
+      S1S2^                                              |
+      {2:~                                                 }|*8
+                                                        |
+    ]]}
+  end)
 end)
 
 describe('decorations: virt_text', function()
