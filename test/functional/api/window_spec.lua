@@ -1571,6 +1571,16 @@ describe('API/win', function()
       )
       eq(false, eval('fired'))
     end)
+
+    it('fires Buf* autocommands when `!enter` if window is entered via autocommands', function()
+      exec([[
+        autocmd WinNew * ++once only!
+        let fired = v:false
+        autocmd BufEnter * ++once let fired = v:true
+      ]])
+      api.nvim_open_win(api.nvim_create_buf(true, true), false, { split = 'left' })
+      eq(true, eval('fired'))
+    end)
   end)
 
   describe('set_config', function()

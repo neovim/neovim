@@ -294,7 +294,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
     tp = win_find_tabpage(wp);
   }
   if (tp && buf != wp->w_buffer) {
-    const bool noautocmd = !enter || fconfig.noautocmd;
+    const bool noautocmd = curwin != wp || fconfig.noautocmd;
     win_set_buf(wp, buf, noautocmd, err);
     if (!noautocmd) {
       tp = win_find_tabpage(wp);
