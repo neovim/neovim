@@ -87,9 +87,9 @@ function M.definition(options)
     local total_items = 0
     for client_id, v in pairs(results) do
       if v.error == nil and v.result ~= nil then
-        -- first check for Location | LocationLink because
+        -- first check for Location because
         -- tbl_islist returns `false` for empty lists
-        if v.result.uri or v.result.targetUri then
+        if v.result.uri then
           local client = vim.lsp.get_client_by_id(client_id)
           local items = util.locations_to_items({ v.result }, client.offset_encoding)
           total_items = total_items + #items
