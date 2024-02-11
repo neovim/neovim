@@ -433,7 +433,8 @@ syn case match
 
 " Maps: {{{2
 " ====
-syn match	vimMap		"\<map\>!\=\ze\s*[^(]" skipwhite nextgroup=vimMapMod,vimMapLhs
+syn match	vimMap		"\<map\>\ze\s*(\@!" 	    skipwhite nextgroup=vimMapMod,vimMapLhs
+syn match	vimMap		"\<map!"	  contains=vimMapBang skipwhite nextgroup=vimMapMod,vimMapLhs
 syn keyword	vimMap		cm[ap] cno[remap] im[ap] ino[remap] lm[ap] ln[oremap] nm[ap] nn[oremap] no[remap] om[ap] ono[remap] smap snor[emap] tno[remap] tm[ap] vm[ap] vmapc[lear] vn[oremap] xm[ap] xn[oremap] skipwhite nextgroup=vimMapBang,vimMapMod,vimMapLhs
 syn keyword	vimMap		mapc[lear] smapc[lear]
 syn keyword	vimUnmap		cu[nmap] iu[nmap] lu[nmap] nun[map] ou[nmap] sunm[ap] tunma[p] unm[ap] unm[ap] vu[nmap] xu[nmap] skipwhite nextgroup=vimMapBang,vimMapMod,vimMapLhs
@@ -630,7 +631,7 @@ syn match	vimHiBang	contained	"!"	skipwhite nextgroup=@vimHighlightCluster
 
 syn match	vimHiGroup	contained	"\i\+"
 syn case ignore
-syn keyword	vimHiAttrib	contained	none bold inverse italic nocombine reverse standout strikethrough underline undercurl underdouble underdotted underdashed
+syn keyword	vimHiAttrib	contained	none bold inverse italic nocombine reverse standout strikethrough underline undercurl underdashed underdotted underdouble
 syn keyword	vimFgBgAttrib	contained	none bg background fg foreground
 syn case match
 syn match	vimHiAttribList	contained	"\i\+"	contains=vimHiAttrib
@@ -645,7 +646,7 @@ syn match	vimHiGuiFontname	contained	"'[a-zA-Z\-* ]\+'"
 syn match	vimHiGuiRgb	contained	"#\x\{6}"
 
 " Highlighting: hi group key=arg ... {{{2
-syn cluster	vimHiCluster contains=vimGroup,vimHiBlend,vimHiGroup,vimHiTerm,vimHiCTerm,vimHiStartStop,vimHiCtermFgBg,vimHiCtermul,vimHiGui,vimHiGuiFont,vimHiGuiFgBg,vimHiKeyError,vimNotation
+syn cluster	vimHiCluster contains=vimGroup,vimHiBlend,vimHiGroup,vimHiTerm,vimHiCTerm,vimHiStartStop,vimHiCtermFgBg,vimHiCtermul,vimHiGui,vimHiGuiFont,vimHiGuiFgBg,vimHiKeyError,vimNotation,vimComment,vim9comment
 syn region	vimHiKeyList	contained oneline start="\i\+" skip="\\\\\|\\|" end="$\||"	contains=@vimHiCluster
 if !exists("g:vimsyn_noerror") && !exists("g:vimsyn_vimhikeyerror")
  syn match	vimHiKeyError	contained	"\i\+="he=e-1
@@ -916,6 +917,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimAutoEvent	Type
  hi def link vimAutoCmdMod	Special
  hi def link vimAutoSet	vimCommand
+ hi def link vimBang	vimOper
  hi def link vimBehaveModel	vimBehave
  hi def link vimBehave	vimCommand
  hi def link vimBracket	Delimiter
@@ -955,6 +957,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimGroupSpecial	Special
  hi def link vimGroup	Type
  hi def link vimHiAttrib	PreProc
+ hi def link vimHiBang	vimBang
  hi def link vimHiBlend	vimHiTerm
  hi def link vimHiClear	vimHighlight
  hi def link vimHiCtermFgBg	vimHiTerm
@@ -983,12 +986,13 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimLetRegister	Special
  hi def link vimLineComment	vimComment
  hi def link vim9LineComment	vimComment
- hi def link vimMapBang	vimCommand
+ hi def link vimMapBang	vimBang
  hi def link vimMapModKey	vimFuncSID
  hi def link vimMapMod	vimBracket
  hi def link vimMap	vimCommand
  hi def link vimMark	Number
  hi def link vimMarkNumber	vimNumber
+ hi def link vimMenuBang	vimBang
  hi def link vimMenuMod	vimMapMod
  hi def link vimMenuNameMore	vimMenuName
  hi def link vimMenuName	PreProc
@@ -1063,7 +1067,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimTodo	Todo
  hi def link vimType	Type
  hi def link vimUnlet	vimCommand
- hi def link vimUnletBang	vimCommand
+ hi def link vimUnletBang	vimBang
  hi def link vimUnmap	vimMap
  hi def link vimUserAttrbCmpltFunc	Special
  hi def link vimUserAttrbCmplt	vimSpecial
