@@ -664,11 +664,6 @@ next_mark:
   return attr;
 }
 
-typedef struct {
-  DecorSignHighlight *sh;
-  uint32_t id;
-} SignItem;
-
 int sign_item_cmp(const void *p1, const void *p2)
 {
   const SignItem *s1 = (SignItem *)p1;
@@ -683,7 +678,7 @@ int sign_item_cmp(const void *p1, const void *p2)
   }
 
   if (s1->sh->sign_add_id != s2->sh->sign_add_id) {
-    return s1->sh->sign_add_id > s2->sh->sign_add_id ? 1 : -1;
+    return s1->sh->sign_add_id < s2->sh->sign_add_id ? 1 : -1;
   }
 
   return 0;
