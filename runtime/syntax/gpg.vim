@@ -1,9 +1,13 @@
 " Vim syntax file
 " Language:		gpg(1) configuration file
+" Maintainer: This file is looking for a maintainer!
 " Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
-" Latest Revision:	2010-10-14
-" Updated:		2023-01-23 @ObserverOfTime: added a couple of keywords
+" Latest Revision:	2024-02-11
+" Updated:		
+"     2023-01-23 @ObserverOfTime: added a couple of keywords
 "			2023-03-21 Todd Zullinger <tmz@pobox.com>: sync with gnupg-2.4.0
+"			2024-02-10 Daniel Kahn Gillmor <dkg@fifthhorseman.net>:
+"			           mark use-embedded-filename as warning for security reasons
 
 if exists("b:current_syntax")
   finish
@@ -21,7 +25,7 @@ syn region  gpgComment	contained display oneline start='#' end='$'
 
 syn match   gpgID	contained display '\<\(0x\)\=\x\{8,}\>'
 
-syn match   gpgBegin	display '^' skipwhite nextgroup=gpgComment,gpgOption,gpgCommand
+syn match   gpgBegin	display '^' skipwhite nextgroup=gpgComment,gpgOption,gpgOptionDeprecated,gpgCommand
 
 syn keyword gpgCommand	contained skipwhite nextgroup=gpgArg
 			\ change-passphrase check-sig check-signatures
@@ -41,6 +45,7 @@ syn keyword gpgCommand	contained skipwhite nextgroup=gpgArg
 			\ quick-set-expire quick-set-primary-uid quick-sign-key
 			\ quick-update-pref receive-keys recv-keys refresh-keys
 			\ search-keys show-key show-keys sign-key tofu-policy
+
 syn keyword gpgCommand	contained skipwhite nextgroup=gpgArgError
 			\ card-edit card-status change-pin check-trustdb
 			\ clear-sign clearsign dearmor dearmour decrypt
@@ -97,6 +102,7 @@ syn keyword gpgOption	contained skipwhite nextgroup=gpgArg
 			\ trusted-key trust-model try-secret-key ttyname
 			\ ttytype ungroup user verify-options weak-digest
 			\ xauthority
+
 syn keyword gpgOption	contained skipwhite nextgroup=gpgArgError
 			\ allow-freeform-uid allow-multiple-messages
 			\ allow-multisig-verification allow-non-selfsigned-uid
@@ -145,7 +151,7 @@ syn keyword gpgOption	contained skipwhite nextgroup=gpgArgError
 			\ no-sk-comments no-skip-hidden-recipients
 			\ no-symkey-cache not-dash-escaped no-textmode
 			\ no-throw-keyids no-tty no-use-agent
-			\ no-use-embedded-filename no-utf8-strings no-verbose
+			\ no-utf8-strings no-verbose
 			\ no-version only-sign-text-ids openpgp
 			\ override-compliance-check pgp6 pgp7 pgp8
 			\ preserve-permissions print-dane-records quiet
@@ -155,7 +161,7 @@ syn keyword gpgOption	contained skipwhite nextgroup=gpgArgError
 			\ show-notation show-photos show-policy-url
 			\ show-session-key sk-comments skip-hidden-recipients
 			\ skip-verify textmode throw-keyids try-all-secrets
-			\ unwrap use-agent use-embedded-filename use-keyboxd
+			\ unwrap use-agent use-keyboxd
 			\ use-only-openpgp-card utf8-strings verbose version
 			\ warranty with-colons with-fingerprint
 			\ with-icao-spelling with-key-data with-keygrip
@@ -164,6 +170,10 @@ syn keyword gpgOption	contained skipwhite nextgroup=gpgArgError
 			\ with-subkey-fingerprints with-tofu-info with-wkd-hash
 			\ yes
 
+" depcrated for security reasons
+syn keyword gpgOptionDeprecated	contained skipwhite nextgroup=gpgArgError
+      \ use-embedded-filename no-use-embedded-filename
+
 syn match   gpgArg	contained display '\S\+\(\s\+\S\+\)*' contains=gpgID
 syn match   gpgArgError contained display '\S\+\(\s\+\S\+\)*'
 
@@ -171,6 +181,7 @@ hi def link gpgComment	Comment
 hi def link gpgTodo	Todo
 hi def link gpgID	Number
 hi def link gpgOption	Keyword
+hi def link gpgOptionDeprecated	WarningMsg
 hi def link gpgCommand	Error
 hi def link gpgArgError	Error
 
