@@ -122,9 +122,6 @@ function M.definition(options)
       return options.on_list({
         title = title,
         items = items,
-        -- FIXME currently passing nil as items can come from multiple clients
-        -- need a better way to attribute items to context
-        context = nil,
       })
     end
 
