@@ -202,6 +202,15 @@ local explicit_queries = setmetatable({}, {
   end,
 })
 
+--- @param x string|string[]
+--- @return string[]
+local function ensure_list(x)
+  if type(x) == 'table' then
+    return x
+  end
+  return { x }
+end
+
 ---@deprecated
 function M.set_query(...)
   vim.deprecate('vim.treesitter.query.set_query()', 'vim.treesitter.query.set()', '0.10')
@@ -234,13 +243,7 @@ function M.set(lang, query_name, text, opts)
     local query_files = {}
 
     if opts.inherits then
-      local inherits = opts.inherits
-      if type(inherits) == 'string' then
-        inherits = { inherits }
-      end
-      ---@cast inherits string[]
-
-      for _, inherited in ipairs(inherits) do
+      for _, inherited in ipairs(ensure_list(opts.inherits)) do
         local files = M.get_files(inherited, query_name, true)
         vim.list_extend(query_files, files)
       end
