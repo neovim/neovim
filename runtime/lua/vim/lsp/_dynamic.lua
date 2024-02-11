@@ -24,7 +24,7 @@ function M:supports_registration(method)
 end
 
 --- @param registrations lsp.Registration[]
---- @private
+--- @package
 function M:register(registrations)
   -- remove duplicates
   self:unregister(registrations)

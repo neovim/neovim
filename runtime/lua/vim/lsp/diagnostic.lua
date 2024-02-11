@@ -22,7 +22,7 @@ end
 ---@param severity lsp.DiagnosticSeverity
 local function severity_lsp_to_vim(severity)
   if type(severity) == 'string' then
-    severity = protocol.DiagnosticSeverity[severity]
+    severity = protocol.DiagnosticSeverity[severity] --- @type integer
   end
   return severity
 end
@@ -48,7 +48,7 @@ local function line_byte_from_position(lines, lnum, col, offset_encoding)
   local line = lines[lnum + 1]
   local ok, result = pcall(vim.str_byteindex, line, col, offset_encoding == 'utf-16')
   if ok then
-    return result
+    return result --- @type integer
   end
 
   return col
@@ -228,6 +228,40 @@ local function convert_severity(opt)
   end
 end
 
+--- @param uri string
+--- @param client_id? integer
+--- @param diagnostics vim.Diagnostic[]
+--- @param is_pull boolean
+--- @param config? vim.diagnostic.Opts
+local function handle_diagnostics(uri, client_id, diagnostics, is_pull, config)
+  local fname = vim.uri_to_fname(uri)
+
+  if #diagnostics == 0 and vim.fn.bufexists(fname) == 0 then
+    return
+  end
+
+  local bufnr = vim.fn.bufadd(fname)
+  if not bufnr then
+    return
+  end
+
+  client_id = get_client_id(client_id)
+  local namespace = M.get_namespace(client_id, is_pull)
+
+  if config then
+    --- @cast config table<string, table>
+    for _, opt in pairs(config) do
+      convert_severity(opt)
+    end
+    -- Persist configuration to ensure buffer reloads use the same
+    -- configuration. To make lsp.with configuration work (See :help
+    -- lsp-handler-configuration)
+    vim.diagnostic.config(config, namespace)
+  end
+
+  vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
+end
+
 --- |lsp-handler| for the method "textDocument/publishDiagnostics"
 ---
 --- See |vim.diagnostic.config()| for configuration options. Handler-specific
@@ -253,36 +287,11 @@ end
 --- )
 --- ```
 ---
+---@param result lsp.PublishDiagnosticsParams
 ---@param ctx lsp.HandlerContext
----@param config table Configuration table (see |vim.diagnostic.config()|).
+---@param config? vim.diagnostic.Opts Configuration table (see |vim.diagnostic.config()|).
 function M.on_publish_diagnostics(_, result, ctx, config)
-  local client_id = ctx.client_id
-  local uri = result.uri
-  local fname = vim.uri_to_fname(uri)
-  local diagnostics = result.diagnostics
-  if #diagnostics == 0 and vim.fn.bufexists(fname) == 0 then
-    return
-  end
-  local bufnr = vim.fn.bufadd(fname)
-
-  if not bufnr then
-    return
-  end
-
-  client_id = get_client_id(client_id)
-  local namespace = M.get_namespace(client_id, false)
-
-  if config then
-    for _, opt in pairs(config) do
-      convert_severity(opt)
-    end
-    -- Persist configuration to ensure buffer reloads use the same
-    -- configuration. To make lsp.with configuration work (See :help
-    -- lsp-handler-configuration)
-    vim.diagnostic.config(config, namespace)
-  end
-
-  vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
+  handle_diagnostics(result.uri, ctx.client_id, result.diagnostics, false, config)
 end
 
 --- |lsp-handler| for the method "textDocument/diagnostic"
@@ -314,45 +323,11 @@ end
 ---@param ctx lsp.HandlerContext
 ---@param config table Configuration table (see |vim.diagnostic.config()|).
 function M.on_diagnostic(_, result, ctx, config)
-  local client_id = ctx.client_id
-  --- @type lsp.DocumentDiagnosticParams
-  local params = ctx.params
-  local uri = params.textDocument.uri
-  local fname = vim.uri_to_fname(uri)
-
-  if result == nil then
+  if result == nil or result.kind == 'unchanged' then
     return
   end
 
-  if result.kind == 'unchanged' then
-    return
-  end
-
-  local diagnostics = result.items
-  if #diagnostics == 0 and vim.fn.bufexists(fname) == 0 then
-    return
-  end
-  local bufnr = vim.fn.bufadd(fname)
-
-  if not bufnr then
-    return
-  end
-
-  client_id = get_client_id(client_id)
-
-  local namespace = M.get_namespace(client_id, true)
-
-  if config then
-    for _, opt in pairs(config) do
-      convert_severity(opt)
-    end
-    -- Persist configuration to ensure buffer reloads use the same
-    -- configuration. To make lsp.with configuration work (See :help
-    -- lsp-handler-configuration)
-    vim.diagnostic.config(config, namespace)
-  end
-
-  vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
+  handle_diagnostics(ctx.params.textDocument.uri, ctx.client_id, result.items, true, config)
 end
 
 --- Clear push diagnostics and diagnostic cache.
@@ -362,7 +337,7 @@ end
 --- implementation so it's simply marked @private rather than @deprecated.
 ---
 ---@param client_id integer
----@param buffer_client_map table map of buffers to active clients
+---@param buffer_client_map table<integer, table<integer, table>> map of buffers to active clients
 ---@private
 function M.reset(client_id, buffer_client_map)
   buffer_client_map = vim.deepcopy(buffer_client_map)
@@ -462,7 +437,8 @@ function M._enable(bufnr)
           return
         end
         if bufstates[bufnr] and bufstates[bufnr].enabled then
-          _refresh(bufnr, { only_visible = true, client_id = opts.data.client_id })
+          local client_id = opts.data.client_id --- @type integer?
+          _refresh(bufnr, { only_visible = true, client_id = client_id })
         end
       end,
       group = augroup,
