@@ -210,7 +210,11 @@ void msg_grid_validate(void)
     msg_grid_adj.target = &default_grid;
     redraw_cmdline = true;
   } else if (msg_grid.chars && !msg_scrolled && msg_grid_pos != max_rows) {
+    int diff = msg_grid_pos - max_rows;
     msg_grid_set_pos(max_rows, false);
+    if (diff > 0) {
+      grid_clear(&msg_grid_adj, Rows - diff, Rows, 0, Columns, HL_ATTR(HLF_MSG));
+    }
   }
   msg_grid_adj.cols = Columns;
 

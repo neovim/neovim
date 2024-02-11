@@ -458,7 +458,6 @@ describe('messages', function()
       -- do the same with 'cmdheight' set to 2
       feed('q')
       command('set ch=2')
-      command('mode') -- FIXME: bottom is invalid after scrolling
       screen:expect([[
         ^                                                            |
         {0:~                                                           }|*7
@@ -688,7 +687,6 @@ describe('messages', function()
       tabnew
       set cmdheight=2
     ]])
-    command('mode') -- FIXME: bottom is invalid after scrolling
     screen:expect([[
       {2: [No Name] }{1: [No Name] }{3:                 }{2:X}|
       ^                                        |

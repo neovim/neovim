@@ -1555,6 +1555,23 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
     ]])
     eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
   end)
+
+  it('bottom of screen is cleared after increasing &cmdheight #20360', function()
+    command('set laststatus=2')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*4
+      {3:[No Name]                                                   }|
+                                                                  |
+    ]])
+    command('set cmdheight=4')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|
+      {3:[No Name]                                                   }|
+                                                                  |*4
+    ]])
+  end)
 end)
 
 it('calling screenstring() after redrawing between messages without UI #20999', function()
