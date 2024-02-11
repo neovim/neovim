@@ -210,6 +210,7 @@ The following new APIs and features were added.
     the original LSP `Location` or `LocationLink`.
   • Added support for connecting to servers using named pipes (Windows) or
     unix domain sockets (Unix) via |vim.lsp.rpc.domain_socket_connect()|.
+  • |vim.lsp.buf.definition()| handles responses from multiple clients.
 
 • Treesitter
   • Bundled parsers and queries (highlight, folds) for Markdown, Python, and
