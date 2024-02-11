@@ -674,4 +674,40 @@ t2]])
     ]],
     }
   end)
+
+  it("doesn't call get_parser too often when parser is not available", function()
+    -- spy on vim.treesitter.get_parser() to keep track of how many times it is called
+    exec_lua [[
+      _G.count = 0
+      vim.treesitter.get_parser = (function(wrapped)
+        return function(...)
+          _G.count = _G.count + 1
+          return wrapped(...)
+        end
+      end)(vim.treesitter.get_parser)
+    ]]
+
+    insert(test_text)
+    command [[
+      set filetype=some_filetype_without_treesitter_parser
+      set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr() foldcolumn=1 foldlevel=0
+    ]]
+
+    -- foldexpr will return '0' for all lines
+    local levels = get_fold_levels() ---@type integer[]
+    eq(19, #levels)
+    for lnum, level in ipairs(levels) do
+      eq('0', level, string.format("foldlevel[%d] == %s; expected '0'", lnum, level))
+    end
+
+    -- local command_output = helpers.api.nvim_command_output
+    -- exec_lua([[ lua= debug.getinfo(vim.treesitter.get_parser) ]])
+    -- eq({}, command_output([[ messages ]]))
+
+    eq(
+      1,
+      exec_lua [[ return _G.count ]],
+      'count should not be as high as the # of lines; actually only once for the buffer.'
+    )
+  end)
 end)
