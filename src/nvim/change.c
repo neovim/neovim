@@ -1149,9 +1149,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   // indent to use for the new line.
   if (curbuf->b_p_ai || do_si) {
     // count white space on current line
-    newindent = get_indent_str_vtab(saved_line,
-                                    curbuf->b_p_ts,
-                                    curbuf->b_p_vts_array, false);
+    newindent = indent_size_ts(saved_line, curbuf->b_p_ts, curbuf->b_p_vts_array);
     if (newindent == 0 && !(flags & OPENLINE_COM_LIST)) {
       newindent = second_line_indent;  // for ^^D command in insert mode
     }
@@ -1593,9 +1591,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
         // Recompute the indent, it may have changed.
         if (curbuf->b_p_ai || do_si) {
-          newindent = get_indent_str_vtab(leader,
-                                          curbuf->b_p_ts,
-                                          curbuf->b_p_vts_array, false);
+          newindent = indent_size_ts(leader, curbuf->b_p_ts, curbuf->b_p_vts_array);
         }
 
         // Add the indent offset

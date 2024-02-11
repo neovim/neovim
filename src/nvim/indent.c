@@ -118,6 +118,7 @@ bool tabstop_set(char *var, colnr_T **array)
 /// If "vts" is set then the tab widths are taken from that array,
 /// otherwise the value of ts is used.
 int tabstop_padding(colnr_T col, OptInt ts_arg, const colnr_T *vts)
+  FUNC_ATTR_PURE
 {
   OptInt ts = ts_arg == 0 ? 8 : ts_arg;
   colnr_T tabcol = 0;
@@ -349,83 +350,96 @@ int get_sts_value(void)
   return result;
 }
 
-// Count the size (in window cells) of the indent in the current line.
+/// Count the size (in window cells) of the indent in the current line.
 int get_indent(void)
 {
-  return get_indent_str_vtab(get_cursor_line_ptr(),
-                             curbuf->b_p_ts,
-                             curbuf->b_p_vts_array,
-                             false);
+  return indent_size_ts(get_cursor_line_ptr(), curbuf->b_p_ts, curbuf->b_p_vts_array);
 }
 
-// Count the size (in window cells) of the indent in line "lnum".
+/// Count the size (in window cells) of the indent in line "lnum".
 int get_indent_lnum(linenr_T lnum)
 {
-  return get_indent_str_vtab(ml_get(lnum),
-                             curbuf->b_p_ts,
-                             curbuf->b_p_vts_array,
-                             false);
+  return indent_size_ts(ml_get(lnum), curbuf->b_p_ts, curbuf->b_p_vts_array);
 }
 
-// Count the size (in window cells) of the indent in line "lnum" of buffer
-// "buf".
+/// Count the size (in window cells) of the indent in line "lnum" of buffer "buf".
 int get_indent_buf(buf_T *buf, linenr_T lnum)
 {
-  return get_indent_str_vtab(ml_get_buf(buf, lnum), buf->b_p_ts, buf->b_p_vts_array, false);
+  return indent_size_ts(ml_get_buf(buf, lnum), buf->b_p_ts, buf->b_p_vts_array);
 }
 
-/// Count the size (in window cells) of the indent in line "ptr", with
-/// 'tabstop' at "ts".
-/// If @param list is true, count only screen size for tabs.
-int get_indent_str(const char *ptr, int ts, bool list)
-  FUNC_ATTR_NONNULL_ALL
+/// Compute the size of the indent (in window cells) in line "ptr",
+/// without tabstops (count tab as ^I or <09>).
+int indent_size_no_ts(char const *ptr)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  int count = 0;
+  int tab_size = byte2cells(TAB);
 
-  for (; *ptr; ptr++) {
-    // Count a tab for what it is worth.
-    if (*ptr == TAB) {
-      if (!list || curwin->w_p_lcs_chars.tab1) {
-        // count a tab for what it is worth
-        count += ts - (count % ts);
-      } else {
-        // In list mode, when tab is not set, count screen char width
-        // for Tab, displays: ^I
-        count += ptr2cells(ptr);
-      }
-    } else if (*ptr == ' ') {
-      // Count a space for one.
-      count++;
+  int vcol = 0;
+  while (true) {
+    char const c = *ptr++;
+    if (c == ' ') {
+      vcol++;
+    } else if (c == TAB) {
+      vcol += tab_size;
     } else {
-      break;
+      return vcol;
     }
   }
-  return count;
 }
 
-/// Count the size (in window cells) of the indent in line "ptr", using
-/// variable tabstops.
-/// if "list" is true, count only screen size for tabs.
-int get_indent_str_vtab(const char *ptr, OptInt ts, colnr_T *vts, bool list)
+/// Compute the size of the indent (in window cells) in line "ptr",
+/// using tabstops
+int indent_size_ts(char const *ptr, OptInt ts, colnr_T *vts)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_PURE
 {
-  int count = 0;
+  assert(char2cells(' ') == 1);
 
-  for (; *ptr; ptr++) {
-    if (*ptr == TAB) {  // count a tab for what it is worth
-      if (!list || curwin->w_p_lcs_chars.tab1) {
-        count += tabstop_padding(count, ts, vts);
-      } else {
-        // In list mode, when tab is not set, count screen char width
-        // for Tab, displays: ^I
-        count += ptr2cells(ptr);
-      }
-    } else if (*ptr == ' ') {
-      count++;  // count a space for one
+  int vcol = 0;
+  int tabstop_width, next_tab_vcol;
+
+  if (vts == NULL || vts[0] < 1) {  // tab has fixed width
+    // can ts be 0 ? This is from tabstop_padding().
+    tabstop_width = (int)(ts == 0 ? 8 : ts);
+    next_tab_vcol = tabstop_width;
+  } else {  // tab has variable width
+    colnr_T *cur_tabstop = vts + 1;
+    colnr_T *const last_tabstop = vts + vts[0];
+
+    while (cur_tabstop != last_tabstop) {
+      int cur_vcol = vcol;
+      vcol += *cur_tabstop++;
+      assert(cur_vcol < vcol);
+
+      do {
+        char const c = *ptr++;
+        if (c == ' ') {
+          cur_vcol++;
+        } else if (c == TAB) {
+          break;
+        } else {
+          return cur_vcol;
+        }
+      } while (cur_vcol != vcol);
+    }
+
+    tabstop_width = *last_tabstop;
+    next_tab_vcol = vcol + tabstop_width;
+  }
+
+  assert(tabstop_width != 0);
+  while (true) {
+    char const c = *ptr++;
+    if (c == ' ') {
+      vcol++;
+      next_tab_vcol += (vcol == next_tab_vcol) ? tabstop_width : 0;
+    } else if (c == TAB) {
+      vcol = next_tab_vcol;
+      next_tab_vcol += tabstop_width;
     } else {
-      break;
+      return vcol;
     }
   }
-  return count;
 }
 
 /// Set the indent of the current line.
@@ -828,10 +842,12 @@ int get_breakindent_win(win_T *wp, char *line)
     prev_tick = buf_get_changedtick(wp->w_buffer);
     prev_vts = wp->w_buffer->b_p_vts_array;
     if (wp->w_briopt_vcol == 0) {
-      prev_indent = get_indent_str_vtab(line,
-                                        wp->w_buffer->b_p_ts,
-                                        wp->w_buffer->b_p_vts_array,
-                                        wp->w_p_list);
+      if (wp->w_p_list && !wp->w_p_lcs_chars.tab1) {
+        prev_indent = indent_size_no_ts(line);
+      } else {
+        prev_indent = indent_size_ts(line, wp->w_buffer->b_p_ts,
+                                     wp->w_buffer->b_p_vts_array);
+      }
     }
     prev_listopt = wp->w_briopt_list;
     prev_list = 0;
