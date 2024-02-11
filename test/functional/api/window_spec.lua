@@ -1620,6 +1620,40 @@ describe('API/win', function()
       )
       command('new | quit')
     end)
+
+    it('restores last known cursor position if BufWinEnter did not move it', function()
+      -- This test mostly exists to ensure BufWinEnter is executed before enter_buffer's epilogue.
+      local buf = api.nvim_get_current_buf()
+      insert([[
+        foo
+        bar baz .etc
+        i love autocommand bugs!
+        supercalifragilisticexpialidocious
+        marvim is actually a human
+        llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch
+      ]])
+      api.nvim_win_set_cursor(0, { 5, 2 })
+      command('set nostartofline | enew')
+      local new_win = api.nvim_open_win(buf, false, { split = 'left' })
+      eq({ 5, 2 }, api.nvim_win_get_cursor(new_win))
+
+      exec([[
+        only!
+        autocmd BufWinEnter * ++once normal! j6l
+      ]])
+      new_win = api.nvim_open_win(buf, false, { split = 'left' })
+      eq({ 2, 6 }, api.nvim_win_get_cursor(new_win))
+    end)
+
+    it('does not block all win_set_buf autocommands if !enter and !noautocmd', function()
+      local new_buf = fn.bufadd('foobarbaz')
+      exec([[
+        let triggered = ""
+        autocmd BufReadCmd * ++once let triggered = bufname()
+      ]])
+      api.nvim_open_win(new_buf, false, { split = 'left' })
+      eq('foobarbaz', eval('triggered'))
+    end)
   end)
 
   describe('set_config', function()

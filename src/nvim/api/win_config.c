@@ -199,9 +199,9 @@
 ///   - footer_pos: Footer position. Must be set with `footer` option.
 ///     Value can be one of "left", "center", or "right".
 ///     Default is `"left"`.
-///   - noautocmd: If true then no buffer-related autocommand events such as
-///                  |BufEnter|, |BufLeave| or |BufWinEnter| may fire from
-///                  calling this function.
+///   - noautocmd: If true then autocommands triggered from setting the
+///     `buffer` to display are blocked (e.g: |BufEnter|, |BufLeave|,
+///     |BufWinEnter|).
 ///   - fixed: If true when anchor is NW or SW, the float window
 ///            would be kept fixed even if the window would be truncated.
 ///   - hide: If true the floating window will be hidden.
@@ -302,20 +302,20 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
     tp = win_find_tabpage(wp);
   }
   if (tp && bufref_valid(&bufref) && buf != wp->w_buffer) {
-    const bool noautocmd = curwin != wp || fconfig.noautocmd;
-    win_set_buf(wp, buf, noautocmd, err);
-    if (!noautocmd) {
+    // win_set_buf temporarily makes `wp` the curwin to set the buffer.
+    // If not entering `wp`, block Enter and Leave events. (cringe)
+    const bool au_no_enter_leave = curwin != wp && !fconfig.noautocmd;
+    if (au_no_enter_leave) {
+      autocmd_no_enter++;
+      autocmd_no_leave++;
+    }
+    win_set_buf(wp, buf, fconfig.noautocmd, err);
+    if (!fconfig.noautocmd) {
       tp = win_find_tabpage(wp);
     }
-    // win_set_buf autocommands were blocked if we didn't enter, but we still want BufWinEnter.
-    if (noautocmd && !fconfig.noautocmd && wp->w_buffer == buf) {
-      const int result = switch_win_noblock(&switchwin, wp, tp, true);
-      assert(result == OK);
-      (void)result;
-      if (apply_autocmds(EVENT_BUFWINENTER, NULL, NULL, false, buf)) {
-        tp = win_find_tabpage(wp);
-      }
-      restore_win_noblock(&switchwin, true);
+    if (au_no_enter_leave) {
+      autocmd_no_enter--;
+      autocmd_no_leave--;
     }
   }
   if (!tp) {

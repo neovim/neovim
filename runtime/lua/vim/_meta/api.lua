@@ -1719,9 +1719,9 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---               • footer_pos: Footer position. Must be set with `footer`
 ---                 option. Value can be one of "left", "center", or "right".
 ---                 Default is `"left"`.
----               • noautocmd: If true then no buffer-related autocommand
----                 events such as `BufEnter`, `BufLeave` or `BufWinEnter` may
----                 fire from calling this function.
+---               • noautocmd: If true then autocommands triggered from
+---                 setting the `buffer` to display are blocked (e.g:
+---                 `BufEnter`, `BufLeave`, `BufWinEnter`).
 ---               • fixed: If true when anchor is NW or SW, the float window
 ---                 would be kept fixed even if the window would be truncated.
 ---               • hide: If true the floating window will be hidden.
