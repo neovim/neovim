@@ -208,9 +208,9 @@ function M.set_query(...)
   M.set(...)
 end
 
----@class SetQueryOpts
----@field inherits (string|string[]|nil)
----@field extends (boolean|nil)
+---@class vim.treesitter.query.SetOpts
+---@field inherits? string|string[]
+---@field extends? boolean
 
 --- Sets the runtime query named {query_name} for {lang}
 ---
@@ -220,7 +220,7 @@ end
 ---@param lang string Language to use for the query
 ---@param query_name string Name of the query (e.g., "highlights")
 ---@param text string Query text (unparsed)
----@param opts? SetQueryOpts (table) Optional keyword arguments
+---@param opts? vim.treesitter.query.SetOpts (table) Optional keyword arguments
 ---   - inherits (string|string[]|nil) Language(s) this query should inherit
 ---     (see |treesitter-query-modeline-inherits|)
 ---   - extends (boolean|nil) If `true`, the query should be used as an extension query
