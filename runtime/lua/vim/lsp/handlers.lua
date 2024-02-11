@@ -644,6 +644,11 @@ M[ms.workspace_inlayHint_refresh] = function(err, result, ctx, config)
   return vim.lsp.inlay_hint.on_refresh(err, result, ctx, config)
 end
 
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#semanticTokens_refreshRequest
+M[ms.workspace_semanticTokens_refresh] = function(err, result, ctx, _config)
+  return vim.lsp.semantic_tokens._refresh(err, result, ctx)
+end
+
 -- Add boilerplate error validation and logging for all of these.
 for k, fn in pairs(M) do
   M[k] = function(err, result, ctx, config)

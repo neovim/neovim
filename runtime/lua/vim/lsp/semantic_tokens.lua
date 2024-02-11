@@ -1,6 +1,5 @@
 local api = vim.api
 local bit = require('bit')
-local handlers = require('vim.lsp.handlers')
 local ms = require('vim.lsp.protocol').Methods
 local util = require('vim.lsp.util')
 local uv = vim.uv
@@ -763,6 +762,7 @@ function M.highlight_token(token, bufnr, client_id, hl_group, opts)
   })
 end
 
+--- @package
 --- |lsp-handler| for the method `workspace/semanticTokens/refresh`
 ---
 --- Refresh requests are sent by the server to indicate a project-wide change
@@ -770,9 +770,7 @@ end
 --- invalidate the current results of all buffers and automatically kick off a
 --- new request for buffers that are displayed in a window. For those that aren't, a
 --- the BufWinEnter event should take care of it next time it's displayed.
----
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#semanticTokens_refreshRequest
-handlers[ms.workspace_semanticTokens_refresh] = function(err, _, ctx)
+function M._refresh(err, _, ctx)
   if err then
     return vim.NIL
   end
