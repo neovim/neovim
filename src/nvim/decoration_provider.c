@@ -48,7 +48,7 @@ static bool decor_provider_invoke(int provider_idx, const char *name, LuaRef ref
 
   textlock++;
   provider_active = true;
-  Object ret = nlua_call_ref(ref, name, args, true, &err);
+  Object ret = nlua_call_ref(ref, name, args, kRetNilBool, NULL, &err);
   provider_active = false;
   textlock--;
 

@@ -2183,8 +2183,7 @@ nvim_buf_call({buffer}, {fun})                               *nvim_buf_call()*
                   only)
 
     Return: ~
-        Return value of function. NB: will deepcopy Lua values currently, use
-        upvalues to send Lua references in and out.
+        Return value of function.
 
 nvim_buf_del_keymap({buffer}, {mode}, {lhs})           *nvim_buf_del_keymap()*
     Unmaps a buffer-local |mapping| for the given mode.
@@ -2879,8 +2878,7 @@ nvim_win_call({window}, {fun})                               *nvim_win_call()*
                   only)
 
     Return: ~
-        Return value of function. NB: will deepcopy Lua values currently, use
-        upvalues to send Lua references in and out.
+        Return value of function.
 
     See also: ~
       • |win_execute()|

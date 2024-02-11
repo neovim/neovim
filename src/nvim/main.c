@@ -940,20 +940,20 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   }
 
   Array args = ARRAY_DICT_INIT;
+  kv_resize(args, (size_t)(argc - remote_args));
   for (int t_argc = remote_args; t_argc < argc; t_argc++) {
-    String arg_s = cstr_to_string(argv[t_argc]);
-    ADD(args, STRING_OBJ(arg_s));
+    ADD_C(args, CSTR_AS_OBJ(argv[t_argc]));
   }
 
   Error err = ERROR_INIT;
-  Array a = ARRAY_DICT_INIT;
+  MAXSIZE_TEMP_ARRAY(a, 4);
   ADD(a, INTEGER_OBJ((int)chan));
-  ADD(a, CSTR_TO_OBJ(server_addr));
-  ADD(a, CSTR_TO_OBJ(connect_error));
+  ADD(a, CSTR_AS_OBJ(server_addr));
+  ADD(a, CSTR_AS_OBJ(connect_error));
   ADD(a, ARRAY_OBJ(args));
   String s = STATIC_CSTR_AS_STRING("return vim._cs_remote(...)");
-  Object o = nlua_exec(s, a, &err);
-  api_free_array(a);
+  Object o = nlua_exec(s, a, kRetObject, NULL, &err);
+  kv_destroy(args);
   if (ERROR_SET(&err)) {
     fprintf(stderr, "%s\n", err.msg);
     os_exit(2);
@@ -2085,7 +2085,7 @@ static void do_exrc_initialization(void)
     str = nlua_read_secure(VIMRC_LUA_FILE);
     if (str != NULL) {
       Error err = ERROR_INIT;
-      nlua_exec(cstr_as_string(str), (Array)ARRAY_DICT_INIT, &err);
+      nlua_exec(cstr_as_string(str), (Array)ARRAY_DICT_INIT, kRetNilBool, NULL, &err);
       xfree(str);
       if (ERROR_SET(&err)) {
         semsg("Error detected while processing %s:", VIMRC_LUA_FILE);

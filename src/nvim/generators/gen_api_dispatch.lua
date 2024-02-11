@@ -333,9 +333,6 @@ KeySetLink *KeyDict_]] .. k.name .. [[_get_field(const char *str, size_t len)
 }
 
 ]])
-  keysets_defs:write(
-    '#define api_free_keydict_' .. k.name .. '(x) api_free_keydict(x, ' .. k.name .. '_table)\n'
-  )
 end
 
 local function real_type(type)
@@ -687,6 +684,7 @@ local function process_function(fn)
   static int %s(lua_State *lstate)
   {
     Error err = ERROR_INIT;
+    Arena arena = ARENA_EMPTY;
     char *err_param = 0;
     if (lua_gettop(lstate) != %i) {
       api_set_error(&err, kErrorTypeValidation, "Expected %i argument%s");
@@ -736,18 +734,24 @@ local function process_function(fn)
     local param = fn.parameters[j]
     local cparam = string.format('arg%u', j)
     local param_type = real_type(param[1])
-    local lc_param_type = real_type(param[1]):lower()
     local extra = param_type == 'Dictionary' and 'false, ' or ''
-    if param[1] == 'Object' or param[1] == 'DictionaryOf(LuaRef)' then
+    local arg_free_code = ''
+    if param[1] == 'Object' then
       extra = 'true, '
+      arg_free_code = 'api_luarefs_free_object(' .. cparam .. ');'
+    elseif param[1] == 'DictionaryOf(LuaRef)' then
+      extra = 'true, '
+      arg_free_code = 'api_luarefs_free_dict(' .. cparam .. ');'
+    elseif param[1] == 'LuaRef' then
+      arg_free_code = 'api_free_luaref(' .. cparam .. ');'
     end
     local errshift = 0
     local seterr = ''
     if string.match(param_type, '^KeyDict_') then
       write_shifted_output(
         [[
-    %s %s = { 0 };
-    nlua_pop_keydict(lstate, &%s, %s_get_field, &err_param, &err);
+    %s %s = KEYDICT_INIT;
+    nlua_pop_keydict(lstate, &%s, %s_get_field, &err_param, &arena, &err);
     ]],
         param_type,
         cparam,
@@ -756,10 +760,15 @@ local function process_function(fn)
       )
       cparam = '&' .. cparam
       errshift = 1 -- free incomplete dict on error
+      arg_free_code = 'api_luarefs_free_keydict('
+        .. cparam
+        .. ', '
+        .. string.sub(param_type, 9)
+        .. '_table);'
     else
       write_shifted_output(
         [[
-    const %s %s = nlua_pop_%s(lstate, %s&err);]],
+    const %s %s = nlua_pop_%s(lstate, %s&arena, &err);]],
         param[1],
         cparam,
         param_type,
@@ -776,7 +785,7 @@ local function process_function(fn)
     }
 
     ]], #fn.parameters - j + errshift)
-    free_code[#free_code + 1] = ('api_free_%s(%s);'):format(lc_param_type, cparam)
+    free_code[#free_code + 1] = arg_free_code
     cparams = cparam .. ', ' .. cparams
   end
   if fn.receives_channel_id then
@@ -784,7 +793,6 @@ local function process_function(fn)
   end
   if fn.arena_return then
     cparams = cparams .. '&arena, '
-    write_shifted_output('    Arena arena = ARENA_EMPTY;\n')
   end
 
   if fn.has_lua_imp then
@@ -809,6 +817,7 @@ local function process_function(fn)
   local err_throw_code = [[
 
 exit_0:
+  arena_mem_free(arena_finish(&arena));
   if (ERROR_SET(&err)) {
     luaL_where(lstate, 1);
     if (err_param) {
@@ -829,10 +838,8 @@ exit_0:
     else
       return_type = fn.return_type
     end
-    local free_retval
-    if fn.arena_return then
-      free_retval = '  arena_mem_free(arena_finish(&arena));'
-    else
+    local free_retval = ''
+    if not fn.arena_return then
       free_retval = '  api_free_' .. return_type:lower() .. '(ret);'
     end
     write_shifted_output('    %s ret = %s(%s);\n', fn.return_type, fn.name, cparams)
@@ -858,6 +865,7 @@ exit_0:
       write_shifted_output('    nlua_push_%s(lstate, ret, %s);\n', return_type, tostring(special))
     end
 
+    -- NOTE: we currently assume err_throw needs nothing from arena
     write_shifted_output(
 
       [[

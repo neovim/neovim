@@ -170,7 +170,7 @@ Object handle_ui_client_redraw(uint64_t channel_id, Array args, Arena *arena, Er
 static HlAttrs ui_client_dict2hlattrs(Dictionary d, bool rgb)
 {
   Error err = ERROR_INIT;
-  Dict(highlight) dict = { 0 };
+  Dict(highlight) dict = KEYDICT_INIT;
   if (!api_dict_to_keydict(&dict, KeyDict_highlight_get_field, d, &err)) {
     // TODO(bfredl): log "err"
     return HLATTRS_INIT;

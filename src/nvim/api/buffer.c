@@ -1227,8 +1227,7 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 /// @param fun        Function to call inside the buffer (currently Lua callable
 ///                   only)
 /// @param[out] err   Error details, if any
-/// @return           Return value of function. NB: will deepcopy Lua values
-///                   currently, use upvalues to send Lua references in and out.
+/// @return           Return value of function.
 Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_LUA_ONLY
@@ -1242,7 +1241,7 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
   aucmd_prepbuf(&aco, buf);
 
   Array args = ARRAY_DICT_INIT;
-  Object res = nlua_call_ref(fun, NULL, args, true, err);
+  Object res = nlua_call_ref(fun, NULL, args, kRetLuaref, NULL, err);
 
   aucmd_restbuf(&aco);
   try_end(err);
@@ -1419,7 +1418,7 @@ static void push_linestr(lua_State *lstate, Array *a, const char *s, size_t len,
   } else {
     String str = STRING_INIT;
     if (len > 0) {
-      str = arena_string(arena, cbuf_as_string((char *)s, len));
+      str = CBUF_TO_ARENA_STR(arena, s, len);
       if (replace_nl) {
         // Vim represents NULs as NLs, but this may confuse clients.
         strchrsub(str.data, '\n', '\0');

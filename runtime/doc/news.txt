@@ -422,6 +422,8 @@ The following changes to existing APIs or features add new behavior.
 
 • |--startuptime| reports the startup times for both processes (TUI + server) as separate sections.
 
+• |nvim_buf_call()| and |nvim_win_call()| now preserves any return value (NB: not multiple return values)
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 

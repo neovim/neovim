@@ -496,11 +496,12 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Bool
 ///                   or executing the Lua code.
 ///
 /// @return           Return value of Lua code if present or NIL.
-Object nvim_exec_lua(String code, Array args, Error *err)
+Object nvim_exec_lua(String code, Array args, Arena *arena, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_REMOTE_ONLY
 {
-  return nlua_exec(code, args, err);
+  // TODO(bfredl): convert directly from msgpack to lua and then back again
+  return nlua_exec(code, args, kRetObject, arena, err);
 }
 
 /// Notify the user with a message
@@ -512,7 +513,7 @@ Object nvim_exec_lua(String code, Array args, Error *err)
 /// @param log_level  The log level
 /// @param opts       Reserved for future use.
 /// @param[out] err   Error details, if any
-Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err)
+Object nvim_notify(String msg, Integer log_level, Dictionary opts, Arena *arena, Error *err)
   FUNC_API_SINCE(7)
 {
   MAXSIZE_TEMP_ARRAY(args, 3);
@@ -520,7 +521,7 @@ Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err)
   ADD_C(args, INTEGER_OBJ(log_level));
   ADD_C(args, DICTIONARY_OBJ(opts));
 
-  return NLUA_EXEC_STATIC("return vim.notify(...)", args, err);
+  return NLUA_EXEC_STATIC("return vim.notify(...)", args, kRetObject, arena, err);
 }
 
 /// Calculates the number of display cells occupied by `text`.
@@ -603,7 +604,8 @@ String nvim__get_lib_dir(void)
 /// @param all whether to return all matches or only the first
 /// @param opts is_lua: only search Lua subdirs
 /// @return list of absolute paths to the found files
-ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, Error *err)
+ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, Arena *arena,
+                                  Error *err)
   FUNC_API_SINCE(8)
   FUNC_API_FAST
 {
@@ -613,7 +615,7 @@ ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, E
     return (Array)ARRAY_DICT_INIT;
   }
 
-  ArrayOf(String) res = runtime_get_named(opts->is_lua, pat, all);
+  ArrayOf(String) res = runtime_get_named(opts->is_lua, pat, all, arena);
 
   if (opts->do_source) {
     for (size_t i = 0; i < res.size; i++) {
@@ -1068,7 +1070,7 @@ static void term_write(const char *buf, size_t size, void *data)
   ADD_C(args, BUFFER_OBJ(terminal_buf(chan->term)));
   ADD_C(args, STRING_OBJ(((String){ .data = (char *)buf, .size = size })));
   textlock++;
-  nlua_call_ref(cb, "input", args, false, NULL);
+  nlua_call_ref(cb, "input", args, kRetNilBool, NULL, NULL);
   textlock--;
 }
 
@@ -1189,7 +1191,7 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 /// @return
 ///     - true: Client may continue pasting.
 ///     - false: Client must cancel the paste.
-Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
+Boolean nvim_paste(String data, Boolean crlf, Integer phase, Arena *arena, Error *err)
   FUNC_API_SINCE(6)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
@@ -1199,19 +1201,18 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
   VALIDATE_INT((phase >= -1 && phase <= 3), "phase", phase, {
     return false;
   });
-  Array args = ARRAY_DICT_INIT;
-  Object rv = OBJECT_INIT;
+  Array lines = ARRAY_DICT_INIT;
   if (phase == -1 || phase == 1) {  // Start of paste-stream.
     draining = false;
   } else if (draining) {
     // Skip remaining chunks.  Report error only once per "stream".
     goto theend;
   }
-  Array lines = string_to_array(data, crlf);
-  ADD(args, ARRAY_OBJ(lines));
-  ADD(args, INTEGER_OBJ(phase));
-  rv = nvim_exec_lua(STATIC_CSTR_AS_STRING("return vim.paste(...)"), args,
-                     err);
+  lines = string_to_array(data, crlf);
+  MAXSIZE_TEMP_ARRAY(args, 2);
+  ADD_C(args, ARRAY_OBJ(lines));
+  ADD_C(args, INTEGER_OBJ(phase));
+  Object rv = NLUA_EXEC_STATIC("return vim.paste(...)", args, kRetNilBool, arena, err);
   if (ERROR_SET(err)) {
     draining = true;
     goto theend;
@@ -1238,8 +1239,7 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
     AppendCharToRedobuff(ESC);  // Dot-repeat.
   }
 theend:
-  api_free_object(rv);
-  api_free_array(args);
+  api_free_array(lines);
   if (cancel || phase == -1 || phase == 3) {  // End of paste-stream.
     draining = false;
   }
@@ -1875,7 +1875,7 @@ Array nvim_list_uis(Arena *arena)
 /// Gets the immediate children of process `pid`.
 ///
 /// @return Array of child process ids, empty if process not found.
-Array nvim_get_proc_children(Integer pid, Error *err)
+Array nvim_get_proc_children(Integer pid, Arena *arena, Error *err)
   FUNC_API_SINCE(4)
 {
   Array rvobj = ARRAY_DICT_INIT;
@@ -1892,7 +1892,7 @@ Array nvim_get_proc_children(Integer pid, Error *err)
     DLOG("fallback to vim._os_proc_children()");
     MAXSIZE_TEMP_ARRAY(a, 1);
     ADD(a, INTEGER_OBJ(pid));
-    Object o = NLUA_EXEC_STATIC("return vim._os_proc_children(...)", a, err);
+    Object o = NLUA_EXEC_STATIC("return vim._os_proc_children(...)", a, kRetObject, arena, err);
     if (o.type == kObjectTypeArray) {
       rvobj = o.data.array;
     } else if (!ERROR_SET(err)) {
@@ -1900,11 +1900,11 @@ Array nvim_get_proc_children(Integer pid, Error *err)
                     "Failed to get process children. pid=%" PRId64 " error=%d",
                     pid, rv);
     }
-    goto end;
-  }
-
-  for (size_t i = 0; i < proc_count; i++) {
-    ADD(rvobj, INTEGER_OBJ(proc_list[i]));
+  } else {
+    rvobj = arena_array(arena, proc_count);
+    for (size_t i = 0; i < proc_count; i++) {
+      ADD(rvobj, INTEGER_OBJ(proc_list[i]));
+    }
   }
 
 end:
@@ -1915,19 +1915,17 @@ end:
 /// Gets info describing process `pid`.
 ///
 /// @return Map of process properties, or NIL if process not found.
-Object nvim_get_proc(Integer pid, Error *err)
+Object nvim_get_proc(Integer pid, Arena *arena, Error *err)
   FUNC_API_SINCE(4)
 {
-  Object rvobj = OBJECT_INIT;
-  rvobj.data.dictionary = (Dictionary)ARRAY_DICT_INIT;
-  rvobj.type = kObjectTypeDictionary;
+  Object rvobj = NIL;
 
   VALIDATE_INT((pid > 0 && pid <= INT_MAX), "pid", pid, {
     return NIL;
   });
 
 #ifdef MSWIN
-  rvobj.data.dictionary = os_proc_info((int)pid);
+  rvobj = DICTIONARY_OBJ(os_proc_info((int)pid));
   if (rvobj.data.dictionary.size == 0) {  // Process not found.
     return NIL;
   }
@@ -1935,11 +1933,11 @@ Object nvim_get_proc(Integer pid, Error *err)
   // Cross-platform process info APIs are miserable, so use `ps` instead.
   MAXSIZE_TEMP_ARRAY(a, 1);
   ADD(a, INTEGER_OBJ(pid));
-  Object o = NLUA_EXEC_STATIC("return vim._os_proc_info(...)", a, err);
+  Object o = NLUA_EXEC_STATIC("return vim._os_proc_info(...)", a, kRetObject, arena, err);
   if (o.type == kObjectTypeArray && o.data.array.size == 0) {
     return NIL;  // Process not found.
   } else if (o.type == kObjectTypeDictionary) {
-    rvobj.data.dictionary = o.data.dictionary;
+    rvobj = o;
   } else if (!ERROR_SET(err)) {
     api_set_error(err, kErrorTypeException,
                   "Failed to get process info. pid=%" PRId64, pid);

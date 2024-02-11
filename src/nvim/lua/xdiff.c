@@ -209,7 +209,8 @@ static bool check_xdiff_opt(ObjectType actType, ObjectType expType, const char *
 static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate, xdemitconf_t *cfg, xpparam_t *params,
                                            int64_t *linematch, Error *err)
 {
-  const DictionaryOf(LuaRef) opts = nlua_pop_Dictionary(lstate, true, err);
+  // TODO: this is very much a keydict..
+  const DictionaryOf(LuaRef) opts = nlua_pop_Dictionary(lstate, true, NULL, err);
 
   NluaXdiffMode mode = kNluaXdiffModeUnified;
 

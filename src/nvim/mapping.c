@@ -1644,7 +1644,7 @@ char *eval_map_expr(mapblock_T *mp, int c)
   if (mp->m_luaref != LUA_NOREF) {
     Error err = ERROR_INIT;
     Array args = ARRAY_DICT_INIT;
-    Object ret = nlua_call_ref(mp->m_luaref, NULL, args, true, &err);
+    Object ret = nlua_call_ref(mp->m_luaref, NULL, args, kRetObject, NULL, &err);
     if (ret.type == kObjectTypeString) {
       p = string_to_cstr(ret.data.string);
     }

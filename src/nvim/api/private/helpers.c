@@ -576,7 +576,7 @@ String arena_string(Arena *arena, String str)
   if (str.size) {
     return cbuf_as_string(arena_memdupz(arena, str.data, str.size), str.size);
   } else {
-    return (String)STRING_INIT;
+    return (String){ .data = arena ? "" : xstrdup(""), .size = 0 };
   }
 }
 
@@ -1062,21 +1062,53 @@ Dictionary api_keydict_to_dict(void *value, KeySetLink *table, size_t max_size, 
   return rv;
 }
 
-void api_free_keydict(void *dict, KeySetLink *table)
+void api_luarefs_free_object(Object value)
+{
+  // TODO(bfredl): this is more complicated than it needs to be.
+  // we should be able to lock down more specifically where luarefs can be
+  switch (value.type) {
+  case kObjectTypeLuaRef:
+    api_free_luaref(value.data.luaref);
+    break;
+
+  case kObjectTypeArray:
+    api_luarefs_free_array(value.data.array);
+    break;
+
+  case kObjectTypeDictionary:
+    api_luarefs_free_dict(value.data.dictionary);
+    break;
+
+  default:
+    break;
+  }
+}
+
+void api_luarefs_free_keydict(void *dict, KeySetLink *table)
 {
   for (size_t i = 0; table[i].str; i++) {
     char *mem = ((char *)dict + table[i].ptr_off);
     if (table[i].type == kObjectTypeNil) {
-      api_free_object(*(Object *)mem);
-    } else if (table[i].type == kObjectTypeString) {
-      api_free_string(*(String *)mem);
-    } else if (table[i].type == kObjectTypeArray) {
-      api_free_array(*(Array *)mem);
-    } else if (table[i].type == kObjectTypeDictionary) {
-      api_free_dictionary(*(Dictionary *)mem);
+      api_luarefs_free_object(*(Object *)mem);
     } else if (table[i].type == kObjectTypeLuaRef) {
       api_free_luaref(*(LuaRef *)mem);
+    } else if (table[i].type == kObjectTypeDictionary) {
+      api_luarefs_free_dict(*(Dictionary *)mem);
     }
+  }
+}
+
+void api_luarefs_free_array(Array value)
+{
+  for (size_t i = 0; i < value.size; i++) {
+    api_luarefs_free_object(value.items[i]);
+  }
+}
+
+void api_luarefs_free_dict(Dictionary value)
+{
+  for (size_t i = 0; i < value.size; i++) {
+    api_luarefs_free_object(value.items[i].value);
   }
 }
 

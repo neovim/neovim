@@ -3278,13 +3278,11 @@ static bool has_wsl(void)
   static TriState has_wsl = kNone;
   if (has_wsl == kNone) {
     Error err = ERROR_INIT;
-    Object o = nlua_exec(STATIC_CSTR_AS_STRING("return vim.uv.os_uname()['release']:lower()"
-                                               ":match('microsoft') and true or false"),
-                         (Array)ARRAY_DICT_INIT, &err);
+    Object o = NLUA_EXEC_STATIC("return vim.uv.os_uname()['release']:lower()"
+                                ":match('microsoft')",
+                                (Array)ARRAY_DICT_INIT, kRetNilBool, NULL, &err);
     assert(!ERROR_SET(&err));
-    assert(o.type == kObjectTypeBoolean);
-    has_wsl = o.data.boolean ? kTrue : kFalse;
-    api_free_object(o);
+    has_wsl = LUARET_TRUTHY(o) ? kTrue : kFalse;
   }
   return has_wsl == kTrue;
 }
@@ -6963,6 +6961,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   ArenaMem res_mem = NULL;
   Object result = rpc_send_call(chan_id, method, args, &res_mem, &err);
+  api_free_array(args);
 
   if (l_provider_call_nesting) {
     current_sctx = save_current_sctx;
