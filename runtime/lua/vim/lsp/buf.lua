@@ -82,6 +82,7 @@ function M.definition(options)
 
   ---@param results table<integer, {error: lsp.ResponseError, result: lsp.Location|lsp.Location[]|lsp.LocationLink[]|nil}>
   local function handler(results)
+    ---@type table<integer, vim.lsp.util.LocationItem[]>
     local client_id_to_items = {}
     local total_items = 0
     for client_id, v in pairs(results) do
