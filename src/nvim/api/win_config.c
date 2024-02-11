@@ -12,6 +12,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
+#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
@@ -279,6 +280,9 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
 
   // Autocommands may close `wp` or move it to another tabpage, so update and check `tp` after each
   // event. In each case, `wp` should already be valid in `tp`, so switch_win should not fail.
+  // Also, autocommands may free the `buf` to switch to, so store a bufref to check.
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
   switchwin_T switchwin;
   {
     const int result = switch_win_noblock(&switchwin, wp, tp, true);
@@ -293,7 +297,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
     goto_tabpage_win(tp, wp);
     tp = win_find_tabpage(wp);
   }
-  if (tp && buf != wp->w_buffer) {
+  if (tp && bufref_valid(&bufref) && buf != wp->w_buffer) {
     const bool noautocmd = curwin != wp || fconfig.noautocmd;
     win_set_buf(wp, buf, noautocmd, err);
     if (!noautocmd) {
