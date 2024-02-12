@@ -79,6 +79,7 @@ local validate = vim.validate
 --- Track this so that we can escalate automatically if we've already tried a
 --- graceful shutdown
 --- @field private _graceful_shutdown_failed true?
+--- @field private commands table
 ---
 --- @field dynamic_capabilities lsp.DynamicCapabilities
 ---
@@ -270,6 +271,7 @@ function Client.start(config)
     attached_buffers = {},
     server_capabilities = {},
     dynamic_capabilities = vim.lsp._dynamic.new(id),
+    commands = config.commands, -- Remove in Nvim 0.11
 
     --- Contains $/progress report messages.
     --- They have the format {token: integer|string, value: any}
