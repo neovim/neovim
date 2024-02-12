@@ -1154,7 +1154,7 @@ code_action({options})                             *vim.lsp.buf.code_action()*
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
       • vim.lsp.protocol.CodeActionTriggerKind
 
-completion({context})                               *vim.lsp.buf.completion()*
+completion({context}, {options})                    *vim.lsp.buf.completion()*
     Retrieves the completion items at the current cursor position. Can only be
     called in Insert mode.
 
@@ -1163,6 +1163,11 @@ completion({context})                               *vim.lsp.buf.completion()*
                    information about the context in which a completion was
                    triggered (how it was triggered, and by which trigger
                    character, if applicable)
+      • {options}  (`table?`) additional options
+                   • row: 1-indexed row number of position, defaults to
+                     current line
+                   • col:0-indexed column number of position, defaults to
+                     current character
 
     See also: ~
       • vim.lsp.protocol.CompletionTriggerKind
@@ -1180,6 +1185,10 @@ declaration({options})                             *vim.lsp.buf.declaration()*
                      already open.
                    • on_list: (function) |lsp-on-list-handler| replacing the
                      default handler. Called for any non-empty result.
+                   • row: 1-indexed row number of position, defaults to
+                     current line
+                   • col:0-indexed column number of position, defaults to
+                     current character
 
 definition({options})                               *vim.lsp.buf.definition()*
     Jumps to the definition of the symbol under the cursor.
@@ -1190,8 +1199,12 @@ definition({options})                               *vim.lsp.buf.definition()*
                      already open.
                    • on_list: (function) |lsp-on-list-handler| replacing the
                      default handler. Called for any non-empty result.
+                   • row: 1-indexed row number of position, defaults to
+                     current line
+                   • col:0-indexed column number of position, defaults to
+                     current character
 
-document_highlight()                        *vim.lsp.buf.document_highlight()*
+document_highlight({options})               *vim.lsp.buf.document_highlight()*
     Send request to the server to resolve document highlights for the current
     text document position. This request can be triggered by a key mapping or
     by events such as `CursorHold`, e.g.: >vim
@@ -1205,6 +1218,13 @@ document_highlight()                        *vim.lsp.buf.document_highlight()*
     highlights. |hl-LspReferenceText| |hl-LspReferenceRead|
     |hl-LspReferenceWrite|
 
+    Parameters: ~
+      • {options}  (`table?`) additional options
+                   • row: 1-indexed row number of position, defaults to
+                     current line
+                   • col:0-indexed column number of position, defaults to
+                     current character
+
 document_symbol({options})                     *vim.lsp.buf.document_symbol()*
     Lists all symbols in the current buffer in the quickfix window.
 
@@ -1212,6 +1232,10 @@ document_symbol({options})                     *vim.lsp.buf.document_symbol()*
       • {options}  (`table?`) additional options
                    • on_list: (function) handler for list results. See
                      |lsp-on-list-handler|
+                   • row: 1-indexed row number of position, defaults to
+                     current line
+                   • col:0-indexed column number of position, defaults to
+                     current character
 
 execute_command({command_params})              *vim.lsp.buf.execute_command()*
     Executes an LSP server command.
@@ -1260,9 +1284,16 @@ format({options})                                       *vim.lsp.buf.format()*
                      Defaults to `nil` in other modes, formatting the full
                      buffer
 
-hover()                                                  *vim.lsp.buf.hover()*
+hover({options})                                         *vim.lsp.buf.hover()*
     Displays hover information about the symbol under the cursor in a floating
     window. Calling the function twice will jump into the floating window.
+
+    Parameters: ~
+      • {options}  (`table?`) additional options
+                   • row: 1-indexed row number of position, defaults to
+                     current line
+                   • col:0-indexed column number of position, defaults to
+                     current character
 
 implementation({options})                       *vim.lsp.buf.implementation()*
     Lists all the implementations for the symbol under the cursor in the
@@ -1272,19 +1303,37 @@ implementation({options})                       *vim.lsp.buf.implementation()*
       • {options}  (`table?`) additional options
                    • on_list: (function) |lsp-on-list-handler| replacing the
                      default handler. Called for any non-empty result.
+                   • row: 1-indexed row number of position, defaults to
+                     current line
+                   • col:0-indexed column number of position, defaults to
+                     current character
 
-incoming_calls()                                *vim.lsp.buf.incoming_calls()*
+incoming_calls({options})                       *vim.lsp.buf.incoming_calls()*
     Lists all the call sites of the symbol under the cursor in the |quickfix|
     window. If the symbol can resolve to multiple items, the user can pick one
     in the |inputlist()|.
 
+    Parameters: ~
+      • {options}  (`table?`) additional options
+                   • row: 1-indexed row number of position, defaults to
+                     current line
+                   • col:0-indexed column number of position, defaults to
+                     current character
+
 list_workspace_folders()                *vim.lsp.buf.list_workspace_folders()*
     List workspace folders.
 
-outgoing_calls()                                *vim.lsp.buf.outgoing_calls()*
+outgoing_calls({options})                       *vim.lsp.buf.outgoing_calls()*
     Lists all the items that are called by the symbol under the cursor in the
     |quickfix| window. If the symbol can resolve to multiple items, the user
     can pick one in the |inputlist()|.
+
+    Parameters: ~
+      • {options}  (`table?`) additional options
+                   • row: 1-indexed row number of position, defaults to
+                     current line
+                   • col:0-indexed column number of position, defaults to
+                     current character
 
 references({context}, {options})                    *vim.lsp.buf.references()*
     Lists all the references to the symbol under the cursor in the quickfix
@@ -1295,6 +1344,10 @@ references({context}, {options})                    *vim.lsp.buf.references()*
       • {options}  (`table?`) additional options
                    • on_list: (function) handler for list results. See
                      |lsp-on-list-handler|
+                   • row: 1-indexed row number of position, defaults to
+                     current line
+                   • col:0-indexed column number of position, defaults to
+                     current character
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
@@ -1316,10 +1369,21 @@ rename({new_name}, {options})                           *vim.lsp.buf.rename()*
                       Clients matching the predicate are included.
                     • name (string|nil): Restrict clients used for rename to
                       ones where client.name matches this field.
+                    • row: 1-indexed row number of position, defaults to
+                      current line
+                    • col:0-indexed column number of position, defaults to
+                      current character
 
-signature_help()                                *vim.lsp.buf.signature_help()*
+signature_help({options})                       *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a
     floating window.
+
+    Parameters: ~
+      • {options}  (`table?`) additional options
+                   • row: 1-indexed row number of position, defaults to
+                     current line
+                   • col:0-indexed column number of position, defaults to
+                     current character
 
 type_definition({options})                     *vim.lsp.buf.type_definition()*
     Jumps to the definition of the type of the symbol under the cursor.
@@ -1330,6 +1394,10 @@ type_definition({options})                     *vim.lsp.buf.type_definition()*
                      already open.
                    • on_list: (function) |lsp-on-list-handler| replacing the
                      default handler. Called for any non-empty result.
+                   • row: 1-indexed row number of position, defaults to
+                     current line
+                   • col:0-indexed column number of position, defaults to
+                     current character
 
 workspace_symbol({query}, {options})          *vim.lsp.buf.workspace_symbol()*
     Lists all symbols in the current workspace in the quickfix window.
@@ -1894,11 +1962,15 @@ make_given_range_params({start_pos}, {end_pos}, {bufnr}, {offset_encoding})
         start = `start_position`, end = `end_position` } }
 
                                          *vim.lsp.util.make_position_params()*
-make_position_params({window}, {offset_encoding})
+make_position_params({row}, {col}, {window}, {offset_encoding})
     Creates a `TextDocumentPositionParams` object for the current buffer and
     cursor position.
 
     Parameters: ~
+      • {row}              (`integer?`) 1-indexed row number of position,
+                           defaults to current line
+      • {col}              (`integer?`) 0-indexed column number of position,
+                           defaults to current character
       • {window}           (`integer?`) window handle or 0 for current,
                            defaults to current
       • {offset_encoding}  (`string?`) utf-8|utf-16|utf-32|nil defaults to

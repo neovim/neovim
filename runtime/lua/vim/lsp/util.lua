@@ -1939,10 +1939,15 @@ end
 
 ---@param window integer|nil: window handle or 0 for current, defaults to current
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
-local function make_position_param(window, offset_encoding)
+---@param row integer|nil 1-indexed row number of position, defaults to current line
+---@param col integer|nil 0-indexed column number of position, defaults to current character
+---@return table position line and character number within buffer
+local function make_position_param(window, offset_encoding, row, col)
   window = window or 0
   local buf = api.nvim_win_get_buf(window)
-  local row, col = unpack(api.nvim_win_get_cursor(window))
+  if not (row or col) then
+    row, col = unpack(api.nvim_win_get_cursor(window))
+  end
   offset_encoding = offset_encoding or M._get_offset_encoding(buf)
   row = row - 1
   local line = api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
@@ -1956,18 +1961,19 @@ local function make_position_param(window, offset_encoding)
 end
 
 --- Creates a `TextDocumentPositionParams` object for the current buffer and cursor position.
----
+---@param row integer|nil 1-indexed row number of position, defaults to current line
+---@param col integer|nil 0-indexed column number of position, defaults to current character
 ---@param window integer|nil: window handle or 0 for current, defaults to current
 ---@param offset_encoding string|nil utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
 ---@return table `TextDocumentPositionParams` object
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
-function M.make_position_params(window, offset_encoding)
+function M.make_position_params(row, col, window, offset_encoding)
   window = window or 0
   local buf = api.nvim_win_get_buf(window)
   offset_encoding = offset_encoding or M._get_offset_encoding(buf)
   return {
     textDocument = M.make_text_document_params(buf),
-    position = make_position_param(window, offset_encoding),
+    position = make_position_param(window, offset_encoding, row, col),
   }
 end
 
