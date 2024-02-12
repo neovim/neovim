@@ -266,6 +266,9 @@ end
 ---     - name (string|nil):
 ---         Restrict clients used for rename to ones where client.name matches
 ---         this field.
+---     - clear_default (boolean|nil):
+---         If true |vim.ui.input()| will default to an empty string.
+---         Defaults to false.
 function M.rename(new_name, options)
   options = options or {}
   local bufnr = options.bufnr or api.nvim_get_current_buf()
@@ -286,7 +289,7 @@ function M.rename(new_name, options)
   local win = api.nvim_get_current_win()
 
   -- Compute early to account for cursor movements after going async
-  local cword = vim.fn.expand('<cword>')
+  local cword = options.clear_default and nil or vim.fn.expand('<cword>')
 
   local function get_text_at_range(range, offset_encoding)
     return api.nvim_buf_get_text(
