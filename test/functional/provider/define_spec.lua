@@ -362,7 +362,7 @@ local function function_specs_for(fn, sync, first_arg_factory, init)
 end
 
 local function channel()
-  return api.nvim_get_api_info()[1]
+  return api.nvim_get_chan_info(0).id
 end
 
 local function host()

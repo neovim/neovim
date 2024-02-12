@@ -3363,7 +3363,7 @@ describe('lua stdlib', function()
 
     describe('returns -2 when interrupted', function()
       before_each(function()
-        local channel = api.nvim_get_api_info()[1]
+        local channel = api.nvim_get_chan_info(0).id
         api.nvim_set_var('channel', channel)
       end)
 

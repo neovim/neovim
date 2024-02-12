@@ -18,18 +18,18 @@ describe('server -> client', function()
 
   before_each(function()
     clear()
-    cid = api.nvim_get_api_info()[1]
+    cid = api.nvim_get_chan_info(0).id
   end)
 
   it('handles unexpected closed stream while preparing RPC response', function()
     source([[
       let g:_nvim_args = [v:progpath, '--embed', '--headless', '-n', '-u', 'NONE', '-i', 'NONE', ]
       let ch1 = jobstart(g:_nvim_args, {'rpc': v:true})
-      let child1_ch = rpcrequest(ch1, "nvim_get_api_info")[0]
+      let child1_ch = rpcrequest(ch1, "nvim_get_chan_info", 0).id
       call rpcnotify(ch1, 'nvim_eval', 'rpcrequest('.child1_ch.', "nvim_get_api_info")')
 
       let ch2 = jobstart(g:_nvim_args, {'rpc': v:true})
-      let child2_ch = rpcrequest(ch2, "nvim_get_api_info")[0]
+      let child2_ch = rpcrequest(ch2, "nvim_get_chan_info", 0).id
       call rpcnotify(ch2, 'nvim_eval', 'rpcrequest('.child2_ch.', "nvim_get_api_info")')
 
       call jobstop(ch1)
@@ -231,7 +231,7 @@ describe('server -> client', function()
   describe('jobstart()', function()
     local jobid
     before_each(function()
-      local channel = api.nvim_get_api_info()[1]
+      local channel = api.nvim_get_chan_info(0).id
       api.nvim_set_var('channel', channel)
       source([[
         function! s:OnEvent(id, data, event)
@@ -292,7 +292,7 @@ describe('server -> client', function()
       ok(id > 0)
 
       fn.rpcrequest(id, 'nvim_set_current_line', 'hello')
-      local client_id = fn.rpcrequest(id, 'nvim_get_api_info')[1]
+      local client_id = fn.rpcrequest(id, 'nvim_get_chan_info', 0).id
 
       set_session(server)
       eq(serverpid, fn.getpid())
@@ -300,7 +300,7 @@ describe('server -> client', function()
 
       -- method calls work both ways
       fn.rpcrequest(client_id, 'nvim_set_current_line', 'howdy!')
-      eq(id, fn.rpcrequest(client_id, 'nvim_get_api_info')[1])
+      eq(id, fn.rpcrequest(client_id, 'nvim_get_chan_info', 0).id)
 
       set_session(client)
       eq(clientpid, fn.getpid())
@@ -378,7 +378,7 @@ describe('server -> client', function()
       eq('hello', api.nvim_get_current_line())
       eq(serverpid, fn.rpcrequest(id, 'nvim_eval', 'getpid()'))
 
-      eq(id, fn.rpcrequest(id, 'nvim_get_api_info')[1])
+      eq(id, fn.rpcrequest(id, 'nvim_get_chan_info', 0).id)
     end)
   end)
 end)
