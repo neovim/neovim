@@ -1115,7 +1115,7 @@ func Test_diff_breakindent_after_filler()
   CheckScreendump
 
   let lines =<< trim END
-    set laststatus=0 diffopt+=followwrap breakindent
+    set laststatus=0 diffopt+=followwrap breakindent breakindentopt=min:0
     call setline(1, ['a', '  ' .. repeat('c', 50)])
     vnew
     call setline(1, ['a', 'b', '  ' .. repeat('c', 50)])

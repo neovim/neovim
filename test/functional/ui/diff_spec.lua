@@ -1480,7 +1480,7 @@ it("diff mode draws 'breakindent' correctly after filler lines", function()
     [4] = { foreground = Screen.colors.Blue, bold = true },
   })
   exec([[
-    set laststatus=0 diffopt+=followwrap breakindent
+    set laststatus=0 diffopt+=followwrap breakindent breakindentopt=min:0
     call setline(1, ['a', '  ' .. repeat('c', 50)])
     vnew
     call setline(1, ['a', 'b', '  ' .. repeat('c', 50)])

@@ -773,7 +773,7 @@ func Test_breakindent20_list()
 	\ "shall make no law   ",
 	\ ]
   call s:compare_lines(expect, lines)
-  " set minimum indent
+  " set minimum text width
   setl briopt=min:5
   redraw!
   let lines = s:screen_lines2(1, 6, 20)
@@ -1171,6 +1171,38 @@ func Test_breakindent_list_split()
   call s:compare_lines(expect, lines)
 
   bwipe!
+endfunc
+
+func Test_breakindent_min_with_signcol()
+  call s:test_windows('setl briopt=min:15 signcolumn=yes')
+  redraw!
+  let expect = [
+        \ "      abcdefghijklmn",
+        \ "     opqrstuvwxyzABC",
+        \ "     DEFGHIJKLMNOP  "
+        \ ]
+  let lines = s:screen_lines(line('.'), 20)
+  call s:compare_lines(expect, lines)
+  setl briopt=min:17
+  redraw!
+  let expect = [
+        \ "      abcdefghijklmn",
+        \ "   opqrstuvwxyzABCDE",
+        \ "   FGHIJKLMNOP      "
+        \ ]
+  let lines = s:screen_lines(line('.'), 20)
+  call s:compare_lines(expect, lines)
+  setl briopt=min:19
+  redraw!
+  let expect = [
+        \ "      abcdefghijklmn",
+        \ "  opqrstuvwxyzABCDEF",
+        \ "  GHIJKLMNOP        "
+        \ ]
+  let lines = s:screen_lines(line('.'), 20)
+  call s:compare_lines(expect, lines)
+
+  call s:close_windows()
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
