@@ -1118,6 +1118,36 @@ describe('lua stdlib', function()
     eq(2, exec_lua [[ return vim.tbl_count({a=1, b=nil, c=3}) ]])
   end)
 
+  it('vim.traverse', function()
+    eq({ 15, 9, 11 }, exec_lua([[
+      local one = { val = 1 }
+      local two = { val = 2, children3 = function() return nil end }
+      local three = { val = 3, children = { two }, children2 = { one } }
+      local four = {
+        val = 4,
+        children = { one, three },
+        children3 = function() return { two } end,
+      }
+      local five = {
+        val = 5,
+        children = { four },
+        children2 = { three, nil },
+        children3 = function() return { four, nil } end,
+      }
+      local total1 = 0
+      local total2 = 0
+      local total3 = 0
+      vim.traverse(five, "children", function(node) total1 = total1 + node.val end)
+      vim.traverse(five, "children2", function(node) total2 = total2 + node.val end)
+      vim.traverse(
+        five,
+        function(node) return node.children3() end,
+        function(node) total3 = total3 + node.val end
+      )
+      return { total1, total2, total3 }
+    ]]))
+  end)
+
   it('vim.deep_equal', function()
     eq(true, exec_lua [[ return vim.deep_equal({a=1}, {a=1}) ]])
     eq(true, exec_lua [[ return vim.deep_equal({a={b=1}}, {a={b=1}}) ]])

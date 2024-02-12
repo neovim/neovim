@@ -2320,6 +2320,30 @@ vim.tbl_values({t})                                         *vim.tbl_values()*
     Return: ~
         (`list`) List of values
 
+vim.traverse({tree}, {key}, {visitor})                        *vim.traverse()*
+    Traverses any tree-like object defined by `key`, calling the provided
+    `visitor` on each descendant.
+
+    Example: >lua
+        local comments = {}
+        vim.traverse(
+          language_tree,
+          function(tree) return tree:children() end,
+          function(tree)
+            if tree:lang() == "comment" then
+              table.insert(comments, tree)
+            end
+          end
+        )
+<
+
+    Parameters: ~
+      • {tree}     any The object to traverse.
+      • {key}      string|fun(subtree: any): any[] Define the "children" to
+                   visit.
+      • {visitor}  fun(subtree: any): boolean|nil Function to call on each
+                   descendant. Return true to skip the rest of `subtree`.
+
 vim.trim({s})                                                     *vim.trim()*
     Trim whitespace (Lua pattern "%s") from both sides of a string.
 
