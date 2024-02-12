@@ -326,6 +326,13 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
         wp->w_redr_type = UPD_VALID;
       }
 
+      // When inserting/deleting lines and the window has specific lines
+      // to be redrawn, w_redraw_top and w_redraw_bot may now be invalid,
+      // so just redraw everything.
+      if (xtra != 0 && wp->w_redraw_top != 0) {
+        redraw_later(wp, UPD_NOT_VALID);
+      }
+
       linenr_T last = lnume + xtra - 1;  // last line after the change
 
       // Reset "w_skipcol" if the topline length has become smaller to

@@ -1427,7 +1427,7 @@ static void draw_sep_connectors_win(win_T *wp)
 ///                     - if wp->w_buffer->b_mod_set set, update lines between
 ///                       b_mod_top and b_mod_bot.
 ///                     - if wp->w_redraw_top non-zero, redraw lines between
-///                       wp->w_redraw_top and wp->w_redr_bot.
+///                       wp->w_redraw_top and wp->w_redraw_bot.
 ///                     - continue redrawing when syntax status is invalid.
 ///                  4. if scrolled up, update lines at the bottom.
 /// This results in three areas that may need updating:
@@ -1537,13 +1537,6 @@ static void win_update(win_T *wp)
   if (wp->w_nrwidth != nrwidth_new) {
     type = UPD_NOT_VALID;
     wp->w_nrwidth = nrwidth_new;
-  } else if (buf->b_mod_set
-             && buf->b_mod_xlines != 0
-             && wp->w_redraw_top != 0) {
-    // When there are both inserted/deleted lines and specific lines to be
-    // redrawn, w_redraw_top and w_redraw_bot may be invalid, just redraw
-    // everything (only happens when redrawing is off for while).
-    type = UPD_NOT_VALID;
   } else {
     // Set mod_top to the first line that needs displaying because of
     // changes.  Set mod_bot to the first line after the changes.
