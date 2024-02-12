@@ -6,7 +6,7 @@
 
 EditorConfig integration                                        *editorconfig*
 
-Nvim supports EditorConfig. When a file is opened, Nvim searches all parent
+Nvim supports EditorConfig. When a file is opened, after running |ftplugin|s, Nvim searches all parent
 directories of that file for ".editorconfig" files, parses them, and applies
 any properties that match the opened file. Think of it like 'modeline' for an
 entire (recursive) directory. For more information see
@@ -86,11 +86,4 @@ Example: >lua
       vim.b[bufnr].foo = val
     end
 <
-
-EditorConfig overrides filetype plugins           *editorconfig-vs-ftplugin*
-
-Nvim's EditorConfig resolution runs after |ftplugin| processing. This means
-that EditorConfig settings override global filetype settings
-(such as those in the |after-directory|).
-
  vim:tw=78:ts=8:et:sw=4:ft=help:norl:
