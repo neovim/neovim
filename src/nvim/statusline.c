@@ -935,13 +935,19 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
   char buf_tmp[TMPLEN];
   char win_tmp[TMPLEN];
   char *usefmt = fmt;
-  const int save_must_redraw = must_redraw;
-  const int save_redr_type = curwin->w_redr_type;
+  const bool save_redraw_not_allowed = redraw_not_allowed;
   const bool save_KeyTyped = KeyTyped;
   // TODO(Bram): find out why using called_emsg_before makes tests fail, does it
   // matter?
   // const int called_emsg_before = called_emsg;
   const int did_emsg_before = did_emsg;
+
+  // When inside update_screen() we do not want redrawing a statusline,
+  // ruler, title, etc. to trigger another redraw, it may cause an endless
+  // loop.
+  if (updating_screen) {
+    redraw_not_allowed = true;
+  }
 
   if (stl_items == NULL) {
     stl_items = xmalloc(sizeof(stl_item_t) * stl_items_len);
@@ -1938,14 +1944,14 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       stl_items[curitem].type = Empty;
     }
 
+    if (num >= 0 || (!itemisflag && str && *str)) {
+      prevchar_isflag = false;              // Item not NULL, but not a flag
+    }
+
     // Only free the string buffer if we allocated it.
     // Note: This is not needed if `str` is pointing at `tmp`
     if (opt == STL_VIM_EXPR) {
       XFREE_CLEAR(str);
-    }
-
-    if (num >= 0 || (!itemisflag && str && *str)) {
-      prevchar_isflag = false;              // Item not NULL, but not a flag
     }
 
     // Item processed, move to the next
@@ -2172,12 +2178,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
     cur_tab_rec->def.func = NULL;
   }
 
-  // When inside update_screen we do not want redrawing a statusline, ruler,
-  // title, etc. to trigger another redraw, it may cause an endless loop.
-  if (updating_screen) {
-    must_redraw = save_must_redraw;
-    curwin->w_redr_type = save_redr_type;
-  }
+  redraw_not_allowed = save_redraw_not_allowed;
 
   // Check for an error.  If there is one the display will be messed up and
   // might loop redrawing.  Avoid that by making the corresponding option

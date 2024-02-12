@@ -322,7 +322,7 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == buf) {
       // Mark this window to be redrawn later.
-      if (wp->w_redr_type < UPD_VALID) {
+      if (!redraw_not_allowed && wp->w_redr_type < UPD_VALID) {
         wp->w_redr_type = UPD_VALID;
       }
 
@@ -390,9 +390,7 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
 
   // Call update_screen() later, which checks out what needs to be redrawn,
   // since it notices b_mod_set and then uses b_mod_*.
-  if (must_redraw < UPD_VALID) {
-    must_redraw = UPD_VALID;
-  }
+  set_must_redraw(UPD_VALID);
 
   // when the cursor line is changed always trigger CursorMoved
   if (last_cursormoved_win == curwin && curwin->w_buffer == buf

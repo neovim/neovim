@@ -184,7 +184,7 @@ void win_config_float(win_T *wp, WinConfig fconfig)
   }
 
   win_set_inner_size(wp, true);
-  must_redraw = MAX(must_redraw, UPD_VALID);
+  set_must_redraw(UPD_VALID);
 
   wp->w_pos_changed = true;
   if (change_external || change_border) {
