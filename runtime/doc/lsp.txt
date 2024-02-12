@@ -1164,9 +1164,9 @@ completion({context}, {options})                    *vim.lsp.buf.completion()*
                    triggered (how it was triggered, and by which trigger
                    character, if applicable)
       • {options}  (`table?`) additional options
-                   • row: 1-indexed row number of position, defaults to
+                   • row: 0-indexed row number of position, defaults to
                      current line
-                   • col:0-indexed column number of position, defaults to
+                   • col: 0-indexed column number of position, defaults to
                      current character
 
     See also: ~
@@ -1185,9 +1185,9 @@ declaration({options})                             *vim.lsp.buf.declaration()*
                      already open.
                    • on_list: (function) |lsp-on-list-handler| replacing the
                      default handler. Called for any non-empty result.
-                   • row: 1-indexed row number of position, defaults to
+                   • row: 0-indexed row number of position, defaults to
                      current line
-                   • col:0-indexed column number of position, defaults to
+                   • col: 0-indexed column number of position, defaults to
                      current character
 
 definition({options})                               *vim.lsp.buf.definition()*
@@ -1199,9 +1199,9 @@ definition({options})                               *vim.lsp.buf.definition()*
                      already open.
                    • on_list: (function) |lsp-on-list-handler| replacing the
                      default handler. Called for any non-empty result.
-                   • row: 1-indexed row number of position, defaults to
+                   • row: 0-indexed row number of position, defaults to
                      current line
-                   • col:0-indexed column number of position, defaults to
+                   • col: 0-indexed column number of position, defaults to
                      current character
 
 document_highlight({options})               *vim.lsp.buf.document_highlight()*
@@ -1220,9 +1220,9 @@ document_highlight({options})               *vim.lsp.buf.document_highlight()*
 
     Parameters: ~
       • {options}  (`table?`) additional options
-                   • row: 1-indexed row number of position, defaults to
+                   • row: 0-indexed row number of position, defaults to
                      current line
-                   • col:0-indexed column number of position, defaults to
+                   • col: 0-indexed column number of position, defaults to
                      current character
 
 document_symbol({options})                     *vim.lsp.buf.document_symbol()*
@@ -1232,9 +1232,9 @@ document_symbol({options})                     *vim.lsp.buf.document_symbol()*
       • {options}  (`table?`) additional options
                    • on_list: (function) handler for list results. See
                      |lsp-on-list-handler|
-                   • row: 1-indexed row number of position, defaults to
+                   • row: 0-indexed row number of position, defaults to
                      current line
-                   • col:0-indexed column number of position, defaults to
+                   • col: 0-indexed column number of position, defaults to
                      current character
 
 execute_command({command_params})              *vim.lsp.buf.execute_command()*
@@ -1290,9 +1290,9 @@ hover({options})                                         *vim.lsp.buf.hover()*
 
     Parameters: ~
       • {options}  (`table?`) additional options
-                   • row: 1-indexed row number of position, defaults to
+                   • row: 0-indexed row number of position, defaults to
                      current line
-                   • col:0-indexed column number of position, defaults to
+                   • col: 0-indexed column number of position, defaults to
                      current character
 
 implementation({options})                       *vim.lsp.buf.implementation()*
@@ -1303,9 +1303,9 @@ implementation({options})                       *vim.lsp.buf.implementation()*
       • {options}  (`table?`) additional options
                    • on_list: (function) |lsp-on-list-handler| replacing the
                      default handler. Called for any non-empty result.
-                   • row: 1-indexed row number of position, defaults to
+                   • row: 0-indexed row number of position, defaults to
                      current line
-                   • col:0-indexed column number of position, defaults to
+                   • col: 0-indexed column number of position, defaults to
                      current character
 
 incoming_calls({options})                       *vim.lsp.buf.incoming_calls()*
@@ -1315,9 +1315,9 @@ incoming_calls({options})                       *vim.lsp.buf.incoming_calls()*
 
     Parameters: ~
       • {options}  (`table?`) additional options
-                   • row: 1-indexed row number of position, defaults to
+                   • row: 0-indexed row number of position, defaults to
                      current line
-                   • col:0-indexed column number of position, defaults to
+                   • col: 0-indexed column number of position, defaults to
                      current character
 
 list_workspace_folders()                *vim.lsp.buf.list_workspace_folders()*
@@ -1330,9 +1330,9 @@ outgoing_calls({options})                       *vim.lsp.buf.outgoing_calls()*
 
     Parameters: ~
       • {options}  (`table?`) additional options
-                   • row: 1-indexed row number of position, defaults to
+                   • row: 0-indexed row number of position, defaults to
                      current line
-                   • col:0-indexed column number of position, defaults to
+                   • col: 0-indexed column number of position, defaults to
                      current character
 
 references({context}, {options})                    *vim.lsp.buf.references()*
@@ -1344,9 +1344,9 @@ references({context}, {options})                    *vim.lsp.buf.references()*
       • {options}  (`table?`) additional options
                    • on_list: (function) handler for list results. See
                      |lsp-on-list-handler|
-                   • row: 1-indexed row number of position, defaults to
+                   • row: 0-indexed row number of position, defaults to
                      current line
-                   • col:0-indexed column number of position, defaults to
+                   • col: 0-indexed column number of position, defaults to
                      current character
 
     See also: ~
@@ -1369,9 +1369,9 @@ rename({new_name}, {options})                           *vim.lsp.buf.rename()*
                       Clients matching the predicate are included.
                     • name (string|nil): Restrict clients used for rename to
                       ones where client.name matches this field.
-                    • row: 1-indexed row number of position, defaults to
+                    • row: 0-indexed row number of position, defaults to
                       current line
-                    • col:0-indexed column number of position, defaults to
+                    • col: 0-indexed column number of position, defaults to
                       current character
 
 signature_help({options})                       *vim.lsp.buf.signature_help()*
@@ -1380,9 +1380,9 @@ signature_help({options})                       *vim.lsp.buf.signature_help()*
 
     Parameters: ~
       • {options}  (`table?`) additional options
-                   • row: 1-indexed row number of position, defaults to
+                   • row: 0-indexed row number of position, defaults to
                      current line
-                   • col:0-indexed column number of position, defaults to
+                   • col: 0-indexed column number of position, defaults to
                      current character
 
 type_definition({options})                     *vim.lsp.buf.type_definition()*
@@ -1394,9 +1394,9 @@ type_definition({options})                     *vim.lsp.buf.type_definition()*
                      already open.
                    • on_list: (function) |lsp-on-list-handler| replacing the
                      default handler. Called for any non-empty result.
-                   • row: 1-indexed row number of position, defaults to
+                   • row: 0-indexed row number of position, defaults to
                      current line
-                   • col:0-indexed column number of position, defaults to
+                   • col: 0-indexed column number of position, defaults to
                      current character
 
 workspace_symbol({query}, {options})          *vim.lsp.buf.workspace_symbol()*
@@ -1962,20 +1962,20 @@ make_given_range_params({start_pos}, {end_pos}, {bufnr}, {offset_encoding})
         start = `start_position`, end = `end_position` } }
 
                                          *vim.lsp.util.make_position_params()*
-make_position_params({row}, {col}, {window}, {offset_encoding})
+make_position_params({window}, {offset_encoding}, {row}, {col})
     Creates a `TextDocumentPositionParams` object for the current buffer and
     cursor position.
 
     Parameters: ~
-      • {row}              (`integer?`) 1-indexed row number of position,
-                           defaults to current line
-      • {col}              (`integer?`) 0-indexed column number of position,
-                           defaults to current character
       • {window}           (`integer?`) window handle or 0 for current,
                            defaults to current
       • {offset_encoding}  (`string?`) utf-8|utf-16|utf-32|nil defaults to
                            `offset_encoding` of first client of buffer of
                            `window`
+      • {row}              (`integer?`) 1-indexed row number of position,
+                           defaults to current line
+      • {col}              (`integer?`) 0-indexed column number of position,
+                           defaults to current character
 
     Return: ~
         (`table`) `TextDocumentPositionParams` object

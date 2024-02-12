@@ -41,11 +41,11 @@ end
 --- Displays hover information about the symbol under the cursor in a floating
 --- window. Calling the function twice will jump into the floating window.
 ---@param options table|nil additional options
----     - row: 1-indexed row number of position, defaults to current line
----     - col:0-indexed column number of position, defaults to current character
+---     - row: 0-indexed row number of position, defaults to current line
+---     - col: 0-indexed column number of position, defaults to current character
 function M.hover(options)
   options = options or {}
-  local params = make_position_params(options.row, options.col)
+  local params = util.make_position_params(nil, nil, options.row, options.col)
   request(ms.textDocument_hover, params)
 end
 
@@ -68,11 +68,11 @@ end
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
 ---     - on_list: (function) |lsp-on-list-handler| replacing the default handler.
 ---        Called for any non-empty result.
----     - row: 1-indexed row number of position, defaults to current line
----     - col:0-indexed column number of position, defaults to current character
+---     - row: 0-indexed row number of position, defaults to current line
+---     - col: 0-indexed column number of position, defaults to current character
 function M.declaration(options)
   options = options or {}
-  local params = make_position_params(options.row, options.col)
+  local params = util.make_position_params(nil, nil, options.row, options.col)
   request_with_options(ms.textDocument_declaration, params, options)
 end
 
@@ -82,11 +82,11 @@ end
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
 ---     - on_list: (function) |lsp-on-list-handler| replacing the default handler.
 ---       Called for any non-empty result.
----     - row: 1-indexed row number of position, defaults to current line
----     - col:0-indexed column number of position, defaults to current character
+---     - row: 0-indexed row number of position, defaults to current line
+---     - col: 0-indexed column number of position, defaults to current character
 function M.definition(options)
   options = options or {}
-  local params = make_position_params(options.row, options.col)
+  local params = util.make_position_params(nil, nil, options.row, options.col)
   request_with_options(ms.textDocument_definition, params, options)
 end
 
@@ -96,11 +96,11 @@ end
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
 ---     - on_list: (function) |lsp-on-list-handler| replacing the default handler.
 ---       Called for any non-empty result.
----     - row: 1-indexed row number of position, defaults to current line
----     - col:0-indexed column number of position, defaults to current character
+---     - row: 0-indexed row number of position, defaults to current line
+---     - col: 0-indexed column number of position, defaults to current character
 function M.type_definition(options)
   options = options or {}
-  local params = make_position_params(options.row, options.col)
+  local params = util.make_position_params(nil, nil, options.row, options.col)
   request_with_options(ms.textDocument_typeDefinition, params, options)
 end
 
@@ -110,22 +110,22 @@ end
 ---@param options table|nil additional options
 ---     - on_list: (function) |lsp-on-list-handler| replacing the default handler.
 ---       Called for any non-empty result.
----     - row: 1-indexed row number of position, defaults to current line
----     - col:0-indexed column number of position, defaults to current character
+---     - row: 0-indexed row number of position, defaults to current line
+---     - col: 0-indexed column number of position, defaults to current character
 function M.implementation(options)
   options = options or {}
-  local params = util.make_position_params(options.row, options.col)
+  local params = util.make_position_params(nil, nil, options.row, options.col)
   request_with_options(ms.textDocument_implementation, params, options)
 end
 
 --- Displays signature information about the symbol under the cursor in a
 --- floating window.
 ---@param options table|nil additional options
----     - row: 1-indexed row number of position, defaults to current line
----     - col:0-indexed column number of position, defaults to current character
+---     - row: 0-indexed row number of position, defaults to current line
+---     - col: 0-indexed column number of position, defaults to current character
 function M.signature_help(options)
   options = options or {}
-  local params = make_position_params(options.row, options.col)
+  local params = util.make_position_params(nil, nil, options.row, options.col)
   request(ms.textDocument_signatureHelp, params)
 end
 
@@ -137,12 +137,12 @@ end
 --- and by which trigger character, if applicable)
 ---
 ---@param options table|nil additional options
----     - row: 1-indexed row number of position, defaults to current line
----     - col:0-indexed column number of position, defaults to current character
+---     - row: 0-indexed row number of position, defaults to current line
+---     - col: 0-indexed column number of position, defaults to current character
 ---@see vim.lsp.protocol.CompletionTriggerKind
 function M.completion(context, options)
   options = options or {}
-  local params = util.make_position_params(options.row, options.col)
+  local params = util.make_position_params(nil, nil, options.row, options.col)
   params.context = context
   return request(ms.textDocument_completion, params)
 end
@@ -290,8 +290,8 @@ end
 ---     - name (string|nil):
 ---         Restrict clients used for rename to ones where client.name matches
 ---         this field.
----     - row: 1-indexed row number of position, defaults to current line
----     - col:0-indexed column number of position, defaults to current character
+---     - row: 0-indexed row number of position, defaults to current line
+---     - col: 0-indexed column number of position, defaults to current character
 function M.rename(new_name, options)
   options = options or {}
   local bufnr = options.bufnr or api.nvim_get_current_buf()
@@ -332,7 +332,8 @@ function M.rename(new_name, options)
 
     --- @param name string
     local function rename(name)
-      local params = util.make_position_params(options.row, options.col, win, client.offset_encoding)
+      local params =
+        util.make_position_params(win, client.offset_encoding, options.row, options.col)
       params.newName = name
       local handler = client.handlers[ms.textDocument_rename]
         or vim.lsp.handlers[ms.textDocument_rename]
@@ -343,7 +344,8 @@ function M.rename(new_name, options)
     end
 
     if client.supports_method(ms.textDocument_prepareRename) then
-      local params = util.make_position_params(options.row, options.col, win, client.offset_encoding)
+      local params =
+        util.make_position_params(win, client.offset_encoding, options.row, options.col)
       client.request(ms.textDocument_prepareRename, params, function(err, result)
         if err or result == nil then
           if next(clients, idx) then
@@ -413,12 +415,12 @@ end
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
 ---@param options table|nil additional options
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
----     - row: 1-indexed row number of position, defaults to current line
----     - col:0-indexed column number of position, defaults to current character
+---     - row: 0-indexed row number of position, defaults to current line
+---     - col: 0-indexed column number of position, defaults to current character
 function M.references(context, options)
   validate({ context = { context, 't', true } })
   options = options or {}
-  local params = make_position_params(options.row, options.col)
+  local params = util.make_position_params(nil, nil, options.row, options.col)
   params.context = context or {
     includeDeclaration = true,
   }
@@ -429,8 +431,8 @@ end
 ---
 ---@param options table|nil additional options
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
----     - row: 1-indexed row number of position, defaults to current line
----     - col:0-indexed column number of position, defaults to current character
+---     - row: 0-indexed row number of position, defaults to current line
+---     - col: 0-indexed column number of position, defaults to current character
 function M.document_symbol(options)
   local params = { textDocument = util.make_text_document_params() }
   request_with_options(ms.textDocument_documentSymbol, params, options)
@@ -479,22 +481,22 @@ end
 --- |quickfix| window. If the symbol can resolve to multiple
 --- items, the user can pick one in the |inputlist()|.
 ---@param options table|nil additional options
----     - row: 1-indexed row number of position, defaults to current line
----     - col:0-indexed column number of position, defaults to current character
+---     - row: 0-indexed row number of position, defaults to current line
+---     - col: 0-indexed column number of position, defaults to current character
 function M.incoming_calls(options)
   options = options or {}
-  call_hierarchy(ms.callHierarchy_incomingCalls, options.row, options.col)
+  call_hierarchy(ms.callHierarchy_incomingCalls, nil, nil, options.row, options.col)
 end
 
 --- Lists all the items that are called by the symbol under the
 --- cursor in the |quickfix| window. If the symbol can resolve to
 --- multiple items, the user can pick one in the |inputlist()|.
 ---@param options table|nil additional options
----     - row: 1-indexed row number of position, defaults to current line
----     - col:0-indexed column number of position, defaults to current character
+---     - row: 0-indexed row number of position, defaults to current line
+---     - col: 0-indexed column number of position, defaults to current character
 function M.outgoing_calls(options)
   options = options or {}
-  call_hierarchy(ms.callHierarchy_outgoingCalls, options.row, options.col)
+  call_hierarchy(ms.callHierarchy_outgoingCalls, nil, nil, options.row, options.col)
 end
 
 --- List workspace folders.
@@ -609,11 +611,11 @@ end
 ---         |hl-LspReferenceRead|
 ---         |hl-LspReferenceWrite|
 ---@param options table|nil additional options
----     - row: 1-indexed row number of position, defaults to current line
----     - col:0-indexed column number of position, defaults to current character
+---     - row: 0-indexed row number of position, defaults to current line
+---     - col: 0-indexed column number of position, defaults to current character
 function M.document_highlight(options)
   options = options or {}
-  local params = make_position_params(options.row, options.col)
+  local params = util.make_position_params(nil, nil, options.row, options.col)
   request(ms.textDocument_documentHighlight, params)
 end
 
