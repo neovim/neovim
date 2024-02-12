@@ -14,7 +14,7 @@ describe('cmdline autocommands', function()
   local channel
   before_each(function()
     clear()
-    channel = api.nvim_get_api_info()[1]
+    channel = api.nvim_get_chan_info(0).id
     api.nvim_set_var('channel', channel)
     command("autocmd CmdlineEnter * call rpcnotify(g:channel, 'CmdlineEnter', v:event)")
     command("autocmd CmdlineLeave * call rpcnotify(g:channel, 'CmdlineLeave', v:event)")

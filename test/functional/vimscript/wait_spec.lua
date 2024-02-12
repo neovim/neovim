@@ -13,7 +13,7 @@ local pcall_err = helpers.pcall_err
 
 before_each(function()
   clear()
-  local channel = api.nvim_get_api_info()[1]
+  local channel = api.nvim_get_chan_info(0).id
   api.nvim_set_var('channel', channel)
 end)
 

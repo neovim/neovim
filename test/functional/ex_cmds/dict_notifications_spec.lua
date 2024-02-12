@@ -14,7 +14,7 @@ describe('Vimscript dictionary notifications', function()
 
   before_each(function()
     clear()
-    channel = api.nvim_get_api_info()[1]
+    channel = api.nvim_get_chan_info(0).id
     api.nvim_set_var('channel', channel)
   end)
 

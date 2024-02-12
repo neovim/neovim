@@ -482,7 +482,7 @@ describe('API: buffer events:', function()
   end)
 
   it('does not get confused if enabled/disabled many times', function()
-    local channel = api.nvim_get_api_info()[1]
+    local channel = api.nvim_get_chan_info(0).id
     local b, tick = editoriginal(false)
 
     -- Enable buffer events many times.
@@ -564,7 +564,7 @@ describe('API: buffer events:', function()
 
     -- make sure there are no other pending nvim_buf_lines_event messages going to
     -- channel 1
-    local channel1 = request(1, 'nvim_get_api_info')[1]
+    local channel1 = request(1, 'nvim_get_chan_info', 0).id
     eval('rpcnotify(' .. channel1 .. ', "Hello")')
     wantn(1, 'Hello', {})
 
@@ -576,14 +576,14 @@ describe('API: buffer events:', function()
 
     -- make sure there are no other pending nvim_buf_lines_event messages going to
     -- channel 1
-    channel1 = request(1, 'nvim_get_api_info')[1]
+    channel1 = request(1, 'nvim_get_chan_info', 0).id
     eval('rpcnotify(' .. channel1 .. ', "Hello Again")')
     wantn(1, 'Hello Again', {})
   end)
 
   it('works with :diffput and :diffget', function()
     local b1, tick1 = editoriginal(true, { 'AAA', 'BBB' })
-    local channel = api.nvim_get_api_info()[1]
+    local channel = api.nvim_get_chan_info(0).id
     command('diffthis')
     command('rightbelow vsplit')
     local b2, tick2 = open(true, { 'BBB', 'CCC' })
@@ -700,7 +700,7 @@ describe('API: buffer events:', function()
 
   it('detaches if the buffer is closed', function()
     local b, tick = editoriginal(true, { 'AAA' })
-    local channel = api.nvim_get_api_info()[1]
+    local channel = api.nvim_get_chan_info(0).id
 
     -- Test that buffer events are working.
     command('normal! x')
@@ -739,7 +739,7 @@ describe('API: buffer events:', function()
 
   it(':enew! does not detach hidden buffer', function()
     local b, tick = editoriginal(true, { 'AAA', 'BBB' })
-    local channel = api.nvim_get_api_info()[1]
+    local channel = api.nvim_get_chan_info(0).id
 
     command('set undoreload=1 hidden')
     command('normal! x')
@@ -753,7 +753,7 @@ describe('API: buffer events:', function()
 
   it('stays attached if the buffer is hidden', function()
     local b, tick = editoriginal(true, { 'AAA' })
-    local channel = api.nvim_get_api_info()[1]
+    local channel = api.nvim_get_chan_info(0).id
 
     -- Test that buffer events are working.
     command('normal! x')
