@@ -1279,6 +1279,9 @@ void ins_compl_show_pum(void)
   }
 
   if (compl_match_array == NULL) {
+    if (compl_started && has_event(EVENT_COMPLETECHANGED)) {
+      trigger_complete_changed_event(cur);
+    }
     return;
   }
 
