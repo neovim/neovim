@@ -2230,6 +2230,44 @@ describe('extmark decorations', function()
     ]]}
   end)
 
+  it('virtual text is drawn correctly after delete and undo #27368', function()
+    insert('aaa\nbbb\nccc\nddd\neee')
+    command('vsplit')
+    api.nvim_buf_set_extmark(0, ns, 2, 0, { virt_text = {{'EOL'}} })
+    feed('3gg')
+    screen:expect{grid=[[
+      aaa                      │aaa                     |
+      bbb                      │bbb                     |
+      ^ccc EOL                  │ccc EOL                 |
+      ddd                      │ddd                     |
+      eee                      │eee                     |
+      {1:~                        }│{1:~                       }|*8
+      {41:[No Name] [+]             }{40:[No Name] [+]           }|
+                                                        |
+    ]]}
+    feed('dd')
+    screen:expect{grid=[[
+      aaa                      │aaa                     |
+      bbb                      │bbb                     |
+      ^ddd EOL                  │ddd EOL                 |
+      eee                      │eee                     |
+      {1:~                        }│{1:~                       }|*9
+      {41:[No Name] [+]             }{40:[No Name] [+]           }|
+                                                        |
+    ]]}
+    command('silent undo')
+    screen:expect{grid=[[
+      aaa                      │aaa                     |
+      bbb                      │bbb                     |
+      ^ccc EOL                  │ccc EOL                 |
+      ddd                      │ddd                     |
+      eee                      │eee                     |
+      {1:~                        }│{1:~                       }|*8
+      {41:[No Name] [+]             }{40:[No Name] [+]           }|
+                                                        |
+    ]]}
+  end)
+
   it('works with both hl_group and sign_hl_group', function()
     screen:try_resize(screen._width, 3)
     insert('abcdefghijklmn')

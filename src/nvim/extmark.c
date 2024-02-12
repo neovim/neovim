@@ -116,6 +116,12 @@ static void extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col, bool
     return;
   }
 
+  // Only the position before undo needs to be redrawn here,
+  // as the position after undo should be marked as changed.
+  if (!invalid && mt_decor_any(key) && key.pos.row != row) {
+    decor_redraw(buf, key.pos.row, key.pos.row, key.pos.col, mt_decor(key));
+  }
+
   int row1 = 0;
   int row2 = 0;
   if (invalid) {
