@@ -1946,7 +1946,7 @@ local function make_position_param(window, offset_encoding, row, col)
   window = window or 0
   local buf = api.nvim_win_get_buf(window)
   if not row then
-    row, _ = unpack(api.nvim_win_get_cursor(window))
+    row = unpack(api.nvim_win_get_cursor(window))
     row = row - 1
   end
   if not col then
