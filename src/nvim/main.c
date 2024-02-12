@@ -1102,7 +1102,7 @@ static void command_line_scan(mparm_T *parmp)
           }
 
           Object md = DICTIONARY_OBJ(api_metadata());
-          msgpack_rpc_from_object(md, p);
+          msgpack_rpc_from_object(&md, p);
 
           msgpack_packer_free(p);
           const int ff_ret = file_flush(&fp);

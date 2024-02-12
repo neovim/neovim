@@ -1260,7 +1260,7 @@ static int nlua_rpc(lua_State *lstate, bool request)
     ArenaMem res_mem = NULL;
     Object result = rpc_send_call(chan_id, name, args, &res_mem, &err);
     if (!ERROR_SET(&err)) {
-      nlua_push_Object(lstate, result, false);
+      nlua_push_Object(lstate, &result, false);
       arena_mem_free(res_mem);
     }
   } else {
@@ -1563,7 +1563,7 @@ Object nlua_exec(const String str, const Array args, LuaRetMode mode, Arena *are
   }
 
   for (size_t i = 0; i < args.size; i++) {
-    nlua_push_Object(lstate, args.items[i], false);
+    nlua_push_Object(lstate, &args.items[i], false);
   }
 
   if (nlua_pcall(lstate, (int)args.size, 1)) {
@@ -1610,7 +1610,7 @@ Object nlua_call_ref(LuaRef ref, const char *name, Array args, LuaRetMode mode, 
     nargs++;
   }
   for (size_t i = 0; i < args.size; i++) {
-    nlua_push_Object(lstate, args.items[i], false);
+    nlua_push_Object(lstate, &args.items[i], false);
   }
 
   if (nlua_pcall(lstate, nargs, 1)) {

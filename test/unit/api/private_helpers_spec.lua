@@ -22,7 +22,7 @@ local api = cimport('./src/nvim/api/private/helpers.h', './src/nvim/api/private/
 
 describe('vim_to_object', function()
   local vim_to_object = function(l)
-    return obj2lua(api.vim_to_object(lua2typvalt(l)))
+    return obj2lua(api.vim_to_object(lua2typvalt(l), nil, false))
   end
 
   local different_output_test = function(name, input, output)
@@ -92,13 +92,13 @@ describe('vim_to_object', function()
   itp('outputs empty list for NULL list', function()
     local tt = typvalt('VAR_LIST', { v_list = NULL })
     eq(nil, tt.vval.v_list)
-    eq({ [type_key] = list_type }, obj2lua(api.vim_to_object(tt)))
+    eq({ [type_key] = list_type }, obj2lua(api.vim_to_object(tt, nil, false)))
   end)
 
   itp('outputs empty dict for NULL dict', function()
     local tt = typvalt('VAR_DICT', { v_dict = NULL })
     eq(nil, tt.vval.v_dict)
-    eq({}, obj2lua(api.vim_to_object(tt)))
+    eq({}, obj2lua(api.vim_to_object(tt, nil, false)))
   end)
 
   itp('regression: partials in a list', function()
@@ -113,6 +113,6 @@ describe('vim_to_object', function()
     }
     local list = lua2typvalt(llist)
     eq(llist, typvalt2lua(list))
-    eq({ nil_value, {} }, obj2lua(api.vim_to_object(list)))
+    eq({ nil_value, {} }, obj2lua(api.vim_to_object(list, nil, false)))
   end)
 end)

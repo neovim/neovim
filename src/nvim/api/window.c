@@ -237,7 +237,7 @@ void nvim_win_set_width(Window window, Integer width, Error *err)
 /// @param name     Variable name
 /// @param[out] err Error details, if any
 /// @return Variable value
-Object nvim_win_get_var(Window window, String name, Error *err)
+Object nvim_win_get_var(Window window, String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -246,7 +246,7 @@ Object nvim_win_get_var(Window window, String name, Error *err)
     return (Object)OBJECT_INIT;
   }
 
-  return dict_get_value(win->w_vars, name, err);
+  return dict_get_value(win->w_vars, name, arena, err);
 }
 
 /// Sets a window-scoped (w:) variable
@@ -264,7 +264,7 @@ void nvim_win_set_var(Window window, String name, Object value, Error *err)
     return;
   }
 
-  dict_set_var(win->w_vars, name, value, false, false, err);
+  dict_set_var(win->w_vars, name, value, false, false, NULL, err);
 }
 
 /// Removes a window-scoped (w:) variable
@@ -281,7 +281,7 @@ void nvim_win_del_var(Window window, String name, Error *err)
     return;
   }
 
-  dict_set_var(win->w_vars, name, NIL, true, false, err);
+  dict_set_var(win->w_vars, name, NIL, true, false, NULL, err);
 }
 
 /// Gets the window position in display cells. First position is zero.
@@ -289,15 +289,16 @@ void nvim_win_del_var(Window window, String name, Error *err)
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
 /// @return (row, col) tuple with the window position
-ArrayOf(Integer, 2) nvim_win_get_position(Window window, Error *err)
+ArrayOf(Integer, 2) nvim_win_get_position(Window window, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
   win_T *win = find_window_by_handle(window, err);
 
   if (win) {
-    ADD(rv, INTEGER_OBJ(win->w_winrow));
-    ADD(rv, INTEGER_OBJ(win->w_wincol));
+    rv = arena_array(arena, 2);
+    ADD_C(rv, INTEGER_OBJ(win->w_winrow));
+    ADD_C(rv, INTEGER_OBJ(win->w_wincol));
   }
 
   return rv;

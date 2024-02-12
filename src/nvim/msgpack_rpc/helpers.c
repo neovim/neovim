@@ -10,6 +10,7 @@
 #include "msgpack/pack.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/assert_defs.h"
+#include "nvim/lua/executor.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/types_defs.h"
@@ -309,34 +310,40 @@ static void msgpack_rpc_from_handle(ObjectType type, Integer o, msgpack_packer *
 }
 
 typedef struct {
-  const Object *aobj;
+  Object *aobj;
   bool container;
   size_t idx;
 } APIToMPObjectStackItem;
 
 /// Convert type used by Nvim API to msgpack type.
 ///
+/// consumes (frees) any luaref inside `result`, even though they are not used
+/// (just represented as NIL)
+///
 /// @param[in]  result  Object to convert.
 /// @param[out]  res  Structure that defines where conversion results are saved.
 ///
 /// @return true in case of success, false otherwise.
-void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
+void msgpack_rpc_from_object(Object *result, msgpack_packer *const res)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   kvec_withinit_t(APIToMPObjectStackItem, 2) stack = KV_INITIAL_VALUE;
   kvi_init(stack);
-  kvi_push(stack, ((APIToMPObjectStackItem) { &result, false, 0 }));
+  kvi_push(stack, ((APIToMPObjectStackItem) { result, false, 0 }));
   while (kv_size(stack)) {
     APIToMPObjectStackItem cur = kv_last(stack);
     STATIC_ASSERT(kObjectTypeWindow == kObjectTypeBuffer + 1
                   && kObjectTypeTabpage == kObjectTypeWindow + 1,
                   "Buffer, window and tabpage enum items are in order");
     switch (cur.aobj->type) {
-    case kObjectTypeNil:
     case kObjectTypeLuaRef:
       // TODO(bfredl): could also be an error. Though kObjectTypeLuaRef
       // should only appear when the caller has opted in to handle references,
       // see nlua_pop_Object.
+      api_free_luaref(cur.aobj->data.luaref);
+      cur.aobj->data.luaref = LUA_NOREF;
+      FALLTHROUGH;
+    case kObjectTypeNil:
       msgpack_pack_nil(res);
       break;
     case kObjectTypeBoolean:
@@ -415,7 +422,7 @@ void msgpack_rpc_from_array(Array result, msgpack_packer *res)
   msgpack_pack_array(res, result.size);
 
   for (size_t i = 0; i < result.size; i++) {
-    msgpack_rpc_from_object(result.items[i], res);
+    msgpack_rpc_from_object(&result.items[i], res);
   }
 }
 
@@ -426,7 +433,7 @@ void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res)
 
   for (size_t i = 0; i < result.size; i++) {
     msgpack_rpc_from_string(result.items[i].key, res);
-    msgpack_rpc_from_object(result.items[i].value, res);
+    msgpack_rpc_from_object(&result.items[i].value, res);
   }
 }
 
@@ -447,9 +454,9 @@ void msgpack_rpc_serialize_request(uint32_t request_id, const String method, Arr
 }
 
 /// Serializes a msgpack-rpc response
-void msgpack_rpc_serialize_response(uint32_t response_id, Error *err, Object arg,
+void msgpack_rpc_serialize_response(uint32_t response_id, Error *err, Object *arg,
                                     msgpack_packer *pac)
-  FUNC_ATTR_NONNULL_ARG(2, 4)
+  FUNC_ATTR_NONNULL_ALL
 {
   msgpack_pack_array(pac, 4);
   msgpack_pack_int(pac, 1);

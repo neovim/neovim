@@ -869,7 +869,7 @@ Integer nvim_buf_get_offset(Buffer buffer, Integer index, Error *err)
 /// @param name       Variable name
 /// @param[out] err   Error details, if any
 /// @return Variable value
-Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
+Object nvim_buf_get_var(Buffer buffer, String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -878,7 +878,7 @@ Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
     return (Object)OBJECT_INIT;
   }
 
-  return dict_get_value(buf->b_vars, name, err);
+  return dict_get_value(buf->b_vars, name, arena, err);
 }
 
 /// Gets a changed tick of a buffer
@@ -957,7 +957,7 @@ void nvim_buf_set_var(Buffer buffer, String name, Object value, Error *err)
     return;
   }
 
-  dict_set_var(buf->b_vars, name, value, false, false, err);
+  dict_set_var(buf->b_vars, name, value, false, false, NULL, err);
 }
 
 /// Removes a buffer-scoped (b:) variable
@@ -974,7 +974,7 @@ void nvim_buf_del_var(Buffer buffer, String name, Error *err)
     return;
   }
 
-  dict_set_var(buf->b_vars, name, NIL, true, false, err);
+  dict_set_var(buf->b_vars, name, NIL, true, false, NULL, err);
 }
 
 /// Gets the full file name for the buffer
@@ -1175,7 +1175,7 @@ Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col,
 /// uppercase/file mark set in another buffer.
 /// @see |nvim_buf_set_mark()|
 /// @see |nvim_buf_del_mark()|
-ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
+ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -1205,8 +1205,9 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
     pos = fm->mark;
   }
 
-  ADD(rv, INTEGER_OBJ(pos.lnum));
-  ADD(rv, INTEGER_OBJ(pos.col));
+  rv = arena_array(arena, 2);
+  ADD_C(rv, INTEGER_OBJ(pos.lnum));
+  ADD_C(rv, INTEGER_OBJ(pos.col));
 
   return rv;
 }

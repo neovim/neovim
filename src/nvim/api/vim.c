@@ -690,7 +690,7 @@ void nvim_del_current_line(Error *err)
 /// @param name     Variable name
 /// @param[out] err Error details, if any
 /// @return Variable value
-Object nvim_get_var(String name, Error *err)
+Object nvim_get_var(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
   dictitem_T *di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
@@ -704,7 +704,7 @@ Object nvim_get_var(String name, Error *err)
   VALIDATE((di != NULL), "Key not found: %s", name.data, {
     return (Object)OBJECT_INIT;
   });
-  return vim_to_object(&di->di_tv);
+  return vim_to_object(&di->di_tv, arena, true);
 }
 
 /// Sets a global (g:) variable.
@@ -715,7 +715,7 @@ Object nvim_get_var(String name, Error *err)
 void nvim_set_var(String name, Object value, Error *err)
   FUNC_API_SINCE(1)
 {
-  dict_set_var(&globvardict, name, value, false, false, err);
+  dict_set_var(&globvardict, name, value, false, false, NULL, err);
 }
 
 /// Removes a global (g:) variable.
@@ -725,7 +725,7 @@ void nvim_set_var(String name, Object value, Error *err)
 void nvim_del_var(String name, Error *err)
   FUNC_API_SINCE(1)
 {
-  dict_set_var(&globvardict, name, NIL, true, false, err);
+  dict_set_var(&globvardict, name, NIL, true, false, NULL, err);
 }
 
 /// Gets a v: variable.
@@ -733,10 +733,10 @@ void nvim_del_var(String name, Error *err)
 /// @param name     Variable name
 /// @param[out] err Error details, if any
 /// @return         Variable value
-Object nvim_get_vvar(String name, Error *err)
+Object nvim_get_vvar(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
-  return dict_get_value(&vimvardict, name, err);
+  return dict_get_value(&vimvardict, name, arena, err);
 }
 
 /// Sets a v: variable, if it is not readonly.
@@ -747,7 +747,7 @@ Object nvim_get_vvar(String name, Error *err)
 void nvim_set_vvar(String name, Object value, Error *err)
   FUNC_API_SINCE(6)
 {
-  dict_set_var(&vimvardict, name, value, false, false, err);
+  dict_set_var(&vimvardict, name, value, false, false, NULL, err);
 }
 
 /// Echo a message.
@@ -1370,7 +1370,7 @@ Dictionary nvim_get_color_map(Arena *arena)
 /// @param[out]  err  Error details, if any
 ///
 /// @return map of global |context|.
-Dictionary nvim_get_context(Dict(context) *opts, Error *err)
+Dictionary nvim_get_context(Dict(context) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(6)
 {
   Array types = ARRAY_DICT_INIT;
@@ -1406,7 +1406,7 @@ Dictionary nvim_get_context(Dict(context) *opts, Error *err)
 
   Context ctx = CONTEXT_INIT;
   ctx_save(&ctx, int_types);
-  Dictionary dict = ctx_to_dict(&ctx);
+  Dictionary dict = ctx_to_dict(&ctx, arena);
   ctx_free(&ctx);
   return dict;
 }
@@ -2065,7 +2065,7 @@ Boolean nvim_del_mark(String name, Error *err)
 /// not set.
 /// @see |nvim_buf_set_mark()|
 /// @see |nvim_del_mark()|
-Array nvim_get_mark(String name, Dict(empty) *opts, Error *err)
+Array nvim_get_mark(String name, Dict(empty) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(8)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -2113,10 +2113,11 @@ Array nvim_get_mark(String name, Dict(empty) *opts, Error *err)
     col = pos.col;
   }
 
-  ADD(rv, INTEGER_OBJ(row));
-  ADD(rv, INTEGER_OBJ(col));
-  ADD(rv, INTEGER_OBJ(bufnr));
-  ADD(rv, CSTR_TO_OBJ(filename));
+  rv = arena_array(arena, 4);
+  ADD_C(rv, INTEGER_OBJ(row));
+  ADD_C(rv, INTEGER_OBJ(col));
+  ADD_C(rv, INTEGER_OBJ(bufnr));
+  ADD_C(rv, CSTR_TO_ARENA_OBJ(arena, filename));
 
   if (allocated) {
     xfree(filename);

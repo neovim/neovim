@@ -343,7 +343,6 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
     if (name) {
       int dummy;
       RgbValue color_val = name_to_color(name, &dummy);
-      xfree(name);
 
       if (color_val != -1) {
         VTermColor color;
@@ -1003,6 +1002,7 @@ static void buf_set_term_title(buf_T *buf, const char *title, size_t len)
                STRING_OBJ(((String){ .data = (char *)title, .size = len })),
                false,
                false,
+               NULL,
                &err);
   api_clear_error(&err);
   status_redraw_buf(buf);
@@ -1883,10 +1883,10 @@ static char *get_config_string(char *key)
 {
   Error err = ERROR_INIT;
   // Only called from terminal_open where curbuf->terminal is the context.
-  Object obj = dict_get_value(curbuf->b_vars, cstr_as_string(key), &err);
+  Object obj = dict_get_value(curbuf->b_vars, cstr_as_string(key), NULL, &err);
   api_clear_error(&err);
   if (obj.type == kObjectTypeNil) {
-    obj = dict_get_value(&globvardict, cstr_as_string(key), &err);
+    obj = dict_get_value(&globvardict, cstr_as_string(key), NULL, &err);
     api_clear_error(&err);
   }
   if (obj.type == kObjectTypeString) {
