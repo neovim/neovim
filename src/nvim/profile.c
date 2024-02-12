@@ -981,7 +981,7 @@ void time_finish(void)
     return;
   }
   assert(startuptime_buf != NULL);
-  TIME_MSG("--- NVIM STARTED ---\n");
+  TIME_MSG("--- NVIM STARTED ---");
 
   // flush buffer to disk
   fclose(time_fd);
