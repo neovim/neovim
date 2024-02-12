@@ -1142,6 +1142,10 @@ func Test_CompleteChanged()
     let g:event = copy(v:event)
     let g:item = get(v:event, 'completed_item', {})
     let g:word = get(g:item, 'word', v:null)
+    let l:line = getline('.')
+    if g:word == v:null && l:line == "bc"
+      let g:word = l:line
+    endif
   endfunction
   augroup AAAAA_Group
     au!
@@ -1161,6 +1165,8 @@ func Test_CompleteChanged()
   call assert_equal(v:null, g:word)
   call feedkeys("a\<C-N>\<C-N>\<C-N>\<C-N>\<C-P>", 'tx')
   call assert_equal('foobar', g:word)
+  call feedkeys("S\<C-N>bc", 'tx')
+  call assert_equal("bc", g:word)
 
   func Omni_test(findstart, base)
     if a:findstart
