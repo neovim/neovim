@@ -2419,9 +2419,7 @@ static void inc_msg_scrolled(void)
     xfree(tofree);
   }
   msg_scrolled++;
-  if (must_redraw < UPD_VALID) {
-    must_redraw = UPD_VALID;
-  }
+  set_must_redraw(UPD_VALID);
 }
 
 static msgchunk_T *last_msgchunk = NULL;  // last displayed text
@@ -3067,9 +3065,7 @@ void msg_ext_clear_later(void)
 {
   if (msg_ext_is_visible()) {
     msg_ext_need_clear = true;
-    if (must_redraw < UPD_VALID) {
-      must_redraw = UPD_VALID;
-    }
+    set_must_redraw(UPD_VALID);
   }
 }
 

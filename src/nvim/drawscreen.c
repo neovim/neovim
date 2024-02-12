@@ -2647,7 +2647,7 @@ void redraw_later(win_T *wp, int type)
 {
   // curwin may have been set to NULL when exiting
   assert(wp != NULL || exiting);
-  if (!exiting && wp->w_redr_type < type) {
+  if (!exiting && !redraw_not_allowed && wp->w_redr_type < type) {
     wp->w_redr_type = type;
     if (type >= UPD_NOT_VALID) {
       wp->w_lines_valid = 0;
@@ -2665,7 +2665,14 @@ void redraw_all_later(int type)
     redraw_later(wp, type);
   }
   // This may be needed when switching tabs.
-  if (must_redraw < type) {
+  set_must_redraw(type);
+}
+
+/// Set "must_redraw" to "type" unless it already has a higher value
+/// or it is currently not allowed.
+void set_must_redraw(int type)
+{
+  if (!redraw_not_allowed && must_redraw < type) {
     must_redraw = type;
   }
 }
@@ -2730,9 +2737,7 @@ void redraw_buf_status_later(buf_T *buf)
             || (wp == curwin && global_stl_height())
             || wp->w_winbar_height)) {
       wp->w_redr_status = true;
-      if (must_redraw < UPD_VALID) {
-        must_redraw = UPD_VALID;
-      }
+      set_must_redraw(UPD_VALID);
     }
   }
 }
