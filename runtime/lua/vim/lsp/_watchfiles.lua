@@ -44,12 +44,8 @@ function M.register(reg, ctx)
   local client = assert(vim.lsp.get_client_by_id(client_id), 'Client must be running')
   -- Ill-behaved servers may not honor the client capability and try to register
   -- anyway, so ignore requests when the user has opted out of the feature.
-  local has_capability = vim.tbl_get(
-    client.config.capabilities or {},
-    'workspace',
-    'didChangeWatchedFiles',
-    'dynamicRegistration'
-  )
+  local has_capability =
+    vim.tbl_get(client.capabilities, 'workspace', 'didChangeWatchedFiles', 'dynamicRegistration')
   if not has_capability or not client.workspace_folders then
     return
   end

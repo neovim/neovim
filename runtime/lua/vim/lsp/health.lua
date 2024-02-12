@@ -38,7 +38,7 @@ function M.check()
           '%s (id=%s, root_dir=%s, attached_to=[%s])',
           client.name,
           client.id,
-          vim.fn.fnamemodify(client.config.root_dir, ':~'),
+          vim.fn.fnamemodify(client.root_dir, ':~'),
           attached_to
         )
       )

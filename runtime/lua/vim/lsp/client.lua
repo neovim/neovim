@@ -6,28 +6,33 @@ local ms = lsp.protocol.Methods
 local changetracking = lsp._changetracking
 local validate = vim.validate
 
+--- @alias vim.lsp.client.on_init_cb fun(client: lsp.Client, initialize_result: lsp.InitializeResult)
+--- @alias vim.lsp.client.on_attach_cb fun(client: lsp.Client, bufnr: integer)
+--- @alias vim.lsp.client.on_exit_cb fun(code: integer, signal: integer, client_id: integer)
+--- @alias vim.lsp.client.before_init_cb fun(params: lsp.InitializeParams, config: lsp.ClientConfig)
+
 --- @class lsp.ClientConfig
---- @field cmd (string[]|fun(dispatchers: table):table)
---- @field cmd_cwd string
---- @field cmd_env (table)
---- @field detached boolean
---- @field workspace_folders (table)
---- @field capabilities lsp.ClientCapabilities
---- @field handlers table<string,function>
---- @field settings table
---- @field commands table
+--- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient?
+--- @field cmd_cwd? string
+--- @field cmd_env? table
+--- @field detached? boolean
+--- @field workspace_folders? lsp.WorkspaceFolder[]
+--- @field capabilities? lsp.ClientCapabilities
+--- @field handlers? table<string,function>
+--- @field settings? table
+--- @field commands? table<string,fun(command: lsp.Command, ctx: table)>
 --- @field init_options table
 --- @field name? string
---- @field get_language_id fun(bufnr: integer, filetype: string): string
---- @field offset_encoding string
---- @field on_error fun(code: integer)
---- @field before_init fun(params: lsp.InitializeParams, config: lsp.ClientConfig)
---- @field on_init fun(client: lsp.Client, initialize_result: lsp.InitializeResult)
---- @field on_exit fun(code: integer, signal: integer, client_id: integer)
---- @field on_attach fun(client: lsp.Client, bufnr: integer)
---- @field trace 'off'|'messages'|'verbose'|nil
---- @field flags table
---- @field root_dir string
+--- @field get_language_id? fun(bufnr: integer, filetype: string): string
+--- @field offset_encoding? string
+--- @field on_error? fun(code: integer, err: string)
+--- @field before_init? vim.lsp.client.before_init_cb
+--- @field on_init? elem_or_list<vim.lsp.client.on_init_cb>
+--- @field on_exit? elem_or_list<vim.lsp.client.on_exit_cb>
+--- @field on_attach? elem_or_list<vim.lsp.client.on_attach_cb>
+--- @field trace? 'off'|'messages'|'verbose'
+--- @field flags? table
+--- @field root_dir? string
 
 --- @class lsp.Client.Progress: vim.Ringbuf<{token: integer|string, value: any}>
 --- @field pending table<lsp.ProgressToken,lsp.LSPAny>
@@ -66,21 +71,43 @@ local validate = vim.validate
 ---
 --- Response from the server sent on
 --- initialize` describing the server's capabilities.
---- @field server_capabilities lsp.ServerCapabilities
+--- @field server_capabilities lsp.ServerCapabilities?
 ---
 --- A ring buffer (|vim.ringbuf()|) containing progress messages
 --- sent by the server.
 --- @field progress lsp.Client.Progress
 ---
 --- @field initialized true?
+---
+--- The workspace folders configured in the client when the server starts.
+--- This property is only available if the client supports workspace folders.
+--- It can be `null` if the client supports workspace folders but none are
+--- configured.
 --- @field workspace_folders lsp.WorkspaceFolder[]?
+--- @field root_dir string
+---
 --- @field attached_buffers table<integer,true>
 --- @field private _log_prefix string
+---
 --- Track this so that we can escalate automatically if we've already tried a
 --- graceful shutdown
 --- @field private _graceful_shutdown_failed true?
---- @field private commands table
 ---
+--- The initial trace setting. If omitted trace is disabled ("off").
+--- trace = "off" | "messages" | "verbose";
+--- @field private _trace 'off'|'messages'|'verbose'
+---
+--- Table of command name to function which is called if any LSP action
+--- (code action, code lenses, ...) triggers the command.
+--- Client commands take precedence over the global command registry.
+--- @field commands table<string,fun(command: lsp.Command, ctx: table)>
+---
+--- @field settings table
+--- @field flags table
+--- @field get_language_id fun(bufnr: integer, filetype: string): string
+---
+--- The capabilities provided by the client (editor or tool)
+--- @field capabilities lsp.ClientCapabilities
 --- @field dynamic_capabilities lsp.DynamicCapabilities
 ---
 --- Sends a request to the server.
@@ -121,6 +148,12 @@ local validate = vim.validate
 --- Runs the on_attach function from the client's config if it was defined.
 --- Useful for buffer-local setup.
 --- @field on_attach fun(bufnr: integer)
+---
+--- @field private _before_init_cb? vim.lsp.client.before_init_cb
+--- @field private _on_attach_cbs vim.lsp.client.on_attach_cb[]
+--- @field private _on_init_cbs vim.lsp.client.on_init_cb[]
+--- @field private _on_exit_cbs vim.lsp.client.on_exit_cb[]
+--- @field private _on_error_cb? fun(code: integer, err: string)
 ---
 --- Checks if a client supports a given method.
 --- Always returns true for unknown off-spec methods.
@@ -196,9 +229,18 @@ local function optional_validator(fn)
   end
 end
 
+--- By default, get_language_id just returns the exact filetype it is passed.
+--- It is possible to pass in something that will calculate a different filetype,
+--- to be sent by the client.
+--- @param _bufnr integer
+--- @param filetype string
+local function default_get_language_id(_bufnr, filetype)
+  return filetype
+end
+
 --- Validates a client configuration as given to |vim.lsp.start_client()|.
 --- @param config lsp.ClientConfig
-local function process_client_config(config)
+local function validate_config(config)
   validate({
     config = { config, 't' },
   })
@@ -210,15 +252,17 @@ local function process_client_config(config)
     detached = { config.detached, 'b', true },
     name = { config.name, 's', true },
     on_error = { config.on_error, 'f', true },
-    on_exit = { config.on_exit, 'f', true },
-    on_init = { config.on_init, 'f', true },
+    on_exit = { config.on_exit, { 'f', 't' }, true },
+    on_init = { config.on_init, { 'f', 't' }, true },
+    on_attach = { config.on_attach, { 'f', 't' }, true },
     settings = { config.settings, 't', true },
     commands = { config.commands, 't', true },
-    before_init = { config.before_init, 'f', true },
+    before_init = { config.before_init, { 'f', 't' }, true },
     offset_encoding = { config.offset_encoding, 's', true },
     flags = { config.flags, 't', true },
     get_language_id = { config.get_language_id, 'f', true },
   })
+
   assert(
     (
       not config.flags
@@ -227,51 +271,98 @@ local function process_client_config(config)
     ),
     'flags.debounce_text_changes must be a number with the debounce time in milliseconds'
   )
+end
 
-  if not config.name and type(config.cmd) == 'table' then
-    config.name = config.cmd[1] and vim.fs.basename(config.cmd[1]) or nil
+--- @param trace string
+--- @return 'off'|'messages'|'verbose'
+local function get_trace(trace)
+  local valid_traces = {
+    off = 'off',
+    messages = 'messages',
+    verbose = 'verbose',
+  }
+  return trace and valid_traces[trace] or 'off'
+end
+
+--- @param id integer
+--- @param config lsp.ClientConfig
+--- @return string
+local function get_name(id, config)
+  local name = config.name
+  if name then
+    return name
   end
 
-  config.offset_encoding = validate_encoding(config.offset_encoding)
-  config.flags = config.flags or {}
-  config.settings = config.settings or {}
-  config.handlers = config.handlers or {}
-
-  -- By default, get_language_id just returns the exact filetype it is passed.
-  --    It is possible to pass in something that will calculate a different filetype,
-  --    to be sent by the client.
-  config.get_language_id = config.get_language_id or function(_, filetype)
-    return filetype
+  if type(config.cmd) == 'table' and config.cmd[1] then
+    return assert(vim.fs.basename(config.cmd[1]))
   end
 
-  config.capabilities = config.capabilities or lsp.protocol.make_client_capabilities()
-  config.commands = config.commands or {}
+  return tostring(id)
+end
+
+--- @param workspace_folders lsp.WorkspaceFolder[]?
+--- @param root_dir string?
+--- @return lsp.WorkspaceFolder[]?
+local function get_workspace_folders(workspace_folders, root_dir)
+  if workspace_folders then
+    return workspace_folders
+  end
+  if root_dir then
+    return {
+      {
+        uri = vim.uri_from_fname(root_dir),
+        name = string.format('%s', root_dir),
+      },
+    }
+  end
+end
+
+--- @generic T
+--- @param x elem_or_list<T>?
+--- @return T[]
+local function ensure_list(x)
+  if type(x) == 'table' then
+    return x
+  end
+  return { x }
 end
 
 --- @package
 --- @param config lsp.ClientConfig
 --- @return lsp.Client?
-function Client.start(config)
-  process_client_config(config)
+function Client.create(config)
+  validate_config(config)
 
   client_index = client_index + 1
   local id = client_index
-
-  local name = config.name or tostring(id)
+  local name = get_name(id, config)
 
   --- @class lsp.Client
   local self = {
     id = id,
     config = config,
-    handlers = config.handlers,
-    offset_encoding = config.offset_encoding,
+    handlers = config.handlers or {},
+    offset_encoding = validate_encoding(config.offset_encoding),
     name = name,
     _log_prefix = string.format('LSP[%s]', name),
     requests = {},
     attached_buffers = {},
     server_capabilities = {},
-    dynamic_capabilities = vim.lsp._dynamic.new(id),
-    commands = config.commands, -- Remove in Nvim 0.11
+    dynamic_capabilities = lsp._dynamic.new(id),
+    commands = config.commands or {},
+    settings = config.settings or {},
+    flags = config.flags or {},
+    get_language_id = config.get_language_id or default_get_language_id,
+    capabilities = config.capabilities or lsp.protocol.make_client_capabilities(),
+    workspace_folders = get_workspace_folders(config.workspace_folders, config.root_dir),
+    root_dir = config.root_dir,
+    _before_init_cb = config.before_init,
+    _on_init_cbs = ensure_list(config.on_init),
+    _on_exit_cbs = ensure_list(config.on_exit),
+    _on_attach_cbs = ensure_list(config.on_attach),
+    _on_error_cb = config.on_error,
+    _root_dir = config.root_dir,
+    _trace = get_trace(config.trace),
 
     --- Contains $/progress report messages.
     --- They have the format {token: integer|string, value: any}
@@ -327,41 +418,31 @@ function Client.start(config)
 
   setmetatable(self, Client)
 
-  self:initialize()
-
   return self
 end
 
---- @private
-function Client:initialize()
-  local valid_traces = {
-    off = 'off',
-    messages = 'messages',
-    verbose = 'verbose',
-  }
+--- @param cbs function[]
+--- @param error_id integer
+--- @param ... any
+function Client:_run_callbacks(cbs, error_id, ...)
+  for _, cb in pairs(cbs) do
+    --- @type boolean, string?
+    local status, err = pcall(cb, ...)
+    if not status then
+      self:write_error(error_id, err)
+    end
+  end
+end
 
+--- @package
+function Client:initialize()
   local config = self.config
 
-  local workspace_folders --- @type lsp.WorkspaceFolder[]?
   local root_uri --- @type string?
   local root_path --- @type string?
-  if config.workspace_folders or config.root_dir then
-    if config.root_dir and not config.workspace_folders then
-      workspace_folders = {
-        {
-          uri = vim.uri_from_fname(config.root_dir),
-          name = string.format('%s', config.root_dir),
-        },
-      }
-    else
-      workspace_folders = config.workspace_folders
-    end
-    root_uri = workspace_folders[1].uri
+  if self.workspace_folders then
+    root_uri = self.workspace_folders[1].uri
     root_path = vim.uri_to_fname(root_uri)
-  else
-    workspace_folders = nil
-    root_uri = nil
-    root_path = nil
   end
 
   local initialize_params = {
@@ -383,26 +464,19 @@ function Client:initialize()
     -- The rootUri of the workspace. Is null if no folder is open. If both
     -- `rootPath` and `rootUri` are set `rootUri` wins.
     rootUri = root_uri or vim.NIL,
-    -- The workspace folders configured in the client when the server starts.
-    -- This property is only available if the client supports workspace folders.
-    -- It can be `null` if the client supports workspace folders but none are
-    -- configured.
-    workspaceFolders = workspace_folders or vim.NIL,
+    workspaceFolders = self.workspace_folders or vim.NIL,
     -- User provided initialization options.
     initializationOptions = config.init_options,
-    -- The capabilities provided by the client (editor or tool)
-    capabilities = config.capabilities,
-    -- The initial trace setting. If omitted trace is disabled ("off").
-    -- trace = "off" | "messages" | "verbose";
-    trace = valid_traces[config.trace] or 'off',
+    capabilities = self.capabilities,
+    trace = self._trace,
   }
-  if config.before_init then
-    --- @type boolean, string?
-    local status, err = pcall(config.before_init, initialize_params, config)
-    if not status then
-      self:write_error(lsp.client_errors.BEFORE_INIT_CALLBACK_ERROR, err)
-    end
-  end
+
+  self:_run_callbacks(
+    { self._before_init_cb },
+    lsp.client_errors.BEFORE_INIT_CALLBACK_ERROR,
+    initialize_params,
+    config
+  )
 
   log.trace(self._log_prefix, 'initialize_params', initialize_params)
 
@@ -413,7 +487,6 @@ function Client:initialize()
     assert(result, 'server sent empty result')
     rpc.notify('initialized', vim.empty_dict())
     self.initialized = true
-    self.workspace_folders = workspace_folders
 
     -- These are the cleaned up capabilities we use for dynamically deciding
     -- when to send certain events to clients.
@@ -425,17 +498,11 @@ function Client:initialize()
       self.offset_encoding = self.server_capabilities.positionEncoding
     end
 
-    if next(config.settings) then
-      self:_notify(ms.workspace_didChangeConfiguration, { settings = config.settings })
+    if next(self.settings) then
+      self:_notify(ms.workspace_didChangeConfiguration, { settings = self.settings })
     end
 
-    if config.on_init then
-      --- @type boolean, string?
-      local status, err = pcall(config.on_init, self, result)
-      if not status then
-        self:write_error(lsp.client_errors.ON_INIT_CALLBACK_ERROR, err)
-      end
-    end
+    self:_run_callbacks(self._on_init_cbs, lsp.client_errors.ON_INIT_CALLBACK_ERROR, self, result)
 
     log.info(
       self._log_prefix,
@@ -672,7 +739,7 @@ function Client:_is_stopped()
   return self.rpc.is_closing()
 end
 
---- @private
+--- @package
 --- Execute a lsp command, either via client command function (if available)
 --- or via workspace/executeCommand (if supported by the server)
 ---
@@ -684,7 +751,7 @@ function Client:_exec_cmd(command, context, handler)
   context.bufnr = context.bufnr or api.nvim_get_current_buf()
   context.client_id = self.id
   local cmdname = command.command
-  local fn = self.config.commands[cmdname] or lsp.commands[cmdname]
+  local fn = self.commands[cmdname] or lsp.commands[cmdname]
   if fn then
     fn(command, context)
     return
@@ -730,7 +797,7 @@ function Client:_text_document_did_open_handler(bufnr)
     textDocument = {
       version = 0,
       uri = vim.uri_from_bufnr(bufnr),
-      languageId = self.config.get_language_id(bufnr, filetype),
+      languageId = self.get_language_id(bufnr, filetype),
       text = lsp._buf_get_full_text(bufnr),
     },
   }
@@ -742,13 +809,13 @@ function Client:_text_document_did_open_handler(bufnr)
     -- Protect against a race where the buffer disappears
     -- between `did_open_handler` and the scheduled function firing.
     if api.nvim_buf_is_valid(bufnr) then
-      local namespace = vim.lsp.diagnostic.get_namespace(self.id)
+      local namespace = lsp.diagnostic.get_namespace(self.id)
       vim.diagnostic.show(namespace, bufnr)
     end
   end)
 end
 
---- @private
+--- @package
 --- Runs the on_attach function from the client's config if it was defined.
 --- @param bufnr integer Buffer number
 function Client:_on_attach(bufnr)
@@ -762,13 +829,7 @@ function Client:_on_attach(bufnr)
     data = { client_id = self.id },
   })
 
-  if self.config.on_attach then
-    --- @type boolean, string?
-    local status, err = pcall(self.config.on_attach, self, bufnr)
-    if not status then
-      self:write_error(lsp.client_errors.ON_ATTACH_ERROR, err)
-    end
-  end
+  self:_run_callbacks(self._on_attach_cbs, lsp.client_errors.ON_ATTACH_ERROR, self, bufnr)
 
   -- schedule the initialization of semantic tokens to give the above
   -- on_attach and LspAttach callbacks the ability to schedule wrap the
@@ -795,7 +856,6 @@ end
 --- @param method string
 --- @param opts? {bufnr: integer?}
 function Client:_supports_method(method, opts)
-  opts = opts or {}
   local required_capability = lsp._request_name_to_capability[method]
   -- if we don't know about the method, assume that the client supports it.
   if not required_capability then
@@ -803,12 +863,11 @@ function Client:_supports_method(method, opts)
   end
   if vim.tbl_get(self.server_capabilities, unpack(required_capability)) then
     return true
-  else
-    if self.dynamic_capabilities:supports_registration(method) then
-      return self.dynamic_capabilities:supports(method, opts)
-    end
-    return false
   end
+  if self.dynamic_capabilities:supports_registration(method) then
+    return self.dynamic_capabilities:supports(method, opts)
+  end
+  return false
 end
 
 --- @private
@@ -853,9 +912,9 @@ end
 --- `vim.lsp.rpc.client_errors[code]` to get a human-friendly name.
 function Client:_on_error(code, err)
   self:write_error(code, err)
-  if self.config.on_error then
+  if self._on_error_cb then
     --- @type boolean, string
-    local status, usererr = pcall(self.config.on_error, code, err)
+    local status, usererr = pcall(self._on_error_cb, code, err)
     if not status then
       log.error(self._log_prefix, 'user on_error failed', { err = usererr })
       err_message(self._log_prefix, ' user on_error failed: ', tostring(usererr))
@@ -869,9 +928,13 @@ end
 --- @param code integer) exit code of the process
 --- @param signal integer the signal used to terminate (if any)
 function Client:_on_exit(code, signal)
-  if self.config.on_exit then
-    pcall(self.config.on_exit, code, signal, self.id)
-  end
+  self:_run_callbacks(
+    self._on_exit_cbs,
+    lsp.client_errors.ON_EXIT_CALLBACK_ERROR,
+    code,
+    signal,
+    self.id
+  )
 end
 
 return Client

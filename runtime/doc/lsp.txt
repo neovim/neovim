@@ -763,6 +763,10 @@ client()                                                      *vim.lsp.client*
         before text is sent to the server.
       • {handlers} (table): The handlers used by the client as described in
         |lsp-handler|.
+      • {commands} (table): Table of command name to function which is called
+        if any LSP action (code action, code lenses, ...) triggers the
+        command. Client commands take precedence over the global command
+        registry.
       • {requests} (table): The current pending requests in flight to the
         server. Entries are key-value pairs with the key being the request ID
         while the value is a table with `type`, `bufnr`, and `method`
@@ -770,12 +774,16 @@ client()                                                      *vim.lsp.client*
         "cancel" for a cancel request. It will be "complete" ephemerally while
         executing |LspRequest| autocmds when replies are received from the
         server.
-      • {config} (table): copy of the table that was passed by the user to
-        |vim.lsp.start_client()|.
+      • {config} (table): Reference of the table that was passed by the user
+        to |vim.lsp.start_client()|.
       • {server_capabilities} (table): Response from the server sent on
         `initialize` describing the server's capabilities.
       • {progress} A ring buffer (|vim.ringbuf()|) containing progress
         messages sent by the server.
+      • {settings} Map with language server specific settings. See {config} in
+        |vim.lsp.start_client()|
+      • {flags} A table with flags for the client. See {config} in
+        |vim.lsp.start_client()|
 
 client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
     Checks whether a client is stopped.

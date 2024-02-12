@@ -143,6 +143,14 @@ local function for_each_buffer_client(bufnr, fn, restrict_client_ids)
   end
 end
 
+local client_errors_base = table.maxn(lsp.rpc.client_errors)
+local client_errors_offset = 0
+
+local function new_error_index()
+  client_errors_offset = client_errors_offset + 1
+  return client_errors_base + client_errors_offset
+end
+
 --- Error codes to be used with `on_error` from |vim.lsp.start_client|.
 --- Can be used to look up the string from a the number or the number
 --- from the string.
@@ -151,9 +159,10 @@ lsp.client_errors = tbl_extend(
   'error',
   lsp.rpc.client_errors,
   vim.tbl_add_reverse_lookup({
-    BEFORE_INIT_CALLBACK_ERROR = table.maxn(lsp.rpc.client_errors) + 1,
-    ON_INIT_CALLBACK_ERROR = table.maxn(lsp.rpc.client_errors) + 2,
-    ON_ATTACH_ERROR = table.maxn(lsp.rpc.client_errors) + 3,
+    BEFORE_INIT_CALLBACK_ERROR = new_error_index(),
+    ON_INIT_CALLBACK_ERROR = new_error_index(),
+    ON_ATTACH_ERROR = new_error_index(),
+    ON_EXIT_CALLBACK_ERROR = new_error_index(),
   })
 )
 
@@ -262,6 +271,10 @@ end
 ---
 ---  - {handlers} (table): The handlers used by the client as described in |lsp-handler|.
 ---
+---  - {commands} (table): Table of command name to function which is called if
+---    any LSP action (code action, code lenses, ...) triggers the command.
+---    Client commands take precedence over the global command registry.
+---
 ---  - {requests} (table): The current pending requests in flight
 ---    to the server. Entries are key-value pairs with the key
 ---    being the request ID while the value is a table with `type`,
@@ -270,7 +283,7 @@ end
 ---    be "complete" ephemerally while executing |LspRequest| autocmds
 ---    when replies are received from the server.
 ---
----  - {config} (table): copy of the table that was passed by the user
+---  - {config} (table): Reference of the table that was passed by the user
 ---    to |vim.lsp.start_client()|.
 ---
 ---  - {server_capabilities} (table): Response from the server sent on
@@ -278,6 +291,11 @@ end
 ---
 ---  - {progress} A ring buffer (|vim.ringbuf()|) containing progress messages
 ---    sent by the server.
+---
+---  - {settings} Map with language server specific settings.
+---    See {config} in |vim.lsp.start_client()|
+---
+---  - {flags} A table with flags for the client. See {config} in |vim.lsp.start_client()|
 function lsp.client()
   error()
 end
@@ -337,7 +355,7 @@ function lsp.start(config, opts)
   opts = opts or {}
   local reuse_client = opts.reuse_client
     or function(client, conf)
-      return client.config.root_dir == conf.root_dir and client.name == conf.name
+      return client.root_dir == conf.root_dir and client.name == conf.name
     end
 
   local bufnr = resolve_bufnr(opts.bufnr)
@@ -537,20 +555,6 @@ local function on_client_exit(code, signal, client_id)
   end)
 end
 
---- @generic F: function
---- @param ... F
---- @return F
-local function join_cbs(...)
-  local funcs = vim.F.pack_len(...)
-  return function(...)
-    for i = 1, funcs.n do
-      if funcs[i] ~= nil then
-        funcs[i](...)
-      end
-    end
-  end
-end
-
 -- FIXME: DOC: Currently all methods on the `vim.lsp.client` object are
 -- documented twice: Here, and on the methods themselves (e.g.
 -- `client.request()`). This is a workaround for the vimdoc generator script
@@ -671,20 +675,21 @@ end
 --- fully initialized. Use `on_init` to do any actions once
 --- the client has been initialized.
 function lsp.start_client(config)
-  config = vim.deepcopy(config, false)
-  config.on_init = join_cbs(config.on_init, on_client_init)
-  config.on_exit = join_cbs(config.on_exit, on_client_exit)
-
-  local client = require('vim.lsp.client').start(config)
+  local client = require('vim.lsp.client').create(config)
 
   if not client then
     return
   end
 
+  --- @diagnostic disable-next-line: invisible
+  table.insert(client._on_init_cbs, on_client_init)
+  --- @diagnostic disable-next-line: invisible
+  table.insert(client._on_exit_cbs, on_client_exit)
+
   -- Store the uninitialized_clients for cleanup in case we exit before initialize finishes.
-  -- TODO(lewis6991): do this on before_init(). Requires API change to before_init() so it
-  -- can access the client_id.
   uninitialized_clients[client.id] = client
+
+  client:initialize()
 
   return client.id
 end
@@ -732,7 +737,7 @@ local function text_document_did_save_handler(bufnr)
         textDocument = {
           version = 0,
           uri = uri,
-          languageId = client.config.get_language_id(bufnr, vim.bo[bufnr].filetype),
+          languageId = client.get_language_id(bufnr, vim.bo[bufnr].filetype),
           text = lsp._buf_get_full_text(bufnr),
         },
       })
@@ -1034,7 +1039,7 @@ api.nvim_create_autocmd('VimLeavePre', {
     local send_kill = false
 
     for client_id, client in pairs(active_clients) do
-      local timeout = if_nil(client.config.flags.exit_timeout, false)
+      local timeout = if_nil(client.flags.exit_timeout, false)
       if timeout then
         send_kill = true
         timeouts[client_id] = timeout

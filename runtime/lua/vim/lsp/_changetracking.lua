@@ -64,7 +64,7 @@ local state_by_group = setmetatable({}, {
 ---@param client lsp.Client
 ---@return vim.lsp.CTGroup
 local function get_group(client)
-  local allow_inc_sync = vim.F.if_nil(client.config.flags.allow_incremental_sync, true) --- @type boolean
+  local allow_inc_sync = vim.F.if_nil(client.flags.allow_incremental_sync, true) --- @type boolean
   local change_capability = vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'change')
   local sync_kind = change_capability or protocol.TextDocumentSyncKind.None
   if not allow_inc_sync and change_capability == protocol.TextDocumentSyncKind.Incremental then
@@ -134,12 +134,12 @@ function M.init(client, bufnr)
   local group = get_group(client)
   local state = state_by_group[group]
   if state then
-    state.debounce = math.min(state.debounce, client.config.flags.debounce_text_changes or 150)
+    state.debounce = math.min(state.debounce, client.flags.debounce_text_changes or 150)
     state.clients[client.id] = client
   else
     state = {
       buffers = {},
-      debounce = client.config.flags.debounce_text_changes or 150,
+      debounce = client.flags.debounce_text_changes or 150,
       clients = {
         [client.id] = client,
       },
