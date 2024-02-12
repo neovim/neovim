@@ -2165,16 +2165,16 @@ bool swapchar(int op_type, pos_T *pos)
     return false;
   }
 
-  if (op_type == OP_UPPER && c == 0xdf) {
+  // ~ is OP_NOP, g~ is OP_TILDE, gU is OP_UPPER
+  if ((op_type == OP_UPPER || op_type == OP_NOP || op_type == OP_TILDE) && c == 0xdf) {
     pos_T sp = curwin->w_cursor;
 
-    // Special handling of German sharp s: change to "SS".
+    // Special handling for lowercase German sharp s (ß): convert to uppercase (ẞ).
     curwin->w_cursor = *pos;
     del_char(false);
-    ins_char('S');
-    ins_char('S');
+    ins_char(0x1E9E);
     curwin->w_cursor = sp;
-    inc(pos);
+    return true;
   }
 
   int nc = c;

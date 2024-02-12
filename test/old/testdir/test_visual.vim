@@ -1022,9 +1022,9 @@ func Test_visual_change_case()
   exe "normal Oblah di\rdoh dut\<Esc>VkUj\r"
   " Uppercase part of two lines
   exe "normal ddppi333\<Esc>k0i222\<Esc>fyllvjfuUk"
-  call assert_equal(['the YOUTUSSEUU end', '- yOUSSTUSSEXu -',
-        \ 'THE YOUTUSSEUU END', '111THE YOUTUSSEUU END', 'BLAH DI', 'DOH DUT',
-        \ '222the yoUTUSSEUU END', '333THE YOUTUßeuu end'], getline(2, '$'))
+  call assert_equal(['the YOUTUẞEUU end', '- yOUẞTUẞEXu -',
+        \ 'THE YOUTUẞEUU END', '111THE YOUTUẞEUU END', 'BLAH DI', 'DOH DUT',
+        \ '222the yoUTUẞEUU END', '333THE YOUTUßeuu end'], getline(2, '$'))
   bwipe!
 endfunc
 
