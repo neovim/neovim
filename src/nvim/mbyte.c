@@ -1323,6 +1323,9 @@ int utf_fold(int a)
 // invalid values or can't handle latin1 when the locale is C.
 // Speed is most important here.
 
+// Note: UnicodeData.txt does not define U+1E9E as being the corresponding upper
+// case letter for U+00DF (ß), however it is part of the toLower table
+
 /// Return the upper-case equivalent of "a", which is a UCS-4 character.  Use
 /// simple case folding.
 int mb_toupper(int a)
