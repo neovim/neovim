@@ -523,7 +523,7 @@ describe('LSP', function()
           if ctx.method == 'start' then
             exec_lua([=[
               local client = vim.lsp.get_client_by_id(TEST_RPC_CLIENT_ID)
-              client.config.settings = {
+              client.settings = {
                 testSetting1 = true;
                 testSetting2 = false;
                 test = {Setting3 = 'nested' };

@@ -197,10 +197,10 @@ M[ms.workspace_configuration] = function(_, result, ctx)
   local response = {}
   for _, item in ipairs(result.items) do
     if item.section then
-      local value = lookup_section(client.config.settings, item.section)
+      local value = lookup_section(client.settings, item.section)
       -- For empty sections with no explicit '' key, return settings as is
       if value == nil and item.section == '' then
-        value = client.config.settings
+        value = client.settings
       end
       if value == nil then
         value = vim.NIL

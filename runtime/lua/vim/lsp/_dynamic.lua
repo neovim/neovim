@@ -19,7 +19,7 @@ function M:supports_registration(method)
   if not client then
     return false
   end
-  local capability = vim.tbl_get(client.config.capabilities, unpack(vim.split(method, '/')))
+  local capability = vim.tbl_get(client.capabilities, unpack(vim.split(method, '/')))
   return type(capability) == 'table' and capability.dynamicRegistration
 end
 
@@ -91,7 +91,7 @@ function M:match(bufnr, documentSelector)
   if not client then
     return false
   end
-  local language = client.config.get_language_id(bufnr, vim.bo[bufnr].filetype)
+  local language = client.get_language_id(bufnr, vim.bo[bufnr].filetype)
   local uri = vim.uri_from_bufnr(bufnr)
   local fname = vim.uri_to_fname(uri)
   for _, filter in ipairs(documentSelector) do
