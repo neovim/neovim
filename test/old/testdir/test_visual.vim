@@ -1010,7 +1010,7 @@ endfunc
 " Test for changing case
 func Test_visual_change_case()
   new
-  " gUe must uppercase a whole word, also when ß changes to SS
+  " gUe must uppercase a whole word, also when ß changes to ẞ
   exe "normal Gothe youtußeuu end\<Esc>Ypk0wgUe\r"
   " gUfx must uppercase until x, inclusive.
   exe "normal O- youßtußexu -\<Esc>0fogUfx\r"

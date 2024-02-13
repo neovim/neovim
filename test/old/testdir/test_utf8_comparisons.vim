@@ -93,7 +93,7 @@ func Test_gap()
   call assert_equal(["ABCD", "", "defg"], getline(1,3))
 endfunc
 
-" test that g~, ~ and gU correclty upper-cases ß
+" test that g~, ~ and gU correctly upper-cases ß
 func Test_uppercase_sharp_ss()
   new
   call setline(1, repeat(['ß'], 4))
