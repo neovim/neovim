@@ -108,7 +108,7 @@ func Test_map_langmap()
   unmap x
   bwipe!
 
-  " 'langnoremap' follows 'langremap' and vise versa
+  " 'langnoremap' follows 'langremap' and vice versa
   set langremap
   set langnoremap
   call assert_equal(0, &langremap)
