@@ -1742,6 +1742,35 @@ describe('extmark decorations', function()
     ]]}
   end)
 
+  it('redraws properly when adding/removing conceal on non-current line', function()
+    screen:try_resize(50, 5)
+    api.nvim_buf_set_lines(0, 0, -1, true, {'abcd', 'efgh','ijkl', 'mnop'})
+    command('setlocal conceallevel=2')
+    screen:expect{grid=[[
+      ^abcd                                              |
+      efgh                                              |
+      ijkl                                              |
+      mnop                                              |
+                                                        |
+    ]]}
+    api.nvim_buf_set_extmark(0, ns, 2, 1, {end_col=3, conceal=''})
+    screen:expect{grid=[[
+      ^abcd                                              |
+      efgh                                              |
+      il                                                |
+      mnop                                              |
+                                                        |
+    ]]}
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    screen:expect{grid=[[
+      ^abcd                                              |
+      efgh                                              |
+      ijkl                                              |
+      mnop                                              |
+                                                        |
+    ]]}
+  end)
+
   it('avoids redraw issue #20651', function()
     exec_lua[[
       vim.cmd.normal'10oXXX'

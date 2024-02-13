@@ -121,7 +121,8 @@ void decor_redraw(buf_T *buf, int row1, int row2, int col1, DecorInline decor)
 
 void decor_redraw_sh(buf_T *buf, int row1, int row2, DecorSignHighlight sh)
 {
-  if (sh.hl_id || (sh.url != NULL) || (sh.flags & (kSHIsSign|kSHSpellOn|kSHSpellOff))) {
+  if (sh.hl_id || (sh.url != NULL)
+      || (sh.flags & (kSHIsSign | kSHSpellOn | kSHSpellOff | kSHConceal))) {
     if (row2 >= row1) {
       redraw_buf_range_later(buf, row1 + 1, row2 + 1);
     }
