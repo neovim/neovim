@@ -809,7 +809,7 @@ M.funcs = {
       <
     ]=],
     name = 'bufname',
-    params = { { 'buf', 'any' } },
+    params = { { 'buf', 'integer|string' } },
     returns = 'string',
     signature = 'bufname([{buf}])',
   },
@@ -832,7 +832,7 @@ M.funcs = {
 
     ]=],
     name = 'bufnr',
-    params = { { 'buf', 'any' }, { 'create', 'any' } },
+    params = { { 'buf', 'integer|string' }, { 'create', 'any' } },
     returns = 'integer',
     signature = 'bufnr([{buf} [, {create}]])',
   },
