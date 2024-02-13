@@ -179,7 +179,7 @@ void buf_updates_unload(buf_T *buf, bool can_reload)
       ADD_C(args, BUFFER_OBJ(buf->handle));
 
       TEXTLOCK_WRAP({
-        nlua_call_ref(thecb, keep ? "reload" : "detach", args, false, NULL);
+        nlua_call_ref(thecb, keep ? "reload" : "detach", args, false, NULL, NULL);
       });
     }
 
@@ -295,10 +295,10 @@ void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
 
       Object res;
       TEXTLOCK_WRAP({
-        res = nlua_call_ref(cb.on_lines, "lines", args, false, NULL);
+        res = nlua_call_ref(cb.on_lines, "lines", args, kRetNilBool, NULL, NULL);
       });
 
-      if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
+      if (LUARET_TRUTHY(res)) {
         buffer_update_callbacks_free(cb);
         keep = false;
       }
@@ -345,10 +345,10 @@ void buf_updates_send_splice(buf_T *buf, int start_row, colnr_T start_col, bcoun
 
       Object res;
       TEXTLOCK_WRAP({
-        res = nlua_call_ref(cb.on_bytes, "bytes", args, false, NULL);
+        res = nlua_call_ref(cb.on_bytes, "bytes", args, kRetNilBool, NULL, NULL);
       });
 
-      if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
+      if (LUARET_TRUTHY(res)) {
         buffer_update_callbacks_free(cb);
         keep = false;
       }
@@ -381,10 +381,10 @@ void buf_updates_changedtick(buf_T *buf)
 
       Object res;
       TEXTLOCK_WRAP({
-        res = nlua_call_ref(cb.on_changedtick, "changedtick", args, false, NULL);
+        res = nlua_call_ref(cb.on_changedtick, "changedtick", args, kRetNilBool, NULL, NULL);
       });
 
-      if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
+      if (LUARET_TRUTHY(res)) {
         buffer_update_callbacks_free(cb);
         keep = false;
       }

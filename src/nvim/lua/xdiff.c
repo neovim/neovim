@@ -5,7 +5,9 @@
 #include <string.h>
 
 #include "luaconf.h"
+#include "nvim/api/keysets_defs.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/linematch.h"
 #include "nvim/lua/converter.h"
@@ -187,136 +189,84 @@ static mmfile_t get_string_arg(lua_State *lstate, int idx)
   return mf;
 }
 
-// Helper function for validating option types
-static bool check_xdiff_opt(ObjectType actType, ObjectType expType, const char *name, Error *err)
-{
-  if (actType != expType) {
-    const char *type_str =
-      expType == kObjectTypeString
-      ? "string" : (expType == kObjectTypeInteger
-                    ? "integer" : (expType == kObjectTypeBoolean
-                                   ? "boolean" : (expType == kObjectTypeLuaRef
-                                                  ? "function" : "NA")));
-
-    api_set_error(err, kErrorTypeValidation, "%s is not a %s", name,
-                  type_str);
-    return true;
-  }
-
-  return false;
-}
-
 static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate, xdemitconf_t *cfg, xpparam_t *params,
                                            int64_t *linematch, Error *err)
 {
-  const DictionaryOf(LuaRef) opts = nlua_pop_Dictionary(lstate, true, err);
+  Dict(xdl_diff) opts = KEYDICT_INIT;
+  char *err_param = NULL;
+  KeySetLink *KeyDict_xdl_diff_get_field(const char *str, size_t len);
+  nlua_pop_keydict(lstate, &opts, KeyDict_xdl_diff_get_field, &err_param, NULL, err);
 
   NluaXdiffMode mode = kNluaXdiffModeUnified;
 
-  bool had_on_hunk = false;
   bool had_result_type_indices = false;
-  for (size_t i = 0; i < opts.size; i++) {
-    String k = opts.items[i].key;
-    Object *v = &opts.items[i].value;
-    if (strequal("on_hunk", k.data)) {
-      if (check_xdiff_opt(v->type, kObjectTypeLuaRef, "on_hunk", err)) {
-        goto exit_1;
-      }
-      had_on_hunk = true;
-      nlua_pushref(lstate, v->data.luaref);
-    } else if (strequal("result_type", k.data)) {
-      if (check_xdiff_opt(v->type, kObjectTypeString, "result_type", err)) {
-        goto exit_1;
-      }
-      if (strequal("unified", v->data.string.data)) {
-        // the default
-      } else if (strequal("indices", v->data.string.data)) {
-        had_result_type_indices = true;
-      } else {
-        api_set_error(err, kErrorTypeValidation, "not a valid result_type");
-        goto exit_1;
-      }
-    } else if (strequal("algorithm", k.data)) {
-      if (check_xdiff_opt(v->type, kObjectTypeString, "algorithm", err)) {
-        goto exit_1;
-      }
-      if (strequal("myers", v->data.string.data)) {
-        // default
-      } else if (strequal("minimal", v->data.string.data)) {
-        params->flags |= XDF_NEED_MINIMAL;
-      } else if (strequal("patience", v->data.string.data)) {
-        params->flags |= XDF_PATIENCE_DIFF;
-      } else if (strequal("histogram", v->data.string.data)) {
-        params->flags |= XDF_HISTOGRAM_DIFF;
-      } else {
-        api_set_error(err, kErrorTypeValidation, "not a valid algorithm");
-        goto exit_1;
-      }
-    } else if (strequal("ctxlen", k.data)) {
-      if (check_xdiff_opt(v->type, kObjectTypeInteger, "ctxlen", err)) {
-        goto exit_1;
-      }
-      cfg->ctxlen = (long)v->data.integer;
-    } else if (strequal("interhunkctxlen", k.data)) {
-      if (check_xdiff_opt(v->type, kObjectTypeInteger, "interhunkctxlen",
-                          err)) {
-        goto exit_1;
-      }
-      cfg->interhunkctxlen = (long)v->data.integer;
-    } else if (strequal("linematch", k.data)) {
-      if (v->type == kObjectTypeBoolean) {
-        *linematch = v->data.boolean ? INT64_MAX : 0;
-      } else if (v->type == kObjectTypeInteger) {
-        *linematch = v->data.integer;
-      } else {
-        api_set_error(err, kErrorTypeValidation, "linematch must be a boolean or integer");
-        goto exit_1;
-      }
+
+  if (HAS_KEY(&opts, xdl_diff, result_type)) {
+    if (strequal("unified", opts.result_type.data)) {
+      // the default
+    } else if (strequal("indices", opts.result_type.data)) {
+      had_result_type_indices = true;
     } else {
-      struct {
-        const char *name;
-        unsigned long value;
-      } flags[] = {
-        { "ignore_whitespace", XDF_IGNORE_WHITESPACE },
-        { "ignore_whitespace_change", XDF_IGNORE_WHITESPACE_CHANGE },
-        { "ignore_whitespace_change_at_eol", XDF_IGNORE_WHITESPACE_AT_EOL },
-        { "ignore_cr_at_eol", XDF_IGNORE_CR_AT_EOL },
-        { "ignore_blank_lines", XDF_IGNORE_BLANK_LINES },
-        { "indent_heuristic", XDF_INDENT_HEURISTIC },
-        {  NULL, 0 },
-      };
-      bool key_used = false;
-      for (size_t j = 0; flags[j].name; j++) {
-        if (strequal(flags[j].name, k.data)) {
-          if (check_xdiff_opt(v->type, kObjectTypeBoolean, flags[j].name,
-                              err)) {
-            goto exit_1;
-          }
-          if (v->data.boolean) {
-            params->flags |= flags[j].value;
-          }
-          key_used = true;
-          break;
-        }
-      }
-
-      if (key_used) {
-        continue;
-      }
-
-      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      api_set_error(err, kErrorTypeValidation, "not a valid result_type");
       goto exit_1;
     }
   }
 
-  if (had_on_hunk) {
+  if (HAS_KEY(&opts, xdl_diff, algorithm)) {
+    if (strequal("myers", opts.algorithm.data)) {
+      // default
+    } else if (strequal("minimal", opts.algorithm.data)) {
+      params->flags |= XDF_NEED_MINIMAL;
+    } else if (strequal("patience", opts.algorithm.data)) {
+      params->flags |= XDF_PATIENCE_DIFF;
+    } else if (strequal("histogram", opts.algorithm.data)) {
+      params->flags |= XDF_HISTOGRAM_DIFF;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "not a valid algorithm");
+      goto exit_1;
+    }
+  }
+
+  if (HAS_KEY(&opts, xdl_diff, ctxlen)) {
+    cfg->ctxlen = (long)opts.ctxlen;
+  }
+
+  if (HAS_KEY(&opts, xdl_diff, interhunkctxlen)) {
+    cfg->interhunkctxlen = (long)opts.interhunkctxlen;
+  }
+
+  if (HAS_KEY(&opts, xdl_diff, linematch)) {
+    if (opts.linematch.type == kObjectTypeBoolean) {
+      *linematch = opts.linematch.data.boolean ? INT64_MAX : 0;
+    } else if (opts.linematch.type == kObjectTypeInteger) {
+      *linematch = opts.linematch.data.integer;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "linematch must be a boolean or integer");
+      goto exit_1;
+    }
+  }
+
+  params->flags |= opts.ignore_whitespace ? XDF_IGNORE_WHITESPACE : 0;
+  params->flags |= opts.ignore_whitespace_change ? XDF_IGNORE_WHITESPACE_CHANGE : 0;
+  params->flags |= opts.ignore_whitespace_change_at_eol ? XDF_IGNORE_WHITESPACE_AT_EOL : 0;
+  params->flags |= opts.ignore_cr_at_eol ? XDF_IGNORE_CR_AT_EOL : 0;
+  params->flags |= opts.ignore_blank_lines ? XDF_IGNORE_BLANK_LINES : 0;
+  params->flags |= opts.indent_heuristic ? XDF_INDENT_HEURISTIC : 0;
+
+  if (HAS_KEY(&opts, xdl_diff, on_hunk)) {
     mode = kNluaXdiffModeOnHunkCB;
+    nlua_pushref(lstate, opts.on_hunk);
+    if (lua_type(lstate, -1) != LUA_TFUNCTION) {
+      api_set_error(err, kErrorTypeValidation, "on_hunk is not a function");
+    }
   } else if (had_result_type_indices) {
     mode = kNluaXdiffModeLocations;
   }
 
 exit_1:
-  api_free_dictionary(opts);
+  api_free_string(opts.result_type);
+  api_free_string(opts.algorithm);
+  api_free_luaref(opts.on_hunk);
   return mode;
 }
 

@@ -421,8 +421,7 @@ void nvim_win_close(Window window, Boolean force, Error *err)
 /// @param fun        Function to call inside the window (currently Lua callable
 ///                   only)
 /// @param[out] err   Error details, if any
-/// @return           Return value of function. NB: will deepcopy Lua values
-///                   currently, use upvalues to send Lua references in and out.
+/// @return           Return value of function.
 Object nvim_win_call(Window window, LuaRef fun, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_LUA_ONLY
@@ -438,7 +437,7 @@ Object nvim_win_call(Window window, LuaRef fun, Error *err)
   win_execute_T win_execute_args;
   if (win_execute_before(&win_execute_args, win, tabpage)) {
     Array args = ARRAY_DICT_INIT;
-    res = nlua_call_ref(fun, NULL, args, true, err);
+    res = nlua_call_ref(fun, NULL, args, kRetLuaref, NULL, err);
   }
   win_execute_after(&win_execute_args);
   try_end(err);

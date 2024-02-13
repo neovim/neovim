@@ -431,7 +431,8 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
       });
 
       cb.type = kCallbackLua;
-      cb.data.luaref = api_new_luaref(callback->data.luaref);
+      cb.data.luaref = callback->data.luaref;
+      callback->data.luaref = LUA_NOREF;
       break;
     case kObjectTypeString:
       cb.type = kCallbackFuncref;

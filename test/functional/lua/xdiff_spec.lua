@@ -165,7 +165,7 @@ describe('xdiff bindings', function()
       pcall_err(exec_lua, [[vim.diff('a', 'b', true)]])
     )
 
-    eq([[unexpected key: bad_key]], pcall_err(exec_lua, [[vim.diff('a', 'b', { bad_key = true })]]))
+    eq([[invalid key: bad_key]], pcall_err(exec_lua, [[vim.diff('a', 'b', { bad_key = true })]]))
 
     eq(
       [[on_hunk is not a function]],

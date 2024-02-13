@@ -7445,7 +7445,7 @@ static void ex_checkhealth(exarg_T *eap)
   ADD_C(args, STRING_OBJ(((String){ .data = mods, .size = mods_len })));
   ADD_C(args, CSTR_AS_OBJ(eap->arg));
 
-  NLUA_EXEC_STATIC("return vim.health._check(...)", args, &err);
+  NLUA_EXEC_STATIC("vim.health._check(...)", args, kRetNilBool, NULL, &err);
   if (!ERROR_SET(&err)) {
     return;
   }

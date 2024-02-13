@@ -297,3 +297,17 @@ error('Cannot require a meta file')
 --- @field end_row? integer
 --- @field start_vcol? integer
 --- @field end_vcol? integer
+
+--- @class vim.api.keyset.xdl_diff
+--- @field on_hunk? function
+--- @field result_type? string
+--- @field algorithm? string
+--- @field ctxlen? integer
+--- @field interhunkctxlen? integer
+--- @field linematch? any
+--- @field ignore_whitespace? boolean
+--- @field ignore_whitespace_change? boolean
+--- @field ignore_whitespace_change_at_eol? boolean
+--- @field ignore_cr_at_eol? boolean
+--- @field ignore_blank_lines? boolean
+--- @field indent_heuristic? boolean

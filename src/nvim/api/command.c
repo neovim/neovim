@@ -99,7 +99,7 @@
 Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(10) FUNC_API_FAST
 {
-  Dict(cmd) result = { 0 };
+  Dict(cmd) result = KEYDICT_INIT;
 
   // Parse command line
   exarg_T ea;
@@ -514,7 +514,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
   VALIDATE_MOD((!ea.forceit || (ea.argt & EX_BANG)), "bang", cmd->cmd.data);
 
   if (HAS_KEY(cmd, cmd, magic)) {
-    Dict(cmd_magic) magic[1] = { 0 };
+    Dict(cmd_magic) magic[1] = KEYDICT_INIT;
     if (!api_dict_to_keydict(magic, KeyDict_cmd_magic_get_field, cmd->magic, err)) {
       goto end;
     }
@@ -532,13 +532,13 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
   }
 
   if (HAS_KEY(cmd, cmd, mods)) {
-    Dict(cmd_mods) mods[1] = { 0 };
+    Dict(cmd_mods) mods[1] = KEYDICT_INIT;
     if (!api_dict_to_keydict(mods, KeyDict_cmd_mods_get_field, cmd->mods, err)) {
       goto end;
     }
 
     if (HAS_KEY(mods, cmd_mods, filter)) {
-      Dict(cmd_mods_filter) filter[1] = { 0 };
+      Dict(cmd_mods_filter) filter[1] = KEYDICT_INIT;
 
       if (!api_dict_to_keydict(&filter, KeyDict_cmd_mods_filter_get_field,
                                mods->filter, err)) {
@@ -1103,7 +1103,8 @@ void create_user_command(uint64_t channel_id, String name, Object command, Dict(
 
   if (opts->complete.type == kObjectTypeLuaRef) {
     context = EXPAND_USER_LUA;
-    compl_luaref = api_new_luaref(opts->complete.data.luaref);
+    compl_luaref = opts->complete.data.luaref;
+    opts->complete.data.luaref = LUA_NOREF;
   } else if (opts->complete.type == kObjectTypeString) {
     VALIDATE_S(OK == parse_compl_arg(opts->complete.data.string.data,
                                      (int)opts->complete.data.string.size, &context, &argt,
@@ -1123,7 +1124,8 @@ void create_user_command(uint64_t channel_id, String name, Object command, Dict(
     });
 
     argt |= EX_PREVIEW;
-    preview_luaref = api_new_luaref(opts->preview.data.luaref);
+    preview_luaref = opts->preview.data.luaref;
+    opts->preview.data.luaref = LUA_NOREF;
   }
 
   switch (command.type) {

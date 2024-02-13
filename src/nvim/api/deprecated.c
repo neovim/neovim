@@ -51,12 +51,12 @@ String nvim_command_output(uint64_t channel_id, String command, Error *err)
 
 /// @deprecated Use nvim_exec_lua() instead.
 /// @see nvim_exec_lua
-Object nvim_execute_lua(String code, Array args, Error *err)
+Object nvim_execute_lua(String code, Array args, Arena *arena, Error *err)
   FUNC_API_SINCE(3)
   FUNC_API_DEPRECATED_SINCE(7)
   FUNC_API_REMOTE_ONLY
 {
-  return nlua_exec(code, args, err);
+  return nlua_exec(code, args, kRetObject, arena, err);
 }
 
 /// Gets the buffer number

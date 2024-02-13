@@ -600,7 +600,7 @@ Dict(win_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
   /// Keep in sync with WinSplit in buffer_defs.h
   static const char *const win_split_str[] = { "left", "right", "above", "below" };
 
-  Dict(win_config) rv = { 0 };
+  Dict(win_config) rv = KEYDICT_INIT;
 
   win_T *wp = find_window_by_handle(window, err);
   if (!wp) {

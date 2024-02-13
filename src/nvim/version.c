@@ -2681,9 +2681,9 @@ void list_in_columns(char **items, int size, int current)
 
 void list_lua_version(void)
 {
-  char *code = "return ((jit and jit.version) and jit.version or _VERSION)";
   Error err = ERROR_INIT;
-  Object ret = nlua_exec(cstr_as_string(code), (Array)ARRAY_DICT_INIT, &err);
+  Object ret = NLUA_EXEC_STATIC("return ((jit and jit.version) and jit.version or _VERSION)",
+                                (Array)ARRAY_DICT_INIT, kRetObject, NULL, &err);
   assert(!ERROR_SET(&err));
   assert(ret.type == kObjectTypeString);
   msg(ret.data.string.data, 0);

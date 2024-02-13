@@ -6143,8 +6143,8 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
     break;
 
   case kCallbackLua:
-    rv = nlua_call_ref(callback->data.luaref, NULL, args, false, NULL);
-    return (rv.type == kObjectTypeBoolean && rv.data.boolean == true);
+    rv = nlua_call_ref(callback->data.luaref, NULL, args, kRetNilBool, NULL, NULL);
+    return LUARET_TRUTHY(rv);
 
   case kCallbackNone:
     return false;

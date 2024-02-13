@@ -710,8 +710,8 @@ void ui_call_event(char *name, Array args)
   bool handled = false;
   map_foreach_value(&ui_event_cbs, event_cb, {
     Error err = ERROR_INIT;
-    Object res = nlua_call_ref(event_cb->cb, name, args, false, &err);
-    if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
+    Object res = nlua_call_ref(event_cb->cb, name, args, kRetNilBool, NULL, &err);
+    if (LUARET_TRUTHY(res)) {
       handled = true;
     }
     if (ERROR_SET(&err)) {
