@@ -19,6 +19,7 @@ local exc_exec = helpers.exc_exec
 local os_kill = helpers.os_kill
 local pcall_err = helpers.pcall_err
 local is_os = helpers.is_os
+local curbuf_contents = helpers.curbuf_contents
 
 local Screen = require('test.functional.ui.screen')
 
@@ -629,4 +630,94 @@ describe('shell :!', function()
     feed('<CR>')
     helpers.expect_exit(command, 'qall!')
   end)
+
+  it(':.! should pipe line buffer to &shell only replacing the current line', function()
+    if is_os('win') then
+      -- Output of pwsh is lengthy.
+      -- Do not check the full string which is environment dependent
+      -- but the presence of critical words.
+      helpers.set_shell_powershell(true)
+      insert([[echo 'Hi, coconut!';
+exec zsh;]])
+      feed('gg')
+      command(':.!')
+      helpers.matches('Hi, coconut!', curbuf_contents())
+      helpers.matches('exec zsh;', curbuf_contents())
+    else
+      insert([[find . 'src' -maxdepth 0 -type d;
+ls]])
+      feed('gg')
+      command(':.!')
+      eq(
+        curbuf_contents(),
+        [[.
+src
+ls]]
+      )
+    end
+  end)
+
+  it(':%! should pipe buffer to &shell replacing the entire buffer', function()
+    if is_os('win') then
+      -- Output of pwsh is lengthy.
+      -- Do not check the full string which is environment dependent
+      -- but the presence of critical words.
+      helpers.set_shell_powershell(true)
+      insert([[dir;
+echo 'Hi, vimers!';]])
+      command(':%!')
+      helpers.matches('Hi, vimers!', curbuf_contents())
+      helpers.matches('Directory', curbuf_contents())
+      helpers.matches('neovim', curbuf_contents())
+    else
+      insert([[find . 'src' -maxdepth 0 -type d;
+echo 'hello world';]])
+      command(':%!')
+      eq(
+        curbuf_contents(),
+        [[.
+src
+hello world]]
+      )
+    end
+  end)
+
+  it('! should filter motion to &shell by default on startup', function()
+    if is_os('win') then
+      helpers.set_shell_powershell(true)
+      insert([[echo 'Hi, coconut!';
+exec zsh;]])
+      feed('gg!w<CR>')
+      helpers.matches('Hi, coconut!', curbuf_contents())
+      helpers.matches('exec zsh;', curbuf_contents())
+    else
+      insert([[echo 'hello world']])
+      feed('!w<CR>')
+      eq(curbuf_contents(), 'hello world')
+    end
+  end)
+
+  it(
+    '! should filter motion to &shell by default on startup but remember the change of {filter} program',
+    function()
+      if not is_os('win') then
+        insert([[echo 'hello world';]])
+        feed('!w<CR>')
+        eq(curbuf_contents(), 'hello world')
+        feed('ggdd')
+        insert([[print('foo')
+print('nvim')]])
+        feed('gg')
+        feed('!w./build/bin/nvim -l -<CR>')
+        feed('j!w<CR>')
+        eq(
+          curbuf_contents(),
+          [[foo
+nvim]]
+        )
+      else
+        pending('test the logic on the full buffer and not the noisy pwsh', function() end)
+      end
+    end
+  )
 end)

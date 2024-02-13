@@ -998,7 +998,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     }
   } while (trailarg != NULL);
 
-  // Only set "prevcmd" if there is a command to run, otherwise keep te one
+  // Only set "prevcmd" if there is a command to run, otherwise keep the one
   // we have.
   if (strlen(newcmd) > 0) {
     xfree(prevcmd);
@@ -1008,8 +1008,9 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   }
 
   if (bangredo) {  // put cmd in redo buffer for ! command
-    if (!prevcmd_is_set()) {
-      goto theend;
+    // ! command without prevcmd pipe lines to &shell
+    if (p_sh != NULL && prevcmd == NULL && strlen(newcmd) == 0) {
+      prevcmd = xstrdup(p_sh);
     }
 
     // If % or # appears in the command, it must have been escaped.
@@ -1046,11 +1047,19 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   } else {                            // :range!
     // Careful: This may recursively call do_bang() again! (because of
     // autocommands)
+    // :{range}! without command pipe lines to &shell
+    if (p_sh != NULL && prevcmd == NULL && strlen(newcmd) == 0) {
+      prevcmd = xstrdup(p_sh);
+    }
+    if (free_newcmd) {
+      xfree(newcmd);
+    }
+    newcmd = xstrdup(prevcmd);
+    free_newcmd = true;
     do_filter(line1, line2, eap, newcmd, do_in, do_out);
     apply_autocmds(EVENT_SHELLFILTERPOST, NULL, NULL, false, curbuf);
   }
 
-theend:
   if (free_newcmd) {
     xfree(newcmd);
   }
