@@ -81,10 +81,10 @@
 --- @class vim.fn.sign_getplaced.dict
 --- @field group? string
 --- @field id? integer
---- @field lnum? string
+--- @field lnum? string|integer
 
 --- @class vim.fn.sign_getplaced.ret.item
---- @field buf integer
+--- @field bufnr integer
 --- @field signs vim.fn.sign[]
 
 --- @class vim.fn.sign_place.dict
