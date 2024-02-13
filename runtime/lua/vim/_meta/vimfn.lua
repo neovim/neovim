@@ -582,7 +582,7 @@ function vim.fn.bufloaded(buf) end
 ---   echo bufname("file2")  " name of buffer where "file2" matches.
 --- <
 ---
---- @param buf? any
+--- @param buf? integer|string
 --- @return string
 function vim.fn.bufname(buf) end
 
@@ -599,7 +599,7 @@ function vim.fn.bufname(buf) end
 --- number necessarily exist, because ":bwipeout" may have removed
 --- them.  Use bufexists() to test for the existence of a buffer.
 ---
---- @param buf? any
+--- @param buf? integer|string
 --- @param create? any
 --- @return integer
 function vim.fn.bufnr(buf, create) end
