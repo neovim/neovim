@@ -3885,6 +3885,67 @@ describe('decorations: inline virtual text', function()
                                                         |
     ]]}
   end)
+
+  it('is redrawn correctly after delete or redo #27370', function()
+    screen:try_resize(50, 12)
+    exec([[
+      call setline(1, ['aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff'])
+      call setline(3, repeat('c', winwidth(0) - 1))
+    ]])
+    api.nvim_buf_set_extmark(0, ns, 1, 0, { virt_text = { { '!!!' } }, virt_text_pos = 'inline' })
+    feed('j')
+    local before_delete = [[
+      aaa                                               |
+      !!!^bbb                                            |
+      ccccccccccccccccccccccccccccccccccccccccccccccccc |
+      ddd                                               |
+      eee                                               |
+      fff                                               |
+      {1:~                                                 }|*5
+                                                        |
+    ]]
+    screen:expect(before_delete)
+    feed('dd')
+    local after_delete = [[
+      aaa                                               |
+      !!!^ccccccccccccccccccccccccccccccccccccccccccccccc|
+      cc                                                |
+      ddd                                               |
+      eee                                               |
+      fff                                               |
+      {1:~                                                 }|*5
+                                                        |
+    ]]
+    screen:expect(after_delete)
+    command('silent undo')
+    screen:expect(before_delete)
+    command('silent redo')
+    screen:expect(after_delete)
+    command('silent undo')
+    screen:expect(before_delete)
+    command('set report=100')
+    feed('yypk2P')
+    before_delete = [[
+      aaa                                               |
+      ^bbb                                               |
+      bbb                                               |
+      !!!bbb                                            |
+      bbb                                               |
+      ccccccccccccccccccccccccccccccccccccccccccccccccc |
+      ddd                                               |
+      eee                                               |
+      fff                                               |
+      {1:~                                                 }|*2
+                                                        |
+    ]]
+    screen:expect(before_delete)
+    feed('4dd')
+    screen:expect(after_delete)
+    command('silent undo')
+    screen:expect(before_delete)
+    command('silent redo')
+    screen:expect(after_delete)
+  end)
 end)
 
 describe('decorations: virtual lines', function()

@@ -101,7 +101,6 @@ void decor_redraw(buf_T *buf, int row1, int row2, int col1, DecorInline decor)
       linenr_T vt_lnum = row1 + 1 + below;
       redraw_buf_line_later(buf, vt_lnum, true);
       if (vt->flags & kVTIsLines || vt->pos == kVPosInline) {
-        // changed_lines_redraw_buf(buf, vt_lnum, vt_lnum + 1, 0);
         colnr_T vt_col = vt->flags & kVTIsLines ? 0 : col1;
         changed_lines_invalidate_buf(buf, vt_lnum, vt_col, vt_lnum + 1, 0);
       }

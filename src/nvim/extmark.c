@@ -116,8 +116,9 @@ static void extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col, bool
     return;
   }
 
+  assert(buf->b_mod_set);
   // Only the position before undo needs to be redrawn here,
-  // as the position after undo should be marked as changed.
+  // as the position after undo should have been marked as changed.
   if (!invalid && mt_decor_any(key) && key.pos.row != row) {
     decor_redraw(buf, key.pos.row, key.pos.row, key.pos.col, mt_decor(key));
   }
@@ -395,6 +396,29 @@ void extmark_splice_delete(buf_T *buf, int l_row, colnr_T l_col, int u_row, coln
     }
 
     marktree_itr_next(buf->b_marktree, itr);
+  }
+}
+
+/// Mark new positions of extmarks in the range for redraw after deleting lines.
+/// This should be called after marking changed lines for redraw and splicing extmarks,
+/// otherwise the range marked for redraw will be larger than needed.
+void extmark_redraw_after_delete(extmark_undo_vec_t *uvp, size_t prev_uvp_size)
+{
+  assert(curbuf->b_mod_set);
+  for (size_t i = prev_uvp_size; i < kv_size(*uvp); i++) {
+    const ExtmarkUndoObject *item = &kv_A(*uvp, i);
+    if (item->type != kExtmarkSavePos) {
+      continue;
+    }
+    const ExtmarkSavePos *pos = &item->data.savepos;
+    if (pos->invalidated) {
+      continue;
+    }
+    MarkTreeIter itr[1] = { 0 };
+    MTKey key = marktree_lookup(curbuf->b_marktree, pos->mark, itr);
+    if (mt_decor_any(key)) {
+      decor_redraw(curbuf, key.pos.row, key.pos.row, key.pos.col, mt_decor(key));
+    }
   }
 }
 

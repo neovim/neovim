@@ -167,6 +167,13 @@ void changed_internal(buf_T *buf)
 static void changed_lines_invalidate_win(win_T *wp, linenr_T lnum, colnr_T col, linenr_T lnume,
                                          linenr_T xtra)
 {
+  // If lines haven been inserted/deleted and the buffer has virt_lines,
+  // invalidate the line after the changed lines as some virt_lines may
+  // now be drawn above a different line.
+  if (xtra != 0 && buf_meta_total(wp->w_buffer, kMTMetaLines) > 0) {
+    lnume++;
+  }
+
   // If the changed line is in a range of previously folded lines,
   // compare with the first line in that range.
   if (wp->w_cursor.lnum <= lnum) {
@@ -195,12 +202,7 @@ static void changed_lines_invalidate_win(win_T *wp, linenr_T lnum, colnr_T col, 
       if (wp->w_lines[i].wl_lnum >= lnum) {
         // Do not change wl_lnum at index zero, it is used to compare with w_topline.
         // Invalidate it instead.
-        // If lines haven been inserted/deleted and the buffer has virt_lines,
-        // invalidate the line after the changed lines as some virt_lines may
-        // now be drawn above a different line.
-        if (i == 0 || wp->w_lines[i].wl_lnum < lnume
-            || (xtra != 0 && wp->w_lines[i].wl_lnum == lnume
-                && buf_meta_total(wp->w_buffer, kMTMetaLines) > 0)) {
+        if (i == 0 || wp->w_lines[i].wl_lnum < lnume) {
           // line included in change
           wp->w_lines[i].wl_valid = false;
         } else if (xtra != 0) {
@@ -500,6 +502,10 @@ void deleted_lines(linenr_T lnum, linenr_T count)
 /// be triggered to display the cursor.
 void deleted_lines_mark(linenr_T lnum, int count)
 {
+  u_header_T *uhp = u_force_get_undo_header(curbuf);
+  extmark_undo_vec_t *uvp = uhp ? &uhp->uh_extmark : NULL;
+  size_t prev_uvp_size = uvp ? kv_size(*uvp) : 0;
+
   bool made_empty = (count > 0) && curbuf->b_ml.ml_flags & ML_EMPTY;
 
   mark_adjust(lnum, (linenr_T)(lnum + count - 1), MAXLNUM, -(linenr_T)count, kExtmarkNOOP);
@@ -507,6 +513,10 @@ void deleted_lines_mark(linenr_T lnum, int count)
   extmark_adjust(curbuf, lnum, (linenr_T)(lnum + count - 1), MAXLNUM,
                  -(linenr_T)count + (made_empty ? 1 : 0), kExtmarkUndo);
   changed_lines(curbuf, lnum, 0, lnum + (linenr_T)count, (linenr_T)(-count), true);
+
+  if (uvp) {
+    extmark_redraw_after_delete(uvp, prev_uvp_size);
+  }
 }
 
 /// Marks the area to be redrawn after a change.
@@ -518,6 +528,13 @@ void deleted_lines_mark(linenr_T lnum, int count)
 /// @param xtra number of extra lines (negative when deleting)
 void changed_lines_redraw_buf(buf_T *buf, linenr_T lnum, linenr_T lnume, linenr_T xtra)
 {
+  // If lines haven been inserted/deleted and the buffer has virt_lines,
+  // mark the line after the changed lines to be redrawn as some virt_lines may
+  // now be drawn above a different line.
+  if (xtra != 0 && buf_meta_total(buf, kMTMetaLines) > 0) {
+    lnume++;
+  }
+
   if (buf->b_mod_set) {
     // find the maximum area that must be redisplayed
     if (lnum < buf->b_mod_top) {
