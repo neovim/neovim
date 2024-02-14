@@ -231,7 +231,7 @@ if vim.o.background == 'light' then
   hi('SpellRare',    { sp = 'Magenta', undercurl = true,           ctermbg = 'LightMagenta' })
   hi('TabLine',      { bg = 'LightGrey', underline = true,         ctermfg = 'Black', ctermbg = 'LightGrey', cterm = { underline = true } })
   hi('Title',        { fg = 'Magenta', bold = true,                ctermfg = 'DarkMagenta' })
-  hi('Visual',       { bg = 'LightGrey',                           ctermfg = 'White', ctermbg = 'DarkGrey' })
+  hi('Visual',       { bg = 'LightGrey',                           ctermfg = 'Black', ctermbg = 'Grey' })
   hi('WarningMsg',   { fg = 'Red',                                 ctermfg = 'DarkRed' })
   hi('Comment',      { fg = 'Blue',                                ctermfg = 'DarkBlue' })
   hi('Constant',     { fg = 'Magenta',                             ctermfg = 'DarkRed' })
