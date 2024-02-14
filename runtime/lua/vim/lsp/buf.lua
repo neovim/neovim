@@ -266,6 +266,9 @@ end
 ---     - name (string|nil):
 ---         Restrict clients used for rename to ones where client.name matches
 ---         this field.
+---     - notify (boolean|nil):
+---         After successful renaming, show a notification how many occurrences
+---         were renamed in how many files. Defaults to false.
 function M.rename(new_name, options)
   options = options or {}
   local bufnr = options.bufnr or api.nvim_get_current_buf()
@@ -299,6 +302,30 @@ function M.rename(new_name, options)
     )[1]
   end
 
+  local function rename_notify(err, result, _, _)
+    if err or not result then
+      return
+    end
+
+    local changed_instances = 0
+    local changed_files = 0
+
+    local with_edits = result.documentChanges ~= nil
+    for _, change in pairs(result.documentChanges or result.changes) do
+      changed_instances = changed_instances + (with_edits and #change.edits or #change)
+      changed_files = changed_files + 1
+    end
+
+    local message = string.format(
+      '[LSP] Renamed %s instance%s in %s file%s.',
+      changed_instances,
+      changed_instances == 1 and '' or 's',
+      changed_files,
+      changed_files == 1 and '' or 's'
+    )
+    vim.notify(message)
+  end
+
   local function try_use_client(idx, client)
     if not client then
       return
@@ -312,6 +339,9 @@ function M.rename(new_name, options)
         or vim.lsp.handlers[ms.textDocument_rename]
       client.request(ms.textDocument_rename, params, function(...)
         handler(...)
+        if options.notify then
+          rename_notify(...)
+        end
         try_use_client(next(clients, idx))
       end, bufnr)
     end
