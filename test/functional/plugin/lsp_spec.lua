@@ -2432,7 +2432,7 @@ describe('LSP', function()
         local newbufnr = vim.fn.bufadd(new)
         vim.lsp.util.rename(old, new)
         return {
-          buflisted = vim.bo[newbufnr].buflisted, 
+          buflisted = vim.bo[newbufnr].buflisted,
           bufloaded = vim.api.nvim_buf_is_loaded(newbufnr)
         }
       ]],
@@ -2464,7 +2464,7 @@ describe('LSP', function()
         vim.lsp.util.rename(old, new)
         local newbufnr = vim.fn.bufadd(new)
         return {
-          buflisted = vim.bo[newbufnr].buflisted, 
+          buflisted = vim.bo[newbufnr].buflisted,
           bufloaded = vim.api.nvim_buf_is_loaded(newbufnr)
         }
       ]],
