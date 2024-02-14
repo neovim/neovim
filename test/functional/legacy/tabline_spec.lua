@@ -18,7 +18,7 @@ describe('tabline', function()
   it('showcmdloc=tabline works', function()
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { background = Screen.colors.LightGrey }, -- Visual
+      [1] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black }, -- Visual
       [2] = { bold = true }, -- MoreMsg, TabLineSel
       [3] = { reverse = true }, -- TabLineFill
       [4] = { background = Screen.colors.LightGrey, underline = true }, -- TabLine

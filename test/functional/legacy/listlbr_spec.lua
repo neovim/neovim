@@ -206,7 +206,7 @@ describe('listlbr', function()
     local screen = Screen.new(60, 6)
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { background = Screen.colors.LightGrey }, -- Visual
+      [1] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black }, -- Visual
       [2] = { background = Screen.colors.Red, foreground = Screen.colors.White }, -- ErrorMsg
     })
     screen:attach()

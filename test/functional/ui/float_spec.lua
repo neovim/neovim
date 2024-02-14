@@ -869,8 +869,8 @@ describe('float window', function()
         [24] = {foreground = Screen.colors.Black, background = Screen.colors.Grey80};
         [25] = {blend = 100, background = Screen.colors.Gray0};
         [26] = {blend = 80, background = Screen.colors.Gray0};
-        [27] = {background = Screen.colors.LightGray};
-        [28] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGray};
+        [27] = {foreground = Screen.colors.Black, background = Screen.colors.LightGrey};
+        [28] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey};
       }
       screen:set_default_attr_ids(attrs)
     end)
@@ -7448,8 +7448,8 @@ describe('float window', function()
         [10] = {foreground = Screen.colors.Red, background = Screen.colors.LightMagenta, blend = 0},
         [11] = {foreground = Screen.colors.Red, background = Screen.colors.LightMagenta, blend = 80},
         [12] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue1, blend = 30},
-        [13] = {background = Screen.colors.LightGray, blend = 30},
-        [14] = {foreground = Screen.colors.Grey0, background = Screen.colors.Grey88},
+        [13] = {foreground = Screen.colors.Black, background = Screen.colors.LightGray, blend = 30},
+        [14] = {foreground = Screen.colors.Black, background = Screen.colors.Grey88},
         [15] = {foreground = tonumber('0x939393'), background = Screen.colors.Grey88},
         [16] = {background = Screen.colors.Grey90};
         [17] = {blend = 100};

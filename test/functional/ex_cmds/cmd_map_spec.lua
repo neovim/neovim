@@ -28,7 +28,7 @@ describe('mappings with <Cmd>', function()
       [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
       [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
       [4] = { bold = true },
-      [5] = { background = Screen.colors.LightGrey },
+      [5] = { foreground = Screen.colors.Black, background = Screen.colors.LightGrey },
       [6] = { foreground = Screen.colors.Blue1 },
       [7] = { bold = true, reverse = true },
       [8] = { background = Screen.colors.WebGray },

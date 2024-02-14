@@ -317,8 +317,8 @@ describe('highlight', function()
     local screen = Screen.new(45, 5)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = { background = Screen.colors.LightGrey },
-      [2] = { bold = true, foreground = Screen.colors.Blue1 },
+      [1] = { foreground = Screen.colors.Black, background = Screen.colors.LightGrey },
+      [2] = { bold = true, foreground = Screen.colors.Blue },
       [3] = { bold = true },
       [4] = { reverse = true, bold = true },
       [5] = { reverse = true },
@@ -833,41 +833,20 @@ describe("'listchars' highlight", function()
   it("'listchar' in visual mode", function()
     screen:set_default_attr_ids({
       [1] = { background = Screen.colors.Grey90 },
-      [2] = {
-        foreground = Screen.colors.Red,
-        background = Screen.colors.Grey90,
-      },
-      [3] = {
-        background = Screen.colors.Grey90,
-        foreground = Screen.colors.Blue,
-        bold = true,
-      },
-      [4] = {
-        foreground = Screen.colors.Blue,
-        bold = true,
-      },
-      [5] = {
-        foreground = Screen.colors.Red,
-      },
-      [6] = {
-        background = Screen.colors.LightGrey,
-      },
-      [7] = {
-        background = Screen.colors.LightGrey,
-        foreground = Screen.colors.Red,
-      },
-      [8] = {
-        background = Screen.colors.LightGrey,
-        foreground = Screen.colors.Blue,
-        bold = true,
-      },
+      [2] = { foreground = Screen.colors.Red, background = Screen.colors.Grey90 },
+      [3] = { background = Screen.colors.Grey90, foreground = Screen.colors.Blue, bold = true },
+      [4] = { foreground = Screen.colors.Blue, bold = true },
+      [5] = { foreground = Screen.colors.Red },
+      [6] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black },
+      [7] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Red },
+      [8] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Blue, bold = true },
     })
-    feed_command('highlight clear ModeMsg')
-    feed_command('highlight Whitespace guifg=#FF0000')
-    feed_command('set cursorline')
-    feed_command('set tabstop=8')
-    feed_command('set nowrap')
-    feed_command('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
+    command('highlight clear ModeMsg')
+    command('highlight Whitespace guifg=#FF0000')
+    command('set cursorline')
+    command('set tabstop=8')
+    command('set nowrap')
+    command('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
     feed('i\t abcd <cr>\t abcd Lorem ipsum dolor sit amet<cr><esc>kkk0')
     screen:expect([[
       {2:^>-------.}{1:abcd}{2:*}{3:¬}{1:     }|
@@ -1200,7 +1179,7 @@ describe('CursorLine and CursorLineNr highlights', function()
       [6] = { bold = true, foreground = Screen.colors.Blue1 },
       [7] = { background = Screen.colors.LightRed },
       [8] = { foreground = Screen.colors.Brown },
-      [9] = { background = Screen.colors.LightGrey },
+      [9] = { foreground = Screen.colors.Black, background = Screen.colors.LightGrey },
       [10] = { bold = true },
     })
     screen:attach()

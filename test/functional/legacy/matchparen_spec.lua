@@ -14,7 +14,7 @@ describe('matchparen', function()
     screen:attach()
     screen:set_default_attr_ids({
       [1] = { bold = true },
-      [2] = { background = Screen.colors.LightGrey },
+      [2] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black },
     })
 
     exec([[

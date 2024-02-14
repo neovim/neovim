@@ -24,7 +24,7 @@ describe('winbar', function()
       [4] = { bold = true, reverse = true },
       [5] = { bold = true, foreground = Screen.colors.Red },
       [6] = { foreground = Screen.colors.Blue },
-      [7] = { background = Screen.colors.LightGrey },
+      [7] = { foreground = Screen.colors.Black, background = Screen.colors.LightGrey },
       [8] = { background = Screen.colors.LightMagenta },
       [9] = {
         bold = true,

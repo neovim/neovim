@@ -20,7 +20,7 @@ describe('Screen', function()
       [3] = { reverse = true },
       [4] = { bold = true },
       [5] = { background = Screen.colors.Yellow },
-      [6] = { background = Screen.colors.LightGrey },
+      [6] = { foreground = Screen.colors.Black, background = Screen.colors.LightGrey },
     })
   end)
 

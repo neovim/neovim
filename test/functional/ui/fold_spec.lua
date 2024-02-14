@@ -44,7 +44,7 @@ describe('folded lines', function()
         [13] = { foreground = Screen.colors.Red, background = Screen.colors.LightGrey },
         [14] = { background = Screen.colors.Red },
         [15] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Red },
-        [16] = { background = Screen.colors.LightGrey },
+        [16] = { foreground = Screen.colors.Black, background = Screen.colors.LightGrey },
         [17] = { background = Screen.colors.Yellow, foreground = Screen.colors.Red },
         [18] = {
           background = Screen.colors.LightGrey,
@@ -2254,7 +2254,7 @@ describe('folded lines', function()
     end)
 
     it('Folded and Visual highlights are combined #19691', function()
-      command('hi! Visual guibg=Red')
+      command('hi! Visual guifg=NONE guibg=Red')
       insert([[
         " foofoofoofoofoofoo
         " 口 {{{1
@@ -2563,7 +2563,7 @@ describe('folded lines', function()
       eq('▶--\tsentence composed by', fn.foldtextresult(3))
       eq('▶--\tin his cave.', fn.foldtextresult(5))
 
-      command('hi! Visual guibg=Red')
+      command('hi! Visual guifg=NONE guibg=Red')
       feed('V2k')
       if multigrid then
         screen:expect([[
@@ -2677,7 +2677,7 @@ describe('folded lines', function()
         ]])
       end
 
-      command('hi! Visual guibg=Red')
+      command('hi! Visual guifg=NONE guibg=Red')
       feed('V2k')
       if multigrid then
         screen:expect([[
