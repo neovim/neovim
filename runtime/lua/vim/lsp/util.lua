@@ -702,6 +702,8 @@ function M.rename(old_fname, new_fname, opts)
   if vim.fn.isdirectory(new_fname) == 0 then
     local newbuf = vim.fn.bufadd(new_fname)
     if win then
+      vim.fn.bufload(newbuf)
+      vim.bo[newbuf].buflisted = true
       api.nvim_win_set_buf(win, newbuf)
     end
   end

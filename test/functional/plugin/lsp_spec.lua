@@ -2419,6 +2419,68 @@ describe('LSP', function()
       eq(0, lines)
       os.remove(new)
     end)
+    it('new buffer remains unlisted and unloaded if the old was not in window before', function()
+      local old = tmpname()
+      write_file(old, 'Test content')
+      local new = tmpname()
+      os.remove(new) -- only reserve the name, file must not exist for the test scenario
+      local actual = exec_lua(
+        [[
+        local old = select(1, ...)
+        local oldbufnr = vim.fn.bufadd(old)
+        local new = select(2, ...)
+        local newbufnr = vim.fn.bufadd(new)
+        vim.lsp.util.rename(old, new)
+        return {
+          buflisted = vim.bo[newbufnr].buflisted,
+          bufloaded = vim.api.nvim_buf_is_loaded(newbufnr)
+        }
+      ]],
+        old,
+        new
+      )
+
+      local expected = {
+        buflisted = false,
+        bufloaded = false,
+      }
+
+      eq(expected, actual)
+
+      os.remove(new)
+    end)
+    it('new buffer is listed and loaded if the old was in window before', function()
+      local old = tmpname()
+      write_file(old, 'Test content')
+      local new = tmpname()
+      os.remove(new) -- only reserve the name, file must not exist for the test scenario
+      local actual = exec_lua(
+        [[
+        local win =  vim.api.nvim_get_current_win()
+        local old = select(1, ...)
+        local oldbufnr = vim.fn.bufadd(old)
+        vim.api.nvim_win_set_buf(win, oldbufnr)
+        local new = select(2, ...)
+        vim.lsp.util.rename(old, new)
+        local newbufnr = vim.fn.bufadd(new)
+        return {
+          buflisted = vim.bo[newbufnr].buflisted,
+          bufloaded = vim.api.nvim_buf_is_loaded(newbufnr)
+        }
+      ]],
+        old,
+        new
+      )
+
+      local expected = {
+        buflisted = true,
+        bufloaded = true,
+      }
+
+      eq(expected, actual)
+
+      os.remove(new)
+    end)
     it('Can rename a directory', function()
       -- only reserve the name, file must not exist for the test scenario
       local old_dir = tmpname()
