@@ -347,7 +347,7 @@ func s:GetFilenameChecks() abort
     \ 'jsp': ['file.jsp'],
     \ 'julia': ['file.jl'],
     \ 'just': ['justfile', 'Justfile', '.justfile', 'config.just'],
-    \ 'kconfig': ['Kconfig', 'Kconfig.debug', 'Kconfig.file'],
+    \ 'kconfig': ['Kconfig', 'Kconfig.debug', 'Kconfig.file', 'Config.in', 'Config.in.host'],
     \ 'kdl': ['file.kdl'],
     \ 'kivy': ['file.kv'],
     \ 'kix': ['file.kix'],
