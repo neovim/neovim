@@ -581,6 +581,9 @@ Autocommands:
 - |TermResponse| is fired for any OSC sequence received from the terminal,
   instead of the Primary Device Attributes response. |v:termresponse|
 
+Options:
+- |shm-q| fully hides macro recording message instead of only shortening it.
+
 ==============================================================================
 Missing features					 *nvim-missing*
 

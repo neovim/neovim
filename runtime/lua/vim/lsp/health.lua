@@ -7,7 +7,7 @@ function M.check()
 
   local log = vim.lsp.log
   local current_log_level = log.get_level()
-  local log_level_string = log.levels[current_log_level]
+  local log_level_string = log.levels[current_log_level] ---@type string
   report_info(string.format('LSP log level : %s', log_level_string))
 
   if current_log_level < log.levels.WARN then
@@ -38,7 +38,7 @@ function M.check()
           '%s (id=%s, root_dir=%s, attached_to=[%s])',
           client.name,
           client.id,
-          vim.fn.fnamemodify(client.config.root_dir, ':~'),
+          vim.fn.fnamemodify(client.root_dir, ':~'),
           attached_to
         )
       )

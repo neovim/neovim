@@ -902,9 +902,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   // not get printed in the middle of it.
   msg_check();
   if (p_ch == 0 && !ui_has(kUIMessages)) {
-    if (must_redraw < UPD_VALID) {
-      must_redraw = UPD_VALID;
-    }
+    set_must_redraw(UPD_VALID);
   }
   msg_scroll = s->save_msg_scroll;
   redir_off = false;

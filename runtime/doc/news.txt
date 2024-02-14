@@ -120,6 +120,7 @@ The following changes may require adaptations in user config or plugins.
   the default behavior of just refreshing the current buffer has been replaced by
   refreshing all buffers.
 
+• |shm-q| now fully hides macro recording message instead of only shortening it.
 
 ==============================================================================
 BREAKING CHANGES IN HEAD                                    *news-breaking-dev*
@@ -420,6 +421,8 @@ The following changes to existing APIs or features add new behavior.
 • 'errorfile' (|-q|) accepts `-` as an alias for stdin.
 
 • |--startuptime| reports the startup times for both processes (TUI + server) as separate sections.
+
+• |nvim_buf_call()| and |nvim_win_call()| now preserves any return value (NB: not multiple return values)
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

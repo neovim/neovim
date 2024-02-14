@@ -46,7 +46,6 @@ typedef struct {
   // state for write_cb, while packing a single arglist to msgpack. This
   // might fail due to buffer overflow.
   size_t pack_totlen;
-  bool buf_overflow;
   char *temp_buf;
 
   // We start packing the two outermost msgpack arrays before knowing the total

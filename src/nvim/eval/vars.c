@@ -2090,6 +2090,7 @@ void f_settabvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   tabpage_T *const save_curtab = curtab;
+  tabpage_T *const save_lu_tp = lastused_tabpage;
   goto_tabpage_tp(tp, false, false);
 
   const size_t varname_len = strlen(varname);
@@ -2099,9 +2100,12 @@ void f_settabvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   set_var(tabvarname, varname_len + 2, varp, true);
   xfree(tabvarname);
 
-  // Restore current tabpage.
+  // Restore current tabpage and last accessed tabpage.
   if (valid_tabpage(save_curtab)) {
     goto_tabpage_tp(save_curtab, false, false);
+    if (valid_tabpage(save_lu_tp)) {
+      lastused_tabpage = save_lu_tp;
+    }
   }
 }
 

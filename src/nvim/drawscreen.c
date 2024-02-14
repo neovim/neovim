@@ -1149,11 +1149,11 @@ void clearmode(void)
 
 static void recording_mode(int attr)
 {
-  msg_puts_attr(_("recording"), attr);
   if (shortmess(SHM_RECORDING)) {
     return;
   }
 
+  msg_puts_attr(_("recording"), attr);
   char s[4];
   snprintf(s, ARRAY_SIZE(s), " @%c", reg_recording);
   msg_puts_attr(s, attr);
@@ -1427,7 +1427,7 @@ static void draw_sep_connectors_win(win_T *wp)
 ///                     - if wp->w_buffer->b_mod_set set, update lines between
 ///                       b_mod_top and b_mod_bot.
 ///                     - if wp->w_redraw_top non-zero, redraw lines between
-///                       wp->w_redraw_top and wp->w_redr_bot.
+///                       wp->w_redraw_top and wp->w_redraw_bot.
 ///                     - continue redrawing when syntax status is invalid.
 ///                  4. if scrolled up, update lines at the bottom.
 /// This results in three areas that may need updating:
@@ -1537,13 +1537,6 @@ static void win_update(win_T *wp)
   if (wp->w_nrwidth != nrwidth_new) {
     type = UPD_NOT_VALID;
     wp->w_nrwidth = nrwidth_new;
-  } else if (buf->b_mod_set
-             && buf->b_mod_xlines != 0
-             && wp->w_redraw_top != 0) {
-    // When there are both inserted/deleted lines and specific lines to be
-    // redrawn, w_redraw_top and w_redraw_bot may be invalid, just redraw
-    // everything (only happens when redrawing is off for while).
-    type = UPD_NOT_VALID;
   } else {
     // Set mod_top to the first line that needs displaying because of
     // changes.  Set mod_bot to the first line after the changes.
@@ -2647,7 +2640,7 @@ void redraw_later(win_T *wp, int type)
 {
   // curwin may have been set to NULL when exiting
   assert(wp != NULL || exiting);
-  if (!exiting && wp->w_redr_type < type) {
+  if (!exiting && !redraw_not_allowed && wp->w_redr_type < type) {
     wp->w_redr_type = type;
     if (type >= UPD_NOT_VALID) {
       wp->w_lines_valid = 0;
@@ -2665,7 +2658,14 @@ void redraw_all_later(int type)
     redraw_later(wp, type);
   }
   // This may be needed when switching tabs.
-  if (must_redraw < type) {
+  set_must_redraw(type);
+}
+
+/// Set "must_redraw" to "type" unless it already has a higher value
+/// or it is currently not allowed.
+void set_must_redraw(int type)
+{
+  if (!redraw_not_allowed && must_redraw < type) {
     must_redraw = type;
   }
 }
@@ -2730,9 +2730,7 @@ void redraw_buf_status_later(buf_T *buf)
             || (wp == curwin && global_stl_height())
             || wp->w_winbar_height)) {
       wp->w_redr_status = true;
-      if (must_redraw < UPD_VALID) {
-        must_redraw = UPD_VALID;
-      }
+      set_must_redraw(UPD_VALID);
     }
   }
 }

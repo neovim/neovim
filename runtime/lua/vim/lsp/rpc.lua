@@ -498,7 +498,7 @@ function Client:handle_body(body)
       if decoded.error then
         decoded.error = setmetatable(decoded.error, {
           __tostring = M.format_rpc_error,
-        })
+        }) --- @type table
       end
       self:try_call(
         M.client_errors.SERVER_RESULT_CALLBACK_ERROR,
@@ -732,8 +732,7 @@ end
 --- interact with it. Communication with the spawned process happens via stdio. For
 --- communication via TCP, spawn a process manually and use |vim.lsp.rpc.connect()|
 ---
----@param cmd string Command to start the LSP server.
----@param cmd_args string[] List of additional string arguments to pass to {cmd}.
+---@param cmd string[] Command to start the LSP server.
 ---
 ---@param dispatchers? vim.lsp.rpc.Dispatchers Dispatchers for LSP message types.
 --- Valid dispatcher names are:
@@ -754,12 +753,11 @@ end
 ---   - `request()` |vim.lsp.rpc.request()|
 ---   - `is_closing()` returns a boolean indicating if the RPC is closing.
 ---   - `terminate()` terminates the RPC client.
-function M.start(cmd, cmd_args, dispatchers, extra_spawn_params)
-  log.info('Starting RPC client', { cmd = cmd, args = cmd_args, extra = extra_spawn_params })
+function M.start(cmd, dispatchers, extra_spawn_params)
+  log.info('Starting RPC client', { cmd = cmd, extra = extra_spawn_params })
 
   validate({
-    cmd = { cmd, 's' },
-    cmd_args = { cmd_args, 't' },
+    cmd = { cmd, 't' },
     dispatchers = { dispatchers, 't', true },
   })
 
@@ -795,7 +793,7 @@ function M.start(cmd, cmd_args, dispatchers, extra_spawn_params)
 
   local stderr_handler = function(_, chunk)
     if chunk then
-      log.error('rpc', cmd, 'stderr', chunk)
+      log.error('rpc', cmd[1], 'stderr', chunk)
     end
   end
 
@@ -804,10 +802,7 @@ function M.start(cmd, cmd_args, dispatchers, extra_spawn_params)
     detached = extra_spawn_params.detached
   end
 
-  local cmd1 = { cmd }
-  vim.list_extend(cmd1, cmd_args)
-
-  local ok, sysobj_or_err = pcall(vim.system, cmd1, {
+  local ok, sysobj_or_err = pcall(vim.system, cmd, {
     stdin = true,
     stdout = stdout_handler,
     stderr = stderr_handler,

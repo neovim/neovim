@@ -763,6 +763,10 @@ client()                                                      *vim.lsp.client*
         before text is sent to the server.
       • {handlers} (table): The handlers used by the client as described in
         |lsp-handler|.
+      • {commands} (table): Table of command name to function which is called
+        if any LSP action (code action, code lenses, ...) triggers the
+        command. Client commands take precedence over the global command
+        registry.
       • {requests} (table): The current pending requests in flight to the
         server. Entries are key-value pairs with the key being the request ID
         while the value is a table with `type`, `bufnr`, and `method`
@@ -770,12 +774,16 @@ client()                                                      *vim.lsp.client*
         "cancel" for a cancel request. It will be "complete" ephemerally while
         executing |LspRequest| autocmds when replies are received from the
         server.
-      • {config} (table): copy of the table that was passed by the user to
-        |vim.lsp.start_client()|.
+      • {config} (table): Reference of the table that was passed by the user
+        to |vim.lsp.start_client()|.
       • {server_capabilities} (table): Response from the server sent on
         `initialize` describing the server's capabilities.
       • {progress} A ring buffer (|vim.ringbuf()|) containing progress
         messages sent by the server.
+      • {settings} Map with language server specific settings. See {config} in
+        |vim.lsp.start_client()|
+      • {flags} A table with flags for the client. See {config} in
+        |vim.lsp.start_client()|
 
 client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
     Checks whether a client is stopped.
@@ -932,7 +940,7 @@ start({config}, {opts})                                      *vim.lsp.start()*
     `ftplugin/<filetype_name>.lua` (See |ftplugin-name|)
 
     Parameters: ~
-      • {config}  (`table`) Same configuration as documented in
+      • {config}  (`lsp.ClientConfig`) Same configuration as documented in
                   |vim.lsp.start_client()|
       • {opts}    (`lsp.StartOpts?`) Optional keyword arguments:
                   • reuse_client (fun(client: client, config: table): boolean)
@@ -1415,8 +1423,9 @@ on_publish_diagnostics({_}, {result}, {ctx}, {config})
 <
 
     Parameters: ~
+      • {result}  (`lsp.PublishDiagnosticsParams`)
       • {ctx}     (`lsp.HandlerContext`)
-      • {config}  (`table`) Configuration table (see
+      • {config}  (`vim.diagnostic.Opts?`) Configuration table (see
                   |vim.diagnostic.config()|).
 
 
@@ -2172,17 +2181,14 @@ rpc_response_error({code}, {message}, {data})
     See also: ~
       • lsp.ErrorCodes See `vim.lsp.protocol.ErrorCodes`
 
-                                                         *vim.lsp.rpc.start()*
-start({cmd}, {cmd_args}, {dispatchers}, {extra_spawn_params})
+start({cmd}, {dispatchers}, {extra_spawn_params})        *vim.lsp.rpc.start()*
     Starts an LSP server process and create an LSP RPC client object to
     interact with it. Communication with the spawned process happens via
     stdio. For communication via TCP, spawn a process manually and use
     |vim.lsp.rpc.connect()|
 
     Parameters: ~
-      • {cmd}                 (`string`) Command to start the LSP server.
-      • {cmd_args}            (`string[]`) List of additional string arguments
-                              to pass to {cmd}.
+      • {cmd}                 (`string[]`) Command to start the LSP server.
       • {dispatchers}         (`vim.lsp.rpc.Dispatchers?`) Dispatchers for LSP
                               message types. Valid dispatcher names are:
                               • `"notification"`

@@ -2390,9 +2390,7 @@ static void u_undoredo(bool undo, bool do_buf_event)
     // When text has been changed, possibly the start of the next line
     // may have SpellCap that should be removed or it needs to be
     // displayed.  Schedule the next line for redrawing just in case.
-    // Also just in case the line had a sign which needs to be removed.
-    if ((spell_check_window(curwin) || buf_meta_total(curbuf, kMTMetaSignText))
-        && bot <= curbuf->b_ml.ml_line_count) {
+    if (spell_check_window(curwin) && bot <= curbuf->b_ml.ml_line_count) {
       redrawWinline(curwin, bot);
     }
 

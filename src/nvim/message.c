@@ -210,7 +210,11 @@ void msg_grid_validate(void)
     msg_grid_adj.target = &default_grid;
     redraw_cmdline = true;
   } else if (msg_grid.chars && !msg_scrolled && msg_grid_pos != max_rows) {
+    int diff = msg_grid_pos - max_rows;
     msg_grid_set_pos(max_rows, false);
+    if (diff > 0) {
+      grid_clear(&msg_grid_adj, Rows - diff, Rows, 0, Columns, HL_ATTR(HLF_MSG));
+    }
   }
   msg_grid_adj.cols = Columns;
 
@@ -2415,9 +2419,7 @@ static void inc_msg_scrolled(void)
     xfree(tofree);
   }
   msg_scrolled++;
-  if (must_redraw < UPD_VALID) {
-    must_redraw = UPD_VALID;
-  }
+  set_must_redraw(UPD_VALID);
 }
 
 static msgchunk_T *last_msgchunk = NULL;  // last displayed text
@@ -3063,9 +3065,7 @@ void msg_ext_clear_later(void)
 {
   if (msg_ext_is_visible()) {
     msg_ext_need_clear = true;
-    if (must_redraw < UPD_VALID) {
-      must_redraw = UPD_VALID;
-    }
+    set_must_redraw(UPD_VALID);
   }
 }
 

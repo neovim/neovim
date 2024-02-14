@@ -48,7 +48,6 @@ local function execute_lens(lens, bufnr, client_id)
 
   local client = vim.lsp.get_client_by_id(client_id)
   assert(client, 'Client is required to execute lens, client_id=' .. client_id)
-  ---@diagnostic disable-next-line: invisible
   client:_exec_cmd(lens.command, { bufnr = bufnr }, function(...)
     vim.lsp.handlers[ms.workspace_executeCommand](...)
     M.refresh()

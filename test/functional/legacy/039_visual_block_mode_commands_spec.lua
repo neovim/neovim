@@ -134,7 +134,7 @@ describe('Visual block mode', function()
   end)
 
   it('should make a selected part uppercase', function()
-    -- GUe must uppercase a whole word, also when ß changes to SS.
+    -- GUe must uppercase a whole word, also when ß changes to ẞ.
     feed('Gothe youtußeuu end<ESC>Ypk0wgUe<CR>')
     -- GUfx must uppercase until x, inclusive.
     feed('O- youßtußexu -<ESC>0fogUfx<CR>')
@@ -150,13 +150,13 @@ describe('Visual block mode', function()
 
     expect([[
       
-      the YOUTUSSEUU end
-      - yOUSSTUSSEXu -
-      THE YOUTUSSEUU END
-      111THE YOUTUSSEUU END
+      the YOUTUẞEUU end
+      - yOUẞTUẞEXu -
+      THE YOUTUẞEUU END
+      111THE YOUTUẞEUU END
       BLAH DI
       DOH DUT
-      222the yoUTUSSEUU END
+      222the yoUTUẞEUU END
       333THE YOUTUßeuu end]])
   end)
 

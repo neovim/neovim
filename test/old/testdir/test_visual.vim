@@ -1010,7 +1010,7 @@ endfunc
 " Test for changing case
 func Test_visual_change_case()
   new
-  " gUe must uppercase a whole word, also when ß changes to SS
+  " gUe must uppercase a whole word, also when ß changes to ẞ
   exe "normal Gothe youtußeuu end\<Esc>Ypk0wgUe\r"
   " gUfx must uppercase until x, inclusive.
   exe "normal O- youßtußexu -\<Esc>0fogUfx\r"
@@ -1022,9 +1022,9 @@ func Test_visual_change_case()
   exe "normal Oblah di\rdoh dut\<Esc>VkUj\r"
   " Uppercase part of two lines
   exe "normal ddppi333\<Esc>k0i222\<Esc>fyllvjfuUk"
-  call assert_equal(['the YOUTUSSEUU end', '- yOUSSTUSSEXu -',
-        \ 'THE YOUTUSSEUU END', '111THE YOUTUSSEUU END', 'BLAH DI', 'DOH DUT',
-        \ '222the yoUTUSSEUU END', '333THE YOUTUßeuu end'], getline(2, '$'))
+  call assert_equal(['the YOUTUẞEUU end', '- yOUẞTUẞEXu -',
+        \ 'THE YOUTUẞEUU END', '111THE YOUTUẞEUU END', 'BLAH DI', 'DOH DUT',
+        \ '222the yoUTUẞEUU END', '333THE YOUTUßeuu end'], getline(2, '$'))
   bwipe!
 endfunc
 

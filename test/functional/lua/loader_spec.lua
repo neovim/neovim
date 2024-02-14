@@ -3,10 +3,32 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local exec_lua = helpers.exec_lua
 local command = helpers.command
+local clear = helpers.clear
 local eq = helpers.eq
 
 describe('vim.loader', function()
-  before_each(helpers.clear)
+  before_each(clear)
+
+  it('can work in compatibility with --luamod-dev #27413', function()
+    clear({ args = { '--luamod-dev' } })
+    exec_lua [[
+      vim.loader.enable()
+
+      require("vim.fs")
+
+      -- try to load other vim submodules as well (Nvim Lua stdlib)
+      for key, _ in pairs(vim._submodules) do
+        local modname = 'vim.' .. key   -- e.g. "vim.fs"
+
+        local lhs = vim[key]
+        local rhs = require(modname)
+        assert(
+          lhs == rhs,
+          ('%s != require("%s"), %s != %s'):format(modname, modname, tostring(lhs), tostring(rhs))
+        )
+      end
+    ]]
+  end)
 
   it('handles changing files (#23027)', function()
     exec_lua [[

@@ -197,10 +197,10 @@ M[ms.workspace_configuration] = function(_, result, ctx)
   local response = {}
   for _, item in ipairs(result.items) do
     if item.section then
-      local value = lookup_section(client.config.settings, item.section)
+      local value = lookup_section(client.settings, item.section)
       -- For empty sections with no explicit '' key, return settings as is
       if value == nil and item.section == '' then
-        value = client.config.settings
+        value = client.settings
       end
       if value == nil then
         value = vim.NIL
@@ -642,6 +642,11 @@ end
 ---@see https://microsoft.github.io/language-server-protocol/specification/#workspace_inlayHint_refresh
 M[ms.workspace_inlayHint_refresh] = function(err, result, ctx, config)
   return vim.lsp.inlay_hint.on_refresh(err, result, ctx, config)
+end
+
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#semanticTokens_refreshRequest
+M[ms.workspace_semanticTokens_refresh] = function(err, result, ctx, _config)
+  return vim.lsp.semantic_tokens._refresh(err, result, ctx)
 end
 
 -- Add boilerplate error validation and logging for all of these.

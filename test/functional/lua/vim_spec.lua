@@ -3363,7 +3363,7 @@ describe('lua stdlib', function()
 
     describe('returns -2 when interrupted', function()
       before_each(function()
-        local channel = api.nvim_get_api_info()[1]
+        local channel = api.nvim_get_chan_info(0).id
         api.nvim_set_var('channel', channel)
       end)
 
@@ -3543,6 +3543,18 @@ describe('lua stdlib', function()
       ]])
       )
     end)
+
+    it('can return values by reference', function()
+      eq(
+        { 4, 7 },
+        exec_lua [[
+        local val = {4, 10}
+        local ref = vim.api.nvim_buf_call(0, function() return val end)
+        ref[2] = 7
+        return val
+      ]]
+      )
+    end)
   end)
 
   describe('vim.api.nvim_win_call', function()
@@ -3639,6 +3651,18 @@ describe('lua stdlib', function()
         {2:[No Name] [+]  20,1         3%}|
                                       |
       ]]
+    end)
+
+    it('can return values by reference', function()
+      eq(
+        { 7, 10 },
+        exec_lua [[
+        local val = {4, 10}
+        local ref = vim.api.nvim_win_call(0, function() return val end)
+        ref[1] = 7
+        return val
+      ]]
+      )
     end)
   end)
 

@@ -311,7 +311,10 @@ static int nlua_thr_api_nvim__get_runtime(lua_State *lstate)
   lua_pop(lstate, 1);
 
   Error err = ERROR_INIT;
-  const Array pat = nlua_pop_Array(lstate, &err);
+  // TODO(bfredl): we could use an arena here for both "pat" and "ret", but then
+  // we need a path to not use the freelist but a private block local to the thread.
+  // We do not want mutex contentionery for the main arena freelist.
+  const Array pat = nlua_pop_Array(lstate, NULL, &err);
   if (ERROR_SET(&err)) {
     luaL_where(lstate, 1);
     lua_pushstring(lstate, err.msg);
@@ -1242,13 +1245,13 @@ static int nlua_rpc(lua_State *lstate, bool request)
   const char *name = luaL_checklstring(lstate, 2, &name_len);
   int nargs = lua_gettop(lstate) - 2;
   Error err = ERROR_INIT;
-  Array args = ARRAY_DICT_INIT;
+  Arena arena = ARENA_EMPTY;
 
+  Array args = arena_array(&arena, (size_t)nargs);
   for (int i = 0; i < nargs; i++) {
     lua_pushvalue(lstate, i + 3);
-    ADD(args, nlua_pop_Object(lstate, false, &err));
+    ADD(args, nlua_pop_Object(lstate, false, &arena, &err));
     if (ERROR_SET(&err)) {
-      api_free_array(args);
       goto check_err;
     }
   }
@@ -1265,10 +1268,11 @@ static int nlua_rpc(lua_State *lstate, bool request)
       api_set_error(&err, kErrorTypeValidation,
                     "Invalid channel: %" PRIu64, chan_id);
     }
-    api_free_array(args);  // TODO(bfredl): no
   }
 
 check_err:
+  arena_mem_free(arena_finish(&arena));
+
   if (ERROR_SET(&err)) {
     lua_pushstring(lstate, err.msg);
     api_clear_error(&err);
@@ -1541,10 +1545,12 @@ int typval_exec_lua_callable(LuaRef lua_cb, int argcount, typval_T *argvars, typ
 ///
 /// @param[in]  str  String to execute.
 /// @param[in]  args array of ... args
+/// @param[in]  mode Whether and how the the return value should be converted to Object
+/// @param[in] arena  can be NULL, then nested allocations are used
 /// @param[out]  err  Location where error will be saved.
 ///
 /// @return Return value of the execution.
-Object nlua_exec(const String str, const Array args, Error *err)
+Object nlua_exec(const String str, const Array args, LuaRetMode mode, Arena *arena, Error *err)
 {
   lua_State *const lstate = global_lstate;
 
@@ -1568,7 +1574,7 @@ Object nlua_exec(const String str, const Array args, Error *err)
     return NIL;
   }
 
-  return nlua_pop_Object(lstate, false, err);
+  return nlua_call_pop_retval(lstate, mode, arena, err);
 }
 
 bool nlua_ref_is_function(LuaRef ref)
@@ -1589,12 +1595,12 @@ bool nlua_ref_is_function(LuaRef ref)
 /// @param ref     the reference to call (not consumed)
 /// @param name    if non-NULL, sent to callback as first arg
 ///                if NULL, only args are used
-/// @param retval  if true, convert return value to Object
-///                if false, only check if return value is truthy
+/// @param mode    Whether and how the the return value should be converted to Object
+/// @param arena   can be NULL, then nested allocations are used
 /// @param err     Error details, if any (if NULL, errors are echoed)
-/// @return        Return value of function, if retval was set. Otherwise
-/// BOOLEAN_OBJ(true) or NIL.
-Object nlua_call_ref(LuaRef ref, const char *name, Array args, bool retval, Error *err)
+/// @return        Return value of function, as per mode
+Object nlua_call_ref(LuaRef ref, const char *name, Array args, LuaRetMode mode, Arena *arena,
+                     Error *err)
 {
   lua_State *const lstate = global_lstate;
   nlua_pushref(lstate, ref);
@@ -1620,18 +1626,34 @@ Object nlua_call_ref(LuaRef ref, const char *name, Array args, bool retval, Erro
     return NIL;
   }
 
-  if (retval) {
-    Error dummy = ERROR_INIT;
-    if (err == NULL) {
-      err = &dummy;
-    }
-    return nlua_pop_Object(lstate, false, err);
-  } else {
-    bool value = lua_toboolean(lstate, -1);
+  return nlua_call_pop_retval(lstate, mode, arena, err);
+}
+
+static Object nlua_call_pop_retval(lua_State *lstate, LuaRetMode mode, Arena *arena, Error *err)
+{
+  if (lua_isnil(lstate, -1)) {
+    lua_pop(lstate, 1);
+    return NIL;
+  }
+  Error dummy = ERROR_INIT;
+
+  switch (mode) {
+  case kRetNilBool: {
+    bool bool_value = lua_toboolean(lstate, -1);
     lua_pop(lstate, 1);
 
-    return value ? BOOLEAN_OBJ(true) : NIL;
+    return BOOLEAN_OBJ(bool_value);
   }
+  case kRetLuaref: {
+    LuaRef ref = nlua_ref_global(lstate, -1);
+    lua_pop(lstate, 1);
+
+    return LUAREF_OBJ(ref);
+  }
+  case kRetObject:
+    return nlua_pop_Object(lstate, false, arena, err ? err : &dummy);
+  }
+  UNREACHABLE;
 }
 
 /// check if the current execution context is safe for calling deferred API
@@ -1930,13 +1952,14 @@ int nlua_expand_pat(expand_T *xp, char *pat, int *num_results, char ***results)
   *num_results = 0;
   *results = NULL;
 
-  int prefix_len = (int)nlua_pop_Integer(lstate, &err);
+  Arena arena = ARENA_EMPTY;
+  int prefix_len = (int)nlua_pop_Integer(lstate, &arena, &err);
   if (ERROR_SET(&err)) {
     ret = FAIL;
     goto cleanup;
   }
 
-  Array completions = nlua_pop_Array(lstate, &err);
+  Array completions = nlua_pop_Array(lstate, &arena, &err);
   if (ERROR_SET(&err)) {
     ret = FAIL;
     goto cleanup_array;
@@ -1960,7 +1983,7 @@ int nlua_expand_pat(expand_T *xp, char *pat, int *num_results, char ***results)
   *num_results = result_array.ga_len;
 
 cleanup_array:
-  api_free_array(completions);
+  arena_mem_free(arena_finish(&arena));
 
 cleanup:
 
@@ -2354,13 +2377,10 @@ bool nlua_func_exists(const char *lua_funcname)
   vim_snprintf(str, length, "return %s", lua_funcname);
   ADD_C(args, CSTR_AS_OBJ(str));
   Error err = ERROR_INIT;
-  Object result = NLUA_EXEC_STATIC("return type(loadstring(...)()) == 'function'", args, &err);
+  Object result = NLUA_EXEC_STATIC("return type(loadstring(...)()) == 'function'", args,
+                                   kRetNilBool, NULL, &err);
   xfree(str);
 
   api_clear_error(&err);
-  if (result.type != kObjectTypeBoolean) {
-    api_free_object(result);
-    return false;
-  }
-  return result.data.boolean;
+  return LUARET_TRUTHY(result);
 }

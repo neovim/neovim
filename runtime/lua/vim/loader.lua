@@ -1,3 +1,4 @@
+local fs = vim.fs -- "vim.fs" is a dependency, so must be loaded early.
 local uv = vim.uv
 local uri_encode = vim.uri_encode --- @type function
 
@@ -63,7 +64,7 @@ function Loader.get_hash(path)
 end
 
 local function normalize(path)
-  return vim.fs.normalize(path, { expand_env = false })
+  return fs.normalize(path, { expand_env = false })
 end
 
 --- Gets the rtp excluding after directories.
@@ -432,7 +433,7 @@ end
 function Loader.lsmod(path)
   if not Loader._indexed[path] then
     Loader._indexed[path] = {}
-    for name, t in vim.fs.dir(path .. '/lua') do
+    for name, t in fs.dir(path .. '/lua') do
       local modpath = path .. '/lua/' .. name
       -- HACK: type is not always returned due to a bug in luv
       t = t or Loader.get_hash(modpath).type

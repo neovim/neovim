@@ -1,5 +1,7 @@
 --- @meta
 
+--- @alias elem_or_list<T> T|T[]
+
 ---@type uv
 vim.uv = ...
 

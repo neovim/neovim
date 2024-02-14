@@ -2591,7 +2591,7 @@ static char *get_healthcheck_names(expand_T *xp FUNC_ATTR_UNUSED, int idx)
   if (last_gen != get_cmdline_last_prompt_id() || last_gen == 0) {
     Array a = ARRAY_DICT_INIT;
     Error err = ERROR_INIT;
-    Object res = nlua_exec(STATIC_CSTR_AS_STRING("return vim.health._complete()"), a, &err);
+    Object res = NLUA_EXEC_STATIC("return vim.health._complete()", a, kRetObject, NULL, &err);
     api_clear_error(&err);
     api_free_object(names);
     names = res;

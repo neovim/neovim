@@ -212,7 +212,7 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
 
     Error err = ERROR_INIT;
     recursive++;
-    Object ret = nlua_call_ref(p->hl_def, "hl_def", args, true, &err);
+    Object ret = nlua_call_ref(p->hl_def, "hl_def", args, kRetObject, NULL, &err);
     recursive--;
 
     // TODO(bfredl): or "inherit", combine with global value?
@@ -221,7 +221,7 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
     HlAttrs attrs = HLATTRS_INIT;
     if (ret.type == kObjectTypeDictionary) {
       fallback = false;
-      Dict(highlight) dict = { 0 };
+      Dict(highlight) dict = KEYDICT_INIT;
       if (api_dict_to_keydict(&dict, KeyDict_highlight_get_field,
                               ret.data.dictionary, &err)) {
         attrs = dict2hlattrs(&dict, true, &it.link_id, &err);
@@ -1086,7 +1086,7 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
 
   // Handle cterm attrs
   if (dict->cterm.type == kObjectTypeDictionary) {
-    Dict(highlight_cterm) cterm[1] = { 0 };
+    Dict(highlight_cterm) cterm[1] = KEYDICT_INIT;
     if (!api_dict_to_keydict(cterm, KeyDict_highlight_cterm_get_field,
                              dict->cterm.data.dictionary, err)) {
       return hlattrs;
