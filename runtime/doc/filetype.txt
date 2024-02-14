@@ -527,6 +527,18 @@ under it.  If not found, a new entry and item is prepended to the beginning of
 the Changelog.
 
 
+ASCIIDOC						*ft-asciidoc-plugin*
+
+To enable |folding| use this: >
+	let g:asciidoc_folding = 1
+
+To disable nesting of folded headers use this: >
+	let g:asciidoc_foldnested = 0
+
+To disable folding everything under the title use this: >
+	let asciidoc_fold_under_title = 0
+
+
 FORTRAN							*ft-fortran-plugin*
 
 Options:
