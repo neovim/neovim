@@ -910,6 +910,7 @@ local extension = {
   sed = 'sed',
   sexp = 'sexplib',
   bash = detect.bash,
+  bats = detect.bash,
   ebuild = detect.bash,
   eclass = detect.bash,
   env = detect.sh,
