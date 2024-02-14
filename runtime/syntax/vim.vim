@@ -60,7 +60,7 @@ syn keyword vimGroup contained	Comment Constant String Character Number Boolean 
 " Default highlighting groups {{{2
 syn keyword vimHLGroup contained ErrorMsg IncSearch ModeMsg NonText StatusLine StatusLineNC EndOfBuffer VertSplit DiffText PmenuSbar TabLineSel TabLineFill Cursor lCursor QuickFixLine CursorLineSign CursorLineFold CurSearch PmenuKind PmenuKindSel PmenuExtra PmenuExtraSel Normal Directory LineNr CursorLineNr MoreMsg Question Search SpellBad SpellCap SpellRare SpellLocal PmenuThumb Pmenu PmenuSel SpecialKey Title WarningMsg WildMenu Folded FoldColumn SignColumn Visual DiffAdd DiffChange DiffDelete TabLine CursorColumn CursorLine ColorColumn Conceal MatchParen CursorIM LineNrAbove LineNrBelow
 syn keyword vimOnlyHLGroup contained	Menu Scrollbar StatusLineTerm StatusLineTermNC ToolbarButton ToolbarLine Tooltip VisualNOS
-syn keyword nvimHLGroup contained	Substitute TermCursor TermCursorNC
+syn keyword nvimHLGroup contained	FloatBorder FloatFooter FloatTitle MsgSeparator NormalFloat NormalNC Substitute TermCursor TermCursorNC VisualNC Whitespace WinBar WinBarNC WinSeparator
 "}}}2
 syn case match
 
