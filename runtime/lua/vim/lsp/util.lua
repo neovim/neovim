@@ -639,21 +639,12 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
   return vim.lsp._completion._lsp_to_complete_items(result, prefix)
 end
 
---- Like vim.fn.bufwinid except it works across tabpages.
-local function bufwinid(bufnr)
-  for _, win in ipairs(api.nvim_list_wins()) do
-    if api.nvim_win_get_buf(win) == bufnr then
-      return win
-    end
-  end
-end
-
 --- Get list of buffers for a directory
 local function get_dir_bufs(path)
   path = path:gsub('([^%w])', '%%%1')
   local buffers = {}
   for _, v in ipairs(vim.api.nvim_list_bufs()) do
-    local bufname = vim.api.nvim_buf_get_name(v):gsub('buffer://', '')
+    local bufname = vim.api.nvim_buf_get_name(v)
     if bufname:find(path) then
       table.insert(buffers, v)
     end
@@ -682,7 +673,7 @@ function M.rename(old_fname, new_fname, opts)
   else
     local oldbuf = vim.fn.bufadd(old_fname)
     table.insert(oldbufs, oldbuf)
-    win = bufwinid(oldbuf)
+    win = vim.fn.win_findbuf(oldbuf)[1]
   end
 
   for _, b in ipairs(oldbufs) do
@@ -1061,7 +1052,7 @@ function M.show_document(location, offset_encoding, opts)
     vim.fn.settagstack(vim.fn.win_getid(), { items = items }, 't')
   end
 
-  local win = opts.reuse_win and bufwinid(bufnr)
+  local win = opts.reuse_win and vim.fn.win_findbuf(bufnr)[1]
     or focus and api.nvim_get_current_win()
     or create_window_without_focus()
 
