@@ -639,13 +639,28 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
   return vim.lsp._completion._lsp_to_complete_items(result, prefix)
 end
 
---- Get list of buffers for a directory
-local function get_dir_bufs(path)
-  path = path:gsub('([^%w])', '%%%1')
+local function path_components(path)
+  return vim.split(path, '/', { plain = true })
+end
+
+local function path_under_prefix(path, prefix)
+  for i, c in ipairs(prefix) do
+    if c ~= path[i] then
+      return false
+    end
+  end
+  return true
+end
+
+--- Get list of buffers whose filename matches the given path prefix (normalized full path)
+---@return integer[]
+local function get_bufs_with_prefix(prefix)
+  prefix = path_components(prefix)
   local buffers = {}
   for _, v in ipairs(vim.api.nvim_list_bufs()) do
-    local bufname = vim.api.nvim_buf_get_name(v)
-    if bufname:find(path) then
+    local bname = vim.api.nvim_buf_get_name(v)
+    local path = path_components(vim.fs.normalize(bname, { expand_env = false }))
+    if path_under_prefix(path, prefix) then
       table.insert(buffers, v)
     end
   end
@@ -679,7 +694,7 @@ function M.rename(old_fname, new_fname, opts)
   local win = nil
 
   if vim.fn.isdirectory(old_fname_full) == 1 then
-    oldbufs = get_dir_bufs(old_fname_full)
+    oldbufs = get_bufs_with_prefix(old_fname_full)
   else
     local oldbuf = vim.fn.bufadd(old_fname_full)
     table.insert(oldbufs, oldbuf)
