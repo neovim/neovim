@@ -365,6 +365,7 @@ local extension = {
   dts = 'dts',
   dtsi = 'dts',
   dtso = 'dts',
+  its = 'dts',
   dylan = 'dylan',
   intr = 'dylanintr',
   lid = 'dylanlid',
