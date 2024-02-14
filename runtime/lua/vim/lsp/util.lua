@@ -667,6 +667,10 @@ local function get_bufs_with_prefix(prefix)
   return buffers
 end
 
+local function escape_gsub_repl(s)
+  return (s:gsub('%%', '%%%%'))
+end
+
 --- Rename old_fname to new_fname
 ---
 ---@param old_fname string
@@ -701,8 +705,25 @@ function M.rename(old_fname, new_fname, opts)
     win = vim.fn.win_findbuf(oldbuf)[1]
   end
 
+  local old_fname_pat = '^' .. vim.pesc(old_fname_full)
   for _, b in ipairs(oldbufs) do
-    -- The there may be pending changes in the buffer
+    -- make sure that renaming doesn't overwrite buffer that has never been written (or nofile)
+    local old_bname = vim.api.nvim_buf_get_name(b)
+    local new_bname = old_bname:gsub(old_fname_pat, escape_gsub_repl(new_fname))
+    if vim.fn.bufexists(new_bname) == 1 then
+      local existing_buf = vim.fn.bufnr(new_bname)
+      if api.nvim_buf_is_loaded(existing_buf) and skip then
+        vim.notify(
+          new_bname .. ' already exists in the buffer list. Skipping rename.',
+          vim.log.levels.ERROR
+        )
+        return
+      end
+      -- no need to preserve if such a buffer is empty
+      api.nvim_buf_delete(existing_buf, {})
+    end
+
+    -- The there may be pending changes in the to-be-renamed file
     if api.nvim_buf_is_loaded(b) then
       api.nvim_buf_call(b, function()
         vim.cmd('update!')
