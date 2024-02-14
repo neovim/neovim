@@ -2383,12 +2383,13 @@ describe('LSP', function()
         [[
         local old = select(1, ...)
         local new = select(2, ...)
+        local old_bufnr = vim.fn.bufadd(old)
+        vim.fn.bufload(old_bufnr)
         vim.lsp.util.rename(old, new)
-
-        -- after rename the target file must have the contents of the source file
-        local bufnr = vim.fn.bufadd(new)
-        vim.fn.bufload(new)
-        return vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
+        -- the existing buffer is renamed in-place and its contents is kept
+        local new_bufnr = vim.fn.bufadd(new)
+        vim.fn.bufload(new_bufnr)
+        return (old_bufnr == new_bufnr) and vim.api.nvim_buf_get_lines(new_bufnr, 0, -1, true)
       ]],
         old,
         new
@@ -2400,94 +2401,18 @@ describe('LSP', function()
       eq(true, exists)
       os.remove(new)
     end)
-    it('Kills old buffer after renaming an existing file', function()
-      local old = tmpname()
-      write_file(old, 'Test content')
-      local new = tmpname()
-      os.remove(new) -- only reserve the name, file must not exist for the test scenario
-      local lines = exec_lua(
-        [[
-        local old = select(1, ...)
-	local oldbufnr = vim.fn.bufadd(old)
-        local new = select(2, ...)
-        vim.lsp.util.rename(old, new)
-	return vim.fn.bufloaded(oldbufnr)
-      ]],
-        old,
-        new
-      )
-      eq(0, lines)
-      os.remove(new)
-    end)
-    it('new buffer remains unlisted and unloaded if the old was not in window before', function()
-      local old = tmpname()
-      write_file(old, 'Test content')
-      local new = tmpname()
-      os.remove(new) -- only reserve the name, file must not exist for the test scenario
-      local actual = exec_lua(
-        [[
-        local old = select(1, ...)
-        local oldbufnr = vim.fn.bufadd(old)
-        local new = select(2, ...)
-        local newbufnr = vim.fn.bufadd(new)
-        vim.lsp.util.rename(old, new)
-        return {
-          buflisted = vim.bo[newbufnr].buflisted,
-          bufloaded = vim.api.nvim_buf_is_loaded(newbufnr)
-        }
-      ]],
-        old,
-        new
-      )
-
-      local expected = {
-        buflisted = false,
-        bufloaded = false,
-      }
-
-      eq(expected, actual)
-
-      os.remove(new)
-    end)
-    it('new buffer is listed and loaded if the old was in window before', function()
-      local old = tmpname()
-      write_file(old, 'Test content')
-      local new = tmpname()
-      os.remove(new) -- only reserve the name, file must not exist for the test scenario
-      local actual = exec_lua(
-        [[
-        local win =  vim.api.nvim_get_current_win()
-        local old = select(1, ...)
-        local oldbufnr = vim.fn.bufadd(old)
-        vim.api.nvim_win_set_buf(win, oldbufnr)
-        local new = select(2, ...)
-        vim.lsp.util.rename(old, new)
-        local newbufnr = vim.fn.bufadd(new)
-        return {
-          buflisted = vim.bo[newbufnr].buflisted,
-          bufloaded = vim.api.nvim_buf_is_loaded(newbufnr)
-        }
-      ]],
-        old,
-        new
-      )
-
-      local expected = {
-        buflisted = true,
-        bufloaded = true,
-      }
-
-      eq(expected, actual)
-
-      os.remove(new)
-    end)
     it('Can rename a directory', function()
       -- only reserve the name, file must not exist for the test scenario
-      local old_dir = tmpname()
-      local new_dir = tmpname()
+      local old_dir_faux = tmpname()
+      local old_dir = old_dir_faux .. '_real'
+      local new_dir_faux = tmpname()
+      local new_dir = new_dir_faux .. '_real'
+      os.remove(old_dir_faux)
       os.remove(old_dir)
+      os.remove(new_dir_faux)
       os.remove(new_dir)
 
+      helpers.mkdir_p(old_dir_faux)
       helpers.mkdir_p(old_dir)
 
       local file = 'file.txt'
@@ -2495,23 +2420,33 @@ describe('LSP', function()
 
       local lines = exec_lua(
         [[
-        local old_dir = select(1, ...)
-        local new_dir = select(2, ...)
-	local pathsep = select(3, ...)
-	local oldbufnr = vim.fn.bufadd(old_dir .. pathsep .. 'file')
-
+        local old_dir_faux = select(1, ...)
+        local old_dir = select(2, ...)
+        local new_dir_faux = select(3, ...)
+        local new_dir = select(4, ...)
+        local pathsep = select(5, ...)
+        local file = select(6, ...)
+        local old_bufnr = vim.fn.bufadd(old_dir .. pathsep .. file)
+        vim.fn.bufload(old_bufnr)
+        -- buffer is not renamed if directory path component doesn't fully match
+        vim.lsp.util.rename(old_dir_faux, new_dir_faux)
         vim.lsp.util.rename(old_dir, new_dir)
-	return vim.fn.bufloaded(oldbufnr)
+        -- the existing buffer is renamed in-place and its contents is kept
+        local new_bufnr = vim.fn.bufadd(new_dir .. pathsep .. file)
+        vim.fn.bufload(new_bufnr)
+        return (old_bufnr == new_bufnr) and vim.api.nvim_buf_get_lines(new_bufnr, 0, -1, true)
       ]],
+        old_dir_faux,
         old_dir,
+        new_dir_faux,
         new_dir,
-        pathsep
+        pathsep,
+        file
       )
-      eq(0, lines)
+      eq({ 'Test content' }, lines)
       eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old_dir))
       eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new_dir))
       eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new_dir .. pathsep .. file))
-      eq('Test content', read_file(new_dir .. pathsep .. file))
 
       os.remove(new_dir)
     end)
@@ -2552,6 +2487,33 @@ describe('LSP', function()
         eq('New file', read_file(new))
       end
     )
+    it(
+      'Does not rename file even if target does not exist if it conflicts with buffers without file',
+      function()
+        local old = tmpname()
+        write_file(old, 'Old File')
+        local new = tmpname()
+        os.remove(new)
+
+        local lines = exec_lua(
+          [[
+        local old = select(1, ...)
+        local new = select(2, ...)
+        local old_buf = vim.fn.bufadd(old)
+        vim.fn.bufload(old_buf)
+        local conflict_buf = vim.api.nvim_create_buf(true, false)
+        vim.api.nvim_buf_set_name(conflict_buf, new)
+        vim.api.nvim_buf_set_lines(conflict_buf, 0, -1, true, {'conflict'})
+        vim.lsp.util.rename(old, new)
+        return vim.api.nvim_buf_get_lines(conflict_buf, 0, -1, true)
+      ]],
+          old,
+          new
+        )
+        eq({ 'conflict' }, lines)
+        eq('Old File', read_file(old))
+      end
+    )
     it('Does override target if overwrite is true', function()
       local old = tmpname()
       write_file(old, 'Old file')
@@ -2570,7 +2532,7 @@ describe('LSP', function()
 
       eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
       eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new))
-      eq('Old file\n', read_file(new))
+      eq('Old file', read_file(new))
     end)
   end)
 
