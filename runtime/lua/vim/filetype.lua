@@ -364,6 +364,7 @@ local extension = {
   d = detect.dtrace,
   dts = 'dts',
   dtsi = 'dts',
+  dtso = 'dts',
   dylan = 'dylan',
   intr = 'dylanintr',
   lid = 'dylanlid',

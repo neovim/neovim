@@ -204,7 +204,7 @@ func s:GetFilenameChecks() abort
     \ 'dracula': ['file.drac', 'file.drc', 'filelvs', 'filelpe', 'drac.file', 'lpe', 'lvs', 'some-lpe', 'some-lvs'],
     \ 'dtd': ['file.dtd'],
     \ 'dtrace': ['/usr/lib/dtrace/io.d'],
-    \ 'dts': ['file.dts', 'file.dtsi'],
+    \ 'dts': ['file.dts', 'file.dtsi', 'file.dtso'],
     \ 'dune': ['jbuild', 'dune', 'dune-project', 'dune-workspace'],
     \ 'dylan': ['file.dylan'],
     \ 'dylanintr': ['file.intr'],
