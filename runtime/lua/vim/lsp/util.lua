@@ -654,24 +654,34 @@ end
 
 --- Rename old_fname to new_fname
 ---
----@param opts (table)
---         overwrite? bool
---         ignoreIfExists? bool
+---@param old_fname string
+---@param new_fname string
+---@param opts? table options
+---        - overwrite? boolean
+---        - ignoreIfExists? boolean
 function M.rename(old_fname, new_fname, opts)
   opts = opts or {}
+  local skip = not opts.overwrite or opts.ignoreIfExists
+
+  local old_fname_full = vim.uv.fs_realpath(vim.fs.normalize(old_fname, { expand_env = false }))
+  if not old_fname_full then
+    vim.notify('Invalid path: ' .. old_fname, vim.log.levels.ERROR)
+    return
+  end
+
   local target_exists = uv.fs_stat(new_fname) ~= nil
-  if target_exists and not opts.overwrite or opts.ignoreIfExists then
-    vim.notify('Rename target already exists. Skipping rename.')
+  if target_exists and skip then
+    vim.notify(new_fname .. ' already exists. Skipping rename.', vim.log.levels.ERROR)
     return
   end
 
   local oldbufs = {}
   local win = nil
 
-  if vim.fn.isdirectory(old_fname) == 1 then
-    oldbufs = get_dir_bufs(old_fname)
+  if vim.fn.isdirectory(old_fname_full) == 1 then
+    oldbufs = get_dir_bufs(old_fname_full)
   else
-    local oldbuf = vim.fn.bufadd(old_fname)
+    local oldbuf = vim.fn.bufadd(old_fname_full)
     table.insert(oldbufs, oldbuf)
     win = vim.fn.win_findbuf(oldbuf)[1]
   end
@@ -687,7 +697,7 @@ function M.rename(old_fname, new_fname, opts)
   local newdir = assert(vim.fs.dirname(new_fname))
   vim.fn.mkdir(newdir, 'p')
 
-  local ok, err = os.rename(old_fname, new_fname)
+  local ok, err = os.rename(old_fname_full, new_fname)
   assert(ok, err)
 
   if vim.fn.isdirectory(new_fname) == 0 then
