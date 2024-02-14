@@ -2424,20 +2424,29 @@ describe('LSP', function()
       write_file(old, 'Test content')
       local new = tmpname()
       os.remove(new) -- only reserve the name, file must not exist for the test scenario
-      local buflisted, bufloaded = unpack(exec_lua(
+      local actual = exec_lua(
         [[
         local old = select(1, ...)
         local oldbufnr = vim.fn.bufadd(old)
         local new = select(2, ...)
         local newbufnr = vim.fn.bufadd(new)
         vim.lsp.util.rename(old, new)
-        return {vim.bo[newbufnr].buflisted, vim.api.nvim_buf_is_loaded(newbufnr)}
+        return {
+          buflisted = vim.bo[newbufnr].buflisted, 
+          bufloaded = vim.api.nvim_buf_is_loaded(newbufnr)
+        }
       ]],
         old,
         new
-      ))
-      eq(false, buflisted)
-      eq(false, bufloaded)
+      )
+
+      local expected = {
+        buflisted = false,
+        bufloaded = false,
+      }
+
+      eq(expected, actual)
+
       os.remove(new)
     end)
     it('new buffer is listed and loaded if the old was in window before', function()
@@ -2445,7 +2454,7 @@ describe('LSP', function()
       write_file(old, 'Test content')
       local new = tmpname()
       os.remove(new) -- only reserve the name, file must not exist for the test scenario
-      local buflisted, bufloaded = unpack(exec_lua(
+      local actual = exec_lua(
         [[
         local win =  vim.api.nvim_get_current_win()
         local old = select(1, ...)
@@ -2454,13 +2463,22 @@ describe('LSP', function()
         local new = select(2, ...)
         vim.lsp.util.rename(old, new)
         local newbufnr = vim.fn.bufadd(new)
-        return {vim.bo[newbufnr].buflisted, vim.api.nvim_buf_is_loaded(newbufnr)}
+        return {
+          buflisted = vim.bo[newbufnr].buflisted, 
+          bufloaded = vim.api.nvim_buf_is_loaded(newbufnr)
+        }
       ]],
         old,
         new
-      ))
-      eq(true, buflisted)
-      eq(true, bufloaded)
+      )
+
+      local expected = {
+        buflisted = true,
+        bufloaded = true,
+      }
+
+      eq(expected, actual)
+
       os.remove(new)
     end)
     it('Can rename a directory', function()
