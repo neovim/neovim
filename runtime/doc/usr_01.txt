@@ -23,7 +23,8 @@ The Vim documentation consists of two parts:
 
 1. The User manual
    Task oriented explanations, from simple to complex.  Reads from start to
-   end like a book.
+   end like a book. Or if you are more of a listening person - here Teej will
+   read the entire User manual: https://www.youtube.com/watch?v=rT-fbLFOCy0
 
 2. The Reference manual
    Precise description of how everything in Vim works.
