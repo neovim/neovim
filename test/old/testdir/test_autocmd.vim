@@ -3840,4 +3840,32 @@ func Test_autocmd_shortmess()
   delfunc SetupVimTest_shm
 endfunc
 
+func Test_autocmd_invalidates_undo_on_textchanged()
+  CheckRunVimInTerminal
+  let script =<< trim END
+    set hidden
+    " create quickfix list (at least 2 lines to move line)
+    vimgrep /u/j %
+
+    " enter quickfix window
+    cwindow
+
+    " set modifiable
+    setlocal modifiable
+
+    " set autocmd to clear quickfix list
+
+    autocmd! TextChanged <buffer> call setqflist([])
+    " move line
+    move+1
+  END
+  call writefile(script, 'XTest_autocmd_invalidates_undo_on_textchanged', 'D')
+  let buf = RunVimInTerminal('XTest_autocmd_invalidates_undo_on_textchanged', {'rows': 20})
+  call term_sendkeys(buf, ":so %\<cr>")
+  call term_sendkeys(buf, "G")
+  call WaitForAssert({-> assert_match('^XTest_autocmd_invalidates_undo_on_textchanged\s*$', term_getline(buf, 20))}, 1000)
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
