@@ -258,7 +258,7 @@ void ui_refresh(void)
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
       res = {}
-      for pattern, match in cquery:iter_matches2(tree:root(), 0, 7, 14) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { correct = true }) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
         for cid, nodes in pairs(match) do
@@ -325,7 +325,7 @@ void ui_refresh(void)
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
       res = {}
-      for pattern, match in cquery:iter_matches2(tree:root(), 0, 7, 14) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { correct = true }) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
         for cid, nodes in pairs(match) do
@@ -430,7 +430,7 @@ end]]
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
       res = {}
-      for pattern, match in cquery:iter_matches2(tree:root(), 0) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0, 0, -1, { correct = true }) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
         for cid, nodes in pairs(match) do
@@ -524,7 +524,7 @@ end]]
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
       res = {}
-      for pattern, match in cquery:iter_matches2(tree:root(), 0) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0, 0, -1, { correct = true }) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
         for cid, nodes in pairs(match) do
@@ -1128,7 +1128,7 @@ int x = INT_MAX;
         query = vim.treesitter.query.parse("c", '((number_literal) @number (#set! "key" "value"))')
         parser = vim.treesitter.get_parser(0, "c")
 
-        for pattern, match, metadata in query:iter_matches2(parser:parse()[1]:root(), 0) do
+        for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0, 0, -1, { correct = true }) do
           result = metadata.key
         end
 
@@ -1151,7 +1151,7 @@ int x = INT_MAX;
           query = vim.treesitter.query.parse("c", '((number_literal) @number (#set! @number "key" "value"))')
           parser = vim.treesitter.get_parser(0, "c")
 
-          for pattern, match, metadata in query:iter_matches2(parser:parse()[1]:root(), 0) do
+          for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0, 0, -1, { correct = true }) do
             for _, nested_tbl in pairs(metadata) do
               return nested_tbl.key
             end
@@ -1173,7 +1173,7 @@ int x = INT_MAX;
           query = vim.treesitter.query.parse("c", '((number_literal) @number (#set! @number "key" "value") (#set! @number "key2" "value2"))')
           parser = vim.treesitter.get_parser(0, "c")
 
-          for pattern, match, metadata in query:iter_matches2(parser:parse()[1]:root(), 0) do
+          for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0, 0, -1, { correct = true }) do
             for _, nested_tbl in pairs(metadata) do
               return nested_tbl
             end

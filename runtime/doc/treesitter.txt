@@ -990,8 +990,8 @@ add_directive({name}, {handler}, {opts})
                    • correct (boolean): Use the correct implementation of the
                      match table where capture IDs map to a list of nodes
                      instead of a single node. Defaults to false (for backward
-                     compatibility). This option will default to true and be
-                     removed in Nvim 0.12.
+                     compatibility). This option will eventually become the
+                     default and removed.
 
                                         *vim.treesitter.query.add_predicate()*
 add_predicate({name}, {handler}, {opts})
@@ -1008,8 +1008,8 @@ add_predicate({name}, {handler}, {opts})
                    • correct (boolean): Use the correct implementation of the
                      match table where capture IDs map to a list of nodes
                      instead of a single node. Defaults to false (for backward
-                     compatibility). This option will default to true and be
-                     removed in Nvim 0.12.
+                     compatibility). This option will eventually become the
+                     default and removed.
 
 edit({lang})                                     *vim.treesitter.query.edit()*
     Opens a live editor to query the buffer you started from.
@@ -1152,18 +1152,22 @@ Query:iter_captures({node}, {source}, {start}, {stop})
         (`fun(end_line: integer?): integer, TSNode, TSMetadata`) capture id,
         capture node, metadata
 
-                                                       *Query:iter_matches2()*
-Query:iter_matches2({node}, {source}, {start}, {stop}, {opts})
+                                                        *Query:iter_matches()*
+Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
     Iterates the matches of self on a given range.
 
     Iterate over all matches within a {node}. The arguments are the same as
     for |Query:iter_captures()| but the iterated values are different: an
     (1-based) index of the pattern in the query, a table mapping capture
-    indices to nodes, and metadata from any directives processing the match.
-    If the query has more than one pattern, the capture table might be sparse
-    and e.g. `pairs()` method should be used over `ipairs`. Here is an example
-    iterating over all captures in every match: >lua
-        for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do
+    indices to a list of nodes, and metadata from any directives processing
+    the match.
+
+    You MUST set the "correct" option for this function to behave correctly!
+    In older versions of Nvim this function has incorrect behavior: the
+    correct behavior must be opted into for backward compatibility.
+
+    Example: >lua
+        for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, 0, -1, { correct = true}) do
           for id, nodes in pairs(match) do
             local name = query.captures[id]
             for _, node in ipairs(nodes) do
@@ -1187,6 +1191,11 @@ Query:iter_matches2({node}, {source}, {start}, {stop}, {opts})
                   • max_start_depth (integer) if non-zero, sets the maximum
                     start depth for each match. This is used to prevent
                     traversing too deep into a tree.
+                  • correct (boolean) When set, the returned match table maps
+                    capture IDs to a list of nodes. Older versions of
+                    iter_matches incorrectly mapped capture IDs to a single
+                    node, which is incorrect behavior. This option will
+                    eventually become the default and removed.
 
     Return: ~
         (`fun(): integer, table<integer, TSNode[]>, table`) pattern id, match,

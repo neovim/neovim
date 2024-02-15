@@ -667,7 +667,7 @@ local directive_handlers = {
 ---                                   capture IDs map to a list of nodes instead
 ---                                   of a single node. Defaults to false (for
 ---                                   backward compatibility). This option will
----                                   default to true and be removed in Nvim 0.12.
+---                                   eventually become the default and removed.
 function M.add_predicate(name, handler, opts)
   -- Backward compatibility: old signature had "force" as boolean argument
   if type(opts) == 'boolean' then
@@ -718,7 +718,7 @@ end
 ---                                   capture IDs map to a list of nodes instead
 ---                                   of a single node. Defaults to false (for
 ---                                   backward compatibility). This option will
----                                   default to true and be removed in Nvim 0.12.
+---                                   eventually become the default and removed.
 function M.add_directive(name, handler, opts)
   -- Backward compatibility: old signature had "force" as boolean argument
   if type(opts) == 'boolean' then
@@ -904,86 +904,19 @@ end
 
 --- Iterates the matches of self on a given range.
 ---
---- Iterate over all matches within a {node}. The arguments are the same as
---- for |Query:iter_captures()| but the iterated values are different:
---- an (1-based) index of the pattern in the query, a table mapping
---- capture indices to nodes, and metadata from any directives processing the match.
---- If the query has more than one pattern, the capture table might be sparse
---- and e.g. `pairs()` method should be used over `ipairs`.
---- Here is an example iterating over all captures in every match:
+--- Iterate over all matches within a {node}. The arguments are the same as for
+--- |Query:iter_captures()| but the iterated values are different: an (1-based)
+--- index of the pattern in the query, a table mapping capture indices to a list
+--- of nodes, and metadata from any directives processing the match.
+---
+--- You MUST set the "correct" option for this function to behave correctly!
+--- In older versions of Nvim this function has incorrect behavior: the correct
+--- behavior must be opted into for backward compatibility.
+---
+--- Example:
 ---
 --- ```lua
---- for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do
----   for id, node in pairs(match) do
----     local name = query.captures[id]
----     -- `node` was captured by the `name` capture in the match
----
----     local node_data = metadata[id] -- Node level metadata
----
----     -- ... use the info here ...
----   end
---- end
---- ```
----
----@param node TSNode under which the search will occur
----@param source (integer|string) Source buffer or string to search
----@param start? integer Starting line for the search. Defaults to `node:start()`.
----@param stop? integer Stopping line for the search (end-exclusive). Defaults to `node:end_()`.
----@param opts? table Optional keyword arguments:
----   - max_start_depth (integer) if non-zero, sets the maximum start depth
----     for each match. This is used to prevent traversing too deep into a tree.
----
----@return (fun(): integer, table<integer,TSNode>, table): pattern id, match, metadata
----@deprecated
-function Query:iter_matches(node, source, start, stop, opts)
-  vim.deprecate('iter_matches', 'iter_matches2', '0.12')
-  if type(source) == 'number' and source == 0 then
-    source = api.nvim_get_current_buf()
-  end
-
-  start, stop = value_or_node_range(start, stop, node)
-
-  -- Tell _rawquery to return a match table of capture_id -> TSNode
-  -- opts._use_deprecated_and_broken_api = true
-
-  local raw_iter = node:_rawquery(self.query, false, start, stop, opts) ---@type fun(): integer, TSMatch
-  local function iter()
-    local pattern, match = raw_iter()
-    local metadata = {}
-
-    if match ~= nil then
-      local active = self:match_preds(match, pattern, source)
-      if not active then
-        return iter() -- tail call: try next match
-      end
-
-      self:apply_directives(match, pattern, source, metadata)
-    end
-
-    -- Convert the match table into the old buggy version for backward
-    -- compatibility. This is slow. Plugin authors, if you're reading this, stop
-    -- using iter_matches!
-    local old_match = {} ---@type table<integer, TSNode>
-    for k, v in pairs(match or {}) do
-      old_match[k] = v[#v]
-    end
-    return pattern, old_match, metadata
-  end
-  return iter
-end
-
---- Iterates the matches of self on a given range.
----
---- Iterate over all matches within a {node}. The arguments are the same as
---- for |Query:iter_captures()| but the iterated values are different:
---- an (1-based) index of the pattern in the query, a table mapping
---- capture indices to nodes, and metadata from any directives processing the match.
---- If the query has more than one pattern, the capture table might be sparse
---- and e.g. `pairs()` method should be used over `ipairs`.
---- Here is an example iterating over all captures in every match:
----
---- ```lua
---- for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do
+--- for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, 0, -1, { correct = true}) do
 ---   for id, nodes in pairs(match) do
 ---     local name = query.captures[id]
 ---     for _, node in ipairs(nodes) do
@@ -1004,9 +937,12 @@ end
 ---@param opts? table Optional keyword arguments:
 ---   - max_start_depth (integer) if non-zero, sets the maximum start depth
 ---     for each match. This is used to prevent traversing too deep into a tree.
+---   - correct (boolean) When set, the returned match table maps capture IDs to a list of nodes.
+---     Older versions of iter_matches incorrectly mapped capture IDs to a single node, which is
+---     incorrect behavior. This option will eventually become the default and removed.
 ---
 ---@return (fun(): integer, table<integer, TSNode[]>, table): pattern id, match, metadata
-function Query:iter_matches2(node, source, start, stop, opts)
+function Query:iter_matches(node, source, start, stop, opts)
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
   end
@@ -1026,6 +962,18 @@ function Query:iter_matches2(node, source, start, stop, opts)
 
       self:apply_directives(match, pattern, source, metadata)
     end
+
+    if not opts or not opts.correct then
+      -- Convert the match table into the old buggy version for backward
+      -- compatibility. This is slow. Plugin authors, if you're reading this, set the "correct"
+      -- option!
+      local old_match = {} ---@type table<integer, TSNode>
+      for k, v in pairs(match or {}) do
+        old_match[k] = v[#v]
+      end
+      return pattern, old_match, metadata
+    end
+
     return pattern, match, metadata
   end
   return iter
