@@ -86,6 +86,7 @@ setmetatable(vim, {
 --- <Docs described in |vim.empty_dict()| >
 ---@private
 --- TODO: should be in vim.shared when vim.shared always uses nvim-lua
+--- @diagnostic disable-next-line:duplicate-set-field
 function vim.empty_dict()
   return setmetatable({}, vim._empty_dict_mt)
 end

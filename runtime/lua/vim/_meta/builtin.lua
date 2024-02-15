@@ -83,6 +83,7 @@ function vim.in_fast_event() end
 ---
 --- Note: If numeric keys are present in the table, Nvim ignores the metatable
 --- marker and converts the dict to a list/array anyway.
+--- @return table
 function vim.empty_dict() end
 
 --- Sends {event} to {channel} via |RPC| and returns immediately. If {channel}
