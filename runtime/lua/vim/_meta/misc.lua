@@ -10,6 +10,7 @@
 --- vim.fn[func]({...})
 --- ```
 ---
---- @param func fun()
+--- @param func string
 --- @param ... any
+--- @return any
 function vim.call(func, ...) end

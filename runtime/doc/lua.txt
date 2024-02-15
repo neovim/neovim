@@ -893,6 +893,9 @@ vim.empty_dict()                                            *vim.empty_dict()*
     Note: If numeric keys are present in the table, Nvim ignores the metatable
     marker and converts the dict to a list/array anyway.
 
+    Return: ~
+        (`table`)
+
 vim.iconv({str}, {from}, {to}, {opts})                           *vim.iconv()*
     The result is a String, which is the text {str} converted from encoding
     {from} to encoding {to}. When the conversion fails `nil` is returned. When
