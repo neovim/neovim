@@ -68,6 +68,7 @@
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
@@ -4142,6 +4143,12 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     }
 
     // delete all existing lines
+    //
+    // Note: we cannot store undo information, because
+    // qf buffer is usually not allowed to be modified.
+    //
+    // So we need to clean up undo information
+    // otherwise autocommands may invalidate the undo stack
     while ((curbuf->b_ml.ml_flags & ML_EMPTY) == 0) {
       // If deletion fails, this loop may run forever, so
       // signal error and return.
@@ -4150,6 +4157,9 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
         return;
       }
     }
+
+    // Remove all undo information
+    u_clearallandblockfree(curbuf);
   }
 
   // Check if there is anything to display

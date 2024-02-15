@@ -2988,6 +2988,28 @@ void u_clearall(buf_T *buf)
   buf->b_u_line_lnum = 0;
 }
 
+/// Free all allocated memory blocks for the buffer 'buf'.
+void u_blockfree(buf_T *buf)
+{
+  while (buf->b_u_oldhead != NULL) {
+#ifndef NDEBUG
+    u_header_T *previous_oldhead = buf->b_u_oldhead;
+#endif
+
+    u_freeheader(buf, buf->b_u_oldhead, NULL);
+    assert(buf->b_u_oldhead != previous_oldhead);
+  }
+  xfree(buf->b_u_line_ptr);
+}
+
+/// Free all allocated memory blocks for the buffer 'buf'.
+/// and invalidate the undo buffer
+void u_clearallandblockfree(buf_T *buf)
+{
+  u_blockfree(buf);
+  u_clearall(buf);
+}
+
 /// Save the line "lnum" for the "U" command.
 void u_saveline(buf_T *buf, linenr_T lnum)
 {
@@ -3052,20 +3074,6 @@ void u_undoline(void)
   curwin->w_cursor.col = t;
   curwin->w_cursor.lnum = curbuf->b_u_line_lnum;
   check_cursor_col();
-}
-
-/// Free all allocated memory blocks for the buffer 'buf'.
-void u_blockfree(buf_T *buf)
-{
-  while (buf->b_u_oldhead != NULL) {
-#ifndef NDEBUG
-    u_header_T *previous_oldhead = buf->b_u_oldhead;
-#endif
-
-    u_freeheader(buf, buf->b_u_oldhead, NULL);
-    assert(buf->b_u_oldhead != previous_oldhead);
-  }
-  xfree(buf->b_u_line_ptr);
 }
 
 /// Allocate memory and copy curbuf line into it.
