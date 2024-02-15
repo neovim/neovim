@@ -122,6 +122,9 @@ The following changes may require adaptations in user config or plugins.
 
 • |shm-q| now fully hides macro recording message instead of only shortening it.
 
+• Returning any truthy value from a callback passed to |nvim_create_autocmd()|
+  (rather than just `true`) will delete the autocommand.
+
 ==============================================================================
 BREAKING CHANGES IN HEAD                                    *news-breaking-dev*
 

@@ -169,7 +169,8 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 ---
 ---                    • on_bytes: Lua callback invoked on change. This
 ---                      callback receives more granular information about the
----                      change compared to on_lines. Return `true` to
+---                      change compared to on_lines. Return a truthy value
+---                      (not `false` or `nil`) to
 ---                      detach. Args:
 ---                      • the string "bytes"
 ---                      • buffer handle
@@ -863,9 +864,9 @@ function vim.api.nvim_create_augroup(name, opts) end
 ---                troubleshooting).
 ---              • callback (function|string) optional: Lua function (or
 ---                Vimscript function name, if string) called when the
----                event(s) is triggered. Lua callback can return true to
----                delete the autocommand, and receives a table argument with
----                these keys:
+---                event(s) is triggered. Lua callback can return a truthy
+---                value (not `false` or `nil`) to delete the
+---                autocommand. Receives a table argument with these keys:
 ---                • id: (number) autocommand id
 ---                • event: (string) name of the triggered event
 ---                  `autocmd-events`
