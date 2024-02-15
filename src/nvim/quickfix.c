@@ -4159,8 +4159,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     }
 
     // Remove all undo information
-    u_blockfree(curbuf);
-    u_clearall(curbuf);
+    u_clearallandblockfree(curbuf);
   }
 
   // Check if there is anything to display
