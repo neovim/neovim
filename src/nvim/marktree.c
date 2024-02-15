@@ -774,6 +774,35 @@ uint64_t marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
   return other;
 }
 
+void marktree_revise_flags(MarkTree *b, MarkTreeIter *itr, uint16_t new_flags)
+{
+  uint32_t meta_old[4];
+  meta_describe_key(meta_old, rawkey(itr));
+  rawkey(itr).flags &= (uint16_t) ~MT_FLAG_EXTERNAL_MASK;
+  rawkey(itr).flags |= new_flags;
+
+  uint32_t meta_new[4];
+  meta_describe_key(meta_new, rawkey(itr));
+
+  if (!memcmp(meta_old, meta_new, sizeof(meta_old))) {
+    return;
+  }
+
+  MTNode *lnode = itr->x;
+  while (lnode->parent) {
+    uint32_t *meta_p = lnode->parent->meta[lnode->p_idx];
+    for (int m = 0; m < kMTMetaCount; m++) {
+      meta_p[m] += meta_new[m] - meta_old[m];
+    }
+
+    lnode = lnode->parent;
+  }
+
+  for (int m = 0; m < kMTMetaCount; m++) {
+    b->meta_root[m] += meta_new[m] - meta_old[m];
+  }
+}
+
 /// similar to intersect_common but modify x and y in place to retain
 /// only the items which are NOT in common
 static void intersect_merge(Intersection *restrict m, Intersection *restrict x,
