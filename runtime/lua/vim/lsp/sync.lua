@@ -53,7 +53,7 @@ local str_utf_end = vim.str_utf_end
 ---@param line string the line to index into
 ---@param byte integer the byte idx
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil (default: utf-8)
---@returns integer the utf idx for the given encoding
+---@return integer utf_idx for the given encoding
 local function byte_to_utf(line, byte, offset_encoding)
   -- convert to 0 based indexing for str_utfindex
   byte = byte - 1
@@ -204,7 +204,7 @@ end
 --- Normalized to the next codepoint.
 --- prev_end_range is the text range sent to the server representing the changed region.
 --- curr_end_range is the text that should be collected and sent to the server.
---
+---
 ---@param prev_lines string[] list of lines
 ---@param curr_lines string[] list of lines
 ---@param start_range vim.lsp.sync.Range

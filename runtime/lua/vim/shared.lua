@@ -6,6 +6,7 @@
 -- or the test suite. (Eventually the test suite will be run in a worker process,
 -- so this wouldn't be a separate case to consider)
 
+---@nodoc
 ---@diagnostic disable-next-line: lowercase-global
 vim = vim or {}
 
@@ -191,8 +192,8 @@ end
 ---
 ---@param s string String to split
 ---@param sep string Separator or pattern
----@param opts (table|nil) Keyword arguments |kwargs| accepted by |vim.gsplit()|
----@return string[] List of split components
+---@param opts? table Keyword arguments |kwargs| accepted by |vim.gsplit()|
+---@return string[] : List of split components
 function vim.split(s, sep, opts)
   local t = {}
   for c in vim.gsplit(s, sep, opts) do
@@ -206,9 +207,9 @@ end
 ---
 ---@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
----@generic T: table
+---@generic T
 ---@param t table<T, any> (table) Table
----@return T[] (list) List of keys
+---@return T[] : List of keys
 function vim.tbl_keys(t)
   vim.validate({ t = { t, 't' } })
   --- @cast t table<any,any>
@@ -225,7 +226,7 @@ end
 ---
 ---@generic T
 ---@param t table<any, T> (table) Table
----@return T[] (list) List of values
+---@return T[] : List of values
 function vim.tbl_values(t)
   vim.validate({ t = { t, 't' } })
 
@@ -243,7 +244,7 @@ end
 ---@generic T
 ---@param func fun(value: T): any (function) Function
 ---@param t table<any, T> (table) Table
----@return table Table of transformed values
+---@return table : Table of transformed values
 function vim.tbl_map(func, t)
   vim.validate({ func = { func, 'c' }, t = { t, 't' } })
   --- @cast t table<any,any>
@@ -260,7 +261,7 @@ end
 ---@generic T
 ---@param func fun(value: T): boolean (function) Function
 ---@param t table<any, T> (table) Table
----@return T[] (table) Table of filtered values
+---@return T[] : Table of filtered values
 function vim.tbl_filter(func, t)
   vim.validate({ func = { func, 'c' }, t = { t, 't' } })
   --- @cast t table<any,any>
@@ -401,7 +402,7 @@ end
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
 ---@param ... table Two or more tables
----@return table Merged table
+---@return table : Merged table
 function vim.tbl_extend(behavior, ...)
   return tbl_extend(behavior, false, ...)
 end
@@ -456,7 +457,7 @@ end
 
 --- Add the reverse lookup values to an existing table.
 --- For example:
---- ``tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }``
+--- `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
 ---
 --- Note that this *modifies* the input.
 ---@param o table Table to add the reverse to
@@ -493,7 +494,7 @@ end
 ---
 ---@param o table Table to index
 ---@param ... any Optional keys (0 or more, variadic) via which to index the table
----@return any Nested value indexed by key (if it exists), else nil
+---@return any : Nested value indexed by key (if it exists), else nil
 function vim.tbl_get(o, ...)
   local keys = { ... }
   if #keys == 0 then
@@ -519,8 +520,8 @@ end
 ---@generic T: table
 ---@param dst T List which will be modified and appended to
 ---@param src table List from which values will be inserted
----@param start (integer|nil) Start index on src. Defaults to 1
----@param finish (integer|nil) Final index on src. Defaults to `#src`
+---@param start integer? Start index on src. Defaults to 1
+---@param finish integer? Final index on src. Defaults to `#src`
 ---@return T dst
 function vim.list_extend(dst, src, start, finish)
   vim.validate({
@@ -666,7 +667,7 @@ end
 ---
 ---@see https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
 ---@param t table Table
----@return integer Number of non-nil values in table
+---@return integer : Number of non-nil values in table
 function vim.tbl_count(t)
   vim.validate({ t = { t, 't' } })
   --- @cast t table<any,any>
@@ -681,10 +682,10 @@ end
 --- Creates a copy of a table containing only elements from start to end (inclusive)
 ---
 ---@generic T
----@param list T[] (list) Table
+---@param list T[] Table
 ---@param start integer|nil Start range of slice
 ---@param finish integer|nil End range of slice
----@return T[] (list) Copy of table sliced from start to finish (inclusive)
+---@return T[] Copy of table sliced from start to finish (inclusive)
 function vim.list_slice(list, start, finish)
   local new_list = {} --- @type `T`[]
   for i = start or 1, finish or #list do
@@ -840,38 +841,37 @@ do
   --- Usage example:
   ---
   --- ```lua
-  ---  function user.new(name, age, hobbies)
-  ---    vim.validate{
-  ---      name={name, 'string'},
-  ---      age={age, 'number'},
-  ---      hobbies={hobbies, 'table'},
-  ---    }
-  ---    ...
-  ---  end
+  --- function user.new(name, age, hobbies)
+  ---   vim.validate{
+  ---     name={name, 'string'},
+  ---     age={age, 'number'},
+  ---     hobbies={hobbies, 'table'},
+  ---   }
+  ---   ...
+  --- end
   --- ```
   ---
   --- Examples with explicit argument values (can be run directly):
   ---
   --- ```lua
-  ---  vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
-  ---     --> NOP (success)
+  --- vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
+  ---    --> NOP (success)
   ---
-  ---  vim.validate{arg1={1, 'table'}}
-  ---     --> error('arg1: expected table, got number')
+  --- vim.validate{arg1={1, 'table'}}
+  ---    --> error('arg1: expected table, got number')
   ---
-  ---  vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
-  ---     --> error('arg1: expected even number, got 3')
+  --- vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
+  ---    --> error('arg1: expected even number, got 3')
   --- ```
   ---
   --- If multiple types are valid they can be given as a list.
   ---
   --- ```lua
-  ---  vim.validate{arg1={{'foo'}, {'table', 'string'}}, arg2={'foo', {'table', 'string'}}}
-  ---  -- NOP (success)
+  --- vim.validate{arg1={{'foo'}, {'table', 'string'}}, arg2={'foo', {'table', 'string'}}}
+  --- -- NOP (success)
   ---
-  ---  vim.validate{arg1={1, {'string', 'table'}}}
-  ---  -- error('arg1: expected string|table, got number')
-  ---
+  --- vim.validate{arg1={1, {'string', 'table'}}}
+  --- -- error('arg1: expected string|table, got number')
   --- ```
   ---
   ---@param opt table<vim.validate.Type,vim.validate.Spec> (table) Names of parameters to validate. Each key is a parameter
@@ -989,19 +989,19 @@ do
   --- Once the buffer is full, adding a new entry overrides the oldest entry.
   ---
   --- ```lua
-  ---   local ringbuf = vim.ringbuf(4)
-  ---   ringbuf:push("a")
-  ---   ringbuf:push("b")
-  ---   ringbuf:push("c")
-  ---   ringbuf:push("d")
-  ---   ringbuf:push("e")    -- overrides "a"
-  ---   print(ringbuf:pop()) -- returns "b"
-  ---   print(ringbuf:pop()) -- returns "c"
+  --- local ringbuf = vim.ringbuf(4)
+  --- ringbuf:push("a")
+  --- ringbuf:push("b")
+  --- ringbuf:push("c")
+  --- ringbuf:push("d")
+  --- ringbuf:push("e")    -- overrides "a"
+  --- print(ringbuf:pop()) -- returns "b"
+  --- print(ringbuf:pop()) -- returns "c"
   ---
-  ---   -- Can be used as iterator. Pops remaining items:
-  ---   for val in ringbuf do
-  ---     print(val)
-  ---   end
+  --- -- Can be used as iterator. Pops remaining items:
+  --- for val in ringbuf do
+  ---   print(val)
+  --- end
   --- ```
   ---
   --- Returns a Ringbuf instance with the following methods:

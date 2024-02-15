@@ -5,22 +5,20 @@ error('Cannot require a meta file')
 -- (based on revision 4aded588f9531d89555566bb1de27490354b91c7)
 -- with types being renamed to include the vim namespace and with some descriptions made less verbose.
 
----@defgroup vim.lpeg
----<pre>help
----LPeg is a pattern-matching library for Lua, based on
----Parsing Expression Grammars (https://bford.info/packrat/) (PEGs).
+--- @brief <pre>help
+--- LPeg is a pattern-matching library for Lua, based on
+--- Parsing Expression Grammars (https://bford.info/packrat/) (PEGs).
 ---
----                                                                    *lua-lpeg*
----                                                            *vim.lpeg.Pattern*
----The LPeg library for parsing expression grammars is included as `vim.lpeg`
----(https://www.inf.puc-rio.br/~roberto/lpeg/).
+---                                                                     *lua-lpeg*
+---                                                             *vim.lpeg.Pattern*
+--- The LPeg library for parsing expression grammars is included as `vim.lpeg`
+--- (https://www.inf.puc-rio.br/~roberto/lpeg/).
 ---
----In addition, its regex-like interface is available as |vim.re|
----(https://www.inf.puc-rio.br/~roberto/lpeg/re.html).
+--- In addition, its regex-like interface is available as |vim.re|
+--- (https://www.inf.puc-rio.br/~roberto/lpeg/re.html).
 ---
----</pre>
+--- </pre>
 
---- *LPeg* is a new pattern-matching library for Lua, based on [Parsing Expression Grammars](https://bford.info/packrat/) (PEGs).
 vim.lpeg = {}
 
 --- @class vim.lpeg.Pattern
@@ -88,6 +86,7 @@ function Pattern:match(subject, init) end
 
 --- Returns the string `"pattern"` if the given value is a pattern, otherwise `nil`.
 ---
+--- @param value vim.lpeg.Pattern|string|integer|boolean|table|function
 --- @return "pattern"|nil
 function vim.lpeg.type(value) end
 

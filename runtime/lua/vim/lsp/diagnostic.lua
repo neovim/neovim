@@ -1,5 +1,3 @@
----@brief lsp-diagnostic
-
 local protocol = require('vim.lsp.protocol')
 local ms = protocol.Methods
 
@@ -287,6 +285,7 @@ end
 --- )
 --- ```
 ---
+---@param _ lsp.ResponseError?
 ---@param result lsp.PublishDiagnosticsParams
 ---@param ctx lsp.HandlerContext
 ---@param config? vim.diagnostic.Opts Configuration table (see |vim.diagnostic.config()|).
@@ -319,6 +318,7 @@ end
 --- )
 --- ```
 ---
+---@param _ lsp.ResponseError?
 ---@param result lsp.DocumentDiagnosticReport
 ---@param ctx lsp.HandlerContext
 ---@param config table Configuration table (see |vim.diagnostic.config()|).

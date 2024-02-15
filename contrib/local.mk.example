@@ -55,9 +55,3 @@
 # DEPS_CMAKE_FLAGS += -DUSE_BUNDLED=OFF
 
 # .DEFAULT_GOAL := nvim
-#
-# Run doxygen over the source code.
-# Output will be in build/doxygen
-#
-# doxygen:
-# 	doxygen src/Doxyfile

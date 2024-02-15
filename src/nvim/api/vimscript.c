@@ -351,9 +351,7 @@ typedef struct {
   Object *ret_node_p;
 } ExprASTConvStackItem;
 
-/// @cond DOXYGEN_NOT_A_FUNCTION
 typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
-/// @endcond
 
 /// Parse a Vimscript expression.
 ///
@@ -387,8 +385,8 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///          - "arg": String, error message argument.
 ///        - "len": Amount of bytes successfully parsed. With flags equal to ""
 ///                 that should be equal to the length of expr string.
-///                 (“Successfully parsed” here means “participated in AST
-///                  creation”, not “till the first error”.)
+///                 ("Successfully parsed" here means "participated in AST
+///                  creation", not "till the first error".)
 ///        - "ast": AST, either nil or a dictionary with these keys:
 ///          - "type": node type, one of the value names from ExprASTNodeType
 ///                    stringified without "kExprNode" prefix.

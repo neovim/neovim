@@ -1,4 +1,4 @@
----TODO: This is implemented only for files currently.
+-- TODO: This is implemented only for files currently.
 -- https://tools.ietf.org/html/rfc3986
 -- https://tools.ietf.org/html/rfc2732
 -- https://tools.ietf.org/html/rfc2396
@@ -116,7 +116,6 @@ end
 
 ---Gets the buffer for a uri.
 ---Creates a new unloaded buffer if no buffer for the uri already exists.
---
 ---@param uri string
 ---@return integer bufnr
 function M.uri_to_bufnr(uri)

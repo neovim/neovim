@@ -165,7 +165,7 @@ end
 
 --- Checks whether the level is sufficient for logging.
 ---@param level integer log level
----@returns (bool) true if would log, false if not
+---@return bool : true if would log, false if not
 function log.should_log(level)
   return level >= current_log_level
 end

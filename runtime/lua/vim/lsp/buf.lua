@@ -12,7 +12,7 @@ local M = {}
 ---@param method (string) LSP method name
 ---@param params (table|nil) Parameters to send to the server
 ---@param handler (function|nil) See |lsp-handler|. Follows |lsp-handler-resolution|
---
+---
 ---@return table<integer, integer> client_request_ids Map of client-id:request-id pairs
 ---for all successful requests.
 ---@return function _cancel_all_requests Function which can be used to
@@ -172,12 +172,13 @@ end
 ---
 ---     - filter (function|nil):
 ---         Predicate used to filter clients. Receives a client as argument and must return a
----         boolean. Clients matching the predicate are included. Example: <pre>lua
----                     -- Never request typescript-language-server for formatting
----                     vim.lsp.buf.format {
----                       filter = function(client) return client.name ~= "tsserver" end
----                     }
----         </pre>
+---         boolean. Clients matching the predicate are included. Example:
+---         ```lua
+---            -- Never request typescript-language-server for formatting
+---              vim.lsp.buf.format {
+---                filter = function(client) return client.name ~= "tsserver" end
+---              }
+---         ```
 ---
 ---     - async boolean|nil
 ---         If true the method won't block. Defaults to false.
@@ -472,6 +473,7 @@ end
 
 --- Add the folder at path to the workspace folders. If {path} is
 --- not provided, the user will be prompted for a path using |input()|.
+--- @param workspace_folder? string
 function M.add_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder
     or npcall(vim.fn.input, 'Workspace Folder: ', vim.fn.expand('%:p:h'), 'dir')
@@ -511,6 +513,7 @@ end
 --- Remove the folder at path from the workspace folders. If
 --- {path} is not provided, the user will be prompted for
 --- a path using |input()|.
+--- @param workspace_folder? string
 function M.remove_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder
     or npcall(vim.fn.input, 'Workspace Folder: ', vim.fn.expand('%:p:h'))
@@ -725,15 +728,15 @@ end
 ---
 ---@param options table|nil Optional table which holds the following optional fields:
 ---  - context: (table|nil)
----      Corresponds to `CodeActionContext` of the LSP specification:
----        - diagnostics (table|nil):
----                      LSP `Diagnostic[]`. Inferred from the current
----                      position if not provided.
----        - only (table|nil):
----               List of LSP `CodeActionKind`s used to filter the code actions.
----               Most language servers support values like `refactor`
----               or `quickfix`.
----        - triggerKind (number|nil): The reason why code actions were requested.
+---    Corresponds to `CodeActionContext` of the LSP specification:
+---      - diagnostics (table|nil):
+---                    LSP `Diagnostic[]`. Inferred from the current
+---                    position if not provided.
+---      - only (table|nil):
+---             List of LSP `CodeActionKind`s used to filter the code actions.
+---             Most language servers support values like `refactor`
+---             or `quickfix`.
+---      - triggerKind (number|nil): The reason why code actions were requested.
 ---  - filter: (function|nil)
 ---           Predicate taking an `CodeAction` and returning a boolean.
 ---  - apply: (boolean|nil)

@@ -2279,9 +2279,9 @@ end
 --- Perform filetype detection.
 ---
 --- The filetype can be detected using one of three methods:
----  1. Using an existing buffer
----  2. Using only a file name
----  3. Using only file contents
+--- 1. Using an existing buffer
+--- 2. Using only a file name
+--- 3. Using only file contents
 ---
 --- Of these, option 1 provides the most accurate result as it uses both the buffer's filename and
 --- (optionally) the buffer contents. Options 2 and 3 can be used without an existing buffer, but

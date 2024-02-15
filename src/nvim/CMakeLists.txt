@@ -902,14 +902,6 @@ set(VIMDOC_FILES
   ${NVIM_RUNTIME_DIR}/doc/treesitter.txt
 )
 
-set(MPACK_FILES
-  ${NVIM_RUNTIME_DIR}/doc/api.mpack
-  ${NVIM_RUNTIME_DIR}/doc/diagnostic.mpack
-  ${NVIM_RUNTIME_DIR}/doc/lsp.mpack
-  ${NVIM_RUNTIME_DIR}/doc/lua.mpack
-  ${NVIM_RUNTIME_DIR}/doc/treesitter.mpack
-)
-
 file(GLOB API_SOURCES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/nvim/api/*.c)
 
 file(GLOB LUA_SOURCES CONFIGURE_DEPENDS
@@ -921,25 +913,25 @@ file(GLOB LUA_SOURCES CONFIGURE_DEPENDS
 )
 
 add_custom_command(
-  OUTPUT ${MPACK_FILES}
-  COMMAND ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.py
+  OUTPUT ${VIMDOC_FILES}
+  COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${NVIM_RUNTIME_DIR}"
+    $<TARGET_FILE:nvim_bin> -l scripts/gen_vimdoc.lua
   DEPENDS
-    nvim_bin
+    nvim
     ${API_SOURCES}
     ${LUA_SOURCES}
-    ${VIMDOC_FILES}
-    ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.py
-    ${PROJECT_SOURCE_DIR}/scripts/lua2dox.lua
+    ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.lua
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 
 add_custom_command(
   OUTPUT ${GEN_EVAL_TOUCH}
   COMMAND ${CMAKE_COMMAND} -E touch ${GEN_EVAL_TOUCH}
-  COMMAND $<TARGET_FILE:nvim_bin> -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
+  COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${NVIM_RUNTIME_DIR}"
+    $<TARGET_FILE:nvim_bin> -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
   DEPENDS
+    nvim
     ${API_METADATA}
-    ${NVIM_RUNTIME_DIR}/doc/api.mpack
     ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/eval.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/options.lua

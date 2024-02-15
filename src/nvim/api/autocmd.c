@@ -75,7 +75,7 @@ static int64_t next_autocmd_id = 1;
 ///             - buffer: Buffer number or list of buffer numbers for buffer local autocommands
 ///             |autocmd-buflocal|. Cannot be used with {pattern}
 /// @return Array of autocommands matching the criteria, with each item
-///         containing the following fields:
+///             containing the following fields:
 ///             - id (number): the autocommand id (only when defined with the API).
 ///             - group (integer): the autocommand group id.
 ///             - group_name (string): the autocommand group name.
@@ -83,10 +83,10 @@ static int64_t next_autocmd_id = 1;
 ///             - event (string): the autocommand event.
 ///             - command (string): the autocommand command. Note: this will be empty if a callback is set.
 ///             - callback (function|string|nil): Lua function or name of a Vim script function
-///             which is executed when this autocommand is triggered.
+///               which is executed when this autocommand is triggered.
 ///             - once (boolean): whether the autocommand is only run once.
 ///             - pattern (string): the autocommand pattern.
-///             If the autocommand is buffer local |autocmd-buffer-local|:
+///               If the autocommand is buffer local |autocmd-buffer-local|:
 ///             - buflocal (boolean): true if the autocommand is buffer local.
 ///             - buffer (number): the buffer number.
 Array nvim_get_autocmds(Dict(get_autocmds) *opts, Arena *arena, Error *err)
@@ -536,9 +536,9 @@ void nvim_del_autocmd(Integer id, Error *err)
 /// @param opts Parameters
 ///         - event: (string|table)
 ///              Examples:
-///                 - event: "pat1"
-///                 - event: { "pat1" }
-///                 - event: { "pat1", "pat2", "pat3" }
+///              - event: "pat1"
+///              - event: { "pat1" }
+///              - event: { "pat1", "pat2", "pat3" }
 ///         - pattern: (string|table)
 ///             - pattern or patterns to match exactly.
 ///                 - For example, if you have `*.py` as that pattern for the autocmd,

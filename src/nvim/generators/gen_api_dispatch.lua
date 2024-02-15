@@ -23,9 +23,7 @@ local function_names = {}
 
 local c_grammar = require('generators.c_grammar')
 
-local function startswith(String, Start)
-  return string.sub(String, 1, string.len(Start)) == Start
-end
+local startswith = vim.startswith
 
 local function add_function(fn)
   local public = startswith(fn.name, 'nvim_') or fn.deprecated_since
@@ -112,10 +110,12 @@ for i = 6, #arg do
   local tmp = c_grammar.grammar:match(input:read('*all'))
   for j = 1, #tmp do
     local val = tmp[j]
-    if val.keyset_name then
-      add_keyset(val)
-    else
-      add_function(val)
+    if val[1] ~= 'empty' then
+      if val.keyset_name then
+        add_keyset(val)
+      else
+        add_function(val)
+      end
     end
   end
   input:close()

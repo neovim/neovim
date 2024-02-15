@@ -61,8 +61,7 @@ Object nvim_execute_lua(String code, Array args, Arena *arena, Error *err)
 
 /// Gets the buffer number
 ///
-/// @deprecated The buffer number now is equal to the object id,
-///             so there is no need to use this function.
+/// @deprecated The buffer number now is equal to the object id
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param[out] err   Error details, if any
@@ -100,8 +99,7 @@ void nvim_buf_clear_highlight(Buffer buffer, Integer ns_id, Integer line_start, 
 
 /// Set the virtual text (annotation) for a buffer line.
 ///
-/// @deprecated use nvim_buf_set_extmark to use full virtual text
-///             functionality.
+/// @deprecated use nvim_buf_set_extmark to use full virtual text functionality.
 ///
 /// The text will be placed after the buffer text. Virtual text will never
 /// cause reflow, rather virtual text will be truncated at the end of the screen
@@ -119,7 +117,7 @@ void nvim_buf_clear_highlight(Buffer buffer, Integer ns_id, Integer line_start, 
 /// virtual text, the allocated id is then returned.
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
-/// @param ns_id      Namespace to use or 0 to create a namespace,
+/// @param src_id     Namespace to use or 0 to create a namespace,
 ///                   or -1 for a ungrouped annotation
 /// @param line       Line to annotate with virtual text (zero-indexed)
 /// @param chunks     A list of [text, hl_group] arrays, each representing a

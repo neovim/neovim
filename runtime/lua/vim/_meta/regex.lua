@@ -2,8 +2,6 @@
 
 -- luacheck: no unused args
 
---- @defgroup vim.regex
----
 --- @brief Vim regexes can be used directly from Lua. Currently they only allow
 --- matching within a single line.
 

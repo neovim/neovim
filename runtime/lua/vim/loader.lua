@@ -190,7 +190,6 @@ function Loader.loader_lib(modname)
   local sysname = uv.os_uname().sysname:lower() or ''
   local is_win = sysname:find('win', 1, true) and not sysname:find('darwin', 1, true)
   local ret = M.find(modname, { patterns = is_win and { '.dll' } or { '.so' } })[1]
-  ---@type function?, string?
   if ret then
     -- Making function name in Lua 5.1 (see src/loadlib.c:mkfuncname) is
     -- a) strip prefix up to and including the first dash, if any
@@ -208,15 +207,13 @@ end
 --- `loadfile` using the cache
 --- Note this has the mode and env arguments which is supported by LuaJIT and is 5.1 compatible.
 ---@param filename? string
----@param mode? "b"|"t"|"bt"
+---@param _mode? "b"|"t"|"bt"
 ---@param env? table
 ---@return function?, string?  error_message
 ---@private
--- luacheck: ignore 312
-function Loader.loadfile(filename, mode, env)
+function Loader.loadfile(filename, _mode, env)
   -- ignore mode, since we byte-compile the Lua source files
-  mode = nil
-  return Loader.load(normalize(filename), { mode = mode, env = env })
+  return Loader.load(normalize(filename), { env = env })
 end
 
 --- Checks whether two cache hashes are the same based on:
@@ -273,14 +270,14 @@ end
 
 --- Finds Lua modules for the given module name.
 ---@param modname string Module name, or `"*"` to find the top-level modules instead
----@param opts? ModuleFindOpts (table|nil) Options for finding a module:
+---@param opts? ModuleFindOpts (table) Options for finding a module:
 ---    - rtp: (boolean) Search for modname in the runtime path (defaults to `true`)
 ---    - paths: (string[]) Extra paths to search for modname (defaults to `{}`)
 ---    - patterns: (string[]) List of patterns to use when searching for modules.
 ---                A pattern is a string added to the basename of the Lua module being searched.
 ---                (defaults to `{"/init.lua", ".lua"}`)
 ---    - all: (boolean) Return all matches instead of just the first one (defaults to `false`)
----@return ModuleInfo[] (list) A list of results with the following properties:
+---@return ModuleInfo[] (table) A list of results with the following properties:
 ---    - modpath: (string) the path to the module
 ---    - modname: (string) the name of the module
 ---    - stat: (table|nil) the fs_stat of the module path. Won't be returned for `modname="*"`

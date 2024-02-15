@@ -273,8 +273,6 @@ end
 ---@field notify_reply_callbacks table<integer, function> dict of message_id to callback
 ---@field transport vim.lsp.rpc.Transport
 ---@field dispatchers vim.lsp.rpc.Dispatchers
-
----@class vim.lsp.rpc.Client
 local Client = {}
 
 ---@private

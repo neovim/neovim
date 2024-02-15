@@ -368,6 +368,8 @@ end
 --- )
 --- ```
 ---
+---@param _ lsp.ResponseError?
+---@param result lsp.Hover
 ---@param ctx lsp.HandlerContext
 ---@param config table Configuration table.
 ---     - border:     (default=nil)
@@ -464,7 +466,8 @@ M[ms.textDocument_implementation] = location_handler
 --- )
 --- ```
 ---
----@param result table Response from the language server
+---@param _ lsp.ResponseError?
+---@param result lsp.SignatureHelp  Response from the language server
 ---@param ctx lsp.HandlerContext Client context
 ---@param config table Configuration table.
 ---     - border:     (default=nil)
