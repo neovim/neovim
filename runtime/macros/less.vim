@@ -1,6 +1,6 @@
 " Vim script to work like "less"
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2023 Aug 10
+" Last Change:	2024 Feb 15
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Avoid loading this file twice, allow the user to define his own script.
