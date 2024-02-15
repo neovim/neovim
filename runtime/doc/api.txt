@@ -179,6 +179,7 @@ Nvim exposes its API metadata as a Dictionary with these items:
                           describing the return value and parameters.
 - ui_events               |UI| event signatures
 - ui_options              Supported |ui-option|s
+- ui_element_tags         String to bit number mapping for |ui-elementtype|
 - {fn}.since              API level where function {fn} was introduced
 - {fn}.deprecated_since   API level where function {fn} was deprecated
 - types                   Custom handle types defined by Nvim

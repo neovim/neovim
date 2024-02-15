@@ -38,6 +38,8 @@ with these (optional) keys:
 
 							*ui-ext-options*
 - `ext_cmdline`		Externalize the cmdline. |ui-cmdline|
+- `ext_elementtype`	Gives details about UI element types. |ui-elementtype|
+			Sets `ext_linegrid` implicitly.
 - `ext_hlstate`		Detailed highlight state. |ui-hlstate|
 			Sets `ext_linegrid` implicitly.
 - `ext_linegrid`	Line-based grid events. |ui-linegrid|
@@ -308,7 +310,7 @@ numerical highlight ids to the actual attributes.
 	screen with changed background color itself.
 
 							*ui-event-hl_attr_define*
-["hl_attr_define", id, rgb_attr, cterm_attr, info] ~
+["hl_attr_define", id, rgb_attr, cterm_attr, info, element_tags] ~
 	Add a highlight with `id`  to the highlight table, with the
 	attributes specified by the `rgb_attr` and `cterm_attr` dicts, with the
 	following (all optional) keys.
@@ -356,6 +358,9 @@ numerical highlight ids to the actual attributes.
 
 	`info` is an empty array by default, and will be used by the
 	|ui-hlstate| extension explained below.
+
+	`element_tags` is an empty array by default, and will be used by the
+	|ui-elementtype| extension explained below.
 
 ["hl_group_set", name, hl_id] ~
 	The built-in highlight group `name` was set to use the attributes `hl_id`
@@ -575,6 +580,36 @@ differ, because the builtin group was linked to another group |:hi-link| , or
 because 'winhighlight' was used. UI items will be transmitted, even if the
 highlight group is cleared, so `ui_name` can always be used to reliably identify
 screen elements, even if no attributes have been applied.
+
+==============================================================================
+Details about UI element types				       *ui-elementtype*
+
+Activated by the `ext_elementtype` |ui-option|.
+Activates |ui-linegrid| implicitly.
+
+When this is set the `element_tags` parameter of |ui-event-hl_attr_define|
+contains semantic information about the type of UI element displayed.
+
+`element_tags` is a bitfield integer, with one more of the following tags set:
+    `StatusBar`    Status bars
+    `WinBar`       Winbars
+    `FloatBorder`  Floating window borders, including titles
+    `FloatTitle`   Floating window titles and footers
+    `Top`          A top element, like a floating window top border
+    `Bottom`       A bottom element
+    `Left`         A left element
+    `Right`        A right element
+    `HSplit`       A horizontal split, which also includes StatusBars, since they
+                 act as splits
+    `VSplit`       A vertical split
+
+The name to bit number mapping can be read from |api-metadata|, the bit number is simply the index.
+
+Multiple element tags can be set, so a floating window footer is represented as:
+    `FloatBorder` | `FloatTitle` | `Bottom`
+
+New element types can be added in the future, so UI implementations should be
+prepared to ignore the ones they don't handle.
 
 ==============================================================================
 Multigrid Events						 *ui-multigrid*

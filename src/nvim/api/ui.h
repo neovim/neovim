@@ -17,8 +17,22 @@ EXTERN const char *ui_ext_names[] INIT( = {
   "ext_linegrid",
   "ext_multigrid",
   "ext_hlstate",
+  "ext_elementtype",
   "ext_termcolors",
   "_debug_float",
+});
+
+EXTERN const char *ui_element_tag_names[] INIT( = {
+  "StatusBar",
+  "WinBar",
+  "FloatBorder",
+  "FloatTitle",
+  "Top",
+  "Bottom",
+  "Left",
+  "Right",
+  "HSplit",
+  "VSplit",
 });
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

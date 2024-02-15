@@ -18,6 +18,7 @@ typedef enum {
   kUILinegrid,
   kUIMultigrid,
   kUIHlState,
+  kUIElementType,
   kUITermColors,
   kUIFloatDebug,
   kUIExtCount,

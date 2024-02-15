@@ -81,8 +81,11 @@ local eq = helpers.eq
 local dedent = helpers.dedent
 local get_session = helpers.get_session
 local create_callindex = helpers.create_callindex
+local bit = require('bit')
 
 local inspect = vim.inspect
+
+local element_type_tags = {}
 
 local function isempty(v)
   return type(v) == 'table' and next(v) == nil
@@ -110,6 +113,7 @@ end
 --- @field private _grid_win_extmarks table<integer,table>
 --- @field private _attr_table table<integer,table>
 --- @field private _hl_info table<integer,table>
+--- @field private _hl_attr_tags table<integer, table<integer>>
 local Screen = {}
 Screen.__index = Screen
 
@@ -219,6 +223,7 @@ function Screen.new(width, height)
     mouse_enabled = true,
     _attrs = {},
     _hl_info = { [0] = {} },
+    _hl_attr_tags = {},
     _attr_table = { [0] = { {}, {} } },
     _clear_attrs = nil,
     _new_attrs = false,
@@ -268,6 +273,8 @@ end
 --- @field ext_newgrid? boolean
 --- @field ext_popupmenu? boolean
 --- @field ext_wildmenu? boolean
+--- @field ext_hlstate? boolean
+--- @field ext_elementtype? boolean
 --- @field rgb? boolean
 --- @field _debug_float? boolean
 
@@ -296,7 +303,30 @@ function Screen:attach(options, session)
   end
 
   if self._default_attr_ids == nil then
-    self._default_attr_ids = Screen._global_default_attr_ids
+    if self:_uses_table_format() then
+      self._default_attr_ids = {}
+      for _, id in pairs(Screen._global_default_attr_ids) do
+        local element
+        if self._rgb_cterm then
+          element = { id, id }
+        else
+          element = { id }
+        end
+        if self._options.ext_hlstate then
+          table.insert(element, {})
+        end
+        if self._options.ext_elementtype then
+          table.insert(element, {})
+        end
+        table.insert(self._default_attr_ids, element)
+      end
+    else
+      self._default_attr_ids = Screen._global_default_attr_ids
+    end
+  end
+  if options.ext_elementtype and #element_type_tags == 0 then
+    local metadata = helpers.api.nvim_get_api_info()[2]
+    element_type_tags = metadata.ui_element_tags
   end
 end
 
@@ -1152,9 +1182,18 @@ function Screen:_handle_grid_scroll(g, top, bot, left, right, rows, cols)
   end
 end
 
-function Screen:_handle_hl_attr_define(id, rgb_attrs, cterm_attrs, info)
+function Screen:_handle_hl_attr_define(id, rgb_attrs, cterm_attrs, info, element_tags)
   self._attr_table[id] = { rgb_attrs, cterm_attrs }
   self._hl_info[id] = info
+  local mask = 1
+  local element_tags_array = {}
+  for i = 1, 32 do
+    if bit.band(element_tags, mask) > 0 then
+      table.insert(element_tags_array, i)
+    end
+    mask = bit.lshift(mask, 1)
+  end
+  self._hl_attr_tags[id] = element_tags_array
   self._new_attrs = true
 end
 
@@ -1734,12 +1773,24 @@ function Screen:_insert_hl_id(attr_state, hl_id)
     end
   end
 
+  -- NOTE: entry always includes both the rgb and cterm value
   local entry = self._attr_table[hl_id]
+  -- NOTE: attrval uses a short format where only the enabled elements are included
+  -- For example if ext_hlstate is not enabled, then it's not included in the table
   local attrval
-  if self._rgb_cterm then
-    attrval = { entry[1], entry[2], info } -- unpack() doesn't work
-  elseif self._options.ext_hlstate then
-    attrval = { entry[1], info }
+  if self:_uses_table_format() then
+    if self._rgb_cterm then
+      attrval = { entry[1], entry[2] }
+    else
+      attrval = { self._options.rgb and entry[1] or entry[2] }
+    end
+
+    if self._options.ext_hlstate then
+      table.insert(attrval, info)
+    end
+    if self._options.ext_elementtype then
+      table.insert(attrval, self._hl_attr_tags[hl_id] or {})
+    end
   else
     attrval = self._options.rgb and entry[1] or entry[2]
   end
@@ -1761,18 +1812,36 @@ function Screen:linegrid_check_attrs(attrs)
     else
       matchinfo = iinfo
     end
+    local match_element_tags = self._hl_attr_tags[i]
+    local info, element_type
     for k, v in pairs(attrs) do
-      local attr, info, attr_rgb, attr_cterm
-      if self._rgb_cterm then
-        attr_rgb, attr_cterm, info = unpack(v)
-        attr = { attr_rgb, attr_cterm }
-        info = info or {}
-      elseif self._options.ext_hlstate then
-        attr, info = unpack(v)
+      -- NOTE: v uses a short format where only the enabled elements are included
+      -- For example if ext_hlstate is not enabled, then it's not included in the table
+      local attr
+      if self:_uses_table_format() then
+        local index
+
+        if self._rgb_cterm then
+          attr = { v[1], v[2] }
+          index = 3
+          assert(attr)
+        else
+          attr = v[1]
+          index = 2
+          assert(attr)
+        end
+        if self._options.ext_hlstate then
+          info = v[index]
+          index = index + 1
+        end
+
+        if self._options.ext_elementtype then
+          element_type = v[index]
+        end
       else
         attr = v
-        info = {}
       end
+      info = info or {}
       if self:_equal_attr_def(attr, def_attr) then
         if #info == #matchinfo then
           local match = false
@@ -1788,6 +1857,9 @@ function Screen:linegrid_check_attrs(attrs)
               end
             end
           end
+          if self._options.ext_elementtype then
+            match = match and self:_equal_element_tags(element_type, match_element_tags)
+          end
           if match then
             id_to_index[i] = k
           end
@@ -1797,6 +1869,7 @@ function Screen:linegrid_check_attrs(attrs)
     if
       self:_equal_attr_def(self._rgb_cterm and { {}, {} } or {}, def_attr)
       and #self._hl_info[i] == 0
+      and (self._hl_attr_tags[i] == nil or #self._hl_attr_tags[i] == 0)
     then
       id_to_index[i] = ''
     end
@@ -1805,23 +1878,39 @@ function Screen:linegrid_check_attrs(attrs)
 end
 
 function Screen:_pprint_hlitem(item)
-  -- print(inspect(item))
-  local multi = self._rgb_cterm or self._options.ext_hlstate
+  --print(inspect(item))
   local cterm = (not self._rgb_cterm and not self._options.rgb)
-  local attrdict = '{' .. self:_pprint_attrs(multi and item[1] or item, cterm) .. '}'
-  local attrdict2, hlinfo
-  local descdict = ''
+
+  if not self:_uses_table_format() then
+    return '{' .. self:_pprint_attrs(item, cterm) .. '}'
+  end
+  local attrdict = '{{' .. self:_pprint_attrs(item[1], cterm) .. '}'
+  local index
   if self._rgb_cterm then
-    attrdict2 = ', {' .. self:_pprint_attrs(item[2], true) .. '}'
-    hlinfo = item[3]
+    attrdict = attrdict .. ', {' .. self:_pprint_attrs(item[2], true) .. '}'
+    index = 3
   else
-    attrdict2 = ''
-    hlinfo = item[2]
+    index = 2
   end
+
   if self._options.ext_hlstate then
-    descdict = ', {' .. self:_pprint_hlinfo(hlinfo) .. '}'
+    attrdict = attrdict .. ', {' .. self:_pprint_hlinfo(item[index]) .. '}'
+    index = index + 1
   end
-  return (multi and '{' or '') .. attrdict .. attrdict2 .. descdict .. (multi and '}' or '')
+
+  if self._options.ext_elementtype then
+    attrdict = attrdict .. ', {'
+    local tags = item[index]
+    tags = tags or {}
+    for _, tag in ipairs(tags) do
+      attrdict = attrdict .. "'" .. element_type_tags[tag] .. "',"
+    end
+    attrdict = attrdict .. '}'
+  end
+
+  attrdict = attrdict .. '}'
+
+  return attrdict
 end
 
 function Screen:_pprint_hlinfo(states)
@@ -1940,6 +2029,18 @@ function Screen:_equal_info(a, b)
   return a.kind == b.kind and a.hi_name == b.hi_name and a.ui_name == b.ui_name
 end
 
+function Screen:_equal_element_tags(a, b)
+  if a == nil or b == nil or #a ~= #b then
+    return false
+  end
+  for i, v in ipairs(a) do
+    if v ~= element_type_tags[b[i]] then
+      return false
+    end
+  end
+  return true
+end
+
 function Screen:_attr_index(attrs, attr)
   if not attrs then
     return nil
@@ -1950,6 +2051,10 @@ function Screen:_attr_index(attrs, attr)
     end
   end
   return nil
+end
+
+function Screen:_uses_table_format()
+  return self._rgb_cterm or self._options.ext_hlstate or self._options.ext_elementtype
 end
 
 return Screen

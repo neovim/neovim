@@ -1594,6 +1594,7 @@ describe('TUI', function()
       {
         chan = 1,
         ext_cmdline = false,
+        ext_elementtype = false,
         ext_hlstate = false,
         ext_linegrid = true,
         ext_messages = false,
