@@ -574,6 +574,7 @@ end
 ---
 ---@param text_document_edit table: a `TextDocumentEdit` object
 ---@param index integer: Optional index of the edit, if from a list of edits (or nil, if not from a list)
+---@param offset_encoding? string
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
 function M.apply_text_document_edit(text_document_edit, index, offset_encoding)
   local text_document = text_document_edit.textDocument
@@ -770,7 +771,7 @@ end
 ---
 ---@param workspace_edit table `WorkspaceEdit`
 ---@param offset_encoding string utf-8|utf-16|utf-32 (required)
---see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
 function M.apply_workspace_edit(workspace_edit, offset_encoding)
   if offset_encoding == nil then
     vim.notify_once(
@@ -1130,6 +1131,7 @@ end
 ---   - for LocationLink, targetRange is shown (e.g., body of function definition)
 ---
 ---@param location table a single `Location` or `LocationLink`
+---@param opts table
 ---@return integer|nil buffer id of float window
 ---@return integer|nil window id of float window
 function M.preview_location(location, opts)
@@ -1243,6 +1245,7 @@ end
 ---
 --- If you want to open a popup with fancy markdown, use `open_floating_preview` instead
 ---
+---@param bufnr integer
 ---@param contents table of lines to show in window
 ---@param opts table with optional fields
 ---  - height    of floating window
@@ -1603,7 +1606,7 @@ end
 ---@param contents table of lines to show in window
 ---@param syntax string of syntax to set for opened buffer
 ---@param opts table with optional fields (additional keys are filtered with |vim.lsp.util.make_floating_popup_options()|
----                  before they are passed on to |nvim_open_win()|)
+---             before they are passed on to |nvim_open_win()|)
 ---             - height: (integer) height of floating window
 ---             - width: (integer) width of floating window
 ---             - wrap: (boolean, default true) wrap long lines
@@ -1868,6 +1871,7 @@ end
 --- Converts symbols to quickfix list items.
 ---
 ---@param symbols table DocumentSymbol[] or SymbolInformation[]
+---@param bufnr integer
 function M.symbols_to_items(symbols, bufnr)
   local function _symbols_to_items(_symbols, _items, _bufnr)
     for _, symbol in ipairs(_symbols) do

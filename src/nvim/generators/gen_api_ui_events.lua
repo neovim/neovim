@@ -93,6 +93,10 @@ local function call_ui_event_method(output, ev)
   output:write('}\n\n')
 end
 
+events = vim.tbl_filter(function(ev)
+  return ev[1] ~= 'empty'
+end, events)
+
 for i = 1, #events do
   local ev = events[i]
   assert(ev.return_type == 'void')

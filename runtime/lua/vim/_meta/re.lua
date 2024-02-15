@@ -7,15 +7,12 @@ error('Cannot require a meta file')
 -- Copyright © 2007-2023 Lua.org, PUC-Rio.
 -- See 'lpeg.html' for license
 
---- @defgroup vim.re
----<pre>help
----The `vim.re` module provides a conventional regex-like syntax for pattern usage
----within LPeg |vim.lpeg|.
+--- @brief
+--- The `vim.re` module provides a conventional regex-like syntax for pattern usage
+--- within LPeg |vim.lpeg|.
 ---
----See https://www.inf.puc-rio.br/~roberto/lpeg/re.html for the original
----documentation including regex syntax and more concrete examples.
----
----</pre>
+--- See https://www.inf.puc-rio.br/~roberto/lpeg/re.html for the original
+--- documentation including regex syntax and more concrete examples.
 
 --- Compiles the given {string} and returns an equivalent LPeg pattern. The given string may define
 --- either an expression or a grammar. The optional {defs} table provides extra Lua values to be used

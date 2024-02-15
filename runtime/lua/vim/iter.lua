@@ -1,4 +1,4 @@
----@defgroup vim.iter
+--- @brief
 ---
 --- \*vim.iter()\* is an interface for |iterable|s: it wraps a table or function argument into an
 --- \*Iter\* object with methods (such as |Iter:filter()| and |Iter:map()|) that transform the
@@ -66,6 +66,7 @@
 
 ---@class IterMod
 ---@operator call:Iter
+
 local M = {}
 
 ---@class Iter
@@ -599,7 +600,7 @@ end
 --- -- 12
 ---
 --- ```
----
+---@param f any
 ---@return any
 function Iter.find(self, f)
   if type(f) ~= 'function' then
@@ -645,6 +646,7 @@ end
 ---
 ---@see Iter.find
 ---
+---@param f any
 ---@return any
 ---@diagnostic disable-next-line: unused-local
 function Iter.rfind(self, f) -- luacheck: no unused args
@@ -724,6 +726,7 @@ function Iter.nextback(self) -- luacheck: no unused args
   error('nextback() requires a list-like table')
 end
 
+--- @nodoc
 function ListIter.nextback(self)
   if self._head ~= self._tail then
     local inc = self._head < self._tail and 1 or -1
@@ -754,6 +757,7 @@ function Iter.peekback(self) -- luacheck: no unused args
   error('peekback() requires a list-like table')
 end
 
+---@nodoc
 function ListIter.peekback(self)
   if self._head ~= self._tail then
     local inc = self._head < self._tail and 1 or -1

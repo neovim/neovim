@@ -231,7 +231,7 @@ end
 ---@param lang string Language to use for the query
 ---@param query_name string Name of the query (e.g. "highlights")
 ---
----@return vim.treesitter.Query|nil -- Parsed query. `nil` if no query files are found.
+---@return vim.treesitter.Query|nil : Parsed query. `nil` if no query files are found.
 M.get = vim.func._memoize('concat-2', function(lang, query_name)
   if explicit_queries[lang][query_name] then
     return explicit_queries[lang][query_name]
@@ -1019,6 +1019,8 @@ end
 --- vim.bo.omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
 --- ```
 ---
+--- @param findstart 0|1
+--- @param base string
 function M.omnifunc(findstart, base)
   return vim.treesitter._query_linter.omnifunc(findstart, base)
 end

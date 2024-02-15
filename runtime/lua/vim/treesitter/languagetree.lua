@@ -1,5 +1,3 @@
---- @defgroup lua-treesitter-languagetree
----
 --- @brief A \*LanguageTree\* contains a tree of parsers: the root treesitter parser for {lang} and
 --- any "injected" language parsers, which themselves may inject other languages, recursively.
 --- For example a Lua buffer containing some Vimscript commands needs multiple parsers to fully
@@ -433,7 +431,7 @@ function LanguageTree:parse(range)
   local query_time = 0
   local total_parse_time = 0
 
-  --- At least 1 region is invalid
+  -- At least 1 region is invalid
   if not self:is_valid(true) then
     changes, no_regions_parsed, total_parse_time = self:_parse_regions(range)
     -- Need to run injections when we parsed something

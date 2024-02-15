@@ -206,99 +206,96 @@ end
 --- |vim.lsp.get_client_by_id()| or |vim.lsp.get_clients()|.
 ---
 --- - Methods:
+---   - request(method, params, [handler], bufnr)
+---      Sends a request to the server.
+---      This is a thin wrapper around {client.rpc.request} with some additional
+---      checking.
+---      If {handler} is not specified,  If one is not found there, then an error will occur.
+---      Returns: {status}, {[client_id]}. {status} is a boolean indicating if
+---      the notification was successful. If it is `false`, then it will always
+---      be `false` (the client has shutdown).
+---      If {status} is `true`, the function returns {request_id} as the second
+---      result. You can use this with `client.cancel_request(request_id)`
+---      to cancel the request.
 ---
----  - request(method, params, [handler], bufnr)
----     Sends a request to the server.
----     This is a thin wrapper around {client.rpc.request} with some additional
----     checking.
----     If {handler} is not specified,  If one is not found there, then an error will occur.
----     Returns: {status}, {[client_id]}. {status} is a boolean indicating if
----     the notification was successful. If it is `false`, then it will always
----     be `false` (the client has shutdown).
----     If {status} is `true`, the function returns {request_id} as the second
----     result. You can use this with `client.cancel_request(request_id)`
----     to cancel the request.
+---   - request_sync(method, params, timeout_ms, bufnr)
+---      Sends a request to the server and synchronously waits for the response.
+---      This is a wrapper around {client.request}
+---      Returns: { err=err, result=result }, a dictionary, where `err` and `result` come from
+---      the |lsp-handler|. On timeout, cancel or error, returns `(nil, err)` where `err` is a
+---      string describing the failure reason. If the request was unsuccessful returns `nil`.
 ---
----  - request_sync(method, params, timeout_ms, bufnr)
----     Sends a request to the server and synchronously waits for the response.
----     This is a wrapper around {client.request}
----     Returns: { err=err, result=result }, a dictionary, where `err` and `result` come from
----     the |lsp-handler|. On timeout, cancel or error, returns `(nil, err)` where `err` is a
----     string describing the failure reason. If the request was unsuccessful returns `nil`.
+---   - notify(method, params)
+---      Sends a notification to an LSP server.
+---      Returns: a boolean to indicate if the notification was successful. If
+---      it is false, then it will always be false (the client has shutdown).
 ---
----  - notify(method, params)
----     Sends a notification to an LSP server.
----     Returns: a boolean to indicate if the notification was successful. If
----     it is false, then it will always be false (the client has shutdown).
+---   - cancel_request(id)
+---      Cancels a request with a given request id.
+---      Returns: same as `notify()`.
 ---
----  - cancel_request(id)
----     Cancels a request with a given request id.
----     Returns: same as `notify()`.
+---   - stop([force])
+---      Stops a client, optionally with force.
+---      By default, it will just ask the server to shutdown without force.
+---      If you request to stop a client which has previously been requested to
+---      shutdown, it will automatically escalate and force shutdown.
 ---
----  - stop([force])
----     Stops a client, optionally with force.
----     By default, it will just ask the server to shutdown without force.
----     If you request to stop a client which has previously been requested to
----     shutdown, it will automatically escalate and force shutdown.
+---   - is_stopped()
+---      Checks whether a client is stopped.
+---      Returns: true if the client is fully stopped.
 ---
----  - is_stopped()
----     Checks whether a client is stopped.
----     Returns: true if the client is fully stopped.
+---   - on_attach(client, bufnr)
+---      Runs the on_attach function from the client's config if it was defined.
+---      Useful for buffer-local setup.
 ---
----  - on_attach(client, bufnr)
----     Runs the on_attach function from the client's config if it was defined.
----     Useful for buffer-local setup.
----
----  - supports_method(method, [opts]): boolean
----     Checks if a client supports a given method.
----     Always returns true for unknown off-spec methods.
----     [opts] is a optional `{bufnr?: integer}` table.
----     Some language server capabilities can be file specific.
+---   - supports_method(method, [opts]): boolean
+---      Checks if a client supports a given method.
+---      Always returns true for unknown off-spec methods.
+---      [opts] is a optional `{bufnr?: integer}` table.
+---      Some language server capabilities can be file specific.
 ---
 --- - Members
----  - {id} (number): The id allocated to the client.
+---   - {id} (number): The id allocated to the client.
 ---
----  - {name} (string): If a name is specified on creation, that will be
----    used. Otherwise it is just the client id. This is used for
----    logs and messages.
+---   - {name} (string): If a name is specified on creation, that will be
+---     used. Otherwise it is just the client id. This is used for
+---     logs and messages.
 ---
----  - {rpc} (table): RPC client object, for low level interaction with the
----    client. See |vim.lsp.rpc.start()|.
+---   - {rpc} (table): RPC client object, for low level interaction with the
+---     client. See |vim.lsp.rpc.start()|.
 ---
----  - {offset_encoding} (string): The encoding used for communicating
----    with the server. You can modify this in the `config`'s `on_init` method
----    before text is sent to the server.
+---   - {offset_encoding} (string): The encoding used for communicating
+---     with the server. You can modify this in the `config`'s `on_init` method
+---     before text is sent to the server.
 ---
----  - {handlers} (table): The handlers used by the client as described in |lsp-handler|.
+---   - {handlers} (table): The handlers used by the client as described in |lsp-handler|.
 ---
----  - {commands} (table): Table of command name to function which is called if
----    any LSP action (code action, code lenses, ...) triggers the command.
----    Client commands take precedence over the global command registry.
+---   - {commands} (table): Table of command name to function which is called if
+---     any LSP action (code action, code lenses, ...) triggers the command.
+---     Client commands take precedence over the global command registry.
 ---
----  - {requests} (table): The current pending requests in flight
----    to the server. Entries are key-value pairs with the key
----    being the request ID while the value is a table with `type`,
----    `bufnr`, and `method` key-value pairs. `type` is either "pending"
----    for an active request, or "cancel" for a cancel request. It will
----    be "complete" ephemerally while executing |LspRequest| autocmds
----    when replies are received from the server.
+---   - {requests} (table): The current pending requests in flight
+---     to the server. Entries are key-value pairs with the key
+---     being the request ID while the value is a table with `type`,
+---     `bufnr`, and `method` key-value pairs. `type` is either "pending"
+---     for an active request, or "cancel" for a cancel request. It will
+---     be "complete" ephemerally while executing |LspRequest| autocmds
+---     when replies are received from the server.
 ---
----  - {config} (table): Reference of the table that was passed by the user
----    to |vim.lsp.start_client()|.
+---   - {config} (table): Reference of the table that was passed by the user
+---     to |vim.lsp.start_client()|.
 ---
----  - {server_capabilities} (table): Response from the server sent on
----    `initialize` describing the server's capabilities.
+---   - {server_capabilities} (table): Response from the server sent on
+---     `initialize` describing the server's capabilities.
 ---
----  - {progress} A ring buffer (|vim.ringbuf()|) containing progress messages
----    sent by the server.
+---   - {progress} A ring buffer (|vim.ringbuf()|) containing progress messages
+---     sent by the server.
 ---
----  - {settings} Map with language server specific settings.
----    See {config} in |vim.lsp.start_client()|
+---   - {settings} Map with language server specific settings.
+---     See {config} in |vim.lsp.start_client()|
 ---
----  - {flags} A table with flags for the client. See {config} in |vim.lsp.start_client()|
-function lsp.client()
-  error()
-end
+---   - {flags} A table with flags for the client. See {config} in |vim.lsp.start_client()|
+lsp.client = nil
 
 --- @class lsp.StartOpts
 --- @field reuse_client fun(client: lsp.Client, config: table): boolean
@@ -581,9 +578,9 @@ end
 ---       spawn.  Must be specified using a table.
 ---       Non-string values are coerced to string.
 ---       Example:
----       <pre>
----                   { PORT = 8080; HOST = "0.0.0.0"; }
----       </pre>
+---    ```
+---        { PORT = 8080; HOST = "0.0.0.0"; }
+---    ```
 ---
 --- - detached: (boolean, default true) Daemonize the server process so that it runs in a
 ---       separate process group from Nvim. Nvim will shutdown the process on exit, but if Nvim fails to
@@ -598,8 +595,9 @@ end
 ---       \|vim.lsp.protocol.make_client_capabilities()|, passed to the language
 ---       server on initialization. Hint: use make_client_capabilities() and modify
 ---       its result.
----       - Note: To send an empty dictionary use |vim.empty_dict()|, else it will be encoded as an
----         array.
+---
+---     - Note: To send an empty dictionary use |vim.empty_dict()|, else it will be encoded as an
+---       array.
 ---
 --- - handlers: Map of language server method names to |lsp-handler|
 ---
@@ -645,9 +643,9 @@ end
 ---
 --- - on_exit Callback (code, signal, client_id) invoked on client
 --- exit.
----       - code: exit code of the process
----       - signal: number describing the signal used to terminate (if any)
----       - client_id: client handle
+---   - code: exit code of the process
+---   - signal: number describing the signal used to terminate (if any)
+---   - client_id: client handle
 ---
 --- - on_attach: Callback (client, bufnr) invoked when client
 ---       attaches to a buffer.
@@ -656,13 +654,13 @@ end
 ---       server in the initialize request. Invalid/empty values will default to "off"
 ---
 --- - flags: A table with flags for the client. The current (experimental) flags are:
----       - allow_incremental_sync (bool, default true): Allow using incremental sync for buffer edits
----       - debounce_text_changes (number, default 150): Debounce didChange
----             notifications to the server by the given number in milliseconds. No debounce
----             occurs if nil
----       - exit_timeout (number|boolean, default false): Milliseconds to wait for server to
----             exit cleanly after sending the "shutdown" request before sending kill -15.
----             If set to false, nvim exits immediately after sending the "shutdown" request to the server.
+---   - allow_incremental_sync (bool, default true): Allow using incremental sync for buffer edits
+---   - debounce_text_changes (number, default 150): Debounce didChange
+---         notifications to the server by the given number in milliseconds. No debounce
+---         occurs if nil
+---   - exit_timeout (number|boolean, default false): Milliseconds to wait for server to
+---         exit cleanly after sending the "shutdown" request before sending kill -15.
+---         If set to false, nvim exits immediately after sending the "shutdown" request to the server.
 ---
 --- - root_dir: (string) Directory where the LSP
 ---       server will base its workspaceFolders, rootUri, and rootPath
@@ -1239,7 +1237,7 @@ end
 ---
 --- Currently only supports a single client. This can be set via
 --- `setlocal formatexpr=v:lua.vim.lsp.formatexpr()` but will typically or in `on_attach`
---- via ``vim.bo[bufnr].formatexpr = 'v:lua.vim.lsp.formatexpr(#{timeout_ms:250})'``.
+--- via `vim.bo[bufnr].formatexpr = 'v:lua.vim.lsp.formatexpr(#{timeout_ms:250})'`.
 ---
 ---@param opts table options for customizing the formatting expression which takes the
 ---                   following optional keys:

@@ -20,10 +20,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get install -y doxygen python3-msgpack
-
       - name: Generate docs
         run: |
           make doc

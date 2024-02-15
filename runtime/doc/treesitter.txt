@@ -933,6 +933,7 @@ get_filetypes({lang})                *vim.treesitter.language.get_filetypes()*
         (`string[]`) filetypes
 
 get_lang({filetype})                      *vim.treesitter.language.get_lang()*
+
     Parameters: ~
       • {filetype}  (`string`)
 
@@ -1056,14 +1057,13 @@ lint({buf}, {opts})                              *vim.treesitter.query.lint()*
 
     Use |treesitter-parsers| in runtimepath to check the query file in {buf}
     for errors:
-
     • verify that used nodes are valid identifiers in the grammar.
     • verify that predicates and directives are valid.
     • verify that top-level s-expressions are valid.
 
     The found diagnostics are reported using |diagnostic-api|. By default, the
     parser used for verification is determined by the containing folder of the
-    query file, e.g., if the path ends in `/lua/highlights.scm` , the parser
+    query file, e.g., if the path ends in `/lua/highlights.scm`, the parser
     for the `lua` language will be used.
 
     Parameters: ~
@@ -1092,6 +1092,10 @@ omnifunc({findstart}, {base})                *vim.treesitter.query.omnifunc()*
     Use via >lua
         vim.bo.omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
 <
+
+    Parameters: ~
+      • {findstart}  (`0|1`)
+      • {base}       (`string`)
 
 parse({lang}, {query})                          *vim.treesitter.query.parse()*
     Parse {query} as a string. (If the query is in a file, the caller should
@@ -1218,42 +1222,36 @@ set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
 ==============================================================================
 Lua module: vim.treesitter.languagetree          *lua-treesitter-languagetree*
 
+A *LanguageTree* contains a tree of parsers: the root treesitter parser for
+{lang} and any "injected" language parsers, which themselves may inject other
+languages, recursively. For example a Lua buffer containing some Vimscript
+commands needs multiple parsers to fully understand its contents.
 
-A *LanguageTree* contains a tree of parsers: the root treesitter parser
-for {lang} and any "injected" language parsers, which themselves may
-inject other languages, recursively. For example a Lua buffer containing
-some Vimscript commands needs multiple parsers to fully understand its
-contents.
-
-To create a LanguageTree (parser object) for a given buffer and language,
-use: >lua
+To create a LanguageTree (parser object) for a given buffer and language, use: >lua
     local parser = vim.treesitter.get_parser(bufnr, lang)
-
 <
 
-(where `bufnr=0` means current buffer). `lang` defaults to 'filetype'.
-Note: currently the parser is retained for the lifetime of a buffer but
-this may change; a plugin should keep a reference to the parser object if
-it wants incremental updates.
+(where `bufnr=0` means current buffer). `lang` defaults to 'filetype'. Note:
+currently the parser is retained for the lifetime of a buffer but this may
+change; a plugin should keep a reference to the parser object if it wants
+incremental updates.
 
 Whenever you need to access the current syntax tree, parse the buffer: >lua
     local tree = parser:parse({ start_row, end_row })
-
 <
 
-This returns a table of immutable |treesitter-tree| objects representing
-the current state of the buffer. When the plugin wants to access the state
-after a (possible) edit it must call `parse()` again. If the buffer wasn't
-edited, the same tree will be returned again without extra work. If the
-buffer was parsed before, incremental parsing will be done of the changed
-parts.
+This returns a table of immutable |treesitter-tree| objects representing the
+current state of the buffer. When the plugin wants to access the state after a
+(possible) edit it must call `parse()` again. If the buffer wasn't edited, the
+same tree will be returned again without extra work. If the buffer was parsed
+before, incremental parsing will be done of the changed parts.
 
-Note: To use the parser directly inside a |nvim_buf_attach()| Lua
-callback, you must call |vim.treesitter.get_parser()| before you register
-your callback. But preferably parsing shouldn't be done directly in the
-change callback anyway as they will be very frequent. Rather a plugin that
-does any kind of analysis on a tree should use a timer to throttle too
-frequent updates.
+Note: To use the parser directly inside a |nvim_buf_attach()| Lua callback,
+you must call |vim.treesitter.get_parser()| before you register your callback.
+But preferably parsing shouldn't be done directly in the change callback
+anyway as they will be very frequent. Rather a plugin that does any kind of
+analysis on a tree should use a timer to throttle too frequent updates.
+
 
 LanguageTree:children()                              *LanguageTree:children()*
     Returns a map of language to child tree.
@@ -1284,7 +1282,7 @@ LanguageTree:for_each_tree({fn})                *LanguageTree:for_each_tree()*
       • {fn}  (`fun(tree: TSTree, ltree: LanguageTree)`)
 
 LanguageTree:included_regions()              *LanguageTree:included_regions()*
-    Gets the set of included regions managed by this LanguageTree . This can be
+    Gets the set of included regions managed by this LanguageTree. This can be
     different from the regions set by injection query, because a partial
     |LanguageTree:parse()| drops the regions outside the requested range.
 
@@ -1404,5 +1402,6 @@ LanguageTree:trees()                                    *LanguageTree:trees()*
 
     Return: ~
         (`table<integer, TSTree>`)
+
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

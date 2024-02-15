@@ -231,7 +231,6 @@ function TSHighlighter:on_changedtree(changes)
 end
 
 --- Gets the query used for @param lang
---
 ---@package
 ---@param lang string Language used by the highlighter.
 ---@return vim.treesitter.highlighter.Query

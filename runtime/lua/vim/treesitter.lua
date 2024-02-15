@@ -432,7 +432,7 @@ end
 --- Can be used in an ftplugin or FileType autocommand.
 ---
 --- Note: By default, disables regex syntax highlighting, which may be required for some plugins.
---- In this case, add ``vim.bo.syntax = 'on'`` after the call to `start`.
+--- In this case, add `vim.bo.syntax = 'on'` after the call to `start`.
 ---
 --- Example:
 ---

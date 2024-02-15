@@ -397,7 +397,6 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                        diagnostics. Options:
                        • severity: Only underline diagnostics matching the
                          given severity |diagnostic-severity|
-
                      • virtual_text: (default true) Use virtual text for
                        diagnostics. If multiple diagnostics are set for a
                        namespace, one prefix per diagnostic + the last
@@ -430,7 +429,6 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                        • format: (function) A function that takes a diagnostic
                          as input and returns a string. The return value is
                          the text used to display the diagnostic. Example: >lua
-
                              function(diagnostic)
                                if diagnostic.severity == vim.diagnostic.severity.ERROR then
                                  return string.format("E: %s", diagnostic.message)
@@ -438,7 +436,6 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                                return diagnostic.message
                              end
 <
-
                      • signs: (default true) Use signs for diagnostics
                        |diagnostic-signs|. Options:
                        • severity: Only show signs for diagnostics matching
@@ -452,7 +449,6 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                          default is to use "E", "W", "I", and "H" for errors,
                          warnings, information, and hints, respectively.
                          Example: >lua
-
                            vim.diagnostic.config({
                              signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
                            })
@@ -463,7 +459,6 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                        • linehl: (table) A table mapping |diagnostic-severity|
                          to the highlight group used for the whole line the
                          sign is placed in.
-
                      • float: Options for floating windows. See
                        |vim.diagnostic.open_float()|.
                      • update_in_insert: (default false) Update diagnostics in
@@ -542,8 +537,8 @@ get({bufnr}, {opts})                                    *vim.diagnostic.get()*
 
     Return: ~
         (`vim.Diagnostic[]`) table A list of diagnostic items
-        |diagnostic-structure|. Keys `bufnr` , `end_lnum` , `end_col` , and `severity` are
-        guaranteed to be present.
+        |diagnostic-structure|. Keys `bufnr`, `end_lnum`, `end_col`, and
+        `severity` are guaranteed to be present.
 
 get_namespace({namespace})                    *vim.diagnostic.get_namespace()*
     Get namespace metadata.
@@ -685,7 +680,7 @@ match({str}, {pat}, {groups}, {severity_map}, {defaults})
         (`vim.Diagnostic?`) |diagnostic-structure| or `nil` if {pat} fails to
         match {str}.
 
-open_float({opts}, {...})                        *vim.diagnostic.open_float()*
+open_float({opts})                               *vim.diagnostic.open_float()*
     Show diagnostics in a floating window.
 
     Parameters: ~
@@ -738,8 +733,9 @@ open_float({opts}, {...})                        *vim.diagnostic.open_float()*
                   diagnostic instead of prepending it. Overrides the setting
                   from |vim.diagnostic.config()|.
 
-    Return: ~
-        (`integer?, integer?`) ({float_bufnr}, {win_id})
+    Return (multiple): ~
+        (`integer?`) float_bufnr
+        (`integer?`) win_id
 
 reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
     Remove all diagnostics from the given namespace.
@@ -822,5 +818,6 @@ toqflist({diagnostics})                            *vim.diagnostic.toqflist()*
 
     Return: ~
         (`table[]`) of quickfix list items |setqflist-what|
+
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

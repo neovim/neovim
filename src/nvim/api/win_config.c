@@ -116,12 +116,12 @@
 ///   - width: Window width (in character cells). Minimum of 1.
 ///   - height: Window height (in character cells). Minimum of 1.
 ///   - bufpos: Places float relative to buffer text (only when
-///               relative="win"). Takes a tuple of zero-indexed [line, column].
-///               `row` and `col` if given are applied relative to this
-///               position, else they default to:
-///               - `row=1` and `col=0` if `anchor` is "NW" or "NE"
-///               - `row=0` and `col=0` if `anchor` is "SW" or "SE"
-///               (thus like a tooltip near the buffer text).
+///       relative="win"). Takes a tuple of zero-indexed [line, column].
+///       `row` and `col` if given are applied relative to this
+///       position, else they default to:
+///       - `row=1` and `col=0` if `anchor` is "NW" or "NE"
+///       - `row=0` and `col=0` if `anchor` is "SW" or "SE"
+///         (thus like a tooltip near the buffer text).
 ///   - row: Row position in units of "screen cell height", may be fractional.
 ///   - col: Column position in units of "screen cell width", may be
 ///            fractional.
@@ -153,7 +153,7 @@
 ///                    'fillchars' to a space char, and clearing the
 ///                    |hl-EndOfBuffer| region in 'winhighlight'.
 ///   - border: Style of (optional) window border. This can either be a string
-///      or an array. The string values are
+///     or an array. The string values are
 ///     - "none": No border (default).
 ///     - "single": A single line box.
 ///     - "double": A double line box.
@@ -161,21 +161,31 @@
 ///     - "solid": Adds padding by a single whitespace cell.
 ///     - "shadow": A drop shadow effect by blending with the background.
 ///     - If it is an array, it should have a length of eight or any divisor of
-///     eight. The array will specify the eight chars building up the border
-///     in a clockwise fashion starting with the top-left corner. As an
-///     example, the double box style could be specified as
+///       eight. The array will specify the eight chars building up the border
+///       in a clockwise fashion starting with the top-left corner. As an
+///       example, the double box style could be specified as:
+///       ```
 ///       [ "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ].
-///     If the number of chars are less than eight, they will be repeated. Thus
-///     an ASCII border could be specified as
+///       ```
+///       If the number of chars are less than eight, they will be repeated. Thus
+///       an ASCII border could be specified as
+///       ```
 ///       [ "/", "-", \"\\\\\", "|" ],
-///     or all chars the same as
+///       ```
+///       or all chars the same as
+///       ```
 ///       [ "x" ].
+///       ```
 ///     An empty string can be used to turn off a specific border, for instance,
+///     ```
 ///       [ "", "", "", ">", "", "", "", "<" ]
+///     ```
 ///     will only make vertical borders but not horizontal ones.
 ///     By default, `FloatBorder` highlight is used, which links to `WinSeparator`
 ///     when not defined.  It could also be specified by character:
+///     ```
 ///       [ ["+", "MyCorner"], ["x", "MyBorder"] ].
+///     ```
 ///   - title: Title (optional) in window border, string or list.
 ///     List should consist of `[text, highlight]` tuples.
 ///     If string, the default highlight group is `FloatTitle`.

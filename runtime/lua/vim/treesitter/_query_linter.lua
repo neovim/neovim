@@ -197,7 +197,7 @@ function M.clear(buf)
 end
 
 --- @private
---- @param findstart integer
+--- @param findstart 0|1
 --- @param base string
 function M.omnifunc(findstart, base)
   if findstart == 1 then
