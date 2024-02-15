@@ -22,7 +22,7 @@ local function new_screen(opt)
     [5] = { bold = true, foreground = Screen.colors.SeaGreen4 },
     [6] = { foreground = Screen.colors.Magenta },
     [7] = { bold = true, foreground = Screen.colors.Brown },
-    [8] = { background = Screen.colors.LightGrey },
+    [8] = { foreground = Screen.colors.Black, background = Screen.colors.LightGrey },
     [9] = { bold = true },
     [10] = { background = Screen.colors.Yellow1 },
   })

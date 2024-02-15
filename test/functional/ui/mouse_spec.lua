@@ -22,7 +22,7 @@ describe('ui/mouse/input', function()
     screen:attach()
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { background = Screen.colors.LightGrey },
+      [1] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black },
       [2] = { bold = true },
       [3] = {
         foreground = Screen.colors.Blue,
@@ -561,7 +561,7 @@ describe('ui/mouse/input', function()
       tab = { background = Screen.colors.LightGrey, underline = true },
       sel = { bold = true },
       fill = { reverse = true },
-      vis = { background = Screen.colors.LightGrey },
+      vis = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black },
     })
     feed_command('silent file foo | tabnew | file bar')
     insert('this is bar')

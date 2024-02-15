@@ -33,7 +33,7 @@ describe('display', function()
     screen:attach()
     screen:set_default_attr_ids({
       [1] = { bold = true }, -- ModeMsg
-      [2] = { background = Screen.colors.LightGrey }, -- Visual
+      [2] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black }, -- Visual
       [3] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue }, -- SignColumn
     })
 
