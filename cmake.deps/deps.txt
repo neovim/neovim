@@ -41,15 +41,15 @@ GETTEXT_SHA256 66415634c6e8c3fa8b71362879ec7575e27da43da562c798a8a2f223e6e47f5c
 LIBICONV_URL https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.17.tar.gz
 LIBICONV_SHA256 8f74213b56238c85a50a5329f77e06198771e70dd9a739779f4c02f65d971313
 
-TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.20.7.tar.gz
-TREESITTER_C_SHA256 00abd71259093983fc7e2b51f3efc724ccab3e69af3a37d3cdd0a2a01d703061
-TREESITTER_LUA_URL https://github.com/MunifTanjim/tree-sitter-lua/archive/v0.0.19.tar.gz
+TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.20.8.tar.gz
+TREESITTER_C_SHA256 50f8aa6a84e2ad532cc3384e84e9f9f91fe3ec41c74f58e0c1e1013df5bf3a88
+TREESITTER_LUA_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/archive/v0.0.19.tar.gz
 TREESITTER_LUA_SHA256 974230f212d0049fce8e881b88b18eebbd05f1fd0edd16fe4ba5bdd2bcd78d08
 TREESITTER_VIM_URL https://github.com/neovim/tree-sitter-vim/archive/v0.3.0.tar.gz
 TREESITTER_VIM_SHA256 403acec3efb7cdb18ff3d68640fc823502a4ffcdfbb71cec3f98aa786c21cbe2
 TREESITTER_VIMDOC_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v2.1.0.tar.gz
 TREESITTER_VIMDOC_SHA256 71af795090ff50638904f27b8888ba1c0c2be91b7b60b0a6f2d6d6a138150e02
-TREESITTER_QUERY_URL https://github.com/nvim-treesitter/tree-sitter-query/archive/v0.1.0.tar.gz
+TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/archive/v0.1.0.tar.gz
 TREESITTER_QUERY_SHA256 e2b806f80e8bf1c4f4e5a96248393fe6622fc1fc6189d6896d269658f67f914c
 TREESITTER_PYTHON_URL https://github.com/tree-sitter/tree-sitter-python/archive/v0.20.4.tar.gz
 TREESITTER_PYTHON_SHA256 1e38c991832f461c0da8ca222fbe5be3b82b868fe34025f0295206b5e5789d7a
