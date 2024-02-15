@@ -1029,12 +1029,12 @@ static Array translate_contents(UI *ui, Array contents, Arena *arena)
     if (attr) {
       Dictionary rgb_attrs = arena_dict(arena, HLATTRS_DICT_SIZE);
       hlattrs2dict(&rgb_attrs, NULL, syn_attr2entry(attr), ui->rgb, false);
-      ADD(new_item, DICTIONARY_OBJ(rgb_attrs));
+      ADD_C(new_item, DICTIONARY_OBJ(rgb_attrs));
     } else {
-      ADD(new_item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
+      ADD_C(new_item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
     }
-    ADD(new_item, item.items[1]);
-    ADD(new_contents, ARRAY_OBJ(new_item));
+    ADD_C(new_item, item.items[1]);
+    ADD_C(new_contents, ARRAY_OBJ(new_item));
   }
   return new_contents;
 }

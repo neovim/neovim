@@ -845,15 +845,17 @@ exit_0:
     write_shifted_output('    %s ret = %s(%s);\n', fn.return_type, fn.name, cparams)
 
     local ret_type = real_type(fn.return_type)
+    local ret_mode = (ret_type == 'Object') and '&' or ''
     if fn.has_lua_imp then
       -- only push onto the Lua stack if we haven't already
       write_shifted_output(string.format(
         [[
     if (lua_gettop(lstate) == 0) {
-      nlua_push_%s(lstate, ret, true);
+      nlua_push_%s(lstate, %sret, true);
     }
       ]],
-        return_type
+        return_type,
+        ret_mode
       ))
     elseif string.match(ret_type, '^KeyDict_') then
       write_shifted_output(
@@ -862,7 +864,12 @@ exit_0:
       )
     else
       local special = (fn.since ~= nil and fn.since < 11)
-      write_shifted_output('    nlua_push_%s(lstate, ret, %s);\n', return_type, tostring(special))
+      write_shifted_output(
+        '    nlua_push_%s(lstate, %sret, %s);\n',
+        return_type,
+        ret_mode,
+        tostring(special)
+      )
     end
 
     -- NOTE: we currently assume err_throw needs nothing from arena

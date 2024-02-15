@@ -359,15 +359,15 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   MsgpackRpcRequestHandler handler = *fptr.api_handler;
 
-  Array args = ARRAY_DICT_INIT;
+  MAXSIZE_TEMP_ARRAY(args, MAX_FUNC_ARGS);
+  Arena arena = ARENA_EMPTY;
 
   for (typval_T *tv = argvars; tv->v_type != VAR_UNKNOWN; tv++) {
-    ADD(args, vim_to_object(tv));
+    ADD_C(args, vim_to_object(tv, &arena, false));
   }
 
   Error err = ERROR_INIT;
-  Arena res_arena = ARENA_EMPTY;
-  Object result = handler.fn(VIML_INTERNAL_CALL, args, &res_arena, &err);
+  Object result = handler.fn(VIML_INTERNAL_CALL, args, &arena, &err);
 
   if (ERROR_SET(&err)) {
     semsg_multiline(e_api_error, err.msg);
@@ -377,12 +377,10 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   object_to_vim(result, rettv, &err);
 
 end:
-  api_free_array(args);
-  if (handler.arena_return) {
-    arena_mem_free(arena_finish(&res_arena));
-  } else {
+  if (!handler.arena_return) {
     api_free_object(result);
   }
+  arena_mem_free(arena_finish(&arena));
   api_clear_error(&err);
 }
 
@@ -1037,10 +1035,11 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  Dictionary ctx_dict = ctx_to_dict(ctx);
+  Arena arena = ARENA_EMPTY;
+  Dictionary ctx_dict = ctx_to_dict(ctx, &arena);
   Error err = ERROR_INIT;
   object_to_vim(DICTIONARY_OBJ(ctx_dict), rettv, &err);
-  api_free_dictionary(ctx_dict);
+  arena_mem_free(arena_finish(&arena));
   api_clear_error(&err);
 }
 
@@ -1108,7 +1107,8 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const int save_did_emsg = did_emsg;
   did_emsg = false;
 
-  Dictionary dict = vim_to_object(&argvars[0]).data.dictionary;
+  Arena arena = ARENA_EMPTY;
+  Dictionary dict = vim_to_object(&argvars[0], &arena, true).data.dictionary;
   Context tmp = CONTEXT_INIT;
   Error err = ERROR_INIT;
   ctx_from_dict(dict, &tmp, &err);
@@ -1121,7 +1121,7 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     *ctx = tmp;
   }
 
-  api_free_dictionary(dict);
+  arena_mem_free(arena_finish(&arena));
   api_clear_error(&err);
   did_emsg = save_did_emsg;
 }
@@ -6883,16 +6883,17 @@ static void f_rpcnotify(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  Array args = ARRAY_DICT_INIT;
+  MAXSIZE_TEMP_ARRAY(args, MAX_FUNC_ARGS);
+  Arena arena = ARENA_EMPTY;
 
   for (typval_T *tv = argvars + 2; tv->v_type != VAR_UNKNOWN; tv++) {
-    ADD(args, vim_to_object(tv));
+    ADD_C(args, vim_to_object(tv, &arena, true));
   }
 
   bool ok = rpc_send_event((uint64_t)argvars[0].vval.v_number,
                            tv_get_string(&argvars[1]), args);
 
-  api_free_array(args);
+  arena_mem_free(arena_finish(&arena));
 
   if (!ok) {
     semsg(_(e_invarg2), "Channel doesn't exist");
@@ -6922,10 +6923,11 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  Array args = ARRAY_DICT_INIT;
+  MAXSIZE_TEMP_ARRAY(args, MAX_FUNC_ARGS);
+  Arena arena = ARENA_EMPTY;
 
   for (typval_T *tv = argvars + 2; tv->v_type != VAR_UNKNOWN; tv++) {
-    ADD(args, vim_to_object(tv));
+    ADD_C(args, vim_to_object(tv, &arena, true));
   }
 
   sctx_T save_current_sctx;
@@ -6961,7 +6963,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   ArenaMem res_mem = NULL;
   Object result = rpc_send_call(chan_id, method, args, &res_mem, &err);
-  api_free_array(args);
+  arena_mem_free(arena_finish(&arena));
 
   if (l_provider_call_nesting) {
     current_sctx = save_current_sctx;
@@ -8868,10 +8870,10 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   Error err = ERROR_INIT;
   // deprecated: use 'channel' buffer option
   dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_id"),
-               INTEGER_OBJ((Integer)chan->id), false, false, &err);
+               INTEGER_OBJ((Integer)chan->id), false, false, NULL, &err);
   api_clear_error(&err);
   dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_pid"),
-               INTEGER_OBJ(pid), false, false, &err);
+               INTEGER_OBJ(pid), false, false, NULL, &err);
   api_clear_error(&err);
 
   channel_incref(chan);

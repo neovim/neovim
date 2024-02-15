@@ -148,7 +148,7 @@ void nvim_command(String command, Error *err)
 /// @param expr     Vimscript expression string
 /// @param[out] err Error details, if any
 /// @return         Evaluation result or expanded object
-Object nvim_eval(String expr, Error *err)
+Object nvim_eval(String expr, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
   static int recursive = 0;  // recursion depth
@@ -179,7 +179,7 @@ Object nvim_eval(String expr, Error *err)
       api_set_error(err, kErrorTypeException,
                     "Failed to evaluate expression: '%.*s'", 256, expr.data);
     } else {
-      rv = vim_to_object(&rettv);
+      rv = vim_to_object(&rettv, arena, false);
     }
   }
 
@@ -196,7 +196,7 @@ Object nvim_eval(String expr, Error *err)
 /// @param self `self` dict, or NULL for non-dict functions
 /// @param[out] err Error details, if any
 /// @return Result of the function call
-static Object _call_function(String fn, Array args, dict_T *self, Error *err)
+static Object _call_function(String fn, Array args, dict_T *self, Arena *arena, Error *err)
 {
   static int recursive = 0;  // recursion depth
   Object rv = OBJECT_INIT;
@@ -239,7 +239,7 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
   });
 
   if (!ERROR_SET(err)) {
-    rv = vim_to_object(&rettv);
+    rv = vim_to_object(&rettv, arena, false);
   }
 
   tv_clear(&rettv);
@@ -260,10 +260,10 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
 /// @param args     Function arguments packed in an Array
 /// @param[out] err Error details, if any
 /// @return Result of the function call
-Object nvim_call_function(String fn, Array args, Error *err)
+Object nvim_call_function(String fn, Array args, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
-  return _call_function(fn, args, NULL, err);
+  return _call_function(fn, args, NULL, arena, err);
 }
 
 /// Calls a Vimscript |Dictionary-function| with the given arguments.
@@ -275,7 +275,7 @@ Object nvim_call_function(String fn, Array args, Error *err)
 /// @param args Function arguments packed in an Array
 /// @param[out] err Error details, if any
 /// @return Result of the function call
-Object nvim_call_dict_function(Object dict, String fn, Array args, Error *err)
+Object nvim_call_dict_function(Object dict, String fn, Array args, Arena *arena, Error *err)
   FUNC_API_SINCE(4)
 {
   Object rv = OBJECT_INIT;
@@ -337,7 +337,7 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Error *err)
     goto end;
   }
 
-  rv = _call_function(fn, args, self_dict, err);
+  rv = _call_function(fn, args, self_dict, arena, err);
 end:
   if (mustfree) {
     tv_clear(&rettv);

@@ -719,7 +719,7 @@ void nlua_push_Dictionary(lua_State *lstate, const Dictionary dict, bool special
   }
   for (size_t i = 0; i < dict.size; i++) {
     nlua_push_String(lstate, dict.items[i].key, special);
-    nlua_push_Object(lstate, dict.items[i].value, special);
+    nlua_push_Object(lstate, &dict.items[i].value, special);
     lua_rawset(lstate, -3);
   }
 }
@@ -732,7 +732,7 @@ void nlua_push_Array(lua_State *lstate, const Array array, bool special)
 {
   lua_createtable(lstate, (int)array.size, 0);
   for (size_t i = 0; i < array.size; i++) {
-    nlua_push_Object(lstate, array.items[i], special);
+    nlua_push_Object(lstate, &array.items[i], special);
     lua_rawseti(lstate, -2, (int)i + 1);
   }
 }
@@ -753,10 +753,10 @@ GENERATE_INDEX_FUNCTION(Tabpage)
 /// Convert given Object to lua value
 ///
 /// Leaves converted value on top of the stack.
-void nlua_push_Object(lua_State *lstate, const Object obj, bool special)
+void nlua_push_Object(lua_State *lstate, Object *obj, bool special)
   FUNC_ATTR_NONNULL_ALL
 {
-  switch (obj.type) {
+  switch (obj->type) {
   case kObjectTypeNil:
     if (special) {
       lua_pushnil(lstate);
@@ -765,12 +765,14 @@ void nlua_push_Object(lua_State *lstate, const Object obj, bool special)
     }
     break;
   case kObjectTypeLuaRef: {
-    nlua_pushref(lstate, obj.data.luaref);
+    nlua_pushref(lstate, obj->data.luaref);
+    api_free_luaref(obj->data.luaref);
+    obj->data.luaref = LUA_NOREF;
     break;
   }
 #define ADD_TYPE(type, data_key) \
   case kObjectType##type: { \
-      nlua_push_##type(lstate, obj.data.data_key, special); \
+      nlua_push_##type(lstate, obj->data.data_key, special); \
       break; \
   }
     ADD_TYPE(Boolean,      boolean)
@@ -782,7 +784,7 @@ void nlua_push_Object(lua_State *lstate, const Object obj, bool special)
 #undef ADD_TYPE
 #define ADD_REMOTE_TYPE(type) \
   case kObjectType##type: { \
-      nlua_push_##type(lstate, (type)obj.data.integer, special); \
+      nlua_push_##type(lstate, (type)obj->data.integer, special); \
       break; \
   }
     ADD_REMOTE_TYPE(Buffer)
@@ -1378,7 +1380,7 @@ void nlua_push_keydict(lua_State *L, void *value, KeySetLink *table)
 
     lua_pushstring(L, field->str);
     if (field->type == kObjectTypeNil) {
-      nlua_push_Object(L, *(Object *)mem, false);
+      nlua_push_Object(L, (Object *)mem, false);
     } else if (field->type == kObjectTypeInteger || field->type == kObjectTypeBuffer
                || field->type == kObjectTypeWindow || field->type == kObjectTypeTabpage) {
       lua_pushinteger(L, *(Integer *)mem);

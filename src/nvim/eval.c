@@ -1355,7 +1355,7 @@ Object eval_foldtext(win_T *wp)
     retval = STRING_OBJ(NULL_STRING);
   } else {
     if (tv.v_type == VAR_LIST) {
-      retval = vim_to_object(&tv);
+      retval = vim_to_object(&tv, NULL, false);
     } else {
       retval = STRING_OBJ(cstr_to_string(tv_get_string(&tv)));
     }

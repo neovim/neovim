@@ -449,7 +449,7 @@ static void request_event(void **argv)
                                               e->type,
                                               e->request_id,
                                               &error,
-                                              result,
+                                              &result,
                                               &out_buffer));
   }
   if (!handler.arena_return) {
@@ -538,7 +538,7 @@ static void send_error(Channel *chan, MsgpackRpcRequestHandler handler, MessageT
                                          type,
                                          id,
                                          &e,
-                                         NIL,
+                                         &NIL,
                                          &out_buffer));
   api_clear_error(&e);
 }
@@ -669,7 +669,7 @@ static WBuffer *serialize_request(uint64_t channel_id, uint32_t request_id, cons
 }
 
 static WBuffer *serialize_response(uint64_t channel_id, MsgpackRpcRequestHandler handler,
-                                   MessageType type, uint32_t response_id, Error *err, Object arg,
+                                   MessageType type, uint32_t response_id, Error *err, Object *arg,
                                    msgpack_sbuffer *sbuffer)
 {
   msgpack_packer pac;

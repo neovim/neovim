@@ -296,7 +296,7 @@ static inline void ctx_restore_funcs(Context *ctx)
 /// @param[in]  sbuf  msgpack_sbuffer to convert.
 ///
 /// @return readfile()-style array representation of "sbuf".
-static inline Array sbuf_to_array(msgpack_sbuffer sbuf)
+static inline Array sbuf_to_array(msgpack_sbuffer sbuf, Arena *arena)
 {
   list_T *const list = tv_list_alloc(kListLenMayKnow);
   tv_list_append_string(list, "", 0);
@@ -310,7 +310,7 @@ static inline Array sbuf_to_array(msgpack_sbuffer sbuf)
     .vval.v_list = list
   };
 
-  Array array = vim_to_object(&list_tv).data.array;
+  Array array = vim_to_object(&list_tv, arena, false).data.array;
   tv_clear(&list_tv);
   return array;
 }
@@ -346,18 +346,18 @@ static inline msgpack_sbuffer array_to_sbuf(Array array, Error *err)
 /// @param[in]  ctx  Context to convert.
 ///
 /// @return Dictionary representing "ctx".
-Dictionary ctx_to_dict(Context *ctx)
+Dictionary ctx_to_dict(Context *ctx, Arena *arena)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(ctx != NULL);
 
-  Dictionary rv = ARRAY_DICT_INIT;
+  Dictionary rv = arena_dict(arena, 5);
 
-  PUT(rv, "regs", ARRAY_OBJ(sbuf_to_array(ctx->regs)));
-  PUT(rv, "jumps", ARRAY_OBJ(sbuf_to_array(ctx->jumps)));
-  PUT(rv, "bufs", ARRAY_OBJ(sbuf_to_array(ctx->bufs)));
-  PUT(rv, "gvars", ARRAY_OBJ(sbuf_to_array(ctx->gvars)));
-  PUT(rv, "funcs", ARRAY_OBJ(copy_array(ctx->funcs, NULL)));
+  PUT_C(rv, "regs", ARRAY_OBJ(sbuf_to_array(ctx->regs, arena)));
+  PUT_C(rv, "jumps", ARRAY_OBJ(sbuf_to_array(ctx->jumps, arena)));
+  PUT_C(rv, "bufs", ARRAY_OBJ(sbuf_to_array(ctx->bufs, arena)));
+  PUT_C(rv, "gvars", ARRAY_OBJ(sbuf_to_array(ctx->gvars, arena)));
+  PUT_C(rv, "funcs", ARRAY_OBJ(copy_array(ctx->funcs, arena)));
 
   return rv;
 }
