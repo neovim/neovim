@@ -426,14 +426,11 @@ The following changes to existing APIs or features add new behavior.
 
 • Treesitter
   • |Query:iter_matches()|, |vim.treesitter.query.add_predicate()|, and
-    |vim.treesitter.query.add_directive()| accept a new "correct" option which
-    opts-in to correct matching behavior. When "correct" is set, the match
-    table returned by each iteration of |Query:iter_matches()| (or that is
-    passed to the handler function for predicates/directives) maps capture IDs
-    to lists of nodes rather than to a single node. The latter behavior is
-    incorrect and buggy, but is kept as the default for backward
-    compatibility. In a future release, the correct behavior will become the
-    default and the "correct" option will be removed.
+    |vim.treesitter.query.add_directive()| accept a new `correct` option which
+    ensures that all matching nodes are returned as a table. The default option
+    `correct=false` returns only a single node, breaking captures with quantifiers
+    like `(comment)+ @comment; it is only provided for backward compatibility
+    and will be removed after Nvim 0.10.
   • |vim.treesitter.query.add_predicate()| and
     |vim.treesitter.query.add_directive()| now accept an options table rather
     than a boolean "force" argument. To force a predicate or directive to

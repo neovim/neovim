@@ -909,9 +909,11 @@ end
 --- index of the pattern in the query, a table mapping capture indices to a list
 --- of nodes, and metadata from any directives processing the match.
 ---
---- You MUST set the "correct" option for this function to behave correctly!
---- In older versions of Nvim this function has incorrect behavior: the correct
---- behavior must be opted into for backward compatibility.
+--- WARNING: Set `correct=true` to ensure all matching nodes in a match are
+--- returned, otherwise only the last node in a match is returned, breaking captures
+--- involving quantifiers such as `(comment)+ @comment`. The default option
+--- `correct=false` is only provided for backward compatibility and will be removed
+--- after Nvim 0.10.
 ---
 --- Example:
 ---
