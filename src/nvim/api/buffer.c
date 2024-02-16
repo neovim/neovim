@@ -480,6 +480,9 @@ end:
 /// Indexing is zero-based. Row indices are end-inclusive, and column indices
 /// are end-exclusive.
 ///
+/// If `start_col` exceeds line length the leading space is padded using spaces
+/// and `end_col` is silently ignored.
+///
 /// To insert text at a given `(row, column)` location, use `start_row = end_row
 /// = row` and `start_col = end_col = col`. To delete the text in a range, use
 /// `replacement = {}`.
@@ -542,19 +545,28 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   str_at_start = xstrdup(ml_get_buf(buf, (linenr_T)start_row));
   size_t len_at_start = strlen(str_at_start);
   start_col = start_col < 0 ? (int64_t)len_at_start + start_col + 1 : start_col;
-  VALIDATE_RANGE((start_col >= 0 && (size_t)start_col <= len_at_start), "start_col", {
+  VALIDATE_RANGE((start_col >= 0), "start_col", {
     goto early_end;
   });
 
   // Another call to ml_get_buf() may free the line, so make a copy.
   str_at_end = xstrdup(ml_get_buf(buf, (linenr_T)end_row));
   size_t len_at_end = strlen(str_at_end);
+
   end_col = end_col < 0 ? (int64_t)len_at_end + end_col + 1 : end_col;
-  VALIDATE_RANGE((end_col >= 0 && (size_t)end_col <= len_at_end), "end_col", {
+
+  bool ve_start_col = (size_t)start_col > len_at_start;
+  bool ve_end_col = (size_t)end_col > len_at_end;
+  // CHECK: possible wraparound bug?
+  end_col = ve_end_col ? (int64_t)len_at_end : end_col;
+
+  VALIDATE_RANGE((end_col >= 0), "end_col", {
     goto early_end;
   });
 
-  VALIDATE((start_row <= end_row && !(end_row == start_row && start_col > end_col)),
+  // Silently ignore larger than line end_col
+  VALIDATE(((start_row <= end_row)
+            && !(end_row == start_row && (!ve_end_col && start_col > end_col))),
            "%s", "'start' is higher than 'end'", {
     goto early_end;
   });
@@ -588,12 +600,21 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
 
   size_t firstlen = (size_t)start_col + first_item.size;
   size_t last_part_len = len_at_end - (size_t)end_col;
+
   if (replacement.size == 1) {
     firstlen += last_part_len;
   }
   char *first = xmallocz(firstlen);
   char *last = NULL;
-  memcpy(first, str_at_start, (size_t)start_col);
+
+  if (ve_start_col) {
+    size_t pad = (size_t)start_col - len_at_start;
+
+    memcpy(first, str_at_start, len_at_start);
+    memset(first + len_at_start, ' ', pad);
+  } else {
+    memcpy(first, str_at_start, (size_t)start_col);
+  }
   memcpy(first + start_col, first_item.data, first_item.size);
   memchrsub(first + start_col, NUL, NL, first_item.size);
   if (replacement.size == 1) {
