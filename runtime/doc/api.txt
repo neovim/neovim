@@ -2099,8 +2099,9 @@ nvim_buf_attach({buffer}, {send_buffer}, {*opts})          *nvim_buf_attach()*
                        will be `nvim_buf_changedtick_event`. Not for Lua
                        callbacks.
       • {opts}         Optional parameters.
-                       • on_lines: Lua callback invoked on change. Return `true` to
-                         detach. Args:
+                       • on_lines: Lua callback invoked on change. Return a
+                         truthy value (not `false` or `nil`)
+                         to detach. Args:
                          • the string "lines"
                          • buffer handle
                          • b:changedtick

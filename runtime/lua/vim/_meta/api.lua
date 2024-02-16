@@ -155,8 +155,9 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 ---                    will be `nvim_buf_changedtick_event`. Not for Lua
 ---                    callbacks.
 --- @param opts vim.api.keyset.buf_attach Optional parameters.
----                    • on_lines: Lua callback invoked on change. Return `true` to
----                      detach. Args:
+---                    • on_lines: Lua callback invoked on change. Return a
+---                      truthy value (not `false` or `nil`)
+---                      to detach. Args:
 ---                      • the string "lines"
 ---                      • buffer handle
 ---                      • b:changedtick
