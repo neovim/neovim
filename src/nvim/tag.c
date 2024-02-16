@@ -393,6 +393,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
 
         // put the tag name in the tag stack
         tagstack[tagstackidx].tagname = xstrdup(tag);
+        tagstack[tagstackidx].user_data = NULL;
 
         curwin->w_tagstacklen = tagstacklen;
 
