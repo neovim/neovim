@@ -79,7 +79,8 @@ cmake:
 	$(MAKE) build/.ran-cmake
 
 build/.ran-cmake: | deps
-	$(CMAKE) -B build -G '$(CMAKE_GENERATOR)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $(MAKEFILE_DIR)
+	# Using -S and -B flags causes problems: https://github.com/neovim/neovim/issues/27475
+	cd build && $(CMAKE) -G '$(CMAKE_GENERATOR)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $(MAKEFILE_DIR)
 	touch $@
 
 deps: | build/.ran-deps-cmake
@@ -91,8 +92,10 @@ ifeq ($(call filter-true,$(USE_BUNDLED)),)
 $(DEPS_BUILD_DIR):
 	mkdir -p "$@"
 build/.ran-deps-cmake:: $(DEPS_BUILD_DIR)
-	$(CMAKE) -S $(MAKEFILE_DIR)/cmake.deps -B $(DEPS_BUILD_DIR) -G '$(CMAKE_GENERATOR)' \
-		$(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) $(DEPS_CMAKE_FLAGS)
+	# Using -S and -B flags causes problems: https://github.com/neovim/neovim/issues/27475
+	cd $(DEPS_BUILD_DIR) && \
+		$(CMAKE) -G '$(CMAKE_GENERATOR)' $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) \
+		$(DEPS_CMAKE_FLAGS) $(MAKEFILE_DIR)/cmake.deps
 endif
 build/.ran-deps-cmake::
 	mkdir -p build
