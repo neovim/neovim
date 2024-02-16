@@ -223,6 +223,10 @@ The following predicates are built in:
             ((identifier) @variable.builtin (#eq? @variable.builtin "self"))
             ((node1) @left (node2) @right (#eq? @left @right))
 <
+    `any-eq?`                                    *treesitter-predicate-any-eq?*
+        Like `eq?`, but for quantified patterns only one captured node must
+        match.
+
     `match?`                                      *treesitter-predicate-match?*
     `vim-match?`                              *treesitter-predicate-vim-match?*
          Match a |regexp| against the text corresponding to a node: >query
@@ -231,15 +235,28 @@ The following predicates are built in:
          Note: The `^` and `$` anchors will match the start and end of the
                node's text.
 
+    `any-match?`                              *treesitter-predicate-any-match?*
+    `any-vim-match?`                      *treesitter-predicate-any-vim-match?*
+        Like `match?`, but for quantified patterns only one captured node must
+        match.
+
     `lua-match?`                              *treesitter-predicate-lua-match?*
          Match |lua-patterns| against the text corresponding to a node,
          similar to `match?`
+
+    `any-lua-match?`                      *treesitter-predicate-any-lua-match?*
+         Like `lua-match?`, but for quantified patterns only one captured node
+         must match.
 
     `contains?`                                *treesitter-predicate-contains?*
         Match a string against parts of the text corresponding to a node: >query
             ((identifier) @foo (#contains? @foo "foo"))
             ((identifier) @foo-bar (#contains? @foo-bar "foo" "bar"))
 <
+    `any-contains?`                        *treesitter-predicate-any-contains?*
+        Like `contains?`, but for quantified patterns only one captured node
+        must match.
+
     `any-of?`                                    *treesitter-predicate-any-of?*
         Match any of the given strings against the text corresponding to
         a node: >query
@@ -264,6 +281,32 @@ The following predicates are built in:
                                                  *lua-treesitter-not-predicate*
 Each predicate has a `not-` prefixed predicate that is just the negation of
 the predicate.
+
+                                                 *lua-treesitter-all-predicate*
+                                                 *lua-treesitter-any-predicate*
+Queries can use quantifiers to capture multiple nodes. When a capture contains
+multiple nodes, predicates match only if ALL nodes contained by the capture
+match the predicate. Some predicates (`eq?`, `match?`, `lua-match?`,
+`contains?`) accept an `any-` prefix to instead match if ANY of the nodes
+contained by the capture match the predicate.
+
+As an example, consider the following Lua code: >lua
+
+  -- TODO: This is a
+  -- very long
+  -- comment (just imagine it)
+<
+using the following predicated query:
+>query
+    (((comment)+ @comment)
+     (#match? @comment "TODO"))
+<
+This query will not match because not all of the nodes captured by @comment
+match the predicate. Instead, use:
+>query
+    (((comment)+ @comment)
+     (#any-match? @comment "TODO"))
+<
 
 Further predicates can be added via |vim.treesitter.query.add_predicate()|.
 Use |vim.treesitter.query.list_predicates()| to list all available predicates.
@@ -923,28 +966,35 @@ register({lang}, {filetype})              *vim.treesitter.language.register()*
 Lua module: vim.treesitter.query                        *lua-treesitter-query*
 
                                         *vim.treesitter.query.add_directive()*
-add_directive({name}, {handler}, {force})
+add_directive({name}, {handler}, {opts})
     Adds a new directive to be used in queries
 
     Handlers can set match level data by setting directly on the metadata
-    object `metadata.key = value`, additionally, handlers can set node level
+    object `metadata.key = value`. Additionally, handlers can set node level
     data by using the capture id on the metadata table
     `metadata[capture_id].key = value`
 
     Parameters: ~
       • {name}     (`string`) Name of the directive, without leading #
       • {handler}  (`function`)
-                   • match: see |treesitter-query|
-                     • node-level data are accessible via `match[capture_id]`
-
-                   • pattern: see |treesitter-query|
+                   • match: A table mapping capture IDs to a list of captured
+                     nodes
+                   • pattern: the index of the matching pattern in the query
+                     file
                    • predicate: list of strings containing the full directive
                      being called, e.g. `(node (#set! conceal "-"))` would get
                      the predicate `{ "#set!", "conceal", "-" }`
-      • {force}    (`boolean?`)
+      • {opts}     (`table<string, any>`) Optional options:
+                   • force (boolean): Override an existing predicate of the
+                     same name
+                   • all (boolean): Use the correct implementation of the
+                     match table where capture IDs map to a list of nodes
+                     instead of a single node. Defaults to false (for backward
+                     compatibility). This option will eventually become the
+                     default and removed.
 
                                         *vim.treesitter.query.add_predicate()*
-add_predicate({name}, {handler}, {force})
+add_predicate({name}, {handler}, {opts})
     Adds a new predicate to be used in queries
 
     Parameters: ~
@@ -952,7 +1002,14 @@ add_predicate({name}, {handler}, {force})
       • {handler}  (`function`)
                    • see |vim.treesitter.query.add_directive()| for argument
                      meanings
-      • {force}    (`boolean?`)
+      • {opts}     (`table<string, any>`) Optional options:
+                   • force (boolean): Override an existing predicate of the
+                     same name
+                   • all (boolean): Use the correct implementation of the
+                     match table where capture IDs map to a list of nodes
+                     instead of a single node. Defaults to false (for backward
+                     compatibility). This option will eventually become the
+                     default and removed.
 
 edit({lang})                                     *vim.treesitter.query.edit()*
     Opens a live editor to query the buffer you started from.
@@ -1102,18 +1159,25 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
     Iterate over all matches within a {node}. The arguments are the same as
     for |Query:iter_captures()| but the iterated values are different: an
     (1-based) index of the pattern in the query, a table mapping capture
-    indices to nodes, and metadata from any directives processing the match.
-    If the query has more than one pattern, the capture table might be sparse
-    and e.g. `pairs()` method should be used over `ipairs`. Here is an example
-    iterating over all captures in every match: >lua
-        for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do
-          for id, node in pairs(match) do
+    indices to a list of nodes, and metadata from any directives processing
+    the match.
+
+    WARNING: Set `all=true` to ensure all matching nodes in a match are
+    returned, otherwise only the last node in a match is returned, breaking
+    captures involving quantifiers such as `(comment)+ @comment`. The default
+    option `all=false` is only provided for backward compatibility and will be
+    removed after Nvim 0.10.
+
+    Example: >lua
+        for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, 0, -1, { all = true }) do
+          for id, nodes in pairs(match) do
             local name = query.captures[id]
-            -- `node` was captured by the `name` capture in the match
+            for _, node in ipairs(nodes) do
+              -- `node` was captured by the `name` capture in the match
 
-            local node_data = metadata[id] -- Node level metadata
-
-            -- ... use the info here ...
+              local node_data = metadata[id] -- Node level metadata
+              ... use the info here ...
+            end
           end
         end
 <
@@ -1129,9 +1193,14 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
                   • max_start_depth (integer) if non-zero, sets the maximum
                     start depth for each match. This is used to prevent
                     traversing too deep into a tree.
+                  • all (boolean) When set, the returned match table maps
+                    capture IDs to a list of nodes. Older versions of
+                    iter_matches incorrectly mapped capture IDs to a single
+                    node, which is incorrect behavior. This option will
+                    eventually become the default and removed.
 
     Return: ~
-        (`fun(): integer, table<integer,TSNode>, table`) pattern id, match,
+        (`fun(): integer, table<integer, TSNode[]>, table`) pattern id, match,
         metadata
 
 set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
