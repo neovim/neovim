@@ -3806,7 +3806,8 @@ describe('API', function()
       it('works with statuscolumn', function()
         exec([[
           let &stc='%C%s%=%l '
-          set cul nu nuw=3 scl=yes:2 fdc=2
+          " should not use "stl" from 'fillchars'
+          set cul nu nuw=3 scl=yes:2 fdc=2 fillchars=stl:#
           call setline(1, repeat(['aaaaa'], 5))
           let g:ns = nvim_create_namespace('')
           call sign_define('a', {'text':'aa', 'texthl':'IncSearch', 'numhl':'Normal'})

@@ -2203,49 +2203,44 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *
   statuscol_T statuscol = { 0 };
   SignTextAttrs sattrs[SIGN_SHOW_MAX] = { 0 };
 
-  if (opts->use_tabline) {
-    fillchar = schar_from_ascii(' ');
-  } else {
-    if (fillchar == 0) {
-      if (opts->use_winbar) {
-        fillchar = wp->w_p_fcs_chars.wbr;
-      } else {
-        int attr;
-        fillchar = fillchar_status(&attr, wp);
+  if (statuscol_lnum) {
+    int line_id = 0;
+    int cul_id = 0;
+    int num_id = 0;
+    linenr_T lnum = statuscol_lnum;
+    decor_redraw_signs(wp, wp->w_buffer, lnum - 1, sattrs, &line_id, &cul_id, &num_id);
+
+    statuscol.sattrs = sattrs;
+    statuscol.foldinfo = fold_info(wp, lnum);
+    wp->w_cursorline = win_cursorline_standout(wp) ? wp->w_cursor.lnum : 0;
+
+    if (wp->w_p_cul) {
+      if (statuscol.foldinfo.fi_level != 0 && statuscol.foldinfo.fi_lines > 0) {
+        wp->w_cursorline = statuscol.foldinfo.fi_lnum;
       }
+      statuscol.use_cul = lnum == wp->w_cursorline && (wp->w_p_culopt_flags & CULOPT_NBR);
     }
-    if (statuscol_lnum) {
-      int line_id = 0;
-      int cul_id = 0;
-      int num_id = 0;
-      linenr_T lnum = statuscol_lnum;
-      decor_redraw_signs(wp, wp->w_buffer, lnum - 1, sattrs, &line_id, &cul_id, &num_id);
 
-      statuscol.sattrs = sattrs;
-      statuscol.foldinfo = fold_info(wp, lnum);
-      wp->w_cursorline = win_cursorline_standout(wp) ? wp->w_cursor.lnum : 0;
+    statuscol.sign_cul_id = statuscol.use_cul ? cul_id : 0;
+    if (num_id) {
+      stc_hl_id = num_id;
+    } else if (statuscol.use_cul) {
+      stc_hl_id = HLF_CLN + 1;
+    } else if (wp->w_p_rnu) {
+      stc_hl_id = (lnum < wp->w_cursor.lnum ? HLF_LNA : HLF_LNB) + 1;
+    } else {
+      stc_hl_id = HLF_N + 1;
+    }
 
-      if (wp->w_p_cul) {
-        if (statuscol.foldinfo.fi_level != 0 && statuscol.foldinfo.fi_lines > 0) {
-          wp->w_cursorline = statuscol.foldinfo.fi_lnum;
-        }
-        statuscol.use_cul = lnum == wp->w_cursorline && (wp->w_p_culopt_flags & CULOPT_NBR);
-      }
-
-      statuscol.sign_cul_id = statuscol.use_cul ? cul_id : 0;
-      if (num_id) {
-        stc_hl_id = num_id;
-      } else if (statuscol.use_cul) {
-        stc_hl_id = HLF_CLN + 1;
-      } else if (wp->w_p_rnu) {
-        stc_hl_id = (lnum < wp->w_cursor.lnum ? HLF_LNA : HLF_LNB) + 1;
-      } else {
-        stc_hl_id = HLF_N + 1;
-      }
-
-      set_vim_var_nr(VV_LNUM, lnum);
-      set_vim_var_nr(VV_RELNUM, labs(get_cursor_rel_lnum(wp, lnum)));
-      set_vim_var_nr(VV_VIRTNUM, 0);
+    set_vim_var_nr(VV_LNUM, lnum);
+    set_vim_var_nr(VV_RELNUM, labs(get_cursor_rel_lnum(wp, lnum)));
+    set_vim_var_nr(VV_VIRTNUM, 0);
+  } else if (fillchar == 0 && !opts->use_tabline) {
+    if (opts->use_winbar) {
+      fillchar = wp->w_p_fcs_chars.wbr;
+    } else {
+      int attr;
+      fillchar = fillchar_status(&attr, wp);
     }
   }
 
