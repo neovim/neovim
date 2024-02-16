@@ -174,7 +174,7 @@ assign_commit_details() {
 
   vim_commit_url="https://github.com/vim/vim/commit/${vim_commit}"
   vim_message="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:%B' "${vim_commit}" \
-      | sed -Ee 's/(#[0-9]{1,})/vim\/vim\1/g')"
+      | sed -Ee 's/(\W)(#[0-9]{1,})/\1vim\/vim\2/g')"
   local vim_coauthor0
   vim_coauthor0="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:Co-authored-by: %an <%ae>' "${vim_commit}")"
   # Extract co-authors from the commit message.
