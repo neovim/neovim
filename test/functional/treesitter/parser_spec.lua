@@ -258,7 +258,7 @@ void ui_refresh(void)
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
       res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { correct = true }) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { all = true }) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
         for cid, nodes in pairs(match) do
@@ -325,7 +325,7 @@ void ui_refresh(void)
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
       res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { correct = true }) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { all = true }) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
         for cid, nodes in pairs(match) do
@@ -430,7 +430,7 @@ end]]
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
       res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 0, -1, { correct = true }) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0, 0, -1, { all = true }) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
         for cid, nodes in pairs(match) do
@@ -524,7 +524,7 @@ end]]
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
       res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 0, -1, { correct = true }) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0, 0, -1, { all = true }) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
         for cid, nodes in pairs(match) do
@@ -574,9 +574,9 @@ end]]
 
       -- Time bomb: update this in 0.12
       if vim.fn.has('nvim-0.12') == 1 then
-        return 'Update this test to remove this message and { correct = true } from add_predicate'
+        return 'Update this test to remove this message and { all = true } from add_predicate'
       end
-      query.add_predicate("is-main?", is_main, { correct = true })
+      query.add_predicate("is-main?", is_main, { all = true })
 
       local query = query.parse("c", ...)
 
@@ -1128,7 +1128,7 @@ int x = INT_MAX;
         query = vim.treesitter.query.parse("c", '((number_literal) @number (#set! "key" "value"))')
         parser = vim.treesitter.get_parser(0, "c")
 
-        for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0, 0, -1, { correct = true }) do
+        for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0, 0, -1, { all = true }) do
           result = metadata.key
         end
 
@@ -1151,7 +1151,7 @@ int x = INT_MAX;
           query = vim.treesitter.query.parse("c", '((number_literal) @number (#set! @number "key" "value"))')
           parser = vim.treesitter.get_parser(0, "c")
 
-          for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0, 0, -1, { correct = true }) do
+          for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0, 0, -1, { all = true }) do
             for _, nested_tbl in pairs(metadata) do
               return nested_tbl.key
             end
@@ -1173,7 +1173,7 @@ int x = INT_MAX;
           query = vim.treesitter.query.parse("c", '((number_literal) @number (#set! @number "key" "value") (#set! @number "key2" "value2"))')
           parser = vim.treesitter.get_parser(0, "c")
 
-          for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0, 0, -1, { correct = true }) do
+          for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0, 0, -1, { all = true }) do
             for _, nested_tbl in pairs(metadata) do
               return nested_tbl
             end

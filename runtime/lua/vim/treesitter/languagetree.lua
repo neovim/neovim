@@ -851,7 +851,7 @@ function LanguageTree:_get_injections()
         self._source,
         start_line,
         end_line + 1,
-        { correct = true }
+        { all = true }
       )
     do
       local lang, combined, ranges = self:_get_injection(match, metadata)

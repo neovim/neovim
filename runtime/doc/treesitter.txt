@@ -987,7 +987,7 @@ add_directive({name}, {handler}, {opts})
       • {opts}     (`table<string, any>`) Optional options:
                    • force (boolean): Override an existing predicate of the
                      same name
-                   • correct (boolean): Use the correct implementation of the
+                   • all (boolean): Use the correct implementation of the
                      match table where capture IDs map to a list of nodes
                      instead of a single node. Defaults to false (for backward
                      compatibility). This option will eventually become the
@@ -1005,7 +1005,7 @@ add_predicate({name}, {handler}, {opts})
       • {opts}     (`table<string, any>`) Optional options:
                    • force (boolean): Override an existing predicate of the
                      same name
-                   • correct (boolean): Use the correct implementation of the
+                   • all (boolean): Use the correct implementation of the
                      match table where capture IDs map to a list of nodes
                      instead of a single node. Defaults to false (for backward
                      compatibility). This option will eventually become the
@@ -1162,12 +1162,14 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
     indices to a list of nodes, and metadata from any directives processing
     the match.
 
-    You MUST set the "correct" option for this function to behave correctly!
-    In older versions of Nvim this function has incorrect behavior: the
-    correct behavior must be opted into for backward compatibility.
+    WARNING: Set `all=true` to ensure all matching nodes in a match are
+    returned, otherwise only the last node in a match is returned, breaking
+    captures involving quantifiers such as `(comment)+ @comment`. The default
+    option `all=false` is only provided for backward compatibility and will be
+    removed after Nvim 0.10.
 
     Example: >lua
-        for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, 0, -1, { correct = true }) do
+        for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, 0, -1, { all = true }) do
           for id, nodes in pairs(match) do
             local name = query.captures[id]
             for _, node in ipairs(nodes) do
@@ -1191,7 +1193,7 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
                   • max_start_depth (integer) if non-zero, sets the maximum
                     start depth for each match. This is used to prevent
                     traversing too deep into a tree.
-                  • correct (boolean) When set, the returned match table maps
+                  • all (boolean) When set, the returned match table maps
                     capture IDs to a list of nodes. Older versions of
                     iter_matches incorrectly mapped capture IDs to a single
                     node, which is incorrect behavior. This option will

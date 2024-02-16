@@ -426,9 +426,9 @@ The following changes to existing APIs or features add new behavior.
 
 • Treesitter
   • |Query:iter_matches()|, |vim.treesitter.query.add_predicate()|, and
-    |vim.treesitter.query.add_directive()| accept a new `correct` option which
+    |vim.treesitter.query.add_directive()| accept a new `all` option which
     ensures that all matching nodes are returned as a table. The default option
-    `correct=false` returns only a single node, breaking captures with quantifiers
+    `all=false` returns only a single node, breaking captures with quantifiers
     like `(comment)+ @comment; it is only provided for backward compatibility
     and will be removed after Nvim 0.10.
   • |vim.treesitter.query.add_predicate()| and

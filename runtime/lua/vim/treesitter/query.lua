@@ -662,7 +662,7 @@ local directive_handlers = {
 ---@param opts table<string, any> Optional options:
 ---                                 - force (boolean): Override an existing
 ---                                   predicate of the same name
----                                 - correct (boolean): Use the correct
+---                                 - all (boolean): Use the correct
 ---                                   implementation of the match table where
 ---                                   capture IDs map to a list of nodes instead
 ---                                   of a single node. Defaults to false (for
@@ -680,7 +680,7 @@ function M.add_predicate(name, handler, opts)
     error(string.format('Overriding existing predicate %s', name))
   end
 
-  if opts.correct then
+  if opts.all then
     predicate_handlers[name] = handler
   else
     --- @param match table<integer, TSNode[]>
@@ -713,7 +713,7 @@ end
 ---@param opts table<string, any> Optional options:
 ---                                 - force (boolean): Override an existing
 ---                                   predicate of the same name
----                                 - correct (boolean): Use the correct
+---                                 - all (boolean): Use the correct
 ---                                   implementation of the match table where
 ---                                   capture IDs map to a list of nodes instead
 ---                                   of a single node. Defaults to false (for
@@ -731,7 +731,7 @@ function M.add_directive(name, handler, opts)
     error(string.format('Overriding existing directive %s', name))
   end
 
-  if opts.correct then
+  if opts.all then
     directive_handlers[name] = handler
   else
     --- @param match table<integer, TSNode[]>
@@ -909,16 +909,16 @@ end
 --- index of the pattern in the query, a table mapping capture indices to a list
 --- of nodes, and metadata from any directives processing the match.
 ---
---- WARNING: Set `correct=true` to ensure all matching nodes in a match are
+--- WARNING: Set `all=true` to ensure all matching nodes in a match are
 --- returned, otherwise only the last node in a match is returned, breaking captures
 --- involving quantifiers such as `(comment)+ @comment`. The default option
---- `correct=false` is only provided for backward compatibility and will be removed
+--- `all=false` is only provided for backward compatibility and will be removed
 --- after Nvim 0.10.
 ---
 --- Example:
 ---
 --- ```lua
---- for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, 0, -1, { correct = true }) do
+--- for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, 0, -1, { all = true }) do
 ---   for id, nodes in pairs(match) do
 ---     local name = query.captures[id]
 ---     for _, node in ipairs(nodes) do
@@ -939,13 +939,13 @@ end
 ---@param opts? table Optional keyword arguments:
 ---   - max_start_depth (integer) if non-zero, sets the maximum start depth
 ---     for each match. This is used to prevent traversing too deep into a tree.
----   - correct (boolean) When set, the returned match table maps capture IDs to a list of nodes.
+---   - all (boolean) When set, the returned match table maps capture IDs to a list of nodes.
 ---     Older versions of iter_matches incorrectly mapped capture IDs to a single node, which is
 ---     incorrect behavior. This option will eventually become the default and removed.
 ---
 ---@return (fun(): integer, table<integer, TSNode[]>, table): pattern id, match, metadata
 function Query:iter_matches(node, source, start, stop, opts)
-  local correct = opts and opts.correct
+  local all = opts and opts.all
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
   end
@@ -966,9 +966,9 @@ function Query:iter_matches(node, source, start, stop, opts)
       self:apply_directives(match, pattern, source, metadata)
     end
 
-    if not correct then
+    if not all then
       -- Convert the match table into the old buggy version for backward
-      -- compatibility. This is slow. Plugin authors, if you're reading this, set the "correct"
+      -- compatibility. This is slow. Plugin authors, if you're reading this, set the "all"
       -- option!
       local old_match = {} ---@type table<integer, TSNode>
       for k, v in pairs(match or {}) do
