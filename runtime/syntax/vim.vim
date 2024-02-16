@@ -23,7 +23,7 @@ syn cluster vimCommentGroup	contains=vimTodo,@Spell
 " Special and plugin vim commands {{{2
 syn match   vimCommand contained	"\<z[-+^.=]\=\>"
 syn keyword vimOnlyCommand contained	fix[del] op[en] sh[ell] P[rint]
-syn keyword vimStdPlugin contained Arguments Asm Break Cfilter Clear Continue DiffOrig Evaluate Finish Gdb Lfilter Man N[ext] Over P[rint] Program Run S Source Step Stop Termdebug TermdebugCommand TOhtml Until Winbar XMLent XMLns
+syn keyword vimStdPlugin contained Arguments Asm Break Cfilter Clear Continue DiffOrig Evaluate Finish Gdb Lfilter Man Over Program Run S Source Step Stop Termdebug TermdebugCommand TOhtml Until Winbar XMLent XMLns
 
 " Vim-specific options {{{2
 syn keyword vimOnlyOption contained	biosk bioskey cp compatible consk conskey cm cryptmethod edcompatible guipty key macatsui mzq mzquantum osfiletype oft renderoptions rop st shelltype sn shortname tenc termencoding ta textauto tx textmode tf ttyfast ttym ttymouse tbi ttybuiltin wiv weirdinvert
@@ -34,8 +34,10 @@ syn keyword vimOnlyOption contained	nobiosk nobioskey noconsk noconskey nocp noc
 " Invertible setting variants
 syn keyword vimOnlyOption contained	invbiosk invbioskey invconsk invconskey invcp invcompatible invguipty invmacatsui invsn invshortname invta invtextauto invtx invtextmode invtf invttyfast invtbi invttybuiltin invwiv invweirdinvert
 " termcap codes (which can also be set) {{{2
-syn keyword vimTermOption contained	t_8b t_AB t_al t_bc t_ce t_cl t_Co t_Cs t_CV t_db t_DL t_Ds t_F1 t_F2 t_F3 t_F4 t_F5 t_F6 t_F7 t_F8 t_F9 t_fs t_IE t_IS t_k1 t_K1 t_k2 t_k3 t_K3 t_k4 t_K4 t_k5 t_K5 t_k6 t_K6 t_k7 t_K7 t_k8 t_K8 t_k9 t_K9 t_KA t_kb t_kB t_KB t_KC t_kd t_kD t_KD t_ke t_KE t_KF t_KG t_KH t_KI t_KJ t_KK t_kl t_KL t_kN t_kP t_kr t_ks t_ku t_le t_mb t_md t_me t_mr t_ms t_nd t_op t_RB t_RI t_RV t_Sb t_se t_Sf t_SI t_so t_sr t_SR t_te t_ti t_ts t_u7 t_ue t_us t_Us t_ut t_vb t_ve t_vi t_vs t_WP t_WS t_xn t_xs t_ZH t_ZR
-syn keyword vimTermOption contained	t_8f t_AF t_AL t_cd t_Ce t_cm t_cs t_CS t_da t_dl t_ds t_EI t_kh t_kI
+" GEN_SYN_VIM: vimOption term output code, START_STR='syn keyword vimOption contained', END_STR=''
+syn keyword vimOption contained t_AB t_AF t_AU t_AL t_al t_bc t_BE t_BD t_cd t_ce t_Ce t_CF t_cl t_cm t_Co t_CS t_Cs t_cs t_CV t_da t_db t_DL t_dl t_ds t_Ds t_EC t_EI t_fs t_fd t_fe t_GP t_IE t_IS t_ke t_ks t_le t_mb t_md t_me t_mr t_ms t_nd t_op t_RF t_RB t_RC t_RI t_Ri t_RK t_RS t_RT t_RV t_Sb t_SC t_se t_Sf t_SH t_SI t_Si t_so t_SR t_sr t_ST t_Te t_te t_TE t_ti t_TI t_Ts t_ts t_u7 t_ue t_us t_Us t_ut t_vb t_ve t_vi t_VS t_vs t_WP t_WS t_XM t_xn t_xs t_ZH t_ZR t_8f t_8b t_8u
+" term key codes
+syn keyword vimOption contained	t_F1 t_F2 t_F3 t_F4 t_F5 t_F6 t_F7 t_F8 t_F9 t_k1 t_K1 t_k2 t_k3 t_K3 t_k4 t_K4 t_k5 t_K5 t_k6 t_K6 t_k7 t_K7 t_k8 t_K8 t_k9 t_K9 t_KA t_kb t_kB t_KB t_KC t_kd t_kD t_KD t_KE t_KF t_KG t_kh t_KH t_kI t_KI t_KJ t_KK t_kl t_KL t_kN t_kP t_kr t_ku
 syn match   vimTermOption contained	"t_%1"
 syn match   vimTermOption contained	"t_#2"
 syn match   vimTermOption contained	"t_#4"
@@ -46,21 +48,21 @@ syn match   vimTermOption contained	"t_%i"
 syn match   vimTermOption contained	"t_k;"
 
 " unsupported settings: these are supported by vi but don't do anything in vim {{{2
-syn keyword vimErrSetting contained	hardtabs ht w1200 w300 w9600
+" GEN_SYN_VIM: Missing vimOption, START_STR='syn keyword vimErrSetting contained', END_STR=''
+syn keyword vimErrSetting contained akm altkeymap anti antialias ap autoprint bf beautify biosk bioskey consk conskey fk fkmap fl flash gr graphic ht hardtabs macatsui mesg novice open opt optimize oft osfiletype redraw slow slowopen sourceany w1200 w300 w9600
+syn keyword vimErrSetting contained noakm noaltkeymap noanti noantialias noap noautoprint nobf nobeautify nobiosk nobioskey noconsk noconskey nofk nofkmap nofl noflash nogr nographic nomacatsui nomesg nonovice noopen noopt nooptimize noredraw noslow noslowopen nosourceany
+syn keyword vimErrSetting contained invakm invaltkeymap invanti invantialias invap invautoprint invbf invbeautify invbiosk invbioskey invconsk invconskey invfk invfkmap invfl invflash invgr invgraphic invmacatsui invmesg invnovice invopen invopt invoptimize invredraw invslow invslowopen invsourceany
 "}}}2
 syn case ignore
 " Highlight commonly used Groupnames {{{2
 syn keyword vimGroup contained	Comment Constant String Character Number Boolean Float Identifier Function Statement Conditional Repeat Label Operator Keyword Exception PreProc Include Define Macro PreCondit Type StorageClass Structure Typedef Special SpecialChar Tag Delimiter SpecialComment Debug Underlined Ignore Error Todo
 
 " Default highlighting groups {{{2
-syn keyword vimHLGroup contained	ColorColumn Cursor CursorColumn CursorIM CursorLine CursorLineFold CursorLineNr CursorLineSign DiffAdd DiffChange DiffDelete DiffText Directory EndOfBuffer ErrorMsg FoldColumn Folded IncSearch LineNr MatchParen Menu MessageWindow ModeMsg MoreMsg NonText Normal Pmenu PmenuExtra PmenuExtraSel PmenuKind PmenuKindSel PmenuSbar PmenuSel PmenuThumb Question QuickFixLine Scrollbar Search SignColumn SpecialKey SpellBad SpellCap SpellLocal SpellRare StatusLine StatusLineNC TabLine TabLineFill TabLineSel Title Tooltip VertSplit Visual WarningMsg WildMenu
-syn match vimHLGroup contained	"Conceal"
-syn keyword vimOnlyHLGroup contained	LineNrAbove LineNrBelow StatusLineTerm Terminal VisualNOS
-syn keyword nvimHLGroup contained	Substitute TermCursor TermCursorNC
+syn keyword vimHLGroup contained ErrorMsg IncSearch ModeMsg NonText StatusLine StatusLineNC EndOfBuffer VertSplit DiffText PmenuSbar TabLineSel TabLineFill Cursor lCursor QuickFixLine CursorLineSign CursorLineFold CurSearch PmenuKind PmenuKindSel PmenuExtra PmenuExtraSel Normal Directory LineNr CursorLineNr MoreMsg Question Search SpellBad SpellCap SpellRare SpellLocal PmenuThumb Pmenu PmenuSel SpecialKey Title WarningMsg WildMenu Folded FoldColumn SignColumn Visual DiffAdd DiffChange DiffDelete TabLine CursorColumn CursorLine ColorColumn Conceal MatchParen CursorIM LineNrAbove LineNrBelow
+syn keyword vimOnlyHLGroup contained	Menu Scrollbar StatusLineTerm StatusLineTermNC ToolbarButton ToolbarLine Tooltip VisualNOS
+syn keyword nvimHLGroup contained	FloatBorder FloatFooter FloatTitle MsgSeparator NormalFloat NormalNC Substitute TermCursor TermCursorNC VisualNC Whitespace WinBar WinBarNC WinSeparator
 "}}}2
 syn case match
-
-syn keyword vimCommand contained	2mat[ch] 3mat[ch]
 
 " Special Vim Highlighting (not automatic) {{{1
 
@@ -173,12 +175,14 @@ endif
 
 " Behave! {{{2
 " =======
-syn match   vimBehave	"\<be\%[have]\>" skipwhite nextgroup=vimBehaveModel,vimBehaveError
-syn keyword vimBehaveModel contained	mswin	xterm
 if !exists("g:vimsyn_noerror") && !exists("g:vimsyn_nobehaveerror")
  syn match   vimBehaveError contained	"[^ ]\+"
 endif
+syn match   vimBehave	"\<be\%[have]\>"	nextgroup=vimBehaveBang,vimBehaveModel,vimBehaveError skipwhite
+syn match   vimBehaveBang	contained	"\a\@1<=!" nextgroup=vimBehaveModel skipwhite
+syn keyword vimBehaveModel	contained	mswin	xterm
 
+hi def link vimBehaveBang vimBang
 " Filetypes {{{2
 " =========
 syn match   vimFiletype	"\<filet\%[ype]\(\s\+\I\i*\)*"	skipwhite contains=vimFTCmd,vimFTOption,vimFTError
@@ -278,9 +282,10 @@ if !exists("g:vimsyn_noerror") && !exists("g:vimsyn_nousercmderror")
 endif
 syn case ignore
 syn keyword	vimUserAttrbKey   contained	bar	ban[g]	cou[nt]	ra[nge] com[plete]	n[args]	re[gister]
-syn keyword	vimUserAttrbCmplt contained	augroup buffer behave color command compiler cscope dir environment event expression file file_in_path filetype function help highlight history locale mapping menu option packadd shellcmd sign syntax syntime tag tag_listfiles user var
+" GEN_SYN_VIM: vimUserAttrbCmplt, START_STR='syn keyword vimUserAttrbCmplt contained', END_STR=''
+syn keyword vimUserAttrbCmplt contained arglist augroup behave buffer color command compiler cscope diff_buffer dir environment event expression file file_in_path filetype function help highlight history keymap locale mapclear mapping menu messages syntax syntime option packadd runtime shellcmd sign tag tag_listfiles user var breakpoint scriptnames
 syn keyword	vimUserAttrbCmplt contained	custom customlist nextgroup=vimUserAttrbCmpltFunc,vimUserCmdError
-syn match	vimUserAttrbCmpltFunc contained	",\%([sS]:\|<[sS][iI][dD]>\)\=\%(\h\w*\%(#\h\w*\)\+\|\h\w*\)"hs=s+1 nextgroup=vimUserCmdError
+syn match	vimUserAttrbCmpltFunc contained	",\%([sS]:\|<[sS][iI][dD]>\)\=\%(\h\w*\%([.#]\h\w*\)\+\|\h\w*\)"hs=s+1 nextgroup=vimUserCmdError
 
 syn case match
 syn match	vimUserAttrbCmplt contained	"custom,\u\w*"
@@ -317,8 +322,6 @@ syn match	vimNotPatSep	contained	"\\\\"
 syn cluster	vimStringGroup	contains=vimEscape,vimEscapeBrace,vimPatSep,vimNotPatSep,vimPatSepErr,vimPatSepZone,@Spell
 syn region	vimString	oneline keepend	start=+[^a-zA-Z>!\\@]"+lc=1 skip=+\\\\\|\\"+ matchgroup=vimStringEnd end=+"+	contains=@vimStringGroup
 syn region	vimString	oneline keepend	start=+[^a-zA-Z>!\\@]'+lc=1 end=+'+
-syn region	vimString	oneline	start=+=!+lc=1	skip=+\\\\\|\\!+ end=+!+	contains=@vimStringGroup
-syn region	vimString	oneline	start="=+"lc=1	skip="\\\\\|\\+" end="+"	contains=@vimStringGroup
 "syn region	vimString	oneline	start="\s/\s*\A"lc=1 skip="\\\\\|\\+" end="/"	contains=@vimStringGroup  " see tst45.vim
 syn match	vimString	contained	+"[^"]*\\$+	skipnl nextgroup=vimStringCont
 syn match	vimStringCont	contained	+\(\\\\\|.\)\{-}[^\\]"+
@@ -412,7 +415,8 @@ VimFoldh syn region vimLetHereDoc	matchgroup=vimLetHereDocStart start='=<<\s*\%(
 syn keyword	vimFor	for	skipwhite nextgroup=vimVar,vimVarList
 " Abbreviations: {{{2
 " =============
-syn keyword vimAbb	ab[breviate] ca[bbrev] inorea[bbrev] cnorea[bbrev] norea[bbrev] ia[bbrev] skipwhite nextgroup=vimMapMod,vimMapLhs
+" GEN_SYN_VIM: vimCommand abbrev, START_STR='syn keyword vimAbb', END_STR='skipwhite nextgroup=vimMapMod,vimMapLhs'
+syn keyword vimAbb ab[breviate] ca[bbrev] cnorea[bbrev] ia[bbrev] inorea[bbrev] norea[bbrev] skipwhite nextgroup=vimMapMod,vimMapLhs
 
 " Autocmd: {{{2
 " =======
@@ -435,9 +439,12 @@ syn case match
 " ====
 syn match	vimMap		"\<map\>\ze\s*(\@!" 	    skipwhite nextgroup=vimMapMod,vimMapLhs
 syn match	vimMap		"\<map!"	  contains=vimMapBang skipwhite nextgroup=vimMapMod,vimMapLhs
-syn keyword	vimMap		cm[ap] cno[remap] im[ap] ino[remap] lm[ap] ln[oremap] nm[ap] nn[oremap] no[remap] om[ap] ono[remap] smap snor[emap] tno[remap] tm[ap] vm[ap] vmapc[lear] vn[oremap] xm[ap] xn[oremap] skipwhite nextgroup=vimMapBang,vimMapMod,vimMapLhs
-syn keyword	vimMap		mapc[lear] smapc[lear]
-syn keyword	vimUnmap		cu[nmap] iu[nmap] lu[nmap] nun[map] ou[nmap] sunm[ap] tunma[p] unm[ap] unm[ap] vu[nmap] xu[nmap] skipwhite nextgroup=vimMapBang,vimMapMod,vimMapLhs
+" GEN_SYN_VIM: vimCommand map, START_STR='syn keyword vimMap', END_STR='skipwhite nextgroup=vimMapBang,vimMapMod,vimMapLhs'
+syn keyword vimMap cm[ap] cno[remap] im[ap] ino[remap] lm[ap] ln[oremap] nm[ap] nn[oremap] no[remap] om[ap] ono[remap] smap snor[emap] tma[p] tno[remap] vm[ap] vn[oremap] xm[ap] xn[oremap] skipwhite nextgroup=vimMapBang,vimMapMod,vimMapLhs
+" GEN_SYN_VIM: vimCommand mapclear, START_STR='syn keyword vimMap', END_STR=''
+syn keyword vimMap cmapc[lear] imapc[lear] lmapc[lear] mapc[lear] nmapc[lear] omapc[lear] smapc[lear] tmapc[lear] vmapc[lear] xmapc[lear]
+" GEN_SYN_VIM: vimCommand unmap, START_STR='syn keyword vimUnmap', END_STR='skipwhite nextgroup=vimMapBang,vimMapMod,vimMapLhs'
+syn keyword vimUnmap cu[nmap] iu[nmap] lu[nmap] nun[map] ou[nmap] sunm[ap] tunma[p] unm[ap] vu[nmap] xu[nmap] skipwhite nextgroup=vimMapBang,vimMapMod,vimMapLhs
 syn match	vimMapLhs	contained	"\S\+"			contains=vimNotation,vimCtrlChar skipwhite nextgroup=vimMapRhs
 syn match	vimMapBang	contained	"!"			skipwhite nextgroup=vimMapMod,vimMapLhs
 syn match	vimMapMod	contained	"\%#=1\c<\(buffer\|expr\|\(local\)\=leader\|nowait\|plug\|script\|sid\|unique\|silent\)\+>" contains=vimMapModKey,vimMapModErr skipwhite nextgroup=vimMapMod,vimMapLhs
@@ -450,7 +457,8 @@ syn case match
 " Menus: {{{2
 " =====
 syn cluster	vimMenuList contains=vimMenuBang,vimMenuPriority,vimMenuName,vimMenuMod
-syn keyword	vimCommand	am[enu] an[oremenu] aun[menu] cme[nu] cnoreme[nu] cunme[nu] ime[nu] inoreme[nu] iunme[nu] me[nu] nme[nu] nnoreme[nu] noreme[nu] nunme[nu] ome[nu] onoreme[nu] ounme[nu] tlm[enu] tln[oremenu] tlu[nmenu] unme[nu] vme[nu] vnoreme[nu] vunme[nu] skipwhite nextgroup=@vimMenuList
+" GEN_SYN_VIM: vimCommand menu, START_STR='syn keyword vimCommand', END_STR='skipwhite nextgroup=@vimMenuList'
+syn keyword vimCommand am[enu] an[oremenu] aun[menu] cme[nu] cnoreme[nu] cunme[nu] ime[nu] inoreme[nu] iunme[nu] me[nu] nme[nu] nnoreme[nu] noreme[nu] nunme[nu] ome[nu] onoreme[nu] ounme[nu] sme[nu] snoreme[nu] sunme[nu] tlm[enu] tln[oremenu] tlu[nmenu] unme[nu] vme[nu] vnoreme[nu] vunme[nu] xme[nu] xnoreme[nu] xunme[nu] skipwhite nextgroup=@vimMenuList
 syn match	vimMenuName	"[^ \t\\<]\+"	contained nextgroup=vimMenuNameMore,vimMenuMap
 syn match	vimMenuPriority	"\d\+\(\.\d\+\)*"	contained skipwhite nextgroup=vimMenuName
 syn match	vimMenuNameMore	"\c\\\s\|<tab>\|\\\."	contained nextgroup=vimMenuName,vimMenuNameMore contains=vimNotation
@@ -918,6 +926,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimAutoCmdMod	Special
  hi def link vimAutoSet	vimCommand
  hi def link vimBang	vimOper
+  hi def link vimBehaveBang	vimBang
  hi def link vimBehaveModel	vimBehave
  hi def link vimBehave	vimCommand
  hi def link vimBracket	Delimiter
