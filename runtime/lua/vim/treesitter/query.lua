@@ -916,7 +916,7 @@ end
 --- Example:
 ---
 --- ```lua
---- for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, 0, -1, { correct = true}) do
+--- for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, 0, -1, { correct = true }) do
 ---   for id, nodes in pairs(match) do
 ---     local name = query.captures[id]
 ---     for _, node in ipairs(nodes) do
@@ -943,6 +943,7 @@ end
 ---
 ---@return (fun(): integer, table<integer, TSNode[]>, table): pattern id, match, metadata
 function Query:iter_matches(node, source, start, stop, opts)
+  local correct = opts and opts.correct
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
   end
@@ -963,7 +964,7 @@ function Query:iter_matches(node, source, start, stop, opts)
       self:apply_directives(match, pattern, source, metadata)
     end
 
-    if not opts or not opts.correct then
+    if not correct then
       -- Convert the match table into the old buggy version for backward
       -- compatibility. This is slow. Plugin authors, if you're reading this, set the "correct"
       -- option!
