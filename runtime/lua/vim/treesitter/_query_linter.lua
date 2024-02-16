@@ -122,7 +122,7 @@ local parse = vim.func._memoize(hash_parse, function(node, buf, lang)
 end)
 
 --- @param buf integer
---- @param match table<integer,TSNode[]>
+--- @param match TSMatch
 --- @param query Query
 --- @param lang_context QueryLinterLanguageContext
 --- @param diagnostics Diagnostic[]
@@ -175,7 +175,7 @@ function M.lint(buf, opts)
     parser:parse()
     parser:for_each_tree(function(tree, ltree)
       if ltree:lang() == 'query' then
-        for _, match, _ in query:iter_matches(tree:root(), buf, 0, -1) do
+        for _, match, _ in query:iter_matches(tree:root(), buf, 0, -1, { all = true }) do
           local lang_context = {
             lang = lang,
             parser_info = parser_info,
