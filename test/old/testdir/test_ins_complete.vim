@@ -108,6 +108,19 @@ func Test_ins_complete()
   call delete('Xdir', 'rf')
 endfunc
 
+func Test_ins_complete_invalid_byte()
+  if has('unix') && executable('base64')
+    " this weird command was causing an illegal memory access
+    call writefile(['bm9ybTlvMDCAMM4Dbw4OGA4ODg=='], 'Xinvalid64')
+    call system('base64 -d Xinvalid64 > Xinvalid')
+    call writefile(['qa!'], 'Xexit')
+    call RunVim([], [], " -i NONE -n -X -Z -e -m -s -S Xinvalid -S Xexit")
+    call delete('Xinvalid64')
+    call delete('Xinvalid')
+    call delete('Xexit')
+  endif
+endfunc
+
 func Test_omni_dash()
   func Omni(findstart, base)
     if a:findstart

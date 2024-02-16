@@ -3557,7 +3557,12 @@ void ins_compl_delete(void)
 /// "in_compl_func" is true when called from complete_check().
 void ins_compl_insert(bool in_compl_func)
 {
-  ins_bytes(compl_shown_match->cp_str + get_compl_len());
+  int compl_len = get_compl_len();
+  // Make sure we don't go over the end of the string, this can happen with
+  // illegal bytes.
+  if (compl_len < (int)strlen(compl_shown_match->cp_str)) {
+    ins_bytes(compl_shown_match->cp_str + compl_len);
+  }
   compl_used_match = !match_at_original_text(compl_shown_match);
 
   dict_T *dict = ins_compl_dict_alloc(compl_shown_match);
