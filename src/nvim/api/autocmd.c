@@ -378,8 +378,9 @@ cleanup:
 ///             |autocmd-buflocal|. Cannot be used with {pattern}.
 ///             - desc (string) optional: description (for documentation and troubleshooting).
 ///             - callback (function|string) optional: Lua function (or Vimscript function name, if
-///             string) called when the event(s) is triggered. Lua callback can return true to
-///             delete the autocommand, and receives a table argument with these keys:
+///             string) called when the event(s) is triggered. Lua callback can return a truthy
+///             value (not `false` or `nil`) to delete the autocommand. Receives a table argument
+///             with these keys:
 ///                 - id: (number) autocommand id
 ///                 - event: (string) name of the triggered event |autocmd-events|
 ///                 - group: (number|nil) autocommand group id, if any

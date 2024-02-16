@@ -112,7 +112,7 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///        Not for Lua callbacks.
 /// @param  opts  Optional parameters.
 ///             - on_lines: Lua callback invoked on change.
-///               Return `true` to detach. Args:
+///               Return a truthy value (not `false` or `nil`) to detach. Args:
 ///               - the string "lines"
 ///               - buffer handle
 ///               - b:changedtick
@@ -125,8 +125,7 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///             - on_bytes: Lua callback invoked on change.
 ///               This callback receives more granular information about the
 ///               change compared to on_lines.
-///               Return `true` to detach.
-///               Args:
+///               Return a truthy value (not `false` or `nil`) to detach. Args:
 ///               - the string "bytes"
 ///               - buffer handle
 ///               - b:changedtick
