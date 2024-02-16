@@ -17,7 +17,7 @@ include(Deps)
 include(Find)
 include(Util)
 
-set_default_buildtype()
+set_default_buildtype(Release)
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(NOT isMultiConfig)
   list(APPEND DEPS_CMAKE_ARGS -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
