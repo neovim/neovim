@@ -1167,7 +1167,7 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
     correct behavior must be opted into for backward compatibility.
 
     Example: >lua
-        for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, 0, -1, { correct = true}) do
+        for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, 0, -1, { correct = true }) do
           for id, nodes in pairs(match) do
             local name = query.captures[id]
             for _, node in ipairs(nodes) do
