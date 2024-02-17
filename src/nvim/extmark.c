@@ -74,11 +74,15 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
         if (old_mark.pos.row == row && old_mark.pos.col == col) {
           // not paired: we can revise in place
           if (!invalid && mt_decor_any(old_mark)) {
+            // TODO(bfredl): conflict of concerns: buf_decor_remove() must process
+            // the buffer as if MT_FLAG_DECOR_SIGNTEXT is already removed, however
+            // marktree must precisely adjust the set of flags from the old set to the new
+            uint16_t save_flags = mt_itr_rawkey(itr).flags;
             mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_DECOR_SIGNTEXT;
             buf_decor_remove(buf, row, row, col, mt_decor(old_mark), true);
+            mt_itr_rawkey(itr).flags = save_flags;
           }
-          mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_EXTERNAL_MASK;
-          mt_itr_rawkey(itr).flags |= flags;
+          marktree_revise_flags(buf->b_marktree, itr, flags);
           mt_itr_rawkey(itr).decor_data = decor.data;
           goto revised;
         }

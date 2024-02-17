@@ -2371,6 +2371,36 @@ describe('extmark decorations', function()
                                                         |
     ]]}
   end)
+
+  it('can replace marks in place with different decorations #27211', function()
+    local mark = api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_lines = {{{"foo", "ErrorMsg"}}}, })
+    screen:expect{grid=[[
+      ^                                                  |
+      {4:foo}                                               |
+      {1:~                                                 }|*12
+                                                        |
+    ]]}
+
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      id = mark,
+      virt_text = { { "testing", "NonText" } },
+      virt_text_pos = "inline",
+    })
+    screen:expect{grid=[[
+      {1:^testing}                                           |
+      {1:~                                                 }|*13
+                                                        |
+    ]]}
+
+    api.nvim_buf_del_extmark(0, ns, mark)
+    screen:expect{grid=[[
+      ^                                                  |
+      {1:~                                                 }|*13
+                                                        |
+    ]]}
+
+    helpers.assert_alive()
+  end)
 end)
 
 describe('decorations: inline virtual text', function()
