@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-MACOSX_DEPLOYMENT_TARGET="$(sw_vers -productVersion | cut -f1 -d.)"
+MACOSX_DEPLOYMENT_TARGET=11.0
 export MACOSX_DEPLOYMENT_TARGET
 cmake -S cmake.deps -B .deps -G Ninja \
   -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
