@@ -21,7 +21,7 @@ env:
 
 jobs:
   macos-universal:
-    runs-on: macos-latest
+    runs-on: macos-14
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
