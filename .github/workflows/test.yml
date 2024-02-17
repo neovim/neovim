@@ -146,12 +146,12 @@ jobs:
 
       - name: Build third-party deps
         run: |
-          cmake -S cmake.deps --preset ci ${{ matrix.build.deps_flags }}
+          cmake -S cmake.deps --preset ci -D CMAKE_BUILD_TYPE=Debug ${{ matrix.build.deps_flags }}
           cmake --build .deps
 
       - name: Build
         run: |
-          cmake --preset ci -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.build.flags }}
+          cmake --preset ci -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.build.flags }}
           cmake --build build
 
       - name: ${{ matrix.test }}
