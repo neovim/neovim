@@ -294,7 +294,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
           break;
         case kCallbackFuncref:
         case kCallbackPartial:
-          PUT(autocmd_info, "callback", CSTR_AS_OBJ(callback_to_string(cb)));
+          PUT(autocmd_info, "callback", CSTR_AS_OBJ(callback_to_string(cb, NULL)));
           break;
         case kCallbackNone:
           abort();

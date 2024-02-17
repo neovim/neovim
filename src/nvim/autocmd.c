@@ -2429,7 +2429,7 @@ char *aucmd_exec_to_string(AutoCmd *ac, AucmdExecutable acc)
   case CALLABLE_EX:
     return xstrdup(acc.callable.cmd);
   case CALLABLE_CB:
-    return callback_to_string(&acc.callable.cb);
+    return callback_to_string(&acc.callable.cb, NULL);
   case CALLABLE_NONE:
     return "This is not possible";
   }

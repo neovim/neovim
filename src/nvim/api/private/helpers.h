@@ -95,6 +95,8 @@
   name.capacity = maxsize; \
   name.items = name##__items; \
 
+typedef kvec_withinit_t(Object, 16) ArrayBuilder;
+
 #define cbuf_as_string(d, s) ((String) { .data = d, .size = s })
 
 #define STATIC_CSTR_AS_STRING(s) ((String) { .data = s, .size = sizeof("" s) - 1 })

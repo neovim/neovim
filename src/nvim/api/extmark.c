@@ -346,7 +346,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 
   rv = arena_array(arena, kv_size(marks));
   for (size_t i = 0; i < kv_size(marks); i++) {
-    ADD(rv, ARRAY_OBJ(extmark_to_array(kv_A(marks, i), true, details, hl_name, arena)));
+    ADD_C(rv, ARRAY_OBJ(extmark_to_array(kv_A(marks, i), true, details, hl_name, arena)));
   }
 
   kv_destroy(marks);

@@ -1456,10 +1456,10 @@ Dictionary nvim_get_mode(Arena *arena)
 /// @param  mode       Mode short-name ("n", "i", "v", ...)
 /// @returns Array of |maparg()|-like dictionaries describing mappings.
 ///          The "buffer" key is always zero.
-ArrayOf(Dictionary) nvim_get_keymap(String mode)
+ArrayOf(Dictionary) nvim_get_keymap(String mode, Arena *arena)
   FUNC_API_SINCE(3)
 {
-  return keymap_array(mode, NULL);
+  return keymap_array(mode, NULL, arena);
 }
 
 /// Sets a global |mapping| for the given mode.

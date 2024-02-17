@@ -1713,6 +1713,39 @@ char *str2special_save(const char *const str, const bool replace_spaces, const b
   return (char *)ga.ga_data;
 }
 
+/// Convert string, replacing key codes with printables
+///
+/// Used for lhs or rhs of mappings.
+///
+/// @param[in]  str  String to convert.
+/// @param[in]  replace_spaces  Convert spaces into `<Space>`, normally used for
+///                             lhs of mapping and keytrans(), but not rhs.
+/// @param[in]  replace_lt  Convert `<` into `<lt>`.
+///
+/// @return [allocated] Converted string.
+char *str2special_arena(const char *str, bool replace_spaces, bool replace_lt, Arena *arena)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_RET
+{
+  const char *p = str;
+  size_t len = 0;
+  while (*p) {
+    len += strlen(str2special(&p, replace_spaces, replace_lt));
+  }
+
+  char *buf = arena_alloc(arena, len + 1, false);
+  size_t pos = 0;
+  p = str;
+  while (*p) {
+    const char *s = str2special(&p, replace_spaces, replace_lt);
+    size_t s_len = strlen(s);
+    memcpy(buf + pos, s, s_len);
+    pos += s_len;
+  }
+  buf[pos] = NUL;
+  return buf;
+}
+
 /// Convert character, replacing key with printable representation.
 ///
 /// @param[in,out]  sp  String to convert. Is advanced to the next key code.

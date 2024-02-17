@@ -374,7 +374,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     goto end;
   }
 
-  object_to_vim(result, rettv, &err);
+  object_to_vim_take_luaref(&result, rettv, true, &err);
 
 end:
   if (!handler.arena_return) {

@@ -160,51 +160,47 @@ static void mapblock_free(mapblock_T **mpp)
   xfree(mp);
 }
 
-/// Return characters to represent the map mode in an allocated string
+/// put characters to represent the map mode in a string buffer
 ///
-/// @return [allocated] NUL-terminated string with characters.
-static char *map_mode_to_chars(int mode)
-  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET
+/// @param[out] buf must be at least 7 bytes (including NUL)
+void map_mode_to_chars(int mode, char *buf)
+  FUNC_ATTR_NONNULL_ALL
 {
-  garray_T mapmode;
-
-  ga_init(&mapmode, 1, 7);
-
+  char *p = buf;
   if ((mode & (MODE_INSERT | MODE_CMDLINE)) == (MODE_INSERT | MODE_CMDLINE)) {
-    ga_append(&mapmode, '!');                           // :map!
+    *p++ = '!';                           // :map!
   } else if (mode & MODE_INSERT) {
-    ga_append(&mapmode, 'i');                           // :imap
+    *p++ = 'i';                           // :imap
   } else if (mode & MODE_LANGMAP) {
-    ga_append(&mapmode, 'l');                           // :lmap
+    *p++ = 'l';                           // :lmap
   } else if (mode & MODE_CMDLINE) {
-    ga_append(&mapmode, 'c');                           // :cmap
+    *p++ = 'c';                           // :cmap
   } else if ((mode & (MODE_NORMAL | MODE_VISUAL | MODE_SELECT | MODE_OP_PENDING))
              == (MODE_NORMAL | MODE_VISUAL | MODE_SELECT | MODE_OP_PENDING)) {
-    ga_append(&mapmode, ' ');                           // :map
+    *p++ = ' ';                           // :map
   } else {
     if (mode & MODE_NORMAL) {
-      ga_append(&mapmode, 'n');                         // :nmap
+      *p++ = 'n';                         // :nmap
     }
     if (mode & MODE_OP_PENDING) {
-      ga_append(&mapmode, 'o');                         // :omap
+      *p++ = 'o';                         // :omap
     }
     if (mode & MODE_TERMINAL) {
-      ga_append(&mapmode, 't');                         // :tmap
+      *p++ = 't';                         // :tmap
     }
     if ((mode & (MODE_VISUAL | MODE_SELECT)) == (MODE_VISUAL | MODE_SELECT)) {
-      ga_append(&mapmode, 'v');                         // :vmap
+      *p++ = 'v';                         // :vmap
     } else {
       if (mode & MODE_VISUAL) {
-        ga_append(&mapmode, 'x');                       // :xmap
+        *p++ = 'x';                       // :xmap
       }
       if (mode & MODE_SELECT) {
-        ga_append(&mapmode, 's');                       // :smap
+        *p++ = 's';                       // :smap
       }
     }
   }
 
-  ga_append(&mapmode, NUL);
-  return (char *)mapmode.ga_data;
+  *p = NUL;
 }
 
 /// @param local  true for buffer-local map
@@ -223,10 +219,10 @@ static void showmap(mapblock_T *mp, bool local)
     }
   }
 
-  char *const mapchars = map_mode_to_chars(mp->m_mode);
+  char mapchars[7];
+  map_mode_to_chars(mp->m_mode, mapchars);
   msg_puts(mapchars);
   size_t len = strlen(mapchars);
-  xfree(mapchars);
 
   while (++len <= 3) {
     msg_putchar(' ');
@@ -256,7 +252,7 @@ static void showmap(mapblock_T *mp, bool local)
   // Use false below if we only want things like <Up> to show up as such on
   // the rhs, and not M-x etc, true gets both -- webb
   if (mp->m_luaref != LUA_NOREF) {
-    char *str = nlua_funcref_str(mp->m_luaref);
+    char *str = nlua_funcref_str(mp->m_luaref, NULL);
     msg_puts_attr(str, HL_ATTR(HLF_8));
     xfree(str);
   } else if (mp->m_str[0] == NUL) {
@@ -2070,12 +2066,14 @@ void f_hasmapto(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 ///
 /// @return  A Dictionary.
 static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhsrawalt,
-                                     const int buffer_value, const bool abbr, const bool compatible)
+                                     const int buffer_value, const bool abbr, const bool compatible,
+                                     Arena *arena)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  Dictionary dict = ARRAY_DICT_INIT;
-  char *const lhs = str2special_save(mp->m_keys, compatible, !compatible);
-  char *const mapmode = map_mode_to_chars(mp->m_mode);
+  Dictionary dict = arena_dict(arena, 19);
+  char *const lhs = str2special_arena(mp->m_keys, compatible, !compatible, arena);
+  char *mapmode = arena_alloc(arena, 7, false);
+  map_mode_to_chars(mp->m_mode, mapmode);
   int noremap_value;
 
   if (compatible) {
@@ -2089,36 +2087,37 @@ static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhs
   }
 
   if (mp->m_luaref != LUA_NOREF) {
-    PUT(dict, "callback", LUAREF_OBJ(api_new_luaref(mp->m_luaref)));
+    PUT_C(dict, "callback", LUAREF_OBJ(api_new_luaref(mp->m_luaref)));
   } else {
-    PUT(dict, "rhs", STRING_OBJ(compatible
-                                ? cstr_to_string(mp->m_orig_str)
-                                : cstr_as_string(str2special_save(mp->m_str, false, true))));
+    String rhs = cstr_as_string(compatible
+                                ? mp->m_orig_str
+                                : str2special_arena(mp->m_str, false, true, arena));
+    PUT_C(dict, "rhs", STRING_OBJ(rhs));
   }
   if (mp->m_desc != NULL) {
-    PUT(dict, "desc", CSTR_TO_OBJ(mp->m_desc));
+    PUT_C(dict, "desc", CSTR_AS_OBJ(mp->m_desc));
   }
-  PUT(dict, "lhs", CSTR_AS_OBJ(lhs));
-  PUT(dict, "lhsraw", CSTR_TO_OBJ(mp->m_keys));
+  PUT_C(dict, "lhs", CSTR_AS_OBJ(lhs));
+  PUT_C(dict, "lhsraw", CSTR_AS_OBJ(mp->m_keys));
   if (lhsrawalt != NULL) {
     // Also add the value for the simplified entry.
-    PUT(dict, "lhsrawalt", CSTR_TO_OBJ(lhsrawalt));
+    PUT_C(dict, "lhsrawalt", CSTR_AS_OBJ(lhsrawalt));
   }
-  PUT(dict, "noremap", INTEGER_OBJ(noremap_value));
-  PUT(dict, "script", INTEGER_OBJ(mp->m_noremap == REMAP_SCRIPT ? 1 : 0));
-  PUT(dict, "expr", INTEGER_OBJ(mp->m_expr ? 1 : 0));
-  PUT(dict, "silent", INTEGER_OBJ(mp->m_silent ? 1 : 0));
-  PUT(dict, "sid", INTEGER_OBJ(mp->m_script_ctx.sc_sid));
-  PUT(dict, "scriptversion", INTEGER_OBJ(1));
-  PUT(dict, "lnum", INTEGER_OBJ(mp->m_script_ctx.sc_lnum));
-  PUT(dict, "buffer", INTEGER_OBJ(buffer_value));
-  PUT(dict, "nowait", INTEGER_OBJ(mp->m_nowait ? 1 : 0));
+  PUT_C(dict, "noremap", INTEGER_OBJ(noremap_value));
+  PUT_C(dict, "script", INTEGER_OBJ(mp->m_noremap == REMAP_SCRIPT ? 1 : 0));
+  PUT_C(dict, "expr", INTEGER_OBJ(mp->m_expr ? 1 : 0));
+  PUT_C(dict, "silent", INTEGER_OBJ(mp->m_silent ? 1 : 0));
+  PUT_C(dict, "sid", INTEGER_OBJ(mp->m_script_ctx.sc_sid));
+  PUT_C(dict, "scriptversion", INTEGER_OBJ(1));
+  PUT_C(dict, "lnum", INTEGER_OBJ(mp->m_script_ctx.sc_lnum));
+  PUT_C(dict, "buffer", INTEGER_OBJ(buffer_value));
+  PUT_C(dict, "nowait", INTEGER_OBJ(mp->m_nowait ? 1 : 0));
   if (mp->m_replace_keycodes) {
-    PUT(dict, "replace_keycodes", INTEGER_OBJ(1));
+    PUT_C(dict, "replace_keycodes", INTEGER_OBJ(1));
   }
-  PUT(dict, "mode", CSTR_AS_OBJ(mapmode));
-  PUT(dict, "abbr", INTEGER_OBJ(abbr ? 1 : 0));
-  PUT(dict, "mode_bits", INTEGER_OBJ(mp->m_mode));
+  PUT_C(dict, "mode", CSTR_AS_OBJ(mapmode));
+  PUT_C(dict, "abbr", INTEGER_OBJ(abbr ? 1 : 0));
+  PUT_C(dict, "mode_bits", INTEGER_OBJ(mp->m_mode));
 
   return dict;
 }
@@ -2184,16 +2183,16 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
         rettv->vval.v_string = str2special_save(rhs, false, false);
       }
     } else if (rhs_lua != LUA_NOREF) {
-      rettv->vval.v_string = nlua_funcref_str(mp->m_luaref);
+      rettv->vval.v_string = nlua_funcref_str(mp->m_luaref, NULL);
     }
   } else {
     // Return a dictionary.
     if (mp != NULL && (rhs != NULL || rhs_lua != LUA_NOREF)) {
-      Dictionary dict = mapblock_fill_dict(mp,
-                                           did_simplify ? keys_simplified : NULL,
-                                           buffer_local, abbr, true);
-      object_to_vim(DICTIONARY_OBJ(dict), rettv, NULL);
-      api_free_dictionary(dict);
+      Arena arena = ARENA_EMPTY;
+      Dictionary dict = mapblock_fill_dict(mp, did_simplify ? keys_simplified : NULL,
+                                           buffer_local, abbr, true, &arena);
+      object_to_vim_take_luaref(&DICTIONARY_OBJ(dict), rettv, true, NULL);
+      arena_mem_free(arena_finish(&arena));
     } else {
       // Return an empty dictionary.
       tv_dict_alloc_ret(rettv);
@@ -2391,19 +2390,18 @@ void f_maplist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         char *keys_buf = NULL;
         bool did_simplify = false;
 
-        char *lhs = str2special_save(mp->m_keys, true, false);
+        Arena arena = ARENA_EMPTY;
+        char *lhs = str2special_arena(mp->m_keys, true, false, &arena);
         replace_termcodes(lhs, strlen(lhs), &keys_buf, 0, flags, &did_simplify,
                           p_cpo);
-        xfree(lhs);
 
-        Dictionary dict = mapblock_fill_dict(mp,
-                                             did_simplify ? keys_buf : NULL,
-                                             buffer_local, abbr, true);
+        Dictionary dict = mapblock_fill_dict(mp, did_simplify ? keys_buf : NULL,
+                                             buffer_local, abbr, true, &arena);
         typval_T d = TV_INITIAL_VALUE;
-        object_to_vim(DICTIONARY_OBJ(dict), &d, NULL);
+        object_to_vim_take_luaref(&DICTIONARY_OBJ(dict), &d, true, NULL);
         assert(d.v_type == VAR_DICT);
         tv_list_append_dict(rettv->vval.v_list, d.vval.v_dict);
-        api_free_dictionary(dict);
+        arena_mem_free(arena_finish(&arena));
         xfree(keys_buf);
       }
     }
@@ -2805,9 +2803,10 @@ fail_and_free:
 /// @param  mode  The abbreviation for the mode
 /// @param  buf  The buffer to get the mapping array. NULL for global
 /// @returns Array of maparg()-like dictionaries describing mappings
-ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
+ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf, Arena *arena)
 {
-  Array mappings = ARRAY_DICT_INIT;
+  ArrayBuilder mappings = KV_INITIAL_VALUE;
+  kvi_init(mappings);
 
   char *p = mode.size > 0 ? mode.data : "m";
   bool forceit = *p == '!';
@@ -2833,12 +2832,11 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
       }
       // Check for correct mode
       if (int_mode & current_maphash->m_mode) {
-        ADD(mappings,
-            DICTIONARY_OBJ(mapblock_fill_dict(current_maphash, NULL,
-                                              buffer_value, is_abbrev, false)));
+        kvi_push(mappings, DICTIONARY_OBJ(mapblock_fill_dict(current_maphash, NULL, buffer_value,
+                                                             is_abbrev, false, arena)));
       }
     }
   }
 
-  return mappings;
+  return arena_take_arraybuilder(arena, &mappings);
 }

@@ -1805,10 +1805,10 @@ void callback_copy(Callback *dest, Callback *src)
 }
 
 /// Generate a string description of a callback
-char *callback_to_string(Callback *cb)
+char *callback_to_string(Callback *cb, Arena *arena)
 {
   if (cb->type == kCallbackLua) {
-    return nlua_funcref_str(cb->data.luaref);
+    return nlua_funcref_str(cb->data.luaref, arena);
   }
 
   const size_t msglen = 100;
