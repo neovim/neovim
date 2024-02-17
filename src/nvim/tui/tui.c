@@ -1434,28 +1434,28 @@ static void show_verbose_terminfo(TUIData *tui)
     abort();
   }
 
-  Array chunks = ARRAY_DICT_INIT;
-  Array title = ARRAY_DICT_INIT;
-  ADD(title, CSTR_TO_OBJ("\n\n--- Terminal info --- {{{\n"));
-  ADD(title, CSTR_TO_OBJ("Title"));
-  ADD(chunks, ARRAY_OBJ(title));
-  Array info = ARRAY_DICT_INIT;
+  MAXSIZE_TEMP_ARRAY(chunks, 3);
+  MAXSIZE_TEMP_ARRAY(title, 2);
+  ADD_C(title, CSTR_AS_OBJ("\n\n--- Terminal info --- {{{\n"));
+  ADD_C(title, CSTR_AS_OBJ("Title"));
+  ADD_C(chunks, ARRAY_OBJ(title));
+  MAXSIZE_TEMP_ARRAY(info, 2);
   String str = terminfo_info_msg(ut, tui->term);
-  ADD(info, STRING_OBJ(str));
-  ADD(chunks, ARRAY_OBJ(info));
-  Array end_fold = ARRAY_DICT_INIT;
-  ADD(end_fold, CSTR_TO_OBJ("}}}\n"));
-  ADD(end_fold, CSTR_TO_OBJ("Title"));
-  ADD(chunks, ARRAY_OBJ(end_fold));
+  ADD_C(info, STRING_OBJ(str));
+  ADD_C(chunks, ARRAY_OBJ(info));
+  MAXSIZE_TEMP_ARRAY(end_fold, 2);
+  ADD_C(end_fold, CSTR_AS_OBJ("}}}\n"));
+  ADD_C(end_fold, CSTR_AS_OBJ("Title"));
+  ADD_C(chunks, ARRAY_OBJ(end_fold));
 
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, ARRAY_OBJ(chunks));
-  ADD(args, BOOLEAN_OBJ(true));  // history
-  Dictionary opts = ARRAY_DICT_INIT;
-  PUT(opts, "verbose", BOOLEAN_OBJ(true));
-  ADD(args, DICTIONARY_OBJ(opts));
+  MAXSIZE_TEMP_ARRAY(args, 3);
+  ADD_C(args, ARRAY_OBJ(chunks));
+  ADD_C(args, BOOLEAN_OBJ(true));  // history
+  MAXSIZE_TEMP_DICT(opts, 1);
+  PUT_C(opts, "verbose", BOOLEAN_OBJ(true));
+  ADD_C(args, DICTIONARY_OBJ(opts));
   rpc_send_event(ui_client_channel_id, "nvim_echo", args);
-  api_free_array(args);
+  xfree(str.data);
 }
 
 void tui_suspend(TUIData *tui)

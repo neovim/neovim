@@ -947,10 +947,10 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
 
   Error err = ERROR_INIT;
   MAXSIZE_TEMP_ARRAY(a, 4);
-  ADD(a, INTEGER_OBJ((int)chan));
-  ADD(a, CSTR_AS_OBJ(server_addr));
-  ADD(a, CSTR_AS_OBJ(connect_error));
-  ADD(a, ARRAY_OBJ(args));
+  ADD_C(a, INTEGER_OBJ((int)chan));
+  ADD_C(a, CSTR_AS_OBJ(server_addr));
+  ADD_C(a, CSTR_AS_OBJ(connect_error));
+  ADD_C(a, ARRAY_OBJ(args));
   String s = STATIC_CSTR_AS_STRING("return vim._cs_remote(...)");
   Object o = nlua_exec(s, a, kRetObject, NULL, &err);
   kv_destroy(args);

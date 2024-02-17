@@ -1633,7 +1633,7 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, 
 ///                 the RPC channel), if provided by it via
 ///                 |nvim_set_client_info()|.
 ///
-Dictionary nvim_get_chan_info(uint64_t channel_id, Integer chan, Error *err)
+Dictionary nvim_get_chan_info(uint64_t channel_id, Integer chan, Arena *arena, Error *err)
   FUNC_API_SINCE(4)
 {
   if (chan < 0) {
@@ -1644,17 +1644,17 @@ Dictionary nvim_get_chan_info(uint64_t channel_id, Integer chan, Error *err)
     assert(channel_id <= INT64_MAX);
     chan = (Integer)channel_id;
   }
-  return channel_info((uint64_t)chan);
+  return channel_info((uint64_t)chan, arena);
 }
 
 /// Get information about all open channels.
 ///
 /// @returns Array of Dictionaries, each describing a channel with
 ///          the format specified at |nvim_get_chan_info()|.
-Array nvim_list_chans(void)
+Array nvim_list_chans(Arena *arena)
   FUNC_API_SINCE(4)
 {
-  return channel_all_info();
+  return channel_all_info(arena);
 }
 
 /// Calls many API methods atomically.
@@ -1891,7 +1891,7 @@ Array nvim_get_proc_children(Integer pid, Arena *arena, Error *err)
     // syscall failed (possibly because of kernel options), try shelling out.
     DLOG("fallback to vim._os_proc_children()");
     MAXSIZE_TEMP_ARRAY(a, 1);
-    ADD(a, INTEGER_OBJ(pid));
+    ADD_C(a, INTEGER_OBJ(pid));
     Object o = NLUA_EXEC_STATIC("return vim._os_proc_children(...)", a, kRetObject, arena, err);
     if (o.type == kObjectTypeArray) {
       rvobj = o.data.array;
@@ -1903,7 +1903,7 @@ Array nvim_get_proc_children(Integer pid, Arena *arena, Error *err)
   } else {
     rvobj = arena_array(arena, proc_count);
     for (size_t i = 0; i < proc_count; i++) {
-      ADD(rvobj, INTEGER_OBJ(proc_list[i]));
+      ADD_C(rvobj, INTEGER_OBJ(proc_list[i]));
     }
   }
 
@@ -1925,7 +1925,7 @@ Object nvim_get_proc(Integer pid, Arena *arena, Error *err)
   });
 
 #ifdef MSWIN
-  rvobj = DICTIONARY_OBJ(os_proc_info((int)pid));
+  rvobj = DICTIONARY_OBJ(os_proc_info((int)pid, arena));
   if (rvobj.data.dictionary.size == 0) {  // Process not found.
     return NIL;
   }
