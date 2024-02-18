@@ -3629,10 +3629,9 @@ shada_read_next_item_start:
   entry->data = sd_default_values[type_u64].data;
   switch ((ShadaEntryType)type_u64) {
   case kSDItemHeader:
-    if (!msgpack_rpc_to_dictionary(&(unpacked.data), &(entry->data.header))) {
-      semsg(_(READERR("header", "is not a dictionary")), initial_fpos);
-      goto shada_read_next_item_error;
-    }
+    // TODO(bfredl): header is written to file and provides useful debugging
+    // info. It is never read by nvim (earlier we parsed it back to a
+    // Dictionary, but that value was never used)
     break;
   case kSDItemSearchPattern: {
     if (unpacked.data.type != MSGPACK_OBJECT_MAP) {

@@ -18,14 +18,17 @@
 # include "msgpack_rpc/unpacker.c.generated.h"
 #endif
 
-Object unpack(const char *data, size_t size, Error *err)
+Object unpack(const char *data, size_t size, Arena *arena, Error *err)
 {
   Unpacker unpacker;
   mpack_parser_init(&unpacker.parser, 0);
   unpacker.parser.data.p = &unpacker;
+  unpacker.arena = *arena;
 
   int result = mpack_parse(&unpacker.parser, &data, &size,
                            api_parse_enter, api_parse_exit);
+
+  *arena = unpacker.arena;
 
   if (result == MPACK_NOMEM) {
     api_set_error(err, kErrorTypeException, "object was too deep to unpack");
