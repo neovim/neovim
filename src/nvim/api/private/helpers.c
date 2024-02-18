@@ -581,6 +581,15 @@ String arena_string(Arena *arena, String str)
   }
 }
 
+Array arena_take_arraybuilder(Arena *arena, ArrayBuilder *arr)
+{
+  Array ret = arena_array(arena, kv_size(*arr));
+  ret.size = kv_size(*arr);
+  memcpy(ret.items, arr->items, sizeof(ret.items[0]) * ret.size);
+  kvi_destroy(*arr);
+  return ret;
+}
+
 void api_free_object(Object value)
 {
   switch (value.type) {

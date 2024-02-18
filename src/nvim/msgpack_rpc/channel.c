@@ -682,12 +682,11 @@ static WBuffer *serialize_response(uint64_t channel_id, MsgpackRpcRequestHandler
       semsg("paste: %s", err->msg);
       api_clear_error(err);
     } else {
-      Array args = ARRAY_DICT_INIT;
-      ADD(args, INTEGER_OBJ(err->type));
-      ADD(args, CSTR_TO_OBJ(err->msg));
+      MAXSIZE_TEMP_ARRAY(args, 2);
+      ADD_C(args, INTEGER_OBJ(err->type));
+      ADD_C(args, CSTR_AS_OBJ(err->msg));
       msgpack_rpc_serialize_request(0, cstr_as_string("nvim_error_event"),
                                     args, &pac);
-      api_free_array(args);
     }
   } else {
     msgpack_rpc_serialize_response(response_id, err, arg, &pac);

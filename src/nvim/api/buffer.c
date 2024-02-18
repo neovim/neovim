@@ -905,7 +905,7 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
 /// @param[out]  err   Error details, if any
 /// @returns Array of |maparg()|-like dictionaries describing mappings.
 ///          The "buffer" key holds the associated buffer handle.
-ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
+ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Arena *arena, Error *err)
   FUNC_API_SINCE(3)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -914,7 +914,7 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
     return (Array)ARRAY_DICT_INIT;
   }
 
-  return keymap_array(mode, buf);
+  return keymap_array(mode, buf, arena);
 }
 
 /// Sets a buffer-local |mapping| for the given mode.

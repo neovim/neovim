@@ -238,7 +238,8 @@ void channel_create_event(Channel *chan, const char *ext_source)
   }
 
   assert(chan->id <= VARNUMBER_MAX);
-  Dictionary info = channel_info(chan->id);
+  Arena arena = ARENA_EMPTY;
+  Dictionary info = channel_info(chan->id, &arena);
   typval_T tv = TV_INITIAL_VALUE;
   // TODO(bfredl): do the conversion in one step. Also would be nice
   // to pretty print top level dict in defined order
@@ -247,7 +248,7 @@ void channel_create_event(Channel *chan, const char *ext_source)
   char *str = encode_tv2json(&tv, NULL);
   ILOG("new channel %" PRIu64 " (%s) : %s", chan->id, source, str);
   xfree(str);
-  api_free_dictionary(info);
+  arena_mem_free(arena_finish(&arena));
 
 #else
   (void)ext_source;
@@ -876,7 +877,8 @@ static void set_info_event(void **argv)
 
   save_v_event_T save_v_event;
   dict_T *dict = get_v_event(&save_v_event);
-  Dictionary info = channel_info(chan->id);
+  Arena arena = ARENA_EMPTY;
+  Dictionary info = channel_info(chan->id, &arena);
   typval_T retval;
   object_to_vim(DICTIONARY_OBJ(info), &retval, NULL);
   assert(retval.v_type == VAR_DICT);
@@ -886,7 +888,7 @@ static void set_info_event(void **argv)
   apply_autocmds(event, NULL, NULL, false, curbuf);
 
   restore_v_event(dict, &save_v_event);
-  api_free_dictionary(info);
+  arena_mem_free(arena_finish(&arena));
   channel_decref(chan);
 }
 
@@ -898,15 +900,15 @@ bool channel_job_running(uint64_t id)
           && !process_is_stopped(&chan->stream.proc));
 }
 
-Dictionary channel_info(uint64_t id)
+Dictionary channel_info(uint64_t id, Arena *arena)
 {
   Channel *chan = find_channel(id);
   if (!chan) {
     return (Dictionary)ARRAY_DICT_INIT;
   }
 
-  Dictionary info = ARRAY_DICT_INIT;
-  PUT(info, "id", INTEGER_OBJ((Integer)chan->id));
+  Dictionary info = arena_dict(arena, 8);
+  PUT_C(info, "id", INTEGER_OBJ((Integer)chan->id));
 
   const char *stream_desc, *mode_desc;
   switch (chan->streamtype) {
@@ -914,18 +916,20 @@ Dictionary channel_info(uint64_t id)
     stream_desc = "job";
     if (chan->stream.proc.type == kProcessTypePty) {
       const char *name = pty_process_tty_name(&chan->stream.pty);
-      PUT(info, "pty", CSTR_TO_OBJ(name));
+      PUT_C(info, "pty", CSTR_TO_ARENA_OBJ(arena, name));
     }
 
-    char **p = chan->stream.proc.argv;
+    char **args = chan->stream.proc.argv;
     Array argv = ARRAY_DICT_INIT;
-    if (p != NULL) {
-      while (*p != NULL) {
-        ADD(argv, CSTR_TO_OBJ(*p));
-        p++;
+    if (args != NULL) {
+      size_t n;
+      for (n = 0; args[n] != NULL; n++) {}
+      argv = arena_array(arena, n);
+      for (size_t i = 0; i < n; i++) {
+        ADD_C(argv, CSTR_AS_OBJ(args[i]));
       }
     }
-    PUT(info, "argv", ARRAY_OBJ(argv));
+    PUT_C(info, "argv", ARRAY_OBJ(argv));
     break;
   }
 
@@ -938,25 +942,25 @@ Dictionary channel_info(uint64_t id)
     break;
 
   case kChannelStreamInternal:
-    PUT(info, "internal", BOOLEAN_OBJ(true));
+    PUT_C(info, "internal", BOOLEAN_OBJ(true));
     FALLTHROUGH;
 
   case kChannelStreamSocket:
     stream_desc = "socket";
     break;
   }
-  PUT(info, "stream", CSTR_TO_OBJ(stream_desc));
+  PUT_C(info, "stream", CSTR_AS_OBJ(stream_desc));
 
   if (chan->is_rpc) {
     mode_desc = "rpc";
-    PUT(info, "client", DICTIONARY_OBJ(rpc_client_info(chan)));
+    PUT_C(info, "client", DICTIONARY_OBJ(chan->rpc.info));
   } else if (chan->term) {
     mode_desc = "terminal";
-    PUT(info, "buffer", BUFFER_OBJ(terminal_buf(chan->term)));
+    PUT_C(info, "buffer", BUFFER_OBJ(terminal_buf(chan->term)));
   } else {
     mode_desc = "bytes";
   }
-  PUT(info, "mode", CSTR_TO_OBJ(mode_desc));
+  PUT_C(info, "mode", CSTR_AS_OBJ(mode_desc));
 
   return info;
 }
@@ -969,21 +973,20 @@ static int int64_t_cmp(const void *pa, const void *pb)
   return a == b ? 0 : a > b ? 1 : -1;
 }
 
-Array channel_all_info(void)
+Array channel_all_info(Arena *arena)
 {
   // order the items in the array by channel number, for Determinism™
   kvec_t(int64_t) ids = KV_INITIAL_VALUE;
-  kv_resize(ids, map_size(&channels));
+  kv_fixsize_arena(arena, ids, map_size(&channels));
   uint64_t id;
   map_foreach_key(&channels, id, {
     kv_push(ids, (int64_t)id);
   });
   qsort(ids.items, ids.size, sizeof ids.items[0], int64_t_cmp);
 
-  Array ret = ARRAY_DICT_INIT;
+  Array ret = arena_array(arena, ids.size);
   for (size_t i = 0; i < ids.size; i++) {
-    ADD(ret, DICTIONARY_OBJ(channel_info((uint64_t)ids.items[i])));
+    ADD_C(ret, DICTIONARY_OBJ(channel_info((uint64_t)ids.items[i], arena)));
   }
-  kv_destroy(ids);
   return ret;
 }

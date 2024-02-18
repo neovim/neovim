@@ -1046,7 +1046,7 @@ static Array translate_firstarg(UI *ui, Array args, Arena *arena)
 
   ADD_C(new_args, ARRAY_OBJ(translate_contents(ui, contents, arena)));
   for (size_t i = 1; i < args.size; i++) {
-    ADD(new_args, args.items[i]);
+    ADD_C(new_args, args.items[i]);
   }
   return new_args;
 }

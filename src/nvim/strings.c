@@ -2166,6 +2166,47 @@ int kv_do_printf(StringBuilder *str, const char *fmt, ...)
   return printed;
 }
 
+String arena_printf(Arena *arena, const char *fmt, ...)
+  FUNC_ATTR_PRINTF(2, 3)
+{
+  size_t remaining = 0;
+  char *buf = NULL;
+  if (arena) {
+    if (!arena->cur_blk) {
+      alloc_block(arena);
+    }
+
+    // happy case, we can fit the printed string in the rest of the current
+    // block (one pass):
+    remaining = arena->size - arena->pos;
+    buf = arena->cur_blk + arena->pos;
+  }
+
+  va_list ap;
+  va_start(ap, fmt);
+  int printed = vsnprintf(buf, remaining, fmt, ap);
+  va_end(ap);
+
+  if (printed < 0) {
+    return (String)STRING_INIT;
+  }
+
+  // printed string didn't fit, allocate and try again
+  if ((size_t)printed >= remaining) {
+    buf = arena_alloc(arena, (size_t)printed + 1, false);
+    va_start(ap, fmt);
+    printed = vsnprintf(buf, (size_t)printed + 1, fmt, ap);
+    va_end(ap);
+    if (printed < 0) {
+      return (String)STRING_INIT;
+    }
+  } else {
+    arena->pos += (size_t)printed + 1;
+  }
+
+  return cbuf_as_string(buf, (size_t)printed);
+}
+
 /// Reverse text into allocated memory.
 ///
 /// @return  the allocated string.

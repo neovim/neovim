@@ -230,7 +230,7 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
 ///
 /// @param pid Process to inspect.
 /// @return Map of process properties, empty on error.
-Dictionary os_proc_info(int pid)
+Dictionary os_proc_info(int pid, Arena *arena)
 {
   Dictionary pinfo = ARRAY_DICT_INIT;
   PROCESSENTRY32 pe;
@@ -258,9 +258,10 @@ Dictionary os_proc_info(int pid)
   CloseHandle(h);
 
   if (pe.th32ProcessID == (DWORD)pid) {
-    PUT(pinfo, "pid", INTEGER_OBJ(pid));
-    PUT(pinfo, "ppid", INTEGER_OBJ((int)pe.th32ParentProcessID));
-    PUT(pinfo, "name", CSTR_TO_OBJ(pe.szExeFile));
+    pinfo = arena_dict(arena, 3);
+    PUT_C(pinfo, "pid", INTEGER_OBJ(pid));
+    PUT_C(pinfo, "ppid", INTEGER_OBJ((int)pe.th32ParentProcessID));
+    PUT_C(pinfo, "name", CSTR_TO_ARENA_OBJ(arena, pe.szExeFile));
   }
 
   return pinfo;

@@ -584,7 +584,7 @@ static void uc_list(char *name, size_t name_len)
       msg_outtrans(IObuff, 0);
 
       if (cmd->uc_luaref != LUA_NOREF) {
-        char *fn = nlua_funcref_str(cmd->uc_luaref);
+        char *fn = nlua_funcref_str(cmd->uc_luaref, NULL);
         msg_puts_attr(fn, HL_ATTR(HLF_8));
         xfree(fn);
         // put the description on a new line
