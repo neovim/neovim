@@ -27,8 +27,8 @@
 #define P_RSTAT        0x200U       ///< redraw status lines
 #define P_RWIN         0x400U       ///< redraw current window and recompute text
 #define P_RBUF         0x800U       ///< redraw current buffer and recompute text
-#define P_RALL         0xC00U       ///< redraw all windows
-#define P_RCLR         0xE00U       ///< clear and redraw all
+#define P_RALL         0xC00U       ///< redraw all windows and recompute text
+#define P_RCLR         0xE00U       ///< clear and redraw all and recompute text
 
 #define P_COMMA        0x1000U      ///< comma separated list
 #define P_ONECOMMA     0x3000U      ///< P_COMMA and cannot have two consecutive
@@ -47,7 +47,7 @@
 #define P_CURSWANT     0x800000U    ///< update curswant required; not needed
                                     ///< when there is a redraw flag
 #define P_NDNAME       0x1000000U   ///< only normal dir name chars allowed
-#define P_RWINONLY     0x2000000U   ///< only redraw current window
+#define P_HLONLY       0x2000000U   ///< option only changes highlight, not text
 #define P_MLE          0x4000000U   ///< under control of 'modelineexpr'
 #define P_FUNC         0x8000000U   ///< accept a function reference or a lambda
 #define P_COLON        0x10000000U  ///< values use colons to create sublists
