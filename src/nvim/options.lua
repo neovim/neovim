@@ -45,10 +45,10 @@
 --- |'statuslines'
 --- |'tabline'
 --- |'current_window'
---- |'current_window_only'
 --- |'current_buffer'
 --- |'all_windows'
 --- |'curswant'
+--- |'highlight_only'
 --- |'ui_option'
 
 --- @param s string
@@ -1262,7 +1262,7 @@ return {
       ]=],
       full_name = 'colorcolumn',
       list = 'onecomma',
-      redraw = { 'current_window' },
+      redraw = { 'current_window', 'highlight_only' },
       scope = { 'window' },
       short_desc = N_('columns to highlight'),
       type = 'string',
@@ -1859,7 +1859,7 @@ return {
         <
       ]=],
       full_name = 'cursorcolumn',
-      redraw = { 'current_window_only' },
+      redraw = { 'current_window', 'highlight_only' },
       scope = { 'window' },
       short_desc = N_('highlight the screen column of the cursor'),
       type = 'boolean',
@@ -1874,7 +1874,7 @@ return {
         easier to see the selected text.
       ]=],
       full_name = 'cursorline',
-      redraw = { 'current_window_only' },
+      redraw = { 'current_window', 'highlight_only' },
       scope = { 'window' },
       short_desc = N_('highlight the screen line of the cursor'),
       type = 'boolean',
@@ -1902,7 +1902,7 @@ return {
       expand_cb = 'expand_set_cursorlineopt',
       full_name = 'cursorlineopt',
       list = 'onecomma',
-      redraw = { 'current_window_only' },
+      redraw = { 'current_window', 'highlight_only' },
       scope = { 'window' },
       short_desc = N_("settings for 'cursorline'"),
       type = 'string',
@@ -3926,7 +3926,7 @@ return {
         with the 'h' flag in 'shada' |shada-h|.
       ]=],
       full_name = 'hlsearch',
-      redraw = { 'all_windows' },
+      redraw = { 'all_windows', 'highlight_only' },
       scope = { 'global' },
       short_desc = N_('highlight matches with last search pattern'),
       type = 'boolean',
@@ -7708,7 +7708,7 @@ return {
         The languages are specified with 'spelllang'.
       ]=],
       full_name = 'spell',
-      redraw = { 'current_window' },
+      redraw = { 'current_window', 'highlight_only' },
       scope = { 'window' },
       short_desc = N_('spell checking'),
       type = 'boolean',
@@ -7730,7 +7730,7 @@ return {
         |set-spc-auto|.
       ]=],
       full_name = 'spellcapcheck',
-      redraw = { 'current_buffer' },
+      redraw = { 'current_buffer', 'highlight_only' },
       scope = { 'buffer' },
       short_desc = N_('pattern to locate end of a sentence'),
       type = 'string',
@@ -7821,7 +7821,7 @@ return {
       expand = true,
       full_name = 'spelllang',
       list = 'onecomma',
-      redraw = { 'current_buffer' },
+      redraw = { 'current_buffer', 'highlight_only' },
       scope = { 'buffer' },
       short_desc = N_('language(s) to do spell checking for'),
       type = 'string',
@@ -7846,7 +7846,7 @@ return {
       expand_cb = 'expand_set_spelloptions',
       full_name = 'spelloptions',
       list = 'onecomma',
-      redraw = { 'current_buffer' },
+      redraw = { 'current_buffer', 'highlight_only' },
       scope = { 'buffer' },
       secure = true,
       type = 'string',
@@ -8858,7 +8858,7 @@ return {
         When 'formatexpr' is set it will be used to break the line.
       ]=],
       full_name = 'textwidth',
-      redraw = { 'current_buffer' },
+      redraw = { 'current_buffer', 'highlight_only' },
       scope = { 'buffer' },
       short_desc = N_('maximum width of text that is being inserted'),
       type = 'number',

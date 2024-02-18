@@ -20,10 +20,10 @@ local redraw_flags = {
   tabline = 'P_RTABL',
   statuslines = 'P_RSTAT',
   current_window = 'P_RWIN',
-  current_window_only = 'P_RWINONLY',
   current_buffer = 'P_RBUF',
   all_windows = 'P_RALL',
   curswant = 'P_CURSWANT',
+  highlight_only = 'P_HLONLY',
 }
 
 local list_flags = {

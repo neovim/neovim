@@ -3029,13 +3029,14 @@ void check_redraw_for(buf_T *buf, win_T *win, uint32_t flags)
   }
 
   if ((flags & P_RBUF) || (flags & P_RWIN) || all) {
-    changed_window_setting_win(win);
+    if (flags & P_HLONLY) {
+      redraw_later(win, UPD_NOT_VALID);
+    } else {
+      changed_window_setting_win(win);
+    }
   }
   if (flags & P_RBUF) {
     redraw_buf_later(buf, UPD_NOT_VALID);
-  }
-  if (flags & P_RWINONLY) {
-    redraw_later(win, UPD_NOT_VALID);
   }
   if (all) {
     redraw_all_later(UPD_NOT_VALID);
@@ -3554,7 +3555,7 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
     do_spelllang_source(curwin);
   }
 
-  // In case 'columns' or 'ls' changed.
+  // In case 'ruler' or 'showcmd' or 'columns' or 'ls' changed.
   comp_col();
 
   if (varp == &p_mouse) {
@@ -3568,7 +3569,8 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
     set_winbar(true);
   }
 
-  if (curwin->w_curswant != MAXCOL && (opt->flags & (P_CURSWANT | P_RALL)) != 0) {
+  if (curwin->w_curswant != MAXCOL
+      && (opt->flags & (P_CURSWANT | P_RALL)) != 0 && (opt->flags & P_HLONLY) == 0) {
     curwin->w_set_curswant = true;
   }
 
