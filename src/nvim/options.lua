@@ -9785,7 +9785,7 @@ return {
         UI-dependent. Works best with RGB colors. 'termguicolors'
       ]=],
       full_name = 'winblend',
-      redraw = { 'current_window' },
+      redraw = { 'current_window', 'highlight_only' },
       scope = { 'window' },
       short_desc = N_('Controls transparency level for floating windows'),
       type = 'number',
@@ -9900,7 +9900,7 @@ return {
       expand_cb = 'expand_set_winhighlight',
       full_name = 'winhighlight',
       list = 'onecommacolon',
-      redraw = { 'current_window' },
+      redraw = { 'current_window', 'highlight_only' },
       scope = { 'window' },
       short_desc = N_('Setup window-local highlights'),
       type = 'string',
