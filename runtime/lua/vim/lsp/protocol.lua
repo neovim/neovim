@@ -1,6 +1,6 @@
--- Protocol for the Microsoft Language Server Protocol (mslsp)
+--- @diagnostic disable: duplicate-doc-alias
 
-local protocol = {}
+-- Protocol for the Microsoft Language Server Protocol (mslsp)
 
 --[=[
 ---@private
@@ -20,7 +20,7 @@ function transform_schema_to_table()
 end
 --]=]
 
-local constants = {
+local protocol = {
   --- @enum lsp.DiagnosticSeverity
   DiagnosticSeverity = {
     -- Reports an error.
@@ -313,7 +313,7 @@ local constants = {
   },
 }
 
-for k, v in pairs(constants) do
+for k, v in pairs(protocol) do
   local tbl = vim.deepcopy(v, true)
   vim.tbl_add_reverse_lookup(tbl)
   protocol[k] = tbl
@@ -723,7 +723,7 @@ function protocol.make_client_capabilities()
         codeActionLiteralSupport = {
           codeActionKind = {
             valueSet = (function()
-              local res = vim.tbl_values(constants.CodeActionKind)
+              local res = vim.tbl_values(protocol.CodeActionKind)
               table.sort(res)
               return res
             end)(),
