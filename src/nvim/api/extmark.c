@@ -984,8 +984,7 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
 /// @param line_end   End of range of lines to clear (exclusive) or -1 to clear
 ///                   to end of buffer.
 /// @param[out] err   Error details, if any
-void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, Integer line_end,
-                              Error *err)
+void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Object start, Object end, Error *err)
   FUNC_API_SINCE(5)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -993,16 +992,76 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
     return;
   }
 
-  VALIDATE_RANGE((line_start >= 0 && line_start < MAXLNUM), "line number", {
+  VALIDATE_INT(ns_id == -1 || ns_initialized((uint32_t)ns_id), "ns_id", ns_id, {
     return;
   });
 
-  if (line_end < 0 || line_end > MAXLNUM) {
-    line_end = MAXLNUM;
+  int l_row;
+  colnr_T l_col;
+  if (start.type == kObjectTypeInteger) {
+    Integer start_row = start.data.integer;
+    if (start_row < 0) {
+      return;
+    } else {
+      l_row = (int)start_row;
+      l_col = 0;
+    }
+  } else if (start.type == kObjectTypeArray) {
+    Array pos = start.data.array;
+    VALIDATE_EXP((pos.size == 2
+                  && pos.items[0].type == kObjectTypeInteger
+                  && pos.items[1].type == kObjectTypeInteger),
+                 "mark position", "2 Integer items", NULL, {
+      return;
+    });
+
+    Integer pos_row = pos.items[0].data.integer;
+    Integer pos_col = pos.items[1].data.integer;
+    l_row = (int)(pos_row >= 0 ? pos_row : MAXLNUM);
+    l_col = (int)(pos_col >= 0 ? pos_col : MAXCOL);
+  } else {
+    return;
   }
+
+  int u_row;
+  colnr_T u_col;
+  if (end.type == kObjectTypeInteger) {
+    Integer end_row = end.data.integer;
+    if (end_row < 0) {
+      u_row = MAXLNUM;
+      u_col = MAXCOL;
+    } else {
+      u_row = (int)end_row;
+      u_col = MAXCOL;
+    }
+  } else if (end.type == kObjectTypeArray) {
+    Array pos = end.data.array;
+    VALIDATE_EXP((pos.size == 2
+                  && pos.items[0].type == kObjectTypeInteger
+                  && pos.items[1].type == kObjectTypeInteger),
+                 "mark position", "2 Integer items", NULL, {
+      return;
+    });
+
+    Integer pos_row = pos.items[0].data.integer;
+    Integer pos_col = pos.items[1].data.integer;
+    u_row = (int)(pos_row >= 0 ? pos_row : MAXLNUM);
+    u_col = (int)(pos_col >= 0 ? pos_col : MAXCOL);
+  } else {
+    return;
+  }
+
+  VALIDATE_RANGE((l_row >= 0 && l_row < MAXLNUM), "line number", {
+    return;
+  });
+
+  if (u_row < 0 || u_row > MAXLNUM) {
+    u_row = MAXLNUM;
+  }
+
   extmark_clear(buf, (ns_id < 0 ? 0 : (uint32_t)ns_id),
-                (int)line_start, 0,
-                (int)line_end - 1, MAXCOL);
+                l_row, l_col,
+                u_row - 1, u_col);
 }
 
 /// Set or change decoration provider for a |namespace|

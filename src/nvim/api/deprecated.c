@@ -95,7 +95,13 @@ void nvim_buf_clear_highlight(Buffer buffer, Integer ns_id, Integer line_start, 
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(7)
 {
-  nvim_buf_clear_namespace(buffer, ns_id, line_start, line_end, err);
+  Object start;
+  start.data.integer = line_start;
+  start.type = kObjectTypeInteger;
+  Object end;
+  end.data.integer = line_end;
+  end.type = kObjectTypeInteger;
+  nvim_buf_clear_namespace(buffer, ns_id, start, end, err);
 }
 
 /// Set the virtual text (annotation) for a buffer line.
