@@ -907,14 +907,14 @@ func Test_tag_last_search_pat()
         \ "first\tXfoo\t/^int first() {}/",
         \ "second\tXfoo\t/^int second() {}/",
         \ "third\tXfoo\t/^int third() {}/"],
-        \ 'Xtags')
+        \ 'Xtags', 'D')
   set tags=Xtags
   let code =<< trim [CODE]
     int first() {}
     int second() {}
     int third() {}
   [CODE]
-  call writefile(code, 'Xfoo')
+  call writefile(code, 'Xfoo', 'D')
 
   enew
   let save_cpo = &cpo
@@ -924,8 +924,6 @@ func Test_tag_last_search_pat()
   call assert_equal('^int second() {}', @/)
   let &cpo = save_cpo
 
-  call delete('Xtags')
-  call delete('Xfoo')
   set tags&
   %bwipe
 endfunc
@@ -936,27 +934,42 @@ func Test_tag_stack()
   for i in range(10, 31)
     let l += ["var" .. i .. "\tXfoo\t/^int var" .. i .. ";$/"]
   endfor
-  call writefile(l, 'Xtags')
+  call writefile(l, 'Xtags', 'D')
   set tags=Xtags
 
   let l = []
   for i in range(10, 31)
     let l += ["int var" .. i .. ";"]
   endfor
-  call writefile(l, 'Xfoo')
+  call writefile(l, 'Xfoo', 'D')
 
-  " Jump to a tag when the tag stack is full. Oldest entry should be removed.
   enew
+  " Jump to a tag when the tag stack is full. Oldest entry should be removed.
   for i in range(10, 30)
     exe "tag var" .. i
   endfor
-  let l = gettagstack()
-  call assert_equal(20, l.length)
-  call assert_equal('var11', l.items[0].tagname)
+  let t = gettagstack()
+  call assert_equal(20, t.length)
+  call assert_equal('var11', t.items[0].tagname)
+  let full = deepcopy(t.items)
   tag var31
-  let l = gettagstack()
-  call assert_equal('var12', l.items[0].tagname)
-  call assert_equal('var31', l.items[19].tagname)
+  let t = gettagstack()
+  call assert_equal('var12', t.items[0].tagname)
+  call assert_equal('var31', t.items[19].tagname)
+
+  " Jump to a tag when the tag stack is full, but with user data this time.
+  call foreach(full, {i, item -> extend(item, {'user_data': $'udata{i}'})})
+  call settagstack(0, {'items': full})
+  let t = gettagstack()
+  call assert_equal(20, t.length)
+  call assert_equal('var11', t.items[0].tagname)
+  call assert_equal('udata0', t.items[0].user_data)
+  tag var31
+  let t = gettagstack()
+  call assert_equal('var12', t.items[0].tagname)
+  call assert_equal('udata1', t.items[0].user_data)
+  call assert_equal('var31', t.items[19].tagname)
+  call assert_false(has_key(t.items[19], 'user_data'))
 
   " Use tnext with a single match
   call assert_fails('tnext', 'E427:')
@@ -988,8 +1001,6 @@ func Test_tag_stack()
   call settagstack(1, {'items' : []})
   call assert_fails('pop', 'E73:')
 
-  call delete('Xtags')
-  call delete('Xfoo')
   set tags&
   %bwipe
 endfunc

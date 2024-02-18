@@ -388,7 +388,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
           for (int i = 1; i < tagstacklen; i++) {
             tagstack[i - 1] = tagstack[i];
           }
-          tagstackidx--;
+          tagstack[--tagstackidx].user_data = NULL;
         }
 
         // put the tag name in the tag stack
