@@ -2550,21 +2550,21 @@ bool has_vim_patch(int n)
   return false;
 }
 
-Dictionary version_dict(void)
+Dictionary version_dict(Arena *arena)
 {
-  Dictionary d = ARRAY_DICT_INIT;
-  PUT(d, "major", INTEGER_OBJ(NVIM_VERSION_MAJOR));
-  PUT(d, "minor", INTEGER_OBJ(NVIM_VERSION_MINOR));
-  PUT(d, "patch", INTEGER_OBJ(NVIM_VERSION_PATCH));
+  Dictionary d = arena_dict(arena, 8);
+  PUT_C(d, "major", INTEGER_OBJ(NVIM_VERSION_MAJOR));
+  PUT_C(d, "minor", INTEGER_OBJ(NVIM_VERSION_MINOR));
+  PUT_C(d, "patch", INTEGER_OBJ(NVIM_VERSION_PATCH));
 #ifndef NVIM_VERSION_BUILD
-  PUT(d, "build", NIL);
+  PUT_C(d, "build", NIL);
 #else
-  PUT(d, "build", CSTR_AS_OBJ(NVIM_VERSION_BUILD));
+  PUT_C(d, "build", STATIC_CSTR_AS_OBJ(NVIM_VERSION_BUILD));
 #endif
-  PUT(d, "prerelease", BOOLEAN_OBJ(NVIM_VERSION_PRERELEASE[0] != '\0'));
-  PUT(d, "api_level", INTEGER_OBJ(NVIM_API_LEVEL));
-  PUT(d, "api_compatible", INTEGER_OBJ(NVIM_API_LEVEL_COMPAT));
-  PUT(d, "api_prerelease", BOOLEAN_OBJ(NVIM_API_PRERELEASE));
+  PUT_C(d, "prerelease", BOOLEAN_OBJ(NVIM_VERSION_PRERELEASE[0] != '\0'));
+  PUT_C(d, "api_level", INTEGER_OBJ(NVIM_API_LEVEL));
+  PUT_C(d, "api_compatible", INTEGER_OBJ(NVIM_API_LEVEL_COMPAT));
+  PUT_C(d, "api_prerelease", BOOLEAN_OBJ(NVIM_API_PRERELEASE));
   return d;
 }
 
