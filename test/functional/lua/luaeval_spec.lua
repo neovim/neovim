@@ -538,6 +538,8 @@ describe('v:lua', function()
     eq('\tbadval', eval("v:lua.require'leftpad'('badval')"))
     eq(9003, eval("v:lua.require'bar'.doit()"))
     eq(9004, eval("v:lua.require'baz-quux'.doit()"))
+    eq(9003, eval("1 ? v:lua.require'bar'.doit() : v:lua.require'baz-quux'.doit()"))
+    eq(9004, eval("0 ? v:lua.require'bar'.doit() : v:lua.require'baz-quux'.doit()"))
   end)
 
   it('throw errors for invalid use', function()
