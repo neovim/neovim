@@ -431,6 +431,15 @@ static void tk_getkeys(TermInput *input, bool force)
   TermKeyResult result;
 
   while ((result = tk_getkey(input->tk, &key, force)) == TERMKEY_RES_KEY) {
+    // Only press and repeat events are handled for now
+    switch (key.event) {
+    case TERMKEY_EVENT_PRESS:
+    case TERMKEY_EVENT_REPEAT:
+      break;
+    default:
+      continue;
+    }
+
     if (key.type == TERMKEY_TYPE_UNICODE && !key.modifiers) {
       forward_simple_utf8(input, &key);
     } else if (key.type == TERMKEY_TYPE_UNICODE

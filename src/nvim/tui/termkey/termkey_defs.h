@@ -123,6 +123,12 @@ typedef enum {
   TERMKEY_MOUSE_RELEASE,
 } TermKeyMouseEvent;
 
+typedef enum {
+  TERMKEY_EVENT_PRESS,
+  TERMKEY_EVENT_REPEAT,
+  TERMKEY_EVENT_RELEASE,
+} TermKeyEvent;
+
 enum {
   TERMKEY_KEYMOD_SHIFT = 1 << 0,
   TERMKEY_KEYMOD_ALT   = 1 << 1,
@@ -162,6 +168,8 @@ typedef struct {
   } code;
 
   int modifiers;
+
+  TermKeyEvent event;
 
   // Any Unicode character can be UTF-8 encoded in no more than 6 bytes, plus
   // terminating NUL
