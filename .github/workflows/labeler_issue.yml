@@ -13,7 +13,7 @@ jobs:
         with:
           script: |
             const title = context.payload.issue.title;
-            const titleSplit = title.split(/\s+/).map(e => e.toLowerCase());
+            const titleSplit = title.split(/\b/).map(e => e.toLowerCase());
             const keywords = ['api', 'treesitter', 'ui', 'lsp'];
             var match = new Set();
             for (const keyword of keywords) {
