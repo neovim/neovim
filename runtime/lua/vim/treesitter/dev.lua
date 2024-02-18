@@ -159,7 +159,10 @@ end
 local function set_dev_properties(w, b)
   vim.wo[w].scrolloff = 5
   vim.wo[w].wrap = false
-  vim.wo[w].foldmethod = 'manual' -- disable folding
+  vim.wo[w].foldmethod = 'expr'
+  vim.wo[w].foldexpr = 'v:lua.vim.treesitter.foldexpr()' -- explicitly set foldexpr
+  vim.wo[w].foldenable = false -- Don't fold on first open InspectTree
+  vim.wo[w].foldlevel = 99
   vim.bo[b].buflisted = false
   vim.bo[b].buftype = 'nofile'
   vim.bo[b].bufhidden = 'wipe'
