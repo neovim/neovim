@@ -667,11 +667,17 @@ void arena_mem_free(ArenaMem mem)
   }
 }
 
-char *arena_memdupz(Arena *arena, const char *buf, size_t size)
+char *arena_allocz(Arena *arena, size_t size)
 {
   char *mem = arena_alloc(arena, size + 1, false);
-  memcpy(mem, buf, size);
   mem[size] = NUL;
+  return mem;
+}
+
+char *arena_memdupz(Arena *arena, const char *buf, size_t size)
+{
+  char *mem = arena_allocz(arena, size);
+  memcpy(mem, buf, size);
   return mem;
 }
 

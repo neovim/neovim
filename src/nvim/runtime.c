@@ -581,7 +581,7 @@ Array runtime_inspect(Arena *arena)
 
   for (size_t i = 0; i < kv_size(path); i++) {
     SearchPathItem *item = &kv_A(path, i);
-    Array entry = ARRAY_DICT_INIT;
+    Array entry = arena_array(arena, 3);
     ADD_C(entry, CSTR_AS_OBJ(item->path));
     ADD_C(entry, BOOLEAN_OBJ(item->after));
     if (item->has_lua != kNone) {
