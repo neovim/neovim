@@ -462,11 +462,14 @@ int main(int argc, char **argv)
 
   // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
   if (!vimrc_none || params.clean) {
-    // Sources filetype.lua unless the user explicitly disabled it with :filetype off.
-    filetype_maybe_enable();
-    // Sources syntax/syntax.vim. We do this *after* the user startup scripts so that users can
-    // disable syntax highlighting with `:syntax off` if they wish.
-    syn_maybe_enable();
+    bool vimruntime_valid = validate_vimruntime_env();
+    if (vimruntime_valid) {
+      // Sources filetype.lua unless the user explicitly disabled it with :filetype off.
+      filetype_maybe_enable();
+      // Sources syntax/syntax.vim. We do this *after* the user startup scripts so that users can
+      // disable syntax highlighting with `:syntax off` if they wish.
+      syn_maybe_enable();
+    }
   }
 
   set_vim_var_nr(VV_VIM_DID_INIT, 1);

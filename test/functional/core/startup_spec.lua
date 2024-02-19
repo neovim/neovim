@@ -1737,6 +1737,23 @@ describe('runtime:', function()
     command('edit FTDETECT')
     eq('SsABab', eval('g:aseq'))
   end)
+
+  it('shows E5009 when $VIMRUNTIME is inaccessible #27527', function()
+    clear()
+    local screen = Screen.new(60, 7)
+    fn.jobstart({
+      nvim_prog,
+      '-u',
+      'NONE',
+      '--clean',
+    }, {
+      term = true,
+      env = {
+        VIMRUNTIME = '/foo/bar',
+      },
+    })
+    screen:expect({ any = 'E5009: Invalid %$VIMRUNTIME: /foo/bar' })
+  end)
 end)
 
 describe('user session', function()
