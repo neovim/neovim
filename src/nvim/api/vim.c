@@ -543,16 +543,21 @@ Integer nvim_strwidth(String text, Error *err)
 /// Gets the paths contained in |runtime-search-path|.
 ///
 /// @return List of paths
-ArrayOf(String) nvim_list_runtime_paths(Error *err)
+ArrayOf(String) nvim_list_runtime_paths(Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
-  return nvim_get_runtime_file(NULL_STRING, true, err);
+  return nvim_get_runtime_file(NULL_STRING, true, arena, err);
 }
 
-Array nvim__runtime_inspect(void)
+Array nvim__runtime_inspect(Arena *arena)
 {
-  return runtime_inspect();
+  return runtime_inspect(arena);
 }
+
+typedef struct {
+  ArrayBuilder rv;
+  Arena *arena;
+} RuntimeCookie;
 
 /// Find files in runtime directories
 ///
@@ -566,25 +571,27 @@ Array nvim__runtime_inspect(void)
 /// @param name pattern of files to search for
 /// @param all whether to return all matches or only the first
 /// @return list of absolute paths to the found files
-ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
+ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Arena *arena, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_FAST
 {
-  Array rv = ARRAY_DICT_INIT;
+  RuntimeCookie cookie = { .rv = ARRAY_DICT_INIT, .arena = arena, };
+  kvi_init(cookie.rv);
 
   int flags = DIP_DIRFILE | (all ? DIP_ALL : 0);
 
   TRY_WRAP(err, {
-    do_in_runtimepath((name.size ? name.data : ""), flags, find_runtime_cb, &rv);
+    do_in_runtimepath((name.size ? name.data : ""), flags, find_runtime_cb, &cookie);
   });
-  return rv;
+  return arena_take_arraybuilder(arena, &cookie.rv);
 }
 
-static bool find_runtime_cb(int num_fnames, char **fnames, bool all, void *cookie)
+static bool find_runtime_cb(int num_fnames, char **fnames, bool all, void *c)
 {
-  Array *rv = (Array *)cookie;
+  RuntimeCookie *cookie = (RuntimeCookie *)c;
   for (int i = 0; i < num_fnames; i++) {
-    ADD(*rv, CSTR_TO_OBJ(fnames[i]));
+    // TODO(bfredl): consider memory management of gen_expand_wildcards() itself
+    kvi_push(cookie->rv, CSTR_TO_ARENA_OBJ(cookie->arena, fnames[i]));
     if (!all) {
       return true;
     }
@@ -1583,13 +1590,12 @@ Array nvim_get_api_info(uint64_t channel_id, Arena *arena)
 ///
 /// @param[out] err Error details, if any
 void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, String type,
-                          Dictionary methods, Dictionary attributes, Error *err)
+                          Dictionary methods, Dictionary attributes, Arena *arena, Error *err)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
-  Dictionary info = ARRAY_DICT_INIT;
-  PUT(info, "name", copy_object(STRING_OBJ(name), NULL));
+  MAXSIZE_TEMP_DICT(info, 5);
+  PUT_C(info, "name", STRING_OBJ(name));
 
-  version = copy_dictionary(version, NULL);
   bool has_major = false;
   for (size_t i = 0; i < version.size; i++) {
     if (strequal(version.items[i].key.data, "major")) {
@@ -1598,15 +1604,21 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, 
     }
   }
   if (!has_major) {
-    PUT(version, "major", INTEGER_OBJ(0));
+    Dictionary v = arena_dict(arena, version.size + 1);
+    if (version.size) {
+      memcpy(v.items, version.items, version.size * sizeof(v.items[0]));
+      v.size = version.size;
+    }
+    PUT_C(v, "major", INTEGER_OBJ(0));
+    version = v;
   }
-  PUT(info, "version", DICTIONARY_OBJ(version));
+  PUT_C(info, "version", DICTIONARY_OBJ(version));
 
-  PUT(info, "type", copy_object(STRING_OBJ(type), NULL));
-  PUT(info, "methods", DICTIONARY_OBJ(copy_dictionary(methods, NULL)));
-  PUT(info, "attributes", DICTIONARY_OBJ(copy_dictionary(attributes, NULL)));
+  PUT_C(info, "type", STRING_OBJ(type));
+  PUT_C(info, "methods", DICTIONARY_OBJ(methods));
+  PUT_C(info, "attributes", DICTIONARY_OBJ(attributes));
 
-  rpc_set_client_info(channel_id, info);
+  rpc_set_client_info(channel_id, copy_dictionary(info, NULL));
 }
 
 /// Gets information about a channel.
