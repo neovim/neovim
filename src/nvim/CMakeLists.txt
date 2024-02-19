@@ -121,11 +121,9 @@ elseif(MINGW)
   # Enable wmain
   target_link_libraries(nvim_bin PRIVATE -municode)
 elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-  if(CMAKE_C_COMPILER_VERSION VERSION_LESS 10)
-    target_compile_options(main_lib INTERFACE -Wno-conversion)
-  endif()
-
-  target_compile_options(main_lib INTERFACE -fno-common
+  target_compile_options(main_lib INTERFACE
+    -Wno-conversion
+    -fno-common
     $<$<CONFIG:Release>:-Wno-unused-result>
     $<$<CONFIG:RelWithDebInfo>:-Wno-unused-result>
     $<$<CONFIG:MinSizeRel>:-Wno-unused-result>)
