@@ -327,7 +327,8 @@ Options:
   'shortmess'   "F" flag does not affect output from autocommands
   'signcolumn'  supports up to 9 dynamic/fixed columns
   'statuscolumn' full control of columns using 'statusline' format
-  'tabline'     %@Func@foo%X can call any function on mouse-click
+  'tabline'     middle-click on tabpage label closes tabpage,
+                and %@Func@foo%X can call any function on mouse-click
   'termpastefilter'
   'ttimeout', 'ttimeoutlen' behavior was simplified
   'winblend'    pseudo-transparency in floating windows |api-floatwin|
