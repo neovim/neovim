@@ -1050,7 +1050,7 @@ describe('completion', function()
     feed('<esc>')
   end)
 
-  it('set completed_item correct when new leader add', function()
+  it('sets completed_item correctly when adding new leader', function()
     source([[
       funct Omni_test(findstart, base)
         if a:findstart
