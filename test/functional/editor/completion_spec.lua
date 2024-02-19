@@ -1052,21 +1052,21 @@ describe('completion', function()
 
   it('set completed_item correct when new leader add', function()
     source([[
-        funct Omni_test(findstart, base)
-          if a:findstart
-            return col(".")
-          endif
-          return [#{word: "one"}, #{word: "two"}, #{word: "five"}]
-        endfunc
-        set omnifunc=Omni_test
-        set complete=.
-        function! OnChange()
-          let g:event = copy(v:event)
-          let g:item = get(v:event, 'completed_item', {})
-          let g:word = get(g:item, 'word', v:null)
-        endfunction
-        autocmd CompleteChanged * call OnChange()
-      ]])
+      funct Omni_test(findstart, base)
+        if a:findstart
+          return col(".")
+        endif
+        return [#{word: "one"}, #{word: "two"}, #{word: "five"}]
+      endfunc
+      set omnifunc=Omni_test
+      set complete=.
+      function! OnChange()
+        let g:event = copy(v:event)
+        let g:item = get(v:event, 'completed_item', {})
+        let g:word = get(g:item, 'word', v:null)
+      endfunction
+      autocmd CompleteChanged * call OnChange()
+    ]])
     feed('i<C-X><C-O>')
     eq('one', eval('g:word'))
     screen:expect {
