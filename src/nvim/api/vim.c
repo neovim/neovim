@@ -832,20 +832,19 @@ void nvim_err_writeln(String str)
 /// Use |nvim_buf_is_loaded()| to check if a buffer is loaded.
 ///
 /// @return List of buffer handles
-ArrayOf(Buffer) nvim_list_bufs(void)
+ArrayOf(Buffer) nvim_list_bufs(Arena *arena)
   FUNC_API_SINCE(1)
 {
-  Array rv = ARRAY_DICT_INIT;
+  size_t n = 0;
 
   FOR_ALL_BUFFERS(b) {
-    rv.size++;
+    n++;
   }
 
-  rv.items = xmalloc(sizeof(Object) * rv.size);
-  size_t i = 0;
+  Array rv = arena_array(arena, n);
 
   FOR_ALL_BUFFERS(b) {
-    rv.items[i++] = BUFFER_OBJ(b->handle);
+    ADD_C(rv, BUFFER_OBJ(b->handle));
   }
 
   return rv;
@@ -887,20 +886,19 @@ void nvim_set_current_buf(Buffer buffer, Error *err)
 /// Gets the current list of window handles.
 ///
 /// @return List of window handles
-ArrayOf(Window) nvim_list_wins(void)
+ArrayOf(Window) nvim_list_wins(Arena *arena)
   FUNC_API_SINCE(1)
 {
-  Array rv = ARRAY_DICT_INIT;
+  size_t n = 0;
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    rv.size++;
+    n++;
   }
 
-  rv.items = xmalloc(sizeof(Object) * rv.size);
-  size_t i = 0;
+  Array rv = arena_array(arena, n);
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    rv.items[i++] = WINDOW_OBJ(wp->handle);
+    ADD_C(rv, WINDOW_OBJ(wp->handle));
   }
 
   return rv;
@@ -1124,20 +1122,19 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 /// Gets the current list of tabpage handles.
 ///
 /// @return List of tabpage handles
-ArrayOf(Tabpage) nvim_list_tabpages(void)
+ArrayOf(Tabpage) nvim_list_tabpages(Arena *arena)
   FUNC_API_SINCE(1)
 {
-  Array rv = ARRAY_DICT_INIT;
+  size_t n = 0;
 
   FOR_ALL_TABS(tp) {
-    rv.size++;
+    n++;
   }
 
-  rv.items = xmalloc(sizeof(Object) * rv.size);
-  size_t i = 0;
+  Array rv = arena_array(arena, n);
 
   FOR_ALL_TABS(tp) {
-    rv.items[i++] = TABPAGE_OBJ(tp->handle);
+    ADD_C(rv, TABPAGE_OBJ(tp->handle));
   }
 
   return rv;
