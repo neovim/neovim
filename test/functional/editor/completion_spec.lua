@@ -1050,6 +1050,47 @@ describe('completion', function()
     feed('<esc>')
   end)
 
+  it('set completed_item correct when new leader add', function()
+    source([[
+        funct Omni_test(findstart, base)
+          if a:findstart
+            return col(".")
+          endif
+          return [#{word: "one"}, #{word: "two"}, #{word: "five"}]
+        endfunc
+        set omnifunc=Omni_test
+        set complete=.
+        function! OnChange()
+          let g:event = copy(v:event)
+          let g:item = get(v:event, 'completed_item', {})
+          let g:word = get(g:item, 'word', v:null)
+        endfunction
+        autocmd CompleteChanged * call OnChange()
+      ]])
+    feed('i<C-X><C-O>')
+    eq('one', eval('g:word'))
+    screen:expect {
+      grid = [[
+      one^                                                         |
+      {2:one            }{0:                                             }|
+      {1:two            }{0:                                             }|
+      {1:five           }{0:                                             }|
+      {0:~                                                           }|*3
+      {3:-- Omni completion (^O^N^P) }{4:match 1 of 3}                    |
+    ]],
+    }
+    feed('<BS><BS><BS>f')
+    screen:expect {
+      grid = [[
+      f^                                                           |
+      {2:five           }{0:                                             }|
+      {0:~                                                           }|*5
+      {3:-- Omni completion (^O^N^P) }{4:match 1 of 3}                    |
+    ]],
+    }
+    eq('five', eval('g:word'))
+  end)
+
   it('is stopped by :stopinsert from timer #12976', function()
     screen:try_resize(32, 14)
     command([[call setline(1, ['hello', 'hullo', 'heeee', ''])]])
