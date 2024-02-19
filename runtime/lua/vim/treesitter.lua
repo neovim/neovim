@@ -294,6 +294,7 @@ function M.get_captures_at_pos(bufnr, row, col)
 
     for capture, node, metadata in iter do
       if M.is_in_node_range(node, row, col) then
+        ---@diagnostic disable-next-line: invisible
         local c = q._query.captures[capture] -- name of the capture in the query
         if c ~= nil then
           table.insert(matches, { capture = c, metadata = metadata, lang = tree:lang() })
@@ -325,6 +326,12 @@ function M.get_captures_at_cursor(winnr)
   return captures
 end
 
+--- @class vim.treesitter.GetNodeOpts
+--- @field bufnr integer?
+--- @field pos { [1]: integer, [2]: integer }?
+--- @field lang string?
+--- @field ignore_injections boolean?
+
 --- Returns the smallest named node at the given position
 ---
 --- NOTE: Calling this on an unparsed tree can yield an invalid node.
@@ -335,7 +342,7 @@ end
 --- vim.treesitter.get_parser(bufnr):parse(range)
 --- ```
 ---
----@param opts table|nil Optional keyword arguments:
+---@param opts vim.treesitter.GetNodeOpts? Optional keyword arguments:
 ---             - bufnr integer|nil Buffer number (nil or 0 for current buffer)
 ---             - pos table|nil 0-indexed (row, col) tuple. Defaults to cursor position in the
 ---                             current window. Required if {bufnr} is not the current buffer
@@ -352,7 +359,7 @@ function M.get_node(opts)
     bufnr = api.nvim_get_current_buf()
   end
 
-  local row, col
+  local row, col --- @type integer, integer
   if opts.pos then
     assert(#opts.pos == 2, 'Position must be a (row, col) tuple')
     row, col = opts.pos[1], opts.pos[2]

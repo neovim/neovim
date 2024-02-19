@@ -2509,7 +2509,7 @@ vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
 <
 
     Parameters: ~
-      • {opts}        (`table`) Additional options. See |input()|
+      • {opts}        (`table?`) Additional options. See |input()|
                       • prompt (string|nil) Text of the prompt
                       • default (string|nil) Default reply to the input
                       • completion (string|nil) Specifies type of completion
@@ -2566,7 +2566,7 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
 <
 
     Parameters: ~
-      • {items}      (`table`) Arbitrary items
+      • {items}      (`any[]`) Arbitrary items
       • {opts}       (`table`) Additional options
                      • prompt (string|nil) Text of the prompt. Defaults to
                        `Select one of:`
@@ -2577,8 +2577,8 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
                        item shape. Plugins reimplementing `vim.ui.select` may
                        wish to use this to infer the structure or semantics of
                        `items`, or the context in which select() was called.
-      • {on_choice}  (`function`) ((item|nil, idx|nil) -> ()) Called once the
-                     user made a choice. `idx` is the 1-based index of `item`
+      • {on_choice}  (`fun(item: any?, idx: integer?)`) Called once the user
+                     made a choice. `idx` is the 1-based index of `item`
                      within `items`. `nil` if the user aborted the dialog.
 
 

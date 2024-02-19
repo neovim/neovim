@@ -732,7 +732,7 @@ get_node({opts})                                   *vim.treesitter.get_node()*
 <
 
     Parameters: ~
-      • {opts}  (`table?`) Optional keyword arguments:
+      • {opts}  (`vim.treesitter.GetNodeOpts?`) Optional keyword arguments:
                 • bufnr integer|nil Buffer number (nil or 0 for current
                   buffer)
                 • pos table|nil 0-indexed (row, col) tuple. Defaults to cursor
