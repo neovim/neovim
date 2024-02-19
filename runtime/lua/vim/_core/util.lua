@@ -81,4 +81,13 @@ function M.source_is_lua(bufnr, line1, line2)
   return lang_tree:lang() == 'lua'
 end
 
+function M._validate_vimruntime()
+  local rt = vim.fn.getenv('VIMRUNTIME')
+  if not rt or rt == '' or not vim.uv.fs_stat(rt .. '/filetype.lua') then
+    vim.notify(('E5009: Invalid $VIMRUNTIME: %q'):format(rt), vim.log.levels.ERROR)
+    return false
+  end
+  return true
+end
+
 return M
