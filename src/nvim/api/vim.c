@@ -543,16 +543,21 @@ Integer nvim_strwidth(String text, Error *err)
 /// Gets the paths contained in |runtime-search-path|.
 ///
 /// @return List of paths
-ArrayOf(String) nvim_list_runtime_paths(Error *err)
+ArrayOf(String) nvim_list_runtime_paths(Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
-  return nvim_get_runtime_file(NULL_STRING, true, err);
+  return nvim_get_runtime_file(NULL_STRING, true, arena, err);
 }
 
-Array nvim__runtime_inspect(void)
+Array nvim__runtime_inspect(Arena *arena)
 {
-  return runtime_inspect();
+  return runtime_inspect(arena);
 }
+
+typedef struct {
+  ArrayBuilder rv;
+  Arena *arena;
+} RuntimeCookie;
 
 /// Find files in runtime directories
 ///
@@ -566,25 +571,27 @@ Array nvim__runtime_inspect(void)
 /// @param name pattern of files to search for
 /// @param all whether to return all matches or only the first
 /// @return list of absolute paths to the found files
-ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
+ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Arena *arena, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_FAST
 {
-  Array rv = ARRAY_DICT_INIT;
+  RuntimeCookie cookie = { .rv = ARRAY_DICT_INIT, .arena = arena, };
+  kvi_init(cookie.rv);
 
   int flags = DIP_DIRFILE | (all ? DIP_ALL : 0);
 
   TRY_WRAP(err, {
-    do_in_runtimepath((name.size ? name.data : ""), flags, find_runtime_cb, &rv);
+    do_in_runtimepath((name.size ? name.data : ""), flags, find_runtime_cb, &cookie);
   });
-  return rv;
+  return arena_take_arraybuilder(arena, &cookie.rv);
 }
 
-static bool find_runtime_cb(int num_fnames, char **fnames, bool all, void *cookie)
+static bool find_runtime_cb(int num_fnames, char **fnames, bool all, void *c)
 {
-  Array *rv = (Array *)cookie;
+  RuntimeCookie *cookie = (RuntimeCookie *)c;
   for (int i = 0; i < num_fnames; i++) {
-    ADD(*rv, CSTR_TO_OBJ(fnames[i]));
+    // TODO(bfredl): consider memory management of gen_expand_wildcards() itself
+    kvi_push(cookie->rv, CSTR_TO_ARENA_OBJ(cookie->arena, fnames[i]));
     if (!all) {
       return true;
     }
@@ -825,20 +832,19 @@ void nvim_err_writeln(String str)
 /// Use |nvim_buf_is_loaded()| to check if a buffer is loaded.
 ///
 /// @return List of buffer handles
-ArrayOf(Buffer) nvim_list_bufs(void)
+ArrayOf(Buffer) nvim_list_bufs(Arena *arena)
   FUNC_API_SINCE(1)
 {
-  Array rv = ARRAY_DICT_INIT;
+  size_t n = 0;
 
   FOR_ALL_BUFFERS(b) {
-    rv.size++;
+    n++;
   }
 
-  rv.items = xmalloc(sizeof(Object) * rv.size);
-  size_t i = 0;
+  Array rv = arena_array(arena, n);
 
   FOR_ALL_BUFFERS(b) {
-    rv.items[i++] = BUFFER_OBJ(b->handle);
+    ADD_C(rv, BUFFER_OBJ(b->handle));
   }
 
   return rv;
@@ -880,20 +886,19 @@ void nvim_set_current_buf(Buffer buffer, Error *err)
 /// Gets the current list of window handles.
 ///
 /// @return List of window handles
-ArrayOf(Window) nvim_list_wins(void)
+ArrayOf(Window) nvim_list_wins(Arena *arena)
   FUNC_API_SINCE(1)
 {
-  Array rv = ARRAY_DICT_INIT;
+  size_t n = 0;
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    rv.size++;
+    n++;
   }
 
-  rv.items = xmalloc(sizeof(Object) * rv.size);
-  size_t i = 0;
+  Array rv = arena_array(arena, n);
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    rv.items[i++] = WINDOW_OBJ(wp->handle);
+    ADD_C(rv, WINDOW_OBJ(wp->handle));
   }
 
   return rv;
@@ -1117,20 +1122,19 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 /// Gets the current list of tabpage handles.
 ///
 /// @return List of tabpage handles
-ArrayOf(Tabpage) nvim_list_tabpages(void)
+ArrayOf(Tabpage) nvim_list_tabpages(Arena *arena)
   FUNC_API_SINCE(1)
 {
-  Array rv = ARRAY_DICT_INIT;
+  size_t n = 0;
 
   FOR_ALL_TABS(tp) {
-    rv.size++;
+    n++;
   }
 
-  rv.items = xmalloc(sizeof(Object) * rv.size);
-  size_t i = 0;
+  Array rv = arena_array(arena, n);
 
   FOR_ALL_TABS(tp) {
-    rv.items[i++] = TABPAGE_OBJ(tp->handle);
+    ADD_C(rv, TABPAGE_OBJ(tp->handle));
   }
 
   return rv;
@@ -1201,14 +1205,13 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Arena *arena, Error
   VALIDATE_INT((phase >= -1 && phase <= 3), "phase", phase, {
     return false;
   });
-  Array lines = ARRAY_DICT_INIT;
   if (phase == -1 || phase == 1) {  // Start of paste-stream.
     draining = false;
   } else if (draining) {
     // Skip remaining chunks.  Report error only once per "stream".
     goto theend;
   }
-  lines = string_to_array(data, crlf);
+  Array lines = string_to_array(data, crlf, arena);
   MAXSIZE_TEMP_ARRAY(args, 2);
   ADD_C(args, ARRAY_OBJ(lines));
   ADD_C(args, INTEGER_OBJ(phase));
@@ -1239,7 +1242,6 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Arena *arena, Error
     AppendCharToRedobuff(ESC);  // Dot-repeat.
   }
 theend:
-  api_free_array(lines);
   if (cancel || phase == -1 || phase == 3) {  // End of paste-stream.
     draining = false;
   }
@@ -1260,24 +1262,27 @@ theend:
 /// @param after  If true insert after cursor (like |p|), or before (like |P|).
 /// @param follow  If true place cursor at end of inserted text.
 /// @param[out] err Error details, if any
-void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow, Error *err)
+void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow, Arena *arena,
+              Error *err)
   FUNC_API_SINCE(6)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
-  yankreg_T *reg = xcalloc(1, sizeof(yankreg_T));
+  yankreg_T reg[1] = { 0 };
   VALIDATE_S((prepare_yankreg_from_object(reg, type, lines.size)), "type", type.data, {
-    goto cleanup;
+    return;
   });
   if (lines.size == 0) {
-    goto cleanup;  // Nothing to do.
+    return;  // Nothing to do.
   }
 
+  reg->y_array = arena_alloc(arena, lines.size * sizeof(uint8_t *), true);
+  reg->y_size = lines.size;
   for (size_t i = 0; i < lines.size; i++) {
     VALIDATE_T("line", kObjectTypeString, lines.items[i].type, {
-      goto cleanup;
+      return;
     });
     String line = lines.items[i].data.string;
-    reg->y_array[i] = xmemdupz(line.data, line.size);
+    reg->y_array[i] = arena_memdupz(arena, line.data, line.size);
     memchrsub(reg->y_array[i], NUL, NL, line.size);
   }
 
@@ -1290,10 +1295,6 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow,
     msg_silent--;
     VIsual_active = VIsual_was_active;
   });
-
-cleanup:
-  free_register(reg);
-  xfree(reg);
 }
 
 /// Subscribes to event broadcasts.
@@ -1583,13 +1584,12 @@ Array nvim_get_api_info(uint64_t channel_id, Arena *arena)
 ///
 /// @param[out] err Error details, if any
 void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, String type,
-                          Dictionary methods, Dictionary attributes, Error *err)
+                          Dictionary methods, Dictionary attributes, Arena *arena, Error *err)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
-  Dictionary info = ARRAY_DICT_INIT;
-  PUT(info, "name", copy_object(STRING_OBJ(name), NULL));
+  MAXSIZE_TEMP_DICT(info, 5);
+  PUT_C(info, "name", STRING_OBJ(name));
 
-  version = copy_dictionary(version, NULL);
   bool has_major = false;
   for (size_t i = 0; i < version.size; i++) {
     if (strequal(version.items[i].key.data, "major")) {
@@ -1598,15 +1598,21 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, 
     }
   }
   if (!has_major) {
-    PUT(version, "major", INTEGER_OBJ(0));
+    Dictionary v = arena_dict(arena, version.size + 1);
+    if (version.size) {
+      memcpy(v.items, version.items, version.size * sizeof(v.items[0]));
+      v.size = version.size;
+    }
+    PUT_C(v, "major", INTEGER_OBJ(0));
+    version = v;
   }
-  PUT(info, "version", DICTIONARY_OBJ(version));
+  PUT_C(info, "version", DICTIONARY_OBJ(version));
 
-  PUT(info, "type", copy_object(STRING_OBJ(type), NULL));
-  PUT(info, "methods", DICTIONARY_OBJ(copy_dictionary(methods, NULL)));
-  PUT(info, "attributes", DICTIONARY_OBJ(copy_dictionary(attributes, NULL)));
+  PUT_C(info, "type", STRING_OBJ(type));
+  PUT_C(info, "methods", DICTIONARY_OBJ(methods));
+  PUT_C(info, "attributes", DICTIONARY_OBJ(attributes));
 
-  rpc_set_client_info(channel_id, info);
+  rpc_set_client_info(channel_id, copy_dictionary(info, NULL));
 }
 
 /// Gets information about a channel.

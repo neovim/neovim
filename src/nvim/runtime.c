@@ -574,20 +574,20 @@ static int do_in_cached_path(char *name, int flags, DoInRuntimepathCB callback, 
   return did_one ? OK : FAIL;
 }
 
-Array runtime_inspect(void)
+Array runtime_inspect(Arena *arena)
 {
   RuntimeSearchPath path = runtime_search_path;
-  Array rv = ARRAY_DICT_INIT;
+  Array rv = arena_array(arena, kv_size(path));
 
   for (size_t i = 0; i < kv_size(path); i++) {
     SearchPathItem *item = &kv_A(path, i);
     Array entry = ARRAY_DICT_INIT;
-    ADD(entry, CSTR_TO_OBJ(item->path));
-    ADD(entry, BOOLEAN_OBJ(item->after));
+    ADD_C(entry, CSTR_AS_OBJ(item->path));
+    ADD_C(entry, BOOLEAN_OBJ(item->after));
     if (item->has_lua != kNone) {
-      ADD(entry, BOOLEAN_OBJ(item->has_lua == kTrue));
+      ADD_C(entry, BOOLEAN_OBJ(item->has_lua == kTrue));
     }
-    ADD(rv, ARRAY_OBJ(entry));
+    ADD_C(rv, ARRAY_OBJ(entry));
   }
   return rv;
 }

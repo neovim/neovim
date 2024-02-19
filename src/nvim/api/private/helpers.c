@@ -456,9 +456,10 @@ String ga_take_string(garray_T *ga)
 /// @param input  Binary string
 /// @param crlf  Also break lines at CR and CRLF.
 /// @return [allocated] String array
-Array string_to_array(const String input, bool crlf)
+Array string_to_array(const String input, bool crlf, Arena *arena)
 {
-  Array ret = ARRAY_DICT_INIT;
+  ArrayBuilder ret = ARRAY_DICT_INIT;
+  kvi_init(ret);
   for (size_t i = 0; i < input.size; i++) {
     const char *start = input.data + i;
     const char *end = start;
@@ -473,20 +474,17 @@ Array string_to_array(const String input, bool crlf)
     if (crlf && *end == CAR && i + 1 < input.size && *(end + 1) == NL) {
       i += 1;  // Advance past CRLF.
     }
-    String s = {
-      .size = line_len,
-      .data = xmemdupz(start, line_len),
-    };
+    String s = CBUF_TO_ARENA_STR(arena, start, line_len);
     memchrsub(s.data, NUL, NL, line_len);
-    ADD(ret, STRING_OBJ(s));
+    kvi_push(ret, STRING_OBJ(s));
     // If line ends at end-of-buffer, add empty final item.
     // This is "readfile()-style", see also ":help channel-lines".
     if (i + 1 == input.size && (*end == NL || (crlf && *end == CAR))) {
-      ADD(ret, STRING_OBJ(STRING_INIT));
+      kvi_push(ret, STRING_OBJ(STRING_INIT));
     }
   }
 
-  return ret;
+  return arena_take_arraybuilder(arena, &ret);
 }
 
 /// Normalizes 0-based indexes to buffer line numbers.
