@@ -6499,8 +6499,6 @@ bool prepare_yankreg_from_object(yankreg_T *reg, String regtype, size_t lines)
     }
   }
 
-  reg->y_array = xcalloc(lines, sizeof(uint8_t *));
-  reg->y_size = lines;
   reg->additional_data = NULL;
   reg->timestamp = 0;
   return true;
@@ -6513,7 +6511,6 @@ void finish_yankreg_from_object(yankreg_T *reg, bool clipboard_adjust)
     // but otherwise there is no line after the final newline
     if (reg->y_type != kMTCharWise) {
       if (reg->y_type == kMTUnknown || clipboard_adjust) {
-        xfree(reg->y_array[reg->y_size - 1]);
         reg->y_size--;
       }
       if (reg->y_type == kMTUnknown) {

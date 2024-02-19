@@ -1205,14 +1205,13 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Arena *arena, Error
   VALIDATE_INT((phase >= -1 && phase <= 3), "phase", phase, {
     return false;
   });
-  Array lines = ARRAY_DICT_INIT;
   if (phase == -1 || phase == 1) {  // Start of paste-stream.
     draining = false;
   } else if (draining) {
     // Skip remaining chunks.  Report error only once per "stream".
     goto theend;
   }
-  lines = string_to_array(data, crlf);
+  Array lines = string_to_array(data, crlf, arena);
   MAXSIZE_TEMP_ARRAY(args, 2);
   ADD_C(args, ARRAY_OBJ(lines));
   ADD_C(args, INTEGER_OBJ(phase));
@@ -1243,7 +1242,6 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Arena *arena, Error
     AppendCharToRedobuff(ESC);  // Dot-repeat.
   }
 theend:
-  api_free_array(lines);
   if (cancel || phase == -1 || phase == 3) {  // End of paste-stream.
     draining = false;
   }
@@ -1264,24 +1262,27 @@ theend:
 /// @param after  If true insert after cursor (like |p|), or before (like |P|).
 /// @param follow  If true place cursor at end of inserted text.
 /// @param[out] err Error details, if any
-void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow, Error *err)
+void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow, Arena *arena,
+              Error *err)
   FUNC_API_SINCE(6)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
-  yankreg_T *reg = xcalloc(1, sizeof(yankreg_T));
+  yankreg_T reg[1] = { 0 };
   VALIDATE_S((prepare_yankreg_from_object(reg, type, lines.size)), "type", type.data, {
-    goto cleanup;
+    return;
   });
   if (lines.size == 0) {
-    goto cleanup;  // Nothing to do.
+    return;  // Nothing to do.
   }
 
+  reg->y_array = arena_alloc(arena, lines.size * sizeof(uint8_t *), true);
+  reg->y_size = lines.size;
   for (size_t i = 0; i < lines.size; i++) {
     VALIDATE_T("line", kObjectTypeString, lines.items[i].type, {
-      goto cleanup;
+      return;
     });
     String line = lines.items[i].data.string;
-    reg->y_array[i] = xmemdupz(line.data, line.size);
+    reg->y_array[i] = arena_memdupz(arena, line.data, line.size);
     memchrsub(reg->y_array[i], NUL, NL, line.size);
   }
 
@@ -1294,10 +1295,6 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow,
     msg_silent--;
     VIsual_active = VIsual_was_active;
   });
-
-cleanup:
-  free_register(reg);
-  xfree(reg);
 }
 
 /// Subscribes to event broadcasts.
