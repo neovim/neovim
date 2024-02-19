@@ -69,6 +69,8 @@ Version.__index = Version
 
 --- Compares prerelease strings: per semver, number parts must be must be treated as numbers:
 --- "pre1.10" is greater than "pre1.2". https://semver.org/#spec-item-11
+---@param prerel1 string?
+---@param prerel2 string?
 local function cmp_prerel(prerel1, prerel2)
   if not prerel1 or not prerel2 then
     return prerel1 and -1 or (prerel2 and 1 or 0)
@@ -78,8 +80,8 @@ local function cmp_prerel(prerel1, prerel2)
   local iter1 = prerel1:gmatch('([^0-9]*)(%d*)')
   local iter2 = prerel2:gmatch('([^0-9]*)(%d*)')
   while true do
-    local word1, n1 = iter1()
-    local word2, n2 = iter2()
+    local word1, n1 = iter1() --- @type string?, string|number|nil
+    local word2, n2 = iter2() --- @type string?, string|number|nil
     if word1 == nil and word2 == nil then -- Done iterating.
       return 0
     end
@@ -168,6 +170,7 @@ function M._version(version, strict) -- Adapted from https://github.com/folke/la
   end
 
   if not strict then -- TODO: add more "scrubbing".
+    --- @cast version string
     version = version:match('%d[^ ]*')
   end
 
@@ -298,8 +301,9 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
 
   local semver = M.parse(version)
   if semver then
-    local from = semver
-    local to = vim.deepcopy(semver, true)
+    local from = semver --- @type Version?
+    local to = vim.deepcopy(semver, true) --- @type Version?
+    ---@diagnostic disable: need-check-nil
     if mods == '' or mods == '=' then
       to.patch = to.patch + 1
     elseif mods == '<' then
@@ -309,9 +313,9 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
       to.patch = to.patch + 1
     elseif mods == '>' then
       from.patch = from.patch + 1
-      to = nil ---@diagnostic disable-line: cast-local-type
+      to = nil
     elseif mods == '>=' then
-      to = nil ---@diagnostic disable-line: cast-local-type
+      to = nil
     elseif mods == '~' then
       if #parts >= 2 then
         to[2] = to[2] + 1
@@ -332,6 +336,7 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
         end
       end
     end
+    ---@diagnostic enable: need-check-nil
     return setmetatable({ from = from, to = to }, { __index = VersionRange })
   end
 end
@@ -445,7 +450,7 @@ setmetatable(M, {
   --- Returns the current Nvim version.
   ---@return Version
   __call = function()
-    local version = vim.fn.api_info().version
+    local version = vim.fn.api_info().version ---@type Version
     -- Workaround: vim.fn.api_info().version reports "prerelease" as a boolean.
     version.prerelease = version.prerelease and 'dev' or nil
     return setmetatable(version, Version)
