@@ -541,7 +541,7 @@ void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end
 }
 
 /// Initialize the draw_col of a newly-added virtual text item.
-static void decor_init_draw_col(int win_col, bool hidden, DecorRange *item)
+void decor_init_draw_col(int win_col, bool hidden, DecorRange *item)
 {
   DecorVirtText *vt = item->kind == kDecorKindVirtText ? item->data.vt : NULL;
   VirtTextPos pos = decor_virt_pos_kind(item);

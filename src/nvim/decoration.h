@@ -52,10 +52,10 @@ typedef struct {
                               ///< Reflects the order of patterns/captures in the query file.
   DecorRangeKind kind;
   /// Screen column to draw the virtual text.
-  /// When -1, the virtual text may be drawn after deciding where.
-  /// When -3, the virtual text should be drawn on the next screen line.
-  /// When -10, the virtual text has just been added.
-  /// When INT_MIN, the virtual text should no longer be drawn.
+  /// When -1, it should be drawn on the current screen line after deciding where.
+  /// When -3, it may be drawn at a position yet to be assigned.
+  /// When -10, it has just been added.
+  /// When INT_MIN, it should no longer be drawn.
   int draw_col;
 } DecorRange;
 
