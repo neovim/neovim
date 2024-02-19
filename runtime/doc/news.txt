@@ -316,6 +316,8 @@ The following new APIs and features were added.
 
 • Added |nvim_tabpage_set_win()| to set the current window of a tabpage.
 
+• Clicking on a tabpage in the tabline with the middle mouse button closes it.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
