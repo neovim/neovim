@@ -688,7 +688,7 @@ static void normal_redraw_mode_message(NormalState *s)
     keep_msg = kmsg;
 
     kmsg = xstrdup(keep_msg);
-    msg(kmsg, keep_msg_attr);
+    msg(kmsg, keep_msg_hlid);
     xfree(kmsg);
   }
   setcursor();
@@ -1372,7 +1372,7 @@ static void normal_redraw(NormalState *s)
     // check for duplicates.  Never put this message in
     // history.
     msg_hist_off = true;
-    msg(p, keep_msg_attr);
+    msg(p, keep_msg_hlid);
     msg_hist_off = false;
     xfree(p);
   }
