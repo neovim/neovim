@@ -422,7 +422,7 @@ end
 --- @param bufnr integer
 --- @return boolean
 local function is_modula2(bufnr)
-  return matchregex(nextnonblank(bufnr, 1), [[\<MODULE\s\+\w\+\s*;\|^\s*(\*]])
+  return matchregex(nextnonblank(bufnr, 1), [[\<MODULE\s\+\w\+\s*\%(\[.*]\s*\)\=;\|^\s*(\*]])
 end
 
 --- @param bufnr integer
