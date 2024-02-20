@@ -80,6 +80,7 @@ Defaults					            *nvim-defaults*
 - 'tags' defaults to "./tags;,tags"
 - 'termguicolors' is enabled by default if Nvim can detect support from the
   host terminal
+- 'ttimeout' is enabled
 - 'ttimeoutlen' defaults to 50
 - 'ttyfast' is always set
 - 'undodir' defaults to ~/.local/state/nvim/undo// (|xdg|), auto-created
