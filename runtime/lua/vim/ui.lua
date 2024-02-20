@@ -143,12 +143,12 @@ function M.open(path)
     else
       return nil, 'vim.ui.open: rundll32 not found'
     end
-  elseif vim.fn.executable('wslview') == 1 then
-    cmd = { 'wslview', path }
+  elseif vim.fn.executable('explorer.exe') == 1 then
+    cmd = { 'explorer.exe', path }
   elseif vim.fn.executable('xdg-open') == 1 then
     cmd = { 'xdg-open', path }
   else
-    return nil, 'vim.ui.open: no handler found (tried: wslview, xdg-open)'
+    return nil, 'vim.ui.open: no handler found (tried: explorer.exe, xdg-open)'
   end
 
   local rv = vim.system(cmd, { text = true, detach = true }):wait()
