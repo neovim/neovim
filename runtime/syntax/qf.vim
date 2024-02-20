@@ -15,6 +15,12 @@ syn match	qfSeparator	"|" nextgroup=qfLineNr contained
 syn match	qfLineNr	"[^|]*" contained contains=qfError
 syn match	qfError		"error" contained
 
+" Hide file name and line number for help outline (TOC).
+if has_key(w:, 'qf_toc') || get(w:, 'quickfix_title') =~# '\<TOC$'
+  setlocal conceallevel=3 concealcursor=nc
+  syn match	Ignore		"^[^|]*|[^|]*| " conceal
+endif
+
 " The default highlighting.
 hi def link qfFileName	Directory
 hi def link qfLineNr	LineNr

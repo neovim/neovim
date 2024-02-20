@@ -71,7 +71,7 @@ if !exists('g:no_plugin_maps')
 
         if indent(lnum) <= indent(l)
           let level = has_section + has_sub_section
-          let add_text = matchstr(text, '\S.*')
+          let add_text = matchstr(text, '\S.\{-}\ze\s\=\~$')
         endif
       endif
 
@@ -79,7 +79,7 @@ if !exists('g:no_plugin_maps')
       if !empty(add_text) && last_added != lnum
         let last_added = lnum
         call add(toc, {'bufnr': bufnr('%'), 'lnum': lnum,
-              \ 'text': repeat('  ', level) . add_text})
+              \ 'text': repeat("\u00a0\u00a0", level) . add_text})
       endif
       let lnum = nextnonblank(lnum + 1)
     endwhile
