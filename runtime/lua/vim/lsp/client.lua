@@ -156,7 +156,7 @@ local validate = vim.validate
 --- @field handlers table<string,lsp.Handler>
 ---
 --- The current pending requests in flight to the server. Entries are key-value
---- pairs with the key being the request ID while the value is a table with
+--- pairs with the key being the request id while the value is a table with
 --- `type`, `bufnr`, and `method` key-value pairs. `type` is either "pending"
 --- for an active request, or "cancel" for a cancel request. It will be
 --- "complete" ephemerally while executing |LspRequest| autocmds when replies
@@ -167,8 +167,8 @@ local validate = vim.validate
 --- to |vim.lsp.start_client()|.
 --- @field config vim.lsp.ClientConfig
 ---
---- Response from the server sent on
---- initialize` describing the server's capabilities.
+--- Response from the server sent on `initialize` describing the server's
+--- capabilities.
 --- @field server_capabilities lsp.ServerCapabilities?
 ---
 --- A ring buffer (|vim.ringbuf()|) containing progress messages
@@ -217,10 +217,11 @@ local validate = vim.validate
 --- Sends a request to the server.
 --- This is a thin wrapper around {client.rpc.request} with some additional
 --- checking.
---- If {handler} is not specified,  If one is not found there, then an error
---- will occur. Returns: {status}, {[client_id]}. {status} is a boolean
---- indicating if the notification was successful. If it is `false`, then it
---- will always be `false` (the client has shutdown).
+--- If {handler} is not specified and if there's no respective global
+--- handler, then an error will occur.
+--- Returns: {status}, {[client_id]}. {status} is a boolean indicating if
+--- the notification was successful. If it is `false`, then it will always
+--- be `false` (the client has shutdown).
 --- If {status} is `true`, the function returns {request_id} as the second
 --- result. You can use this with `client.cancel_request(request_id)` to cancel
 --- the request.
