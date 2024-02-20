@@ -1707,7 +1707,7 @@ static void digraph_header(const char *msg)
   if (msg_col > 0) {
     msg_putchar('\n');
   }
-  msg_outtrans(msg, HL_ATTR(HLF_CM));
+  msg_outtrans(msg, HLF_CM + 1, false);
   msg_putchar('\n');
 }
 
@@ -1861,7 +1861,7 @@ static void printdigraph(const digr_T *dp, result_T *previous)
   *p++ = (char)dp->char2;
   *p++ = ' ';
   *p = NUL;
-  msg_outtrans(buf, 0);
+  msg_outtrans(buf, 0, false);
   p = buf;
 
   // add a space to draw a composing char on
@@ -1871,14 +1871,14 @@ static void printdigraph(const digr_T *dp, result_T *previous)
   p += utf_char2bytes(dp->result, p);
 
   *p = NUL;
-  msg_outtrans(buf, HL_ATTR(HLF_8));
+  msg_outtrans(buf, HLF_8 + 1, false);
   p = buf;
   if (char2cells(dp->result) == 1) {
     *p++ = ' ';
   }
   assert(p >= buf);
   vim_snprintf(p, sizeof(buf) - (size_t)(p - buf), " %3d", dp->result);
-  msg_outtrans(buf, 0);
+  msg_outtrans(buf, 0, false);
 }
 
 /// Get the two digraph characters from a typval.

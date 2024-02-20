@@ -667,7 +667,7 @@ void ex_history(exarg_T *eap)
           } else {
             xstrlcpy(IObuff + len, hist[i].hisstr, (size_t)(IOSIZE - len));
           }
-          msg_outtrans(IObuff, 0);
+          msg_outtrans(IObuff, 0, false);
         }
         if (i == idx) {
           break;

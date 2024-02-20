@@ -885,9 +885,9 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
     // Failed, probably 'shell' is not executable.
     if (!silent) {
       msg_puts(_("\nshell failed to start: "));
-      msg_outtrans(os_strerror(status), 0);
+      msg_outtrans(os_strerror(status), 0, false);
       msg_puts(": ");
-      msg_outtrans(prog, 0);
+      msg_outtrans(prog, 0, false);
       msg_putchar('\n');
     }
     multiqueue_free(events);
@@ -1102,7 +1102,7 @@ static void out_data_append_to_screen(const char *output, size_t *count, bool eo
   const char *end = output + *count;
   while (p < end) {
     if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
-      msg_putchar_attr((uint8_t)(*p), 0);
+      msg_putchar_hl((uint8_t)(*p), 0);
       p++;
     } else {
       // Note: this is not 100% precise:
@@ -1118,7 +1118,7 @@ static void out_data_append_to_screen(const char *output, size_t *count, bool eo
         goto end;
       }
 
-      msg_outtrans_len(p, i, 0);
+      msg_outtrans_len(p, i, 0, false);
       p += i;
     }
   }

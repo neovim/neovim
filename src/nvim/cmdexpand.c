@@ -979,20 +979,19 @@ void ExpandCleanup(expand_T *xp)
 /// @param linenr       line number of matches to display
 /// @param maxlen       maximum number of characters in each line
 /// @param showtail     display only the tail of the full path of a file name
-/// @param dir_attr     highlight attribute to use for directory names
 static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, int lines, int linenr,
-                                int maxlen, bool showtail, int dir_attr)
+                                int maxlen, bool showtail)
 {
   char *p;
   int lastlen = 999;
   for (int j = linenr; j < numMatches; j += lines) {
     if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
-      msg_outtrans(matches[j], HL_ATTR(HLF_D));
+      msg_outtrans(matches[j], HLF_D + 1, false);
       p = matches[j] + strlen(matches[j]) + 1;
       msg_advance(maxlen + 1);
       msg_puts(p);
       msg_advance(maxlen + 3);
-      msg_outtrans_long(p + 2, HL_ATTR(HLF_D));
+      msg_outtrans_long(p + 2, HLF_D + 1);
       break;
     }
     for (int i = maxlen - lastlen; --i >= 0;) {
@@ -1029,7 +1028,7 @@ static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, in
       isdir = false;
       p = SHOW_MATCH(j);
     }
-    lastlen = msg_outtrans(p, isdir ? dir_attr : 0);
+    lastlen = msg_outtrans(p, isdir ? HLF_D + 1 : 0, false);
   }
   if (msg_col > 0) {  // when not wrapped around
     msg_clr_eos();
@@ -1119,18 +1118,16 @@ int showmatches(expand_T *xp, bool wildmenu)
       lines = (numMatches + columns - 1) / columns;
     }
 
-    int attr = HL_ATTR(HLF_D);      // find out highlighting for directories
-
     if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
-      msg_puts_attr(_("tagname"), HL_ATTR(HLF_T));
+      msg_puts_hl(_("tagname"), HLF_T + 1, false);
       msg_clr_eos();
       msg_advance(maxlen - 3);
-      msg_puts_attr(_(" kind file\n"), HL_ATTR(HLF_T));
+      msg_puts_hl(_(" kind file\n"), HLF_T + 1, false);
     }
 
     // list the files line by line
     for (int i = 0; i < lines; i++) {
-      showmatches_oneline(xp, matches, numMatches, lines, i, maxlen, showtail, attr);
+      showmatches_oneline(xp, matches, numMatches, lines, i, maxlen, showtail);
       if (got_int) {
         got_int = false;
         break;

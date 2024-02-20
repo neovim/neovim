@@ -10,8 +10,8 @@
 /// Defines a region which has the same highlighting.
 typedef struct {
   int start;  ///< Colored chunk start.
-  int end;  ///< Colored chunk end (exclusive, > start).
-  int attr;  ///< Highlight attr.
+  int end;    ///< Colored chunk end (exclusive, > start).
+  int hl_id;  ///< Highlight id.
 } CmdlineColorChunk;
 
 /// Command-line colors
@@ -49,7 +49,7 @@ struct cmdline_info {
   int cmdfirstc;                ///< ':', '/', '?', '=', '>' or NUL
   int cmdindent;                ///< number of spaces before cmdline
   char *cmdprompt;              ///< message in front of cmdline
-  int cmdattr;                  ///< attributes for prompt
+  int hl_id;                    ///< highlight id for prompt
   int overstrike;               ///< Typing mode on the command line.  Shared by
                                 ///< getcmdline() and put_on_cmdline().
   expand_T *xpc;                ///< struct being used for expansion, xp_pattern

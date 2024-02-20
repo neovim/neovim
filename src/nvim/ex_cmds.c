@@ -189,7 +189,7 @@ void do_ascii(exarg_T *eap)
                    transchar(c), buf1, buf2, cval, cval, cval);
     }
 
-    msg_multiline(IObuff, 0, true, &need_clear);
+    msg_multiline(IObuff, 0, true, false, &need_clear);
 
     off += (size_t)utf_ptr2len(data);  // needed for overlong ascii?
   }
@@ -224,7 +224,7 @@ void do_ascii(exarg_T *eap)
                    c, c, c);
     }
 
-    msg_multiline(IObuff, 0, true, &need_clear);
+    msg_multiline(IObuff, 0, true, false, &need_clear);
 
     off += (size_t)utf_ptr2len(data + off);  // needed for overlong ascii?
   }
@@ -1028,7 +1028,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     msg_start();
     msg_putchar(':');
     msg_putchar('!');
-    msg_outtrans(newcmd, 0);
+    msg_outtrans(newcmd, 0, false);
     msg_clr_eos();
     ui_cursor_goto(msg_row, msg_col);
 
@@ -1469,7 +1469,7 @@ void print_line_no_prefix(linenr_T lnum, int use_number, bool list)
   if (curwin->w_p_nu || use_number) {
     vim_snprintf(numbuf, sizeof(numbuf), "%*" PRIdLINENR " ",
                  number_width(curwin), lnum);
-    msg_puts_attr(numbuf, HL_ATTR(HLF_N));  // Highlight line nrs.
+    msg_puts_hl(numbuf, HLF_N + 1, false);  // Highlight line nrs.
   }
   msg_prt_line(ml_get(lnum), list);
 }
@@ -3805,7 +3805,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               msg_no_more = true;
               msg_ext_set_kind("confirm_sub");
               // Same highlight as wait_return().
-              smsg(HL_ATTR(HLF_R), _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
+              smsg(HLF_R + 1, _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
               msg_no_more = false;
               msg_scroll = i;
               if (!ui_has(kUIMessages)) {
@@ -4796,7 +4796,7 @@ void ex_oldfiles(exarg_T *eap)
     if (!message_filtered(fname)) {
       msg_outnum(nr);
       msg_puts(": ");
-      msg_outtrans(tv_get_string(TV_LIST_ITEM_TV(li)), 0);
+      msg_outtrans(tv_get_string(TV_LIST_ITEM_TV(li)), 0, false);
       msg_clr_eos();
       msg_putchar('\n');
       os_breakcheck();

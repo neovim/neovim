@@ -44,9 +44,9 @@ local function test_embed(ext_linegrid)
     screen:expect([[
                                                                   |*4
       {6:                                                            }|
-      {7:Error detected while processing pre-vimrc command line:}     |
-      {7:E121: Undefined variable: invalid}                           |
-      {8:Press ENTER or type command to continue}^                     |
+      {1:Error detected while processing pre-vimrc command line:}     |
+      {1:E121: Undefined variable: invalid}                           |
+      {2:Press ENTER or type command to continue}^                     |
     ]])
 
     feed('<cr>')
@@ -65,8 +65,8 @@ local function test_embed(ext_linegrid)
     screen:expect([[
                                                                   |*3
       {6:                                                            }|
-      {7:Error detected while processing pre-vimrc command line:}     |
-      {7:foo}                                                         |
+      {1:Error detected while processing pre-vimrc command line:}     |
+      {1:foo}                                                         |
       {7:bar}                                                         |
       {8:Press ENTER or type command to continue}^                     |
     ]])
@@ -78,10 +78,10 @@ local function test_embed(ext_linegrid)
       grid = [[
                                                                   |*3
       {6:                                                            }|
-      {7:Error detected while processing pre-vimrc command line:}     |
-      {7:foo}                                                         |
-      {7:bar}                                                         |
-      {8:Press ENTER or type command to continue}^                     |
+      {1:Error detected while processing pre-vimrc command line:}     |
+      {1:foo}                                                         |
+      {1:bar}                                                         |
+      {2:Press ENTER or type command to continue}^                     |
     ]],
       condition = function()
         eq(Screen.colors.Green, screen.default_colors.rgb_bg)

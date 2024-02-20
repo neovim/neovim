@@ -126,7 +126,7 @@ bool *eval_lavars_used = NULL;
 #define SCRIPT_SV(id) (SCRIPT_ITEM(id)->sn_vars)
 #define SCRIPT_VARS(id) (SCRIPT_SV(id)->sv_dict.dv_hashtab)
 
-static int echo_attr = 0;   // attributes used for ":echo"
+static int echo_hl_id = 0;   // highlight id used for ":echo"
 
 /// Info used by a ":for" loop.
 typedef struct {
@@ -7876,12 +7876,12 @@ void ex_echo(exarg_T *eap)
           msg_start();
         }
       } else if (eap->cmdidx == CMD_echo) {
-        msg_puts_attr(" ", echo_attr);
+        msg_puts_hl(" ", echo_hl_id, false);
       }
       char *tofree = encode_tv2echo(&rettv, NULL);
       if (*tofree != NUL) {
         msg_ext_set_kind("echo");
-        msg_multiline(tofree, echo_attr, true, &need_clear);
+        msg_multiline(tofree, echo_hl_id, true, false, &need_clear);
       }
       xfree(tofree);
     }
@@ -7907,13 +7907,13 @@ void ex_echo(exarg_T *eap)
 /// ":echohl {name}".
 void ex_echohl(exarg_T *eap)
 {
-  echo_attr = syn_name2attr(eap->arg);
+  echo_hl_id = syn_name2id(eap->arg);
 }
 
-/// Returns the :echo attribute
-int get_echo_attr(void)
+/// Returns the :echo highlight id
+int get_echo_hl_id(void)
 {
-  return echo_attr;
+  return echo_hl_id;
 }
 
 /// ":execute expr1 ..." execute the result of an expression.
@@ -7964,7 +7964,7 @@ void ex_execute(exarg_T *eap)
   if (ret != FAIL && ga.ga_data != NULL) {
     if (eap->cmdidx == CMD_echomsg) {
       msg_ext_set_kind("echomsg");
-      msg(ga.ga_data, echo_attr);
+      msg(ga.ga_data, echo_hl_id);
     } else if (eap->cmdidx == CMD_echoerr) {
       // We don't want to abort following commands, restore did_emsg.
       int save_did_emsg = did_emsg;

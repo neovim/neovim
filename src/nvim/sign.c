@@ -270,7 +270,7 @@ static void sign_list_placed(buf_T *rbuf, char *group)
   while (buf != NULL && !got_int) {
     if (buf_has_signs(buf)) {
       vim_snprintf(lbuf, MSG_BUF_LEN, _("Signs for %s:"), buf->b_fname);
-      msg_puts_attr(lbuf, HL_ATTR(HLF_D));
+      msg_puts_hl(lbuf, HLF_D + 1, false);
       msg_putchar('\n');
     }
 
@@ -481,14 +481,14 @@ static void sign_list_defined(sign_T *sp)
   smsg(0, "sign %s", sp->sn_name);
   if (sp->sn_icon != NULL) {
     msg_puts(" icon=");
-    msg_outtrans(sp->sn_icon, 0);
+    msg_outtrans(sp->sn_icon, 0, false);
     msg_puts(_(" (not supported)"));
   }
   if (sp->sn_text[0]) {
     msg_puts(" text=");
     char buf[SIGN_WIDTH * MAX_SCHAR_SIZE];
     describe_sign_text(buf, sp->sn_text);
-    msg_outtrans(buf, 0);
+    msg_outtrans(buf, 0, false);
   }
   if (sp->sn_priority > 0) {
     char lbuf[MSG_BUF_LEN];

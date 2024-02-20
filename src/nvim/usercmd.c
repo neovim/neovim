@@ -464,8 +464,7 @@ static void uc_list(char *name, size_t name_len)
 
       // Put out the title first time
       if (!found) {
-        msg_puts_title(_("\n    Name              Args Address "
-                         "Complete    Definition"));
+        msg_puts_title(_("\n    Name              Args Address Complete    Definition"));
       }
       found = true;
       msg_putchar('\n');
@@ -495,7 +494,7 @@ static void uc_list(char *name, size_t name_len)
         msg_putchar(' ');
       }
 
-      msg_outtrans(cmd->uc_name, HL_ATTR(HLF_D));
+      msg_outtrans(cmd->uc_name, HLF_D + 1, false);
       len = strlen(cmd->uc_name) + 4;
 
       do {
@@ -582,11 +581,11 @@ static void uc_list(char *name, size_t name_len)
       } while ((int64_t)len < 25 - over);
 
       IObuff[len] = NUL;
-      msg_outtrans(IObuff, 0);
+      msg_outtrans(IObuff, 0, false);
 
       if (cmd->uc_luaref != LUA_NOREF) {
         char *fn = nlua_funcref_str(cmd->uc_luaref, NULL);
-        msg_puts_attr(fn, HL_ATTR(HLF_8));
+        msg_puts_hl(fn, HLF_8 + 1, false);
         xfree(fn);
         // put the description on a new line
         if (*cmd->uc_rep != NUL) {

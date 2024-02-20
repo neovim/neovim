@@ -1621,9 +1621,9 @@ static void highlight_list_one(const int id)
   if (sgp->sg_link && !got_int) {
     syn_list_header(didh, 0, id, true);
     didh = true;
-    msg_puts_attr("links to", HL_ATTR(HLF_D));
+    msg_puts_hl("links to", HLF_D + 1, false);
     msg_putchar(' ');
-    msg_outtrans(hl_table[hl_table[id - 1].sg_link - 1].sg_name, 0);
+    msg_outtrans(hl_table[hl_table[id - 1].sg_link - 1].sg_name, 0, false);
   }
 
   if (!didh) {
@@ -1751,10 +1751,10 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
   didh = true;
   if (!got_int) {
     if (*name != NUL) {
-      msg_puts_attr(name, HL_ATTR(HLF_D));
-      msg_puts_attr("=", HL_ATTR(HLF_D));
+      msg_puts_hl(name, HLF_D + 1, false);
+      msg_puts_hl("=", HLF_D + 1, false);
     }
-    msg_outtrans(ts, 0);
+    msg_outtrans(ts, 0, false);
   }
   return didh;
 }
@@ -1884,7 +1884,7 @@ bool syn_list_header(const bool did_header, const int outlen, const int id, bool
     if (got_int) {
       return true;
     }
-    msg_outtrans(hl_table[id - 1].sg_name, 0);
+    msg_outtrans(hl_table[id - 1].sg_name, 0, false);
     name_col = msg_col;
     endcol = 15;
   } else if ((ui_has(kUIMessages) || msg_silent) && !force_newline) {
@@ -1915,7 +1915,7 @@ bool syn_list_header(const bool did_header, const int outlen, const int id, bool
     if (endcol == Columns - 1 && endcol <= name_col) {
       msg_putchar(' ');
     }
-    msg_puts_attr("xxx", syn_id2attr(id));
+    msg_puts_hl("xxx", id, false);
     msg_putchar(' ');
   }
 
@@ -2047,7 +2047,7 @@ static int syn_add_group(const char *name, size_t len)
       return 0;
     } else if (!ASCII_ISALNUM(c) && c != '_' && c != '.' && c != '@' && c != '-') {
       // '.' and '@' are allowed characters for use with treesitter capture names.
-      msg_source(HL_ATTR(HLF_W));
+      msg_source(HLF_W + 1);
       emsg(_(e_highlight_group_name_invalid_char));
       return 0;
     }
@@ -2361,16 +2361,16 @@ void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
 static void highlight_list(void)
 {
   for (int i = 10; --i >= 0;) {
-    highlight_list_two(i, HL_ATTR(HLF_D));
+    highlight_list_two(i, HLF_D + 1);
   }
   for (int i = 40; --i >= 0;) {
     highlight_list_two(99, 0);
   }
 }
 
-static void highlight_list_two(int cnt, int attr)
+static void highlight_list_two(int cnt, int id)
 {
-  msg_puts_attr(&("N \bI \b!  \b"[cnt / 11]), attr);
+  msg_puts_hl(&("N \bI \b!  \b"[cnt / 11]), id, false);
   msg_clr_eos();
   ui_flush();
   os_delay(cnt == 99 ? 40 : (uint64_t)cnt * 50, false);

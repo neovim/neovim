@@ -775,7 +775,6 @@ void ml_recover(bool checkext)
 
   recoverymode = true;
   int called_from_main = (curbuf->b_ml.ml_mfp == NULL);
-  int attr = HL_ATTR(HLF_E);
 
   // If the file name ends in ".s[a-w][a-z]" we assume this is the swapfile.
   // Otherwise a search is done to find the swapfile(s).
@@ -853,40 +852,39 @@ void ml_recover(bool checkext)
   // be set to the real value below.
   mfp->mf_page_size = MIN_SWAP_PAGE_SIZE;
 
+  int hl_id = HLF_E + 1;
   // try to read block 0
   if ((hp = mf_get(mfp, 0, 1)) == NULL) {
     msg_start();
-    msg_puts_attr(_("Unable to read block 0 from "), attr | MSG_HIST);
-    msg_outtrans(mfp->mf_fname, attr | MSG_HIST);
-    msg_puts_attr(_("\nMaybe no changes were made or Vim did not update the swap file."),
-                  attr | MSG_HIST);
+    msg_puts_hl(_("Unable to read block 0 from "), hl_id, true);
+    msg_outtrans(mfp->mf_fname, hl_id, true);
+    msg_puts_hl(_("\nMaybe no changes were made or Nvim did not update the swap file."), hl_id,
+                true);
     msg_end();
     goto theend;
   }
   ZeroBlock *b0p = hp->bh_data;
   if (strncmp(b0p->b0_version, "VIM 3.0", 7) == 0) {
     msg_start();
-    msg_outtrans(mfp->mf_fname, MSG_HIST);
-    msg_puts_attr(_(" cannot be used with this version of Vim.\n"),
-                  MSG_HIST);
-    msg_puts_attr(_("Use Vim version 3.0.\n"), MSG_HIST);
+    msg_outtrans(mfp->mf_fname, 0, true);
+    msg_puts_hl(_(" cannot be used with this version of Nvim.\n"), 0, true);
+    msg_puts_hl(_("Use Vim version 3.0.\n"), 0, true);
     msg_end();
     goto theend;
   }
   if (ml_check_b0_id(b0p) == FAIL) {
-    semsg(_("E307: %s does not look like a Vim swap file"), mfp->mf_fname);
+    semsg(_("E307: %s does not look like a Nvim swap file"), mfp->mf_fname);
     goto theend;
   }
   if (b0_magic_wrong(b0p)) {
     msg_start();
-    msg_outtrans(mfp->mf_fname, attr | MSG_HIST);
-    msg_puts_attr(_(" cannot be used on this computer.\n"),
-                  attr | MSG_HIST);
-    msg_puts_attr(_("The file was created on "), attr | MSG_HIST);
+    msg_outtrans(mfp->mf_fname, hl_id, true);
+    msg_puts_hl(_(" cannot be used on this computer.\n"), hl_id, true);
+    msg_puts_hl(_("The file was created on "), hl_id, true);
     // avoid going past the end of a corrupted hostname
     b0p->b0_fname[0] = NUL;
-    msg_puts_attr(b0p->b0_hname, attr | MSG_HIST);
-    msg_puts_attr(_(",\nor the file has been damaged."), attr | MSG_HIST);
+    msg_puts_hl(b0p->b0_hname, hl_id, true);
+    msg_puts_hl(_(",\nor the file has been damaged."), hl_id, true);
     msg_end();
     goto theend;
   }
@@ -899,9 +897,8 @@ void ml_recover(bool checkext)
     mf_new_page_size(mfp, (unsigned)char_to_long(b0p->b0_page_size));
     if (mfp->mf_page_size < previous_page_size) {
       msg_start();
-      msg_outtrans(mfp->mf_fname, attr | MSG_HIST);
-      msg_puts_attr(_(" has been damaged (page size is smaller than minimum value).\n"),
-                    attr | MSG_HIST);
+      msg_outtrans(mfp->mf_fname, hl_id, true);
+      msg_puts_hl(_(" has been damaged (page size is smaller than minimum value).\n"), hl_id, true);
       msg_end();
       goto theend;
     }
@@ -1521,7 +1518,7 @@ static time_t swapfile_info(char *fname)
     // print name of owner of the file
     if (os_get_uname((uv_uid_t)file_info.stat.st_uid, uname, B0_UNAME_SIZE) == OK) {
       msg_puts(_("          owned by: "));
-      msg_outtrans(uname, 0);
+      msg_outtrans(uname, 0, false);
       msg_puts(_("   dated: "));
     } else {
       msg_puts(_("             dated: "));
@@ -1541,7 +1538,7 @@ static time_t swapfile_info(char *fname)
       if (strncmp(b0.b0_version, "VIM 3.0", 7) == 0) {
         msg_puts(_("         [from Vim version 3.0]"));
       } else if (ml_check_b0_id(&b0) == FAIL) {
-        msg_puts(_("         [does not look like a Vim swap file]"));
+        msg_puts(_("         [does not look like a Nvim swap file]"));
       } else if (!ml_check_b0_strings(&b0)) {
         msg_puts(_("         [garbled strings (not nul terminated)]"));
       } else {
@@ -1549,7 +1546,7 @@ static time_t swapfile_info(char *fname)
         if (b0.b0_fname[0] == NUL) {
           msg_puts(_("[No Name]"));
         } else {
-          msg_outtrans(b0.b0_fname, 0);
+          msg_outtrans(b0.b0_fname, 0, false);
         }
 
         msg_puts(_("\n          modified: "));
@@ -1557,7 +1554,7 @@ static time_t swapfile_info(char *fname)
 
         if (*(b0.b0_uname) != NUL) {
           msg_puts(_("\n         user name: "));
-          msg_outtrans(b0.b0_uname, 0);
+          msg_outtrans(b0.b0_uname, 0, false);
         }
 
         if (*(b0.b0_hname) != NUL) {
@@ -1566,7 +1563,7 @@ static time_t swapfile_info(char *fname)
           } else {
             msg_puts(_("\n         host name: "));
           }
-          msg_outtrans(b0.b0_hname, 0);
+          msg_outtrans(b0.b0_hname, 0, false);
         }
 
         if (char_to_long(b0.b0_pid) != 0) {
@@ -3259,7 +3256,7 @@ static void attention_message(buf_T *buf, char *fname)
   msg_puts("\"\n");
   const time_t swap_mtime = swapfile_info(fname);
   msg_puts(_("While opening file \""));
-  msg_outtrans(buf->b_fname, 0);
+  msg_outtrans(buf->b_fname, 0, false);
   msg_puts("\"\n");
   FileInfo file_info;
   if (!os_fileinfo(buf->b_fname, &file_info)) {
@@ -3281,10 +3278,10 @@ static void attention_message(buf_T *buf, char *fname)
              "  Quit, or continue with caution.\n"));
   msg_puts(_("(2) An edit session for this file crashed.\n"));
   msg_puts(_("    If this is the case, use \":recover\" or \"nvim -r "));
-  msg_outtrans(buf->b_fname, 0);
+  msg_outtrans(buf->b_fname, 0, false);
   msg_puts(_("\"\n    to recover the changes (see \":help recovery\").\n"));
   msg_puts(_("    If you did this already, delete the swap file \""));
-  msg_outtrans(fname, 0);
+  msg_outtrans(fname, 0, false);
   msg_puts(_("\"\n    to avoid this message.\n"));
   cmdline_row = msg_row;
   no_wait_return--;
