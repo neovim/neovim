@@ -277,7 +277,7 @@ local function build_extensions(inherits, extends, query_key, lang, query_name)
     return
   end
 
-  for _, ext in ipairs(explicit_extensions[lang][query_name]) do
+  for _, ext in ipairs(explicit_extensions[query_key][query_name]) do
     if ext.inherits then
       for _, inherited in ipairs(ensure_list(ext.inherits)) do
         if inherited ~= lang and not vim.list_contains(inherits, inherited) then
@@ -289,12 +289,6 @@ local function build_extensions(inherits, extends, query_key, lang, query_name)
   end
 end
 
----@deprecated
-function M.get_query(...)
-  vim.deprecate('vim.treesitter.query.get_query()', 'vim.treesitter.query.get()', '0.10')
-  return M.get(...)
-end
-
 ---@param lang string
 ---@param query_name string
 ---@param bufnr? integer
@@ -303,19 +297,10 @@ local function hash_get(lang, query_name, bufnr)
   return lang .. '%%' .. query_name .. '%%' .. b
 end
 
---- Returns the runtime query {query_name} for {lang}.
----
----@param lang string Language to use for the query
----@param query_name string Name of the query (e.g. "highlights")
----@param bufnr integer? Buffer for per-buffer queries applied with |vim.treesitter.query.set()|
----   (`0`for current buffer, `nil` for all buffers for lang)
----
----@return vim.treesitter.Query|nil -- Parsed query. `nil` if no query files are found.
-M.get = vim.func._memoize(hash_get, function(lang, query_name, bufnr)
-  if bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
-
+---@param lang string
+---@param query_name string
+---@param bufnr? integer
+local get_cached_query = vim.func._memoize(hash_get, function(lang, query_name, bufnr)
   local inherits = {} ---@type string[]
   local extends = {} ---@type string[]
   build_extensions(inherits, extends, lang, lang, query_name)
@@ -362,6 +347,28 @@ M.get = vim.func._memoize(hash_get, function(lang, query_name, bufnr)
 
   return M.parse(lang, query_string)
 end)
+
+---@deprecated
+function M.get_query(...)
+  vim.deprecate('vim.treesitter.query.get_query()', 'vim.treesitter.query.get()', '0.10')
+  return M.get(...)
+end
+
+--- Returns the runtime query {query_name} for {lang}.
+---
+---@param lang string Language to use for the query
+---@param query_name string Name of the query (e.g. "highlights")
+---@param bufnr integer? Buffer for per-buffer queries applied with |vim.treesitter.query.set()|
+---   (`0`for current buffer, `nil` for all buffers for lang)
+---
+---@return vim.treesitter.Query|nil -- Parsed query. `nil` if no query files are found.
+M.get = function(lang, query_name, bufnr)
+  if bufnr == 0 then
+    bufnr = api.nvim_get_current_buf()
+  end
+
+  return get_cached_query(lang, query_name, bufnr)
+end
 
 ---@deprecated
 function M.parse_query(...)
