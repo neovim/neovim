@@ -530,16 +530,19 @@ describe('treesitter highlighting (C)', function()
     return x + y;
     ]])
 
-    exec_lua([[
+    exec_lua(
+      [[
       vim.treesitter.query.set("c", "highlights", ..., { extends = true })
       vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, "c"))
-    ]], [[
+    ]],
+      [[
       [";"] @variable
       ["if"] @extend_query_test
-    ]])
+    ]]
+    )
 
     local captures = exec_lua [[ return vim.treesitter.query.get("c", "highlights").captures ]]
-    assert(vim.list_contains(captures, "extend_query_test"))
+    assert(vim.list_contains(captures, 'extend_query_test'))
 
     screen:expect {
       grid = [[

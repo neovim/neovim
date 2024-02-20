@@ -7,7 +7,7 @@ local ns = api.nvim_create_namespace('treesitter/highlighter')
 ---@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil): integer, TSNode, TSMetadata
 
 ---@class vim.treesitter.highlighter.Query
----@field private _query vim.treesitter.query.Query?
+---@field private _query vim.treesitter.Query?
 ---@field private lang string
 ---@field private hl_cache table<integer,integer>
 local TSHighlighterQuery = {}
@@ -16,8 +16,9 @@ TSHighlighterQuery.__index = TSHighlighterQuery
 ---@private
 ---@param lang string
 ---@param query_string string?
+---@param bufnr integer?
 ---@return vim.treesitter.highlighter.Query
-function TSHighlighterQuery.new(lang, query_string)
+function TSHighlighterQuery.new(lang, query_string, bufnr)
   local self = setmetatable({}, TSHighlighterQuery)
   self.lang = lang
   self.hl_cache = {}
@@ -25,7 +26,7 @@ function TSHighlighterQuery.new(lang, query_string)
   if query_string then
     self._query = query.parse(lang, query_string)
   else
-    self._query = query.get(lang, 'highlights')
+    self._query = query.get(lang, 'highlights', bufnr)
   end
 
   return self
@@ -123,7 +124,7 @@ function TSHighlighter.new(tree, opts)
   -- string query... if one is not provided it will be looked up by file.
   if opts.queries then
     for lang, query_string in pairs(opts.queries) do
-      self._queries[lang] = TSHighlighterQuery.new(lang, query_string)
+      self._queries[lang] = TSHighlighterQuery.new(lang, query_string, self.bufnr)
     end
   end
 
@@ -237,7 +238,7 @@ end
 ---@return vim.treesitter.highlighter.Query
 function TSHighlighter:get_query(lang)
   if not self._queries[lang] then
-    self._queries[lang] = TSHighlighterQuery.new(lang)
+    self._queries[lang] = TSHighlighterQuery.new(lang, nil, self.bufnr)
   end
 
   return self._queries[lang]

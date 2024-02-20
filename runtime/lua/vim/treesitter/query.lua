@@ -191,16 +191,26 @@ local function read_query_files(filenames)
   return table.concat(contents, '')
 end
 
--- The explicitly set queries from |vim.treesitter.query.set()|
----@type table<string,table<string,vim.treesitter.Query>>
-local explicit_queries = setmetatable({}, {
+---@class vim.treesitter.query.ExplicitQuery
+---@field text string
+---@field inherits? string|string[]
+
+local explicit_mt = {
   __index = function(t, k)
     local lang_queries = {}
     rawset(t, k, lang_queries)
 
     return lang_queries
   end,
-})
+}
+
+-- The explicitly set queries from |vim.treesitter.query.set()|
+---@type table<string|integer,table<string,vim.treesitter.query.ExplicitQuery>>
+local explicit_queries = setmetatable({}, explicit_mt)
+
+-- The explicitly set query extensions from |vim.treesitter.query.set()|
+---@type table<string|integer,table<string,vim.treesitter.query.ExplicitQuery[]>>
+local explicit_extensions = setmetatable({}, explicit_mt)
 
 --- @param x string|string[]
 --- @return string[]
@@ -220,6 +230,7 @@ end
 ---@class vim.treesitter.query.SetOpts
 ---@field inherits? string|string[]
 ---@field extends? boolean
+---@field bufnr? integer
 
 --- Sets the runtime query named {query_name} for {lang}
 ---
@@ -234,31 +245,48 @@ end
 ---     (see |treesitter-query-modeline-inherits|)
 ---   - extends (boolean|nil) If `true`, the query should be used as an extension query
 ---     (see |treesitter-query-modeline-extends|)
+---   - bufnr (integer|nil) Buffer this query should apply to
+---     (`0` for current buffer, `nil` for all buffers for lang)
 function M.set(lang, query_name, text, opts)
-  local query ---@type vim.treesitter.Query
-
   if not opts then
-    query = M.parse(lang, text)
-  else
-    local query_files = {}
-
-    if opts.inherits then
-      for _, inherited in ipairs(ensure_list(opts.inherits)) do
-        local files = M.get_files(inherited, query_name, true)
-        vim.list_extend(query_files, files)
-      end
-    end
-
-    if opts.extends then
-      local files = M.get_files(lang, query_name)
-      vim.list_extend(query_files, files)
-    end
-
-    local query_string = read_query_files(query_files) .. text
-    query = M.parse(lang, query_string)
+    explicit_queries[lang][query_name] = { text = text }
+    return
   end
 
-  explicit_queries[lang][query_name] = query
+  local bufnr = opts.bufnr == 0 and api.nvim_get_current_buf() or opts.bufnr
+  local query_key = bufnr or lang
+
+  local query = { text = text, inherits = opts.inherits }
+  if not opts.extends then
+    explicit_queries[query_key][query_name] = query
+  else
+    if not explicit_extensions[query_key][query_name] then
+      explicit_extensions[query_key][query_name] = {}
+    end
+    table.insert(explicit_extensions[query_key][query_name], query)
+  end
+end
+
+---@param inherits string[]
+---@param extends string[]
+---@param query_key string|integer
+---@param lang string
+---@param query_name string
+local function build_extensions(inherits, extends, query_key, lang, query_name)
+  if not explicit_extensions[query_key][query_name] then
+    return
+  end
+
+  for _, ext in ipairs(explicit_extensions[lang][query_name]) do
+    if ext.inherits then
+      for _, inherited in ipairs(ensure_list(ext.inherits)) do
+        if inherited ~= lang and not vim.list_contains(inherits, inherited) then
+          table.insert(inherits, inherited)
+        end
+      end
+    end
+    table.insert(extends, ext.text)
+  end
 end
 
 ---@deprecated
@@ -267,19 +295,66 @@ function M.get_query(...)
   return M.get(...)
 end
 
+---@param lang string
+---@param query_name string
+---@param bufnr? integer
+local function hash_get(lang, query_name, bufnr)
+  local b = (bufnr and tostring(bufnr) or '-1')
+  return lang .. '%%' .. query_name .. '%%' .. b
+end
+
 --- Returns the runtime query {query_name} for {lang}.
 ---
 ---@param lang string Language to use for the query
 ---@param query_name string Name of the query (e.g. "highlights")
+---@param bufnr integer? Buffer for per-buffer queries applied with |vim.treesitter.query.set()|
+---   (`0`for current buffer, `nil` for all buffers for lang)
 ---
 ---@return vim.treesitter.Query|nil -- Parsed query. `nil` if no query files are found.
-M.get = vim.func._memoize('concat-2', function(lang, query_name)
-  if explicit_queries[lang][query_name] then
-    return explicit_queries[lang][query_name]
+M.get = vim.func._memoize(hash_get, function(lang, query_name, bufnr)
+  if bufnr == 0 then
+    bufnr = api.nvim_get_current_buf()
   end
 
-  local query_files = M.get_files(lang, query_name)
-  local query_string = read_query_files(query_files)
+  local inherits = {} ---@type string[]
+  local extends = {} ---@type string[]
+  build_extensions(inherits, extends, lang, lang, query_name)
+  if bufnr then
+    build_extensions(inherits, extends, bufnr, lang, query_name)
+  end
+
+  local query_string ---@type string
+
+  local query_files = {}
+  for _, inherited in ipairs(inherits) do
+    local files = M.get_files(inherited, query_name, true)
+    vim.list_extend(query_files, files)
+  end
+
+  local explicit_query = (
+    bufnr and explicit_queries[bufnr][query_name] or explicit_queries[lang][query_name]
+  )
+
+  if explicit_query then
+    if explicit_query.inherits then
+      for _, inherited in ipairs(ensure_list(explicit_query.inherits)) do
+        if inherited ~= lang then
+          local files = M.get_files(inherited, query_name, true)
+          vim.list_extend(query_files, files)
+        end
+      end
+    end
+
+    query_string = read_query_files(query_files) .. explicit_query.text
+  else
+    vim.list_extend(query_files, M.get_files(lang, query_name))
+    query_string = read_query_files(query_files)
+  end
+
+  if #extends > 0 then
+    local extends_string = table.concat(extends, '\n')
+    query_string = query_string .. extends_string
+  end
 
   if #query_string == 0 then
     return nil
