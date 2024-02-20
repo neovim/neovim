@@ -2401,6 +2401,93 @@ describe('extmark decorations', function()
 
     helpers.assert_alive()
   end)
+
+  it('priority ordering of overlay or win_col virtual text at same position', function()
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_text = {{'A'}}, virt_text_pos = 'overlay', priority = 100 })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_text = {{'A'}}, virt_text_win_col = 30, priority = 100 })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_text = {{'BB'}}, virt_text_pos = 'overlay', priority = 90 })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_text = {{'BB'}}, virt_text_win_col = 30, priority = 90 })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_text = {{'CCC'}}, virt_text_pos = 'overlay', priority = 80 })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_text = {{'CCC'}}, virt_text_win_col = 30, priority = 80 })
+    screen:expect([[
+      ^ABC                           ABC                 |
+      {1:~                                                 }|*13
+                                                        |
+    ]])
+  end)
+
+  it('priority ordering of inline and non-inline virtual text at same char', function()
+    insert(('?'):rep(40) .. ('!'):rep(30))
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'A'}}, virt_text_pos = 'overlay', priority = 10 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'a'}}, virt_text_win_col = 15, priority = 10 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'BBBB'}}, virt_text_pos = 'inline', priority = 15 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'C'}}, virt_text_pos = 'overlay', priority = 20 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'c'}}, virt_text_win_col = 17, priority = 20 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'DDDD'}}, virt_text_pos = 'inline', priority = 25 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'E'}}, virt_text_pos = 'overlay', priority = 30 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'e'}}, virt_text_win_col = 19, priority = 30 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'FFFF'}}, virt_text_pos = 'inline', priority = 35 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'G'}}, virt_text_pos = 'overlay', priority = 40 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'g'}}, virt_text_win_col = 21, priority = 40 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'HHHH'}}, virt_text_pos = 'inline', priority = 45 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'I'}}, virt_text_pos = 'overlay', priority = 50 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'i'}}, virt_text_win_col = 23, priority = 50 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'JJJJ'}}, virt_text_pos = 'inline', priority = 55 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'K'}}, virt_text_pos = 'overlay', priority = 60 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'k'}}, virt_text_win_col = 25, priority = 60 })
+    screen:expect([[
+      ???????????????a?c?e????????????????????ABBBCDDDEF|
+      FFGHHHIJJJK!!!!!!!!!!g!i!k!!!!!!!!!!!!!^!          |
+      {1:~                                                 }|*12
+                                                        |
+    ]])
+    feed('02x$')
+    screen:expect([[
+      ???????????????a?c?e??????????????????ABBBCDDDEFFF|
+      GHHHIJJJK!!!!!!!!!!!!g!i!k!!!!!!!!!!!^!            |
+      {1:~                                                 }|*12
+                                                        |
+    ]])
+    feed('02x$')
+    screen:expect([[
+      ???????????????a?c?e?g??????????????ABBBCDDDEFFFGH|
+      HHIJJJK!!!!!!!!!!!!!!!!i!k!!!!!!!!!^!              |
+      {1:~                                                 }|*12
+                                                        |
+    ]])
+    feed('02x$')
+    screen:expect([[
+      ???????????????a?c?e?g????????????ABBBCDDDEFFFGHHH|
+      IJJJK!!!!!!!!!!!!!!!!!!i!k!!!!!!!^!                |
+      {1:~                                                 }|*12
+                                                        |
+    ]])
+    command('set nowrap')
+    feed('0')
+    screen:expect([[
+      ^???????????????a?c?e?g?i?k????????ABBBCDDDEFFFGHHH|
+      {1:~                                                 }|*13
+                                                        |
+    ]])
+    feed('2x')
+    screen:expect([[
+      ^???????????????a?c?e?g?i?k??????ABBBCDDDEFFFGHHHIJ|
+      {1:~                                                 }|*13
+                                                        |
+    ]])
+    feed('2x')
+    screen:expect([[
+      ^???????????????a?c?e?g?i?k????ABBBCDDDEFFFGHHHIJJJ|
+      {1:~                                                 }|*13
+                                                        |
+    ]])
+    feed('2x')
+    screen:expect([[
+      ^???????????????a?c?e?g?i?k??ABBBCDDDEFFFGHHHIJJJK!|
+      {1:~                                                 }|*13
+                                                        |
+    ]])
+  end)
 end)
 
 describe('decorations: inline virtual text', function()
