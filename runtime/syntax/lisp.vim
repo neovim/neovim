@@ -1,9 +1,11 @@
 " Vim syntax file
 " Language:    Lisp
-" Maintainer:  Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
+" Maintainer:	This runtime file is looking for a new maintainer.
+" Former Maintainer:  Charles E. Campbell
 " Last Change: Nov 10, 2021
+"   2024 Feb 19 by Vim Project (announce adoption)
 " Version:     31
-" URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_LISP
+" Former URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_LISP
 "
 "  Thanks to F Xavier Noria for a list of 978 Common Lisp symbols taken from HyperSpec
 "  Clisp additions courtesy of http://clisp.cvs.sourceforge.net/*checkout*/clisp/clisp/emacs/lisp.vim

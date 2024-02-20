@@ -2,7 +2,8 @@
 "            AUTOLOAD PORTION
 " Date:		Mar 12, 2023
 " Version:	33
-" Maintainer:	Charles E Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
+" Maintainer:	This runtime file is looking for a new maintainer.
+" Former Maintainer:	Charles E Campbell
 " License:	Vim License  (see vim's :help license)
 " Copyright:    Copyright (C) 2005-2019 Charles E. Campbell {{{1
 "               Permission is hereby granted to use and distribute this code,

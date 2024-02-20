@@ -1,7 +1,9 @@
 " Language: Markdown with chunks of R, Python and other languages
-" Maintainer: Jakson Aquino <jalvesaq@gmail.com>
-" Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change: Sun Dec 24, 2023  07:21AM
+" Maintainer: This runtime file is looking for a new maintainer.
+" Former Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
+" Former Repository: https://github.com/jalvesaq/R-Vim-runtime
+" Last Change: 2023 Dec 24  07:21AM
+"   2024 Feb 19 by Vim Project (announce adoption)
 "
 "   For highlighting pandoc extensions to markdown like citations and TeX and
 "   many other advanced features like folding of markdown sections, it is

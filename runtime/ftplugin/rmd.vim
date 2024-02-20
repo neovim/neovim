@@ -2,7 +2,7 @@
 " Language: R Markdown file
 " Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
 " Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	Mon May 29, 2023  06:31AM
+" Last Change:	2023 May 29  06:31AM
 "		2024 Jan 14 by Vim Project (browsefilter)
 " Original work by Alex Zvoleff (adjusted from R help for rmd by Michel Kuhlmann)
 

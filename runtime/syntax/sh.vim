@@ -1,10 +1,12 @@
 " Vim syntax file
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
-" Maintainer:		Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
-" Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
+" Maintainer:		This runtime file is looking for a new maintainer.
+" Previous Maintainers:	Charles E. Campbell
+" 		Lennart Schultz <Lennart.Schultz@ecmwf.int>
 " Last Change:		Feb 28, 2023
+"   2024 Feb 19 by Vim Project (announce adoption)
 " Version:		208
-" URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
+" Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr) and heredoc fixes from Felipe Contreras
 

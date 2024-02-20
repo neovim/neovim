@@ -1,9 +1,11 @@
 " Vim syntax file
 " Language:	xmath (a simulation tool)
-" Maintainer:	Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
+" Maintainer:	This runtime file is looking for a new maintainer.
+" Former Maintainer: Charles E. Campbell
 " Last Change:	Aug 31, 2016
+"   2024 Feb 19 by Vim Project (announce adoption)
 " Version:	10
-" URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_XMATH
+" Former URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_XMATH
 
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded
