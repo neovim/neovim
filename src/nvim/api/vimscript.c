@@ -51,7 +51,7 @@
 /// @return Dictionary containing information about execution, with these keys:
 ///       - output: (string|nil) Output if `opts.output` is true.
 Dictionary nvim_exec2(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *err)
-  FUNC_API_SINCE(11)
+  FUNC_API_SINCE(11) FUNC_API_RET_ALLOC
 {
   Dictionary result = ARRAY_DICT_INIT;
 

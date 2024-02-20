@@ -377,7 +377,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   object_to_vim_take_luaref(&result, rettv, true, &err);
 
 end:
-  if (!handler.arena_return) {
+  if (handler.ret_alloc) {
     api_free_object(result);
   }
   arena_mem_free(arena_finish(&arena));

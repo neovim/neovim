@@ -1203,7 +1203,7 @@ free_exit:
 }
 
 String nvim__buf_debug_extmarks(Buffer buffer, Boolean keys, Boolean dot, Error *err)
-  FUNC_API_SINCE(7)
+  FUNC_API_SINCE(7) FUNC_API_RET_ALLOC
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {

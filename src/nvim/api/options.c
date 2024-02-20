@@ -150,7 +150,7 @@ static buf_T *do_ft_buf(char *filetype, aco_save_T *aco, Error *err)
 /// @param[out] err  Error details, if any
 /// @return          Option value
 Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
-  FUNC_API_SINCE(9)
+  FUNC_API_SINCE(9) FUNC_API_RET_ALLOC
 {
   OptIndex opt_idx = 0;
   int scope = 0;
