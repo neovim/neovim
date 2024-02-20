@@ -225,12 +225,12 @@ Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Arena *arena, Error *er
 ///                   the end of the buffer.
 /// @param lines      Array of lines
 /// @param[out] err   Error details, if any
-void buffer_insert(Buffer buffer, Integer lnum, ArrayOf(String) lines, Error *err)
+void buffer_insert(Buffer buffer, Integer lnum, ArrayOf(String) lines, Arena *arena, Error *err)
   FUNC_API_DEPRECATED_SINCE(1)
 {
   // "lnum" will be the index of the line after inserting,
   // no matter if it is negative or not
-  nvim_buf_set_lines(0, buffer, lnum, lnum, true, lines, err);
+  nvim_buf_set_lines(0, buffer, lnum, lnum, true, lines, arena, err);
 }
 
 /// Gets a buffer line
@@ -272,13 +272,13 @@ String buffer_get_line(Buffer buffer, Integer index, Arena *arena, Error *err)
 /// @param index    Line index
 /// @param line     Contents of the new line
 /// @param[out] err Error details, if any
-void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
+void buffer_set_line(Buffer buffer, Integer index, String line, Arena *arena, Error *err)
   FUNC_API_DEPRECATED_SINCE(1)
 {
   Object l = STRING_OBJ(line);
   Array array = { .items = &l, .size = 1 };
   index = convert_index(index);
-  nvim_buf_set_lines(0, buffer, index, index + 1, true,  array, err);
+  nvim_buf_set_lines(0, buffer, index, index + 1, true,  array, arena, err);
 }
 
 /// Deletes a buffer line
@@ -291,12 +291,12 @@ void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
 /// @param buffer   buffer handle
 /// @param index    line index
 /// @param[out] err Error details, if any
-void buffer_del_line(Buffer buffer, Integer index, Error *err)
+void buffer_del_line(Buffer buffer, Integer index, Arena *arena, Error *err)
   FUNC_API_DEPRECATED_SINCE(1)
 {
   Array array = ARRAY_DICT_INIT;
   index = convert_index(index);
-  nvim_buf_set_lines(0, buffer, index, index + 1, true, array, err);
+  nvim_buf_set_lines(0, buffer, index, index + 1, true, array, arena, err);
 }
 
 /// Retrieves a line range from the buffer
@@ -342,12 +342,13 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
 //                        array will delete the line range)
 /// @param[out] err       Error details, if any
 void buffer_set_line_slice(Buffer buffer, Integer start, Integer end, Boolean include_start,
-                           Boolean include_end, ArrayOf(String) replacement, Error *err)
+                           Boolean include_end, ArrayOf(String) replacement, Arena *arena,
+                           Error *err)
   FUNC_API_DEPRECATED_SINCE(1)
 {
   start = convert_index(start) + !include_start;
   end = convert_index(end) + include_end;
-  nvim_buf_set_lines(0, buffer, start, end, false, replacement, err);
+  nvim_buf_set_lines(0, buffer, start, end, false, replacement, arena, err);
 }
 
 /// Sets a buffer-scoped (b:) variable

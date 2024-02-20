@@ -675,21 +675,21 @@ String nvim_get_current_line(Arena *arena, Error *err)
 ///
 /// @param line     Line contents
 /// @param[out] err Error details, if any
-void nvim_set_current_line(String line, Error *err)
+void nvim_set_current_line(String line, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
-  buffer_set_line(curbuf->handle, curwin->w_cursor.lnum - 1, line, err);
+  buffer_set_line(curbuf->handle, curwin->w_cursor.lnum - 1, line, arena, err);
 }
 
 /// Deletes the current line.
 ///
 /// @param[out] err Error details, if any
-void nvim_del_current_line(Error *err)
+void nvim_del_current_line(Arena *arena, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
-  buffer_del_line(curbuf->handle, curwin->w_cursor.lnum - 1, err);
+  buffer_del_line(curbuf->handle, curwin->w_cursor.lnum - 1, arena, err);
 }
 
 /// Gets a global (g:) variable.

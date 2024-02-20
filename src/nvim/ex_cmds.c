@@ -4674,7 +4674,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
         snprintf(str, line_size, "|%*" PRIdLINENR "| %s", col_width - 3,
                  next_linenr, line);
         if (linenr_preview == 0) {
-          ml_replace_buf(cmdpreview_buf, 1, str, true);
+          ml_replace_buf(cmdpreview_buf, 1, str, true, false);
         } else {
           ml_append_buf(cmdpreview_buf, linenr_preview, str, (colnr_T)line_size, false);
         }
