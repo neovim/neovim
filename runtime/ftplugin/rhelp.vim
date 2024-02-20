@@ -2,7 +2,7 @@
 " Language: R help file
 " Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
 " Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	Sun Apr 24, 2022  09:12AM
+" Last Change:	2022 Apr 24  09:12AM
 "		2024 Jan 14 by Vim Project (browsefilter)
 
 " Only do this when not yet done for this buffer

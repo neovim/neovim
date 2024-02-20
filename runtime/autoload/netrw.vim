@@ -1,11 +1,13 @@
 " netrw.vim: Handles file transfer and remote directory listing across
 "            AUTOLOAD SECTION
-" Date:		May 03, 2023
+" Maintainer: This runtime file is looking for a new maintainer.
+" Date:		  May 03, 2023
 " Version:	173a
 " Last Change:
 " 	2023 Nov 21 by Vim Project: ignore wildignore when expanding $COMSPEC	(v173a)
 " 	2023 Nov 22 by Vim Project: fix handling of very long filename on longlist style	(v173a)
-" Maintainer:	Charles E Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
+"   2024 Feb 19 by Vim Project (announce adoption)
+" Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 2016 Charles E. Campbell {{{1
 "               Permission is hereby granted to use and distribute this code,

@@ -2,7 +2,8 @@
 "            AUTOLOAD PORTION
 " Date:		Nov 14, 2023
 " Version:	32b  (with modifications from the Vim Project)
-" Maintainer:	Charles E Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
+" Maintainer:	This runtime file is looking for a new maintainer.
+" Former Maintainer: Charles E Campbell
 " License:	Vim License  (see vim's :help license)
 "
 "	Contains many ideas from Michael Toren's <tar.vim>

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:		gpg(1) configuration file
-" Maintainer: This file is looking for a maintainer!
+" Maintainer: This runtime file is looking for a maintainer.
 " Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
 " Latest Revision:	2024-02-11
 " Updated:		

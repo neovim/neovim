@@ -1,6 +1,8 @@
 " Language   : Netrw Listing Syntax
-" Maintainer : Charles E. Campbell
-" Last change: Nov 07, 2019
+" Maintainer:	This runtime file is looking for a new maintainer.
+" Former Maintainer: Charles E. Campbell
+" Last Change: Nov 07, 2019
+"   2024 Feb 19 by Vim Project (announce adoption)
 " Version    : 20
 " ---------------------------------------------------------------------
 if exists("b:current_syntax")

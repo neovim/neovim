@@ -1,9 +1,11 @@
 " Vim filetype plugin file
 " Language: reStructuredText documentation format with R code
-" Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
-" Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	Mon Feb 27, 2023  07:16PM
+" Maintainer: This runtime file is looking for a new maintainer.
+" Former Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
+" Former Repository: https://github.com/jalvesaq/R-Vim-runtime
+" Last Change:	2023 Feb 27  07:16PM
 "		2024 Jan 14 by Vim Project (browsefilter)
+"		2024 Feb 19 by Vim Project (announce adoption)
 " Original work by Alex Zvoleff
 
 " Only do this when not yet done for this buffer

@@ -1,7 +1,9 @@
 " Language: Quarto (Markdown with chunks of R, Python and other languages)
-" Provisory Maintainer: Jakson Aquino <jalvesaq@gmail.com>
-" Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change: Fri Feb 24, 2023  08:26AM
+" Maintainer: This runtime file is looking for a new maintainer.
+" Former Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
+" Former Repository: https://github.com/jalvesaq/R-Vim-runtime
+" Last Change: 2023 Feb 24  08:26AM
+"		2024 Feb 19 by Vim Project (announce adoption)
 "
 " The developers of tools for Quarto maintain Vim runtime files in their
 " Github repository and, if required, I will hand over the maintenance of

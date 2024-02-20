@@ -1,6 +1,7 @@
 " netrwSettings.vim: makes netrw settings simpler
 " Date:		Nov 15, 2021
-" Maintainer:	Charles E Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
+" Maintainer:   This runtime file is looking for a new maintainer.
+" Former Maintainer: Charles E Campbell
 " Version:	18
 " Copyright:    Copyright (C) 1999-2007 Charles E. Campbell {{{1
 "               Permission is hereby granted to use and distribute this code,

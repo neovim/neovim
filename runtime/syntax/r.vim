@@ -1,12 +1,14 @@
 " Vim syntax file
 " Language:	      R (GNU S)
-" Maintainer:	      Jakson Aquino <jalvesaq@gmail.com>
-" Former Maintainers: Vaidotas Zemlys <zemlys@gmail.com>
-" 		      Tom Payne <tom@tompayne.org>
+" Maintainer:	      This runtime file is looking for a new maintainer.
+" Former Maintainers: Jakson Aquino <jalvesaq@gmail.com>
+"                     Vaidotas Zemlys <zemlys@gmail.com>
+"                     Tom Payne <tom@tompayne.org>
 " Contributor:        Johannes Ranke <jranke@uni-bremen.de>
-" Homepage:           https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	      Sun Dec 24, 2023  08:05AM
-" Filenames:	      *.R *.r *.Rhistory *.Rt
+" Former Repository:  https://github.com/jalvesaq/R-Vim-runtime
+" Filenames:          *.R *.r *.Rhistory *.Rt
+" Last Change:        2023 Dec 24  08:05AM
+"   2024 Feb 19 by Vim Project (announce adoption)
 "
 " NOTE: The highlighting of R functions might be defined in
 " runtime files created by a filetype plugin, if installed.
