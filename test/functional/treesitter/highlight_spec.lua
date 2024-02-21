@@ -676,11 +676,11 @@ describe('treesitter highlighting (C)', function()
       local parser = vim.treesitter.get_parser(0, "c")
       test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = [[
         ("static" @keyword
-         (set! conceal "R"))
+         (#set! conceal "R"))
 
         ((identifier) @Identifier
-         (set! conceal "")
-         (eq? @Identifier "lstate"))
+         (#set! conceal "")
+         (#eq? @Identifier "lstate"))
       ]]}})
     ]=]
 
