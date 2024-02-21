@@ -174,7 +174,7 @@ void ui_refresh(void)
   end)
 
   local test_query = [[
-    ((call_expression function: (identifier) @minfunc (argument_list (identifier) @min_id)) (eq? @minfunc "MIN"))
+    ((call_expression function: (identifier) @minfunc (argument_list (identifier) @min_id)) (#eq? @minfunc "MIN"))
     "for" @keyword
     (primitive_type) @type
     (field_expression argument: (identifier) @fieldarg)
@@ -886,7 +886,7 @@ end]]
     local parser = vim.treesitter.get_string_parser(str, "c")
 
     local nodes = {}
-    local query = vim.treesitter.query.parse("c", '((identifier) @id (eq? @id "foo"))')
+    local query = vim.treesitter.query.parse("c", '((identifier) @id (#eq? @id "foo"))')
 
     for _, node in query:iter_captures(parser:parse()[1]:root(), str) do
       table.insert(nodes, { node:range() })
