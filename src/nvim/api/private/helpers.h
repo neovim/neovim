@@ -125,13 +125,6 @@ typedef kvec_withinit_t(Object, 16) ArrayBuilder;
 
 #define KEYDICT_INIT { 0 }
 
-#define api_free_boolean(value)
-#define api_free_integer(value)
-#define api_free_float(value)
-#define api_free_buffer(value)
-#define api_free_window(value)
-#define api_free_tabpage(value)
-
 EXTERN PMap(int) buffer_handles INIT( = MAP_INIT);
 EXTERN PMap(int) window_handles INIT( = MAP_INIT);
 EXTERN PMap(int) tabpage_handles INIT( = MAP_INIT);

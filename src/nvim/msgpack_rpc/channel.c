@@ -452,7 +452,7 @@ static void request_event(void **argv)
                                               &result,
                                               &out_buffer));
   }
-  if (!handler.arena_return) {
+  if (handler.ret_alloc) {
     api_free_object(result);
   }
 

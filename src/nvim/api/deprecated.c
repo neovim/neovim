@@ -32,8 +32,8 @@
 /// @deprecated Use nvim_exec2() instead.
 /// @see nvim_exec2
 String nvim_exec(uint64_t channel_id, String src, Boolean output, Error *err)
-  FUNC_API_SINCE(7)
-  FUNC_API_DEPRECATED_SINCE(11)
+  FUNC_API_SINCE(7) FUNC_API_DEPRECATED_SINCE(11)
+  FUNC_API_RET_ALLOC
 {
   Dict(exec_opts) opts = { .output = output };
   return exec_impl(channel_id, src, &opts, err);
@@ -42,8 +42,8 @@ String nvim_exec(uint64_t channel_id, String src, Boolean output, Error *err)
 /// @deprecated
 /// @see nvim_exec2
 String nvim_command_output(uint64_t channel_id, String command, Error *err)
-  FUNC_API_SINCE(1)
-  FUNC_API_DEPRECATED_SINCE(7)
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(7)
+  FUNC_API_RET_ALLOC
 {
   Dict(exec_opts) opts = { .output = true };
   return exec_impl(channel_id, command, &opts, err);
@@ -541,7 +541,7 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
 /// @param name     Option name
 /// @param[out] err Error details, if any
 /// @return         Option value (global)
-Object nvim_get_option(String name, Arena *arena, Error *err)
+Object nvim_get_option(String name, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(11)
 {
@@ -555,7 +555,7 @@ Object nvim_get_option(String name, Arena *arena, Error *err)
 /// @param name       Option name
 /// @param[out] err   Error details, if any
 /// @return Option value
-Object nvim_buf_get_option(Buffer buffer, String name, Arena *arena, Error *err)
+Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(11)
 {
@@ -597,7 +597,7 @@ void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object
 /// @param name     Option name
 /// @param[out] err Error details, if any
 /// @return Option value
-Object nvim_win_get_option(Window window, String name, Arena *arena, Error *err)
+Object nvim_win_get_option(Window window, String name, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(11)
 {

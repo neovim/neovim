@@ -60,8 +60,7 @@ local function add_function(fn)
       fn.parameters[#fn.parameters] = nil
     end
     if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'arena' then
-      -- return value is allocated in an arena
-      fn.arena_return = true
+      fn.receives_arena = true
       fn.parameters[#fn.parameters] = nil
     end
   end
@@ -554,7 +553,7 @@ for i = 1, #functions do
       table.insert(call_args, a)
     end
 
-    if fn.arena_return then
+    if fn.receives_arena then
       table.insert(call_args, 'arena')
     end
 
@@ -621,8 +620,8 @@ for n, name in ipairs(hashorder) do
       .. (fn.impl_name or fn.name)
       .. ', .fast = '
       .. tostring(fn.fast)
-      .. ', .arena_return = '
-      .. tostring(not not fn.arena_return)
+      .. ', .ret_alloc = '
+      .. tostring(not not fn.ret_alloc)
       .. '},\n'
   )
 end
@@ -791,7 +790,7 @@ local function process_function(fn)
   if fn.receives_channel_id then
     cparams = 'LUA_INTERNAL_CALL, ' .. cparams
   end
-  if fn.arena_return then
+  if fn.receives_arena then
     cparams = cparams .. '&arena, '
   end
 
@@ -839,7 +838,7 @@ exit_0:
       return_type = fn.return_type
     end
     local free_retval = ''
-    if not fn.arena_return then
+    if fn.ret_alloc then
       free_retval = '  api_free_' .. return_type:lower() .. '(ret);'
     end
     write_shifted_output('    %s ret = %s(%s);\n', fn.return_type, fn.name, cparams)
