@@ -409,7 +409,7 @@ error('Cannot require a meta file')
 ---
 ---If a client neither supports `documentChanges` nor `workspace.workspaceEdit.resourceOperations` then
 ---only plain `TextEdit`s using the `changes` property are supported.
----@field documentChanges? lsp.TextDocumentEdit|lsp.CreateFile|lsp.RenameFile|lsp.DeleteFile[]
+---@field documentChanges? (lsp.TextDocumentEdit|lsp.CreateFile|lsp.RenameFile|lsp.DeleteFile)[]
 ---
 ---A map of change annotations that can be referenced in `AnnotatedTextEdit`s or create, rename and
 ---delete file / folder operations.
@@ -1888,7 +1888,7 @@ error('Cannot require a meta file')
 ---
 ---@since 3.16.0 - support for AnnotatedTextEdit. This is guarded using a
 ---client capability.
----@field edits lsp.TextEdit|lsp.AnnotatedTextEdit[]
+---@field edits (lsp.TextEdit|lsp.AnnotatedTextEdit)[]
 
 ---Create file operation.
 ---@class lsp.CreateFile: lsp.ResourceOperation
@@ -3146,7 +3146,7 @@ error('Cannot require a meta file')
 ---@class lsp.NotebookDocumentSyncOptions
 ---
 ---The notebooks to be synced
----@field notebookSelector lsp._anonym14.notebookSelector|lsp._anonym16.notebookSelector[]
+---@field notebookSelector (lsp._anonym14.notebookSelector|lsp._anonym16.notebookSelector)[]
 ---
 ---Whether save notification should be forwarded to
 ---the server. Will only be honored if mode === `notebook`.

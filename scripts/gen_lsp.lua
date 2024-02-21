@@ -224,7 +224,11 @@ function M.gen(opt)
 
     -- ArrayType
     elseif type.kind == 'array' then
-      return parse_type(type.element, prefix) .. '[]'
+      local parsed_items = parse_type(type.element, prefix)
+      if type.element.items and #type.element.items > 1 then
+        parsed_items = '(' .. parsed_items .. ')'
+      end
+      return parsed_items .. '[]'
 
     -- OrType
     elseif type.kind == 'or' then
