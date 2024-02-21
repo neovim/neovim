@@ -66,13 +66,13 @@ local function valid_lang(lang)
   return lang and lang ~= ''
 end
 
---- Returns the parser for a specific buffer and attaches it to the buffer
+--- Gets the parser for a buffer and attaches it to the buffer.
 ---
---- If needed, this will create the parser.
+--- Creates the parser, if needed.
 ---
 --- If no parser can be created, nil (and an error message) is returned.
 ---
----@param bufnr (integer|nil) Buffer the parser should be tied to (default: current buffer)
+---@param bufnr (integer|nil) Buffer to parse (default: current buffer)
 ---@param lang (string|nil) Language of this parser (default: from buffer filetype)
 ---@param opts (table|nil) Options to pass to the created language tree
 ---

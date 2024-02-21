@@ -398,11 +398,10 @@ describe('treesitter parser API', function()
   it('does not get parser for empty filetype', function()
     insert(test_text)
 
-    local parser, error = exec_lua(function()
-      return vim.treesitter.get_parser(0)
-    end)
-    eq(vim.NIL, parser)
-    eq('Parser not found for buffer 1: language could not be determined', error)
+    eq(
+      '.../treesitter.lua:0: Parser not found for buffer 1: unknown language',
+      pcall_err(exec_lua, 'vim.treesitter.get_parser(0)')
+    )
 
     -- Must provide language for buffers with an empty filetype
     exec_lua("vim.treesitter.get_parser(0, 'c')")

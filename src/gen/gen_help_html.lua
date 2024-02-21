@@ -30,6 +30,10 @@
 --   * visit_validate() is the core function used by validate().
 --   * Files in `new_layout` will be generated with a "flow" layout instead of preformatted/fixed-width layout.
 --
+-- TODO:
+--   * Conjoin listitem "blocks" (blank-separated). Example: starting.txt
+--   * All Nvim-owned files should migrate to "flow" layout.
+
 local pending_urls = 0
 local tagmap = nil ---@type table<string, string>
 local helpfiles = nil ---@type string[]
@@ -66,6 +70,7 @@ local M = {}
 
 -- These files are generated with "flow" layout (non fixed-width, wrapped text paragraphs).
 -- All other files are "legacy" files which require fixed-width layout.
+-- All Nvim-owned files should migrate to "flow" layout.
 local new_layout = {
   ['api.txt'] = true,
   ['channel.txt'] = true,
@@ -368,7 +373,7 @@ local function ignore_parse_error(fname, s)
   end
   -- Ignore parse errors for unclosed tag.
   -- This is common in vimdocs and is treated as plaintext by :help.
-  return s:find("^[`'|*]")
+  return s:find('^``') or s:find("^['|]")
 end
 
 ---@param node TSNode
