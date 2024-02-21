@@ -20,6 +20,7 @@
 #include "nvim/extmark.h"
 #include "nvim/grid.h"
 #include "nvim/highlight_group.h"
+#include "nvim/map_defs.h"
 #include "nvim/marktree.h"
 #include "nvim/marktree_defs.h"
 #include "nvim/mbyte.h"
@@ -175,6 +176,10 @@ static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_na
     }
     if (mt_invalid(start)) {
       PUT_C(dict, "invalid", BOOLEAN_OBJ(true));
+    }
+
+    if (mt_scoped(start)) {
+      PUT_C(dict, "scoped", BOOLEAN_OBJ(true));
     }
 
     decor_to_dict_legacy(&dict, mt_decor(start), hl_name, arena);
@@ -493,6 +498,8 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   used together with virt_text.
 ///               - url: A URL to associate with this extmark. In the TUI, the OSC 8 control
 ///                   sequence is used to generate a clickable hyperlink to this URL.
+///               - scoped: boolean that indicates that the extmark should only be
+///                   displayed in the namespace scope. (experimental)
 ///
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
@@ -751,6 +758,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   if (opts->ephemeral && decor_state.win && decor_state.win->w_buffer == buf) {
+    if (opts->scoped) {
+      api_set_error(err, kErrorTypeException, "not yet implemented");
+      goto error;
+    }
+
     int r = (int)line;
     int c = (int)col;
     if (line2 == -1) {
@@ -843,7 +855,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     extmark_set(buf, (uint32_t)ns_id, &id, (int)line, (colnr_T)col, line2, col2,
                 decor, decor_flags, right_gravity, opts->end_right_gravity,
                 !GET_BOOL_OR_TRUE(opts, set_extmark, undo_restore),
-                opts->invalidate, err);
+                opts->invalidate, opts->scoped, err);
     if (ERROR_SET(err)) {
       decor_free(decor);
       return 0;
@@ -969,7 +981,7 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
   decor.data.hl.hl_id = hl_id;
 
   extmark_set(buf, ns, NULL, (int)line, (colnr_T)col_start, end_line, (colnr_T)col_end,
-              decor, MT_FLAG_DECOR_HL, true, false, false, false, NULL);
+              decor, MT_FLAG_DECOR_HL, true, false, false, false, false, NULL);
   return ns_id;
 }
 
@@ -1211,4 +1223,73 @@ String nvim__buf_debug_extmarks(Buffer buffer, Boolean keys, Boolean dot, Error 
   }
 
   return mt_inspect(buf->b_marktree, keys, dot);
+}
+
+/// Adds the namespace scope to the window.
+///
+/// @param window Window handle, or 0 for current window
+/// @param ns_id the namespace to add
+/// @return true if the namespace was added, else false
+Boolean nvim_win_add_ns(Window window, Integer ns_id, Error *err)
+  FUNC_API_SINCE(12)
+{
+  win_T *win = find_window_by_handle(window, err);
+  if (!win) {
+    return false;
+  }
+
+  VALIDATE_INT(ns_initialized((uint32_t)ns_id), "ns_id", ns_id, {
+    return false;
+  });
+
+  set_put(uint32_t, &win->w_ns_set, (uint32_t)ns_id);
+
+  redraw_all_later(UPD_NOT_VALID);  // TODO(altermo): only need to redraw the window
+
+  return true;
+}
+
+/// Gets all the namespaces scopes associated with a window.
+///
+/// @param window Window handle, or 0 for current window
+/// @return a list of namespaces ids
+ArrayOf(Integer) nvim_win_get_ns(Window window, Error *err)
+  FUNC_API_SINCE(12)
+{
+  Array rv = ARRAY_DICT_INIT;
+
+  win_T *win = find_window_by_handle(window, err);
+  if (!win) {
+    return rv;
+  }
+  uint32_t i;
+  set_foreach(&win->w_ns_set, i, {
+    ADD(rv, INTEGER_OBJ((Integer)(i)));
+  });
+
+  return rv;
+}
+
+/// Removes the namespace scope from the window.
+///
+/// @param window Window handle, or 0 for current window
+/// @param ns_id the namespace to remove
+/// @return true if the namespace was removed, else false
+Boolean nvim_win_remove_ns(Window window, Integer ns_id, Error *err)
+  FUNC_API_SINCE(12)
+{
+  win_T *win = find_window_by_handle(window, err);
+  if (!win) {
+    return false;
+  }
+
+  if (!set_has(uint32_t, &win->w_ns_set, (uint32_t)ns_id)) {
+    return false;
+  }
+
+  set_del_uint32_t(&win->w_ns_set, (uint32_t)ns_id);
+
+  redraw_later(win, UPD_NOT_VALID);
+
+  return true;
 }
