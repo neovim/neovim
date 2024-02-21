@@ -123,7 +123,7 @@ static int tslua_add_language_from_wasm(lua_State *L)
 }
 #endif
 
-// Creates the language into the internal language map.
+// Creates and adds a language to the internal language map.
 //
 // Returns true if the language is correctly loaded in the language map
 static int tslua_add_language_from_object(lua_State *L)
