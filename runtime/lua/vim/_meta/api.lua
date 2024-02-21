@@ -1819,9 +1819,9 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 ---              activate them.
 --- @param name string Highlight group name, e.g. "ErrorMsg"
 --- @param val vim.api.keyset.highlight Highlight definition map, accepts the following keys:
----              • fg (or foreground): color name or "#RRGGBB", see note.
----              • bg (or background): color name or "#RRGGBB", see note.
----              • sp (or special): color name or "#RRGGBB"
+---              • fg: color name or "#RRGGBB", see note.
+---              • bg: color name or "#RRGGBB", see note.
+---              • sp: color name or "#RRGGBB"
 ---              • blend: integer between 0 and 100
 ---              • bold: boolean
 ---              • standout: boolean
