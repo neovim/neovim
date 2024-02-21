@@ -61,8 +61,7 @@ static PMap(cstr_t) envmap = MAP_INIT;
 const char *os_getenv(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *e;
-  size_t size = 64;
+  char *e = NULL;
   if (name[0] == '\0') {
     return NULL;
   }
@@ -78,23 +77,31 @@ const char *os_getenv(const char *name)
     }
     pmap_del2(&envmap, name);
   }
-  e = xmalloc(size);
-  r = uv_os_getenv(name, e, &size);
+#define INIT_SIZE 64
+  size_t size = INIT_SIZE;
+  char buf[INIT_SIZE];
+  r = uv_os_getenv(name, buf, &size);
   if (r == UV_ENOBUFS) {
-    e = xrealloc(e, size);
+    e = xmalloc(size);
     r = uv_os_getenv(name, e, &size);
-  }
-  if (r != 0 || size == 0 || e[0] == '\0') {
-    xfree(e);
+    if (r != 0 || size == 0 || e[0] == '\0') {
+      XFREE_CLEAR(e);
+      goto end;
+    }
+  } else if (r != 0 || size == 0 || buf[0] == '\0') {
     e = NULL;
     goto end;
+  } else {
+    // NB: `size` param of uv_os_getenv() includes the NUL-terminator,
+    // except when it does not include the NUL-terminator.
+    e = xmemdupz(buf, size);
   }
   pmap_put(cstr_t)(&envmap, xstrdup(name), e);
 end:
   if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
     ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
-  return (e == NULL || size == 0 || e[0] == '\0') ? NULL : e;
+  return e;
 }
 
 /// Returns true if environment variable `name` is defined (even if empty).
