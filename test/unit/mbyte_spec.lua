@@ -204,127 +204,73 @@ describe('mbyte', function()
     end)
   end)
 
-  describe('utf_cp_tail_off', function()
+  describe('utf_cp_bounds_len', function()
     local to_cstr = helpers.to_cstr
 
-    local function test(str, expected_offsets)
-      local cstr = to_cstr(str)
-      local offsets = {}
-      for i = 1, #str do
-        table.insert(offsets, lib.utf_cp_tail_off(cstr, cstr + i - 1))
-      end
-      eq(expected_offsets, offsets)
+    local tests = {
+      {
+        name = 'for valid string',
+        str = 'iÀiiⱠiⱠⱠ𐀀i',
+        offsets = {
+          b = { 0, 0, -1, 0, 0, 0, -1, -2, 0, 0, -1, -2, 0, -1, -2, 0, -1, -2, -3, 0 },
+          e = { 1, 2, 1, 1, 1, 3, 2, 1, 1, 3, 2, 1, 3, 2, 1, 4, 3, 2, 1, 1 },
+        },
+      },
+      {
+        name = 'for string with incomplete sequence',
+        str = 'i\xC3iÀⱠiÀ\xE2\xB1Ⱡ\xF0\x90\x80',
+        offsets = {
+          b = { 0, 0, 0, 0, -1, 0, -1, -2, 0, 0, -1, 0, 0, 0, -1, -2, 0, 0, 0 },
+          e = { 1, 1, 1, 2, 1, 3, 2, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1 },
+        },
+      },
+      {
+        name = 'for string with trailing bytes after multibyte',
+        str = 'iÀ\xA0Ⱡ\xA0Ⱡ𐀀\xA0i',
+        offsets = {
+          b = { 0, 0, -1, 0, 0, -1, -2, 0, 0, -1, -2, 0, -1, -2, -3, 0, 0 },
+          e = { 1, 2, 1, 1, 3, 2, 1, 1, 3, 2, 1, 4, 3, 2, 1, 1, 1 },
+        },
+      },
+    }
+
+    for _, test in ipairs(tests) do
+      itp(test.name, function()
+        local cstr = to_cstr(test.str)
+        local b_offsets, e_offsets = {}, {}
+        for i = 1, #test.str do
+          local result = lib.utf_cp_bounds_len(cstr, cstr + i - 1, #test.str - (i - 1))
+          table.insert(b_offsets, result.begin_off)
+          table.insert(e_offsets, result.end_off)
+        end
+        eq(test.offsets, { b = b_offsets, e = e_offsets })
+      end)
     end
-
-    itp('for valid string', function()
-      local str = 'iÀiiⱠiⱠⱠ𐀀i'
-      local offsets = { 0, 1, 0, 0, 0, 2, 1, 0, 0, 2, 1, 0, 2, 1, 0, 3, 2, 1, 0, 0 }
-      test(str, offsets)
-    end)
-
-    itp('for string with incomplete sequence', function()
-      local str = 'i\xC3iÀⱠiÀ\xE2\xB1Ⱡ\xF0\x90\x80'
-      local offsets = { 0, 0, 0, 1, 0, 2, 1, 0, 0, 1, 0, 0, 0, 2, 1, 0, 0, 0, 0 }
-      test(str, offsets)
-    end)
-
-    pending('for string with trailing bytes after multibyte', function()
-      local str = 'iÀ\xA0Ⱡ\xA0Ⱡ𐀀\xA0i'
-      local offsets = { 0, 1, 0, 0, 2, 1, 0, 0, 2, 1, 0, 3, 2, 1, 0, 0, 0 }
-      test(str, offsets)
-    end)
 
     itp('does not read before start', function()
       local str = '𐀀'
-      local expected_offsets = { 0, 0, 0 }
+      local expected_offsets = { b = { 0, 0, 0 }, e = { 1, 1, 1 } }
       local cstr = to_cstr(str) + 1
-      local offsets = {}
+      local b_offsets, e_offsets = {}, {}
       for i = 1, 3 do
-        table.insert(offsets, lib.utf_cp_tail_off(cstr, cstr + i - 1))
+        local result = lib.utf_cp_bounds_len(cstr, cstr + i - 1, 3 - (i - 1))
+        table.insert(b_offsets, result.begin_off)
+        table.insert(e_offsets, result.end_off)
       end
-      eq(expected_offsets, offsets)
-    end)
-  end)
-
-  describe('utf_cp_head_off', function()
-    local to_cstr = helpers.to_cstr
-
-    local function test(str, expected_offsets)
-      local cstr = to_cstr(str)
-      local offsets = {}
-      for i = 1, #str do
-        table.insert(offsets, lib.utf_cp_head_off(cstr, cstr + i - 1))
-      end
-      eq(expected_offsets, offsets)
-    end
-
-    itp('for valid string', function()
-      local str = 'iÀiiⱠiⱠⱠ𐀀i'
-      local offsets = { 0, 0, 1, 0, 0, 0, 1, 2, 0, 0, 1, 2, 0, 1, 2, 0, 1, 2, 3, 0 }
-      test(str, offsets)
+      eq(expected_offsets, { b = b_offsets, e = e_offsets })
     end)
 
-    itp('for string with incomplete sequence', function()
-      local str = 'i\xC3iÀⱠiÀ\xE2\xB1Ⱡ\xF0\x90\x80'
-      local offsets = { 0, 0, 0, 0, 1, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0, 0 }
-      test(str, offsets)
-    end)
-
-    pending('for string with trailing bytes after multibyte', function()
-      local str = 'iÀ\xA0Ⱡ\xA0Ⱡ𐀀\xA0i'
-      local offsets = { 0, 0, 1, 0, 0, 1, 2, 0, 0, 1, 2, 0, 1, 2, 3, 0, 00 }
-      test(str, offsets)
-    end)
-
-    itp('does not read before start', function()
+    itp('does not read past the end', function()
       local str = '𐀀'
-      local expected_offsets = { 0, 0, 0 }
-      local cstr = to_cstr(str) + 1
-      local offsets = {}
-      for i = 1, 3 do
-        table.insert(offsets, lib.utf_cp_tail_off(cstr, cstr + i - 1))
-      end
-      eq(expected_offsets, offsets)
-    end)
-  end)
-
-  describe('mb_off_next', function()
-    local to_cstr = helpers.to_cstr
-
-    local function test(str, expected_offsets)
+      local expected_offsets = { b = { 0, 0, 0 }, e = { 1, 1, 1 } }
       local cstr = to_cstr(str)
-      local offsets = {}
-      for i = 1, #str do
-        table.insert(offsets, lib.mb_off_next(cstr, cstr + i - 1))
-      end
-      eq(expected_offsets, offsets)
-    end
-
-    itp('for valid string', function()
-      local str = 'iÀiiⱠiⱠⱠ𐀀i'
-      local expected_offsets = { 0, 0, 1, 0, 0, 0, 2, 1, 0, 0, 2, 1, 0, 2, 1, 0, 3, 2, 1, 0 }
-      test(str, expected_offsets)
-    end)
-    itp('for string with incomplete sequence', function()
-      local str = 'i\xC3iÀⱠiÀ\xE2\xB1Ⱡ\xF0\x90\x80'
-      local expected_offsets = { 0, 0, 0, 0, 1, 0, 2, 1, 0, 0, 1, 0, 0, 0, 2, 1, 0, 0, 0 }
-      test(str, expected_offsets)
-    end)
-    pending('for string with trailing bytes after multibyte', function()
-      local str = 'iÀ\xA0Ⱡ\xA0Ⱡ𐀀\xA0i'
-      local expected_offsets = { 0, 0, 1, 0, 0, 2, 1, 0, 0, 2, 1, 0, 3, 2, 1, 0, 0 }
-      test(str, expected_offsets)
-    end)
-
-    itp('does not read before start', function()
-      local str = '𐀀'
-      local expected_offsets = { 0, 0, 0 }
-      local cstr = to_cstr(str) + 1
-      local offsets = {}
+      local b_offsets, e_offsets = {}, {}
       for i = 1, 3 do
-        table.insert(offsets, lib.mb_off_next(cstr, cstr + i - 1))
+        local result = lib.utf_cp_bounds_len(cstr, cstr + i - 1, 3 - (i - 1))
+        table.insert(b_offsets, result.begin_off)
+        table.insert(e_offsets, result.end_off)
       end
-      eq(expected_offsets, offsets)
+      eq(expected_offsets, { b = b_offsets, e = e_offsets })
     end)
   end)
 end)

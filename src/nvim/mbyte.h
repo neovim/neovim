@@ -52,6 +52,16 @@ extern const uint8_t utf8len_tab[256];
 #define MB_PTR_BACK(s, p) \
   (p -= utf_head_off((char *)(s), (char *)(p) - 1) + 1)
 
+/// Check whether a given UTF-8 byte is a trailing byte (10xx.xxxx).
+static inline bool utf_is_trail_byte(uint8_t byte)
+  REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
+
+static inline bool utf_is_trail_byte(uint8_t const byte)
+{
+  // uint8_t is for clang to use smaller cmp
+  return (uint8_t)(byte & 0xC0U) == 0x80U;
+}
+
 static inline CharInfo utf_ptr2CharInfo(char const *p_in)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
 
