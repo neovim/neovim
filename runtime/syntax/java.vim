@@ -2,7 +2,7 @@
 " Language:	Java
 " Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " URL:          https://github.com/fleiner/vim/blob/master/runtime/syntax/java.vim
-" Last Change:	2022 Jun 08
+" Last Change:	2023 Aug 13
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -39,7 +39,7 @@ syn keyword javaTypedef		this super
 syn keyword javaOperator	var new instanceof
 syn keyword javaType		boolean char byte short int long float double
 syn keyword javaType		void
-syn keyword javaStatement	return
+syn keyword javaStatement	return yield
 syn keyword javaStorageClass	static synchronized transient volatile final strictfp serializable
 syn keyword javaExceptions	throw try catch finally
 syn keyword javaAssert		assert
@@ -142,7 +142,7 @@ if exists("java_space_errors")
   endif
 endif
 
-syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" end="->" matchgroup=NONE end=":" contains=javaNumber,javaCharacter,javaString
+syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" matchgroup=NONE end=":\|->" contains=javaNumber,javaCharacter,javaString
 syn match   javaUserLabel	"^\s*[_$a-zA-Z][_$a-zA-Z0-9_]*\s*:"he=e-1 contains=javaLabel
 syn keyword javaLabel		default
 
