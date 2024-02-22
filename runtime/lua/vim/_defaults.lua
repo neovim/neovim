@@ -343,17 +343,7 @@ if tty then
       end,
     })
 
-    local query = '\027]11;?\007'
-
-    -- tmux 3.3a and earlier do not query the parent terminal for background color. As of the
-    -- writing of this comment, 3.3a is the latest release, so a passthrough sequence is necessary.
-    -- The passthrough should be removed as soon as a tmux version later than 3.3a is released.
-    -- See: https://github.com/neovim/neovim/pull/26557
-    if os.getenv('TMUX') then
-      query = string.format('\027Ptmux;%s\027\\', query:gsub('\027', '\027\027'))
-    end
-
-    io.stdout:write(query)
+    io.stdout:write('\027]11;?\007')
 
     timer:start(1000, 0, function()
       -- Delete the autocommand if no response was received
