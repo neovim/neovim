@@ -142,7 +142,7 @@ local function get_folds_levels(bufnr, info, srow, erow, parse_injections)
   local prev_stop = -1
 
   parser:for_each_tree(function(tree, ltree)
-    local query = ts.query.get(ltree:lang(), 'folds')
+    local query = ts.query.get(ltree:lang(), 'folds', bufnr)
     if not query then
       return
     end

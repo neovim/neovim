@@ -523,6 +523,46 @@ describe('treesitter highlighting (C)', function()
     }
   end)
 
+  it('supports extending queries', function()
+    insert([[
+    int x = 2;
+    int y = 2;
+    return x + y;
+    ]])
+
+    exec_lua(
+      [[
+      vim.treesitter.query.set("c", "highlights", ..., { extends = true })
+      vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, "c"))
+    ]],
+      [[
+      [";"] @variable
+      ["if"] @extend_query_test
+    ]]
+    )
+
+    local captures = exec_lua [[ return vim.treesitter.query.get("c", "highlights").captures ]]
+    assert(vim.list_contains(captures, 'extend_query_test'))
+
+    screen:expect {
+      grid = [[
+      {5:int} {4:x} {2:=} {3:2}{4:;}                                                       |
+      {5:int} {4:y} {2:=} {3:2}{4:;}                                                       |
+      {2:return} {4:x} {2:+} {4:y;}                                                    |
+      ^                                                                 |
+      {1:~                                                                }|*13
+                                                                       |
+      ]],
+      attr_ids = {
+        [1] = { bold = true, foreground = Screen.colors.Blue },
+        [2] = { bold = true, foreground = Screen.colors.Brown },
+        [3] = { foreground = Screen.colors.Magenta },
+        [4] = { foreground = Screen.colors.Cyan4 },
+        [5] = { foreground = Screen.colors.SlateBlue },
+      },
+    }
+  end)
+
   it('supports highlighting with custom highlight groups', function()
     insert(hl_text_c)
 
