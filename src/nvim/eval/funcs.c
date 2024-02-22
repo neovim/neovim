@@ -2874,7 +2874,7 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     p2 = p;
   }
 
-  oparg_T oap;
+  oparg_T oa;
   bool inclusive = true;
 
   if (region_type == kMTCharWise) {
@@ -2902,16 +2902,16 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     colnr_T sc1, ec1, sc2, ec2;
     getvvcol(curwin, &p1, &sc1, NULL, &ec1);
     getvvcol(curwin, &p2, &sc2, NULL, &ec2);
-    oap.motion_type = kMTBlockWise;
-    oap.inclusive = true;
-    oap.op_type = OP_NOP;
-    oap.start = p1;
-    oap.end = p2;
-    oap.start_vcol = MIN(sc1, sc2);
+    oa.motion_type = kMTBlockWise;
+    oa.inclusive = true;
+    oa.op_type = OP_NOP;
+    oa.start = p1;
+    oa.end = p2;
+    oa.start_vcol = MIN(sc1, sc2);
     if (*p_sel == 'e' && ec1 < sc2 && 0 < sc2 && ec2 > ec1) {
-      oap.end_vcol = sc2 - 1;
+      oa.end_vcol = sc2 - 1;
     } else {
-      oap.end_vcol = MAX(ec1, ec2);
+      oa.end_vcol = MAX(ec1, ec2);
     }
   }
 
@@ -2928,7 +2928,7 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       akt = xstrdup(ml_get(lnum));
     } else if (region_type == kMTBlockWise) {
       struct block_def bd;
-      block_prep(&oap, &bd, lnum, false);
+      block_prep(&oa, &bd, lnum, false);
       akt = block_def2str(&bd);
     } else if (p1.lnum < lnum && lnum < p2.lnum) {
       akt = xstrdup(ml_get(lnum));
