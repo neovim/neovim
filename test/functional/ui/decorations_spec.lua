@@ -5769,7 +5769,8 @@ describe('decorations: window scoped', function()
       end_col = 3,
     })
 
-    api.nvim_win_add_ns(0, ns)
+    eq(true, api.nvim_win_add_ns(0, ns))
+    eq({ ns }, api.nvim_win_get_ns(0))
 
     screen:expect {
       grid = [[
@@ -5780,10 +5781,12 @@ describe('decorations: window scoped', function()
 
     command 'split'
     command 'only'
+    eq({}, api.nvim_win_get_ns(0))
 
     screen:expect(noextmarks)
 
-    api.nvim_win_add_ns(0, ns)
+    eq(true, api.nvim_win_add_ns(0, ns))
+    eq({ ns }, api.nvim_win_get_ns(0))
 
     screen:expect {
       grid = [[
