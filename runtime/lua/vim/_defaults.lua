@@ -143,14 +143,16 @@ do
 
   vim.api.nvim_create_autocmd({ 'TermClose' }, {
     group = nvim_terminal_augroup,
+    nested = true,
     desc = 'Automatically close terminal buffers when started with no arguments and exiting without an error',
     callback = function(args)
-      if vim.v.event.status == 0 then
-        local info = vim.api.nvim_get_chan_info(vim.bo[args.buf].channel)
-        local argv = info.argv or {}
-        if #argv == 1 and argv[1] == vim.o.shell then
-          vim.cmd({ cmd = 'bdelete', args = { args.buf }, bang = true })
-        end
+      if vim.v.event.status ~= 0 then
+        return
+      end
+      local info = vim.api.nvim_get_chan_info(vim.bo[args.buf].channel)
+      local argv = info.argv or {}
+      if #argv == 1 and argv[1] == vim.o.shell then
+        vim.api.nvim_buf_delete(args.buf, { force = true })
       end
     end,
   })
