@@ -3553,6 +3553,8 @@ function vim.fn.getreginfo(regname) end
 ---   |visual-mode|, an empty list is returned.
 --- - If {pos1}, {pos2} or {type} is an invalid string, an empty
 ---   list is returned.
+--- - If {pos1} or {pos2} is a mark in different buffer, an empty
+---   list is returned.
 ---
 --- Examples: >
 ---   :xnoremap <CR>

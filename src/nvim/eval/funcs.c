@@ -2831,13 +2831,13 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int fnum = -1;
   // NOTE: var2fpos() returns static pointer.
   pos_T *fp = var2fpos(&argvars[0], true, &fnum, false);
-  if (fp == NULL) {
+  if (fp == NULL || (fnum >= 0 && fnum != curbuf->b_fnum)) {
     return;
   }
   pos_T p1 = *fp;
 
   fp = var2fpos(&argvars[1], true, &fnum, false);
-  if (fp == NULL) {
+  if (fp == NULL || (fnum >= 0 && fnum != curbuf->b_fnum)) {
     return;
   }
   pos_T p2 = *fp;

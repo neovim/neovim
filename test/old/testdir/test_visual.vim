@@ -1716,7 +1716,16 @@ func Test_visual_getregion()
   call assert_fails(':echo "."->getregion([],"V")', 'E1174:')
   call assert_fails(':echo "."->getregion("$", {})', 'E1174:')
   call assert_fails(':echo [0, 1, 1, 0]->getregion("$", "v")', 'E1174:')
-
+  " using a mark in another buffer
+  new
+  let newbuf = bufnr()
+  call setline(1, range(10))
+  normal! GmA
+  wincmd p
+  call assert_equal([newbuf, 10, 1, 0], getpos("'A"))
+  call assert_equal([], getregion(".", "'A", 'v'))
+  call assert_equal([], getregion("'A", ".", 'v'))
+  exe newbuf .. 'bwipe!'
 
   bwipe!
   " Selection in starts or ends in the middle of a multibyte character
