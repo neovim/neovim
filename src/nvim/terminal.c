@@ -182,9 +182,9 @@ static void emit_term_request(void **argv)
 {
   char *payload = argv[0];
   size_t payload_length = (size_t)argv[1];
-  Terminal *rv = argv[2];
+  Terminal *term = argv[2];
 
-  buf_T *buf = handle_get_buffer(rv->buf_handle);
+  buf_T *buf = handle_get_buffer(term->buf_handle);
   String termrequest = { .data = payload, .size = payload_length };
   Object data = STRING_OBJ(termrequest);
   set_vim_var_string(VV_TERMREQUEST, payload, (ptrdiff_t)payload_length);
@@ -264,36 +264,36 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
   FUNC_ATTR_NONNULL_ALL
 {
   // Create a new terminal instance and configure it
-  Terminal *rv = *termpp = xcalloc(1, sizeof(Terminal));
-  rv->opts = opts;
-  rv->cursor.visible = true;
+  Terminal *term = *termpp = xcalloc(1, sizeof(Terminal));
+  term->opts = opts;
+  term->cursor.visible = true;
   // Associate the terminal instance with the new buffer
-  rv->buf_handle = buf->handle;
-  buf->terminal = rv;
+  term->buf_handle = buf->handle;
+  buf->terminal = term;
   // Create VTerm
-  rv->vt = vterm_new(opts.height, opts.width);
-  vterm_set_utf8(rv->vt, 1);
+  term->vt = vterm_new(opts.height, opts.width);
+  vterm_set_utf8(term->vt, 1);
   // Setup state
-  VTermState *state = vterm_obtain_state(rv->vt);
+  VTermState *state = vterm_obtain_state(term->vt);
   // Set up screen
-  rv->vts = vterm_obtain_screen(rv->vt);
-  vterm_screen_enable_altscreen(rv->vts, true);
-  vterm_screen_enable_reflow(rv->vts, true);
+  term->vts = vterm_obtain_screen(term->vt);
+  vterm_screen_enable_altscreen(term->vts, true);
+  vterm_screen_enable_reflow(term->vts, true);
   // delete empty lines at the end of the buffer
-  vterm_screen_set_callbacks(rv->vts, &vterm_screen_callbacks, rv);
-  vterm_screen_set_unrecognised_fallbacks(rv->vts, &vterm_fallbacks, rv);
-  vterm_screen_set_damage_merge(rv->vts, VTERM_DAMAGE_SCROLL);
-  vterm_screen_reset(rv->vts, 1);
-  vterm_output_set_callback(rv->vt, term_output_callback, rv);
+  vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
+  vterm_screen_set_unrecognised_fallbacks(term->vts, &vterm_fallbacks, term);
+  vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
+  vterm_screen_reset(term->vts, 1);
+  vterm_output_set_callback(term->vt, term_output_callback, term);
   // force a initial refresh of the screen to ensure the buffer will always
   // have as many lines as screen rows when refresh_scrollback is called
-  rv->invalid_start = 0;
-  rv->invalid_end = opts.height;
+  term->invalid_start = 0;
+  term->invalid_end = opts.height;
 
   aco_save_T aco;
   aucmd_prepbuf(&aco, buf);
 
-  refresh_screen(rv, buf);
+  refresh_screen(term, buf);
   set_option_value(kOptBuftype, STATIC_CSTR_AS_OPTVAL("terminal"), OPT_LOCAL);
 
   // Default settings for terminal buffers
@@ -311,7 +311,7 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
   // Reset cursor in current window.
   curwin->w_cursor = (pos_T){ .lnum = 1, .col = 0, .coladd = 0 };
   // Initialize to check if the scrollback buffer has been allocated in a TermOpen autocmd.
-  rv->sb_buffer = NULL;
+  term->sb_buffer = NULL;
   // Apply TermOpen autocmds _before_ configuring the scrollback buffer.
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, buf);
 
@@ -321,14 +321,14 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
     return;  // Terminal has already been destroyed.
   }
 
-  if (rv->sb_buffer == NULL) {
+  if (term->sb_buffer == NULL) {
     // Local 'scrollback' _after_ autocmds.
     if (buf->b_p_scbk < 1) {
       buf->b_p_scbk = SB_MAX;
     }
     // Configure the scrollback buffer.
-    rv->sb_size = (size_t)buf->b_p_scbk;
-    rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
+    term->sb_size = (size_t)buf->b_p_scbk;
+    term->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * term->sb_size);
   }
 
   // Configure the color palette. Try to get the color from:
@@ -351,7 +351,7 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
                         (uint8_t)((color_val >> 8) & 0xFF),
                         (uint8_t)((color_val >> 0) & 0xFF));
         vterm_state_set_palette_color(state, i, &color);
-        rv->color_set[i] = true;
+        term->color_set[i] = true;
       }
     }
   }
