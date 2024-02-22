@@ -461,7 +461,8 @@ end
 ---
 --- While in the window, press "a" to toggle display of anonymous nodes, "I" to toggle the
 --- display of the source language of each node, "o" to toggle the query editor, and press
---- <Enter> to jump to the node under the cursor in the source buffer.
+--- <Enter> to jump to the node under the cursor in the source buffer. Folding also works
+--- (try |zo|, |zc|, etc.).
 ---
 --- Can also be shown with `:InspectTree`. *:InspectTree*
 ---
