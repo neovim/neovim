@@ -26,6 +26,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/move.h"
 #include "nvim/pos_defs.h"
 #include "nvim/sign.h"
 
@@ -1244,7 +1245,7 @@ Boolean nvim_win_add_ns(Window window, Integer ns_id, Error *err)
 
   set_put(uint32_t, &win->w_ns_set, (uint32_t)ns_id);
 
-  redraw_all_later(UPD_NOT_VALID);  // TODO(altermo): only need to redraw the window
+  changed_window_setting_win(win);
 
   return true;
 }
@@ -1289,7 +1290,7 @@ Boolean nvim_win_remove_ns(Window window, Integer ns_id, Error *err)
 
   set_del_uint32_t(&win->w_ns_set, (uint32_t)ns_id);
 
-  redraw_later(win, UPD_NOT_VALID);
+  changed_window_setting_win(win);
 
   return true;
 }
