@@ -4355,6 +4355,51 @@ M.funcs = {
     returns = 'table',
     signature = 'getreginfo([{regname}])',
   },
+  getregion = {
+    args = 3,
+    base = 1,
+    desc = [=[
+      Returns the list of strings from {pos1} to {pos2} as if it's
+      selected in visual mode of {type}.
+      For possible values of {pos1} and {pos2} see |line()|.
+      {type} is the selection type:
+      	"v" for |charwise| mode
+      	"V" for |linewise| mode
+      	"<CTRL-V>" for |blockwise-visual| mode
+      You can get the last selection type by |visualmode()|.
+      If Visual mode is active, use |mode()| to get the Visual mode
+      (e.g., in a |:vmap|).
+      This function uses the line and column number from the
+      specified position.
+      It is useful to get text starting and ending in different
+      columns, such as |charwise-visual| selection.
+
+      Note that:
+      - Order of {pos1} and {pos2} doesn't matter, it will always
+        return content from the upper left position to the lower
+        right position.
+      - If 'virtualedit' is enabled and selection is past the end of
+        line, resulting lines are filled with blanks.
+      - If the selection starts or ends in the middle of a multibyte
+        character, it is not included but its selected part is
+        substituted with spaces.
+      - If {pos1} or {pos2} equals "v" (see |line()|) and it is not in
+        |visual-mode|, an empty list is returned.
+      - If {pos1}, {pos2} or {type} is an invalid string, an empty
+        list is returned.
+      - If {pos1} or {pos2} is a mark in different buffer, an empty
+        list is returned.
+
+      Examples: >
+      	:xnoremap <CR>
+      	\ <Cmd>echom getregion('v', '.', mode())<CR>
+      <
+    ]=],
+    name = 'getregion',
+    params = { { 'pos1', 'string' }, { 'pos2', 'string' }, { 'type', 'string' } },
+    returns = 'string[]',
+    signature = 'getregion({pos1}, {pos2}, {type})',
+  },
   getregtype = {
     args = { 0, 1 },
     base = 1,

@@ -130,6 +130,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
+#include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/version.h"
 #include "nvim/vim_defs.h"
@@ -2799,6 +2800,149 @@ static void f_getcursorcharpos(typval_T *argvars, typval_T *rettv, EvalFuncData 
 static void f_getpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   getpos_both(argvars, rettv, false, false);
+}
+
+/// Convert from block_def to string
+static char *block_def2str(struct block_def *bd)
+{
+  size_t size = (size_t)bd->startspaces + (size_t)bd->endspaces + (size_t)bd->textlen;
+  char *ret = xmalloc(size + 1);
+  char *p = ret;
+  memset(p, ' ', (size_t)bd->startspaces);
+  p += bd->startspaces;
+  memmove(p, bd->textstart, (size_t)bd->textlen);
+  p += bd->textlen;
+  memset(p, ' ', (size_t)bd->endspaces);
+  *(p + bd->endspaces) = NUL;
+  return ret;
+}
+
+/// "getregion()" function
+static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  tv_list_alloc_ret(rettv, kListLenMayKnow);
+
+  if (tv_check_for_string_arg(argvars, 0) == FAIL
+      || tv_check_for_string_arg(argvars, 1) == FAIL
+      || tv_check_for_string_arg(argvars, 2) == FAIL) {
+    return;
+  }
+
+  int fnum = -1;
+  // NOTE: var2fpos() returns static pointer.
+  pos_T *fp = var2fpos(&argvars[0], true, &fnum, false);
+  if (fp == NULL || (fnum >= 0 && fnum != curbuf->b_fnum)) {
+    return;
+  }
+  pos_T p1 = *fp;
+
+  fp = var2fpos(&argvars[1], true, &fnum, false);
+  if (fp == NULL || (fnum >= 0 && fnum != curbuf->b_fnum)) {
+    return;
+  }
+  pos_T p2 = *fp;
+
+  const char *pos1 = tv_get_string(&argvars[0]);
+  const char *pos2 = tv_get_string(&argvars[1]);
+  const char *type = tv_get_string(&argvars[2]);
+
+  const bool is_visual
+    = (pos1[0] == 'v' && pos1[1] == NUL) || (pos2[0] == 'v' && pos2[1] == NUL);
+
+  if (is_visual && !VIsual_active) {
+    return;
+  }
+
+  MotionType region_type = kMTUnknown;
+  if (type[0] == 'v' && type[1] == NUL) {
+    region_type = kMTCharWise;
+  } else if (type[0] == 'V' && type[1] == NUL) {
+    region_type = kMTLineWise;
+  } else if (type[0] == Ctrl_V && type[1] == NUL) {
+    region_type = kMTBlockWise;
+  } else {
+    return;
+  }
+
+  const TriState save_virtual = virtual_op;
+  virtual_op = virtual_active();
+
+  if (!lt(p1, p2)) {
+    // swap position
+    pos_T p = p1;
+    p1 = p2;
+    p2 = p;
+  }
+
+  oparg_T oa;
+  bool inclusive = true;
+
+  if (region_type == kMTCharWise) {
+    // handle 'selection' == "exclusive"
+    if (*p_sel == 'e' && !equalpos(p1, p2)) {
+      if (p2.coladd > 0) {
+        p2.coladd--;
+      } else if (p2.col > 0) {
+        p2.col--;
+        mark_mb_adjustpos(curbuf, &p2);
+      } else if (p2.lnum > 1) {
+        p2.lnum--;
+        p2.col = (colnr_T)strlen(ml_get(p2.lnum));
+        if (p2.col > 0) {
+          p2.col--;
+          mark_mb_adjustpos(curbuf, &p2);
+        }
+      }
+    }
+    // if fp2 is on NUL (empty line) inclusive becomes false
+    if (*ml_get_pos(&p2) == NUL && !virtual_op) {
+      inclusive = false;
+    }
+  } else if (region_type == kMTBlockWise) {
+    colnr_T sc1, ec1, sc2, ec2;
+    getvvcol(curwin, &p1, &sc1, NULL, &ec1);
+    getvvcol(curwin, &p2, &sc2, NULL, &ec2);
+    oa.motion_type = kMTBlockWise;
+    oa.inclusive = true;
+    oa.op_type = OP_NOP;
+    oa.start = p1;
+    oa.end = p2;
+    oa.start_vcol = MIN(sc1, sc2);
+    if (*p_sel == 'e' && ec1 < sc2 && 0 < sc2 && ec2 > ec1) {
+      oa.end_vcol = sc2 - 1;
+    } else {
+      oa.end_vcol = MAX(ec1, ec2);
+    }
+  }
+
+  // Include the trailing byte of a multi-byte char.
+  int l = utfc_ptr2len(ml_get_pos(&p2));
+  if (l > 1) {
+    p2.col += l - 1;
+  }
+
+  for (linenr_T lnum = p1.lnum; lnum <= p2.lnum; lnum++) {
+    char *akt = NULL;
+
+    if (region_type == kMTLineWise) {
+      akt = xstrdup(ml_get(lnum));
+    } else if (region_type == kMTBlockWise) {
+      struct block_def bd;
+      block_prep(&oa, &bd, lnum, false);
+      akt = block_def2str(&bd);
+    } else if (p1.lnum < lnum && lnum < p2.lnum) {
+      akt = xstrdup(ml_get(lnum));
+    } else {
+      struct block_def bd;
+      charwise_block_prep(p1, p2, &bd, lnum, inclusive);
+      akt = block_def2str(&bd);
+    }
+
+    assert(akt != NULL);
+    tv_list_append_allocated_string(rettv->vval.v_list, akt);
+  }
+
+  virtual_op = save_virtual;
 }
 
 /// Common between getreg(), getreginfo() and getregtype(): get the register
