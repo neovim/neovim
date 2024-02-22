@@ -33,27 +33,54 @@ local function resolve_hash(hash)
   return hash
 end
 
+---@return table<any,table<any,any>>
+local function get_weak_table()
+  return setmetatable({}, { __mode = 'kv' })
+end
+
+--- @alias vim.func.Hash integer|string|fun(...): any
+
+--- @class vim.func.MemoizeTable
+--- @field clear fun(self, ...)
+
 --- @generic F: function
---- @param hash integer|string|fun(...): any
+--- @param hash vim.func.Hash
 --- @param fn F
 --- @return F
+--- @overload fun(hash: vim.func.Hash, fn: fun(...): any): vim.func.MemoizeTable
 return function(hash, fn)
   vim.validate({
     hash = { hash, { 'number', 'string', 'function' } },
     fn = { fn, 'function' },
   })
 
-  ---@type table<any,table<any,any>>
-  local cache = setmetatable({}, { __mode = 'kv' })
+  local cache = get_weak_table()
 
   hash = resolve_hash(hash)
 
-  return function(...)
-    local key = hash(...)
-    if cache[key] == nil then
-      cache[key] = vim.F.pack_len(fn(...))
-    end
+  local mt = {
+    __call = function(_, ...)
+      local key = hash(...)
+      if cache[key] == nil then
+        cache[key] = vim.F.pack_len(fn(...))
+      end
 
-    return vim.F.unpack_len(cache[key])
-  end
+      return vim.F.unpack_len(cache[key])
+    end,
+  }
+
+  return setmetatable({
+    clear = function(_, ...)
+      if vim.tbl_count(cache) == 0 then
+        return
+      end
+
+      if #{ ... } == 0 then
+        cache = get_weak_table()
+      else
+        local key = hash(...)
+        cache[key] = nil
+      end
+    end,
+  }, mt)
 end

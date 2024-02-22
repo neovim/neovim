@@ -341,14 +341,17 @@ end
 function M.set(lang, query_name, text, opts)
   if not opts then
     explicit_queries[lang][query_name][GLOBAL_EXPLICIT_QUERY_KEY] = { text = text }
+    get_cached_query:clear()
     return
   end
 
   local bufnr = opts.bufnr
   if bufnr then
     bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+    get_cached_query:clear(lang, query_name, bufnr)
   else
     bufnr = GLOBAL_EXPLICIT_QUERY_KEY
+    get_cached_query:clear()
   end
 
   local query = { text = text, inherits = opts.inherits }

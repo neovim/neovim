@@ -33,6 +33,7 @@ local M = {}
 ---
 --- @param fn F Function to memoize.
 --- @return F # Memoized version of {fn}
+--- @overload fun(hash: vim.func.Hash, fn: fun(...): any): vim.func.MemoizeTable
 --- @nodoc
 function M._memoize(hash, fn)
   return require('vim.func._memoize')(hash, fn)
