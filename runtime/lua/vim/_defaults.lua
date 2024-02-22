@@ -4,27 +4,9 @@ do
   ---
   --- See |v_star-default| and |v_#-default|
   do
-    local function region_chunks(region)
-      local chunks = {}
-      local maxcol = vim.v.maxcol
-      for line, cols in vim.spairs(region) do
-        local endcol = cols[2] == maxcol and -1 or cols[2]
-        local chunk = vim.api.nvim_buf_get_text(0, line, cols[1], line, endcol, {})[1]
-        table.insert(chunks, chunk)
-      end
-      return chunks
-    end
-
     local function _visual_search(cmd)
       assert(cmd == '/' or cmd == '?')
-      local region = vim.region(
-        0,
-        '.',
-        'v',
-        vim.api.nvim_get_mode().mode:sub(1, 1),
-        vim.o.selection == 'inclusive'
-      )
-      local chunks = region_chunks(region)
+      local chunks = vim.fn.getregion('.', 'v', vim.fn.mode())
       local esc_chunks = vim
         .iter(chunks)
         :map(function(v)
