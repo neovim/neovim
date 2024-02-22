@@ -5577,6 +5577,29 @@ describe('decorations: window scoped', function()
     screen:expect(noextmarks)
   end)
 
+  it('redraws correctly with inline virt_text and wrapping', function()
+    set_scoped_extmark(0, 2, {
+      virt_text = {{ ('b'):rep(18), 'Comment' }},
+      virt_text_pos = 'inline'
+    })
+
+    screen:expect(noextmarks)
+
+    api.nvim_win_add_ns(0, ns)
+
+    screen:expect {
+      grid = [[
+      12{1:bbbbbbbbbbbbbbbbbb}|
+      34^5                 |
+      {2:~                   }|*7
+                          |
+    ]]}
+
+    api.nvim_win_remove_ns(0, ns)
+
+    screen:expect(noextmarks)
+  end)
+
   pending('sign_text', function()
     -- TODO(altermo): The window signcolumn width is calculated wrongly (when `signcolumn=auto`)
     -- This happens in function `win_redraw_signcols` on line containing `buf_meta_total(buf, kMTMetaSignText) > 0`
