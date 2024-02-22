@@ -965,8 +965,8 @@ ctxset({context} [, {index}])                                         *ctxset()*
 ctxsize()                                                            *ctxsize()*
 		Returns the size of the |context-stack|.
 
-cursor({lnum}, {col} [, {off}])
-cursor({list})                                                        *cursor()*
+cursor({lnum}, {col} [, {off}])                                       *cursor()*
+cursor({list})
 		Positions the cursor at the column (byte count) {col} in the
 		line {lnum}.  The first column is one.
 
@@ -2055,8 +2055,8 @@ get({func}, {what})
 			"args"	The list with arguments
 		Returns zero on error.
 
-getbufinfo([{buf}])
-getbufinfo([{dict}])                                              *getbufinfo()*
+getbufinfo([{buf}])                                               *getbufinfo()*
+getbufinfo([{dict}])
 		Get information about buffers as a List of Dictionaries.
 
 		Without an argument information about all the buffers is
@@ -4310,8 +4310,8 @@ mapnew({expr1}, {expr2})                                              *mapnew()*
 		unchanged.  Items can still be changed by {expr2}, if you
 		don't want that use |deepcopy()| first.
 
-mapset({mode}, {abbr}, {dict})
-mapset({dict})                                                        *mapset()*
+mapset({mode}, {abbr}, {dict})                                        *mapset()*
+mapset({dict})
 		Restore a mapping from a dictionary, possibly returned by
 		|maparg()| or |maplist()|.  A buffer mapping, when dict.buffer
 		is true, is set on the current buffer; it is up to the caller
@@ -5740,9 +5740,9 @@ reg_recording()                                                *reg_recording()*
 		Returns the single letter name of the register being recorded.
 		Returns an empty string when not recording.  See |q|.
 
-reltime()
+reltime()                                                            *reltime()*
 reltime({start})
-reltime({start}, {end})                                              *reltime()*
+reltime({start}, {end})
 		Return an item that represents a time value.  The item is a
 		list with items that depend on the system.
 		The item can be passed to |reltimestr()| to convert it to a
@@ -5787,8 +5787,8 @@ reltimestr({time})                                                *reltimestr()*
 <		Also see |profiling|.
 		If there is an error an empty string is returned
 
-remove({list}, {idx})
-remove({list}, {idx}, {end})                                          *remove()*
+remove({list}, {idx})                                                 *remove()*
+remove({list}, {idx}, {end})
 		Without {end}: Remove the item at {idx} from |List| {list} and
 		return the item.
 		With {end}: Remove items from {idx} to {end} (inclusive) and
@@ -6517,8 +6517,8 @@ setcmdpos({pos})                                                   *setcmdpos()*
 		Returns 0 when successful, 1 when not editing the command
 		line.
 
-setcursorcharpos({lnum}, {col} [, {off}])
-setcursorcharpos({list})                                    *setcursorcharpos()*
+setcursorcharpos({lnum}, {col} [, {off}])                   *setcursorcharpos()*
+setcursorcharpos({list})
 		Same as |cursor()| but uses the specified column number as the
 		character index instead of the byte index in the line.
 
@@ -6944,8 +6944,8 @@ shiftwidth([{col}])                                               *shiftwidth()*
 		'vartabstop' feature. If no {col} argument is given, column 1
 		will be assumed.
 
-sign_define({name} [, {dict}])
-sign_define({list})                                              *sign_define()*
+sign_define({name} [, {dict}])                                   *sign_define()*
+sign_define({list})
 		Define a new sign named {name} or modify the attributes of an
 		existing sign.  This is similar to the |:sign-define| command.
 
@@ -7212,8 +7212,8 @@ sign_placelist({list})                                        *sign_placelist()*
 				\ ])
 <
 
-sign_undefine([{name}])
-sign_undefine({list})                                          *sign_undefine()*
+sign_undefine([{name}])                                        *sign_undefine()*
+sign_undefine({list})
 		Deletes a previously defined sign {name}. This is similar to
 		the |:sign-undefine| command. If {name} is not supplied, then
 		deletes all the defined signs.

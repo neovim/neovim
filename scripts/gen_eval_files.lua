@@ -411,9 +411,6 @@ local function render_eval_meta(f, fun, write)
   write(render_fun_sig(funname, params))
 end
 
---- @type table<string,true>
-local rendered_tags = {}
-
 --- @param name string
 --- @param fun vim.EvalFn
 --- @param write fun(line: string)
@@ -455,24 +452,17 @@ local function render_eval_doc(f, fun, write)
     return
   end
 
-  local desc = fun.desc
-
-  if not desc then
+  if f:find('__%d+$') then
     write(fun.signature)
+  else
+    render_sig_and_tag(fun.name or f, fun, write)
+  end
+
+  if not fun.desc then
     return
   end
 
-  local name = fun.name or f
-
-  if rendered_tags[name] then
-    write(fun.signature)
-  else
-    render_sig_and_tag(name, fun, write)
-    rendered_tags[name] = true
-  end
-
-  desc = vim.trim(desc)
-  local desc_l = split(desc)
+  local desc_l = split(vim.trim(fun.desc))
   for _, l in ipairs(desc_l) do
     l = l:gsub('^      ', '')
     if vim.startswith(l, '<') and not l:match('^<[^ \t]+>') then
