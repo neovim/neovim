@@ -271,40 +271,40 @@ local function on_line_impl(self, buf, line, is_spell_nav)
       end
 
       for capture, nodes in pairs(match or {}) do
+        local capture_name = state.highlighter_query:query().captures[capture]
+        local spell = nil ---@type boolean?
+        if capture_name == 'spell' then
+          spell = true
+        elseif capture_name == 'nospell' then
+          spell = false
+        end
+
+        local hl = state.highlighter_query:get_hl_from_capture(capture)
+
+        -- Give nospell a higher priority so it always overrides spell captures.
+        local spell_pri_offset = capture_name == 'nospell' and 1 or 0
+        local priority = (tonumber(metadata.priority) or vim.highlight.priorities.treesitter)
+          + spell_pri_offset
+
+        local url = metadata[capture] and metadata[capture].url ---@type string|number|nil
+        if type(url) == 'number' then
+          if match and match[url] then
+            -- Assume there is only one matching node. If there is more than one, take the URL
+            -- from the first.
+            local other_node = match[url][1]
+            url = vim.treesitter.get_node_text(other_node, buf, {
+              metadata = metadata[url],
+            })
+          else
+            url = nil
+          end
+        end
+
         for _, node in ipairs(nodes) do
           local range = vim.treesitter.get_range(node, buf, metadata[capture])
           local start_row, start_col, end_row, end_col = Range.unpack4(range)
 
-          local hl = state.highlighter_query:get_hl_from_capture(capture)
-
-          local capture_name = state.highlighter_query:query().captures[capture]
-          local spell = nil ---@type boolean?
-          if capture_name == 'spell' then
-            spell = true
-          elseif capture_name == 'nospell' then
-            spell = false
-          end
-
-          -- Give nospell a higher priority so it always overrides spell captures.
-          local spell_pri_offset = capture_name == 'nospell' and 1 or 0
-
           if hl and end_row >= line and (not is_spell_nav or spell ~= nil) then
-            local priority = (tonumber(metadata.priority) or vim.highlight.priorities.treesitter)
-              + spell_pri_offset
-            local url = metadata[capture] and metadata[capture].url ---@type string|number|nil
-            if type(url) == 'number' then
-              if match and match[url] then
-                -- Assume there is only one matching node. If there are more than one, take the URL
-                -- from the first.
-                local other_node = match[url][1]
-                url = vim.treesitter.get_node_text(other_node, buf, {
-                  metadata = metadata[url],
-                })
-              else
-                url = nil
-              end
-            end
-
             api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
               end_line = end_row,
               end_col = end_col,
