@@ -526,18 +526,6 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
       }
     } else {
       win_remove(win, win_tp == curtab ? NULL : win_tp);
-      ui_comp_remove_grid(&win->w_grid_alloc);
-      if (win->w_config.external) {
-        for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
-          if (tp == curtab) {
-            continue;
-          }
-          if (tp->tp_curwin == win) {
-            tp->tp_curwin = tp->tp_firstwin;
-          }
-        }
-      }
-      win->w_pos_changed = true;
     }
 
     int flags = win_split_flags(fconfig.split, parent == NULL) | WSP_NOENTER;

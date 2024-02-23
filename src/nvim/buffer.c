@@ -117,7 +117,6 @@
 # include "buffer.c.generated.h"
 #endif
 
-static const char *e_auabort = N_("E855: Autocommands caused command to abort");
 static const char e_attempt_to_delete_buffer_that_is_in_use_str[]
   = N_("E937: Attempt to delete a buffer that is in use: %s");
 
