@@ -297,7 +297,9 @@ local function on_line_impl(self, buf, line, is_spell_nav)
                 -- Assume there is only one matching node. If there are more than one, take the URL
                 -- from the first.
                 local other_node = match[url][1]
-                url = vim.treesitter.get_node_text(other_node, buf, metadata and metadata[url])
+                url = vim.treesitter.get_node_text(other_node, buf, {
+                  metadata = metadata and metadata[url],
+                })
               else
                 url = nil
               end
