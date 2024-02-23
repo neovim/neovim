@@ -4,7 +4,7 @@ local Range = require('vim.treesitter._range')
 
 local ns = api.nvim_create_namespace('treesitter/highlighter')
 
----@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSMatch?
+---@alias vim.treesitter.highlighter.Iter fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata
 
 ---@class (private) vim.treesitter.highlighter.Query
 ---@field private _query vim.treesitter.Query?
@@ -272,7 +272,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
 
       for capture, nodes in pairs(match or {}) do
         for _, node in ipairs(nodes) do
-          local range = vim.treesitter.get_range(node, buf, metadata and metadata[capture])
+          local range = vim.treesitter.get_range(node, buf, metadata[capture])
           local start_row, start_col, end_row, end_col = Range.unpack4(range)
 
           local hl = state.highlighter_query:get_hl_from_capture(capture)
@@ -298,7 +298,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
                 -- from the first.
                 local other_node = match[url][1]
                 url = vim.treesitter.get_node_text(other_node, buf, {
-                  metadata = metadata and metadata[url],
+                  metadata = metadata[url],
                 })
               else
                 url = nil
