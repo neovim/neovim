@@ -283,8 +283,12 @@ local function on_line_impl(self, buf, line, is_spell_nav)
 
         -- Give nospell a higher priority so it always overrides spell captures.
         local spell_pri_offset = capture_name == 'nospell' and 1 or 0
-        local priority = (tonumber(metadata.priority) or vim.highlight.priorities.treesitter)
-          + spell_pri_offset
+
+        local priority = (
+          -- The "priority" attribute can be set at the pattern level or on a particular capture
+          tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
+          or vim.highlight.priorities.treesitter
+        ) + spell_pri_offset
 
         local url = metadata[capture] and metadata[capture].url ---@type string|number|nil
         if type(url) == 'number' then
@@ -300,6 +304,9 @@ local function on_line_impl(self, buf, line, is_spell_nav)
           end
         end
 
+        -- The "conceal" attribute can be set at the pattern level or on a particular capture
+        local conceal = metadata.conceal or metadata[capture] and metadata[capture].conceal
+
         for _, node in ipairs(nodes) do
           local range = vim.treesitter.get_range(node, buf, metadata[capture])
           local start_row, start_col, end_row, end_col = Range.unpack4(range)
@@ -312,7 +319,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
               ephemeral = true,
               priority = priority,
               _subpriority = pattern,
-              conceal = metadata.conceal,
+              conceal = conceal,
               spell = spell,
               url = url,
             })
