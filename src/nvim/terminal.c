@@ -163,6 +163,9 @@ struct terminal {
 
   bool color_set[16];
 
+  // When there is a pending TermRequest autocommand, block and store input.
+  StringBuilder *pending_send;
+
   size_t refcount;                  // reference count
 };
 
@@ -178,11 +181,12 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
 
 static Set(ptr_t) invalidated_terminals = SET_INIT;
 
-static void emit_term_request(void **argv)
+static void emit_termrequest(void **argv)
 {
-  char *payload = argv[0];
-  size_t payload_length = (size_t)argv[1];
-  Terminal *term = argv[2];
+  Terminal *term = argv[0];
+  char *payload = argv[1];
+  size_t payload_length = (size_t)argv[2];
+  StringBuilder *pending_send = argv[3];
 
   buf_T *buf = handle_get_buffer(term->buf_handle);
   String termrequest = { .data = payload, .size = payload_length };
@@ -190,6 +194,25 @@ static void emit_term_request(void **argv)
   set_vim_var_string(VV_TERMREQUEST, payload, (ptrdiff_t)payload_length);
   apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, false, AUGROUP_ALL, buf, NULL, &data);
   xfree(payload);
+
+  StringBuilder *term_pending_send = term->pending_send;
+  term->pending_send = NULL;
+  if (kv_size(*pending_send)) {
+    terminal_send(term, pending_send->items, pending_send->size);
+    kv_destroy(*pending_send);
+  }
+  if (term_pending_send != pending_send) {
+    term->pending_send = term_pending_send;
+  }
+  xfree(pending_send);
+}
+
+static void schedule_termrequest(Terminal *term, char *payload, size_t payload_length)
+{
+  term->pending_send = xmalloc(sizeof(StringBuilder));
+  kv_init(*term->pending_send);
+  multiqueue_put(main_loop.events, emit_termrequest, term, payload, (void *)payload_length,
+                 term->pending_send);
 }
 
 static int on_osc(int command, VTermStringFragment frag, void *user)
@@ -197,24 +220,30 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
   if (frag.str == NULL) {
     return 0;
   }
+  if (!has_event(EVENT_TERMREQUEST)) {
+    return 1;
+  }
 
   StringBuilder request = KV_INITIAL_VALUE;
   kv_printf(request, "\x1b]%d;", command);
   kv_concat_len(request, frag.str, frag.len);
-  multiqueue_put(main_loop.events, emit_term_request, request.items, (void *)request.size, user);
+  schedule_termrequest(user, request.items, request.size);
   return 1;
 }
 
 static int on_dcs(const char *command, size_t commandlen, VTermStringFragment frag, void *user)
 {
-  if ((command == NULL) || (frag.str == NULL)) {
+  if (command == NULL || frag.str == NULL) {
     return 0;
+  }
+  if (!has_event(EVENT_TERMREQUEST)) {
+    return 1;
   }
 
   StringBuilder request = KV_INITIAL_VALUE;
   kv_printf(request, "\x1bP%*s", (int)commandlen, command);
   kv_concat_len(request, frag.str, frag.len);
-  multiqueue_put(main_loop.events, emit_term_request, request.items, (void *)request.size, user);
+  schedule_termrequest(user, request.items, request.size);
   return 1;
 }
 
@@ -745,6 +774,10 @@ void terminal_destroy(Terminal **termpp)
 static void terminal_send(Terminal *term, const char *data, size_t size)
 {
   if (term->closed) {
+    return;
+  }
+  if (term->pending_send) {
+    kv_concat_len(*term->pending_send, data, size);
     return;
   }
   term->opts.write_cb(data, size, term->opts.data);
