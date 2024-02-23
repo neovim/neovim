@@ -1831,7 +1831,7 @@ bool marktree_itr_step_overlap(MarkTree *b, MarkTreeIter *itr, MTPair *pair)
       }
       unrelative(itr->pos, &k.pos);
       MTKey start = marktree_lookup(b, id, NULL);
-      if (pos_less(itr->intersect_pos, start.pos)) {
+      if (pos_leq(itr->intersect_pos, start.pos)) {
         continue;
       }
       *pair = mtpair_from(start, k);
