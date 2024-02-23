@@ -681,6 +681,12 @@ describe('treesitter highlighting (C)', function()
         ((identifier) @Identifier
          (#set! conceal "")
          (#eq? @Identifier "lstate"))
+
+        ((call_expression
+            function: (identifier) @function
+            arguments: (argument_list) @arguments)
+         (#eq? @function "multiqueue_put")
+         (#set! @function conceal "V"))
       ]]}})
     ]=]
 
@@ -697,7 +703,7 @@ describe('treesitter highlighting (C)', function()
                                                                        |
         LuaRef cb = nlua_ref(, 1);                                     |
                                                                        |
-        multiqueue_put(main_loop.events, nlua_schedule_event,          |
+        {11:V}(main_loop.events, nlua_schedule_event,                       |
                        1, (void *)(ptrdiff_t)cb);                      |
         return 0;                                                      |
       ^}                                                                |
