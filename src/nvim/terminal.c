@@ -848,21 +848,7 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
     return;
   }
 
-  if (term->opts.force_crlf) {
-    StringBuilder crlf_data = KV_INITIAL_VALUE;
-
-    for (size_t i = 0; i < len; i++) {
-      if (data[i] == '\n' && (i == 0 || (i > 0 && data[i - 1] != '\r'))) {
-        kv_push(crlf_data, '\r');
-      }
-      kv_push(crlf_data, data[i]);
-    }
-
-    vterm_input_write(term->vt, crlf_data.items, kv_size(crlf_data));
-    kv_destroy(crlf_data);
-  } else {
-    vterm_input_write(term->vt, data, len);
-  }
+  vterm_input_write(term->vt, data, len);
   vterm_screen_flush_damage(term->vts);
 }
 

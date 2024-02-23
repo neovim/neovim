@@ -1053,11 +1053,13 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
     .write_cb = term_write,
     .resize_cb = term_resize,
     .close_cb = term_close,
-    .force_crlf = GET_BOOL_OR_TRUE(opts, open_term, force_crlf),
   };
   channel_incref(chan);
   terminal_open(&chan->term, buf, topts);
   if (chan->term != NULL) {
+    if (GET_BOOL_OR_TRUE(opts, open_term, force_crlf)) {
+      terminal_receive(chan->term, S_LEN("\x1b[20h"));
+    }
     terminal_check_size(chan->term);
   }
   channel_decref(chan);
