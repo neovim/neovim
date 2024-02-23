@@ -319,8 +319,7 @@ describe(':terminal buffer', function()
   end)
 
   it('emits TermRequest events #26972', function()
-    command('split')
-    command('enew')
+    command('new')
     local term = api.nvim_open_term(0, {})
     local termbuf = api.nvim_get_current_buf()
 
@@ -335,6 +334,35 @@ describe(':terminal buffer', function()
     api.nvim_chan_send(term, string.format('%s\027\\', expected))
     eq(expected, eval('v:termrequest'))
     eq(termbuf, eval('g:termbuf'))
+  end)
+
+  it('TermReqeust synchronization #27572', function()
+    command('new')
+    command('autocmd! nvim_terminal TermRequest')
+    local term = exec_lua([[
+      _G.input = {}
+      local term = vim.api.nvim_open_term(0, {
+        on_input = function(_, _, _, data)
+          table.insert(_G.input, data)
+        end,
+        force_crlf = false,
+      })
+      vim.api.nvim_create_autocmd('TermRequest', {
+        callback = function(args)
+          if args.data == '\027]11;?' then
+            table.insert(_G.input, '\027]11;rgb:0000/0000/0000\027\\')
+          end
+        end
+      })
+      return term
+    ]])
+    api.nvim_chan_send(term, '\027]11;?\007\027[5n\027]11;?\007\027[5n')
+    eq({
+      '\027]11;rgb:0000/0000/0000\027\\',
+      '\027[0n',
+      '\027]11;rgb:0000/0000/0000\027\\',
+      '\027[0n',
+    }, exec_lua('return _G.input'))
   end)
 end)
 
