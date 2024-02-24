@@ -402,7 +402,7 @@ typedef ptrdiff_t (*ShaDaFileWriter)(ShaDaWriteDef *const sd_writer,
 struct sd_write_def {
   ShaDaFileWriter write;   ///< Writer function.
   ShaDaWriteCloser close;  ///< Close function.
-  void *cookie;            ///< Data describing object written to.
+  FileDescriptor cookie;            ///< Data describing object written to.
   const char *error;       ///< Error message in case of error.
 };
 
@@ -643,7 +643,7 @@ static ptrdiff_t write_file(ShaDaWriteDef *const sd_writer, const void *const de
                             const size_t size)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const ptrdiff_t ret = file_write(sd_writer->cookie, dest, size);
+  const ptrdiff_t ret = file_write(&sd_writer->cookie, dest, size);
   if (ret < 0) {
     sd_writer->error = os_strerror((int)ret);
     return -1;
@@ -656,13 +656,14 @@ static void close_sd_reader(ShaDaReadDef *const sd_reader)
   FUNC_ATTR_NONNULL_ALL
 {
   close_file(sd_reader->cookie);
+  xfree(sd_reader->cookie);
 }
 
 /// Wrapper for closing file descriptors opened for writing
 static void close_sd_writer(ShaDaWriteDef *const sd_writer)
   FUNC_ATTR_NONNULL_ALL
 {
-  close_file(sd_writer->cookie);
+  close_file(&sd_writer->cookie);
 }
 
 /// Wrapper for read that reads to IObuff and ignores bytes read
@@ -731,8 +732,6 @@ static ShaDaReadResult sd_reader_skip(ShaDaReadDef *const sd_reader, const size_
 static int open_shada_file_for_reading(const char *const fname, ShaDaReadDef *sd_reader)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  int error;
-
   *sd_reader = (ShaDaReadDef) {
     .read = &read_file,
     .close = &close_sd_reader,
@@ -740,9 +739,11 @@ static int open_shada_file_for_reading(const char *const fname, ShaDaReadDef *sd
     .error = NULL,
     .eof = false,
     .fpos = 0,
-    .cookie = file_open_new(&error, fname, kFileReadOnly, 0),
+    .cookie = xmalloc(sizeof(FileDescriptor)),
   };
-  if (sd_reader->cookie == NULL) {
+  int error = file_open(sd_reader->cookie, fname, kFileReadOnly, 0);
+  if (error) {
+    XFREE_CLEAR(sd_reader->cookie);
     return error;
   }
 
@@ -754,7 +755,7 @@ static int open_shada_file_for_reading(const char *const fname, ShaDaReadDef *sd
 /// Wrapper for closing file descriptors
 static void close_file(void *cookie)
 {
-  const int error = file_free(cookie, !!p_fs);
+  const int error = file_close(cookie, !!p_fs);
   if (error != 0) {
     semsg(_(SERR "System error while closing ShaDa file: %s"),
           os_strerror(error));
@@ -3003,6 +3004,7 @@ int shada_write_file(const char *const file, bool nomerge)
     .error = NULL,
   };
   ShaDaReadDef sd_reader = { .close = NULL };
+  bool did_open_writer = false;
 
   if (!nomerge) {
     int error;
@@ -3032,8 +3034,8 @@ int shada_write_file(const char *const file, bool nomerge)
     // 3: If somebody happened to delete the file after it was opened for
     //    reading use u=rw permissions.
 shada_write_file_open: {}
-    sd_writer.cookie = file_open_new(&error, tempname, kFileCreateOnly|kFileNoSymlink, perm);
-    if (sd_writer.cookie == NULL) {
+    error = file_open(&sd_writer.cookie, tempname, kFileCreateOnly|kFileNoSymlink, perm);
+    if (error) {
       if (error == UV_EEXIST || error == UV_ELOOP) {
         // File already exists, try another name
         char *const wp = tempname + strlen(tempname) - 1;
@@ -3054,6 +3056,8 @@ shada_write_file_open: {}
         semsg(_(SERR "System error while opening temporary ShaDa file %s "
                 "for writing: %s"), tempname, os_strerror(error));
       }
+    } else {
+      did_open_writer = true;
     }
   }
   if (nomerge) {
@@ -3076,16 +3080,16 @@ shada_write_file_nomerge: {}
       }
       *tail = tail_save;
     }
-    int error;
-    sd_writer.cookie = file_open_new(&error, fname, kFileCreate|kFileTruncate,
-                                     0600);
-    if (sd_writer.cookie == NULL) {
+    int error = file_open(&sd_writer.cookie, fname, kFileCreate|kFileTruncate, 0600);
+    if (error) {
       semsg(_(SERR "System error while opening ShaDa file %s for writing: %s"),
             fname, os_strerror(error));
+    } else {
+      did_open_writer = true;
     }
   }
 
-  if (sd_writer.cookie == NULL) {
+  if (!did_open_writer) {
     xfree(fname);
     xfree(tempname);
     if (sd_reader.cookie != NULL) {
@@ -3132,7 +3136,7 @@ shada_write_file_nomerge: {}
             || old_info.stat.st_gid != getgid()) {
           const uv_uid_t old_uid = (uv_uid_t)old_info.stat.st_uid;
           const uv_gid_t old_gid = (uv_gid_t)old_info.stat.st_gid;
-          const int fchown_ret = os_fchown(file_fd(sd_writer.cookie),
+          const int fchown_ret = os_fchown(file_fd(&sd_writer.cookie),
                                            old_uid, old_gid);
           if (fchown_ret != 0) {
             semsg(_(RNERR "Failed setting uid and gid for file %s: %s"),
