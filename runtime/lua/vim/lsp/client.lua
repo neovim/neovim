@@ -21,7 +21,7 @@ local validate = vim.validate
 --- @field handlers? table<string,function>
 --- @field settings? table
 --- @field commands? table<string,fun(command: lsp.Command, ctx: table)>
---- @field init_options table
+--- @field init_options? table
 --- @field name? string
 --- @field get_language_id? fun(bufnr: integer, filetype: string): string
 --- @field offset_encoding? string
