@@ -2377,10 +2377,8 @@ static int buf_time_compare(const void *s1, const void *s2)
 /// @return  OK if matches found, FAIL otherwise.
 int ExpandBufnames(char *pat, int *num_file, char ***file, int options)
 {
-  int count = 0;
-  int round;
-  char *p;
   bufmatch_T *matches = NULL;
+  bool to_free = false;
 
   *num_file = 0;                    // return values in case of FAIL
   *file = NULL;
@@ -2392,125 +2390,115 @@ int ExpandBufnames(char *pat, int *num_file, char ***file, int options)
   const bool fuzzy = cmdline_fuzzy_complete(pat);
 
   char *patc = NULL;
+  fuzmatch_str_T *fuzmatch = NULL;
+  regmatch_T regmatch;
+
   // Make a copy of "pat" and change "^" to "\(^\|[\/]\)" (if doing regular
   // expression matching)
   if (!fuzzy) {
-    if (*pat == '^') {
-      patc = xmalloc(strlen(pat) + 11);
-      STRCPY(patc, "\\(^\\|[\\/]\\)");
-      STRCPY(patc + 11, pat + 1);
+    if (*pat == '^' && pat[1] != NUL) {
+      patc = xstrdup(pat + 1);
+      to_free = true;
+    } else if (*pat == '^') {
+      patc = "";
     } else {
       patc = pat;
     }
+    regmatch.regprog = vim_regcomp(patc, RE_MAGIC);
   }
 
-  fuzmatch_str_T *fuzmatch = NULL;
-  // attempt == 0: try match with    '\<', match at start of word
-  // attempt == 1: try match without '\<', match anywhere
-  for (int attempt = 0; attempt <= (fuzzy ? 0 : 1); attempt++) {
-    regmatch_T regmatch;
-    if (!fuzzy) {
-      if (attempt > 0 && patc == pat) {
-        break;            // there was no anchor, no need to try again
+  int count = 0;
+  int score = 0;
+  // round == 1: Count the matches.
+  // round == 2: Build the array to keep the matches.
+  for (int round = 1; round <= 2; round++) {
+    count = 0;
+    FOR_ALL_BUFFERS(buf) {
+      if (!buf->b_p_bl) {             // skip unlisted buffers
+        continue;
       }
-      regmatch.regprog = vim_regcomp(patc + attempt * 11, RE_MAGIC);
-    }
-
-    int score = 0;
-    // round == 1: Count the matches.
-    // round == 2: Build the array to keep the matches.
-    for (round = 1; round <= 2; round++) {
-      count = 0;
-      FOR_ALL_BUFFERS(buf) {
-        if (!buf->b_p_bl) {             // skip unlisted buffers
+      if (options & BUF_DIFF_FILTER) {
+        // Skip buffers not suitable for
+        // :diffget or :diffput completion.
+        if (buf == curbuf || !diff_mode_buf(buf)) {
           continue;
         }
-        if (options & BUF_DIFF_FILTER) {
-          // Skip buffers not suitable for
-          // :diffget or :diffput completion.
-          if (buf == curbuf || !diff_mode_buf(buf)) {
-            continue;
-          }
-        }
+      }
 
-        if (!fuzzy) {
-          if (regmatch.regprog == NULL) {
-            // invalid pattern, possibly after recompiling
-            if (patc != pat) {
-              xfree(patc);
-            }
-            return FAIL;
+      char *p = NULL;
+      if (!fuzzy) {
+        if (regmatch.regprog == NULL) {
+          // invalid pattern, possibly after recompiling
+          if (to_free) {
+            xfree(patc);
           }
-          p = buflist_match(&regmatch, buf, p_wic);
-        } else {
-          p = NULL;
-          // first try matching with the short file name
-          if ((score = fuzzy_match_str(buf->b_sfname, pat)) != 0) {
-            p = buf->b_sfname;
-          }
-          if (p == NULL) {
-            // next try matching with the full path file name
-            if ((score = fuzzy_match_str(buf->b_ffname, pat)) != 0) {
-              p = buf->b_ffname;
-            }
-          }
+          return FAIL;
         }
-
+        p = buflist_match(&regmatch, buf, p_wic);
+      } else {
+        p = NULL;
+        // first try matching with the short file name
+        if ((score = fuzzy_match_str(buf->b_sfname, pat)) != 0) {
+          p = buf->b_sfname;
+        }
         if (p == NULL) {
-          continue;
-        }
-
-        if (round == 1) {
-          count++;
-          continue;
-        }
-
-        if (options & WILD_HOME_REPLACE) {
-          p = home_replace_save(buf, p);
-        } else {
-          p = xstrdup(p);
-        }
-
-        if (!fuzzy) {
-          if (matches != NULL) {
-            matches[count].buf = buf;
-            matches[count].match = p;
-            count++;
-          } else {
-            (*file)[count++] = p;
+          // next try matching with the full path file name
+          if ((score = fuzzy_match_str(buf->b_ffname, pat)) != 0) {
+            p = buf->b_ffname;
           }
-        } else {
-          fuzmatch[count].idx = count;
-          fuzmatch[count].str = p;
-          fuzmatch[count].score = score;
-          count++;
         }
       }
-      if (count == 0) {         // no match found, break here
-        break;
+
+      if (p == NULL) {
+        continue;
       }
+
       if (round == 1) {
-        if (!fuzzy) {
-          *file = xmalloc((size_t)count * sizeof(**file));
-          if (options & WILD_BUFLASTUSED) {
-            matches = xmalloc((size_t)count * sizeof(*matches));
-          }
+        count++;
+        continue;
+      }
+
+      if (options & WILD_HOME_REPLACE) {
+        p = home_replace_save(buf, p);
+      } else {
+        p = xstrdup(p);
+      }
+
+      if (!fuzzy) {
+        if (matches != NULL) {
+          matches[count].buf = buf;
+          matches[count].match = p;
+          count++;
         } else {
-          fuzmatch = xmalloc((size_t)count * sizeof(fuzmatch_str_T));
+          (*file)[count++] = p;
         }
+      } else {
+        fuzmatch[count].idx = count;
+        fuzmatch[count].str = p;
+        fuzmatch[count].score = score;
+        count++;
       }
     }
-
-    if (!fuzzy) {
-      vim_regfree(regmatch.regprog);
-      if (count) {                // match(es) found, break here
-        break;
+    if (count == 0) {         // no match found, break here
+      break;
+    }
+    if (round == 1) {
+      if (!fuzzy) {
+        *file = xmalloc((size_t)count * sizeof(**file));
+        if (options & WILD_BUFLASTUSED) {
+          matches = xmalloc((size_t)count * sizeof(*matches));
+        }
+      } else {
+        fuzmatch = xmalloc((size_t)count * sizeof(fuzmatch_str_T));
       }
     }
   }
 
-  if (!fuzzy && patc != pat) {
-    xfree(patc);
+  if (!fuzzy) {
+    vim_regfree(regmatch.regprog);
+    if (to_free) {
+      xfree(patc);
+    }
   }
 
   if (!fuzzy) {
