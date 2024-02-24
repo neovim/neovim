@@ -1770,8 +1770,13 @@ static void mb_adjust_opend(oparg_T *oap)
     return;
   }
 
-  char *p = ml_get(oap->end.lnum);
-  oap->end.col += utf_cp_tail_off(p, p + oap->end.col);
+  const char *line = ml_get(oap->end.lnum);
+  const char *ptr = line + oap->end.col;
+  if (*ptr != NUL) {
+    ptr -= utf_head_off(line, ptr);
+    ptr += utfc_ptr2len(ptr) - 1;
+    oap->end.col = (colnr_T)(ptr - line);
+  }
 }
 
 /// Put character 'c' at position 'lp'
