@@ -482,6 +482,7 @@ complex highlighting.
 The following groups are linked by default to standard |group-name|s:
 
 @lsp.type.class          Structure
+@lsp.type.comment        Comment
 @lsp.type.decorator      Function
 @lsp.type.enum           Structure
 @lsp.type.enumMember     Constant
