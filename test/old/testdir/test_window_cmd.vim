@@ -1066,6 +1066,19 @@ func Test_win_splitmove()
   leftabove split b
   leftabove vsplit c
   leftabove split d
+
+  " win_splitmove doesn't actually create or close any windows, so expect an
+  " unchanged winid and no WinNew/WinClosed events, like :wincmd H/J/K/L.
+  let s:triggered = []
+  augroup WinSplitMove
+    au!
+    " Nvim: WinNewPre not ported yet. Also needs full port of v9.1.0117 to pass.
+    " au WinNewPre * let s:triggered += ['WinNewPre']
+    au WinNew * let s:triggered += ['WinNew', win_getid()]
+    au WinClosed * let s:triggered += ['WinClosed', str2nr(expand('<afile>'))]
+  augroup END
+  let winid = win_getid()
+
   call assert_equal(0, win_splitmove(winnr(), winnr('l')))
   call assert_equal(bufname(winbufnr(1)), 'c')
   call assert_equal(bufname(winbufnr(2)), 'd')
@@ -1088,6 +1101,11 @@ func Test_win_splitmove()
   call assert_equal(bufname(winbufnr(3)), 'a')
   call assert_equal(bufname(winbufnr(4)), 'd')
   call assert_fails('call win_splitmove(winnr(), winnr("k"), v:_null_dict)', 'E1297:')
+  call assert_equal([], s:triggered)
+  call assert_equal(winid, win_getid())
+
+  unlet! s:triggered
+  au! WinSplitMove
   only | bd
 
   call assert_fails('call win_splitmove(winnr(), 123)', 'E957:')

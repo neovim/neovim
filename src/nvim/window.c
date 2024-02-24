@@ -987,6 +987,8 @@ int win_split(int size, int flags)
 /// When "new_wp" is NULL: split the current window in two.
 /// When "new_wp" is not NULL: insert this window at the far
 /// top/left/right/bottom.
+/// On failure, if "new_wp" was not NULL, no changes will have been made to the
+/// window layout or sizes.
 /// @return  NULL for failure, or pointer to new window
 win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir)
 {
@@ -1494,7 +1496,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir)
 
   if (!(flags & WSP_NOENTER)) {
     // make the new window the current window
-    win_enter_ext(wp, WEE_TRIGGER_NEW_AUTOCMDS | WEE_TRIGGER_ENTER_AUTOCMDS
+    win_enter_ext(wp, (new_wp == NULL ? WEE_TRIGGER_NEW_AUTOCMDS : 0) | WEE_TRIGGER_ENTER_AUTOCMDS
                   | WEE_TRIGGER_LEAVE_AUTOCMDS);
   }
   if (vertical) {

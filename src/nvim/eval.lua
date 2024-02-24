@@ -12699,10 +12699,10 @@ M.funcs = {
     args = { 2, 3 },
     base = 1,
     desc = [=[
-      Move the window {nr} to a new split of the window {target}.
-      This is similar to moving to {target}, creating a new window
-      using |:split| but having the same contents as window {nr}, and
-      then closing {nr}.
+      Temporarily switch to window {target}, then move window {nr}
+      to a new split adjacent to {target}.
+      Unlike commands such as |:split|, no new windows are created
+      (the |window-ID| of window {nr} is unchanged after the move).
 
       Both {nr} and {target} can be window numbers or |window-ID|s.
       Both must be in the current tab page.
