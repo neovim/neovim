@@ -5356,6 +5356,7 @@ function vim.fn.mapset(dict) end
 --- Note that when {count} is added the way {start} works changes,
 --- see above.
 ---
+---         *match-pattern*
 --- See |pattern| for the patterns that are accepted.
 --- The 'ignorecase' option is used to set the ignore-caseness of
 --- the pattern.  'smartcase' is NOT used.  The matching is always
@@ -5513,6 +5514,9 @@ function vim.fn.matcharg(nr) end
 ---
 --- This function works only for loaded buffers. First call
 --- |bufload()| if needed.
+---
+--- See |match-pattern| for information about the effect of some
+--- option settings on the pattern.
 ---
 --- When {buf} is not a valid buffer, the buffer is not loaded or
 --- {lnum} or {end} is not valid then an error is given and an
@@ -5726,6 +5730,9 @@ function vim.fn.matchstr(expr, pat, start, count) end
 ---     text  matched string
 ---     submatches  a List of submatches.  Present only if
 ---     "submatches" is set to v:true in {dict}.
+---
+--- See |match-pattern| for information about the effect of some
+--- option settings on the pattern.
 ---
 --- Example: >vim
 ---     :echo matchstrlist(['tik tok'], '\<\k\+\>')
