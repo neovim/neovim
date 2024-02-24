@@ -302,11 +302,24 @@ created, thus they behave slightly differently:
 			For a global option the global value is
 			shown (but that might change in the future).
 
-:setl[ocal] {option}<	Set the local value of {option} to its global value by
-			copying the value.
+:se[t] {option}<	Set the effective value of {option} to its global
+                        value.
+			For string |global-local| options, the local value is
+			removed, so that the global value will be used.
+			For all other options, the global value is copied to
+			the local value.
 
-:se[t] {option}<	For |global-local| options: Remove the local value of
-			{option}, so that the global value will be used.
+:setl[ocal] {option}<	Set the effective value of {option} to its global
+                        value.
+			For number and boolean |global-local| options, the
+			local value is removed, so that the global value will
+			be used.
+			For all other options, including string |global-local|
+			options, the global value is copied to the local
+			value.
+
+Note that the behaviour for |global-local| options is slightly different
+between string and number-based options.
 
 							*:setg* *:setglobal*
 :setg[lobal][!] ...	Like ":set" but set only the global value for a local
