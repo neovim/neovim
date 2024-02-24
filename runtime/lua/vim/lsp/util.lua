@@ -420,9 +420,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     return
   end
 
-  if not bufnr or bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
+  assert(bufnr ~= 0, 'Explicit buffer number is required')
 
   if not api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
