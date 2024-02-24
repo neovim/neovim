@@ -2221,4 +2221,34 @@ func Test_set_wrap()
   set wrap& smoothscroll& scrolloff&
 endfunc
 
+func Test_delcombine()
+  new
+  set backspace=indent,eol,start
+
+  set delcombine
+  call setline(1, 'β̳̈:β̳̈')
+  normal! 0x
+  call assert_equal('β̈:β̳̈', getline(1))
+  exe "normal! A\<BS>"
+  call assert_equal('β̈:β̈', getline(1))
+  normal! 0x
+  call assert_equal('β:β̈', getline(1))
+  exe "normal! A\<BS>"
+  call assert_equal('β:β', getline(1))
+  normal! 0x
+  call assert_equal(':β', getline(1))
+  exe "normal! A\<BS>"
+  call assert_equal(':', getline(1))
+
+  set nodelcombine
+  call setline(1, 'β̳̈:β̳̈')
+  normal! 0x
+  call assert_equal(':β̳̈', getline(1))
+  exe "normal! A\<BS>"
+  call assert_equal(':', getline(1))
+
+  set backspace& delcombine&
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
