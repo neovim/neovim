@@ -949,8 +949,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   colnr_T vcol_prev = -1;             // "wlv.vcol" of previous character
   ScreenGrid *grid = &wp->w_grid;     // grid specific to the window
 
-  static char *at_end_str = "";       // used for p_extra when displaying curwin->w_p_lcs_chars.eol
-                                      // at end-of-line
   const bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
   const bool has_foldtext = has_fold && *wp->w_p_fdt != NUL;
 
@@ -2341,7 +2339,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
             // In virtualedit, visual selections may extend beyond end of line
             if (!(area_highlighting && virtual_active()
                   && wlv.tocol != MAXCOL && wlv.vcol < wlv.tocol)) {
-              wlv.p_extra = at_end_str;
+              wlv.p_extra = "";
             }
             wlv.n_extra = 0;
           }
@@ -2840,8 +2838,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     if (wlv.col >= grid->cols && (!has_foldtext || virt_line_offset >= 0)
         && (*ptr != NUL
             || wlv.filler_todo > 0
-            || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL
-                && wlv.p_extra != at_end_str)
+            || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL && lcs_eol_todo)
             || (wlv.n_extra != 0 && (wlv.sc_extra != NUL || *wlv.p_extra != NUL))
             || (may_have_inline_virt && has_more_inline_virt(&wlv, ptr - line)))) {
       const bool wrap = is_wrapped                    // Wrapping enabled (not a folded line).
@@ -2875,9 +2872,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       wlv.vcol_off = 0;
       wlv.row++;
 
-      // When not wrapping and finished diff lines, or when displayed
-      // '$' and highlighting until last column, break here.
-      if ((!is_wrapped && wlv.filler_todo <= 0) || !lcs_eol_todo) {
+      // When not wrapping and finished diff lines, break here.
+      if (!is_wrapped && wlv.filler_todo <= 0) {
         break;
       }
 
