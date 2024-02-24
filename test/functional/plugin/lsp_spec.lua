@@ -2515,6 +2515,47 @@ describe('LSP', function()
 
       os.remove(new_dir)
     end)
+    it('Does not touch buffers that do not match path prefix', function()
+      local old = tmpname()
+      local new = tmpname()
+      os.remove(old)
+      os.remove(new)
+      helpers.mkdir_p(old)
+
+      local result = exec_lua(
+        [[
+        local old = select(1, ...)
+        local new = select(2, ...)
+
+        local old_prefixed = 'explorer://' .. old
+        local old_suffixed = old .. '.bak'
+        local new_prefixed = 'explorer://' .. new
+        local new_suffixed = new .. '.bak'
+
+        local old_prefixed_buf = vim.fn.bufadd(old_prefixed)
+        local old_suffixed_buf = vim.fn.bufadd(old_suffixed)
+        local new_prefixed_buf = vim.fn.bufadd(new_prefixed)
+        local new_suffixed_buf = vim.fn.bufadd(new_suffixed)
+
+        vim.lsp.util.rename(old, new)
+
+        return
+          vim.api.nvim_buf_is_valid(old_prefixed_buf) and
+          vim.api.nvim_buf_is_valid(old_suffixed_buf) and
+          vim.api.nvim_buf_is_valid(new_prefixed_buf) and
+          vim.api.nvim_buf_is_valid(new_suffixed_buf) and
+          vim.api.nvim_buf_get_name(old_prefixed_buf) == old_prefixed and
+          vim.api.nvim_buf_get_name(old_suffixed_buf) == old_suffixed and
+          vim.api.nvim_buf_get_name(new_prefixed_buf) == new_prefixed and
+          vim.api.nvim_buf_get_name(new_suffixed_buf) == new_suffixed
+      ]],
+        old,
+        new
+      )
+      eq(true, result)
+
+      os.remove(new)
+    end)
     it(
       'Does not rename file if target exists and ignoreIfExists is set or overwrite is false',
       function()

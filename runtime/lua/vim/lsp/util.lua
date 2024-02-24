@@ -639,13 +639,28 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
   return vim.lsp._completion._lsp_to_complete_items(result, prefix)
 end
 
---- Get list of buffers for a directory
-local function get_dir_bufs(path)
-  path = path:gsub('([^%w])', '%%%1')
+local function path_components(path)
+  return vim.split(path, '/', { plain = true })
+end
+
+local function path_under_prefix(path, prefix)
+  for i, c in ipairs(prefix) do
+    if c ~= path[i] then
+      return false
+    end
+  end
+  return true
+end
+
+--- Get list of buffers whose filename matches the given path prefix (normalized full path)
+---@return integer[]
+local function get_bufs_with_prefix(prefix)
+  prefix = path_components(prefix)
   local buffers = {}
   for _, v in ipairs(vim.api.nvim_list_bufs()) do
-    local bufname = vim.api.nvim_buf_get_name(v)
-    if bufname:find(path) then
+    local bname = vim.api.nvim_buf_get_name(v)
+    local path = path_components(vim.fs.normalize(bname, { expand_env = false }))
+    if path_under_prefix(path, prefix) then
       table.insert(buffers, v)
     end
   end
@@ -654,24 +669,34 @@ end
 
 --- Rename old_fname to new_fname
 ---
----@param opts (table)
---         overwrite? bool
---         ignoreIfExists? bool
+---@param old_fname string
+---@param new_fname string
+---@param opts? table options
+---        - overwrite? boolean
+---        - ignoreIfExists? boolean
 function M.rename(old_fname, new_fname, opts)
   opts = opts or {}
+  local skip = not opts.overwrite or opts.ignoreIfExists
+
+  local old_fname_full = vim.uv.fs_realpath(vim.fs.normalize(old_fname, { expand_env = false }))
+  if not old_fname_full then
+    vim.notify('Invalid path: ' .. old_fname, vim.log.levels.ERROR)
+    return
+  end
+
   local target_exists = uv.fs_stat(new_fname) ~= nil
-  if target_exists and not opts.overwrite or opts.ignoreIfExists then
-    vim.notify('Rename target already exists. Skipping rename.')
+  if target_exists and skip then
+    vim.notify(new_fname .. ' already exists. Skipping rename.', vim.log.levels.ERROR)
     return
   end
 
   local oldbufs = {}
   local win = nil
 
-  if vim.fn.isdirectory(old_fname) == 1 then
-    oldbufs = get_dir_bufs(old_fname)
+  if vim.fn.isdirectory(old_fname_full) == 1 then
+    oldbufs = get_bufs_with_prefix(old_fname_full)
   else
-    local oldbuf = vim.fn.bufadd(old_fname)
+    local oldbuf = vim.fn.bufadd(old_fname_full)
     table.insert(oldbufs, oldbuf)
     win = vim.fn.win_findbuf(oldbuf)[1]
   end
@@ -687,7 +712,7 @@ function M.rename(old_fname, new_fname, opts)
   local newdir = assert(vim.fs.dirname(new_fname))
   vim.fn.mkdir(newdir, 'p')
 
-  local ok, err = os.rename(old_fname, new_fname)
+  local ok, err = os.rename(old_fname_full, new_fname)
   assert(ok, err)
 
   if vim.fn.isdirectory(new_fname) == 0 then

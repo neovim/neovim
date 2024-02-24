@@ -2003,7 +2003,11 @@ rename({old_fname}, {new_fname}, {opts})               *vim.lsp.util.rename()*
     Rename old_fname to new_fname
 
     Parameters: ~
-      • {opts}  (`table`)
+      • {old_fname}  (`string`)
+      • {new_fname}  (`string`)
+      • {opts}       (`table?`) options
+                     • overwrite? boolean
+                     • ignoreIfExists? boolean
 
                                                 *vim.lsp.util.show_document()*
 show_document({location}, {offset_encoding}, {opts})
