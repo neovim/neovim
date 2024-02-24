@@ -54,12 +54,17 @@ local function execute_lens(lens, bufnr, client_id)
   end)
 end
 
+local function resolve_bufnr(bufnr)
+  return bufnr == 0 and api.nvim_get_current_buf() or bufnr
+end
+
 --- Return all lenses for the given buffer
 ---
 ---@param bufnr integer  Buffer number. 0 can be used for the current buffer.
 ---@return lsp.CodeLens[]
 function M.get(bufnr)
-  local lenses_by_client = lens_cache_by_buf[bufnr or 0]
+  bufnr = resolve_bufnr(bufnr or 0)
+  local lenses_by_client = lens_cache_by_buf[bufnr]
   if not lenses_by_client then
     return {}
   end
@@ -102,10 +107,6 @@ function M.run()
       end
     end)
   end
-end
-
-local function resolve_bufnr(bufnr)
-  return bufnr == 0 and api.nvim_get_current_buf() or bufnr
 end
 
 --- Clear the lenses
