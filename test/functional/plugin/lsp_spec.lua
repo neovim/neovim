@@ -1808,7 +1808,7 @@ describe('LSP', function()
         make_edit(4, 0, 5, 0, 'barfoo'),
       }
       eq(true, exec_lua('return vim.api.nvim_buf_set_mark(1, "a", 2, 1, {})'))
-      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, 'utf-16')
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 0, 'utf-16')
       eq({
         'First line of text',
         'foobar line of text',

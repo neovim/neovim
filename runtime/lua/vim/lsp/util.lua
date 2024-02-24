@@ -419,6 +419,11 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   if not next(text_edits) then
     return
   end
+
+  if not bufnr or bufnr == 0 then
+    bufnr = api.nvim_get_current_buf()
+  end
+
   if not api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
   end
@@ -457,7 +462,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
 
   -- save and restore local marks since they get deleted by nvim_buf_set_lines
   local marks = {}
-  for _, m in pairs(vim.fn.getmarklist(bufnr or vim.api.nvim_get_current_buf())) do
+  for _, m in pairs(vim.fn.getmarklist(bufnr)) do
     if m.mark:match("^'[a-z]$") then
       marks[m.mark:sub(2, 2)] = { m.pos[2], m.pos[3] - 1 } -- api-indexed
     end
@@ -516,7 +521,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   local max = api.nvim_buf_line_count(bufnr)
 
   -- no need to restore marks that still exist
-  for _, m in pairs(vim.fn.getmarklist(bufnr or vim.api.nvim_get_current_buf())) do
+  for _, m in pairs(vim.fn.getmarklist(bufnr)) do
     marks[m.mark:sub(2, 2)] = nil
   end
   -- restore marks
