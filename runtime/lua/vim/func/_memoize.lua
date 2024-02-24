@@ -33,22 +33,27 @@ local function resolve_hash(hash)
   return hash
 end
 
+---@return table<any,table<any,any>>
+local function get_weak_table()
+  return setmetatable({}, { __mode = 'kv' })
+end
+
 --- @generic F: function
 --- @param hash integer|string|fun(...): any
 --- @param fn F
 --- @return F
+--- @return function
 return function(hash, fn)
   vim.validate({
     hash = { hash, { 'number', 'string', 'function' } },
     fn = { fn, 'function' },
   })
 
-  ---@type table<any,table<any,any>>
-  local cache = setmetatable({}, { __mode = 'kv' })
+  local cache = get_weak_table()
 
   hash = resolve_hash(hash)
 
-  return function(...)
+  local memoized = function(...)
     local key = hash(...)
     if cache[key] == nil then
       cache[key] = vim.F.pack_len(fn(...))
@@ -56,4 +61,19 @@ return function(hash, fn)
 
     return vim.F.unpack_len(cache[key])
   end
+
+  local clear = function(...)
+    if vim.tbl_count(cache) == 0 then
+      return
+    end
+
+    if #{ ... } == 0 then
+      cache = get_weak_table()
+    else
+      local key = hash(...)
+      cache[key] = nil
+    end
+  end
+
+  return memoized, clear
 end

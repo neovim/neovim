@@ -14,6 +14,11 @@ local M = {}
 --
 --- Memoizes a function {fn} using {hash} to hash the arguments.
 ---
+--- Also returns a function that either:
+--- - Invalidates the entire memoize cache when provided no arguments, or
+--- - Removes a specific function call from the cache when provided that
+---   function call's arguments
+---
 --- Internally uses a |lua-weaktable| to cache the results of {fn} meaning the
 --- cache will be invalidated whenever Lua does garbage collection.
 ---
@@ -33,6 +38,7 @@ local M = {}
 ---
 --- @param fn F Function to memoize.
 --- @return F # Memoized version of {fn}
+--- @return function # Function to clear the memoize cache
 --- @nodoc
 function M._memoize(hash, fn)
   return require('vim.func._memoize')(hash, fn)
