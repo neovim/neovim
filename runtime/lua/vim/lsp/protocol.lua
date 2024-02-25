@@ -2,24 +2,6 @@
 
 -- Protocol for the Microsoft Language Server Protocol (mslsp)
 
---[=[
----@private
---- Useful for interfacing with:
---- https://github.com/microsoft/language-server-protocol/raw/gh-pages/_specifications/specification-3-14.md
-function transform_schema_comments()
-  nvim.command [[silent! '<,'>g/\/\*\*\|\*\/\|^$/d]]
-  nvim.command [[silent! '<,'>s/^\(\s*\) \* \=\(.*\)/\1--\2/]]
-end
----@private
-function transform_schema_to_table()
-  transform_schema_comments()
-  nvim.command [[silent! '<,'>s/: \S\+//]]
-  nvim.command [[silent! '<,'>s/export const //]]
-  nvim.command [[silent! '<,'>s/export namespace \(\S*\)\s*{/protocol.\1 = {/]]
-  nvim.command [[silent! '<,'>s/namespace \(\S*\)\s*{/protocol.\1 = {/]]
-end
---]=]
-
 local protocol = {
   --- @enum lsp.DiagnosticSeverity
   DiagnosticSeverity = {
