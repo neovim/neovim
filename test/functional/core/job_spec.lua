@@ -1239,7 +1239,6 @@ describe('pty process teardown', function()
   end)
 
   it('does not prevent/delay exit. #4798 #4900', function()
-    skip(is_os('win'))
     -- Use a nested nvim (in :term) to test without --headless.
     fn.termopen({
       helpers.nvim_prog,

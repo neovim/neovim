@@ -18,10 +18,6 @@ local mkdir = helpers.mkdir
 
 local file_prefix = 'Xtest-functional-ex_cmds-mksession_spec'
 
-if helpers.skip(helpers.is_os('win')) then
-  return
-end
-
 describe(':mksession', function()
   local session_file = file_prefix .. '.vim'
   local tab_dir = file_prefix .. '.d'
@@ -73,25 +69,22 @@ describe(':mksession', function()
     eq(expected_buf_count, #api.nvim_list_bufs())
   end
 
-  it(
-    'do not restore :terminal if not set in sessionoptions, terminal in current window #13078',
-    function()
-      local tmpfile_base = file_prefix .. '-tmpfile'
-      command('edit ' .. tmpfile_base)
-      command('terminal')
+  it('do not restore :terminal if not set in sessionoptions, terminal in curwin #13078', function()
+    local tmpfile_base = file_prefix .. '-tmpfile'
+    command('edit ' .. tmpfile_base)
+    command('terminal')
 
-      local buf_count = #api.nvim_list_bufs()
-      eq(2, buf_count)
+    local buf_count = #api.nvim_list_bufs()
+    eq(2, buf_count)
 
-      eq('terminal', api.nvim_get_option_value('buftype', {}))
+    eq('terminal', api.nvim_get_option_value('buftype', {}))
 
-      test_terminal_session_disabled(2)
+    test_terminal_session_disabled(2)
 
-      -- no terminal should be set. As a side effect we end up with a blank buffer
-      eq('', api.nvim_get_option_value('buftype', { buf = api.nvim_list_bufs()[1] }))
-      eq('', api.nvim_get_option_value('buftype', { buf = api.nvim_list_bufs()[2] }))
-    end
-  )
+    -- no terminal should be set. As a side effect we end up with a blank buffer
+    eq('', api.nvim_get_option_value('buftype', { buf = api.nvim_list_bufs()[1] }))
+    eq('', api.nvim_get_option_value('buftype', { buf = api.nvim_list_bufs()[2] }))
+  end)
 
   it('do not restore :terminal if not set in sessionoptions, terminal hidden #13078', function()
     command('terminal')
@@ -173,6 +166,8 @@ describe(':mksession', function()
   end)
 
   it('restores CWD for :terminal buffers #11288', function()
+    skip(is_os('win'), 'causes rmdir() to fail')
+
     local cwd_dir = fn.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
     cwd_dir = cwd_dir:gsub([[\]], '/') -- :mksession always uses unix slashes.
     local session_path = cwd_dir .. '/' .. session_file
