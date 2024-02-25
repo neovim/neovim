@@ -1,5 +1,11 @@
 --- @diagnostic disable: duplicate-doc-alias
 
+local function get_value_set(t)
+  return vim.iter.filter(function(i)
+    return type(i) == 'number'
+  end, ipairs(t))
+end
+
 -- Protocol for the Microsoft Language Server Protocol (mslsp)
 
 local protocol = {
@@ -295,6 +301,7 @@ local protocol = {
   },
 }
 
+-- TODO(mariasolos): Remove this reverse lookup.
 for k, v in pairs(protocol) do
   local tbl = vim.deepcopy(v, true)
   vim.tbl_add_reverse_lookup(tbl)
@@ -705,7 +712,10 @@ function protocol.make_client_capabilities()
         codeActionLiteralSupport = {
           codeActionKind = {
             valueSet = (function()
-              local res = vim.tbl_values(protocol.CodeActionKind)
+              local res = vim.iter.filter(function(value)
+                -- Filter out the keys that were added by the reverse lookup.
+                return value:match('^%l')
+              end, vim.tbl_values(protocol.CodeActionKind))
               table.sort(res)
               return res
             end)(),
@@ -736,15 +746,7 @@ function protocol.make_client_capabilities()
           documentationFormat = { protocol.MarkupKind.Markdown, protocol.MarkupKind.PlainText },
         },
         completionItemKind = {
-          valueSet = (function()
-            local res = {}
-            for k in ipairs(protocol.CompletionItemKind) do
-              if type(k) == 'number' then
-                table.insert(res, k)
-              end
-            end
-            return res
-          end)(),
+          valueSet = get_value_set(protocol.CompletionItemKind),
         },
         completionList = {
           itemDefaults = {
@@ -794,15 +796,7 @@ function protocol.make_client_capabilities()
       documentSymbol = {
         dynamicRegistration = false,
         symbolKind = {
-          valueSet = (function()
-            local res = {}
-            for k in ipairs(protocol.SymbolKind) do
-              if type(k) == 'number' then
-                table.insert(res, k)
-              end
-            end
-            return res
-          end)(),
+          valueSet = get_value_set(protocol.SymbolKind),
         },
         hierarchicalDocumentSymbolSupport = true,
       },
@@ -813,15 +807,7 @@ function protocol.make_client_capabilities()
       publishDiagnostics = {
         relatedInformation = true,
         tagSupport = {
-          valueSet = (function()
-            local res = {}
-            for k in ipairs(protocol.DiagnosticTag) do
-              if type(k) == 'number' then
-                table.insert(res, k)
-              end
-            end
-            return res
-          end)(),
+          valueSet = get_value_set(protocol.DiagnosticTag),
         },
         dataSupport = true,
       },
@@ -833,15 +819,7 @@ function protocol.make_client_capabilities()
       symbol = {
         dynamicRegistration = false,
         symbolKind = {
-          valueSet = (function()
-            local res = {}
-            for k in ipairs(protocol.SymbolKind) do
-              if type(k) == 'number' then
-                table.insert(res, k)
-              end
-            end
-            return res
-          end)(),
+          valueSet = get_value_set(protocol.SymbolKind),
         },
       },
       configuration = true,
