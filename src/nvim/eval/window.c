@@ -14,6 +14,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/window.h"
+#include "nvim/ex_getln.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/gettext_defs.h"
@@ -584,8 +585,7 @@ void f_win_gotoid(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   int id = (int)tv_get_number(&argvars[0]);
 
-  if (cmdwin_type != 0) {
-    emsg(_(e_cmdwin));
+  if (text_or_buf_locked()) {
     return;
   }
   FOR_ALL_TAB_WINDOWS(tp, wp) {
@@ -697,7 +697,7 @@ void f_win_splitmove(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   // Check if we can split the target before we bother switching windows.
-  if (is_aucmd_win(wp) || check_split_disallowed(targetwin) == FAIL) {
+  if (is_aucmd_win(wp) || text_or_buf_locked() || check_split_disallowed(targetwin) == FAIL) {
     return;
   }
 

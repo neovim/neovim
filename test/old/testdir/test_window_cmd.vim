@@ -2177,4 +2177,32 @@ func Test_splitmove_autocmd_window_no_room()
   %bw!
 endfunc
 
+func Test_win_gotoid_splitmove_textlock_cmdwin()
+  call setline(1, 'foo')
+  new
+  let curwin = win_getid()
+  call setline(1, 'bar')
+
+  set debug+=throw indentexpr=win_gotoid(win_getid(winnr('#')))
+  call assert_fails('normal! ==', 'E565:')
+  call assert_equal(curwin, win_getid())
+
+  set indentexpr=win_splitmove(winnr('#'),winnr())
+  call assert_fails('normal! ==', 'E565:')
+  call assert_equal(curwin, win_getid())
+
+  %bw!
+  set debug-=throw indentexpr&
+
+  call feedkeys('q:'
+           \ .. ":call assert_fails('call win_splitmove(winnr(''#''), winnr())', 'E11:')\<CR>"
+           \ .. ":call assert_equal('command', win_gettype())\<CR>"
+           \ .. ":call assert_equal('', win_gettype(winnr('#')))\<CR>", 'ntx')
+
+  call feedkeys('q:'
+           \ .. ":call assert_fails('call win_gotoid(win_getid(winnr(''#'')))', 'E11:')\<CR>"
+           \ .. ":call assert_equal('command', win_gettype())\<CR>"
+           \ .. ":call assert_equal('', win_gettype(winnr('#')))\<CR>", 'ntx')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
