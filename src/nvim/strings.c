@@ -2173,7 +2173,7 @@ String arena_printf(Arena *arena, const char *fmt, ...)
   char *buf = NULL;
   if (arena) {
     if (!arena->cur_blk) {
-      alloc_block(arena);
+      arena_alloc_block(arena);
     }
 
     // happy case, we can fit the printed string in the rest of the current

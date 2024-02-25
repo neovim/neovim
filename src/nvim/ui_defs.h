@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "nvim/api/private/defs.h"
+#include "nvim/msgpack_rpc/packer_defs.h"
 
 /// Keep in sync with ui_ext_names[] in ui.h
 typedef enum {
@@ -34,19 +35,15 @@ typedef struct ui_t UI;
 typedef struct {
   uint64_t channel_id;
 
-#define UI_BUF_SIZE 4096  ///< total buffer size for pending msgpack data.
+#define UI_BUF_SIZE ARENA_BLOCK_SIZE  ///< total buffer size for pending msgpack data.
   /// guaranteed size available for each new event (so packing of simple events
   /// and the header of grid_line will never fail)
 #define EVENT_BUF_SIZE 256
-  char buf[UI_BUF_SIZE];  ///< buffer of packed but not yet sent msgpack data
-  char *buf_wptr;  ///< write head of buffer
+
+  PackerBuffer packer;
+
   const char *cur_event;  ///< name of current event (might get multiple arglists)
   Array call_buf;  ///< buffer for constructing a single arg list (max 16 elements!)
-
-  // state for write_cb, while packing a single arglist to msgpack. This
-  // might fail due to buffer overflow.
-  size_t pack_totlen;
-  char *temp_buf;
 
   // We start packing the two outermost msgpack arrays before knowing the total
   // number of elements. Thus track the location where array size will need

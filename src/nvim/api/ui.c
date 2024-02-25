@@ -12,6 +12,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/api/ui.h"
+#include "nvim/assert_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
 #include "nvim/channel.h"
@@ -33,12 +34,12 @@
 #include "nvim/memory_defs.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
-#include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/msgpack_rpc/packer.h"
 #include "nvim/option.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 
-#define BUF_POS(data) ((size_t)((data)->buf_wptr - (data)->buf))
+#define BUF_POS(data) ((size_t)((data)->packer.ptr - (data)->packer.startptr))
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/ui.c.generated.h"
@@ -46,55 +47,6 @@
 #endif
 
 static PMap(uint64_t) connected_uis = MAP_INIT;
-
-#define mpack_w(b, byte) *(*(b))++ = (char)(byte);
-static void mpack_w2(char **b, uint32_t v)
-{
-  *(*b)++ = (char)((v >> 8) & 0xff);
-  *(*b)++ = (char)(v & 0xff);
-}
-
-static void mpack_w4(char **b, uint32_t v)
-{
-  *(*b)++ = (char)((v >> 24) & 0xff);
-  *(*b)++ = (char)((v >> 16) & 0xff);
-  *(*b)++ = (char)((v >> 8) & 0xff);
-  *(*b)++ = (char)(v & 0xff);
-}
-
-static void mpack_uint(char **buf, uint32_t val)
-{
-  if (val > 0xffff) {
-    mpack_w(buf, 0xce);
-    mpack_w4(buf, val);
-  } else if (val > 0xff) {
-    mpack_w(buf, 0xcd);
-    mpack_w2(buf, val);
-  } else if (val > 0x7f) {
-    mpack_w(buf, 0xcc);
-    mpack_w(buf, val);
-  } else {
-    mpack_w(buf, val);
-  }
-}
-
-static void mpack_bool(char **buf, bool val)
-{
-  mpack_w(buf, 0xc2 | (val ? 1 : 0));
-}
-
-static void mpack_array(char **buf, uint32_t len)
-{
-  if (len < 0x10) {
-    mpack_w(buf, 0x90 | len);
-  } else if (len < 0x10000) {
-    mpack_w(buf, 0xdc);
-    mpack_w2(buf, len);
-  } else {
-    mpack_w(buf, 0xdd);
-    mpack_w4(buf, len);
-  }
-}
 
 static char *mpack_array_dyn16(char **buf)
 {
@@ -104,9 +56,9 @@ static char *mpack_array_dyn16(char **buf)
   return pos;
 }
 
-static void mpack_str(char **buf, const char *str, size_t len)
+static void mpack_str_small(char **buf, const char *str, size_t len)
 {
-  assert(sizeof(schar_T) - 1 < 0x20);
+  assert(len < 0x20);
   mpack_w(buf, 0xa0 | len);
   memcpy(*buf, str, len);
   *buf += len;
@@ -117,6 +69,7 @@ static void remote_ui_destroy(UI *ui)
 {
   UIData *data = ui->data;
   kv_destroy(data->call_buf);
+  xfree(data->packer.startptr);
   XFREE_CLEAR(ui->term_name);
   xfree(ui);
 }
@@ -231,8 +184,13 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dictiona
   data->ncalls_pos = NULL;
   data->ncalls = 0;
   data->ncells_pending = 0;
-  data->buf_wptr = data->buf;
-  data->temp_buf = NULL;
+  data->packer = (PackerBuffer) {
+    .startptr = NULL,
+    .ptr = NULL,
+    .endptr = NULL,
+    .packer_flush = ui_flush_callback,
+    .anydata = data,
+  };
   data->wildmenu_active = false;
   data->call_buf = (Array)ARRAY_DICT_INIT;
   kv_ensure_space(data->call_buf, 16);
@@ -561,72 +519,29 @@ void nvim_ui_term_event(uint64_t channel_id, String event, Object value, Error *
 static void flush_event(UIData *data)
 {
   if (data->cur_event) {
-    mpack_w2(&data->ncalls_pos, data->ncalls);
+    mpack_w2(&data->ncalls_pos, 1 + data->ncalls);
     data->cur_event = NULL;
-  }
-  if (!data->nevents_pos) {
-    assert(BUF_POS(data) == 0);
-    char **buf = &data->buf_wptr;
-    // [2, "redraw", [...]]
-    mpack_array(buf, 3);
-    mpack_uint(buf, 2);
-    mpack_str(buf, S_LEN("redraw"));
-    data->nevents_pos = mpack_array_dyn16(buf);
+    data->ncalls_pos = NULL;
+    data->ncalls = 0;
   }
 }
 
-static inline int write_cb(void *vdata, const char *buf, size_t len)
+static void ui_alloc_buf(UIData *data)
 {
-  UIData *data = (UIData *)vdata;
-  if (!buf) {
-    return 0;
-  }
-
-  data->pack_totlen += len;
-  if (!data->temp_buf && UI_BUF_SIZE - BUF_POS(data) < len) {
-    return 0;
-  }
-
-  memcpy(data->buf_wptr, buf, len);
-  data->buf_wptr += len;
-
-  return 0;
+  data->packer.startptr = alloc_block();
+  data->packer.ptr = data->packer.startptr;
+  data->packer.endptr = data->packer.startptr + UI_BUF_SIZE;
 }
 
-static inline int size_cb(void *vdata, const char *buf, size_t len)
-{
-  UIData *data = (UIData *)vdata;
-  if (!buf) {
-    return 0;
-  }
-
-  data->pack_totlen += len;
-  return 0;
-}
-
-static void prepare_call(UI *ui, const char *name, size_t size_needed)
+static void prepare_call(UI *ui, const char *name)
 {
   UIData *data = ui->data;
-  size_t name_len = strlen(name);
-  const size_t overhead = name_len + 20;
-  bool oversized_message = size_needed + overhead > UI_BUF_SIZE;
-
-  if (oversized_message || BUF_POS(data) > UI_BUF_SIZE - size_needed - overhead) {
-    remote_ui_flush_buf(ui);
+  if (data->packer.startptr && BUF_POS(data) > UI_BUF_SIZE - EVENT_BUF_SIZE) {
+    ui_flush_buf(data);
   }
 
-  if (oversized_message) {
-    // TODO(bfredl): manually testable by setting UI_BUF_SIZE to 1024 (mode_info_set)
-    data->temp_buf = xmalloc(20 + name_len + size_needed);
-    data->buf_wptr = data->temp_buf;
-    char **buf = &data->buf_wptr;
-    mpack_array(buf, 3);
-    mpack_uint(buf, 2);
-    mpack_str(buf, S_LEN("redraw"));
-    mpack_array(buf, 1);
-    mpack_array(buf, 2);
-    mpack_str(buf, name, name_len);
-    return;
+  if (data->packer.startptr == NULL) {
+    ui_alloc_buf(data);
   }
 
   // To optimize data transfer(especially for "grid_line"), we bundle adjacent
@@ -634,26 +549,23 @@ static void prepare_call(UI *ui, const char *name, size_t size_needed)
   // method call is different from "name"
 
   if (!data->cur_event || !strequal(data->cur_event, name)) {
+    char **buf = &data->packer.ptr;
+    if (!data->nevents_pos) {
+      // [2, "redraw", [...]]
+      mpack_array(buf, 3);
+      mpack_uint(buf, 2);
+      mpack_str_small(buf, S_LEN("redraw"));
+      data->nevents_pos = mpack_array_dyn16(buf);
+      assert(data->cur_event == NULL);
+    }
     flush_event(data);
     data->cur_event = name;
-    char **buf = &data->buf_wptr;
     data->ncalls_pos = mpack_array_dyn16(buf);
-    mpack_str(buf, name, strlen(name));
+    mpack_str_small(buf, name, strlen(name));
     data->nevents++;
     data->ncalls = 1;
-    return;
-  }
-}
-
-static void send_oversized_message(UIData *data)
-{
-  if (data->temp_buf) {
-    size_t size = (size_t)(data->buf_wptr - data->temp_buf);
-    WBuffer *buf = wstream_new_buffer(data->temp_buf, size, 1, xfree);
-    rpc_write_raw(data->channel_id, buf);
-    data->temp_buf = NULL;
-    data->buf_wptr = data->buf;
-    data->nevents_pos = NULL;
+  } else {
+    data->ncalls++;
   }
 }
 
@@ -661,23 +573,15 @@ static void send_oversized_message(UIData *data)
 static void push_call(UI *ui, const char *name, Array args)
 {
   UIData *data = ui->data;
+  prepare_call(ui, name);
+  mpack_object_array(args, &data->packer);
+}
 
-  msgpack_packer pac;
-  data->pack_totlen = 0;
-  // First determine the needed size
-  msgpack_packer_init(&pac, data, size_cb);
-  msgpack_rpc_from_array(args, &pac);
-  // Then send the actual message
-  prepare_call(ui, name, data->pack_totlen);
-  msgpack_packer_init(&pac, data, write_cb);
-  msgpack_rpc_from_array(args, &pac);
-
-  // Oversized messages need to be sent immediately
-  if (data->temp_buf) {
-    send_oversized_message(data);
-  }
-
-  data->ncalls++;
+static void ui_flush_callback(PackerBuffer *packer)
+{
+  UIData *data = packer->anydata;
+  ui_flush_buf(data);
+  ui_alloc_buf(data);
 }
 
 void remote_ui_grid_clear(UI *ui, Integer grid)
@@ -869,12 +773,15 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
                         Integer clearcol, Integer clearattr, LineFlags flags, const schar_T *chunk,
                         const sattr_T *attrs)
 {
+  // If MAX_SCHAR_SIZE is made larger, we need to refactor implementation below
+  // to not only use FIXSTR (only up to 0x20 bytes)
+  STATIC_ASSERT(MAX_SCHAR_SIZE - 1 < 0x20, "SCHAR doesn't fit in fixstr");
+
   UIData *data = ui->data;
   if (ui->ui_ext[kUILinegrid]) {
-    prepare_call(ui, "grid_line", EVENT_BUF_SIZE);
-    data->ncalls++;
+    prepare_call(ui, "grid_line");
 
-    char **buf = &data->buf_wptr;
+    char **buf = &data->packer.ptr;
     mpack_array(buf, 5);
     mpack_uint(buf, (uint32_t)grid);
     mpack_uint(buf, (uint32_t)row);
@@ -898,10 +805,9 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
 
           // We only ever set the wrap field on the final "grid_line" event for the line.
           mpack_bool(buf, false);
-          remote_ui_flush_buf(ui);
+          ui_flush_buf(data);
 
-          prepare_call(ui, "grid_line", EVENT_BUF_SIZE);
-          data->ncalls++;
+          prepare_call(ui, "grid_line");
           mpack_array(buf, 5);
           mpack_uint(buf, (uint32_t)grid);
           mpack_uint(buf, (uint32_t)row);
@@ -934,7 +840,7 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
       nelem++;
       data->ncells_pending += 1;
       mpack_array(buf, 3);
-      mpack_str(buf, S_LEN(" "));
+      mpack_str_small(buf, S_LEN(" "));
       mpack_uint(buf, (uint32_t)clearattr);
       mpack_uint(buf, (uint32_t)(clearcol - endcol));
     }
@@ -943,7 +849,7 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
 
     if (data->ncells_pending > 500) {
       // pass off cells to UI to let it start processing them
-      remote_ui_flush_buf(ui);
+      ui_flush_buf(data);
     }
   } else {
     for (int i = 0; i < endcol - startcol; i++) {
@@ -977,28 +883,27 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
 ///
 /// This might happen multiple times before the actual ui_flush, if the
 /// total redraw size is large!
-void remote_ui_flush_buf(UI *ui)
+static void ui_flush_buf(UIData *data)
 {
-  UIData *data = ui->data;
-  if (!data->nevents_pos) {
+  if (!data->packer.startptr || !BUF_POS(data)) {
     return;
   }
-  if (data->cur_event) {
-    flush_event(data);
+
+  flush_event(data);
+  if (data->nevents_pos != NULL) {
+    mpack_w2(&data->nevents_pos, data->nevents);
+    data->nevents = 0;
+    data->nevents_pos = NULL;
   }
-  mpack_w2(&data->nevents_pos, data->nevents);
-  data->nevents = 0;
-  data->nevents_pos = NULL;
 
-  // TODO(bfredl): elide copy by a length one free-list like the arena
-  size_t size = BUF_POS(data);
-  WBuffer *buf = wstream_new_buffer(xmemdup(data->buf, size), size, 1, xfree);
+  WBuffer *buf = wstream_new_buffer(data->packer.startptr, BUF_POS(data), 1, free_block);
   rpc_write_raw(data->channel_id, buf);
-  data->buf_wptr = data->buf;
-  // we have sent events to the client, but possibly not yet the final "flush"
-  // event.
-  data->flushed_events = true;
 
+  data->packer.startptr = NULL;
+  data->packer.ptr = NULL;
+
+  // we have sent events to the client, but possibly not yet the final "flush" event.
+  data->flushed_events = true;
   data->ncells_pending = 0;
 }
 
@@ -1014,7 +919,7 @@ void remote_ui_flush(UI *ui)
       remote_ui_cursor_goto(ui, data->cursor_row, data->cursor_col);
     }
     push_call(ui, "flush", (Array)ARRAY_DICT_INIT);
-    remote_ui_flush_buf(ui);
+    ui_flush_buf(data);
     data->flushed_events = false;
   }
 }
