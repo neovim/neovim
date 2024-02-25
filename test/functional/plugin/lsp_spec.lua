@@ -2611,7 +2611,7 @@ describe('LSP', function()
 
       eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
       eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new))
-      eq('Old file\n', read_file(new))
+      eq('Old file', read_file(new))
     end)
   end)
 
