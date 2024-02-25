@@ -368,12 +368,12 @@ processing a quickfix or location list command, it will be aborted.
 :cl[ist]! +{count}	List the current and next {count} error lines.  This
 			is useful to see unrecognized lines after the current
 			one.  For example, if ":clist" shows:
-        8384 testje.java:252: error: cannot find symbol ~
+	8384 testje.java:252: error: cannot find symbol ~
 			Then using ":cl! +3" shows the reason:
-        8384 testje.java:252: error: cannot find symbol ~
-        8385:   ZexitCode = Fmainx(); ~
-        8386:               ^ ~
-        8387:   symbol:   method Fmainx() ~
+	8384 testje.java:252: error: cannot find symbol ~
+	8385:   ZexitCode = Fmainx(); ~
+	8386:               ^ ~
+	8387:   symbol:   method Fmainx() ~
 
 :lli[st] [from] [, [to]]				*:lli* *:llist*
 			Same as ":clist", except the location list for the

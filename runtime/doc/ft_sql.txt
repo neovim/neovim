@@ -375,7 +375,7 @@ This command breaks down as: >
     'sqlKeyword'	   - Display the items for the sqlKeyword highlight
 			     group
     'sqlKeyword\w*'	   - A second option available with Vim 7.4 which
-                             uses a regular expression to determine which
+			     uses a regular expression to determine which
 			     syntax groups to use
     )<CR>		   - Execute the :let command
     <C-X><C-O>		   - Trigger the standard omni completion key stroke.
