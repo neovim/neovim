@@ -1280,7 +1280,7 @@ function lsp.formatexpr(opts)
       local response =
         client.request_sync(ms.textDocument_rangeFormatting, params, timeout_ms, bufnr)
       if response and response.result then
-        lsp.util.apply_text_edits(response.result, 0, client.offset_encoding)
+        lsp.util.apply_text_edits(response.result, bufnr, client.offset_encoding)
         return 0
       end
     end
