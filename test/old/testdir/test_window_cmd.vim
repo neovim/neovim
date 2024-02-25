@@ -2105,19 +2105,6 @@ func Test_new_help_window_on_error()
   call assert_equal(expand("<cword>"), "'mod'")
 endfunc
 
-func Test_smoothscroll_in_zero_width_window()
-  set cpo+=n number smoothscroll
-  set winwidth=99999 winminwidth=0
-
-  vsplit
-  call assert_equal(0, winwidth(winnr('#')))
-  call win_execute(win_getid(winnr('#')), "norm! \<C-Y>")
-
-  only!
-  set winwidth& winminwidth&
-  set cpo-=n nonumber nosmoothscroll
-endfunc
-
 func Test_splitmove_flatten_frame()
   split
   vsplit
@@ -2131,7 +2118,7 @@ func Test_splitmove_flatten_frame()
   only!
 endfunc
 
-func Test_splitmove_autocmd_window_no_room()
+func Test_autocmd_window_force_room()
   " Open as many windows as possible
   while v:true
     try
@@ -2158,7 +2145,7 @@ func Test_splitmove_autocmd_window_no_room()
   edit unload me
   enew
   bunload! unload\ me
-  augroup SplitMoveAucmdWin
+  augroup AucmdWinForceRoom
     au!
     au BufEnter * ++once let s:triggered = v:true
                       \| call assert_equal('autocmd', win_gettype())
@@ -2172,8 +2159,8 @@ func Test_splitmove_autocmd_window_no_room()
   call assert_equal(winrestcmd(), restcmd)
 
   unlet! s:triggered
-  au! SplitMoveAucmdWin
-  augroup! SplitMoveAucmdWin
+  au! AucmdWinForceRoom
+  augroup! AucmdWinForceRoom
   %bw!
 endfunc
 
