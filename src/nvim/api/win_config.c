@@ -260,7 +260,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
     int flags = win_split_flags(fconfig.split, parent == NULL) | WSP_NOENTER;
 
     if (parent == NULL) {
-      wp = win_split_ins(0, flags, NULL, 0);
+      wp = win_split_ins(0, flags, NULL, 0, NULL);
     } else {
       tp = win_find_tabpage(parent);
       switchwin_T switchwin;
@@ -268,7 +268,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
       const int result = switch_win(&switchwin, parent, tp, true);
       assert(result == OK);
       (void)result;
-      wp = win_split_ins(0, flags, NULL, 0);
+      wp = win_split_ins(0, flags, NULL, 0, NULL);
       restore_win(&switchwin, true);
     }
     if (wp) {
@@ -495,11 +495,11 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
           // If the frame doesn't have a parent, the old frame
           // was the root frame and we need to create a top-level split.
           int dir;
-          new_curwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp);
+          new_curwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp, NULL);
         } else if (n_frames == 2) {
           // There are two windows in the frame, we can just rotate it.
           int dir;
-          neighbor = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp);
+          neighbor = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp, NULL);
           new_curwin = neighbor;
         } else {
           // There is only one window in the frame, we can't split it.
@@ -511,7 +511,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
         parent = neighbor;
       } else {
         int dir;
-        new_curwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp);
+        new_curwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp, NULL);
       }
       win_remove(win, win_tp == curtab ? NULL : win_tp);
       // move to neighboring window if we're moving the current window to a new tabpage
@@ -531,7 +531,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     int flags = win_split_flags(fconfig.split, parent == NULL) | WSP_NOENTER;
 
     if (parent == NULL) {
-      if (!win_split_ins(0, flags, win, 0)) {
+      if (!win_split_ins(0, flags, win, 0, NULL)) {
         // TODO(willothy): What should this error message say?
         api_set_error(err, kErrorTypeException, "Failed to split window");
         return;
@@ -542,7 +542,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
       const int result = switch_win(&switchwin, parent, win_find_tabpage(parent), true);
       (void)result;
       assert(result == OK);
-      win_split_ins(0, flags, win, 0);
+      win_split_ins(0, flags, win, 0, NULL);
       restore_win(&switchwin, true);
     }
     if (HAS_KEY_X(config, width)) {

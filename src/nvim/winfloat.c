@@ -57,7 +57,7 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
       return NULL;
     }
     int dir;
-    winframe_remove(wp, &dir, NULL);
+    winframe_remove(wp, &dir, NULL, NULL);
     XFREE_CLEAR(wp->w_frame);
     win_comp_pos();  // recompute window positions
     win_remove(wp, NULL);
