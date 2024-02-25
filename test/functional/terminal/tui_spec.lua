@@ -2669,10 +2669,9 @@ describe("TUI 'term' option", function()
     })
 
     local full_timeout = screen.timeout
-    screen.timeout = 250 -- We want screen:expect() to fail quickly.
     retry(nil, 2 * full_timeout, function() -- Wait for TUI thread to set 'term'.
       feed_data(":echo 'term='.(&term)\n")
-      screen:expect { any = 'term=' .. term_expected }
+      screen:expect { any = 'term=' .. term_expected, timeout = 250 }
     end)
   end
 
