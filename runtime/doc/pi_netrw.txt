@@ -639,7 +639,7 @@ additional prompting.
 	work with your ftp client.  Otherwise the script will
 	prompt for user-id and password.
 
-        (*3) for ftp, "machine" may be machine#port or machine:port
+	(*3) for ftp, "machine" may be machine#port or machine:port
 	if a different port is needed than the standard ftp port
 
 	(*4) for http:..., if wget is available it will be used.  Otherwise,
@@ -785,7 +785,7 @@ below, a {netfile} is a URL to a remote file.
 		(related: |netrw-userpass|)
 
 :NetrwSettings  This command is described in |netrw-settings| -- used to
-                display netrw settings and change netrw behavior.
+		display netrw settings and change netrw behavior.
 
 
 ==============================================================================

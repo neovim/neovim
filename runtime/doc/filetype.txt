@@ -459,7 +459,7 @@ g:changelog_new_date_format
 				%%	insert a single '%' character
 				%d	insert the date from above
 				%u	insert the user from above
-                                %p	insert result of b:changelog_entry_prefix
+				%p	insert result of b:changelog_entry_prefix
 				%c	where to position cursor when done
 			The default is "%d  %u\n\n\t* %p%c\n\n", which produces
 			something like (| is where cursor will be, unless at
@@ -473,7 +473,7 @@ g:changelog_new_entry_format
 			The format used when creating a new entry.
 			The following table describes special tokens in the
 			string:
-                                %p	insert result of b:changelog_entry_prefix
+				%p	insert result of b:changelog_entry_prefix
 				%c	where to position cursor when done
 			The default is "\t*%c", which produces something
 			similar to >

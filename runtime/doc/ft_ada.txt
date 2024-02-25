@@ -172,7 +172,7 @@ GNAT OBJECT ~
 							       *g:gnat.Make()*
 g:gnat.Make()
 		Calls |g:gnat.Make_Command| and displays the result inside a
-               |quickfix| window.
+		|quickfix| window.
 
 							     *g:gnat.Pretty()*
 g:gnat.Pretty()
