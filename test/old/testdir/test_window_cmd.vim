@@ -1150,6 +1150,15 @@ func Test_win_splitmove()
   call assert_equal(v:true, s:triggered)
   unlet! s:triggered
 
+  split
+  let close_win = winnr('#')
+  augroup WinSplitMove
+    au!
+    au WinEnter * ++once quit!
+  augroup END
+  call win_splitmove(close_win, winnr())
+  call assert_equal(0, win_id2win(close_win))
+
   au! WinSplitMove
   augroup! WinSplitMove
   %bw!
