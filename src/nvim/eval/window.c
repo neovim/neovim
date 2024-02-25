@@ -584,6 +584,11 @@ void f_win_getid(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 void f_win_gotoid(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   int id = (int)tv_get_number(&argvars[0]);
+  if (curwin->handle == id) {
+    // Nothing to do.
+    rettv->vval.v_number = 1;
+    return;
+  }
 
   if (text_or_buf_locked()) {
     return;

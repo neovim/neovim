@@ -2173,6 +2173,10 @@ func Test_win_gotoid_splitmove_textlock_cmdwin()
   set debug+=throw indentexpr=win_gotoid(win_getid(winnr('#')))
   call assert_fails('normal! ==', 'E565:')
   call assert_equal(curwin, win_getid())
+  " No error if attempting to switch to curwin; nothing happens.
+  set indentexpr=assert_equal(1,win_gotoid(win_getid()))
+  normal! ==
+  call assert_equal(curwin, win_getid())
 
   set indentexpr=win_splitmove(winnr('#'),winnr())
   call assert_fails('normal! ==', 'E565:')
@@ -2188,6 +2192,8 @@ func Test_win_gotoid_splitmove_textlock_cmdwin()
 
   call feedkeys('q:'
            \ .. ":call assert_fails('call win_gotoid(win_getid(winnr(''#'')))', 'E11:')\<CR>"
+           "\ No error if attempting to switch to curwin; nothing happens.
+           \ .. ":call assert_equal(1, win_gotoid(win_getid()))\<CR>"
            \ .. ":call assert_equal('command', win_gettype())\<CR>"
            \ .. ":call assert_equal('', win_gettype(winnr('#')))\<CR>", 'ntx')
 endfunc
