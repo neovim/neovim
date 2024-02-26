@@ -1918,7 +1918,7 @@ CharBoundsOff utf_cp_bounds_len(char const *base, char const *p_in, int p_len)
     }
   }
 
-  return (CharBoundsOff){ .begin_off = (int8_t)first_off, .end_off = (int8_t)max_end_off };
+  return (CharBoundsOff){ .begin_off = (int8_t)-first_off, .end_off = (int8_t)max_end_off };
 }
 
 /// Returns the offset in bytes from "p_in" to the first and one-past-end bytes

@@ -68,6 +68,6 @@ typedef struct {
 } StrCharInfo;
 
 typedef struct {
-  int8_t begin_off;  ///< Offset <= 0 to the first byte of the codepoint.
+  int8_t begin_off;  ///< Offset to the first byte of the codepoint.
   int8_t end_off;    ///< Offset to one past the end byte of the codepoint.
 } CharBoundsOff;
