@@ -4,6 +4,8 @@ local lsp = vim.lsp
 local protocol = lsp.protocol
 local ms = protocol.Methods
 
+--- @alias vim.lsp.CompletionResult lsp.CompletionList | lsp.CompletionItem[]
+
 ---@param input string unparsed snippet
 ---@return string parsed snippet
 local function parse_snippet(input)
@@ -37,7 +39,7 @@ local function get_completion_word(item)
   return item.label
 end
 
----@param result lsp.CompletionList|lsp.CompletionItem[]
+---@param result vim.lsp.CompletionResult
 ---@return lsp.CompletionItem[]
 local function get_items(result)
   if result.items then
@@ -49,7 +51,7 @@ end
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
----@param result lsp.CompletionList|lsp.CompletionItem[] Result of `textDocument/completion`
+---@param result vim.lsp.CompletionResult Result of `textDocument/completion`
 ---@param prefix string prefix to filter the completion items
 ---@return table[]
 ---@see complete-items
@@ -130,7 +132,7 @@ end
 ---@param lnum integer 0-indexed line number
 ---@param client_start_boundary integer 0-indexed word boundary
 ---@param server_start_boundary? integer 0-indexed word boundary, based on textEdit.range.start.character
----@param result lsp.CompletionList|lsp.CompletionItem[]
+---@param result vim.lsp.CompletionResult
 ---@param encoding string
 ---@return table[] matches
 ---@return integer? server_start_boundary
