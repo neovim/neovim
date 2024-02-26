@@ -548,6 +548,10 @@ end
 --- Can be used to extract the completion items from a
 --- `textDocument/completion` request, which may return one of
 --- `CompletionItem[]`, `CompletionList` or null.
+---
+--- Note that this method doesn't apply `itemDefaults` to `CompletionList`s, and hence the returned
+--- results might be incorrect.
+---
 ---@deprecated
 ---@param result table The result of a `textDocument/completion` request
 ---@return lsp.CompletionItem[] List of completion items

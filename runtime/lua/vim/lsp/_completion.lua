@@ -6,6 +6,14 @@ local ms = protocol.Methods
 
 --- @alias vim.lsp.CompletionResult lsp.CompletionList | lsp.CompletionItem[]
 
+-- TODO(mariasolos): Remove this declaration once we figure out a better way to handle
+-- literal/anonymous types (see https://github.com/neovim/neovim/pull/27542/files#r1495259331).
+--- @class lsp.ItemDefaults
+--- @field editRange lsp.Range | { insert: lsp.Range, replace: lsp.Range } | nil
+--- @field insertTextFormat lsp.InsertTextFormat?
+--- @field insertTextMode lsp.InsertTextMode?
+--- @field data any
+
 ---@param input string unparsed snippet
 ---@return string parsed snippet
 local function parse_snippet(input)
@@ -39,13 +47,43 @@ local function get_completion_word(item)
   return item.label
 end
 
+--- Applies the given defaults to the completion item, modifying it in place.
+---
+--- @param item lsp.CompletionItem
+--- @param defaults lsp.ItemDefaults?
+local function apply_defaults(item, defaults)
+  if not defaults then
+    return
+  end
+
+  item.insertTextFormat = item.insertTextFormat or defaults.insertTextFormat
+  item.insertTextMode = item.insertTextMode or defaults.insertTextMode
+  item.data = item.data or defaults.data
+  if defaults.editRange then
+    local textEdit = item.textEdit or {}
+    item.textEdit = textEdit
+    textEdit.newText = textEdit.newText or item.textEditText or item.insertText
+    if defaults.editRange.start then
+      textEdit.range = textEdit.range or defaults.editRange
+    elseif defaults.editRange.insert then
+      textEdit.insert = defaults.editRange.insert
+      textEdit.replace = defaults.editRange.replace
+    end
+  end
+end
+
 ---@param result vim.lsp.CompletionResult
 ---@return lsp.CompletionItem[]
 local function get_items(result)
   if result.items then
+    for _, item in ipairs(result.items) do
+      ---@diagnostic disable-next-line: param-type-mismatch
+      apply_defaults(item, result.itemDefaults)
+    end
     return result.items
+  else
+    return result
   end
-  return result
 end
 
 --- Turns the result of a `textDocument/completion` request into vim-compatible
