@@ -764,6 +764,14 @@ function protocol.make_client_capabilities()
             return res
           end)(),
         },
+        completionList = {
+          itemDefaults = {
+            'editRange',
+            'insertTextFormat',
+            'insertTextMode',
+            'data',
+          },
+        },
 
         -- TODO(tjdevries): Implement this
         contextSupport = false,
