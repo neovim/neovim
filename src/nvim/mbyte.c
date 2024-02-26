@@ -1884,6 +1884,20 @@ void mb_copy_char(const char **const fp, char **const tp)
   *fp += l;
 }
 
+/// Return the offset from "p" to the first byte of a character.  When "p" is
+/// at the start of a character 0 is returned, otherwise the offset to the next
+/// character.  Can start anywhere in a stream of bytes.
+int mb_off_next(const char *base, const char *p)
+{
+  int head_off = utf_head_off(base, p);
+
+  if (head_off == 0) {
+    return 0;
+  }
+
+  return utfc_ptr2len(p - head_off) - head_off;
+}
+
 /// Returns the offset in bytes from "p_in" to the first and one-past-end bytes
 /// of the codepoint it points to.
 /// "p_in" can point anywhere in a stream of bytes.

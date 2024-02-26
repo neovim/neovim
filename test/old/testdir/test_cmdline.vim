@@ -864,10 +864,28 @@ func Test_cmdline_remove_char()
   let &encoding = encoding_save
 endfunc
 
-func Test_cmdline_keymap_ctrl_hat()
-  if !has('keymap')
-    return
+func Test_cmdline_del_utf8()
+  let @s = '⒌'
+  call feedkeys(":\"\<C-R>s,,\<C-B>\<Right>\<Del>\<CR>", 'tx')
+  call assert_equal('",,', @:)
+
+  let @s = 'a̳'
+  call feedkeys(":\"\<C-R>s,,\<C-B>\<Right>\<Del>\<CR>", 'tx')
+  call assert_equal('",,', @:)
+
+  let @s = 'β̳'
+  call feedkeys(":\"\<C-R>s,,\<C-B>\<Right>\<Del>\<CR>", 'tx')
+  call assert_equal('",,', @:)
+
+  if has('arabic')
+    let @s = 'لا'
+    call feedkeys(":\"\<C-R>s,,\<C-B>\<Right>\<Del>\<CR>", 'tx')
+    call assert_equal('",,', @:)
   endif
+endfunc
+
+func Test_cmdline_keymap_ctrl_hat()
+  CheckFeature keymap
 
   set keymap=esperanto
   call feedkeys(":\"Jxauxdo \<C-^>Jxauxdo \<C-^>Jxauxdo\<CR>", 'tx')
