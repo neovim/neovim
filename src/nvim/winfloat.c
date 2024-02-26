@@ -61,7 +61,7 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
     XFREE_CLEAR(wp->w_frame);
     win_comp_pos();  // recompute window positions
     win_remove(wp, NULL);
-    win_append(lastwin_nofloating(), wp);
+    win_append(lastwin_nofloating(), wp, NULL);
   }
   wp->w_floating = true;
   wp->w_status_height = 0;

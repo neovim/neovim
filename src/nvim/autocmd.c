@@ -1333,7 +1333,7 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
 
     block_autocmds();  // We don't want BufEnter/WinEnter autocommands.
     if (need_append) {
-      win_append(lastwin, auc_win);
+      win_append(lastwin, auc_win, NULL);
       pmap_put(int)(&window_handles, auc_win->handle, auc_win);
       win_config_float(auc_win, auc_win->w_config);
     }

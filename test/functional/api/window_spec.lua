@@ -1654,6 +1654,18 @@ describe('API/win', function()
       api.nvim_open_win(new_buf, false, { split = 'left' })
       eq('foobarbaz', eval('triggered'))
     end)
+
+    it('sets error when no room', function()
+      matches('E36: Not enough room$', pcall_err(command, 'execute "split|"->repeat(&lines)'))
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_open_win, 0, true, { split = 'above', win = 0 })
+      )
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_open_win, 0, true, { split = 'below', win = 0 })
+      )
+    end)
   end)
 
   describe('set_config', function()
@@ -1965,23 +1977,89 @@ describe('API/win', function()
 
     it('closing new curwin when moving window to other tabpage works', function()
       command('split | tabnew')
-      local w = api.nvim_get_current_win()
-      local t = api.nvim_get_current_tabpage()
-      command('tabfirst | autocmd WinEnter * quit')
-      api.nvim_win_set_config(0, { win = w, split = 'left' })
-      -- New tabpage is now the only one, as WinEnter closed the new curwin in the original.
-      eq(t, api.nvim_get_current_tabpage())
-      eq({ t }, api.nvim_list_tabpages())
+      local t2_win = api.nvim_get_current_win()
+      command('tabfirst | autocmd WinEnter * ++once quit')
+      local t1_move_win = api.nvim_get_current_win()
+      -- win_set_config fails to switch away from "t1_move_win" because the WinEnter autocmd that
+      -- closed the window we're switched to returns us to "t1_move_win", as it filled the space.
+      eq(
+        'Failed to switch away from window ' .. t1_move_win,
+        pcall_err(api.nvim_win_set_config, t1_move_win, { win = t2_win, split = 'left' })
+      )
+      eq(t1_move_win, api.nvim_get_current_win())
+
+      command('split | split | autocmd WinEnter * ++once quit')
+      t1_move_win = api.nvim_get_current_win()
+      -- In this case, we closed the window that we got switched to, but doing so didn't switch us
+      -- back to "t1_move_win", which is fine.
+      api.nvim_win_set_config(t1_move_win, { win = t2_win, split = 'left' })
+      neq(t1_move_win, api.nvim_get_current_win())
     end)
 
-    it('closing split parent when moving window to other tabpage aborts', function()
+    it('messing with "win" or "parent" when moving "win" to other tabpage', function()
       command('split | tabnew')
-      local w = api.nvim_get_current_win()
-      command('tabfirst | autocmd WinEnter * call nvim_win_close(' .. w .. ', 1)')
+      local t2 = api.nvim_get_current_tabpage()
+      local t2_win1 = api.nvim_get_current_win()
+      command('split')
+      local t2_win2 = api.nvim_get_current_win()
+      command('split')
+      local t2_win3 = api.nvim_get_current_win()
+
+      command('tabfirst | autocmd WinEnter * ++once call nvim_win_close(' .. t2_win1 .. ', 1)')
+      local cur_win = api.nvim_get_current_win()
       eq(
-        'Window to split was closed',
-        pcall_err(api.nvim_win_set_config, 0, { win = w, split = 'left' })
+        'Windows to split were closed',
+        pcall_err(api.nvim_win_set_config, 0, { win = t2_win1, split = 'left' })
       )
+      eq(cur_win, api.nvim_get_current_win())
+
+      command('split | autocmd WinLeave * ++once quit!')
+      cur_win = api.nvim_get_current_win()
+      eq(
+        'Windows to split were closed',
+        pcall_err(api.nvim_win_set_config, 0, { win = t2_win2, split = 'left' })
+      )
+      neq(cur_win, api.nvim_get_current_win())
+
+      exec([[
+        split
+        autocmd WinLeave * ++once
+              \ call nvim_win_set_config(0, #{relative:'editor', row:0, col:0, width:5, height:5})
+      ]])
+      cur_win = api.nvim_get_current_win()
+      eq(
+        'Floating state of windows to split changed',
+        pcall_err(api.nvim_win_set_config, 0, { win = t2_win3, split = 'left' })
+      )
+      eq('editor', api.nvim_win_get_config(0).relative)
+      eq(cur_win, api.nvim_get_current_win())
+
+      command('autocmd WinLeave * ++once wincmd J')
+      cur_win = api.nvim_get_current_win()
+      eq(
+        'Floating state of windows to split changed',
+        pcall_err(api.nvim_win_set_config, 0, { win = t2_win3, split = 'left' })
+      )
+      eq('', api.nvim_win_get_config(0).relative)
+      eq(cur_win, api.nvim_get_current_win())
+
+      -- Try to make "parent" floating. This should give the same error as before, but because
+      -- changing a split from another tabpage into a float isn't supported yet, check for that
+      -- error instead for now.
+      -- Use ":silent!" to avoid the one second delay from printing the error message.
+      exec(([[
+        autocmd WinLeave * ++once silent!
+              \ call nvim_win_set_config(%d, #{relative:'editor', row:0, col:0, width:5, height:5})
+      ]]):format(t2_win3))
+      cur_win = api.nvim_get_current_win()
+      api.nvim_win_set_config(0, { win = t2_win3, split = 'left' })
+      matches(
+        'Cannot change window from different tabpage into float$',
+        api.nvim_get_vvar('errmsg')
+      )
+      -- The error doesn't abort moving the window (or maybe it should, if that's wanted?)
+      neq(cur_win, api.nvim_get_current_win())
+      eq(t2, api.nvim_win_get_tabpage(cur_win))
     end)
 
     it('expected autocmds when moving window to other tabpage', function()
@@ -2030,6 +2108,223 @@ describe('API/win', function()
       local w = api.nvim_get_current_win()
       command('autocmd BufHidden * ++once call nvim_win_set_config(' .. w .. ', #{split: "left"})')
       command('new | quit')
+    end)
+
+    --- Returns a function to get information about the window layout, sizes and positions of a
+    --- tabpage.
+    local function define_tp_info_function()
+      exec_lua([[
+        function tp_info(tp)
+          return {
+            layout = vim.fn.winlayout(vim.api.nvim_tabpage_get_number(tp)),
+            pos_sizes = vim.tbl_map(
+              function(w)
+                local pos = vim.fn.win_screenpos(w)
+                return {
+                  row = pos[1],
+                  col = pos[2],
+                  width = vim.fn.winwidth(w),
+                  height = vim.fn.winheight(w)
+                }
+              end,
+              vim.api.nvim_tabpage_list_wins(tp)
+            )
+          }
+        end
+      ]])
+
+      return function(tp)
+        return exec_lua('return tp_info(...)', tp)
+      end
+    end
+
+    it('attempt to move window with no room', function()
+      -- Fill the 2nd tabpage full of windows until we run out of room.
+      -- Use &laststatus=0 to ensure restoring missing statuslines doesn't affect things.
+      command('set laststatus=0 | tabnew')
+      matches('E36: Not enough room$', pcall_err(command, 'execute "split|"->repeat(&lines)'))
+      command('vsplit | wincmd | | wincmd p')
+      local t2 = api.nvim_get_current_tabpage()
+      local t2_cur_win = api.nvim_get_current_win()
+      local t2_top_split = fn.win_getid(1)
+      local t2_bot_split = fn.win_getid(fn.winnr('$'))
+      local t2_float = api.nvim_open_win(
+        0,
+        false,
+        { relative = 'editor', row = 0, col = 0, width = 10, height = 10 }
+      )
+      local t2_float_config = api.nvim_win_get_config(t2_float)
+      local tp_info = define_tp_info_function()
+      local t2_info = tp_info(t2)
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, 0, { win = t2_top_split, split = 'above' })
+      )
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, 0, { win = t2_top_split, split = 'below' })
+      )
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, 0, { win = t2_bot_split, split = 'above' })
+      )
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, 0, { win = t2_bot_split, split = 'below' })
+      )
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, t2_float, { win = t2_top_split, split = 'above' })
+      )
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, t2_float, { win = t2_top_split, split = 'below' })
+      )
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, t2_float, { win = t2_bot_split, split = 'above' })
+      )
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, t2_float, { win = t2_bot_split, split = 'below' })
+      )
+      eq(t2_cur_win, api.nvim_get_current_win())
+      eq(t2_info, tp_info(t2))
+      eq(t2_float_config, api.nvim_win_get_config(t2_float))
+
+      -- Try to move windows from the 1st tabpage to the 2nd.
+      command('tabfirst | split | wincmd _')
+      local t1 = api.nvim_get_current_tabpage()
+      local t1_cur_win = api.nvim_get_current_win()
+      local t1_float = api.nvim_open_win(
+        0,
+        false,
+        { relative = 'editor', row = 5, col = 3, width = 7, height = 6 }
+      )
+      local t1_float_config = api.nvim_win_get_config(t1_float)
+      local t1_info = tp_info(t1)
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, 0, { win = t2_top_split, split = 'above' })
+      )
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, 0, { win = t2_top_split, split = 'below' })
+      )
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, 0, { win = t2_bot_split, split = 'above' })
+      )
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, 0, { win = t2_bot_split, split = 'below' })
+      )
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, t1_float, { win = t2_top_split, split = 'above' })
+      )
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, t1_float, { win = t2_top_split, split = 'below' })
+      )
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, t1_float, { win = t2_bot_split, split = 'above' })
+      )
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, t1_float, { win = t2_bot_split, split = 'below' })
+      )
+      eq(t1_cur_win, api.nvim_get_current_win())
+      eq(t1_info, tp_info(t1))
+      eq(t1_float_config, api.nvim_win_get_config(t1_float))
+    end)
+
+    it('attempt to move window from other tabpage with no room', function()
+      -- Fill up the 1st tabpage with horizontal splits, then create a 2nd with only a few. Go back
+      -- to the 1st and try to move windows from the 2nd (while it's non-current) to it. Check that
+      -- window positions and sizes in the 2nd are unchanged.
+      command('set laststatus=0')
+      matches('E36: Not enough room$', pcall_err(command, 'execute "split|"->repeat(&lines)'))
+
+      command('tab split')
+      local t2 = api.nvim_get_current_tabpage()
+      local t2_top = api.nvim_get_current_win()
+      command('belowright split')
+      local t2_mid_left = api.nvim_get_current_win()
+      command('belowright vsplit')
+      local t2_mid_right = api.nvim_get_current_win()
+      command('split | wincmd J')
+      local t2_bot = api.nvim_get_current_win()
+      local tp_info = define_tp_info_function()
+      local t2_info = tp_info(t2)
+      eq({
+        'col',
+        {
+          { 'leaf', t2_top },
+          {
+            'row',
+            {
+              { 'leaf', t2_mid_left },
+              { 'leaf', t2_mid_right },
+            },
+          },
+          { 'leaf', t2_bot },
+        },
+      }, t2_info.layout)
+
+      local function try_move_t2_wins_to_t1()
+        for _, w in ipairs({ t2_bot, t2_mid_left, t2_mid_right, t2_top }) do
+          matches(
+            'E36: Not enough room$',
+            pcall_err(api.nvim_win_set_config, w, { win = 0, split = 'below' })
+          )
+          eq(t2_info, tp_info(t2))
+        end
+      end
+      command('tabfirst')
+      try_move_t2_wins_to_t1()
+      -- Go to the 2nd tabpage to ensure nothing changes after win_comp_pos, last_status, .etc.
+      -- from enter_tabpage.
+      command('tabnext')
+      eq(t2_info, tp_info(t2))
+
+      -- Check things are fine with the global statusline too, for good measure.
+      -- Set it while the 2nd tabpage is current, so last_status runs for it.
+      command('set laststatus=3')
+      t2_info = tp_info(t2)
+      command('tabfirst')
+      try_move_t2_wins_to_t1()
+    end)
+
+    it('does not switch window when textlocked or in the cmdwin', function()
+      command('tabnew')
+      local t2_win = api.nvim_get_current_win()
+      command('tabfirst')
+      feed('q:')
+      local cur_win = api.nvim_get_current_win()
+      eq(
+        'Failed to switch away from window ' .. cur_win,
+        pcall_err(api.nvim_win_set_config, 0, { split = 'left', win = t2_win })
+      )
+      eq(
+        'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        api.nvim_get_vvar('errmsg')
+      )
+      eq(cur_win, api.nvim_get_current_win())
+      command('quit!')
+
+      exec(([[
+        new
+        call setline(1, 'foo')
+        setlocal debug=throw indentexpr=nvim_win_set_config(0,#{split:'left',win:%d})
+      ]]):format(t2_win))
+      cur_win = api.nvim_get_current_win()
+      matches(
+        'E565: Not allowed to change text or change window$',
+        pcall_err(command, 'normal! ==')
+      )
+      eq(cur_win, api.nvim_get_current_win())
     end)
   end)
 
