@@ -143,6 +143,10 @@ do
     group = nvim_terminal_augroup,
     desc = 'Respond to OSC foreground/background color requests',
     callback = function(args)
+      local channel = vim.bo[args.buf].channel
+      if channel == 0 then
+        return
+      end
       local fg_request = args.data == '\027]10;?'
       local bg_request = args.data == '\027]11;?'
       if fg_request or bg_request then
@@ -157,7 +161,6 @@ do
         end
         local command = fg_request and 10 or 11
         local data = string.format('\027]%d;rgb:%04x/%04x/%04x\007', command, red, green, blue)
-        local channel = vim.bo[args.buf].channel
         vim.api.nvim_chan_send(channel, data)
       end
     end,
