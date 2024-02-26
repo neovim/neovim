@@ -1,7 +1,6 @@
 #include <msgpack/object.h>
 #include <msgpack/sbuffer.h>
 #include <msgpack/unpack.h>
-#include <msgpack/zone.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -19,19 +18,16 @@
 # include "msgpack_rpc/helpers.c.generated.h"
 #endif
 
-static msgpack_zone zone;
 static msgpack_sbuffer sbuffer;
 
 void msgpack_rpc_helpers_init(void)
 {
-  msgpack_zone_init(&zone, 0xfff);
   msgpack_sbuffer_init(&sbuffer);
 }
 
 #ifdef EXITFREE
 void msgpack_rpc_helpers_free_all_mem(void)
 {
-  msgpack_zone_destroy(&zone);
   msgpack_sbuffer_destroy(&sbuffer);
 }
 #endif
@@ -246,87 +242,4 @@ void msgpack_rpc_serialize_response(uint32_t response_id, Error *err, Object *ar
     // Return value
     msgpack_rpc_from_object(arg, pac);
   }
-}
-
-static bool msgpack_rpc_is_notification(msgpack_object *req)
-{
-  return req->via.array.ptr[0].via.u64 == 2;
-}
-
-msgpack_object *msgpack_rpc_method(msgpack_object *req)
-{
-  msgpack_object *obj = req->via.array.ptr
-                        + (msgpack_rpc_is_notification(req) ? 1 : 2);
-  return obj->type == MSGPACK_OBJECT_STR || obj->type == MSGPACK_OBJECT_BIN
-         ? obj : NULL;
-}
-
-msgpack_object *msgpack_rpc_args(msgpack_object *req)
-{
-  msgpack_object *obj = req->via.array.ptr
-                        + (msgpack_rpc_is_notification(req) ? 2 : 3);
-  return obj->type == MSGPACK_OBJECT_ARRAY ? obj : NULL;
-}
-
-static msgpack_object *msgpack_rpc_msg_id(msgpack_object *req)
-{
-  if (msgpack_rpc_is_notification(req)) {
-    return NULL;
-  }
-  msgpack_object *obj = &req->via.array.ptr[1];
-  return obj->type == MSGPACK_OBJECT_POSITIVE_INTEGER ? obj : NULL;
-}
-
-MessageType msgpack_rpc_validate(uint32_t *response_id, msgpack_object *req, Error *err)
-{
-  *response_id = 0;
-  // Validate the basic structure of the msgpack-rpc payload
-  if (req->type != MSGPACK_OBJECT_ARRAY) {
-    api_set_error(err, kErrorTypeValidation, "Message is not an array");
-    return kMessageTypeUnknown;
-  }
-
-  if (req->via.array.size == 0) {
-    api_set_error(err, kErrorTypeValidation, "Message is empty");
-    return kMessageTypeUnknown;
-  }
-
-  if (req->via.array.ptr[0].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
-    api_set_error(err, kErrorTypeValidation, "Message type must be an integer");
-    return kMessageTypeUnknown;
-  }
-
-  MessageType type = (MessageType)req->via.array.ptr[0].via.u64;
-  if (type != kMessageTypeRequest && type != kMessageTypeNotification) {
-    api_set_error(err, kErrorTypeValidation, "Unknown message type");
-    return kMessageTypeUnknown;
-  }
-
-  if ((type == kMessageTypeRequest && req->via.array.size != 4)
-      || (type == kMessageTypeNotification && req->via.array.size != 3)) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Request array size must be 4 (request) or 3 (notification)");
-    return type;
-  }
-
-  if (type == kMessageTypeRequest) {
-    msgpack_object *id_obj = msgpack_rpc_msg_id(req);
-    if (!id_obj) {
-      api_set_error(err, kErrorTypeValidation, "ID must be a positive integer");
-      return type;
-    }
-    *response_id = (uint32_t)id_obj->via.u64;
-  }
-
-  if (!msgpack_rpc_method(req)) {
-    api_set_error(err, kErrorTypeValidation, "Method must be a string");
-    return type;
-  }
-
-  if (!msgpack_rpc_args(req)) {
-    api_set_error(err, kErrorTypeValidation, "Parameters must be an array");
-    return type;
-  }
-
-  return type;
 }
