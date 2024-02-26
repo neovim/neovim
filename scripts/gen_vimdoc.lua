@@ -161,6 +161,7 @@ local config = {
       'iter.lua',
       'snippet.lua',
       'text.lua',
+      'tohtml.lua',
     },
     files = {
       'runtime/lua/vim/iter.lua',
@@ -189,6 +190,7 @@ local config = {
       'runtime/lua/vim/_meta/lpeg.lua',
       'runtime/lua/vim/_meta/re.lua',
       'runtime/lua/vim/_meta/spell.lua',
+      'runtime/lua/tohtml.lua',
     },
     fn_xform = function(fun)
       if contains(fun.module, { 'vim.uri', 'vim.shared', 'vim._editor' }) then
@@ -232,6 +234,9 @@ local config = {
       then
         return 'VIM.' .. name:upper()
       end
+      if name == 'tohtml' then
+        return 'Lua module: tohtml'
+      end
       return 'Lua module: vim.' .. name
     end,
     helptag_fmt = function(name)
@@ -239,6 +244,8 @@ local config = {
         return '*lua-vim*'
       elseif name == '_options' then
         return '*lua-vimscript*'
+      elseif name == 'tohtml' then
+        return '*tohtml*'
       end
       return '*vim.' .. name:lower() .. '*'
     end,
