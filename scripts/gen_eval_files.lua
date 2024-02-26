@@ -2,7 +2,7 @@
 
 -- Generator for various vimdoc and Lua type files
 
-local DEP_API_METADATA = 'build/api_metadata.mpack'
+local DEP_API_METADATA = 'build/funcs_metadata.mpack'
 
 --- @class vim.api.metadata
 --- @field name string
