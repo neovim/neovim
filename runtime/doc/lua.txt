@@ -4363,4 +4363,35 @@ vim.text.hexencode({str})                               *vim.text.hexencode()*
         (`string`) Hex encoded string
 
 
+==============================================================================
+Lua module: tohtml                                                *vim.tohtml*
+
+
+:TOhtml {file}                                                       *:TOhtml*
+Converts the buffer shown in the current window to HTML, opens the generated
+HTML in a new split window, and saves its contents to {file}. If {file} is not
+given, a temporary file (created by |tempname()|) is used.
+
+
+tohtml.tohtml({winid}, {opt})                         *tohtml.tohtml.tohtml()*
+    Converts the buffer shown in the window {winid} to HTML and returns the
+    output as a list of string.
+
+    Parameters: ~
+      • {winid}  (`integer?`) Window to convert (defaults to current window)
+      • {opt}    (`table?`) Optional parameters.
+                 • title (string): Title tag to set in the generated HTML code
+                   (defaults to buffer name)
+                 • number_lines (boolean): Show line numbers (defaults to
+                   `false`)
+                 • font (string|string[]): Fonts to use (defaults to
+                   `guifont`)
+                 • width (integer) Width used for items which are either right
+                   aligned or repeat a character infinitely (defaults to
+                   'textwidth' if non-zero or window width otherwise)
+
+    Return: ~
+        (`string[]`)
+
+
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
