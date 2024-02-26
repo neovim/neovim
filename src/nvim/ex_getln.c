@@ -1512,8 +1512,8 @@ static int command_line_erase_chars(CommandLineState *s)
   }
 
   if (s->c == K_DEL) {
-    ccline.cmdpos += mb_off_next(ccline.cmdbuff,
-                                 ccline.cmdbuff + ccline.cmdpos);
+    CharBoundsOff bounds = utf_cp_bounds(ccline.cmdbuff, ccline.cmdbuff + ccline.cmdpos);
+    ccline.cmdpos += bounds.begin_off != 0 ? bounds.end_off : 0;
   }
 
   if (ccline.cmdpos > 0) {

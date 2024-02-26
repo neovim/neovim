@@ -66,3 +66,8 @@ typedef struct {
   char *ptr;     ///< Pointer to the first byte of the character.
   CharInfo chr;  ///< Information about the character.
 } StrCharInfo;
+
+typedef struct {
+  int8_t begin_off;  ///< Offset to the first byte of the codepoint.
+  int8_t end_off;    ///< Offset to one past the end byte of the codepoint.
+} CharBoundsOff;

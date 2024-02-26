@@ -277,7 +277,7 @@ void line_do_arabic_shape(schar_T *buf, int cols)
       // Too bigly, discard one code-point.
       // This should be enough as c0 cannot grow more than from 2 to 4 bytes
       // (base arabic to extended arabic)
-      rest -= (size_t)utf_cp_head_off(scbuf + off, scbuf + off + rest - 1) + 1;
+      rest -= (size_t)utf_cp_bounds(scbuf + off, scbuf + off + rest - 1).begin_off + 1;
     }
     memcpy(scbuf_new + len, scbuf + off, rest);
     buf[i] = schar_from_buf(scbuf_new, len + rest);

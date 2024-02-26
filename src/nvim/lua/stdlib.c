@@ -226,11 +226,12 @@ static int nlua_str_utf_start(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   size_t s1_len;
   const char *s1 = luaL_checklstring(lstate, 1, &s1_len);
   ptrdiff_t offset = luaL_checkinteger(lstate, 2);
-  if (offset < 0 || offset > (intptr_t)s1_len) {
+  if (offset <= 0 || offset > (intptr_t)s1_len) {
     return luaL_error(lstate, "index out of range");
   }
-  int head_offset = -utf_cp_head_off(s1, s1 + offset - 1);
-  lua_pushinteger(lstate, head_offset);
+  size_t const off = (size_t)(offset - 1);
+  int head_off = -utf_cp_bounds_len(s1, s1 + off, (int)(s1_len - off)).begin_off;
+  lua_pushinteger(lstate, head_off);
   return 1;
 }
 
@@ -246,11 +247,12 @@ static int nlua_str_utf_end(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   size_t s1_len;
   const char *s1 = luaL_checklstring(lstate, 1, &s1_len);
   ptrdiff_t offset = luaL_checkinteger(lstate, 2);
-  if (offset < 0 || offset > (intptr_t)s1_len) {
+  if (offset <= 0 || offset > (intptr_t)s1_len) {
     return luaL_error(lstate, "index out of range");
   }
-  int tail_offset = utf_cp_tail_off(s1, s1 + offset - 1);
-  lua_pushinteger(lstate, tail_offset);
+  size_t const off = (size_t)(offset - 1);
+  int tail_off = utf_cp_bounds_len(s1, s1 + off, (int)(s1_len - off)).end_off - 1;
+  lua_pushinteger(lstate, tail_off);
   return 1;
 }
 
