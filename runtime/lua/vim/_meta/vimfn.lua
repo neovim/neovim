@@ -8172,7 +8172,7 @@ function vim.fn.setqflist(list, action, what) end
 ---
 --- @param regname string
 --- @param value any
---- @param options? table
+--- @param options? string
 --- @return any
 function vim.fn.setreg(regname, value, options) end
 
