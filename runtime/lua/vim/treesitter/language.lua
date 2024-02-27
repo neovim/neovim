@@ -137,9 +137,7 @@ function M.register(lang, filetype)
   end
 end
 
---- Inspects the provided language.
----
---- Inspecting provides some useful information on the language like node names, ...
+--- Gets some useful information on the language like node names, ...
 ---
 ---@param lang string Language
 ---@return table

@@ -607,11 +607,17 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
     return s
-  elseif vim.list_contains({ 'codespan', 'keycode' }, node_name) then
+  elseif vim.list_contains({ 'codespan', 'keycode', 'optional' }, node_name) then
     if root:has_error() then
       return text
     end
-    local s = ('%s<code>%s</code>'):format(ws(), trimmed)
+    local class = node_name == 'optional' and ' class="optional"' or ''
+    local s = (
+      node_name == 'keycode'
+        -- TODO: use <kbd>. Currently has a layout issue, example: ":help _".
+        and ('%s<code>%s</code>'):format(ws(), trimmed)
+      or ('%s<code%s>%s</code>'):format(ws(), class, trimmed)
+    )
     if opt.old and node_name == 'codespan' then
       s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
@@ -1013,11 +1019,13 @@ local function gen_css(fname)
   local css = [[
     :root {
       --code-color: #004b4b;
+      --kbd-color: red;
       --tag-color: #095943;
     }
     @media (prefers-color-scheme: dark) {
       :root {
         --code-color: #00c243;
+        --kbd-color: red;
         --tag-color: #00b7b7;
       }
     }
@@ -1087,7 +1095,7 @@ local function gen_css(fname)
       /* Tabs are used for alignment in old docs, so we must match Vim's 8-char expectation. */
       tab-size: 8;
       white-space: pre;
-      font-size: 16px;
+      font-size: 15px;
       font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
     }
     .old-help-para pre {
@@ -1146,7 +1154,14 @@ local function gen_css(fname)
     }
     code {
       color: var(--code-color);
-      font-size: 16px;
+      font-size: 15px;
+    }
+    code.optional {
+      color: yellow;
+    }
+    kbd {
+      /* color: var(--kbd-color); */
+      font-size: 15px;
     }
     pre {
       /* Tabs are used in codeblocks only for indentation, not alignment, so we can aggressively shrink them. */
@@ -1155,7 +1170,7 @@ local function gen_css(fname)
       line-height: 1.3;  /* Important for ascii art. */
       overflow: visible;
       /* font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace; */
-      font-size: 16px;
+      font-size: 15px;
       margin-top: 10px;
     }
     pre:last-child {
