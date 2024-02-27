@@ -136,8 +136,10 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
   int is_doublewidth = false;
   if (use_tabstop) {
     size = tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array);
-  } else if (*cur == NUL && !has_lcs_eol) {
-    size = 0;
+  } else if (*cur == NUL) {
+    // 1 cell for EOL list char (if present), as opposed to the two cell ^@
+    // for a NUL character in the text.
+    size = has_lcs_eol ? 1 : 0;
   } else if (cur_char < 0) {
     size = kInvalidByteCells;
   } else {
