@@ -451,6 +451,12 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     if (!check_split_disallowed_err(win, err)) {
       return;  // error already set
     }
+    // Can't move the cmdwin or its old curwin to a different tabpage.
+    if ((win == cmdwin_win || win == cmdwin_old_curwin) && parent != NULL
+        && win_find_tabpage(parent) != win_tp) {
+      api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
+      return;
+    }
 
     bool to_split_ok = false;
     // If we are moving curwin to another tabpage, switch windows *before* we remove it from the

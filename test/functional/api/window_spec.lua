@@ -2297,29 +2297,82 @@ describe('API/win', function()
       try_move_t2_wins_to_t1()
     end)
 
-    it('does not switch window when textlocked or in the cmdwin', function()
+    it('handles cmdwin and textlock restrictions', function()
       command('tabnew')
+      local t2 = api.nvim_get_current_tabpage()
       local t2_win = api.nvim_get_current_win()
       command('tabfirst')
+      local t1_move_win = api.nvim_get_current_win()
+      command('split')
+
+      -- Can't move the cmdwin, or its old curwin to a different tabpage.
+      local old_curwin = api.nvim_get_current_win()
       feed('q:')
-      local cur_win = api.nvim_get_current_win()
       eq(
-        'Failed to switch away from window ' .. cur_win,
+        'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
         pcall_err(api.nvim_win_set_config, 0, { split = 'left', win = t2_win })
       )
       eq(
         'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-        api.nvim_get_vvar('errmsg')
+        pcall_err(api.nvim_win_set_config, old_curwin, { split = 'left', win = t2_win })
       )
-      eq(cur_win, api.nvim_get_current_win())
+      -- But we can move other windows.
+      api.nvim_win_set_config(t1_move_win, { split = 'left', win = t2_win })
+      eq(t2, api.nvim_win_get_tabpage(t1_move_win))
       command('quit!')
 
+      -- Can't configure windows such that the cmdwin would become the only non-float.
+      command('only!')
+      feed('q:')
+      eq(
+        'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(
+          api.nvim_win_set_config,
+          old_curwin,
+          { relative = 'editor', row = 0, col = 0, width = 5, height = 5 }
+        )
+      )
+      -- old_curwin is now no longer the only other non-float, so we can make it floating now.
+      local t1_new_win = api.nvim_open_win(
+        api.nvim_create_buf(true, true),
+        false,
+        { split = 'left', win = old_curwin }
+      )
+      api.nvim_win_set_config(
+        old_curwin,
+        { relative = 'editor', row = 0, col = 0, width = 5, height = 5 }
+      )
+      eq('editor', api.nvim_win_get_config(old_curwin).relative)
+      -- ...which means we shouldn't be able to also make the new window floating too!
+      eq(
+        'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(
+          api.nvim_win_set_config,
+          t1_new_win,
+          { relative = 'editor', row = 0, col = 0, width = 5, height = 5 }
+        )
+      )
+      -- Nothing ought to stop us from making the cmdwin itself floating, though...
+      api.nvim_win_set_config(0, { relative = 'editor', row = 0, col = 0, width = 5, height = 5 })
+      eq('editor', api.nvim_win_get_config(0).relative)
+      -- We can't make our new window from before floating too, as it's now the only non-float.
+      eq(
+        'Cannot change last window into float',
+        pcall_err(
+          api.nvim_win_set_config,
+          t1_new_win,
+          { relative = 'editor', row = 0, col = 0, width = 5, height = 5 }
+        )
+      )
+      command('quit!')
+
+      -- Can't switch away from window before moving it to a different tabpage during textlock.
       exec(([[
         new
         call setline(1, 'foo')
         setlocal debug=throw indentexpr=nvim_win_set_config(0,#{split:'left',win:%d})
       ]]):format(t2_win))
-      cur_win = api.nvim_get_current_win()
+      local cur_win = api.nvim_get_current_win()
       matches(
         'E565: Not allowed to change text or change window$',
         pcall_err(command, 'normal! ==')

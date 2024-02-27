@@ -55,6 +55,19 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
       api_set_error(err, kErrorTypeException,
                     "Cannot change window from different tabpage into float");
       return NULL;
+    } else if (cmdwin_win != NULL && !cmdwin_win->w_floating) {
+      // cmdwin can't become the only non-float. Check for others.
+      bool other_nonfloat = false;
+      for (win_T *wp2 = firstwin; wp2 != NULL && !wp2->w_floating; wp2 = wp2->w_next) {
+        if (wp2 != wp && wp2 != cmdwin_win) {
+          other_nonfloat = true;
+          break;
+        }
+      }
+      if (!other_nonfloat) {
+        api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
+        return NULL;
+      }
     }
     int dir;
     winframe_remove(wp, &dir, NULL, NULL);
