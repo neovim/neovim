@@ -390,7 +390,7 @@ local function clear(bufnr)
   end
 end
 
----@class lsp.diagnostic.bufstate
+---@class (private) lsp.diagnostic.bufstate
 ---@field enabled boolean Whether inlay hints are enabled for this buffer
 ---@type table<integer, lsp.diagnostic.bufstate>
 local bufstates = {}

@@ -4,12 +4,12 @@ local ms = require('vim.lsp.protocol').Methods
 local api = vim.api
 local M = {}
 
----@class lsp.inlay_hint.bufstate
+---@class (private) vim.lsp.inlay_hint.bufstate
 ---@field version? integer
 ---@field client_hints? table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
 ---@field applied table<integer, integer> Last version of hints applied to this line
 ---@field enabled boolean Whether inlay hints are enabled for this buffer
----@type table<integer, lsp.inlay_hint.bufstate>
+---@type table<integer, vim.lsp.inlay_hint.bufstate>
 local bufstates = {}
 
 local namespace = api.nvim_create_namespace('vim_lsp_inlayhint')
@@ -103,11 +103,14 @@ function M.on_refresh(err, _, ctx, _)
   return vim.NIL
 end
 
---- @class vim.lsp.inlay_hint.get.filter
+--- Optional filters |kwargs|:
+--- @class vim.lsp.inlay_hint.get.Filter
+--- @inlinedoc
 --- @field bufnr integer?
 --- @field range lsp.Range?
----
+
 --- @class vim.lsp.inlay_hint.get.ret
+--- @inlinedoc
 --- @field bufnr integer
 --- @field client_id integer
 --- @field inlay_hint lsp.InlayHint
@@ -130,17 +133,8 @@ end
 --- })
 --- ```
 ---
---- @param filter vim.lsp.inlay_hint.get.filter?
---- Optional filters |kwargs|:
---- - bufnr (integer?): 0 for current buffer
---- - range (lsp.Range?)
----
+--- @param filter vim.lsp.inlay_hint.get.Filter?
 --- @return vim.lsp.inlay_hint.get.ret[]
---- Each list item is a table with the following fields:
----  - bufnr (integer)
----  - client_id (integer)
----  - inlay_hint (lsp.InlayHint)
----
 --- @since 12
 function M.get(filter)
   vim.validate({ filter = { filter, 'table', true } })
@@ -241,7 +235,7 @@ end
 
 --- Refresh inlay hints, only if we have attached clients that support it
 ---@param bufnr (integer) Buffer handle, or 0 for current
----@param opts? lsp.util.RefreshOptions Additional options to pass to util._refresh
+---@param opts? vim.lsp.util._refresh.Opts Additional options to pass to util._refresh
 ---@private
 local function _refresh(bufnr, opts)
   opts = opts or {}

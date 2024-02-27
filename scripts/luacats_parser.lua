@@ -19,7 +19,7 @@ local luacats_grammar = require('scripts.luacats_grammar')
 
 --- @class nvim.luacats.parser.alias
 --- @field kind 'alias'
---- @field type string
+--- @field type string[]
 --- @field desc string
 
 --- @class nvim.luacats.parser.fun
@@ -49,8 +49,12 @@ local luacats_grammar = require('scripts.luacats_grammar')
 
 --- @class nvim.luacats.parser.class
 --- @field kind 'class'
+--- @field parent? string
 --- @field name string
 --- @field desc string
+--- @field nodoc? true
+--- @field inlinedoc? true
+--- @field access? 'private'|'package'|'protected'
 --- @field fields nvim.luacats.parser.field[]
 --- @field notes? string[]
 
@@ -64,6 +68,7 @@ local luacats_grammar = require('scripts.luacats_grammar')
 --- | nvim.luacats.parser.class
 --- | nvim.luacats.parser.fun
 --- | nvim.luacats.parser.brief
+--- | nvim.luacats.parser.alias
 
 -- Remove this when we document classes properly
 --- Some doc lines have the form:
@@ -142,22 +147,27 @@ local function process_doc_line(line, state)
     }
   elseif kind == 'class' then
     --- @cast parsed nvim.luacats.Class
-    state.cur_obj = {
-      kind = 'class',
-      name = parsed.name,
-      parent = parsed.parent,
-      desc = '',
-      fields = {},
-    }
+    cur_obj.kind = 'class'
+    cur_obj.name = parsed.name
+    cur_obj.parent = parsed.parent
+    cur_obj.access = parsed.access
+    cur_obj.desc = state.doc_lines and table.concat(state.doc_lines, '\n') or nil
+    state.doc_lines = nil
+    cur_obj.fields = {}
   elseif kind == 'field' then
     --- @cast parsed nvim.luacats.Field
-    if not parsed.access then
-      parsed.desc = parsed.desc or state.doc_lines and table.concat(state.doc_lines, '\n') or nil
-      if parsed.desc then
-        parsed.desc = vim.trim(parsed.desc)
-      end
-      table.insert(cur_obj.fields, parsed)
+    parsed.desc = parsed.desc or state.doc_lines and table.concat(state.doc_lines, '\n') or nil
+    if parsed.desc then
+      parsed.desc = vim.trim(parsed.desc)
     end
+    table.insert(cur_obj.fields, parsed)
+    state.doc_lines = nil
+  elseif kind == 'operator' then
+    parsed.desc = parsed.desc or state.doc_lines and table.concat(state.doc_lines, '\n') or nil
+    if parsed.desc then
+      parsed.desc = vim.trim(parsed.desc)
+    end
+    table.insert(cur_obj.fields, parsed)
     state.doc_lines = nil
   elseif kind == 'param' then
     state.last_doc_item_indent = nil
@@ -191,6 +201,8 @@ local function process_doc_line(line, state)
     cur_obj.access = 'protected'
   elseif kind == 'deprecated' then
     cur_obj.deprecated = true
+  elseif kind == 'inlinedoc' then
+    cur_obj.inlinedoc = true
   elseif kind == 'nodoc' then
     cur_obj.nodoc = true
   elseif kind == 'since' then
@@ -383,11 +395,11 @@ end
 
 --- Determine the table name used to export functions of a module
 --- Usually this is `M`.
---- @param filename string
+--- @param str string
 --- @return string?
-local function determine_modvar(filename)
+local function determine_modvar(str)
   local modvar --- @type string?
-  for line in io.lines(filename) do
+  for line in vim.gsplit(str, '\n') do
     do
       --- @type string?
       local m = line:match('^return%s+([a-zA-Z_]+)')
@@ -462,17 +474,12 @@ end
 
 local M = {}
 
---- @param filename string
---- @return table<string,nvim.luacats.parser.class> classes
---- @return nvim.luacats.parser.fun[] funs
---- @return string[] briefs
---- @return nvim.luacats.parser.obj[]
-function M.parse(filename)
+function M.parse_str(str, filename)
   local funs = {} --- @type nvim.luacats.parser.fun[]
   local classes = {} --- @type table<string,nvim.luacats.parser.class>
   local briefs = {} --- @type string[]
 
-  local mod_return = determine_modvar(filename)
+  local mod_return = determine_modvar(str)
 
   --- @type string
   local module = filename:match('.*/lua/([a-z_][a-z0-9_/]+)%.lua') or filename
@@ -485,7 +492,7 @@ function M.parse(filename)
   -- Keep track of any partial objects we don't commit
   local uncommitted = {} --- @type nvim.luacats.parser.obj[]
 
-  for line in io.lines(filename) do
+  for line in vim.gsplit(str, '\n') do
     local has_indent = line:match('^%s+') ~= nil
     line = vim.trim(line)
     if vim.startswith(line, '---') then
@@ -516,6 +523,15 @@ function M.parse(filename)
   -- dump_uncommitted(filename, uncommitted)
 
   return classes, funs, briefs, uncommitted
+end
+
+--- @param filename string
+function M.parse(filename)
+  local f = assert(io.open(filename, 'r'))
+  local txt = f:read('*all')
+  f:close()
+
+  return M.parse_str(txt, filename)
 end
 
 return M

@@ -21,6 +21,7 @@ error('Cannot require a meta file')
 
 vim.lpeg = {}
 
+--- @nodoc
 --- @class vim.lpeg.Pattern
 --- @operator unm: vim.lpeg.Pattern
 --- @operator add(vim.lpeg.Pattern): vim.lpeg.Pattern
@@ -167,6 +168,7 @@ function vim.lpeg.S(string) end
 --- @return vim.lpeg.Pattern
 function vim.lpeg.V(v) end
 
+--- @nodoc
 --- @class vim.lpeg.Locale
 --- @field alnum userdata
 --- @field alpha userdata

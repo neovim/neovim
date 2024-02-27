@@ -12,6 +12,7 @@
 --- @return vim.regex
 function vim.regex(re) end
 
+--- @nodoc
 --- @class vim.regex
 local regex = {} -- luacheck: no unused
 

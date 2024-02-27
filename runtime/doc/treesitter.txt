@@ -732,16 +732,16 @@ get_node({opts})                                   *vim.treesitter.get_node()*
 <
 
     Parameters: ~
-      • {opts}  (`vim.treesitter.GetNodeOpts?`) Optional keyword arguments:
-                • bufnr integer|nil Buffer number (nil or 0 for current
+      • {opts}  (`table?`) Optional keyword arguments:
+                • {bufnr} (`integer?`) Buffer number (nil or 0 for current
                   buffer)
-                • pos table|nil 0-indexed (row, col) tuple. Defaults to cursor
-                  position in the current window. Required if {bufnr} is not
-                  the current buffer
-                • lang string|nil Parser language. (default: from buffer
+                • {pos} (`{ [1]: integer, [2]: integer }?`) 0-indexed (row,
+                  col) tuple. Defaults to cursor position in the current
+                  window. Required if {bufnr} is not the current buffer
+                • {lang} (`string?`) Parser language. (default: from buffer
                   filetype)
-                • ignore_injections boolean Ignore injected languages (default
-                  true)
+                • {ignore_injections} (`boolean?`) Ignore injected languages
+                  (default true)
 
     Return: ~
         (`TSNode?`) Node at the given position
@@ -787,7 +787,7 @@ get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
       • {opts}   (`table?`) Options to pass to the created language tree
 
     Return: ~
-        (`LanguageTree`) object to use for parsing
+        (`vim.treesitter.LanguageTree`) object to use for parsing
 
 get_range({node}, {source}, {metadata})           *vim.treesitter.get_range()*
     Get the range of a |TSNode|. Can also supply {source} and {metadata} to
@@ -797,7 +797,7 @@ get_range({node}, {source}, {metadata})           *vim.treesitter.get_range()*
       • {node}      (`TSNode`)
       • {source}    (`integer|string?`) Buffer or string from which the {node}
                     is extracted
-      • {metadata}  (`TSMetadata?`)
+      • {metadata}  (`vim.treesitter.query.TSMetadata?`)
 
     Return: ~
         (`Range6`)
@@ -812,7 +812,7 @@ get_string_parser({str}, {lang}, {opts})
       • {opts}  (`table?`) Options to pass to the created language tree
 
     Return: ~
-        (`LanguageTree`) object to use for parsing
+        (`vim.treesitter.LanguageTree`) object to use for parsing
 
 inspect_tree({opts})                           *vim.treesitter.inspect_tree()*
     Open a window that displays a textual representation of the nodes in the
@@ -917,10 +917,10 @@ add({lang}, {opts})                            *vim.treesitter.language.add()*
     Parameters: ~
       • {lang}  (`string`) Name of the parser (alphanumerical and `_` only)
       • {opts}  (`table?`) Options:
-                • filetype (string|string[]) Default filetype the parser
-                  should be associated with. Defaults to {lang}.
-                • path (string|nil) Optional path the parser is located at
-                • symbol_name (string|nil) Internal symbol name for the
+                • {filetype}? (`string|string[]`, default: {lang}) Default
+                  filetype the parser should be associated with.
+                • {path}? (`string`) Optional path the parser is located at
+                • {symbol_name}? (`string`) Internal symbol name for the
                   language to load
 
 get_filetypes({lang})                *vim.treesitter.language.get_filetypes()*
@@ -1069,10 +1069,10 @@ lint({buf}, {opts})                              *vim.treesitter.query.lint()*
     Parameters: ~
       • {buf}   (`integer`) Buffer handle
       • {opts}  (`table?`) Optional keyword arguments:
-                • langs (string|string[]|nil) Language(s) to use for checking
+                • {langs}? (`string|string[]`) Language(s) to use for checking
                   the query. If multiple languages are specified, queries are
                   validated for all of them
-                • clear (boolean) if `true`, just clear current lint errors
+                • {clear} (`boolean`) Just clear current lint errors
 
 list_directives()                     *vim.treesitter.query.list_directives()*
     Lists the currently available directives to use in queries.
@@ -1153,8 +1153,8 @@ Query:iter_captures({node}, {source}, {start}, {stop})
                   Defaults to `node:end_()`.
 
     Return: ~
-        (`fun(end_line: integer?): integer, TSNode, TSMetadata`) capture id,
-        capture node, metadata
+        (`fun(end_line: integer?): integer, TSNode,
+        vim.treesitter.query.TSMetadata`) capture id, capture node, metadata
 
                                                         *Query:iter_matches()*
 Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
@@ -1279,7 +1279,7 @@ LanguageTree:for_each_tree({fn})                *LanguageTree:for_each_tree()*
     Note: This includes the invoking tree's child trees as well.
 
     Parameters: ~
-      • {fn}  (`fun(tree: TSTree, ltree: LanguageTree)`)
+      • {fn}  (`fun(tree: TSTree, ltree: vim.treesitter.LanguageTree)`)
 
 LanguageTree:included_regions()              *LanguageTree:included_regions()*
     Gets the set of included regions managed by this LanguageTree. This can be
@@ -1318,7 +1318,7 @@ LanguageTree:language_for_range({range})
       • {range}  (`Range4`) `{ start_line, start_col, end_line, end_col }`
 
     Return: ~
-        (`LanguageTree`) Managing {range}
+        (`vim.treesitter.LanguageTree`) Managing {range}
 
                                          *LanguageTree:named_node_for_range()*
 LanguageTree:named_node_for_range({range}, {opts})

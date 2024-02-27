@@ -147,11 +147,29 @@ function M.dir(path, opts)
   end)
 end
 
---- @class vim.fs.find.opts
+--- @class vim.fs.find.Opts
+--- @inlinedoc
+---
+--- Path to begin searching from. If
+--- omitted, the |current-directory| is used.
 --- @field path string
+---
+--- Search upward through parent directories.
+--- Otherwise, search through child directories (recursively).
+--- (default: `false`)
 --- @field upward boolean
+---
+--- Stop searching when this directory is reached.
+--- The directory itself is not searched.
 --- @field stop string
+---
+--- Find only items of the given type.
+--- If omitted, all items that match {names} are included.
 --- @field type string
+---
+--- Stop the search after finding this many matches.
+--- Use `math.huge` to place no limit on the number of matches.
+--- (default: `1`)
 --- @field limit number
 
 --- Find files or directories (or other items as specified by `opts.type`) in the given path.
@@ -194,23 +212,10 @@ end
 ---             - path: full path of the current item
 ---             The function should return `true` if the given item is considered a match.
 ---
----@param opts (table) Optional keyword arguments:
----                       - path (string): Path to begin searching from. If
----                              omitted, the |current-directory| is used.
----                       - upward (boolean, default false): If true, search
----                                upward through parent directories. Otherwise,
----                                search through child directories
----                                (recursively).
----                       - stop (string): Stop searching when this directory is
----                              reached. The directory itself is not searched.
----                       - type (string): Find only items of the given type.
----                               If omitted, all items that match {names} are included.
----                       - limit (number, default 1): Stop the search after
----                               finding this many matches. Use `math.huge` to
----                               place no limit on the number of matches.
+---@param opts vim.fs.find.Opts Optional keyword arguments:
 ---@return (string[]) # Normalized paths |vim.fs.normalize()| of all matching items
 function M.find(names, opts)
-  opts = opts or {} --[[@as vim.fs.find.opts]]
+  opts = opts or {}
   vim.validate({
     names = { names, { 's', 't', 'f' } },
     path = { opts.path, 's', true },
@@ -318,6 +323,13 @@ function M.find(names, opts)
   return matches
 end
 
+--- @class vim.fs.normalize.Opts
+--- @inlinedoc
+---
+--- Expand environment variables.
+--- (default: `true`)
+--- @field expand_env boolean
+
 --- Normalize a path to a standard format. A tilde (~) character at the
 --- beginning of the path is expanded to the user's home directory and any
 --- backslash (\) characters are converted to forward slashes (/). Environment
@@ -337,9 +349,8 @@ end
 --- ```
 ---
 ---@param path (string) Path to normalize
----@param opts table|nil Options:
----             - expand_env: boolean Expand environment variables (default: true)
----@return (string) Normalized path
+---@param opts? vim.fs.normalize.Opts
+---@return (string) : Normalized path
 function M.normalize(path, opts)
   opts = opts or {}
 

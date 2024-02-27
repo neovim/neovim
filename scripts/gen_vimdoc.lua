@@ -269,6 +269,7 @@ local config = {
     filename = 'lsp.txt',
     section_order = {
       'lsp.lua',
+      'client.lua',
       'buf.lua',
       'diagnostic.lua',
       'codelens.lua',
@@ -362,15 +363,25 @@ local function replace_generics(ty, generics)
   return generics[ty] or ty
 end
 
+--- @param name string
+local function fmt_field_name(name)
+  local name0, opt = name:match('^([^?]*)(%??)$')
+  return fmt('{%s}%s', name0, opt)
+end
+
 --- @param ty string
 --- @param generics? table<string,string>
-local function render_type(ty, generics)
+--- @param default? string
+local function render_type(ty, generics, default)
   if generics then
     ty = replace_generics(ty, generics)
   end
   ty = ty:gsub('%s*|%s*nil', '?')
   ty = ty:gsub('nil%s*|%s*(.*)', '%1?')
   ty = ty:gsub('%s*|%s*', '|')
+  if default then
+    return fmt('(`%s`, default: %s)', ty, default)
+  end
   return fmt('(`%s`)', ty)
 end
 
@@ -379,10 +390,101 @@ local function should_render_param(p)
   return not p.access and not contains(p.name, { '_', 'self' })
 end
 
+--- @param desc? string
+--- @return string?, string?
+local function get_default(desc)
+  if not desc then
+    return
+  end
+
+  local default = desc:match('\n%s*%([dD]efault: ([^)]+)%)')
+  if default then
+    desc = desc:gsub('\n%s*%([dD]efault: [^)]+%)', '')
+  end
+
+  return desc, default
+end
+
+--- @param ty string
+--- @param classes? table<string,nvim.luacats.parser.class>
+--- @return nvim.luacats.parser.class?
+local function get_class(ty, classes)
+  if not classes then
+    return
+  end
+
+  local cty = ty:gsub('%s*|%s*nil', '?'):gsub('?$', ''):gsub('%[%]$', '')
+
+  return classes[cty]
+end
+
+--- @param obj nvim.luacats.parser.param|nvim.luacats.parser.return|nvim.luacats.parser.field
+--- @param classes? table<string,nvim.luacats.parser.class>
+local function inline_type(obj, classes)
+  local ty = obj.type
+  if not ty then
+    return
+  end
+
+  local cls = get_class(ty, classes)
+
+  if not cls or cls.nodoc then
+    return
+  end
+
+  if not cls.inlinedoc then
+    -- Not inlining so just add a: "See |tag|."
+    local tag = fmt('|%s|', cls.name)
+    if obj.desc and obj.desc:find(tag) then
+      -- Tag already there
+      return
+    end
+
+    -- TODO(lewis6991): Aim to remove this. Need this to prevent dead
+    -- references to types defined in runtime/lua/vim/lsp/_meta/protocol.lua
+    if not vim.startswith(cls.name, 'vim.') then
+      return
+    end
+
+    obj.desc = obj.desc or ''
+    local period = (obj.desc == '' or vim.endswith(obj.desc, '.')) and '' or '.'
+    obj.desc = obj.desc .. fmt('%s See %s.', period, tag)
+    return
+  end
+
+  local ty_isopt = (ty:match('%?$') or ty:match('%s*|%s*nil')) ~= nil
+  local ty_islist = (ty:match('%[%]$')) ~= nil
+  ty = ty_isopt and 'table?' or ty_islist and 'table[]' or 'table'
+
+  local desc = obj.desc or ''
+  if cls.desc then
+    desc = desc .. cls.desc
+  elseif desc == '' then
+    if ty_islist then
+      desc = desc .. 'A list of objects with the following fields:'
+    else
+      desc = desc .. 'A table with the following fields:'
+    end
+  end
+
+  local desc_append = {}
+  for _, f in ipairs(cls.fields) do
+    local fdesc, default = get_default(f.desc)
+    local fty = render_type(f.type, nil, default)
+    local fnm = fmt_field_name(f.name)
+    table.insert(desc_append, table.concat({ '-', fnm, fty, fdesc }, ' '))
+  end
+
+  desc = desc .. '\n' .. table.concat(desc_append, '\n')
+  obj.type = ty
+  obj.desc = desc
+end
+
 --- @param xs (nvim.luacats.parser.param|nvim.luacats.parser.field)[]
 --- @param generics? table<string,string>
+--- @param classes? table<string,nvim.luacats.parser.class>
 --- @param exclude_types? true
-local function render_fields_or_params(xs, generics, exclude_types)
+local function render_fields_or_params(xs, generics, classes, exclude_types)
   local ret = {} --- @type string[]
 
   xs = vim.tbl_filter(should_render_param, xs)
@@ -398,15 +500,27 @@ local function render_fields_or_params(xs, generics, exclude_types)
   end
 
   for _, p in ipairs(xs) do
-    local nm, ty = p.name, p.type
-    local desc = p.desc
-    local pnm = fmt('      • %-' .. indent .. 's', '{' .. nm .. '}')
+    local pdesc, default = get_default(p.desc)
+    p.desc = pdesc
+
+    inline_type(p, classes)
+    local nm, ty, desc = p.name, p.type, p.desc
+
+    local fnm = p.kind == 'operator' and fmt('op(%s)', nm) or fmt_field_name(nm)
+    local pnm = fmt('      • %-' .. indent .. 's', fnm)
+
     if ty then
-      local pty = render_type(ty, generics)
+      local pty = render_type(ty, generics, default)
+
       if desc then
-        desc = fmt('%s %s', pty, desc)
         table.insert(ret, pnm)
-        table.insert(ret, md_to_vimdoc(desc, 1, 9 + indent, TEXT_WIDTH, true))
+        if #pty > TEXT_WIDTH - indent then
+          vim.list_extend(ret, { ' ', pty, '\n' })
+          table.insert(ret, md_to_vimdoc(desc, 9 + indent, 9 + indent, TEXT_WIDTH, true))
+        else
+          desc = fmt('%s %s', pty, desc)
+          table.insert(ret, md_to_vimdoc(desc, 1, 9 + indent, TEXT_WIDTH, true))
+        end
       else
         table.insert(ret, fmt('%s %s\n', pnm, pty))
       end
@@ -421,24 +535,46 @@ local function render_fields_or_params(xs, generics, exclude_types)
   return table.concat(ret)
 end
 
--- --- @param class lua2vimdoc.class
--- local function render_class(class)
---   writeln(fmt('*%s*', class.name))
---   writeln()
---   if #class.fields > 0 then
---     writeln('    Fields: ~')
---     render_fields_or_params(class.fields)
---   end
---   writeln()
--- end
+--- @param class nvim.luacats.parser.class
+local function render_class(class)
+  if class.access or class.nodoc or class.inlinedoc then
+    return
+  end
 
--- --- @param cls table<string,lua2vimdoc.class>
--- local function render_classes(cls)
---   --- @diagnostic disable-next-line:no-unknown
---   for _, class in vim.spairs(cls) do
---     render_class(class)
---   end
--- end
+  local ret = {} --- @type string[]
+
+  table.insert(ret, fmt('*%s*\n', class.name))
+
+  if class.parent then
+    local txt = fmt('Extends: |%s|', class.parent)
+    table.insert(ret, md_to_vimdoc(txt, INDENTATION, INDENTATION, TEXT_WIDTH))
+  end
+
+  if class.desc then
+    table.insert(ret, md_to_vimdoc(class.desc, INDENTATION, INDENTATION, TEXT_WIDTH))
+  end
+
+  local fields_txt = render_fields_or_params(class.fields)
+  if not fields_txt:match('^%s*$') then
+    table.insert(ret, '\n    Fields: ~\n')
+    table.insert(ret, fields_txt)
+  end
+  table.insert(ret, '\n')
+
+  return table.concat(ret)
+end
+
+--- @param cls table<string,nvim.luacats.parser.class>
+local function render_classes(cls)
+  local ret = {} --- @type string[]
+
+  --- @diagnostic disable-next-line:no-unknown
+  for _, class in vim.spairs(cls) do
+    ret[#ret + 1] = render_class(class)
+  end
+
+  return table.concat(ret)
+end
 
 --- @param fun nvim.luacats.parser.fun
 --- @param cfg nvim.gen_vimdoc.Config
@@ -448,7 +584,7 @@ local function render_fun_header(fun, cfg)
   local args = {} --- @type string[]
   for _, p in ipairs(fun.params or {}) do
     if p.name ~= 'self' then
-      args[#args + 1] = fmt('{%s}', p.name:gsub('%?$', ''))
+      args[#args + 1] = fmt_field_name(p.name)
     end
   end
 
@@ -480,8 +616,9 @@ end
 
 --- @param returns nvim.luacats.parser.return[]
 --- @param generics? table<string,string>
+--- @param classes? table<string,nvim.luacats.parser.class>
 --- @param exclude_types boolean
-local function render_returns(returns, generics, exclude_types)
+local function render_returns(returns, generics, classes, exclude_types)
   local ret = {} --- @type string[]
 
   returns = vim.deepcopy(returns)
@@ -498,26 +635,26 @@ local function render_returns(returns, generics, exclude_types)
   end
 
   for _, p in ipairs(returns) do
+    inline_type(p, classes)
     local rnm, ty, desc = p.name, p.type, p.desc
-    local blk = ''
+
+    local blk = {} --- @type string[]
     if ty then
-      blk = render_type(ty, generics)
+      blk[#blk + 1] = render_type(ty, generics)
     end
-    if rnm then
-      blk = blk .. ' ' .. rnm
-    end
-    if desc then
-      blk = blk .. ' ' .. desc
-    end
-    table.insert(ret, md_to_vimdoc(blk, 8, 8, TEXT_WIDTH, true))
+    blk[#blk + 1] = rnm
+    blk[#blk + 1] = desc
+
+    table.insert(ret, md_to_vimdoc(table.concat(blk, ' '), 8, 8, TEXT_WIDTH, true))
   end
 
   return table.concat(ret)
 end
 
 --- @param fun nvim.luacats.parser.fun
+--- @param classes table<string,nvim.luacats.parser.class>
 --- @param cfg nvim.gen_vimdoc.Config
-local function render_fun(fun, cfg)
+local function render_fun(fun, classes, cfg)
   if fun.access or fun.deprecated or fun.nodoc then
     return
   end
@@ -570,7 +707,7 @@ local function render_fun(fun, cfg)
   end
 
   if fun.params and #fun.params > 0 then
-    local param_txt = render_fields_or_params(fun.params, fun.generics, cfg.exclude_types)
+    local param_txt = render_fields_or_params(fun.params, fun.generics, classes, cfg.exclude_types)
     if not param_txt:match('^%s*$') then
       table.insert(ret, '\n    Parameters: ~\n')
       ret[#ret + 1] = param_txt
@@ -578,7 +715,7 @@ local function render_fun(fun, cfg)
   end
 
   if fun.returns then
-    local txt = render_returns(fun.returns, fun.generics, cfg.exclude_types)
+    local txt = render_returns(fun.returns, fun.generics, classes, cfg.exclude_types)
     if not txt:match('^%s*$') then
       table.insert(ret, '\n')
       ret[#ret + 1] = txt
@@ -597,15 +734,16 @@ local function render_fun(fun, cfg)
 end
 
 --- @param funs nvim.luacats.parser.fun[]
+--- @param classes table<string,nvim.luacats.parser.class>
 --- @param cfg nvim.gen_vimdoc.Config
-local function render_funs(funs, cfg)
+local function render_funs(funs, classes, cfg)
   local ret = {} --- @type string[]
 
   for _, f in ipairs(funs) do
     if cfg.fn_xform then
       cfg.fn_xform(f)
     end
-    ret[#ret + 1] = render_fun(f, cfg)
+    ret[#ret + 1] = render_fun(f, classes, cfg)
   end
 
   -- Sort via prototype
@@ -745,15 +883,35 @@ local function gen_target(cfg)
 
   expand_files(cfg.files)
 
+  --- @type table<string,{[1]:table<string,nvim.luacats.parser.class>, [2]: nvim.luacats.parser.fun[], [3]: string[]}>
+  local file_results = {}
+
+  --- @type table<string,nvim.luacats.parser.class>
+  local all_classes = {}
+
+  --- First pass so we can collect all classes
   for _, f in pairs(cfg.files) do
     local ext = assert(f:match('%.([^.]+)$')) --[[@as 'h'|'c'|'lua']]
     local parser = assert(parsers[ext])
-    local _, funs, briefs = parser(f)
+    local classes, funs, briefs = parser(f)
+    file_results[f] = { classes, funs, briefs }
+    all_classes = vim.tbl_extend('error', all_classes, classes)
+  end
+
+  for f, r in pairs(file_results) do
+    local classes, funs, briefs = r[1], r[2], r[3]
+
     local briefs_txt = {} --- @type string[]
     for _, b in ipairs(briefs) do
       briefs_txt[#briefs_txt + 1] = md_to_vimdoc(b, 0, 0, TEXT_WIDTH)
     end
-    local funs_txt = render_funs(funs, cfg)
+    local funs_txt = render_funs(funs, all_classes, cfg)
+    if next(classes) then
+      local classes_txt = render_classes(classes)
+      if vim.trim(classes_txt) ~= '' then
+        funs_txt = classes_txt .. '\n' .. funs_txt
+      end
+    end
     -- FIXME: Using f_base will confuse `_meta/protocol.lua` with `protocol.lua`
     local f_base = assert(vim.fs.basename(f))
     sections[f_base] = make_section(f_base, cfg, briefs_txt, funs_txt)

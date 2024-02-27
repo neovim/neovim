@@ -4,9 +4,9 @@ local Range = require('vim.treesitter._range')
 
 local ns = api.nvim_create_namespace('treesitter/highlighter')
 
----@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil): integer, TSNode, TSMetadata
+---@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata
 
----@class vim.treesitter.highlighter.Query
+---@class (private) vim.treesitter.highlighter.Query
 ---@field private _query vim.treesitter.Query?
 ---@field private lang string
 ---@field private hl_cache table<integer,integer>
@@ -52,22 +52,23 @@ function TSHighlighterQuery:query()
   return self._query
 end
 
----@class vim.treesitter.highlighter.State
+---@class (private) vim.treesitter.highlighter.State
 ---@field tstree TSTree
 ---@field next_row integer
 ---@field iter vim.treesitter.highlighter.Iter?
 ---@field highlighter_query vim.treesitter.highlighter.Query
 
+---@nodoc
 ---@class vim.treesitter.highlighter
 ---@field active table<integer,vim.treesitter.highlighter>
 ---@field bufnr integer
----@field orig_spelloptions string
+---@field private orig_spelloptions string
 --- A map of highlight states.
 --- This state is kept during rendering across each line update.
----@field _highlight_states vim.treesitter.highlighter.State[]
----@field _queries table<string,vim.treesitter.highlighter.Query>
----@field tree LanguageTree
----@field redraw_count integer
+---@field private _highlight_states vim.treesitter.highlighter.State[]
+---@field private _queries table<string,vim.treesitter.highlighter.Query>
+---@field tree vim.treesitter.LanguageTree
+---@field private redraw_count integer
 local TSHighlighter = {
   active = {},
 }
@@ -78,7 +79,7 @@ TSHighlighter.__index = TSHighlighter
 ---
 --- Creates a highlighter for `tree`.
 ---
----@param tree LanguageTree parser object to use for highlighting
+---@param tree vim.treesitter.LanguageTree parser object to use for highlighting
 ---@param opts (table|nil) Configuration of the highlighter:
 ---           - queries table overwrite queries used by the highlighter
 ---@return vim.treesitter.highlighter Created highlighter object

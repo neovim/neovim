@@ -4,7 +4,7 @@ local ms = require('vim.lsp.protocol').Methods
 local util = require('vim.lsp.util')
 local uv = vim.uv
 
---- @class STTokenRange
+--- @class (private) STTokenRange
 --- @field line integer line number 0-based
 --- @field start_col integer start column 0-based
 --- @field end_col integer end column 0-based
@@ -12,23 +12,23 @@ local uv = vim.uv
 --- @field modifiers table<string,boolean> token modifiers as a set. E.g., { static = true, readonly = true }
 --- @field marked boolean whether this token has had extmarks applied
 ---
---- @class STCurrentResult
+--- @class (private) STCurrentResult
 --- @field version? integer document version associated with this result
 --- @field result_id? string resultId from the server; used with delta requests
 --- @field highlights? STTokenRange[] cache of highlight ranges for this document version
 --- @field tokens? integer[] raw token array as received by the server. used for calculating delta responses
 --- @field namespace_cleared? boolean whether the namespace was cleared for this result yet
 ---
---- @class STActiveRequest
+--- @class (private) STActiveRequest
 --- @field request_id? integer the LSP request ID of the most recent request sent to the server
 --- @field version? integer the document version associated with the most recent request
 ---
---- @class STClientState
+--- @class (private) STClientState
 --- @field namespace integer
 --- @field active_request STActiveRequest
 --- @field current_result STCurrentResult
 
----@class STHighlighter
+---@class (private) STHighlighter
 ---@field active table<integer, STHighlighter>
 ---@field bufnr integer
 ---@field augroup integer augroup for buffer events
@@ -92,7 +92,7 @@ end
 ---
 ---@param data integer[]
 ---@param bufnr integer
----@param client lsp.Client
+---@param client vim.lsp.Client
 ---@param request STActiveRequest
 ---@return STTokenRange[]
 local function tokens_to_ranges(data, bufnr, client, request)
@@ -646,6 +646,7 @@ function M.stop(bufnr, client_id)
   end
 end
 
+--- @nodoc
 --- @class STTokenRangeInspect : STTokenRange
 --- @field client_id integer
 
@@ -727,6 +728,13 @@ function M.force_refresh(bufnr)
   end
 end
 
+--- @class vim.lsp.semantic_tokens.highlight_token.Opts
+--- @inlinedoc
+---
+--- Priority for the applied extmark.
+--- (Default: `vim.highlight.priorities.semantic_tokens + 3`)
+--- @field priority? integer
+
 --- Highlight a semantic token.
 ---
 --- Apply an extmark with a given highlight group for a semantic token. The
@@ -735,11 +743,9 @@ end
 --- use inside |LspTokenUpdate| callbacks.
 ---@param token (table) a semantic token, found as `args.data.token` in |LspTokenUpdate|.
 ---@param bufnr (integer) the buffer to highlight
----@param client_id (integer) The ID of the |vim.lsp.client|
+---@param client_id (integer) The ID of the |vim.lsp.Client|
 ---@param hl_group (string) Highlight group name
----@param opts (table|nil) Optional parameters.
----       - priority: (integer|nil) Priority for the applied extmark. Defaults
----         to `vim.highlight.priorities.semantic_tokens + 3`
+---@param opts? vim.lsp.semantic_tokens.highlight_token.Opts  Optional parameters:
 function M.highlight_token(token, bufnr, client_id, hl_group, opts)
   local highlighter = STHighlighter.active[bufnr]
   if not highlighter then

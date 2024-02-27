@@ -21,8 +21,7 @@ local function opt(x)
   return x ^ -1
 end
 
-local nl = P('\r\n') + P('\n')
-local ws = rep1(S(' \t') + nl)
+local ws = rep1(S(' \t'))
 local fill = opt(ws)
 
 local any = P(1) -- (consume one character)
@@ -30,11 +29,11 @@ local letter = R('az', 'AZ') + S('_$')
 local num = R('09')
 local ident = letter * rep(letter + num + S '-.')
 local string_single = P "'" * rep(any - P "'") * P "'"
-local string_double = P '"' * rep(any - P '"') * P '"'
+local string_double = P('"') * rep(any - P('"')) * P('"')
 
-local literal = (string_single + string_double + (opt(P '-') * num) + P 'false' + P 'true')
+local literal = (string_single + string_double + (opt(P('-')) * num) + P('false') + P('true'))
 
-local lname = (ident + P '...') * opt(P '?')
+local lname = (ident + P('...')) * opt(P('?'))
 
 --- @param x string
 local function Pf(x)
@@ -47,13 +46,23 @@ local function Sf(x)
 end
 
 --- @param x vim.lpeg.Pattern
-local function comma(x)
-  return x * rep(Pf ',' * x)
+local function paren(x)
+  return Pf('(') * x * fill * P(')')
 end
 
 --- @param x vim.lpeg.Pattern
 local function parenOpt(x)
-  return (Pf('(') * x * fill * P(')')) + x
+  return paren(x) + x
+end
+
+--- @param x vim.lpeg.Pattern
+local function comma1(x)
+  return parenOpt(x * rep(Pf(',') * x))
+end
+
+--- @param x vim.lpeg.Pattern
+local function comma(x)
+  return opt(comma1(x))
 end
 
 --- @type table<string,vim.lpeg.Pattern>
@@ -63,7 +72,15 @@ local v = setmetatable({}, {
   end,
 })
 
+local colon = Pf(':')
+local opt_exact = opt(Cg(Pf('(exact)'), 'access'))
+local access = P('private') + P('protected') + P('package')
+local caccess = Cg(access, 'access')
 local desc_delim = Sf '#:' + ws
+local desc = Cg(rep(any), 'desc')
+local opt_desc = opt(desc_delim * desc)
+local cname = Cg(ident, 'name')
+local opt_parent = opt(colon * Cg(ident, 'parent'))
 
 --- @class nvim.luacats.Param
 --- @field kind 'param'
@@ -85,6 +102,7 @@ local desc_delim = Sf '#:' + ws
 --- @field kind 'class'
 --- @field name string
 --- @field parent? string
+--- @field access? 'private'|'protected'|'package'
 
 --- @class nvim.luacats.Field
 --- @field kind 'field'
@@ -107,112 +125,60 @@ local desc_delim = Sf '#:' + ws
 --- @class nvim.luacats.grammar
 --- @field match fun(self, input: string): nvim.luacats.grammar.result?
 
+local function annot(nm, pat)
+  if type(nm) == 'string' then
+    nm = P(nm)
+  end
+  if pat then
+    return Ct(Cg(P(nm), 'kind') * fill * pat)
+  end
+  return Ct(Cg(P(nm), 'kind'))
+end
+
 local grammar = P {
   rep1(P('@') * (v.ats + v.ext_ats)),
 
-  ats = v.at_param
-    + v.at_return
-    + v.at_type
-    + v.at_cast
-    + v.at_generic
-    + v.at_class
-    + v.at_field
-    + v.at_access
-    + v.at_deprecated
-    + v.at_alias
-    + v.at_enum
-    + v.at_see
-    + v.at_diagnostic
-    + v.at_overload
-    + v.at_meta,
-
-  ext_ats = v.ext_at_note + v.ext_at_since + v.ext_at_nodoc + v.ext_at_brief,
-
-  at_param = Ct(
-    Cg(P('param'), 'kind')
-      * ws
-      * Cg(lname, 'name')
-      * ws
-      * parenOpt(Cg(v.ltype, 'type'))
-      * opt(desc_delim * Cg(rep(any), 'desc'))
-  ),
-
-  at_return = Ct(
-    Cg(P('return'), 'kind')
-      * ws
-      * parenOpt(comma(Ct(Cg(v.ltype, 'type') * opt(ws * Cg(ident, 'name')))))
-      * opt(desc_delim * Cg(rep(any), 'desc'))
-  ),
-
-  at_type = Ct(
-    Cg(P('type'), 'kind')
-      * ws
-      * parenOpt(comma(Ct(Cg(v.ltype, 'type'))))
-      * opt(desc_delim * Cg(rep(any), 'desc'))
-  ),
-
-  at_cast = Ct(
-    Cg(P('cast'), 'kind') * ws * Cg(lname, 'name') * ws * opt(Sf('+-')) * Cg(v.ltype, 'type')
-  ),
-
-  at_generic = Ct(
-    Cg(P('generic'), 'kind') * ws * Cg(ident, 'name') * opt(Pf ':' * Cg(v.ltype, 'type'))
-  ),
-
-  at_class = Ct(
-    Cg(P('class'), 'kind')
-      * ws
-      * opt(P('(exact)') * ws)
-      * Cg(lname, 'name')
-      * opt(Pf(':') * Cg(lname, 'parent'))
-  ),
-
-  at_field = Ct(
-    Cg(P('field'), 'kind')
-      * ws
-      * opt(Cg(Pf('private') + Pf('package') + Pf('protected'), 'access'))
-      * Cg(lname, 'name')
-      * ws
-      * Cg(v.ltype, 'type')
-      * opt(desc_delim * Cg(rep(any), 'desc'))
-  ),
-
-  at_access = Ct(Cg(P('private') + P('protected') + P('package'), 'kind')),
-
-  at_deprecated = Ct(Cg(P('deprecated'), 'kind')),
-
-  -- Types may be provided on subsequent lines
-  at_alias = Ct(Cg(P('alias'), 'kind') * ws * Cg(lname, 'name') * opt(ws * Cg(v.ltype, 'type'))),
-
-  at_enum = Ct(Cg(P('enum'), 'kind') * ws * Cg(lname, 'name')),
-
-  at_see = Ct(Cg(P('see'), 'kind') * ws * opt(Pf('#')) * Cg(rep(any), 'desc')),
-  at_diagnostic = Ct(Cg(P('diagnostic'), 'kind') * ws * opt(Pf('#')) * Cg(rep(any), 'desc')),
-  at_overload = Ct(Cg(P('overload'), 'kind') * ws * Cg(v.ltype, 'type')),
-  at_meta = Ct(Cg(P('meta'), 'kind')),
+  ats = annot('param', Cg(lname, 'name') * ws * v.ctype * opt_desc)
+    + annot('return', comma1(Ct(v.ctype * opt(ws * cname))) * opt_desc)
+    + annot('type', comma1(Ct(v.ctype)) * opt_desc)
+    + annot('cast', cname * ws * opt(Sf('+-')) * v.ctype)
+    + annot('generic', cname * opt(colon * v.ctype))
+    + annot('class', opt_exact * opt(paren(caccess)) * fill * cname * opt_parent)
+    + annot('field', opt(caccess * ws) * v.field_name * ws * v.ctype * opt_desc)
+    + annot('operator', cname * opt(paren(Cg(v.ltype, 'argtype'))) * colon * v.ctype)
+    + annot(access)
+    + annot('deprecated')
+    + annot('alias', cname * opt(ws * v.ctype))
+    + annot('enum', cname)
+    + annot('overload', v.ctype)
+    + annot('see', opt(desc_delim) * desc)
+    + annot('diagnostic', opt(desc_delim) * desc)
+    + annot('meta'),
 
   --- Custom extensions
-  ext_at_note = Ct(Cg(P('note'), 'kind') * ws * Cg(rep(any), 'desc')),
+  ext_ats = (
+    annot('note', desc)
+    + annot('since', desc)
+    + annot('nodoc')
+    + annot('inlinedoc')
+    + annot('brief', desc)
+  ),
 
-  -- TODO only consume 1 line
-  ext_at_since = Ct(Cg(P('since'), 'kind') * ws * Cg(rep(any), 'desc')),
+  field_name = Cg(lname + (v.ty_index * opt(P('?'))), 'name'),
 
-  ext_at_nodoc = Ct(Cg(P('nodoc'), 'kind')),
-  ext_at_brief = Ct(Cg(P('brief'), 'kind') * opt(ws * Cg(rep(any), 'desc'))),
+  ctype = parenOpt(Cg(v.ltype, 'type')),
+  ltype = parenOpt(v.ty_union),
 
-  ltype = v.ty_union + Pf '(' * v.ty_union * fill * P ')',
-
-  ty_union = v.ty_opt * rep(Pf '|' * v.ty_opt),
+  ty_union = v.ty_opt * rep(Pf('|') * v.ty_opt),
   ty = v.ty_fun + ident + v.ty_table + literal,
-  ty_param = Pf '<' * comma(v.ltype) * fill * P '>',
-  ty_opt = v.ty * opt(v.ty_param) * opt(P '[]') * opt(P '?'),
-
-  table_key = (Pf '[' * literal * Pf ']') + lname,
-  table_elem = v.table_key * Pf ':' * v.ltype,
-  ty_table = Pf '{' * comma(v.table_elem) * Pf '}',
-
-  fun_param = lname * opt(Pf ':' * v.ltype),
-  ty_fun = Pf 'fun(' * rep(comma(v.fun_param)) * fill * P ')' * opt(Pf ':' * comma(v.ltype)),
+  ty_param = Pf('<') * comma1(v.ltype) * fill * P('>'),
+  ty_opt = v.ty * opt(v.ty_param) * opt(P('[]')) * opt(P('?')),
+  ty_index = (Pf('[') * v.ltype * Pf(']')),
+  table_key = v.ty_index + lname,
+  table_elem = v.table_key * colon * v.ltype,
+  ty_table = Pf('{') * comma1(v.table_elem) * Pf('}'),
+  fun_param = lname * opt(colon * v.ltype),
+  ty_fun = Pf('fun') * paren(comma(lname * opt(colon * v.ltype))) * opt(colon * comma1(v.ltype)),
 }
 
 return grammar --[[@as nvim.luacats.grammar]]

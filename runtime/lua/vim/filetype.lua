@@ -2082,6 +2082,7 @@ local function normalize_path(path, as_pattern)
 end
 
 --- @class vim.filetype.add.filetypes
+--- @inlinedoc
 --- @field pattern? vim.filetype.mapping
 --- @field extension? vim.filetype.mapping
 --- @field filename? vim.filetype.mapping
@@ -2170,7 +2171,7 @@ end
 --- }
 --- ```
 ---
----@param filetypes vim.filetype.add.filetypes (table) A table containing new filetype maps (see example).
+---@param filetypes vim.filetype.add.filetypes A table containing new filetype maps (see example).
 function M.add(filetypes)
   for k, v in pairs(filetypes.extension or {}) do
     extension[k] = v
@@ -2272,8 +2273,23 @@ local function match_pattern(name, path, tail, pat)
 end
 
 --- @class vim.filetype.match.args
+--- @inlinedoc
+---
+--- Buffer number to use for matching. Mutually exclusive with {contents}
 --- @field buf? integer
+---
+--- Filename to use for matching. When {buf} is given,
+--- defaults to the filename of the given buffer number. The
+--- file need not actually exist in the filesystem. When used
+--- without {buf} only the name of the file is used for
+--- filetype matching. This may result in failure to detect
+--- the filetype in cases where the filename alone is not
+--- enough to disambiguate the filetype.
 --- @field filename? string
+---
+--- An array of lines representing file contents to use for
+--- matching. Can be used with {filename}. Mutually exclusive
+--- with {buf}.
 --- @field contents? string[]
 
 --- Perform filetype detection.
@@ -2305,20 +2321,8 @@ end
 --- vim.filetype.match({ contents = {'#!/usr/bin/env bash'} })
 --- ```
 ---
----@param args vim.filetype.match.args (table) Table specifying which matching strategy to use.
+---@param args vim.filetype.match.args Table specifying which matching strategy to use.
 ---                 Accepted keys are:
----                   * buf (number): Buffer number to use for matching. Mutually exclusive with
----                                   {contents}
----                   * filename (string): Filename to use for matching. When {buf} is given,
----                                        defaults to the filename of the given buffer number. The
----                                        file need not actually exist in the filesystem. When used
----                                        without {buf} only the name of the file is used for
----                                        filetype matching. This may result in failure to detect
----                                        the filetype in cases where the filename alone is not
----                                        enough to disambiguate the filetype.
----                   * contents (table): An array of lines representing file contents to use for
----                                       matching. Can be used with {filename}. Mutually exclusive
----                                       with {buf}.
 ---@return string|nil # If a match was found, the matched filetype.
 ---@return function|nil # A function that modifies buffer state when called (for example, to set some
 ---                     filetype specific buffer variables). The function accepts a buffer number as

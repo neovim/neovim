@@ -141,7 +141,7 @@ LSP FUNCTIONS
 - *vim.lsp.buf.range_formatting()*		Use |vim.lsp.formatexpr()|
 						or |vim.lsp.buf.format()| instead.
 - *vim.lsp.util.get_progress_messages()*	Use |vim.lsp.status()| or access
-						`progress` of |vim.lsp.client|
+						`progress` of |vim.lsp.Client|
 - *vim.lsp.get_active_clients()*		Use |vim.lsp.get_clients()|
 - *vim.lsp.for_each_buffer_client()*		Use |vim.lsp.get_clients()|
 - *vim.lsp.util.lookup_section()*		Use |vim.tbl_get()| and

@@ -101,7 +101,7 @@ local function get_extmark_range(bufnr, extmark_id)
   return { mark[1], mark[2], mark[3].end_row, mark[3].end_col }
 end
 
---- @class vim.snippet.Tabstop
+--- @class (private) vim.snippet.Tabstop
 --- @field extmark_id integer
 --- @field bufnr integer
 --- @field index integer
@@ -177,7 +177,7 @@ function Tabstop:set_right_gravity(right_gravity)
   })
 end
 
---- @class vim.snippet.Session
+--- @class (private) vim.snippet.Session
 --- @field bufnr integer
 --- @field extmark_id integer
 --- @field tabstops table<integer, vim.snippet.Tabstop[]>

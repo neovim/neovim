@@ -2,18 +2,44 @@ local api, if_nil = vim.api, vim.F.if_nil
 
 local M = {}
 
+--- *diagnostic-structure*
+---
+--- Diagnostics use the same indexing as the rest of the Nvim API (i.e. 0-based
+--- rows and columns). |api-indexing|
 --- @class vim.Diagnostic
+---
+--- Buffer number
 --- @field bufnr? integer
---- @field lnum integer 0-indexed
---- @field end_lnum? integer 0-indexed
---- @field col integer 0-indexed
---- @field end_col? integer 0-indexed
+---
+--- The starting line of the diagnostic (0-indexed)
+--- @field lnum integer
+---
+--- The final line of the diagnostic (0-indexed)
+--- @field end_lnum? integer
+---
+--- The starting column of the diagnostic (0-indexed)
+--- @field col integer
+---
+--- The final column of the diagnostic (0-indexed)
+--- @field end_col? integer
+---
+--- The severity of the diagnostic |vim.diagnostic.severity|
 --- @field severity? vim.diagnostic.Severity
+---
+--- The diagnostic text
 --- @field message string
+---
+--- The source of the diagnostic
 --- @field source? string
+---
+--- The diagnostic code
 --- @field code? string|integer
+---
 --- @field _tags? { deprecated: boolean, unnecessary: boolean}
+---
+--- Arbitrary data plugins or users can add
 --- @field user_data? any arbitrary data plugins can add
+---
 --- @field namespace? integer
 
 --- @class vim.diagnostic.Opts
@@ -104,7 +130,7 @@ local global_diagnostic_options = {
   severity_sort = false,
 }
 
---- @class vim.diagnostic.Handler
+--- @class (private) vim.diagnostic.Handler
 --- @field show? fun(namespace: integer, bufnr: integer, diagnostics: vim.Diagnostic[], opts?: vim.diagnostic.OptsResolved)
 --- @field hide? fun(namespace:integer, bufnr:integer)
 
@@ -154,7 +180,7 @@ do
   })
 end
 
---- @class vim.diagnostic._extmark
+--- @class (private) vim.diagnostic._extmark
 --- @field [1] integer id
 --- @field [2] integer start
 --- @field [3] integer end
@@ -1018,31 +1044,52 @@ function M.get_next_pos(opts)
   return { next.lnum, next.col }
 end
 
+--- A table with the following keys:
 --- @class vim.diagnostic.GetOpts
+--- @inlinedoc
+---
+--- Limit diagnostics to the given namespace.
 --- @field namespace? integer
+---
+--- Limit diagnostics to the given line number.
 --- @field lnum? integer
+---
+--- See |diagnostic-severity|.
 --- @field severity? vim.diagnostic.SeverityFilter
 
+--- Configuration table with the following keys:
 --- @class vim.diagnostic.GotoOpts : vim.diagnostic.GetOpts
+--- @inlinedoc
+---
+--- Only consider diagnostics from the given namespace.
+--- @field namespace integer
+---
+--- Cursor position as a (row, col) tuple.
+--- See |nvim_win_get_cursor()|. Defaults to the current cursor position.
 --- @field cursor_position? {[1]:integer,[2]:integer}
+---
+--- Whether to loop around file or not. Similar to 'wrapscan'.
+--- (default: `true`)
 --- @field wrap? boolean
+---
+--- See |diagnostic-severity|.
+--- @field severity vim.diagnostic.Severity
+---
+--- If "true", call |vim.diagnostic.open_float()|
+--- after moving. If a table, pass the table as the {opts} parameter
+--- to |vim.diagnostic.open_float()|. Unless overridden, the float will show
+--- diagnostics at the new cursor position (as if "cursor" were passed to
+--- the "scope" option).
+--- (default: `true`)
 --- @field float? boolean|vim.diagnostic.Opts.Float
+---
+--- Window ID
+--- (default: `0`)
 --- @field win_id? integer
 
 --- Move to the next diagnostic.
 ---
----@param opts? vim.diagnostic.GotoOpts (table) Configuration table with the following keys:
----         - namespace: (integer) Only consider diagnostics from the given namespace.
----         - cursor_position: (cursor position) Cursor position as a (row, col) tuple.
----                          See |nvim_win_get_cursor()|. Defaults to the current cursor position.
----         - wrap: (boolean, default true) Whether to loop around file or not. Similar to 'wrapscan'.
----         - severity: See |diagnostic-severity|.
----         - float: (boolean or table, default true) If "true", call |vim.diagnostic.open_float()|
----                    after moving. If a table, pass the table as the {opts} parameter
----                    to |vim.diagnostic.open_float()|. Unless overridden, the float will show
----                    diagnostics at the new cursor position (as if "cursor" were passed to
----                    the "scope" option).
----         - win_id: (number, default 0) Window ID
+---@param opts? vim.diagnostic.GotoOpts
 function M.goto_next(opts)
   diagnostic_move_pos(opts, M.get_next_pos(opts))
 end
@@ -1789,38 +1836,54 @@ function M.reset(namespace, bufnr)
   end
 end
 
+--- Configuration table with the following keys:
 --- @class vim.diagnostic.setqflist.Opts
+--- @inlinedoc
+---
+--- Only add diagnostics from the given namespace.
 --- @field namespace? integer
+---
+--- Open quickfix list after setting.
+--- (default: `true`)
 --- @field open? boolean
+---
+--- Title of quickfix list. Defaults to "Diagnostics".
 --- @field title? string
+---
+--- See |diagnostic-severity|.
 --- @field severity? vim.diagnostic.Severity
 
 --- Add all diagnostics to the quickfix list.
 ---
----@param opts? vim.diagnostic.setqflist.Opts (table) Configuration table with the following keys:
----         - namespace: (number) Only add diagnostics from the given namespace.
----         - open: (boolean, default true) Open quickfix list after setting.
----         - title: (string) Title of quickfix list. Defaults to "Diagnostics".
----         - severity: See |diagnostic-severity|.
+---@param opts? vim.diagnostic.setqflist.Opts
 function M.setqflist(opts)
   set_list(false, opts)
 end
 
+---Configuration table with the following keys:
 --- @class vim.diagnostic.setloclist.Opts
+--- @inlinedoc
+---
+--- Only add diagnostics from the given namespace.
 --- @field namespace? integer
---- @field open? boolean
---- @field title? string
---- @field severity? vim.diagnostic.Severity
+---
+--- Window number to set location list for.
+--- (default: `0`)
 --- @field winnr? integer
+---
+--- Open the location list after setting.
+--- (default: `true`)
+--- @field open? boolean
+---
+--- Title of the location list. Defaults to "Diagnostics".
+--- @field title? string
+---
+--- See |diagnostic-severity|.
+--- @field severity? vim.diagnostic.Severity
 
 --- Add buffer diagnostics to the location list.
 ---
----@param opts? vim.diagnostic.setloclist.Opts (table) Configuration table with the following keys:
----         - namespace: (number) Only add diagnostics from the given namespace.
----         - winnr: (number, default 0) Window number to set location list for.
----         - open: (boolean, default true) Open the location list after setting.
----         - title: (string) Title of the location list. Defaults to "Diagnostics".
----         - severity: See |diagnostic-severity|.
+---@param opts? vim.diagnostic.setloclist.Opts
 function M.setloclist(opts)
   set_list(true, opts)
 end

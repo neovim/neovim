@@ -108,22 +108,25 @@ function M.read(path)
   return contents
 end
 
----@class vim.trust.opts
----@field action string
----@field path? string
----@field bufnr? integer
+--- @class vim.trust.opts
+--- @inlinedoc
+---
+--- - `'allow'` to add a file to the trust database and trust it,
+--- - `'deny'` to add a file to the trust database and deny it,
+--- - `'remove'` to remove file from the trust database
+--- @field action 'allow'|'deny'|'remove'
+---
+--- Path to a file to update. Mutually exclusive with {bufnr}.
+--- Cannot be used when {action} is "allow".
+--- @field path? string
+--- Buffer number to update. Mutually exclusive with {path}.
+--- @field bufnr? integer
 
 --- Manage the trust database.
 ---
 --- The trust database is located at |$XDG_STATE_HOME|/nvim/trust.
 ---
----@param opts (table):
----    - action (string): "allow" to add a file to the trust database and trust it,
----      "deny" to add a file to the trust database and deny it,
----      "remove" to remove file from the trust database
----    - path (string|nil): Path to a file to update. Mutually exclusive with {bufnr}.
----      Cannot be used when {action} is "allow".
----    - bufnr (number|nil): Buffer number to update. Mutually exclusive with {path}.
+---@param opts? vim.trust.opts
 ---@return boolean success true if operation was successful
 ---@return string msg full path if operation was successful, else error message
 function M.trust(opts)

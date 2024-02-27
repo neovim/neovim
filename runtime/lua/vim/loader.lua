@@ -10,16 +10,37 @@ local M = {}
 ---@alias CacheHash {mtime: {nsec: integer, sec: integer}, size: integer, type?: uv.aliases.fs_stat_types}
 ---@alias CacheEntry {hash:CacheHash, chunk:string}
 
----@class ModuleFindOpts
----@field all? boolean Search for all matches (defaults to `false`)
----@field rtp? boolean Search for modname in the runtime path (defaults to `true`)
----@field patterns? string[] Patterns to use (defaults to `{"/init.lua", ".lua"}`)
----@field paths? string[] Extra paths to search for modname
+--- @class vim.loader.find.Opts
+--- @inlinedoc
+---
+--- Search for modname in the runtime path.
+--- (default: `true`)
+--- @field rtp? boolean
+---
+--- Extra paths to search for modname
+--- (default: `{}`)
+--- @field paths? string[]
+---
+--- List of patterns to use when searching for modules.
+--- A pattern is a string added to the basename of the Lua module being searched.
+--- (default: `{"/init.lua", ".lua"}`)
+--- @field patterns? string[]
+---
+--- Search for all matches.
+--- (default: `false`)
+--- @field all? boolean
 
----@class ModuleInfo
----@field modpath string Path of the module
----@field modname string Name of the module
----@field stat? uv.uv_fs_t File stat of the module path
+--- @class vim.loader.ModuleInfo
+--- @inlinedoc
+---
+--- Path of the module
+--- @field modpath string
+---
+--- Name of the module
+--- @field modname string
+---
+--- The fs_stat of the module path. Won't be returned for `modname="*"`
+--- @field stat? uv.uv_fs_t
 
 ---@alias LoaderStats table<string, {total:number, time:number, [string]:number?}?>
 
@@ -29,14 +50,14 @@ M.path = vim.fn.stdpath('cache') .. '/luac'
 ---@nodoc
 M.enabled = false
 
----@class Loader
----@field _rtp string[]
----@field _rtp_pure string[]
----@field _rtp_key string
----@field _hashes? table<string, CacheHash>
+---@class (private) Loader
+---@field private _rtp string[]
+---@field private _rtp_pure string[]
+---@field private _rtp_key string
+---@field private _hashes? table<string, CacheHash>
 local Loader = {
   VERSION = 4,
-  ---@type table<string, table<string,ModuleInfo>>
+  ---@type table<string, table<string,vim.loader.ModuleInfo>>
   _indexed = {},
   ---@type table<string, string[]>
   _topmods = {},
@@ -270,17 +291,8 @@ end
 
 --- Finds Lua modules for the given module name.
 ---@param modname string Module name, or `"*"` to find the top-level modules instead
----@param opts? ModuleFindOpts (table) Options for finding a module:
----    - rtp: (boolean) Search for modname in the runtime path (defaults to `true`)
----    - paths: (string[]) Extra paths to search for modname (defaults to `{}`)
----    - patterns: (string[]) List of patterns to use when searching for modules.
----                A pattern is a string added to the basename of the Lua module being searched.
----                (defaults to `{"/init.lua", ".lua"}`)
----    - all: (boolean) Return all matches instead of just the first one (defaults to `false`)
----@return ModuleInfo[] (table) A list of results with the following properties:
----    - modpath: (string) the path to the module
----    - modname: (string) the name of the module
----    - stat: (table|nil) the fs_stat of the module path. Won't be returned for `modname="*"`
+---@param opts? vim.loader.find.Opts Options for finding a module:
+---@return vim.loader.ModuleInfo[]
 function M.find(modname, opts)
   opts = opts or {}
 
@@ -306,7 +318,7 @@ function M.find(modname, opts)
     patterns[p] = '/lua/' .. basename .. pattern
   end
 
-  ---@type ModuleInfo[]
+  ---@type vim.loader.ModuleInfo[]
   local results = {}
 
   -- Only continue if we haven't found anything yet or we want to find all
@@ -472,12 +484,12 @@ function Loader.track(stat, f)
   end
 end
 
----@class ProfileOpts
+---@class (private) vim.loader._profile.Opts
 ---@field loaders? boolean Add profiling to the loaders
 
 --- Debug function that wraps all loaders and tracks stats
 ---@private
----@param opts ProfileOpts?
+---@param opts vim.loader._profile.Opts?
 function M._profile(opts)
   Loader.get_rtp = Loader.track('get_rtp', Loader.get_rtp)
   Loader.read = Loader.track('read', Loader.read)

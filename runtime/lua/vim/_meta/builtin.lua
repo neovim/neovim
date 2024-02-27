@@ -61,6 +61,7 @@ error('Cannot require a meta file')
 ---
 --- </pre>
 
+---@nodoc
 ---@class vim.NIL
 
 ---@type vim.NIL
