@@ -65,8 +65,13 @@ function vim.deepcopy(orig, noref)
 end
 
 --- @class vim.gsplit.Opts
---- @field plain? boolean Use `sep` literally (as in string.find).
---- @field trimempty? boolean Discard empty segments at start and end of the sequence.
+--- @inlinedoc
+---
+--- Use `sep` literally (as in string.find).
+--- @field plain? boolean
+---
+--- Discard empty segments at start and end of the sequence.
+--- @field trimempty? boolean
 
 --- Gets an |iterator| that splits a string at each instance of a separator, in "lazy" fashion
 --- (as opposed to |vim.split()| which is "eager").
@@ -96,10 +101,8 @@ end
 ---
 --- @param s string String to split
 --- @param sep string Separator or pattern
---- @param opts? vim.gsplit.Opts (table) Keyword arguments |kwargs|:
----       - plain: (boolean) Use `sep` literally (as in string.find).
----       - trimempty: (boolean) Discard empty segments at start and end of the sequence.
----@return fun():string|nil (function) Iterator over the split components
+--- @param opts? vim.gsplit.Opts Keyword arguments |kwargs|:
+--- @return fun():string|nil (function) Iterator over the split components
 function vim.gsplit(s, sep, opts)
   local plain --- @type boolean?
   local trimempty = false
@@ -192,7 +195,7 @@ end
 ---
 ---@param s string String to split
 ---@param sep string Separator or pattern
----@param opts? table Keyword arguments |kwargs| accepted by |vim.gsplit()|
+---@param opts? vim.gsplit.Opts Keyword arguments |kwargs|:
 ---@return string[] : List of split components
 function vim.split(s, sep, opts)
   local t = {}
@@ -276,6 +279,9 @@ function vim.tbl_filter(func, t)
 end
 
 --- @class vim.tbl_contains.Opts
+--- @inlinedoc
+---
+--- `value` is a function reference to be checked (default false)
 --- @field predicate? boolean
 
 --- Checks if a table contains a given value, specified either directly or via
@@ -294,8 +300,7 @@ end
 ---
 ---@param t table Table to check
 ---@param value any Value to compare or predicate function reference
----@param opts? vim.tbl_contains.Opts (table) Keyword arguments |kwargs|:
----       - predicate: (boolean) `value` is a function reference to be checked (default false)
+---@param opts? vim.tbl_contains.Opts Keyword arguments |kwargs|:
 ---@return boolean `true` if `t` contains `value`
 function vim.tbl_contains(t, value, opts)
   vim.validate({ t = { t, 't' }, opts = { opts, 't', true } })
@@ -764,6 +769,7 @@ do
     ['userdata'] = 'userdata',
   }
 
+  --- @nodoc
   --- @class vim.validate.Spec {[1]: any, [2]: string|string[], [3]: boolean }
   --- @field [1] any Argument value
   --- @field [2] string|string[]|fun(v:any):boolean, string? Type name, or callable

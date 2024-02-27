@@ -1,6 +1,6 @@
 local api = vim.api
 
----@type table<integer,LanguageTree>
+---@type table<integer,vim.treesitter.LanguageTree>
 local parsers = setmetatable({}, { __mode = 'v' })
 
 local M = vim._defer_require('vim.treesitter', {
@@ -30,7 +30,7 @@ M.minimum_language_version = vim._ts_get_minimum_language_version()
 ---@param lang string Language of the parser
 ---@param opts (table|nil) Options to pass to the created language tree
 ---
----@return LanguageTree object to use for parsing
+---@return vim.treesitter.LanguageTree object to use for parsing
 function M._create_parser(bufnr, lang, opts)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
@@ -80,7 +80,7 @@ end
 ---@param lang (string|nil) Filetype of this parser (default: buffer filetype)
 ---@param opts (table|nil) Options to pass to the created language tree
 ---
----@return LanguageTree object to use for parsing
+---@return vim.treesitter.LanguageTree object to use for parsing
 function M.get_parser(bufnr, lang, opts)
   opts = opts or {}
 
@@ -119,7 +119,7 @@ end
 ---@param lang string Language of this string
 ---@param opts (table|nil) Options to pass to the created language tree
 ---
----@return LanguageTree object to use for parsing
+---@return vim.treesitter.LanguageTree object to use for parsing
 function M.get_string_parser(str, lang, opts)
   vim.validate({
     str = { str, 'string' },
@@ -172,7 +172,7 @@ end
 ---to get the range with directives applied.
 ---@param node TSNode
 ---@param source integer|string|nil Buffer or string from which the {node} is extracted
----@param metadata TSMetadata|nil
+---@param metadata vim.treesitter.query.TSMetadata|nil
 ---@return Range6
 function M.get_range(node, source, metadata)
   if metadata and metadata.range then
@@ -326,10 +326,21 @@ function M.get_captures_at_cursor(winnr)
   return captures
 end
 
---- @class vim.treesitter.GetNodeOpts
+--- Optional keyword arguments:
+--- @class vim.treesitter.get_node.Opts
+--- @inlinedoc
+---
+--- Buffer number (nil or 0 for current buffer)
 --- @field bufnr integer?
+---
+--- 0-indexed (row, col) tuple. Defaults to cursor position in the
+--- current window. Required if {bufnr} is not the current buffer
 --- @field pos { [1]: integer, [2]: integer }?
+---
+--- Parser language. (default: from buffer filetype)
 --- @field lang string?
+---
+--- Ignore injected languages (default true)
 --- @field ignore_injections boolean?
 
 --- Returns the smallest named node at the given position
@@ -342,12 +353,7 @@ end
 --- vim.treesitter.get_parser(bufnr):parse(range)
 --- ```
 ---
----@param opts vim.treesitter.GetNodeOpts? Optional keyword arguments:
----             - bufnr integer|nil Buffer number (nil or 0 for current buffer)
----             - pos table|nil 0-indexed (row, col) tuple. Defaults to cursor position in the
----                             current window. Required if {bufnr} is not the current buffer
----             - lang string|nil Parser language. (default: from buffer filetype)
----             - ignore_injections boolean Ignore injected languages (default true)
+---@param opts vim.treesitter.get_node.Opts?
 ---
 ---@return TSNode | nil Node at the given position
 function M.get_node(opts)

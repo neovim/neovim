@@ -412,6 +412,7 @@ M[ms.textDocument_hover] = M.hover
 ---@param _ nil not used
 ---@param result (table) result of LSP method; a location or a list of locations.
 ---@param ctx (lsp.HandlerContext) table containing the context of the request, including the method
+---@param config? vim.lsp.buf.LocationOpts
 ---(`textDocument/definition` can return `Location` or `Location[]`
 local function location_handler(_, result, ctx, config)
   if result == nil or vim.tbl_isempty(result) then

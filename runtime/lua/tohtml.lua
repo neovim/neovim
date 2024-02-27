@@ -25,13 +25,7 @@
 -- Remarks:
 -- - Not all visuals are supported, so it may differ.
 
---- @class vim.tohtml.opt
---- @field title? string|false
---- @field number_lines? boolean
---- @field font? string[]|string
---- @field width? integer
-
---- @class vim.tohtml.state.global
+--- @class (private) vim.tohtml.state.global
 --- @field background string
 --- @field foreground string
 --- @field title string|false
@@ -39,7 +33,7 @@
 --- @field highlights_name table<integer,string>
 --- @field conf vim.tohtml.opt
 
---- @class vim.tohtml.state:vim.tohtml.state.global
+--- @class (private) vim.tohtml.state:vim.tohtml.state.global
 --- @field style vim.tohtml.styletable
 --- @field tabstop string|false
 --- @field opt vim.wo
@@ -48,20 +42,20 @@
 --- @field width integer
 --- @field buflen integer
 
---- @class vim.tohtml.styletable
+--- @class (private) vim.tohtml.styletable
 --- @field [integer] vim.tohtml.line (integer: (1-index, exclusive))
 
---- @class vim.tohtml.line
+--- @class (private) vim.tohtml.line
 --- @field virt_lines {[integer]:{[1]:string,[2]:integer}[]}
 --- @field pre_text string[][]
 --- @field hide? boolean
 --- @field [integer] vim.tohtml.cell? (integer: (1-index, exclusive))
 
---- @class vim.tohtml.cell
+--- @class (private) vim.tohtml.cell
 --- @field [1] integer[] start
 --- @field [2] integer[] close
---- @field [3]  any[][] virt_text
---- @field [4]  any[][] overlay_text
+--- @field [3] any[][] virt_text
+--- @field [4] any[][] overlay_text
 
 local HIDE_ID = -1
 -- stylua: ignore start
@@ -1319,14 +1313,29 @@ end
 
 local M = {}
 
+--- @class vim.tohtml.opt
+--- @inlinedoc
+---
+--- Title tag to set in the generated HTML code.
+--- (default: buffer name)
+--- @field title? string|false
+---
+--- Show line numbers.
+--- (default: `false`)
+--- @field number_lines? boolean
+---
+--- Fonts to use.
+--- (default: `guifont`)
+--- @field font? string[]|string
+---
+--- Width used for items which are either right aligned or repeat a character
+--- infinitely.
+--- (default: 'textwidth' if non-zero or window width otherwise)
+--- @field width? integer
+
 --- Converts the buffer shown in the window {winid} to HTML and returns the output as a list of string.
 --- @param winid? integer Window to convert (defaults to current window)
---- @param opt? vim.tohtml.opt (table) Optional parameters.
----               - title (string): Title tag to set in the generated HTML code (defaults to buffer name)
----               - number_lines (boolean): Show line numbers (defaults to `false`)
----               - font (string|string[]): Fonts to use (defaults to `guifont`)
----               - width (integer) Width used for items which are either right aligned or repeat a character infinitely
----                   (defaults to 'textwidth' if non-zero or window width otherwise)
+--- @param opt? vim.tohtml.opt Optional parameters.
 --- @return string[]
 function M.tohtml(winid, opt)
   return win_to_html(winid or 0, opt)

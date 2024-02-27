@@ -1828,16 +1828,16 @@ vim.inspect_pos({bufnr}, {row}, {col}, {filter})           *vim.inspect_pos()*
                   the current cursor
       • {col}     (`integer?`) col to inspect, 0-based. Defaults to the col of
                   the current cursor
-      • {filter}  (`table?`) a table with key-value pairs to filter the items
-                  • syntax (boolean): include syntax based highlight groups
+      • {filter}  (`table?`) Table with key-value pairs to filter the items
+                  • {syntax} (`boolean`) Include syntax based highlight groups
                     (defaults to true)
-                  • treesitter (boolean): include treesitter based highlight
-                    groups (defaults to true)
-                  • extmarks (boolean|"all"): include extmarks. When `all`,
-                    then extmarks without a `hl_group` will also be included
-                    (defaults to true)
-                  • semantic_tokens (boolean): include semantic tokens
-                    (defaults to true)
+                  • {treesitter} (`boolean`) Include treesitter based
+                    highlight groups (defaults to true)
+                  • {extmarks} (`boolean|"all"`, default: true) Include
+                    extmarks. When `all`, then extmarks without a `hl_group`
+                    will also be included.
+                  • {semantic_tokens} (`boolean`) Include semantic token
+                    highlights (defaults to true)
 
     Return: ~
         (`table`) a table with the following key-value pairs. Items are in
@@ -1864,6 +1864,17 @@ vim.show_pos({bufnr}, {row}, {col}, {filter})                 *vim.show_pos()*
       • {filter}  (`table?`) see |vim.inspect_pos()|
 
 
+
+
+*vim.Ringbuf*
+
+    Fields: ~
+      • {clear}  (`fun()`) Clear all items
+      • {push}   (`fun(item: T)`) Adds an item, overriding the oldest item if
+                 the buffer is full.
+      • {pop}    (`fun(): T?`) Removes and returns the first unread item
+      • {peek}   (`fun(): T?`) Returns the first unread item without removing
+                 it
 
 
 Ringbuf:clear()                                              *Ringbuf:clear()*
@@ -1970,9 +1981,10 @@ vim.gsplit({s}, {sep}, {opts})                                  *vim.gsplit()*
       • {s}     (`string`) String to split
       • {sep}   (`string`) Separator or pattern
       • {opts}  (`table?`) Keyword arguments |kwargs|:
-                • plain: (boolean) Use `sep` literally (as in string.find).
-                • trimempty: (boolean) Discard empty segments at start and end
-                  of the sequence.
+                • {plain}? (`boolean`) Use `sep` literally (as in
+                  string.find).
+                • {trimempty}? (`boolean`) Discard empty segments at start and
+                  end of the sequence.
 
     Return: ~
         (`function`) Iterator over the split components
@@ -2104,8 +2116,11 @@ vim.split({s}, {sep}, {opts})                                    *vim.split()*
     Parameters: ~
       • {s}     (`string`) String to split
       • {sep}   (`string`) Separator or pattern
-      • {opts}  (`table?`) Keyword arguments |kwargs| accepted by
-                |vim.gsplit()|
+      • {opts}  (`table?`) Keyword arguments |kwargs|:
+                • {plain}? (`boolean`) Use `sep` literally (as in
+                  string.find).
+                • {trimempty}? (`boolean`) Discard empty segments at start and
+                  end of the sequence.
 
     Return: ~
         (`string[]`) List of split components
@@ -2151,8 +2166,8 @@ vim.tbl_contains({t}, {value}, {opts})                    *vim.tbl_contains()*
       • {t}      (`table`) Table to check
       • {value}  (`any`) Value to compare or predicate function reference
       • {opts}   (`table?`) Keyword arguments |kwargs|:
-                 • predicate: (boolean) `value` is a function reference to be
-                   checked (default false)
+                 • {predicate}? (`boolean`) `value` is a function reference to
+                   be checked (default false)
 
     Return: ~
         (`boolean`) `true` if `t` contains `value`
@@ -2419,23 +2434,23 @@ vim.loader.find({modname}, {opts})                         *vim.loader.find()*
       • {modname}  (`string`) Module name, or `"*"` to find the top-level
                    modules instead
       • {opts}     (`table?`) Options for finding a module:
-                   • rtp: (boolean) Search for modname in the runtime path
-                     (defaults to `true`)
-                   • paths: (string[]) Extra paths to search for modname
-                     (defaults to `{}`)
-                   • patterns: (string[]) List of patterns to use when
-                     searching for modules. A pattern is a string added to the
-                     basename of the Lua module being searched. (defaults to
-                     `{"/init.lua", ".lua"}`)
-                   • all: (boolean) Return all matches instead of just the
-                     first one (defaults to `false`)
+                   • {rtp}? (`boolean`, default: `true`) Search for modname in
+                     the runtime path.
+                   • {paths}? (`string[]`, default: `{}`) Extra paths to
+                     search for modname
+                   • {patterns}? (`string[]`, default: `{"/init.lua",
+                     ".lua"}`) List of patterns to use when searching for
+                     modules. A pattern is a string added to the basename of
+                     the Lua module being searched.
+                   • {all}? (`boolean`, default: `false`) Search for all
+                     matches.
 
     Return: ~
-        (`table`) A list of results with the following properties:
-        • modpath: (string) the path to the module
-        • modname: (string) the name of the module
-        • stat: (table|nil) the fs_stat of the module path. Won't be returned
-          for `modname="*"`
+        (`table[]`) A list of objects with the following fields:
+        • {modpath} (`string`) Path of the module
+        • {modname} (`string`) Name of the module
+        • {stat}? (`uv.uv_fs_t`) The fs_stat of the module path. Won't be
+          returned for `modname="*"`
 
 vim.loader.reset({path})                                  *vim.loader.reset()*
     Resets the cache for the path, or all the paths if path is nil.
@@ -2678,6 +2693,9 @@ vim.filetype.add({filetypes})                             *vim.filetype.add()*
     Parameters: ~
       • {filetypes}  (`table`) A table containing new filetype maps (see
                      example).
+                     • {pattern}? (`vim.filetype.mapping`)
+                     • {extension}? (`vim.filetype.mapping`)
+                     • {filename}? (`vim.filetype.mapping`)
 
                                                    *vim.filetype.get_option()*
 vim.filetype.get_option({filetype}, {option})
@@ -2734,16 +2752,16 @@ vim.filetype.match({args})                              *vim.filetype.match()*
     Parameters: ~
       • {args}  (`table`) Table specifying which matching strategy to use.
                 Accepted keys are:
-                • buf (number): Buffer number to use for matching. Mutually
-                  exclusive with {contents}
-                • filename (string): Filename to use for matching. When {buf}
-                  is given, defaults to the filename of the given buffer
+                • {buf}? (`integer`) Buffer number to use for matching.
+                  Mutually exclusive with {contents}
+                • {filename}? (`string`) Filename to use for matching. When
+                  {buf} is given, defaults to the filename of the given buffer
                   number. The file need not actually exist in the filesystem.
                   When used without {buf} only the name of the file is used
                   for filetype matching. This may result in failure to detect
                   the filetype in cases where the filename alone is not enough
                   to disambiguate the filetype.
-                • contents (table): An array of lines representing file
+                • {contents}? (`string[]`) An array of lines representing file
                   contents to use for matching. Can be used with {filename}.
                   Mutually exclusive with {buf}.
 
@@ -2896,18 +2914,18 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                  • path: full path of the current item The function should
                    return `true` if the given item is considered a match.
       • {opts}   (`table`) Optional keyword arguments:
-                 • path (string): Path to begin searching from. If omitted,
+                 • {path} (`string`) Path to begin searching from. If omitted,
                    the |current-directory| is used.
-                 • upward (boolean, default false): If true, search upward
+                 • {upward} (`boolean`, default: `false`) Search upward
                    through parent directories. Otherwise, search through child
                    directories (recursively).
-                 • stop (string): Stop searching when this directory is
+                 • {stop} (`string`) Stop searching when this directory is
                    reached. The directory itself is not searched.
-                 • type (string): Find only items of the given type. If
+                 • {type} (`string`) Find only items of the given type. If
                    omitted, all items that match {names} are included.
-                 • limit (number, default 1): Stop the search after finding
-                   this many matches. Use `math.huge` to place no limit on the
-                   number of matches.
+                 • {limit} (`number`, default: `1`) Stop the search after
+                   finding this many matches. Use `math.huge` to place no
+                   limit on the number of matches.
 
     Return: ~
         (`string[]`) Normalized paths |vim.fs.normalize()| of all matching
@@ -2942,9 +2960,9 @@ vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
 
     Parameters: ~
       • {path}  (`string`) Path to normalize
-      • {opts}  (`table?`) Options:
-                • expand_env: boolean Expand environment variables (default:
-                  true)
+      • {opts}  (`table?`) A table with the following fields:
+                • {expand_env} (`boolean`, default: `true`) Expand environment
+                  variables.
 
     Return: ~
         (`string`) Normalized path
@@ -3538,14 +3556,15 @@ vim.secure.trust({opts})                                  *vim.secure.trust()*
     The trust database is located at |$XDG_STATE_HOME|/nvim/trust.
 
     Parameters: ~
-      • {opts}  (`table`)
-                • action (string): "allow" to add a file to the trust database
-                  and trust it, "deny" to add a file to the trust database and
-                  deny it, "remove" to remove file from the trust database
-                • path (string|nil): Path to a file to update. Mutually
+      • {opts}  (`table?`) A table with the following fields:
+                • {action} (`'allow'|'deny'|'remove'`) - `'allow'` to add a
+                  file to the trust database and trust it,
+                • `'deny'` to add a file to the trust database and deny it,
+                • `'remove'` to remove file from the trust database
+                • {path}? (`string`) Path to a file to update. Mutually
                   exclusive with {bufnr}. Cannot be used when {action} is
                   "allow".
-                • bufnr (number|nil): Buffer number to update. Mutually
+                • {bufnr}? (`integer`) Buffer number to update. Mutually
                   exclusive with {path}.
 
     Return (multiple): ~
@@ -3628,8 +3647,8 @@ vim.version.cmp({v1}, {v2})                                *vim.version.cmp()*
         otherwise-equivalent versions.
 
     Parameters: ~
-      • {v1}  (`Version|number[]|string`) Version object.
-      • {v2}  (`Version|number[]|string`) Version to compare with `v1`.
+      • {v1}  (`vim.Version|number[]|string`) Version object.
+      • {v2}  (`vim.Version|number[]|string`) Version to compare with `v1`.
 
     Return: ~
         (`integer`) -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
@@ -3639,8 +3658,8 @@ vim.version.eq({v1}, {v2})                                  *vim.version.eq()*
     for usage.
 
     Parameters: ~
-      • {v1}  (`Version|number[]|string`)
-      • {v2}  (`Version|number[]|string`)
+      • {v1}  (`vim.Version|number[]|string`)
+      • {v2}  (`vim.Version|number[]|string`)
 
     Return: ~
         (`boolean`)
@@ -3649,8 +3668,8 @@ vim.version.ge({v1}, {v2})                                  *vim.version.ge()*
     Returns `true` if `v1 >= v2`. See |vim.version.cmp()| for usage.
 
     Parameters: ~
-      • {v1}  (`Version|number[]|string`)
-      • {v2}  (`Version|number[]|string`)
+      • {v1}  (`vim.Version|number[]|string`)
+      • {v2}  (`vim.Version|number[]|string`)
 
     Return: ~
         (`boolean`)
@@ -3659,8 +3678,8 @@ vim.version.gt({v1}, {v2})                                  *vim.version.gt()*
     Returns `true` if `v1 > v2`. See |vim.version.cmp()| for usage.
 
     Parameters: ~
-      • {v1}  (`Version|number[]|string`)
-      • {v2}  (`Version|number[]|string`)
+      • {v1}  (`vim.Version|number[]|string`)
+      • {v2}  (`vim.Version|number[]|string`)
 
     Return: ~
         (`boolean`)
@@ -3669,17 +3688,17 @@ vim.version.last({versions})                              *vim.version.last()*
     TODO: generalize this, move to func.lua
 
     Parameters: ~
-      • {versions}  (`Version[]`)
+      • {versions}  (`vim.Version[]`)
 
     Return: ~
-        (`Version?`)
+        (`vim.Version?`)
 
 vim.version.le({v1}, {v2})                                  *vim.version.le()*
     Returns `true` if `v1 <= v2`. See |vim.version.cmp()| for usage.
 
     Parameters: ~
-      • {v1}  (`Version|number[]|string`)
-      • {v2}  (`Version|number[]|string`)
+      • {v1}  (`vim.Version|number[]|string`)
+      • {v2}  (`vim.Version|number[]|string`)
 
     Return: ~
         (`boolean`)
@@ -3688,8 +3707,8 @@ vim.version.lt({v1}, {v2})                                  *vim.version.lt()*
     Returns `true` if `v1 < v2`. See |vim.version.cmp()| for usage.
 
     Parameters: ~
-      • {v1}  (`Version|number[]|string`)
-      • {v2}  (`Version|number[]|string`)
+      • {v1}  (`vim.Version|number[]|string`)
+      • {v2}  (`vim.Version|number[]|string`)
 
     Return: ~
         (`boolean`)
@@ -3710,7 +3729,7 @@ vim.version.parse({version}, {opts})                     *vim.version.parse()*
                      "1.0", "0-x", "tmux 3.2a" into valid versions.
 
     Return: ~
-        (`Version?`) parsed_version Version object or `nil` if input is
+        (`vim.Version?`) parsed_version Version object or `nil` if input is
         invalid.
 
     See also: ~
@@ -3743,6 +3762,12 @@ vim.version.range({spec})                                *vim.version.range()*
 
     Parameters: ~
       • {spec}  (`string`) Version range "spec"
+
+    Return: ~
+        (`table`) A table with the following fields:
+        • {from} (`vim.Version`)
+        • {to}? (`vim.Version`)
+        • {has} (`fun(self: vim.VersionRangeversion: string|vim.Version)`)
 
     See also: ~
       • https://github.com/npm/node-semver#ranges
@@ -4380,15 +4405,15 @@ tohtml.tohtml({winid}, {opt})                         *tohtml.tohtml.tohtml()*
     Parameters: ~
       • {winid}  (`integer?`) Window to convert (defaults to current window)
       • {opt}    (`table?`) Optional parameters.
-                 • title (string): Title tag to set in the generated HTML code
-                   (defaults to buffer name)
-                 • number_lines (boolean): Show line numbers (defaults to
-                   `false`)
-                 • font (string|string[]): Fonts to use (defaults to
-                   `guifont`)
-                 • width (integer) Width used for items which are either right
-                   aligned or repeat a character infinitely (defaults to
-                   'textwidth' if non-zero or window width otherwise)
+                 • {title}? (`string|false`, default: buffer name) Title tag
+                   to set in the generated HTML code.
+                 • {number_lines}? (`boolean`, default: `false`) Show line
+                   numbers.
+                 • {font}? (`string[]|string`, default: `guifont`) Fonts to
+                   use.
+                 • {width}? (`integer`, default: 'textwidth' if non-zero or
+                   window width otherwise) Width used for items which are
+                   either right aligned or repeat a character infinitely.
 
     Return: ~
         (`string[]`)

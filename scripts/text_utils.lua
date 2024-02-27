@@ -175,7 +175,11 @@ local function render_md(node, start_indent, indent, text_width, level, is_list)
       error(fmt('cannot render:\n%s', vim.inspect(node)))
     end
     for i, child in ipairs(node) do
-      vim.list_extend(parts, render_md(child, start_indent, indent, text_width, level + 1, is_list))
+      local start_indent0 = i == 1 and start_indent or indent
+      vim.list_extend(
+        parts,
+        render_md(child, start_indent0, indent, text_width, level + 1, is_list)
+      )
       if node.type ~= 'list' and i ~= #node then
         if (node[i + 1] or {}).type ~= 'list' then
           parts[#parts + 1] = '\n'

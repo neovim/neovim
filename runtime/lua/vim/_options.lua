@@ -797,6 +797,7 @@ end
 --- `vim.opt_global`.
 --- </pre>
 
+--- @nodoc
 --- @class vim.Option
 local Option = {} -- luacheck: no unused
 

@@ -45,7 +45,7 @@ local function guess_query_lang(buf)
 end
 
 --- @param buf integer
---- @param opts QueryLinterOpts|QueryLinterNormalizedOpts|nil
+--- @param opts vim.treesitter.query.lint.Opts|QueryLinterNormalizedOpts|nil
 --- @return QueryLinterNormalizedOpts
 local function normalize_opts(buf, opts)
   opts = opts or {}
@@ -122,7 +122,7 @@ local parse = vim.func._memoize(hash_parse, function(node, buf, lang)
 end)
 
 --- @param buf integer
---- @param match TSMatch
+--- @param match vim.treesitter.query.TSMatch
 --- @param query Query
 --- @param lang_context QueryLinterLanguageContext
 --- @param diagnostics Diagnostic[]
@@ -153,7 +153,7 @@ end
 
 --- @private
 --- @param buf integer Buffer to lint
---- @param opts QueryLinterOpts|QueryLinterNormalizedOpts|nil Options for linting
+--- @param opts vim.treesitter.query.lint.Opts|QueryLinterNormalizedOpts|nil Options for linting
 function M.lint(buf, opts)
   if buf == 0 then
     buf = api.nvim_get_current_buf()

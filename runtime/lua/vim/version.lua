@@ -54,7 +54,8 @@
 
 local M = {}
 
----@class Version
+---@nodoc
+---@class vim.Version
 ---@field [1] number
 ---@field [2] number
 ---@field [3] number
@@ -111,7 +112,7 @@ function Version:__newindex(key, value)
   end
 end
 
----@param other Version
+---@param other vim.Version
 function Version:__eq(other)
   for i = 1, 3 do
     if self[i] ~= other[i] then
@@ -132,7 +133,7 @@ function Version:__tostring()
   return ret
 end
 
----@param other Version
+---@param other vim.Version
 function Version:__lt(other)
   for i = 1, 3 do
     if self[i] > other[i] then
@@ -144,7 +145,7 @@ function Version:__lt(other)
   return -1 == cmp_prerel(self.prerelease, other.prerelease)
 end
 
----@param other Version
+---@param other vim.Version
 function Version:__le(other)
   return self < other or self == other
 end
@@ -153,9 +154,9 @@ end
 ---
 --- Creates a new Version object, or returns `nil` if `version` is invalid.
 ---
---- @param version string|number[]|Version
+--- @param version string|number[]|vim.Version
 --- @param strict? boolean Reject "1.0", "0-x", "3.2a" or other non-conforming version strings
---- @return Version?
+--- @return vim.Version?
 function M._version(version, strict) -- Adapted from https://github.com/folke/lazy.nvim
   if type(version) == 'table' then
     if version.major then
@@ -203,7 +204,7 @@ end
 
 ---TODO: generalize this, move to func.lua
 ---
----@generic T: Version
+---@generic T: vim.Version
 ---@param versions T[]
 ---@return T?
 function M.last(versions)
@@ -216,14 +217,15 @@ function M.last(versions)
   return last
 end
 
----@class VersionRange
----@field from Version
----@field to? Version
+---@class vim.VersionRange
+---@inlinedoc
+---@field from vim.Version
+---@field to? vim.Version
 local VersionRange = {}
 
 --- @private
 ---
----@param version string|Version
+---@param version string|vim.Version
 function VersionRange:has(version)
   if type(version) == 'string' then
     ---@diagnostic disable-next-line: cast-local-type
@@ -272,6 +274,7 @@ end
 --- @see # https://github.com/npm/node-semver#ranges
 ---
 --- @param spec string Version range "spec"
+--- @return vim.VersionRange
 function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
   if spec == '*' or spec == '' then
     return setmetatable({ from = M.parse('0.0.0') }, { __index = VersionRange })
@@ -300,8 +303,8 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
 
   local semver = M.parse(version)
   if semver then
-    local from = semver --- @type Version?
-    local to = vim.deepcopy(semver, true) --- @type Version?
+    local from = semver --- @type vim.Version?
+    local to = vim.deepcopy(semver, true) --- @type vim.Version?
     ---@diagnostic disable: need-check-nil
     if mods == '' or mods == '=' then
       to.patch = to.patch + 1
@@ -340,7 +343,7 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
   end
 end
 
----@param v string|Version
+---@param v string|vim.Version
 ---@return string
 local function create_err_msg(v)
   if type(v) == 'string' then
@@ -369,8 +372,8 @@ end
 ---
 --- @note Per semver, build metadata is ignored when comparing two otherwise-equivalent versions.
 ---
----@param v1 Version|number[]|string Version object.
----@param v2 Version|number[]|string Version to compare with `v1`.
+---@param v1 vim.Version|number[]|string Version object.
+---@param v2 vim.Version|number[]|string Version to compare with `v1`.
 ---@return integer -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
 function M.cmp(v1, v2)
   local v1_parsed = assert(M._version(v1), create_err_msg(v1))
@@ -385,40 +388,40 @@ function M.cmp(v1, v2)
 end
 
 ---Returns `true` if the given versions are equal. See |vim.version.cmp()| for usage.
----@param v1 Version|number[]|string
----@param v2 Version|number[]|string
+---@param v1 vim.Version|number[]|string
+---@param v2 vim.Version|number[]|string
 ---@return boolean
 function M.eq(v1, v2)
   return M.cmp(v1, v2) == 0
 end
 
 ---Returns `true` if `v1 <= v2`. See |vim.version.cmp()| for usage.
----@param v1 Version|number[]|string
----@param v2 Version|number[]|string
+---@param v1 vim.Version|number[]|string
+---@param v2 vim.Version|number[]|string
 ---@return boolean
 function M.le(v1, v2)
   return M.cmp(v1, v2) <= 0
 end
 
 ---Returns `true` if `v1 < v2`. See |vim.version.cmp()| for usage.
----@param v1 Version|number[]|string
----@param v2 Version|number[]|string
+---@param v1 vim.Version|number[]|string
+---@param v2 vim.Version|number[]|string
 ---@return boolean
 function M.lt(v1, v2)
   return M.cmp(v1, v2) == -1
 end
 
 ---Returns `true` if `v1 >= v2`. See |vim.version.cmp()| for usage.
----@param v1 Version|number[]|string
----@param v2 Version|number[]|string
+---@param v1 vim.Version|number[]|string
+---@param v2 vim.Version|number[]|string
 ---@return boolean
 function M.ge(v1, v2)
   return M.cmp(v1, v2) >= 0
 end
 
 ---Returns `true` if `v1 > v2`. See |vim.version.cmp()| for usage.
----@param v1 Version|number[]|string
----@param v2 Version|number[]|string
+---@param v1 vim.Version|number[]|string
+---@param v2 vim.Version|number[]|string
 ---@return boolean
 function M.gt(v1, v2)
   return M.cmp(v1, v2) == 1
@@ -438,7 +441,7 @@ end
 ---                      - strict (boolean):  Default false. If `true`, no coercion is attempted on
 ---                      input not conforming to semver v2.0.0. If `false`, `parse()` attempts to
 ---                      coerce input such as "1.0", "0-x", "tmux 3.2a" into valid versions.
----@return Version? parsed_version Version object or `nil` if input is invalid.
+---@return vim.Version? parsed_version Version object or `nil` if input is invalid.
 function M.parse(version, opts)
   assert(type(version) == 'string', create_err_msg(version))
   opts = opts or { strict = false }
@@ -447,9 +450,9 @@ end
 
 setmetatable(M, {
   --- Returns the current Nvim version.
-  ---@return Version
+  ---@return vim.Version
   __call = function()
-    local version = vim.fn.api_info().version ---@type Version
+    local version = vim.fn.api_info().version ---@type vim.Version
     -- Workaround: vim.fn.api_info().version reports "prerelease" as a boolean.
     version.prerelease = version.prerelease and 'dev' or nil
     return setmetatable(version, Version)

@@ -190,6 +190,7 @@ function vim._os_proc_children(ppid)
   return children
 end
 
+--- @nodoc
 --- @class vim.inspect.Opts
 --- @field depth? integer
 --- @field newline? string
@@ -454,7 +455,7 @@ vim.cmd = setmetatable({}, {
   end,
 })
 
---- @class vim.var_accessor
+--- @class (private) vim.var_accessor
 --- @field [string] any
 --- @field [integer] vim.var_accessor
 
@@ -1048,7 +1049,7 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
   -- e.g., when planned to be removed in version = '0.12' (soft-deprecated since 0.10-dev),
   -- show warnings since 0.11, including 0.11-dev (hard_deprecated_since = 0.11-dev).
   if plugin == 'Nvim' then
-    local current_version = vim.version() ---@type Version
+    local current_version = vim.version() ---@type vim.Version
     local removal_version = assert(vim.version.parse(version))
     local is_hard_deprecated ---@type boolean
 

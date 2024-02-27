@@ -64,11 +64,13 @@
 --- In addition to the |vim.iter()| function, the |vim.iter| module provides
 --- convenience functions like |vim.iter.filter()| and |vim.iter.totable()|.
 
+---@nodoc
 ---@class IterMod
 ---@operator call:Iter
 
 local M = {}
 
+---@nodoc
 ---@class Iter
 local Iter = {}
 Iter.__index = Iter
@@ -77,6 +79,7 @@ Iter.__call = function(self)
 end
 
 --- Special case implementations for iterators on list tables.
+---@nodoc
 ---@class ListIter : Iter
 ---@field _table table Underlying table data
 ---@field _head number Index to the front of a table iterator

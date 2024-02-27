@@ -675,13 +675,15 @@ local function get_bufs_with_prefix(prefix)
   return buffers
 end
 
+--- @class vim.lsp.util.rename.Opts
+--- @inlinedoc
+--- @field overwrite? boolean
+--- @field ignoreIfExists? boolean
+
 --- Rename old_fname to new_fname
----
----@param old_fname string
----@param new_fname string
----@param opts? table options
----        - overwrite? boolean
----        - ignoreIfExists? boolean
+--- @param old_fname string
+--- @param new_fname string
+--- @param opts? vim.lsp.util.rename.Opts Options:
 function M.rename(old_fname, new_fname, opts)
   opts = opts or {}
   local skip = not opts.overwrite or opts.ignoreIfExists
@@ -1450,7 +1452,7 @@ function M.stylize_markdown(bufnr, contents, opts)
   return stripped
 end
 
---- @class lsp.util.NormalizeMarkdownOptions
+--- @class (private) vim.lsp.util._normalize_markdown.Opts
 --- @field width integer Thematic breaks are expanded to this size. Defaults to 80.
 
 --- Normalizes Markdown input to a canonical form.
@@ -1466,7 +1468,7 @@ end
 ---
 ---@private
 ---@param contents string[]
----@param opts? lsp.util.NormalizeMarkdownOptions
+---@param opts? vim.lsp.util._normalize_markdown.Opts
 ---@return string[] table of lines containing normalized Markdown
 ---@see https://github.github.com/gfm
 function M._normalize_markdown(contents, opts)
@@ -1537,7 +1539,7 @@ local function close_preview_autocmd(events, winnr, bufnrs)
   end
 end
 
----@internal
+---@private
 --- Computes size of float needed to show contents (with optional wrapping)
 ---
 ---@param contents table of lines to show in window
@@ -1613,24 +1615,50 @@ function M._make_floating_popup_size(contents, opts)
   return width, height
 end
 
+--- @class vim.lsp.util.open_floating_preview.Opts
+--- @inlinedoc
+---
+--- Height of floating window
+--- @field height? integer
+---
+--- Width of floating window
+--- @field width? integer
+---
+--- Wrap long lines
+--- (default: `true`)
+--- @field wrap? boolean
+---
+--- Character to wrap at for computing height when wrap is enabled
+--- @field wrap_at? integer
+---
+--- Maximal width of floating window
+--- @field max_width? integer
+---
+--- Maximal height of floating window
+--- @field max_height? integer
+---
+--- If a popup with this id is opened, then focus it
+--- @field focus_id? string
+---
+--- List of events that closes the floating window
+--- @field close_events? table
+---
+--- Make float focusable.
+--- (default: `true`)
+--- @field focusable? boolean
+---
+--- If `true`, and if {focusable} is also `true`, focus an existing floating
+--- window with the same {focus_id}
+--- (default: `true`)
+--- @field focus? boolean
+
 --- Shows contents in a floating window.
 ---
 ---@param contents table of lines to show in window
 ---@param syntax string of syntax to set for opened buffer
----@param opts table with optional fields (additional keys are filtered with |vim.lsp.util.make_floating_popup_options()|
----             before they are passed on to |nvim_open_win()|)
----             - height: (integer) height of floating window
----             - width: (integer) width of floating window
----             - wrap: (boolean, default true) wrap long lines
----             - wrap_at: (integer) character to wrap at for computing height when wrap is enabled
----             - max_width: (integer) maximal width of floating window
----             - max_height: (integer) maximal height of floating window
----             - focus_id: (string) if a popup with this id is opened, then focus it
----             - close_events: (table) list of events that closes the floating window
----             - focusable: (boolean, default true) Make float focusable
----             - focus: (boolean, default true) If `true`, and if {focusable}
----                      is also `true`, focus an existing floating window with the same
----                      {focus_id}
+---@param opts? vim.lsp.util.open_floating_preview.Opts with optional fields
+--- (additional keys are filtered with |vim.lsp.util.make_floating_popup_options()|
+--- before they are passed on to |nvim_open_win()|)
 ---@return integer bufnr of newly created float window
 ---@return integer winid of newly created float window preview window
 function M.open_floating_preview(contents, syntax, opts)
@@ -1794,7 +1822,8 @@ local position_sort = sort_by_key(function(v)
   return { v.start.line, v.start.character }
 end)
 
----@class vim.lsp.util.LocationItem
+---@class vim.lsp.util.locations_to_items.ret
+---@inlinedoc
 ---@field filename string
 ---@field lnum integer 1-indexed line number
 ---@field col integer 1-indexed column
@@ -1813,7 +1842,7 @@ end)
 ---@param locations lsp.Location[]|lsp.LocationLink[]
 ---@param offset_encoding string offset_encoding for locations utf-8|utf-16|utf-32
 ---                              default to first client of buffer
----@return vim.lsp.util.LocationItem[] list of items
+---@return vim.lsp.util.locations_to_items.ret[]
 function M.locations_to_items(locations, offset_encoding)
   if offset_encoding == nil then
     vim.notify_once(
@@ -2221,16 +2250,16 @@ local function make_line_range_params(bufnr, start_line, end_line, offset_encodi
   }
 end
 
----@private
---- Request updated LSP information for a buffer.
----
----@class lsp.util.RefreshOptions
+---@class (private) vim.lsp.util._refresh.Opts
 ---@field bufnr integer? Buffer to refresh (default: 0)
 ---@field only_visible? boolean Whether to only refresh for the visible regions of the buffer (default: false)
 ---@field client_id? integer Client ID to refresh (default: all clients)
---
+
+---@private
+--- Request updated LSP information for a buffer.
+---
 ---@param method string LSP method to call
----@param opts? lsp.util.RefreshOptions Options table
+---@param opts? vim.lsp.util._refresh.Opts Options table
 function M._refresh(method, opts)
   opts = opts or {}
   local bufnr = opts.bufnr
