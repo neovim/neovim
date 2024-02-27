@@ -164,6 +164,8 @@ syn match vimVar        	"\s\zs&t_k;"
 syn match vimFBVar      contained   "\<[bwglstav]:\h[a-zA-Z0-9#_]*\>"
 syn keyword vimCommand  contained	in
 
+syn cluster vimExprList contains=vimEnvvar,vimFunc,vimFuncVar,vimNumber,vimOper,vimOperParen,vimLetRegister,vimString,vimVar
+
 " Insertions And Appends: insert append {{{2
 "   (buftype != nofile test avoids having append, change, insert show up in the command window)
 " =======================
@@ -330,11 +332,11 @@ syn match	vimEscape	contained	"\\\o\{1,3}\|\\[xX]\x\{1,2}\|\\u\x\{1,4}\|\\U\x\{1
 syn match	vimEscape	contained	"\\<" contains=vimNotation
 syn match	vimEscape	contained	"\\<\*[^>]*>\=>"
 
-syn region	vimString start=+$'+ end=+'+ skip=+''+ oneline contains=vimStringInterpolationBrace,vimStringInterpolationExpr
-syn region	vimString start=+$"+ end=+"+ oneline contains=@vimStringGroup,vimStringInterpolationBrace,vimStringInterpolationExpr
-syn region	vimStringInterpolationExpr matchgroup=vimSep start=+{+ end=+}+ oneline contains=vimFunc,vimFuncVar,vimOper,vimOperParen,vimNotation,vimNumber,vimString,vimVar
-syn match	vimStringInterpolationBrace "{{"
-syn match	vimStringInterpolationBrace "}}"
+syn region	vimString	oneline start=+$'+ skip=+''+ end=+'+ contains=vimStringInterpolationBrace,vimStringInterpolationExpr
+syn region	vimString	oneline start=+$"+ end=+"+ contains=@vimStringGroup,vimStringInterpolationBrace,vimStringInterpolationExpr
+syn region	vimStringInterpolationExpr  oneline contained matchgroup=vimSep start=+{+ end=+}+ contains=@vimExprList
+syn match	vimStringInterpolationBrace contained "{{"
+syn match	vimStringInterpolationBrace contained "}}"
 
 " Substitutions: {{{2
 " =============
@@ -428,12 +430,16 @@ syn match	vimAutoCmdMod	"\(++\)\=\(once\|nested\)"
 
 " Echo And Execute: -- prefer strings! {{{2
 " ================
-syn region	vimEcho	oneline excludenl matchgroup=vimCommand start="\<ec\%[ho]\>" skip="\(\\\\\)*\\|" end="$\||" contains=vimFunc,vimFuncVar,vimString,vimVar
-syn region	vimExecute	oneline excludenl matchgroup=vimCommand start="\<exe\%[cute]\>" skip="\(\\\\\)*\\|" end="$\||\|<[cC][rR]>" contains=vimFuncVar,vimIsCommand,vimOper,vimNotation,vimOperParen,vimString,vimVar
-syn match	vimEchoHL	"echohl\="	skipwhite nextgroup=vimGroup,vimHLGroup,vimEchoHLNone,vimOnlyHLGroup,nvimHLGroup
+" GEN_SYN_VIM: vimCommand echo, START_STR='syn keyword vimEcho', END_STR='skipwhite nextgroup=vimEchoExpr'
+syn keyword vimEcho ec[ho] echoe[rr] echom[sg] echoc[onsole] echon echow[indow] skipwhite nextgroup=vimEchoExpr
+syn region	vimEchoExpr 	contained	start="[^[:space:]|]" skip=+\\\\\|\\|\|\n\s*\\\|\n\s*"\\ + matchgroup=vimCmdSep end="|" end="$" contains=@vimContinue,@vimExprList
+
+syn match	vimEchoHL	"\<echohl\=\>"	skipwhite nextgroup=vimGroup,vimHLGroup,vimEchoHLNone,vimOnlyHLGroup,nvimHLGroup
 syn case ignore
 syn keyword	vimEchoHLNone	none
 syn case match
+
+syn region	vimExecute	oneline excludenl matchgroup=vimCommand start="\<exe\%[cute]\>" skip="\(\\\\\)*\\|" end="$\||\|<[cC][rR]>" contains=vimFuncVar,vimIsCommand,vimOper,vimNotation,vimOperParen,vimString,vimVar
 
 " Maps: {{{2
 " ====
@@ -942,6 +948,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimContinue	Special
  hi def link vimContinueComment	vimComment
  hi def link vimCtrlChar	SpecialChar
+ hi def link vimEcho	vimCommand
  hi def link vimEchoHLNone	vimGroup
  hi def link vimEchoHL	vimCommand
  hi def link vimElseIfErr	Error
