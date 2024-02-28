@@ -3326,8 +3326,8 @@ vim.lpeg.R({...})                                               *vim.lpeg.R()*
     Returns a pattern that matches any single character belonging to one of
     the given ranges. Each `range` is a string `xy` of length 2, representing
     all characters with code between the codes of `x` and `y` (both
-    inclusive). As an example, the pattern ``lpeg.R('09')`` matches any digit,
-    and ``lpeg.R('az', 'AZ')`` matches any ASCII letter.
+    inclusive). As an example, the pattern `lpeg.R('09')` matches any digit,
+    and `lpeg.R('az', 'AZ')` matches any ASCII letter.
 
     Example: >lua
         local pattern = lpeg.R('az') ^ 1 * -1
@@ -3343,10 +3343,10 @@ vim.lpeg.R({...})                                               *vim.lpeg.R()*
 vim.lpeg.S({string})                                            *vim.lpeg.S()*
     Returns a pattern that matches any single character that appears in the
     given string (the `S` stands for Set). As an example, the pattern
-    ``lpeg.S('+-*/')`` matches any arithmetic operator. Note that, if `s` is a
+    `lpeg.S('+-*/')` matches any arithmetic operator. Note that, if `s` is a
     character (that is, a string of length 1), then `lpeg.P(s)` is equivalent
     to `lpeg.S(s)` which is equivalent to `lpeg.R(s..s)`. Note also that both
-    ``lpeg.S('')`` and `lpeg.R()` are patterns that always fail.
+    `lpeg.S('')` and `lpeg.R()` are patterns that always fail.
 
     Parameters: ~
       • {string}  (`string`)
