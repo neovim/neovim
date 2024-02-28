@@ -4356,16 +4356,27 @@ M.funcs = {
     signature = 'getreginfo([{regname}])',
   },
   getregion = {
-    args = 3,
+    args = { 2, 3 },
     base = 1,
     desc = [=[
-      Returns the list of strings from {pos1} to {pos2} as if it's
-      selected in visual mode of {type}.
-      For possible values of {pos1} and {pos2} see |line()|.
-      {type} is the selection type:
-      	"v" for |charwise| mode
-      	"V" for |linewise| mode
-      	"<CTRL-V>" for |blockwise-visual| mode
+      Returns the list of strings from {pos1} to {pos2} in current
+      buffer.
+
+      {pos1} and {pos2} must both be |List|s with four numbers.
+      See |getpos()| for the format of the list.
+
+      The optional argument {opts} is a Dict and supports the
+      following items:
+
+      	type		Specify the selection type
+      			(default: "v"):
+      	    "v"		for |charwise| mode
+      	    "V"		for |linewise| mode
+      	    "<CTRL-V>"	for |blockwise-visual| mode
+
+      	exclusive	If |TRUE|, use exclusive selection
+      			for the end position 'selection'.
+
       You can get the last selection type by |visualmode()|.
       If Visual mode is active, use |mode()| to get the Visual mode
       (e.g., in a |:vmap|).
@@ -4383,22 +4394,19 @@ M.funcs = {
       - If the selection starts or ends in the middle of a multibyte
         character, it is not included but its selected part is
         substituted with spaces.
-      - If {pos1} or {pos2} equals "v" (see |line()|) and it is not in
-        |visual-mode|, an empty list is returned.
-      - If {pos1}, {pos2} or {type} is an invalid string, an empty
-        list is returned.
-      - If {pos1} or {pos2} is a mark in different buffer, an empty
+      - If {pos1} or {pos2} is not current in the buffer, an empty
         list is returned.
 
       Examples: >
       	:xnoremap <CR>
-      	\ <Cmd>echom getregion('v', '.', mode())<CR>
+      	\ <Cmd>echom getregion(
+      	\ getpos('v'), getpos('.'), #{ type: mode() })<CR>
       <
     ]=],
     name = 'getregion',
-    params = { { 'pos1', 'string' }, { 'pos2', 'string' }, { 'type', 'string' } },
+    params = { { 'pos1', 'table' }, { 'pos2', 'table' }, { 'opts', 'table' } },
     returns = 'string[]',
-    signature = 'getregion({pos1}, {pos2}, {type})',
+    signature = 'getregion({pos1}, {pos2} [, {opts}])',
   },
   getregtype = {
     args = { 0, 1 },
