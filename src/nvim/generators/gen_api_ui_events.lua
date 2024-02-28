@@ -204,7 +204,5 @@ for _, ev in ipairs(events) do
   end
 end
 
-local packed = mpack.encode(exported_events)
-local dump_bin_array = require('generators.dump_bin_array')
-dump_bin_array(metadata_output, 'ui_events_metadata', packed)
+metadata_output:write(mpack.encode(exported_events))
 metadata_output:close()

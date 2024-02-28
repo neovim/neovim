@@ -1103,20 +1103,16 @@ static void command_line_scan(mparm_T *parmp)
           FileDescriptor fp;
           const int fof_ret = file_open_fd(&fp, STDOUT_FILENO,
                                            kFileWriteOnly);
-          msgpack_packer *p = msgpack_packer_new(&fp, msgpack_file_write);
-
           if (fof_ret != 0) {
             semsg(_("E5421: Failed to open stdin: %s"), os_strerror(fof_ret));
           }
 
-          if (p == NULL) {
-            emsg(_(e_outofmem));
+          String data = api_metadata_raw();
+          const ptrdiff_t written_bytes = file_write(&fp, data.data, data.size);
+          if (written_bytes < 0) {
+            msgpack_file_write_error((int)written_bytes);
           }
 
-          Object md = DICTIONARY_OBJ(api_metadata());
-          msgpack_rpc_from_object(&md, p);
-
-          msgpack_packer_free(p);
           const int ff_ret = file_flush(&fp);
           if (ff_ret < 0) {
             msgpack_file_write_error(ff_ret);

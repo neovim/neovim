@@ -442,8 +442,7 @@ static void f_and(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "api_info()" function
 static void f_api_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  Dictionary metadata = api_metadata();
-  object_to_vim(DICTIONARY_OBJ(metadata), rettv, NULL);
+  object_to_vim(api_metadata(), rettv, NULL);
 }
 
 /// "atan2()" function
