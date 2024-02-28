@@ -88,6 +88,12 @@ describe('URI methods', function()
 
         eq('/xy/åäö/ɧ/汉语/↥/🤦/🦄/å/بِيَّ.txt', exec_lua(test_case))
       end)
+
+      it('file path with uri fragment', function()
+        exec_lua("uri = 'file:///Foo/Bar/Baz.txt#fragment'")
+
+        eq('/Foo/Bar/Baz.txt', exec_lua('return vim.uri_to_fname(uri)'))
+      end)
     end)
 
     describe('decode Windows filepath', function()
@@ -181,6 +187,15 @@ describe('URI methods', function()
           false,
           exec_lua [[
           return pcall(vim.uri_to_fname, 'foo,://bar')
+        ]]
+        )
+      end)
+
+      it('uri_to_fname returns non-file schema URI with fragment unchanged', function()
+        eq(
+          'scheme://path#fragment',
+          exec_lua [[
+          return vim.uri_to_fname('scheme://path#fragment')
         ]]
         )
       end)

@@ -104,6 +104,10 @@ function M.uri_to_fname(uri)
   if scheme ~= 'file' then
     return uri
   end
+  local fragment_index = uri:find('#')
+  if fragment_index ~= nil then
+    uri = uri:sub(1, fragment_index - 1)
+  end
   uri = M.uri_decode(uri)
   --TODO improve this.
   if is_windows_file_uri(uri) then
