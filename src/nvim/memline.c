@@ -30,6 +30,10 @@
 //  changed (lines appended/deleted/changed) or when it is flushed it gets a
 //  positive number. Use mf_trans_del() to get the new number, before calling
 //  mf_get().
+//
+// "Mom, can we get ropes?"
+// "We have ropes at home."
+// Ropes at home:
 
 #include <assert.h>
 #include <errno.h>
