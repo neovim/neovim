@@ -682,6 +682,9 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       return text
     end
     local class = node_name == 'optional' and ' class="optional"' or ''
+    if node_name == 'optional' then
+      return ('%s<code%s>%s</code>'):format(ws(), class, trimmed)
+    end
     local s = (
       node_name == 'keycode'
         -- TODO: use <kbd>. Currently has a layout issue, example: ":help _".
