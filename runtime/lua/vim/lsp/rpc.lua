@@ -819,7 +819,8 @@ function M.start(cmd, dispatchers, extra_spawn_params)
     else
       sfx = string.format(' with error message: %s', err)
     end
-    local msg = string.format('Spawning language server with cmd: `%s` failed%s', cmd, sfx)
+    local msg =
+      string.format('Spawning language server with cmd: `%s` failed%s', vim.inspect(cmd), sfx)
     vim.notify(msg, vim.log.levels.WARN)
     return nil
   end
