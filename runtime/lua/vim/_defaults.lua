@@ -6,7 +6,8 @@ do
   do
     local function _visual_search(cmd)
       assert(cmd == '/' or cmd == '?')
-      local chunks = vim.fn.getregion('.', 'v', vim.fn.mode())
+      local chunks =
+        vim.fn.getregion(vim.fn.getpos('.'), vim.fn.getpos('v'), { type = vim.fn.mode() })
       local esc_chunks = vim
         .iter(chunks)
         :map(function(v)

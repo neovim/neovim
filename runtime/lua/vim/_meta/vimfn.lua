@@ -3525,13 +3525,24 @@ function vim.fn.getreg(regname, list) end
 --- @return table
 function vim.fn.getreginfo(regname) end
 
---- Returns the list of strings from {pos1} to {pos2} as if it's
---- selected in visual mode of {type}.
---- For possible values of {pos1} and {pos2} see |line()|.
---- {type} is the selection type:
----   "v" for |charwise| mode
----   "V" for |linewise| mode
----   "<CTRL-V>" for |blockwise-visual| mode
+--- Returns the list of strings from {pos1} to {pos2} in current
+--- buffer.
+---
+--- {pos1} and {pos2} must both be |List|s with four numbers.
+--- See |getpos()| for the format of the list.
+---
+--- The optional argument {opts} is a Dict and supports the
+--- following items:
+---
+---   type    Specify the selection type
+---       (default: "v"):
+---       "v"    for |charwise| mode
+---       "V"    for |linewise| mode
+---       "<CTRL-V>"  for |blockwise-visual| mode
+---
+---   exclusive  If |TRUE|, use exclusive selection
+---       for the end position 'selection'.
+---
 --- You can get the last selection type by |visualmode()|.
 --- If Visual mode is active, use |mode()| to get the Visual mode
 --- (e.g., in a |:vmap|).
@@ -3549,23 +3560,20 @@ function vim.fn.getreginfo(regname) end
 --- - If the selection starts or ends in the middle of a multibyte
 ---   character, it is not included but its selected part is
 ---   substituted with spaces.
---- - If {pos1} or {pos2} equals "v" (see |line()|) and it is not in
----   |visual-mode|, an empty list is returned.
---- - If {pos1}, {pos2} or {type} is an invalid string, an empty
----   list is returned.
---- - If {pos1} or {pos2} is a mark in different buffer, an empty
+--- - If {pos1} or {pos2} is not current in the buffer, an empty
 ---   list is returned.
 ---
 --- Examples: >
 ---   :xnoremap <CR>
----   \ <Cmd>echom getregion('v', '.', mode())<CR>
+---   \ <Cmd>echom getregion(
+---   \ getpos('v'), getpos('.'), #{ type: mode() })<CR>
 --- <
 ---
---- @param pos1 string
---- @param pos2 string
---- @param type string
+--- @param pos1 table
+--- @param pos2 table
+--- @param opts? table
 --- @return string[]
-function vim.fn.getregion(pos1, pos2, type) end
+function vim.fn.getregion(pos1, pos2, opts) end
 
 --- The result is a String, which is type of register {regname}.
 --- The value will be one of:
