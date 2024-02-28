@@ -307,7 +307,8 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
   // Set up screen
   term->vts = vterm_obtain_screen(term->vt);
   vterm_screen_enable_altscreen(term->vts, true);
-  vterm_screen_enable_reflow(term->vts, true);
+  // TODO(clason): reenable when https://github.com/neovim/neovim/issues/23762 is fixed
+  // vterm_screen_enable_reflow(term->vts, true);
   // delete empty lines at the end of the buffer
   vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
   vterm_screen_set_unrecognised_fallbacks(term->vts, &vterm_fallbacks, term);

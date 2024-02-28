@@ -6573,9 +6573,6 @@ return {
         top are deleted if new lines exceed this limit.
         Minimum is 1, maximum is 100000.
         Only in |terminal| buffers.
-
-        Note: Lines that are not visible and kept in scrollback are not
-        reflown when the terminal buffer is resized horizontally.
       ]=],
       full_name = 'scrollback',
       redraw = { 'current_buffer' },

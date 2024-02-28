@@ -179,10 +179,6 @@ The following new APIs and features were added.
 • |'foldtext'| can be set to an empty string to disable and render the line:
   as normal with regular highlighting and no line wrapping.
 
-• The terminal buffer now supports reflow (wrapped lines adapt when the buffer
-  is resized horizontally). Note: Lines that are not visible and kept in
-  |'scrollback'| are not reflown.
-
 • |vim.system()| for running system commands.
 
 • |vim.lpeg| and |vim.re| expose the bundled Lpeg expression grammar parser
