@@ -6446,6 +6446,7 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
   bool was_visual = false;
   int dir;
   int flags = 0;
+  const int save_fen = curwin->w_p_fen;
 
   if (cap->oap->op_type != OP_NOP) {
     // "dp" is ":diffput"
@@ -6495,6 +6496,10 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
       // The delete might overwrite the register we want to put, save it first
       savereg = copy_register(regname);
     }
+
+    // Temporarily disable folding, as deleting a fold marker may cause
+    // the cursor to be included in a fold.
+    curwin->w_p_fen = false;
 
     // To place the cursor correctly after a blockwise put, and to leave the
     // text in the correct position when putting over a selection with
@@ -6546,9 +6551,12 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
     xfree(savereg);
   }
 
-  // What to reselect with "gv"?  Selecting the just put text seems to
-  // be the most useful, since the original text was removed.
   if (was_visual) {
+    if (save_fen) {
+      curwin->w_p_fen = true;
+    }
+    // What to reselect with "gv"?  Selecting the just put text seems to
+    // be the most useful, since the original text was removed.
     curbuf->b_visual.vi_start = curbuf->b_op_start;
     curbuf->b_visual.vi_end = curbuf->b_op_end;
     // need to adjust cursor position
