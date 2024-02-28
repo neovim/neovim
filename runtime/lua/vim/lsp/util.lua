@@ -710,11 +710,12 @@ function M.rename(old_fname, new_fname, opts)
   end
 
   for _, b in ipairs(oldbufs) do
-    vim.fn.bufload(b)
-    -- The there may be pending changes in the buffer
-    api.nvim_buf_call(b, function()
-      vim.cmd('w!')
-    end)
+    -- There may be pending changes in the buffer
+    if api.nvim_buf_is_loaded(b) then
+      api.nvim_buf_call(b, function()
+        vim.cmd('update!')
+      end)
+    end
   end
 
   local newdir = assert(vim.fs.dirname(new_fname))
