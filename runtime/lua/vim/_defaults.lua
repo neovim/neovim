@@ -67,15 +67,6 @@ do
   )
   --- Map |gx| to call |vim.ui.open| on the identifier under the cursor
   do
-    -- TODO: use vim.region() when it lands... #13896 #16843
-    local function get_visual_selection()
-      local save_a = vim.fn.getreginfo('a')
-      vim.cmd([[norm! "ay]])
-      local selection = vim.fn.getreg('a', 1)
-      vim.fn.setreg('a', save_a)
-      return selection
-    end
-
     local function do_open(uri)
       local _, err = vim.ui.open(uri)
       if err then
@@ -89,7 +80,10 @@ do
       do_open(vim.fn.expand('<cfile>'))
     end, { desc = gx_desc })
     vim.keymap.set({ 'x' }, 'gx', function()
-      do_open(get_visual_selection())
+      local lines =
+        vim.fn.getregion(vim.fn.getpos('.'), vim.fn.getpos('v'), { type = vim.fn.mode() })
+      -- Trim whitespace on each line and concatenate.
+      do_open(table.concat(vim.iter(lines):map(vim.trim):totable()))
     end, { desc = gx_desc })
   end
 end
