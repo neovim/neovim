@@ -3185,7 +3185,7 @@ function vim.fn.getjumplist(winnr, tabnr) end
 --- <To get lines from another buffer see |getbufline()| and
 --- |getbufoneline()|
 ---
---- @param lnum integer
+--- @param lnum integer|string
 --- @param end_? nil|false
 --- @return string
 function vim.fn.getline(lnum, end_) end
@@ -4246,7 +4246,7 @@ function vim.fn.id(expr) end
 --- |getline()|.
 --- When {lnum} is invalid -1 is returned.
 ---
---- @param lnum integer
+--- @param lnum integer|string
 --- @return integer
 function vim.fn.indent(lnum) end
 

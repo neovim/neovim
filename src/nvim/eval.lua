@@ -3973,7 +3973,7 @@ M.funcs = {
       |getbufoneline()|
     ]=],
     name = 'getline',
-    params = { { 'lnum', 'integer' }, { 'end', 'nil|false' } },
+    params = { { 'lnum', 'integer|string' }, { 'end', 'nil|false' } },
     signature = 'getline({lnum} [, {end}])',
     returns = 'string',
   },
@@ -5220,7 +5220,7 @@ M.funcs = {
 
     ]=],
     name = 'indent',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'indent({lnum})',
   },
