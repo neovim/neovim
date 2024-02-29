@@ -3,7 +3,7 @@
 local function get_value_set(t)
   return vim.iter.filter(function(i)
     return type(i) == 'number'
-  end, ipairs(t))
+  end, t)
 end
 
 -- Protocol for the Microsoft Language Server Protocol (mslsp)
