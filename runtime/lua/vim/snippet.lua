@@ -446,14 +446,18 @@ function M.expand(input)
       base_indent = base_indent .. (snippet_lines[#snippet_lines]:match('(^%s*)%S') or '') --- @type string
     end
 
+    local shiftwidth = vim.fn.shiftwidth()
+    local curbuf = vim.api.nvim_get_current_buf()
+    local expandtab = vim.bo[curbuf].expandtab
     local lines = vim.iter.map(function(i, line)
       -- Replace tabs by spaces.
-      if vim.o.expandtab then
-        line = line:gsub('\t', (' '):rep(vim.fn.shiftwidth())) --- @type string
+      if expandtab then
+        line = line:gsub('\t', (' '):rep(shiftwidth)) --- @type string
       end
       -- Add the base indentation.
       if i > 1 then
-        line = base_indent .. line
+        line = #line ~= 0 and base_indent .. line
+          or (expandtab and (' '):rep(shiftwidth) or '\t'):rep(vim.fn.indent('.') / shiftwidth + 1)
       end
       return line
     end, ipairs(text_to_lines(text)))
