@@ -2,7 +2,7 @@
 " Language:	Java
 " Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " URL:          https://github.com/fleiner/vim/blob/master/runtime/syntax/java.vim
-" Last Change:	2023 Aug 13
+" Last Change:	2024 Feb 27
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -37,9 +37,17 @@ syn keyword javaBoolean		true false
 syn keyword javaConstant	null
 syn keyword javaTypedef		this super
 syn keyword javaOperator	var new instanceof
+" Since the yield statement, which could take a parenthesised operand,
+" and _qualified_ yield methods get along within the switch block
+" (JLS-17, §3.8), it seems futile to make a region definition for this
+" block; instead look for the _yield_ word alone, and if found,
+" backtrack (arbitrarily) 80 bytes, at most, on the matched line and,
+" if necessary, on the line before that (h: \@<=), trying to match
+" neither a method reference nor a qualified method invocation.
+syn match   javaOperator	"\%(\%(::\|\.\)[[:space:]\n]*\)\@80<!\<yield\>"
 syn keyword javaType		boolean char byte short int long float double
 syn keyword javaType		void
-syn keyword javaStatement	return yield
+syn keyword javaStatement	return
 syn keyword javaStorageClass	static synchronized transient volatile final strictfp serializable
 syn keyword javaExceptions	throw try catch finally
 syn keyword javaAssert		assert
@@ -56,6 +64,7 @@ syn keyword javaBranch		break continue nextgroup=javaUserLabelRef skipwhite
 syn match   javaUserLabelRef	"\k\+" contained
 syn match   javaVarArg		"\.\.\."
 syn keyword javaScopeDecl	public protected private abstract
+syn match   javaConceptKind	"\<default\>\%(\s*\%(:\|->\)\)\@!"
 
 function s:isModuleInfoDeclarationCurrentBuffer() abort
     return fnamemodify(bufname("%"), ":t") =~ '^module-info\%(\.class\>\)\@!'
@@ -142,15 +151,30 @@ if exists("java_space_errors")
   endif
 endif
 
-syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" matchgroup=NONE end=":\|->" contains=javaNumber,javaCharacter,javaString
-syn match   javaUserLabel	"^\s*[_$a-zA-Z][_$a-zA-Z0-9_]*\s*:"he=e-1 contains=javaLabel
-syn keyword javaLabel		default
+syn match   javaUserLabel	"^\s*\<\K\k*\>\%(\<default\>\)\@<!\s*:"he=e-1
+syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" matchgroup=NONE end=":\|->" contains=javaLabelCastType,javaLabelNumber,javaCharacter,javaString,javaConstant,@javaClasses,javaLabelDefault,javaLabelVarType,javaLabelWhenClause
+syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<default\>\%(\s*\%(:\|->\)\)\@=" matchgroup=NONE end=":\|->" oneline
+" Consider grouped _default_ _case_ labels, i.e.
+" case null, default ->
+" case null: default:
+syn keyword javaLabelDefault	contained default
+syn keyword javaLabelVarType	contained var
+syn keyword javaLabelCastType	contained char byte short int
+" Allow for the contingency of the enclosing region not being able to
+" _keep_ its _end_, e.g. case ':':.
+syn region  javaLabelWhenClause	contained transparent matchgroup=javaLabel start="\<when\>" matchgroup=NONE end=":"me=e-1 end="->"me=e-2 contains=TOP,javaExternal
+syn match   javaLabelNumber	contained "\<0\>[lL]\@!"
+syn match   javaLabelNumber	contained "\<\%(0\%([xX]\x\%(_*\x\)*\|_*\o\%(_*\o\)*\|[bB][01]\%(_*[01]\)*\)\|[1-9]\%(_*\d\)*\)\>[lL]\@!"
+hi def link javaLabelDefault	javaLabel
+hi def link javaLabelVarType	javaOperator
+hi def link javaLabelNumber	javaNumber
+hi def link javaLabelCastType	javaType
 
 " highlighting C++ keywords as errors removed, too many people find it
 " annoying.  Was: if !exists("java_allow_cpp_keywords")
 
 " The following cluster contains all java groups except the contained ones
-syn cluster javaTop add=javaExternal,javaError,javaBranch,javaLabelRegion,javaLabel,javaConditional,javaRepeat,javaBoolean,javaConstant,javaTypedef,javaOperator,javaType,javaStatement,javaStorageClass,javaAssert,javaExceptions,javaMethodDecl,javaClassDecl,javaScopeDecl,javaError2,javaUserLabel,javaLangObject,javaAnnotation,javaVarArg
+syn cluster javaTop add=javaExternal,javaError,javaBranch,javaLabelRegion,javaConditional,javaRepeat,javaBoolean,javaConstant,javaTypedef,javaOperator,javaType,javaStatement,javaStorageClass,javaAssert,javaExceptions,javaMethodDecl,javaClassDecl,javaScopeDecl,javaConceptKind,javaError2,javaUserLabel,javaLangObject,javaAnnotation,javaVarArg
 
 
 " Comments
@@ -231,9 +255,9 @@ if exists("java_highlight_functions")
     "	1. class names are always capitalized (ie: Button)
     "	2. method names are never capitalized (except constructors, of course)
     "syn region javaFuncDef start=+^\s\+\(\(public\|protected\|private\|static\|abstract\|final\|native\|synchronized\)\s\+\)*\(\(void\|boolean\|char\|byte\|short\|int\|long\|float\|double\|\([A-Za-z_][A-Za-z0-9_$]*\.\)*[A-Z][A-Za-z0-9_$]*\)\(<[^>]*>\)\=\(\[\]\)*\s\+[a-z][A-Za-z0-9_$]*\|[A-Z][A-Za-z0-9_$]*\)\s*([^0-9]+ end=+)+ contains=javaScopeDecl,javaType,javaStorageClass,javaComment,javaLineComment,@javaClasses
-    syn region javaFuncDef start=+^\s\+\(\(public\|protected\|private\|static\|abstract\|final\|native\|synchronized\)\s\+\)*\(<.*>\s\+\)\?\(\(void\|boolean\|char\|byte\|short\|int\|long\|float\|double\|\([A-Za-z_][A-Za-z0-9_$]*\.\)*[A-Z][A-Za-z0-9_$]*\)\(<[^(){}]*>\)\=\(\[\]\)*\s\+[a-z][A-Za-z0-9_$]*\|[A-Z][A-Za-z0-9_$]*\)\s*(+ end=+)+ contains=javaScopeDecl,javaType,javaStorageClass,javaComment,javaLineComment,@javaClasses,javaAnnotation
+    syn region javaFuncDef start=+^\s\+\%(\%(public\|protected\|private\|static\|\%(abstract\|default\)\|final\|native\|synchronized\)\s\+\)*\%(<.*>\s\+\)\?\%(\%(void\|boolean\|char\|byte\|short\|int\|long\|float\|double\|\%([A-Za-z_][A-Za-z0-9_$]*\.\)*[A-Z][A-Za-z0-9_$]*\)\%(<[^(){}]*>\)\=\%(\[\]\)*\s\+[a-z][A-Za-z0-9_$]*\|[A-Z][A-Za-z0-9_$]*\)\s*(+ end=+)+ contains=javaScopeDecl,javaType,javaStorageClass,javaComment,javaLineComment,@javaClasses,javaAnnotation
   endif
-  syn match javaLambdaDef "[a-zA-Z_][a-zA-Z0-9_]*\s*->"
+  syn match   javaLambdaDef "\<\K\k*\>\%(\<default\>\)\@<!\s*->"
   syn match  javaBraces  "[{}]"
   syn cluster javaTop add=javaFuncDef,javaBraces,javaLambdaDef
 endif
@@ -326,6 +350,7 @@ hi def link javaStorageClass		StorageClass
 hi def link javaMethodDecl		javaStorageClass
 hi def link javaClassDecl		javaStorageClass
 hi def link javaScopeDecl		javaStorageClass
+hi def link javaConceptKind		NonText
 
 hi def link javaBoolean		Boolean
 hi def link javaSpecial		Special
