@@ -6,7 +6,8 @@
 " Last Change:
 " 	2023 Nov 21 by Vim Project: ignore wildignore when expanding $COMSPEC	(v173a)
 " 	2023 Nov 22 by Vim Project: fix handling of very long filename on longlist style	(v173a)
-"   2024 Feb 19 by Vim Project (announce adoption)
+"   2024 Feb 19 by Vim Project: (announce adoption)
+"   2024 Feb 29 by Vim Project: handle symlinks in tree mode correctly
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 2016 Charles E. Campbell {{{1
