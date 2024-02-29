@@ -4946,12 +4946,12 @@ win_T *buf_jump_open_tab(buf_T *buf)
   return NULL;
 }
 
+static int last_win_id = LOWEST_WIN_ID - 1;
+
 /// @param hidden  allocate a window structure and link it in the window if
 //                 false.
 win_T *win_alloc(win_T *after, bool hidden)
 {
-  static int last_win_id = LOWEST_WIN_ID - 1;
-
   // allocate window structure and linesizes arrays
   win_T *new_wp = xcalloc(1, sizeof(win_T));
 
@@ -7449,6 +7449,11 @@ skip:
   }
 
   return NULL;    // no error
+}
+
+int get_last_winid(void)
+{
+  return last_win_id;
 }
 
 void win_get_tabwin(handle_T id, int *tabnr, int *winnr)
