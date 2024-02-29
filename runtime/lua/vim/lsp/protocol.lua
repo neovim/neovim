@@ -1,9 +1,17 @@
 --- @diagnostic disable: duplicate-doc-alias
 
+-- TODO(clason) can be simplified after reverse lookup is removed
+---@param t table<any, any>
+---@return number[]
 local function get_value_set(t)
-  return vim.iter.filter(function(i)
-    return type(i) == 'number'
-  end, ipairs(t))
+  local result = {}
+  for _, v in pairs(t) do
+    if type(v) == 'number' then
+      table.insert(result, v)
+    end
+  end
+  table.sort(result)
+  return result
 end
 
 -- Protocol for the Microsoft Language Server Protocol (mslsp)
