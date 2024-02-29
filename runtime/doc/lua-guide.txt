@@ -589,7 +589,7 @@ Grouping autocommands                             *lua-guide-autocommands-group*
 
 Autocommand groups can be used to group related autocommands together; see
 |autocmd-groups|. This is useful for organizing autocommands and especially
-for preventing autocommands to be set multiple times.
+to prevent setting autocommands multiple times.
 
 Groups can be created with `vim.api.`|nvim_create_augroup()|. This function
 takes two mandatory arguments: a string with the name of a group and a table
