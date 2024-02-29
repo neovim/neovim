@@ -11,6 +11,11 @@ if(POLICY CMP0092)
   cmake_policy(SET CMP0092 NEW)
 endif()
 
+# Support generating for new Xcode build system
+if(CMAKE_GENERATOR STREQUAL "Xcode" AND POLICY CMP0114)
+  cmake_policy(SET CMP0114 NEW)
+endif()
+
 project(nvim C)
 
 if(POLICY CMP0135)

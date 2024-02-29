@@ -175,6 +175,10 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
       COMMENT "Updating ${LANGUAGE}.po"
       DEPENDS ${NVIM_POT})
 
+    if(CMAKE_GENERATOR STREQUAL "Xcode")
+      add_dependencies(update-po-${LANGUAGE} nvim_translations)
+    endif()
+
     CheckPo(${LANGUAGE})
 
     list(APPEND UPDATE_PO_TARGETS update-po-${LANGUAGE})

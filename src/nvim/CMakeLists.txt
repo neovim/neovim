@@ -902,6 +902,11 @@ add_custom_target(generated-sources DEPENDS
   ${NVIM_GENERATED_SOURCES}
 )
 
+if(CMAKE_GENERATOR STREQUAL "Xcode")
+  add_dependencies(nvim_bin generated-sources)
+  add_dependencies(libnvim generated-sources)
+endif()
+
 set(VIMDOC_FILES
   ${NVIM_RUNTIME_DIR}/doc/api.txt
   ${NVIM_RUNTIME_DIR}/doc/diagnostic.txt
@@ -963,3 +968,7 @@ add_custom_command(
   USES_TERMINAL)
 add_custom_target(lintdoc DEPENDS ${lintdoc_touch})
 add_dependencies(lintdoc nvim)
+
+if(CMAKE_GENERATOR STREQUAL "Xcode")
+  add_dependencies(lintdoc doc)
+endif()
