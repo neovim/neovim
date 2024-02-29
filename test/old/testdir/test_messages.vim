@@ -167,8 +167,12 @@ func Test_echospace()
   call assert_equal(&columns - 12, v:echospace)
   set showcmd ruler
   call assert_equal(&columns - 29, v:echospace)
+  set showcmdloc=statusline
+  call assert_equal(&columns - 19, v:echospace)
+  set showcmdloc=tabline
+  call assert_equal(&columns - 19, v:echospace)
 
-  set ruler& showcmd&
+  set ruler& showcmd& showcmdloc&
 endfunc
 
 func Test_warning_scroll()
