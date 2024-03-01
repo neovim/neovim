@@ -2118,7 +2118,7 @@ function vim.api.nvim_win_get_buf(window) end
 --- `relative` is empty for normal windows.
 ---
 --- @param window integer Window handle, or 0 for current window
---- @return vim.api.keyset.float_config
+--- @return vim.api.keyset.win_config
 function vim.api.nvim_win_get_config(window) end
 
 --- Gets the (1,0)-indexed, buffer-relative cursor position for a given window
