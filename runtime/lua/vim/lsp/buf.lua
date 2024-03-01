@@ -771,6 +771,7 @@ function M.code_action(options)
     local bufnr = api.nvim_get_current_buf()
     context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics(bufnr)
   end
+
   local mode = api.nvim_get_mode().mode
   local bufnr = api.nvim_get_current_buf()
   local win = api.nvim_get_current_win()
@@ -813,6 +814,14 @@ function M.code_action(options)
       params = util.make_range_params(win, client.offset_encoding)
     end
     params.context = context
+
+    -- Don't send markup to clients that don't support it.
+    if not client.server_capabilities.textDocument.diagnostic.markupMessageSupport then
+      context.diagnostics = vim.iter(context.diagnostics):filter(function(diag)
+        return type(diag.message) == 'string'
+      end)
+    end
+
     client.request(ms.textDocument_codeAction, params, on_result, bufnr)
   end
 end

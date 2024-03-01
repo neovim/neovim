@@ -2,6 +2,8 @@ local api, if_nil = vim.api, vim.F.if_nil
 
 local M = {}
 
+--- @alias vim.diagnostic.MarkupKind lsp.MarkupKind
+
 --- [diagnostic-structure]()
 ---
 --- Diagnostics use the same indexing as the rest of the Nvim API (i.e. 0-based
@@ -31,6 +33,9 @@ local M = {}
 ---
 --- The source of the diagnostic
 --- @field source? string
+---
+--- The kind of the diagnostic's message
+--- @field message_kind vim.diagnostic.MarkupKind
 ---
 --- The diagnostic code
 --- @field code? string|integer
@@ -1835,7 +1840,10 @@ function M.open_float(opts, ...)
   if not opts.focus_id then
     opts.focus_id = scope
   end
-  local float_bufnr, winnr = vim.lsp.util.open_floating_preview(lines, 'plaintext', opts)
+  local message_kind = vim.iter(diagnostics):any(function (diag)
+    return diag.message_kind == 'markdown'
+  end) and 'markdown' or 'plaintext'
+  local float_bufnr, winnr = vim.lsp.util.open_floating_preview(lines, message_kind, opts)
   for i, hl in ipairs(highlights) do
     local line = lines[i]
     local prefix_len = hl.prefix and hl.prefix.length or 0
@@ -1846,6 +1854,26 @@ function M.open_float(opts, ...)
     api.nvim_buf_add_highlight(float_bufnr, -1, hl.hlname, i - 1, prefix_len, #line - suffix_len)
     if suffix_len > 0 then
       api.nvim_buf_add_highlight(float_bufnr, -1, hl.suffix.hlname, i - 1, #line - suffix_len, -1)
+    end
+  end
+
+  if message_kind == 'markdown' then
+    for l, line in ipairs(api.nvim_buf_get_lines(float_bufnr, 0, -1, false)) do
+      for pattern, hl_group in pairs({
+        ['`%S-`'] = '@markup.raw.markdown_inline',
+        ['[%*_]%S-[%*_]'] = '@markup.italic.markdown_inline',
+        ['[%*_][%*_]%S-[%*_][%*_]'] = '@markup.strong.markdown_inline',
+      }) do
+        local from = 1 ---@type integer?
+        while from do
+          local to
+          from, to = line:find(pattern, from)
+          if from and to then
+            api.nvim_buf_add_highlight(float_bufnr, -1, hl_group, l - 1, from - 1, to)
+          end
+          from = to and to + 1 or nil
+        end
+      end
     end
   end
 
@@ -2181,6 +2209,7 @@ function M.fromqflist(list)
         end_col = end_col,
         severity = severity,
         message = item.text,
+        message_kind = 'plaintext',
       }
     end
   end
