@@ -2593,6 +2593,58 @@ describe('LSP', function()
         eq('New file', read_file(new))
       end
     )
+    it('Maintains undo information for loaded buffer', function()
+      local old = tmpname()
+      write_file(old, 'line')
+      local new = tmpname()
+      os.remove(new)
+
+      local undo_kept = exec_lua(
+        [[
+        local old = select(1, ...)
+        local new = select(2, ...)
+        vim.opt.undofile = true
+        vim.cmd.edit(old)
+        vim.cmd.normal('dd')
+        vim.cmd.write()
+        local undotree = vim.fn.undotree()
+        vim.lsp.util.rename(old, new)
+        return vim.deep_equal(undotree, vim.fn.undotree())
+      ]],
+        old,
+        new
+      )
+      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
+      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new))
+      eq(true, undo_kept)
+    end)
+    it('Maintains undo information for unloaded buffer', function()
+      local old = tmpname()
+      write_file(old, 'line')
+      local new = tmpname()
+      os.remove(new)
+
+      local undo_kept = exec_lua(
+        [[
+        local old = select(1, ...)
+        local new = select(2, ...)
+        vim.opt.undofile = true
+        vim.cmd.split(old)
+        vim.cmd.normal('dd')
+        vim.cmd.write()
+        local undotree = vim.fn.undotree()
+        vim.cmd.bdelete()
+        vim.lsp.util.rename(old, new)
+        vim.cmd.edit(new)
+        return vim.deep_equal(undotree, vim.fn.undotree())
+      ]],
+        old,
+        new
+      )
+      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
+      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new))
+      eq(true, undo_kept)
+    end)
     it('Does override target if overwrite is true', function()
       local old = tmpname()
       write_file(old, 'Old file')
