@@ -667,7 +667,7 @@ NOTE: If you were to exit Neovim and start it again with `nvim TEST`, the file
 
  4. Type
 
-        `:w TEST`{vim}
+        `w TEST`{vim}
 
     where TEST is a filename that does not exist yet. Verify that you see
 
