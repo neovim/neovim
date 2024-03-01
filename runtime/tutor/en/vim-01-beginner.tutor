@@ -518,9 +518,9 @@ NOTE: When the search reaches the end of the file it will continue at the
 
  4. Type `%`{normal} to move the cursor to the other matching bracket.
 
- 5. Move the cursor to another (,),[,],{ or } and see what `%`{normal} does.
+ 5. Move the cursor to another (,),[,],{, or } and see what `%`{normal} does.
 
-This ( is a test line with ('s, ['s ] and {'s } in it. ))
+This ( is a test line with ('s, ['s, ] and {'s } in it. ))
 
 NOTE: This is very useful in debugging a program with unmatched parentheses!
 
@@ -762,7 +762,7 @@ Open up a line above this by typing O while the cursor is on this line.
 This li will allow you to pract appendi text to a line.
 This line will allow you to practice appending text to a line.
 
-NOTE: [a](a), [i](i) and [A](A) all go to the same Insert mode, the only
+NOTE: [a](a), [i](i), and [A](A) all go to the same Insert mode, the only
       difference is where the characters are inserted.
 
 # Lesson 6.3: ANOTHER WAY TO REPLACE
