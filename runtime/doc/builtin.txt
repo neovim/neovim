@@ -2928,32 +2928,31 @@ getregion({pos1}, {pos2} [, {opts}])                               *getregion()*
 		The optional argument {opts} is a Dict and supports the
 		following items:
 
-			type		Specify the selection type
+			type		Specify the region's selection type
 					(default: "v"):
 			    "v"		for |charwise| mode
 			    "V"		for |linewise| mode
 			    "<CTRL-V>"	for |blockwise-visual| mode
 
 			exclusive	If |TRUE|, use exclusive selection
-					for the end position 'selection'.
+					for the end position
+					(default: follow 'selection')
 
 		You can get the last selection type by |visualmode()|.
 		If Visual mode is active, use |mode()| to get the Visual mode
 		(e.g., in a |:vmap|).
-		This function uses the line and column number from the
-		specified position.
-		It is useful to get text starting and ending in different
-		columns, such as |charwise-visual| selection.
+		This function is useful to get text starting and ending in
+		different columns, such as a |charwise-visual| selection.
 
 		Note that:
 		- Order of {pos1} and {pos2} doesn't matter, it will always
 		  return content from the upper left position to the lower
 		  right position.
-		- If 'virtualedit' is enabled and selection is past the end of
-		  line, resulting lines are filled with blanks.
-		- If the selection starts or ends in the middle of a multibyte
-		  character, it is not included but its selected part is
-		  substituted with spaces.
+		- If 'virtualedit' is enabled and the region is past the end
+		  of the lines, resulting lines are padded with spaces.
+		- If the region is blockwise and it starts or ends in the
+		  middle of a multi-cell character, it is not included but
+		  its selected part is substituted with spaces.
 		- If {pos1} or {pos2} is not current in the buffer, an empty
 		  list is returned.
 
