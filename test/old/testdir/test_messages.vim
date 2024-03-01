@@ -171,6 +171,12 @@ func Test_echospace()
   call assert_equal(&columns - 19, v:echospace)
   set showcmdloc=tabline
   call assert_equal(&columns - 19, v:echospace)
+  call assert_fails('set showcmdloc=leap', 'E474:')
+  call assert_equal(&columns - 19, v:echospace)
+  set showcmdloc=last
+  call assert_equal(&columns - 29, v:echospace)
+  call assert_fails('set showcmdloc=jump', 'E474:')
+  call assert_equal(&columns - 29, v:echospace)
 
   set ruler& showcmd& showcmdloc&
 endfunc

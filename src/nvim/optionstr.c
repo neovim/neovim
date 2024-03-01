@@ -2100,8 +2100,13 @@ const char *did_set_showbreak(optset_T *args)
 /// The 'showcmdloc' option is changed.
 const char *did_set_showcmdloc(optset_T *args FUNC_ATTR_UNUSED)
 {
-  comp_col();
-  return did_set_opt_strings(p_sloc, p_sloc_values, true);
+  const char *errmsg = did_set_opt_strings(p_sloc, p_sloc_values, false);
+
+  if (errmsg == NULL) {
+    comp_col();
+  }
+
+  return errmsg;
 }
 
 int expand_set_showcmdloc(optexpand_T *args, int *numMatches, char ***matches)
