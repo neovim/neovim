@@ -675,12 +675,23 @@ local function get_bufs_with_prefix(prefix)
   return buffers
 end
 
+local function escape_gsub_repl(s)
+  return (s:gsub('%%', '%%%%'))
+end
+
 --- @class vim.lsp.util.rename.Opts
 --- @inlinedoc
 --- @field overwrite? boolean
 --- @field ignoreIfExists? boolean
 
 --- Rename old_fname to new_fname
+---
+--- Existing buffers are renamed as well, while maintaining their bufnr.
+---
+--- It deletes existing buffers that conflict with the renamed file name only when
+--- * `opts` requests overwriting; or
+--- * the conflicting buffers are not loaded, so that deleting thme does not result in data loss.
+---
 --- @param old_fname string
 --- @param new_fname string
 --- @param opts? vim.lsp.util.rename.Opts Options:
@@ -700,24 +711,36 @@ function M.rename(old_fname, new_fname, opts)
     return
   end
 
-  local oldbufs = {}
-  local win = nil
-
-  if vim.fn.isdirectory(old_fname_full) == 1 then
-    oldbufs = get_bufs_with_prefix(old_fname_full)
-  else
-    local oldbuf = vim.fn.bufadd(old_fname_full)
-    table.insert(oldbufs, oldbuf)
-    win = vim.fn.win_findbuf(oldbuf)[1]
-  end
-
-  for _, b in ipairs(oldbufs) do
-    -- There may be pending changes in the buffer
-    if api.nvim_buf_is_loaded(b) then
-      api.nvim_buf_call(b, function()
-        vim.cmd('update!')
-      end)
+  local buf_rename = {} ---@type table<integer, {from: string, to: string}>
+  local old_fname_pat = '^' .. vim.pesc(old_fname_full)
+  for b in
+    vim.iter(get_bufs_with_prefix(old_fname_full)):filter(function(b)
+      -- No need to care about unloaded or nofile buffers. Also :saveas won't work for them.
+      return api.nvim_buf_is_loaded(b)
+        and not vim.list_contains({ 'nofile', 'nowrite' }, vim.bo[b].buftype)
+    end)
+  do
+    -- Renaming a buffer may conflict with another buffer that happens to have the same name. In
+    -- most cases, this would have been already detected by the file conflict check above, but the
+    -- conflicting buffer may not be associated with a file. For example, 'buftype' can be "nofile"
+    -- or "nowrite", or the buffer can be a normal buffer but has not been written to the file yet.
+    -- Renaming should fail in such cases to avoid losing the contents of the conflicting buffer.
+    local old_bname = vim.api.nvim_buf_get_name(b)
+    local new_bname = old_bname:gsub(old_fname_pat, escape_gsub_repl(new_fname))
+    if vim.fn.bufexists(new_bname) == 1 then
+      local existing_buf = vim.fn.bufnr(new_bname)
+      if api.nvim_buf_is_loaded(existing_buf) and skip then
+        vim.notify(
+          new_bname .. ' already exists in the buffer list. Skipping rename.',
+          vim.log.levels.ERROR
+        )
+        return
+      end
+      -- no need to preserve if such a buffer is empty
+      api.nvim_buf_delete(existing_buf, {})
     end
+
+    buf_rename[b] = { from = old_bname, to = new_bname }
   end
 
   local newdir = assert(vim.fs.dirname(new_fname))
@@ -733,17 +756,16 @@ function M.rename(old_fname, new_fname, opts)
     os.rename(old_undofile, new_undofile)
   end
 
-  if vim.fn.isdirectory(new_fname) == 0 then
-    local newbuf = vim.fn.bufadd(new_fname)
-    if win then
-      vim.fn.bufload(newbuf)
-      vim.bo[newbuf].buflisted = true
-      api.nvim_win_set_buf(win, newbuf)
-    end
-  end
-
-  for _, b in ipairs(oldbufs) do
-    api.nvim_buf_delete(b, {})
+  for b, rename in pairs(buf_rename) do
+    -- Rename with :saveas. This does two things:
+    -- * Unset BF_WRITE_MASK, so that users don't get E13 when they do :write.
+    -- * Send didClose and didOpen via textDocument/didSave handler.
+    api.nvim_buf_call(b, function()
+      vim.cmd('keepalt saveas! ' .. vim.fn.fnameescape(rename.to))
+    end)
+    -- Delete the new buffer with the old name created by :saveas. nvim_buf_delete and
+    -- :bwipeout are futile because the buffer will be added again somewhere else.
+    vim.cmd('bdelete! ' .. vim.fn.bufnr(rename.from))
   end
 end
 
