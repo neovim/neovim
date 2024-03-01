@@ -508,7 +508,7 @@ NOTE: When the search reaches the end of the file it will continue at the
 
 # Lesson 4.3: MATCHING PARENTHESES SEARCH
 
-** Type `%`{normal} to find a matching ),], or }. **
+** Type `%`{normal} to find a matching ), ], or }. **
 
  1. Place the cursor on any (, [, or { in the line below marked ✓.
 
@@ -518,7 +518,7 @@ NOTE: When the search reaches the end of the file it will continue at the
 
  4. Type `%`{normal} to move the cursor to the other matching bracket.
 
- 5. Move the cursor to another (,),[,],{, or } and see what `%`{normal} does.
+ 5. Move the cursor to another (, ), [, ], {, or } and see what `%`{normal} does.
 
 This ( is a test line with ('s, ['s, ] and {'s } in it. ))
 
@@ -582,7 +582,7 @@ NOTE: You can also select the lines you want to substitute first using visual-mo
     `<C-o>`{normal} takes you back to older positions, `<C-i>`{normal} to
     newer positions.
 
- 3. Typing `%`{normal} while the cursor is on a (,),[,],{, or } goes to its
+ 3. Typing `%`{normal} while the cursor is on a (, ), [, ], {, or } goes to its
     match.
 
  4. To substitute new for the first old in a line type
