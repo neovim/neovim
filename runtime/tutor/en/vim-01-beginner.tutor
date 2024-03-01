@@ -589,7 +589,7 @@ NOTE: You can also select the lines you want to substitute first using visual-mo
 ~~~ cmd
         :s/old/new
 ~~~
-    To substitute new for all 'old's on a line type
+    To substitute new for all olds on a line type
 ~~~ cmd
         :s/old/new/g
 ~~~
