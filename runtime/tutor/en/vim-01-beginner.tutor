@@ -360,7 +360,7 @@ Fiix the errors oon thhis line and reeplace them witth undo.
 
  7. To undo previous actions, type:            `u`{normal}  (lowercase u)
     To undo all the changes on a line, type:   `U`{normal}  (capital U)
-    To undo the undo's, type:                  `<C-r>`{normal}
+    To undo the undos, type:                  `<C-r>`{normal}
 
 # Lesson 3.1: THE PUT COMMAND
 
