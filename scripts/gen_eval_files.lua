@@ -40,7 +40,7 @@ local LUA_API_RETURN_OVERRIDES = {
   nvim_get_option_info = 'vim.api.keyset.get_option_info',
   nvim_get_option_info2 = 'vim.api.keyset.get_option_info',
   nvim_parse_cmd = 'vim.api.keyset.parse_cmd',
-  nvim_win_get_config = 'vim.api.keyset.float_config',
+  nvim_win_get_config = 'vim.api.keyset.win_config',
 }
 
 local LUA_META_HEADER = {
