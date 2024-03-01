@@ -369,6 +369,9 @@ The following changes to existing APIs or features add new behavior.
 
 • The `workspace/didChangeWatchedFiles` LSP client capability is now enabled
   by default.
+  • On Mac or Windows, `libuv.fs_watch` is used as the backend.
+  • On Linux, `fswatch` (recommended) is used as the backend if available,
+    otherwise `libuv.fs_event` is used on each subdirectory.
 
 • |LspRequest| autocmd callbacks now contain additional information about the LSP
   request status update that occurred.
