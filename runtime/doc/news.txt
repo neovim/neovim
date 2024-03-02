@@ -526,4 +526,7 @@ release.
   populated. Background color detection is now performed in Lua by the Nvim
   core, not the TUI.
 
+• vim.shared functions:
+  - |vim.tbl_add_reverse_lookup()|
+
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:

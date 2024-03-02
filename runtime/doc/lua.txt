@@ -2149,18 +2149,6 @@ vim.startswith({s}, {prefix})                               *vim.startswith()*
     Return: ~
         (`boolean`) `true` if `prefix` is a prefix of `s`
 
-vim.tbl_add_reverse_lookup({o})                 *vim.tbl_add_reverse_lookup()*
-    Add the reverse lookup values to an existing table. For example:
-    `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
-
-    Note that this modifies the input.
-
-    Parameters: ~
-      • {o}  (`table`) Table to add the reverse to
-
-    Return: ~
-        (`table`) o
-
 vim.tbl_contains({t}, {value}, {opts})                    *vim.tbl_contains()*
     Checks if a table contains a given value, specified either directly or via
     a predicate that is checked for each value.

@@ -575,7 +575,10 @@ local function styletable_extmarks(state)
   --TODO(altermo) extmarks may have col/row which is outside of the buffer, which could cause an error
   local bufnr = state.bufnr
   local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, -1, 0, -1, { details = true })
-  local namespaces = vim.tbl_add_reverse_lookup(vim.api.nvim_get_namespaces())
+  local namespaces = {} --- @type table<integer, string>
+  for ns, ns_id in pairs(vim.api.nvim_get_namespaces()) do
+    namespaces[ns_id] = ns
+  end
   for _, v in ipairs(extmarks) do
     _styletable_extmarks_highlight(state, v, namespaces)
   end

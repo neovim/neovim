@@ -130,7 +130,7 @@ local M = {}
 
 --- Mapping of error codes used by the client
 --- @nodoc
-M.client_errors = {
+local client_errors = {
   INVALID_SERVER_MESSAGE = 1,
   INVALID_SERVER_JSON = 2,
   NO_RESULT_CALLBACK_FOUND = 3,
@@ -140,7 +140,12 @@ M.client_errors = {
   SERVER_RESULT_CALLBACK_ERROR = 7,
 }
 
-M.client_errors = vim.tbl_add_reverse_lookup(M.client_errors)
+--- @type table<string|integer, string|integer>
+--- @nodoc
+M.client_errors = vim.deepcopy(client_errors)
+for k, v in pairs(client_errors) do
+  M.client_errors[v] = k
+end
 
 --- Constructs an error message from an LSP error object.
 ---

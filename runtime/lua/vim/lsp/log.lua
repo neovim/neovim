@@ -2,16 +2,19 @@
 
 local log = {}
 
+local log_levels = vim.log.levels
+
 --- Log level dictionary with reverse lookup as well.
 ---
 --- Can be used to lookup the number from the name or the name from the number.
 --- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"
 --- Level numbers begin with "TRACE" at 0
+--- @type table<string|integer, string|integer>
 --- @nodoc
-log.levels = vim.deepcopy(vim.log.levels)
+log.levels = vim.deepcopy(log_levels)
 
 -- Default log level is warn.
-local current_log_level = log.levels.WARN
+local current_log_level = log_levels.WARN
 
 local log_date_format = '%F %H:%M:%S'
 
@@ -58,7 +61,7 @@ local function open_logfile()
   logfile, openerr = io.open(logfilename, 'a+')
   if not logfile then
     local err_msg = string.format('Failed to open LSP client log file: %s', openerr)
-    notify(err_msg, vim.log.levels.ERROR)
+    notify(err_msg, log_levels.ERROR)
     return false
   end
 
@@ -77,12 +80,13 @@ local function open_logfile()
   return true
 end
 
-for level, levelnr in pairs(log.levels) do
+for level, levelnr in pairs(log_levels) do
   -- Also export the log level on the root object.
   log[level] = levelnr
-end
 
-vim.tbl_add_reverse_lookup(log.levels)
+  -- Add a reverse lookup.
+  log.levels[levelnr] = level
+end
 
 --- @param level string
 --- @param levelnr integer
@@ -123,19 +127,19 @@ end
 -- log at that level (if applicable, it is checked either way).
 
 --- @nodoc
-log.debug = create_logger('DEBUG', vim.log.levels.DEBUG)
+log.debug = create_logger('DEBUG', log_levels.DEBUG)
 
 --- @nodoc
-log.error = create_logger('ERROR', vim.log.levels.ERROR)
+log.error = create_logger('ERROR', log_levels.ERROR)
 
 --- @nodoc
-log.info = create_logger('INFO', vim.log.levels.INFO)
+log.info = create_logger('INFO', log_levels.INFO)
 
 --- @nodoc
-log.trace = create_logger('TRACE', vim.log.levels.TRACE)
+log.trace = create_logger('TRACE', log_levels.TRACE)
 
 --- @nodoc
-log.warn = create_logger('WARN', vim.log.levels.WARN)
+log.warn = create_logger('WARN', log_levels.WARN)
 
 --- Sets the current log level.
 ---@param level (string|integer) One of `vim.lsp.log.levels`
