@@ -1205,6 +1205,7 @@ free_exit:
   return virt_text;
 }
 
+/// @nodoc
 String nvim__buf_debug_extmarks(Buffer buffer, Boolean keys, Boolean dot, Error *err)
   FUNC_API_SINCE(7) FUNC_API_RET_ALLOC
 {

@@ -56,10 +56,17 @@ function M.require_language(lang, path, silent, symbol_name)
   return true
 end
 
----@class vim.treesitter.language.RequireLangOpts
----@field path? string
----@field silent? boolean
+---@class vim.treesitter.language.add.Opts
+---@inlinedoc
+---
+---Default filetype the parser should be associated with.
+---(Default: {lang})
 ---@field filetype? string|string[]
+---
+---Optional path the parser is located at
+---@field path? string
+---
+---Internal symbol name for the language to load
 ---@field symbol_name? string
 
 --- Load parser with name {lang}
@@ -67,13 +74,8 @@ end
 --- Parsers are searched in the `parser` runtime directory, or the provided {path}
 ---
 ---@param lang string Name of the parser (alphanumerical and `_` only)
----@param opts (table|nil) Options:
----                        - filetype (string|string[]) Default filetype the parser should be associated with.
----                          Defaults to {lang}.
----                        - path (string|nil) Optional path the parser is located at
----                        - symbol_name (string|nil) Internal symbol name for the language to load
+---@param opts? vim.treesitter.language.add.Opts Options:
 function M.add(lang, opts)
-  ---@cast opts vim.treesitter.language.RequireLangOpts
   opts = opts or {}
   local path = opts.path
   local filetype = opts.filetype or lang

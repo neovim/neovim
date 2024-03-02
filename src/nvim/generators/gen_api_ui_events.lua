@@ -93,6 +93,10 @@ local function call_ui_event_method(output, ev)
   output:write('}\n\n')
 end
 
+events = vim.tbl_filter(function(ev)
+  return ev[1] ~= 'empty'
+end, events)
+
 for i = 1, #events do
   local ev = events[i]
   assert(ev.return_type == 'void')
@@ -200,7 +204,5 @@ for _, ev in ipairs(events) do
   end
 end
 
-local packed = mpack.encode(exported_events)
-local dump_bin_array = require('generators.dump_bin_array')
-dump_bin_array(metadata_output, 'ui_events_metadata', packed)
+metadata_output:write(mpack.encode(exported_events))
 metadata_output:close()

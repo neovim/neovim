@@ -125,6 +125,18 @@ The following changes may require adaptations in user config or plugins.
 • Returning any truthy value from a callback passed to |nvim_create_autocmd()|
   (rather than just `true`) will delete the autocommand.
 
+• |vim.lsp.util.extract_completion_items()| will no longer return reliable
+  results, since it does not apply `itemDefaults` when its input is a
+  `CompletionList`.
+  Moreover, since support for LSP `completionList.itemDefaults` was added,
+  some third party plugins might be negatively impacted in case the language
+  servers support the feature but the plugin does not.
+  If necessary, the respective capability can be
+  removed when calling |vim.lsp.protocol.make_client_capabilities()|.
+
+• |:TOhtml| has been rewritten in Lua to support Neovim-specific decorations,
+  and many options have been removed.
+
 ==============================================================================
 BREAKING CHANGES IN HEAD                                    *news-breaking-dev*
 
@@ -213,6 +225,11 @@ The following new APIs and features were added.
     the original LSP `Location` or `LocationLink`.
   • Added support for connecting to servers using named pipes (Windows) or
     unix domain sockets (Unix) via |vim.lsp.rpc.domain_socket_connect()|.
+  • Added support for `completionList.itemDefaults`, reducing overhead when
+    computing completion items where properties often share the same value
+    (e.g. `commitCharacters`). Note that this might affect plugins and
+    language servers that don't support the feature, and in such cases the
+    respective capability can be unset.
 
 • Treesitter
   • Bundled parsers and queries (highlight, folds) for Markdown, Python, and
@@ -352,6 +369,9 @@ The following changes to existing APIs or features add new behavior.
 
 • The `workspace/didChangeWatchedFiles` LSP client capability is now enabled
   by default.
+  • On Mac or Windows, `libuv.fs_watch` is used as the backend.
+  • On Linux, `fswatch` (recommended) is used as the backend if available,
+    otherwise `libuv.fs_event` is used on each subdirectory.
 
 • |LspRequest| autocmd callbacks now contain additional information about the LSP
   request status update that occurred.

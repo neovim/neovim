@@ -20,7 +20,7 @@ local M = {}
 --- end)
 --- ```
 ---
----@param items table Arbitrary items
+---@param items any[] Arbitrary items
 ---@param opts table Additional options
 ---     - prompt (string|nil)
 ---               Text of the prompt. Defaults to `Select one of:`
@@ -32,7 +32,7 @@ local M = {}
 ---               Plugins reimplementing `vim.ui.select` may wish to
 ---               use this to infer the structure or semantics of
 ---               `items`, or the context in which select() was called.
----@param on_choice function ((item|nil, idx|nil) -> ())
+---@param on_choice fun(item: any|nil, idx: integer|nil)
 ---               Called once the user made a choice.
 ---               `idx` is the 1-based index of `item` within `items`.
 ---               `nil` if the user aborted the dialog.
@@ -44,7 +44,7 @@ function M.select(items, opts, on_choice)
   opts = opts or {}
   local choices = { opts.prompt or 'Select one of:' }
   local format_item = opts.format_item or tostring
-  for i, item in pairs(items) do
+  for i, item in ipairs(items) do
     table.insert(choices, string.format('%d: %s', i, format_item(item)))
   end
   local choice = vim.fn.inputlist(choices)
@@ -66,7 +66,7 @@ end
 --- end)
 --- ```
 ---
----@param opts table Additional options. See |input()|
+---@param opts table? Additional options. See |input()|
 ---     - prompt (string|nil)
 ---               Text of the prompt
 ---     - default (string|nil)
@@ -87,6 +87,7 @@ end
 ---               `nil` if the user aborted the dialog.
 function M.input(opts, on_confirm)
   vim.validate({
+    opts = { opts, 'table', true },
     on_confirm = { on_confirm, 'function', false },
   })
 

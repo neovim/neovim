@@ -1,23 +1,21 @@
 local api = vim.api
 
----@class TSDevModule
 local M = {}
 
----@private
----@class TSTreeView
+---@class (private) vim.treesitter.dev.TSTreeView
 ---@field ns integer API namespace
----@field opts TSTreeViewOpts
----@field nodes TSP.Node[]
----@field named TSP.Node[]
+---@field opts vim.treesitter.dev.TSTreeViewOpts
+---@field nodes vim.treesitter.dev.Node[]
+---@field named vim.treesitter.dev.Node[]
 local TSTreeView = {}
 
 ---@private
----@class TSTreeViewOpts
+---@class (private) vim.treesitter.dev.TSTreeViewOpts
 ---@field anon boolean If true, display anonymous nodes.
 ---@field lang boolean If true, display the language alongside each node.
 ---@field indent number Number of spaces to indent nested lines.
 
----@class TSP.Node
+---@class (private) vim.treesitter.dev.Node
 ---@field node TSNode Treesitter node
 ---@field field string? Node field
 ---@field depth integer Depth of this node in the tree
@@ -25,7 +23,7 @@ local TSTreeView = {}
 ---                    inspector is drawn.
 ---@field lang string Source language of this node
 
----@class TSP.Injection
+---@class (private) vim.treesitter.dev.Injection
 ---@field lang string Source language of this injection
 ---@field root TSNode Root node of the injection
 
@@ -45,9 +43,9 @@ local TSTreeView = {}
 ---@param depth integer Current recursion depth
 ---@param field string|nil The field of the current node
 ---@param lang string Language of the tree currently being traversed
----@param injections table<string, TSP.Injection> Mapping of node ids to root nodes
+---@param injections table<string, vim.treesitter.dev.Injection> Mapping of node ids to root nodes
 ---                  of injected language trees (see explanation above)
----@param tree TSP.Node[] Output table containing a list of tables each representing a node in the tree
+---@param tree vim.treesitter.dev.Node[] Output table containing a list of tables each representing a node in the tree
 local function traverse(node, depth, field, lang, injections, tree)
   table.insert(tree, {
     node = node,
@@ -73,7 +71,7 @@ end
 ---@param bufnr integer Source buffer number
 ---@param lang string|nil Language of source buffer
 ---
----@return TSTreeView|nil
+---@return vim.treesitter.dev.TSTreeView|nil
 ---@return string|nil Error message, if any
 ---
 ---@package
@@ -88,7 +86,7 @@ function TSTreeView:new(bufnr, lang)
   -- the primary tree that contains that root. Add a mapping from the node in the primary tree to
   -- the root in the child tree to the {injections} table.
   local root = parser:parse(true)[1]:root()
-  local injections = {} ---@type table<string, TSP.Injection>
+  local injections = {} ---@type table<string, vim.treesitter.dev.Injection>
 
   parser:for_each_tree(function(parent_tree, parent_ltree)
     local parent = parent_tree:root()
@@ -109,7 +107,7 @@ function TSTreeView:new(bufnr, lang)
 
   local nodes = traverse(root, 0, nil, parser:lang(), injections, {})
 
-  local named = {} ---@type TSP.Node[]
+  local named = {} ---@type vim.treesitter.dev.Node[]
   for _, v in ipairs(nodes) do
     if v.node:named() then
       named[#named + 1] = v
@@ -120,7 +118,7 @@ function TSTreeView:new(bufnr, lang)
     ns = api.nvim_create_namespace('treesitter/dev-inspect'),
     nodes = nodes,
     named = named,
-    ---@type TSTreeViewOpts
+    ---@type vim.treesitter.dev.TSTreeViewOpts
     opts = {
       anon = false,
       lang = false,
@@ -171,7 +169,7 @@ end
 
 --- Updates the cursor position in the inspector to match the node under the cursor.
 ---
---- @param treeview TSTreeView
+--- @param treeview vim.treesitter.dev.TSTreeView
 --- @param lang string
 --- @param source_buf integer
 --- @param inspect_buf integer
@@ -278,7 +276,7 @@ end
 --- The node number is dependent on whether or not anonymous nodes are displayed.
 ---
 ---@param i integer Node number to get
----@return TSP.Node
+---@return vim.treesitter.dev.Node
 ---@package
 function TSTreeView:get(i)
   local t = self.opts.anon and self.nodes or self.named
@@ -287,7 +285,7 @@ end
 
 --- Iterate over all of the nodes in this View.
 ---
----@return (fun(): integer, TSP.Node) Iterator over all nodes in this View
+---@return (fun(): integer, vim.treesitter.dev.Node) Iterator over all nodes in this View
 ---@return table
 ---@return integer
 ---@package
@@ -295,22 +293,31 @@ function TSTreeView:iter()
   return ipairs(self.opts.anon and self.nodes or self.named)
 end
 
---- @class InspectTreeOpts
---- @field lang string? The language of the source buffer. If omitted, the
----                     filetype of the source buffer is used.
---- @field bufnr integer? Buffer to draw the tree into. If omitted, a new
----                       buffer is created.
---- @field winid integer? Window id to display the tree buffer in. If omitted,
----                       a new window is created with {command}.
---- @field command string? Vimscript command to create the window. Default
----                       value is "60vnew". Only used when {winid} is nil.
---- @field title (string|fun(bufnr:integer):string|nil) Title of the window. If a
----                       function, it accepts the buffer number of the source
----                       buffer as its only argument and should return a string.
+--- @class vim.treesitter.dev.inspect_tree.Opts
+--- @inlinedoc
+---
+--- The language of the source buffer. If omitted, the filetype of the source
+--- buffer is used.
+--- @field lang string?
+---
+--- Buffer to draw the tree into. If omitted, a new buffer is created.
+--- @field bufnr integer?
+---
+--- Window id to display the tree buffer in. If omitted, a new window is
+--- created with {command}.
+--- @field winid integer?
+---
+--- Vimscript command to create the window. Default value is "60vnew".
+--- Only used when {winid} is nil.
+--- @field command string?
+---
+--- Title of the window. If a function, it accepts the buffer number of the
+--- source buffer as its only argument and should return a string.
+--- @field title (string|fun(bufnr:integer):string|nil)
 
 --- @private
 ---
---- @param opts InspectTreeOpts?
+--- @param opts vim.treesitter.dev.inspect_tree.Opts?
 function M.inspect_tree(opts)
   vim.validate({
     opts = { opts, 't', true },

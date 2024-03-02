@@ -1510,10 +1510,8 @@ static int command_line_erase_chars(CommandLineState *s)
   if (s->c == K_DEL && ccline.cmdpos != ccline.cmdlen) {
     ccline.cmdpos++;
   }
-
   if (s->c == K_DEL) {
-    ccline.cmdpos += mb_off_next(ccline.cmdbuff,
-                                 ccline.cmdbuff + ccline.cmdpos);
+    ccline.cmdpos += mb_off_next(ccline.cmdbuff, ccline.cmdbuff + ccline.cmdpos);
   }
 
   if (ccline.cmdpos > 0) {

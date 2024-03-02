@@ -129,59 +129,15 @@ int file_open_fd(FileDescriptor *const ret_fp, const int fd, const int flags)
   return 0;
 }
 
-/// Like file_open(), but allocate and return ret_fp
-///
-/// @param[out]  error  Error code, or 0 on success. @see os_strerror()
-/// @param[in]  fname  File name to open.
-/// @param[in]  flags  Flags, @see FileOpenFlags.
-/// @param[in]  mode  Permissions for the newly created file (ignored if flags
-///                   does not have kFileCreate\*).
-///
-/// @return [allocated] Opened file or NULL in case of error.
-FileDescriptor *file_open_new(int *const error, const char *const fname, const int flags,
-                              const int mode)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  FileDescriptor *const fp = xmalloc(sizeof(*fp));
-  if ((*error = file_open(fp, fname, flags, mode)) != 0) {
-    xfree(fp);
-    return NULL;
-  }
-  return fp;
-}
-
-/// Like file_open_fd(), but allocate and return ret_fp
-///
-/// @param[out]  error  Error code, or 0 on success. @see os_strerror()
-/// @param[in]  fd  File descriptor to wrap.
-/// @param[in]  flags  Flags, @see FileOpenFlags.
-/// @param[in]  mode  Permissions for the newly created file (ignored if flags
-///                   does not have FILE_CREATE\*).
-///
-/// @return [allocated] Opened file or NULL in case of error.
-FileDescriptor *file_open_fd_new(int *const error, const int fd, const int flags)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  FileDescriptor *const fp = xmalloc(sizeof(*fp));
-  if ((*error = file_open_fd(fp, fd, flags)) != 0) {
-    xfree(fp);
-    return NULL;
-  }
-  return fp;
-}
-
 /// Opens standard input as a FileDescriptor.
-FileDescriptor *file_open_stdin(void)
-  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+int file_open_stdin(FileDescriptor *fp)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  int error;
-  FileDescriptor *const stdin_dup = file_open_fd_new(&error, os_open_stdin_fd(),
-                                                     kFileReadOnly|kFileNonBlocking);
-  assert(stdin_dup != NULL);
+  int error = file_open_fd(fp, os_open_stdin_fd(), kFileReadOnly|kFileNonBlocking);
   if (error != 0) {
     ELOG("failed to open stdin: %s", os_strerror(error));
   }
-  return stdin_dup;
+  return error;
 }
 
 /// Close file and free its buffer
@@ -200,20 +156,6 @@ int file_close(FileDescriptor *const fp, const bool do_fsync)
     return close_error;
   }
   return flush_error;
-}
-
-/// Close and free file obtained using file_open_new()
-///
-/// @param[in,out]  fp  File to close.
-/// @param[in]  do_fsync  If true, use fsync() to write changes to disk.
-///
-/// @return 0 or error code.
-int file_free(FileDescriptor *const fp, const bool do_fsync)
-  FUNC_ATTR_NONNULL_ALL
-{
-  const int ret = file_close(fp, do_fsync);
-  xfree(fp);
-  return ret;
 }
 
 /// Flush file modifications to disk
@@ -422,24 +364,6 @@ ptrdiff_t file_skip(FileDescriptor *const fp, const size_t size)
   } while (read_bytes < size && !file_eof(fp));
 
   return (ptrdiff_t)read_bytes;
-}
-
-/// Msgpack callback for writing to a file
-///
-/// @param  data  File to write to.
-/// @param[in]  buf  Data to write.
-/// @param[in]  len  Length of the data to write.
-///
-/// @return 0 in case of success, -1 in case of error.
-int msgpack_file_write(void *data, const char *buf, size_t len)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  assert(len < PTRDIFF_MAX);
-  const ptrdiff_t written_bytes = file_write((FileDescriptor *)data, buf, len);
-  if (written_bytes < 0) {
-    return msgpack_file_write_error((int)written_bytes);
-  }
-  return 0;
 }
 
 /// Print error which occurs when failing to write msgpack data

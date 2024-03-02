@@ -50,9 +50,8 @@
 # include "api/buffer.c.generated.h"
 #endif
 
-/// \defgroup api-buffer
-///
-/// \brief For more information on buffers, see |buffers|
+/// @brief <pre>help
+/// For more information on buffers, see |buffers|.
 ///
 /// Unloaded Buffers: ~
 ///
@@ -64,6 +63,7 @@
 ///
 /// You can use |nvim_buf_is_loaded()| or |nvim_buf_line_count()| to check
 /// whether a buffer is loaded.
+/// </pre>
 
 /// Returns the number of lines in the given buffer.
 ///
@@ -229,6 +229,7 @@ Boolean nvim_buf_detach(uint64_t channel_id, Buffer buffer, Error *err)
   return true;
 }
 
+/// @nodoc
 void nvim__buf_redraw_range(Buffer buffer, Integer first, Integer last, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -875,8 +876,8 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
 
 /// Gets a list of buffer-local |mapping| definitions.
 ///
-/// @param  mode       Mode short-name ("n", "i", "v", ...)
 /// @param  buffer     Buffer handle, or 0 for current buffer
+/// @param  mode       Mode short-name ("n", "i", "v", ...)
 /// @param[out]  err   Error details, if any
 /// @returns Array of |maparg()|-like dictionaries describing mappings.
 ///          The "buffer" key holds the associated buffer handle.
@@ -1223,6 +1224,7 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
   return res;
 }
 
+/// @nodoc
 Dictionary nvim__buf_stats(Buffer buffer, Arena *arena, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);

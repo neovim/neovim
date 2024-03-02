@@ -3,66 +3,65 @@
 
 error('Cannot require a meta file')
 
----@defgroup vim.builtin
+--- @brief <pre>help
+--- vim.api.{func}({...})                                                    *vim.api*
+---     Invokes Nvim |API| function {func} with arguments {...}.
+---     Example: call the "nvim_get_current_line()" API function: >lua
+---         print(tostring(vim.api.nvim_get_current_line()))
 ---
----@brief <pre>help
----vim.api.{func}({...})                                                    *vim.api*
----    Invokes Nvim |API| function {func} with arguments {...}.
----    Example: call the "nvim_get_current_line()" API function: >lua
----        print(tostring(vim.api.nvim_get_current_line()))
+--- vim.NIL                                                                  *vim.NIL*
+---     Special value representing NIL in |RPC| and |v:null| in Vimscript
+---     conversion, and similar cases. Lua `nil` cannot be used as part of a Lua
+---     table representing a Dictionary or Array, because it is treated as
+---     missing: `{"foo", nil}` is the same as `{"foo"}`.
 ---
----vim.NIL                                                                  *vim.NIL*
----    Special value representing NIL in |RPC| and |v:null| in Vimscript
----    conversion, and similar cases. Lua `nil` cannot be used as part of a Lua
----    table representing a Dictionary or Array, because it is treated as
----    missing: `{"foo", nil}` is the same as `{"foo"}`.
+--- vim.type_idx                                                        *vim.type_idx*
+---     Type index for use in |lua-special-tbl|. Specifying one of the values from
+---     |vim.types| allows typing the empty table (it is unclear whether empty Lua
+---     table represents empty list or empty array) and forcing integral numbers
+---     to be |Float|. See |lua-special-tbl| for more details.
 ---
----vim.type_idx                                                        *vim.type_idx*
----    Type index for use in |lua-special-tbl|. Specifying one of the values from
----    |vim.types| allows typing the empty table (it is unclear whether empty Lua
----    table represents empty list or empty array) and forcing integral numbers
----    to be |Float|. See |lua-special-tbl| for more details.
+--- vim.val_idx                                                          *vim.val_idx*
+---     Value index for tables representing |Float|s. A table representing
+---     floating-point value 1.0 looks like this: >lua
+---         {
+---           [vim.type_idx] = vim.types.float,
+---           [vim.val_idx] = 1.0,
+---         }
+--- <    See also |vim.type_idx| and |lua-special-tbl|.
 ---
----vim.val_idx                                                          *vim.val_idx*
----    Value index for tables representing |Float|s. A table representing
----    floating-point value 1.0 looks like this: >lua
----        {
----          [vim.type_idx] = vim.types.float,
----          [vim.val_idx] = 1.0,
----        }
----<    See also |vim.type_idx| and |lua-special-tbl|.
+--- vim.types                                                              *vim.types*
+---     Table with possible values for |vim.type_idx|. Contains two sets of
+---     key-value pairs: first maps possible values for |vim.type_idx| to
+---     human-readable strings, second maps human-readable type names to values
+---     for |vim.type_idx|. Currently contains pairs for `float`, `array` and
+---         `dictionary` types.
 ---
----vim.types                                                              *vim.types*
----    Table with possible values for |vim.type_idx|. Contains two sets of
----    key-value pairs: first maps possible values for |vim.type_idx| to
----    human-readable strings, second maps human-readable type names to values
----    for |vim.type_idx|. Currently contains pairs for `float`, `array` and
----        `dictionary` types.
+---     Note: One must expect that values corresponding to `vim.types.float`,
+---     `vim.types.array` and `vim.types.dictionary` fall under only two following
+---     assumptions:
+---     1. Value may serve both as a key and as a value in a table. Given the
+---        properties of Lua tables this basically means “value is not `nil`”.
+---     2. For each value in `vim.types` table `vim.types[vim.types[value]]` is the
+---        same as `value`.
+---     No other restrictions are put on types, and it is not guaranteed that
+---     values corresponding to `vim.types.float`, `vim.types.array` and
+---     `vim.types.dictionary` will not change or that `vim.types` table will only
+---     contain values for these three types.
 ---
----    Note: One must expect that values corresponding to `vim.types.float`,
----    `vim.types.array` and `vim.types.dictionary` fall under only two following
----    assumptions:
----    1. Value may serve both as a key and as a value in a table. Given the
----       properties of Lua tables this basically means “value is not `nil`”.
----    2. For each value in `vim.types` table `vim.types[vim.types[value]]` is the
----       same as `value`.
----    No other restrictions are put on types, and it is not guaranteed that
----    values corresponding to `vim.types.float`, `vim.types.array` and
----    `vim.types.dictionary` will not change or that `vim.types` table will only
----    contain values for these three types.
+---                                                    *log_levels* *vim.log.levels*
+--- Log levels are one of the values defined in `vim.log.levels`:
 ---
----                                                   *log_levels* *vim.log.levels*
----Log levels are one of the values defined in `vim.log.levels`:
+---     vim.log.levels.DEBUG
+---     vim.log.levels.ERROR
+---     vim.log.levels.INFO
+---     vim.log.levels.TRACE
+---     vim.log.levels.WARN
+---     vim.log.levels.OFF
 ---
----    vim.log.levels.DEBUG
----    vim.log.levels.ERROR
----    vim.log.levels.INFO
----    vim.log.levels.TRACE
----    vim.log.levels.WARN
----    vim.log.levels.OFF
----
----</pre>
+--- </pre>
 
+---@nodoc
 ---@class vim.NIL
 
 ---@type vim.NIL

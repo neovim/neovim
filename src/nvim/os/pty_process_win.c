@@ -23,6 +23,17 @@ static void CALLBACK pty_process_finish1(void *context, BOOLEAN unused)
   Process *proc = (Process *)ptyproc;
 
   os_conpty_free(ptyproc->conpty);
+  // NB: pty_process_finish1() is called on a separate thread,
+  // but the timer only works properly if it's started by the main thread.
+  loop_schedule_fast(proc->loop, event_create(start_wait_eof_timer, ptyproc));
+}
+
+static void start_wait_eof_timer(void **argv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  PtyProcess *ptyproc = (PtyProcess *)argv[0];
+  Process *proc = (Process *)ptyproc;
+
   uv_timer_init(&proc->loop->uv, &ptyproc->wait_eof_timer);
   ptyproc->wait_eof_timer.data = (void *)ptyproc;
   uv_timer_start(&ptyproc->wait_eof_timer, wait_eof_timer_cb, 200, 200);

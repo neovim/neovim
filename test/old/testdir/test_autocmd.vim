@@ -3868,4 +3868,16 @@ func Test_autocmd_invalidates_undo_on_textchanged()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_autocmd_creates_new_buffer_on_bufleave()
+  e a.txt
+  e b.txt
+  setlocal bufhidden=wipe
+  autocmd BufLeave <buffer> diffsplit c.txt
+  bn
+  call assert_equal(1, winnr('$'))
+  call assert_equal('a.txt', bufname('%'))
+  bw a.txt
+  bw c.txt
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

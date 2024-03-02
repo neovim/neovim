@@ -35,6 +35,7 @@ describe('highlight: `:syntax manual`', function()
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = Screen.colors.Blue },
       [1] = { bold = true, foreground = Screen.colors.Brown },
+      [2] = { foreground = Screen.colors.Magenta1 },
     })
   end)
 
@@ -56,7 +57,7 @@ describe('highlight: `:syntax manual`', function()
     command('bn')
     feed_command('bp')
     screen:expect([[
-      {1:^echo} 1              |
+      {1:^echo} {2:1}              |
       {0:~                   }|*3
       :bp                 |
     ]])
@@ -78,7 +79,7 @@ describe('highlight: `:syntax manual`', function()
     feed_command('silent bp')
     eq('Xtest-functional-ui-highlight.tmp.vim', eval("fnamemodify(bufname('%'), ':t')"))
     screen:expect([[
-      {1:^echo} 1              |
+      {1:^echo} {2:1}              |
       {0:~                   }|*3
       :silent bp          |
     ]])

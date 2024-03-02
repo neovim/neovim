@@ -1,24 +1,20 @@
 --- @diagnostic disable: duplicate-doc-alias
 
--- Protocol for the Microsoft Language Server Protocol (mslsp)
+-- TODO(clason) can be simplified after reverse lookup is removed
+---@param t table<any, any>
+---@return number[]
+local function get_value_set(t)
+  local result = {}
+  for _, v in pairs(t) do
+    if type(v) == 'number' then
+      table.insert(result, v)
+    end
+  end
+  table.sort(result)
+  return result
+end
 
---[=[
----@private
---- Useful for interfacing with:
---- https://github.com/microsoft/language-server-protocol/raw/gh-pages/_specifications/specification-3-14.md
-function transform_schema_comments()
-  nvim.command [[silent! '<,'>g/\/\*\*\|\*\/\|^$/d]]
-  nvim.command [[silent! '<,'>s/^\(\s*\) \* \=\(.*\)/\1--\2/]]
-end
----@private
-function transform_schema_to_table()
-  transform_schema_comments()
-  nvim.command [[silent! '<,'>s/: \S\+//]]
-  nvim.command [[silent! '<,'>s/export const //]]
-  nvim.command [[silent! '<,'>s/export namespace \(\S*\)\s*{/protocol.\1 = {/]]
-  nvim.command [[silent! '<,'>s/namespace \(\S*\)\s*{/protocol.\1 = {/]]
-end
---]=]
+-- Protocol for the Microsoft Language Server Protocol (mslsp)
 
 local protocol = {
   --- @enum lsp.DiagnosticSeverity
@@ -313,6 +309,7 @@ local protocol = {
   },
 }
 
+-- TODO(mariasolos): Remove this reverse lookup.
 for k, v in pairs(protocol) do
   local tbl = vim.deepcopy(v, true)
   vim.tbl_add_reverse_lookup(tbl)
@@ -723,7 +720,10 @@ function protocol.make_client_capabilities()
         codeActionLiteralSupport = {
           codeActionKind = {
             valueSet = (function()
-              local res = vim.tbl_values(protocol.CodeActionKind)
+              local res = vim.iter.filter(function(value)
+                -- Filter out the keys that were added by the reverse lookup.
+                return value:match('^%l')
+              end, vim.tbl_values(protocol.CodeActionKind))
               table.sort(res)
               return res
             end)(),
@@ -754,15 +754,15 @@ function protocol.make_client_capabilities()
           documentationFormat = { protocol.MarkupKind.Markdown, protocol.MarkupKind.PlainText },
         },
         completionItemKind = {
-          valueSet = (function()
-            local res = {}
-            for k in ipairs(protocol.CompletionItemKind) do
-              if type(k) == 'number' then
-                table.insert(res, k)
-              end
-            end
-            return res
-          end)(),
+          valueSet = get_value_set(protocol.CompletionItemKind),
+        },
+        completionList = {
+          itemDefaults = {
+            'editRange',
+            'insertTextFormat',
+            'insertTextMode',
+            'data',
+          },
         },
 
         -- TODO(tjdevries): Implement this
@@ -804,15 +804,7 @@ function protocol.make_client_capabilities()
       documentSymbol = {
         dynamicRegistration = false,
         symbolKind = {
-          valueSet = (function()
-            local res = {}
-            for k in ipairs(protocol.SymbolKind) do
-              if type(k) == 'number' then
-                table.insert(res, k)
-              end
-            end
-            return res
-          end)(),
+          valueSet = get_value_set(protocol.SymbolKind),
         },
         hierarchicalDocumentSymbolSupport = true,
       },
@@ -823,15 +815,7 @@ function protocol.make_client_capabilities()
       publishDiagnostics = {
         relatedInformation = true,
         tagSupport = {
-          valueSet = (function()
-            local res = {}
-            for k in ipairs(protocol.DiagnosticTag) do
-              if type(k) == 'number' then
-                table.insert(res, k)
-              end
-            end
-            return res
-          end)(),
+          valueSet = get_value_set(protocol.DiagnosticTag),
         },
         dataSupport = true,
       },
@@ -843,15 +827,7 @@ function protocol.make_client_capabilities()
       symbol = {
         dynamicRegistration = false,
         symbolKind = {
-          valueSet = (function()
-            local res = {}
-            for k in ipairs(protocol.SymbolKind) do
-              if type(k) == 'number' then
-                table.insert(res, k)
-              end
-            end
-            return res
-          end)(),
+          valueSet = get_value_set(protocol.SymbolKind),
         },
       },
       configuration = true,

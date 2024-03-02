@@ -258,6 +258,8 @@ end
 
 --- |lsp-handler| for the method `textDocument/codeLens`
 ---
+---@param err lsp.ResponseError?
+---@param result lsp.CodeLens[]
 ---@param ctx lsp.HandlerContext
 function M.on_codelens(err, result, ctx, _)
   if err then
@@ -277,7 +279,8 @@ function M.on_codelens(err, result, ctx, _)
   end)
 end
 
---- @class vim.lsp.codelens.RefreshOptions
+--- @class vim.lsp.codelens.refresh.Opts
+--- @inlinedoc
 --- @field bufnr integer? filter by buffer. All buffers if nil, 0 for current buffer
 
 --- Refresh the lenses.
@@ -290,8 +293,7 @@ end
 --- autocmd BufEnter,CursorHold,InsertLeave <buffer> lua vim.lsp.codelens.refresh({ bufnr = 0 })
 --- ```
 ---
---- @param opts? vim.lsp.codelens.RefreshOptions Table with the following fields:
----  - `bufnr` (integer|nil): filter by buffer. All buffers if nil, 0 for current buffer
+--- @param opts? vim.lsp.codelens.refresh.Opts Optional fields
 function M.refresh(opts)
   opts = opts or {}
   local bufnr = opts.bufnr and resolve_bufnr(opts.bufnr)

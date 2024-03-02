@@ -372,6 +372,8 @@ function module.sysname()
   return uv.os_uname().sysname:lower()
 end
 
+--- @param s 'win'|'mac'|'freebsd'|'openbsd'|'bsd'
+--- @return boolean
 function module.is_os(s)
   if not (s == 'win' or s == 'mac' or s == 'freebsd' or s == 'openbsd' or s == 'bsd') then
     error('unknown platform: ' .. tostring(s))
@@ -396,33 +398,32 @@ local function tmpdir_is_local(dir)
   return not not (dir and dir:find('Xtest'))
 end
 
+local tmpname_id = 0
+local tmpdir = tmpdir_get()
+
 --- Creates a new temporary file for use by tests.
-module.tmpname = (function()
-  local seq = 0
-  local tmpdir = tmpdir_get()
-  return function()
-    if tmpdir_is_local(tmpdir) then
-      -- Cannot control os.tmpname() dir, so hack our own tmpname() impl.
-      seq = seq + 1
-      -- "…/Xtest_tmpdir/T42.7"
-      local fname = ('%s/%s.%d'):format(tmpdir, (_G._nvim_test_id or 'nvim-test'), seq)
-      io.open(fname, 'w'):close()
-      return fname
-    else
-      local fname = os.tmpname()
-      if module.is_os('win') and fname:sub(1, 2) == '\\s' then
-        -- In Windows tmpname() returns a filename starting with
-        -- special sequence \s, prepend $TEMP path
-        return tmpdir .. fname
-      elseif fname:match('^/tmp') and module.is_os('mac') then
-        -- In OS X /tmp links to /private/tmp
-        return '/private' .. fname
-      else
-        return fname
-      end
-    end
+function module.tmpname()
+  if tmpdir_is_local(tmpdir) then
+    -- Cannot control os.tmpname() dir, so hack our own tmpname() impl.
+    tmpname_id = tmpname_id + 1
+    -- "…/Xtest_tmpdir/T42.7"
+    local fname = ('%s/%s.%d'):format(tmpdir, (_G._nvim_test_id or 'nvim-test'), tmpname_id)
+    io.open(fname, 'w'):close()
+    return fname
   end
-end)()
+
+  local fname = os.tmpname()
+  if module.is_os('win') and fname:sub(1, 2) == '\\s' then
+    -- In Windows tmpname() returns a filename starting with
+    -- special sequence \s, prepend $TEMP path
+    return tmpdir .. fname
+  elseif module.is_os('mac') and fname:match('^/tmp') then
+    -- In OS X /tmp links to /private/tmp
+    return '/private' .. fname
+  end
+
+  return fname
+end
 
 local function deps_prefix()
   local env = os.getenv('DEPS_PREFIX')

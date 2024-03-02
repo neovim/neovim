@@ -1,4 +1,4 @@
----TODO: This is implemented only for files currently.
+-- TODO: This is implemented only for files currently.
 -- https://tools.ietf.org/html/rfc3986
 -- https://tools.ietf.org/html/rfc2732
 -- https://tools.ietf.org/html/rfc2396
@@ -104,6 +104,10 @@ function M.uri_to_fname(uri)
   if scheme ~= 'file' then
     return uri
   end
+  local fragment_index = uri:find('#')
+  if fragment_index ~= nil then
+    uri = uri:sub(1, fragment_index - 1)
+  end
   uri = M.uri_decode(uri)
   --TODO improve this.
   if is_windows_file_uri(uri) then
@@ -116,7 +120,6 @@ end
 
 ---Gets the buffer for a uri.
 ---Creates a new unloaded buffer if no buffer for the uri already exists.
---
 ---@param uri string
 ---@return integer bufnr
 function M.uri_to_bufnr(uri)

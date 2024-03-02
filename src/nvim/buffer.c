@@ -1584,6 +1584,7 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
   int unload = (action == DOBUF_UNLOAD || action == DOBUF_DEL
                 || action == DOBUF_WIPE);
   OptInt old_tw = curbuf->b_p_tw;
+  const int last_winid = get_last_winid();
 
   if (update_jumplist) {
     setpcmark();
@@ -1612,7 +1613,11 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
     if (prevbuf == curwin->w_buffer) {
       reset_synblock(curwin);
     }
-    if (unload) {
+    // autocommands may have opened a new window
+    // with prevbuf, grr
+    if (unload
+        || (last_winid != get_last_winid()
+            && strchr("wdu", prevbuf->b_p_bh[0]) != NULL)) {
       close_windows(prevbuf, false);
     }
     if (bufref_valid(&prevbufref) && !aborting()) {
@@ -1642,6 +1647,11 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
   // If curwin->w_buffer is null, enter_buffer() will make it valid again
   bool valid = buf_valid(buf);
   if ((valid && buf != curbuf && !aborting()) || curwin->w_buffer == NULL) {
+    // autocommands changed curbuf and we will move to another
+    // buffer soon, so decrement curbuf->b_nwindows
+    if (curbuf != NULL && prevbuf != curbuf) {
+      curbuf->b_nwindows--;
+    }
     // If the buffer is not valid but curwin->w_buffer is NULL we must
     // enter some buffer.  Using the last one is hopefully OK.
     if (!valid) {
@@ -3436,7 +3446,7 @@ void maketitle(void)
       int len = (int)strlen(buf_p);
       if (len > 100) {
         len -= 100;
-        len += utf_cp_tail_off(buf_p, buf_p + len) + 1;
+        len += utf_cp_bounds(buf_p, buf_p + len).end_off;
         buf_p += len;
       }
       STRCPY(icon_str, buf_p);

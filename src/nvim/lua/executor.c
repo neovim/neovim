@@ -15,6 +15,7 @@
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/ui.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
@@ -1828,7 +1829,11 @@ bool nlua_exec_file(const char *path)
     lua_getglobal(lstate, "loadfile");
     lua_pushstring(lstate, path);
   } else {
-    FileDescriptor *stdin_dup = file_open_stdin();
+    FileDescriptor stdin_dup;
+    int error = file_open_stdin(&stdin_dup);
+    if (error) {
+      return false;
+    }
 
     StringBuilder sb = KV_INITIAL_VALUE;
     kv_resize(sb, 64);
@@ -1837,7 +1842,7 @@ bool nlua_exec_file(const char *path)
       if (got_int) {  // User canceled.
         return false;
       }
-      ptrdiff_t read_size = file_read(stdin_dup, IObuff, 64);
+      ptrdiff_t read_size = file_read(&stdin_dup, IObuff, 64);
       if (read_size < 0) {  // Error.
         return false;
       }
@@ -1849,7 +1854,7 @@ bool nlua_exec_file(const char *path)
       }
     }
     kv_push(sb, NUL);
-    file_free(stdin_dup, false);
+    file_close(&stdin_dup, false);
 
     lua_getglobal(lstate, "loadstring");
     lua_pushstring(lstate, sb.items);

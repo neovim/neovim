@@ -442,8 +442,7 @@ static void f_and(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "api_info()" function
 static void f_api_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  Dictionary metadata = api_metadata();
-  object_to_vim(DICTIONARY_OBJ(metadata), rettv, NULL);
+  object_to_vim(api_metadata(), rettv, NULL);
 }
 
 /// "atan2()" function
@@ -2822,35 +2821,38 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   tv_list_alloc_ret(rettv, kListLenMayKnow);
 
-  if (tv_check_for_string_arg(argvars, 0) == FAIL
-      || tv_check_for_string_arg(argvars, 1) == FAIL
-      || tv_check_for_string_arg(argvars, 2) == FAIL) {
+  if (tv_check_for_list_arg(argvars, 0) == FAIL
+      || tv_check_for_list_arg(argvars, 1) == FAIL
+      || tv_check_for_opt_dict_arg(argvars, 2) == FAIL) {
     return;
   }
 
   int fnum = -1;
-  // NOTE: var2fpos() returns static pointer.
-  pos_T *fp = var2fpos(&argvars[0], true, &fnum, false);
-  if (fp == NULL || (fnum >= 0 && fnum != curbuf->b_fnum)) {
+  pos_T p1;
+  if (list2fpos(&argvars[0], &p1, &fnum, NULL, false) != OK
+      || (fnum >= 0 && fnum != curbuf->b_fnum)) {
     return;
   }
-  pos_T p1 = *fp;
 
-  fp = var2fpos(&argvars[1], true, &fnum, false);
-  if (fp == NULL || (fnum >= 0 && fnum != curbuf->b_fnum)) {
+  pos_T p2;
+  if (list2fpos(&argvars[1], &p2, &fnum, NULL, false) != OK
+      || (fnum >= 0 && fnum != curbuf->b_fnum)) {
     return;
   }
-  pos_T p2 = *fp;
 
-  const char *pos1 = tv_get_string(&argvars[0]);
-  const char *pos2 = tv_get_string(&argvars[1]);
-  const char *type = tv_get_string(&argvars[2]);
-
-  const bool is_visual
-    = (pos1[0] == 'v' && pos1[1] == NUL) || (pos2[0] == 'v' && pos2[1] == NUL);
-
-  if (is_visual && !VIsual_active) {
-    return;
+  bool is_select_exclusive;
+  char *type;
+  char default_type[] = "v";
+  if (argvars[2].v_type == VAR_DICT) {
+    is_select_exclusive = tv_dict_get_bool(argvars[2].vval.v_dict, "exclusive",
+                                           *p_sel == 'e');
+    type = tv_dict_get_string(argvars[2].vval.v_dict, "type", false);
+    if (type == NULL) {
+      type = default_type;
+    }
+  } else {
+    is_select_exclusive = *p_sel == 'e';
+    type = default_type;
   }
 
   MotionType region_type = kMTUnknown;
@@ -2867,6 +2869,10 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const TriState save_virtual = virtual_op;
   virtual_op = virtual_active();
 
+  // NOTE: Adjust is needed.
+  p1.col--;
+  p2.col--;
+
   if (!lt(p1, p2)) {
     // swap position
     pos_T p = p1;
@@ -2879,7 +2885,7 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   if (region_type == kMTCharWise) {
     // handle 'selection' == "exclusive"
-    if (*p_sel == 'e' && !equalpos(p1, p2)) {
+    if (is_select_exclusive && !equalpos(p1, p2)) {
       if (p2.coladd > 0) {
         p2.coladd--;
       } else if (p2.col > 0) {
@@ -2908,7 +2914,7 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     oa.start = p1;
     oa.end = p2;
     oa.start_vcol = MIN(sc1, sc2);
-    if (*p_sel == 'e' && ec1 < sc2 && 0 < sc2 && ec2 > ec1) {
+    if (is_select_exclusive && ec1 < sc2 && 0 < sc2 && ec2 > ec1) {
       oa.end_vcol = sc2 - 1;
     } else {
       oa.end_vcol = MAX(ec1, ec2);

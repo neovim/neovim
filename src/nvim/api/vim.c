@@ -123,7 +123,7 @@ Dictionary nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena *arena, E
 ///
 /// @note Unlike the `:highlight` command which can update a highlight group,
 ///       this function completely replaces the definition. For example:
-///       ``nvim_set_hl(0, 'Visual', {})`` will clear the highlight group
+///       `nvim_set_hl(0, 'Visual', {})` will clear the highlight group
 ///       'Visual'.
 ///
 /// @note The fg and bg keys also accept the string values `"fg"` or `"bg"`
@@ -549,6 +549,7 @@ ArrayOf(String) nvim_list_runtime_paths(Arena *arena, Error *err)
   return nvim_get_runtime_file(NULL_STRING, true, arena, err);
 }
 
+/// @nodoc
 Array nvim__runtime_inspect(Arena *arena)
 {
   return runtime_inspect(arena);
@@ -600,6 +601,7 @@ static bool find_runtime_cb(int num_fnames, char **fnames, bool all, void *c)
   return num_fnames > 0;
 }
 
+/// @nodoc
 String nvim__get_lib_dir(void)
   FUNC_API_RET_ALLOC
 {
@@ -1527,7 +1529,7 @@ Array nvim_get_api_info(uint64_t channel_id, Arena *arena)
 
   assert(channel_id <= INT64_MAX);
   ADD_C(rv, INTEGER_OBJ((int64_t)channel_id));
-  ADD_C(rv, DICTIONARY_OBJ(api_metadata()));
+  ADD_C(rv, api_metadata());
 
   return rv;
 }
@@ -1547,14 +1549,14 @@ Array nvim_get_api_info(uint64_t channel_id, Arena *arena)
 /// @param channel_id
 /// @param name Short name for the connected client
 /// @param version  Dictionary describing the version, with these
-///                 (optional) keys:
+///     (optional) keys:
 ///     - "major" major version (defaults to 0 if not set, for no release yet)
 ///     - "minor" minor version
 ///     - "patch" patch number
 ///     - "prerelease" string describing a prerelease, like "dev" or "beta1"
 ///     - "commit" hash or similar identifier of commit
 /// @param type Must be one of the following values. Client libraries should
-///             default to "remote" unless overridden by the user.
+///     default to "remote" unless overridden by the user.
 ///     - "remote" remote client connected "Nvim flavored" MessagePack-RPC (responses
 ///                must be in reverse order of requests). |msgpack-rpc|
 ///     - "msgpack-rpc" remote client connected to Nvim via fully MessagePack-RPC
@@ -1565,12 +1567,12 @@ Array nvim_get_api_info(uint64_t channel_id, Arena *arena)
 ///     - "host" plugin host, typically started by nvim
 ///     - "plugin" single plugin, started by nvim
 /// @param methods Builtin methods in the client. For a host, this does not
-///                include plugin methods which will be discovered later.
-///                The key should be the method name, the values are dicts with
-///                these (optional) keys (more keys may be added in future
-///                versions of Nvim, thus unknown keys are ignored. Clients
-///                must only use keys defined in this or later versions of
-///                Nvim):
+///     include plugin methods which will be discovered later.
+///     The key should be the method name, the values are dicts with
+///     these (optional) keys (more keys may be added in future
+///     versions of Nvim, thus unknown keys are ignored. Clients
+///     must only use keys defined in this or later versions of
+///     Nvim):
 ///     - "async"  if true, send as a notification. If false or unspecified,
 ///                use a blocking request
 ///     - "nargs" Number of arguments. Could be a single integer or an array
@@ -1979,7 +1981,7 @@ void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish, Di
   pum_ext_select_item((int)item, insert, finish);
 }
 
-/// NB: if your UI doesn't use hlstate, this will not return hlstate first time
+/// NB: if your UI doesn't use hlstate, this will not return hlstate first time.
 Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Arena *arena, Error *err)
 {
   Array ret = ARRAY_DICT_INIT;
@@ -2015,6 +2017,7 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Arena *arena, E
   return ret;
 }
 
+/// @nodoc
 void nvim__screenshot(String path)
   FUNC_API_FAST
 {
@@ -2029,6 +2032,7 @@ void nvim__invalidate_glyph_cache(void)
   must_redraw = UPD_CLEAR;
 }
 
+/// @nodoc
 Object nvim__unpack(String str, Arena *arena, Error *err)
   FUNC_API_FAST
 {
@@ -2319,6 +2323,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *
   return result;
 }
 
+/// @nodoc
 void nvim_error_event(uint64_t channel_id, Integer lvl, String data)
   FUNC_API_REMOTE_ONLY
 {

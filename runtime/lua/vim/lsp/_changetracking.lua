@@ -61,7 +61,7 @@ local state_by_group = setmetatable({}, {
   end,
 })
 
----@param client lsp.Client
+---@param client vim.lsp.Client
 ---@return vim.lsp.CTGroup
 local function get_group(client)
   local allow_inc_sync = vim.F.if_nil(client.flags.allow_incremental_sync, true) --- @type boolean
@@ -127,7 +127,7 @@ local function incremental_changes(state, encoding, bufnr, firstline, lastline, 
   return incremental_change
 end
 
----@param client lsp.Client
+---@param client vim.lsp.Client
 ---@param bufnr integer
 function M.init(client, bufnr)
   assert(client.offset_encoding, 'lsp client must have an offset_encoding')
@@ -165,7 +165,7 @@ function M.init(client, bufnr)
   end
 end
 
---- @param client lsp.Client
+--- @param client vim.lsp.Client
 --- @param bufnr integer
 --- @param name string
 --- @return string
@@ -189,7 +189,7 @@ local function reset_timer(buf_state)
   end
 end
 
---- @param client lsp.Client
+--- @param client vim.lsp.Client
 --- @param bufnr integer
 function M.reset_buf(client, bufnr)
   M.flush(client, bufnr)
@@ -207,7 +207,7 @@ function M.reset_buf(client, bufnr)
   end
 end
 
---- @param client lsp.Client
+--- @param client vim.lsp.Client
 function M.reset(client)
   local state = state_by_group[get_group(client)]
   if not state then
@@ -350,7 +350,7 @@ function M.send_changes(bufnr, firstline, lastline, new_lastline)
 end
 
 --- Flushes any outstanding change notification.
----@param client lsp.Client
+---@param client vim.lsp.Client
 ---@param bufnr? integer
 function M.flush(client, bufnr)
   local group = get_group(client)

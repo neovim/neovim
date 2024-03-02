@@ -2,72 +2,113 @@ local helpers = require('test.functional.helpers')(after_each)
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local clear = helpers.clear
+local is_ci = helpers.is_ci
 local is_os = helpers.is_os
 local skip = helpers.skip
+
+-- Create a file via a rename to avoid multiple
+-- events which can happen with some backends on some platforms
+local function touch(path)
+  local tmp = helpers.tmpname()
+  io.open(tmp, 'w'):close()
+  assert(vim.uv.fs_rename(tmp, path))
+end
 
 describe('vim._watch', function()
   before_each(function()
     clear()
   end)
 
-  describe('watch', function()
-    it('detects file changes', function()
-      skip(is_os('bsd'), 'Stopped working on bsd after 3ca967387c49c754561c3b11a574797504d40f38')
+  local function run(watchfunc)
+    it('detects file changes (watchfunc=' .. watchfunc .. '())', function()
+      if watchfunc == 'fswatch' then
+        skip(is_os('mac'), 'flaky test on mac')
+        skip(
+          not is_ci() and helpers.fn.executable('fswatch') == 0,
+          'fswatch not installed and not on CI'
+        )
+        skip(is_os('win'), 'not supported on windows')
+      end
+
+      if watchfunc == 'watch' then
+        skip(is_os('bsd'), 'Stopped working on bsd after 3ca967387c49c754561c3b11a574797504d40f38')
+      else
+        skip(
+          is_os('bsd'),
+          'kqueue only reports events on watched folder itself, not contained files #26110'
+        )
+      end
+
       local root_dir = vim.uv.fs_mkdtemp(vim.fs.dirname(helpers.tmpname()) .. '/nvim_XXXXXXXXXX')
 
-      local result = exec_lua(
+      local expected_events = 0
+
+      local function wait_for_event()
+        expected_events = expected_events + 1
+        exec_lua(
+          [[
+            local expected_events = ...
+            assert(
+              vim.wait(3000, function()
+                return #_G.events == expected_events
+              end),
+              string.format(
+                'Timed out waiting for expected event no. %d. Current events seen so far: %s',
+                expected_events,
+                vim.inspect(events)
+              )
+            )
+        ]],
+          expected_events
+        )
+      end
+
+      local unwatched_path = root_dir .. '/file.unwatched'
+      local watched_path = root_dir .. '/file'
+
+      exec_lua(
         [[
-        local root_dir = ...
+          local root_dir, watchfunc = ...
 
-        local events = {}
+          _G.events = {}
 
-        local expected_events = 0
-        local function wait_for_events()
-          assert(vim.wait(100, function() return #events == expected_events end), 'Timed out waiting for expected number of events. Current events seen so far: ' .. vim.inspect(events))
-        end
-
-        local stop = vim._watch.watch(root_dir, {}, function(path, change_type)
-          table.insert(events, { path = path, change_type = change_type })
-        end)
-
-        -- Only BSD seems to need some extra time for the watch to be ready to respond to events
-        if vim.fn.has('bsd') then
-          vim.wait(50)
-        end
-
-        local watched_path = root_dir .. '/file'
-        local watched, err = io.open(watched_path, 'w')
-        assert(not err, err)
-
-        expected_events = expected_events + 1
-        wait_for_events()
-
-        watched:close()
-        os.remove(watched_path)
-
-        expected_events = expected_events + 1
-        wait_for_events()
-
-        stop()
-        -- No events should come through anymore
-
-        local watched_path = root_dir .. '/file'
-        local watched, err = io.open(watched_path, 'w')
-        assert(not err, err)
-
-        vim.wait(50)
-
-        watched:close()
-        os.remove(watched_path)
-
-        vim.wait(50)
-
-        return events
+          _G.stop_watch = vim._watch[watchfunc](root_dir, {
+            debounce = 100,
+            include_pattern = vim.lpeg.P(root_dir) * vim.lpeg.P("/file") ^ -1,
+            exclude_pattern = vim.lpeg.P(root_dir .. '/file.unwatched'),
+          }, function(path, change_type)
+            table.insert(_G.events, { path = path, change_type = change_type })
+          end)
       ]],
-        root_dir
+        root_dir,
+        watchfunc
       )
 
-      local expected = {
+      if watchfunc ~= 'watch' then
+        vim.uv.sleep(200)
+      end
+
+      touch(watched_path)
+      touch(unwatched_path)
+
+      wait_for_event()
+
+      os.remove(watched_path)
+      os.remove(unwatched_path)
+
+      wait_for_event()
+
+      exec_lua [[_G.stop_watch()]]
+
+      -- No events should come through anymore
+
+      vim.uv.sleep(100)
+      touch(watched_path)
+      vim.uv.sleep(100)
+      os.remove(watched_path)
+      vim.uv.sleep(100)
+
+      eq({
         {
           change_type = exec_lua([[return vim._watch.FileChangeType.Created]]),
           path = root_dir .. '/file',
@@ -76,106 +117,11 @@ describe('vim._watch', function()
           change_type = exec_lua([[return vim._watch.FileChangeType.Deleted]]),
           path = root_dir .. '/file',
         },
-      }
-
-      -- kqueue only reports events on the watched path itself, so creating a file within a
-      -- watched directory results in a "rename" libuv event on the directory.
-      if is_os('bsd') then
-        expected = {
-          {
-            change_type = exec_lua([[return vim._watch.FileChangeType.Created]]),
-            path = root_dir,
-          },
-          {
-            change_type = exec_lua([[return vim._watch.FileChangeType.Created]]),
-            path = root_dir,
-          },
-        }
-      end
-
-      eq(expected, result)
+      }, exec_lua [[return _G.events]])
     end)
-  end)
+  end
 
-  describe('poll', function()
-    it('detects file changes', function()
-      skip(
-        is_os('bsd'),
-        'kqueue only reports events on watched folder itself, not contained files #26110'
-      )
-      local root_dir = vim.uv.fs_mkdtemp(vim.fs.dirname(helpers.tmpname()) .. '/nvim_XXXXXXXXXX')
-
-      local result = exec_lua(
-        [[
-        local root_dir = ...
-        local lpeg = vim.lpeg
-
-        local events = {}
-
-        local debounce = 100
-        local wait_ms = debounce + 200
-
-        local expected_events = 0
-        local function wait_for_events()
-          assert(vim.wait(wait_ms, function() return #events == expected_events end), 'Timed out waiting for expected number of events. Current events seen so far: ' .. vim.inspect(events))
-        end
-
-        local incl = lpeg.P(root_dir) * lpeg.P("/file")^-1
-        local excl = lpeg.P(root_dir..'/file.unwatched')
-        local stop = vim._watch.poll(root_dir, {
-            debounce = debounce,
-            include_pattern = incl,
-            exclude_pattern = excl,
-          }, function(path, change_type)
-          table.insert(events, { path = path, change_type = change_type })
-        end)
-
-        local watched_path = root_dir .. '/file'
-        local watched, err = io.open(watched_path, 'w')
-        assert(not err, err)
-        local unwatched_path = root_dir .. '/file.unwatched'
-        local unwatched, err = io.open(unwatched_path, 'w')
-        assert(not err, err)
-
-        expected_events = expected_events + 1
-        wait_for_events()
-
-        watched:close()
-        os.remove(watched_path)
-        unwatched:close()
-        os.remove(unwatched_path)
-
-        expected_events = expected_events + 1
-        wait_for_events()
-
-        stop()
-        -- No events should come through anymore
-
-        local watched_path = root_dir .. '/file'
-        local watched, err = io.open(watched_path, 'w')
-        assert(not err, err)
-
-        watched:close()
-        os.remove(watched_path)
-
-        return events
-      ]],
-        root_dir
-      )
-
-      local created = exec_lua([[return vim._watch.FileChangeType.Created]])
-      local deleted = exec_lua([[return vim._watch.FileChangeType.Deleted]])
-      local expected = {
-        {
-          change_type = created,
-          path = root_dir .. '/file',
-        },
-        {
-          change_type = deleted,
-          path = root_dir .. '/file',
-        },
-      }
-      eq(expected, result)
-    end)
-  end)
+  run('watch')
+  run('watchdirs')
+  run('fswatch')
 end)

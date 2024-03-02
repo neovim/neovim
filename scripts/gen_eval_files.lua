@@ -2,8 +2,7 @@
 
 -- Generator for various vimdoc and Lua type files
 
-local DEP_API_METADATA = 'build/api_metadata.mpack'
-local DEP_API_DOC = 'runtime/doc/api.mpack'
+local DEP_API_METADATA = 'build/funcs_metadata.mpack'
 
 --- @class vim.api.metadata
 --- @field name string
@@ -41,7 +40,7 @@ local LUA_API_RETURN_OVERRIDES = {
   nvim_get_option_info = 'vim.api.keyset.get_option_info',
   nvim_get_option_info2 = 'vim.api.keyset.get_option_info',
   nvim_parse_cmd = 'vim.api.keyset.parse_cmd',
-  nvim_win_get_config = 'vim.api.keyset.float_config',
+  nvim_win_get_config = 'vim.api.keyset.win_config',
 }
 
 local LUA_META_HEADER = {
@@ -210,44 +209,65 @@ end
 
 --- @return table<string, vim.EvalFn>
 local function get_api_meta()
-  local mpack_f = assert(io.open(DEP_API_METADATA, 'rb'))
-  local metadata = vim.mpack.decode(mpack_f:read('*all')) --[[@as vim.api.metadata[] ]]
   local ret = {} --- @type table<string, vim.EvalFn>
 
-  local doc_mpack_f = assert(io.open(DEP_API_DOC, 'rb'))
-  local doc_metadata = vim.mpack.decode(doc_mpack_f:read('*all')) --[[@as table<string,vim.gen_vim_doc_fun>]]
+  local cdoc_parser = require('scripts.cdoc_parser')
 
-  for _, fun in ipairs(metadata) do
-    if fun.lua then
-      local fdoc = doc_metadata[fun.name]
+  local f = 'src/nvim/api'
 
-      local params = {} --- @type {[1]:string,[2]:string}[]
-      for _, p in ipairs(fun.parameters) do
-        local ptype, pname = p[1], p[2]
-        params[#params + 1] = {
-          pname,
-          api_type(ptype),
-          fdoc and fdoc.parameters_doc[pname] or nil,
-        }
-      end
-
-      local r = {
-        signature = 'NA',
-        name = fun.name,
-        params = params,
-        returns = api_type(fun.return_type),
-        deprecated = fun.deprecated_since ~= nil,
-      }
-
-      if fdoc then
-        if #fdoc.doc > 0 then
-          r.desc = table.concat(fdoc.doc, '\n')
-        end
-        r.return_desc = (fdoc['return'] or {})[1]
-      end
-
-      ret[fun.name] = r
+  local function include(fun)
+    if not vim.startswith(fun.name, 'nvim_') then
+      return false
     end
+    if vim.tbl_contains(fun.attrs or {}, 'lua_only') then
+      return true
+    end
+    if vim.tbl_contains(fun.attrs or {}, 'remote_only') then
+      return false
+    end
+    return true
+  end
+
+  --- @type table<string,nvim.cdoc.parser.fun>
+  local functions = {}
+  for path, ty in vim.fs.dir(f) do
+    if ty == 'file' then
+      local filename = vim.fs.joinpath(f, path)
+      local _, funs = cdoc_parser.parse(filename)
+      for _, fn in ipairs(funs) do
+        if include(fn) then
+          functions[fn.name] = fn
+        end
+      end
+    end
+  end
+
+  for _, fun in pairs(functions) do
+    local deprecated = fun.deprecated_since ~= nil
+
+    local params = {} --- @type {[1]:string,[2]:string}[]
+    for _, p in ipairs(fun.params) do
+      params[#params + 1] = {
+        p.name,
+        api_type(p.type),
+        not deprecated and p.desc or nil,
+      }
+    end
+
+    local r = {
+      signature = 'NA',
+      name = fun.name,
+      params = params,
+      returns = api_type(fun.returns[1].type),
+      deprecated = deprecated,
+    }
+
+    if not deprecated then
+      r.desc = fun.desc
+      r.return_desc = fun.returns[1].desc
+    end
+
+    ret[fun.name] = r
   end
   return ret
 end
@@ -275,11 +295,9 @@ end
 --- @param fun vim.EvalFn
 --- @param write fun(line: string)
 local function render_api_meta(_f, fun, write)
-  if not vim.startswith(fun.name, 'nvim_') then
-    return
-  end
-
   write('')
+
+  local text_utils = require('scripts.text_utils')
 
   if vim.startswith(fun.name, 'nvim__') then
     write('--- @private')
@@ -291,10 +309,10 @@ local function render_api_meta(_f, fun, write)
 
   local desc = fun.desc
   if desc then
+    desc = text_utils.md_to_vimdoc(desc, 0, 0, 74)
     for _, l in ipairs(split(norm_text(desc))) do
       write('--- ' .. l)
     end
-    write('---')
   end
 
   local param_names = {} --- @type string[]
@@ -303,8 +321,11 @@ local function render_api_meta(_f, fun, write)
     param_names[#param_names + 1] = p[1]
     local pdesc = p[3]
     if pdesc then
-      local pdesc_a = split(norm_text(pdesc))
-      write('--- @param ' .. p[1] .. ' ' .. p[2] .. ' ' .. pdesc_a[1])
+      local s = '--- @param ' .. p[1] .. ' ' .. p[2] .. ' '
+      local indent = #('@param ' .. p[1] .. ' ')
+      pdesc = text_utils.md_to_vimdoc(pdesc, #s, indent, 74, true)
+      local pdesc_a = split(vim.trim(norm_text(pdesc)))
+      write(s .. pdesc_a[1])
       for i = 2, #pdesc_a do
         if not pdesc_a[i] then
           break
@@ -317,6 +338,7 @@ local function render_api_meta(_f, fun, write)
   end
   if fun.returns ~= '' then
     local ret_desc = fun.returns_desc and ' : ' .. fun.returns_desc or ''
+    ret_desc = text_utils.md_to_vimdoc(ret_desc, 0, 0, 74)
     local ret = LUA_API_RETURN_OVERRIDES[fun.name] or fun.returns
     write('--- @return ' .. ret .. ret_desc)
   end
@@ -328,8 +350,6 @@ end
 --- @return table<string, vim.EvalFn>
 local function get_api_keysets_meta()
   local mpack_f = assert(io.open(DEP_API_METADATA, 'rb'))
-
-  --- @diagnostic disable-next-line:no-unknown
   local metadata = assert(vim.mpack.decode(mpack_f:read('*all')))
 
   local ret = {} --- @type table<string, vim.EvalFn>

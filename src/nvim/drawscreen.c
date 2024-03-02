@@ -1178,7 +1178,7 @@ void comp_col(void)
       sc_col = ru_col;
     }
   }
-  if (p_sc) {
+  if (p_sc && *p_sloc == 'l') {
     sc_col += SHOWCMD_COLS;
     if (!p_ru || last_has_status) {         // no need for separating space
       sc_col++;

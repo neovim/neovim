@@ -817,9 +817,10 @@ void ui_ext_win_position(win_T *wp, bool validate)
 
       int comp_row = (int)row - (south ? wp->w_height_outer : 0);
       int comp_col = (int)col - (east ? wp->w_width_outer : 0);
+      int above_ch = wp->w_config.zindex < kZIndexMessages ? (int)p_ch : 0;
       comp_row += grid->comp_row;
       comp_col += grid->comp_col;
-      comp_row = MAX(MIN(comp_row, Rows - wp->w_height_outer - (p_ch > 0 ? 1 : 0)), 0);
+      comp_row = MAX(MIN(comp_row, Rows - wp->w_height_outer - above_ch), 0);
       if (!c.fixed || east) {
         comp_col = MAX(MIN(comp_col, Columns - wp->w_width_outer), 0);
       }
@@ -4946,12 +4947,12 @@ win_T *buf_jump_open_tab(buf_T *buf)
   return NULL;
 }
 
+static int last_win_id = LOWEST_WIN_ID - 1;
+
 /// @param hidden  allocate a window structure and link it in the window if
 //                 false.
 win_T *win_alloc(win_T *after, bool hidden)
 {
-  static int last_win_id = LOWEST_WIN_ID - 1;
-
   // allocate window structure and linesizes arrays
   win_T *new_wp = xcalloc(1, sizeof(win_T));
 
@@ -7449,6 +7450,11 @@ skip:
   }
 
   return NULL;    // no error
+}
+
+int get_last_winid(void)
+{
+  return last_win_id;
 }
 
 void win_get_tabwin(handle_T id, int *tabnr, int *winnr)

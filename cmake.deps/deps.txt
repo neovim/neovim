@@ -16,8 +16,8 @@ UNIBILIUM_SHA256 9c4747c862ab5e3076dcf8fa8f0ea7a6b50f20ec5905618b953665559679748
 LIBVTERM_URL https://github.com/neovim/libvterm/archive/v0.3.3.tar.gz
 LIBVTERM_SHA256 0babe3ab42c354925dadede90d352f054aa9c4ae6842ea803a20c9741e172e56
 
-LUV_URL https://github.com/luvit/luv/archive/v1.48.0-0.tar.gz
-LUV_SHA256 c9c12e414f8045aea11e5dbb44cd6c68196c10e02e1294dad971c367976cc1f9
+LUV_URL https://github.com/luvit/luv/releases/download/1.48.0-2/luv-1.48.0-2.tar.gz
+LUV_SHA256 2c3a1ddfebb4f6550293a40ee789f7122e97647eede51511f57203de48c03b7a
 
 LPEG_URL https://github.com/neovim/deps/raw/d495ee6f79e7962a53ad79670cb92488abe0b9b4/opt/lpeg-1.1.0.tar.gz
 LPEG_SHA256 4b155d67d2246c1ffa7ad7bc466c1ea899bbc40fef0257cc9c03cecbaed4352a
@@ -47,8 +47,8 @@ TREESITTER_LUA_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/archi
 TREESITTER_LUA_SHA256 974230f212d0049fce8e881b88b18eebbd05f1fd0edd16fe4ba5bdd2bcd78d08
 TREESITTER_VIM_URL https://github.com/neovim/tree-sitter-vim/archive/v0.3.0.tar.gz
 TREESITTER_VIM_SHA256 403acec3efb7cdb18ff3d68640fc823502a4ffcdfbb71cec3f98aa786c21cbe2
-TREESITTER_VIMDOC_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v2.1.0.tar.gz
-TREESITTER_VIMDOC_SHA256 71af795090ff50638904f27b8888ba1c0c2be91b7b60b0a6f2d6d6a138150e02
+TREESITTER_VIMDOC_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v2.2.0.tar.gz
+TREESITTER_VIMDOC_SHA256 2cd898245d28bb606b05c022f04077031381d998faa3c6825c5ca01b7c89e2ae
 TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/archive/v0.1.0.tar.gz
 TREESITTER_QUERY_SHA256 e2b806f80e8bf1c4f4e5a96248393fe6622fc1fc6189d6896d269658f67f914c
 TREESITTER_PYTHON_URL https://github.com/tree-sitter/tree-sitter-python/archive/v0.20.4.tar.gz

@@ -272,21 +272,21 @@ Dictionary nvim_get_all_options_info(Arena *arena, Error *err)
 /// Gets the option information for one option from arbitrary buffer or window
 ///
 /// Resulting dictionary has keys:
-///     - name: Name of the option (like 'filetype')
-///     - shortname: Shortened name of the option (like 'ft')
-///     - type: type of option ("string", "number" or "boolean")
-///     - default: The default value for the option
-///     - was_set: Whether the option was set.
+/// - name: Name of the option (like 'filetype')
+/// - shortname: Shortened name of the option (like 'ft')
+/// - type: type of option ("string", "number" or "boolean")
+/// - default: The default value for the option
+/// - was_set: Whether the option was set.
 ///
-///     - last_set_sid: Last set script id (if any)
-///     - last_set_linenr: line number where option was set
-///     - last_set_chan: Channel where option was set (0 for local)
+/// - last_set_sid: Last set script id (if any)
+/// - last_set_linenr: line number where option was set
+/// - last_set_chan: Channel where option was set (0 for local)
 ///
-///     - scope: one of "global", "win", or "buf"
-///     - global_local: whether win or buf option has a global value
+/// - scope: one of "global", "win", or "buf"
+/// - global_local: whether win or buf option has a global value
 ///
-///     - commalist: List of comma separated values
-///     - flaglist: List of single char flags
+/// - commalist: List of comma separated values
+/// - flaglist: List of single char flags
 ///
 /// When {scope} is not provided, the last set information applies to the local
 /// value in the current buffer or window if it is available, otherwise the

@@ -452,6 +452,7 @@ Object nvim_win_call(Window window, LuaRef fun, Error *err)
 ///
 /// This takes precedence over the 'winhighlight' option.
 ///
+/// @param window
 /// @param ns_id the namespace to use
 /// @param[out] err Error details, if any
 void nvim_win_set_hl_ns(Window window, Integer ns_id, Error *err)

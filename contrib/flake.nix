@@ -140,7 +140,6 @@
                 include-what-you-use # for scripts/check-includes.py
                 jq # jq for scripts/vim-patch.sh -r
                 shellcheck # for `make shlint`
-                doxygen # for script/gen_vimdoc.py
               ];
 
             nativeBuildInputs = with pkgs;

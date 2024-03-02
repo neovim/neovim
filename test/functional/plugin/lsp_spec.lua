@@ -205,8 +205,8 @@ describe('LSP', function()
           client.stop()
         end,
         on_exit = function(code, signal)
-          eq(0, code, 'exit code', fake_lsp_logfile)
-          eq(0, signal, 'exit signal', fake_lsp_logfile)
+          eq(0, code, 'exit code')
+          eq(0, signal, 'exit signal')
         end,
         settings = {
           dummy = 1,
@@ -2383,12 +2383,13 @@ describe('LSP', function()
         [[
         local old = select(1, ...)
         local new = select(2, ...)
+        local old_bufnr = vim.fn.bufadd(old)
+        vim.fn.bufload(old_bufnr)
         vim.lsp.util.rename(old, new)
-
-        -- after rename the target file must have the contents of the source file
-        local bufnr = vim.fn.bufadd(new)
-        vim.fn.bufload(new)
-        return vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
+        -- the existing buffer is renamed in-place and its contents is kept
+        local new_bufnr = vim.fn.bufadd(new)
+        vim.fn.bufload(new_bufnr)
+        return (old_bufnr == new_bufnr) and vim.api.nvim_buf_get_lines(new_bufnr, 0, -1, true)
       ]],
         old,
         new
@@ -2398,87 +2399,6 @@ describe('LSP', function()
       eq(false, exists)
       exists = exec_lua('return vim.uv.fs_stat(...) ~= nil', new)
       eq(true, exists)
-      os.remove(new)
-    end)
-    it('Kills old buffer after renaming an existing file', function()
-      local old = tmpname()
-      write_file(old, 'Test content')
-      local new = tmpname()
-      os.remove(new) -- only reserve the name, file must not exist for the test scenario
-      local lines = exec_lua(
-        [[
-        local old = select(1, ...)
-	local oldbufnr = vim.fn.bufadd(old)
-        local new = select(2, ...)
-        vim.lsp.util.rename(old, new)
-	return vim.fn.bufloaded(oldbufnr)
-      ]],
-        old,
-        new
-      )
-      eq(0, lines)
-      os.remove(new)
-    end)
-    it('new buffer remains unlisted and unloaded if the old was not in window before', function()
-      local old = tmpname()
-      write_file(old, 'Test content')
-      local new = tmpname()
-      os.remove(new) -- only reserve the name, file must not exist for the test scenario
-      local actual = exec_lua(
-        [[
-        local old = select(1, ...)
-        local oldbufnr = vim.fn.bufadd(old)
-        local new = select(2, ...)
-        local newbufnr = vim.fn.bufadd(new)
-        vim.lsp.util.rename(old, new)
-        return {
-          buflisted = vim.bo[newbufnr].buflisted,
-          bufloaded = vim.api.nvim_buf_is_loaded(newbufnr)
-        }
-      ]],
-        old,
-        new
-      )
-
-      local expected = {
-        buflisted = false,
-        bufloaded = false,
-      }
-
-      eq(expected, actual)
-
-      os.remove(new)
-    end)
-    it('new buffer is listed and loaded if the old was in window before', function()
-      local old = tmpname()
-      write_file(old, 'Test content')
-      local new = tmpname()
-      os.remove(new) -- only reserve the name, file must not exist for the test scenario
-      local actual = exec_lua(
-        [[
-        local win =  vim.api.nvim_get_current_win()
-        local old = select(1, ...)
-        local oldbufnr = vim.fn.bufadd(old)
-        vim.api.nvim_win_set_buf(win, oldbufnr)
-        local new = select(2, ...)
-        vim.lsp.util.rename(old, new)
-        local newbufnr = vim.fn.bufadd(new)
-        return {
-          buflisted = vim.bo[newbufnr].buflisted,
-          bufloaded = vim.api.nvim_buf_is_loaded(newbufnr)
-        }
-      ]],
-        old,
-        new
-      )
-
-      local expected = {
-        buflisted = true,
-        bufloaded = true,
-      }
-
-      eq(expected, actual)
-
       os.remove(new)
     end)
     it('Can rename a directory', function()
@@ -2497,21 +2417,25 @@ describe('LSP', function()
         [[
         local old_dir = select(1, ...)
         local new_dir = select(2, ...)
-	local pathsep = select(3, ...)
-	local oldbufnr = vim.fn.bufadd(old_dir .. pathsep .. 'file')
-
+        local pathsep = select(3, ...)
+        local file = select(4, ...)
+        local old_bufnr = vim.fn.bufadd(old_dir .. pathsep .. file)
+        vim.fn.bufload(old_bufnr)
         vim.lsp.util.rename(old_dir, new_dir)
-	return vim.fn.bufloaded(oldbufnr)
+        -- the existing buffer is renamed in-place and its contents is kept
+        local new_bufnr = vim.fn.bufadd(new_dir .. pathsep .. file)
+        vim.fn.bufload(new_bufnr)
+        return (old_bufnr == new_bufnr) and vim.api.nvim_buf_get_lines(new_bufnr, 0, -1, true)
       ]],
         old_dir,
         new_dir,
-        pathsep
+        pathsep,
+        file
       )
-      eq(0, lines)
+      eq({ 'Test content' }, lines)
       eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old_dir))
       eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new_dir))
       eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new_dir .. pathsep .. file))
-      eq('Test content', read_file(new_dir .. pathsep .. file))
 
       os.remove(new_dir)
     end)
@@ -2593,6 +2517,88 @@ describe('LSP', function()
         eq('New file', read_file(new))
       end
     )
+    it('Maintains undo information for loaded buffer', function()
+      local old = tmpname()
+      write_file(old, 'line')
+      local new = tmpname()
+      os.remove(new)
+
+      local undo_kept = exec_lua(
+        [[
+        local old = select(1, ...)
+        local new = select(2, ...)
+        vim.opt.undofile = true
+        vim.cmd.edit(old)
+        vim.cmd.normal('dd')
+        vim.cmd.write()
+        local undotree = vim.fn.undotree()
+        vim.lsp.util.rename(old, new)
+        -- Renaming uses :saveas, which updates the "last write" information.
+        -- Other than that, the undotree should remain the same.
+        undotree.save_cur = undotree.save_cur + 1
+        undotree.save_last = undotree.save_last + 1
+        undotree.entries[1].save = undotree.entries[1].save + 1
+        return vim.deep_equal(undotree, vim.fn.undotree())
+      ]],
+        old,
+        new
+      )
+      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
+      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new))
+      eq(true, undo_kept)
+    end)
+    it('Maintains undo information for unloaded buffer', function()
+      local old = tmpname()
+      write_file(old, 'line')
+      local new = tmpname()
+      os.remove(new)
+
+      local undo_kept = exec_lua(
+        [[
+        local old = select(1, ...)
+        local new = select(2, ...)
+        vim.opt.undofile = true
+        vim.cmd.split(old)
+        vim.cmd.normal('dd')
+        vim.cmd.write()
+        local undotree = vim.fn.undotree()
+        vim.cmd.bdelete()
+        vim.lsp.util.rename(old, new)
+        vim.cmd.edit(new)
+        return vim.deep_equal(undotree, vim.fn.undotree())
+      ]],
+        old,
+        new
+      )
+      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
+      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new))
+      eq(true, undo_kept)
+    end)
+    it('Does not rename file when it conflicts with a buffer without file', function()
+      local old = tmpname()
+      write_file(old, 'Old File')
+      local new = tmpname()
+      os.remove(new)
+
+      local lines = exec_lua(
+        [[
+          local old = select(1, ...)
+          local new = select(2, ...)
+          local old_buf = vim.fn.bufadd(old)
+          vim.fn.bufload(old_buf)
+          local conflict_buf = vim.api.nvim_create_buf(true, false)
+          vim.api.nvim_buf_set_name(conflict_buf, new)
+          vim.api.nvim_buf_set_lines(conflict_buf, 0, -1, true, {'conflict'})
+          vim.api.nvim_win_set_buf(0, conflict_buf)
+          vim.lsp.util.rename(old, new)
+          return vim.api.nvim_buf_get_lines(conflict_buf, 0, -1, true)
+        ]],
+        old,
+        new
+      )
+      eq({ 'conflict' }, lines)
+      eq('Old File', read_file(old))
+    end)
     it('Does override target if overwrite is true', function()
       local old = tmpname()
       write_file(old, 'Old file')
@@ -2611,7 +2617,7 @@ describe('LSP', function()
 
       eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
       eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new))
-      eq('Old file\n', read_file(new))
+      eq('Old file', read_file(new))
     end)
   end)
 
@@ -4438,113 +4444,140 @@ describe('LSP', function()
   end)
 
   describe('vim.lsp._watchfiles', function()
-    it('sends notifications when files change', function()
-      skip(
-        is_os('bsd'),
-        'kqueue only reports events on watched folder itself, not contained files #26110'
-      )
-      local root_dir = tmpname()
-      os.remove(root_dir)
-      mkdir(root_dir)
+    local function test_filechanges(watchfunc)
+      it(
+        string.format('sends notifications when files change (watchfunc=%s)', watchfunc),
+        function()
+          if watchfunc == 'fswatch' then
+            skip(
+              not is_ci() and fn.executable('fswatch') == 0,
+              'fswatch not installed and not on CI'
+            )
+            skip(is_os('win'), 'not supported on windows')
+            skip(is_os('mac'), 'flaky')
+          end
 
-      exec_lua(create_server_definition)
-      local result = exec_lua(
-        [[
-        local root_dir = ...
+          skip(
+            is_os('bsd'),
+            'kqueue only reports events on watched folder itself, not contained files #26110'
+          )
 
-        local server = _create_server()
-        local client_id = vim.lsp.start({
-          name = 'watchfiles-test',
-          cmd = server.cmd,
-          root_dir = root_dir,
-          capabilities = {
-            workspace = {
-              didChangeWatchedFiles = {
-                dynamicRegistration = true,
+          local root_dir = tmpname()
+          os.remove(root_dir)
+          mkdir(root_dir)
+
+          exec_lua(create_server_definition)
+          local result = exec_lua(
+            [[
+          local root_dir, watchfunc = ...
+
+          local server = _create_server()
+          local client_id = vim.lsp.start({
+            name = 'watchfiles-test',
+            cmd = server.cmd,
+            root_dir = root_dir,
+            capabilities = {
+              workspace = {
+                didChangeWatchedFiles = {
+                  dynamicRegistration = true,
+                },
               },
             },
-          },
-        })
+          })
 
-        local expected_messages = 2 -- initialize, initialized
+          require('vim.lsp._watchfiles')._watchfunc = require('vim._watch')[watchfunc]
 
-        local watchfunc = require('vim.lsp._watchfiles')._watchfunc
-        local msg_wait_timeout = watchfunc == vim._watch.poll and 2500 or 200
-        local function wait_for_messages()
-          assert(vim.wait(msg_wait_timeout, function() return #server.messages == expected_messages end), 'Timed out waiting for expected number of messages. Current messages seen so far: ' .. vim.inspect(server.messages))
-        end
+          local expected_messages = 0
 
-        wait_for_messages()
+          local msg_wait_timeout = watchfunc == 'watch' and 200 or 2500
 
-        vim.lsp.handlers['client/registerCapability'](nil, {
-          registrations = {
-            {
-              id = 'watchfiles-test-0',
-              method = 'workspace/didChangeWatchedFiles',
-              registerOptions = {
-                watchers = {
-                  {
-                    globPattern = '**/watch',
-                    kind = 7,
+          local function wait_for_message(incr)
+            expected_messages = expected_messages + (incr or 1)
+            assert(
+              vim.wait(msg_wait_timeout, function()
+                return #server.messages == expected_messages
+              end),
+              'Timed out waiting for expected number of messages. Current messages seen so far: '
+                .. vim.inspect(server.messages)
+            )
+          end
+
+          wait_for_message(2) -- initialize, initialized
+
+          vim.lsp.handlers['client/registerCapability'](nil, {
+            registrations = {
+              {
+                id = 'watchfiles-test-0',
+                method = 'workspace/didChangeWatchedFiles',
+                registerOptions = {
+                  watchers = {
+                    {
+                      globPattern = '**/watch',
+                      kind = 7,
+                    },
                   },
                 },
               },
             },
-          },
-        }, { client_id = client_id })
+          }, { client_id = client_id })
 
-        if watchfunc == vim._watch.poll then
-          vim.wait(100)
+          if watchfunc ~= 'watch' then
+            vim.wait(100)
+          end
+
+          local path = root_dir .. '/watch'
+          local tmp = vim.fn.tempname()
+          io.open(tmp, 'w'):close()
+          vim.uv.fs_rename(tmp, path)
+
+          wait_for_message()
+
+          os.remove(path)
+
+          wait_for_message()
+
+          vim.lsp.stop_client(client_id)
+
+          return server.messages
+        ]],
+            root_dir,
+            watchfunc
+          )
+
+          local uri = vim.uri_from_fname(root_dir .. '/watch')
+
+          eq(6, #result)
+
+          eq({
+            method = 'workspace/didChangeWatchedFiles',
+            params = {
+              changes = {
+                {
+                  type = exec_lua([[return vim.lsp.protocol.FileChangeType.Created]]),
+                  uri = uri,
+                },
+              },
+            },
+          }, result[3])
+
+          eq({
+            method = 'workspace/didChangeWatchedFiles',
+            params = {
+              changes = {
+                {
+                  type = exec_lua([[return vim.lsp.protocol.FileChangeType.Deleted]]),
+                  uri = uri,
+                },
+              },
+            },
+          }, result[4])
         end
-
-        local path = root_dir .. '/watch'
-        local file = io.open(path, 'w')
-        file:close()
-
-        expected_messages = expected_messages + 1
-        wait_for_messages()
-
-        os.remove(path)
-
-        expected_messages = expected_messages + 1
-        wait_for_messages()
-
-        return server.messages
-      ]],
-        root_dir
       )
+    end
 
-      local function watched_uri(fname)
-        return exec_lua(
-          [[
-            local root_dir, fname = ...
-            return vim.uri_from_fname(root_dir .. '/' .. fname)
-          ]],
-          root_dir,
-          fname
-        )
-      end
-
-      eq(4, #result)
-      eq('workspace/didChangeWatchedFiles', result[3].method)
-      eq({
-        changes = {
-          {
-            type = exec_lua([[return vim.lsp.protocol.FileChangeType.Created]]),
-            uri = watched_uri('watch'),
-          },
-        },
-      }, result[3].params)
-      eq('workspace/didChangeWatchedFiles', result[4].method)
-      eq({
-        changes = {
-          {
-            type = exec_lua([[return vim.lsp.protocol.FileChangeType.Deleted]]),
-            uri = watched_uri('watch'),
-          },
-        },
-      }, result[4].params)
-    end)
+    test_filechanges('watch')
+    test_filechanges('watchdirs')
+    test_filechanges('fswatch')
 
     it('correctly registers and unregisters', function()
       local root_dir = '/some_dir'

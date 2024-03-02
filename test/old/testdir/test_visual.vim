@@ -3,6 +3,7 @@
 source shared.vim
 source check.vim
 source screendump.vim
+source vim9.vim
 
 func Test_block_shift_multibyte()
   " Uses double-wide character.
@@ -1635,167 +1636,279 @@ func Test_visual_substitute_visual()
 endfunc
 
 func Test_visual_getregion()
-  new
+  let lines =<< trim END
+    new
 
-  call setline(1, ['one', 'two', 'three'])
+    call setline(1, ['one', 'two', 'three'])
 
-  " Visual mode
-  call cursor(1, 1)
-  call feedkeys("\<ESC>vjl", 'tx')
-  call assert_equal(['one', 'tw'], 'v'->getregion('.', 'v'))
-  call assert_equal(['one', 'tw'], '.'->getregion('v', 'v'))
-  call assert_equal(['o'], 'v'->getregion('v', 'v'))
-  call assert_equal(['w'], '.'->getregion('.', 'v'))
-  call assert_equal(['one', 'two'], '.'->getregion('v', 'V'))
-  call assert_equal(['on', 'tw'], '.'->getregion('v', "\<C-v>"))
+    #" Visual mode
+    call cursor(1, 1)
+    call feedkeys("\<ESC>vjl", 'tx')
+    call assert_equal(['one', 'tw'],
+          \ 'v'->getpos()->getregion(getpos('.')))
+    call assert_equal(['one', 'tw'],
+          \ '.'->getpos()->getregion(getpos('v')))
+    call assert_equal(['o'],
+          \ 'v'->getpos()->getregion(getpos('v')))
+    call assert_equal(['w'],
+          \ '.'->getpos()->getregion(getpos('.'), {'type': 'v' }))
+    call assert_equal(['one', 'two'],
+          \ getpos('.')->getregion(getpos('v'), {'type': 'V' }))
+    call assert_equal(['on', 'tw'],
+          \ getpos('.')->getregion(getpos('v'), {'type': "\<C-v>" }))
 
-  " Line visual mode
-  call cursor(1, 1)
-  call feedkeys("\<ESC>Vl", 'tx')
-  call assert_equal(['one'], getregion('v', '.', 'V'))
-  call assert_equal(['one'], getregion('.', 'v', 'V'))
-  call assert_equal(['one'], getregion('v', 'v', 'V'))
-  call assert_equal(['one'], getregion('.', '.', 'V'))
-  call assert_equal(['on'], '.'->getregion('v', 'v'))
-  call assert_equal(['on'], '.'->getregion('v', "\<C-v>"))
+    #" Line visual mode
+    call cursor(1, 1)
+    call feedkeys("\<ESC>Vl", 'tx')
+    call assert_equal(['one'],
+          \ getregion(getpos('v'), getpos('.'), {'type': 'V' }))
+    call assert_equal(['one'],
+          \ getregion(getpos('.'), getpos('v'), {'type': 'V' }))
+    call assert_equal(['one'],
+          \ getregion(getpos('v'), getpos('v'), {'type': 'V' }))
+    call assert_equal(['one'],
+          \ getregion(getpos('.'), getpos('.'), {'type': 'V' }))
+    call assert_equal(['on'],
+          \ getpos('.')->getregion(getpos('v'), {'type': 'v' }))
+    call assert_equal(['on'],
+          \ getpos('.')->getregion(getpos('v'), {'type': "\<C-v>" }))
 
-  " Block visual mode
-  call cursor(1, 1)
-  call feedkeys("\<ESC>\<C-v>ll", 'tx')
-  call assert_equal(['one'], getregion('v', '.', "\<C-v>"))
-  call assert_equal(['one'], getregion('.', 'v', "\<C-v>"))
-  call assert_equal(['o'], getregion('v', 'v', "\<C-v>"))
-  call assert_equal(['e'], getregion('.', '.', "\<C-v>"))
-  call assert_equal(['one'], '.'->getregion('v', 'V'))
-  call assert_equal(['one'], '.'->getregion('v', 'v'))
+    #" Block visual mode
+    call cursor(1, 1)
+    call feedkeys("\<ESC>\<C-v>ll", 'tx')
+    call assert_equal(['one'],
+          \ getregion(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
+    call assert_equal(['one'],
+          \ getregion(getpos('.'), getpos('v'), {'type': "\<C-v>" }))
+    call assert_equal(['o'],
+          \ getregion(getpos('v'), getpos('v'), {'type': "\<C-v>" }))
+    call assert_equal(['e'],
+          \ getregion(getpos('.'), getpos('.'), {'type': "\<C-v>" }))
+    call assert_equal(['one'],
+          \ '.'->getpos()->getregion(getpos('v'), {'type': 'V' }))
+    call assert_equal(['one'],
+          \ '.'->getpos()->getregion(getpos('v'), {'type': 'v' }))
 
-  " Using Marks
-  call setpos("'a", [0, 2, 3, 0])
-  call cursor(1, 1)
-  call assert_equal(['one', 'two'], "'a"->getregion('.', 'v'))
-  call assert_equal(['one', 'two'], "."->getregion("'a", 'v'))
-  call assert_equal(['one', 'two'], "."->getregion("'a", 'V'))
-  call assert_equal(['two'], "'a"->getregion("'a", 'V'))
-  call assert_equal(['one', 'two'], "."->getregion("'a", "\<c-v>"))
+    #" Using Marks
+    call setpos("'a", [0, 2, 3, 0])
+    call cursor(1, 1)
+    call assert_equal(['one', 'two'],
+          \ "'a"->getpos()->getregion(getpos('.'), {'type': 'v' }))
+    call assert_equal(['one', 'two'],
+          \ "."->getpos()->getregion(getpos("'a"), {'type': 'v' }))
+    call assert_equal(['one', 'two'],
+          \ "."->getpos()->getregion(getpos("'a"), {'type': 'V' }))
+    call assert_equal(['two'],
+          \ "'a"->getpos()->getregion(getpos("'a"), {'type': 'V' }))
+    call assert_equal(['one', 'two'],
+          \ "."->getpos()->getregion(getpos("'a"), {'type': "\<c-v>" }))
 
-  " Multiline with line visual mode
-  call cursor(1, 1)
-  call feedkeys("\<ESC>Vjj", 'tx')
-  call assert_equal(['one', 'two', 'three'], getregion('v', '.', 'V'))
+    #" Using List
+    call cursor(1, 1)
+    call assert_equal(['one', 'two'],
+          \ [0, 2, 3, 0]->getregion(getpos('.'), {'type': 'v' }))
+    call assert_equal(['one', 'two'],
+          \ '.'->getpos()->getregion([0, 2, 3, 0], {'type': 'v' }))
+    call assert_equal(['one', 'two'],
+          \ '.'->getpos()->getregion([0, 2, 3, 0], {'type': 'V' }))
+    call assert_equal(['two'],
+          \ [0, 2, 3, 0]->getregion([0, 2, 3, 0], {'type': 'V' }))
+    call assert_equal(['one', 'two'],
+          \ '.'->getpos()->getregion([0, 2, 3, 0], {'type': "\<c-v>" }))
 
-  " Multiline with block visual mode
-  call cursor(1, 1)
-  call feedkeys("\<ESC>\<C-v>jj", 'tx')
-  call assert_equal(['o', 't', 't'], getregion('v', '.', "\<C-v>"))
+    #" Multiline with line visual mode
+    call cursor(1, 1)
+    call feedkeys("\<ESC>Vjj", 'tx')
+    call assert_equal(['one', 'two', 'three'],
+          \ getregion(getpos('v'), getpos('.'), {'type': 'V' }))
 
-  call cursor(1, 1)
-  call feedkeys("\<ESC>\<C-v>jj$", 'tx')
-  call assert_equal(['one', 'two', 'three'], getregion('v', '.', "\<C-v>"))
+    #" Multiline with block visual mode
+    call cursor(1, 1)
+    call feedkeys("\<ESC>\<C-v>jj", 'tx')
+    call assert_equal(['o', 't', 't'],
+          \ getregion(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
 
-  " 'virtualedit'
-  set virtualedit=all
-  call cursor(1, 1)
-  call feedkeys("\<ESC>\<C-v>10ljj$", 'tx')
-  call assert_equal(['one   ', 'two   ', 'three '],
-        \ getregion('v', '.', "\<C-v>"))
-  set virtualedit&
+    call cursor(1, 1)
+    call feedkeys("\<ESC>\<C-v>jj$", 'tx')
+    call assert_equal(['one', 'two', 'three'],
+          \ getregion(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
 
-  " Invalid position
-  call cursor(1, 1)
-  call feedkeys("\<ESC>vjj$", 'tx')
-  call assert_fails("call getregion(1, 2, 'v')", 'E1174:')
-  call assert_fails("call getregion('.', {}, 'v')", 'E1174:')
-  call assert_equal([], getregion('', '.', 'v'))
-  call assert_equal([], getregion('.', '.', ''))
-  call feedkeys("\<ESC>", 'tx')
-  call assert_equal([], getregion('v', '.', 'v'))
+    #" 'virtualedit'
+    set virtualedit=all
+    call cursor(1, 1)
+    call feedkeys("\<ESC>\<C-v>10ljj$", 'tx')
+    call assert_equal(['one   ', 'two   ', 'three '],
+          \ getregion(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
+    set virtualedit&
 
-  " using an unset mark
-  call assert_equal([], "'z"->getregion(".", 'V'))
-  " using the wrong type
-  call assert_fails(':echo "."->getregion([],"V")', 'E1174:')
-  call assert_fails(':echo "."->getregion("$", {})', 'E1174:')
-  call assert_fails(':echo [0, 1, 1, 0]->getregion("$", "v")', 'E1174:')
-  " using a mark in another buffer
-  new
-  let newbuf = bufnr()
-  call setline(1, range(10))
-  normal! GmA
-  wincmd p
-  call assert_equal([newbuf, 10, 1, 0], getpos("'A"))
-  call assert_equal([], getregion(".", "'A", 'v'))
-  call assert_equal([], getregion("'A", ".", 'v'))
-  exe newbuf .. 'bwipe!'
+    #" Invalid position
+    call cursor(1, 1)
+    call feedkeys("\<ESC>vjj$", 'tx')
+    call assert_fails("call getregion(1, 2)", 'E1211:')
+    call assert_fails("call getregion(getpos('.'), {})", 'E1211:')
+    call assert_equal([], getregion(getpos('.'), getpos('.'), {'type': '' }))
 
-  bwipe!
-  " Selection in starts or ends in the middle of a multibyte character
-  new
-  call setline(1, [
-        \   "abcdefghijk\u00ab",
-        \   "\U0001f1e6\u00ab\U0001f1e7\u00ab\U0001f1e8\u00ab\U0001f1e9",
-        \   "1234567890"
-        \ ])
-  call cursor(1, 3)
-  call feedkeys("\<Esc>\<C-v>ljj", 'xt')
-  call assert_equal(['cd', "\u00ab ", '34'],
-        \ getregion('v', '.', "\<C-v>"))
-  call cursor(1, 4)
-  call feedkeys("\<Esc>\<C-v>ljj", 'xt')
-  call assert_equal(['de', "\U0001f1e7", '45'],
-        \ getregion('v', '.', "\<C-v>"))
-  call cursor(1, 5)
-  call feedkeys("\<Esc>\<C-v>jj", 'xt')
-  call assert_equal(['e', ' ', '5'], getregion('v', '.', "\<C-v>"))
-  call cursor(1, 1)
-  call feedkeys("\<Esc>vj", 'xt')
-  call assert_equal(['abcdefghijk«', "\U0001f1e6"], getregion('v', '.', "v"))
-  " marks on multibyte chars
-  set selection=exclusive
-  call setpos("'a", [0, 1, 11, 0])
-  call setpos("'b", [0, 2, 16, 0])
-  call setpos("'c", [0, 2, 0, 0])
-  call cursor(1, 1)
-  call assert_equal(['ghijk', '🇨«🇩'], getregion("'a", "'b", "\<c-v>"))
-  call assert_equal(['k«', '🇦«🇧«🇨'], getregion("'a", "'b", "v"))
-  call assert_equal(['k«'], getregion("'a", "'c", "v"))
+    #" using the wrong type
+    call assert_fails(':echo "."->getpos()->getregion("$", [])', 'E1211:')
 
-  bwipe!
-
-  " Exclusive selection
-  new
-  set selection=exclusive
-  call setline(1, ["a\tc", "x\tz", '', ''])
-  call cursor(1, 1)
-  call feedkeys("\<Esc>v2l", 'xt')
-  call assert_equal(["a\t"], getregion('v', '.', 'v'))
-  call cursor(1, 1)
-  call feedkeys("\<Esc>v$G", 'xt')
-  call assert_equal(["a\tc", "x\tz", ''], getregion('v', '.', 'v'))
-  call cursor(1, 1)
-  call feedkeys("\<Esc>v$j", 'xt')
-  call assert_equal(["a\tc", "x\tz"], getregion('v', '.', 'v'))
-  call cursor(1, 1)
-  call feedkeys("\<Esc>\<C-v>$j", 'xt')
-  call assert_equal(["a\tc", "x\tz"], getregion('v', '.', "\<C-v>"))
-  call cursor(1, 1)
-  call feedkeys("\<Esc>\<C-v>$G", 'xt')
-  call assert_equal(["a", "x", '', ''], getregion('v', '.', "\<C-v>"))
-  call cursor(1, 1)
-  call feedkeys("\<Esc>wv2j", 'xt')
-  call assert_equal(["c", "x\tz"], getregion('v', '.', 'v'))
-
-  " virtualedit
-  set virtualedit=all
-  call cursor(1, 1)
-  call feedkeys("\<Esc>2lv2lj", 'xt')
-  call assert_equal(['      c', 'x   '], getregion('v', '.', 'v'))
-  call cursor(1, 1)
-  call feedkeys("\<Esc>2l\<C-v>2l2j", 'xt')
-  call assert_equal(['  ', '  ', '  '], getregion('v', '.', "\<C-v>"))
-  set virtualedit&
-  set selection&
+    #" using a mark in another buffer
+    new
+    VAR newbuf = bufnr()
+    call setline(1, range(10))
+    normal! GmA
+    wincmd p
+    call assert_equal([newbuf, 10, 1, 0], getpos("'A"))
+    call assert_equal([], getregion(getpos('.'), getpos("'A"), {'type': 'v' }))
+    call assert_equal([], getregion(getpos("'A"), getpos('.'), {'type': 'v' }))
+    exe $':{newbuf}bwipe!'
+  END
+  call CheckLegacyAndVim9Success(lines)
 
   bwipe!
+
+  let lines =<< trim END
+    #" Selection in starts or ends in the middle of a multibyte character
+    new
+    call setline(1, [
+          \   "abcdefghijk\u00ab",
+          \   "\U0001f1e6\u00ab\U0001f1e7\u00ab\U0001f1e8\u00ab\U0001f1e9",
+          \   "1234567890"
+          \ ])
+    call cursor(1, 3)
+    call feedkeys("\<Esc>\<C-v>ljj", 'xt')
+    call assert_equal(['cd', "\u00ab ", '34'],
+          \ getregion(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
+    call cursor(1, 4)
+    call feedkeys("\<Esc>\<C-v>ljj", 'xt')
+    call assert_equal(['de', "\U0001f1e7", '45'],
+          \ getregion(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
+    call cursor(1, 5)
+    call feedkeys("\<Esc>\<C-v>jj", 'xt')
+    call assert_equal(['e', ' ', '5'],
+          \ getregion(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
+    call cursor(1, 1)
+    call feedkeys("\<Esc>vj", 'xt')
+    call assert_equal(['abcdefghijk«', "\U0001f1e6"],
+          \ getregion(getpos('v'), getpos('.'), {'type': 'v' }))
+
+    #" marks on multibyte chars
+    :set selection=exclusive
+    call setpos("'a", [0, 1, 11, 0])
+    call setpos("'b", [0, 2, 16, 0])
+    call setpos("'c", [0, 2, 0, 0])
+    call cursor(1, 1)
+    call assert_equal(['ghijk', '🇨«🇩'],
+          \ getregion(getpos("'a"), getpos("'b"), {'type': "\<c-v>" }))
+    call assert_equal(['k«', '🇦«🇧«🇨'],
+          \ getregion(getpos("'a"), getpos("'b"), {'type': 'v' }))
+    call assert_equal(['k«'],
+          \ getregion(getpos("'a"), getpos("'c"), {'type': 'v' }))
+
+    #" use inclusive selection, although 'selection' is exclusive
+    call setpos("'a", [0, 1, 11, 0])
+    call setpos("'b", [0, 1, 1, 0])
+    call assert_equal(['abcdefghijk'],
+          \ getregion(getpos("'a"), getpos("'b"),
+          \ {'type': "\<c-v>", 'exclusive': v:false }))
+    call assert_equal(['abcdefghij'],
+          \ getregion(getpos("'a"), getpos("'b"),
+          \ {'type': "\<c-v>", 'exclusive': v:true }))
+    call assert_equal(['abcdefghijk'],
+          \ getregion(getpos("'a"), getpos("'b"),
+          \ {'type': 'v', 'exclusive': 0 }))
+    call assert_equal(['abcdefghij'],
+          \ getregion(getpos("'a"), getpos("'b"),
+          \ {'type': 'v', 'exclusive': 1 }))
+    call assert_equal(['abcdefghijk«'],
+          \ getregion(getpos("'a"), getpos("'b"),
+          \ {'type': 'V', 'exclusive': 0 }))
+    call assert_equal(['abcdefghijk«'],
+          \ getregion(getpos("'a"), getpos("'b"),
+          \ {'type': 'V', 'exclusive': 1 }))
+    :set selection&
+  END
+  call CheckLegacyAndVim9Success(lines)
+
+  bwipe!
+
+  let lines =<< trim END
+    #" Exclusive selection
+    new
+    set selection=exclusive
+    call setline(1, ["a\tc", "x\tz", '', ''])
+    call cursor(1, 1)
+    call feedkeys("\<Esc>v2l", 'xt')
+    call assert_equal(["a\t"],
+          \ getregion(getpos('v'), getpos('.'), {'type': 'v' }))
+    call cursor(1, 1)
+    call feedkeys("\<Esc>v$G", 'xt')
+    call assert_equal(["a\tc", "x\tz", ''],
+          \ getregion(getpos('v'), getpos('.'), {'type': 'v' }))
+    call cursor(1, 1)
+    call feedkeys("\<Esc>v$j", 'xt')
+    call assert_equal(["a\tc", "x\tz"],
+          \ getregion(getpos('v'), getpos('.'), {'type': 'v' }))
+    call cursor(1, 1)
+    call feedkeys("\<Esc>\<C-v>$j", 'xt')
+    call assert_equal(["a\tc", "x\tz"],
+          \ getregion(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
+    call cursor(1, 1)
+    call feedkeys("\<Esc>\<C-v>$G", 'xt')
+    call assert_equal(["a", "x", '', ''],
+          \ getregion(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
+    call cursor(1, 1)
+    call feedkeys("\<Esc>wv2j", 'xt')
+    call assert_equal(["c", "x\tz"],
+          \ getregion(getpos('v'), getpos('.'), {'type': 'v' }))
+    set selection&
+
+    #" Exclusive selection 2
+    new
+    call setline(1, ["a\tc", "x\tz", '', ''])
+    call cursor(1, 1)
+    call feedkeys("\<Esc>v2l", 'xt')
+    call assert_equal(["a\t"],
+          \ getregion(getpos('v'), getpos('.'), {'exclusive': v:true }))
+    call cursor(1, 1)
+    call feedkeys("\<Esc>v$G", 'xt')
+    call assert_equal(["a\tc", "x\tz", ''],
+          \ getregion(getpos('v'), getpos('.'), {'exclusive': v:true }))
+    call cursor(1, 1)
+    call feedkeys("\<Esc>v$j", 'xt')
+    call assert_equal(["a\tc", "x\tz"],
+          \ getregion(getpos('v'), getpos('.'), {'exclusive': v:true }))
+    call cursor(1, 1)
+    call feedkeys("\<Esc>\<C-v>$j", 'xt')
+    call assert_equal(["a\tc", "x\tz"],
+          \ getregion(getpos('v'), getpos('.'),
+          \           {'exclusive': v:true, 'type': "\<C-v>" }))
+    call cursor(1, 1)
+    call feedkeys("\<Esc>\<C-v>$G", 'xt')
+    call assert_equal(["a", "x", '', ''],
+          \ getregion(getpos('v'), getpos('.'),
+          \           {'exclusive': v:true, 'type': "\<C-v>" }))
+    call cursor(1, 1)
+    call feedkeys("\<Esc>wv2j", 'xt')
+    call assert_equal(["c", "x\tz"],
+          \ getregion(getpos('v'), getpos('.'), {'exclusive': v:true }))
+
+    #" virtualedit
+    set selection=exclusive
+    set virtualedit=all
+    call cursor(1, 1)
+    call feedkeys("\<Esc>2lv2lj", 'xt')
+    call assert_equal(['      c', 'x   '],
+          \ getregion(getpos('v'), getpos('.'), {'type': 'v' }))
+    call cursor(1, 1)
+    call feedkeys("\<Esc>2l\<C-v>2l2j", 'xt')
+    call assert_equal(['  ', '  ', '  '],
+          \ getregion(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
+    set virtualedit&
+    set selection&
+
+    bwipe!
+  END
+  call CheckLegacyAndVim9Success(lines)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -179,6 +179,8 @@ Strict "vimdoc" subset:
 - Do not use indentation in random places—that prevents the page from using
   "flow" layout. If you need a preformatted section, put it in
   a |help-codeblock| starting with ">".
+- Parameters and fields are documented as `{foo}`.
+- Optional parameters and fields are documented as `{foo}?`.
 
 C docstrings ~
 
@@ -189,9 +191,8 @@ from the docstrings defined in src/nvim/api/*.c.
 Docstring format:
 - Lines start with `///`
 - Special tokens start with `@` followed by the token name:
-  `@note`, `@param`, `@returns`
-- Limited markdown is supported.
-  - List-items start with `-` (useful to nest or "indent")
+  `@note`, `@param`, `@return`
+- Markdown is supported.
 - Use ``` for code samples.
   Code samples can be annotated as `vim` or `lua`
 
@@ -233,11 +234,33 @@ definitions.  The |lua-vim| :help is generated from the docstrings.
 
 Docstring format:
 - Use LuaCATS annotations: https://luals.github.io/wiki/annotations/
-- Limited markdown is supported.
-  - List-items start with `-` (useful to nest or "indent")
+- Markdown is supported.
 - Use ``` for code samples.
   Code samples can be annotated as `vim` or `lua`
 - Use `@nodoc` to prevent documentation generation.
+- Use `@inlinedoc` to inline `@class` blocks into `@param` blocks.
+  E.g. >lua
+      --- Object with fields:
+      --- @class myOpts
+      --- @inlinedoc
+      ---
+      --- Documentation for some field
+      --- @field somefield? integer
+
+      --- @param opts? myOpts
+      function foo(opts)
+      end
+<
+
+  Will be rendered as: >vimdoc
+
+      foo({opts})
+
+          Parameters:
+            - {opts}? (table) Object with the fields:
+                      - {somefield}? (integer) Documentation
+                        for some field
+<
 - Files which has `@meta` are only used for typing and documentation.
 
 Example: the help for |vim.paste()| is generated from a docstring decorating

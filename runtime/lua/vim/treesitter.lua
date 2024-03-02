@@ -1,6 +1,6 @@
 local api = vim.api
 
----@type table<integer,LanguageTree>
+---@type table<integer,vim.treesitter.LanguageTree>
 local parsers = setmetatable({}, { __mode = 'v' })
 
 local M = vim._defer_require('vim.treesitter', {
@@ -30,7 +30,7 @@ M.minimum_language_version = vim._ts_get_minimum_language_version()
 ---@param lang string Language of the parser
 ---@param opts (table|nil) Options to pass to the created language tree
 ---
----@return LanguageTree object to use for parsing
+---@return vim.treesitter.LanguageTree object to use for parsing
 function M._create_parser(bufnr, lang, opts)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
@@ -80,7 +80,7 @@ end
 ---@param lang (string|nil) Filetype of this parser (default: buffer filetype)
 ---@param opts (table|nil) Options to pass to the created language tree
 ---
----@return LanguageTree object to use for parsing
+---@return vim.treesitter.LanguageTree object to use for parsing
 function M.get_parser(bufnr, lang, opts)
   opts = opts or {}
 
@@ -119,7 +119,7 @@ end
 ---@param lang string Language of this string
 ---@param opts (table|nil) Options to pass to the created language tree
 ---
----@return LanguageTree object to use for parsing
+---@return vim.treesitter.LanguageTree object to use for parsing
 function M.get_string_parser(str, lang, opts)
   vim.validate({
     str = { str, 'string' },
@@ -172,7 +172,7 @@ end
 ---to get the range with directives applied.
 ---@param node TSNode
 ---@param source integer|string|nil Buffer or string from which the {node} is extracted
----@param metadata TSMetadata|nil
+---@param metadata vim.treesitter.query.TSMetadata|nil
 ---@return Range6
 function M.get_range(node, source, metadata)
   if metadata and metadata.range then
@@ -294,6 +294,7 @@ function M.get_captures_at_pos(bufnr, row, col)
 
     for capture, node, metadata in iter do
       if M.is_in_node_range(node, row, col) then
+        ---@diagnostic disable-next-line: invisible
         local c = q._query.captures[capture] -- name of the capture in the query
         if c ~= nil then
           table.insert(matches, { capture = c, metadata = metadata, lang = tree:lang() })
@@ -325,6 +326,23 @@ function M.get_captures_at_cursor(winnr)
   return captures
 end
 
+--- Optional keyword arguments:
+--- @class vim.treesitter.get_node.Opts
+--- @inlinedoc
+---
+--- Buffer number (nil or 0 for current buffer)
+--- @field bufnr integer?
+---
+--- 0-indexed (row, col) tuple. Defaults to cursor position in the
+--- current window. Required if {bufnr} is not the current buffer
+--- @field pos { [1]: integer, [2]: integer }?
+---
+--- Parser language. (default: from buffer filetype)
+--- @field lang string?
+---
+--- Ignore injected languages (default true)
+--- @field ignore_injections boolean?
+
 --- Returns the smallest named node at the given position
 ---
 --- NOTE: Calling this on an unparsed tree can yield an invalid node.
@@ -335,12 +353,7 @@ end
 --- vim.treesitter.get_parser(bufnr):parse(range)
 --- ```
 ---
----@param opts table|nil Optional keyword arguments:
----             - bufnr integer|nil Buffer number (nil or 0 for current buffer)
----             - pos table|nil 0-indexed (row, col) tuple. Defaults to cursor position in the
----                             current window. Required if {bufnr} is not the current buffer
----             - lang string|nil Parser language. (default: from buffer filetype)
----             - ignore_injections boolean Ignore injected languages (default true)
+---@param opts vim.treesitter.get_node.Opts?
 ---
 ---@return TSNode | nil Node at the given position
 function M.get_node(opts)
@@ -352,7 +365,7 @@ function M.get_node(opts)
     bufnr = api.nvim_get_current_buf()
   end
 
-  local row, col
+  local row, col --- @type integer, integer
   if opts.pos then
     assert(#opts.pos == 2, 'Position must be a (row, col) tuple')
     row, col = opts.pos[1], opts.pos[2]
@@ -425,7 +438,7 @@ end
 --- Can be used in an ftplugin or FileType autocommand.
 ---
 --- Note: By default, disables regex syntax highlighting, which may be required for some plugins.
---- In this case, add ``vim.bo.syntax = 'on'`` after the call to `start`.
+--- In this case, add `vim.bo.syntax = 'on'` after the call to `start`.
 ---
 --- Example:
 ---

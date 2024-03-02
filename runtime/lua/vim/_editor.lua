@@ -127,10 +127,10 @@ vim.log = {
 ---     timeout the process is sent the KILL signal (9) and the exit code is set to 124. Cannot
 ---     be called in |api-fast|.
 ---     - SystemCompleted is an object with the fields:
----      - code: (integer)
----      - signal: (integer)
----      - stdout: (string), nil if stdout argument is passed
----      - stderr: (string), nil if stderr argument is passed
+---       - code: (integer)
+---       - signal: (integer)
+---       - stdout: (string), nil if stdout argument is passed
+---       - stderr: (string), nil if stderr argument is passed
 ---   - kill (fun(signal: integer|string))
 ---   - write (fun(data: string|nil)) Requires `stdin=true`. Pass `nil` to close the stream.
 ---   - is_closing (fun(): boolean)
@@ -190,6 +190,7 @@ function vim._os_proc_children(ppid)
   return children
 end
 
+--- @nodoc
 --- @class vim.inspect.Opts
 --- @field depth? integer
 --- @field newline? string
@@ -454,7 +455,7 @@ vim.cmd = setmetatable({}, {
   end,
 })
 
---- @class vim.var_accessor
+--- @class (private) vim.var_accessor
 --- @field [string] any
 --- @field [integer] vim.var_accessor
 
@@ -706,8 +707,8 @@ end
 --- Generates a list of possible completions for the string.
 --- String has the pattern.
 ---
----     1. Can we get it to just return things in the global namespace with that name prefix
----     2. Can we get it to return things from global namespace even with `print(` in front.
+--- 1. Can we get it to just return things in the global namespace with that name prefix
+--- 2. Can we get it to return things from global namespace even with `print(` in front.
 ---
 --- @param pat string
 function vim._expand_pat(pat, env)
@@ -885,6 +886,7 @@ do
   --- similar to the builtin completion for the `:lua` command.
   ---
   --- Activate using `set omnifunc=v:lua.vim.lua_omnifunc` in a Lua buffer.
+  --- @param find_start 1|0
   function vim.lua_omnifunc(find_start, _)
     if find_start == 1 then
       local line = vim.api.nvim_get_current_line()
@@ -914,6 +916,7 @@ end
 ---
 --- @see |vim.inspect()|
 --- @see |:=|
+--- @param ... any
 --- @return any # given arguments.
 function vim.print(...)
   if vim.in_fast_event() then
@@ -1046,7 +1049,7 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
   -- e.g., when planned to be removed in version = '0.12' (soft-deprecated since 0.10-dev),
   -- show warnings since 0.11, including 0.11-dev (hard_deprecated_since = 0.11-dev).
   if plugin == 'Nvim' then
-    local current_version = vim.version() ---@type Version
+    local current_version = vim.version() ---@type vim.Version
     local removal_version = assert(vim.version.parse(version))
     local is_hard_deprecated ---@type boolean
 

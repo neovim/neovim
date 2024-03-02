@@ -1226,5 +1226,11 @@ indent for a continuation line, a line that starts with a backslash: >
 
 Three times shiftwidth is the default value.
 
+YAML							*ft-yaml-indent*
+
+By default, the yaml indent script does not try to detect multiline scalars.
+If you want to enable this, set the following variable: >
+
+  let g:yaml_indent_multiline_scalar = 1
 
  vim:tw=78:ts=8:noet:ft=help:norl:

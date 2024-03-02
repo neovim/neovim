@@ -635,6 +635,7 @@ Commands:
   :lcscope
   :scscope
   :Vimuntar
+  The old `:TOhtml`, replaced by a Lua version (contains many differences)
 
 Compile-time features:
   Emacs tags support

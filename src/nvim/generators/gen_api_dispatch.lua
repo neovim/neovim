@@ -2,15 +2,18 @@ local mpack = vim.mpack
 
 local hashy = require 'generators.hashy'
 
-assert(#arg >= 5)
+local pre_args = 7
+assert(#arg >= pre_args)
 -- output h file with generated dispatch functions (dispatch_wrappers.generated.h)
 local dispatch_outputf = arg[1]
--- output h file with packed metadata (funcs_metadata.generated.h)
-local funcs_metadata_outputf = arg[2]
+-- output h file with packed metadata (api_metadata.generated.h)
+local api_metadata_outputf = arg[2]
 -- output metadata mpack file, for use by other build scripts (api_metadata.mpack)
 local mpack_outputf = arg[3]
 local lua_c_bindings_outputf = arg[4] -- lua_api_c_bindings.generated.c
 local keysets_outputf = arg[5] -- keysets_defs.generated.h
+local ui_metadata_inputf = arg[6] -- ui events metadata
+local git_version_inputf = arg[7] -- git version header
 
 local functions = {}
 
@@ -23,9 +26,7 @@ local function_names = {}
 
 local c_grammar = require('generators.c_grammar')
 
-local function startswith(String, Start)
-  return string.sub(String, 1, string.len(Start)) == Start
-end
+local startswith = vim.startswith
 
 local function add_function(fn)
   local public = startswith(fn.name, 'nvim_') or fn.deprecated_since
@@ -98,8 +99,10 @@ local function add_keyset(val)
   })
 end
 
+local ui_options_text = nil
+
 -- read each input file, parse and append to the api metadata
-for i = 6, #arg do
+for i = pre_args + 1, #arg do
   local full_path = arg[i]
   local parts = {}
   for part in string.gmatch(full_path, '[^/]+') do
@@ -109,15 +112,18 @@ for i = 6, #arg do
 
   local input = assert(io.open(full_path, 'rb'))
 
-  local tmp = c_grammar.grammar:match(input:read('*all'))
+  local text = input:read('*all')
+  local tmp = c_grammar.grammar:match(text)
   for j = 1, #tmp do
     local val = tmp[j]
     if val.keyset_name then
       add_keyset(val)
-    else
+    elseif val.name then
       add_function(val)
     end
   end
+
+  ui_options_text = ui_options_text or string.match(text, 'ui_ext_names%[][^{]+{([^}]+)}')
   input:close()
 end
 
@@ -218,13 +224,71 @@ for _, f in ipairs(functions) do
   end
 end
 
+local ui_options = { 'rgb' }
+for x in string.gmatch(ui_options_text, '"([a-z][a-z_]+)"') do
+  table.insert(ui_options, x)
+end
+
+local version = require 'nvim_version'
+local git_version = io.open(git_version_inputf):read '*a'
+local version_build = string.match(git_version, '#define NVIM_VERSION_BUILD "([^"]+)"') or vim.NIL
+
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
-local funcs_metadata_output = assert(io.open(funcs_metadata_outputf, 'wb'))
-local packed = mpack.encode(exported_functions)
+local api_metadata_output = assert(io.open(api_metadata_outputf, 'wb'))
+local pieces = {}
+
+-- Naively using mpack.encode({foo=x, bar=y}) will make the build
+-- "non-reproducible". Emit maps directly as FIXDICT(2) "foo" x "bar" y instead
+local function fixdict(num)
+  if num > 15 then
+    error 'implement more dict codes'
+  end
+  table.insert(pieces, string.char(128 + num))
+end
+local function put(item, item2)
+  table.insert(pieces, mpack.encode(item))
+  if item2 ~= nil then
+    table.insert(pieces, mpack.encode(item2))
+  end
+end
+
+fixdict(6)
+
+put('version')
+fixdict(1 + #version)
+for _, item in ipairs(version) do
+  -- NB: all items are mandatory. But any error will be less confusing
+  -- with placholder vim.NIL (than invalid mpack data)
+  put(item[1], item[2] or vim.NIL)
+end
+put('build', version_build)
+
+put('functions', exported_functions)
+put('ui_events')
+table.insert(pieces, io.open(ui_metadata_inputf, 'rb'):read('*all'))
+put('ui_options', ui_options)
+
+put('error_types')
+fixdict(2)
+put('Exception', { id = 0 })
+put('Validation', { id = 1 })
+
+put('types')
+local types =
+  { { 'Buffer', 'nvim_buf_' }, { 'Window', 'nvim_win_' }, { 'Tabpage', 'nvim_tabpage_' } }
+fixdict(#types)
+for i, item in ipairs(types) do
+  put(item[1])
+  fixdict(2)
+  put('id', i - 1)
+  put('prefix', item[2])
+end
+
+local packed = table.concat(pieces)
 local dump_bin_array = require('generators.dump_bin_array')
-dump_bin_array(funcs_metadata_output, 'funcs_metadata', packed)
-funcs_metadata_output:close()
+dump_bin_array(api_metadata_output, 'packed_api_metadata', packed)
+api_metadata_output:close()
 
 -- start building the dispatch wrapper output
 local output = assert(io.open(dispatch_outputf, 'wb'))

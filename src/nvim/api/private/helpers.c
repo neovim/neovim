@@ -38,9 +38,8 @@
 #include "nvim/version.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/funcs_metadata.generated.h"
+# include "api/private/api_metadata.generated.h"
 # include "api/private/helpers.c.generated.h"
-# include "api/private/ui_events_metadata.generated.h"
 #endif
 
 /// Start block that may cause Vimscript exceptions while evaluating another code
@@ -653,83 +652,26 @@ void api_clear_error(Error *value)
 static ArenaMem mem_for_metadata = NULL;
 
 /// @returns a shared value. caller must not modify it!
-Dictionary api_metadata(void)
+Object api_metadata(void)
 {
-  static Dictionary metadata = ARRAY_DICT_INIT;
+  static Object metadata = OBJECT_INIT;
 
-  if (!metadata.size) {
+  if (metadata.type == kObjectTypeNil) {
     Arena arena = ARENA_EMPTY;
     Error err = ERROR_INIT;
-    metadata = arena_dict(&arena, 6);
-    PUT_C(metadata, "version", DICTIONARY_OBJ(version_dict(&arena)));
-    PUT_C(metadata, "functions",
-          unpack((char *)funcs_metadata, sizeof(funcs_metadata), &arena, &err));
-    if (ERROR_SET(&err)) {
+    metadata = unpack((char *)packed_api_metadata, sizeof(packed_api_metadata), &arena, &err);
+    if (ERROR_SET(&err) || metadata.type != kObjectTypeDictionary) {
       abort();
     }
-    PUT_C(metadata, "ui_events",
-          unpack((char *)ui_events_metadata, sizeof(ui_events_metadata), &arena, &err));
-    if (ERROR_SET(&err)) {
-      abort();
-    }
-    PUT_C(metadata, "ui_options", ARRAY_OBJ(ui_options_metadata(&arena)));
-    PUT_C(metadata, "error_types", DICTIONARY_OBJ(error_type_metadata(&arena)));
-    PUT_C(metadata, "types", DICTIONARY_OBJ(type_metadata(&arena)));
     mem_for_metadata = arena_finish(&arena);
   }
 
   return metadata;
 }
 
-static Array ui_options_metadata(Arena *arena)
+String api_metadata_raw(void)
 {
-  Array ui_options = arena_array(arena, kUIExtCount + 1);
-  ADD_C(ui_options, CSTR_AS_OBJ("rgb"));
-  for (UIExtension i = 0; i < kUIExtCount; i++) {
-    if (ui_ext_names[i][0] != '_') {
-      ADD_C(ui_options, CSTR_AS_OBJ(ui_ext_names[i]));
-    }
-  }
-  return ui_options;
-}
-
-static Dictionary error_type_metadata(Arena *arena)
-{
-  Dictionary types = arena_dict(arena, 2);
-
-  Dictionary exception_metadata = arena_dict(arena, 1);
-  PUT_C(exception_metadata, "id", INTEGER_OBJ(kErrorTypeException));
-
-  Dictionary validation_metadata = arena_dict(arena, 1);
-  PUT_C(validation_metadata, "id", INTEGER_OBJ(kErrorTypeValidation));
-
-  PUT_C(types, "Exception", DICTIONARY_OBJ(exception_metadata));
-  PUT_C(types, "Validation", DICTIONARY_OBJ(validation_metadata));
-
-  return types;
-}
-
-static Dictionary type_metadata(Arena *arena)
-{
-  Dictionary types = arena_dict(arena, 3);
-
-  Dictionary buffer_metadata = arena_dict(arena, 2);
-  PUT_C(buffer_metadata, "id", INTEGER_OBJ(kObjectTypeBuffer - EXT_OBJECT_TYPE_SHIFT));
-  PUT_C(buffer_metadata, "prefix", CSTR_AS_OBJ("nvim_buf_"));
-
-  Dictionary window_metadata = arena_dict(arena, 2);
-  PUT_C(window_metadata, "id", INTEGER_OBJ(kObjectTypeWindow - EXT_OBJECT_TYPE_SHIFT));
-  PUT_C(window_metadata, "prefix", CSTR_AS_OBJ("nvim_win_"));
-
-  Dictionary tabpage_metadata = arena_dict(arena, 2);
-  PUT_C(tabpage_metadata, "id", INTEGER_OBJ(kObjectTypeTabpage - EXT_OBJECT_TYPE_SHIFT));
-  PUT_C(tabpage_metadata, "prefix", CSTR_AS_OBJ("nvim_tabpage_"));
-
-  PUT_C(types, "Buffer", DICTIONARY_OBJ(buffer_metadata));
-  PUT_C(types, "Window", DICTIONARY_OBJ(window_metadata));
-  PUT_C(types, "Tabpage", DICTIONARY_OBJ(tabpage_metadata));
-
-  return types;
+  return cbuf_as_string((char *)packed_api_metadata, sizeof(packed_api_metadata));
 }
 
 // all the copy_[object] functions allow arena=NULL,

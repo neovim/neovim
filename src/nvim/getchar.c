@@ -65,8 +65,9 @@
 #include "nvim/vim_defs.h"
 
 /// Index in scriptin
-static int curscript = 0;
-FileDescriptor *scriptin[NSCRIPT] = { NULL };
+static int curscript = -1;
+/// Streams to read script from
+static FileDescriptor scriptin[NSCRIPT] = { 0 };
 
 // These buffers are used for storing:
 // - stuffed characters: A command that is translated into another command.
@@ -1176,7 +1177,7 @@ void ungetchars(int len)
 void may_sync_undo(void)
 {
   if ((!(State & (MODE_INSERT | MODE_CMDLINE)) || arrow_used)
-      && scriptin[curscript] == NULL) {
+      && curscript < 0) {
     u_sync(false);
   }
 }
@@ -1216,8 +1217,9 @@ void free_typebuf(void)
 /// restored when "file" has been read completely.
 static typebuf_T saved_typebuf[NSCRIPT];
 
-void save_typebuf(void)
+static void save_typebuf(void)
 {
+  assert(curscript >= 0);
   init_typebuf();
   saved_typebuf[curscript] = typebuf;
   alloc_typebuf();
@@ -1292,18 +1294,13 @@ void openscript(char *name, bool directly)
     return;
   }
 
-  if (scriptin[curscript] != NULL) {    // already reading script
-    curscript++;
-  }
+  curscript++;
   // use NameBuff for expanded name
   expand_env(name, NameBuff, MAXPATHL);
-  int error;
-  if ((scriptin[curscript] = file_open_new(&error, NameBuff,
-                                           kFileReadOnly, 0)) == NULL) {
+  int error = file_open(&scriptin[curscript], NameBuff, kFileReadOnly, 0);
+  if (error) {
     semsg(_(e_notopen_2), name, os_strerror(error));
-    if (curscript) {
-      curscript--;
-    }
+    curscript--;
     return;
   }
   save_typebuf();
@@ -1330,7 +1327,7 @@ void openscript(char *name, bool directly)
       update_topline_cursor();          // update cursor position and topline
       normal_cmd(&oa, false);           // execute one command
       vpeekc();                   // check for end of file
-    } while (scriptin[oldcurscript] != NULL);
+    } while (curscript >= oldcurscript);
 
     State = save_State;
     msg_scroll = save_msg_scroll;
@@ -1342,31 +1339,53 @@ void openscript(char *name, bool directly)
 /// Close the currently active input script.
 static void closescript(void)
 {
+  assert(curscript >= 0);
   free_typebuf();
   typebuf = saved_typebuf[curscript];
 
-  file_free(scriptin[curscript], false);
-  scriptin[curscript] = NULL;
-  if (curscript > 0) {
-    curscript--;
-  }
+  file_close(&scriptin[curscript], false);
+  curscript--;
 }
 
 #if defined(EXITFREE)
 void close_all_scripts(void)
 {
-  while (scriptin[0] != NULL) {
+  while (curscript >= 0) {
     closescript();
   }
 }
 
 #endif
 
+bool open_scriptin(char *scriptin_name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(curscript == -1);
+  curscript++;
+
+  int error;
+  if (strequal(scriptin_name, "-")) {
+    error = file_open_stdin(&scriptin[0]);
+  } else {
+    error = file_open(&scriptin[0], scriptin_name,
+                      kFileReadOnly|kFileNonBlocking, 0);
+  }
+  if (error) {
+    fprintf(stderr, _("Cannot open for reading: \"%s\": %s\n"),
+            scriptin_name, os_strerror(error));
+    curscript--;
+    return false;
+  }
+  save_typebuf();
+
+  return true;
+}
+
 /// Return true when reading keys from a script file.
 int using_script(void)
   FUNC_ATTR_PURE
 {
-  return scriptin[curscript] != NULL;
+  return curscript >= 0;
 }
 
 /// This function is called just before doing a blocking wait.  Thus after
@@ -2801,10 +2820,10 @@ int inchar(uint8_t *buf, int maxlen, long wait_time)
   // Get a character from a script file if there is one.
   // If interrupted: Stop reading script files, close them all.
   ptrdiff_t read_size = -1;
-  while (scriptin[curscript] != NULL && read_size <= 0 && !ignore_script) {
+  while (curscript >= 0 && read_size <= 0 && !ignore_script) {
     char script_char;
     if (got_int
-        || (read_size = file_read(scriptin[curscript], &script_char, 1)) != 1) {
+        || (read_size = file_read(&scriptin[curscript], &script_char, 1)) != 1) {
       // Reached EOF or some error occurred.
       // Careful: closescript() frees typebuf.tb_buf[] and buf[] may
       // point inside typebuf.tb_buf[].  Don't use buf[] after this!

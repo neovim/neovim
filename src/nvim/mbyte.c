@@ -1884,99 +1884,66 @@ void mb_copy_char(const char **const fp, char **const tp)
   *fp += l;
 }
 
-/// Return the offset from "p_in" to the first byte of a character.  When "p_in" is
+/// Return the offset from "p" to the first byte of a character.  When "p" is
 /// at the start of a character 0 is returned, otherwise the offset to the next
 /// character.  Can start anywhere in a stream of bytes.
-int mb_off_next(const char *base, const char *p_in)
+int mb_off_next(const char *base, const char *p)
 {
-  const uint8_t *p = (uint8_t *)p_in;
-  int i;
+  int head_off = utf_head_off(base, p);
 
-  if (*p < 0x80) {              // be quick for ASCII
+  if (head_off == 0) {
     return 0;
   }
 
-  // Find the next character that isn't 10xx.xxxx
-  for (i = 0; (p[i] & 0xc0) == 0x80; i++) {}
-  if (i > 0) {
-    int j;
-    // Check for illegal sequence.
-    for (j = 0; p - j > (uint8_t *)base; j++) {
-      if ((p[-j] & 0xc0) != 0x80) {
-        break;
-      }
-    }
-    if (utf8len_tab[p[-j]] != i + j) {
-      return 0;
-    }
-  }
-  return i;
+  return utfc_ptr2len(p - head_off) - head_off;
 }
 
-/// Return the offset from `p_in` to the last byte of the codepoint it points
-/// to.  Can start anywhere in a stream of bytes.
+/// Returns the offset in bytes from "p_in" to the first and one-past-end bytes
+/// of the codepoint it points to.
+/// "p_in" can point anywhere in a stream of bytes.
+/// "p_len" limits number of bytes after "p_in".
 /// Note: Counts individual codepoints of composed characters separately.
-int utf_cp_tail_off(const char *base, const char *p_in)
+CharBoundsOff utf_cp_bounds_len(char const *base, char const *p_in, int p_len)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
-  const uint8_t *p = (uint8_t *)p_in;
-  int i;
-  int j;
-
-  if (*p == NUL) {
-    return 0;
+  assert(base <= p_in && p_len > 0);
+  uint8_t const *const b = (uint8_t *)base;
+  uint8_t const *const p = (uint8_t *)p_in;
+  if (*p < 0x80U) {  // be quick for ASCII
+    return (CharBoundsOff){ 0, 1 };
   }
 
-  // Find the last character that is 10xx.xxxx
-  for (i = 0; (p[i + 1] & 0xc0) == 0x80; i++) {}
-
-  // Check for illegal sequence.
-  for (j = 0; p_in - j > base; j++) {
-    if ((p[-j] & 0xc0) != 0x80) {
-      break;
+  int const max_first_off = -MIN((int)(p - b), MB_MAXCHAR - 1);
+  int first_off = 0;
+  for (; utf_is_trail_byte(p[first_off]); first_off--) {
+    if (first_off == max_first_off) {  // failed to find first byte
+      return (CharBoundsOff){ 0, 1 };
     }
   }
 
-  if (utf8len_tab[p[-j]] != i + j + 1) {
-    return 0;
+  int const max_end_off = utf8len_tab[p[first_off]] + first_off;
+  if (max_end_off <= 0 || max_end_off > p_len) {  // illegal or incomplete sequence
+    return (CharBoundsOff){ 0, 1 };
   }
-  return i;
+
+  for (int end_off = 1; end_off < max_end_off; end_off++) {
+    if (!utf_is_trail_byte(p[end_off])) {  // not enough trail bytes
+      return (CharBoundsOff){ 0, 1 };
+    }
+  }
+
+  return (CharBoundsOff){ .begin_off = (int8_t)-first_off, .end_off = (int8_t)max_end_off };
 }
 
-/// Return the offset from "p" to the first byte of the codepoint it points
-/// to. Can start anywhere in a stream of bytes.
-/// Note: Unlike `utf_head_off`, this counts individual codepoints of composed characters
-/// separately.
-///
-/// @param[in] base  Pointer to start of string
-/// @param[in] p     Pointer to byte for which to return the offset to the previous codepoint
-//
-/// @return 0 if invalid sequence, else number of bytes to previous codepoint
-int utf_cp_head_off(const char *base, const char *p)
+/// Returns the offset in bytes from "p_in" to the first and one-past-end bytes
+/// of the codepoint it points to.
+/// "p_in" can point anywhere in a stream of bytes.
+/// Stream must be NUL-terminated.
+/// Note: Counts individual codepoints of composed characters separately.
+CharBoundsOff utf_cp_bounds(char const *base, char const *p_in)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
-  int i;
-
-  if (*p == NUL) {
-    return 0;
-  }
-
-  // Find the first character that is not 10xx.xxxx
-  for (i = 0; p - i >= base; i++) {
-    if (((uint8_t)p[-i] & 0xc0) != 0x80) {
-      break;
-    }
-  }
-
-  // Find the last character that is 10xx.xxxx (condition terminates on NUL)
-  int j = 1;
-  while (((uint8_t)p[j] & 0xc0) == 0x80) {
-    j++;
-  }
-
-  // Check for illegal sequence.
-  if (utf8len_tab[(uint8_t)p[-i]] != j + i) {
-    return 0;
-  }
-  return i;
+  return utf_cp_bounds_len(base, p_in, INT_MAX);
 }
 
 // Find the next illegal byte sequence.

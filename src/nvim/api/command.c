@@ -67,7 +67,7 @@
 ///             - file: (boolean) The command expands filenames. Which means characters such as "%",
 ///                               "#" and wildcards are expanded.
 ///             - bar: (boolean) The "|" character is treated as a command separator and the double
-///                              quote character (\") is treated as the start of a comment.
+///                              quote character (") is treated as the start of a comment.
 ///         - mods: (dictionary) |:command-modifiers|.
 ///             - filter: (dictionary) |:filter|.
 ///                 - pattern: (string) Filter pattern. Empty string if there is no filter.

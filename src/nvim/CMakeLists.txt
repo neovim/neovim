@@ -285,7 +285,8 @@ endif()
 # Variables
 #-------------------------------------------------------------------------------
 
-set(API_METADATA ${PROJECT_BINARY_DIR}/api_metadata.mpack)
+set(FUNCS_METADATA ${PROJECT_BINARY_DIR}/funcs_metadata.mpack)
+set(UI_METADATA ${PROJECT_BINARY_DIR}/ui_metadata.mpack)
 set(BINARY_LIB_DIR ${PROJECT_BINARY_DIR}/lib/nvim)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
@@ -317,14 +318,13 @@ set(GENERATED_EVENTS_NAMES_MAP ${GENERATED_DIR}/auevents_name_map.generated.h)
 set(GENERATED_EX_CMDS_DEFS ${GENERATED_DIR}/ex_cmds_defs.generated.h)
 set(GENERATED_EX_CMDS_ENUM ${GENERATED_INCLUDES_DIR}/ex_cmds_enum.generated.h)
 set(GENERATED_FUNCS ${GENERATED_DIR}/funcs.generated.h)
-set(GENERATED_FUNCS_METADATA ${GENERATED_DIR}/api/private/funcs_metadata.generated.h)
+set(GENERATED_API_METADATA ${GENERATED_DIR}/api/private/api_metadata.generated.h)
 set(GENERATED_KEYSETS_DEFS ${GENERATED_DIR}/keysets_defs.generated.h)
 set(GENERATED_OPTIONS ${GENERATED_DIR}/options.generated.h)
 set(GENERATED_OPTIONS_ENUM ${GENERATED_DIR}/options_enum.generated.h)
 set(GENERATED_OPTIONS_MAP ${GENERATED_DIR}/options_map.generated.h)
 set(GENERATED_UI_EVENTS_CALL ${GENERATED_DIR}/ui_events_call.generated.h)
 set(GENERATED_UI_EVENTS_CLIENT ${GENERATED_DIR}/ui_events_client.generated.h)
-set(GENERATED_UI_EVENTS_METADATA ${GENERATED_DIR}/api/private/ui_events_metadata.generated.h)
 set(GENERATED_UI_EVENTS_REMOTE ${GENERATED_DIR}/ui_events_remote.generated.h)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 set(LUA_API_C_BINDINGS ${GENERATED_DIR}/lua_api_c_bindings.generated.c)
@@ -493,7 +493,7 @@ add_custom_command(
     "${NVIM_VERSION_DEF_H}"
   DEPENDS "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef-$<CONFIG>.h")
 
-set(LUA_GEN ${LUA_GEN_PRG} ${GENERATOR_PRELOAD} ${PROJECT_SOURCE_DIR} $<TARGET_FILE:nlua0>)
+set(LUA_GEN ${LUA_GEN_PRG} ${GENERATOR_PRELOAD} ${PROJECT_SOURCE_DIR} $<TARGET_FILE:nlua0> ${PROJECT_BINARY_DIR})
 set(LUA_GEN_DEPS ${GENERATOR_PRELOAD} $<TARGET_FILE:nlua0>)
 
 # NVIM_GENERATED_FOR_HEADERS: generated headers to be included in headers
@@ -553,14 +553,19 @@ add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
     ${UNICODE_FILES}
 )
 
+set(NVIM_VERSION_LUA ${PROJECT_BINARY_DIR}/nvim_version.lua)
+configure_file(${GENERATOR_DIR}/nvim_version.lua.in ${NVIM_VERSION_LUA})
+
 add_custom_command(
-  OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_FUNCS_METADATA}
-         ${API_METADATA} ${LUA_API_C_BINDINGS} ${GENERATED_KEYSETS_DEFS}
+  OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_API_METADATA}
+  ${FUNCS_METADATA} ${LUA_API_C_BINDINGS} ${GENERATED_KEYSETS_DEFS}
          COMMAND ${LUA_GEN} ${API_DISPATCH_GENERATOR}
                          ${GENERATED_API_DISPATCH}
-                         ${GENERATED_FUNCS_METADATA} ${API_METADATA}
+                         ${GENERATED_API_METADATA} ${FUNCS_METADATA}
                          ${LUA_API_C_BINDINGS}
                          ${GENERATED_KEYSETS_DEFS}
+                         ${UI_METADATA}
+                         ${NVIM_VERSION_GIT_H}
                          ${API_HEADERS}
   DEPENDS
     ${LUA_GEN_DEPS}
@@ -568,6 +573,9 @@ add_custom_command(
     ${MSGPACK_RPC_HEADERS}
     ${API_DISPATCH_GENERATOR}
     ${GENERATOR_C_GRAMMAR}
+    ${UI_METADATA}
+    ${NVIM_VERSION_LUA}
+    ${NVIM_VERSION_GIT_H}
     ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
 )
 
@@ -612,13 +620,13 @@ list(APPEND NVIM_GENERATED_SOURCES
 add_custom_command(
   OUTPUT ${GENERATED_UI_EVENTS_CALL}
          ${GENERATED_UI_EVENTS_REMOTE}
-         ${GENERATED_UI_EVENTS_METADATA}
+         ${UI_METADATA}
          ${GENERATED_UI_EVENTS_CLIENT}
   COMMAND ${LUA_GEN} ${API_UI_EVENTS_GENERATOR}
                      ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
                      ${GENERATED_UI_EVENTS_CALL}
                      ${GENERATED_UI_EVENTS_REMOTE}
-                     ${GENERATED_UI_EVENTS_METADATA}
+                     ${UI_METADATA}
                      ${GENERATED_UI_EVENTS_CLIENT}
   DEPENDS
     ${LUA_GEN_DEPS}
@@ -654,8 +662,8 @@ add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
 )
 
 add_custom_command(OUTPUT ${GENERATED_FUNCS} ${FUNCS_DATA}
-  COMMAND ${LUA_GEN} ${FUNCS_GENERATOR} ${GENERATED_DIR} ${API_METADATA} ${FUNCS_DATA}
-  DEPENDS ${LUA_GEN_DEPS} ${FUNCS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/eval.lua ${API_METADATA}
+  COMMAND ${LUA_GEN} ${FUNCS_GENERATOR} ${GENERATED_DIR} ${FUNCS_METADATA} ${FUNCS_DATA}
+  DEPENDS ${LUA_GEN_DEPS} ${FUNCS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/eval.lua ${FUNCS_METADATA}
 )
 list(APPEND NVIM_GENERATED_FOR_SOURCES
   "${GENERATED_FUNCS}")
@@ -902,14 +910,6 @@ set(VIMDOC_FILES
   ${NVIM_RUNTIME_DIR}/doc/treesitter.txt
 )
 
-set(MPACK_FILES
-  ${NVIM_RUNTIME_DIR}/doc/api.mpack
-  ${NVIM_RUNTIME_DIR}/doc/diagnostic.mpack
-  ${NVIM_RUNTIME_DIR}/doc/lsp.mpack
-  ${NVIM_RUNTIME_DIR}/doc/lua.mpack
-  ${NVIM_RUNTIME_DIR}/doc/treesitter.mpack
-)
-
 file(GLOB API_SOURCES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/nvim/api/*.c)
 
 file(GLOB LUA_SOURCES CONFIGURE_DEPENDS
@@ -921,25 +921,25 @@ file(GLOB LUA_SOURCES CONFIGURE_DEPENDS
 )
 
 add_custom_command(
-  OUTPUT ${MPACK_FILES}
-  COMMAND ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.py
+  OUTPUT ${VIMDOC_FILES}
+  COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${NVIM_RUNTIME_DIR}"
+    $<TARGET_FILE:nvim_bin> -l scripts/gen_vimdoc.lua
   DEPENDS
-    nvim_bin
+    nvim
     ${API_SOURCES}
     ${LUA_SOURCES}
-    ${VIMDOC_FILES}
-    ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.py
-    ${PROJECT_SOURCE_DIR}/scripts/lua2dox.lua
+    ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.lua
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 
 add_custom_command(
   OUTPUT ${GEN_EVAL_TOUCH}
   COMMAND ${CMAKE_COMMAND} -E touch ${GEN_EVAL_TOUCH}
-  COMMAND $<TARGET_FILE:nvim_bin> -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
+  COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${NVIM_RUNTIME_DIR}"
+    $<TARGET_FILE:nvim_bin> -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
   DEPENDS
-    ${API_METADATA}
-    ${NVIM_RUNTIME_DIR}/doc/api.mpack
+    nvim
+    ${FUNCS_METADATA}
     ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/eval.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/options.lua

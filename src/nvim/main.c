@@ -426,7 +426,19 @@ int main(int argc, char **argv)
     params.edit_type = EDIT_STDIN;
   }
 
-  open_script_files(&params);
+  if (params.scriptin) {
+    if (!open_scriptin(params.scriptin)) {
+      os_exit(2);
+    }
+  }
+  if (params.scriptout) {
+    scriptout = os_fopen(params.scriptout, params.scriptout_append ? APPENDBIN : WRITEBIN);
+    if (scriptout == NULL) {
+      fprintf(stderr, _("Cannot open for script output: \""));
+      fprintf(stderr, "%s\"\n", params.scriptout);
+      os_exit(2);
+    }
+  }
 
   nlua_init_defaults();
 
@@ -1091,20 +1103,16 @@ static void command_line_scan(mparm_T *parmp)
           FileDescriptor fp;
           const int fof_ret = file_open_fd(&fp, STDOUT_FILENO,
                                            kFileWriteOnly);
-          msgpack_packer *p = msgpack_packer_new(&fp, msgpack_file_write);
-
           if (fof_ret != 0) {
             semsg(_("E5421: Failed to open stdin: %s"), os_strerror(fof_ret));
           }
 
-          if (p == NULL) {
-            emsg(_(e_outofmem));
+          String data = api_metadata_raw();
+          const ptrdiff_t written_bytes = file_write(&fp, data.data, data.size);
+          if (written_bytes < 0) {
+            msgpack_file_write_error((int)written_bytes);
           }
 
-          Object md = DICTIONARY_OBJ(api_metadata());
-          msgpack_rpc_from_object(&md, p);
-
-          msgpack_packer_free(p);
           const int ff_ret = file_flush(&fp);
           if (ff_ret < 0) {
             msgpack_file_write_error(ff_ret);
@@ -1618,37 +1626,6 @@ static void read_stdin(void)
   msg_didany = save_msg_didany;
   TIME_MSG("reading stdin");
   check_swap_exists_action();
-}
-
-static void open_script_files(mparm_T *parmp)
-{
-  if (parmp->scriptin) {
-    int error;
-    if (strequal(parmp->scriptin, "-")) {
-      FileDescriptor *stdin_dup = file_open_stdin();
-      scriptin[0] = stdin_dup;
-    } else {
-      scriptin[0] = file_open_new(&error, parmp->scriptin,
-                                  kFileReadOnly|kFileNonBlocking, 0);
-      if (scriptin[0] == NULL) {
-        vim_snprintf(IObuff, IOSIZE,
-                     _("Cannot open for reading: \"%s\": %s\n"),
-                     parmp->scriptin, os_strerror(error));
-        fprintf(stderr, "%s", IObuff);
-        os_exit(2);
-      }
-    }
-    save_typebuf();
-  }
-
-  if (parmp->scriptout) {
-    scriptout = os_fopen(parmp->scriptout, parmp->scriptout_append ? APPENDBIN : WRITEBIN);
-    if (scriptout == NULL) {
-      fprintf(stderr, _("Cannot open for script output: \""));
-      fprintf(stderr, "%s\"\n", parmp->scriptout);
-      os_exit(2);
-    }
-  }
 }
 
 // Create the requested number of windows and edit buffers in them.

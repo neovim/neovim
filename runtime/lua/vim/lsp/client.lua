@@ -6,38 +6,125 @@ local ms = lsp.protocol.Methods
 local changetracking = lsp._changetracking
 local validate = vim.validate
 
---- @alias vim.lsp.client.on_init_cb fun(client: lsp.Client, initialize_result: lsp.InitializeResult)
---- @alias vim.lsp.client.on_attach_cb fun(client: lsp.Client, bufnr: integer)
+--- @alias vim.lsp.client.on_init_cb fun(client: vim.lsp.Client, initialize_result: lsp.InitializeResult)
+--- @alias vim.lsp.client.on_attach_cb fun(client: vim.lsp.Client, bufnr: integer)
 --- @alias vim.lsp.client.on_exit_cb fun(code: integer, signal: integer, client_id: integer)
---- @alias vim.lsp.client.before_init_cb fun(params: lsp.InitializeParams, config: lsp.ClientConfig)
+--- @alias vim.lsp.client.before_init_cb fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)
 
---- @class lsp.ClientConfig
+--- @class vim.lsp.ClientConfig
+--- command string[] that launches the language
+--- server (treated as in |jobstart()|, must be absolute or on `$PATH`, shell constructs like
+--- "~" are not expanded), or function that creates an RPC client. Function receives
+--- a `dispatchers` table and returns a table with member functions `request`, `notify`,
+--- `is_closing` and `terminate`.
+--- See |vim.lsp.rpc.request()|, |vim.lsp.rpc.notify()|.
+---  For TCP there is a builtin RPC client factory: |vim.lsp.rpc.connect()|
 --- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient?
+---
+--- Directory to launch the `cmd` process. Not related to `root_dir`.
+--- (default: cwd)
 --- @field cmd_cwd? string
+---
+--- Environment flags to pass to the LSP on spawn.
+--- Must be specified using a table.
+--- Non-string values are coerced to string.
+--- Example:
+--- ```lua
+--- { PORT = 8080; HOST = "0.0.0.0"; }
+--- ```
 --- @field cmd_env? table
+---
+--- Daemonize the server process so that it runs in a separate process group from Nvim.
+--- Nvim will shutdown the process on exit, but if Nvim fails to exit cleanly this could leave
+--- behind orphaned server processes.
+--- (default: true)
 --- @field detached? boolean
+---
+--- List of workspace folders passed to the language server.
+--- For backwards compatibility rootUri and rootPath will be derived from the first workspace
+--- folder in this list. See `workspaceFolders` in the LSP spec.
 --- @field workspace_folders? lsp.WorkspaceFolder[]
+---
+--- Map overriding the default capabilities defined by |vim.lsp.protocol.make_client_capabilities()|,
+--- passed to the language server on initialization. Hint: use make_client_capabilities() and modify
+--- its result.
+--- - Note: To send an empty dictionary use |vim.empty_dict()|, else it will be encoded as an
+---   array.
 --- @field capabilities? lsp.ClientCapabilities
+---
+--- Map of language server method names to |lsp-handler|
 --- @field handlers? table<string,function>
+---
+--- Map with language server specific settings. These are returned to the language server if
+--- requested via `workspace/configuration`. Keys are case-sensitive.
 --- @field settings? table
+---
+--- Table that maps string of clientside commands to user-defined functions.
+--- Commands passed to start_client take precedence over the global command registry. Each key
+--- must be a unique command name, and the value is a function which is called if any LSP action
+--- (code action, code lenses, ...) triggers the command.
 --- @field commands? table<string,fun(command: lsp.Command, ctx: table)>
+---
+--- Values to pass in the initialization request as `initializationOptions`. See `initialize` in
+--- the LSP spec.
 --- @field init_options? table
+---
+--- Name in log messages.
+--- (default: client-id)
 --- @field name? string
+---
+--- Language ID as string. Defaults to the filetype.
 --- @field get_language_id? fun(bufnr: integer, filetype: string): string
---- @field offset_encoding? string
+---
+--- The encoding that the LSP server expects. Client does not verify this is correct.
+--- @field offset_encoding? 'utf-8'|'utf-16'|'utf-32'
+---
+--- Callback invoked when the client operation throws an error. `code` is a number describing the error.
+--- Other arguments may be passed depending on the error kind.  See `vim.lsp.rpc.client_errors`
+--- for possible errors. Use `vim.lsp.rpc.client_errors[code]` to get human-friendly name.
 --- @field on_error? fun(code: integer, err: string)
+---
+--- Callback invoked before the LSP "initialize" phase, where `params` contains the parameters
+--- being sent to the server and `config` is the config that was passed to |vim.lsp.start_client()|.
+--- You can use this to modify parameters before they are sent.
 --- @field before_init? vim.lsp.client.before_init_cb
+---
+--- Callback invoked after LSP "initialize", where `result` is a table of `capabilities`
+--- and anything else the server may send. For example, clangd sends
+--- `initialize_result.offsetEncoding` if `capabilities.offsetEncoding` was sent to it.
+--- You can only modify the `client.offset_encoding` here before any notifications are sent.
 --- @field on_init? elem_or_list<vim.lsp.client.on_init_cb>
+---
+--- Callback invoked on client exit.
+---   - code: exit code of the process
+---   - signal: number describing the signal used to terminate (if any)
+---   - client_id: client handle
 --- @field on_exit? elem_or_list<vim.lsp.client.on_exit_cb>
+---
+--- Callback invoked when client attaches to a buffer.
 --- @field on_attach? elem_or_list<vim.lsp.client.on_attach_cb>
+---
+--- Passed directly to the language server in the initialize request. Invalid/empty values will
+--- (default: "off")
 --- @field trace? 'off'|'messages'|'verbose'
+---
+--- A table with flags for the client. The current (experimental) flags are:
+--- - allow_incremental_sync (bool, default true): Allow using incremental sync for buffer edits
+--- - debounce_text_changes (number, default 150): Debounce didChange
+---   notifications to the server by the given number in milliseconds. No debounce
+---   occurs if nil
+--- - exit_timeout (number|boolean, default false): Milliseconds to wait for server to
+---   exit cleanly after sending the "shutdown" request before sending kill -15.
+---   If set to false, nvim exits immediately after sending the "shutdown" request to the server.
 --- @field flags? table
+---
+--- Directory where the LSP server will base its workspaceFolders, rootUri, and rootPath on initialization.
 --- @field root_dir? string
 
---- @class lsp.Client.Progress: vim.Ringbuf<{token: integer|string, value: any}>
+--- @class vim.lsp.Client.Progress: vim.Ringbuf<{token: integer|string, value: any}>
 --- @field pending table<lsp.ProgressToken,lsp.LSPAny>
 
---- @class lsp.Client
+--- @class vim.lsp.Client
 ---
 --- The id allocated to the client.
 --- @field id integer
@@ -67,7 +154,7 @@ local validate = vim.validate
 ---
 --- copy of the table that was passed by the user
 --- to |vim.lsp.start_client()|.
---- @field config lsp.ClientConfig
+--- @field config vim.lsp.ClientConfig
 ---
 --- Response from the server sent on
 --- initialize` describing the server's capabilities.
@@ -75,7 +162,7 @@ local validate = vim.validate
 ---
 --- A ring buffer (|vim.ringbuf()|) containing progress messages
 --- sent by the server.
---- @field progress lsp.Client.Progress
+--- @field progress vim.lsp.Client.Progress
 ---
 --- @field initialized true?
 ---
@@ -239,7 +326,7 @@ local function default_get_language_id(_bufnr, filetype)
 end
 
 --- Validates a client configuration as given to |vim.lsp.start_client()|.
---- @param config lsp.ClientConfig
+--- @param config vim.lsp.ClientConfig
 local function validate_config(config)
   validate({
     config = { config, 't' },
@@ -285,7 +372,7 @@ local function get_trace(trace)
 end
 
 --- @param id integer
---- @param config lsp.ClientConfig
+--- @param config vim.lsp.ClientConfig
 --- @return string
 local function get_name(id, config)
   local name = config.name
@@ -328,8 +415,8 @@ local function ensure_list(x)
 end
 
 --- @package
---- @param config lsp.ClientConfig
---- @return lsp.Client?
+--- @param config vim.lsp.ClientConfig
+--- @return vim.lsp.Client?
 function Client.create(config)
   validate_config(config)
 
@@ -337,7 +424,7 @@ function Client.create(config)
   local id = client_index
   local name = get_name(id, config)
 
-  --- @class lsp.Client
+  --- @class vim.lsp.Client
   local self = {
     id = id,
     config = config,
@@ -370,7 +457,7 @@ function Client.create(config)
     --- - lsp.WorkDoneProgressBegin,
     --- - lsp.WorkDoneProgressReport (extended with title from Begin)
     --- - lsp.WorkDoneProgressEnd    (extended with title from Begin)
-    progress = vim.ringbuf(50) --[[@as lsp.Client.Progress]],
+    progress = vim.ringbuf(50) --[[@as vim.lsp.Client.Progress]],
 
     --- @deprecated use client.progress instead
     messages = { name = name, messages = {}, progress = {}, status = {} },
@@ -421,6 +508,7 @@ function Client.create(config)
   return self
 end
 
+--- @private
 --- @param cbs function[]
 --- @param error_id integer
 --- @param ... any
@@ -603,8 +691,16 @@ local wait_result_reason = { [-1] = 'timeout', [-2] = 'interrupted', [-3] = 'err
 ---
 --- @param ... string List to write to the buffer
 local function err_message(...)
-  api.nvim_err_writeln(table.concat(vim.tbl_flatten({ ... })))
-  api.nvim_command('redraw')
+  local message = table.concat(vim.tbl_flatten({ ... }))
+  if vim.in_fast_event() then
+    vim.schedule(function()
+      api.nvim_err_writeln(message)
+      api.nvim_command('redraw')
+    end)
+  else
+    api.nvim_err_writeln(message)
+    api.nvim_command('redraw')
+  end
 end
 
 --- @private
@@ -698,7 +794,7 @@ function Client:_cancel_request(id)
   return self.rpc.notify(ms.dollar_cancelRequest, { id = id })
 end
 
---- @nodoc
+--- @private
 --- Stops a client, optionally with force.
 ---
 --- By default, it will just ask the - server to shutdown without force. If
@@ -727,6 +823,7 @@ function Client:_stop(force)
       rpc.terminate()
       self._graceful_shutdown_failed = true
     end
+    vim.lsp._watchfiles.cancel(self.id)
   end)
 end
 
@@ -853,6 +950,7 @@ function Client:write_error(code, err)
   err_message(self._log_prefix, ': Error ', client_error, ': ', vim.inspect(err))
 end
 
+--- @private
 --- @param method string
 --- @param opts? {bufnr: integer?}
 function Client:_supports_method(method, opts)

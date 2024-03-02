@@ -1,5 +1,3 @@
----@brief lsp-diagnostic
-
 local protocol = require('vim.lsp.protocol')
 local ms = protocol.Methods
 
@@ -287,6 +285,7 @@ end
 --- )
 --- ```
 ---
+---@param _ lsp.ResponseError?
 ---@param result lsp.PublishDiagnosticsParams
 ---@param ctx lsp.HandlerContext
 ---@param config? vim.diagnostic.Opts Configuration table (see |vim.diagnostic.config()|).
@@ -319,6 +318,7 @@ end
 --- )
 --- ```
 ---
+---@param _ lsp.ResponseError?
 ---@param result lsp.DocumentDiagnosticReport
 ---@param ctx lsp.HandlerContext
 ---@param config table Configuration table (see |vim.diagnostic.config()|).
@@ -390,7 +390,7 @@ local function clear(bufnr)
   end
 end
 
----@class lsp.diagnostic.bufstate
+---@class (private) lsp.diagnostic.bufstate
 ---@field enabled boolean Whether inlay hints are enabled for this buffer
 ---@type table<integer, lsp.diagnostic.bufstate>
 local bufstates = {}
