@@ -17,6 +17,10 @@ if(POLICY CMP0135)
   cmake_policy(SET CMP0135 NEW)
 endif()
 
+if(XCODE)
+  message(FATAL_ERROR [[Xcode generator is not supported. Use "Ninja" or "Unix Makefiles" instead.]])
+endif()
+
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
