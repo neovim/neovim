@@ -23,44 +23,6 @@ typedef struct {
 } Dict(set_decoration_provider);
 
 typedef struct {
-  OptionalKeys is_set__set_extmark_;
-  Integer id;
-  Integer end_line;
-  Integer end_row;
-  Integer end_col;
-  HLGroupID hl_group;
-  Array virt_text;
-  String virt_text_pos;
-  Integer virt_text_win_col;
-  Boolean virt_text_hide;
-  Boolean virt_text_repeat_linebreak;
-  Boolean hl_eol;
-  String hl_mode;
-  Boolean invalidate;
-  Boolean ephemeral;
-  Integer priority;
-  Boolean right_gravity;
-  Boolean end_right_gravity;
-  Array virt_lines;
-  Boolean virt_lines_above;
-  Boolean virt_lines_leftcol;
-  Boolean strict;
-  String sign_text;
-  HLGroupID sign_hl_group;
-  HLGroupID number_hl_group;
-  HLGroupID line_hl_group;
-  HLGroupID cursorline_hl_group;
-  String conceal;
-  Boolean spell;
-  Boolean ui_watched;
-  Boolean undo_restore;
-  String url;
-  Boolean scoped;
-
-  Integer _subpriority;
-} Dict(set_extmark);
-
-typedef struct {
   OptionalKeys is_set__get_extmark_;
   Boolean details;
   Boolean hl_name;
