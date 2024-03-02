@@ -299,12 +299,12 @@ function M.refresh(opts)
   local bufnr = opts.bufnr and resolve_bufnr(opts.bufnr)
   local buffers = bufnr and { bufnr }
     or vim.tbl_filter(api.nvim_buf_is_loaded, api.nvim_list_bufs())
-  local params = {
-    textDocument = util.make_text_document_params(),
-  }
 
   for _, buf in ipairs(buffers) do
     if not active_refreshes[buf] then
+      local params = {
+        textDocument = util.make_text_document_params(buf),
+      }
       active_refreshes[buf] = true
       vim.lsp.buf_request(buf, ms.textDocument_codeLens, params, M.on_codelens)
     end
