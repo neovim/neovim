@@ -2068,6 +2068,14 @@ preview_location({location}, {opts})         *vim.lsp.util.preview_location()*
 rename({old_fname}, {new_fname}, {opts})               *vim.lsp.util.rename()*
     Rename old_fname to new_fname
 
+    Existing buffers are renamed as well, while maintaining their bufnr.
+
+    It deletes existing buffers that conflict with the renamed file name only
+    when
+    • `opts` requests overwriting; or
+    • the conflicting buffers are not loaded, so that deleting thme does not
+      result in data loss.
+
     Parameters: ~
       • {old_fname}  (`string`)
       • {new_fname}  (`string`)
