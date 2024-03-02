@@ -782,7 +782,7 @@ get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
     Parameters: ~
       • {bufnr}  (`integer?`) Buffer the parser should be tied to (default:
                  current buffer)
-      • {lang}   (`string?`) Filetype of this parser (default: buffer
+      • {lang}   (`string?`) Language of this parser (default: from buffer
                  filetype)
       • {opts}   (`table?`) Options to pass to the created language tree
 
@@ -829,7 +829,7 @@ inspect_tree({opts})                           *vim.treesitter.inspect_tree()*
       • {opts}  (`table?`) Optional options table with the following possible
                 keys:
                 • lang (string|nil): The language of the source buffer. If
-                  omitted, the filetype of the source buffer is used.
+                  omitted, detect from the filetype of the source buffer.
                 • bufnr (integer|nil): Buffer to draw the tree into. If
                   omitted, a new buffer is created.
                 • winid (integer|nil): Window id to display the tree buffer
@@ -895,7 +895,8 @@ start({bufnr}, {lang})                                *vim.treesitter.start()*
     Parameters: ~
       • {bufnr}  (`integer?`) Buffer to be highlighted (default: current
                  buffer)
-      • {lang}   (`string?`) Language of the parser (default: buffer filetype)
+      • {lang}   (`string?`) Language of the parser (default: from buffer
+                 filetype)
 
 stop({bufnr})                                          *vim.treesitter.stop()*
     Stops treesitter highlighting for a buffer
