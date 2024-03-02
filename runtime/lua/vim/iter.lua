@@ -1140,9 +1140,8 @@ function M.map(f, src, ...)
   return Iter.new(src, ...):map(f):totable()
 end
 
----@type IterMod
 return setmetatable(M, {
   __call = function(_, ...)
     return Iter.new(...)
   end,
-})
+}) --[[@as IterMod]]
