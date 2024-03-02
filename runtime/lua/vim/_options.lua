@@ -271,10 +271,10 @@ vim.go = setmetatable({}, {
 })
 
 --- Get or set buffer-scoped |options| for the buffer with number {bufnr}.
---- Like `:set` and `:setlocal`. If [{bufnr}] is omitted then the current
---- buffer is used. Invalid {bufnr} or key is an error.
+--- If [{bufnr}] is omitted then the current buffer is used.
+--- Invalid {bufnr} or key is an error.
 ---
---- Note: this is equivalent to both `:set` and `:setlocal`.
+--- Note: this is equivalent to `:setlocal` for |global-local| options and `:set` otherwise.
 ---
 --- Example:
 ---
@@ -287,9 +287,9 @@ vim.go = setmetatable({}, {
 vim.bo = new_buf_opt_accessor()
 
 --- Get or set window-scoped |options| for the window with handle {winid} and
---- buffer with number {bufnr}. Like `:setlocal` if {bufnr} is provided, like
---- `:set` otherwise. If [{winid}] is omitted then the current window is
---- used. Invalid {winid}, {bufnr} or key is an error.
+--- buffer with number {bufnr}. Like `:setlocal` if setting a |global-local| option
+--- or if {bufnr} is provided, like `:set` otherwise. If [{winid}] is omitted then
+--- the current window is used. Invalid {winid}, {bufnr} or key is an error.
 ---
 --- Note: only {bufnr} with value `0` (the current buffer in the window) is
 --- supported.
