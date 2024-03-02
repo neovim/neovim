@@ -120,6 +120,10 @@ static unibi_term *terminfo_builtin(const char *term, char **termname)
     *termname = xstrdup("builtin_conemu");
     return unibi_from_mem((const char *)conemu_terminfo,
                           sizeof conemu_terminfo);
+  } else if (terminfo_is_term_family(term, "vtpcon") && getenv("WT_SESSION")) {
+    *termname = xstrdup("builtin_windows_terminal");
+    return unibi_from_mem((const char *)windows_terminal_terminfo,
+                          sizeof windows_terminal_terminfo);
   } else if (terminfo_is_term_family(term, "vtpcon")) {
     *termname = xstrdup("builtin_vtpcon");
     return unibi_from_mem((const char *)vtpcon_terminfo,
