@@ -205,18 +205,6 @@ echo '#include "./src/nvim/buffer.h"' | \
 - `grep -v /usr/` is used to filter out system header files.
 - `-save-temps` can be added as well to see expanded macros or commented assembly.
 
-## Xcode and MSVC project files
-
-CMake has a `-G` option for exporting to multiple [project file formats](http://www.cmake.org/cmake/help/v2.8.8/cmake.html#section_Generators), such as Xcode and Visual Studio. 
-
-For example, to use Xcode's static analysis GUI ([#167](https://github.com/neovim/neovim/issues/167#issuecomment-36136018)), you need to generate an Xcode project file from the Neovim Makefile (where `neovim/` is the top-level Neovim source code directory containing the main `Makefile`):
-
-```
-cmake -G Xcode neovim
-```
-
-The resulting project file can then be opened in Xcode.
-
 ## Custom Makefile
 
 You can customize the build process locally by creating a `local.mk`, which is referenced at the top of the main `Makefile`. It's listed in `.gitignore`, so it can be used across branches. **A new target in `local.mk` overrides the default make-target.**
@@ -265,7 +253,7 @@ cmake --build build
    cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
    cmake --build build
    ```
-3. Run `make`, `ninja`, or whatever build tool you [told CMake to generate](#xcode-and-msvc-project-files).
+3. Run `make`, `ninja`, or whatever build tool you told CMake to generate.
     - Using `ninja` is strongly recommended.
 
 #### Debian 10 (Buster) example:
