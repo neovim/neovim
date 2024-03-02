@@ -817,9 +817,10 @@ void ui_ext_win_position(win_T *wp, bool validate)
 
       int comp_row = (int)row - (south ? wp->w_height_outer : 0);
       int comp_col = (int)col - (east ? wp->w_width_outer : 0);
+      int above_ch = wp->w_config.zindex < kZIndexMessages ? (int)p_ch : 0;
       comp_row += grid->comp_row;
       comp_col += grid->comp_col;
-      comp_row = MAX(MIN(comp_row, Rows - wp->w_height_outer - (p_ch > 0 ? 1 : 0)), 0);
+      comp_row = MAX(MIN(comp_row, Rows - wp->w_height_outer - above_ch), 0);
       if (!c.fixed || east) {
         comp_col = MAX(MIN(comp_col, Columns - wp->w_width_outer), 0);
       }

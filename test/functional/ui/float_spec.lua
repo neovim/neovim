@@ -9030,6 +9030,77 @@ describe('float window', function()
         ]])
       end
     end)
+
+    it('correctly placed in or above message area', function()
+      local float_opts = {relative='editor', width=5, height=1, row=100, col=1, border = 'single'}
+      api.nvim_set_option_value('cmdheight', 3, {})
+      command("echo 'cmdline'")
+      local win = api.nvim_open_win(api.nvim_create_buf(false, false), true, float_opts)
+      -- Not hidden behind message area but placed above it.
+      if multigrid then
+        screen:expect{grid=[[
+          ## grid 1
+            [2:----------------------------------------]|*4
+            [3:----------------------------------------]|*3
+          ## grid 2
+                                                    |
+            {0:~                                       }|*3
+          ## grid 3
+            cmdline                                 |
+                                                    |*2
+          ## grid 4
+            {5:┌─────┐}|
+            {5:│}{1:^     }{5:│}|
+            {5:└─────┘}|
+          ]], float_pos={
+            [4] = {1001, "NW", 1, 100, 1, true, 50};
+          }, win_viewport={
+            [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+            [4] = {win = 1001, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }}
+      else
+        screen:expect{grid=[[
+                                                  |
+          {0:~}{5:┌─────┐}{0:                                }|
+          {0:~}{5:│}{1:^     }{5:│}{0:                                }|
+          {0:~}{5:└─────┘}{0:                                }|
+          cmdline                                 |
+                                                  |*2
+        ]]}
+      end
+      -- Not placed above message area and visible on top of it.
+      api.nvim_win_set_config(win, {zindex = 300})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|*4
+          [3:----------------------------------------]|*3
+        ## grid 2
+                                                  |
+          {0:~                                       }|*3
+        ## grid 3
+          cmdline                                 |
+                                                  |*2
+        ## grid 4
+          {5:┌─────┐}|
+          {5:│}{1:^     }{5:│}|
+          {5:└─────┘}|
+        ]], float_pos={
+          [4] = {1001, "NW", 1, 100, 1, true, 300};
+        }, win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = 1001, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }}
+      else
+        screen:expect{grid=[[
+                                                  |
+          {0:~                                       }|*3
+          c{5:┌─────┐}                                |
+           {5:│}{1:^     }{5:│}                                |
+           {5:└─────┘}                                |
+        ]]}
+      end
+    end)
   end
 
   describe('with ext_multigrid', function()
