@@ -691,8 +691,16 @@ local wait_result_reason = { [-1] = 'timeout', [-2] = 'interrupted', [-3] = 'err
 ---
 --- @param ... string List to write to the buffer
 local function err_message(...)
-  api.nvim_err_writeln(table.concat(vim.tbl_flatten({ ... })))
-  api.nvim_command('redraw')
+  local message = table.concat(vim.tbl_flatten({ ... }))
+  if vim.in_fast_event() then
+    vim.schedule(function()
+      api.nvim_err_writeln(message)
+      api.nvim_command('redraw')
+    end)
+  else
+    api.nvim_err_writeln(message)
+    api.nvim_command('redraw')
+  end
 end
 
 --- @private
