@@ -146,9 +146,10 @@ end
 local client_errors_base = table.maxn(lsp.rpc.client_errors)
 local client_errors_offset = 0
 
-local function new_error_index()
+local function client_error(name)
   client_errors_offset = client_errors_offset + 1
-  return client_errors_base + client_errors_offset
+  local index = client_errors_base + client_errors_offset
+  return { [name] = index, [index] = name }
 end
 
 --- Error codes to be used with `on_error` from |vim.lsp.start_client|.
@@ -158,12 +159,10 @@ end
 lsp.client_errors = tbl_extend(
   'error',
   lsp.rpc.client_errors,
-  vim.tbl_add_reverse_lookup({
-    BEFORE_INIT_CALLBACK_ERROR = new_error_index(),
-    ON_INIT_CALLBACK_ERROR = new_error_index(),
-    ON_ATTACH_ERROR = new_error_index(),
-    ON_EXIT_CALLBACK_ERROR = new_error_index(),
-  })
+  client_error('BEFORE_INIT_CALLBACK_ERROR'),
+  client_error('ON_INIT_CALLBACK_ERROR'),
+  client_error('ON_ATTACH_ERROR'),
+  client_error('ON_EXIT_CALLBACK_ERROR')
 )
 
 ---@private

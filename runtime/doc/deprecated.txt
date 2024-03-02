@@ -169,6 +169,7 @@ LUA
 - vim.register_keystroke_callback()	Use |vim.on_key()| instead.
 - *vim.pretty_print()*			Use |vim.print()| instead.
 - *vim.loop*				Use |vim.uv| instead.
+- *vim.tbl_add_reverse_lookup()*
 
 NORMAL COMMANDS
 - *]f* *[f*		Same as "gf".
