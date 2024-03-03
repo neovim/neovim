@@ -6005,6 +6005,12 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
     }
   }
 
+  if (blob) {
+    tv_blob_alloc_ret(rettv);
+  } else {
+    tv_list_alloc_ret(rettv, kListLenUnknown);
+  }
+
   // Always open the file in binary mode, library functions have a mind of
   // their own about CR-LF conversion.
   const char *const fname = tv_get_string(&argvars[0]);
@@ -6019,7 +6025,6 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
   }
 
   if (blob) {
-    tv_blob_alloc_ret(rettv);
     if (read_blob(fd, rettv, offset, size) == FAIL) {
       semsg(_(e_notread), fname);
     }
@@ -6027,7 +6032,7 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
     return;
   }
 
-  list_T *const l = tv_list_alloc_ret(rettv, kListLenUnknown);
+  list_T *const l = rettv->vval.v_list;
 
   while (maxline < 0 || tv_list_len(l) < maxline) {
     int readlen = (int)fread(buf, 1, (size_t)io_size, fd);
