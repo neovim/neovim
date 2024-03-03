@@ -46,3 +46,10 @@ jobs:
             runuser -u qemuci -- cmake -B build -G Ninja -D CI_BUILD=ON -D PREFER_LUA=ON &&
             runuser -u qemuci -- make ${{ matrix.test }}
             "
+
+  windows-asan:
+    if: contains(github.event.pull_request.labels.*.name, 'ci:windows-asan') || github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/test_windows.yml
+    with:
+      build_flags: "-D ENABLE_ASAN_UBSAN=ON"
+      functionaltest_timeout: 40

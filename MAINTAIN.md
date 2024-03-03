@@ -232,6 +232,7 @@ Some github labels are used to trigger certain jobs:
 * `backport release-x.y` - backport to release branch
 * `ci:s390x` - enable s390x CI
 * `ci:skip-news` - skip news.yml workflows
+* `ci:windows-asan` - test windows with ASAN enabled
 * `needs:response` - close PR after a certain amount of time if author doesn't
   respond
 

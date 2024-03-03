@@ -14,7 +14,9 @@
 #include <string.h>
 #ifdef ENABLE_ASAN_UBSAN
 # include <sanitizer/asan_interface.h>
-# include <sanitizer/ubsan_interface.h>
+# ifndef MSWIN
+#  include <sanitizer/ubsan_interface.h>
+# endif
 #endif
 
 #include "auto/config.h"  // IWYU pragma: keep
