@@ -469,10 +469,11 @@ The following is a list of standard captures used in queries for Nvim,
 highlighted according to the current colorscheme (use |:Inspect| on one to see
 the exact definition):
 
-@variable               various variable names
-@variable.builtin       built-in variable names (e.g. `this` / `self`)
-@variable.parameter     parameters of a function
-@variable.member        object and struct fields
+@variable                       various variable names
+@variable.builtin               built-in variable names (e.g. `this`, `self`)
+@variable.parameter             parameters of a function
+@variable.parameter.builtin     special parameters (e.g. `_`, `it`)
+@variable.member                object and struct fields
 
 @constant               constant identifiers
 @constant.builtin       built-in constant values
@@ -480,7 +481,7 @@ the exact definition):
 
 @module                 modules or namespaces
 @module.builtin         built-in modules or namespaces
-@label                  GOTO and other labels (e.g. `label:` in C), including heredoc labels
+@label                  `GOTO` and other labels (e.g. `label:` in C), including heredoc labels
 
 @string                 string literals
 @string.documentation   string documenting code (e.g. Python docstrings)
@@ -501,9 +502,9 @@ the exact definition):
 @type                   type or class definitions and annotations
 @type.builtin           built-in types
 @type.definition        identifiers in type definitions (e.g. `typedef <type> <identifier>` in C)
-@type.qualifier         type qualifiers (e.g. `const`)
 
-@attribute              attribute annotations (e.g. Python decorators)
+@attribute              attribute annotations (e.g. Python decorators, Rust lifetimes)
+@attribute.builtin      builtin annotations (e.g. `@property` in Python)
 @property               the key in key/value pairs
 
 @function               function definitions
@@ -515,27 +516,28 @@ the exact definition):
 @function.method.call   method calls
 
 @constructor            constructor calls and definitions
-@operator               symbolic operators (e.g. `+` / `*`)
+@operator               symbolic operators (e.g. `+`, `*`)
 
 @keyword                keywords not fitting into specific categories
 @keyword.coroutine      keywords related to coroutines (e.g. `go` in Go, `async/await` in Python)
 @keyword.function       keywords that define a function (e.g. `func` in Go, `def` in Python)
-@keyword.operator       operators that are English words (e.g. `and` / `or`)
-@keyword.import         keywords for including modules (e.g. `import` / `from` in Python)
-@keyword.storage        modifiers that affect storage in memory or life-time
-@keyword.repeat         keywords related to loops (e.g. `for` / `while`)
+@keyword.operator       operators that are English words (e.g. `and`, `or`)
+@keyword.import         keywords for including modules (e.g. `import`, `from` in Python)
+@keyword.type           keywords defining composite types (e.g. `struct`, `enum`)
+@keyword.modifier       keywords definining type modifiers (e.g. `const`, `static`, `public`)
+@keyword.repeat         keywords related to loops (e.g. `for`, `while`)
 @keyword.return         keywords like `return` and `yield`
 @keyword.debug          keywords related to debugging
-@keyword.exception      keywords related to exceptions (e.g. `throw` / `catch`)
+@keyword.exception      keywords related to exceptions (e.g. `throw`, `catch`)
 
-@keyword.conditional         keywords related to conditionals (e.g. `if` / `else`)
-@keyword.conditional.ternary ternary operator (e.g. `?` / `:`)
+@keyword.conditional         keywords related to conditionals (e.g. `if`, `else`)
+@keyword.conditional.ternary ternary operator (e.g. `?`, `:`)
 
 @keyword.directive           various preprocessor directives and shebangs
 @keyword.directive.define    preprocessor definition directives
 
-@punctuation.delimiter  delimiters (e.g. `;` / `.` / `,`)
-@punctuation.bracket    brackets (e.g. `()` / `{}` / `[]`)
+@punctuation.delimiter  delimiters (e.g. `;`, `.`, `,`)
+@punctuation.bracket    brackets (e.g. `()`, `{}`, `[]`)
 @punctuation.special    special symbols (e.g. `{}` in string interpolation)
 
 @comment                line and block comments
@@ -543,7 +545,7 @@ the exact definition):
 
 @comment.error          error-type comments (e.g. `ERROR`, `FIXME`, `DEPRECATED`)
 @comment.warning        warning-type comments (e.g. `WARNING`, `FIX`, `HACK`)
-@comment.todo           todo-type comments (e.g. `TODO`, `WIP`, `FIXME`)
+@comment.todo           todo-type comments (e.g. `TODO`, `WIP`)
 @comment.note           note-type comments (e.g. `NOTE`, `INFO`, `XXX`)
 
 @markup.strong          bold text
@@ -552,10 +554,15 @@ the exact definition):
 @markup.underline       underlined text (only for literal underline markup!)
 
 @markup.heading         headings, titles (including markers)
+@markup.heading.1       top-level heading
+@markup.heading.2       section heading
+@markup.heading.3       subsection heading
+@markup.heading.4       and so on
+@markup.heading.5       and so forth
+@markup.heading.6       six levels ought to be enough for anybody
 
 @markup.quote           block quotes
 @markup.math            math environments (e.g. `$ ... $` in LaTeX)
-@markup.environment     environments (e.g. in LaTeX)
 
 @markup.link            text references, footnotes, citations, etc.
 @markup.link.label      link, reference descriptions
@@ -573,6 +580,7 @@ the exact definition):
 @diff.delta             changed text (for diff files)
 
 @tag                    XML-style tag names (e.g. in XML, HTML, etc.)
+@tag.builtin            XML-style tag names (e.g. HTML5 tags)
 @tag.attribute          XML-style tag attributes
 @tag.delimiter          XML-style tag delimiters
 

@@ -223,7 +223,8 @@ static const char *highlight_init_both[] = {
   "default link DiagnosticUnnecessary      Comment",
 
   // Treesitter standard groups
-  "default link @variable.builtin Special",
+  "default link @variable.builtin           Special",
+  "default link @variable.parameter.builtin Special",
 
   "default link @constant         Constant",
   "default link @constant.builtin Special",
@@ -248,8 +249,9 @@ static const char *highlight_init_both[] = {
   "default link @type         Type",
   "default link @type.builtin Special",
 
-  "default link @attribute Macro",
-  "default link @property  Identifier",
+  "default link @attribute         Macro",
+  "default link @attribute.builtin Special",
+  "default link @property          Identifier",
 
   "default link @function         Function",
   "default link @function.builtin Special",
@@ -282,7 +284,8 @@ static const char *highlight_init_both[] = {
   "default link @diff.minus Removed",
   "default link @diff.delta Changed",
 
-  "default link @tag Tag",
+  "default link @tag         Tag",
+  "default link @tag.builtin Special",
 
   // LSP semantic tokens
   "default link @lsp.type.class         @type",
