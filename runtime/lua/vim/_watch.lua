@@ -283,6 +283,17 @@ function M.fswatch(path, opts, callback)
     '/.git/',
     path,
   }, {
+    stderr = function(err, data)
+      if err then
+        error(err)
+      end
+
+      if data and #vim.trim(data) > 0 then
+        vim.schedule(function()
+          vim.notify('fswatch: ' .. data, vim.log.levels.ERROR)
+        end)
+      end
+    end,
     stdout = function(err, data)
       if err then
         error(err)
