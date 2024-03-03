@@ -2,7 +2,7 @@
 " Language:	Java
 " Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " URL:          https://github.com/fleiner/vim/blob/master/runtime/syntax/java.vim
-" Last Change:	2024 Mar 01
+" Last Change:	2024 Mar 02
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -179,15 +179,18 @@ syn cluster javaTop add=javaExternal,javaError,javaBranch,javaLabelRegion,javaCo
 
 " Comments
 syn keyword javaTodo		 contained TODO FIXME XXX
+
 if exists("java_comment_strings")
   syn region  javaCommentString    contained start=+"+ end=+"+ end=+$+ end=+\*/+me=s-1,he=s-1 contains=javaSpecial,javaCommentStar,javaSpecialChar,@Spell
-  syn region  javaComment2String   contained start=+"+	end=+$\|"+  contains=javaSpecial,javaSpecialChar,@Spell
+  syn region  javaCommentString    contained start=+"""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaSpecial,javaCommentStar,javaSpecialChar,@Spell,javaSpecialError,javaTextBlockError
+  syn region  javaComment2String   contained start=+"+ end=+$\|"+ contains=javaSpecial,javaSpecialChar,@Spell
   syn match   javaCommentCharacter contained "'\\[^']\{1,6\}'" contains=javaSpecialChar
   syn match   javaCommentCharacter contained "'\\''" contains=javaSpecialChar
   syn match   javaCommentCharacter contained "'[^\\]'"
   syn cluster javaCommentSpecial add=javaCommentString,javaCommentCharacter,javaNumber
   syn cluster javaCommentSpecial2 add=javaComment2String,javaCommentCharacter,javaNumber
 endif
+
 syn region  javaComment		 start="/\*"  end="\*/" contains=@javaCommentSpecial,javaTodo,@Spell
 syn match   javaCommentStar	 contained "^\s*\*[^/]"me=e-1
 syn match   javaCommentStar	 contained "^\s*\*$"
@@ -227,10 +230,12 @@ syn match   javaComment		 "/\*\*/"
 syn match   javaSpecialError	 contained "\\."
 syn match   javaSpecialCharError contained "[^']"
 " Escape Sequences (JLS-17, §3.10.7):
-syn match   javaSpecialChar	 contained "\\\%(u\x\x\x\x\|[0-3]\o\o\|\o\o\=\|[btnfr"'\\]\)"
+syn match   javaSpecialChar	 contained "\\\%(u\x\x\x\x\|[0-3]\o\o\|\o\o\=\|[bstnfr"'\\]\)"
 syn region  javaString		start=+"+ end=+"+ end=+$+ contains=javaSpecialChar,javaSpecialError,@Spell
+syn region  javaString		start=+"""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaSpecialChar,javaSpecialError,javaTextBlockError,@Spell
+syn match   javaTextBlockError	+"""\s*"""+
 " The next line is commented out, it can cause a crash for a long line
-"syn match   javaStringError	  +"\([^"\\]\|\\.\)*$+
+"syn match   javaStringError	  +"\%([^"\\]\|\\.\)*$+
 syn match   javaCharacter	 "'[^']*'" contains=javaSpecialChar,javaSpecialCharError
 syn match   javaCharacter	 "'\\''" contains=javaSpecialChar
 syn match   javaCharacter	 "'[^\\]'"
@@ -249,7 +254,7 @@ syn match   javaNumber		 "\<0[xX]\%(\x\%(_*\x\)*\.\=\|\%(\x\%(_*\x\)*\)\=\.\x\%(
 " Unicode characters
 syn match   javaSpecial "\\u\x\x\x\x"
 
-syn cluster javaTop add=javaString,javaCharacter,javaNumber,javaSpecial,javaStringError
+syn cluster javaTop add=javaString,javaCharacter,javaNumber,javaSpecial,javaStringError,javaTextBlockError
 
 if exists("java_highlight_functions")
   if java_highlight_functions == "indent"
@@ -271,16 +276,18 @@ if exists("java_highlight_functions")
 endif
 
 if exists("java_highlight_debug")
-
   " Strings and constants
-  syn match   javaDebugSpecial		contained "\\\%(u\x\x\x\x\|[0-3]\o\o\|\o\o\=\|[btnfr"'\\]\)"
+  syn match   javaDebugSpecial		contained "\\\%(u\x\x\x\x\|[0-3]\o\o\|\o\o\=\|[bstnfr"'\\]\)"
   syn region  javaDebugString		contained start=+"+  end=+"+  contains=javaDebugSpecial
-  syn match   javaDebugStringError	contained +"\%([^"\\]\|\\.\)*$+
+  syn region  javaDebugString		contained start=+"""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaDebugSpecial,javaDebugTextBlockError
+" The next line is commented out, it can cause a crash for a long line
+" syn match   javaDebugStringError	contained +"\%([^"\\]\|\\.\)*$+
+  syn match   javaDebugTextBlockError	contained +"""\s*"""+
   syn match   javaDebugCharacter	contained "'[^\\]'"
   syn match   javaDebugSpecialCharacter contained "'\\.'"
   syn match   javaDebugSpecialCharacter contained "'\\''"
   syn keyword javaDebugNumber		contained 0 0l 0L
-  syn match   javaNumber		contained "\<\d\%(_*\d\)*\."
+  syn match   javaDebugNumber		contained "\<\d\%(_*\d\)*\."
   syn match   javaDebugNumber		contained "\<\%(0\%([xX]\x\%(_*\x\)*\|_*\o\%(_*\o\)*\|[bB][01]\%(_*[01]\)*\)\|[1-9]\%(_*\d\)*\)[lL]\=\>"
   syn match   javaDebugNumber		contained "\%(\<\d\%(_*\d\)*\.\%(\d\%(_*\d\)*\)\=\|\.\d\%(_*\d\)*\)\%([eE][-+]\=\d\%(_*\d\)*\)\=[fFdD]\=\>"
   syn match   javaDebugNumber		contained "\<\d\%(_*\d\)*[eE][-+]\=\d\%(_*\d\)*[fFdD]\=\>"
@@ -301,6 +308,7 @@ if exists("java_highlight_debug")
   hi def link javaDebug		 Debug
   hi def link javaDebugString		 DebugString
   hi def link javaDebugStringError	 javaError
+  hi def link javaDebugTextBlockError	 javaDebugStringError
   hi def link javaDebugType		 DebugType
   hi def link javaDebugBoolean		 DebugBoolean
   hi def link javaDebugNumber		 Debug
@@ -373,6 +381,7 @@ hi def link javaSpecialChar		SpecialChar
 hi def link javaNumber			Number
 hi def link javaError			Error
 hi def link javaStringError		Error
+hi def link javaTextBlockError		javaStringError
 hi def link javaStatement		Statement
 hi def link javaOperator		Operator
 hi def link javaComment		Comment
