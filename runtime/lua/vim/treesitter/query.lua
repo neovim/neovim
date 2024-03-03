@@ -742,7 +742,9 @@ function M.add_directive(name, handler, opts)
     local function wrapper(match, ...)
       local m = {} ---@type table<integer, TSNode>
       for k, v in pairs(match) do
-        m[k] = v[#v]
+        if type(k) == 'number' then
+          m[k] = v[#v]
+        end
       end
       handler(m, ...)
     end
