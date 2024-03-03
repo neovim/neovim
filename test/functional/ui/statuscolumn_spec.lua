@@ -927,4 +927,17 @@ describe('statuscolumn', function()
                                        |
     ]])
   end)
+
+  it('line increase properly redraws buffer text with relativenumber #27709', function()
+    screen:try_resize(33, 4)
+    command([[set rnu nuw=3 stc=%l\ ]])
+    command('call setline(1, range(1, 99))')
+    feed('Gyyp')
+    screen:expect([[
+      98  98                           |
+      99  99                           |
+      100 ^99                           |
+                                       |
+    ]])
+  end)
 end)

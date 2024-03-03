@@ -581,7 +581,7 @@ static void draw_lnum_col(win_T *wp, winlinevars_T *wlv, int sign_num_attr, int 
 }
 
 /// Build and draw the 'statuscolumn' string for line "lnum" in window "wp".
-static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int virtnum,
+static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int virtnum, int col_rows,
                            statuscol_T *stcp)
 {
   // When called for the first non-filler row of line "lnum" set num v:vars
@@ -597,9 +597,14 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int vir
     int width = build_statuscol_str(wp, wp->w_nrwidth_line_count, 0, buf, stcp);
     if (width > stcp->width) {
       int addwidth = MIN(width - stcp->width, MAX_STCWIDTH - stcp->width);
-      stcp->width += addwidth;
       wp->w_nrwidth += addwidth;
       wp->w_nrwidth_width = wp->w_nrwidth;
+      if (col_rows > 0) {
+        // If only column is being redrawn, we now need to redraw the text as well
+        wp->w_redr_statuscol = true;
+        return;
+      }
+      stcp->width += addwidth;
       wp->w_valid &= ~VALID_WCOL;
     }
   }
@@ -1539,7 +1544,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           statuscol.num_attr = get_line_number_attr(wp, &wlv);
         }
         const int v = (int)(ptr - line);
-        draw_statuscol(wp, &wlv, lnum, wlv.row - startrow - wlv.filler_lines, &statuscol);
+        draw_statuscol(wp, &wlv, lnum, wlv.row - startrow - wlv.filler_lines, col_rows, &statuscol);
         if (wp->w_redr_statuscol) {
           break;
         }
