@@ -906,7 +906,9 @@ local function styletable_listchars(state)
 
   if listchars.nbsp then
     for _, match in
-      ipairs(vim.fn.matchbufline(state.bufnr, '\xe2\x80\xaf\\|\xa0', 1, '$') --[[@as (table[])]])
+      ipairs(
+        vim.fn.matchbufline(state.bufnr, '\226\128\175\\|\194\160', 1, '$') --[[@as (table[])]]
+      )
     do
       style_line_insert_overlay_char(
         state.style[match.lnum],
