@@ -219,10 +219,10 @@ local function get_api_meta()
     if not vim.startswith(fun.name, 'nvim_') then
       return false
     end
-    if vim.tbl_contains(fun.attrs or {}, 'lua_only') then
+    if fun.attrs.lua_only then
       return true
     end
-    if vim.tbl_contains(fun.attrs or {}, 'remote_only') then
+    if fun.attrs.remote_only then
       return false
     end
     return true
@@ -243,7 +243,7 @@ local function get_api_meta()
   end
 
   for _, fun in pairs(functions) do
-    local deprecated = fun.deprecated_since ~= nil
+    local deprecated = fun.attrs.deprecated_since ~= nil
 
     local params = {} --- @type {[1]:string,[2]:string}[]
     for _, p in ipairs(fun.params) do

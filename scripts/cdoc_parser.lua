@@ -25,7 +25,7 @@ local c_grammar = require('src.nvim.generators.c_grammar')
 --- @field desc string
 --- @field deprecated? true
 --- @field since? string
---- @field attrs? string[]
+--- @field attrs? table<string,any>
 --- @field nodoc? true
 --- @field notes? nvim.cdoc.parser.note[]
 --- @field see? nvim.cdoc.parser.note[]
@@ -131,7 +131,7 @@ local function process_doc_line(line, state)
   end
 end
 
---- @param item table
+--- @param item nvim.c_grammar.Proto
 --- @param state nvim.cdoc.parser.State
 local function process_proto(item, state)
   state.cur_obj = state.cur_obj or {}
@@ -157,21 +157,7 @@ local function process_proto(item, state)
 
   cur_obj.returns = cur_obj.returns or { {} }
   cur_obj.returns[1].type = item.return_type
-
-  for _, a in ipairs({
-    'fast',
-    'remote_only',
-    'lua_only',
-    'textlock',
-    'textlock_allow_cmdwin',
-  }) do
-    if item[a] then
-      cur_obj.attrs = cur_obj.attrs or {}
-      table.insert(cur_obj.attrs, a)
-    end
-  end
-
-  cur_obj.deprecated_since = item.deprecated_since
+  cur_obj.attrs = item.attrs or {}
 
   -- Remove some arguments
   for i = #cur_obj.params, 1, -1 do
@@ -184,32 +170,29 @@ end
 
 local M = {}
 
---- @param filename string
+--- @param txt string
 --- @return {} classes
 --- @return nvim.cdoc.parser.fun[] funs
 --- @return string[] briefs
-function M.parse(filename)
+function M.parse_str(txt)
   local funs = {} --- @type nvim.cdoc.parser.fun[]
   local briefs = {} --- @type string[]
   local state = {} --- @type nvim.cdoc.parser.State
 
-  local txt = assert(io.open(filename, 'r')):read('*all')
-
-  local parsed = c_grammar.grammar:match(txt)
-  for _, item in ipairs(parsed) do
-    if item.comment then
+  for _, item in ipairs(c_grammar.grammar:match(txt)) do
+    if item[1] == 'comment' then
+      --- @cast item nvim.c_grammar.Comment
       process_doc_line(item.comment, state)
     else
       add_doc_lines_to_obj(state)
       if item[1] == 'proto' then
+        --- @cast item nvim.c_grammar.Proto
         process_proto(item, state)
         table.insert(funs, state.cur_obj)
       end
       local cur_obj = state.cur_obj
-      if cur_obj and not item.static then
-        if cur_obj.kind == 'brief' then
-          table.insert(briefs, cur_obj.desc)
-        end
+      if cur_obj and cur_obj.kind == 'brief' then
+        table.insert(briefs, cur_obj.desc)
       end
       state = {}
     end
@@ -218,6 +201,16 @@ function M.parse(filename)
   return {}, funs, briefs
 end
 
--- M.parse('src/nvim/api/vim.c')
+--- @param filename string
+--- @return {} classes
+--- @return nvim.cdoc.parser.fun[] funs
+--- @return string[] briefs
+function M.parse(filename)
+  local f = assert(io.open(filename, 'r'))
+  local txt = f:read('*all')
+
+  f:close()
+  return M.parse_str(txt)
+end
 
 return M

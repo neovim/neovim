@@ -693,8 +693,8 @@ nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
     |vim.rpcnotify()| and |vim.rpcrequest()| instead.
 
     Attributes: ~
-        |RPC| only
         Lua |vim.api| only
+        |RPC| only
 
     Parameters: ~
       • {chan}  id of the channel

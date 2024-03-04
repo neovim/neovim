@@ -693,16 +693,22 @@ local function render_fun(fun, classes, cfg)
   end
 
   if fun.attrs then
-    table.insert(ret, '\n    Attributes: ~\n')
-    for _, attr in ipairs(fun.attrs) do
+    local parts = {}
+    for attr in vim.spairs(fun.attrs) do
       local attr_str = ({
         textlock = 'not allowed when |textlock| is active or in the |cmdwin|',
         textlock_allow_cmdwin = 'not allowed when |textlock| is active',
         fast = '|api-fast|',
         remote_only = '|RPC| only',
         lua_only = 'Lua |vim.api| only',
-      })[attr] or attr
-      table.insert(ret, fmt('        %s\n', attr_str))
+      })[attr]
+      if attr_str then
+        table.insert(parts, fmt('        %s\n', attr_str))
+      end
+    end
+    if #parts > 0 then
+      table.insert(ret, '\n    Attributes: ~\n')
+      vim.list_extend(ret, parts)
     end
   end
 

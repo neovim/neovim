@@ -15,64 +15,88 @@ local keysets_outputf = arg[5] -- keysets_defs.generated.h
 local ui_metadata_inputf = arg[6] -- ui events metadata
 local git_version_inputf = arg[7] -- git version header
 
+--- @class nvim.gen_api_disptach.fun: nvim.c_grammar.Proto
+--- @field receives_array_args true?
+--- @field has_lua_imp true?
+--- @field can_fail true?
+--- @field receives_arena true?
+--- @field receives_channel_id true?
+--- @field remote? boolean
+--- @field lua? boolean
+--- @field eval? boolean
+--- @field method? boolean
+--- @field impl_name string
+--- @field handler_id?  integer
+
+--- @type {[integer]: nvim.gen_api_disptach.fun, keysets: nvim.gen_api_disptach.Keyset[]}
 local functions = {}
 
 -- names of all headers relative to the source root (for inclusion in the
 -- generated file)
+--- @type string[]
 local headers = {}
 
 -- set of function names, used to detect duplicates
+--- @type table<string,true?>
 local function_names = {}
 
 local c_grammar = require('generators.c_grammar')
 
 local startswith = vim.startswith
 
+--- @param fn nvim.c_grammar.Proto
 local function add_function(fn)
-  local public = startswith(fn.name, 'nvim_') or fn.deprecated_since
-  if public and not fn.noexport then
+  fn.attrs = fn.attrs or {}
+  local public = startswith(fn.name, 'nvim_') or fn.attrs.deprecated_since
+  if public and not fn.attrs.noexport then
+    --- @cast fn nvim.gen_api_disptach.fun
     functions[#functions + 1] = fn
     function_names[fn.name] = true
-    if
-      #fn.parameters >= 2
-      and fn.parameters[2][1] == 'Array'
-      and fn.parameters[2][2] == 'uidata'
-    then
+    local params = fn.parameters
+    if #params >= 2 and params[2][1] == 'Array' and params[2][2] == 'uidata' then
       -- function receives the "args" as a parameter
       fn.receives_array_args = true
       -- remove the args parameter
-      table.remove(fn.parameters, 2)
+      table.remove(params, 2)
     end
-    if #fn.parameters ~= 0 and fn.parameters[1][2] == 'channel_id' then
+    if #params ~= 0 and params[1][2] == 'channel_id' then
       -- this function should receive the channel id
       fn.receives_channel_id = true
       -- remove the parameter since it won't be passed by the api client
-      table.remove(fn.parameters, 1)
+      table.remove(params, 1)
     end
-    if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'error' then
+    if #params ~= 0 and params[#params][1] == 'error' then
       -- function can fail if the last parameter type is 'Error'
       fn.can_fail = true
       -- remove the error parameter, msgpack has it's own special field
       -- for specifying errors
-      fn.parameters[#fn.parameters] = nil
+      params[#params] = nil
     end
-    if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'lstate' then
+    if #params ~= 0 and params[#params][1] == 'lstate' then
       fn.has_lua_imp = true
-      fn.parameters[#fn.parameters] = nil
+      params[#params] = nil
     end
-    if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'arena' then
+    if #params ~= 0 and params[#params][1] == 'arena' then
       fn.receives_arena = true
-      fn.parameters[#fn.parameters] = nil
+      params[#params] = nil
     end
   end
 end
 
+--- @class nvim.gen_api_disptach.Keyset
+--- @field name string
+--- @field keys string[]
+--- @field types table<string,string>
+--- @field has_optional boolean
+
+--- @type nvim.gen_api_disptach.Keyset[]
 local keysets = {}
 
+--- @param val nvim.c_grammar.Keyset
 local function add_keyset(val)
   local keys = {}
-  local types = {}
-  local is_set_name = 'is_set__' .. val.keyset_name .. '_'
+  local types = {} --- @type table<string,string>
+  local is_set_name = 'is_set__' .. val.name .. '_'
   local has_optional = false
   for i, field in ipairs(val.fields) do
     if field.type ~= 'Object' then
@@ -84,27 +108,28 @@ local function add_keyset(val)
       if i > 1 then
         error("'is_set__{type}_' must be first if present")
       elseif field.name ~= is_set_name then
-        error(val.keyset_name .. ': name of first key should be ' .. is_set_name)
+        error(val.name .. ': name of first key should be ' .. is_set_name)
       elseif field.type ~= 'OptionalKeys' then
         error("'" .. is_set_name .. "' must have type 'OptionalKeys'")
       end
       has_optional = true
     end
   end
-  table.insert(keysets, {
-    name = val.keyset_name,
+  keysets[#keysets + 1] = {
+    name = val.name,
     keys = keys,
     types = types,
     has_optional = has_optional,
-  })
+  }
 end
 
+--- @type string?
 local ui_options_text = nil
 
 -- read each input file, parse and append to the api metadata
 for i = pre_args + 1, #arg do
   local full_path = arg[i]
-  local parts = {}
+  local parts = {} --- @type string[]
   for part in string.gmatch(full_path, '[^/]+') do
     parts[#parts + 1] = part
   end
@@ -116,17 +141,22 @@ for i = pre_args + 1, #arg do
   local tmp = c_grammar.grammar:match(text)
   for j = 1, #tmp do
     local val = tmp[j]
-    if val.keyset_name then
+    if val[1] == 'keyset' then
+      --- @cast val nvim.c_grammar.Keyset
       add_keyset(val)
-    elseif val.name then
+    elseif val[1] == 'proto' then
+      --- @cast val nvim.c_grammar.Proto
       add_function(val)
     end
   end
 
-  ui_options_text = ui_options_text or string.match(text, 'ui_ext_names%[][^{]+{([^}]+)}')
+  ui_options_text = ui_options_text or text:match('ui_ext_names%[][^{]+{([^}]+)}')
   input:close()
 end
 
+--- @generic T
+--- @param orig T
+--- @return T
 local function shallowcopy(orig)
   local copy = {}
   for orig_key, orig_value in pairs(orig) do
@@ -142,14 +172,10 @@ for _, f in ipairs(shallowcopy(functions)) do
   local ismethod = false
   if startswith(f.name, 'nvim_') then
     if startswith(f.name, 'nvim__') or f.name == 'nvim_error_event' then
-      f.since = -1
-    elseif f.since == nil then
+      f.attrs.since = -1
+    elseif f.attrs.since == nil then
       print('Function ' .. f.name .. ' lacks since field.\n')
       os.exit(1)
-    end
-    f.since = tonumber(f.since)
-    if f.deprecated_since ~= nil then
-      f.deprecated_since = tonumber(f.deprecated_since)
     end
 
     if startswith(f.name, 'nvim_buf_') then
@@ -159,18 +185,18 @@ for _, f in ipairs(shallowcopy(functions)) do
     elseif startswith(f.name, 'nvim_tabpage_') then
       ismethod = true
     end
-    f.remote = f.remote_only or not f.lua_only
-    f.lua = f.lua_only or not f.remote_only
-    f.eval = (not f.lua_only) and not f.remote_only
+    local attrs = f.attrs
+    f.remote = attrs.remote_only or not attrs.lua_only
+    f.lua = attrs.lua_only or not attrs.remote_only
+    f.eval = (not attrs.lua_only) and not attrs.remote_only
   else
-    f.deprecated_since = tonumber(f.deprecated_since)
-    assert(f.deprecated_since == 1)
+    assert(f.attrs.deprecated_since == 1)
     f.remote = true
-    f.since = 0
+    f.attrs.since = 0
   end
   f.method = ismethod
   local newname = deprecated_aliases[f.name]
-  if newname ~= nil then
+  if newname then
     if function_names[newname] then
       -- duplicate
       print(
@@ -193,22 +219,34 @@ for _, f in ipairs(shallowcopy(functions)) do
     newf.impl_name = f.name
     newf.lua = false
     newf.eval = false
-    newf.since = 0
-    newf.deprecated_since = 1
+    newf.attrs.since = 0
+    newf.attrs.deprecated_since = 1
     functions[#functions + 1] = newf
   end
 end
 
 -- don't expose internal attributes like "impl_name" in public metadata
-local exported_attributes = { 'name', 'return_type', 'method', 'since', 'deprecated_since' }
-local exported_functions = {}
+--- @class nvim.gen_api_disptach.exported_fun
+--- @field name string
+--- @field return_type string
+--- @field method boolean
+--- @field since integer
+--- @field deprecated_since integer
+--- @field parameters {[1]: string, [2]: string}[]
+
+local exported_functions = {} --- @type nvim.gen_api_disptach.exported_fun[]
 for _, f in ipairs(functions) do
   if not (startswith(f.name, 'nvim__') or f.name == 'nvim_error_event' or f.name == 'redraw') then
-    local f_exported = {}
-    for _, attr in ipairs(exported_attributes) do
-      f_exported[attr] = f[attr]
-    end
-    f_exported.parameters = {}
+    --- @type nvim.gen_api_disptach.exported_fun
+    local f_exported = {
+      name = f.name,
+      return_type = f.return_type,
+      method = f.method,
+      since = f.attrs.since,
+      deprecated_since = f.attrs.deprecated_since,
+      parameters = {},
+    }
+
     for i, param in ipairs(f.parameters) do
       if param[1] == 'DictionaryOf(LuaRef)' then
         param = { 'Dictionary', param[2] }
@@ -217,19 +255,21 @@ for _, f in ipairs(functions) do
       end
       f_exported.parameters[i] = param
     end
+
     if startswith(f.return_type, 'Dict(') then
       f_exported.return_type = 'Dictionary'
     end
+
     exported_functions[#exported_functions + 1] = f_exported
   end
 end
 
 local ui_options = { 'rgb' }
-for x in string.gmatch(ui_options_text, '"([a-z][a-z_]+)"') do
+for x in ui_options_text:gmatch('"([a-z][a-z_]+)"') do
   table.insert(ui_options, x)
 end
 
-local version = require 'nvim_version'
+local version = require('nvim_version')
 local git_version = io.open(git_version_inputf):read '*a'
 local version_build = string.match(git_version, '#define NVIM_VERSION_BUILD "([^"]+)"') or vim.NIL
 
@@ -427,7 +467,7 @@ end
 for i = 1, #functions do
   local fn = functions[i]
   if fn.impl_name == nil and fn.remote then
-    local args = {}
+    local args = {} --- @type string[]
 
     output:write(
       'Object handle_' .. fn.name .. '(uint64_t channel_id, Array args, Arena* arena, Error *error)'
@@ -582,12 +622,12 @@ for i = 1, #functions do
       args[#args + 1] = converted
     end
 
-    if fn.textlock then
+    if fn.attrs.textlock then
       output:write('\n  if (text_locked()) {')
       output:write('\n    api_set_error(error, kErrorTypeException, "%s", get_text_locked_msg());')
       output:write('\n    goto cleanup;')
       output:write('\n  }\n')
-    elseif fn.textlock_allow_cmdwin then
+    elseif fn.attrs.textlock_allow_cmdwin then
       output:write('\n  if (textlock != 0 || expr_map_locked()) {')
       output:write('\n    api_set_error(error, kErrorTypeException, "%s", e_textlock);')
       output:write('\n    goto cleanup;')
@@ -659,13 +699,19 @@ for i = 1, #functions do
   end
 end
 
-local remote_fns = {}
+local remote_fns = {} --- @type table<string,nvim.gen_api_disptach.fun>
 for _, fn in ipairs(functions) do
   if fn.remote then
     remote_fns[fn.name] = fn
   end
 end
-remote_fns.redraw = { impl_name = 'ui_client_redraw', fast = true }
+
+remote_fns.redraw = {
+  name = 'redraw',
+  impl_name = 'ui_client_redraw',
+  fast = true,
+  attrs = {},
+}
 
 local names = vim.tbl_keys(remote_fns)
 table.sort(names)
@@ -683,9 +729,9 @@ for n, name in ipairs(hashorder) do
       .. '", .fn = handle_'
       .. (fn.impl_name or fn.name)
       .. ', .fast = '
-      .. tostring(fn.fast)
+      .. tostring(fn.attrs.fast or 'false')
       .. ', .ret_alloc = '
-      .. tostring(not not fn.ret_alloc)
+      .. tostring(not not fn.attrs.ret_alloc)
       .. '},\n'
   )
 end
@@ -707,11 +753,13 @@ local function include_headers(output_handle, headers_to_include)
   end
 end
 
+--- @param str string
+--- @param ... any
 local function write_shifted_output(str, ...)
   str = str:gsub('\n  ', '\n')
   str = str:gsub('^  ', '')
   str = str:gsub(' +$', '')
-  output:write(string.format(str, ...))
+  output:write(str:format(...))
 end
 
 -- start building lua output
@@ -737,8 +785,14 @@ output:write([[
 include_headers(output, headers)
 output:write('\n')
 
+--- @class nvim.gen_api_disptach.lua_c_function
+--- @field binding string
+--- @field api string
+
+--- @type nvim.gen_api_disptach.lua_c_function[]
 local lua_c_functions = {}
 
+--- @param fn nvim.gen_api_disptach.fun
 local function process_function(fn)
   local lua_c_function_name = ('nlua_api_%s'):format(fn.name)
   write_shifted_output(
@@ -764,7 +818,7 @@ local function process_function(fn)
     api = fn.name,
   }
 
-  if not fn.fast then
+  if not fn.attrs.fast then
     write_shifted_output(
       [[
     if (!nlua_is_deferred_safe()) {
@@ -775,14 +829,14 @@ local function process_function(fn)
     )
   end
 
-  if fn.textlock then
+  if fn.attrs.textlock then
     write_shifted_output([[
     if (text_locked()) {
       api_set_error(&err, kErrorTypeException, "%%s", get_text_locked_msg());
       goto exit_0;
     }
     ]])
-  elseif fn.textlock_allow_cmdwin then
+  elseif fn.attrs.textlock_allow_cmdwin then
     write_shifted_output([[
     if (textlock != 0 || expr_map_locked()) {
       api_set_error(&err, kErrorTypeException, "%%s", e_textlock);
@@ -792,7 +846,7 @@ local function process_function(fn)
   end
 
   local cparams = ''
-  local free_code = {}
+  local free_code = {} --- @type string[]
   for j = #fn.parameters, 1, -1 do
     local param = fn.parameters[j]
     local cparam = string.format('arg%u', j)
@@ -894,7 +948,7 @@ exit_0:
     return lua_error(lstate);
   }
 ]]
-  local return_type
+  local return_type --- @type string?
   if fn.return_type ~= 'void' then
     if fn.return_type:match('^ArrayOf') then
       return_type = 'Array'
@@ -902,7 +956,7 @@ exit_0:
       return_type = fn.return_type
     end
     local free_retval = ''
-    if fn.ret_alloc then
+    if fn.attrs.ret_alloc then
       free_retval = '  api_free_' .. return_type:lower() .. '(ret);'
     end
     write_shifted_output('    %s ret = %s(%s);\n', fn.return_type, fn.name, cparams)
@@ -926,7 +980,7 @@ exit_0:
         string.sub(ret_type, 9)
       )
     else
-      local special = (fn.since ~= nil and fn.since < 11)
+      local special = (fn.attrs.since ~= nil and fn.attrs.since < 11)
       write_shifted_output(
         '    nlua_push_%s(lstate, %sret, %s);\n',
         return_type,

@@ -1,11 +1,11 @@
 local mpack = vim.mpack
 
 assert(#arg == 5)
-local input = io.open(arg[1], 'rb')
-local call_output = io.open(arg[2], 'wb')
-local remote_output = io.open(arg[3], 'wb')
-local metadata_output = io.open(arg[4], 'wb')
-local client_output = io.open(arg[5], 'wb')
+local input = assert(io.open(arg[1], 'rb'))
+local call_output = assert(io.open(arg[2], 'wb'))
+local remote_output = assert(io.open(arg[3], 'wb'))
+local metadata_output = assert(io.open(arg[4], 'wb'))
+local client_output = assert(io.open(arg[5], 'wb'))
 
 local c_grammar = require('generators.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
@@ -93,22 +93,27 @@ local function call_ui_event_method(output, ev)
   output:write('}\n\n')
 end
 
-events = vim.tbl_filter(function(ev)
-  return ev[1] ~= 'empty'
-end, events)
+--- @type nvim.c_grammar.Proto[]
+events = vim.tbl_filter(
+  --- @param ev nvim.c_grammar.Proto
+  function(ev)
+    return ev[1] == 'proto'
+  end,
+  events
+)
 
 for i = 1, #events do
   local ev = events[i]
+  local attrs = ev.attrs
   assert(ev.return_type == 'void')
 
-  if ev.since == nil and not ev.noexport then
+  if attrs.since == nil and not attrs.noexport then
     print('Ui event ' .. ev.name .. ' lacks since field.\n')
     os.exit(1)
   end
-  ev.since = tonumber(ev.since)
 
-  if not ev.remote_only then
-    if not ev.remote_impl and not ev.noexport then
+  if not attrs.remote_only then
+    if not attrs.remote_impl and not attrs.noexport then
       remote_output:write('void remote_ui_' .. ev.name)
       write_signature(remote_output, ev, 'UI *ui')
       remote_output:write('\n{\n')
@@ -120,15 +125,15 @@ for i = 1, #events do
     end
   end
 
-  if not (ev.remote_only and ev.remote_impl) then
+  if not (attrs.remote_only and attrs.remote_impl) then
     call_output:write('void ui_call_' .. ev.name)
     write_signature(call_output, ev, '')
     call_output:write('\n{\n')
-    if ev.remote_only then
+    if attrs.remote_only then
       call_output:write('  Array args = call_buf;\n')
       write_arglist(call_output, ev)
       call_output:write('  ui_call_event("' .. ev.name .. '", args);\n')
-    elseif ev.compositor_impl then
+    elseif attrs.compositor_impl then
       call_output:write('  ui_comp_' .. ev.name)
       write_signature(call_output, ev, '', true)
       call_output:write(';\n')
@@ -143,7 +148,7 @@ for i = 1, #events do
     call_output:write('}\n\n')
   end
 
-  if ev.compositor_impl then
+  if attrs.compositor_impl then
     call_output:write('void ui_composed_call_' .. ev.name)
     write_signature(call_output, ev, '')
     call_output:write('\n{\n')
@@ -153,14 +158,25 @@ for i = 1, #events do
     call_output:write('}\n\n')
   end
 
-  if (not ev.remote_only) and not ev.noexport and not ev.client_impl and not ev.client_ignore then
+  if
+    not attrs.remote_only
+    and not attrs.noexport
+    and not attrs.client_impl
+    and not attrs.client_ignore
+  then
     call_ui_event_method(client_output, ev)
   end
 end
 
+--- @type table<string,nvim.c_grammar.Proto>
 local client_events = {}
 for _, ev in ipairs(events) do
-  if (not ev.noexport) and ((not ev.remote_only) or ev.client_impl) and not ev.client_ignore then
+  local attrs = ev.attrs
+  if
+    not attrs.noexport
+    and ((not attrs.remote_only) or attrs.client_impl)
+    and not attrs.client_ignore
+  then
     client_events[ev.name] = ev
   end
 end
@@ -187,19 +203,28 @@ remote_output:close()
 client_output:close()
 
 -- don't expose internal attributes like "impl_name" in public metadata
-local exported_attributes = { 'name', 'parameters', 'since', 'deprecated_since' }
+--- @class nvim.gen_api_ui_events.exported_fun
+--- @field name string
+--- @field since integer
+--- @field deprecated_since integer
+--- @field parameters {[1]: string, [2]: string}[]
+
+--- @type nvim.gen_api_ui_events.exported_fun[]
 local exported_events = {}
+
 for _, ev in ipairs(events) do
-  local ev_exported = {}
-  for _, attr in ipairs(exported_attributes) do
-    ev_exported[attr] = ev[attr]
-  end
-  for _, p in ipairs(ev_exported.parameters) do
-    if p[1] == 'HlAttrs' then
-      p[1] = 'Dictionary'
+  if not ev.attrs.noexport then
+    local ev_exported = {
+      name = ev.name,
+      parameters = ev.parameters,
+      since = ev.attrs.since,
+      deprecated_since = ev.attrs.deprecated_since,
+    }
+    for _, p in ipairs(ev_exported.parameters) do
+      if p[1] == 'HlAttrs' then
+        p[1] = 'Dictionary'
+      end
     end
-  end
-  if not ev.noexport then
     exported_events[#exported_events + 1] = ev_exported
   end
 end

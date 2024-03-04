@@ -1,10 +1,45 @@
+--- @class nvim.c_grammar.Proto
+--- @field [1] 'proto'
+--- @field name string
+--- @field return_type string
+--- @field parameters string[][]
+--- @field attrs table<string,any>
+--- @field attrs1 table<string,any>
+--- @field static? true
+--- @field inline? true
+
+--- @class nvim.c_grammar.Preproc
+--- @field [1] 'preproc'
+--- @field name string
+--- @field body string
+
+--- @class nvim.c_grammar.Keyset
+--- @field [1] 'keyset'
+--- @field name string
+--- @field fields {name:string, type:string}[]
+
+--- @class nvim.c_grammar.Empty
+--- @field [1] 'empty'
+
+--- @class nvim.c_grammar.Comment
+--- @field [1] 'comment'
+--- @field comment string
+
+--- @alias nvim.c_grammar.Result
+--- | nvim.c_grammar.Proto
+--- | nvim.c_grammar.Keyset
+--- | nvim.c_grammar.Preproc
+--- | nvim.c_grammar.Empty
+--- | nvim.c_grammar.Comment
+
+--- @class nvim.c_grammar
+--- @field match fun(self, input: string): nvim.c_grammar.Result[]
+
 local lpeg = vim.lpeg
 
--- lpeg grammar for building api metadata from a set of header files. It
--- ignores comments and preprocessor commands and parses a very small subset
--- of C prototypes with a limited set of types
+-- lpeg grammar for building api metadata and documentation
 local P, R, S = lpeg.P, lpeg.R, lpeg.S
-local C, Ct, Cc, Cg = lpeg.C, lpeg.Ct, lpeg.Cc, lpeg.Cg
+local C, Cmt, Ct, Cc, Cg = lpeg.C, lpeg.Cmt, lpeg.Ct, lpeg.Cc, lpeg.Cg
 
 --- @param pat vim.lpeg.Pattern
 local function rep(pat)
@@ -24,94 +59,121 @@ end
 local any = P(1) -- (consume one character)
 local letter = R('az', 'AZ') + S('_$')
 local num = R('09')
-local alpha = letter + num
+local id = letter * rep(letter + num)
 local nl = P('\r\n') + P('\n')
-local not_nl = any - nl
+local not_nl = (S('\\') * nl) + (any - nl)
 local space = S(' \t')
 local ws = space + nl
+local fill1 = rep1(ws)
+local preproc_fill1 = rep1(space)
 local fill = rep(ws)
+
 local c_comment = P('//') * rep(not_nl)
-local cdoc_comment = P('///') * opt(Ct(Cg(rep(space) * rep(not_nl), 'comment')))
-local c_preproc = P('#') * rep(not_nl)
-local dllexport = P('DLLEXPORT') * rep1(ws)
+local cdoc_comment = P('///') * opt(Ct(Cc('comment') * Cg(rep(space) * rep(not_nl), 'comment')))
+
+local dllexport = P('DLLEXPORT') * fill1
+
+--- @param x string
+local function Pf(x)
+  return fill * P(x) * fill
+end
 
 local typed_container = (
-  (P('ArrayOf(') + P('DictionaryOf(') + P('Dict('))
+  (P('ArrayOf') + P('DictionaryOf') + P('Dict'))
+  * P('(')
   * rep1(any - P(')'))
   * P(')')
 )
 
-local c_id = (typed_container + (letter * rep(alpha)))
+local c_id = typed_container + id
 local c_void = P('void')
 
 local c_param_type = (
-  ((P('Error') * fill * P('*') * fill) * Cc('error'))
-  + ((P('Arena') * fill * P('*') * fill) * Cc('arena'))
-  + ((P('lua_State') * fill * P('*') * fill) * Cc('lstate'))
-  + C(opt(P('const ')) * c_id * rep1(ws) * rep1(P('*')))
-  + (C(c_id) * rep1(ws))
+  ((P('Error') * Pf('*')) * Cc('error'))
+  + ((P('Arena') * Pf('*')) * Cc('arena'))
+  + ((P('lua_State') * Pf('*')) * Cc('lstate'))
+  + (
+    C(opt(P('struct') * fill1) * opt(P('const ')) * c_id * rep(fill * (P('const') + P('*')))) * fill
+  )
 )
 
-local c_type = (C(c_void) * (ws ^ 1)) + c_param_type
-local c_param = Ct(c_param_type * C(c_id))
-local c_param_list = c_param * (fill * (P(',') * fill * c_param) ^ 0)
-local c_params = Ct(c_void + c_param_list)
+--- @param x vim.lpeg.Pattern
+local function comma1(x)
+  return x * rep(Pf(',') * x)
+end
 
-local impl_line = (any - P('}')) * opt(rep(not_nl)) * nl
+local array = P('[') * rep(any - P(']')) * P(']')
+
+local c_return_type = c_param_type + (C(c_void) * fill1)
+local c_param = Ct((c_param_type * C(c_id * rep(array)) * rep(fill * C(id))) + C(Pf('...')))
+local c_params = Ct(comma1(c_param) + c_void)
 
 local ignore_line = rep1(not_nl) * nl
-
 local empty_line = Ct(Cc('empty') * nl * nl)
+
+--- @param kind string
+local function attrs(kind)
+  local attr = P('FUNC_')
+    * P(kind:upper())
+    * S('_')
+    * C(id)
+    * opt(P('(') * Ct(comma1(C(rep1(num)))) * P(')'))
+
+  return Cmt(rep(fill * Ct(attr)), function(_, pos, ...)
+    local r = {} --- @type table<string,any>
+    for i = 1, select('#', ...) do
+      local arg = select(i, ...)
+      if type(arg) == 'table' then
+        --- @type string, any
+        local name, a = unpack(arg)
+        local v --- @type any
+        if not a then
+          v = true
+        elseif #a == 1 then
+          v = tonumber(a[1]) or a[1]
+        else
+          v = a
+        end
+        r[name:lower()] = v
+      end
+    end
+
+    return pos, r
+  end)
+end
+
+local c_preproc = Ct(
+  Cc('preproc')
+    * Pf('#')
+    * Cg(id + rep1(num), 'name')
+    * opt(preproc_fill1 * Cg(rep(not_nl), 'body'))
+)
 
 local c_proto = Ct(
   Cc('proto')
     * opt(dllexport)
     * opt(Cg(P('static') * fill * Cc(true), 'static'))
-    * Cg(c_type, 'return_type')
+    * opt(Cg(P('inline') * fill * Cc(true), 'inline'))
+    * Cg(c_return_type, 'return_type')
     * Cg(c_id, 'name')
+    * (Pf('(') * Cg(c_params, 'parameters') * Pf(')'))
+    * Cg(attrs('api'), 'attrs')
+    * Cg(attrs('attr'), 'attrs1')
     * fill
-    * (P('(') * fill * Cg(c_params, 'parameters') * fill * P(')'))
-    * Cg(Cc(false), 'fast')
-    * (fill * Cg((P('FUNC_API_SINCE(') * C(rep1(num))) * P(')'), 'since') ^ -1)
-    * (fill * Cg((P('FUNC_API_DEPRECATED_SINCE(') * C(rep1(num))) * P(')'), 'deprecated_since') ^ -1)
-    * (fill * Cg((P('FUNC_API_FAST') * Cc(true)), 'fast') ^ -1)
-    * (fill * Cg((P('FUNC_API_RET_ALLOC') * Cc(true)), 'ret_alloc') ^ -1)
-    * (fill * Cg((P('FUNC_API_NOEXPORT') * Cc(true)), 'noexport') ^ -1)
-    * (fill * Cg((P('FUNC_API_REMOTE_ONLY') * Cc(true)), 'remote_only') ^ -1)
-    * (fill * Cg((P('FUNC_API_LUA_ONLY') * Cc(true)), 'lua_only') ^ -1)
-    * (fill * (Cg(P('FUNC_API_TEXTLOCK_ALLOW_CMDWIN') * Cc(true), 'textlock_allow_cmdwin') + Cg(
-      P('FUNC_API_TEXTLOCK') * Cc(true),
-      'textlock'
-    )) ^ -1)
-    * (fill * Cg((P('FUNC_API_REMOTE_IMPL') * Cc(true)), 'remote_impl') ^ -1)
-    * (fill * Cg((P('FUNC_API_COMPOSITOR_IMPL') * Cc(true)), 'compositor_impl') ^ -1)
-    * (fill * Cg((P('FUNC_API_CLIENT_IMPL') * Cc(true)), 'client_impl') ^ -1)
-    * (fill * Cg((P('FUNC_API_CLIENT_IGNORE') * Cc(true)), 'client_ignore') ^ -1)
-    * fill
-    * (P(';') + (P('{') * nl + (impl_line ^ 0) * P('}')))
+    * (P(';') + P('{'))
 )
 
-local c_field = Ct(Cg(c_id, 'type') * ws * Cg(c_id, 'name') * fill * P(';') * fill)
+local c_field = Ct(Cg(c_id, 'type') * fill1 * Cg(c_id, 'name') * Pf(';'))
 local c_keyset = Ct(
-  P('typedef')
-    * ws
-    * P('struct')
-    * fill
-    * P('{')
-    * fill
-    * Cg(Ct(c_field ^ 1), 'fields')
-    * P('}')
-    * fill
-    * P('Dict')
-    * fill
-    * P('(')
-    * Cg(c_id, 'keyset_name')
-    * fill
-    * P(')')
+  Cc('keyset')
+    * (P('typedef') * Pf('struct') * (Pf('{')) * Cg(Ct(rep1(c_field)), 'fields') * Pf('}') * (Pf(
+      'Dict'
+    ) * Pf('(') * Cg(id, 'name') * Pf(')')))
     * P(';')
 )
 
 local grammar = Ct(
-  rep1(empty_line + c_proto + cdoc_comment + c_comment + c_preproc + ws + c_keyset + ignore_line)
-)
+  rep1(empty_line + c_proto + cdoc_comment + c_comment + c_preproc + fill1 + c_keyset + ignore_line)
+) --[[@as nvim.c_grammar]]
+
 return { grammar = grammar, typed_container = typed_container }
