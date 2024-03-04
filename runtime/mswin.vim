@@ -1,7 +1,7 @@
 " Set options and add mapping such that Vim behaves a lot like MS-Windows
 "
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2023 Aug 10
+" Last Change:	2024 Mar 3
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Bail out if this isn't wanted.
@@ -27,7 +27,7 @@ set backspace=indent,eol,start whichwrap+=<,>,[,]
 " backspace in Visual mode deletes selection
 vnoremap <BS> d
 
-if has("clipboard")
+if has("clipboard_working")
     " CTRL-X and SHIFT-Del are Cut
     vnoremap <C-X> "+x
     vnoremap <S-Del> "+x
@@ -42,6 +42,23 @@ if has("clipboard")
 
     cmap <C-V>		<C-R>+
     cmap <S-Insert>		<C-R>+
+else
+    " Use unnamed register while clipboard not exist
+
+    " CTRL-X and SHIFT-Del are Cut
+    vnoremap <C-X>   x
+    vnoremap <S-Del> x
+
+    " CTRL-C and CTRL-Insert are Copy
+    vnoremap <C-C>      y
+    vnoremap <C-Insert> y
+
+    " CTRL-V and SHIFT-Insert are Paste
+    noremap <C-V>      gP
+    noremap <S-Insert> gP
+
+    inoremap <C-V>      <C-R>"
+    inoremap <S-Insert> <C-R>"
 endif
 
 " Pasting blockwise and linewise selections is not possible in Insert and
@@ -50,7 +67,7 @@ endif
 " Uses the paste.vim autoload script.
 " Use CTRL-G u to have CTRL-Z only undo the paste.
 
-if 1
+if has("clipboard_working")
     exe 'inoremap <script> <C-V> <C-G>u' . paste#paste_cmd['i']
     exe 'vnoremap <script> <C-V> ' . paste#paste_cmd['v']
 endif
