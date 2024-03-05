@@ -3315,7 +3315,6 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     "path_extra",
     "persistent_undo",
     "profile",
-    "pythonx",
     "reltime",
     "quickfix",
     "rightleft",
@@ -3406,6 +3405,8 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       n = syntax_present(curwin);
     } else if (STRICMP(name, "clipboard_working") == 0) {
       n = eval_has_provider("clipboard");
+    } else if (STRICMP(name, "pythonx") == 0) {
+      n = eval_has_provider("python3");
     } else if (STRICMP(name, "wsl") == 0) {
       n = has_wsl();
 #ifdef UNIX

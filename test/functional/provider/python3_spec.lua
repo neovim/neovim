@@ -20,6 +20,12 @@ do
       matches(expected, pcall_err(command, 'py3 print("foo")'))
       matches(expected, pcall_err(command, 'py3file foo'))
     end)
+    it('feature test when Python 3 provider is missing', function()
+      eq(0, eval('has("python3")'))
+      eq(0, eval('has("python3_compiled")'))
+      eq(0, eval('has("python3_dynamic")'))
+      eq(0, eval('has("pythonx")'))
+    end)
     pending(
       string.format('Python 3 (or the pynvim module) is broken/missing (%s)', reason),
       function() end
@@ -38,6 +44,7 @@ describe('python3 provider', function()
     eq(1, eval('has("python3")'))
     eq(1, eval('has("python3_compiled")'))
     eq(1, eval('has("python3_dynamic")'))
+    eq(1, eval('has("pythonx")'))
     eq(0, eval('has("python3_dynamic_")'))
     eq(0, eval('has("python3_")'))
   end)
