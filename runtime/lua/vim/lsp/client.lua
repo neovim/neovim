@@ -15,7 +15,7 @@ local validate = vim.validate
 --- @inlinedoc
 ---
 --- Allow using incremental sync for buffer edits
---- (defailt: `true`)
+--- (default: `true`)
 --- @field allow_incremental_sync? boolean
 ---
 --- Debounce `didChange` notifications to the server by the given number in milliseconds.
