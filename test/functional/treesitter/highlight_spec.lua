@@ -764,6 +764,44 @@ describe('treesitter highlighting (C)', function()
   end)
 end)
 
+describe('treesitter highlighting (lua)', function()
+  local screen
+
+  before_each(function()
+    screen = Screen.new(65, 18)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = { bold = true, foreground = Screen.colors.Blue },
+      [2] = { foreground = Screen.colors.DarkCyan },
+      [3] = { foreground = Screen.colors.Magenta },
+      [4] = { foreground = Screen.colors.SlateBlue },
+      [5] = { bold = true, foreground = Screen.colors.Brown },
+    }
+  end)
+
+  it('supports language injections', function()
+    insert [[
+      local ffi = require('ffi')
+      ffi.cdef("int (*fun)(int, char *);")
+    ]]
+
+    exec_lua [[
+      vim.bo.filetype = 'lua'
+      vim.treesitter.start()
+    ]]
+
+    screen:expect {
+      grid = [[
+        {5:local} {2:ffi} {5:=} {4:require(}{3:'ffi'}{4:)}                                     |
+        {2:ffi}{4:.}{2:cdef}{4:(}{3:"}{4:int}{3: }{4:(}{5:*}{3:fun}{4:)(int,}{3: }{4:char}{3: }{5:*}{4:);}{3:"}{4:)}                           |
+      ^                                                                 |
+      {1:~                                                                }|*14
+                                                                       |
+    ]],
+    }
+  end)
+end)
+
 describe('treesitter highlighting (help)', function()
   local screen
 
