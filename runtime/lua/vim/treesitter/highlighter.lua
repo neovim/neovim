@@ -284,8 +284,8 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         -- Give nospell a higher priority so it always overrides spell captures.
         local spell_pri_offset = capture_name == 'nospell' and 1 or 0
 
+        -- The "priority" attribute can be set at the pattern level or on a particular capture
         local priority = (
-          -- The "priority" attribute can be set at the pattern level or on a particular capture
           tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
           or vim.highlight.priorities.treesitter
         ) + spell_pri_offset
