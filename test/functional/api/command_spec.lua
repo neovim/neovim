@@ -675,6 +675,22 @@ describe('nvim_create_user_command', function()
     eq('Test bbb', fn.getcmdline())
   end)
 
+  it('can use a Lua complete function which returns string instead of a list', function()
+    exec_lua [[
+      vim.api.nvim_create_user_command('Test', '', {
+        nargs = "*",
+        complete = function(arg, cmdline, pos)
+          return "aaa\nbbb\nccc"
+        end,
+      })
+    ]]
+
+    feed(':Test a<Tab>')
+    eq('Test aaa', fn.getcmdline())
+    feed('<C-U>Test b<Tab>')
+    eq('Test bbb', fn.getcmdline())
+  end)
+
   it('does not allow invalid command names', function()
     eq(
       "Invalid command name (must start with uppercase): 'test'",

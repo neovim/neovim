@@ -1863,7 +1863,9 @@ nvim_create_user_command({name}, {command}, {opts})
                      |nvim_buf_create_user_command()| instead).
                    • "complete" |:command-complete| also accepts a Lua
                      function which works like
-                     |:command-completion-customlist|.
+                     |:command-completion-customlist| if it returns a table,
+                     or like |:command-completion-custom| if it returns a
+                     string.
                    • Other parameters:
                      • desc: (string) Used for listing the command when a Lua
                        function is used for {command}.

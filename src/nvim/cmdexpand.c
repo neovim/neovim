@@ -2759,8 +2759,13 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
   if (xp->xp_context == EXPAND_USER_LIST) {
     return ExpandUserList(xp, matches, numMatches);
   }
+  char *expand_user_lua_string = NULL;
   if (xp->xp_context == EXPAND_USER_LUA) {
-    return ExpandUserLua(xp, numMatches, matches);
+    ret = ExpandUserLua(xp, numMatches, matches, &expand_user_lua_string);
+
+    if (ret != NOTDONE) {
+      return ret;
+    }
   }
   if (xp->xp_context == EXPAND_PACKADD) {
     return ExpandPackAddDir(pat, numMatches, matches);
@@ -2808,6 +2813,8 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
     ret = expand_argopt(pat, xp, &regmatch, matches, numMatches);
   } else if (xp->xp_context == EXPAND_USER_DEFINED) {
     ret = ExpandUserDefined(pat, xp, &regmatch, matches, numMatches);
+  } else if (xp->xp_context == EXPAND_USER_LUA) {
+    ret = ExpandUserLuaList(pat, xp, &regmatch, matches, numMatches, expand_user_lua_string);
   } else {
     ret = ExpandOther(pat, xp, &regmatch, matches, numMatches);
   }
@@ -2815,6 +2822,7 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
   if (!fuzzy) {
     vim_regfree(regmatch.regprog);
   }
+  xfree(expand_user_lua_string);
   xfree(tofree);
 
   return ret;
@@ -3208,10 +3216,16 @@ static int ExpandUserList(expand_T *xp, char ***matches, int *numMatches)
   return OK;
 }
 
-static int ExpandUserLua(expand_T *xp, int *num_file, char ***file)
+static int ExpandUserLua(expand_T *xp, int *num_file, char ***file, char **ret_string)
 {
   typval_T rettv;
   nlua_call_user_expand_func(xp, &rettv);
+
+  if (rettv.v_type == VAR_STRING) {
+    *ret_string = rettv.vval.v_string;
+    return NOTDONE;
+  }
+
   if (rettv.v_type != VAR_LIST) {
     tv_clear(&rettv);
     return FAIL;
@@ -3234,6 +3248,78 @@ static int ExpandUserLua(expand_T *xp, int *num_file, char ***file)
 
   *file = ga.ga_data;
   *num_file = ga.ga_len;
+  return OK;
+}
+
+static int ExpandUserLuaList(const char *const pat, expand_T *xp, regmatch_T *regmatch,
+                             char ***matches, int *numMatches, char *retstr)
+{
+  const bool fuzzy = cmdline_fuzzy_complete(pat);
+  *matches = NULL;
+  *numMatches = 0;
+
+  if (retstr == NULL) {
+    return FAIL;
+  }
+
+  garray_T ga;
+  if (!fuzzy) {
+    ga_init(&ga, (int)sizeof(char *), 3);
+  } else {
+    ga_init(&ga, (int)sizeof(fuzmatch_str_T), 3);
+  }
+
+  for (char *s = retstr, *e; *s != NUL; s = e) {
+    e = vim_strchr(s, '\n');
+    if (e == NULL) {
+      e = s + strlen(s);
+    }
+    const char keep = *e;
+    *e = NUL;
+
+    bool match;
+    int score = 0;
+    if (xp->xp_pattern[0] != NUL) {
+      if (!fuzzy) {
+        match = vim_regexec(regmatch, s, 0);
+      } else {
+        score = fuzzy_match_str(s, pat);
+        match = (score != 0);
+      }
+    } else {
+      match = true;               // match everything
+    }
+
+    *e = keep;
+
+    if (match) {
+      if (!fuzzy) {
+        GA_APPEND(char *, &ga, xmemdupz(s, (size_t)(e - s)));
+      } else {
+        GA_APPEND(fuzmatch_str_T, &ga, ((fuzmatch_str_T){
+          .idx = ga.ga_len,
+          .str = xmemdupz(s, (size_t)(e - s)),
+          .score = score,
+        }));
+      }
+    }
+
+    if (*e != NUL) {
+      e++;
+    }
+  }
+
+  if (ga.ga_len == 0) {
+    return OK;
+  }
+
+  if (!fuzzy) {
+    *matches = ga.ga_data;
+    *numMatches = ga.ga_len;
+  } else {
+    fuzzymatches_to_strmatches(ga.ga_data, matches, ga.ga_len, false);
+    *numMatches = ga.ga_len;
+  }
   return OK;
 }
 

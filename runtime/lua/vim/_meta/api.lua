@@ -983,7 +983,9 @@ function vim.api.nvim_create_namespace(name) end
 ---               `:command-bar` to true (but not `:command-buffer`, use
 ---               `nvim_buf_create_user_command()` instead).
 ---             • "complete" `:command-complete` also accepts a Lua function
----               which works like `:command-completion-customlist`.
+---               which works like `:command-completion-customlist` if it
+---               returns a table, or like `:command-completion-custom` if it
+---               returns a string.
 ---             • Other parameters:
 ---               • desc: (string) Used for listing the command when a Lua
 ---                 function is used for {command}.

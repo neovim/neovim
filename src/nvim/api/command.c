@@ -870,7 +870,8 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 ///                 - Set boolean attributes such as |:command-bang| or |:command-bar| to true (but
 ///                   not |:command-buffer|, use |nvim_buf_create_user_command()| instead).
 ///                 - "complete" |:command-complete| also accepts a Lua function which works like
-///                   |:command-completion-customlist|.
+///                   |:command-completion-customlist| if it returns a table, or like
+///                   |:command-completion-custom| if it returns a string.
 ///                 - Other parameters:
 ///                   - desc: (string) Used for listing the command when a Lua function is used for
 ///                                    {command}.
