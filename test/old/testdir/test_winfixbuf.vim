@@ -1576,6 +1576,7 @@ endfunc
 
 " Fail vim.cmd if we try to change buffers while 'winfixbuf' is set
 func Test_lua_command()
+  " CheckFeature lua
   call s:reset_all_buffers()
 
   enew
@@ -3129,3 +3130,21 @@ func Test_wprevious()
   call delete("middle")
   call delete("last")
 endfunc
+
+func Test_quickfix_switchbuf_invalid_prevwin()
+  call s:reset_all_buffers()
+
+  let [l:first, _] = s:make_simple_quickfix()
+  call assert_notequal(l:first, bufnr())
+  call assert_equal(1, winnr('$'))
+
+  set switchbuf=uselast
+  split
+  copen
+  execute winnr('#') 'quit'
+
+  call assert_fails('cfirst', 'E1513:')
+  set switchbuf&
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

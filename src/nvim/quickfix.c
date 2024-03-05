@@ -2699,7 +2699,7 @@ static void qf_goto_win_with_qfl_file(int qf_fnum)
       // Didn't find it, go to the window before the quickfix
       // window, unless 'switchbuf' contains 'uselast': in this case we
       // try to jump to the previously used window first.
-      if ((swb_flags & SWB_USELAST) && !prevwin->w_p_wfb && win_valid(prevwin)) {
+      if ((swb_flags & SWB_USELAST) && win_valid(prevwin) && !prevwin->w_p_wfb) {
         win = prevwin;
       } else if (altwin != NULL) {
         win = altwin;
