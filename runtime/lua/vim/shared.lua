@@ -102,7 +102,7 @@ end
 --- @param s string String to split
 --- @param sep string Separator or pattern
 --- @param opts? vim.gsplit.Opts Keyword arguments |kwargs|:
---- @return fun():string|nil (function) Iterator over the split components
+--- @return fun():string? : Iterator over the split components
 function vim.gsplit(s, sep, opts)
   local plain --- @type boolean?
   local trimempty = false
@@ -245,8 +245,8 @@ end
 --- Apply a function to all values of a table.
 ---
 ---@generic T
----@param func fun(value: T): any (function) Function
----@param t table<any, T> (table) Table
+---@param func fun(value: T): any Function
+---@param t table<any, T> Table
 ---@return table : Table of transformed values
 function vim.tbl_map(func, t)
   vim.validate({ func = { func, 'c' }, t = { t, 't' } })
@@ -570,8 +570,10 @@ end
 ---
 ---@see Based on https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
----@param t table Dict-like table
----@return function # |for-in| iterator over sorted keys and their values
+---@generic T: table, K, V
+---@param t T Dict-like table
+---@return fun(table: table<K, V>, index?: K):K, V # |for-in| iterator over sorted keys and their values
+---@return T
 function vim.spairs(t)
   vim.validate({ t = { t, 't' } })
   --- @cast t table<any,any>
@@ -1018,7 +1020,7 @@ do
   --- - |Ringbuf:clear()|
   ---
   ---@param size integer
-  ---@return vim.Ringbuf ringbuf (table)
+  ---@return vim.Ringbuf ringbuf
   function vim.ringbuf(size)
     local ringbuf = {
       _items = {},

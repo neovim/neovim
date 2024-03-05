@@ -536,7 +536,8 @@ local function render_fields_or_params(xs, generics, classes, exclude_types)
 end
 
 --- @param class nvim.luacats.parser.class
-local function render_class(class)
+--- @param classes table<string,nvim.luacats.parser.class>
+local function render_class(class, classes)
   if class.access or class.nodoc or class.inlinedoc then
     return
   end
@@ -548,13 +549,14 @@ local function render_class(class)
   if class.parent then
     local txt = fmt('Extends: |%s|', class.parent)
     table.insert(ret, md_to_vimdoc(txt, INDENTATION, INDENTATION, TEXT_WIDTH))
+    table.insert(ret, '\n')
   end
 
   if class.desc then
     table.insert(ret, md_to_vimdoc(class.desc, INDENTATION, INDENTATION, TEXT_WIDTH))
   end
 
-  local fields_txt = render_fields_or_params(class.fields)
+  local fields_txt = render_fields_or_params(class.fields, nil, classes)
   if not fields_txt:match('^%s*$') then
     table.insert(ret, '\n    Fields: ~\n')
     table.insert(ret, fields_txt)
@@ -564,13 +566,12 @@ local function render_class(class)
   return table.concat(ret)
 end
 
---- @param cls table<string,nvim.luacats.parser.class>
-local function render_classes(cls)
+--- @param classes table<string,nvim.luacats.parser.class>
+local function render_classes(classes)
   local ret = {} --- @type string[]
 
-  --- @diagnostic disable-next-line:no-unknown
-  for _, class in vim.spairs(cls) do
-    ret[#ret + 1] = render_class(class)
+  for _, class in vim.spairs(classes) do
+    ret[#ret + 1] = render_class(class, classes)
   end
 
   return table.concat(ret)

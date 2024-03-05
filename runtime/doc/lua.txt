@@ -1831,15 +1831,15 @@ vim.inspect_pos({bufnr}, {row}, {col}, {filter})           *vim.inspect_pos()*
       • {col}     (`integer?`) col to inspect, 0-based. Defaults to the col of
                   the current cursor
       • {filter}  (`table?`) Table with key-value pairs to filter the items
-                  • {syntax} (`boolean`) Include syntax based highlight groups
-                    (defaults to true)
-                  • {treesitter} (`boolean`) Include treesitter based
-                    highlight groups (defaults to true)
+                  • {syntax} (`boolean`, default: `true`) Include syntax based
+                    highlight groups.
+                  • {treesitter} (`boolean`, default: `true`) Include
+                    treesitter based highlight groups.
                   • {extmarks} (`boolean|"all"`, default: true) Include
                     extmarks. When `all`, then extmarks without a `hl_group`
                     will also be included.
-                  • {semantic_tokens} (`boolean`) Include semantic token
-                    highlights (defaults to true)
+                  • {semantic_tokens} (`boolean`, default: true) Include
+                    semantic token highlights.
 
     Return: ~
         (`table`) a table with the following key-value pairs. Items are in
@@ -1863,7 +1863,16 @@ vim.show_pos({bufnr}, {row}, {col}, {filter})                 *vim.show_pos()*
                   the current cursor
       • {col}     (`integer?`) col to inspect, 0-based. Defaults to the col of
                   the current cursor
-      • {filter}  (`table?`) see |vim.inspect_pos()|
+      • {filter}  (`table?`) A table with the following fields:
+                  • {syntax} (`boolean`, default: `true`) Include syntax based
+                    highlight groups.
+                  • {treesitter} (`boolean`, default: `true`) Include
+                    treesitter based highlight groups.
+                  • {extmarks} (`boolean|"all"`, default: true) Include
+                    extmarks. When `all`, then extmarks without a `hl_group`
+                    will also be included.
+                  • {semantic_tokens} (`boolean`, default: true) Include
+                    semantic token highlights.
 
 
 
@@ -1989,7 +1998,7 @@ vim.gsplit({s}, {sep}, {opts})                                  *vim.gsplit()*
                   end of the sequence.
 
     Return: ~
-        (`function`) Iterator over the split components
+        (`fun():string?`) Iterator over the split components
 
     See also: ~
       • |string.gmatch()|
@@ -2089,7 +2098,7 @@ vim.ringbuf({size})                                            *vim.ringbuf()*
       • {size}  (`integer`)
 
     Return: ~
-        (`table`)
+        (`vim.Ringbuf`) ringbuf See |vim.Ringbuf|.
 
 vim.spairs({t})                                                 *vim.spairs()*
     Enumerates key-value pairs of a table, ordered by key.
@@ -2097,8 +2106,10 @@ vim.spairs({t})                                                 *vim.spairs()*
     Parameters: ~
       • {t}  (`table`) Dict-like table
 
-    Return: ~
-        (`function`) |for-in| iterator over sorted keys and their values
+    Return (multiple): ~
+        (`fun(table: table<K, V>, index?: K):K, V`) |for-in| iterator over
+        sorted keys and their values
+        (`table`)
 
     See also: ~
       • Based on
@@ -2334,8 +2345,8 @@ vim.tbl_map({func}, {t})                                       *vim.tbl_map()*
     Apply a function to all values of a table.
 
     Parameters: ~
-      • {func}  (`function`) Function
-      • {t}     (`table`) Table
+      • {func}  (`fun(value: T): any`) Function
+      • {t}     (`table<any, T>`) Table
 
     Return: ~
         (`table`) Table of transformed values

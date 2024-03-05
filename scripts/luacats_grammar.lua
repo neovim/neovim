@@ -170,7 +170,7 @@ local grammar = P {
   ltype = parenOpt(v.ty_union),
 
   ty_union = v.ty_opt * rep(Pf('|') * v.ty_opt),
-  ty = v.ty_fun + ident + v.ty_table + literal,
+  ty = v.ty_fun + ident + v.ty_table + literal + paren(v.ty),
   ty_param = Pf('<') * comma1(v.ltype) * fill * P('>'),
   ty_opt = v.ty * opt(v.ty_param) * opt(P('[]')) * opt(P('?')),
   ty_index = (Pf('[') * v.ltype * Pf(']')),

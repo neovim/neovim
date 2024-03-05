@@ -572,7 +572,7 @@ local M = {}
 ---
 ---@param bufnr integer
 ---@param client_id integer
----@param opts (nil|table) Optional keyword arguments
+---@param opts? table Optional keyword arguments
 ---  - debounce (integer, default: 200): Debounce token requests
 ---        to the server by the given number in milliseconds
 function M.start(bufnr, client_id, opts)

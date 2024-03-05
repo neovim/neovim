@@ -1,17 +1,20 @@
 --- @class vim._inspector.Filter
 --- @inlinedoc
 ---
---- Include syntax based highlight groups (defaults to true)
+--- Include syntax based highlight groups.
+--- (default: `true`)
 --- @field syntax boolean
 ---
---- Include treesitter based highlight groups (defaults to true)
+--- Include treesitter based highlight groups.
+--- (default: `true`)
 --- @field treesitter boolean
 ---
 --- Include extmarks. When `all`, then extmarks without a `hl_group` will also be included.
 --- (default: true)
 --- @field extmarks boolean|"all"
 ---
---- Include semantic token highlights (defaults to true)
+--- Include semantic token highlights.
+--- (default: true)
 --- @field semantic_tokens boolean
 local defaults = {
   syntax = true,
@@ -145,7 +148,7 @@ end
 ---@param bufnr? integer defaults to the current buffer
 ---@param row? integer row to inspect, 0-based. Defaults to the row of the current cursor
 ---@param col? integer col to inspect, 0-based. Defaults to the col of the current cursor
----@param filter? vim._inspector.Filter (table) see |vim.inspect_pos()|
+---@param filter? vim._inspector.Filter
 function vim.show_pos(bufnr, row, col, filter)
   local items = vim.inspect_pos(bufnr, row, col, filter)
 
