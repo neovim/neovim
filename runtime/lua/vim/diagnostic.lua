@@ -42,15 +42,44 @@ local M = {}
 ---
 --- @field namespace? integer
 
+--- Each of the configuration options below accepts one of the following:
+--- - `false`: Disable this feature
+--- - `true`: Enable this feature, use default settings.
+--- - `table`: Enable this feature with overrides. Use an empty table to use default values.
+--- - `function`: Function with signature (namespace, bufnr) that returns any of the above.
 --- @class vim.diagnostic.Opts
---- @field float? boolean|vim.diagnostic.Opts.Float
+---
+--- Use underline for diagnostics.
+--- (default: `true`)
+--- @field underline? boolean|vim.diagnostic.Opts.Underline|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Underline
+---
+--- Use virtual text for diagnostics. If multiple diagnostics are set for a
+--- namespace, one prefix per diagnostic + the last diagnostic message are
+--- shown.
+--- (default: `true`)
+--- @field virtual_text? boolean|vim.diagnostic.Opts.VirtualText|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.VirtualText
+---
+--- Use signs for diagnostics |diagnostic-signs|.
+--- (default: `true`)
+--- @field signs? boolean|vim.diagnostic.Opts.Signs|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Signs
+---
+--- Options for floating windows. See |vim.diagnostic.Opts.Float|.
+--- @field float? boolean|vim.diagnostic.Opts.Float|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Float
+---
+--- Update diagnostics in Insert mode
+--- (if `false`, diagnostics are updated on |InsertLeave|)
+--- (default: `false)
 --- @field update_in_insert? boolean
---- @field underline? boolean|vim.diagnostic.Opts.Underline
---- @field virtual_text? boolean|vim.diagnostic.Opts.VirtualText
---- @field signs? boolean|vim.diagnostic.Opts.Signs
+---
+--- Sort diagnostics by severity. This affects the order in which signs and
+--- virtual text are displayed. When true, higher severities are displayed
+--- before lower severities (e.g. ERROR is displayed before WARN).
+--- Options:
+---   - {reverse}? (boolean) Reverse sort order
+--- (default: `false)
 --- @field severity_sort? boolean|{reverse?:boolean}
 
---- @class vim.diagnostic.OptsResolved
+--- @class (private) vim.diagnostic.OptsResolved
 --- @field float vim.diagnostic.Opts.Float
 --- @field update_in_insert boolean
 --- @field underline vim.diagnostic.Opts.Underline
@@ -59,42 +88,156 @@ local M = {}
 --- @field severity_sort {reverse?:boolean}
 
 --- @class vim.diagnostic.Opts.Float
+---
+--- Buffer number to show diagnostics from.
+--- (default: current buffer)
 --- @field bufnr? integer
+---
+--- Limit diagnostics to the given namespace
 --- @field namespace? integer
+---
+--- Show diagnostics from the whole buffer (`buffer"`, the current cursor line
+--- (`line`), or the current cursor position (`cursor`). Shorthand versions
+--- are also accepted (`c` for `cursor`, `l` for `line`, `b` for `buffer`).
+--- (default: `line`)
 --- @field scope? 'line'|'buffer'|'cursor'|'c'|'l'|'b'
+---
+--- If {scope} is "line" or "cursor", use this position rather than the cursor
+--- position. If a number, interpreted as a line number; otherwise, a
+--- (row, col) tuple.
 --- @field pos? integer|{[1]:integer,[2]:integer}
+---
+--- Sort diagnostics by severity.
+--- Overrides the setting from |vim.diagnostic.config()|.
+--- (default: `false`)
 --- @field severity_sort? boolean|{reverse?:boolean}
+---
+--- See |diagnostic-severity|.
+--- Overrides the setting from |vim.diagnostic.config()|.
 --- @field severity? vim.diagnostic.SeverityFilter
+---
+--- String to use as the header for the floating window. If a table, it is
+--- interpreted as a `[text, hl_group]` tuple.
+--- Overrides the setting from |vim.diagnostic.config()|.
 --- @field header? string|{[1]:string,[2]:any}
---- @field source? boolean|string
+---
+--- Include the diagnostic source in the message.
+--- Use "if_many" to only show sources if there is more than one source of
+--- diagnostics in the buffer. Otherwise, any truthy value means to always show
+--- the diagnostic source.
+--- Overrides the setting from |vim.diagnostic.config()|.
+--- @field source? boolean|'if_many'
+---
+--- A function that takes a diagnostic as input and returns a string.
+--- The return value is the text used to display the diagnostic.
+--- Overrides the setting from |vim.diagnostic.config()|.
 --- @field format? fun(diagnostic:vim.Diagnostic): string
+---
+--- Prefix each diagnostic in the floating window:
+--- - If a `function`, {i} is the index of the diagnostic being evaluated and
+---   {total} is the total number of diagnostics displayed in the window. The
+---   function should return a `string` which is prepended to each diagnostic
+---   in the window as well as an (optional) highlight group which will be
+---   used to highlight the prefix.
+--- - If a `table`, it is interpreted as a `[text, hl_group]` tuple as
+---   in |nvim_echo()|
+--- - If a `string`, it is prepended to each diagnostic in the window with no
+---   highlight.
+--- Overrides the setting from |vim.diagnostic.config()|.
 --- @field prefix? string|table|(fun(diagnostic:vim.Diagnostic,i:integer,total:integer): string, string)
+---
+--- Same as {prefix}, but appends the text to the diagnostic instead of
+--- prepending it.
+--- Overrides the setting from |vim.diagnostic.config()|.
 --- @field suffix? string|table|(fun(diagnostic:vim.Diagnostic,i:integer,total:integer): string, string)
+---
 --- @field focus_id? string
 
 --- @class vim.diagnostic.Opts.Underline
+---
+--- Only underline diagnostics matching the given
+--- severity |diagnostic-severity|.
 --- @field severity? vim.diagnostic.SeverityFilter
 
 --- @class vim.diagnostic.Opts.VirtualText
+---
+--- Only show virtual text for diagnostics matching the given
+--- severity |diagnostic-severity|
 --- @field severity? vim.diagnostic.SeverityFilter
---- @field source? boolean|string
---- @field prefix? string|function
---- @field suffix? string|function
+---
+--- Include the diagnostic source in virtual text. Use `'if_many'` to only
+--- show sources if there is more than one diagnostic source in the buffer.
+--- Otherwise, any truthy value means to always show the diagnostic source.
+--- @field source? boolean|"if_many"
+---
+--- Amount of empty spaces inserted at the beginning of the virtual text.
 --- @field spacing? integer
---- @field format? function
+---
+--- Prepend diagnostic message with prefix. If a `function`, {i} is the index
+--- of the diagnostic being evaluated, and {total} is the total number of
+--- diagnostics for the line. This can be used to render diagnostic symbols
+--- or error codes.
+--- @field prefix? string|(fun(diagnostic:vim.Diagnostic,i:integer,total:integer): string)
+---
+--- Append diagnostic message with suffix.
+--- This can be used to render an LSP diagnostic error code.
+--- @field suffix? string|(fun(diagnostic:vim.Diagnostic): string)
+---
+--- The return value is the text used to display the diagnostic. Example:
+--- ```lua
+--- function(diagnostic)
+---   if diagnostic.severity == vim.diagnostic.severity.ERROR then
+---     return string.format("E: %s", diagnostic.message)
+---   end
+---   return diagnostic.message
+--- end
+--- ```
+--- @field format? fun(diagnostic:vim.Diagnostic): string
+---
+--- See |nvim_buf_set_extmark()|.
 --- @field hl_mode? 'replace'|'combine'|'blend'
+---
+--- See |nvim_buf_set_extmark()|.
 --- @field virt_text? {[1]:string,[2]:any}[]
+---
+--- See |nvim_buf_set_extmark()|.
 --- @field virt_text_pos? 'eol'|'overlay'|'right_align'|'inline'
+---
+--- See |nvim_buf_set_extmark()|.
 --- @field virt_text_win_col? integer
+---
+--- See |nvim_buf_set_extmark()|.
 --- @field virt_text_hide? boolean
 
 --- @class vim.diagnostic.Opts.Signs
+---
+--- Only show virtual text for diagnostics matching the given
+--- severity |diagnostic-severity|
 --- @field severity? vim.diagnostic.SeverityFilter
+---
+--- Base priority to use for signs. When {severity_sort} is used, the priority
+--- of a sign is adjusted based on its severity.
+--- Otherwise, all signs use the same priority.
+--- (default: `10`)
 --- @field priority? integer
+---
+--- A table mapping |diagnostic-severity| to the sign text to display in the
+--- sign column. The default is to use `"E"`, `"W"`, `"I"`, and `"H"` for errors,
+--- warnings, information, and hints, respectively. Example:
+--- ```lua
+--- vim.diagnostic.config({
+---   signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
+--- })
+--- ```
 --- @field text? table<vim.diagnostic.Severity,string>
+---
+--- A table mapping |diagnostic-severity| to the highlight group used for the
+--- line number where the sign is placed.
 --- @field numhl? table<vim.diagnostic.Severity,string>
+---
+--- A table mapping |diagnostic-severity| to the highlight group used for the
+--- whole line the sign is placed in.
 --- @field linehl? table<vim.diagnostic.Severity,string>
---- @field texthl? table<vim.diagnostic.Severity,string>
 
 --- @nodoc
 --- @enum vim.diagnostic.Severity
@@ -752,83 +895,11 @@ end
 ---
 --- then virtual text will not be enabled for those diagnostics.
 ---
----@note Each of the configuration options below accepts one of the following:
----         - `false`: Disable this feature
----         - `true`: Enable this feature, use default settings.
----         - `table`: Enable this feature with overrides. Use an empty table to use default values.
----         - `function`: Function with signature (namespace, bufnr) that returns any of the above.
----
----@param opts vim.diagnostic.Opts? (table?) When omitted or "nil", retrieve the current
----       configuration. Otherwise, a configuration table with the following keys:
----       - underline: (default true) Use underline for diagnostics. Options:
----           * severity: Only underline diagnostics matching the given
----             severity |diagnostic-severity|
----       - virtual_text: (default true) Use virtual text for diagnostics. If multiple diagnostics
----         are set for a namespace, one prefix per diagnostic + the last diagnostic
----         message are shown. In addition to the options listed below, the
----         "virt_text" options of |nvim_buf_set_extmark()| may also be used here
----         (e.g. "virt_text_pos" and "hl_mode").
----         Options:
----         * severity: Only show virtual text for diagnostics matching the given
----         severity |diagnostic-severity|
----         * source: (boolean or string) Include the diagnostic source in virtual
----                   text. Use "if_many" to only show sources if there is more than
----                   one diagnostic source in the buffer. Otherwise, any truthy value
----                   means to always show the diagnostic source.
----         * spacing: (number) Amount of empty spaces inserted at the beginning
----                    of the virtual text.
----         * prefix: (string or function) prepend diagnostic message with prefix.
----                   If a function, it must have the signature (diagnostic, i, total)
----                   -> string, where {diagnostic} is of type |diagnostic-structure|,
----                   {i} is the index of the diagnostic being evaluated, and {total}
----                   is the total number of diagnostics for the line. This can be
----                   used to render diagnostic symbols or error codes.
----         * suffix: (string or function) Append diagnostic message with suffix.
----                   If a function, it must have the signature (diagnostic) ->
----                   string, where {diagnostic} is of type |diagnostic-structure|.
----                   This can be used to render an LSP diagnostic error code.
----         * format: (function) A function that takes a diagnostic as input and
----                   returns a string. The return value is the text used to display
----                   the diagnostic. Example:
----              ```lua
----                  function(diagnostic)
----                    if diagnostic.severity == vim.diagnostic.severity.ERROR then
----                      return string.format("E: %s", diagnostic.message)
----                    end
----                    return diagnostic.message
----                  end
----                  ```
----       - signs: (default true) Use signs for diagnostics |diagnostic-signs|. Options:
----         * severity: Only show signs for diagnostics matching the given
----         severity |diagnostic-severity|
----         * priority: (number, default 10) Base priority to use for signs. When
----         {severity_sort} is used, the priority of a sign is adjusted based on
----         its severity. Otherwise, all signs use the same priority.
----         * text: (table) A table mapping |diagnostic-severity| to the sign text
----         to display in the sign column. The default is to use "E", "W", "I", and "H"
----         for errors, warnings, information, and hints, respectively. Example:
----            ```lua
----                vim.diagnostic.config({
----                  signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
----                })
----            ```
----         * numhl: (table) A table mapping |diagnostic-severity| to the highlight
----         group used for the line number where the sign is placed.
----         * linehl: (table) A table mapping |diagnostic-severity| to the highlight group
----         used for the whole line the sign is placed in.
----       - float: Options for floating windows. See |vim.diagnostic.open_float()|.
----       - update_in_insert: (default false) Update diagnostics in Insert mode (if false,
----                           diagnostics are updated on InsertLeave)
----       - severity_sort: (default false) Sort diagnostics by severity. This affects the order in
----         which signs and virtual text are displayed. When true, higher severities
----         are displayed before lower severities (e.g. ERROR is displayed before WARN).
----         Options:
----         * reverse: (boolean) Reverse sort order
----
----@param namespace integer? Update the options for the given namespace. When omitted, update the
----                          global diagnostic options.
----
----@return vim.diagnostic.Opts? (table?) table of current diagnostic config if `opts` is omitted.
+---@param opts vim.diagnostic.Opts? When omitted or `nil`, retrieve the current
+---       configuration. Otherwise, a configuration table (see |vim.diagnostic.Opts|).
+---@param namespace integer? Update the options for the given namespace.
+---                          When omitted, update the global diagnostic options.
+---@return vim.diagnostic.Opts? : Current diagnostic config if {opts} is omitted.
 function M.config(opts, namespace)
   vim.validate({
     opts = { opts, 't', true },
@@ -873,8 +944,8 @@ end
 ---
 ---@param namespace integer The diagnostic namespace
 ---@param bufnr integer Buffer number
----@param diagnostics vim.Diagnostic[] A list of diagnostic items |diagnostic-structure|
----@param opts? vim.diagnostic.Opts (table) Display options to pass to |vim.diagnostic.show()|
+---@param diagnostics vim.Diagnostic[]
+---@param opts? vim.diagnostic.Opts Display options to pass to |vim.diagnostic.show()|
 function M.set(namespace, bufnr, diagnostics, opts)
   vim.validate({
     namespace = { namespace, 'n' },
@@ -908,7 +979,7 @@ end
 --- Get namespace metadata.
 ---
 ---@param namespace integer Diagnostic namespace
----@return vim.diagnostic.NS (table) Namespace metadata
+---@return vim.diagnostic.NS : Namespace metadata
 function M.get_namespace(namespace)
   vim.validate({ namespace = { namespace, 'n' } })
   if not all_namespaces[namespace] then
@@ -933,22 +1004,21 @@ end
 
 --- Get current diagnostic namespaces.
 ---
----@return table<integer,vim.diagnostic.NS> A list of active diagnostic namespaces |vim.diagnostic|.
+---@return table<integer,vim.diagnostic.NS> : List of active diagnostic namespaces |vim.diagnostic|.
 function M.get_namespaces()
   return vim.deepcopy(all_namespaces, true)
 end
 
 --- Get current diagnostics.
 ---
---- Modifying diagnostics in the returned table has no effect. To set diagnostics in a buffer, use |vim.diagnostic.set()|.
+--- Modifying diagnostics in the returned table has no effect.
+--- To set diagnostics in a buffer, use |vim.diagnostic.set()|.
 ---
 ---@param bufnr integer? Buffer number to get diagnostics from. Use 0 for
----                        current buffer or nil for all buffers.
----@param opts? vim.diagnostic.GetOpts (table) A table with the following keys:
----                        - namespace: (number) Limit diagnostics to the given namespace.
----                        - lnum: (number) Limit diagnostics to the given line number.
----                        - severity: See |diagnostic-severity|.
----@return vim.Diagnostic[] table A list of diagnostic items |diagnostic-structure|. Keys `bufnr`, `end_lnum`, `end_col`, and `severity` are guaranteed to be present.
+---                      current buffer or nil for all buffers.
+---@param opts? vim.diagnostic.GetOpts
+---@return vim.Diagnostic[] : Fields `bufnr`, `end_lnum`, `end_col`, and `severity`
+---                           are guaranteed to be present.
 function M.get(bufnr, opts)
   vim.validate({
     bufnr = { bufnr, 'n', true },
@@ -962,11 +1032,9 @@ end
 ---
 ---@param bufnr? integer Buffer number to get diagnostics from. Use 0 for
 ---                      current buffer or nil for all buffers.
----@param opts? table A table with the following keys:
----                   - namespace: (number) Limit diagnostics to the given namespace.
----                   - lnum: (number) Limit diagnostics to the given line number.
----                   - severity: See |diagnostic-severity|.
----@return table A table with actually present severity values as keys (see |diagnostic-severity|) and integer counts as values.
+---@param opts? vim.diagnostic.GetOpts
+---@return table : Table with actually present severity values as keys
+---                (see |diagnostic-severity|) and integer counts as values.
 function M.count(bufnr, opts)
   vim.validate({
     bufnr = { bufnr, 'n', true },
@@ -984,8 +1052,8 @@ end
 
 --- Get the previous diagnostic closest to the cursor position.
 ---
----@param opts? vim.diagnostic.GotoOpts (table) See |vim.diagnostic.goto_next()|
----@return vim.Diagnostic? Previous diagnostic
+---@param opts? vim.diagnostic.GotoOpts
+---@return vim.Diagnostic? : Previous diagnostic
 function M.get_prev(opts)
   opts = opts or {}
 
@@ -998,9 +1066,9 @@ end
 
 --- Return the position of the previous diagnostic in the current buffer.
 ---
----@param opts? vim.diagnostic.GotoOpts (table) See |vim.diagnostic.goto_next()|
----@return table|false: Previous diagnostic position as a (row, col) tuple or false if there is no
----                     prior diagnostic
+---@param opts? vim.diagnostic.GotoOpts
+---@return table|false: Previous diagnostic position as a `(row, col)` tuple
+---                     or `false` if there is no prior diagnostic.
 function M.get_prev_pos(opts)
   local prev = M.get_prev(opts)
   if not prev then
@@ -1011,14 +1079,14 @@ function M.get_prev_pos(opts)
 end
 
 --- Move to the previous diagnostic in the current buffer.
----@param opts? vim.diagnostic.GotoOpts (table) See |vim.diagnostic.goto_next()|
+---@param opts? vim.diagnostic.GotoOpts
 function M.goto_prev(opts)
   return diagnostic_move_pos(opts, M.get_prev_pos(opts))
 end
 
 --- Get the next diagnostic closest to the cursor position.
 ---
----@param opts? vim.diagnostic.GotoOpts (table) See |vim.diagnostic.goto_next()|
+---@param opts? vim.diagnostic.GotoOpts
 ---@return vim.Diagnostic? : Next diagnostic
 function M.get_next(opts)
   opts = opts or {}
@@ -1032,8 +1100,8 @@ end
 
 --- Return the position of the next diagnostic in the current buffer.
 ---
----@param opts? vim.diagnostic.GotoOpts (table) See |vim.diagnostic.goto_next()|
----@return table|false : Next diagnostic position as a (row, col) tuple or false if no next
+---@param opts? vim.diagnostic.GotoOpts
+---@return table|false : Next diagnostic position as a `(row, col)` tuple or false if no next
 ---                      diagnostic.
 function M.get_next_pos(opts)
   local next = M.get_next(opts)
@@ -1046,7 +1114,6 @@ end
 
 --- A table with the following keys:
 --- @class vim.diagnostic.GetOpts
---- @inlinedoc
 ---
 --- Limit diagnostics to the given namespace.
 --- @field namespace? integer
@@ -1059,13 +1126,10 @@ end
 
 --- Configuration table with the following keys:
 --- @class vim.diagnostic.GotoOpts : vim.diagnostic.GetOpts
---- @inlinedoc
 ---
---- Only consider diagnostics from the given namespace.
---- @field namespace integer
----
---- Cursor position as a (row, col) tuple.
---- See |nvim_win_get_cursor()|. Defaults to the current cursor position.
+--- Cursor position as a `(row, col)` tuple.
+--- See |nvim_win_get_cursor()|.
+--- (default: current cursor position)
 --- @field cursor_position? {[1]:integer,[2]:integer}
 ---
 --- Whether to loop around file or not. Similar to 'wrapscan'.
@@ -1075,11 +1139,10 @@ end
 --- See |diagnostic-severity|.
 --- @field severity vim.diagnostic.Severity
 ---
---- If "true", call |vim.diagnostic.open_float()|
---- after moving. If a table, pass the table as the {opts} parameter
---- to |vim.diagnostic.open_float()|. Unless overridden, the float will show
---- diagnostics at the new cursor position (as if "cursor" were passed to
---- the "scope" option).
+--- If `true`, call |vim.diagnostic.open_float()| after moving.
+--- If a table, pass the table as the {opts} parameter to |vim.diagnostic.open_float()|.
+--- Unless overridden, the float will show diagnostics at the new cursor
+--- position (as if "cursor" were passed to the "scope" option).
 --- (default: `true`)
 --- @field float? boolean|vim.diagnostic.Opts.Float
 ---
@@ -1141,7 +1204,7 @@ M.handlers.signs = {
 
     -- Handle legacy diagnostic sign definitions
     -- These were deprecated in 0.10 and will be removed in 0.12
-    if opts.signs and not opts.signs.text and not opts.signs.numhl and not opts.signs.texthl then
+    if opts.signs and not opts.signs.text and not opts.signs.numhl then
       for _, v in ipairs({ 'Error', 'Warn', 'Info', 'Hint' }) do
         local name = string.format('DiagnosticSign%s', v)
         local sign = vim.fn.sign_getdefined(name)[1]
@@ -1476,7 +1539,7 @@ end
 ---                             without saving them or to display only a subset of
 ---                             diagnostics. May not be used when {namespace}
 ---                             or {bufnr} is nil.
----@param opts? vim.diagnostic.Opts (table) Display options. See |vim.diagnostic.config()|.
+---@param opts? vim.diagnostic.Opts Display options.
 function M.show(namespace, bufnr, diagnostics, opts)
   vim.validate({
     namespace = { namespace, 'n', true },
@@ -1552,46 +1615,7 @@ end
 
 --- Show diagnostics in a floating window.
 ---
----@param opts vim.diagnostic.Opts.Float? (table?) Configuration table with the same keys
----            as |vim.lsp.util.open_floating_preview()| in addition to the following:
----            - bufnr: (number) Buffer number to show diagnostics from.
----                     Defaults to the current buffer.
----            - namespace: (number) Limit diagnostics to the given namespace
----            - scope: (string, default "line") Show diagnostics from the whole buffer ("buffer"),
----                     the current cursor line ("line"), or the current cursor position ("cursor").
----                     Shorthand versions are also accepted ("c" for "cursor", "l" for "line", "b"
----                     for "buffer").
----            - pos: (number or table) If {scope} is "line" or "cursor", use this position rather
----                   than the cursor position. If a number, interpreted as a line number;
----                   otherwise, a (row, col) tuple.
----            - severity_sort: (default false) Sort diagnostics by severity. Overrides the setting
----                             from |vim.diagnostic.config()|.
----            - severity: See |diagnostic-severity|. Overrides the setting
----                        from |vim.diagnostic.config()|.
----            - header: (string or table) String to use as the header for the floating window. If a
----                      table, it is interpreted as a [text, hl_group] tuple. Overrides the setting
----                      from |vim.diagnostic.config()|.
----            - source: (boolean or string) Include the diagnostic source in the message.
----                      Use "if_many" to only show sources if there is more than one source of
----                      diagnostics in the buffer. Otherwise, any truthy value means to always show
----                      the diagnostic source. Overrides the setting from |vim.diagnostic.config()|.
----            - format: (function) A function that takes a diagnostic as input and returns a
----                      string. The return value is the text used to display the diagnostic.
----                      Overrides the setting from |vim.diagnostic.config()|.
----            - prefix: (function, string, or table) Prefix each diagnostic in the floating
----                      window. If a function, it must have the signature (diagnostic, i,
----                      total) -> (string, string), where {i} is the index of the diagnostic
----                      being evaluated and {total} is the total number of diagnostics
----                      displayed in the window. The function should return a string which
----                      is prepended to each diagnostic in the window as well as an
----                      (optional) highlight group which will be used to highlight the
----                      prefix. If {prefix} is a table, it is interpreted as a [text,
----                      hl_group] tuple as in |nvim_echo()|; otherwise, if {prefix} is a
----                      string, it is prepended to each diagnostic in the window with no
----                      highlight.
----                      Overrides the setting from |vim.diagnostic.config()|.
----            - suffix: Same as {prefix}, but appends the text to the diagnostic instead of
----                      prepending it. Overrides the setting from |vim.diagnostic.config()|.
+---@param opts vim.diagnostic.Opts.Float?
 ---@return integer? float_bufnr
 ---@return integer? win_id
 function M.open_float(opts, ...)
@@ -1963,8 +1987,7 @@ end
 --- WARNING filename:27:3: Variable 'foo' does not exist
 --- ```
 ---
---- This can be parsed into a diagnostic |diagnostic-structure|
---- with:
+--- This can be parsed into |vim.Diagnostic| structure with:
 ---
 --- ```lua
 --- local s = "WARNING filename:27:3: Variable 'foo' does not exist"
@@ -1975,14 +1998,14 @@ end
 ---
 ---@param str string String to parse diagnostics from.
 ---@param pat string Lua pattern with capture groups.
----@param groups string[] List of fields in a |diagnostic-structure| to
+---@param groups string[] List of fields in a |vim.Diagnostic| structure to
 ---                    associate with captures from {pat}.
 ---@param severity_map table A table mapping the severity field from {groups}
 ---                          with an item from |vim.diagnostic.severity|.
 ---@param defaults table? Table of default values for any fields not listed in {groups}.
 ---                       When omitted, numeric values default to 0 and "severity" defaults to
 ---                       ERROR.
----@return vim.Diagnostic?: |diagnostic-structure| or `nil` if {pat} fails to match {str}.
+---@return vim.Diagnostic?: |vim.Diagnostic| structure or `nil` if {pat} fails to match {str}.
 function M.match(str, pat, groups, severity_map, defaults)
   vim.validate({
     str = { str, 's' },
@@ -2030,8 +2053,8 @@ local errlist_type_map = {
 --- Convert a list of diagnostics to a list of quickfix items that can be
 --- passed to |setqflist()| or |setloclist()|.
 ---
----@param diagnostics vim.Diagnostic[] List of diagnostics |diagnostic-structure|.
----@return table[] of quickfix list items |setqflist-what|
+---@param diagnostics vim.Diagnostic[]
+---@return table[] : Quickfix list items |setqflist-what|
 function M.toqflist(diagnostics)
   vim.validate({
     diagnostics = {
@@ -2071,7 +2094,7 @@ end
 --- Convert a list of quickfix items to a list of diagnostics.
 ---
 ---@param list table[] List of quickfix items from |getqflist()| or |getloclist()|.
----@return vim.Diagnostic[] array of |diagnostic-structure|
+---@return vim.Diagnostic[]
 function M.fromqflist(list)
   vim.validate({
     list = {

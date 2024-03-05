@@ -321,7 +321,7 @@ end
 ---@param _ lsp.ResponseError?
 ---@param result lsp.DocumentDiagnosticReport
 ---@param ctx lsp.HandlerContext
----@param config table Configuration table (see |vim.diagnostic.config()|).
+---@param config vim.diagnostic.Opts Configuration table (see |vim.diagnostic.config()|).
 function M.on_diagnostic(_, result, ctx, config)
   if result == nil or result.kind == 'unchanged' then
     return

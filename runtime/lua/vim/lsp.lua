@@ -961,16 +961,15 @@ end
 ---
 --- Calls |vim.lsp.buf_request_all()| but blocks Nvim while awaiting the result.
 --- Parameters are the same as |vim.lsp.buf_request_all()| but the result is
---- different. Waits a maximum of {timeout_ms} (default 1000) ms.
+--- different. Waits a maximum of {timeout_ms}.
 ---
----@param bufnr (integer) Buffer handle, or 0 for current.
----@param method (string) LSP method name
----@param params (table|nil) Parameters to send to the server
----@param timeout_ms (integer|nil) Maximum time in milliseconds to wait for a
----                               result. Defaults to 1000
----
----@return table<integer, {err: lsp.ResponseError, result: any}>|nil (table) result Map of client_id:request_result.
----@return string|nil err On timeout, cancel, or error, `err` is a string describing the failure reason, and `result` is nil.
+---@param bufnr integer Buffer handle, or 0 for current.
+---@param method string LSP method name
+---@param params table? Parameters to send to the server
+---@param timeout_ms integer? Maximum time in milliseconds to wait for a result.
+---                           (default: `1000`)
+---@return table<integer, {err: lsp.ResponseError, result: any}>? result Map of client_id:request_result.
+---@return string? err On timeout, cancel, or error, `err` is a string describing the failure reason, and `result` is nil.
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   local request_results
 

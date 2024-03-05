@@ -673,17 +673,18 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
 
     Calls |vim.lsp.buf_request_all()| but blocks Nvim while awaiting the
     result. Parameters are the same as |vim.lsp.buf_request_all()| but the
-    result is different. Waits a maximum of {timeout_ms} (default 1000) ms.
+    result is different. Waits a maximum of {timeout_ms}.
 
     Parameters: ~
       • {bufnr}       (`integer`) Buffer handle, or 0 for current.
       • {method}      (`string`) LSP method name
       • {params}      (`table?`) Parameters to send to the server
-      • {timeout_ms}  (`integer?`) Maximum time in milliseconds to wait for a
-                      result. Defaults to 1000
+      • {timeout_ms}  (`integer?`, default: `1000`) Maximum time in
+                      milliseconds to wait for a result.
 
     Return (multiple): ~
-        (`table`) result Map of client_id:request_result.
+        (`table<integer, {err: lsp.ResponseError, result: any}>?`) result Map
+        of client_id:request_result.
         (`string?`) err On timeout, cancel, or error, `err` is a string
         describing the failure reason, and `result` is nil.
 
@@ -946,13 +947,15 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 server.
       • {config}                (`vim.lsp.ClientConfig`) copy of the table
                                 that was passed by the user to
-                                |vim.lsp.start_client()|.
+                                |vim.lsp.start_client()|. See
+                                |vim.lsp.ClientConfig|.
       • {server_capabilities}   (`lsp.ServerCapabilities?`) Response from the
                                 server sent on initialize` describing the
                                 server's capabilities.
       • {progress}              (`vim.lsp.Client.Progress`) A ring buffer
                                 (|vim.ringbuf()|) containing progress messages
-                                sent by the server.
+                                sent by the server. See
+                                |vim.lsp.Client.Progress|.
       • {initialized}           (`true?`)
       • {workspace_folders}     (`lsp.WorkspaceFolder[]?`) The workspace
                                 folders configured in the client when the
@@ -968,9 +971,28 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 action, code lenses, ...) triggers the
                                 command. Client commands take precedence over
                                 the global command registry.
-      • {settings}              (`table`)
-      • {flags}                 (`table`)
-      • {get_language_id}       (`fun(bufnr: integer, filetype: string): string`)
+      • {settings}              (`table`) Map with language server specific
+                                settings. These are returned to the language
+                                server if requested via
+                                `workspace/configuration`. Keys are
+                                case-sensitive.
+      • {flags}                 (`table`) A table with flags for the client.
+                                The current (experimental) flags are:
+                                • {allow_incremental_sync}? (`boolean`) Allow
+                                  using incremental sync for buffer edits
+                                  (defailt: `true`)
+                                • {debounce_text_changes} (`integer`, default:
+                                  `150`) Debounce `didChange` notifications to
+                                  the server by the given number in
+                                  milliseconds. No debounce occurs if `nil`.
+                                • {exit_timeout} (`integer|false`, default:
+                                  `false`) Milliseconds to wait for server to
+                                  exit cleanly after sending the "shutdown"
+                                  request before sending kill -15. If set to
+                                  false, nvim exits immediately after sending
+                                  the "shutdown" request to the server.
+      • {get_language_id}       (`fun(bufnr: integer, filetype: string):
+                                string`)
       • {capabilities}          (`lsp.ClientCapabilities`) The capabilities
                                 provided by the client (editor or tool)
       • {dynamic_capabilities}  (`lsp.DynamicCapabilities`)
@@ -1021,6 +1043,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
 *vim.lsp.Client.Progress*
     Extends: |vim.Ringbuf|
 
+
     Fields: ~
       • {pending}  (`table<lsp.ProgressToken,lsp.LSPAny>`)
 
@@ -1070,10 +1093,8 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {handlers}?           (`table<string,function>`) Map of language
                               server method names to |lsp-handler|
       • {settings}?           (`table`) Map with language server specific
-                              settings. These are returned to the language
-                              server if requested via
-                              `workspace/configuration`. Keys are
-                              case-sensitive.
+                              settings. See the {settings} in
+                              |vim.lsp.Client|.
       • {commands}?           (`table<string,fun(command: lsp.Command, ctx:
                               table)>`) Table that maps string of clientside
                               commands to user-defined functions. Commands
@@ -1101,13 +1122,14 @@ Lua module: vim.lsp.client                                        *lsp-client*
                               possible errors. Use
                               `vim.lsp.rpc.client_errors[code]` to get
                               human-friendly name.
-      • {before_init}?        (`vim.lsp.client.before_init_cb`) Callback
-                              invoked before the LSP "initialize" phase, where
-                              `params` contains the parameters being sent to
-                              the server and `config` is the config that was
-                              passed to |vim.lsp.start_client()|. You can use
-                              this to modify parameters before they are sent.
-      • {on_init}?            (`elem_or_list<vim.lsp.client.on_init_cb>`)
+      • {before_init}?        (`fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)`)
+                              Callback invoked before the LSP "initialize"
+                              phase, where `params` contains the parameters
+                              being sent to the server and `config` is the
+                              config that was passed to
+                              |vim.lsp.start_client()|. You can use this to
+                              modify parameters before they are sent.
+      • {on_init}?            (`elem_or_list<fun(client: vim.lsp.Client, initialize_result: lsp.InitializeResult)>`)
                               Callback invoked after LSP "initialize", where
                               `result` is a table of `capabilities` and
                               anything else the server may send. For example,
@@ -1115,13 +1137,13 @@ Lua module: vim.lsp.client                                        *lsp-client*
                               if `capabilities.offsetEncoding` was sent to it.
                               You can only modify the `client.offset_encoding`
                               here before any notifications are sent.
-      • {on_exit}?            (`elem_or_list<vim.lsp.client.on_exit_cb>`)
+      • {on_exit}?            (`elem_or_list<fun(code: integer, signal: integer, client_id: integer)>`)
                               Callback invoked on client exit.
                               • code: exit code of the process
                               • signal: number describing the signal used to
                                 terminate (if any)
                               • client_id: client handle
-      • {on_attach}?          (`elem_or_list<vim.lsp.client.on_attach_cb>`)
+      • {on_attach}?          (`elem_or_list<fun(client: vim.lsp.Client, bufnr: integer)>`)
                               Callback invoked when client attaches to a
                               buffer.
       • {trace}?              (`'off'|'messages'|'verbose'`, default: "off")
@@ -1129,18 +1151,19 @@ Lua module: vim.lsp.client                                        *lsp-client*
                               initialize request. Invalid/empty values will
       • {flags}?              (`table`) A table with flags for the client. The
                               current (experimental) flags are:
-                              • allow_incremental_sync (bool, default true):
-                                Allow using incremental sync for buffer edits
-                              • debounce_text_changes (number, default 150):
-                                Debounce didChange notifications to the server
-                                by the given number in milliseconds. No
-                                debounce occurs if nil
-                              • exit_timeout (number|boolean, default false):
-                                Milliseconds to wait for server to exit
-                                cleanly after sending the "shutdown" request
-                                before sending kill -15. If set to false, nvim
-                                exits immediately after sending the "shutdown"
-                                request to the server.
+                              • {allow_incremental_sync}? (`boolean`) Allow
+                                using incremental sync for buffer edits
+                                (defailt: `true`)
+                              • {debounce_text_changes} (`integer`, default:
+                                `150`) Debounce `didChange` notifications to
+                                the server by the given number in
+                                milliseconds. No debounce occurs if `nil`.
+                              • {exit_timeout} (`integer|false`, default:
+                                `false`) Milliseconds to wait for server to
+                                exit cleanly after sending the "shutdown"
+                                request before sending kill -15. If set to
+                                false, nvim exits immediately after sending
+                                the "shutdown" request to the server.
       • {root_dir}?           (`string`) Directory where the LSP server will
                               base its workspaceFolders, rootUri, and rootPath
                               on initialization.
@@ -1175,6 +1198,7 @@ Lua module: vim.lsp.buf                                              *lsp-buf*
 
 *vim.lsp.LocationOpts*
     Extends: |vim.lsp.ListOpts|
+
 
     Fields: ~
       • {reuse_win}?  (`boolean`) Jump to existing window if buffer is already
@@ -1443,7 +1467,7 @@ on_diagnostic({_}, {result}, {ctx}, {config})
     Parameters: ~
       • {result}  (`lsp.DocumentDiagnosticReport`)
       • {ctx}     (`lsp.HandlerContext`)
-      • {config}  (`table`) Configuration table (see
+      • {config}  (`vim.diagnostic.Opts`) Configuration table (see
                   |vim.diagnostic.config()|).
 
                                  *vim.lsp.diagnostic.on_publish_diagnostics()*

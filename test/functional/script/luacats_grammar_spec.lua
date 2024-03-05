@@ -130,4 +130,13 @@ describe('luacats grammar', function()
     type = 'b',
     desc = 'desc',
   })
+
+  test(
+    '@field prefix? string|table|(fun(diagnostic:vim.Diagnostic,i:integer,total:integer): string, string)',
+    {
+      kind = 'field',
+      name = 'prefix?',
+      type = 'string|table|(fun(diagnostic:vim.Diagnostic,i:integer,total:integer): string, string)',
+    }
+  )
 end)
