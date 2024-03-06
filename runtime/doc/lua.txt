@@ -2848,7 +2848,7 @@ vim.fs.basename({file})                                    *vim.fs.basename()*
     Return the basename of the given path
 
     Parameters: ~
-      • {file}  (`string`) Path
+      • {file}  (`string?`) Path
 
     Return: ~
         (`string?`) Basename of {file}
@@ -2876,7 +2876,7 @@ vim.fs.dirname({file})                                      *vim.fs.dirname()*
     Return the parent directory of the given path
 
     Parameters: ~
-      • {file}  (`string`) Path
+      • {file}  (`string?`) Path
 
     Return: ~
         (`string?`) Parent directory of {file}
