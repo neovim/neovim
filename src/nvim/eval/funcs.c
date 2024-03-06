@@ -2827,16 +2827,12 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  int fnum = -1;
-  pos_T p1;
-  if (list2fpos(&argvars[0], &p1, &fnum, NULL, false) != OK
-      || (fnum >= 0 && fnum != curbuf->b_fnum)) {
-    return;
-  }
-
-  pos_T p2;
-  if (list2fpos(&argvars[1], &p2, &fnum, NULL, false) != OK
-      || (fnum >= 0 && fnum != curbuf->b_fnum)) {
+  int fnum1 = -1;
+  int fnum2 = -1;
+  pos_T p1, p2;
+  if (list2fpos(&argvars[0], &p1, &fnum1, NULL, false) != OK
+      || list2fpos(&argvars[1], &p2, &fnum2, NULL, false) != OK
+      || fnum1 != fnum2) {
     return;
   }
 
@@ -2864,6 +2860,18 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     region_type = kMTBlockWise;
   } else {
     return;
+  }
+
+  buf_T *save_curbuf = curbuf;
+
+  if (fnum1 != 0) {
+    buf_T *findbuf = buflist_findnr(fnum1);
+    // buffer not loaded
+    if (findbuf == NULL || findbuf->b_ml.ml_mfp == NULL) {
+      return;
+    }
+    save_curbuf = curbuf;
+    curbuf = findbuf;
   }
 
   const TriState save_virtual = virtual_op;
@@ -2946,6 +2954,10 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
     assert(akt != NULL);
     tv_list_append_allocated_string(rettv->vval.v_list, akt);
+  }
+
+  if (curbuf != save_curbuf) {
+    curbuf = save_curbuf;
   }
 
   virtual_op = save_virtual;
