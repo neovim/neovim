@@ -136,7 +136,7 @@ end
 
 --- @param diagnostic vim.Diagnostic
 --- @return lsp.DiagnosticTag[]?
-local function tags_vim_to_vim(diagnostic)
+local function tags_vim_to_lsp(diagnostic)
   if not diagnostic._tags then
     return
   end
@@ -173,7 +173,7 @@ local function diagnostic_vim_to_lsp(diagnostics)
       message = diagnostic.message,
       source = diagnostic.source,
       code = diagnostic.code,
-      tags = tags_vim_to_vim(diagnostics),
+      tags = tags_vim_to_lsp(diagnostic),
     }, diagnostic.user_data and (diagnostic.user_data.lsp or {}) or {})
   end, diagnostics)
 end
