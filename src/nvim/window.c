@@ -139,7 +139,7 @@ static void log_frame_layout(frame_T *frame)
 bool check_can_set_curbuf_disabled(void)
 {
   if (curwin->w_p_wfb) {
-    semsg("%s", e_winfixbuf_cannot_go_to_buffer);
+    emsg(_(e_winfixbuf_cannot_go_to_buffer));
     return false;
   }
 
@@ -155,7 +155,7 @@ bool check_can_set_curbuf_disabled(void)
 bool check_can_set_curbuf_forceit(int forceit)
 {
   if (!forceit && curwin->w_p_wfb) {
-    semsg("%s", e_winfixbuf_cannot_go_to_buffer);
+    emsg(_(e_winfixbuf_cannot_go_to_buffer));
     return false;
   }
 

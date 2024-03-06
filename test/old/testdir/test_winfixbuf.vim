@@ -1254,14 +1254,27 @@ func Test_lNext()
   call s:reset_all_buffers()
 
   let [l:first, l:middle, _] = s:make_simple_location_list()
-  lnext!
+  call assert_equal(1, getloclist(0, #{idx: 0}).idx)
 
-  call assert_fails("lNext", "E1513:")
+  lnext!
+  call assert_equal(2, getloclist(0, #{idx: 0}).idx)
   call assert_equal(l:middle, bufnr())
 
-  lnext!  " Reset for the next test
+  call assert_fails("lNext", "E1513:")
+  " Ensure the entry didn't change.
+  call assert_equal(2, getloclist(0, #{idx: 0}).idx)
+  call assert_equal(l:middle, bufnr())
+
+  lnext!
+  call assert_equal(3, getloclist(0, #{idx: 0}).idx)
+  call assert_equal(l:middle, bufnr())
 
   lNext!
+  call assert_equal(2, getloclist(0, #{idx: 0}).idx)
+  call assert_equal(l:middle, bufnr())
+
+  lNext!
+  call assert_equal(1, getloclist(0, #{idx: 0}).idx)
   call assert_equal(l:first, bufnr())
 endfunc
 
@@ -1271,14 +1284,23 @@ func Test_lNfile()
   call s:reset_all_buffers()
 
   let [l:first, l:current, _] = s:make_simple_location_list()
-  lnext!
+  call assert_equal(1, getloclist(0, #{idx: 0}).idx)
 
-  call assert_fails("lNfile", "E1513:")
+  lnext!
+  call assert_equal(2, getloclist(0, #{idx: 0}).idx)
   call assert_equal(l:current, bufnr())
 
-  lnext!  " Reset for the next test
+  call assert_fails("lNfile", "E1513:")
+  " Ensure the entry didn't change.
+  call assert_equal(2, getloclist(0, #{idx: 0}).idx)
+  call assert_equal(l:current, bufnr())
+
+  lnext!
+  call assert_equal(3, getloclist(0, #{idx: 0}).idx)
+  call assert_equal(l:current, bufnr())
 
   lNfile!
+  call assert_equal(1, getloclist(0, #{idx: 0}).idx)
   call assert_equal(l:first, bufnr())
 endfunc
 
@@ -1485,14 +1507,18 @@ func Test_lnfile()
   call s:reset_all_buffers()
 
   let [_, l:current, l:last] = s:make_simple_location_list()
-  lnext!
+  call assert_equal(1, getloclist(0, #{idx: 0}).idx)
 
-  call assert_fails("lnfile", "E1513:")
+  lnext!
+  call assert_equal(2, getloclist(0, #{idx: 0}).idx)
   call assert_equal(l:current, bufnr())
 
-  lprevious!  " Reset for the next test call
+  call assert_fails("lnfile", "E1513:")
+  call assert_equal(2, getloclist(0, #{idx: 0}).idx)
+  call assert_equal(l:current, bufnr())
 
   lnfile!
+  call assert_equal(4, getloclist(0, #{idx: 0}).idx)
   call assert_equal(l:last, bufnr())
 endfunc
 
@@ -1519,14 +1545,19 @@ func Test_lprevious()
   call s:reset_all_buffers()
 
   let [l:first, l:middle, _] = s:make_simple_location_list()
-  lnext!
+  call assert_equal(1, getloclist(0, #{idx: 0}).idx)
 
-  call assert_fails("lprevious", "E1513:")
+  lnext!
+  call assert_equal(2, getloclist(0, #{idx: 0}).idx)
   call assert_equal(l:middle, bufnr())
 
-  lnext!  " Reset for the next test call
+  call assert_fails("lprevious", "E1513:")
+  " Ensure the entry didn't change.
+  call assert_equal(2, getloclist(0, #{idx: 0}).idx)
+  call assert_equal(l:middle, bufnr())
 
   lprevious!
+  call assert_equal(1, getloclist(0, #{idx: 0}).idx)
   call assert_equal(l:first, bufnr())
 endfunc
 
@@ -3134,17 +3165,87 @@ endfunc
 func Test_quickfix_switchbuf_invalid_prevwin()
   call s:reset_all_buffers()
 
-  let [l:first, _] = s:make_simple_quickfix()
-  call assert_notequal(l:first, bufnr())
-  call assert_equal(1, winnr('$'))
+  call s:make_simple_quickfix()
+  call assert_equal(1, getqflist(#{idx: 0}).idx)
 
   set switchbuf=uselast
   split
   copen
   execute winnr('#') 'quit'
+  call assert_equal(2, winnr('$'))
 
-  call assert_fails('cfirst', 'E1513:')
+  cnext  " Would've triggered a null pointer member access
+  call assert_equal(2, getqflist(#{idx: 0}).idx)
+
   set switchbuf&
+endfunc
+
+func Test_listdo_goto_prevwin()
+  call s:reset_all_buffers()
+  call s:make_buffers_list()
+
+  new
+  call assert_equal(0, &winfixbuf)
+  wincmd p
+  call assert_equal(1, &winfixbuf)
+  call assert_notequal(bufnr(), bufnr('#'))
+
+  augroup ListDoGotoPrevwin
+    au!
+    au BufLeave * let s:triggered = 1
+          \| call assert_equal(bufnr(), winbufnr(winnr()))
+  augroup END
+  " Should correctly switch to the window without 'winfixbuf', and curbuf should
+  " be consistent with curwin->w_buffer for autocommands.
+  bufdo "
+  call assert_equal(0, &winfixbuf)
+  call assert_equal(1, s:triggered)
+  unlet! s:triggered
+  au! ListDoGotoPrevwin
+
+  set winfixbuf
+  wincmd p
+  call assert_equal(2, winnr('$'))
+  " Both curwin and prevwin have 'winfixbuf' set, so should split a new window
+  " without it set.
+  bufdo "
+  call assert_equal(0, &winfixbuf)
+  call assert_equal(3, winnr('$'))
+
+  quit
+  call assert_equal(2, winnr('$'))
+  call assert_equal(1, &winfixbuf)
+  augroup ListDoGotoPrevwin
+    au!
+    au WinEnter * ++once set winfixbuf
+  augroup END
+  " Same as before, but naughty autocommands set 'winfixbuf' for the new window.
+  " :bufdo should give up in this case.
+  call assert_fails('bufdo "', 'E1513:')
+
+  au! ListDoGotoPrevwin
+  augroup! ListDoGotoPrevwin
+endfunc
+
+func Test_quickfix_changed_split_failed()
+  call s:reset_all_buffers()
+
+  call s:make_simple_quickfix()
+  call assert_equal(1, winnr('$'))
+
+  " Quickfix code will open a split in an attempt to get a 'nowinfixbuf' window
+  " to switch buffers in.  Interfere with things by setting 'winfixbuf' in it.
+  augroup QfChanged
+    au!
+    au WinEnter * ++once call assert_equal(2, winnr('$'))
+          \| set winfixbuf | call setqflist([], 'f')
+  augroup END
+  call assert_fails('cnext', ['E1513:', 'E925:'])
+  " Check that the split was automatically closed.
+  call assert_equal(1, winnr('$'))
+
+  au! QfChanged
+  augroup! QfChanged
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
