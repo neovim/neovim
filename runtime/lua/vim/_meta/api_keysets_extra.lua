@@ -129,7 +129,7 @@ error('Cannot require a meta file')
 --- @field last_set_chan integer
 --- @field type 'string'|'boolean'|'number'
 --- @field default string|boolean|integer
---- @field allow_duplicates boolean
+--- @field allows_duplicates boolean
 
 --- @class vim.api.keyset.parse_cmd.mods
 --- @field filter { force: boolean, pattern: string }

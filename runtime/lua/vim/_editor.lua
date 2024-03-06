@@ -275,6 +275,7 @@ do
       for _, line in ipairs(lines) do
         nchars = nchars + line:len()
       end
+      --- @type integer, integer
       local row, col = unpack(vim.api.nvim_win_get_cursor(0))
       local bufline = vim.api.nvim_buf_get_lines(0, row - 1, row, true)[1]
       local firstline = lines[1]
@@ -355,8 +356,11 @@ end
 -- vim.fn.{func}(...)
 ---@nodoc
 vim.fn = setmetatable({}, {
+  --- @param t table<string,function>
+  --- @param key string
+  --- @return function
   __index = function(t, key)
-    local _fn
+    local _fn --- @type function
     if vim.api[key] ~= nil then
       _fn = function()
         error(string.format('Tried to call API function with vim.fn: use vim.api.%s instead', key))
@@ -620,7 +624,7 @@ function vim.notify(msg, level, opts) -- luacheck: no unused args
 end
 
 do
-  local notified = {}
+  local notified = {} --- @type table<string,true>
 
   --- Displays a notification only one time.
   ---
@@ -641,7 +645,7 @@ do
   end
 end
 
-local on_key_cbs = {}
+local on_key_cbs = {} --- @type table<integer,function>
 
 --- Adds Lua function {fn} with namespace id {ns_id} as a listener to every,
 --- yes every, input key.
@@ -711,6 +715,7 @@ end
 --- 2. Can we get it to return things from global namespace even with `print(` in front.
 ---
 --- @param pat string
+--- @return any[], integer
 function vim._expand_pat(pat, env)
   env = env or _G
 
@@ -743,7 +748,7 @@ function vim._expand_pat(pat, env)
     if type(final_env) ~= 'table' then
       return {}, 0
     end
-    local key
+    local key --- @type any
 
     -- Normally, we just have a string
     -- Just attempt to get the string directly from the environment
@@ -785,7 +790,8 @@ function vim._expand_pat(pat, env)
     end
   end
 
-  local keys = {}
+  local keys = {} --- @type table<string,true>
+  --- @param obj table<any,any>
   local function insert_keys(obj)
     for k, _ in pairs(obj) do
       if type(k) == 'string' and string.sub(k, 1, string.len(match_part)) == match_part then
@@ -813,6 +819,7 @@ function vim._expand_pat(pat, env)
 end
 
 --- @param lua_string string
+--- @return (string|string[])[], integer
 vim._expand_pat_get_parts = function(lua_string)
   local parts = {}
 
@@ -870,6 +877,7 @@ vim._expand_pat_get_parts = function(lua_string)
     end
   end
 
+  --- @param val any[]
   parts = vim.tbl_filter(function(val)
     return #val > 0
   end, parts)
@@ -880,7 +888,7 @@ end
 do
   -- Ideally we should just call complete() inside omnifunc, though there are
   -- some bugs, so fake the two-step dance for now.
-  local matches
+  local matches --- @type any[]
 
   --- Omnifunc for completing Lua values from the runtime Lua interpreter,
   --- similar to the builtin completion for the `:lua` command.
