@@ -39,8 +39,9 @@ end
 
 --- Return the parent directory of the given path
 ---
----@param file (string) Path
----@return string|nil Parent directory of {file}
+---@generic T : string|nil
+---@param file T Path
+---@return T Parent directory of {file}
 function M.dirname(file)
   if file == nil then
     return nil
@@ -53,6 +54,7 @@ function M.dirname(file)
   elseif file == '/' or file:match('^/[^/]+$') then
     return '/'
   end
+  ---@type string
   local dir = file:match('[/\\]$') and file:sub(1, #file - 1) or file:match('^([/\\]?.+)[/\\]')
   if iswin and dir:match('^%w:$') then
     return dir .. '/'
@@ -62,8 +64,9 @@ end
 
 --- Return the basename of the given path
 ---
----@param file string Path
----@return string|nil Basename of {file}
+---@generic T : string|nil
+---@param file T Path
+---@return T Basename of {file}
 function M.basename(file)
   if file == nil then
     return nil
