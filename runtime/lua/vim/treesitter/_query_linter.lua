@@ -17,7 +17,7 @@ local M = {}
 --- @field is_first_lang boolean Whether this is the first language of a linter run checking queries for multiple `langs`
 
 --- Adds a diagnostic for node in the query buffer
---- @param diagnostics Diagnostic[]
+--- @param diagnostics vim.Diagnostic[]
 --- @param range Range4
 --- @param lint string
 --- @param lang string?
@@ -114,7 +114,7 @@ end
 --- @return vim.treesitter.ParseError?
 local parse = vim.func._memoize(hash_parse, function(node, buf, lang)
   local query_text = vim.treesitter.get_node_text(node, buf)
-  local ok, err = pcall(vim.treesitter.query.parse, lang, query_text) ---@type boolean|vim.treesitter.ParseError, string|Query
+  local ok, err = pcall(vim.treesitter.query.parse, lang, query_text) ---@type boolean|vim.treesitter.ParseError, string|vim.treesitter.Query
 
   if not ok and type(err) == 'string' then
     return get_error_entry(err, node)
@@ -123,9 +123,9 @@ end)
 
 --- @param buf integer
 --- @param match vim.treesitter.query.TSMatch
---- @param query Query
+--- @param query vim.treesitter.Query
 --- @param lang_context QueryLinterLanguageContext
---- @param diagnostics Diagnostic[]
+--- @param diagnostics vim.Diagnostic[]
 local function lint_match(buf, match, query, lang_context, diagnostics)
   local lang = lang_context.lang
   local parser_info = lang_context.parser_info

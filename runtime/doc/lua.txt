@@ -3774,7 +3774,7 @@ vim.version.range({spec})                                *vim.version.range()*
       • {spec}  (`string`) Version range "spec"
 
     Return: ~
-        (`table`) A table with the following fields:
+        (`table?`) A table with the following fields:
         • {from} (`vim.Version`)
         • {to}? (`vim.Version`)
         • {has} (`fun(self: vim.VersionRangeversion: string|vim.Version)`)

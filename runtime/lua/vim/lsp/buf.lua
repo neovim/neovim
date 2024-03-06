@@ -248,6 +248,9 @@ function M.format(options)
     vim.notify('[LSP] Format request failed, no matching language servers.')
   end
 
+  --- @param client vim.lsp.Client
+  --- @param params lsp.DocumentFormattingParams
+  --- @return lsp.DocumentFormattingParams
   local function set_range(client, params)
     if range then
       local range_params =
@@ -294,6 +297,9 @@ end
 --- Restrict clients used for rename to ones where client.name matches
 --- this field.
 --- @field name? string
+---
+--- (default: current buffer)
+--- @field bufnr? integer
 
 --- Renames all references to the symbol under the cursor.
 ---
@@ -786,6 +792,7 @@ function M.code_action(options)
   options = options or {}
   -- Detect old API call code_action(context) which should now be
   -- code_action({ context = context} )
+  --- @diagnostic disable-next-line:undefined-field
   if options.diagnostics or options.only then
     options = { options = options }
   end
