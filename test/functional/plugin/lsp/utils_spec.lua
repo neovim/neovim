@@ -228,4 +228,198 @@ describe('vim.lsp.util', function()
       end)
     end)
   end)
+
+  describe('_update_folds', function()
+    local upd_folds = function(ranges)
+      exec_lua([[vim.lsp.util._update_folds(0,...)]], ranges)
+    end
+
+    ---@type lsp.FoldingRange[]
+    local ranges = {}
+
+    ---@param s integer
+    ---@param e integer
+    local add_range = function(s, e)
+      table.insert(ranges, { startLine = s - 1, endLine = e - 1 })
+      upd_folds(ranges)
+    end
+
+    local fold_lvl = function(lnum)
+      return exec_lua([[return vim.lsp.util._get_fold_level(0,...)]], lnum)
+    end
+
+    it('fold levels are zero when not explicitly defined', function()
+      eq(0, fold_lvl(0))
+      eq(0, fold_lvl(1))
+      eq(0, fold_lvl(2))
+    end)
+
+    it('adding a range increases fold level for range only', function()
+      add_range(2, 4)
+      --  1
+      -- -2
+      -- |3
+      -- |4
+      --  5
+      --  6
+      --  7
+      eq(0, fold_lvl(1))
+      eq(1, fold_lvl(2))
+      eq(1, fold_lvl(3))
+      eq('<1', fold_lvl(4))
+      eq(0, fold_lvl(5))
+      eq(0, fold_lvl(6))
+      eq(0, fold_lvl(7))
+    end)
+
+    it('nested folds add up', function()
+      add_range(1, 5)
+      -- - 1
+      -- |-2
+      -- ||3
+      -- ||4
+      -- | 5
+      --   6
+      --   7
+      eq(1, fold_lvl(1))
+      eq(2, fold_lvl(2))
+      eq(2, fold_lvl(3))
+      eq('<2', fold_lvl(4))
+      eq('<1', fold_lvl(5))
+      eq(0, fold_lvl(6))
+      eq(0, fold_lvl(7))
+    end)
+
+    it('consecutive folds with same level are separated', function()
+      add_range(6, 7)
+      -- - 1
+      -- |-2
+      -- ||3
+      -- ||4
+      -- | 5
+      -- - 6
+      -- | 7
+      eq(1, fold_lvl(1))
+      eq(2, fold_lvl(2))
+      eq(2, fold_lvl(3))
+      eq('<2', fold_lvl(4))
+      eq('<1', fold_lvl(5))
+      eq(1, fold_lvl(6))
+      eq('<1', fold_lvl(7))
+    end)
+
+    it('single line fold is respected', function()
+      add_range(3, 3)
+      -- -  1
+      -- |- 2
+      -- ||-3
+      -- || 4
+      -- |  5
+      -- -  6
+      -- |  7
+      eq(1, fold_lvl(1))
+      eq(2, fold_lvl(2))
+      eq('<3', fold_lvl(3))
+      eq('<2', fold_lvl(4))
+      eq('<1', fold_lvl(5))
+      eq(1, fold_lvl(6))
+      eq('<1', fold_lvl(7))
+    end)
+
+    it('overlapping folds are extended', function()
+      add_range(4, 5)
+      -- -   1
+      -- |-- 2
+      -- |||-3
+      -- ||| 4
+      -- ||  5
+      -- -   6
+      -- |   7
+      eq(1, fold_lvl(1))
+      eq(3, fold_lvl(2))
+      eq('<4', fold_lvl(3))
+      eq('<3', fold_lvl(4))
+      eq('<1', fold_lvl(5))
+      eq(1, fold_lvl(6))
+      eq('<1', fold_lvl(7))
+
+      add_range(1, 3)
+      -- --   1
+      -- ||-- 2
+      -- ||||-3
+      -- |||| 4
+      -- |||  5
+      -- -    6
+      -- |    7
+      eq(2, fold_lvl(1))
+      eq(4, fold_lvl(2))
+      eq('<5', fold_lvl(3))
+      eq('<4', fold_lvl(4))
+      eq('<1', fold_lvl(5))
+      eq(1, fold_lvl(6))
+      eq('<1', fold_lvl(7))
+
+      add_range(5, 7)
+      -- ---   1
+      -- |||-- 2
+      -- |||||-3
+      -- ||||| 4
+      -- ||||  5
+      -- |-    6
+      -- ||    7
+      eq(3, fold_lvl(1))
+      eq(5, fold_lvl(2))
+      eq('<6', fold_lvl(3))
+      eq('<5', fold_lvl(4))
+      eq('<2', fold_lvl(5))
+      eq(2, fold_lvl(6))
+      eq('<1', fold_lvl(7))
+
+      add_range(6, 7)
+      -- ---   1
+      -- |||-- 2
+      -- |||||-3
+      -- ||||| 4
+      -- ||||  5
+      -- |--   6
+      -- |||   7
+      eq(3, fold_lvl(1))
+      eq(5, fold_lvl(2))
+      eq('<6', fold_lvl(3))
+      eq('<5', fold_lvl(4))
+      eq('<2', fold_lvl(5))
+      eq(3, fold_lvl(6))
+      eq('<1', fold_lvl(7))
+    end)
+
+    it('overlap resolution depends on order', function()
+      ranges = {}
+      add_range(1, 3)
+      add_range(3, 5)
+      -- --1
+      -- ||2
+      -- ||3
+      -- | 4
+      -- | 5
+      eq(2, fold_lvl(1))
+      eq(2, fold_lvl(2))
+      eq('<2', fold_lvl(3))
+      eq(1, fold_lvl(4))
+      eq('<1', fold_lvl(5))
+
+      ranges = {}
+      add_range(3, 5)
+      add_range(1, 3)
+      -- - 1
+      -- | 2
+      -- |-3
+      -- ||4
+      -- ||5
+      eq(1, fold_lvl(1))
+      eq(1, fold_lvl(2))
+      eq(2, fold_lvl(3))
+      eq(2, fold_lvl(4))
+      eq('<1', fold_lvl(5))
+    end)
+  end)
 end)

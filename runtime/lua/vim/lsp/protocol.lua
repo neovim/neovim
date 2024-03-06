@@ -822,6 +822,10 @@ function protocol.make_client_capabilities()
       callHierarchy = {
         dynamicRegistration = false,
       },
+      foldingRange = {
+        dynamicRegistration = false,
+        lineFoldingOnly = true,
+      },
     },
     workspace = {
       symbol = {
