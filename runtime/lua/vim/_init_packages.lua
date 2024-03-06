@@ -1,5 +1,5 @@
-local pathtrails = {}
-vim._so_trails = {}
+local pathtrails = {} --- @type table<string,true> ta
+vim._so_trails = {} --- @type string[]
 for s in (package.cpath .. ';'):gmatch('[^;]*;') do
   s = s:sub(1, -2) -- Strip trailing semicolon
   -- Find out path patterns. pathtrail should contain something like
@@ -65,6 +65,7 @@ vim._submodules = {
 
 -- These are for loading runtime modules in the vim namespace lazily.
 setmetatable(vim, {
+  --- @param t table<any,any>
   __index = function(t, key)
     if vim._submodules[key] then
       t[key] = require('vim.' .. key)
@@ -73,6 +74,7 @@ setmetatable(vim, {
       require('vim._inspector')
       return t[key]
     elseif vim.startswith(key, 'uri_') then
+      --- @type any?
       local val = require('vim.uri')[key]
       if val ~= nil then
         -- Expose all `vim.uri` functions on the `vim` module.

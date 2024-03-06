@@ -1433,9 +1433,6 @@ vim.env                                                              *vim.env*
         print(vim.env.TERM)
 <
 
-    Parameters: ~
-      • {var}  (`string`)
-
 vim.go                                                                *vim.go*
     Get or set global |options|. Like `:setglobal`. Invalid key is an error.
 
@@ -2927,16 +2924,16 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                  • path: full path of the current item The function should
                    return `true` if the given item is considered a match.
       • {opts}   (`table`) Optional keyword arguments:
-                 • {path} (`string`) Path to begin searching from. If omitted,
-                   the |current-directory| is used.
-                 • {upward} (`boolean`, default: `false`) Search upward
+                 • {path}? (`string`) Path to begin searching from. If
+                   omitted, the |current-directory| is used.
+                 • {upward}? (`boolean`, default: `false`) Search upward
                    through parent directories. Otherwise, search through child
                    directories (recursively).
-                 • {stop} (`string`) Stop searching when this directory is
+                 • {stop}? (`string`) Stop searching when this directory is
                    reached. The directory itself is not searched.
-                 • {type} (`string`) Find only items of the given type. If
+                 • {type}? (`string`) Find only items of the given type. If
                    omitted, all items that match {names} are included.
-                 • {limit} (`number`, default: `1`) Stop the search after
+                 • {limit}? (`number`, default: `1`) Stop the search after
                    finding this many matches. Use `math.huge` to place no
                    limit on the number of matches.
 

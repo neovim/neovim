@@ -592,7 +592,8 @@ function vim.spairs(t)
     if keys[i] then
       return keys[i], t[keys[i]]
     end
-  end
+  end,
+    t
 end
 
 --- Tests if `t` is an "array": a table indexed _only_ by integers (potentially non-contiguous).
