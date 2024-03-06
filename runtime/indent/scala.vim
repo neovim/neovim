@@ -501,7 +501,7 @@ function! GetScalaIndent()
           let ind = indent(completeLine)
         endif
       else
-        " This is the only part that's different from from the '{', '}' one below
+        " This is the only part that's different from the '{', '}' one below
         " Yup... some refactoring is necessary at some point.
         let ind = ind + (bracketCount * shiftwidth())
         let lineCompletedBrackets = 1
