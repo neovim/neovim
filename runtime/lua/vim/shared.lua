@@ -652,18 +652,21 @@ function vim.tbl_islist(t)
     return false
   end
 
-  local num_elem = vim.tbl_count(t)
-
-  if num_elem == 0 then
+  if next(t) == nil then
     return getmetatable(t) ~= vim._empty_dict_mt
-  else
-    for i = 1, num_elem do
-      if t[i] == nil then
-        return false
-      end
-    end
-    return true
   end
+
+  local j = 1
+  for _ in
+    pairs(t--[[@as table<any,any>]])
+  do
+    if t[j] == nil then
+      return false
+    end
+    j = j + 1
+  end
+
+  return true
 end
 
 --- Counts the number of non-nil values in table `t`.
