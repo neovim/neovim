@@ -431,13 +431,13 @@ local function styletable_treesitter(state)
   end
   buf_highlighter.tree:parse(true)
   buf_highlighter.tree:for_each_tree(function(tstree, tree)
-    --- @cast tree LanguageTree
+    --- @cast tree vim.treesitter.LanguageTree
     if not tstree then
       return
     end
     local root = tstree:root()
     local q = buf_highlighter:get_query(tree:lang())
-    --- @type Query?
+    --- @type vim.treesitter.Query?
     local query = q:query()
     if not query then
       return

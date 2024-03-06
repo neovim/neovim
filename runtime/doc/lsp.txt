@@ -1403,6 +1403,7 @@ rename({new_name}, {options})                           *vim.lsp.buf.rename()*
                       predicate are included.
                     • {name}? (`string`) Restrict clients used for rename to
                       ones where client.name matches this field.
+                    • {bufnr}? (`integer`) (default: current buffer)
 
 signature_help()                                *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a

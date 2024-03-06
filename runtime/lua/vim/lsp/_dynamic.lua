@@ -58,7 +58,7 @@ end
 --- @param method string
 --- @param opts? {bufnr: integer?}
 --- @return lsp.Registration? (table|nil) the registration if found
---- @private
+--- @package
 function M:get(method, opts)
   opts = opts or {}
   opts.bufnr = opts.bufnr or vim.api.nvim_get_current_buf()

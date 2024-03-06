@@ -72,7 +72,7 @@ local TSCallbackNames = {
 ---@field private _callbacks table<TSCallbackName,function[]> Callback handlers
 ---@field package _callbacks_rec table<TSCallbackName,function[]> Callback handlers (recursive)
 ---@field private _children table<string,vim.treesitter.LanguageTree> Injected languages
----@field private _injection_query Query Queries defining injected languages
+---@field private _injection_query vim.treesitter.Query Queries defining injected languages
 ---@field private _injections_processed boolean
 ---@field private _opts table Options
 ---@field private _parser TSParser Parser for language
@@ -473,6 +473,7 @@ function LanguageTree:for_each_child(fn, include_self)
   end
 
   for _, child in pairs(self._children) do
+    --- @diagnostic disable-next-line:deprecated
     child:for_each_child(fn, true)
   end
 end
