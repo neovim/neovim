@@ -853,8 +853,9 @@ print()
     ]]
     )
 
+    -- Regions outside the given range are discarded.
     eq(
-      2,
+      1,
       exec_lua [[
       parser:parse({2, 6})
       return vim.tbl_count(parser:children().lua:trees())
@@ -997,19 +998,7 @@ print()
       ]]
     end
 
-    it('is valid excluding, invalid including children initially', function()
-      eq(true, exec_lua('return parser:is_valid(true)'))
-      eq(false, exec_lua('return parser:is_valid()'))
-    end)
-
-    it('is fully valid after a full parse', function()
-      exec_lua('parser:parse(true)')
-      eq(true, exec_lua('return parser:is_valid(true)'))
-      eq(true, exec_lua('return parser:is_valid()'))
-    end)
-
-    it('is fully valid after a parsing a range on parsed tree', function()
-      exec_lua('vim.treesitter.get_parser():parse({5, 7})')
+    it('is valid including children since it does not have one', function()
       eq(true, exec_lua('return parser:is_valid(true)'))
       eq(true, exec_lua('return parser:is_valid()'))
     end)
@@ -1082,17 +1071,30 @@ print()
         eq(false, exec_lua('return parser:is_valid()'))
       end)
 
-      it('is valid excluding, invalid including children after a rangeless parse', function()
-        exec_lua('parser:parse()')
-        eq(true, exec_lua('return parser:is_valid(true)'))
-        eq(false, exec_lua('return parser:is_valid()'))
-      end)
+      it(
+        'is fully valid after a rangeless parse, since the only change to the children was removing a region',
+        function()
+          exec_lua('parser:parse()')
+          eq(true, exec_lua('return parser:is_valid(true)'))
+          eq(true, exec_lua('return parser:is_valid()'))
+        end
+      )
 
       it('is fully valid after a range parse that includes injection region', function()
         exec_lua('parser:parse({5, 7})')
         eq(true, exec_lua('return parser:is_valid(true)'))
         eq(true, exec_lua('return parser:is_valid()'))
       end)
+
+      it(
+        'is valid excluding, invalid including children after a range parse that does not include injection region',
+        function()
+          exec_lua('parser:parse({2, 4})')
+          eq(vim.NIL, get_regions())
+          eq(true, exec_lua('return parser:is_valid(true)'))
+          eq(false, exec_lua('return parser:is_valid()'))
+        end
+      )
     end)
 
     describe('when editing an injection region', function()
