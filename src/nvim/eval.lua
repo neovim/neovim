@@ -4365,7 +4365,7 @@ M.funcs = {
       {pos1} and {pos2} must both be |List|s with four numbers.
       See |getpos()| for the format of the list.  It's possible
       to specify positions from a different buffer, but please
-      note the limitations at |getregion-notes|
+      note the limitations at |getregion-notes|.
 
       The optional argument {opts} is a Dict and supports the
       following items:
@@ -4399,9 +4399,9 @@ M.funcs = {
       - If {pos1} and {pos2} are not in the same buffer, an empty
         list is returned.
       - {pos1} and {pos2} must belong to a |bufloaded()| buffer.
-      - It is evaluated in current window context, this makes a
-        different if a buffer is displayed in a different window and
-        'virtualedit' or 'list' is set
+      - It is evaluated in current window context, which makes a
+        difference if the buffer is displayed in a window with
+        different 'virtualedit' or 'list' values.
 
       Examples: >
       	:xnoremap <CR>

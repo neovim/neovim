@@ -2862,7 +2862,7 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  buf_T *save_curbuf = curbuf;
+  buf_T *const save_curbuf = curbuf;
 
   if (fnum1 != 0) {
     buf_T *findbuf = buflist_findnr(fnum1);
@@ -2870,7 +2870,6 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (findbuf == NULL || findbuf->b_ml.ml_mfp == NULL) {
       return;
     }
-    save_curbuf = curbuf;
     curbuf = findbuf;
   }
 
