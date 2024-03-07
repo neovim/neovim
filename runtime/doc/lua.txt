@@ -922,7 +922,7 @@ vim.in_fast_event()                                      *vim.in_fast_event()*
     When this is `false` most API functions are callable (but may be subject
     to other restrictions such as |textlock|).
 
-vim.rpcnotify({channel}, {method}, {args}, {...})            *vim.rpcnotify()*
+vim.rpcnotify({channel}, {method}, {...})                    *vim.rpcnotify()*
     Sends {event} to {channel} via |RPC| and returns immediately. If {channel}
     is 0, the event is broadcast to all channels.
 
@@ -931,10 +931,9 @@ vim.rpcnotify({channel}, {method}, {args}, {...})            *vim.rpcnotify()*
     Parameters: ~
       • {channel}  (`integer`)
       • {method}   (`string`)
-      • {args}     (`any[]?`)
       • {...}      (`any?`)
 
-vim.rpcrequest({channel}, {method}, {args}, {...})          *vim.rpcrequest()*
+vim.rpcrequest({channel}, {method}, {...})                  *vim.rpcrequest()*
     Sends a request to {channel} to invoke {method} via |RPC| and blocks until
     a response is received.
 
@@ -944,7 +943,6 @@ vim.rpcrequest({channel}, {method}, {args}, {...})          *vim.rpcrequest()*
     Parameters: ~
       • {channel}  (`integer`)
       • {method}   (`string`)
-      • {args}     (`any[]?`)
       • {...}      (`any?`)
 
 vim.schedule({fn})                                            *vim.schedule()*
