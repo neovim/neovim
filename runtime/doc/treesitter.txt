@@ -1317,7 +1317,12 @@ LanguageTree:is_valid({exclude_children})            *LanguageTree:is_valid()*
 
     Parameters: ~
       • {exclude_children}  (`boolean?`) whether to ignore the validity of
-                            children (default `false`)
+                            children (default `false`). `is_valid(false)` is
+                            sound but not complete, i.e.,
+                            • if it returns `true`, this LanguageTree is
+                              actually valid; but
+                            • even if this LanguageTree is actually valid, it
+                              may return `false`.
 
     Return: ~
         (`boolean`)

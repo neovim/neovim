@@ -73,7 +73,7 @@ local TSCallbackNames = {
 ---@field package _callbacks_rec table<TSCallbackName,function[]> Callback handlers (recursive)
 ---@field private _children table<string,vim.treesitter.LanguageTree> Injected languages
 ---@field private _injection_query vim.treesitter.Query Queries defining injected languages
----@field private _injections_processed boolean
+---@field private _injections_processed boolean true iff processed completely (not partially)
 ---@field private _opts table Options
 ---@field private _parser TSParser Parser for language
 ---@field private _has_regions boolean
@@ -86,6 +86,7 @@ local TSCallbackNames = {
 ---@field private _trees table<integer, TSTree> Reference to parsed tree (one for each language).
 ---Each key is the index of region, which is synced with _regions and _valid.
 ---@field private _valid boolean|table<integer,boolean> If the parsed tree is valid
+---@field private _has_combined_injection boolean
 ---@field private _logger? fun(logtype: string, msg: string)
 ---@field private _logfile? file*
 local LanguageTree = {}
@@ -97,6 +98,21 @@ local LanguageTree = {}
 ---@field injections? table<string,string>
 
 LanguageTree.__index = LanguageTree
+
+---@param injection_query vim.treesitter.Query
+---@return boolean
+local function query_has_combined(injection_query)
+  for _, preds in pairs(injection_query.info.patterns) do
+    if
+      vim.tbl_contains(preds, function(pred)
+        return vim.deep_equal(pred, { 'set!', 'injection.combined' })
+      end, { predicate = true })
+    then
+      return true
+    end
+  end
+  return false
+end
 
 --- @package
 ---
@@ -127,12 +143,17 @@ function LanguageTree.new(source, lang, opts)
     _injection_query = injections[lang] and query.parse(lang, injections[lang])
       or query.get(lang, 'injections'),
     _has_regions = false,
+    _has_combined_injection = false,
     _injections_processed = false,
     _valid = false,
     _parser = vim._create_ts_parser(lang),
     _callbacks = {},
     _callbacks_rec = {},
   }
+
+  if self._injection_query then
+    self._has_combined_injection = query_has_combined(self._injection_query)
+  end
 
   setmetatable(self, LanguageTree)
 
@@ -261,7 +282,10 @@ end
 
 --- Returns whether this LanguageTree is valid, i.e., |LanguageTree:trees()| reflects the latest
 --- state of the source. If invalid, user should call |LanguageTree:parse()|.
----@param exclude_children boolean|nil whether to ignore the validity of children (default `false`)
+---@param exclude_children boolean|nil whether to ignore the validity of children (default `false`).
+--- `is_valid(false)` is sound but not complete, i.e.,
+--- * if it returns `true`, this LanguageTree is actually valid; but
+--- * even if this LanguageTree is actually valid, it may return `false`.
 ---@return boolean
 function LanguageTree:is_valid(exclude_children)
   local valid = self._valid
@@ -275,6 +299,10 @@ function LanguageTree:is_valid(exclude_children)
   end
 
   if not exclude_children then
+    -- NOTE: For `is_valid(false)` to be complete under partial injection optimization,
+    -- `_injections_processed` should track the set of ranges in which the injections query has been
+    -- run, and it should be checked that `_injections_processed` covers all possible injection
+    -- regions (which can be decided only by running injection query again).
     if not self._injections_processed then
       return false
     end
@@ -374,11 +402,12 @@ function LanguageTree:_parse_regions(range)
 end
 
 --- @private
+--- @param range boolean|Range|nil
 --- @return number
-function LanguageTree:_add_injections()
+function LanguageTree:_add_injections(range)
   local seen_langs = {} ---@type table<string,boolean>
 
-  local query_time, injections_by_lang = tcall(self._get_injections, self)
+  local query_time, injections_by_lang = tcall(self._get_injections, self, range)
   for lang, injection_regions in pairs(injections_by_lang) do
     local has_lang = pcall(language.add, lang)
 
@@ -419,11 +448,6 @@ end
 ---     only the root tree without injections).
 --- @return table<integer, TSTree>
 function LanguageTree:parse(range)
-  if self:is_valid() then
-    self:_log('valid')
-    return self._trees
-  end
-
   local changes --- @type Range6[]?
 
   -- Collect some stats
@@ -440,9 +464,16 @@ function LanguageTree:parse(range)
     end
   end
 
+  -- NOTE: Trade-off in partial injection query execution
+  -- * The good: Each `parse()` is faster.
+  -- * The bad: The injection query is run whenever parsing a different range, e.g., when scrolling
+  --   and when multiple windows showing the same buffer. However, this is not a big problem as
+  --   partial query is very cheap even on huge files.
   if not self._injections_processed and range ~= false and range ~= nil then
-    query_time = self:_add_injections()
-    self._injections_processed = true
+    query_time = self:_add_injections(range)
+    if range == true or self._has_combined_injection then
+      self._injections_processed = true
+    end
   end
 
   self:_log({
@@ -835,36 +866,54 @@ end
 ---
 --- This is where most of the injection processing occurs.
 ---
---- TODO: Allow for an offset predicate to tailor the injection range
----       instead of using the entire nodes range.
+--- @param range boolean|Range|nil
 --- @private
 --- @return table<string, Range6[][]>
-function LanguageTree:_get_injections()
-  if not self._injection_query then
+function LanguageTree:_get_injections(range)
+  if not self._injection_query or not range then
     return {}
   end
 
   ---@type table<integer,vim.treesitter.languagetree.Injection>
   local injections = {}
 
+  local range_start_line, range_end_line ---@type integer, integer
+  if range ~= true then
+    local sline, _, eline, _ = Range.unpack4(range)
+    range_start_line, range_end_line = sline, eline
+  end
+
   for index, tree in pairs(self._trees) do
     local root_node = tree:root()
-    local start_line, _, end_line, _ = root_node:range()
+    local start_line, _, end_line, end_col = root_node:range()
+    if end_col > 0 then
+      end_line = end_line + 1
+    end
 
-    for pattern, match, metadata in
-      self._injection_query:iter_matches(
-        root_node,
-        self._source,
-        start_line,
-        end_line + 1,
-        { all = true }
-      )
-    do
-      local lang, combined, ranges = self:_get_injection(match, metadata)
-      if lang then
-        add_injection(injections, index, pattern, lang, combined, ranges)
-      else
-        self:_log('match from injection query failed for pattern', pattern)
+    -- If the query doesn't have combined injection, run the query on the given range. Combined
+    -- injection must be run on the full range. Currently there is no simply way to selectively
+    -- match each pattern separately.
+    if range ~= true and not self._has_combined_injection then
+      start_line = math.max(start_line, range_start_line)
+      end_line = math.min(end_line, range_end_line)
+    end
+
+    if start_line < end_line then
+      for pattern, match, metadata in
+        self._injection_query:iter_matches(
+          root_node,
+          self._source,
+          start_line,
+          end_line,
+          { all = true }
+        )
+      do
+        local lang, combined, ranges = self:_get_injection(match, metadata)
+        if lang then
+          add_injection(injections, index, pattern, lang, combined, ranges)
+        else
+          self:_log('match from injection query failed for pattern', pattern)
+        end
       end
     end
   end
