@@ -1283,6 +1283,26 @@ func Test_shortmess_F2()
   " call assert_fails('call test_getvalue("abc")', 'E475:')
 endfunc
 
+func Test_shortmess_F3()
+  defer delete('X_dummy')
+
+  set hidden
+  set autoread
+  e X_dummy
+  e file
+
+  set shortmess+=F
+  call writefile(["foo"], 'X_dummy')
+  call assert_true(empty(execute('bn', '')))
+  call assert_true(empty(execute('bn', '')))
+
+  set shortmess&
+  set autoread&
+  set hidden&
+  bwipe
+  bwipe
+endfunc
+
 func Test_local_scrolloff()
   set so=5
   set siso=7

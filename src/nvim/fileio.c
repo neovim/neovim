@@ -3008,7 +3008,7 @@ int buf_check_timestamp(buf_T *buf)
     can_reload = true;
   }
 
-  if (mesg != NULL) {
+  if (mesg != NULL && !shortmess(SHM_FILEINFO)) {
     char *path = home_replace_save(buf, buf->b_fname);
     if (!helpmesg) {
       mesg2 = "";
