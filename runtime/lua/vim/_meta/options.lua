@@ -5799,7 +5799,8 @@ vim.bo.sw = vim.bo.shiftwidth
 --- 	items, for instance "scanning tags"
 ---   q	do not show "recording @a" when recording a macro	*shm-q*
 ---   F	don't give the file info when editing a file, like	*shm-F*
---- 	`:silent` was used for the command
+--- 	`:silent` was used for the command; note that this also
+--- 	affects messages from 'autoread' reloading
 ---   S	do not show search count message when searching, e.g.	*shm-S*
 --- 	"[1/5]"
 ---
