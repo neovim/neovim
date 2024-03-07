@@ -363,7 +363,7 @@ int main(int argc, char **argv)
 
   setbuf(stdout, NULL);  // NOLINT(bugprone-unsafe-functions)
 
-  full_screen = !silent_mode;
+  full_screen = !silent_mode || exmode_active;
 
   // Set the default values for the options that use Rows and Columns.
   win_init_size();
