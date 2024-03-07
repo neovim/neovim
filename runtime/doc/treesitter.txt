@@ -1554,7 +1554,8 @@ LanguageTree:invalidate({reload})                  *LanguageTree:invalidate()*
 LanguageTree:is_valid({exclude_children})            *LanguageTree:is_valid()*
     Returns whether this LanguageTree is valid, i.e., |LanguageTree:trees()|
     reflects the latest state of the source. If invalid, user should call
-    |LanguageTree:parse()|.
+    |LanguageTree:parse()|. `is_valid(false)` can be slow because it runs
+    injection on the full source.
 
     Parameters: ~
       • {exclude_children}  (`boolean?`) whether to ignore the validity of

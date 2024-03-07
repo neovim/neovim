@@ -67,6 +67,7 @@ end
 ---@field lang string parser language name
 ---@field captures string[] list of (unique) capture names defined in query
 ---@field info vim.treesitter.QueryInfo query context (e.g. captures, predicates, directives)
+---@field has_combined_injection true? whether this query has a combined injection pattern
 ---@field query TSQuery userdata query object
 ---@field private _processed_patterns table<integer, vim.treesitter.query.ProcessedPattern>
 local Query = {}
@@ -88,6 +89,17 @@ function Query.new(lang, ts_query)
   }
   self.captures = self.info.captures
   self._processed_patterns = process_patterns(self.info.patterns)
+  for _, pattern in pairs(self._processed_patterns) do
+    if
+      vim.tbl_contains(pattern.directives, function(directive)
+        return vim.deep_equal(directive, { 'set!', 'injection.combined' })
+      end, { predicate = true })
+    then
+      self.has_combined_injection = true
+      break
+    end
+  end
+
   return self
 end
 

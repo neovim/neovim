@@ -74,7 +74,10 @@ local TSCallbackNames = {
 ---@field private _callbacks table<TSCallbackName,function[]> Callback handlers
 ---@field package _callbacks_rec table<TSCallbackName,function[]> Callback handlers (recursive)
 ---@field private _children table<string,vim.treesitter.LanguageTree> Injected languages
----@field private _injection_query vim.treesitter.Query Queries defining injected languages
+---@field private _injection_query vim.treesitter.Query? Queries defining injected languages
+---
+---If `is_valid(true) and _injections_processed`, the set of children parsers and their sets of
+---regions are complete wrt. the full source, so that it's not necessary to execute injections.
 ---@field private _injections_processed boolean
 ---@field private _opts table Options
 ---@field private _parser TSParser Parser for language
@@ -282,6 +285,7 @@ end
 
 --- Returns whether this LanguageTree is valid, i.e., |LanguageTree:trees()| reflects the latest
 --- state of the source. If invalid, user should call |LanguageTree:parse()|.
+--- `is_valid(false)` can be slow because it runs injection on the full source.
 ---@param exclude_children boolean|nil whether to ignore the validity of children (default `false`)
 ---@return boolean
 function LanguageTree:is_valid(exclude_children)
@@ -296,8 +300,11 @@ function LanguageTree:is_valid(exclude_children)
   end
 
   if not exclude_children then
+    -- Run full injection to check if the current set of children and their regions are complete.
+    -- Note that `set_included_regions` marks new regions invalid.
     if not self._injections_processed then
-      return false
+      self:_add_injections(true)
+      self._injections_processed = true
     end
 
     for _, child in pairs(self._children) do
@@ -402,11 +409,12 @@ function LanguageTree:_parse_regions(range, timeout)
 end
 
 --- @private
+--- @param range boolean|Range|nil
 --- @return number
-function LanguageTree:_add_injections()
+function LanguageTree:_add_injections(range)
   local seen_langs = {} ---@type table<string,boolean>
 
-  local query_time, injections_by_lang = tcall(self._get_injections, self)
+  local query_time, injections_by_lang = tcall(self._get_injections, self, range)
   for lang, injection_regions in pairs(injections_by_lang) do
     local has_lang = pcall(language.add, lang)
 
@@ -553,11 +561,6 @@ end
 --- @return table<integer, TSTree> trees
 --- @return boolean finished
 function LanguageTree:_parse(range, timeout)
-  if self:is_valid() then
-    self:_log('valid')
-    return self._trees, true
-  end
-
   local changes --- @type Range6[]?
 
   -- Collect some stats
@@ -579,9 +582,19 @@ function LanguageTree:_parse(range, timeout)
     end
   end
 
-  if not self._injections_processed and range then
-    query_time = self:_add_injections()
-    self._injections_processed = true
+  -- NOTE: Trade-off in partial injection query execution
+  -- * The good: Each `parse()` is faster.
+  -- * The bad: `is_valid(false)` is more expensive, requiring a full injection query execution. To
+  --   avoid this cost, each `parse()` always runs partial injection. However, this is not a big
+  --   problem as partial injection is very cheap even on huge files.
+  -- * A potential optimization: Track the ranges where the set of injected regions are known to be
+  --   complete and valid, and run the injection query only on the intersection of requested ranges
+  --   and the invalid ranges. This would be even more beneficial for combined injection.
+  if self._injection_query and not self._injections_processed and range then
+    query_time = self:_add_injections(range)
+    if range == true or self._injection_query.has_combined_injection then
+      self._injections_processed = true
+    end
   end
 
   self:_log({
@@ -1133,30 +1146,48 @@ end
 ---
 --- This is where most of the injection processing occurs.
 ---
---- TODO: Allow for an offset predicate to tailor the injection range
----       instead of using the entire nodes range.
+--- @param range boolean|Range|nil
 --- @private
 --- @return table<string, Range6[][]>
-function LanguageTree:_get_injections()
-  if not self._injection_query then
+function LanguageTree:_get_injections(range)
+  if not self._injection_query or not range then
     return {}
   end
 
   ---@type table<integer,vim.treesitter.languagetree.Injection>
   local injections = {}
 
+  local range_start_line, range_end_line ---@type integer, integer
+  if range ~= true then
+    local sline, _, eline, _ = Range.unpack4(range)
+    range_start_line, range_end_line = sline, eline
+  end
+
   for index, tree in pairs(self._trees) do
     local root_node = tree:root()
-    local start_line, _, end_line, _ = root_node:range()
+    local start_line, _, end_line, end_col = root_node:range()
+    if end_col > 0 then
+      end_line = end_line + 1
+    end
 
-    for pattern, match, metadata in
-      self._injection_query:iter_matches(root_node, self._source, start_line, end_line + 1)
-    do
-      local lang, combined, ranges = self:_get_injection(match, metadata)
-      if lang then
-        add_injection(injections, index, pattern, lang, combined, ranges)
-      else
-        self:_log('match from injection query failed for pattern', pattern)
+    -- If the query doesn't have combined injection, run the query on the given range. Combined
+    -- injection must be run on the full range. Currently there is no simply way to selectively
+    -- match each pattern separately.
+    if range ~= true and not self._injection_query.has_combined_injection then
+      start_line = math.max(start_line, range_start_line)
+      end_line = math.min(end_line, range_end_line)
+    end
+
+    if start_line < end_line then
+      for pattern, match, metadata in
+        self._injection_query:iter_matches(root_node, self._source, start_line, end_line)
+      do
+        local lang, combined, ranges = self:_get_injection(match, metadata)
+        if lang then
+          add_injection(injections, index, pattern, lang, combined, ranges)
+        else
+          self:_log('match from injection query failed for pattern', pattern)
+        end
       end
     end
   end
