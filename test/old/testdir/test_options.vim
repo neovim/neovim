@@ -1284,23 +1284,41 @@ func Test_shortmess_F2()
 endfunc
 
 func Test_shortmess_F3()
-  defer delete('X_dummy')
+  call writefile(['foo'], 'X_dummy', 'D')
 
   set hidden
   set autoread
   e X_dummy
-  e file
-
+  e Xotherfile
+  call assert_equal(['foo'], getbufline('X_dummy', 1, '$'))
   set shortmess+=F
-  call writefile(["foo"], 'X_dummy')
-  call assert_true(empty(execute('bn', '')))
-  call assert_true(empty(execute('bn', '')))
+  echo ''
+
+  if has('nanotime')
+    sleep 10m
+  else
+    sleep 2
+  endif
+  call writefile(['bar'], 'X_dummy')
+  bprev
+  call assert_equal('', Screenline(&lines))
+  call assert_equal(['bar'], getbufline('X_dummy', 1, '$'))
+
+  if has('nanotime')
+    sleep 10m
+  else
+    sleep 2
+  endif
+  call writefile(['baz'], 'X_dummy')
+  checktime
+  call assert_equal('', Screenline(&lines))
+  call assert_equal(['baz'], getbufline('X_dummy', 1, '$'))
 
   set shortmess&
   set autoread&
   set hidden&
-  bwipe
-  bwipe
+  bwipe X_dummy
+  bwipe Xotherfile
 endfunc
 
 func Test_local_scrolloff()

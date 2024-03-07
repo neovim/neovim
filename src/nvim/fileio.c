@@ -3008,7 +3008,7 @@ int buf_check_timestamp(buf_T *buf)
     can_reload = true;
   }
 
-  if (mesg != NULL && !shortmess(SHM_FILEINFO)) {
+  if (mesg != NULL) {
     char *path = home_replace_save(buf, buf->b_fname);
     if (!helpmesg) {
       mesg2 = "";
@@ -3153,7 +3153,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
     curbuf->b_flags |= BF_CHECK_RO;           // check for RO again
     keep_filetype = true;                     // don't detect 'filetype'
     if (readfile(buf->b_ffname, buf->b_fname, 0, 0,
-                 (linenr_T)MAXLNUM, &ea, flags, false) != OK) {
+                 (linenr_T)MAXLNUM, &ea, flags, shortmess(SHM_FILEINFO)) != OK) {
       if (!aborting()) {
         semsg(_("E321: Could not reload \"%s\""), buf->b_fname);
       }
