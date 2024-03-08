@@ -918,15 +918,15 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
     for (int i = 0; i < xp->xp_numfiles; i++) {
       if (i > 0) {
         if (xp->xp_prefix == XP_PREFIX_NO) {
-          ssp = xstpcpy(ssp, "no");
+          ssp = stpcpy(ssp, "no");
         } else if (xp->xp_prefix == XP_PREFIX_INV) {
-          ssp = xstpcpy(ssp, "inv");
+          ssp = stpcpy(ssp, "inv");
         }
       }
-      ssp = xstpcpy(ssp, xp->xp_files[i]);
+      ssp = stpcpy(ssp, xp->xp_files[i]);
 
       if (i != xp->xp_numfiles - 1) {
-        ssp = xstpcpy(ssp, (options & WILD_USE_NL) ? "\n" : " ");
+        ssp = stpcpy(ssp, (options & WILD_USE_NL) ? "\n" : " ");
       }
     }
   }

@@ -21,6 +21,8 @@
 #cmakedefine HAVE_NL_MSG_CAT_CNTR
 #cmakedefine HAVE_PWD_FUNCS
 #cmakedefine HAVE_READLINK
+#cmakedefine HAVE_STPCPY
+#cmakedefine HAVE_STPNCPY
 #cmakedefine HAVE_STRNLEN
 #cmakedefine HAVE_STRCASECMP
 #cmakedefine HAVE_STRINGS_H
