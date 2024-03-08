@@ -563,7 +563,7 @@ end]]
       local function is_main(match, pattern, bufnr, predicate)
         local nodes = match[ predicate[2] ]
         for _, node in ipairs(nodes) do
-          if query.get_node_text(node, bufnr) == 'main' then
+          if vim.treesitter.get_node_text(node, bufnr) == 'main' then
             return true
           end
         end
@@ -602,7 +602,7 @@ end]]
       local function is_main(match, pattern, bufnr, predicate)
         local node = match[ predicate[2] ]
 
-        return query.get_node_text(node, bufnr) == 'main'
+        return vim.treesitter.get_node_text(node, bufnr) == 'main'
       end
 
       local parser = vim.treesitter.get_parser(0, "c")

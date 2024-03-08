@@ -50,7 +50,7 @@ describe('treesitter node API', function()
         lang = 'lua',
       })
     ]])
-    eq('foo', lua_eval('vim.treesitter.query.get_node_text(node, 0)'))
+    eq('foo', lua_eval('vim.treesitter.get_node_text(node, 0)'))
     eq('identifier', lua_eval('node:type()'))
   end)
 
@@ -62,14 +62,13 @@ describe('treesitter node API', function()
     ]])
 
     exec_lua([[
-      query = require"vim.treesitter.query"
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
       root = tree:root()
       lang = vim.treesitter.language.inspect('c')
 
       function node_text(node)
-        return query.get_node_text(node, 0)
+        return vim.treesitter.get_node_text(node, 0)
       end
     ]])
 

@@ -150,14 +150,4 @@ function M.inspect(lang)
   return vim._ts_inspect_language(lang)
 end
 
----@deprecated
-function M.inspect_language(...)
-  vim.deprecate(
-    'vim.treesitter.language.inspect_language()',
-    'vim.treesitter.language.inspect()',
-    '0.10'
-  )
-  return M.inspect(...)
-end
-
 return M
