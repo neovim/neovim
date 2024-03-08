@@ -219,7 +219,7 @@ local validate = vim.validate
 --- checking.
 --- If {handler} is not specified and if there's no respective global
 --- handler, then an error will occur.
---- Returns: {status}, {[client_id]}. {status} is a boolean indicating if
+--- Returns: {status}, {client_id}?. {status} is a boolean indicating if
 --- the notification was successful. If it is `false`, then it will always
 --- be `false` (the client has shutdown).
 --- If {status} is `true`, the function returns {request_id} as the second
@@ -262,7 +262,7 @@ local validate = vim.validate
 ---
 --- Checks if a client supports a given method.
 --- Always returns true for unknown off-spec methods.
---- [opts] is a optional `{bufnr?: integer}` table.
+--- {opts} is a optional `{bufnr?: integer}` table.
 --- Some language server capabilities can be file specific.
 --- @field supports_method fun(method: string, opts?: {bufnr: integer?}): boolean
 ---

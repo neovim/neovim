@@ -12,9 +12,9 @@
 --- end
 --- ```
 ---
---- *vim.version()* returns the version of the current Nvim process.
+--- [vim.version()]() returns the version of the current Nvim process.
 ---
---- VERSION RANGE SPEC *version-range*
+--- VERSION RANGE SPEC [version-range]()
 ---
 --- A version "range spec" defines a semantic version range which can be tested against a version,
 --- using |vim.version.range()|.

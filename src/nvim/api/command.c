@@ -48,16 +48,16 @@
 /// @param[out] err  Error details, if any.
 /// @return Dictionary containing command information, with these keys:
 ///         - cmd: (string) Command name.
-///         - range: (array) (optional) Command range (|<line1>| |<line2>|).
+///         - range: (array) (optional) Command range ([<line1>] [<line2>]).
 ///                          Omitted if command doesn't accept a range.
 ///                          Otherwise, has no elements if no range was specified, one element if
 ///                          only a single range item was specified, or two elements if both range
 ///                          items were specified.
-///         - count: (number) (optional) Command |<count>|.
+///         - count: (number) (optional) Command [<count>].
 ///                           Omitted if command cannot take a count.
-///         - reg: (string) (optional) Command |<register>|.
+///         - reg: (string) (optional) Command [<register>].
 ///                         Omitted if command cannot take a register.
-///         - bang: (boolean) Whether command contains a |<bang>| (!) modifier.
+///         - bang: (boolean) Whether command contains a [<bang>] (!) modifier.
 ///         - args: (array) Command arguments.
 ///         - addr: (string) Value of |:command-addr|. Uses short name or "line" for -addr=lines.
 ///         - nargs: (string) Value of |:command-nargs|.
@@ -853,17 +853,17 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 ///                 from Lua, the command can also be a Lua function. The function is called with a
 ///                 single table argument that contains the following keys:
 ///                 - name: (string) Command name
-///                 - args: (string) The args passed to the command, if any |<args>|
+///                 - args: (string) The args passed to the command, if any [<args>]
 ///                 - fargs: (table) The args split by unescaped whitespace (when more than one
-///                 argument is allowed), if any |<f-args>|
+///                 argument is allowed), if any [<f-args>]
 ///                 - nargs: (string) Number of arguments |:command-nargs|
-///                 - bang: (boolean) "true" if the command was executed with a ! modifier |<bang>|
-///                 - line1: (number) The starting line of the command range |<line1>|
-///                 - line2: (number) The final line of the command range |<line2>|
-///                 - range: (number) The number of items in the command range: 0, 1, or 2 |<range>|
-///                 - count: (number) Any count supplied |<count>|
-///                 - reg: (string) The optional register, if specified |<reg>|
-///                 - mods: (string) Command modifiers, if any |<mods>|
+///                 - bang: (boolean) "true" if the command was executed with a ! modifier [<bang>]
+///                 - line1: (number) The starting line of the command range [<line1>]
+///                 - line2: (number) The final line of the command range [<line2>]
+///                 - range: (number) The number of items in the command range: 0, 1, or 2 [<range>]
+///                 - count: (number) Any count supplied [<count>]
+///                 - reg: (string) The optional register, if specified [<reg>]
+///                 - mods: (string) Command modifiers, if any [<mods>]
 ///                 - smods: (table) Command modifiers in a structured format. Has the same
 ///                 structure as the "mods" key of |nvim_parse_cmd()|.
 /// @param  opts    Optional |command-attributes|.

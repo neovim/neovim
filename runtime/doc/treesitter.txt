@@ -719,8 +719,8 @@ get_captures_at_pos({bufnr}, {row}, {col})
       • {col}    (`integer`) Position column
 
     Return: ~
-        (`table[]`) List of captures `{ capture = "name", metadata = { ... }
-        }`
+        (`table[]`) List of captures
+        `{ capture = "name", metadata = { ... } }`
 
 get_node({opts})                                   *vim.treesitter.get_node()*
     Returns the smallest named node at the given position
@@ -1154,8 +1154,8 @@ Query:iter_captures({node}, {source}, {start}, {stop})
                   Defaults to `node:end_()`.
 
     Return: ~
-        (`fun(end_line: integer?): integer, TSNode,
-        vim.treesitter.query.TSMetadata`) capture id, capture node, metadata
+        (`fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata`)
+        capture id, capture node, metadata
 
                                                         *Query:iter_matches()*
 Query:iter_matches({node}, {source}, {start}, {stop}, {opts})

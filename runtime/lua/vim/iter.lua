@@ -1,7 +1,7 @@
 --- @brief
 ---
---- \*vim.iter()\* is an interface for |iterable|s: it wraps a table or function argument into an
---- \*Iter\* object with methods (such as |Iter:filter()| and |Iter:map()|) that transform the
+--- [vim.iter()]() is an interface for [iterable]s: it wraps a table or function argument into an
+--- [Iter]() object with methods (such as [Iter:filter()] and [Iter:map()]) that transform the
 --- underlying source data. These methods can be chained to create iterator "pipelines": the output
 --- of each pipeline stage is input to the next stage. The first stage depends on the type passed to
 --- `vim.iter()`:

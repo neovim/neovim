@@ -429,7 +429,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {float}?             (`boolean|vim.diagnostic.Opts.Float|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Float`)
                              Options for floating windows. See
                              |vim.diagnostic.Opts.Float|.
-      • {update_in_insert}?  (`boolean`, default: `false) Update diagnostics
+      • {update_in_insert}?  (`boolean`, default: `false`) Update diagnostics
                              in Insert mode (if `false`, diagnostics are
                              updated on |InsertLeave|)
       • {severity_sort}?     (`boolean|{reverse?:boolean}`, default: `false)
@@ -486,8 +486,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                             which is prepended to each diagnostic in the
                             window as well as an (optional) highlight group
                             which will be used to highlight the prefix.
-                          • If a `table`, it is interpreted as a `[text,
-                            hl_group]` tuple as in |nvim_echo()|
+                          • If a `table`, it is interpreted as a
+                            `[text, hl_group]` tuple as in |nvim_echo()|
                           • If a `string`, it is prepended to each diagnostic
                             in the window with no highlight. Overrides the
                             setting from |vim.diagnostic.config()|.
@@ -550,10 +550,9 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                               being evaluated, and {total} is the total number
                               of diagnostics for the line. This can be used to
                               render diagnostic symbols or error codes.
-      • {suffix}?             (`string|(fun(diagnostic:vim.Diagnostic):
-                              string)`) Append diagnostic message with suffix.
-                              This can be used to render an LSP diagnostic
-                              error code.
+      • {suffix}?             (`string|(fun(diagnostic:vim.Diagnostic): string)`)
+                              Append diagnostic message with suffix. This can
+                              be used to render an LSP diagnostic error code.
       • {format}?             (`fun(diagnostic:vim.Diagnostic): string`) The
                               return value is the text used to display the
                               diagnostic. Example: >lua

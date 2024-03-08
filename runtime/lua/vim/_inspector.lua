@@ -25,7 +25,7 @@ local defaults = {
 
 ---Get all the items at a given buffer position.
 ---
----Can also be pretty-printed with `:Inspect!`. *:Inspect!*
+---Can also be pretty-printed with `:Inspect!`. [:Inspect!]()
 ---
 ---@param bufnr? integer defaults to the current buffer
 ---@param row? integer row to inspect, 0-based. Defaults to the row of the current cursor
@@ -143,7 +143,7 @@ end
 
 ---Show all the items at a given buffer position.
 ---
----Can also be shown with `:Inspect`. *:Inspect*
+---Can also be shown with `:Inspect`. [:Inspect]()
 ---
 ---@param bufnr? integer defaults to the current buffer
 ---@param row? integer row to inspect, 0-based. Defaults to the row of the current cursor

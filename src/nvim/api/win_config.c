@@ -116,7 +116,7 @@
 ///   - width: Window width (in character cells). Minimum of 1.
 ///   - height: Window height (in character cells). Minimum of 1.
 ///   - bufpos: Places float relative to buffer text (only when
-///       relative="win"). Takes a tuple of zero-indexed [line, column].
+///       relative="win"). Takes a tuple of zero-indexed `[line, column]`.
 ///       `row` and `col` if given are applied relative to this
 ///       position, else they default to:
 ///       - `row=1` and `col=0` if `anchor` is "NW" or "NE"
