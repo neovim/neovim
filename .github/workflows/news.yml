@@ -1,13 +1,13 @@
 name: "news.txt"
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
     branches:
     - 'master'
 jobs:
   check:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'ci:skip-news')
     steps:
       - uses: actions/checkout@v4
         with:
