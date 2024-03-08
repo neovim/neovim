@@ -586,6 +586,9 @@ void expand_env_esc(char *restrict srcp, char *restrict dst, int dstlen, bool es
   bool copy_char;
   bool mustfree;  // var was allocated, need to free it later
   bool at_start = true;  // at start of a name
+#if defined(BACKSLASH_IN_FILENAME)
+  char *const save_dst = dst;
+#endif
 
   int prefix_len = (prefix == NULL) ? 0 : (int)strlen(prefix);
 
@@ -726,7 +729,7 @@ void expand_env_esc(char *restrict srcp, char *restrict dst, int dstlen, bool es
         // with it, skip a character
         if (after_pathsep(dst, dst + c)
 #if defined(BACKSLASH_IN_FILENAME)
-            && dst[-1] != ':'
+            && (dst == save_dst || dst[-1] != ':')
 #endif
             && vim_ispathsep(*tail)) {
           tail++;
