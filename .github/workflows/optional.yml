@@ -17,7 +17,7 @@ env:
 
 jobs:
   s390x:
-    if: contains(github.event.pull_request.labels.*.name, 'ci-s390x') || github.event_name == 'workflow_dispatch'
+    if: contains(github.event.pull_request.labels.*.name, 'ci:s390x') || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
