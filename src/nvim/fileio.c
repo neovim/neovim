@@ -2629,7 +2629,7 @@ static int rename_with_tmp(const char *const from, const char *const to)
   STRCPY(tempname, from);
   for (int n = 123; n < 99999; n++) {
     char *tail = path_tail(tempname);
-    snprintf(tail, (size_t)((MAXPATHL + 1) - (tail - tempname - 1)), "%d", n);
+    snprintf(tail, (size_t)((MAXPATHL + 1) - (tail - tempname)), "%d", n);
 
     if (!os_path_exists(tempname)) {
       if (os_rename(from, tempname) == OK) {
