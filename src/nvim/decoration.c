@@ -740,14 +740,15 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
 
   if (kv_size(signs)) {
     int width = wp->w_minscwidth == SCL_NUM ? 1 : wp->w_scwidth;
-    int idx = MIN(width, num_text) - 1;
+    int len = MIN(width, num_text);
+    int idx = 0;
     qsort((void *)&kv_A(signs, 0), kv_size(signs), sizeof(kv_A(signs, 0)), sign_item_cmp);
 
     for (size_t i = 0; i < kv_size(signs); i++) {
       DecorSignHighlight *sh = kv_A(signs, i).sh;
-      if (idx >= 0 && sh->text[0]) {
+      if (idx < len && sh->text[0]) {
         memcpy(sattrs[idx].text, sh->text, SIGN_WIDTH * sizeof(sattr_T));
-        sattrs[idx--].hl_id = sh->hl_id;
+        sattrs[idx++].hl_id = sh->hl_id;
       }
       if (*num_id == 0) {
         *num_id = sh->number_hl_id;
