@@ -53,7 +53,7 @@ typedef struct {
 
 #define MAX_UI_COUNT 16
 
-static UI *uis[MAX_UI_COUNT];
+static RemoteUI *uis[MAX_UI_COUNT];
 static bool ui_ext[kUIExtCount] = { 0 };
 static size_t ui_count = 0;
 static int ui_mode_idx = SHAPE_IDX_N;
@@ -108,7 +108,7 @@ static void ui_log(const char *funname)
   do { \
     bool any_call = false; \
     for (size_t i = 0; i < ui_count; i++) { \
-      UI *ui = uis[i]; \
+      RemoteUI *ui = uis[i]; \
       if ((cond)) { \
         remote_ui_##funname(__VA_ARGS__); \
         any_call = true; \
@@ -212,7 +212,7 @@ void ui_refresh(void)
 
   bool inclusive = ui_override();
   for (size_t i = 0; i < ui_count; i++) {
-    UI *ui = uis[i];
+    RemoteUI *ui = uis[i];
     width = MIN(ui->width, width);
     height = MIN(ui->height, height);
     for (UIExtension j = 0; (int)j < kUIExtCount; j++) {
@@ -367,12 +367,11 @@ void vim_beep(unsigned val)
 void do_autocmd_uienter_all(void)
 {
   for (size_t i = 0; i < ui_count; i++) {
-    UIData *data = uis[i]->data;
-    do_autocmd_uienter(data->channel_id, true);
+    do_autocmd_uienter(uis[i]->channel_id, true);
   }
 }
 
-void ui_attach_impl(UI *ui, uint64_t chanid)
+void ui_attach_impl(RemoteUI *ui, uint64_t chanid)
 {
   if (ui_count == MAX_UI_COUNT) {
     abort();
@@ -408,7 +407,7 @@ void ui_attach_impl(UI *ui, uint64_t chanid)
   do_autocmd_uienter(chanid, true);
 }
 
-void ui_detach_impl(UI *ui, uint64_t chanid)
+void ui_detach_impl(RemoteUI *ui, uint64_t chanid)
 {
   size_t shift_index = MAX_UI_COUNT;
 
@@ -444,7 +443,7 @@ void ui_detach_impl(UI *ui, uint64_t chanid)
   do_autocmd_uienter(chanid, false);
 }
 
-void ui_set_ext_option(UI *ui, UIExtension ext, bool active)
+void ui_set_ext_option(RemoteUI *ui, UIExtension ext, bool active)
 {
   if (ext < kUIGlobalCount) {
     ui_refresh();
@@ -649,7 +648,7 @@ Array ui_array(Arena *arena)
 {
   Array all_uis = arena_array(arena, ui_count);
   for (size_t i = 0; i < ui_count; i++) {
-    UI *ui = uis[i];
+    RemoteUI *ui = uis[i];
     Dictionary info = arena_dict(arena, 10 + kUIExtCount);
     PUT_C(info, "width", INTEGER_OBJ(ui->width));
     PUT_C(info, "height", INTEGER_OBJ(ui->height));
@@ -671,7 +670,7 @@ Array ui_array(Arena *arena)
         PUT_C(info, (char *)ui_ext_names[j], BOOLEAN_OBJ(ui->ui_ext[j]));
       }
     }
-    PUT_C(info, "chan", INTEGER_OBJ((Integer)ui->data->channel_id));
+    PUT_C(info, "chan", INTEGER_OBJ((Integer)ui->channel_id));
 
     ADD_C(all_uis, DICTIONARY_OBJ(info));
   }
