@@ -32,9 +32,10 @@ static void start_wait_eof_timer(void **argv)
   FUNC_ATTR_NONNULL_ALL
 {
   PtyProcess *ptyproc = (PtyProcess *)argv[0];
-  Process *proc = (Process *)ptyproc;
 
-  uv_timer_start(&ptyproc->wait_eof_timer, wait_eof_timer_cb, 200, 200);
+  if (ptyproc->finish_wait != NULL) {
+    uv_timer_start(&ptyproc->wait_eof_timer, wait_eof_timer_cb, 200, 200);
+  }
 }
 
 /// @returns zero on success, or negative error code.
@@ -214,6 +215,7 @@ static void wait_eof_timer_cb(uv_timer_t *wait_eof_timer)
   PtyProcess *ptyproc = wait_eof_timer->data;
   Process *proc = (Process *)ptyproc;
 
+  assert(ptyproc->finish_wait != NULL);
   if (proc->out.closed || proc->out.did_eof || !uv_is_readable(proc->out.uvstream)) {
     uv_timer_stop(&ptyproc->wait_eof_timer);
     pty_process_finish2(ptyproc);
