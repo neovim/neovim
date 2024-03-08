@@ -115,18 +115,20 @@ end
 ---@param func function?
 local function run_tohtml_and_assert(screen, func)
   exec('norm! ggO-;')
-  exec('norm! gg0f;:\r')
-  screen:sleep(10)
-  local snapshot = { grid = screen:get_snapshot().grid, attr_ids = screen:get_snapshot().attr_ids }
+  screen:expect({ any = vim.pesc('-^;') })
+  exec('norm! :\rh')
+  screen:expect({ any = vim.pesc('^-;') })
+  local expected = screen:get_snapshot()
   do
     (func or exec)('TOhtml')
   end
   exec('only')
   html_syntax_match()
   html_to_extmarks()
-  exec('norm! gg0f;:\r')
-  screen:sleep(10)
-  eq(snapshot, { grid = screen:get_snapshot().grid, attr_ids = screen:get_snapshot().attr_ids })
+  exec('norm! gg0f;')
+  screen:expect({ any = vim.pesc('-^;') })
+  exec('norm! :\rh')
+  screen:expect({ grid = expected.grid, attr_ids = expected.attr_ids })
 end
 
 describe(':TOhtml', function()
@@ -288,7 +290,7 @@ describe(':TOhtml', function()
       --api.nvim_buf_set_extmark(0,ns,3,0,{virt_text={{'foo'}},virt_text_pos='right_align'})
       run_tohtml_and_assert(screen)
     end)
-    it('highlgith', function()
+    it('highlight', function()
       insert [[
       line1
       ]]
