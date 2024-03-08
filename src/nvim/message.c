@@ -139,6 +139,7 @@ static const char *msg_ext_kind = NULL;
 static Array *msg_ext_chunks = NULL;
 static garray_T msg_ext_last_chunk = GA_INIT(sizeof(char), 40);
 static sattr_T msg_ext_last_attr = -1;
+static int msg_ext_hl_id;
 static size_t msg_ext_cur_len = 0;
 
 static bool msg_ext_overwrite = false;  ///< will overwrite last message
@@ -1088,12 +1089,14 @@ void ex_messages(exarg_T *eap)
             Array content_entry = ARRAY_DICT_INIT;
             ADD(content_entry, INTEGER_OBJ(chunk.hl_id ? syn_id2attr(chunk.hl_id) : 0));
             ADD(content_entry, STRING_OBJ(copy_string(chunk.text, NULL)));
+            ADD(content_entry, INTEGER_OBJ(chunk.hl_id));
             ADD(content, ARRAY_OBJ(content_entry));
           }
         } else if (p->msg && p->msg[0]) {
           Array content_entry = ARRAY_DICT_INIT;
           ADD(content_entry, INTEGER_OBJ(p->hl_id ? syn_id2attr(p->hl_id) : 0));
           ADD(content_entry, CSTR_TO_OBJ(p->msg));
+          ADD(content_entry, INTEGER_OBJ(p->hl_id));
           ADD(content, ARRAY_OBJ(content_entry));
         }
         ADD(entry, ARRAY_OBJ(content));
@@ -2125,6 +2128,7 @@ static void msg_ext_emit_chunk(void)
   msg_ext_last_attr = -1;
   String text = ga_take_string(&msg_ext_last_chunk);
   ADD(chunk, STRING_OBJ(text));
+  ADD(chunk, INTEGER_OBJ(msg_ext_hl_id));
   ADD(*msg_ext_chunks, ARRAY_OBJ(chunk));
 }
 
@@ -2141,6 +2145,7 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
 
   if (ui_has(kUIMessages)) {
     if (attr != msg_ext_last_attr) {
+      msg_ext_hl_id = hl_id;
       msg_ext_emit_chunk();
       msg_ext_last_attr = attr;
     }

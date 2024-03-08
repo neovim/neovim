@@ -283,6 +283,8 @@ UI
   |hl-PmenuMatchSel| inherits highlights from both |hl-PmenuSel| and
   |hl-PmenuMatch|.
 
+• |ui-messages| content chunks now also contain the highlight group ID.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

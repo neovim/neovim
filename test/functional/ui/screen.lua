@@ -1524,7 +1524,7 @@ end
 function Screen:_chunks_repr(chunks, attr_state)
   local repr_chunks = {}
   for i, chunk in ipairs(chunks) do
-    local hl, text = unpack(chunk)
+    local hl, text, id = unpack(chunk)
     local attrs
     if self._options.ext_linegrid then
       attrs = self._attr_table[hl][1]
@@ -1532,7 +1532,7 @@ function Screen:_chunks_repr(chunks, attr_state)
       attrs = hl
     end
     local attr_id = self:_get_attr_id(attr_state, attrs, hl)
-    repr_chunks[i] = { text, attr_id }
+    repr_chunks[i] = { text, attr_id, attr_id and id or nil }
   end
   return repr_chunks
 end
