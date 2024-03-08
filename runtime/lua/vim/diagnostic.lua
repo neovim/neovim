@@ -2,7 +2,7 @@ local api, if_nil = vim.api, vim.F.if_nil
 
 local M = {}
 
---- *diagnostic-structure*
+--- [diagnostic-structure]()
 ---
 --- Diagnostics use the same indexing as the rest of the Nvim API (i.e. 0-based
 --- rows and columns). |api-indexing|
@@ -68,7 +68,7 @@ local M = {}
 ---
 --- Update diagnostics in Insert mode
 --- (if `false`, diagnostics are updated on |InsertLeave|)
---- (default: `false)
+--- (default: `false`)
 --- @field update_in_insert? boolean
 ---
 --- Sort diagnostics by severity. This affects the order in which signs and

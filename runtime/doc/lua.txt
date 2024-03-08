@@ -1408,8 +1408,8 @@ Option:remove({value})                                      *vim.opt:remove()*
 
 vim.bo                                                                *vim.bo*
     Get or set buffer-scoped |options| for the buffer with number {bufnr}. If
-    [{bufnr}] is omitted then the current buffer is used. Invalid {bufnr} or
-    key is an error.
+    {bufnr} is omitted then the current buffer is used. Invalid {bufnr} or key
+    is an error.
 
     Note: this is equivalent to `:setlocal` for |global-local| options and
     `:set` otherwise.
@@ -1459,7 +1459,7 @@ vim.o                                                                  *vim.o*
 vim.wo                                                                *vim.wo*
     Get or set window-scoped |options| for the window with handle {winid} and
     buffer with number {bufnr}. Like `:setlocal` if setting a |global-local|
-    option or if {bufnr} is provided, like `:set` otherwise. If [{winid}] is
+    option or if {bufnr} is provided, like `:set` otherwise. If {winid} is
     omitted then the current window is used. Invalid {winid}, {bufnr} or key
     is an error.
 
@@ -2434,10 +2434,10 @@ vim.loader.find({modname}, {opts})                         *vim.loader.find()*
                      the runtime path.
                    • {paths}? (`string[]`, default: `{}`) Extra paths to
                      search for modname
-                   • {patterns}? (`string[]`, default: `{"/init.lua",
-                     ".lua"}`) List of patterns to use when searching for
-                     modules. A pattern is a string added to the basename of
-                     the Lua module being searched.
+                   • {patterns}? (`string[]`, default:
+                     `{"/init.lua", ".lua"}`) List of patterns to use when
+                     searching for modules. A pattern is a string added to the
+                     basename of the Lua module being searched.
                    • {all}? (`boolean`, default: `false`) Search for all
                      matches.
 
@@ -3139,16 +3139,17 @@ vim.lpeg.Cc({...})                                             *vim.lpeg.Cc()*
 
 vim.lpeg.Cf({patt}, {func})                                    *vim.lpeg.Cf()*
     Creates a fold capture. If `patt` produces a list of captures C1 C2 ...
-    Cn, this capture will produce the value `func(...func(func(C1, C2),
-    C3)...,Cn)`, that is, it will fold (or accumulate, or reduce) the captures
-    from `patt` using function `func`. This capture assumes that `patt` should
-    produce at least one capture with at least one value (of any type), which
-    becomes the initial value of an accumulator. (If you need a specific
-    initial value, you may prefix a constant captureto `patt`.) For each
-    subsequent capture, LPeg calls `func` with this accumulator as the first
-    argument and all values produced by the capture as extra arguments; the
-    first result from this call becomes the new value for the accumulator. The
-    final value of the accumulator becomes the captured value.
+    Cn, this capture will produce the value
+    `func(...func(func(C1, C2), C3)...,Cn)`, that is, it will fold (or
+    accumulate, or reduce) the captures from `patt` using function `func`.
+    This capture assumes that `patt` should produce at least one capture with
+    at least one value (of any type), which becomes the initial value of an
+    accumulator. (If you need a specific initial value, you may prefix a
+    constant captureto `patt`.) For each subsequent capture, LPeg calls `func`
+    with this accumulator as the first argument and all values produced by the
+    capture as extra arguments; the first result from this call becomes the
+    new value for the accumulator. The final value of the accumulator becomes
+    the captured value.
 
     Example: >lua
         local number = lpeg.R('09') ^ 1 / tonumber

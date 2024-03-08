@@ -139,4 +139,16 @@ describe('luacats grammar', function()
       type = 'string|table|(fun(diagnostic:vim.Diagnostic,i:integer,total:integer): string, string)',
     }
   )
+
+  test('@field [integer] integer', {
+    kind = 'field',
+    name = '[integer]',
+    type = 'integer',
+  })
+
+  test('@field [1] integer', {
+    kind = 'field',
+    name = '[1]',
+    type = 'integer',
+  })
 end)

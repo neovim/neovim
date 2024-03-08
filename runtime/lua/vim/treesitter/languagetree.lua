@@ -1,4 +1,4 @@
---- @brief A \*LanguageTree\* contains a tree of parsers: the root treesitter parser for {lang} and
+--- @brief A [LanguageTree]() contains a tree of parsers: the root treesitter parser for {lang} and
 --- any "injected" language parsers, which themselves may inject other languages, recursively.
 --- For example a Lua buffer containing some Vimscript commands needs multiple parsers to fully
 --- understand its contents.
@@ -93,8 +93,8 @@ local LanguageTree = {}
 ---Optional arguments:
 ---@class vim.treesitter.LanguageTree.new.Opts
 ---@inlinedoc
----@field queries table<string,string>  -- Deprecated
----@field injections table<string,string>
+---@field queries? table<string,string>  -- Deprecated
+---@field injections? table<string,string>
 
 LanguageTree.__index = LanguageTree
 
