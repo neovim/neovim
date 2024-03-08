@@ -10,7 +10,6 @@
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
-#include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/ui_client.h"
 

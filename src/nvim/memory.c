@@ -554,7 +554,6 @@ void time_to_bytes(time_t time_, uint8_t buf[8])
   }
 }
 
-#define ARENA_BLOCK_SIZE 4096
 #define REUSE_MAX 4
 
 static struct consumed_blk *arena_reuse_blk;
@@ -583,17 +582,26 @@ ArenaMem arena_finish(Arena *arena)
   return res;
 }
 
-void alloc_block(Arena *arena)
+/// allocate a block of ARENA_BLOCK_SIZE
+///
+/// free it with free_block
+void *alloc_block(void)
 {
-  struct consumed_blk *prev_blk = (struct consumed_blk *)arena->cur_blk;
   if (arena_reuse_blk_count > 0) {
-    arena->cur_blk = (char *)arena_reuse_blk;
+    void *retval = (char *)arena_reuse_blk;
     arena_reuse_blk = arena_reuse_blk->prev;
     arena_reuse_blk_count--;
+    return retval;
   } else {
     arena_alloc_count++;
-    arena->cur_blk = xmalloc(ARENA_BLOCK_SIZE);
+    return xmalloc(ARENA_BLOCK_SIZE);
   }
+}
+
+void arena_alloc_block(Arena *arena)
+{
+  struct consumed_blk *prev_blk = (struct consumed_blk *)arena->cur_blk;
+  arena->cur_blk = alloc_block();
   arena->pos = 0;
   arena->size = ARENA_BLOCK_SIZE;
   struct consumed_blk *blk = arena_alloc(arena, sizeof(struct consumed_blk), true);
@@ -615,7 +623,7 @@ void *arena_alloc(Arena *arena, size_t size, bool align)
     return xmalloc(size);
   }
   if (!arena->cur_blk) {
-    alloc_block(arena);
+    arena_alloc_block(arena);
   }
   size_t alloc_pos = align ? arena_align_offset(arena->pos) : arena->pos;
   if (alloc_pos + size > arena->size) {
@@ -637,7 +645,7 @@ void *arena_alloc(Arena *arena, size_t size, bool align)
       cur_blk->prev = fix_blk;
       return alloc + aligned_hdr_size;
     } else {
-      alloc_block(arena);  // resets arena->pos
+      arena_alloc_block(arena);  // resets arena->pos
       alloc_pos = align ? arena_align_offset(arena->pos) : arena->pos;
     }
   }
@@ -647,17 +655,27 @@ void *arena_alloc(Arena *arena, size_t size, bool align)
   return mem;
 }
 
+void free_block(void *block)
+{
+  if (arena_reuse_blk_count < REUSE_MAX) {
+    struct consumed_blk *reuse_blk = block;
+    reuse_blk->prev = arena_reuse_blk;
+    arena_reuse_blk = reuse_blk;
+    arena_reuse_blk_count++;
+  } else {
+    xfree(block);
+  }
+}
+
 void arena_mem_free(ArenaMem mem)
 {
   struct consumed_blk *b = mem;
   // peel of the first block, as it is guaranteed to be ARENA_BLOCK_SIZE,
   // not a custom fix_blk
-  if (arena_reuse_blk_count < REUSE_MAX && b != NULL) {
+  if (b != NULL) {
     struct consumed_blk *reuse_blk = b;
     b = b->prev;
-    reuse_blk->prev = arena_reuse_blk;
-    arena_reuse_blk = reuse_blk;
-    arena_reuse_blk_count++;
+    free_block(reuse_blk);
   }
 
   while (b) {
@@ -695,7 +713,6 @@ char *arena_memdupz(Arena *arena, const char *buf, size_t size)
 # include "nvim/grid.h"
 # include "nvim/mark.h"
 # include "nvim/msgpack_rpc/channel.h"
-# include "nvim/msgpack_rpc/helpers.h"
 # include "nvim/ops.h"
 # include "nvim/option.h"
 # include "nvim/os/os.h"
@@ -862,7 +879,6 @@ void free_all_mem(void)
   ui_comp_free_all_mem();
   nlua_free_all_mem();
   rpc_free_all_mem();
-  msgpack_rpc_helpers_free_all_mem();
 
   // should be last, in case earlier free functions deallocates arenas
   arena_free_reuse_blks();

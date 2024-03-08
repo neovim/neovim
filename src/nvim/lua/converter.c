@@ -1381,9 +1381,11 @@ void nlua_push_keydict(lua_State *L, void *value, KeySetLink *table)
     lua_pushstring(L, field->str);
     if (field->type == kObjectTypeNil) {
       nlua_push_Object(L, (Object *)mem, false);
-    } else if (field->type == kObjectTypeInteger || field->type == kObjectTypeBuffer
-               || field->type == kObjectTypeWindow || field->type == kObjectTypeTabpage) {
+    } else if (field->type == kObjectTypeInteger) {
       lua_pushinteger(L, *(Integer *)mem);
+    } else if (field->type == kObjectTypeBuffer || field->type == kObjectTypeWindow
+               || field->type == kObjectTypeTabpage) {
+      lua_pushinteger(L, *(handle_T *)mem);
     } else if (field->type == kObjectTypeFloat) {
       lua_pushnumber(L, *(Float *)mem);
     } else if (field->type == kObjectTypeBoolean) {
