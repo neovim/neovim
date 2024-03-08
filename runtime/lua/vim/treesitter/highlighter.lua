@@ -296,8 +296,13 @@ local function on_line_impl(self, buf, line, is_spell_nav)
     end
 
     if state.iter == nil or state.next_row < line then
-      state.iter =
-        state.highlighter_query:query():iter_captures(root_node, self.bufnr, line, root_end_row + 1)
+      state.iter = state.highlighter_query:query():iter_captures(
+        root_node,
+        self.bufnr,
+        line,
+        root_end_row + 1,
+        { max_traverse_length = 15 }
+      )
     end
 
     while line >= state.next_row do

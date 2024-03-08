@@ -1130,7 +1130,7 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
       • |vim.treesitter.query.get()|
 
                                                        *Query:iter_captures()*
-Query:iter_captures({node}, {source}, {start}, {stop})
+Query:iter_captures({node}, {source}, {start}, {stop}, {opts})
     Iterate over all captures from all matches inside {node}
 
     {source} is needed if the query contains predicates; then the caller must
@@ -1164,6 +1164,12 @@ Query:iter_captures({node}, {source}, {start}, {stop})
                   `node:start()`.
       • {stop}    (`integer?`) Stopping line for the search (end-exclusive).
                   Defaults to `node:end_()`.
+      • {opts}    (`table?`) Optional keyword arguments:
+                  • max_start_depth (integer) if non-zero, sets the maximum
+                    start depth for each match. This is used to prevent
+                    traversing too deep into a tree.
+                  • max_traverse_length (integer) if non-zero, sets the
+                    maximum travseral length of `has-ancestor?` predicate
 
     Return: ~
         (`fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, table<integer,TSNode[]>?`)
@@ -1217,6 +1223,8 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
                     iter_matches incorrectly mapped capture IDs to a single
                     node, which is incorrect behavior. This option will
                     eventually become the default and removed.
+                  • max_traverse_length (integer) if non-zero, sets the
+                    maximum travseral length of `has-ancestor?` predicate
 
     Return: ~
         (`fun(): integer, table<integer, TSNode[]>, table`) pattern id, match,

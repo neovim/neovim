@@ -383,7 +383,7 @@ local impl = {
   end,
 }
 
----@alias TSPredicate fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[]): boolean
+---@alias TSPredicate fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], opts?: {max_traverse_length?: integer}): boolean
 
 -- Predicate handler receive the following arguments
 -- (match, pattern, bufnr, predicate)
@@ -449,7 +449,7 @@ local predicate_handlers = {
     return false
   end,
 
-  ['has-ancestor?'] = function(match, _, _, predicate)
+  ['has-ancestor?'] = function(match, _, _, predicate, opt)
     local nodes = match[predicate[2]]
     if not nodes or #nodes == 0 then
       return true
@@ -462,11 +462,13 @@ local predicate_handlers = {
       end
 
       local cur = node:parent()
-      while cur do
+      local limit = opt and opt.max_traverse_length ---@type integer?
+      while cur and (not limit or limit >= 0) do
         if ancestor_types[cur:type()] then
           return true
         end
         cur = cur:parent()
+        limit = limit and limit - 1
       end
     end
     return false
@@ -722,7 +724,8 @@ end
 ---@private
 ---@param match TSQueryMatch
 ---@param source integer|string
-function Query:match_preds(match, source)
+---@param opts? {max_traverse_length?: integer}
+function Query:match_preds(match, source, opts)
   local _, pattern = match:info()
   local preds = self.info.patterns[pattern]
 
@@ -754,7 +757,7 @@ function Query:match_preds(match, source)
         return false
       end
 
-      local pred_matches = handler(captures, pattern, source, pred)
+      local pred_matches = handler(captures, pattern, source, pred, opts)
 
       if not xor(is_not, pred_matches) then
         return false
@@ -840,12 +843,17 @@ end
 ---@param source (integer|string) Source buffer or string to extract text from
 ---@param start? integer Starting line for the search. Defaults to `node:start()`.
 ---@param stop? integer Stopping line for the search (end-exclusive). Defaults to `node:end_()`.
+---@param opts? table Optional keyword arguments:
+---   - max_start_depth (integer) if non-zero, sets the maximum start depth
+---     for each match. This is used to prevent traversing too deep into a tree.
+---   - max_traverse_length (integer) if non-zero, sets the maximum travseral length of
+---     `has-ancestor?` predicate
 ---
 ---@return (fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, table<integer,TSNode[]>?):
 ---        capture id, capture node, metadata, match
 ---
 ---@note Captures are only returned if the query pattern of a specific capture contained predicates.
-function Query:iter_captures(node, source, start, stop)
+function Query:iter_captures(node, source, start, stop, opts)
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
   end
@@ -873,7 +881,7 @@ function Query:iter_captures(node, source, start, stop)
     if #preds > 0 and match_id > max_match_id then
       captures = match:captures()
       max_match_id = match_id
-      if not self:match_preds(match, source) then
+      if not self:match_preds(match, source, opts) then
         cursor:remove_match(match_id)
         if end_line and captured_node:range() > end_line then
           return nil, captured_node, nil
@@ -929,6 +937,8 @@ end
 ---   - all (boolean) When set, the returned match table maps capture IDs to a list of nodes.
 ---     Older versions of iter_matches incorrectly mapped capture IDs to a single node, which is
 ---     incorrect behavior. This option will eventually become the default and removed.
+---   - max_traverse_length (integer) if non-zero, sets the maximum travseral length of
+---     `has-ancestor?` predicate
 ---
 ---@return (fun(): integer, table<integer, TSNode[]>, table): pattern id, match, metadata
 function Query:iter_matches(node, source, start, stop, opts)
@@ -952,7 +962,7 @@ function Query:iter_matches(node, source, start, stop, opts)
 
     local match_id, pattern = match:info()
 
-    if not self:match_preds(match, source) then
+    if not self:match_preds(match, source, opts) then
       cursor:remove_match(match_id)
       return iter() -- tail call: try next match
     end
