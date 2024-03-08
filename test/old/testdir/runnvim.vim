@@ -25,8 +25,7 @@ function Main()
   set lines=25
   set columns=80
   enew
-  " FIXME: using termopen() hangs on Windows CI
-  let job = has('win32') ? jobstart(args, s:logger) : termopen(args, s:logger)
+  let job = termopen(args, s:logger)
   let results = jobwait([job], 5 * 60 * 1000)
   " TODO(ZyX-I): Get colors
   let screen = getline(1, '$')
