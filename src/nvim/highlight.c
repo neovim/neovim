@@ -127,7 +127,7 @@ retry: {}
 }
 
 /// When a UI connects, we need to send it the table of highlights used so far.
-void ui_send_all_hls(UI *ui)
+void ui_send_all_hls(RemoteUI *ui)
 {
   for (size_t i = 1; i < set_size(&attr_entries); i++) {
     Arena arena = ARENA_EMPTY;

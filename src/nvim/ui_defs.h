@@ -30,9 +30,28 @@ enum {
 
 typedef int LineFlags;
 
-typedef struct ui_t UI;
-
 typedef struct {
+  bool rgb;
+  bool override;  ///< Force highest-requested UI capabilities.
+  bool composed;
+  bool ui_ext[kUIExtCount];  ///< Externalized UI capabilities.
+  int width;
+  int height;
+  int pum_nlines;  /// actual nr. lines shown in PUM
+  bool pum_pos;  /// UI reports back pum position?
+  double pum_row;
+  double pum_col;
+  double pum_height;
+  double pum_width;
+
+  // TUI fields.
+  char *term_name;
+  char *term_background;  ///< Deprecated. No longer needed since background color detection happens
+                          ///< in Lua. To be removed in a future release.
+  int term_colors;
+  bool stdin_tty;
+  bool stdout_tty;
+
   uint64_t channel_id;
 
 #define UI_BUF_SIZE ARENA_BLOCK_SIZE  ///< total buffer size for pending msgpack data.
@@ -40,6 +59,7 @@ typedef struct {
   /// and the header of grid_line will never fail)
 #define EVENT_BUF_SIZE 256
 
+// Fields related to packing
   PackerBuffer packer;
 
   const char *cur_event;  ///< name of current event (might get multiple arglists)
@@ -62,33 +82,7 @@ typedef struct {
   // Position of legacy cursor, used both for drawing and visible user cursor.
   Integer client_row, client_col;
   bool wildmenu_active;
-} UIData;
-
-struct ui_t {
-  bool rgb;
-  bool override;  ///< Force highest-requested UI capabilities.
-  bool composed;
-  bool ui_ext[kUIExtCount];  ///< Externalized UI capabilities.
-  int width;
-  int height;
-  int pum_nlines;  /// actual nr. lines shown in PUM
-  bool pum_pos;  /// UI reports back pum position?
-  double pum_row;
-  double pum_col;
-  double pum_height;
-  double pum_width;
-
-  // TUI fields.
-  char *term_name;
-  char *term_background;  ///< Deprecated. No longer needed since background color detection happens
-                          ///< in Lua. To be removed in a future release.
-  int term_colors;
-  bool stdin_tty;
-  bool stdout_tty;
-
-  // TODO(bfredl): integrate into struct!
-  UIData data[1];
-};
+} RemoteUI;
 
 typedef struct {
   const char *name;

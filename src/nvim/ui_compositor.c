@@ -79,13 +79,13 @@ void ui_comp_syn_init(void)
   dbghl_recompose = syn_check_group(S_LEN("RedrawDebugRecompose"));
 }
 
-void ui_comp_attach(UI *ui)
+void ui_comp_attach(RemoteUI *ui)
 {
   composed_uis++;
   ui->composed = true;
 }
 
-void ui_comp_detach(UI *ui)
+void ui_comp_detach(RemoteUI *ui)
 {
   composed_uis--;
   if (composed_uis == 0) {
