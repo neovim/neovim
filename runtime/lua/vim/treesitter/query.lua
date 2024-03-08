@@ -84,16 +84,6 @@ local function add_included_lang(base_langs, lang, ilang)
   return false
 end
 
----@deprecated
-function M.get_query_files(...)
-  vim.deprecate(
-    'vim.treesitter.query.get_query_files()',
-    'vim.treesitter.query.get_files()',
-    '0.10'
-  )
-  return M.get_files(...)
-end
-
 --- Gets the list of files used to make up a query
 ---
 ---@param lang string Language to get query for
@@ -204,12 +194,6 @@ local explicit_queries = setmetatable({}, {
   end,
 })
 
----@deprecated
-function M.set_query(...)
-  vim.deprecate('vim.treesitter.query.set_query()', 'vim.treesitter.query.set()', '0.10')
-  M.set(...)
-end
-
 --- Sets the runtime query named {query_name} for {lang}
 ---
 --- This allows users to override any runtime files and/or configuration
@@ -220,12 +204,6 @@ end
 ---@param text string Query text (unparsed).
 function M.set(lang, query_name, text)
   explicit_queries[lang][query_name] = M.parse(lang, text)
-end
-
----@deprecated
-function M.get_query(...)
-  vim.deprecate('vim.treesitter.query.get_query()', 'vim.treesitter.query.get()', '0.10')
-  return M.get(...)
 end
 
 --- Returns the runtime query {query_name} for {lang}.
@@ -248,12 +226,6 @@ M.get = vim.func._memoize('concat-2', function(lang, query_name)
 
   return M.parse(lang, query_string)
 end)
-
----@deprecated
-function M.parse_query(...)
-  vim.deprecate('vim.treesitter.query.parse_query()', 'vim.treesitter.query.parse()', '0.10')
-  return M.parse(...)
-end
 
 --- Parse {query} as a string. (If the query is in a file, the caller
 --- should read the contents into a string before calling).
@@ -279,18 +251,6 @@ M.parse = vim.func._memoize('concat-2', function(lang, query)
   local ts_query = vim._ts_parse_query(lang, query)
   return Query.new(lang, ts_query)
 end)
-
----@deprecated
-function M.get_range(...)
-  vim.deprecate('vim.treesitter.query.get_range()', 'vim.treesitter.get_range()', '0.10')
-  return vim.treesitter.get_range(...)
-end
-
----@deprecated
-function M.get_node_text(...)
-  vim.deprecate('vim.treesitter.query.get_node_text()', 'vim.treesitter.get_node_text()', '0.10')
-  return vim.treesitter.get_node_text(...)
-end
 
 --- Implementations of predicates that can optionally be prefixed with "any-".
 ---

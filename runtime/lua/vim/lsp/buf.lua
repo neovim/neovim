@@ -28,16 +28,6 @@ local function request(method, params, handler)
   return vim.lsp.buf_request(0, method, params, handler)
 end
 
---- Checks whether the language servers attached to the current buffer are
---- ready.
----
----@return boolean : if server responds.
----@deprecated
-function M.server_ready()
-  vim.deprecate('vim.lsp.buf.server_ready()', nil, '0.10')
-  return not not vim.lsp.buf_notify(0, 'window/progress', {})
-end
-
 --- Displays hover information about the symbol under the cursor in a floating
 --- window. Calling the function twice will jump into the floating window.
 function M.hover()
