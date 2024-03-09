@@ -455,7 +455,7 @@ newwindow:
   case 'H':
   case 'L':
     CHECK_CMDWIN;
-    if (firstwin == curwin && lastwin_nofloating() == curwin) {
+    if (one_window(curwin)) {
       beep_flush();
     } else {
       const int dir = ((nchar == 'H' || nchar == 'L') ? WSP_VERT : 0)
@@ -1018,7 +1018,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
   bool toplevel = flags & (WSP_TOP | WSP_BOT);
 
   // add a status line when p_ls == 1 and splitting the first window
-  if (one_nonfloat() && p_ls == 1 && oldwin->w_status_height == 0) {
+  if (one_window(firstwin) && p_ls == 1 && oldwin->w_status_height == 0) {
     if (oldwin->w_height <= p_wmh) {
       emsg(_(e_noroom));
       return NULL;
@@ -1741,7 +1741,7 @@ static void win_exchange(int Prenum)
     return;
   }
 
-  if (firstwin == curwin && lastwin_nofloating() == curwin) {
+  if (one_window(curwin)) {
     // just one window
     beep_flush();
     return;
@@ -1833,7 +1833,7 @@ static void win_rotate(bool upwards, int count)
     return;
   }
 
-  if (count <= 0 || (firstwin == curwin && lastwin_nofloating() == curwin)) {
+  if (count <= 0 || one_window(curwin)) {
     // nothing to do
     beep_flush();
     return;
@@ -2495,37 +2495,13 @@ bool last_window(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 }
 
 /// Check if "win" is the only non-floating window in the current tabpage.
+///
+/// This should be used in place of ONE_WINDOW when necessary,
+/// with "firstwin" or the affected window as argument depending on the situation.
 bool one_window(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (win->w_floating) {
-    return false;
-  }
-
-  bool seen_one = false;
-
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (!wp->w_floating) {
-      if (seen_one) {
-        return false;
-      }
-      seen_one = true;
-    }
-  }
-  return true;
-}
-
-/// Like ONE_WINDOW but only considers non-floating windows
-bool one_nonfloat(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  return firstwin->w_next == NULL || firstwin->w_next->w_floating;
-}
-
-/// if wp is the last non-floating window
-///
-/// always false for a floating window
-bool last_nonfloat(win_T *wp) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  return wp != NULL && firstwin == wp && !(wp->w_next && !wp->w_floating);
+  assert(!firstwin->w_floating);
+  return firstwin == win && (win->w_next == NULL || win->w_next->w_floating);
 }
 
 /// Check if floating windows in the current tab can be closed.
@@ -3950,7 +3926,7 @@ void close_others(int message, int forceit)
     return;
   }
 
-  if (one_nonfloat() && !lastwin->w_floating) {
+  if (one_window(firstwin) && !lastwin->w_floating) {
     if (message
         && !autocmd_busy) {
       msg(_(m_onlyone), 0);
@@ -7224,7 +7200,7 @@ int global_stl_height(void)
 /// @param morewin  pretend there are two or more windows if true.
 int last_stl_height(bool morewin)
 {
-  return (p_ls > 1 || (p_ls == 1 && (morewin || !one_nonfloat()))) ? STATUS_HEIGHT : 0;
+  return (p_ls > 1 || (p_ls == 1 && (morewin || !one_window(firstwin)))) ? STATUS_HEIGHT : 0;
 }
 
 /// Return the minimal number of rows that is needed on the screen to display

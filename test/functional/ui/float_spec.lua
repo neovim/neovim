@@ -873,6 +873,39 @@ describe('float window', function()
     end)
   end)
 
+  describe(':close on non-float with floating windows', function()
+    it('does not quit Nvim if BufWinLeave makes it the only non-float', function()
+      exec([[
+        let firstbuf = bufnr()
+        new
+        let midwin = win_getid()
+        new
+        setlocal bufhidden=wipe
+        call nvim_win_set_config(midwin,
+              \ #{relative: 'editor', row: 5, col: 5, width: 5, height: 5})
+        autocmd BufWinLeave * ++once exe firstbuf .. 'bwipe!'
+      ]])
+      eq('Vim(close):E855: Autocommands caused command to abort', pcall_err(command, 'close'))
+      assert_alive()
+    end)
+
+    pending('does not crash if BufWinLeave makes it the only non-float in tabpage', function()
+      exec([[
+        tabnew
+        let firstbuf = bufnr()
+        new
+        let midwin = win_getid()
+        new
+        setlocal bufhidden=wipe
+        call nvim_win_set_config(midwin,
+              \ #{relative: 'editor', row: 5, col: 5, width: 5, height: 5})
+        autocmd BufWinLeave * ++once exe firstbuf .. 'bwipe!'
+      ]])
+      eq('Vim(close):E855: Autocommands caused command to abort', pcall_err(command, 'close'))
+      assert_alive()
+    end)
+  end)
+
   local function with_ext_multigrid(multigrid)
     local screen, attrs
     before_each(function()
