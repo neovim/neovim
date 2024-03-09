@@ -1916,7 +1916,7 @@ int win_splitmove(win_T *wp, int size, int flags)
   int dir = 0;
   int height = wp->w_height;
 
-  if (firstwin == wp && lastwin_nofloating() == wp) {
+  if (one_window(wp)) {
     return OK;  // nothing to do
   }
   if (is_aucmd_win(wp) || check_split_disallowed(wp) == FAIL) {
@@ -2539,19 +2539,40 @@ bool can_close_in_cmdwin(win_T *win, Error *err)
   return true;
 }
 
-/// Close the possibly last window in a tab page.
+/// Close the possibly last non-floating window in a tab page.
 ///
 /// @param  win          window to close
 /// @param  free_buf     whether to free the window's current buffer
+/// @param  force        close floating windows even if they are modified
 /// @param  prev_curtab  previous tabpage that will be closed if "win" is the
 ///                      last window in the tabpage
 ///
-/// @return false if there are other windows and nothing is done, true otherwise.
-static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev_curtab)
+/// @return false if there are other non-floating windows and nothing is done, true otherwise.
+static bool close_last_window_tabpage(win_T *win, bool free_buf, bool force, tabpage_T *prev_curtab)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (!ONE_WINDOW) {
+  if (!one_window(win)) {
     return false;
+  }
+
+  if (lastwin->w_floating && one_window(win)) {
+    if (is_aucmd_win(lastwin)) {
+      emsg(_("E814: Cannot close window, only autocmd window would remain"));
+      return true;
+    }
+    if (force || can_close_floating_windows()) {
+      // close the last window until the there are no floating windows
+      while (lastwin->w_floating) {
+        // `force` flag isn't actually used when closing a floating window.
+        if (win_close(lastwin, free_buf, true) == FAIL) {
+          // If closing the window fails give up, to avoid looping forever.
+          return true;
+        }
+      }
+    } else {
+      emsg(e_floatonly);
+      return true;
+    }
   }
 
   buf_T *old_curbuf = curbuf;
@@ -2653,30 +2674,11 @@ int win_close(win_T *win, bool free_buf, bool force)
     emsg(_(e_autocmd_close));
     return FAIL;
   }
-  if (lastwin->w_floating && one_window(win)) {
-    if (is_aucmd_win(lastwin)) {
-      emsg(_("E814: Cannot close window, only autocmd window would remain"));
-      return FAIL;
-    }
-    if (force || can_close_floating_windows()) {
-      // close the last window until the there are no floating windows
-      while (lastwin->w_floating) {
-        // `force` flag isn't actually used when closing a floating window.
-        if (win_close(lastwin, free_buf, true) == FAIL) {
-          // If closing the window fails give up, to avoid looping forever.
-          return FAIL;
-        }
-      }
-    } else {
-      emsg(e_floatonly);
-      return FAIL;
-    }
-  }
 
   // When closing the last window in a tab page first go to another tab page
   // and then close the window and the tab page to avoid that curwin and
   // curtab are invalid while we are freeing memory.
-  if (close_last_window_tabpage(win, free_buf, prev_curtab)) {
+  if (close_last_window_tabpage(win, free_buf, force, prev_curtab)) {
     return FAIL;
   }
 
@@ -2771,7 +2773,7 @@ int win_close(win_T *win, bool free_buf, bool force)
   // Autocommands may have closed the window already, or closed the only
   // other window or moved to another tab page.
   if (!win_valid(win) || (!win->w_floating && last_window(win))
-      || close_last_window_tabpage(win, free_buf, prev_curtab)) {
+      || close_last_window_tabpage(win, free_buf, force, prev_curtab)) {
     return FAIL;
   }
 
