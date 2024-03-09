@@ -550,8 +550,7 @@ v:searchforward
 v:servername
 		Primary listen-address of Nvim, the first item returned by
 		|serverlist()|. Usually this is the named pipe created by Nvim
-		at |startup| or given by |--listen| (or the deprecated
-		|$NVIM_LISTEN_ADDRESS| env var).
+		at |startup| or given by |--listen|.
 
 		See also |serverstart()| |serverstop()|.
 		Read-only.
