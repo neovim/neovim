@@ -73,6 +73,18 @@ describe('command-line option', function()
       eq(#'100500\n', attrs.size)
     end)
 
+    it('does not crash when run completion in ex mode', function()
+      fn.system({
+        nvim_prog_abs(),
+        '--clean',
+        '-e',
+        '-s',
+        '--cmd',
+        'exe "norm! i\\<C-X>\\<C-V>"',
+      })
+      eq(0, eval('v:shell_error'))
+    end)
+
     it('does not crash after reading from stdin in non-headless mode', function()
       skip(is_os('win'))
       local screen = Screen.new(40, 8)
