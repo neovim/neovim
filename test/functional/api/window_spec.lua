@@ -2401,6 +2401,47 @@ describe('API/win', function()
                     |
       ]])
     end)
+
+    it("updates tp_curwin of moved window's original tabpage", function()
+      local t1 = api.nvim_get_current_tabpage()
+      command('tab split | split')
+      local t2 = api.nvim_get_current_tabpage()
+      local t2_alt_win = api.nvim_get_current_win()
+      command('vsplit')
+      local t2_cur_win = api.nvim_get_current_win()
+      command('tabprevious')
+      eq(t2_cur_win, api.nvim_tabpage_get_win(t2))
+
+      -- tp_curwin is unchanged when moved within the same tabpage.
+      api.nvim_win_set_config(t2_cur_win, { split = 'left', win = t2_alt_win })
+      eq(t2_cur_win, api.nvim_tabpage_get_win(t2))
+
+      -- Also unchanged if the move failed.
+      command('let &winwidth = &columns | let &winminwidth = &columns')
+      matches(
+        'E36: Not enough room$',
+        pcall_err(api.nvim_win_set_config, t2_cur_win, { split = 'left', win = 0 })
+      )
+      eq(t2_cur_win, api.nvim_tabpage_get_win(t2))
+      command('set winminwidth& winwidth&')
+
+      -- But is changed if successfully moved to a different tabpage.
+      api.nvim_win_set_config(t2_cur_win, { split = 'left', win = 0 })
+      eq(t2_alt_win, api.nvim_tabpage_get_win(t2))
+      eq(t1, api.nvim_win_get_tabpage(t2_cur_win))
+
+      -- Now do it for a float, which has different altwin logic.
+      command('tabnext')
+      t2_cur_win =
+        api.nvim_open_win(0, true, { relative = 'editor', row = 5, col = 5, width = 5, height = 5 })
+      eq(t2_alt_win, fn.win_getid(fn.winnr('#')))
+      command('tabprevious')
+      eq(t2_cur_win, api.nvim_tabpage_get_win(t2))
+
+      api.nvim_win_set_config(t2_cur_win, { split = 'left', win = 0 })
+      eq(t2_alt_win, api.nvim_tabpage_get_win(t2))
+      eq(t1, api.nvim_win_get_tabpage(t2_cur_win))
+    end)
   end)
 
   describe('get_config', function()

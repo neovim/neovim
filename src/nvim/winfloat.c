@@ -319,3 +319,21 @@ win_T *win_float_find_preview(void)
   }
   return NULL;
 }
+
+/// Select an alternative window to `win` (assumed floating) in tabpage `tp`.
+///
+/// Useful for finding a window to switch to if `win` is the current window, but is then closed or
+/// moved to a different tabpage.
+///
+/// @param  tp  `win`'s original tabpage, or NULL for current.
+win_T *win_float_find_altwin(const win_T *win, const tabpage_T *tp)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  if (tp == NULL) {
+    return (win_valid(prevwin) && prevwin != win) ? prevwin : firstwin;
+  }
+
+  assert(tp != curtab);
+  return (tabpage_win_valid(tp, tp->tp_prevwin) && tp->tp_prevwin != win) ? tp->tp_prevwin
+                                                                          : tp->tp_firstwin;
+}

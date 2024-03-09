@@ -3044,20 +3044,7 @@ static win_T *win_free_mem(win_T *win, int *dirp, tabpage_T *tp)
     xfree(frp);
   } else {
     *dirp = 'h';  // Dummy value.
-    if (tp == NULL) {
-      if (win_valid(prevwin) && prevwin != win) {
-        wp = prevwin;
-      } else {
-        wp = firstwin;
-      }
-    } else {
-      assert(tp != curtab);
-      if (tabpage_win_valid(tp, tp->tp_prevwin) && tp->tp_prevwin != win) {
-        wp = tp->tp_prevwin;
-      } else {
-        wp = tp->tp_firstwin;
-      }
-    }
+    wp = win_float_find_altwin(win, tp);
   }
   win_free(win, tp);
 

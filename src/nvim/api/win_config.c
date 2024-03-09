@@ -468,7 +468,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
         int dir;
         win_goto(winframe_find_altwin(win, &dir, NULL, NULL));
       } else {
-        win_goto(win_valid(prevwin) && prevwin != win ? prevwin : firstwin);
+        win_goto(win_float_find_altwin(win, NULL));
       }
 
       // Autocommands may have been a real nuisance and messed things up...
@@ -490,6 +490,8 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
 
     int dir = 0;
     frame_T *unflat_altfr = NULL;
+    win_T *altwin = NULL;
+
     if (was_split) {
       // If the window is the last in the tabpage or `fconfig.win` is
       // a handle to itself, we can't split it.
@@ -534,10 +536,11 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
           }
           // If the frame doesn't have a parent, the old frame
           // was the root frame and we need to create a top-level split.
-          winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp, &unflat_altfr);
+          altwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp, &unflat_altfr);
         } else if (n_frames == 2) {
           // There are two windows in the frame, we can just rotate it.
-          neighbor = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp, &unflat_altfr);
+          altwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp, &unflat_altfr);
+          neighbor = altwin;
         } else {
           // There is only one window in the frame, we can't split it.
           api_set_error(err, kErrorTypeException, "Cannot split window into itself");
@@ -546,9 +549,12 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
         // Set the parent to whatever the correct neighbor window was determined to be.
         parent = neighbor;
       } else {
-        winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp, &unflat_altfr);
+        altwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp, &unflat_altfr);
       }
+    } else {
+      altwin = win_float_find_altwin(win, win_tp == curtab ? NULL : win_tp);
     }
+
     win_remove(win, win_tp == curtab ? NULL : win_tp);
     if (win_tp == curtab) {
       last_status(false);  // may need to remove last status line
@@ -556,12 +562,14 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     }
 
     int flags = win_split_flags(fconfig.split, parent == NULL) | WSP_NOENTER;
+    tabpage_T *const parent_tp = parent ? win_find_tabpage(parent) : curtab;
+
     TRY_WRAP(err, {
       const bool need_switch = parent != NULL && parent != curwin;
       switchwin_T switchwin;
       if (need_switch) {
         // `parent` is valid in its tabpage, so switch_win should not fail.
-        const int result = switch_win(&switchwin, parent, win_find_tabpage(parent), true);
+        const int result = switch_win(&switchwin, parent, parent_tp, true);
         (void)result;
         assert(result == OK);
       }
@@ -591,6 +599,11 @@ restore_curwin:
         win_goto(win);
       }
       return;
+    }
+
+    // If `win` moved tabpages and was the curwin of its old one, select a new curwin for it.
+    if (win_tp != parent_tp && win_tp->tp_curwin == win) {
+      win_tp->tp_curwin = altwin;
     }
 
     if (HAS_KEY_X(config, width)) {
