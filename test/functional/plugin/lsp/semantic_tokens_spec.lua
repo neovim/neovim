@@ -37,6 +37,8 @@ describe('semantic token highlighting', function()
       [7] = { bold = true, foreground = Screen.colors.DarkCyan },
       [8] = { bold = true, foreground = Screen.colors.SlateBlue },
       [9] = { bold = true, foreground = tonumber('0x6a0dad') },
+      [10] = { bold = true, foreground = Screen.colors.Brown },
+      [11] = { foreground = Screen.colors.Magenta1 },
     }
     command([[ hi link @lsp.type.namespace Type ]])
     command([[ hi link @lsp.type.function Special ]])
@@ -837,11 +839,13 @@ b = "as"]],
       {
         it = 'rust-analyzer',
         text = [[pub fn main() {
-  break rust;
-  /// what?
+    println!("Hello world!");
+    break rust;
+    /// what?
 }
 ]],
-        response = [[{"data": [0, 0, 3, 1, 0, 0, 4, 2, 1, 0, 0, 3, 4, 14, 524290, 0, 4, 1, 45, 0, 0, 1, 1, 45, 0, 0, 2, 1, 26, 0, 1, 4, 5, 1, 8192, 0, 6, 4, 52, 0, 0, 4, 1, 48, 0, 1, 4, 9, 0, 1, 1, 0, 1, 26, 0], "resultId": "1"}]],
+        response = [[{"data": [0, 0, 3, 1, 0, 0, 4, 2, 1, 0, 0, 3, 4, 14, 524290, 0, 4, 1, 45, 0, 0, 1, 1, 45, 0, 0, 2, 1, 26, 0, 1, 4, 8, 17, 0, 0, 8, 1, 45, 0, 0, 1, 14, 2, 0, 0, 14, 1, 45, 0, 0, 1, 1, 48, 0, 1, 4, 5, 1, 8192, 0, 6, 4, 52, 0, 0, 4, 1, 48, 0, 1, 4, 9, 0, 1, 1, 0, 1, 26, 0 ], "resultId": "1"}]],
+
         legend = [[{
         "tokenTypes": [
           "comment", "keyword", "string", "number", "regexp", "operator", "namespace", "type", "struct", "class", "interface", "enum", "enumMember", "typeParameter", "function", "method", "property", "macro", "variable",
@@ -904,6 +908,46 @@ b = "as"]],
           },
           {
             line = 1,
+            modifiers = {},
+            start_col = 4,
+            end_col = 12,
+            type = 'macro', -- println!
+            marked = true,
+          },
+          {
+            line = 1,
+            modifiers = {},
+            start_col = 12,
+            end_col = 13,
+            type = 'parenthesis',
+            marked = true,
+          },
+          {
+            line = 1,
+            modifiers = {},
+            start_col = 13,
+            end_col = 27,
+            type = 'string', -- "Hello world!"
+            marked = true,
+          },
+          {
+            line = 1,
+            modifiers = {},
+            start_col = 27,
+            end_col = 28,
+            type = 'parenthesis',
+            marked = true,
+          },
+          {
+            line = 1,
+            modifiers = {},
+            start_col = 28,
+            end_col = 29,
+            type = 'semicolon',
+            marked = true,
+          },
+          {
+            line = 2,
             modifiers = { controlFlow = true },
             start_col = 4,
             end_col = 9, -- break
@@ -911,31 +955,31 @@ b = "as"]],
             marked = true,
           },
           {
-            line = 1,
+            line = 2,
             modifiers = {},
             start_col = 10,
-            end_col = 13, -- rust
+            end_col = 14, -- rust
             type = 'unresolvedReference',
             marked = true,
           },
           {
-            line = 1,
+            line = 2,
             modifiers = {},
-            start_col = 13,
-            end_col = 13,
+            start_col = 14,
+            end_col = 15,
             type = 'semicolon',
             marked = true,
           },
           {
-            line = 2,
+            line = 3,
             modifiers = { documentation = true },
             start_col = 4,
-            end_col = 11,
+            end_col = 13,
             type = 'comment', -- /// what?
             marked = true,
           },
           {
-            line = 3,
+            line = 4,
             modifiers = {},
             start_col = 0,
             end_col = 1,
@@ -946,12 +990,13 @@ b = "as"]],
         expected_screen = function()
           screen:expect {
             grid = [[
-            pub fn {8:main}() {                         |
-              break rust;                           |
-              //{6:/ what?}                             |
+            {10:pub} {10:fn} {8:main}() {                         |
+                {5:println!}({11:"Hello world!"});           |
+                {10:break} rust;                         |
+                {6:/// what?}                           |
             }                                       |
             ^                                        |
-            {1:~                                       }|*10
+            {1:~                                       }|*9
                                                     |
           ]],
           }
