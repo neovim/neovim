@@ -550,6 +550,10 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
       }
     }
     win_remove(win, win_tp == curtab ? NULL : win_tp);
+    if (win_tp == curtab) {
+      last_status(false);  // may need to remove last status line
+      win_comp_pos();  // recompute window positions
+    }
 
     int flags = win_split_flags(fconfig.split, parent == NULL) | WSP_NOENTER;
     TRY_WRAP(err, {

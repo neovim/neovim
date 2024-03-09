@@ -2379,6 +2379,28 @@ describe('API/win', function()
       )
       eq(cur_win, api.nvim_get_current_win())
     end)
+
+    it('updates statusline when moving bottom split', function()
+      local screen = Screen.new(10, 10)
+      screen:set_default_attr_ids({
+        [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+        [1] = { bold = true, reverse = true }, -- StatusLine
+      })
+      screen:attach()
+      exec([[
+        set laststatus=0
+        belowright split
+        call nvim_win_set_config(0, #{split: 'above', win: win_getid(winnr('#'))})
+      ]])
+      screen:expect([[
+        ^            |
+        {0:~           }|*3
+        {1:[No Name]   }|
+                    |
+        {0:~           }|*3
+                    |
+      ]])
+    end)
   end)
 
   describe('get_config', function()
