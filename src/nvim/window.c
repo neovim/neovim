@@ -2546,7 +2546,7 @@ bool can_close_in_cmdwin(win_T *win, Error *err)
 /// @param  prev_curtab  previous tabpage that will be closed if "win" is the
 ///                      last window in the tabpage
 ///
-/// @return true when the window was closed already.
+/// @return false if there are other windows and nothing is done, true otherwise.
 static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev_curtab)
   FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -2751,10 +2751,8 @@ int win_close(win_T *win, bool free_buf, bool force)
 
   win_close_buffer(win, free_buf ? DOBUF_UNLOAD : 0, true);
 
-  if (only_one_window() && win_valid(win) && win->w_buffer == NULL
-      && (last_window(win) || curtab != prev_curtab
-          || close_last_window_tabpage(win, free_buf, prev_curtab))
-      && !win->w_floating) {
+  if (win_valid(win) && win->w_buffer == NULL
+      && !win->w_floating && last_window(win)) {
     // Autocommands have closed all windows, quit now.  Restore
     // curwin->w_buffer, otherwise writing ShaDa file may fail.
     if (curwin->w_buffer == NULL) {
@@ -2766,10 +2764,7 @@ int win_close(win_T *win, bool free_buf, bool force)
   if (curtab != prev_curtab && win_valid_any_tab(win)
       && win->w_buffer == NULL) {
     // Need to close the window anyway, since the buffer is NULL.
-    // Don't trigger autocmds with a NULL buffer.
-    block_autocmds();
     win_close_othertab(win, false, prev_curtab);
-    unblock_autocmds();
     return FAIL;
   }
 
@@ -2940,10 +2935,14 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   }
 
   // Fire WinClosed just before starting to free window-related resources.
-  do_autocmd_winclosed(win);
-  // autocmd may have freed the window already.
-  if (!win_valid_any_tab(win)) {
-    return;
+  // If the buffer is NULL, it isn't safe to trigger autocommands,
+  // and win_close() should have already triggered WinClosed.
+  if (win->w_buffer != NULL) {
+    do_autocmd_winclosed(win);
+    // autocmd may have freed the window already.
+    if (!win_valid_any_tab(win)) {
+      return;
+    }
   }
 
   if (win->w_buffer != NULL) {
