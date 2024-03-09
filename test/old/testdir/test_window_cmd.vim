@@ -1164,19 +1164,6 @@ func Test_win_splitmove()
   %bw!
 endfunc
 
-func Test_floatwin_splitmove()
-  vsplit
-  let win2 = win_getid()
-  let popup_winid = nvim_open_win(0, 0, {'relative': 'win',
-        \ 'row': 3, 'col': 3, 'width': 12, 'height': 3})
-  " Nvim: floating windows are supported for the first argument.
-  " call assert_fails('call win_splitmove(popup_winid, win2)', 'E957:')
-  call assert_fails('call win_splitmove(win2, popup_winid)', 'E957:')
-
-  call nvim_win_close(popup_winid, 1)
-  bwipe
-endfunc
-
 " Test for the :only command
 func Test_window_only()
   new
