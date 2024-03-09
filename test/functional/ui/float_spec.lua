@@ -550,6 +550,43 @@ describe('float window', function()
     eq({ w0 }, api.nvim_list_wins())
   end)
 
+  it('win_splitmove() can move float into a split', function()
+    command('split')
+    eq({'col', {{'leaf', 1001}, {'leaf', 1000}}}, fn.winlayout())
+
+    local win1 = api.nvim_open_win(0, true, {relative = 'editor', row = 1, col = 1, width = 5, height = 5})
+    fn.win_splitmove(win1, 1001, {vertical = true})
+    eq({'col', {{'row', {{'leaf', win1}, {'leaf', 1001}}}, {'leaf', 1000}}}, fn.winlayout())
+    eq('', api.nvim_win_get_config(win1).relative)
+
+    -- Should be unable to create a split relative to a float, though.
+    local win2 = api.nvim_open_win(0, true, {relative = 'editor', row = 1, col = 1, width = 5, height = 5})
+    eq('Vim:E957: Invalid window number', pcall_err(fn.win_splitmove, win1, win2, {vertical = true}))
+  end)
+
+  it('tp_curwin updated if external window is moved into split', function()
+    local screen = Screen.new(20, 7)
+    screen:attach { ext_multigrid = true }
+
+    command('tabnew')
+    local external_win = api.nvim_open_win(0, true, {external = true, width = 5, height = 5})
+    eq(external_win, api.nvim_get_current_win())
+    eq(2, fn.tabpagenr())
+    command('tabfirst')
+    api.nvim_set_current_win(external_win)
+    eq(external_win, api.nvim_get_current_win())
+    eq(1, fn.tabpagenr())
+
+    command('wincmd J')
+    eq(external_win, api.nvim_get_current_win())
+    eq(false, api.nvim_win_get_config(external_win).external)
+    command('tabnext')
+    eq(2, fn.tabpagenr())
+    neq(external_win, api.nvim_get_current_win())
+
+    screen:detach()
+  end)
+
   describe('with only one tabpage,', function()
     local float_opts = {relative = 'editor', row = 1, col = 1, width = 1, height = 1}
     local old_buf, old_win
@@ -833,6 +870,39 @@ describe('float window', function()
         end)
       end)
       -- TODO: what to do when there are non-closeable floating windows?
+    end)
+  end)
+
+  describe(':close on non-float with floating windows', function()
+    it('does not quit Nvim if BufWinLeave makes it the only non-float', function()
+      exec([[
+        let firstbuf = bufnr()
+        new
+        let midwin = win_getid()
+        new
+        setlocal bufhidden=wipe
+        call nvim_win_set_config(midwin,
+              \ #{relative: 'editor', row: 5, col: 5, width: 5, height: 5})
+        autocmd BufWinLeave * ++once exe firstbuf .. 'bwipe!'
+      ]])
+      eq('Vim(close):E855: Autocommands caused command to abort', pcall_err(command, 'close'))
+      assert_alive()
+    end)
+
+    pending('does not crash if BufWinLeave makes it the only non-float in tabpage', function()
+      exec([[
+        tabnew
+        let firstbuf = bufnr()
+        new
+        let midwin = win_getid()
+        new
+        setlocal bufhidden=wipe
+        call nvim_win_set_config(midwin,
+              \ #{relative: 'editor', row: 5, col: 5, width: 5, height: 5})
+        autocmd BufWinLeave * ++once exe firstbuf .. 'bwipe!'
+      ]])
+      eq('Vim(close):E855: Autocommands caused command to abort', pcall_err(command, 'close'))
+      assert_alive()
     end)
   end)
 
@@ -9100,6 +9170,22 @@ describe('float window', function()
            {5:└─────┘}                                |
         ]]}
       end
+    end)
+
+    it('attempt to turn into split with no room', function()
+      eq('Vim(split):E36: Not enough room', pcall_err(command, 'execute "split |"->repeat(&lines)'))
+      command('vsplit | wincmd | | wincmd p')
+      api.nvim_open_win(0, true, {relative = "editor", row = 0, col = 0, width = 5, height = 5})
+      local config = api.nvim_win_get_config(0)
+      eq('editor', config.relative)
+
+      local layout = fn.winlayout()
+      local restcmd = fn.winrestcmd()
+      eq('Vim(wincmd):E36: Not enough room', pcall_err(command, 'wincmd K'))
+      eq('Vim(wincmd):E36: Not enough room', pcall_err(command, 'wincmd J'))
+      eq(layout, fn.winlayout())
+      eq(restcmd, fn.winrestcmd())
+      eq(config, api.nvim_win_get_config(0))
     end)
   end
 

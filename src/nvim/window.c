@@ -455,9 +455,14 @@ newwindow:
   case 'H':
   case 'L':
     CHECK_CMDWIN;
-    win_totop(Prenum,
-              ((nchar == 'H' || nchar == 'L') ? WSP_VERT : 0)
-              | ((nchar == 'H' || nchar == 'K') ? WSP_TOP : WSP_BOT));
+    if (one_window(curwin)) {
+      beep_flush();
+    } else {
+      const int dir = ((nchar == 'H' || nchar == 'L') ? WSP_VERT : 0)
+                      | ((nchar == 'H' || nchar == 'K') ? WSP_TOP : WSP_BOT);
+
+      win_splitmove(curwin, Prenum, dir);
+    }
     break;
 
   // make all windows the same width and/or height
@@ -718,6 +723,7 @@ void win_set_buf(win_T *win, buf_T *buf, bool noautocmd, Error *err)
                   kErrorTypeException,
                   "Failed to switch to window %d",
                   win->handle);
+    goto cleanup;
   }
 
   try_start();
@@ -729,10 +735,11 @@ void win_set_buf(win_T *win, buf_T *buf, bool noautocmd, Error *err)
                   buf->handle);
   }
 
-  // If window is not current, state logic will not validate its cursor.
-  // So do it now.
+  // If window is not current, state logic will not validate its cursor. So do it now.
+  // Still needed if do_buffer returns FAIL (e.g: autocmds abort script after buffer was set).
   validate_cursor();
 
+cleanup:
   restore_win_noblock(&switchwin, true);
   if (noautocmd) {
     unblock_autocmds();
@@ -903,19 +910,35 @@ void ui_ext_win_viewport(win_T *wp)
   }
 }
 
-/// If "split_disallowed" is set give an error and return FAIL.
+/// If "split_disallowed" is set or "wp"s buffer is closing, give an error and return FAIL.
 /// Otherwise return OK.
-static int check_split_disallowed(void)
+int check_split_disallowed(const win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  Error err = ERROR_INIT;
+  const bool ok = check_split_disallowed_err(wp, &err);
+  if (ERROR_SET(&err)) {
+    emsg(_(err.msg));
+    api_clear_error(&err);
+  }
+  return ok ? OK : FAIL;
+}
+
+/// Like `check_split_disallowed`, but set `err` to the (untranslated) error message on failure and
+/// return false. Otherwise return true.
+/// @see check_split_disallowed
+bool check_split_disallowed_err(const win_T *wp, Error *err)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (split_disallowed > 0) {
-    emsg(_("E242: Can't split a window while closing another"));
-    return FAIL;
+    api_set_error(err, kErrorTypeException, "E242: Can't split a window while closing another");
+    return false;
   }
-  if (curwin->w_buffer->b_locked_split) {
-    emsg(_(e_cannot_split_window_when_closing_buffer));
-    return FAIL;
+  if (wp->w_buffer->b_locked_split) {
+    api_set_error(err, kErrorTypeException, "%s", e_cannot_split_window_when_closing_buffer);
+    return false;
   }
-  return OK;
+  return true;
 }
 
 // split the current window, implements CTRL-W s and :split
@@ -934,7 +957,7 @@ static int check_split_disallowed(void)
 // return FAIL for failure, OK otherwise
 int win_split(int size, int flags)
 {
-  if (check_split_disallowed() == FAIL) {
+  if (check_split_disallowed(curwin) == FAIL) {
     return FAIL;
   }
 
@@ -958,14 +981,19 @@ int win_split(int size, int flags)
     clear_snapshot(curtab, SNAP_HELP_IDX);
   }
 
-  return win_split_ins(size, flags, NULL, 0) == NULL ? FAIL : OK;
+  return win_split_ins(size, flags, NULL, 0, NULL) == NULL ? FAIL : OK;
 }
 
 /// When "new_wp" is NULL: split the current window in two.
 /// When "new_wp" is not NULL: insert this window at the far
 /// top/left/right/bottom.
+/// When "to_flatten" is not NULL: flatten this frame before reorganising frames;
+/// remains unflattened on failure.
+///
+/// On failure, if "new_wp" was not NULL, no changes will have been made to the
+/// window layout or sizes.
 /// @return  NULL for failure, or pointer to new window
-win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir)
+win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_flatten)
 {
   win_T *wp = new_wp;
 
@@ -986,13 +1014,12 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir)
 
   int need_status = 0;
   int new_size = size;
-  bool new_in_layout = (new_wp == NULL || new_wp->w_floating);
   bool vertical = flags & WSP_VERT;
   bool toplevel = flags & (WSP_TOP | WSP_BOT);
 
   // add a status line when p_ls == 1 and splitting the first window
-  if (one_nonfloat() && p_ls == 1 && oldwin->w_status_height == 0) {
-    if (oldwin->w_height <= p_wmh && new_in_layout) {
+  if (one_window(firstwin) && p_ls == 1 && oldwin->w_status_height == 0) {
+    if (oldwin->w_height <= p_wmh) {
       emsg(_(e_noroom));
       return NULL;
     }
@@ -1041,7 +1068,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir)
       available = oldwin->w_frame->fr_width;
       needed += minwidth;
     }
-    if (available < needed && new_in_layout) {
+    if (available < needed) {
       emsg(_(e_noroom));
       return NULL;
     }
@@ -1121,7 +1148,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir)
       available = oldwin->w_frame->fr_height;
       needed += minheight;
     }
-    if (available < needed && new_in_layout) {
+    if (available < needed) {
       emsg(_(e_noroom));
       return NULL;
     }
@@ -1191,13 +1218,13 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir)
     if (new_wp == NULL) {
       wp = win_alloc(oldwin, false);
     } else {
-      win_append(oldwin, wp);
+      win_append(oldwin, wp, NULL);
     }
   } else {
     if (new_wp == NULL) {
       wp = win_alloc(oldwin->w_prev, false);
     } else {
-      win_append(oldwin->w_prev, wp);
+      win_append(oldwin->w_prev, wp, NULL);
     }
   }
 
@@ -1211,11 +1238,35 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir)
     // make the contents of the new window the same as the current one
     win_init(wp, curwin, flags);
   } else if (wp->w_floating) {
-    new_frame(wp);
+    ui_comp_remove_grid(&wp->w_grid_alloc);
+    if (ui_has(kUIMultigrid)) {
+      wp->w_pos_changed = true;
+    } else {
+      // No longer a float, a non-multigrid UI shouldn't draw it as such
+      ui_call_win_hide(wp->w_grid_alloc.handle);
+      win_free_grid(wp, true);
+    }
+
+    // External windows are independent of tabpages, and may have been the curwin of others.
+    if (wp->w_config.external) {
+      FOR_ALL_TABS(tp) {
+        if (tp != curtab && tp->tp_curwin == wp) {
+          tp->tp_curwin = tp->tp_firstwin;
+        }
+      }
+    }
+
     wp->w_floating = false;
+    new_frame(wp);
+
     // non-floating window doesn't store float config or have a border.
     wp->w_config = WIN_CONFIG_INIT;
     CLEAR_FIELD(wp->w_border_adj);
+  }
+
+  // Going to reorganize frames now, make sure they're flat.
+  if (to_flatten != NULL) {
+    frame_flatten(to_flatten);
   }
 
   bool before;
@@ -1453,7 +1504,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir)
 
   if (!(flags & WSP_NOENTER)) {
     // make the new window the current window
-    win_enter_ext(wp, WEE_TRIGGER_NEW_AUTOCMDS | WEE_TRIGGER_ENTER_AUTOCMDS
+    win_enter_ext(wp, (new_wp == NULL ? WEE_TRIGGER_NEW_AUTOCMDS : 0) | WEE_TRIGGER_ENTER_AUTOCMDS
                   | WEE_TRIGGER_LEAVE_AUTOCMDS);
   }
   if (vertical) {
@@ -1690,7 +1741,7 @@ static void win_exchange(int Prenum)
     return;
   }
 
-  if (firstwin == curwin && lastwin_nofloating() == curwin) {
+  if (one_window(curwin)) {
     // just one window
     beep_flush();
     return;
@@ -1732,13 +1783,13 @@ static void win_exchange(int Prenum)
   if (wp->w_prev != curwin) {
     win_remove(curwin, NULL);
     frame_remove(curwin->w_frame);
-    win_append(wp->w_prev, curwin);
+    win_append(wp->w_prev, curwin, NULL);
     frame_insert(frp, curwin->w_frame);
   }
   if (wp != wp2) {
     win_remove(wp, NULL);
     frame_remove(wp->w_frame);
-    win_append(wp2, wp);
+    win_append(wp2, wp, NULL);
     if (frp2 == NULL) {
       frame_insert(wp->w_frame->fr_parent->fr_child, wp->w_frame);
     } else {
@@ -1782,7 +1833,7 @@ static void win_rotate(bool upwards, int count)
     return;
   }
 
-  if (count <= 0 || (firstwin == curwin && lastwin_nofloating() == curwin)) {
+  if (count <= 0 || one_window(curwin)) {
     // nothing to do
     beep_flush();
     return;
@@ -1812,7 +1863,7 @@ static void win_rotate(bool upwards, int count)
 
       // find last frame and append removed window/frame after it
       for (; frp->fr_next != NULL; frp = frp->fr_next) {}
-      win_append(frp->fr_win, wp1);
+      win_append(frp->fr_win, wp1, NULL);
       frame_append(frp, wp1->w_frame);
 
       wp2 = frp->fr_win;                // previously last window
@@ -1827,7 +1878,7 @@ static void win_rotate(bool upwards, int count)
       assert(frp->fr_parent->fr_child);
 
       // append the removed window/frame before the first in the list
-      win_append(frp->fr_parent->fr_child->fr_win->w_prev, wp1);
+      win_append(frp->fr_parent->fr_child->fr_win->w_prev, wp1, NULL);
       frame_insert(frp->fr_parent->fr_child, frp);
     }
 
@@ -1856,48 +1907,58 @@ static void win_rotate(bool upwards, int count)
   redraw_all_later(UPD_NOT_VALID);
 }
 
-// Move the current window to the very top/bottom/left/right of the screen.
-static void win_totop(int size, int flags)
+/// Move "wp" into a new split in a given direction, possibly relative to the
+/// current window.
+/// "wp" must be valid in the current tabpage.
+/// Returns FAIL for failure, OK otherwise.
+int win_splitmove(win_T *wp, int size, int flags)
 {
   int dir = 0;
-  int height = curwin->w_height;
+  int height = wp->w_height;
 
-  if (firstwin == curwin && lastwin_nofloating() == curwin) {
-    beep_flush();
-    return;
+  if (firstwin == wp && lastwin_nofloating() == wp) {
+    return OK;  // nothing to do
   }
-  if (is_aucmd_win(curwin)) {
-    return;
-  }
-  if (check_split_disallowed() == FAIL) {
-    return;
+  if (is_aucmd_win(wp) || check_split_disallowed(wp) == FAIL) {
+    return FAIL;
   }
 
-  if (curwin->w_floating) {
-    ui_comp_remove_grid(&curwin->w_grid_alloc);
-    if (ui_has(kUIMultigrid)) {
-      curwin->w_pos_changed = true;
-    } else {
-      // No longer a float, a non-multigrid UI shouldn't draw it as such
-      ui_call_win_hide(curwin->w_grid_alloc.handle);
-      win_free_grid(curwin, true);
-    }
+  frame_T *unflat_altfr = NULL;
+  if (wp->w_floating) {
+    win_remove(wp, NULL);
   } else {
-    // Remove the window and frame from the tree of frames.
-    winframe_remove(curwin, &dir, NULL);
+    // Remove the window and frame from the tree of frames.  Don't flatten any
+    // frames yet so we can restore things if win_split_ins fails.
+    winframe_remove(wp, &dir, NULL, &unflat_altfr);
+    win_remove(wp, NULL);
+    last_status(false);  // may need to remove last status line
+    win_comp_pos();  // recompute window positions
   }
-  win_remove(curwin, NULL);
-  last_status(false);       // may need to remove last status line
-  win_comp_pos();     // recompute window positions
 
-  // Split a window on the desired side and put the window there.
-  win_split_ins(size, flags, curwin, dir);
-  if (!(flags & WSP_VERT)) {
-    win_setheight(height);
+  // Split a window on the desired side and put "wp" there.
+  if (win_split_ins(size, flags, wp, dir, unflat_altfr) == NULL) {
+    win_append(wp->w_prev, wp, NULL);
+    if (!wp->w_floating) {
+      // win_split_ins doesn't change sizes or layout if it fails to insert an
+      // existing window, so just undo winframe_remove.
+      winframe_restore(wp, dir, unflat_altfr);
+      win_comp_pos();  // recompute window positions
+    }
+    return FAIL;
+  }
+
+  // If splitting horizontally, try to preserve height.
+  // Note that win_split_ins autocommands may have immediately closed "wp", or made it floating!
+  if (size == 0 && !(flags & WSP_VERT) && win_valid(wp) && !wp->w_floating) {
+    win_setheight_win(height, wp);
     if (p_ea) {
-      win_equal(curwin, true, 'v');
+      // Equalize windows.  Note that win_split_ins autocommands may have
+      // made a window other than "wp" current.
+      win_equal(curwin, curwin == wp, 'v');
     }
   }
+
+  return OK;
 }
 
 // Move window "win1" to below/right of "win2" and make "win1" the current
@@ -1955,7 +2016,7 @@ void win_move_after(win_T *win1, win_T *win2)
     }
     win_remove(win1, NULL);
     frame_remove(win1->w_frame);
-    win_append(win2, win1);
+    win_append(win2, win1, NULL);
     frame_append(win2->w_frame, win1->w_frame);
 
     win_comp_pos();  // recompute w_winrow for all windows
@@ -2434,37 +2495,13 @@ bool last_window(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 }
 
 /// Check if "win" is the only non-floating window in the current tabpage.
+///
+/// This should be used in place of ONE_WINDOW when necessary,
+/// with "firstwin" or the affected window as argument depending on the situation.
 bool one_window(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (win->w_floating) {
-    return false;
-  }
-
-  bool seen_one = false;
-
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (!wp->w_floating) {
-      if (seen_one) {
-        return false;
-      }
-      seen_one = true;
-    }
-  }
-  return true;
-}
-
-/// Like ONE_WINDOW but only considers non-floating windows
-bool one_nonfloat(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  return firstwin->w_next == NULL || firstwin->w_next->w_floating;
-}
-
-/// if wp is the last non-floating window
-///
-/// always false for a floating window
-bool last_nonfloat(win_T *wp) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  return wp != NULL && firstwin == wp && !(wp->w_next && !wp->w_floating);
+  assert(!firstwin->w_floating);
+  return firstwin == win && (win->w_next == NULL || win->w_next->w_floating);
 }
 
 /// Check if floating windows in the current tab can be closed.
@@ -2759,13 +2796,10 @@ int win_close(win_T *win, bool free_buf, bool force)
     ui_comp_remove_grid(&win->w_grid_alloc);
     assert(first_tabpage != NULL);  // suppress clang "Dereference of NULL pointer"
     if (win->w_config.external) {
-      for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
-        if (tp == curtab) {
-          continue;
-        }
-        if (tp->tp_curwin == win) {
+      FOR_ALL_TABS(tp) {
+        if (tp != curtab && tp->tp_curwin == win) {
           // NB: an autocmd can still abort the closing of this window,
-          // bur carring out this change anyway shouldn't be a catastrophe.
+          // but carrying out this change anyway shouldn't be a catastrophe.
           tp->tp_curwin = tp->tp_firstwin;
         }
       }
@@ -3006,24 +3040,11 @@ static win_T *win_free_mem(win_T *win, int *dirp, tabpage_T *tp)
   if (!win->w_floating) {
     // Remove the window and its frame from the tree of frames.
     frame_T *frp = win->w_frame;
-    wp = winframe_remove(win, dirp, tp);
+    wp = winframe_remove(win, dirp, tp, NULL);
     xfree(frp);
   } else {
     *dirp = 'h';  // Dummy value.
-    if (tp == NULL) {
-      if (win_valid(prevwin) && prevwin != win) {
-        wp = prevwin;
-      } else {
-        wp = firstwin;
-      }
-    } else {
-      assert(tp != curtab);
-      if (tabpage_win_valid(tp, tp->tp_prevwin) && tp->tp_prevwin != win) {
-        wp = tp->tp_prevwin;
-      } else {
-        wp = tp->tp_firstwin;
-      }
-    }
+    wp = win_float_find_altwin(win, tp);
   }
   win_free(win, tp);
 
@@ -3087,9 +3108,60 @@ void win_free_all(void)
 ///
 /// @param dirp  set to 'v' or 'h' for direction if 'ea'
 /// @param tp    tab page "win" is in, NULL for current
+/// @param unflat_altfr if not NULL, set to pointer of frame that got
+///                     the space, and it is not flattened
 ///
 /// @return      a pointer to the window that got the freed up space.
-win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp)
+win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp, frame_T **unflat_altfr)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  frame_T *altfr;
+  win_T *wp = winframe_find_altwin(win, dirp, tp, &altfr);
+  if (wp == NULL) {
+    return NULL;
+  }
+
+  frame_T *frp_close = win->w_frame;
+  // Remove this frame from the list of frames.
+  frame_remove(frp_close);
+
+  if (*dirp == 'v') {
+    frame_new_height(altfr, altfr->fr_height + frp_close->fr_height,
+                     altfr == frp_close->fr_next, false);
+  } else {
+    assert(*dirp == 'h');
+    frame_new_width(altfr, altfr->fr_width + frp_close->fr_width,
+                    altfr == frp_close->fr_next, false);
+  }
+
+  // If rows/columns go to a window below/right its positions need to be
+  // updated.  Can only be done after the sizes have been updated.
+  if (altfr == frp_close->fr_next) {
+    int row = win->w_winrow;
+    int col = win->w_wincol;
+
+    frame_comp_pos(altfr, &row, &col);
+  }
+
+  if (unflat_altfr == NULL) {
+    frame_flatten(altfr);
+  } else {
+    *unflat_altfr = altfr;
+  }
+
+  return wp;
+}
+
+/// Find the window that will get the freed space from a call to `winframe_remove`.
+/// Makes no changes to the window layout.
+///
+/// @param dirp  set to 'v' or 'h' for the direction where "altfr" will be resized
+///              to fill the space
+/// @param tp    tab page "win" is in, NULL for current
+/// @param altfr if not NULL, set to pointer of frame that will get the space
+///
+/// @return      a pointer to the window that will get the freed up space.
+win_T *winframe_find_altwin(win_T *win, int *dirp, tabpage_T *tp, frame_T **altfr)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   assert(tp == NULL || tp != curtab);
@@ -3101,12 +3173,9 @@ win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp)
 
   frame_T *frp_close = win->w_frame;
 
-  // Remove the window from its frame.
+  // Find the window and frame that gets the space.
   frame_T *frp2 = win_altframe(win, tp);
   win_T *wp = frame2win(frp2);
-
-  // Remove this frame from the list of frames.
-  frame_remove(frp_close);
 
   if (frp_close->fr_parent->fr_layout == FR_COL) {
     // When 'winfixheight' is set, try to find another frame in the column
@@ -3134,8 +3203,6 @@ win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp)
         }
       }
     }
-    frame_new_height(frp2, frp2->fr_height + frp_close->fr_height,
-                     frp2 == frp_close->fr_next, false);
     *dirp = 'v';
   } else {
     // When 'winfixwidth' is set, try to find another frame in the column
@@ -3163,70 +3230,124 @@ win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp)
         }
       }
     }
-    frame_new_width(frp2, frp2->fr_width + frp_close->fr_width,
-                    frp2 == frp_close->fr_next, false);
     *dirp = 'h';
   }
 
-  // If rows/columns go to a window below/right its positions need to be
-  // updated.  Can only be done after the sizes have been updated.
-  if (frp2 == frp_close->fr_next) {
-    int row = win->w_winrow;
-    int col = win->w_wincol;
-
-    frame_comp_pos(frp2, &row, &col);
+  assert(wp != win && frp2 != frp_close);
+  if (altfr != NULL) {
+    *altfr = frp2;
   }
 
-  if (frp2->fr_next == NULL && frp2->fr_prev == NULL) {
-    // There is no other frame in this list, move its info to the parent
-    // and remove it.
-    frp2->fr_parent->fr_layout = frp2->fr_layout;
-    frp2->fr_parent->fr_child = frp2->fr_child;
-    frame_T *frp;
-    FOR_ALL_FRAMES(frp, frp2->fr_child) {
-      frp->fr_parent = frp2->fr_parent;
+  return wp;
+}
+
+/// Flatten "frp" into its parent frame if it's the only child, also merging its
+/// list with the grandparent if they share the same layout.
+/// Frees "frp" if flattened; also "frp->fr_parent" if it has the same layout.
+/// "frp" must be valid in the current tabpage.
+static void frame_flatten(frame_T *frp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (frp->fr_next != NULL || frp->fr_prev != NULL) {
+    return;
+  }
+
+  // There is no other frame in this list, move its info to the parent
+  // and remove it.
+  frp->fr_parent->fr_layout = frp->fr_layout;
+  frp->fr_parent->fr_child = frp->fr_child;
+  frame_T *frp2;
+  FOR_ALL_FRAMES(frp2, frp->fr_child) {
+    frp2->fr_parent = frp->fr_parent;
+  }
+  frp->fr_parent->fr_win = frp->fr_win;
+  if (frp->fr_win != NULL) {
+    frp->fr_win->w_frame = frp->fr_parent;
+  }
+  frp2 = frp->fr_parent;
+  if (topframe->fr_child == frp) {
+    topframe->fr_child = frp2;
+  }
+  xfree(frp);
+
+  frp = frp2->fr_parent;
+  if (frp != NULL && frp->fr_layout == frp2->fr_layout) {
+    // The frame above the parent has the same layout, have to merge
+    // the frames into this list.
+    if (frp->fr_child == frp2) {
+      frp->fr_child = frp2->fr_child;
     }
-    frp2->fr_parent->fr_win = frp2->fr_win;
-    if (frp2->fr_win != NULL) {
-      frp2->fr_win->w_frame = frp2->fr_parent;
+    assert(frp2->fr_child);
+    frp2->fr_child->fr_prev = frp2->fr_prev;
+    if (frp2->fr_prev != NULL) {
+      frp2->fr_prev->fr_next = frp2->fr_child;
     }
-    frp = frp2->fr_parent;
+    for (frame_T *frp3 = frp2->fr_child;; frp3 = frp3->fr_next) {
+      frp3->fr_parent = frp;
+      if (frp3->fr_next == NULL) {
+        frp3->fr_next = frp2->fr_next;
+        if (frp2->fr_next != NULL) {
+          frp2->fr_next->fr_prev = frp3;
+        }
+        break;
+      }
+    }
     if (topframe->fr_child == frp2) {
       topframe->fr_child = frp;
     }
     xfree(frp2);
+  }
+}
 
-    frp2 = frp->fr_parent;
-    if (frp2 != NULL && frp2->fr_layout == frp->fr_layout) {
-      // The frame above the parent has the same layout, have to merge
-      // the frames into this list.
-      if (frp2->fr_child == frp) {
-        frp2->fr_child = frp->fr_child;
-      }
-      assert(frp->fr_child);
-      frp->fr_child->fr_prev = frp->fr_prev;
-      if (frp->fr_prev != NULL) {
-        frp->fr_prev->fr_next = frp->fr_child;
-      }
-      frame_T *frp3;
-      for (frp3 = frp->fr_child;; frp3 = frp3->fr_next) {
-        frp3->fr_parent = frp2;
-        if (frp3->fr_next == NULL) {
-          frp3->fr_next = frp->fr_next;
-          if (frp->fr_next != NULL) {
-            frp->fr_next->fr_prev = frp3;
-          }
-          break;
-        }
-      }
-      if (topframe->fr_child == frp) {
-        topframe->fr_child = frp2;
-      }
-      xfree(frp);
+/// Undo changes from a prior call to winframe_remove, also restoring lost
+/// vertical separators and statuslines, and changed window positions for
+/// windows within "unflat_altfr".
+/// Caller must ensure no other changes were made to the layout or window sizes!
+void winframe_restore(win_T *wp, int dir, frame_T *unflat_altfr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  frame_T *frp = wp->w_frame;
+
+  // Put "wp"'s frame back where it was.
+  if (frp->fr_prev != NULL) {
+    frame_append(frp->fr_prev, frp);
+  } else {
+    frame_insert(frp->fr_next, frp);
+  }
+
+  // Vertical separators to the left may have been lost.  Restore them.
+  if (wp->w_vsep_width == 0 && frp->fr_parent->fr_layout == FR_ROW && frp->fr_prev != NULL) {
+    frame_add_vsep(frp->fr_prev);
+  }
+
+  // Statuslines or horizontal separators above may have been lost.  Restore them.
+  if (frp->fr_parent->fr_layout == FR_COL && frp->fr_prev != NULL) {
+    if (global_stl_height() == 0 && wp->w_status_height == 0) {
+      frame_add_statusline(frp->fr_prev);
+    } else if (wp->w_hsep_height == 0) {
+      frame_add_hsep(frp->fr_prev);
     }
   }
 
-  return wp;
+  int row = wp->w_winrow;
+  int col = wp->w_wincol;
+
+  // Restore the lost room that was redistributed to the altframe.
+  if (dir == 'v') {
+    frame_new_height(unflat_altfr, unflat_altfr->fr_height - frp->fr_height,
+                     unflat_altfr == frp->fr_next, false);
+    row += frp->fr_height;
+  } else if (dir == 'h') {
+    frame_new_width(unflat_altfr, unflat_altfr->fr_width - frp->fr_width,
+                    unflat_altfr == frp->fr_next, false);
+    col += frp->fr_width;
+  }
+
+  // If rows/columns went to a window below/right, its positions need to be
+  // restored.  Can only be done after the sizes have been updated.
+  if (unflat_altfr == frp->fr_next) {
+    frame_comp_pos(unflat_altfr, &row, &col);
+  }
 }
 
 /// If 'splitbelow' or 'splitright' is set, the space goes above or to the left
@@ -3792,7 +3913,7 @@ void close_others(int message, int forceit)
     return;
   }
 
-  if (one_nonfloat() && !lastwin->w_floating) {
+  if (one_window(firstwin) && !lastwin->w_floating) {
     if (message
         && !autocmd_busy) {
       msg(_(m_onlyone), 0);
@@ -4331,7 +4452,7 @@ static void tabpage_check_windows(tabpage_T *old_curtab)
     if (wp->w_floating) {
       if (wp->w_config.external) {
         win_remove(wp, old_curtab);
-        win_append(lastwin_nofloating(), wp);
+        win_append(lastwin_nofloating(), wp, NULL);
       } else {
         ui_comp_remove_grid(&wp->w_grid_alloc);
       }
@@ -4971,7 +5092,7 @@ win_T *win_alloc(win_T *after, bool hidden)
   block_autocmds();
   // link the window in the window list
   if (!hidden) {
-    win_append(after, new_wp);
+    win_append(after, new_wp, NULL);
   }
 
   new_wp->w_wincol = 0;
@@ -5141,21 +5262,29 @@ void win_free_grid(win_T *wp, bool reinit)
   }
 }
 
-// Append window "wp" in the window list after window "after".
-void win_append(win_T *after, win_T *wp)
+/// Append window "wp" in the window list after window "after".
+///
+/// @param tp  tab page "win" (and "after", if not NULL) is in, NULL for current
+void win_append(win_T *after, win_T *wp, tabpage_T *tp)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
+  assert(tp == NULL || tp != curtab);
+
+  win_T **first = tp == NULL ? &firstwin : &tp->tp_firstwin;
+  win_T **last = tp == NULL ? &lastwin : &tp->tp_lastwin;
+
   // after NULL is in front of the first
-  win_T *before = after == NULL ? firstwin : after->w_next;
+  win_T *before = after == NULL ? *first : after->w_next;
 
   wp->w_next = before;
   wp->w_prev = after;
   if (after == NULL) {
-    firstwin = wp;
+    *first = wp;
   } else {
     after->w_next = wp;
   }
   if (before == NULL) {
-    lastwin = wp;
+    *last = wp;
   } else {
     before->w_prev = wp;
   }
@@ -7058,7 +7187,7 @@ int global_stl_height(void)
 /// @param morewin  pretend there are two or more windows if true.
 int last_stl_height(bool morewin)
 {
-  return (p_ls > 1 || (p_ls == 1 && (morewin || !one_nonfloat()))) ? STATUS_HEIGHT : 0;
+  return (p_ls > 1 || (p_ls == 1 && (morewin || !one_window(firstwin)))) ? STATUS_HEIGHT : 0;
 }
 
 /// Return the minimal number of rows that is needed on the screen to display

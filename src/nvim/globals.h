@@ -939,6 +939,7 @@ EXTERN const char e_using_float_as_string[] INIT(= N_("E806: Using a Float as a 
 EXTERN const char e_cannot_edit_other_buf[] INIT(= N_("E788: Not allowed to edit another buffer now"));
 EXTERN const char e_using_number_as_bool_nr[] INIT(= N_("E1023: Using a Number as a Bool: %d"));
 EXTERN const char e_not_callable_type_str[] INIT(= N_("E1085: Not a callable type: %s"));
+EXTERN const char e_auabort[] INIT(= N_("E855: Autocommands caused command to abort"));
 
 EXTERN const char e_api_error[] INIT(= N_("E5555: API call: %s"));
 

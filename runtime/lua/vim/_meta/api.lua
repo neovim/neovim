@@ -1718,9 +1718,9 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---               • footer_pos: Footer position. Must be set with `footer`
 ---                 option. Value can be one of "left", "center", or "right".
 ---                 Default is `"left"`.
----               • noautocmd: If true then no buffer-related autocommand
----                 events such as `BufEnter`, `BufLeave` or `BufWinEnter` may
----                 fire from calling this function.
+---               • noautocmd: If true then autocommands triggered from
+---                 setting the `buffer` to display are blocked (e.g:
+---                 `BufEnter`, `BufLeave`, `BufWinEnter`).
 ---               • fixed: If true when anchor is NW or SW, the float window
 ---                 would be kept fixed even if the window would be truncated.
 ---               • hide: If true the floating window will be hidden.
@@ -2223,11 +2223,11 @@ function vim.api.nvim_win_remove_ns(window, ns_id) end
 --- @param buffer integer Buffer handle
 function vim.api.nvim_win_set_buf(window, buffer) end
 
---- Configures window layout. Currently only for floating and external windows
---- (including changing a split window to those layouts).
+--- Configures window layout. Cannot be used to move the last window in a
+--- tabpage to a different one.
 ---
---- When reconfiguring a floating window, absent option keys will not be
---- changed. `row`/`col` and `relative` must be reconfigured together.
+--- When reconfiguring a window, absent option keys will not be changed.
+--- `row`/`col` and `relative` must be reconfigured together.
 ---
 --- @param window integer Window handle, or 0 for current window
 --- @param config vim.api.keyset.win_config Map defining the window configuration, see `nvim_open_win()`

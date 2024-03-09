@@ -14,6 +14,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/window.h"
+#include "nvim/ex_getln.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/gettext_defs.h"
@@ -583,9 +584,13 @@ void f_win_getid(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 void f_win_gotoid(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   int id = (int)tv_get_number(&argvars[0]);
+  if (curwin->handle == id) {
+    // Nothing to do.
+    rettv->vval.v_number = 1;
+    return;
+  }
 
-  if (cmdwin_type != 0) {
-    emsg(_(e_cmdwin));
+  if (text_or_buf_locked()) {
     return;
   }
   FOR_ALL_TAB_WINDOWS(tp, wp) {
@@ -659,55 +664,19 @@ void f_win_screenpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   tv_list_append_number(rettv->vval.v_list, wp == NULL ? 0 : wp->w_wincol + 1);
 }
 
-/// Move the window wp into a new split of targetwin in a given direction
-static void win_move_into_split(win_T *wp, win_T *targetwin, int size, int flags)
-{
-  int height = wp->w_height;
-  win_T *oldwin = curwin;
-
-  if (wp == targetwin || is_aucmd_win(wp)) {
-    return;
-  }
-
-  // Jump to the target window
-  if (curwin != targetwin) {
-    win_goto(targetwin);
-  }
-
-  // Remove the old window and frame from the tree of frames
-  int dir;
-  winframe_remove(wp, &dir, NULL);
-  win_remove(wp, NULL);
-  last_status(false);     // may need to remove last status line
-  win_comp_pos();   // recompute window positions
-
-  // Split a window on the desired side and put the old window there
-  win_split_ins(size, flags, wp, dir);
-
-  // If splitting horizontally, try to preserve height
-  if (size == 0 && !(flags & WSP_VERT)) {
-    win_setheight_win(height, wp);
-    if (p_ea) {
-      win_equal(wp, true, 'v');
-    }
-  }
-
-  if (oldwin != curwin) {
-    win_goto(oldwin);
-  }
-}
-
 /// "win_splitmove()" function
 void f_win_splitmove(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   win_T *wp = find_win_by_nr_or_id(&argvars[0]);
   win_T *targetwin = find_win_by_nr_or_id(&argvars[1]);
+  win_T *oldwin = curwin;
+
+  rettv->vval.v_number = -1;
 
   if (wp == NULL || targetwin == NULL || wp == targetwin
       || !win_valid(wp) || !win_valid(targetwin)
-      || win_float_valid(wp) || win_float_valid(targetwin)) {
+      || targetwin->w_floating) {
     emsg(_(e_invalwindow));
-    rettv->vval.v_number = -1;
     return;
   }
 
@@ -732,7 +701,27 @@ void f_win_splitmove(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     size = (int)tv_dict_get_number(d, "size");
   }
 
-  win_move_into_split(wp, targetwin, size, flags);
+  // Check if we can split the target before we bother switching windows.
+  if (is_aucmd_win(wp) || text_or_buf_locked() || check_split_disallowed(targetwin) == FAIL) {
+    return;
+  }
+
+  if (curwin != targetwin) {
+    win_goto(targetwin);
+  }
+
+  // Autocommands may have sent us elsewhere or closed "wp" or "oldwin".
+  if (curwin == targetwin && win_valid(wp)) {
+    if (win_splitmove(wp, size, flags) == OK) {
+      rettv->vval.v_number = 0;
+    }
+  } else {
+    emsg(_(e_auabort));
+  }
+
+  if (oldwin != curwin && win_valid(oldwin)) {
+    win_goto(oldwin);
+  }
 }
 
 /// "win_gettype(nr)" function
@@ -969,9 +958,11 @@ int switch_win_noblock(switchwin_T *switchwin, win_T *win, tabpage_T *tp, bool n
     if (no_display) {
       curtab->tp_firstwin = firstwin;
       curtab->tp_lastwin = lastwin;
+      curtab->tp_topframe = topframe;
       curtab = tp;
       firstwin = curtab->tp_firstwin;
       lastwin = curtab->tp_lastwin;
+      topframe = curtab->tp_topframe;
     } else {
       goto_tabpage_tp(tp, false, false);
     }
@@ -1000,9 +991,11 @@ void restore_win_noblock(switchwin_T *switchwin, bool no_display)
     if (no_display) {
       curtab->tp_firstwin = firstwin;
       curtab->tp_lastwin = lastwin;
+      curtab->tp_topframe = topframe;
       curtab = switchwin->sw_curtab;
       firstwin = curtab->tp_firstwin;
       lastwin = curtab->tp_lastwin;
+      topframe = curtab->tp_topframe;
     } else {
       goto_tabpage_tp(switchwin->sw_curtab, false, false);
     }

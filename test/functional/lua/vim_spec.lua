@@ -3664,6 +3664,20 @@ describe('lua stdlib', function()
       ]]
       )
     end)
+
+    it('layout in current tabpage does not affect windows in others', function()
+      command('tab split')
+      local t2_move_win = api.nvim_get_current_win()
+      command('vsplit')
+      local t2_other_win = api.nvim_get_current_win()
+      command('tabprevious')
+      matches('E36: Not enough room$', pcall_err(command, 'execute "split|"->repeat(&lines)'))
+      command('vsplit')
+
+      -- Without vim-patch:8.2.3862, this gives E36, despite just the 1st tabpage being full.
+      exec_lua('vim.api.nvim_win_call(..., function() vim.cmd.wincmd "J" end)', t2_move_win)
+      eq({ 'col', { { 'leaf', t2_other_win }, { 'leaf', t2_move_win } } }, fn.winlayout(2))
+    end)
   end)
 
   describe('vim.iconv', function()

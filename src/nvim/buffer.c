@@ -117,7 +117,6 @@
 # include "buffer.c.generated.h"
 #endif
 
-static const char *e_auabort = N_("E855: Autocommands caused command to abort");
 static const char e_attempt_to_delete_buffer_that_is_in_use_str[]
   = N_("E937: Attempt to delete a buffer that is in use: %s");
 
@@ -569,7 +568,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
     }
     buf->b_locked--;
     buf->b_locked_split--;
-    if (abort_if_last && last_nonfloat(win)) {
+    if (abort_if_last && one_window(win)) {
       // Autocommands made this the only window.
       emsg(_(e_auabort));
       return false;
@@ -588,7 +587,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
       }
       buf->b_locked--;
       buf->b_locked_split--;
-      if (abort_if_last && last_nonfloat(win)) {
+      if (abort_if_last && one_window(win)) {
         // Autocommands made this the only window.
         emsg(_(e_auabort));
         return false;

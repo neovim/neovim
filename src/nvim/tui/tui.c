@@ -1643,7 +1643,7 @@ static void invalidate(TUIData *tui, int top, int bot, int left, int right)
 static void ensure_space_buf_size(TUIData *tui, size_t len)
 {
   if (len > tui->space_buf_len) {
-    tui->space_buf = xrealloc(tui->space_buf, len * sizeof *tui->space_buf);
+    tui->space_buf = xrealloc(tui->space_buf, len);
     memset(tui->space_buf + tui->space_buf_len, ' ', len - tui->space_buf_len);
     tui->space_buf_len = len;
   }

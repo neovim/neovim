@@ -55,13 +55,26 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
       api_set_error(err, kErrorTypeException,
                     "Cannot change window from different tabpage into float");
       return NULL;
+    } else if (cmdwin_win != NULL && !cmdwin_win->w_floating) {
+      // cmdwin can't become the only non-float. Check for others.
+      bool other_nonfloat = false;
+      for (win_T *wp2 = firstwin; wp2 != NULL && !wp2->w_floating; wp2 = wp2->w_next) {
+        if (wp2 != wp && wp2 != cmdwin_win) {
+          other_nonfloat = true;
+          break;
+        }
+      }
+      if (!other_nonfloat) {
+        api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
+        return NULL;
+      }
     }
     int dir;
-    winframe_remove(wp, &dir, NULL);
+    winframe_remove(wp, &dir, NULL, NULL);
     XFREE_CLEAR(wp->w_frame);
     win_comp_pos();  // recompute window positions
     win_remove(wp, NULL);
-    win_append(lastwin_nofloating(), wp);
+    win_append(lastwin_nofloating(), wp, NULL);
   }
   wp->w_floating = true;
   wp->w_status_height = 0;
@@ -305,4 +318,22 @@ win_T *win_float_find_preview(void)
     }
   }
   return NULL;
+}
+
+/// Select an alternative window to `win` (assumed floating) in tabpage `tp`.
+///
+/// Useful for finding a window to switch to if `win` is the current window, but is then closed or
+/// moved to a different tabpage.
+///
+/// @param  tp  `win`'s original tabpage, or NULL for current.
+win_T *win_float_find_altwin(const win_T *win, const tabpage_T *tp)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  if (tp == NULL) {
+    return (win_valid(prevwin) && prevwin != win) ? prevwin : firstwin;
+  }
+
+  assert(tp != curtab);
+  return (tabpage_win_valid(tp, tp->tp_prevwin) && tp->tp_prevwin != win) ? tp->tp_prevwin
+                                                                          : tp->tp_firstwin;
 }
