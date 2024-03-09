@@ -215,7 +215,6 @@ function vim.schedule(fn) end
 --- Examples:
 ---
 --- ```lua
----
 --- ---
 --- -- Wait for 100 ms, allowing other events to process
 --- vim.wait(100, function() end)
