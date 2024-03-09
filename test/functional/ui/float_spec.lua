@@ -874,34 +874,38 @@ describe('float window', function()
   end)
 
   describe(':close on non-float with floating windows', function()
+    -- XXX: it isn't really clear whether this should quit Nvim, as if the autocommand
+    -- here is BufUnload then it does quit Nvim.
+    -- But with BufWinLeave, this doesn't quit Nvim if there are no floating windows,
+    -- so it shouldn't quit Nvim if there are floating windows.
     it('does not quit Nvim if BufWinLeave makes it the only non-float', function()
       exec([[
-        let firstbuf = bufnr()
+        let g:buf = bufnr()
         new
-        let midwin = win_getid()
+        let s:midwin = win_getid()
         new
         setlocal bufhidden=wipe
-        call nvim_win_set_config(midwin,
+        call nvim_win_set_config(s:midwin,
               \ #{relative: 'editor', row: 5, col: 5, width: 5, height: 5})
-        autocmd BufWinLeave * ++once exe firstbuf .. 'bwipe!'
+        autocmd BufWinLeave * ++once exe g:buf .. 'bwipe!'
       ]])
       eq('Vim(close):E855: Autocommands caused command to abort', pcall_err(command, 'close'))
       assert_alive()
     end)
 
-    pending('does not crash if BufWinLeave makes it the only non-float in tabpage', function()
+    it('does not crash if BufUnload makes it the only non-float in tabpage', function()
       exec([[
         tabnew
-        let firstbuf = bufnr()
+        let g:buf = bufnr()
         new
-        let midwin = win_getid()
+        let s:midwin = win_getid()
         new
         setlocal bufhidden=wipe
-        call nvim_win_set_config(midwin,
+        call nvim_win_set_config(s:midwin,
               \ #{relative: 'editor', row: 5, col: 5, width: 5, height: 5})
-        autocmd BufWinLeave * ++once exe firstbuf .. 'bwipe!'
+        autocmd BufUnload * ++once exe g:buf .. 'bwipe!'
       ]])
-      eq('Vim(close):E855: Autocommands caused command to abort', pcall_err(command, 'close'))
+      command('close')
       assert_alive()
     end)
   end)
