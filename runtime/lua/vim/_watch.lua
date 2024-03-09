@@ -303,6 +303,8 @@ function M.fswatch(path, opts, callback)
         fswatch_output_handler(line, opts, callback)
       end
     end,
+    -- --latency is locale dependent but tostring() isn't and will always have '.' as decimal point.
+    env = { LC_NUMERIC = 'C' },
   })
 
   return function()
