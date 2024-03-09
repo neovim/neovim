@@ -1161,6 +1161,7 @@ Lua list copies the list object to Vimscript and does NOT modify the Lua list: >
     vim.print(list)  --> "{ 1, 2, 3 }"
 <
 
+
 vim.call({func}, {...})                                           *vim.call()*
     Invokes |vim-function| or |user-function| {func} with arguments {...}.
     See also |vim.fn|.
@@ -1239,6 +1240,7 @@ vim.v                                                                  *vim.v*
     |v:| variables.
     Invalid or unset key returns `nil`.
 
+
                                                                  *lua-options*
                                                              *lua-vim-options*
                                                                  *lua-vim-set*
@@ -1261,6 +1263,7 @@ Similarly, there is |vim.bo| and |vim.wo| for setting buffer-scoped and
 window-scoped options. Note that this must NOT be confused with
 |local-options| and |:setlocal|. There is also |vim.go| that only accesses the
 global value of a |global-local| option, see |:setglobal|.
+
 
                                                                *vim.opt_local*
                                                               *vim.opt_global*
@@ -3897,6 +3900,7 @@ Iter:enumerate()                                            *Iter:enumerate()*
 <
 
     Example: >lua
+
         local it = vim.iter(vim.gsplit('abc', '')):enumerate()
         it:next()
         -- 1	'a'
@@ -3931,6 +3935,7 @@ Iter:find({f})                                                   *Iter:find()*
     found.
 
     Examples: >lua
+
         local it = vim.iter({ 3, 6, 9, 12 })
         it:find(12)
         -- 12
@@ -4011,6 +4016,7 @@ Iter:last()                                                      *Iter:last()*
     Drains the iterator and returns the last item.
 
     Example: >lua
+
         local it = vim.iter(vim.gsplit('abcdefg', ''))
         it:last()
         -- 'g'
@@ -4051,6 +4057,7 @@ Iter:next()                                                      *Iter:next()*
     Gets the next value from the iterator.
 
     Example: >lua
+
         local it = vim.iter(string.gmatch('1 2 3', '%d+')):map(tonumber)
         it:next()
         -- 1
@@ -4082,6 +4089,7 @@ Iter:nth({n})                                                     *Iter:nth()*
     Gets the nth value of an iterator (and advances to it).
 
     Example: >lua
+
         local it = vim.iter({ 3, 6, 9, 12 })
         it:nth(2)
         -- 6
@@ -4099,6 +4107,7 @@ Iter:nthback({n})                                             *Iter:nthback()*
     Gets the nth value from the end of a |list-iterator| (and advances to it).
 
     Example: >lua
+
         local it = vim.iter({ 3, 6, 9, 12 })
         it:nthback(2)
         -- 9
@@ -4116,6 +4125,7 @@ Iter:peek()                                                      *Iter:peek()*
     Gets the next value in a |list-iterator| without consuming it.
 
     Example: >lua
+
         local it = vim.iter({ 3, 6, 9, 12 })
         it:peek()
         -- 3
@@ -4150,6 +4160,7 @@ Iter:rev()                                                        *Iter:rev()*
     Reverses a |list-iterator| pipeline.
 
     Example: >lua
+
         local it = vim.iter({ 3, 6, 9, 12 }):rev()
         it:totable()
         -- { 12, 9, 6, 3 }
@@ -4166,6 +4177,7 @@ Iter:rfind({f})                                                 *Iter:rfind()*
     found.
 
     Examples: >lua
+
         local it = vim.iter({ 1, 2, 3, 2, 1 }):enumerate()
         it:rfind(1)
         -- 5	1
@@ -4186,6 +4198,7 @@ Iter:skip({n})                                                   *Iter:skip()*
     Skips `n` values of an iterator pipeline.
 
     Example: >lua
+
         local it = vim.iter({ 3, 6, 9, 12 }):skip(2)
         it:next()
         -- 9

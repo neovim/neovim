@@ -318,7 +318,7 @@ local function align_tags(text_width)
   --- @param line string
   --- @return string
   return function(line)
-    local tag_pat = '%s+(%*[^ ]+%*)%s*$'
+    local tag_pat = '%s*(%*.+%*)%s*$'
     local tags = {}
     for m in line:gmatch(tag_pat) do
       table.insert(tags, m)
@@ -327,7 +327,9 @@ local function align_tags(text_width)
     if #tags > 0 then
       line = line:gsub(tag_pat, '')
       local tags_str = ' ' .. table.concat(tags, ' ')
-      local pad = string.rep(' ', text_width - #line - #tags_str)
+      --- @type integer
+      local conceal_offset = select(2, tags_str:gsub('%*', '')) - 2
+      local pad = string.rep(' ', text_width - #line - #tags_str + conceal_offset)
       return line .. pad .. tags_str
     end
 
@@ -352,7 +354,7 @@ function M.md_to_vimdoc(text, start_indent, indent, text_width, is_list)
   local s = table.concat(lines, '\n')
 
   -- Reduce whitespace in code-blocks
-  s = s:gsub('\n+%s*>([a-z]+)\n?\n', ' >%1\n')
+  s = s:gsub('\n+%s*>([a-z]+)\n', ' >%1\n')
   s = s:gsub('\n+%s*>\n?\n', ' >\n')
 
   return s
