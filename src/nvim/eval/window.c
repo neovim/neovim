@@ -958,9 +958,11 @@ int switch_win_noblock(switchwin_T *switchwin, win_T *win, tabpage_T *tp, bool n
     if (no_display) {
       curtab->tp_firstwin = firstwin;
       curtab->tp_lastwin = lastwin;
+      curtab->tp_topframe = topframe;
       curtab = tp;
       firstwin = curtab->tp_firstwin;
       lastwin = curtab->tp_lastwin;
+      topframe = curtab->tp_topframe;
     } else {
       goto_tabpage_tp(tp, false, false);
     }
@@ -989,9 +991,11 @@ void restore_win_noblock(switchwin_T *switchwin, bool no_display)
     if (no_display) {
       curtab->tp_firstwin = firstwin;
       curtab->tp_lastwin = lastwin;
+      curtab->tp_topframe = topframe;
       curtab = switchwin->sw_curtab;
       firstwin = curtab->tp_firstwin;
       lastwin = curtab->tp_lastwin;
+      topframe = curtab->tp_topframe;
     } else {
       goto_tabpage_tp(switchwin->sw_curtab, false, false);
     }
