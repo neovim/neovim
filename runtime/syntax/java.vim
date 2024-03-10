@@ -2,7 +2,7 @@
 " Language:	Java
 " Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " URL:          https://github.com/fleiner/vim/blob/master/runtime/syntax/java.vim
-" Last Change:	2024 Mar 02
+" Last Change:	2024 Mar 06
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -187,8 +187,8 @@ if exists("java_comment_strings")
   syn match   javaCommentCharacter contained "'\\[^']\{1,6\}'" contains=javaSpecialChar
   syn match   javaCommentCharacter contained "'\\''" contains=javaSpecialChar
   syn match   javaCommentCharacter contained "'[^\\]'"
-  syn cluster javaCommentSpecial add=javaCommentString,javaCommentCharacter,javaNumber
-  syn cluster javaCommentSpecial2 add=javaComment2String,javaCommentCharacter,javaNumber
+  syn cluster javaCommentSpecial add=javaCommentString,javaCommentCharacter,javaNumber,javaStrTempl
+  syn cluster javaCommentSpecial2 add=javaComment2String,javaCommentCharacter,javaNumber,javaStrTempl
 endif
 
 syn region  javaComment		 start="/\*"  end="\*/" contains=@javaCommentSpecial,javaTodo,@Spell
@@ -234,6 +234,9 @@ syn match   javaSpecialChar	 contained "\\\%(u\x\x\x\x\|[0-3]\o\o\|\o\o\=\|[bstn
 syn region  javaString		start=+"+ end=+"+ end=+$+ contains=javaSpecialChar,javaSpecialError,@Spell
 syn region  javaString		start=+"""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaSpecialChar,javaSpecialError,javaTextBlockError,@Spell
 syn match   javaTextBlockError	+"""\s*"""+
+syn region  javaStrTemplEmbExp	 contained matchgroup=javaStrTempl start="\\{" end="}" contains=TOP
+syn region  javaStrTempl	 start=+\%(\.[[:space:]\n]*\)\@<="+ end=+"+ contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,@Spell
+syn region  javaStrTempl	 start=+\%(\.[[:space:]\n]*\)\@<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,javaTextBlockError,@Spell
 " The next line is commented out, it can cause a crash for a long line
 "syn match   javaStringError	  +"\%([^"\\]\|\\.\)*$+
 syn match   javaCharacter	 "'[^']*'" contains=javaSpecialChar,javaSpecialCharError
@@ -254,7 +257,7 @@ syn match   javaNumber		 "\<0[xX]\%(\x\%(_*\x\)*\.\=\|\%(\x\%(_*\x\)*\)\=\.\x\%(
 " Unicode characters
 syn match   javaSpecial "\\u\x\x\x\x"
 
-syn cluster javaTop add=javaString,javaCharacter,javaNumber,javaSpecial,javaStringError,javaTextBlockError
+syn cluster javaTop add=javaString,javaStrTempl,javaCharacter,javaNumber,javaSpecial,javaStringError,javaTextBlockError
 
 if exists("java_highlight_functions")
   if java_highlight_functions == "indent"
@@ -280,7 +283,12 @@ if exists("java_highlight_debug")
   syn match   javaDebugSpecial		contained "\\\%(u\x\x\x\x\|[0-3]\o\o\|\o\o\=\|[bstnfr"'\\]\)"
   syn region  javaDebugString		contained start=+"+  end=+"+  contains=javaDebugSpecial
   syn region  javaDebugString		contained start=+"""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaDebugSpecial,javaDebugTextBlockError
-" The next line is commented out, it can cause a crash for a long line
+  " The highlight groups of java{StrTempl,Debug{,Paren,StrTempl}}\,
+  " share one colour by default. Do not conflate unrelated parens.
+  syn region  javaDebugStrTemplEmbExp	contained matchgroup=javaDebugStrTempl start="\\{" end="}" contains=javaComment,javaLineComment,javaDebug\%(Paren\)\@!.*
+  syn region  javaDebugStrTempl		contained start=+\%(\.[[:space:]\n]*\)\@<="+ end=+"+ contains=javaDebugStrTemplEmbExp,javaDebugSpecial
+  syn region  javaDebugStrTempl		contained start=+\%(\.[[:space:]\n]*\)\@<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaDebugStrTemplEmbExp,javaDebugSpecial,javaDebugTextBlockError
+  " The next line is commented out, it can cause a crash for a long line
 " syn match   javaDebugStringError	contained +"\%([^"\\]\|\\.\)*$+
   syn match   javaDebugTextBlockError	contained +"""\s*"""+
   syn match   javaDebugCharacter	contained "'[^\\]'"
@@ -307,6 +315,7 @@ if exists("java_highlight_debug")
 
   hi def link javaDebug		 Debug
   hi def link javaDebugString		 DebugString
+  hi def link javaDebugStrTempl		 Macro
   hi def link javaDebugStringError	 javaError
   hi def link javaDebugTextBlockError	 javaDebugStringError
   hi def link javaDebugType		 DebugType
@@ -376,6 +385,7 @@ hi def link javaSpecial		Special
 hi def link javaSpecialError		Error
 hi def link javaSpecialCharError	Error
 hi def link javaString			String
+hi def link javaStrTempl		Macro
 hi def link javaCharacter		Character
 hi def link javaSpecialChar		SpecialChar
 hi def link javaNumber			Number
