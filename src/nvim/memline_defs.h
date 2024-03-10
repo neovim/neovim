@@ -56,6 +56,7 @@ typedef struct {
 #define ML_ALLOCATED    0x10    // ml_line_ptr is an allocated copy
   int ml_flags;
 
+  colnr_T ml_line_len;          // length of the cached line + NUL
   linenr_T ml_line_lnum;        // line number of cached line, 0 if not valid
   char *ml_line_ptr;            // pointer to cached line
   size_t ml_line_offset;        // cached byte offset of ml_line_lnum

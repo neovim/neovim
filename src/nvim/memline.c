@@ -1174,7 +1174,7 @@ void ml_recover(bool checkext)
   } else {
     for (idx = 1; idx <= lnum; idx++) {
       // Need to copy one line, fetching the other one may flush it.
-      p = xstrdup(ml_get(idx));
+      p = xstrnsave(ml_get(idx), (size_t)ml_get_len(idx));
       int i = strcmp(p, ml_get(idx + lnum));
       xfree(p);
       if (i != 0) {
@@ -1834,6 +1834,22 @@ char *ml_get_pos(const pos_T *pos)
   return ml_get_buf(curbuf, pos->lnum) + pos->col;
 }
 
+/// @return  length (excluding the NUL) of the given line.
+colnr_T ml_get_len(linenr_T lnum)
+{
+  return ml_get_buf_len(curbuf, lnum);
+}
+
+/// @return  length (excluding the NUL) of the given line in the given buffer.
+colnr_T ml_get_buf_len(buf_T *buf, linenr_T lnum)
+{
+  if (*ml_get_buf(buf, lnum) == NUL) {
+    return 0;
+  }
+
+  return buf->b_ml.ml_line_len - 1;
+}
+
 /// @return  codepoint at pos. pos must be either valid or have col set to MAXCOL!
 int gchar_pos(pos_T *pos)
   FUNC_ATTR_NONNULL_ARG(1)
@@ -1865,6 +1881,7 @@ static char *ml_get_buf_impl(buf_T *buf, linenr_T lnum, bool will_change)
     ml_flush_line(buf, false);
 errorret:
     STRCPY(questions, "???");
+    buf->b_ml.ml_line_len = 4;
     buf->b_ml.ml_line_lnum = lnum;
     return questions;
   }
@@ -1873,6 +1890,7 @@ errorret:
   }
 
   if (buf->b_ml.ml_mfp == NULL) {       // there are no lines
+    buf->b_ml.ml_line_len = 1;
     return "";
   }
 
@@ -1903,8 +1921,14 @@ errorret:
 
     DataBlock *dp = hp->bh_data;
 
-    char *ptr = (char *)dp + (dp->db_index[lnum - buf->b_ml.ml_locked_low] & DB_INDEX_MASK);
-    buf->b_ml.ml_line_ptr = ptr;
+    int idx = lnum - buf->b_ml.ml_locked_low;
+    unsigned start = (dp->db_index[idx] & DB_INDEX_MASK);
+    // The text ends where the previous line starts.  The first line ends
+    // at the end of the block.
+    unsigned end = idx == 0 ? dp->db_txt_end : (dp->db_index[idx - 1] & DB_INDEX_MASK);
+
+    buf->b_ml.ml_line_ptr = (char *)dp + start;
+    buf->b_ml.ml_line_len = (colnr_T)(end - start);
     buf->b_ml.ml_line_lnum = lnum;
     buf->b_ml.ml_flags &= ~(ML_LINE_DIRTY | ML_ALLOCATED);
   }
@@ -1922,7 +1946,8 @@ errorret:
 #ifdef ML_GET_ALLOC_LINES
   if ((buf->b_ml.ml_flags & (ML_LINE_DIRTY | ML_ALLOCATED)) == 0) {
     // make sure the text is in allocated memory
-    buf->b_ml.ml_line_ptr = xstrdup(buf->b_ml.ml_line_ptr);
+    buf->b_ml.ml_line_ptr = xmemdup(buf->b_ml.ml_line_ptr,
+                                    (size_t)buf->b_ml.ml_line_len);
     buf->b_ml.ml_flags |= ML_ALLOCATED;
     if (will_change) {
       // can't make the change in the data block
@@ -2468,6 +2493,7 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy, bool noallo
   }
 
   buf->b_ml.ml_line_ptr = line;
+  buf->b_ml.ml_line_len = (colnr_T)strlen(line) + 1;
   buf->b_ml.ml_line_lnum = lnum;
   buf->b_ml.ml_flags = (buf->b_ml.ml_flags | ML_LINE_DIRTY) & ~ML_EMPTY;
   if (noalloc) {
@@ -2765,7 +2791,7 @@ static void ml_flush_line(buf_T *buf, bool noalloc)
       } else {  // text of previous line follows
         old_len = (int)(dp->db_index[idx - 1] & DB_INDEX_MASK) - start;
       }
-      colnr_T new_len = (colnr_T)strlen(new_line) + 1;
+      colnr_T new_len = buf->b_ml.ml_line_len;
       int extra = new_len - old_len;            // negative if lines gets smaller
 
       // if new line fits in data block, replace directly
@@ -3456,7 +3482,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
 
             char *const name = xmalloc(name_len);
             memcpy(name, sw_msg_1, sw_msg_1_len + 1);
-            home_replace(NULL, fname, &name[sw_msg_1_len], fname_len, true);
+            home_replace(NULL, fname, name + sw_msg_1_len, fname_len, true);
             xstrlcat(name, sw_msg_2, name_len);
             int dialog_result
               = do_dialog(VIM_WARNING,
@@ -3734,7 +3760,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
     // First line in empty buffer from ml_flush_line() -- reset
     buf->b_ml.ml_usedchunks = 1;
     buf->b_ml.ml_chunksize[0].mlcs_numlines = 1;
-    buf->b_ml.ml_chunksize[0].mlcs_totalsize = (int)strlen(buf->b_ml.ml_line_ptr) + 1;
+    buf->b_ml.ml_chunksize[0].mlcs_totalsize = buf->b_ml.ml_line_len;
     return;
   }
 

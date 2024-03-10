@@ -926,21 +926,24 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
     count = oldlen - col;
     movelen = 1;
   }
+  colnr_T newlen = oldlen - count;
 
   // If the old line has been allocated the deletion can be done in the
   // existing line. Otherwise a new line has to be allocated.
-  bool was_alloced = ml_line_alloced();     // check if oldp was allocated
+  bool alloc_newp = !ml_line_alloced();     // check if oldp was allocated
   char *newp;
-  if (was_alloced) {
+  if (!alloc_newp) {
     ml_add_deleted_len(curbuf->b_ml.ml_line_ptr, oldlen);
     newp = oldp;                            // use same allocated memory
   } else {                                  // need to allocate a new line
-    newp = xmalloc((size_t)(oldlen + 1 - count));
+    newp = xmalloc((size_t)newlen + 1);
     memmove(newp, oldp, (size_t)col);
   }
   memmove(newp + col, oldp + col + count, (size_t)movelen);
-  if (!was_alloced) {
+  if (alloc_newp) {
     ml_replace(lnum, newp, false);
+  } else {
+    curbuf->b_ml.ml_line_len -= count;
   }
 
   // mark the buffer as changed and prepare for displaying
