@@ -3785,9 +3785,10 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         if (has_format_option(FO_AUTO)
             && has_format_option(FO_WHITE_PAR)) {
           char *ptr = ml_get_buf_mut(curbuf, curwin->w_cursor.lnum);
-          int len = (int)strlen(ptr);
+          int len = get_cursor_line_len();
           if (len > 0 && ptr[len - 1] == ' ') {
             ptr[len - 1] = NUL;
+            curbuf->b_ml.ml_line_len--;
           }
         }
 
@@ -4411,13 +4412,13 @@ static bool ins_tab(void)
       if (i > 0) {
         STRMOVE(ptr, ptr + i);
         // correct replace stack.
-        if ((State & REPLACE_FLAG)
-            && !(State & VREPLACE_FLAG)) {
+        if ((State & REPLACE_FLAG) && !(State & VREPLACE_FLAG)) {
           for (temp = i; --temp >= 0;) {
             replace_join(repl_off);
           }
         }
         if (!(State & VREPLACE_FLAG)) {
+          curbuf->b_ml.ml_line_len -= i;
           inserted_bytes(fpos.lnum, change_col,
                          cursor->col - change_col, fpos.col - change_col);
         }
@@ -4462,8 +4463,7 @@ bool ins_eol(int c)
   // Strange Vi behaviour: In Replace mode, typing a NL will not delete the
   // character under the cursor.  Only push a NUL on the replace stack,
   // nothing to put back when the NL is deleted.
-  if ((State & REPLACE_FLAG)
-      && !(State & VREPLACE_FLAG)) {
+  if ((State & REPLACE_FLAG) && !(State & VREPLACE_FLAG)) {
     replace_push(NUL);
   }
 
