@@ -1764,9 +1764,18 @@ MARKDOWN						*ft-markdown-syntax*
 
 If you have long regions there might be wrong highlighting.  At the cost of
 slowing down displaying, you can have the engine look further back to sync on
-the start of a region, for example 500 lines: >
+the start of a region, for example 500 lines (default is 50): >
 
 	:let g:markdown_minlines = 500
+
+If you want to enable fenced code block syntax highlighting in your markdown
+documents you can enable like this: >
+
+	:let g:markdown_fenced_languages = ['html', 'python', 'bash=sh']
+
+To disable markdown syntax concealing add the following to your vimrc: >
+
+	:let g:markdown_syntax_conceal = 0
 
 
 MATHEMATICA		*mma.vim* *ft-mma-syntax* *ft-mathematica-syntax*
