@@ -908,6 +908,21 @@ describe('float window', function()
       command('close')
       assert_alive()
     end)
+
+    it('does not crash if WinClosed from floating windows closes it', function()
+      exec([[
+        tabnew
+        let g:buf = bufnr()
+        new
+        let s:win = win_getid()
+        call nvim_win_set_config(s:win,
+              \ #{relative: 'editor', row: 5, col: 5, width: 5, height: 5})
+        wincmd t
+        exe $"autocmd WinClosed {s:win} 1close"
+      ]])
+      command('close')
+      assert_alive()
+    end)
   end)
 
   local function with_ext_multigrid(multigrid)
