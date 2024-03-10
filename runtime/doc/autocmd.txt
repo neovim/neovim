@@ -238,9 +238,11 @@ BufEnter			After entering (visiting, switching-to) a new
 							*BufFilePost*
 BufFilePost			After changing the name of the current buffer
 				with the ":file" or ":saveas" command.
+				Also during |nvim_buf_set_name()|.
 							*BufFilePre*
 BufFilePre			Before changing the name of the current buffer
 				with the ":file" or ":saveas" command.
+				Also during |nvim_buf_set_name()|.
 							*BufHidden*
 BufHidden			Before a buffer becomes hidden: when there are
 				no longer windows that show the buffer, but
