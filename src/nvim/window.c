@@ -2560,6 +2560,7 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, bool force, tab
       emsg(_("E814: Cannot close window, only autocmd window would remain"));
       return true;
     }
+
     if (force || can_close_floating_windows()) {
       // close the last window until the there are no floating windows
       while (lastwin->w_floating) {
@@ -2572,6 +2573,10 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, bool force, tab
     } else {
       emsg(e_floatonly);
       return true;
+    }
+
+    if (!win_valid_any_tab(win)) {
+      return true;  // window already closed by autocommands
     }
   }
 
@@ -2590,10 +2595,6 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, bool force, tab
   // Don't trigger autocommands yet, they may use wrong values, so do
   // that below.
   goto_tabpage_tp(alt_tabpage(), false, true);
-
-  // save index for tabclosed event
-  char prev_idx[NUMBUFLEN];
-  snprintf(prev_idx, NUMBUFLEN, "%i", tabpage_index(prev_curtab));
 
   // Safety check: Autocommands may have closed the window when jumping
   // to the other tab page.
