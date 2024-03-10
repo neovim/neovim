@@ -2859,20 +2859,40 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   } else if (type[0] == Ctrl_V && type[1] == NUL) {
     region_type = kMTBlockWise;
   } else {
+    semsg(_(e_invargNval), "type", type);
     return;
   }
 
   buf_T *const save_curbuf = curbuf;
+  buf_T *findbuf = curbuf;
 
   if (fnum1 != 0) {
-    buf_T *findbuf = buflist_findnr(fnum1);
+    findbuf = buflist_findnr(fnum1);
     // buffer not loaded
     if (findbuf == NULL || findbuf->b_ml.ml_mfp == NULL) {
+      emsg(_(e_buffer_is_not_loaded));
       return;
     }
-    curbuf = findbuf;
   }
 
+  if (p1.lnum < 1 || p1.lnum > findbuf->b_ml.ml_line_count) {
+    semsg(_(e_invalid_line_number_nr), p1.lnum);
+    return;
+  }
+  if (p1.col < 1 || p1.col > ml_get_buf_len(findbuf, p1.lnum) + 1) {
+    semsg(_(e_invalid_column_number_nr), p1.col);
+    return;
+  }
+  if (p2.lnum < 1 || p2.lnum > findbuf->b_ml.ml_line_count) {
+    semsg(_(e_invalid_line_number_nr), p2.lnum);
+    return;
+  }
+  if (p2.col < 1 || p2.col > ml_get_buf_len(findbuf, p2.lnum) + 1) {
+    semsg(_(e_invalid_column_number_nr), p2.col);
+    return;
+  }
+
+  curbuf = findbuf;
   const TriState save_virtual = virtual_op;
   virtual_op = virtual_active();
 
@@ -2900,7 +2920,7 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         mark_mb_adjustpos(curbuf, &p2);
       } else if (p2.lnum > 1) {
         p2.lnum--;
-        p2.col = (colnr_T)strlen(ml_get(p2.lnum));
+        p2.col = ml_get_len(p2.lnum);
         if (p2.col > 0) {
           p2.col--;
           mark_mb_adjustpos(curbuf, &p2);
