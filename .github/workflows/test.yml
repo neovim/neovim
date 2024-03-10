@@ -12,8 +12,8 @@ on:
       - 'contrib/**'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   ASAN_OPTIONS: detect_leaks=1:check_initialization_order=1:log_path=${{ github.workspace }}/build/log/asan:intercept_tls_get_addr=0
