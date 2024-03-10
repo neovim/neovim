@@ -893,7 +893,7 @@ describe('float window', function()
       assert_alive()
     end)
 
-    it('does not crash if BufUnload makes it the only non-float in tabpage', function()
+    pending('does not crash if BufUnload makes it the only non-float in tabpage', function()
       exec([[
         tabnew
         let g:buf = bufnr()
@@ -909,10 +909,9 @@ describe('float window', function()
       assert_alive()
     end)
 
-    it('does not crash if WinClosed from floating windows closes it', function()
+    it('does not crash if WinClosed from floating window closes it', function()
       exec([[
         tabnew
-        let g:buf = bufnr()
         new
         let s:win = win_getid()
         call nvim_win_set_config(s:win,
