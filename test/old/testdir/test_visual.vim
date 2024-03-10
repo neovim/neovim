@@ -1741,40 +1741,60 @@ func Test_visual_getregion()
           \ getregion(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
     set virtualedit&
 
-    #" Invalid position
+    #" using wrong types for positions
     call cursor(1, 1)
     call feedkeys("\<ESC>vjj$", 'tx')
     call assert_fails("call getregion(1, 2)", 'E1211:')
     call assert_fails("call getregion(getpos('.'), {})", 'E1211:')
-    call assert_equal([], getregion(getpos('.'), getpos('.'), {'type': '' }))
-
-    #" using the wrong type
     call assert_fails(':echo "."->getpos()->getregion("$", [])', 'E1211:')
+
+    #" using invalid value for "type"
+    call assert_fails("call getregion(getpos('.'), getpos('.'), {'type': '' })", 'E475:')
 
     #" using a mark from another buffer to current buffer
     new
-    VAR newbuf = bufnr()
+    LET g:buf = bufnr()
     call setline(1, range(10))
     normal! GmA
     wincmd p
-    call assert_equal([newbuf, 10, 1, 0], getpos("'A"))
+    call assert_equal([g:buf, 10, 1, 0], getpos("'A"))
     call assert_equal([], getregion(getpos('.'), getpos("'A"), {'type': 'v' }))
     call assert_equal([], getregion(getpos("'A"), getpos('.'), {'type': 'v' }))
-    exe $':{newbuf}bwipe!'
 
-    #" using a mark from another buffer to another buffer
-    new
-    VAR anotherbuf = bufnr()
-    call setline(1, range(10))
-    normal! GmA
+    #" using two marks from another buffer
+    wincmd p
     normal! GmB
     wincmd p
-    call assert_equal([anotherbuf, 10, 1, 0], getpos("'A"))
+    call assert_equal([g:buf, 10, 1, 0], getpos("'B"))
     call assert_equal(['9'], getregion(getpos("'B"), getpos("'A"), {'type': 'v' }))
-    exe $':{anotherbuf}bwipe!'
+
+    #" using two positions from another buffer
+    for type in ['v', 'V', "\<C-V>"]
+      for exclusive in [v:false, v:true]
+        call assert_equal(range(10)->mapnew('string(v:val)'),
+              \ getregion([g:buf, 1, 1, 0], [g:buf, 10, 2, 0]),
+              \ {'type': type, 'exclusive': exclusive })
+        call assert_equal(range(10)->mapnew('string(v:val)'),
+              \ getregion([g:buf, 10, 2, 0], [g:buf, 1, 1, 0]),
+              \ {'type': type, 'exclusive': exclusive })
+      endfor
+    endfor
+
+    #" using invalid positions in buffer
+    call assert_fails('call getregion([g:buf, 0, 1, 0], [g:buf, 10, 2, 0])', 'E966:')
+    call assert_fails('call getregion([g:buf, 10, 2, 0], [g:buf, 0, 1, 0])', 'E966:')
+    call assert_fails('call getregion([g:buf, 1, 1, 0], [g:buf, 11, 2, 0])', 'E966:')
+    call assert_fails('call getregion([g:buf, 11, 2, 0], [g:buf, 1, 1, 0])', 'E966:')
+    call assert_fails('call getregion([g:buf, 1, 1, 0], [g:buf, 10, 0, 0])', 'E964:')
+    call assert_fails('call getregion([g:buf, 10, 0, 0], [g:buf, 1, 1, 0])', 'E964:')
+    call assert_fails('call getregion([g:buf, 1, 1, 0], [g:buf, 10, 3, 0])', 'E964:')
+    call assert_fails('call getregion([g:buf, 10, 3, 0], [g:buf, 1, 1, 0])', 'E964:')
 
     #" using invalid buffer
-    call assert_equal([], getregion([10000, 10, 1, 0], [10000, 10, 1, 0]))
+    call assert_fails('call getregion([10000, 10, 1, 0], [10000, 10, 1, 0])', 'E681:')
+
+    exe $':{g:buf}bwipe!'
+    unlet g:buf
   END
   call CheckLegacyAndVim9Success(lines)
 
@@ -1935,7 +1955,7 @@ func Test_getregion_invalid_buf()
   call assert_equal(['Move around:'], getregion(getpos("'A"), getpos("'B")))
   " close the help window
   q
-  call assert_equal([], getregion(getpos("'A"), getpos("'B")))
+  call assert_fails("call getregion(getpos(\"'A\"), getpos(\"'B\"))", 'E681:')
   bwipe!
 endfunc
 
