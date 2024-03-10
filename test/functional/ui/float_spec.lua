@@ -912,7 +912,6 @@ describe('float window', function()
     it('does not crash if WinClosed from floating windows closes it', function()
       exec([[
         tabnew
-        let g:buf = bufnr()
         new
         let s:win = win_getid()
         call nvim_win_set_config(s:win,

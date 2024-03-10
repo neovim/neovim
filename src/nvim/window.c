@@ -2555,7 +2555,7 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, bool force, tab
     return false;
   }
 
-  if (lastwin->w_floating && one_window(win)) {
+  if (lastwin->w_floating) {
     if (is_aucmd_win(lastwin)) {
       emsg(_("E814: Cannot close window, only autocmd window would remain"));
       return true;
