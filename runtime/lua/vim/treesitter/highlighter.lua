@@ -248,6 +248,13 @@ end
 ---@param line integer
 ---@param is_spell_nav boolean
 local function on_line_impl(self, buf, line, is_spell_nav)
+  -- Track the maximum pattern index encountered in each tree. For subsequent
+  -- trees, the subpriority passed to nvim_buf_set_extmark is offset by the
+  -- largest pattern index from the prior tree. This ensures that extmarks
+  -- from subsequent trees always appear "on top of" extmarks from previous
+  -- trees (e.g. injections should always appear over base highlights).
+  local pattern_offset = 0
+
   self:for_each_highlight_state(function(state)
     local root_node = state.tstree:root()
     local root_start_row, _, root_end_row, _ = root_node:range()
@@ -263,8 +270,13 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         :iter_matches(root_node, self.bufnr, line, root_end_row + 1, { all = true })
     end
 
+    local max_pattern_index = -1
     while line >= state.next_row do
       local pattern, match, metadata = state.iter()
+
+      if pattern and pattern > max_pattern_index then
+        max_pattern_index = pattern
+      end
 
       if not match then
         state.next_row = root_end_row + 1
@@ -318,7 +330,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
               hl_group = hl,
               ephemeral = true,
               priority = priority,
-              _subpriority = pattern,
+              _subpriority = pattern_offset + pattern,
               conceal = conceal,
               spell = spell,
               url = url,
@@ -331,6 +343,8 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         end
       end
     end
+
+    pattern_offset = pattern_offset + max_pattern_index
   end)
 end
 
