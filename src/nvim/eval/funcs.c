@@ -738,7 +738,7 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
     if (fp->col == MAXCOL) {
       // '> can be MAXCOL, get the length of the line then
       if (fp->lnum <= curbuf->b_ml.ml_line_count) {
-        col = (colnr_T)strlen(ml_get(fp->lnum)) + 1;
+        col = ml_get_len(fp->lnum) + 1;
       } else {
         col = MAXCOL;
       }
@@ -8694,7 +8694,7 @@ static void f_synID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   int id = 0;
   if (!transerr && lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count
-      && col >= 0 && (size_t)col < strlen(ml_get(lnum))) {
+      && col >= 0 && col < ml_get_len(lnum)) {
     id = syn_get_id(curwin, lnum, col, trans, NULL, false);
   }
 
@@ -8817,8 +8817,8 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 
   CLEAR_FIELD(str);
 
-  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count && col >= 0
-      && (size_t)col <= strlen(ml_get(lnum)) && curwin->w_p_cole > 0) {
+  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count
+      && col >= 0 && col <= ml_get_len(lnum) && curwin->w_p_cole > 0) {
     syn_get_id(curwin, lnum, col, false, NULL, false);
     syntax_flags = get_syntax_info(&matchid);
 
@@ -8851,10 +8851,8 @@ static void f_synstack(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const linenr_T lnum = tv_get_lnum(argvars);
   const colnr_T col = (colnr_T)tv_get_number(&argvars[1]) - 1;
 
-  if (lnum >= 1
-      && lnum <= curbuf->b_ml.ml_line_count
-      && col >= 0
-      && (size_t)col <= strlen(ml_get(lnum))) {
+  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count
+      && col >= 0 && col <= ml_get_len(lnum)) {
     tv_list_alloc_ret(rettv, kListLenMayKnow);
     syn_get_id(curwin, lnum, col, false, NULL, true);
 
@@ -9224,9 +9222,9 @@ static void f_virtcol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (fp->col < 0) {
       fp->col = 0;
     } else {
-      const size_t len = strlen(ml_get(fp->lnum));
-      if (fp->col > (colnr_T)len) {
-        fp->col = (colnr_T)len;
+      const colnr_T len = ml_get_len(fp->lnum);
+      if (fp->col > len) {
+        fp->col = len;
       }
     }
     getvvcol(curwin, fp, &vcol_start, NULL, &vcol_end);

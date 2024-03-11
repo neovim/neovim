@@ -4331,7 +4331,7 @@ static bool ins_tab(void)
     if (State & VREPLACE_FLAG) {
       pos = curwin->w_cursor;
       cursor = &pos;
-      saved_line = xstrdup(get_cursor_line_ptr());
+      saved_line = xstrnsave(get_cursor_line_ptr(), (size_t)get_cursor_line_len());
       ptr = saved_line + pos.col;
     } else {
       ptr = get_cursor_pos_ptr();
