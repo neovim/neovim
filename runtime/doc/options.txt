@@ -270,6 +270,7 @@ created, thus they behave slightly differently:
 	Option		Reason	~
 	'previewwindow'	there can only be a single one
 	'scroll'	specific to existing window
+	'winfixbuf'	specific to existing window
 	'winfixheight'	specific to existing window
 	'winfixwidth'	specific to existing window
 
@@ -7175,11 +7176,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'winfixbuf'* *'wfb'* *'nowinfixbuf'* *'nowfb'*
 'winfixbuf' 'wfb'	boolean	(default off)
 			local to window
-	If enabled, the buffer and any window that displays it are paired.
+	If enabled, the window and the buffer it is displaying are paired.
 	For example, attempting to change the buffer with |:edit| will fail.
 	Other commands which change a window's buffer such as |:cnext| will
-	also skip any window with 'winfixbuf' enabled. However if a command
-	has an "!" option, a window can be forced to switch buffers.
+	also skip any window with 'winfixbuf' enabled.  However if an Ex
+	command has a "!" modifier, it can force switching buffers.
 
 			*'winfixheight'* *'wfh'* *'nowinfixheight'* *'nowfh'*
 'winfixheight' 'wfh'	boolean	(default off)
