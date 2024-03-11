@@ -2863,16 +2863,10 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  buf_T *const save_curbuf = curbuf;
-  buf_T *findbuf = curbuf;
-
-  if (fnum1 != 0) {
-    findbuf = buflist_findnr(fnum1);
-    // buffer not loaded
-    if (findbuf == NULL || findbuf->b_ml.ml_mfp == NULL) {
-      emsg(_(e_buffer_is_not_loaded));
-      return;
-    }
+  buf_T *findbuf = fnum1 != 0 ? buflist_findnr(fnum1) : curbuf;
+  if (findbuf == NULL || findbuf->b_ml.ml_mfp == NULL) {
+    emsg(_(e_buffer_is_not_loaded));
+    return;
   }
 
   if (p1.lnum < 1 || p1.lnum > findbuf->b_ml.ml_line_count) {
@@ -2892,7 +2886,9 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
+  buf_T *const save_curbuf = curbuf;
   curbuf = findbuf;
+  curwin->w_buffer = curbuf;
   const TriState save_virtual = virtual_op;
   virtual_op = virtual_active();
 
@@ -2975,10 +2971,8 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tv_list_append_allocated_string(rettv->vval.v_list, akt);
   }
 
-  if (curbuf != save_curbuf) {
-    curbuf = save_curbuf;
-  }
-
+  curbuf = save_curbuf;
+  curwin->w_buffer = curbuf;
   virtual_op = save_virtual;
 }
 

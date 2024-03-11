@@ -1772,11 +1772,11 @@ func Test_visual_getregion()
     for type in ['v', 'V', "\<C-V>"]
       for exclusive in [v:false, v:true]
         call assert_equal(range(10)->mapnew('string(v:val)'),
-              \ getregion([g:buf, 1, 1, 0], [g:buf, 10, 2, 0]),
-              \ {'type': type, 'exclusive': exclusive })
+              \ getregion([g:buf, 1, 1, 0], [g:buf, 10, 2, 0],
+              \ {'type': type, 'exclusive': exclusive }))
         call assert_equal(range(10)->mapnew('string(v:val)'),
-              \ getregion([g:buf, 10, 2, 0], [g:buf, 1, 1, 0]),
-              \ {'type': type, 'exclusive': exclusive })
+              \ getregion([g:buf, 10, 2, 0], [g:buf, 1, 1, 0],
+              \ {'type': type, 'exclusive': exclusive }))
       endfor
     endfor
 
