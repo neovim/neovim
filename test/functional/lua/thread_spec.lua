@@ -166,7 +166,7 @@ describe('thread', function()
       ]]
 
       local msg = next_msg()
-      eq(msg[1], 'notification')
+      eq('notification', msg[1])
       assert(tonumber(msg[2]) >= 72961)
     end)
 
@@ -327,7 +327,7 @@ describe('threadpool', function()
       ]]
 
       local msg = next_msg()
-      eq(msg[1], 'notification')
+      eq('notification', msg[1])
       assert(tonumber(msg[2]) >= 72961)
     end)
 

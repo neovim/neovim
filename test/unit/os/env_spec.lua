@@ -306,9 +306,9 @@ describe('env.c', function()
       -- expand_env_esc SHOULD NOT expand the variable if there is not enough space to
       -- contain the result
       for i = 0, 3 do
-        eq(output[i], input[i])
+        eq(input[i], output[i])
       end
-      eq(output[4], 0)
+      eq(0, output[4])
     end)
   end)
 end)

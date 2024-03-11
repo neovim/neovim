@@ -229,7 +229,7 @@ describe('profiling related functions', function()
   describe('profile_msg', function()
     itp('prints the zero time as 0.00000', function()
       local str = trim(profile_msg(profile_zero()))
-      eq(str, '0.000000')
+      eq('0.000000', str)
     end)
 
     itp('prints the time passed, in seconds.microsends', function()
@@ -245,7 +245,7 @@ describe('profiling related functions', function()
 
       -- zero seconds have passed (if this is not true, either LuaJIT is too
       -- slow or the profiling functions are too slow and need to be fixed)
-      eq(s, '0')
+      eq('0', s)
 
       -- more or less the same goes for the microsecond part, if it doesn't
       -- start with 0, it's too slow.

@@ -828,7 +828,7 @@ end]]
       return parser:included_regions()
     ]]
 
-    eq(range_tbl, { { { 0, 0, 0, 17, 1, 508 } } })
+    eq({ { { 0, 0, 0, 17, 1, 508 } } }, range_tbl)
   end)
 
   it('allows to set complex ranges', function()
@@ -1111,7 +1111,7 @@ int x = INT_MAX;
       return sub_tree == parser:children().c
       ]])
 
-      eq(result, true)
+      eq(true, result)
     end)
   end)
 
@@ -1135,7 +1135,7 @@ int x = INT_MAX;
         return result
         ]])
 
-        eq(result, 'value')
+        eq('value', result)
       end)
 
       describe('when setting a key on a capture', function()
@@ -1158,7 +1158,7 @@ int x = INT_MAX;
           end
           ]])
 
-          eq(result, 'value')
+          eq('value', result)
         end)
 
         it('it should not overwrite the nested table', function()

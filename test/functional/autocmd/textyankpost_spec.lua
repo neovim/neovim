@@ -72,19 +72,19 @@ describe('TextYankPost', function()
     command('set debug=msg')
     -- the regcontents should not be changed without copy.
     local status, err = pcall(command, 'call extend(g:event.regcontents, ["more text"])')
-    eq(status, false)
+    eq(false, status)
     neq(nil, string.find(err, ':E742:'))
 
     -- can't mutate keys inside the autocommand
     command('autocmd! TextYankPost * let v:event.regcontents = 0')
     status, err = pcall(command, 'normal yy')
-    eq(status, false)
+    eq(false, status)
     neq(nil, string.find(err, ':E46:'))
 
     -- can't add keys inside the autocommand
     command('autocmd! TextYankPost * let v:event.mykey = 0')
     status, err = pcall(command, 'normal yy')
-    eq(status, false)
+    eq(false, status)
     neq(nil, string.find(err, ':E742:'))
   end)
 

@@ -6257,7 +6257,7 @@ describe('float window', function()
         run(on_request, nil, on_setup)
         os.remove('Xtest_written')
         os.remove('Xtest_written2')
-        eq(exited, true)
+        eq(true, exited)
       end)
 
       it(':quit two floats in a row', function()

@@ -312,15 +312,15 @@ describe('lua buffer event callbacks: on_lines', function()
     feed('G0')
     feed('p')
     -- Is the last arg old_byte_size correct? Doesn't matter for this PR
-    eq(api.nvim_get_var('linesev'), { 'lines', 1, 4, 2, 3, 5, 4 })
+    eq({ 'lines', 1, 4, 2, 3, 5, 4 }, api.nvim_get_var('linesev'))
 
     feed('2G0')
     feed('p')
-    eq(api.nvim_get_var('linesev'), { 'lines', 1, 5, 1, 4, 4, 8 })
+    eq({ 'lines', 1, 5, 1, 4, 4, 8 }, api.nvim_get_var('linesev'))
 
     feed('1G0')
     feed('P')
-    eq(api.nvim_get_var('linesev'), { 'lines', 1, 6, 0, 3, 3, 9 })
+    eq({ 'lines', 1, 6, 0, 3, 3, 9 }, api.nvim_get_var('linesev'))
   end)
 
   it(
