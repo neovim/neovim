@@ -94,14 +94,14 @@ function SystemObj:wait(timeout)
 
   local done = vim.wait(timeout or state.timeout or MAX_TIMEOUT, function()
     return state.result ~= nil
-  end)
+  end, nil, true)
 
   if not done then
     -- Send sigkill since this cannot be caught
     self:_timeout(SIG.KILL)
     vim.wait(timeout or state.timeout or MAX_TIMEOUT, function()
       return state.result ~= nil
-    end)
+    end, nil, true)
   end
 
   return state.result

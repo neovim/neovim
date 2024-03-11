@@ -1,9 +1,9 @@
 " Vim filetype plugin file
-" Language: reStructuredText documentation format with R code
-" Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
-" Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	Mon Feb 27, 2023  07:16PM
-"		2024 Jan 14 by Vim Project (browsefilter)
+" Language:		reStructuredText documentation format with R code
+" Maintainer:		This runtime file is looking for a new maintainer.
+" Former Maintainer:	Jakson Alves de Aquino <jalvesaq@gmail.com>
+" Former Repository:	https://github.com/jalvesaq/R-Vim-runtime
+" Last Change:		2024 Feb 28 by Vim Project
 " Original work by Alex Zvoleff
 
 " Only do this when not yet done for this buffer
@@ -39,7 +39,7 @@ if !exists("g:rrst_dynamic_comments") || (exists("g:rrst_dynamic_comments") && g
 endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "R Source Files (*.R *.Rnw *.Rd *.Rmd *.Rrst *.qmd)\t*.R;*.Rnw;*.Rd;*.Rmd;*.Rrst;*.qmd\n"
+  let b:browsefilter = "R Source Files (*.R, *.Rnw, *.Rd, *.Rmd, *.Rrst, *.qmd)\t*.R;*.Rnw;*.Rd;*.Rmd;*.Rrst;*.qmd\n"
   if has("win32")
     let b:browsefilter .= "All Files (*.*)\t*\n"
   else

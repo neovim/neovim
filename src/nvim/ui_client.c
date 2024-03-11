@@ -62,6 +62,9 @@ uint64_t ui_client_start_server(int argc, char **argv)
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
                                        false, true, true, false, kChannelStdinPipe,
                                        NULL, 0, 0, NULL, &exit_status);
+  if (!channel) {
+    return 0;
+  }
 
   // If stdin is not a pty, it is forwarded to the client.
   // Replace stdin in the TUI process with the tty fd.
@@ -170,7 +173,7 @@ Object handle_ui_client_redraw(uint64_t channel_id, Array args, Arena *arena, Er
 static HlAttrs ui_client_dict2hlattrs(Dictionary d, bool rgb)
 {
   Error err = ERROR_INIT;
-  Dict(highlight) dict = { 0 };
+  Dict(highlight) dict = KEYDICT_INIT;
   if (!api_dict_to_keydict(&dict, KeyDict_highlight_get_field, d, &err)) {
     // TODO(bfredl): log "err"
     return HLATTRS_INIT;

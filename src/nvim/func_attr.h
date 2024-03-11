@@ -212,6 +212,8 @@
 #if defined(DEFINE_FUNC_ATTRIBUTES) || defined(DEFINE_EMPTY_ATTRIBUTES)
 /// Fast (non-deferred) API function.
 # define FUNC_API_FAST
+/// Return value needs to be freed
+# define FUNC_API_RET_ALLOC
 /// Internal C function not exposed in the RPC API.
 # define FUNC_API_NOEXPORT
 /// API function not exposed in Vimscript/eval.

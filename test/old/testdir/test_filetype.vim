@@ -204,7 +204,7 @@ func s:GetFilenameChecks() abort
     \ 'dracula': ['file.drac', 'file.drc', 'filelvs', 'filelpe', 'drac.file', 'lpe', 'lvs', 'some-lpe', 'some-lvs'],
     \ 'dtd': ['file.dtd'],
     \ 'dtrace': ['/usr/lib/dtrace/io.d'],
-    \ 'dts': ['file.dts', 'file.dtsi'],
+    \ 'dts': ['file.dts', 'file.dtsi', 'file.dtso', 'file.its'],
     \ 'dune': ['jbuild', 'dune', 'dune-project', 'dune-workspace'],
     \ 'dylan': ['file.dylan'],
     \ 'dylanintr': ['file.intr'],
@@ -341,13 +341,13 @@ func s:GetFilenameChecks() abort
     \ 'jproperties': ['file.properties', 'file.properties_xx', 'file.properties_xx_xx', 'some.properties_xx_xx_file', 'org.eclipse.xyz.prefs'],
     \ 'json': ['file.json', 'file.jsonp', 'file.json-patch', 'file.geojson', 'file.webmanifest', 'Pipfile.lock', 'file.ipynb', '.prettierrc', '.firebaserc', '.stylelintrc', 'file.slnf'],
     \ 'json5': ['file.json5'],
-    \ 'jsonc': ['file.jsonc', '.babelrc', '.eslintrc', '.jsfmtrc', '.jshintrc', '.hintrc', '.swrc', 'jsconfig.json', 'tsconfig.json', 'tsconfig.test.json', 'tsconfig-test.json'],
+    \ 'jsonc': ['file.jsonc', '.babelrc', '.eslintrc', '.jsfmtrc', '.jshintrc', '.hintrc', '.swrc', 'jsconfig.json', 'tsconfig.json', 'tsconfig.test.json', 'tsconfig-test.json', '.luaurc'],
     \ 'jsonl': ['file.jsonl'],
     \ 'jsonnet': ['file.jsonnet', 'file.libsonnet'],
     \ 'jsp': ['file.jsp'],
     \ 'julia': ['file.jl'],
     \ 'just': ['justfile', 'Justfile', '.justfile', 'config.just'],
-    \ 'kconfig': ['Kconfig', 'Kconfig.debug', 'Kconfig.file'],
+    \ 'kconfig': ['Kconfig', 'Kconfig.debug', 'Kconfig.file', 'Config.in', 'Config.in.host'],
     \ 'kdl': ['file.kdl'],
     \ 'kivy': ['file.kv'],
     \ 'kix': ['file.kix'],
@@ -581,7 +581,7 @@ func s:GetFilenameChecks() abort
     \ 'services': ['/etc/services', 'any/etc/services'],
     \ 'setserial': ['/etc/serial.conf', 'any/etc/serial.conf'],
     \ 'sexplib': ['file.sexp'],
-    \ 'sh': ['.bashrc', '.bash_profile', '.bash-profile', '.bash_logout', '.bash-logout', '.bash_aliases', '.bash-aliases', '/tmp/bash-fc-3Ozjlw', '/tmp/bash-fc.3Ozjlw', 'PKGBUILD', 'APKBUILD', 'file.bash', '/usr/share/doc/bash-completion/filter.sh', '/etc/udev/cdsymlinks.conf', 'any/etc/udev/cdsymlinks.conf'],
+    \ 'sh': ['.bashrc', '.bash_profile', '.bash-profile', '.bash_logout', '.bash-logout', '.bash_aliases', '.bash-aliases', '/tmp/bash-fc-3Ozjlw', '/tmp/bash-fc.3Ozjlw', 'PKGBUILD', 'APKBUILD', 'file.bash', '/usr/share/doc/bash-completion/filter.sh', '/etc/udev/cdsymlinks.conf', 'any/etc/udev/cdsymlinks.conf', 'file.bats'],
     \ 'sieve': ['file.siv', 'file.sieve'],
     \ 'sil': ['file.sil'],
     \ 'simula': ['file.sim'],
@@ -1511,82 +1511,89 @@ func Test_mod_file()
   filetype on
 
   " *.mod defaults to Modsim III
-  call writefile(['locks like Modsim III'], 'modfile.mod')
-  split modfile.mod
+  call writefile(['locks like Modsim III'], 'Xfile.mod', 'D')
+  split Xfile.mod
   call assert_equal('modsim3', &filetype)
   bwipe!
 
   " Users preference set by g:filetype_mod
   let g:filetype_mod = 'lprolog'
-  split modfile.mod
+  split Xfile.mod
   call assert_equal('lprolog', &filetype)
   unlet g:filetype_mod
   bwipe!
 
+  " LambdaProlog module
+  call writefile(['module lpromod.'], 'Xfile.mod')
+  split Xfile.mod
+  call assert_equal('lprolog', &filetype)
+  bwipe!
+
+  " LambdaProlog with comment and empty lines prior module
+  call writefile(['', '% with',  '% comment', '', 'module lpromod.'], 'Xfile.mod')
+  split Xfile.mod
+  call assert_equal('lprolog', &filetype)
+  bwipe!
+
   " RAPID header start with a line containing only "%%%",
   " but is not always present.
-  call writefile(['%%%'], 'modfile.mod')
-  split modfile.mod
+  call writefile(['%%%'], 'Xfile.mod')
+  split Xfile.mod
   call assert_equal('rapid', &filetype)
   bwipe!
-  call delete('modfile.mod')
 
   " RAPID supports umlauts in module names, leading spaces,
   " the .mod extension is not case sensitive.
-  call writefile(['  module ÜmlautModule'], 'modfile.Mod')
-  split modfile.Mod
+  call writefile(['  module ÜmlautModule'], 'Xfile.Mod', 'D')
+  split Xfile.Mod
   call assert_equal('rapid', &filetype)
   bwipe!
-  call delete('modfile.Mod')
 
   " RAPID is not case sensitive, embedded spaces, sysmodule,
   " file starts with empty line(s).
-  call writefile(['', 'MODULE  rapidmödüle  (SYSMODULE,NOSTEPIN)'], 'modfile.MOD')
-  split modfile.MOD
+  call writefile(['', 'MODULE  rapidmödüle  (SYSMODULE,NOSTEPIN)'], 'Xfile.MOD', 'D')
+  split Xfile.MOD
   call assert_equal('rapid', &filetype)
   bwipe!
 
   " Modula-2 MODULE not start of line
-  call writefile(['IMPLEMENTATION MODULE Module2Mod;'], 'modfile.MOD')
-  split modfile.MOD
+  call writefile(['IMPLEMENTATION MODULE Module2Mod;'], 'Xfile.mod')
+  split Xfile.mod
   call assert_equal('modula2', &filetype)
   call assert_equal('pim', b:modula2.dialect)
   bwipe!
 
   " Modula-2 with comment and empty lines prior MODULE
-  call writefile(['', '(* with',  ' comment *)', '', 'MODULE Module2Mod;'], 'modfile.MOD')
-  split modfile.MOD
+  call writefile(['', '(* with',  ' comment *)', '', 'MODULE Module2Mod;'], 'Xfile.mod')
+  split Xfile.mod
   call assert_equal('modula2', &filetype)
   call assert_equal('pim', b:modula2.dialect)
   bwipe!
 
-  call delete('modfile.MOD')
-
-  " LambdaProlog module
-  call writefile(['module lpromod.'], 'modfile.mod')
-  split modfile.mod
-  call assert_equal('lprolog', &filetype)
+  " Modula-2 program MODULE with priorty (and uppercase extension)
+  call writefile(['MODULE Module2Mod [42];'], 'Xfile.MOD')
+  split Xfile.MOD
+  call assert_equal('modula2', &filetype)
+  call assert_equal('pim', b:modula2.dialect)
   bwipe!
 
-  " LambdaProlog with comment and empty lines prior module
-  call writefile(['', '% with',  '% comment', '', 'module lpromod.'], 'modfile.mod')
-  split modfile.mod
-  call assert_equal('lprolog', &filetype)
+  " Modula-2 implementation MODULE with priorty (and uppercase extension)
+  call writefile(['IMPLEMENTATION MODULE Module2Mod [42];'], 'Xfile.MOD')
+  split Xfile.MOD
+  call assert_equal('modula2', &filetype)
+  call assert_equal('pim', b:modula2.dialect)
   bwipe!
-  call delete('modfile.mod')
 
   " go.mod
-  call writefile(['module example.com/M'], 'go.mod')
+  call writefile(['module example.com/M'], 'go.mod', 'D')
   split go.mod
   call assert_equal('gomod', &filetype)
   bwipe!
-  call delete('go.mod')
 
   call writefile(['module M'], 'go.mod')
   split go.mod
   call assert_equal('gomod', &filetype)
   bwipe!
-  call delete('go.mod')
 
   filetype off
 endfunc

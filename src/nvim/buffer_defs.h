@@ -139,6 +139,8 @@ typedef struct {
 #define w_ve_flags w_onebuf_opt.wo_ve_flags  // flags for 'virtualedit'
   OptInt wo_nuw;
 #define w_p_nuw w_onebuf_opt.wo_nuw    // 'numberwidth'
+  int wo_wfb;
+#define w_p_wfb w_onebuf_opt.wo_wfb    // 'winfixbuf'
   int wo_wfh;
 #define w_p_wfh w_onebuf_opt.wo_wfh    // 'winfixheight'
   int wo_wfw;
@@ -889,6 +891,14 @@ typedef enum {
   kFloatRelativeMouse = 3,
 } FloatRelative;
 
+/// Keep in sync with win_split_str[] in nvim_win_get_config() (api/win_config.c)
+typedef enum {
+  kWinSplitLeft = 0,
+  kWinSplitRight = 1,
+  kWinSplitAbove = 2,
+  kWinSplitBelow = 3,
+} WinSplit;
+
 typedef enum {
   kWinStyleUnused = 0,
   kWinStyleMinimal,  /// Minimal UI: no number column, eob markers, etc
@@ -905,6 +915,7 @@ typedef enum {
   kBorderTextFooter = 1,
 } BorderTextType;
 
+/// See ":help nvim_open_win()" for documentation.
 typedef struct {
   Window window;
   lpos_T bufpos;
@@ -914,6 +925,7 @@ typedef struct {
   FloatRelative relative;
   bool external;
   bool focusable;
+  WinSplit split;
   int zindex;
   WinStyle style;
   bool border;
@@ -932,18 +944,19 @@ typedef struct {
   bool noautocmd;
   bool fixed;
   bool hide;
-} FloatConfig;
+} WinConfig;
 
-#define FLOAT_CONFIG_INIT ((FloatConfig){ .height = 0, .width = 0, \
-                                          .bufpos = { -1, 0 }, \
-                                          .row = 0, .col = 0, .anchor = 0, \
-                                          .relative = 0, .external = false, \
-                                          .focusable = true, \
-                                          .zindex = kZIndexFloatDefault, \
-                                          .style = kWinStyleUnused, \
-                                          .noautocmd = false, \
-                                          .hide = false, \
-                                          .fixed = false })
+#define WIN_CONFIG_INIT ((WinConfig){ .height = 0, .width = 0, \
+                                      .bufpos = { -1, 0 }, \
+                                      .row = 0, .col = 0, .anchor = 0, \
+                                      .relative = 0, .external = false, \
+                                      .focusable = true, \
+                                      .split = 0, \
+                                      .zindex = kZIndexFloatDefault, \
+                                      .style = kWinStyleUnused, \
+                                      .noautocmd = false, \
+                                      .hide = false, \
+                                      .fixed = false })
 
 // Structure to store last cursor position and topline.  Used by check_lnums()
 // and reset_lnums().
@@ -1008,6 +1021,8 @@ struct window_S {
   int w_ns_hl_winhl;
   int w_ns_hl_active;
   int *w_ns_hl_attr;
+
+  Set(uint32_t) w_ns_set;
 
   int w_hl_id_normal;               ///< 'winhighlight' normal id
   int w_hl_attr_normal;             ///< 'winhighlight' normal final attrs
@@ -1268,7 +1283,7 @@ struct window_S {
   bool w_pos_changed;                   // true if window position changed
   bool w_floating;                      ///< whether the window is floating
   bool w_float_is_info;                 // the floating window is info float
-  FloatConfig w_float_config;
+  WinConfig w_config;
 
   // w_fraction is the fractional row of the cursor within the window, from
   // 0 at the top row to FRACTION_MULT at the last row.

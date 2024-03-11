@@ -459,7 +459,7 @@ g:changelog_new_date_format
 				%%	insert a single '%' character
 				%d	insert the date from above
 				%u	insert the user from above
-                                %p	insert result of b:changelog_entry_prefix
+				%p	insert result of b:changelog_entry_prefix
 				%c	where to position cursor when done
 			The default is "%d  %u\n\n\t* %p%c\n\n", which produces
 			something like (| is where cursor will be, unless at
@@ -473,7 +473,7 @@ g:changelog_new_entry_format
 			The format used when creating a new entry.
 			The following table describes special tokens in the
 			string:
-                                %p	insert result of b:changelog_entry_prefix
+				%p	insert result of b:changelog_entry_prefix
 				%c	where to position cursor when done
 			The default is "\t*%c", which produces something
 			similar to >
@@ -525,6 +525,18 @@ After figuring out the current date and user, the file is searched for an
 entry beginning with the current date and user and if found adds another item
 under it.  If not found, a new entry and item is prepended to the beginning of
 the Changelog.
+
+
+ASCIIDOC						*ft-asciidoc-plugin*
+
+To enable |folding| use this: >
+	let g:asciidoc_folding = 1
+
+To disable nesting of folded headers use this: >
+	let g:asciidoc_foldnested = 0
+
+To disable folding everything under the title use this: >
+	let asciidoc_fold_under_title = 0
 
 
 FORTRAN							*ft-fortran-plugin*

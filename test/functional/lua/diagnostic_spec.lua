@@ -205,7 +205,7 @@ describe('vim.diagnostic', function()
       diag[1].col = 10000
       return vim.diagnostic.get()[1].col == 10000
     ]]
-    eq(result, false)
+    eq(false, result)
   end)
 
   it('resolves buffer number 0 to the current buffer', function()

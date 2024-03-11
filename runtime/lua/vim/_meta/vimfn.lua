@@ -582,7 +582,7 @@ function vim.fn.bufloaded(buf) end
 ---   echo bufname("file2")  " name of buffer where "file2" matches.
 --- <
 ---
---- @param buf? any
+--- @param buf? integer|string
 --- @return string
 function vim.fn.bufname(buf) end
 
@@ -599,7 +599,7 @@ function vim.fn.bufname(buf) end
 --- number necessarily exist, because ":bwipeout" may have removed
 --- them.  Use bufexists() to test for the existence of a buffer.
 ---
---- @param buf? any
+--- @param buf? integer|string
 --- @param create? any
 --- @return integer
 function vim.fn.bufnr(buf, create) end
@@ -3185,7 +3185,7 @@ function vim.fn.getjumplist(winnr, tabnr) end
 --- <To get lines from another buffer see |getbufline()| and
 --- |getbufoneline()|
 ---
---- @param lnum integer
+--- @param lnum integer|string
 --- @param end_? nil|false
 --- @return string
 function vim.fn.getline(lnum, end_) end
@@ -3524,6 +3524,62 @@ function vim.fn.getreg(regname, list) end
 --- @param regname? string
 --- @return table
 function vim.fn.getreginfo(regname) end
+
+--- Returns the list of strings from {pos1} to {pos2} from a
+--- buffer.
+---
+--- {pos1} and {pos2} must both be |List|s with four numbers.
+--- See |getpos()| for the format of the list.  It's possible
+--- to specify positions from a different buffer, but please
+--- note the limitations at |getregion-notes|.
+---
+--- The optional argument {opts} is a Dict and supports the
+--- following items:
+---
+---   type    Specify the region's selection type
+---       (default: "v"):
+---       "v"    for |charwise| mode
+---       "V"    for |linewise| mode
+---       "<CTRL-V>"  for |blockwise-visual| mode
+---
+---   exclusive  If |TRUE|, use exclusive selection
+---       for the end position
+---       (default: follow 'selection')
+---
+--- You can get the last selection type by |visualmode()|.
+--- If Visual mode is active, use |mode()| to get the Visual mode
+--- (e.g., in a |:vmap|).
+--- This function is useful to get text starting and ending in
+--- different columns, such as a |charwise-visual| selection.
+---
+---           *getregion-notes*
+--- Note that:
+--- - Order of {pos1} and {pos2} doesn't matter, it will always
+---   return content from the upper left position to the lower
+---   right position.
+--- - If 'virtualedit' is enabled and the region is past the end
+---   of the lines, resulting lines are padded with spaces.
+--- - If the region is blockwise and it starts or ends in the
+---   middle of a multi-cell character, it is not included but
+---   its selected part is substituted with spaces.
+--- - If {pos1} and {pos2} are not in the same buffer, an empty
+---   list is returned.
+--- - {pos1} and {pos2} must belong to a |bufloaded()| buffer.
+--- - It is evaluated in current window context, which makes a
+---   difference if the buffer is displayed in a window with
+---   different 'virtualedit' or 'list' values.
+---
+--- Examples: >
+---   :xnoremap <CR>
+---   \ <Cmd>echom getregion(
+---   \ getpos('v'), getpos('.'), #{ type: mode() })<CR>
+--- <
+---
+--- @param pos1 table
+--- @param pos2 table
+--- @param opts? table
+--- @return string[]
+function vim.fn.getregion(pos1, pos2, opts) end
 
 --- The result is a String, which is type of register {regname}.
 --- The value will be one of:
@@ -4196,7 +4252,7 @@ function vim.fn.id(expr) end
 --- |getline()|.
 --- When {lnum} is invalid -1 is returned.
 ---
---- @param lnum integer
+--- @param lnum integer|string
 --- @return integer
 function vim.fn.indent(lnum) end
 
@@ -5314,6 +5370,7 @@ function vim.fn.mapset(dict) end
 --- Note that when {count} is added the way {start} works changes,
 --- see above.
 ---
+---         *match-pattern*
 --- See |pattern| for the patterns that are accepted.
 --- The 'ignorecase' option is used to set the ignore-caseness of
 --- the pattern.  'smartcase' is NOT used.  The matching is always
@@ -5471,6 +5528,9 @@ function vim.fn.matcharg(nr) end
 ---
 --- This function works only for loaded buffers. First call
 --- |bufload()| if needed.
+---
+--- See |match-pattern| for information about the effect of some
+--- option settings on the pattern.
 ---
 --- When {buf} is not a valid buffer, the buffer is not loaded or
 --- {lnum} or {end} is not valid then an error is given and an
@@ -5684,6 +5744,9 @@ function vim.fn.matchstr(expr, pat, start, count) end
 ---     text  matched string
 ---     submatches  a List of submatches.  Present only if
 ---     "submatches" is set to v:true in {dict}.
+---
+--- See |match-pattern| for information about the effect of some
+--- option settings on the pattern.
 ---
 --- Example: >vim
 ---     :echo matchstrlist(['tik tok'], '\<\k\+\>')
@@ -8123,7 +8186,7 @@ function vim.fn.setqflist(list, action, what) end
 ---
 --- @param regname string
 --- @param value any
---- @param options? table
+--- @param options? string
 --- @return any
 function vim.fn.setreg(regname, value, options) end
 
@@ -10535,10 +10598,10 @@ function vim.fn.win_move_statusline(nr, offset) end
 --- @return any
 function vim.fn.win_screenpos(nr) end
 
---- Move the window {nr} to a new split of the window {target}.
---- This is similar to moving to {target}, creating a new window
---- using |:split| but having the same contents as window {nr}, and
---- then closing {nr}.
+--- Temporarily switch to window {target}, then move window {nr}
+--- to a new split adjacent to {target}.
+--- Unlike commands such as |:split|, no new windows are created
+--- (the |window-ID| of window {nr} is unchanged after the move).
 ---
 --- Both {nr} and {target} can be window numbers or |window-ID|s.
 --- Both must be in the current tab page.

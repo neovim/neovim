@@ -1,9 +1,11 @@
 " Vim syntax file
 " Language:    R Help File
-" Maintainer: Jakson Aquino <jalvesaq@gmail.com>
-" Former Maintainer: Johannes Ranke <jranke@uni-bremen.de>
-" Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change: Tue Jun 28, 2016  08:53AM
+" Maintainer: This runtime file is looking for a new maintainer.
+" Former Maintainers: Jakson Aquino <jalvesaq@gmail.com>
+"                     Johannes Ranke <jranke@uni-bremen.de>
+" Former Repository: https://github.com/jalvesaq/R-Vim-runtime
+" Last Change: 2016 Jun 28  08:53AM
+"   2024 Feb 19 by Vim Project (announce adoption)
 " Remarks:     - Includes R syntax highlighting in the appropriate
 "                sections if an r.vim file is in the same directory or in the
 "                default debian location.

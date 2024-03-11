@@ -12,7 +12,7 @@ typedef struct {
   char *name;
   RgbValue color;
 } color_name_table_T;
-extern color_name_table_T color_name_table[];
+extern color_name_table_T color_name_table[700];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "highlight_group.h.generated.h"

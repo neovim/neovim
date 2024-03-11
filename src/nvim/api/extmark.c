@@ -20,11 +20,13 @@
 #include "nvim/extmark.h"
 #include "nvim/grid.h"
 #include "nvim/highlight_group.h"
+#include "nvim/map_defs.h"
 #include "nvim/marktree.h"
 #include "nvim/marktree_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/move.h"
 #include "nvim/pos_defs.h"
 #include "nvim/sign.h"
 
@@ -41,7 +43,7 @@ void api_extmark_free_all_mem(void)
   map_destroy(String, &namespace_ids);
 }
 
-/// Creates a new namespace or gets an existing one. \*namespace\*
+/// Creates a new namespace or gets an existing one. [namespace]()
 ///
 /// Namespaces are used for buffer highlights and virtual text, see
 /// |nvim_buf_add_highlight()| and |nvim_buf_set_extmark()|.
@@ -70,15 +72,15 @@ Integer nvim_create_namespace(String name)
 /// Gets existing, non-anonymous |namespace|s.
 ///
 /// @return dict that maps from names to namespace ids.
-Dictionary nvim_get_namespaces(void)
+Dictionary nvim_get_namespaces(Arena *arena)
   FUNC_API_SINCE(5)
 {
-  Dictionary retval = ARRAY_DICT_INIT;
+  Dictionary retval = arena_dict(arena, map_size(&namespace_ids));
   String name;
   handle_T id;
 
   map_foreach(&namespace_ids, name, id, {
-    PUT(retval, name.data, INTEGER_OBJ(id));
+    PUT_C(retval, name.data, INTEGER_OBJ(id));
   })
 
   return retval;
@@ -105,73 +107,85 @@ bool ns_initialized(uint32_t ns)
   return ns < (uint32_t)next_namespace_id;
 }
 
-Array virt_text_to_array(VirtText vt, bool hl_name)
+Array virt_text_to_array(VirtText vt, bool hl_name, Arena *arena)
 {
-  Array chunks = ARRAY_DICT_INIT;
-  Array hl_array = ARRAY_DICT_INIT;
+  Array chunks = arena_array(arena, kv_size(vt));
   for (size_t i = 0; i < kv_size(vt); i++) {
+    size_t j = i;
+    for (; j < kv_size(vt); j++) {
+      if (kv_A(vt, j).text != NULL) {
+        break;
+      }
+    }
+
+    Array hl_array = arena_array(arena, i < j ? j - i + 1 : 0);
+    for (; i < j; i++) {
+      int hl_id = kv_A(vt, i).hl_id;
+      if (hl_id > 0) {
+        ADD_C(hl_array, hl_group_name(hl_id, hl_name));
+      }
+    }
+
     char *text = kv_A(vt, i).text;
     int hl_id = kv_A(vt, i).hl_id;
-    if (text == NULL) {
-      if (hl_id > 0) {
-        ADD(hl_array, hl_group_name(hl_id, hl_name));
-      }
-      continue;
-    }
-    Array chunk = ARRAY_DICT_INIT;
-    ADD(chunk, CSTR_TO_OBJ(text));
+    Array chunk = arena_array(arena, 2);
+    ADD_C(chunk, CSTR_AS_OBJ(text));
     if (hl_array.size > 0) {
       if (hl_id > 0) {
-        ADD(hl_array, hl_group_name(hl_id, hl_name));
+        ADD_C(hl_array, hl_group_name(hl_id, hl_name));
       }
-      ADD(chunk, ARRAY_OBJ(hl_array));
-      hl_array = (Array)ARRAY_DICT_INIT;
+      ADD_C(chunk, ARRAY_OBJ(hl_array));
     } else if (hl_id > 0) {
-      ADD(chunk, hl_group_name(hl_id, hl_name));
+      ADD_C(chunk, hl_group_name(hl_id, hl_name));
     }
-    ADD(chunks, ARRAY_OBJ(chunk));
+    ADD_C(chunks, ARRAY_OBJ(chunk));
   }
-  assert(hl_array.size == 0);
   return chunks;
 }
 
-static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_name)
+static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_name, Arena *arena)
 {
   MTKey start = extmark.start;
-  Array rv = ARRAY_DICT_INIT;
+  Array rv = arena_array(arena, 4);
   if (id) {
-    ADD(rv, INTEGER_OBJ((Integer)start.id));
+    ADD_C(rv, INTEGER_OBJ((Integer)start.id));
   }
-  ADD(rv, INTEGER_OBJ(start.pos.row));
-  ADD(rv, INTEGER_OBJ(start.pos.col));
+  ADD_C(rv, INTEGER_OBJ(start.pos.row));
+  ADD_C(rv, INTEGER_OBJ(start.pos.col));
 
   if (add_dict) {
-    Dictionary dict = ARRAY_DICT_INIT;
+    // TODO(bfredl): coding the size like this is a bit fragile.
+    // We want ArrayOf(Dict(set_extmark)) as the return type..
+    Dictionary dict = arena_dict(arena, ARRAY_SIZE(set_extmark_table));
 
-    PUT(dict, "ns_id", INTEGER_OBJ((Integer)start.ns));
+    PUT_C(dict, "ns_id", INTEGER_OBJ((Integer)start.ns));
 
-    PUT(dict, "right_gravity", BOOLEAN_OBJ(mt_right(start)));
+    PUT_C(dict, "right_gravity", BOOLEAN_OBJ(mt_right(start)));
 
     if (mt_paired(start)) {
-      PUT(dict, "end_row", INTEGER_OBJ(extmark.end_pos.row));
-      PUT(dict, "end_col", INTEGER_OBJ(extmark.end_pos.col));
-      PUT(dict, "end_right_gravity", BOOLEAN_OBJ(extmark.end_right_gravity));
+      PUT_C(dict, "end_row", INTEGER_OBJ(extmark.end_pos.row));
+      PUT_C(dict, "end_col", INTEGER_OBJ(extmark.end_pos.col));
+      PUT_C(dict, "end_right_gravity", BOOLEAN_OBJ(extmark.end_right_gravity));
     }
 
     if (mt_no_undo(start)) {
-      PUT(dict, "undo_restore", BOOLEAN_OBJ(false));
+      PUT_C(dict, "undo_restore", BOOLEAN_OBJ(false));
     }
 
     if (mt_invalidate(start)) {
-      PUT(dict, "invalidate", BOOLEAN_OBJ(true));
+      PUT_C(dict, "invalidate", BOOLEAN_OBJ(true));
     }
     if (mt_invalid(start)) {
-      PUT(dict, "invalid", BOOLEAN_OBJ(true));
+      PUT_C(dict, "invalid", BOOLEAN_OBJ(true));
     }
 
-    decor_to_dict_legacy(&dict, mt_decor(start), hl_name);
+    if (mt_scoped(start)) {
+      PUT_C(dict, "scoped", BOOLEAN_OBJ(true));
+    }
 
-    ADD(rv, DICTIONARY_OBJ(dict));
+    decor_to_dict_legacy(&dict, mt_decor(start), hl_name, arena);
+
+    ADD_C(rv, DICTIONARY_OBJ(dict));
   }
 
   return rv;
@@ -190,7 +204,7 @@ static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_na
 /// absent
 ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
                                             Integer id, Dict(get_extmark) *opts,
-                                            Error *err)
+                                            Arena *arena, Error *err)
   FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -213,7 +227,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
   if (extmark.start.pos.row < 0) {
     return rv;
   }
-  return extmark_to_array(extmark, false, details, hl_name);
+  return extmark_to_array(extmark, false, details, hl_name, arena);
 }
 
 /// Gets |extmarks| in "traversal order" from a |charwise| region defined by
@@ -270,9 +284,9 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 ///                     their start position is less than `start`
 ///          - type: Filter marks by type: "highlight", "sign", "virt_text" and "virt_lines"
 /// @param[out] err   Error details, if any
-/// @return List of [extmark_id, row, col] tuples in "traversal order".
+/// @return List of `[extmark_id, row, col]` tuples in "traversal order".
 Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object end,
-                            Dict(get_extmarks) *opts, Error *err)
+                            Dict(get_extmarks) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -336,8 +350,9 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
   ExtmarkInfoArray marks = extmark_get(buf, (uint32_t)ns_id, l_row, l_col, u_row,
                                        u_col, (int64_t)limit, reverse, type, opts->overlap);
 
+  rv = arena_array(arena, kv_size(marks));
   for (size_t i = 0; i < kv_size(marks); i++) {
-    ADD(rv, ARRAY_OBJ(extmark_to_array(kv_A(marks, i), true, details, hl_name)));
+    ADD_C(rv, ARRAY_OBJ(extmark_to_array(kv_A(marks, i), true, details, hl_name, arena)));
   }
 
   kv_destroy(marks);
@@ -375,7 +390,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                          of the screen line (just like for diff and
 ///                          cursorline highlight).
 ///               - virt_text : virtual text to link to this mark.
-///                   A list of [text, highlight] tuples, each representing a
+///                   A list of `[text, highlight]` tuples, each representing a
 ///                   text chunk with specified highlight. `highlight` element
 ///                   can either be a single highlight group, or an array of
 ///                   multiple highlight groups that will be stacked
@@ -410,7 +425,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///
 ///               - virt_lines : virtual lines to add next to this mark
 ///                   This should be an array over lines, where each line in
-///                   turn is an array over [text, highlight] tuples. In
+///                   turn is an array over `[text, highlight]` tuples. In
 ///                   general, buffer and window options do not affect the
 ///                   display of the text. In particular 'wrap'
 ///                   and 'linebreak' options do not take effect, so
@@ -443,33 +458,24 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   hidden marks, an "invalid" key is added to the "details"
 ///                   array of |nvim_buf_get_extmarks()| and family. If
 ///                   "undo_restore" is false, the extmark is deleted instead.
-///               - priority: a priority value for the highlight group or sign
-///                   attribute. For example treesitter highlighting uses a
-///                   value of 100.
+///               - priority: a priority value for the highlight group, sign
+///                   attribute or virtual text. For virtual text, item with
+///                   highest priority is drawn last. For example treesitter
+///                   highlighting uses a value of 100.
 ///               - strict: boolean that indicates extmark should not be placed
 ///                   if the line or column value is past the end of the
 ///                   buffer or end of the line respectively. Defaults to true.
 ///               - sign_text: string of length 1-2 used to display in the
 ///                   sign column.
-///                   Note: ranges are unsupported and decorations are only
-///                   applied to start_row
 ///               - sign_hl_group: name of the highlight group used to
 ///                   highlight the sign column text.
-///                   Note: ranges are unsupported and decorations are only
-///                   applied to start_row
 ///               - number_hl_group: name of the highlight group used to
 ///                   highlight the number column.
-///                   Note: ranges are unsupported and decorations are only
-///                   applied to start_row
 ///               - line_hl_group: name of the highlight group used to
 ///                   highlight the whole line.
-///                   Note: ranges are unsupported and decorations are only
-///                   applied to start_row
 ///               - cursorline_hl_group: name of the highlight group used to
-///                   highlight the line when the cursor is on the same line
-///                   as the mark and 'cursorline' is enabled.
-///                   Note: ranges are unsupported and decorations are only
-///                   applied to start_row
+///                   highlight the sign column text when the cursor is on
+///                   the same line as the mark and 'cursorline' is enabled.
 ///               - conceal: string which should be either empty or a single
 ///                   character. Enable concealing similar to |:syn-conceal|.
 ///                   When a character is supplied it is used as |:syn-cchar|.
@@ -483,6 +489,8 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   used together with virt_text.
 ///               - url: A URL to associate with this extmark. In the TUI, the OSC 8 control
 ///                   sequence is used to generate a clickable hyperlink to this URL.
+///               - scoped: boolean that indicates that the extmark should only be
+///                   displayed in the namespace scope. (experimental)
 ///
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
@@ -741,6 +749,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   if (opts->ephemeral && decor_state.win && decor_state.win->w_buffer == buf) {
+    if (opts->scoped) {
+      api_set_error(err, kErrorTypeException, "not yet implemented");
+      goto error;
+    }
+
     int r = (int)line;
     int c = (int)col;
     if (line2 == -1) {
@@ -833,7 +846,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     extmark_set(buf, (uint32_t)ns_id, &id, (int)line, (colnr_T)col, line2, col2,
                 decor, decor_flags, right_gravity, opts->end_right_gravity,
                 !GET_BOOL_OR_TRUE(opts, set_extmark, undo_restore),
-                opts->invalidate, err);
+                opts->invalidate, opts->scoped, err);
     if (ERROR_SET(err)) {
       decor_free(decor);
       return 0;
@@ -959,7 +972,7 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
   decor.data.hl.hl_id = hl_id;
 
   extmark_set(buf, ns, NULL, (int)line, (colnr_T)col_start, end_line, (colnr_T)col_end,
-              decor, MT_FLAG_DECOR_HL, true, false, false, false, NULL);
+              decor, MT_FLAG_DECOR_HL, true, false, false, false, false, NULL);
   return ns_id;
 }
 
@@ -1027,17 +1040,27 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param opts  Table of callbacks:
 ///             - on_start: called first on each screen redraw
+///               ```
 ///                 ["start", tick]
+///               ```
 ///             - on_buf: called for each buffer being redrawn (before
-///                 window callbacks)
+///               window callbacks)
+///               ```
 ///                 ["buf", bufnr, tick]
+///               ```
 ///             - on_win: called when starting to redraw a specific window.
+///               ```
 ///                 ["win", winid, bufnr, topline, botline]
+///               ```
 ///             - on_line: called for each buffer line being redrawn.
 ///                 (The interaction with fold lines is subject to change)
-///                 ["win", winid, bufnr, row]
+///               ```
+///                 ["line", winid, bufnr, row]
+///               ```
 ///             - on_end: called at the end of a redraw cycle
+///               ```
 ///                 ["end", tick]
+///               ```
 void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *opts, Error *err)
   FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
 {
@@ -1192,8 +1215,9 @@ free_exit:
   return virt_text;
 }
 
+/// @nodoc
 String nvim__buf_debug_extmarks(Buffer buffer, Boolean keys, Boolean dot, Error *err)
-  FUNC_API_SINCE(7)
+  FUNC_API_SINCE(7) FUNC_API_RET_ALLOC
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -1201,4 +1225,73 @@ String nvim__buf_debug_extmarks(Buffer buffer, Boolean keys, Boolean dot, Error 
   }
 
   return mt_inspect(buf->b_marktree, keys, dot);
+}
+
+/// Adds the namespace scope to the window.
+///
+/// @param window Window handle, or 0 for current window
+/// @param ns_id the namespace to add
+/// @return true if the namespace was added, else false
+Boolean nvim_win_add_ns(Window window, Integer ns_id, Error *err)
+  FUNC_API_SINCE(12)
+{
+  win_T *win = find_window_by_handle(window, err);
+  if (!win) {
+    return false;
+  }
+
+  VALIDATE_INT(ns_initialized((uint32_t)ns_id), "ns_id", ns_id, {
+    return false;
+  });
+
+  set_put(uint32_t, &win->w_ns_set, (uint32_t)ns_id);
+
+  changed_window_setting_win(win);
+
+  return true;
+}
+
+/// Gets all the namespaces scopes associated with a window.
+///
+/// @param window Window handle, or 0 for current window
+/// @return a list of namespaces ids
+ArrayOf(Integer) nvim_win_get_ns(Window window, Arena *arena, Error *err)
+  FUNC_API_SINCE(12)
+{
+  win_T *win = find_window_by_handle(window, err);
+  if (!win) {
+    return (Array)ARRAY_DICT_INIT;
+  }
+
+  Array rv = arena_array(arena, set_size(&win->w_ns_set));
+  uint32_t i;
+  set_foreach(&win->w_ns_set, i, {
+    ADD_C(rv, INTEGER_OBJ((Integer)(i)));
+  });
+
+  return rv;
+}
+
+/// Removes the namespace scope from the window.
+///
+/// @param window Window handle, or 0 for current window
+/// @param ns_id the namespace to remove
+/// @return true if the namespace was removed, else false
+Boolean nvim_win_remove_ns(Window window, Integer ns_id, Error *err)
+  FUNC_API_SINCE(12)
+{
+  win_T *win = find_window_by_handle(window, err);
+  if (!win) {
+    return false;
+  }
+
+  if (!set_has(uint32_t, &win->w_ns_set, (uint32_t)ns_id)) {
+    return false;
+  }
+
+  set_del(uint32_t, &win->w_ns_set, (uint32_t)ns_id);
+
+  changed_window_setting_win(win);
+
+  return true;
 }

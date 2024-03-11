@@ -6,6 +6,7 @@
 -- or the test suite. (Eventually the test suite will be run in a worker process,
 -- so this wouldn't be a separate case to consider)
 
+---@nodoc
 ---@diagnostic disable-next-line: lowercase-global
 vim = vim or {}
 
@@ -63,6 +64,15 @@ function vim.deepcopy(orig, noref)
   return deepcopy(orig, not noref and {} or nil)
 end
 
+--- @class vim.gsplit.Opts
+--- @inlinedoc
+---
+--- Use `sep` literally (as in string.find).
+--- @field plain? boolean
+---
+--- Discard empty segments at start and end of the sequence.
+--- @field trimempty? boolean
+
 --- Gets an |iterator| that splits a string at each instance of a separator, in "lazy" fashion
 --- (as opposed to |vim.split()| which is "eager").
 ---
@@ -91,12 +101,10 @@ end
 ---
 --- @param s string String to split
 --- @param sep string Separator or pattern
---- @param opts (table|nil) Keyword arguments |kwargs|:
----       - plain: (boolean) Use `sep` literally (as in string.find).
----       - trimempty: (boolean) Discard empty segments at start and end of the sequence.
----@return fun():string|nil (function) Iterator over the split components
+--- @param opts? vim.gsplit.Opts Keyword arguments |kwargs|:
+--- @return fun():string? : Iterator over the split components
 function vim.gsplit(s, sep, opts)
-  local plain
+  local plain --- @type boolean?
   local trimempty = false
   if type(opts) == 'boolean' then
     plain = opts -- For backwards compatibility.
@@ -113,6 +121,11 @@ function vim.gsplit(s, sep, opts)
   local segs = {}
   local empty_start = true -- Only empty segments seen so far.
 
+  --- @param i integer?
+  --- @param j integer
+  --- @param ... unknown
+  --- @return string
+  --- @return ...
   local function _pass(i, j, ...)
     if i then
       assert(j + 1 > start, 'Infinite loop detected')
@@ -182,8 +195,8 @@ end
 ---
 ---@param s string String to split
 ---@param sep string Separator or pattern
----@param opts (table|nil) Keyword arguments |kwargs| accepted by |vim.gsplit()|
----@return string[] List of split components
+---@param opts? vim.gsplit.Opts Keyword arguments |kwargs|:
+---@return string[] : List of split components
 function vim.split(s, sep, opts)
   local t = {}
   for c in vim.gsplit(s, sep, opts) do
@@ -197,14 +210,15 @@ end
 ---
 ---@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
----@generic T: table
+---@generic T
 ---@param t table<T, any> (table) Table
----@return T[] (list) List of keys
+---@return T[] : List of keys
 function vim.tbl_keys(t)
-  assert(type(t) == 'table', string.format('Expected table, got %s', type(t)))
+  vim.validate({ t = { t, 't' } })
+  --- @cast t table<any,any>
 
   local keys = {}
-  for k, _ in pairs(t) do
+  for k in pairs(t) do
     table.insert(keys, k)
   end
   return keys
@@ -215,12 +229,14 @@ end
 ---
 ---@generic T
 ---@param t table<any, T> (table) Table
----@return T[] (list) List of values
+---@return T[] : List of values
 function vim.tbl_values(t)
-  assert(type(t) == 'table', string.format('Expected table, got %s', type(t)))
+  vim.validate({ t = { t, 't' } })
 
   local values = {}
-  for _, v in pairs(t) do
+  for _, v in
+    pairs(t --[[@as table<any,any>]])
+  do
     table.insert(values, v)
   end
   return values
@@ -229,13 +245,14 @@ end
 --- Apply a function to all values of a table.
 ---
 ---@generic T
----@param func fun(value: T): any (function) Function
----@param t table<any, T> (table) Table
----@return table Table of transformed values
+---@param func fun(value: T): any Function
+---@param t table<any, T> Table
+---@return table : Table of transformed values
 function vim.tbl_map(func, t)
   vim.validate({ func = { func, 'c' }, t = { t, 't' } })
+  --- @cast t table<any,any>
 
-  local rettab = {}
+  local rettab = {} --- @type table<any,any>
   for k, v in pairs(t) do
     rettab[k] = func(v)
   end
@@ -247,18 +264,25 @@ end
 ---@generic T
 ---@param func fun(value: T): boolean (function) Function
 ---@param t table<any, T> (table) Table
----@return T[] (table) Table of filtered values
+---@return T[] : Table of filtered values
 function vim.tbl_filter(func, t)
   vim.validate({ func = { func, 'c' }, t = { t, 't' } })
+  --- @cast t table<any,any>
 
-  local rettab = {}
+  local rettab = {} --- @type table<any,any>
   for _, entry in pairs(t) do
     if func(entry) then
-      table.insert(rettab, entry)
+      rettab[#rettab + 1] = entry
     end
   end
   return rettab
 end
+
+--- @class vim.tbl_contains.Opts
+--- @inlinedoc
+---
+--- `value` is a function reference to be checked (default false)
+--- @field predicate? boolean
 
 --- Checks if a table contains a given value, specified either directly or via
 --- a predicate that is checked for each value.
@@ -276,13 +300,13 @@ end
 ---
 ---@param t table Table to check
 ---@param value any Value to compare or predicate function reference
----@param opts (table|nil) Keyword arguments |kwargs|:
----       - predicate: (boolean) `value` is a function reference to be checked (default false)
+---@param opts? vim.tbl_contains.Opts Keyword arguments |kwargs|:
 ---@return boolean `true` if `t` contains `value`
 function vim.tbl_contains(t, value, opts)
   vim.validate({ t = { t, 't' }, opts = { opts, 't', true } })
+  --- @cast t table<any,any>
 
-  local pred
+  local pred --- @type fun(v: any): boolean?
   if opts and opts.predicate then
     vim.validate({ value = { value, 'c' } })
     pred = value
@@ -309,6 +333,7 @@ end
 ---@return boolean `true` if `t` contains `value`
 function vim.list_contains(t, value)
   vim.validate({ t = { t, 't' } })
+  --- @cast t table<any,any>
 
   for _, v in ipairs(t) do
     if v == value then
@@ -325,7 +350,7 @@ end
 ---@param t table Table to check
 ---@return boolean `true` if `t` is empty
 function vim.tbl_isempty(t)
-  assert(type(t) == 'table', string.format('Expected table, got %s', type(t)))
+  vim.validate({ t = { t, 't' } })
   return next(t) == nil
 end
 
@@ -347,7 +372,7 @@ local function tbl_extend(behavior, deep_extend, ...)
     )
   end
 
-  local ret = {}
+  local ret = {} --- @type table<any,any>
   if vim._empty_dict_mt ~= nil and getmetatable(select(1, ...)) == vim._empty_dict_mt then
     ret = vim.empty_dict()
   end
@@ -355,6 +380,7 @@ local function tbl_extend(behavior, deep_extend, ...)
   for i = 1, select('#', ...) do
     local tbl = select(i, ...)
     vim.validate({ ['after the second argument'] = { tbl, 't' } })
+    --- @cast tbl table<any,any>
     if tbl then
       for k, v in pairs(tbl) do
         if deep_extend and can_merge(v) and can_merge(ret[k]) then
@@ -376,12 +402,12 @@ end
 ---
 ---@see |extend()|
 ---
----@param behavior string Decides what to do if a key is found in more than one map:
+---@param behavior 'error'|'keep'|'force' Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
 ---@param ... table Two or more tables
----@return table Merged table
+---@return table : Merged table
 function vim.tbl_extend(behavior, ...)
   return tbl_extend(behavior, false, ...)
 end
@@ -392,7 +418,7 @@ end
 ---
 ---@generic T1: table
 ---@generic T2: table
----@param behavior "error"|"keep"|"force" (string) Decides what to do if a key is found in more than one map:
+---@param behavior 'error'|'keep'|'force' Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
@@ -417,12 +443,14 @@ function vim.deep_equal(a, b)
     return false
   end
   if type(a) == 'table' then
+    --- @cast a table<any,any>
+    --- @cast b table<any,any>
     for k, v in pairs(a) do
       if not vim.deep_equal(v, b[k]) then
         return false
       end
     end
-    for k, _ in pairs(b) do
+    for k in pairs(b) do
       if a[k] == nil then
         return false
       end
@@ -434,12 +462,17 @@ end
 
 --- Add the reverse lookup values to an existing table.
 --- For example:
---- ``tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }``
+--- `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
 ---
 --- Note that this *modifies* the input.
+---@deprecated
 ---@param o table Table to add the reverse to
 ---@return table o
 function vim.tbl_add_reverse_lookup(o)
+  vim.deprecate('vim.tbl_add_reverse_lookup', nil, '0.12')
+
+  --- @cast o table<any,any>
+  --- @type any[]
   local keys = vim.tbl_keys(o)
   for _, k in ipairs(keys) do
     local v = o[k]
@@ -469,15 +502,14 @@ end
 ---
 ---@param o table Table to index
 ---@param ... any Optional keys (0 or more, variadic) via which to index the table
----
----@return any Nested value indexed by key (if it exists), else nil
+---@return any : Nested value indexed by key (if it exists), else nil
 function vim.tbl_get(o, ...)
   local keys = { ... }
   if #keys == 0 then
     return nil
   end
   for i, k in ipairs(keys) do
-    o = o[k]
+    o = o[k] --- @type any
     if o == nil then
       return nil
     elseif type(o) ~= 'table' and next(keys, i) then
@@ -496,8 +528,8 @@ end
 ---@generic T: table
 ---@param dst T List which will be modified and appended to
 ---@param src table List from which values will be inserted
----@param start (integer|nil) Start index on src. Defaults to 1
----@param finish (integer|nil) Final index on src. Defaults to `#src`
+---@param start integer? Start index on src. Defaults to 1
+---@param finish integer? Final index on src. Defaults to `#src`
 ---@return T dst
 function vim.list_extend(dst, src, start, finish)
   vim.validate({
@@ -521,6 +553,7 @@ end
 ---@return table Flattened copy of the given list-like table
 function vim.tbl_flatten(t)
   local result = {}
+  --- @param _t table<any,any>
   local function _tbl_flatten(_t)
     local n = #_t
     for i = 1, n do
@@ -540,10 +573,13 @@ end
 ---
 ---@see Based on https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
----@param t table Dict-like table
----@return function # |for-in| iterator over sorted keys and their values
+---@generic T: table, K, V
+---@param t T Dict-like table
+---@return fun(table: table<K, V>, index?: K):K, V # |for-in| iterator over sorted keys and their values
+---@return T
 function vim.spairs(t)
-  assert(type(t) == 'table', string.format('Expected table, got %s', type(t)))
+  vim.validate({ t = { t, 't' } })
+  --- @cast t table<any,any>
 
   -- collect the keys
   local keys = {}
@@ -559,7 +595,8 @@ function vim.spairs(t)
     if keys[i] then
       return keys[i], t[keys[i]]
     end
-  end
+  end,
+    t
 end
 
 --- Tests if `t` is an "array": a table indexed _only_ by integers (potentially non-contiguous).
@@ -577,6 +614,8 @@ function vim.tbl_isarray(t)
   if type(t) ~= 'table' then
     return false
   end
+
+  --- @cast t table<any,any>
 
   local count = 0
 
@@ -616,18 +655,21 @@ function vim.tbl_islist(t)
     return false
   end
 
-  local num_elem = vim.tbl_count(t)
-
-  if num_elem == 0 then
+  if next(t) == nil then
     return getmetatable(t) ~= vim._empty_dict_mt
-  else
-    for i = 1, num_elem do
-      if t[i] == nil then
-        return false
-      end
-    end
-    return true
   end
+
+  local j = 1
+  for _ in
+    pairs(t--[[@as table<any,any>]])
+  do
+    if t[j] == nil then
+      return false
+    end
+    j = j + 1
+  end
+
+  return true
 end
 
 --- Counts the number of non-nil values in table `t`.
@@ -639,9 +681,10 @@ end
 ---
 ---@see https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
 ---@param t table Table
----@return integer Number of non-nil values in table
+---@return integer : Number of non-nil values in table
 function vim.tbl_count(t)
   vim.validate({ t = { t, 't' } })
+  --- @cast t table<any,any>
 
   local count = 0
   for _ in pairs(t) do
@@ -653,12 +696,12 @@ end
 --- Creates a copy of a table containing only elements from start to end (inclusive)
 ---
 ---@generic T
----@param list T[] (list) Table
+---@param list T[] Table
 ---@param start integer|nil Start range of slice
 ---@param finish integer|nil End range of slice
----@return T[] (list) Copy of table sliced from start to finish (inclusive)
+---@return T[] Copy of table sliced from start to finish (inclusive)
 function vim.list_slice(list, start, finish)
-  local new_list = {}
+  local new_list = {} --- @type `T`[]
   for i = start or 1, finish or #list do
     new_list[#new_list + 1] = list[i]
   end
@@ -707,6 +750,16 @@ function vim.endswith(s, suffix)
 end
 
 do
+  --- @alias vim.validate.Type
+  --- | 't' | 'table'
+  --- | 's' | 'string'
+  --- | 'n' | 'number'
+  --- | 'f' | 'function'
+  --- | 'c' | 'callable'
+  --- | 'nil'
+  --- | 'thread'
+  --- | 'userdata
+
   local type_names = {
     ['table'] = 'table',
     t = 'table',
@@ -725,10 +778,18 @@ do
     ['userdata'] = 'userdata',
   }
 
+  --- @nodoc
+  --- @class vim.validate.Spec {[1]: any, [2]: string|string[], [3]: boolean }
+  --- @field [1] any Argument value
+  --- @field [2] string|string[]|fun(v:any):boolean, string? Type name, or callable
+  --- @field [3]? boolean
+
   local function _is_type(val, t)
     return type(val) == t or (t == 'callable' and vim.is_callable(val))
   end
 
+  --- @param opt table<vim.validate.Type,vim.validate.Spec>
+  --- @return boolean, string?
   local function is_valid(opt)
     if type(opt) ~= 'table' then
       return false, string.format('opt: expected table, got %s', type(opt))
@@ -787,7 +848,7 @@ do
       end
     end
 
-    return true, nil
+    return true
   end
 
   --- Validates a parameter specification (types and values).
@@ -795,41 +856,40 @@ do
   --- Usage example:
   ---
   --- ```lua
-  ---  function user.new(name, age, hobbies)
-  ---    vim.validate{
-  ---      name={name, 'string'},
-  ---      age={age, 'number'},
-  ---      hobbies={hobbies, 'table'},
-  ---    }
-  ---    ...
-  ---  end
+  --- function user.new(name, age, hobbies)
+  ---   vim.validate{
+  ---     name={name, 'string'},
+  ---     age={age, 'number'},
+  ---     hobbies={hobbies, 'table'},
+  ---   }
+  ---   ...
+  --- end
   --- ```
   ---
   --- Examples with explicit argument values (can be run directly):
   ---
   --- ```lua
-  ---  vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
-  ---     --> NOP (success)
+  --- vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
+  ---    --> NOP (success)
   ---
-  ---  vim.validate{arg1={1, 'table'}}
-  ---     --> error('arg1: expected table, got number')
+  --- vim.validate{arg1={1, 'table'}}
+  ---    --> error('arg1: expected table, got number')
   ---
-  ---  vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
-  ---     --> error('arg1: expected even number, got 3')
+  --- vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
+  ---    --> error('arg1: expected even number, got 3')
   --- ```
   ---
   --- If multiple types are valid they can be given as a list.
   ---
   --- ```lua
-  ---  vim.validate{arg1={{'foo'}, {'table', 'string'}}, arg2={'foo', {'table', 'string'}}}
-  ---  -- NOP (success)
+  --- vim.validate{arg1={{'foo'}, {'table', 'string'}}, arg2={'foo', {'table', 'string'}}}
+  --- -- NOP (success)
   ---
-  ---  vim.validate{arg1={1, {'string', 'table'}}}
-  ---  -- error('arg1: expected string|table, got number')
-  ---
+  --- vim.validate{arg1={1, {'string', 'table'}}}
+  --- -- error('arg1: expected string|table, got number')
   --- ```
   ---
-  ---@param opt table Names of parameters to validate. Each key is a parameter
+  ---@param opt table<vim.validate.Type,vim.validate.Spec> (table) Names of parameters to validate. Each key is a parameter
   ---          name; each value is a tuple in one of these forms:
   ---          1. (arg_value, type_name, optional)
   ---             - arg_value: argument value
@@ -895,6 +955,7 @@ do
   ---@field private _idx_read integer
   ---@field private _idx_write integer
   ---@field private _size integer
+  ---@overload fun(self): table?
   local Ringbuf = {}
 
   --- Clear all items
@@ -943,19 +1004,19 @@ do
   --- Once the buffer is full, adding a new entry overrides the oldest entry.
   ---
   --- ```lua
-  ---   local ringbuf = vim.ringbuf(4)
-  ---   ringbuf:push("a")
-  ---   ringbuf:push("b")
-  ---   ringbuf:push("c")
-  ---   ringbuf:push("d")
-  ---   ringbuf:push("e")    -- overrides "a"
-  ---   print(ringbuf:pop()) -- returns "b"
-  ---   print(ringbuf:pop()) -- returns "c"
+  --- local ringbuf = vim.ringbuf(4)
+  --- ringbuf:push("a")
+  --- ringbuf:push("b")
+  --- ringbuf:push("c")
+  --- ringbuf:push("d")
+  --- ringbuf:push("e")    -- overrides "a"
+  --- print(ringbuf:pop()) -- returns "b"
+  --- print(ringbuf:pop()) -- returns "c"
   ---
-  ---   -- Can be used as iterator. Pops remaining items:
-  ---   for val in ringbuf do
-  ---     print(val)
-  ---   end
+  --- -- Can be used as iterator. Pops remaining items:
+  --- for val in ringbuf do
+  ---   print(val)
+  --- end
   --- ```
   ---
   --- Returns a Ringbuf instance with the following methods:
@@ -966,7 +1027,7 @@ do
   --- - |Ringbuf:clear()|
   ---
   ---@param size integer
-  ---@return vim.Ringbuf ringbuf (table)
+  ---@return vim.Ringbuf ringbuf
   function vim.ringbuf(size)
     local ringbuf = {
       _items = {},
@@ -981,6 +1042,26 @@ do
       end,
     })
   end
+end
+
+--- @private
+--- @generic T
+--- @param root string
+--- @param mod T
+--- @return T
+function vim._defer_require(root, mod)
+  return setmetatable({}, {
+    ---@param t table<string, any>
+    ---@param k string
+    __index = function(t, k)
+      if not mod[k] then
+        return
+      end
+      local name = string.format('%s.%s', root, k)
+      t[k] = require(name)
+      return t[k]
+    end,
+  })
 end
 
 return vim

@@ -136,6 +136,26 @@ static void move_tab_to_mouse(void)
     tabpage_move(tabnr);
   }
 }
+/// Close the current or specified tab page.
+///
+/// @param c1  tabpage number, or 999 for the current tabpage
+static void mouse_tab_close(int c1)
+{
+  tabpage_T *tp;
+
+  if (c1 == 999) {
+    tp = curtab;
+  } else {
+    tp = find_tabpage(c1);
+  }
+  if (tp == curtab) {
+    if (first_tabpage->tp_next != NULL) {
+      tabpage_close(false);
+    }
+  } else if (tp != NULL) {
+    tabpage_close_other(tp, false);
+  }
+}
 
 static bool got_click = false;  // got a click some time back
 
@@ -487,43 +507,32 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       if (is_click && cmdwin_type == 0 && mouse_col < Columns) {
         in_tab_line = true;
         c1 = tab_page_click_defs[mouse_col].tabnr;
+
         switch (tab_page_click_defs[mouse_col].type) {
         case kStlClickDisabled:
           break;
-        case kStlClickTabClose: {
-          tabpage_T *tp;
-
-          // Close the current or specified tab page.
-          if (c1 == 999) {
-            tp = curtab;
-          } else {
-            tp = find_tabpage(c1);
-          }
-          if (tp == curtab) {
-            if (first_tabpage->tp_next != NULL) {
-              tabpage_close(false);
-            }
-          } else if (tp != NULL) {
-            tabpage_close_other(tp, false);
-          }
-          break;
-        }
         case kStlClickTabSwitch:
-          if ((mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK) {
-            // double click opens new page
-            end_visual_mode();
-            tabpage_new();
-            tabpage_move(c1 == 0 ? 9999 : c1 - 1);
-          } else {
-            // Go to specified tab page, or next one if not clicking
-            // on a label.
-            goto_tabpage(c1);
-
-            // It's like clicking on the status line of a window.
-            if (curwin != old_curwin) {
+          if (which_button != MOUSE_MIDDLE) {
+            if ((mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK) {
+              // double click opens new page
               end_visual_mode();
+              tabpage_new();
+              tabpage_move(c1 == 0 ? 9999 : c1 - 1);
+            } else {
+              // Go to specified tab page, or next one if not clicking
+              // on a label.
+              goto_tabpage(c1);
+
+              // It's like clicking on the status line of a window.
+              if (curwin != old_curwin) {
+                end_visual_mode();
+              }
             }
+            break;
           }
+          FALLTHROUGH;
+        case kStlClickTabClose:
+          mouse_tab_close(c1);
           break;
         case kStlClickFuncRun:
           call_click_def_func(tab_page_click_defs, mouse_col, which_button);
@@ -1571,9 +1580,6 @@ void nv_mousescroll(cmdarg_T *cap)
   // Call the common mouse scroll function shared with other modes.
   do_mousescroll(cap);
 
-  if (curwin != old_curwin && curwin->w_p_cul) {
-    redraw_for_cursorline(curwin);
-  }
   curwin->w_redr_status = true;
   curwin = old_curwin;
   curbuf = curwin->w_buffer;
@@ -1725,7 +1731,7 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
   } else if (*gridp > 1) {
     win_T *wp = get_win_by_grid_handle(*gridp);
     if (wp && wp->w_grid_alloc.chars
-        && !(wp->w_floating && !wp->w_float_config.focusable)) {
+        && !(wp->w_floating && !wp->w_config.focusable)) {
       *rowp = MIN(*rowp - wp->w_grid.row_offset, wp->w_grid.rows - 1);
       *colp = MIN(*colp - wp->w_grid.col_offset, wp->w_grid.cols - 1);
       return wp;

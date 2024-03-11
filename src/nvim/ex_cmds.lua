@@ -812,7 +812,7 @@ module.cmds = {
   },
   {
     command = 'drop',
-    flags = bit.bor(FILES, CMDARG, NEEDARG, ARGOPT, TRLBAR),
+    flags = bit.bor(BANG, FILES, CMDARG, NEEDARG, ARGOPT, TRLBAR),
     addr_type = 'ADDR_NONE',
     func = 'ex_drop',
   },

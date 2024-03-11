@@ -774,6 +774,35 @@ uint64_t marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
   return other;
 }
 
+void marktree_revise_flags(MarkTree *b, MarkTreeIter *itr, uint16_t new_flags)
+{
+  uint32_t meta_old[4];
+  meta_describe_key(meta_old, rawkey(itr));
+  rawkey(itr).flags &= (uint16_t) ~MT_FLAG_EXTERNAL_MASK;
+  rawkey(itr).flags |= new_flags;
+
+  uint32_t meta_new[4];
+  meta_describe_key(meta_new, rawkey(itr));
+
+  if (!memcmp(meta_old, meta_new, sizeof(meta_old))) {
+    return;
+  }
+
+  MTNode *lnode = itr->x;
+  while (lnode->parent) {
+    uint32_t *meta_p = lnode->parent->meta[lnode->p_idx];
+    for (int m = 0; m < kMTMetaCount; m++) {
+      meta_p[m] += meta_new[m] - meta_old[m];
+    }
+
+    lnode = lnode->parent;
+  }
+
+  for (int m = 0; m < kMTMetaCount; m++) {
+    b->meta_root[m] += meta_new[m] - meta_old[m];
+  }
+}
+
 /// similar to intersect_common but modify x and y in place to retain
 /// only the items which are NOT in common
 static void intersect_merge(Intersection *restrict m, Intersection *restrict x,
@@ -1802,7 +1831,7 @@ bool marktree_itr_step_overlap(MarkTree *b, MarkTreeIter *itr, MTPair *pair)
       }
       unrelative(itr->pos, &k.pos);
       MTKey start = marktree_lookup(b, id, NULL);
-      if (pos_less(itr->intersect_pos, start.pos)) {
+      if (pos_leq(itr->intersect_pos, start.pos)) {
         continue;
       }
       *pair = mtpair_from(start, k);
@@ -2257,7 +2286,7 @@ static void marktree_itr_fix_pos(MarkTree *b, MarkTreeIter *itr)
 void marktree_put_test(MarkTree *b, uint32_t ns, uint32_t id, int row, int col, bool right_gravity,
                        int end_row, int end_col, bool end_right, bool meta_inline)
 {
-  uint16_t flags = mt_flags(right_gravity, false, false, false);
+  uint16_t flags = mt_flags(right_gravity, false, false, false, false);
   // The specific choice is irrelevant here, we pick one counted decor
   // type to test the counting and filtering logic.
   flags |= meta_inline ? MT_FLAG_DECOR_VIRT_TEXT_INLINE : 0;

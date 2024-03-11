@@ -28,7 +28,7 @@ describe('mappings with <Cmd>', function()
       [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
       [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
       [4] = { bold = true },
-      [5] = { background = Screen.colors.LightGrey },
+      [5] = { foreground = Screen.colors.Black, background = Screen.colors.LightGrey },
       [6] = { foreground = Screen.colors.Blue1 },
       [7] = { bold = true, reverse = true },
       [8] = { background = Screen.colors.WebGray },
@@ -505,7 +505,7 @@ describe('mappings with <Cmd>', function()
     feed('"bd<F7>')
     expect([[
         soest text]])
-    eq(fn.getreg('b', 1, 1), { 'me short lines', 'of t' })
+    eq({ 'me short lines', 'of t' }, fn.getreg('b', 1, 1))
 
     -- startinsert aborts operator
     feed('d<F8>')
@@ -561,7 +561,7 @@ describe('mappings with <Cmd>', function()
       of stuff test text]])
 
     feed('<F5>')
-    eq(fn.getreg('a', 1, 1), { 'deed some short little lines', 'of stuff t' })
+    eq({ 'deed some short little lines', 'of stuff t' }, fn.getreg('a', 1, 1))
 
     -- still in insert
     screen:expect([[

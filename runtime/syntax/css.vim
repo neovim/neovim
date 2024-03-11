@@ -7,7 +7,7 @@
 "               Nikolai Weibull (Add CSS2 support)
 " URL:          https://github.com/vim-language-dept/css-syntax.vim
 " Maintainer:   Jay Sitter <jay@jaysitter.com>
-" Last Change:  2021 Oct 20
+" Last Change:  2024 Mar 2
 
 " quit when a syntax file was already loaded
 if !exists("main_syntax")
@@ -127,7 +127,7 @@ syn match cssColor contained "#\x\{8\}\>" contains=cssUnitDecorators
 
 syn region cssURL contained matchgroup=cssFunctionName start="\<\(uri\|url\|local\|format\)\s*(" end=")" contains=cssStringQ,cssStringQQ oneline
 syn region cssMathGroup contained matchgroup=cssMathParens start="(" end=")" containedin=cssFunction,cssMathGroup contains=cssCustomProp,cssValue.*,cssFunction,cssColor,cssStringQ,cssStringQQ oneline
-syn region cssFunction contained matchgroup=cssFunctionName start="\<\(var\|calc\)\s*(" end=")" contains=cssCustomProp,cssValue.*,cssFunction,cssColor,cssStringQ,cssStringQQ oneline
+syn region cssFunction contained matchgroup=cssFunctionName start="\<\(var\|calc\)\s*(" end=")" contains=cssCustomProp,cssValue.*,cssFunction,cssURL,cssColor,cssStringQ,cssStringQQ oneline
 syn region cssFunction contained matchgroup=cssFunctionName start="\<\(rgb\|clip\|attr\|counter\|rect\|cubic-bezier\|steps\)\s*(" end=")" oneline  contains=cssValueInteger,cssValueNumber,cssValueLength,cssFunctionComma
 syn region cssFunction contained matchgroup=cssFunctionName start="\<\(rgba\|hsl\|hsla\|color-stop\|from\|to\)\s*(" end=")" oneline  contains=cssColor,cssValueInteger,cssValueNumber,cssValueLength,cssFunctionComma,cssFunction
 syn region cssFunction contained matchgroup=cssFunctionName start="\<\(linear-\|radial-\|conic-\)\=\gradient\s*(" end=")" oneline  contains=cssColor,cssValueInteger,cssValueNumber,cssValueLength,cssFunction,cssGradientAttr,cssFunctionComma
@@ -176,6 +176,8 @@ syn keyword cssBackgroundAttr contained cover contain
 
 syn match cssBorderProp contained "\<border\(-\(top\|right\|bottom\|left\)\)\=\(-\(width\|color\|style\)\)\=\>"
 syn match cssBorderProp contained "\<border\(-\(top\|bottom\)-\(left\|right\)\)\=-radius\>"
+syn match cssBorderProp contained "\<border-\(inline\|block\)\(-\(start\|end\)\)\=\(-\(style\|width\|color\)\)\=\>"
+syn match cssBorderProp contained "\<border-\(start\|end\)-\(start\|end\)-radius\>"
 syn match cssBorderProp contained "\<border-image\(-\(outset\|repeat\|slice\|source\|width\)\)\=\>"
 syn match cssBorderProp contained "\<box-decoration-break\>"
 syn match cssBorderProp contained "\<box-shadow\>"
@@ -195,6 +197,7 @@ syn keyword cssBorderAttr contained clone slice
 
 syn match cssBoxProp contained "\<padding\(-\(top\|right\|bottom\|left\)\)\=\>"
 syn match cssBoxProp contained "\<margin\(-\(top\|right\|bottom\|left\)\)\=\>"
+syn match cssBoxProp contained "\<\(margin\|padding\)\(-\(inline\|block\)\(-\(start\|end\)\)\)\=\>"
 syn match cssBoxProp contained "\<overflow\(-\(x\|y\|style\)\)\=\>"
 syn match cssBoxProp contained "\<rotation\(-point\)\=\>"
 syn keyword cssBoxAttr contained visible hidden scroll auto
@@ -227,7 +230,7 @@ syn match cssFlexibleBoxAttr contained "\<space\(-\(between\|around\|evenly\)\)\
 
 " CSS Fonts Module Level 3
 " http://www.w3.org/TR/css-fonts-3/
-syn match cssFontProp contained "\<font\(-\(family\|\|feature-settings\|kerning\|language-override\|size\(-adjust\)\=\|stretch\|style\|synthesis\|variant\(-\(alternates\|caps\|east-asian\|ligatures\|numeric\|position\)\)\=\|weight\)\)\=\>"
+syn match cssFontProp contained "\<font\(-\(display\|family\|feature-settings\|kerning\|language-override\|size\(-adjust\)\=\|stretch\|style\|synthesis\|variant\(-\(alternates\|caps\|east-asian\|ligatures\|numeric\|position\)\)\=\|weight\)\)\=\>"
 
 " font attributes
 syn keyword cssFontAttr contained icon menu caption
@@ -248,6 +251,8 @@ syn keyword cssFontAttr contained italic oblique
 syn keyword cssFontAttr contained weight style
 " font-weight attributes
 syn keyword cssFontAttr contained bold bolder lighter
+" font-display attributes
+syn keyword cssFontAttr contained auto block swap fallback optional
 " TODO: font-variant-* attributes
 "------------------------------------------------
 
@@ -282,7 +287,7 @@ syn match cssGeneratedContentAttr contained "\<\(no-\)\=\(open\|close\)-quote\>"
 " https://www.w3.org/TR/css-grid-1/
 syn match cssGridProp contained "\<grid\>"
 syn match cssGridProp contained "\<grid-template\(-\(columns\|rows\|areas\)\)\=\>"
-syn match cssGridProp contained "\<grid-\(column\|row\)\(-\(start\|end\|gap\)\)\=\>"
+syn match cssGridProp contained "\<\(grid-\)\=\(column\|row\)\(-\(start\|end\|gap\)\)\=\>"
 syn match cssGridProp contained "\<grid-\(area\|gap\)\>"
 syn match cssGridProp contained "\<gap\>"
 syn match cssGridProp contained "\<grid-auto-\(flow\|rows\|columns\)\>"
@@ -452,12 +457,12 @@ syn match cssAttrComma ","
 " Pseudo class
 " https://www.w3.org/TR/selectors-4/
 syn match cssPseudoClass ":[A-Za-z0-9_-]*" contains=cssNoise,cssPseudoClassId,cssUnicodeEscape,cssVendor,cssPseudoClassFn
-syn keyword cssPseudoClassId contained link visited active hover before after left right any-link
-syn keyword cssPseudoClassId contained root empty target enabled disabled checked invalid default defined autofill fullscreen host indeterminate in-range modal optional out-of-range picture-in-picture placeholder-shown paused playing read-only read-write required scope
+syn keyword cssPseudoClassId contained link visited active hover before after left right
+syn keyword cssPseudoClassId contained root empty target enabled disabled checked invalid
 syn match cssPseudoClassId contained "\<first-\(line\|letter\)\>"
 syn match cssPseudoClassId contained "\<\(first\|last\|only\)-\(of-type\|child\)\>"
 syn match cssPseudoClassId contained  "\<focus\(-within\|-visible\)\=\>"
-syn region cssPseudoClassFn contained matchgroup=cssFunctionName start="\<\(where\|has\|host\|not\|is\|lang\|\(nth\|nth-last\)-\(of-type\|child\)\)(" end=")" contains=cssStringQ,cssStringQQ,cssTagName,cssAttributeSelector,cssClassName,cssIdentifier
+syn region cssPseudoClassFn contained matchgroup=cssFunctionName start="\<\(not\|is\|lang\|\(nth\|nth-last\)-\(of-type\|child\)\)(" end=")" contains=cssStringQ,cssStringQQ,cssTagName,cssAttributeSelector,cssClassName,cssIdentifier
 " ------------------------------------
 " Vendor specific properties
 syn match cssPseudoClassId contained  "\<selection\>"

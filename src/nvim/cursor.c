@@ -514,3 +514,15 @@ char *get_cursor_pos_ptr(void)
 {
   return ml_get_buf(curbuf, curwin->w_cursor.lnum) + curwin->w_cursor.col;
 }
+
+/// @return  length (excluding the NUL) of the cursor line.
+colnr_T get_cursor_line_len(void)
+{
+  return ml_get_buf_len(curbuf, curwin->w_cursor.lnum);
+}
+
+/// @return  length (excluding the NUL) of the cursor position.
+colnr_T get_cursor_pos_len(void)
+{
+  return ml_get_buf_len(curbuf, curwin->w_cursor.lnum) - curwin->w_cursor.col;
+}

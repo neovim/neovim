@@ -2,8 +2,6 @@
 
 -- luacheck: no unused args
 
---- @defgroup vim.regex
----
 --- @brief Vim regexes can be used directly from Lua. Currently they only allow
 --- matching within a single line.
 
@@ -14,6 +12,7 @@
 --- @return vim.regex
 function vim.regex(re) end
 
+--- @nodoc
 --- @class vim.regex
 local regex = {} -- luacheck: no unused
 

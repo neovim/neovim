@@ -2629,7 +2629,7 @@ static int rename_with_tmp(const char *const from, const char *const to)
   STRCPY(tempname, from);
   for (int n = 123; n < 99999; n++) {
     char *tail = path_tail(tempname);
-    snprintf(tail, (size_t)((MAXPATHL + 1) - (tail - tempname - 1)), "%d", n);
+    snprintf(tail, (size_t)((MAXPATHL + 1) - (tail - tempname)), "%d", n);
 
     if (!os_path_exists(tempname)) {
       if (os_rename(from, tempname) == OK) {
@@ -3153,7 +3153,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
     curbuf->b_flags |= BF_CHECK_RO;           // check for RO again
     keep_filetype = true;                     // don't detect 'filetype'
     if (readfile(buf->b_ffname, buf->b_fname, 0, 0,
-                 (linenr_T)MAXLNUM, &ea, flags, false) != OK) {
+                 (linenr_T)MAXLNUM, &ea, flags, shortmess(SHM_FILEINFO)) != OK) {
       if (!aborting()) {
         semsg(_("E321: Could not reload \"%s\""), buf->b_fname);
       }
@@ -3171,8 +3171,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
       // Mark the buffer as unmodified and free undo info.
       unchanged(buf, true, true);
       if ((flags & READ_KEEP_UNDO) == 0) {
-        u_blockfree(buf);
-        u_clearall(buf);
+        u_clearallandblockfree(buf);
       } else {
         // Mark all undo states as changed.
         u_unchanged(curbuf);

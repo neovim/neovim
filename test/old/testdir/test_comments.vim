@@ -237,6 +237,12 @@ func Test_comment_autoformat()
   call feedkeys("aone\ntwo\n", 'xt')
   call assert_equal(['one', 'two', ''], getline(1, '$'))
 
+  set backspace=indent,eol,start
+  %d
+  call feedkeys("aone \n\<BS>", 'xt')
+  call assert_equal(['one'], getline(1, '$'))
+  set backspace&
+
   close!
 endfunc
 

@@ -1672,10 +1672,7 @@ Dictionary ns_get_hl_defs(NS ns_id, Dict(get_highlight) *opts, Arena *arena, Err
   return rv;
 
 cleanup:
-  api_free_integer(id);
-  api_free_boolean(link);
-  Dictionary empty = ARRAY_DICT_INIT;
-  return empty;
+  return (Dictionary)ARRAY_DICT_INIT;
 }
 
 /// Outputs a highlight when doing ":hi MyHighlight"
@@ -2241,7 +2238,7 @@ void highlight_changed(void)
         HlAttrs attrs = syn_attr2entry(highlight_attr[hlf]);
         msg_grid.blending = attrs.hl_blend > -1;
       }
-      ui_call_hl_group_set(cstr_as_string((char *)hlf_names[hlf]),
+      ui_call_hl_group_set(cstr_as_string(hlf_names[hlf]),
                            highlight_attr[hlf]);
       highlight_attr_last[hlf] = highlight_attr[hlf];
     }

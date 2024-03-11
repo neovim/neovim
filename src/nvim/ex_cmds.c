@@ -406,18 +406,16 @@ static int sort_compare(const void *s1, const void *s2)
   // number.
   if (sort_nr) {
     if (l1.st_u.num.is_number != l2.st_u.num.is_number) {
-      result = l1.st_u.num.is_number - l2.st_u.num.is_number;
+      result = l1.st_u.num.is_number > l2.st_u.num.is_number ? 1 : -1;
     } else {
       result = l1.st_u.num.value == l2.st_u.num.value
                ? 0
-               : l1.st_u.num.value > l2.st_u.num.value
-               ? 1
-               : -1;
+               : l1.st_u.num.value > l2.st_u.num.value ? 1 : -1;
     }
   } else if (sort_flt) {
     result = l1.st_u.value_flt == l2.st_u.value_flt
-             ? 0 : l1.st_u.value_flt > l2.st_u.value_flt
-             ? 1 : -1;
+             ? 0
+             : l1.st_u.value_flt > l2.st_u.value_flt ? 1 : -1;
   } else {
     // We need to copy one line into "sortbuf1", because there is no
     // guarantee that the first pointer becomes invalid when obtaining the
@@ -2010,6 +2008,10 @@ static int check_readonly(int *forceit, buf_T *buf)
 ///           GETFILE_OPEN_OTHER for successfully opening another file.
 int getfile(int fnum, char *ffname_arg, char *sfname_arg, bool setpm, linenr_T lnum, bool forceit)
 {
+  if (!check_can_set_curbuf_forceit(forceit)) {
+    return GETFILE_ERROR;
+  }
+
   char *ffname = ffname_arg;
   char *sfname = sfname_arg;
   bool other;
@@ -4592,9 +4594,6 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
   // disable file info message
   set_string_option_direct(kOptShortmess, "F", 0, SID_NONE);
 
-  // Update the topline to ensure that main window is on the correct line
-  update_topline(curwin);
-
   // Place cursor on nearest matching line, to undo do_sub() cursor placement.
   for (size_t i = 0; i < lines.subresults.size; i++) {
     SubResult curres = lines.subresults.items[i];
@@ -4604,6 +4603,9 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
       break;
     }  // Else: All matches are above, do_sub() already placed cursor.
   }
+
+  // Update the topline to ensure that main window is on the correct line
+  update_topline(curwin);
 
   // Width of the "| lnum|..." column which displays the line numbers.
   int col_width = 0;
@@ -4676,7 +4678,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
         snprintf(str, line_size, "|%*" PRIdLINENR "| %s", col_width - 3,
                  next_linenr, line);
         if (linenr_preview == 0) {
-          ml_replace_buf(cmdpreview_buf, 1, str, true);
+          ml_replace_buf(cmdpreview_buf, 1, str, true, false);
         } else {
           ml_append_buf(cmdpreview_buf, linenr_preview, str, (colnr_T)line_size, false);
         }

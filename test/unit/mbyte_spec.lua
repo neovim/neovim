@@ -203,4 +203,74 @@ describe('mbyte', function()
       )
     end)
   end)
+
+  describe('utf_cp_bounds_len', function()
+    local to_cstr = helpers.to_cstr
+
+    local tests = {
+      {
+        name = 'for valid string',
+        str = 'iÀiiⱠiⱠⱠ𐀀i',
+        offsets = {
+          b = { 0, 0, 1, 0, 0, 0, 1, 2, 0, 0, 1, 2, 0, 1, 2, 0, 1, 2, 3, 0 },
+          e = { 1, 2, 1, 1, 1, 3, 2, 1, 1, 3, 2, 1, 3, 2, 1, 4, 3, 2, 1, 1 },
+        },
+      },
+      {
+        name = 'for string with incomplete sequence',
+        str = 'i\xC3iÀⱠiÀ\xE2\xB1Ⱡ\xF0\x90\x80',
+        offsets = {
+          b = { 0, 0, 0, 0, 1, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0, 0 },
+          e = { 1, 1, 1, 2, 1, 3, 2, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1 },
+        },
+      },
+      {
+        name = 'for string with trailing bytes after multibyte',
+        str = 'iÀ\xA0Ⱡ\xA0Ⱡ𐀀\xA0i',
+        offsets = {
+          b = { 0, 0, 1, 0, 0, 1, 2, 0, 0, 1, 2, 0, 1, 2, 3, 0, 0 },
+          e = { 1, 2, 1, 1, 3, 2, 1, 1, 3, 2, 1, 4, 3, 2, 1, 1, 1 },
+        },
+      },
+    }
+
+    for _, test in ipairs(tests) do
+      itp(test.name, function()
+        local cstr = to_cstr(test.str)
+        local b_offsets, e_offsets = {}, {}
+        for i = 1, #test.str do
+          local result = lib.utf_cp_bounds_len(cstr, cstr + i - 1, #test.str - (i - 1))
+          table.insert(b_offsets, result.begin_off)
+          table.insert(e_offsets, result.end_off)
+        end
+        eq(test.offsets, { b = b_offsets, e = e_offsets })
+      end)
+    end
+
+    itp('does not read before start', function()
+      local str = '𐀀'
+      local expected_offsets = { b = { 0, 0, 0 }, e = { 1, 1, 1 } }
+      local cstr = to_cstr(str) + 1
+      local b_offsets, e_offsets = {}, {}
+      for i = 1, 3 do
+        local result = lib.utf_cp_bounds_len(cstr, cstr + i - 1, 3 - (i - 1))
+        table.insert(b_offsets, result.begin_off)
+        table.insert(e_offsets, result.end_off)
+      end
+      eq(expected_offsets, { b = b_offsets, e = e_offsets })
+    end)
+
+    itp('does not read past the end', function()
+      local str = '𐀀'
+      local expected_offsets = { b = { 0, 0, 0 }, e = { 1, 1, 1 } }
+      local cstr = to_cstr(str)
+      local b_offsets, e_offsets = {}, {}
+      for i = 1, 3 do
+        local result = lib.utf_cp_bounds_len(cstr, cstr + i - 1, 3 - (i - 1))
+        table.insert(b_offsets, result.begin_off)
+        table.insert(e_offsets, result.end_off)
+      end
+      eq(expected_offsets, { b = b_offsets, e = e_offsets })
+    end)
+  end)
 end)

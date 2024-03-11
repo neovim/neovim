@@ -231,10 +231,6 @@ describe("'wildmenu'", function()
   end)
 
   it('with laststatus=0, :vsplit, :term #2255', function()
-    -- Because this test verifies a _lack_ of activity after screen:sleep(), we
-    -- must wait the full timeout. So make it reasonable.
-    screen.timeout = 1000
-
     if not is_os('win') then
       command('set shell=sh') -- Need a predictable "$" prompt.
       command('let $PS1 = "$"')
@@ -257,7 +253,9 @@ describe("'wildmenu'", function()
     -- Check only the last 2 lines, because the shell output is
     -- system-dependent.
     screen:expect { any = '!  #  &  <  =  >  @  >   |\n:!^' }
-    screen:expect_unchanged()
+    -- Because this test verifies a _lack_ of activity, we must wait the full timeout.
+    -- So make it reasonable.
+    screen:expect_unchanged(false, 1000)
   end)
 
   it('wildmode=list,full and messages interaction #10092', function()

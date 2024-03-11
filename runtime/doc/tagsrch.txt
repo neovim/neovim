@@ -402,17 +402,22 @@ If the tag is in the current file this will always work.  Otherwise the
 performed actions depend on whether the current file was changed, whether a !
 is added to the command and on the 'autowrite' option:
 
-  tag in       file	   autowrite			~
-current file  changed	!   option	  action	~
- ---------------------------------------------------------------------------
-    yes		 x	x     x	  goto tag
-    no		 no	x     x	  read other file, goto tag
-    no		yes    yes    x   abandon current file, read other file, goto
-				  tag
-    no		yes	no    on  write current file, read other file, goto
-				  tag
-    no		yes	no   off  fail
- ---------------------------------------------------------------------------
+  tag in       file	                autowrite			~
+current file  changed	!   winfixbuf   option	      action	~
+ -----------------------------------------------------------------------------
+    yes		x	x      no         x         goto tag
+    no		no	x      no         x         read other file, goto tag
+    no		yes	yes    no         x         abandon current file,
+						    read other file, goto tag
+    no		yes	no     no         on        write current file,
+						    read other file, goto tag
+    no		yes	no     no         off       fail
+    yes		x	yes    x          x         goto tag
+    no		no	no     yes        x         fail
+    no		yes	no     yes        x         fail
+    no		yes	no     yes        on        fail
+    no		yes	no     yes        off       fail
+ -----------------------------------------------------------------------------
 
 - If the tag is in the current file, the command will always work.
 - If the tag is in another file and the current file was not changed, the
@@ -428,6 +433,8 @@ current file  changed	!   option	  action	~
   the changes, use the ":w" command and then use ":tag" without an argument.
   This works because the tag is put on the stack anyway.  If you want to lose
   the changes you can use the ":tag!" command.
+- If the tag is in another file and the window includes 'winfixbuf', the
+  command will fail. If the tag is in the same file then it may succeed.
 
 							*tag-security*
 Note that Vim forbids some commands, for security reasons.  This works like

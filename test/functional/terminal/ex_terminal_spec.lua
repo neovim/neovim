@@ -170,21 +170,19 @@ local function test_terminal_with_fake_shell(backslash)
     screen:attach({ rgb = false })
     api.nvim_set_option_value('shell', shell_path, {})
     api.nvim_set_option_value('shellcmdflag', 'EXE', {})
-    api.nvim_set_option_value('shellxquote', '', {})
+    api.nvim_set_option_value('shellxquote', '', {}) -- win: avoid extra quotes
   end)
 
   it('with no argument, acts like termopen()', function()
     command('set laststatus=2')
     command('autocmd! nvim_terminal TermClose')
     feed_command('terminal')
-    retry(nil, 4 * screen.timeout, function()
-      screen:expect([[
+    screen:expect([[
       ^ready $                                           |
                                                         |*2
       {MATCH:.*}[Process exited 0]{MATCH:.*}|
       :terminal                                         |
     ]])
-    end)
   end)
 
   it("with no argument, and 'shell' is set to empty string", function()
@@ -208,8 +206,10 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it('executes a given command through the shell', function()
+
     command('set laststatus=2')
     command('set shellxquote=') -- win: avoid extra quotes
+
     feed_command('terminal echo hi')
     screen:expect([[
       ^ready $ echo hi                                   |
@@ -222,7 +222,6 @@ local function test_terminal_with_fake_shell(backslash)
   it("executes a given command through the shell, when 'shell' has arguments", function()
     command('set laststatus=2')
     api.nvim_set_option_value('shell', shell_path .. ' -t jeff', {})
-    command('set shellxquote=') -- win: avoid extra quotes
     feed_command('terminal echo hi')
     screen:expect([[
       ^jeff $ echo hi                                    |
@@ -233,8 +232,10 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it('allows quotes and slashes', function()
+
     command('set laststatus=2')
     command('set shellxquote=') -- win: avoid extra quotes
+
     feed_command([[terminal echo 'hello' \ "world"]])
     screen:expect([[
       ^ready $ echo 'hello' \ "world"                    |
@@ -292,17 +293,16 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it('works with gf', function()
+
     command('set laststatus=2')
     command('set shellxquote=') -- win: avoid extra quotes
     feed_command([[terminal echo "scripts/shadacat.py"]])
-    retry(nil, 4 * screen.timeout, function()
-      screen:expect([[
+    screen:expect([[
       ^ready $ echo "scripts/shadacat.py"                |
                                                         |*2
       {MATCH:.*}[Process exited 0]{MATCH:.*}|
       :terminal echo "scripts/shadacat.py"              |
     ]])
-    end)
     feed([[<C-\><C-N>]])
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
     feed([[ggf"lgf]])
@@ -317,6 +317,22 @@ local function test_terminal_with_fake_shell(backslash)
       source([[
       execute 'edit '.reltimestr(reltime())
       terminal]])
+    end
+  end)
+
+  describe('exit does not have long delay #27615', function()
+    for _, ut in ipairs({ 5, 50, 500, 5000, 50000, 500000 }) do
+      it(('with updatetime=%d'):format(ut), function()
+        api.nvim_set_option_value('updatetime', ut, {})
+        api.nvim_set_option_value('shellcmdflag', 'EXIT', {})
+        feed_command('terminal 42')
+        screen:expect([[
+          ^                                                  |
+          [Process exited 42]                               |
+                                                            |
+          :terminal 42                                      |
+        ]])
+      end)
     end
   end)
 end

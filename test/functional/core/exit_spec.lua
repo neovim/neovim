@@ -18,7 +18,7 @@ describe('v:exiting', function()
 
   before_each(function()
     helpers.clear()
-    cid = helpers.api.nvim_get_api_info()[1]
+    cid = helpers.api.nvim_get_chan_info(0).id
   end)
 
   it('defaults to v:null', function()

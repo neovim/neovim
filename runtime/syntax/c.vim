@@ -252,7 +252,7 @@ if exists("c_gnu")
   syn keyword	cOperator	typeof __typeof__
   syn keyword	cOperator	__real__ __imag__
   syn keyword	cStorageClass	__attribute__ __const__ __extension__
-  syn keyword	cStorageClass	inline __inline__
+  syn keyword	cStorageClass	inline __inline __inline__
   syn keyword	cStorageClass	__restrict__ __volatile__ __noreturn__
 endif
 syn keyword	cType		int long short char void

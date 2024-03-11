@@ -55,6 +55,7 @@
 #ifdef MSWIN
 # include "nvim/mbyte.h"
 # include "nvim/option.h"
+# include "nvim/os/os_win_console.h"
 # include "nvim/strings.h"
 #endif
 
@@ -94,7 +95,7 @@ int os_chdir(const char *path)
   }
   int err = uv_chdir(path);
   if (err == 0) {
-    ui_call_chdir(cstr_as_string((char *)path));
+    ui_call_chdir(cstr_as_string(path));
   }
   return err;
 }
@@ -541,6 +542,22 @@ os_dup_dup:
   return ret;
 }
 
+/// Open the file descriptor for stdin.
+int os_open_stdin_fd(void)
+{
+  int stdin_dup_fd;
+  if (stdin_fd > 0) {
+    stdin_dup_fd = stdin_fd;
+  } else {
+    stdin_dup_fd = os_dup(STDIN_FILENO);
+#ifdef MSWIN
+    // Replace the original stdin with the console input handle.
+    os_replace_stdin_to_conin();
+#endif
+  }
+  return stdin_dup_fd;
+}
+
 /// Read from a file
 ///
 /// Handles EINTR and ENOMEM, but not other errors.
@@ -772,7 +789,7 @@ void os_copy_xattr(const char *from_file, const char *to_file)
   // get the length of the extended attributes
   ssize_t size = listxattr((char *)from_file, NULL, 0);
   // not supported or no attributes to copy
-  if (errno == ENOTSUP || size <= 0) {
+  if (size <= 0) {
     return;
   }
   char *xattr_buf = xmalloc((size_t)size);

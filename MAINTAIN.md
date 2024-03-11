@@ -230,8 +230,9 @@ https://github.com/neovim/neovim-backup
 Some github labels are used to trigger certain jobs:
 
 * `backport release-x.y` - backport to release branch
-* `ci-s390x` - enable s390x CI
-* `needs:response` - Close PR after a certain amount of time if author doesn't
+* `ci:s390x` - enable s390x CI
+* `ci:skip-news` - skip news.yml workflows
+* `needs:response` - close PR after a certain amount of time if author doesn't
   respond
 
 See also

@@ -24,7 +24,8 @@ typedef struct {
 #endif
 } nlua_ref_state_t;
 
-#define NLUA_EXEC_STATIC(cstr, arg, err) nlua_exec(STATIC_CSTR_AS_STRING(cstr), arg, err)
+#define NLUA_EXEC_STATIC(cstr, arg, mode, arena, err) \
+  nlua_exec(STATIC_CSTR_AS_STRING(cstr), arg, mode, arena, err)
 
 #define NLUA_CLEAR_REF(x) \
   do { \
@@ -34,6 +35,16 @@ typedef struct {
       (x) = LUA_NOREF; \
     } \
   } while (0)
+
+typedef enum {
+  kRetObject,  ///< any object, but doesn't preserve nested luarefs
+  kRetNilBool,  ///< NIL preserved as such, other values return their booleanness
+                ///< Should also be used when return value is ignored, as it is allocation-free
+  kRetLuaref,  ///< return value becomes a single Luaref, regardless of type (except NIL)
+} LuaRetMode;
+
+/// To use with kRetNilBool for quick thuthyness check
+#define LUARET_TRUTHY(res) ((res).type == kObjectTypeBoolean && (res).data.boolean == true)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/executor.h.generated.h"

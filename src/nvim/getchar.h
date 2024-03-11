@@ -17,9 +17,6 @@ typedef enum {
 
 enum { NSCRIPT = 15, };  ///< Maximum number of streams to read script from
 
-/// Streams to read script from
-extern FileDescriptor *scriptin[NSCRIPT];
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "getchar.h.generated.h"
 #endif

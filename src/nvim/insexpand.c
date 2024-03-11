@@ -1279,6 +1279,9 @@ void ins_compl_show_pum(void)
   }
 
   if (compl_match_array == NULL) {
+    if (compl_started && has_event(EVENT_COMPLETECHANGED)) {
+      trigger_complete_changed_event(cur);
+    }
     return;
   }
 
@@ -1293,6 +1296,11 @@ void ins_compl_show_pum(void)
   pum_selected_item = cur;
   pum_display(compl_match_array, compl_match_arraysize, cur, array_changed, 0);
   curwin->w_cursor.col = col;
+
+  // After adding leader, set the current match to shown match.
+  if (compl_started && compl_curr_match != compl_shown_match) {
+    compl_curr_match = compl_shown_match;
+  }
 
   if (has_event(EVENT_COMPLETECHANGED)) {
     trigger_complete_changed_event(cur);
@@ -3019,7 +3027,7 @@ static void get_next_include_file_completion(int compl_type)
                        ((compl_type == CTRL_X_PATH_DEFINES
                          && !(compl_cont_status & CONT_SOL))
                         ? FIND_DEFINE : FIND_ANY),
-                       1, ACTION_EXPAND, 1, MAXLNUM);
+                       1, ACTION_EXPAND, 1, MAXLNUM, false);
 }
 
 /// Get the next set of words matching "compl_pattern" in dictionary or
@@ -3549,7 +3557,12 @@ void ins_compl_delete(void)
 /// "in_compl_func" is true when called from complete_check().
 void ins_compl_insert(bool in_compl_func)
 {
-  ins_bytes(compl_shown_match->cp_str + get_compl_len());
+  int compl_len = get_compl_len();
+  // Make sure we don't go over the end of the string, this can happen with
+  // illegal bytes.
+  if (compl_len < (int)strlen(compl_shown_match->cp_str)) {
+    ins_bytes(compl_shown_match->cp_str + compl_len);
+  }
   compl_used_match = !match_at_original_text(compl_shown_match);
 
   dict_T *dict = ins_compl_dict_alloc(compl_shown_match);

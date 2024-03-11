@@ -327,7 +327,8 @@ Options:
   'shortmess'   "F" flag does not affect output from autocommands
   'signcolumn'  supports up to 9 dynamic/fixed columns
   'statuscolumn' full control of columns using 'statusline' format
-  'tabline'     %@Func@foo%X can call any function on mouse-click
+  'tabline'     middle-click on tabpage label closes tabpage,
+                and %@Func@foo%X can call any function on mouse-click
   'termpastefilter'
   'ttimeout', 'ttimeoutlen' behavior was simplified
   'winblend'    pseudo-transparency in floating windows |api-floatwin|
@@ -581,6 +582,9 @@ Autocommands:
 - |TermResponse| is fired for any OSC sequence received from the terminal,
   instead of the Primary Device Attributes response. |v:termresponse|
 
+Options:
+- |shm-q| fully hides macro recording message instead of only shortening it.
+
 ==============================================================================
 Missing features					 *nvim-missing*
 
@@ -631,6 +635,7 @@ Commands:
   :lcscope
   :scscope
   :Vimuntar
+  The old `:TOhtml`, replaced by a Lua version (contains many differences)
 
 Compile-time features:
   Emacs tags support

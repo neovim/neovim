@@ -2390,9 +2390,7 @@ static void u_undoredo(bool undo, bool do_buf_event)
     // When text has been changed, possibly the start of the next line
     // may have SpellCap that should be removed or it needs to be
     // displayed.  Schedule the next line for redrawing just in case.
-    // Also just in case the line had a sign which needs to be removed.
-    if ((spell_check_window(curwin) || buf_meta_total(curbuf, kMTMetaSignText))
-        && bot <= curbuf->b_ml.ml_line_count) {
+    if (spell_check_window(curwin) && bot <= curbuf->b_ml.ml_line_count) {
       redrawWinline(curwin, bot);
     }
 
@@ -2427,39 +2425,15 @@ static void u_undoredo(bool undo, bool do_buf_event)
     curbuf->b_op_end.lnum = curbuf->b_ml.ml_line_count;
   }
 
-  int row1 = MAXLNUM;
-  int row2 = -1;
-  int row3 = -1;
-  // Tricky: ExtmarkSavePos may come after ExtmarkSplice which does call
-  // buf_signcols_count_range() but then misses the yet unrestored marks.
-  if (curbuf->b_signcols.autom && buf_meta_total(curbuf, kMTMetaSignText)) {
-    for (int i = 0; i < (int)kv_size(curhead->uh_extmark); i++) {
-      ExtmarkUndoObject undo_info = kv_A(curhead->uh_extmark, i);
-      if (undo_info.type == kExtmarkSplice) {
-        ExtmarkSplice s = undo_info.data.splice;
-        if (s.old_row > 0 || s.new_row > 0) {
-          row1 = MIN(row1, s.start_row);
-          row2 = MAX(row2, s.start_row + (undo ? s.new_row : s.old_row) + 1);
-          row3 = MAX(row3, s.start_row + (undo ? s.old_row : s.new_row) + 1);
-        }
-      }
-    }
-    if (row2 != -1) {
-      // Remove signs inside edited region from "b_signcols.count".
-      buf_signcols_count_range(curbuf, row1, row2, 0, kTrue);
-    }
-  }
   // Adjust Extmarks
   if (undo) {
     for (int i = (int)kv_size(curhead->uh_extmark) - 1; i > -1; i--) {
-      ExtmarkUndoObject undo_info = kv_A(curhead->uh_extmark, i);
-      extmark_apply_undo(undo_info, undo);
+      extmark_apply_undo(kv_A(curhead->uh_extmark, i), undo);
     }
     // redo
   } else {
     for (int i = 0; i < (int)kv_size(curhead->uh_extmark); i++) {
-      ExtmarkUndoObject undo_info = kv_A(curhead->uh_extmark, i);
-      extmark_apply_undo(undo_info, undo);
+      extmark_apply_undo(kv_A(curhead->uh_extmark, i), undo);
     }
   }
   if (curhead->uh_flags & UH_RELOAD) {
@@ -2467,10 +2441,7 @@ static void u_undoredo(bool undo, bool do_buf_event)
     // should have all info to send a buffer-reloaing on_lines/on_bytes event
     buf_updates_unload(curbuf, true);
   }
-  // Finish adjusting extmarks: add signs inside edited region to "b_signcols.count".
-  if (row2 != -1) {
-    buf_signcols_count_range(curbuf, row1, row3, 0, kNone);
-  }
+  // Finish adjusting extmarks
 
   curhead->uh_entry = newlist;
   curhead->uh_flags = new_flags;
@@ -3017,6 +2988,28 @@ void u_clearall(buf_T *buf)
   buf->b_u_line_lnum = 0;
 }
 
+/// Free all allocated memory blocks for the buffer 'buf'.
+void u_blockfree(buf_T *buf)
+{
+  while (buf->b_u_oldhead != NULL) {
+#ifndef NDEBUG
+    u_header_T *previous_oldhead = buf->b_u_oldhead;
+#endif
+
+    u_freeheader(buf, buf->b_u_oldhead, NULL);
+    assert(buf->b_u_oldhead != previous_oldhead);
+  }
+  xfree(buf->b_u_line_ptr);
+}
+
+/// Free all allocated memory blocks for the buffer 'buf'.
+/// and invalidate the undo buffer
+void u_clearallandblockfree(buf_T *buf)
+{
+  u_blockfree(buf);
+  u_clearall(buf);
+}
+
 /// Save the line "lnum" for the "U" command.
 void u_saveline(buf_T *buf, linenr_T lnum)
 {
@@ -3081,20 +3074,6 @@ void u_undoline(void)
   curwin->w_cursor.col = t;
   curwin->w_cursor.lnum = curbuf->b_u_line_lnum;
   check_cursor_col();
-}
-
-/// Free all allocated memory blocks for the buffer 'buf'.
-void u_blockfree(buf_T *buf)
-{
-  while (buf->b_u_oldhead != NULL) {
-#ifndef NDEBUG
-    u_header_T *previous_oldhead = buf->b_u_oldhead;
-#endif
-
-    u_freeheader(buf, buf->b_u_oldhead, NULL);
-    assert(buf->b_u_oldhead != previous_oldhead);
-  }
-  xfree(buf->b_u_line_ptr);
 }
 
 /// Allocate memory and copy curbuf line into it.

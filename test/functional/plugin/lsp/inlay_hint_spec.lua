@@ -169,12 +169,12 @@ describe('vim.lsp.inlay_hint', function()
 
       --- @type vim.lsp.inlay_hint.get.ret
       local res = exec_lua([[return vim.lsp.inlay_hint.get()]])
-      eq(res, {
+      eq({
         { bufnr = 1, client_id = 1, inlay_hint = expected[1] },
         { bufnr = 1, client_id = 1, inlay_hint = expected[2] },
         { bufnr = 1, client_id = 1, inlay_hint = expected[3] },
         { bufnr = 1, client_id = 2, inlay_hint = expected2 },
-      })
+      }, res)
 
       --- @type vim.lsp.inlay_hint.get.ret
       res = exec_lua([[return vim.lsp.inlay_hint.get({
@@ -183,9 +183,9 @@ describe('vim.lsp.inlay_hint', function()
           ["end"] = { line = 2, character = 10 },
         },
       })]])
-      eq(res, {
+      eq({
         { bufnr = 1, client_id = 2, inlay_hint = expected2 },
-      })
+      }, res)
 
       --- @type vim.lsp.inlay_hint.get.ret
       res = exec_lua([[return vim.lsp.inlay_hint.get({
@@ -195,16 +195,16 @@ describe('vim.lsp.inlay_hint', function()
           ["end"] = { line = 5, character = 17 },
         },
       })]])
-      eq(res, {
+      eq({
         { bufnr = 1, client_id = 1, inlay_hint = expected[2] },
         { bufnr = 1, client_id = 1, inlay_hint = expected[3] },
-      })
+      }, res)
 
       --- @type vim.lsp.inlay_hint.get.ret
       res = exec_lua([[return vim.lsp.inlay_hint.get({
         bufnr = vim.api.nvim_get_current_buf() + 1,
       })]])
-      eq(res, {})
+      eq({}, res)
     end)
   end)
 end)

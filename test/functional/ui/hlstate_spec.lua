@@ -309,4 +309,283 @@ describe('ext_hlstate detailed highlights', function()
       {3:                                        }|
     ]])
   end)
+
+  it('combines deleted extmark highlights', function()
+    insert([[
+      line1
+        line2
+        line3
+        line4
+        line5
+      line6]])
+
+    screen:expect {
+      grid = [[
+      line1                                   |
+        line2                                 |
+        line3                                 |
+        line4                                 |
+        line5                                 |
+      line^6                                   |
+      {1:~                                       }|
+      {2:                                        }|
+    ]],
+      attr_ids = {
+        [1] = {
+          { foreground = Screen.colors.Blue, bold = true },
+          { { ui_name = 'EndOfBuffer', hi_name = 'NonText', kind = 'ui' } },
+        },
+        [2] = { {}, { { ui_name = 'MsgArea', hi_name = 'MsgArea', kind = 'ui' } } },
+      },
+    }
+
+    local ns = api.nvim_create_namespace('test')
+
+    local add_indicator = function(line, col)
+      api.nvim_buf_set_extmark(0, ns, line, col, {
+        hl_mode = 'combine',
+        priority = 2,
+        right_gravity = false,
+        virt_text = { { '|', 'Delimiter' } },
+        virt_text_win_col = 0,
+        virt_text_pos = 'overlay',
+      })
+    end
+
+    add_indicator(1, 0)
+    add_indicator(2, 0)
+    add_indicator(3, 0)
+    add_indicator(4, 0)
+
+    screen:expect {
+      grid = [[
+      line1                                   |
+      {1:|} line2                                 |
+      {1:|} line3                                 |
+      {1:|} line4                                 |
+      {1:|} line5                                 |
+      line^6                                   |
+      {2:~                                       }|
+      {3:                                        }|
+    ]],
+      attr_ids = {
+        [1] = {
+          { foreground = Screen.colors.SlateBlue },
+          { { hi_name = 'Special', kind = 'syntax' } },
+        },
+        [2] = {
+          { bold = true, foreground = Screen.colors.Blue },
+          { { ui_name = 'EndOfBuffer', kind = 'ui', hi_name = 'NonText' } },
+        },
+        [3] = { {}, { { ui_name = 'MsgArea', kind = 'ui', hi_name = 'MsgArea' } } },
+      },
+    }
+
+    helpers.feed('3ggV2jd')
+    --screen:redraw_debug()
+    screen:expect {
+      grid = [[
+      line1                                   |
+      {1:|} line2                                 |
+      {2:^|}ine6                                   |
+      {3:~                                       }|*4
+      {4:3 fewer lines                           }|
+    ]],
+      attr_ids = {
+        [1] = {
+          { foreground = Screen.colors.SlateBlue },
+          { { kind = 'syntax', hi_name = 'Special' } },
+        },
+        [2] = { { foreground = Screen.colors.SlateBlue }, { 1, 1, 1 } },
+        [3] = {
+          { bold = true, foreground = Screen.colors.Blue },
+          { { kind = 'ui', ui_name = 'EndOfBuffer', hi_name = 'NonText' } },
+        },
+        [4] = { {}, { { kind = 'ui', ui_name = 'MsgArea', hi_name = 'MsgArea' } } },
+      },
+    }
+  end)
+
+  it('removes deleted extmark highlights with invalidate', function()
+    insert([[
+      line1
+        line2
+        line3
+        line4
+        line5
+      line6]])
+
+    screen:expect {
+      grid = [[
+      line1                                   |
+        line2                                 |
+        line3                                 |
+        line4                                 |
+        line5                                 |
+      line^6                                   |
+      {1:~                                       }|
+      {2:                                        }|
+    ]],
+      attr_ids = {
+        [1] = {
+          { foreground = Screen.colors.Blue, bold = true },
+          { { ui_name = 'EndOfBuffer', hi_name = 'NonText', kind = 'ui' } },
+        },
+        [2] = { {}, { { ui_name = 'MsgArea', hi_name = 'MsgArea', kind = 'ui' } } },
+      },
+    }
+
+    local ns = api.nvim_create_namespace('test')
+
+    local add_indicator = function(line, col)
+      api.nvim_buf_set_extmark(0, ns, line, col, {
+        hl_mode = 'combine',
+        priority = 2,
+        right_gravity = false,
+        virt_text = { { '|', 'Delimiter' } },
+        virt_text_win_col = 0,
+        virt_text_pos = 'overlay',
+        invalidate = true,
+      })
+    end
+
+    add_indicator(1, 0)
+    add_indicator(2, 0)
+    add_indicator(3, 0)
+    add_indicator(4, 0)
+
+    screen:expect {
+      grid = [[
+      line1                                   |
+      {1:|} line2                                 |
+      {1:|} line3                                 |
+      {1:|} line4                                 |
+      {1:|} line5                                 |
+      line^6                                   |
+      {2:~                                       }|
+      {3:                                        }|
+    ]],
+      attr_ids = {
+        [1] = {
+          { foreground = Screen.colors.SlateBlue },
+          { { hi_name = 'Special', kind = 'syntax' } },
+        },
+        [2] = {
+          { bold = true, foreground = Screen.colors.Blue },
+          { { ui_name = 'EndOfBuffer', kind = 'ui', hi_name = 'NonText' } },
+        },
+        [3] = { {}, { { ui_name = 'MsgArea', kind = 'ui', hi_name = 'MsgArea' } } },
+      },
+    }
+
+    helpers.feed('3ggV2jd')
+    --screen:redraw_debug()
+    screen:expect {
+      grid = [[
+      line1                                   |
+      {1:|} line2                                 |
+      ^line6                                   |
+      {2:~                                       }|*4
+      {3:3 fewer lines                           }|
+    ]],
+      attr_ids = {
+        [1] = {
+          { foreground = Screen.colors.SlateBlue },
+          { { kind = 'syntax', hi_name = 'Special' } },
+        },
+        [2] = {
+          { foreground = Screen.colors.Blue, bold = true },
+          { { kind = 'ui', ui_name = 'EndOfBuffer', hi_name = 'NonText' } },
+        },
+        [3] = { {}, { { kind = 'ui', ui_name = 'MsgArea', hi_name = 'MsgArea' } } },
+      },
+    }
+  end)
+
+  it('does not hang when combining too many highlights', function()
+    local num_lines = 500
+    insert('first line\n')
+    for _ = 1, num_lines do
+      insert([[
+        line
+      ]])
+    end
+    insert('last line')
+
+    helpers.feed('gg')
+    screen:expect {
+      grid = [[
+      ^first line                              |
+        line                                  |*6
+      {1:                                        }|
+    ]],
+      attr_ids = {
+        [1] = { {}, { { kind = 'ui', hi_name = 'MsgArea', ui_name = 'MsgArea' } } },
+      },
+    }
+    local ns = api.nvim_create_namespace('test')
+
+    local add_indicator = function(line, col)
+      api.nvim_buf_set_extmark(0, ns, line, col, {
+        hl_mode = 'combine',
+        priority = 2,
+        right_gravity = false,
+        virt_text = { { '|', 'Delimiter' } },
+        virt_text_win_col = 0,
+        virt_text_pos = 'overlay',
+      })
+    end
+
+    for i = 1, num_lines do
+      add_indicator(i, 0)
+    end
+
+    screen:expect {
+      grid = [[
+      ^first line                              |
+      {1:|} line                                  |*6
+      {2:                                        }|
+    ]],
+      attr_ids = {
+        [1] = {
+          { foreground = Screen.colors.SlateBlue },
+          { { kind = 'syntax', hi_name = 'Special' } },
+        },
+        [2] = { {}, { { kind = 'ui', ui_name = 'MsgArea', hi_name = 'MsgArea' } } },
+      },
+    }
+
+    helpers.feed(string.format('3ggV%ijd', num_lines - 2))
+    --screen:redraw_debug(nil, nil, 100000)
+
+    local expected_ids = {}
+    for i = 1, num_lines - 1 do
+      expected_ids[i] = 1
+    end
+    screen:expect {
+      grid = string.format(
+        [[
+        first line                              |
+        {1:|} line                                  |
+        {2:^|}ast line                               |
+        {3:~                                       }|*4
+        {4:%-40s}|
+    ]],
+        tostring(num_lines - 1) .. ' fewer lines'
+      ),
+      attr_ids = {
+        [1] = {
+          { foreground = Screen.colors.SlateBlue },
+          { { kind = 'syntax', hi_name = 'Special' } },
+        },
+        [2] = { { foreground = Screen.colors.SlateBlue }, expected_ids },
+        [3] = {
+          { foreground = Screen.colors.Blue, bold = true },
+          { { kind = 'ui', hi_name = 'NonText', ui_name = 'EndOfBuffer' } },
+        },
+        [4] = { {}, { { kind = 'ui', hi_name = 'MsgArea', ui_name = 'MsgArea' } } },
+      },
+      timeout = 100000,
+    }
+  end)
 end)

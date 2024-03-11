@@ -86,7 +86,7 @@ describe('autoread TUI FocusGained/FocusLost', function()
       line 3                                            |
       line 4                                            |
       {5:xtest-foo                                         }|
-      "xtest-foo" 4L, 28B                               |
+      :edit xtest-foo                                   |
       {3:-- TERMINAL --}                                    |
     ]],
     }

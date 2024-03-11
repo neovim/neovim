@@ -4,7 +4,7 @@
 " Previous Maintainer:	Dan Sharp
 " Contributor:		Enno Nagel <ennonagel+vim@gmail.com>
 "			Eisuke Kawashima
-" Last Change:		2024 Jan 14
+" Last Change:		2024 Feb 27
 
 if exists("b:did_ftplugin")
   finish
@@ -14,7 +14,7 @@ let b:did_ftplugin = 1
 let s:save_cpo = &cpo
 set cpo-=C
 
-setlocal comments=:#
+setlocal comments=b:#
 setlocal commentstring=#\ %s
 setlocal formatoptions-=t formatoptions+=croql
 

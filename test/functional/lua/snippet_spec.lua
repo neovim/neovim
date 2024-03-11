@@ -216,4 +216,28 @@ describe('vim.snippet', function()
     feed('foo')
     eq({ 'public function foo() {', '\t', '}' }, buf_lines(0))
   end)
+
+  it('jumps through adjacent tabstops', function()
+    test_expand_success(
+      { 'for i=1,${1:to}${2:,step} do\n\t$3\nend' },
+      { 'for i=1,to,step do', '\t', 'end' }
+    )
+    feed('10')
+    feed('<Tab>')
+    poke_eventloop()
+    feed(',2')
+    eq({ 'for i=1,10,2 do', '\t', 'end' }, buf_lines(0))
+  end)
+
+  it('updates snippet state when built-in completion menu is visible', function()
+    test_expand_success({ '$1 = function($2)\n$3\nend' }, { ' = function()', '', 'end' })
+    -- Show the completion menu.
+    feed('<C-n>')
+    -- Make sure no item is selected.
+    feed('<C-p>')
+    -- Jump forward (the 2nd tabstop).
+    exec_lua('vim.snippet.jump(1)')
+    feed('foo')
+    eq({ ' = function(foo)', '', 'end' }, buf_lines(0))
+  end)
 end)

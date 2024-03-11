@@ -9,7 +9,7 @@ function M.check()
     return
   end
 
-  local perl_exec, perl_warnings = require('vim.provider.perl').detect()
+  local perl_exec, perl_warnings = vim.provider.perl.detect()
 
   if not perl_exec then
     health.warn(assert(perl_warnings), {

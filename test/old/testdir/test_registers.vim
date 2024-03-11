@@ -175,7 +175,7 @@ func Test_recording_status_in_ex_line()
   call assert_equal('recording @x', Screenline(&lines))
   set shortmess=q
   redraw!
-  call assert_equal('recording', Screenline(&lines))
+  call assert_equal('', Screenline(&lines)) " Nvim: shm+=q fully hides message
   set shortmess&
   norm q
   redraw!

@@ -939,6 +939,7 @@ EXTERN const char e_using_float_as_string[] INIT(= N_("E806: Using a Float as a 
 EXTERN const char e_cannot_edit_other_buf[] INIT(= N_("E788: Not allowed to edit another buffer now"));
 EXTERN const char e_using_number_as_bool_nr[] INIT(= N_("E1023: Using a Number as a Bool: %d"));
 EXTERN const char e_not_callable_type_str[] INIT(= N_("E1085: Not a callable type: %s"));
+EXTERN const char e_auabort[] INIT(= N_("E855: Autocommands caused command to abort"));
 
 EXTERN const char e_api_error[] INIT(= N_("E5555: API call: %s"));
 
@@ -957,6 +958,7 @@ EXTERN const char e_highlight_group_name_invalid_char[] INIT(= N_("E5248: Invali
 
 EXTERN const char e_highlight_group_name_too_long[] INIT(= N_("E1249: Highlight group name too long"));
 
+EXTERN const char e_invalid_column_number_nr[] INIT( = N_("E964: Invalid column number: %ld"));
 EXTERN const char e_invalid_line_number_nr[] INIT(= N_("E966: Invalid line number: %ld"));
 
 EXTERN const char e_stray_closing_curly_str[]
@@ -969,6 +971,9 @@ EXTERN const char e_val_too_large[] INIT(= N_("E1510: Value too large: %s"));
 EXTERN const char e_undobang_cannot_redo_or_move_branch[]
 INIT(= N_("E5767: Cannot use :undo! to redo or move to a different undo branch"));
 
+EXTERN const char e_winfixbuf_cannot_go_to_buffer[]
+INIT(= N_("E1513: Cannot edit buffer. 'winfixbuf' is enabled"));
+
 EXTERN const char e_trustfile[] INIT(= N_("E5570: Cannot update trust file: %s"));
 
 EXTERN const char e_unknown_option2[] INIT(= N_("E355: Unknown option: %s"));
@@ -978,7 +983,7 @@ EXTERN const char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"
 
 EXTERN const char line_msg[] INIT(= N_(" line "));
 
-EXTERN FILE *time_fd INIT(= NULL);  // where to write startup timing
+EXTERN FILE *time_fd INIT(= NULL);  // Where to write --startuptime report.
 
 // Some compilers warn for not using a return value, but in some situations we
 // can't do anything useful with the value.  Assign to this variable to avoid

@@ -129,7 +129,7 @@ bool keep_msg_more = false;    // keep_msg was set by msgmore()
 //                  Set: When the ruler or typeahead display is overwritten,
 //                  scrolling the screen for some message.
 // keep_msg         Message to be displayed after redrawing the screen, in
-//                  main_loop().
+//                  Normal mode main loop.
 //                  This is an allocated string or NULL when not used.
 
 // Extended msg state, currently used for external UIs with ext_messages
@@ -210,7 +210,11 @@ void msg_grid_validate(void)
     msg_grid_adj.target = &default_grid;
     redraw_cmdline = true;
   } else if (msg_grid.chars && !msg_scrolled && msg_grid_pos != max_rows) {
+    int diff = msg_grid_pos - max_rows;
     msg_grid_set_pos(max_rows, false);
+    if (diff > 0) {
+      grid_clear(&msg_grid_adj, Rows - diff, Rows, 0, Columns, HL_ATTR(HLF_MSG));
+    }
   }
   msg_grid_adj.cols = Columns;
 
@@ -1709,6 +1713,39 @@ char *str2special_save(const char *const str, const bool replace_spaces, const b
   return (char *)ga.ga_data;
 }
 
+/// Convert string, replacing key codes with printables
+///
+/// Used for lhs or rhs of mappings.
+///
+/// @param[in]  str  String to convert.
+/// @param[in]  replace_spaces  Convert spaces into `<Space>`, normally used for
+///                             lhs of mapping and keytrans(), but not rhs.
+/// @param[in]  replace_lt  Convert `<` into `<lt>`.
+///
+/// @return [allocated] Converted string.
+char *str2special_arena(const char *str, bool replace_spaces, bool replace_lt, Arena *arena)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_RET
+{
+  const char *p = str;
+  size_t len = 0;
+  while (*p) {
+    len += strlen(str2special(&p, replace_spaces, replace_lt));
+  }
+
+  char *buf = arena_alloc(arena, len + 1, false);
+  size_t pos = 0;
+  p = str;
+  while (*p) {
+    const char *s = str2special(&p, replace_spaces, replace_lt);
+    size_t s_len = strlen(s);
+    memcpy(buf + pos, s, s_len);
+    pos += s_len;
+  }
+  buf[pos] = NUL;
+  return buf;
+}
+
 /// Convert character, replacing key with printable representation.
 ///
 /// @param[in,out]  sp  String to convert. Is advanced to the next key code.
@@ -2415,9 +2452,7 @@ static void inc_msg_scrolled(void)
     xfree(tofree);
   }
   msg_scrolled++;
-  if (must_redraw < UPD_VALID) {
-    must_redraw = UPD_VALID;
-  }
+  set_must_redraw(UPD_VALID);
 }
 
 static msgchunk_T *last_msgchunk = NULL;  // last displayed text
@@ -3017,7 +3052,7 @@ void msg_ext_ui_flush(void)
 
   msg_ext_emit_chunk();
   if (msg_ext_chunks.size > 0) {
-    ui_call_msg_show(cstr_as_string((char *)msg_ext_kind),
+    ui_call_msg_show(cstr_as_string(msg_ext_kind),
                      msg_ext_chunks, msg_ext_overwrite);
     if (!msg_ext_overwrite) {
       msg_ext_visible++;
@@ -3063,9 +3098,7 @@ void msg_ext_clear_later(void)
 {
   if (msg_ext_is_visible()) {
     msg_ext_need_clear = true;
-    if (must_redraw < UPD_VALID) {
-      must_redraw = UPD_VALID;
-    }
+    set_must_redraw(UPD_VALID);
   }
 }
 

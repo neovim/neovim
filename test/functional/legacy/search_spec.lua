@@ -772,9 +772,9 @@ describe('Search highlight', function()
     screen:set_default_attr_ids({
       [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
       [2] = { bold = true }, -- ModeMsg, Search
-      [3] = { background = Screen.colors.LightGrey }, -- Visual
+      [3] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black }, -- Visual
       [4] = { background = Screen.colors.Yellow, bold = true }, -- Search
-      [5] = { background = Screen.colors.LightGrey, bold = true }, -- Visual + Search
+      [5] = { background = Screen.colors.LightGrey, bold = true, foreground = Screen.colors.Black },
     })
     screen:attach()
     exec([[

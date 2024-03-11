@@ -55,8 +55,8 @@
 # include "sign.c.generated.h"
 #endif
 
-static PMap(cstr_t) sign_map INIT( = MAP_INIT);
-static kvec_t(Integer) sign_ns INIT( = MAP_INIT);
+static PMap(cstr_t) sign_map = MAP_INIT;
+static kvec_t(Integer) sign_ns = KV_INITIAL_VALUE;
 
 static char *cmds[] = {
   "define",
@@ -84,7 +84,7 @@ static int64_t group_get_ns(const char *group)
     return UINT32_MAX;  // All namespaces
   }
   // Specific or non-existing namespace
-  int ns = map_get(String, int)(&namespace_ids, cstr_as_string((char *)group));
+  int ns = map_get(String, int)(&namespace_ids, cstr_as_string(group));
   return ns ? ns : -1;
 }
 
@@ -126,7 +126,7 @@ static void buf_set_sign(buf_T *buf, uint32_t *id, char *group, int prio, linenr
 
   DecorInline decor = { .ext = true, .data.ext = { .vt = NULL, .sh_idx = decor_put_sh(sign) } };
   extmark_set(buf, ns, id, lnum - 1, 0, -1, -1, decor, decor_flags, true,
-              false, true, true, NULL);
+              false, true, true, false, NULL);
 }
 
 /// For an existing, placed sign with "id", modify the sign, group or priority.
@@ -168,24 +168,22 @@ static int buf_findsign(buf_T *buf, int id, char *group)
 }
 
 /// qsort() function to sort signs by line number, priority, id and recency.
-int sign_cmp(const void *p1, const void *p2)
+static int sign_row_cmp(const void *p1, const void *p2)
 {
   const MTKey *s1 = (MTKey *)p1;
   const MTKey *s2 = (MTKey *)p2;
-  int n = s1->pos.row - s2->pos.row;
 
-  if (n) {
-    return n;
+  if (s1->pos.row != s2->pos.row) {
+    return s1->pos.row > s2->pos.row ? 1 : -1;
   }
 
   DecorSignHighlight *sh1 = decor_find_sign(mt_decor(*s1));
   DecorSignHighlight *sh2 = decor_find_sign(mt_decor(*s2));
   assert(sh1 && sh2);
+  SignItem si1 = { sh1, s1->id };
+  SignItem si2 = { sh2, s2->id };
 
-  n = sh2->priority - sh1->priority;
-
-  return n ? n : (n = (int)(s2->id - s1->id))
-         ? n : (sh2->sign_add_id - sh1->sign_add_id);
+  return sign_item_cmp(&si1, &si2);
 }
 
 /// Delete the specified sign(s)
@@ -241,7 +239,7 @@ static int buf_delete_signs(buf_T *buf, char *group, int id, linenr_T atlnum)
 
   // Sort to remove the highest priority sign at a specific line number.
   if (kv_size(signs)) {
-    qsort((void *)&kv_A(signs, 0), kv_size(signs), sizeof(MTKey), sign_cmp);
+    qsort((void *)&kv_A(signs, 0), kv_size(signs), sizeof(MTKey), sign_row_cmp);
     extmark_del_id(buf, kv_A(signs, 0).ns, kv_A(signs, 0).id);
     kv_destroy(signs);
   } else if (atlnum > 0) {
@@ -296,7 +294,7 @@ static void sign_list_placed(buf_T *rbuf, char *group)
       }
 
       if (kv_size(signs)) {
-        qsort((void *)&kv_A(signs, 0), kv_size(signs), sizeof(MTKey), sign_cmp);
+        qsort((void *)&kv_A(signs, 0), kv_size(signs), sizeof(MTKey), sign_row_cmp);
 
         for (size_t i = 0; i < kv_size(signs); i++) {
           namebuf[0] = '\0';
@@ -994,7 +992,7 @@ static void sign_get_placed_in_buf(buf_T *buf, linenr_T lnum, int sign_id, const
   }
 
   if (kv_size(signs)) {
-    qsort((void *)&kv_A(signs, 0), kv_size(signs), sizeof(MTKey), sign_cmp);
+    qsort((void *)&kv_A(signs, 0), kv_size(signs), sizeof(MTKey), sign_row_cmp);
     for (size_t i = 0; i < kv_size(signs); i++) {
       tv_list_append_dict(l, sign_get_placed_info_dict(kv_A(signs, i)));
     }

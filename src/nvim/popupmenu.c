@@ -488,7 +488,7 @@ void pum_redraw(void)
   if (ui_has(kUIMultigrid)) {
     const char *anchor = pum_above ? "SW" : "NW";
     int row_off = pum_above ? -pum_height : 0;
-    ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string((char *)anchor), pum_anchor_grid,
+    ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string(anchor), pum_anchor_grid,
                           pum_row - row_off, pum_left_col, false, pum_grid.zindex);
   }
 
@@ -669,7 +669,7 @@ void pum_redraw(void)
 /// @return  NULL when no enough room to show
 static win_T *pum_create_float_preview(bool enter)
 {
-  FloatConfig config = FLOAT_CONFIG_INIT;
+  WinConfig config = WIN_CONFIG_INIT;
   config.relative = kFloatRelativeEditor;
   // when pum_above is SW otherwise is NW
   config.anchor = pum_above ? kFloatAnchorSouth : 0;
@@ -744,16 +744,16 @@ static void pum_adjust_float_position(win_T *wp, int height, int width)
 {
   // when floating window in right and right no enough room to show
   // but left has enough room, adjust floating window to left.
-  if (wp->w_float_config.width < width && wp->w_float_config.col > pum_col) {
+  if (wp->w_config.width < width && wp->w_config.col > pum_col) {
     if ((pum_col - 2) > width) {
-      wp->w_float_config.width = width;
-      wp->w_float_config.col = pum_col - width - 1;
+      wp->w_config.width = width;
+      wp->w_config.col = pum_col - width - 1;
     }
   }
-  wp->w_float_config.width = MIN(wp->w_float_config.width, width);
-  wp->w_float_config.height = MIN(Rows, height);
-  wp->w_float_config.hide = false;
-  win_config_float(wp, wp->w_float_config);
+  wp->w_config.width = MIN(wp->w_config.width, width);
+  wp->w_config.height = MIN(Rows, height);
+  wp->w_config.hide = false;
+  win_config_float(wp, wp->w_config);
 }
 
 /// used in nvim_complete_set

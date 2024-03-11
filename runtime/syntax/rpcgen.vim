@@ -1,9 +1,11 @@
 " Vim syntax file
 " Language:	rpcgen
-" Maintainer:	Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
+" Maintainer:	This runtime file is looking for a new maintainer.
+" Former Maintainer: Charles E. Campbell
 " Last Change:	Aug 31, 2016
+"   2024 Feb 19 by Vim Project (announce adoption)
 " Version:	13
-" URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_RPCGEN
+" Former URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_RPCGEN
 
 if exists("b:current_syntax")
   finish

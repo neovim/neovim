@@ -3197,7 +3197,11 @@ static int fuzzy_match_item_compare(const void *const s1, const void *const s2)
   const int idx1 = ((const fuzzyItem_T *)s1)->idx;
   const int idx2 = ((const fuzzyItem_T *)s2)->idx;
 
-  return v1 == v2 ? (idx1 - idx2) : v1 > v2 ? -1 : 1;
+  if (v1 == v2) {
+    return idx1 == idx2 ? 0 : idx1 > idx2 ? 1 : -1;
+  } else {
+    return v1 > v2 ? -1 : 1;
+  }
 }
 
 /// Fuzzy search the string "str" in a list of "items" and return the matching
@@ -3436,7 +3440,11 @@ static int fuzzy_match_str_compare(const void *const s1, const void *const s2)
   const int idx1 = ((fuzmatch_str_T *)s1)->idx;
   const int idx2 = ((fuzmatch_str_T *)s2)->idx;
 
-  return v1 == v2 ? (idx1 - idx2) : v1 > v2 ? -1 : 1;
+  if (v1 == v2) {
+    return idx1 == idx2 ? 0 : idx1 > idx2 ? 1 : -1;
+  } else {
+    return v1 > v2 ? -1 : 1;
+  }
 }
 
 /// Sort fuzzy matches by score
@@ -3465,7 +3473,11 @@ static int fuzzy_match_func_compare(const void *const s1, const void *const s2)
   if (*str1 == '<' && *str2 != '<') {
     return 1;
   }
-  return v1 == v2 ? (idx1 - idx2) : v1 > v2 ? -1 : 1;
+  if (v1 == v2) {
+    return idx1 == idx2 ? 0 : idx1 > idx2 ? 1 : -1;
+  } else {
+    return v1 > v2 ? -1 : 1;
+  }
 }
 
 /// Sort fuzzy matches of function names by score.
@@ -3552,8 +3564,10 @@ static char *get_line_and_copy(linenr_T lnum, char *buf)
 /// @param action         What to do when we find it
 /// @param start_lnum     first line to start searching
 /// @param end_lnum       last line for searching
+/// @param forceit        If true, always switch to the found path
 void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool skip_comments,
-                          int type, int count, int action, linenr_T start_lnum, linenr_T end_lnum)
+                          int type, int count, int action, linenr_T start_lnum, linenr_T end_lnum,
+                          int forceit)
 {
   SearchedFile *files;                  // Stack of included files
   SearchedFile *bigger;                 // When we need more space
@@ -4013,7 +4027,7 @@ search_line:
                 break;
               }
               if (!GETFILE_SUCCESS(getfile(curwin_save->w_buffer->b_fnum, NULL,
-                                           NULL, true, lnum, false))) {
+                                           NULL, true, lnum, forceit))) {
                 break;    // failed to jump to file
               }
             } else {
@@ -4023,7 +4037,7 @@ search_line:
             check_cursor();
           } else {
             if (!GETFILE_SUCCESS(getfile(0, files[depth].name, NULL, true,
-                                         files[depth].lnum, false))) {
+                                         files[depth].lnum, forceit))) {
               break;    // failed to jump to file
             }
             // autocommands may have changed the lnum, we don't

@@ -121,7 +121,7 @@ static void augroup_map_del(int id, const char *name)
 {
   if (name != NULL) {
     String key;
-    map_del(String, int)(&map_augroup_name_to_id, cstr_as_string((char *)name), &key);
+    map_del(String, int)(&map_augroup_name_to_id, cstr_as_string(name), &key);
     api_free_string(key);
   }
   if (id > 0) {
@@ -476,7 +476,7 @@ void augroup_del(char *name, bool stupid_legacy_mode)
 int augroup_find(const char *name)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  int existing_id = map_get(String, int)(&map_augroup_name_to_id, cstr_as_string((char *)name));
+  int existing_id = map_get(String, int)(&map_augroup_name_to_id, cstr_as_string(name));
   if (existing_id == AUGROUP_DELETED) {
     return existing_id;
   }
@@ -1333,9 +1333,9 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
 
     block_autocmds();  // We don't want BufEnter/WinEnter autocommands.
     if (need_append) {
-      win_append(lastwin, auc_win);
+      win_append(lastwin, auc_win, NULL);
       pmap_put(int)(&window_handles, auc_win->handle, auc_win);
-      win_config_float(auc_win, auc_win->w_float_config);
+      win_config_float(auc_win, auc_win->w_config);
     }
     // Prevent chdir() call in win_enter_ext(), through do_autochdir()
     int save_acd = p_acd;
@@ -2002,15 +2002,15 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
 {
   Callback callback = ac->exec.callable.cb;
   if (callback.type == kCallbackLua) {
-    Dictionary data = ARRAY_DICT_INIT;
-    PUT(data, "id", INTEGER_OBJ(ac->id));
-    PUT(data, "event", CSTR_TO_OBJ(event_nr2name(apc->event)));
-    PUT(data, "match", CSTR_TO_OBJ(autocmd_match));
-    PUT(data, "file", CSTR_TO_OBJ(autocmd_fname));
-    PUT(data, "buf", INTEGER_OBJ(autocmd_bufnr));
+    MAXSIZE_TEMP_DICT(data, 7);
+    PUT_C(data, "id", INTEGER_OBJ(ac->id));
+    PUT_C(data, "event", CSTR_AS_OBJ(event_nr2name(apc->event)));
+    PUT_C(data, "match", CSTR_AS_OBJ(autocmd_match));
+    PUT_C(data, "file", CSTR_AS_OBJ(autocmd_fname));
+    PUT_C(data, "buf", INTEGER_OBJ(autocmd_bufnr));
 
     if (apc->data) {
-      PUT(data, "data", copy_object(*apc->data, NULL));
+      PUT_C(data, "data", *apc->data);
     }
 
     int group = ac->pat->group;
@@ -2023,21 +2023,15 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
       // omit group in these cases
       break;
     default:
-      PUT(data, "group", INTEGER_OBJ(group));
+      PUT_C(data, "group", INTEGER_OBJ(group));
       break;
     }
 
     MAXSIZE_TEMP_ARRAY(args, 1);
     ADD_C(args, DICTIONARY_OBJ(data));
 
-    Object result = nlua_call_ref(callback.data.luaref, NULL, args, true, NULL);
-    bool ret = false;
-    if (result.type == kObjectTypeBoolean) {
-      ret = result.data.boolean;
-    }
-    api_free_dictionary(data);
-    api_free_object(result);
-    return ret;
+    Object result = nlua_call_ref(callback.data.luaref, NULL, args, kRetNilBool, NULL, NULL);
+    return LUARET_TRUTHY(result);
   } else {
     typval_T argsin = TV_INITIAL_VALUE;
     typval_T rettv = TV_INITIAL_VALUE;
@@ -2435,7 +2429,7 @@ char *aucmd_exec_to_string(AutoCmd *ac, AucmdExecutable acc)
   case CALLABLE_EX:
     return xstrdup(acc.callable.cmd);
   case CALLABLE_CB:
-    return callback_to_string(&acc.callable.cb);
+    return callback_to_string(&acc.callable.cb, NULL);
   case CALLABLE_NONE:
     return "This is not possible";
   }

@@ -52,6 +52,16 @@ extern const uint8_t utf8len_tab[256];
 #define MB_PTR_BACK(s, p) \
   (p -= utf_head_off((char *)(s), (char *)(p) - 1) + 1)
 
+/// Check whether a given UTF-8 byte is a trailing byte (10xx.xxxx).
+static inline bool utf_is_trail_byte(uint8_t byte)
+  REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
+
+static inline bool utf_is_trail_byte(uint8_t const byte)
+{
+  // uint8_t is for clang to use smaller cmp
+  return (uint8_t)(byte & 0xC0U) == 0x80U;
+}
+
 static inline CharInfo utf_ptr2CharInfo(char const *p_in)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
 
@@ -61,7 +71,7 @@ static inline CharInfo utf_ptr2CharInfo(char const *p_in)
 /// @param[in]  p_in  String to convert.
 ///
 /// @return information abouth the character. When the sequence is illegal,
-/// 'value' is negative, 'len' is 1.
+/// "value" is negative, "len" is 1.
 static inline CharInfo utf_ptr2CharInfo(char const *const p_in)
 {
   uint8_t const *const p = (uint8_t const *)p_in;
@@ -82,11 +92,9 @@ static inline StrCharInfo utfc_next(StrCharInfo cur)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE REAL_FATTR_PURE;
 
 /// Return information about the next character.
-/// Composing and combining characters are
-/// considered a part of the current character.
+/// Composing and combining characters are considered a part of the current character.
 ///
-/// @param[in] cur  Pointer to the current character. Must not point to NUL
-/// @param[in] cur_char Decoded charater at 'cur'.
+/// @param[in] cur  Information about the current character in the string.
 static inline StrCharInfo utfc_next(StrCharInfo cur)
 {
   int32_t prev_code = cur.chr.value;

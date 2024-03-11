@@ -963,4 +963,42 @@ func Test_smoothscroll_insert_bottom()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_smoothscroll_in_zero_width_window()
+  set cpo+=n number smoothscroll
+  set winwidth=99999 winminwidth=0
+
+  vsplit
+  call assert_equal(0, winwidth(winnr('#')))
+  call win_execute(win_getid(winnr('#')), "norm! \<C-Y>")
+
+  only!
+  set winwidth& winminwidth&
+  set cpo-=n nonumber nosmoothscroll
+endfunc
+
+func Test_smoothscroll_textoff_small_winwidth()
+  set smoothscroll number
+  call setline(1, 'llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch')
+  vsplit
+
+  let textoff = getwininfo(win_getid())[0].textoff
+  execute 'vertical resize' textoff + 1
+  redraw
+  call assert_equal(0, winsaveview().skipcol)
+  execute "normal! 0\<C-E>"
+  redraw
+  call assert_equal(1, winsaveview().skipcol)
+  execute 'vertical resize' textoff - 1
+  " This caused a signed integer overflow.
+  redraw
+  call assert_equal(1, winsaveview().skipcol)
+  execute 'vertical resize' textoff
+  " This caused an infinite loop.
+  redraw
+  call assert_equal(1, winsaveview().skipcol)
+
+  %bw!
+  set smoothscroll& number&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -515,6 +515,22 @@ describe('statuscolumn', function()
       set cpoptions-=n nocursorline relativenumber
       set stc=%{v:virtnum<0?'virtual':(!v:virtnum?'buffer':'wrapped')}%=%{'\ '.v:virtnum.'\ '.v:lnum.'\ '.v:relnum}
     ]])
+    screen:expect([[
+      {1:buffer  0 12 3}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 1 12 3}aaaaaaaaaaa                            |
+      {1:buffer  0 13 2}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 1 13 2}aaaaaaaaaaa                            |
+      {1:buffer  0 14 1}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 1 14 1}aaaaaaaaaaa                            |
+      {1:buffer  0 15 0}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 1 15 0}aaaaaaaaaaa^ aaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 2 15 0}aaaaaaaaaaaaaaaaaaaaaaa                |
+      {1:virtual-3 15 0}virt_line1                             |
+      {1:virtual-2 15 0}virt_line2                             |
+      {1:virtual-1 15 0}END                                    |
+      {0:~                                                    }|
+                                                           |
+    ]])
     feed('kk')
     screen:expect([[
       {1:buffer  0 12 1}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -908,6 +924,19 @@ describe('statuscolumn', function()
       8  ^This is a line that contains ᶏ|
           multibyte character.         |
       9  aaaaa                         |
+                                       |
+    ]])
+  end)
+
+  it('line increase properly redraws buffer text with relativenumber #27709', function()
+    screen:try_resize(33, 4)
+    command([[set rnu nuw=3 stc=%l\ ]])
+    command('call setline(1, range(1, 99))')
+    feed('Gyyp')
+    screen:expect([[
+      98  98                           |
+      99  99                           |
+      100 ^99                           |
                                        |
     ]])
   end)

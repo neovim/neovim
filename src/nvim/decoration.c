@@ -10,6 +10,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/change.h"
 #include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
 #include "nvim/extmark.h"
@@ -87,19 +88,22 @@ void bufhl_add_hl_pos_offset(buf_T *buf, int src_id, int hl_id, lpos_T pos_start
 
     extmark_set(buf, (uint32_t)src_id, NULL,
                 (int)lnum - 1, hl_start, (int)lnum - 1 + end_off, hl_end,
-                decor, MT_FLAG_DECOR_HL, true, false, true, false, NULL);
+                decor, MT_FLAG_DECOR_HL, true, false, true, false, false, NULL);
   }
 }
 
-void decor_redraw(buf_T *buf, int row1, int row2, DecorInline decor)
+void decor_redraw(buf_T *buf, int row1, int row2, int col1, DecorInline decor)
 {
   if (decor.ext) {
     DecorVirtText *vt = decor.data.ext.vt;
     while (vt) {
       bool below = (vt->flags & kVTIsLines) && !(vt->flags & kVTLinesAbove);
-      redraw_buf_line_later(buf, row1 + 1 + below, true);
+      linenr_T vt_lnum = row1 + 1 + below;
+      redraw_buf_line_later(buf, vt_lnum, true);
       if (vt->flags & kVTIsLines || vt->pos == kVPosInline) {
-        changed_line_display_buf(buf);
+        // changed_lines_redraw_buf(buf, vt_lnum, vt_lnum + 1, 0);
+        colnr_T vt_col = vt->flags & kVTIsLines ? 0 : col1;
+        changed_lines_invalidate_buf(buf, vt_lnum, vt_col, vt_lnum + 1, 0);
       }
       vt = vt->next;
     }
@@ -117,7 +121,8 @@ void decor_redraw(buf_T *buf, int row1, int row2, DecorInline decor)
 
 void decor_redraw_sh(buf_T *buf, int row1, int row2, DecorSignHighlight sh)
 {
-  if (sh.hl_id || (sh.url != NULL) || (sh.flags & (kSHIsSign|kSHSpellOn|kSHSpellOff))) {
+  if (sh.hl_id || (sh.url != NULL)
+      || (sh.flags & (kSHIsSign | kSHSpellOn | kSHSpellOff | kSHConceal))) {
     if (row2 >= row1) {
       redraw_buf_range_later(buf, row1 + 1, row2 + 1);
     }
@@ -190,9 +195,9 @@ void buf_put_decor_sh(buf_T *buf, DecorSignHighlight *sh, int row1, int row2)
   }
 }
 
-void buf_decor_remove(buf_T *buf, int row1, int row2, DecorInline decor, bool free)
+void buf_decor_remove(buf_T *buf, int row1, int row2, int col1, DecorInline decor, bool free)
 {
-  decor_redraw(buf, row1, row2, decor);
+  decor_redraw(buf, row1, row2, col1, decor);
   if (decor.ext) {
     uint32_t idx = decor.data.ext.sh_idx;
     while (idx != DECOR_ID_INVALID) {
@@ -536,7 +541,7 @@ void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end
 }
 
 /// Initialize the draw_col of a newly-added virtual text item.
-static void decor_init_draw_col(int win_col, bool hidden, DecorRange *item)
+void decor_init_draw_col(int win_col, bool hidden, DecorRange *item)
 {
   DecorVirtText *vt = item->kind == kDecorKindVirtText ? item->data.vt : NULL;
   VirtTextPos pos = decor_virt_pos_kind(item);
@@ -575,6 +580,10 @@ int decor_redraw_col(win_T *wp, int col, int win_col, bool hidden, DecorState *s
     } else if (mark.pos.row == state->row && mark.pos.col > col) {
       state->col_until = mark.pos.col - 1;
       break;
+    }
+
+    if (!mt_scoped_in_win(mark, wp)) {
+      goto next_mark;
     }
 
     if (mt_invalid(mark) || mt_end(mark) || !mt_decor_any(mark)) {
@@ -664,19 +673,24 @@ next_mark:
   return attr;
 }
 
-typedef struct {
-  DecorSignHighlight *sh;
-  uint32_t id;
-} SignItem;
-
 int sign_item_cmp(const void *p1, const void *p2)
 {
   const SignItem *s1 = (SignItem *)p1;
   const SignItem *s2 = (SignItem *)p2;
-  int n = s2->sh->priority - s1->sh->priority;
 
-  return n ? n : (n = (int)(s2->id - s1->id))
-         ? n : (s2->sh->sign_add_id - s1->sh->sign_add_id);
+  if (s1->sh->priority != s2->sh->priority) {
+    return s1->sh->priority < s2->sh->priority ? 1 : -1;
+  }
+
+  if (s1->id != s2->id) {
+    return s1->id < s2->id ? 1 : -1;
+  }
+
+  if (s1->sh->sign_add_id != s2->sh->sign_add_id) {
+    return s1->sh->sign_add_id < s2->sh->sign_add_id ? 1 : -1;
+  }
+
+  return 0;
 }
 
 static const uint32_t sign_filter[4] = {[kMTMetaSignText] = kMTFilterSelect,
@@ -691,15 +705,16 @@ static const uint32_t sign_filter[4] = {[kMTMetaSignText] = kMTFilterSelect,
 void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], int *line_id,
                         int *cul_id, int *num_id)
 {
-  MarkTreeIter itr[1];
-  if (!marktree_itr_get_overlap(buf->b_marktree, row, 0, itr)) {
+  if (!buf_has_signs(buf)) {
     return;
   }
 
   MTPair pair;
   int num_text = 0;
+  MarkTreeIter itr[1];
   kvec_t(SignItem) signs = KV_INITIAL_VALUE;
   // TODO(bfredl): integrate with main decor loop.
+  marktree_itr_get_overlap(buf->b_marktree, row, 0, itr);
   while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
     if (!mt_invalid(pair.start) && mt_decor_sign(pair.start)) {
       DecorSignHighlight *sh = decor_find_sign(mt_decor(pair.start));
@@ -715,7 +730,8 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
     if (mark.pos.row != row) {
       break;
     }
-    if (!mt_end(mark) && !mt_invalid(mark) && mt_decor_sign(mark)) {
+    if (!mt_end(mark) && !mt_invalid(mark) && mt_decor_sign(mark)
+        && mt_scoped_in_win(mark, wp)) {
       DecorSignHighlight *sh = decor_find_sign(mt_decor(mark));
       num_text += (sh->text[0] != NUL);
       kv_push(signs, ((SignItem){ sh, mark.id }));
@@ -778,12 +794,6 @@ void buf_signcols_count_range(buf_T *buf, int row1, int row2, int add, TriState 
 {
   if (!buf->b_signcols.autom || !buf_meta_total(buf, kMTMetaSignText)) {
     return;
-  }
-
-  static int nested = 0;
-  // An undo/redo may trigger subsequent calls before its own kNone call.
-  if ((nested += clear) > (0 + (clear == kTrue))) {
-    return;  // Avoid adding signs more than once.
   }
 
   // Allocate an array of integers holding the number of signs in the range.
@@ -901,18 +911,20 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fo
   while (true) {
     MTKey mark = marktree_itr_current(itr);
     DecorVirtText *vt = mt_decor_virt(mark);
-    while (vt) {
-      if (vt->flags & kVTIsLines) {
-        bool above = vt->flags & kVTLinesAbove;
-        int draw_row = mark.pos.row + (above ? 0 : 1);
-        if (draw_row == row) {
-          virt_lines += (int)kv_size(vt->data.virt_lines);
-          if (lines) {
-            kv_splice(*lines, vt->data.virt_lines);
+    if (mt_scoped_in_win(mark, wp)) {
+      while (vt) {
+        if (vt->flags & kVTIsLines) {
+          bool above = vt->flags & kVTLinesAbove;
+          int draw_row = mark.pos.row + (above ? 0 : 1);
+          if (draw_row == row) {
+            virt_lines += (int)kv_size(vt->data.virt_lines);
+            if (lines) {
+              kv_splice(*lines, vt->data.virt_lines);
+            }
           }
         }
+        vt = vt->next;
       }
-      vt = vt->next;
     }
 
     if (!marktree_itr_next_filter(buf->b_marktree, itr, end_row, 0, lines_filter)) {
@@ -924,7 +936,9 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fo
 }
 
 /// This assumes maximum one entry of each kind, which will not always be the case.
-void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
+///
+/// NB: assumes caller has allocated enough space in dict for all fields!
+void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name, Arena *arena)
 {
   DecorSignHighlight sh_hl = DECOR_SIGN_HIGHLIGHT_INIT;
   DecorSignHighlight sh_sign = DECOR_SIGN_HIGHLIGHT_INIT;
@@ -958,58 +972,58 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
   }
 
   if (sh_hl.hl_id) {
-    PUT(*dict, "hl_group", hl_group_name(sh_hl.hl_id, hl_name));
-    PUT(*dict, "hl_eol", BOOLEAN_OBJ(sh_hl.flags & kSHHlEol));
+    PUT_C(*dict, "hl_group", hl_group_name(sh_hl.hl_id, hl_name));
+    PUT_C(*dict, "hl_eol", BOOLEAN_OBJ(sh_hl.flags & kSHHlEol));
     priority = sh_hl.priority;
   }
 
   if (sh_hl.flags & kSHConceal) {
     char buf[MAX_SCHAR_SIZE];
     schar_get(buf, sh_hl.text[0]);
-    PUT(*dict, "conceal", CSTR_TO_OBJ(buf));
+    PUT_C(*dict, "conceal", CSTR_TO_ARENA_OBJ(arena, buf));
   }
 
   if (sh_hl.flags & kSHSpellOn) {
-    PUT(*dict, "spell", BOOLEAN_OBJ(true));
+    PUT_C(*dict, "spell", BOOLEAN_OBJ(true));
   } else if (sh_hl.flags & kSHSpellOff) {
-    PUT(*dict, "spell", BOOLEAN_OBJ(false));
+    PUT_C(*dict, "spell", BOOLEAN_OBJ(false));
   }
 
   if (sh_hl.flags & kSHUIWatched) {
-    PUT(*dict, "ui_watched", BOOLEAN_OBJ(true));
+    PUT_C(*dict, "ui_watched", BOOLEAN_OBJ(true));
   }
 
   if (sh_hl.url != NULL) {
-    PUT(*dict, "url", STRING_OBJ(cstr_to_string(sh_hl.url)));
+    PUT_C(*dict, "url", STRING_OBJ(cstr_as_string(sh_hl.url)));
   }
 
   if (virt_text) {
     if (virt_text->hl_mode) {
-      PUT(*dict, "hl_mode", CSTR_TO_OBJ(hl_mode_str[virt_text->hl_mode]));
+      PUT_C(*dict, "hl_mode", CSTR_AS_OBJ(hl_mode_str[virt_text->hl_mode]));
     }
 
-    Array chunks = virt_text_to_array(virt_text->data.virt_text, hl_name);
-    PUT(*dict, "virt_text", ARRAY_OBJ(chunks));
-    PUT(*dict, "virt_text_hide", BOOLEAN_OBJ(virt_text->flags & kVTHide));
-    PUT(*dict, "virt_text_repeat_linebreak", BOOLEAN_OBJ(virt_text->flags & kVTRepeatLinebreak));
+    Array chunks = virt_text_to_array(virt_text->data.virt_text, hl_name, arena);
+    PUT_C(*dict, "virt_text", ARRAY_OBJ(chunks));
+    PUT_C(*dict, "virt_text_hide", BOOLEAN_OBJ(virt_text->flags & kVTHide));
+    PUT_C(*dict, "virt_text_repeat_linebreak", BOOLEAN_OBJ(virt_text->flags & kVTRepeatLinebreak));
     if (virt_text->pos == kVPosWinCol) {
-      PUT(*dict, "virt_text_win_col", INTEGER_OBJ(virt_text->col));
+      PUT_C(*dict, "virt_text_win_col", INTEGER_OBJ(virt_text->col));
     }
-    PUT(*dict, "virt_text_pos", CSTR_TO_OBJ(virt_text_pos_str[virt_text->pos]));
+    PUT_C(*dict, "virt_text_pos", CSTR_AS_OBJ(virt_text_pos_str[virt_text->pos]));
     priority = virt_text->priority;
   }
 
   if (virt_lines) {
-    Array all_chunks = ARRAY_DICT_INIT;
+    Array all_chunks = arena_array(arena, kv_size(virt_lines->data.virt_lines));
     bool virt_lines_leftcol = false;
     for (size_t i = 0; i < kv_size(virt_lines->data.virt_lines); i++) {
       virt_lines_leftcol = kv_A(virt_lines->data.virt_lines, i).left_col;
-      Array chunks = virt_text_to_array(kv_A(virt_lines->data.virt_lines, i).line, hl_name);
+      Array chunks = virt_text_to_array(kv_A(virt_lines->data.virt_lines, i).line, hl_name, arena);
       ADD(all_chunks, ARRAY_OBJ(chunks));
     }
-    PUT(*dict, "virt_lines", ARRAY_OBJ(all_chunks));
-    PUT(*dict, "virt_lines_above", BOOLEAN_OBJ(virt_lines->flags & kVTLinesAbove));
-    PUT(*dict, "virt_lines_leftcol", BOOLEAN_OBJ(virt_lines_leftcol));
+    PUT_C(*dict, "virt_lines", ARRAY_OBJ(all_chunks));
+    PUT_C(*dict, "virt_lines_above", BOOLEAN_OBJ(virt_lines->flags & kVTLinesAbove));
+    PUT_C(*dict, "virt_lines_leftcol", BOOLEAN_OBJ(virt_lines_leftcol));
     priority = virt_lines->priority;
   }
 
@@ -1017,11 +1031,11 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
     if (sh_sign.text[0]) {
       char buf[SIGN_WIDTH * MAX_SCHAR_SIZE];
       describe_sign_text(buf, sh_sign.text);
-      PUT(*dict, "sign_text", CSTR_TO_OBJ(buf));
+      PUT_C(*dict, "sign_text", CSTR_TO_ARENA_OBJ(arena, buf));
     }
 
     if (sh_sign.sign_name) {
-      PUT(*dict, "sign_name", CSTR_TO_OBJ(sh_sign.sign_name));
+      PUT_C(*dict, "sign_name", CSTR_AS_OBJ(sh_sign.sign_name));
     }
 
     // uncrustify:off
@@ -1038,14 +1052,14 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
 
     for (int j = 0; hls[j].name; j++) {
       if (hls[j].val) {
-        PUT(*dict, hls[j].name, hl_group_name(hls[j].val, hl_name));
+        PUT_C(*dict, hls[j].name, hl_group_name(hls[j].val, hl_name));
       }
     }
     priority = sh_sign.priority;
   }
 
   if (priority != -1) {
-    PUT(*dict, "priority", INTEGER_OBJ(priority));
+    PUT_C(*dict, "priority", INTEGER_OBJ(priority));
   }
 }
 
@@ -1073,7 +1087,7 @@ uint16_t decor_type_flags(DecorInline decor)
 Object hl_group_name(int hl_id, bool hl_name)
 {
   if (hl_name) {
-    return CSTR_TO_OBJ(syn_id2name(hl_id));
+    return CSTR_AS_OBJ(syn_id2name(hl_id));
   } else {
     return INTEGER_OBJ(hl_id);
   }

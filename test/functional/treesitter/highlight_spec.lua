@@ -676,11 +676,11 @@ describe('treesitter highlighting (C)', function()
       local parser = vim.treesitter.get_parser(0, "c")
       test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = [[
         ("static" @keyword
-         (set! conceal "R"))
+         (#set! conceal "R"))
 
         ((identifier) @Identifier
-         (set! conceal "")
-         (eq? @Identifier "lstate"))
+         (#set! conceal "")
+         (#eq? @Identifier "lstate"))
       ]]}})
     ]=]
 
@@ -730,6 +730,31 @@ describe('treesitter highlighting (C)', function()
     eq(3, get_hl '@foo.missing.exists')
     eq(3, get_hl '@foo.missing.exists.bar')
     eq(nil, get_hl '@total.nonsense.but.a.lot.of.dots')
+  end)
+
+  it('supports multiple nodes assigned to the same capture #17060', function()
+    insert([[
+      int x = 4;
+      int y = 5;
+      int z = 6;
+    ]])
+
+    exec_lua([[
+      local query = '((declaration)+ @string)'
+      vim.treesitter.query.set('c', 'highlights', query)
+      vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, 'c'))
+    ]])
+
+    screen:expect {
+      grid = [[
+        {5:int x = 4;}                                                     |
+        {5:int y = 5;}                                                     |
+        {5:int z = 6;}                                                     |
+      ^                                                                 |
+      {1:~                                                                }|*13
+                                                                       |
+    ]],
+    }
   end)
 end)
 

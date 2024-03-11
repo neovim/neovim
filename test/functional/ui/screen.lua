@@ -638,7 +638,6 @@ screen:redraw_debug() to show all intermediate screen states.]]
 end
 
 function Screen:expect_unchanged(intermediate, waittime_ms, ignore_attrs)
-  waittime_ms = waittime_ms and waittime_ms or 100
   -- Collect the current screen state.
   local kwargs = self:get_snapshot(nil, ignore_attrs)
 
@@ -689,8 +688,8 @@ function Screen:_wait(check, flags)
 
   -- For an "unchanged" test, flags.timeout is the time during which the state
   -- must not change, so always wait this full time.
-  if (flags.unchanged or flags.intermediate) and flags.timeout then
-    minimal_timeout = timeout
+  if flags.unchanged then
+    minimal_timeout = flags.timeout or default_timeout_factor * 20
   end
 
   assert(timeout >= minimal_timeout)
@@ -711,12 +710,12 @@ function Screen:_wait(check, flags)
       intermediate_seen = true
     end
 
-    if not err then
+    if not err and (not flags.intermediate or intermediate_seen) then
       success_seen = true
       if did_minimal_timeout then
         self._session:stop()
       end
-    elseif success_seen and #args > 0 then
+    elseif err and success_seen and #args > 0 then
       success_seen = false
       failure_after_success = true
       -- print(inspect(args))

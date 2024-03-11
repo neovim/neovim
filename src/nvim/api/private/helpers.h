@@ -32,6 +32,10 @@
 
 #define CSTR_AS_OBJ(s) STRING_OBJ(cstr_as_string(s))
 #define CSTR_TO_OBJ(s) STRING_OBJ(cstr_to_string(s))
+#define CSTR_TO_ARENA_STR(arena, s) arena_string(arena, cstr_as_string(s))
+#define CSTR_TO_ARENA_OBJ(arena, s) STRING_OBJ(CSTR_TO_ARENA_STR(arena, s))
+#define CBUF_TO_ARENA_STR(arena, s, len) arena_string(arena, cbuf_as_string((char *)(s), len))
+#define CBUF_TO_ARENA_OBJ(arena, s, len) STRING_OBJ(CBUF_TO_ARENA_STR(arena, s, len))
 
 #define BUFFER_OBJ(s) ((Object) { \
     .type = kObjectTypeBuffer, \
@@ -70,6 +74,9 @@
 #define PUT_C(dict, k, v) \
   kv_push_c(dict, ((KeyValuePair) { .key = cstr_as_string(k), .value = v }))
 
+#define PUT_KEY(d, typ, key, v) \
+  do { (d).is_set__##typ##_ |= (1 << KEYSET_OPTIDX_##typ##__##key); (d).key = v; } while (0)
+
 #define ADD(array, item) \
   kv_push(array, item)
 
@@ -87,6 +94,8 @@
   KeyValuePair name##__items[maxsize]; \
   name.capacity = maxsize; \
   name.items = name##__items; \
+
+typedef kvec_withinit_t(Object, 16) ArrayBuilder;
 
 #define cbuf_as_string(d, s) ((String) { .data = d, .size = s })
 
@@ -114,12 +123,7 @@
 #define api_init_array = ARRAY_DICT_INIT
 #define api_init_dictionary = ARRAY_DICT_INIT
 
-#define api_free_boolean(value)
-#define api_free_integer(value)
-#define api_free_float(value)
-#define api_free_buffer(value)
-#define api_free_window(value)
-#define api_free_tabpage(value)
+#define KEYDICT_INIT { 0 }
 
 EXTERN PMap(int) buffer_handles INIT( = MAP_INIT);
 EXTERN PMap(int) window_handles INIT( = MAP_INIT);

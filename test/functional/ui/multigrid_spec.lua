@@ -36,7 +36,7 @@ describe('ext_multigrid', function()
       [17] = {background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Magenta},
       [18] = {bold = true, foreground = Screen.colors.Magenta},
       [19] = {foreground = Screen.colors.Brown},
-      [20] = {background = Screen.colors.LightGrey},
+      [20] = {background = Screen.colors.LightGrey, foreground = Screen.colors.Black},
       [21] = {background = Screen.colors.LightMagenta},
       [22] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue},
       [23] = {background = Screen.colors.Grey90},

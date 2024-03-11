@@ -797,6 +797,22 @@ int expand_set_belloff(optexpand_T *args, int *numMatches, char ***matches)
                                matches);
 }
 
+/// The 'breakat' option is changed.
+const char *did_set_breakat(optset_T *args FUNC_ATTR_UNUSED)
+{
+  for (int i = 0; i < 256; i++) {
+    breakat_flags[i] = false;
+  }
+
+  if (p_breakat != NULL) {
+    for (char *p = p_breakat; *p; p++) {
+      breakat_flags[(uint8_t)(*p)] = true;
+    }
+  }
+
+  return NULL;
+}
+
 /// The 'breakindentopt' option is changed.
 const char *did_set_breakindentopt(optset_T *args)
 {
@@ -1525,7 +1541,15 @@ int expand_set_formatoptions(optexpand_T *args, int *numMatches, char ***matches
 /// The 'guicursor' option is changed.
 const char *did_set_guicursor(optset_T *args FUNC_ATTR_UNUSED)
 {
-  return parse_shape_opt(SHAPE_CURSOR);
+  const char *errmsg = parse_shape_opt(SHAPE_CURSOR);
+  if (errmsg != NULL) {
+    return errmsg;
+  }
+  if (VIsual_active) {
+    // In Visual mode cursor may be drawn differently.
+    redrawWinline(curwin, curwin->w_cursor.lnum);
+  }
+  return NULL;
 }
 
 /// The 'helpfile' option is changed.
@@ -1942,6 +1966,10 @@ const char *did_set_selection(optset_T *args FUNC_ATTR_UNUSED)
   if (*p_sel == NUL || check_opt_strings(p_sel, p_sel_values, false) != OK) {
     return e_invarg;
   }
+  if (VIsual_active) {
+    // Visual selection may be drawn differently.
+    redraw_curbuf_later(UPD_INVERTED);
+  }
   return NULL;
 }
 
@@ -2072,7 +2100,13 @@ const char *did_set_showbreak(optset_T *args)
 /// The 'showcmdloc' option is changed.
 const char *did_set_showcmdloc(optset_T *args FUNC_ATTR_UNUSED)
 {
-  return did_set_opt_strings(p_sloc, p_sloc_values, true);
+  const char *errmsg = did_set_opt_strings(p_sloc, p_sloc_values, false);
+
+  if (errmsg == NULL) {
+    comp_col();
+  }
+
+  return errmsg;
 }
 
 int expand_set_showcmdloc(optexpand_T *args, int *numMatches, char ***matches)

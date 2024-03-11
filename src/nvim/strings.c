@@ -335,36 +335,41 @@ void vim_strup(char *p)
 char *strcase_save(const char *const orig, bool upper)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  char *res = xstrdup(orig);
+  // Calculate the initial length and allocate memory for the result
+  size_t orig_len = strlen(orig);
+  // +1 for the null terminator
+  char *res = xmalloc(orig_len + 1);
+  // Index in the result string
+  size_t res_index = 0;
+  // Current position in the original string
+  const char *p = orig;
 
-  char *p = res;
   while (*p != NUL) {
-    int c = utf_ptr2char(p);
-    int l = utf_ptr2len(p);
-    if (c == 0) {
-      // overlong sequence, use only the first byte
-      c = (uint8_t)(*p);
-      l = 1;
-    }
-    int uc = upper ? mb_toupper(c) : mb_tolower(c);
+    CharInfo char_info = utf_ptr2CharInfo(p);
+    int c = char_info.value < 0 ? (uint8_t)(*p) : char_info.value;
+    int newc = upper ? mb_toupper(c) : mb_tolower(c);
+    // Cast to size_t to avoid mixing types in arithmetic
+    size_t newl = (size_t)utf_char2len(newc);
 
-    // Reallocate string when byte count changes.  This is rare,
-    // thus it's OK to do another malloc()/free().
-    int newl = utf_char2len(uc);
-    if (newl != l) {
-      // TODO(philix): use xrealloc() in strcase_save()
-      char *s = xmalloc(strlen(res) + (size_t)(1 + newl - l));
-      memcpy(s, res, (size_t)(p - res));
-      STRCPY(s + (p - res) + newl, p + l);
-      p = s + (p - res);
-      xfree(res);
-      res = s;
+    // Check if there's enough space in the allocated memory
+    if (res_index + newl > orig_len) {
+      // Need more space: allocate extra space for the new character and the null terminator
+      size_t new_size = res_index + newl + 1;
+      res = xrealloc(res, new_size);
+      // Adjust the original length to the new size, minus the null terminator
+      orig_len = new_size - 1;
     }
 
-    utf_char2bytes(uc, p);
-    p += newl;
+    // Write the possibly new character into the result string
+    utf_char2bytes(newc, res + res_index);
+    // Move the index in the result string
+    res_index += newl;
+    // Move to the next character in the original string
+    p += char_info.len;
   }
 
+  // Null-terminate the result string
+  res[res_index] = NUL;
   return res;
 }
 
@@ -2159,6 +2164,47 @@ int kv_do_printf(StringBuilder *str, const char *fmt, ...)
 
   str->size += (size_t)printed;
   return printed;
+}
+
+String arena_printf(Arena *arena, const char *fmt, ...)
+  FUNC_ATTR_PRINTF(2, 3)
+{
+  size_t remaining = 0;
+  char *buf = NULL;
+  if (arena) {
+    if (!arena->cur_blk) {
+      arena_alloc_block(arena);
+    }
+
+    // happy case, we can fit the printed string in the rest of the current
+    // block (one pass):
+    remaining = arena->size - arena->pos;
+    buf = arena->cur_blk + arena->pos;
+  }
+
+  va_list ap;
+  va_start(ap, fmt);
+  int printed = vsnprintf(buf, remaining, fmt, ap);
+  va_end(ap);
+
+  if (printed < 0) {
+    return (String)STRING_INIT;
+  }
+
+  // printed string didn't fit, allocate and try again
+  if ((size_t)printed >= remaining) {
+    buf = arena_alloc(arena, (size_t)printed + 1, false);
+    va_start(ap, fmt);
+    printed = vsnprintf(buf, (size_t)printed + 1, fmt, ap);
+    va_end(ap);
+    if (printed < 0) {
+      return (String)STRING_INIT;
+    }
+  } else {
+    arena->pos += (size_t)printed + 1;
+  }
+
+  return cbuf_as_string(buf, (size_t)printed);
 }
 
 /// Reverse text into allocated memory.

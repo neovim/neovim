@@ -184,4 +184,18 @@ describe('tabline', function()
     ]],
     }
   end)
+
+  it('middle-click closes tab', function()
+    command('tabnew')
+    command('tabnew')
+    command('tabnew')
+    command('tabprev')
+    eq({ 3, 4 }, api.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
+    api.nvim_input_mouse('middle', 'press', '', 0, 0, 1)
+    eq({ 2, 3 }, api.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
+    api.nvim_input_mouse('middle', 'press', '', 0, 0, 20)
+    eq({ 2, 2 }, api.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
+    api.nvim_input_mouse('middle', 'press', '', 0, 0, 1)
+    eq({ 1, 1 }, api.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
+  end)
 end)

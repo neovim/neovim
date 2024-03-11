@@ -2,7 +2,7 @@
 " Language:	Java
 " Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " URL:          https://github.com/fleiner/vim/blob/master/runtime/syntax/java.vim
-" Last Change:	2022 Jun 08
+" Last Change:	2024 Mar 06
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -37,6 +37,14 @@ syn keyword javaBoolean		true false
 syn keyword javaConstant	null
 syn keyword javaTypedef		this super
 syn keyword javaOperator	var new instanceof
+" Since the yield statement, which could take a parenthesised operand,
+" and _qualified_ yield methods get along within the switch block
+" (JLS-17, §3.8), it seems futile to make a region definition for this
+" block; instead look for the _yield_ word alone, and if found,
+" backtrack (arbitrarily) 80 bytes, at most, on the matched line and,
+" if necessary, on the line before that (h: \@<=), trying to match
+" neither a method reference nor a qualified method invocation.
+syn match   javaOperator	"\%(\%(::\|\.\)[[:space:]\n]*\)\@80<!\<yield\>"
 syn keyword javaType		boolean char byte short int long float double
 syn keyword javaType		void
 syn keyword javaStatement	return
@@ -56,6 +64,7 @@ syn keyword javaBranch		break continue nextgroup=javaUserLabelRef skipwhite
 syn match   javaUserLabelRef	"\k\+" contained
 syn match   javaVarArg		"\.\.\."
 syn keyword javaScopeDecl	public protected private abstract
+syn match   javaConceptKind	"\<default\>\%(\s*\%(:\|->\)\)\@!"
 
 function s:isModuleInfoDeclarationCurrentBuffer() abort
     return fnamemodify(bufname("%"), ":t") =~ '^module-info\%(\.class\>\)\@!'
@@ -142,28 +151,46 @@ if exists("java_space_errors")
   endif
 endif
 
-syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" end="->" matchgroup=NONE end=":" contains=javaNumber,javaCharacter,javaString
-syn match   javaUserLabel	"^\s*[_$a-zA-Z][_$a-zA-Z0-9_]*\s*:"he=e-1 contains=javaLabel
-syn keyword javaLabel		default
+syn match   javaUserLabel	"^\s*\<\K\k*\>\%(\<default\>\)\@<!\s*:"he=e-1
+syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" matchgroup=NONE end=":\|->" contains=javaLabelCastType,javaLabelNumber,javaCharacter,javaString,javaConstant,@javaClasses,javaLabelDefault,javaLabelVarType,javaLabelWhenClause
+syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<default\>\%(\s*\%(:\|->\)\)\@=" matchgroup=NONE end=":\|->" oneline
+" Consider grouped _default_ _case_ labels, i.e.
+" case null, default ->
+" case null: default:
+syn keyword javaLabelDefault	contained default
+syn keyword javaLabelVarType	contained var
+syn keyword javaLabelCastType	contained char byte short int
+" Allow for the contingency of the enclosing region not being able to
+" _keep_ its _end_, e.g. case ':':.
+syn region  javaLabelWhenClause	contained transparent matchgroup=javaLabel start="\<when\>" matchgroup=NONE end=":"me=e-1 end="->"me=e-2 contains=TOP,javaExternal
+syn match   javaLabelNumber	contained "\<0\>[lL]\@!"
+syn match   javaLabelNumber	contained "\<\%(0\%([xX]\x\%(_*\x\)*\|_*\o\%(_*\o\)*\|[bB][01]\%(_*[01]\)*\)\|[1-9]\%(_*\d\)*\)\>[lL]\@!"
+hi def link javaLabelDefault	javaLabel
+hi def link javaLabelVarType	javaOperator
+hi def link javaLabelNumber	javaNumber
+hi def link javaLabelCastType	javaType
 
 " highlighting C++ keywords as errors removed, too many people find it
 " annoying.  Was: if !exists("java_allow_cpp_keywords")
 
 " The following cluster contains all java groups except the contained ones
-syn cluster javaTop add=javaExternal,javaError,javaBranch,javaLabelRegion,javaLabel,javaConditional,javaRepeat,javaBoolean,javaConstant,javaTypedef,javaOperator,javaType,javaStatement,javaStorageClass,javaAssert,javaExceptions,javaMethodDecl,javaClassDecl,javaScopeDecl,javaError2,javaUserLabel,javaLangObject,javaAnnotation,javaVarArg
+syn cluster javaTop add=javaExternal,javaError,javaBranch,javaLabelRegion,javaConditional,javaRepeat,javaBoolean,javaConstant,javaTypedef,javaOperator,javaType,javaStatement,javaStorageClass,javaAssert,javaExceptions,javaMethodDecl,javaClassDecl,javaScopeDecl,javaConceptKind,javaError2,javaUserLabel,javaLangObject,javaAnnotation,javaVarArg
 
 
 " Comments
 syn keyword javaTodo		 contained TODO FIXME XXX
+
 if exists("java_comment_strings")
   syn region  javaCommentString    contained start=+"+ end=+"+ end=+$+ end=+\*/+me=s-1,he=s-1 contains=javaSpecial,javaCommentStar,javaSpecialChar,@Spell
-  syn region  javaComment2String   contained start=+"+	end=+$\|"+  contains=javaSpecial,javaSpecialChar,@Spell
+  syn region  javaCommentString    contained start=+"""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaSpecial,javaCommentStar,javaSpecialChar,@Spell,javaSpecialError,javaTextBlockError
+  syn region  javaComment2String   contained start=+"+ end=+$\|"+ contains=javaSpecial,javaSpecialChar,@Spell
   syn match   javaCommentCharacter contained "'\\[^']\{1,6\}'" contains=javaSpecialChar
   syn match   javaCommentCharacter contained "'\\''" contains=javaSpecialChar
   syn match   javaCommentCharacter contained "'[^\\]'"
-  syn cluster javaCommentSpecial add=javaCommentString,javaCommentCharacter,javaNumber
-  syn cluster javaCommentSpecial2 add=javaComment2String,javaCommentCharacter,javaNumber
+  syn cluster javaCommentSpecial add=javaCommentString,javaCommentCharacter,javaNumber,javaStrTempl
+  syn cluster javaCommentSpecial2 add=javaComment2String,javaCommentCharacter,javaNumber,javaStrTempl
 endif
+
 syn region  javaComment		 start="/\*"  end="\*/" contains=@javaCommentSpecial,javaTodo,@Spell
 syn match   javaCommentStar	 contained "^\s*\*[^/]"me=e-1
 syn match   javaCommentStar	 contained "^\s*\*$"
@@ -202,22 +229,35 @@ syn match   javaComment		 "/\*\*/"
 " Strings and constants
 syn match   javaSpecialError	 contained "\\."
 syn match   javaSpecialCharError contained "[^']"
-syn match   javaSpecialChar	 contained "\\\([4-9]\d\|[0-3]\d\d\|[\"\\'ntbrf]\|u\x\{4\}\)"
+" Escape Sequences (JLS-17, §3.10.7):
+syn match   javaSpecialChar	 contained "\\\%(u\x\x\x\x\|[0-3]\o\o\|\o\o\=\|[bstnfr"'\\]\)"
 syn region  javaString		start=+"+ end=+"+ end=+$+ contains=javaSpecialChar,javaSpecialError,@Spell
-" next line disabled, it can cause a crash for a long line
-"syn match   javaStringError	  +"\([^"\\]\|\\.\)*$+
+syn region  javaString		start=+"""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaSpecialChar,javaSpecialError,javaTextBlockError,@Spell
+syn match   javaTextBlockError	+"""\s*"""+
+syn region  javaStrTemplEmbExp	 contained matchgroup=javaStrTempl start="\\{" end="}" contains=TOP
+syn region  javaStrTempl	 start=+\%(\.[[:space:]\n]*\)\@<="+ end=+"+ contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,@Spell
+syn region  javaStrTempl	 start=+\%(\.[[:space:]\n]*\)\@<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,javaTextBlockError,@Spell
+" The next line is commented out, it can cause a crash for a long line
+"syn match   javaStringError	  +"\%([^"\\]\|\\.\)*$+
 syn match   javaCharacter	 "'[^']*'" contains=javaSpecialChar,javaSpecialCharError
 syn match   javaCharacter	 "'\\''" contains=javaSpecialChar
 syn match   javaCharacter	 "'[^\\]'"
-syn match   javaNumber		 "\<\(0[bB][0-1]\+\|0[0-7]*\|0[xX]\x\+\|\d\(\d\|_\d\)*\)[lL]\=\>"
-syn match   javaNumber		 "\(\<\d\(\d\|_\d\)*\.\(\d\(\d\|_\d\)*\)\=\|\.\d\(\d\|_\d\)*\)\([eE][-+]\=\d\(\d\|_\d\)*\)\=[fFdD]\="
-syn match   javaNumber		 "\<\d\(\d\|_\d\)*[eE][-+]\=\d\(\d\|_\d\)*[fFdD]\=\>"
-syn match   javaNumber		 "\<\d\(\d\|_\d\)*\([eE][-+]\=\d\(\d\|_\d\)*\)\=[fFdD]\>"
+" Integer literals (JLS-17, §3.10.1):
+syn keyword javaNumber		 0 0l 0L
+syn match   javaNumber		 "\<\%(0\%([xX]\x\%(_*\x\)*\|_*\o\%(_*\o\)*\|[bB][01]\%(_*[01]\)*\)\|[1-9]\%(_*\d\)*\)[lL]\=\>"
+" Decimal floating-point literals (JLS-17, §3.10.2):
+" Against "\<\d\+\>\.":
+syn match   javaNumber		 "\<\d\%(_*\d\)*\."
+syn match   javaNumber		 "\%(\<\d\%(_*\d\)*\.\%(\d\%(_*\d\)*\)\=\|\.\d\%(_*\d\)*\)\%([eE][-+]\=\d\%(_*\d\)*\)\=[fFdD]\=\>"
+syn match   javaNumber		 "\<\d\%(_*\d\)*[eE][-+]\=\d\%(_*\d\)*[fFdD]\=\>"
+syn match   javaNumber		 "\<\d\%(_*\d\)*\%([eE][-+]\=\d\%(_*\d\)*\)\=[fFdD]\>"
+" Hexadecimal floating-point literals (JLS-17, §3.10.2):
+syn match   javaNumber		 "\<0[xX]\%(\x\%(_*\x\)*\.\=\|\%(\x\%(_*\x\)*\)\=\.\x\%(_*\x\)*\)[pP][-+]\=\d\%(_*\d\)*[fFdD]\=\>"
 
-" unicode characters
-syn match   javaSpecial "\\u\d\{4\}"
+" Unicode characters
+syn match   javaSpecial "\\u\x\x\x\x"
 
-syn cluster javaTop add=javaString,javaCharacter,javaNumber,javaSpecial,javaStringError
+syn cluster javaTop add=javaString,javaStrTempl,javaCharacter,javaNumber,javaSpecial,javaStringError,javaTextBlockError
 
 if exists("java_highlight_functions")
   if java_highlight_functions == "indent"
@@ -231,26 +271,36 @@ if exists("java_highlight_functions")
     "	1. class names are always capitalized (ie: Button)
     "	2. method names are never capitalized (except constructors, of course)
     "syn region javaFuncDef start=+^\s\+\(\(public\|protected\|private\|static\|abstract\|final\|native\|synchronized\)\s\+\)*\(\(void\|boolean\|char\|byte\|short\|int\|long\|float\|double\|\([A-Za-z_][A-Za-z0-9_$]*\.\)*[A-Z][A-Za-z0-9_$]*\)\(<[^>]*>\)\=\(\[\]\)*\s\+[a-z][A-Za-z0-9_$]*\|[A-Z][A-Za-z0-9_$]*\)\s*([^0-9]+ end=+)+ contains=javaScopeDecl,javaType,javaStorageClass,javaComment,javaLineComment,@javaClasses
-    syn region javaFuncDef start=+^\s\+\(\(public\|protected\|private\|static\|abstract\|final\|native\|synchronized\)\s\+\)*\(<.*>\s\+\)\?\(\(void\|boolean\|char\|byte\|short\|int\|long\|float\|double\|\([A-Za-z_][A-Za-z0-9_$]*\.\)*[A-Z][A-Za-z0-9_$]*\)\(<[^(){}]*>\)\=\(\[\]\)*\s\+[a-z][A-Za-z0-9_$]*\|[A-Z][A-Za-z0-9_$]*\)\s*(+ end=+)+ contains=javaScopeDecl,javaType,javaStorageClass,javaComment,javaLineComment,@javaClasses,javaAnnotation
+    syn region javaFuncDef start=+^\s\+\%(\%(public\|protected\|private\|static\|\%(abstract\|default\)\|final\|native\|synchronized\)\s\+\)*\%(<.*>\s\+\)\?\%(\%(void\|boolean\|char\|byte\|short\|int\|long\|float\|double\|\%([A-Za-z_][A-Za-z0-9_$]*\.\)*[A-Z][A-Za-z0-9_$]*\)\%(<[^(){}]*>\)\=\%(\[\]\)*\s\+[a-z][A-Za-z0-9_$]*\|[A-Z][A-Za-z0-9_$]*\)\s*(+ end=+)+ contains=javaScopeDecl,javaType,javaStorageClass,javaComment,javaLineComment,@javaClasses,javaAnnotation
   endif
-  syn match javaLambdaDef "[a-zA-Z_][a-zA-Z0-9_]*\s*->"
+  syn match   javaLambdaDef "\<\K\k*\>\%(\<default\>\)\@<!\s*->"
   syn match  javaBraces  "[{}]"
   syn cluster javaTop add=javaFuncDef,javaBraces,javaLambdaDef
 endif
 
 if exists("java_highlight_debug")
-
   " Strings and constants
-  syn match   javaDebugSpecial		contained "\\\d\d\d\|\\."
+  syn match   javaDebugSpecial		contained "\\\%(u\x\x\x\x\|[0-3]\o\o\|\o\o\=\|[bstnfr"'\\]\)"
   syn region  javaDebugString		contained start=+"+  end=+"+  contains=javaDebugSpecial
-  syn match   javaDebugStringError	+"\([^"\\]\|\\.\)*$+
+  syn region  javaDebugString		contained start=+"""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaDebugSpecial,javaDebugTextBlockError
+  " The highlight groups of java{StrTempl,Debug{,Paren,StrTempl}}\,
+  " share one colour by default. Do not conflate unrelated parens.
+  syn region  javaDebugStrTemplEmbExp	contained matchgroup=javaDebugStrTempl start="\\{" end="}" contains=javaComment,javaLineComment,javaDebug\%(Paren\)\@!.*
+  syn region  javaDebugStrTempl		contained start=+\%(\.[[:space:]\n]*\)\@<="+ end=+"+ contains=javaDebugStrTemplEmbExp,javaDebugSpecial
+  syn region  javaDebugStrTempl		contained start=+\%(\.[[:space:]\n]*\)\@<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaDebugStrTemplEmbExp,javaDebugSpecial,javaDebugTextBlockError
+  " The next line is commented out, it can cause a crash for a long line
+" syn match   javaDebugStringError	contained +"\%([^"\\]\|\\.\)*$+
+  syn match   javaDebugTextBlockError	contained +"""\s*"""+
   syn match   javaDebugCharacter	contained "'[^\\]'"
   syn match   javaDebugSpecialCharacter contained "'\\.'"
   syn match   javaDebugSpecialCharacter contained "'\\''"
-  syn match   javaDebugNumber		contained "\<\(0[0-7]*\|0[xX]\x\+\|\d\+\)[lL]\=\>"
-  syn match   javaDebugNumber		contained "\(\<\d\+\.\d*\|\.\d\+\)\([eE][-+]\=\d\+\)\=[fFdD]\="
-  syn match   javaDebugNumber		contained "\<\d\+[eE][-+]\=\d\+[fFdD]\=\>"
-  syn match   javaDebugNumber		contained "\<\d\+\([eE][-+]\=\d\+\)\=[fFdD]\>"
+  syn keyword javaDebugNumber		contained 0 0l 0L
+  syn match   javaDebugNumber		contained "\<\d\%(_*\d\)*\."
+  syn match   javaDebugNumber		contained "\<\%(0\%([xX]\x\%(_*\x\)*\|_*\o\%(_*\o\)*\|[bB][01]\%(_*[01]\)*\)\|[1-9]\%(_*\d\)*\)[lL]\=\>"
+  syn match   javaDebugNumber		contained "\%(\<\d\%(_*\d\)*\.\%(\d\%(_*\d\)*\)\=\|\.\d\%(_*\d\)*\)\%([eE][-+]\=\d\%(_*\d\)*\)\=[fFdD]\=\>"
+  syn match   javaDebugNumber		contained "\<\d\%(_*\d\)*[eE][-+]\=\d\%(_*\d\)*[fFdD]\=\>"
+  syn match   javaDebugNumber		contained "\<\d\%(_*\d\)*\%([eE][-+]\=\d\%(_*\d\)*\)\=[fFdD]\>"
+  syn match   javaDebugNumber		contained "\<0[xX]\%(\x\%(_*\x\)*\.\=\|\%(\x\%(_*\x\)*\)\=\.\x\%(_*\x\)*\)[pP][-+]\=\d\%(_*\d\)*[fFdD]\=\>"
   syn keyword javaDebugBoolean		contained true false
   syn keyword javaDebugType		contained null this super
   syn region javaDebugParen  start=+(+ end=+)+ contained contains=javaDebug.*,javaDebugParen
@@ -265,7 +315,9 @@ if exists("java_highlight_debug")
 
   hi def link javaDebug		 Debug
   hi def link javaDebugString		 DebugString
+  hi def link javaDebugStrTempl		 Macro
   hi def link javaDebugStringError	 javaError
+  hi def link javaDebugTextBlockError	 javaDebugStringError
   hi def link javaDebugType		 DebugType
   hi def link javaDebugBoolean		 DebugBoolean
   hi def link javaDebugNumber		 Debug
@@ -326,17 +378,20 @@ hi def link javaStorageClass		StorageClass
 hi def link javaMethodDecl		javaStorageClass
 hi def link javaClassDecl		javaStorageClass
 hi def link javaScopeDecl		javaStorageClass
+hi def link javaConceptKind		NonText
 
 hi def link javaBoolean		Boolean
 hi def link javaSpecial		Special
 hi def link javaSpecialError		Error
 hi def link javaSpecialCharError	Error
 hi def link javaString			String
+hi def link javaStrTempl		Macro
 hi def link javaCharacter		Character
 hi def link javaSpecialChar		SpecialChar
 hi def link javaNumber			Number
 hi def link javaError			Error
 hi def link javaStringError		Error
+hi def link javaTextBlockError		javaStringError
 hi def link javaStatement		Statement
 hi def link javaOperator		Operator
 hi def link javaComment		Comment

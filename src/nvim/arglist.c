@@ -623,6 +623,8 @@ void ex_argument(exarg_T *eap)
 /// Edit file "argn" of the argument lists.
 void do_argfile(exarg_T *eap, int argn)
 {
+  bool is_split_cmd = *eap->cmd == 's';
+
   int old_arg_idx = curwin->w_arg_idx;
 
   if (argn < 0 || argn >= ARGCOUNT) {
@@ -637,10 +639,16 @@ void do_argfile(exarg_T *eap, int argn)
     return;
   }
 
+  if (!is_split_cmd
+      && (&ARGLIST[argn])->ae_fnum != curbuf->b_fnum
+      && !check_can_set_curbuf_forceit(eap->forceit)) {
+    return;
+  }
+
   setpcmark();
 
   // split window or create new tab page first
-  if (*eap->cmd == 's' || cmdmod.cmod_tab != 0) {
+  if (is_split_cmd || cmdmod.cmod_tab != 0) {
     if (win_split(0, 0) == FAIL) {
       return;
     }
@@ -1093,11 +1101,6 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
   // When the ":tab" modifier was used do this for all tab pages.
   arg_all_close_unused_windows(&aall);
 
-  // Now set the last used tabpage to where we started.
-  if (valid_tabpage(new_lu_tp)) {
-    lastused_tabpage = new_lu_tp;
-  }
-
   // Open a window for files in the argument list that don't have one.
   // ARGCOUNT may change while doing this, because of autocommands.
   if (count > aall.opened_len || count <= 0) {
@@ -1134,6 +1137,12 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
   if (valid_tabpage(aall.new_curtab)) {
     goto_tabpage_tp(aall.new_curtab, true, true);
   }
+
+  // Now set the last used tabpage to where we started.
+  if (valid_tabpage(new_lu_tp)) {
+    lastused_tabpage = new_lu_tp;
+  }
+
   if (win_valid(aall.new_curwin)) {
     win_enter(aall.new_curwin, false);
   }

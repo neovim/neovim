@@ -252,10 +252,15 @@ List concatenation ~
 							*list-concatenation*
 Two lists can be concatenated with the "+" operator: >
 	:let longlist = mylist + [5, 6]
-	:let mylist += [7, 8]
+	:let longlist = [5, 6] + mylist
+To prepend or append an item, turn it into a list by putting [] around it.
 
-To prepend or append an item, turn the item into a list by putting [] around
-it.  To change a list in-place, refer to |list-modification| below.
+A list can be concatenated with another one in-place using |:let+=| or
+|extend()|: >
+	:let mylist += [7, 8]
+	:call extend(mylist, [7, 8])
+<
+See |list-modification| below for more about changing a list in-place.
 
 
 Sublist ~
@@ -374,6 +379,18 @@ To change part of a list you can specify the first and last item to be
 modified.  The value must at least have the number of items in the range: >
 	:let list[3:5] = [3, 4, 5]
 
+To add items to a List in-place, you can use |:let+=| (|list-concatenation|): >
+	:let listA = [1, 2]
+	:let listA += [3, 4]
+<
+When two variables refer to the same List, changing one List in-place will
+cause the referenced List to be changed in-place: >
+	:let listA = [1, 2]
+	:let listB = listA
+	:let listB += [3, 4]
+	:echo listA
+	[1, 2, 3, 4]
+<
 Adding and removing items from a list is done with functions.  Here are a few
 examples: >
 	:call insert(list, 'a')		" prepend item 'a'
@@ -682,12 +699,15 @@ This calls Doit() with 0x11, 0x22 and 0x33.
 
 
 Blob concatenation ~
-
+							*blob-concatenation*
 Two blobs can be concatenated with the "+" operator: >
 	:let longblob = myblob + 0z4455
+	:let longblob = 0z4455 + myblob
+<
+A blob can be concatenated with another one in-place using |:let+=|: >
 	:let myblob += 0z6677
-
-To change a blob in-place see |blob-modification| below.
+<
+See |blob-modification| below for more about changing a blob in-place.
 
 
 Part of a blob ~
@@ -730,6 +750,18 @@ To change part of a blob you can specify the first and last byte to be
 modified.  The value must have the same number of bytes in the range: >
 	:let blob[3:5] = 0z334455
 
+To add items to a Blob in-place, you can use |:let+=| (|blob-concatenation|): >
+	:let blobA = 0z1122
+	:let blobA += 0z3344
+<
+When two variables refer to the same Blob, changing one Blob in-place will
+cause the referenced Blob to be changed in-place: >
+	:let blobA = 0z1122
+	:let blobB = blobA
+	:let blobB += 0z3344
+	:echo blobA
+	0z11223344
+<
 You can also use the functions |add()|, |remove()| and |insert()|.
 
 
@@ -1878,6 +1910,8 @@ This does NOT work: >
 :let {var} ..= {expr1}	Like ":let {var} = {var} .. {expr1}".
 			These fail if {var} was not set yet and when the type
 			of {var} and {expr1} don't fit the operator.
+			`+=` modifies a |List| or a |Blob| in-place instead of
+			creating a new one.
 
 
 :let ${env-name} = {expr1}			*:let-environment* *:let-$*

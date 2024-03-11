@@ -29,7 +29,7 @@
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/message.h"
-#include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
@@ -37,9 +37,8 @@
 #include "nvim/version.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/funcs_metadata.generated.h"
+# include "api/private/api_metadata.generated.h"
 # include "api/private/helpers.c.generated.h"
-# include "api/private/ui_events_metadata.generated.h"
 #endif
 
 /// Start block that may cause Vimscript exceptions while evaluating another code
@@ -175,7 +174,7 @@ bool try_end(Error *err)
 /// @param dict The vimscript dict
 /// @param key The key
 /// @param[out] err Details of an error that may have occurred
-Object dict_get_value(dict_T *dict, String key, Error *err)
+Object dict_get_value(dict_T *dict, String key, Arena *arena, Error *err)
 {
   dictitem_T *const di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
 
@@ -184,7 +183,7 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
     return (Object)OBJECT_INIT;
   }
 
-  return vim_to_object(&di->di_tv);
+  return vim_to_object(&di->di_tv, arena, true);
 }
 
 dictitem_T *dict_check_writable(dict_T *dict, String key, bool del, Error *err)
@@ -221,7 +220,8 @@ dictitem_T *dict_check_writable(dict_T *dict, String key, bool del, Error *err)
 /// @param retval If true the old value will be converted and returned.
 /// @param[out] err Details of an error that may have occurred
 /// @return The old value if `retval` is true and the key was present, else NIL
-Object dict_set_var(dict_T *dict, String key, Object value, bool del, bool retval, Error *err)
+Object dict_set_var(dict_T *dict, String key, Object value, bool del, bool retval, Arena *arena,
+                    Error *err)
 {
   Object rv = OBJECT_INIT;
   dictitem_T *di = dict_check_writable(dict, key, del, err);
@@ -244,7 +244,7 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del, bool retva
       }
       // Return the old value
       if (retval) {
-        rv = vim_to_object(&di->di_tv);
+        rv = vim_to_object(&di->di_tv, arena, false);
       }
       // Delete the entry
       tv_dict_item_remove(dict, di);
@@ -265,7 +265,7 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del, bool retva
     } else {
       // Return the old value
       if (retval) {
-        rv = vim_to_object(&di->di_tv);
+        rv = vim_to_object(&di->di_tv, arena, false);
       }
       bool type_error = false;
       if (dict == &vimvardict
@@ -425,12 +425,12 @@ String cstrn_as_string(char *str, size_t maxsize)
 /// @param str the C string to use
 /// @return The resulting String, or an empty String if
 ///           str was NULL
-String cstr_as_string(char *str) FUNC_ATTR_PURE
+String cstr_as_string(const char *str) FUNC_ATTR_PURE
 {
   if (str == NULL) {
     return (String)STRING_INIT;
   }
-  return (String){ .data = str, .size = strlen(str) };
+  return (String){ .data = (char *)str, .size = strlen(str) };
 }
 
 /// Return the owned memory of a ga as a String
@@ -454,9 +454,10 @@ String ga_take_string(garray_T *ga)
 /// @param input  Binary string
 /// @param crlf  Also break lines at CR and CRLF.
 /// @return [allocated] String array
-Array string_to_array(const String input, bool crlf)
+Array string_to_array(const String input, bool crlf, Arena *arena)
 {
-  Array ret = ARRAY_DICT_INIT;
+  ArrayBuilder ret = ARRAY_DICT_INIT;
+  kvi_init(ret);
   for (size_t i = 0; i < input.size; i++) {
     const char *start = input.data + i;
     const char *end = start;
@@ -471,20 +472,17 @@ Array string_to_array(const String input, bool crlf)
     if (crlf && *end == CAR && i + 1 < input.size && *(end + 1) == NL) {
       i += 1;  // Advance past CRLF.
     }
-    String s = {
-      .size = line_len,
-      .data = xmemdupz(start, line_len),
-    };
+    String s = CBUF_TO_ARENA_STR(arena, start, line_len);
     memchrsub(s.data, NUL, NL, line_len);
-    ADD(ret, STRING_OBJ(s));
+    kvi_push(ret, STRING_OBJ(s));
     // If line ends at end-of-buffer, add empty final item.
     // This is "readfile()-style", see also ":help channel-lines".
     if (i + 1 == input.size && (*end == NL || (crlf && *end == CAR))) {
-      ADD(ret, STRING_OBJ(STRING_INIT));
+      kvi_push(ret, STRING_OBJ(STRING_INIT));
     }
   }
 
-  return ret;
+  return arena_take_arraybuilder(arena, &ret);
 }
 
 /// Normalizes 0-based indexes to buffer line numbers.
@@ -576,8 +574,17 @@ String arena_string(Arena *arena, String str)
   if (str.size) {
     return cbuf_as_string(arena_memdupz(arena, str.data, str.size), str.size);
   } else {
-    return (String)STRING_INIT;
+    return (String){ .data = arena ? "" : xstrdup(""), .size = 0 };
   }
+}
+
+Array arena_take_arraybuilder(Arena *arena, ArrayBuilder *arr)
+{
+  Array ret = arena_array(arena, kv_size(*arr));
+  ret.size = kv_size(*arr);
+  memcpy(ret.items, arr->items, sizeof(ret.items[0]) * ret.size);
+  kvi_destroy(*arr);
+  return ret;
 }
 
 void api_free_object(Object value)
@@ -640,102 +647,30 @@ void api_clear_error(Error *value)
   value->type = kErrorTypeNone;
 }
 
-/// @returns a shared value. caller must not modify it!
-Dictionary api_metadata(void)
-{
-  static Dictionary metadata = ARRAY_DICT_INIT;
+// initialized once, never freed
+static ArenaMem mem_for_metadata = NULL;
 
-  if (!metadata.size) {
-    PUT(metadata, "version", DICTIONARY_OBJ(version_dict()));
-    init_function_metadata(&metadata);
-    init_ui_event_metadata(&metadata);
-    init_error_type_metadata(&metadata);
-    init_type_metadata(&metadata);
+/// @returns a shared value. caller must not modify it!
+Object api_metadata(void)
+{
+  static Object metadata = OBJECT_INIT;
+
+  if (metadata.type == kObjectTypeNil) {
+    Arena arena = ARENA_EMPTY;
+    Error err = ERROR_INIT;
+    metadata = unpack((char *)packed_api_metadata, sizeof(packed_api_metadata), &arena, &err);
+    if (ERROR_SET(&err) || metadata.type != kObjectTypeDictionary) {
+      abort();
+    }
+    mem_for_metadata = arena_finish(&arena);
   }
 
   return metadata;
 }
 
-static void init_function_metadata(Dictionary *metadata)
+String api_metadata_raw(void)
 {
-  msgpack_unpacked unpacked;
-  msgpack_unpacked_init(&unpacked);
-  if (msgpack_unpack_next(&unpacked,
-                          (const char *)funcs_metadata,
-                          sizeof(funcs_metadata),
-                          NULL) != MSGPACK_UNPACK_SUCCESS) {
-    abort();
-  }
-  Object functions;
-  msgpack_rpc_to_object(&unpacked.data, &functions);
-  msgpack_unpacked_destroy(&unpacked);
-  PUT(*metadata, "functions", functions);
-}
-
-static void init_ui_event_metadata(Dictionary *metadata)
-{
-  msgpack_unpacked unpacked;
-  msgpack_unpacked_init(&unpacked);
-  if (msgpack_unpack_next(&unpacked,
-                          (const char *)ui_events_metadata,
-                          sizeof(ui_events_metadata),
-                          NULL) != MSGPACK_UNPACK_SUCCESS) {
-    abort();
-  }
-  Object ui_events;
-  msgpack_rpc_to_object(&unpacked.data, &ui_events);
-  msgpack_unpacked_destroy(&unpacked);
-  PUT(*metadata, "ui_events", ui_events);
-  Array ui_options = ARRAY_DICT_INIT;
-  ADD(ui_options, CSTR_TO_OBJ("rgb"));
-  for (UIExtension i = 0; i < kUIExtCount; i++) {
-    if (ui_ext_names[i][0] != '_') {
-      ADD(ui_options, CSTR_TO_OBJ(ui_ext_names[i]));
-    }
-  }
-  PUT(*metadata, "ui_options", ARRAY_OBJ(ui_options));
-}
-
-static void init_error_type_metadata(Dictionary *metadata)
-{
-  Dictionary types = ARRAY_DICT_INIT;
-
-  Dictionary exception_metadata = ARRAY_DICT_INIT;
-  PUT(exception_metadata, "id", INTEGER_OBJ(kErrorTypeException));
-
-  Dictionary validation_metadata = ARRAY_DICT_INIT;
-  PUT(validation_metadata, "id", INTEGER_OBJ(kErrorTypeValidation));
-
-  PUT(types, "Exception", DICTIONARY_OBJ(exception_metadata));
-  PUT(types, "Validation", DICTIONARY_OBJ(validation_metadata));
-
-  PUT(*metadata, "error_types", DICTIONARY_OBJ(types));
-}
-
-static void init_type_metadata(Dictionary *metadata)
-{
-  Dictionary types = ARRAY_DICT_INIT;
-
-  Dictionary buffer_metadata = ARRAY_DICT_INIT;
-  PUT(buffer_metadata, "id",
-      INTEGER_OBJ(kObjectTypeBuffer - EXT_OBJECT_TYPE_SHIFT));
-  PUT(buffer_metadata, "prefix", CSTR_TO_OBJ("nvim_buf_"));
-
-  Dictionary window_metadata = ARRAY_DICT_INIT;
-  PUT(window_metadata, "id",
-      INTEGER_OBJ(kObjectTypeWindow - EXT_OBJECT_TYPE_SHIFT));
-  PUT(window_metadata, "prefix", CSTR_TO_OBJ("nvim_win_"));
-
-  Dictionary tabpage_metadata = ARRAY_DICT_INIT;
-  PUT(tabpage_metadata, "id",
-      INTEGER_OBJ(kObjectTypeTabpage - EXT_OBJECT_TYPE_SHIFT));
-  PUT(tabpage_metadata, "prefix", CSTR_TO_OBJ("nvim_tabpage_"));
-
-  PUT(types, "Buffer", DICTIONARY_OBJ(buffer_metadata));
-  PUT(types, "Window", DICTIONARY_OBJ(window_metadata));
-  PUT(types, "Tabpage", DICTIONARY_OBJ(tabpage_metadata));
-
-  PUT(*metadata, "types", DICTIONARY_OBJ(types));
+  return cbuf_as_string((char *)packed_api_metadata, sizeof(packed_api_metadata));
 }
 
 // all the copy_[object] functions allow arena=NULL,
@@ -1014,21 +949,101 @@ bool api_dict_to_keydict(void *retval, FieldHashfn hashy, Dictionary dict, Error
   return true;
 }
 
-void api_free_keydict(void *dict, KeySetLink *table)
+Dictionary api_keydict_to_dict(void *value, KeySetLink *table, size_t max_size, Arena *arena)
+{
+  Dictionary rv = arena_dict(arena, max_size);
+  for (size_t i = 0; table[i].str; i++) {
+    KeySetLink *field = &table[i];
+    bool is_set = true;
+    if (field->opt_index >= 0) {
+      OptKeySet *ks = (OptKeySet *)value;
+      is_set = ks->is_set_ & (1ULL << field->opt_index);
+    }
+
+    if (!is_set) {
+      continue;
+    }
+
+    char *mem = ((char *)value + field->ptr_off);
+    Object val = NIL;
+
+    if (field->type == kObjectTypeNil) {
+      val = *(Object *)mem;
+    } else if (field->type == kObjectTypeInteger) {
+      val = INTEGER_OBJ(*(Integer *)mem);
+    } else if (field->type == kObjectTypeFloat) {
+      val = FLOAT_OBJ(*(Float *)mem);
+    } else if (field->type == kObjectTypeBoolean) {
+      val = BOOLEAN_OBJ(*(Boolean *)mem);
+    } else if (field->type == kObjectTypeString) {
+      val = STRING_OBJ(*(String *)mem);
+    } else if (field->type == kObjectTypeArray) {
+      val = ARRAY_OBJ(*(Array *)mem);
+    } else if (field->type == kObjectTypeDictionary) {
+      val = DICTIONARY_OBJ(*(Dictionary *)mem);
+    } else if (field->type == kObjectTypeBuffer || field->type == kObjectTypeWindow
+               || field->type == kObjectTypeTabpage) {
+      val.data.integer = *(handle_T *)mem;
+      val.type = field->type;
+    } else if (field->type == kObjectTypeLuaRef) {
+      // do nothing
+    } else {
+      abort();
+    }
+
+    PUT_C(rv, field->str, val);
+  }
+
+  return rv;
+}
+
+void api_luarefs_free_object(Object value)
+{
+  // TODO(bfredl): this is more complicated than it needs to be.
+  // we should be able to lock down more specifically where luarefs can be
+  switch (value.type) {
+  case kObjectTypeLuaRef:
+    api_free_luaref(value.data.luaref);
+    break;
+
+  case kObjectTypeArray:
+    api_luarefs_free_array(value.data.array);
+    break;
+
+  case kObjectTypeDictionary:
+    api_luarefs_free_dict(value.data.dictionary);
+    break;
+
+  default:
+    break;
+  }
+}
+
+void api_luarefs_free_keydict(void *dict, KeySetLink *table)
 {
   for (size_t i = 0; table[i].str; i++) {
     char *mem = ((char *)dict + table[i].ptr_off);
     if (table[i].type == kObjectTypeNil) {
-      api_free_object(*(Object *)mem);
-    } else if (table[i].type == kObjectTypeString) {
-      api_free_string(*(String *)mem);
-    } else if (table[i].type == kObjectTypeArray) {
-      api_free_array(*(Array *)mem);
-    } else if (table[i].type == kObjectTypeDictionary) {
-      api_free_dictionary(*(Dictionary *)mem);
+      api_luarefs_free_object(*(Object *)mem);
     } else if (table[i].type == kObjectTypeLuaRef) {
       api_free_luaref(*(LuaRef *)mem);
+    } else if (table[i].type == kObjectTypeDictionary) {
+      api_luarefs_free_dict(*(Dictionary *)mem);
     }
+  }
+}
+
+void api_luarefs_free_array(Array value)
+{
+  for (size_t i = 0; i < value.size; i++) {
+    api_luarefs_free_object(value.items[i]);
+  }
+}
+
+void api_luarefs_free_dict(Dictionary value)
+{
+  for (size_t i = 0; i < value.size; i++) {
+    api_luarefs_free_object(value.items[i].value);
   }
 }
 

@@ -39,6 +39,7 @@ describe('decorations providers', function()
       [16] = {special = Screen.colors.Red, undercurl = true},
       [17] = {foreground = Screen.colors.Red},
       [18] = {bold = true, foreground = Screen.colors.SeaGreen};
+      [19] = {bold = true};
     }
   end)
 
@@ -738,6 +739,25 @@ describe('decorations providers', function()
                                               |
     ]]}
   end)
+
+  it('is not invoked repeatedly in Visual mode with vim.schedule() #20235', function()
+    exec_lua([[_G.cnt = 0]])
+    setup_provider([[
+      function on_do(event, ...)
+        if event == 'win' then
+          vim.schedule(function() end)
+          _G.cnt = _G.cnt + 1
+        end
+      end
+    ]])
+    feed('v')
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*6
+      {19:-- VISUAL --}                            |
+    ]])
+    eq(2, exec_lua([[return _G.cnt]]))
+  end)
 end)
 
 local example_text = [[
@@ -786,14 +806,14 @@ describe('extmark decorations', function()
       [23] = {foreground = Screen.colors.Magenta1, background = Screen.colors.LightGrey};
       [24] = {bold = true};
       [25] = {background = Screen.colors.LightRed};
-      [26] = {background=Screen.colors.DarkGrey, foreground=Screen.colors.LightGrey};
-      [27] = {background = Screen.colors.Plum1};
+      [26] = {background = Screen.colors.DarkGrey, foreground = Screen.colors.LightGrey};
+      [27] = {background = Screen.colors.LightGrey, foreground = Screen.colors.Black};
       [28] = {underline = true, foreground = Screen.colors.SlateBlue};
-      [29] = {foreground = Screen.colors.SlateBlue, background = Screen.colors.LightGray, underline = true};
-      [30] = {foreground = Screen.colors.DarkCyan, background = Screen.colors.LightGray, underline = true};
+      [29] = {foreground = Screen.colors.SlateBlue, background = Screen.colors.LightGrey, underline = true};
+      [30] = {foreground = Screen.colors.DarkCyan, background = Screen.colors.LightGrey, underline = true};
       [31] = {underline = true, foreground = Screen.colors.DarkCyan};
       [32] = {underline = true};
-      [33] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGray};
+      [33] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey};
       [34] = {background = Screen.colors.Yellow};
       [35] = {background = Screen.colors.Yellow, bold = true, foreground = Screen.colors.Blue};
       [36] = {foreground = Screen.colors.Blue1, bold = true, background = Screen.colors.Red};
@@ -804,6 +824,7 @@ describe('extmark decorations', function()
       [41] = {bold = true, reverse = true};
       [42] = {undercurl = true, special = Screen.colors.Red};
       [43] = {background = Screen.colors.Yellow, undercurl = true, special = Screen.colors.Red};
+      [44] = {background = Screen.colors.LightMagenta};
     }
 
     ns = api.nvim_create_namespace 'test'
@@ -997,7 +1018,7 @@ describe('extmark decorations', function()
     screen:expect{grid=[[
       ababababababababababababababababababababab{4:01234567}|
       {1:++}{4:89}abababababababababababababababababababa{4:0123456}|
-      {1:++}^a{18:babab}ababababababababababababababababababababab|
+      {1:++}^a{27:babab}ababababababababababababababababababababab|
       {1:++}abababababababababababababababababababababababab|
       {1:++}ababab                                          |
       {24:-- VISUAL --}                                      |
@@ -1007,7 +1028,7 @@ describe('extmark decorations', function()
     screen:expect{grid=[[
       ababababababababababababababababababababab{4:01234567}|
       {1:++}{4:89}abababababababababababababababababababa{4:0123456}|
-      {1:++}{18:ababa}^bababababababababababababababababababababab|
+      {1:++}{27:ababa}^bababababababababababababababababababababab|
       {1:++}abababababababababababababababababababababababab|
       {1:++}ababab                                          |
       {24:-- VISUAL --}                                      |
@@ -1016,8 +1037,8 @@ describe('extmark decorations', function()
     feed('gk')
     screen:expect{grid=[[
       ababababababababababababababababababababab{4:01234567}|
-      {1:++}{4:89}aba^b{18:ababababababababababababababababababababab}|
-      {1:++}{18:a}{4:89}babababababababababababababababababababababab|
+      {1:++}{4:89}aba^b{27:ababababababababababababababababababababab}|
+      {1:++}{27:a}{4:89}babababababababababababababababababababababab|
       {1:++}abababababababababababababababababababababababab|
       {1:++}ababab                                          |
       {24:-- VISUAL --}                                      |
@@ -1026,7 +1047,7 @@ describe('extmark decorations', function()
     feed('o')
     screen:expect{grid=[[
       ababababababababababababababababababababab{4:01234567}|
-      {1:++}{4:89}aba{18:bababababababababababababababababababababab}|
+      {1:++}{4:89}aba{27:bababababababababababababababababababababab}|
       {1:++}^a{4:89}babababababababababababababababababababababab|
       {1:++}abababababababababababababababababababababababab|
       {1:++}ababab                                          |
@@ -1165,6 +1186,7 @@ describe('extmark decorations', function()
     ]]}
 
     command 'hi Blendy guibg=Red blend=30'
+    command 'hi! Visual guifg=NONE guibg=LightGrey'
     api.nvim_buf_set_extmark(0, ns, 1, 5, { virt_text={{'blendy text - here', 'Blendy'}}, virt_text_pos='overlay', hl_mode='blend'})
     api.nvim_buf_set_extmark(0, ns, 2, 5, { virt_text={{'combining color', 'Blendy'}}, virt_text_pos='overlay', hl_mode='combine'})
     api.nvim_buf_set_extmark(0, ns, 3, 5, { virt_text={{'replacing color', 'Blendy'}}, virt_text_pos='overlay', hl_mode='replace'})
@@ -1722,6 +1744,35 @@ describe('extmark decorations', function()
     ]]}
   end)
 
+  it('redraws properly when adding/removing conceal on non-current line', function()
+    screen:try_resize(50, 5)
+    api.nvim_buf_set_lines(0, 0, -1, true, {'abcd', 'efgh','ijkl', 'mnop'})
+    command('setlocal conceallevel=2')
+    screen:expect{grid=[[
+      ^abcd                                              |
+      efgh                                              |
+      ijkl                                              |
+      mnop                                              |
+                                                        |
+    ]]}
+    api.nvim_buf_set_extmark(0, ns, 2, 1, {end_col=3, conceal=''})
+    screen:expect{grid=[[
+      ^abcd                                              |
+      efgh                                              |
+      il                                                |
+      mnop                                              |
+                                                        |
+    ]]}
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    screen:expect{grid=[[
+      ^abcd                                              |
+      efgh                                              |
+      ijkl                                              |
+      mnop                                              |
+                                                        |
+    ]]}
+  end)
+
   it('avoids redraw issue #20651', function()
     exec_lua[[
       vim.cmd.normal'10oXXX'
@@ -1751,7 +1802,7 @@ describe('extmark decorations', function()
     end
 
     screen:expect{grid=[[
-      {27: }                                                 |
+      {44: }                                                 |
       XXX                                               |*2
       ^XXX HELLO                                         |
       XXX                                               |*7
@@ -1852,7 +1903,8 @@ describe('extmark decorations', function()
     feed('gg')
     command('set ft=lua')
     command('syntax on')
-    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_col = 3, hl_mode = 'combine', hl_group = 'Visual' })
+    command('hi default MyMark guibg=LightGrey')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_col = 3, hl_mode = 'combine', hl_group = 'MyMark' })
     command('hi default MyLine gui=underline')
     command('sign define CurrentLine linehl=MyLine')
     fn.sign_place(6, 'Test', 'CurrentLine', '', { lnum = 1 })
@@ -1915,18 +1967,19 @@ describe('extmark decorations', function()
   it('highlight applies to a full TAB on line with matches #20885', function()
     screen:try_resize(50, 3)
     api.nvim_buf_set_lines(0, 0, -1, true, {'\t-- match1', '        -- match2'})
-    fn.matchadd('Underlined', 'match')
-    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_row = 1, end_col = 0, hl_group = 'Visual' })
-    api.nvim_buf_set_extmark(0, ns, 1, 0, { end_row = 2, end_col = 0, hl_group = 'Visual' })
+    fn.matchadd('NonText', 'match')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_row = 1, end_col = 0, hl_group = 'Search' })
+    api.nvim_buf_set_extmark(0, ns, 1, 0, { end_row = 2, end_col = 0, hl_group = 'Search' })
     screen:expect{grid=[[
-      {18:       ^ -- }{29:match}{18:1}                                 |
-      {18:        -- }{29:match}{18:2}                                 |
+      {34:       ^ -- }{35:match}{34:1}                                 |
+      {34:        -- }{35:match}{34:2}                                 |
                                                         |
     ]]}
   end)
 
   pending('highlight applies to a full TAB in visual block mode', function()
     screen:try_resize(50, 8)
+    command('hi! Visual guifg=NONE guibg=LightGrey')
     api.nvim_buf_set_lines(0, 0, -1, true, {'asdf', '\tasdf', '\tasdf', '\tasdf', 'asdf'})
     api.nvim_buf_set_extmark(0, ns, 0, 0, {end_row = 5, end_col = 0, hl_group = 'Underlined'})
     screen:expect([[
@@ -2210,6 +2263,44 @@ describe('extmark decorations', function()
     ]]}
   end)
 
+  it('virtual text is drawn correctly after delete and undo #27368', function()
+    insert('aaa\nbbb\nccc\nddd\neee')
+    command('vsplit')
+    api.nvim_buf_set_extmark(0, ns, 2, 0, { virt_text = {{'EOL'}} })
+    feed('3gg')
+    screen:expect{grid=[[
+      aaa                      │aaa                     |
+      bbb                      │bbb                     |
+      ^ccc EOL                  │ccc EOL                 |
+      ddd                      │ddd                     |
+      eee                      │eee                     |
+      {1:~                        }│{1:~                       }|*8
+      {41:[No Name] [+]             }{40:[No Name] [+]           }|
+                                                        |
+    ]]}
+    feed('dd')
+    screen:expect{grid=[[
+      aaa                      │aaa                     |
+      bbb                      │bbb                     |
+      ^ddd EOL                  │ddd EOL                 |
+      eee                      │eee                     |
+      {1:~                        }│{1:~                       }|*9
+      {41:[No Name] [+]             }{40:[No Name] [+]           }|
+                                                        |
+    ]]}
+    command('silent undo')
+    screen:expect{grid=[[
+      aaa                      │aaa                     |
+      bbb                      │bbb                     |
+      ^ccc EOL                  │ccc EOL                 |
+      ddd                      │ddd                     |
+      eee                      │eee                     |
+      {1:~                        }│{1:~                       }|*8
+      {41:[No Name] [+]             }{40:[No Name] [+]           }|
+                                                        |
+    ]]}
+  end)
+
   it('works with both hl_group and sign_hl_group', function()
     screen:try_resize(screen._width, 3)
     insert('abcdefghijklmn')
@@ -2252,11 +2343,10 @@ describe('extmark decorations', function()
 
     local url = 'https://example.com'
 
-    local attrs = screen:get_default_attr_ids()
-    table.insert(attrs, {
-      url = url,
+    screen:set_default_attr_ids({
+      e = { bold = true, foreground = Screen.colors.Blue },
+      u = { url = url },
     })
-    screen:set_default_attr_ids(attrs)
 
     api.nvim_buf_set_extmark(0, ns, 1, 4, {
       end_col = 14,
@@ -2265,7 +2355,7 @@ describe('extmark decorations', function()
 
     screen:expect{grid=[[
       for _,item in ipairs(items) do                    |
-          {44:local text}, hl_id_cell, count = unpack(item)  |
+          {u:local text}, hl_id_cell, count = unpack(item)  |
           if hl_id_cell ~= nil then                     |
               hl_id = hl_id_cell                        |
           end                                           |
@@ -2276,10 +2366,127 @@ describe('extmark decorations', function()
               colpos = colpos+1                         |
           end                                           |
       en^d                                               |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {e:~                                                 }|
+      {e:~                                                 }|
                                                         |
     ]]}
+  end)
+
+  it('can replace marks in place with different decorations #27211', function()
+    local mark = api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_lines = {{{"foo", "ErrorMsg"}}}, })
+    screen:expect{grid=[[
+      ^                                                  |
+      {4:foo}                                               |
+      {1:~                                                 }|*12
+                                                        |
+    ]]}
+
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      id = mark,
+      virt_text = { { "testing", "NonText" } },
+      virt_text_pos = "inline",
+    })
+    screen:expect{grid=[[
+      {1:^testing}                                           |
+      {1:~                                                 }|*13
+                                                        |
+    ]]}
+
+    api.nvim_buf_del_extmark(0, ns, mark)
+    screen:expect{grid=[[
+      ^                                                  |
+      {1:~                                                 }|*13
+                                                        |
+    ]]}
+
+    helpers.assert_alive()
+  end)
+
+  it('priority ordering of overlay or win_col virtual text at same position', function()
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_text = {{'A'}}, virt_text_pos = 'overlay', priority = 100 })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_text = {{'A'}}, virt_text_win_col = 30, priority = 100 })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_text = {{'BB'}}, virt_text_pos = 'overlay', priority = 90 })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_text = {{'BB'}}, virt_text_win_col = 30, priority = 90 })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_text = {{'CCC'}}, virt_text_pos = 'overlay', priority = 80 })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_text = {{'CCC'}}, virt_text_win_col = 30, priority = 80 })
+    screen:expect([[
+      ^ABC                           ABC                 |
+      {1:~                                                 }|*13
+                                                        |
+    ]])
+  end)
+
+  it('priority ordering of inline and non-inline virtual text at same char', function()
+    insert(('?'):rep(40) .. ('!'):rep(30))
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'A'}}, virt_text_pos = 'overlay', priority = 10 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'a'}}, virt_text_win_col = 15, priority = 10 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'BBBB'}}, virt_text_pos = 'inline', priority = 15 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'C'}}, virt_text_pos = 'overlay', priority = 20 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'c'}}, virt_text_win_col = 17, priority = 20 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'DDDD'}}, virt_text_pos = 'inline', priority = 25 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'E'}}, virt_text_pos = 'overlay', priority = 30 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'e'}}, virt_text_win_col = 19, priority = 30 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'FFFF'}}, virt_text_pos = 'inline', priority = 35 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'G'}}, virt_text_pos = 'overlay', priority = 40 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'g'}}, virt_text_win_col = 21, priority = 40 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'HHHH'}}, virt_text_pos = 'inline', priority = 45 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'I'}}, virt_text_pos = 'overlay', priority = 50 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'i'}}, virt_text_win_col = 23, priority = 50 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'JJJJ'}}, virt_text_pos = 'inline', priority = 55 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'K'}}, virt_text_pos = 'overlay', priority = 60 })
+    api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = {{'k'}}, virt_text_win_col = 25, priority = 60 })
+    screen:expect([[
+      ???????????????a?c?e????????????????????ABBBCDDDEF|
+      FFGHHHIJJJK!!!!!!!!!!g!i!k!!!!!!!!!!!!!^!          |
+      {1:~                                                 }|*12
+                                                        |
+    ]])
+    feed('02x$')
+    screen:expect([[
+      ???????????????a?c?e??????????????????ABBBCDDDEFFF|
+      GHHHIJJJK!!!!!!!!!!!!g!i!k!!!!!!!!!!!^!            |
+      {1:~                                                 }|*12
+                                                        |
+    ]])
+    feed('02x$')
+    screen:expect([[
+      ???????????????a?c?e?g??????????????ABBBCDDDEFFFGH|
+      HHIJJJK!!!!!!!!!!!!!!!!i!k!!!!!!!!!^!              |
+      {1:~                                                 }|*12
+                                                        |
+    ]])
+    feed('02x$')
+    screen:expect([[
+      ???????????????a?c?e?g????????????ABBBCDDDEFFFGHHH|
+      IJJJK!!!!!!!!!!!!!!!!!!i!k!!!!!!!^!                |
+      {1:~                                                 }|*12
+                                                        |
+    ]])
+    command('set nowrap')
+    feed('0')
+    screen:expect([[
+      ^???????????????a?c?e?g?i?k????????ABBBCDDDEFFFGHHH|
+      {1:~                                                 }|*13
+                                                        |
+    ]])
+    feed('2x')
+    screen:expect([[
+      ^???????????????a?c?e?g?i?k??????ABBBCDDDEFFFGHHHIJ|
+      {1:~                                                 }|*13
+                                                        |
+    ]])
+    feed('2x')
+    screen:expect([[
+      ^???????????????a?c?e?g?i?k????ABBBCDDDEFFFGHHHIJJJ|
+      {1:~                                                 }|*13
+                                                        |
+    ]])
+    feed('2x')
+    screen:expect([[
+      ^???????????????a?c?e?g?i?k??ABBBCDDDEFFFGHHHIJJJK!|
+      {1:~                                                 }|*13
+                                                        |
+    ]])
   end)
 end)
 
@@ -2296,7 +2503,7 @@ describe('decorations: inline virtual text', function()
       [4] = {background = Screen.colors.Red1, foreground = Screen.colors.Gray100};
       [5] = {background = Screen.colors.Red1, bold = true};
       [6] = {foreground = Screen.colors.DarkCyan};
-      [7] = {background = Screen.colors.LightGrey};
+      [7] = {background = Screen.colors.LightGrey, foreground = Screen.colors.Black};
       [8] = {bold = true};
       [9] = {background = Screen.colors.Plum1};
       [10] = {foreground = Screen.colors.SlateBlue};
@@ -3862,16 +4069,31 @@ if (h->n_buckets < new_n_buckets) { // expand
 
   it('works with one line', function()
     insert(example_text2)
-    feed 'gg'
+    feed '2gg'
+    screen:expect{grid=[[
+      if (h->n_buckets < new_n_buckets) { // expand     |
+        ^khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      }                                                 |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
     api.nvim_buf_set_extmark(0, ns, 1, 33, {
       virt_lines={ {{">> ", "NonText"}, {"krealloc", "Identifier"}, {": change the size of an allocation"}}};
       virt_lines_above=true;
     })
 
     screen:expect{grid=[[
-      ^if (h->n_buckets < new_n_buckets) { // expand     |
+      if (h->n_buckets < new_n_buckets) { // expand     |
       {1:>> }{2:krealloc}: change the size of an allocation     |
-        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+        ^khkey_t *new_keys = (khkey_t *)krealloc((void *)|
       h->keys, new_n_buckets * sizeof(khkey_t));        |
         h->keys = new_keys;                             |
         if (kh_is_map && val_size) {                    |
@@ -3935,7 +4157,6 @@ if (h->n_buckets < new_n_buckets) { // expand
     api.nvim_buf_set_extmark(0, ns, 5, 0, {
       virt_lines = { {{"^^ REVIEW:", "Todo"}, {" new_vals variable seems unnecessary?", "Comment"}} };
     })
-    -- TODO: what about the cursor??
     screen:expect{grid=[[
       if (h->n_buckets < new_n_buckets) { // expand     |
         khkey_t *new_keys = (khkey_t *)                 |
@@ -3952,7 +4173,6 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]]}
 
     api.nvim_buf_clear_namespace(0, ns, 0, -1)
-    -- Cursor should be drawn on the correct line. #22704
     screen:expect{grid=[[
       if (h->n_buckets < new_n_buckets) { // expand     |
         khkey_t *new_keys = (khkey_t *)                 |
@@ -4584,22 +4804,24 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]]}
 
     feed('gg')
-    feed('dd')
+    feed('yyp')
     screen:expect{grid=[[
-      ^line2                                             |
+      line1                                             |
       foo                                               |
       bar                                               |
       baz                                               |
+      ^line1                                             |
+      line2                                             |
       line3                                             |
       line4                                             |
       line5                                             |
-      {1:~                                                 }|*4
+      {1:~                                                 }|*2
                                                         |
     ]]}
 
-    feed('yyp')
+    feed('dd')
     screen:expect{grid=[[
-      line2                                             |
+      line1                                             |
       foo                                               |
       bar                                               |
       baz                                               |
@@ -4610,6 +4832,19 @@ if (h->n_buckets < new_n_buckets) { // expand
       {1:~                                                 }|*3
                                                         |
     ]]}
+
+    feed('kdd')
+    screen:expect([[
+      ^line2                                             |
+      foo                                               |
+      bar                                               |
+      baz                                               |
+      line3                                             |
+      line4                                             |
+      line5                                             |
+      {1:~                                                 }|*4
+                                                        |
+    ]])
   end)
 
 end)
@@ -5099,6 +5334,33 @@ l5
     ]]}
   end)
 
+  it('correct width with moved marks before undo savepos', function()
+    screen:try_resize(20, 4)
+    insert(example_test3)
+    feed('gg')
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace('')
+      vim.api.nvim_buf_set_extmark(0, ns, 0, 0, { sign_text = 'S1' })
+      vim.api.nvim_buf_set_extmark(0, ns, 1, 0, { sign_text = 'S2' })
+      local s3 = vim.api.nvim_buf_set_extmark(0, ns, 2, 0, { sign_text = 'S3' })
+      local s4 = vim.api.nvim_buf_set_extmark(0, ns, 2, 0, { sign_text = 'S4' })
+      vim.schedule(function()
+        vim.cmd('silent d3')
+        vim.api.nvim_buf_set_extmark(0, ns, 2, 0, { id = s3, sign_text = 'S3' })
+        vim.api.nvim_buf_set_extmark(0, ns, 2, 0, { id = s4, sign_text = 'S4' })
+        vim.cmd('silent undo')
+        vim.api.nvim_buf_del_extmark(0, ns, s3)
+      end)
+    ]])
+
+    screen:expect{grid=[[
+      S1^l1                |
+      S2l2                |
+      S4l3                |
+                          |
+    ]]}
+  end)
+
   it('no crash with sign after many marks #27137', function()
     screen:try_resize(20, 4)
     insert('a')
@@ -5112,6 +5374,42 @@ l5
       {2:~                   }|*2
                           |
     ]]}
+  end)
+
+  it('correct sort order with multiple namespaces and same id', function()
+    local ns2 = api.nvim_create_namespace('')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {sign_text = 'S1', id = 1})
+    api.nvim_buf_set_extmark(0, ns2, 0, 0, {sign_text = 'S2', id = 1})
+
+    screen:expect{grid=[[
+      S1S2^                                              |
+      {2:~                                                 }|*8
+                                                        |
+    ]]}
+  end)
+
+  it('correct number of signs after deleting text (#27046)', function()
+    command('call setline(1, ["foo"]->repeat(31))')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {end_row = 0, sign_text = 'S1'})
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {end_row = 0, end_col = 3, hl_group = 'Error'})
+    api.nvim_buf_set_extmark(0, ns, 9, 0, {end_row = 9,  sign_text = 'S2'})
+    api.nvim_buf_set_extmark(0, ns, 9, 0, {end_row = 9, end_col = 3, hl_group = 'Error'})
+    api.nvim_buf_set_extmark(0, ns, 19, 0, {end_row = 19, sign_text = 'S3'})
+    api.nvim_buf_set_extmark(0, ns, 19, 0, {end_row = 19, end_col = 3, hl_group = 'Error'})
+    api.nvim_buf_set_extmark(0, ns, 29, 0, {end_row = 29, sign_text = 'S4'})
+    api.nvim_buf_set_extmark(0, ns, 29, 0, {end_row = 29, end_col = 3, hl_group = 'Error'})
+    api.nvim_buf_set_extmark(0, ns, 30, 0, {end_row = 30, sign_text = 'S5'})
+    api.nvim_buf_set_extmark(0, ns, 30, 0, {end_row = 30, end_col = 3, hl_group = 'Error'})
+    command('0d29')
+
+    screen:expect{grid=[[
+      S1S2S3S4{4:^foo}                                       |
+      S5{1:      }{4:foo}                                       |
+      {2:~                                                 }|*7
+      29 fewer lines                                    |
+    ]]}
+
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
   end)
 end)
 
@@ -5192,5 +5490,361 @@ describe('decorations: virt_text', function()
       {3:~                                                 }|*3
                                                         |
     ]]}
+  end)
+end)
+
+describe('decorations: window scoped', function()
+  local screen, ns
+  before_each(function()
+    clear()
+    screen = Screen.new(20, 10)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = { foreground = Screen.colors.Blue1 },
+      [2] = { foreground = Screen.colors.Blue1, bold = true },
+    }
+
+    ns = api.nvim_create_namespace 'test'
+
+    insert('12345')
+  end)
+
+  local noextmarks = {
+    grid = [[
+      1234^5               |
+      {2:~                   }|*8
+                          |
+    ]]}
+
+  local function set_scoped_extmark(line, col, opts)
+    return api.nvim_buf_set_extmark(0, ns, line, col, vim.tbl_extend('error', { scoped = true }, opts))
+  end
+
+  it('hl_group', function()
+    set_scoped_extmark(0, 0, {
+      hl_group = 'Comment',
+      end_col = 3,
+    })
+
+    screen:expect(noextmarks)
+
+    api.nvim_win_add_ns(0, ns)
+
+    screen:expect {
+      grid = [[
+      {1:123}4^5               |
+      {2:~                   }|*8
+                          |
+    ]]}
+
+    command 'split'
+    command 'only'
+
+    screen:expect(noextmarks)
+  end)
+
+  it('virt_text', function()
+    set_scoped_extmark(0, 0, {
+      virt_text = { { 'a', 'Comment' } },
+      virt_text_pos = 'eol',
+    })
+    set_scoped_extmark(0, 5, {
+      virt_text = { { 'b', 'Comment' } },
+      virt_text_pos = 'inline',
+    })
+    set_scoped_extmark(0, 1, {
+      virt_text = { { 'c', 'Comment' } },
+      virt_text_pos = 'overlay',
+    })
+    set_scoped_extmark(0, 1, {
+      virt_text = { { 'd', 'Comment' } },
+      virt_text_pos = 'right_align',
+    })
+
+    screen:expect(noextmarks)
+
+    api.nvim_win_add_ns(0, ns)
+
+    screen:expect {
+      grid = [[
+      1{1:c}34^5{1:b} {1:a}           {1:d}|
+      {2:~                   }|*8
+                          |
+    ]]}
+
+    command 'split'
+    command 'only'
+
+    screen:expect(noextmarks)
+  end)
+
+  it('virt_lines', function()
+    set_scoped_extmark(0, 0, {
+      virt_lines = { { { 'a', 'Comment' } } },
+    })
+
+    screen:expect(noextmarks)
+
+    api.nvim_win_add_ns(0, ns)
+
+    screen:expect {
+      grid = [[
+      1234^5               |
+      {1:a}                   |
+      {2:~                   }|*7
+                          |
+    ]]}
+
+    command 'split'
+    command 'only'
+
+    screen:expect(noextmarks)
+  end)
+
+  it('redraws correctly with inline virt_text and wrapping', function()
+    set_scoped_extmark(0, 2, {
+      virt_text = {{ ('b'):rep(18), 'Comment' }},
+      virt_text_pos = 'inline'
+    })
+
+    screen:expect(noextmarks)
+
+    api.nvim_win_add_ns(0, ns)
+
+    screen:expect {
+      grid = [[
+      12{1:bbbbbbbbbbbbbbbbbb}|
+      34^5                 |
+      {2:~                   }|*7
+                          |
+    ]]}
+
+    api.nvim_win_remove_ns(0, ns)
+
+    screen:expect(noextmarks)
+  end)
+
+  pending('sign_text', function()
+    -- TODO(altermo): The window signcolumn width is calculated wrongly (when `signcolumn=auto`)
+    -- This happens in function `win_redraw_signcols` on line containing `buf_meta_total(buf, kMTMetaSignText) > 0`
+    set_scoped_extmark(0, 0, {
+      sign_text = 'a',
+      sign_hl_group = 'Comment',
+    })
+
+    screen:expect(noextmarks)
+
+    api.nvim_win_add_ns(0, ns)
+
+    screen:expect {
+      grid = [[
+      a 1234^5             |
+      {2:~                   }|*8
+                          |
+    ]]}
+
+    command 'split'
+    command 'only'
+
+    screen:expect(noextmarks)
+  end)
+
+  it('statuscolumn hl group', function()
+    local attrs = screen:get_default_attr_ids()
+    table.insert(attrs, {
+      foreground = Screen.colors.Brown,
+    })
+    screen:set_default_attr_ids(attrs)
+
+    set_scoped_extmark(0, 0, {
+      number_hl_group='comment',
+    })
+    set_scoped_extmark(0, 0, {
+      line_hl_group='comment',
+    })
+
+    command 'set number'
+
+    screen:expect {
+      grid = [[
+      {3:  1 }1234^5           |
+      {2:~                   }|*8
+                          |
+    ]]}
+
+    api.nvim_win_add_ns(0, ns)
+
+    screen:expect {
+      grid = [[
+      {1:  1 1234^5           }|
+      {2:~                   }|*8
+                          |
+    ]]}
+
+    command 'split'
+    command 'only'
+
+    screen:expect {
+      grid = [[
+      {3:  1 }1234^5           |
+      {2:~                   }|*8
+                          |
+    ]]}
+  end)
+
+  it('spell', function()
+    local attrs = screen:get_default_attr_ids()
+    table.insert(attrs, {
+      special = Screen.colors.Red, undercurl = true
+    })
+    screen:set_default_attr_ids(attrs)
+    api.nvim_buf_set_lines(0,0,-1,true,{'aa'})
+
+    set_scoped_extmark(0, 0, {
+      spell=true,
+      end_col=2,
+    })
+
+    command 'set spelloptions=noplainbuffer'
+    command 'set spell'
+    command 'syntax off'
+
+    screen:expect {
+      grid = [[
+      a^a                  |
+      {2:~                   }|*8
+                          |
+    ]]}
+
+    api.nvim_win_add_ns(0, ns)
+
+    screen:expect {
+      grid = [[
+      {3:a^a}                  |
+      {2:~                   }|*8
+                          |
+    ]]}
+
+    command 'split'
+    command 'only'
+
+    screen:expect {
+      grid = [[
+      a^a                  |
+      {2:~                   }|*8
+                          |
+    ]]}
+  end)
+
+  it('url', function()
+    local url = 'https://example.com'
+    local attrs = screen:get_default_attr_ids()
+    table.insert(attrs, {
+      url = url,
+    })
+    screen:set_default_attr_ids(attrs)
+
+    set_scoped_extmark(0, 0, {
+      end_col=3,
+      url=url,
+    })
+
+    screen:expect(noextmarks)
+
+    api.nvim_win_add_ns(0, ns)
+
+    screen:expect {
+      grid = [[
+      {3:123}4^5               |
+      {2:~                   }|*8
+                          |
+    ]]}
+
+    command 'split'
+    command 'only'
+
+    screen:expect(noextmarks)
+  end)
+
+  it('change extmarks scoped option', function()
+    local id = set_scoped_extmark(0, 0, {
+      hl_group = 'Comment',
+      end_col = 3,
+    })
+
+    api.nvim_win_add_ns(0, ns)
+
+    screen:expect {
+      grid = [[
+      {1:123}4^5               |
+      {2:~                   }|*8
+                          |
+    ]]}
+
+    command 'split'
+    command 'only'
+
+    screen:expect(noextmarks)
+
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      id = id,
+      hl_group = 'Comment',
+      end_col = 3,
+      scoped = false,
+    })
+
+    screen:expect {
+      grid = [[
+      {1:123}4^5               |
+      {2:~                   }|*8
+                          |
+    ]]}
+
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      id = id,
+      hl_group = 'Comment',
+      end_col = 3,
+      scoped = true,
+    })
+
+    screen:expect(noextmarks)
+  end)
+
+  it('change namespace scope', function()
+    set_scoped_extmark(0, 0, {
+      hl_group = 'Comment',
+      end_col = 3,
+    })
+
+    eq(true, api.nvim_win_add_ns(0, ns))
+    eq({ ns }, api.nvim_win_get_ns(0))
+
+    screen:expect {
+      grid = [[
+      {1:123}4^5               |
+      {2:~                   }|*8
+                          |
+    ]]}
+
+    command 'split'
+    command 'only'
+    eq({}, api.nvim_win_get_ns(0))
+
+    screen:expect(noextmarks)
+
+    eq(true, api.nvim_win_add_ns(0, ns))
+    eq({ ns }, api.nvim_win_get_ns(0))
+
+    screen:expect {
+      grid = [[
+      {1:123}4^5               |
+      {2:~                   }|*8
+                          |
+    ]]}
+
+    eq(true, api.nvim_win_remove_ns(0, ns))
+    eq({}, api.nvim_win_get_ns(0))
+
+    screen:expect(noextmarks)
   end)
 end)

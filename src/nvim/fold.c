@@ -1626,7 +1626,7 @@ static void foldAddMarker(buf_T *buf, pos_T pos, const char *marker, size_t mark
     STRCPY(newline + line_len + (p - cms) + markerlen, p + 2);
     added = markerlen + strlen(cms) - 2;
   }
-  ml_replace_buf(buf, lnum, newline, false);
+  ml_replace_buf(buf, lnum, newline, false, false);
   if (added) {
     extmark_splice_cols(buf, (int)lnum - 1, (int)line_len,
                         0, (int)added, kExtmarkUndo);
@@ -1690,7 +1690,7 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char *marker, size_t marker
       assert(p >= line);
       memcpy(newline, line, (size_t)(p - line));
       STRCPY(newline + (p - line), p + len);
-      ml_replace_buf(buf, lnum, newline, false);
+      ml_replace_buf(buf, lnum, newline, false, false);
       extmark_splice_cols(buf, (int)lnum - 1, (int)(p - line),
                           (int)len, 0, kExtmarkUndo);
     }

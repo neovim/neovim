@@ -758,11 +758,14 @@ void eval_patch(const char *const origfile, const char *const difffile, const ch
 void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
 {
   *evalarg = (evalarg_T){ .eval_flags = skip ? 0 : EVAL_EVALUATE };
-  if (eap != NULL) {
-    if (getline_equal(eap->getline, eap->cookie, getsourceline)) {
-      evalarg->eval_getline = eap->getline;
-      evalarg->eval_cookie = eap->cookie;
-    }
+
+  if (eap == NULL) {
+    return;
+  }
+
+  if (getline_equal(eap->getline, eap->cookie, getsourceline)) {
+    evalarg->eval_getline = eap->getline;
+    evalarg->eval_cookie = eap->cookie;
   }
 }
 
@@ -1352,7 +1355,7 @@ Object eval_foldtext(win_T *wp)
     retval = STRING_OBJ(NULL_STRING);
   } else {
     if (tv.v_type == VAR_LIST) {
-      retval = vim_to_object(&tv);
+      retval = vim_to_object(&tv, NULL, false);
     } else {
       retval = STRING_OBJ(cstr_to_string(tv_get_string(&tv)));
     }
@@ -2326,20 +2329,22 @@ static int eval_func(char **const arg, evalarg_T *const evalarg, char *const nam
 /// After using "evalarg" filled from "eap": free the memory.
 void clear_evalarg(evalarg_T *evalarg, exarg_T *eap)
 {
-  if (evalarg != NULL) {
-    if (evalarg->eval_tofree != NULL) {
-      if (eap != NULL) {
-        // We may need to keep the original command line, e.g. for
-        // ":let" it has the variable names.  But we may also need the
-        // new one, "nextcmd" points into it.  Keep both.
-        xfree(eap->cmdline_tofree);
-        eap->cmdline_tofree = *eap->cmdlinep;
-        *eap->cmdlinep = evalarg->eval_tofree;
-      } else {
-        xfree(evalarg->eval_tofree);
-      }
-      evalarg->eval_tofree = NULL;
+  if (evalarg == NULL) {
+    return;
+  }
+
+  if (evalarg->eval_tofree != NULL) {
+    if (eap != NULL) {
+      // We may need to keep the original command line, e.g. for
+      // ":let" it has the variable names.  But we may also need the
+      // new one, "nextcmd" points into it.  Keep both.
+      xfree(eap->cmdline_tofree);
+      eap->cmdline_tofree = *eap->cmdlinep;
+      *eap->cmdlinep = evalarg->eval_tofree;
+    } else {
+      xfree(evalarg->eval_tofree);
     }
+    evalarg->eval_tofree = NULL;
   }
 }
 
@@ -3233,6 +3238,13 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
       } else {
         // skip the name
         check_vars(s, (size_t)len);
+        // If evaluate is false rettv->v_type was not set, but it's needed
+        // in handle_subscript() to parse v:lua, so set it here.
+        if (rettv->v_type == VAR_UNKNOWN && !evaluate && strnequal(s, "v:lua.", 6)) {
+          rettv->v_type = VAR_PARTIAL;
+          rettv->vval.v_partial = vvlua_partial;
+          rettv->vval.v_partial->pt_refcount++;
+        }
         ret = OK;
       }
     }
@@ -3437,7 +3449,7 @@ static int eval_method(char **const arg, typval_T *const rettv, evalarg_T *const
   int len;
   char *name = *arg;
   char *lua_funcname = NULL;
-  if (strncmp(name, "v:lua.", 6) == 0) {
+  if (strnequal(name, "v:lua.", 6)) {
     lua_funcname = name + 6;
     *arg = (char *)skip_luafunc_name(lua_funcname);
     *arg = skipwhite(*arg);  // to detect trailing whitespace later
@@ -3626,12 +3638,14 @@ static int check_can_index(typval_T *rettv, bool evaluate, bool verbose)
 /// slice() function
 void f_slice(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (check_can_index(argvars, true, false) == OK) {
-    tv_copy(argvars, rettv);
-    eval_index_inner(rettv, true, argvars + 1,
-                     argvars[2].v_type == VAR_UNKNOWN ? NULL : argvars + 2,
-                     true, NULL, 0, false);
+  if (check_can_index(argvars, true, false) != OK) {
+    return;
   }
+
+  tv_copy(argvars, rettv);
+  eval_index_inner(rettv, true, argvars + 1,
+                   argvars[2].v_type == VAR_UNKNOWN ? NULL : argvars + 2,
+                   true, NULL, 0, false);
 }
 
 /// Apply index or range to "rettv".
@@ -4248,7 +4262,11 @@ static void partial_free(partial_T *pt)
 /// becomes zero.
 void partial_unref(partial_T *pt)
 {
-  if (pt != NULL && --pt->pt_refcount <= 0) {
+  if (pt == NULL) {
+    return;
+  }
+
+  if (--pt->pt_refcount <= 0) {
     partial_free(pt);
   }
 }
@@ -5386,35 +5404,37 @@ static void filter_map(typval_T *argvars, typval_T *rettv, filtermap_T filtermap
   // On type errors, the preceding call has already displayed an error
   // message.  Avoid a misleading error message for an empty string that
   // was not passed as argument.
-  if (expr->v_type != VAR_UNKNOWN) {
-    typval_T save_val;
-    prepare_vimvar(VV_VAL, &save_val);
-
-    // We reset "did_emsg" to be able to detect whether an error
-    // occurred during evaluation of the expression.
-    int save_did_emsg = did_emsg;
-    did_emsg = false;
-
-    typval_T save_key;
-    prepare_vimvar(VV_KEY, &save_key);
-    if (argvars[0].v_type == VAR_DICT) {
-      filter_map_dict(argvars[0].vval.v_dict, filtermap, func_name,
-                      arg_errmsg, expr, rettv);
-    } else if (argvars[0].v_type == VAR_BLOB) {
-      filter_map_blob(argvars[0].vval.v_blob, filtermap, expr, arg_errmsg, rettv);
-    } else if (argvars[0].v_type == VAR_STRING) {
-      filter_map_string(tv_get_string(&argvars[0]), filtermap, expr, rettv);
-    } else {
-      assert(argvars[0].v_type == VAR_LIST);
-      filter_map_list(argvars[0].vval.v_list, filtermap, func_name,
-                      arg_errmsg, expr, rettv);
-    }
-
-    restore_vimvar(VV_KEY, &save_key);
-    restore_vimvar(VV_VAL, &save_val);
-
-    did_emsg |= save_did_emsg;
+  if (expr->v_type == VAR_UNKNOWN) {
+    return;
   }
+
+  typval_T save_val;
+  prepare_vimvar(VV_VAL, &save_val);
+
+  // We reset "did_emsg" to be able to detect whether an error
+  // occurred during evaluation of the expression.
+  int save_did_emsg = did_emsg;
+  did_emsg = false;
+
+  typval_T save_key;
+  prepare_vimvar(VV_KEY, &save_key);
+  if (argvars[0].v_type == VAR_DICT) {
+    filter_map_dict(argvars[0].vval.v_dict, filtermap, func_name,
+                    arg_errmsg, expr, rettv);
+  } else if (argvars[0].v_type == VAR_BLOB) {
+    filter_map_blob(argvars[0].vval.v_blob, filtermap, expr, arg_errmsg, rettv);
+  } else if (argvars[0].v_type == VAR_STRING) {
+    filter_map_string(tv_get_string(&argvars[0]), filtermap, expr, rettv);
+  } else {
+    assert(argvars[0].v_type == VAR_LIST);
+    filter_map_list(argvars[0].vval.v_list, filtermap, func_name,
+                    arg_errmsg, expr, rettv);
+  }
+
+  restore_vimvar(VV_KEY, &save_key);
+  restore_vimvar(VV_VAL, &save_val);
+
+  did_emsg |= save_did_emsg;
 }
 
 /// Handle one item for map(), filter(), foreach().
@@ -6130,8 +6150,8 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
     break;
 
   case kCallbackLua:
-    rv = nlua_call_ref(callback->data.luaref, NULL, args, false, NULL);
-    return (rv.type == kObjectTypeBoolean && rv.data.boolean == true);
+    rv = nlua_call_ref(callback->data.luaref, NULL, args, kRetNilBool, NULL, NULL);
+    return LUARET_TRUTHY(rv);
 
   case kCallbackNone:
     return false;
@@ -7601,6 +7621,10 @@ int handle_subscript(const char **const arg, typval_T *rettv, evalarg_T *const e
   const char *lua_funcname = NULL;
 
   if (tv_is_luafunc(rettv)) {
+    if (!evaluate) {
+      tv_clear(rettv);
+    }
+
     if (**arg != '.') {
       tv_clear(rettv);
       ret = FAIL;
@@ -8241,21 +8265,24 @@ void last_set_msg(sctx_T script_ctx)
 /// Should only be invoked when 'verbose' is non-zero.
 void option_last_set_msg(LastSet last_set)
 {
-  if (last_set.script_ctx.sc_sid != 0) {
-    bool should_free;
-    char *p = get_scriptname(last_set, &should_free);
-    verbose_enter();
-    msg_puts(_("\n\tLast set from "));
-    msg_puts(p);
-    if (last_set.script_ctx.sc_lnum > 0) {
-      msg_puts(_(line_msg));
-      msg_outnum(last_set.script_ctx.sc_lnum);
-    }
-    if (should_free) {
-      xfree(p);
-    }
-    verbose_leave();
+  if (last_set.script_ctx.sc_sid == 0) {
+    return;
   }
+
+  bool should_free;
+  char *p = get_scriptname(last_set, &should_free);
+
+  verbose_enter();
+  msg_puts(_("\n\tLast set from "));
+  msg_puts(p);
+  if (last_set.script_ctx.sc_lnum > 0) {
+    msg_puts(_(line_msg));
+    msg_outnum(last_set.script_ctx.sc_lnum);
+  }
+  if (should_free) {
+    xfree(p);
+  }
+  verbose_leave();
 }
 
 // reset v:option_new, v:option_old, v:option_oldlocal, v:option_oldglobal,

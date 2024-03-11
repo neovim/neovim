@@ -137,6 +137,7 @@ struct TUIData {
     int sync;
   } unibi_ext;
   char *space_buf;
+  size_t space_buf_len;
   bool stopped;
   int seen_error_exit;
   int width;
@@ -1055,10 +1056,7 @@ void tui_grid_resize(TUIData *tui, Integer g, Integer width, Integer height)
 {
   UGrid *grid = &tui->grid;
   ugrid_resize(grid, (int)width, (int)height);
-
-  xfree(tui->space_buf);
-  tui->space_buf = xmalloc((size_t)width * sizeof(*tui->space_buf));
-  memset(tui->space_buf, ' ', (size_t)width);
+  ensure_space_buf_size(tui, (size_t)width);
 
   // resize might not always be followed by a clear before flush
   // so clip the invalid region
@@ -1436,28 +1434,28 @@ static void show_verbose_terminfo(TUIData *tui)
     abort();
   }
 
-  Array chunks = ARRAY_DICT_INIT;
-  Array title = ARRAY_DICT_INIT;
-  ADD(title, CSTR_TO_OBJ("\n\n--- Terminal info --- {{{\n"));
-  ADD(title, CSTR_TO_OBJ("Title"));
-  ADD(chunks, ARRAY_OBJ(title));
-  Array info = ARRAY_DICT_INIT;
+  MAXSIZE_TEMP_ARRAY(chunks, 3);
+  MAXSIZE_TEMP_ARRAY(title, 2);
+  ADD_C(title, CSTR_AS_OBJ("\n\n--- Terminal info --- {{{\n"));
+  ADD_C(title, CSTR_AS_OBJ("Title"));
+  ADD_C(chunks, ARRAY_OBJ(title));
+  MAXSIZE_TEMP_ARRAY(info, 2);
   String str = terminfo_info_msg(ut, tui->term);
-  ADD(info, STRING_OBJ(str));
-  ADD(chunks, ARRAY_OBJ(info));
-  Array end_fold = ARRAY_DICT_INIT;
-  ADD(end_fold, CSTR_TO_OBJ("}}}\n"));
-  ADD(end_fold, CSTR_TO_OBJ("Title"));
-  ADD(chunks, ARRAY_OBJ(end_fold));
+  ADD_C(info, STRING_OBJ(str));
+  ADD_C(chunks, ARRAY_OBJ(info));
+  MAXSIZE_TEMP_ARRAY(end_fold, 2);
+  ADD_C(end_fold, CSTR_AS_OBJ("}}}\n"));
+  ADD_C(end_fold, CSTR_AS_OBJ("Title"));
+  ADD_C(chunks, ARRAY_OBJ(end_fold));
 
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, ARRAY_OBJ(chunks));
-  ADD(args, BOOLEAN_OBJ(true));  // history
-  Dictionary opts = ARRAY_DICT_INIT;
-  PUT(opts, "verbose", BOOLEAN_OBJ(true));
-  ADD(args, DICTIONARY_OBJ(opts));
+  MAXSIZE_TEMP_ARRAY(args, 3);
+  ADD_C(args, ARRAY_OBJ(chunks));
+  ADD_C(args, BOOLEAN_OBJ(true));  // history
+  MAXSIZE_TEMP_DICT(opts, 1);
+  PUT_C(opts, "verbose", BOOLEAN_OBJ(true));
+  ADD_C(args, DICTIONARY_OBJ(opts));
   rpc_send_event(ui_client_channel_id, "nvim_echo", args);
-  api_free_array(args);
+  xfree(str.data);
 }
 
 void tui_suspend(TUIData *tui)
@@ -1642,6 +1640,15 @@ static void invalidate(TUIData *tui, int top, int bot, int left, int right)
   }
 }
 
+static void ensure_space_buf_size(TUIData *tui, size_t len)
+{
+  if (len > tui->space_buf_len) {
+    tui->space_buf = xrealloc(tui->space_buf, len);
+    memset(tui->space_buf + tui->space_buf_len, ' ', len - tui->space_buf_len);
+    tui->space_buf_len = len;
+  }
+}
+
 /// Tries to get the user's wanted dimensions (columns and rows) for the entire
 /// application (i.e., the host terminal).
 void tui_guess_size(TUIData *tui)
@@ -1678,6 +1685,7 @@ void tui_guess_size(TUIData *tui)
 
   tui->width = width;
   tui->height = height;
+  ensure_space_buf_size(tui, (size_t)tui->width);
 
   // Redraw on SIGWINCH event if size didn't change. #23411
   ui_client_set_size(width, height);

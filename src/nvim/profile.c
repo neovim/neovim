@@ -45,6 +45,7 @@ typedef struct {
 #define PRL_ITEM(si, idx)     (((sn_prl_T *)(si)->sn_prl_ga.ga_data)[(idx)])
 
 static proftime_T prof_wait_time;
+static char *startuptime_buf = NULL;  // --startuptime buffer
 
 /// Gets the current time.
 ///
@@ -907,7 +908,7 @@ void time_start(const char *message)
   // initialize the global variables
   g_prev_time = g_start_time = profile_start();
 
-  fprintf(time_fd, "\n\ntimes in msec\n");
+  fprintf(time_fd, "\ntimes in msec\n");
   fprintf(time_fd, " clock   self+sourced   self:  sourced script\n");
   fprintf(time_fd, " clock   elapsed:              other lines\n\n");
 
@@ -943,4 +944,48 @@ void time_msg(const char *mesg, const proftime_T *start)
   // reset `g_prev_time` and print the message
   g_prev_time = now;
   fprintf(time_fd, ": %s\n", mesg);
+}
+
+/// Initializes the `time_fd` stream for the --startuptime report.
+///
+/// @param fname startuptime report file path
+/// @param process_name name of the current Nvim process to write in the report.
+void time_init(const char *fname, const char *process_name)
+{
+  const size_t bufsize = 8192;  // Big enough for the entire --startuptime report.
+  time_fd = fopen(fname, "a");
+  if (time_fd == NULL) {
+    semsg(_(e_notopen), fname);
+    return;
+  }
+  startuptime_buf = xmalloc(sizeof(char) * (bufsize + 1));
+  // The startuptime file is (potentially) written by multiple Nvim processes concurrently. So each
+  // report is buffered, and flushed to disk (`time_finish`) once after startup. `_IOFBF` mode
+  // ensures the buffer is not auto-flushed ("controlled buffering").
+  int r = setvbuf(time_fd, startuptime_buf, _IOFBF, bufsize + 1);
+  if (r != 0) {
+    XFREE_CLEAR(startuptime_buf);
+    fclose(time_fd);
+    time_fd = NULL;
+    ELOG("time_init: setvbuf failed: %d %s", r, uv_err_name(r));
+    semsg("time_init: setvbuf failed: %d %s", r, uv_err_name(r));
+    return;
+  }
+  fprintf(time_fd, "--- Startup times for process: %s ---\n", process_name);
+}
+
+/// Flushes the startuptimes to disk for the current process
+void time_finish(void)
+{
+  if (time_fd == NULL) {
+    return;
+  }
+  assert(startuptime_buf != NULL);
+  TIME_MSG("--- NVIM STARTED ---\n");
+
+  // flush buffer to disk
+  fclose(time_fd);
+  time_fd = NULL;
+
+  XFREE_CLEAR(startuptime_buf);
 }

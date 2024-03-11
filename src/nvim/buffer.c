@@ -117,7 +117,6 @@
 # include "buffer.c.generated.h"
 #endif
 
-static const char *e_auabort = N_("E855: Autocommands caused command to abort");
 static const char e_attempt_to_delete_buffer_that_is_in_use_str[]
   = N_("E937: Attempt to delete a buffer that is in use: %s");
 
@@ -569,7 +568,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
     }
     buf->b_locked--;
     buf->b_locked_split--;
-    if (abort_if_last && last_nonfloat(win)) {
+    if (abort_if_last && one_window(win)) {
       // Autocommands made this the only window.
       emsg(_(e_auabort));
       return false;
@@ -588,7 +587,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
       }
       buf->b_locked--;
       buf->b_locked_split--;
-      if (abort_if_last && last_nonfloat(win)) {
+      if (abort_if_last && one_window(win)) {
         // Autocommands made this the only window.
         emsg(_(e_auabort));
         return false;
@@ -843,8 +842,9 @@ void buf_freeall(buf_T *buf, int flags)
   ml_close(buf, true);              // close and delete the memline/memfile
   buf->b_ml.ml_line_count = 0;      // no lines in buffer
   if ((flags & BFA_KEEP_UNDO) == 0) {
-    u_blockfree(buf);               // free the memory allocated for undo
-    u_clearall(buf);                // reset all undo information
+    // free the memory allocated for undo
+    // and reset all undo information
+    u_clearallandblockfree(buf);
   }
   syntax_clear(&buf->b_s);          // reset syntax info
   buf->b_flags &= ~BF_READERR;      // a read error is no longer relevant
@@ -1305,6 +1305,12 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     }
     return FAIL;
   }
+
+  if (action == DOBUF_GOTO && buf != curbuf && !check_can_set_curbuf_forceit(forceit)) {
+    // disallow navigating to another buffer when 'winfixbuf' is applied
+    return FAIL;
+  }
+
   if ((action == DOBUF_GOTO || action == DOBUF_SPLIT) && (buf->b_flags & BF_DUMMY)) {
     // disallow navigating to the dummy buffer
     semsg(_(e_nobufnr), count);
@@ -1583,6 +1589,7 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
   int unload = (action == DOBUF_UNLOAD || action == DOBUF_DEL
                 || action == DOBUF_WIPE);
   OptInt old_tw = curbuf->b_p_tw;
+  const int last_winid = get_last_winid();
 
   if (update_jumplist) {
     setpcmark();
@@ -1611,7 +1618,11 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
     if (prevbuf == curwin->w_buffer) {
       reset_synblock(curwin);
     }
-    if (unload) {
+    // autocommands may have opened a new window
+    // with prevbuf, grr
+    if (unload
+        || (last_winid != get_last_winid()
+            && strchr("wdu", prevbuf->b_p_bh[0]) != NULL)) {
       close_windows(prevbuf, false);
     }
     if (bufref_valid(&prevbufref) && !aborting()) {
@@ -1641,6 +1652,11 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
   // If curwin->w_buffer is null, enter_buffer() will make it valid again
   bool valid = buf_valid(buf);
   if ((valid && buf != curbuf && !aborting()) || curwin->w_buffer == NULL) {
+    // autocommands changed curbuf and we will move to another
+    // buffer soon, so decrement curbuf->b_nwindows
+    if (curbuf != NULL && prevbuf != curbuf) {
+      curbuf->b_nwindows--;
+    }
     // If the buffer is not valid but curwin->w_buffer is NULL we must
     // enter some buffer.  Using the last one is hopefully OK.
     if (!valid) {
@@ -2376,10 +2392,8 @@ static int buf_time_compare(const void *s1, const void *s2)
 /// @return  OK if matches found, FAIL otherwise.
 int ExpandBufnames(char *pat, int *num_file, char ***file, int options)
 {
-  int count = 0;
-  int round;
-  char *p;
   bufmatch_T *matches = NULL;
+  bool to_free = false;
 
   *num_file = 0;                    // return values in case of FAIL
   *file = NULL;
@@ -2391,125 +2405,115 @@ int ExpandBufnames(char *pat, int *num_file, char ***file, int options)
   const bool fuzzy = cmdline_fuzzy_complete(pat);
 
   char *patc = NULL;
+  fuzmatch_str_T *fuzmatch = NULL;
+  regmatch_T regmatch;
+
   // Make a copy of "pat" and change "^" to "\(^\|[\/]\)" (if doing regular
   // expression matching)
   if (!fuzzy) {
-    if (*pat == '^') {
-      patc = xmalloc(strlen(pat) + 11);
-      STRCPY(patc, "\\(^\\|[\\/]\\)");
-      STRCPY(patc + 11, pat + 1);
+    if (*pat == '^' && pat[1] != NUL) {
+      patc = xstrdup(pat + 1);
+      to_free = true;
+    } else if (*pat == '^') {
+      patc = "";
     } else {
       patc = pat;
     }
+    regmatch.regprog = vim_regcomp(patc, RE_MAGIC);
   }
 
-  fuzmatch_str_T *fuzmatch = NULL;
-  // attempt == 0: try match with    '\<', match at start of word
-  // attempt == 1: try match without '\<', match anywhere
-  for (int attempt = 0; attempt <= (fuzzy ? 0 : 1); attempt++) {
-    regmatch_T regmatch;
-    if (!fuzzy) {
-      if (attempt > 0 && patc == pat) {
-        break;            // there was no anchor, no need to try again
+  int count = 0;
+  int score = 0;
+  // round == 1: Count the matches.
+  // round == 2: Build the array to keep the matches.
+  for (int round = 1; round <= 2; round++) {
+    count = 0;
+    FOR_ALL_BUFFERS(buf) {
+      if (!buf->b_p_bl) {             // skip unlisted buffers
+        continue;
       }
-      regmatch.regprog = vim_regcomp(patc + attempt * 11, RE_MAGIC);
-    }
-
-    int score = 0;
-    // round == 1: Count the matches.
-    // round == 2: Build the array to keep the matches.
-    for (round = 1; round <= 2; round++) {
-      count = 0;
-      FOR_ALL_BUFFERS(buf) {
-        if (!buf->b_p_bl) {             // skip unlisted buffers
+      if (options & BUF_DIFF_FILTER) {
+        // Skip buffers not suitable for
+        // :diffget or :diffput completion.
+        if (buf == curbuf || !diff_mode_buf(buf)) {
           continue;
         }
-        if (options & BUF_DIFF_FILTER) {
-          // Skip buffers not suitable for
-          // :diffget or :diffput completion.
-          if (buf == curbuf || !diff_mode_buf(buf)) {
-            continue;
-          }
-        }
+      }
 
-        if (!fuzzy) {
-          if (regmatch.regprog == NULL) {
-            // invalid pattern, possibly after recompiling
-            if (patc != pat) {
-              xfree(patc);
-            }
-            return FAIL;
+      char *p = NULL;
+      if (!fuzzy) {
+        if (regmatch.regprog == NULL) {
+          // invalid pattern, possibly after recompiling
+          if (to_free) {
+            xfree(patc);
           }
-          p = buflist_match(&regmatch, buf, p_wic);
-        } else {
-          p = NULL;
-          // first try matching with the short file name
-          if ((score = fuzzy_match_str(buf->b_sfname, pat)) != 0) {
-            p = buf->b_sfname;
-          }
-          if (p == NULL) {
-            // next try matching with the full path file name
-            if ((score = fuzzy_match_str(buf->b_ffname, pat)) != 0) {
-              p = buf->b_ffname;
-            }
-          }
+          return FAIL;
         }
-
+        p = buflist_match(&regmatch, buf, p_wic);
+      } else {
+        p = NULL;
+        // first try matching with the short file name
+        if ((score = fuzzy_match_str(buf->b_sfname, pat)) != 0) {
+          p = buf->b_sfname;
+        }
         if (p == NULL) {
-          continue;
-        }
-
-        if (round == 1) {
-          count++;
-          continue;
-        }
-
-        if (options & WILD_HOME_REPLACE) {
-          p = home_replace_save(buf, p);
-        } else {
-          p = xstrdup(p);
-        }
-
-        if (!fuzzy) {
-          if (matches != NULL) {
-            matches[count].buf = buf;
-            matches[count].match = p;
-            count++;
-          } else {
-            (*file)[count++] = p;
+          // next try matching with the full path file name
+          if ((score = fuzzy_match_str(buf->b_ffname, pat)) != 0) {
+            p = buf->b_ffname;
           }
-        } else {
-          fuzmatch[count].idx = count;
-          fuzmatch[count].str = p;
-          fuzmatch[count].score = score;
-          count++;
         }
       }
-      if (count == 0) {         // no match found, break here
-        break;
+
+      if (p == NULL) {
+        continue;
       }
+
       if (round == 1) {
-        if (!fuzzy) {
-          *file = xmalloc((size_t)count * sizeof(**file));
-          if (options & WILD_BUFLASTUSED) {
-            matches = xmalloc((size_t)count * sizeof(*matches));
-          }
+        count++;
+        continue;
+      }
+
+      if (options & WILD_HOME_REPLACE) {
+        p = home_replace_save(buf, p);
+      } else {
+        p = xstrdup(p);
+      }
+
+      if (!fuzzy) {
+        if (matches != NULL) {
+          matches[count].buf = buf;
+          matches[count].match = p;
+          count++;
         } else {
-          fuzmatch = xmalloc((size_t)count * sizeof(fuzmatch_str_T));
+          (*file)[count++] = p;
         }
+      } else {
+        fuzmatch[count].idx = count;
+        fuzmatch[count].str = p;
+        fuzmatch[count].score = score;
+        count++;
       }
     }
-
-    if (!fuzzy) {
-      vim_regfree(regmatch.regprog);
-      if (count) {                // match(es) found, break here
-        break;
+    if (count == 0) {         // no match found, break here
+      break;
+    }
+    if (round == 1) {
+      if (!fuzzy) {
+        *file = xmalloc((size_t)count * sizeof(**file));
+        if (options & WILD_BUFLASTUSED) {
+          matches = xmalloc((size_t)count * sizeof(*matches));
+        }
+      } else {
+        fuzmatch = xmalloc((size_t)count * sizeof(fuzmatch_str_T));
       }
     }
   }
 
-  if (!fuzzy && patc != pat) {
-    xfree(patc);
+  if (!fuzzy) {
+    vim_regfree(regmatch.regprog);
+    if (to_free) {
+      xfree(patc);
+    }
   }
 
   if (!fuzzy) {
@@ -2773,7 +2777,7 @@ void get_winopts(buf_T *buf)
     curwin->w_changelistidx = wip->wi_changelistidx;
   }
 
-  if (curwin->w_float_config.style == kWinStyleMinimal) {
+  if (curwin->w_config.style == kWinStyleMinimal) {
     didset_window_options(curwin, false);
     win_set_minimal_style(curwin);
   }
@@ -3326,7 +3330,7 @@ void maketitle(void)
     if (*p_titlestring != NUL) {
       if (stl_syntax & STL_IN_TITLE) {
         build_stl_str_hl(curwin, buf, sizeof(buf), p_titlestring,
-                         kOptTitlestring, 0, 0, maxlen, NULL, NULL, NULL);
+                         kOptTitlestring, 0, 0, maxlen, NULL, NULL, NULL, NULL);
         title_str = buf;
       } else {
         title_str = p_titlestring;
@@ -3431,7 +3435,7 @@ void maketitle(void)
     if (*p_iconstring != NUL) {
       if (stl_syntax & STL_IN_ICON) {
         build_stl_str_hl(curwin, icon_str, sizeof(buf), p_iconstring,
-                         kOptIconstring, 0, 0, 0, NULL, NULL, NULL);
+                         kOptIconstring, 0, 0, 0, NULL, NULL, NULL, NULL);
       } else {
         icon_str = p_iconstring;
       }
@@ -3447,7 +3451,7 @@ void maketitle(void)
       int len = (int)strlen(buf_p);
       if (len > 100) {
         len -= 100;
-        len += utf_cp_tail_off(buf_p, buf_p + len) + 1;
+        len += utf_cp_bounds(buf_p, buf_p + len).end_off;
         buf_p += len;
       }
       STRCPY(icon_str, buf_p);

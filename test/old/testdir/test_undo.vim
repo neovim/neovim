@@ -588,7 +588,7 @@ funct Test_undofile()
   endif
   call assert_equal('', undofile(''))
 
-  " Test undofile() with 'undodir' set to to an existing directory.
+  " Test undofile() with 'undodir' set to an existing directory.
   call mkdir('Xundodir')
   set undodir=Xundodir
   let cwd = getcwd()

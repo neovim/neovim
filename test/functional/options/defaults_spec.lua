@@ -1232,3 +1232,22 @@ describe('stdpath()', function()
     end)
   end)
 end)
+
+describe('autocommands', function()
+  it('closes terminal with default shell on success', function()
+    api.nvim_set_option_value('shell', helpers.testprg('shell-test'), {})
+    command('set shellcmdflag=EXIT shellredir= shellpipe= shellquote= shellxquote=')
+
+    -- Should not block other events
+    command('let g:n=0')
+    command('au BufEnter * let g:n = g:n + 1')
+
+    command('terminal')
+    eq(1, eval('get(g:, "n", 0)'))
+
+    helpers.retry(nil, 1000, function()
+      neq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
+      eq(2, eval('get(g:, "n", 0)'))
+    end)
+  end)
+end)

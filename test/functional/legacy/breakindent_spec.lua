@@ -69,7 +69,7 @@ describe('breakindent', function()
     ]])
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { background = Screen.colors.LightGrey }, -- Visual
+      [1] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black }, -- Visual
       [2] = { bold = true, reverse = true }, -- StatusLine
       [3] = { reverse = true }, -- StatusLineNC
       [4] = { bold = true }, -- ModeMsg

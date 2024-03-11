@@ -1,4 +1,4 @@
-local glob = require('vim.glob')
+local glob = vim.glob
 
 --- @class lsp.DynamicCapabilities
 --- @field capabilities table<string, lsp.Registration[]>
@@ -6,6 +6,7 @@ local glob = require('vim.glob')
 local M = {}
 
 --- @param client_id number
+--- @return lsp.DynamicCapabilities
 function M.new(client_id)
   return setmetatable({
     capabilities = {},
@@ -18,12 +19,12 @@ function M:supports_registration(method)
   if not client then
     return false
   end
-  local capability = vim.tbl_get(client.config.capabilities, unpack(vim.split(method, '/')))
+  local capability = vim.tbl_get(client.capabilities, unpack(vim.split(method, '/')))
   return type(capability) == 'table' and capability.dynamicRegistration
 end
 
 --- @param registrations lsp.Registration[]
---- @private
+--- @package
 function M:register(registrations)
   -- remove duplicates
   self:unregister(registrations)
@@ -37,7 +38,7 @@ function M:register(registrations)
 end
 
 --- @param unregisterations lsp.Unregistration[]
---- @private
+--- @package
 function M:unregister(unregisterations)
   for _, unreg in ipairs(unregisterations) do
     local method = unreg.method
@@ -57,7 +58,7 @@ end
 --- @param method string
 --- @param opts? {bufnr: integer?}
 --- @return lsp.Registration? (table|nil) the registration if found
---- @private
+--- @package
 function M:get(method, opts)
   opts = opts or {}
   opts.bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
@@ -77,7 +78,7 @@ end
 
 --- @param method string
 --- @param opts? {bufnr: integer?}
---- @private
+--- @package
 function M:supports(method, opts)
   return self:get(method, opts) ~= nil
 end
@@ -90,7 +91,7 @@ function M:match(bufnr, documentSelector)
   if not client then
     return false
   end
-  local language = client.config.get_language_id(bufnr, vim.bo[bufnr].filetype)
+  local language = client.get_language_id(bufnr, vim.bo[bufnr].filetype)
   local uri = vim.uri_from_bufnr(bufnr)
   local fname = vim.uri_to_fname(uri)
   for _, filter in ipairs(documentSelector) do

@@ -135,28 +135,54 @@ static void comp_botline(win_T *wp)
   win_check_anchored_floats(wp);
 }
 
-/// Redraw when w_virtcol changes and 'cursorcolumn' is set or 'cursorlineopt'
-/// contains "screenline" or when the "CurSearch" highlight is in use.
-/// Also when concealing is on and 'concealcursor' is active.
+/// Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
+/// Also when concealing is on and 'concealcursor' is not active.
+static void redraw_for_cursorline(win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if ((wp->w_valid & VALID_CROW) == 0 && !pum_visible()
+      && (wp->w_p_rnu || win_cursorline_standout(wp))) {
+    // win_line() will redraw the number column and cursorline only.
+    redraw_later(wp, UPD_VALID);
+  }
+}
+
+/// Redraw when w_virtcol changes and
+/// - 'cursorcolumn' is set, or
+/// - 'cursorlineopt' contains "screenline", or
+/// - "CurSearch" highlight is in use, or
+/// - 'concealcursor' is active, or
+/// - Visual mode is active.
 static void redraw_for_cursorcolumn(win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  if ((wp->w_valid & VALID_VIRTCOL) == 0 && !pum_visible()) {
-    if (wp->w_p_cuc
-        || (win_hl_attr(wp, HLF_LC) != win_hl_attr(wp, HLF_L) && using_hlsearch())) {
-      // When 'cursorcolumn' is set or "CurSearch" is in use
-      // need to redraw with UPD_SOME_VALID.
-      redraw_later(wp, UPD_SOME_VALID);
-    } else if (wp->w_p_cul && (wp->w_p_culopt_flags & CULOPT_SCRLINE)) {
-      // When 'cursorlineopt' contains "screenline" need to redraw with UPD_VALID.
-      redraw_later(wp, UPD_VALID);
-    }
+  if (wp->w_valid & VALID_VIRTCOL) {
+    return;
   }
+
   // If the cursor moves horizontally when 'concealcursor' is active, then the
-  // current line needs to be redrawn in order to calculate the correct
-  // cursor position.
-  if ((wp->w_valid & VALID_VIRTCOL) == 0 && wp->w_p_cole > 0 && conceal_cursor_line(wp)) {
+  // current line needs to be redrawn to calculate the correct cursor position.
+  if (wp->w_p_cole > 0 && conceal_cursor_line(wp)) {
     redrawWinline(wp, wp->w_cursor.lnum);
+  }
+
+  if (pum_visible()) {
+    return;
+  }
+
+  if (wp->w_p_cuc
+      || (win_hl_attr(wp, HLF_LC) != win_hl_attr(wp, HLF_L) && using_hlsearch())) {
+    // When 'cursorcolumn' is set or "CurSearch" is in use
+    // need to redraw with UPD_SOME_VALID.
+    redraw_later(wp, UPD_SOME_VALID);
+  } else if (wp->w_p_cul && (wp->w_p_culopt_flags & CULOPT_SCRLINE)) {
+    // When 'cursorlineopt' contains "screenline" need to redraw with UPD_VALID.
+    redraw_later(wp, UPD_VALID);
+  }
+
+  // When current buffer's cursor moves in Visual mode, redraw it with UPD_INVERTED.
+  if (VIsual_active && wp->w_buffer == curbuf) {
+    redraw_curbuf_later(UPD_INVERTED);
   }
 }
 
@@ -201,14 +227,16 @@ static int skipcol_from_plines(win_T *wp, int plines_off)
 /// Set wp->w_skipcol to zero and redraw later if needed.
 static void reset_skipcol(win_T *wp)
 {
-  if (wp->w_skipcol != 0) {
-    wp->w_skipcol = 0;
-
-    // Should use the least expensive way that displays all that changed.
-    // UPD_NOT_VALID is too expensive, UPD_REDRAW_TOP does not redraw
-    // enough when the top line gets another screen line.
-    redraw_later(wp, UPD_SOME_VALID);
+  if (wp->w_skipcol == 0) {
+    return;
   }
+
+  wp->w_skipcol = 0;
+
+  // Should use the least expensive way that displays all that changed.
+  // UPD_NOT_VALID is too expensive, UPD_REDRAW_TOP does not redraw
+  // enough when the top line gets another screen line.
+  redraw_later(wp, UPD_SOME_VALID);
 }
 
 // Update curwin->w_topline to move the cursor onto the screen.
@@ -565,19 +593,6 @@ void changed_line_abv_curs_win(win_T *wp)
 {
   wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL|VALID_CROW
                    |VALID_CHEIGHT|VALID_TOPLINE);
-}
-
-/// Display of line has changed for "buf", invalidate cursor position and
-/// w_botline.
-void changed_line_display_buf(buf_T *buf)
-{
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer == buf) {
-      wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL
-                       |VALID_CROW|VALID_CHEIGHT
-                       |VALID_TOPLINE|VALID_BOTLINE|VALID_BOTLINE_AP);
-    }
-  }
 }
 
 // Make sure the value of curwin->w_botline is valid.

@@ -302,11 +302,24 @@ created, thus they behave slightly differently:
 			For a global option the global value is
 			shown (but that might change in the future).
 
-:setl[ocal] {option}<	Set the local value of {option} to its global value by
-			copying the value.
+:se[t] {option}<	Set the effective value of {option} to its global
+			value.
+			For string |global-local| options, the local value is
+			removed, so that the global value will be used.
+			For all other options, the global value is copied to
+			the local value.
 
-:se[t] {option}<	For |global-local| options: Remove the local value of
-			{option}, so that the global value will be used.
+:setl[ocal] {option}<	Set the effective value of {option} to its global
+			value.
+			For number and boolean |global-local| options, the
+			local value is removed, so that the global value will
+			be used.
+			For all other options, including string |global-local|
+			options, the global value is copied to the local
+			value.
+
+Note that the behaviour for |global-local| options is slightly different
+between string and number-based options.
 
 							*:setg* *:setglobal*
 :setg[lobal][!] ...	Like ":set" but set only the global value for a local
@@ -5459,9 +5472,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 		match", "Pattern not found", "Back at original", etc.
 	  C	don't give messages while scanning for ins-completion	*shm-C*
 		items, for instance "scanning tags"
-	  q	use "recording" instead of "recording @a"		*shm-q*
+	  q	do not show "recording @a" when recording a macro	*shm-q*
 	  F	don't give the file info when editing a file, like	*shm-F*
-		`:silent` was used for the command
+		`:silent` was used for the command; note that this also
+		affects messages from 'autoread' reloading
 	  S	do not show search count message when searching, e.g.	*shm-S*
 		"[1/5]"
 
@@ -6078,16 +6092,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	) -   End of item group.  No width fields allowed.
 	T N   For 'tabline': start of tab page N label.  Use %T or %X to end
 	      the label.  Clicking this label with left mouse button switches
-	      to the specified tab page.
+	      to the specified tab page, while clicking it with middle mouse
+	      button closes the specified tab page.
 	X N   For 'tabline': start of close tab N label.  Use %X or %T to end
 	      the label, e.g.: %3Xclose%X.  Use %999X for a "close current
-	      tab" label.    Clicking this label with left mouse button closes
-	      specified tab page.
-	@ N   Start of execute function label. Use %X or %T to
-	      end the label, e.g.: %10@SwitchBuffer@foo.c%X.  Clicking this
-	      label runs specified function: in the example when clicking once
-	      using left mouse button on "foo.c" "SwitchBuffer(10, 1, 'l',
-	      '    ')" expression will be run.  Function receives the
+	      tab" label.  Clicking this label with left mouse button closes
+	      the specified tab page.
+	@ N   Start of execute function label. Use %X or %T to end the label,
+	      e.g.: %10@SwitchBuffer@foo.c%X.  Clicking this label runs the
+	      specified function: in the example when clicking once using left
+	      mouse button on "foo.c", a `SwitchBuffer(10, 1, 'l', '    ')`
+	      expression will be run.  The specified function receives the
 	      following arguments in order:
 	      1. minwid field value or zero if no N was specified
 	      2. number of mouse clicks to detect multiple clicks
@@ -6256,6 +6271,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			"split" when both are present.
 	   uselast	If included, jump to the previously used window when
 			jumping to errors with |quickfix| commands.
+	If a window has 'winfixbuf' enabled, 'switchbuf' is currently not
+	applied to the split window.
 
 						*'synmaxcol'* *'smc'*
 'synmaxcol' 'smc'	number	(default 3000)
@@ -7154,6 +7171,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	or equal to 'lines' it will be set to 'lines' minus 1.
 	Note: Do not confuse this with the height of the Vim window, use
 	'lines' for that.
+
+			*'winfixbuf'* *'wfb'* *'nowinfixbuf'* *'nowfb'*
+'winfixbuf' 'wfb'	boolean	(default off)
+			local to window
+	If enabled, the buffer and any window that displays it are paired.
+	For example, attempting to change the buffer with |:edit| will fail.
+	Other commands which change a window's buffer such as |:cnext| will
+	also skip any window with 'winfixbuf' enabled. However if a command
+	has an "!" option, a window can be forced to switch buffers.
 
 			*'winfixheight'* *'wfh'* *'nowinfixheight'* *'nowfh'*
 'winfixheight' 'wfh'	boolean	(default off)

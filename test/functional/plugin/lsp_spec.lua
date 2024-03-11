@@ -139,30 +139,6 @@ describe('LSP', function()
       end)
     end)
   end)
-
-  describe('lsp._cmd_parts test', function()
-    local function _cmd_parts(input)
-      return exec_lua(
-        [[
-        lsp = require('vim.lsp')
-        return lsp._cmd_parts(...)
-      ]],
-        input
-      )
-    end
-    it('should valid cmd argument', function()
-      eq(true, pcall(_cmd_parts, { 'nvim' }))
-      eq(true, pcall(_cmd_parts, { 'nvim', '--head' }))
-    end)
-
-    it('should invalid cmd argument', function()
-      eq('.../lsp.lua:0: cmd: expected list, got nvim', pcall_err(_cmd_parts, 'nvim'))
-      eq(
-        '.../lsp.lua:0: cmd argument: expected string, got number',
-        pcall_err(_cmd_parts, { 'nvim', 1 })
-      )
-    end)
-  end)
 end)
 
 describe('LSP', function()
@@ -229,8 +205,8 @@ describe('LSP', function()
           client.stop()
         end,
         on_exit = function(code, signal)
-          eq(0, code, 'exit code', fake_lsp_logfile)
-          eq(0, signal, 'exit signal', fake_lsp_logfile)
+          eq(0, code, 'exit code')
+          eq(0, signal, 'exit signal')
         end,
         settings = {
           dummy = 1,
@@ -547,7 +523,7 @@ describe('LSP', function()
           if ctx.method == 'start' then
             exec_lua([=[
               local client = vim.lsp.get_client_by_id(TEST_RPC_CLIENT_ID)
-              client.config.settings = {
+              client.settings = {
                 testSetting1 = true;
                 testSetting2 = false;
                 test = {Setting3 = 'nested' };
@@ -665,11 +641,11 @@ describe('LSP', function()
         vim.lsp.stop_client(client_id)
         return server.messages
       ]])
-      eq(#messages, 4)
-      eq(messages[1].method, 'initialize')
-      eq(messages[2].method, 'initialized')
-      eq(messages[3].method, 'shutdown')
-      eq(messages[4].method, 'exit')
+      eq(4, #messages)
+      eq('initialize', messages[1].method)
+      eq('initialized', messages[2].method)
+      eq('shutdown', messages[3].method)
+      eq('exit', messages[4].method)
     end)
 
     it('BufWritePre sends willSave / willSaveWaitUntil, applies textEdits', function()
@@ -2407,12 +2383,13 @@ describe('LSP', function()
         [[
         local old = select(1, ...)
         local new = select(2, ...)
+        local old_bufnr = vim.fn.bufadd(old)
+        vim.fn.bufload(old_bufnr)
         vim.lsp.util.rename(old, new)
-
-        -- after rename the target file must have the contents of the source file
-        local bufnr = vim.fn.bufadd(new)
-        vim.fn.bufload(new)
-        return vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
+        -- the existing buffer is renamed in-place and its contents is kept
+        local new_bufnr = vim.fn.bufadd(new)
+        vim.fn.bufload(new_bufnr)
+        return (old_bufnr == new_bufnr) and vim.api.nvim_buf_get_lines(new_bufnr, 0, -1, true)
       ]],
         old,
         new
@@ -2422,25 +2399,6 @@ describe('LSP', function()
       eq(false, exists)
       exists = exec_lua('return vim.uv.fs_stat(...) ~= nil', new)
       eq(true, exists)
-      os.remove(new)
-    end)
-    it('Kills old buffer after renaming an existing file', function()
-      local old = tmpname()
-      write_file(old, 'Test content')
-      local new = tmpname()
-      os.remove(new) -- only reserve the name, file must not exist for the test scenario
-      local lines = exec_lua(
-        [[
-        local old = select(1, ...)
-	local oldbufnr = vim.fn.bufadd(old)
-        local new = select(2, ...)
-        vim.lsp.util.rename(old, new)
-	return vim.fn.bufloaded(oldbufnr)
-      ]],
-        old,
-        new
-      )
-      eq(0, lines)
       os.remove(new)
     end)
     it('Can rename a directory', function()
@@ -2459,23 +2417,68 @@ describe('LSP', function()
         [[
         local old_dir = select(1, ...)
         local new_dir = select(2, ...)
-	local pathsep = select(3, ...)
-	local oldbufnr = vim.fn.bufadd(old_dir .. pathsep .. 'file')
-
+        local pathsep = select(3, ...)
+        local file = select(4, ...)
+        local old_bufnr = vim.fn.bufadd(old_dir .. pathsep .. file)
+        vim.fn.bufload(old_bufnr)
         vim.lsp.util.rename(old_dir, new_dir)
-	return vim.fn.bufloaded(oldbufnr)
+        -- the existing buffer is renamed in-place and its contents is kept
+        local new_bufnr = vim.fn.bufadd(new_dir .. pathsep .. file)
+        vim.fn.bufload(new_bufnr)
+        return (old_bufnr == new_bufnr) and vim.api.nvim_buf_get_lines(new_bufnr, 0, -1, true)
       ]],
         old_dir,
         new_dir,
-        pathsep
+        pathsep,
+        file
       )
-      eq(0, lines)
+      eq({ 'Test content' }, lines)
       eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old_dir))
       eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new_dir))
       eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new_dir .. pathsep .. file))
-      eq('Test content', read_file(new_dir .. pathsep .. file))
 
       os.remove(new_dir)
+    end)
+    it('Does not touch buffers that do not match path prefix', function()
+      local old = tmpname()
+      local new = tmpname()
+      os.remove(old)
+      os.remove(new)
+      helpers.mkdir_p(old)
+
+      local result = exec_lua(
+        [[
+        local old = select(1, ...)
+        local new = select(2, ...)
+
+        local old_prefixed = 'explorer://' .. old
+        local old_suffixed = old .. '.bak'
+        local new_prefixed = 'explorer://' .. new
+        local new_suffixed = new .. '.bak'
+
+        local old_prefixed_buf = vim.fn.bufadd(old_prefixed)
+        local old_suffixed_buf = vim.fn.bufadd(old_suffixed)
+        local new_prefixed_buf = vim.fn.bufadd(new_prefixed)
+        local new_suffixed_buf = vim.fn.bufadd(new_suffixed)
+
+        vim.lsp.util.rename(old, new)
+
+        return
+          vim.api.nvim_buf_is_valid(old_prefixed_buf) and
+          vim.api.nvim_buf_is_valid(old_suffixed_buf) and
+          vim.api.nvim_buf_is_valid(new_prefixed_buf) and
+          vim.api.nvim_buf_is_valid(new_suffixed_buf) and
+          vim.api.nvim_buf_get_name(old_prefixed_buf) == old_prefixed and
+          vim.api.nvim_buf_get_name(old_suffixed_buf) == old_suffixed and
+          vim.api.nvim_buf_get_name(new_prefixed_buf) == new_prefixed and
+          vim.api.nvim_buf_get_name(new_suffixed_buf) == new_suffixed
+      ]],
+        old,
+        new
+      )
+      eq(true, result)
+
+      os.remove(new)
     end)
     it(
       'Does not rename file if target exists and ignoreIfExists is set or overwrite is false',
@@ -2514,6 +2517,88 @@ describe('LSP', function()
         eq('New file', read_file(new))
       end
     )
+    it('Maintains undo information for loaded buffer', function()
+      local old = tmpname()
+      write_file(old, 'line')
+      local new = tmpname()
+      os.remove(new)
+
+      local undo_kept = exec_lua(
+        [[
+        local old = select(1, ...)
+        local new = select(2, ...)
+        vim.opt.undofile = true
+        vim.cmd.edit(old)
+        vim.cmd.normal('dd')
+        vim.cmd.write()
+        local undotree = vim.fn.undotree()
+        vim.lsp.util.rename(old, new)
+        -- Renaming uses :saveas, which updates the "last write" information.
+        -- Other than that, the undotree should remain the same.
+        undotree.save_cur = undotree.save_cur + 1
+        undotree.save_last = undotree.save_last + 1
+        undotree.entries[1].save = undotree.entries[1].save + 1
+        return vim.deep_equal(undotree, vim.fn.undotree())
+      ]],
+        old,
+        new
+      )
+      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
+      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new))
+      eq(true, undo_kept)
+    end)
+    it('Maintains undo information for unloaded buffer', function()
+      local old = tmpname()
+      write_file(old, 'line')
+      local new = tmpname()
+      os.remove(new)
+
+      local undo_kept = exec_lua(
+        [[
+        local old = select(1, ...)
+        local new = select(2, ...)
+        vim.opt.undofile = true
+        vim.cmd.split(old)
+        vim.cmd.normal('dd')
+        vim.cmd.write()
+        local undotree = vim.fn.undotree()
+        vim.cmd.bdelete()
+        vim.lsp.util.rename(old, new)
+        vim.cmd.edit(new)
+        return vim.deep_equal(undotree, vim.fn.undotree())
+      ]],
+        old,
+        new
+      )
+      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
+      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new))
+      eq(true, undo_kept)
+    end)
+    it('Does not rename file when it conflicts with a buffer without file', function()
+      local old = tmpname()
+      write_file(old, 'Old File')
+      local new = tmpname()
+      os.remove(new)
+
+      local lines = exec_lua(
+        [[
+          local old = select(1, ...)
+          local new = select(2, ...)
+          local old_buf = vim.fn.bufadd(old)
+          vim.fn.bufload(old_buf)
+          local conflict_buf = vim.api.nvim_create_buf(true, false)
+          vim.api.nvim_buf_set_name(conflict_buf, new)
+          vim.api.nvim_buf_set_lines(conflict_buf, 0, -1, true, {'conflict'})
+          vim.api.nvim_win_set_buf(0, conflict_buf)
+          vim.lsp.util.rename(old, new)
+          return vim.api.nvim_buf_get_lines(conflict_buf, 0, -1, true)
+        ]],
+        old,
+        new
+      )
+      eq({ 'conflict' }, lines)
+      eq('Old File', read_file(old))
+    end)
     it('Does override target if overwrite is true', function()
       local old = tmpname()
       write_file(old, 'Old file')
@@ -2532,7 +2617,7 @@ describe('LSP', function()
 
       eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
       eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new))
-      eq('Old file\n', read_file(new))
+      eq('Old file', read_file(new))
     end)
   end)
 
@@ -4013,6 +4098,105 @@ describe('LSP', function()
       check_notify('both', true, true)
     end)
   end)
+
+  describe('vim.lsp.tagfunc', function()
+    before_each(function()
+      clear()
+      ---@type lsp.Location[]
+      local mock_locations = {
+        {
+          range = {
+            ['start'] = { line = 5, character = 23 },
+            ['end'] = { line = 10, character = 0 },
+          },
+          uri = 'test://buf',
+        },
+        {
+          range = {
+            ['start'] = { line = 42, character = 10 },
+            ['end'] = { line = 44, character = 0 },
+          },
+          uri = 'test://another-file',
+        },
+      }
+      exec_lua(create_server_definition)
+      exec_lua(
+        [[
+        _G.mock_locations = ...
+        _G.server = _create_server({
+          ---@type lsp.ServerCapabilities
+          capabilities = {
+            definitionProvider = true,
+            workspaceSymbolProvider = true,
+          },
+          handlers = {
+            ---@return lsp.Location[]
+            ['textDocument/definition'] = function()
+              return { _G.mock_locations[1] }
+            end,
+            ---@return lsp.WorkspaceSymbol[]
+            ['workspace/symbol'] = function(_, request)
+              assert(request.query == 'foobar')
+              return {
+                {
+                  name = 'foobar',
+                  kind = 13, ---@type lsp.SymbolKind
+                  location = _G.mock_locations[1],
+                },
+                {
+                  name = 'vim.foobar',
+                  kind = 12, ---@type lsp.SymbolKind
+                  location = _G.mock_locations[2],
+                }
+              }
+            end,
+          },
+        })
+        _G.client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+      ]],
+        mock_locations
+      )
+    end)
+    after_each(function()
+      exec_lua [[
+        vim.lsp.stop_client(_G.client_id)
+      ]]
+    end)
+
+    it('with flags=c, returns matching tags using textDocument/definition', function()
+      local result = exec_lua [[
+        return vim.lsp.tagfunc('foobar', 'c')
+      ]]
+      eq({
+        {
+          cmd = '/\\%6l\\%1c/', -- for location (5, 23)
+          filename = 'test://buf',
+          name = 'foobar',
+        },
+      }, result)
+    end)
+
+    it('without flags=c, returns all matching tags using workspace/symbol', function()
+      local result = exec_lua [[
+        return vim.lsp.tagfunc('foobar', '')
+      ]]
+      eq({
+        {
+          cmd = '/\\%6l\\%1c/', -- for location (5, 23)
+          filename = 'test://buf',
+          kind = 'Variable',
+          name = 'foobar',
+        },
+        {
+          cmd = '/\\%43l\\%1c/', -- for location (42, 10)
+          filename = 'test://another-file',
+          kind = 'Function',
+          name = 'vim.foobar',
+        },
+      }, result)
+    end)
+  end)
+
   describe('cmd', function()
     it('can connect to lsp server via rpc.connect', function()
       local result = exec_lua [[
@@ -4037,7 +4221,7 @@ describe('LSP', function()
         server:shutdown()
         return vim.json.decode(init)
       ]]
-      eq(result.method, 'initialize')
+      eq('initialize', result.method)
     end)
     it('can connect to lsp server via rpc.domain_socket_connect', function()
       local tmpfile
@@ -4073,7 +4257,7 @@ describe('LSP', function()
       ]],
         tmpfile
       )
-      eq(result.method, 'initialize')
+      eq('initialize', result.method)
     end)
   end)
 
@@ -4260,113 +4444,140 @@ describe('LSP', function()
   end)
 
   describe('vim.lsp._watchfiles', function()
-    it('sends notifications when files change', function()
-      skip(
-        is_os('bsd'),
-        'kqueue only reports events on watched folder itself, not contained files #26110'
-      )
-      local root_dir = tmpname()
-      os.remove(root_dir)
-      mkdir(root_dir)
+    local function test_filechanges(watchfunc)
+      it(
+        string.format('sends notifications when files change (watchfunc=%s)', watchfunc),
+        function()
+          if watchfunc == 'fswatch' then
+            skip(
+              not is_ci() and fn.executable('fswatch') == 0,
+              'fswatch not installed and not on CI'
+            )
+            skip(is_os('win'), 'not supported on windows')
+            skip(is_os('mac'), 'flaky')
+          end
 
-      exec_lua(create_server_definition)
-      local result = exec_lua(
-        [[
-        local root_dir = ...
+          skip(
+            is_os('bsd'),
+            'kqueue only reports events on watched folder itself, not contained files #26110'
+          )
 
-        local server = _create_server()
-        local client_id = vim.lsp.start({
-          name = 'watchfiles-test',
-          cmd = server.cmd,
-          root_dir = root_dir,
-          capabilities = {
-            workspace = {
-              didChangeWatchedFiles = {
-                dynamicRegistration = true,
+          local root_dir = tmpname()
+          os.remove(root_dir)
+          mkdir(root_dir)
+
+          exec_lua(create_server_definition)
+          local result = exec_lua(
+            [[
+          local root_dir, watchfunc = ...
+
+          local server = _create_server()
+          local client_id = vim.lsp.start({
+            name = 'watchfiles-test',
+            cmd = server.cmd,
+            root_dir = root_dir,
+            capabilities = {
+              workspace = {
+                didChangeWatchedFiles = {
+                  dynamicRegistration = true,
+                },
               },
             },
-          },
-        })
+          })
 
-        local expected_messages = 2 -- initialize, initialized
+          require('vim.lsp._watchfiles')._watchfunc = require('vim._watch')[watchfunc]
 
-        local watchfunc = require('vim.lsp._watchfiles')._watchfunc
-        local msg_wait_timeout = watchfunc == vim._watch.poll and 2500 or 200
-        local function wait_for_messages()
-          assert(vim.wait(msg_wait_timeout, function() return #server.messages == expected_messages end), 'Timed out waiting for expected number of messages. Current messages seen so far: ' .. vim.inspect(server.messages))
-        end
+          local expected_messages = 0
 
-        wait_for_messages()
+          local msg_wait_timeout = watchfunc == 'watch' and 200 or 2500
 
-        vim.lsp.handlers['client/registerCapability'](nil, {
-          registrations = {
-            {
-              id = 'watchfiles-test-0',
-              method = 'workspace/didChangeWatchedFiles',
-              registerOptions = {
-                watchers = {
-                  {
-                    globPattern = '**/watch',
-                    kind = 7,
+          local function wait_for_message(incr)
+            expected_messages = expected_messages + (incr or 1)
+            assert(
+              vim.wait(msg_wait_timeout, function()
+                return #server.messages == expected_messages
+              end),
+              'Timed out waiting for expected number of messages. Current messages seen so far: '
+                .. vim.inspect(server.messages)
+            )
+          end
+
+          wait_for_message(2) -- initialize, initialized
+
+          vim.lsp.handlers['client/registerCapability'](nil, {
+            registrations = {
+              {
+                id = 'watchfiles-test-0',
+                method = 'workspace/didChangeWatchedFiles',
+                registerOptions = {
+                  watchers = {
+                    {
+                      globPattern = '**/watch',
+                      kind = 7,
+                    },
                   },
                 },
               },
             },
-          },
-        }, { client_id = client_id })
+          }, { client_id = client_id })
 
-        if watchfunc == vim._watch.poll then
-          vim.wait(100)
+          if watchfunc ~= 'watch' then
+            vim.wait(100)
+          end
+
+          local path = root_dir .. '/watch'
+          local tmp = vim.fn.tempname()
+          io.open(tmp, 'w'):close()
+          vim.uv.fs_rename(tmp, path)
+
+          wait_for_message()
+
+          os.remove(path)
+
+          wait_for_message()
+
+          vim.lsp.stop_client(client_id)
+
+          return server.messages
+        ]],
+            root_dir,
+            watchfunc
+          )
+
+          local uri = vim.uri_from_fname(root_dir .. '/watch')
+
+          eq(6, #result)
+
+          eq({
+            method = 'workspace/didChangeWatchedFiles',
+            params = {
+              changes = {
+                {
+                  type = exec_lua([[return vim.lsp.protocol.FileChangeType.Created]]),
+                  uri = uri,
+                },
+              },
+            },
+          }, result[3])
+
+          eq({
+            method = 'workspace/didChangeWatchedFiles',
+            params = {
+              changes = {
+                {
+                  type = exec_lua([[return vim.lsp.protocol.FileChangeType.Deleted]]),
+                  uri = uri,
+                },
+              },
+            },
+          }, result[4])
         end
-
-        local path = root_dir .. '/watch'
-        local file = io.open(path, 'w')
-        file:close()
-
-        expected_messages = expected_messages + 1
-        wait_for_messages()
-
-        os.remove(path)
-
-        expected_messages = expected_messages + 1
-        wait_for_messages()
-
-        return server.messages
-      ]],
-        root_dir
       )
+    end
 
-      local function watched_uri(fname)
-        return exec_lua(
-          [[
-            local root_dir, fname = ...
-            return vim.uri_from_fname(root_dir .. '/' .. fname)
-          ]],
-          root_dir,
-          fname
-        )
-      end
-
-      eq(4, #result)
-      eq('workspace/didChangeWatchedFiles', result[3].method)
-      eq({
-        changes = {
-          {
-            type = exec_lua([[return vim.lsp.protocol.FileChangeType.Created]]),
-            uri = watched_uri('watch'),
-          },
-        },
-      }, result[3].params)
-      eq('workspace/didChangeWatchedFiles', result[4].method)
-      eq({
-        changes = {
-          {
-            type = exec_lua([[return vim.lsp.protocol.FileChangeType.Deleted]]),
-            uri = watched_uri('watch'),
-          },
-        },
-      }, result[4].params)
-    end)
+    test_filechanges('watch')
+    test_filechanges('watchdirs')
+    test_filechanges('fswatch')
 
     it('correctly registers and unregisters', function()
       local root_dir = '/some_dir'

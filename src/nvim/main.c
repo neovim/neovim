@@ -70,7 +70,6 @@
 #include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/msgpack_rpc/channel.h"
-#include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/normal.h"
 #include "nvim/ops.h"
@@ -152,11 +151,9 @@ void event_init(void)
   loop_init(&main_loop, NULL);
   resize_events = multiqueue_new_child(main_loop.events);
 
-  // early msgpack-rpc initialization
-  msgpack_rpc_helpers_init();
   input_init();
   signal_init();
-  // finish mspgack-rpc initialization
+  // mspgack-rpc initialization
   channel_init();
   terminal_init();
   ui_init();
@@ -366,7 +363,7 @@ int main(int argc, char **argv)
 
   setbuf(stdout, NULL);  // NOLINT(bugprone-unsafe-functions)
 
-  full_screen = !silent_mode;
+  full_screen = !silent_mode || exmode_active;
 
   // Set the default values for the options that use Rows and Columns.
   win_init_size();
@@ -399,6 +396,7 @@ int main(int argc, char **argv)
   }
 
   if (ui_client_channel_id) {
+    time_finish();
     ui_client_run(remote_ui);  // NORETURN
   }
   assert(!ui_client_channel_id && !use_builtin_ui);
@@ -425,7 +423,19 @@ int main(int argc, char **argv)
     params.edit_type = EDIT_STDIN;
   }
 
-  open_script_files(&params);
+  if (params.scriptin) {
+    if (!open_scriptin(params.scriptin)) {
+      os_exit(2);
+    }
+  }
+  if (params.scriptout) {
+    scriptout = os_fopen(params.scriptout, params.scriptout_append ? APPENDBIN : WRITEBIN);
+    if (scriptout == NULL) {
+      fprintf(stderr, _("Cannot open for script output: \""));
+      fprintf(stderr, "%s\"\n", params.scriptout);
+      os_exit(2);
+    }
+  }
 
   nlua_init_defaults();
 
@@ -695,6 +705,9 @@ void getout(int exitval)
   assert(!ui_client_channel_id);
   exiting = true;
 
+  // make sure startuptimes have been flushed
+  time_finish();
+
   // On error during Ex mode, exit with a non-zero code.
   // POSIX requires this, although it's not 100% clear from the standard.
   if (exmode_active) {
@@ -936,20 +949,20 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   }
 
   Array args = ARRAY_DICT_INIT;
+  kv_resize(args, (size_t)(argc - remote_args));
   for (int t_argc = remote_args; t_argc < argc; t_argc++) {
-    String arg_s = cstr_to_string(argv[t_argc]);
-    ADD(args, STRING_OBJ(arg_s));
+    ADD_C(args, CSTR_AS_OBJ(argv[t_argc]));
   }
 
   Error err = ERROR_INIT;
-  Array a = ARRAY_DICT_INIT;
-  ADD(a, INTEGER_OBJ((int)chan));
-  ADD(a, CSTR_TO_OBJ(server_addr));
-  ADD(a, CSTR_TO_OBJ(connect_error));
-  ADD(a, ARRAY_OBJ(args));
+  MAXSIZE_TEMP_ARRAY(a, 4);
+  ADD_C(a, INTEGER_OBJ((int)chan));
+  ADD_C(a, CSTR_AS_OBJ(server_addr));
+  ADD_C(a, CSTR_AS_OBJ(connect_error));
+  ADD_C(a, ARRAY_OBJ(args));
   String s = STATIC_CSTR_AS_STRING("return vim._cs_remote(...)");
-  Object o = nlua_exec(s, a, &err);
-  api_free_array(a);
+  Object o = nlua_exec(s, a, kRetObject, NULL, &err);
+  kv_destroy(args);
   if (ERROR_SET(&err)) {
     fprintf(stderr, "%s\n", err.msg);
     os_exit(2);
@@ -1016,6 +1029,7 @@ static bool edit_stdin(mparm_T *parmp)
                   && !(embedded_mode && stdin_fd <= 0)
                   && (!exmode_active || parmp->input_istext)
                   && !stdin_isatty
+                  && parmp->edit_type <= EDIT_STDIN
                   && parmp->scriptin == NULL;  // `-s -` was not given.
   return parmp->had_stdin_file || implicit;
 }
@@ -1086,20 +1100,16 @@ static void command_line_scan(mparm_T *parmp)
           FileDescriptor fp;
           const int fof_ret = file_open_fd(&fp, STDOUT_FILENO,
                                            kFileWriteOnly);
-          msgpack_packer *p = msgpack_packer_new(&fp, msgpack_file_write);
-
           if (fof_ret != 0) {
             semsg(_("E5421: Failed to open stdin: %s"), os_strerror(fof_ret));
           }
 
-          if (p == NULL) {
-            emsg(_(e_outofmem));
+          String data = api_metadata_raw();
+          const ptrdiff_t written_bytes = file_write(&fp, data.data, data.size);
+          if (written_bytes < 0) {
+            msgpack_file_write_error((int)written_bytes);
           }
 
-          Object md = DICTIONARY_OBJ(api_metadata());
-          msgpack_rpc_from_object(md, p);
-
-          msgpack_packer_free(p);
           const int ff_ret = file_flush(&fp);
           if (ff_ret < 0) {
             msgpack_file_write_error(ff_ret);
@@ -1494,9 +1504,16 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
 /// Initialize global startuptime file if "--startuptime" passed as an argument.
 static void init_startuptime(mparm_T *paramp)
 {
+  bool is_embed = false;
+  for (int i = 1; i < paramp->argc - 1; i++) {
+    if (STRICMP(paramp->argv[i], "--embed") == 0) {
+      is_embed = true;
+      break;
+    }
+  }
   for (int i = 1; i < paramp->argc - 1; i++) {
     if (STRICMP(paramp->argv[i], "--startuptime") == 0) {
-      time_fd = fopen(paramp->argv[i + 1], "a");
+      time_init(paramp->argv[i + 1], is_embed ? "Embedded" : "Primary/TUI");
       time_start("--- NVIM STARTING ---");
       break;
     }
@@ -1606,37 +1623,6 @@ static void read_stdin(void)
   msg_didany = save_msg_didany;
   TIME_MSG("reading stdin");
   check_swap_exists_action();
-}
-
-static void open_script_files(mparm_T *parmp)
-{
-  if (parmp->scriptin) {
-    int error;
-    if (strequal(parmp->scriptin, "-")) {
-      FileDescriptor *stdin_dup = file_open_stdin();
-      scriptin[0] = stdin_dup;
-    } else {
-      scriptin[0] = file_open_new(&error, parmp->scriptin,
-                                  kFileReadOnly|kFileNonBlocking, 0);
-      if (scriptin[0] == NULL) {
-        vim_snprintf(IObuff, IOSIZE,
-                     _("Cannot open for reading: \"%s\": %s\n"),
-                     parmp->scriptin, os_strerror(error));
-        fprintf(stderr, "%s", IObuff);
-        os_exit(2);
-      }
-    }
-    save_typebuf();
-  }
-
-  if (parmp->scriptout) {
-    scriptout = os_fopen(parmp->scriptout, parmp->scriptout_append ? APPENDBIN : WRITEBIN);
-    if (scriptout == NULL) {
-      fprintf(stderr, _("Cannot open for script output: \""));
-      fprintf(stderr, "%s\"\n", parmp->scriptout);
-      os_exit(2);
-    }
-  }
 }
 
 // Create the requested number of windows and edit buffers in them.
@@ -2073,7 +2059,7 @@ static void do_exrc_initialization(void)
     str = nlua_read_secure(VIMRC_LUA_FILE);
     if (str != NULL) {
       Error err = ERROR_INIT;
-      nlua_exec(cstr_as_string(str), (Array)ARRAY_DICT_INIT, &err);
+      nlua_exec(cstr_as_string(str), (Array)ARRAY_DICT_INIT, kRetNilBool, NULL, &err);
       xfree(str);
       if (ERROR_SET(&err)) {
         semsg("Error detected while processing %s:", VIMRC_LUA_FILE);

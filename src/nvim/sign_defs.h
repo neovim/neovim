@@ -1,5 +1,6 @@
 #pragma once
 
+#include "nvim/decoration_defs.h"
 #include "nvim/types_defs.h"
 
 /// Sign attributes. Used by the screen refresh routines.
@@ -18,6 +19,11 @@ typedef struct {
   int sn_cul_hl;   // highlight ID for text on current line when 'cursorline' is set
   int sn_num_hl;   // highlight ID for line number
 } sign_T;
+
+typedef struct {
+  DecorSignHighlight *sh;
+  uint32_t id;
+} SignItem;
 
 enum { SIGN_SHOW_MAX = 9, };  ///< Maximum number of signs shown on a single line
 enum { SIGN_DEF_PRIO = 10, };  ///< Default sign highlight priority

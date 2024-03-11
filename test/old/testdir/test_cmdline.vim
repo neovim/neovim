@@ -679,7 +679,7 @@ func Test_getcompletion()
     bw Xtest\
   endif
 
-  call assert_fails("call getcompletion('\\\\@!\\\\@=', 'buffer')", 'E871:')
+  call assert_fails("call getcompletion('\\\\@!\\\\@=', 'buffer')", 'E866:')
   call assert_fails('call getcompletion("", "burp")', 'E475:')
   call assert_fails('call getcompletion("abc", [])', 'E1174:')
 endfunc
@@ -864,10 +864,28 @@ func Test_cmdline_remove_char()
   let &encoding = encoding_save
 endfunc
 
-func Test_cmdline_keymap_ctrl_hat()
-  if !has('keymap')
-    return
+func Test_cmdline_del_utf8()
+  let @s = '⒌'
+  call feedkeys(":\"\<C-R>s,,\<C-B>\<Right>\<Del>\<CR>", 'tx')
+  call assert_equal('",,', @:)
+
+  let @s = 'a̳'
+  call feedkeys(":\"\<C-R>s,,\<C-B>\<Right>\<Del>\<CR>", 'tx')
+  call assert_equal('",,', @:)
+
+  let @s = 'β̳'
+  call feedkeys(":\"\<C-R>s,,\<C-B>\<Right>\<Del>\<CR>", 'tx')
+  call assert_equal('",,', @:)
+
+  if has('arabic')
+    let @s = 'لا'
+    call feedkeys(":\"\<C-R>s,,\<C-B>\<Right>\<Del>\<CR>", 'tx')
+    call assert_equal('",,', @:)
   endif
+endfunc
+
+func Test_cmdline_keymap_ctrl_hat()
+  CheckFeature keymap
 
   set keymap=esperanto
   call feedkeys(":\"Jxauxdo \<C-^>Jxauxdo \<C-^>Jxauxdo\<CR>", 'tx')
@@ -3916,6 +3934,36 @@ func Test_custom_completion_with_glob()
 
   delcommand TestGlobComplete
   delfunc TestGlobComplete
+endfunc
+
+func Test_window_size_stays_same_after_changing_cmdheight()
+  set laststatus=2
+  let expected = winheight(0)
+  function! Function_name() abort
+    call feedkeys(":"..repeat('x', &columns), 'x')
+    let &cmdheight=2
+    let &cmdheight=1
+    redraw
+  endfunction
+  call Function_name()
+  call assert_equal(expected, winheight(0))
+endfunc
+
+" verify that buffer-completion finds all buffer names matching a pattern
+func Test_buffer_completion()
+  " should return empty list
+  call assert_equal([], getcompletion('', 'buffer'))
+
+  call mkdir('Xbuf_complete', 'R')
+  e Xbuf_complete/Foobar.c
+  e Xbuf_complete/MyFoobar.c
+  e AFoobar.h
+  let expected = ["Xbuf_complete/Foobar.c", "Xbuf_complete/MyFoobar.c", "AFoobar.h"]
+
+  call assert_equal(3, len(getcompletion('Foo', 'buffer')))
+  call assert_equal(expected, getcompletion('Foo', 'buffer'))
+  call feedkeys(":b Foo\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"b Xbuf_complete/Foobar.c Xbuf_complete/MyFoobar.c AFoobar.h", @:)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

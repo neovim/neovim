@@ -4,27 +4,10 @@ do
   ---
   --- See |v_star-default| and |v_#-default|
   do
-    local function region_chunks(region)
-      local chunks = {}
-      local maxcol = vim.v.maxcol
-      for line, cols in vim.spairs(region) do
-        local endcol = cols[2] == maxcol and -1 or cols[2]
-        local chunk = vim.api.nvim_buf_get_text(0, line, cols[1], line, endcol, {})[1]
-        table.insert(chunks, chunk)
-      end
-      return chunks
-    end
-
     local function _visual_search(cmd)
       assert(cmd == '/' or cmd == '?')
-      local region = vim.region(
-        0,
-        '.',
-        'v',
-        vim.api.nvim_get_mode().mode:sub(1, 1),
-        vim.o.selection == 'inclusive'
-      )
-      local chunks = region_chunks(region)
+      local chunks =
+        vim.fn.getregion(vim.fn.getpos('.'), vim.fn.getpos('v'), { type = vim.fn.mode() })
       local esc_chunks = vim
         .iter(chunks)
         :map(function(v)
@@ -84,15 +67,6 @@ do
   )
   --- Map |gx| to call |vim.ui.open| on the identifier under the cursor
   do
-    -- TODO: use vim.region() when it lands... #13896 #16843
-    local function get_visual_selection()
-      local save_a = vim.fn.getreginfo('a')
-      vim.cmd([[norm! "ay]])
-      local selection = vim.fn.getreg('a', 1)
-      vim.fn.setreg('a', save_a)
-      return selection
-    end
-
     local function do_open(uri)
       local _, err = vim.ui.open(uri)
       if err then
@@ -106,7 +80,10 @@ do
       do_open(vim.fn.expand('<cfile>'))
     end, { desc = gx_desc })
     vim.keymap.set({ 'x' }, 'gx', function()
-      do_open(get_visual_selection())
+      local lines =
+        vim.fn.getregion(vim.fn.getpos('.'), vim.fn.getpos('v'), { type = vim.fn.mode() })
+      -- Trim whitespace on each line and concatenate.
+      do_open(table.concat(vim.iter(lines):map(vim.trim):totable()))
     end, { desc = gx_desc })
   end
 end
@@ -143,14 +120,16 @@ do
 
   vim.api.nvim_create_autocmd({ 'TermClose' }, {
     group = nvim_terminal_augroup,
+    nested = true,
     desc = 'Automatically close terminal buffers when started with no arguments and exiting without an error',
     callback = function(args)
-      if vim.v.event.status == 0 then
-        local info = vim.api.nvim_get_chan_info(vim.bo[args.buf].channel)
-        local argv = info.argv or {}
-        if #argv == 1 and argv[1] == vim.o.shell then
-          vim.cmd({ cmd = 'bdelete', args = { args.buf }, bang = true })
-        end
+      if vim.v.event.status ~= 0 then
+        return
+      end
+      local info = vim.api.nvim_get_chan_info(vim.bo[args.buf].channel)
+      local argv = info.argv or {}
+      if #argv == 1 and argv[1] == vim.o.shell then
+        vim.api.nvim_buf_delete(args.buf, { force = true })
       end
     end,
   })
@@ -159,6 +138,10 @@ do
     group = nvim_terminal_augroup,
     desc = 'Respond to OSC foreground/background color requests',
     callback = function(args)
+      local channel = vim.bo[args.buf].channel
+      if channel == 0 then
+        return
+      end
       local fg_request = args.data == '\027]10;?'
       local bg_request = args.data == '\027]11;?'
       if fg_request or bg_request then
@@ -173,7 +156,6 @@ do
         end
         local command = fg_request and 10 or 11
         local data = string.format('\027]%d;rgb:%04x/%04x/%04x\007', command, red, green, blue)
-        local channel = vim.bo[args.buf].channel
         vim.api.nvim_chan_send(channel, data)
       end
     end,
@@ -343,17 +325,7 @@ if tty then
       end,
     })
 
-    local query = '\027]11;?\007'
-
-    -- tmux 3.3a and earlier do not query the parent terminal for background color. As of the
-    -- writing of this comment, 3.3a is the latest release, so a passthrough sequence is necessary.
-    -- The passthrough should be removed as soon as a tmux version later than 3.3a is released.
-    -- See: https://github.com/neovim/neovim/pull/26557
-    if os.getenv('TMUX') then
-      query = string.format('\027Ptmux;%s\027\\', query:gsub('\027', '\027\027'))
-    end
-
-    io.stdout:write(query)
+    io.stdout:write('\027]11;?\007')
 
     timer:start(1000, 0, function()
       -- Delete the autocommand if no response was received

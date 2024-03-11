@@ -2,15 +2,18 @@ local mpack = vim.mpack
 
 local hashy = require 'generators.hashy'
 
-assert(#arg >= 5)
+local pre_args = 7
+assert(#arg >= pre_args)
 -- output h file with generated dispatch functions (dispatch_wrappers.generated.h)
 local dispatch_outputf = arg[1]
--- output h file with packed metadata (funcs_metadata.generated.h)
-local funcs_metadata_outputf = arg[2]
+-- output h file with packed metadata (api_metadata.generated.h)
+local api_metadata_outputf = arg[2]
 -- output metadata mpack file, for use by other build scripts (api_metadata.mpack)
 local mpack_outputf = arg[3]
 local lua_c_bindings_outputf = arg[4] -- lua_api_c_bindings.generated.c
 local keysets_outputf = arg[5] -- keysets_defs.generated.h
+local ui_metadata_inputf = arg[6] -- ui events metadata
+local git_version_inputf = arg[7] -- git version header
 
 local functions = {}
 
@@ -23,9 +26,7 @@ local function_names = {}
 
 local c_grammar = require('generators.c_grammar')
 
-local function startswith(String, Start)
-  return string.sub(String, 1, string.len(Start)) == Start
-end
+local startswith = vim.startswith
 
 local function add_function(fn)
   local public = startswith(fn.name, 'nvim_') or fn.deprecated_since
@@ -55,13 +56,12 @@ local function add_function(fn)
       -- for specifying errors
       fn.parameters[#fn.parameters] = nil
     end
-    if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'arena' then
-      -- return value is allocated in an arena
-      fn.arena_return = true
-      fn.parameters[#fn.parameters] = nil
-    end
     if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'lstate' then
       fn.has_lua_imp = true
+      fn.parameters[#fn.parameters] = nil
+    end
+    if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'arena' then
+      fn.receives_arena = true
       fn.parameters[#fn.parameters] = nil
     end
   end
@@ -99,8 +99,10 @@ local function add_keyset(val)
   })
 end
 
+local ui_options_text = nil
+
 -- read each input file, parse and append to the api metadata
-for i = 6, #arg do
+for i = pre_args + 1, #arg do
   local full_path = arg[i]
   local parts = {}
   for part in string.gmatch(full_path, '[^/]+') do
@@ -110,15 +112,18 @@ for i = 6, #arg do
 
   local input = assert(io.open(full_path, 'rb'))
 
-  local tmp = c_grammar.grammar:match(input:read('*all'))
+  local text = input:read('*all')
+  local tmp = c_grammar.grammar:match(text)
   for j = 1, #tmp do
     local val = tmp[j]
     if val.keyset_name then
       add_keyset(val)
-    else
+    elseif val.name then
       add_function(val)
     end
   end
+
+  ui_options_text = ui_options_text or string.match(text, 'ui_ext_names%[][^{]+{([^}]+)}')
   input:close()
 end
 
@@ -212,17 +217,78 @@ for _, f in ipairs(functions) do
       end
       f_exported.parameters[i] = param
     end
+    if startswith(f.return_type, 'Dict(') then
+      f_exported.return_type = 'Dictionary'
+    end
     exported_functions[#exported_functions + 1] = f_exported
   end
 end
 
+local ui_options = { 'rgb' }
+for x in string.gmatch(ui_options_text, '"([a-z][a-z_]+)"') do
+  table.insert(ui_options, x)
+end
+
+local version = require 'nvim_version'
+local git_version = io.open(git_version_inputf):read '*a'
+local version_build = string.match(git_version, '#define NVIM_VERSION_BUILD "([^"]+)"') or vim.NIL
+
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
-local funcs_metadata_output = assert(io.open(funcs_metadata_outputf, 'wb'))
-local packed = mpack.encode(exported_functions)
+local api_metadata_output = assert(io.open(api_metadata_outputf, 'wb'))
+local pieces = {}
+
+-- Naively using mpack.encode({foo=x, bar=y}) will make the build
+-- "non-reproducible". Emit maps directly as FIXDICT(2) "foo" x "bar" y instead
+local function fixdict(num)
+  if num > 15 then
+    error 'implement more dict codes'
+  end
+  table.insert(pieces, string.char(128 + num))
+end
+local function put(item, item2)
+  table.insert(pieces, mpack.encode(item))
+  if item2 ~= nil then
+    table.insert(pieces, mpack.encode(item2))
+  end
+end
+
+fixdict(6)
+
+put('version')
+fixdict(1 + #version)
+for _, item in ipairs(version) do
+  -- NB: all items are mandatory. But any error will be less confusing
+  -- with placholder vim.NIL (than invalid mpack data)
+  put(item[1], item[2] or vim.NIL)
+end
+put('build', version_build)
+
+put('functions', exported_functions)
+put('ui_events')
+table.insert(pieces, io.open(ui_metadata_inputf, 'rb'):read('*all'))
+put('ui_options', ui_options)
+
+put('error_types')
+fixdict(2)
+put('Exception', { id = 0 })
+put('Validation', { id = 1 })
+
+put('types')
+local types =
+  { { 'Buffer', 'nvim_buf_' }, { 'Window', 'nvim_win_' }, { 'Tabpage', 'nvim_tabpage_' } }
+fixdict(#types)
+for i, item in ipairs(types) do
+  put(item[1])
+  fixdict(2)
+  put('id', i - 1)
+  put('prefix', item[2])
+end
+
+local packed = table.concat(pieces)
 local dump_bin_array = require('generators.dump_bin_array')
-dump_bin_array(funcs_metadata_output, 'funcs_metadata', packed)
-funcs_metadata_output:close()
+dump_bin_array(api_metadata_output, 'packed_api_metadata', packed)
+api_metadata_output:close()
 
 -- start building the dispatch wrapper output
 local output = assert(io.open(dispatch_outputf, 'wb'))
@@ -241,7 +307,6 @@ output:write([[
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/map_defs.h"
-#include "nvim/msgpack_rpc/helpers.h"
 
 #include "nvim/api/autocmd.h"
 #include "nvim/api/buffer.h"
@@ -279,7 +344,7 @@ for _, k in ipairs(keysets) do
     return k.name .. '_table[' .. idx .. '].str'
   end)
 
-  keysets_defs:write('extern KeySetLink ' .. k.name .. '_table[];\n')
+  keysets_defs:write('extern KeySetLink ' .. k.name .. '_table[' .. (1 + #neworder) .. '];\n')
 
   local function typename(type)
     if type == 'HLGroupID' then
@@ -330,9 +395,6 @@ KeySetLink *KeyDict_]] .. k.name .. [[_get_field(const char *str, size_t len)
 }
 
 ]])
-  keysets_defs:write(
-    '#define api_free_keydict_' .. k.name .. '(x) api_free_keydict(x, ' .. k.name .. '_table)\n'
-  )
 end
 
 local function real_type(type)
@@ -532,7 +594,6 @@ for i = 1, #functions do
     end
 
     -- function call
-    local call_args = table.concat(args, ', ')
     output:write('\n  ')
     if fn.return_type ~= 'void' then
       -- has a return value, prefix the call with a declaration
@@ -542,61 +603,53 @@ for i = 1, #functions do
     -- write the function name and the opening parenthesis
     output:write(fn.name .. '(')
 
+    local call_args = {}
     if fn.receives_channel_id then
-      -- if the function receives the channel id, pass it as first argument
-      if #args > 0 or fn.can_fail then
-        output:write('channel_id, ')
-        if fn.receives_array_args then
-          -- if the function receives the array args, pass it the second argument
-          output:write('args, ')
-        end
-        output:write(call_args)
-      else
-        output:write('channel_id')
-        if fn.receives_array_args then
-          output:write(', args')
-        end
-      end
-    else
-      if fn.receives_array_args then
-        if #args > 0 or fn.call_fail then
-          output:write('args, ' .. call_args)
-        else
-          output:write('args')
-        end
-      else
-        output:write(call_args)
-      end
+      table.insert(call_args, 'channel_id')
     end
 
-    if fn.arena_return then
-      output:write(', arena')
+    if fn.receives_array_args then
+      table.insert(call_args, 'args')
+    end
+
+    for _, a in ipairs(args) do
+      table.insert(call_args, a)
+    end
+
+    if fn.receives_arena then
+      table.insert(call_args, 'arena')
     end
 
     if fn.has_lua_imp then
-      if #args > 0 then
-        output:write(', NULL')
-      else
-        output:write('NULL')
-      end
+      table.insert(call_args, 'NULL')
     end
 
     if fn.can_fail then
+      table.insert(call_args, 'error')
+    end
+
+    output:write(table.concat(call_args, ', '))
+    output:write(');\n')
+
+    if fn.can_fail then
       -- if the function can fail, also pass a pointer to the local error object
-      if #args > 0 then
-        output:write(', error);\n')
-      else
-        output:write('error);\n')
-      end
       -- and check for the error
       output:write('\n  if (ERROR_SET(error)) {')
       output:write('\n    goto cleanup;')
       output:write('\n  }\n')
-    else
-      output:write(');\n')
     end
 
-    if fn.return_type ~= 'void' then
+    local ret_type = real_type(fn.return_type)
+    if string.match(ret_type, '^KeyDict_') then
+      local table = string.sub(ret_type, 9) .. '_table'
+      output:write(
+        '\n  ret = DICTIONARY_OBJ(api_keydict_to_dict(&rv, '
+          .. table
+          .. ', ARRAY_SIZE('
+          .. table
+          .. '), arena));'
+      )
+    elseif ret_type ~= 'void' then
       output:write('\n  ret = ' .. string.upper(real_type(fn.return_type)) .. '_OBJ(rv);')
     end
     output:write('\n\ncleanup:')
@@ -630,8 +683,8 @@ for n, name in ipairs(hashorder) do
       .. (fn.impl_name or fn.name)
       .. ', .fast = '
       .. tostring(fn.fast)
-      .. ', .arena_return = '
-      .. tostring(not not fn.arena_return)
+      .. ', .ret_alloc = '
+      .. tostring(not not fn.ret_alloc)
       .. '},\n'
   )
 end
@@ -653,11 +706,11 @@ local function include_headers(output_handle, headers_to_include)
   end
 end
 
-local function write_shifted_output(_, str)
+local function write_shifted_output(str, ...)
   str = str:gsub('\n  ', '\n')
   str = str:gsub('^  ', '')
   str = str:gsub(' +$', '')
-  output:write(str)
+  output:write(string.format(str, ...))
 end
 
 -- start building lua output
@@ -688,24 +741,22 @@ local lua_c_functions = {}
 local function process_function(fn)
   local lua_c_function_name = ('nlua_api_%s'):format(fn.name)
   write_shifted_output(
-    output,
-    string.format(
-      [[
+    [[
 
   static int %s(lua_State *lstate)
   {
     Error err = ERROR_INIT;
+    Arena arena = ARENA_EMPTY;
     char *err_param = 0;
     if (lua_gettop(lstate) != %i) {
       api_set_error(&err, kErrorTypeValidation, "Expected %i argument%s");
       goto exit_0;
     }
   ]],
-      lua_c_function_name,
-      #fn.parameters,
-      #fn.parameters,
-      (#fn.parameters == 1) and '' or 's'
-    )
+    lua_c_function_name,
+    #fn.parameters,
+    #fn.parameters,
+    (#fn.parameters == 1) and '' or 's'
   )
   lua_c_functions[#lua_c_functions + 1] = {
     binding = lua_c_function_name,
@@ -714,38 +765,29 @@ local function process_function(fn)
 
   if not fn.fast then
     write_shifted_output(
-      output,
-      string.format(
-        [[
+      [[
     if (!nlua_is_deferred_safe()) {
       return luaL_error(lstate, e_luv_api_disabled, "%s");
     }
     ]],
-        fn.name
-      )
+      fn.name
     )
   end
 
   if fn.textlock then
-    write_shifted_output(
-      output,
-      [[
+    write_shifted_output([[
     if (text_locked()) {
-      api_set_error(&err, kErrorTypeException, "%s", get_text_locked_msg());
+      api_set_error(&err, kErrorTypeException, "%%s", get_text_locked_msg());
       goto exit_0;
     }
-    ]]
-    )
+    ]])
   elseif fn.textlock_allow_cmdwin then
-    write_shifted_output(
-      output,
-      [[
+    write_shifted_output([[
     if (textlock != 0 || expr_map_locked()) {
-      api_set_error(&err, kErrorTypeException, "%s", e_textlock);
+      api_set_error(&err, kErrorTypeException, "%%s", e_textlock);
       goto exit_0;
     }
-    ]]
-    )
+    ]])
   end
 
   local cparams = ''
@@ -754,67 +796,65 @@ local function process_function(fn)
     local param = fn.parameters[j]
     local cparam = string.format('arg%u', j)
     local param_type = real_type(param[1])
-    local lc_param_type = real_type(param[1]):lower()
     local extra = param_type == 'Dictionary' and 'false, ' or ''
-    if param[1] == 'Object' or param[1] == 'DictionaryOf(LuaRef)' then
+    local arg_free_code = ''
+    if param[1] == 'Object' then
       extra = 'true, '
+      arg_free_code = 'api_luarefs_free_object(' .. cparam .. ');'
+    elseif param[1] == 'DictionaryOf(LuaRef)' then
+      extra = 'true, '
+      arg_free_code = 'api_luarefs_free_dict(' .. cparam .. ');'
+    elseif param[1] == 'LuaRef' then
+      arg_free_code = 'api_free_luaref(' .. cparam .. ');'
     end
     local errshift = 0
     local seterr = ''
     if string.match(param_type, '^KeyDict_') then
       write_shifted_output(
-        output,
-        string.format(
-          [[
-      %s %s = { 0 }; nlua_pop_keydict(lstate, &%s, %s_get_field, &err_param, &err);]],
-          param_type,
-          cparam,
-          cparam,
-          param_type
-        )
+        [[
+    %s %s = KEYDICT_INIT;
+    nlua_pop_keydict(lstate, &%s, %s_get_field, &err_param, &arena, &err);
+    ]],
+        param_type,
+        cparam,
+        cparam,
+        param_type
       )
       cparam = '&' .. cparam
       errshift = 1 -- free incomplete dict on error
+      arg_free_code = 'api_luarefs_free_keydict('
+        .. cparam
+        .. ', '
+        .. string.sub(param_type, 9)
+        .. '_table);'
     else
       write_shifted_output(
-        output,
-        string.format(
-          [[
-      const %s %s = nlua_pop_%s(lstate, %s&err);]],
-          param[1],
-          cparam,
-          param_type,
-          extra
-        )
+        [[
+    const %s %s = nlua_pop_%s(lstate, %s&arena, &err);]],
+        param[1],
+        cparam,
+        param_type,
+        extra
       )
-      seterr = [[
-      err_param = "]] .. param[2] .. [[";]]
+      seterr = '\n      err_param = "' .. param[2] .. '";'
     end
 
-    write_shifted_output(
-      output,
-      string.format([[
+    write_shifted_output([[
 
     if (ERROR_SET(&err)) {]] .. seterr .. [[
+
       goto exit_%u;
     }
 
     ]], #fn.parameters - j + errshift)
-    )
-    free_code[#free_code + 1] = ('api_free_%s(%s);'):format(lc_param_type, cparam)
+    free_code[#free_code + 1] = arg_free_code
     cparams = cparam .. ', ' .. cparams
   end
   if fn.receives_channel_id then
     cparams = 'LUA_INTERNAL_CALL, ' .. cparams
   end
-  if fn.arena_return then
+  if fn.receives_arena then
     cparams = cparams .. '&arena, '
-    write_shifted_output(
-      output,
-      [[
-    Arena arena = ARENA_EMPTY;
-    ]]
-    )
   end
 
   if fn.has_lua_imp then
@@ -831,27 +871,28 @@ local function process_function(fn)
     local rev_i = #free_code - i + 1
     local code = free_code[rev_i]
     if i == 1 and not string.match(real_type(fn.parameters[1][1]), '^KeyDict_') then
-      free_at_exit_code = free_at_exit_code .. ('\n    %s'):format(code)
+      free_at_exit_code = free_at_exit_code .. ('\n  %s'):format(code)
     else
-      free_at_exit_code = free_at_exit_code .. ('\n  exit_%u:\n    %s'):format(rev_i, code)
+      free_at_exit_code = free_at_exit_code .. ('\nexit_%u:\n  %s'):format(rev_i, code)
     end
   end
   local err_throw_code = [[
 
-  exit_0:
-    if (ERROR_SET(&err)) {
-      luaL_where(lstate, 1);
-      if (err_param) {
-        lua_pushstring(lstate, "Invalid '");
-        lua_pushstring(lstate, err_param);
-        lua_pushstring(lstate, "': ");
-      }
-      lua_pushstring(lstate, err.msg);
-      api_clear_error(&err);
-      lua_concat(lstate, err_param ? 5 : 2);
-      return lua_error(lstate);
+exit_0:
+  arena_mem_free(arena_finish(&arena));
+  if (ERROR_SET(&err)) {
+    luaL_where(lstate, 1);
+    if (err_param) {
+      lua_pushstring(lstate, "Invalid '");
+      lua_pushstring(lstate, err_param);
+      lua_pushstring(lstate, "': ");
     }
-  ]]
+    lua_pushstring(lstate, err.msg);
+    api_clear_error(&err);
+    lua_concat(lstate, err_param ? 5 : 2);
+    return lua_error(lstate);
+  }
+]]
   local return_type
   if fn.return_type ~= 'void' then
     if fn.return_type:match('^ArrayOf') then
@@ -859,88 +900,70 @@ local function process_function(fn)
     else
       return_type = fn.return_type
     end
-    local free_retval
-    if fn.arena_return then
-      free_retval = 'arena_mem_free(arena_finish(&arena));'
-    else
-      free_retval = 'api_free_' .. return_type:lower() .. '(ret);'
+    local free_retval = ''
+    if fn.ret_alloc then
+      free_retval = '  api_free_' .. return_type:lower() .. '(ret);'
     end
-    write_shifted_output(
-      output,
-      string.format(
-        [[
-    const %s ret = %s(%s);
-    ]],
-        fn.return_type,
-        fn.name,
-        cparams
-      )
-    )
+    write_shifted_output('    %s ret = %s(%s);\n', fn.return_type, fn.name, cparams)
 
+    local ret_type = real_type(fn.return_type)
+    local ret_mode = (ret_type == 'Object') and '&' or ''
     if fn.has_lua_imp then
       -- only push onto the Lua stack if we haven't already
-      write_shifted_output(
-        output,
-        string.format(
-          [[
+      write_shifted_output(string.format(
+        [[
     if (lua_gettop(lstate) == 0) {
-      nlua_push_%s(lstate, ret, true);
+      nlua_push_%s(lstate, %sret, true);
     }
       ]],
-          return_type
-        )
+        return_type,
+        ret_mode
+      ))
+    elseif string.match(ret_type, '^KeyDict_') then
+      write_shifted_output(
+        '     nlua_push_keydict(lstate, &ret, %s_table);\n',
+        string.sub(ret_type, 9)
       )
     else
       local special = (fn.since ~= nil and fn.since < 11)
       write_shifted_output(
-        output,
-        string.format(
-          [[
-    nlua_push_%s(lstate, ret, %s);
-      ]],
-          return_type,
-          tostring(special)
-        )
+        '    nlua_push_%s(lstate, %sret, %s);\n',
+        return_type,
+        ret_mode,
+        tostring(special)
       )
     end
 
+    -- NOTE: we currently assume err_throw needs nothing from arena
     write_shifted_output(
-      output,
-      string.format(
-        [[
+
+      [[
   %s
   %s
   %s
     return 1;
     ]],
-        free_retval,
-        free_at_exit_code,
-        err_throw_code
-      )
+      free_retval,
+      free_at_exit_code,
+      err_throw_code
     )
   else
     write_shifted_output(
-      output,
-      string.format(
-        [[
+      [[
     %s(%s);
   %s
   %s
     return 0;
     ]],
-        fn.name,
-        cparams,
-        free_at_exit_code,
-        err_throw_code
-      )
+      fn.name,
+      cparams,
+      free_at_exit_code,
+      err_throw_code
     )
   end
-  write_shifted_output(
-    output,
-    [[
+  write_shifted_output([[
   }
-  ]]
-  )
+  ]])
 end
 
 for _, fn in ipairs(functions) do

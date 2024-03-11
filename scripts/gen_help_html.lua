@@ -752,7 +752,7 @@ end
 ---
 --- @param fname string help file to parse
 --- @param parser_path string? path to non-default vimdoc.so
---- @return LanguageTree, integer (lang_tree, bufnr)
+--- @return vim.treesitter.LanguageTree, integer (lang_tree, bufnr)
 local function parse_buf(fname, parser_path)
   local buf ---@type integer
   if type(fname) == 'string' then

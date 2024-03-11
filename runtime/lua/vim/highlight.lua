@@ -1,4 +1,4 @@
----@defgroup vim.highlight
+---@brief
 ---
 --- Nvim includes a function for highlighting a selection on yank.
 ---
@@ -19,18 +19,19 @@
 --- ```vim
 --- au TextYankPost * silent! lua vim.highlight.on_yank {on_visual=false}
 --- ```
+---
 
 local api = vim.api
 
 local M = {}
 
 --- Table with default priorities used for highlighting:
----     - `syntax`: `50`, used for standard syntax highlighting
----     - `treesitter`: `100`, used for treesitter-based highlighting
----     - `semantic_tokens`: `125`, used for LSP semantic token highlighting
----     - `diagnostics`: `150`, used for code analysis such as diagnostics
----     - `user`: `200`, used for user-triggered highlights such as LSP document
----       symbols or `on_yank` autocommands
+--- - `syntax`: `50`, used for standard syntax highlighting
+--- - `treesitter`: `100`, used for treesitter-based highlighting
+--- - `semantic_tokens`: `125`, used for LSP semantic token highlighting
+--- - `diagnostics`: `150`, used for code analysis such as diagnostics
+--- - `user`: `200`, used for user-triggered highlights such as LSP document
+---   symbols or `on_yank` autocommands
 M.priorities = {
   syntax = 50,
   treesitter = 100,
@@ -55,6 +56,7 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
   local regtype = opts.regtype or 'v'
   local inclusive = opts.inclusive or false
   local priority = opts.priority or M.priorities.user
+  local scoped = opts._scoped or false
 
   -- TODO: in case of 'v', 'V' (not block), this should calculate equivalent
   -- bounds (row, col, end_row, end_col) as multiline regions are natively
@@ -72,12 +74,14 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
       end_col = cols[2],
       priority = priority,
       strict = false,
+      scoped = scoped,
     })
   end
 end
 
 local yank_ns = api.nvim_create_namespace('hlyank')
 local yank_timer
+local yank_cancel
 
 --- Highlight the yanked text
 ---
@@ -120,24 +124,29 @@ function M.on_yank(opts)
   local higroup = opts.higroup or 'IncSearch'
   local timeout = opts.timeout or 150
 
-  local bufnr = api.nvim_get_current_buf()
-  api.nvim_buf_clear_namespace(bufnr, yank_ns, 0, -1)
+  local bufnr = vim.api.nvim_get_current_buf()
+  local winid = vim.api.nvim_get_current_win()
   if yank_timer then
     yank_timer:close()
+    yank_cancel()
   end
 
   M.range(bufnr, yank_ns, higroup, "'[", "']", {
     regtype = event.regtype,
     inclusive = event.inclusive,
     priority = opts.priority or M.priorities.user,
+    _scoped = true,
   })
+  vim.api.nvim_win_add_ns(winid, yank_ns)
 
-  yank_timer = vim.defer_fn(function()
+  yank_cancel = function()
     yank_timer = nil
-    if api.nvim_buf_is_valid(bufnr) then
-      api.nvim_buf_clear_namespace(bufnr, yank_ns, 0, -1)
-    end
-  end, timeout)
+    yank_cancel = nil
+    pcall(vim.api.nvim_buf_clear_namespace, bufnr, yank_ns, 0, -1)
+    pcall(vim.api.nvim_win_remove_ns, winid, yank_ns)
+  end
+
+  yank_timer = vim.defer_fn(yank_cancel, timeout)
 end
 
 return M

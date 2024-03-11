@@ -104,4 +104,18 @@ describe('vim.system', function()
       assert(signal == 2)
     ]])
   end)
+
+  it('SystemObj:wait() does not process non-fast events #27292', function()
+    eq(
+      false,
+      exec_lua([[
+        _G.processed = false
+        local cmd = vim.system({ 'sleep', '1' })
+        vim.schedule(function() _G.processed = true end)
+        cmd:wait()
+        return _G.processed
+      ]])
+    )
+    eq(true, exec_lua([[return _G.processed]]))
+  end)
 end)

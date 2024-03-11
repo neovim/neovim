@@ -4,11 +4,21 @@ local lsp = vim.lsp
 local protocol = lsp.protocol
 local ms = protocol.Methods
 
+--- @alias vim.lsp.CompletionResult lsp.CompletionList | lsp.CompletionItem[]
+
+-- TODO(mariasolos): Remove this declaration once we figure out a better way to handle
+-- literal/anonymous types (see https://github.com/neovim/neovim/pull/27542/files#r1495259331).
+--- @class lsp.ItemDefaults
+--- @field editRange lsp.Range | { insert: lsp.Range, replace: lsp.Range } | nil
+--- @field insertTextFormat lsp.InsertTextFormat?
+--- @field insertTextMode lsp.InsertTextMode?
+--- @field data any
+
 ---@param input string unparsed snippet
 ---@return string parsed snippet
 local function parse_snippet(input)
   local ok, parsed = pcall(function()
-    return require('vim.lsp._snippet_grammar').parse(input)
+    return vim.lsp._snippet_grammar.parse(input)
   end)
   return ok and tostring(parsed) or input
 end
@@ -37,19 +47,49 @@ local function get_completion_word(item)
   return item.label
 end
 
----@param result lsp.CompletionList|lsp.CompletionItem[]
+--- Applies the given defaults to the completion item, modifying it in place.
+---
+--- @param item lsp.CompletionItem
+--- @param defaults lsp.ItemDefaults?
+local function apply_defaults(item, defaults)
+  if not defaults then
+    return
+  end
+
+  item.insertTextFormat = item.insertTextFormat or defaults.insertTextFormat
+  item.insertTextMode = item.insertTextMode or defaults.insertTextMode
+  item.data = item.data or defaults.data
+  if defaults.editRange then
+    local textEdit = item.textEdit or {}
+    item.textEdit = textEdit
+    textEdit.newText = textEdit.newText or item.textEditText or item.insertText
+    if defaults.editRange.start then
+      textEdit.range = textEdit.range or defaults.editRange
+    elseif defaults.editRange.insert then
+      textEdit.insert = defaults.editRange.insert
+      textEdit.replace = defaults.editRange.replace
+    end
+  end
+end
+
+---@param result vim.lsp.CompletionResult
 ---@return lsp.CompletionItem[]
 local function get_items(result)
   if result.items then
+    for _, item in ipairs(result.items) do
+      ---@diagnostic disable-next-line: param-type-mismatch
+      apply_defaults(item, result.itemDefaults)
+    end
     return result.items
+  else
+    return result
   end
-  return result
 end
 
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
----@param result lsp.CompletionList|lsp.CompletionItem[] Result of `textDocument/completion`
+---@param result vim.lsp.CompletionResult Result of `textDocument/completion`
 ---@param prefix string prefix to filter the completion items
 ---@return table[]
 ---@see complete-items
@@ -130,7 +170,7 @@ end
 ---@param lnum integer 0-indexed line number
 ---@param client_start_boundary integer 0-indexed word boundary
 ---@param server_start_boundary? integer 0-indexed word boundary, based on textEdit.range.start.character
----@param result lsp.CompletionList|lsp.CompletionItem[]
+---@param result vim.lsp.CompletionResult
 ---@param encoding string
 ---@return table[] matches
 ---@return integer? server_start_boundary
@@ -206,7 +246,7 @@ function M.omnifunc(findstart, base)
     local params = util.make_position_params(win, client.offset_encoding)
     client.request(ms.textDocument_completion, params, function(err, result)
       if err then
-        require('vim.lsp.log').warn(err.message)
+        vim.lsp.log.warn(err.message)
       end
       if result and vim.fn.mode() == 'i' then
         local matches

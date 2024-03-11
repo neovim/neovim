@@ -375,7 +375,7 @@ static int nv_compare(const void *s1, const void *s2)
   if (c2 < 0) {
     c2 = -c2;
   }
-  return c1 - c2;
+  return c1 == c2 ? 0 : c1 > c2 ? 1 : -1;
 }
 
 /// Initialize the nv_cmd_idx[] table.
@@ -1347,10 +1347,6 @@ static void normal_redraw(NormalState *s)
 
   show_cursor_info_later(false);
 
-  if (VIsual_active) {
-    redraw_curbuf_later(UPD_INVERTED);  // update inverted part
-  }
-
   if (must_redraw) {
     update_screen();
   } else {
@@ -1455,9 +1451,7 @@ static int normal_check(VimState *state)
     // has been done, close any file for startup messages.
     if (time_fd != NULL) {
       TIME_MSG("first screen update");
-      TIME_MSG("--- NVIM STARTED ---");
-      fclose(time_fd);
-      time_fd = NULL;
+      time_finish();
     }
     // After the first screen update may start triggering WinScrolled
     // autocmd events.  Store all the scroll positions and sizes now.
@@ -3229,8 +3223,7 @@ static void nv_colon(cmdarg_T *cap)
     clearop(cap->oap);
   } else if (cap->oap->op_type != OP_NOP
              && (cap->oap->start.lnum > curbuf->b_ml.ml_line_count
-                 || cap->oap->start.col >
-                 (colnr_T)strlen(ml_get(cap->oap->start.lnum))
+                 || cap->oap->start.col > ml_get_len(cap->oap->start.lnum)
                  || did_emsg)) {
     // The start of the operator has become invalid by the Ex command.
     clearopbeep(cap->oap);
@@ -3598,7 +3591,7 @@ bool get_visual_text(cmdarg_T *cap, char **pp, size_t *lenp)
   }
   if (VIsual_mode == 'V') {
     *pp = get_cursor_line_ptr();
-    *lenp = strlen(*pp);
+    *lenp = (size_t)get_cursor_line_len();
   } else {
     if (lt(curwin->w_cursor, VIsual)) {
       *pp = ml_get_pos(&curwin->w_cursor);
@@ -3900,6 +3893,10 @@ static void nv_gotofile(cmdarg_T *cap)
   linenr_T lnum = -1;
 
   if (check_text_or_curbuf_locked(cap->oap)) {
+    return;
+  }
+
+  if (!check_can_set_curbuf_disabled()) {
     return;
   }
 
@@ -4239,7 +4236,8 @@ static void nv_brackets(cmdarg_T *cap)
                            (cap->cmdchar == ']'
                             ? curwin->w_cursor.lnum + 1
                             : 1),
-                           MAXLNUM);
+                           MAXLNUM,
+                           false);
       xfree(ptr);
       curwin->w_set_curswant = true;
     }
@@ -4533,9 +4531,8 @@ static void nv_replace(cmdarg_T *cap)
   }
 
   // Abort if not enough characters to replace.
-  char *ptr = get_cursor_pos_ptr();
-  if (strlen(ptr) < (unsigned)cap->count1
-      || (mb_charlen(ptr) < cap->count1)) {
+  if ((size_t)get_cursor_pos_len() < (unsigned)cap->count1
+      || (mb_charlen(get_cursor_pos_ptr()) < cap->count1)) {
     clearopbeep(cap->oap);
     return;
   }
@@ -5129,6 +5126,7 @@ static void n_start_visual_mode(int c)
     curwin->w_old_cursor_lnum = curwin->w_cursor.lnum;
     curwin->w_old_visual_lnum = curwin->w_cursor.lnum;
   }
+  redraw_curbuf_later(UPD_VALID);
 }
 
 /// CTRL-W: Window commands
@@ -5352,7 +5350,7 @@ static void nv_gi_cmd(cmdarg_T *cap)
   if (curbuf->b_last_insert.mark.lnum != 0) {
     curwin->w_cursor = curbuf->b_last_insert.mark;
     check_cursor_lnum(curwin);
-    int i = (int)strlen(get_cursor_line_ptr());
+    int i = (int)get_cursor_line_len();
     if (curwin->w_cursor.col > (colnr_T)i) {
       if (virtual_active()) {
         curwin->w_cursor.coladd += curwin->w_cursor.col - i;
@@ -6041,7 +6039,7 @@ bool unadjust_for_sel(void)
       mark_mb_adjustpos(curbuf, pp);
     } else if (pp->lnum > 1) {
       pp->lnum--;
-      pp->col = (colnr_T)strlen(ml_get(pp->lnum));
+      pp->col = ml_get_len(pp->lnum);
       return true;
     }
   }
@@ -6451,6 +6449,7 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
   bool was_visual = false;
   int dir;
   int flags = 0;
+  const int save_fen = curwin->w_p_fen;
 
   if (cap->oap->op_type != OP_NOP) {
     // "dp" is ":diffput"
@@ -6500,6 +6499,10 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
       // The delete might overwrite the register we want to put, save it first
       savereg = copy_register(regname);
     }
+
+    // Temporarily disable folding, as deleting a fold marker may cause
+    // the cursor to be included in a fold.
+    curwin->w_p_fen = false;
 
     // To place the cursor correctly after a blockwise put, and to leave the
     // text in the correct position when putting over a selection with
@@ -6551,9 +6554,12 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
     xfree(savereg);
   }
 
-  // What to reselect with "gv"?  Selecting the just put text seems to
-  // be the most useful, since the original text was removed.
   if (was_visual) {
+    if (save_fen) {
+      curwin->w_p_fen = true;
+    }
+    // What to reselect with "gv"?  Selecting the just put text seems to
+    // be the most useful, since the original text was removed.
     curbuf->b_visual.vi_start = curbuf->b_op_start;
     curbuf->b_visual.vi_end = curbuf->b_op_end;
     // need to adjust cursor position

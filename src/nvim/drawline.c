@@ -581,7 +581,7 @@ static void draw_lnum_col(win_T *wp, winlinevars_T *wlv, int sign_num_attr, int 
 }
 
 /// Build and draw the 'statuscolumn' string for line "lnum" in window "wp".
-static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int virtnum,
+static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int virtnum, int col_rows,
                            statuscol_T *stcp)
 {
   // When called for the first non-filler row of line "lnum" set num v:vars
@@ -597,9 +597,14 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int vir
     int width = build_statuscol_str(wp, wp->w_nrwidth_line_count, 0, buf, stcp);
     if (width > stcp->width) {
       int addwidth = MIN(width - stcp->width, MAX_STCWIDTH - stcp->width);
-      stcp->width += addwidth;
       wp->w_nrwidth += addwidth;
       wp->w_nrwidth_width = wp->w_nrwidth;
+      if (col_rows > 0) {
+        // If only column is being redrawn, we now need to redraw the text as well
+        wp->w_redr_statuscol = true;
+        return;
+      }
+      stcp->width += addwidth;
       wp->w_valid &= ~VALID_WCOL;
     }
   }
@@ -769,7 +774,7 @@ static bool has_more_inline_virt(winlinevars_T *wlv, ptrdiff_t v)
   return false;
 }
 
-static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t v)
+static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t v, bool selected)
 {
   while (wlv->n_extra == 0) {
     if (wlv->virt_inline_i >= kv_size(wlv->virt_inline)) {
@@ -779,6 +784,11 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
       DecorState *state = &decor_state;
       for (size_t i = 0; i < kv_size(state->active); i++) {
         DecorRange *item = &kv_A(state->active, i);
+        if (item->draw_col == -3) {
+          // No more inline virtual text before this non-inline virtual text item,
+          // so its position can be decided now.
+          decor_init_draw_col(wlv->off, selected, item);
+        }
         if (item->start_row != state->row
             || item->kind != kDecorKindVirtText
             || item->data.vt->pos != kVPosInline
@@ -929,7 +939,8 @@ static int get_rightmost_vcol(win_T *wp, const int *color_cols)
 /// @param lnum         line to display
 /// @param startrow     first row relative to window grid
 /// @param endrow       last grid row to be redrawn
-/// @param col_rows     only update the columns for this amount of rows
+/// @param col_rows     set to the height of the line when only updating the columns,
+///                     otherwise set to 0
 /// @param spv          'spell' related variables kept between calls for "wp"
 /// @param foldinfo     fold info for this line
 /// @param[in, out] providers  decoration providers active this line
@@ -943,8 +954,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   colnr_T vcol_prev = -1;             // "wlv.vcol" of previous character
   ScreenGrid *grid = &wp->w_grid;     // grid specific to the window
 
-  static char *at_end_str = "";       // used for p_extra when displaying curwin->w_p_lcs_chars.eol
-                                      // at end-of-line
   const bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
   const bool has_foldtext = has_fold && *wp->w_p_fdt != NUL;
 
@@ -1492,6 +1501,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     extra_check = true;
   }
 
+  const bool may_have_inline_virt
+    = !has_foldtext && buf_meta_total(wp->w_buffer, kMTMetaInline) > 0;
   int virt_line_index;
   int virt_line_offset = -1;
   // Repeat for the whole displayed line.
@@ -1533,7 +1544,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           statuscol.num_attr = get_line_number_attr(wp, &wlv);
         }
         const int v = (int)(ptr - line);
-        draw_statuscol(wp, &wlv, lnum, wlv.row - startrow - wlv.filler_lines, &statuscol);
+        draw_statuscol(wp, &wlv, lnum, wlv.row - startrow - wlv.filler_lines, col_rows, &statuscol);
         if (wp->w_redr_statuscol) {
           break;
         }
@@ -1555,6 +1566,35 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       }
 
       win_col_offset = wlv.off;
+
+      // When only updating the columns and that's done, stop here.
+      if (col_rows > 0) {
+        win_put_linebuf(wp, wlv.row, 0, wlv.off, wlv.off, bg_attr, false);
+        // Need to update more screen lines if:
+        // - 'statuscolumn' needs to be drawn, or
+        // - LineNrAbove or LineNrBelow is used, or
+        // - still drawing filler lines.
+        if ((wlv.row + 1 - wlv.startrow < col_rows
+             && (statuscol.draw
+                 || win_hl_attr(wp, HLF_LNA) != win_hl_attr(wp, HLF_N)
+                 || win_hl_attr(wp, HLF_LNB) != win_hl_attr(wp, HLF_N)))
+            || wlv.filler_todo > 0) {
+          wlv.row++;
+          if (wlv.row == endrow) {
+            break;
+          }
+          wlv.filler_todo--;
+          if (wlv.filler_todo == 0 && (wp->w_botfill || end_fill)) {
+            break;
+          }
+          // win_line_start(wp, &wlv);
+          wlv.col = 0;
+          wlv.off = 0;
+          continue;
+        } else {
+          break;
+        }
+      }
 
       // Check if 'breakindent' applies and show it.
       if (!wp->w_briopt_sbr) {
@@ -1580,24 +1620,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       apply_cursorline_highlight(wp, &wlv);
     }
 
-    // When still displaying '$' of change command, stop at cursor
-    if (((dollar_vcol >= 0
-          && wp == curwin
-          && lnum == wp->w_cursor.lnum
-          && wlv.vcol >= wp->w_virtcol)
-         || col_rows > 0)
-        && wlv.filler_todo <= 0) {
-      if (col_rows == 0) {
-        draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
-      }
+    // When still displaying '$' of change command, stop at cursor.
+    if (dollar_vcol >= 0 && wp == curwin
+        && lnum == wp->w_cursor.lnum && wlv.vcol >= wp->w_virtcol) {
+      draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
       // don't clear anything after wlv.col
       win_put_linebuf(wp, wlv.row, 0, wlv.col, wlv.col, bg_attr, false);
-      // update the 'statuscolumn' for the entire line size
-      if (col_rows > 0 && statuscol.draw && ++wlv.row - wlv.startrow < col_rows) {
-        draw_cols = true;
-        wlv.off = 0;
-        continue;
-      }
       // Pretend we have finished updating the window.  Except when
       // 'cursorcolumn' is set.
       if (wp->w_p_cuc) {
@@ -1638,17 +1666,21 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
         bool selected = (area_active || (area_highlighting && noinvcur
                                          && wlv.vcol == wp->w_virtcol));
+        // When there may be inline virtual text, position of non-inline virtual text
+        // can only be decided after drawing inline virtual text with lower priority.
         if (decor_need_recheck) {
-          decor_recheck_draw_col(wlv.off, selected, &decor_state);
+          if (!may_have_inline_virt) {
+            decor_recheck_draw_col(wlv.off, selected, &decor_state);
+          }
           decor_need_recheck = false;
         }
         if (wlv.filler_todo <= 0) {
-          extmark_attr = decor_redraw_col(wp, (colnr_T)(ptr - line), wlv.off, selected,
-                                          &decor_state);
+          extmark_attr = decor_redraw_col(wp, (colnr_T)(ptr - line),
+                                          may_have_inline_virt ? -3 : wlv.off,
+                                          selected, &decor_state);
         }
-
-        if (!has_foldtext && buf_meta_total(wp->w_buffer, kMTMetaInline) > 0) {
-          handle_inline_virtual_text(wp, &wlv, ptr - line);
+        if (may_have_inline_virt) {
+          handle_inline_virtual_text(wp, &wlv, ptr - line, selected);
           if (wlv.n_extra > 0 && wlv.virt_inline_hl_mode <= kHlModeReplace) {
             // restore search_attr and area_attr when n_extra is down to zero
             // TODO(bfredl): this is ugly as fuck. look if we can do this some other way.
@@ -2230,6 +2262,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
               mb_c = schar_get_first_codepoint(mb_schar);
               char *p = get_extra_buf(len + 1);
               memset(p, ' ', len);
+              p[len] = NUL;
               wlv.p_extra = p;
               for (int i = 0; i < tab_len; i++) {
                 if (*p == NUL) {
@@ -2311,7 +2344,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
             // In virtualedit, visual selections may extend beyond end of line
             if (!(area_highlighting && virtual_active()
                   && wlv.tocol != MAXCOL && wlv.vcol < wlv.tocol)) {
-              wlv.p_extra = at_end_str;
+              wlv.p_extra = "";
             }
             wlv.n_extra = 0;
           }
@@ -2646,12 +2679,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         && !has_foldtext) {
       if (has_decor && *ptr == NUL && lcs_eol == 0 && lcs_eol_todo) {
         // Tricky: there might be a virtual text just _after_ the last char
-        decor_redraw_col(wp, (colnr_T)(ptr - line), wlv.off, false, &decor_state);
+        decor_redraw_col(wp, (colnr_T)(ptr - line), -1, false, &decor_state);
       }
       if (*ptr != NUL
           || (lcs_eol > 0 && lcs_eol_todo)
           || (wlv.n_extra > 0 && (wlv.sc_extra != NUL || *wlv.p_extra != NUL))
-          || has_more_inline_virt(&wlv, ptr - line)) {
+          || (may_have_inline_virt && has_more_inline_virt(&wlv, ptr - line))) {
         mb_schar = wp->w_p_lcs_chars.ext;
         wlv.char_attr = win_hl_attr(wp, HLF_AT);
         mb_c = schar_get_first_codepoint(mb_schar);
@@ -2800,6 +2833,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       } else if (!is_wrapped) {
         // Without wrapping, we might need to display right_align and win_col
         // virt_text for the entire text line.
+        decor_recheck_draw_col(-1, true, &decor_state);
         decor_redraw_col(wp, MAXCOL, -1, true, &decor_state);
       }
     }
@@ -2809,10 +2843,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     if (wlv.col >= grid->cols && (!has_foldtext || virt_line_offset >= 0)
         && (*ptr != NUL
             || wlv.filler_todo > 0
-            || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL
-                && wlv.p_extra != at_end_str)
+            || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL && lcs_eol_todo)
             || (wlv.n_extra != 0 && (wlv.sc_extra != NUL || *wlv.p_extra != NUL))
-            || has_more_inline_virt(&wlv, ptr - line))) {
+            || (may_have_inline_virt && has_more_inline_virt(&wlv, ptr - line)))) {
       const bool wrap = is_wrapped                    // Wrapping enabled (not a folded line).
                         && wlv.filler_todo <= 0       // Not drawing diff filler lines.
                         && lcs_eol_todo               // Haven't printed the lcs_eol character.
@@ -2844,9 +2877,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       wlv.vcol_off = 0;
       wlv.row++;
 
-      // When not wrapping and finished diff lines, or when displayed
-      // '$' and highlighting until last column, break here.
-      if ((!is_wrapped && wlv.filler_todo <= 0) || !lcs_eol_todo) {
+      // When not wrapping and finished diff lines, break here.
+      if (!is_wrapped && wlv.filler_todo <= 0) {
         break;
       }
 

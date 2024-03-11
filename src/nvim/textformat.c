@@ -86,8 +86,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
 
   // When 'ai' is off we don't want a space under the cursor to be
   // deleted.  Replace it with an 'x' temporarily.
-  if (!curbuf->b_p_ai
-      && !(State & VREPLACE_FLAG)) {
+  if (!curbuf->b_p_ai && !(State & VREPLACE_FLAG)) {
     cc = gchar_cursor();
     if (ascii_iswhite(cc)) {
       save_char = (char)cc;

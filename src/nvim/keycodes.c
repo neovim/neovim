@@ -400,7 +400,7 @@ int name_to_mod_mask(int c)
 int simplify_key(const int key, int *modifiers)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  if (!(*modifiers & (MOD_MASK_SHIFT | MOD_MASK_CTRL | MOD_MASK_ALT))) {
+  if (!(*modifiers & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
     return key;
   }
 
@@ -758,17 +758,20 @@ static int extract_modifiers(int key, int *modp, const bool simplify, bool *cons
 {
   int modifiers = *modp;
 
-  // Command-key and ctrl are special
-  if (!(modifiers & MOD_MASK_CMD) && !(modifiers & MOD_MASK_CTRL)) {
-    if ((modifiers & MOD_MASK_SHIFT) && ASCII_ISALPHA(key)) {
-      key = TOUPPER_ASC(key);
+  if ((modifiers & MOD_MASK_SHIFT) && ASCII_ISALPHA(key)) {
+    key = TOUPPER_ASC(key);
+    // With <C-S-a> we keep the shift modifier.
+    // With <S-a>, <A-S-a> and <S-A> we don't keep the shift modifier.
+    if (!(modifiers & MOD_MASK_CTRL)) {
       modifiers &= ~MOD_MASK_SHIFT;
     }
   }
+
   // <C-H> and <C-h> mean the same thing, always use "H"
   if ((modifiers & MOD_MASK_CTRL) && ASCII_ISALPHA(key)) {
     key = TOUPPER_ASC(key);
   }
+
   if (simplify && (modifiers & MOD_MASK_CTRL)
       && ((key >= '?' && key <= '_') || ASCII_ISALPHA(key))) {
     key = CTRL_CHR(key);

@@ -1,13 +1,19 @@
 local bit = require('bit')
-local glob = require('vim.glob')
-local watch = require('vim._watch')
+local glob = vim.glob
+local watch = vim._watch
 local protocol = require('vim.lsp.protocol')
 local ms = protocol.Methods
 local lpeg = vim.lpeg
 
 local M = {}
 
-M._watchfunc = (vim.fn.has('win32') == 1 or vim.fn.has('mac') == 1) and watch.watch or watch.poll
+if vim.fn.has('win32') == 1 or vim.fn.has('mac') == 1 then
+  M._watchfunc = watch.watch
+elseif vim.fn.executable('fswatch') == 1 then
+  M._watchfunc = watch.fswatch
+else
+  M._watchfunc = watch.watchdirs
+end
 
 ---@type table<integer, table<string, function[]>> client id -> registration id -> cancel function
 local cancels = vim.defaulttable()
@@ -44,12 +50,8 @@ function M.register(reg, ctx)
   local client = assert(vim.lsp.get_client_by_id(client_id), 'Client must be running')
   -- Ill-behaved servers may not honor the client capability and try to register
   -- anyway, so ignore requests when the user has opted out of the feature.
-  local has_capability = vim.tbl_get(
-    client.config.capabilities or {},
-    'workspace',
-    'didChangeWatchedFiles',
-    'dynamicRegistration'
-  )
+  local has_capability =
+    vim.tbl_get(client.capabilities, 'workspace', 'didChangeWatchedFiles', 'dynamicRegistration')
   if not has_capability or not client.workspace_folders then
     return
   end
@@ -164,6 +166,15 @@ function M.unregister(unreg, ctx)
   client_cancels[unreg.id] = nil
   if not next(cancels[client_id]) then
     cancels[client_id] = nil
+  end
+end
+
+--- @param client_id integer
+function M.cancel(client_id)
+  for _, reg_cancels in pairs(cancels[client_id]) do
+    for _, cancel in pairs(reg_cancels) do
+      cancel()
+    end
   end
 end
 

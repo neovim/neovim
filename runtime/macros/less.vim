@@ -1,6 +1,6 @@
 " Vim script to work like "less"
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2023 Aug 10
+" Last Change:	2024 Feb 15
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Avoid loading this file twice, allow the user to define his own script.
@@ -227,67 +227,181 @@ noremap q :q<CR>
 " Switch to editing (switch off less mode)
 map v :silent call <SID>End()<CR>
 fun! s:End()
-  set ma
+  set modifiable noreadonly
   if exists('s:lz')
     let &lz = s:lz
   endif
-  unmap h
-  unmap H
-  unmap <Space>
-  unmap <C-V>
-  unmap f
-  unmap <C-F>
-  unmap z
-  unmap <Esc><Space>
-  unmap F
-  unmap d
-  unmap <C-D>
-  unmap <CR>
-  unmap <C-N>
-  unmap e
-  unmap <C-E>
-  unmap j
-  unmap <C-J>
-  unmap b
-  unmap <C-B>
-  unmap w
-  unmap <Esc>v
-  unmap u
-  unmap <C-U>
-  unmap k
-  unmap y
-  unmap <C-Y>
-  unmap <C-P>
-  unmap <C-K>
-  unmap r
-  unmap <C-R>
-  unmap R
-  unmap g
-  unmap <
-  unmap <Esc><
-  unmap G
-  unmap >
-  unmap <Esc>>
-  unmap %
-  unmap p
-  unmap n
-  unmap N
-  unmap q
-  unmap v
-  unmap /
-  unmap ?
-  unmap <Up>
-  unmap <Down>
-  unmap <PageDown>
-  unmap <kPageDown>
-  unmap <PageUp>
-  unmap <kPageUp>
-  unmap <S-Down>
-  unmap <S-Up>
-  unmap <Home>
-  unmap <kHome>
-  unmap <End>
-  unmap <kEnd>
+  if !empty(maparg('h'))
+    unmap h
+  endif
+  if !empty(maparg('H'))
+    unmap H
+  endif
+  if !empty(maparg('<Space>'))
+    unmap <Space>
+  endif
+  if !empty(maparg('<C-V>'))
+    unmap <C-V>
+  endif
+  if !empty(maparg('f'))
+    unmap f
+  endif
+  if !empty(maparg('<C-F>'))
+    unmap <C-F>
+  endif
+  if !empty(maparg('z'))
+    unmap z
+  endif
+  if !empty(maparg('<Esc><Space>'))
+    unmap <Esc><Space>
+  endif
+  if !empty(maparg('F'))
+    unmap F
+  endif
+  if !empty(maparg('d'))
+    unmap d
+  endif
+  if !empty(maparg('<C-D>'))
+    unmap <C-D>
+  endif
+  if !empty(maparg('<CR>'))
+    unmap <CR>
+  endif
+  if !empty(maparg('<C-N>'))
+    unmap <C-N>
+  endif
+  if !empty(maparg('e'))
+    unmap e
+  endif
+  if !empty(maparg('<C-E>'))
+    unmap <C-E>
+  endif
+  if !empty(maparg('j'))
+    unmap j
+  endif
+  if !empty(maparg('<C-J>'))
+    unmap <C-J>
+  endif
+  if !empty(maparg('b'))
+    unmap b
+  endif
+  if !empty(maparg('<C-B>'))
+    unmap <C-B>
+  endif
+  if !empty(maparg('w'))
+    unmap w
+  endif
+  if !empty(maparg('<Esc>v'))
+    unmap <Esc>v
+  endif
+  if !empty(maparg('u'))
+    unmap u
+  endif
+  if !empty(maparg('<C-U>'))
+    unmap <C-U>
+  endif
+  if !empty(maparg('k'))
+    unmap k
+  endif
+  if !empty(maparg('y'))
+    unmap y
+  endif
+  if !empty(maparg('<C-Y>'))
+    unmap <C-Y>
+  endif
+  if !empty(maparg('<C-P>'))
+    unmap <C-P>
+  endif
+  if !empty(maparg('<C-K>'))
+    unmap <C-K>
+  endif
+  if !empty(maparg('r'))
+    unmap r
+  endif
+  if !empty(maparg('<C-R>'))
+    unmap <C-R>
+  endif
+  if !empty(maparg('R'))
+    unmap R
+  endif
+  if !empty(maparg('g'))
+    unmap g
+  endif
+  if !empty(maparg('<'))
+    unmap <
+  endif
+  if !empty(maparg('<Esc><'))
+    unmap <Esc><
+  endif
+  if !empty(maparg('G'))
+    unmap G
+  endif
+  if !empty(maparg('>'))
+    unmap >
+  endif
+  if !empty(maparg('<Esc>>'))
+    unmap <Esc>>
+  endif
+  if !empty(maparg('%'))
+    unmap %
+  endif
+  if !empty(maparg('p'))
+    unmap p
+  endif
+  if !empty(maparg('n'))
+    unmap n
+  endif
+  if !empty(maparg('N'))
+    unmap N
+  endif
+  if !empty(maparg('q'))
+    unmap q
+  endif
+  if !empty(maparg('v'))
+    unmap v
+  endif
+  if !empty(maparg('/'))
+    unmap /
+  endif
+  if !empty(maparg('?'))
+    unmap ?
+  endif
+  if !empty(maparg('<Up>'))
+    unmap <Up>
+  endif
+  if !empty(maparg('<Down>'))
+    unmap <Down>
+  endif
+  if !empty(maparg('<PageDown>'))
+    unmap <PageDown>
+  endif
+  if !empty(maparg('<kPageDown>'))
+    unmap <kPageDown>
+  endif
+  if !empty(maparg('<PageUp>'))
+    unmap <PageUp>
+  endif
+  if !empty(maparg('<kPageUp>'))
+    unmap <kPageUp>
+  endif
+  if !empty(maparg('<S-Down>'))
+    unmap <S-Down>
+  endif
+  if !empty(maparg('<S-Up>'))
+    unmap <S-Up>
+  endif
+  if !empty(maparg('<Home>'))
+    unmap <Home>
+  endif
+  if !empty(maparg('<kHome>'))
+    unmap <kHome>
+  endif
+  if !empty(maparg('<End>'))
+    unmap <End>
+  endif
+  if !empty(maparg('<kEnd>'))
+    unmap <kEnd>
+  endif
 endfun
 
 " vim: sw=2

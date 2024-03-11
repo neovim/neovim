@@ -3,6 +3,7 @@
 " Maintainer:	Nikolai Pavlov <zyx.vim@gmail.com>
 " Last Updates:	Lukas Reineke, "lacygoill"
 " Last Change:	2022 Jun 17
+"      2024 Feb 29 disable mulitline indent by default (The Vim project)
 
 " Only load this indent file when no other was loaded.
 if exists('b:did_indent')
@@ -138,11 +139,13 @@ function GetYAMLIndent(lnum)
         else
             return indent(prevmapline)
         endif
-    elseif prevline =~# '^\s*- '
+    elseif get(g:, 'yaml_indent_multiline_scalar', 0) &&
+        \  prevline =~# '^\s*- '
         " - List with
         "   multiline scalar
         return previndent+2
-    elseif prevline =~# s:mapkeyregex .. '\v\s*%(%(' .. s:c_ns_tag_property ..
+    elseif get(g:, 'yaml_indent_multiline_scalar', 0) &&
+        \ prevline =~# s:mapkeyregex .. '\v\s*%(%(' .. s:c_ns_tag_property ..
                 \                              '\v|' .. s:c_ns_anchor_property ..
                 \                              '\v|' .. s:block_scalar_header ..
                 \                             '\v)%(\s+|\s*%(\#.*)?$))*'

@@ -48,16 +48,16 @@
 /// @param[out] err  Error details, if any.
 /// @return Dictionary containing command information, with these keys:
 ///         - cmd: (string) Command name.
-///         - range: (array) (optional) Command range (|<line1>| |<line2>|).
+///         - range: (array) (optional) Command range ([<line1>] [<line2>]).
 ///                          Omitted if command doesn't accept a range.
 ///                          Otherwise, has no elements if no range was specified, one element if
 ///                          only a single range item was specified, or two elements if both range
 ///                          items were specified.
-///         - count: (number) (optional) Command |<count>|.
+///         - count: (number) (optional) Command [<count>].
 ///                           Omitted if command cannot take a count.
-///         - reg: (string) (optional) Command |<register>|.
+///         - reg: (string) (optional) Command [<register>].
 ///                         Omitted if command cannot take a register.
-///         - bang: (boolean) Whether command contains a |<bang>| (!) modifier.
+///         - bang: (boolean) Whether command contains a [<bang>] (!) modifier.
 ///         - args: (array) Command arguments.
 ///         - addr: (string) Value of |:command-addr|. Uses short name or "line" for -addr=lines.
 ///         - nargs: (string) Value of |:command-nargs|.
@@ -67,7 +67,7 @@
 ///             - file: (boolean) The command expands filenames. Which means characters such as "%",
 ///                               "#" and wildcards are expanded.
 ///             - bar: (boolean) The "|" character is treated as a command separator and the double
-///                              quote character (\") is treated as the start of a comment.
+///                              quote character (") is treated as the start of a comment.
 ///         - mods: (dictionary) |:command-modifiers|.
 ///             - filter: (dictionary) |:filter|.
 ///                 - pattern: (string) Filter pattern. Empty string if there is no filter.
@@ -96,15 +96,15 @@
 ///               - "belowright": |:belowright|.
 ///               - "topleft": |:topleft|.
 ///               - "botright": |:botright|.
-Dictionary nvim_parse_cmd(String str, Dict(empty) *opts, Error *err)
+Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(10) FUNC_API_FAST
 {
-  Dictionary result = ARRAY_DICT_INIT;
+  Dict(cmd) result = KEYDICT_INIT;
 
   // Parse command line
   exarg_T ea;
   CmdParseInfo cmdinfo;
-  char *cmdline = string_to_cstr(str);
+  char *cmdline = arena_memdupz(arena, str.data, str.size);
   const char *errormsg = NULL;
 
   if (!parse_cmdline(cmdline, &ea, &cmdinfo, &errormsg)) {
@@ -124,22 +124,23 @@ Dictionary nvim_parse_cmd(String str, Dict(empty) *opts, Error *err)
   // otherwise split arguments by whitespace.
   if (ea.argt & EX_NOSPC) {
     if (*ea.arg != NUL) {
-      ADD(args, STRING_OBJ(cstrn_to_string(ea.arg, length)));
+      args = arena_array(arena, 1);
+      ADD_C(args, STRING_OBJ(cstrn_as_string(ea.arg, length)));
     }
   } else {
     size_t end = 0;
     size_t len = 0;
-    char *buf = xcalloc(length, sizeof(char));
+    char *buf = arena_alloc(arena, length + 1, false);
     bool done = false;
+    args = arena_array(arena, uc_nargs_upper_bound(ea.arg, length));
 
     while (!done) {
       done = uc_split_args_iter(ea.arg, length, &end, buf, &len);
       if (len > 0) {
-        ADD(args, STRING_OBJ(cstrn_to_string(buf, len)));
+        ADD_C(args, STRING_OBJ(cstrn_as_string(buf, len)));
+        buf += len + 1;
       }
     }
-
-    xfree(buf);
   }
 
   ucmd_T *cmd = NULL;
@@ -149,40 +150,32 @@ Dictionary nvim_parse_cmd(String str, Dict(empty) *opts, Error *err)
     cmd = USER_CMD_GA(&curbuf->b_ucmds, ea.useridx);
   }
 
-  if (cmd != NULL) {
-    PUT(result, "cmd", CSTR_TO_OBJ(cmd->uc_name));
-  } else {
-    PUT(result, "cmd", CSTR_TO_OBJ(get_command_name(NULL, ea.cmdidx)));
-  }
+  char *name = (cmd != NULL ? cmd->uc_name : get_command_name(NULL, ea.cmdidx));
+  PUT_KEY(result, cmd, cmd, cstr_as_string(name));
 
   if (ea.argt & EX_RANGE) {
-    Array range = ARRAY_DICT_INIT;
+    Array range = arena_array(arena, 2);
     if (ea.addr_count > 0) {
       if (ea.addr_count > 1) {
-        ADD(range, INTEGER_OBJ(ea.line1));
+        ADD_C(range, INTEGER_OBJ(ea.line1));
       }
-      ADD(range, INTEGER_OBJ(ea.line2));
+      ADD_C(range, INTEGER_OBJ(ea.line2));
     }
-    PUT(result, "range", ARRAY_OBJ(range));
+    PUT_KEY(result, cmd, range, range);
   }
 
   if (ea.argt & EX_COUNT) {
-    if (ea.addr_count > 0) {
-      PUT(result, "count", INTEGER_OBJ(ea.line2));
-    } else if (cmd != NULL) {
-      PUT(result, "count", INTEGER_OBJ(cmd->uc_def));
-    } else {
-      PUT(result, "count", INTEGER_OBJ(0));
-    }
+    Integer count = ea.addr_count > 0 ? ea.line2 : (cmd != NULL ? cmd->uc_def : 0);
+    PUT_KEY(result, cmd, count, count);
   }
 
   if (ea.argt & EX_REGSTR) {
     char reg[2] = { (char)ea.regname, NUL };
-    PUT(result, "reg", CSTR_TO_OBJ(reg));
+    PUT_KEY(result, cmd, reg, CSTR_TO_ARENA_STR(arena, reg));
   }
 
-  PUT(result, "bang", BOOLEAN_OBJ(ea.forceit));
-  PUT(result, "args", ARRAY_OBJ(args));
+  PUT_KEY(result, cmd, bang, ea.forceit);
+  PUT_KEY(result, cmd, args, args);
 
   char nargs[2];
   if (ea.argt & EX_EXTRA) {
@@ -201,9 +194,9 @@ Dictionary nvim_parse_cmd(String str, Dict(empty) *opts, Error *err)
     nargs[0] = '0';
   }
   nargs[1] = '\0';
-  PUT(result, "nargs", CSTR_TO_OBJ(nargs));
+  PUT_KEY(result, cmd, nargs, CSTR_TO_ARENA_OBJ(arena, nargs));
 
-  const char *addr;
+  char *addr;
   switch (ea.addr_type) {
   case ADDR_LINES:
     addr = "line";
@@ -233,38 +226,37 @@ Dictionary nvim_parse_cmd(String str, Dict(empty) *opts, Error *err)
     addr = "?";
     break;
   }
-  PUT(result, "addr", CSTR_TO_OBJ(addr));
-  PUT(result, "nextcmd", CSTR_TO_OBJ(ea.nextcmd));
+  PUT_KEY(result, cmd, addr, CSTR_AS_OBJ(addr));
+  PUT_KEY(result, cmd, nextcmd, CSTR_AS_OBJ(ea.nextcmd));
 
-  Dictionary mods = ARRAY_DICT_INIT;
+  // TODO(bfredl): nested keydict would be nice..
+  Dictionary mods = arena_dict(arena, 20);
 
-  Dictionary filter = ARRAY_DICT_INIT;
-  PUT(filter, "pattern", cmdinfo.cmdmod.cmod_filter_pat
-      ? CSTR_TO_OBJ(cmdinfo.cmdmod.cmod_filter_pat)
-      : STATIC_CSTR_TO_OBJ(""));
-  PUT(filter, "force", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_filter_force));
-  PUT(mods, "filter", DICTIONARY_OBJ(filter));
+  Dictionary filter = arena_dict(arena, 2);
+  PUT_C(filter, "pattern", CSTR_TO_ARENA_OBJ(arena, cmdinfo.cmdmod.cmod_filter_pat));
+  PUT_C(filter, "force", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_filter_force));
+  PUT_C(mods, "filter", DICTIONARY_OBJ(filter));
 
-  PUT(mods, "silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SILENT));
-  PUT(mods, "emsg_silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_ERRSILENT));
-  PUT(mods, "unsilent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_UNSILENT));
-  PUT(mods, "sandbox", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX));
-  PUT(mods, "noautocmd", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOAUTOCMD));
-  PUT(mods, "tab", INTEGER_OBJ(cmdinfo.cmdmod.cmod_tab - 1));
-  PUT(mods, "verbose", INTEGER_OBJ(cmdinfo.cmdmod.cmod_verbose - 1));
-  PUT(mods, "browse", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_BROWSE));
-  PUT(mods, "confirm", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_CONFIRM));
-  PUT(mods, "hide", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_HIDE));
-  PUT(mods, "keepalt", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPALT));
-  PUT(mods, "keepjumps", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPJUMPS));
-  PUT(mods, "keepmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPMARKS));
-  PUT(mods, "keeppatterns", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPPATTERNS));
-  PUT(mods, "lockmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_LOCKMARKS));
-  PUT(mods, "noswapfile", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOSWAPFILE));
-  PUT(mods, "vertical", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_VERT));
-  PUT(mods, "horizontal", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_HOR));
+  PUT_C(mods, "silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SILENT));
+  PUT_C(mods, "emsg_silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_ERRSILENT));
+  PUT_C(mods, "unsilent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_UNSILENT));
+  PUT_C(mods, "sandbox", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX));
+  PUT_C(mods, "noautocmd", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOAUTOCMD));
+  PUT_C(mods, "tab", INTEGER_OBJ(cmdinfo.cmdmod.cmod_tab - 1));
+  PUT_C(mods, "verbose", INTEGER_OBJ(cmdinfo.cmdmod.cmod_verbose - 1));
+  PUT_C(mods, "browse", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_BROWSE));
+  PUT_C(mods, "confirm", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_CONFIRM));
+  PUT_C(mods, "hide", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_HIDE));
+  PUT_C(mods, "keepalt", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPALT));
+  PUT_C(mods, "keepjumps", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPJUMPS));
+  PUT_C(mods, "keepmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPMARKS));
+  PUT_C(mods, "keeppatterns", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPPATTERNS));
+  PUT_C(mods, "lockmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_LOCKMARKS));
+  PUT_C(mods, "noswapfile", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOSWAPFILE));
+  PUT_C(mods, "vertical", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_VERT));
+  PUT_C(mods, "horizontal", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_HOR));
 
-  const char *split;
+  char *split;
   if (cmdinfo.cmdmod.cmod_split & WSP_BOT) {
     split = "botright";
   } else if (cmdinfo.cmdmod.cmod_split & WSP_TOP) {
@@ -276,18 +268,17 @@ Dictionary nvim_parse_cmd(String str, Dict(empty) *opts, Error *err)
   } else {
     split = "";
   }
-  PUT(mods, "split", CSTR_TO_OBJ(split));
+  PUT_C(mods, "split", CSTR_AS_OBJ(split));
 
-  PUT(result, "mods", DICTIONARY_OBJ(mods));
+  PUT_KEY(result, cmd, mods, mods);
 
-  Dictionary magic = ARRAY_DICT_INIT;
-  PUT(magic, "file", BOOLEAN_OBJ(cmdinfo.magic.file));
-  PUT(magic, "bar", BOOLEAN_OBJ(cmdinfo.magic.bar));
-  PUT(result, "magic", DICTIONARY_OBJ(magic));
+  Dictionary magic = arena_dict(arena, 2);
+  PUT_C(magic, "file", BOOLEAN_OBJ(cmdinfo.magic.file));
+  PUT_C(magic, "bar", BOOLEAN_OBJ(cmdinfo.magic.bar));
+  PUT_KEY(result, cmd, magic, magic);
 
   undo_cmdmod(&cmdinfo.cmdmod);
 end:
-  xfree(cmdline);
   return result;
 }
 
@@ -314,7 +305,7 @@ end:
 ///                  - output: (boolean, default false) Whether to return command output.
 /// @param[out] err  Error details, if any.
 /// @return Command output (non-error, non-shell |:!|) if `output` is true, else empty string.
-String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error *err)
+String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(10)
 {
   exarg_T ea;
@@ -352,7 +343,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     goto end;
   });
 
-  cmdname = string_to_cstr(cmd->cmd);
+  cmdname = arena_string(arena, cmd->cmd).data;
   ea.cmd = cmdname;
 
   char *p = find_ex_command(&ea, NULL);
@@ -361,9 +352,8 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
   // autocommands defined, trigger the matching autocommands.
   if (p != NULL && ea.cmdidx == CMD_SIZE && ASCII_ISUPPER(*ea.cmd)
       && has_event(EVENT_CMDUNDEFINED)) {
-    p = xstrdup(cmdname);
+    p = arena_string(arena, cmd->cmd).data;
     int ret = apply_autocmds(EVENT_CMDUNDEFINED, p, p, true, NULL);
-    xfree(p);
     // If the autocommands did something and didn't cause an error, try
     // finding the command again.
     p = (ret && !aborting()) ? find_ex_command(&ea, NULL) : ea.cmd;
@@ -392,28 +382,31 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
   if (HAS_KEY(cmd, cmd, args)) {
     // Process all arguments. Convert non-String arguments to String and check if String arguments
     // have non-whitespace characters.
+    args = arena_array(arena, cmd->args.size);
     for (size_t i = 0; i < cmd->args.size; i++) {
       Object elem = cmd->args.items[i];
       char *data_str;
 
       switch (elem.type) {
       case kObjectTypeBoolean:
-        data_str = xcalloc(2, sizeof(char));
+        data_str = arena_alloc(arena, 2, false);
         data_str[0] = elem.data.boolean ? '1' : '0';
         data_str[1] = '\0';
+        ADD_C(args, CSTR_AS_OBJ(data_str));
         break;
       case kObjectTypeBuffer:
       case kObjectTypeWindow:
       case kObjectTypeTabpage:
       case kObjectTypeInteger:
-        data_str = xcalloc(NUMBUFLEN, sizeof(char));
+        data_str = arena_alloc(arena, NUMBUFLEN, false);
         snprintf(data_str, NUMBUFLEN, "%" PRId64, elem.data.integer);
+        ADD_C(args, CSTR_AS_OBJ(data_str));
         break;
       case kObjectTypeString:
         VALIDATE_EXP(!string_iswhite(elem.data.string), "command arg", "non-whitespace", NULL, {
           goto end;
         });
-        data_str = string_to_cstr(elem.data.string);
+        ADD_C(args, elem);
         break;
       default:
         VALIDATE_EXP(false, "command arg", "valid type", api_typename(elem.type), {
@@ -421,8 +414,6 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
         });
         break;
       }
-
-      ADD(args, CSTR_AS_OBJ(data_str));
     }
 
     bool argc_valid;
@@ -523,7 +514,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
   VALIDATE_MOD((!ea.forceit || (ea.argt & EX_BANG)), "bang", cmd->cmd.data);
 
   if (HAS_KEY(cmd, cmd, magic)) {
-    Dict(cmd_magic) magic[1] = { 0 };
+    Dict(cmd_magic) magic[1] = KEYDICT_INIT;
     if (!api_dict_to_keydict(magic, KeyDict_cmd_magic_get_field, cmd->magic, err)) {
       goto end;
     }
@@ -541,13 +532,13 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
   }
 
   if (HAS_KEY(cmd, cmd, mods)) {
-    Dict(cmd_mods) mods[1] = { 0 };
+    Dict(cmd_mods) mods[1] = KEYDICT_INIT;
     if (!api_dict_to_keydict(mods, KeyDict_cmd_mods_get_field, cmd->mods, err)) {
       goto end;
     }
 
     if (HAS_KEY(mods, cmd_mods, filter)) {
-      Dict(cmd_mods_filter) filter[1] = { 0 };
+      Dict(cmd_mods_filter) filter[1] = KEYDICT_INIT;
 
       if (!api_dict_to_keydict(&filter, KeyDict_cmd_mods_filter_get_field,
                                mods->filter, err)) {
@@ -675,26 +666,20 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
   }
 
   if (opts->output && capture_local.ga_len > 1) {
-    retv = (String){
-      .data = capture_local.ga_data,
-      .size = (size_t)capture_local.ga_len,
-    };
+    // TODO(bfredl): if there are more cases like this we might want custom xfree-list in arena
+    retv = CBUF_TO_ARENA_STR(arena, capture_local.ga_data, (size_t)capture_local.ga_len);
     // redir usually (except :echon) prepends a newline.
     if (retv.data[0] == '\n') {
-      memmove(retv.data, retv.data + 1, retv.size - 1);
-      retv.data[retv.size - 1] = '\0';
-      retv.size = retv.size - 1;
+      retv.data++;
+      retv.size--;
     }
-    goto end;
   }
 clear_ga:
   if (opts->output) {
     ga_clear(&capture_local);
   }
 end:
-  api_free_array(args);
   xfree(cmdline);
-  xfree(cmdname);
   xfree(ea.args);
   xfree(ea.arglens);
 
@@ -868,17 +853,17 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 ///                 from Lua, the command can also be a Lua function. The function is called with a
 ///                 single table argument that contains the following keys:
 ///                 - name: (string) Command name
-///                 - args: (string) The args passed to the command, if any |<args>|
+///                 - args: (string) The args passed to the command, if any [<args>]
 ///                 - fargs: (table) The args split by unescaped whitespace (when more than one
-///                 argument is allowed), if any |<f-args>|
+///                 argument is allowed), if any [<f-args>]
 ///                 - nargs: (string) Number of arguments |:command-nargs|
-///                 - bang: (boolean) "true" if the command was executed with a ! modifier |<bang>|
-///                 - line1: (number) The starting line of the command range |<line1>|
-///                 - line2: (number) The final line of the command range |<line2>|
-///                 - range: (number) The number of items in the command range: 0, 1, or 2 |<range>|
-///                 - count: (number) Any count supplied |<count>|
-///                 - reg: (string) The optional register, if specified |<reg>|
-///                 - mods: (string) Command modifiers, if any |<mods>|
+///                 - bang: (boolean) "true" if the command was executed with a ! modifier [<bang>]
+///                 - line1: (number) The starting line of the command range [<line1>]
+///                 - line2: (number) The final line of the command range [<line2>]
+///                 - range: (number) The number of items in the command range: 0, 1, or 2 [<range>]
+///                 - count: (number) Any count supplied [<count>]
+///                 - reg: (string) The optional register, if specified [<reg>]
+///                 - mods: (string) Command modifiers, if any [<mods>]
 ///                 - smods: (table) Command modifiers in a structured format. Has the same
 ///                 structure as the "mods" key of |nvim_parse_cmd()|.
 /// @param  opts    Optional |command-attributes|.
@@ -1112,7 +1097,8 @@ void create_user_command(uint64_t channel_id, String name, Object command, Dict(
 
   if (opts->complete.type == kObjectTypeLuaRef) {
     context = EXPAND_USER_LUA;
-    compl_luaref = api_new_luaref(opts->complete.data.luaref);
+    compl_luaref = opts->complete.data.luaref;
+    opts->complete.data.luaref = LUA_NOREF;
   } else if (opts->complete.type == kObjectTypeString) {
     VALIDATE_S(OK == parse_compl_arg(opts->complete.data.string.data,
                                      (int)opts->complete.data.string.size, &context, &argt,
@@ -1132,7 +1118,8 @@ void create_user_command(uint64_t channel_id, String name, Object command, Dict(
     });
 
     argt |= EX_PREVIEW;
-    preview_luaref = api_new_luaref(opts->preview.data.luaref);
+    preview_luaref = opts->preview.data.luaref;
+    opts->preview.data.luaref = LUA_NOREF;
   }
 
   switch (command.type) {
@@ -1179,10 +1166,10 @@ err:
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Map of maps describing commands.
-Dictionary nvim_get_commands(Dict(get_commands) *opts, Error *err)
+Dictionary nvim_get_commands(Dict(get_commands) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(4)
 {
-  return nvim_buf_get_commands(-1, opts, err);
+  return nvim_buf_get_commands(-1, opts, arena, err);
 }
 
 /// Gets a map of buffer-local |user-commands|.
@@ -1192,7 +1179,7 @@ Dictionary nvim_get_commands(Dict(get_commands) *opts, Error *err)
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Map of maps describing commands.
-Dictionary nvim_buf_get_commands(Buffer buffer, Dict(get_commands) *opts, Error *err)
+Dictionary nvim_buf_get_commands(Buffer buffer, Dict(get_commands) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(4)
 {
   bool global = (buffer == -1);
@@ -1205,12 +1192,12 @@ Dictionary nvim_buf_get_commands(Buffer buffer, Dict(get_commands) *opts, Error 
       api_set_error(err, kErrorTypeValidation, "builtin=true not implemented");
       return (Dictionary)ARRAY_DICT_INIT;
     }
-    return commands_array(NULL);
+    return commands_array(NULL, arena);
   }
 
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (opts->builtin || !buf) {
     return (Dictionary)ARRAY_DICT_INIT;
   }
-  return commands_array(buf);
+  return commands_array(buf, arena);
 }

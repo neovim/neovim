@@ -17,7 +17,7 @@ local M = {}
 --- @field is_first_lang boolean Whether this is the first language of a linter run checking queries for multiple `langs`
 
 --- Adds a diagnostic for node in the query buffer
---- @param diagnostics Diagnostic[]
+--- @param diagnostics vim.Diagnostic[]
 --- @param range Range4
 --- @param lint string
 --- @param lang string?
@@ -45,7 +45,7 @@ local function guess_query_lang(buf)
 end
 
 --- @param buf integer
---- @param opts QueryLinterOpts|QueryLinterNormalizedOpts|nil
+--- @param opts vim.treesitter.query.lint.Opts|QueryLinterNormalizedOpts|nil
 --- @return QueryLinterNormalizedOpts
 local function normalize_opts(buf, opts)
   opts = opts or {}
@@ -114,7 +114,7 @@ end
 --- @return vim.treesitter.ParseError?
 local parse = vim.func._memoize(hash_parse, function(node, buf, lang)
   local query_text = vim.treesitter.get_node_text(node, buf)
-  local ok, err = pcall(vim.treesitter.query.parse, lang, query_text) ---@type boolean|vim.treesitter.ParseError, string|Query
+  local ok, err = pcall(vim.treesitter.query.parse, lang, query_text) ---@type boolean|vim.treesitter.ParseError, string|vim.treesitter.Query
 
   if not ok and type(err) == 'string' then
     return get_error_entry(err, node)
@@ -122,28 +122,30 @@ local parse = vim.func._memoize(hash_parse, function(node, buf, lang)
 end)
 
 --- @param buf integer
---- @param match table<integer,TSNode>
---- @param query Query
+--- @param match vim.treesitter.query.TSMatch
+--- @param query vim.treesitter.Query
 --- @param lang_context QueryLinterLanguageContext
---- @param diagnostics Diagnostic[]
+--- @param diagnostics vim.Diagnostic[]
 local function lint_match(buf, match, query, lang_context, diagnostics)
   local lang = lang_context.lang
   local parser_info = lang_context.parser_info
 
-  for id, node in pairs(match) do
-    local cap_id = query.captures[id]
+  for id, nodes in pairs(match) do
+    for _, node in ipairs(nodes) do
+      local cap_id = query.captures[id]
 
-    -- perform language-independent checks only for first lang
-    if lang_context.is_first_lang and cap_id == 'error' then
-      local node_text = vim.treesitter.get_node_text(node, buf):gsub('\n', ' ')
-      add_lint_for_node(diagnostics, { node:range() }, 'Syntax error: ' .. node_text)
-    end
+      -- perform language-independent checks only for first lang
+      if lang_context.is_first_lang and cap_id == 'error' then
+        local node_text = vim.treesitter.get_node_text(node, buf):gsub('\n', ' ')
+        add_lint_for_node(diagnostics, { node:range() }, 'Syntax error: ' .. node_text)
+      end
 
-    -- other checks rely on Neovim parser introspection
-    if lang and parser_info and cap_id == 'toplevel' then
-      local err = parse(node, buf, lang)
-      if err then
-        add_lint_for_node(diagnostics, err.range, err.msg, lang)
+      -- other checks rely on Neovim parser introspection
+      if lang and parser_info and cap_id == 'toplevel' then
+        local err = parse(node, buf, lang)
+        if err then
+          add_lint_for_node(diagnostics, err.range, err.msg, lang)
+        end
       end
     end
   end
@@ -151,7 +153,7 @@ end
 
 --- @private
 --- @param buf integer Buffer to lint
---- @param opts QueryLinterOpts|QueryLinterNormalizedOpts|nil Options for linting
+--- @param opts vim.treesitter.query.lint.Opts|QueryLinterNormalizedOpts|nil Options for linting
 function M.lint(buf, opts)
   if buf == 0 then
     buf = api.nvim_get_current_buf()
@@ -173,7 +175,7 @@ function M.lint(buf, opts)
     parser:parse()
     parser:for_each_tree(function(tree, ltree)
       if ltree:lang() == 'query' then
-        for _, match, _ in query:iter_matches(tree:root(), buf, 0, -1) do
+        for _, match, _ in query:iter_matches(tree:root(), buf, 0, -1, { all = true }) do
           local lang_context = {
             lang = lang,
             parser_info = parser_info,
@@ -195,7 +197,7 @@ function M.clear(buf)
 end
 
 --- @private
---- @param findstart integer
+--- @param findstart 0|1
 --- @param base string
 function M.omnifunc(findstart, base)
   if findstart == 1 then

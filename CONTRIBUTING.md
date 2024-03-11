@@ -272,11 +272,16 @@ make lintdoc
 ```
 
 If you need to modify or debug the documentation flow, these are the main files:
-- `./scripts/gen_vimdoc.py`:
-  Main doc generator. Drives doxygen to generate xml files, and scrapes those
-  xml files to render vimdoc files.
-- `./scripts/lua2dox.lua`:
-  Used by `gen_vimdoc.py` to transform Lua files into a format compatible with doxygen.
+- `./scripts/gen_vimdoc.lua`:
+  Main doc generator. Parses C and Lua files to render vimdoc files.
+- `./scripts/luacats_parser.lua`:
+  Documentation parser for Lua files.
+- `./scripts/cdoc_parser.lua`:
+  Documentation parser for C files.
+- `./scripts/luacats_grammar.lua`:
+  Lpeg grammar for LuaCATS
+- `./scripts/cdoc_grammar.lua`:
+  Lpeg grammar for C doc comments
 - `./scripts/gen_eval_files.lua`:
   Generates documentation and Lua type files from metadata files:
   ```

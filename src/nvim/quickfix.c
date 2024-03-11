@@ -68,6 +68,7 @@
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
@@ -1065,7 +1066,9 @@ static int qf_setup_state(qfstate_T *pstate, char *restrict enc, const char *res
   }
 
   if (efile != NULL
-      && (pstate->fd = os_fopen(efile, "r")) == NULL) {
+      && (pstate->fd = (strequal(efile, "-")
+                        ? fdopen(os_open_stdin_fd(), "r")
+                        : os_fopen(efile, "r"))) == NULL) {
     semsg(_(e_openerrf), efile);
     return FAIL;
   }
@@ -2696,7 +2699,8 @@ static void qf_goto_win_with_qfl_file(int qf_fnum)
       // Didn't find it, go to the window before the quickfix
       // window, unless 'switchbuf' contains 'uselast': in this case we
       // try to jump to the previously used window first.
-      if ((swb_flags & SWB_USELAST) && win_valid(prevwin)) {
+      if ((swb_flags & SWB_USELAST) && win_valid(prevwin)
+          && !prevwin->w_p_wfb) {
         win = prevwin;
       } else if (altwin != NULL) {
         win = altwin;
@@ -2711,6 +2715,7 @@ static void qf_goto_win_with_qfl_file(int qf_fnum)
     // Remember a usable window.
     if (altwin == NULL
         && !win->w_p_pvw
+        && !win->w_p_wfb
         && bt_normal(win->w_buffer)) {
       altwin = win;
     }
@@ -2799,8 +2804,43 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, int
                      ECMD_HIDE + ECMD_SET_HELP,
                      prev_winid == curwin->handle ? curwin : NULL);
   } else {
-    retval = buflist_getfile(qf_ptr->qf_fnum, 1,
-                             GETF_SETMARK | GETF_SWITCH, forceit);
+    int fnum = qf_ptr->qf_fnum;
+
+    if (!forceit && curwin->w_p_wfb && curbuf->b_fnum != fnum) {
+      if (qi->qfl_type == QFLT_LOCATION) {
+        // Location lists cannot split or reassign their window
+        // so 'winfixbuf' windows must fail
+        emsg(_(e_winfixbuf_cannot_go_to_buffer));
+        return FAIL;
+      }
+
+      if (win_valid(prevwin) && !prevwin->w_p_wfb
+          && !bt_quickfix(prevwin->w_buffer)) {
+        // 'winfixbuf' is set; attempt to change to a window without it
+        // that isn't a quickfix/location list window.
+        win_goto(prevwin);
+      }
+      if (curwin->w_p_wfb) {
+        // Split the window, which will be 'nowinfixbuf', and set curwin
+        // to that
+        if (win_split(0, 0) == OK) {
+          *opened_window = true;
+        }
+        if (curwin->w_p_wfb) {
+          // Autocommands set 'winfixbuf' or sent us to another window
+          // with it set, or we failed to split the window.  Give up,
+          // but don't return immediately, as they may have messed
+          // with the list.
+          emsg(_(e_winfixbuf_cannot_go_to_buffer));
+          retval = FAIL;
+        }
+      }
+    }
+
+    if (retval == OK) {
+      retval = buflist_getfile(fnum, 1,
+                               GETF_SETMARK | GETF_SWITCH, forceit);
+    }
   }
   // If a location list, check whether the associated window is still
   // present.
@@ -4140,6 +4180,12 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     }
 
     // delete all existing lines
+    //
+    // Note: we cannot store undo information, because
+    // qf buffer is usually not allowed to be modified.
+    //
+    // So we need to clean up undo information
+    // otherwise autocommands may invalidate the undo stack
     while ((curbuf->b_ml.ml_flags & ML_EMPTY) == 0) {
       // If deletion fails, this loop may run forever, so
       // signal error and return.
@@ -4148,6 +4194,9 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
         return;
       }
     }
+
+    // Remove all undo information
+    u_clearallandblockfree(curbuf);
   }
 
   // Check if there is anything to display
@@ -4285,6 +4334,11 @@ static void qf_jump_first(qf_info_T *qi, unsigned save_qfid, int forceit)
   if (qf_restore_list(qi, save_qfid) == FAIL) {
     return;
   }
+
+  if (!check_can_set_curbuf_forceit(forceit)) {
+    return;
+  }
+
   // Autocommands might have cleared the list, check for that
   if (!qf_list_empty(qf_get_curlist(qi))) {
     qf_jump(qi, 0, 0, forceit);
@@ -5113,7 +5167,7 @@ void ex_cfile(exarg_T *eap)
 
   // This function is used by the :cfile, :cgetfile and :caddfile
   // commands.
-  // :cfile always creates a new quickfix list and jumps to the
+  // :cfile always creates a new quickfix list and may jump to the
   // first error.
   // :cgetfile creates a new quickfix list but doesn't jump to the
   // first error.
@@ -5575,6 +5629,10 @@ theend:
 /// ":lvimgrepadd {pattern} file(s)"
 void ex_vimgrep(exarg_T *eap)
 {
+  if (!check_can_set_curbuf_forceit(eap->forceit)) {
+    return;
+  }
+
   char *au_name = vgr_get_auname(eap->cmdidx);
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
                                         curbuf->b_fname, true, curbuf)) {

@@ -3,6 +3,7 @@
 source view_util.vim
 source check.vim
 source vim9.vim
+source term_util.vim
 
 func NestedEval()
   let nested = execute('echo "nested\nlines"')
@@ -175,6 +176,27 @@ func Test_win_execute_visual_redraw()
 
   bwipe!
   bwipe!
+endfunc
+
+func Test_win_execute_on_startup()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      vim9script
+      [repeat('x', &columns)]->writefile('Xfile1')
+      silent tabedit Xfile2
+      var id = win_getid()
+      silent tabedit Xfile3
+      autocmd VimEnter * win_execute(id, 'close')
+  END
+  call writefile(lines, 'XwinExecute')
+  let buf = RunVimInTerminal('-p Xfile1 -Nu XwinExecute', {})
+
+  " this was crashing on exit with EXITFREE defined
+  call StopVimInTerminal(buf)
+
+  call delete('XwinExecute')
+  call delete('Xfile1')
 endfunc
 
 func Test_execute_cmd_with_null()

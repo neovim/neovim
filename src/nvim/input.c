@@ -35,7 +35,7 @@
 /// @param[in]  str  Prompt: question to ask user. Is always followed by
 ///                  " (y/n)?".
 /// @param[in]  direct  Determines what function to use to get user input. If
-///                     true then ui_inchar() will be used, otherwise vgetc().
+///                     true then os_inchar() will be used, otherwise vgetc().
 ///                     I.e. when direct is true then characters are obtained
 ///                     directly from the user without buffers involved.
 ///

@@ -136,8 +136,10 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
   int is_doublewidth = false;
   if (use_tabstop) {
     size = tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array);
-  } else if (*cur == NUL && !has_lcs_eol) {
-    size = 0;
+  } else if (*cur == NUL) {
+    // 1 cell for EOL list char (if present), as opposed to the two cell ^@
+    // for a NUL character in the text.
+    size = has_lcs_eol ? 1 : 0;
   } else if (cur_char < 0) {
     size = kInvalidByteCells;
   } else {
@@ -153,7 +155,8 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
       if (mark.pos.row != csarg->virt_row || mark.pos.col > col) {
         break;
       } else if (mark.pos.col == col) {
-        if (!mt_end(mark) && mark.flags & (MT_FLAG_DECOR_VIRT_TEXT_INLINE)) {
+        if (!mt_end(mark) && (mark.flags & MT_FLAG_DECOR_VIRT_TEXT_INLINE)
+            && mt_scoped_in_win(mark, wp)) {
           DecorInline decor = mt_decor(mark);
           DecorVirtText *vt = decor.ext ? decor.data.ext.vt : NULL;
           while (vt) {

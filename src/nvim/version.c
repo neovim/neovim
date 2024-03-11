@@ -2550,24 +2550,6 @@ bool has_vim_patch(int n)
   return false;
 }
 
-Dictionary version_dict(void)
-{
-  Dictionary d = ARRAY_DICT_INIT;
-  PUT(d, "major", INTEGER_OBJ(NVIM_VERSION_MAJOR));
-  PUT(d, "minor", INTEGER_OBJ(NVIM_VERSION_MINOR));
-  PUT(d, "patch", INTEGER_OBJ(NVIM_VERSION_PATCH));
-#ifndef NVIM_VERSION_BUILD
-  PUT(d, "build", NIL);
-#else
-  PUT(d, "build", CSTR_AS_OBJ(NVIM_VERSION_BUILD));
-#endif
-  PUT(d, "prerelease", BOOLEAN_OBJ(NVIM_VERSION_PRERELEASE[0] != '\0'));
-  PUT(d, "api_level", INTEGER_OBJ(NVIM_API_LEVEL));
-  PUT(d, "api_compatible", INTEGER_OBJ(NVIM_API_LEVEL_COMPAT));
-  PUT(d, "api_prerelease", BOOLEAN_OBJ(NVIM_API_PRERELEASE));
-  return d;
-}
-
 void ex_version(exarg_T *eap)
 {
   // Ignore a ":version 9.99" command.
@@ -2681,9 +2663,9 @@ void list_in_columns(char **items, int size, int current)
 
 void list_lua_version(void)
 {
-  char *code = "return ((jit and jit.version) and jit.version or _VERSION)";
   Error err = ERROR_INIT;
-  Object ret = nlua_exec(cstr_as_string(code), (Array)ARRAY_DICT_INIT, &err);
+  Object ret = NLUA_EXEC_STATIC("return ((jit and jit.version) and jit.version or _VERSION)",
+                                (Array)ARRAY_DICT_INIT, kRetObject, NULL, &err);
   assert(!ERROR_SET(&err));
   assert(ret.type == kObjectTypeString);
   msg(ret.data.string.data, 0);

@@ -363,7 +363,13 @@ static void insert_enter(InsertState *s)
     ins_apply_autocmds(EVENT_INSERTLEAVE);
   }
   did_cursorhold = false;
-  curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
+
+  // ins_redraw() triggers TextChangedI only when no characters
+  // are in the typeahead buffer, so only reset curbuf->b_last_changedtick
+  // if the TextChangedI was not blocked by char_avail() (e.g. using :norm!)
+  if (!char_avail()) {
+    curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
+  }
 }
 
 static int insert_check(VimState *state)
@@ -1439,45 +1445,47 @@ static int pc_col;
 
 void edit_putchar(int c, bool highlight)
 {
-  if (curwin->w_grid_alloc.chars != NULL || default_grid.chars != NULL) {
-    int attr;
-    update_topline(curwin);  // just in case w_topline isn't valid
-    validate_cursor();
-    if (highlight) {
-      attr = HL_ATTR(HLF_8);
-    } else {
-      attr = 0;
-    }
-    pc_row = curwin->w_wrow;
-    pc_status = PC_STATUS_UNSET;
-    grid_line_start(&curwin->w_grid, pc_row);
-    if (curwin->w_p_rl) {
-      pc_col = curwin->w_grid.cols - 1 - curwin->w_wcol;
-
-      if (grid_line_getchar(pc_col, NULL) == NUL) {
-        grid_line_put_schar(pc_col - 1, schar_from_ascii(' '), attr);
-        curwin->w_wcol--;
-        pc_status = PC_STATUS_RIGHT;
-      }
-    } else {
-      pc_col = curwin->w_wcol;
-
-      if (grid_line_getchar(pc_col + 1, NULL) == NUL) {
-        // pc_col is the left half of a double-width char
-        pc_status = PC_STATUS_LEFT;
-      }
-    }
-
-    // save the character to be able to put it back
-    if (pc_status == PC_STATUS_UNSET) {
-      pc_schar = grid_line_getchar(pc_col, &pc_attr);
-      pc_status = PC_STATUS_SET;
-    }
-
-    char buf[MB_MAXCHAR + 1];
-    grid_line_puts(pc_col, buf, utf_char2bytes(c, buf), attr);
-    grid_line_flush();
+  if (curwin->w_grid_alloc.chars == NULL && default_grid.chars == NULL) {
+    return;
   }
+
+  int attr;
+  update_topline(curwin);  // just in case w_topline isn't valid
+  validate_cursor();
+  if (highlight) {
+    attr = HL_ATTR(HLF_8);
+  } else {
+    attr = 0;
+  }
+  pc_row = curwin->w_wrow;
+  pc_status = PC_STATUS_UNSET;
+  grid_line_start(&curwin->w_grid, pc_row);
+  if (curwin->w_p_rl) {
+    pc_col = curwin->w_grid.cols - 1 - curwin->w_wcol;
+
+    if (grid_line_getchar(pc_col, NULL) == NUL) {
+      grid_line_put_schar(pc_col - 1, schar_from_ascii(' '), attr);
+      curwin->w_wcol--;
+      pc_status = PC_STATUS_RIGHT;
+    }
+  } else {
+    pc_col = curwin->w_wcol;
+
+    if (grid_line_getchar(pc_col + 1, NULL) == NUL) {
+      // pc_col is the left half of a double-width char
+      pc_status = PC_STATUS_LEFT;
+    }
+  }
+
+  // save the character to be able to put it back
+  if (pc_status == PC_STATUS_UNSET) {
+    pc_schar = grid_line_getchar(pc_col, &pc_attr);
+    pc_status = PC_STATUS_SET;
+  }
+
+  char buf[MB_MAXCHAR + 1];
+  grid_line_puts(pc_col, buf, utf_char2bytes(c, buf), attr);
+  grid_line_flush();
 }
 
 /// @return    the effective prompt for the specified buffer.
@@ -1591,10 +1599,12 @@ void display_dollar(colnr_T col_arg)
 // in insert mode.
 void undisplay_dollar(void)
 {
-  if (dollar_vcol >= 0) {
-    dollar_vcol = -1;
-    redrawWinline(curwin, curwin->w_cursor.lnum);
+  if (dollar_vcol < 0) {
+    return;
   }
+
+  dollar_vcol = -1;
+  redrawWinline(curwin, curwin->w_cursor.lnum);
 }
 
 /// Insert an indent (for <Tab> or CTRL-T) or delete an indent (for CTRL-D).
@@ -3775,9 +3785,10 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         if (has_format_option(FO_AUTO)
             && has_format_option(FO_WHITE_PAR)) {
           char *ptr = ml_get_buf_mut(curbuf, curwin->w_cursor.lnum);
-          int len = (int)strlen(ptr);
+          int len = get_cursor_line_len();
           if (len > 0 && ptr[len - 1] == ' ') {
             ptr[len - 1] = NUL;
+            curbuf->b_ml.ml_line_len--;
           }
         }
 
@@ -4401,13 +4412,13 @@ static bool ins_tab(void)
       if (i > 0) {
         STRMOVE(ptr, ptr + i);
         // correct replace stack.
-        if ((State & REPLACE_FLAG)
-            && !(State & VREPLACE_FLAG)) {
+        if ((State & REPLACE_FLAG) && !(State & VREPLACE_FLAG)) {
           for (temp = i; --temp >= 0;) {
             replace_join(repl_off);
           }
         }
         if (!(State & VREPLACE_FLAG)) {
+          curbuf->b_ml.ml_line_len -= i;
           inserted_bytes(fpos.lnum, change_col,
                          cursor->col - change_col, fpos.col - change_col);
         }
@@ -4452,8 +4463,7 @@ bool ins_eol(int c)
   // Strange Vi behaviour: In Replace mode, typing a NL will not delete the
   // character under the cursor.  Only push a NUL on the replace stack,
   // nothing to put back when the NL is deleted.
-  if ((State & REPLACE_FLAG)
-      && !(State & VREPLACE_FLAG)) {
+  if ((State & REPLACE_FLAG) && !(State & VREPLACE_FLAG)) {
     replace_push(NUL);
   }
 

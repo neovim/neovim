@@ -965,8 +965,8 @@ ctxset({context} [, {index}])                                         *ctxset()*
 ctxsize()                                                            *ctxsize()*
 		Returns the size of the |context-stack|.
 
-cursor({lnum}, {col} [, {off}])
-cursor({list})                                                        *cursor()*
+cursor({lnum}, {col} [, {off}])                                       *cursor()*
+cursor({list})
 		Positions the cursor at the column (byte count) {col} in the
 		line {lnum}.  The first column is one.
 
@@ -2055,8 +2055,8 @@ get({func}, {what})
 			"args"	The list with arguments
 		Returns zero on error.
 
-getbufinfo([{buf}])
-getbufinfo([{dict}])                                              *getbufinfo()*
+getbufinfo([{buf}])                                               *getbufinfo()*
+getbufinfo([{dict}])
 		Get information about buffers as a List of Dictionaries.
 
 		Without an argument information about all the buffers is
@@ -2917,6 +2917,57 @@ getreginfo([{regname}])                                           *getreginfo()*
 		or not set, an empty Dictionary will be returned.
 		If {regname} is not specified, |v:register| is used.
 		The returned Dictionary can be passed to |setreg()|.
+
+getregion({pos1}, {pos2} [, {opts}])                               *getregion()*
+		Returns the list of strings from {pos1} to {pos2} from a
+		buffer.
+
+		{pos1} and {pos2} must both be |List|s with four numbers.
+		See |getpos()| for the format of the list.  It's possible
+		to specify positions from a different buffer, but please
+		note the limitations at |getregion-notes|.
+
+		The optional argument {opts} is a Dict and supports the
+		following items:
+
+			type		Specify the region's selection type
+					(default: "v"):
+			    "v"		for |charwise| mode
+			    "V"		for |linewise| mode
+			    "<CTRL-V>"	for |blockwise-visual| mode
+
+			exclusive	If |TRUE|, use exclusive selection
+					for the end position
+					(default: follow 'selection')
+
+		You can get the last selection type by |visualmode()|.
+		If Visual mode is active, use |mode()| to get the Visual mode
+		(e.g., in a |:vmap|).
+		This function is useful to get text starting and ending in
+		different columns, such as a |charwise-visual| selection.
+
+							*getregion-notes*
+		Note that:
+		- Order of {pos1} and {pos2} doesn't matter, it will always
+		  return content from the upper left position to the lower
+		  right position.
+		- If 'virtualedit' is enabled and the region is past the end
+		  of the lines, resulting lines are padded with spaces.
+		- If the region is blockwise and it starts or ends in the
+		  middle of a multi-cell character, it is not included but
+		  its selected part is substituted with spaces.
+		- If {pos1} and {pos2} are not in the same buffer, an empty
+		  list is returned.
+		- {pos1} and {pos2} must belong to a |bufloaded()| buffer.
+		- It is evaluated in current window context, which makes a
+		  difference if the buffer is displayed in a window with
+		  different 'virtualedit' or 'list' values.
+
+		Examples: >
+			:xnoremap <CR>
+			\ <Cmd>echom getregion(
+			\ getpos('v'), getpos('.'), #{ type: mode() })<CR>
+<
 
 getregtype([{regname}])                                           *getregtype()*
 		The result is a String, which is type of register {regname}.
@@ -4310,8 +4361,8 @@ mapnew({expr1}, {expr2})                                              *mapnew()*
 		unchanged.  Items can still be changed by {expr2}, if you
 		don't want that use |deepcopy()| first.
 
-mapset({mode}, {abbr}, {dict})
-mapset({dict})                                                        *mapset()*
+mapset({mode}, {abbr}, {dict})                                        *mapset()*
+mapset({dict})
 		Restore a mapping from a dictionary, possibly returned by
 		|maparg()| or |maplist()|.  A buffer mapping, when dict.buffer
 		is true, is set on the current buffer; it is up to the caller
@@ -4400,6 +4451,7 @@ match({expr}, {pat} [, {start} [, {count}]])                           *match()*
 		Note that when {count} is added the way {start} works changes,
 		see above.
 
+						*match-pattern*
 		See |pattern| for the patterns that are accepted.
 		The 'ignorecase' option is used to set the ignore-caseness of
 		the pattern.  'smartcase' is NOT used.  The matching is always
@@ -4535,6 +4587,9 @@ matchbufline({buf}, {pat}, {lnum}, {end}, [, {dict}])           *matchbufline()*
 
 		This function works only for loaded buffers. First call
 		|bufload()| if needed.
+
+		See |match-pattern| for information about the effect of some
+		option settings on the pattern.
 
 		When {buf} is not a valid buffer, the buffer is not loaded or
 		{lnum} or {end} is not valid then an error is given and an
@@ -4709,6 +4764,9 @@ matchstrlist({list}, {pat} [, {dict}])                          *matchstrlist()*
 		    text	matched string
 		    submatches	a List of submatches.  Present only if
 				"submatches" is set to v:true in {dict}.
+
+		See |match-pattern| for information about the effect of some
+		option settings on the pattern.
 
 		Example: >vim
 		    :echo matchstrlist(['tik tok'], '\<\k\+\>')
@@ -5740,9 +5798,9 @@ reg_recording()                                                *reg_recording()*
 		Returns the single letter name of the register being recorded.
 		Returns an empty string when not recording.  See |q|.
 
-reltime()
+reltime()                                                            *reltime()*
 reltime({start})
-reltime({start}, {end})                                              *reltime()*
+reltime({start}, {end})
 		Return an item that represents a time value.  The item is a
 		list with items that depend on the system.
 		The item can be passed to |reltimestr()| to convert it to a
@@ -5787,8 +5845,8 @@ reltimestr({time})                                                *reltimestr()*
 <		Also see |profiling|.
 		If there is an error an empty string is returned
 
-remove({list}, {idx})
-remove({list}, {idx}, {end})                                          *remove()*
+remove({list}, {idx})                                                 *remove()*
+remove({list}, {idx}, {end})
 		Without {end}: Remove the item at {idx} from |List| {list} and
 		return the item.
 		With {end}: Remove items from {idx} to {end} (inclusive) and
@@ -6517,8 +6575,8 @@ setcmdpos({pos})                                                   *setcmdpos()*
 		Returns 0 when successful, 1 when not editing the command
 		line.
 
-setcursorcharpos({lnum}, {col} [, {off}])
-setcursorcharpos({list})                                    *setcursorcharpos()*
+setcursorcharpos({lnum}, {col} [, {off}])                   *setcursorcharpos()*
+setcursorcharpos({list})
 		Same as |cursor()| but uses the specified column number as the
 		character index instead of the byte index in the line.
 
@@ -6944,8 +7002,8 @@ shiftwidth([{col}])                                               *shiftwidth()*
 		'vartabstop' feature. If no {col} argument is given, column 1
 		will be assumed.
 
-sign_define({name} [, {dict}])
-sign_define({list})                                              *sign_define()*
+sign_define({name} [, {dict}])                                   *sign_define()*
+sign_define({list})
 		Define a new sign named {name} or modify the attributes of an
 		existing sign.  This is similar to the |:sign-define| command.
 
@@ -7212,8 +7270,8 @@ sign_placelist({list})                                        *sign_placelist()*
 				\ ])
 <
 
-sign_undefine([{name}])
-sign_undefine({list})                                          *sign_undefine()*
+sign_undefine([{name}])                                        *sign_undefine()*
+sign_undefine({list})
 		Deletes a previously defined sign {name}. This is similar to
 		the |:sign-undefine| command. If {name} is not supplied, then
 		deletes all the defined signs.
@@ -8843,10 +8901,10 @@ win_screenpos({nr})                                            *win_screenpos()*
 		tabpage.
 
 win_splitmove({nr}, {target} [, {options}])                    *win_splitmove()*
-		Move the window {nr} to a new split of the window {target}.
-		This is similar to moving to {target}, creating a new window
-		using |:split| but having the same contents as window {nr}, and
-		then closing {nr}.
+		Temporarily switch to window {target}, then move window {nr}
+		to a new split adjacent to {target}.
+		Unlike commands such as |:split|, no new windows are created
+		(the |window-ID| of window {nr} is unchanged after the move).
 
 		Both {nr} and {target} can be window numbers or |window-ID|s.
 		Both must be in the current tab page.

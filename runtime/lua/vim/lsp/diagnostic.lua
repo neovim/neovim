@@ -1,8 +1,4 @@
----@brief lsp-diagnostic
-
-local util = require('vim.lsp.util')
 local protocol = require('vim.lsp.protocol')
-local log = require('vim.lsp.log')
 local ms = protocol.Methods
 
 local api = vim.api
@@ -24,7 +20,7 @@ end
 ---@param severity lsp.DiagnosticSeverity
 local function severity_lsp_to_vim(severity)
   if type(severity) == 'string' then
-    severity = protocol.DiagnosticSeverity[severity]
+    severity = protocol.DiagnosticSeverity[severity] --- @type integer
   end
   return severity
 end
@@ -37,7 +33,7 @@ local function severity_vim_to_lsp(severity)
   return severity
 end
 
----@param lines string[]
+---@param lines string[]?
 ---@param lnum integer
 ---@param col integer
 ---@param offset_encoding string
@@ -50,14 +46,14 @@ local function line_byte_from_position(lines, lnum, col, offset_encoding)
   local line = lines[lnum + 1]
   local ok, result = pcall(vim.str_byteindex, line, col, offset_encoding == 'utf-16')
   if ok then
-    return result
+    return result --- @type integer
   end
 
   return col
 end
 
 ---@param bufnr integer
----@return string[]
+---@return string[]?
 local function get_buf_lines(bufnr)
   if vim.api.nvim_buf_is_loaded(bufnr) then
     return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
@@ -95,7 +91,7 @@ local function tags_lsp_to_vim(diagnostic, client_id)
       tags = tags or {}
       tags.deprecated = true
     else
-      log.info(string.format('Unknown DiagnosticTag %d from LSP client %d', tag, client_id))
+      vim.lsp.log.info(string.format('Unknown DiagnosticTag %d from LSP client %d', tag, client_id))
     end
   end
   return tags
@@ -104,16 +100,17 @@ end
 ---@param diagnostics lsp.Diagnostic[]
 ---@param bufnr integer
 ---@param client_id integer
----@return Diagnostic[]
+---@return vim.Diagnostic[]
 local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
   local buf_lines = get_buf_lines(bufnr)
   local client = vim.lsp.get_client_by_id(client_id)
   local offset_encoding = client and client.offset_encoding or 'utf-16'
-  ---@diagnostic disable-next-line:no-unknown
+  --- @param diagnostic lsp.Diagnostic
+  --- @return vim.Diagnostic
   return vim.tbl_map(function(diagnostic)
-    ---@cast diagnostic lsp.Diagnostic
     local start = diagnostic.range.start
     local _end = diagnostic.range['end']
+    --- @type vim.Diagnostic
     return {
       lnum = start.line,
       col = line_byte_from_position(buf_lines, start.line, start.character, offset_encoding),
@@ -137,12 +134,29 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
   end, diagnostics)
 end
 
---- @param diagnostics Diagnostic[]
+--- @param diagnostic vim.Diagnostic
+--- @return lsp.DiagnosticTag[]?
+local function tags_vim_to_lsp(diagnostic)
+  if not diagnostic._tags then
+    return
+  end
+
+  local tags = {} --- @type lsp.DiagnosticTag[]
+  if diagnostic._tags.unnecessary then
+    tags[#tags + 1] = protocol.DiagnosticTag.Unnecessary
+  end
+  if diagnostic._tags.deprecated then
+    tags[#tags + 1] = protocol.DiagnosticTag.Deprecated
+  end
+  return tags
+end
+
+--- @param diagnostics vim.Diagnostic[]
 --- @return lsp.Diagnostic[]
 local function diagnostic_vim_to_lsp(diagnostics)
-  ---@diagnostic disable-next-line:no-unknown
+  ---@param diagnostic vim.Diagnostic
+  ---@return lsp.Diagnostic
   return vim.tbl_map(function(diagnostic)
-    ---@cast diagnostic Diagnostic
     return vim.tbl_extend('keep', {
       -- "keep" the below fields over any duplicate fields in diagnostic.user_data.lsp
       range = {
@@ -159,6 +173,7 @@ local function diagnostic_vim_to_lsp(diagnostics)
       message = diagnostic.message,
       source = diagnostic.source,
       code = diagnostic.code,
+      tags = tags_vim_to_lsp(diagnostic),
     }, diagnostic.user_data and (diagnostic.user_data.lsp or {}) or {})
   end, diagnostics)
 end
@@ -204,6 +219,47 @@ function M.get_namespace(client_id, is_pull)
   end
 end
 
+local function convert_severity(opt)
+  if type(opt) == 'table' and not opt.severity and opt.severity_limit then
+    vim.deprecate('severity_limit', '{min = severity} See vim.diagnostic.severity', '0.11')
+    opt.severity = { min = severity_lsp_to_vim(opt.severity_limit) }
+  end
+end
+
+--- @param uri string
+--- @param client_id? integer
+--- @param diagnostics vim.Diagnostic[]
+--- @param is_pull boolean
+--- @param config? vim.diagnostic.Opts
+local function handle_diagnostics(uri, client_id, diagnostics, is_pull, config)
+  local fname = vim.uri_to_fname(uri)
+
+  if #diagnostics == 0 and vim.fn.bufexists(fname) == 0 then
+    return
+  end
+
+  local bufnr = vim.fn.bufadd(fname)
+  if not bufnr then
+    return
+  end
+
+  client_id = get_client_id(client_id)
+  local namespace = M.get_namespace(client_id, is_pull)
+
+  if config then
+    --- @cast config table<string, table>
+    for _, opt in pairs(config) do
+      convert_severity(opt)
+    end
+    -- Persist configuration to ensure buffer reloads use the same
+    -- configuration. To make lsp.with configuration work (See :help
+    -- lsp-handler-configuration)
+    vim.diagnostic.config(config, namespace)
+  end
+
+  vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
+end
+
 --- |lsp-handler| for the method "textDocument/publishDiagnostics"
 ---
 --- See |vim.diagnostic.config()| for configuration options. Handler-specific
@@ -229,41 +285,12 @@ end
 --- )
 --- ```
 ---
+---@param _ lsp.ResponseError?
+---@param result lsp.PublishDiagnosticsParams
 ---@param ctx lsp.HandlerContext
----@param config table Configuration table (see |vim.diagnostic.config()|).
+---@param config? vim.diagnostic.Opts Configuration table (see |vim.diagnostic.config()|).
 function M.on_publish_diagnostics(_, result, ctx, config)
-  local client_id = ctx.client_id
-  local uri = result.uri
-  local fname = vim.uri_to_fname(uri)
-  local diagnostics = result.diagnostics
-  if #diagnostics == 0 and vim.fn.bufexists(fname) == 0 then
-    return
-  end
-  local bufnr = vim.fn.bufadd(fname)
-
-  if not bufnr then
-    return
-  end
-
-  client_id = get_client_id(client_id)
-  local namespace = M.get_namespace(client_id, false)
-
-  if config then
-    for _, opt in pairs(config) do
-      if type(opt) == 'table' then
-        if not opt.severity and opt.severity_limit then
-          opt.severity = { min = severity_lsp_to_vim(opt.severity_limit) }
-        end
-      end
-    end
-
-    -- Persist configuration to ensure buffer reloads use the same
-    -- configuration. To make lsp.with configuration work (See :help
-    -- lsp-handler-configuration)
-    vim.diagnostic.config(config, namespace)
-  end
-
-  vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
+  handle_diagnostics(result.uri, ctx.client_id, result.diagnostics, false, config)
 end
 
 --- |lsp-handler| for the method "textDocument/diagnostic"
@@ -291,49 +318,16 @@ end
 --- )
 --- ```
 ---
+---@param _ lsp.ResponseError?
+---@param result lsp.DocumentDiagnosticReport
 ---@param ctx lsp.HandlerContext
----@param config table Configuration table (see |vim.diagnostic.config()|).
+---@param config vim.diagnostic.Opts Configuration table (see |vim.diagnostic.config()|).
 function M.on_diagnostic(_, result, ctx, config)
-  local client_id = ctx.client_id
-  local uri = ctx.params.textDocument.uri
-  local fname = vim.uri_to_fname(uri)
-
-  if result == nil then
+  if result == nil or result.kind == 'unchanged' then
     return
   end
 
-  if result.kind == 'unchanged' then
-    return
-  end
-
-  local diagnostics = result.items
-  if #diagnostics == 0 and vim.fn.bufexists(fname) == 0 then
-    return
-  end
-  local bufnr = vim.fn.bufadd(fname)
-
-  if not bufnr then
-    return
-  end
-
-  client_id = get_client_id(client_id)
-
-  local namespace = M.get_namespace(client_id, true)
-
-  if config then
-    for _, opt in pairs(config) do
-      if type(opt) == 'table' and not opt.severity and opt.severity_limit then
-        opt.severity = { min = severity_lsp_to_vim(opt.severity_limit) }
-      end
-    end
-
-    -- Persist configuration to ensure buffer reloads use the same
-    -- configuration. To make lsp.with configuration work (See :help
-    -- lsp-handler-configuration)
-    vim.diagnostic.config(config, namespace)
-  end
-
-  vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
+  handle_diagnostics(ctx.params.textDocument.uri, ctx.client_id, result.items, true, config)
 end
 
 --- Clear push diagnostics and diagnostic cache.
@@ -343,7 +337,7 @@ end
 --- implementation so it's simply marked @private rather than @deprecated.
 ---
 ---@param client_id integer
----@param buffer_client_map table map of buffers to active clients
+---@param buffer_client_map table<integer, table<integer, table>> map of buffers to active clients
 ---@private
 function M.reset(client_id, buffer_client_map)
   buffer_client_map = vim.deepcopy(buffer_client_map)
@@ -364,34 +358,28 @@ end
 ---
 ---@param bufnr integer|nil The buffer number
 ---@param line_nr integer|nil The line number
----@param opts table|nil Configuration keys
----         - severity: (DiagnosticSeverity, default nil)
----             - Only return diagnostics with this severity. Overrides severity_limit
----         - severity_limit: (DiagnosticSeverity, default nil)
----             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
+---@param opts {severity?:lsp.DiagnosticSeverity}?
+---         - severity: (lsp.DiagnosticSeverity)
+---             - Only return diagnostics with this severity.
 ---@param client_id integer|nil the client id
 ---@return table Table with map of line number to list of diagnostics.
 ---              Structured: { [1] = {...}, [5] = {.... } }
 ---@private
 function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
-  opts = opts or {}
-  if opts.severity then
-    opts.severity = severity_lsp_to_vim(opts.severity)
-  elseif opts.severity_limit then
-    opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
+  convert_severity(opts)
+  local diag_opts = {} --- @type vim.diagnostic.GetOpts
+
+  if opts and opts.severity then
+    diag_opts.severity = severity_lsp_to_vim(opts.severity)
   end
 
   if client_id then
-    opts.namespace = M.get_namespace(client_id, false)
+    diag_opts.namespace = M.get_namespace(client_id, false)
   end
 
-  if not line_nr then
-    line_nr = vim.api.nvim_win_get_cursor(0)[1] - 1
-  end
+  diag_opts.lnum = line_nr or (api.nvim_win_get_cursor(0)[1] - 1)
 
-  opts.lnum = line_nr
-
-  return diagnostic_vim_to_lsp(vim.diagnostic.get(bufnr, opts))
+  return diagnostic_vim_to_lsp(vim.diagnostic.get(bufnr, diag_opts))
 end
 
 --- Clear diagnostics from pull based clients
@@ -402,7 +390,7 @@ local function clear(bufnr)
   end
 end
 
----@class lsp.diagnostic.bufstate
+---@class (private) lsp.diagnostic.bufstate
 ---@field enabled boolean Whether inlay hints are enabled for this buffer
 ---@type table<integer, lsp.diagnostic.bufstate>
 local bufstates = {}
@@ -425,7 +413,7 @@ end
 local function _refresh(bufnr, opts)
   opts = opts or {}
   opts['bufnr'] = bufnr
-  util._refresh(ms.textDocument_diagnostic, opts)
+  vim.lsp.util._refresh(ms.textDocument_diagnostic, opts)
 end
 
 --- Enable pull diagnostics for a buffer
@@ -449,7 +437,8 @@ function M._enable(bufnr)
           return
         end
         if bufstates[bufnr] and bufstates[bufnr].enabled then
-          _refresh(bufnr, { only_visible = true, client_id = opts.data.client_id })
+          local client_id = opts.data.client_id --- @type integer?
+          _refresh(bufnr, { only_visible = true, client_id = client_id })
         end
       end,
       group = augroup,

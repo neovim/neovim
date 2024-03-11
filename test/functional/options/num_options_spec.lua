@@ -12,7 +12,7 @@ local function should_fail(opt, value, errmsg)
   eq(errmsg, eval('v:errmsg'):match('E%d*'))
   feed_command('let v:errmsg = ""')
   local status, err = pcall(api.nvim_set_option_value, opt, value, {})
-  eq(status, false)
+  eq(false, status)
   eq(errmsg, err:match('E%d*'))
   eq('', eval('v:errmsg'))
 end

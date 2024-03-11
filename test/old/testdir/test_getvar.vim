@@ -83,6 +83,7 @@ func Test_var()
 
   unlet def_dict
 
+  call assert_equal("", gettabwinvar(9, 2020, ''))
   call assert_equal('', gettabwinvar(2, 3, '&nux'))
   call assert_equal(1, gettabwinvar(2, 3, '&nux', 1))
   tabonly

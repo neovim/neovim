@@ -1,11 +1,11 @@
-LIBUV_URL https://github.com/libuv/libuv/archive/v1.47.0.tar.gz
-LIBUV_SHA256 d50af7e6d72526db137e66fad812421c8a1cae09d146b0ec2bb9a22c5f23ba93
+LIBUV_URL https://github.com/libuv/libuv/archive/v1.48.0.tar.gz
+LIBUV_SHA256 8c253adb0f800926a6cbd1c6576abae0bc8eb86a4f891049b72f9e5b7dc58f33
 
 MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/c-6.0.0.tar.gz
 MSGPACK_SHA256 af6f3cf25edb220aa2140b09bb5bdd73ddf00938194bd94ebe5c92090cccb466
 
-LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/343ce0edaf3906a62022936175b2f5410024cbfc.tar.gz
-LUAJIT_SHA256 6d82b553761eec1c221af9edfe31e72fe6b62845702c55c0e857c384bed0e3c2
+LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/d06beb0480c5d1eb53b3343e78063950275aa281.tar.gz
+LUAJIT_SHA256 6abd146a1dfa240a965748f63221633446affa2a715e3eb03879136e3efb95f4
 
 LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz
 LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
@@ -16,14 +16,14 @@ UNIBILIUM_SHA256 9c4747c862ab5e3076dcf8fa8f0ea7a6b50f20ec5905618b953665559679748
 LIBVTERM_URL https://github.com/neovim/libvterm/archive/v0.3.3.tar.gz
 LIBVTERM_SHA256 0babe3ab42c354925dadede90d352f054aa9c4ae6842ea803a20c9741e172e56
 
-LUV_URL https://github.com/luvit/luv/archive/1.47.0-0.tar.gz
-LUV_SHA256 f9911d9d33808514e9ddc1e74667a57c427efa14fefecfa5fabe80ce95a3150a
+LUV_URL https://github.com/luvit/luv/releases/download/1.48.0-2/luv-1.48.0-2.tar.gz
+LUV_SHA256 2c3a1ddfebb4f6550293a40ee789f7122e97647eede51511f57203de48c03b7a
 
 LPEG_URL https://github.com/neovim/deps/raw/d495ee6f79e7962a53ad79670cb92488abe0b9b4/opt/lpeg-1.1.0.tar.gz
 LPEG_SHA256 4b155d67d2246c1ffa7ad7bc466c1ea899bbc40fef0257cc9c03cecbaed4352a
 
-LUA_COMPAT53_URL https://github.com/keplerproject/lua-compat-5.3/archive/v0.9.tar.gz
-LUA_COMPAT53_SHA256 ad05540d2d96a48725bb79a1def35cf6652a4e2ec26376e2617c8ce2baa6f416
+LUA_COMPAT53_URL https://github.com/lunarmodules/lua-compat-5.3/archive/v0.13.tar.gz
+LUA_COMPAT53_SHA256 f5dc30e7b1fda856ee4d392be457642c1f0c259264a9b9bfbcb680302ce88fc2
 
 CAT_URL https://github.com/neovim/deps/raw/21c5e8bdda33521a6ed497b315e03265a2785cbc/opt/cat.exe
 CAT_SHA256 93b8d307bb15af3968920bdea3beb869a49d166f9164853c58a4e6ffdcae61c6
@@ -35,27 +35,27 @@ XXD_SHA256 7a581e3882d28161cc52850f9a11d634b3eaf2c029276f093c1ed4c90e45a10c
 WIN32YANK_X86_64_URL https://github.com/equalsraf/win32yank/releases/download/v0.1.1/win32yank-x64.zip
 WIN32YANK_X86_64_SHA256 247c9a05b94387a884b49d3db13f806b1677dfc38020f955f719be6902260cd6
 
-GETTEXT_URL https://ftp.gnu.org/pub/gnu/gettext/gettext-0.20.1.tar.gz
+GETTEXT_URL https://github.com/neovim/deps/raw/b9bf36eb31f27e8136d907da38fa23518927737e/opt/gettext-0.20.1.tar.gz
 GETTEXT_SHA256 66415634c6e8c3fa8b71362879ec7575e27da43da562c798a8a2f223e6e47f5c
 
-LIBICONV_URL https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.17.tar.gz
+LIBICONV_URL https://github.com/neovim/deps/raw/b9bf36eb31f27e8136d907da38fa23518927737e/opt/libiconv-1.17.tar.gz
 LIBICONV_SHA256 8f74213b56238c85a50a5329f77e06198771e70dd9a739779f4c02f65d971313
 
-TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.20.7.tar.gz
-TREESITTER_C_SHA256 00abd71259093983fc7e2b51f3efc724ccab3e69af3a37d3cdd0a2a01d703061
-TREESITTER_LUA_URL https://github.com/MunifTanjim/tree-sitter-lua/archive/v0.0.19.tar.gz
+TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.20.8.tar.gz
+TREESITTER_C_SHA256 50f8aa6a84e2ad532cc3384e84e9f9f91fe3ec41c74f58e0c1e1013df5bf3a88
+TREESITTER_LUA_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/archive/v0.0.19.tar.gz
 TREESITTER_LUA_SHA256 974230f212d0049fce8e881b88b18eebbd05f1fd0edd16fe4ba5bdd2bcd78d08
 TREESITTER_VIM_URL https://github.com/neovim/tree-sitter-vim/archive/v0.3.0.tar.gz
 TREESITTER_VIM_SHA256 403acec3efb7cdb18ff3d68640fc823502a4ffcdfbb71cec3f98aa786c21cbe2
-TREESITTER_VIMDOC_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v2.1.0.tar.gz
-TREESITTER_VIMDOC_SHA256 71af795090ff50638904f27b8888ba1c0c2be91b7b60b0a6f2d6d6a138150e02
-TREESITTER_QUERY_URL https://github.com/nvim-treesitter/tree-sitter-query/archive/v0.1.0.tar.gz
+TREESITTER_VIMDOC_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v2.2.0.tar.gz
+TREESITTER_VIMDOC_SHA256 2cd898245d28bb606b05c022f04077031381d998faa3c6825c5ca01b7c89e2ae
+TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/archive/v0.1.0.tar.gz
 TREESITTER_QUERY_SHA256 e2b806f80e8bf1c4f4e5a96248393fe6622fc1fc6189d6896d269658f67f914c
 TREESITTER_PYTHON_URL https://github.com/tree-sitter/tree-sitter-python/archive/v0.20.4.tar.gz
 TREESITTER_PYTHON_SHA256 1e38c991832f461c0da8ca222fbe5be3b82b868fe34025f0295206b5e5789d7a
-TREESITTER_BASH_URL https://github.com/tree-sitter/tree-sitter-bash/archive/v0.20.4.tar.gz
-TREESITTER_BASH_SHA256 8a86182b9dd66acdce27c1e272247882b5cf910dd8725fbb68a8bf9d808fecba
+TREESITTER_BASH_URL https://github.com/tree-sitter/tree-sitter-bash/archive/v0.20.5.tar.gz
+TREESITTER_BASH_SHA256 7bba80ac64a18ec1b3f47e738e6a168f065c3cb4244234eff1b773816008f5a7
 TREESITTER_MARKDOWN_URL https://github.com/MDeiml/tree-sitter-markdown/archive/v0.1.7.tar.gz
 TREESITTER_MARKDOWN_SHA256 7d0e7f7ed4516ed0816f9c304e2e7fa93b2c16f9280416c2fb64dc4efd9c5f83
-TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/v0.20.9.tar.gz
-TREESITTER_SHA256 9b2fd489a7281e3a7e5e7cbbf3a974e5a6a115889ae65676d61b79bdae96464e
+TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/v0.21.0.tar.gz
+TREESITTER_SHA256 6bb60e5b63c1dc18aba57a9e7b3ea775b4f9ceec44cc35dac4634d26db4eb69c

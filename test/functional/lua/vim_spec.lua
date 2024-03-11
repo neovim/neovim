@@ -2016,7 +2016,7 @@ describe('lua stdlib', function()
         vim.opt.scrolloff = 10
         return vim.o.scrolloff
       ]]
-      eq(scrolloff, 10)
+      eq(10, scrolloff)
     end)
 
     pending('should handle STUPID window things', function()
@@ -2037,7 +2037,7 @@ describe('lua stdlib', function()
         vim.opt.wildignore = { 'hello', 'world' }
         return vim.o.wildignore
       ]]
-      eq(wildignore, 'hello,world')
+      eq('hello,world', wildignore)
     end)
 
     it('should allow setting tables with shortnames', function()
@@ -2045,7 +2045,7 @@ describe('lua stdlib', function()
         vim.opt.wig = { 'hello', 'world' }
         return vim.o.wildignore
       ]]
-      eq(wildignore, 'hello,world')
+      eq('hello,world', wildignore)
     end)
 
     it('should error when you attempt to set string values to numeric options', function()
@@ -2451,13 +2451,13 @@ describe('lua stdlib', function()
         vim.opt.wildignore = 'foo'
         return vim.o.wildignore
       ]]
-      eq(wildignore, 'foo')
+      eq('foo', wildignore)
 
       wildignore = exec_lua [[
         vim.opt.wildignore = vim.opt.wildignore + { 'bar', 'baz' }
         return vim.o.wildignore
       ]]
-      eq(wildignore, 'foo,bar,baz')
+      eq('foo,bar,baz', wildignore)
     end)
 
     it('should handle adding duplicates', function()
@@ -2465,19 +2465,19 @@ describe('lua stdlib', function()
         vim.opt.wildignore = 'foo'
         return vim.o.wildignore
       ]]
-      eq(wildignore, 'foo')
+      eq('foo', wildignore)
 
       wildignore = exec_lua [[
         vim.opt.wildignore = vim.opt.wildignore + { 'bar', 'baz' }
         return vim.o.wildignore
       ]]
-      eq(wildignore, 'foo,bar,baz')
+      eq('foo,bar,baz', wildignore)
 
       wildignore = exec_lua [[
         vim.opt.wildignore = vim.opt.wildignore + { 'bar', 'baz' }
         return vim.o.wildignore
       ]]
-      eq(wildignore, 'foo,bar,baz')
+      eq('foo,bar,baz', wildignore)
     end)
 
     it('should allow adding multiple times', function()
@@ -2486,7 +2486,7 @@ describe('lua stdlib', function()
         vim.opt.wildignore = vim.opt.wildignore + 'bar' + 'baz'
         return vim.o.wildignore
       ]]
-      eq(wildignore, 'foo,bar,baz')
+      eq('foo,bar,baz', wildignore)
     end)
 
     it('should remove values when you use minus', function()
@@ -2494,19 +2494,19 @@ describe('lua stdlib', function()
         vim.opt.wildignore = 'foo'
         return vim.o.wildignore
       ]]
-      eq(wildignore, 'foo')
+      eq('foo', wildignore)
 
       wildignore = exec_lua [[
         vim.opt.wildignore = vim.opt.wildignore + { 'bar', 'baz' }
         return vim.o.wildignore
       ]]
-      eq(wildignore, 'foo,bar,baz')
+      eq('foo,bar,baz', wildignore)
 
       wildignore = exec_lua [[
         vim.opt.wildignore = vim.opt.wildignore - 'bar'
         return vim.o.wildignore
       ]]
-      eq(wildignore, 'foo,baz')
+      eq('foo,baz', wildignore)
     end)
 
     it('should prepend values when using ^', function()
@@ -2521,7 +2521,7 @@ describe('lua stdlib', function()
         vim.opt.wildignore = vim.opt.wildignore ^ 'super_first'
         return vim.o.wildignore
       ]]
-      eq(wildignore, 'super_first,first,foo')
+      eq('super_first,first,foo', wildignore)
     end)
 
     it('should not remove duplicates from wildmode: #14708', function()
@@ -2530,7 +2530,7 @@ describe('lua stdlib', function()
         return vim.o.wildmode
       ]]
 
-      eq(wildmode, 'full,list,full')
+      eq('full,list,full', wildmode)
     end)
 
     describe('option types', function()
@@ -2738,7 +2738,7 @@ describe('lua stdlib', function()
           return vim.go.whichwrap
         ]]
 
-        eq(ww, 'b,s')
+        eq('b,s', ww)
         eq(
           'b,s,<,>,[,]',
           exec_lua [[
@@ -3363,7 +3363,7 @@ describe('lua stdlib', function()
 
     describe('returns -2 when interrupted', function()
       before_each(function()
-        local channel = api.nvim_get_api_info()[1]
+        local channel = api.nvim_get_chan_info(0).id
         api.nvim_set_var('channel', channel)
       end)
 
@@ -3543,6 +3543,18 @@ describe('lua stdlib', function()
       ]])
       )
     end)
+
+    it('can return values by reference', function()
+      eq(
+        { 4, 7 },
+        exec_lua [[
+        local val = {4, 10}
+        local ref = vim.api.nvim_buf_call(0, function() return val end)
+        ref[2] = 7
+        return val
+      ]]
+      )
+    end)
   end)
 
   describe('vim.api.nvim_win_call', function()
@@ -3639,6 +3651,32 @@ describe('lua stdlib', function()
         {2:[No Name] [+]  20,1         3%}|
                                       |
       ]]
+    end)
+
+    it('can return values by reference', function()
+      eq(
+        { 7, 10 },
+        exec_lua [[
+        local val = {4, 10}
+        local ref = vim.api.nvim_win_call(0, function() return val end)
+        ref[1] = 7
+        return val
+      ]]
+      )
+    end)
+
+    it('layout in current tabpage does not affect windows in others', function()
+      command('tab split')
+      local t2_move_win = api.nvim_get_current_win()
+      command('vsplit')
+      local t2_other_win = api.nvim_get_current_win()
+      command('tabprevious')
+      matches('E36: Not enough room$', pcall_err(command, 'execute "split|"->repeat(&lines)'))
+      command('vsplit')
+
+      -- Without vim-patch:8.2.3862, this gives E36, despite just the 1st tabpage being full.
+      exec_lua('vim.api.nvim_win_call(..., function() vim.cmd.wincmd "J" end)', t2_move_win)
+      eq({ 'col', { { 'leaf', t2_other_win }, { 'leaf', t2_move_win } } }, fn.winlayout(2))
     end)
   end)
 

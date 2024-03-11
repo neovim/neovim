@@ -45,10 +45,10 @@
 --- |'statuslines'
 --- |'tabline'
 --- |'current_window'
---- |'current_window_only'
 --- |'current_buffer'
 --- |'all_windows'
 --- |'curswant'
+--- |'highlight_only'
 --- |'ui_option'
 
 --- @param s string
@@ -1262,7 +1262,7 @@ return {
       ]=],
       full_name = 'colorcolumn',
       list = 'onecomma',
-      redraw = { 'current_window' },
+      redraw = { 'current_window', 'highlight_only' },
       scope = { 'window' },
       short_desc = N_('columns to highlight'),
       type = 'string',
@@ -1859,7 +1859,7 @@ return {
         <
       ]=],
       full_name = 'cursorcolumn',
-      redraw = { 'current_window_only' },
+      redraw = { 'current_window', 'highlight_only' },
       scope = { 'window' },
       short_desc = N_('highlight the screen column of the cursor'),
       type = 'boolean',
@@ -1874,7 +1874,7 @@ return {
         easier to see the selected text.
       ]=],
       full_name = 'cursorline',
-      redraw = { 'current_window_only' },
+      redraw = { 'current_window', 'highlight_only' },
       scope = { 'window' },
       short_desc = N_('highlight the screen line of the cursor'),
       type = 'boolean',
@@ -1902,7 +1902,7 @@ return {
       expand_cb = 'expand_set_cursorlineopt',
       full_name = 'cursorlineopt',
       list = 'onecomma',
-      redraw = { 'current_window_only' },
+      redraw = { 'current_window', 'highlight_only' },
       scope = { 'window' },
       short_desc = N_("settings for 'cursorline'"),
       type = 'string',
@@ -3926,7 +3926,7 @@ return {
         with the 'h' flag in 'shada' |shada-h|.
       ]=],
       full_name = 'hlsearch',
-      redraw = { 'all_windows' },
+      redraw = { 'all_windows', 'highlight_only' },
       scope = { 'global' },
       short_desc = N_('highlight matches with last search pattern'),
       type = 'boolean',
@@ -7329,9 +7329,10 @@ return {
         	match", "Pattern not found", "Back at original", etc.
           C	don't give messages while scanning for ins-completion	*shm-C*
         	items, for instance "scanning tags"
-          q	use "recording" instead of "recording @a"		*shm-q*
+          q	do not show "recording @a" when recording a macro	*shm-q*
           F	don't give the file info when editing a file, like	*shm-F*
-        	`:silent` was used for the command
+        	`:silent` was used for the command; note that this also
+        	affects messages from 'autoread' reloading
           S	do not show search count message when searching, e.g.	*shm-S*
         	"[1/5]"
 
@@ -7708,7 +7709,7 @@ return {
         The languages are specified with 'spelllang'.
       ]=],
       full_name = 'spell',
-      redraw = { 'current_window' },
+      redraw = { 'current_window', 'highlight_only' },
       scope = { 'window' },
       short_desc = N_('spell checking'),
       type = 'boolean',
@@ -7730,7 +7731,7 @@ return {
         |set-spc-auto|.
       ]=],
       full_name = 'spellcapcheck',
-      redraw = { 'current_buffer' },
+      redraw = { 'current_buffer', 'highlight_only' },
       scope = { 'buffer' },
       short_desc = N_('pattern to locate end of a sentence'),
       type = 'string',
@@ -7821,7 +7822,7 @@ return {
       expand = true,
       full_name = 'spelllang',
       list = 'onecomma',
-      redraw = { 'current_buffer' },
+      redraw = { 'current_buffer', 'highlight_only' },
       scope = { 'buffer' },
       short_desc = N_('language(s) to do spell checking for'),
       type = 'string',
@@ -7846,7 +7847,7 @@ return {
       expand_cb = 'expand_set_spelloptions',
       full_name = 'spelloptions',
       list = 'onecomma',
-      redraw = { 'current_buffer' },
+      redraw = { 'current_buffer', 'highlight_only' },
       scope = { 'buffer' },
       secure = true,
       type = 'string',
@@ -8186,16 +8187,17 @@ return {
         ) -   End of item group.  No width fields allowed.
         T N   For 'tabline': start of tab page N label.  Use %T or %X to end
               the label.  Clicking this label with left mouse button switches
-              to the specified tab page.
+              to the specified tab page, while clicking it with middle mouse
+              button closes the specified tab page.
         X N   For 'tabline': start of close tab N label.  Use %X or %T to end
               the label, e.g.: %3Xclose%X.  Use %999X for a "close current
-              tab" label.    Clicking this label with left mouse button closes
-              specified tab page.
-        @ N   Start of execute function label. Use %X or %T to
-              end the label, e.g.: %10@SwitchBuffer@foo.c%X.  Clicking this
-              label runs specified function: in the example when clicking once
-              using left mouse button on "foo.c" "SwitchBuffer(10, 1, 'l',
-              '    ')" expression will be run.  Function receives the
+              tab" label.  Clicking this label with left mouse button closes
+              the specified tab page.
+        @ N   Start of execute function label. Use %X or %T to end the label,
+              e.g.: %10@SwitchBuffer@foo.c%X.  Clicking this label runs the
+              specified function: in the example when clicking once using left
+              mouse button on "foo.c", a `SwitchBuffer(10, 1, 'l', '    ')`
+              expression will be run.  The specified function receives the
               following arguments in order:
               1. minwid field value or zero if no N was specified
               2. number of mouse clicks to detect multiple clicks
@@ -8404,6 +8406,8 @@ return {
         		"split" when both are present.
            uselast	If included, jump to the previously used window when
         		jumping to errors with |quickfix| commands.
+        If a window has 'winfixbuf' enabled, 'switchbuf' is currently not
+        applied to the split window.
       ]=],
       expand_cb = 'expand_set_switchbuf',
       full_name = 'switchbuf',
@@ -8858,7 +8862,7 @@ return {
         When 'formatexpr' is set it will be used to break the line.
       ]=],
       full_name = 'textwidth',
-      redraw = { 'current_buffer' },
+      redraw = { 'current_buffer', 'highlight_only' },
       scope = { 'buffer' },
       short_desc = N_('maximum width of text that is being inserted'),
       type = 'number',
@@ -9785,7 +9789,7 @@ return {
         UI-dependent. Works best with RGB colors. 'termguicolors'
       ]=],
       full_name = 'winblend',
-      redraw = { 'current_window' },
+      redraw = { 'current_window', 'highlight_only' },
       scope = { 'window' },
       short_desc = N_('Controls transparency level for floating windows'),
       type = 'number',
@@ -9813,6 +9817,23 @@ return {
       short_desc = N_('nr of lines to scroll for CTRL-F and CTRL-B'),
       type = 'number',
       varname = 'p_window',
+    },
+    {
+      abbreviation = 'wfb',
+      defaults = { if_true = false },
+      desc = [=[
+        If enabled, the buffer and any window that displays it are paired.
+        For example, attempting to change the buffer with |:edit| will fail.
+        Other commands which change a window's buffer such as |:cnext| will
+        also skip any window with 'winfixbuf' enabled. However if a command
+        has an "!" option, a window can be forced to switch buffers.
+      ]=],
+      full_name = 'winfixbuf',
+      pv_name = 'p_wfb',
+      redraw = { 'current_window' },
+      scope = { 'window' },
+      short_desc = N_('pin a window to a specific buffer'),
+      type = 'boolean',
     },
     {
       abbreviation = 'wfh',
@@ -9900,7 +9921,7 @@ return {
       expand_cb = 'expand_set_winhighlight',
       full_name = 'winhighlight',
       list = 'onecommacolon',
-      redraw = { 'current_window' },
+      redraw = { 'current_window', 'highlight_only' },
       scope = { 'window' },
       short_desc = N_('Setup window-local highlights'),
       type = 'string',

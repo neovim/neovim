@@ -41,7 +41,6 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/normal_defs.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
@@ -386,26 +385,6 @@ struct sd_read_def {
                           ///< reader structure initialization). May overflow.
 };
 
-typedef struct sd_write_def ShaDaWriteDef;
-
-/// Function used to close files defined by ShaDaWriteDef
-typedef void (*ShaDaWriteCloser)(ShaDaWriteDef *const sd_writer)
-  REAL_FATTR_NONNULL_ALL;
-
-/// Function used to write ShaDa files
-typedef ptrdiff_t (*ShaDaFileWriter)(ShaDaWriteDef *const sd_writer,
-                                     const void *const src,
-                                     const size_t size)
-  REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
-
-/// Structure containing necessary pointers for writing ShaDa files
-struct sd_write_def {
-  ShaDaFileWriter write;   ///< Writer function.
-  ShaDaWriteCloser close;  ///< Close function.
-  void *cookie;            ///< Data describing object written to.
-  const char *error;       ///< Error message in case of error.
-};
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "shada.c.generated.h"
 #endif
@@ -636,33 +615,12 @@ static int read_char(ShaDaReadDef *const sd_reader)
   return (int)ret;
 }
 
-/// Wrapper for writing to file descriptors
-///
-/// @return -1 or number of bytes written.
-static ptrdiff_t write_file(ShaDaWriteDef *const sd_writer, const void *const dest,
-                            const size_t size)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  const ptrdiff_t ret = file_write(sd_writer->cookie, dest, size);
-  if (ret < 0) {
-    sd_writer->error = os_strerror((int)ret);
-    return -1;
-  }
-  return ret;
-}
-
 /// Wrapper for closing file descriptors opened for reading
 static void close_sd_reader(ShaDaReadDef *const sd_reader)
   FUNC_ATTR_NONNULL_ALL
 {
   close_file(sd_reader->cookie);
-}
-
-/// Wrapper for closing file descriptors opened for writing
-static void close_sd_writer(ShaDaWriteDef *const sd_writer)
-  FUNC_ATTR_NONNULL_ALL
-{
-  close_file(sd_writer->cookie);
+  xfree(sd_reader->cookie);
 }
 
 /// Wrapper for read that reads to IObuff and ignores bytes read
@@ -731,8 +689,6 @@ static ShaDaReadResult sd_reader_skip(ShaDaReadDef *const sd_reader, const size_
 static int open_shada_file_for_reading(const char *const fname, ShaDaReadDef *sd_reader)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  int error;
-
   *sd_reader = (ShaDaReadDef) {
     .read = &read_file,
     .close = &close_sd_reader,
@@ -740,9 +696,11 @@ static int open_shada_file_for_reading(const char *const fname, ShaDaReadDef *sd
     .error = NULL,
     .eof = false,
     .fpos = 0,
-    .cookie = file_open_new(&error, fname, kFileReadOnly, 0),
+    .cookie = xmalloc(sizeof(FileDescriptor)),
   };
-  if (sd_reader->cookie == NULL) {
+  int error = file_open(sd_reader->cookie, fname, kFileReadOnly, 0);
+  if (error) {
+    XFREE_CLEAR(sd_reader->cookie);
     return error;
   }
 
@@ -752,25 +710,26 @@ static int open_shada_file_for_reading(const char *const fname, ShaDaReadDef *sd
 }
 
 /// Wrapper for closing file descriptors
-static void close_file(void *cookie)
+static void close_file(FileDescriptor *cookie)
 {
-  const int error = file_free(cookie, !!p_fs);
+  const int error = file_close(cookie, !!p_fs);
   if (error != 0) {
     semsg(_(SERR "System error while closing ShaDa file: %s"),
           os_strerror(error));
   }
 }
 
-/// Msgpack callback for writing to ShaDaWriteDef*
+/// Msgpack callback for writing to FileDescriptor*
 static int msgpack_sd_writer_write(void *data, const char *buf, size_t len)
 {
-  ShaDaWriteDef *const sd_writer = (ShaDaWriteDef *)data;
-  ptrdiff_t written_bytes = sd_writer->write(sd_writer, buf, len);
-  if (written_bytes == -1) {
+  FileDescriptor *const sd_writer = (FileDescriptor *)data;
+  const ptrdiff_t ret = file_write(sd_writer, buf, len);
+  if (ret < 0) {
     semsg(_(SERR "System error while writing ShaDa file: %s"),
-          sd_writer->error);
+          os_strerror((int)ret));
     return -1;
   }
+
   return 0;
 }
 
@@ -1875,9 +1834,7 @@ static int compare_file_marks(const void *a, const void *b)
   const FileMarks *const *const b_fms = b;
   return ((*a_fms)->greatest_timestamp == (*b_fms)->greatest_timestamp
           ? 0
-          : ((*a_fms)->greatest_timestamp > (*b_fms)->greatest_timestamp
-             ? -1
-             : 1));
+          : ((*a_fms)->greatest_timestamp > (*b_fms)->greatest_timestamp ? -1 : 1));
 }
 
 /// Parse msgpack object that has given length
@@ -2525,7 +2482,7 @@ static int hist_type2char(const int type)
 /// @param[in]  sd_reader  Structure containing file reader definition. If it is
 ///                        not NULL then contents of this file will be merged
 ///                        with current Neovim runtime.
-static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef *const sd_reader)
+static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer, ShaDaReadDef *const sd_reader)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   ShaDaWriteResult ret = kSDWriteSuccessful;
@@ -2999,12 +2956,9 @@ int shada_write_file(const char *const file, bool nomerge)
 
   char *const fname = shada_filename(file);
   char *tempname = NULL;
-  ShaDaWriteDef sd_writer = {
-    .write = &write_file,
-    .close = &close_sd_writer,
-    .error = NULL,
-  };
+  FileDescriptor sd_writer;
   ShaDaReadDef sd_reader = { .close = NULL };
+  bool did_open_writer = false;
 
   if (!nomerge) {
     int error;
@@ -3034,8 +2988,8 @@ int shada_write_file(const char *const file, bool nomerge)
     // 3: If somebody happened to delete the file after it was opened for
     //    reading use u=rw permissions.
 shada_write_file_open: {}
-    sd_writer.cookie = file_open_new(&error, tempname, kFileCreateOnly|kFileNoSymlink, perm);
-    if (sd_writer.cookie == NULL) {
+    error = file_open(&sd_writer, tempname, kFileCreateOnly|kFileNoSymlink, perm);
+    if (error) {
       if (error == UV_EEXIST || error == UV_ELOOP) {
         // File already exists, try another name
         char *const wp = tempname + strlen(tempname) - 1;
@@ -3056,6 +3010,8 @@ shada_write_file_open: {}
         semsg(_(SERR "System error while opening temporary ShaDa file %s "
                 "for writing: %s"), tempname, os_strerror(error));
       }
+    } else {
+      did_open_writer = true;
     }
   }
   if (nomerge) {
@@ -3078,16 +3034,16 @@ shada_write_file_nomerge: {}
       }
       *tail = tail_save;
     }
-    int error;
-    sd_writer.cookie = file_open_new(&error, fname, kFileCreate|kFileTruncate,
-                                     0600);
-    if (sd_writer.cookie == NULL) {
+    int error = file_open(&sd_writer, fname, kFileCreate|kFileTruncate, 0600);
+    if (error) {
       semsg(_(SERR "System error while opening ShaDa file %s for writing: %s"),
             fname, os_strerror(error));
+    } else {
+      did_open_writer = true;
     }
   }
 
-  if (sd_writer.cookie == NULL) {
+  if (!did_open_writer) {
     xfree(fname);
     xfree(tempname);
     if (sd_reader.cookie != NULL) {
@@ -3102,9 +3058,7 @@ shada_write_file_nomerge: {}
     verbose_leave();
   }
 
-  const ShaDaWriteResult sw_ret = shada_write(&sd_writer, (nomerge
-                                                           ? NULL
-                                                           : &sd_reader));
+  const ShaDaWriteResult sw_ret = shada_write(&sd_writer, (nomerge ? NULL : &sd_reader));
   assert(sw_ret != kSDWriteIgnError);
   if (!nomerge) {
     sd_reader.close(&sd_reader);
@@ -3134,7 +3088,7 @@ shada_write_file_nomerge: {}
             || old_info.stat.st_gid != getgid()) {
           const uv_uid_t old_uid = (uv_uid_t)old_info.stat.st_uid;
           const uv_gid_t old_gid = (uv_gid_t)old_info.stat.st_gid;
-          const int fchown_ret = os_fchown(file_fd(sd_writer.cookie),
+          const int fchown_ret = os_fchown(file_fd(&sd_writer),
                                            old_uid, old_gid);
           if (fchown_ret != 0) {
             semsg(_(RNERR "Failed setting uid and gid for file %s: %s"),
@@ -3167,7 +3121,7 @@ shada_write_file_did_not_remove:
     }
     xfree(tempname);
   }
-  sd_writer.close(&sd_writer);
+  close_file(&sd_writer);
 
   xfree(fname);
   return OK;
@@ -3631,10 +3585,9 @@ shada_read_next_item_start:
   entry->data = sd_default_values[type_u64].data;
   switch ((ShadaEntryType)type_u64) {
   case kSDItemHeader:
-    if (!msgpack_rpc_to_dictionary(&(unpacked.data), &(entry->data.header))) {
-      semsg(_(READERR("header", "is not a dictionary")), initial_fpos);
-      goto shada_read_next_item_error;
-    }
+    // TODO(bfredl): header is written to file and provides useful debugging
+    // info. It is never read by nvim (earlier we parsed it back to a
+    // Dictionary, but that value was never used)
     break;
   case kSDItemSearchPattern: {
     if (unpacked.data.type != MSGPACK_OBJECT_MAP) {

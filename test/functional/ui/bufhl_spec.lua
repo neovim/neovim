@@ -29,7 +29,7 @@ describe('Buffer highlighting', function()
       [10] = { foreground = Screen.colors.Red },
       [11] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
       [12] = { foreground = Screen.colors.Blue1 },
-      [13] = { background = Screen.colors.LightGrey },
+      [13] = { foreground = Screen.colors.Black, background = Screen.colors.LightGrey },
       [14] = { background = Screen.colors.Gray90 },
       [15] = { background = Screen.colors.Gray90, bold = true, foreground = Screen.colors.Brown },
       [16] = { foreground = Screen.colors.Magenta, background = Screen.colors.Gray90 },

@@ -19,7 +19,7 @@
 /// @param tabpage  Tabpage handle, or 0 for current tabpage
 /// @param[out] err Error details, if any
 /// @return List of windows in `tabpage`
-ArrayOf(Window) nvim_tabpage_list_wins(Tabpage tabpage, Error *err)
+ArrayOf(Window) nvim_tabpage_list_wins(Tabpage tabpage, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -29,15 +29,15 @@ ArrayOf(Window) nvim_tabpage_list_wins(Tabpage tabpage, Error *err)
     return rv;
   }
 
+  size_t n = 0;
   FOR_ALL_WINDOWS_IN_TAB(wp, tab) {
-    rv.size++;
+    n++;
   }
 
-  rv.items = xmalloc(sizeof(Object) * rv.size);
-  size_t i = 0;
+  rv = arena_array(arena, n);
 
   FOR_ALL_WINDOWS_IN_TAB(wp, tab) {
-    rv.items[i++] = WINDOW_OBJ(wp->handle);
+    ADD_C(rv, WINDOW_OBJ(wp->handle));
   }
 
   return rv;
@@ -49,7 +49,7 @@ ArrayOf(Window) nvim_tabpage_list_wins(Tabpage tabpage, Error *err)
 /// @param name     Variable name
 /// @param[out] err Error details, if any
 /// @return Variable value
-Object nvim_tabpage_get_var(Tabpage tabpage, String name, Error *err)
+Object nvim_tabpage_get_var(Tabpage tabpage, String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
@@ -58,7 +58,7 @@ Object nvim_tabpage_get_var(Tabpage tabpage, String name, Error *err)
     return (Object)OBJECT_INIT;
   }
 
-  return dict_get_value(tab->tp_vars, name, err);
+  return dict_get_value(tab->tp_vars, name, arena, err);
 }
 
 /// Sets a tab-scoped (t:) variable
@@ -76,7 +76,7 @@ void nvim_tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err
     return;
   }
 
-  dict_set_var(tab->tp_vars, name, value, false, false, err);
+  dict_set_var(tab->tp_vars, name, value, false, false, NULL, err);
 }
 
 /// Removes a tab-scoped (t:) variable
@@ -93,7 +93,7 @@ void nvim_tabpage_del_var(Tabpage tabpage, String name, Error *err)
     return;
   }
 
-  dict_set_var(tab->tp_vars, name, NIL, true, false, err);
+  dict_set_var(tab->tp_vars, name, NIL, true, false, NULL, err);
 }
 
 /// Gets the current window in a tabpage
@@ -146,7 +146,11 @@ void nvim_tabpage_set_win(Tabpage tabpage, Window win, Error *err)
   }
 
   if (tp == curtab) {
-    win_enter(wp, true);
+    try_start();
+    win_goto(wp);
+    if (!try_end(err) && curwin != wp) {
+      api_set_error(err, kErrorTypeException, "Failed to switch to window %d", win);
+    }
   } else if (tp->tp_curwin != wp) {
     tp->tp_prevwin = tp->tp_curwin;
     tp->tp_curwin = wp;

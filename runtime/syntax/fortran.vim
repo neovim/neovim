@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Fortran 2023 (and Fortran 2018, 2008, 2003, 95, 90, and 77)
-" Version:	(v112) 2024 January 24
+" Version:	(v113) 2024 February 01
 " Maintainers:	Ajit J. Thakkar <ajit@unb.ca>; <https://ajit.ext.unb.ca/>
 " 	        Joshua Hollett <j.hollett@uwinnipeg.ca>
 " Usage:	For instructions, do :help fortran-syntax from Vim
@@ -84,14 +84,14 @@ syn match fortranConstructName          "\%(\<end\s*associate\s\+\)\@18<=\a\w*\>
 syn match fortranUnitName               "\%(\<\%(end\s*\)\?\%(subroutine\|function\|module\|program\|submodule\)\s\+\)\@12<=\a\w*"
 syn match fortranUnitHeader             "\<end\>\ze\s*\%(!.*\)\?$"
 
-syn keyword fortranIntrinsic	abs acos aimag aint anint asin atan atan2 cmplx conjg cos cosh exp ichar index int log log10 max min nint sign sin sinh sqrt tan tanh
+syn keyword fortranIntrinsic	abs acos aimag aint anint asin atan atan2 cmplx conjg cos cosh exp ichar index int log log10 max min nint sin sinh sqrt tan tanh
 syn keyword fortranIntrinsicR	achar iachar transfer dble dprod dim lge lgt lle llt mod
 syn keyword fortranIntrinsic    command_argument_count get_command get_command_argument get_environment_variable is_iostat_end is_iostat_eor move_alloc new_line same_type_as extends_type_of
 syn keyword fortranIntrinsic    selected_real_kind selected_int_kind selected_logical_kind selected_char_kind next previous
 syn keyword fortranIntrinsic    acosh asinh atanh bessel_j0 bessel_j1 bessel_jn bessel_y0 bessel_y1 bessel_yn erf erfc erfc_scaled gamma log_gamma hypot norm2
 syn keyword fortranIntrinsic    adjustl adjustr all allocated any associated bit_size btest ceiling cshift date_and_time digits
 syn keyword fortranIntrinsic    dot_product eoshift exponent floor fraction iand ibclr ibits ibset ieor ior ishft ishftc lbound len_trim matmul maxexponent maxloc merge minexponent minloc
-syn keyword fortranIntrinsic    modulo mvbits nearest pack precision present radix random_number random_seed range repeat reshape rrspacing scale scan set_exponent shape size spacing
+syn keyword fortranIntrinsic    modulo mvbits nearest pack precision present radix random_number random_seed range repeat reshape rrspacing scale scan set_exponent shape spacing
 " intrinsic names often used for variables in older Fortran code
 syn match fortranIntrinsic      '\<\%(count\|epsilon\|maxval\|minval\|product\|sum\|huge\|tiny\|char\)\>\ze\s*('
 syn keyword fortranIntrinsic    spread system_clock transpose trim ubound unpack verify is_contiguous event_query
@@ -112,17 +112,19 @@ syn keyword fortranIntrinsic	ieee_unordered ieee_value ieee_get_flag ieee_get_ha
 syn keyword fortranIntrinsic	ieee_set_flag ieee_set_halting_mode ieee_set_modes ieee_set_status ieee_support_flag ieee_support_halting
 syn keyword fortranIntrinsic    iso_c_binding c_loc c_funloc c_sizeof c_associated c_f_pointer c_f_procpointer c_f_strpointer f_c_string
 syn keyword fortranIntrinsic    iso_fortran_env compiler_options compiler_version
-syn keyword fortranIntrinsic	out_of_range reduce random_init coshape get_team team_number split tokenize
+syn keyword fortranIntrinsic	out_of_range reduce random_init coshape get_team split tokenize
 syn keyword fortranIntrinsic    acosd asind atand atan2d cosd sind tand acospi asinpi atanpi atan2pi cospi sinpi tanpi
 syn match fortranIntrinsic      "\%(^\s*\|type *is *(\s*\)\@12<!\<real\ze\s*("
 syn match fortranIntrinsic      '\<\%(logical\|not\|len\|kind\|rank\)\>\ze\s*('
+syn match fortranIntrinsic      '\<\%(sign\|size\|team_number\)\>\ze\s*('
 " Obsolescent type-specific intrinsics
 syn keyword fortranIntrinsicOb	alog alog10 amax0 amax1 amin0 amin1 amod cabs ccos cexp clog csin csqrt dabs dacos dasin datan datan2 dcos dcosh ddim dexp dint dlog dlog10 dmax1 dmin1 dmod dnint dsign dsin dsinh dsqrt dtan dtanh float iabs idim idint idnint ifix isign max0 max1 min0 min1 sngl
 if exists("fortran_vendor_intrinsics")
   syn keyword fortranIntrinsicVen	algama cdabs cdcos cdexp cdlog cdsin cdsqrt cqabs cqcos cqexp cqlog cqsin cqsqrt dcmplx dconjg derf derfc dfloat dgamma dimag dlgama iqint qabs qacos qasin qatan qatan2 qcmplx qconjg qcos qcosh qdim qerf qerfc qexp qgamma qimag qlgama qlog qlog10 qmax1 qmin1 qmod qnint qsign qsin qsinh qsqrt qtan qtanh
 endif
 
-syn keyword fortranType         generic final enumerator import classof typeof
+syn keyword fortranType         generic final enumerator import classof typeof team_type event_type lock_type notify_type
+syn keyword fortranType 	ieee_flag_type ieee_modes_type ieee_status_type ieee_class_type ieee_round_type ieee_features_type
 syn keyword fortranType         c_ptr c_funptr elemental pure impure recursive non_recursive simple
 syn match fortranType           "^\s*\%(implicit\s\+\)\?\%(real\|double\s*precision\|integer\|logical\|complex\|character\|type\)\>"
 syn match fortranTypeOb         "^\s*\%(character\s*\)\@15<=\*"
@@ -137,10 +139,10 @@ syn match fortranType           "\<\%(end\s*\)\?\%(module\s\+\)\?procedure\>"
 syn match fortranType           "\%(simple \|pure \|impure \|recursive \|non_recursive \|elemental \|module \)\@17<=\%(real\|double precision\|integer\|logical\|complex\|character\)"
 syn match fortranTypeR	       	display "\<double\s*precision\>"
 syn match fortranTypeR  	display "\<double\s\+complex\>"
-syn keyword fortranAttribute    value bind deferred contiguous intrinsic non_intrinsic
-syn keyword fortranAttribute    asynchronous nopass non_overridable pass volatile extends
-syn keyword fortranAttribute    abstract external private public protected intent optional
-syn keyword fortranAttribute	pointer target allocatable dimension codimension sequence parameter save
+syn keyword fortranAttribute    abstract allocatable bind codimension contiguous deferred dimension extends
+syn keyword fortranAttribute    external intent intrinsic non_intrinsic non_overridable nopass optional parameter pass
+syn keyword fortranAttribute    pointer private protected public save sequence target value volatile
+syn match fortranAttribute      "\<asynchronous\>\ze\s*\%(::\|,\|(\)"
 
 syn keyword fortranUnitHeader	result operator assignment
 syn match fortranUnitHeader     "\<\%(end\s*\)\?\%(subroutine\|function\|module\|program\|submodule\)\>"
@@ -169,7 +171,7 @@ syn match fortranOperatorR	"\.\s*[gl][et]\s*\."
 syn match fortranOperatorR	"\.\s*\%(eq\|ne\)\s*\."
 
 syn keyword fortranReadWrite	print flush
-syn match fortranReadWrite	'\<\%(backspace\|close\|endfile\|inquire\|open\|read\|rewind\|write\)\ze\s*('
+syn match fortranReadWrite	'\<\%(backspace\|close\|endfile\|inquire\|open\|read\|rewind\|wait\|write\)\ze\s*('
 
 "If tabs are allowed then the left margin checks do not work
 if exists("fortran_have_tabs")
@@ -205,11 +207,16 @@ syn match fortranFormatSpec	display	"\d\+x\>"
 " The next match cannot be used because it would pick up identifiers as well
 " syn match fortranFormatSpec	display	"\<\%(a\|i\)\d\+"
 " Numbers as labels
-syn match fortranLabelNumber	display	"^\zs\d\{1,5}\ze\s"
-syn match fortranLabelNumber	display	"^ \zs\d\{1,4}\ze\s"
-syn match fortranLabelNumber	display	"^  \zs\d\{1,3}\ze\s"
-syn match fortranLabelNumber	display	"^   \zs\d\d\?\ze\s"
-syn match fortranLabelNumber	display	"^    \zs\d\ze\s"
+if (b:fortran_fixed_source == 1)
+  syn match fortranLabelNumber	display	"^\zs\d\{1,5}\ze\s"
+  syn match fortranLabelNumber	display	"^ \zs\d\{1,4}\ze\s"
+  syn match fortranLabelNumber	display	"^  \zs\d\{1,3}\ze\s"
+  syn match fortranLabelNumber	display	"^   \zs\d\d\?\ze\s"
+  syn match fortranLabelNumber	display	"^    \zs\d\ze\s"
+else
+  syn match fortranLabelNumber	        display	"^\s*\zs\d\{1,5}\ze\s*\a"
+  syn match fortranLabelNumberOb	display	"^\s*\zs\d\{1,5}\ze *end\s*\%(do\|if\)\>\ze"
+endif
 " Numbers as targets
 syn match fortranTarget 	display	"\%(\<if\s*(.\+)\s*\)\@<=\%(\d\+\s*,\s*\)\{2}\d\+\>"
 syn match fortranTargetOb	display	"\%(\<do\s*,\?\s*\)\@11<=\d\+\>"
@@ -226,13 +233,19 @@ syn match fortranKeywordOb  	"\<go\s*to\ze\s*(\d\+.*$"
 syn keyword fortranKeywordDel	pause
 syn match fortranKeywordDel	"assign\s*\d\+\s*to\s\+\a\w*"
 
+syn match fortranStringDel      display "[/(,] *\d\+H"
 syn region fortranString 	start=+'+ end=+'+	contains=fortranLeftMargin,fortranContinueMark,fortranSerialNumber
 syn region fortranString	start=+"+ end=+"+	contains=fortranLeftMargin,fortranContinueMark,fortranSerialNumber
 
-syn match fortranIO		'\%(\%((\|,\|, *&\n\)\s*\)\@<=\%(access\|blank\|direct\|exist\|file\|fmt\|form\|formatted\|iostat\|name\|named\|nextrec\|number\|opened\|rec\|recl\|sequential\|status\|unformatted\|unit\)\ze\s*='
+syn match fortranSpecifier     	'\%(\%((\|,\|, *&\n\)\s*\)\@<=\%(access\|acquired_lock\|action\|advance\|asynchronous\|blank\|decimal\|delim\|direct\|encoding\|end\|eor\|err\)\ze\s*='
+syn match fortranSpecifier     	'\%(\%((\|,\|, *&\n\)\s*\)\@<=\%(errmsg\|exist\|file\|fmt\|form\|formatted\|id\|iolength\|iomsg\|iostat\|leading_zero\|mold\|name\|named\)\ze\s*='
+syn match fortranSpecifier     	'\%(\%((\|,\|, *&\n\)\s*\)\@<=\%(new_index\|newunit\|nextrec\|nml\|notify\|number\|opened\|pad\|pending\|pos\|position\|quiet\)\ze\s*='
+syn match fortranSpecifier     	'\%(\%((\|,\|, *&\n\)\s*\)\@<=\%(read\|readwrite\|rec\|recl\|round\|sequential\|sign\|size\)\ze\s*='
+syn match fortranSpecifier     	'\%(\%((\|,\|, *&\n\)\s*\)\@<=\%(source\|stat\|status\|stream\|team\|team_number\|unformatted\|unit\|until_count\|write\)\ze\s*='
+syn match fortranSpecifier      "\%((\s*\)\@<=\%(un\)\?formatted\ze\s*)"
+syn match fortranSpecifier      "\%(local\|local_init\|reduce\|shared\)\ze\s*("
+syn match fortranSpecifier      "\<default\s*(\s*none\s*)"
 syn keyword fortranIOR		format namelist
-syn keyword fortranIO		pad position action delim readwrite eor advance nml newunit decimal round iomsg
-syn match   fortranIO		contains=fortranOperator "\<e\%(nd\|rr\)\s*=\s*\d\+"
 
 syn keyword fortranConditional	else then where elsewhere
 syn match fortranConditional    "\<\%(else\s*\)\?if\>"
@@ -262,8 +275,8 @@ syn match fortranStorageClassOb         "\<equivalence\>\%(\s*(\)\@="
 
 syn keyword fortranConstant             c_null_char c_alert c_backspace c_form_feed c_new_line c_carriage_return c_horizontal_tab c_vertical_tab c_ptrdiff_t
 syn keyword fortranConstant             c_int c_short c_long c_long_long c_signed_char c_size_t c_int8_t c_int16_t c_int32_t c_int64_t c_int_least8_t c_int_least16_t c_int_least32_t c_int_least64_t c_int_fast8_t c_int_fast16_t c_int_fast32_t c_int_fast64_t c_intmax_t C_intptr_t c_float c_double c_long_double c_float_complex c_double_complex c_long_double_complex c_bool c_char c_null_ptr c_null_funptr
-syn keyword fortranConstant             character_storage_size error_unit file_storage_size input_unit iostat_end iostat_eor numeric_storage_size output_unit stat_failed_image stat_unlocked_failed_image
-syn keyword fortranConstant             int8 int16 int32 int64 real16 real32 real64 real128 character_kinds integer_kinds logical_kinds real_kinds iostat_inquire_internal_unit
+syn keyword fortranConstant             character_storage_size error_unit file_storage_size input_unit iostat_end iostat_eor numeric_storage_size output_unit stat_failed_image stat_locked stat_locked_other_image stat_stopped_image stat_unlocked stat_unlocked_failed_image
+syn keyword fortranConstant             int8 int16 int32 int64 real16 real32 real64 real128 character_kinds integer_kinds logical_kinds real_kinds iostat_inquire_internal_unit initial_team current_team parent_team
 syn keyword fortranConstant             ieee_invalid ieee_overflow ieee_divide_by_zero ieee_underflow ieee_inexact ieee_usual ieee_all
 syn keyword fortranConstant             ieee_signaling_nan ieee_quiet_nan ieee_negative_inf ieee_negative_normal ieee_negative_subnormal
 syn keyword fortranConstant             ieee_negative_zero ieee_positive_zero ieee_positive_subnormal ieee_positive_normal ieee_positive_inf
@@ -271,6 +284,7 @@ syn keyword fortranConstant             ieee_other_value ieee_negative_denormal 
 syn keyword fortranConstant             ieee_positive_subnormal ieee_nearest ieee_to_zero ieee_up ieee_down ieee_away ieee_other ieee_datatype
 syn keyword fortranConstant             ieee_denormal ieee_divide ieee_halting ieee_inexact_flag ieee_inf ieee_invalid_flag ieee_nan
 syn keyword fortranConstant             ieee_rounding ieee_sqrt ieee_subnormal ieee_underflow_flag
+syn match fortranConstant	        "\.\s*nil\s*\."
 
 " CUDA Fortran
 if exists("fortran_CUDA")
@@ -414,6 +428,7 @@ hi def link fortranConditionalDel 	Error
 hi def link fortranKeywordDel     	Error
 hi def link fortranLabelError	        Error
 hi def link fortranParenError  		Error
+hi def link fortranStringDel            Error
 hi def link fortranTab		        Error
 hi def link fortranFloat       		Float
 hi def link fortranFloatIll             Float
@@ -427,11 +442,11 @@ hi def link fortranConstructName	Identifier
 hi def link fortranFormatSpec  		Identifier
 hi def link cInclude    		Include
 hi def link fortranInclude              Include
-hi def link fortranIO                   Keyword
 hi def link fortranIOR  		Keyword
 hi def link fortranImageControl         Keyword
 hi def link fortranKeyword 	        Keyword
 hi def link fortranReadWrite            Keyword
+hi def link fortranSpecifier		Keyword
 hi def link fortranBinary	        Number
 hi def link fortranHex  	        Number
 hi def link fortranNumber	        Number
@@ -455,6 +470,7 @@ hi def link fortranString	        String
 hi def link fortranStringCUDA           String
 hi def link fortranIntrinsicOb    	Todo
 hi def link fortranKeywordOb      	Todo
+hi def link fortranLabelNumberOb        Todo
 hi def link fortranRepeatOb       	Todo
 hi def link fortranSerialNumber	        Todo
 hi def link fortranStorageClassOb 	Todo

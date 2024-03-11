@@ -1,9 +1,11 @@
 " Vim syntax file
 " Language:	TeX
-" Maintainer:	Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
+" Maintainer:	This runtime file is looking for a new maintainer.
+" Former Maintainer: Charles E. Campbell
 " Last Change:	Apr 22, 2022
+"   2024 Feb 19 by Vim Project (announce adoption)
 " Version:	121
-" URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
+" Former URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
 "

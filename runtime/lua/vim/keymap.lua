@@ -90,6 +90,8 @@ end
 --- vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buffer = 5 })
 --- ```
 ---
+---@param modes string|string[]
+---@param lhs string
 ---@param opts table|nil A table of optional arguments:
 ---                      - "buffer": (integer|boolean) Remove a mapping from the given buffer.
 ---                        When `0` or `true`, use the current buffer.

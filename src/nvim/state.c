@@ -79,7 +79,7 @@ getkey:
       // mapping engine.
       os_inchar(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
       // If an event was put into the queue, we send K_EVENT directly.
-      if (!multiqueue_empty(main_loop.events)) {
+      if (!input_available() && !multiqueue_empty(main_loop.events)) {
         key = K_EVENT;
       } else {
         goto getkey;

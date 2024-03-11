@@ -56,6 +56,7 @@ typedef struct {
 # include "lua/treesitter.c.generated.h"
 #endif
 
+// TSParser
 static struct luaL_Reg parser_meta[] = {
   { "__gc", parser_gc },
   { "__tostring", parser_tostring },
@@ -70,6 +71,7 @@ static struct luaL_Reg parser_meta[] = {
   { NULL, NULL }
 };
 
+// TSTree
 static struct luaL_Reg tree_meta[] = {
   { "__gc", tree_gc },
   { "__tostring", tree_tostring },
@@ -80,6 +82,7 @@ static struct luaL_Reg tree_meta[] = {
   { NULL, NULL }
 };
 
+// TSNode
 static struct luaL_Reg node_meta[] = {
   { "__tostring", node_tostring },
   { "__eq", node_eq },
@@ -119,6 +122,7 @@ static struct luaL_Reg node_meta[] = {
   { NULL, NULL }
 };
 
+// TSQuery
 static struct luaL_Reg query_meta[] = {
   { "__gc", query_gc },
   { "__tostring", query_tostring },
@@ -1360,9 +1364,16 @@ static int node_equal(lua_State *L)
 /// assumes the match table being on top of the stack
 static void set_match(lua_State *L, TSQueryMatch *match, int nodeidx)
 {
-  for (int i = 0; i < match->capture_count; i++) {
-    push_node(L, match->captures[i].node, nodeidx);
-    lua_rawseti(L, -2, (int)match->captures[i].index + 1);
+  // [match]
+  for (size_t i = 0; i < match->capture_count; i++) {
+    lua_rawgeti(L, -1, (int)match->captures[i].index + 1);  // [match, captures]
+    if (lua_isnil(L, -1)) {  // [match, nil]
+      lua_pop(L, 1);  // [match]
+      lua_createtable(L, 1, 0);  // [match, captures]
+    }
+    push_node(L, match->captures[i].node, nodeidx);  // [match, captures, node]
+    lua_rawseti(L, -2, (int)lua_objlen(L, -2) + 1);  // [match, captures]
+    lua_rawseti(L, -2, (int)match->captures[i].index + 1);  // [match]
   }
 }
 
@@ -1375,7 +1386,7 @@ static int query_next_match(lua_State *L)
   TSQueryMatch match;
   if (ts_query_cursor_next_match(cursor, &match)) {
     lua_pushinteger(L, match.pattern_index + 1);  // [index]
-    lua_createtable(L, (int)ts_query_capture_count(query), 2);  // [index, match]
+    lua_createtable(L, (int)ts_query_capture_count(query), 0);  // [index, match]
     set_match(L, &match, lua_upvalueindex(2));
     return 2;
   }
@@ -1417,7 +1428,8 @@ static int query_next_capture(lua_State *L)
     if (n_pred > 0 && (ud->max_match_id < (int)match.id)) {
       ud->max_match_id = (int)match.id;
 
-      lua_pushvalue(L, lua_upvalueindex(4));  // [index, node, match]
+      // Create a new cleared match table
+      lua_createtable(L, (int)ts_query_capture_count(query), 2);  // [index, node, match]
       set_match(L, &match, lua_upvalueindex(2));
       lua_pushinteger(L, match.pattern_index + 1);
       lua_setfield(L, -2, "pattern");
@@ -1427,6 +1439,10 @@ static int query_next_capture(lua_State *L)
         lua_pushboolean(L, false);
         lua_setfield(L, -2, "active");
       }
+
+      // Set current_match to the new match
+      lua_replace(L, lua_upvalueindex(4));  // [index, node]
+      lua_pushvalue(L, lua_upvalueindex(4));  // [index, node, match]
       return 3;
     }
     return 2;
@@ -1649,8 +1665,10 @@ static int query_inspect(lua_State *L)
     return 0;
   }
 
-  uint32_t n_pat = ts_query_pattern_count(query);
+  // TSQueryInfo
   lua_createtable(L, 0, 2);  // [retval]
+
+  uint32_t n_pat = ts_query_pattern_count(query);
   lua_createtable(L, (int)n_pat, 1);  // [retval, patterns]
   for (size_t i = 0; i < n_pat; i++) {
     uint32_t len;

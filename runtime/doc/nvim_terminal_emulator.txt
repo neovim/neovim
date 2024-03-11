@@ -345,8 +345,8 @@ Other commands ~
  *:Asm*	     jump to the window with the disassembly, create it if there
 	     isn't one
  *:Var*	     jump to the window with the local and argument variables,
-             create it if there isn't one. This window updates whenever the
-             program is stopped
+	     create it if there isn't one. This window updates whenever the
+	     program is stopped
 
 Events ~
 							*termdebug-events*

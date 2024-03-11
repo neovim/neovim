@@ -1,8 +1,10 @@
 " Vim indent file
 " Language:	Rmd
-" Author:	Jakson Alves de Aquino <jalvesaq@gmail.com>
-" Homepage:     https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	Wed Nov 09, 2022  09:44PM
+" Maintainer: This runtime file is looking for a new maintainer.
+" Former Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
+" Former Repository: https://github.com/jalvesaq/R-Vim-runtime
+" Last Change:	2022 Nov 09  09:44PM
+"		2024 Feb 19 by Vim Project (announce adoption)
 
 
 " Only load this indent file when no other was loaded.

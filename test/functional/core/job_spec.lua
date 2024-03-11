@@ -42,7 +42,7 @@ describe('jobs', function()
   before_each(function()
     clear()
 
-    channel = api.nvim_get_api_info()[1]
+    channel = api.nvim_get_chan_info(0).id
     api.nvim_set_var('channel', channel)
     source([[
     function! Normalize(data) abort
@@ -1242,7 +1242,6 @@ describe('pty process teardown', function()
   end)
 
   it('does not prevent/delay exit. #4798 #4900', function()
-    skip(is_os('win'))
     -- Use a nested nvim (in :term) to test without --headless.
     fn.termopen({
       helpers.nvim_prog,

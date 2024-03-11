@@ -104,6 +104,7 @@ jobs:
             { runner: ubuntu-22.04, flavor: tsan, cc: clang, flags: -D ENABLE_TSAN=ON },
             { runner: ubuntu-22.04, cc: gcc },
             { runner: macos-12, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
+            { runner: macos-14, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
             { runner: ubuntu-22.04, flavor: puc-lua, cc: gcc, deps_flags: -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON, flags: -D PREFER_LUA=ON },
           ]
         test: [unittest, functionaltest, oldtest]
@@ -112,6 +113,8 @@ jobs:
             build: { flavor: tsan }
           - test: unittest
             build: { flavor: puc-lua }
+          - test: unittest
+            build: { runner: macos-14 } # unittests don't work on M1 #26145
           - test: oldtest
             build: { flavor: tsan }
     runs-on: ${{ matrix.build.runner }}
@@ -146,12 +149,12 @@ jobs:
 
       - name: Build third-party deps
         run: |
-          cmake -S cmake.deps --preset ci ${{ matrix.build.deps_flags }}
+          cmake -S cmake.deps --preset ci -D CMAKE_BUILD_TYPE=Debug ${{ matrix.build.deps_flags }}
           cmake --build .deps
 
       - name: Build
         run: |
-          cmake --preset ci -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.build.flags }}
+          cmake --preset ci -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.build.flags }}
           cmake --build build
 
       - name: ${{ matrix.test }}

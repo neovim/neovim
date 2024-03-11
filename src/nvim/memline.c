@@ -1174,7 +1174,7 @@ void ml_recover(bool checkext)
   } else {
     for (idx = 1; idx <= lnum; idx++) {
       // Need to copy one line, fetching the other one may flush it.
-      p = xstrdup(ml_get(idx));
+      p = xstrnsave(ml_get(idx), (size_t)ml_get_len(idx));
       int i = strcmp(p, ml_get(idx + lnum));
       xfree(p);
       if (i != 0) {
@@ -1694,7 +1694,7 @@ void ml_sync_all(int check_file, int check_char, bool do_fsync)
     if (buf->b_ml.ml_mfp == NULL || buf->b_ml.ml_mfp->mf_fname == NULL) {
       continue;                             // no file
     }
-    ml_flush_line(buf);                     // flush buffered line
+    ml_flush_line(buf, false);              // flush buffered line
                                             // flush locked block
     ml_find_line(buf, 0, ML_FLUSH);
     if (bufIsChanged(buf) && check_file && mf_need_trans(buf->b_ml.ml_mfp)
@@ -1745,7 +1745,7 @@ void ml_preserve(buf_T *buf, bool message, bool do_fsync)
   // before.
   got_int = false;
 
-  ml_flush_line(buf);                               // flush buffered line
+  ml_flush_line(buf, false);        // flush buffered line
   ml_find_line(buf, 0, ML_FLUSH);   // flush locked block
   int status = mf_sync(mfp, MFS_ALL | (do_fsync ? MFS_FLUSH : 0));
 
@@ -1834,6 +1834,22 @@ char *ml_get_pos(const pos_T *pos)
   return ml_get_buf(curbuf, pos->lnum) + pos->col;
 }
 
+/// @return  length (excluding the NUL) of the given line.
+colnr_T ml_get_len(linenr_T lnum)
+{
+  return ml_get_buf_len(curbuf, lnum);
+}
+
+/// @return  length (excluding the NUL) of the given line in the given buffer.
+colnr_T ml_get_buf_len(buf_T *buf, linenr_T lnum)
+{
+  if (*ml_get_buf(buf, lnum) == NUL) {
+    return 0;
+  }
+
+  return buf->b_ml.ml_line_len - 1;
+}
+
 /// @return  codepoint at pos. pos must be either valid or have col set to MAXCOL!
 int gchar_pos(pos_T *pos)
   FUNC_ATTR_NONNULL_ARG(1)
@@ -1862,9 +1878,10 @@ static char *ml_get_buf_impl(buf_T *buf, linenr_T lnum, bool will_change)
       siemsg(_(e_ml_get_invalid_lnum_nr), (int64_t)lnum);
       recursive--;
     }
-    ml_flush_line(buf);
+    ml_flush_line(buf, false);
 errorret:
     STRCPY(questions, "???");
+    buf->b_ml.ml_line_len = 4;
     buf->b_ml.ml_line_lnum = lnum;
     return questions;
   }
@@ -1873,6 +1890,7 @@ errorret:
   }
 
   if (buf->b_ml.ml_mfp == NULL) {       // there are no lines
+    buf->b_ml.ml_line_len = 1;
     return "";
   }
 
@@ -1881,7 +1899,7 @@ errorret:
   // Don't use the last used line when 'swapfile' is reset, need to load all
   // blocks.
   if (buf->b_ml.ml_line_lnum != lnum) {
-    ml_flush_line(buf);
+    ml_flush_line(buf, false);
 
     // Find the data block containing the line.
     // This also fills the stack with the blocks from the root to the data
@@ -1903,8 +1921,14 @@ errorret:
 
     DataBlock *dp = hp->bh_data;
 
-    char *ptr = (char *)dp + (dp->db_index[lnum - buf->b_ml.ml_locked_low] & DB_INDEX_MASK);
-    buf->b_ml.ml_line_ptr = ptr;
+    int idx = lnum - buf->b_ml.ml_locked_low;
+    unsigned start = (dp->db_index[idx] & DB_INDEX_MASK);
+    // The text ends where the previous line starts.  The first line ends
+    // at the end of the block.
+    unsigned end = idx == 0 ? dp->db_txt_end : (dp->db_index[idx - 1] & DB_INDEX_MASK);
+
+    buf->b_ml.ml_line_ptr = (char *)dp + start;
+    buf->b_ml.ml_line_len = (colnr_T)(end - start);
     buf->b_ml.ml_line_lnum = lnum;
     buf->b_ml.ml_flags &= ~(ML_LINE_DIRTY | ML_ALLOCATED);
   }
@@ -1922,7 +1946,8 @@ errorret:
 #ifdef ML_GET_ALLOC_LINES
   if ((buf->b_ml.ml_flags & (ML_LINE_DIRTY | ML_ALLOCATED)) == 0) {
     // make sure the text is in allocated memory
-    buf->b_ml.ml_line_ptr = xstrdup(buf->b_ml.ml_line_ptr);
+    buf->b_ml.ml_line_ptr = xmemdup(buf->b_ml.ml_line_ptr,
+                                    (size_t)buf->b_ml.ml_line_len);
     buf->b_ml.ml_flags |= ML_ALLOCATED;
     if (will_change) {
       // can't make the change in the data block
@@ -1964,7 +1989,7 @@ int ml_append(linenr_T lnum, char *line, colnr_T len, bool newfile)
   }
 
   if (curbuf->b_ml.ml_line_lnum != 0) {
-    ml_flush_line(curbuf);
+    ml_flush_line(curbuf, false);
   }
   return ml_append_int(curbuf, lnum, line, len, newfile, false);
 }
@@ -1984,7 +2009,7 @@ int ml_append_buf(buf_T *buf, linenr_T lnum, char *line, colnr_T len, bool newfi
   }
 
   if (buf->b_ml.ml_line_lnum != 0) {
-    ml_flush_line(buf);
+    ml_flush_line(buf, false);
   }
   return ml_append_int(buf, lnum, line, len, newfile, false);
 }
@@ -2423,7 +2448,7 @@ void ml_add_deleted_len_buf(buf_T *buf, char *ptr, ssize_t len)
 
 int ml_replace(linenr_T lnum, char *line, bool copy)
 {
-  return ml_replace_buf(curbuf, lnum, line, copy);
+  return ml_replace_buf(curbuf, lnum, line, copy, false);
 }
 
 /// Replace line "lnum", with buffering, in current buffer.
@@ -2438,7 +2463,7 @@ int ml_replace(linenr_T lnum, char *line, bool copy)
 /// changed_lines(), unless update_screen(UPD_NOT_VALID) is used.
 ///
 /// @return  FAIL for failure, OK otherwise
-int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy)
+int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy, bool noalloc)
 {
   if (line == NULL) {           // just checking...
     return FAIL;
@@ -2450,12 +2475,13 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy)
   }
 
   if (copy) {
+    assert(!noalloc);
     line = xstrdup(line);
   }
 
   if (buf->b_ml.ml_line_lnum != lnum) {
     // another line is buffered, flush it
-    ml_flush_line(buf);
+    ml_flush_line(buf, false);
   }
 
   if (kv_size(buf->update_callbacks)) {
@@ -2467,8 +2493,16 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy)
   }
 
   buf->b_ml.ml_line_ptr = line;
+  buf->b_ml.ml_line_len = (colnr_T)strlen(line) + 1;
   buf->b_ml.ml_line_lnum = lnum;
   buf->b_ml.ml_flags = (buf->b_ml.ml_flags | ML_LINE_DIRTY) & ~ML_EMPTY;
+  if (noalloc) {
+    // TODO(bfredl): this is a bit of a hack. but replacing lines in a loop is really common,
+    // and allocating a separate scratch buffer for each line which is immediately freed adds
+    // a lot of noise. A more general refactor could be to use a _fixed_ scratch buffer for
+    // all lines up to $REASONABLE_SIZE .
+    ml_flush_line(buf, true);
+  }
 
   return OK;
 }
@@ -2483,7 +2517,7 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy)
 /// @return  FAIL for failure, OK otherwise
 int ml_delete(linenr_T lnum, bool message)
 {
-  ml_flush_line(curbuf);
+  ml_flush_line(curbuf, false);
   return ml_delete_int(curbuf, lnum, message);
 }
 
@@ -2496,7 +2530,7 @@ int ml_delete(linenr_T lnum, bool message)
 /// @return  FAIL for failure, OK otherwise
 int ml_delete_buf(buf_T *buf, linenr_T lnum, bool message)
 {
-  ml_flush_line(buf);
+  ml_flush_line(buf, false);
   return ml_delete_int(buf, lnum, message);
 }
 
@@ -2516,7 +2550,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
       set_keep_msg(_(no_lines_msg), 0);
     }
 
-    int i = ml_replace_buf(buf, 1, "", true);
+    int i = ml_replace_buf(buf, 1, "", true, false);
     buf->b_ml.ml_flags |= ML_EMPTY;
 
     return i;
@@ -2724,7 +2758,7 @@ size_t ml_flush_deleted_bytes(buf_T *buf, size_t *codepoints, size_t *codeunits)
 }
 
 /// flush ml_line if necessary
-static void ml_flush_line(buf_T *buf)
+static void ml_flush_line(buf_T *buf, bool noalloc)
 {
   static bool entered = false;
 
@@ -2757,7 +2791,7 @@ static void ml_flush_line(buf_T *buf)
       } else {  // text of previous line follows
         old_len = (int)(dp->db_index[idx - 1] & DB_INDEX_MASK) - start;
       }
-      colnr_T new_len = (colnr_T)strlen(new_line) + 1;
+      colnr_T new_len = buf->b_ml.ml_line_len;
       int extra = new_len - old_len;            // negative if lines gets smaller
 
       // if new line fits in data block, replace directly
@@ -2798,10 +2832,13 @@ static void ml_flush_line(buf_T *buf)
         ml_delete_int(buf, lnum, false);
       }
     }
-    xfree(new_line);
+    if (!noalloc) {
+      xfree(new_line);
+    }
 
     entered = false;
   } else if (buf->b_ml.ml_flags & ML_ALLOCATED) {
+    assert(!noalloc);  // caller must set ML_LINE_DIRTY with noalloc, handled above
     xfree(buf->b_ml.ml_line_ptr);
   }
 
@@ -3445,7 +3482,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
 
             char *const name = xmalloc(name_len);
             memcpy(name, sw_msg_1, sw_msg_1_len + 1);
-            home_replace(NULL, fname, &name[sw_msg_1_len], fname_len, true);
+            home_replace(NULL, fname, name + sw_msg_1_len, fname_len, true);
             xstrlcat(name, sw_msg_2, name_len);
             int dialog_result
               = do_dialog(VIM_WARNING,
@@ -3723,7 +3760,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
     // First line in empty buffer from ml_flush_line() -- reset
     buf->b_ml.ml_usedchunks = 1;
     buf->b_ml.ml_chunksize[0].mlcs_numlines = 1;
-    buf->b_ml.ml_chunksize[0].mlcs_totalsize = (int)strlen(buf->b_ml.ml_line_ptr) + 1;
+    buf->b_ml.ml_chunksize[0].mlcs_totalsize = buf->b_ml.ml_line_len;
     return;
   }
 
@@ -3903,7 +3940,7 @@ int ml_find_line_or_offset(buf_T *buf, linenr_T lnum, int *offp, bool no_ff)
   // was never cached to start with anyway).
   bool can_cache = (lnum != 0 && !ffdos && buf->b_ml.ml_line_lnum == lnum);
   if (lnum == 0 || buf->b_ml.ml_line_lnum < lnum || !no_ff) {
-    ml_flush_line(curbuf);
+    ml_flush_line(curbuf, false);
   } else if (can_cache && buf->b_ml.ml_line_offset > 0) {
     return (int)buf->b_ml.ml_line_offset;
   }
@@ -4030,7 +4067,7 @@ void goto_byte(int cnt)
 {
   int boff = cnt;
 
-  ml_flush_line(curbuf);  // cached line may be dirty
+  ml_flush_line(curbuf, false);  // cached line may be dirty
   setpcmark();
   if (boff) {
     boff--;

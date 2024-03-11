@@ -130,6 +130,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
+#include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/version.h"
 #include "nvim/vim_defs.h"
@@ -359,30 +360,28 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   MsgpackRpcRequestHandler handler = *fptr.api_handler;
 
-  Array args = ARRAY_DICT_INIT;
+  MAXSIZE_TEMP_ARRAY(args, MAX_FUNC_ARGS);
+  Arena arena = ARENA_EMPTY;
 
   for (typval_T *tv = argvars; tv->v_type != VAR_UNKNOWN; tv++) {
-    ADD(args, vim_to_object(tv));
+    ADD_C(args, vim_to_object(tv, &arena, false));
   }
 
   Error err = ERROR_INIT;
-  Arena res_arena = ARENA_EMPTY;
-  Object result = handler.fn(VIML_INTERNAL_CALL, args, &res_arena, &err);
+  Object result = handler.fn(VIML_INTERNAL_CALL, args, &arena, &err);
 
   if (ERROR_SET(&err)) {
     semsg_multiline(e_api_error, err.msg);
     goto end;
   }
 
-  object_to_vim(result, rettv, &err);
+  object_to_vim_take_luaref(&result, rettv, true, &err);
 
 end:
-  api_free_array(args);
-  if (handler.arena_return) {
-    arena_mem_free(arena_finish(&res_arena));
-  } else {
+  if (handler.ret_alloc) {
     api_free_object(result);
   }
+  arena_mem_free(arena_finish(&arena));
   api_clear_error(&err);
 }
 
@@ -443,8 +442,7 @@ static void f_and(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "api_info()" function
 static void f_api_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  Dictionary metadata = api_metadata();
-  object_to_vim(DICTIONARY_OBJ(metadata), rettv, NULL);
+  object_to_vim(api_metadata(), rettv, NULL);
 }
 
 /// "atan2()" function
@@ -1037,10 +1035,11 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  Dictionary ctx_dict = ctx_to_dict(ctx);
+  Arena arena = ARENA_EMPTY;
+  Dictionary ctx_dict = ctx_to_dict(ctx, &arena);
   Error err = ERROR_INIT;
   object_to_vim(DICTIONARY_OBJ(ctx_dict), rettv, &err);
-  api_free_dictionary(ctx_dict);
+  arena_mem_free(arena_finish(&arena));
   api_clear_error(&err);
 }
 
@@ -1108,7 +1107,8 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const int save_did_emsg = did_emsg;
   did_emsg = false;
 
-  Dictionary dict = vim_to_object(&argvars[0]).data.dictionary;
+  Arena arena = ARENA_EMPTY;
+  Dictionary dict = vim_to_object(&argvars[0], &arena, true).data.dictionary;
   Context tmp = CONTEXT_INIT;
   Error err = ERROR_INIT;
   ctx_from_dict(dict, &tmp, &err);
@@ -1121,7 +1121,7 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     *ctx = tmp;
   }
 
-  api_free_dictionary(dict);
+  arena_mem_free(arena_finish(&arena));
   api_clear_error(&err);
   did_emsg = save_did_emsg;
 }
@@ -1726,7 +1726,7 @@ static void f_exists(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       n = false;  // Trailing garbage.
     }
   } else if (*p == '*') {  // Internal or user defined function.
-    n = strncmp(p, "*v:lua.", 7) == 0 ? nlua_func_exists(p + 7) : function_exists(p + 1, false);
+    n = strnequal(p, "*v:lua.", 7) ? nlua_func_exists(p + 7) : function_exists(p + 1, false);
   } else if (*p == ':') {
     n = cmd_exists(p + 1);
   } else if (*p == '#') {
@@ -1937,44 +1937,47 @@ static void extend_list(typval_T *argvars, const char *arg_errmsg, bool is_new, 
 
   list_T *l1 = argvars[0].vval.v_list;
   list_T *const l2 = argvars[1].vval.v_list;
-  if (is_new || !value_check_lock(tv_list_locked(l1), arg_errmsg, TV_TRANSLATE)) {
-    if (is_new) {
-      l1 = tv_list_copy(NULL, l1, false, get_copyID());
-      if (l1 == NULL) {
+
+  if (!is_new && value_check_lock(tv_list_locked(l1), arg_errmsg, TV_TRANSLATE)) {
+    return;
+  }
+
+  if (is_new) {
+    l1 = tv_list_copy(NULL, l1, false, get_copyID());
+    if (l1 == NULL) {
+      return;
+    }
+  }
+
+  listitem_T *item;
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    int before = (int)tv_get_number_chk(&argvars[2], &error);
+    if (error) {
+      return;  // Type error; errmsg already given.
+    }
+
+    if (before == tv_list_len(l1)) {
+      item = NULL;
+    } else {
+      item = tv_list_find(l1, before);
+      if (item == NULL) {
+        semsg(_(e_list_index_out_of_range_nr), (int64_t)before);
         return;
       }
     }
+  } else {
+    item = NULL;
+  }
+  tv_list_extend(l1, l2, item);
 
-    listitem_T *item;
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      int before = (int)tv_get_number_chk(&argvars[2], &error);
-      if (error) {
-        return;  // Type error; errmsg already given.
-      }
-
-      if (before == tv_list_len(l1)) {
-        item = NULL;
-      } else {
-        item = tv_list_find(l1, before);
-        if (item == NULL) {
-          semsg(_(e_list_index_out_of_range_nr), (int64_t)before);
-          return;
-        }
-      }
-    } else {
-      item = NULL;
-    }
-    tv_list_extend(l1, l2, item);
-
-    if (is_new) {
-      *rettv = (typval_T){
-        .v_type = VAR_LIST,
-        .v_lock = VAR_UNLOCKED,
-        .vval.v_list = l1,
-      };
-    } else {
-      tv_copy(&argvars[0], rettv);
-    }
+  if (is_new) {
+    *rettv = (typval_T){
+      .v_type = VAR_LIST,
+      .v_lock = VAR_UNLOCKED,
+      .vval.v_list = l1,
+    };
+  } else {
+    tv_copy(&argvars[0], rettv);
   }
 }
 
@@ -1985,54 +1988,61 @@ static void extend_list(typval_T *argvars, const char *arg_errmsg, bool is_new, 
 static void extend_dict(typval_T *argvars, const char *arg_errmsg, bool is_new, typval_T *rettv)
 {
   dict_T *d1 = argvars[0].vval.v_dict;
-  dict_T *const d2 = argvars[1].vval.v_dict;
   if (d1 == NULL) {
     const bool locked = value_check_lock(VAR_FIXED, arg_errmsg, TV_TRANSLATE);
     (void)locked;
     assert(locked == true);
-  } else if (d2 == NULL) {
+    return;
+  }
+  dict_T *const d2 = argvars[1].vval.v_dict;
+  if (d2 == NULL) {
     // Do nothing
     tv_copy(&argvars[0], rettv);
-  } else if (is_new || !value_check_lock(d1->dv_lock, arg_errmsg, TV_TRANSLATE)) {
-    if (is_new) {
-      d1 = tv_dict_copy(NULL, d1, false, get_copyID());
-      if (d1 == NULL) {
-        return;
+    return;
+  }
+
+  if (!is_new && value_check_lock(d1->dv_lock, arg_errmsg, TV_TRANSLATE)) {
+    return;
+  }
+
+  if (is_new) {
+    d1 = tv_dict_copy(NULL, d1, false, get_copyID());
+    if (d1 == NULL) {
+      return;
+    }
+  }
+
+  const char *action = "force";
+  // Check the third argument.
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    const char *const av[] = { "keep", "force", "error" };
+
+    action = tv_get_string_chk(&argvars[2]);
+    if (action == NULL) {
+      return;  // Type error; error message already given.
+    }
+    size_t i;
+    for (i = 0; i < ARRAY_SIZE(av); i++) {
+      if (strcmp(action, av[i]) == 0) {
+        break;
       }
     }
-
-    const char *action = "force";
-    // Check the third argument.
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      const char *const av[] = { "keep", "force", "error" };
-
-      action = tv_get_string_chk(&argvars[2]);
-      if (action == NULL) {
-        return;  // Type error; error message already given.
-      }
-      size_t i;
-      for (i = 0; i < ARRAY_SIZE(av); i++) {
-        if (strcmp(action, av[i]) == 0) {
-          break;
-        }
-      }
-      if (i == 3) {
-        semsg(_(e_invarg2), action);
-        return;
-      }
+    if (i == 3) {
+      semsg(_(e_invarg2), action);
+      return;
     }
+  }
 
-    tv_dict_extend(d1, d2, action);
+  tv_dict_extend(d1, d2, action);
 
-    if (is_new) {
-      *rettv = (typval_T){
-        .v_type = VAR_DICT,
-        .v_lock = VAR_UNLOCKED,
-        .vval.v_dict = d1,
-      };
-    } else {
-      tv_copy(&argvars[0], rettv);
-    }
+  if (is_new) {
+    *rettv = (typval_T){
+      .v_type = VAR_DICT,
+      .v_lock = VAR_UNLOCKED,
+      .vval.v_dict = d1,
+    };
+  } else {
+    tv_copy(&argvars[0], rettv);
   }
 }
 
@@ -2083,8 +2093,8 @@ static void f_feedkeys(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     flags = tv_get_string_buf(&argvars[1], nbuf);
   }
 
-  nvim_feedkeys(cstr_as_string((char *)keys),
-                cstr_as_string((char *)flags), true);
+  nvim_feedkeys(cstr_as_string(keys),
+                cstr_as_string(flags), true);
 }
 
 /// "filereadable()" function
@@ -2791,6 +2801,187 @@ static void f_getpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   getpos_both(argvars, rettv, false, false);
 }
 
+/// Convert from block_def to string
+static char *block_def2str(struct block_def *bd)
+{
+  size_t size = (size_t)bd->startspaces + (size_t)bd->endspaces + (size_t)bd->textlen;
+  char *ret = xmalloc(size + 1);
+  char *p = ret;
+  memset(p, ' ', (size_t)bd->startspaces);
+  p += bd->startspaces;
+  memmove(p, bd->textstart, (size_t)bd->textlen);
+  p += bd->textlen;
+  memset(p, ' ', (size_t)bd->endspaces);
+  *(p + bd->endspaces) = NUL;
+  return ret;
+}
+
+/// "getregion()" function
+static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  tv_list_alloc_ret(rettv, kListLenMayKnow);
+
+  if (tv_check_for_list_arg(argvars, 0) == FAIL
+      || tv_check_for_list_arg(argvars, 1) == FAIL
+      || tv_check_for_opt_dict_arg(argvars, 2) == FAIL) {
+    return;
+  }
+
+  int fnum1 = -1;
+  int fnum2 = -1;
+  pos_T p1, p2;
+  if (list2fpos(&argvars[0], &p1, &fnum1, NULL, false) != OK
+      || list2fpos(&argvars[1], &p2, &fnum2, NULL, false) != OK
+      || fnum1 != fnum2) {
+    return;
+  }
+
+  bool is_select_exclusive;
+  char *type;
+  char default_type[] = "v";
+  if (argvars[2].v_type == VAR_DICT) {
+    is_select_exclusive = tv_dict_get_bool(argvars[2].vval.v_dict, "exclusive",
+                                           *p_sel == 'e');
+    type = tv_dict_get_string(argvars[2].vval.v_dict, "type", false);
+    if (type == NULL) {
+      type = default_type;
+    }
+  } else {
+    is_select_exclusive = *p_sel == 'e';
+    type = default_type;
+  }
+
+  MotionType region_type = kMTUnknown;
+  if (type[0] == 'v' && type[1] == NUL) {
+    region_type = kMTCharWise;
+  } else if (type[0] == 'V' && type[1] == NUL) {
+    region_type = kMTLineWise;
+  } else if (type[0] == Ctrl_V && type[1] == NUL) {
+    region_type = kMTBlockWise;
+  } else {
+    semsg(_(e_invargNval), "type", type);
+    return;
+  }
+
+  buf_T *const save_curbuf = curbuf;
+  buf_T *findbuf = curbuf;
+
+  if (fnum1 != 0) {
+    findbuf = buflist_findnr(fnum1);
+    // buffer not loaded
+    if (findbuf == NULL || findbuf->b_ml.ml_mfp == NULL) {
+      emsg(_(e_buffer_is_not_loaded));
+      return;
+    }
+  }
+
+  if (p1.lnum < 1 || p1.lnum > findbuf->b_ml.ml_line_count) {
+    semsg(_(e_invalid_line_number_nr), p1.lnum);
+    return;
+  }
+  if (p1.col < 1 || p1.col > ml_get_buf_len(findbuf, p1.lnum) + 1) {
+    semsg(_(e_invalid_column_number_nr), p1.col);
+    return;
+  }
+  if (p2.lnum < 1 || p2.lnum > findbuf->b_ml.ml_line_count) {
+    semsg(_(e_invalid_line_number_nr), p2.lnum);
+    return;
+  }
+  if (p2.col < 1 || p2.col > ml_get_buf_len(findbuf, p2.lnum) + 1) {
+    semsg(_(e_invalid_column_number_nr), p2.col);
+    return;
+  }
+
+  curbuf = findbuf;
+  const TriState save_virtual = virtual_op;
+  virtual_op = virtual_active();
+
+  // NOTE: Adjust is needed.
+  p1.col--;
+  p2.col--;
+
+  if (!lt(p1, p2)) {
+    // swap position
+    pos_T p = p1;
+    p1 = p2;
+    p2 = p;
+  }
+
+  oparg_T oa;
+  bool inclusive = true;
+
+  if (region_type == kMTCharWise) {
+    // handle 'selection' == "exclusive"
+    if (is_select_exclusive && !equalpos(p1, p2)) {
+      if (p2.coladd > 0) {
+        p2.coladd--;
+      } else if (p2.col > 0) {
+        p2.col--;
+        mark_mb_adjustpos(curbuf, &p2);
+      } else if (p2.lnum > 1) {
+        p2.lnum--;
+        p2.col = ml_get_len(p2.lnum);
+        if (p2.col > 0) {
+          p2.col--;
+          mark_mb_adjustpos(curbuf, &p2);
+        }
+      }
+    }
+    // if fp2 is on NUL (empty line) inclusive becomes false
+    if (*ml_get_pos(&p2) == NUL && !virtual_op) {
+      inclusive = false;
+    }
+  } else if (region_type == kMTBlockWise) {
+    colnr_T sc1, ec1, sc2, ec2;
+    getvvcol(curwin, &p1, &sc1, NULL, &ec1);
+    getvvcol(curwin, &p2, &sc2, NULL, &ec2);
+    oa.motion_type = kMTBlockWise;
+    oa.inclusive = true;
+    oa.op_type = OP_NOP;
+    oa.start = p1;
+    oa.end = p2;
+    oa.start_vcol = MIN(sc1, sc2);
+    if (is_select_exclusive && ec1 < sc2 && 0 < sc2 && ec2 > ec1) {
+      oa.end_vcol = sc2 - 1;
+    } else {
+      oa.end_vcol = MAX(ec1, ec2);
+    }
+  }
+
+  // Include the trailing byte of a multi-byte char.
+  int l = utfc_ptr2len(ml_get_pos(&p2));
+  if (l > 1) {
+    p2.col += l - 1;
+  }
+
+  for (linenr_T lnum = p1.lnum; lnum <= p2.lnum; lnum++) {
+    char *akt = NULL;
+
+    if (region_type == kMTLineWise) {
+      akt = xstrdup(ml_get(lnum));
+    } else if (region_type == kMTBlockWise) {
+      struct block_def bd;
+      block_prep(&oa, &bd, lnum, false);
+      akt = block_def2str(&bd);
+    } else if (p1.lnum < lnum && lnum < p2.lnum) {
+      akt = xstrdup(ml_get(lnum));
+    } else {
+      struct block_def bd;
+      charwise_block_prep(p1, p2, &bd, lnum, inclusive);
+      akt = block_def2str(&bd);
+    }
+
+    assert(akt != NULL);
+    tv_list_append_allocated_string(rettv->vval.v_list, akt);
+  }
+
+  if (curbuf != save_curbuf) {
+    curbuf = save_curbuf;
+  }
+
+  virtual_op = save_virtual;
+}
+
 /// Common between getreg(), getreginfo() and getregtype(): get the register
 /// name from the first argument.
 /// Returns zero on error.
@@ -3155,7 +3346,6 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     "path_extra",
     "persistent_undo",
     "profile",
-    "pythonx",
     "reltime",
     "quickfix",
     "rightleft",
@@ -3246,6 +3436,8 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       n = syntax_present(curwin);
     } else if (STRICMP(name, "clipboard_working") == 0) {
       n = eval_has_provider("clipboard");
+    } else if (STRICMP(name, "pythonx") == 0) {
+      n = eval_has_provider("python3");
     } else if (STRICMP(name, "wsl") == 0) {
       n = has_wsl();
 #ifdef UNIX
@@ -3268,13 +3460,11 @@ static bool has_wsl(void)
   static TriState has_wsl = kNone;
   if (has_wsl == kNone) {
     Error err = ERROR_INIT;
-    Object o = nlua_exec(STATIC_CSTR_AS_STRING("return vim.uv.os_uname()['release']:lower()"
-                                               ":match('microsoft') and true or false"),
-                         (Array)ARRAY_DICT_INIT, &err);
+    Object o = NLUA_EXEC_STATIC("return vim.uv.os_uname()['release']:lower()"
+                                ":match('microsoft')",
+                                (Array)ARRAY_DICT_INIT, kRetNilBool, NULL, &err);
     assert(!ERROR_SET(&err));
-    assert(o.type == kObjectTypeBoolean);
-    has_wsl = o.data.boolean ? kTrue : kFalse;
-    api_free_object(o);
+    has_wsl = LUARET_TRUTHY(o) ? kTrue : kFalse;
   }
   return has_wsl == kTrue;
 }
@@ -4518,7 +4708,7 @@ static void f_luaeval(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  nlua_typval_eval(cstr_as_string((char *)str), &argvars[1], rettv);
+  nlua_typval_eval(cstr_as_string(str), &argvars[1], rettv);
 }
 
 static void find_some_match(typval_T *const argvars, typval_T *const rettv,
@@ -5847,6 +6037,12 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
     }
   }
 
+  if (blob) {
+    tv_blob_alloc_ret(rettv);
+  } else {
+    tv_list_alloc_ret(rettv, kListLenUnknown);
+  }
+
   // Always open the file in binary mode, library functions have a mind of
   // their own about CR-LF conversion.
   const char *const fname = tv_get_string(&argvars[0]);
@@ -5861,7 +6057,6 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
   }
 
   if (blob) {
-    tv_blob_alloc_ret(rettv);
     if (read_blob(fd, rettv, offset, size) == FAIL) {
       semsg(_(e_notread), fname);
     }
@@ -5869,7 +6064,7 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
     return;
   }
 
-  list_T *const l = tv_list_alloc_ret(rettv, kListLenUnknown);
+  list_T *const l = rettv->vval.v_list;
 
   while (maxline < 0 || tv_list_len(l) < maxline) {
     int readlen = (int)fread(buf, 1, (size_t)io_size, fd);
@@ -6875,16 +7070,17 @@ static void f_rpcnotify(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  Array args = ARRAY_DICT_INIT;
+  MAXSIZE_TEMP_ARRAY(args, MAX_FUNC_ARGS);
+  Arena arena = ARENA_EMPTY;
 
   for (typval_T *tv = argvars + 2; tv->v_type != VAR_UNKNOWN; tv++) {
-    ADD(args, vim_to_object(tv));
+    ADD_C(args, vim_to_object(tv, &arena, true));
   }
 
   bool ok = rpc_send_event((uint64_t)argvars[0].vval.v_number,
                            tv_get_string(&argvars[1]), args);
 
-  api_free_array(args);
+  arena_mem_free(arena_finish(&arena));
 
   if (!ok) {
     semsg(_(e_invarg2), "Channel doesn't exist");
@@ -6914,10 +7110,11 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  Array args = ARRAY_DICT_INIT;
+  MAXSIZE_TEMP_ARRAY(args, MAX_FUNC_ARGS);
+  Arena arena = ARENA_EMPTY;
 
   for (typval_T *tv = argvars + 2; tv->v_type != VAR_UNKNOWN; tv++) {
-    ADD(args, vim_to_object(tv));
+    ADD_C(args, vim_to_object(tv, &arena, true));
   }
 
   sctx_T save_current_sctx;
@@ -6953,6 +7150,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   ArenaMem res_mem = NULL;
   Object result = rpc_send_call(chan_id, method, args, &res_mem, &err);
+  arena_mem_free(arena_finish(&arena));
 
   if (l_provider_call_nesting) {
     current_sctx = save_current_sctx;
@@ -8859,10 +9057,10 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   Error err = ERROR_INIT;
   // deprecated: use 'channel' buffer option
   dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_id"),
-               INTEGER_OBJ((Integer)chan->id), false, false, &err);
+               INTEGER_OBJ((Integer)chan->id), false, false, NULL, &err);
   api_clear_error(&err);
   dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_pid"),
-               INTEGER_OBJ(pid), false, false, &err);
+               INTEGER_OBJ(pid), false, false, NULL, &err);
   api_clear_error(&err);
 
   channel_incref(chan);
