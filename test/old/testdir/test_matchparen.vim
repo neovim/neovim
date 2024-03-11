@@ -61,6 +61,31 @@ func Test_matchparen_clear_highlight()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test for matchparen highlight when switching buffer in win_execute()
+func Test_matchparen_win_execute()
+  CheckScreendump
+
+  let lines =<< trim END
+    source $VIMRUNTIME/plugin/matchparen.vim
+    let s:win = win_getid()
+    call setline(1, '{}')
+    split
+
+    func SwitchBuf()
+      call win_execute(s:win, 'enew | buffer #')
+    endfunc
+  END
+  call writefile(lines, 'XMatchparenWinExecute', 'D')
+  let buf = RunVimInTerminal('-S XMatchparenWinExecute', #{rows: 5})
+  call VerifyScreenDump(buf, 'Test_matchparen_win_execute_1', {})
+
+  " Switching buffer away and back shouldn't change matchparen highlight.
+  call term_sendkeys(buf, ":call SwitchBuf()\<CR>:\<Esc>")
+  call VerifyScreenDump(buf, 'Test_matchparen_win_execute_1', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " Test for scrolling that modifies buffer during visual block
 func Test_matchparen_pum_clear()
   CheckScreendump
