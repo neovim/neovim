@@ -1613,15 +1613,8 @@ int op_delete(oparg_T *oap)
       } else {
         beginline(0);                       // cursor in column 0
       }
-
-      int old_len = (int)strlen(ml_get(curwin->w_cursor.lnum));
-      truncate_line(false);         // delete the rest of the line
-
-      extmark_splice_cols(curbuf,
-                          (int)curwin->w_cursor.lnum - 1, curwin->w_cursor.col,
-                          old_len - curwin->w_cursor.col, 0, kExtmarkUndo);
-
-      // leave cursor past last char in line
+      truncate_line(false);         // delete the rest of the line,
+                                    // leave cursor past last char in line
       if (oap->line_count > 1) {
         u_clearline(curbuf);  // "U" command not possible after "2cc"
       }

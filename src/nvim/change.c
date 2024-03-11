@@ -1935,19 +1935,16 @@ theend:
 /// If "fixpos" is true fix the cursor position when done.
 void truncate_line(int fixpos)
 {
-  char *newp;
   linenr_T lnum = curwin->w_cursor.lnum;
   colnr_T col = curwin->w_cursor.col;
+  char *old_line = ml_get(lnum);
+  char *newp = col == 0 ? xstrdup("") : xstrnsave(old_line, (size_t)col);
+  int deleted = (int)strlen(old_line) - col;
 
-  if (col == 0) {
-    newp = xstrdup("");
-  } else {
-    newp = xstrnsave(ml_get(lnum), (size_t)col);
-  }
   ml_replace(lnum, newp, false);
 
   // mark the buffer as changed and prepare for displaying
-  changed_bytes(lnum, curwin->w_cursor.col);
+  inserted_bytes(lnum, curwin->w_cursor.col, deleted, 0);
 
   // If "fixpos" is true we don't want to end up positioned at the NUL.
   if (fixpos && curwin->w_cursor.col > 0) {
