@@ -59,7 +59,7 @@ local monitor_memory_usage = {
       end
       table.remove(self.hist, 1)
       self.last = self.hist[#self.hist]
-      eq(#result, 1)
+      eq(1, #result)
     end)
   end,
   dump = function(self)

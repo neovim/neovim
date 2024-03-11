@@ -257,7 +257,7 @@ describe('vim.lsp.diagnostic', function()
         }, {client_id=client_id})
         return vim.fn.bufnr(vim.uri_to_fname("file:///fake/uri2"))
       ]]
-      eq(bufnr, -1)
+      eq(-1, bufnr)
 
       -- Create buffer on diagnostics
       bufnr = exec_lua [[
@@ -269,8 +269,8 @@ describe('vim.lsp.diagnostic', function()
         }, {client_id=client_id})
         return vim.fn.bufnr(vim.uri_to_fname("file:///fake/uri2"))
       ]]
-      neq(bufnr, -1)
-      eq(exec_lua([[return #vim.diagnostic.get(...)]], bufnr), 1)
+      neq(-1, bufnr)
+      eq(1, exec_lua([[return #vim.diagnostic.get(...)]], bufnr))
 
       -- Clear diagnostics after buffer was created
       bufnr = exec_lua [[
@@ -280,8 +280,8 @@ describe('vim.lsp.diagnostic', function()
         }, {client_id=client_id})
         return vim.fn.bufnr(vim.uri_to_fname("file:///fake/uri2"))
       ]]
-      neq(bufnr, -1)
-      eq(exec_lua([[return #vim.diagnostic.get(...)]], bufnr), 0)
+      neq(-1, bufnr)
+      eq(0, exec_lua([[return #vim.diagnostic.get(...)]], bufnr))
     end)
   end)
 
