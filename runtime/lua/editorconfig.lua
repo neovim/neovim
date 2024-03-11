@@ -273,6 +273,9 @@ end
 
 local M = {}
 
+-- Exposed for use in syntax/editorconfig.vim`
+M.properties = properties
+
 --- @private
 --- Configure the given buffer with options from an `.editorconfig` file
 --- @param bufnr integer Buffer number to configure
@@ -303,7 +306,7 @@ function M.config(bufnr)
   local applied = {} --- @type table<string,string|boolean>
   for opt, val in pairs(opts) do
     if val ~= 'unset' then
-      local func = properties[opt]
+      local func = M.properties[opt]
       if func then
         --- @type boolean, string?
         local ok, err = pcall(func, bufnr, val, opts)
