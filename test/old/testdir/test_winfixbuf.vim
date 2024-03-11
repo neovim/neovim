@@ -3248,4 +3248,15 @@ func Test_quickfix_changed_split_failed()
   augroup! QfChanged
 endfunc
 
+func Test_bufdo_splitwin_fails()
+  call s:reset_all_buffers()
+  let other = s:make_buffer_pairs()
+  " Make sure there is not enough room to
+  " split the winfixedbuf window
+  let &winheight=&lines
+  let &winminheight=&lines-2
+  call assert_fails(':bufdo echo 1', 'E36:')
+  set winminheight&vim winheight&vim
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

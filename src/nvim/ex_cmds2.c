@@ -457,8 +457,9 @@ void ex_listdo(exarg_T *eap)
     }
     if (curwin->w_p_wfb) {
       // Split the window, which will be 'nowinfixbuf', and set curwin to that
-      win_split(0, 0);
-
+      if (win_split(0, 0) == FAIL) {
+        return;  // error message already given
+      }
       if (curwin->w_p_wfb) {
         // Autocommands set 'winfixbuf' or sent us to another window
         // with it set. Give up.
