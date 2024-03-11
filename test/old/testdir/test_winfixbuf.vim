@@ -479,6 +479,9 @@ endfunc
 
 " Fail :browse edit but :browse edit! is allowed
 func Test_browse_edit_fail()
+  " A GUI dialog may stall the test.
+  CheckNotGui
+
   call s:reset_all_buffers()
 
   let l:other = s:make_buffer_pairs()
@@ -487,18 +490,31 @@ func Test_browse_edit_fail()
   call assert_fails("browse edit other", "E1513:")
   call assert_equal(l:current, bufnr())
 
-  browse edit! other
-  call assert_equal(l:other, bufnr())
+  try
+    browse edit! other
+    call assert_equal(l:other, bufnr())
+  catch /E338:/
+    " Ignore E338, which occurs if console Vim is built with +browse.
+    " Console Vim without +browse will treat this as a regular :edit.
+  endtry
 endfunc
 
 " Allow :browse w because it doesn't change the buffer in the current file
 func Test_browse_edit_pass()
+  " A GUI dialog may stall the test.
+  CheckNotGui
+
   call s:reset_all_buffers()
 
   let l:other = s:make_buffer_pairs()
   let l:current = bufnr()
 
-  browse write other
+  try
+    browse write other
+  catch /E338:/
+    " Ignore E338, which occurs if console Vim is built with +browse.
+    " Console Vim without +browse will treat this as a regular :write.
+  endtry
 
   call delete("other")
 endfunc
@@ -1145,6 +1161,7 @@ func Test_find()
   let l:current = bufnr()
   let l:file = tempname()
   call writefile([], l:file)
+  let l:file = fnamemodify(l:file, ':p')  " In case it's Windows 8.3-style.
   let l:directory = fnamemodify(l:file, ":p:h")
   let l:name = fnamemodify(l:file, ":p:t")
 
@@ -1514,6 +1531,7 @@ func Test_lnfile()
   call assert_equal(l:current, bufnr())
 
   call assert_fails("lnfile", "E1513:")
+  " Ensure the entry didn't change.
   call assert_equal(2, getloclist(0, #{idx: 0}).idx)
   call assert_equal(l:current, bufnr())
 
@@ -2490,8 +2508,8 @@ func Test_previous()
   call assert_equal(l:first, bufnr())
 endfunc
 
-" Fail pydo if it changes a window with 'winfixbuf' is set
-func Test_python_pydo()
+" Fail pyxdo if it changes a window with 'winfixbuf' is set
+func Test_pythonx_pyxdo()
   CheckFeature pythonx
   call s:reset_all_buffers()
 
@@ -2504,16 +2522,16 @@ func Test_python_pydo()
 
   set winfixbuf
 
-  python << EOF
+  pythonx << EOF
 import vim
 
-def test_winfixbuf_Test_python_pydo_set_buffer():
+def test_winfixbuf_Test_pythonx_pyxdo_set_buffer():
     buffer = vim.vars['_previous_buffer']
     vim.current.buffer = vim.buffers[buffer]
 EOF
 
   try
-    pydo test_winfixbuf_Test_python_pydo_set_buffer()
+    pyxdo test_winfixbuf_Test_pythonx_pyxdo_set_buffer()
   catch /pynvim\.api\.common\.NvimError: E1513: Cannot edit buffer\. 'winfixbuf' is enabled/
     let l:caught = 1
   endtry
@@ -2523,8 +2541,8 @@ EOF
   unlet g:_previous_buffer
 endfunc
 
-" Fail pyfile if it changes a window with 'winfixbuf' is set
-func Test_python_pyfile()
+" Fail pyxfile if it changes a window with 'winfixbuf' is set
+func Test_pythonx_pyxfile()
   CheckFeature pythonx
   call s:reset_all_buffers()
 
@@ -2544,7 +2562,7 @@ func Test_python_pyfile()
         \ "file.py")
 
   try
-    pyfile file.py
+    pyxfile file.py
   catch /pynvim\.api\.common\.NvimError: E1513: Cannot edit buffer\. 'winfixbuf' is enabled/
     let l:caught = 1
   endtry
@@ -2556,7 +2574,7 @@ func Test_python_pyfile()
 endfunc
 
 " Fail vim.current.buffer if 'winfixbuf' is set
-func Test_python_vim_current_buffer()
+func Test_pythonx_vim_current_buffer()
   CheckFeature pythonx
   call s:reset_all_buffers()
 
@@ -2572,7 +2590,7 @@ func Test_python_vim_current_buffer()
   set winfixbuf
 
   try
-    python << EOF
+    pythonx << EOF
 import vim
 
 buffer = vim.vars["_previous_buffer"]
@@ -3248,14 +3266,20 @@ func Test_quickfix_changed_split_failed()
   augroup! QfChanged
 endfunc
 
-func Test_bufdo_splitwin_fails()
+func Test_bufdo_cnext_splitwin_fails()
   call s:reset_all_buffers()
-  let other = s:make_buffer_pairs()
+  call s:make_simple_quickfix()
+  call assert_equal(1, getqflist(#{idx: 0}).idx)
   " Make sure there is not enough room to
   " split the winfixedbuf window
   let &winheight=&lines
   let &winminheight=&lines-2
-  call assert_fails(':bufdo echo 1', 'E36:')
+  " Still want E1513, or it may not be clear why a split was attempted and why
+  " it failing caused the commands to abort.
+  call assert_fails(':bufdo echo 1', ['E36:', 'E1513:'])
+  call assert_fails(':cnext', ['E36:', 'E1513:'])
+  " Ensure the entry didn't change.
+  call assert_equal(1, getqflist(#{idx: 0}).idx)
   set winminheight&vim winheight&vim
 endfunc
 
