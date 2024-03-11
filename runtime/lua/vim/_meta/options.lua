@@ -7876,11 +7876,11 @@ vim.o.wi = vim.o.window
 vim.go.window = vim.o.window
 vim.go.wi = vim.go.window
 
---- If enabled, the buffer and any window that displays it are paired.
+--- If enabled, the window and the buffer it is displaying are paired.
 --- For example, attempting to change the buffer with `:edit` will fail.
 --- Other commands which change a window's buffer such as `:cnext` will
---- also skip any window with 'winfixbuf' enabled. However if a command
---- has an "!" option, a window can be forced to switch buffers.
+--- also skip any window with 'winfixbuf' enabled.  However if an Ex
+--- command has a "!" modifier, it can force switching buffers.
 ---
 --- @type boolean
 vim.o.winfixbuf = false
