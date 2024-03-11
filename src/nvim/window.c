@@ -133,6 +133,35 @@ static void log_frame_layout(frame_T *frame)
 }
 #endif
 
+/// Check if the current window is allowed to move to a different buffer.
+///
+/// @return If the window has 'winfixbuf', or this function will return false.
+bool check_can_set_curbuf_disabled(void)
+{
+  if (curwin->w_p_wfb) {
+    emsg(_(e_winfixbuf_cannot_go_to_buffer));
+    return false;
+  }
+
+  return true;
+}
+
+/// Check if the current window is allowed to move to a different buffer.
+///
+/// @param forceit If true, do not error. If false and 'winfixbuf' is enabled, error.
+///
+/// @return If the window has 'winfixbuf', then forceit must be true
+///     or this function will return false.
+bool check_can_set_curbuf_forceit(int forceit)
+{
+  if (!forceit && curwin->w_p_wfb) {
+    emsg(_(e_winfixbuf_cannot_go_to_buffer));
+    return false;
+  }
+
+  return true;
+}
+
 /// @return the current window, unless in the cmdline window and "prevwin" is
 /// set, then return "prevwin".
 win_T *prevwin_curwin(void)
@@ -597,7 +626,7 @@ wingotofile:
     ptr = xmemdupz(ptr, len);
 
     find_pattern_in_path(ptr, 0, len, true, Prenum == 0,
-                         type, Prenum1, ACTION_SPLIT, 1, MAXLNUM);
+                         type, Prenum1, ACTION_SPLIT, 1, MAXLNUM, false);
     xfree(ptr);
     curwin->w_set_curswant = true;
     break;

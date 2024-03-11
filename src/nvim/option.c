@@ -4629,6 +4629,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(win->w_p_rnu);
   case PV_NUW:
     return &(win->w_p_nuw);
+  case PV_WFB:
+    return &(win->w_p_wfb);
   case PV_WFH:
     return &(win->w_p_wfh);
   case PV_WFW:

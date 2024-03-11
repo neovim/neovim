@@ -971,6 +971,9 @@ EXTERN const char e_val_too_large[] INIT(= N_("E1510: Value too large: %s"));
 EXTERN const char e_undobang_cannot_redo_or_move_branch[]
 INIT(= N_("E5767: Cannot use :undo! to redo or move to a different undo branch"));
 
+EXTERN const char e_winfixbuf_cannot_go_to_buffer[]
+INIT(= N_("E1513: Cannot edit buffer. 'winfixbuf' is enabled"));
+
 EXTERN const char e_trustfile[] INIT(= N_("E5570: Cannot update trust file: %s"));
 
 EXTERN const char e_unknown_option2[] INIT(= N_("E355: Unknown option: %s"));

@@ -5334,6 +5334,10 @@ static void ex_resize(exarg_T *eap)
 /// ":find [+command] <file>" command.
 static void ex_find(exarg_T *eap)
 {
+  if (!check_can_set_curbuf_forceit(eap->forceit)) {
+    return;
+  }
+
   char *file_to_find = NULL;
   char *search_ctx = NULL;
   char *fname = find_file_in_path(eap->arg, strlen(eap->arg),
@@ -5364,6 +5368,14 @@ static void ex_find(exarg_T *eap)
 /// ":edit", ":badd", ":balt", ":visual".
 static void ex_edit(exarg_T *eap)
 {
+  // Exclude commands which keep the window's current buffer
+  if (eap->cmdidx != CMD_badd
+      && eap->cmdidx != CMD_balt
+      // All other commands must obey 'winfixbuf' / ! rules
+      && !check_can_set_curbuf_forceit(eap->forceit)) {
+    return;
+  }
+
   do_exedit(eap, NULL);
 }
 
@@ -6670,7 +6682,7 @@ static void ex_checkpath(exarg_T *eap)
 {
   find_pattern_in_path(NULL, 0, 0, false, false, CHECK_PATH, 1,
                        eap->forceit ? ACTION_SHOW_ALL : ACTION_SHOW,
-                       1, (linenr_T)MAXLNUM);
+                       1, (linenr_T)MAXLNUM, eap->forceit);
 }
 
 /// ":psearch"
@@ -6729,7 +6741,7 @@ static void ex_findpat(exarg_T *eap)
   if (!eap->skip) {
     find_pattern_in_path(eap->arg, 0, strlen(eap->arg), whole, !eap->forceit,
                          *eap->cmd == 'd' ? FIND_DEFINE : FIND_ANY,
-                         n, action, eap->line1, eap->line2);
+                         n, action, eap->line1, eap->line2, eap->forceit);
   }
 }
 

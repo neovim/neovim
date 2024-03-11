@@ -3896,6 +3896,10 @@ static void nv_gotofile(cmdarg_T *cap)
     return;
   }
 
+  if (!check_can_set_curbuf_disabled()) {
+    return;
+  }
+
   char *ptr = grab_file_name(cap->count1, &lnum);
 
   if (ptr != NULL) {
@@ -4232,7 +4236,8 @@ static void nv_brackets(cmdarg_T *cap)
                            (cap->cmdchar == ']'
                             ? curwin->w_cursor.lnum + 1
                             : 1),
-                           MAXLNUM);
+                           MAXLNUM,
+                           false);
       xfree(ptr);
       curwin->w_set_curswant = true;
     }

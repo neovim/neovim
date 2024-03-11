@@ -6271,6 +6271,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			"split" when both are present.
 	   uselast	If included, jump to the previously used window when
 			jumping to errors with |quickfix| commands.
+	If a window has 'winfixbuf' enabled, 'switchbuf' is currently not
+	applied to the split window.
 
 						*'synmaxcol'* *'smc'*
 'synmaxcol' 'smc'	number	(default 3000)
@@ -7169,6 +7171,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	or equal to 'lines' it will be set to 'lines' minus 1.
 	Note: Do not confuse this with the height of the Vim window, use
 	'lines' for that.
+
+			*'winfixbuf'* *'wfb'* *'nowinfixbuf'* *'nowfb'*
+'winfixbuf' 'wfb'	boolean	(default off)
+			local to window
+	If enabled, the buffer and any window that displays it are paired.
+	For example, attempting to change the buffer with |:edit| will fail.
+	Other commands which change a window's buffer such as |:cnext| will
+	also skip any window with 'winfixbuf' enabled. However if a command
+	has an "!" option, a window can be forced to switch buffers.
 
 			*'winfixheight'* *'wfh'* *'nowinfixheight'* *'nowfh'*
 'winfixheight' 'wfh'	boolean	(default off)

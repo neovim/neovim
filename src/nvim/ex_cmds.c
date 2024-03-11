@@ -2008,6 +2008,10 @@ static int check_readonly(int *forceit, buf_T *buf)
 ///           GETFILE_OPEN_OTHER for successfully opening another file.
 int getfile(int fnum, char *ffname_arg, char *sfname_arg, bool setpm, linenr_T lnum, bool forceit)
 {
+  if (!check_can_set_curbuf_forceit(forceit)) {
+    return GETFILE_ERROR;
+  }
+
   char *ffname = ffname_arg;
   char *sfname = sfname_arg;
   bool other;

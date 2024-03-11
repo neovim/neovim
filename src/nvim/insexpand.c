@@ -3027,7 +3027,7 @@ static void get_next_include_file_completion(int compl_type)
                        ((compl_type == CTRL_X_PATH_DEFINES
                          && !(compl_cont_status & CONT_SOL))
                         ? FIND_DEFINE : FIND_ANY),
-                       1, ACTION_EXPAND, 1, MAXLNUM);
+                       1, ACTION_EXPAND, 1, MAXLNUM, false);
 }
 
 /// Get the next set of words matching "compl_pattern" in dictionary or

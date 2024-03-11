@@ -61,6 +61,12 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   if (!win || !buf) {
     return;
   }
+
+  if (win->w_p_wfb) {
+    api_set_error(err, kErrorTypeException, "%s", e_winfixbuf_cannot_go_to_buffer);
+    return;
+  }
+
   if (win == cmdwin_win || win == cmdwin_old_curwin || buf == cmdwin_buf) {
     api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return;
