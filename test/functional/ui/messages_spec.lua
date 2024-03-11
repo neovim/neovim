@@ -844,7 +844,7 @@ describe('ui/ext_messages', function()
     }
   end)
 
-  it('implies ext_cmdline and ignores cmdheight', function()
+  it("implies ext_cmdline but allows changing 'cmdheight'", function()
     eq(0, eval('&cmdheight'))
     feed(':set cmdheight=1')
     screen:expect {
@@ -864,15 +864,17 @@ describe('ui/ext_messages', function()
     feed('<cr>')
     screen:expect([[
       ^                         |
-      {1:~                        }|*4
+      {1:~                        }|*3
+                               |
     ]])
-    eq(0, eval('&cmdheight'))
+    eq(1, eval('&cmdheight'))
 
     feed(':set cmdheight=0')
     screen:expect {
       grid = [[
       ^                         |
-      {1:~                        }|*4
+      {1:~                        }|*3
+                               |
     ]],
       cmdline = {
         {

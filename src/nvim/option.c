@@ -2024,9 +2024,6 @@ static const char *did_set_cmdheight(optset_T *args)
 {
   OptInt old_value = args->os_oldval.number;
 
-  if (ui_has(kUIMessages)) {
-    p_ch = 0;
-  }
   if (p_ch > Rows - min_rows() + 1) {
     p_ch = Rows - min_rows() + 1;
   }
