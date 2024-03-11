@@ -530,6 +530,16 @@ Example: File-change detection                                    *watch-file*
     vim.api.nvim_command(
       "command! -nargs=1 Watch call luaeval('watch_file(_A)', expand('<args>'))")
 <
+                                                         *fswatch-limitations*
+When on Linux and using fswatch, you may need to increase the maximum number
+of `inotify` watches and queued events as the default limit can be too low. To
+increase the limit, run: >sh
+    sysctl fs.inotify.max_user_watches=100000
+    sysctl fs.inotify.max_queued_events=100000
+<
+This will increase the limit to 100000 watches and queued events. These lines
+can be added to `/etc/sysctl.conf` to make the changes persistent.
+
 Example: TCP echo-server                                          *tcp-server*
     1. Save this code to a file.
     2. Execute it with ":luafile %".

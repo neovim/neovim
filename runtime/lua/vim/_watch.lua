@@ -289,6 +289,9 @@ function M.fswatch(path, opts, callback)
       end
 
       if data and #vim.trim(data) > 0 then
+        if vim.fn.has('linux') == 1 and vim.startswith(data, 'Event queue overflow') then
+          data = 'inotify(7) limit reached, see :h fswatch-limitations for more info.'
+        end
         vim.schedule(function()
           vim.notify('fswatch: ' .. data, vim.log.levels.ERROR)
         end)
