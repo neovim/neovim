@@ -136,7 +136,7 @@ function ChildProcessStream.spawn(argv, env, io_extra)
   end
   --- @diagnostic disable-next-line:missing-fields
   self._proc, self._pid = uv.spawn(prog, {
-    stdio = { self._child_stdin, self._child_stdout, 2, io_extra },
+    stdio = { self._child_stdin, self._child_stdout, 1, io_extra },
     args = args,
     --- @diagnostic disable-next-line:assign-type-mismatch
     env = env,

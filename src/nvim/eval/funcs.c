@@ -727,7 +727,7 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
       return;
     }
 
-    check_cursor();
+    check_cursor(curwin);
     winchanged = true;
   }
 
@@ -746,7 +746,7 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
       col = fp->col + 1;
       // col(".") when the cursor is on the NUL at the end of the line
       // because of "coladd" can be seen as an extra column.
-      if (virtual_active() && fp == &curwin->w_cursor) {
+      if (virtual_active(curwin) && fp == &curwin->w_cursor) {
         char *p = get_cursor_pos_ptr();
         if (curwin->w_cursor.coladd >=
             (colnr_T)win_chartabsize(curwin, p,
@@ -1191,7 +1191,7 @@ static void set_cursorpos(typval_T *argvars, typval_T *rettv, bool charcol)
   curwin->w_cursor.coladd = coladd;
 
   // Make sure the cursor is in a valid position.
-  check_cursor();
+  check_cursor(curwin);
   // Correct cursor for multi-byte character.
   mb_adjust_cursor();
 
@@ -2890,7 +2890,7 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   curbuf = findbuf;
   curwin->w_buffer = curbuf;
   const TriState save_virtual = virtual_op;
-  virtual_op = virtual_active();
+  virtual_op = virtual_active(curwin);
 
   // NOTE: Adjust is needed.
   p1.col--;
@@ -4643,7 +4643,7 @@ static void f_line(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (wp != NULL && tp != NULL) {
       switchwin_T switchwin;
       if (switch_win_noblock(&switchwin, wp, tp, true) == OK) {
-        check_cursor();
+        check_cursor(curwin);
         fp = var2fpos(&argvars[0], true, &fnum, false);
       }
       restore_win_noblock(&switchwin, true);
@@ -7029,7 +7029,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
     }
     // "/$" will put the cursor after the end of the line, may need to
     // correct that here
-    check_cursor();
+    check_cursor(curwin);
   }
 
   // If 'n' flag is used: restore cursor position.
@@ -7791,7 +7791,7 @@ static void set_position(typval_T *argvars, typval_T *rettv, bool charpos)
       curwin->w_curswant = curswant - 1;
       curwin->w_set_curswant = false;
     }
-    check_cursor();
+    check_cursor(curwin);
     rettv->vval.v_number = 0;
   } else if (name[0] == '\'' && name[1] != NUL && name[2] == NUL) {
     // set mark
@@ -9204,7 +9204,7 @@ static void f_virtcol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       goto theend;
     }
 
-    check_cursor();
+    check_cursor(curwin);
     winchanged = true;
   }
 

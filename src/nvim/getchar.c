@@ -2508,7 +2508,7 @@ static int vgetorpeek(bool advance)
             unshowmode(true);
             mode_deleted = true;
           }
-          validate_cursor();
+          validate_cursor(curwin);
           int old_wcol = curwin->w_wcol;
           int old_wrow = curwin->w_wrow;
 
@@ -2541,7 +2541,7 @@ static int vgetorpeek(bool advance)
                 curwin->w_wrow = curwin->w_cline_row
                                  + curwin->w_wcol / curwin->w_width_inner;
                 curwin->w_wcol %= curwin->w_width_inner;
-                curwin->w_wcol += curwin_col_off();
+                curwin->w_wcol += win_col_off(curwin);
                 col = 0;  // no correction needed
               } else {
                 curwin->w_wcol--;

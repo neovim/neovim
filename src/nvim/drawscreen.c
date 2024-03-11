@@ -823,7 +823,7 @@ void setcursor(void)
 void setcursor_mayforce(bool force)
 {
   if (force || redrawing()) {
-    validate_cursor();
+    validate_cursor(curwin);
 
     ScreenGrid *grid = &curwin->w_grid;
     int row = curwin->w_wrow;
@@ -851,7 +851,7 @@ void show_cursor_info_later(bool force)
                    && *ml_get_buf(curwin->w_buffer, curwin->w_cursor.lnum) == NUL;
 
   // Only draw when something changed.
-  validate_virtcol_win(curwin);
+  validate_virtcol(curwin);
   if (force
       || curwin->w_cursor.lnum != curwin->w_stl_cursor.lnum
       || curwin->w_cursor.col != curwin->w_stl_cursor.col
@@ -1611,14 +1611,14 @@ static void win_update(win_T *wp)
         }
       }
 
-      hasFoldingWin(wp, mod_top, &mod_top, NULL, true, NULL);
+      hasFolding(wp, mod_top, &mod_top, NULL);
       if (mod_top > lnumt) {
         mod_top = lnumt;
       }
 
       // Now do the same for the bottom line (one above mod_bot).
       mod_bot--;
-      hasFoldingWin(wp, mod_bot, NULL, &mod_bot, true, NULL);
+      hasFolding(wp, mod_bot, NULL, &mod_bot);
       mod_bot++;
       if (mod_bot < lnumb) {
         mod_bot = lnumb;
@@ -1691,7 +1691,7 @@ static void win_update(win_T *wp)
           if (j >= wp->w_grid.rows - 2) {
             break;
           }
-          hasFoldingWin(wp, ln, NULL, &ln, true, NULL);
+          hasFolding(wp, ln, NULL, &ln);
         }
       } else {
         j = wp->w_lines[0].wl_lnum - wp->w_topline;
@@ -1903,7 +1903,7 @@ static void win_update(win_T *wp)
         // Highlight to the end of the line, unless 'virtualedit' has
         // "block".
         if (curwin->w_curswant == MAXCOL) {
-          if (get_ve_flags() & VE_BLOCK) {
+          if (get_ve_flags(curwin) & VE_BLOCK) {
             pos_T pos;
             int cursor_above = curwin->w_cursor.lnum < VIsual.lnum;
 
@@ -2148,7 +2148,7 @@ static void win_update(win_T *wp)
           // rows, and may insert/delete lines
           int j = idx;
           for (l = lnum; l < mod_bot; l++) {
-            if (hasFoldingWin(wp, l, NULL, &l, true, NULL)) {
+            if (hasFolding(wp, l, NULL, &l)) {
               new_rows++;
             } else if (l == wp->w_topline) {
               int n = plines_win_nofill(wp, l, false) + wp->w_topfill;

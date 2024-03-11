@@ -1797,7 +1797,7 @@ void ex_luado(exarg_T *const eap)
   }
 
   lua_pop(lstate, 1);
-  check_cursor();
+  check_cursor(curwin);
   redraw_curbuf_later(UPD_NOT_VALID);
 }
 

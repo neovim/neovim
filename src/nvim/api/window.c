@@ -138,7 +138,7 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   win->w_cursor.col = (colnr_T)col;
   win->w_cursor.coladd = 0;
   // When column is out of range silently correct it.
-  check_cursor_col_win(win);
+  check_cursor_col(win);
 
   // Make sure we stick in this column.
   win->w_set_curswant = true;
@@ -148,7 +148,7 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   switchwin_T switchwin;
   switch_win(&switchwin, win, NULL, true);
   update_topline(curwin);
-  validate_cursor();
+  validate_cursor(curwin);
   restore_win(&switchwin, true);
 
   redraw_later(win, UPD_VALID);

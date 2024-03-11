@@ -588,7 +588,7 @@ MarkMoveRes mark_move_to(fmark_T *fm, MarkMove flags)
   }
 
   if (res & kMarkSwitchedBuf || res & kMarkChangedCursor) {
-    check_cursor();
+    check_cursor(curwin);
   }
 end:
   return res;

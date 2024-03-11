@@ -477,7 +477,7 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, bool r
     uhp->uh_entry = NULL;
     uhp->uh_getbot_entry = NULL;
     uhp->uh_cursor = curwin->w_cursor;          // save cursor pos. for undo
-    if (virtual_active() && curwin->w_cursor.coladd > 0) {
+    if (virtual_active(curwin) && curwin->w_cursor.coladd > 0) {
       uhp->uh_cursor_vcol = getviscol();
     } else {
       uhp->uh_cursor_vcol = -1;
@@ -2488,8 +2488,8 @@ static void u_undoredo(bool undo, bool do_buf_event)
   if (curwin->w_cursor.lnum <= curbuf->b_ml.ml_line_count) {
     if (curhead->uh_cursor.lnum == curwin->w_cursor.lnum) {
       curwin->w_cursor.col = curhead->uh_cursor.col;
-      if (virtual_active() && curhead->uh_cursor_vcol >= 0) {
-        coladvance(curhead->uh_cursor_vcol);
+      if (virtual_active(curwin) && curhead->uh_cursor_vcol >= 0) {
+        coladvance(curwin, curhead->uh_cursor_vcol);
       } else {
         curwin->w_cursor.coladd = 0;
       }
@@ -2506,7 +2506,7 @@ static void u_undoredo(bool undo, bool do_buf_event)
   }
 
   // Make sure the cursor is on an existing line and column.
-  check_cursor();
+  check_cursor(curwin);
 
   // Remember where we are for "g-" and ":earlier 10s".
   curbuf->b_u_seq_cur = curhead->uh_seq;
@@ -3073,7 +3073,7 @@ void u_undoline(void)
   }
   curwin->w_cursor.col = t;
   curwin->w_cursor.lnum = curbuf->b_u_line_lnum;
-  check_cursor_col();
+  check_cursor_col(curwin);
 }
 
 /// Allocate memory and copy curbuf line into it.

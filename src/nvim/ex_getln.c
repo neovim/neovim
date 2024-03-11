@@ -510,7 +510,7 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
 
     s->match_start = curwin->w_cursor;
     set_search_match(&curwin->w_cursor);
-    validate_cursor();
+    validate_cursor(curwin);
     end_pos = curwin->w_cursor;
     s->match_end = end_pos;
     curwin->w_cursor = save_pos;
@@ -530,7 +530,7 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
     ccline.cmdbuff[skiplen + patlen] = next_char;
   }
 
-  validate_cursor();
+  validate_cursor(curwin);
 
   // May redraw the status line to show the cursor position.
   if (p_ru && (curwin->w_status_height > 0 || global_stl_height() > 0)) {
@@ -626,7 +626,7 @@ static void finish_incsearch_highlighting(bool gotesc, incsearch_state_T *s,
 
   magic_overruled = s->magic_overruled_save;
 
-  validate_cursor();          // needed for TAB
+  validate_cursor(curwin);          // needed for TAB
   status_redraw_all();
   redraw_all_later(UPD_SOME_VALID);
   if (call_update_screen) {
@@ -1483,7 +1483,7 @@ static int may_do_command_line_next_incsearch(int firstc, int count, incsearch_s
     curwin->w_cursor = s->match_start;
     changed_cline_bef_curs(curwin);
     update_topline(curwin);
-    validate_cursor();
+    validate_cursor(curwin);
     highlight_match = true;
     save_viewstate(curwin, &s->old_viewstate);
     redraw_later(curwin, UPD_NOT_VALID);
@@ -4623,6 +4623,6 @@ static void set_search_match(pos_T *t)
   t->col = search_match_endcol;
   if (t->lnum > curbuf->b_ml.ml_line_count) {
     t->lnum = curbuf->b_ml.ml_line_count;
-    coladvance(MAXCOL);
+    coladvance(curwin, MAXCOL);
   }
 }

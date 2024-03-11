@@ -1269,10 +1269,13 @@ static void fix_cursor(win_T *win, linenr_T lo, linenr_T hi, linenr_T extra)
     } else if (extra < 0) {
       check_cursor_lnum(win);
     }
-    check_cursor_col_win(win);
+    check_cursor_col(win);
     changed_cline_bef_curs(win);
+    win->w_valid &= ~(VALID_BOTLINE_AP);
+    update_topline(win);
+  } else {
+    invalidate_botline(win);
   }
-  invalidate_botline(win);
 }
 
 /// Fix cursor position after replacing text
@@ -1307,7 +1310,7 @@ static void fix_cursor_cols(win_T *win, linenr_T start_row, colnr_T start_col, l
 
     // it's easier to work with a single value here.
     // col and coladd are fixed by a later call
-    // to check_cursor_col_win when necessary
+    // to check_cursor_col when necessary
     win->w_cursor.col += win->w_cursor.coladd;
     win->w_cursor.coladd = 0;
 
@@ -1343,7 +1346,7 @@ static void fix_cursor_cols(win_T *win, linenr_T start_row, colnr_T start_col, l
     }
   }
 
-  check_cursor_col_win(win);
+  check_cursor_col(win);
   changed_cline_bef_curs(win);
   invalidate_botline(win);
 }

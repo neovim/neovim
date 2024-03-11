@@ -1393,7 +1393,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     // the end of the line may be before the start of the displayed part.
     if (wlv.vcol < start_col && (wp->w_p_cuc
                                  || wlv.color_cols
-                                 || virtual_active()
+                                 || virtual_active(wp)
                                  || (VIsual_active && wp->w_buffer == curwin->w_buffer))) {
       wlv.vcol = start_col;
     }
@@ -2339,7 +2339,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
               && wlv.line_attr == 0
               && wlv.line_attr_lowprio == 0) {
             // In virtualedit, visual selections may extend beyond end of line
-            if (!(area_highlighting && virtual_active()
+            if (!(area_highlighting && virtual_active(wp)
                   && wlv.tocol != MAXCOL && wlv.vcol < wlv.tocol)) {
               wlv.p_extra = "";
             }
@@ -2382,7 +2382,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           mb_schar = schar_from_ascii(mb_c);
         } else if (VIsual_active
                    && (VIsual_mode == Ctrl_V || VIsual_mode == 'v')
-                   && virtual_active()
+                   && virtual_active(wp)
                    && wlv.tocol != MAXCOL
                    && wlv.vcol < wlv.tocol
                    && wlv.col < grid->cols) {

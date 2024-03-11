@@ -2479,9 +2479,8 @@ const char *did_set_virtualedit(optset_T *args)
     } else if (strcmp(ve, args->os_oldval.string.data) != 0) {
       // Recompute cursor position in case the new 've' setting
       // changes something.
-      validate_virtcol_win(win);
-      // XXX: this only works when win == curwin
-      coladvance(win->w_virtcol);
+      validate_virtcol(win);
+      coladvance(win, win->w_virtcol);
     }
   }
   return NULL;

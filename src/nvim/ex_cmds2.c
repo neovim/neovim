@@ -654,7 +654,7 @@ void ex_listdo(exarg_T *eap)
       }
 
       if (eap->cmdidx == CMD_windo && execute) {
-        validate_cursor();              // cursor may have moved
+        validate_cursor(curwin);              // cursor may have moved
         // required when 'scrollbind' has been set
         if (curwin->w_p_scb) {
           do_check_scrollbind(true);

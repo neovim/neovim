@@ -771,7 +771,7 @@ popupexit:
       // move VIsual to the right column
       start_visual = curwin->w_cursor;              // save the cursor pos
       curwin->w_cursor = end_visual;
-      coladvance(end_visual.col);
+      coladvance(curwin, end_visual.col);
       VIsual = curwin->w_cursor;
       curwin->w_cursor = start_visual;              // restore the cursor
     } else {
@@ -1430,7 +1430,7 @@ retnomove:
           break;
         }
         first = false;
-        hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
+        hasFolding(curwin, curwin->w_topline, &curwin->w_topline, NULL);
         if (curwin->w_topfill < win_get_fill(curwin, curwin->w_topline)) {
           curwin->w_topfill++;
         } else {
@@ -1460,7 +1460,7 @@ retnomove:
         if (curwin->w_topfill > 0) {
           curwin->w_topfill--;
         } else {
-          if (hasFolding(curwin->w_topline, NULL, &curwin->w_topline)
+          if (hasFolding(curwin, curwin->w_topline, NULL, &curwin->w_topline)
               && curwin->w_topline == curbuf->b_ml.ml_line_count) {
             break;
           }
@@ -1515,7 +1515,7 @@ retnomove:
 
   curwin->w_curswant = col;
   curwin->w_set_curswant = false;       // May still have been true
-  if (coladvance(col) == FAIL) {        // Mouse click beyond end of line
+  if (coladvance(curwin, col) == FAIL) {        // Mouse click beyond end of line
     if (inclusive != NULL) {
       *inclusive = true;
     }
@@ -1548,7 +1548,7 @@ static bool do_mousescroll_horiz(colnr_T leftcol)
 
   // When the line of the cursor is too short, move the cursor to the
   // longest visible line.
-  if (!virtual_active()
+  if (!virtual_active(curwin)
       && leftcol > scroll_line_len(curwin->w_cursor.lnum)) {
     curwin->w_cursor.lnum = find_longest_lnum();
     curwin->w_cursor.col = 0;
@@ -1637,7 +1637,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
       break;            // Position is in this buffer line.
     }
 
-    hasFoldingWin(win, lnum, NULL, &lnum, true, NULL);
+    hasFolding(win, lnum, NULL, &lnum);
 
     if (lnum == win->w_buffer->b_ml.ml_line_count) {
       retval = true;
