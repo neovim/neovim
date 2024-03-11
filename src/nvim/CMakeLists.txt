@@ -469,6 +469,8 @@ foreach(target ${targets})
   endif()
 endforeach()
 
+list(REMOVE_DUPLICATES gen_cflags)
+
 if(APPLE AND CMAKE_OSX_SYSROOT)
   list(APPEND gen_cflags "-isysroot" "${CMAKE_OSX_SYSROOT}")
 endif()
