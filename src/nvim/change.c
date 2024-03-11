@@ -714,7 +714,7 @@ void ins_char_bytes(char *buf, size_t charlen)
   size_t col = (size_t)curwin->w_cursor.col;
   linenr_T lnum = curwin->w_cursor.lnum;
   char *oldp = ml_get(lnum);
-  size_t linelen = strlen(oldp) + 1;  // length of old line including NUL
+  size_t linelen = (size_t)ml_get_len(lnum) + 1;  // length of old line including NUL
 
   // The lengths default to the values for when not replacing.
   size_t oldlen = 0;        // nr of bytes inserted
@@ -821,7 +821,7 @@ void ins_str(char *s)
 
   colnr_T col = curwin->w_cursor.col;
   char *oldp = ml_get(lnum);
-  int oldlen = (int)strlen(oldp);
+  int oldlen = ml_get_len(lnum);
 
   char *newp = xmalloc((size_t)oldlen + (size_t)newlen + 1);
   if (col > 0) {
@@ -879,7 +879,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   colnr_T col = curwin->w_cursor.col;
   bool fixpos = fixpos_arg;
   char *oldp = ml_get(lnum);
-  colnr_T oldlen = (colnr_T)strlen(oldp);
+  colnr_T oldlen = ml_get_len(lnum);
 
   // Can't do anything when the cursor is on the NUL after the line.
   if (col >= oldlen) {
@@ -1117,7 +1117,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   colnr_T mincol = curwin->w_cursor.col + 1;
 
   // make a copy of the current line so we can mess with it
-  char *saved_line = xstrdup(get_cursor_line_ptr());
+  char *saved_line = xstrnsave(get_cursor_line_ptr(), (size_t)get_cursor_line_len());
 
   if (State & VREPLACE_FLAG) {
     // With MODE_VREPLACE we make a copy of the next line, which we will be
@@ -1128,7 +1128,8 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     // the line, replacing what was there before and pushing the right
     // stuff onto the replace stack.  -- webb.
     if (curwin->w_cursor.lnum < orig_line_count) {
-      next_line = xstrdup(ml_get(curwin->w_cursor.lnum + 1));
+      next_line = xstrnsave(ml_get(curwin->w_cursor.lnum + 1),
+                            (size_t)ml_get_len(curwin->w_cursor.lnum + 1));
     } else {
       next_line = xstrdup("");
     }
@@ -1908,7 +1909,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   // stuff onto the replace stack (via ins_char()).
   if (State & VREPLACE_FLAG) {
     // Put new line in p_extra
-    p_extra = xstrdup(get_cursor_line_ptr());
+    p_extra = xstrnsave(get_cursor_line_ptr(), (size_t)get_cursor_line_len());
 
     // Put back original line
     ml_replace(curwin->w_cursor.lnum, next_line, false);
@@ -1939,7 +1940,7 @@ void truncate_line(int fixpos)
   colnr_T col = curwin->w_cursor.col;
   char *old_line = ml_get(lnum);
   char *newp = col == 0 ? xstrdup("") : xstrnsave(old_line, (size_t)col);
-  int deleted = (int)strlen(old_line) - col;
+  int deleted = ml_get_len(lnum) - col;
 
   ml_replace(lnum, newp, false);
 
