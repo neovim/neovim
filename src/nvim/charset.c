@@ -1461,13 +1461,11 @@ void backslash_halve(char *p)
   if (*p != NUL) {
     char *dst = p;
     goto start;
-    for (;;) {
+    while (*p != NUL) {
       if (rem_backslash(p)) {
 start:
         *dst++ = *(p + 1);
         p += 2;
-      } else if (*p == NUL) {
-        break;
       } else {
         *dst++ = *p++;
       }
@@ -1486,12 +1484,10 @@ char *backslash_halve_save(const char *p)
 {
   char *res = xmalloc(strlen(p) + 1);
   char *dst = res;
-  for (;;) {
+  while (*p != NUL) {
     if (rem_backslash(p)) {
       *dst++ = *(p + 1);
       p += 2;
-    } else if (*p == NUL) {
-      break;
     } else {
       *dst++ = *p++;
     }
