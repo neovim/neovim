@@ -371,7 +371,7 @@ static const char *input_cb(void *payload, uint32_t byte_index, TSPoint position
     return "";
   }
   char *line = ml_get_buf(bp, (linenr_T)position.row + 1);
-  size_t len = strlen(line);
+  size_t len = (size_t)ml_get_buf_len(bp, (linenr_T)position.row + 1);
   if (position.column > len) {
     *bytes_read = 0;
     return "";
