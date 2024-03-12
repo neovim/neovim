@@ -616,6 +616,14 @@ local directive_handlers = {
       metadata[capture_id].range = { start_row, start_col, end_row, end_col }
     end
   end,
+
+  ['lang_from_filename!'] = function(match, _, source, predicate, metadata)
+    local dst, id = predicate[2], predicate[3]
+    local node = match[id][1]
+    local text = vim.treesitter.get_node_text(node, source, { metadata = metadata[id] }) or ''
+    local ft = vim.filetype.match({filename = text})
+    metadata[dst] = vim.treesitter.language.get_lang(ft) or ft
+  end,
 }
 
 --- Adds a new predicate to be used in queries
