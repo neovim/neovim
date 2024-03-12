@@ -299,8 +299,8 @@ char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newli
 char *vim_strsave_up(const char *string)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  char *p1 = xstrdup(string);
-  vim_strup(p1);
+  char *p1 = xmalloc(strlen(string) + 1);
+  vim_strcpy_up(p1, string);
   return p1;
 }
 
@@ -309,8 +309,8 @@ char *vim_strsave_up(const char *string)
 char *vim_strnsave_up(const char *string, size_t len)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  char *p1 = xstrnsave(string, len);
-  vim_strup(p1);
+  char *p1 = xmalloc(len + 1);
+  vim_strncpy_up(p1, string, len);
   return p1;
 }
 
@@ -321,6 +321,39 @@ void vim_strup(char *p)
   uint8_t c;
   while ((c = (uint8_t)(*p)) != NUL) {
     *p++ = (char)(uint8_t)(c < 'a' || c > 'z' ? c : c - 0x20);
+  }
+}
+
+// strcpy plus vim_strup.
+void vim_strcpy_up(char *restrict dst, const char *restrict src)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uint8_t c;
+  while ((c = (uint8_t)(*src++)) != NUL) {
+    *dst++ = (char)(uint8_t)(c < 'a' || c > 'z' ? c : c - 0x20);
+  }
+  *dst = '\0';
+}
+
+// strncpy (NUL-terminated) plus vim_strup.
+void vim_strncpy_up(char *restrict dst, const char *restrict src, size_t n)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uint8_t c;
+  while (n-- && (c = (uint8_t)(*src++)) != NUL) {
+    *dst++ = (char)(uint8_t)(c < 'a' || c > 'z' ? c : c - 0x20);
+  }
+  *dst = '\0';
+}
+
+// memcpy (does not NUL-terminate) plus vim_strup.
+void vim_memcpy_up(char *restrict dst, const char *restrict src, size_t n)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uint8_t c;
+  while (n--) {
+    c = (uint8_t)(*src++);
+    *dst++ = (char)(uint8_t)(c < 'a' || c > 'z' ? c : c - 0x20);
   }
 }
 
