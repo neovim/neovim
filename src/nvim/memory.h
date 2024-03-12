@@ -68,6 +68,19 @@ EXTERN size_t arena_alloc_count INIT( = 0);
 # define strnlen xstrnlen  // Older versions of SunOS may not have strnlen
 #endif
 
+// MacOS doesn't have HAVE_STPCPY defined and defines its own stpcpy in Xcode. So just define STPCPY
+#ifdef HAVE_STPCPY
+# define STPCPY stpcpy
+#else
+# define STPCPY xstpcpy
+#endif
+
+#ifdef HAVE_STPNCPY
+# define STPNCPY stpncpy
+#else
+# define STPNCPY xstpncpy
+#endif
+
 #define STRCPY(d, s)        strcpy((char *)(d), (char *)(s))  // NOLINT(runtime/printf)
 
 // Like strcpy() but allows overlapped source and destination.
