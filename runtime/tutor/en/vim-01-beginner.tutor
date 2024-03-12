@@ -39,7 +39,7 @@ instead of text to type.
 
 Now, move to the next lesson (use the `j`{normal} key to scroll down).
 
-# Lesson 1.1: MOVING THE CURSOR
+## Lesson 1.1: MOVING THE CURSOR
 
 ** To move the cursor, press the `h`, `j`, `k`, `l` keys as indicated. **
 
@@ -87,7 +87,7 @@ NOTE: [:q!](:q) `<Enter>`{normal} discards any changes you made. In a few lesson
 
  5. Move the cursor down to Lesson 1.3.
 
-# Lesson 1.3: TEXT EDITING - DELETION
+## Lesson 1.3: TEXT EDITING - DELETION
 
 ** Press `x`{normal} to delete the character under the cursor. **
 
