@@ -346,6 +346,18 @@ void vim_strncpy_up(char *restrict dst, const char *restrict src, size_t n)
   *dst = '\0';
 }
 
+// memcpy (does not NUL-terminate) plus vim_strup.
+void vim_memcpy_up(char *restrict dst, const char *restrict src, size_t n)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uint8_t c;
+  while (n--) {
+    c = (uint8_t)(*src++);
+    *dst++ = (char)(uint8_t)(c < 'a' || c > 'z' ? c : c - 0x20);
+  }
+  *dst = '\0';
+}
+
 /// Make given string all upper-case or all lower-case
 ///
 /// Handles multi-byte characters as good as possible.
