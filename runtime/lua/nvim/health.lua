@@ -17,7 +17,7 @@ local shell_error = function()
   return vim.v.shell_error ~= 0
 end
 
-local suggest_faq = 'https://github.com/neovim/neovim/blob/docs/install/BUILD.md#building'
+local suggest_faq = 'https://github.com/neovim/neovim/blob/master/BUILD.md#building'
 
 local function check_runtime()
   health.start('Runtime')

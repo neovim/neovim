@@ -690,7 +690,7 @@ end
 ---
 --- It deletes existing buffers that conflict with the renamed file name only when
 --- * `opts` requests overwriting; or
---- * the conflicting buffers are not loaded, so that deleting thme does not result in data loss.
+--- * the conflicting buffers are not loaded, so that deleting them does not result in data loss.
 ---
 --- @param old_fname string
 --- @param new_fname string

@@ -460,7 +460,7 @@ static void meta_describe_key(uint32_t *meta_inc, MTKey k)
   meta_describe_key_inc(meta_inc, &k);
 }
 
-// if x is internal, asumes x->meta[..] of children are correct
+// if x is internal, assumes x->meta[..] of children are correct
 static void meta_describe_node(uint32_t *meta_node, MTNode *x)
 {
   memset(meta_node, 0, kMTMetaCount * sizeof(meta_node[0]));
@@ -1425,7 +1425,7 @@ bool marktree_itr_get_ext(MarkTree *b, MTPos p, MarkTreeIter *itr, bool last, bo
     }
     if (meta_filter) {
       if (!meta_has(itr->x->meta[itr->i], meta_filter)) {
-        // this takes us to the interal position after the first rejected node
+        // this takes us to the internal position after the first rejected node
         break;
       }
     }

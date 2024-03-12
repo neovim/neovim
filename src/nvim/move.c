@@ -239,7 +239,7 @@ static void reset_skipcol(win_T *wp)
   redraw_later(wp, UPD_SOME_VALID);
 }
 
-// Update curwin->w_topline to move the cursor onto the screen.
+// Update wp->w_topline to move the cursor onto the screen.
 void update_topline(win_T *wp)
 {
   bool check_botline = false;
@@ -595,7 +595,7 @@ void changed_line_abv_curs_win(win_T *wp)
                    |VALID_CHEIGHT|VALID_TOPLINE);
 }
 
-// Make sure the value of curwin->w_botline is valid.
+// Make sure the value of wp->w_botline is valid.
 void validate_botline(win_T *wp)
 {
   if (!(wp->w_valid & VALID_BOTLINE)) {
