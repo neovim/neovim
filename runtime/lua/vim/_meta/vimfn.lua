@@ -7259,6 +7259,7 @@ function vim.fn.screenstring(row, col) end
 --- When a match has been found its line number is returned.
 --- If there is no match a 0 is returned and the cursor doesn't
 --- move.  No error message is given.
+--- To get the matched string, use |matchbufline()|.
 ---
 --- {flags} is a String, which can contain these character flags:
 --- 'b'  search Backward instead of forward
