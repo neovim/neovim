@@ -355,7 +355,6 @@ void vim_memcpy_up(char *restrict dst, const char *restrict src, size_t n)
     c = (uint8_t)(*src++);
     *dst++ = (char)(uint8_t)(c < 'a' || c > 'z' ? c : c - 0x20);
   }
-  *dst = '\0';
 }
 
 /// Make given string all upper-case or all lower-case
