@@ -33,6 +33,11 @@
   ] @markup.link
   (#set! conceal ""))
 
+(inline_link
+  (link_text) @markup.link.label
+  (link_destination) @markup.link
+  (#set! @markup.link.label "url" @markup.link))
+
 ; Conceal image links
 (image
   [
