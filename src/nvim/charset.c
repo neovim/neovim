@@ -1466,11 +1466,10 @@ void backslash_halve(char *p)
 start:
         *dst++ = *(p + 1);
         p += 2;
+      } else if (*p == NUL) {
+        break;
       } else {
         *dst++ = *p++;
-        if (*p == NUL) {
-          break;
-        }
       }
     }
     *dst = '\0';
@@ -1491,11 +1490,10 @@ char *backslash_halve_save(const char *p)
     if (rem_backslash(p)) {
       *dst++ = *(p + 1);
       p += 2;
+    } else if (*p == NUL) {
+      break;
     } else {
       *dst++ = *p++;
-      if (*p == NUL) {
-        break;
-      }
     }
   }
   *dst = '\0';
