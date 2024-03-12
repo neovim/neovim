@@ -270,7 +270,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         :iter_matches(root_node, self.bufnr, line, root_end_row + 1, { all = true })
     end
 
-    local max_pattern_index = -1
+    local max_pattern_index = 0
     while line >= state.next_row do
       local pattern, match, metadata = state.iter()
 
