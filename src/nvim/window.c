@@ -939,7 +939,7 @@ void ui_ext_win_viewport(win_T *wp)
   }
 }
 
-/// If "split_disallowed" is set or "wp"s buffer is closing, give an error and return FAIL.
+/// If "split_disallowed" is set, or "wp"'s buffer is closing, give an error and return FAIL.
 /// Otherwise return OK.
 int check_split_disallowed(const win_T *wp)
   FUNC_ATTR_NONNULL_ALL
@@ -1966,13 +1966,12 @@ int win_splitmove(win_T *wp, int size, int flags)
 
   // Split a window on the desired side and put "wp" there.
   if (win_split_ins(size, flags, wp, dir, unflat_altfr) == NULL) {
-    win_append(wp->w_prev, wp, NULL);
     if (!wp->w_floating) {
       // win_split_ins doesn't change sizes or layout if it fails to insert an
       // existing window, so just undo winframe_remove.
       winframe_restore(wp, dir, unflat_altfr);
-      win_comp_pos();  // recompute window positions
     }
+    win_append(wp->w_prev, wp, NULL);
     return FAIL;
   }
 
@@ -3271,7 +3270,6 @@ win_T *winframe_find_altwin(win_T *win, int *dirp, tabpage_T *tp, frame_T **altf
 /// Flatten "frp" into its parent frame if it's the only child, also merging its
 /// list with the grandparent if they share the same layout.
 /// Frees "frp" if flattened; also "frp->fr_parent" if it has the same layout.
-/// "frp" must be valid in the current tabpage.
 static void frame_flatten(frame_T *frp)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -3359,7 +3357,8 @@ void winframe_restore(win_T *wp, int dir, frame_T *unflat_altfr)
   int row = wp->w_winrow;
   int col = wp->w_wincol;
 
-  // Restore the lost room that was redistributed to the altframe.
+  // Restore the lost room that was redistributed to the altframe.  Also
+  // adjusts window sizes to fit restored statuslines/separators, if needed.
   if (dir == 'v') {
     frame_new_height(unflat_altfr, unflat_altfr->fr_height - frp->fr_height,
                      unflat_altfr == frp->fr_next, false);
