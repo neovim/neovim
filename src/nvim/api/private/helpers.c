@@ -524,10 +524,10 @@ String buf_get_text(buf_T *buf, int64_t lnum, int64_t start_col, int64_t end_col
   }
 
   char *bufstr = ml_get_buf(buf, (linenr_T)lnum);
-  size_t line_length = strlen(bufstr);
+  colnr_T line_length = ml_get_buf_len(buf, (linenr_T)lnum);
 
-  start_col = start_col < 0 ? (int64_t)line_length + start_col + 1 : start_col;
-  end_col = end_col < 0 ? (int64_t)line_length + end_col + 1 : end_col;
+  start_col = start_col < 0 ? line_length + start_col + 1 : start_col;
+  end_col = end_col < 0 ? line_length + end_col + 1 : end_col;
 
   if (start_col >= MAXCOL || end_col >= MAXCOL) {
     api_set_error(err, kErrorTypeValidation, "Column index is too high");
@@ -539,7 +539,7 @@ String buf_get_text(buf_T *buf, int64_t lnum, int64_t start_col, int64_t end_col
     return rv;
   }
 
-  if ((size_t)start_col >= line_length) {
+  if (start_col >= line_length) {
     return rv;
   }
 

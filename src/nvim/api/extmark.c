@@ -682,7 +682,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     goto error;
   });
 
-  size_t len = 0;
+  colnr_T len = 0;
 
   if (HAS_KEY(opts, set_extmark, spell)) {
     hl.flags |= (opts->spell) ? kSHSpellOn : kSHSpellOff;
@@ -712,16 +712,16 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     });
     line = buf->b_ml.ml_line_count;
   } else if (line < buf->b_ml.ml_line_count) {
-    len = opts->ephemeral ? MAXCOL : strlen(ml_get_buf(buf, (linenr_T)line + 1));
+    len = opts->ephemeral ? MAXCOL : ml_get_buf_len(buf, (linenr_T)line + 1);
   }
 
   if (col == -1) {
-    col = (Integer)len;
-  } else if (col > (Integer)len) {
+    col = len;
+  } else if (col > len) {
     VALIDATE_RANGE(!strict, "col", {
       goto error;
     });
-    col = (Integer)len;
+    col = len;
   } else if (col < -1) {
     VALIDATE_RANGE(false, "col", {
       goto error;
@@ -730,7 +730,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
   if (col2 >= 0) {
     if (line2 >= 0 && line2 < buf->b_ml.ml_line_count) {
-      len = opts->ephemeral ? MAXCOL : strlen(ml_get_buf(buf, (linenr_T)line2 + 1));
+      len = opts->ephemeral ? MAXCOL : ml_get_buf_len(buf, (linenr_T)line2 + 1);
     } else if (line2 == buf->b_ml.ml_line_count) {
       // We are trying to add an extmark past final newline
       len = 0;
@@ -738,11 +738,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       // reuse len from before
       line2 = (int)line;
     }
-    if (col2 > (Integer)len) {
+    if (col2 > len) {
       VALIDATE_RANGE(!strict, "end_col", {
         goto error;
       });
-      col2 = (int)len;
+      col2 = len;
     }
   } else if (line2 >= 0) {
     col2 = 0;
