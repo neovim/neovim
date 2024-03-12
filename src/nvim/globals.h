@@ -363,7 +363,7 @@ EXTERN bool sys_menu INIT( = false);
 // currently active window.
 EXTERN win_T *firstwin;              // first window
 EXTERN win_T *lastwin;               // last window
-EXTERN win_T *prevwin INIT( = NULL);  // previous window
+EXTERN win_T *prevwin INIT( = NULL);  // previous window (may equal curwin)
 #define ONE_WINDOW (firstwin == lastwin)
 #define FOR_ALL_FRAMES(frp, first_frame) \
   for ((frp) = first_frame; (frp) != NULL; (frp) = (frp)->fr_next)
