@@ -493,7 +493,7 @@ func Test_browse_edit_fail()
   try
     browse edit! other
     call assert_equal(l:other, bufnr())
-  catch /E338:/
+  catch /^Vim\%((\a\+)\)\=:E338:/
     " Ignore E338, which occurs if console Vim is built with +browse.
     " Console Vim without +browse will treat this as a regular :edit.
   endtry
@@ -511,7 +511,7 @@ func Test_browse_edit_pass()
 
   try
     browse write other
-  catch /E338:/
+  catch /^Vim\%((\a\+)\)\=:E338:/
     " Ignore E338, which occurs if console Vim is built with +browse.
     " Console Vim without +browse will treat this as a regular :write.
   endtry
@@ -2532,7 +2532,7 @@ EOF
 
   try
     pyxdo test_winfixbuf_Test_pythonx_pyxdo_set_buffer()
-  catch /pynvim\.api\.common\.NvimError: E1513: Cannot edit buffer\. 'winfixbuf' is enabled/
+  catch /pynvim\.api\.common\.NvimError: E1513:/
     let l:caught = 1
   endtry
 
@@ -2563,7 +2563,7 @@ func Test_pythonx_pyxfile()
 
   try
     pyxfile file.py
-  catch /pynvim\.api\.common\.NvimError: E1513: Cannot edit buffer\. 'winfixbuf' is enabled/
+  catch /pynvim\.api\.common\.NvimError: E1513:/
     let l:caught = 1
   endtry
 
@@ -2596,7 +2596,7 @@ import vim
 buffer = vim.vars["_previous_buffer"]
 vim.current.buffer = vim.buffers[buffer]
 EOF
-  catch /pynvim\.api\.common\.NvimError: E1513: Cannot edit buffer\. 'winfixbuf' is enabled/
+  catch /pynvim\.api\.common\.NvimError: E1513:/
     let l:caught = 1
   endtry
 
