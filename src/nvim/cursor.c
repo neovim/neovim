@@ -108,9 +108,10 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
                  || ((get_ve_flags(wp) & VE_ONEMORE) && wcol < MAXCOL);
 
   char *line = ml_get_buf(wp->w_buffer, pos->lnum);
+  int linelen = ml_get_buf_len(wp->w_buffer, pos->lnum);
 
   if (wcol >= MAXCOL) {
-    idx = (int)strlen(line) - 1 + one_more;
+    idx = linelen - 1 + one_more;
     col = wcol;
 
     if ((addspaces || finetune) && !VIsual_active) {
@@ -188,7 +189,6 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
         col = wcol;
       } else {
         // Break a tab
-        int linelen = (int)strlen(line);
         int correct = wcol - col - csize + 1;             // negative!!
         char *newline;
 
@@ -315,8 +315,7 @@ void check_pos(buf_T *buf, pos_T *pos)
   }
 
   if (pos->col > 0) {
-    char *line = ml_get_buf(buf, pos->lnum);
-    colnr_T len = (colnr_T)strlen(line);
+    colnr_T len = ml_get_buf_len(buf, pos->lnum);
     if (pos->col > len) {
       pos->col = len;
     }
@@ -347,7 +346,7 @@ void check_cursor_col(win_T *win)
   colnr_T oldcoladd = win->w_cursor.col + win->w_cursor.coladd;
   unsigned cur_ve_flags = get_ve_flags(win);
 
-  colnr_T len = (colnr_T)strlen(ml_get_buf(win->w_buffer, win->w_cursor.lnum));
+  colnr_T len = ml_get_buf_len(win->w_buffer, win->w_cursor.lnum);
   if (len == 0) {
     win->w_cursor.col = 0;
   } else if (win->w_cursor.col >= len) {
@@ -413,7 +412,7 @@ void check_visual_pos(void)
     VIsual.col = 0;
     VIsual.coladd = 0;
   } else {
-    int len = (int)strlen(ml_get(VIsual.lnum));
+    int len = ml_get_len(VIsual.lnum);
 
     if (VIsual.col > len) {
       VIsual.col = len;

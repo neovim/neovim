@@ -1044,7 +1044,7 @@ bool copy_indent(int size, char *src)
     if (p == NULL) {
       // Allocate memory for the result: the copied indent, new indent
       // and the rest of the line.
-      line_len = (int)strlen(get_cursor_line_ptr()) + 1;
+      line_len = get_cursor_line_len() + 1;
       assert(ind_len + line_len >= 0);
       size_t line_size;
       STRICT_ADD(ind_len, line_len, &line_size, size_t);
@@ -1865,7 +1865,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   }
   if (did_append) {
     // bail out and just get the final length of the line we just manipulated
-    bcount_t extra = (bcount_t)strlen(ml_get(curwin->w_cursor.lnum));
+    bcount_t extra = ml_get_len(curwin->w_cursor.lnum);
     extmark_splice(curbuf, (int)curwin->w_cursor.lnum - 1, 0,
                    0, 0, 0, 1, 0, 1 + extra, kExtmarkUndo);
     changed_lines(curbuf, curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1, true);

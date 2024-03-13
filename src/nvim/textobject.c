@@ -218,7 +218,7 @@ bool findpar(bool *pincl, int dir, int count, int what, bool both)
 
     // Put the cursor on the last character in the last line and make the
     // motion inclusive.
-    if ((curwin->w_cursor.col = (colnr_T)strlen(line)) != 0) {
+    if ((curwin->w_cursor.col = ml_get_len(curr)) != 0) {
       curwin->w_cursor.col--;
       curwin->w_cursor.col -= utf_head_off(line, line + curwin->w_cursor.col);
       *pincl = true;

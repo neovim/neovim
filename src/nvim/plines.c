@@ -593,7 +593,7 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *e
     // Cannot put the cursor on part of a wide character.
     char *ptr = ml_get_buf(wp->w_buffer, pos->lnum);
 
-    if (pos->col < (colnr_T)strlen(ptr)) {
+    if (pos->col < ml_get_buf_len(wp->w_buffer, pos->lnum)) {
       int c = utf_ptr2char(ptr + pos->col);
       if ((c != TAB) && vim_isprintc(c)) {
         endadd = (colnr_T)(char2cells(c) - 1);

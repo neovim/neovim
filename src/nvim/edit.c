@@ -2968,7 +2968,7 @@ static void replace_do_bs(int limit_col)
     }
     del_char_after_col(limit_col);
     if (l_State & VREPLACE_FLAG) {
-      orig_len = (int)strlen(get_cursor_pos_ptr());
+      orig_len = get_cursor_pos_len();
     }
     replace_push(cc);
     replace_pop_ins();
@@ -2976,7 +2976,7 @@ static void replace_do_bs(int limit_col)
     if (l_State & VREPLACE_FLAG) {
       // Get the number of screen cells used by the inserted characters
       char *p = get_cursor_pos_ptr();
-      int ins_len = (int)strlen(p) - orig_len;
+      int ins_len = get_cursor_pos_len() - orig_len;
       int vcol = start_vcol;
       for (int i = 0; i < ins_len; i++) {
         vcol += win_chartabsize(curwin, p + i, vcol);
@@ -3760,7 +3760,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         return false;
       }
       Insstart.lnum--;
-      Insstart.col = (colnr_T)strlen(ml_get(Insstart.lnum));
+      Insstart.col = ml_get_len(Insstart.lnum);
     }
     // In replace mode:
     // cc < 0: NL was inserted, delete it
@@ -4480,7 +4480,7 @@ bool ins_eol(int c)
 
   // NL in reverse insert will always start in the end of current line.
   if (revins_on) {
-    curwin->w_cursor.col += (colnr_T)strlen(get_cursor_pos_ptr());
+    curwin->w_cursor.col += get_cursor_pos_len();
   }
 
   AppendToRedobuff(NL_STR);

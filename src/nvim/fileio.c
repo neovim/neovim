@@ -957,7 +957,7 @@ retry:
             int tlen = 0;
             while (true) {
               p = (uint8_t *)ml_get(read_buf_lnum) + read_buf_col;
-              int n = (int)strlen((char *)p);
+              int n = ml_get_len(read_buf_lnum) - read_buf_col;
               if (tlen + n + 1 > size) {
                 // Filled up to "size", append partial line.
                 // Change NL to NUL to reverse the effect done

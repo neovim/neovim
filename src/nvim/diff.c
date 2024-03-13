@@ -756,7 +756,7 @@ static int diff_write_buffer(buf_T *buf, mmfile_t *m, linenr_T start, linenr_T e
 
   // xdiff requires one big block of memory with all the text.
   for (linenr_T lnum = start; lnum <= end; lnum++) {
-    len += strlen(ml_get_buf(buf, lnum)) + 1;
+    len += (size_t)ml_get_buf_len(buf, lnum) + 1;
   }
   char *ptr = try_malloc(len);
   if (ptr == NULL) {
