@@ -632,4 +632,92 @@ describe('Conceal', function()
     feed('$')
     expect_pos(9, 26)
   end)
+
+  -- oldtest: Test_conceal_virtualedit_after_eol()
+  it('cursor drawn at correct column with virtualedit', function()
+    local screen = Screen.new(75, 3)
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+    })
+    screen:attach()
+    exec([[
+      call setline(1, 'abcdefgh|hidden|ijklmnpop')
+      syntax match test /|hidden|/ conceal
+      set conceallevel=2 concealcursor=n virtualedit=all
+      normal! $
+    ]])
+    screen:expect([[
+      abcdefghijklmnpo^p                                                          |
+      {0:~                                                                          }|
+                                                                                 |
+    ]])
+    feed('l')
+    screen:expect([[
+      abcdefghijklmnpop^                                                          |
+      {0:~                                                                          }|
+                                                                                 |
+    ]])
+    feed('l')
+    screen:expect([[
+      abcdefghijklmnpop ^                                                         |
+      {0:~                                                                          }|
+                                                                                 |
+    ]])
+    feed('l')
+    screen:expect([[
+      abcdefghijklmnpop  ^                                                        |
+      {0:~                                                                          }|
+                                                                                 |
+    ]])
+    feed('rr')
+    screen:expect([[
+      abcdefghijklmnpop  ^r                                                       |
+      {0:~                                                                          }|
+                                                                                 |
+    ]])
+  end)
+
+  -- oldtest: Test_conceal_virtualedit_after_eol_rightleft()
+  it('cursor drawn correctly with virtualedit and rightleft', function()
+    local screen = Screen.new(75, 3)
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+    })
+    screen:attach()
+    exec([[
+      call setline(1, 'abcdefgh|hidden|ijklmnpop')
+      syntax match test /|hidden|/ conceal
+      set conceallevel=2 concealcursor=n virtualedit=all rightleft
+      normal! $
+    ]])
+    screen:expect([[
+                                                                ^popnmlkjihgfedcba|
+      {0:                                                                          ~}|
+                                                                                 |
+    ]])
+    feed('h')
+    screen:expect([[
+                                                               ^ popnmlkjihgfedcba|
+      {0:                                                                          ~}|
+                                                                                 |
+    ]])
+    feed('h')
+    screen:expect([[
+                                                              ^  popnmlkjihgfedcba|
+      {0:                                                                          ~}|
+                                                                                 |
+    ]])
+    feed('h')
+    screen:expect([[
+                                                             ^   popnmlkjihgfedcba|
+      {0:                                                                          ~}|
+                                                                                 |
+    ]])
+    feed('rr')
+    screen:expect([[
+                                                             ^r  popnmlkjihgfedcba|
+      {0:                                                                          ~}|
+                                                                                 |
+    ]])
+  end)
 end)
