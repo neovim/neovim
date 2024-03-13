@@ -12688,9 +12688,7 @@ M.funcs = {
       [1, 1], unless there is a tabline, then it is [2, 1].
       {nr} can be the window number or the |window-ID|.  Use zero
       for the current window.
-      Returns [0, 0] if the window cannot be found in the current
-      tabpage.
-
+      Returns [0, 0] if the window cannot be found.
     ]=],
     name = 'win_screenpos',
     params = { { 'nr', 'integer' } },
