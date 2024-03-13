@@ -81,7 +81,7 @@ local TSCallbackNames = {
 ---List of regions this tree should manage and parse. If nil then regions are
 ---taken from _trees. This is mostly a short-lived cache for included_regions()
 ---@field private _lang string Language name
----@field private _parent_lang? string Parent language name
+---@field private _parent? vim.treesitter.LanguageTree Parent LanguageTree
 ---@field private _source (integer|string) Buffer or string to parse
 ---@field private _trees table<integer, TSTree> Reference to parsed tree (one for each language).
 ---Each key is the index of region, which is synced with _regions and _valid.
@@ -106,9 +106,8 @@ LanguageTree.__index = LanguageTree
 ---@param source (integer|string) Buffer or text string to parse
 ---@param lang string Root language of this tree
 ---@param opts vim.treesitter.LanguageTree.new.Opts?
----@param parent_lang? string Parent language name of this tree
 ---@return vim.treesitter.LanguageTree parser object
-function LanguageTree.new(source, lang, opts, parent_lang)
+function LanguageTree.new(source, lang, opts)
   language.add(lang)
   opts = opts or {}
 
@@ -122,7 +121,6 @@ function LanguageTree.new(source, lang, opts, parent_lang)
   local self = {
     _source = source,
     _lang = lang,
-    _parent_lang = parent_lang,
     _children = {},
     _trees = {},
     _opts = opts,
@@ -505,17 +503,23 @@ function LanguageTree:add_child(lang)
     self:remove_child(lang)
   end
 
-  local child = LanguageTree.new(self._source, lang, self._opts, self:lang())
+  local child = LanguageTree.new(self._source, lang, self._opts)
 
   -- Inherit recursive callbacks
   for nm, cb in pairs(self._callbacks_rec) do
     vim.list_extend(child._callbacks_rec[nm], cb)
   end
 
+  child._parent = self
   self._children[lang] = child
   self:_do_callback('child_added', self._children[lang])
 
   return self._children[lang]
+end
+
+--- @package
+function LanguageTree:parent()
+  return self._parent
 end
 
 --- Removes a child language from this |LanguageTree|.
@@ -792,7 +796,7 @@ function LanguageTree:_get_injection(match, metadata)
   local combined = metadata['injection.combined'] ~= nil
   local injection_lang = metadata['injection.language'] --[[@as string?]]
   local lang = metadata['injection.self'] ~= nil and self:lang()
-    or metadata['injection.parent'] ~= nil and self._parent_lang
+    or metadata['injection.parent'] ~= nil and self._parent
     or (injection_lang and resolve_lang(injection_lang))
   local include_children = metadata['injection.include-children'] ~= nil
 

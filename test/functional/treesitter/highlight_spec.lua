@@ -867,6 +867,40 @@ describe('treesitter highlighting (help)', function()
     ]],
     }
   end)
+
+  it('correctly redraws injections subpriorities', function()
+    -- The top level string node will be highlighted first
+    -- with an extmark spanning multiple lines.
+    -- When the next line is drawn, which includes an injection,
+    -- make sure the highlight appears above the base tree highlight
+
+    insert([=[
+    local s = [[
+      local also = lua
+    ]]
+    ]=])
+
+    exec_lua [[
+      parser = vim.treesitter.get_parser(0, "lua", {
+        injections = {
+          lua = '(string content: (_) @injection.content (#set! injection.language lua))'
+        }
+      })
+
+      vim.treesitter.highlighter.new(parser)
+    ]]
+
+    screen:expect {
+      grid = [=[
+      {3:local} {4:s} {3:=} {5:[[}                            |
+      {5:  }{3:local}{5: }{4:also}{5: }{3:=}{5: }{4:lua}                      |
+      {5:]]}                                      |
+      ^                                        |
+      {2:~                                       }|
+                                              |
+    ]=],
+    }
+  end)
 end)
 
 describe('treesitter highlighting (nested injections)', function()
