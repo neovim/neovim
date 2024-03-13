@@ -2301,8 +2301,21 @@ describe('extmark decorations', function()
     ]]}
   end)
 
+  it('virtual text does not crash with blend, conceal and wrap #27836', function()
+    screen:try_resize(50, 3)
+    insert(('a'):rep(45) .. '|hidden|' .. ('b'):rep(45))
+    command('syntax match test /|hidden|/ conceal')
+    command('set conceallevel=2 concealcursor=n')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {virt_text = {{'FOO'}}, virt_text_pos='right_align', hl_mode='blend'})
+    screen:expect{grid=[[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  FOO|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb^b     |
+                                                        |
+    ]]}
+  end)
+
   it('works with both hl_group and sign_hl_group', function()
-    screen:try_resize(screen._width, 3)
+    screen:try_resize(50, 3)
     insert('abcdefghijklmn')
     api.nvim_buf_set_extmark(0, ns, 0, 0, {sign_text='S', sign_hl_group='NonText', hl_group='Error', end_col=14})
     screen:expect{grid=[[

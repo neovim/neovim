@@ -288,26 +288,23 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
     if (item->draw_col < 0) {
       continue;
     }
-    int col = 0;
     if (item->kind == kDecorKindUIWatched) {
       // send mark position to UI
-      col = item->draw_col;
-      WinExtmark m = { (NS)item->data.ui.ns_id, item->data.ui.mark_id, win_row, col };
+      WinExtmark m = { (NS)item->data.ui.ns_id, item->data.ui.mark_id, win_row, item->draw_col };
       kv_push(win_extmark_arr, m);
     }
     if (vt) {
       int vcol = item->draw_col - col_off;
-      col = draw_virt_text_item(buf, item->draw_col, vt->data.virt_text,
-                                vt->hl_mode, max_col, vcol);
+      int col = draw_virt_text_item(buf, item->draw_col, vt->data.virt_text,
+                                    vt->hl_mode, max_col, vcol);
       if (vt->pos == kVPosEndOfLine && do_eol) {
         state->eol_col = col + 1;
       }
+      *end_col = MAX(*end_col, col);
     }
     if (!vt || !(vt->flags & kVTRepeatLinebreak)) {
       item->draw_col = INT_MIN;  // deactivate
     }
-
-    *end_col = MAX(*end_col, col);
   }
 }
 
@@ -898,7 +895,7 @@ static void win_line_start(win_T *wp, winlinevars_T *wlv)
   wlv->need_lbr = false;
   for (int i = 0; i < wp->w_grid.cols; i++) {
     linebuf_char[i] = schar_from_ascii(' ');
-    linebuf_attr[i] = -1;
+    linebuf_attr[i] = 0;
     linebuf_vcol[i] = -1;
   }
 }
@@ -2569,13 +2566,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
       advance_color_col(&wlv, vcol_hlc(wlv));
 
-      bool has_virttext = false;
       // Make sure alignment is the same regardless
       // if listchars=eol:X is used or not.
       const int eol_skip = (lcs_eol_todo && eol_hl_off == 0 ? 1 : 0);
 
       if (has_decor) {
-        has_virttext = decor_redraw_eol(wp, &decor_state, &wlv.line_attr, wlv.col + eol_skip);
+        decor_redraw_eol(wp, &decor_state, &wlv.line_attr, wlv.col + eol_skip);
       }
 
       if (((wp->w_p_cuc
@@ -2583,7 +2579,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
             && wp->w_virtcol < grid->cols * (ptrdiff_t)(wlv.row - startrow + 1) + start_col
             && lnum != wp->w_cursor.lnum)
            || wlv.color_cols || wlv.line_attr_lowprio || wlv.line_attr
-           || wlv.diff_hlf != 0 || has_virttext)) {
+           || wlv.diff_hlf != 0)) {
         int rightmost_vcol = get_rightmost_vcol(wp, wlv.color_cols);
         const int cuc_attr = win_hl_attr(wp, HLF_CUC);
         const int mc_attr = win_hl_attr(wp, HLF_MC);
@@ -2597,7 +2593,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
                               : 0;
 
         const int base_attr = hl_combine_attr(wlv.line_attr_lowprio, diff_attr);
-        if (base_attr || wlv.line_attr || has_virttext) {
+        if (base_attr || wlv.line_attr) {
           rightmost_vcol = INT_MAX;
         }
 
@@ -2624,7 +2620,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
             break;
           }
 
-          wlv.vcol += 1;
+          wlv.vcol++;
         }
       }
 
