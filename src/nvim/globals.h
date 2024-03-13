@@ -972,7 +972,7 @@ EXTERN const char e_undobang_cannot_redo_or_move_branch[]
 INIT(= N_("E5767: Cannot use :undo! to redo or move to a different undo branch"));
 
 EXTERN const char e_winfixbuf_cannot_go_to_buffer[]
-INIT(= N_("E1513: Cannot edit buffer. 'winfixbuf' is enabled"));
+INIT(= N_("E1513: Cannot switch buffer. 'winfixbuf' is enabled"));
 
 EXTERN const char e_trustfile[] INIT(= N_("E5570: Cannot update trust file: %s"));
 
