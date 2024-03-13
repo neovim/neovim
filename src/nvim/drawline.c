@@ -2851,6 +2851,19 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
                         && !wp->w_p_rl;               // Not right-to-left.
 
       int draw_col = wlv.col - wlv.boguscols;
+
+      // Apply 'cursorline' highlight.
+      if (wlv.boguscols != 0 && (wlv.line_attr_lowprio != 0 || wlv.line_attr != 0)) {
+        int attr = hl_combine_attr(wlv.line_attr_lowprio, wlv.line_attr);
+        while (draw_col < grid->cols) {
+          linebuf_char[wlv.off] = schar_from_char(' ');
+          linebuf_attr[wlv.off] = attr;
+          linebuf_vcol[wlv.off] = MAXCOL;  // TODO(zeertzjq): this is wrong
+          wlv.off++;
+          draw_col++;
+        }
+      }
+
       if (virt_line_offset >= 0) {
         draw_virt_text_item(buf, virt_line_offset, kv_A(virt_lines, virt_line_index).line,
                             kHlModeReplace, grid->cols, 0);

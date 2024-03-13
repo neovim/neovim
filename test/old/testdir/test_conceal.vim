@@ -169,6 +169,57 @@ func Test_conceal_with_cursorcolumn()
   call StopVimInTerminal(buf)
 endfunc
 
+" Check that 'cursorline' and 'wincolor' apply to the whole line in presence
+" of wrapped lines containing concealed text.
+func Test_conceal_wrapped_cursorline_wincolor()
+  CheckScreendump
+
+  let code =<< trim [CODE]
+    call setline(1, 'one one one |hidden| one one one one one one one one')
+    syntax match test /|hidden|/ conceal
+    set conceallevel=2 concealcursor=n cursorline
+    normal! g$
+  [CODE]
+
+  call writefile(code, 'XTest_conceal_cul_wcr', 'D')
+  let buf = RunVimInTerminal('-S XTest_conceal_cul_wcr', {'rows': 4, 'cols': 40})
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_01', {})
+
+  call term_sendkeys(buf, ":set wincolor=ErrorMsg\n")
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_02', {})
+
+  call term_sendkeys(buf, ":set nocursorline\n")
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_03', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+" Same as Test_conceal_wrapped_cursorline_wincolor(), but with 'rightleft'.
+func Test_conceal_wrapped_cursorline_wincolor_rightleft()
+  CheckScreendump
+
+  let code =<< trim [CODE]
+    call setline(1, 'one one one |hidden| one one one one one one one one')
+    syntax match test /|hidden|/ conceal
+    set conceallevel=2 concealcursor=n cursorline rightleft
+    normal! g$
+  [CODE]
+
+  call writefile(code, 'XTest_conceal_cul_wcr_rl', 'D')
+  let buf = RunVimInTerminal('-S XTest_conceal_cul_wcr_rl', {'rows': 4, 'cols': 40})
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_rl_01', {})
+
+  call term_sendkeys(buf, ":set wincolor=ErrorMsg\n")
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_rl_02', {})
+
+  call term_sendkeys(buf, ":set nocursorline\n")
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_rl_03', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_conceal_resize_term()
   CheckScreendump
 
