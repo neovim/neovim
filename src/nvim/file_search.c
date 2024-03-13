@@ -683,7 +683,7 @@ char *vim_findfile(void *search_ctx_arg)
 
         rest_of_wildcards = stackp->ffs_wc_path;
         if (*rest_of_wildcards != NUL) {
-          len = file_path_e - file_path;
+          len = (size_t)(file_path_e - file_path);
           if (strncmp(rest_of_wildcards, "**", 2) == 0) {
             // pointer to the restrict byte
             // The restrict byte is not a character!
