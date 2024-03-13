@@ -442,19 +442,18 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
     emsg(_(e_path_too_long_for_completion));
     goto error_return;
   }
-  char *ff_expand_buffer_e = ff_expand_buffer;
-  ff_expand_buffer_e = xstpcpy(ff_expand_buffer_e, search_ctx->ffsc_start_dir);
+  char *ff_expand_buffer_e = xstpcpy(ff_expand_buffer, search_ctx->ffsc_start_dir);
   add_pathsep(ff_expand_buffer);
+  ff_expand_buffer_e += strlen(ff_expand_buffer_e);
   {
-    size_t eb_len = strlen(ff_expand_buffer);
+    size_t eb_len = (size_t)(ff_expand_buffer_e - ff_expand_buffer);
     char *buf = xmalloc(eb_len + strlen(search_ctx->ffsc_fix_path) + 1);
-    char *buf_e = buf;
-
-    buf_e = xstpcpy(buf_e, ff_expand_buffer);
+    char *buf_e = xstpcpy(buf, ff_expand_buffer);
     buf_e = xstpcpy(buf_e, search_ctx->ffsc_fix_path);
     if (os_isdir(buf)) {
       ff_expand_buffer_e = xstpcpy(ff_expand_buffer_e, search_ctx->ffsc_fix_path);
       add_pathsep(ff_expand_buffer);
+      ff_expand_buffer_e += strlen(ff_expand_buffer_e);
     } else {
       char *p = path_tail(search_ctx->ffsc_fix_path);
       char *wc_path = NULL;
@@ -480,8 +479,7 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
         temp = xmalloc(strlen(search_ctx->ffsc_wc_path)
                        + strlen(search_ctx->ffsc_fix_path + len)
                        + 1);
-        char *temp_e = temp;
-        temp_e = xstpcpy(temp_e, search_ctx->ffsc_fix_path + len);
+        char *temp_e = xstpcpy(temp, search_ctx->ffsc_fix_path + len);
         temp_e = xstpcpy(temp_e, search_ctx->ffsc_wc_path);
         xfree(search_ctx->ffsc_wc_path);
         xfree(wc_path);
@@ -661,7 +659,7 @@ char *vim_findfile(void *search_ctx_arg)
             ff_free_stack_element(stackp);
             goto fail;
           }
-          file_path_e = xstpcpy(file_path_e, search_ctx->ffsc_start_dir);
+          file_path_e = xstpcpy(file_path, search_ctx->ffsc_start_dir);
           if (!add_pathsep(file_path)) {
             ff_free_stack_element(stackp);
             goto fail;
@@ -912,8 +910,7 @@ char *vim_findfile(void *search_ctx_arg)
           + strlen(search_ctx->ffsc_fix_path) >= MAXPATHL) {
         goto fail;
       }
-      char *file_path_e = file_path;
-      file_path_e = xstpcpy(file_path_e, search_ctx->ffsc_start_dir);
+      char *file_path_e = xstpcpy(file_path, search_ctx->ffsc_start_dir);
       if (!add_pathsep(file_path)) {
         goto fail;
       }

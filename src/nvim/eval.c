@@ -7093,8 +7093,7 @@ static char *make_expanded_name(const char *in_start, char *expr_start, char *ex
   if (temp_result != NULL) {
     retval = xmalloc(strlen(temp_result) + (size_t)(expr_start - in_start)
                      + (size_t)(in_end - expr_end) + 1);
-    char *retval_e = retval;
-    retval_e = xstpcpy(retval_e, in_start);
+    char *retval_e = xstpcpy(retval, in_start);
     retval_e = xstpcpy(retval_e, temp_result);
     retval_e = xstpcpy(retval_e, expr_end + 1);
   }

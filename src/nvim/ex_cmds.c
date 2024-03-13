@@ -1029,8 +1029,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
       xfree(newcmd);
     }
     newcmd = xmalloc(strlen(prevcmd) + 2 * strlen(p_shq) + 1);
-    char *newcmd_e = newcmd;
-    newcmd_e = xstpcpy(newcmd_e, p_shq);
+    char *newcmd_e = xstpcpy(newcmd, p_shq);
     newcmd_e = xstpcpy(newcmd_e, prevcmd);
     newcmd_e = xstpcpy(newcmd_e, p_shq);
     free_newcmd = true;

@@ -241,7 +241,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   }
 
   char *command = xmalloc(len);
-  char *command_e = command;
+  char *command_e;
 
   // Build the shell command:
   // - Set $nonomatch depending on EW_NOTFOUND (hopefully the shell
@@ -252,9 +252,9 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   if (shell_style == STYLE_BT) {
     // change `command; command& ` to (command; command )
     if (is_fish_shell) {
-      command_e = xstpcpy(command_e, "begin; ");
+      command_e = xstpcpy(command, "begin; ");
     } else {
-      command_e = xstpcpy(command_e, "(");
+      command_e = xstpcpy(command, "(");
     }
     command_e = xstpcpy(command_e, pat[0] + 1);                // exclude first backtick
     p = command_e - 1;
@@ -273,7 +273,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     }
     command_e = xstpcpy(command_e, ">");
   } else {
-    command_e = xstpcpy(command_e, "");
+    command_e = xstpcpy(command, "");
     if (shell_style == STYLE_GLOB) {
       // Assume the nonomatch option is valid only for csh like shells,
       // otherwise, this may set the positional parameters for the shell,

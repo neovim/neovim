@@ -395,6 +395,7 @@ char *get_exception_string(void *value, except_type_T type, char *cmdname, bool 
     // msg_add_fname may have been used to prefix the message with a file
     // name in quotes.  In the exception value, put the file name in
     // parentheses and move it to the end.
+    char *val_e = val + strlen(val);
     for (char *p = mesg;; p++) {
       if (*p == NUL
           || (*p == 'E'
@@ -405,7 +406,7 @@ char *get_exception_string(void *value, except_type_T type, char *cmdname, bool 
                           || (ascii_isdigit(p[3])
                               && p[4] == ':')))))) {
         if (*p == NUL || p == mesg) {
-          STRCAT(val, mesg);  // 'E123' missing or at beginning
+          val_e = xstpcpy(val_e, mesg);  // 'E123' missing or at beginning
         } else {
           // '"filename" E123: message text'
           if (mesg[0] != '"' || p - 2 < &mesg[1]
@@ -413,12 +414,11 @@ char *get_exception_string(void *value, except_type_T type, char *cmdname, bool 
             // "E123:" is part of the file name.
             continue;
           }
-
-          char *val_e = val + strlen(val);
           val_e = xstpcpy(val_e, p);
           p[-2] = NUL;
           snprintf(val_e, strlen(" (%s)"), " (%s)", &mesg[1]);
           p[-2] = '"';
+          val_e += strlen(val_e);
         }
         break;
       }

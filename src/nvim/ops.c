@@ -3431,8 +3431,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
           char *ptr = ml_get(lnum) + col;
           totlen = strlen(y_array[y_size - 1]);
           char *newp = xmalloc((size_t)(strlen(ptr) + totlen + 1));
-          char *newp_e = newp;
-          newp_e = xstpcpy(newp_e, y_array[y_size - 1]);
+          char *newp_e = xstpcpy(newp, y_array[y_size - 1]);
           newp_e = xstpcpy(newp_e, ptr);
           // insert second line
           ml_append(lnum, newp, 0, false);

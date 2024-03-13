@@ -3795,9 +3795,8 @@ char *replace_makeprg(exarg_T *eap, char *arg, char **cmdlinep)
     // Replace $* by given arguments
     if ((new_cmdline = strrep(program, "$*", arg)) == NULL) {
       // No $* in arg, build "<makeprg> <arg>" instead
-      char *new_cmdline_e = new_cmdline;
       new_cmdline = xmalloc(strlen(program) + strlen(arg) + 2);
-      new_cmdline_e = xstpcpy(new_cmdline_e, program);
+      char *new_cmdline_e = xstpcpy(new_cmdline, program);
       new_cmdline_e = xstpcpy(new_cmdline_e, " ");
       new_cmdline_e = xstpcpy(new_cmdline_e, arg);
     }

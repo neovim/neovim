@@ -1719,7 +1719,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     char *leader_e = leader + strlen(leader);
     if (flags & OPENLINE_COM_LIST && second_line_indent > 0) {
       int padding = second_line_indent
-                    - (newindent + (int)strlen(leader));
+                    - (newindent + (int)(leader_e - leader));
 
       // Here whitespace is inserted after the comment char.
       // Below, set_indent(newindent, SIN_INSERT) will insert the

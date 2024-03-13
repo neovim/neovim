@@ -1271,11 +1271,10 @@ void ex_diffpatch(exarg_T *eap)
 #endif
 
   // Delete any .orig or .rej file created.
-  char *buf_e = buf;
-  buf_e = xstpcpy(buf_e, tmp_new);
+  char *buf_e = xstpcpy(buf, tmp_new);
   buf_e = xstpcpy(buf_e, ".orig");
   os_remove(buf);
-  buf_e = xstpcpy(buf_e, tmp_new);
+  buf_e = xstpcpy(buf, tmp_new);
   buf_e = xstpcpy(buf_e, ".rej");
   os_remove(buf);
 
@@ -1287,7 +1286,7 @@ void ex_diffpatch(exarg_T *eap)
     emsg(_("E816: Cannot read patch output"));
   } else {
     if (curbuf->b_fname != NULL) {
-      size_t newname_len = strlen(curbuf->b_fname);
+      const size_t newname_len = strlen(curbuf->b_fname);
       newname = xstrnsave(curbuf->b_fname, newname_len + 4);
       STRCPY(newname + newname_len, ".new");
     }
