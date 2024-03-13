@@ -57,6 +57,7 @@ end
 ---@field next_row integer
 ---@field iter vim.treesitter.highlighter.Iter?
 ---@field highlighter_query vim.treesitter.highlighter.Query
+---@field level integer Injection level
 
 ---@nodoc
 ---@class vim.treesitter.highlighter
@@ -192,12 +193,20 @@ function TSHighlighter:prepare_highlight_states(srow, erow)
       return
     end
 
+    local level = 0
+    local t = tree
+    while t do
+      t = t:parent()
+      level = level + 1
+    end
+
     -- _highlight_states should be a list so that the highlights are added in the same order as
     -- for_each_tree traversal. This ensures that parents' highlight don't override children's.
     table.insert(self._highlight_states, {
       tstree = tstree,
       next_row = 0,
       iter = nil,
+      level = level,
       highlighter_query = highlighter_query,
     })
   end)
@@ -248,14 +257,10 @@ end
 ---@param line integer
 ---@param is_spell_nav boolean
 local function on_line_impl(self, buf, line, is_spell_nav)
-  -- Track the maximum pattern index encountered in each tree. For subsequent
-  -- trees, the subpriority passed to nvim_buf_set_extmark is offset by the
-  -- largest pattern index from the prior tree. This ensures that extmarks
-  -- from subsequent trees always appear "on top of" extmarks from previous
-  -- trees (e.g. injections should always appear over base highlights).
-  local pattern_offset = 0
-
   self:for_each_highlight_state(function(state)
+    -- Use the injection level to offset the subpriority passed to nvim_buf_set_extmark
+    -- so injections always appear over base highlights.
+    local pattern_offset = state.level * 1000
     local root_node = state.tstree:root()
     local root_start_row, _, root_end_row, _ = root_node:range()
 
@@ -270,13 +275,8 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         :iter_matches(root_node, self.bufnr, line, root_end_row + 1, { all = true })
     end
 
-    local max_pattern_index = 0
     while line >= state.next_row do
       local pattern, match, metadata = state.iter()
-
-      if pattern and pattern > max_pattern_index then
-        max_pattern_index = pattern
-      end
 
       if not match then
         state.next_row = root_end_row + 1
@@ -343,8 +343,6 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         end
       end
     end
-
-    pattern_offset = pattern_offset + max_pattern_index
   end)
 end
 
