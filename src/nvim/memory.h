@@ -11,7 +11,7 @@
 #include "nvim/memory_defs.h"  // IWYU pragma: keep
 
 static inline char *xstpcpy(char *restrict dst, const char *restrict src)
-  REAL_FATTR_NONNULL_RET REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL;
+  REAL_FATTR_NONNULL_RET REAL_FATTR_NONNULL_ALL;
 
 /// Copies the string pointed to by src (including the terminating NUL
 /// character) into the array pointed to by dst.
