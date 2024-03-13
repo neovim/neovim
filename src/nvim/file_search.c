@@ -670,7 +670,7 @@ char *vim_findfile(void *search_ctx_arg)
         }
 
         // append the fix part of the search path
-        if ((file_path_e - file_path) + strlen(stackp->ffs_fix_path) + 1 >= MAXPATHL) {
+        if ((size_t)(file_path_e - file_path) + strlen(stackp->ffs_fix_path) + 1 >= MAXPATHL) {
           ff_free_stack_element(stackp);
           goto fail;
         }

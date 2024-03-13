@@ -4524,7 +4524,7 @@ static char *get_mef_name(void)
     name = xmalloc(strlen(p_mef) + 30);
     char *name_e = name;
     name_e = xstpcpy(name_e, p_mef);
-    snprintf(name + (p - p_mef), name_e - name, "%d%d", start, off);
+    snprintf(name + (p - p_mef), (size_t)(name_e - name), "%d%d", start, off);
     name_e = xstpcpy(name_e, p + 2);
     // Don't accept a symbolic link, it's a security risk.
     FileInfo file_info;
