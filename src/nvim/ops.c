@@ -1587,7 +1587,7 @@ int op_delete(oparg_T *oap)
                           kExtmarkUndo);
     }
 
-    check_cursor_col();
+    check_cursor_col(curwin);
     changed_lines(curbuf, curwin->w_cursor.lnum, curwin->w_cursor.col,
                   oap->end.lnum + 1, 0, true);
     oap->line_count = 0;  // no lines deleted
@@ -1637,7 +1637,7 @@ int op_delete(oparg_T *oap)
         coladvance_force(getviscol2(oap->start.col, oap->start.coladd));
         oap->start = curwin->w_cursor;
         if (oap->line_count == 1) {
-          coladvance(endcol);
+          coladvance(curwin, endcol);
           oap->end.col = curwin->w_cursor.col;
           oap->end.coladd = curwin->w_cursor.coladd;
           curwin->w_cursor = oap->start;
@@ -1840,7 +1840,7 @@ static int op_replace(oparg_T *oap, int c)
         pos_T vpos;
 
         vpos.lnum = curwin->w_cursor.lnum;
-        getvpos(&vpos, oap->start_vcol);
+        getvpos(curwin, &vpos, oap->start_vcol);
         bd.startspaces += vpos.coladd;
         n = bd.startspaces;
       } else {
@@ -1975,7 +1975,7 @@ static int op_replace(oparg_T *oap, int c)
             }
             coladvance_force(getviscol());
             if (curwin->w_cursor.lnum == oap->end.lnum) {
-              getvpos(&oap->end, end_vcol);
+              getvpos(curwin, &oap->end, end_vcol);
             }
           }
           // with "coladd" set may move to just after a TAB
@@ -2018,7 +2018,7 @@ static int op_replace(oparg_T *oap, int c)
   }
 
   curwin->w_cursor = oap->start;
-  check_cursor();
+  check_cursor(curwin);
   changed_lines(curbuf, oap->start.lnum, oap->start.col, oap->end.lnum + 1, 0, true);
 
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
@@ -2260,7 +2260,7 @@ void op_insert(oparg_T *oap, int count1)
       }
     } else {
       curwin->w_cursor = oap->end;
-      check_cursor_col();
+      check_cursor_col(curwin);
 
       // Works just like an 'i'nsert on the next character.
       if (!LINEEMPTY(curwin->w_cursor.lnum)
@@ -2393,7 +2393,7 @@ void op_insert(oparg_T *oap, int count1)
       }
 
       curwin->w_cursor.col = oap->start.col;
-      check_cursor();
+      check_cursor(curwin);
       xfree(ins_text);
     }
   }
@@ -2488,7 +2488,7 @@ int op_change(oparg_T *oap)
           // initial coladd offset as part of "startspaces"
           if (bd.is_short) {
             vpos.lnum = linenr;
-            getvpos(&vpos, oap->start_vcol);
+            getvpos(curwin, &vpos, oap->start_vcol);
           } else {
             vpos.coladd = 0;
           }
@@ -2509,7 +2509,7 @@ int op_change(oparg_T *oap)
                               0, vpos.coladd + ins_len, kExtmarkUndo);
         }
       }
-      check_cursor();
+      check_cursor(curwin);
       changed_lines(curbuf, oap->start.lnum + 1, 0, oap->end.lnum + 1, 0, true);
       xfree(ins_text);
     }
@@ -2843,7 +2843,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
   bool allocated = false;
   const pos_T orig_start = curbuf->b_op_start;
   const pos_T orig_end = curbuf->b_op_end;
-  unsigned cur_ve_flags = get_ve_flags();
+  unsigned cur_ve_flags = get_ve_flags(curwin);
 
   if (flags & PUT_FIXINDENT) {
     orig_indent = get_indent();
@@ -3064,9 +3064,9 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
     // Correct line number for closed fold.  Don't move the cursor yet,
     // u_save() uses it.
     if (dir == BACKWARD) {
-      hasFolding(lnum, &lnum, NULL);
+      hasFolding(curwin, lnum, &lnum, NULL);
     } else {
-      hasFolding(lnum, NULL, &lnum);
+      hasFolding(curwin, lnum, NULL, &lnum);
     }
     if (dir == FORWARD) {
       lnum++;
@@ -3362,7 +3362,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
             pos_T pos = {
               .lnum = lnum,
             };
-            if (getvpos(&pos, vcol) == OK) {
+            if (getvpos(curwin, &pos, vcol) == OK) {
               col = pos.col;
             } else {
               col = MAXCOL;
@@ -3616,7 +3616,7 @@ end:
 /// there move it left.
 void adjust_cursor_eol(void)
 {
-  unsigned cur_ve_flags = get_ve_flags();
+  unsigned cur_ve_flags = get_ve_flags(curwin);
 
   const bool adj_cursor = (curwin->w_cursor.col > 0
                            && gchar_cursor() == NUL
@@ -4078,7 +4078,7 @@ int do_join(size_t count, bool insert_space, bool save_undo, bool use_formatopti
   // vim:             use the column of the last join
   curwin->w_cursor.col =
     (vim_strchr(p_cpo, CPO_JOINCOL) != NULL ? currsize : col);
-  check_cursor_col();
+  check_cursor_col(curwin);
 
   curwin->w_cursor.coladd = 0;
   curwin->w_set_curswant = true;
@@ -4445,7 +4445,7 @@ bool do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   // "Unsigned"
   const bool do_unsigned = vim_strchr(curbuf->b_p_nf, 'u') != NULL;
 
-  if (virtual_active()) {
+  if (virtual_active(curwin)) {
     save_coladd = pos->coladd;
     pos->coladd = 0;
   }
@@ -4767,7 +4767,7 @@ theend:
     curwin->w_cursor = save_cursor;
   } else if (did_change) {
     curwin->w_set_curswant = true;
-  } else if (virtual_active()) {
+  } else if (virtual_active(curwin)) {
     curwin->w_cursor.coladd = save_coladd;
   }
 
@@ -5349,7 +5349,7 @@ void cursor_pos_info(dict_T *dict)
 
         switch (l_VIsual_mode) {
         case Ctrl_V:
-          virtual_op = virtual_active();
+          virtual_op = virtual_active(curwin);
           block_prep(&oparg, &bd, lnum, false);
           virtual_op = kNone;
           s = bd.textstart;
@@ -5438,7 +5438,7 @@ void cursor_pos_info(dict_T *dict)
         }
       } else {
         char *p = get_cursor_line_ptr();
-        validate_virtcol();
+        validate_virtcol(curwin);
         col_print(buf1, sizeof(buf1), (int)curwin->w_cursor.col + 1,
                   (int)curwin->w_virtcol + 1);
         col_print(buf2, sizeof(buf2), (int)strlen(p), linetabsize_str(p));
@@ -5523,7 +5523,7 @@ static void op_colon(oparg_T *oap)
     // When using !! on a closed fold the range ".!" works best to operate
     // on, it will be made the whole closed fold later.
     linenr_T endOfStartFold = oap->start.lnum;
-    hasFolding(oap->start.lnum, NULL, &endOfStartFold);
+    hasFolding(curwin, oap->start.lnum, NULL, &endOfStartFold);
     if (oap->end.lnum != oap->start.lnum && oap->end.lnum != endOfStartFold) {
       // Make it a range with the end line.
       stuffcharReadbuff(',');
@@ -5534,7 +5534,7 @@ static void op_colon(oparg_T *oap)
       } else if (oap->start.lnum == curwin->w_cursor.lnum
                  // do not use ".+number" for a closed fold, it would count
                  // folded lines twice
-                 && !hasFolding(oap->end.lnum, NULL, NULL)) {
+                 && !hasFolding(curwin, oap->end.lnum, NULL, NULL)) {
         stuffReadbuff(".+");
         stuffnumReadbuff(oap->line_count - 1);
       } else {
@@ -5696,11 +5696,11 @@ static void get_op_vcol(oparg_T *oap, colnr_T redo_VIsual_vcol, bool initial)
   // (Actually, this does convert column positions into character
   // positions)
   curwin->w_cursor.lnum = oap->end.lnum;
-  coladvance(oap->end_vcol);
+  coladvance(curwin, oap->end_vcol);
   oap->end = curwin->w_cursor;
 
   curwin->w_cursor = oap->start;
-  coladvance(oap->start_vcol);
+  coladvance(curwin, oap->start_vcol);
   oap->start = curwin->w_cursor;
 }
 
@@ -5825,7 +5825,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       if (redo_VIsual.rv_vcol == MAXCOL || VIsual_mode == 'v') {
         if (VIsual_mode == 'v') {
           if (redo_VIsual.rv_line_count <= 1) {
-            validate_virtcol();
+            validate_virtcol(curwin);
             curwin->w_curswant = curwin->w_virtcol + redo_VIsual.rv_vcol - 1;
           } else {
             curwin->w_curswant = redo_VIsual.rv_vcol;
@@ -5833,7 +5833,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         } else {
           curwin->w_curswant = MAXCOL;
         }
-        coladvance(curwin->w_curswant);
+        coladvance(curwin, curwin->w_curswant);
       }
       cap->count0 = redo_VIsual.rv_count;
       cap->count1 = (cap->count0 == 0 ? 1 : cap->count0);
@@ -5880,13 +5880,13 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     if (lt(oap->start, curwin->w_cursor)) {
       // Include folded lines completely.
       if (!VIsual_active) {
-        if (hasFolding(oap->start.lnum, &oap->start.lnum, NULL)) {
+        if (hasFolding(curwin, oap->start.lnum, &oap->start.lnum, NULL)) {
           oap->start.col = 0;
         }
         if ((curwin->w_cursor.col > 0
              || oap->inclusive
              || oap->motion_type == kMTLineWise)
-            && hasFolding(curwin->w_cursor.lnum, NULL,
+            && hasFolding(curwin, curwin->w_cursor.lnum, NULL,
                           &curwin->w_cursor.lnum)) {
           curwin->w_cursor.col = (colnr_T)strlen(get_cursor_line_ptr());
         }
@@ -5901,11 +5901,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     } else {
       // Include folded lines completely.
       if (!VIsual_active && oap->motion_type == kMTLineWise) {
-        if (hasFolding(curwin->w_cursor.lnum, &curwin->w_cursor.lnum,
+        if (hasFolding(curwin, curwin->w_cursor.lnum, &curwin->w_cursor.lnum,
                        NULL)) {
           curwin->w_cursor.col = 0;
         }
-        if (hasFolding(oap->start.lnum, NULL, &oap->start.lnum)) {
+        if (hasFolding(curwin, oap->start.lnum, NULL, &oap->start.lnum)) {
           oap->start.col = (colnr_T)strlen(ml_get(oap->start.lnum));
         }
       }
@@ -5918,7 +5918,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     oap->line_count = oap->end.lnum - oap->start.lnum + 1;
 
     // Set "virtual_op" before resetting VIsual_active.
-    virtual_op = virtual_active();
+    virtual_op = virtual_active(curwin);
 
     if (VIsual_active || redo_VIsual_busy) {
       get_op_vcol(oap, redo_VIsual.rv_vcol, true);
@@ -6149,7 +6149,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         oap->excl_tr_ws = cap->cmdchar == 'z';
         op_yank(oap, !gui_yank);
       }
-      check_cursor_col();
+      check_cursor_col(curwin);
       break;
 
     case OP_CHANGE:
@@ -6223,7 +6223,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       } else {
         op_tilde(oap);
       }
-      check_cursor_col();
+      check_cursor_col(curwin);
       break;
 
     case OP_FORMAT:
@@ -6341,7 +6341,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         op_addsub(oap, (linenr_T)cap->count1, redo_VIsual.rv_arg);
         VIsual_active = false;
       }
-      check_cursor_col();
+      check_cursor_col(curwin);
       break;
     default:
       clearopbeep(oap);
@@ -6353,7 +6353,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           && (oap->op_type == OP_LSHIFT || oap->op_type == OP_RSHIFT
               || oap->op_type == OP_DELETE)) {
         reset_lbr();
-        coladvance(curwin->w_curswant = old_col);
+        coladvance(curwin, curwin->w_curswant = old_col);
       }
     } else {
       curwin->w_cursor = old_cursor;

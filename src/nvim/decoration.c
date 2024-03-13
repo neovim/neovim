@@ -890,9 +890,9 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fo
   }
 
   assert(lnum > 0);
-  bool below_fold = lnum > 1 && hasFoldingWin(wp, lnum - 1, NULL, NULL, true, NULL);
+  bool below_fold = lnum > 1 && hasFolding(wp, lnum - 1, NULL, NULL);
   if (has_fold == kNone) {
-    has_fold = hasFoldingWin(wp, lnum, NULL, NULL, true, NULL);
+    has_fold = hasFolding(wp, lnum, NULL, NULL);
   }
 
   const int row = lnum - 1;

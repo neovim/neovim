@@ -1076,11 +1076,11 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, int count, in
   // If the cursor is in a closed fold, don't find another match in the same
   // fold.
   if (dirc == '/') {
-    if (hasFolding(pos.lnum, NULL, &pos.lnum)) {
+    if (hasFolding(curwin, pos.lnum, NULL, &pos.lnum)) {
       pos.col = MAXCOL - 2;             // avoid overflow when adding 1
     }
   } else {
-    if (hasFolding(pos.lnum, &pos.lnum, NULL)) {
+    if (hasFolding(curwin, pos.lnum, &pos.lnum, NULL)) {
       pos.col = 0;
     }
   }
@@ -1389,7 +1389,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, int count, in
                           show_top_bot_msg, msgbuf,
                           (count != 1 || has_offset
                            || (!(fdo_flags & FDO_SEARCH)
-                               && hasFolding(curwin->w_cursor.lnum, NULL,
+                               && hasFolding(curwin, curwin->w_cursor.lnum, NULL,
                                              NULL))),
                           SEARCH_STAT_DEF_MAX_COUNT,
                           SEARCH_STAT_DEF_TIMEOUT);
@@ -4034,7 +4034,7 @@ search_line:
               setpcmark();
             }
             curwin->w_cursor.lnum = lnum;
-            check_cursor();
+            check_cursor(curwin);
           } else {
             if (!GETFILE_SUCCESS(getfile(0, files[depth].name, NULL, true,
                                          files[depth].lnum, forceit))) {
@@ -4053,7 +4053,7 @@ search_line:
         if (l_g_do_tagpreview != 0
             && curwin != curwin_save && win_valid(curwin_save)) {
           // Return cursor to where we were
-          validate_cursor();
+          validate_cursor(curwin);
           redraw_later(curwin, UPD_VALID);
           win_enter(curwin_save, true);
         }

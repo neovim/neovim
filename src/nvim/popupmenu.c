@@ -140,7 +140,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     // to avoid that must_redraw is set when 'cursorcolumn' is on.
     pum_is_visible = true;
     pum_is_drawn = true;
-    validate_cursor_col();
+    validate_cursor_col(curwin);
     int above_row = 0;
     int below_row = cmdline_row;
 
@@ -273,7 +273,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         context_lines = 0;
       } else {
         // Leave two lines of context if possible
-        validate_cheight();
+        validate_cheight(curwin);
         if (curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow >= 3) {
           context_lines = 3;
         } else {
@@ -995,7 +995,7 @@ static bool pum_set_selected(int n, int repeat)
             }
 
             // Return cursor to where we were
-            validate_cursor();
+            validate_cursor(curwin);
             redraw_later(curwin, UPD_SOME_VALID);
 
             // When the preview window was resized we need to

@@ -766,7 +766,7 @@ void win_set_buf(win_T *win, buf_T *buf, bool noautocmd, Error *err)
 
   // If window is not current, state logic will not validate its cursor. So do it now.
   // Still needed if do_buffer returns FAIL (e.g: autocmds abort script after buffer was set).
-  validate_cursor();
+  validate_cursor(curwin);
 
 cleanup:
   restore_win_noblock(&switchwin, true);
@@ -2872,7 +2872,7 @@ int win_close(win_T *win, bool free_buf, bool force)
 
     // The cursor position may be invalid if the buffer changed after last
     // using the window.
-    check_cursor();
+    check_cursor(curwin);
   }
 
   if (!was_floating) {
@@ -4921,8 +4921,8 @@ static void win_enter_ext(win_T *const wp, const int flags)
   curwin = wp;
   curbuf = wp->w_buffer;
 
-  check_cursor();
-  if (!virtual_active()) {
+  check_cursor(curwin);
+  if (!virtual_active(curwin)) {
     curwin->w_cursor.coladd = 0;
   }
   if (*p_spk == 'c') {
@@ -6638,7 +6638,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
       }
     } else if (sline > 0) {
       while (sline > 0 && lnum > 1) {
-        hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
+        hasFolding(wp, lnum, &lnum, NULL);
         if (lnum == 1) {
           // first line in buffer is folded
           line_size = 1;
@@ -6658,7 +6658,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
       if (sline < 0) {
         // Line we want at top would go off top of screen.  Use next
         // line instead.
-        hasFoldingWin(wp, lnum, NULL, &lnum, true, NULL);
+        hasFolding(wp, lnum, NULL, &lnum);
         lnum++;
         wp->w_wrow -= line_size + sline;
       } else if (sline > 0) {
@@ -6699,7 +6699,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
       if (wp == curwin && *p_spk == 'c') {
         // w_wrow needs to be valid. When setting 'laststatus' this may
         // call win_new_height() recursively.
-        validate_cursor();
+        validate_cursor(curwin);
       }
       if (wp->w_height_inner != prev_height) {
         return;  // Recursive call already changed the size, bail out.

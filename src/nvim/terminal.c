@@ -612,7 +612,7 @@ static void terminal_check_cursor(void)
                               row_to_linenr(term, term->cursor.row));
   // Nudge cursor when returning to normal-mode.
   int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
-  coladvance(MAX(0, term->cursor.col + off));
+  coladvance(curwin, MAX(0, term->cursor.col + off));
 }
 
 // Function executed before each iteration of terminal mode.
@@ -626,7 +626,7 @@ static int terminal_check(VimState *state)
   }
 
   terminal_check_cursor();
-  validate_cursor();
+  validate_cursor(curwin);
 
   if (must_redraw) {
     update_screen();

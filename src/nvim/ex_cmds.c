@@ -2638,14 +2638,14 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     if (newcol >= 0) {          // position set by autocommands
       curwin->w_cursor.lnum = newlnum;
       curwin->w_cursor.col = newcol;
-      check_cursor();
+      check_cursor(curwin);
     } else if (newlnum > 0) {  // line number from caller or old position
       curwin->w_cursor.lnum = newlnum;
       check_cursor_lnum(curwin);
       if (solcol >= 0 && !p_sol) {
         // 'sol' is off: Use last known column.
         curwin->w_cursor.col = solcol;
-        check_cursor_col();
+        check_cursor_col(curwin);
         curwin->w_cursor.coladd = 0;
         curwin->w_set_curswant = true;
       } else {
@@ -3787,7 +3787,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               highlight_match = true;
 
               update_topline(curwin);
-              validate_cursor();
+              validate_cursor(curwin);
               redraw_later(curwin, UPD_SOME_VALID);
               show_cursor_info_later(true);
               update_screen();
@@ -4247,7 +4247,7 @@ skip:
       // when interactive leave cursor on the match
       if (!subflags.do_ask) {
         if (endcolumn) {
-          coladvance(MAXCOL);
+          coladvance(curwin, MAXCOL);
         } else {
           beginline(BL_WHITE | BL_FIX);
         }
@@ -4278,7 +4278,7 @@ skip:
 
   if (subflags.do_ask && hasAnyFolding(curwin)) {
     // Cursor position may require updating
-    changed_window_setting();
+    changed_window_setting(curwin);
   }
 
   vim_regfree(regmatch.regprog);
@@ -4514,7 +4514,7 @@ void global_exe(char *cmd)
   if (global_need_beginline) {
     beginline(BL_WHITE | BL_FIX);
   } else {
-    check_cursor();  // cursor may be beyond the end of the line
+    check_cursor(curwin);  // cursor may be beyond the end of the line
   }
 
   // the cursor may not have moved in the text but a change in a previous

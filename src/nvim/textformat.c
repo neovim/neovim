@@ -157,7 +157,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     }
 
     // find column of textwidth border
-    coladvance((colnr_T)textwidth);
+    coladvance(curwin, (colnr_T)textwidth);
     wantcol = curwin->w_cursor.col;
 
     // If startcol is large (a long line), formatting takes too much
@@ -690,9 +690,9 @@ void auto_format(bool trailblank, bool prev_line)
   if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
     // "cannot happen"
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-    coladvance(MAXCOL);
+    coladvance(curwin, MAXCOL);
   } else {
-    check_cursor_col();
+    check_cursor_col(curwin);
   }
 
   // Insert mode: If the cursor is now after the end of the line while it
@@ -715,7 +715,7 @@ void auto_format(bool trailblank, bool prev_line)
     }
   }
 
-  check_cursor();
+  check_cursor(curwin);
 }
 
 /// When an extra space was added to continue a paragraph for auto-formatting,
@@ -839,7 +839,7 @@ void op_format(oparg_T *oap, bool keep_cursor)
     saved_cursor.lnum = 0;
 
     // formatting may have made the cursor position invalid
-    check_cursor();
+    check_cursor(curwin);
   }
 
   if (oap->is_VIsual) {
@@ -1063,7 +1063,7 @@ void format_lines(linenr_T line_count, bool avoid_fex)
 
         // put cursor on last non-space
         State = MODE_NORMAL;  // don't go past end-of-line
-        coladvance(MAXCOL);
+        coladvance(curwin, MAXCOL);
         while (curwin->w_cursor.col && ascii_isspace(gchar_cursor())) {
           dec_cursor();
         }

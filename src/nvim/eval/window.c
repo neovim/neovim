@@ -516,7 +516,7 @@ bool win_execute_before(win_execute_T *args, win_T *wp, tabpage_T *tp)
   }
 
   if (switch_win_noblock(&args->switchwin, wp, tp, true) == OK) {
-    check_cursor();
+    check_cursor(curwin);
     return true;
   }
   return false;
@@ -540,7 +540,7 @@ void win_execute_after(win_execute_T *args)
 
   // In case the command moved the cursor or changed the Visual area,
   // check it is valid.
-  check_cursor();
+  check_cursor(curwin);
   if (VIsual_active) {
     check_pos(curbuf, &VIsual);
   }
@@ -774,7 +774,7 @@ void f_winbufnr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "wincol()" function
 void f_wincol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  validate_cursor();
+  validate_cursor(curwin);
   rettv->vval.v_number = curwin->w_wcol + 1;
 }
 
@@ -811,7 +811,7 @@ void f_winlayout(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "winline()" function
 void f_winline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  validate_cursor();
+  validate_cursor(curwin);
   rettv->vval.v_number = curwin->w_wrow + 1;
 }
 
@@ -883,10 +883,10 @@ void f_winrestview(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     curwin->w_skipcol = (colnr_T)tv_get_number(&di->di_tv);
   }
 
-  check_cursor();
+  check_cursor(curwin);
   win_new_height(curwin, curwin->w_height);
   win_new_width(curwin, curwin->w_width);
-  changed_window_setting();
+  changed_window_setting(curwin);
 
   if (curwin->w_topline <= 0) {
     curwin->w_topline = 1;

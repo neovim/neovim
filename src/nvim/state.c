@@ -135,9 +135,9 @@ void state_handle_k_event(void)
 }
 
 /// Return true if in the current mode we need to use virtual.
-bool virtual_active(void)
+bool virtual_active(win_T *wp)
 {
-  unsigned cur_ve_flags = get_ve_flags();
+  unsigned cur_ve_flags = get_ve_flags(wp);
 
   // While an operator is being executed we return "virtual_op", because
   // VIsual_active has already been reset, thus we can't check for "block"

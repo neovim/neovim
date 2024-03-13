@@ -1192,7 +1192,7 @@ void ml_recover(bool checkext)
     ml_delete(curbuf->b_ml.ml_line_count, false);
   }
   curbuf->b_flags |= BF_RECOVERED;
-  check_cursor();
+  check_cursor(curwin);
 
   recoverymode = false;
   if (got_int) {
@@ -4076,14 +4076,14 @@ void goto_byte(int cnt)
   if (lnum < 1) {         // past the end
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     curwin->w_curswant = MAXCOL;
-    coladvance(MAXCOL);
+    coladvance(curwin, MAXCOL);
   } else {
     curwin->w_cursor.lnum = lnum;
     curwin->w_cursor.col = (colnr_T)boff;
     curwin->w_cursor.coladd = 0;
     curwin->w_set_curswant = true;
   }
-  check_cursor();
+  check_cursor(curwin);
 
   // Make sure the cursor is on the first byte of a multi-byte char.
   mb_adjust_cursor();

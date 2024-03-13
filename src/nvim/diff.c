@@ -1347,7 +1347,7 @@ void ex_diffsplit(exarg_T *eap)
   set_bufref(&old_curbuf, curbuf);
 
   // Need to compute w_fraction when no redraw happened yet.
-  validate_cursor();
+  validate_cursor(curwin);
   set_fraction(curwin);
 
   // don't use a new tab page, each tab page has its own diffs
@@ -1457,7 +1457,7 @@ void diff_win_options(win_T *wp, bool addbuf)
   foldUpdateAll(wp);
 
   // make sure topline is not halfway through a fold
-  changed_window_setting_win(wp);
+  changed_window_setting(wp);
   if (vim_strchr(p_sbo, 'h') == NULL) {
     do_cmdline_cmd("set sbo+=hor");
   }
@@ -1522,7 +1522,7 @@ void ex_diffoff(exarg_T *eap)
 
       // make sure topline is not halfway a fold and cursor is
       // invalidated
-      changed_window_setting_win(wp);
+      changed_window_setting(wp);
 
       // Note: 'sbo' is not restored, it's a global option.
       diff_buf_adjust(wp);
@@ -2137,7 +2137,7 @@ int diff_check_with_linestatus(win_T *wp, linenr_T lnum, int *linestatus)
   }
 
   // A closed fold never has filler lines.
-  if (hasFoldingWin(wp, lnum, NULL, NULL, true, NULL)) {
+  if (hasFolding(wp, lnum, NULL, NULL)) {
     return 0;
   }
 
@@ -2451,8 +2451,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
   changed_line_abv_curs_win(towin);
 
   check_topfill(towin, false);
-  hasFoldingWin(towin, towin->w_topline, &towin->w_topline,
-                NULL, true, NULL);
+  hasFolding(towin, towin->w_topline, &towin->w_topline, NULL);
 }
 
 /// This is called when 'diffopt' is changed.
@@ -2988,7 +2987,7 @@ theend:
   // Check that the cursor is on a valid character and update its
   // position.  When there were filler lines the topline has become
   // invalid.
-  check_cursor();
+  check_cursor(curwin);
   changed_line_abv_curs();
 
   if (diff_need_update) {

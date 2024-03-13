@@ -197,7 +197,7 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, typval_
           && ml_replace(lnum, line, true) == OK) {
         inserted_bytes(lnum, 0, old_len, (int)strlen(line));
         if (is_curbuf && lnum == curwin->w_cursor.lnum) {
-          check_cursor_col();
+          check_cursor_col(curwin);
         }
         rettv->vval.v_number = 0;  // OK
       }
@@ -229,7 +229,7 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, typval_
         wp->w_cursor.lnum += (linenr_T)added;
       }
     }
-    check_cursor_col();
+    check_cursor_col(curwin);
     update_topline(curwin);
   }
 
@@ -469,7 +469,7 @@ void f_deletebufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       }
     }
   }
-  check_cursor_col();
+  check_cursor_col(curwin);
   deleted_lines_mark(first, count);
   rettv->vval.v_number = 0;  // OK
 

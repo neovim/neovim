@@ -2436,7 +2436,7 @@ static void expand_by_function(int type, char *base)
   textlock--;
 
   curwin->w_cursor = pos;       // restore the cursor position
-  validate_cursor();
+  validate_cursor(curwin);
   if (!equalpos(curwin->w_cursor, pos)) {
     emsg(_(e_compldel));
     goto theend;
@@ -4096,7 +4096,7 @@ static int get_userdefined_compl_info(colnr_T curs_col)
 
   State = save_State;
   curwin->w_cursor = pos;  // restore the cursor position
-  validate_cursor();
+  validate_cursor(curwin);
   if (!equalpos(curwin->w_cursor, pos)) {
     emsg(_(e_compldel));
     return FAIL;

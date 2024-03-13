@@ -2889,12 +2889,12 @@ static void qf_jump_goto_line(linenr_T qf_lnum, int qf_col, char qf_viscol, char
     if (qf_col > 0) {
       curwin->w_cursor.coladd = 0;
       if (qf_viscol == true) {
-        coladvance(qf_col - 1);
+        coladvance(curwin, qf_col - 1);
       } else {
         curwin->w_cursor.col = qf_col - 1;
       }
       curwin->w_set_curswant = true;
-      check_cursor();
+      check_cursor(curwin);
     } else {
       beginline(BL_WHITE | BL_FIX);
     }
@@ -3831,7 +3831,7 @@ void ex_copen(exarg_T *eap)
 
   curwin->w_cursor.lnum = lnum;
   curwin->w_cursor.col = 0;
-  check_cursor();
+  check_cursor(curwin);
   update_topline(curwin);             // scroll to show the line
 }
 
