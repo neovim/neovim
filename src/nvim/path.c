@@ -953,7 +953,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
   char *file_pattern = xmalloc(len + 2);
   file_pattern[0] = '*';
   file_pattern[1] = NUL;
-  STRCAT(file_pattern, pattern);
+  STRCPY(file_pattern + 1, pattern);
   char *pat = file_pat_to_reg_pat(file_pattern, NULL, NULL, true);
   xfree(file_pattern);
   if (pat == NULL) {
@@ -1054,9 +1054,11 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
     }
 
     rel_path = xmalloc(strlen(short_name) + strlen(PATHSEPSTR) + 2);
-    STRCPY(rel_path, ".");
+    char *rel_path_e = rel_path;
+    rel_path_e = xstpcpy(rel_path_e, ".");
     add_pathsep(rel_path);
-    STRCAT(rel_path, short_name);
+    rel_path_e += strlen(rel_path_e);
+    rel_path_e = xstpcpy(rel_path_e, short_name);
 
     xfree(fnames[i]);
     fnames[i] = rel_path;

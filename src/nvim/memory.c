@@ -333,27 +333,6 @@ size_t memcnt(const void *data, char c, size_t len)
   return cnt;
 }
 
-/// Copies the string pointed to by src (including the terminating NUL
-/// character) into the array pointed to by dst.
-///
-/// @returns pointer to the terminating NUL char copied into the dst buffer.
-///          This is the only difference with strcpy(), which returns dst.
-///
-/// WARNING: If copying takes place between objects that overlap, the behavior
-/// is undefined.
-///
-/// Nvim version of POSIX 2008 stpcpy(3). We do not require POSIX 2008, so
-/// implement our own version.
-///
-/// @param dst
-/// @param src
-char *xstpcpy(char *restrict dst, const char *restrict src)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
-{
-  const size_t len = strlen(src);
-  return (char *)memcpy(dst, src, len + 1) + len;
-}
-
 /// Copies not more than n bytes (bytes that follow a NUL character are not
 /// copied) from the array pointed to by src to the array pointed to by dst.
 ///

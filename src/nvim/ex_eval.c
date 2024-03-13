@@ -414,9 +414,10 @@ char *get_exception_string(void *value, except_type_T type, char *cmdname, bool 
             continue;
           }
 
-          STRCAT(val, p);
+          char *val_e = val + strlen(val);
+          val_e = xstpcpy(val_e, p);
           p[-2] = NUL;
-          snprintf(val + strlen(p), strlen(" (%s)"), " (%s)", &mesg[1]);
+          snprintf(val_e, strlen(" (%s)"), " (%s)", &mesg[1]);
           p[-2] = '"';
         }
         break;

@@ -2,11 +2,44 @@
 
 #include <stdbool.h>
 #include <stdint.h>  // IWYU pragma: keep
+#include <string.h>
 #include <time.h>  // IWYU pragma: keep
 
 #include "auto/config.h"
+#include "nvim/func_attr.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memory_defs.h"  // IWYU pragma: keep
+
+static inline char *xstpcpy(char *restrict dst, const char *restrict src)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL;
+
+static inline char *xstpcat(char *restrict dst, const char *restrict src)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL;
+
+/// Copies the string pointed to by src (including the terminating NUL
+/// character) into the array pointed to by dst.
+///
+/// @returns pointer to the terminating NUL char copied into the dst buffer.
+///          This is the only difference with strcpy(), which returns dst.
+///
+/// WARNING: If copying takes place between objects that overlap, the behavior
+/// is undefined.
+///
+/// Nvim version of POSIX 2008 stpcpy(3). We do not require POSIX 2008, so
+/// implement our own version.
+///
+/// @param dst
+/// @param src
+static inline char *xstpcpy(char *restrict dst, const char *restrict src)
+{
+  const size_t len = strlen(src);
+  return (char *)memcpy(dst, src, len + 1) + len;
+}
+
+static inline char *xstpcat(char *restrict dst, const char *restrict src)
+{
+  return xstpcpy(dst + strlen(dst), src);
+}
 
 /// `malloc()` function signature
 typedef void *(*MemMalloc)(size_t);

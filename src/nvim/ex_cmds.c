@@ -969,14 +969,15 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     }
     char *t = xmalloc(len);
     *t = NUL;
+    char *t_e = t;
     if (newcmd != NULL) {
-      STRCAT(t, newcmd);
+      t_e = xstpcpy(t_e, newcmd);
     }
     if (ins_prevcmd) {
-      STRCAT(t, prevcmd);
+      t_e = xstpcpy(t_e, prevcmd);
     }
-    char *p = t + strlen(t);
-    STRCAT(t, trailarg);
+    char *p = t_e;
+    t_e = xstpcpy(t_e, trailarg);
     xfree(newcmd);
     newcmd = t;
 
@@ -1028,9 +1029,10 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
       xfree(newcmd);
     }
     newcmd = xmalloc(strlen(prevcmd) + 2 * strlen(p_shq) + 1);
-    STRCPY(newcmd, p_shq);
-    STRCAT(newcmd, prevcmd);
-    STRCAT(newcmd, p_shq);
+    char *newcmd_e = newcmd;
+    newcmd_e = xstpcpy(newcmd_e, p_shq);
+    newcmd_e = xstpcpy(newcmd_e, prevcmd);
+    newcmd_e = xstpcpy(newcmd_e, p_shq);
     free_newcmd = true;
   }
   if (addr_count == 0) {                // :!

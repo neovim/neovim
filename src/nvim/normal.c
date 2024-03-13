@@ -3336,9 +3336,10 @@ void do_nv_ident(int c1, int c2)
 static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, char **ptr_arg,
                           size_t n, char *buf, size_t buf_size)
 {
+  char *buf_e = buf;
   if (kp_help) {
     // in the help buffer
-    STRCPY(buf, "he! ");
+    buf_e = xstpcpy(buf_e, "he! ");
     return n;
   }
 
@@ -3347,8 +3348,8 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, cha
     if (cap->count0 != 0) {  // Send the count to the ex command.
       snprintf(buf, buf_size, "%" PRId64, (int64_t)(cap->count0));
     }
-    STRCAT(buf, kp);
-    STRCAT(buf, " ");
+    buf_e = xstpcpy(buf_e, kp);
+    buf_e = xstpcpy(buf_e, " ");
     return n;
   }
 
@@ -3377,17 +3378,17 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, cha
   }
 
   do_cmdline_cmd("tabnew");
-  STRCAT(buf, "terminal ");
+  buf_e = xstpcpy(buf_e, "terminal ");
   if (cap->count0 == 0 && isman_s) {
-    STRCAT(buf, "man");
+    buf_e = xstpcpy(buf_e, "man");
   } else {
-    STRCAT(buf, kp);
+    buf_e = xstpcpy(buf_e, kp);
   }
-  STRCAT(buf, " ");
+  buf_e = xstpcpy(buf_e, " ");
   if (cap->count0 != 0 && (isman || isman_s)) {
     snprintf(buf + strlen(buf), buf_size - strlen(buf), "%" PRId64,
              (int64_t)cap->count0);
-    STRCAT(buf, " ");
+    buf_e = xstpcpy(buf_e, " ");
   }
 
   *ptr_arg = ptr;
@@ -3506,9 +3507,10 @@ static void nv_ident(cmdarg_T *cap)
       p = vim_strsave_shellescape(ptr, true, true);
     }
     xfree(ptr);
-    char *newbuf = xrealloc(buf, strlen(buf) + strlen(p) + 1);
+    const size_t buf_len = strlen(buf);
+    char *newbuf = xrealloc(buf, buf_len + strlen(p) + 1);
     buf = newbuf;
-    STRCAT(buf, p);
+    STRCPY(buf + buf_len, p);
     xfree(p);
   } else {
     char *aux_ptr;

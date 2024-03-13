@@ -914,19 +914,19 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
     }
     ss = xmalloc(len);
     *ss = NUL;
-    char *ssp = ss;
+    char *ss_e = ss;
     for (int i = 0; i < xp->xp_numfiles; i++) {
       if (i > 0) {
         if (xp->xp_prefix == XP_PREFIX_NO) {
-          ssp = xstpcpy(ssp, "no");
+          ss_e = xstpcpy(ss_e, "no");
         } else if (xp->xp_prefix == XP_PREFIX_INV) {
-          ssp = xstpcpy(ssp, "inv");
+          ss_e = xstpcpy(ss_e, "inv");
         }
       }
-      ssp = xstpcpy(ssp, xp->xp_files[i]);
+      ss_e = xstpcpy(ss_e, xp->xp_files[i]);
 
       if (i != xp->xp_numfiles - 1) {
-        ssp = xstpcpy(ssp, (options & WILD_USE_NL) ? "\n" : " ");
+        ss_e = xstpcpy(ss_e, (options & WILD_USE_NL) ? "\n" : " ");
       }
     }
   }

@@ -641,8 +641,9 @@ void spell_suggest(int count)
     char *p = xmalloc(strlen(line) - (size_t)stp->st_orglen + (size_t)stp->st_wordlen + 1);
     int c = (int)(sug.su_badptr - line);
     memmove(p, line, (size_t)c);
-    STRCPY(p + c, stp->st_word);
-    STRCAT(p, sug.su_badptr + stp->st_orglen);
+    char *p_e = p + c;
+    p_e = xstpcpy(p_e, stp->st_word);
+    p_e = xstpcpy(p_e, sug.su_badptr + stp->st_orglen);
 
     // For redo we use a change-word command.
     ResetRedobuff();

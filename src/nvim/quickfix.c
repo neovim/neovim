@@ -4522,9 +4522,10 @@ static char *get_mef_name(void)
       off += 19;
     }
     name = xmalloc(strlen(p_mef) + 30);
-    STRCPY(name, p_mef);
-    snprintf(name + (p - p_mef), strlen(name), "%d%d", start, off);
-    STRCAT(name, p + 2);
+    char *name_e = name;
+    name_e = xstpcpy(name_e, p_mef);
+    snprintf(name + (p - p_mef), name_e - name, "%d%d", start, off);
+    name_e = xstpcpy(name_e, p + 2);
     // Don't accept a symbolic link, it's a security risk.
     FileInfo file_info;
     bool file_or_link_found = os_fileinfo_link(name, &file_info);

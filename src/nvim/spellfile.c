@@ -2137,13 +2137,14 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
                     (spin->si_info == NULL ? 0 : strlen(spin->si_info))
                     + strlen(items[0])
                     + strlen(items[1]) + 3, false);
+        char *p_e = p;
         if (spin->si_info != NULL) {
-          STRCPY(p, spin->si_info);
-          STRCAT(p, "\n");
+          p_e = xstpcpy(p_e, spin->si_info);
+          p_e = xstpcpy(p_e, "\n");
         }
-        STRCAT(p, items[0]);
-        STRCAT(p, " ");
-        STRCAT(p, items[1]);
+        p_e = xstpcpy(p_e, items[0]);
+        p_e = xstpcpy(p_e, " ");
+        p_e = xstpcpy(p_e, items[1]);
         spin->si_info = p;
       } else if (is_aff_rule(items, itemcnt, "MIDWORD", 2) && midword == NULL) {
         midword = getroom_save(spin, items[1]);
@@ -2198,8 +2199,9 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
         // Turn flag "c" into COMPOUNDRULE compatible string "c+",
         // "Na" into "Na+", "1234" into "1234+".
         p = getroom(spin, strlen(items[1]) + 2, false);
-        STRCPY(p, items[1]);
-        STRCAT(p, "+");
+        char *p_e = p;
+        p_e = xstpcpy(p_e, items[1]);
+        p_e = xstpcpy(p_e, "+");
         compflags = p;
       } else if (is_aff_rule(items, itemcnt, "COMPOUNDRULES", 2)) {
         // We don't use the count, but do check that it's a number and
@@ -2218,11 +2220,12 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
             l += (int)strlen(compflags) + 1;
           }
           p = getroom(spin, (size_t)l, false);
+          char *p_e = p;
           if (compflags != NULL) {
-            STRCPY(p, compflags);
-            STRCAT(p, "/");
+            p_e = xstpcpy(p_e, compflags);
+            p_e = xstpcpy(p_e, "/");
           }
-          STRCAT(p, items[1]);
+          p_e = xstpcpy(p_e, items[1]);
           compflags = p;
         }
       } else if (is_aff_rule(items, itemcnt, "COMPOUNDWORDMAX", 2)
@@ -2841,12 +2844,13 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char *compflags
     len += (int)strlen(spin->si_compflags) + 1;
   }
   char *p = getroom(spin, (size_t)len, false);
+  char *p_e = p;
   if (spin->si_compflags != NULL) {
-    STRCPY(p, spin->si_compflags);
-    STRCAT(p, "/");
+    p_e = xstpcpy(p_e, spin->si_compflags);
+    p_e = xstpcpy(p_e, "/");
   }
   spin->si_compflags = p;
-  uint8_t *tp = (uint8_t *)p + strlen(p);
+  uint8_t *tp = (uint8_t *)p_e;
 
   for (p = compflags; *p != NUL;) {
     if (vim_strchr("/?*+[]", (uint8_t)(*p)) != NULL) {

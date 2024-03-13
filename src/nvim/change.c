@@ -1716,6 +1716,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
   // concatenate leader and p_extra, if there is a leader
   if (lead_len > 0) {
+    char *leader_e = leader + strlen(leader);
     if (flags & OPENLINE_COM_LIST && second_line_indent > 0) {
       int padding = second_line_indent
                     - (newindent + (int)strlen(leader));
@@ -1724,12 +1725,12 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
       // Below, set_indent(newindent, SIN_INSERT) will insert the
       // whitespace needed before the comment char.
       for (int i = 0; i < padding; i++) {
-        STRCAT(leader, " ");
+        leader_e = xstpcpy(leader_e, " ");
         less_cols--;
         newcol++;
       }
     }
-    STRCAT(leader, p_extra);
+    leader_e = xstpcpy(leader_e, p_extra);
     p_extra = leader;
     did_ai = true;          // So truncating blanks works with comments
     less_cols -= lead_len;

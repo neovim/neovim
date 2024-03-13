@@ -234,12 +234,16 @@ static void set_init_default_backupskip(void)
       if (find_dup_item(ga.ga_data, item, options[opt_idx].flags)
           == NULL) {
         ga_grow(&ga, (int)len);
-        if (!GA_EMPTY(&ga)) {
-          STRCAT(ga.ga_data, ",");
+        char *ga_data_e;
+        if (GA_EMPTY(&ga)) {
+          ga_data_e = ga.ga_data;
+        } else {
+          ga_data_e = (char *)ga.ga_data + strlen(ga.ga_data);
+          ga_data_e = xstpcpy(ga_data_e, ",");
         }
-        STRCAT(ga.ga_data, p);
+        ga_data_e = xstpcpy(ga_data_e, p);
         add_pathsep(ga.ga_data);
-        STRCAT(ga.ga_data, "*");
+        ga_data_e = xstpcpy(ga_data_e + strlen(ga_data_e), "*");
         ga.ga_len += (int)len;
       }
       xfree(item);
