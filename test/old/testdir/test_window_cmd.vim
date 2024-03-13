@@ -200,11 +200,11 @@ func Test_window_split_edit_bufnr()
   %bw!
 endfunc
 
-func s:win_layout_info() abort
+func s:win_layout_info(tp = tabpagenr()) abort
   return #{
-        \ layout: winlayout(),
-        \ pos_sizes: range(1, winnr('$'))
-        \            ->map({_, nr -> win_getid(nr)->getwininfo()[0]})
+        \ layout: winlayout(a:tp),
+        \ pos_sizes: range(1, tabpagewinnr(a:tp, '$'))
+        \            ->map({_, nr -> win_getid(nr, a:tp)->getwininfo()[0]})
         \            ->map({_, wininfo -> #{id: wininfo.winid,
         \                                   row: wininfo.winrow,
         \                                   col: wininfo.wincol,
@@ -2143,6 +2143,71 @@ func Test_win_gotoid_splitmove_textlock_cmdwin()
            \ .. ":call assert_equal(1, win_gotoid(win_getid()))\<CR>"
            \ .. ":call assert_equal('command', win_gettype())\<CR>"
            \ .. ":call assert_equal('', win_gettype(winnr('#')))\<CR>", 'ntx')
+endfunc
+
+func Test_winfixsize_positions()
+  " Check positions are correct when closing a window in a non-current tabpage
+  " causes non-adjacent window to fill the space due to 'winfix{width,height}'.
+  tabnew
+  vsplit
+  wincmd |
+  split
+  set winfixheight
+  split foo
+  tabfirst
+
+  bwipe! foo
+  " Save actual values before entering the tabpage.
+  let info = s:win_layout_info(2)
+  tabnext
+  " Compare it with the expected value (after win_comp_pos) from entering.
+  call assert_equal(s:win_layout_info(), info)
+
+  $tabnew
+  split
+  split
+  wincmd k
+  belowright vsplit
+  set winfixwidth
+  belowright vsplit foo
+  tabprevious
+
+  bwipe! foo
+  " Save actual values before entering the tabpage.
+  let info = s:win_layout_info(3)
+  tabnext
+  " Compare it with the expected value (after win_comp_pos) from entering.
+  call assert_equal(s:win_layout_info(), info)
+
+  " Check positions unchanged when failing to move a window, if 'winfix{width,
+  " height}' would otherwise cause a non-adjacent window to fill the space.
+  %bwipe
+  call assert_fails('execute "split|"->repeat(&lines)', 'E36:')
+  wincmd p
+  vsplit
+  set winfixwidth
+  vsplit
+  set winfixwidth
+  vsplit
+  vsplit
+  set winfixwidth
+  wincmd p
+
+  let info = s:win_layout_info()
+  call assert_fails('wincmd J', 'E36:')
+  call assert_equal(info, s:win_layout_info())
+
+  only
+  call assert_fails('execute "vsplit|"->repeat(&columns)', 'E36:')
+  belowright split
+  set winfixheight
+  belowright split
+
+  let info = s:win_layout_info()
+  call assert_fails('wincmd H', 'E36:')
+  call assert_equal(info, s:win_layout_info())
+
+  %bwipe
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
