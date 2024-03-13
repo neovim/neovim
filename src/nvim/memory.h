@@ -13,9 +13,6 @@
 static inline char *xstpcpy(char *restrict dst, const char *restrict src)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL;
 
-static inline char *xstpcat(char *restrict dst, const char *restrict src)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL;
-
 /// Copies the string pointed to by src (including the terminating NUL
 /// character) into the array pointed to by dst.
 ///
@@ -34,11 +31,6 @@ static inline char *xstpcpy(char *restrict dst, const char *restrict src)
 {
   const size_t len = strlen(src);
   return (char *)memcpy(dst, src, len + 1) + len;
-}
-
-static inline char *xstpcat(char *restrict dst, const char *restrict src)
-{
-  return xstpcpy(dst + strlen(dst), src);
 }
 
 /// `malloc()` function signature
