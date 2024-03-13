@@ -433,6 +433,68 @@ describe('Conceal', function()
     ]])
   end)
 
+  -- oldtest: Test_conceal_wrapped_cursorline_wincolor()
+  it('CursorLine highlight on wrapped lines', function()
+    local screen = Screen.new(40, 4)
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { background = Screen.colors.Green }, -- CursorLine (low-priority)
+      [2] = { foreground = Screen.colors.Red }, -- CursorLine (high-priority)
+    })
+    screen:attach()
+    exec([[
+      call setline(1, 'one one one |hidden| one one one one one one one one')
+      syntax match test /|hidden|/ conceal
+      set conceallevel=2 concealcursor=n cursorline
+      normal! g$
+      hi! CursorLine guibg=Green
+    ]])
+    screen:expect([[
+      {1:one one one  one one one one on^e        }|
+      {1: one one one                            }|
+      {0:~                                       }|
+                                              |
+    ]])
+    command('hi! CursorLine guibg=NONE guifg=Red')
+    screen:expect([[
+      {2:one one one  one one one one on^e        }|
+      {2: one one one                            }|
+      {0:~                                       }|
+                                              |
+    ]])
+  end)
+
+  -- oldtest: Test_conceal_wrapped_cursorline_wincolor_rightleft()
+  it('CursorLine highlight on wrapped lines with rightleft', function()
+    local screen = Screen.new(40, 4)
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { background = Screen.colors.Green }, -- CursorLine (low-priority)
+      [2] = { foreground = Screen.colors.Red }, -- CursorLine (high-priority)
+    })
+    screen:attach()
+    exec([[
+      call setline(1, 'one one one |hidden| one one one one one one one one')
+      syntax match test /|hidden|/ conceal
+      set conceallevel=2 concealcursor=n cursorline rightleft
+      normal! g$
+      hi! CursorLine guibg=Green
+    ]])
+    screen:expect([[
+      {1:        ^eno eno eno eno eno  eno eno eno}|
+      {1:                            eno eno eno }|
+      {0:                                       ~}|
+                                              |
+    ]])
+    command('hi! CursorLine guibg=NONE guifg=Red')
+    screen:expect([[
+      {2:        ^eno eno eno eno eno  eno eno eno}|
+      {2:                            eno eno eno }|
+      {0:                                       ~}|
+                                              |
+    ]])
+  end)
+
   -- oldtest: Test_conceal_resize_term()
   it('resize editor', function()
     local screen = Screen.new(75, 6)
@@ -569,5 +631,93 @@ describe('Conceal', function()
     expect_pos(9, 25)
     feed('$')
     expect_pos(9, 26)
+  end)
+
+  -- oldtest: Test_conceal_virtualedit_after_eol()
+  it('cursor drawn at correct column with virtualedit', function()
+    local screen = Screen.new(75, 3)
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+    })
+    screen:attach()
+    exec([[
+      call setline(1, 'abcdefgh|hidden|ijklmnpop')
+      syntax match test /|hidden|/ conceal
+      set conceallevel=2 concealcursor=n virtualedit=all
+      normal! $
+    ]])
+    screen:expect([[
+      abcdefghijklmnpo^p                                                          |
+      {0:~                                                                          }|
+                                                                                 |
+    ]])
+    feed('l')
+    screen:expect([[
+      abcdefghijklmnpop^                                                          |
+      {0:~                                                                          }|
+                                                                                 |
+    ]])
+    feed('l')
+    screen:expect([[
+      abcdefghijklmnpop ^                                                         |
+      {0:~                                                                          }|
+                                                                                 |
+    ]])
+    feed('l')
+    screen:expect([[
+      abcdefghijklmnpop  ^                                                        |
+      {0:~                                                                          }|
+                                                                                 |
+    ]])
+    feed('rr')
+    screen:expect([[
+      abcdefghijklmnpop  ^r                                                       |
+      {0:~                                                                          }|
+                                                                                 |
+    ]])
+  end)
+
+  -- oldtest: Test_conceal_virtualedit_after_eol_rightleft()
+  it('cursor drawn correctly with virtualedit and rightleft', function()
+    local screen = Screen.new(75, 3)
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+    })
+    screen:attach()
+    exec([[
+      call setline(1, 'abcdefgh|hidden|ijklmnpop')
+      syntax match test /|hidden|/ conceal
+      set conceallevel=2 concealcursor=n virtualedit=all rightleft
+      normal! $
+    ]])
+    screen:expect([[
+                                                                ^popnmlkjihgfedcba|
+      {0:                                                                          ~}|
+                                                                                 |
+    ]])
+    feed('h')
+    screen:expect([[
+                                                               ^ popnmlkjihgfedcba|
+      {0:                                                                          ~}|
+                                                                                 |
+    ]])
+    feed('h')
+    screen:expect([[
+                                                              ^  popnmlkjihgfedcba|
+      {0:                                                                          ~}|
+                                                                                 |
+    ]])
+    feed('h')
+    screen:expect([[
+                                                             ^   popnmlkjihgfedcba|
+      {0:                                                                          ~}|
+                                                                                 |
+    ]])
+    feed('rr')
+    screen:expect([[
+                                                             ^r  popnmlkjihgfedcba|
+      {0:                                                                          ~}|
+                                                                                 |
+    ]])
   end)
 end)

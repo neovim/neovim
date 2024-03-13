@@ -2451,11 +2451,17 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
     // In the cursor line and we may be concealing characters: correct
     // the cursor column when we reach its position.
+    // With 'virtualedit' we may never reach cursor position, but we still
+    // need to correct the cursor column, so do that at end of line.
     if (!did_wcol
         && wp == curwin && lnum == wp->w_cursor.lnum
         && conceal_cursor_line(wp)
-        && (int)wp->w_virtcol <= wlv.vcol + wlv.skip_cells) {
+        && (wlv.vcol + wlv.skip_cells >= wp->w_virtcol || mb_schar == NUL)) {
       wp->w_wcol = wlv.col - wlv.boguscols;
+      if (wlv.vcol + wlv.skip_cells < wp->w_virtcol) {
+        // Cursor beyond end of the line with 'virtualedit'.
+        wp->w_wcol += wp->w_virtcol - wlv.vcol - wlv.skip_cells;
+      }
       wp->w_wrow = wlv.row;
       did_wcol = true;
       wp->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
@@ -2851,6 +2857,19 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
                         && !wp->w_p_rl;               // Not right-to-left.
 
       int draw_col = wlv.col - wlv.boguscols;
+
+      // Apply 'cursorline' highlight.
+      if (wlv.boguscols != 0 && (wlv.line_attr_lowprio != 0 || wlv.line_attr != 0)) {
+        int attr = hl_combine_attr(wlv.line_attr_lowprio, wlv.line_attr);
+        while (draw_col < grid->cols) {
+          linebuf_char[wlv.off] = schar_from_char(' ');
+          linebuf_attr[wlv.off] = attr;
+          linebuf_vcol[wlv.off] = MAXCOL;  // TODO(zeertzjq): this is wrong
+          wlv.off++;
+          draw_col++;
+        }
+      }
+
       if (virt_line_offset >= 0) {
         draw_virt_text_item(buf, virt_line_offset, kv_A(virt_lines, virt_line_index).line,
                             kHlModeReplace, grid->cols, 0);

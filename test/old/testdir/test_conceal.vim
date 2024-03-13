@@ -169,6 +169,57 @@ func Test_conceal_with_cursorcolumn()
   call StopVimInTerminal(buf)
 endfunc
 
+" Check that 'cursorline' and 'wincolor' apply to the whole line in presence
+" of wrapped lines containing concealed text.
+func Test_conceal_wrapped_cursorline_wincolor()
+  CheckScreendump
+
+  let code =<< trim [CODE]
+    call setline(1, 'one one one |hidden| one one one one one one one one')
+    syntax match test /|hidden|/ conceal
+    set conceallevel=2 concealcursor=n cursorline
+    normal! g$
+  [CODE]
+
+  call writefile(code, 'XTest_conceal_cul_wcr', 'D')
+  let buf = RunVimInTerminal('-S XTest_conceal_cul_wcr', {'rows': 4, 'cols': 40})
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_01', {})
+
+  call term_sendkeys(buf, ":set wincolor=ErrorMsg\n")
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_02', {})
+
+  call term_sendkeys(buf, ":set nocursorline\n")
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_03', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+" Same as Test_conceal_wrapped_cursorline_wincolor(), but with 'rightleft'.
+func Test_conceal_wrapped_cursorline_wincolor_rightleft()
+  CheckScreendump
+
+  let code =<< trim [CODE]
+    call setline(1, 'one one one |hidden| one one one one one one one one')
+    syntax match test /|hidden|/ conceal
+    set conceallevel=2 concealcursor=n cursorline rightleft
+    normal! g$
+  [CODE]
+
+  call writefile(code, 'XTest_conceal_cul_wcr_rl', 'D')
+  let buf = RunVimInTerminal('-S XTest_conceal_cul_wcr_rl', {'rows': 4, 'cols': 40})
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_rl_01', {})
+
+  call term_sendkeys(buf, ":set wincolor=ErrorMsg\n")
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_rl_02', {})
+
+  call term_sendkeys(buf, ":set nocursorline\n")
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_rl_03', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_conceal_resize_term()
   CheckScreendump
 
@@ -407,6 +458,60 @@ func Test_conceal_mouse_click()
 
   bwipe!
   set mouse& virtualedit&
+endfunc
+
+" Test that cursor is drawn at the correct column when it is after end of the
+" line with 'virtualedit' and concealing.
+func Test_conceal_virtualedit_after_eol()
+  CheckScreendump
+
+  let code =<< trim [CODE]
+    call setline(1, 'abcdefgh|hidden|ijklmnpop')
+    syntax match test /|hidden|/ conceal
+    set conceallevel=2 concealcursor=n virtualedit=all
+    normal! $
+  [CODE]
+  call writefile(code, 'XTest_conceal_ve_after_eol', 'D')
+  let buf = RunVimInTerminal('-S XTest_conceal_ve_after_eol', {'rows': 3})
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_1', {})
+  call term_sendkeys(buf, "l")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_2', {})
+  call term_sendkeys(buf, "l")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_3', {})
+  call term_sendkeys(buf, "l")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_4', {})
+  call term_sendkeys(buf, "rr")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_5', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+" Same as Test_conceal_virtualedit_after_eol(), but with 'rightleft' set.
+func Test_conceal_virtualedit_after_eol_rightleft()
+  CheckFeature rightleft
+  CheckScreendump
+
+  let code =<< trim [CODE]
+    call setline(1, 'abcdefgh|hidden|ijklmnpop')
+    syntax match test /|hidden|/ conceal
+    set conceallevel=2 concealcursor=n virtualedit=all rightleft
+    normal! $
+  [CODE]
+  call writefile(code, 'XTest_conceal_ve_after_eol_rl', 'D')
+  let buf = RunVimInTerminal('-S XTest_conceal_ve_after_eol_rl', {'rows': 3})
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_rl_1', {})
+  call term_sendkeys(buf, "h")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_rl_2', {})
+  call term_sendkeys(buf, "h")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_rl_3', {})
+  call term_sendkeys(buf, "h")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_rl_4', {})
+  call term_sendkeys(buf, "rr")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_rl_5', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
