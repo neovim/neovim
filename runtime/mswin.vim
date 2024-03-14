@@ -1,7 +1,7 @@
 " Set options and add mapping such that Vim behaves a lot like MS-Windows
 "
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2024 Mar 3
+" Last Change:	2024 Mar 13
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Bail out if this isn't wanted.
@@ -27,7 +27,10 @@ set backspace=indent,eol,start whichwrap+=<,>,[,]
 " backspace in Visual mode deletes selection
 vnoremap <BS> d
 
-if has("clipboard_working")
+" the better solution would be to use has("clipboard_working"),
+" but that may not be available yet while starting up, so let's just check if
+" clipboard support has been compiled in and assume it will be working :/
+if has("clipboard")
     " CTRL-X and SHIFT-Del are Cut
     vnoremap <C-X> "+x
     vnoremap <S-Del> "+x
@@ -43,7 +46,7 @@ if has("clipboard_working")
     cmap <C-V>		<C-R>+
     cmap <S-Insert>		<C-R>+
 else
-    " Use unnamed register while clipboard not exist
+		" Use the unnamed register when clipboard support not available
 
     " CTRL-X and SHIFT-Del are Cut
     vnoremap <C-X>   x
