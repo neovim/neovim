@@ -2594,10 +2594,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
           int col_attr = base_attr;
 
-          if (wp->w_p_cuc && vcol_hlc(wlv) == wp->w_virtcol) {
-            col_attr = cuc_attr;
+          if (wp->w_p_cuc && vcol_hlc(wlv) == wp->w_virtcol
+              && lnum != wp->w_cursor.lnum) {
+            col_attr = hl_combine_attr(col_attr, cuc_attr);
           } else if (wlv.color_cols && vcol_hlc(wlv) == *wlv.color_cols) {
-            col_attr = hl_combine_attr(wlv.line_attr_lowprio, mc_attr);
+            col_attr = hl_combine_attr(col_attr, mc_attr);
           }
 
           col_attr = hl_combine_attr(col_attr, wlv.line_attr);
@@ -2798,7 +2799,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       wlv.char_attr = vcol_save_attr;
     }
 
-    // restore attributes after "predeces" in 'listchars'
+    // restore attributes after "precedes" in 'listchars'
     if (n_attr3 > 0 && --n_attr3 == 0) {
       wlv.char_attr = saved_attr3;
     }
