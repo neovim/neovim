@@ -421,7 +421,14 @@ bool redrawing(void)
 /// and redraw_all_later() to mark parts of the screen as needing a redraw.
 int update_screen(void)
 {
-  static bool did_intro = false;
+  static bool still_may_intro = true;
+  if (still_may_intro) {
+    if (!may_show_intro()) {
+      must_redraw = UPD_NOT_VALID;
+      still_may_intro = false;
+    }
+  }
+
   bool is_stl_global = global_stl_height() > 0;
 
   // Don't do anything if the screen structures are (not yet) valid.
@@ -673,10 +680,9 @@ int update_screen(void)
   }
 
   // May put up an introductory message when not editing a file
-  if (!did_intro) {
-    maybe_intro_message();
+  if (still_may_intro) {
+    intro_message(false);
   }
-  did_intro = true;
 
   decor_providers_invoke_end();
 

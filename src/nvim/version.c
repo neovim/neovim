@@ -2710,15 +2710,13 @@ void list_version(void)
                  : "\nRun \":verbose version\" for more info"));
 }
 
-/// Show the intro message when not editing a file.
-void maybe_intro_message(void)
+/// Whether it still is not too late to show an intro message
+bool may_show_intro(void)
 {
-  if (buf_is_empty(curbuf)
-      && (curbuf->b_fname == NULL)
-      && (firstwin->w_next == NULL)
-      && (vim_strchr(p_shm, SHM_INTRO) == NULL)) {
-    intro_message(false);
-  }
+  return (buf_is_empty(curbuf)
+          && (curbuf->b_fname == NULL)
+          && (firstwin->w_next == NULL)
+          && (vim_strchr(p_shm, SHM_INTRO) == NULL));
 }
 
 /// Give an introductory message about Vim.
