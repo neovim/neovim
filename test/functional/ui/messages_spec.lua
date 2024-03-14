@@ -1627,13 +1627,41 @@ describe('ui/ext_messages', function()
       {1:~                                                                               }|*5
     ]])
 
-    feed('<c-l>')
-    screen:expect([[
+    -- <c-l> (same as :mode) does _not_ clear intro message
+    feed('<c-l>i')
+    screen:expect {
+      grid = [[
       ^                                                                                |
-      {1:~                                                                               }|*23
-    ]])
+      {1:~                                                                               }|*4
+      {MATCH:.*}|
+      {1:~                                                                               }|
+      {1:~                 }Nvim is open source and freely distributable{1:                  }|
+      {1:~                           }https://neovim.io/#chat{1:                             }|
+      {1:~                                                                               }|
+      {1:~                }type  :help nvim{5:<Enter>}       if you are new! {1:                 }|
+      {1:~                }type  :checkhealth{5:<Enter>}     to optimize Nvim{1:                 }|
+      {1:~                }type  :q{5:<Enter>}               to exit         {1:                 }|
+      {1:~                }type  :help{5:<Enter>}            for help        {1:                 }|
+      {1:~                                                                               }|
+      {1:~{MATCH: +}}type  :help news{5:<Enter>} to see changes in v{MATCH:%d+%.%d+}{1:{MATCH: +}}|
+      {1:~                                                                               }|
+      {MATCH:.*}|*2
+      {1:~                                                                               }|*5
+    ]],
+      showmode = { { '-- INSERT --', 3 } },
+    }
 
-    feed(':intro<cr>')
+    -- but editing text does..
+    feed('x')
+    screen:expect {
+      grid = [[
+      x^                                                                               |
+      {1:~                                                                               }|*23
+    ]],
+      showmode = { { '-- INSERT --', 3 } },
+    }
+
+    feed('<esc>:intro<cr>')
     screen:expect {
       grid = [[
       ^                                                                                |
@@ -1656,6 +1684,14 @@ describe('ui/ext_messages', function()
       messages = {
         { content = { { 'Press ENTER or type command to continue', 4 } }, kind = 'return_prompt' },
       },
+    }
+
+    feed('<cr>')
+    screen:expect {
+      grid = [[
+      ^x                                                                               |
+      {1:~                                                                               }|*23
+    ]],
     }
   end)
 
