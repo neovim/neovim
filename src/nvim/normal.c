@@ -3339,7 +3339,7 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, cha
   char *buf_e = buf;
   if (kp_help) {
     // in the help buffer
-    buf_e = xstpcpy(buf_e, "he! ");
+    buf_e = xstpcpy(buf, "he! ");
     return n;
   }
 

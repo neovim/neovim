@@ -3460,8 +3460,7 @@ static void dump_word(slang_T *slang, char *word, char *pat, Direction *dir, int
   if (pat == NULL) {
     // Add flags and regions after a slash.
     if ((flags & (WF_BANNED | WF_RARE | WF_REGION)) || keepcap) {
-      char *badword_e = badword;
-      badword_e = xstpcpy(badword_e, p);
+      char *badword_e = xstpcpy(badword, p);
       badword_e = xstpcpy(badword_e, "/");
       if (keepcap) {
         badword_e = xstpcpy(badword_e, "=");

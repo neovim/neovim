@@ -2139,7 +2139,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
                     + strlen(items[1]) + 3, false);
         char *p_e = p;
         if (spin->si_info != NULL) {
-          p_e = xstpcpy(p_e, spin->si_info);
+          p_e = xstpcpy(p, spin->si_info);
           p_e = xstpcpy(p_e, "\n");
         }
         p_e = xstpcpy(p_e, items[0]);
@@ -2199,8 +2199,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
         // Turn flag "c" into COMPOUNDRULE compatible string "c+",
         // "Na" into "Na+", "1234" into "1234+".
         p = getroom(spin, strlen(items[1]) + 2, false);
-        char *p_e = p;
-        p_e = xstpcpy(p_e, items[1]);
+        char *p_e = xstpcpy(p, items[1]);
         p_e = xstpcpy(p_e, "+");
         compflags = p;
       } else if (is_aff_rule(items, itemcnt, "COMPOUNDRULES", 2)) {
@@ -2846,7 +2845,7 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char *compflags
   char *p = getroom(spin, (size_t)len, false);
   char *p_e = p;
   if (spin->si_compflags != NULL) {
-    p_e = xstpcpy(p_e, spin->si_compflags);
+    p_e = xstpcpy(p, spin->si_compflags);
     p_e = xstpcpy(p_e, "/");
   }
   spin->si_compflags = p;

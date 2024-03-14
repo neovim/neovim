@@ -1054,8 +1054,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
     }
 
     rel_path = xmalloc(strlen(short_name) + strlen(PATHSEPSTR) + 2);
-    char *rel_path_e = rel_path;
-    rel_path_e = xstpcpy(rel_path_e, ".");
+    char *rel_path_e = xstpcpy(rel_path, ".");
     add_pathsep(rel_path);
     rel_path_e += strlen(rel_path_e);
     rel_path_e = xstpcpy(rel_path_e, short_name);

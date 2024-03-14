@@ -1286,9 +1286,9 @@ void ex_diffpatch(exarg_T *eap)
     emsg(_("E816: Cannot read patch output"));
   } else {
     if (curbuf->b_fname != NULL) {
-      const size_t newname_len = strlen(curbuf->b_fname);
-      newname = xstrnsave(curbuf->b_fname, newname_len + 4);
-      STRCPY(newname + newname_len, ".new");
+      const size_t b_fname_len = strlen(curbuf->b_fname);
+      newname = xstrnsave(curbuf->b_fname, b_fname_len + 4);
+      STRCPY(newname + b_fname_len, ".new");
     }
 
     // don't use a new tab page, each tab page has its own diffs
