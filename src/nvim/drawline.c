@@ -73,7 +73,7 @@ typedef struct {
   int col;                   ///< visual column on screen, after wrapping
   int boguscols;             ///< nonexistent columns added to "col" to force wrapping
   int old_boguscols;         ///< bogus boguscols
-  int vcol_off;              ///< offset for concealed characters
+  int vcol_off_co;           ///< offset for concealed characters
 
   int off;                   ///< offset relative start of line
 
@@ -865,9 +865,9 @@ static void win_line_start(win_T *wp, winlinevars_T *wlv)
 
 static void fix_for_boguscols(winlinevars_T *wlv)
 {
-  wlv->n_extra += wlv->vcol_off;
-  wlv->vcol -= wlv->vcol_off;
-  wlv->vcol_off = 0;
+  wlv->n_extra += wlv->vcol_off_co;
+  wlv->vcol -= wlv->vcol_off_co;
+  wlv->vcol_off_co = 0;
   wlv->col -= wlv->boguscols;
   wlv->old_boguscols = wlv->boguscols;
   wlv->boguscols = 0;
@@ -987,7 +987,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   int conceal_attr = win_hl_attr(wp, HLF_CONCEAL);
   bool is_concealing = false;
   bool did_wcol = false;
-#define vcol_hlc(wlv) ((wlv).vcol - (wlv).vcol_off)
+#define vcol_hlc(wlv) ((wlv).vcol - (wlv).vcol_off_co)
 
   assert(startrow < endrow);
 
@@ -2216,9 +2216,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           } else {
             int saved_nextra = wlv.n_extra;
 
-            if (wlv.vcol_off > 0) {
+            if (wlv.vcol_off_co > 0) {
               // there are characters to conceal
-              tab_len += wlv.vcol_off;
+              tab_len += wlv.vcol_off_co;
             }
             // boguscols before fix_for_boguscols() from above.
             if (wp->w_p_lcs_chars.tab1 && wlv.old_boguscols > 0
@@ -2260,27 +2260,27 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
               }
 
               // n_extra will be increased by fix_for_boguscols()
-              // macro below, so need to adjust for that here
-              if (wlv.vcol_off > 0) {
-                wlv.n_extra -= wlv.vcol_off;
+              // below, so need to adjust for that here
+              if (wlv.vcol_off_co > 0) {
+                wlv.n_extra -= wlv.vcol_off_co;
               }
             }
           }
 
           {
-            int vc_saved = wlv.vcol_off;
+            int vc_saved = wlv.vcol_off_co;
 
             // Tab alignment should be identical regardless of
             // 'conceallevel' value. So tab compensates of all
             // previous concealed characters, and thus resets
-            // vcol_off and boguscols accumulated so far in the
+            // vcol_off_co and boguscols accumulated so far in the
             // line. Note that the tab can be longer than
             // 'tabstop' when there are concealed characters.
             fix_for_boguscols(&wlv);
 
             // Make sure, the highlighting for the tab char will be
             // correctly set further below (effectively reverts the
-            // FIX_FOR_BOGSUCOLS macro).
+            // fix_for_boguscols() call).
             if (wlv.n_extra == tab_len + vc_saved && wp->w_p_list
                 && wp->w_p_lcs_chars.tab1) {
               tab_len += vc_saved;
@@ -2408,7 +2408,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           prev_syntax_id = syntax_seqnr;
 
           if (wlv.n_extra > 0) {
-            wlv.vcol_off += wlv.n_extra;
+            wlv.vcol_off_co += wlv.n_extra;
           }
           wlv.vcol += wlv.n_extra;
           if (is_wrapped && wlv.n_extra > 0) {
@@ -2739,9 +2739,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       wlv.col++;
     } else if (wp->w_p_cole > 0 && is_concealing) {
       wlv.skip_cells--;
-      wlv.vcol_off++;
+      wlv.vcol_off_co++;
       if (wlv.n_extra > 0) {
-        wlv.vcol_off += wlv.n_extra;
+        wlv.vcol_off_co += wlv.n_extra;
       }
       if (is_wrapped) {
         // Special voodoo required if 'wrap' is on.
@@ -2872,7 +2872,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       }
 
       wlv.boguscols = 0;
-      wlv.vcol_off = 0;
+      wlv.vcol_off_co = 0;
       wlv.row++;
 
       // When not wrapping and finished diff lines, break here.
