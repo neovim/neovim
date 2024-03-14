@@ -150,16 +150,16 @@ describe('api/buf', function()
       ]],
       }
 
+      lines[5] = 'boogalo 5'
       api.nvim_buf_set_lines(buf, 0, -1, true, lines)
       screen:expect {
         grid = [[
         ^                    |
         {1:~                   }|*4
         {2:[No Name]           }|
-        line3               |
-        line4               |
-        line5               |
+        boogalo 5           |
         line6               |
+        {1:~                   }|*2
         {3:[No Name] [+]       }|
                             |
       ]],
@@ -171,10 +171,9 @@ describe('api/buf', function()
                             |
         {1:~                   }|*4
         {3:[No Name]           }|
-        line3               |
-        line4               |
-        line5               |
+        boogalo 5           |
         ^line6               |
+        {1:~                   }|*2
         {2:[No Name] [+]       }|
                             |
       ]],

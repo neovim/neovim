@@ -1243,11 +1243,11 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
       if (win != curwin || by_api) {
         if (win->w_topline >= line1 && win->w_topline <= line2) {
           if (amount == MAXLNUM) {                  // topline is deleted
-            if (line1 <= 1) {
-              win->w_topline = 1;
+            if (by_api && amount_after > line1 - line2 - 1) {
+              // api: if the deleted region was replaced with new contents, topline will
+              // get adjusted later as an effect of the adjusted cursor in fix_cursor()
             } else {
-              // api: if the deleted region was replaced with new contents, display that
-              win->w_topline = (by_api && amount_after > line1 - line2 - 1) ? line1 : line1 - 1;
+              win->w_topline = MAX(line1 - 1, 1);
             }
           } else if (win->w_topline > line1) {
             // keep topline on the same line, unless inserting just
