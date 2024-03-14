@@ -408,6 +408,7 @@ static void shift_block(oparg_T *oap, int amount)
     memset(newp + bd.textcol + tabs, ' ', (size_t)spaces);
     // Note that STRMOVE() copies the trailing NUL.
     STRMOVE(newp + bd.textcol + tabs + spaces, bd.textstart);
+    assert(newlen - oldlen == (colnr_T)new_line_len - get_cursor_line_len());
   } else {  // left
     char *verbatim_copy_end;      // end of the part of the line which is
                                   // copied verbatim
@@ -494,6 +495,7 @@ static void shift_block(oparg_T *oap, int amount)
     memset(newp + verbatim_diff, ' ', fill);
     // Note that STRMOVE() copies the trailing NUL.
     STRMOVE(newp + verbatim_diff + fill, non_white);
+    assert(newlen - oldlen == (colnr_T)new_line_len - get_cursor_line_len());
   }
   // replace the line
   ml_replace(curwin->w_cursor.lnum, newp, false);
