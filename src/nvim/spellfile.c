@@ -5114,13 +5114,12 @@ static void sug_write(spellinfo_T *spin, char *fname)
   for (linenr_T lnum = 1; lnum <= wcount; lnum++) {
     // <sugline>: <sugnr> ... NUL
     char *line = ml_get_buf(spin->si_spellbuf, lnum);
-    size_t len = strlen(line) + 1;
-    if (fwrite(line, len, 1, fd) == 0) {
+    int len = ml_get_buf_len(spin->si_spellbuf, lnum) + 1;
+    if (fwrite(line, (size_t)len, 1, fd) == 0) {
       emsg(_(e_write));
       goto theend;
     }
-    assert((size_t)spin->si_memtot + len <= INT_MAX);
-    spin->si_memtot += (int)len;
+    spin->si_memtot += len;
   }
 
   // Write another byte to check for errors.

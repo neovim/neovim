@@ -1715,7 +1715,7 @@ void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
 {
   if (lp->col > 0 || lp->coladd > 1) {
     const char *const p = ml_get_buf(buf, lp->lnum);
-    if (*p == NUL || (int)strlen(p) < lp->col) {
+    if (*p == NUL || ml_get_buf_len(buf, lp->lnum) < lp->col) {
       lp->col = 0;
     } else {
       lp->col -= utf_head_off(p, p + lp->col);

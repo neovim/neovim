@@ -604,7 +604,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
                && pos->col < MAXCOL - 2) {
       // Watch out for the "col" being MAXCOL - 2, used in a closed fold.
       ptr = ml_get_buf(buf, pos->lnum);
-      if ((int)strlen(ptr) <= pos->col) {
+      if (ml_get_buf_len(buf, pos->lnum) <= pos->col) {
         start_char_len = 1;
       } else {
         start_char_len = utfc_ptr2len(ptr + pos->col);
@@ -851,7 +851,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
             if (endpos.col == 0) {
               if (pos->lnum > 1) {              // just in case
                 pos->lnum--;
-                pos->col = (colnr_T)strlen(ml_get_buf(buf, pos->lnum));
+                pos->col = ml_get_buf_len(buf, pos->lnum);
               }
             } else {
               pos->col--;
@@ -969,7 +969,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
   // A pattern like "\n\zs" may go past the last line.
   if (pos->lnum > buf->b_ml.ml_line_count) {
     pos->lnum = buf->b_ml.ml_line_count;
-    pos->col = (int)strlen(ml_get_buf(buf, pos->lnum));
+    pos->col = ml_get_buf_len(buf, pos->lnum);
     if (pos->col > 0) {
       pos->col--;
     }
@@ -1554,7 +1554,7 @@ int searchc(cmdarg_T *cap, bool t_cmd)
 
   char *p = get_cursor_line_ptr();
   int col = curwin->w_cursor.col;
-  int len = (int)strlen(p);
+  int len = get_cursor_line_len();
 
   while (count--) {
     while (true) {
@@ -1958,7 +1958,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         }
 
         linep = ml_get(pos.lnum);
-        pos.col = (colnr_T)strlen(linep);         // pos.col on trailing NUL
+        pos.col = ml_get_len(pos.lnum);  // pos.col on trailing NUL
         do_quotes = -1;
         line_breakcheck();
 
@@ -2105,7 +2105,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         }
         if (pos.lnum > 1) {
           ptr = ml_get(pos.lnum - 1);
-          if (*ptr && *(ptr + strlen(ptr) - 1) == '\\') {
+          if (*ptr && *(ptr + ml_get_len(pos.lnum - 1) - 1) == '\\') {
             do_quotes = 1;
             if (start_in_quotes == kNone) {
               inquote = at_start;
@@ -2472,7 +2472,7 @@ int current_search(int count, bool forward)
       } else {  // try again from end of buffer
                 // searching backwards, so set pos to last line and col
         pos.lnum = curwin->w_buffer->b_ml.ml_line_count;
-        pos.col = (colnr_T)strlen(ml_get(curwin->w_buffer->b_ml.ml_line_count));
+        pos.col = ml_get_len(curwin->w_buffer->b_ml.ml_line_count);
       }
     }
   }

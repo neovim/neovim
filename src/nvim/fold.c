@@ -518,7 +518,7 @@ static bool checkCloseRec(garray_T *gap, linenr_T lnum, int level)
   return retval;
 }
 
-// foldCreateAllowed() {{{2
+// foldManualAllowed() {{{2
 /// @return  true if it's allowed to manually create or delete a fold or,
 ///          give an error message and return false if not.
 int foldManualAllowed(bool create)
@@ -1017,8 +1017,7 @@ void foldAdjustVisual(void)
     return;
   }
 
-  char *ptr = ml_get(end->lnum);
-  end->col = (colnr_T)strlen(ptr);
+  end->col = ml_get_len(end->lnum);
   if (end->col > 0 && *p_sel == 'o') {
     end->col--;
   }
@@ -1026,7 +1025,7 @@ void foldAdjustVisual(void)
   mb_adjust_cursor();
 }
 
-// cursor_foldstart() {{{2
+// foldAdjustCursor() {{{2
 /// Move the cursor to the first line of a closed fold.
 void foldAdjustCursor(win_T *wp)
 {
@@ -1605,7 +1604,7 @@ static void foldAddMarker(buf_T *buf, pos_T pos, const char *marker, size_t mark
 
   // Allocate a new line: old-line + 'cms'-start + marker + 'cms'-end
   char *line = ml_get_buf(buf, lnum);
-  size_t line_len = strlen(line);
+  size_t line_len = (size_t)ml_get_buf_len(buf, lnum);
   size_t added = 0;
 
   if (u_save(lnum - 1, lnum + 1) != OK) {
@@ -1686,7 +1685,7 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char *marker, size_t marker
     }
     if (u_save(lnum - 1, lnum + 1) == OK) {
       // Make new line: text-before-marker + text-after-marker
-      char *newline = xmalloc(strlen(line) - len + 1);
+      char *newline = xmalloc((size_t)ml_get_buf_len(buf, lnum) - len + 1);
       assert(p >= line);
       memcpy(newline, line, (size_t)(p - line));
       STRCPY(newline + (p - line), p + len);

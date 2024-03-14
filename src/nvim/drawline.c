@@ -850,43 +850,6 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
   }
 }
 
-static colnr_T get_trailcol(win_T *wp, const char *ptr, const char *line)
-{
-  colnr_T trailcol = MAXCOL;
-  // find start of trailing whitespace
-  if (wp->w_p_lcs_chars.trail) {
-    trailcol = (colnr_T)strlen(ptr);
-    while (trailcol > 0 && ascii_iswhite(ptr[trailcol - 1])) {
-      trailcol--;
-    }
-    trailcol += (colnr_T)(ptr - line);
-  }
-
-  return trailcol;
-}
-
-static colnr_T get_leadcol(win_T *wp, const char *ptr, const char *line)
-{
-  colnr_T leadcol = 0;
-
-  // find end of leading whitespace
-  if (wp->w_p_lcs_chars.lead || wp->w_p_lcs_chars.leadmultispace != NULL) {
-    leadcol = 0;
-    while (ascii_iswhite(ptr[leadcol])) {
-      leadcol++;
-    }
-    if (ptr[leadcol] == NUL) {
-      // in a line full of spaces all of them are treated as trailing
-      leadcol = 0;
-    } else {
-      // keep track of the first column not filled with spaces
-      leadcol += (colnr_T)(ptr - line + 1);
-    }
-  }
-
-  return leadcol;
-}
-
 /// Start a screen line at column zero.
 static void win_line_start(win_T *wp, winlinevars_T *wlv)
 {
@@ -1298,17 +1261,17 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       nextlinecol = MAXCOL;
       nextline_idx = 0;
     } else {
-      const size_t line_len = strlen(line);
+      const colnr_T line_len = ml_get_buf_len(wp->w_buffer, lnum);
       if (line_len < SPWORDLEN) {
         // Short line, use it completely and append the start of the
         // next line.
         nextlinecol = 0;
-        memmove(nextline, line, line_len);
+        memmove(nextline, line, (size_t)line_len);
         STRMOVE(nextline + line_len, nextline + SPWORDLEN);
-        nextline_idx = (int)line_len + 1;
+        nextline_idx = line_len + 1;
       } else {
         // Long line, use only the last SPWORDLEN bytes.
-        nextlinecol = (int)line_len - SPWORDLEN;
+        nextlinecol = line_len - SPWORDLEN;
         memmove(nextline, line + nextlinecol, SPWORDLEN);
         nextline_idx = SPWORDLEN + 1;
       }
@@ -1336,8 +1299,28 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         || wp->w_p_lcs_chars.nbsp) {
       extra_check = true;
     }
-    trailcol = get_trailcol(wp, ptr, line);
-    leadcol = get_leadcol(wp, ptr, line);
+    // find start of trailing whitespace
+    if (wp->w_p_lcs_chars.trail) {
+      trailcol = ml_get_buf_len(wp->w_buffer, lnum);
+      while (trailcol > 0 && ascii_iswhite(ptr[trailcol - 1])) {
+        trailcol--;
+      }
+      trailcol += (colnr_T)(ptr - line);
+    }
+    // find end of leading whitespace
+    if (wp->w_p_lcs_chars.lead || wp->w_p_lcs_chars.leadmultispace != NULL) {
+      leadcol = 0;
+      while (ascii_iswhite(ptr[leadcol])) {
+        leadcol++;
+      }
+      if (ptr[leadcol] == NUL) {
+        // in a line full of spaces all of them are treated as trailing
+        leadcol = 0;
+      } else {
+        // keep track of the first column not filled with spaces
+        leadcol += (colnr_T)(ptr - line + 1);
+      }
+    }
   }
 
   // 'nowrap' or 'wrap' and a single line that doesn't fit: Advance to the
