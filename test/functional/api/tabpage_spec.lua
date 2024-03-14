@@ -138,7 +138,7 @@ describe('api/tabpage', function()
       eq(tab2, api.nvim_get_current_tabpage())
     end)
 
-    it('respects the `after` argument', function()
+    it('respects the `after` option', function()
       local tab1 = api.nvim_get_current_tabpage()
       command('tabnew')
       local tab2 = api.nvim_get_current_tabpage()
@@ -157,6 +157,33 @@ describe('api/tabpage', function()
         new_tab,
         tab3,
       })
+      eq(api.nvim_get_current_tabpage(), tab3)
+    end)
+
+    it('respects the `enter` argument', function()
+      eq(1, #api.nvim_list_tabpages())
+      local tab1 = api.nvim_get_current_tabpage()
+
+      local new_tab = api.nvim_open_tabpage(0, false, {})
+
+      local newtabs = api.nvim_list_tabpages()
+      eq(2, #newtabs)
+      eq(newtabs, {
+        tab1,
+        new_tab,
+      })
+      eq(api.nvim_get_current_tabpage(), tab1)
+
+      local new_tab2 = api.nvim_open_tabpage(0, true, {})
+      local newtabs = api.nvim_list_tabpages()
+      eq(3, #newtabs)
+      eq(newtabs, {
+        tab1,
+        new_tab2,
+        new_tab,
+      })
+
+      eq(api.nvim_get_current_tabpage(), new_tab2)
     end)
   end)
 
