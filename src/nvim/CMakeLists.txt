@@ -342,6 +342,9 @@ set(LUA_KEYMAP_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/keymap.lua)
 set(LUA_LOADER_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/loader.lua)
 set(LUA_OPTIONS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_options.lua)
 set(LUA_SHARED_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/shared.lua)
+# set(LUA_EXTUI_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/ui/ext/init.lua)
+# set(LUA_CMDLINE_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/ui/ext/cmdline.lua)
+# set(LUA_MESSAGES_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/ui/ext/messages.lua)
 
 file(GLOB UNICODE_FILES CONFIGURE_DEPENDS ${UNICODE_DIR}/*.txt)
 file(GLOB API_HEADERS CONFIGURE_DEPENDS api/*.h)
@@ -604,6 +607,9 @@ add_custom_command(
       ${LUA_DEFAULTS_MODULE_SOURCE} "vim._defaults"
       ${LUA_OPTIONS_MODULE_SOURCE} "vim._options"
       ${LUA_SHARED_MODULE_SOURCE} "vim.shared"
+      # ${LUA_EXTUI_MODULE_SOURCE} "vim.ui.ext"
+      # ${LUA_CMDLINE_MODULE_SOURCE} "vim.ui.ext.cmdline"
+      # ${LUA_MESSAGES_MODULE_SOURCE} "vim.ui.ext.messages"
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
     ${LUA_INIT_PACKAGES_MODULE_SOURCE}
@@ -617,6 +623,9 @@ add_custom_command(
     ${LUA_DEFAULTS_MODULE_SOURCE}
     ${LUA_OPTIONS_MODULE_SOURCE}
     ${LUA_SHARED_MODULE_SOURCE}
+    # ${LUA_EXTUI_MODULE_SOURCE}
+    # ${LUA_CMDLINE_MODULE_SOURCE}
+    # ${LUA_MESSAGES_MODULE_SOURCE}
   VERBATIM
 )
 

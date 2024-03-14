@@ -1101,6 +1101,7 @@ void ex_messages(exarg_T *eap)
       }
     }
     ui_call_msg_history_show(entries);
+    update_screen();
     api_free_array(entries);
     msg_ext_history_visible = true;
     wait_return(false);
@@ -1137,6 +1138,7 @@ void msg_end_prompt(void)
 ///                if -1, don't redraw at all
 void wait_return(int redraw)
 {
+  return;
   int c;
   int had_got_int;
   FILE *save_scriptout;

@@ -2064,6 +2064,7 @@ static void display_showcmd(void)
       ADD_C(content, ARRAY_OBJ(chunk));
     }
     ui_call_msg_showcmd(content);
+    update_screen();
     return;
   }
 

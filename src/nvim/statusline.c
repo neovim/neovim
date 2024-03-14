@@ -83,7 +83,7 @@ void win_redr_status(win_T *wp)
   wp->w_redr_status = false;
   if (wp->w_status_height == 0 && !(is_stl_global && wp == curwin)) {
     // no status line, either global statusline is enabled or the window is a last window
-    redraw_cmdline = true;
+    redraw_cmdline = redrawing_cmdline;
   } else if (!redrawing()) {
     // Don't redraw right now, do it later. Don't update status line when
     // popup menu is visible and may be drawn over it

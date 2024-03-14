@@ -284,7 +284,7 @@ function vim.wait(time, callback, interval, fast_only) end
 ---
 --- @param ns integer
 --- @param options table<string, any>
---- @param callback fun()
+--- @param callback fun(event: string, ...)
 function vim.ui_attach(ns, options, callback) end
 
 --- Detach a callback previously attached with |vim.ui_attach()| for the

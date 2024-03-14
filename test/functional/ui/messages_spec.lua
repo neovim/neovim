@@ -118,8 +118,8 @@ describe('ui/ext_messages', function()
     feed(':%s/i/X/gc<cr>')
     screen:expect {
       grid = [[
-      l{7:i}ne 1                   |
-      l{8:i}ne ^2                   |
+      l{7:^i}ne 1                   |
+      l{8:i}ne 2                   |
       {1:~                        }|*3
     ]],
       attr_ids = {
