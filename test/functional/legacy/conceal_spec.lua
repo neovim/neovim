@@ -4,6 +4,7 @@ local clear = helpers.clear
 local command = helpers.command
 local exec = helpers.exec
 local feed = helpers.feed
+local api = helpers.api
 
 local expect_pos = function(row, col)
   return helpers.eq({ row, col }, helpers.eval('[screenrow(), screencol()]'))
@@ -633,13 +634,13 @@ describe('Conceal', function()
     expect_pos(9, 26)
   end)
 
-  -- oldtest: Test_conceal_virtualedit_after_eol()
-  it('cursor drawn at correct column with virtualedit', function()
-    local screen = Screen.new(75, 3)
+  local function test_conceal_virtualedit_after_eol(wrap)
+    local screen = Screen.new(60, 3)
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
     })
     screen:attach()
+    api.nvim_set_option_value('wrap', wrap, {})
     exec([[
       call setline(1, 'abcdefgh|hidden|ijklmnpop')
       syntax match test /|hidden|/ conceal
@@ -647,43 +648,53 @@ describe('Conceal', function()
       normal! $
     ]])
     screen:expect([[
-      abcdefghijklmnpo^p                                                          |
-      {0:~                                                                          }|
-                                                                                 |
+      abcdefghijklmnpo^p                                           |
+      {0:~                                                           }|
+                                                                  |
     ]])
     feed('l')
     screen:expect([[
-      abcdefghijklmnpop^                                                          |
-      {0:~                                                                          }|
-                                                                                 |
+      abcdefghijklmnpop^                                           |
+      {0:~                                                           }|
+                                                                  |
     ]])
     feed('l')
     screen:expect([[
-      abcdefghijklmnpop ^                                                         |
-      {0:~                                                                          }|
-                                                                                 |
+      abcdefghijklmnpop ^                                          |
+      {0:~                                                           }|
+                                                                  |
     ]])
     feed('l')
     screen:expect([[
-      abcdefghijklmnpop  ^                                                        |
-      {0:~                                                                          }|
-                                                                                 |
+      abcdefghijklmnpop  ^                                         |
+      {0:~                                                           }|
+                                                                  |
     ]])
     feed('rr')
     screen:expect([[
-      abcdefghijklmnpop  ^r                                                       |
-      {0:~                                                                          }|
-                                                                                 |
+      abcdefghijklmnpop  ^r                                        |
+      {0:~                                                           }|
+                                                                  |
     ]])
+  end
+
+  -- oldtest: Test_conceal_virtualedit_after_eol()
+  describe('cursor drawn at correct column with virtualedit', function()
+    it('with wrapping', function()
+      test_conceal_virtualedit_after_eol(true)
+    end)
+    it('without wrapping', function()
+      test_conceal_virtualedit_after_eol(false)
+    end)
   end)
 
-  -- oldtest: Test_conceal_virtualedit_after_eol_rightleft()
-  it('cursor drawn correctly with virtualedit and rightleft', function()
-    local screen = Screen.new(75, 3)
+  local function test_conceal_virtualedit_after_eol_rightleft(wrap)
+    local screen = Screen.new(60, 3)
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
     })
     screen:attach()
+    api.nvim_set_option_value('wrap', wrap, {})
     exec([[
       call setline(1, 'abcdefgh|hidden|ijklmnpop')
       syntax match test /|hidden|/ conceal
@@ -691,33 +702,141 @@ describe('Conceal', function()
       normal! $
     ]])
     screen:expect([[
-                                                                ^popnmlkjihgfedcba|
-      {0:                                                                          ~}|
-                                                                                 |
+                                                 ^popnmlkjihgfedcba|
+      {0:                                                           ~}|
+                                                                  |
     ]])
     feed('h')
     screen:expect([[
-                                                               ^ popnmlkjihgfedcba|
-      {0:                                                                          ~}|
-                                                                                 |
+                                                ^ popnmlkjihgfedcba|
+      {0:                                                           ~}|
+                                                                  |
     ]])
     feed('h')
     screen:expect([[
-                                                              ^  popnmlkjihgfedcba|
-      {0:                                                                          ~}|
-                                                                                 |
+                                               ^  popnmlkjihgfedcba|
+      {0:                                                           ~}|
+                                                                  |
     ]])
     feed('h')
     screen:expect([[
-                                                             ^   popnmlkjihgfedcba|
-      {0:                                                                          ~}|
-                                                                                 |
+                                              ^   popnmlkjihgfedcba|
+      {0:                                                           ~}|
+                                                                  |
     ]])
     feed('rr')
     screen:expect([[
-                                                             ^r  popnmlkjihgfedcba|
-      {0:                                                                          ~}|
-                                                                                 |
+                                              ^r  popnmlkjihgfedcba|
+      {0:                                                           ~}|
+                                                                  |
+    ]])
+  end
+
+  -- oldtest: Test_conceal_virtualedit_after_eol_rightleft()
+  describe('cursor drawn correctly with virtualedit and rightleft', function()
+    it('with wrapping', function()
+      test_conceal_virtualedit_after_eol_rightleft(true)
+    end)
+    it('without wrapping', function()
+      test_conceal_virtualedit_after_eol_rightleft(false)
+    end)
+  end)
+
+  local function test_conceal_double_width(wrap)
+    local screen = Screen.new(60, 4)
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { background = Screen.colors.DarkGrey, foreground = Screen.colors.LightGrey },
+      [2] = { background = Screen.colors.LightRed },
+    })
+    screen:attach()
+    api.nvim_set_option_value('wrap', wrap, {})
+    exec([[
+      call setline(1, ['aaaaa口=口bbbbb口=口ccccc', 'foobar'])
+      syntax match test /口=口/ conceal cchar=β
+      set conceallevel=2 concealcursor=n colorcolumn=30
+      normal! $
+    ]])
+    screen:expect([[
+      aaaaa{1:β}bbbbb{1:β}cccc^c            {2: }                              |
+      foobar                       {2: }                              |
+      {0:~                                                           }|
+                                                                  |
+    ]])
+    feed('gM')
+    screen:expect([[
+      aaaaa{1:β}bb^bbb{1:β}ccccc            {2: }                              |
+      foobar                       {2: }                              |
+      {0:~                                                           }|
+                                                                  |
+    ]])
+    command('set conceallevel=3')
+    screen:expect([[
+      aaaaabb^bbbccccc              {2: }                              |
+      foobar                       {2: }                              |
+      {0:~                                                           }|
+                                                                  |
+    ]])
+    feed('$')
+    screen:expect([[
+      aaaaabbbbbcccc^c              {2: }                              |
+      foobar                       {2: }                              |
+      {0:~                                                           }|
+                                                                  |
+    ]])
+  end
+
+  -- oldtest: Test_conceal_double_width()
+  describe('cursor drawn correctly when double-width chars are concealed', function()
+    it('with wrapping', function()
+      test_conceal_double_width(true)
+    end)
+    it('without wrapping', function()
+      test_conceal_double_width(false)
+    end)
+  end)
+
+  -- oldtest: Test_conceal_double_width_wrap()
+  it('line wraps correctly when double-width chars are concealed', function()
+    local screen = Screen.new(20, 4)
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { background = Screen.colors.DarkGrey, foreground = Screen.colors.LightGrey },
+      [2] = { background = Screen.colors.LightRed },
+    })
+    screen:attach()
+    exec([[
+      call setline(1, 'aaaaaaaaaa口=口bbbbbbbbbb口=口cccccccccc')
+      syntax match test /口=口/ conceal cchar=β
+      set conceallevel=2 concealcursor=n
+      normal! $
+    ]])
+    screen:expect([[
+      aaaaaaaaaa{1:β}bbbbb    |
+      bbbbb{1:β}ccccccccc^c    |
+      {0:~                   }|
+                          |
+    ]])
+    feed('gM')
+    screen:expect([[
+      aaaaaaaaaa{1:β}bbbbb    |
+      ^bbbbb{1:β}cccccccccc    |
+      {0:~                   }|
+                          |
+    ]])
+    command('set conceallevel=3')
+    screen:expect([[
+      aaaaaaaaaabbbbb     |
+      ^bbbbbcccccccccc     |
+      {0:~                   }|
+                          |
+    ]])
+    feed('$')
+    screen:expect([[
+      aaaaaaaaaabbbbb     |
+      bbbbbccccccccc^c     |
+      {0:~                   }|
+                          |
     ]])
   end)
 end)
