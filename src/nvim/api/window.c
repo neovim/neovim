@@ -148,7 +148,7 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   switchwin_T switchwin;
   switch_win(&switchwin, win, NULL, true);
   update_topline(curwin);
-  validate_cursor(curwin);
+  setcursor_mayforce(true);
   restore_win(&switchwin, true);
 
   redraw_later(win, UPD_VALID);
