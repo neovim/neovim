@@ -1380,6 +1380,8 @@ describe('CursorColumn highlight', function()
       [1] = { background = Screen.colors.Gray90 }, -- CursorColumn
       [2] = { bold = true, foreground = Screen.colors.Blue1 }, -- NonText
       [3] = { bold = true }, -- ModeMsg
+      [4] = { background = Screen.colors.Red },
+      [5] = { background = Screen.colors.Blue },
     })
     screen:attach()
   end)
@@ -1453,6 +1455,47 @@ describe('CursorColumn highlight', function()
                                                         |
     ]],
     })
+  end)
+
+  it('is not shown on current line with virtualedit', function()
+    exec([[
+      hi! CursorColumn guibg=Red
+      hi! CursorLine guibg=Blue
+      set virtualedit=all cursorline cursorcolumn
+    ]])
+    insert('line 1\nline 2\nline 3')
+    feed('k')
+    screen:expect([[
+      line {4:1}                                            |
+      {5:line ^2                                            }|
+      line {4:3}                                            |
+      {2:~                                                 }|*4
+                                                        |
+    ]])
+    feed('l')
+    screen:expect([[
+      line 1{4: }                                           |
+      {5:line 2^                                            }|
+      line 3{4: }                                           |
+      {2:~                                                 }|*4
+                                                        |
+    ]])
+    feed('l')
+    screen:expect([[
+      line 1 {4: }                                          |
+      {5:line 2 ^                                           }|
+      line 3 {4: }                                          |
+      {2:~                                                 }|*4
+                                                        |
+    ]])
+    feed('l')
+    screen:expect([[
+      line 1  {4: }                                         |
+      {5:line 2  ^                                          }|
+      line 3  {4: }                                         |
+      {2:~                                                 }|*4
+                                                        |
+    ]])
   end)
 end)
 
