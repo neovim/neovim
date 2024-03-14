@@ -2370,6 +2370,14 @@ func Test_normal30_changecase()
   %d
   call assert_beeps('norm! ~')
 
+  " Test with multiple lines
+  call setline(1, ['AA', 'BBBB', 'CCCCCC', 'DDDDDDDD'])
+  norm! ggguG
+  call assert_equal(['aa', 'bbbb', 'cccccc', 'dddddddd'], getline(1, '$'))
+  norm! GgUgg
+  call assert_equal(['AA', 'BBBB', 'CCCCCC', 'DDDDDDDD'], getline(1, '$'))
+  %d
+
   " Test for changing case across lines using 'whichwrap'
   call setline(1, ['aaaaaa', 'aaaaaa'])
   normal! gg10~

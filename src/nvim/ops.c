@@ -1616,7 +1616,7 @@ int op_delete(oparg_T *oap)
         beginline(0);                       // cursor in column 0
       }
       truncate_line(false);         // delete the rest of the line,
-                                    // leave cursor past last char in line
+                                    // leaving cursor past last char in line
       if (oap->line_count > 1) {
         u_clearline(curbuf);  // "U" command not possible after "2cc"
       }
@@ -2232,7 +2232,6 @@ void op_insert(oparg_T *oap, int count1)
     ind_pre_col = (colnr_T)getwhitecols_curline();
     ind_pre_vcol = get_indent();
     pre_textlen = ml_get_len(oap->start.lnum) - bd.textcol;
-
     if (oap->op_type == OP_APPEND) {
       pre_textlen -= bd.textlen;
     }
@@ -4452,9 +4451,10 @@ bool do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
 
   curwin->w_cursor = *pos;
   char *ptr = ml_get(pos->lnum);
+  int linelen = ml_get_len(pos->lnum);
   int col = pos->col;
 
-  if (*ptr == NUL || col + !!save_coladd >= (int)strlen(ptr)) {
+  if (col + !!save_coladd >= linelen) {
     goto theend;
   }
 
@@ -4593,9 +4593,7 @@ bool do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
 
     // get the number value (unsigned)
     if (visual && VIsual_mode != 'V') {
-      maxlen = (curbuf->b_visual.vi_curswant == MAXCOL
-                ? (int)strlen(ptr) - col
-                : length);
+      maxlen = curbuf->b_visual.vi_curswant == MAXCOL ? linelen - col : length;
     }
 
     bool overflow = false;

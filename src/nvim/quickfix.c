@@ -5362,7 +5362,7 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
       }
     } else {
       char *const str = ml_get_buf(buf, lnum);
-      const int line_len = ml_get_buf_len(buf, lnum);
+      const colnr_T linelen = ml_get_buf_len(buf, lnum);
       int score;
       uint32_t matches[MAX_FUZZY_MATCHES];
       const size_t sz = sizeof(matches) / sizeof(matches[0]);
@@ -5401,7 +5401,7 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
           break;
         }
         col = (colnr_T)matches[pat_len - 1] + col + 1;
-        if (col > line_len) {
+        if (col > linelen) {
           break;
         }
       }

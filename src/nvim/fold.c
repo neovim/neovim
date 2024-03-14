@@ -518,7 +518,7 @@ static bool checkCloseRec(garray_T *gap, linenr_T lnum, int level)
   return retval;
 }
 
-// foldCreateAllowed() {{{2
+// foldManualAllowed() {{{2
 /// @return  true if it's allowed to manually create or delete a fold or,
 ///          give an error message and return false if not.
 int foldManualAllowed(bool create)
@@ -1025,7 +1025,7 @@ void foldAdjustVisual(void)
   mb_adjust_cursor();
 }
 
-// cursor_foldstart() {{{2
+// foldAdjustCursor() {{{2
 /// Move the cursor to the first line of a closed fold.
 void foldAdjustCursor(win_T *wp)
 {

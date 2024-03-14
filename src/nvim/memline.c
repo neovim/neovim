@@ -1843,7 +1843,7 @@ colnr_T ml_get_len(linenr_T lnum)
 /// @return  length (excluding the NUL) of the text after position "pos".
 colnr_T ml_get_pos_len(pos_T *pos)
 {
-  return ml_get_buf_len(curbuf, curwin->w_cursor.lnum) - pos->col;
+  return ml_get_buf_len(curbuf, pos->lnum) - pos->col;
 }
 
 /// @return  length (excluding the NUL) of the given line in the given buffer.
