@@ -2403,6 +2403,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           } else {
             mb_schar = schar_from_ascii(' ');
           }
+
+          if (utf_char2cells(mb_c) > 1) {
+            // When the first char to be concealed is double-width,
+            // need to advance one more virtual column.
+            wlv.n_extra++;
+          }
+
           mb_c = schar_get_first_codepoint(mb_schar);
 
           prev_syntax_id = syntax_seqnr;
@@ -2739,11 +2746,21 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       wlv.off++;
       wlv.col++;
     } else if (wp->w_p_cole > 0 && is_concealing) {
+      bool concealed_wide = utf_char2cells(mb_c) > 1;
+
       wlv.skip_cells--;
       wlv.vcol_off_co++;
+      if (concealed_wide) {
+        // When a double-width char is concealed,
+        // need to advance one more virtual column.
+        wlv.vcol++;
+        wlv.vcol_off_co++;
+      }
+
       if (wlv.n_extra > 0) {
         wlv.vcol_off_co += wlv.n_extra;
       }
+
       if (is_wrapped) {
         // Special voodoo required if 'wrap' is on.
         //
@@ -2764,7 +2781,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           wlv.n_attr = 0;
         }
 
-        if (utf_char2cells(mb_c) > 1) {
+        if (concealed_wide) {
           // Need to fill two screen columns.
           wlv.boguscols++;
           wlv.col++;
