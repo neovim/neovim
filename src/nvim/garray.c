@@ -154,12 +154,12 @@ char *ga_concat_strings_sep(const garray_T *gap, const char *sep)
   len += (nelem - 1) * strlen(sep);
   char *const ret = xmallocz(len);
 
-  char *s = ret;
+  char *s_e = ret;
   for (size_t i = 0; i < nelem - 1; i++) {
-    s = xstpcpy(s, strings[i]);
-    s = xstpcpy(s, sep);
+    s_e = xstpcpy(s_e, strings[i]);
+    s_e = xstpcpy(s_e, sep);
   }
-  strcpy(s, strings[nelem - 1]);  // NOLINT(runtime/printf)
+  s_e = xstpcpy(s_e, strings[nelem - 1]);  // NOLINT(runtime/printf)
 
   return ret;
 }

@@ -2403,7 +2403,7 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
   } else {
     fnamelen = strlen(fname);
     retval = xmalloc(fnamelen + extlen + 3);
-    strcpy(retval, fname);  // NOLINT(runtime/printf)
+    STRCPY(retval, fname);
   }
 
   // Search backwards until we hit a '/', '\' or ':'.
@@ -2425,7 +2425,7 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
 
   // Append the extension.
   // ext can start with '.' and cannot exceed 3 more characters.
-  strcpy(s, ext);  // NOLINT(runtime/printf)
+  STRCPY(s, ext);
 
   char *e;
   // Prepend the dot if needed.
