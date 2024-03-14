@@ -7836,6 +7836,9 @@ M.funcs = {
           echo printf("%1$*2$.*3$f", 1.4142135, 6, 2)
       <      1.41
 
+      You will get an overflow error |E1510|, when the field-width
+      or precision will result in a string longer than 6400 chars.
+
       					*E1500*
       You cannot mix positional and non-positional arguments: >vim
           echo printf("%s%1$s", "One", "Two")
