@@ -70,7 +70,7 @@ endif
 " Uses the paste.vim autoload script.
 " Use CTRL-G u to have CTRL-Z only undo the paste.
 
-if has("clipboard_working")
+if has("clipboard")
     exe 'inoremap <script> <C-V> <C-G>u' . paste#paste_cmd['i']
     exe 'vnoremap <script> <C-V> ' . paste#paste_cmd['v']
 endif
