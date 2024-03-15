@@ -777,9 +777,10 @@ This UI extension delegates presentation of messages and dialogs. Messages
 that would otherwise render in the message/cmdline screen space, are emitted
 as UI events.
 
-Nvim will not allocate screen space for the cmdline or messages, and
-'cmdheight' will be forced zero. Cmdline state is emitted as |ui-cmdline|
-events, which the UI must handle.
+Nvim will not allocate screen space for the cmdline or messages. 'cmdheight'
+will be set to zero, but can be changed and used for the replacing cmdline or
+message window. Cmdline state is emitted as |ui-cmdline| events, which the UI
+must handle.
 
 ["msg_show", kind, content, replace_last] ~
 	Display a message to the user.
