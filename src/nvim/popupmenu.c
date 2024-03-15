@@ -762,6 +762,9 @@ win_T *pum_set_info(int pum_idx, char *info)
   if (!pum_is_visible || pum_idx < 0 || pum_idx > pum_size) {
     return NULL;
   }
+  if (pum_array[pum_idx].pum_info) {
+    xfree(pum_array[pum_idx].pum_info);
+  }
   pum_array[pum_idx].pum_info = xstrdup(info);
   compl_set_info(pum_idx);
   bool use_float = strstr(p_cot, "popup") != NULL ? true : false;
