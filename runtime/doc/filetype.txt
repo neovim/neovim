@@ -660,7 +660,7 @@ soft wrapped as with `g:man_hardwrap=0`. You can set in your environment: >sh
      export MANWIDTH=999
 An alternative to using `MANPAGER` in shell can be redefined `man`, for example: >sh
      man() {
-	nvim "+hide Man $1"
+          nvim "+hide Man $1"
      }
 
 So `groff`'s pre-formatting output will be the same as with `g:man_hardwrap=0` i.e soft-wrapped.
