@@ -1705,19 +1705,24 @@ describe('cmdheight=0', function()
     ]])
   end)
 
-  it('cannot be resized at all with external messages', function()
+  it('can be resized with external messages', function()
     clear()
     screen = new_screen({ rgb = true, ext_messages = true })
     command('set laststatus=2 mouse=a')
     command('resize -1')
     screen:expect([[
       ^                         |
+      {1:~                        }|*2
+      {3:[No Name]                }|
+                               |
+    ]])
+    api.nvim_input_mouse('left', 'press', '', 0, 3, 10)
+    poke_eventloop()
+    api.nvim_input_mouse('left', 'drag', '', 0, 4, 10)
+    screen:expect([[
+      ^                         |
       {1:~                        }|*3
       {3:[No Name]                }|
     ]])
-    api.nvim_input_mouse('left', 'press', '', 0, 6, 10)
-    poke_eventloop()
-    api.nvim_input_mouse('left', 'drag', '', 0, 5, 10)
-    screen:expect_unchanged()
   end)
 end)

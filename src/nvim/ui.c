@@ -227,6 +227,11 @@ void ui_refresh(void)
     if (i < kUIGlobalCount) {
       ext_widgets[i] |= ui_cb_ext[i];
     }
+    // Set 'cmdheight' to zero when ext_messages becomes active.
+    if (i == kUIMessages && !ui_ext[i] && ext_widgets[i]) {
+      set_option_value(kOptCmdheight, NUMBER_OPTVAL(0), 0);
+      command_height();
+    }
     ui_ext[i] = ext_widgets[i];
     if (i < kUIGlobalCount) {
       ui_call_option_set(cstr_as_string(ui_ext_names[i]),
@@ -241,10 +246,6 @@ void ui_refresh(void)
   screen_resize(width, height);
   p_lz = save_p_lz;
 
-  if (ext_widgets[kUIMessages]) {
-    set_option_value(kOptCmdheight, NUMBER_OPTVAL(0), 0);
-    command_height();
-  }
   ui_mode_info_set();
   pending_mode_update = true;
   ui_cursor_shape();
