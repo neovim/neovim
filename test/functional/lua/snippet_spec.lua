@@ -5,6 +5,7 @@ local clear = helpers.clear
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
+local api = helpers.api
 local fn = helpers.fn
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
@@ -230,7 +231,7 @@ describe('vim.snippet', function()
   end)
 
   it('updates snippet state when built-in completion menu is visible', function()
-    test_expand_success({ '$1 = function($2)\n$3\nend' }, { ' = function()', '', 'end' })
+    test_expand_success({ '$1 = function($2)\nend' }, { ' = function()', 'end' })
     -- Show the completion menu.
     feed('<C-n>')
     -- Make sure no item is selected.
@@ -238,6 +239,28 @@ describe('vim.snippet', function()
     -- Jump forward (the 2nd tabstop).
     exec_lua('vim.snippet.jump(1)')
     feed('foo')
-    eq({ ' = function(foo)', '', 'end' }, buf_lines(0))
+    eq({ ' = function(foo)', 'end' }, buf_lines(0))
+  end)
+
+  it('correctly indents with newlines', function()
+    local curbuf = api.nvim_get_current_buf()
+    test_expand_success(
+      { 'function($2)\n$3\nend' },
+      { 'function()', '  ', 'end' },
+      [[
+      vim.opt.sw = 2
+      vim.opt.expandtab = true
+    ]]
+    )
+    api.nvim_buf_set_lines(curbuf, 0, -1, false, {})
+    test_expand_success(
+      { 'func main() {\n$1\n}' },
+      { 'func main() {', '\t', '}' },
+      [[
+      vim.opt.sw = 4
+      vim.opt.ts = 4
+      vim.opt.expandtab = false
+    ]]
+    )
   end)
 end)
