@@ -629,7 +629,7 @@ Man!                      Display the current buffer contents as a manpage.
 |:Man| accepts command modifiers. For example, to use a vertical split: >vim
      :vertical Man printf
 To reuse the current window: >vim
-     :hide Man man
+     :hide Man printf
 
 Local mappings:
 K or CTRL-]               Jump to the manpage for the <cWORD> under the
