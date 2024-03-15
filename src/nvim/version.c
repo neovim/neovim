@@ -32,6 +32,7 @@
 #include "nvim/option_vars.h"
 #include "nvim/os/os.h"
 #include "nvim/strings.h"
+#include "nvim/ui.h"
 #include "nvim/version.h"
 
 // for ":version", ":intro", and "nvim --version"
@@ -2724,7 +2725,7 @@ bool may_show_intro(void)
 /// Or with the ":intro" command (for Sven :-).
 ///
 /// @param colon true for ":intro"
-void intro_message(int colon)
+void intro_message(bool colon)
 {
   static char *(lines[]) = {
     N_(NVIM_VERSION_LONG),
@@ -2801,7 +2802,7 @@ void intro_message(int colon)
       }
 
       if (*mesg != NUL) {
-        do_intro_line(row, mesg, 0);
+        do_intro_line(row, mesg, colon);
       }
       row++;
 
@@ -2812,7 +2813,7 @@ void intro_message(int colon)
   }
 }
 
-static void do_intro_line(int row, char *mesg, int attr)
+static void do_intro_line(int row, char *mesg, bool colon)
 {
   int l;
 
@@ -2825,7 +2826,12 @@ static void do_intro_line(int row, char *mesg, int attr)
     col = 0;
   }
 
-  grid_line_start(&default_grid, row);
+  ScreenGrid *grid = &default_grid;
+  if (!colon && ui_has(kUIMultigrid)) {
+    grid = &firstwin->w_grid;
+  }
+
+  grid_line_start(grid, row);
   // Split up in parts to highlight <> items differently.
   for (char *p = mesg; *p != NUL; p += l) {
     for (l = 0;
@@ -2834,7 +2840,7 @@ static void do_intro_line(int row, char *mesg, int attr)
       l += utfc_ptr2len(p + l) - 1;
     }
     assert(row <= INT_MAX && col <= INT_MAX);
-    col += grid_line_puts(col, p, l, *p == '<' ? HL_ATTR(HLF_8) : attr);
+    col += grid_line_puts(col, p, l, *p == '<' ? HL_ATTR(HLF_8) : 0);
   }
   grid_line_flush();
 }
