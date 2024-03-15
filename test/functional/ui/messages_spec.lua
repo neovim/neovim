@@ -1623,7 +1623,8 @@ describe('ui/ext_messages', function()
       {1:~                                                                               }|
       {1:~{MATCH: +}}type  :help news{5:<Enter>} to see changes in v{MATCH:%d+%.%d+}{1:{MATCH: +}}|
       {1:~                                                                               }|
-      {MATCH:.*}|*2
+      {1:~                        }Help poor children in Uganda!{1:                          }|
+      {1:~                }type  :help iccf{5:<Enter>}       for information {1:                 }|
       {1:~                                                                               }|*5
     ]])
 
@@ -1645,7 +1646,8 @@ describe('ui/ext_messages', function()
       {1:~                                                                               }|
       {1:~{MATCH: +}}type  :help news{5:<Enter>} to see changes in v{MATCH:%d+%.%d+}{1:{MATCH: +}}|
       {1:~                                                                               }|
-      {MATCH:.*}|*2
+      {1:~                        }Help poor children in Uganda!{1:                          }|
+      {1:~                }type  :help iccf{5:<Enter>}       for information {1:                 }|
       {1:~                                                                               }|*5
     ]],
       showmode = { { '-- INSERT --', 3 } },
@@ -1678,7 +1680,8 @@ describe('ui/ext_messages', function()
                                                                                       |
       {MATCH: +}type  :help news{5:<Enter>} to see changes in v{MATCH:%d+%.%d+ +}|
                                                                                       |
-      {MATCH:.*}|*2
+                               Help poor children in Uganda!                          |
+                       type  :help iccf{5:<Enter>}       for information                  |
                                                                                       |*5
     ]],
       messages = {
@@ -1783,7 +1786,8 @@ it('ui/ext_multigrid supports intro screen', function()
       {1:~                                                                               }|
       {1:~{MATCH: +}}type  :help news{5:<Enter>} to see changes in v{MATCH:%d+%.%d+}{1:{MATCH: +}}|
       {1:~                                                                               }|
-      {MATCH:.*}|*2
+      {1:~                        }Help poor children in Uganda!{1:                          }|
+      {1:~                }type  :help iccf{5:<Enter>}       for information {1:                 }|
       {1:~                                                                               }|*4
     ## grid 3
                                                                                       |

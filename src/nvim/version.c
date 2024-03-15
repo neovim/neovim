@@ -2759,11 +2759,6 @@ void intro_message(bool colon)
     blanklines = 0;
   }
 
-  // Show the sponsor and register message one out of four times, the Uganda
-  // message two out of four times.
-  int sponsor = (int)time(NULL);
-  sponsor = ((sponsor & 2) == 0) - ((sponsor & 4) == 0);
-
   // start displaying the message lines after half of the blank lines
   int row = blanklines / 2;
 
@@ -2781,16 +2776,6 @@ void intro_message(bool colon)
         mesg = xmallocz((size_t)mesg_size);
         snprintf(mesg, (size_t)mesg_size + 1, p,
                  STR(NVIM_VERSION_MAJOR), STR(NVIM_VERSION_MINOR));
-      } else if (sponsor != 0) {
-        if (strstr(p, "children") != NULL) {
-          p = sponsor < 0
-              ? N_("Sponsor Vim development!")
-              : N_("Become a registered Vim user!");
-        } else if (strstr(p, "iccf") != NULL) {
-          p = sponsor < 0
-              ? N_("type  :help sponsor<Enter>    for information ")
-              : N_("type  :help register<Enter>   for information ");
-        }
       }
 
       if (mesg == NULL) {
