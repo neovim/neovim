@@ -7,11 +7,6 @@ module.exports = async ({ github, context }) => {
   const labels = pr_data.data.labels.map((e) => e.name);
   const reviewers = new Set();
 
-  if (labels.includes("api")) {
-    reviewers.add("bfredl");
-    reviewers.add("famiu");
-  }
-
   if (labels.includes("build")) {
     reviewers.add("dundargoc");
     reviewers.add("jamessan");
@@ -101,11 +96,6 @@ module.exports = async ({ github, context }) => {
 
   if (labels.includes("typo")) {
     reviewers.add("dundargoc");
-  }
-
-  if (labels.includes("ui")) {
-    reviewers.add("bfredl");
-    reviewers.add("famiu");
   }
 
   if (labels.includes("vim-patch")) {
