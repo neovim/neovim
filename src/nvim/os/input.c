@@ -351,8 +351,7 @@ static uint8_t check_multiclick(int code, int grid, int row, int col)
   return modifiers;
 }
 
-// Mouse event handling code(Extract row/col if available and detect multiple
-// clicks)
+/// Mouse event handling code (extract row/col if available and detect multiple clicks)
 static unsigned handle_mouse_event(const char **ptr, uint8_t *buf, unsigned bufsize)
 {
   int mouse_code = 0;

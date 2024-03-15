@@ -10,7 +10,7 @@ enum {
   /// character of up to 6 bytes, or one 16-bit character of up to three bytes
   /// plus six following composing characters of three bytes each.
   MB_MAXBYTES = 21,
-  /// max length of an unicode char
+  /// Maximum length of a Unicode character, excluding composing characters.
   MB_MAXCHAR = 6,
 };
 

@@ -4187,9 +4187,9 @@ msgid ""
 "&No\n"
 "&Cancel"
 msgstr ""
-"&Да\n"
-"&Нет\n"
-"О&тмена"
+"&Y Да\n"
+"&N Нет\n"
+"&C Отмена"
 
 #: ../message.c:3045
 msgid ""

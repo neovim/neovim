@@ -1117,8 +1117,8 @@ static void out_data_ring(char *output, size_t size)
 /// Continue to append data to last screen line.
 ///
 /// @param output       Data to append to screen lines.
-/// @param remaining    Size of data.
-/// @param new_line     If true, next data output will be on a new line.
+/// @param count        Size of data.
+/// @param eof          If true, there will be no more data output.
 static void out_data_append_to_screen(char *output, size_t *count, bool eof)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1168,8 +1168,7 @@ static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data, 
     rbuffer_consumed(buf, cnt);
   }
 
-  // Move remaining data to start of buffer, so the buffer can never
-  // wrap around.
+  // Move remaining data to start of buffer, so the buffer can never wrap around.
   rbuffer_reset(buf);
 }
 

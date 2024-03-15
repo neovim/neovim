@@ -16,7 +16,7 @@
 
 **Notes**:
 - From the repository's root directory, running `make` will download and build all the needed dependencies and put the `nvim` executable in `build/bin`.
-- Third-party dependencies (libuv, LuaJIT, etc.) are downloaded automatically to `.deps/`. See the [FAQ](FAQ#build-issues) if you have issues.
+- Third-party dependencies (libuv, LuaJIT, etc.) are downloaded automatically to `.deps/`. See the [FAQ](https://neovim.io/doc/user/faq.html#faq-build) if you have issues.
 - After building, you can run the `nvim` executable without installing it by running `VIMRUNTIME=runtime ./build/bin/nvim`.
 - If you plan to develop Neovim, install [Ninja](https://ninja-build.org/) for faster builds. It will automatically be used.
 - Install [ccache](https://ccache.dev/) for faster rebuilds of Neovim. It's used by default. To disable it, use `CCACHE_DISABLE=true make`.
@@ -345,7 +345,7 @@ buildPhase
 ```
 
 Tests are not available by default, because of some unfixed failures. You can enable them via adding this package in your overlay:
-``` 
+```
   neovim-dev = (super.pkgs.neovim-unwrapped.override  {
     doCheck=true;
   }).overrideAttrs(oa:{

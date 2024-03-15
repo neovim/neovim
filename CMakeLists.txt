@@ -18,7 +18,7 @@ if(POLICY CMP0135)
 endif()
 
 if(XCODE)
-  message(FATAL_ERROR [[Xcode generator is not supported. Use "Ninja" or "Unix Makefiles" instead.]])
+  message(FATAL_ERROR [[Xcode generator is not supported. Use "Ninja" or "Unix Makefiles" instead]])
 endif()
 
 # Point CMake at any custom modules we may ship
