@@ -4,6 +4,7 @@ find_program(ICONV_PRG iconv)
 mark_as_advanced(
   GETTEXT_MSGFMT_EXECUTABLE
   GETTEXT_MSGMERGE_EXECUTABLE
+  GETTEXT_VERSION_STRING
   ICONV_PRG
   XGETTEXT_PRG)
 
@@ -67,13 +68,21 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
   set(LANGUAGE_MO_FILES)
   set(UPDATE_PO_TARGETS)
 
+  # Starting from version 0.22, msgfmt forcibly converts text to UTF-8 regardless
+  # of the value of the "charset" field.
+  if(${GETTEXT_VERSION_STRING} VERSION_GREATER_EQUAL 0.22)
+    set(MSGFMT_FLAGS --no-convert)
+  else()
+    set(MSGFMT_FLAGS "")
+  endif()
+
   macro(BuildMo name)
     set(poFile ${CMAKE_CURRENT_SOURCE_DIR}/${name}.po)
     set(moFile ${CMAKE_CURRENT_BINARY_DIR}/${name}.mo)
 
     add_custom_command(
       OUTPUT ${moFile}
-      COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -o ${moFile} ${poFile}
+      COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} ${MSGFMT_FLAGS} -o ${moFile} ${poFile}
       DEPENDS ${poFile} ${NVIM_POT})
 
     install_helper(
