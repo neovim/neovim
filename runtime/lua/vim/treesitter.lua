@@ -411,9 +411,13 @@ end
 ---
 ---@param bufnr (integer|nil) Buffer to be highlighted (default: current buffer)
 ---@param lang (string|nil) Language of the parser (default: from buffer filetype)
-function M.start(bufnr, lang)
+function M.start(bufnr, lang, opts)
   bufnr = bufnr or api.nvim_get_current_buf()
   local parser = M.get_parser(bufnr, lang)
+  if opts and opts.line_based then
+    require('vim.treesitter.highlighter.line').new(bufnr, lang)
+    return
+  end
   M.highlighter.new(parser)
 end
 

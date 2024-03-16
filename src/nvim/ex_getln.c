@@ -46,6 +46,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/keycodes.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
 #include "nvim/mapping.h"
@@ -1193,7 +1194,7 @@ static int command_line_execute(VimState *state, int key)
       pum_want.active = false;
     }
 
-    if (!cmdline_was_last_drawn) {
+    if (!cmdline_was_last_drawn && !ui_has(kUICmdline)) {
       redrawcmdline();
     }
     return 1;
@@ -2682,7 +2683,9 @@ static int command_line_changed(CommandLineState *s)
 static void abandon_cmdline(void)
 {
   XFREE_CLEAR(ccline.cmdbuff);
-  ccline.redraw_state = kCmdRedrawNone;
+  ccline.redraw_state = kCmdRedrawAll;
+  ccline.cmdfirstc = NUL;
+  cmdline_ui_flush();
   if (msg_scrolled == 0) {
     compute_cmdrow();
   }
@@ -3454,11 +3457,14 @@ void cmdline_ui_flush(void)
     if (line->level == level) {
       if (line->redraw_state == kCmdRedrawAll) {
         ui_ext_cmdline_show(line);
+        // regression for cmdpreview
+        update_screen();
       } else if (line->redraw_state == kCmdRedrawPos) {
         ui_call_cmdline_pos(line->cmdpos, line->level);
       }
       line->redraw_state = kCmdRedrawNone;
       level--;
+      setcursor();
     }
     line = line->prev_ccline;
   }
@@ -3483,6 +3489,7 @@ void putcmdline(char c, bool shift)
     char charbuf[2] = { c, 0 };
     ui_call_cmdline_special_char(cstr_as_string(charbuf), shift,
                                  ccline.level);
+    update_screen();
   }
   cursorcmd();
   ccline.special_char = c;
@@ -3859,7 +3866,6 @@ void cursorcmd(void)
     if (ccline.redraw_state < kCmdRedrawPos) {
       ccline.redraw_state = kCmdRedrawPos;
     }
-    setcursor();
     return;
   }
 
@@ -4385,7 +4391,6 @@ static int open_cmdwin(void)
       add_map("<Tab>", "<C-X><C-V>", MODE_INSERT, true);
       add_map("<Tab>", "a<C-X><C-V>", MODE_NORMAL, true);
     }
-    set_option_value_give_err(kOptFiletype, STATIC_CSTR_AS_OPTVAL("vim"), OPT_LOCAL);
   }
   curbuf->b_ro_locked--;
 
@@ -4409,7 +4414,6 @@ static int open_cmdwin(void)
       } while (i != *get_hisidx(histtype));
     }
   }
-
   // Replace the empty last line with the current command-line and put the
   // cursor there.
   ml_replace(curbuf->b_ml.ml_line_count, ccline.cmdbuff, true);
@@ -4443,6 +4447,15 @@ static int open_cmdwin(void)
   i = RedrawingDisabled;
   RedrawingDisabled = 0;
   int save_count = save_batch_count();
+
+  MAXSIZE_TEMP_DICT(opts, 1);
+  PUT_C(opts, "line_based", BOOLEAN_OBJ(true));
+  MAXSIZE_TEMP_ARRAY(args, 3);
+  ADD_C(args, INTEGER_OBJ(cmdwin_buf->handle));
+  ADD_C(args, CSTR_TO_OBJ("vim"));
+  ADD_C(args, DICTIONARY_OBJ(opts));
+  Error err = ERROR_INIT;
+  NLUA_EXEC_STATIC("vim.treesitter.start(...)", args, kRetNilBool, NULL, &err);
 
   // Call the main loop until <CR> or CTRL-C is typed.
   normal_enter(true, false);

@@ -1,56 +1,12 @@
 local api = vim.api
-local query = vim.treesitter.query
 local Range = require('vim.treesitter._range')
+local Capture = require('vim.treesitter.highlighter.capture')
 
 local ns = api.nvim_create_namespace('treesitter/highlighter')
 
 ---@alias vim.treesitter.highlighter.Iter fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata
 
----@class (private) vim.treesitter.highlighter.Query
----@field private _query vim.treesitter.Query?
----@field private lang string
----@field private hl_cache table<integer,integer>
-local TSHighlighterQuery = {}
-TSHighlighterQuery.__index = TSHighlighterQuery
-
----@private
----@param lang string
----@param query_string string?
----@return vim.treesitter.highlighter.Query
-function TSHighlighterQuery.new(lang, query_string)
-  local self = setmetatable({}, TSHighlighterQuery)
-  self.lang = lang
-  self.hl_cache = {}
-
-  if query_string then
-    self._query = query.parse(lang, query_string)
-  else
-    self._query = query.get(lang, 'highlights')
-  end
-
-  return self
-end
-
----@package
----@param capture integer
----@return integer?
-function TSHighlighterQuery:get_hl_from_capture(capture)
-  if not self.hl_cache[capture] then
-    local name = self._query.captures[capture]
-    local id = 0
-    if not vim.startswith(name, '_') then
-      id = api.nvim_get_hl_id_by_name('@' .. name .. '.' .. self.lang)
-    end
-    self.hl_cache[capture] = id
-  end
-
-  return self.hl_cache[capture]
-end
-
----@package
-function TSHighlighterQuery:query()
-  return self._query
-end
+local TSHighlighterQuery = require('vim.treesitter.highlighter.query')
 
 ---@class (private) vim.treesitter.highlighter.State
 ---@field tstree TSTree
@@ -252,44 +208,6 @@ function TSHighlighter:get_query(lang)
   return self._queries[lang]
 end
 
---- @param match table<integer,TSNode[]>
---- @param bufnr integer
---- @param capture integer
---- @param metadata vim.treesitter.query.TSMetadata
---- @return string?
-local function get_url(match, bufnr, capture, metadata)
-  ---@type string|number|nil
-  local url = metadata[capture] and metadata[capture].url
-
-  if not url or type(url) == 'string' then
-    return url
-  end
-
-  if not match or not match[url] then
-    return
-  end
-
-  -- Assume there is only one matching node. If there is more than one, take the URL
-  -- from the first.
-  local other_node = match[url][1]
-
-  return vim.treesitter.get_node_text(other_node, bufnr, {
-    metadata = metadata[url],
-  })
-end
-
---- @param capture_name string
---- @return boolean?, integer
-local function get_spell(capture_name)
-  if capture_name == 'spell' then
-    return true, 0
-  elseif capture_name == 'nospell' then
-    -- Give nospell a higher priority so it always overrides spell captures.
-    return false, 1
-  end
-  return nil, 0
-end
-
 ---@param self vim.treesitter.highlighter
 ---@param buf integer
 ---@param line integer
@@ -322,7 +240,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
 
       for capture, nodes in pairs(match or {}) do
         local capture_name = state.highlighter_query:query().captures[capture]
-        local spell, spell_pri_offset = get_spell(capture_name)
+        local spell, spell_pri_offset = Capture.get_spell(capture_name)
 
         local hl = state.highlighter_query:get_hl_from_capture(capture)
 
@@ -332,7 +250,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
           or vim.highlight.priorities.treesitter
         ) + spell_pri_offset
 
-        local url = get_url(match, buf, capture, metadata)
+        local url = Capture.get_url(match, buf, capture, metadata)
 
         -- The "conceal" attribute can be set at the pattern level or on a particular capture
         local conceal = metadata.conceal or metadata[capture] and metadata[capture].conceal
