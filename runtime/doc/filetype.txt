@@ -626,8 +626,10 @@ Man                       Open the manpage for the <cWORD> (man buffers)
                           or <cword> (non-man buffers) under the cursor.
 Man!                      Display the current buffer contents as a manpage.
 
-|:Man| accepts command modifiers. For example, to use a vertical split: >
+|:Man| accepts command modifiers. For example, to use a vertical split: >vim
      :vertical Man printf
+To reuse the current window: >vim
+     :hide Man printf
 
 Local mappings:
 K or CTRL-]               Jump to the manpage for the <cWORD> under the
@@ -647,14 +649,14 @@ Variables:
                           empty. Enabled by default. Set |FALSE| to enable soft
                           wrapping.
 
-To use Nvim as a manpager: >
+To use Nvim as a manpager: >sh
      export MANPAGER='nvim +Man!'
 
 Note that when running `man` from the shell and with that `MANPAGER` in your
 environment, `man` will pre-format the manpage using `groff`. Thus, Nvim
 will inevitably display the manual page as it was passed to it from stdin. One
 of the caveats of this is that the width will _always_ be hard-wrapped and not
-soft wrapped as with `g:man_hardwrap=0`. You can set in your environment: >
+soft wrapped as with `g:man_hardwrap=0`. You can set in your environment: >sh
      export MANWIDTH=999
 
 So `groff`'s pre-formatting output will be the same as with `g:man_hardwrap=0` i.e soft-wrapped.
@@ -662,6 +664,10 @@ So `groff`'s pre-formatting output will be the same as with `g:man_hardwrap=0` i
 To disable bold highlighting: >
      :highlight link manBold Normal
 
+An alternative to using `MANPAGER` in shell can be redefined `man`, for example: >sh
+     man() {
+          nvim "+hide Man $1"
+     }
 
 MARKDOWN                                                *ft-markdown-plugin*
 
