@@ -3337,7 +3337,7 @@ msgstr "E5400: コールバックはリストを返す必要があります"
 
 #, c-format
 msgid "E5401: List item %i is not a List"
-msgstr "E1109: リストの要素 %i はリストではありません"
+msgstr "E5401: リストの要素 %i はリストではありません"
 
 #, c-format
 msgid "E5402: List item %i has incorrect length: %d /= 3"
@@ -7385,7 +7385,7 @@ msgstr "E15: '}' がありません: %.*s"
 
 #, c-format
 msgid "E15: Missing closing figure brace for lambda: %.*s"
-msgstr "ラムダに '}' がありません: %.*s"
+msgstr "E15: ラムダに '}' がありません: %.*s"
 
 #, c-format
 msgid "E109: Missing ':' after '?': %.*s"
