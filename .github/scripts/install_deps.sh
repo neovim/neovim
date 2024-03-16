@@ -16,7 +16,7 @@ if [[ $os == Linux ]]; then
 
   if [[ $CC == clang ]]; then
     DEFAULT_CLANG_VERSION=$(echo |  clang -dM -E - | grep __clang_major | awk '{print $3}')
-    CLANG_VERSION=17
+    CLANG_VERSION=18
     if ((DEFAULT_CLANG_VERSION >= CLANG_VERSION)); then
       echo "Default clang version is $DEFAULT_CLANG_VERSION, which equal or larger than wanted version $CLANG_VERSION. Aborting!"
       exit 1
