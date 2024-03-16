@@ -1596,7 +1596,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       }
     }
 
-    if (cul_screenline && wlv.vcol >= left_curline_col && wlv.vcol < right_curline_col) {
+    if (cul_screenline && wlv.filler_todo <= 0
+        && wlv.vcol >= left_curline_col && wlv.vcol < right_curline_col) {
       apply_cursorline_highlight(wp, &wlv);
     }
 
@@ -1623,7 +1624,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     }
 
     int extmark_attr = 0;
-    if (area_highlighting || spv->spv_has_spell || extra_check) {
+    if (wlv.filler_todo <= 0
+        && (area_highlighting || spv->spv_has_spell || extra_check)) {
       if (wlv.n_extra == 0 || !wlv.extra_for_extmark) {
         wlv.reset_extra_attr = false;
       }
@@ -1654,11 +1656,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           }
           decor_need_recheck = false;
         }
-        if (wlv.filler_todo <= 0) {
-          extmark_attr = decor_redraw_col(wp, (colnr_T)(ptr - line),
-                                          may_have_inline_virt ? -3 : wlv.off,
-                                          selected, &decor_state);
-        }
+        extmark_attr = decor_redraw_col(wp, (colnr_T)(ptr - line),
+                                        may_have_inline_virt ? -3 : wlv.off,
+                                        selected, &decor_state);
         if (may_have_inline_virt) {
           handle_inline_virtual_text(wp, &wlv, ptr - line, selected);
           if (wlv.n_extra > 0 && wlv.virt_inline_hl_mode <= kHlModeReplace) {
@@ -2443,7 +2443,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     // the cursor column when we reach its position.
     // With 'virtualedit' we may never reach cursor position, but we still
     // need to correct the cursor column, so do that at end of line.
-    if (!did_wcol
+    if (!did_wcol && wlv.filler_todo <= 0
         && wp == curwin && lnum == wp->w_cursor.lnum
         && conceal_cursor_line(wp)
         && (wlv.vcol + wlv.skip_cells >= wp->w_virtcol || mb_schar == NUL)) {
@@ -2705,10 +2705,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       }
     }
 
-    // Apply lowest-priority line attr now, so everything can override it.
-    wlv.char_attr = hl_combine_attr(wlv.line_attr_lowprio, wlv.char_attr);
+    if (wlv.filler_todo <= 0) {
+      // Apply lowest-priority line attr now, so everything can override it.
+      wlv.char_attr = hl_combine_attr(wlv.line_attr_lowprio, wlv.char_attr);
+    }
 
-    vcol_prev = wlv.vcol;
+    if (wlv.filler_todo <= 0) {
+      vcol_prev = wlv.vcol;
+    }
 
     // Store character to be displayed.
     // Skip characters that are left of the screen for 'nowrap'.
