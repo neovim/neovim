@@ -3,6 +3,7 @@
 source shared.vim
 source screendump.vim
 source check.vim
+source view_util.vim
 
 func Test_diff_fold_sync()
   enew!
@@ -1701,5 +1702,71 @@ func Test_diff_put_and_undo()
   set nodiff
 endfunc
 
+
+func Test_diff_toggle_wrap_skipcol_leftcol()
+  61vnew
+  call setline(1, 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.')
+  30vnew
+  call setline(1, 'ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.')
+  let win1 = win_getid()
+  setlocal smoothscroll
+  exe "normal! $\<C-E>"
+  wincmd l
+  let win2 = win_getid()
+  setlocal smoothscroll
+  exe "normal! $\<C-E>"
+  call assert_equal([
+        \ '<<<sadipscing elitr, sed diam |<<<tetur sadipscing elitr, sed|',
+        \ 'nonumy eirmod tempor invidunt | diam nonumy eirmod tempor inv|',
+        \ 'ut labore et dolore magna aliq|idunt ut labore et dolore magn|',
+        \ 'uyam erat, sed diam voluptua. |a aliquyam erat, sed diam volu|',
+        \ '~                             |ptua.                         |',
+        \ ], ScreenLines([1, 5], 62))
+  call assert_equal({'col': 29, 'row': 4, 'endcol': 29, 'curscol': 29},
+        \ screenpos(win1, line('.', win1), col('.', win1)))
+  call assert_equal({'col': 36, 'row': 5, 'endcol': 36, 'curscol': 36},
+        \ screenpos(win2, line('.', win2), col('.', win2)))
+
+  wincmd h
+  diffthis
+  wincmd l
+  diffthis
+  normal! 0
+  call assert_equal([
+        \ '  ipsum dolor sit amet, conset|  Lorem ipsum dolor sit amet, |',
+        \ '~                             |~                             |',
+        \ ], ScreenLines([1, 2], 62))
+  call assert_equal({'col': 3, 'row': 1, 'endcol': 3, 'curscol': 3},
+        \ screenpos(win1, line('.', win1), col('.', win1)))
+  call assert_equal({'col': 34, 'row': 1, 'endcol': 34, 'curscol': 34},
+        \ screenpos(win2, line('.', win2), col('.', win2)))
+
+  normal! $
+  call assert_equal([
+        \ '  voluptua.                   |   diam voluptua.             |',
+        \ '~                             |~                             |',
+        \ ], ScreenLines([1, 2], 62))
+  call assert_equal({'col': 11, 'row': 1, 'endcol': 11, 'curscol': 11},
+        \ screenpos(win1, line('.', win1), col('.', win1)))
+  call assert_equal({'col': 48, 'row': 1, 'endcol': 48, 'curscol': 48},
+        \ screenpos(win2, line('.', win2), col('.', win2)))
+
+  diffoff!
+  call assert_equal([
+        \ 'ipsum dolor sit amet, consetet|Lorem ipsum dolor sit amet, co|',
+        \ 'ur sadipscing elitr, sed diam |nsetetur sadipscing elitr, sed|',
+        \ 'nonumy eirmod tempor invidunt | diam nonumy eirmod tempor inv|',
+        \ 'ut labore et dolore magna aliq|idunt ut labore et dolore magn|',
+        \ 'uyam erat, sed diam voluptua. |a aliquyam erat, sed diam volu|',
+        \ '~                             |ptua.                         |',
+        \ ], ScreenLines([1, 6], 62))
+  call assert_equal({'col': 29, 'row': 5, 'endcol': 29, 'curscol': 29},
+        \ screenpos(win1, line('.', win1), col('.', win1)))
+  call assert_equal({'col': 36, 'row': 6, 'endcol': 36, 'curscol': 36},
+        \ screenpos(win2, line('.', win2), col('.', win2)))
+
+  bwipe!
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
