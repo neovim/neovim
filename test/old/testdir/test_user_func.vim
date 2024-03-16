@@ -891,4 +891,23 @@ func Test_multidefer_with_exception()
   delfunc Foo
 endfunc
 
+func Test_func_curly_brace_invalid_name()
+  func Fail()
+    func Foo{'()'}bar()
+    endfunc
+  endfunc
+
+  call assert_fails('call Fail()', 'E475: Invalid argument: Foo()bar')
+
+  silent! call Fail()
+  call assert_equal([], getcompletion('Foo', 'function'))
+
+  set formatexpr=Fail()
+  normal! gqq
+  call assert_equal([], getcompletion('Foo', 'function'))
+
+  set formatexpr&
+  delfunc Fail
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
