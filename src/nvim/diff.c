@@ -1429,6 +1429,7 @@ void diff_win_options(win_T *wp, bool addbuf)
       wp->w_p_wrap_save = wp->w_p_wrap;
     }
     wp->w_p_wrap = false;
+    wp->w_skipcol = 0;
   }
 
   if (!wp->w_p_diff) {
@@ -1497,8 +1498,9 @@ void ex_diffoff(exarg_T *eap)
           wp->w_p_crb = wp->w_p_crb_save;
         }
         if (!(diff_flags & DIFF_FOLLOWWRAP)) {
-          if (!wp->w_p_wrap) {
-            wp->w_p_wrap = wp->w_p_wrap_save;
+          if (!wp->w_p_wrap && wp->w_p_wrap_save) {
+            wp->w_p_wrap = true;
+            wp->w_leftcol = 0;
           }
         }
         free_string_option(wp->w_p_fdm);
