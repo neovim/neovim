@@ -387,77 +387,123 @@ func Test_conceal_eol()
 endfunc
 
 func Test_conceal_mouse_click()
-  enew!
+  call NewWindow(10, 40)
   set mouse=a
   setlocal conceallevel=2 concealcursor=nc
   syn match Concealed "this" conceal
   hi link Concealed Search
-  call setline(1, 'conceal this click here')
-  redraw
-  call assert_equal(['conceal  click here '], ScreenLines(1, 20))
 
-  " click on the space between "this" and "click" puts cursor there
-  call Ntest_setmouse(1, 9)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 13, 0, 13], getcurpos())
-  " click on 'h' of "here" puts cursor there
-  call Ntest_setmouse(1, 16)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 20, 0, 20], getcurpos())
-  " click on 'e' of "here" puts cursor there
-  call Ntest_setmouse(1, 19)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 23, 0, 23], getcurpos())
-  " click after end of line puts cursor on 'e' without 'virtualedit'
-  call Ntest_setmouse(1, 20)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 23, 0, 24], getcurpos())
-  call Ntest_setmouse(1, 21)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 23, 0, 25], getcurpos())
-  call Ntest_setmouse(1, 22)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 23, 0, 26], getcurpos())
-  call Ntest_setmouse(1, 31)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 23, 0, 35], getcurpos())
-  call Ntest_setmouse(1, 32)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 23, 0, 36], getcurpos())
+  " Test with both 'nocursorline' and 'cursorline', as they use two different
+  " code paths to set virtual columns for the cells to clear.
+  for cul in [v:false, v:true]
+    let &l:cursorline = cul
 
-  set virtualedit=all
-  redraw
-  " click on the space between "this" and "click" puts cursor there
-  call Ntest_setmouse(1, 9)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 13, 0, 13], getcurpos())
-  " click on 'h' of "here" puts cursor there
-  call Ntest_setmouse(1, 16)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 20, 0, 20], getcurpos())
-  " click on 'e' of "here" puts cursor there
-  call Ntest_setmouse(1, 19)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 23, 0, 23], getcurpos())
-  " click after end of line puts cursor there with 'virtualedit'
-  call Ntest_setmouse(1, 20)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 24, 0, 24], getcurpos())
-  call Ntest_setmouse(1, 21)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 24, 1, 25], getcurpos())
-  call Ntest_setmouse(1, 22)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 24, 2, 26], getcurpos())
-  call Ntest_setmouse(1, 31)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 24, 11, 35], getcurpos())
-  call Ntest_setmouse(1, 32)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 24, 12, 36], getcurpos())
+    call setline(1, 'conceal this click here')
+    call assert_equal([
+          \ 'conceal  click here                     ',
+          \ ], ScreenLines(1, 40))
 
-  bwipe!
-  set mouse& virtualedit&
+    " Click on the space between "this" and "click" puts cursor there.
+    call Ntest_setmouse(1, 9)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 13, 0, 13], getcurpos())
+    " Click on 'h' of "here" puts cursor there.
+    call Ntest_setmouse(1, 16)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 20, 0, 20], getcurpos())
+    " Click on 'e' of "here" puts cursor there.
+    call Ntest_setmouse(1, 19)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 23, 0, 23], getcurpos())
+    " Click after end of line puts cursor on 'e' without 'virtualedit'.
+    call Ntest_setmouse(1, 20)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 23, 0, 24], getcurpos())
+    call Ntest_setmouse(1, 21)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 23, 0, 25], getcurpos())
+    call Ntest_setmouse(1, 22)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 23, 0, 26], getcurpos())
+    call Ntest_setmouse(1, 31)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 23, 0, 35], getcurpos())
+    call Ntest_setmouse(1, 32)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 23, 0, 36], getcurpos())
+
+    set virtualedit=all
+    redraw
+    " Click on the space between "this" and "click" puts cursor there.
+    call Ntest_setmouse(1, 9)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 13, 0, 13], getcurpos())
+    " Click on 'h' of "here" puts cursor there.
+    call Ntest_setmouse(1, 16)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 20, 0, 20], getcurpos())
+    " Click on 'e' of "here" puts cursor there.
+    call Ntest_setmouse(1, 19)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 23, 0, 23], getcurpos())
+    " Click after end of line puts cursor there with 'virtualedit'.
+    call Ntest_setmouse(1, 20)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 24, 0, 24], getcurpos())
+    call Ntest_setmouse(1, 21)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 24, 1, 25], getcurpos())
+    call Ntest_setmouse(1, 22)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 24, 2, 26], getcurpos())
+    call Ntest_setmouse(1, 31)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 24, 11, 35], getcurpos())
+    call Ntest_setmouse(1, 32)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 24, 12, 36], getcurpos())
+    set virtualedit&
+
+    " Test with a wrapped line.
+    call setline(1, ['conceal this click here']->repeat(3)->join())
+    call assert_equal([
+          \ 'conceal  click here conceal  cli        ',
+          \ 'ck here conceal  click here             ',
+          \ ], ScreenLines([1, 2], 40))
+    " Click on boguscols puts cursor on the last char of a screen line.
+    for col in range(33, 40)
+      call Ntest_setmouse(1, col)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 40, 0, 40], getcurpos())
+    endfor
+
+    " Also test with the last char of a screen line concealed.
+    setlocal number signcolumn=yes
+    call assert_equal([
+          \ '    1 conceal  click here conceal       ',
+          \ '       click here conceal  click h      ',
+          \ '      ere                               ',
+          \ ], ScreenLines([1, 3], 40))
+    call Ntest_setmouse(1, 34)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 32, 0, 32], getcurpos())
+    call Ntest_setmouse(2, 7)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 37, 0, 37], getcurpos())
+    " Click on boguscols puts cursor on the last char of a screen line.
+    for col in range(35, 40)
+      call Ntest_setmouse(1, col)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 34, 0, 34], getcurpos())
+      call Ntest_setmouse(2, col)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 68, 0, 68], getcurpos())
+    endfor
+    setlocal number& signcolumn&
+  endfor
+
+  call CloseWindow()
+  set mouse&
 endfunc
 
 " Test that cursor is drawn at the correct column when it is after end of the
