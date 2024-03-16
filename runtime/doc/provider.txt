@@ -195,6 +195,7 @@ registers. Nvim looks for these clipboard tools, in order of priority:
   - doitclient (for SSH) https://www.chiark.greenend.org.uk/~sgtatham/doit/
   - win32yank (Windows)
   - termux (via termux-clipboard-set, termux-clipboard-set)
+  - pbcopy, pbpaste
   - tmux (if $TMUX is set)
 
 								 *g:clipboard*
