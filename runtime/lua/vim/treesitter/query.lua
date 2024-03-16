@@ -88,7 +88,7 @@ end
 ---
 ---@param lang string Language to get query for
 ---@param query_name string Name of the query to load (e.g., "highlights")
----@param is_included (boolean|nil) Internal parameter, most of the time left as `nil`
+---@param is_included? boolean Internal parameter, most of the time left as `nil`
 ---@return string[] query_files List of files to load for given query and language
 function M.get_files(lang, query_name, is_included)
   local query_path = string.format('queries/%s/%s.scm', lang, query_name)
@@ -211,7 +211,7 @@ end
 ---@param lang string Language to use for the query
 ---@param query_name string Name of the query (e.g. "highlights")
 ---
----@return vim.treesitter.Query|nil : Parsed query. `nil` if no query files are found.
+---@return vim.treesitter.Query? : Parsed query. `nil` if no query files are found.
 M.get = vim.func._memoize('concat-2', function(lang, query_name)
   if explicit_queries[lang][query_name] then
     return explicit_queries[lang][query_name]
@@ -242,9 +242,9 @@ end)
 ---@param lang string Language to use for the query
 ---@param query string Query in s-expr syntax
 ---
----@return vim.treesitter.Query Parsed query
+---@return vim.treesitter.Query : Parsed query
 ---
----@see |vim.treesitter.query.get()|
+---@see [vim.treesitter.query.get()]
 M.parse = vim.func._memoize('concat-2', function(lang, query)
   language.add(lang)
 
@@ -618,20 +618,23 @@ local directive_handlers = {
   end,
 }
 
+--- @class vim.treesitter.query.add_predicate.Opts
+--- @inlinedoc
+---
+--- Override an existing predicate of the same name
+--- @field force? boolean
+---
+--- Use the correct implementation of the match table where capture IDs map to
+--- a list of nodes instead of a single node. Defaults to false (for backward
+--- compatibility). This option will eventually become the default and removed.
+--- @field all? boolean
+
 --- Adds a new predicate to be used in queries
 ---
 ---@param name string Name of the predicate, without leading #
----@param handler function(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: table)
+---@param handler fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: table)
 ---   - see |vim.treesitter.query.add_directive()| for argument meanings
----@param opts table<string, any> Optional options:
----                                 - force (boolean): Override an existing
----                                   predicate of the same name
----                                 - all (boolean): Use the correct
----                                   implementation of the match table where
----                                   capture IDs map to a list of nodes instead
----                                   of a single node. Defaults to false (for
----                                   backward compatibility). This option will
----                                   eventually become the default and removed.
+---@param opts vim.treesitter.query.add_predicate.Opts
 function M.add_predicate(name, handler, opts)
   -- Backward compatibility: old signature had "force" as boolean argument
   if type(opts) == 'boolean' then
@@ -669,20 +672,12 @@ end
 --- metadata table `metadata[capture_id].key = value`
 ---
 ---@param name string Name of the directive, without leading #
----@param handler function(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: table)
+---@param handler fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: table)
 ---   - match: A table mapping capture IDs to a list of captured nodes
 ---   - pattern: the index of the matching pattern in the query file
 ---   - predicate: list of strings containing the full directive being called, e.g.
 ---     `(node (#set! conceal "-"))` would get the predicate `{ "#set!", "conceal", "-" }`
----@param opts table<string, any> Optional options:
----                                 - force (boolean): Override an existing
----                                   predicate of the same name
----                                 - all (boolean): Use the correct
----                                   implementation of the match table where
----                                   capture IDs map to a list of nodes instead
----                                   of a single node. Defaults to false (for
----                                   backward compatibility). This option will
----                                   eventually become the default and removed.
+---@param opts vim.treesitter.query.add_predicate.Opts
 function M.add_directive(name, handler, opts)
   -- Backward compatibility: old signature had "force" as boolean argument
   if type(opts) == 'boolean' then
@@ -711,13 +706,13 @@ function M.add_directive(name, handler, opts)
 end
 
 --- Lists the currently available directives to use in queries.
----@return string[] List of supported directives.
+---@return string[] : Supported directives.
 function M.list_directives()
   return vim.tbl_keys(directive_handlers)
 end
 
 --- Lists the currently available predicates to use in queries.
----@return string[] List of supported predicates.
+---@return string[] : Supported predicates.
 function M.list_predicates()
   return vim.tbl_keys(predicate_handlers)
 end
@@ -792,8 +787,8 @@ end
 --- Returns the start and stop value if set else the node's range.
 -- When the node's range is used, the stop is incremented by 1
 -- to make the search inclusive.
----@param start integer|nil
----@param stop integer|nil
+---@param start integer?
+---@param stop integer?
 ---@param node TSNode
 ---@return integer, integer
 local function value_or_node_range(start, stop, node)

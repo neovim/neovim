@@ -488,10 +488,12 @@ local function inline_type(obj, classes)
 
   local desc_append = {}
   for _, f in ipairs(cls.fields) do
-    local fdesc, default = get_default(f.desc)
-    local fty = render_type(f.type, nil, default)
-    local fnm = fmt_field_name(f.name)
-    table.insert(desc_append, table.concat({ '-', fnm, fty, fdesc }, ' '))
+    if not f.access then
+      local fdesc, default = get_default(f.desc)
+      local fty = render_type(f.type, nil, default)
+      local fnm = fmt_field_name(f.name)
+      table.insert(desc_append, table.concat({ '-', fnm, fty, fdesc }, ' '))
+    end
   end
 
   desc = desc .. '\n' .. table.concat(desc_append, '\n')

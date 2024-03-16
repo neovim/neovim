@@ -40,6 +40,23 @@ M.priorities = {
   user = 200,
 }
 
+--- @class vim.highlight.range.Opts
+--- @inlinedoc
+---
+--- Type of range. See [setreg()]
+--- (default: `'charwise'`)
+--- @field regtype? string
+---
+--- Indicates whether the range is end-inclusive
+--- (default: `false`)
+--- @field inclusive? boolean
+---
+--- Indicates priority of highlight
+--- (default: `vim.highlight.priorities.user`)
+--- @field priority? integer
+---
+--- @field package _scoped? boolean
+
 --- Apply highlight group to range of text.
 ---
 ---@param bufnr integer Buffer number to apply highlighting to
@@ -47,10 +64,7 @@ M.priorities = {
 ---@param higroup string Highlight group to use for highlighting
 ---@param start integer[]|string Start of region as a (line, column) tuple or string accepted by |getpos()|
 ---@param finish integer[]|string End of region as a (line, column) tuple or string accepted by |getpos()|
----@param opts table|nil Optional parameters
----            - regtype type of range (see |setreg()|, default charwise)
----            - inclusive boolean indicating whether the range is end-inclusive (default false)
----            - priority number indicating priority of highlight (default priorities.user)
+---@param opts? vim.highlight.range.Opts
 function M.range(bufnr, ns, higroup, start, finish, opts)
   opts = opts or {}
   local regtype = opts.regtype or 'v'
@@ -80,8 +94,8 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
 end
 
 local yank_ns = api.nvim_create_namespace('hlyank')
-local yank_timer
-local yank_cancel
+local yank_timer --- @type uv.uv_timer_t?
+local yank_cancel --- @type fun()?
 
 --- Highlight the yanked text
 ---
@@ -128,6 +142,7 @@ function M.on_yank(opts)
   local winid = vim.api.nvim_get_current_win()
   if yank_timer then
     yank_timer:close()
+    assert(yank_cancel)
     yank_cancel()
   end
 
