@@ -300,6 +300,7 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
       if (vt->pos == kVPosEndOfLine && do_eol) {
         state->eol_col = col + 1;
       }
+      // TODO(zeertzjq): set values in linebuf_vcol[]
       *end_col = MAX(*end_col, col);
     }
     if (!vt || !(vt->flags & kVTRepeatLinebreak)) {
@@ -1549,7 +1550,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
       // When only updating the columns and that's done, stop here.
       if (col_rows > 0) {
-        win_put_linebuf(wp, wlv.row, wlv.off, wlv.off, bg_attr, false);
+        wlv_put_linebuf(wp, &wlv, wlv.off, false, bg_attr, 0);
         // Need to update more screen lines if:
         // - 'statuscolumn' needs to be drawn, or
         // - LineNrAbove or LineNrBelow is used, or
@@ -1606,7 +1607,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         && lnum == wp->w_cursor.lnum && wlv.vcol >= wp->w_virtcol) {
       draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
       // don't clear anything after wlv.col
-      win_put_linebuf(wp, wlv.row, wlv.col, wlv.col, bg_attr, false);
+      wlv_put_linebuf(wp, &wlv, wlv.col, false, bg_attr, 0);
       // Pretend we have finished updating the window.  Except when
       // 'cursorcolumn' is set.
       if (wp->w_p_cuc) {
@@ -2539,7 +2540,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
                              : wlv.char_attr;
 
         linebuf_attr[wlv.off] = eol_attr;
-        linebuf_vcol[wlv.off] = MAXCOL;
+        linebuf_vcol[wlv.off] = wlv.vcol;
         wlv.col++;
         wlv.off++;
         wlv.vcol++;
@@ -2595,7 +2596,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
         while (wlv.col < grid->cols) {
           linebuf_char[wlv.off] = schar_from_ascii(' ');
-          linebuf_vcol[wlv.off] = MAXCOL;
+          linebuf_vcol[wlv.off] = wlv.vcol;
           wlv.col++;
           advance_color_col(&wlv, vcol_hlc(wlv));
 
@@ -2638,7 +2639,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         draw_virt_text_item(buf, win_col_offset, fold_vt, kHlModeCombine, grid->cols, 0);
       }
       draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
-      win_put_linebuf(wp, wlv.row, wlv.col, grid->cols, bg_attr, false);
+      // Set increasing virtual columns in grid->vcols[] to set correct curswant
+      // (or "coladd" for 'virtualedit') when clicking after end of line.
+      wlv_put_linebuf(wp, &wlv, wlv.col, true, bg_attr, SLF_INC_VCOL);
       wlv.row++;
 
       // Update w_cline_height and w_cline_folded if the cursor line was
@@ -2869,7 +2872,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         while (draw_col < grid->cols) {
           linebuf_char[wlv.off] = schar_from_char(' ');
           linebuf_attr[wlv.off] = attr;
-          linebuf_vcol[wlv.off] = MAXCOL;  // TODO(zeertzjq): this is wrong
+          linebuf_vcol[wlv.off] = wlv.vcol - 1;
           wlv.off++;
           draw_col++;
         }
@@ -2882,7 +2885,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         draw_virt_text(wp, buf, win_col_offset, &draw_col, wlv.row);
       }
 
-      win_put_linebuf(wp, wlv.row, draw_col, grid->cols, bg_attr, wrap);
+      wlv_put_linebuf(wp, &wlv, draw_col, true, bg_attr, wrap ? SLF_WRAP : 0);
       if (wrap) {
         ScreenGrid *current_grid = grid;
         int current_row = wlv.row;
@@ -2942,18 +2945,28 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   return wlv.row;
 }
 
-static void win_put_linebuf(win_T *wp, int row, int endcol, int clear_width, int bg_attr, bool wrap)
+/// Call grid_put_linebuf() using values from "wlv".
+/// Also takes care of putting "<<<" on the first line for 'smoothscroll'
+/// when 'showbreak' is not set.
+///
+/// @param clear_end  clear until the end of the screen line.
+/// @param flags  for grid_put_linebuf(), but shouldn't contain SLF_RIGHTLEFT.
+static void wlv_put_linebuf(win_T *wp, const winlinevars_T *wlv, int endcol, bool clear_end,
+                            int bg_attr, int flags)
 {
   ScreenGrid *grid = &wp->w_grid;
 
   int startcol = 0;
+  int clear_width = clear_end ? grid->cols : endcol;
 
+  assert(!(flags & SLF_RIGHTLEFT));
   if (wp->w_p_rl) {
     linebuf_mirror(&startcol, &endcol, &clear_width, grid->cols);
+    flags |= SLF_RIGHTLEFT;
   }
 
   // Take care of putting "<<<" on the first line for 'smoothscroll'.
-  if (row == 0 && wp->w_skipcol > 0
+  if (wlv->row == 0 && wp->w_skipcol > 0
       // do not overwrite the 'showbreak' text with "<<<"
       && *get_showbreak_value(wp) == NUL
       // do not overwrite the 'listchars' "precedes" text with "<<<"
@@ -2978,7 +2991,8 @@ static void win_put_linebuf(win_T *wp, int row, int endcol, int clear_width, int
     }
   }
 
+  int row = wlv->row;
   int coloff = 0;
   grid_adjust(&grid, &row, &coloff);
-  grid_put_linebuf(grid, row, coloff, startcol, endcol, clear_width, wp->w_p_rl, bg_attr, wrap);
+  grid_put_linebuf(grid, row, coloff, startcol, endcol, clear_width, bg_attr, wlv->vcol - 1, flags);
 }
