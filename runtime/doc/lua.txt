@@ -643,12 +643,14 @@ vim.highlight.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
                    tuple or string accepted by |getpos()|
       • {finish}   (`integer[]|string`) End of region as a (line, column)
                    tuple or string accepted by |getpos()|
-      • {opts}     (`table?`) Optional parameters
-                   • regtype type of range (see |setreg()|, default charwise)
-                   • inclusive boolean indicating whether the range is
-                     end-inclusive (default false)
-                   • priority number indicating priority of highlight (default
-                     priorities.user)
+      • {opts}     (`table?`) A table with the following fields:
+                   • {regtype}? (`string`, default: `'charwise'`) Type of
+                     range. See |setreg()|
+                   • {inclusive}? (`boolean`, default: `false`) Indicates
+                     whether the range is end-inclusive
+                   • {priority}? (`integer`, default:
+                     `vim.highlight.priorities.user`) Indicates priority of
+                     highlight
 
 
 ==============================================================================
@@ -2794,9 +2796,9 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
     Parameters: ~
       • {modes}  (`string|string[]`)
       • {lhs}    (`string`)
-      • {opts}   (`table?`) A table of optional arguments:
-                 • "buffer": (integer|boolean) Remove a mapping from the given
-                   buffer. When `0` or `true`, use the current buffer.
+      • {opts}   (`table?`) A table with the following fields:
+                 • {buffer}? (`integer|boolean`) Remove a mapping from the
+                   given buffer. When `0` or `true`, use the current buffer.
 
     See also: ~
       • |vim.keymap.set()|
@@ -2818,20 +2820,20 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
 <
 
     Parameters: ~
-      • {mode}  (`string|table`) Mode short-name, see |nvim_set_keymap()|. Can
-                also be list of modes to create mapping on multiple modes.
+      • {mode}  (`string|string[]`) Mode short-name, see |nvim_set_keymap()|.
+                Can also be list of modes to create mapping on multiple modes.
       • {lhs}   (`string`) Left-hand side |{lhs}| of the mapping.
       • {rhs}   (`string|function`) Right-hand side |{rhs}| of the mapping,
                 can be a Lua function.
-      • {opts}  (`table?`) Table of |:map-arguments|.
-                • Same as |nvim_set_keymap()| {opts}, except:
-                  • "replace_keycodes" defaults to `true` if "expr" is `true`.
-                  • "noremap": inverse of "remap" (see below).
-                • Also accepts:
-                  • "buffer": (integer|boolean) Creates buffer-local mapping,
-                    `0` or `true` for current buffer.
-                  • "remap": (boolean) Make the mapping recursive. Inverse of
-                    "noremap". Defaults to `false`.
+      • {opts}  (`table?`) Table of |:map-arguments|. Same as
+                |nvim_set_keymap()| {opts}, except:
+                • {replace_keycodes} defaults to `true` if "expr" is `true`.
+
+                Also accepts:
+                • {buffer}? (`integer|boolean`) Creates buffer-local mapping,
+                  `0` or `true` for current buffer.
+                • {remap}? (`boolean`, default: `false`) Make the mapping
+                  recursive. Inverse of {noremap}.
 
     See also: ~
       • |nvim_set_keymap()|
@@ -3566,7 +3568,7 @@ vim.secure.trust({opts})                                  *vim.secure.trust()*
     The trust database is located at |$XDG_STATE_HOME|/nvim/trust.
 
     Parameters: ~
-      • {opts}  (`table?`) A table with the following fields:
+      • {opts}  (`table`) A table with the following fields:
                 • {action} (`'allow'|'deny'|'remove'`) - `'allow'` to add a
                   file to the trust database and trust it,
                 • `'deny'` to add a file to the trust database and deny it,
@@ -3777,7 +3779,6 @@ vim.version.range({spec})                                *vim.version.range()*
         (`table?`) A table with the following fields:
         • {from} (`vim.Version`)
         • {to}? (`vim.Version`)
-        • {has} (`fun(self: vim.VersionRangeversion: string|vim.Version)`)
 
     See also: ~
       • https://github.com/npm/node-semver#ranges

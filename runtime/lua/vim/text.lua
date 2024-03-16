@@ -5,7 +5,7 @@ local M = {}
 --- Hex encode a string.
 ---
 --- @param str string String to encode
---- @return string Hex encoded string
+--- @return string : Hex encoded string
 function M.hexencode(str)
   local bytes = { str:byte(1, #str) }
   local enc = {} ---@type string[]
@@ -18,7 +18,7 @@ end
 --- Hex decode a string.
 ---
 --- @param enc string String to decode
---- @return string Decoded string
+--- @return string : Decoded string
 function M.hexdecode(enc)
   assert(#enc % 2 == 0, 'string must have an even number of hex characters')
   local str = {} ---@type string[]

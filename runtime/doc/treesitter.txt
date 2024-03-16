@@ -978,7 +978,7 @@ add_directive({name}, {handler}, {opts})
 
     Parameters: ~
       • {name}     (`string`) Name of the directive, without leading #
-      • {handler}  (`function`)
+      • {handler}  (`fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: table)`)
                    • match: A table mapping capture IDs to a list of captured
                      nodes
                    • pattern: the index of the matching pattern in the query
@@ -986,10 +986,10 @@ add_directive({name}, {handler}, {opts})
                    • predicate: list of strings containing the full directive
                      being called, e.g. `(node (#set! conceal "-"))` would get
                      the predicate `{ "#set!", "conceal", "-" }`
-      • {opts}     (`table<string, any>`) Optional options:
-                   • force (boolean): Override an existing predicate of the
-                     same name
-                   • all (boolean): Use the correct implementation of the
+      • {opts}     (`table`) A table with the following fields:
+                   • {force}? (`boolean`) Override an existing predicate of
+                     the same name
+                   • {all}? (`boolean`) Use the correct implementation of the
                      match table where capture IDs map to a list of nodes
                      instead of a single node. Defaults to false (for backward
                      compatibility). This option will eventually become the
@@ -1001,13 +1001,13 @@ add_predicate({name}, {handler}, {opts})
 
     Parameters: ~
       • {name}     (`string`) Name of the predicate, without leading #
-      • {handler}  (`function`)
+      • {handler}  (`fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: table)`)
                    • see |vim.treesitter.query.add_directive()| for argument
                      meanings
-      • {opts}     (`table<string, any>`) Optional options:
-                   • force (boolean): Override an existing predicate of the
-                     same name
-                   • all (boolean): Use the correct implementation of the
+      • {opts}     (`table`) A table with the following fields:
+                   • {force}? (`boolean`) Override an existing predicate of
+                     the same name
+                   • {all}? (`boolean`) Use the correct implementation of the
                      match table where capture IDs map to a list of nodes
                      instead of a single node. Defaults to false (for backward
                      compatibility). This option will eventually become the
@@ -1079,13 +1079,13 @@ list_directives()                     *vim.treesitter.query.list_directives()*
     Lists the currently available directives to use in queries.
 
     Return: ~
-        (`string[]`) List of supported directives.
+        (`string[]`) Supported directives.
 
 list_predicates()                     *vim.treesitter.query.list_predicates()*
     Lists the currently available predicates to use in queries.
 
     Return: ~
-        (`string[]`) List of supported predicates.
+        (`string[]`) Supported predicates.
 
 omnifunc({findstart}, {base})                *vim.treesitter.query.omnifunc()*
     Omnifunc for completing node names and predicates in treesitter queries.
@@ -1319,7 +1319,7 @@ LanguageTree:language_for_range({range})
       • {range}  (`Range4`) `{ start_line, start_col, end_line, end_col }`
 
     Return: ~
-        (`vim.treesitter.LanguageTree`) Managing {range}
+        (`vim.treesitter.LanguageTree`) tree Managing {range}
 
                                          *LanguageTree:named_node_for_range()*
 LanguageTree:named_node_for_range({range}, {opts})
@@ -1327,12 +1327,12 @@ LanguageTree:named_node_for_range({range}, {opts})
 
     Parameters: ~
       • {range}  (`Range4`) `{ start_line, start_col, end_line, end_col }`
-      • {opts}   (`table?`) Optional keyword arguments:
-                 • ignore_injections boolean Ignore injected languages
-                   (default true)
+      • {opts}   (`table?`) A table with the following fields:
+                 • {ignore_injections}? (`boolean`, default: `true`) Ignore
+                   injected languages
 
     Return: ~
-        (`TSNode?`) Found node
+        (`TSNode?`)
 
 LanguageTree:parse({range})                             *LanguageTree:parse()*
     Recursively parse all regions in the language tree using
@@ -1359,8 +1359,9 @@ LanguageTree:register_cbs({cbs}, {recursive})
     Registers callbacks for the |LanguageTree|.
 
     Parameters: ~
-      • {cbs}        (`table`) An |nvim_buf_attach()|-like table argument with
-                     the following handlers:
+      • {cbs}        (`table<TSCallbackNameOn,function>`) An
+                     |nvim_buf_attach()|-like table argument with the
+                     following handlers:
                      • `on_bytes` : see |nvim_buf_attach()|, but this will be
                        called after the parsers callback.
                      • `on_changedtree` : a callback that will be called every
@@ -1387,9 +1388,9 @@ LanguageTree:tree_for_range({range}, {opts})
 
     Parameters: ~
       • {range}  (`Range4`) `{ start_line, start_col, end_line, end_col }`
-      • {opts}   (`table?`) Optional keyword arguments:
-                 • ignore_injections boolean Ignore injected languages
-                   (default true)
+      • {opts}   (`table?`) A table with the following fields:
+                 • {ignore_injections}? (`boolean`, default: `true`) Ignore
+                   injected languages
 
     Return: ~
         (`TSTree?`)
