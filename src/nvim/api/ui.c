@@ -533,7 +533,8 @@ static void ui_alloc_buf(RemoteUI *ui)
 
 static void prepare_call(RemoteUI *ui, const char *name)
 {
-  if (ui->packer.startptr && BUF_POS(ui) > UI_BUF_SIZE - EVENT_BUF_SIZE) {
+  if (ui->packer.startptr
+      && (BUF_POS(ui) > UI_BUF_SIZE - EVENT_BUF_SIZE || ui->ncells_pending >= 500)) {
     ui_flush_buf(ui);
   }
 
@@ -781,11 +782,14 @@ void remote_ui_raw_line(RemoteUI *ui, Integer grid, Integer row, Integer startco
     for (size_t i = 0; i < ncells; i++) {
       repeat++;
       if (i == ncells - 1 || attrs[i] != attrs[i + 1] || chunk[i] != chunk[i + 1]) {
-        if (UI_BUF_SIZE - BUF_POS(ui) < 2 * (1 + 2 + sizeof(schar_T) + 5 + 5) + 1) {
+        if (UI_BUF_SIZE - BUF_POS(ui) < 2 * (1 + 2 + sizeof(schar_T) + 5 + 5) + 1
+            || ui->ncells_pending >= 500) {
           // close to overflowing the redraw buffer. finish this event,
           // flush, and start a new "grid_line" event at the current position.
           // For simplicity leave place for the final "clear" element
           // as well, hence the factor of 2 in the check.
+          // Also if there is a lot of packed cells, pass them of to the UI to
+          // let it start processing them
           mpack_w2(&lenpos, nelem);
 
           // We only ever set the wrap field on the final "grid_line" event for the line.
@@ -831,11 +835,6 @@ void remote_ui_raw_line(RemoteUI *ui, Integer grid, Integer row, Integer startco
     }
     mpack_w2(&lenpos, nelem);
     mpack_bool(buf, flags & kLineFlagWrap);
-
-    if (ui->ncells_pending > 500) {
-      // pass off cells to UI to let it start processing them
-      ui_flush_buf(ui);
-    }
   } else {
     for (int i = 0; i < endcol - startcol; i++) {
       remote_ui_cursor_goto(ui, row, startcol + i);
