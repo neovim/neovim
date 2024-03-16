@@ -1752,8 +1752,8 @@ describe('ui/msg_puts_printf', function()
     command([[call termopen(']] .. cmd .. [[')]])
     screen:expect([[
     ^Exモードに入ります. ノー |
-    マルモードに戻るには"visu|
-    al"と入力してください.   |
+    マルモードに戻るには "vis|
+    ual" と入力してください. |
     :                        |
                              |
     ]])
