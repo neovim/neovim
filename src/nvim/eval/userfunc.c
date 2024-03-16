@@ -2309,6 +2309,7 @@ void ex_function(exarg_T *eap)
                                           : eval_isnamec(name_base[i])); i++) {}
       if (name_base[i] != NUL) {
         emsg_funcname(e_invarg2, arg);
+        goto ret_free;
       }
     }
     // Disallow using the g: dict.
