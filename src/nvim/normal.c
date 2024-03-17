@@ -748,7 +748,7 @@ static void normal_get_additional_char(NormalState *s)
     bool langmap_active = false;  // using :lmap mappings
     if (repl) {
       State = MODE_REPLACE;                // pretend Replace mode
-      ui_cursor_shape();              // show different cursor shape
+      ui_cursor_shape_no_check_conceal();  // show different cursor shape
     }
     if (lang && curbuf->b_p_iminsert == B_IMODE_LMAP) {
       // Allow mappings defined with ":lmap".
