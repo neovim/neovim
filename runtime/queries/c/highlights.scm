@@ -159,21 +159,26 @@
 
 (statement_identifier) @label
 
+(declaration
+  type: (type_identifier) @_type
+  declarator: (identifier) @label
+  (#eq? @_type "__label__"))
+
 [
   (type_identifier)
   (type_descriptor)
 ] @type
 
-(storage_class_specifier) @keyword.storage
+(storage_class_specifier) @keyword.modifier
 
 [
   (type_qualifier)
   (gnu_asm_qualifier)
   "__extension__"
-] @type.qualifier
+] @keyword.modifier
 
 (linkage_specification
-  "extern" @keyword.storage)
+  "extern" @keyword.modifier)
 
 (type_definition
   declarator: (type_identifier) @type.definition)
@@ -232,10 +237,10 @@
   (argument_list
     (identifier) @variable.builtin))
 
-((attribute_specifier
+(attribute_specifier
   (argument_list
     (call_expression
-      function: (identifier) @variable.builtin))))
+      function: (identifier) @variable.builtin)))
 
 ((call_expression
   function: (identifier) @function.builtin)
