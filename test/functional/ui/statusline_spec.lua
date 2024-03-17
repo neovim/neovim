@@ -11,6 +11,7 @@ local exec = helpers.exec
 local exec_lua = helpers.exec_lua
 local eval = helpers.eval
 local sleep = vim.uv.sleep
+local pcall_err = helpers.pcall_err
 
 local mousemodels = { 'extend', 'popup', 'popup_setpos' }
 
@@ -471,6 +472,25 @@ describe('global statusline', function()
       0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
       ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
       {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
+                                                                  |
+    ]])
+  end)
+
+  it('horizontal separators unchanged when failing to split-move window', function()
+    exec([[
+      botright split
+      let &winwidth = &columns
+      let &winminwidth = &columns
+    ]])
+    eq('Vim(wincmd):E36: Not enough room', pcall_err(command, 'wincmd L'))
+    command('mode')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*5
+      ────────────────────────────────────────────────────────────|
+      ^                                                            |
+      {1:~                                                           }|*6
+      {2:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
   end)

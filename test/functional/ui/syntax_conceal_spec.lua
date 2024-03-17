@@ -435,6 +435,18 @@ describe('Screen', function()
         {0:~                                                    }|*3
                                                              |
       ]])
+
+      feed('r')
+      screen:expect_unchanged()
+
+      feed('m')
+      screen:expect([[
+        ^moo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*4
+                                                             |
+        {0:~                                                    }|*3
+                                                             |
+      ]])
     end)
 
     it('and open line', function()

@@ -502,35 +502,33 @@ horizontally split windows.  CTRL-W H does it the other way around.
 
 						*CTRL-W_K*
 CTRL-W K	Move the current window to be at the very top, using the full
-		width of the screen.  This works like closing the current
-		window and then creating another one with ":topleft split",
-		except that the current window contents is used for the new
-		window.
+		width of the screen.  This works like `:topleft split`, except
+		it is applied to the current window and no new window is
+		created.
 
 						*CTRL-W_J*
 CTRL-W J	Move the current window to be at the very bottom, using the
-		full width of the screen.  This works like closing the current
-		window and then creating another one with ":botright split",
-		except that the current window contents is used for the new
-		window.
+		full width of the screen.  This works like `:botright split`,
+		except it is applied to the current window and no new window
+		is created.
 
 						*CTRL-W_H*
 CTRL-W H	Move the current window to be at the far left, using the
-		full height of the screen.  This works like closing the
-		current window and then creating another one with
-		`:vert topleft split`, except that the current window contents
-		is used for the new window.
+		full height of the screen.  This works like
+		`:vert topleft split`, except it is applied to the current
+		window and no new window is created.
 
 						*CTRL-W_L*
 CTRL-W L	Move the current window to be at the far right, using the full
-		height of the screen.  This works like closing the
-		current window and then creating another one with
-		`:vert botright split`, except that the current window
-		contents is used for the new window.
+		height of the screen.  This works like `:vert botright split`,
+		except it is applied to the current window and no new window
+		is created.
 
 						*CTRL-W_T*
 CTRL-W T	Move the current window to a new tab page.  This fails if
 		there is only one window in the current tab page.
+		This works like `:tab split`, except the previous window is
+		closed.
 		When a count is specified the new tab page will be opened
 		before the tab page with this index.  Otherwise it comes after
 		the current tab page.

@@ -146,9 +146,10 @@ end
 local client_errors_base = table.maxn(lsp.rpc.client_errors)
 local client_errors_offset = 0
 
-local function new_error_index()
+local function client_error(name)
   client_errors_offset = client_errors_offset + 1
-  return client_errors_base + client_errors_offset
+  local index = client_errors_base + client_errors_offset
+  return { [name] = index, [index] = name }
 end
 
 --- Error codes to be used with `on_error` from |vim.lsp.start_client|.
@@ -158,12 +159,10 @@ end
 lsp.client_errors = tbl_extend(
   'error',
   lsp.rpc.client_errors,
-  vim.tbl_add_reverse_lookup({
-    BEFORE_INIT_CALLBACK_ERROR = new_error_index(),
-    ON_INIT_CALLBACK_ERROR = new_error_index(),
-    ON_ATTACH_ERROR = new_error_index(),
-    ON_EXIT_CALLBACK_ERROR = new_error_index(),
-  })
+  client_error('BEFORE_INIT_CALLBACK_ERROR'),
+  client_error('ON_INIT_CALLBACK_ERROR'),
+  client_error('ON_ATTACH_ERROR'),
+  client_error('ON_EXIT_CALLBACK_ERROR')
 )
 
 ---@private
@@ -961,16 +960,15 @@ end
 ---
 --- Calls |vim.lsp.buf_request_all()| but blocks Nvim while awaiting the result.
 --- Parameters are the same as |vim.lsp.buf_request_all()| but the result is
---- different. Waits a maximum of {timeout_ms} (default 1000) ms.
+--- different. Waits a maximum of {timeout_ms}.
 ---
----@param bufnr (integer) Buffer handle, or 0 for current.
----@param method (string) LSP method name
----@param params (table|nil) Parameters to send to the server
----@param timeout_ms (integer|nil) Maximum time in milliseconds to wait for a
----                               result. Defaults to 1000
----
----@return table<integer, {err: lsp.ResponseError, result: any}>|nil (table) result Map of client_id:request_result.
----@return string|nil err On timeout, cancel, or error, `err` is a string describing the failure reason, and `result` is nil.
+---@param bufnr integer Buffer handle, or 0 for current.
+---@param method string LSP method name
+---@param params table? Parameters to send to the server
+---@param timeout_ms integer? Maximum time in milliseconds to wait for a result.
+---                           (default: `1000`)
+---@return table<integer, {err: lsp.ResponseError, result: any}>? result Map of client_id:request_result.
+---@return string? err On timeout, cancel, or error, `err` is a string describing the failure reason, and `result` is nil.
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   local request_results
 

@@ -2436,7 +2436,7 @@ static void expand_by_function(int type, char *base)
   textlock--;
 
   curwin->w_cursor = pos;       // restore the cursor position
-  validate_cursor();
+  validate_cursor(curwin);
   if (!equalpos(curwin->w_cursor, pos)) {
     emsg(_(e_compldel));
     goto theend;
@@ -2937,7 +2937,7 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
       // buffer, so that word at start of buffer is found
       // correctly.
       st->first_match_pos.lnum = st->ins_buf->b_ml.ml_line_count;
-      st->first_match_pos.col = (colnr_T)strlen(ml_get(st->first_match_pos.lnum));
+      st->first_match_pos.col = ml_get_len(st->first_match_pos.lnum);
     }
     st->last_match_pos = st->first_match_pos;
     compl_type = 0;
@@ -3027,7 +3027,7 @@ static void get_next_include_file_completion(int compl_type)
                        ((compl_type == CTRL_X_PATH_DEFINES
                          && !(compl_cont_status & CONT_SOL))
                         ? FIND_DEFINE : FIND_ANY),
-                       1, ACTION_EXPAND, 1, MAXLNUM);
+                       1, ACTION_EXPAND, 1, MAXLNUM, false);
 }
 
 /// Get the next set of words matching "compl_pattern" in dictionary or
@@ -3557,7 +3557,12 @@ void ins_compl_delete(void)
 /// "in_compl_func" is true when called from complete_check().
 void ins_compl_insert(bool in_compl_func)
 {
-  ins_bytes(compl_shown_match->cp_str + get_compl_len());
+  int compl_len = get_compl_len();
+  // Make sure we don't go over the end of the string, this can happen with
+  // illegal bytes.
+  if (compl_len < (int)strlen(compl_shown_match->cp_str)) {
+    ins_bytes(compl_shown_match->cp_str + compl_len);
+  }
   compl_used_match = !match_at_original_text(compl_shown_match);
 
   dict_T *dict = ins_compl_dict_alloc(compl_shown_match);
@@ -4091,7 +4096,7 @@ static int get_userdefined_compl_info(colnr_T curs_col)
 
   State = save_State;
   curwin->w_cursor = pos;  // restore the cursor position
-  validate_cursor();
+  validate_cursor(curwin);
   if (!equalpos(curwin->w_cursor, pos)) {
     emsg(_(e_compldel));
     return FAIL;

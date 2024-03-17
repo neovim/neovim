@@ -102,7 +102,7 @@ end
 --- @param s string String to split
 --- @param sep string Separator or pattern
 --- @param opts? vim.gsplit.Opts Keyword arguments |kwargs|:
---- @return fun():string|nil (function) Iterator over the split components
+--- @return fun():string? : Iterator over the split components
 function vim.gsplit(s, sep, opts)
   local plain --- @type boolean?
   local trimempty = false
@@ -245,8 +245,8 @@ end
 --- Apply a function to all values of a table.
 ---
 ---@generic T
----@param func fun(value: T): any (function) Function
----@param t table<any, T> (table) Table
+---@param func fun(value: T): any Function
+---@param t table<any, T> Table
 ---@return table : Table of transformed values
 function vim.tbl_map(func, t)
   vim.validate({ func = { func, 'c' }, t = { t, 't' } })
@@ -402,7 +402,7 @@ end
 ---
 ---@see |extend()|
 ---
----@param behavior string Decides what to do if a key is found in more than one map:
+---@param behavior 'error'|'keep'|'force' Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
@@ -418,7 +418,7 @@ end
 ---
 ---@generic T1: table
 ---@generic T2: table
----@param behavior "error"|"keep"|"force" (string) Decides what to do if a key is found in more than one map:
+---@param behavior 'error'|'keep'|'force' Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
@@ -465,9 +465,12 @@ end
 --- `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
 ---
 --- Note that this *modifies* the input.
+---@deprecated
 ---@param o table Table to add the reverse to
 ---@return table o
 function vim.tbl_add_reverse_lookup(o)
+  vim.deprecate('vim.tbl_add_reverse_lookup', nil, '0.12')
+
   --- @cast o table<any,any>
   --- @type any[]
   local keys = vim.tbl_keys(o)
@@ -570,8 +573,10 @@ end
 ---
 ---@see Based on https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
----@param t table Dict-like table
----@return function # |for-in| iterator over sorted keys and their values
+---@generic T: table, K, V
+---@param t T Dict-like table
+---@return fun(table: table<K, V>, index?: K):K, V # |for-in| iterator over sorted keys and their values
+---@return T
 function vim.spairs(t)
   vim.validate({ t = { t, 't' } })
   --- @cast t table<any,any>
@@ -590,7 +595,8 @@ function vim.spairs(t)
     if keys[i] then
       return keys[i], t[keys[i]]
     end
-  end
+  end,
+    t
 end
 
 --- Tests if `t` is an "array": a table indexed _only_ by integers (potentially non-contiguous).
@@ -649,18 +655,21 @@ function vim.tbl_islist(t)
     return false
   end
 
-  local num_elem = vim.tbl_count(t)
-
-  if num_elem == 0 then
+  if next(t) == nil then
     return getmetatable(t) ~= vim._empty_dict_mt
-  else
-    for i = 1, num_elem do
-      if t[i] == nil then
-        return false
-      end
-    end
-    return true
   end
+
+  local j = 1
+  for _ in
+    pairs(t--[[@as table<any,any>]])
+  do
+    if t[j] == nil then
+      return false
+    end
+    j = j + 1
+  end
+
+  return true
 end
 
 --- Counts the number of non-nil values in table `t`.
@@ -1018,7 +1027,7 @@ do
   --- - |Ringbuf:clear()|
   ---
   ---@param size integer
-  ---@return vim.Ringbuf ringbuf (table)
+  ---@return vim.Ringbuf ringbuf
   function vim.ringbuf(size)
     local ringbuf = {
       _items = {},

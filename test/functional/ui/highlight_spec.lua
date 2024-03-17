@@ -1380,6 +1380,8 @@ describe('CursorColumn highlight', function()
       [1] = { background = Screen.colors.Gray90 }, -- CursorColumn
       [2] = { bold = true, foreground = Screen.colors.Blue1 }, -- NonText
       [3] = { bold = true }, -- ModeMsg
+      [4] = { background = Screen.colors.Red },
+      [5] = { background = Screen.colors.Blue },
     })
     screen:attach()
   end)
@@ -1453,6 +1455,47 @@ describe('CursorColumn highlight', function()
                                                         |
     ]],
     })
+  end)
+
+  it('is not shown on current line with virtualedit', function()
+    exec([[
+      hi! CursorColumn guibg=Red
+      hi! CursorLine guibg=Blue
+      set virtualedit=all cursorline cursorcolumn
+    ]])
+    insert('line 1\nline 2\nline 3')
+    feed('k')
+    screen:expect([[
+      line {4:1}                                            |
+      {5:line ^2                                            }|
+      line {4:3}                                            |
+      {2:~                                                 }|*4
+                                                        |
+    ]])
+    feed('l')
+    screen:expect([[
+      line 1{4: }                                           |
+      {5:line 2^                                            }|
+      line 3{4: }                                           |
+      {2:~                                                 }|*4
+                                                        |
+    ]])
+    feed('l')
+    screen:expect([[
+      line 1 {4: }                                          |
+      {5:line 2 ^                                           }|
+      line 3 {4: }                                          |
+      {2:~                                                 }|*4
+                                                        |
+    ]])
+    feed('l')
+    screen:expect([[
+      line 1  {4: }                                         |
+      {5:line 2  ^                                          }|
+      line 3  {4: }                                         |
+      {2:~                                                 }|*4
+                                                        |
+    ]])
   end)
 end)
 
@@ -2492,5 +2535,117 @@ describe('highlight namespaces', function()
       {10:nd to continue}^           |
     ]],
     }
+  end)
+end)
+
+describe('synIDattr()', function()
+  local screen
+  before_each(function()
+    clear()
+    screen = Screen.new(50, 7)
+    command('highlight Normal ctermfg=252 guifg=#ff0000 guibg=Black')
+    -- Salmon #fa8072 Maroon #800000
+    command(
+      'highlight Keyword ctermfg=79 guifg=Salmon guisp=Maroon cterm=strikethrough gui=strikethrough'
+    )
+  end)
+
+  it('returns cterm-color if RGB-capable UI is _not_ attached', function()
+    eq('252', eval('synIDattr(hlID("Normal"),  "fg")'))
+    eq('252', eval('synIDattr(hlID("Normal"),  "fg#")'))
+    eq('', eval('synIDattr(hlID("Normal"),  "bg")'))
+    eq('', eval('synIDattr(hlID("Normal"),  "bg#")'))
+    eq('79', eval('synIDattr(hlID("Keyword"), "fg")'))
+    eq('79', eval('synIDattr(hlID("Keyword"), "fg#")'))
+    eq('', eval('synIDattr(hlID("Keyword"), "sp")'))
+    eq('', eval('synIDattr(hlID("Keyword"), "sp#")'))
+  end)
+
+  it('returns gui-color if "gui" arg is passed', function()
+    eq('Black', eval('synIDattr(hlID("Normal"),  "bg", "gui")'))
+    eq('Maroon', eval('synIDattr(hlID("Keyword"), "sp", "gui")'))
+  end)
+
+  it('returns gui-color if RGB-capable UI is attached', function()
+    screen:attach({ rgb = true })
+    eq('#ff0000', eval('synIDattr(hlID("Normal"),  "fg")'))
+    eq('Black', eval('synIDattr(hlID("Normal"),  "bg")'))
+    eq('Salmon', eval('synIDattr(hlID("Keyword"), "fg")'))
+    eq('Maroon', eval('synIDattr(hlID("Keyword"), "sp")'))
+  end)
+
+  it('returns #RRGGBB value for fg#/bg#/sp#', function()
+    screen:attach({ rgb = true })
+    eq('#ff0000', eval('synIDattr(hlID("Normal"),  "fg#")'))
+    eq('#000000', eval('synIDattr(hlID("Normal"),  "bg#")'))
+    eq('#fa8072', eval('synIDattr(hlID("Keyword"), "fg#")'))
+    eq('#800000', eval('synIDattr(hlID("Keyword"), "sp#")'))
+  end)
+
+  it('returns color number if non-GUI', function()
+    screen:attach({ rgb = false })
+    eq('252', eval('synIDattr(hlID("Normal"), "fg")'))
+    eq('79', eval('synIDattr(hlID("Keyword"), "fg")'))
+  end)
+
+  it('returns "1" if group has given highlight attribute', function()
+    local hl_attrs = {
+      'underline',
+      'undercurl',
+      'underdouble',
+      'underdotted',
+      'underdashed',
+      'strikethrough',
+    }
+    for _, hl_attr in ipairs(hl_attrs) do
+      local context = 'using ' .. hl_attr .. ' attr'
+      command('highlight Keyword cterm=' .. hl_attr .. ' gui=' .. hl_attr)
+      eq('', eval('synIDattr(hlID("Normal"), "' .. hl_attr .. '")'), context)
+      eq('1', eval('synIDattr(hlID("Keyword"), "' .. hl_attr .. '")'), context)
+      eq('1', eval('synIDattr(hlID("Keyword"), "' .. hl_attr .. '", "gui")'), context)
+    end
+  end)
+end)
+
+describe('fg/bg special colors', function()
+  local screen
+  before_each(function()
+    clear()
+    screen = Screen.new(50, 7)
+    command('highlight Normal ctermfg=145 ctermbg=16 guifg=#ff0000 guibg=Black')
+    command('highlight Visual ctermfg=bg ctermbg=fg guifg=bg guibg=fg guisp=bg')
+  end)
+
+  it('resolve to "Normal" values', function()
+    eq(eval('synIDattr(hlID("Normal"), "bg")'), eval('synIDattr(hlID("Visual"), "fg")'))
+    eq(eval('synIDattr(hlID("Normal"), "bg#")'), eval('synIDattr(hlID("Visual"), "fg#")'))
+    eq(eval('synIDattr(hlID("Normal"), "fg")'), eval('synIDattr(hlID("Visual"), "bg")'))
+    eq(eval('synIDattr(hlID("Normal"), "fg#")'), eval('synIDattr(hlID("Visual"), "bg#")'))
+    eq('bg', eval('synIDattr(hlID("Visual"), "fg", "gui")'))
+    eq('bg', eval('synIDattr(hlID("Visual"), "fg#", "gui")'))
+    eq('fg', eval('synIDattr(hlID("Visual"), "bg", "gui")'))
+    eq('fg', eval('synIDattr(hlID("Visual"), "bg#", "gui")'))
+    eq('bg', eval('synIDattr(hlID("Visual"), "sp", "gui")'))
+    eq('bg', eval('synIDattr(hlID("Visual"), "sp#", "gui")'))
+  end)
+
+  it('resolve to "Normal" values in RGB-capable UI', function()
+    screen:attach({ rgb = true })
+    eq('bg', eval('synIDattr(hlID("Visual"), "fg")'))
+    eq(eval('synIDattr(hlID("Normal"), "bg#")'), eval('synIDattr(hlID("Visual"), "fg#")'))
+    eq('fg', eval('synIDattr(hlID("Visual"), "bg")'))
+    eq(eval('synIDattr(hlID("Normal"), "fg#")'), eval('synIDattr(hlID("Visual"), "bg#")'))
+    eq('bg', eval('synIDattr(hlID("Visual"), "sp")'))
+    eq(eval('synIDattr(hlID("Normal"), "bg#")'), eval('synIDattr(hlID("Visual"), "sp#")'))
+  end)
+
+  it('resolve after the "Normal" group is modified', function()
+    screen:attach({ rgb = true })
+    local new_guibg = '#282c34'
+    local new_guifg = '#abb2bf'
+    command('highlight Normal guifg=' .. new_guifg .. ' guibg=' .. new_guibg)
+    eq(new_guibg, eval('synIDattr(hlID("Visual"), "fg#")'))
+    eq(new_guifg, eval('synIDattr(hlID("Visual"), "bg#")'))
+    eq(new_guibg, eval('synIDattr(hlID("Visual"), "sp#")'))
   end)
 end)

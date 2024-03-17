@@ -143,7 +143,7 @@ void copyFoldingState(win_T *wp_from, win_T *wp_to)
 }
 
 // hasAnyFolding() {{{2
-/// @return  true if there may be folded lines in the current window.
+/// @return  true if there may be folded lines in window "win".
 int hasAnyFolding(win_T *win)
 {
   // very simple now, but can become more complex later
@@ -155,10 +155,10 @@ int hasAnyFolding(win_T *win)
 /// When returning true, *firstp and *lastp are set to the first and last
 /// lnum of the sequence of folded lines (skipped when NULL).
 ///
-/// @return  true if line "lnum" in the current window is part of a closed fold.
-bool hasFolding(linenr_T lnum, linenr_T *firstp, linenr_T *lastp)
+/// @return  true if line "lnum" in window "win" is part of a closed fold.
+bool hasFolding(win_T *win, linenr_T lnum, linenr_T *firstp, linenr_T *lastp)
 {
-  return hasFoldingWin(curwin, lnum, firstp, lastp, true, NULL);
+  return hasFoldingWin(win, lnum, firstp, lastp, true, NULL);
 }
 
 // hasFoldingWin() {{{2
@@ -398,13 +398,13 @@ void opFoldRange(pos_T firstpos, pos_T lastpos, int opening, int recurse, bool h
     // Opening one level only: next fold to open is after the one going to
     // be opened.
     if (opening && !recurse) {
-      hasFolding(lnum, NULL, &lnum_next);
+      hasFolding(curwin, lnum, NULL, &lnum_next);
     }
     setManualFold(temp, opening, recurse, &done);
     // Closing one level only: next line to close a fold is after just
     // closed fold.
     if (!opening && !recurse) {
-      hasFolding(lnum, NULL, &lnum_next);
+      hasFolding(curwin, lnum, NULL, &lnum_next);
     }
   }
   if (done == DONE_NOTHING) {
@@ -477,7 +477,7 @@ static void newFoldLevelWin(win_T *wp)
     }
     wp->w_fold_manual = false;
   }
-  changed_window_setting_win(wp);
+  changed_window_setting(wp);
 }
 
 // foldCheckClose() {{{2
@@ -492,7 +492,7 @@ void foldCheckClose(void)
   checkupdate(curwin);
   if (checkCloseRec(&curwin->w_folds, curwin->w_cursor.lnum,
                     (int)curwin->w_p_fdl)) {
-    changed_window_setting();
+    changed_window_setting(curwin);
   }
 }
 
@@ -518,7 +518,7 @@ static bool checkCloseRec(garray_T *gap, linenr_T lnum, int level)
   return retval;
 }
 
-// foldCreateAllowed() {{{2
+// foldManualAllowed() {{{2
 /// @return  true if it's allowed to manually create or delete a fold or,
 ///          give an error message and return false if not.
 int foldManualAllowed(bool create)
@@ -661,7 +661,7 @@ void foldCreate(win_T *wp, pos_T start, pos_T end)
     fp->fd_small = kNone;
 
     // redraw
-    changed_window_setting_win(wp);
+    changed_window_setting(wp);
   }
 }
 
@@ -735,7 +735,7 @@ void deleteFold(win_T *const wp, const linenr_T start, const linenr_T end, const
       did_one = true;
 
       // redraw window
-      changed_window_setting_win(wp);
+      changed_window_setting(wp);
     }
   }
   if (!did_one) {
@@ -746,7 +746,7 @@ void deleteFold(win_T *const wp, const linenr_T start, const linenr_T end, const
     }
   } else {
     // Deleting markers may make cursor column invalid
-    check_cursor_col_win(wp);
+    check_cursor_col(wp);
   }
 
   if (last_lnum > 0) {
@@ -1009,16 +1009,15 @@ void foldAdjustVisual(void)
     start = &curwin->w_cursor;
     end = &VIsual;
   }
-  if (hasFolding(start->lnum, &start->lnum, NULL)) {
+  if (hasFolding(curwin, start->lnum, &start->lnum, NULL)) {
     start->col = 0;
   }
 
-  if (!hasFolding(end->lnum, NULL, &end->lnum)) {
+  if (!hasFolding(curwin, end->lnum, NULL, &end->lnum)) {
     return;
   }
 
-  char *ptr = ml_get(end->lnum);
-  end->col = (colnr_T)strlen(ptr);
+  end->col = ml_get_len(end->lnum);
   if (end->col > 0 && *p_sel == 'o') {
     end->col--;
   }
@@ -1026,11 +1025,11 @@ void foldAdjustVisual(void)
   mb_adjust_cursor();
 }
 
-// cursor_foldstart() {{{2
+// foldAdjustCursor() {{{2
 /// Move the cursor to the first line of a closed fold.
-void foldAdjustCursor(void)
+void foldAdjustCursor(win_T *wp)
 {
-  hasFolding(curwin->w_cursor.lnum, &curwin->w_cursor.lnum, NULL);
+  hasFolding(wp, wp->w_cursor.lnum, &wp->w_cursor.lnum, NULL);
 }
 
 // Internal functions for "fold_T" {{{1
@@ -1269,7 +1268,7 @@ static linenr_T setManualFoldWin(win_T *wp, linenr_T lnum, bool opening, bool re
     }
     wp->w_fold_manual = true;
     if (done & DONE_ACTION) {
-      changed_window_setting_win(wp);
+      changed_window_setting(wp);
     }
     done |= DONE_FOLD;
   } else if (donep == NULL && wp == curwin) {
@@ -1605,7 +1604,7 @@ static void foldAddMarker(buf_T *buf, pos_T pos, const char *marker, size_t mark
 
   // Allocate a new line: old-line + 'cms'-start + marker + 'cms'-end
   char *line = ml_get_buf(buf, lnum);
-  size_t line_len = strlen(line);
+  size_t line_len = (size_t)ml_get_buf_len(buf, lnum);
   size_t added = 0;
 
   if (u_save(lnum - 1, lnum + 1) != OK) {
@@ -1686,7 +1685,7 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char *marker, size_t marker
     }
     if (u_save(lnum - 1, lnum + 1) == OK) {
       // Make new line: text-before-marker + text-after-marker
-      char *newline = xmalloc(strlen(line) - len + 1);
+      char *newline = xmalloc((size_t)ml_get_buf_len(buf, lnum) - len + 1);
       assert(p >= line);
       memcpy(newline, line, (size_t)(p - line));
       STRCPY(newline + (p - line), p + len);
@@ -2117,7 +2116,7 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
 
   // If some fold changed, need to redraw and position cursor.
   if (fold_changed && wp->w_p_fen) {
-    changed_window_setting_win(wp);
+    changed_window_setting(wp);
   }
 
   // If we updated folds past "bot", need to redraw more lines.  Don't do

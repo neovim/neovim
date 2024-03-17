@@ -1457,10 +1457,20 @@ bool rem_backslash(const char *str)
 /// @param p
 void backslash_halve(char *p)
 {
-  for (; *p; p++) {
-    if (rem_backslash(p)) {
-      STRMOVE(p, p + 1);
+  for (; *p && !rem_backslash(p); p++) {}
+  if (*p != NUL) {
+    char *dst = p;
+    goto start;
+    while (*p != NUL) {
+      if (rem_backslash(p)) {
+start:
+        *dst++ = *(p + 1);
+        p += 2;
+      } else {
+        *dst++ = *p++;
+      }
     }
+    *dst = '\0';
   }
 }
 
@@ -1472,8 +1482,16 @@ void backslash_halve(char *p)
 char *backslash_halve_save(const char *p)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
-  // TODO(philix): simplify and improve backslash_halve_save algorithm
-  char *res = xstrdup(p);
-  backslash_halve(res);
+  char *res = xmalloc(strlen(p) + 1);
+  char *dst = res;
+  while (*p != NUL) {
+    if (rem_backslash(p)) {
+      *dst++ = *(p + 1);
+      p += 2;
+    } else {
+      *dst++ = *p++;
+    }
+  }
+  *dst = '\0';
   return res;
 }

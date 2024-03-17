@@ -170,13 +170,13 @@ local grammar = P {
   ltype = parenOpt(v.ty_union),
 
   ty_union = v.ty_opt * rep(Pf('|') * v.ty_opt),
-  ty = v.ty_fun + ident + v.ty_table + literal,
+  ty = v.ty_fun + ident + v.ty_table + literal + paren(v.ty),
   ty_param = Pf('<') * comma1(v.ltype) * fill * P('>'),
   ty_opt = v.ty * opt(v.ty_param) * opt(P('[]')) * opt(P('?')),
-  ty_index = (Pf('[') * v.ltype * Pf(']')),
+  ty_index = (Pf('[') * (v.ltype + ident + rep1(num)) * fill * P(']')),
   table_key = v.ty_index + lname,
   table_elem = v.table_key * colon * v.ltype,
-  ty_table = Pf('{') * comma1(v.table_elem) * Pf('}'),
+  ty_table = Pf('{') * comma1(v.table_elem) * fill * P('}'),
   fun_param = lname * opt(colon * v.ltype),
   ty_fun = Pf('fun') * paren(comma(lname * opt(colon * v.ltype))) * opt(colon * comma1(v.ltype)),
 }

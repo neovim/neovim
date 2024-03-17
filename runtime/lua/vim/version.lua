@@ -12,9 +12,9 @@
 --- end
 --- ```
 ---
---- *vim.version()* returns the version of the current Nvim process.
+--- [vim.version()]() returns the version of the current Nvim process.
 ---
---- VERSION RANGE SPEC *version-range*
+--- VERSION RANGE SPEC [version-range]()
 ---
 --- A version "range spec" defines a semantic version range which can be tested against a version,
 --- using |vim.version.range()|.
@@ -274,7 +274,7 @@ end
 --- @see # https://github.com/npm/node-semver#ranges
 ---
 --- @param spec string Version range "spec"
---- @return vim.VersionRange
+--- @return vim.VersionRange?
 function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
   if spec == '*' or spec == '' then
     return setmetatable({ from = M.parse('0.0.0') }, { __index = VersionRange })

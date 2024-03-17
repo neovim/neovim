@@ -43,7 +43,7 @@ void api_extmark_free_all_mem(void)
   map_destroy(String, &namespace_ids);
 }
 
-/// Creates a new namespace or gets an existing one. \*namespace\*
+/// Creates a new namespace or gets an existing one. [namespace]()
 ///
 /// Namespaces are used for buffer highlights and virtual text, see
 /// |nvim_buf_add_highlight()| and |nvim_buf_set_extmark()|.
@@ -284,7 +284,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 ///                     their start position is less than `start`
 ///          - type: Filter marks by type: "highlight", "sign", "virt_text" and "virt_lines"
 /// @param[out] err   Error details, if any
-/// @return List of [extmark_id, row, col] tuples in "traversal order".
+/// @return List of `[extmark_id, row, col]` tuples in "traversal order".
 Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object end,
                             Dict(get_extmarks) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(7)
@@ -390,7 +390,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                          of the screen line (just like for diff and
 ///                          cursorline highlight).
 ///               - virt_text : virtual text to link to this mark.
-///                   A list of [text, highlight] tuples, each representing a
+///                   A list of `[text, highlight]` tuples, each representing a
 ///                   text chunk with specified highlight. `highlight` element
 ///                   can either be a single highlight group, or an array of
 ///                   multiple highlight groups that will be stacked
@@ -425,7 +425,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///
 ///               - virt_lines : virtual lines to add next to this mark
 ///                   This should be an array over lines, where each line in
-///                   turn is an array over [text, highlight] tuples. In
+///                   turn is an array over `[text, highlight]` tuples. In
 ///                   general, buffer and window options do not affect the
 ///                   display of the text. In particular 'wrap'
 ///                   and 'linebreak' options do not take effect, so
@@ -682,7 +682,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     goto error;
   });
 
-  size_t len = 0;
+  colnr_T len = 0;
 
   if (HAS_KEY(opts, set_extmark, spell)) {
     hl.flags |= (opts->spell) ? kSHSpellOn : kSHSpellOff;
@@ -712,16 +712,16 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     });
     line = buf->b_ml.ml_line_count;
   } else if (line < buf->b_ml.ml_line_count) {
-    len = opts->ephemeral ? MAXCOL : strlen(ml_get_buf(buf, (linenr_T)line + 1));
+    len = opts->ephemeral ? MAXCOL : ml_get_buf_len(buf, (linenr_T)line + 1);
   }
 
   if (col == -1) {
-    col = (Integer)len;
-  } else if (col > (Integer)len) {
+    col = len;
+  } else if (col > len) {
     VALIDATE_RANGE(!strict, "col", {
       goto error;
     });
-    col = (Integer)len;
+    col = len;
   } else if (col < -1) {
     VALIDATE_RANGE(false, "col", {
       goto error;
@@ -730,7 +730,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
   if (col2 >= 0) {
     if (line2 >= 0 && line2 < buf->b_ml.ml_line_count) {
-      len = opts->ephemeral ? MAXCOL : strlen(ml_get_buf(buf, (linenr_T)line2 + 1));
+      len = opts->ephemeral ? MAXCOL : ml_get_buf_len(buf, (linenr_T)line2 + 1);
     } else if (line2 == buf->b_ml.ml_line_count) {
       // We are trying to add an extmark past final newline
       len = 0;
@@ -738,11 +738,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       // reuse len from before
       line2 = (int)line;
     }
-    if (col2 > (Integer)len) {
+    if (col2 > len) {
       VALIDATE_RANGE(!strict, "end_col", {
         goto error;
       });
-      col2 = (int)len;
+      col2 = len;
     }
   } else if (line2 >= 0) {
     col2 = 0;
@@ -1040,17 +1040,27 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param opts  Table of callbacks:
 ///             - on_start: called first on each screen redraw
+///               ```
 ///                 ["start", tick]
+///               ```
 ///             - on_buf: called for each buffer being redrawn (before
-///                 window callbacks)
+///               window callbacks)
+///               ```
 ///                 ["buf", bufnr, tick]
+///               ```
 ///             - on_win: called when starting to redraw a specific window.
+///               ```
 ///                 ["win", winid, bufnr, topline, botline]
+///               ```
 ///             - on_line: called for each buffer line being redrawn.
 ///                 (The interaction with fold lines is subject to change)
+///               ```
 ///                 ["line", winid, bufnr, row]
+///               ```
 ///             - on_end: called at the end of a redraw cycle
+///               ```
 ///                 ["end", tick]
+///               ```
 void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *opts, Error *err)
   FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
 {
@@ -1236,7 +1246,7 @@ Boolean nvim_win_add_ns(Window window, Integer ns_id, Error *err)
 
   set_put(uint32_t, &win->w_ns_set, (uint32_t)ns_id);
 
-  changed_window_setting_win(win);
+  changed_window_setting(win);
 
   return true;
 }
@@ -1281,7 +1291,7 @@ Boolean nvim_win_remove_ns(Window window, Integer ns_id, Error *err)
 
   set_del(uint32_t, &win->w_ns_set, (uint32_t)ns_id);
 
-  changed_window_setting_win(win);
+  changed_window_setting(win);
 
   return true;
 }

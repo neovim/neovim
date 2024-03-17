@@ -39,10 +39,8 @@ void loop_init(Loop *loop, void *data)
 /// @param ms  0: non-blocking poll.
 ///            > 0: timeout after `ms`.
 ///            < 0: wait forever.
-/// @param once  true: process at most one `Loop.uv` event.
-///              false: process until `ms` timeout (only has effect if `ms` > 0).
 /// @return  true if `ms` > 0 and was reached
-bool loop_uv_run(Loop *loop, int64_t ms, bool once)
+static bool loop_uv_run(Loop *loop, int64_t ms)
 {
   if (loop->recursive++) {
     abort();  // Should not re-enter uv_run
@@ -60,9 +58,7 @@ bool loop_uv_run(Loop *loop, int64_t ms, bool once)
     mode = UV_RUN_NOWAIT;
   }
 
-  do {
-    uv_run(&loop->uv, mode);
-  } while (ms > 0 && !once && !*timeout_expired);
+  uv_run(&loop->uv, mode);
 
   if (ms > 0) {
     uv_timer_stop(&loop->poll_timer);
@@ -83,7 +79,7 @@ bool loop_uv_run(Loop *loop, int64_t ms, bool once)
 /// @return  true if `ms` > 0 and was reached
 bool loop_poll_events(Loop *loop, int64_t ms)
 {
-  bool timeout_expired = loop_uv_run(loop, ms, true);
+  bool timeout_expired = loop_uv_run(loop, ms);
   multiqueue_process_events(loop->fast_events);
   return timeout_expired;
 }

@@ -39,8 +39,9 @@ end
 
 --- Return the parent directory of the given path
 ---
----@param file (string) Path
----@return string|nil Parent directory of {file}
+---@generic T : string|nil
+---@param file T Path
+---@return T Parent directory of {file}
 function M.dirname(file)
   if file == nil then
     return nil
@@ -53,6 +54,7 @@ function M.dirname(file)
   elseif file == '/' or file:match('^/[^/]+$') then
     return '/'
   end
+  ---@type string
   local dir = file:match('[/\\]$') and file:sub(1, #file - 1) or file:match('^([/\\]?.+)[/\\]')
   if iswin and dir:match('^%w:$') then
     return dir .. '/'
@@ -62,8 +64,9 @@ end
 
 --- Return the basename of the given path
 ---
----@param file string Path
----@return string|nil Basename of {file}
+---@generic T : string|nil
+---@param file T Path
+---@return T Basename of {file}
 function M.basename(file)
   if file == nil then
     return nil
@@ -152,25 +155,25 @@ end
 ---
 --- Path to begin searching from. If
 --- omitted, the |current-directory| is used.
---- @field path string
+--- @field path? string
 ---
 --- Search upward through parent directories.
 --- Otherwise, search through child directories (recursively).
 --- (default: `false`)
---- @field upward boolean
+--- @field upward? boolean
 ---
 --- Stop searching when this directory is reached.
 --- The directory itself is not searched.
---- @field stop string
+--- @field stop? string
 ---
 --- Find only items of the given type.
 --- If omitted, all items that match {names} are included.
---- @field type string
+--- @field type? string
 ---
 --- Stop the search after finding this many matches.
 --- Use `math.huge` to place no limit on the number of matches.
 --- (default: `1`)
---- @field limit number
+--- @field limit? number
 
 --- Find files or directories (or other items as specified by `opts.type`) in the given path.
 ---
@@ -229,7 +232,7 @@ function M.find(names, opts)
     names = { names }
   end
 
-  local path = opts.path or vim.uv.cwd()
+  local path = opts.path or assert(vim.uv.cwd())
   local stop = opts.stop
   local limit = opts.limit or 1
 

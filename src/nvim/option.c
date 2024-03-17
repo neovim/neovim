@@ -1937,7 +1937,7 @@ static const char *did_set_arabic(optset_T *args)
       // set rightleft mode
       if (!win->w_p_rl) {
         win->w_p_rl = true;
-        changed_window_setting();
+        changed_window_setting(curwin);
       }
 
       // Enable Arabic shaping (major part of what Arabic requires)
@@ -1968,7 +1968,7 @@ static const char *did_set_arabic(optset_T *args)
       // reset rightleft mode
       if (win->w_p_rl) {
         win->w_p_rl = false;
-        changed_window_setting();
+        changed_window_setting(curwin);
       }
 
       // 'arabicshape' isn't reset, it is a global option and
@@ -2024,9 +2024,6 @@ static const char *did_set_cmdheight(optset_T *args)
 {
   OptInt old_value = args->os_oldval.number;
 
-  if (ui_has(kUIMessages)) {
-    p_ch = 0;
-  }
   if (p_ch > Rows - min_rows() + 1) {
     p_ch = Rows - min_rows() + 1;
   }
@@ -3032,7 +3029,7 @@ void check_redraw_for(buf_T *buf, win_T *win, uint32_t flags)
     if (flags & P_HLONLY) {
       redraw_later(win, UPD_NOT_VALID);
     } else {
-      changed_window_setting_win(win);
+      changed_window_setting(win);
     }
   }
   if (flags & P_RBUF) {
@@ -4629,6 +4626,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(win->w_p_rnu);
   case PV_NUW:
     return &(win->w_p_nuw);
+  case PV_WFB:
+    return &(win->w_p_wfb);
   case PV_WFH:
     return &(win->w_p_wfh);
   case PV_WFW:
@@ -6105,9 +6104,9 @@ char *get_flp_value(buf_T *buf)
 }
 
 /// Get the local or global value of the 'virtualedit' flags.
-unsigned get_ve_flags(void)
+unsigned get_ve_flags(win_T *wp)
 {
-  return (curwin->w_ve_flags ? curwin->w_ve_flags : ve_flags) & ~(VE_NONE | VE_NONEU);
+  return (wp->w_ve_flags ? wp->w_ve_flags : ve_flags) & ~(VE_NONE | VE_NONEU);
 }
 
 /// Get the local or global value of 'showbreak'.

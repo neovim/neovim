@@ -5,8 +5,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
@@ -17,7 +17,7 @@ env:
 
 jobs:
   s390x:
-    if: contains(github.event.pull_request.labels.*.name, 'ci-s390x') || github.event_name == 'workflow_dispatch'
+    if: contains(github.event.pull_request.labels.*.name, 'ci:s390x') || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:

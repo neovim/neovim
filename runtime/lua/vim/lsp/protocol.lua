@@ -1,22 +1,19 @@
 --- @diagnostic disable: duplicate-doc-alias
 
--- TODO(clason) can be simplified after reverse lookup is removed
----@param t table<any, any>
----@return number[]
-local function get_value_set(t)
-  local result = {}
-  for _, v in pairs(t) do
-    if type(v) == 'number' then
-      table.insert(result, v)
-    end
+---@param tbl table<string, string|number>
+local function get_value_set(tbl)
+  local value_set = {}
+  for _, v in pairs(tbl) do
+    table.insert(value_set, v)
   end
-  table.sort(result)
-  return result
+  table.sort(value_set)
+  return value_set
 end
 
 -- Protocol for the Microsoft Language Server Protocol (mslsp)
+local protocol = {}
 
-local protocol = {
+local constants = {
   --- @enum lsp.DiagnosticSeverity
   DiagnosticSeverity = {
     -- Reports an error.
@@ -309,11 +306,13 @@ local protocol = {
   },
 }
 
--- TODO(mariasolos): Remove this reverse lookup.
-for k, v in pairs(protocol) do
-  local tbl = vim.deepcopy(v, true)
-  vim.tbl_add_reverse_lookup(tbl)
-  protocol[k] = tbl
+for k1, v1 in pairs(constants) do
+  local tbl = vim.deepcopy(v1, true)
+  for _, k2 in ipairs(vim.tbl_keys(tbl)) do
+    local v2 = tbl[k2]
+    tbl[v2] = k2
+  end
+  protocol[k1] = tbl
 end
 
 --[=[
@@ -719,14 +718,7 @@ function protocol.make_client_capabilities()
 
         codeActionLiteralSupport = {
           codeActionKind = {
-            valueSet = (function()
-              local res = vim.iter.filter(function(value)
-                -- Filter out the keys that were added by the reverse lookup.
-                return value:match('^%l')
-              end, vim.tbl_values(protocol.CodeActionKind))
-              table.sort(res)
-              return res
-            end)(),
+            valueSet = get_value_set(constants.CodeActionKind),
           },
         },
         isPreferredSupport = true,
@@ -751,10 +743,10 @@ function protocol.make_client_capabilities()
           commitCharactersSupport = false,
           preselectSupport = false,
           deprecatedSupport = false,
-          documentationFormat = { protocol.MarkupKind.Markdown, protocol.MarkupKind.PlainText },
+          documentationFormat = { constants.MarkupKind.Markdown, constants.MarkupKind.PlainText },
         },
         completionItemKind = {
-          valueSet = get_value_set(protocol.CompletionItemKind),
+          valueSet = get_value_set(constants.CompletionItemKind),
         },
         completionList = {
           itemDefaults = {
@@ -783,13 +775,13 @@ function protocol.make_client_capabilities()
       },
       hover = {
         dynamicRegistration = true,
-        contentFormat = { protocol.MarkupKind.Markdown, protocol.MarkupKind.PlainText },
+        contentFormat = { constants.MarkupKind.Markdown, constants.MarkupKind.PlainText },
       },
       signatureHelp = {
         dynamicRegistration = false,
         signatureInformation = {
           activeParameterSupport = true,
-          documentationFormat = { protocol.MarkupKind.Markdown, protocol.MarkupKind.PlainText },
+          documentationFormat = { constants.MarkupKind.Markdown, constants.MarkupKind.PlainText },
           parameterInformation = {
             labelOffsetSupport = true,
           },
@@ -804,7 +796,7 @@ function protocol.make_client_capabilities()
       documentSymbol = {
         dynamicRegistration = false,
         symbolKind = {
-          valueSet = get_value_set(protocol.SymbolKind),
+          valueSet = get_value_set(constants.SymbolKind),
         },
         hierarchicalDocumentSymbolSupport = true,
       },
@@ -815,7 +807,7 @@ function protocol.make_client_capabilities()
       publishDiagnostics = {
         relatedInformation = true,
         tagSupport = {
-          valueSet = get_value_set(protocol.DiagnosticTag),
+          valueSet = get_value_set(constants.DiagnosticTag),
         },
         dataSupport = true,
       },
@@ -827,7 +819,7 @@ function protocol.make_client_capabilities()
       symbol = {
         dynamicRegistration = false,
         symbolKind = {
-          valueSet = get_value_set(protocol.SymbolKind),
+          valueSet = get_value_set(constants.SymbolKind),
         },
       },
       configuration = true,
@@ -867,9 +859,9 @@ end
 
 --- Creates a normalized object describing LSP server capabilities.
 ---@param server_capabilities table Table of capabilities supported by the server
----@return lsp.ServerCapabilities|nil Normalized table of capabilities
+---@return lsp.ServerCapabilities|nil : Normalized table of capabilities
 function protocol.resolve_capabilities(server_capabilities)
-  local TextDocumentSyncKind = protocol.TextDocumentSyncKind
+  local TextDocumentSyncKind = protocol.TextDocumentSyncKind ---@type table<string|number, string|number>
   local textDocumentSync = server_capabilities.textDocumentSync
   if textDocumentSync == nil then
     -- Defaults if omitted.

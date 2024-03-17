@@ -14,6 +14,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/window.h"
+#include "nvim/ex_getln.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/gettext_defs.h"
@@ -515,7 +516,7 @@ bool win_execute_before(win_execute_T *args, win_T *wp, tabpage_T *tp)
   }
 
   if (switch_win_noblock(&args->switchwin, wp, tp, true) == OK) {
-    check_cursor();
+    check_cursor(curwin);
     return true;
   }
   return false;
@@ -539,7 +540,7 @@ void win_execute_after(win_execute_T *args)
 
   // In case the command moved the cursor or changed the Visual area,
   // check it is valid.
-  check_cursor();
+  check_cursor(curwin);
   if (VIsual_active) {
     check_pos(curbuf, &VIsual);
   }
@@ -583,9 +584,13 @@ void f_win_getid(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 void f_win_gotoid(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   int id = (int)tv_get_number(&argvars[0]);
+  if (curwin->handle == id) {
+    // Nothing to do.
+    rettv->vval.v_number = 1;
+    return;
+  }
 
-  if (cmdwin_type != 0) {
-    emsg(_(e_cmdwin));
+  if (text_or_buf_locked()) {
     return;
   }
   FOR_ALL_TAB_WINDOWS(tp, wp) {
@@ -659,55 +664,19 @@ void f_win_screenpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   tv_list_append_number(rettv->vval.v_list, wp == NULL ? 0 : wp->w_wincol + 1);
 }
 
-/// Move the window wp into a new split of targetwin in a given direction
-static void win_move_into_split(win_T *wp, win_T *targetwin, int size, int flags)
-{
-  int height = wp->w_height;
-  win_T *oldwin = curwin;
-
-  if (wp == targetwin || is_aucmd_win(wp)) {
-    return;
-  }
-
-  // Jump to the target window
-  if (curwin != targetwin) {
-    win_goto(targetwin);
-  }
-
-  // Remove the old window and frame from the tree of frames
-  int dir;
-  winframe_remove(wp, &dir, NULL);
-  win_remove(wp, NULL);
-  last_status(false);     // may need to remove last status line
-  win_comp_pos();   // recompute window positions
-
-  // Split a window on the desired side and put the old window there
-  win_split_ins(size, flags, wp, dir);
-
-  // If splitting horizontally, try to preserve height
-  if (size == 0 && !(flags & WSP_VERT)) {
-    win_setheight_win(height, wp);
-    if (p_ea) {
-      win_equal(wp, true, 'v');
-    }
-  }
-
-  if (oldwin != curwin) {
-    win_goto(oldwin);
-  }
-}
-
 /// "win_splitmove()" function
 void f_win_splitmove(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   win_T *wp = find_win_by_nr_or_id(&argvars[0]);
   win_T *targetwin = find_win_by_nr_or_id(&argvars[1]);
+  win_T *oldwin = curwin;
+
+  rettv->vval.v_number = -1;
 
   if (wp == NULL || targetwin == NULL || wp == targetwin
       || !win_valid(wp) || !win_valid(targetwin)
-      || win_float_valid(wp) || win_float_valid(targetwin)) {
+      || targetwin->w_floating) {
     emsg(_(e_invalwindow));
-    rettv->vval.v_number = -1;
     return;
   }
 
@@ -732,7 +701,27 @@ void f_win_splitmove(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     size = (int)tv_dict_get_number(d, "size");
   }
 
-  win_move_into_split(wp, targetwin, size, flags);
+  // Check if we're allowed to continue before we bother switching windows.
+  if (is_aucmd_win(wp) || text_or_buf_locked() || check_split_disallowed(wp) == FAIL) {
+    return;
+  }
+
+  if (curwin != targetwin) {
+    win_goto(targetwin);
+  }
+
+  // Autocommands may have sent us elsewhere or closed "wp" or "oldwin".
+  if (curwin == targetwin && win_valid(wp)) {
+    if (win_splitmove(wp, size, flags) == OK) {
+      rettv->vval.v_number = 0;
+    }
+  } else {
+    emsg(_(e_auabort));
+  }
+
+  if (oldwin != curwin && win_valid(oldwin)) {
+    win_goto(oldwin);
+  }
 }
 
 /// "win_gettype(nr)" function
@@ -785,7 +774,7 @@ void f_winbufnr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "wincol()" function
 void f_wincol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  validate_cursor();
+  validate_cursor(curwin);
   rettv->vval.v_number = curwin->w_wcol + 1;
 }
 
@@ -822,7 +811,7 @@ void f_winlayout(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "winline()" function
 void f_winline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  validate_cursor();
+  validate_cursor(curwin);
   rettv->vval.v_number = curwin->w_wrow + 1;
 }
 
@@ -894,10 +883,10 @@ void f_winrestview(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     curwin->w_skipcol = (colnr_T)tv_get_number(&di->di_tv);
   }
 
-  check_cursor();
+  check_cursor(curwin);
   win_new_height(curwin, curwin->w_height);
   win_new_width(curwin, curwin->w_width);
-  changed_window_setting();
+  changed_window_setting(curwin);
 
   if (curwin->w_topline <= 0) {
     curwin->w_topline = 1;
@@ -967,11 +956,8 @@ int switch_win_noblock(switchwin_T *switchwin, win_T *win, tabpage_T *tp, bool n
   if (tp != NULL) {
     switchwin->sw_curtab = curtab;
     if (no_display) {
-      curtab->tp_firstwin = firstwin;
-      curtab->tp_lastwin = lastwin;
-      curtab = tp;
-      firstwin = curtab->tp_firstwin;
-      lastwin = curtab->tp_lastwin;
+      unuse_tabpage(curtab);
+      use_tabpage(tp);
     } else {
       goto_tabpage_tp(tp, false, false);
     }
@@ -998,11 +984,12 @@ void restore_win_noblock(switchwin_T *switchwin, bool no_display)
 {
   if (switchwin->sw_curtab != NULL && valid_tabpage(switchwin->sw_curtab)) {
     if (no_display) {
-      curtab->tp_firstwin = firstwin;
-      curtab->tp_lastwin = lastwin;
-      curtab = switchwin->sw_curtab;
-      firstwin = curtab->tp_firstwin;
-      lastwin = curtab->tp_lastwin;
+      win_T *const old_tp_curwin = curtab->tp_curwin;
+
+      unuse_tabpage(curtab);
+      // Don't change the curwin of the tabpage we temporarily visited.
+      curtab->tp_curwin = old_tp_curwin;
+      use_tabpage(switchwin->sw_curtab);
     } else {
       goto_tabpage_tp(switchwin->sw_curtab, false, false);
     }

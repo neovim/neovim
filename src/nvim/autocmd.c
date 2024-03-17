@@ -1333,7 +1333,7 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
 
     block_autocmds();  // We don't want BufEnter/WinEnter autocommands.
     if (need_append) {
-      win_append(lastwin, auc_win);
+      win_append(lastwin, auc_win, NULL);
       pmap_put(int)(&window_handles, auc_win->handle, auc_win);
       win_config_float(auc_win, auc_win->w_config);
     }
@@ -1432,7 +1432,7 @@ win_found:
 
     // the buffer contents may have changed
     VIsual_active = aco->save_VIsual_active;
-    check_cursor();
+    check_cursor(curwin);
     if (curwin->w_topline > curbuf->b_ml.ml_line_count) {
       curwin->w_topline = curbuf->b_ml.ml_line_count;
       curwin->w_topfill = 0;
@@ -1464,12 +1464,12 @@ win_found:
       // In case the autocommand moves the cursor to a position that does not
       // exist in curbuf
       VIsual_active = aco->save_VIsual_active;
-      check_cursor();
+      check_cursor(curwin);
     }
   }
 
   VIsual_active = aco->save_VIsual_active;
-  check_cursor();  // just in case lines got deleted
+  check_cursor(curwin);  // just in case lines got deleted
   if (VIsual_active) {
     check_pos(curbuf, &VIsual);
   }

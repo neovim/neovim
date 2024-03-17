@@ -1,7 +1,7 @@
 --- @brief
 ---
---- \*vim.iter()\* is an interface for |iterable|s: it wraps a table or function argument into an
---- \*Iter\* object with methods (such as |Iter:filter()| and |Iter:map()|) that transform the
+--- [vim.iter()]() is an interface for [iterable]s: it wraps a table or function argument into an
+--- [Iter]() object with methods (such as [Iter:filter()] and [Iter:map()]) that transform the
 --- underlying source data. These methods can be chained to create iterator "pipelines": the output
 --- of each pipeline stage is input to the next stage. The first stage depends on the type passed to
 --- `vim.iter()`:
@@ -63,6 +63,9 @@
 ---
 --- In addition to the |vim.iter()| function, the |vim.iter| module provides
 --- convenience functions like |vim.iter.filter()| and |vim.iter.totable()|.
+
+--- LuaLS is bad at generics which this module mostly deals with
+--- @diagnostic disable:no-unknown
 
 ---@nodoc
 ---@class IterMod
@@ -189,7 +192,7 @@ end
 ---                       in the pipeline and returns false or nil if the
 ---                       current iterator element should be removed.
 ---@return Iter
-function Iter.filter(self, f)
+function Iter:filter(f)
   return self:map(function(...)
     if f(...) then
       return ...
@@ -198,7 +201,7 @@ function Iter.filter(self, f)
 end
 
 ---@private
-function ListIter.filter(self, f)
+function ListIter:filter(f)
   local inc = self._head < self._tail and 1 or -1
   local n = self._head
   for i = self._head, self._tail - inc, inc do
@@ -231,12 +234,13 @@ end
 ---@param depth? number Depth to which |list-iterator| should be flattened
 ---                        (defaults to 1)
 ---@return Iter
-function Iter.flatten(self, depth) -- luacheck: no unused args
+---@diagnostic disable-next-line:unused-local
+function Iter:flatten(depth) -- luacheck: no unused args
   error('flatten() requires a list-like table')
 end
 
 ---@private
-function ListIter.flatten(self, depth)
+function ListIter:flatten(depth)
   depth = depth or 1
   local inc = self._head < self._tail and 1 or -1
   local target = {}
@@ -282,7 +286,7 @@ end
 ---                      in the next pipeline stage. Nil return values
 ---                      are filtered from the output.
 ---@return Iter
-function Iter.map(self, f)
+function Iter:map(f)
   -- Implementation note: the reader may be forgiven for observing that this
   -- function appears excessively convoluted. The problem to solve is that each
   -- stage of the iterator pipeline can return any number of values, and the
@@ -326,7 +330,7 @@ function Iter.map(self, f)
 end
 
 ---@private
-function ListIter.map(self, f)
+function ListIter:map(f)
   local inc = self._head < self._tail and 1 or -1
   local n = self._head
   for i = self._head, self._tail - inc, inc do
@@ -347,7 +351,7 @@ end
 ---@param f fun(...) Function to execute for each item in the pipeline.
 ---                  Takes all of the values returned by the previous stage
 ---                  in the pipeline as arguments.
-function Iter.each(self, f)
+function Iter:each(f)
   local function fn(...)
     if select(1, ...) ~= nil then
       f(...)
@@ -359,7 +363,7 @@ function Iter.each(self, f)
 end
 
 ---@private
-function ListIter.each(self, f)
+function ListIter:each(f)
   local inc = self._head < self._tail and 1 or -1
   for i = self._head, self._tail - inc, inc do
     f(unpack(self._table[i]))
@@ -392,7 +396,7 @@ end
 ---
 ---
 ---@return table
-function Iter.totable(self)
+function Iter:totable()
   local t = {}
 
   while true do
@@ -407,7 +411,7 @@ function Iter.totable(self)
 end
 
 ---@private
-function ListIter.totable(self)
+function ListIter:totable()
   if self.next ~= ListIter.next or self._head >= self._tail then
     return Iter.totable(self)
   end
@@ -445,7 +449,7 @@ end
 ---
 --- @param delim string Delimiter
 --- @return string
-function Iter.join(self, delim)
+function Iter:join(delim)
   return table.concat(self:totable(), delim)
 end
 
@@ -470,7 +474,7 @@ end
 ---@param init A Initial value of the accumulator.
 ---@param f fun(acc:A, ...):A Accumulation function.
 ---@return A
-function Iter.fold(self, init, f)
+function Iter:fold(init, f)
   local acc = init
 
   --- Use a closure to handle var args returned from iterator
@@ -487,7 +491,7 @@ function Iter.fold(self, init, f)
 end
 
 ---@private
-function ListIter.fold(self, init, f)
+function ListIter:fold(init, f)
   local acc = init
   local inc = self._head < self._tail and 1 or -1
   for i = self._head, self._tail - inc, inc do
@@ -513,14 +517,13 @@ end
 --- ```
 ---
 ---@return any
----@diagnostic disable-next-line: unused-local
-function Iter.next(self) -- luacheck: no unused args
+function Iter:next()
   -- This function is provided by the source iterator in Iter.new. This definition exists only for
   -- the docstring
 end
 
 ---@private
-function ListIter.next(self)
+function ListIter:next()
   if self._head ~= self._tail then
     local v = self._table[self._head]
     local inc = self._head < self._tail and 1 or -1
@@ -542,12 +545,12 @@ end
 --- ```
 ---
 ---@return Iter
-function Iter.rev(self) -- luacheck: no unused args
+function Iter:rev()
   error('rev() requires a list-like table')
 end
 
 ---@private
-function ListIter.rev(self)
+function ListIter:rev()
   local inc = self._head < self._tail and 1 or -1
   self._head, self._tail = self._tail - inc, self._head - inc
   return self
@@ -570,13 +573,12 @@ end
 --- ```
 ---
 ---@return any
----@diagnostic disable-next-line: unused-local
-function Iter.peek(self) -- luacheck: no unused args
+function Iter:peek()
   error('peek() requires a list-like table')
 end
 
 ---@private
-function ListIter.peek(self)
+function ListIter:peek()
   if self._head ~= self._tail then
     return self._table[self._head]
   end
@@ -605,7 +607,7 @@ end
 --- ```
 ---@param f any
 ---@return any
-function Iter.find(self, f)
+function Iter:find(f)
   if type(f) ~= 'function' then
     local val = f
     f = function(v)
@@ -652,12 +654,12 @@ end
 ---@param f any
 ---@return any
 ---@diagnostic disable-next-line: unused-local
-function Iter.rfind(self, f) -- luacheck: no unused args
+function Iter:rfind(f) -- luacheck: no unused args
   error('rfind() requires a list-like table')
 end
 
 ---@private
-function ListIter.rfind(self, f)
+function ListIter:rfind(f)
   if type(f) ~= 'function' then
     local val = f
     f = function(v)
@@ -692,7 +694,7 @@ end
 ---
 ---@param n integer
 ---@return Iter
-function Iter.take(self, n)
+function Iter:take(n)
   local next = self.next
   local i = 0
   self.next = function()
@@ -705,7 +707,7 @@ function Iter.take(self, n)
 end
 
 ---@private
-function ListIter.take(self, n)
+function ListIter:take(n)
   local inc = self._head < self._tail and 1 or -1
   self._tail = math.min(self._tail, self._head + n * inc)
   return self
@@ -724,13 +726,12 @@ end
 --- ```
 ---
 ---@return any
----@diagnostic disable-next-line: unused-local
-function Iter.nextback(self) -- luacheck: no unused args
+function Iter:nextback()
   error('nextback() requires a list-like table')
 end
 
 --- @nodoc
-function ListIter.nextback(self)
+function ListIter:nextback()
   if self._head ~= self._tail then
     local inc = self._head < self._tail and 1 or -1
     self._tail = self._tail - inc
@@ -755,13 +756,12 @@ end
 --- ```
 ---
 ---@return any
----@diagnostic disable-next-line: unused-local
-function Iter.peekback(self) -- luacheck: no unused args
+function Iter:peekback()
   error('peekback() requires a list-like table')
 end
 
 ---@nodoc
-function ListIter.peekback(self)
+function ListIter:peekback()
   if self._head ~= self._tail then
     local inc = self._head < self._tail and 1 or -1
     return self._table[self._tail - inc]
@@ -782,7 +782,7 @@ end
 ---
 ---@param n number Number of values to skip.
 ---@return Iter
-function Iter.skip(self, n)
+function Iter:skip(n)
   for _ = 1, n do
     local _ = self:next()
   end
@@ -790,7 +790,7 @@ function Iter.skip(self, n)
 end
 
 ---@private
-function ListIter.skip(self, n)
+function ListIter:skip(n)
   local inc = self._head < self._tail and n or -n
   self._head = self._head + inc
   if (inc > 0 and self._head > self._tail) or (inc < 0 and self._head < self._tail) then
@@ -814,12 +814,12 @@ end
 ---@param n number Number of values to skip.
 ---@return Iter
 ---@diagnostic disable-next-line: unused-local
-function Iter.skipback(self, n) -- luacheck: no unused args
+function Iter:skipback(n) -- luacheck: no unused args
   error('skipback() requires a list-like table')
 end
 
 ---@private
-function ListIter.skipback(self, n)
+function ListIter:skipback(n)
   local inc = self._head < self._tail and n or -n
   self._tail = self._tail - inc
   if (inc > 0 and self._head > self._tail) or (inc < 0 and self._head < self._tail) then
@@ -844,7 +844,7 @@ end
 ---
 ---@param n number The index of the value to return.
 ---@return any
-function Iter.nth(self, n)
+function Iter:nth(n)
   if n > 0 then
     return self:skip(n - 1):next()
   end
@@ -866,7 +866,7 @@ end
 ---
 ---@param n number The index of the value to return.
 ---@return any
-function Iter.nthback(self, n)
+function Iter:nthback(n)
   if n > 0 then
     return self:skipback(n - 1):nextback()
   end
@@ -880,12 +880,12 @@ end
 ---@param last number
 ---@return Iter
 ---@diagnostic disable-next-line: unused-local
-function Iter.slice(self, first, last) -- luacheck: no unused args
+function Iter:slice(first, last) -- luacheck: no unused args
   error('slice() requires a list-like table')
 end
 
 ---@private
-function ListIter.slice(self, first, last)
+function ListIter:slice(first, last)
   return self:skip(math.max(0, first - 1)):skipback(math.max(0, self._tail - last - 1))
 end
 
@@ -894,7 +894,7 @@ end
 ---@param pred fun(...):boolean Predicate function. Takes all values returned from the previous
 ---                          stage in the pipeline as arguments and returns true if the
 ---                          predicate matches.
-function Iter.any(self, pred)
+function Iter:any(pred)
   local any = false
 
   --- Use a closure to handle var args returned from iterator
@@ -918,7 +918,7 @@ end
 ---@param pred fun(...):boolean Predicate function. Takes all values returned from the previous
 ---                          stage in the pipeline as arguments and returns true if the
 ---                          predicate matches.
-function Iter.all(self, pred)
+function Iter:all(pred)
   local all = true
 
   local function fn(...)
@@ -953,7 +953,7 @@ end
 --- ```
 ---
 ---@return any
-function Iter.last(self)
+function Iter:last()
   local last = self:next()
   local cur = self:next()
   while cur do
@@ -964,7 +964,7 @@ function Iter.last(self)
 end
 
 ---@private
-function ListIter.last(self)
+function ListIter:last()
   local inc = self._head < self._tail and 1 or -1
   local v = self._table[self._tail - inc]
   self._head = self._tail
@@ -1000,7 +1000,7 @@ end
 --- ```
 ---
 ---@return Iter
-function Iter.enumerate(self)
+function Iter:enumerate()
   local i = 0
   return self:map(function(...)
     i = i + 1
@@ -1009,7 +1009,7 @@ function Iter.enumerate(self)
 end
 
 ---@private
-function ListIter.enumerate(self)
+function ListIter:enumerate()
   local inc = self._head < self._tail and 1 or -1
   for i = self._head, self._tail - inc, inc do
     local v = self._table[i]
@@ -1140,9 +1140,8 @@ function M.map(f, src, ...)
   return Iter.new(src, ...):map(f):totable()
 end
 
----@type IterMod
 return setmetatable(M, {
   __call = function(_, ...)
     return Iter.new(...)
   end,
-})
+}) --[[@as IterMod]]

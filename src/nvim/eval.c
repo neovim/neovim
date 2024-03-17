@@ -6699,7 +6699,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     if (charcol) {
       len = mb_charlen(ml_get(pos.lnum));
     } else {
-      len = (int)strlen(ml_get(pos.lnum));
+      len = ml_get_len(pos.lnum);
     }
 
     // We accept "$" for the column number: last column.
@@ -6789,7 +6789,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
       if (charcol) {
         pos.col = (colnr_T)mb_charlen(get_cursor_line_ptr());
       } else {
-        pos.col = (colnr_T)strlen(get_cursor_line_ptr());
+        pos.col = get_cursor_line_len();
       }
     }
     return &pos;

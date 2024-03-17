@@ -113,64 +113,6 @@ func Test_window_quit()
   bw Xa Xb
 endfunc
 
-func Test_window_curwin_not_prevwin()
-  botright split
-  call assert_equal(2, winnr())
-  call assert_equal(1, winnr('#'))
-  quit
-  call assert_equal(1, winnr())
-  call assert_equal(0, winnr('#'))
-
-  botright split
-  botright split
-  call assert_equal(3, winnr())
-  call assert_equal(2, winnr('#'))
-  1quit
-  call assert_equal(2, winnr())
-  call assert_equal(1, winnr('#'))
-
-  botright split
-  call assert_equal(1, tabpagenr())
-  call assert_equal(3, winnr())
-  call assert_equal(2, winnr('#'))
-  wincmd T
-  call assert_equal(2, tabpagenr())
-  call assert_equal(1, winnr())
-  call assert_equal(0, winnr('#'))
-  tabfirst
-  call assert_equal(1, tabpagenr())
-  call assert_equal(2, winnr())
-  call assert_equal(0, winnr('#'))
-
-  tabonly
-  botright split
-  wincmd t
-  wincmd p
-  call assert_equal(3, winnr())
-  call assert_equal(1, winnr('#'))
-  quit
-  call assert_equal(2, winnr())
-  call assert_equal(1, winnr('#'))
-
-  botright split
-  wincmd t
-  wincmd p
-  call assert_equal(1, tabpagenr())
-  call assert_equal(3, winnr())
-  call assert_equal(1, winnr('#'))
-  wincmd T
-  call assert_equal(2, tabpagenr())
-  call assert_equal(1, winnr())
-  call assert_equal(0, winnr('#'))
-  tabfirst
-  call assert_equal(1, tabpagenr())
-  call assert_equal(2, winnr())
-  call assert_equal(1, winnr('#'))
-
-  tabonly
-  only
-endfunc
-
 func Test_window_horizontal_split()
   call assert_equal(1, winnr('$'))
   3wincmd s
@@ -258,6 +200,20 @@ func Test_window_split_edit_bufnr()
   %bw!
 endfunc
 
+func s:win_layout_info(tp = tabpagenr()) abort
+  return #{
+        \ layout: winlayout(a:tp),
+        \ pos_sizes: range(1, tabpagewinnr(a:tp, '$'))
+        \            ->map({_, nr -> win_getid(nr, a:tp)->getwininfo()[0]})
+        \            ->map({_, wininfo -> #{id: wininfo.winid,
+        \                                   row: wininfo.winrow,
+        \                                   col: wininfo.wincol,
+        \                                   width: wininfo.width,
+        \                                   height: wininfo.height}})
+        \            ->sort({a, b -> a.id - b.id})
+        \ }
+endfunc
+
 func Test_window_split_no_room()
   " N horizontal windows need >= 2*N + 1 lines:
   " - 1 line + 1 status line in each window
@@ -272,6 +228,14 @@ func Test_window_split_no_room()
   for s in range(1, hor_split_count) | split | endfor
   call assert_fails('split', 'E36:')
 
+  botright vsplit
+  wincmd |
+  let info = s:win_layout_info()
+  call assert_fails('wincmd J', 'E36:')
+  call assert_fails('wincmd K', 'E36:')
+  call assert_equal(info, s:win_layout_info())
+  only
+
   " N vertical windows need >= 2*(N - 1) + 1 columns:
   " - 1 column + 1 separator for each window (except last window)
   " - 1 column for the last window which does not have separator
@@ -284,7 +248,37 @@ func Test_window_split_no_room()
   for s in range(1, ver_split_count) | vsplit | endfor
   call assert_fails('vsplit', 'E36:')
 
+  split
+  wincmd |
+  let info = s:win_layout_info()
+  call assert_fails('wincmd H', 'E36:')
+  call assert_fails('wincmd L', 'E36:')
+  call assert_equal(info, s:win_layout_info())
+
+  " Check that the last statusline isn't lost.
+  " Set its window's width to 2 for the test.
+  wincmd j
+  set laststatus=0 winminwidth=0
+  vertical resize 2
+  " Update expected positions/sizes after the resize.  Layout is unchanged.
+  let info.pos_sizes = s:win_layout_info().pos_sizes
+  set winminwidth&
+  call setwinvar(winnr('k'), '&statusline', '@#')
+  let last_stl_row = win_screenpos(0)[0] - 1
+  redraw
+  call assert_equal('@#|', GetScreenStr(last_stl_row))
+  call assert_equal('~ |', GetScreenStr(&lines - &cmdheight))
+
+  call assert_fails('wincmd H', 'E36:')
+  call assert_fails('wincmd L', 'E36:')
+  call assert_equal(info, s:win_layout_info())
+  call setwinvar(winnr('k'), '&statusline', '=-')
+  redraw
+  call assert_equal('=-|', GetScreenStr(last_stl_row))
+  call assert_equal('~ |', GetScreenStr(&lines - &cmdheight))
+
   %bw!
+  set laststatus&
 endfunc
 
 func Test_window_exchange()
@@ -1024,6 +1018,19 @@ func Test_win_splitmove()
   leftabove split b
   leftabove vsplit c
   leftabove split d
+
+  " win_splitmove doesn't actually create or close any windows, so expect an
+  " unchanged winid and no WinNew/WinClosed events, like :wincmd H/J/K/L.
+  let s:triggered = []
+  augroup WinSplitMove
+    au!
+    " Nvim: WinNewPre not ported yet. Also needs full port of v9.1.0117 to pass.
+    " au WinNewPre * let s:triggered += ['WinNewPre']
+    au WinNew * let s:triggered += ['WinNew', win_getid()]
+    au WinClosed * let s:triggered += ['WinClosed', str2nr(expand('<afile>'))]
+  augroup END
+  let winid = win_getid()
+
   call assert_equal(0, win_splitmove(winnr(), winnr('l')))
   call assert_equal(bufname(winbufnr(1)), 'c')
   call assert_equal(bufname(winbufnr(2)), 'd')
@@ -1046,6 +1053,11 @@ func Test_win_splitmove()
   call assert_equal(bufname(winbufnr(3)), 'a')
   call assert_equal(bufname(winbufnr(4)), 'd')
   call assert_fails('call win_splitmove(winnr(), winnr("k"), v:_null_dict)', 'E1297:')
+  call assert_equal([], s:triggered)
+  call assert_equal(winid, win_getid())
+
+  unlet! s:triggered
+  au! WinSplitMove
   only | bd
 
   call assert_fails('call win_splitmove(winnr(), 123)', 'E957:')
@@ -1055,18 +1067,54 @@ func Test_win_splitmove()
   tabnew
   call assert_fails('call win_splitmove(1, win_getid(1, 1))', 'E957:')
   tabclose
-endfunc
 
-func Test_floatwin_splitmove()
-  vsplit
-  let win2 = win_getid()
-  let popup_winid = nvim_open_win(0, 0, {'relative': 'win',
-        \ 'row': 3, 'col': 3, 'width': 12, 'height': 3})
-  call assert_fails('call win_splitmove(popup_winid, win2)', 'E957:')
-  call assert_fails('call win_splitmove(win2, popup_winid)', 'E957:')
+  split
+  augroup WinSplitMove
+    au!
+    au WinEnter * ++once call win_gotoid(win_getid(winnr('#')))
+  augroup END
+  call assert_fails('call win_splitmove(winnr(), winnr("#"))', 'E855:')
 
-  call nvim_win_close(popup_winid, 1)
-  bwipe
+  augroup WinSplitMove
+    au!
+    au WinLeave * ++once quit
+  augroup END
+  call assert_fails('call win_splitmove(winnr(), winnr("#"))', 'E855:')
+
+  split
+  split
+  augroup WinSplitMove
+    au!
+    au WinEnter * ++once let s:triggered = v:true
+          \| call assert_fails('call win_splitmove(winnr(), winnr("$"))', 'E242:')
+          \| call assert_fails('call win_splitmove(winnr("$"), winnr())', 'E242:')
+  augroup END
+  quit
+  call assert_equal(v:true, s:triggered)
+  unlet! s:triggered
+
+  new
+  augroup WinSplitMove
+    au!
+    au BufHidden * ++once let s:triggered = v:true
+          \| call assert_fails('call win_splitmove(winnr(), winnr("#"))', 'E1159:')
+  augroup END
+  hide
+  call assert_equal(v:true, s:triggered)
+  unlet! s:triggered
+
+  split
+  let close_win = winnr('#')
+  augroup WinSplitMove
+    au!
+    au WinEnter * ++once quit!
+  augroup END
+  call win_splitmove(close_win, winnr())
+  call assert_equal(0, win_id2win(close_win))
+
+  au! WinSplitMove
+  augroup! WinSplitMove
+  %bw!
 endfunc
 
 " Test for the :only command
@@ -2006,24 +2054,160 @@ func Test_new_help_window_on_error()
   call assert_equal(expand("<cword>"), "'mod'")
 endfunc
 
-func Test_smoothscroll_in_zero_width_window()
-  let save_lines = &lines
-  let save_columns = &columns
+func Test_splitmove_flatten_frame()
+  split
+  vsplit
 
-  winsize 0 24
-  set cpo+=n
-  exe "noremap 0 \<C-W>n\<C-W>L"
-  norm 000000
-  set number smoothscroll
-  exe "norm \<C-Y>"
+  wincmd L
+  let layout = winlayout()
+  wincmd K
+  wincmd L
+  call assert_equal(winlayout(), layout)
 
   only!
-  let &lines = save_lines
-  let &columns = save_columns
-  set cpo-=n
-  unmap 0
-  set nonumber nosmoothscroll
 endfunc
 
+func Test_autocmd_window_force_room()
+  " Open as many windows as possible
+  while v:true
+    try
+      split
+    catch /E36:/
+      break
+    endtry
+  endwhile
+  while v:true
+    try
+      vsplit
+    catch /E36:/
+      break
+    endtry
+  endwhile
+
+  wincmd j
+  vsplit
+  call assert_fails('wincmd H', 'E36:')
+  call assert_fails('wincmd J', 'E36:')
+  call assert_fails('wincmd K', 'E36:')
+  call assert_fails('wincmd L', 'E36:')
+
+  edit unload me
+  enew
+  bunload! unload\ me
+  augroup AucmdWinForceRoom
+    au!
+    au BufEnter * ++once let s:triggered = v:true
+                      \| call assert_equal('autocmd', win_gettype())
+  augroup END
+  let info = s:win_layout_info()
+  " bufload opening the autocommand window shouldn't give E36.
+  call bufload('unload me')
+  call assert_equal(v:true, s:triggered)
+  call assert_equal(info, s:win_layout_info())
+
+  unlet! s:triggered
+  au! AucmdWinForceRoom
+  augroup! AucmdWinForceRoom
+  %bw!
+endfunc
+
+func Test_win_gotoid_splitmove_textlock_cmdwin()
+  call setline(1, 'foo')
+  new
+  let curwin = win_getid()
+  call setline(1, 'bar')
+
+  set debug+=throw indentexpr=win_gotoid(win_getid(winnr('#')))
+  call assert_fails('normal! ==', 'E565:')
+  call assert_equal(curwin, win_getid())
+  " No error if attempting to switch to curwin; nothing happens.
+  set indentexpr=assert_equal(1,win_gotoid(win_getid()))
+  normal! ==
+  call assert_equal(curwin, win_getid())
+
+  set indentexpr=win_splitmove(winnr('#'),winnr())
+  call assert_fails('normal! ==', 'E565:')
+  call assert_equal(curwin, win_getid())
+
+  %bw!
+  set debug-=throw indentexpr&
+
+  call feedkeys('q:'
+           \ .. ":call assert_fails('call win_splitmove(winnr(''#''), winnr())', 'E11:')\<CR>"
+           \ .. ":call assert_equal('command', win_gettype())\<CR>"
+           \ .. ":call assert_equal('', win_gettype(winnr('#')))\<CR>", 'ntx')
+
+  call feedkeys('q:'
+           \ .. ":call assert_fails('call win_gotoid(win_getid(winnr(''#'')))', 'E11:')\<CR>"
+           "\ No error if attempting to switch to curwin; nothing happens.
+           \ .. ":call assert_equal(1, win_gotoid(win_getid()))\<CR>"
+           \ .. ":call assert_equal('command', win_gettype())\<CR>"
+           \ .. ":call assert_equal('', win_gettype(winnr('#')))\<CR>", 'ntx')
+endfunc
+
+func Test_winfixsize_positions()
+  " Check positions are correct when closing a window in a non-current tabpage
+  " causes non-adjacent window to fill the space due to 'winfix{width,height}'.
+  tabnew
+  vsplit
+  wincmd |
+  split
+  set winfixheight
+  split foo
+  tabfirst
+
+  bwipe! foo
+  " Save actual values before entering the tabpage.
+  let info = s:win_layout_info(2)
+  tabnext
+  " Compare it with the expected value (after win_comp_pos) from entering.
+  call assert_equal(s:win_layout_info(), info)
+
+  $tabnew
+  split
+  split
+  wincmd k
+  belowright vsplit
+  set winfixwidth
+  belowright vsplit foo
+  tabprevious
+
+  bwipe! foo
+  " Save actual values before entering the tabpage.
+  let info = s:win_layout_info(3)
+  tabnext
+  " Compare it with the expected value (after win_comp_pos) from entering.
+  call assert_equal(s:win_layout_info(), info)
+
+  " Check positions unchanged when failing to move a window, if 'winfix{width,
+  " height}' would otherwise cause a non-adjacent window to fill the space.
+  %bwipe
+  call assert_fails('execute "split|"->repeat(&lines)', 'E36:')
+  wincmd p
+  vsplit
+  set winfixwidth
+  vsplit
+  set winfixwidth
+  vsplit
+  vsplit
+  set winfixwidth
+  wincmd p
+
+  let info = s:win_layout_info()
+  call assert_fails('wincmd J', 'E36:')
+  call assert_equal(info, s:win_layout_info())
+
+  only
+  call assert_fails('execute "vsplit|"->repeat(&columns)', 'E36:')
+  belowright split
+  set winfixheight
+  belowright split
+
+  let info = s:win_layout_info()
+  call assert_fails('wincmd H', 'E36:')
+  call assert_equal(info, s:win_layout_info())
+
+  %bwipe
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

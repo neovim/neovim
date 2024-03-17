@@ -290,6 +290,10 @@ void set_buflocal_tfu_callback(buf_T *buf)
 /// @param verbose  print "tag not found" message
 void do_tag(char *tag, int type, int count, int forceit, bool verbose)
 {
+  if (postponed_split == 0 && !check_can_set_curbuf_forceit(forceit)) {
+    return;
+  }
+
   taggy_T *tagstack = curwin->w_tagstack;
   int tagstackidx = curwin->w_tagstackidx;
   int tagstacklen = curwin->w_tagstacklen;
@@ -445,7 +449,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
         }
         curwin->w_cursor.col = saved_fmark.mark.col;
         curwin->w_set_curswant = true;
-        check_cursor();
+        check_cursor(curwin);
         if ((fdo_flags & FDO_TAG) && old_KeyTyped) {
           foldOpenCursor();
         }
@@ -2784,6 +2788,10 @@ static char *tag_full_fname(tagptrs_T *tagp)
 /// @return  OK for success, NOTAGFILE when file not found, FAIL otherwise.
 static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
 {
+  if (postponed_split == 0 && !check_can_set_curbuf_forceit(forceit)) {
+    return FAIL;
+  }
+
   char *pbuf_end;
   char *tofree_fname = NULL;
   tagptrs_T tagp;
@@ -2994,7 +3002,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
 
       // A search command may have positioned the cursor beyond the end
       // of the line.  May need to correct that here.
-      check_cursor();
+      check_cursor(curwin);
     } else {
       const int save_secure = secure;
 
@@ -3039,7 +3047,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
     if (l_g_do_tagpreview != 0
         && curwin != curwin_save && win_valid(curwin_save)) {
       // Return cursor to where we were
-      validate_cursor();
+      validate_cursor(curwin);
       redraw_later(curwin, UPD_VALID);
       win_enter(curwin_save, true);
     }

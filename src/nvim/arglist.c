@@ -623,6 +623,8 @@ void ex_argument(exarg_T *eap)
 /// Edit file "argn" of the argument lists.
 void do_argfile(exarg_T *eap, int argn)
 {
+  bool is_split_cmd = *eap->cmd == 's';
+
   int old_arg_idx = curwin->w_arg_idx;
 
   if (argn < 0 || argn >= ARGCOUNT) {
@@ -637,10 +639,16 @@ void do_argfile(exarg_T *eap, int argn)
     return;
   }
 
+  if (!is_split_cmd
+      && (&ARGLIST[argn])->ae_fnum != curbuf->b_fnum
+      && !check_can_set_curbuf_forceit(eap->forceit)) {
+    return;
+  }
+
   setpcmark();
 
   // split window or create new tab page first
-  if (*eap->cmd == 's' || cmdmod.cmod_tab != 0) {
+  if (is_split_cmd || cmdmod.cmod_tab != 0) {
     if (win_split(0, 0) == FAIL) {
       return;
     }

@@ -3,6 +3,7 @@
 source view_util.vim
 source check.vim
 source vim9.vim
+source term_util.vim
 
 func NestedEval()
   let nested = execute('echo "nested\nlines"')
@@ -177,6 +178,27 @@ func Test_win_execute_visual_redraw()
   bwipe!
 endfunc
 
+func Test_win_execute_on_startup()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      vim9script
+      [repeat('x', &columns)]->writefile('Xfile1')
+      silent tabedit Xfile2
+      var id = win_getid()
+      silent tabedit Xfile3
+      autocmd VimEnter * win_execute(id, 'close')
+  END
+  call writefile(lines, 'XwinExecute')
+  let buf = RunVimInTerminal('-p Xfile1 -Nu XwinExecute', {})
+
+  " this was crashing on exit with EXITFREE defined
+  call StopVimInTerminal(buf)
+
+  call delete('XwinExecute')
+  call delete('Xfile1')
+endfunc
+
 func Test_execute_cmd_with_null()
   call assert_equal("", execute(v:_null_string))
   call assert_equal("", execute(v:_null_list))
@@ -188,6 +210,30 @@ func Test_execute_cmd_with_null()
     call assert_fails('call execute(test_null_job())', 'E908:')
     call assert_fails('call execute(test_null_channel())', 'E908:')
   endif
+endfunc
+
+func Test_win_execute_tabpagewinnr()
+  belowright split
+  tab split
+  belowright split
+  call assert_equal(2, tabpagewinnr(1))
+
+  tabprevious
+  wincmd p
+  call assert_equal(1, tabpagenr())
+  call assert_equal(1, tabpagewinnr(1))
+  call assert_equal(2, tabpagewinnr(2))
+
+  call win_execute(win_getid(1, 2),
+        \      'call assert_equal(2, tabpagenr())'
+        \ .. '| call assert_equal(1, tabpagewinnr(1))'
+        \ .. '| call assert_equal(1, tabpagewinnr(2))')
+
+  call assert_equal(1, tabpagenr())
+  call assert_equal(1, tabpagewinnr(1))
+  call assert_equal(2, tabpagewinnr(2))
+
+  %bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

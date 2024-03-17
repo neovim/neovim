@@ -3,8 +3,7 @@
 " Maintainer:		This runtime file is looking for a new maintainer.
 " Previous Maintainers:	Charles E. Campbell
 " 		Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Feb 28, 2023
-"   2024 Feb 19 by Vim Project (announce adoption)
+" Last Change:		2024 Mar 04 by Vim Project
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
@@ -354,7 +353,7 @@ if exists("b:is_kornshell") || exists("b:is_bash") || exists("b:is_posix")
 elseif !exists("g:sh_no_error")
  syn region shCommandSub matchgroup=Error start="\$(" end=")" contains=@shCommandSubList
 endif
-syn region shCmdParenRegion matchgroup=shCmdSubRegion start="(\ze[^(]" skip='\\\\\|\\.' end=")" contains=@shCommandSubList
+syn region shCmdParenRegion matchgroup=shCmdSubRegion start="((\@!" skip='\\\\\|\\.' end=")" contains=@shCommandSubList
 
 if exists("b:is_bash")
  syn cluster shCommandSubList add=bashSpecialVariables,bashStatement

@@ -1003,7 +1003,7 @@ describe('ShaDa jumps support code', function()
         eq(jumps[found].line, v.value.l)
       end
     end
-    eq(found, #jumps)
+    eq(#jumps, found)
   end)
 
   it('merges JUMPLISTSIZE jumps when writing', function()
@@ -1041,7 +1041,7 @@ describe('ShaDa jumps support code', function()
         eq(jumps[found].line, v.value.l)
       end
     end
-    eq(found, 100)
+    eq(100, found)
   end)
 end)
 
@@ -1132,7 +1132,7 @@ describe('ShaDa changes support code', function()
         eq(changes[found].line, v.value.l or 1)
       end
     end
-    eq(found, #changes)
+    eq(#changes, found)
   end)
 
   it('merges JUMPLISTSIZE changes when writing', function()
@@ -1170,7 +1170,7 @@ describe('ShaDa changes support code', function()
         eq(changes[found].line, v.value.l)
       end
     end
-    eq(found, 100)
+    eq(100, found)
   end)
 
   it('merges JUMPLISTSIZE changes when writing, with new items between old', function()
@@ -1213,6 +1213,6 @@ describe('ShaDa changes support code', function()
         eq(changes[found].line, v.value.l)
       end
     end
-    eq(found, 100)
+    eq(100, found)
   end)
 end)

@@ -110,10 +110,9 @@ for i = 1, #events do
   if not ev.remote_only then
     if not ev.remote_impl and not ev.noexport then
       remote_output:write('void remote_ui_' .. ev.name)
-      write_signature(remote_output, ev, 'UI *ui')
+      write_signature(remote_output, ev, 'RemoteUI *ui')
       remote_output:write('\n{\n')
-      remote_output:write('  UIData *data = ui->data;\n')
-      remote_output:write('  Array args = data->call_buf;\n')
+      remote_output:write('  Array args = ui->call_buf;\n')
       write_arglist(remote_output, ev)
       remote_output:write('  push_call(ui, "' .. ev.name .. '", args);\n')
       remote_output:write('}\n\n')

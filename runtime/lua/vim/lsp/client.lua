@@ -11,6 +11,24 @@ local validate = vim.validate
 --- @alias vim.lsp.client.on_exit_cb fun(code: integer, signal: integer, client_id: integer)
 --- @alias vim.lsp.client.before_init_cb fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)
 
+--- @class vim.lsp.Client.Flags
+--- @inlinedoc
+---
+--- Allow using incremental sync for buffer edits
+--- (default: `true`)
+--- @field allow_incremental_sync? boolean
+---
+--- Debounce `didChange` notifications to the server by the given number in milliseconds.
+--- No debounce occurs if `nil`.
+--- (default: `150`)
+--- @field debounce_text_changes integer
+---
+--- Milliseconds to wait for server to exit cleanly after sending the
+--- "shutdown" request before sending kill -15. If set to false, nvim exits
+--- immediately after sending the "shutdown" request to the server.
+--- (default: `false`)
+--- @field exit_timeout integer|false
+
 --- @class vim.lsp.ClientConfig
 --- command string[] that launches the language
 --- server (treated as in |jobstart()|, must be absolute or on `$PATH`, shell constructs like
@@ -55,8 +73,8 @@ local validate = vim.validate
 --- Map of language server method names to |lsp-handler|
 --- @field handlers? table<string,function>
 ---
---- Map with language server specific settings. These are returned to the language server if
---- requested via `workspace/configuration`. Keys are case-sensitive.
+--- Map with language server specific settings.
+--- See the {settings} in |vim.lsp.Client|.
 --- @field settings? table
 ---
 --- Table that maps string of clientside commands to user-defined functions.
@@ -87,36 +105,29 @@ local validate = vim.validate
 --- Callback invoked before the LSP "initialize" phase, where `params` contains the parameters
 --- being sent to the server and `config` is the config that was passed to |vim.lsp.start_client()|.
 --- You can use this to modify parameters before they are sent.
---- @field before_init? vim.lsp.client.before_init_cb
+--- @field before_init? fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)
 ---
 --- Callback invoked after LSP "initialize", where `result` is a table of `capabilities`
 --- and anything else the server may send. For example, clangd sends
 --- `initialize_result.offsetEncoding` if `capabilities.offsetEncoding` was sent to it.
 --- You can only modify the `client.offset_encoding` here before any notifications are sent.
---- @field on_init? elem_or_list<vim.lsp.client.on_init_cb>
+--- @field on_init? elem_or_list<fun(client: vim.lsp.Client, initialize_result: lsp.InitializeResult)>
 ---
 --- Callback invoked on client exit.
 ---   - code: exit code of the process
 ---   - signal: number describing the signal used to terminate (if any)
 ---   - client_id: client handle
---- @field on_exit? elem_or_list<vim.lsp.client.on_exit_cb>
+--- @field on_exit? elem_or_list<fun(code: integer, signal: integer, client_id: integer)>
 ---
 --- Callback invoked when client attaches to a buffer.
---- @field on_attach? elem_or_list<vim.lsp.client.on_attach_cb>
+--- @field on_attach? elem_or_list<fun(client: vim.lsp.Client, bufnr: integer)>
 ---
 --- Passed directly to the language server in the initialize request. Invalid/empty values will
 --- (default: "off")
 --- @field trace? 'off'|'messages'|'verbose'
 ---
 --- A table with flags for the client. The current (experimental) flags are:
---- - allow_incremental_sync (bool, default true): Allow using incremental sync for buffer edits
---- - debounce_text_changes (number, default 150): Debounce didChange
----   notifications to the server by the given number in milliseconds. No debounce
----   occurs if nil
---- - exit_timeout (number|boolean, default false): Milliseconds to wait for server to
----   exit cleanly after sending the "shutdown" request before sending kill -15.
----   If set to false, nvim exits immediately after sending the "shutdown" request to the server.
---- @field flags? table
+--- @field flags? vim.lsp.Client.Flags
 ---
 --- Directory where the LSP server will base its workspaceFolders, rootUri, and rootPath on initialization.
 --- @field root_dir? string
@@ -145,7 +156,7 @@ local validate = vim.validate
 --- @field handlers table<string,lsp.Handler>
 ---
 --- The current pending requests in flight to the server. Entries are key-value
---- pairs with the key being the request ID while the value is a table with
+--- pairs with the key being the request id while the value is a table with
 --- `type`, `bufnr`, and `method` key-value pairs. `type` is either "pending"
 --- for an active request, or "cancel" for a cancel request. It will be
 --- "complete" ephemerally while executing |LspRequest| autocmds when replies
@@ -156,8 +167,8 @@ local validate = vim.validate
 --- to |vim.lsp.start_client()|.
 --- @field config vim.lsp.ClientConfig
 ---
---- Response from the server sent on
---- initialize` describing the server's capabilities.
+--- Response from the server sent on `initialize` describing the server's
+--- capabilities.
 --- @field server_capabilities lsp.ServerCapabilities?
 ---
 --- A ring buffer (|vim.ringbuf()|) containing progress messages
@@ -189,8 +200,14 @@ local validate = vim.validate
 --- Client commands take precedence over the global command registry.
 --- @field commands table<string,fun(command: lsp.Command, ctx: table)>
 ---
+--- Map with language server specific settings. These are returned to the
+--- language server if requested via `workspace/configuration`. Keys are
+--- case-sensitive.
 --- @field settings table
---- @field flags table
+---
+--- A table with flags for the client. The current (experimental) flags are:
+--- @field flags vim.lsp.Client.Flags
+---
 --- @field get_language_id fun(bufnr: integer, filetype: string): string
 ---
 --- The capabilities provided by the client (editor or tool)
@@ -200,10 +217,11 @@ local validate = vim.validate
 --- Sends a request to the server.
 --- This is a thin wrapper around {client.rpc.request} with some additional
 --- checking.
---- If {handler} is not specified,  If one is not found there, then an error
---- will occur. Returns: {status}, {[client_id]}. {status} is a boolean
---- indicating if the notification was successful. If it is `false`, then it
---- will always be `false` (the client has shutdown).
+--- If {handler} is not specified and if there's no respective global
+--- handler, then an error will occur.
+--- Returns: {status}, {client_id}?. {status} is a boolean indicating if
+--- the notification was successful. If it is `false`, then it will always
+--- be `false` (the client has shutdown).
 --- If {status} is `true`, the function returns {request_id} as the second
 --- result. You can use this with `client.cancel_request(request_id)` to cancel
 --- the request.
@@ -244,7 +262,7 @@ local validate = vim.validate
 ---
 --- Checks if a client supports a given method.
 --- Always returns true for unknown off-spec methods.
---- [opts] is a optional `{bufnr?: integer}` table.
+--- {opts} is a optional `{bufnr?: integer}` table.
 --- Some language server capabilities can be file specific.
 --- @field supports_method fun(method: string, opts?: {bufnr: integer?}): boolean
 ---

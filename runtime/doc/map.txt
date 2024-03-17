@@ -604,7 +604,7 @@ instead.  Example: >
 	map <Leader>A  oanother line<Esc>
 Works like: >
 	map \A  oanother line<Esc>
-But after:
+But after: >
 	let mapleader = ","
 It works like: >
 	map ,A  oanother line<Esc>

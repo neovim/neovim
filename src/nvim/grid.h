@@ -27,8 +27,12 @@ EXTERN sattr_T *linebuf_attr INIT( = NULL);
 EXTERN colnr_T *linebuf_vcol INIT( = NULL);
 EXTERN char *linebuf_scratch INIT( = NULL);
 
-// Low-level functions to manipulate individual character cells on the
-// screen grid.
+/// flags for grid_put_linebuf()
+enum {
+  SLF_RIGHTLEFT = 1,
+  SLF_WRAP      = 2,
+  SLF_INC_VCOL  = 4,
+};
 
 /// Put a ASCII character in a screen cell.
 ///

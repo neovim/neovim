@@ -541,7 +541,7 @@ void ex_sort(exarg_T *eap)
   // Also get the longest line length for allocating "sortbuf".
   for (linenr_T lnum = eap->line1; lnum <= eap->line2; lnum++) {
     char *s = ml_get(lnum);
-    int len = (int)strlen(s);
+    int len = ml_get_len(lnum);
     if (maxlen < len) {
       maxlen = len;
     }
@@ -643,8 +643,8 @@ void ex_sort(exarg_T *eap)
     }
 
     char *s = ml_get(get_lnum);
-    size_t bytelen = strlen(s) + 1;  // include EOL in bytelen
-    old_count += (bcount_t)bytelen;
+    colnr_T bytelen = ml_get_len(get_lnum) + 1;  // include EOL in bytelen
+    old_count += bytelen;
     if (!unique || i == 0 || string_compare(s, sortbuf1) != 0) {
       // Copy the line into a buffer, it may become invalid in
       // ml_append(). And it's needed for "unique".
@@ -652,7 +652,7 @@ void ex_sort(exarg_T *eap)
       if (ml_append(lnum++, sortbuf1, 0, false) == FAIL) {
         break;
       }
-      new_count += (bcount_t)bytelen;
+      new_count += bytelen;
     }
     fast_breakcheck();
     if (got_int) {
@@ -740,7 +740,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     return FAIL;
   }
   for (extra = 0, l = line1; l <= line2; l++) {
-    char *str = xstrdup(ml_get(l + extra));
+    char *str = xstrnsave(ml_get(l + extra), (size_t)ml_get_len(l + extra));
     ml_append(dest + l - line1, str, 0, false);
     xfree(str);
     if (dest < line1) {
@@ -876,9 +876,8 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
 
   curwin->w_cursor.lnum = n;
   while (line1 <= line2) {
-    // need to use xstrdup() because the line will be unlocked within
-    // ml_append()
-    char *p = xstrdup(ml_get(line1));
+    // need to make a copy because the line will be unlocked within ml_append()
+    char *p = xstrnsave(ml_get(line1), (size_t)ml_get_len(line1));
     ml_append(curwin->w_cursor.lnum, p, 0, false);
     xfree(p);
 
@@ -2008,6 +2007,10 @@ static int check_readonly(int *forceit, buf_T *buf)
 ///           GETFILE_OPEN_OTHER for successfully opening another file.
 int getfile(int fnum, char *ffname_arg, char *sfname_arg, bool setpm, linenr_T lnum, bool forceit)
 {
+  if (!check_can_set_curbuf_forceit(forceit)) {
+    return GETFILE_ERROR;
+  }
+
   char *ffname = ffname_arg;
   char *sfname = sfname_arg;
   bool other;
@@ -2634,14 +2637,14 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     if (newcol >= 0) {          // position set by autocommands
       curwin->w_cursor.lnum = newlnum;
       curwin->w_cursor.col = newcol;
-      check_cursor();
+      check_cursor(curwin);
     } else if (newlnum > 0) {  // line number from caller or old position
       curwin->w_cursor.lnum = newlnum;
       check_cursor_lnum(curwin);
       if (solcol >= 0 && !p_sol) {
         // 'sol' is off: Use last known column.
         curwin->w_cursor.col = solcol;
-        check_cursor_col();
+        check_cursor_col(curwin);
         curwin->w_cursor.coladd = 0;
         curwin->w_set_curswant = true;
       } else {
@@ -3296,7 +3299,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
     if (nmatch > 1) { \
       sub_firstlnum += (linenr_T)nmatch - 1; \
       xfree(sub_firstline); \
-      sub_firstline = xstrdup(ml_get(sub_firstlnum)); \
+      sub_firstline = xstrnsave(ml_get(sub_firstlnum), \
+                                (size_t)ml_get_len(sub_firstlnum)); \
       /* When going beyond the last line, stop substituting. */ \
       if (sub_firstlnum <= line2) { \
         do_again = true; \
@@ -3624,7 +3628,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
           break;
         }
         if (sub_firstline == NULL) {
-          sub_firstline = xstrdup(ml_get(sub_firstlnum));
+          sub_firstline = xstrnsave(ml_get(sub_firstlnum),
+                                    (size_t)ml_get_len(sub_firstlnum));
         }
 
         // Save the line number of the last change for the final
@@ -3761,7 +3766,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
                 // really update the line, it would change
                 // what matches.  Temporarily replace the line
                 // and change it back afterwards.
-                orig_line = xstrdup(ml_get(lnum));
+                orig_line = xstrnsave(ml_get(lnum), (size_t)ml_get_len(lnum));
                 char *new_line = concat_str(new_start, sub_firstline + copycol);
 
                 // Position the cursor relative to the end of the line, the
@@ -3783,7 +3788,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               highlight_match = true;
 
               update_topline(curwin);
-              validate_cursor();
+              validate_cursor(curwin);
               redraw_later(curwin, UPD_SOME_VALID);
               show_cursor_info_later(true);
               update_screen();
@@ -4243,7 +4248,7 @@ skip:
       // when interactive leave cursor on the match
       if (!subflags.do_ask) {
         if (endcolumn) {
-          coladvance(MAXCOL);
+          coladvance(curwin, MAXCOL);
         } else {
           beginline(BL_WHITE | BL_FIX);
         }
@@ -4274,7 +4279,7 @@ skip:
 
   if (subflags.do_ask && hasAnyFolding(curwin)) {
     // Cursor position may require updating
-    changed_window_setting();
+    changed_window_setting(curwin);
   }
 
   vim_regfree(regmatch.regprog);
@@ -4510,7 +4515,7 @@ void global_exe(char *cmd)
   if (global_need_beginline) {
     beginline(BL_WHITE | BL_FIX);
   } else {
-    check_cursor();  // cursor may be beyond the end of the line
+    check_cursor(curwin);  // cursor may be beyond the end of the line
   }
 
   // the cursor may not have moved in the text but a change in a previous
@@ -4622,8 +4627,8 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
   }
 
   char *str = NULL;  // construct the line to show in here
-  size_t old_line_size = 0;
-  size_t line_size = 0;
+  colnr_T old_line_size = 0;
+  colnr_T line_size = 0;
   linenr_T linenr_preview = 0;  // last line added to preview buffer
   linenr_T linenr_origbuf = 0;  // last line added to original buffer
   linenr_T next_linenr = 0;     // next line to show for the match
@@ -4662,21 +4667,21 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
           line = "";
         } else {
           line = ml_get_buf(orig_buf, next_linenr);
-          line_size = strlen(line) + (size_t)col_width + 1;
+          line_size = ml_get_buf_len(orig_buf, next_linenr) + col_width + 1;
 
           // Reallocate if line not long enough
           if (line_size > old_line_size) {
-            str = xrealloc(str, line_size * sizeof(char));
+            str = xrealloc(str, (size_t)line_size * sizeof(char));
             old_line_size = line_size;
           }
         }
         // Put "|lnum| line" into `str` and append it to the preview buffer.
-        snprintf(str, line_size, "|%*" PRIdLINENR "| %s", col_width - 3,
+        snprintf(str, (size_t)line_size, "|%*" PRIdLINENR "| %s", col_width - 3,
                  next_linenr, line);
         if (linenr_preview == 0) {
           ml_replace_buf(cmdpreview_buf, 1, str, true, false);
         } else {
-          ml_append_buf(cmdpreview_buf, linenr_preview, str, (colnr_T)line_size, false);
+          ml_append_buf(cmdpreview_buf, linenr_preview, str, line_size, false);
         }
         linenr_preview += 1;
       }

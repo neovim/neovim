@@ -5,7 +5,6 @@ local feed, clear = helpers.feed, helpers.clear
 local api = helpers.api
 local testprg, command = helpers.testprg, helpers.command
 local nvim_prog_abs = helpers.nvim_prog_abs
-local eq, eval = helpers.eq, helpers.eval
 local fn = helpers.fn
 local nvim_set = helpers.nvim_set
 local is_os = helpers.is_os
@@ -191,6 +190,109 @@ it(':terminal highlight has lower precedence than editor #9964', function()
   ]])
 end)
 
+it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', function()
+  clear()
+  local screen = Screen.new(50, 7)
+  screen:set_default_attr_ids({
+    [1] = { background = Screen.colors.Grey90 }, -- CursorLine, CursorColumn
+    [2] = { reverse = true }, -- TermCursor
+    [3] = { bold = true }, -- ModeMsg
+    [4] = { background = Screen.colors.Grey90, reverse = true },
+    [5] = { background = Screen.colors.Red },
+  })
+  screen:attach()
+  command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
+  screen:expect([[
+    ^tty ready                                         |
+                                                      |*6
+  ]])
+  thelpers.feed_data((' foobar'):rep(30))
+  screen:expect([[
+    ^tty ready                                         |
+     foobar foobar foobar foobar foobar foobar foobar |
+    foobar foobar foobar foobar foobar foobar foobar f|
+    oobar foobar foobar foobar foobar foobar foobar fo|
+    obar foobar foobar foobar foobar foobar foobar foo|
+    bar foobar                                        |
+                                                      |
+  ]])
+  command('set cursorline cursorcolumn')
+  feed('j10w')
+  screen:expect([[
+    tty ready     {1: }                                   |
+     foobar foobar{1: }foobar foobar foobar foobar foobar |
+    {1:foobar foobar ^foobar foobar foobar foobar foobar f}|
+    oobar foobar f{1:o}obar foobar foobar foobar foobar fo|
+    obar foobar fo{1:o}bar foobar foobar foobar foobar foo|
+    bar foobar    {1: }                                   |
+                                                      |
+  ]])
+  -- Entering terminal mode disables 'cursorline' and 'cursorcolumn'.
+  feed('i')
+  screen:expect([[
+    tty ready                                         |
+     foobar foobar foobar foobar foobar foobar foobar |
+    foobar foobar foobar foobar foobar foobar foobar f|
+    oobar foobar foobar foobar foobar foobar foobar fo|
+    obar foobar foobar foobar foobar foobar foobar foo|
+    bar foobar{2: }                                       |
+    {3:-- TERMINAL --}                                    |
+  ]])
+  -- Leaving terminal mode restores old values.
+  feed([[<C-\><C-N>]])
+  screen:expect([[
+    tty ready{1: }                                        |
+     foobar f{1:o}obar foobar foobar foobar foobar foobar |
+    foobar fo{1:o}bar foobar foobar foobar foobar foobar f|
+    oobar foo{1:b}ar foobar foobar foobar foobar foobar fo|
+    obar foob{1:a}r foobar foobar foobar foobar foobar foo|
+    {1:bar fooba^r                                        }|
+                                                      |
+  ]])
+  -- CursorLine and CursorColumn are combined with TermCursorNC.
+  command('highlight TermCursorNC gui=reverse')
+  screen:expect([[
+    tty ready{1: }                                        |
+     foobar f{1:o}obar foobar foobar foobar foobar foobar |
+    foobar fo{1:o}bar foobar foobar foobar foobar foobar f|
+    oobar foo{1:b}ar foobar foobar foobar foobar foobar fo|
+    obar foob{1:a}r foobar foobar foobar foobar foobar foo|
+    {1:bar fooba^r}{4: }{1:                                       }|
+                                                      |
+  ]])
+  feed('2gg11|')
+  screen:expect([[
+    tty ready {1: }                                       |
+    {1: foobar fo^obar foobar foobar foobar foobar foobar }|
+    foobar foo{1:b}ar foobar foobar foobar foobar foobar f|
+    oobar foob{1:a}r foobar foobar foobar foobar foobar fo|
+    obar fooba{1:r} foobar foobar foobar foobar foobar foo|
+    bar foobar{4: }                                       |
+                                                      |
+  ]])
+  -- TermCursorNC has higher precedence.
+  command('highlight TermCursorNC gui=NONE guibg=Red')
+  screen:expect([[
+    tty ready {1: }                                       |
+    {1: foobar fo^obar foobar foobar foobar foobar foobar }|
+    foobar foo{1:b}ar foobar foobar foobar foobar foobar f|
+    oobar foob{1:a}r foobar foobar foobar foobar foobar fo|
+    obar fooba{1:r} foobar foobar foobar foobar foobar foo|
+    bar foobar{5: }                                       |
+                                                      |
+  ]])
+  feed('G$')
+  screen:expect([[
+    tty ready{1: }                                        |
+     foobar f{1:o}obar foobar foobar foobar foobar foobar |
+    foobar fo{1:o}bar foobar foobar foobar foobar foobar f|
+    oobar foo{1:b}ar foobar foobar foobar foobar foobar fo|
+    obar foob{1:a}r foobar foobar foobar foobar foobar foo|
+    {1:bar fooba^r}{5: }{1:                                       }|
+                                                      |
+  ]])
+end)
+
 describe(':terminal highlight forwarding', function()
   local screen
 
@@ -274,117 +376,5 @@ describe(':terminal highlight with custom palette', function()
                                                         |*4
       {9:-- TERMINAL --}                                    |
     ]])
-  end)
-end)
-
-describe('synIDattr()', function()
-  local screen
-  before_each(function()
-    clear()
-    screen = Screen.new(50, 7)
-    command('highlight Normal ctermfg=252 guifg=#ff0000 guibg=Black')
-    -- Salmon #fa8072 Maroon #800000
-    command(
-      'highlight Keyword ctermfg=79 guifg=Salmon guisp=Maroon cterm=strikethrough gui=strikethrough'
-    )
-  end)
-
-  it('returns cterm-color if RGB-capable UI is _not_ attached', function()
-    eq('252', eval('synIDattr(hlID("Normal"),  "fg")'))
-    eq('252', eval('synIDattr(hlID("Normal"),  "fg#")'))
-    eq('', eval('synIDattr(hlID("Normal"),  "bg")'))
-    eq('', eval('synIDattr(hlID("Normal"),  "bg#")'))
-    eq('79', eval('synIDattr(hlID("Keyword"), "fg")'))
-    eq('79', eval('synIDattr(hlID("Keyword"), "fg#")'))
-    eq('', eval('synIDattr(hlID("Keyword"), "sp")'))
-    eq('', eval('synIDattr(hlID("Keyword"), "sp#")'))
-  end)
-
-  it('returns gui-color if "gui" arg is passed', function()
-    eq('Black', eval('synIDattr(hlID("Normal"),  "bg", "gui")'))
-    eq('Maroon', eval('synIDattr(hlID("Keyword"), "sp", "gui")'))
-  end)
-
-  it('returns gui-color if RGB-capable UI is attached', function()
-    screen:attach({ rgb = true })
-    eq('#ff0000', eval('synIDattr(hlID("Normal"),  "fg")'))
-    eq('Black', eval('synIDattr(hlID("Normal"),  "bg")'))
-    eq('Salmon', eval('synIDattr(hlID("Keyword"), "fg")'))
-    eq('Maroon', eval('synIDattr(hlID("Keyword"), "sp")'))
-  end)
-
-  it('returns #RRGGBB value for fg#/bg#/sp#', function()
-    screen:attach({ rgb = true })
-    eq('#ff0000', eval('synIDattr(hlID("Normal"),  "fg#")'))
-    eq('#000000', eval('synIDattr(hlID("Normal"),  "bg#")'))
-    eq('#fa8072', eval('synIDattr(hlID("Keyword"), "fg#")'))
-    eq('#800000', eval('synIDattr(hlID("Keyword"), "sp#")'))
-  end)
-
-  it('returns color number if non-GUI', function()
-    screen:attach({ rgb = false })
-    eq('252', eval('synIDattr(hlID("Normal"), "fg")'))
-    eq('79', eval('synIDattr(hlID("Keyword"), "fg")'))
-  end)
-
-  it('returns "1" if group has given highlight attribute', function()
-    local hl_attrs = {
-      'underline',
-      'undercurl',
-      'underdouble',
-      'underdotted',
-      'underdashed',
-      'strikethrough',
-    }
-    for _, hl_attr in ipairs(hl_attrs) do
-      local context = 'using ' .. hl_attr .. ' attr'
-      command('highlight Keyword cterm=' .. hl_attr .. ' gui=' .. hl_attr)
-      eq('', eval('synIDattr(hlID("Normal"), "' .. hl_attr .. '")'), context)
-      eq('1', eval('synIDattr(hlID("Keyword"), "' .. hl_attr .. '")'), context)
-      eq('1', eval('synIDattr(hlID("Keyword"), "' .. hl_attr .. '", "gui")'), context)
-    end
-  end)
-end)
-
-describe('fg/bg special colors', function()
-  local screen
-  before_each(function()
-    clear()
-    screen = Screen.new(50, 7)
-    command('highlight Normal ctermfg=145 ctermbg=16 guifg=#ff0000 guibg=Black')
-    command('highlight Visual ctermfg=bg ctermbg=fg guifg=bg guibg=fg guisp=bg')
-  end)
-
-  it('resolve to "Normal" values', function()
-    eq(eval('synIDattr(hlID("Normal"), "bg")'), eval('synIDattr(hlID("Visual"), "fg")'))
-    eq(eval('synIDattr(hlID("Normal"), "bg#")'), eval('synIDattr(hlID("Visual"), "fg#")'))
-    eq(eval('synIDattr(hlID("Normal"), "fg")'), eval('synIDattr(hlID("Visual"), "bg")'))
-    eq(eval('synIDattr(hlID("Normal"), "fg#")'), eval('synIDattr(hlID("Visual"), "bg#")'))
-    eq('bg', eval('synIDattr(hlID("Visual"), "fg", "gui")'))
-    eq('bg', eval('synIDattr(hlID("Visual"), "fg#", "gui")'))
-    eq('fg', eval('synIDattr(hlID("Visual"), "bg", "gui")'))
-    eq('fg', eval('synIDattr(hlID("Visual"), "bg#", "gui")'))
-    eq('bg', eval('synIDattr(hlID("Visual"), "sp", "gui")'))
-    eq('bg', eval('synIDattr(hlID("Visual"), "sp#", "gui")'))
-  end)
-
-  it('resolve to "Normal" values in RGB-capable UI', function()
-    screen:attach({ rgb = true })
-    eq('bg', eval('synIDattr(hlID("Visual"), "fg")'))
-    eq(eval('synIDattr(hlID("Normal"), "bg#")'), eval('synIDattr(hlID("Visual"), "fg#")'))
-    eq('fg', eval('synIDattr(hlID("Visual"), "bg")'))
-    eq(eval('synIDattr(hlID("Normal"), "fg#")'), eval('synIDattr(hlID("Visual"), "bg#")'))
-    eq('bg', eval('synIDattr(hlID("Visual"), "sp")'))
-    eq(eval('synIDattr(hlID("Normal"), "bg#")'), eval('synIDattr(hlID("Visual"), "sp#")'))
-  end)
-
-  it('resolve after the "Normal" group is modified', function()
-    screen:attach({ rgb = true })
-    local new_guibg = '#282c34'
-    local new_guifg = '#abb2bf'
-    command('highlight Normal guifg=' .. new_guifg .. ' guibg=' .. new_guibg)
-    eq(new_guibg, eval('synIDattr(hlID("Visual"), "fg#")'))
-    eq(new_guifg, eval('synIDattr(hlID("Visual"), "bg#")'))
-    eq(new_guibg, eval('synIDattr(hlID("Visual"), "sp#")'))
   end)
 end)

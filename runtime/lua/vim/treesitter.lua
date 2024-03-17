@@ -77,7 +77,7 @@ end
 --- If needed, this will create the parser.
 ---
 ---@param bufnr (integer|nil) Buffer the parser should be tied to (default: current buffer)
----@param lang (string|nil) Filetype of this parser (default: buffer filetype)
+---@param lang (string|nil) Language of this parser (default: from buffer filetype)
 ---@param opts (table|nil) Options to pass to the created language tree
 ---
 ---@return vim.treesitter.LanguageTree object to use for parsing
@@ -391,48 +391,6 @@ function M.get_node(opts)
   return root_lang_tree:named_node_for_range(ts_range, opts)
 end
 
---- Returns the smallest named node at the given position
----
----@param bufnr integer Buffer number (0 for current buffer)
----@param row integer Position row
----@param col integer Position column
----@param opts table Optional keyword arguments:
----             - lang string|nil Parser language
----             - ignore_injections boolean Ignore injected languages (default true)
----
----@return TSNode | nil Node at the given position
----@deprecated
-function M.get_node_at_pos(bufnr, row, col, opts)
-  vim.deprecate('vim.treesitter.get_node_at_pos()', 'vim.treesitter.get_node()', '0.10')
-  if bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
-  local ts_range = { row, col, row, col }
-
-  opts = opts or {}
-
-  local root_lang_tree = M.get_parser(bufnr, opts.lang)
-  if not root_lang_tree then
-    return
-  end
-
-  return root_lang_tree:named_node_for_range(ts_range, opts)
-end
-
---- Returns the smallest named node under the cursor
----
----@param winnr (integer|nil) Window handle or 0 for current window (default)
----
----@return string Name of node under the cursor
----@deprecated
-function M.get_node_at_cursor(winnr)
-  vim.deprecate('vim.treesitter.get_node_at_cursor()', 'vim.treesitter.get_node():type()', '0.10')
-  winnr = winnr or 0
-  local bufnr = api.nvim_win_get_buf(winnr)
-
-  return M.get_node({ bufnr = bufnr, ignore_injections = false }):type()
-end
-
 --- Starts treesitter highlighting for a buffer
 ---
 --- Can be used in an ftplugin or FileType autocommand.
@@ -452,7 +410,7 @@ end
 --- ```
 ---
 ---@param bufnr (integer|nil) Buffer to be highlighted (default: current buffer)
----@param lang (string|nil) Language of the parser (default: buffer filetype)
+---@param lang (string|nil) Language of the parser (default: from buffer filetype)
 function M.start(bufnr, lang)
   bufnr = bufnr or api.nvim_get_current_buf()
   local parser = M.get_parser(bufnr, lang)
@@ -474,14 +432,14 @@ end
 ---
 --- While in the window, press "a" to toggle display of anonymous nodes, "I" to toggle the
 --- display of the source language of each node, "o" to toggle the query editor, and press
---- <Enter> to jump to the node under the cursor in the source buffer. Folding also works
+--- [<Enter>] to jump to the node under the cursor in the source buffer. Folding also works
 --- (try |zo|, |zc|, etc.).
 ---
---- Can also be shown with `:InspectTree`. *:InspectTree*
+--- Can also be shown with `:InspectTree`. [:InspectTree]()
 ---
 ---@param opts table|nil Optional options table with the following possible keys:
----                      - lang (string|nil): The language of the source buffer. If omitted, the
----                        filetype of the source buffer is used.
+---                      - lang (string|nil): The language of the source buffer. If omitted, detect
+---                        from the filetype of the source buffer.
 ---                      - bufnr (integer|nil): Buffer to draw the tree into. If omitted, a new
 ---                        buffer is created.
 ---                      - winid (integer|nil): Window id to display the tree buffer in. If omitted,

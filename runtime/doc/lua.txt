@@ -530,6 +530,16 @@ Example: File-change detection                                    *watch-file*
     vim.api.nvim_command(
       "command! -nargs=1 Watch call luaeval('watch_file(_A)', expand('<args>'))")
 <
+                                                         *fswatch-limitations*
+When on Linux and using fswatch, you may need to increase the maximum number
+of `inotify` watches and queued events as the default limit can be too low. To
+increase the limit, run: >sh
+    sysctl fs.inotify.max_user_watches=100000
+    sysctl fs.inotify.max_queued_events=100000
+<
+This will increase the limit to 100000 watches and queued events. These lines
+can be added to `/etc/sysctl.conf` to make the changes persistent.
+
 Example: TCP echo-server                                          *tcp-server*
     1. Save this code to a file.
     2. Execute it with ":luafile %".
@@ -633,12 +643,14 @@ vim.highlight.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
                    tuple or string accepted by |getpos()|
       • {finish}   (`integer[]|string`) End of region as a (line, column)
                    tuple or string accepted by |getpos()|
-      • {opts}     (`table?`) Optional parameters
-                   • regtype type of range (see |setreg()|, default charwise)
-                   • inclusive boolean indicating whether the range is
-                     end-inclusive (default false)
-                   • priority number indicating priority of highlight (default
-                     priorities.user)
+      • {opts}     (`table?`) A table with the following fields:
+                   • {regtype}? (`string`, default: `'charwise'`) Type of
+                     range. See |setreg()|
+                   • {inclusive}? (`boolean`, default: `false`) Indicates
+                     whether the range is end-inclusive
+                   • {priority}? (`integer`, default:
+                     `vim.highlight.priorities.user`) Indicates priority of
+                     highlight
 
 
 ==============================================================================
@@ -922,7 +934,7 @@ vim.in_fast_event()                                      *vim.in_fast_event()*
     When this is `false` most API functions are callable (but may be subject
     to other restrictions such as |textlock|).
 
-vim.rpcnotify({channel}, {method}, {args}, {...})            *vim.rpcnotify()*
+vim.rpcnotify({channel}, {method}, {...})                    *vim.rpcnotify()*
     Sends {event} to {channel} via |RPC| and returns immediately. If {channel}
     is 0, the event is broadcast to all channels.
 
@@ -931,10 +943,9 @@ vim.rpcnotify({channel}, {method}, {args}, {...})            *vim.rpcnotify()*
     Parameters: ~
       • {channel}  (`integer`)
       • {method}   (`string`)
-      • {args}     (`any[]?`)
       • {...}      (`any?`)
 
-vim.rpcrequest({channel}, {method}, {args}, {...})          *vim.rpcrequest()*
+vim.rpcrequest({channel}, {method}, {...})                  *vim.rpcrequest()*
     Sends a request to {channel} to invoke {method} via |RPC| and blocks until
     a response is received.
 
@@ -944,7 +955,6 @@ vim.rpcrequest({channel}, {method}, {args}, {...})          *vim.rpcrequest()*
     Parameters: ~
       • {channel}  (`integer`)
       • {method}   (`string`)
-      • {args}     (`any[]?`)
       • {...}      (`any?`)
 
 vim.schedule({fn})                                            *vim.schedule()*
@@ -1163,6 +1173,7 @@ Lua list copies the list object to Vimscript and does NOT modify the Lua list: >
     vim.print(list)  --> "{ 1, 2, 3 }"
 <
 
+
 vim.call({func}, {...})                                           *vim.call()*
     Invokes |vim-function| or |user-function| {func} with arguments {...}.
     See also |vim.fn|.
@@ -1241,6 +1252,7 @@ vim.v                                                                  *vim.v*
     |v:| variables.
     Invalid or unset key returns `nil`.
 
+
                                                                  *lua-options*
                                                              *lua-vim-options*
                                                                  *lua-vim-set*
@@ -1263,6 +1275,7 @@ Similarly, there is |vim.bo| and |vim.wo| for setting buffer-scoped and
 window-scoped options. Note that this must NOT be confused with
 |local-options| and |:setlocal|. There is also |vim.go| that only accesses the
 global value of a |global-local| option, see |:setglobal|.
+
 
                                                                *vim.opt_local*
                                                               *vim.opt_global*
@@ -1409,11 +1422,12 @@ Option:remove({value})                                      *vim.opt:remove()*
       • {value}  (`string`) Value to remove
 
 vim.bo                                                                *vim.bo*
-    Get or set buffer-scoped |options| for the buffer with number {bufnr}.
-    Like `:set` and `:setlocal`. If [{bufnr}] is omitted then the current
-    buffer is used. Invalid {bufnr} or key is an error.
+    Get or set buffer-scoped |options| for the buffer with number {bufnr}. If
+    {bufnr} is omitted then the current buffer is used. Invalid {bufnr} or key
+    is an error.
 
-    Note: this is equivalent to both `:set` and `:setlocal`.
+    Note: this is equivalent to `:setlocal` for |global-local| options and
+    `:set` otherwise.
 
     Example: >lua
         local bufnr = vim.api.nvim_get_current_buf()
@@ -1431,9 +1445,6 @@ vim.env                                                              *vim.env*
         vim.env.FOO = 'bar'
         print(vim.env.TERM)
 <
-
-    Parameters: ~
-      • {var}  (`string`)
 
 vim.go                                                                *vim.go*
     Get or set global |options|. Like `:setglobal`. Invalid key is an error.
@@ -1462,9 +1473,10 @@ vim.o                                                                  *vim.o*
 
 vim.wo                                                                *vim.wo*
     Get or set window-scoped |options| for the window with handle {winid} and
-    buffer with number {bufnr}. Like `:setlocal` if {bufnr} is provided, like
-    `:set` otherwise. If [{winid}] is omitted then the current window is used.
-    Invalid {winid}, {bufnr} or key is an error.
+    buffer with number {bufnr}. Like `:setlocal` if setting a |global-local|
+    option or if {bufnr} is provided, like `:set` otherwise. If {winid} is
+    omitted then the current window is used. Invalid {winid}, {bufnr} or key
+    is an error.
 
     Note: only {bufnr} with value `0` (the current buffer in the window) is
     supported.
@@ -1829,15 +1841,15 @@ vim.inspect_pos({bufnr}, {row}, {col}, {filter})           *vim.inspect_pos()*
       • {col}     (`integer?`) col to inspect, 0-based. Defaults to the col of
                   the current cursor
       • {filter}  (`table?`) Table with key-value pairs to filter the items
-                  • {syntax} (`boolean`) Include syntax based highlight groups
-                    (defaults to true)
-                  • {treesitter} (`boolean`) Include treesitter based
-                    highlight groups (defaults to true)
+                  • {syntax} (`boolean`, default: `true`) Include syntax based
+                    highlight groups.
+                  • {treesitter} (`boolean`, default: `true`) Include
+                    treesitter based highlight groups.
                   • {extmarks} (`boolean|"all"`, default: true) Include
                     extmarks. When `all`, then extmarks without a `hl_group`
                     will also be included.
-                  • {semantic_tokens} (`boolean`) Include semantic token
-                    highlights (defaults to true)
+                  • {semantic_tokens} (`boolean`, default: true) Include
+                    semantic token highlights.
 
     Return: ~
         (`table`) a table with the following key-value pairs. Items are in
@@ -1861,7 +1873,16 @@ vim.show_pos({bufnr}, {row}, {col}, {filter})                 *vim.show_pos()*
                   the current cursor
       • {col}     (`integer?`) col to inspect, 0-based. Defaults to the col of
                   the current cursor
-      • {filter}  (`table?`) see |vim.inspect_pos()|
+      • {filter}  (`table?`) A table with the following fields:
+                  • {syntax} (`boolean`, default: `true`) Include syntax based
+                    highlight groups.
+                  • {treesitter} (`boolean`, default: `true`) Include
+                    treesitter based highlight groups.
+                  • {extmarks} (`boolean|"all"`, default: true) Include
+                    extmarks. When `all`, then extmarks without a `hl_group`
+                    will also be included.
+                  • {semantic_tokens} (`boolean`, default: true) Include
+                    semantic token highlights.
 
 
 
@@ -1987,7 +2008,7 @@ vim.gsplit({s}, {sep}, {opts})                                  *vim.gsplit()*
                   end of the sequence.
 
     Return: ~
-        (`function`) Iterator over the split components
+        (`fun():string?`) Iterator over the split components
 
     See also: ~
       • |string.gmatch()|
@@ -2087,7 +2108,7 @@ vim.ringbuf({size})                                            *vim.ringbuf()*
       • {size}  (`integer`)
 
     Return: ~
-        (`table`)
+        (`vim.Ringbuf`) ringbuf See |vim.Ringbuf|.
 
 vim.spairs({t})                                                 *vim.spairs()*
     Enumerates key-value pairs of a table, ordered by key.
@@ -2095,8 +2116,10 @@ vim.spairs({t})                                                 *vim.spairs()*
     Parameters: ~
       • {t}  (`table`) Dict-like table
 
-    Return: ~
-        (`function`) |for-in| iterator over sorted keys and their values
+    Return (multiple): ~
+        (`fun(table: table<K, V>, index?: K):K, V`) |for-in| iterator over
+        sorted keys and their values
+        (`table`)
 
     See also: ~
       • Based on
@@ -2138,18 +2161,6 @@ vim.startswith({s}, {prefix})                               *vim.startswith()*
 
     Return: ~
         (`boolean`) `true` if `prefix` is a prefix of `s`
-
-vim.tbl_add_reverse_lookup({o})                 *vim.tbl_add_reverse_lookup()*
-    Add the reverse lookup values to an existing table. For example:
-    `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
-
-    Note that this modifies the input.
-
-    Parameters: ~
-      • {o}  (`table`) Table to add the reverse to
-
-    Return: ~
-        (`table`) o
 
 vim.tbl_contains({t}, {value}, {opts})                    *vim.tbl_contains()*
     Checks if a table contains a given value, specified either directly or via
@@ -2194,8 +2205,8 @@ vim.tbl_deep_extend({behavior}, {...})                 *vim.tbl_deep_extend()*
     Merges recursively two or more tables.
 
     Parameters: ~
-      • {behavior}  (`"error"|"keep"|"force"`) (string) Decides what to do if
-                    a key is found in more than one map:
+      • {behavior}  (`'error'|'keep'|'force'`) Decides what to do if a key is
+                    found in more than one map:
                     • "error": raise an error
                     • "keep": use value from the leftmost map
                     • "force": use value from the rightmost map
@@ -2211,8 +2222,8 @@ vim.tbl_extend({behavior}, {...})                           *vim.tbl_extend()*
     Merges two or more tables.
 
     Parameters: ~
-      • {behavior}  (`string`) Decides what to do if a key is found in more
-                    than one map:
+      • {behavior}  (`'error'|'keep'|'force'`) Decides what to do if a key is
+                    found in more than one map:
                     • "error": raise an error
                     • "keep": use value from the leftmost map
                     • "force": use value from the rightmost map
@@ -2332,8 +2343,8 @@ vim.tbl_map({func}, {t})                                       *vim.tbl_map()*
     Apply a function to all values of a table.
 
     Parameters: ~
-      • {func}  (`function`) Function
-      • {t}     (`table`) Table
+      • {func}  (`fun(value: T): any`) Function
+      • {t}     (`table<any, T>`) Table
 
     Return: ~
         (`table`) Table of transformed values
@@ -2438,10 +2449,10 @@ vim.loader.find({modname}, {opts})                         *vim.loader.find()*
                      the runtime path.
                    • {paths}? (`string[]`, default: `{}`) Extra paths to
                      search for modname
-                   • {patterns}? (`string[]`, default: `{"/init.lua",
-                     ".lua"}`) List of patterns to use when searching for
-                     modules. A pattern is a string added to the basename of
-                     the Lua module being searched.
+                   • {patterns}? (`string[]`, default:
+                     `{"/init.lua", ".lua"}`) List of patterns to use when
+                     searching for modules. A pattern is a string added to the
+                     basename of the Lua module being searched.
                    • {all}? (`boolean`, default: `false`) Search for all
                      matches.
 
@@ -2785,9 +2796,9 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
     Parameters: ~
       • {modes}  (`string|string[]`)
       • {lhs}    (`string`)
-      • {opts}   (`table?`) A table of optional arguments:
-                 • "buffer": (integer|boolean) Remove a mapping from the given
-                   buffer. When `0` or `true`, use the current buffer.
+      • {opts}   (`table?`) A table with the following fields:
+                 • {buffer}? (`integer|boolean`) Remove a mapping from the
+                   given buffer. When `0` or `true`, use the current buffer.
 
     See also: ~
       • |vim.keymap.set()|
@@ -2809,20 +2820,20 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
 <
 
     Parameters: ~
-      • {mode}  (`string|table`) Mode short-name, see |nvim_set_keymap()|. Can
-                also be list of modes to create mapping on multiple modes.
+      • {mode}  (`string|string[]`) Mode short-name, see |nvim_set_keymap()|.
+                Can also be list of modes to create mapping on multiple modes.
       • {lhs}   (`string`) Left-hand side |{lhs}| of the mapping.
       • {rhs}   (`string|function`) Right-hand side |{rhs}| of the mapping,
                 can be a Lua function.
-      • {opts}  (`table?`) Table of |:map-arguments|.
-                • Same as |nvim_set_keymap()| {opts}, except:
-                  • "replace_keycodes" defaults to `true` if "expr" is `true`.
-                  • "noremap": inverse of "remap" (see below).
-                • Also accepts:
-                  • "buffer": (integer|boolean) Creates buffer-local mapping,
-                    `0` or `true` for current buffer.
-                  • "remap": (boolean) Make the mapping recursive. Inverse of
-                    "noremap". Defaults to `false`.
+      • {opts}  (`table?`) Table of |:map-arguments|. Same as
+                |nvim_set_keymap()| {opts}, except:
+                • {replace_keycodes} defaults to `true` if "expr" is `true`.
+
+                Also accepts:
+                • {buffer}? (`integer|boolean`) Creates buffer-local mapping,
+                  `0` or `true` for current buffer.
+                • {remap}? (`boolean`, default: `false`) Make the mapping
+                  recursive. Inverse of {noremap}.
 
     See also: ~
       • |nvim_set_keymap()|
@@ -2838,7 +2849,7 @@ vim.fs.basename({file})                                    *vim.fs.basename()*
     Return the basename of the given path
 
     Parameters: ~
-      • {file}  (`string`) Path
+      • {file}  (`string?`) Path
 
     Return: ~
         (`string?`) Basename of {file}
@@ -2866,7 +2877,7 @@ vim.fs.dirname({file})                                      *vim.fs.dirname()*
     Return the parent directory of the given path
 
     Parameters: ~
-      • {file}  (`string`) Path
+      • {file}  (`string?`) Path
 
     Return: ~
         (`string?`) Parent directory of {file}
@@ -2914,16 +2925,16 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                  • path: full path of the current item The function should
                    return `true` if the given item is considered a match.
       • {opts}   (`table`) Optional keyword arguments:
-                 • {path} (`string`) Path to begin searching from. If omitted,
-                   the |current-directory| is used.
-                 • {upward} (`boolean`, default: `false`) Search upward
+                 • {path}? (`string`) Path to begin searching from. If
+                   omitted, the |current-directory| is used.
+                 • {upward}? (`boolean`, default: `false`) Search upward
                    through parent directories. Otherwise, search through child
                    directories (recursively).
-                 • {stop} (`string`) Stop searching when this directory is
+                 • {stop}? (`string`) Stop searching when this directory is
                    reached. The directory itself is not searched.
-                 • {type} (`string`) Find only items of the given type. If
+                 • {type}? (`string`) Find only items of the given type. If
                    omitted, all items that match {names} are included.
-                 • {limit} (`number`, default: `1`) Stop the search after
+                 • {limit}? (`number`, default: `1`) Stop the search after
                    finding this many matches. Use `math.huge` to place no
                    limit on the number of matches.
 
@@ -3143,16 +3154,17 @@ vim.lpeg.Cc({...})                                             *vim.lpeg.Cc()*
 
 vim.lpeg.Cf({patt}, {func})                                    *vim.lpeg.Cf()*
     Creates a fold capture. If `patt` produces a list of captures C1 C2 ...
-    Cn, this capture will produce the value `func(...func(func(C1, C2),
-    C3)...,Cn)`, that is, it will fold (or accumulate, or reduce) the captures
-    from `patt` using function `func`. This capture assumes that `patt` should
-    produce at least one capture with at least one value (of any type), which
-    becomes the initial value of an accumulator. (If you need a specific
-    initial value, you may prefix a constant captureto `patt`.) For each
-    subsequent capture, LPeg calls `func` with this accumulator as the first
-    argument and all values produced by the capture as extra arguments; the
-    first result from this call becomes the new value for the accumulator. The
-    final value of the accumulator becomes the captured value.
+    Cn, this capture will produce the value
+    `func(...func(func(C1, C2), C3)...,Cn)`, that is, it will fold (or
+    accumulate, or reduce) the captures from `patt` using function `func`.
+    This capture assumes that `patt` should produce at least one capture with
+    at least one value (of any type), which becomes the initial value of an
+    accumulator. (If you need a specific initial value, you may prefix a
+    constant captureto `patt`.) For each subsequent capture, LPeg calls `func`
+    with this accumulator as the first argument and all values produced by the
+    capture as extra arguments; the first result from this call becomes the
+    new value for the accumulator. The final value of the accumulator becomes
+    the captured value.
 
     Example: >lua
         local number = lpeg.R('09') ^ 1 / tonumber
@@ -3556,7 +3568,7 @@ vim.secure.trust({opts})                                  *vim.secure.trust()*
     The trust database is located at |$XDG_STATE_HOME|/nvim/trust.
 
     Parameters: ~
-      • {opts}  (`table?`) A table with the following fields:
+      • {opts}  (`table`) A table with the following fields:
                 • {action} (`'allow'|'deny'|'remove'`) - `'allow'` to add a
                   file to the trust database and trust it,
                 • `'deny'` to add a file to the trust database and deny it,
@@ -3764,10 +3776,9 @@ vim.version.range({spec})                                *vim.version.range()*
       • {spec}  (`string`) Version range "spec"
 
     Return: ~
-        (`table`) A table with the following fields:
+        (`table?`) A table with the following fields:
         • {from} (`vim.Version`)
         • {to}? (`vim.Version`)
-        • {has} (`fun(self: vim.VersionRangeversion: string|vim.Version)`)
 
     See also: ~
       • https://github.com/npm/node-semver#ranges
@@ -3900,6 +3911,7 @@ Iter:enumerate()                                            *Iter:enumerate()*
 <
 
     Example: >lua
+
         local it = vim.iter(vim.gsplit('abc', '')):enumerate()
         it:next()
         -- 1	'a'
@@ -3934,6 +3946,7 @@ Iter:find({f})                                                   *Iter:find()*
     found.
 
     Examples: >lua
+
         local it = vim.iter({ 3, 6, 9, 12 })
         it:find(12)
         -- 12
@@ -4014,6 +4027,7 @@ Iter:last()                                                      *Iter:last()*
     Drains the iterator and returns the last item.
 
     Example: >lua
+
         local it = vim.iter(vim.gsplit('abcdefg', ''))
         it:last()
         -- 'g'
@@ -4054,6 +4068,7 @@ Iter:next()                                                      *Iter:next()*
     Gets the next value from the iterator.
 
     Example: >lua
+
         local it = vim.iter(string.gmatch('1 2 3', '%d+')):map(tonumber)
         it:next()
         -- 1
@@ -4085,6 +4100,7 @@ Iter:nth({n})                                                     *Iter:nth()*
     Gets the nth value of an iterator (and advances to it).
 
     Example: >lua
+
         local it = vim.iter({ 3, 6, 9, 12 })
         it:nth(2)
         -- 6
@@ -4102,6 +4118,7 @@ Iter:nthback({n})                                             *Iter:nthback()*
     Gets the nth value from the end of a |list-iterator| (and advances to it).
 
     Example: >lua
+
         local it = vim.iter({ 3, 6, 9, 12 })
         it:nthback(2)
         -- 9
@@ -4119,6 +4136,7 @@ Iter:peek()                                                      *Iter:peek()*
     Gets the next value in a |list-iterator| without consuming it.
 
     Example: >lua
+
         local it = vim.iter({ 3, 6, 9, 12 })
         it:peek()
         -- 3
@@ -4153,6 +4171,7 @@ Iter:rev()                                                        *Iter:rev()*
     Reverses a |list-iterator| pipeline.
 
     Example: >lua
+
         local it = vim.iter({ 3, 6, 9, 12 }):rev()
         it:totable()
         -- { 12, 9, 6, 3 }
@@ -4169,6 +4188,7 @@ Iter:rfind({f})                                                 *Iter:rfind()*
     found.
 
     Examples: >lua
+
         local it = vim.iter({ 1, 2, 3, 2, 1 }):enumerate()
         it:rfind(1)
         -- 5	1
@@ -4189,6 +4209,7 @@ Iter:skip({n})                                                   *Iter:skip()*
     Skips `n` values of an iterator pipeline.
 
     Example: >lua
+
         local it = vim.iter({ 3, 6, 9, 12 }):skip(2)
         it:next()
         -- 9

@@ -533,7 +533,7 @@ void prepare_search_hl(win_T *wp, match_T *search_hl, linenr_T lnum)
         for (shl->first_lnum = lnum;
              shl->first_lnum > wp->w_topline;
              shl->first_lnum--) {
-          if (hasFoldingWin(wp, shl->first_lnum - 1, NULL, NULL, true, NULL)) {
+          if (hasFolding(wp, shl->first_lnum - 1, NULL, NULL)) {
             break;
           }
         }

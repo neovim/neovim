@@ -212,7 +212,7 @@ https://github.com/neovim/neovim-backup
 * Runner versions:
     * For special-purpose jobs where the runner version doesn't really matter,
       prefer `-latest` tags so we don't need to manually bump the versions. An
-      example of a special-purpose workflow is `labeler.yml`.
+      example of a special-purpose workflow is `labeler_pr.yml`.
     * For our testing jobs, which are in `test.yml` and `build.yml`, prefer to
       use the latest stable (i.e. non-beta) version explicitly. Avoid using the
       `-latest` tags here as it makes it difficult to determine from an
@@ -230,8 +230,9 @@ https://github.com/neovim/neovim-backup
 Some github labels are used to trigger certain jobs:
 
 * `backport release-x.y` - backport to release branch
-* `ci-s390x` - enable s390x CI
-* `needs:response` - Close PR after a certain amount of time if author doesn't
+* `ci:s390x` - enable s390x CI
+* `ci:skip-news` - skip news.yml workflows
+* `needs:response` - close PR after a certain amount of time if author doesn't
   respond
 
 See also

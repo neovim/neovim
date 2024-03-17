@@ -1478,11 +1478,11 @@ void execute_menu(const exarg_T *eap, vimmenu_T *menu, int mode_idx)
       // Activate visual mode
       VIsual_active = true;
       VIsual_reselect = true;
-      check_cursor();
+      check_cursor(curwin);
       VIsual = curwin->w_cursor;
       curwin->w_cursor = tpos;
 
-      check_cursor();
+      check_cursor(curwin);
 
       // Adjust the cursor to make sure it is in the correct pos
       // for exclusive mode

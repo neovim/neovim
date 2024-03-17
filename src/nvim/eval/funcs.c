@@ -727,7 +727,7 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
       return;
     }
 
-    check_cursor();
+    check_cursor(curwin);
     winchanged = true;
   }
 
@@ -738,7 +738,7 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
     if (fp->col == MAXCOL) {
       // '> can be MAXCOL, get the length of the line then
       if (fp->lnum <= curbuf->b_ml.ml_line_count) {
-        col = (colnr_T)strlen(ml_get(fp->lnum)) + 1;
+        col = ml_get_len(fp->lnum) + 1;
       } else {
         col = MAXCOL;
       }
@@ -746,7 +746,7 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
       col = fp->col + 1;
       // col(".") when the cursor is on the NUL at the end of the line
       // because of "coladd" can be seen as an extra column.
-      if (virtual_active() && fp == &curwin->w_cursor) {
+      if (virtual_active(curwin) && fp == &curwin->w_cursor) {
         char *p = get_cursor_pos_ptr();
         if (curwin->w_cursor.coladd >=
             (colnr_T)win_chartabsize(curwin, p,
@@ -1191,7 +1191,7 @@ static void set_cursorpos(typval_T *argvars, typval_T *rettv, bool charcol)
   curwin->w_cursor.coladd = coladd;
 
   // Make sure the cursor is in a valid position.
-  check_cursor();
+  check_cursor(curwin);
   // Correct cursor for multi-byte character.
   mb_adjust_cursor();
 
@@ -2827,16 +2827,12 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  int fnum = -1;
-  pos_T p1;
-  if (list2fpos(&argvars[0], &p1, &fnum, NULL, false) != OK
-      || (fnum >= 0 && fnum != curbuf->b_fnum)) {
-    return;
-  }
-
-  pos_T p2;
-  if (list2fpos(&argvars[1], &p2, &fnum, NULL, false) != OK
-      || (fnum >= 0 && fnum != curbuf->b_fnum)) {
+  int fnum1 = -1;
+  int fnum2 = -1;
+  pos_T p1, p2;
+  if (list2fpos(&argvars[0], &p1, &fnum1, NULL, false) != OK
+      || list2fpos(&argvars[1], &p2, &fnum2, NULL, false) != OK
+      || fnum1 != fnum2) {
     return;
   }
 
@@ -2863,11 +2859,38 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   } else if (type[0] == Ctrl_V && type[1] == NUL) {
     region_type = kMTBlockWise;
   } else {
+    semsg(_(e_invargNval), "type", type);
     return;
   }
 
+  buf_T *findbuf = fnum1 != 0 ? buflist_findnr(fnum1) : curbuf;
+  if (findbuf == NULL || findbuf->b_ml.ml_mfp == NULL) {
+    emsg(_(e_buffer_is_not_loaded));
+    return;
+  }
+
+  if (p1.lnum < 1 || p1.lnum > findbuf->b_ml.ml_line_count) {
+    semsg(_(e_invalid_line_number_nr), p1.lnum);
+    return;
+  }
+  if (p1.col < 1 || p1.col > ml_get_buf_len(findbuf, p1.lnum) + 1) {
+    semsg(_(e_invalid_column_number_nr), p1.col);
+    return;
+  }
+  if (p2.lnum < 1 || p2.lnum > findbuf->b_ml.ml_line_count) {
+    semsg(_(e_invalid_line_number_nr), p2.lnum);
+    return;
+  }
+  if (p2.col < 1 || p2.col > ml_get_buf_len(findbuf, p2.lnum) + 1) {
+    semsg(_(e_invalid_column_number_nr), p2.col);
+    return;
+  }
+
+  buf_T *const save_curbuf = curbuf;
+  curbuf = findbuf;
+  curwin->w_buffer = curbuf;
   const TriState save_virtual = virtual_op;
-  virtual_op = virtual_active();
+  virtual_op = virtual_active(curwin);
 
   // NOTE: Adjust is needed.
   p1.col--;
@@ -2893,7 +2916,7 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         mark_mb_adjustpos(curbuf, &p2);
       } else if (p2.lnum > 1) {
         p2.lnum--;
-        p2.col = (colnr_T)strlen(ml_get(p2.lnum));
+        p2.col = ml_get_len(p2.lnum);
         if (p2.col > 0) {
           p2.col--;
           mark_mb_adjustpos(curbuf, &p2);
@@ -2948,6 +2971,8 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tv_list_append_allocated_string(rettv->vval.v_list, akt);
   }
 
+  curbuf = save_curbuf;
+  curwin->w_buffer = curbuf;
   virtual_op = save_virtual;
 }
 
@@ -3315,7 +3340,6 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     "path_extra",
     "persistent_undo",
     "profile",
-    "pythonx",
     "reltime",
     "quickfix",
     "rightleft",
@@ -3406,6 +3430,8 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       n = syntax_present(curwin);
     } else if (STRICMP(name, "clipboard_working") == 0) {
       n = eval_has_provider("clipboard");
+    } else if (STRICMP(name, "pythonx") == 0) {
+      n = eval_has_provider("python3");
     } else if (STRICMP(name, "wsl") == 0) {
       n = has_wsl();
 #ifdef UNIX
@@ -4617,7 +4643,7 @@ static void f_line(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (wp != NULL && tp != NULL) {
       switchwin_T switchwin;
       if (switch_win_noblock(&switchwin, wp, tp, true) == OK) {
-        check_cursor();
+        check_cursor(curwin);
         fp = var2fpos(&argvars[0], true, &fnum, false);
       }
       restore_win_noblock(&switchwin, true);
@@ -6005,6 +6031,12 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
     }
   }
 
+  if (blob) {
+    tv_blob_alloc_ret(rettv);
+  } else {
+    tv_list_alloc_ret(rettv, kListLenUnknown);
+  }
+
   // Always open the file in binary mode, library functions have a mind of
   // their own about CR-LF conversion.
   const char *const fname = tv_get_string(&argvars[0]);
@@ -6019,7 +6051,6 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
   }
 
   if (blob) {
-    tv_blob_alloc_ret(rettv);
     if (read_blob(fd, rettv, offset, size) == FAIL) {
       semsg(_(e_notread), fname);
     }
@@ -6027,7 +6058,7 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
     return;
   }
 
-  list_T *const l = tv_list_alloc_ret(rettv, kListLenUnknown);
+  list_T *const l = rettv->vval.v_list;
 
   while (maxline < 0 || tv_list_len(l) < maxline) {
     int readlen = (int)fread(buf, 1, (size_t)io_size, fd);
@@ -6998,7 +7029,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
     }
     // "/$" will put the cursor after the end of the line, may need to
     // correct that here
-    check_cursor();
+    check_cursor(curwin);
   }
 
   // If 'n' flag is used: restore cursor position.
@@ -7760,7 +7791,7 @@ static void set_position(typval_T *argvars, typval_T *rettv, bool charpos)
       curwin->w_curswant = curswant - 1;
       curwin->w_set_curswant = false;
     }
-    check_cursor();
+    check_cursor(curwin);
     rettv->vval.v_number = 0;
   } else if (name[0] == '\'' && name[1] != NUL && name[2] == NUL) {
     // set mark
@@ -8657,7 +8688,7 @@ static void f_synID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   int id = 0;
   if (!transerr && lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count
-      && col >= 0 && (size_t)col < strlen(ml_get(lnum))) {
+      && col >= 0 && col < ml_get_len(lnum)) {
     id = syn_get_id(curwin, lnum, col, trans, NULL, false);
   }
 
@@ -8780,8 +8811,8 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 
   CLEAR_FIELD(str);
 
-  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count && col >= 0
-      && (size_t)col <= strlen(ml_get(lnum)) && curwin->w_p_cole > 0) {
+  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count
+      && col >= 0 && col <= ml_get_len(lnum) && curwin->w_p_cole > 0) {
     syn_get_id(curwin, lnum, col, false, NULL, false);
     syntax_flags = get_syntax_info(&matchid);
 
@@ -8814,10 +8845,8 @@ static void f_synstack(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const linenr_T lnum = tv_get_lnum(argvars);
   const colnr_T col = (colnr_T)tv_get_number(&argvars[1]) - 1;
 
-  if (lnum >= 1
-      && lnum <= curbuf->b_ml.ml_line_count
-      && col >= 0
-      && (size_t)col <= strlen(ml_get(lnum))) {
+  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count
+      && col >= 0 && col <= ml_get_len(lnum)) {
     tv_list_alloc_ret(rettv, kListLenMayKnow);
     syn_get_id(curwin, lnum, col, false, NULL, true);
 
@@ -9175,7 +9204,7 @@ static void f_virtcol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       goto theend;
     }
 
-    check_cursor();
+    check_cursor(curwin);
     winchanged = true;
   }
 
@@ -9187,9 +9216,9 @@ static void f_virtcol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (fp->col < 0) {
       fp->col = 0;
     } else {
-      const size_t len = strlen(ml_get(fp->lnum));
-      if (fp->col > (colnr_T)len) {
-        fp->col = (colnr_T)len;
+      const colnr_T len = ml_get_len(fp->lnum);
+      if (fp->col > len) {
+        fp->col = len;
       }
     }
     getvvcol(curwin, fp, &vcol_start, NULL, &vcol_end);

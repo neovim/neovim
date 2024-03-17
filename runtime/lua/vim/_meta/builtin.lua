@@ -91,9 +91,8 @@ function vim.empty_dict() end
 --- This function also works in a fast callback |lua-loop-callbacks|.
 --- @param channel integer
 --- @param method string
---- @param args? any[]
 --- @param ...? any
-function vim.rpcnotify(channel, method, args, ...) end
+function vim.rpcnotify(channel, method, ...) end
 
 --- Sends a request to {channel} to invoke {method} via |RPC| and blocks until
 --- a response is received.
@@ -102,9 +101,8 @@ function vim.rpcnotify(channel, method, args, ...) end
 --- special value
 --- @param channel integer
 --- @param method string
---- @param args? any[]
 --- @param ...? any
-function vim.rpcrequest(channel, method, args, ...) end
+function vim.rpcrequest(channel, method, ...) end
 
 --- Compares strings case-insensitively.
 --- @param a string
@@ -217,7 +215,6 @@ function vim.schedule(fn) end
 --- Examples:
 ---
 --- ```lua
----
 --- ---
 --- -- Wait for 100 ms, allowing other events to process
 --- vim.wait(100, function() end)

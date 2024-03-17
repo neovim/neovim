@@ -283,6 +283,21 @@ function M.fswatch(path, opts, callback)
     '/.git/',
     path,
   }, {
+    stderr = function(err, data)
+      if err then
+        error(err)
+      end
+
+      if data and #vim.trim(data) > 0 then
+        vim.schedule(function()
+          if vim.fn.has('linux') == 1 and vim.startswith(data, 'Event queue overflow') then
+            data = 'inotify(7) limit reached, see :h fswatch-limitations for more info.'
+          end
+
+          vim.notify('fswatch: ' .. data, vim.log.levels.ERROR)
+        end)
+      end
+    end,
     stdout = function(err, data)
       if err then
         error(err)
@@ -292,6 +307,8 @@ function M.fswatch(path, opts, callback)
         fswatch_output_handler(line, opts, callback)
       end
     end,
+    -- --latency is locale dependent but tostring() isn't and will always have '.' as decimal point.
+    env = { LC_NUMERIC = 'C' },
   })
 
   return function()

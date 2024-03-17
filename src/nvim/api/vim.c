@@ -249,7 +249,7 @@ void nvim_set_hl_ns_fast(Integer ns_id, Error *err)
 ///
 /// On execution error: does not fail, but updates v:errmsg.
 ///
-/// To input sequences like <C-o> use |nvim_replace_termcodes()| (typically
+/// To input sequences like [<C-o>] use |nvim_replace_termcodes()| (typically
 /// with escape_ks=false) to replace |keycodes|, then pass the result to
 /// nvim_feedkeys().
 ///
@@ -337,11 +337,11 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
 ///
 /// On execution error: does not fail, but updates v:errmsg.
 ///
-/// @note |keycodes| like <CR> are translated, so "<" is special.
-///       To input a literal "<", send <LT>.
+/// @note |keycodes| like [<CR>] are translated, so "<" is special.
+///       To input a literal "<", send [<LT>].
 ///
 /// @note For mouse events use |nvim_input_mouse()|. The pseudokey form
-///       "<LeftMouse><col,row>" is deprecated since |api-level| 6.
+///       `<LeftMouse><col,row>` is deprecated since |api-level| 6.
 ///
 /// @param keys to be typed
 /// @return Number of bytes actually written (can be fewer than
@@ -362,7 +362,7 @@ Integer nvim_input(String keys)
 ///       by calling it multiple times in a loop: the intermediate mouse
 ///       positions will be ignored. It should be used to implement real-time
 ///       mouse input in a GUI. The deprecated pseudokey form
-///       ("<LeftMouse><col,row>") of |nvim_input()| has the same limitation.
+///       (`<LeftMouse><col,row>`) of |nvim_input()| has the same limitation.
 ///
 /// @param button Mouse button: one of "left", "right", "middle", "wheel", "move",
 ///               "x1", "x2".
@@ -451,13 +451,13 @@ error:
                 "invalid button or action");
 }
 
-/// Replaces terminal codes and |keycodes| (<CR>, <Esc>, ...) in a string with
+/// Replaces terminal codes and |keycodes| ([<CR>], [<Esc>], ...) in a string with
 /// the internal representation.
 ///
 /// @param str        String to be converted.
 /// @param from_part  Legacy Vim parameter. Usually true.
-/// @param do_lt      Also translate <lt>. Ignored if `special` is false.
-/// @param special    Replace |keycodes|, e.g. <CR> becomes a "\r" char.
+/// @param do_lt      Also translate [<lt>]. Ignored if `special` is false.
+/// @param special    Replace |keycodes|, e.g. [<CR>] becomes a "\r" char.
 /// @see replace_termcodes
 /// @see cpoptions
 String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Boolean special)
@@ -525,7 +525,7 @@ Object nvim_notify(String msg, Integer log_level, Dictionary opts, Arena *arena,
 }
 
 /// Calculates the number of display cells occupied by `text`.
-/// Control characters including <Tab> count as one cell.
+/// Control characters including [<Tab>] count as one cell.
 ///
 /// @param text       Some text
 /// @param[out] err   Error details, if any
@@ -762,7 +762,7 @@ void nvim_set_vvar(String name, Object value, Error *err)
 
 /// Echo a message.
 ///
-/// @param chunks  A list of [text, hl_group] arrays, each representing a
+/// @param chunks  A list of `[text, hl_group]` arrays, each representing a
 ///                text chunk with specified highlight. `hl_group` element
 ///                can be omitted for no highlight.
 /// @param history  if true, add to |message-history|.
@@ -873,6 +873,11 @@ void nvim_set_current_buf(Buffer buffer, Error *err)
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
+    return;
+  }
+
+  if (curwin->w_p_wfb) {
+    api_set_error(err, kErrorTypeException, "%s", e_winfixbuf_cannot_go_to_buffer);
     return;
   }
 
@@ -1019,7 +1024,7 @@ fail:
 ///            master end. For instance, a carriage return is sent
 ///            as a "\r", not as a "\n". |textlock| applies. It is possible
 ///            to call |nvim_chan_send()| directly in the callback however.
-///                 ["input", term, bufnr, data]
+///                 `["input", term, bufnr, data]`
 ///          - force_crlf: (boolean, default true) Convert "\n" to "\r\n".
 /// @param[out] err Error details, if any
 /// @return Channel id, or 0 on error
@@ -1471,7 +1476,7 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode, Arena *arena)
 /// To set a buffer-local mapping, use |nvim_buf_set_keymap()|.
 ///
 /// Unlike |:map|, leading/trailing whitespace is accepted as part of the {lhs} or {rhs}.
-/// Empty {rhs} is |<Nop>|. |keycodes| are replaced as usual.
+/// Empty {rhs} is [<Nop>]. |keycodes| are replaced as usual.
 ///
 /// Example:
 ///
@@ -1491,7 +1496,7 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode, Arena *arena)
 ///               "ia", "ca" or "!a" for abbreviation in Insert mode, Cmdline mode, or both, respectively
 /// @param  lhs   Left-hand-side |{lhs}| of the mapping.
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
-/// @param  opts  Optional parameters map: Accepts all |:map-arguments| as keys except |<buffer>|,
+/// @param  opts  Optional parameters map: Accepts all |:map-arguments| as keys except [<buffer>],
 ///               values are booleans (default false). Also:
 ///               - "noremap" disables |recursive_mapping|, like |:noremap|
 ///               - "desc" human-readable description.
@@ -1521,7 +1526,7 @@ void nvim_del_keymap(uint64_t channel_id, String mode, String lhs, Error *err)
 /// Returns a 2-tuple (Array), where item 0 is the current channel id and item
 /// 1 is the |api-metadata| map (Dictionary).
 ///
-/// @returns 2-tuple [{channel-id}, {api-metadata}]
+/// @returns 2-tuple `[{channel-id}, {api-metadata}]`
 Array nvim_get_api_info(uint64_t channel_id, Arena *arena)
   FUNC_API_SINCE(1) FUNC_API_FAST FUNC_API_REMOTE_ONLY
 {
@@ -1960,7 +1965,7 @@ Object nvim_get_proc(Integer pid, Arena *arena, Error *err)
 /// If neither |ins-completion| nor |cmdline-completion| popup menu is active
 /// this API call is silently ignored.
 /// Useful for an external UI using |ui-popupmenu| to control the popup menu with the mouse.
-/// Can also be used in a mapping; use <Cmd> |:map-cmd| or a Lua mapping to ensure the mapping
+/// Can also be used in a mapping; use [<Cmd>] |:map-cmd| or a Lua mapping to ensure the mapping
 /// doesn't end completion mode.
 ///
 /// @param item    Index (zero-based) of the item to select. Value of -1 selects nothing

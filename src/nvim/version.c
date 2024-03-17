@@ -32,6 +32,7 @@
 #include "nvim/option_vars.h"
 #include "nvim/os/os.h"
 #include "nvim/strings.h"
+#include "nvim/ui.h"
 #include "nvim/version.h"
 
 // for ":version", ":intro", and "nvim --version"
@@ -2710,15 +2711,13 @@ void list_version(void)
                  : "\nRun \":verbose version\" for more info"));
 }
 
-/// Show the intro message when not editing a file.
-void maybe_intro_message(void)
+/// Whether it still is not too late to show an intro message
+bool may_show_intro(void)
 {
-  if (buf_is_empty(curbuf)
-      && (curbuf->b_fname == NULL)
-      && (firstwin->w_next == NULL)
-      && (vim_strchr(p_shm, SHM_INTRO) == NULL)) {
-    intro_message(false);
-  }
+  return (buf_is_empty(curbuf)
+          && (curbuf->b_fname == NULL)
+          && (firstwin->w_next == NULL)
+          && (vim_strchr(p_shm, SHM_INTRO) == NULL));
 }
 
 /// Give an introductory message about Vim.
@@ -2726,7 +2725,7 @@ void maybe_intro_message(void)
 /// Or with the ":intro" command (for Sven :-).
 ///
 /// @param colon true for ":intro"
-void intro_message(int colon)
+void intro_message(bool colon)
 {
   static char *(lines[]) = {
     N_(NVIM_VERSION_LONG),
@@ -2760,11 +2759,6 @@ void intro_message(int colon)
     blanklines = 0;
   }
 
-  // Show the sponsor and register message one out of four times, the Uganda
-  // message two out of four times.
-  int sponsor = (int)time(NULL);
-  sponsor = ((sponsor & 2) == 0) - ((sponsor & 4) == 0);
-
   // start displaying the message lines after half of the blank lines
   int row = blanklines / 2;
 
@@ -2782,16 +2776,6 @@ void intro_message(int colon)
         mesg = xmallocz((size_t)mesg_size);
         snprintf(mesg, (size_t)mesg_size + 1, p,
                  STR(NVIM_VERSION_MAJOR), STR(NVIM_VERSION_MINOR));
-      } else if (sponsor != 0) {
-        if (strstr(p, "children") != NULL) {
-          p = sponsor < 0
-              ? N_("Sponsor Vim development!")
-              : N_("Become a registered Vim user!");
-        } else if (strstr(p, "iccf") != NULL) {
-          p = sponsor < 0
-              ? N_("type  :help sponsor<Enter>    for information ")
-              : N_("type  :help register<Enter>   for information ");
-        }
       }
 
       if (mesg == NULL) {
@@ -2803,7 +2787,7 @@ void intro_message(int colon)
       }
 
       if (*mesg != NUL) {
-        do_intro_line(row, mesg, 0);
+        do_intro_line(row, mesg, colon);
       }
       row++;
 
@@ -2814,7 +2798,7 @@ void intro_message(int colon)
   }
 }
 
-static void do_intro_line(int row, char *mesg, int attr)
+static void do_intro_line(int row, char *mesg, bool colon)
 {
   int l;
 
@@ -2827,7 +2811,12 @@ static void do_intro_line(int row, char *mesg, int attr)
     col = 0;
   }
 
-  grid_line_start(&default_grid, row);
+  ScreenGrid *grid = &default_grid;
+  if (!colon && ui_has(kUIMultigrid)) {
+    grid = &firstwin->w_grid;
+  }
+
+  grid_line_start(grid, row);
   // Split up in parts to highlight <> items differently.
   for (char *p = mesg; *p != NUL; p += l) {
     for (l = 0;
@@ -2836,7 +2825,7 @@ static void do_intro_line(int row, char *mesg, int attr)
       l += utfc_ptr2len(p + l) - 1;
     }
     assert(row <= INT_MAX && col <= INT_MAX);
-    col += grid_line_puts(col, p, l, *p == '<' ? HL_ATTR(HLF_8) : attr);
+    col += grid_line_puts(col, p, l, *p == '<' ? HL_ATTR(HLF_8) : 0);
   }
   grid_line_flush();
 }

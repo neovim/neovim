@@ -73,7 +73,7 @@ typedef struct {
   int col;                   ///< visual column on screen, after wrapping
   int boguscols;             ///< nonexistent columns added to "col" to force wrapping
   int old_boguscols;         ///< bogus boguscols
-  int vcol_off;              ///< offset for concealed characters
+  int vcol_off_co;           ///< offset for concealed characters
 
   int off;                   ///< offset relative start of line
 
@@ -288,26 +288,23 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
     if (item->draw_col < 0) {
       continue;
     }
-    int col = 0;
     if (item->kind == kDecorKindUIWatched) {
       // send mark position to UI
-      col = item->draw_col;
-      WinExtmark m = { (NS)item->data.ui.ns_id, item->data.ui.mark_id, win_row, col };
+      WinExtmark m = { (NS)item->data.ui.ns_id, item->data.ui.mark_id, win_row, item->draw_col };
       kv_push(win_extmark_arr, m);
     }
     if (vt) {
       int vcol = item->draw_col - col_off;
-      col = draw_virt_text_item(buf, item->draw_col, vt->data.virt_text,
-                                vt->hl_mode, max_col, vcol);
+      int col = draw_virt_text_item(buf, item->draw_col, vt->data.virt_text,
+                                    vt->hl_mode, max_col, vcol);
       if (vt->pos == kVPosEndOfLine && do_eol) {
         state->eol_col = col + 1;
       }
+      *end_col = MAX(*end_col, col);
     }
     if (!vt || !(vt->flags & kVTRepeatLinebreak)) {
       item->draw_col = INT_MIN;  // deactivate
     }
-
-    *end_col = MAX(*end_col, col);
   }
 }
 
@@ -581,7 +578,7 @@ static void draw_lnum_col(win_T *wp, winlinevars_T *wlv, int sign_num_attr, int 
 }
 
 /// Build and draw the 'statuscolumn' string for line "lnum" in window "wp".
-static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int virtnum,
+static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int virtnum, int col_rows,
                            statuscol_T *stcp)
 {
   // When called for the first non-filler row of line "lnum" set num v:vars
@@ -597,9 +594,14 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int vir
     int width = build_statuscol_str(wp, wp->w_nrwidth_line_count, 0, buf, stcp);
     if (width > stcp->width) {
       int addwidth = MIN(width - stcp->width, MAX_STCWIDTH - stcp->width);
-      stcp->width += addwidth;
       wp->w_nrwidth += addwidth;
       wp->w_nrwidth_width = wp->w_nrwidth;
+      if (col_rows > 0) {
+        // If only column is being redrawn, we now need to redraw the text as well
+        wp->w_redr_statuscol = true;
+        return;
+      }
+      stcp->width += addwidth;
       wp->w_valid &= ~VALID_WCOL;
     }
   }
@@ -848,43 +850,6 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
   }
 }
 
-static colnr_T get_trailcol(win_T *wp, const char *ptr, const char *line)
-{
-  colnr_T trailcol = MAXCOL;
-  // find start of trailing whitespace
-  if (wp->w_p_lcs_chars.trail) {
-    trailcol = (colnr_T)strlen(ptr);
-    while (trailcol > 0 && ascii_iswhite(ptr[trailcol - 1])) {
-      trailcol--;
-    }
-    trailcol += (colnr_T)(ptr - line);
-  }
-
-  return trailcol;
-}
-
-static colnr_T get_leadcol(win_T *wp, const char *ptr, const char *line)
-{
-  colnr_T leadcol = 0;
-
-  // find end of leading whitespace
-  if (wp->w_p_lcs_chars.lead || wp->w_p_lcs_chars.leadmultispace != NULL) {
-    leadcol = 0;
-    while (ascii_iswhite(ptr[leadcol])) {
-      leadcol++;
-    }
-    if (ptr[leadcol] == NUL) {
-      // in a line full of spaces all of them are treated as trailing
-      leadcol = 0;
-    } else {
-      // keep track of the first column not filled with spaces
-      leadcol += (colnr_T)(ptr - line + 1);
-    }
-  }
-
-  return leadcol;
-}
-
 /// Start a screen line at column zero.
 static void win_line_start(win_T *wp, winlinevars_T *wlv)
 {
@@ -893,16 +858,16 @@ static void win_line_start(win_T *wp, winlinevars_T *wlv)
   wlv->need_lbr = false;
   for (int i = 0; i < wp->w_grid.cols; i++) {
     linebuf_char[i] = schar_from_ascii(' ');
-    linebuf_attr[i] = -1;
+    linebuf_attr[i] = 0;
     linebuf_vcol[i] = -1;
   }
 }
 
 static void fix_for_boguscols(winlinevars_T *wlv)
 {
-  wlv->n_extra += wlv->vcol_off;
-  wlv->vcol -= wlv->vcol_off;
-  wlv->vcol_off = 0;
+  wlv->n_extra += wlv->vcol_off_co;
+  wlv->vcol -= wlv->vcol_off_co;
+  wlv->vcol_off_co = 0;
   wlv->col -= wlv->boguscols;
   wlv->old_boguscols = wlv->boguscols;
   wlv->boguscols = 0;
@@ -1022,7 +987,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   int conceal_attr = win_hl_attr(wp, HLF_CONCEAL);
   bool is_concealing = false;
   bool did_wcol = false;
-#define vcol_hlc(wlv) ((wlv).vcol - (wlv).vcol_off)
+#define vcol_hlc(wlv) ((wlv).vcol - (wlv).vcol_off_co)
 
   assert(startrow < endrow);
 
@@ -1296,17 +1261,17 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       nextlinecol = MAXCOL;
       nextline_idx = 0;
     } else {
-      const size_t line_len = strlen(line);
+      const colnr_T line_len = ml_get_buf_len(wp->w_buffer, lnum);
       if (line_len < SPWORDLEN) {
         // Short line, use it completely and append the start of the
         // next line.
         nextlinecol = 0;
-        memmove(nextline, line, line_len);
+        memmove(nextline, line, (size_t)line_len);
         STRMOVE(nextline + line_len, nextline + SPWORDLEN);
-        nextline_idx = (int)line_len + 1;
+        nextline_idx = line_len + 1;
       } else {
         // Long line, use only the last SPWORDLEN bytes.
-        nextlinecol = (int)line_len - SPWORDLEN;
+        nextlinecol = line_len - SPWORDLEN;
         memmove(nextline, line + nextlinecol, SPWORDLEN);
         nextline_idx = SPWORDLEN + 1;
       }
@@ -1334,8 +1299,28 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         || wp->w_p_lcs_chars.nbsp) {
       extra_check = true;
     }
-    trailcol = get_trailcol(wp, ptr, line);
-    leadcol = get_leadcol(wp, ptr, line);
+    // find start of trailing whitespace
+    if (wp->w_p_lcs_chars.trail) {
+      trailcol = ml_get_buf_len(wp->w_buffer, lnum);
+      while (trailcol > 0 && ascii_iswhite(ptr[trailcol - 1])) {
+        trailcol--;
+      }
+      trailcol += (colnr_T)(ptr - line);
+    }
+    // find end of leading whitespace
+    if (wp->w_p_lcs_chars.lead || wp->w_p_lcs_chars.leadmultispace != NULL) {
+      leadcol = 0;
+      while (ascii_iswhite(ptr[leadcol])) {
+        leadcol++;
+      }
+      if (ptr[leadcol] == NUL) {
+        // in a line full of spaces all of them are treated as trailing
+        leadcol = 0;
+      } else {
+        // keep track of the first column not filled with spaces
+        leadcol += (colnr_T)(ptr - line + 1);
+      }
+    }
   }
 
   // 'nowrap' or 'wrap' and a single line that doesn't fit: Advance to the
@@ -1391,7 +1376,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     // the end of the line may be before the start of the displayed part.
     if (wlv.vcol < start_col && (wp->w_p_cuc
                                  || wlv.color_cols
-                                 || virtual_active()
+                                 || virtual_active(wp)
                                  || (VIsual_active && wp->w_buffer == curwin->w_buffer))) {
       wlv.vcol = start_col;
     }
@@ -1539,7 +1524,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           statuscol.num_attr = get_line_number_attr(wp, &wlv);
         }
         const int v = (int)(ptr - line);
-        draw_statuscol(wp, &wlv, lnum, wlv.row - startrow - wlv.filler_lines, &statuscol);
+        draw_statuscol(wp, &wlv, lnum, wlv.row - startrow - wlv.filler_lines, col_rows, &statuscol);
         if (wp->w_redr_statuscol) {
           break;
         }
@@ -1564,7 +1549,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
       // When only updating the columns and that's done, stop here.
       if (col_rows > 0) {
-        win_put_linebuf(wp, wlv.row, 0, wlv.off, wlv.off, bg_attr, false);
+        wlv_put_linebuf(wp, &wlv, wlv.off, false, bg_attr, 0);
         // Need to update more screen lines if:
         // - 'statuscolumn' needs to be drawn, or
         // - LineNrAbove or LineNrBelow is used, or
@@ -1611,7 +1596,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       }
     }
 
-    if (cul_screenline && wlv.vcol >= left_curline_col && wlv.vcol < right_curline_col) {
+    if (cul_screenline && wlv.filler_todo <= 0
+        && wlv.vcol >= left_curline_col && wlv.vcol < right_curline_col) {
       apply_cursorline_highlight(wp, &wlv);
     }
 
@@ -1620,7 +1606,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         && lnum == wp->w_cursor.lnum && wlv.vcol >= wp->w_virtcol) {
       draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
       // don't clear anything after wlv.col
-      win_put_linebuf(wp, wlv.row, 0, wlv.col, wlv.col, bg_attr, false);
+      wlv_put_linebuf(wp, &wlv, wlv.col, false, bg_attr, 0);
       // Pretend we have finished updating the window.  Except when
       // 'cursorcolumn' is set.
       if (wp->w_p_cuc) {
@@ -1638,7 +1624,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     }
 
     int extmark_attr = 0;
-    if (area_highlighting || spv->spv_has_spell || extra_check) {
+    if (wlv.filler_todo <= 0
+        && (area_highlighting || spv->spv_has_spell || extra_check)) {
       if (wlv.n_extra == 0 || !wlv.extra_for_extmark) {
         wlv.reset_extra_attr = false;
       }
@@ -1669,11 +1656,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           }
           decor_need_recheck = false;
         }
-        if (wlv.filler_todo <= 0) {
-          extmark_attr = decor_redraw_col(wp, (colnr_T)(ptr - line),
-                                          may_have_inline_virt ? -3 : wlv.off,
-                                          selected, &decor_state);
-        }
+        extmark_attr = decor_redraw_col(wp, (colnr_T)(ptr - line),
+                                        may_have_inline_virt ? -3 : wlv.off,
+                                        selected, &decor_state);
         if (may_have_inline_virt) {
           handle_inline_virtual_text(wp, &wlv, ptr - line, selected);
           if (wlv.n_extra > 0 && wlv.virt_inline_hl_mode <= kHlModeReplace) {
@@ -2231,9 +2216,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           } else {
             int saved_nextra = wlv.n_extra;
 
-            if (wlv.vcol_off > 0) {
+            if (wlv.vcol_off_co > 0) {
               // there are characters to conceal
-              tab_len += wlv.vcol_off;
+              tab_len += wlv.vcol_off_co;
             }
             // boguscols before fix_for_boguscols() from above.
             if (wp->w_p_lcs_chars.tab1 && wlv.old_boguscols > 0
@@ -2275,27 +2260,27 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
               }
 
               // n_extra will be increased by fix_for_boguscols()
-              // macro below, so need to adjust for that here
-              if (wlv.vcol_off > 0) {
-                wlv.n_extra -= wlv.vcol_off;
+              // below, so need to adjust for that here
+              if (wlv.vcol_off_co > 0) {
+                wlv.n_extra -= wlv.vcol_off_co;
               }
             }
           }
 
           {
-            int vc_saved = wlv.vcol_off;
+            int vc_saved = wlv.vcol_off_co;
 
             // Tab alignment should be identical regardless of
             // 'conceallevel' value. So tab compensates of all
             // previous concealed characters, and thus resets
-            // vcol_off and boguscols accumulated so far in the
+            // vcol_off_co and boguscols accumulated so far in the
             // line. Note that the tab can be longer than
             // 'tabstop' when there are concealed characters.
             fix_for_boguscols(&wlv);
 
             // Make sure, the highlighting for the tab char will be
             // correctly set further below (effectively reverts the
-            // FIX_FOR_BOGSUCOLS macro).
+            // fix_for_boguscols() call).
             if (wlv.n_extra == tab_len + vc_saved && wp->w_p_list
                 && wp->w_p_lcs_chars.tab1) {
               tab_len += vc_saved;
@@ -2337,7 +2322,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
               && wlv.line_attr == 0
               && wlv.line_attr_lowprio == 0) {
             // In virtualedit, visual selections may extend beyond end of line
-            if (!(area_highlighting && virtual_active()
+            if (!(area_highlighting && virtual_active(wp)
                   && wlv.tocol != MAXCOL && wlv.vcol < wlv.tocol)) {
               wlv.p_extra = "";
             }
@@ -2380,7 +2365,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           mb_schar = schar_from_ascii(mb_c);
         } else if (VIsual_active
                    && (VIsual_mode == Ctrl_V || VIsual_mode == 'v')
-                   && virtual_active()
+                   && virtual_active(wp)
                    && wlv.tocol != MAXCOL
                    && wlv.vcol < wlv.tocol
                    && wlv.col < grid->cols) {
@@ -2418,12 +2403,19 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           } else {
             mb_schar = schar_from_ascii(' ');
           }
+
+          if (utf_char2cells(mb_c) > 1) {
+            // When the first char to be concealed is double-width,
+            // need to advance one more virtual column.
+            wlv.n_extra++;
+          }
+
           mb_c = schar_get_first_codepoint(mb_schar);
 
           prev_syntax_id = syntax_seqnr;
 
           if (wlv.n_extra > 0) {
-            wlv.vcol_off += wlv.n_extra;
+            wlv.vcol_off_co += wlv.n_extra;
           }
           wlv.vcol += wlv.n_extra;
           if (is_wrapped && wlv.n_extra > 0) {
@@ -2449,11 +2441,17 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
     // In the cursor line and we may be concealing characters: correct
     // the cursor column when we reach its position.
-    if (!did_wcol
+    // With 'virtualedit' we may never reach cursor position, but we still
+    // need to correct the cursor column, so do that at end of line.
+    if (!did_wcol && wlv.filler_todo <= 0
         && wp == curwin && lnum == wp->w_cursor.lnum
         && conceal_cursor_line(wp)
-        && (int)wp->w_virtcol <= wlv.vcol + wlv.skip_cells) {
+        && (wlv.vcol + wlv.skip_cells >= wp->w_virtcol || mb_schar == NUL)) {
       wp->w_wcol = wlv.col - wlv.boguscols;
+      if (wlv.vcol + wlv.skip_cells < wp->w_virtcol) {
+        // Cursor beyond end of the line with 'virtualedit'.
+        wp->w_wcol += wp->w_virtcol - wlv.vcol - wlv.skip_cells;
+      }
       wp->w_wrow = wlv.row;
       did_wcol = true;
       wp->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
@@ -2541,7 +2539,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
                              : wlv.char_attr;
 
         linebuf_attr[wlv.off] = eol_attr;
-        linebuf_vcol[wlv.off] = MAXCOL;
+        linebuf_vcol[wlv.off] = wlv.vcol;
         wlv.col++;
         wlv.off++;
         wlv.vcol++;
@@ -2564,13 +2562,16 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
       advance_color_col(&wlv, vcol_hlc(wlv));
 
-      bool has_virttext = false;
       // Make sure alignment is the same regardless
       // if listchars=eol:X is used or not.
       const int eol_skip = (lcs_eol_todo && eol_hl_off == 0 ? 1 : 0);
 
       if (has_decor) {
-        has_virttext = decor_redraw_eol(wp, &decor_state, &wlv.line_attr, wlv.col + eol_skip);
+        decor_redraw_eol(wp, &decor_state, &wlv.line_attr, wlv.col + eol_skip);
+      }
+
+      for (int i = wlv.col; i < grid->cols; i++) {
+        linebuf_vcol[wlv.off + (i - wlv.col)] = wlv.vcol + (i - wlv.col);
       }
 
       if (((wp->w_p_cuc
@@ -2578,7 +2579,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
             && wp->w_virtcol < grid->cols * (ptrdiff_t)(wlv.row - startrow + 1) + start_col
             && lnum != wp->w_cursor.lnum)
            || wlv.color_cols || wlv.line_attr_lowprio || wlv.line_attr
-           || wlv.diff_hlf != 0 || has_virttext)) {
+           || wlv.diff_hlf != 0 || wp->w_buffer->terminal)) {
         int rightmost_vcol = get_rightmost_vcol(wp, wlv.color_cols);
         const int cuc_attr = win_hl_attr(wp, HLF_CUC);
         const int mc_attr = win_hl_attr(wp, HLF_MC);
@@ -2592,47 +2593,40 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
                               : 0;
 
         const int base_attr = hl_combine_attr(wlv.line_attr_lowprio, diff_attr);
-        if (base_attr || wlv.line_attr || has_virttext) {
+        if (base_attr || wlv.line_attr || wp->w_buffer->terminal) {
           rightmost_vcol = INT_MAX;
         }
 
         while (wlv.col < grid->cols) {
           linebuf_char[wlv.off] = schar_from_ascii(' ');
-          linebuf_vcol[wlv.off] = MAXCOL;
-          wlv.col++;
+
           advance_color_col(&wlv, vcol_hlc(wlv));
 
           int col_attr = base_attr;
 
-          if (wp->w_p_cuc && vcol_hlc(wlv) == wp->w_virtcol) {
-            col_attr = cuc_attr;
+          if (wp->w_p_cuc && vcol_hlc(wlv) == wp->w_virtcol
+              && lnum != wp->w_cursor.lnum) {
+            col_attr = hl_combine_attr(col_attr, cuc_attr);
           } else if (wlv.color_cols && vcol_hlc(wlv) == *wlv.color_cols) {
-            col_attr = hl_combine_attr(wlv.line_attr_lowprio, mc_attr);
+            col_attr = hl_combine_attr(col_attr, mc_attr);
+          }
+
+          if (wp->w_buffer->terminal && wlv.vcol < TERM_ATTRS_MAX) {
+            col_attr = hl_combine_attr(col_attr, term_attrs[wlv.vcol]);
           }
 
           col_attr = hl_combine_attr(col_attr, wlv.line_attr);
 
           linebuf_attr[wlv.off] = col_attr;
+          // linebuf_vcol[] already filled by the for loop above
           wlv.off++;
+          wlv.col++;
 
           if (vcol_hlc(wlv) >= rightmost_vcol) {
             break;
           }
 
-          wlv.vcol += 1;
-        }
-      }
-
-      // TODO(bfredl): integrate with the common beyond-the-end-loop
-      if (wp->w_buffer->terminal) {
-        // terminal buffers may need to highlight beyond the end of the logical line
-        while (wlv.col >= 0 && wlv.col < grid->cols) {
-          linebuf_char[wlv.off] = schar_from_ascii(' ');
-          linebuf_attr[wlv.off] = wlv.vcol >= TERM_ATTRS_MAX ? 0 : term_attrs[wlv.vcol];
-          linebuf_vcol[wlv.off] = wlv.vcol;
-          wlv.off++;
           wlv.vcol++;
-          wlv.col++;
         }
       }
 
@@ -2640,7 +2634,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         draw_virt_text_item(buf, win_col_offset, fold_vt, kHlModeCombine, grid->cols, 0);
       }
       draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
-      win_put_linebuf(wp, wlv.row, 0, wlv.col, grid->cols, bg_attr, false);
+      // Set increasing virtual columns in grid->vcols[] to set correct curswant
+      // (or "coladd" for 'virtualedit') when clicking after end of line.
+      wlv_put_linebuf(wp, &wlv, wlv.col, true, bg_attr, SLF_INC_VCOL);
       wlv.row++;
 
       // Update w_cline_height and w_cline_folded if the cursor line was
@@ -2707,10 +2703,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       }
     }
 
-    // Apply lowest-priority line attr now, so everything can override it.
-    wlv.char_attr = hl_combine_attr(wlv.line_attr_lowprio, wlv.char_attr);
+    if (wlv.filler_todo <= 0) {
+      // Apply lowest-priority line attr now, so everything can override it.
+      wlv.char_attr = hl_combine_attr(wlv.line_attr_lowprio, wlv.char_attr);
+    }
 
-    vcol_prev = wlv.vcol;
+    if (wlv.filler_todo <= 0) {
+      vcol_prev = wlv.vcol;
+    }
 
     // Store character to be displayed.
     // Skip characters that are left of the screen for 'nowrap'.
@@ -2748,11 +2748,21 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       wlv.off++;
       wlv.col++;
     } else if (wp->w_p_cole > 0 && is_concealing) {
+      bool concealed_wide = utf_char2cells(mb_c) > 1;
+
       wlv.skip_cells--;
-      wlv.vcol_off++;
-      if (wlv.n_extra > 0) {
-        wlv.vcol_off += wlv.n_extra;
+      wlv.vcol_off_co++;
+      if (concealed_wide) {
+        // When a double-width char is concealed,
+        // need to advance one more virtual column.
+        wlv.vcol++;
+        wlv.vcol_off_co++;
       }
+
+      if (wlv.n_extra > 0) {
+        wlv.vcol_off_co += wlv.n_extra;
+      }
+
       if (is_wrapped) {
         // Special voodoo required if 'wrap' is on.
         //
@@ -2773,7 +2783,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           wlv.n_attr = 0;
         }
 
-        if (utf_char2cells(mb_c) > 1) {
+        if (concealed_wide) {
           // Need to fill two screen columns.
           wlv.boguscols++;
           wlv.col++;
@@ -2808,7 +2818,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       wlv.char_attr = vcol_save_attr;
     }
 
-    // restore attributes after "predeces" in 'listchars'
+    // restore attributes after "precedes" in 'listchars'
     if (n_attr3 > 0 && --n_attr3 == 0) {
       wlv.char_attr = saved_attr3;
     }
@@ -2850,6 +2860,23 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
                         && !wp->w_p_rl;               // Not right-to-left.
 
       int draw_col = wlv.col - wlv.boguscols;
+
+      for (int i = draw_col; i < grid->cols; i++) {
+        linebuf_vcol[wlv.off + (i - draw_col)] = wlv.vcol - 1;
+      }
+
+      // Apply 'cursorline' highlight.
+      if (wlv.boguscols != 0 && (wlv.line_attr_lowprio != 0 || wlv.line_attr != 0)) {
+        int attr = hl_combine_attr(wlv.line_attr_lowprio, wlv.line_attr);
+        while (draw_col < grid->cols) {
+          linebuf_char[wlv.off] = schar_from_char(' ');
+          linebuf_attr[wlv.off] = attr;
+          // linebuf_vcol[] already filled by the for loop above
+          wlv.off++;
+          draw_col++;
+        }
+      }
+
       if (virt_line_offset >= 0) {
         draw_virt_text_item(buf, virt_line_offset, kv_A(virt_lines, virt_line_index).line,
                             kHlModeReplace, grid->cols, 0);
@@ -2857,7 +2884,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         draw_virt_text(wp, buf, win_col_offset, &draw_col, wlv.row);
       }
 
-      win_put_linebuf(wp, wlv.row, 0, draw_col, grid->cols, bg_attr, wrap);
+      wlv_put_linebuf(wp, &wlv, draw_col, true, bg_attr, wrap ? SLF_WRAP : 0);
       if (wrap) {
         ScreenGrid *current_grid = grid;
         int current_row = wlv.row;
@@ -2869,7 +2896,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       }
 
       wlv.boguscols = 0;
-      wlv.vcol_off = 0;
+      wlv.vcol_off_co = 0;
       wlv.row++;
 
       // When not wrapping and finished diff lines, break here.
@@ -2917,19 +2944,28 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   return wlv.row;
 }
 
-static void win_put_linebuf(win_T *wp, int row, int coloff, int endcol, int clear_width,
-                            int bg_attr, bool wrap)
+/// Call grid_put_linebuf() using values from "wlv".
+/// Also takes care of putting "<<<" on the first line for 'smoothscroll'
+/// when 'showbreak' is not set.
+///
+/// @param clear_end  clear until the end of the screen line.
+/// @param flags  for grid_put_linebuf(), but shouldn't contain SLF_RIGHTLEFT.
+static void wlv_put_linebuf(win_T *wp, const winlinevars_T *wlv, int endcol, bool clear_end,
+                            int bg_attr, int flags)
 {
   ScreenGrid *grid = &wp->w_grid;
 
-  int start_col = 0;
+  int startcol = 0;
+  int clear_width = clear_end ? grid->cols : endcol;
 
+  assert(!(flags & SLF_RIGHTLEFT));
   if (wp->w_p_rl) {
-    linebuf_mirror(&start_col, &endcol, &clear_width, grid->cols);
+    linebuf_mirror(&startcol, &endcol, &clear_width, grid->cols);
+    flags |= SLF_RIGHTLEFT;
   }
 
   // Take care of putting "<<<" on the first line for 'smoothscroll'.
-  if (row == 0 && wp->w_skipcol > 0
+  if (wlv->row == 0 && wp->w_skipcol > 0
       // do not overwrite the 'showbreak' text with "<<<"
       && *get_showbreak_value(wp) == NUL
       // do not overwrite the 'listchars' "precedes" text with "<<<"
@@ -2954,6 +2990,8 @@ static void win_put_linebuf(win_T *wp, int row, int coloff, int endcol, int clea
     }
   }
 
+  int row = wlv->row;
+  int coloff = 0;
   grid_adjust(&grid, &row, &coloff);
-  grid_put_linebuf(grid, row, coloff, start_col, endcol, clear_width, wp->w_p_rl, bg_attr, wrap);
+  grid_put_linebuf(grid, row, coloff, startcol, endcol, clear_width, bg_attr, wlv->vcol - 1, flags);
 }

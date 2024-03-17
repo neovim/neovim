@@ -707,13 +707,13 @@ describe('API', function()
 
     it('works', function()
       api.nvim_set_current_dir('Xtestdir')
-      eq(fn.getcwd(), start_dir .. helpers.get_pathsep() .. 'Xtestdir')
+      eq(start_dir .. helpers.get_pathsep() .. 'Xtestdir', fn.getcwd())
     end)
 
     it('sets previous directory', function()
       api.nvim_set_current_dir('Xtestdir')
       command('cd -')
-      eq(fn.getcwd(), start_dir)
+      eq(start_dir, fn.getcwd())
     end)
   end)
 

@@ -549,8 +549,8 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
 
     // Skip lines that end in a backslash.
     for (; start_lnum > 1; start_lnum--) {
-      char *line = ml_get(start_lnum - 1);
-      if (*line == NUL || *(line + strlen(line) - 1) != '\\') {
+      char *l = ml_get(start_lnum - 1);
+      if (*l == NUL || *(l + ml_get_len(start_lnum - 1) - 1) != '\\') {
         break;
       }
     }
@@ -2352,7 +2352,6 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
   regmmatch_T regmatch;
   regmmatch_T best_regmatch;        // startpos/endpos of best match
   lpos_T pos;
-  char *line;
   bool had_match = false;
   char buf_chartab[32];  // chartab array for syn option iskeyword
 
@@ -2457,8 +2456,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
           break;
         }
 
-        line = ml_get_buf(syn_buf, startpos->lnum);
-        int line_len = (int)strlen(line);
+        int line_len = ml_get_buf_len(syn_buf, startpos->lnum);
 
         // take care of an empty match or negative offset
         if (pos.col <= matchcol) {
@@ -2635,7 +2633,7 @@ static void syn_add_start_off(lpos_T *result, regmmatch_T *regmatch, synpat_T *s
   if (result->lnum > syn_buf->b_ml.ml_line_count) {
     // a "\n" at the end of the pattern may take us below the last line
     result->lnum = syn_buf->b_ml.ml_line_count;
-    col = (int)strlen(ml_get_buf(syn_buf, result->lnum));
+    col = ml_get_buf_len(syn_buf, result->lnum);
   }
   if (off != 0) {
     base = ml_get_buf(syn_buf, result->lnum);

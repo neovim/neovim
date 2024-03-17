@@ -431,13 +431,13 @@ local function styletable_treesitter(state)
   end
   buf_highlighter.tree:parse(true)
   buf_highlighter.tree:for_each_tree(function(tstree, tree)
-    --- @cast tree LanguageTree
+    --- @cast tree vim.treesitter.LanguageTree
     if not tstree then
       return
     end
     local root = tstree:root()
     local q = buf_highlighter:get_query(tree:lang())
-    --- @type Query?
+    --- @type vim.treesitter.Query?
     local query = q:query()
     if not query then
       return
@@ -575,7 +575,10 @@ local function styletable_extmarks(state)
   --TODO(altermo) extmarks may have col/row which is outside of the buffer, which could cause an error
   local bufnr = state.bufnr
   local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, -1, 0, -1, { details = true })
-  local namespaces = vim.tbl_add_reverse_lookup(vim.api.nvim_get_namespaces())
+  local namespaces = {} --- @type table<integer, string>
+  for ns, ns_id in pairs(vim.api.nvim_get_namespaces()) do
+    namespaces[ns_id] = ns
+  end
   for _, v in ipairs(extmarks) do
     _styletable_extmarks_highlight(state, v, namespaces)
   end
@@ -906,7 +909,9 @@ local function styletable_listchars(state)
 
   if listchars.nbsp then
     for _, match in
-      ipairs(vim.fn.matchbufline(state.bufnr, '\xe2\x80\xaf\\|\xa0', 1, '$') --[[@as (table[])]])
+      ipairs(
+        vim.fn.matchbufline(state.bufnr, '\226\128\175\\|\194\160', 1, '$') --[[@as (table[])]]
+      )
     do
       style_line_insert_overlay_char(
         state.style[match.lnum],

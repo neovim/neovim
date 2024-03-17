@@ -7,7 +7,7 @@ local loaders = package.loaders
 
 local M = {}
 
----@alias CacheHash {mtime: {nsec: integer, sec: integer}, size: integer, type?: uv.aliases.fs_stat_types}
+---@alias CacheHash {mtime: {nsec: integer, sec: integer}, size: integer, type?: string}
 ---@alias CacheEntry {hash:CacheHash, chunk:string}
 
 --- @class vim.loader.find.Opts

@@ -61,20 +61,55 @@ describe('matchparen', function()
       set hidden
       call setline(1, ['()'])
       normal 0
+
+      func OtherBuffer()
+         enew
+         exe "normal iaa\<Esc>0"
+      endfunc
     ]])
     screen:expect(screen1)
+
+    exec('call OtherBuffer()')
+    screen:expect(screen2)
+
+    feed('<C-^>')
+    screen:expect(screen1)
+
+    feed('<C-^>')
+    screen:expect(screen2)
+  end)
+
+  -- oldtest: Test_matchparen_win_execute()
+  it('matchparen highlight when switching buffer in win_execute()', function()
+    local screen = Screen.new(20, 5)
+    screen:set_default_attr_ids({
+      [1] = { background = Screen.colors.Cyan },
+      [2] = { reverse = true, bold = true },
+      [3] = { reverse = true },
+    })
+    screen:attach()
 
     exec([[
-      enew
-      exe "normal iaa\<Esc>0"
+      source $VIMRUNTIME/plugin/matchparen.vim
+      let s:win = win_getid()
+      call setline(1, '{}')
+      split
+
+      func SwitchBuf()
+        call win_execute(s:win, 'enew | buffer #')
+      endfunc
     ]])
-    screen:expect(screen2)
+    screen:expect([[
+      {1:^{}}                  |
+      {2:[No Name] [+]       }|
+      {}                  |
+      {3:[No Name] [+]       }|
+                          |
+    ]])
 
-    feed('<C-^>')
-    screen:expect(screen1)
-
-    feed('<C-^>')
-    screen:expect(screen2)
+    -- Switching buffer away and back shouldn't change matchparen highlight.
+    exec('call SwitchBuf()')
+    screen:expect_unchanged()
   end)
 
   -- oldtest: Test_matchparen_pum_clear()

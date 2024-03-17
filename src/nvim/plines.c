@@ -540,7 +540,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
     if (ci.chr.value == TAB
         && (State & MODE_NORMAL)
         && !wp->w_p_list
-        && !virtual_active()
+        && !virtual_active(wp)
         && !(VIsual_active && ((*p_sel == 'e') || ltoreq(*pos, VIsual)))) {
       // cursor at end
       *cursor = vcol + incr - 1;
@@ -583,7 +583,7 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *e
 {
   colnr_T col;
 
-  if (virtual_active()) {
+  if (virtual_active(wp)) {
     // For virtual mode, only want one value
     getvcol(wp, pos, &col, NULL, NULL);
 
@@ -593,7 +593,7 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *e
     // Cannot put the cursor on part of a wide character.
     char *ptr = ml_get_buf(wp->w_buffer, pos->lnum);
 
-    if (pos->col < (colnr_T)strlen(ptr)) {
+    if (pos->col < ml_get_buf_len(wp->w_buffer, pos->lnum)) {
       int c = utf_ptr2char(ptr + pos->col);
       if ((c != TAB) && vim_isprintc(c)) {
         endadd = (colnr_T)(char2cells(c) - 1);
@@ -902,7 +902,7 @@ int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_
 
   if (start_vcol >= 0) {
     linenr_T lnum_next = lnum;
-    const bool folded = hasFoldingWin(wp, lnum, &lnum, &lnum_next, true, NULL);
+    const bool folded = hasFolding(wp, lnum, &lnum, &lnum_next);
     height_cur_nofill = folded ? 1 : plines_win_nofill(wp, lnum, false);
     height_sum_nofill += height_cur_nofill;
     const int64_t row_off = (start_vcol < width1 || width2 <= 0)
@@ -914,7 +914,7 @@ int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_
 
   while (lnum <= end_lnum) {
     linenr_T lnum_next = lnum;
-    const bool folded = hasFoldingWin(wp, lnum, &lnum, &lnum_next, true, NULL);
+    const bool folded = hasFolding(wp, lnum, &lnum, &lnum_next);
     height_sum_fill += win_get_fill(wp, lnum);
     height_cur_nofill = folded ? 1 : plines_win_nofill(wp, lnum, false);
     height_sum_nofill += height_cur_nofill;

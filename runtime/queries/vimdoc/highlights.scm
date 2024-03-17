@@ -12,21 +12,30 @@
 
 (tag
   "*" @markup.heading.5.marker
-  (#set! conceal "")
-  text: (_) @label)
+  .
+  text: (_) @label
+  .
+  "*" @markup.heading.5.marker
+  (#set! @markup.heading.5.marker conceal ""))
 
 (taglink
-  "|" @markup.link
-  (#set! conceal "")
-  text: (_) @markup.link)
+  "|" @markup.link.delimiter
+  .
+  text: (_) @markup.link
+  .
+  "|" @markup.link.delimiter
+  (#set! @markup.link.delimiter conceal ""))
 
 (optionlink
   text: (_) @markup.link)
 
 (codespan
   "`" @markup.raw.delimiter
-  (#set! conceal "")
-  text: (_) @markup.raw)
+  .
+  text: (_) @markup.raw
+  .
+  "`" @markup.raw.delimiter
+  (#set! @markup.raw.delimiter conceal ""))
 
 ((codeblock) @markup.raw.block
   (#set! "priority" 90))

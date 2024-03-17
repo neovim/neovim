@@ -259,7 +259,7 @@ put('version')
 fixdict(1 + #version)
 for _, item in ipairs(version) do
   -- NB: all items are mandatory. But any error will be less confusing
-  -- with placholder vim.NIL (than invalid mpack data)
+  -- with placeholder vim.NIL (than invalid mpack data)
   put(item[1], item[2] or vim.NIL)
 end
 put('build', version_build)
@@ -307,7 +307,6 @@ output:write([[
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/map_defs.h"
-#include "nvim/msgpack_rpc/helpers.h"
 
 #include "nvim/api/autocmd.h"
 #include "nvim/api/buffer.h"

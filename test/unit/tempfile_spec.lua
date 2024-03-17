@@ -28,7 +28,7 @@ describe('tempfile related functions', function()
       assert.True(dir ~= nil and dir:len() > 0)
       -- os_file_is_writable returns 2 for a directory which we have rights
       -- to write into.
-      eq(lib.os_file_is_writable(helpers.to_cstr(dir)), 2)
+      eq(2, lib.os_file_is_writable(helpers.to_cstr(dir)))
       for entry in vim.fs.dir(dir) do
         assert.True(entry == '.' or entry == '..')
       end
@@ -57,7 +57,7 @@ describe('tempfile related functions', function()
     itp('generate file name in Nvim own temp directory', function()
       local dir = vim_gettempdir()
       local file = vim_tempname()
-      eq(string.sub(file, 1, string.len(dir)), dir)
+      eq(dir, string.sub(file, 1, string.len(dir)))
     end)
   end)
 end)

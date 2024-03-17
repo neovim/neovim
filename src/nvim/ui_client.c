@@ -62,6 +62,9 @@ uint64_t ui_client_start_server(int argc, char **argv)
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
                                        false, true, true, false, kChannelStdinPipe,
                                        NULL, 0, 0, NULL, &exit_status);
+  if (!channel) {
+    return 0;
+  }
 
   // If stdin is not a pty, it is forwarded to the client.
   // Replace stdin in the TUI process with the tty fd.

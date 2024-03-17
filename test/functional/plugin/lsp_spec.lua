@@ -641,11 +641,11 @@ describe('LSP', function()
         vim.lsp.stop_client(client_id)
         return server.messages
       ]])
-      eq(#messages, 4)
-      eq(messages[1].method, 'initialize')
-      eq(messages[2].method, 'initialized')
-      eq(messages[3].method, 'shutdown')
-      eq(messages[4].method, 'exit')
+      eq(4, #messages)
+      eq('initialize', messages[1].method)
+      eq('initialized', messages[2].method)
+      eq('shutdown', messages[3].method)
+      eq('exit', messages[4].method)
     end)
 
     it('BufWritePre sends willSave / willSaveWaitUntil, applies textEdits', function()
@@ -4221,7 +4221,7 @@ describe('LSP', function()
         server:shutdown()
         return vim.json.decode(init)
       ]]
-      eq(result.method, 'initialize')
+      eq('initialize', result.method)
     end)
     it('can connect to lsp server via rpc.domain_socket_connect', function()
       local tmpfile
@@ -4257,7 +4257,7 @@ describe('LSP', function()
       ]],
         tmpfile
       )
-      eq(result.method, 'initialize')
+      eq('initialize', result.method)
     end)
   end)
 

@@ -1116,7 +1116,7 @@ void ex_retab(exarg_T *eap)
     }
     xfree(new_ts_str);
   }
-  coladvance(curwin->w_curswant);
+  coladvance(curwin, curwin->w_curswant);
 
   u_clearline(curbuf);
 }
@@ -1160,7 +1160,7 @@ int get_expr_indent(void)
   curwin->w_cursor = save_pos;
   curwin->w_curswant = save_curswant;
   curwin->w_set_curswant = save_set_curswant;
-  check_cursor();
+  check_cursor(curwin);
   State = save_State;
 
   // Reset did_throw, unless 'debug' has "throw" and inside a try/catch.

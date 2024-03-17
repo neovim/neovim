@@ -360,7 +360,7 @@ Fiix the errors oon thhis line and reeplace them witth undo.
 
  7. To undo previous actions, type:            `u`{normal}  (lowercase u)
     To undo all the changes on a line, type:   `U`{normal}  (capital U)
-    To undo the undo's, type:                  `<C-r>`{normal}
+    To undo the undos, type:                   `<C-r>`{normal}
 
 # Lesson 3.1: THE PUT COMMAND
 
@@ -508,7 +508,7 @@ NOTE: When the search reaches the end of the file it will continue at the
 
 # Lesson 4.3: MATCHING PARENTHESES SEARCH
 
-** Type `%`{normal} to find a matching ),], or }. **
+** Type `%`{normal} to find a matching ), ], or }. **
 
  1. Place the cursor on any (, [, or { in the line below marked ✓.
 
@@ -518,9 +518,9 @@ NOTE: When the search reaches the end of the file it will continue at the
 
  4. Type `%`{normal} to move the cursor to the other matching bracket.
 
- 5. Move the cursor to another (,),[,],{ or } and see what `%`{normal} does.
+ 5. Move the cursor to another (, ), [, ], {, or } and see what `%`{normal} does.
 
-This ( is a test line with ('s, ['s ] and {'s } in it. ))
+This ( is a test line with ('s, ['s, ] and {'s } in it. ))
 
 NOTE: This is very useful in debugging a program with unmatched parentheses!
 
@@ -582,14 +582,14 @@ NOTE: You can also select the lines you want to substitute first using visual-mo
     `<C-o>`{normal} takes you back to older positions, `<C-i>`{normal} to
     newer positions.
 
- 3. Typing `%`{normal} while the cursor is on a (,),[,],{, or } goes to its
+ 3. Typing `%`{normal} while the cursor is on a (, ), [, ], {, or } goes to its
     match.
 
  4. To substitute new for the first old in a line type
 ~~~ cmd
         :s/old/new
 ~~~
-    To substitute new for all 'old's on a line type
+    To substitute new for all olds on a line type
 ~~~ cmd
         :s/old/new/g
 ~~~
@@ -667,7 +667,7 @@ NOTE: If you were to exit Neovim and start it again with `nvim TEST`, the file
 
  4. Type
 
-        `:w TEST`{vim}
+        `w TEST`{vim}
 
     where TEST is a filename that does not exist yet. Verify that you see
 
@@ -762,7 +762,7 @@ Open up a line above this by typing O while the cursor is on this line.
 This li will allow you to pract appendi text to a line.
 This line will allow you to practice appending text to a line.
 
-NOTE: [a](a), [i](i) and [A](A) all go to the same Insert mode, the only
+NOTE: [a](a), [i](i), and [A](A) all go to the same Insert mode, the only
       difference is where the characters are inserted.
 
 # Lesson 6.3: ANOTHER WAY TO REPLACE

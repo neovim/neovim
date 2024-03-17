@@ -12,8 +12,8 @@ on:
       - '.github/**'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   BIN_DIR: ${{ github.workspace }}/bin

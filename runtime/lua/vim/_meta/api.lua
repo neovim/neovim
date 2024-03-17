@@ -530,7 +530,7 @@ function vim.api.nvim_buf_line_count(buffer) end
 ---               EOL of a line, continue the highlight for the rest of the
 ---               screen line (just like for diff and cursorline highlight).
 ---             • virt_text : virtual text to link to this mark. A list of
----               [text, highlight] tuples, each representing a text chunk
+---               `[text, highlight]` tuples, each representing a text chunk
 ---               with specified highlight. `highlight` element can either be
 ---               a single highlight group, or an array of multiple highlight
 ---               groups that will be stacked (highest priority last). A
@@ -563,8 +563,8 @@ function vim.api.nvim_buf_line_count(buffer) end
 ---                 for "inline" virt_text.
 ---             • virt_lines : virtual lines to add next to this mark This
 ---               should be an array over lines, where each line in turn is an
----               array over [text, highlight] tuples. In general, buffer and
----               window options do not affect the display of the text. In
+---               array over `[text, highlight]` tuples. In general, buffer
+---               and window options do not affect the display of the text. In
 ---               particular 'wrap' and 'linebreak' options do not take
 ---               effect, so the number of extra screen lines will always
 ---               match the size of the array. However the 'tabstop' buffer
@@ -690,9 +690,9 @@ function vim.api.nvim_buf_set_option(buffer, name, value) end
 --- Indexing is zero-based. Row indices are end-inclusive, and column indices
 --- are end-exclusive.
 ---
---- To insert text at a given `(row, column)` location, use `start_row =
---- end_row = row` and `start_col = end_col = col`. To delete the text in a
---- range, use `replacement = {}`.
+--- To insert text at a given `(row, column)` location, use
+--- `start_row = end_row = row` and `start_col = end_col = col`. To delete the
+--- text in a range, use `replacement = {}`.
 ---
 --- Prefer `nvim_buf_set_lines()` if you are only adding or deleting entire
 --- lines.
@@ -903,9 +903,9 @@ function vim.api.nvim_create_augroup(name, opts) end
 ---               • event: (string) name of the triggered event
 ---                 `autocmd-events`
 ---               • group: (number|nil) autocommand group id, if any
----               • match: (string) expanded value of `<amatch>`
----               • buf: (number) expanded value of `<abuf>`
----               • file: (string) expanded value of `<afile>`
+---               • match: (string) expanded value of <amatch>
+---               • buf: (number) expanded value of <abuf>
+---               • file: (string) expanded value of <afile>
 ---               • data: (any) arbitrary data passed from
 ---                 `nvim_exec_autocmds()`
 ---             • command (string) optional: Vim command to execute on event.
@@ -960,22 +960,21 @@ function vim.api.nvim_create_namespace(name) end
 ---                argument that contains the following keys:
 ---                • name: (string) Command name
 ---                • args: (string) The args passed to the command, if any
----                  `<args>`
+---                  <args>
 ---                • fargs: (table) The args split by unescaped whitespace
----                  (when more than one argument is allowed), if any
----                  `<f-args>`
+---                  (when more than one argument is allowed), if any <f-args>
 ---                • nargs: (string) Number of arguments `:command-nargs`
 ---                • bang: (boolean) "true" if the command was executed with a
----                  ! modifier `<bang>`
+---                  ! modifier <bang>
 ---                • line1: (number) The starting line of the command range
----                  `<line1>`
+---                  <line1>
 ---                • line2: (number) The final line of the command range
----                  `<line2>`
+---                  <line2>
 ---                • range: (number) The number of items in the command range:
----                  0, 1, or 2 `<range>`
----                • count: (number) Any count supplied `<count>`
----                • reg: (string) The optional register, if specified `<reg>`
----                • mods: (string) Command modifiers, if any `<mods>`
+---                  0, 1, or 2 <range>
+---                • count: (number) Any count supplied <count>
+---                • reg: (string) The optional register, if specified <reg>
+---                • mods: (string) Command modifiers, if any <mods>
 ---                • smods: (table) Command modifiers in a structured format.
 ---                  Has the same structure as the "mods" key of
 ---                  `nvim_parse_cmd()`.
@@ -1049,9 +1048,9 @@ function vim.api.nvim_del_var(name) end
 
 --- Echo a message.
 ---
---- @param chunks any[] A list of [text, hl_group] arrays, each representing a text
----               chunk with specified highlight. `hl_group` element can be
----               omitted for no highlight.
+--- @param chunks any[] A list of `[text, hl_group]` arrays, each representing a
+---               text chunk with specified highlight. `hl_group` element can
+---               be omitted for no highlight.
 --- @param history boolean if true, add to `message-history`.
 --- @param opts vim.api.keyset.echo_opts Optional parameters.
 ---             • verbose: Message was printed as a result of 'verbose' option
@@ -1134,7 +1133,7 @@ function vim.api.nvim_exec2(src, opts) end
 ---             • buffer (integer) optional: buffer number `autocmd-buflocal`.
 ---               Cannot be used with {pattern}.
 ---             • modeline (bool) optional: defaults to true. Process the
----               modeline after the autocommands `<nomodeline>`.
+---               modeline after the autocommands <nomodeline>.
 ---             • data (any): arbitrary data to send to the autocommand
 ---               callback. See `nvim_create_autocmd()` for details.
 function vim.api.nvim_exec_autocmds(event, opts) end
@@ -1541,7 +1540,7 @@ function vim.api.nvim_notify(msg, log_level, opts) end
 ---               be to the pty master end. For instance, a carriage return is
 ---               sent as a "\r", not as a "\n". `textlock` applies. It is
 ---               possible to call `nvim_chan_send()` directly in the callback
----               however. ["input", term, bufnr, data]
+---               however. `["input", term, bufnr, data]`
 ---             • force_crlf: (boolean, default true) Convert "\n" to "\r\n".
 --- @return integer
 function vim.api.nvim_open_term(buffer, opts) end
@@ -1625,9 +1624,9 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---               • width: Window width (in character cells). Minimum of 1.
 ---               • height: Window height (in character cells). Minimum of 1.
 ---               • bufpos: Places float relative to buffer text (only when
----                 relative="win"). Takes a tuple of zero-indexed [line,
----                 column]. `row` and `col` if given are applied relative to
----                 this position, else they default to:
+---                 relative="win"). Takes a tuple of zero-indexed
+---                 `[line, column]`. `row` and `col` if given are applied
+---                 relative to this position, else they default to:
 ---                 • `row=1` and `col=0` if `anchor` is "NW" or "NE"
 ---                 • `row=0` and `col=0` if `anchor` is "SW" or "SE" (thus
 ---                   like a tooltip near the buffer text).
@@ -1719,9 +1718,9 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---               • footer_pos: Footer position. Must be set with `footer`
 ---                 option. Value can be one of "left", "center", or "right".
 ---                 Default is `"left"`.
----               • noautocmd: If true then no buffer-related autocommand
----                 events such as `BufEnter`, `BufLeave` or `BufWinEnter` may
----                 fire from calling this function.
+---               • noautocmd: If true then autocommands triggered from
+---                 setting the `buffer` to display are blocked (e.g:
+---                 `BufEnter`, `BufLeave`, `BufWinEnter`).
 ---               • fixed: If true when anchor is NW or SW, the float window
 ---                 would be kept fixed even if the window would be truncated.
 ---               • hide: If true the floating window will be hidden.
@@ -1756,8 +1755,8 @@ function vim.api.nvim_parse_cmd(str, opts) end
 ---                operator/space, though also yielding an error).
 ---              • "l" when needing to start parsing with lvalues for ":let"
 ---                or ":for". Common flag sets:
----              • "m" to parse like for ":echo".
----              • "E" to parse like for "<C-r>=".
+---              • "m" to parse like for `":echo"`.
+---              • "E" to parse like for `"<C-r>="`.
 ---              • empty string for ":call".
 ---              • "lm" to parse for ":let".
 --- @param highlight boolean If true, return value will also include "highlight" key
@@ -1887,15 +1886,32 @@ function vim.api.nvim_set_current_win(window) end
 ---
 --- @param ns_id integer Namespace id from `nvim_create_namespace()`
 --- @param opts vim.api.keyset.set_decoration_provider Table of callbacks:
----             • on_start: called first on each screen redraw ["start", tick]
+---             • on_start: called first on each screen redraw
+--- ```
+---                ["start", tick]
+--- ```
+---
 ---             • on_buf: called for each buffer being redrawn (before window
----               callbacks) ["buf", bufnr, tick]
+---               callbacks)
+--- ```
+---                ["buf", bufnr, tick]
+--- ```
+---
 ---             • on_win: called when starting to redraw a specific window.
----               ["win", winid, bufnr, topline, botline]
+--- ```
+---                ["win", winid, bufnr, topline, botline]
+--- ```
+---
 ---             • on_line: called for each buffer line being redrawn. (The
----               interaction with fold lines is subject to change) ["line",
----               winid, bufnr, row]
----             • on_end: called at the end of a redraw cycle ["end", tick]
+---               interaction with fold lines is subject to change)
+--- ```
+---                ["line", winid, bufnr, row]
+--- ```
+---
+---             • on_end: called at the end of a redraw cycle
+--- ```
+---                ["end", tick]
+--- ```
 function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 
 --- Sets a highlight group.
@@ -1955,7 +1971,7 @@ function vim.api.nvim_set_hl_ns_fast(ns_id) end
 --- To set a buffer-local mapping, use `nvim_buf_set_keymap()`.
 ---
 --- Unlike `:map`, leading/trailing whitespace is accepted as part of the
---- {lhs} or {rhs}. Empty {rhs} is `<Nop>`. `keycodes` are replaced as usual.
+--- {lhs} or {rhs}. Empty {rhs} is <Nop>. `keycodes` are replaced as usual.
 ---
 --- Example:
 ---
@@ -1977,7 +1993,7 @@ function vim.api.nvim_set_hl_ns_fast(ns_id) end
 --- @param lhs string Left-hand-side `{lhs}` of the mapping.
 --- @param rhs string Right-hand-side `{rhs}` of the mapping.
 --- @param opts vim.api.keyset.keymap Optional parameters map: Accepts all `:map-arguments` as keys
----             except `<buffer>`, values are booleans (default false). Also:
+---             except <buffer>, values are booleans (default false). Also:
 ---             • "noremap" disables `recursive_mapping`, like `:noremap`
 ---             • "desc" human-readable description.
 ---             • "callback" Lua function called in place of {rhs}.
@@ -2207,11 +2223,11 @@ function vim.api.nvim_win_remove_ns(window, ns_id) end
 --- @param buffer integer Buffer handle
 function vim.api.nvim_win_set_buf(window, buffer) end
 
---- Configures window layout. Currently only for floating and external windows
---- (including changing a split window to those layouts).
+--- Configures window layout. Cannot be used to move the last window in a
+--- tabpage to a different one.
 ---
---- When reconfiguring a floating window, absent option keys will not be
---- changed. `row`/`col` and `relative` must be reconfigured together.
+--- When reconfiguring a window, absent option keys will not be changed.
+--- `row`/`col` and `relative` must be reconfigured together.
 ---
 --- @param window integer Window handle, or 0 for current window
 --- @param config vim.api.keyset.win_config Map defining the window configuration, see `nvim_open_win()`

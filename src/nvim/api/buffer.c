@@ -529,18 +529,18 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
 
   // Another call to ml_get_buf() may free the lines, so we make copies
   char *str_at_start = ml_get_buf(buf, (linenr_T)start_row);
-  size_t len_at_start = strlen(str_at_start);
-  str_at_start = arena_memdupz(arena, str_at_start, len_at_start);
-  start_col = start_col < 0 ? (int64_t)len_at_start + start_col + 1 : start_col;
-  VALIDATE_RANGE((start_col >= 0 && (size_t)start_col <= len_at_start), "start_col", {
+  colnr_T len_at_start = ml_get_buf_len(buf, (linenr_T)start_row);
+  str_at_start = arena_memdupz(arena, str_at_start, (size_t)len_at_start);
+  start_col = start_col < 0 ? len_at_start + start_col + 1 : start_col;
+  VALIDATE_RANGE((start_col >= 0 && start_col <= len_at_start), "start_col", {
     return;
   });
 
   char *str_at_end = ml_get_buf(buf, (linenr_T)end_row);
-  size_t len_at_end = strlen(str_at_end);
-  str_at_end = arena_memdupz(arena, str_at_end, len_at_end);
-  end_col = end_col < 0 ? (int64_t)len_at_end + end_col + 1 : end_col;
-  VALIDATE_RANGE((end_col >= 0 && (size_t)end_col <= len_at_end), "end_col", {
+  colnr_T len_at_end = ml_get_buf_len(buf, (linenr_T)end_row);
+  str_at_end = arena_memdupz(arena, str_at_end, (size_t)len_at_end);
+  end_col = end_col < 0 ? len_at_end + end_col + 1 : end_col;
+  VALIDATE_RANGE((end_col >= 0 && end_col <= len_at_end), "end_col", {
     return;
   });
 
@@ -563,12 +563,10 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   if (start_row == end_row) {
     old_byte = (bcount_t)end_col - start_col;
   } else {
-    old_byte += (bcount_t)len_at_start - start_col;
+    old_byte += len_at_start - start_col;
     for (int64_t i = 1; i < end_row - start_row; i++) {
       int64_t lnum = start_row + i;
-
-      const char *bufline = ml_get_buf(buf, (linenr_T)lnum);
-      old_byte += (bcount_t)(strlen(bufline)) + 1;
+      old_byte += ml_get_buf_len(buf, (linenr_T)lnum) + 1;
     }
     old_byte += (bcount_t)end_col + 1;
   }
@@ -577,7 +575,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   String last_item = replacement.items[replacement.size - 1].data.string;
 
   size_t firstlen = (size_t)start_col + first_item.size;
-  size_t last_part_len = len_at_end - (size_t)end_col;
+  size_t last_part_len = (size_t)len_at_end - (size_t)end_col;
   if (replacement.size == 1) {
     firstlen += last_part_len;
   }
@@ -1271,10 +1269,13 @@ static void fix_cursor(win_T *win, linenr_T lo, linenr_T hi, linenr_T extra)
     } else if (extra < 0) {
       check_cursor_lnum(win);
     }
-    check_cursor_col_win(win);
+    check_cursor_col(win);
     changed_cline_bef_curs(win);
+    win->w_valid &= ~(VALID_BOTLINE_AP);
+    update_topline(win);
+  } else {
+    invalidate_botline(win);
   }
-  invalidate_botline(win);
 }
 
 /// Fix cursor position after replacing text
@@ -1309,7 +1310,7 @@ static void fix_cursor_cols(win_T *win, linenr_T start_row, colnr_T start_col, l
 
     // it's easier to work with a single value here.
     // col and coladd are fixed by a later call
-    // to check_cursor_col_win when necessary
+    // to check_cursor_col when necessary
     win->w_cursor.col += win->w_cursor.coladd;
     win->w_cursor.coladd = 0;
 
@@ -1324,7 +1325,7 @@ static void fix_cursor_cols(win_T *win, linenr_T start_row, colnr_T start_col, l
       // it already (in case virtualedit is active)
       // column might be additionally adjusted below
       // to keep it inside col range if needed
-      colnr_T len = (colnr_T)strlen(ml_get_buf(win->w_buffer, new_end_row));
+      colnr_T len = ml_get_buf_len(win->w_buffer, new_end_row);
       if (win->w_cursor.col < len) {
         win->w_cursor.col = len;
       }
@@ -1345,7 +1346,7 @@ static void fix_cursor_cols(win_T *win, linenr_T start_row, colnr_T start_col, l
     }
   }
 
-  check_cursor_col_win(win);
+  check_cursor_col(win);
   changed_cline_bef_curs(win);
   invalidate_botline(win);
 }
@@ -1424,6 +1425,7 @@ void buf_collect_lines(buf_T *buf, size_t n, linenr_T start, int start_idx, bool
   for (size_t i = 0; i < n; i++) {
     linenr_T lnum = start + (linenr_T)i;
     char *bufstr = ml_get_buf(buf, lnum);
-    push_linestr(lstate, l, bufstr, strlen(bufstr), start_idx + (int)i, replace_nl, arena);
+    size_t bufstrlen = (size_t)ml_get_buf_len(buf, lnum);
+    push_linestr(lstate, l, bufstr, bufstrlen, start_idx + (int)i, replace_nl, arena);
   }
 }

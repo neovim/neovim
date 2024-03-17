@@ -107,15 +107,15 @@ static int regex_match_line(lua_State *lstate)
   }
 
   char *line = ml_get_buf(buf, rownr + 1);
-  size_t len = strlen(line);
+  colnr_T len = ml_get_buf_len(buf, rownr + 1);
 
-  if (start < 0 || (size_t)start > len) {
+  if (start < 0 || start > len) {
     return luaL_error(lstate, "invalid start");
   }
 
   char save = NUL;
   if (end >= 0) {
-    if ((size_t)end > len || end < start) {
+    if (end > len || end < start) {
       return luaL_error(lstate, "invalid end");
     }
     save = line[end];

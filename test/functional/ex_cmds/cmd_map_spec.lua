@@ -505,7 +505,7 @@ describe('mappings with <Cmd>', function()
     feed('"bd<F7>')
     expect([[
         soest text]])
-    eq(fn.getreg('b', 1, 1), { 'me short lines', 'of t' })
+    eq({ 'me short lines', 'of t' }, fn.getreg('b', 1, 1))
 
     -- startinsert aborts operator
     feed('d<F8>')
@@ -561,7 +561,7 @@ describe('mappings with <Cmd>', function()
       of stuff test text]])
 
     feed('<F5>')
-    eq(fn.getreg('a', 1, 1), { 'deed some short little lines', 'of stuff t' })
+    eq({ 'deed some short little lines', 'of stuff t' }, fn.getreg('a', 1, 1))
 
     -- still in insert
     screen:expect([[

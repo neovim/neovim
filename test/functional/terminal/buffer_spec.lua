@@ -54,7 +54,7 @@ describe(':terminal buffer', function()
     eq({ 0, 'both' }, eval('[&l:cursorline, &l:cursorlineopt]'))
   end)
 
-  it('terminal-mode disables cursorline when cursorlineopt is only set to "line', function()
+  it('terminal-mode disables cursorline when cursorlineopt is only set to "line"', function()
     feed([[<C-\><C-N>]])
     command('setlocal cursorline cursorlineopt=line')
     feed('i')

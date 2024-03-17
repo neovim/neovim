@@ -136,7 +136,7 @@ end
 
 --- @param diagnostic vim.Diagnostic
 --- @return lsp.DiagnosticTag[]?
-local function tags_vim_to_vim(diagnostic)
+local function tags_vim_to_lsp(diagnostic)
   if not diagnostic._tags then
     return
   end
@@ -173,7 +173,7 @@ local function diagnostic_vim_to_lsp(diagnostics)
       message = diagnostic.message,
       source = diagnostic.source,
       code = diagnostic.code,
-      tags = tags_vim_to_vim(diagnostics),
+      tags = tags_vim_to_lsp(diagnostic),
     }, diagnostic.user_data and (diagnostic.user_data.lsp or {}) or {})
   end, diagnostics)
 end
@@ -321,7 +321,7 @@ end
 ---@param _ lsp.ResponseError?
 ---@param result lsp.DocumentDiagnosticReport
 ---@param ctx lsp.HandlerContext
----@param config table Configuration table (see |vim.diagnostic.config()|).
+---@param config vim.diagnostic.Opts Configuration table (see |vim.diagnostic.config()|).
 function M.on_diagnostic(_, result, ctx, config)
   if result == nil or result.kind == 'unchanged' then
     return

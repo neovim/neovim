@@ -2301,8 +2301,21 @@ describe('extmark decorations', function()
     ]]}
   end)
 
+  it('virtual text does not crash with blend, conceal and wrap #27836', function()
+    screen:try_resize(50, 3)
+    insert(('a'):rep(45) .. '|hidden|' .. ('b'):rep(45))
+    command('syntax match test /|hidden|/ conceal')
+    command('set conceallevel=2 concealcursor=n')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {virt_text = {{'FOO'}}, virt_text_pos='right_align', hl_mode='blend'})
+    screen:expect{grid=[[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  FOO|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb^b     |
+                                                        |
+    ]]}
+  end)
+
   it('works with both hl_group and sign_hl_group', function()
-    screen:try_resize(screen._width, 3)
+    screen:try_resize(50, 3)
     insert('abcdefghijklmn')
     api.nvim_buf_set_extmark(0, ns, 0, 0, {sign_text='S', sign_hl_group='NonText', hl_group='Error', end_col=14})
     screen:expect{grid=[[
@@ -4052,6 +4065,8 @@ describe('decorations: virtual lines', function()
       [7] = {foreground = Screen.colors.SlateBlue};
       [8] = {background = Screen.colors.WebGray, foreground = Screen.colors.DarkBlue};
       [9] = {foreground = Screen.colors.Brown};
+      [10] = {bold = true, reverse = true};
+      [11] = {reverse = true};
     }
 
     ns = api.nvim_create_namespace 'test'
@@ -4847,6 +4862,22 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]])
   end)
 
+  it('does not break cursor position with concealcursor #27887', function()
+    command('vsplit')
+    insert('\n')
+    api.nvim_set_option_value('conceallevel', 2, {})
+    api.nvim_set_option_value('concealcursor', 'niv', {})
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_lines = {{{'VIRT1'}}, {{'VIRT2'}}} })
+    screen:expect([[
+                               │                        |
+      VIRT1                    │VIRT1                   |
+      VIRT2                    │VIRT2                   |
+      ^                         │                        |
+      {1:~                        }│{1:~                       }|*6
+      {10:[No Name] [+]             }{11:[No Name] [+]           }|
+                                                        |
+    ]])
+  end)
 end)
 
 describe('decorations: signs', function()

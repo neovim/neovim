@@ -160,6 +160,8 @@ The following new APIs and features were added.
   • 'breakindent' performance is significantly improved for wrapped lines.
   • Cursor movement, insertion with [count] and |screenpos()| are now faster.
 
+• |'winfixbuf'| keeps a window focused onto a specific buffer
+
 • |vim.iter()| provides a generic iterator interface for tables and Lua
   iterators |for-in|.
 
@@ -176,10 +178,6 @@ The following new APIs and features were added.
 
 • |'foldtext'| can be set to an empty string to disable and render the line:
   as normal with regular highlighting and no line wrapping.
-
-• The terminal buffer now supports reflow (wrapped lines adapt when the buffer
-  is resized horizontally). Note: Lines that are not visible and kept in
-  |'scrollback'| are not reflown.
 
 • |vim.system()| for running system commands.
 
@@ -252,6 +250,11 @@ The following new APIs and features were added.
     indexing.
   • |:InspectTree| shows root nodes
   • |:InspectTree| now supports |folding|
+  • The `#set!` directive can set the "url" property of a node to have the
+    node emit a hyperlink. Hyperlinks are UI specific: in the TUI, the OSC 8
+    control sequence is used.
+
+• |:Man| now supports `:hide` modifier to open page in the current window.
 
 • |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
   Windows `explorer`, Linux `xdg-open`, etc.)
@@ -525,5 +528,8 @@ release.
 • The "term_background" UI option |ui-ext-options| is deprecated and no longer
   populated. Background color detection is now performed in Lua by the Nvim
   core, not the TUI.
+
+• vim.shared functions:
+  - |vim.tbl_add_reverse_lookup()|
 
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:

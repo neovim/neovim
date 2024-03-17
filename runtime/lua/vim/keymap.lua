@@ -1,5 +1,20 @@
 local keymap = {}
 
+--- Table of |:map-arguments|.
+--- Same as |nvim_set_keymap()| {opts}, except:
+--- - {replace_keycodes} defaults to `true` if "expr" is `true`.
+---
+--- Also accepts:
+--- @class vim.keymap.set.Opts : vim.api.keyset.keymap
+--- @inlinedoc
+---
+--- Creates buffer-local mapping, `0` or `true` for current buffer.
+--- @field buffer? integer|boolean
+---
+--- Make the mapping recursive. Inverse of {noremap}.
+--- (Default: `false`)
+--- @field remap? boolean
+
 --- Adds a new |mapping|.
 --- Examples:
 ---
@@ -18,20 +33,12 @@ local keymap = {}
 --- vim.keymap.set('n', '[%%', '<Plug>(MatchitNormalMultiBackward)')
 --- ```
 ---
----@param mode string|table    Mode short-name, see |nvim_set_keymap()|.
+---@param mode string|string[] Mode short-name, see |nvim_set_keymap()|.
 ---                            Can also be list of modes to create mapping on multiple modes.
 ---@param lhs string           Left-hand side |{lhs}| of the mapping.
 ---@param rhs string|function  Right-hand side |{rhs}| of the mapping, can be a Lua function.
 ---
----@param opts table|nil Table of |:map-arguments|.
----                      - Same as |nvim_set_keymap()| {opts}, except:
----                        - "replace_keycodes" defaults to `true` if "expr" is `true`.
----                        - "noremap": inverse of "remap" (see below).
----                      - Also accepts:
----                        - "buffer": (integer|boolean) Creates buffer-local mapping, `0` or `true`
----                        for current buffer.
----                        - "remap": (boolean) Make the mapping recursive. Inverse of "noremap".
----                        Defaults to `false`.
+---@param opts? vim.keymap.set.Opts
 ---@see |nvim_set_keymap()|
 ---@see |maparg()|
 ---@see |mapcheck()|
@@ -81,6 +88,13 @@ function keymap.set(mode, lhs, rhs, opts)
   end
 end
 
+--- @class vim.keymap.del.Opts
+--- @inlinedoc
+---
+--- Remove a mapping from the given buffer.
+--- When `0` or `true`, use the current buffer.
+--- @field buffer? integer|boolean
+
 --- Remove an existing mapping.
 --- Examples:
 ---
@@ -92,11 +106,8 @@ end
 ---
 ---@param modes string|string[]
 ---@param lhs string
----@param opts table|nil A table of optional arguments:
----                      - "buffer": (integer|boolean) Remove a mapping from the given buffer.
----                        When `0` or `true`, use the current buffer.
+---@param opts? vim.keymap.del.Opts
 ---@see |vim.keymap.set()|
----
 function keymap.del(modes, lhs, opts)
   vim.validate({
     mode = { modes, { 's', 't' } },
@@ -106,6 +117,7 @@ function keymap.del(modes, lhs, opts)
 
   opts = opts or {}
   modes = type(modes) == 'string' and { modes } or modes
+  --- @cast modes string[]
 
   local buffer = false ---@type false|integer
   if opts.buffer ~= nil then

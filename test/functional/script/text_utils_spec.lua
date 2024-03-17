@@ -55,4 +55,6 @@ describe('md_to_vimdoc', function()
     '          para2',
     '',
   }, 0, 10, 78)
+
+  test('inline 1', { '(`string`)' }, { '(`string`)', '' })
 end)

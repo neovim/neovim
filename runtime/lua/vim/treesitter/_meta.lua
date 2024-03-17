@@ -39,7 +39,7 @@ local TSNode = {}
 ---@param start? integer
 ---@param end_? integer
 ---@param opts? table
----@return fun(): integer, TSNode, TSMatch
+---@return fun(): integer, TSNode, vim.treesitter.query.TSMatch
 function TSNode:_rawquery(query, captures, start, end_, opts) end
 
 ---@param query TSQuery
@@ -47,14 +47,13 @@ function TSNode:_rawquery(query, captures, start, end_, opts) end
 ---@param start? integer
 ---@param end_? integer
 ---@param opts? table
----@return fun(): integer, TSMatch
+---@return fun(): integer, vim.treesitter.query.TSMatch
 function TSNode:_rawquery(query, captures, start, end_, opts) end
 
 ---@alias TSLoggerCallback fun(logtype: 'parse'|'lex', msg: string)
 
 ---@class TSParser: userdata
----@field parse fun(self: TSParser, tree: TSTree?, source: integer|string, include_bytes: true): TSTree, Range6[]
----@field parse fun(self: TSParser, tree: TSTree?, source: integer|string, include_bytes: false|nil): TSTree, Range4[]
+---@field parse fun(self: TSParser, tree: TSTree?, source: integer|string, include_bytes: boolean): TSTree, (Range4|Range6)[]
 ---@field reset fun(self: TSParser)
 ---@field included_ranges fun(self: TSParser, include_bytes: boolean?): integer[]
 ---@field set_included_ranges fun(self: TSParser, ranges: (Range6|TSNode)[])

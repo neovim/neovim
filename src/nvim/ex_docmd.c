@@ -1743,8 +1743,8 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
       && eap->addr_type == ADDR_LINES) {
     // Put the first line at the start of a closed fold, put the last line
     // at the end of a closed fold.
-    hasFolding(eap->line1, &eap->line1, NULL);
-    hasFolding(eap->line2, NULL, &eap->line2);
+    hasFolding(curwin, eap->line1, &eap->line1, NULL);
+    hasFolding(curwin, eap->line2, NULL, &eap->line2);
   }
 
   // Use first argument as count when possible
@@ -2213,8 +2213,8 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
       && ea.addr_type == ADDR_LINES) {
     // Put the first line at the start of a closed fold, put the last line
     // at the end of a closed fold.
-    hasFolding(ea.line1, &ea.line1, NULL);
-    hasFolding(ea.line2, NULL, &ea.line2);
+    hasFolding(curwin, ea.line1, &ea.line1, NULL);
+    hasFolding(curwin, ea.line2, NULL, &ea.line2);
   }
 
   // For the ":make" and ":grep" commands we insert the 'makeprg'/'grepprg'
@@ -2875,9 +2875,9 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
         // (where zero usually means to use the first line).
         // Check the cursor position before returning.
         if (eap->line2 > 0) {
-          check_cursor();
+          check_cursor(curwin);
         } else {
-          check_cursor_col();
+          check_cursor_col(curwin);
         }
         need_check_cursor = true;
       }
@@ -2899,7 +2899,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
 
 theend:
   if (need_check_cursor) {
-    check_cursor();
+    check_cursor(curwin);
   }
   return ret;
 }
@@ -3596,7 +3596,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool
         // closed fold after the first address.
         if (addr_type == ADDR_LINES && (i == '-' || i == '+')
             && address_count >= 2) {
-          hasFolding(lnum, NULL, &lnum);
+          hasFolding(curwin, lnum, NULL, &lnum);
         }
         if (i == '-') {
           lnum -= n;
@@ -5334,6 +5334,10 @@ static void ex_resize(exarg_T *eap)
 /// ":find [+command] <file>" command.
 static void ex_find(exarg_T *eap)
 {
+  if (!check_can_set_curbuf_forceit(eap->forceit)) {
+    return;
+  }
+
   char *file_to_find = NULL;
   char *search_ctx = NULL;
   char *fname = find_file_in_path(eap->arg, strlen(eap->arg),
@@ -5364,6 +5368,14 @@ static void ex_find(exarg_T *eap)
 /// ":edit", ":badd", ":balt", ":visual".
 static void ex_edit(exarg_T *eap)
 {
+  // Exclude commands which keep the window's current buffer
+  if (eap->cmdidx != CMD_badd
+      && eap->cmdidx != CMD_balt
+      // All other commands must obey 'winfixbuf' / ! rules
+      && !check_can_set_curbuf_forceit(eap->forceit)) {
+    return;
+  }
+
   do_exedit(eap, NULL);
 }
 
@@ -5516,8 +5528,6 @@ static void ex_swapname(exarg_T *eap)
 /// (1998-11-02 16:21:01  R. Edward Ralston <eralston@computer.org>)
 static void ex_syncbind(exarg_T *eap)
 {
-  win_T *save_curwin = curwin;
-  buf_T *save_curbuf = curbuf;
   linenr_T topline;
   int y;
   linenr_T old_linenr = curwin->w_cursor.lnum;
@@ -5544,23 +5554,19 @@ static void ex_syncbind(exarg_T *eap)
 
   // Set all scrollbind windows to the same topline.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    curwin = wp;
-    if (curwin->w_p_scb) {
-      curbuf = curwin->w_buffer;
-      y = topline - curwin->w_topline;
+    if (wp->w_p_scb) {
+      y = topline - wp->w_topline;
       if (y > 0) {
-        scrollup(y, true);
+        scrollup(wp, y, true);
       } else {
-        scrolldown(-y, true);
+        scrolldown(wp, -y, true);
       }
-      curwin->w_scbind_pos = topline;
-      redraw_later(curwin, UPD_VALID);
-      cursor_correct();
-      curwin->w_redr_status = true;
+      wp->w_scbind_pos = topline;
+      redraw_later(wp, UPD_VALID);
+      cursor_correct(wp);
+      wp->w_redr_status = true;
     }
   }
-  curwin = save_curwin;
-  curbuf = save_curbuf;
   if (curwin->w_p_scb) {
     did_syncbind = true;
     checkpcmark();
@@ -5842,7 +5848,7 @@ static void ex_equal(exarg_T *eap)
 
 static void ex_sleep(exarg_T *eap)
 {
-  if (cursor_valid()) {
+  if (cursor_valid(curwin)) {
     setcursor_mayforce(true);
   }
 
@@ -5978,7 +5984,7 @@ static void ex_put(exarg_T *eap)
     eap->forceit = true;
   }
   curwin->w_cursor.lnum = eap->line2;
-  check_cursor_col();
+  check_cursor_col(curwin);
   do_put(eap->regname, NULL, eap->forceit ? BACKWARD : FORWARD, 1,
          PUT_LINE|PUT_CURSLINE);
 }
@@ -6072,7 +6078,7 @@ static void ex_at(exarg_T *eap)
   int prev_len = typebuf.tb_len;
 
   curwin->w_cursor.lnum = eap->line2;
-  check_cursor_col();
+  check_cursor_col(curwin);
 
   // Get the register name. No name means use the previous one.
   int c = (uint8_t)(*eap->arg);
@@ -6294,7 +6300,7 @@ static void ex_redraw(exarg_T *eap)
 
   RedrawingDisabled = 0;
   p_lz = false;
-  validate_cursor();
+  validate_cursor(curwin);
   update_topline(curwin);
   if (eap->forceit) {
     redraw_all_later(UPD_NOT_VALID);
@@ -6447,10 +6453,10 @@ static void ex_mark(exarg_T *eap)
 /// Update w_topline, w_leftcol and the cursor position.
 void update_topline_cursor(void)
 {
-  check_cursor();               // put cursor on valid line
+  check_cursor(curwin);               // put cursor on valid line
   update_topline(curwin);
   if (!curwin->w_p_wrap) {
-    validate_cursor();
+    validate_cursor(curwin);
   }
   update_curswant();
 }
@@ -6670,7 +6676,7 @@ static void ex_checkpath(exarg_T *eap)
 {
   find_pattern_in_path(NULL, 0, 0, false, false, CHECK_PATH, 1,
                        eap->forceit ? ACTION_SHOW_ALL : ACTION_SHOW,
-                       1, (linenr_T)MAXLNUM);
+                       1, (linenr_T)MAXLNUM, eap->forceit);
 }
 
 /// ":psearch"
@@ -6729,7 +6735,7 @@ static void ex_findpat(exarg_T *eap)
   if (!eap->skip) {
     find_pattern_in_path(eap->arg, 0, strlen(eap->arg), whole, !eap->forceit,
                          *eap->cmd == 'd' ? FIND_DEFINE : FIND_ANY,
-                         n, action, eap->line1, eap->line2);
+                         n, action, eap->line1, eap->line2, eap->forceit);
   }
 }
 
@@ -6754,7 +6760,7 @@ static void ex_pedit(exarg_T *eap)
 
   if (curwin != curwin_save && win_valid(curwin_save)) {
     // Return cursor to where we were
-    validate_cursor();
+    validate_cursor(curwin);
     redraw_later(curwin, UPD_VALID);
     win_enter(curwin_save, true);
   }
@@ -7396,7 +7402,7 @@ static void ex_folddo(exarg_T *eap)
 {
   // First set the marks for all lines closed/open.
   for (linenr_T lnum = eap->line1; lnum <= eap->line2; lnum++) {
-    if (hasFolding(lnum, NULL, NULL) == (eap->cmdidx == CMD_folddoclosed)) {
+    if (hasFolding(curwin, lnum, NULL, NULL) == (eap->cmdidx == CMD_folddoclosed)) {
       ml_setmarked(lnum);
     }
   }

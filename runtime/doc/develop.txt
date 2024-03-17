@@ -184,7 +184,7 @@ Strict "vimdoc" subset:
 
 C docstrings ~
 
-Nvim API documentation lives in the source code, as docstrings (Doxygen
+Nvim API documentation lives in the source code, as docstrings (doc
 comments) on the function definitions.  The |api| :help is generated
 from the docstrings defined in src/nvim/api/*.c.
 
@@ -193,6 +193,8 @@ Docstring format:
 - Special tokens start with `@` followed by the token name:
   `@note`, `@param`, `@return`
 - Markdown is supported.
+- Tags are written as `[tag]()`.
+- References are written as `[tag]`
 - Use ``` for code samples.
   Code samples can be annotated as `vim` or `lua`
 
@@ -235,6 +237,8 @@ definitions.  The |lua-vim| :help is generated from the docstrings.
 Docstring format:
 - Use LuaCATS annotations: https://luals.github.io/wiki/annotations/
 - Markdown is supported.
+- Tags are written as `[tag]()`.
+- References are written as `[tag]`
 - Use ``` for code samples.
   Code samples can be annotated as `vim` or `lua`
 - Use `@nodoc` to prevent documentation generation.

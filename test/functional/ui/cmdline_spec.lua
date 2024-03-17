@@ -824,6 +824,29 @@ local function test_cmdline(linegrid)
                                |
     ]])
   end)
+
+  it('does not move cursor to curwin #20309', function()
+    local win = api.nvim_get_current_win()
+    command('norm icmdlinewin')
+    command('new')
+    command('norm icurwin')
+    feed(':')
+    api.nvim_win_set_cursor(win, { 1, 7 })
+    screen:expect {
+      grid = [[
+      curwin                   |
+      {3:[No Name] [+]            }|
+      cmdline^win               |
+      {2:[No Name] [+]            }|
+                               |
+    ]],
+      cmdline = { {
+        content = { { '' } },
+        firstc = ':',
+        pos = 0,
+      } },
+    }
+  end)
 end
 
 -- the representation of cmdline and cmdline_block contents changed with ext_linegrid

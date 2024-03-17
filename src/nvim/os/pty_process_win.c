@@ -32,11 +32,10 @@ static void start_wait_eof_timer(void **argv)
   FUNC_ATTR_NONNULL_ALL
 {
   PtyProcess *ptyproc = (PtyProcess *)argv[0];
-  Process *proc = (Process *)ptyproc;
 
-  uv_timer_init(&proc->loop->uv, &ptyproc->wait_eof_timer);
-  ptyproc->wait_eof_timer.data = (void *)ptyproc;
-  uv_timer_start(&ptyproc->wait_eof_timer, wait_eof_timer_cb, 200, 200);
+  if (ptyproc->finish_wait != NULL) {
+    uv_timer_start(&ptyproc->wait_eof_timer, wait_eof_timer_cb, 200, 200);
+  }
 }
 
 /// @returns zero on success, or negative error code.
@@ -117,6 +116,8 @@ int pty_process_spawn(PtyProcess *ptyproc)
   }
   proc->pid = (int)GetProcessId(process_handle);
 
+  uv_timer_init(&proc->loop->uv, &ptyproc->wait_eof_timer);
+  ptyproc->wait_eof_timer.data = (void *)ptyproc;
   if (!RegisterWaitForSingleObject(&ptyproc->finish_wait,
                                    process_handle,
                                    pty_process_finish1,
@@ -176,6 +177,16 @@ void pty_process_close(PtyProcess *ptyproc)
 
   pty_process_close_master(ptyproc);
 
+  if (ptyproc->finish_wait != NULL) {
+    UnregisterWaitEx(ptyproc->finish_wait, NULL);
+    ptyproc->finish_wait = NULL;
+    uv_close((uv_handle_t *)&ptyproc->wait_eof_timer, NULL);
+  }
+  if (ptyproc->process_handle != NULL) {
+    CloseHandle(ptyproc->process_handle);
+    ptyproc->process_handle = NULL;
+  }
+
   if (proc->internal_close_cb) {
     proc->internal_close_cb(proc);
   }
@@ -204,6 +215,7 @@ static void wait_eof_timer_cb(uv_timer_t *wait_eof_timer)
   PtyProcess *ptyproc = wait_eof_timer->data;
   Process *proc = (Process *)ptyproc;
 
+  assert(ptyproc->finish_wait != NULL);
   if (proc->out.closed || proc->out.did_eof || !uv_is_readable(proc->out.uvstream)) {
     uv_timer_stop(&ptyproc->wait_eof_timer);
     pty_process_finish2(ptyproc);
@@ -215,15 +227,9 @@ static void pty_process_finish2(PtyProcess *ptyproc)
 {
   Process *proc = (Process *)ptyproc;
 
-  UnregisterWaitEx(ptyproc->finish_wait, NULL);
-  uv_close((uv_handle_t *)&ptyproc->wait_eof_timer, NULL);
-
   DWORD exit_code = 0;
   GetExitCodeProcess(ptyproc->process_handle, &exit_code);
   proc->status = proc->exit_signal ? 128 + proc->exit_signal : (int)exit_code;
-
-  CloseHandle(ptyproc->process_handle);
-  ptyproc->process_handle = NULL;
 
   proc->internal_exit_cb(proc);
 }

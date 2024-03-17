@@ -386,10 +386,10 @@ cleanup:
 ///                 - id: (number) autocommand id
 ///                 - event: (string) name of the triggered event |autocmd-events|
 ///                 - group: (number|nil) autocommand group id, if any
-///                 - match: (string) expanded value of |<amatch>|
-///                 - buf: (number) expanded value of |<abuf>|
-///                 - file: (string) expanded value of |<afile>|
-///                 - data: (any) arbitrary data passed from |nvim_exec_autocmds()|
+///                 - match: (string) expanded value of [<amatch>]
+///                 - buf: (number) expanded value of [<abuf>]
+///                 - file: (string) expanded value of [<afile>]
+///                 - data: (any) arbitrary data passed from [nvim_exec_autocmds()]
 ///             - command (string) optional: Vim command to execute on event. Cannot be used with
 ///             {callback}
 ///             - once (boolean) optional: defaults to false. Run the autocommand
@@ -694,7 +694,7 @@ void nvim_del_augroup_by_name(String name, Error *err)
 ///             - buffer (integer) optional: buffer number |autocmd-buflocal|. Cannot be used with
 ///             {pattern}.
 ///             - modeline (bool) optional: defaults to true. Process the
-///             modeline after the autocommands |<nomodeline>|.
+///             modeline after the autocommands [<nomodeline>].
 ///             - data (any): arbitrary data to send to the autocommand callback. See
 ///             |nvim_create_autocmd()| for details.
 /// @see |:doautocmd|

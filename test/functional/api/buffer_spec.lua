@@ -121,6 +121,65 @@ describe('api/buf', function()
       eq({ 5, 2 }, api.nvim_win_get_cursor(win2))
     end)
 
+    it('cursor position is maintained consistently with viewport', function()
+      local screen = Screen.new(20, 12)
+      screen:set_default_attr_ids {
+        [1] = { bold = true, foreground = Screen.colors.Blue1 },
+        [2] = { reverse = true, bold = true },
+        [3] = { reverse = true },
+      }
+      screen:attach()
+
+      local lines = { 'line1', 'line2', 'line3', 'line4', 'line5', 'line6' }
+      local buf = api.nvim_get_current_buf()
+
+      api.nvim_buf_set_lines(buf, 0, -1, true, lines)
+
+      command('6')
+      command('new')
+      screen:expect {
+        grid = [[
+        ^                    |
+        {1:~                   }|*4
+        {2:[No Name]           }|
+        line5               |
+        line6               |
+        {1:~                   }|*2
+        {3:[No Name] [+]       }|
+                            |
+      ]],
+      }
+
+      lines[5] = 'boogalo 5'
+      api.nvim_buf_set_lines(buf, 0, -1, true, lines)
+      screen:expect {
+        grid = [[
+        ^                    |
+        {1:~                   }|*4
+        {2:[No Name]           }|
+        boogalo 5           |
+        line6               |
+        {1:~                   }|*2
+        {3:[No Name] [+]       }|
+                            |
+      ]],
+      }
+
+      command('wincmd w')
+      screen:expect {
+        grid = [[
+                            |
+        {1:~                   }|*4
+        {3:[No Name]           }|
+        boogalo 5           |
+        ^line6               |
+        {1:~                   }|*2
+        {2:[No Name] [+]       }|
+                            |
+      ]],
+      }
+    end)
+
     it('line_count has defined behaviour for unloaded buffers', function()
       -- we'll need to know our bufnr for when it gets unloaded
       local bufnr = api.nvim_buf_get_number(0)
@@ -323,20 +382,20 @@ describe('api/buf', function()
         ]],
         }
 
-        -- inserting just before topline scrolls up
         api.nvim_buf_set_lines(buf, 3, 3, true, { 'mmm' })
         screen:expect {
           grid = [[
           ^                    |
           {1:~                   }|*4
           {2:[No Name]           }|
-          mmm                 |
           wwweeee             |
           xxx                 |
           yyy                 |
+          zzz                 |
           {3:[No Name] [+]       }|
                               |
         ]],
+          unchanged = true,
         }
       end)
 
@@ -402,7 +461,6 @@ describe('api/buf', function()
         ]],
         }
 
-        -- inserting just before topline scrolls up
         api.nvim_buf_set_lines(buf, 3, 3, true, { 'mmm' })
         screen:expect {
           grid = [[
@@ -412,10 +470,10 @@ describe('api/buf', function()
           mmm                 |
           wwweeee             |
           {2:[No Name] [+]       }|
-          mmm                 |
           wwweeee             |
           xxx                 |
           yyy                 |
+          zzz                 |
           {3:[No Name] [+]       }|
                               |
         ]],

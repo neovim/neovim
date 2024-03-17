@@ -204,8 +204,8 @@ describe(":substitute, 'inccommand' preserves", function()
       feed(':%s/as/glork/')
       poke_eventloop()
       feed('<enter>')
-      eq(api.nvim_get_option_value('undolevels', { scope = 'global' }), 139)
-      eq(api.nvim_get_option_value('undolevels', { buf = 0 }), 34)
+      eq(139, api.nvim_get_option_value('undolevels', { scope = 'global' }))
+      eq(34, api.nvim_get_option_value('undolevels', { buf = 0 }))
     end)
   end
 

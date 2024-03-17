@@ -1,5 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, ok = helpers.clear, helpers.eq, helpers.ok
+local exec = helpers.exec
+local feed = helpers.feed
 local api = helpers.api
 local fn = helpers.fn
 local request = helpers.request
@@ -85,6 +87,30 @@ describe('api/tabpage', function()
         string.format('Window does not belong to tabpage %d', tab1),
         pcall_err(api.nvim_tabpage_set_win, tab1, win3)
       )
+    end)
+
+    it('does not switch window when textlocked or in the cmdwin', function()
+      local target_win = api.nvim_get_current_win()
+      feed('q:')
+      local cur_win = api.nvim_get_current_win()
+      eq(
+        'Vim:E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(api.nvim_tabpage_set_win, 0, target_win)
+      )
+      eq(cur_win, api.nvim_get_current_win())
+      command('quit!')
+
+      exec(([[
+        new
+        call setline(1, 'foo')
+        setlocal debug=throw indentexpr=nvim_tabpage_set_win(0,%d)
+      ]]):format(target_win))
+      cur_win = api.nvim_get_current_win()
+      eq(
+        'Vim(normal):E5555: API call: Vim:E565: Not allowed to change text or change window',
+        pcall_err(command, 'normal! ==')
+      )
+      eq(cur_win, api.nvim_get_current_win())
     end)
   end)
 

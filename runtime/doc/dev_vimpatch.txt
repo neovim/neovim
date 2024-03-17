@@ -209,6 +209,8 @@ information.
   utf_off2cells                                       grid_off2cells
   ml_get_curline                                    get_cursor_line_ptr
   ml_get_cursor                                     get_cursor_pos_ptr
+  ml_get_curline_len                                get_cursor_line_len
+  ml_get_cursor_len                                 get_cursor_pos_len
   screen_char                                             ui_line
   screen_line                                        grid_put_linebuf
   screen_* (most functions)                               grid_*

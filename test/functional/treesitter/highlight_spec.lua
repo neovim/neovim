@@ -681,6 +681,12 @@ describe('treesitter highlighting (C)', function()
         ((identifier) @Identifier
          (#set! conceal "")
          (#eq? @Identifier "lstate"))
+
+        ((call_expression
+            function: (identifier) @function
+            arguments: (argument_list) @arguments)
+         (#eq? @function "multiqueue_put")
+         (#set! @function conceal "V"))
       ]]}})
     ]=]
 
@@ -697,7 +703,7 @@ describe('treesitter highlighting (C)', function()
                                                                        |
         LuaRef cb = nlua_ref(, 1);                                     |
                                                                        |
-        multiqueue_put(main_loop.events, nlua_schedule_event,          |
+        {11:V}(main_loop.events, nlua_schedule_event,                       |
                        1, (void *)(ptrdiff_t)cb);                      |
         return 0;                                                      |
       ^}                                                                |
@@ -752,6 +758,44 @@ describe('treesitter highlighting (C)', function()
         {5:int z = 6;}                                                     |
       ^                                                                 |
       {1:~                                                                }|*13
+                                                                       |
+    ]],
+    }
+  end)
+end)
+
+describe('treesitter highlighting (lua)', function()
+  local screen
+
+  before_each(function()
+    screen = Screen.new(65, 18)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = { bold = true, foreground = Screen.colors.Blue },
+      [2] = { foreground = Screen.colors.DarkCyan },
+      [3] = { foreground = Screen.colors.Magenta },
+      [4] = { foreground = Screen.colors.SlateBlue },
+      [5] = { bold = true, foreground = Screen.colors.Brown },
+    }
+  end)
+
+  it('supports language injections', function()
+    insert [[
+      local ffi = require('ffi')
+      ffi.cdef("int (*fun)(int, char *);")
+    ]]
+
+    exec_lua [[
+      vim.bo.filetype = 'lua'
+      vim.treesitter.start()
+    ]]
+
+    screen:expect {
+      grid = [[
+        {5:local} {2:ffi} {5:=} {4:require(}{3:'ffi'}{4:)}                                     |
+        {2:ffi}{4:.}{2:cdef}{4:(}{3:"}{4:int}{3: }{4:(}{5:*}{3:fun}{4:)(int,}{3: }{4:char}{3: }{5:*}{4:);}{3:"}{4:)}                           |
+      ^                                                                 |
+      {1:~                                                                }|*14
                                                                        |
     ]],
     }
@@ -823,6 +867,40 @@ describe('treesitter highlighting (help)', function()
     ]],
     }
   end)
+
+  it('correctly redraws injections subpriorities', function()
+    -- The top level string node will be highlighted first
+    -- with an extmark spanning multiple lines.
+    -- When the next line is drawn, which includes an injection,
+    -- make sure the highlight appears above the base tree highlight
+
+    insert([=[
+    local s = [[
+      local also = lua
+    ]]
+    ]=])
+
+    exec_lua [[
+      parser = vim.treesitter.get_parser(0, "lua", {
+        injections = {
+          lua = '(string content: (_) @injection.content (#set! injection.language lua))'
+        }
+      })
+
+      vim.treesitter.highlighter.new(parser)
+    ]]
+
+    screen:expect {
+      grid = [=[
+      {3:local} {4:s} {3:=} {5:[[}                            |
+      {5:  }{3:local}{5: }{4:also}{5: }{3:=}{5: }{4:lua}                      |
+      {5:]]}                                      |
+      ^                                        |
+      {2:~                                       }|
+                                              |
+    ]=],
+    }
+  end)
 end)
 
 describe('treesitter highlighting (nested injections)', function()
@@ -888,6 +966,49 @@ vim.cmd([[
       {1:}}                                                                               |
                                                                                       |
     ]],
+    }
+  end)
+end)
+
+describe('treesitter highlighting (markdown)', function()
+  local screen
+
+  before_each(function()
+    screen = Screen.new(40, 6)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = { foreground = Screen.colors.Blue1 },
+      [2] = { bold = true, foreground = Screen.colors.Blue1 },
+      [3] = { bold = true, foreground = Screen.colors.Brown },
+      [4] = { foreground = Screen.colors.Cyan4 },
+      [5] = { foreground = Screen.colors.Magenta1 },
+    }
+  end)
+
+  it('supports hyperlinks', function()
+    local url = 'https://example.com'
+    insert(string.format('[This link text](%s) is a hyperlink.', url))
+    exec_lua([[
+      vim.bo.filetype = 'markdown'
+      vim.treesitter.start()
+    ]])
+
+    screen:expect {
+      grid = [[
+      {4:[}{6:This link text}{4:](}{7:https://example.com}{4:)} is|
+       a hyperlink^.                           |
+      {2:~                                       }|*3
+                                              |
+    ]],
+      attr_ids = {
+        [1] = { foreground = Screen.colors.Blue1 },
+        [2] = { bold = true, foreground = Screen.colors.Blue1 },
+        [3] = { bold = true, foreground = Screen.colors.Brown },
+        [4] = { foreground = Screen.colors.Cyan4 },
+        [5] = { foreground = Screen.colors.Magenta },
+        [6] = { foreground = Screen.colors.Cyan4, url = url },
+        [7] = { underline = true, foreground = Screen.colors.SlateBlue },
+      },
     }
   end)
 end)
