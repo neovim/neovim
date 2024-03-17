@@ -1132,10 +1132,10 @@ Query:iter_captures({node}, {source}, {start}, {stop})
     i.e., to get syntax highlight matches in the current viewport). When
     omitted, the {start} and {stop} row values are used from the given node.
 
-    The iterator returns three values: a numeric id identifying the capture,
-    the captured node, and metadata from any directives processing the match.
-    The following example shows how to get captures by name: >lua
-        for id, node, metadata in query:iter_captures(tree:root(), bufnr, first, last) do
+    The iterator returns four values: a numeric id identifying the capture,
+    the captured node, metadata from any directives processing the match, and
+    the match itself. The following example shows how to get captures by name: >lua
+        for id, node, metadata, match in query:iter_captures(tree:root(), bufnr, first, last) do
           local name = query.captures[id] -- name of the capture in the query
           -- typically useful info about the node:
           local type = node:type() -- type of the captured node
@@ -1154,8 +1154,8 @@ Query:iter_captures({node}, {source}, {start}, {stop})
                   Defaults to `node:end_()`.
 
     Return: ~
-        (`fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata`)
-        capture id, capture node, metadata
+        (`fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, table<integer, TSNode>`)
+        capture id, capture node, metadata, match
 
                                                         *Query:iter_matches()*
 Query:iter_matches({node}, {source}, {start}, {stop}, {opts})

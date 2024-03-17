@@ -762,6 +762,32 @@ describe('treesitter highlighting (C)', function()
     ]],
     }
   end)
+
+  it('gives higher priority to more specific captures #27895', function()
+    insert([[
+      void foo(int *bar);
+    ]])
+
+    local query = [[
+      "*" @operator
+
+      (parameter_declaration
+        declarator: (pointer_declarator) @variable.parameter)
+    ]]
+
+    exec_lua([[
+      local query = ...
+      vim.treesitter.query.set('c', 'highlights', query)
+      vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, 'c'))
+    ]], query)
+
+    screen:expect{grid=[[
+        void foo(int {4:*}{11:bar});                                            |
+      ^                                                                 |
+      {1:~                                                                }|*15
+                                                                       |
+    ]]}
+  end)
 end)
 
 describe('treesitter highlighting (lua)', function()
