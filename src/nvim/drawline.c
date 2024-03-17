@@ -2576,7 +2576,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
             && wp->w_virtcol < grid->cols * (ptrdiff_t)(wlv.row - startrow + 1) + start_col
             && lnum != wp->w_cursor.lnum)
            || wlv.color_cols || wlv.line_attr_lowprio || wlv.line_attr
-           || wlv.diff_hlf != 0)) {
+           || wlv.diff_hlf != 0 || wp->w_buffer->terminal)) {
         int rightmost_vcol = get_rightmost_vcol(wp, wlv.color_cols);
         const int cuc_attr = win_hl_attr(wp, HLF_CUC);
         const int mc_attr = win_hl_attr(wp, HLF_MC);
@@ -2590,7 +2590,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
                               : 0;
 
         const int base_attr = hl_combine_attr(wlv.line_attr_lowprio, diff_attr);
-        if (base_attr || wlv.line_attr) {
+        if (base_attr || wlv.line_attr || wp->w_buffer->terminal) {
           rightmost_vcol = INT_MAX;
         }
 
@@ -2609,6 +2609,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
             col_attr = hl_combine_attr(col_attr, mc_attr);
           }
 
+          if (wp->w_buffer->terminal && wlv.vcol < TERM_ATTRS_MAX) {
+            col_attr = hl_combine_attr(col_attr, term_attrs[wlv.vcol]);
+          }
+
           col_attr = hl_combine_attr(col_attr, wlv.line_attr);
 
           linebuf_attr[wlv.off] = col_attr;
@@ -2619,19 +2623,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           }
 
           wlv.vcol++;
-        }
-      }
-
-      // TODO(bfredl): integrate with the common beyond-the-end-loop
-      if (wp->w_buffer->terminal) {
-        // terminal buffers may need to highlight beyond the end of the logical line
-        while (wlv.col >= 0 && wlv.col < grid->cols) {
-          linebuf_char[wlv.off] = schar_from_ascii(' ');
-          linebuf_attr[wlv.off] = wlv.vcol >= TERM_ATTRS_MAX ? 0 : term_attrs[wlv.vcol];
-          linebuf_vcol[wlv.off] = wlv.vcol;
-          wlv.off++;
-          wlv.vcol++;
-          wlv.col++;
         }
       }
 
