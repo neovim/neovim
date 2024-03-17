@@ -197,6 +197,8 @@ it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', functi
     [1] = { background = Screen.colors.Grey90 }, -- CursorLine, CursorColumn
     [2] = { reverse = true }, -- TermCursor
     [3] = { bold = true }, -- ModeMsg
+    [4] = { background = Screen.colors.Grey90, reverse = true },
+    [5] = { background = Screen.colors.Red },
   })
   screen:attach()
   command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
@@ -245,6 +247,48 @@ it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', functi
     oobar foo{1:b}ar foobar foobar foobar foobar foobar fo|
     obar foob{1:a}r foobar foobar foobar foobar foobar foo|
     {1:bar fooba^r                                        }|
+                                                      |
+  ]])
+  -- CursorLine and CursorColumn are combined with TermCursorNC.
+  command('highlight TermCursorNC gui=reverse')
+  screen:expect([[
+    tty ready{1: }                                        |
+     foobar f{1:o}obar foobar foobar foobar foobar foobar |
+    foobar fo{1:o}bar foobar foobar foobar foobar foobar f|
+    oobar foo{1:b}ar foobar foobar foobar foobar foobar fo|
+    obar foob{1:a}r foobar foobar foobar foobar foobar foo|
+    {1:bar fooba^r}{4: }{1:                                       }|
+                                                      |
+  ]])
+  feed('2gg11|')
+  screen:expect([[
+    tty ready {1: }                                       |
+    {1: foobar fo^obar foobar foobar foobar foobar foobar }|
+    foobar foo{1:b}ar foobar foobar foobar foobar foobar f|
+    oobar foob{1:a}r foobar foobar foobar foobar foobar fo|
+    obar fooba{1:r} foobar foobar foobar foobar foobar foo|
+    bar foobar{4: }                                       |
+                                                      |
+  ]])
+  -- TermCursorNC has higher precedence.
+  command('highlight TermCursorNC gui=NONE guibg=Red')
+  screen:expect([[
+    tty ready {1: }                                       |
+    {1: foobar fo^obar foobar foobar foobar foobar foobar }|
+    foobar foo{1:b}ar foobar foobar foobar foobar foobar f|
+    oobar foob{1:a}r foobar foobar foobar foobar foobar fo|
+    obar fooba{1:r} foobar foobar foobar foobar foobar foo|
+    bar foobar{5: }                                       |
+                                                      |
+  ]])
+  feed('G$')
+  screen:expect([[
+    tty ready{1: }                                        |
+     foobar f{1:o}obar foobar foobar foobar foobar foobar |
+    foobar fo{1:o}bar foobar foobar foobar foobar foobar f|
+    oobar foo{1:b}ar foobar foobar foobar foobar foobar fo|
+    obar foob{1:a}r foobar foobar foobar foobar foobar foo|
+    {1:bar fooba^r}{5: }{1:                                       }|
                                                       |
   ]])
 end)
