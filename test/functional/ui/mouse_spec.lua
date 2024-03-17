@@ -34,6 +34,7 @@ describe('ui/mouse/input', function()
       [6] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
       [7] = { bold = true, foreground = Screen.colors.SeaGreen4 },
       [8] = { foreground = Screen.colors.Brown },
+      [9] = { background = Screen.colors.DarkGrey, foreground = Screen.colors.LightGrey },
     })
     command('set mousemodel=extend')
     feed('itesting<cr>mouse<cr>support and selection<esc>')
@@ -1636,6 +1637,59 @@ describe('ui/mouse/input', function()
       end)
       test_mouse_click_conceal()
     end)
+  end)
+
+  it('virtual text does not change cursor placement on concealed line', function()
+    command('%delete')
+    insert('aaaaaaaaaa|hidden|bbbbbbbbbb|hidden|cccccccccc')
+    command('syntax match test /|hidden|/ conceal cchar=X')
+    command('set conceallevel=2 concealcursor=n virtualedit=all')
+    screen:expect([[
+      aaaaaaaaaa{9:X}bbbbbbb       |
+      bbb{9:X}ccccccccc^c           |
+      {0:~                        }|*2
+                               |
+    ]])
+    api.nvim_input_mouse('left', 'press', '', 0, 0, 22)
+    screen:expect([[
+      aaaaaaaaaa{9:X}bbbbbb^b       |
+      bbb{9:X}cccccccccc           |
+      {0:~                        }|*2
+                               |
+    ]])
+    api.nvim_input_mouse('left', 'press', '', 0, 1, 16)
+    screen:expect([[
+      aaaaaaaaaa{9:X}bbbbbbb       |
+      bbb{9:X}cccccccccc  ^         |
+      {0:~                        }|*2
+                               |
+    ]])
+
+    api.nvim_buf_set_extmark(0, api.nvim_create_namespace(''), 0, 0, {
+      virt_text = { { '?', 'ErrorMsg' } },
+      virt_text_pos = 'right_align',
+      virt_text_repeat_linebreak = true,
+    })
+    screen:expect([[
+      aaaaaaaaaa{9:X}bbbbbbb      {6:?}|
+      bbb{9:X}cccccccccc  ^        {6:?}|
+      {0:~                        }|*2
+                               |
+    ]])
+    api.nvim_input_mouse('left', 'press', '', 0, 0, 22)
+    screen:expect([[
+      aaaaaaaaaa{9:X}bbbbbb^b      {6:?}|
+      bbb{9:X}cccccccccc          {6:?}|
+      {0:~                        }|*2
+                               |
+    ]])
+    api.nvim_input_mouse('left', 'press', '', 0, 1, 16)
+    screen:expect([[
+      aaaaaaaaaa{9:X}bbbbbbb      {6:?}|
+      bbb{9:X}cccccccccc  ^        {6:?}|
+      {0:~                        }|*2
+                               |
+    ]])
   end)
 
   it('getmousepos() works correctly', function()
