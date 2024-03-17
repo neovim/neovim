@@ -624,7 +624,7 @@ void ui_check_mouse(void)
 /// Check if current mode has changed.
 ///
 /// May update the shape of the cursor.
-void ui_cursor_shape(void)
+void ui_cursor_shape_no_check_conceal(void)
 {
   if (!full_screen) {
     return;
@@ -635,6 +635,15 @@ void ui_cursor_shape(void)
     ui_mode_idx = new_mode_idx;
     pending_mode_update = true;
   }
+}
+
+/// Check if current mode has changed.
+///
+/// May update the shape of the cursor.
+/// With concealing on, may conceal or unconceal the cursor line.
+void ui_cursor_shape(void)
+{
+  ui_cursor_shape_no_check_conceal();
   conceal_check_cursor_line();
 }
 
