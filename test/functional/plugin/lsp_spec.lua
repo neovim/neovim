@@ -3879,6 +3879,92 @@ describe('LSP', function()
         end,
       }
     end)
+
+    it('refresh multiple buffers', function()
+      local lens_title_per_fake_uri = {
+        ['file:///fake/uri1'] = 'Lens1',
+        ['file:///fake/uri2'] = 'Lens2',
+      }
+      clear()
+      exec_lua(create_server_definition)
+
+      -- setup lsp
+      exec_lua(
+        [[
+          local lens_title_per_fake_uri = ...
+          local server = _create_server({
+            capabilities = {
+              codeLensProvider = {
+                resolveProvider = true
+              },
+            },
+            handlers = {
+              ["textDocument/codeLens"] = function(method, params)
+                local lenses = {
+                  {
+                    range = {
+                      start = { line = 0, character = 0 },
+                      ['end'] = { line = 0, character = 0 },
+                    },
+                    command = {
+                      title = lens_title_per_fake_uri[params.textDocument.uri],
+                      command = 'Dummy',
+                    },
+                  },
+                }
+                return lenses
+              end,
+            }
+          })
+
+          CLIENT_ID = vim.lsp.start({
+            name = "dummy",
+            cmd = server.cmd,
+          })
+        ]],
+        lens_title_per_fake_uri
+      )
+
+      -- create buffers and setup handler
+      exec_lua(
+        [[
+          local lens_title_per_fake_uri = ...
+          local default_buf = vim.api.nvim_get_current_buf()
+          for fake_uri, _ in pairs(lens_title_per_fake_uri) do
+            local bufnr = vim.uri_to_bufnr(fake_uri)
+            vim.api.nvim_set_current_buf(bufnr)
+            vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {'Some contents'})
+            vim.lsp.buf_attach_client(bufnr, CLIENT_ID)
+          end
+          vim.api.nvim_buf_delete(default_buf, {force = true})
+
+          REQUEST_COUNT = vim.tbl_count(lens_title_per_fake_uri)
+          RESPONSES = {}
+          local on_codelens = vim.lsp.codelens.on_codelens
+          vim.lsp.codelens.on_codelens = function (err, result, ctx, ...)
+            table.insert(RESPONSES, { err = err, result = result, ctx = ctx })
+            return on_codelens(err, result, ctx, ...)
+          end
+        ]],
+        lens_title_per_fake_uri
+      )
+
+      -- call codelens refresh
+      local cmds = exec_lua([[
+        RESPONSES = {}
+        vim.lsp.codelens.refresh()
+        vim.wait(100, function () return #RESPONSES >= REQUEST_COUNT end)
+
+        local cmds = {}
+        for _, resp in ipairs(RESPONSES) do
+          local uri = resp.ctx.params.textDocument.uri
+          cmds[uri] = resp.result[1].command
+        end
+        return cmds
+      ]])
+      eq({ command = 'Dummy', title = 'Lens1' }, cmds['file:///fake/uri1'])
+      eq({ command = 'Dummy', title = 'Lens2' }, cmds['file:///fake/uri2'])
+    end)
   end)
 
   describe('vim.lsp.buf.format', function()
