@@ -132,6 +132,8 @@
 (map_statement
   cmd: _ @keyword)
 
+(keycode) @character.special
+
 (command_name) @function.macro
 
 ; Filetype command
