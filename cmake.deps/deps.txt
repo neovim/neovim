@@ -43,8 +43,8 @@ LIBICONV_SHA256 8f74213b56238c85a50a5329f77e06198771e70dd9a739779f4c02f65d971313
 
 TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.21.0.tar.gz
 TREESITTER_C_SHA256 6f0f5d1b71cf8ffd8a37fb638c6022fa1245bd630150b538547d52128ce0ea7e
-TREESITTER_LUA_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/archive/v0.0.19.tar.gz
-TREESITTER_LUA_SHA256 974230f212d0049fce8e881b88b18eebbd05f1fd0edd16fe4ba5bdd2bcd78d08
+TREESITTER_LUA_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/archive/v0.1.0.tar.gz
+TREESITTER_LUA_SHA256 230cfcbfa74ed1f7b8149e9a1f34c2efc4c589a71fe0f5dc8560622f8020d722
 TREESITTER_VIM_URL https://github.com/neovim/tree-sitter-vim/archive/v0.3.0.tar.gz
 TREESITTER_VIM_SHA256 403acec3efb7cdb18ff3d68640fc823502a4ffcdfbb71cec3f98aa786c21cbe2
 TREESITTER_VIMDOC_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v2.2.0.tar.gz
