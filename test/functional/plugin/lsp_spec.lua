@@ -282,7 +282,8 @@ describe('LSP', function()
       local client
       test_rpc_server {
         test_name = 'basic_finish',
-        on_setup = function()
+        on_init = function(_client)
+          client = _client
           exec_lua [[
             BUFFER = vim.api.nvim_create_buf(false, true)
           ]]
@@ -291,9 +292,6 @@ describe('LSP', function()
           exec_lua [[
             vim.api.nvim_command(BUFFER.."bwipeout")
           ]]
-        end,
-        on_init = function(_client)
-          client = _client
           client.notify('finish')
         end,
         on_exit = function(code, signal)
@@ -1060,7 +1058,8 @@ describe('LSP', function()
       local client
       test_rpc_server {
         test_name = 'basic_finish',
-        on_setup = function()
+        on_init = function(_client)
+          client = _client
           exec_lua [[
             BUFFER = vim.api.nvim_create_buf(false, true)
             vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
@@ -1074,9 +1073,6 @@ describe('LSP', function()
           exec_lua [[
             vim.api.nvim_command(BUFFER.."bwipeout")
           ]]
-        end,
-        on_init = function(_client)
-          client = _client
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
           eq(full_kind, client.server_capabilities().textDocumentSync.change)
           eq(true, client.server_capabilities().textDocumentSync.openClose)
