@@ -2713,7 +2713,7 @@ static bool do_more_prompt(int typed_char)
   // If headless mode is enabled and no input is required, this variable
   // will be true. However If server mode is enabled, the message "--more--"
   // should be displayed.
-  bool no_need_more = headless_mode && !embedded_mode;
+  bool no_need_more = headless_mode && !embedded_mode && !ui_active();
 
   // We get called recursively when a timer callback outputs a message. In
   // that case don't show another prompt. Also when at the hit-Enter prompt

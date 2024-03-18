@@ -775,18 +775,23 @@ describe('treesitter highlighting (C)', function()
         declarator: (pointer_declarator) @variable.parameter)
     ]]
 
-    exec_lua([[
+    exec_lua(
+      [[
       local query = ...
       vim.treesitter.query.set('c', 'highlights', query)
       vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, 'c'))
-    ]], query)
+    ]],
+      query
+    )
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
         void foo(int {4:*}{11:bar});                                            |
       ^                                                                 |
       {1:~                                                                }|*15
                                                                        |
-    ]]}
+    ]],
+    }
   end)
 end)
 

@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local eval = helpers.eval
 local eq = helpers.eq
+local neq = helpers.neq
 local command = helpers.command
 local set_method_error = helpers.set_method_error
 local api = helpers.api
@@ -15,6 +16,7 @@ local exc_exec = helpers.exc_exec
 local exec_lua = helpers.exec_lua
 local poke_eventloop = helpers.poke_eventloop
 local assert_alive = helpers.assert_alive
+local retry = helpers.retry
 local is_os = helpers.is_os
 local is_ci = helpers.is_ci
 local fn = helpers.fn
@@ -2496,4 +2498,48 @@ aliquip ex ea commodo consequat.]]
     ]],
     }
   end)
+end)
+
+it('pager works in headless mode with UI attached', function()
+  skip(is_os('win'))
+  clear()
+  local child_server = assert(helpers.new_pipename())
+  fn.jobstart({ nvim_prog, '--clean', '--headless', '--listen', child_server })
+  retry(nil, nil, function()
+    neq(nil, vim.uv.fs_stat(child_server))
+  end)
+
+  local child_session = helpers.connect(child_server)
+  local child_screen = Screen.new(40, 6)
+  child_screen:attach(nil, child_session)
+
+  child_session:notify('nvim_command', [[echo range(100)->join("\n")]])
+  child_screen:expect([[
+    0                                       |
+    1                                       |
+    2                                       |
+    3                                       |
+    4                                       |
+    -- More --^                              |
+  ]])
+
+  child_session:request('nvim_input', 'G')
+  child_screen:expect([[
+    95                                      |
+    96                                      |
+    97                                      |
+    98                                      |
+    99                                      |
+    Press ENTER or type command to continue^ |
+  ]])
+
+  child_session:request('nvim_input', 'g')
+  child_screen:expect([[
+    0                                       |
+    1                                       |
+    2                                       |
+    3                                       |
+    4                                       |
+    -- More --^                              |
+  ]])
 end)
