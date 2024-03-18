@@ -1,6 +1,7 @@
+get_sha(treesitter ${DEPS_IGNORE_SHA})
 ExternalProject_Add(treesitter
   URL ${TREESITTER_URL}
-  URL_HASH SHA256=${TREESITTER_SHA256}
+  ${EXTERNALPROJECT_URL_HASH}
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/treesitter
   PATCH_COMMAND ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/TreesitterCMakeLists.txt
