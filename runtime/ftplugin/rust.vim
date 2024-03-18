@@ -1,7 +1,7 @@
 " Language:     Rust
 " Description:  Vim ftplugin for Rust
 " Maintainer:   Chris Morgan <me@chrismorgan.info>
-" Last Change:  2023-09-11
+" Last Change:  2024-03-17
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 
 if exists("b:did_ftplugin")
@@ -94,14 +94,15 @@ if has('conceal') && get(g:, 'rust_conceal', 0)
 endif
 
 " Motion Commands {{{1
-
-" Bind motion commands to support hanging indents
-nnoremap <silent> <buffer> [[ :call rust#Jump('n', 'Back')<CR>
-nnoremap <silent> <buffer> ]] :call rust#Jump('n', 'Forward')<CR>
-xnoremap <silent> <buffer> [[ :call rust#Jump('v', 'Back')<CR>
-xnoremap <silent> <buffer> ]] :call rust#Jump('v', 'Forward')<CR>
-onoremap <silent> <buffer> [[ :call rust#Jump('o', 'Back')<CR>
-onoremap <silent> <buffer> ]] :call rust#Jump('o', 'Forward')<CR>
+if !exists("g:no_plugin_maps") && !exists("g:no_rust_maps")
+    " Bind motion commands to support hanging indents
+    nnoremap <silent> <buffer> [[ :call rust#Jump('n', 'Back')<CR>
+    nnoremap <silent> <buffer> ]] :call rust#Jump('n', 'Forward')<CR>
+    xnoremap <silent> <buffer> [[ :call rust#Jump('v', 'Back')<CR>
+    xnoremap <silent> <buffer> ]] :call rust#Jump('v', 'Forward')<CR>
+    onoremap <silent> <buffer> [[ :call rust#Jump('o', 'Back')<CR>
+    onoremap <silent> <buffer> ]] :call rust#Jump('o', 'Forward')<CR>
+endif
 
 " Commands {{{1
 
@@ -176,12 +177,12 @@ let b:undo_ftplugin = "
                                 \|delcommand -buffer RustInfoToClipboard
                                 \|delcommand -buffer RustInfoToFile
                                 \|delcommand -buffer RustTest
-                                \|nunmap <buffer> [[
-                                \|nunmap <buffer> ]]
-                                \|xunmap <buffer> [[
-                                \|xunmap <buffer> ]]
-                                \|ounmap <buffer> [[
-                                \|ounmap <buffer> ]]
+                                \|silent! nunmap <buffer> [[
+                                \|silent! nunmap <buffer> ]]
+                                \|silent! xunmap <buffer> [[
+                                \|silent! xunmap <buffer> ]]
+                                \|silent! ounmap <buffer> [[
+                                \|silent! ounmap <buffer> ]]
                                 \|setlocal matchpairs-=<:>
                                 \|unlet b:match_skip
                                 \"
