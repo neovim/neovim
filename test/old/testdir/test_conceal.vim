@@ -462,6 +462,53 @@ func Test_conceal_mouse_click()
     call Ntest_setmouse(1, 32)
     call feedkeys("\<LeftMouse>", "tx")
     call assert_equal([0, 1, 24, 12, 36], getcurpos())
+    " Behavior should also be the same with 'colorcolumn'.
+    setlocal colorcolumn=30
+    redraw
+    call Ntest_setmouse(1, 31)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 24, 11, 35], getcurpos())
+    call Ntest_setmouse(1, 32)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 24, 12, 36], getcurpos())
+    setlocal colorcolumn&
+
+    if has('rightleft')
+      setlocal rightleft
+      call assert_equal([
+            \ '                     ereh kcilc  laecnoc',
+            \ ], ScreenLines(1, 40))
+      " Click on the space between "this" and "click" puts cursor there.
+      call Ntest_setmouse(1, 41 - 9)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 13, 0, 13], getcurpos())
+      " Click on 'h' of "here" puts cursor there.
+      call Ntest_setmouse(1, 41 - 16)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 20, 0, 20], getcurpos())
+      " Click on 'e' of "here" puts cursor there.
+      call Ntest_setmouse(1, 41 - 19)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 23, 0, 23], getcurpos())
+      " Click after end of line puts cursor there with 'virtualedit'.
+      call Ntest_setmouse(1, 41 - 20)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 24, 0, 24], getcurpos())
+      call Ntest_setmouse(1, 41 - 21)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 24, 1, 25], getcurpos())
+      call Ntest_setmouse(1, 41 - 22)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 24, 2, 26], getcurpos())
+      call Ntest_setmouse(1, 41 - 31)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 24, 11, 35], getcurpos())
+      call Ntest_setmouse(1, 41 - 32)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 24, 12, 36], getcurpos())
+      setlocal rightleft&
+    endif
+
     set virtualedit&
 
     " Test with a wrapped line.

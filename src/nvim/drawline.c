@@ -2621,12 +2621,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           // linebuf_vcol[] already filled by the for loop above
           wlv.off++;
           wlv.col++;
+          wlv.vcol++;
 
-          if (vcol_hlc(wlv) >= rightmost_vcol) {
+          if (vcol_hlc(wlv) > rightmost_vcol) {
             break;
           }
-
-          wlv.vcol++;
         }
       }
 

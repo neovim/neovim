@@ -750,10 +750,15 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
   }
 
   int clear_dirty_start = -1, clear_end = -1;
+  if (flags & SLF_RIGHTLEFT) {
+    for (col = clear_width - 1; col >= clear_start; col--) {
+      size_t off = off_to + (size_t)col;
+      grid->vcols[off] = (flags & SLF_INC_VCOL) ? ++last_vcol : last_vcol;
+    }
+  }
   // blank out the rest of the line
   // TODO(bfredl): we could cache winline widths
-  col = clear_start;
-  while (col < clear_width) {
+  for (col = clear_start; col < clear_width; col++) {
     size_t off = off_to + (size_t)col;
     if (grid->chars[off] != schar_from_ascii(' ')
         || grid->attrs[off] != bg_attr
@@ -765,8 +770,9 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
       }
       clear_end = col + 1;
     }
-    grid->vcols[off] = (flags & SLF_INC_VCOL) ? ++last_vcol : last_vcol;
-    col++;
+    if (!(flags & SLF_RIGHTLEFT)) {
+      grid->vcols[off] = (flags & SLF_INC_VCOL) ? ++last_vcol : last_vcol;
+    }
   }
 
   if ((flags & SLF_RIGHTLEFT) && start_dirty != -1 && clear_dirty_start != -1) {
