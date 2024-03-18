@@ -1,8 +1,6 @@
 if(MSVC)
-  get_sha(libiconv ${DEPS_IGNORE_SHA})
+  get_externalproject_options(libiconv ${DEPS_IGNORE_SHA})
   ExternalProject_Add(libiconv
-    URL ${LIBICONV_URL}
-    ${EXTERNALPROJECT_URL_HASH}
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libiconv
     PATCH_COMMAND ${CMAKE_COMMAND} -E copy
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibiconvCMakeLists.txt
