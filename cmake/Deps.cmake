@@ -19,7 +19,6 @@ if(APPLE)
 endif()
 
 set(DEPS_CMAKE_CACHE_ARGS -DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES})
-set(EXTERNALPROJECT_OPTIONS DOWNLOAD_NO_PROGRESS TRUE)
 
 # MAKE_PRG
 if(UNIX)
@@ -55,10 +54,24 @@ if(CMAKE_OSX_ARCHITECTURES)
   endforeach()
 endif()
 
-function(get_sha name ignore)
-  unset(EXTERNALPROJECT_URL_HASH)
-  if(NOT ${ignore})
-    string(TOUPPER ${name} name_allcaps)
-    set(EXTERNALPROJECT_URL_HASH URL_HASH SHA256=${${name_allcaps}_SHA256} PARENT_SCOPE)
+function(get_externalproject_options name DEPS_IGNORE_SHA)
+  string(TOUPPER ${name} name_allcaps)
+  set(url ${${name_allcaps}_URL})
+
+  set(EXTERNALPROJECT_OPTIONS DOWNLOAD_NO_PROGRESS TRUE)
+
+  if(EXISTS ${url})
+    list(APPEND EXTERNALPROJECT_OPTIONS
+      GIT_REPOSITORY ${${name_allcaps}_URL})
+    if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.18)
+      list(APPEND EXTERNALPROJECT_OPTIONS GIT_REMOTE_UPDATE_STRATEGY CHECKOUT)
+    endif()
+  else()
+    list(APPEND EXTERNALPROJECT_OPTIONS URL ${${name_allcaps}_URL})
+    if(NOT ${DEPS_IGNORE_SHA})
+      list(APPEND EXTERNALPROJECT_OPTIONS URL_HASH SHA256=${${name_allcaps}_SHA256})
+    endif()
   endif()
+
+  set(EXTERNALPROJECT_OPTIONS ${EXTERNALPROJECT_OPTIONS} PARENT_SCOPE)
 endfunction()

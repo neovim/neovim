@@ -1,7 +1,5 @@
-get_sha(libuv ${DEPS_IGNORE_SHA})
+get_externalproject_options(libuv ${DEPS_IGNORE_SHA})
 ExternalProject_Add(libuv
-  URL ${LIBUV_URL}
-  ${EXTERNALPROJECT_URL_HASH}
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libuv
   CMAKE_ARGS ${DEPS_CMAKE_ARGS}
     -D CMAKE_INSTALL_LIBDIR=lib

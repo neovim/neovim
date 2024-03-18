@@ -318,6 +318,30 @@ types, etc. See [:help dev-lua-doc][dev-lua-doc].
       - Private functions usually should be underscore-prefixed (named "_foo", not "foo").
 - Mark deprecated functions with `@deprecated`.
 
+Third-party dependencies
+------------------------
+
+To build Nvim using a different commit of a dependency change the appropriate
+URL in `cmake.deps/deps.txt`. For example, to use a different version of luajit
+replace the value in `LUAJIT_URL` with the wanted commit hash:
+
+```bash
+LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/<sha>.tar.gz
+```
+
+Set `DEPS_IGNORE_SHA` to `TRUE` in `cmake.deps/CMakeLists.txt` to skip hash
+check from cmake.
+
+Alternatively, you may point the URL as a local path where the repository is.
+This is convenient when bisecting a problem in a dependency with `git bisect`.
+This requires running `make distclean` the first time once to remove traces of
+the previous build. Hash checking is always skipped in this case regardless of
+`DEPS_IGNORE_SHA`.
+
+```bash
+LUAJIT_URL /home/user/luajit
+```
+
 Reviewing
 ---------
 

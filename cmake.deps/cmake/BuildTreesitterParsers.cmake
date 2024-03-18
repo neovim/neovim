@@ -15,14 +15,10 @@ function(BuildTSParser)
     set(TS_CMAKE_FILE TreesitterParserCMakeLists.txt)
   endif()
 
-  set(NAME treesitter-${TS_LANG})
-  string(TOUPPER "TREESITTER_${TS_LANG}_URL" URL_VARNAME)
-  set(URL ${${URL_VARNAME}})
+  set(NAME treesitter_${TS_LANG})
 
-  get_sha(treesitter_${TS_LANG} ${DEPS_IGNORE_SHA})
+  get_externalproject_options(${NAME} ${DEPS_IGNORE_SHA})
   ExternalProject_Add(${NAME}
-    URL ${URL}
-    ${EXTERNALPROJECT_URL_HASH}
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/${NAME}
     PATCH_COMMAND ${CMAKE_COMMAND} -E copy
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${TS_CMAKE_FILE}

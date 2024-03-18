@@ -1,7 +1,5 @@
-get_sha(msgpack ${DEPS_IGNORE_SHA})
+get_externalproject_options(msgpack ${DEPS_IGNORE_SHA})
 ExternalProject_Add(msgpack
-  URL ${MSGPACK_URL}
-  ${EXTERNALPROJECT_URL_HASH}
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/msgpack
   CMAKE_ARGS ${DEPS_CMAKE_ARGS}
     -D MSGPACK_BUILD_TESTS=OFF

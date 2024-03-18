@@ -17,21 +17,17 @@ if(CMAKE_GENERATOR MATCHES "Unix Makefiles" AND
     list(APPEND LUV_CMAKE_ARGS -D CMAKE_MAKE_PROGRAM=gmake)
 endif()
 
-get_sha(lua_compat53 ${DEPS_IGNORE_SHA})
+get_externalproject_options(lua_compat53 ${DEPS_IGNORE_SHA})
 ExternalProject_Add(lua_compat53
-  URL ${LUA_COMPAT53_URL}
-  ${EXTERNALPROJECT_URL_HASH}
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/lua_compat53
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
   ${EXTERNALPROJECT_OPTIONS})
 
-get_sha(luv ${DEPS_IGNORE_SHA})
+get_externalproject_options(luv ${DEPS_IGNORE_SHA})
 ExternalProject_Add(luv
   DEPENDS lua_compat53
-  URL ${LUV_URL}
-  ${EXTERNALPROJECT_URL_HASH}
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luv
   SOURCE_DIR ${DEPS_BUILD_DIR}/src/luv
   CMAKE_ARGS ${DEPS_CMAKE_ARGS} ${LUV_CMAKE_ARGS}
