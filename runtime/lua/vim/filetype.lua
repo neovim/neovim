@@ -335,6 +335,7 @@ local extension = {
   si = 'cuplsim',
   cyn = 'cynpp',
   cypher = 'cypher',
+  dfy = 'dafny',
   dart = 'dart',
   drt = 'dart',
   ds = 'datascript',
