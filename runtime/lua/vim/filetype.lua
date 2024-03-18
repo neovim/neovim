@@ -336,6 +336,7 @@ local extension = {
   cyn = 'cynpp',
   cypher = 'cypher',
   dart = 'dart',
+  dfy = 'dafny',
   drt = 'dart',
   ds = 'datascript',
   dcd = 'dcd',

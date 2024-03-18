@@ -179,6 +179,7 @@ func s:GetFilenameChecks() abort
     \ 'cynpp': ['file.cyn'],
     \ 'cypher': ['file.cypher'],
     \ 'd': ['file.d'],
+    \ 'dafny': ['file.dfy'],
     \ 'dart': ['file.dart', 'file.drt'],
     \ 'datascript': ['file.ds'],
     \ 'dcd': ['file.dcd'],
