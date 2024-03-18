@@ -2281,7 +2281,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
   }
   msg_cursor_goto(msg_row, msg_col);
 
-  if (p_more && !recurse && !(s == sb_str + 1 && *sb_str == '\n')) {
+  if (p_more && !recurse) {
     store_sb_text(&sb_str, s, attr, &sb_col, false);
   }
 
