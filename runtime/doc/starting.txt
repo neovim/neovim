@@ -139,7 +139,7 @@ argument.
 
 --cmd {command}						*--cmd*
 		{command} will be executed before processing any vimrc file.
-		Otherwise it acts like -c {command}.  You can use up to 10 of
+		Otherwise, it acts like -c {command}.  You can use up to 10 of
 		these commands, independently from "-c" commands.
 
 							*-S*
@@ -306,7 +306,7 @@ argument.
 		few windows will be editing an empty file.
 
 							*-O*
--O[N]		Open N windows, split vertically.  Otherwise it's like -o.
+-O[N]		Open N windows, split vertically.  Otherwise, it's like -o.
 		If both the -o and the -O option are given, the last one on
 		the command line determines how the windows will be split.
 
@@ -325,8 +325,10 @@ argument.
 
 		This can be used to start Vim in a special mode, with special
 		mappings and settings.  A shell alias can be used to make
-		this easy to use.  For example: >
-			alias vimc vim -u ~/.config/nvim/c_init.vim !*
+		this easy to use.  For example, in a C shell descendant: >
+			alias vimc 'nvim -u ~/.config/nvim/c_init.vim \!*'
+<		And in a Bash shell: >
+			alias vimc='nvim -u ~/.config/nvim/c_init.vim'
 <		Also consider using autocommands; see |autocommand|.
 
 		When {vimrc} is "NONE" (all uppercase), all initializations
@@ -544,7 +546,7 @@ accordingly, proceeding as follows:
 	This means that Nvim will figure out the values of 'shellpipe' and
 	'shellredir' for you, unless you have set them yourself.
 
-12. Set 'updatecount' to zero, if "-n" command argument used
+12. Set 'updatecount' to zero, if "-n" command argument used.
 
 13. Set binary options if the |-b| flag was given.
 
@@ -581,11 +583,11 @@ Avoiding trojan horses ~
 							*trojan-horse*
 While reading the "vimrc" or the "exrc" file in the current directory, some
 commands can be disabled for security reasons by setting the 'secure' option.
-This is always done when executing the command from a tags file.  Otherwise it
-would be possible that you accidentally use a vimrc or tags file that somebody
-else created and contains nasty commands.  The disabled commands are the ones
-that start a shell, the ones that write to a file, and ":autocmd".  The ":map"
-commands are echoed, so you can see which keys are being mapped.
+This is always done when executing the command from a tags file.  Otherwise,
+it would be possible that you accidentally use a vimrc or tags file that
+somebody else created and contains nasty commands.  The disabled commands are
+the ones that start a shell, the ones that write to a file, and ":autocmd".
+The ":map" commands are echoed, so you can see which keys are being mapped.
 	If you want Vim to execute all commands in a local vimrc file, you
 can reset the 'secure' option in the EXINIT or VIMINIT environment variable or
 in the global exrc or vimrc file.  This is not possible in vimrc or
@@ -743,7 +745,7 @@ these are terminal or file dependent.
 Note that the options 'binary', 'paste' and 'readonly' are included, this
 might not always be what you want.
 
-When special keys are used in mappings, The 'cpoptions' option will be
+When special keys are used in mappings, the 'cpoptions' option will be
 temporarily set to its Vim default, to avoid the mappings to be
 misinterpreted.  This makes the file incompatible with Vi, but makes sure it
 can be used with different terminals.
@@ -797,8 +799,8 @@ You can quickly start editing with a previously saved View or Session with the
 							*:mks* *:mksession*
 :mks[ession][!] [file]	Write a Vim script that restores the current editing
 			session.
-			When [!] is included an existing file is overwritten.
-			When [file] is omitted "Session.vim" is used.
+			When [!] is included, an existing file is overwritten.
+			When [file] is omitted, "Session.vim" is used.
 
 The output of ":mksession" is like ":mkvimrc", but additional commands are
 added to the file.  Which ones depends on the 'sessionoptions' option.  The
@@ -810,16 +812,16 @@ resulting file, when executed with a ":source" command:
 3. Closes all windows in the current tab page, except the current one; closes
    all tab pages except the current one (this results in currently loaded
    buffers to be unloaded, some may become hidden if 'hidden' is set or
-   otherwise specified); wipes out the current buffer, if it is empty
-   and unnamed.
-4. Restores the current directory if 'sessionoptions' contains "curdir", or
-   sets the current directory to where the Session file is if 'sessionoptions'
-   contains "sesdir".
+   otherwise specified); wipes out the current buffer, if it is empty and
+   unnamed.
+4. Restores the current directory, if 'sessionoptions' contains "curdir", or
+   sets the current directory to where the Session file is, if
+   'sessionoptions' contains "sesdir".
 5. Restores GUI Vim window position, if 'sessionoptions' contains "winpos".
 6. Restores screen size, if 'sessionoptions' contains "resize".
 7. Reloads the buffer list, with the last cursor positions.  If
    'sessionoptions' contains "buffers" then all buffers are restored,
-   including hidden and unloaded buffers.  Otherwise only buffers in windows
+   including hidden and unloaded buffers.  Otherwise, only buffers in windows
    are restored.
 8. Restores all windows with the same layout.  If 'sessionoptions' contains
    "help", help windows are restored.  If 'sessionoptions' contains "blank",
@@ -846,14 +848,14 @@ A session includes all tab pages, unless "tabpages" was removed from
 The |SessionLoadPost| autocmd event is triggered after a session file is
 loaded/sourced.
 						*SessionLoad-variable*
-While the session file is loading the SessionLoad global variable is set to 1.
-Plugins can use this to postpone some work until the SessionLoadPost event is
-triggered.
+While the session file is loading, the SessionLoad global variable is set to
+1.  Plugins can use this to postpone some work until the SessionLoadPost event
+is triggered.
 
 							*:mkvie* *:mkview*
 :mkvie[w][!] [file]	Write a Vim script that restores the contents of the
 			current window.
-			When [!] is included an existing file is overwritten.
+			When [!] is included, an existing file is overwritten.
 			When [file] is omitted or is a number from 1 to 9, a
 			name is generated and 'viewdir' prepended.  When the
 			last path part of 'viewdir' does not exist, this
@@ -868,14 +870,13 @@ triggered.
 
 The output of ":mkview" contains these items:
 1. The argument list used in the window.  When the global argument list is
-   used it is reset to the global list.
+   used, it is reset to the global list.
    The index in the argument list is also restored.
 2. The file being edited in the window.  If there is no file, the window is
    made empty.
-3. Restore mappings, abbreviations and options local to the window if
-   'viewoptions' contains "options" or "localoptions".  For the options it
-   restores only values that are local to the current buffer and values local
-   to the window.
+3. Restore mappings, abbreviations and options local to the window, if
+   'viewoptions' contains "options" or "localoptions".  Only option values
+   that are local to the current buffer and the current window are restored.
    When storing the view as part of a session and "options" is in
    'sessionoptions', global values for local options will be stored too.
 4. Restore folds when using manual folding and 'viewoptions' contains
@@ -909,7 +910,7 @@ Note that Views and Sessions are not perfect:
 The combination of ":mkview" and ":loadview" can be used to store up to ten
 different views of a file.  These are remembered in the directory specified
 with the 'viewdir' option.  The views are stored using the file name.  If a
-file is renamed or accessed through a (symbolic) link the view will not be
+file is renamed or accessed through a (symbolic) link, the view will not be
 found.
 
 You might want to clean up your 'viewdir' directory now and then.
@@ -969,7 +970,7 @@ Notes for Unix:
   allow just anybody to read and write your ShaDa file!
 - Vim will not overwrite a ShaDa file that is not writable by the current
   "real" user.  This helps for when you did "su" to become root, but your
-  $HOME is still set to a normal user's home directory.  Otherwise Vim would
+  $HOME is still set to a normal user's home directory.  Otherwise, Vim would
   create a ShaDa file owned by root that nobody else can read.
 - The ShaDa file cannot be a symbolic link.  This is to avoid security
   issues.
@@ -1001,11 +1002,11 @@ using this command: >
 
 	vim -c "normal '0"
 
-In a csh compatible shell you could make an alias for it: >
+In a C shell descendant, you could make an alias for it: >
 
 	alias lvim vim -c '"'normal "'"0'"'
 
-For a bash-like shell: >
+For a Bash-like shell: >
 
 	alias lvim='vim -c "normal '\''0"'
 
@@ -1099,15 +1100,15 @@ MANUALLY READING AND WRITING				*shada-read-write*
 Two commands can be used to read and write the ShaDa file manually.  This
 can be used to exchange registers between two running Vim programs: First
 type ":wsh" in one and then ":rsh" in the other.  Note that if the register
-already contained something, then ":rsh!" would be required.  Also note
-however that this means everything will be overwritten with information from
+already contained something, then ":rsh!" would be required.  Also note,
+however, that this means everything will be overwritten with information from
 the first Vim, including the command line history, etc.
 
 The ShaDa file itself can be edited by hand too, although we suggest you
 start with an existing one to get the format right.  You need to understand
 MessagePack (or, more likely, find software that is able to use it) format to
 do this.  This can be useful in order to create a second file, say
-"~/.my.shada" which could contain certain settings that you always want when
+"~/.my.shada", which could contain certain settings that you always want when
 you first start Nvim.  For example, you can preload registers with
 particular data, or put certain commands in the command line history.  A line
 in your |config| file like >
@@ -1171,8 +1172,8 @@ running) you have additional options:
 			described in |shada-error-handling|).  If 'shada' is
 			empty, marks for up to 100 files will be written.
 			When you get error "E929: All .tmp.X files exist,
-			cannot write ShaDa file!" check that no old temp files
-			were left behind (e.g.
+			cannot write ShaDa file!", check that no old temp
+			files were left behind (e.g.
 			~/.local/state/nvim/shada/main.shada.tmp*).
 
 			Note: Executing :wshada will reset all |'quote| marks.
@@ -1192,7 +1193,7 @@ running) you have additional options:
 			the list is edited.
 			If you get the |press-enter| prompt you can press "q"
 			and still get the prompt to enter a file number.
-			Use ! to abandon a modified buffer. |abandon|
+			Use [!] to abandon a modified buffer. |abandon|
 
 SHADA FILE FORMAT						*shada-format*
 
