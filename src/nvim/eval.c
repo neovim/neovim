@@ -8085,10 +8085,12 @@ void ex_echo(exarg_T *eap)
         // Call msg_start() after eval1(), evaluating the expression
         // may cause a message to appear.
         if (eap->cmdidx == CMD_echo) {
-          // Mark the saved text as finishing the line, so that what
-          // follows is displayed on a new line when scrolling back
-          // at the more prompt.
-          msg_sb_eol();
+          if (!msg_didout) {
+            // Mark the saved text as finishing the line, so that what
+            // follows is displayed on a new line when scrolling back
+            // at the more prompt.
+            msg_sb_eol();
+          }
           msg_start();
         }
       } else if (eap->cmdidx == CMD_echo) {
