@@ -10,6 +10,7 @@ local api = helpers.api
 local async_meths = helpers.async_meths
 local test_build_dir = helpers.paths.test_build_dir
 local nvim_prog = helpers.nvim_prog
+local testprg = helpers.testprg
 local exec = helpers.exec
 local exec_capture = helpers.exec_capture
 local exc_exec = helpers.exc_exec
@@ -2497,6 +2498,178 @@ aliquip ex ea commodo consequat.]]
       {1:~                                  }|*7
     ]],
     }
+  end)
+
+  it('g< shows blank line from :echo properly', function()
+    screen:try_resize(60, 8)
+    feed([[:echo 1 | echo "\n" | echo 2<CR>]])
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*2
+      {12:                                                            }|
+      1                                                           |
+                                                                  |
+      2                                                           |
+      {4:Press ENTER or type command to continue}^                     |
+    ]])
+
+    feed('<CR>')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*6
+                                                                  |
+    ]])
+
+    feed('g<lt>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|
+      {12:                                                            }|
+      :echo 1 | echo "\n" | echo 2                                |
+      1                                                           |
+                                                                  |
+      2                                                           |
+      {4:Press ENTER or type command to continue}^                     |
+    ]])
+
+    feed('<CR>')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*6
+                                                                  |
+    ]])
+  end)
+
+  it('scrolling works properly when :echo output ends with newline', function()
+    screen:try_resize(60, 6)
+    feed([[:echo range(100)->join("\n") .. "\n"<CR>]])
+    screen:expect([[
+      0                                                           |
+      1                                                           |
+      2                                                           |
+      3                                                           |
+      4                                                           |
+      {4:-- More --}^                                                  |
+    ]])
+    feed('G')
+    screen:expect([[
+      96                                                          |
+      97                                                          |
+      98                                                          |
+      99                                                          |
+                                                                  |
+      {4:Press ENTER or type command to continue}^                     |
+    ]])
+    for _ = 1, 3 do
+      feed('k')
+      screen:expect([[
+        95                                                          |
+        96                                                          |
+        97                                                          |
+        98                                                          |
+        99                                                          |
+        {4:-- More --}^                                                  |
+      ]])
+      feed('k')
+      screen:expect([[
+        94                                                          |
+        95                                                          |
+        96                                                          |
+        97                                                          |
+        98                                                          |
+        {4:-- More --}^                                                  |
+      ]])
+      feed('j')
+      screen:expect([[
+        95                                                          |
+        96                                                          |
+        97                                                          |
+        98                                                          |
+        99                                                          |
+        {4:-- More --}^                                                  |
+      ]])
+      feed('j')
+      screen:expect([[
+        96                                                          |
+        97                                                          |
+        98                                                          |
+        99                                                          |
+                                                                    |
+        {4:-- More --}^                                                  |
+      ]])
+      feed('j')
+      screen:expect([[
+        96                                                          |
+        97                                                          |
+        98                                                          |
+        99                                                          |
+                                                                    |
+        {4:Press ENTER or type command to continue}^                     |
+      ]])
+    end
+  end)
+
+  it('scrolling works properly when :!cmd output ends with newline #27902', function()
+    screen:try_resize(60, 6)
+    api.nvim_set_option_value('shell', testprg('shell-test'), {})
+    api.nvim_set_option_value('shellcmdflag', 'REP 100', {})
+    api.nvim_set_option_value('shellxquote', '', {}) -- win: avoid extra quotes
+    feed([[:!foo<CR>]])
+    screen:expect([[
+      96: foo                                                     |
+      97: foo                                                     |
+      98: foo                                                     |
+      99: foo                                                     |
+                                                                  |
+      {4:Press ENTER or type command to continue}^                     |
+    ]])
+    for _ = 1, 3 do
+      feed('k')
+      screen:expect([[
+        95: foo                                                     |
+        96: foo                                                     |
+        97: foo                                                     |
+        98: foo                                                     |
+        99: foo                                                     |
+        {4:-- More --}^                                                  |
+      ]])
+      feed('k')
+      screen:expect([[
+        94: foo                                                     |
+        95: foo                                                     |
+        96: foo                                                     |
+        97: foo                                                     |
+        98: foo                                                     |
+        {4:-- More --}^                                                  |
+      ]])
+      feed('j')
+      screen:expect([[
+        95: foo                                                     |
+        96: foo                                                     |
+        97: foo                                                     |
+        98: foo                                                     |
+        99: foo                                                     |
+        {4:-- More --}^                                                  |
+      ]])
+      feed('j')
+      screen:expect([[
+        96: foo                                                     |
+        97: foo                                                     |
+        98: foo                                                     |
+        99: foo                                                     |
+                                                                    |
+        {4:-- More --}^                                                  |
+      ]])
+      feed('j')
+      screen:expect([[
+        96: foo                                                     |
+        97: foo                                                     |
+        98: foo                                                     |
+        99: foo                                                     |
+                                                                    |
+        {4:Press ENTER or type command to continue}^                     |
+      ]])
+    end
   end)
 end)
 

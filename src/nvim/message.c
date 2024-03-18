@@ -1191,7 +1191,7 @@ void wait_return(int redraw)
       check_timestamps(false);
     }
 
-    hit_return_msg();
+    hit_return_msg(true);
 
     do {
       // Remember "got_int", if it is set vgetc() probably returns a
@@ -1240,7 +1240,7 @@ void wait_return(int redraw)
             got_int = false;
           } else if (c != K_IGNORE) {
             c = K_IGNORE;
-            hit_return_msg();
+            hit_return_msg(false);
           }
         } else if (msg_scrolled > Rows - 2
                    && (c == 'j' || c == 'd' || c == 'f'
@@ -1313,14 +1313,19 @@ void wait_return(int redraw)
 }
 
 /// Write the hit-return prompt.
-static void hit_return_msg(void)
+///
+/// @param newline_sb  if starting a new line, add it to the scrollback.
+static void hit_return_msg(bool newline_sb)
 {
   int save_p_more = p_more;
 
-  p_more = false;       // don't want to see this message when scrolling back
+  if (!newline_sb) {
+    p_more = false;
+  }
   if (msg_didout) {     // start on a new line
     msg_putchar('\n');
   }
+  p_more = false;       // don't want to see this message when scrolling back
   msg_ext_set_kind("return_prompt");
   if (got_int) {
     msg_puts(_("Interrupt: "));
@@ -2968,7 +2973,7 @@ void repeat_message(void)
       msg_col = 0;
       msg_clr_eos();
     }
-    hit_return_msg();
+    hit_return_msg(false);
     msg_row = Rows - 1;
   }
 }
