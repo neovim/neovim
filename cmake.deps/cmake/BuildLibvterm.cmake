@@ -1,6 +1,7 @@
+get_sha(libvterm ${DEPS_IGNORE_SHA})
 ExternalProject_Add(libvterm
   URL ${LIBVTERM_URL}
-  URL_HASH SHA256=${LIBVTERM_SHA256}
+  ${EXTERNALPROJECT_URL_HASH}
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libvterm
   PATCH_COMMAND ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibvtermCMakeLists.txt

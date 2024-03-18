@@ -18,12 +18,11 @@ function(BuildTSParser)
   set(NAME treesitter-${TS_LANG})
   string(TOUPPER "TREESITTER_${TS_LANG}_URL" URL_VARNAME)
   set(URL ${${URL_VARNAME}})
-  string(TOUPPER "TREESITTER_${TS_LANG}_SHA256" HASH_VARNAME)
-  set(HASH ${${HASH_VARNAME}})
 
+  get_sha(treesitter_${TS_LANG} ${DEPS_IGNORE_SHA})
   ExternalProject_Add(${NAME}
     URL ${URL}
-    URL_HASH SHA256=${HASH}
+    ${EXTERNALPROJECT_URL_HASH}
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/${NAME}
     PATCH_COMMAND ${CMAKE_COMMAND} -E copy
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${TS_CMAKE_FILE}

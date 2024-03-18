@@ -1,7 +1,8 @@
 if(MSVC)
+  get_sha(gettext ${DEPS_IGNORE_SHA})
   ExternalProject_Add(gettext
     URL ${GETTEXT_URL}
-    URL_HASH SHA256=${GETTEXT_SHA256}
+    ${EXTERNALPROJECT_URL_HASH}
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/gettext
     PATCH_COMMAND ${CMAKE_COMMAND} -E copy
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/GettextCMakeLists.txt
