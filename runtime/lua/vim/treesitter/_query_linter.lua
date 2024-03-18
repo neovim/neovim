@@ -122,7 +122,7 @@ local parse = vim.func._memoize(hash_parse, function(node, buf, lang)
 end)
 
 --- @param buf integer
---- @param match vim.treesitter.query.TSMatch
+--- @param match table<integer,TSNode[]>
 --- @param query vim.treesitter.Query
 --- @param lang_context QueryLinterLanguageContext
 --- @param diagnostics vim.Diagnostic[]
