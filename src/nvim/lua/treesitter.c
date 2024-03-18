@@ -33,13 +33,8 @@
 #define TS_META_NODE "treesitter_node"
 #define TS_META_QUERY "treesitter_query"
 #define TS_META_QUERYCURSOR "treesitter_querycursor"
+#define TS_META_QUERYMATCH "treesitter_querymatch"
 #define TS_META_TREECURSOR "treesitter_treecursor"
-
-typedef struct {
-  TSQueryCursor *cursor;
-  int predicated_match;
-  int max_match_id;
-} TSLua_cursor;
 
 typedef struct {
   LuaRef cb;
@@ -108,7 +103,6 @@ static struct luaL_Reg node_meta[] = {
   { "named_descendant_for_range", node_named_descendant_for_range },
   { "parent", node_parent },
   { "iter_children", node_iter_children },
-  { "_rawquery", node_rawquery },
   { "next_sibling", node_next_sibling },
   { "prev_sibling", node_prev_sibling },
   { "next_named_sibling", node_next_named_sibling },
@@ -130,9 +124,19 @@ static struct luaL_Reg query_meta[] = {
   { NULL, NULL }
 };
 
-// cursors are not exposed, but still needs garbage collection
+// TSQueryCursor
 static struct luaL_Reg querycursor_meta[] = {
+  { "remove_match", querycursor_remove_match },
+  { "next_capture", querycursor_next_capture },
+  { "next_match", querycursor_next_match },
   { "__gc", querycursor_gc },
+  { NULL, NULL }
+};
+
+// TSQueryMatch
+static struct luaL_Reg querymatch_meta[] = {
+  { "info", querymatch_info },
+  { "captures", querymatch_captures },
   { NULL, NULL }
 };
 
@@ -141,7 +145,6 @@ static struct luaL_Reg treecursor_meta[] = {
   { NULL, NULL }
 };
 
-static kvec_t(TSQueryCursor *) cursors = KV_INITIAL_VALUE;
 static PMap(cstr_t) langs = MAP_INIT;
 
 static void build_meta(lua_State *L, const char *tname, const luaL_Reg *meta)
@@ -166,6 +169,7 @@ void tslua_init(lua_State *L)
   build_meta(L, TS_META_NODE, node_meta);
   build_meta(L, TS_META_QUERY, query_meta);
   build_meta(L, TS_META_QUERYCURSOR, querycursor_meta);
+  build_meta(L, TS_META_QUERYMATCH, querymatch_meta);
   build_meta(L, TS_META_TREECURSOR, treecursor_meta);
 
   ts_set_allocator(xmalloc, xcalloc, xrealloc, xfree);
@@ -1361,171 +1365,154 @@ static int node_equal(lua_State *L)
   return 1;
 }
 
-/// assumes the match table being on top of the stack
-static void set_match(lua_State *L, TSQueryMatch *match, int nodeidx)
-{
-  // [match]
-  for (size_t i = 0; i < match->capture_count; i++) {
-    lua_rawgeti(L, -1, (int)match->captures[i].index + 1);  // [match, captures]
-    if (lua_isnil(L, -1)) {  // [match, nil]
-      lua_pop(L, 1);  // [match]
-      lua_createtable(L, 1, 0);  // [match, captures]
-    }
-    push_node(L, match->captures[i].node, nodeidx);  // [match, captures, node]
-    lua_rawseti(L, -2, (int)lua_objlen(L, -2) + 1);  // [match, captures]
-    lua_rawseti(L, -2, (int)match->captures[i].index + 1);  // [match]
-  }
-}
-
-static int query_next_match(lua_State *L)
-{
-  TSLua_cursor *ud = lua_touserdata(L, lua_upvalueindex(1));
-  TSQueryCursor *cursor = ud->cursor;
-
-  TSQuery *query = query_check(L, lua_upvalueindex(3));
-  TSQueryMatch match;
-  if (ts_query_cursor_next_match(cursor, &match)) {
-    lua_pushinteger(L, match.pattern_index + 1);  // [index]
-    lua_createtable(L, (int)ts_query_capture_count(query), 0);  // [index, match]
-    set_match(L, &match, lua_upvalueindex(2));
-    return 2;
-  }
-  return 0;
-}
-
-static int query_next_capture(lua_State *L)
-{
-  // Upvalues are:
-  // [ cursor, node, query, current_match ]
-  TSLua_cursor *ud = lua_touserdata(L, lua_upvalueindex(1));
-  TSQueryCursor *cursor = ud->cursor;
-
-  TSQuery *query = query_check(L, lua_upvalueindex(3));
-
-  if (ud->predicated_match > -1) {
-    lua_getfield(L, lua_upvalueindex(4), "active");
-    bool active = lua_toboolean(L, -1);
-    lua_pop(L, 1);
-    if (!active) {
-      ts_query_cursor_remove_match(cursor, (uint32_t)ud->predicated_match);
-    }
-    ud->predicated_match = -1;
-  }
-
-  TSQueryMatch match;
-  uint32_t capture_index;
-  if (ts_query_cursor_next_capture(cursor, &match, &capture_index)) {
-    TSQueryCapture capture = match.captures[capture_index];
-
-    // TODO(vigoux): handle capture quantifiers here
-    lua_pushinteger(L, capture.index + 1);  // [index]
-    push_node(L, capture.node, lua_upvalueindex(2));  // [index, node]
-
-    // Now check if we need to run the predicates
-    uint32_t n_pred;
-    ts_query_predicates_for_pattern(query, match.pattern_index, &n_pred);
-
-    if (n_pred > 0 && (ud->max_match_id < (int)match.id)) {
-      ud->max_match_id = (int)match.id;
-
-      // Create a new cleared match table
-      lua_createtable(L, (int)ts_query_capture_count(query), 2);  // [index, node, match]
-      set_match(L, &match, lua_upvalueindex(2));
-      lua_pushinteger(L, match.pattern_index + 1);
-      lua_setfield(L, -2, "pattern");
-
-      if (match.capture_count > 1) {
-        ud->predicated_match = (int)match.id;
-        lua_pushboolean(L, false);
-        lua_setfield(L, -2, "active");
-      }
-
-      // Set current_match to the new match
-      lua_replace(L, lua_upvalueindex(4));  // [index, node]
-      lua_pushvalue(L, lua_upvalueindex(4));  // [index, node, match]
-      return 3;
-    }
-    return 2;
-  }
-  return 0;
-}
-
-static int node_rawquery(lua_State *L)
+int tslua_push_querycursor(lua_State *L)
 {
   TSNode node;
   if (!node_check(L, 1, &node)) {
-    return 0;
+    return luaL_error(L, "TSNode expected");
   }
+
   TSQuery *query = query_check(L, 2);
-
-  TSQueryCursor *cursor;
-  if (kv_size(cursors) > 0) {
-    cursor = kv_pop(cursors);
-  } else {
-    cursor = ts_query_cursor_new();
+  if (!query) {
+    return luaL_error(L, "TSQuery expected");
   }
 
-  ts_query_cursor_set_max_start_depth(cursor, UINT32_MAX);
-  ts_query_cursor_set_match_limit(cursor, 256);
+  TSQueryCursor *cursor = ts_query_cursor_new();
   ts_query_cursor_exec(cursor, query, node);
 
-  bool captures = lua_toboolean(L, 3);
-
-  if (lua_gettop(L) >= 4) {
-    uint32_t start = (uint32_t)luaL_checkinteger(L, 4);
-    uint32_t end = lua_gettop(L) >= 5 ? (uint32_t)luaL_checkinteger(L, 5) : MAXLNUM;
+  if (lua_gettop(L) >= 3) {
+    uint32_t start = (uint32_t)luaL_checkinteger(L, 3);
+    uint32_t end = lua_gettop(L) >= 4 ? (uint32_t)luaL_checkinteger(L, 4) : MAXLNUM;
     ts_query_cursor_set_point_range(cursor, (TSPoint){ start, 0 }, (TSPoint){ end, 0 });
   }
 
-  if (lua_gettop(L) >= 6 && !lua_isnil(L, 6)) {
-    if (!lua_istable(L, 6)) {
+  if (lua_gettop(L) >= 5 && !lua_isnil(L, 5)) {
+    if (!lua_istable(L, 5)) {
       return luaL_error(L, "table expected");
     }
-    lua_pushnil(L);
-    // stack: [dict, ..., nil]
-    while (lua_next(L, 6)) {
-      // stack: [dict, ..., key, value]
+    lua_pushnil(L);  // [dict, ..., nil]
+    while (lua_next(L, 5)) {
+      // [dict, ..., key, value]
       if (lua_type(L, -2) == LUA_TSTRING) {
         char *k = (char *)lua_tostring(L, -2);
         if (strequal("max_start_depth", k)) {
           uint32_t max_start_depth = (uint32_t)lua_tointeger(L, -1);
           ts_query_cursor_set_max_start_depth(cursor, max_start_depth);
+        } else if (strequal("match_limit", k)) {
+          uint32_t match_limit = (uint32_t)lua_tointeger(L, -1);
+          ts_query_cursor_set_match_limit(cursor, match_limit);
         }
       }
-      lua_pop(L, 1);  // pop the value; lua_next will pop the key.
-      // stack: [dict, ..., key]
+      // pop the value; lua_next will pop the key.
+      lua_pop(L, 1);  // [dict, ..., key]
     }
   }
 
-  TSLua_cursor *ud = lua_newuserdata(L, sizeof(*ud));  // [udata]
-  ud->cursor = cursor;
-  ud->predicated_match = -1;
-  ud->max_match_id = -1;
+  TSQueryCursor **ud = lua_newuserdata(L, sizeof(*ud));  // [node, query, ..., udata]
+  *ud = cursor;
+  lua_getfield(L, LUA_REGISTRYINDEX, TS_META_QUERYCURSOR);  // [node, query, ..., udata, meta]
+  lua_setmetatable(L, -2);  // [node, query, ..., udata]
 
-  lua_getfield(L, LUA_REGISTRYINDEX, TS_META_QUERYCURSOR);
-  lua_setmetatable(L, -2);  // [udata]
-  lua_pushvalue(L, 1);  // [udata, node]
-
-  // include query separately, as to keep a ref to it for gc
-  lua_pushvalue(L, 2);  // [udata, node, query]
-
-  if (captures) {
-    // placeholder for match state
-    lua_createtable(L, (int)ts_query_capture_count(query), 2);  // [u, n, q, match]
-    lua_pushcclosure(L, query_next_capture, 4);  // [closure]
-  } else {
-    lua_pushcclosure(L, query_next_match, 3);  // [closure]
-  }
+  // Copy the fenv which contains the nodes tree.
+  lua_getfenv(L, 1);  // [udata, reftable]
+  lua_setfenv(L, -2);  // [udata]
 
   return 1;
 }
 
+static int querycursor_remove_match(lua_State *L)
+{
+  TSQueryCursor *cursor = querycursor_check(L, 1);
+  uint32_t match_id = (uint32_t)luaL_checkinteger(L, 2);
+  ts_query_cursor_remove_match(cursor, match_id);
+  return 0;
+}
+
+static void push_querymatch(lua_State *L, TSQueryMatch *match, int uindex)
+{
+  TSQueryMatch *ud = lua_newuserdata(L, sizeof(TSQueryMatch));  // [udata]
+  *ud = *match;
+  lua_getfield(L, LUA_REGISTRYINDEX, TS_META_QUERYMATCH);  // [udata, meta]
+  lua_setmetatable(L, -2);  // [udata]
+
+  // Copy the fenv which contains the nodes tree.
+  lua_getfenv(L, uindex);  // [udata, reftable]
+  lua_setfenv(L, -2);  // [udata]
+}
+
+static int querycursor_next_capture(lua_State *L)
+{
+  TSQueryCursor *cursor = querycursor_check(L, 1);
+
+  TSQueryMatch match;
+  uint32_t capture_index;
+  if (!ts_query_cursor_next_capture(cursor, &match, &capture_index)) {
+    return 0;
+  }
+
+  TSQueryCapture capture = match.captures[capture_index];
+
+  // Handle capture quantifiers here
+  lua_pushinteger(L, capture.index + 1);  // [index]
+  push_node(L, capture.node, 1);  // [index, node]
+  push_querymatch(L, &match, 1);
+
+  return 3;
+}
+
+static int querycursor_next_match(lua_State *L)
+{
+  TSQueryCursor *cursor = querycursor_check(L, 1);
+
+  TSQueryMatch match;
+  if (!ts_query_cursor_next_match(cursor, &match)) {
+    return 0;
+  }
+
+  push_querymatch(L, &match, 1);
+
+  return 1;
+}
+
+static TSQueryCursor *querycursor_check(lua_State *L, int index)
+{
+  TSQueryCursor **ud = luaL_checkudata(L, index, TS_META_QUERYCURSOR);
+  return *ud;
+}
+
 static int querycursor_gc(lua_State *L)
 {
-  TSLua_cursor *ud = luaL_checkudata(L, 1, TS_META_QUERYCURSOR);
-  kv_push(cursors, ud->cursor);
-  ud->cursor = NULL;
+  TSQueryCursor *cursor = querycursor_check(L, 1);
+  ts_query_cursor_delete(cursor);
   return 0;
+}
+
+static int querymatch_info(lua_State *L)
+{
+  TSQueryMatch *ud = luaL_checkudata(L, 1, TS_META_QUERYMATCH);
+  lua_pushinteger(L, ud->id);
+  lua_pushinteger(L, ud->pattern_index + 1);
+  return 2;
+}
+
+static int querymatch_captures(lua_State *L)
+{
+  TSQueryMatch *match = luaL_checkudata(L, 1, TS_META_QUERYMATCH);
+  lua_newtable(L);  // [match, nodes, captures]
+  for (size_t i = 0; i < match->capture_count; i++) {
+    TSQueryCapture capture = match->captures[i];
+    int index = (int)capture.index + 1;
+
+    lua_rawgeti(L, -1, index);  // [match, node, captures]
+    if (lua_isnil(L, -1)) {  // [match, node, captures, nil]
+      lua_pop(L, 1);  // [match, node, captures]
+      lua_newtable(L);  // [match, node, captures, nodes]
+    }
+    push_node(L, capture.node, 1);  // [match, node, captures, nodes, node]
+    lua_rawseti(L, -2, (int)lua_objlen(L, -2) + 1);  // [match, node, captures, nodes]
+    lua_rawseti(L, -2, index);  // [match, node, captures]
+  }
+  return 1;
 }
 
 // Query methods
@@ -1638,7 +1625,7 @@ static void query_err_string(const char *src, int error_offset, TSQueryError err
 static TSQuery *query_check(lua_State *L, int index)
 {
   TSQuery **ud = luaL_checkudata(L, index, TS_META_QUERY);
-  return *ud;
+  return ud ? *ud : NULL;
 }
 
 static int query_gc(lua_State *L)

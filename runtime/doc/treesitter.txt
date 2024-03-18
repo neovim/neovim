@@ -1144,6 +1144,10 @@ Query:iter_captures({node}, {source}, {start}, {stop})
         end
 <
 
+    Note: ~
+      • Captures are only returned if the query pattern of a specific capture
+        contained predicates.
+
     Parameters: ~
       • {node}    (`TSNode`) under which the search will occur
       • {source}  (`integer|string`) Source buffer or string to extract text
@@ -1154,7 +1158,7 @@ Query:iter_captures({node}, {source}, {start}, {stop})
                   Defaults to `node:end_()`.
 
     Return: ~
-        (`fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, table<integer, TSNode>`)
+        (`fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, table<integer,TSNode[]>?`)
         capture id, capture node, metadata, match
 
                                                         *Query:iter_matches()*
@@ -1198,6 +1202,8 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
                   • max_start_depth (integer) if non-zero, sets the maximum
                     start depth for each match. This is used to prevent
                     traversing too deep into a tree.
+                  • match_limit (integer) Set the maximum number of
+                    in-progress matches (Default: 256).
                   • all (boolean) When set, the returned match table maps
                     capture IDs to a list of nodes. Older versions of
                     iter_matches incorrectly mapped capture IDs to a single
