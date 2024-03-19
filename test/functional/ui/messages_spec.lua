@@ -1849,15 +1849,11 @@ describe('ui/msg_puts_printf', function()
         pending('missing japanese language features', function() end)
         return
       else
-        cmd = 'chcp 932 > NULL & '
+        cmd = 'chcp 932 > NUL & '
       end
     else
       if exc_exec('lang ja_JP.UTF-8') ~= 0 then
         pending('Locale ja_JP.UTF-8 not supported', function() end)
-        return
-      elseif is_ci() then
-        -- Fails non--Windows CI. Message catalog directory issue?
-        pending('fails on unix CI', function() end)
         return
       end
     end
