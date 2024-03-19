@@ -1063,6 +1063,7 @@ local extension = {
   vdmrt = 'vdmrt',
   vdmsl = 'vdmsl',
   vdm = 'vdmsl',
+  vto = 'vento',
   vr = 'vera',
   vri = 'vera',
   vrh = 'vera',
