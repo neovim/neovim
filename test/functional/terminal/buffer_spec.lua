@@ -10,6 +10,7 @@ local pcall_err = helpers.pcall_err
 local eq, neq = helpers.eq, helpers.neq
 local api = helpers.api
 local retry = helpers.retry
+local testprg = helpers.testprg
 local write_file = helpers.write_file
 local command = helpers.command
 local exc_exec = helpers.exc_exec
@@ -394,6 +395,20 @@ describe(':terminal buffer', function()
     retry(nil, nil, function()
       eq('a' .. composing:rep(5), api.nvim_get_current_line())
     end)
+  end)
+
+  it('handles split UTF-8 sequences #16245', function()
+    local screen = Screen.new(50, 7)
+    screen:attach()
+    fn.termopen({ testprg('shell-test'), 'UTF-8' })
+    screen:expect([[
+      ^å                                                 |
+      ref: å̲                                            |
+      1: å̲                                              |
+      2: å̲                                              |
+      3: å̲                                              |
+                                                        |*2
+    ]])
   end)
 end)
 

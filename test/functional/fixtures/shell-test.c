@@ -49,6 +49,10 @@ int main(int argc, char **argv)
     help();
   }
 
+#ifdef _MSC_VER
+  SetConsoleOutputCP(CP_UTF8);
+#endif
+
   if (argc >= 2) {
     if (strcmp(argv[1], "-t") == 0) {
       if (argc < 3) {
