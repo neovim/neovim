@@ -205,22 +205,14 @@ describe(':terminal buffer', function()
     eq(tbuf, eval('bufnr("%")'))
   end)
 
-  it('term_close() use-after-free #4393', function()
-    feed_command('terminal yes')
-    feed([[<C-\><C-n>]])
-    feed_command('bdelete!')
-  end)
-
   describe('handles confirmations', function()
     it('with :confirm', function()
-      feed_command('terminal')
       feed('<c-\\><c-n>')
       feed_command('confirm bdelete')
       screen:expect { any = 'Close "term://' }
     end)
 
     it('with &confirm', function()
-      feed_command('terminal')
       feed('<c-\\><c-n>')
       feed_command('bdelete')
       screen:expect { any = 'E89' }
@@ -317,13 +309,22 @@ describe(':terminal buffer', function()
       pcall_err(command, 'write test/functional/fixtures/tty-test.c')
     )
   end)
+end)
+
+describe(':terminal buffer', function()
+  before_each(clear)
+
+  it('term_close() use-after-free #4393', function()
+    command('terminal yes')
+    feed('<Ignore>') -- Add input to separate two RPC requests
+    command('bdelete!')
+  end)
 
   it('emits TermRequest events #26972', function()
-    command('new')
     local term = api.nvim_open_term(0, {})
     local termbuf = api.nvim_get_current_buf()
 
-    -- Test that autocommand buffer is associated with the terminal buffer, not the current buffer
+    -- Test that <abuf> is the terminal buffer, not the current buffer
     command('au TermRequest * let g:termbuf = +expand("<abuf>")')
     command('wincmd p')
 
@@ -337,7 +338,6 @@ describe(':terminal buffer', function()
   end)
 
   it('TermReqeust synchronization #27572', function()
-    command('new')
     command('autocmd! nvim_terminal TermRequest')
     local term = exec_lua([[
       _G.input = {}
@@ -364,20 +364,13 @@ describe(':terminal buffer', function()
       '\027[0n',
     }, exec_lua('return _G.input'))
   end)
-end)
 
-describe('No heap-buffer-overflow when using', function()
-  local testfilename = 'Xtestfile-functional-terminal-buffers_spec'
-
-  before_each(function()
+  it('no heap-buffer-overflow when using termopen(echo) #3161', function()
+    local testfilename = 'Xtestfile-functional-terminal-buffers_spec'
     write_file(testfilename, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-  end)
-
-  after_each(function()
-    os.remove(testfilename)
-  end)
-
-  it('termopen(echo) #3161', function()
+    finally(function()
+      os.remove(testfilename)
+    end)
     feed_command('edit ' .. testfilename)
     -- Move cursor away from the beginning of the line
     feed('$')
@@ -386,14 +379,21 @@ describe('No heap-buffer-overflow when using', function()
     assert_alive()
     feed_command('bdelete!')
   end)
-end)
 
-describe('No heap-buffer-overflow when', function()
-  it('set nowrap and send long line #11548', function()
+  it('no heap-buffer-overflow when sending long line with nowrap #11548', function()
     feed_command('set nowrap')
     feed_command('autocmd TermOpen * startinsert')
     feed_command('call feedkeys("4000ai\\<esc>:terminal!\\<cr>")')
     assert_alive()
+  end)
+
+  it('truncates number of composing characters to 5', function()
+    local chan = api.nvim_open_term(0, {})
+    local composing = ('a̳'):sub(2)
+    api.nvim_chan_send(chan, 'a' .. composing:rep(8))
+    retry(nil, nil, function()
+      eq('a' .. composing:rep(5), api.nvim_get_current_line())
+    end)
   end)
 end)
 
@@ -428,16 +428,6 @@ describe('on_lines does not emit out-of-bounds line indexes when', function()
     feed_command('lua _G.register_callback(0)')
     feed_command('bdelete!')
     eq('', exec_lua([[return _G.cb_error]]))
-  end)
-end)
-
-it('terminal truncates number of composing characters to 5', function()
-  clear()
-  local chan = api.nvim_open_term(0, {})
-  local composing = ('a̳'):sub(2)
-  api.nvim_chan_send(chan, 'a' .. composing:rep(8))
-  retry(nil, nil, function()
-    eq('a' .. composing:rep(5), api.nvim_get_current_line())
   end)
 end)
 
