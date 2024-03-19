@@ -103,7 +103,7 @@ err:
 
 /// Creates a WBuffer object for holding output data. Instances of this
 /// object can be reused across Stream instances, and the memory is freed
-/// automatically when no longer needed(it tracks the number of references
+/// automatically when no longer needed (it tracks the number of references
 /// internally)
 ///
 /// @param data Data stored by the WBuffer
@@ -111,7 +111,7 @@ err:
 /// @param refcount The number of references for the WBuffer. This will be used
 ///        by Stream instances to decide when a WBuffer should be freed.
 /// @param cb Pointer to function that will be responsible for freeing
-///        the buffer data(passing 'free' will work as expected).
+///        the buffer data (passing `xfree` will work as expected).
 /// @return The allocated WBuffer instance
 WBuffer *wstream_new_buffer(char *data, size_t size, size_t refcount, wbuffer_data_finalizer cb)
   FUNC_ATTR_NONNULL_ARG(1)
