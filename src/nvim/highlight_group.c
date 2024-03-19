@@ -312,6 +312,8 @@ static const char *highlight_init_both[] = {
   "default link @lsp.type.typeParameter @type.definition",
   "default link @lsp.type.variable      @variable",
 
+  "default link @lsp.mod.deprecated DiagnosticDeprecated",
+
   NULL
 };
 
