@@ -111,6 +111,23 @@ void ui_refresh(void)
   }
 }]]
 
+  local test_query = [[
+    ((call_expression
+      function: (identifier) @minfunc
+      (argument_list
+        [ (identifier) (number_literal) ] @min_id)) ; #27239
+      (#eq? @minfunc "MIN")
+      (#set! "meta-key" "meta-value") ; #23664
+      (#set! @min_id "belongs" @minfunc) ; #23664
+    )
+
+    "for" @keyword
+
+    (primitive_type) @type
+
+    (field_expression argument: (identifier) @fieldarg)
+  ]]
+
   it('allows to iterate over nodes children', function()
     insert(test_text)
 
@@ -157,7 +174,7 @@ void ui_refresh(void)
 
       local res = {}
       for _, node in ipairs(func_node:field("type")) do
-        table.insert(res, {node:type(), node:range()})
+        table.insert(res, { node:type(), node:range() })
       end
       return res
     ]])
@@ -173,34 +190,31 @@ void ui_refresh(void)
     assert(res_fail)
   end)
 
-  local test_query = [[
-    ((call_expression function: (identifier) @minfunc (argument_list (identifier) @min_id)) (#eq? @minfunc "MIN"))
-    "for" @keyword
-    (primitive_type) @type
-    (field_expression argument: (identifier) @fieldarg)
-  ]]
-
   it('supports runtime queries', function()
+    ---@type string[]
     local ret = exec_lua [[
-      return vim.treesitter.query.get("c", "highlights").captures[1]
+      return vim.treesitter.query.get("c", "highlights").captures
     ]]
 
-    eq('variable', ret)
+    -- see $VIMRUNTIME/queries/c/highlights.scm
+    eq('variable', ret[1])
+    eq('keyword', ret[2])
   end)
 
   it('supports caching queries', function()
     local long_query = test_query:rep(100)
+    ---@return number
     local function q(n)
       return exec_lua(
         [[
-        local query, n = ...
-        local before = vim.uv.hrtime()
-        for i=1,n,1 do
-          cquery = vim.treesitter.query.parse("c", ...)
-        end
-        local after = vim.uv.hrtime()
-        return after - before
-      ]],
+          local query, n = ...
+          local before = vim.uv.hrtime()
+          for i=1, n, 1 do
+            cquery = vim.treesitter.query.parse("c", ...)
+          end
+          local after = vim.uv.hrtime()
+          return after - before
+        ]],
         long_query,
         n
       )
@@ -217,77 +231,119 @@ void ui_refresh(void)
     )
   end)
 
-  it('support query and iter by capture', function()
+  it('supports query and iter by capture (iter_captures)', function()
     insert(test_text)
-
-    local res = exec_lua(
-      [[
-      cquery = vim.treesitter.query.parse("c", ...)
-      parser = vim.treesitter.get_parser(0, "c")
-      tree = parser:parse()[1]
-      res = {}
-      for cid, node in cquery:iter_captures(tree:root(), 0, 7, 14) do
-        -- can't transmit node over RPC. just check the name and range
-        table.insert(res, {cquery.captures[cid], node:type(), node:range()})
+    exec_lua [[
+      _wrap = function(t)
+        ret = {}
+        for key, value in pairs(t) do
+          if type(key) == "number" then key = "@" .. tostring(key) end
+          ret[key] = value
+        end
+        return ret
       end
-      return res
-    ]],
+    ]]
+
+    local captures, metadatas = unpack(exec_lua(
+      [[
+        cquery = vim.treesitter.query.parse("c", ...)
+        parser = vim.treesitter.get_parser(0, "c")
+        tree = parser:parse()[1]
+        captures = {}
+        metadatas = {}
+        for cid, node, metadata in cquery:iter_captures(tree:root(), 0, 7, 14) do
+          -- can't transmit node over RPC. just check the name and range
+          table.insert(captures, { '@' .. cquery.captures[cid], node:type(), node:range() })
+          -- also can't transmit metadata when there are mixed keys of integer/string,
+          -- so convert all the integer keys (capture id) with string
+          table.insert(metadatas, { '@' .. cquery.captures[cid], _wrap(metadata) })
+        end
+        return { captures, metadatas }
+      ]],
       test_query
-    )
+    ))
 
     eq({
-      { 'type', 'primitive_type', 8, 2, 8, 6 },
-      { 'keyword', 'for', 9, 2, 9, 5 },
-      { 'type', 'primitive_type', 9, 7, 9, 13 },
-      { 'minfunc', 'identifier', 11, 12, 11, 15 },
-      { 'fieldarg', 'identifier', 11, 16, 11, 18 },
-      { 'min_id', 'identifier', 11, 27, 11, 32 },
-      { 'minfunc', 'identifier', 12, 13, 12, 16 },
-      { 'fieldarg', 'identifier', 12, 17, 12, 19 },
-      { 'min_id', 'identifier', 12, 29, 12, 35 },
-      { 'fieldarg', 'identifier', 13, 14, 13, 16 },
-    }, res)
+      { '@type', 'primitive_type', 8, 2, 8, 6 }, -- bool
+      { '@keyword', 'for', 9, 2, 9, 5 }, -- for
+      { '@type', 'primitive_type', 9, 7, 9, 13 }, -- size_t
+      { '@minfunc', 'identifier', 11, 12, 11, 15 }, -- "MIN"(ui->width, width);
+      { '@fieldarg', 'identifier', 11, 16, 11, 18 }, --      ui
+      { '@min_id', 'identifier', 11, 27, 11, 32 }, -- width
+      { '@minfunc', 'identifier', 12, 13, 12, 16 }, -- "MIN"(ui->height, height);
+      { '@fieldarg', 'identifier', 12, 17, 12, 19 }, --      ui
+      { '@min_id', 'identifier', 12, 29, 12, 35 }, -- height
+      { '@fieldarg', 'identifier', 13, 14, 13, 16 }, -- ui   ; in BAR(..)
+      -- Note: @min_id should not capture "bazaar" because of the predicate. #27239
+    }, captures)
+
+    -- metadata: set by the specific `#set! (@min_id ...)` directive.
+    -- All the captures within the same match must have the same instance of metadata. #23664
+    -- In the first pattern, @minfunc, @min_id are the captures who should have the metadata
+    local metadata = {
+      ['meta-key'] = 'meta-value',
+      ['@2'] = { ['belongs'] = 1 }, -- (#set! @min_id "belongs" @minfunc)
+    }
+    eq({
+      { '@type', {} },
+      { '@keyword', {} },
+      { '@type', {} },
+      { '@minfunc', metadata },
+      { '@fieldarg', {} },
+      { '@min_id', metadata },
+      { '@minfunc', metadata },
+      { '@fieldarg', {} },
+      { '@min_id', metadata },
+      { '@fieldarg', {} },
+    }, metadatas)
   end)
 
-  it('support query and iter by match', function()
+  it('supports query and iter by match (iter_matches)', function()
     insert(test_text)
 
+    ---@type table
     local res = exec_lua(
       [[
-      cquery = vim.treesitter.query.parse("c", ...)
-      parser = vim.treesitter.get_parser(0, "c")
-      tree = parser:parse()[1]
-      res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { all = true }) do
-        -- can't transmit node over RPC. just check the name and range
-        local mrepr = {}
-        for cid, nodes in pairs(match) do
-          for _, node in ipairs(nodes) do
-            table.insert(mrepr, {cquery.captures[cid], node:type(), node:range()})
+        cquery = vim.treesitter.query.parse("c", ...)
+        parser = vim.treesitter.get_parser(0, "c")
+        tree = parser:parse()[1]
+        res = {}
+        for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { all = true }) do
+          -- can't transmit node over RPC. just check the name and range
+          local mrepr = {}
+          for cid, nodes in pairs(match) do
+            for _, node in ipairs(nodes) do
+              table.insert(mrepr, { '@' .. cquery.captures[cid], node:type(), node:range() })
+            end
           end
+          table.insert(res, { pattern, mrepr })
         end
-        table.insert(res, {pattern, mrepr})
-      end
-      return res
-    ]],
+        return res
+      ]],
       test_query
     )
 
     eq({
-      { 3, { { 'type', 'primitive_type', 8, 2, 8, 6 } } },
-      { 2, { { 'keyword', 'for', 9, 2, 9, 5 } } },
-      { 3, { { 'type', 'primitive_type', 9, 7, 9, 13 } } },
-      { 4, { { 'fieldarg', 'identifier', 11, 16, 11, 18 } } },
+      { 3, { { '@type', 'primitive_type', 8, 2, 8, 6 } } },
+      { 2, { { '@keyword', 'for', 9, 2, 9, 5 } } },
+      { 3, { { '@type', 'primitive_type', 9, 7, 9, 13 } } },
+      { 4, { { '@fieldarg', 'identifier', 11, 16, 11, 18 } } },
       {
         1,
-        { { 'minfunc', 'identifier', 11, 12, 11, 15 }, { 'min_id', 'identifier', 11, 27, 11, 32 } },
+        {
+          { '@minfunc', 'identifier', 11, 12, 11, 15 },
+          { '@min_id', 'identifier', 11, 27, 11, 32 },
+        },
       },
-      { 4, { { 'fieldarg', 'identifier', 12, 17, 12, 19 } } },
+      { 4, { { '@fieldarg', 'identifier', 12, 17, 12, 19 } } },
       {
         1,
-        { { 'minfunc', 'identifier', 12, 13, 12, 16 }, { 'min_id', 'identifier', 12, 29, 12, 35 } },
+        {
+          { '@minfunc', 'identifier', 12, 13, 12, 16 },
+          { '@min_id', 'identifier', 12, 29, 12, 35 },
+        },
       },
-      { 4, { { 'fieldarg', 'identifier', 13, 14, 13, 16 } } },
+      { 4, { { '@fieldarg', 'identifier', 13, 14, 13, 16 } } },
     }, res)
   end)
 
@@ -296,23 +352,23 @@ void ui_refresh(void)
 
     local res = exec_lua(
       [[
-      cquery = vim.treesitter.query.parse("c", ...)
-      parser = vim.treesitter.get_parser(0, "c")
-      tree = parser:parse()[1]
-      res = {}
-      for cid, node in cquery:iter_captures(tree:root(), 0, 7, 14) do
-        -- can't transmit node over RPC. just check the name and range
-        table.insert(res, {cquery.captures[cid], node:type(), node:range()})
-      end
-      return res
-    ]],
+        cquery = vim.treesitter.query.parse("c", ...)
+        parser = vim.treesitter.get_parser(0, "c")
+        tree = parser:parse()[1]
+        res = {}
+        for cid, node in cquery:iter_captures(tree:root(), 0, 7, 14) do
+          -- can't transmit node over RPC. just check the name and range
+          table.insert(res, { '@' .. cquery.captures[cid], node:type(), node:range() })
+        end
+        return res
+      ]],
       '(expression_statement (assignment_expression (call_expression)))+ @funccall'
     )
 
     eq({
-      { 'funccall', 'expression_statement', 11, 4, 11, 34 },
-      { 'funccall', 'expression_statement', 12, 4, 12, 37 },
-      { 'funccall', 'expression_statement', 13, 4, 13, 34 },
+      { '@funccall', 'expression_statement', 11, 4, 11, 34 },
+      { '@funccall', 'expression_statement', 12, 4, 12, 37 },
+      { '@funccall', 'expression_statement', 13, 4, 13, 34 },
     }, res)
   end)
 
@@ -321,22 +377,22 @@ void ui_refresh(void)
 
     local res = exec_lua(
       [[
-      cquery = vim.treesitter.query.parse("c", ...)
-      parser = vim.treesitter.get_parser(0, "c")
-      tree = parser:parse()[1]
-      res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { all = true }) do
-        -- can't transmit node over RPC. just check the name and range
-        local mrepr = {}
-        for cid, nodes in pairs(match) do
-          for _, node in ipairs(nodes) do
-            table.insert(mrepr, {cquery.captures[cid], node:type(), node:range()})
+        cquery = vim.treesitter.query.parse("c", ...)
+        parser = vim.treesitter.get_parser(0, "c")
+        tree = parser:parse()[1]
+        res = {}
+        for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { all = true }) do
+          -- can't transmit node over RPC. just check the name and range
+          local mrepr = {}
+          for cid, nodes in pairs(match) do
+            for _, node in ipairs(nodes) do
+              table.insert(mrepr, { '@' .. cquery.captures[cid], node:type(), node:range() })
+            end
           end
+          table.insert(res, {pattern, mrepr})
         end
-        table.insert(res, {pattern, mrepr})
-      end
-      return res
-    ]],
+        return res
+      ]],
       '(expression_statement (assignment_expression (call_expression)))+ @funccall'
     )
 
@@ -344,9 +400,9 @@ void ui_refresh(void)
       {
         1,
         {
-          { 'funccall', 'expression_statement', 11, 4, 11, 34 },
-          { 'funccall', 'expression_statement', 12, 4, 12, 37 },
-          { 'funccall', 'expression_statement', 13, 4, 13, 34 },
+          { '@funccall', 'expression_statement', 11, 4, 11, 34 },
+          { '@funccall', 'expression_statement', 12, 4, 12, 37 },
+          { '@funccall', 'expression_statement', 13, 4, 13, 34 },
         },
       },
     }, res)
@@ -421,12 +477,16 @@ end]]
   it('can match special regex characters like \\ * + ( with `vim-match?`', function()
     insert('char* astring = "\\n"; (1 + 1) * 2 != 2;')
 
+    ---@type table
     local res = exec_lua([[
-      cquery = vim.treesitter.query.parse("c", '([_] @plus (#vim-match? @plus "^\\\\+$"))'..
-                                               '([_] @times (#vim-match? @times "^\\\\*$"))'..
-                                               '([_] @paren (#vim-match? @paren "^\\\\($"))'..
-                                               '([_] @escape (#vim-match? @escape "^\\\\\\\\n$"))'..
-                                               '([_] @string (#vim-match? @string "^\\"\\\\\\\\n\\"$"))')
+      query = (
+        '([_] @plus (#vim-match? @plus "^\\\\+$"))' ..
+        '([_] @times (#vim-match? @times "^\\\\*$"))' ..
+        '([_] @paren (#vim-match? @paren "^\\\\($"))' ..
+        '([_] @escape (#vim-match? @escape "^\\\\\\\\n$"))' ..
+        '([_] @string (#vim-match? @string "^\\"\\\\\\\\n\\"$"))'
+      )
+      cquery = vim.treesitter.query.parse("c", query)
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
       res = {}
@@ -435,21 +495,21 @@ end]]
         local mrepr = {}
         for cid, nodes in pairs(match) do
           for _, node in ipairs(nodes) do
-            table.insert(mrepr, {cquery.captures[cid], node:type(), node:range()})
+            table.insert(mrepr, { '@' .. cquery.captures[cid], node:type(), node:range() })
           end
         end
-        table.insert(res, {pattern, mrepr})
+        table.insert(res, { pattern, mrepr })
       end
       return res
     ]])
 
     eq({
-      { 2, { { 'times', '*', 0, 4, 0, 5 } } },
-      { 5, { { 'string', 'string_literal', 0, 16, 0, 20 } } },
-      { 4, { { 'escape', 'escape_sequence', 0, 17, 0, 19 } } },
-      { 3, { { 'paren', '(', 0, 22, 0, 23 } } },
-      { 1, { { 'plus', '+', 0, 25, 0, 26 } } },
-      { 2, { { 'times', '*', 0, 30, 0, 31 } } },
+      { 2, { { '@times', '*', 0, 4, 0, 5 } } },
+      { 5, { { '@string', 'string_literal', 0, 16, 0, 20 } } },
+      { 4, { { '@escape', 'escape_sequence', 0, 17, 0, 19 } } },
+      { 3, { { '@paren', '(', 0, 22, 0, 23 } } },
+      { 1, { { '@plus', '+', 0, 25, 0, 26 } } },
+      { 2, { { '@times', '*', 0, 30, 0, 31 } } },
     }, res)
   end)
 
@@ -514,12 +574,10 @@ end]]
     }, res1)
   end)
 
-  it(
-    'allow loading query with escaped quotes and capture them with `lua-match?` and `vim-match?`',
-    function()
-      insert('char* astring = "Hello World!";')
+  it('allows loading query with escaped quotes and capture them `#{lua,vim}-match`?', function()
+    insert('char* astring = "Hello World!";')
 
-      local res = exec_lua([[
+    local res = exec_lua([[
       cquery = vim.treesitter.query.parse("c", '([_] @quote (#vim-match? @quote "^\\"$")) ([_] @quote (#lua-match? @quote "^\\"$"))')
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
@@ -529,22 +587,21 @@ end]]
         local mrepr = {}
         for cid, nodes in pairs(match) do
           for _, node in ipairs(nodes) do
-            table.insert(mrepr, {cquery.captures[cid], node:type(), node:range()})
+            table.insert(mrepr, { '@' .. cquery.captures[cid], node:type(), node:range() })
           end
         end
-        table.insert(res, {pattern, mrepr})
+        table.insert(res, { pattern, mrepr })
       end
       return res
     ]])
 
-      eq({
-        { 1, { { 'quote', '"', 0, 16, 0, 17 } } },
-        { 2, { { 'quote', '"', 0, 16, 0, 17 } } },
-        { 1, { { 'quote', '"', 0, 29, 0, 30 } } },
-        { 2, { { 'quote', '"', 0, 29, 0, 30 } } },
-      }, res)
-    end
-  )
+    eq({
+      { 1, { { '@quote', '"', 0, 16, 0, 17 } } },
+      { 2, { { '@quote', '"', 0, 16, 0, 17 } } },
+      { 1, { { '@quote', '"', 0, 29, 0, 30 } } },
+      { 2, { { '@quote', '"', 0, 29, 0, 30 } } },
+    }, res)
+  end)
 
   it('allows to add predicates', function()
     insert([[
@@ -558,35 +615,35 @@ end]]
     do
       local res = exec_lua(
         [[
-      local query = vim.treesitter.query
+          local query = vim.treesitter.query
 
-      local function is_main(match, pattern, bufnr, predicate)
-        local nodes = match[ predicate[2] ]
-        for _, node in ipairs(nodes) do
-          if vim.treesitter.get_node_text(node, bufnr) == 'main' then
-            return true
+          local function is_main(match, pattern, bufnr, predicate)
+            local nodes = match[ predicate[2] ]
+            for _, node in ipairs(nodes) do
+              if vim.treesitter.get_node_text(node, bufnr) == 'main' then
+                return true
+              end
+            end
+            return false
           end
-        end
-        return false
-      end
 
-      local parser = vim.treesitter.get_parser(0, "c")
+          local parser = vim.treesitter.get_parser(0, "c")
 
-      -- Time bomb: update this in 0.12
-      if vim.fn.has('nvim-0.12') == 1 then
-        return 'Update this test to remove this message and { all = true } from add_predicate'
-      end
-      query.add_predicate("is-main?", is_main, { all = true })
+          -- Time bomb: update this in 0.12
+          if vim.fn.has('nvim-0.12') == 1 then
+            return 'Update this test to remove this message and { all = true } from add_predicate'
+          end
+          query.add_predicate("is-main?", is_main, { all = true })
 
-      local query = query.parse("c", ...)
+          local query = query.parse("c", ...)
 
-      local nodes = {}
-      for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
-        table.insert(nodes, {node:range()})
-      end
+          local nodes = {}
+          for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
+            table.insert(nodes, {node:range()})
+          end
 
-      return nodes
-      ]],
+          return nodes
+        ]],
         custom_query
       )
 
@@ -597,27 +654,27 @@ end]]
     do
       local res = exec_lua(
         [[
-      local query = vim.treesitter.query
+          local query = vim.treesitter.query
 
-      local function is_main(match, pattern, bufnr, predicate)
-        local node = match[ predicate[2] ]
+          local function is_main(match, pattern, bufnr, predicate)
+            local node = match[ predicate[2] ]
 
-        return vim.treesitter.get_node_text(node, bufnr) == 'main'
-      end
+            return vim.treesitter.get_node_text(node, bufnr) == 'main'
+          end
 
-      local parser = vim.treesitter.get_parser(0, "c")
+          local parser = vim.treesitter.get_parser(0, "c")
 
-      query.add_predicate("is-main?", is_main, true)
+          query.add_predicate("is-main?", is_main, true)
 
-      local query = query.parse("c", ...)
+          local query = query.parse("c", ...)
 
-      local nodes = {}
-      for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
-        table.insert(nodes, {node:range()})
-      end
+          local nodes = {}
+          for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
+            table.insert(nodes, {node:range()})
+          end
 
-      return nodes
-      ]],
+          return nodes
+        ]],
         custom_query
       )
 
@@ -657,14 +714,14 @@ end]]
       api.nvim_buf_set_lines(0, 0, -1, true, vim.split(dedent(input), '\n'))
       return exec_lua(
         [[
-        local parser = vim.treesitter.get_parser(0, "lua")
-        local query = vim.treesitter.query.parse("lua", ...)
-        local nodes = {}
-        for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
-          nodes[#nodes+1] = { node:range() }
-        end
-        return nodes
-      ]],
+          local parser = vim.treesitter.get_parser(0, "lua")
+          local query = vim.treesitter.query.parse("lua", ...)
+          local nodes = {}
+          for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
+            nodes[#nodes+1] = { node:range() }
+          end
+          return nodes
+        ]],
         query
       )
     end
@@ -740,14 +797,14 @@ end]]
 
     local result = exec_lua(
       [[
-      local parser = vim.treesitter.get_parser(0, "lua")
-      local query = vim.treesitter.query.parse("lua", ...)
-      local nodes = {}
-      for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
-        nodes[#nodes+1] = { node:range() }
-      end
-      return nodes
-    ]],
+        local parser = vim.treesitter.get_parser(0, "lua")
+        local query = vim.treesitter.query.parse("lua", ...)
+        local nodes = {}
+        for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
+          nodes[#nodes+1] = { node:range() }
+        end
+        return nodes
+      ]],
       query
     )
 
@@ -765,37 +822,43 @@ end]]
     insert(test_text)
     local res = exec_lua(
       [[
-      cquery = vim.treesitter.query.parse("c", ...)
-      parser = vim.treesitter.get_parser(0, "c")
-      tree = parser:parse()[1]
-      res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14) do
-        local mrepr = {}
-        for cid, node in pairs(match) do
-          table.insert(mrepr, {cquery.captures[cid], node:type(), node:range()})
+        cquery = vim.treesitter.query.parse("c", ...)
+        parser = vim.treesitter.get_parser(0, "c")
+        tree = parser:parse()[1]
+        res = {}
+        for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14) do
+          local mrepr = {}
+          for cid, node in pairs(match) do
+            table.insert(mrepr, { '@' .. cquery.captures[cid], node:type(), node:range() })
+          end
+          table.insert(res, { pattern, mrepr })
         end
-        table.insert(res, {pattern, mrepr})
-      end
-      return res
-    ]],
+        return res
+      ]],
       test_query
     )
 
     eq({
-      { 3, { { 'type', 'primitive_type', 8, 2, 8, 6 } } },
-      { 2, { { 'keyword', 'for', 9, 2, 9, 5 } } },
-      { 3, { { 'type', 'primitive_type', 9, 7, 9, 13 } } },
-      { 4, { { 'fieldarg', 'identifier', 11, 16, 11, 18 } } },
+      { 3, { { '@type', 'primitive_type', 8, 2, 8, 6 } } },
+      { 2, { { '@keyword', 'for', 9, 2, 9, 5 } } },
+      { 3, { { '@type', 'primitive_type', 9, 7, 9, 13 } } },
+      { 4, { { '@fieldarg', 'identifier', 11, 16, 11, 18 } } },
       {
         1,
-        { { 'minfunc', 'identifier', 11, 12, 11, 15 }, { 'min_id', 'identifier', 11, 27, 11, 32 } },
+        {
+          { '@minfunc', 'identifier', 11, 12, 11, 15 },
+          { 'min_id', 'identifier', 11, 27, 11, 32 },
+        },
       },
-      { 4, { { 'fieldarg', 'identifier', 12, 17, 12, 19 } } },
+      { 4, { { '@fieldarg', 'identifier', 12, 17, 12, 19 } } },
       {
         1,
-        { { 'minfunc', 'identifier', 12, 13, 12, 16 }, { 'min_id', 'identifier', 12, 29, 12, 35 } },
+        {
+          { '@minfunc', 'identifier', 12, 13, 12, 16 },
+          { 'min_id', 'identifier', 12, 29, 12, 35 },
+        },
       },
-      { 4, { { 'fieldarg', 'identifier', 13, 14, 13, 16 } } },
+      { 4, { { '@fieldarg', 'identifier', 13, 14, 13, 16 } } },
     }, res)
   end)
 

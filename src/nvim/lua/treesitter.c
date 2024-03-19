@@ -1393,6 +1393,7 @@ static int query_next_match(lua_State *L)
   return 0;
 }
 
+/// Single iterator step of TSNode:_rawquery(), enumerates (capture_id, node, match).
 static int query_next_capture(lua_State *L)
 {
   // Upvalues are:
@@ -1402,6 +1403,7 @@ static int query_next_capture(lua_State *L)
 
   TSQuery *query = query_check(L, lua_upvalueindex(3));
 
+  // match.active == false: the current match has been filtered out by predicate.
   if (ud->predicated_match > -1) {
     lua_getfield(L, lua_upvalueindex(4), "active");
     bool active = lua_toboolean(L, -1);
@@ -1422,15 +1424,33 @@ static int query_next_capture(lua_State *L)
     push_node(L, capture.node, lua_upvalueindex(2));  // [index, node]
 
     // Now check if we need to run the predicates
+    // a predicate is executed only once within the same match.
     uint32_t n_pred;
     ts_query_predicates_for_pattern(query, match.pattern_index, &n_pred);
 
-    if (n_pred > 0 && (ud->max_match_id < (int)match.id)) {
+    if (n_pred == 0) {
+      // No predicates. Return without the match table as a small perf optimization,
+      // because in the iter_captures() method, match table won't be needed.
+      // [index, node]
+      return 2;
+    }
+
+    // A new match is found. the use of `max_match_id` assumed that `ts_query_cursor_next_capture()`
+    // would enumerate captures in the order that "match"es increases monotonoically.
+    // The `ts_query_cursor_next_capture()` would enumerate captures in the order they are found.
+    // TODO(wookayin): However, this is not guaranteed, and indeed assertion fails.
+    // Therefore, when matches are alternating, the information about if predicate is active
+    // won't be maintained, which can still lead to incorrect behavior of predicates.
+    // assert(ud->max_match_id <= (int)match.id);
+    if (ud->max_match_id < (int)match.id) {
       ud->max_match_id = (int)match.id;
 
       // Create a new cleared match table
       lua_createtable(L, (int)ts_query_capture_count(query), 2);  // [index, node, match]
+      // match: TSMatch = { [integer]: TSNode, pattern: integer, active: boolean }
       set_match(L, &match, lua_upvalueindex(2));
+
+      // match.pattern
       lua_pushinteger(L, match.pattern_index + 1);
       lua_setfield(L, -2, "pattern");
 
@@ -1445,8 +1465,12 @@ static int query_next_capture(lua_State *L)
       lua_pushvalue(L, lua_upvalueindex(4));  // [index, node, match]
       return 3;
     }
-    return 2;
+
+    lua_pushvalue(L, lua_upvalueindex(4));  // [index, node, match]
+    return 3;
   }
+
+  // end of result for the query.
   return 0;
 }
 
@@ -1511,7 +1535,7 @@ static int node_rawquery(lua_State *L)
 
   if (captures) {
     // placeholder for match state
-    lua_createtable(L, (int)ts_query_capture_count(query), 2);  // [u, n, q, match]
+    lua_createtable(L, (int)ts_query_capture_count(query), 2);  // [udata, node, query, match]
     lua_pushcclosure(L, query_next_capture, 4);  // [closure]
   } else {
     lua_pushcclosure(L, query_next_match, 3);  // [closure]

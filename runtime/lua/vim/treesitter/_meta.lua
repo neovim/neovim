@@ -34,21 +34,40 @@ error('Cannot require a meta file')
 ---@field byte_length fun(self: TSNode): integer
 local TSNode = {}
 
+---Execute {query} on the node, and enumerates over the node captures. See |Query:iter_captures()|
+---A capture is represented by capture_id (index in the query), matched TSNode, and an optional
+---table (TSMatch) which is set *only* when a predicate exists in the pattern. For multiple
+---captures within the same match, the identical TSMatch object will be returned.
 ---@param query TSQuery
----@param captures true
+---@param captures true (see query_next_capture() in treesitter.c)
 ---@param start? integer
 ---@param end_? integer
 ---@param opts? table
----@return fun(): integer, TSNode, vim.treesitter.query.TSMatch
+---@return fun(): integer, TSNode, vim.treesitter.query.TSMatch iterator of (capture_id, node, match).
 function TSNode:_rawquery(query, captures, start, end_, opts) end
 
+---Execute {query} on the node, and enumerates the matches by pattern. See |Query:iter_matches()|.
 ---@param query TSQuery
----@param captures false
+---@param captures false (see query_next_match() in treesitter.c)
 ---@param start? integer
 ---@param end_? integer
 ---@param opts? table
----@return fun(): integer, vim.treesitter.query.TSMatch
+---@return fun(): integer, vim.treesitter.query.TSMatch iterator of (pattern_index, match).
+---  match is a mapping from capture index to matched node (see #24738)
 function TSNode:_rawquery(query, captures, start, end_, opts) end
+
+--- Internal data structure for query match. Key is capture_id, value is matched nodes.
+---
+--- For captures, this table additionally includes the following field to process predicates, see
+--- TSNode:_rawquery() and Query:iter_captures():
+---     - active?  (boolean) denotes whether the match will be included, according to predicates.
+---     - pattern? (integer) id of the pattern associated with this match.
+--- TODO: consider removing `match.pattern` to make the data structure consistent
+---       between iter_captures() and iter_matches().
+---@class TSMatch
+---@field pattern? integer
+---@field active? boolean
+---@field [integer] TSNode[]
 
 ---@alias TSLoggerCallback fun(logtype: 'parse'|'lex', msg: string)
 
