@@ -967,13 +967,15 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 
   // Open the memline for the buffer. This will avoid spurious autocmds when
   // a later nvim_buf_set_lines call would have needed to "open" the buffer.
-  try_start();
-  block_autocmds();
-  int status = ml_open(buf);
-  unblock_autocmds();
-  try_end(err);
-  if (status == FAIL) {
-    goto fail;
+  if (buf->b_ml.ml_mfp == NULL) {
+    try_start();
+    block_autocmds();
+    int status = ml_open(buf);
+    unblock_autocmds();
+    try_end(err);
+    if (status == FAIL) {
+      goto fail;
+    }
   }
 
   // Set last_changedtick to avoid triggering a TextChanged autocommand right

@@ -3135,6 +3135,15 @@ describe('API', function()
       -- nowadays this works because we don't execute any spurious autocmds at all #24824
       assert_alive()
     end)
+
+    it('no memory leak when autocommands load the buffer immediately', function()
+      exec([[
+        autocmd BufNew * ++once call bufload(expand("<abuf>")->str2nr())
+                             \| let loaded = bufloaded(expand("<abuf>")->str2nr())
+      ]])
+      api.nvim_create_buf(false, true)
+      eq(1, eval('g:loaded'))
+    end)
   end)
 
   describe('nvim_get_runtime_file', function()
