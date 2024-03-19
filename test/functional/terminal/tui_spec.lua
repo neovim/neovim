@@ -83,7 +83,6 @@ describe('TUI', function()
   end
 
   it('rapid resize #7572 #7628', function()
-    helpers.skip(helpers.is_asan(), 'Test extra unstable with ASAN. See #23762')
     -- Need buffer rows to provoke the behavior.
     feed_data(':edit test/functional/fixtures/bigfile.txt\n')
     screen:expect([[
