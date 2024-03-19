@@ -2447,7 +2447,7 @@ nvim_buf_set_mark({buffer}, {name}, {line}, {col}, {opts})
       • |nvim_buf_get_mark()|
 
 nvim_buf_set_name({buffer}, {name})                      *nvim_buf_set_name()*
-    Sets the full file name for a buffer
+    Sets the full file name for a buffer, like |:file_f|
 
     Parameters: ~
       • {buffer}  Buffer handle, or 0 for current buffer

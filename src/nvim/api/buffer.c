@@ -968,7 +968,7 @@ String nvim_buf_get_name(Buffer buffer, Error *err)
   return cstr_as_string(buf->b_ffname);
 }
 
-/// Sets the full file name for a buffer
+/// Sets the full file name for a buffer, like |:file_f|
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Buffer name
