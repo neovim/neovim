@@ -701,6 +701,7 @@ func s:GetFilenameChecks() abort
     \ 'vdmpp': ['file.vpp', 'file.vdmpp'],
     \ 'vdmrt': ['file.vdmrt'],
     \ 'vdmsl': ['file.vdm', 'file.vdmsl'],
+    \ 'vento': ['file.vto'],
     \ 'vera': ['file.vr', 'file.vri', 'file.vrh'],
     \ 'verilogams': ['file.va', 'file.vams'],
     \ 'vgrindefs': ['vgrindefs'],
