@@ -19,7 +19,6 @@ local poke_eventloop = helpers.poke_eventloop
 local assert_alive = helpers.assert_alive
 local retry = helpers.retry
 local is_os = helpers.is_os
-local is_ci = helpers.is_ci
 local fn = helpers.fn
 local skip = helpers.skip
 
