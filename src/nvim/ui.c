@@ -72,6 +72,7 @@ static int pending_has_mouse = -1;
 static bool pending_default_colors = false;
 
 static Array call_buf = ARRAY_DICT_INIT;
+static Array msg_event_buf = ARRAY_DICT_INIT;
 
 #ifdef NVIM_LOG_DEBUG
 static size_t uilog_seen = 0;
@@ -712,23 +713,59 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *err)
   }
 }
 
-void ui_call_event(char *name, Array args)
+static void ui_call_lua_callback(char *name, UIEventCallback *event_cb, Array args, bool *handled)
 {
-  UIEventCallback *event_cb;
+  Error err = ERROR_INIT;
+  Object res = nlua_call_ref(event_cb->cb, name, args, kRetNilBool, NULL, &err);
+  if (LUARET_TRUTHY(res) && handled != NULL) {
+    *handled = true;
+  }
+  if (ERROR_SET(&err)) {
+    ELOG("Error executing UI event callback: %s", err.msg);
+  }
+  api_clear_error(&err);
+}
+
+void ui_flush_msg_show(void)
+{
+  if (kv_size(msg_event_buf) > 0) {
+    UIEventCallback *event_cb;
+    MAXSIZE_TEMP_ARRAY(events, 1);
+    ADD_C(events, ARRAY_OBJ(msg_event_buf));
+    map_foreach_value(&ui_event_cbs, event_cb, {
+      ui_call_lua_callback("msg_show", event_cb, events, NULL);
+    })
+
+    api_free_array(msg_event_buf);
+    msg_event_buf = (Array)ARRAY_DICT_INIT;
+  }
+}
+
+static bool ui_call_lua_event(char *name, Array args)
+{
   bool handled = false;
+  UIEventCallback *event_cb;
+
   map_foreach_value(&ui_event_cbs, event_cb, {
-    Error err = ERROR_INIT;
-    Object res = nlua_call_ref(event_cb->cb, name, args, kRetNilBool, NULL, &err);
-    if (LUARET_TRUTHY(res)) {
+    // Callback may be unsafe for |ui-messages| events, flush later.
+    if (strcmp(name, "msg_show") == 0) {
+      Array event = ARRAY_DICT_INIT;
+      for (size_t i = 0; i < kv_size(args); i++) {
+        ADD(event, OBJECT_OBJ(copy_object(kv_A(args, i), NULL)));
+      }
+      ADD(msg_event_buf, ARRAY_OBJ(event));
       handled = true;
+      break;
     }
-    if (ERROR_SET(&err)) {
-      ELOG("Error executing UI event callback: %s", err.msg);
-    }
-    api_clear_error(&err);
+    ui_call_lua_callback(name, event_cb, args, &handled);
   })
 
-  if (!handled) {
+  return handled;
+}
+
+void ui_call_event(char *name, Array args)
+{
+  if (!ui_call_lua_event(name, args)) {
     UI_CALL(true, event, ui, name, args);
   }
 

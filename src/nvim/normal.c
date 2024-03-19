@@ -1041,6 +1041,8 @@ normal_end:
     }
   }
 
+  ui_flush_msg_show();
+
   if (restart_VIsual_select == 2) {
     restart_VIsual_select = 1;
   }
