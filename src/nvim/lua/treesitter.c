@@ -144,7 +144,6 @@ static TSLanguage *lang_check(lua_State *L, int index)
   TSLanguage *lang = pmap_get(cstr_t)(&langs, lang_name);
   if (!lang) {
     luaL_error(L, "no such language: %s", lang_name);
-    return NULL;  // Coverity doesn't know luaL_error is noreturn
   }
   return lang;
 }
@@ -229,10 +228,7 @@ int tslua_push_parser(lua_State *L)
 static TSParser *parser_check(lua_State *L, uint16_t index)
 {
   TSParser **ud = luaL_checkudata(L, index, TS_META_PARSER);
-  if (!ud || !(*ud)) {
-    luaL_argerror(L, index, "TSParser expected");
-    return NULL;  // Coverity doesn't know luaL_error is noreturn
-  }
+  luaL_argcheck(L, *ud, index, "TSParser expected");
   return *ud;
 }
 
@@ -327,7 +323,7 @@ static int parser_parse(lua_State *L)
   TSParser *p = parser_check(L, 1);
   TSTree *old_tree = NULL;
   if (!lua_isnil(L, 2)) {
-    TSLuaTree *ud = tree_check(L, 2);
+    TSLuaTree *ud = luaL_checkudata(L, 2, TS_META_TREE);
     old_tree = ud ? ud->tree : NULL;
   }
 
@@ -468,9 +464,7 @@ static int parser_set_ranges(lua_State *L)
 
   TSParser *p = parser_check(L, 1);
 
-  if (!lua_istable(L, 2)) {
-    return luaL_argerror(L, 2, "table expected.");
-  }
+  luaL_argcheck(L, lua_istable(L, 2), 2, "table expected.");
 
   size_t tbl_len = lua_objlen(L, 2);
   TSRange *ranges = xmalloc(sizeof(TSRange) * tbl_len);
@@ -544,17 +538,9 @@ static int parser_set_logger(lua_State *L)
 {
   TSParser *p = parser_check(L, 1);
 
-  if (!lua_isboolean(L, 2)) {
-    return luaL_argerror(L, 2, "boolean expected");
-  }
-
-  if (!lua_isboolean(L, 3)) {
-    return luaL_argerror(L, 3, "boolean expected");
-  }
-
-  if (!lua_isfunction(L, 4)) {
-    return luaL_argerror(L, 4, "function expected");
-  }
+  luaL_argcheck(L, lua_isboolean(L, 2), 2, "boolean expected");
+  luaL_argcheck(L, lua_isboolean(L, 3), 3, "boolean expected");
+  luaL_argcheck(L, lua_isfunction(L, 4), 4, "function expected");
 
   TSLuaLoggerOpts *opts = xmalloc(sizeof(TSLuaLoggerOpts));
   lua_pushvalue(L, 4);
@@ -630,19 +616,9 @@ static void push_tree(lua_State *L, TSTree *tree)
   lua_setfenv(L, -2);  // [udata]
 }
 
-static TSLuaTree *tree_check(lua_State *L, int index)
-{
-  TSLuaTree *ud = luaL_checkudata(L, index, TS_META_TREE);
-  if (!ud) {
-    luaL_argerror(L, index, "TSTree expected");
-    return NULL;  // Coverity doesn't know luaL_error is noreturn
-  }
-  return ud;
-}
-
 static int tree_copy(lua_State *L)
 {
-  TSLuaTree *ud = tree_check(L, 1);
+  TSLuaTree *ud = luaL_checkudata(L, 1, TS_META_TREE);
   TSTree *copy = ts_tree_copy(ud->tree);
   push_tree(L, copy);  // [tree]
 
@@ -656,7 +632,7 @@ static int tree_edit(lua_State *L)
     return lua_error(L);
   }
 
-  TSLuaTree *ud = tree_check(L, 1);
+  TSLuaTree *ud = luaL_checkudata(L, 1, TS_META_TREE);
 
   uint32_t start_byte = (uint32_t)luaL_checkint(L, 2);
   uint32_t old_end_byte = (uint32_t)luaL_checkint(L, 3);
@@ -675,7 +651,7 @@ static int tree_edit(lua_State *L)
 
 static int tree_get_ranges(lua_State *L)
 {
-  TSLuaTree *ud = tree_check(L, 1);
+  TSLuaTree *ud = luaL_checkudata(L, 1, TS_META_TREE);
 
   bool include_bytes = (lua_gettop(L) >= 2) && lua_toboolean(L, 2);
 
@@ -690,7 +666,7 @@ static int tree_get_ranges(lua_State *L)
 
 static int tree_gc(lua_State *L)
 {
-  TSLuaTree *ud = tree_check(L, 1);
+  TSLuaTree *ud = luaL_checkudata(L, 1, TS_META_TREE);
   ts_tree_delete(ud->tree);
   return 0;
 }
@@ -703,7 +679,7 @@ static int tree_tostring(lua_State *L)
 
 static int tree_root(lua_State *L)
 {
-  TSLuaTree *ud = tree_check(L, 1);
+  TSLuaTree *ud = luaL_checkudata(L, 1, TS_META_TREE);
   TSNode root = ts_tree_root_node(ud->tree);
   push_node(L, root, 1);
   return 1;
@@ -716,19 +692,9 @@ static struct luaL_Reg treecursor_meta[] = {
   { NULL, NULL }
 };
 
-static TSTreeCursor *treecursor_check(lua_State *L, int index)
-{
-  TSTreeCursor *ud = luaL_checkudata(L, index, TS_META_TREECURSOR);
-  if (!ud) {
-    luaL_error(L, "TSTreeCursor expected");
-    return NULL;  // Coverity doesn't know luaL_error is noreturn
-  }
-  return ud;
-}
-
 static int treecursor_gc(lua_State *L)
 {
-  TSTreeCursor *cursor = treecursor_check(L, 1);
+  TSTreeCursor *cursor = luaL_checkudata(L, 1, TS_META_TREECURSOR);
   ts_tree_cursor_delete(cursor);
   return 0;
 }
@@ -807,10 +773,6 @@ static bool node_check_opt(lua_State *L, int index, TSNode *res)
 static TSNode node_check(lua_State *L, int index)
 {
   TSNode *ud = luaL_checkudata(L, index, TS_META_NODE);
-  if (!ud) {
-    luaL_argerror(L, index, "TSNode expected");
-    abort();  // Coverity doesn't know luaL_error is noreturn
-  }
   return *ud;
 }
 
@@ -1037,7 +999,7 @@ static int node_named_descendant_for_range(lua_State *L)
 
 static int node_next_child(lua_State *L)
 {
-  TSTreeCursor *cursor = treecursor_check(L, lua_upvalueindex(1));
+  TSTreeCursor *cursor = luaL_checkudata(L, lua_upvalueindex(1), TS_META_TREECURSOR);
   TSNode source = node_check(L, lua_upvalueindex(2));
 
   // First call should return first child
@@ -1201,9 +1163,7 @@ int tslua_push_querycursor(lua_State *L)
   }
 
   if (lua_gettop(L) >= 5 && !lua_isnil(L, 5)) {
-    if (!lua_istable(L, 5)) {
-      return luaL_argerror(L, 5, "table expected");
-    }
+    luaL_argcheck(L, lua_istable(L, 5), 5, "table expected");
     lua_pushnil(L);  // [dict, ..., nil]
     while (lua_next(L, 5)) {
       // [dict, ..., key, value]
@@ -1278,10 +1238,7 @@ static int querycursor_next_match(lua_State *L)
 static TSQueryCursor *querycursor_check(lua_State *L, int index)
 {
   TSQueryCursor **ud = luaL_checkudata(L, index, TS_META_QUERYCURSOR);
-  if (!ud || !(*ud)) {
-    luaL_argerror(L, index, "TSQueryCursor expected");
-    return NULL;  // Coverity doesn't know luaL_error is noreturn
-  }
+  luaL_argcheck(L, *ud, index, "TSQueryCursor expected");
   return *ud;
 }
 
@@ -1312,19 +1269,9 @@ static void push_querymatch(lua_State *L, TSQueryMatch *match, int uindex)
   lua_setfenv(L, -2);  // [udata]
 }
 
-static TSQueryMatch *querymatch_check(lua_State *L, int index)
-{
-  TSQueryMatch *ud = luaL_checkudata(L, index, TS_META_QUERYMATCH);
-  if (!ud) {
-    luaL_argerror(L, index, "TSQueryMatch expected");
-    return NULL;  // Coverity doesn't know luaL_error is noreturn
-  }
-  return ud;
-}
-
 static int querymatch_info(lua_State *L)
 {
-  TSQueryMatch *match = querymatch_check(L, 1);
+  TSQueryMatch *match = luaL_checkudata(L, 1, TS_META_QUERYMATCH);
   lua_pushinteger(L, match->id);
   lua_pushinteger(L, match->pattern_index + 1);
   return 2;
@@ -1332,7 +1279,7 @@ static int querymatch_info(lua_State *L)
 
 static int querymatch_captures(lua_State *L)
 {
-  TSQueryMatch *match = querymatch_check(L, 1);
+  TSQueryMatch *match = luaL_checkudata(L, 1, TS_META_QUERYMATCH);
   lua_newtable(L);  // [match, nodes, captures]
   for (size_t i = 0; i < match->capture_count; i++) {
     TSQueryCapture capture = match->captures[i];
@@ -1463,10 +1410,7 @@ static void query_err_string(const char *src, int error_offset, TSQueryError err
 static TSQuery *query_check(lua_State *L, int index)
 {
   TSQuery **ud = luaL_checkudata(L, index, TS_META_QUERY);
-  if (!ud || !(*ud)) {
-    luaL_argerror(L, index, "TSQuery expected");
-    return NULL;  // Coverity doesn't know luaL_error is noreturn
-  }
+  luaL_argcheck(L, *ud, index, "TSQuery expected");
   return *ud;
 }
 
