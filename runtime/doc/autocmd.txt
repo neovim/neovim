@@ -377,6 +377,17 @@ CmdlineChanged			After a change was made to the text inside
 				command line.  Be careful not to mess up the
 				command line, it may cause Vim to lock up.
 				<afile> expands to the |cmdline-char|.
+							*CmdlineCharPre*
+CmdlineCharPre			When a character is typed in Command-line
+				mode, before inserting the char.
+				The |v:char| variable indicates the char typed
+				and can be changed during the event to insert
+				a different character.  When |v:char| is set
+				to more than one character this text is
+				inserted literally.
+				<afile> expands to the |cmdline-char|.
+
+				Cannot change the text. |textlock|
 							*CmdlineEnter*
 CmdlineEnter			After entering the command-line (including
 				non-interactive use of ":" in a mapping: use

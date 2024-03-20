@@ -26,6 +26,7 @@ return {
     'CmdWinEnter', -- after entering the cmdline window
     'CmdWinLeave', -- before leaving the cmdline window
     'CmdlineChanged', -- command line was modified
+    'CmdlineCharPre', -- before inserting a char in the cmdline window
     'CmdlineEnter', -- after entering cmdline mode
     'CmdlineLeave', -- before leaving cmdline mode
     'ColorScheme', -- after loading a colorscheme
@@ -154,6 +155,7 @@ return {
   -- syntax file
   nvim_specific = {
     BufModifiedSet = true,
+    CmdlineCharPre = true,
     DiagnosticChanged = true,
     LspAttach = true,
     LspDetach = true,

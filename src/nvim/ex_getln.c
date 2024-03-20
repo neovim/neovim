@@ -1831,6 +1831,44 @@ static int command_line_browse_history(CommandLineState *s)
   return CMDLINE_NOT_CHANGED;
 }
 
+/// Handles the CmdlineCharPre event.
+///
+/// @return 0 if no text is inserted, 1 if text is inserted
+///           or 2 if text is inserted, but the cmdline not changed
+static int do_cmdline_char_pre(CommandLineState *s)
+{
+  if (!has_event(EVENT_CMDLINECHARPRE)) {
+    return 0;
+  }
+
+  char buf[MB_MAXBYTES + 1];
+  buf[utf_char2bytes(s->c, buf)] = NUL;
+
+  textlock++;
+  set_vim_var_string(VV_CHAR, buf, -1);
+  char firstcbuf[2];
+  firstcbuf[0] = (char)(s->firstc > 0 ? s->firstc : '-');
+  firstcbuf[1] = 0;
+  int return_status = 0;
+
+  if (apply_autocmds(EVENT_CMDLINECHARPRE, firstcbuf, firstcbuf, false, curbuf)) {
+    textlock--;
+    if (strcmp(buf, get_vim_var_str(VV_CHAR)) != 0) {
+      if (strlen(get_vim_var_str(VV_CHAR)) != 1) {
+        put_on_cmdline(get_vim_var_str(VV_CHAR), -1, true);
+        return_status = (strlen(get_vim_var_str(VV_CHAR)) == 0 ? 2 : 1);
+      } else {
+        s->c = (int)get_vim_var_str(VV_CHAR)[0];
+      }
+    }
+  } else {
+    textlock--;
+  }
+
+  set_vim_var_string(VV_CHAR, NULL, -1);
+  return return_status;
+}
+
 static int command_line_handle_key(CommandLineState *s)
 {
   // Big switch for a typed command line character.
@@ -2147,6 +2185,16 @@ static int command_line_handle_key(CommandLineState *s)
     if (!IS_SPECIAL(s->c)) {
       mod_mask = 0x0;
     }
+
+    switch (do_cmdline_char_pre(s)) {
+    case 1:
+      return command_line_changed(s);
+    case 2:
+      return command_line_not_changed(s);
+    default:
+      break;
+    }
+
     break;
   }
 
