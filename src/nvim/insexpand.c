@@ -1104,11 +1104,11 @@ static dict_T *ins_compl_dict_alloc(compl_T *match)
 {
   // { word, abbr, menu, kind, info }
   dict_T *dict = tv_dict_alloc_lock(VAR_FIXED);
-  tv_dict_add_str(dict, S_LEN("word"), EMPTY_IF_NULL(match->cp_str));
-  tv_dict_add_str(dict, S_LEN("abbr"), EMPTY_IF_NULL(match->cp_text[CPT_ABBR]));
-  tv_dict_add_str(dict, S_LEN("menu"), EMPTY_IF_NULL(match->cp_text[CPT_MENU]));
-  tv_dict_add_str(dict, S_LEN("kind"), EMPTY_IF_NULL(match->cp_text[CPT_KIND]));
-  tv_dict_add_str(dict, S_LEN("info"), EMPTY_IF_NULL(match->cp_text[CPT_INFO]));
+  tv_dict_add_str(dict, S_LEN("word"), match->cp_str);
+  tv_dict_add_str(dict, S_LEN("abbr"), match->cp_text[CPT_ABBR]);
+  tv_dict_add_str(dict, S_LEN("menu"), match->cp_text[CPT_MENU]);
+  tv_dict_add_str(dict, S_LEN("kind"), match->cp_text[CPT_KIND]);
+  tv_dict_add_str(dict, S_LEN("info"), match->cp_text[CPT_INFO]);
   if (match->cp_user_data.v_type == VAR_UNKNOWN) {
     tv_dict_add_str(dict, S_LEN("user_data"), "");
   } else {
@@ -2730,72 +2730,6 @@ static void ins_compl_update_sequence_numbers(void)
   }
 }
 
-static int info_add_completion_info(list_T *li)
-{
-  if (compl_first_match == NULL) {
-    return OK;
-  }
-
-  bool forward = compl_dir_forward();
-  compl_T *match = compl_first_match;
-  // There are four cases to consider here:
-  // 1) when just going forward through the menu,
-  //    compl_first_match should point to the initial entry with
-  //    number zero and CP_ORIGINAL_TEXT flag set
-  // 2) when just going backwards,
-  //    compl-first_match should point to the last entry before
-  //    the entry with the CP_ORIGINAL_TEXT flag set
-  // 3) when first going forwards and then backwards, e.g.
-  //    pressing C-N, C-P, compl_first_match points to the
-  //    last entry before the entry with the CP_ORIGINAL_TEXT
-  //    flag set and next-entry moves opposite through the list
-  //    compared to case 2, so pretend the direction is forward again
-  // 4) when first going backwards and then forwards, e.g.
-  //    pressing C-P, C-N, compl_first_match points to the
-  //    first entry with the CP_ORIGINAL_TEXT
-  //    flag set and next-entry moves in opposite direction through the list
-  //    compared to case 1, so pretend the direction is backwards again
-  //
-  // But only do this when the 'noselect' option is not active!
-
-  if (!compl_no_select) {
-    if (forward && !match_at_original_text(match)) {
-      forward = false;
-    } else if (!forward && match_at_original_text(match)) {
-      forward = true;
-    }
-  }
-
-  // Skip the element with the CP_ORIGINAL_TEXT flag at the beginning, in case of
-  // forward completion, or at the end, in case of backward completion.
-  match = (forward || match->cp_prev == NULL
-           ? match->cp_next
-           : (compl_no_select && match_at_original_text(match)
-              ? match->cp_prev
-              : match->cp_prev->cp_prev));
-
-  while (match != NULL && !match_at_original_text(match)) {
-    dict_T *di = tv_dict_alloc();
-
-    tv_list_append_dict(li, di);
-    tv_dict_add_str(di, S_LEN("word"), EMPTY_IF_NULL(match->cp_str));
-    tv_dict_add_str(di, S_LEN("abbr"), EMPTY_IF_NULL(match->cp_text[CPT_ABBR]));
-    tv_dict_add_str(di, S_LEN("menu"), EMPTY_IF_NULL(match->cp_text[CPT_MENU]));
-    tv_dict_add_str(di, S_LEN("kind"), EMPTY_IF_NULL(match->cp_text[CPT_KIND]));
-    tv_dict_add_str(di, S_LEN("info"), EMPTY_IF_NULL(match->cp_text[CPT_INFO]));
-    if (match->cp_user_data.v_type == VAR_UNKNOWN) {
-      // Add an empty string for backwards compatibility
-      tv_dict_add_str(di, S_LEN("user_data"), "");
-    } else {
-      tv_dict_add_tv(di, S_LEN("user_data"), &match->cp_user_data);
-    }
-
-    match = forward ? match->cp_next : match->cp_prev;
-  }
-
-  return OK;
-}
-
 /// Get complete information
 static void get_complete_info(list_T *what_list, dict_T *retdict)
 {
@@ -2839,25 +2773,54 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
     ret = tv_dict_add_nr(retdict, S_LEN("pum_visible"), pum_visible());
   }
 
-  if (ret == OK && (what_flag & CI_WHAT_ITEMS)) {
-    list_T *li = tv_list_alloc(get_compl_len());
-    ret = tv_dict_add_list(retdict, S_LEN("items"), li);
-    if (ret == OK) {
-      ret = info_add_completion_info(li);
+  if (ret == OK && (what_flag & CI_WHAT_ITEMS || what_flag & CI_WHAT_SELECTED)) {
+    list_T *li;
+    int selected_idx = -1;
+    if (what_flag & CI_WHAT_ITEMS) {
+      li = tv_list_alloc(kListLenMayKnow);
+      ret = tv_dict_add_list(retdict, S_LEN("items"), li);
     }
-  }
-
-  if (ret == OK && (what_flag & CI_WHAT_SELECTED)) {
-    if (compl_curr_match != NULL && compl_curr_match->cp_number == -1) {
-      ins_compl_update_sequence_numbers();
+    if (ret == OK && what_flag & CI_WHAT_SELECTED) {
+      if (compl_curr_match != NULL && compl_curr_match->cp_number == -1) {
+        ins_compl_update_sequence_numbers();
+      }
     }
-    ret = tv_dict_add_nr(retdict, S_LEN("selected"),
-                         (compl_curr_match != NULL)
-                         ? compl_curr_match->cp_number - 1 : -1);
-    win_T *wp = win_float_find_preview();
-    if (wp != NULL) {
-      tv_dict_add_nr(retdict, S_LEN("preview_winid"), wp->handle);
-      tv_dict_add_nr(retdict, S_LEN("preview_bufnr"), wp->w_buffer->handle);
+    if (ret == OK && compl_first_match != NULL) {
+      int list_idx = 0;
+      compl_T *match = compl_first_match;
+      do {
+        if (!match_at_original_text(match)) {
+          if (what_flag & CI_WHAT_ITEMS) {
+            dict_T *di = tv_dict_alloc();
+            tv_list_append_dict(li, di);
+            tv_dict_add_str(di, S_LEN("word"), match->cp_str);
+            tv_dict_add_str(di, S_LEN("abbr"), match->cp_text[CPT_ABBR]);
+            tv_dict_add_str(di, S_LEN("menu"), match->cp_text[CPT_MENU]);
+            tv_dict_add_str(di, S_LEN("kind"), match->cp_text[CPT_KIND]);
+            tv_dict_add_str(di, S_LEN("info"), match->cp_text[CPT_INFO]);
+            if (match->cp_user_data.v_type == VAR_UNKNOWN) {
+              // Add an empty string for backwards compatibility
+              tv_dict_add_str(di, S_LEN("user_data"), "");
+            } else {
+              tv_dict_add_tv(di, S_LEN("user_data"), &match->cp_user_data);
+            }
+          }
+          if (compl_curr_match != NULL
+              && compl_curr_match->cp_number == match->cp_number) {
+            selected_idx = list_idx;
+          }
+          list_idx += 1;
+        }
+        match = match->cp_next;
+      } while (match != NULL && !is_first_match(match));
+    }
+    if (ret == OK && (what_flag & CI_WHAT_SELECTED)) {
+      ret = tv_dict_add_nr(retdict, S_LEN("selected"), selected_idx);
+      win_T *wp = win_float_find_preview();
+      if (wp != NULL) {
+        tv_dict_add_nr(retdict, S_LEN("preview_winid"), wp->handle);
+        tv_dict_add_nr(retdict, S_LEN("preview_bufnr"), wp->w_buffer->handle);
+      }
     }
   }
 
