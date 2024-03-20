@@ -9205,6 +9205,131 @@ describe('float window', function()
       eq(restcmd, fn.winrestcmd())
       eq(config, api.nvim_win_get_config(0))
     end)
+
+    it('#previewpopup option', function()
+      command('call writefile(["bar"], "foo", "a")')
+      finally(function()
+        os.remove('foo')
+      end)
+      command('set previewpopup=height:2,width:5,border:single | pedit foo')
+
+      if multigrid then
+        screen:expect{grid = [[
+        ## grid 1
+          [2:----------------------------------------]|*6
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|*5
+        ## grid 3
+                                                  |
+        ## grid 4
+          {5:┌}{11:foo}{5:┐}|
+          {5:│}{1:bar}{5:│}|
+          {5:└───┘}|
+        ]],
+          float_pos = {
+            [4] = { 1001, 'NW', 2, 1, 1, false, 50 },
+          },
+          win_viewport = {
+            [2] = {
+              win = 1000,
+              topline = 0,
+              botline = 2,
+              curline = 0,
+              curcol = 0,
+              linecount = 1,
+              sum_scroll_delta = 0,
+            },
+            [4] = {
+              win = 1001,
+              topline = 0,
+              botline = 1,
+              curline = 0,
+              curcol = 0,
+              linecount = 1,
+              sum_scroll_delta = 0,
+            },
+          },
+        }
+      else
+        screen:expect{grid=[[
+          ^                                        |
+          {0:~}{5:┌}{11:foo}{5:┐}{0:                                  }|
+          {0:~}{5:│}{1:bar}{5:│}{0:                                  }|
+          {0:~}{5:└───┘}{0:                                  }|
+          {0:~                                       }|*2
+                                                  |
+        ]]}
+      end
+
+      --refconfig it by using set
+      command('set previewpopup=height:2,width:5,border:double')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|*6
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|*5
+        ## grid 3
+                                                  |
+        ## grid 4
+          {5:╔═}{11:foo}{5:═╗}|
+          {5:║}{1:bar  }{5:║}|
+          {5:║}{2:~    }{5:║}|
+          {5:╚═════╝}|
+        ]], float_pos={
+          [4] = {1001, "NW", 2, 1, 1, false, 50};
+        }, win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }}
+      else
+        screen:expect{grid=[[
+          ^                                        |
+          {0:~}{5:╔═}{11:foo}{5:═╗}{0:                                }|
+          {0:~}{5:║}{1:bar  }{5:║}{0:                                }|
+          {0:~}{5:║}{2:~    }{5:║}{0:                                }|
+          {0:~}{5:╚═════╝}{0:                                }|
+          {0:~                                       }|
+                                                  |
+        ]]}
+      end
+      --can close by pclose command
+      command('pclose')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|*6
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|*5
+        ## grid 3
+                                                  |
+        ]],
+        win_viewport = {
+          [2] = {
+            win = 1000,
+            topline = 0,
+            botline = 2,
+            curline = 0,
+            curcol = 0,
+            linecount = 1,
+            sum_scroll_delta = 0,
+          },
+        },
+      }
+      else
+        screen:expect{grid=[[
+          ^                                        |
+          {0:~                                       }|*5
+                                                  |
+        ]]}
+      end
+    end)
   end
 
   describe('with ext_multigrid', function()

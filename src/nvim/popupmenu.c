@@ -764,7 +764,7 @@ win_T *pum_set_info(int pum_idx, char *info)
   }
   pum_array[pum_idx].pum_info = xstrdup(info);
   compl_set_info(pum_idx);
-  bool use_float = strstr(p_cot, "popup") != NULL ? true : false;
+  bool use_float = strstr(p_cot, "popup") != NULL;
   if (pum_idx != pum_selected || !use_float) {
     return NULL;
   }
@@ -772,7 +772,7 @@ win_T *pum_set_info(int pum_idx, char *info)
   block_autocmds();
   RedrawingDisabled++;
   no_u_sync++;
-  win_T *wp = win_float_find_preview();
+  win_T *wp = win_float_find_preview(true);
   if (wp == NULL) {
     wp = pum_create_float_preview(false);
     // no enough room to show
@@ -901,9 +901,9 @@ static bool pum_set_selected(int n, int repeat)
       no_u_sync++;
 
       if (!use_float) {
-        resized = prepare_tagpreview(false);
+        resized = prepare_tagpreview(false, false);
       } else {
-        win_T *wp = win_float_find_preview();
+        win_T *wp = win_float_find_preview(true);
         if (wp) {
           win_enter(wp, false);
         } else {
@@ -1069,7 +1069,7 @@ void pum_check_clear(void)
     }
     pum_is_drawn = false;
     pum_external = false;
-    win_T *wp = win_float_find_preview();
+    win_T *wp = win_float_find_preview(true);
     if (wp != NULL) {
       win_close(wp, false, false);
     }

@@ -922,6 +922,26 @@ set in the preview window to be able to recognize it.  The 'winfixheight'
 option is set to have it keep the same height when opening/closing other
 windows.
 
+                                                *preview-popup*
+Alternatively, a floating window can be used by setting the 'previewpopup'
+option.  When set, it overrules the 'previewwindow' and 'previewheight'
+settings.  The option is a comma-separated list of values:
+	height		maximum height of the popup
+	width		maximum width of the popup
+	border		string values are one of none, single, double, rounded,
+			solid, shadow.
+Example: >vim
+        :set previewpopup=border:double,height:10,width:60
+
+A few peculiarities:
+- If the file is in a buffer already, it will be re-used.  This will allow for
+  editing the file while it's visible in the popup window.
+- No ATTENTION dialog will be used, since you can't edit the file in the popup
+  window.  However, if you later open the same buffer in a normal window, you
+  may not notice it's edited elsewhere.  And when then using ":edit" to
+  trigger the ATTENTION and responding "A" for Abort, the preview window will
+  become empty.
+
 						*:pta* *:ptag*
 :pta[g][!] [tagname]
 		Does ":tag[!] [tagname]" and shows the found tag in a
