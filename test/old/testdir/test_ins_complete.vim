@@ -388,6 +388,62 @@ func Test_completefunc_info()
   set completefunc&
 endfunc
 
+func CompleteInfoUserDefinedFn(findstart, query)
+  " User defined function (i_CTRL-X_CTRL-U)
+  if a:findstart
+    return col('.')
+  endif
+  return [{'word': 'foo'}, {'word': 'bar'}, {'word': 'baz'}, {'word': 'qux'}]
+endfunc
+
+func CompleteInfoTestUserDefinedFn(mvmt, idx, noselect)
+  new
+  if a:noselect
+    set completeopt=menuone,popup,noinsert,noselect
+  else
+    set completeopt=menu,preview
+  endif
+  set completefunc=CompleteInfoUserDefinedFn
+  call feedkeys("i\<C-X>\<C-U>" . a:mvmt . "\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
+  let completed = a:idx != -1 ? ['foo', 'bar', 'baz', 'qux']->get(a:idx) : ''
+  call assert_equal(completed. "{'pum_visible': 1, 'mode': 'function', 'selected': " . a:idx . ", 'items': [" .
+        \ "{'word': 'foo', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}, " .
+        \ "{'word': 'bar', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}, " .
+        \ "{'word': 'baz', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}, " .
+        \ "{'word': 'qux', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}" .
+        \ "]}", getline(1))
+  bwipe!
+  set completeopt&
+  set completefunc&
+endfunc
+
+func Test_complete_info_user_defined_fn()
+  " forward
+  call CompleteInfoTestUserDefinedFn("\<C-N>\<C-N>", 1, v:true)
+  call CompleteInfoTestUserDefinedFn("\<C-N>\<C-N>\<C-N>", 2, v:true)
+  call CompleteInfoTestUserDefinedFn("\<C-N>\<C-N>", 2, v:false)
+  call CompleteInfoTestUserDefinedFn("\<C-N>\<C-N>\<C-N>", 3, v:false)
+  call CompleteInfoTestUserDefinedFn("\<C-N>\<C-N>\<C-N>\<C-N>", -1, v:false)
+  " backward
+  call CompleteInfoTestUserDefinedFn("\<C-P>\<C-P>", 2, v:true)
+  call CompleteInfoTestUserDefinedFn("\<C-P>\<C-P>\<C-P>", 1, v:true)
+  call CompleteInfoTestUserDefinedFn("\<C-P>\<C-P>\<C-P>\<C-P>\<C-P>", -1, v:true)
+  call CompleteInfoTestUserDefinedFn("\<C-P>\<C-P>", 3, v:false)
+  call CompleteInfoTestUserDefinedFn("\<C-P>\<C-P>\<C-P>", 2, v:false)
+  " forward backward
+  call CompleteInfoTestUserDefinedFn("\<C-N>\<C-N>\<C-N>\<C-P>", 1, v:true)
+  call CompleteInfoTestUserDefinedFn("\<C-N>\<C-N>\<C-P>", 0, v:true)
+  call CompleteInfoTestUserDefinedFn("\<C-N>\<C-N>\<C-N>\<C-P>", 2, v:false)
+  call CompleteInfoTestUserDefinedFn("\<C-N>\<C-N>\<C-N>\<C-N>\<C-P>", 3, v:false)
+  call CompleteInfoTestUserDefinedFn("\<C-N>\<C-N>\<C-P>", 1, v:false)
+  " backward forward
+  call CompleteInfoTestUserDefinedFn("\<C-P>\<C-P>\<C-P>\<C-P>\<C-P>\<C-N>", 0, v:true)
+  call CompleteInfoTestUserDefinedFn("\<C-P>\<C-P>\<C-P>\<C-N>", 2, v:true)
+  call CompleteInfoTestUserDefinedFn("\<C-P>\<C-P>\<C-P>\<C-P>\<C-P>\<C-N>", 1, v:false)
+  call CompleteInfoTestUserDefinedFn("\<C-P>\<C-P>\<C-P>\<C-N>", 3, v:false)
+  call CompleteInfoTestUserDefinedFn("\<C-P>\<C-N>\<C-N>", 1, v:false)
+endfunc
+
 " Test that mouse scrolling/movement should not interrupt completion.
 func Test_mouse_scroll_move_during_completion()
   new
@@ -2406,7 +2462,7 @@ func Test_complete_info_index()
   call assert_equal(-1, g:compl_info['selected'])
 
   call feedkeys("Go\<C-X>\<C-N>\<C-P>\<F5>\<Esc>_dd", 'tx')
-  call assert_equal(0, g:compl_info['selected'])
+  call assert_equal(5, g:compl_info['selected'])
   call assert_equal(6 , len(g:compl_info['items']))
   call assert_equal("fff", g:compl_info['items'][g:compl_info['selected']]['word'])
   call feedkeys("Go\<C-X>\<C-N>\<C-N>\<C-N>\<C-N>\<C-N>\<C-N>\<C-N>\<C-N>\<C-N>\<F5>\<Esc>_dd", 'tx')
