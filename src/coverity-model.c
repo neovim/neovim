@@ -111,3 +111,31 @@ void * xmemdup(const void *data, size_t len)
   __coverity_writeall__(p);
   return p;
 }
+
+// Teach coverity that lua errors are noreturn
+
+typedef struct {} lua_State;
+
+int luaL_typerror(lua_State *L, int narg, const char *tname)
+{
+  __coverity_panic__();
+  return 0;
+}
+
+int luaL_error(lua_State *L, const char *fmt, ...)
+{
+  __coverity_panic__();
+  return 0;
+}
+
+int luaL_argerror(lua_State *L, int numarg, const char *extramsg)
+{
+  __coverity_panic__();
+  return 0;
+}
+
+void *luaL_checkudata(lua_State *L, int ud, const char *tname)
+{
+  return __coverity_alloc_nosize__()
+}
+
