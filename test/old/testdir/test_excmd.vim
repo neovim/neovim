@@ -3,6 +3,7 @@
 source check.vim
 source shared.vim
 source term_util.vim
+source screendump.vim
 
 func Test_ex_delete()
   new
@@ -756,6 +757,21 @@ endfunc
 " catch address lines overflow
 func Test_ex_address_range_overflow()
   call assert_fails(':--+foobar', 'E492:')
+endfunc
+
+func Test_drop_modified_file()
+  CheckScreendump
+  let lines =<< trim END
+  call setline(1, 'The quick brown fox jumped over the lazy dogs')
+  END
+  call writefile([''], 'Xdrop_modified.txt', 'D')
+  call writefile(lines, 'Xtest_drop_modified', 'D')
+  let buf = RunVimInTerminal('-S Xtest_drop_modified Xdrop_modified.txt', {'rows': 10,'columns': 40})
+  call term_sendkeys(buf, ":drop Xdrop_modified.txt\<CR>")
+  call VerifyScreenDump(buf, 'Test_drop_modified_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -870,7 +870,9 @@ void ex_drop(exarg_T *eap)
         buf_check_timestamp(curbuf);
         curbuf->b_p_ar = save_ar;
       }
-      ex_rewind(eap);
+      if (buf->b_ml.ml_flags & ML_EMPTY) {
+        open_buffer(false, eap, 0);
+      }
       return;
     }
   }
