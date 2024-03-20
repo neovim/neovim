@@ -551,7 +551,6 @@ int update_screen(void)
   if (type == UPD_CLEAR) {          // first clear screen
     screenclear();  // will reset clear_cmdline
                     // and set UPD_NOT_VALID for each window
-    cmdline_screen_cleared();   // clear external cmdline state
     type = UPD_NOT_VALID;
     // must_redraw may be set indirectly, avoid another redraw later
     must_redraw = 0;

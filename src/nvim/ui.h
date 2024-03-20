@@ -18,3 +18,6 @@
 // uncrustify:on
 
 EXTERN MultiQueue *resize_events;
+
+/// True when a UI event was handled successfully by a Lua callback (vim.ui_attach()).
+EXTERN bool ui_did_lua_cb;

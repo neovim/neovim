@@ -201,18 +201,6 @@ local function test_cmdline(linegrid)
       cmdline = expectation,
     }
 
-    -- erase information, so we check if it is retransmitted
-    command('mode')
-    screen:expect {
-      grid = [[
-      ^                         |
-      {1:~                        }|*3
-                               |
-    ]],
-      cmdline = expectation,
-      reset = true,
-    }
-
     feed('<cr>')
     screen:expect {
       grid = [[
@@ -279,28 +267,6 @@ local function test_cmdline(linegrid)
         { { 'function Foo()' } },
         { { '  line1' } },
       },
-    }
-
-    command('mode')
-    screen:expect {
-      grid = [[
-      ^                         |
-      {1:~                        }|*3
-                               |
-    ]],
-      cmdline = {
-        {
-          indent = 2,
-          firstc = ':',
-          content = { { '' } },
-          pos = 0,
-        },
-      },
-      cmdline_block = {
-        { { 'function Foo()' } },
-        { { '  line1' } },
-      },
-      reset = true,
     }
 
     feed('endfunction<cr>')
@@ -389,26 +355,6 @@ local function test_cmdline(linegrid)
           pos = 4,
         },
       },
-    }
-
-    command('mode')
-    screen:expect {
-      grid = [[
-                               |
-      {2:[No Name]                }|
-      {1::}mak^e                    |
-      {3:[Command Line]           }|
-                               |
-    ]],
-      cmdline = {
-        nil,
-        {
-          firstc = ':',
-          content = { { 'yank' } },
-          pos = 4,
-        },
-      },
-      reset = true,
     }
 
     feed('<c-c>')

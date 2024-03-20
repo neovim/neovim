@@ -2583,6 +2583,8 @@ static bool cmdpreview_may_show(CommandLineState *s)
     cmdpreview_type = 1;
   }
 
+  // Flush to avoid clearing cmdpreview later.
+  cmdline_ui_flush();
   // If preview callback return value is nonzero, update screen now.
   if (cmdpreview_type != 0) {
     int save_rd = RedrawingDisabled;
@@ -3420,32 +3422,6 @@ void ui_ext_cmdline_block_leave(void)
   ui_call_cmdline_block_hide();
 }
 
-/// Extra redrawing needed for redraw! and on ui_attach
-/// assumes "redrawcmdline()" will already be invoked
-void cmdline_screen_cleared(void)
-{
-  if (!ui_has(kUICmdline)) {
-    return;
-  }
-
-  if (cmdline_block.size) {
-    ui_call_cmdline_block_show(cmdline_block);
-  }
-
-  int prev_level = ccline.level - 1;
-  CmdlineInfo *line = ccline.prev_ccline;
-  while (prev_level > 0 && line) {
-    if (line->level == prev_level) {
-      // don't redraw a cmdline already shown in the cmdline window
-      if (prev_level != cmdwin_level) {
-        line->redraw_state = kCmdRedrawAll;
-      }
-      prev_level--;
-    }
-    line = line->prev_ccline;
-  }
-}
-
 /// called by ui_flush, do what redraws necessary to keep cmdline updated.
 void cmdline_ui_flush(void)
 {
@@ -3458,6 +3434,9 @@ void cmdline_ui_flush(void)
     if (line->level == level) {
       if (line->redraw_state == kCmdRedrawAll) {
         ui_ext_cmdline_show(line);
+        if (ui_did_lua_cb) {
+          update_screen();
+        }
       } else if (line->redraw_state == kCmdRedrawPos) {
         ui_call_cmdline_pos(line->cmdpos, line->level);
       }
@@ -3754,7 +3733,7 @@ void cmdline_paste_str(const char *s, bool literally)
 // overwritten.
 void redrawcmdline(void)
 {
-  if (cmd_silent) {
+  if (ui_has(kUICmdline) || cmd_silent) {
     return;
   }
   need_wait_return = false;
@@ -4338,7 +4317,6 @@ static int open_cmdwin(void)
 
   // Set "cmdwin_..." variables before any autocommands may mess things up.
   cmdwin_type = get_cmdline_type();
-  cmdwin_level = ccline.level;
   cmdwin_win = curwin;
   cmdwin_old_curwin = old_curwin;
 
@@ -4360,7 +4338,6 @@ static int open_cmdwin(void)
     }
 
     cmdwin_type = 0;
-    cmdwin_level = 0;
     cmdwin_win = NULL;
     cmdwin_old_curwin = NULL;
     beep_flush();
@@ -4462,7 +4439,6 @@ static int open_cmdwin(void)
   KeyTyped = save_KeyTyped;
 
   cmdwin_type = 0;
-  cmdwin_level = 0;
   cmdwin_buf = NULL;
   cmdwin_win = NULL;
   cmdwin_old_curwin = NULL;
