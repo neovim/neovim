@@ -674,4 +674,18 @@ describe('search highlighting', function()
       :%g@a/b^                                 |
     ]])
   end)
+
+  it('incsearch is still visible after :redraw from K_EVENT', function()
+    fn.setline(1, { 'foo', 'bar' })
+    feed('/foo<CR>/bar')
+    screen:expect([[
+      foo                                     |
+      {3:bar}                                     |
+      {1:~                                       }|*4
+      /bar^                                    |
+    ]])
+    command('redraw!')
+    -- There is an intermediate state where :redraw! removes 'incsearch' highlight.
+    screen:expect_unchanged(true)
+  end)
 end)
