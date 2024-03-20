@@ -144,6 +144,7 @@ static TSLanguage *lang_check(lua_State *L, int index)
   TSLanguage *lang = pmap_get(cstr_t)(&langs, lang_name);
   if (!lang) {
     luaL_error(L, "no such language: %s", lang_name);
+    return NULL;  // Coverity doesn't know luaL_error is noreturn
   }
   return lang;
 }
@@ -230,6 +231,7 @@ static TSParser *parser_check(lua_State *L, uint16_t index)
   TSParser **ud = luaL_checkudata(L, index, TS_META_PARSER);
   if (!ud || !(*ud)) {
     luaL_argerror(L, index, "TSParser expected");
+    return NULL;  // Coverity doesn't know luaL_error is noreturn
   }
   return *ud;
 }
@@ -633,6 +635,7 @@ static TSLuaTree *tree_check(lua_State *L, int index)
   TSLuaTree *ud = luaL_checkudata(L, index, TS_META_TREE);
   if (!ud) {
     luaL_argerror(L, index, "TSTree expected");
+    return NULL;  // Coverity doesn't know luaL_error is noreturn
   }
   return ud;
 }
@@ -715,9 +718,10 @@ static struct luaL_Reg treecursor_meta[] = {
 
 static TSTreeCursor *treecursor_check(lua_State *L, int index)
 {
-  TSTreeCursor *ud = luaL_checkudata(L, lua_upvalueindex(1), TS_META_TREECURSOR);
+  TSTreeCursor *ud = luaL_checkudata(L, index, TS_META_TREECURSOR);
   if (!ud) {
     luaL_error(L, "TSTreeCursor expected");
+    return NULL;  // Coverity doesn't know luaL_error is noreturn
   }
   return ud;
 }
@@ -805,6 +809,7 @@ static TSNode node_check(lua_State *L, int index)
   TSNode *ud = luaL_checkudata(L, index, TS_META_NODE);
   if (!ud) {
     luaL_argerror(L, index, "TSNode expected");
+    abort();  // Coverity doesn't know luaL_error is noreturn
   }
   return *ud;
 }
@@ -1044,23 +1049,21 @@ static int node_next_child(lua_State *L)
     }
   }
 
-  if (ts_tree_cursor_goto_next_sibling(cursor)) {
-push:
-    push_node(L,
-              ts_tree_cursor_current_node(cursor),
-              lua_upvalueindex(2));  // [node]
-
-    const char *field = ts_tree_cursor_current_field_name(cursor);
-
-    if (field != NULL) {
-      lua_pushstring(L, ts_tree_cursor_current_field_name(cursor));
-    } else {
-      lua_pushnil(L);
-    }  // [node, field_name_or_nil]
-    return 2;
+  if (!ts_tree_cursor_goto_next_sibling(cursor)) {
+    return 0;
   }
 
-  return 0;
+push:
+  push_node(L, ts_tree_cursor_current_node(cursor), lua_upvalueindex(2));  // [node]
+
+  const char *field = ts_tree_cursor_current_field_name(cursor);
+
+  if (field != NULL) {
+    lua_pushstring(L, ts_tree_cursor_current_field_name(cursor));
+  } else {
+    lua_pushnil(L);
+  }  // [node, field_name_or_nil]
+  return 2;
 }
 
 static int node_iter_children(lua_State *L)
@@ -1277,6 +1280,7 @@ static TSQueryCursor *querycursor_check(lua_State *L, int index)
   TSQueryCursor **ud = luaL_checkudata(L, index, TS_META_QUERYCURSOR);
   if (!ud || !(*ud)) {
     luaL_argerror(L, index, "TSQueryCursor expected");
+    return NULL;  // Coverity doesn't know luaL_error is noreturn
   }
   return *ud;
 }
@@ -1310,9 +1314,10 @@ static void push_querymatch(lua_State *L, TSQueryMatch *match, int uindex)
 
 static TSQueryMatch *querymatch_check(lua_State *L, int index)
 {
-  TSQueryMatch *ud = luaL_checkudata(L, 1, TS_META_QUERYMATCH);
+  TSQueryMatch *ud = luaL_checkudata(L, index, TS_META_QUERYMATCH);
   if (!ud) {
     luaL_argerror(L, index, "TSQueryMatch expected");
+    return NULL;  // Coverity doesn't know luaL_error is noreturn
   }
   return ud;
 }
@@ -1460,6 +1465,7 @@ static TSQuery *query_check(lua_State *L, int index)
   TSQuery **ud = luaL_checkudata(L, index, TS_META_QUERY);
   if (!ud || !(*ud)) {
     luaL_argerror(L, index, "TSQuery expected");
+    return NULL;  // Coverity doesn't know luaL_error is noreturn
   }
   return *ud;
 }
