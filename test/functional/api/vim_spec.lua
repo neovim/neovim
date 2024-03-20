@@ -3135,6 +3135,56 @@ describe('API', function()
       -- nowadays this works because we don't execute any spurious autocmds at all #24824
       assert_alive()
     end)
+
+    it('no memory leak when autocommands load the buffer immediately', function()
+      exec([[
+        autocmd BufNew * ++once call bufload(expand("<abuf>")->str2nr())
+                             \| let loaded = bufloaded(expand("<abuf>")->str2nr())
+      ]])
+      api.nvim_create_buf(false, true)
+      eq(1, eval('g:loaded'))
+    end)
+
+    it('creating scratch buffer where autocommands set &swapfile works', function()
+      exec([[
+        autocmd BufNew * ++once execute expand("<abuf>") "buffer"
+                             \| file foobar
+                             \| setlocal swapfile
+      ]])
+      local new_buf = api.nvim_create_buf(false, true)
+      neq('', fn.swapname(new_buf))
+    end)
+
+    it('fires expected autocommands', function()
+      exec([=[
+        " Append the &buftype to check autocommands trigger *after* the buffer was configured to be
+        " scratch, if applicable.
+        autocmd BufNew * let fired += [["BufNew", expand("<abuf>")->str2nr(),
+                                      \ getbufvar(expand("<abuf>")->str2nr(), "&buftype")]]
+        autocmd BufAdd * let fired += [["BufAdd", expand("<abuf>")->str2nr(),
+                                      \ getbufvar(expand("<abuf>")->str2nr(), "&buftype")]]
+
+        " Don't want to see OptionSet; buffer options set from passing true for "scratch", etc.
+        " should be configured invisibly, and before autocommands.
+        autocmd OptionSet * let fired += [["OptionSet", expand("<amatch>")]]
+
+        let fired = []
+      ]=])
+      local new_buf = api.nvim_create_buf(false, false)
+      eq({ { 'BufNew', new_buf, '' } }, eval('g:fired'))
+
+      command('let fired = []')
+      new_buf = api.nvim_create_buf(false, true)
+      eq({ { 'BufNew', new_buf, 'nofile' } }, eval('g:fired'))
+
+      command('let fired = []')
+      new_buf = api.nvim_create_buf(true, false)
+      eq({ { 'BufNew', new_buf, '' }, { 'BufAdd', new_buf, '' } }, eval('g:fired'))
+
+      command('let fired = []')
+      new_buf = api.nvim_create_buf(true, true)
+      eq({ { 'BufNew', new_buf, 'nofile' }, { 'BufAdd', new_buf, 'nofile' } }, eval('g:fired'))
+    end)
   end)
 
   describe('nvim_get_runtime_file', function()

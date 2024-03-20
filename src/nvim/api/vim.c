@@ -958,21 +958,21 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
   FUNC_API_SINCE(6)
 {
   try_start();
+  // Block autocommands for now so they don't mess with the buffer before we
+  // finish configuring it.
+  block_autocmds();
+
   buf_T *buf = buflist_new(NULL, NULL, 0,
                            BLN_NOOPT | BLN_NEW | (listed ? BLN_LISTED : 0));
-  try_end(err);
   if (buf == NULL) {
+    unblock_autocmds();
     goto fail;
   }
 
   // Open the memline for the buffer. This will avoid spurious autocmds when
   // a later nvim_buf_set_lines call would have needed to "open" the buffer.
-  try_start();
-  block_autocmds();
-  int status = ml_open(buf);
-  unblock_autocmds();
-  try_end(err);
-  if (status == FAIL) {
+  if (ml_open(buf) == FAIL) {
+    unblock_autocmds();
     goto fail;
   }
 
@@ -983,7 +983,7 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
   buf->b_last_changedtick_pum = buf_get_changedtick(buf);
 
   // Only strictly needed for scratch, but could just as well be consistent
-  // and do this now. buffer is created NOW, not when it latter first happen
+  // and do this now. Buffer is created NOW, not when it later first happens
   // to reach a window or aucmd_prepbuf() ..
   buf_copy_options(buf, BCO_ENTER | BCO_NOHELP);
 
@@ -994,10 +994,26 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
     buf->b_p_swf = false;
     buf->b_p_ml = false;
   }
+
+  unblock_autocmds();
+
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
+  if (apply_autocmds(EVENT_BUFNEW, NULL, NULL, false, buf)
+      && !bufref_valid(&bufref)) {
+    goto fail;
+  }
+  if (listed
+      && apply_autocmds(EVENT_BUFADD, NULL, NULL, false, buf)
+      && !bufref_valid(&bufref)) {
+    goto fail;
+  }
+
+  try_end(err);
   return buf->b_fnum;
 
 fail:
-  if (!ERROR_SET(err)) {
+  if (!try_end(err)) {
     api_set_error(err, kErrorTypeException, "Failed to create buffer");
   }
   return 0;
