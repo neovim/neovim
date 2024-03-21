@@ -13,8 +13,10 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
+#include "nvim/eval/typval.h"
 #include "nvim/eval/window.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/fold.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"
@@ -29,6 +31,46 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/window.c.generated.h"
 #endif
+
+/// Opens or closes the fold at or around the specified line in a window.
+///
+/// @param window   Window handle, or 0 for current window
+/// @param lnum     Line number
+/// @param opts     Dictionary
+///                 - "open": Open or close folds
+///                 - "recurse": Recurse over all folds within the specified fold, like |zC| / |zO|
+/// @param[out] err Error details, if any
+void nvim_win_fold(Window window, Integer lnum, Dict(win_fold) *opts, Error *err)
+  FUNC_API_SINCE(12)
+{
+  bool recurse = HAS_KEY(opts, win_fold, recursive) && opts->recursive;
+  bool open = HAS_KEY(opts, win_fold, open) && opts->open;
+
+  win_T *win = find_window_by_handle(window, err);
+  if (!win) {
+    return;
+  }
+  if (lnum > INT32_MAX || lnum < 0) {
+    api_set_error(err, kErrorTypeValidation, "Line value outside range");
+    return;
+  }
+
+  foldinfo_T fi = fold_info(win, (linenr_T)lnum);
+
+  pos_T start;
+  start.lnum = fi.fi_lnum;
+  start.col = 0;
+  start.coladd = 0;
+
+  pos_T end;
+  end.lnum = fi.fi_lnum + fi.fi_lines;
+  end.col = 0;
+  end.coladd = 0;
+
+  try_start();
+  opFoldRange(start, end, open, recurse, false);
+  try_end(err);
+}
 
 /// Gets the current buffer in a window
 ///

@@ -19,6 +19,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_eval.h"
+#include "nvim/fold.h"
 #include "nvim/garray_defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_group.h"
