@@ -123,7 +123,10 @@ char *rbuffer_read_ptr(RBuffer *buf, size_t *read_count) FUNC_ATTR_NONNULL_ALL
 void rbuffer_consumed(RBuffer *buf, size_t count)
   FUNC_ATTR_NONNULL_ALL
 {
-  assert(count && count <= buf->size);
+  if (count == 0) {
+    return;
+  }
+  assert(count <= buf->size);
 
   buf->read_ptr += count;
   if (buf->read_ptr >= buf->end_ptr) {
