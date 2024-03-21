@@ -1103,7 +1103,6 @@ void ex_messages(exarg_T *eap)
     ui_call_msg_history_show(entries);
     api_free_array(entries);
     msg_ext_history_visible = true;
-    wait_return(false);
   } else {
     msg_hist_off = true;
     for (; p != NULL && !got_int; p = p->next) {
@@ -1121,7 +1120,6 @@ void ex_messages(exarg_T *eap)
 /// and a delay.
 void msg_end_prompt(void)
 {
-  msg_ext_clear_later();
   need_wait_return = false;
   emsg_on_display = false;
   cmdline_row = msg_row;
@@ -1151,7 +1149,7 @@ void wait_return(int redraw)
     return;
   }
 
-  if (headless_mode && !ui_active()) {
+  if ((headless_mode && !ui_active()) || ui_has(kUIMessages)) {
     return;
   }
 
@@ -1305,9 +1303,6 @@ void wait_return(int redraw)
   } else if (!skip_redraw) {
     if (redraw == true || (msg_scrolled != 0 && redraw != -1)) {
       redraw_later(curwin, UPD_VALID);
-    }
-    if (ui_has(kUIMessages)) {
-      msg_ext_clear(true);
     }
   }
 }
@@ -2065,16 +2060,7 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int attr)
   // need_wait_return after some prompt, and then outputting something
   // without scrolling
   // Not needed when only using CR to move the cursor.
-  bool overflow = false;
-  if (ui_has(kUIMessages)) {
-    int count = msg_ext_visible + (msg_ext_overwrite ? 0 : 1);
-    // TODO(bfredl): possible extension point, let external UI control this
-    if (count > 1) {
-      overflow = true;
-    }
-  } else {
-    overflow = msg_scrolled > (p_ch == 0 ? 1 : 0);
-  }
+  bool overflow = !ui_has(kUIMessages) && msg_scrolled > (p_ch == 0 ? 1 : 0);
 
   if (overflow && !msg_scrolled_ign && strcmp(str, "\r") != 0) {
     need_wait_return = true;
@@ -2413,7 +2399,6 @@ void msg_scroll_flush(void)
 void msg_reset_scroll(void)
 {
   if (ui_has(kUIMessages)) {
-    msg_ext_clear(true);
     return;
   }
   // TODO(bfredl): some duplicate logic with update_screen(). Later on
@@ -3081,44 +3066,6 @@ void msg_ext_flush_showmode(void)
     msg_ext_chunks = (Array)ARRAY_DICT_INIT;
     msg_ext_cur_len = 0;
   }
-}
-
-void msg_ext_clear(bool force)
-{
-  if (msg_ext_visible && (!msg_ext_keep_after_cmdline || force)) {
-    ui_call_msg_clear();
-    msg_ext_visible = 0;
-    msg_ext_overwrite = false;  // nothing to overwrite
-  }
-  if (msg_ext_history_visible) {
-    ui_call_msg_history_clear();
-    msg_ext_history_visible = false;
-  }
-
-  // Only keep once.
-  msg_ext_keep_after_cmdline = false;
-}
-
-void msg_ext_clear_later(void)
-{
-  if (msg_ext_is_visible()) {
-    msg_ext_need_clear = true;
-    set_must_redraw(UPD_VALID);
-  }
-}
-
-void msg_ext_check_clear(void)
-{
-  // Redraw after cmdline or prompt is expected to clear messages.
-  if (msg_ext_need_clear) {
-    msg_ext_clear(true);
-    msg_ext_need_clear = false;
-  }
-}
-
-bool msg_ext_is_visible(void)
-{
-  return ui_has(kUIMessages) && msg_ext_visible > 0;
 }
 
 /// If the written message runs into the shown command or ruler, we have to
