@@ -2774,7 +2774,7 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
   }
 
   if (ret == OK && (what_flag & CI_WHAT_ITEMS || what_flag & CI_WHAT_SELECTED)) {
-    list_T *li;
+    list_T *li = NULL;
     int selected_idx = -1;
     if (what_flag & CI_WHAT_ITEMS) {
       li = tv_list_alloc(kListLenMayKnow);
