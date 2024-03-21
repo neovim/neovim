@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <string.h>
 
+#ifdef _MSC_VER
+# include <intrin.h>  // Required for _BitScanForward64
+#endif
+
 #include "nvim/math.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -52,6 +56,10 @@ int xctz(uint64_t x)
   // Use compiler builtin if possible.
 #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ >= 4))
   return __builtin_ctzll(x);
+#elif defined(_MSC_VER)
+  unsigned long index;
+  _BitScanForward64(&index, x);
+  return (int)index;
 #else
   int count = 0;
   // Set x's trailing zeroes to ones and zero the rest.
