@@ -866,12 +866,12 @@ void ex_drop(exarg_T *eap)
         const int save_ar = curbuf->b_p_ar;
 
         // reload the file if it is newer
-        curbuf->b_p_ar = 1;
+        curbuf->b_p_ar = true;
         buf_check_timestamp(curbuf);
         curbuf->b_p_ar = save_ar;
       }
-      if (buf->b_ml.ml_flags & ML_EMPTY) {
-        open_buffer(false, eap, 0);
+      if (curbuf->b_ml.ml_flags & ML_EMPTY) {
+        ex_rewind(eap);
       }
       return;
     }

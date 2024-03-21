@@ -72,7 +72,7 @@ describe(':drop', function()
        lazy dogs                         |
       {0:~                                  }|*6
       {1:Xdrop_modified.txt [+]             }|
-      "Xdrop_modified.txt" [New]         |
+      :drop Xdrop_modified.txt           |
     ]])
   end)
 end)
