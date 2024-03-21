@@ -1,7 +1,5 @@
 local api = vim.api
-local tbl_isempty, tbl_extend = vim.tbl_isempty, vim.tbl_extend
 local validate = vim.validate
-local if_nil = vim.F.if_nil
 
 local lsp = vim._defer_require('vim.lsp', {
   _changetracking = ..., --- @module 'vim.lsp._changetracking'
@@ -108,40 +106,7 @@ function lsp._buf_get_line_ending(bufnr)
 end
 
 -- Tracks all clients created via lsp.start_client
-local active_clients = {} --- @type table<integer,vim.lsp.Client>
-local all_buffer_active_clients = {} --- @type table<integer,table<integer,true>>
-local uninitialized_clients = {} --- @type table<integer,vim.lsp.Client>
-
----@param bufnr? integer
----@param fn fun(client: vim.lsp.Client, client_id: integer, bufnr: integer)
-local function for_each_buffer_client(bufnr, fn, restrict_client_ids)
-  validate({
-    fn = { fn, 'f' },
-    restrict_client_ids = { restrict_client_ids, 't', true },
-  })
-  bufnr = resolve_bufnr(bufnr)
-  local client_ids = all_buffer_active_clients[bufnr]
-  if not client_ids or tbl_isempty(client_ids) then
-    return
-  end
-
-  if restrict_client_ids and #restrict_client_ids > 0 then
-    local filtered_client_ids = {} --- @type table<integer,true>
-    for client_id in pairs(client_ids) do
-      if vim.list_contains(restrict_client_ids, client_id) then
-        filtered_client_ids[client_id] = true
-      end
-    end
-    client_ids = filtered_client_ids
-  end
-
-  for client_id in pairs(client_ids) do
-    local client = active_clients[client_id]
-    if client then
-      fn(client, client_id, bufnr)
-    end
-  end
-end
+local all_clients = {} --- @type table<integer,vim.lsp.Client>
 
 local client_errors_base = table.maxn(lsp.rpc.client_errors)
 local client_errors_offset = 0
@@ -156,7 +121,7 @@ end
 --- Can be used to look up the string from a the number or the number
 --- from the string.
 --- @nodoc
-lsp.client_errors = tbl_extend(
+lsp.client_errors = vim.tbl_extend(
   'error',
   lsp.rpc.client_errors,
   client_error('BEFORE_INIT_CALLBACK_ERROR'),
@@ -258,12 +223,10 @@ function lsp.start(config, opts)
 
   local bufnr = resolve_bufnr(opts.bufnr)
 
-  for _, clients in ipairs({ uninitialized_clients, lsp.get_clients() }) do
-    for _, client in pairs(clients) do
-      if reuse_client(client, config) then
-        lsp.buf_attach_client(bufnr, client.id)
-        return client.id
-      end
+  for _, client in pairs(all_clients) do
+    if reuse_client(client, config) then
+      lsp.buf_attach_client(bufnr, client.id)
+      return client.id
     end
   end
 
@@ -383,48 +346,30 @@ local function reset_defaults(bufnr)
   end)
 end
 
---- @param client vim.lsp.Client
-local function on_client_init(client)
-  local id = client.id
-  uninitialized_clients[id] = nil
-  -- Only assign after initialized.
-  active_clients[id] = client
-  -- If we had been registered before we start, then send didOpen This can
-  -- happen if we attach to buffers before initialize finishes or if
-  -- someone restarts a client.
-  for bufnr, client_ids in pairs(all_buffer_active_clients) do
-    if client_ids[id] then
-      client.on_attach(bufnr)
-    end
-  end
-end
-
 --- @param code integer
 --- @param signal integer
 --- @param client_id integer
 local function on_client_exit(code, signal, client_id)
-  local client = active_clients[client_id] or uninitialized_clients[client_id]
+  local client = all_clients[client_id]
 
-  for bufnr, client_ids in pairs(all_buffer_active_clients) do
-    if client_ids[client_id] then
-      vim.schedule(function()
-        if client and client.attached_buffers[bufnr] then
-          api.nvim_exec_autocmds('LspDetach', {
-            buffer = bufnr,
-            modeline = false,
-            data = { client_id = client_id },
-          })
-        end
+  for bufnr in pairs(client.attached_buffers) do
+    vim.schedule(function()
+      if client and client.attached_buffers[bufnr] then
+        api.nvim_exec_autocmds('LspDetach', {
+          buffer = bufnr,
+          modeline = false,
+          data = { client_id = client_id },
+        })
+      end
 
-        local namespace = vim.lsp.diagnostic.get_namespace(client_id)
-        vim.diagnostic.reset(namespace, bufnr)
+      local namespace = vim.lsp.diagnostic.get_namespace(client_id)
+      vim.diagnostic.reset(namespace, bufnr)
+      client.attached_buffers[bufnr] = nil
 
-        client_ids[client_id] = nil
-        if vim.tbl_isempty(client_ids) then
-          reset_defaults(bufnr)
-        end
-      end)
-    end
+      if #lsp.get_clients({ bufnr = bufnr, _uninitialized = true }) == 0 then
+        reset_defaults(bufnr)
+      end
+    end)
   end
 
   local name = client.name or 'unknown'
@@ -432,8 +377,7 @@ local function on_client_exit(code, signal, client_id)
   -- Schedule the deletion of the client object so that it exists in the execution of LspDetach
   -- autocommands
   vim.schedule(function()
-    active_clients[client_id] = nil
-    uninitialized_clients[client_id] = nil
+    all_clients[client_id] = nil
 
     -- Client can be absent if executable starts, but initialize fails
     -- init/attach won't have happened
@@ -466,12 +410,9 @@ function lsp.start_client(config)
   end
 
   --- @diagnostic disable-next-line: invisible
-  table.insert(client._on_init_cbs, on_client_init)
-  --- @diagnostic disable-next-line: invisible
   table.insert(client._on_exit_cbs, on_client_exit)
 
-  -- Store the uninitialized_clients for cleanup in case we exit before initialize finishes.
-  uninitialized_clients[client.id] = client
+  all_clients[client.id] = client
 
   client:initialize()
 
@@ -495,7 +436,7 @@ local function text_document_did_change_handler(
   new_lastline
 )
   -- Detach (nvim_buf_attach) via returning True to on_lines if no clients are attached
-  if tbl_isempty(all_buffer_active_clients[bufnr] or {}) then
+  if #lsp.get_clients({ bufnr = bufnr }) == 0 then
     return true
   end
   util.buf_versions[bufnr] = changedtick
@@ -543,6 +484,80 @@ local function text_document_did_save_handler(bufnr)
   end
 end
 
+--- @param bufnr integer
+--- @param client_id integer
+local function buf_attach(bufnr, client_id)
+  local uri = vim.uri_from_bufnr(bufnr)
+  local augroup = ('lsp_c_%d_b_%d_save'):format(client_id, bufnr)
+  local group = api.nvim_create_augroup(augroup, { clear = true })
+  api.nvim_create_autocmd('BufWritePre', {
+    group = group,
+    buffer = bufnr,
+    desc = 'vim.lsp: textDocument/willSave',
+    callback = function(ctx)
+      for _, client in ipairs(lsp.get_clients({ bufnr = ctx.buf })) do
+        local params = {
+          textDocument = {
+            uri = uri,
+          },
+          reason = protocol.TextDocumentSaveReason.Manual,
+        }
+        if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'willSave') then
+          client.notify(ms.textDocument_willSave, params)
+        end
+        if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'willSaveWaitUntil') then
+          local result, err =
+            client.request_sync(ms.textDocument_willSaveWaitUntil, params, 1000, ctx.buf)
+          if result and result.result then
+            util.apply_text_edits(result.result, ctx.buf, client.offset_encoding)
+          elseif err then
+            log.error(vim.inspect(err))
+          end
+        end
+      end
+    end,
+  })
+  api.nvim_create_autocmd('BufWritePost', {
+    group = group,
+    buffer = bufnr,
+    desc = 'vim.lsp: textDocument/didSave handler',
+    callback = function(ctx)
+      text_document_did_save_handler(ctx.buf)
+    end,
+  })
+  -- First time, so attach and set up stuff.
+  api.nvim_buf_attach(bufnr, false, {
+    on_lines = text_document_did_change_handler,
+    on_reload = function()
+      local params = { textDocument = { uri = uri } }
+      for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
+        changetracking.reset_buf(client, bufnr)
+        if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
+          client.notify(ms.textDocument_didClose, params)
+        end
+        client:_text_document_did_open_handler(bufnr)
+      end
+    end,
+    on_detach = function()
+      local params = { textDocument = { uri = uri } }
+      for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
+        changetracking.reset_buf(client, bufnr)
+        if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
+          client.notify(ms.textDocument_didClose, params)
+        end
+      end
+      for _, client in ipairs(all_clients) do
+        client.attached_buffers[bufnr] = nil
+      end
+      util.buf_versions[bufnr] = nil
+    end,
+    -- TODO if we know all of the potential clients ahead of time, then we
+    -- could conditionally set this.
+    --      utf_sizes = size_index > 1;
+    utf_sizes = true,
+  })
+end
+
 --- Implements the `textDocument/did…` notifications required to track a buffer
 --- for any language server.
 ---
@@ -561,92 +576,26 @@ function lsp.buf_attach_client(bufnr, client_id)
     log.warn(string.format('buf_attach_client called on unloaded buffer (id: %d): ', bufnr))
     return false
   end
-  local buffer_client_ids = all_buffer_active_clients[bufnr]
   -- This is our first time attaching to this buffer.
-  if not buffer_client_ids then
-    buffer_client_ids = {}
-    all_buffer_active_clients[bufnr] = buffer_client_ids
-
-    local uri = vim.uri_from_bufnr(bufnr)
-    local augroup = ('lsp_c_%d_b_%d_save'):format(client_id, bufnr)
-    local group = api.nvim_create_augroup(augroup, { clear = true })
-    api.nvim_create_autocmd('BufWritePre', {
-      group = group,
-      buffer = bufnr,
-      desc = 'vim.lsp: textDocument/willSave',
-      callback = function(ctx)
-        for _, client in ipairs(lsp.get_clients({ bufnr = ctx.buf })) do
-          local params = {
-            textDocument = {
-              uri = uri,
-            },
-            reason = protocol.TextDocumentSaveReason.Manual,
-          }
-          if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'willSave') then
-            client.notify(ms.textDocument_willSave, params)
-          end
-          if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'willSaveWaitUntil') then
-            local result, err =
-              client.request_sync(ms.textDocument_willSaveWaitUntil, params, 1000, ctx.buf)
-            if result and result.result then
-              util.apply_text_edits(result.result, ctx.buf, client.offset_encoding)
-            elseif err then
-              log.error(vim.inspect(err))
-            end
-          end
-        end
-      end,
-    })
-    api.nvim_create_autocmd('BufWritePost', {
-      group = group,
-      buffer = bufnr,
-      desc = 'vim.lsp: textDocument/didSave handler',
-      callback = function(ctx)
-        text_document_did_save_handler(ctx.buf)
-      end,
-    })
-    -- First time, so attach and set up stuff.
-    api.nvim_buf_attach(bufnr, false, {
-      on_lines = text_document_did_change_handler,
-      on_reload = function()
-        local params = { textDocument = { uri = uri } }
-        for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
-          changetracking.reset_buf(client, bufnr)
-          if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
-            client.notify(ms.textDocument_didClose, params)
-          end
-          client:_text_document_did_open_handler(bufnr)
-        end
-      end,
-      on_detach = function()
-        local params = { textDocument = { uri = uri } }
-        for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
-          changetracking.reset_buf(client, bufnr)
-          if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
-            client.notify(ms.textDocument_didClose, params)
-          end
-          client.attached_buffers[bufnr] = nil
-        end
-        util.buf_versions[bufnr] = nil
-        all_buffer_active_clients[bufnr] = nil
-      end,
-      -- TODO if we know all of the potential clients ahead of time, then we
-      -- could conditionally set this.
-      --      utf_sizes = size_index > 1;
-      utf_sizes = true,
-    })
+  if #lsp.get_clients({ bufnr = bufnr, _uninitialized = true }) == 0 then
+    buf_attach(bufnr, client_id)
   end
 
-  if buffer_client_ids[client_id] then
+  local client = lsp.get_client_by_id(client_id)
+  if not client then
+    return false
+  end
+
+  if client.attached_buffers[bufnr] then
     return true
   end
-  -- This is our first time attaching this client to this buffer.
-  buffer_client_ids[client_id] = true
 
-  local client = active_clients[client_id]
+  client.attached_buffers[bufnr] = true
+
+  -- This is our first time attaching this client to this buffer.
   -- Send didOpen for the client if it is initialized. If it isn't initialized
   -- then it will send didOpen on initialize.
-  if client then
+  if client.initialized then
     client:_on_attach(bufnr)
   end
   return true
@@ -665,7 +614,7 @@ function lsp.buf_detach_client(bufnr, client_id)
   })
   bufnr = resolve_bufnr(bufnr)
 
-  local client = lsp.get_client_by_id(client_id)
+  local client = all_clients[client_id]
   if not client or not client.attached_buffers[bufnr] then
     vim.notify(
       string.format(
@@ -694,11 +643,6 @@ function lsp.buf_detach_client(bufnr, client_id)
   client.attached_buffers[bufnr] = nil
   util.buf_versions[bufnr] = nil
 
-  all_buffer_active_clients[bufnr][client_id] = nil
-  if #vim.tbl_keys(all_buffer_active_clients[bufnr]) == 0 then
-    all_buffer_active_clients[bufnr] = nil
-  end
-
   local namespace = lsp.diagnostic.get_namespace(client_id)
   vim.diagnostic.reset(namespace, bufnr)
 end
@@ -708,7 +652,7 @@ end
 ---@param bufnr (integer) Buffer handle, or 0 for current
 ---@param client_id (integer) the client id
 function lsp.buf_is_attached(bufnr, client_id)
-  return (all_buffer_active_clients[resolve_bufnr(bufnr)] or {})[client_id] == true
+  return lsp.get_clients({ bufnr = bufnr, id = client_id, _uninitialized = true })[1] ~= nil
 end
 
 --- Gets a client by id, or nil if the id is invalid.
@@ -718,7 +662,7 @@ end
 ---
 ---@return (nil|vim.lsp.Client) client rpc object
 function lsp.get_client_by_id(client_id)
-  return active_clients[client_id] or uninitialized_clients[client_id]
+  return all_clients[client_id]
 end
 
 --- Returns list of buffers attached to client_id.
@@ -726,7 +670,7 @@ end
 ---@param client_id integer client id
 ---@return integer[] buffers list of buffer ids
 function lsp.get_buffers_by_client_id(client_id)
-  local client = lsp.get_client_by_id(client_id)
+  local client = all_clients[client_id]
   return client and vim.tbl_keys(client.attached_buffers) or {}
 end
 
@@ -742,17 +686,22 @@ end
 --- By default asks the server to shutdown, unless stop was requested
 --- already for this client, then force-shutdown is attempted.
 ---
----@param client_id integer|vim.lsp.Client id or |vim.lsp.Client| object, or list thereof
----@param force boolean|nil shutdown forcefully
+---@param client_id integer|integer[]|vim.lsp.Client[] id, list of id's, or list of |vim.lsp.Client| objects
+---@param force? boolean shutdown forcefully
 function lsp.stop_client(client_id, force)
+  --- @type integer[]|vim.lsp.Client[]
   local ids = type(client_id) == 'table' and client_id or { client_id }
   for _, id in ipairs(ids) do
-    if type(id) == 'table' and id.stop ~= nil then
-      id.stop(force)
-    elseif active_clients[id] then
-      active_clients[id].stop(force)
-    elseif uninitialized_clients[id] then
-      uninitialized_clients[id].stop(true)
+    if type(id) == 'table' then
+      if id.stop then
+        id.stop(force)
+      end
+    else
+      --- @cast id -vim.lsp.Client
+      local client = all_clients[id]
+      if client then
+        client.stop(force)
+      end
     end
   end
 end
@@ -772,6 +721,9 @@ end
 ---
 --- Only return clients supporting the given method
 --- @field method? string
+---
+--- Also return uninitialized clients.
+--- @field package _uninitialized? boolean
 
 --- Get active clients.
 ---
@@ -784,15 +736,16 @@ function lsp.get_clients(filter)
 
   local clients = {} --- @type vim.lsp.Client[]
 
-  local t = filter.bufnr and (all_buffer_active_clients[resolve_bufnr(filter.bufnr)] or {})
-    or active_clients
-  for client_id in pairs(t) do
-    local client = active_clients[client_id]
+  local bufnr = filter.bufnr and resolve_bufnr(filter.bufnr)
+
+  for _, client in pairs(all_clients) do
     if
       client
       and (filter.id == nil or client.id == filter.id)
+      and (filter.bufnr == nil or client.attached_buffers[bufnr])
       and (filter.name == nil or client.name == filter.name)
       and (filter.method == nil or client.supports_method(filter.method, { bufnr = filter.bufnr }))
+      and (filter._uninitialized or client.initialized)
     then
       clients[#clients + 1] = client
     end
@@ -810,15 +763,9 @@ end
 api.nvim_create_autocmd('VimLeavePre', {
   desc = 'vim.lsp: exit handler',
   callback = function()
+    local active_clients = lsp.get_clients()
     log.info('exit_handler', active_clients)
-    for _, client in pairs(uninitialized_clients) do
-      client.stop(true)
-    end
-    -- TODO handle v:dying differently?
-    if tbl_isempty(active_clients) then
-      return
-    end
-    for _, client in pairs(active_clients) do
+    for _, client in pairs(all_clients) do
       client.stop()
     end
 
@@ -827,7 +774,7 @@ api.nvim_create_autocmd('VimLeavePre', {
     local send_kill = false
 
     for client_id, client in pairs(active_clients) do
-      local timeout = if_nil(client.flags.exit_timeout, false)
+      local timeout = client.flags.exit_timeout
       if timeout then
         send_kill = true
         timeouts[client_id] = timeout
@@ -910,7 +857,7 @@ function lsp.buf_request(bufnr, method, params, handler)
 
   local function _cancel_all_requests()
     for client_id, request_id in pairs(client_request_ids) do
-      local client = active_clients[client_id]
+      local client = all_clients[client_id]
       client.cancel_request(request_id)
     end
   end
@@ -1106,7 +1053,7 @@ end
 ---@return boolean stopped true if client is stopped, false otherwise.
 function lsp.client_is_stopped(client_id)
   assert(client_id, 'missing client_id param')
-  return active_clients[client_id] == nil and not uninitialized_clients[client_id]
+  return not all_clients[client_id]
 end
 
 --- Gets a map of client_id:client pairs for the given buffer, where each value
@@ -1172,7 +1119,11 @@ function lsp.for_each_buffer_client(bufnr, fn)
     'lsp.get_clients({ bufnr = bufnr }) with regular loop',
     '0.12'
   )
-  return for_each_buffer_client(bufnr, fn)
+  bufnr = resolve_bufnr(bufnr)
+
+  for _, client in pairs(lsp.get_clients({ bufnr = bufnr })) do
+    fn(client, client.id, bufnr)
+  end
 end
 
 --- Function to manage overriding defaults for LSP handlers.

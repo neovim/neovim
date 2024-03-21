@@ -185,6 +185,10 @@ local validate = vim.validate
 --- @field root_dir string
 ---
 --- @field attached_buffers table<integer,true>
+---
+--- Buffers that should be attached to upon initialize()
+--- @field package _buffers_to_attach table<integer,true>
+---
 --- @field private _log_prefix string
 ---
 --- Track this so that we can escalate automatically if we've already tried a
@@ -608,7 +612,15 @@ function Client:initialize()
       self:_notify(ms.workspace_didChangeConfiguration, { settings = self.settings })
     end
 
+    -- If server is being restarted, make sure to re-attach to any previously attached buffers.
+    -- Save which buffers before on_init in case new buffers are attached.
+    local reattach_bufs = vim.deepcopy(self.attached_buffers)
+
     self:_run_callbacks(self._on_init_cbs, lsp.client_errors.ON_INIT_CALLBACK_ERROR, self, result)
+
+    for buf in pairs(reattach_bufs) do
+      self:_on_attach(buf)
+    end
 
     log.info(
       self._log_prefix,
@@ -761,7 +773,7 @@ function Client:_request_sync(method, params, timeout_ms, bufnr)
   return request_result
 end
 
---- @private
+--- @package
 --- Sends a notification to an LSP server.
 ---
 --- @param method string LSP method name.
