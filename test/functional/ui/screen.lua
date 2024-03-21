@@ -698,6 +698,8 @@ screen:redraw_debug() to show all intermediate screen states.]]
       end
     end
   end, expected)
+
+  self.messages = {}
 end
 
 function Screen:expect_unchanged(intermediate, waittime_ms)
@@ -1373,16 +1375,8 @@ function Screen:_handle_wildmenu_hide()
   self.wildmenu_items, self.wildmenu_pos = nil, nil
 end
 
-function Screen:_handle_msg_show(kind, chunks, replace_last)
-  local pos = #self.messages
-  if not replace_last or pos == 0 then
-    pos = pos + 1
-  end
-  self.messages[pos] = { kind = kind, content = chunks }
-end
-
-function Screen:_handle_msg_clear()
-  self.messages = {}
+function Screen:_handle_msg_show(kind, chunks)
+  self.messages[#self.messages + 1] = { kind = kind, content = chunks }
 end
 
 function Screen:_handle_msg_showcmd(msg)

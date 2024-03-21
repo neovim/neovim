@@ -783,7 +783,7 @@ will be set to zero, but can be changed and used for the replacing cmdline or
 message window. Cmdline state is emitted as |ui-cmdline| events, which the UI
 must handle.
 
-["msg_show", kind, content, replace_last] ~
+["msg_show", kind, content] ~
 	Display a message to the user.
 
 	kind
@@ -809,17 +809,6 @@ must handle.
 	    text of chunks of different highlights. No extra spacing should be
 	    added between chunks, the `text_chunk` by itself contains any
 	    necessary whitespace. Messages can contain line breaks "\n".
-
-	replace_last
-	    Decides how multiple messages should be displayed:
-	    false: Display the message together with all previous messages
-		   that are still visible.
-	    true:  Replace the message in the most-recent `msg_show` call,
-		   but any other visible message should still remain.
-
-["msg_clear"] ~
-	Clear all messages currently displayed by "msg_show". (Messages sent
-	by other "msg_" events below will not be affected).
 
 ["msg_showmode", content] ~
 	Shows 'showmode' and |recording| messages. `content` has the same
