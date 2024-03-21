@@ -761,7 +761,7 @@ function Client:_request_sync(method, params, timeout_ms, bufnr)
   return request_result
 end
 
---- @private
+--- @package
 --- Sends a notification to an LSP server.
 ---
 --- @param method string LSP method name.

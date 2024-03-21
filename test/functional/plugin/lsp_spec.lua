@@ -282,8 +282,7 @@ describe('LSP', function()
       local client
       test_rpc_server {
         test_name = 'basic_finish',
-        on_init = function(_client)
-          client = _client
+        on_setup = function()
           exec_lua [[
             BUFFER = vim.api.nvim_create_buf(false, true)
           ]]
@@ -292,6 +291,9 @@ describe('LSP', function()
           exec_lua [[
             vim.api.nvim_command(BUFFER.."bwipeout")
           ]]
+        end,
+        on_init = function(_client)
+          client = _client
           client.notify('finish')
         end,
         on_exit = function(code, signal)
@@ -806,14 +808,12 @@ describe('LSP', function()
               BUFFER = vim.api.nvim_get_current_buf()
               lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)
               vim.lsp.handlers['textDocument/typeDefinition'] = function() end
+              vim.cmd(BUFFER.."bwipeout")
             ]=])
         end,
         on_init = function(client)
           client.stop()
           exec_lua('vim.lsp.buf.type_definition()')
-          exec_lua [[
-            vim.api.nvim_command(BUFFER.."bwipeout")
-          ]]
         end,
         on_exit = function(code, signal)
           eq(0, code, 'exit code')
@@ -1058,8 +1058,7 @@ describe('LSP', function()
       local client
       test_rpc_server {
         test_name = 'basic_finish',
-        on_init = function(_client)
-          client = _client
+        on_setup = function()
           exec_lua [[
             BUFFER = vim.api.nvim_create_buf(false, true)
             vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
@@ -1073,6 +1072,9 @@ describe('LSP', function()
           exec_lua [[
             vim.api.nvim_command(BUFFER.."bwipeout")
           ]]
+        end,
+        on_init = function(_client)
+          client = _client
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
           eq(full_kind, client.server_capabilities().textDocumentSync.change)
           eq(true, client.server_capabilities().textDocumentSync.openClose)
