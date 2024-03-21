@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local command = helpers.command
 local Screen = require('test.functional.ui.screen')
 local clear, feed, feed_command = helpers.clear, helpers.feed, helpers.feed_command
+local exec = helpers.exec
 
 describe(':drop', function()
   local screen
@@ -16,7 +17,7 @@ describe(':drop', function()
       [2] = { reverse = true },
       [3] = { bold = true },
     })
-    command('set laststatus=2 shortmess-=F')
+    command('set nohidden laststatus=2 shortmess-=F')
   end)
 
   it('works like :e when called with only one window open', function()
@@ -43,7 +44,6 @@ describe(':drop', function()
   end)
 
   it("splits off a new window when a buffer can't be abandoned", function()
-    command('set nohidden')
     feed_command('edit tmp1')
     feed_command('vsplit')
     feed_command('edit tmp2')
@@ -57,6 +57,22 @@ describe(':drop', function()
       {0:~                   }│{0:~             }|*2
       {2:tmp2 [+]             tmp1          }|
       "tmp3" [New]                       |
+    ]])
+  end)
+
+  -- oldtest: Test_drop_modified_file()
+  it('does not cause E37 with modified same file', function()
+    exec([[
+      edit Xdrop_modified.txt
+      call setline(1, 'The quick brown fox jumped over the lazy dogs')
+    ]])
+    feed_command('drop Xdrop_modified.txt')
+    screen:expect([[
+      ^The quick brown fox jumped over the|
+       lazy dogs                         |
+      {0:~                                  }|*6
+      {1:Xdrop_modified.txt [+]             }|
+      :drop Xdrop_modified.txt           |
     ]])
   end)
 end)
