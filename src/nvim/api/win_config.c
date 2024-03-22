@@ -130,7 +130,7 @@
 ///   - focusable: Enable focus by user actions (wincmds, mouse events).
 ///       Defaults to true. Non-focusable windows can be entered by
 ///       |nvim_set_current_win()|, or, when the `mouse` field is set to true,
-///       by mouse events.
+///       by mouse events. See |focusable|.
 ///   - mouse: Specify how this window interacts with mouse events.
 ///       Defaults to `focusable` value.
 ///       - If false, mouse events pass through this window.

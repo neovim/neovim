@@ -69,7 +69,8 @@ If a window is focusable, it is part of the "navigation stack", that is,
 editor commands such as :windo, |CTRL-W|, etc., will consider the window as
 one that can be made the "current window". A non-focusable window will be
 skipped by such commands (though it can be explicitly focused by
-|nvim_set_current_win()|).
+|nvim_set_current_win()|). Non-focusable windows are not listed by |:tabs|, and
+are not counted by the default 'tabline'.
 
 Windows (especially floating windows) can have many other |api-win_config|
 properties such as "hide" and "fixed" which also affect behavior.
