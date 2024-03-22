@@ -693,7 +693,7 @@ function Client:_request(method, params, handler, bufnr)
     local request = { type = 'pending', bufnr = bufnr, method = method }
     self.requests[request_id] = request
     api.nvim_exec_autocmds('LspRequest', {
-      buffer = bufnr,
+      buffer = api.nvim_buf_is_valid(bufnr) and bufnr or nil,
       modeline = false,
       data = { client_id = self.id, request_id = request_id, request = request },
     })
@@ -804,7 +804,7 @@ function Client:_cancel_request(id)
   if request and request.type == 'pending' then
     request.type = 'cancel'
     api.nvim_exec_autocmds('LspRequest', {
-      buffer = request.bufnr,
+      buffer = api.nvim_buf_is_valid(request.bufnr) and request.bufnr or nil,
       modeline = false,
       data = { client_id = self.id, request_id = id, request = request },
     })
