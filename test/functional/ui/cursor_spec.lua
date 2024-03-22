@@ -204,7 +204,7 @@ describe('ui/cursor', function()
     screen:expect {
       grid = [[
       ^                         |
-      ~                        |*3
+      {1:~                        }|*3
       test                     |
     ]],
       condition = function()
@@ -290,7 +290,7 @@ describe('ui/cursor', function()
     screen:expect {
       grid = [[
       ^                         |
-      ~                        |*3
+      {1:~                        }|*3
       test                     |
     ]],
       condition = function()

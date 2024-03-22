@@ -256,28 +256,28 @@ describe('shell command :!', function()
         :!'Write-Output $a'                          |
         Write-Output $a                              |
                                                      |
-        Press ENTER or type command to continue^      |
+        {6:Press ENTER or type command to continue}^      |
       ]])
       feed_command([[!$a = 1; Write-Output '$a']])
       screen:expect([[
         :!$a = 1; Write-Output '$a'                  |
         $a                                           |
                                                      |
-        Press ENTER or type command to continue^      |
+        {6:Press ENTER or type command to continue}^      |
       ]])
       feed_command([[!"Write-Output $a"]])
       screen:expect([[
         :!"Write-Output $a"                          |
         Write-Output                                 |
                                                      |
-        Press ENTER or type command to continue^      |
+        {6:Press ENTER or type command to continue}^      |
       ]])
       feed_command([[!$a = 1; Write-Output "$a"]])
       screen:expect([[
         :!$a = 1; Write-Output "$a"                  |
         1                                            |
                                                      |
-        Press ENTER or type command to continue^      |
+        {6:Press ENTER or type command to continue}^      |
       ]])
       if is_os('win') then
         feed_command([[!& 'cmd.exe' /c 'echo $a']])
@@ -285,7 +285,7 @@ describe('shell command :!', function()
           :!& 'cmd.exe' /c 'echo $a'                   |
           $a                                           |
                                                        |
-          Press ENTER or type command to continue^      |
+          {6:Press ENTER or type command to continue}^      |
         ]])
       else
         feed_command([[!& '/bin/sh' -c 'echo ''$a''']])
@@ -293,7 +293,7 @@ describe('shell command :!', function()
           :!& '/bin/sh' -c 'echo ''$a'''               |
           $a                                           |
                                                        |
-          Press ENTER or type command to continue^      |
+          {6:Press ENTER or type command to continue}^      |
         ]])
       end
     end)

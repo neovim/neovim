@@ -596,57 +596,59 @@ it('statusline is redrawn on various state changes', function()
   command('set ls=2 stl=%{repeat(reg_recording(),5)}')
   screen:expect([[
     ^                                        |
-    ~                                       |
-                                            |*2
+    {1:~                                       }|
+    {3:                                        }|
+                                            |
   ]])
   feed('qQ')
   screen:expect([[
     ^                                        |
-    ~                                       |
-    QQQQQ                                   |
-    recording @Q                            |
+    {1:~                                       }|
+    {3:QQQQQ                                   }|
+    {5:recording @Q}                            |
   ]])
   feed('q')
   screen:expect([[
     ^                                        |
-    ~                                       |
-                                            |*2
+    {1:~                                       }|
+    {3:                                        }|
+                                            |
   ]])
 
   -- Visual mode change #23932
   command('set ls=2 stl=%{mode(1)}')
   screen:expect([[
     ^                                        |
-    ~                                       |
-    n                                       |
+    {1:~                                       }|
+    {3:n                                       }|
                                             |
   ]])
   feed('v')
   screen:expect([[
     ^                                        |
-    ~                                       |
-    v                                       |
-    -- VISUAL --                            |
+    {1:~                                       }|
+    {3:v                                       }|
+    {5:-- VISUAL --}                            |
   ]])
   feed('V')
   screen:expect([[
     ^                                        |
-    ~                                       |
-    V                                       |
-    -- VISUAL LINE --                       |
+    {1:~                                       }|
+    {3:V                                       }|
+    {5:-- VISUAL LINE --}                       |
   ]])
   feed('<C-V>')
   screen:expect([[
     ^                                        |
-    ~                                       |
-    ^V                                      |
-    -- VISUAL BLOCK --                      |
+    {1:~                                       }|
+    {3:^V                                      }|
+    {5:-- VISUAL BLOCK --}                      |
   ]])
   feed('<Esc>')
   screen:expect([[
     ^                                        |
-    ~                                       |
-    n                                       |
+    {1:~                                       }|
+    {3:n                                       }|
                                             |
   ]])
 end)

@@ -22,7 +22,7 @@ describe("'fillchars'", function()
       eq('', eval('&fillchars'))
       screen:expect([[
         ^                         |
-        ~                        |*3
+        {1:~                        }|*3
                                  |
       ]])
     end)
@@ -30,13 +30,14 @@ describe("'fillchars'", function()
     it('supports whitespace', function()
       screen:expect([[
         ^                         |
-        ~                        |*3
+        {1:~                        }|*3
                                  |
       ]])
       command('set fillchars=eob:\\ ')
       screen:expect([[
         ^                         |
-                                 |*4
+        {1:                         }|*3
+                                 |
       ]])
     end)
 
@@ -44,7 +45,7 @@ describe("'fillchars'", function()
       command('set fillchars=eob:ñ')
       screen:expect([[
         ^                         |
-        ñ                        |*3
+        {1:ñ                        }|*3
                                  |
       ]])
     end)
@@ -53,7 +54,7 @@ describe("'fillchars'", function()
       command('set fillchars=eob:å̲')
       screen:expect([[
         ^                         |
-        å̲                        |*3
+        {1:å̲                        }|*3
                                  |
       ]])
     end)
@@ -112,8 +113,8 @@ describe("'fillchars'", function()
     command('vsplit')
     command('set fillchars=fold:x')
     screen:expect([[
-      ^+--  2 lines: fooxxxxxxxx│+--  2 lines: fooxxxxxxx|
-      ~                        │~                       |*3
+      {13:^+--  2 lines: fooxxxxxxxx}│{13:+--  2 lines: fooxxxxxxx}|
+      {1:~                        }│{1:~                       }|*3
                                                         |
     ]])
   end)
@@ -126,8 +127,8 @@ describe("'fillchars'", function()
     command('vsplit')
     command('setl fillchars=fold:x')
     screen:expect([[
-      ^+--  2 lines: fooxxxxxxxx│+--  2 lines: foo·······|
-      ~                        │~                       |*3
+      {13:^+--  2 lines: fooxxxxxxxx}│{13:+--  2 lines: foo·······}|
+      {1:~                        }│{1:~                       }|*3
                                                         |
     ]])
   end)
@@ -141,8 +142,8 @@ describe("'fillchars'", function()
     command('vsplit')
     command('set fillchars&')
     screen:expect([[
-      ^+--  2 lines: foo········│+--  2 lines: fooxxxxxxx|
-      ~                        │~                       |*3
+      {13:^+--  2 lines: foo········}│{13:+--  2 lines: fooxxxxxxx}|
+      {1:~                        }│{1:~                       }|*3
                                                         |
     ]])
   end)
@@ -163,8 +164,8 @@ describe("'listchars'", function()
     command('vsplit')
     command('set listchars=tab:<->')
     screen:expect([[
-      <------><------>^<------> │<------><------><------>|
-      ~                        │~                       |*3
+      {1:<------><------>^<------>} │{1:<------><------><------>}|
+      {1:~                        }│{1:~                       }|*3
                                                         |
     ]])
   end)
@@ -176,8 +177,8 @@ describe("'listchars'", function()
     command('vsplit')
     command('setl listchars<')
     screen:expect([[
-      >       >       ^>        │<------><------><------>|
-      ~                        │~                       |*3
+      {1:>       >       ^>       } │{1:<------><------><------>}|
+      {1:~                        }│{1:~                       }|*3
                                                         |
     ]])
   end)
@@ -189,8 +190,8 @@ describe("'listchars'", function()
     command('vsplit')
     command('set listchars=tab:>-,eol:$')
     screen:expect([[
-      >------->-------^>-------$│<------><------><------>|
-      ~                        │~                       |*3
+      {1:>------->-------^>-------$}│{1:<------><------><------>}|
+      {1:~                        }│{1:~                       }|*3
                                                         |
     ]])
   end)

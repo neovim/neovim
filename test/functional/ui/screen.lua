@@ -139,6 +139,43 @@ local function _init_colors()
   end
   Screen.colors = colors
   Screen.colornames = colornames
+
+  Screen._global_default_attr_ids = {
+    [1] = { foreground = Screen.colors.Blue1, bold = true },
+    [2] = { reverse = true },
+    [3] = { bold = true, reverse = true },
+    [4] = { background = Screen.colors.LightMagenta },
+    [5] = { bold = true },
+    [6] = { foreground = Screen.colors.SeaGreen, bold = true },
+    [7] = { background = Screen.colors.Gray, foreground = Screen.colors.DarkBlue },
+    [8] = { foreground = Screen.colors.Brown },
+    [9] = { background = Screen.colors.Red, foreground = Screen.colors.Grey100 },
+    [10] = { background = Screen.colors.Yellow },
+    [11] = {
+      foreground = Screen.colors.Blue1,
+      background = Screen.colors.LightMagenta,
+      bold = true,
+    },
+    [12] = { background = Screen.colors.Gray },
+    [13] = { background = Screen.colors.LightGrey, foreground = Screen.colors.DarkBlue },
+    [14] = { background = Screen.colors.DarkGray, foreground = Screen.colors.LightGrey },
+    [15] = { foreground = Screen.colors.Brown, bold = true },
+    [16] = { foreground = Screen.colors.SlateBlue },
+    [17] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black },
+    [18] = { foreground = Screen.colors.Blue1 },
+    [19] = { foreground = Screen.colors.Red },
+    [20] = { background = Screen.colors.Yellow, foreground = Screen.colors.Red },
+    [21] = { background = Screen.colors.Grey90 },
+    [22] = { background = Screen.colors.LightBlue },
+    [23] = { foreground = Screen.colors.Blue1, background = Screen.colors.LightCyan, bold = true },
+    [24] = { background = Screen.colors.LightGrey, underline = true },
+    [25] = { foreground = Screen.colors.Cyan4 },
+    [26] = { foreground = Screen.colors.Fuchsia },
+    [27] = { background = Screen.colors.Red, bold = true },
+    [28] = { foreground = Screen.colors.SlateBlue, underline = true },
+    [29] = { foreground = Screen.colors.SlateBlue, bold = true },
+    [30] = { background = Screen.colors.Red },
+  }
 end
 
 --- @param width? integer
@@ -256,6 +293,10 @@ function Screen:attach(options, session)
   end
   if self._options.ext_multigrid then
     self._options.ext_linegrid = true
+  end
+
+  if self._default_attr_ids == nil then
+    self._default_attr_ids = Screen._global_default_attr_ids
   end
 end
 
@@ -480,7 +521,10 @@ function Screen:expect(expected, attr_ids, ...)
       attr_state.id_to_index = self:linegrid_check_attrs(attr_state.ids or {})
     end
 
-    local actual_rows = self:render(not expected.any, attr_state)
+    local actual_rows
+    if expected.any or grid then
+      actual_rows = self:render(not expected.any, attr_state)
+    end
 
     if expected.any then
       -- Search for `any` anywhere in the screen lines.

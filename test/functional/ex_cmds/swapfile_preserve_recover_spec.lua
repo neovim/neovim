@@ -170,6 +170,7 @@ describe('swapfile detection', function()
     set_session(nvim2)
     local screen2 = Screen.new(256, 40)
     screen2:attach()
+    screen2._default_attr_ids = nil
     exec(init)
     command('autocmd! nvim_swapfile') -- Delete the default handler (which skips the dialog).
 

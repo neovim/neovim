@@ -22,7 +22,7 @@ describe("'shortmess'", function()
       feed(':edit foo<CR>')
       screen:expect([[
         ^                                          |
-        ~                                         |*3
+        {1:~                                         }|*3
         "foo" [New]                               |
       ]])
       eq(1, eval('bufnr("%")'))
@@ -31,7 +31,7 @@ describe("'shortmess'", function()
       feed(':edit bar<CR>')
       screen:expect([[
         ^                                          |
-        ~                                         |*3
+        {1:~                                         }|*3
         :edit bar                                 |
       ]])
       eq(2, eval('bufnr("%")'))
@@ -43,21 +43,21 @@ describe("'shortmess'", function()
       feed(':edit foo<CR>')
       screen:expect([[
         ^                                          |
-        ~                                         |*3
+        {1:~                                         }|*3
         "foo" [New]                               |
       ]])
       eq(1, eval('bufnr("%")'))
       feed(':edit bar<CR>')
       screen:expect([[
         ^                                          |
-        ~                                         |*3
+        {1:~                                         }|*3
         "bar" [New]                               |
       ]])
       eq(2, eval('bufnr("%")'))
       feed(':bprevious<CR>')
       screen:expect([[
         ^                                          |
-        ~                                         |*3
+        {1:~                                         }|*3
         "foo" [New] --No lines in buffer--        |
       ]])
       eq(1, eval('bufnr("%")'))
@@ -66,14 +66,14 @@ describe("'shortmess'", function()
       feed(':bnext<CR>')
       screen:expect([[
         ^                                          |
-        ~                                         |*3
+        {1:~                                         }|*3
         :bnext                                    |
       ]])
       eq(2, eval('bufnr("%")'))
       feed(':bprevious<CR>')
       screen:expect([[
         ^                                          |
-        ~                                         |*3
+        {1:~                                         }|*3
         :bprevious                                |
       ]])
       eq(1, eval('bufnr("%")'))

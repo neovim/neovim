@@ -32,7 +32,7 @@ describe('startup defaults', function()
       command('filetype')
       screen:expect([[
         ^                                                  |
-        ~                                                 |*2
+        {1:~                                                 }|*2
         ]] .. expected)
     end
 
@@ -132,9 +132,9 @@ describe('startup defaults', function()
       command('vsp')
       screen:expect([[
         1                        │1                       |
-        ^+--  2 lines: 2··········│+--  2 lines: 2·········|
+        {13:^+--  2 lines: 2··········}│{13:+--  2 lines: 2·········}|
         4                        │4                       |
-        ~                        │~                       |
+        {1:~                        }│{1:~                       }|
                                                           |
       ]])
 
@@ -142,9 +142,9 @@ describe('startup defaults', function()
       command('set ambiwidth=double')
       screen:expect([[
         1                        |1                       |
-        ^+--  2 lines: 2----------|+--  2 lines: 2---------|
+        {13:^+--  2 lines: 2----------}|{13:+--  2 lines: 2---------}|
         4                        |4                       |
-        ~                        |~                       |
+        {1:~                        }|{1:~                       }|
                                                           |
       ]])
 
@@ -152,9 +152,9 @@ describe('startup defaults', function()
       fn.setcellwidths({ { 0x2502, 0x2502, 1 } })
       screen:expect([[
         1                        │1                       |
-        ^+--  2 lines: 2----------│+--  2 lines: 2---------|
+        {13:^+--  2 lines: 2----------}│{13:+--  2 lines: 2---------}|
         4                        │4                       |
-        ~                        │~                       |
+        {1:~                        }│{1:~                       }|
                                                           |
       ]])
 
@@ -162,9 +162,9 @@ describe('startup defaults', function()
       fn.setcellwidths({ { 0x2502, 0x2502, 2 } })
       screen:expect([[
         1                        |1                       |
-        ^+--  2 lines: 2----------|+--  2 lines: 2---------|
+        {13:^+--  2 lines: 2----------}|{13:+--  2 lines: 2---------}|
         4                        |4                       |
-        ~                        |~                       |
+        {1:~                        }|{1:~                       }|
                                                           |
       ]])
 
@@ -172,9 +172,9 @@ describe('startup defaults', function()
       command('set ambiwidth=single')
       screen:expect([[
         1                        |1                       |
-        ^+--  2 lines: 2··········|+--  2 lines: 2·········|
+        {13:^+--  2 lines: 2··········}|{13:+--  2 lines: 2·········}|
         4                        |4                       |
-        ~                        |~                       |
+        {1:~                        }|{1:~                       }|
                                                           |
       ]])
     end)

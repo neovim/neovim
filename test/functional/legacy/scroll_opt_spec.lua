@@ -23,9 +23,9 @@ describe('smoothscroll', function()
       set number
     ]])
     feed('<C-Y>')
-    screen:expect({ any = '  1 ^one' })
+    screen:expect({ any = '{8:  1 }^one' })
     feed('<C-E><C-E><C-E>')
-    screen:expect({ any = '  2 ^two' })
+    screen:expect({ any = '{8:  2 }^two' })
   end)
 
   -- oldtest: Test_smoothscroll_CtrlE_CtrlY()
@@ -43,28 +43,28 @@ describe('smoothscroll', function()
       long word long word long word           |
       ^line                                    |
       line                                    |*2
-      ~                                       |*2
+      {1:~                                       }|*2
                                               |
     ]]
     local s2 = [[
-      <<<d word word word word word word word |
+      {1:<<<}d word word word word word word word |
       word word word word                     |
       line three                              |
       long word long word long word long word |
       long word long word long word           |
       ^line                                    |
       line                                    |*2
-      ~                                       |*3
+      {1:~                                       }|*3
                                               |
     ]]
     local s3 = [[
-      <<<d word word word                     |
+      {1:<<<}d word word word                     |
       line three                              |
       long word long word long word long word |
       long word long word long word           |
       ^line                                    |
       line                                    |*2
-      ~                                       |*4
+      {1:~                                       }|*4
                                               |
     ]]
     local s4 = [[
@@ -73,28 +73,28 @@ describe('smoothscroll', function()
       long word long word long word           |
       line                                    |*2
       ^line                                    |
-      ~                                       |*5
+      {1:~                                       }|*5
                                               |
     ]]
     local s5 = [[
-      <<<d word word word                     |
+      {1:<<<}d word word word                     |
       line three                              |
       long word long word long word long word |
       long word long word long word           |
       line                                    |*2
       ^line                                    |
-      ~                                       |*4
+      {1:~                                       }|*4
                                               |
     ]]
     local s6 = [[
-      <<<d word word word word word word word |
+      {1:<<<}d word word word word word word word |
       word word word word                     |
       line three                              |
       long word long word long word long word |
       long word long word long word           |
       line                                    |*2
       ^line                                    |
-      ~                                       |*3
+      {1:~                                       }|*3
                                               |
     ]]
     local s7 = [[
@@ -105,7 +105,7 @@ describe('smoothscroll', function()
       long word long word long word           |
       line                                    |*2
       ^line                                    |
-      ~                                       |*2
+      {1:~                                       }|*2
                                               |
     ]]
     local s8 = [[
@@ -117,7 +117,7 @@ describe('smoothscroll', function()
       long word long word long word           |
       line                                    |*2
       ^line                                    |
-      ~                                       |
+      {1:~                                       }|
                                               |
     ]]
     feed('<C-E>')
@@ -160,7 +160,7 @@ describe('smoothscroll', function()
       ϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛ^ϛϛϛϛϛ|
       ϛϛϛϛϛ                                   |
       222222222222222222222222222222222222    |
-      ~                                       |*2
+      {1:~                                       }|*2
                                               |
     ]])
   end)
@@ -181,134 +181,136 @@ describe('smoothscroll', function()
       endfunc
     ]])
     screen:expect([[
-        1 one word word word word word word wo|
+      {8:  1 }one word word word word word word wo|
       rd word word word word word word word wo|
       rd word word word word word             |
-        2 two long word long word long word lo|
+      {8:  2 }two long word long word long word lo|
       ng word long word long word long word   |
-        3 ^line                                |
-        4 line                                |
-        5 line                                |
-      ~                                       |*3
+      {8:  3 }^line                                |
+      {8:  4 }line                                |
+      {8:  5 }line                                |
+      {1:~                                       }|*3
                                               |
     ]])
     feed('<C-E>')
     screen:expect([[
-      <<<word word word word word word word wo|
+      {1:<<<}word word word word word word word wo|
       rd word word word word word             |
-        2 two long word long word long word lo|
+      {8:  2 }two long word long word long word lo|
       ng word long word long word long word   |
-        3 ^line                                |
-        4 line                                |
-        5 line                                |
-      ~                                       |*4
+      {8:  3 }^line                                |
+      {8:  4 }line                                |
+      {8:  5 }line                                |
+      {1:~                                       }|*4
                                               |
     ]])
     feed('<C-E>')
     screen:expect([[
-      <<<word word word word word             |
-        2 two long word long word long word lo|
+      {1:<<<}word word word word word             |
+      {8:  2 }two long word long word long word lo|
       ng word long word long word long word   |
-        3 ^line                                |
-        4 line                                |
-        5 line                                |
-      ~                                       |*5
+      {8:  3 }^line                                |
+      {8:  4 }line                                |
+      {8:  5 }line                                |
+      {1:~                                       }|*5
                                               |
     ]])
     exec('set cpo-=n')
     screen:expect([[
-      <<< d word word word word word word     |
-        2 two long word long word long word lo|
-          ng word long word long word long wor|
-          d                                   |
-        3 ^line                                |
-        4 line                                |
-        5 line                                |
-      ~                                       |*4
+      {1:<<<}{8: }d word word word word word word     |
+      {8:  2 }two long word long word long word lo|
+      {8:    }ng word long word long word long wor|
+      {8:    }d                                   |
+      {8:  3 }^line                                |
+      {8:  4 }line                                |
+      {8:  5 }line                                |
+      {1:~                                       }|*4
                                               |
     ]])
     feed('<C-Y>')
     screen:expect([[
-      <<< rd word word word word word word wor|
-          d word word word word word word     |
-        2 two long word long word long word lo|
-          ng word long word long word long wor|
-          d                                   |
-        3 ^line                                |
-        4 line                                |
-        5 line                                |
-      ~                                       |*3
+      {1:<<<}{8: }rd word word word word word word wor|
+      {8:    }d word word word word word word     |
+      {8:  2 }two long word long word long word lo|
+      {8:    }ng word long word long word long wor|
+      {8:    }d                                   |
+      {8:  3 }^line                                |
+      {8:  4 }line                                |
+      {8:  5 }line                                |
+      {1:~                                       }|*3
                                               |
     ]])
     feed('<C-Y>')
     screen:expect([[
-        1 one word word word word word word wo|
-          rd word word word word word word wor|
-          d word word word word word word     |
-        2 two long word long word long word lo|
-          ng word long word long word long wor|
-          d                                   |
-        3 ^line                                |
-        4 line                                |
-        5 line                                |
-      ~                                       |*2
+      {8:  1 }one word word word word word word wo|
+      {8:    }rd word word word word word word wor|
+      {8:    }d word word word word word word     |
+      {8:  2 }two long word long word long word lo|
+      {8:    }ng word long word long word long wor|
+      {8:    }d                                   |
+      {8:  3 }^line                                |
+      {8:  4 }line                                |
+      {8:  5 }line                                |
+      {1:~                                       }|*2
                                               |
     ]])
     exec('botright split')
     feed('gg')
     screen:expect([[
-        1 one word word word word word word wo|
-          rd word word word word word word wor|
-          d word word word word word word     |
-        2 two long word long word long word@@@|
-      [No Name] [+]                           |
-        1 ^one word word word word word word wo|
-          rd word word word word word word wor|
-          d word word word word word word     |
-        2 two long word long word long word lo|
-          ng word long word long word long @@@|
-      [No Name] [+]                           |
+      {8:  1 }one word word word word word word wo|
+      {8:    }rd word word word word word word wor|
+      {8:    }d word word word word word word     |
+      {8:  2 }two long word long word long word{1:@@@}|
+      {2:[No Name] [+]                           }|
+      {8:  1 }^one word word word word word word wo|
+      {8:    }rd word word word word word word wor|
+      {8:    }d word word word word word word     |
+      {8:  2 }two long word long word long word lo|
+      {8:    }ng word long word long word long {1:@@@}|
+      {3:[No Name] [+]                           }|
                                               |
     ]])
+
     feed('<C-E>')
     screen:expect([[
-        1 one word word word word word word wo|
-          rd word word word word word word wor|
-          d word word word word word word     |
-        2 two long word long word long word@@@|
-      [No Name] [+]                           |
-      <<< rd word word word word word word wor|
-          d word word word word word word^     |
-        2 two long word long word long word lo|
-          ng word long word long word long wor|
-          d                                   |
-      [No Name] [+]                           |
+      {8:  1 }one word word word word word word wo|
+      {8:    }rd word word word word word word wor|
+      {8:    }d word word word word word word     |
+      {8:  2 }two long word long word long word{1:@@@}|
+      {2:[No Name] [+]                           }|
+      {1:<<<}{8: }rd word word word word word word wor|
+      {8:    }d word word word word word word^     |
+      {8:  2 }two long word long word long word lo|
+      {8:    }ng word long word long word long wor|
+      {8:    }d                                   |
+      {3:[No Name] [+]                           }|
                                               |
     ]])
+
     feed('<C-E>')
     screen:expect([[
-        1 one word word word word word word wo|
-          rd word word word word word word wor|
-          d word word word word word word     |
-        2 two long word long word long word@@@|
-      [No Name] [+]                           |
-      <<< d word word word word word word^     |
-        2 two long word long word long word lo|
-          ng word long word long word long wor|
-          d                                   |
-        3 line                                |
-      [No Name] [+]                           |
+      {8:  1 }one word word word word word word wo|
+      {8:    }rd word word word word word word wor|
+      {8:    }d word word word word word word     |
+      {8:  2 }two long word long word long word{1:@@@}|
+      {2:[No Name] [+]                           }|
+      {1:<<<}{8: }d word word word word word word^     |
+      {8:  2 }two long word long word long word lo|
+      {8:    }ng word long word long word long wor|
+      {8:    }d                                   |
+      {8:  3 }line                                |
+      {3:[No Name] [+]                           }|
                                               |
     ]])
     exec('close')
     exec('call DoRel()')
     screen:expect([[
-      2<<<^ong text very long text very long te|
-          xt very long text very long text ver|
-          y long text very long text very long|
-           text very long text very long text |
-        1 three                               |
-      ~                                       |*6
+      {8:2}{1:<<<}^ong text very long text very long te|
+      {8:    }xt very long text very long text ver|
+      {8:    }y long text very long text very long|
+      {8:    } text very long text very long text |
+      {8:  1 }three                               |
+      {1:~                                       }|*6
       --No lines in buffer--                  |
     ]])
   end)
@@ -323,22 +325,22 @@ describe('smoothscroll', function()
       exe "normal 2Gzt\<C-E>"
     ]])
     screen:expect([[
-      <<<t very long text very long text very |
+      {1:<<<}t very long text very long text very |
       ^long text very long text very long text |
       very long text very long text very long |
-      text very long text-                    |
+      text very long text{1:-}                    |
       three                                   |
-      ~                                       |*2
+      {1:~                                       }|*2
                                               |
     ]])
     exec('set listchars+=precedes:#')
     screen:expect([[
-      #ext very long text very long text very |
+      {1:#}ext very long text very long text very |
       ^long text very long text very long text |
       very long text very long text very long |
-      text very long text-                    |
+      text very long text{1:-}                    |
       three                                   |
-      ~                                       |*2
+      {1:~                                       }|*2
                                               |
     ]])
   end)
@@ -356,13 +358,14 @@ describe('smoothscroll', function()
       set smoothscroll
       diffthis
     ]])
+
     screen:expect([[
-      - ^just some text here                   |
-      ~                                       |*2
-      [No Name] [+]                           |
-      - just some text here                   |
-      ~                                       |
-      [No Name] [+]                           |
+      {7:- }^just some text here                   |
+      {1:~                                       }|*2
+      {3:[No Name] [+]                           }|
+      {7:- }just some text here                   |
+      {1:~                                       }|
+      {2:[No Name] [+]                           }|
                                               |
     ]])
     feed('<C-Y>')
@@ -380,7 +383,7 @@ describe('smoothscroll', function()
       :3
     ]])
     screen:expect([[
-      <<<h some text with some text           |
+      {1:<<<}h some text with some text           |
       Line with some text with some text with |
       some text with some text with some text |
       with some text with some text           |
@@ -401,7 +404,7 @@ describe('smoothscroll', function()
     -- moving cursor up right after the <<< marker - no need to show whole line
     feed('2gj3l2k')
     screen:expect([[
-      <<<^h some text with some text           |
+      {1:<<<}^h some text with some text           |
       Line with some text with some text with |
       some text with some text with some text |
       with some text with some text           |
@@ -419,7 +422,7 @@ describe('smoothscroll', function()
       Line with some text with some text with |
       some text with some text with some text |
       with some text with some text           |
-      @                                       |
+      {1:@                                       }|
                                               |
     ]])
   end)
@@ -443,7 +446,7 @@ describe('smoothscroll', function()
     ]])
     feed('<C-E>')
     screen:expect([[
-      <<<th lot^s of text with lots of text wit|
+      {1:<<<}th lot^s of text with lots of text wit|
       h lots of text with lots of text with lo|
       ts of text with lots of text with lots o|
       f text with lots of text with lots of te|
@@ -452,7 +455,7 @@ describe('smoothscroll', function()
     ]])
     feed('5<C-E>')
     screen:expect([[
-      <<< lots ^of text with lots of text with |
+      {1:<<<} lots ^of text with lots of text with |
       lots of text with lots of text with lots|
        of text with lots of text with lots of |
       text with lots of text with lots of text|
@@ -462,7 +465,7 @@ describe('smoothscroll', function()
     -- scrolling down, cursor moves screen line up
     feed('5<C-Y>')
     screen:expect([[
-      <<<th lots of text with lots of text wit|
+      {1:<<<}th lots of text with lots of text wit|
       h lots of text with lots of text with lo|
       ts of text with lots of text with lots o|
       f text with lots of text with lots of te|
@@ -482,7 +485,7 @@ describe('smoothscroll', function()
     exec('set scrolloff=1')
     feed('10|<C-E>')
     screen:expect([[
-      <<<th lots of text with lots of text wit|
+      {1:<<<}th lots of text with lots of text wit|
       h lots of^ text with lots of text with lo|
       ts of text with lots of text with lots o|
       f text with lots of text with lots of te|
@@ -492,7 +495,7 @@ describe('smoothscroll', function()
     -- 'scrolloff' set to 1, scrolling down, cursor moves screen line up
     feed('<C-E>gjgj<C-Y>')
     screen:expect([[
-      <<<th lots of text with lots of text wit|
+      {1:<<<}th lots of text with lots of text wit|
       h lots of text with lots of text with lo|
       ts of text with lots of text with lots o|
       f text wi^th lots of text with lots of te|
@@ -503,7 +506,7 @@ describe('smoothscroll', function()
     exec('set scrolloff=2')
     feed('10|<C-E>')
     screen:expect([[
-      <<<th lots of text with lots of text wit|
+      {1:<<<}th lots of text with lots of text wit|
       h lots of text with lots of text with lo|
       ts of tex^t with lots of text with lots o|
       f text with lots of text with lots of te|
@@ -518,7 +521,7 @@ describe('smoothscroll', function()
     exec('set scrolloff=0')
     feed('0j')
     screen:expect([[
-      <<<th lots of text with lots of text wit|
+      {1:<<<}th lots of text with lots of text wit|
       h lots of text with lots of text with lo|
       ts of text with lots of text with lots o|
       f text with lots of text end            |
@@ -529,20 +532,20 @@ describe('smoothscroll', function()
     feed('zt')
     screen:expect([[
       ^four                                    |
-      ~                                       |*4
+      {1:~                                       }|*4
                                               |
     ]])
     feed('zz')
     screen:expect([[
-      <<<of text with lots of text with lots o|
+      {1:<<<}of text with lots of text with lots o|
       f text with lots of text end            |
       ^four                                    |
-      ~                                       |*2
+      {1:~                                       }|*2
                                               |
     ]])
     feed('zb')
     screen:expect([[
-      <<<th lots of text with lots of text wit|
+      {1:<<<}th lots of text with lots of text wit|
       h lots of text with lots of text with lo|
       ts of text with lots of text with lots o|
       f text with lots of text end            |
@@ -567,7 +570,7 @@ describe('smoothscroll', function()
     -- screen.
     feed('3Gzt<C-E>j')
     screen:expect([[
-      <<<th lots of text with lots of text wit|
+      {1:<<<}th lots of text with lots of text wit|
       h lots of text with lots of text with lo|
       ts of text with lots of text with lots o|
       f text with lots of text end            |
@@ -588,16 +591,16 @@ describe('smoothscroll', function()
        lots of text with lots of text with lot|
       s of text with lots of text with lots of|
        text                                   |
-      ~                                       |
+      {1:~                                       }|
                                               |
     ]]
     screen:expect(s1)
     feed('<C-E>')
     screen:expect([[
-      <<<ts of text with lots of text with lot|
+      {1:<<<}ts of text with lots of text with lot|
       ^s of text with lots of text with lots of|
        text                                   |
-      ~                                       |*2
+      {1:~                                       }|*2
                                               |
     ]])
     feed('0')
@@ -612,20 +615,20 @@ describe('smoothscroll', function()
     exec('set smoothscroll scrolloff=0 showbreak=+++\\ ')
     local s1 = [[
       ^with lots of text in one line with lots |
-      +++ of text in one line with lots of tex|
-      +++ t in one line with lots of text in o|
-      +++ ne line with lots of text in one lin|
-      +++ e with lots of text in one line     |
+      {1:+++ }of text in one line with lots of tex|
+      {1:+++ }t in one line with lots of text in o|
+      {1:+++ }ne line with lots of text in one lin|
+      {1:+++ }e with lots of text in one line     |
                                               |
     ]]
     screen:expect(s1)
     feed('<C-E>')
     screen:expect([[
-      +++ ^of text in one line with lots of tex|
-      +++ t in one line with lots of text in o|
-      +++ ne line with lots of text in one lin|
-      +++ e with lots of text in one line     |
-      ~                                       |
+      {1:+++ }^of text in one line with lots of tex|
+      {1:+++ }t in one line with lots of text in o|
+      {1:+++ }ne line with lots of text in one lin|
+      {1:+++ }e with lots of text in one line     |
+      {1:~                                       }|
                                               |
     ]])
     feed('0')
@@ -642,13 +645,13 @@ describe('smoothscroll', function()
     screen:expect([[
       ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       口口口口口口口口口口                    |
-      ~                                       |*3
+      {1:~                                       }|*3
                                               |
     ]])
     feed('<C-E>')
     screen:expect([[
-      <<< 口口口口口口口^口                    |
-      ~                                       |*4
+      {1:<<<} 口口口口口口口^口                    |
+      {1:~                                       }|*4
                                               |
     ]])
   end)
@@ -694,7 +697,7 @@ describe('smoothscroll', function()
     ]=])
     feed('<C-E>gjgk')
     screen:expect([[
-      <<<lots of text in one line^             |
+      {1:<<<}lots of text in one line^             |
       line two                                |
       line three                              |
       line four                               |
@@ -717,7 +720,7 @@ describe('smoothscroll', function()
       call search('xxx')
     ]=])
     screen:expect([[
-      <<<_____________________________________|
+      {1:<<<}_____________________________________|
       ________________________________________|
       ______________________________________^xx|
       x______________________________________x|
@@ -744,7 +747,7 @@ describe('smoothscroll', function()
     feed('<C-B>G')
     -- cursor is not placed below window
     screen:expect([[
-      <<<aaaaaaaaaaaaaaaaa                    |
+      {1:<<<}aaaaaaaaaaaaaaaaa                    |
                                               |*7
       ^                                        |
                                               |
@@ -901,15 +904,15 @@ describe('smoothscroll', function()
     ]])
     screen:expect([[
                                               |
-      [No Name]                               |
+      {2:[No Name]                               }|
       line1                                   |
       line2                                   |
       ^line3line3line3line3line3line3line3line3|
       line3line3line3line3line3line3line3line3|
       line3line3line3line3                    |
       line4                                   |
-      ~                                       |*2
-      [No Name] [+]                           |
+      {1:~                                       }|*2
+      {3:[No Name] [+]                           }|
                                               |
     ]])
   end)
@@ -952,7 +955,7 @@ describe('smoothscroll', function()
     ]])
     feed('<C-E>')
     screen:expect([[
-      <<<e text with some text with some text with some text |
+      {1:<<<}e text with some text with some text with some text |
       virt_below1                                            |
       virt_above1                                            |
       ^Line with some text with some text with some text with |
@@ -977,7 +980,7 @@ describe('smoothscroll', function()
       some text with some text with some text with some text |
       virt_below2                                            |
       virt_above2                                            |
-      Line with some text with some text with some text wi@@@|
+      Line with some text with some text with some text wi{1:@@@}|
                                                              |
     ]])
     feed('<C-E>')
@@ -992,12 +995,12 @@ describe('smoothscroll', function()
     ]])
     feed('<C-E>')
     screen:expect([[
-      <<<e text with some text with some text with some tex^t |
+      {1:<<<}e text with some text with some text with some tex^t |
       virt_below2                                            |
       virt_above2                                            |
       Line with some text with some text with some text with |
       some text with some text with some text with some text |
-      ~                                                      |
+      {1:~                                                      }|
                                                              |
     ]])
   end)
@@ -1010,65 +1013,73 @@ describe('smoothscroll', function()
     ]])
     feed('Go123456789<CR>')
     screen:expect([[
-      <<<ery long line ...A very long line ...|
+      {1:<<<}ery long line ...A very long line ...|
       A very long line ...A very long line ...|*5
       123456789                               |
       ^                                        |
-      -- INSERT --                            |
+      {5:-- INSERT --}                            |
     ]])
   end)
 
   it('<<< marker shows with tabline, winbar and splits', function()
     screen:try_resize(40, 12)
+    screen:set_default_attr_ids({
+      [1] = { foreground = Screen.colors.Blue1, bold = true },
+      [2] = { reverse = true },
+      [3] = { bold = true, reverse = true },
+      [4] = { background = Screen.colors.LightMagenta },
+      [5] = { bold = true },
+      [31] = { foreground = Screen.colors.Fuchsia, bold = true },
+    })
     exec([[
       call setline(1, ['Line' .. (' with some text'->repeat(7))]->repeat(7))
       set smoothscroll scrolloff=0
       norm sj
     ]])
     screen:expect([[
-      <<<e text with some text with some text |
+      {1:<<<}e text with some text with some text |
       with some text with some text           |
       Line with some text with some text with |
       some text with some text with some text |
       with some text with some text           |
-      [No Name] [+]                           |
-      <<<e text with some text with some text |
+      {2:[No Name] [+]                           }|
+      {1:<<<}e text with some text with some text |
       ^with some text with some text           |
       Line with some text with some text with |
-      some text with some text with some te@@@|
-      [No Name] [+]                           |
+      some text with some text with some te{1:@@@}|
+      {3:[No Name] [+]                           }|
                                               |
     ]])
     exec('set showtabline=2')
     feed('<C-E>')
     screen:expect([[
-       2+ [No Name]                           |
-      <<<e text with some text with some text |
+      {5: }{31:2}{5:+ [No Name] }{2:                          }|
+      {1:<<<}e text with some text with some text |
       with some text with some text           |
       Line with some text with some text with |
       some text with some text with some text |
       with some text with some text           |
-      [No Name] [+]                           |
-      <<<e text with some text with some text |
+      {2:[No Name] [+]                           }|
+      {1:<<<}e text with some text with some text |
       ^with some text with some text           |
-      Line with some text with some text wi@@@|
-      [No Name] [+]                           |
+      Line with some text with some text wi{1:@@@}|
+      {3:[No Name] [+]                           }|
                                               |
     ]])
     exec('set winbar=winbar')
     feed('<C-w>k<C-E>')
     screen:expect([[
-       2+ [No Name]                           |
-      winbar                                  |
-      <<<e text with some text with some text |
+      {5: }{31:2}{5:+ [No Name] }{2:                          }|
+      {5:winbar                                  }|
+      {1:<<<}e text with some text with some text |
       ^with some text with some text           |
       Line with some text with some text with |
-      some text with some text with some te@@@|
-      [No Name] [+]                           |
-      winbar                                  |
-      <<<e text with some text with some text |
+      some text with some text with some te{1:@@@}|
+      {3:[No Name] [+]                           }|
+      {5:winbar                                  }|
+      {1:<<<}e text with some text with some text |
       with some text with some text           |
-      [No Name] [+]                           |
+      {2:[No Name] [+]                           }|
                                               |
     ]])
   end)

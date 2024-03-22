@@ -31,7 +31,7 @@ describe('ui/ext_tabline', function()
     screen:expect {
       grid = [[
       ^                         |
-      ~                        |*3
+      {1:~                        }|*3
                                |
     ]],
       condition = function()
@@ -44,7 +44,7 @@ describe('ui/ext_tabline', function()
     screen:expect {
       grid = [[
       ^                         |
-      ~                        |*3
+      {1:~                        }|*3
                                |
     ]],
       condition = function()
@@ -62,7 +62,7 @@ describe('ui/ext_tabline', function()
     screen:expect {
       grid = [[
       ^                         |
-      ~                        |*3
+      {1:~                        }|*3
                                |
     ]],
       condition = function()
@@ -81,7 +81,7 @@ describe('ui/ext_tabline', function()
     screen:expect {
       grid = [[
       ^                         |
-      ~                        |*3
+      {1:~                        }|*3
                                |
     ]],
       condition = function()

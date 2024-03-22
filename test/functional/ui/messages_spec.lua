@@ -2680,6 +2680,7 @@ it('pager works in headless mode with UI attached', function()
   local child_session = helpers.connect(child_server)
   local child_screen = Screen.new(40, 6)
   child_screen:attach(nil, child_session)
+  child_screen._default_attr_ids = nil -- TODO: unskip with new color scheme
 
   child_session:notify('nvim_command', [[echo range(100)->join("\n")]])
   child_screen:expect([[

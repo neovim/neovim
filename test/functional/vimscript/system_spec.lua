@@ -214,7 +214,7 @@ describe('system()', function()
       feed(':call system("echo")<cr>')
       screen:expect([[
         ^                                                     |
-        ~                                                    |*12
+        {1:~                                                    }|*12
         :call system("echo")                                 |
       ]])
     end)
@@ -262,14 +262,14 @@ describe('system()', function()
       )
       screen:expect([[
                                                              |
-        ~                                                    |*12
+        {1:~                                                    }|*12
 ]] .. (is_os('win') and [[
         :call system("for /L %I in (1,0,2) do @echo y")      |]] or [[
         :call system("yes")                                  |]]))
       feed('foo<c-c>')
       screen:expect([[
         ^                                                     |
-        ~                                                    |*12
+        {1:~                                                    }|*12
         Type  :qa  and press <Enter> to exit Nvim            |
       ]])
     end)
@@ -283,15 +283,15 @@ describe('system()', function()
       )
       screen:expect([[
                                                              |
-        ~                                                    |*12
+        {1:~                                                    }|*12
 ]] .. (is_os('win') and [[
         :call system("for /L %I in (1,0,2) do @echo y")      |]] or [[
         :call system("yes")                                  |]]))
       feed('foo<c-c>')
       screen:expect([[
         ^                                                     |
-        ~                                                    |*12
-        -- INSERT --                                         |
+        {1:~                                                    }|*12
+        {5:-- INSERT --}                                         |
       ]])
     end)
   end)
@@ -447,7 +447,7 @@ describe('systemlist()', function()
       feed(':call systemlist("echo")<cr>')
       screen:expect([[
         ^                                                     |
-        ~                                                    |*12
+        {1:~                                                    }|*12
         :call systemlist("echo")                             |
       ]])
     end)
@@ -456,13 +456,13 @@ describe('systemlist()', function()
       feed(':call systemlist("yes | xargs")<cr>')
       screen:expect([[
                                                              |
-        ~                                                    |*12
+        {1:~                                                    }|*12
         :call systemlist("yes | xargs")                      |
       ]])
       feed('<c-c>')
       screen:expect([[
         ^                                                     |
-        ~                                                    |*12
+        {1:~                                                    }|*12
         Type  :qa  and press <Enter> to exit Nvim            |
       ]])
     end)

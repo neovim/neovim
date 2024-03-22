@@ -166,11 +166,11 @@ describe('health.vim', function()
       screen:expect {
         grid = [[
         ^                                                  |
-        ──────────────────────────────────────────────────|
-        +WE  4 lines: foo: ·······························|
-        ──────────────────────────────────────────────────|
-        +--  8 lines: test_plug.success1: require("test_pl|
-        ~                                                 |
+        {14:──────────────────────────────────────────────────}|
+        {13:+WE  4 lines: foo: ·······························}|
+        {14:──────────────────────────────────────────────────}|
+        {13:+--  8 lines: test_plug.success1: require("test_pl}|
+        {1:~                                                 }|
                                                           |
       ]],
       }
@@ -218,6 +218,12 @@ describe(':checkhealth window', function()
 
   it('opens directly if no buffer created', function()
     local screen = Screen.new(50, 12)
+    screen:set_default_attr_ids {
+      [1] = { foreground = Screen.colors.Blue, bold = true },
+      [14] = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray },
+      [31] = { foreground = tonumber('0x6a0dad') },
+      [32] = { foreground = Screen.colors.PaleGreen2 },
+    }
     screen:attach({ ext_multigrid = true })
     command('checkhealth success1')
     screen:expect {
@@ -227,16 +233,16 @@ describe(':checkhealth window', function()
       [3:--------------------------------------------------]|
     ## grid 2
       ^                                                  |
-      ──────────────────────────────────────────────────|
-      ────────────────────────────                      |
-      test_plug.success1: require("test_plug.success1.  |
-      health").check()                                  |
+      {14:──────────────────────────────────────────────────}|
+      {14:────────────────────────────}                      |
+      {31:test_plug.success1: require("test_plug.success1.  }|
+      {31:health").check()}                                  |
                                                         |
-      report 1                                          |
-      - OK everything is fine                           |
+      {31:report 1}                                          |
+      - {32:OK} everything is fine                           |
                                                         |
-      report 2                                          |
-      - OK nothing to see here                          |
+      {31:report 2}                                          |
+      - {32:OK} nothing to see here                          |
     ## grid 3
                                                         |
     ]],
@@ -245,6 +251,12 @@ describe(':checkhealth window', function()
 
   local function test_health_vsplit(left, emptybuf, mods)
     local screen = Screen.new(50, 20)
+    screen:set_default_attr_ids {
+      [1] = { foreground = Screen.colors.Blue, bold = true },
+      [14] = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray },
+      [31] = { foreground = tonumber('0x6a0dad') },
+      [32] = { foreground = Screen.colors.PaleGreen2 },
+    }
     screen:attach({ ext_multigrid = true })
     if not emptybuf then
       insert('hello')
@@ -257,24 +269,24 @@ describe(':checkhealth window', function()
       [3:--------------------------------------------------]|
     ## grid 2
       %s                   |
-      ~                       |*18
+      {1:~                       }|*18
     ## grid 3
                                                         |
     ## grid 4
       ^                         |
-      ─────────────────────────|*3
-      ───                      |
-      test_plug.success1:      |
-      require("test_plug.      |
-      success1.health").check()|
+      {14:─────────────────────────}|*3
+      {14:───}                      |
+      {31:test_plug.success1:      }|
+      {31:require("test_plug.      }|
+      {31:success1.health").check()}|
                                |
-      report 1                 |
-      - OK everything is fine  |
+      {31:report 1}                 |
+      - {32:OK} everything is fine  |
                                |
-      report 2                 |
-      - OK nothing to see here |
+      {31:report 2}                 |
+      - {32:OK} nothing to see here |
                                |
-      ~                        |*4
+      {1:~                        }|*4
     ]]):format(
         left and '[4:-------------------------]│[2:------------------------]|*19'
           or '[2:------------------------]│[4:-------------------------]|*19',
@@ -304,6 +316,7 @@ describe(':checkhealth window', function()
   local function test_health_split(top, emptybuf, mods)
     local screen = Screen.new(50, 25)
     screen:attach({ ext_multigrid = true })
+    screen._default_attr_ids = nil
     if not emptybuf then
       insert('hello')
     end

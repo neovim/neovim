@@ -93,8 +93,8 @@ describe('cmdline', function()
     feed_command('DoSomething')
     screen:expect([[
                                                                   |
-      ~                                                           |*2
-                                                                  |
+      {1:~                                                           }|*2
+      {3:                                                            }|
       Executing: DoSomething                                      |
       Executing: echo 'hello' |set ts=4 |let v = '123' |echo v    |
       hello                                                       |
@@ -102,7 +102,7 @@ describe('cmdline', function()
       Executing: let v = '123' |echo v                            |
       Executing: echo v                                           |
       123                                                         |
-      Press ENTER or type command to continue^                     |
+      {6:Press ENTER or type command to continue}^                     |
     ]])
   end)
 

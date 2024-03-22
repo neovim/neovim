@@ -22,15 +22,15 @@ describe(':highlight', function()
     -- is discarded resulting in test failure
     screen:expect([[
       :highlight                         |
-      SpecialKey     xxx ctermfg=4       |
-                         guifg=Blue      |
-      EndOfBuffer    xxx links to NonText|
+      SpecialKey     {18:xxx} {18:ctermfg=}4       |
+                         {18:guifg=}Blue      |
+      EndOfBuffer    {1:xxx} {18:links to} NonText|
                                          |
-      TermCursor     xxx cterm=reverse   |
-                         gui=reverse     |
+      TermCursor     {2:xxx} {18:cterm=}reverse   |
+                         {18:gui=}reverse     |
       TermCursorNC   xxx cleared         |
-      NonText        xxx ctermfg=12      |
-      -- More --^                         |
+      NonText        {1:xxx} {18:ctermfg=}12      |
+      {6:-- More --}^                         |
     ]])
     feed('q')
     poke_eventloop() -- wait until we're back to normal

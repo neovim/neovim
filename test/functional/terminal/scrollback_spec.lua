@@ -361,16 +361,19 @@ describe(':terminal prints more lines than the screen height and exits', functio
       line8                         |
       line9                         |
                                     |
-      [Process exited 0]            |
-      -- TERMINAL --                |
+      [Process exited 0]{2: }           |
+      {5:-- TERMINAL --}                |
     ]])
     feed('<cr>')
     -- closes the buffer correctly after pressing a key
-    screen:expect([[
+    screen:expect {
+      grid = [[
       ^                              |
-      ~                             |*5
+      {1:~                             }|*5
                                     |
-    ]])
+    ]],
+      attr_ids = { [1] = { foreground = 12 } },
+    }
   end)
 end)
 

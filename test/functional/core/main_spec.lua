@@ -120,9 +120,9 @@ describe('command-line option', function()
       feed('i:cq<CR>')
       screen:expect([[
                                                 |
-        [Process exited 1]                      |
+        [Process exited 1]{2: }                     |
                                                 |*5
-        -- TERMINAL --                          |
+        {5:-- TERMINAL --}                          |
       ]])
       --[=[ Example of incorrect output:
       screen:expect([[
