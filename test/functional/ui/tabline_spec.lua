@@ -102,6 +102,11 @@ describe('tabline', function()
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
       [1] = { reverse = true }, -- TabLineFill
+      [2] = { background = Screen.colors.LightMagenta },
+      [3] = { background = Screen.colors.LightGrey, underline = true },
+      [4] = { bold = true },
+      [6] = { foreground = Screen.colors.SeaGreen, bold = true },
+      [5] = { foreground = Screen.colors.Fuchsia, bold = true },
     })
   end)
 
@@ -197,5 +202,35 @@ describe('tabline', function()
     eq({ 2, 2 }, api.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
     api.nvim_input_mouse('middle', 'press', '', 0, 0, 1)
     eq({ 1, 1 }, api.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
+  end)
+
+  it('does not show floats with focusable=false', function()
+    command('tabnew')
+    api.nvim_open_win(0, false, {
+      focusable = false,
+      relative = 'editor',
+      height = 1,
+      width = 1,
+      row = 0,
+      col = 0,
+    })
+    screen:expect {
+      grid = [[
+      {2: }{3:[No Name] }{4: [No Name] }{1:                   }{3:X}|
+      ^                                          |
+      {0:~                                         }|*2
+                                                |
+    ]],
+    }
+    command('tabs')
+    screen:expect {
+      grid = [[
+      {5:Tab page 1}                                |
+      #   [No Name]                             |
+      {5:Tab page 2}                                |
+      >   [No Name]                             |
+      {6:Press ENTER or type command to continue}^   |
+    ]],
+    }
   end)
 end)
