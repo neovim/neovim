@@ -17,6 +17,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/cursor.h"
+#include "nvim/decoration.h"
 #include "nvim/diff.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
@@ -1349,6 +1350,10 @@ bool scrollup(win_T *wp, linenr_T line_count, bool byfold)
     for (int todo = line_count; todo > 0; todo--) {
       if (wp->w_topfill > 0) {
         wp->w_topfill--;
+        if (wp->w_topline == 1) {
+          // Redraw to show 'smoothscroll' marker
+          redrawWinline(wp, 1);
+        }
       } else {
         linenr_T lnum = wp->w_topline;
         if (byfold) {
@@ -1465,11 +1470,30 @@ bool scrollup(win_T *wp, linenr_T line_count, bool byfold)
   return moved;
 }
 
+/// Adjust topfill for virtual text when moving the cursor behind the
+/// 'smoothscroll' marker on the first line of a buffer.
+///
+/// @param count false if we already know there are virtual lines above the first line
+bool adjust_topfill(bool count)
+{
+  if (curwin->w_topline == 1 && curwin->w_topfill == 0) {
+    int overlap = sms_marker_overlap(curwin, win_col_off(curwin) - win_col_off2(curwin));
+    validate_virtcol(curwin);
+    if (curwin->w_virtcol < overlap && (!count || decor_virt_lines(curwin, 1, NULL, kNone))) {
+      curwin->w_topfill = 1;
+      redraw_later(curwin, UPD_NOT_VALID);
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Called after changing the cursor column: make sure that curwin->w_skipcol is
 /// valid for 'smoothscroll'.
 void adjust_skipcol(void)
 {
   if (!curwin->w_p_wrap || !curwin->w_p_sms || curwin->w_cursor.lnum != curwin->w_topline) {
+    adjust_topfill(true);
     return;
   }
 
@@ -1503,6 +1527,9 @@ void adjust_skipcol(void)
       curwin->w_skipcol -= width1;
     }
     scrolled = true;
+  }
+  if (!scrolled) {
+    scrolled = adjust_topfill(overlap);
   }
   if (scrolled) {
     validate_virtcol(curwin);

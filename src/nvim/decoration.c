@@ -181,6 +181,9 @@ void buf_put_decor(buf_T *buf, DecorInline decor, int row, int row2)
       buf_put_decor_sh(buf, sh, row, row2);
       idx = sh->next;
     }
+    if (row == 0 && decor.data.ext.vt && decor.data.ext.vt->flags & kVTLinesAbove) {
+      adjust_topfill(false);
+    }
   }
 }
 

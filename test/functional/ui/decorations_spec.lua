@@ -2501,6 +2501,22 @@ describe('extmark decorations', function()
                                                         |
     ]])
   end)
+
+  it("hidden virtual text above first line shows marker", function()
+    fn.setline(1, 'some text')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {virt_lines={{{'Above1', 'String'}}}, virt_lines_above=true})
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {virt_lines={{{'Above2', 'String'}}}, virt_lines_above=true})
+    -- Automatically scroll when cursor becomes hidden behind '<<<' marker
+    screen:expect({grid=[[
+      {1:<<<}{13:ve2}                                            |
+      ^some text                                         |
+      {1:~                                                 }|*12
+                                                        |
+    ]]})
+    feed('$<C-E>0')
+    -- Scroll when moving cursor behind '<<<' marker
+    screen:expect_unchanged()
+  end)
 end)
 
 describe('decorations: inline virtual text', function()
@@ -4223,6 +4239,7 @@ if (h->n_buckets < new_n_buckets) { // expand
                                                         |
     ]]}
 
+    feed('$')
     api.nvim_buf_set_extmark(0, ns, 0, 0, {
       virt_lines={
         {{"refactor(khash): ", "Special"}, {"take size of values as parameter"}};
@@ -4233,8 +4250,9 @@ if (h->n_buckets < new_n_buckets) { // expand
     })
 
     -- placing virt_text on topline does not automatically cause a scroll
+    -- if it does not invalidate the cursor, but shows the '<<<' marker.
     screen:expect{grid=[[
-      ^if (h->n_buckets < new_n_buckets) { // expand     |
+      {1:<<<}(h->n_buckets < new_n_buckets) { // expan^d     |
         khkey_t *new_keys = (khkey_t *)krealloc((void *)|
       h->keys, new_n_buckets * sizeof(khkey_t));        |
         h->keys = new_keys;                             |

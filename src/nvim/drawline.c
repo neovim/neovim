@@ -103,7 +103,8 @@ typedef struct {
 
   hlf_T diff_hlf;            ///< type of diff highlighting
 
-  int n_virt_lines;          ///< nr of virtual lines
+  int n_virt_lines;          ///< nr of virtual lines that will be be drawn
+  int line_virt_lines;       ///< nr of available virtual lines on this line
   int filler_lines;          ///< nr of filler lines to be drawn
   int filler_todo;           ///< nr of filler lines still to do + 1
   SignTextAttrs sattrs[SIGN_SHOW_MAX];  ///< sign attributes for the sign column
@@ -1154,7 +1155,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     area_highlighting = true;
   }
   VirtLines virt_lines = KV_INITIAL_VALUE;
-  wlv.n_virt_lines = decor_virt_lines(wp, lnum, &virt_lines, has_fold);
+  wlv.line_virt_lines = wlv.n_virt_lines = decor_virt_lines(wp, lnum, &virt_lines, has_fold);
   wlv.filler_lines += wlv.n_virt_lines;
   if (lnum == wp->w_topline) {
     wlv.filler_lines = wp->w_topfill;
@@ -2964,7 +2965,8 @@ static void wlv_put_linebuf(win_T *wp, const winlinevars_T *wlv, int endcol, boo
   }
 
   // Take care of putting "<<<" on the first line for 'smoothscroll'.
-  if (wlv->row == 0 && wp->w_skipcol > 0
+  if (wlv->row == 0
+      && (wp->w_skipcol > 0 || (wlv->lnum == 1 && wlv->line_virt_lines > wp->w_topfill))
       // do not overwrite the 'showbreak' text with "<<<"
       && *get_showbreak_value(wp) == NUL
       // do not overwrite the 'listchars' "precedes" text with "<<<"
