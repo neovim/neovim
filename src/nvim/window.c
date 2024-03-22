@@ -4683,6 +4683,7 @@ void win_goto(win_T *wp)
   }
 
   win_enter(wp, true);
+  redraw_float_bot_border();
 
   // Conceal cursor line in previous window, unconceal in current window.
   if (win_valid(owp) && owp->w_p_cole > 0 && !msg_scrolled) {

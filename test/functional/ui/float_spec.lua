@@ -9205,6 +9205,66 @@ describe('float window', function()
       eq(restcmd, fn.winrestcmd())
       eq(config, api.nvim_win_get_config(0))
     end)
+
+    it('border of float bottom on statusline', function()
+      screen:try_resize(20, 7)
+      command('set cmdheight=0 laststatus=2 | hi FloatBorder guibg=NONE')
+      api.nvim_open_win(
+        0,
+        true,
+        { relative = 'editor', row = 1, col = 1, width = 5, height = 7, border = 'single' }
+      )
+      if multigrid then
+        screen:expect {
+          grid = [[
+              ## grid 1
+                [2:--------------------]|*6
+                {5:[No Name]           }|
+              ## grid 2
+                                    |
+                {0:~                   }|*5
+              ## grid 3
+              ## grid 4
+                ┌─────┐|
+                │{1:^     }│|
+                │{2:~    }│|*6
+                └─────┘|
+              ]],
+          float_pos = {
+            [4] = { 1001, 'NW', 1, 1, 1, true, 50 },
+          },
+          win_viewport = {
+            [2] = {
+              win = 1000,
+              topline = 0,
+              botline = 2,
+              curline = 0,
+              curcol = 0,
+              linecount = 1,
+              sum_scroll_delta = 0,
+            },
+            [4] = {
+              win = 1001,
+              topline = 0,
+              botline = 2,
+              curline = 0,
+              curcol = 0,
+              linecount = 1,
+              sum_scroll_delta = 0,
+            },
+          },
+        }
+      else
+        screen:expect {
+          grid = [[
+               ┌─────┐            |
+              {0:~}│{1:^     }│{0:            }|
+              {0:~}│{2:~    }│{0:            }|*4
+              {5:[└─────┘]           }|
+            ]],
+        }
+      end
+    end)
   end
 
   describe('with ext_multigrid', function()
