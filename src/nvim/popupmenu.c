@@ -704,7 +704,8 @@ static win_T *pum_create_float_preview(bool enter)
     return NULL;
   }
   buf_T *buf = find_buffer_by_handle(b, &err);
-  set_string_option_direct_in_buf(buf, kOptBufhidden, "wipe", OPT_LOCAL, 0);
+  set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL, 0, kOptReqBuf,
+                        buf);
   wp->w_float_is_info = true;
   wp->w_p_diff = false;
   buf->b_p_bl = false;
