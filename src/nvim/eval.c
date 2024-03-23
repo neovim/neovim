@@ -7519,8 +7519,9 @@ int check_luafunc_name(const char *const str, const bool paren)
   return (int)(p - str);
 }
 
-/// Return the character "str[index]" where "index" is the character index.  If
-/// "index" is out of range NULL is returned.
+/// Return the character "str[index]" where "index" is the character index,
+/// including composing characters.
+/// If "index" is out of range NULL is returned.
 char *char_from_string(const char *str, varnumber_T index)
 {
   varnumber_T nchar = index;
@@ -7535,7 +7536,7 @@ char *char_from_string(const char *str, varnumber_T index)
     int clen = 0;
 
     for (size_t nbyte = 0; nbyte < slen; clen++) {
-      nbyte += (size_t)utf_ptr2len(str + nbyte);
+      nbyte += (size_t)utfc_ptr2len(str + nbyte);
     }
     nchar = clen + index;
     if (nchar < 0) {
@@ -7546,16 +7547,16 @@ char *char_from_string(const char *str, varnumber_T index)
 
   size_t nbyte = 0;
   for (; nchar > 0 && nbyte < slen; nchar--) {
-    nbyte += (size_t)utf_ptr2len(str + nbyte);
+    nbyte += (size_t)utfc_ptr2len(str + nbyte);
   }
   if (nbyte >= slen) {
     return NULL;
   }
-  return xmemdupz(str + nbyte, (size_t)utf_ptr2len(str + nbyte));
+  return xmemdupz(str + nbyte, (size_t)utfc_ptr2len(str + nbyte));
 }
 
 /// Get the byte index for character index "idx" in string "str" with length
-/// "str_len".
+/// "str_len".  Composing characters are included.
 /// If going over the end return "str_len".
 /// If "idx" is negative count from the end, -1 is the last character.
 /// When going over the start return -1.
@@ -7566,7 +7567,7 @@ static ssize_t char_idx2byte(const char *str, size_t str_len, varnumber_T idx)
 
   if (nchar >= 0) {
     while (nchar > 0 && nbyte < str_len) {
-      nbyte += (size_t)utf_ptr2len(str + nbyte);
+      nbyte += (size_t)utfc_ptr2len(str + nbyte);
       nchar--;
     }
   } else {
@@ -7583,7 +7584,8 @@ static ssize_t char_idx2byte(const char *str, size_t str_len, varnumber_T idx)
   return (ssize_t)nbyte;
 }
 
-/// Return the slice "str[first:last]" using character indexes.
+/// Return the slice "str[first : last]" using character indexes.  Composing
+/// characters are included.
 ///
 /// @param exclusive  true for slice().
 ///
@@ -7605,7 +7607,7 @@ char *string_slice(const char *str, varnumber_T first, varnumber_T last, bool ex
     end_byte = char_idx2byte(str, slen, last);
     if (!exclusive && end_byte >= 0 && end_byte < (ssize_t)slen) {
       // end index is inclusive
-      end_byte += utf_ptr2len(str + end_byte);
+      end_byte += utfc_ptr2len(str + end_byte);
     }
   }
 
