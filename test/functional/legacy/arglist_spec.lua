@@ -24,26 +24,26 @@ describe('argument list commands', function()
     feed(':confirm quit\n')
     screen:expect([[
                                                                   |
-      ~                                                           |
-                                                                  |
+      {1:~                                                           }|
+      {3:                                                            }|
       :confirm quit                                               |
-      2 more files to edit.  Quit anyway?                         |
-      [Y]es, (N)o: ^                                               |
+      {6:2 more files to edit.  Quit anyway?}                         |
+      {6:[Y]es, (N)o: }^                                               |
     ]])
     feed('N')
     screen:expect([[
       ^                                                            |
-      ~                                                           |*4
+      {1:~                                                           }|*4
                                                                   |
     ]])
     feed(':confirm quit\n')
     screen:expect([[
                                                                   |
-      ~                                                           |
-                                                                  |
+      {1:~                                                           }|
+      {3:                                                            }|
       :confirm quit                                               |
-      2 more files to edit.  Quit anyway?                         |
-      [Y]es, (N)o: ^                                               |
+      {6:2 more files to edit.  Quit anyway?}                         |
+      {6:[Y]es, (N)o: }^                                               |
     ]])
     expect_exit(1000, feed, 'Y')
   end)

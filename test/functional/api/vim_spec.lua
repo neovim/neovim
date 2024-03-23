@@ -1269,7 +1269,7 @@ describe('API', function()
       api.nvim_paste('', true, 3)
       screen:expect([[
                             |
-        ~                   |*2
+        {1:~                   }|*2
         :Foo^                |
       ]])
     end)
@@ -1280,8 +1280,8 @@ describe('API', function()
       api.nvim_paste('normal! \023\022\006\027', true, -1)
       screen:expect([[
                             |
-        ~                   |*2
-        :normal! ^W^V^F^[^   |
+        {1:~                   }|*2
+        :normal! {18:^W^V^F^[}^   |
       ]])
     end)
     it('crlf=false does not break lines at CR, CRLF', function()
@@ -1981,9 +1981,9 @@ describe('API', function()
       -- Make any RPC request (can be non-async: op-pending does not block).
       api.nvim_get_current_buf()
       screen:expect([[
-       ^a$                  |
-       b$                  |
-       c$                  |
+       ^a{1:$}                  |
+       b{1:$}                  |
+       c{1:$}                  |
                            |
       ]])
     end)

@@ -83,6 +83,8 @@ describe('startup', function()
     local screen
     screen = Screen.new(60, 7)
     screen:attach()
+    -- not the same colors on windows for some reason
+    screen._default_attr_ids = nil
     local id = fn.termopen({
       nvim_prog,
       '-u',
@@ -326,6 +328,9 @@ describe('startup', function()
     local screen = Screen.new(25, 3)
     -- Remote UI connected by --embed.
     screen:attach()
+    -- TODO: a lot of tests in this file already use the new default color scheme.
+    -- once we do the batch update of tests to use it, remove this workarond
+    screen._default_attr_ids = nil
     command([[echo has('ttyin') has('ttyout')]])
     screen:expect([[
       ^                         |
@@ -337,6 +342,7 @@ describe('startup', function()
   it('in a TTY: has("ttyin")==1 has("ttyout")==1', function()
     local screen = Screen.new(25, 4)
     screen:attach()
+    screen._default_attr_ids = nil
     if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
@@ -428,6 +434,7 @@ describe('startup', function()
   it('input from pipe (implicit) #7679', function()
     local screen = Screen.new(25, 4)
     screen:attach()
+    screen._default_attr_ids = nil
     if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
@@ -589,6 +596,7 @@ describe('startup', function()
     local screen
     screen = Screen.new(60, 6)
     screen:attach()
+    screen._default_attr_ids = nil
     local id = fn.termopen({
       nvim_prog,
       '-u',
@@ -1123,6 +1131,7 @@ describe('user config init', function()
 
         local screen = Screen.new(50, 8)
         screen:attach()
+        screen._default_attr_ids = nil
         fn.termopen({ nvim_prog }, {
           env = {
             VIMRUNTIME = os.getenv('VIMRUNTIME'),

@@ -1744,12 +1744,11 @@ describe('api/buf', function()
       api.nvim_buf_set_text(0, 0, 0, 1, 3, { 'XXX', 'YYY' })
 
       screen:expect([[
-  XXX                 |
-  YYY                 |
-  ^                    |
-  ~                   |
-                      |
-
+        XXX                 |
+        YYY                 |
+        ^                    |
+        {1:~                   }|
+                            |
       ]])
     end)
 

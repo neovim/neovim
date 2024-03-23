@@ -65,10 +65,10 @@ describe('splitkeep', function()
       99                                                                         |
       ^100                                                                        |
       101                                                                        |
-      [No Name] [+]                                                              |
+      {3:[No Name] [+]                                                              }|
       5                                                                          |
       6                                                                          |
-      [No Name] [+]                                                              |
+      {2:[No Name] [+]                                                              }|
                                                                                  |
     ]])
 
@@ -77,10 +77,10 @@ describe('splitkeep', function()
       100                                                                        |
       ^101                                                                        |
       102                                                                        |
-      [No Name] [+]                                                              |
+      {3:[No Name] [+]                                                              }|
       5                                                                          |
       6                                                                          |
-      [No Name] [+]                                                              |
+      {2:[No Name] [+]                                                              }|
                                                                                  |
     ]])
 
@@ -90,10 +90,10 @@ describe('splitkeep', function()
       198                                                                        |
       199                                                                        |
       ^200                                                                        |
-      [No Name] [+]                                                              |
+      {3:[No Name] [+]                                                              }|
       5                                                                          |
       6                                                                          |
-      [No Name] [+]                                                              |
+      {2:[No Name] [+]                                                              }|
                                                                                  |
     ]])
   end)
@@ -135,13 +135,13 @@ describe('splitkeep', function()
       3                                                    |
       4                                                    |
       5                                                    |
-      [No Name] [+]                                        |
+      {2:[No Name] [+]                                        }|
       ^7                                                    |
       8                                                    |
       9                                                    |
       10                                                   |
       11                                                   |
-      [No Name] [+]                                        |
+      {3:[No Name] [+]                                        }|
                                                            |
     ]])
     feed(':quit<CR>Ht')
@@ -152,13 +152,13 @@ describe('splitkeep', function()
       3                                                    |
       4                                                    |
       5                                                    |
-      [No Name] [+]                                        |
+      {3:[No Name] [+]                                        }|
       7                                                    |
       8                                                    |
       9                                                    |
       10                                                   |
       11                                                   |
-      [No Name] [+]                                        |
+      {2:[No Name] [+]                                        }|
       :quit                                                |
     ]])
     feed(':set sb<CR>:quit<CR>Gj')
@@ -168,14 +168,14 @@ describe('splitkeep', function()
       3                                                    |
       4                                                    |
       ^5                                                    |
-      [No Name] [+]                                        |
+      {3:[No Name] [+]                                        }|
       7                                                    |
       8                                                    |
       9                                                    |
       10                                                   |
       11                                                   |
       12                                                   |
-      [No Name] [+]                                        |
+      {2:[No Name] [+]                                        }|
       :quit                                                |
     ]])
     feed(':quit<CR>Gt')
@@ -185,14 +185,14 @@ describe('splitkeep', function()
       3                                                    |
       4                                                    |
       5                                                    |
-      [No Name] [+]                                        |
+      {2:[No Name] [+]                                        }|
       7                                                    |
       8                                                    |
       9                                                    |
       10                                                   |
       11                                                   |
       ^12                                                   |
-      [No Name] [+]                                        |
+      {3:[No Name] [+]                                        }|
       :quit                                                |
     ]])
   end)
@@ -213,70 +213,70 @@ describe('splitkeep', function()
     ]])
     feed('L:wincmd s<CR>')
     screen:expect([[
-        1 +--  7 lines: int FuncName() {···················|
-        8 after fold                                       |
-        9 +--  7 lines: int FuncName() {···················|
-       16 after fold                                       |
-       17 +--  7 lines: int FuncName() {···················|
-       24 ^after fold                                       |
-      [No Name] [+]                                        |
-       32 after fold                                       |
-       33 +--  7 lines: int FuncName() {···················|
-       40 after fold                                       |
-       41 +--  7 lines: int FuncName() {···················|
-       48 after fold                                       |
-      [No Name] [+]                                        |
+      {8:  1 }{13:+--  7 lines: int FuncName() {···················}|
+      {8:  8 }after fold                                       |
+      {8:  9 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 16 }after fold                                       |
+      {8: 17 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 24 }^after fold                                       |
+      {3:[No Name] [+]                                        }|
+      {8: 32 }after fold                                       |
+      {8: 33 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 40 }after fold                                       |
+      {8: 41 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 48 }after fold                                       |
+      {2:[No Name] [+]                                        }|
       :wincmd s                                            |
     ]])
     feed(':quit<CR>')
     screen:expect([[
-        1 +--  7 lines: int FuncName() {···················|
-        8 after fold                                       |
-        9 +--  7 lines: int FuncName() {···················|
-       16 after fold                                       |
-       17 +--  7 lines: int FuncName() {···················|
-       24 after fold                                       |
-       25 +--  7 lines: int FuncName() {···················|
-       32 after fold                                       |
-       33 +--  7 lines: int FuncName() {···················|
-       40 after fold                                       |
-       41 +--  7 lines: int FuncName() {···················|
-       48 after fold                                       |
-       49 ^+--  7 lines: int FuncName() {···················|
+      {8:  1 }{13:+--  7 lines: int FuncName() {···················}|
+      {8:  8 }after fold                                       |
+      {8:  9 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 16 }after fold                                       |
+      {8: 17 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 24 }after fold                                       |
+      {8: 25 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 32 }after fold                                       |
+      {8: 33 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 40 }after fold                                       |
+      {8: 41 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 48 }after fold                                       |
+      {8: 49 }{13:^+--  7 lines: int FuncName() {···················}|
       :quit                                                |
     ]])
     feed('H:below split<CR>')
     screen:expect([[
-        1 +--  7 lines: int FuncName() {···················|
-        8 after fold                                       |
-        9 +--  7 lines: int FuncName() {···················|
-       16 after fold                                       |
-       17 +--  7 lines: int FuncName() {···················|
-      [No Name] [+]                                        |
-       25 ^+--  7 lines: int FuncName() {···················|
-       32 after fold                                       |
-       33 +--  7 lines: int FuncName() {···················|
-       40 after fold                                       |
-       41 +--  7 lines: int FuncName() {···················|
-       48 after fold                                       |
-      [No Name] [+]                                        |
+      {8:  1 }{13:+--  7 lines: int FuncName() {···················}|
+      {8:  8 }after fold                                       |
+      {8:  9 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 16 }after fold                                       |
+      {8: 17 }{13:+--  7 lines: int FuncName() {···················}|
+      {2:[No Name] [+]                                        }|
+      {8: 25 }{13:^+--  7 lines: int FuncName() {···················}|
+      {8: 32 }after fold                                       |
+      {8: 33 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 40 }after fold                                       |
+      {8: 41 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 48 }after fold                                       |
+      {3:[No Name] [+]                                        }|
       :below split                                         |
     ]])
     feed(':wincmd k<CR>:quit<CR>')
     screen:expect([[
-        1 +--  7 lines: int FuncName() {···················|
-        8 after fold                                       |
-        9 +--  7 lines: int FuncName() {···················|
-       16 after fold                                       |
-       17 +--  7 lines: int FuncName() {···················|
-       24 after fold                                       |
-       25 ^+--  7 lines: int FuncName() {···················|
-       32 after fold                                       |
-       33 +--  7 lines: int FuncName() {···················|
-       40 after fold                                       |
-       41 +--  7 lines: int FuncName() {···················|
-       48 after fold                                       |
-       49 +--  7 lines: int FuncName() {···················|
+      {8:  1 }{13:+--  7 lines: int FuncName() {···················}|
+      {8:  8 }after fold                                       |
+      {8:  9 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 16 }after fold                                       |
+      {8: 17 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 24 }after fold                                       |
+      {8: 25 }{13:^+--  7 lines: int FuncName() {···················}|
+      {8: 32 }after fold                                       |
+      {8: 33 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 40 }after fold                                       |
+      {8: 41 }{13:+--  7 lines: int FuncName() {···················}|
+      {8: 48 }after fold                                       |
+      {8: 49 }{13:+--  7 lines: int FuncName() {···················}|
       :quit                                                |
     ]])
   end)
@@ -296,13 +296,13 @@ describe('splitkeep', function()
       a                                                    |
       b                                                    |
       c                                                    |
-      ~                                                    |*4
-      [No Name]                                            |
+      {1:~                                                    }|*4
+      {2:[No Name]                                            }|
       ^a                                                    |
       b                                                    |
       c                                                    |
-      ~                                                    |
-      [No Name]                                            |
+      {1:~                                                    }|
+      {3:[No Name]                                            }|
                                                            |
     ]])
   end)
@@ -317,16 +317,16 @@ describe('splitkeep', function()
       wincmd s
     ]])
     screen:expect([[
-      <<<e line with lots of text in one line |
+      {1:<<<}e line with lots of text in one line |
       with lots of text in one line with lots |
       of text in one line                     |
-      ~                                       |
-      [No Name] [+]                           |
-      <<<e line with lots of text in one line |
+      {1:~                                       }|
+      {2:[No Name] [+]                           }|
+      {1:<<<}e line with lots of text in one line |
       ^with lots of text in one line with lots |
       of text in one line                     |
-      ~                                       |*2
-      [No Name] [+]                           |
+      {1:~                                       }|*2
+      {3:[No Name] [+]                           }|
                                               |
     ]])
   end)

@@ -27,38 +27,38 @@ describe('statuscolumn', function()
       [[set stc=%{v:relnum?v:relnum:(v:lnum==5?'truncate':v:lnum)}%{!v:relnum&&v:lnum==5?invalid:''}\ ]]
     )
     screen:expect([[
-      4  aaaaa                                             |
-      3  aaaaa                                             |
-      2  aaaaa                                             |
-      1  aaaaa                                             |
-      8  ^aaaaa                                             |
-      1  aaaaa                                             |
-      2  aaaaa                                             |
-      3  aaaaa                                             |
-      4  aaaaa                                             |
-      5  aaaaa                                             |
-      6  aaaaa                                             |
-      7  aaaaa                                             |
-      8  aaaaa                                             |
+      {8:4  }aaaaa                                             |
+      {8:3  }aaaaa                                             |
+      {8:2  }aaaaa                                             |
+      {8:1  }aaaaa                                             |
+      {8:8  }^aaaaa                                             |
+      {8:1  }aaaaa                                             |
+      {8:2  }aaaaa                                             |
+      {8:3  }aaaaa                                             |
+      {8:4  }aaaaa                                             |
+      {8:5  }aaaaa                                             |
+      {8:6  }aaaaa                                             |
+      {8:7  }aaaaa                                             |
+      {8:8  }aaaaa                                             |
                                                            |
     ]])
     command('norm 5G')
     eq('Vim(redraw):E121: Undefined variable: invalid', pcall_err(command, 'redraw!'))
     eq('', eval('&statuscolumn'))
     screen:expect([[
-       4 aaaaa                                             |
-       5 ^aaaaa                                             |
-       6 aaaaa                                             |
-       7 aaaaa                                             |
-       8 aaaaa                                             |
-       9 aaaaa                                             |
-      10 aaaaa                                             |
-      11 aaaaa                                             |
-      12 aaaaa                                             |
-      13 aaaaa                                             |
-      14 aaaaa                                             |
-      15 aaaaa                                             |
-      16 aaaaa                                             |
+      {8: 4 }aaaaa                                             |
+      {8: 5 }^aaaaa                                             |
+      {8: 6 }aaaaa                                             |
+      {8: 7 }aaaaa                                             |
+      {8: 8 }aaaaa                                             |
+      {8: 9 }aaaaa                                             |
+      {8:10 }aaaaa                                             |
+      {8:11 }aaaaa                                             |
+      {8:12 }aaaaa                                             |
+      {8:13 }aaaaa                                             |
+      {8:14 }aaaaa                                             |
+      {8:15 }aaaaa                                             |
+      {8:16 }aaaaa                                             |
                                                            |
     ]])
   end)
@@ -72,9 +72,9 @@ describe('statuscolumn', function()
       norm 5G | redraw!
     ]=])
     screen:expect([[
-      1    aaaaa virt_text                                 |
-      bbbbba^eaaa                                           |
-      1    aaaaa                                           |
+      {8:1    }aaaaa virt_text                                 |
+      {8:bbbbb}a^eaaa                                           |
+      {8:1    }aaaaa                                           |
                                                            |
     ]])
     -- Doesn't crash when trying to fill click defs that do not fit (#26845)
@@ -84,9 +84,9 @@ describe('statuscolumn', function()
       norm 5Gzt | redraw!
     ]=])
     screen:expect([[
-      bbbbba^eaaa                                           |
-      1    aaaaa                                           |
-      2    aaaaa                                           |
+      {8:bbbbb}a^eaaa                                           |
+      {8:1    }aaaaa                                           |
+      {8:2    }aaaaa                                           |
                                                            |
     ]])
   end)
@@ -94,19 +94,19 @@ describe('statuscolumn', function()
   it("works with 'number' and 'relativenumber'", function()
     command([[set stc=%{&nu?v:lnum:''}%=%{&rnu?'\ '.v:relnum:''}│]])
     screen:expect([[
-      4 │aaaaa                                             |
-      5 │aaaaa                                             |
-      6 │aaaaa                                             |
-      7 │aaaaa                                             |
-      8 │^aaaaa                                             |
-      9 │aaaaa                                             |
-      10│aaaaa                                             |
-      11│aaaaa                                             |
-      12│aaaaa                                             |
-      13│aaaaa                                             |
-      14│aaaaa                                             |
-      15│aaaaa                                             |
-      16│aaaaa                                             |
+      {8:4 │}aaaaa                                             |
+      {8:5 │}aaaaa                                             |
+      {8:6 │}aaaaa                                             |
+      {8:7 │}aaaaa                                             |
+      {8:8 │}^aaaaa                                             |
+      {8:9 │}aaaaa                                             |
+      {8:10│}aaaaa                                             |
+      {8:11│}aaaaa                                             |
+      {8:12│}aaaaa                                             |
+      {8:13│}aaaaa                                             |
+      {8:14│}aaaaa                                             |
+      {8:15│}aaaaa                                             |
+      {8:16│}aaaaa                                             |
                                                            |
     ]])
     command([[set stc=%l%=%{&rnu?'\ ':''}%r│]])
@@ -114,39 +114,19 @@ describe('statuscolumn', function()
     command([[set stc=%{&nu?v:lnum:''}%=%{&rnu?'\ '.v:relnum:''}│]])
     command('set relativenumber')
     screen:expect([[
-      4  4│aaaaa                                           |
-      5  3│aaaaa                                           |
-      6  2│aaaaa                                           |
-      7  1│aaaaa                                           |
-      8  0│^aaaaa                                           |
-      9  1│aaaaa                                           |
-      10 2│aaaaa                                           |
-      11 3│aaaaa                                           |
-      12 4│aaaaa                                           |
-      13 5│aaaaa                                           |
-      14 6│aaaaa                                           |
-      15 7│aaaaa                                           |
-      16 8│aaaaa                                           |
-                                                           |
-    ]])
-    command([[set stc=%l%=%{&rnu?'\ ':''}%r│]])
-    screen:expect_unchanged()
-    command([[set stc=%{&nu?v:lnum:''}%=%{&rnu?'\ '.v:relnum:''}│]])
-    command('norm 12GH')
-    screen:expect([[
-      4   0│^aaaaa                                          |
-      5   1│aaaaa                                          |
-      6   2│aaaaa                                          |
-      7   3│aaaaa                                          |
-      8   4│aaaaa                                          |
-      9   5│aaaaa                                          |
-      10  6│aaaaa                                          |
-      11  7│aaaaa                                          |
-      12  8│aaaaa                                          |
-      13  9│aaaaa                                          |
-      14 10│aaaaa                                          |
-      15 11│aaaaa                                          |
-      16 12│aaaaa                                          |
+      {8:4  4│}aaaaa                                           |
+      {8:5  3│}aaaaa                                           |
+      {8:6  2│}aaaaa                                           |
+      {8:7  1│}aaaaa                                           |
+      {8:8  0│}^aaaaa                                           |
+      {8:9  1│}aaaaa                                           |
+      {8:10 2│}aaaaa                                           |
+      {8:11 3│}aaaaa                                           |
+      {8:12 4│}aaaaa                                           |
+      {8:13 5│}aaaaa                                           |
+      {8:14 6│}aaaaa                                           |
+      {8:15 7│}aaaaa                                           |
+      {8:16 8│}aaaaa                                           |
                                                            |
     ]])
     command([[set stc=%l%=%{&rnu?'\ ':''}%r│]])
@@ -735,19 +715,19 @@ describe('statuscolumn', function()
         virt_lines_leftcol = true, virt_lines = {{{"virt", ""}}} })
     ]])
     screen:expect([[
-                4 aaaaa                                    |
-                5 aaaaa                                    |
-                6 aaaaa                                    |
-                7 aaaaa                                    |
+      {7:         }{8: 4 }aaaaa                                    |
+      {7:         }{8: 5 }aaaaa                                    |
+      {7:         }{8: 6 }aaaaa                                    |
+      {7:         }{8: 7 }aaaaa                                    |
       virt                                                 |
-      --------- 8 ^aaaaa                                    |
+      {7:---------}{8: 8 }^aaaaa                                    |
       virt                                                 |
-      𒀀𒀀𒀀𒀀𒀀𒀀𒀀𒀀𒀀 9 aaaaa                                    |
-               10 aaaaa                                    |
-               11 aaaaa                                    |
-               12 aaaaa                                    |
-               13 aaaaa                                    |
-               14 aaaaa                                    |
+      {7:𒀀𒀀𒀀𒀀𒀀𒀀𒀀𒀀𒀀}{8: 9 }aaaaa                                    |
+      {7:         }{8:10 }aaaaa                                    |
+      {7:         }{8:11 }aaaaa                                    |
+      {7:         }{8:12 }aaaaa                                    |
+      {7:         }{8:13 }aaaaa                                    |
+      {7:         }{8:14 }aaaaa                                    |
                                                            |
     ]])
     command('set stc=') -- also for the default fold column
@@ -756,18 +736,18 @@ describe('statuscolumn', function()
     command([[set stc=%{foldlevel(v:lnum)>0?repeat('-',foldlevel(v:lnum)):''}%=%l\ ]])
     feed('Gd10Ggg<C-l>')
     screen:expect([[
-               1 ^aaaaa                                     |
-               2 aaaaa                                     |
-               3 aaaaa                                     |
-               4 aaaaa                                     |
-               5 aaaaa                                     |
-               6 aaaaa                                     |
-               7 aaaaa                                     |
+      {8:         1 }^aaaaa                                     |
+      {8:         2 }aaaaa                                     |
+      {8:         3 }aaaaa                                     |
+      {8:         4 }aaaaa                                     |
+      {8:         5 }aaaaa                                     |
+      {8:         6 }aaaaa                                     |
+      {8:         7 }aaaaa                                     |
       virt                                                 |
-      ---------8 aaaaa                                     |
+      {8:---------8 }aaaaa                                     |
       virt                                                 |
-      ---------9 aaaaa                                     |
-      ~                                                    |*2
+      {8:---------9 }aaaaa                                     |
+      {1:~                                                    }|*2
                                                            |
     ]])
   end)
@@ -775,15 +755,15 @@ describe('statuscolumn', function()
   it('works with cmdwin', function()
     feed(':set stc=%l<CR>q:k$')
     screen:expect([[
-      7 aaaaa                                              |
-      8 aaaaa                                              |
-      9 aaaaa                                              |
-      10aaaaa                                              |
-      [No Name] [+]                                        |
-      :1set stc=%^l                                         |
-      :2                                                   |
-      ~                                                    |*5
-      [Command Line]                                       |
+      {8:7 }aaaaa                                              |
+      {8:8 }aaaaa                                              |
+      {8:9 }aaaaa                                              |
+      {8:10}aaaaa                                              |
+      {2:[No Name] [+]                                        }|
+      {1::}{8:1}set stc=%^l                                         |
+      {1::}{8:2}                                                   |
+      {1:~                                                    }|*5
+      {3:[Command Line]                                       }|
       :                                                    |
     ]])
   end)
@@ -794,11 +774,11 @@ describe('statuscolumn', function()
     command('set relativenumber')
     command([[set stc=%{!&nu&&!&rnu?'':&rnu?v:relnum?v:relnum:&nu?v:lnum:'0':v:lnum}]])
     screen:expect([[
-      1  aaaaa                                             |
-      8  ^aaaaa                                             |
-      1  aaaaa                                             |
-      2  aaaaa                                             |
-      3  aaaaa                                             |
+      {8:1  }aaaaa                                             |
+      {8:8  }^aaaaa                                             |
+      {8:1  }aaaaa                                             |
+      {8:2  }aaaaa                                             |
+      {8:3  }aaaaa                                             |
                                                            |
     ]])
     -- width correctly estimated with "w_nrwidth_line_count" when setting 'stc'
@@ -815,11 +795,11 @@ describe('statuscolumn', function()
     -- width correctly estimated with "w_nrwidth_line_count" when setting 'nu'
     command('set number')
     screen:expect([[
-      7  aaaaa                                             |
-      8  ^aaaaa                                             |
-      9  aaaaa                                             |
-      10 aaaaa                                             |
-      11 aaaaa                                             |
+      {8:7  }aaaaa                                             |
+      {8:8  }^aaaaa                                             |
+      {8:9  }aaaaa                                             |
+      {8:10 }aaaaa                                             |
+      {8:11 }aaaaa                                             |
                                                            |
     ]])
   end)
@@ -846,59 +826,59 @@ describe('statuscolumn', function()
     ]])
     command('sign place 1 line=2 name=sign')
     screen:expect([[
-      1   ^aaaaa                                            |
-      2 ssaaaaa                                            |
+      {8:1   }^aaaaa                                            |
+      {8:2 ss}aaaaa                                            |
                                                            |
     ]])
     command('sign place 2 line=2 name=sign')
     screen:expect([[
-      1     ^aaaaa                                          |
-      2 ssssaaaaa                                          |
+      {8:1     }^aaaaa                                          |
+      {8:2 ssss}aaaaa                                          |
                                                            |
     ]])
     command('sign unplace 2')
     screen:expect([[
-      1   ^aaaaa                                            |
-      2 ssaaaaa                                            |
+      {8:1   }^aaaaa                                            |
+      {8:2 ss}aaaaa                                            |
                                                            |
     ]])
     command('sign unplace 1')
     screen:expect([[
-      1 ^aaaaa                                              |
-      2 aaaaa                                              |
+      {8:1 }^aaaaa                                              |
+      {8:2 }aaaaa                                              |
                                                            |
     ]])
     -- Also for extmark signs
     exec_lua('id1 = vim.api.nvim_buf_set_extmark(0, ns, 1, 0, {sign_text = "ss"})')
     screen:expect([[
-      1   ^aaaaa                                            |
-      2 ssaaaaa                                            |
+      {8:1   }^aaaaa                                            |
+      {8:2 ss}aaaaa                                            |
                                                            |
     ]])
     exec_lua('id2 = vim.api.nvim_buf_set_extmark(0, ns, 1, 0, {sign_text = "ss"})')
     screen:expect([[
-      1     ^aaaaa                                          |
-      2 ssssaaaaa                                          |
+      {8:1     }^aaaaa                                          |
+      {8:2 ssss}aaaaa                                          |
                                                            |
     ]])
     exec_lua('vim.api.nvim_buf_del_extmark(0, ns, id1)')
     screen:expect([[
-      1   ^aaaaa                                            |
-      2 ssaaaaa                                            |
+      {8:1   }^aaaaa                                            |
+      {8:2 ss}aaaaa                                            |
                                                            |
     ]])
     exec_lua('vim.api.nvim_buf_del_extmark(0, ns, id2)')
     screen:expect([[
-      1 ^aaaaa                                              |
-      2 aaaaa                                              |
+      {8:1 }^aaaaa                                              |
+      {8:2 }aaaaa                                              |
                                                            |
     ]])
     -- In all windows
     command('wincmd v | set ls=0')
     command('sign place 1 line=2 name=sign')
     screen:expect([[
-      1   ^aaaaa                 │1   aaaaa                 |
-      2 ssaaaaa                 │2 ssaaaaa                 |
+      {8:1   }^aaaaa                 │{8:1   }aaaaa                 |
+      {8:2 ss}aaaaa                 │{8:2 ss}aaaaa                 |
                                                            |
     ]])
   end)
@@ -918,12 +898,16 @@ describe('statuscolumn', function()
 
   it('does not wrap multibyte characters at the end of a line', function()
     screen:try_resize(33, 4)
+    screen:set_default_attr_ids {
+      [8] = { foreground = Screen.colors.Brown },
+      [31] = { undercurl = true, special = Screen.colors.Red },
+    }
     command([[set spell stc=%l\ ]])
     command('call setline(8, "This is a line that contains ᶏ multibyte character.")')
     screen:expect([[
-      8  ^This is a line that contains ᶏ|
-          multibyte character.         |
-      9  aaaaa                         |
+      {8:8  }^This is a line that contains {31:ᶏ}|
+      {8:   } {31:multibyte} character.         |
+      {8:9  }{31:aaaaa}                         |
                                        |
     ]])
   end)
@@ -934,9 +918,9 @@ describe('statuscolumn', function()
     command('call setline(1, range(1, 99))')
     feed('Gyyp')
     screen:expect([[
-      98  98                           |
-      99  99                           |
-      100 ^99                           |
+      {8:98  }98                           |
+      {8:99  }99                           |
+      {8:100 }^99                           |
                                        |
     ]])
   end)

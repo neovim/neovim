@@ -41,12 +41,12 @@ local grid_without_inlay_hints = [[
 ]]
 
 local grid_with_inlay_hints = [[
-  auto add(int a, int b)-> int { return a + b; }    |
+  auto add(int a, int b){1:-> int} { return a + b; }    |
                                                     |
   int main() {                                      |
       int x = 1;                                    |
       int y = 2;                                    |
-      return add(a: x,b: y);                        |
+      return add({1:a:} x,{1:b:} y);                        |
   }                                                 |
   ^}                                                 |
                                                     |

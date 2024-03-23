@@ -1233,7 +1233,7 @@ describe('pty process teardown', function()
     screen:attach()
     screen:expect([[
       ^                              |
-      ~                             |*4
+      {1:~                             }|*4
                                     |
     ]])
   end)

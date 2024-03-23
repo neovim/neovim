@@ -121,6 +121,7 @@ it('chansend sends lines to terminal channel in proper order', function()
   clear({ args = { '--cmd', 'set laststatus=2' } })
   local screen = Screen.new(100, 20)
   screen:attach()
+  screen._default_attr_ids = nil
   local shells = is_os('win') and { 'cmd.exe', 'pwsh.exe -nop', 'powershell.exe -nop' } or { 'sh' }
   for _, sh in ipairs(shells) do
     command([[let id = termopen(']] .. sh .. [[')]])

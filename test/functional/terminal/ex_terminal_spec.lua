@@ -21,6 +21,7 @@ describe(':terminal', function()
     clear()
     screen = Screen.new(50, 4)
     screen:attach({ rgb = false })
+    screen._default_attr_ids = nil
   end)
 
   it('does not interrupt Press-ENTER prompt #2748', function()
@@ -168,6 +169,7 @@ local function test_terminal_with_fake_shell(backslash)
     clear()
     screen = Screen.new(50, 4)
     screen:attach({ rgb = false })
+    screen._default_attr_ids = nil
     api.nvim_set_option_value('shell', shell_path, {})
     api.nvim_set_option_value('shellcmdflag', 'EXE', {})
     api.nvim_set_option_value('shellxquote', '', {}) -- win: avoid extra quotes

@@ -420,12 +420,12 @@ describe('named marks view', function()
     feed("<C-w>p'a")
     screen:expect([[
                   |
-      ~           |*3
-      [No Name]   |
+      {1:~           }|*3
+      {2:[No Name]   }|
       6 line      |
       ^7 line      |
       8 line      |
-      {MATCH:.*marks} |
+      {3:<itor-marks }|
                   |
       ]])
   end)
@@ -453,7 +453,7 @@ describe('named marks view', function()
     command('bwipe!')
     screen:expect([[
       ^            |
-      ~           |*4
+      {1:~           }|*4
                   |
     ]])
     command('rshada!')
