@@ -7523,16 +7523,30 @@ int check_luafunc_name(const char *const str, const bool paren)
 /// "index" is out of range NULL is returned.
 char *char_from_string(const char *str, varnumber_T index)
 {
-  size_t nbyte = 0;
   varnumber_T nchar = index;
 
-  if (str == NULL || index < 0) {
+  if (str == NULL) {
     return NULL;
   }
   size_t slen = strlen(str);
-  while (nchar > 0 && nbyte < slen) {
+
+  // do the same as for a list: a negative index counts from the end
+  if (index < 0) {
+    int clen = 0;
+
+    for (size_t nbyte = 0; nbyte < slen; clen++) {
+      nbyte += (size_t)utf_ptr2len(str + nbyte);
+    }
+    nchar = clen + index;
+    if (nchar < 0) {
+      // unlike list: index out of range results in empty string
+      return NULL;
+    }
+  }
+
+  size_t nbyte = 0;
+  for (; nchar > 0 && nbyte < slen; nchar--) {
     nbyte += (size_t)utf_ptr2len(str + nbyte);
-    nchar--;
   }
   if (nbyte >= slen) {
     return NULL;

@@ -859,7 +859,7 @@ int tv_list_slice_or_index(list_T *list, bool range, varnumber_T n1_arg, varnumb
     // A list index out of range is an error.
     if (!range) {
       if (verbose) {
-        semsg(_(e_list_index_out_of_range_nr), (int64_t)n1);
+        semsg(_(e_list_index_out_of_range_nr), (int64_t)n1_arg);
       }
       return FAIL;
     }
