@@ -15,8 +15,32 @@ on:
 # Build on the oldest supported images, so we have broader compatibility
 # Build with gcc-10 to prevent triggering #14150 (default is still gcc-9 on 20.04)
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      build_type: ${{ steps.build.outputs.build_type }}
+      appimage_tag: ${{ steps.build.outputs.appimage_tag }}
+    steps:
+      # Nightly uses RelWithDebInfo while stable uses Release (which disables
+      # asserts). This helps get better debug info from people brave enough to
+      # use the nightly builds.
+      - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
+        run: |
+          echo 'CMAKE_BUILD_TYPE=Release' >> $GITHUB_ENV
+          echo 'APPIMAGE_TAG=latest' >> $GITHUB_ENV
+      - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
+        run: |
+          echo 'CMAKE_BUILD_TYPE=RelWithDebInfo' >> $GITHUB_ENV
+          echo 'APPIMAGE_TAG=nightly' >> $GITHUB_ENV
+      - name: Export build information
+        id: build
+        run: |
+          printf "build_type=${CMAKE_BUILD_TYPE}\n" >> $GITHUB_OUTPUT
+          printf "appimage_tag=${APPIMAGE_TAG}\n" >> $GITHUB_OUTPUT
+
   linux:
     runs-on: ubuntu-20.04
+    needs: setup
     env:
       CC: gcc-10
     outputs:
@@ -27,16 +51,9 @@ jobs:
           # Perform a full checkout #13471
           fetch-depth: 0
       - run: ./.github/scripts/install_deps.sh
-      - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
-        run: |
-          echo 'CMAKE_BUILD_TYPE=Release' >> $GITHUB_ENV
-          echo 'APPIMAGE_TAG=latest' >> $GITHUB_ENV
-      - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
-        run: |
-          echo 'CMAKE_BUILD_TYPE=RelWithDebInfo' >> $GITHUB_ENV
-          echo 'APPIMAGE_TAG=nightly' >> $GITHUB_ENV
+      - run: echo "CMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}" >> $GITHUB_ENV
       - name: appimage
-        run: ./scripts/genappimage.sh ${APPIMAGE_TAG}
+        run: ./scripts/genappimage.sh ${{ needs.setup.outputs.appimage_tag }}
       - name: tar.gz
         run: cpack --config build/CPackConfig.cmake -G TGZ
       - uses: actions/upload-artifact@v4
@@ -60,6 +77,7 @@ jobs:
           printf 'END\n' >> $GITHUB_OUTPUT
 
   macos:
+    needs: setup
     strategy:
       fail-fast: false
       matrix:
@@ -79,22 +97,18 @@ jobs:
           fetch-depth: 0
       - name: Install dependencies
         run: ./.github/scripts/install_deps.sh
-      - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
-        run: printf 'CMAKE_BUILD_TYPE=Release\n' >> $GITHUB_ENV
-      - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
-        run: printf 'CMAKE_BUILD_TYPE=RelWithDebInfo\n' >> $GITHUB_ENV
 
       - name: Build deps
         run: |
           cmake -S cmake.deps -B .deps -G Ninja \
-            -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+            -D CMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }} \
             -D CMAKE_FIND_FRAMEWORK=NEVER
           cmake --build .deps
 
       - name: Build neovim
         run: |
           cmake -B build -G Ninja \
-            -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+            -D CMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }} \
             -D ENABLE_LIBINTL=OFF \
             -D CMAKE_FIND_FRAMEWORK=NEVER
           cmake --build build
@@ -109,6 +123,7 @@ jobs:
           retention-days: 1
 
   windows:
+    needs: setup
     runs-on: windows-2019
     steps:
       - uses: actions/checkout@v4
@@ -118,11 +133,11 @@ jobs:
       - run: .github/scripts/env.ps1
       - name: Build deps
         run: |
-          cmake -S cmake.deps -B .deps -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
+          cmake -S cmake.deps -B .deps -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}
           cmake --build .deps
       - name: build package
         run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}
           cmake --build build --target package
       - uses: actions/upload-artifact@v4
         with:
