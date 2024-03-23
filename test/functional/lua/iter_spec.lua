@@ -249,8 +249,8 @@ describe('vim.iter', function()
 
     do
       local t = { 4, 3, 2, 1 }
-      eq({ 1, 2, 3 }, vim.iter(t):rev():take(3))
-      eq({ 2, 3, 4 }, vim.iter(t):take(3):rev())
+      eq({ 1, 2, 3 }, vim.iter(t):rev():take(3):totable())
+      eq({ 2, 3, 4 }, vim.iter(t):take(3):rev():totable())
     end
 
     do
