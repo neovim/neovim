@@ -5,5 +5,4 @@ ExternalProject_Add(libvterm
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibvtermCMakeLists.txt
     ${DEPS_BUILD_DIR}/src/libvterm/CMakeLists.txt
   CMAKE_ARGS ${DEPS_CMAKE_ARGS}
-  CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS}
   ${EXTERNALPROJECT_OPTIONS})
