@@ -2568,6 +2568,9 @@ it(':substitute with inccommand during :terminal activity', function()
 
     command('set cmdwinheight=3')
     feed(([[:terminal "%s" REP 5000 xxx<cr>]]):format(testprg('shell-test')))
+    -- Wait until the terminal process stops running so the redraw
+    -- won't close the preview window
+    sleep(40)
     command('file term')
     feed('G') -- Follow :terminal output.
     command('new')

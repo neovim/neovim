@@ -34,7 +34,7 @@ describe(':edit term://*', function()
   end)
 
   it("runs TermOpen early enough to set buffer-local 'scrollback'", function()
-    local columns, lines = 20, 4
+    local columns, lines = 50, 4
     local scr = get_screen(columns, lines)
     local rep = 97
     api.nvim_set_option_value('shellcmdflag', 'REP ' .. rep, {})
@@ -46,22 +46,25 @@ describe(':edit term://*', function()
     command('edit term://foobar')
 
     local bufcontents = {}
-    local winheight = api.nvim_win_get_height(0)
-    local buf_cont_start = rep - sb - winheight + 2
+    local winheight = api.nvim_win_get_height(0) - 1
+    local buf_cont_start = rep - sb - winheight + 1
     for i = buf_cont_start, (rep - 1) do
       bufcontents[#bufcontents + 1] = ('%d: foobar'):format(i)
     end
     bufcontents[#bufcontents + 1] = ''
-    bufcontents[#bufcontents + 1] = '[Process exited 0]'
 
     local exp_screen = '\n'
     for i = 1, (winheight - 1) do
       local line = bufcontents[#bufcontents - winheight + i]
       exp_screen = (exp_screen .. line .. (' '):rep(columns - #line) .. '|\n')
     end
-    exp_screen = exp_screen .. '^[Process exited 0]  |\n'
+    exp_screen = exp_screen .. '^' .. (' '):rep(columns) .. '|\n'
+    exp_screen = exp_screen .. '{MATCH:.*}[Process exited 0]{MATCH:.*}|\n'
 
     exp_screen = exp_screen .. (' '):rep(columns) .. '|\n'
+
+    command('set laststatus=2')
+
     scr:expect(exp_screen)
     eq(bufcontents, api.nvim_buf_get_lines(0, 0, -1, true))
   end)

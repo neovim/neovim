@@ -88,6 +88,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/state.h"
 #include "nvim/state_defs.h"
+#include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
@@ -443,15 +444,9 @@ void terminal_close(Terminal **termpp, int status)
       term->opts.close_cb(term->opts.data);
     }
   } else if (!only_destroy) {
-    // Associated channel has been closed and the editor is not exiting.
-    // Do not call the close callback now. Wait for the user to press a key.
-    char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
-    if (((Channel *)term->opts.data)->streamtype == kChannelStreamInternal) {
-      snprintf(msg, sizeof msg, "\r\n[Terminal closed]");
-    } else {
-      snprintf(msg, sizeof msg, "\r\n[Process exited %d]", status);
+    for (int i = 0; i < buf->b_nwindows; i++) {
+      win_redr_status(buf->b_wininfo[i].wi_win);
     }
-    terminal_receive(term, msg, strlen(msg));
   }
 
   if (only_destroy) {
@@ -1002,6 +997,11 @@ Buffer terminal_buf(const Terminal *term)
 bool terminal_running(const Terminal *term)
 {
   return !term->closed;
+}
+
+Channel *terminal_channel(Terminal *term)
+{
+  return term != NULL ? term->opts.data : NULL;
 }
 
 // }}}

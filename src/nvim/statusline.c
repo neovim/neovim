@@ -11,6 +11,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/digraph.h"
 #include "nvim/drawline.h"
@@ -46,6 +47,7 @@
 #include "nvim/state_defs.h"
 #include "nvim/statusline.h"
 #include "nvim/strings.h"
+#include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_defs.h"
@@ -120,7 +122,19 @@ void win_redr_status(win_T *wp)
     }
     if (wp->w_buffer->b_p_ro) {
       snprintf(p + len, MAXPATHL - (size_t)len, "%s", _("[RO]"));
-      // len += (int)strlen(p + len);  // dead assignment
+      len += (int)strlen(p + len);  // dead assignment
+    }
+    if (bt_terminal(wp->w_buffer)) {
+      Channel *ch = terminal_channel(wp->w_buffer->terminal);
+      if (ch != NULL) {
+        if (ch->streamtype == kChannelStreamProc && ch->stream.proc.status >= 0) {
+          *(p + len++) = ' ';
+          snprintf(p + len, MAXPATHL - (size_t)len, "[Process exited %d]", ch->stream.proc.status);
+        } else if (ch->streamtype == kChannelStreamInternal) {
+          *(p + len++) = ' ';
+          snprintf(p + len, MAXPATHL - (size_t)len, "%s", "[Terminal closed]");
+        }
+      }
     }
 
     int this_ru_col = ru_col - (Columns - stl_width);
@@ -193,6 +207,7 @@ void win_redr_status(win_T *wp)
 
 void get_trans_bufname(buf_T *buf)
 {
+  memset(NameBuff, 0, MAXPATHL);
   if (buf_spname(buf) != NULL) {
     xstrlcpy(NameBuff, buf_spname(buf), MAXPATHL);
   } else {
