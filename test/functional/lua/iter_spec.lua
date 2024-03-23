@@ -139,8 +139,6 @@ describe('vim.iter', function()
 
   it('rev()', function()
     eq({ 3, 2, 1 }, vim.iter({ 1, 2, 3 }):rev():totable())
-    eq({ 3, 2 }, vim.iter({ 1, 2, 3 }):rev():take(2):totable())
-    eq({ 2, 1 }, vim.iter({ 1, 2, 3 }):take(2):rev():totable())
 
     local it = vim.iter(string.gmatch('abc', '%w'))
     matches('rev%(%) requires a list%-like table', pcall_err(it.rev, it))
@@ -247,6 +245,12 @@ describe('vim.iter', function()
       eq({ 4, 3, 2 }, vim.iter(t):take(3):totable())
       eq({ 4, 3, 2, 1 }, vim.iter(t):take(4):totable())
       eq({ 4, 3, 2, 1 }, vim.iter(t):take(5):totable())
+    end
+
+    do
+      local t = { 4, 3, 2, 1 }
+      eq({ 1, 2, 3 }, vim.iter(t):rev():take(3))
+      eq({ 2, 3, 4 }, vim.iter(t):take(3):rev())
     end
 
     do
