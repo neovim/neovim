@@ -20,17 +20,6 @@ env:
   INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
 
 jobs:
-  macos-universal:
-    runs-on: macos-14
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup
-      - run: printf 'CMAKE_BUILD_TYPE=Release\n' >> $GITHUB_ENV
-
-      - name: Build universal binary
-        run: ./.github/scripts/build_universal_macos.sh
-
   old-cmake:
     name: Test oldest supported cmake
     runs-on: ubuntu-22.04

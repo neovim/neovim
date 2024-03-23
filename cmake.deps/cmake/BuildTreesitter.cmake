@@ -5,5 +5,4 @@ ExternalProject_Add(treesitter
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/TreesitterCMakeLists.txt
     ${DEPS_BUILD_DIR}/src/treesitter/CMakeLists.txt
   CMAKE_ARGS ${DEPS_CMAKE_ARGS}
-  CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS}
   ${EXTERNALPROJECT_OPTIONS})
