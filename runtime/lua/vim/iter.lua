@@ -709,7 +709,8 @@ end
 ---@private
 function ListIter:take(n)
   local inc = self._head < self._tail and 1 or -1
-  self._tail = math.min(self._tail, self._head + n * inc)
+  local cmp = self._head < self._tail and math.min or math.max
+  self._tail = cmp(self._tail, self._head + n * inc)
   return self
 end
 

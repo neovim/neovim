@@ -249,6 +249,12 @@ describe('vim.iter', function()
 
     do
       local t = { 4, 3, 2, 1 }
+      eq({ 1, 2, 3 }, vim.iter(t):rev():take(3):totable())
+      eq({ 2, 3, 4 }, vim.iter(t):take(3):rev():totable())
+    end
+
+    do
+      local t = { 4, 3, 2, 1 }
       local it = vim.iter(t)
       eq({ 4, 3 }, it:take(2):totable())
       -- tail is already set from the previous take()
