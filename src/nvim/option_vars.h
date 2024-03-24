@@ -129,6 +129,8 @@
 #define DFLT_FO_VIM     "tcqj"
 #define FO_ALL          "tcro/q2vlb1mMBn,aw]jp"   // for do_set()
 
+#define MAX_MCO  6  // fixed value for 'maxcombine'
+
 // characters for the p_cpo option:
 #define CPO_ALTREAD     'a'     // ":read" sets alternate file name
 #define CPO_ALTWRITE    'A'     // ":write" sets alternate file name
@@ -549,8 +551,6 @@ EXTERN char *p_mef;             ///< 'makeef'
 EXTERN char *p_mp;              ///< 'makeprg'
 EXTERN char *p_mps;             ///< 'matchpairs'
 EXTERN OptInt p_mat;            ///< 'matchtime'
-EXTERN OptInt p_mco;            ///< 'maxcombine'
-#define MAX_MCO  6  // fixed value for 'maxcombine'
 EXTERN OptInt p_mfd;            ///< 'maxfuncdepth'
 EXTERN OptInt p_mmd;            ///< 'maxmapdepth'
 EXTERN OptInt p_mmp;            ///< 'maxmempattern'

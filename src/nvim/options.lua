@@ -7,6 +7,7 @@
 --- @field varname? string
 --- @field pv_name? string
 --- @field type 'boolean'|'number'|'string'
+--- @field hidden? boolean
 --- @field immutable? boolean
 --- @field list? 'comma'|'onecomma'|'commacolon'|'onecommacolon'|'flags'|'flagscomma'
 --- @field scope vim.option_scope[]
@@ -1341,7 +1342,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      immutable = true,
+      hidden = true,
     },
     {
       abbreviation = 'cpt',
@@ -2300,7 +2301,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      immutable = true,
+      hidden = true,
     },
     {
       abbreviation = 'emo',
@@ -3889,7 +3890,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      immutable = true,
+      hidden = true,
     },
     {
       abbreviation = 'hkp',
@@ -3898,7 +3899,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      immutable = true,
+      hidden = true,
     },
     {
       abbreviation = 'hls',
@@ -4296,7 +4297,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      immutable = true,
+      hidden = true,
     },
     {
       abbreviation = 'isf',
@@ -5142,12 +5143,12 @@ return {
     },
     {
       abbreviation = 'mco',
-      defaults = { if_true = 6 },
+      defaults = { if_true = imacros('MAX_MCO') },
       full_name = 'maxcombine',
       scope = { 'global' },
       short_desc = N_('maximum nr of combining characters displayed'),
       type = 'number',
-      varname = 'p_mco',
+      immutable = true,
     },
     {
       abbreviation = 'mfd',
@@ -6048,7 +6049,7 @@ return {
       scope = { 'global' },
       short_desc = N_('enable prompt in Ex mode'),
       type = 'boolean',
-      immutable = true,
+      hidden = true,
     },
     {
       abbreviation = 'pb',
@@ -6305,7 +6306,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      immutable = true,
+      hidden = true,
     },
     {
       defaults = { if_true = 2 },
@@ -8844,7 +8845,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      immutable = true,
+      hidden = true,
     },
     {
       abbreviation = 'tw',
@@ -9089,7 +9090,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      immutable = true,
+      hidden = true,
     },
     {
       abbreviation = 'udir',
