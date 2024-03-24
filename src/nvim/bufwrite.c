@@ -900,6 +900,14 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
         // remove old backup, if present
         os_remove(*backupp);
 
+        // copy the file
+        if (os_copy(fname, *backupp, UV_FS_COPYFILE_FICLONE) != 0) {
+          *err = set_err(_("E509: Cannot create backup file (add ! to override)"));
+          XFREE_CLEAR(*backupp);
+          *backupp = NULL;
+          continue;
+        }
+
         // set file protection same as original file, but
         // strip s-bit.
         os_setperm(*backupp, perm & 0777);
@@ -914,20 +922,11 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
             && os_chown(*backupp, (uv_uid_t)-1, (uv_gid_t)file_info_old->stat.st_gid) != 0) {
           os_setperm(*backupp, (perm & 0707) | ((perm & 07) << 3));
         }
+
 # ifdef HAVE_XATTR
         os_copy_xattr(fname, *backupp);
 # endif
-#endif
 
-        // copy the file
-        if (os_copy(fname, *backupp, UV_FS_COPYFILE_FICLONE) != 0) {
-          *err = set_err(_("E509: Cannot create backup file (add ! to override)"));
-          XFREE_CLEAR(*backupp);
-          *backupp = NULL;
-          continue;
-        }
-
-#ifdef UNIX
         os_file_settime(*backupp,
                         (double)file_info_old->stat.st_atim.tv_sec,
                         (double)file_info_old->stat.st_mtim.tv_sec);
