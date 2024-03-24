@@ -14,11 +14,13 @@
 #include "nvim/tui/terminfo.h"
 #include "nvim/tui/terminfo_defs.h"
 
+
 #ifdef __FreeBSD__
 # include "nvim/os/os.h"
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/env.c.generated.h"
 # include "tui/terminfo.c.generated.h"
 #endif
 
@@ -120,7 +122,7 @@ static unibi_term *terminfo_builtin(const char *term, char **termname)
     *termname = xstrdup("builtin_conemu");
     return unibi_from_mem((const char *)conemu_terminfo,
                           sizeof conemu_terminfo);
-  } else if (terminfo_is_term_family(term, "vtpcon") && getenv("WT_SESSION")) {
+  } else if (terminfo_is_term_family(term, "vtpcon") && os_getenv("WT_SESSION")) {
     *termname = xstrdup("builtin_windows_terminal");
     return unibi_from_mem((const char *)windows_terminal_terminfo,
                           sizeof windows_terminal_terminfo);
