@@ -907,8 +907,8 @@ stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
     for this client, then force-shutdown is attempted.
 
     Parameters: ~
-      • {client_id}  (`integer|integer[]|vim.lsp.Client[]`) id, list of id's,
-                     or list of |vim.lsp.Client| objects
+      • {client_id}  (`integer|vim.lsp.Client`) id or |vim.lsp.Client| object,
+                     or list thereof
       • {force}      (`boolean?`) shutdown forcefully
 
 tagfunc({pattern}, {flags})                                *vim.lsp.tagfunc()*
