@@ -36,15 +36,19 @@ end
 --- @generic F: function
 --- @param hash integer|string|fun(...): any
 --- @param fn F
+--- @param strong? boolean
 --- @return F
-return function(hash, fn)
+return function(hash, fn, strong)
   vim.validate({
     hash = { hash, { 'number', 'string', 'function' } },
     fn = { fn, 'function' },
   })
 
   ---@type table<any,table<any,any>>
-  local cache = setmetatable({}, { __mode = 'kv' })
+  local cache = {}
+  if not strong then
+    setmetatable(cache, { __mode = 'kv' })
+  end
 
   hash = resolve_hash(hash)
 
