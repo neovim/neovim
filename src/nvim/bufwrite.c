@@ -913,24 +913,18 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
         os_setperm(*backupp, perm & 0777);
 
 #ifdef UNIX
-        //
         // Try to set the group of the backup same as the original file. If
         // this fails, set the protection bits for the group same as the
         // protection bits for others.
-        //
         if (file_info_new.stat.st_gid != file_info_old->stat.st_gid
             && os_chown(*backupp, (uv_uid_t)-1, (uv_gid_t)file_info_old->stat.st_gid) != 0) {
           os_setperm(*backupp, (perm & 0707) | ((perm & 07) << 3));
         }
-
-# ifdef HAVE_XATTR
-        os_copy_xattr(fname, *backupp);
-# endif
-
         os_file_settime(*backupp,
                         (double)file_info_old->stat.st_atim.tv_sec,
                         (double)file_info_old->stat.st_mtim.tv_sec);
 #endif
+
         os_set_acl(*backupp, acl);
 #ifdef HAVE_XATTR
         os_copy_xattr(fname, *backupp);
