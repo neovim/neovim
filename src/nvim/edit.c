@@ -3837,7 +3837,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       *inserted_space_p = false;
 
       bool const use_ts = !curwin->w_p_list || curwin->w_p_lcs_chars.tab1;
-      char *const line = ml_get_buf(curbuf, curwin->w_cursor.lnum);
+      char *const line = get_cursor_line_ptr();
       char *const end_ptr = line + curwin->w_cursor.col;
 
       colnr_T vcol = 0;
@@ -3845,6 +3845,9 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       StrCharInfo sci = utf_ptr2StrCharInfo(line);
       StrCharInfo space_sci = sci;
       bool prev_space = false;
+
+      // Find the last whitespace that is preceded by non-whitespace.
+      // Use charsize_nowrap() so that virtual text and wrapping are ignored.
       while (sci.ptr < end_ptr) {
         bool cur_space = ascii_iswhite(sci.chr.value);
         if (!prev_space && cur_space) {
@@ -3856,6 +3859,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         prev_space = cur_space;
       }
 
+      // Compute the virtual column where we want to be.
       colnr_T want_vcol = vcol - 1;
       if (want_vcol <= 0) {
         want_vcol = 0;
@@ -3865,6 +3869,8 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         want_vcol = tabstop_start(want_vcol, get_sts_value(), curbuf->b_p_vsts_array);
       }
 
+      // Find the position to stop backspacing.
+      // Use charsize_nowrap() so that virtual text and wrapping are ignored.
       while (true) {
         int size = charsize_nowrap(curbuf, use_ts, space_vcol, space_sci.chr.value);
         if (space_vcol + size > want_vcol) {
