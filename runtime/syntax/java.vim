@@ -2,7 +2,7 @@
 " Language:	Java
 " Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " URL:          https://github.com/fleiner/vim/blob/master/runtime/syntax/java.vim
-" Last Change:	2024 Mar 22
+" Last Change:	2024 Mar 24
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -191,17 +191,20 @@ if exists("java_comment_strings")
   syn cluster javaCommentSpecial2 add=javaComment2String,javaCommentCharacter,javaNumber,javaStrTempl
 endif
 
-syn region  javaComment		start="/\*" end="\*/" contains=@javaCommentSpecial,javaTodo,javaSpaceError,@Spell
+syn region  javaComment		matchgroup=javaCommentStart start="/\*" end="\*/" contains=@javaCommentSpecial,javaTodo,javaCommentError,javaSpaceError,@Spell
 syn match   javaCommentStar	 contained "^\s*\*[^/]"me=e-1
 syn match   javaCommentStar	 contained "^\s*\*$"
 syn match   javaLineComment	"//.*" contains=@javaCommentSpecial2,javaTodo,javaCommentMarkupTag,javaSpaceError,@Spell
-syn match   javaCommentMarkupTag contained "@\%(end\|highlight\|link\|replace\|start\)\>" nextgroup=javaCommentMarkupTagAttr skipwhite
-syn match   javaCommentMarkupTagAttr contained "\<region\>" nextgroup=javaCommentMarkupTagAttr skipwhite
-syn region  javaCommentMarkupTagAttr contained transparent matchgroup=htmlArg start=/\<\%(re\%(gex\|gion\|placement\)\|substring\|t\%(arget\|ype\)\)\%(\s*=\)\@=/ matchgroup=htmlString end=/\%(=\s*\)\@<=\%("[^"]\+"\|'[^']\+'\|\%([.-]\|\k\)\+\)/ nextgroup=javaCommentMarkupTagAttr skipwhite oneline
+syn match   javaCommentMarkupTag contained "@\%(end\|highlight\|link\|replace\|start\)\>" nextgroup=javaCommentMarkupTagAttr,javaSpaceError skipwhite
+syn match   javaCommentMarkupTagAttr contained "\<region\>" nextgroup=javaCommentMarkupTagAttr,javaSpaceError skipwhite
+syn region  javaCommentMarkupTagAttr contained transparent matchgroup=htmlArg start=/\<\%(re\%(gex\|gion\|placement\)\|substring\|t\%(arget\|ype\)\)\%(\s*=\)\@=/ matchgroup=htmlString end=/\%(=\s*\)\@<=\%("[^"]\+"\|'[^']\+'\|\%([.-]\|\k\)\+\)/ nextgroup=javaCommentMarkupTagAttr,javaSpaceError skipwhite oneline
 hi def link javaCommentMarkupTagAttr htmlArg
 hi def link javaCommentString javaString
 hi def link javaComment2String javaString
 hi def link javaCommentCharacter javaCharacter
+syn match   javaCommentError contained "/\*"me=e-1 display
+hi def link javaCommentError javaError
+hi def link javaCommentStart javaComment
 
 syn cluster javaTop add=javaComment,javaLineComment
 
@@ -215,17 +218,18 @@ if !exists("java_ignore_javadoc") && main_syntax != 'jsp'
   " here.
   syntax spell default
 
-  syn region javaDocComment	start="/\*\*" end="\*/" keepend contains=javaCommentTitle,@javaHtml,javaDocTags,javaDocSeeTag,javaDocCodeTag,javaDocSnippetTag,javaTodo,javaSpaceError,@Spell
-  syn region javaCommentTitle	contained matchgroup=javaDocComment start="/\*\*" matchgroup=javaCommentTitle keepend end="\.$" end="\.[ \t\r<&]"me=e-1 end="[^{]@"me=s-2,he=s-1 end="\*/"me=s-1,he=s-1 contains=@javaHtml,javaCommentStar,javaTodo,javaSpaceError,@Spell,javaDocTags,javaDocSeeTag,javaDocCodeTag,javaDocSnippetTag
+  syn region javaDocComment	start="/\*\*" end="\*/" keepend contains=javaCommentTitle,@javaHtml,javaDocTags,javaDocSeeTag,javaDocCodeTag,javaDocSnippetTag,javaTodo,javaCommentError,javaSpaceError,@Spell
+  syn region javaCommentTitle	contained matchgroup=javaDocComment start="/\*\*" matchgroup=javaCommentTitle end="\.$" end="\.[ \t\r]\@=" end="\%(^\s*\**\s*\)\@<=@"me=s-2,he=s-1 end="\*/"me=s-1,he=s-1 contains=@javaHtml,javaCommentStar,javaTodo,javaCommentError,javaSpaceError,@Spell,javaDocTags,javaDocSeeTag,javaDocCodeTag,javaDocSnippetTag
+  syn region javaCommentTitle	contained matchgroup=javaDocComment start="/\*\*\s*\r\=\n\=\s*\**\s*\%({@return\>\)\@=" matchgroup=javaCommentTitle end="}\%(\s*\.*\)*" contains=@javaHtml,javaCommentStar,javaTodo,javaCommentError,javaSpaceError,@Spell,javaDocTags,javaDocSeeTag,javaDocCodeTag,javaDocSnippetTag
   syn region javaDocTags	contained start="{@\%(li\%(teral\|nk\%(plain\)\=\)\|inherit[Dd]oc\|doc[rR]oot\|value\)\>" end="}"
-  syn match  javaDocTags	 contained "@\(param\|exception\|throws\|since\)\s\+\S\+" contains=javaDocParam
-  syn match  javaDocParam	 contained "\s\S\+"
-  syn match  javaDocTags	 contained "@\(version\|author\|return\|deprecated\|serial\|serialField\|serialData\)\>"
-  syn region javaDocSeeTag	 contained matchgroup=javaDocTags start="@see\s\+" matchgroup=NONE end="\_."re=e-1 contains=javaDocSeeTagParam
-  syn match  javaDocSeeTagParam  contained @"\_[^"]\+"\|<a\s\+\_.\{-}</a>\|\(\k\|\.\)*\(#\k\+\((\_[^)]\+)\)\=\)\=@ extend
+  syn match  javaDocTags	contained "@\%(param\|exception\|throws\|since\)\s\+\S\+" contains=javaDocParam
+  syn match  javaDocParam	contained "\s\S\+"
+  syn match  javaDocTags	contained "@\%(version\|author\|return\|deprecated\|serial\%(Field\|Data\)\=\)\>"
+  syn region javaDocSeeTag	contained matchgroup=javaDocTags start="@see\s\+" matchgroup=NONE end="\_."re=e-1 contains=javaDocSeeTagParam
+  syn match  javaDocSeeTagParam	contained @"\_[^"]\+"\|<a\s\+\_.\{-}</a>\|\%(\k\|\.\)*\%(#\k\+\%((\_[^)]*)\)\=\)\=@ contains=@javaHtml extend
   syn region javaCodeSkipBlock	contained transparent start="{\%(@code\>\)\@!" end="}" contains=javaCodeSkipBlock,javaDocCodeTag
   syn region javaDocCodeTag	contained start="{@code\>" end="}" contains=javaDocCodeTag,javaCodeSkipBlock
-  syn region javaDocSnippetTagAttr contained transparent matchgroup=htmlArg start=/\<\%(class\|file\|id\|lang\|region\)\%(\s*=\)\@=/ matchgroup=htmlString end=/:$/ end=/\%(=\s*\)\@<=\%("[^"]\+"\|'[^']\+'\|\%([.-]\|\k\)\+\)/ nextgroup=javaDocSnippetTagAttr skipwhite skipnl
+  syn region javaDocSnippetTagAttr contained transparent matchgroup=htmlArg start=/\<\%(class\|file\|id\|lang\|region\)\%(\s*=\)\@=/ matchgroup=htmlString end=/:$/ end=/\%(=\s*\)\@<=\%("[^"]\+"\|'[^']\+'\|\%([.\\/-]\|\k\)\+\)/ nextgroup=javaDocSnippetTagAttr skipwhite skipnl
   syn region javaSnippetSkipBlock contained transparent start="{\%(@snippet\>\)\@!" end="}" contains=javaSnippetSkipBlock,javaDocSnippetTag,javaCommentMarkupTag
   syn region javaDocSnippetTag	contained start="{@snippet\>" end="}" contains=javaDocSnippetTag,javaSnippetSkipBlock,javaDocSnippetTagAttr,javaCommentMarkupTag
   syntax case match
@@ -367,6 +371,13 @@ endif
 if !exists("java_minlines")
   let java_minlines = 10
 endif
+
+" Note that variations of a /*/ balanced comment, e.g., /*/*/, /*//*/,
+" /* /*/, /*  /*/, etc., may have their rightmost /*/ part accepted
+" as a comment start by ':syntax sync ccomment'; consider alternatives
+" to make synchronisation start further towards file's beginning by
+" bumping up g:java_minlines or issuing ':syntax sync fromstart' or
+" preferring &foldmethod set to 'syntax'.
 exec "syn sync ccomment javaComment minlines=" . java_minlines
 
 " The default highlighting.
