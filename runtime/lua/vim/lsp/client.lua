@@ -153,7 +153,7 @@ local validate = vim.validate
 --- @field offset_encoding string
 ---
 --- The handlers used by the client as described in |lsp-handler|.
---- @field handlers table<string,lsp.Handler>
+--- @field handlers table<string,vim.lsp.Handler>
 ---
 --- The current pending requests in flight to the server. Entries are key-value
 --- pairs with the key being the request id while the value is a table with
@@ -225,7 +225,7 @@ local validate = vim.validate
 --- If {status} is `true`, the function returns {request_id} as the second
 --- result. You can use this with `client.cancel_request(request_id)` to cancel
 --- the request.
---- @field request fun(method: string, params: table?, handler: lsp.Handler?, bufnr: integer): boolean, integer?
+--- @field request fun(method: string, params: table?, handler: vim.lsp.Handler?, bufnr: integer): boolean, integer?
 ---
 --- Sends a request to the server and synchronously waits for the response.
 --- This is a wrapper around {client.request}
@@ -623,7 +623,7 @@ end
 --- Returns the default handler if the user hasn't set a custom one.
 ---
 --- @param method (string) LSP method name
---- @return lsp.Handler|nil handler for the given method, if defined, or the default from |vim.lsp.handlers|
+--- @return vim.lsp.Handler|nil handler for the given method, if defined, or the default from |vim.lsp.handlers|
 function Client:_resolve_handler(method)
   return self.handlers[method] or lsp.handlers[method]
 end
@@ -648,7 +648,7 @@ end
 ---
 --- @param method string LSP method name.
 --- @param params table|nil LSP request params.
---- @param handler lsp.Handler|nil Response |lsp-handler| for this method.
+--- @param handler vim.lsp.Handler|nil Response |lsp-handler| for this method.
 --- @param bufnr integer Buffer handle (0 for current).
 --- @return boolean status, integer|nil request_id {status} is a bool indicating
 --- whether the request was successful. If it is `false`, then it will
@@ -860,7 +860,7 @@ end
 ---
 --- @param command lsp.Command
 --- @param context? {bufnr: integer}
---- @param handler? lsp.Handler only called if a server command
+--- @param handler? vim.lsp.Handler only called if a server command
 function Client:_exec_cmd(command, context, handler)
   context = vim.deepcopy(context or {}, true) --[[@as lsp.HandlerContext]]
   context.bufnr = context.bufnr or api.nvim_get_current_buf()
@@ -994,7 +994,7 @@ end
 --- @param params table The parameters for that method.
 function Client:_notification(method, params)
   log.trace('notification', method, params)
-  local handler = self:_resolve_handler(method)
+  local handler = self:_resolve_handler(method) --[[@as vim.lsp.NotificationHandler]]
   if handler then
     -- Method name is provided here for convenience.
     handler(nil, params, { method = method, client_id = self.id })
@@ -1007,10 +1007,10 @@ end
 --- @param method (string) LSP method name
 --- @param params (table) The parameters for that method
 --- @return any result
---- @return lsp.ResponseError error code and message set in case an exception happens during the request.
+--- @return lsp.ResponseError? error code and message set in case an exception happens during the request.
 function Client:_server_request(method, params)
   log.trace('server_request', method, params)
-  local handler = self:_resolve_handler(method)
+  local handler = self:_resolve_handler(method) --[[@as vim.lsp.RequestHandler]]
   if handler then
     log.trace('server_request: found handler for', method)
     return handler(nil, params, { method = method, client_id = self.id })

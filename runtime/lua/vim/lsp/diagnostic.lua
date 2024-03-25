@@ -228,7 +228,7 @@ end
 
 --- @param uri string
 --- @param client_id? integer
---- @param diagnostics vim.Diagnostic[]
+--- @param diagnostics vim.Diagnostic[]|lsp.Diagnostic[] TODO: review type
 --- @param is_pull boolean
 --- @param config? vim.diagnostic.Opts
 local function handle_diagnostics(uri, client_id, diagnostics, is_pull, config)
@@ -286,11 +286,12 @@ end
 --- ```
 ---
 ---@param _ lsp.ResponseError?
----@param result lsp.PublishDiagnosticsParams
+---@param params lsp.PublishDiagnosticsParams
 ---@param ctx lsp.HandlerContext
 ---@param config? vim.diagnostic.Opts Configuration table (see |vim.diagnostic.config()|).
-function M.on_publish_diagnostics(_, result, ctx, config)
-  handle_diagnostics(result.uri, ctx.client_id, result.diagnostics, false, config)
+---@type vim.lsp.NotificationHandler
+function M.on_publish_diagnostics(_, params, ctx, config)
+  handle_diagnostics(params.uri, ctx.client_id, params.diagnostics, false, config)
 end
 
 --- |lsp-handler| for the method "textDocument/diagnostic"
@@ -319,9 +320,10 @@ end
 --- ```
 ---
 ---@param _ lsp.ResponseError?
----@param result lsp.DocumentDiagnosticReport
+---@param result lsp.DocumentDiagnosticReport  TODO verify partial results
 ---@param ctx lsp.HandlerContext
 ---@param config vim.diagnostic.Opts Configuration table (see |vim.diagnostic.config()|).
+---@type vim.lsp.ResponseHandler
 function M.on_diagnostic(_, result, ctx, config)
   if result == nil or result.kind == 'unchanged' then
     return

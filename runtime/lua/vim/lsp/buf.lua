@@ -11,8 +11,7 @@ local M = {}
 ---
 ---@param method (string) LSP method name
 ---@param params (table|nil) Parameters to send to the server
----@param handler lsp.Handler? See |lsp-handler|. Follows |lsp-handler-resolution|
----
+---@param handler vim.lsp.Handler? See |lsp-handler|. Follows |lsp-handler-resolution|
 ---@return table<integer, integer> client_request_ids Map of client-id:request-id pairs
 ---for all successful requests.
 ---@return function _cancel_all_requests Function which can be used to
@@ -775,7 +774,7 @@ end
 --- cursor position.
 ---
 ---@param options? vim.lsp.buf.code_action.Opts
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
+---@see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 ---@see vim.lsp.protocol.CodeActionTriggerKind
 function M.code_action(options)
   validate({ options = { options, 't', true } })
@@ -809,9 +808,11 @@ function M.code_action(options)
   ---@type table<integer, vim.lsp.CodeActionResultEntry>
   local results = {}
 
+  --- Handler for textDocument/codeAction
   ---@param err? lsp.ResponseError
   ---@param result? (lsp.Command|lsp.CodeAction)[]
   ---@param ctx lsp.HandlerContext
+  ---@type vim.lsp.ResponseHandler
   local function on_result(err, result, ctx)
     results[ctx.client_id] = { error = err, result = result, ctx = ctx }
     remaining = remaining - 1

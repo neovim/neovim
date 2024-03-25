@@ -20,6 +20,7 @@ local augroup = api.nvim_create_augroup('vim_lsp_inlayhint', {})
 ---@param result lsp.InlayHint[]?
 ---@param ctx lsp.HandlerContext
 ---@private
+---@type vim.lsp.ResponseHandler
 function M.on_inlayhint(err, result, ctx, _)
   if err then
     log.error('inlayhint', err)
@@ -81,11 +82,15 @@ function M.on_inlayhint(err, result, ctx, _)
   api.nvim__buf_redraw_range(bufnr, 0, -1)
 end
 
+--- @private
 --- |lsp-handler| for the method `textDocument/inlayHint/refresh`
----@param ctx lsp.HandlerContext
----@private
+--- @see: https://microsoft.github.io/language-server-protocol/specification/#workspace_inlayHint_refresh
+--- @param ctx lsp.HandlerContext
+--- @return vim.NIL void On a successful request, return void.
+--- @type vim.lsp.RequestHandler
 function M.on_refresh(err, _, ctx, _)
   if err then
+    -- TODO(wookayin): error case; should not return NIL but return an error.
     return vim.NIL
   end
   for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(ctx.client_id)) do
@@ -100,7 +105,7 @@ function M.on_refresh(err, _, ctx, _)
     end
   end
 
-  return vim.NIL
+  return vim.NIL -- successful
 end
 
 --- Optional filters |kwargs|:
