@@ -1344,6 +1344,34 @@ describe('runtime:', function()
     clear { args_rm = { '-u' }, args = { '--cmd', 'let g:seq = ""' }, env = xenv }
     eq('ABab', eval('g:seq'))
   end)
+
+  it('#validate $VIMRUNTIME env', function()
+    clear()
+    local screen
+    screen = Screen.new(60, 7)
+    screen:attach()
+    fn.termopen({
+      nvim_prog,
+      '-u',
+      'NONE',
+      '--clean',
+    }, {
+      env = {
+        VIMRUNTIME = '/foo/bar',
+      },
+    })
+
+    screen:expect{grid=[[
+      {1:^                                                            }|
+      {1:                                                            }|*2
+      {1:E484: Can't open file /foo/bar/syntax/syntax.vim            }|
+      {1:E5009: Invalid $VIMRUNTIME: /foo/bar                        }|
+      {1:Press ENTER or type command to continue                     }|
+                                                                  |
+    ]], attr_ids={
+      [1] = {background = Screen.colors.NvimDarkGrey2, foreground = Screen.colors.NvimLightGrey2};
+    }}
+  end)
 end)
 
 describe('user session', function()
