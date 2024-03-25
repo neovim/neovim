@@ -10,10 +10,10 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/charset.h"
 #include "nvim/memory.h"
+#include "nvim/os/os.h"
 #include "nvim/strings.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/tui/terminfo_defs.h"
-# include "nvim/os/os.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/terminfo.c.generated.h"
