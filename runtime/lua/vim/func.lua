@@ -32,10 +32,11 @@ local M = {}
 ---     first n arguments passed to {fn}.
 ---
 --- @param fn F Function to memoize.
+--- @param strong? boolean Do not use a weak table
 --- @return F # Memoized version of {fn}
 --- @nodoc
-function M._memoize(hash, fn)
-  return require('vim.func._memoize')(hash, fn)
+function M._memoize(hash, fn, strong)
+  return require('vim.func._memoize')(hash, fn, strong)
 end
 
 return M

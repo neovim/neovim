@@ -281,8 +281,8 @@ local function filter_decl(line)
   -- M.fun = vim._memoize(function(...)
   --   ->
   -- function M.fun(...)
-  line = line:gsub('^local (.+) = .*_memoize%([^,]+, function%((.*)%)$', 'local function %1(%2)')
-  line = line:gsub('^(.+) = .*_memoize%([^,]+, function%((.*)%)$', 'function %1(%2)')
+  line = line:gsub('^local (.+) = memoize%([^,]+, function%((.*)%)$', 'local function %1(%2)')
+  line = line:gsub('^(.+) = memoize%([^,]+, function%((.*)%)$', 'function %1(%2)')
   return line
 end
 

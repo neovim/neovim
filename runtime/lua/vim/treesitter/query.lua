@@ -1,5 +1,6 @@
 local api = vim.api
 local language = require('vim.treesitter.language')
+local memoize = vim.func._memoize
 
 local M = {}
 
@@ -212,7 +213,7 @@ end
 ---@param query_name string Name of the query (e.g. "highlights")
 ---
 ---@return vim.treesitter.Query? : Parsed query. `nil` if no query files are found.
-M.get = vim.func._memoize('concat-2', function(lang, query_name)
+M.get = memoize('concat-2', function(lang, query_name)
   if explicit_queries[lang][query_name] then
     return explicit_queries[lang][query_name]
   end
@@ -245,7 +246,7 @@ end)
 ---@return vim.treesitter.Query : Parsed query
 ---
 ---@see [vim.treesitter.query.get()]
-M.parse = vim.func._memoize('concat-2', function(lang, query)
+M.parse = memoize('concat-2', function(lang, query)
   language.add(lang)
 
   local ts_query = vim._ts_parse_query(lang, query)
@@ -812,6 +813,12 @@ local function value_or_node_range(start, stop, node)
   return start, stop
 end
 
+--- @param match TSQueryMatch
+--- @return integer
+local function match_id_hash(_, match)
+  return (match:info())
+end
+
 --- Iterate over all captures from all matches inside {node}
 ---
 --- {source} is needed if the query contains predicates; then the caller
@@ -841,7 +848,7 @@ end
 ---@param start? integer Starting line for the search. Defaults to `node:start()`.
 ---@param stop? integer Stopping line for the search (end-exclusive). Defaults to `node:end_()`.
 ---
----@return (fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, table<integer,TSNode[]>?):
+---@return (fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch):
 ---        capture id, capture node, metadata, match
 ---
 ---@note Captures are only returned if the query pattern of a specific capture contained predicates.
@@ -854,7 +861,8 @@ function Query:iter_captures(node, source, start, stop)
 
   local cursor = vim._create_ts_querycursor(node, self.query, start, stop, { match_limit = 256 })
 
-  local max_match_id = -1
+  local apply_directives = memoize(match_id_hash, self.apply_directives, true)
+  local match_preds = memoize(match_id_hash, self.match_preds, true)
 
   local function iter(end_line)
     local capture, captured_node, match = cursor:next_capture()
@@ -863,27 +871,18 @@ function Query:iter_captures(node, source, start, stop)
       return
     end
 
-    local captures --- @type table<integer,TSNode[]>?
-    local match_id, pattern_index = match:info()
-
-    local metadata = {}
-
-    local preds = self.info.patterns[pattern_index] or {}
-
-    if #preds > 0 and match_id > max_match_id then
-      captures = match:captures()
-      max_match_id = match_id
-      if not self:match_preds(match, source) then
-        cursor:remove_match(match_id)
-        if end_line and captured_node:range() > end_line then
-          return nil, captured_node, nil
-        end
-        return iter(end_line) -- tail call: try next match
+    if not match_preds(self, match, source) then
+      local match_id = match:info()
+      cursor:remove_match(match_id)
+      if end_line and captured_node:range() > end_line then
+        return nil, captured_node, nil, nil
       end
-
-      metadata = self:apply_directives(match, source)
+      return iter(end_line) -- tail call: try next match
     end
-    return capture, captured_node, metadata, captures
+
+    local metadata = apply_directives(self, match, source)
+
+    return capture, captured_node, metadata, match
   end
   return iter
 end
@@ -972,6 +971,7 @@ function Query:iter_matches(node, source, start, stop, opts)
       return pattern, old_match, metadata
     end
 
+    -- TODO(lewis6991): create a new function that returns {match, metadata}
     return pattern, captures, metadata
   end
   return iter
