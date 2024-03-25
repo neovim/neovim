@@ -4368,12 +4368,15 @@ static int get_tabpage_arg(exarg_T *eap)
       tab_number = 0;
     } else {
       tab_number = (int)eap->line2;
-      char *cmdp = eap->cmd;
-      while (--cmdp > *eap->cmdlinep && (*cmdp == ' ' || ascii_isdigit(*cmdp))) {}
-      if (!unaccept_arg0 && *cmdp == '-') {
-        tab_number--;
-        if (tab_number < unaccept_arg0) {
-          eap->errmsg = _(e_invrange);
+      if (!unaccept_arg0) {
+        char *cmdp = eap->cmd;
+        while (--cmdp > *eap->cmdlinep
+               && (ascii_iswhite(*cmdp) || ascii_isdigit(*cmdp))) {}
+        if (*cmdp == '-') {
+          tab_number--;
+          if (tab_number < unaccept_arg0) {
+            eap->errmsg = _(e_invrange);
+          }
         }
       }
     }

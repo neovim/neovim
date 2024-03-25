@@ -187,7 +187,7 @@ gt					*i_CTRL-<PageDown>* *i_<C-PageDown>*
 		    :1tabnext	" go to the first tab page
 		    :$tabnext	" go to the last tab page
 		    :tabnext $	" as above
-		    :tabnext #  " go to the last accessed tab page
+		    :tabnext #	" go to the last accessed tab page
 		    :tabnext -	" go to the previous tab page
 		    :tabnext -1	" as above
 		    :tabnext +	" go to the next tab page
@@ -239,18 +239,17 @@ REORDERING TAB PAGES:
 		Move the current tab page to after tab page N.  Use zero to
 		make the current tab page the first one.  N is counted before
 		the move, thus if the second tab is the current one,
-		`:tabmove 1` and `:tabmove 2`  have no effect.
+		`:tabmove 1` and `:tabmove 2` have no effect.
 		Without N the tab page is made the last one. >
-		    :.tabmove   " do nothing
-		    :-tabmove   " move the tab page to the left
-		    :+tabmove   " move the tab page to the right
-		    :0tabmove   " move the tab page to the beginning  of the tab
-				" list
+		    :.tabmove	" do nothing
+		    :-tabmove	" move the tab page to the left
+		    :+tabmove	" move the tab page to the right
+		    :0tabmove	" move the tab page to the first
 		    :tabmove 0	" as above
 		    :tabmove	" move the tab page to the last
 		    :$tabmove	" as above
 		    :tabmove $	" as above
-		    :tabmove #  " move the tab page after the last accessed
+		    :tabmove #	" move the tab page after the last accessed
 				" tab page
 
 :tabm[ove] +[N]
