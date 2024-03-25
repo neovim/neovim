@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local command, rawfeed = helpers.command, helpers.rawfeed
+local command, feed = helpers.command, helpers.feed
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local fn = helpers.fn
@@ -44,7 +44,7 @@ describe(':Man', function()
   end)
 
   describe('man.lua: highlight_line()', function()
-    local screen
+    local screen --- @type test.functional.ui.screen
 
     before_each(function()
       command('syntax on')
@@ -64,7 +64,7 @@ describe(':Man', function()
     end)
 
     it('clears backspaces from text and adds highlights', function()
-      rawfeed(
+      feed(
         [[
         ithis i<C-v><C-h>is<C-v><C-h>s a<C-v><C-h>a test
         with _<C-v><C-h>o_<C-v><C-h>v_<C-v><C-h>e_<C-v><C-h>r_<C-v><C-h>s_<C-v><C-h>t_<C-v><C-h>r_<C-v><C-h>u_<C-v><C-h>c_<C-v><C-h>k text<ESC>]]
@@ -90,7 +90,7 @@ describe(':Man', function()
     end)
 
     it('clears escape sequences from text and adds highlights', function()
-      rawfeed(
+      feed(
         [[
         ithis <C-v><ESC>[1mis <C-v><ESC>[3ma <C-v><ESC>[4mtest<C-v><ESC>[0m
         <C-v><ESC>[4mwith<C-v><ESC>[24m <C-v><ESC>[4mescaped<C-v><ESC>[24m <C-v><ESC>[4mtext<C-v><ESC>[24m<ESC>]]
@@ -116,7 +116,7 @@ describe(':Man', function()
     end)
 
     it('highlights multibyte text', function()
-      rawfeed(
+      feed(
         [[
         ithis i<C-v><C-h>is<C-v><C-h>s あ<C-v><C-h>あ test
         with _<C-v><C-h>ö_<C-v><C-h>v_<C-v><C-h>e_<C-v><C-h>r_<C-v><C-h>s_<C-v><C-h>t_<C-v><C-h>r_<C-v><C-h>u_<C-v><C-h>̃_<C-v><C-h>c_<C-v><C-h>k te<C-v><ESC>[3mxt¶<C-v><ESC>[0m<ESC>]]
@@ -132,7 +132,7 @@ describe(':Man', function()
     end)
 
     it('highlights underscores based on context', function()
-      rawfeed(
+      feed(
         [[
         i_<C-v><C-h>_b<C-v><C-h>be<C-v><C-h>eg<C-v><C-h>gi<C-v><C-h>in<C-v><C-h>ns<C-v><C-h>s
         m<C-v><C-h>mi<C-v><C-h>id<C-v><C-h>d_<C-v><C-h>_d<C-v><C-h>dl<C-v><C-h>le<C-v><C-h>e
@@ -150,7 +150,7 @@ describe(':Man', function()
     end)
 
     it('highlights various bullet formats', function()
-      rawfeed([[
+      feed([[
         i· ·<C-v><C-h>·
         +<C-v><C-h>o
         +<C-v><C-h>+<C-v><C-h>o<C-v><C-h>o double<ESC>]])
@@ -166,7 +166,7 @@ describe(':Man', function()
     end)
 
     it('handles : characters in input', function()
-      rawfeed([[
+      feed([[
         i<C-v><C-[>[40m    0  <C-v><C-[>[41m    1  <C-v><C-[>[42m    2  <C-v><C-[>[43m    3
         <C-v><C-[>[44m    4  <C-v><C-[>[45m    5  <C-v><C-[>[46m    6  <C-v><C-[>[47m    7  <C-v><C-[>[100m    8  <C-v><C-[>[101m    9
         <C-v><C-[>[102m   10  <C-v><C-[>[103m   11  <C-v><C-[>[104m   12  <C-v><C-[>[105m   13  <C-v><C-[>[106m   14  <C-v><C-[>[107m   15

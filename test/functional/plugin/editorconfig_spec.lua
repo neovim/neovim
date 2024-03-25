@@ -9,6 +9,8 @@ local exec_lua = helpers.exec_lua
 
 local testdir = 'Xtest-editorconfig'
 
+--- @param name string
+--- @param expected table<string,any>
 local function test_case(name, expected)
   local filename = testdir .. pathsep .. name
   command('edit ' .. filename)

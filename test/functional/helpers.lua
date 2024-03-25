@@ -15,7 +15,8 @@ local ok = global_helpers.ok
 local sleep = uv.sleep
 local fail = global_helpers.fail
 
-local module = {}
+--- @class test.functional.helpers: test.helpers
+local module = vim.deepcopy(global_helpers)
 
 local runtime_set = 'set runtimepath^=./build/lib/nvim/'
 module.nvim_prog = (os.getenv('NVIM_PRG') or global_helpers.paths.test_build_dir .. '/bin/nvim')
@@ -367,13 +368,6 @@ function module.feed(...)
   end
 end
 
---- @param ... string
-function module.rawfeed(...)
-  for _, v in ipairs({ ... }) do
-    nvim_feed(dedent(v))
-  end
-end
-
 ---@param ... string[]?
 ---@return string[]
 function module.merge_args(...)
@@ -583,7 +577,7 @@ function module.insert(...)
   nvim_feed('i')
   for _, v in ipairs({ ... }) do
     local escaped = v:gsub('<', '<lt>')
-    module.rawfeed(escaped)
+    module.feed(escaped)
   end
   nvim_feed('<ESC>')
 end
@@ -853,7 +847,7 @@ function module.exc_exec(cmd)
 end
 
 --- @param cond boolean
---- @param reason string
+--- @param reason? string
 --- @return boolean
 function module.skip(cond, reason)
   if cond then
@@ -1027,9 +1021,6 @@ end
 function module.mkdir_p(path)
   return os.execute((is_os('win') and 'mkdir ' .. path or 'mkdir -p ' .. path))
 end
-
---- @class test.functional.helpers: test.helpers
-module = vim.tbl_extend('error', module, global_helpers)
 
 --- @return test.functional.helpers
 return function(after_each)

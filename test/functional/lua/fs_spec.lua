@@ -54,7 +54,7 @@ describe('vim.fs', function()
     it('works', function()
       local test_dir = nvim_dir .. '/test'
       mkdir_p(test_dir)
-      local dirs = {}
+      local dirs = {} --- @type string[]
       for dir in vim.fs.parents(test_dir .. '/foo.txt') do
         dirs[#dirs + 1] = dir
         if dir == test_build_dir then
@@ -70,6 +70,7 @@ describe('vim.fs', function()
     it('works', function()
       eq(test_build_dir, vim.fs.dirname(nvim_dir))
 
+      --- @param paths string[]
       local function test_paths(paths)
         for _, path in ipairs(paths) do
           eq(
@@ -97,6 +98,7 @@ describe('vim.fs', function()
     it('works', function()
       eq(nvim_prog_basename, vim.fs.basename(nvim_prog))
 
+      --- @param paths string[]
       local function test_paths(paths)
         for _, path in ipairs(paths) do
           eq(
@@ -292,7 +294,7 @@ describe('vim.fs', function()
       eq('/', vim.fs.normalize('/'))
     end)
     it('works with ~', function()
-      eq(vim.fs.normalize(vim.uv.os_homedir()) .. '/src/foo', vim.fs.normalize('~/src/foo'))
+      eq(vim.fs.normalize(assert(vim.uv.os_homedir())) .. '/src/foo', vim.fs.normalize('~/src/foo'))
     end)
     it('works with environment variables', function()
       local xdg_config_home = test_build_dir .. '/.config'

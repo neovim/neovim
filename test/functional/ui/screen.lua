@@ -271,7 +271,7 @@ end
 --- @field rgb? boolean
 --- @field _debug_float? boolean
 
---- @param options test.functional.ui.screen.Opts
+--- @param options? test.functional.ui.screen.Opts
 --- @param session? test.Session
 function Screen:attach(options, session)
   session = session or get_session()

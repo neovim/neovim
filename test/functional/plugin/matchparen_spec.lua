@@ -8,7 +8,7 @@ local feed = helpers.feed
 local eq = helpers.eq
 
 describe('matchparen', function()
-  local screen
+  local screen --- @type test.functional.ui.screen
 
   before_each(function()
     clear { args = { '-u', 'NORC' } }
