@@ -5,7 +5,7 @@ local exec = helpers.exec
 local api = helpers.api
 
 describe('Vimscript syntax highlighting', function()
-  local screen
+  local screen --- @type test.functional.ui.screen
 
   before_each(function()
     clear()

@@ -6,7 +6,7 @@ local feed = helpers.feed
 local is_os = helpers.is_os
 
 describe(':Tutor', function()
-  local screen
+  local screen --- @type test.functional.ui.screen
 
   before_each(function()
     clear({ args = { '--clean' } })

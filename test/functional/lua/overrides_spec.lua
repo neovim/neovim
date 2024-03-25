@@ -195,7 +195,7 @@ describe('print', function()
 end)
 
 describe('debug.debug', function()
-  local screen
+  local screen --- @type test.functional.ui.screen
 
   before_each(function()
     screen = Screen.new()

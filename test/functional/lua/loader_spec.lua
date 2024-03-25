@@ -73,12 +73,12 @@ describe('vim.loader', function()
       vim.loader.enable()
     ]]
 
-    local tmp1, tmp2 = (function(t)
-      assert(os.remove(t))
-      assert(helpers.mkdir(t))
-      assert(helpers.mkdir(t .. '/%'))
-      return t .. '/%/x', t .. '/%%x'
-    end)(helpers.tmpname())
+    local t = helpers.tmpname()
+    assert(os.remove(t))
+    assert(helpers.mkdir(t))
+    assert(helpers.mkdir(t .. '/%'))
+    local tmp1 = t .. '/%/x'
+    local tmp2 = t .. '/%%x'
 
     helpers.write_file(tmp1, 'return 1', true)
     helpers.write_file(tmp2, 'return 2', true)
