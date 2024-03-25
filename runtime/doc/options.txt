@@ -6349,7 +6349,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	appear wrong in many places.
 	The value must be more than 0 and less than 10000.
 
-	There are four main ways to use tabs in Vim:
+	There are five main ways to use tabs in Vim:
 	1. Always keep 'tabstop' at 8, set 'softtabstop' and 'shiftwidth' to 4
 	   (or 3 or whatever you prefer) and use 'noexpandtab'.  Then Vim
 	   will use a mix of tabs and spaces, but typing <Tab> and <BS> will
