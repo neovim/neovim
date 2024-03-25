@@ -44,6 +44,8 @@
 /// @param col
 ///
 /// @return Number of cells.
+///
+/// @see charsize_nowrap()
 int win_chartabsize(win_T *wp, char *p, colnr_T col)
 {
   buf_T *buf = wp->w_buffer;
@@ -376,6 +378,8 @@ CharSize charsize_fast(CharsizeArg *csarg, colnr_T const vcol, int32_t const cur
 }
 
 /// Get the number of cells taken up on the screen at given virtual column.
+///
+/// @see win_chartabsize()
 int charsize_nowrap(buf_T *buf, bool use_tabstop, colnr_T vcol, int32_t cur_char)
 {
   if (cur_char == TAB && use_tabstop) {
