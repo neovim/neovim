@@ -11,10 +11,9 @@ vim.bo = vim.bo
 ---@field [integer] vim.wo
 vim.wo = vim.wo
 
---- Allow CTRL-_ in Insert and Command-line mode.  This is default off, to
---- avoid that users that accidentally type CTRL-_ instead of SHIFT-_ get
---- into reverse Insert mode, and don't know how to get out.  See
---- 'revins'.
+--- Allow CTRL-_ in Insert mode.  This is default off, to avoid that users
+--- that accidentally type CTRL-_ instead of SHIFT-_ get into reverse
+--- Insert mode, and don't know how to get out.  See 'revins'.
 ---
 --- @type boolean
 vim.o.allowrevins = false

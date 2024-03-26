@@ -225,11 +225,7 @@ CTRL-Y		Insert the character which is above the cursor.
 		able to copy characters from a long line.
 
 						*i_CTRL-_*
-CTRL-_		Switch between insert direction, by toggling 'revins', as follows:
-		-  When in a rightleft window, 'revins' is toggled,
-		   since English will likely be inserted in this case.
-		-  When in a norightleft window, 'revins' is toggled,
-		   since a rightleft language will likely be inserted in this case.
+CTRL-_		Switch between insert direction, by toggling 'revins'.
 
 		CTRL-_ moves the cursor to the end of the typed text.
 

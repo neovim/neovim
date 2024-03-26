@@ -99,14 +99,13 @@ return {
       abbreviation = 'ari',
       defaults = { if_true = false },
       desc = [=[
-        Allow CTRL-_ in Insert and Command-line mode.  This is default off, to
-        avoid that users that accidentally type CTRL-_ instead of SHIFT-_ get
-        into reverse Insert mode, and don't know how to get out.  See
-        'revins'.
+        Allow CTRL-_ in Insert mode.  This is default off, to avoid that users
+        that accidentally type CTRL-_ instead of SHIFT-_ get into reverse
+        Insert mode, and don't know how to get out.  See 'revins'.
       ]=],
       full_name = 'allowrevins',
       scope = { 'global' },
-      short_desc = N_('allow CTRL-_ in Insert and Command-line mode'),
+      short_desc = N_('allow CTRL-_ in Insert mode'),
       type = 'boolean',
       varname = 'p_ari',
     },
