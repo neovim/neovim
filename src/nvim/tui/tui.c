@@ -347,12 +347,14 @@ static void terminfo_start(TUIData *tui)
   const char *konsolev_env = os_getenv("KONSOLE_VERSION");
   int konsolev = konsolev_env ? (int)strtol(konsolev_env, NULL, 10)
                               : (konsole ? 1 : 0);
+  bool wezterm = strequal(termprg, "WezTerm");
+  const char *weztermv = wezterm ? os_getenv("TERM_PROGRAM_VERSION") : NULL;
 
   // truecolor support must be checked before patching/augmenting terminfo
   tui->rgb = term_has_truecolor(tui, colorterm);
 
   patch_terminfo_bugs(tui, term, colorterm, vtev, konsolev, iterm_env, nsterm);
-  augment_terminfo(tui, term, vtev, konsolev, iterm_env, nsterm);
+  augment_terminfo(tui, term, vtev, konsolev, weztermv, iterm_env, nsterm);
   tui->can_change_scroll_region =
     !!unibi_get_str(tui->ut, unibi_change_scroll_region);
   tui->can_set_lr_margin =
@@ -2168,7 +2170,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
 /// This adds stuff that is not in standard terminfo as extended unibilium
 /// capabilities.
 static void augment_terminfo(TUIData *tui, const char *term, int vte_version, int konsolev,
-                             bool iterm_env, bool nsterm)
+                             const char *weztermv, bool iterm_env, bool nsterm)
 {
   unibi_term *ut = tui->ut;
   bool xterm = terminfo_is_term_family(term, "xterm")
@@ -2327,8 +2329,8 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
   if (tui->unibi_ext.set_underline_style == -1) {
     int ext_bool_Su = unibi_find_ext_bool(ut, "Su");  // used by kitty
     if (vte_version >= 5102 || konsolev >= 221170
-        || (ext_bool_Su != -1
-            && unibi_get_ext_bool(ut, (size_t)ext_bool_Su))) {
+        || (ext_bool_Su != -1 && unibi_get_ext_bool(ut, (size_t)ext_bool_Su))
+        || (weztermv != NULL && strcmp(weztermv, "20210203-095643") > 0)) {
       tui->unibi_ext.set_underline_style = (int)unibi_add_ext_str(ut, "ext.set_underline_style",
                                                                   "\x1b[4:%p1%dm");
     }
