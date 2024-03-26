@@ -639,10 +639,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'allowrevins'* *'ari'* *'noallowrevins'* *'noari'*
 'allowrevins' 'ari'	boolean	(default off)
 			global
-	Allow CTRL-_ in Insert and Command-line mode.  This is default off, to
-	avoid that users that accidentally type CTRL-_ instead of SHIFT-_ get
-	into reverse Insert mode, and don't know how to get out.  See
-	'revins'.
+	Allow CTRL-_ in Insert mode.  This is default off, to avoid that users
+	that accidentally type CTRL-_ instead of SHIFT-_ get into reverse
+	Insert mode, and don't know how to get out.  See 'revins'.
 
 						*'ambiwidth'* *'ambw'*
 'ambiwidth' 'ambw'	string	(default "single")
