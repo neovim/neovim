@@ -590,6 +590,8 @@ followed by another Vim command:
     :ldo
     :lfdo
     :lhelpgrep
+    :lua
+    :luado
     :make
     :normal
     :perlfile
