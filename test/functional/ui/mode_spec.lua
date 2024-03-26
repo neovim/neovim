@@ -12,20 +12,13 @@ describe('ui mode_change event', function()
     clear()
     screen = Screen.new(25, 4)
     screen:attach({ rgb = true })
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = 255 },
-      [1] = { bold = true, reverse = true },
-      [2] = { bold = true },
-      [3] = { reverse = true },
-      [4] = { background = Screen.colors.Red, foreground = Screen.colors.White }, -- ErrorMsg
-    })
   end)
 
   it('works in normal mode', function()
     screen:expect {
       grid = [[
       ^                         |
-      {0:~                        }|*2
+      {1:~                        }|*2
                                |
     ]],
       mode = 'normal',
@@ -35,7 +28,7 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
       ^                         |
-      {0:~                        }|*2
+      {1:~                        }|*2
                                |
     ]],
       mode = 'operator',
@@ -45,7 +38,7 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
       ^                         |
-      {0:~                        }|*2
+      {1:~                        }|*2
                                |
     ]],
       mode = 'normal',
@@ -61,7 +54,7 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
       ^                                                  |
-      {0:~                                                 }|*2
+      {1:~                                                 }|*2
                                                         |
     ]],
       mode = 'operator',
@@ -71,8 +64,8 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
       ^                                                  |
-      {0:~                                                 }|*2
-      {4:E21: Cannot make changes, 'modifiable' is off}     |
+      {1:~                                                 }|*2
+      {9:E21: Cannot make changes, 'modifiable' is off}     |
     ]],
       mode = 'normal',
     }
@@ -84,7 +77,7 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
       ^                         |
-      {0:~                        }|*2
+      {1:~                        }|*2
                                |
     ]],
       mode = 'replace',
@@ -94,7 +87,7 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
       ^                         |
-      {0:~                        }|*2
+      {1:~                        }|*2
                                |
     ]],
       mode = 'normal',
@@ -106,8 +99,8 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
       ^                         |
-      {0:~                        }|*2
-      {2:-- INSERT --}             |
+      {1:~                        }|*2
+      {5:-- INSERT --}             |
     ]],
       mode = 'insert',
     }
@@ -116,7 +109,7 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
       wor^d                     |
-      {0:~                        }|*2
+      {1:~                        }|*2
                                |
     ]],
       mode = 'normal',
@@ -133,8 +126,8 @@ describe('ui mode_change event', function()
       screen:expect {
         grid = [[
         word(stuff^               |
-        {0:~                        }|*2
-        {2:-- INSERT --}             |
+        {1:~                        }|*2
+        {5:-- INSERT --}             |
       ]],
         mode = 'insert',
         timeout = screen_timeout,
@@ -144,8 +137,8 @@ describe('ui mode_change event', function()
       screen:expect {
         grid = [[
         word^(stuff)              |
-        {0:~                        }|*2
-        {2:-- INSERT --}             |
+        {1:~                        }|*2
+        {5:-- INSERT --}             |
       ]],
         mode = 'showmatch',
         timeout = screen_timeout,
@@ -154,8 +147,8 @@ describe('ui mode_change event', function()
       screen:expect {
         grid = [[
         word(stuff)^              |
-        {0:~                        }|*2
-        {2:-- INSERT --}             |
+        {1:~                        }|*2
+        {5:-- INSERT --}             |
       ]],
         mode = 'insert',
         timeout = screen_timeout,
@@ -168,8 +161,8 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
       ^                         |
-      {0:~                        }|*2
-      {2:-- REPLACE --}            |
+      {1:~                        }|*2
+      {5:-- REPLACE --}            |
     ]],
       mode = 'replace',
     }
@@ -178,7 +171,7 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
       wor^d                     |
-      {0:~                        }|*2
+      {1:~                        }|*2
                                |
     ]],
       mode = 'normal',
@@ -190,7 +183,7 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
                                |
-      {0:~                        }|*2
+      {1:~                        }|*2
       :^                        |
     ]],
       mode = 'cmdline_normal',
@@ -200,7 +193,7 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
                                |
-      {0:~                        }|*2
+      {1:~                        }|*2
       :^x                       |
     ]],
       mode = 'cmdline_insert',
@@ -210,7 +203,7 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
                                |
-      {0:~                        }|*2
+      {1:~                        }|*2
       :^x                       |
     ]],
       mode = 'cmdline_replace',
@@ -220,7 +213,7 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
                                |
-      {0:~                        }|*2
+      {1:~                        }|*2
       :x^                       |
     ]],
       mode = 'cmdline_normal',
@@ -230,7 +223,7 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
       ^                         |
-      {0:~                        }|*2
+      {1:~                        }|*2
                                |
     ]],
       mode = 'normal',
@@ -243,8 +236,8 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
       tex^t                     |
-      {0:~                        }|*2
-      {2:-- VISUAL --}             |
+      {1:~                        }|*2
+      {5:-- VISUAL --}             |
     ]],
       mode = 'visual',
     }
@@ -253,7 +246,7 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
       tex^t                     |
-      {0:~                        }|*2
+      {1:~                        }|*2
                                |
     ]],
       mode = 'normal',
@@ -264,8 +257,8 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
       tex^t                     |
-      {0:~                        }|*2
-      {2:-- VISUAL --}             |
+      {1:~                        }|*2
+      {5:-- VISUAL --}             |
     ]],
       mode = 'visual_select',
     }
@@ -274,7 +267,7 @@ describe('ui mode_change event', function()
     screen:expect {
       grid = [[
       tex^t                     |
-      {0:~                        }|*2
+      {1:~                        }|*2
                                |
     ]],
       mode = 'normal',

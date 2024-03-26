@@ -27,17 +27,13 @@ describe('screen', function()
     set_session(screen_nvim)
     screen = Screen.new()
     screen:attach()
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = 255 },
-      [1] = { bold = true, reverse = true },
-    })
   end)
 
   it('default initial screen', function()
     screen:expect([[
       ^                                                     |
-      {0:~                                                    }|*11
-      {1:[No Name]                                            }|
+      {1:~                                                    }|*11
+      {3:[No Name]                                            }|
                                                            |
     ]])
   end)
@@ -811,9 +807,6 @@ end)
 it("showcmd doesn't cause empty grid_line with redrawdebug=compositor #22593", function()
   clear()
   local screen = Screen.new(30, 2)
-  screen:set_default_attr_ids({
-    [0] = { bold = true, foreground = Screen.colors.Blue },
-  })
   screen:attach()
   command('set showcmd redrawdebug=compositor')
   feed('d')

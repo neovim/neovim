@@ -16,15 +16,6 @@ describe('multibyte rendering', function()
     clear()
     screen = Screen.new(60, 6)
     screen:attach({ rgb = true })
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue },
-      [2] = { background = Screen.colors.WebGray },
-      [3] = { background = Screen.colors.LightMagenta },
-      [4] = { bold = true },
-      [5] = { foreground = Screen.colors.Blue },
-      [6] = { reverse = true, bold = true },
-      [7] = { reverse = true },
-    })
   end)
 
   it('works with composed char at start of line', function()
@@ -83,17 +74,17 @@ describe('multibyte rendering', function()
       ab ^                                                         |
       -馬                                                         |
       {1:~                                                           }|*3
-      {4:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]])
 
     -- check double-width char is temporarily hidden when overlapped
     fn.complete(4, { 'xx', 'yy' })
     screen:expect([[
       ab xx^                                                       |
-      - {2: xx             }                                          |
-      {1:~ }{3: yy             }{1:                                          }|
+      - {12: xx             }                                          |
+      {1:~ }{4: yy             }{1:                                          }|
       {1:~                                                           }|*2
-      {4:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]])
 
     -- check it is properly restored
@@ -102,7 +93,7 @@ describe('multibyte rendering', function()
       ab xxz^                                                      |
       -馬                                                         |
       {1:~                                                           }|*3
-      {4:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]])
   end)
 
@@ -129,7 +120,7 @@ describe('multibyte rendering', function()
       {1:~                   }│a口口口口口口口口口口口口口口口口      |
       {1:~                   }│aa口口口口口口口口口口口口口口口口     |
       {1:~                   }│aaa口口口口口口口口口口口口口口口口    |
-      {6:[No Name]            }{7:[No Name] [+]                          }|
+      {3:[No Name]            }{2:[No Name] [+]                          }|
                                                                   |
     ]])
   end)
@@ -139,7 +130,7 @@ describe('multibyte rendering', function()
     feed('$')
     screen:expect {
       grid = [[
-      {5:<ffff>}!!^!                                                   |
+      {18:<ffff>}!!^!                                                   |
       {1:~                                                           }|*4
                                                                   |
     ]],
@@ -285,11 +276,6 @@ describe('multibyte rendering: statusline', function()
   before_each(function()
     clear()
     screen = Screen.new(40, 4)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { bold = true, reverse = true },
-      [3] = { background = Screen.colors.Red, foreground = Screen.colors.Gray100 },
-    })
     screen:attach()
     command('set laststatus=2')
   end)
@@ -299,7 +285,7 @@ describe('multibyte rendering: statusline', function()
     screen:expect([[
     ^                                        |
     {1:~                                       }|
-    {2:你好                                    }|
+    {3:你好                                    }|
                                             |
     ]])
   end)
@@ -308,7 +294,7 @@ describe('multibyte rendering: statusline', function()
     screen:expect([[
     ^                                        |
     {1:~                                       }|
-    {2:abc                                     }|
+    {3:abc                                     }|
                                             |
     ]])
   end)
@@ -317,7 +303,7 @@ describe('multibyte rendering: statusline', function()
     screen:expect([[
     ^                                        |
     {1:~                                       }|
-    {2:<9f>                                    }|
+    {3:<9f>                                    }|
                                             |
     ]])
   end)
@@ -327,7 +313,7 @@ describe('multibyte rendering: statusline', function()
     screen:expect([[
     ^                                        |
     {1:~                                       }|
-    {2:o̸⃯ᷰ⃐⃧⃝                                       }|
+    {3:o̸⃯ᷰ⃐⃧⃝                                       }|
                                             |
     ]])
   end)
@@ -337,7 +323,7 @@ describe('multibyte rendering: statusline', function()
     screen:expect([[
     ^                                        |
     {1:~                                       }|
-    {2:<9f><1df0><20ef><0338><20d0><20e7><20dd>}|
+    {3:<9f><1df0><20ef><0338><20d0><20e7><20dd>}|
                                             |
     ]])
   end)
@@ -348,7 +334,7 @@ describe('multibyte rendering: statusline', function()
       grid = [[
       ^                                        |
       {1:~                                       }|
-      {2: Q≡                                     }|
+      {3: Q≡                                     }|
                                               |
     ]],
     }
@@ -361,7 +347,7 @@ describe('multibyte rendering: statusline', function()
       grid = [[
       ^                                        |
       {1:~                                       }|
-      {2:🧑�💻                                   }|
+      {3:🧑�💻                                   }|
                                               |
     ]],
     }
@@ -375,7 +361,7 @@ describe('multibyte rendering: statusline', function()
       grid = [[
       ^                                        |
       {1:~                                       }|
-      {2:xx}{3:🧑<200d>💻}{2:yy                          }|
+      {3:xx}{9:🧑<200d>💻}{3:yy                          }|
                                               |
     ]],
     }
