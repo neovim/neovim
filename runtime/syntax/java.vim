@@ -2,7 +2,7 @@
 " Language:	Java
 " Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " URL:          https://github.com/fleiner/vim/blob/master/runtime/syntax/java.vim
-" Last Change:	2024 Mar 24
+" Last Change:	2024 Mar 25
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -91,7 +91,7 @@ if exists("java_highlight_all")  || exists("java_highlight_java")  || exists("ja
   " keywords can be pre-sorted and appended without disturbing
   " the current keyword placement. The below _match_es follow suit.
 
-  syn keyword javaR_JavaLang ArithmeticException ArrayIndexOutOfBoundsException ArrayStoreException ClassCastException IllegalArgumentException IllegalMonitorStateException IllegalThreadStateException IndexOutOfBoundsException NegativeArraySizeException NullPointerException NumberFormatException RuntimeException SecurityException StringIndexOutOfBoundsException IllegalStateException UnsupportedOperationException EnumConstantNotPresentException TypeNotPresentException IllegalCallerException LayerInstantiationException
+  syn keyword javaR_JavaLang ArithmeticException ArrayIndexOutOfBoundsException ArrayStoreException ClassCastException IllegalArgumentException IllegalMonitorStateException IllegalThreadStateException IndexOutOfBoundsException NegativeArraySizeException NullPointerException NumberFormatException RuntimeException SecurityException StringIndexOutOfBoundsException IllegalStateException UnsupportedOperationException EnumConstantNotPresentException TypeNotPresentException IllegalCallerException LayerInstantiationException WrongThreadException MatchException
   syn cluster javaTop add=javaR_JavaLang
   syn cluster javaClasses add=javaR_JavaLang
   hi def link javaR_JavaLang javaR_Java
@@ -111,6 +111,8 @@ if exists("java_highlight_all")  || exists("java_highlight_java")  || exists("ja
   syn match   javaC_JavaLang "\%(\<Enum\.\)\@<=\<EnumDesc\>"
   syn keyword javaC_JavaLang Boolean Character Class ClassLoader Compiler Double Float Integer Long Math Number Object Process Runtime SecurityManager String StringBuffer Thread ThreadGroup Byte Short Void InheritableThreadLocal Package RuntimePermission ThreadLocal StrictMath StackTraceElement Enum ProcessBuilder StringBuilder ClassValue Module ModuleLayer StackWalker Record
   syn match   javaC_JavaLang "\<System\>"	" See javaDebug.
+  " As of Java 21, java.lang.Compiler is no more (deprecated in Java 9).
+  syn keyword javaLangDeprecated Compiler
   syn cluster javaTop add=javaC_JavaLang
   syn cluster javaClasses add=javaC_JavaLang
   hi def link javaC_JavaLang javaC_Java
