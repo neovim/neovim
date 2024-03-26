@@ -6075,8 +6075,8 @@ vim.go.sta = vim.go.smarttab
 --- highlighted with `hl-NonText`.
 --- You may also want to add "lastline" to the 'display' option to show as
 --- much of the last line as possible.
---- NOTE: only partly implemented, currently works with CTRL-E, CTRL-Y
---- and scrolling with the mouse.
+--- NOTE: only partly implemented, currently works with CTRL-E, CTRL-Y,
+--- CTRL-B, CTRL-F and scrolling with the mouse.
 ---
 --- @type boolean
 vim.o.smoothscroll = false
