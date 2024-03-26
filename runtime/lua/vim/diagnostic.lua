@@ -682,6 +682,13 @@ local function get_diagnostics(bufnr, opts, clamp)
   opts = opts or {}
 
   local namespace = opts.namespace
+
+  if type(namespace) == 'number' then
+    namespace = { namespace }
+  end
+
+  ---@cast namespace integer[]
+
   local diagnostics = {}
 
   -- Memoized results of buf_line_count per bufnr
@@ -742,11 +749,15 @@ local function get_diagnostics(bufnr, opts, clamp)
     end
   elseif bufnr == nil then
     for b, t in pairs(diagnostic_cache) do
-      add_all_diags(b, t[namespace] or {})
+      for _, iter_namespace in ipairs(namespace) do
+        add_all_diags(b, t[iter_namespace] or {})
+      end
     end
   else
     bufnr = get_bufnr(bufnr)
-    add_all_diags(bufnr, diagnostic_cache[bufnr][namespace] or {})
+    for _, iter_namespace in ipairs(namespace) do
+      add_all_diags(bufnr, diagnostic_cache[bufnr][iter_namespace] or {})
+    end
   end
 
   if opts.severity then
@@ -785,7 +796,7 @@ end
 --- @param search_forward boolean
 --- @param bufnr integer
 --- @param opts vim.diagnostic.GotoOpts
---- @param namespace integer
+--- @param namespace integer[]|integer
 --- @return vim.Diagnostic?
 local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
   position[1] = position[1] - 1
@@ -1115,8 +1126,8 @@ end
 --- A table with the following keys:
 --- @class vim.diagnostic.GetOpts
 ---
---- Limit diagnostics to the given namespace.
---- @field namespace? integer
+--- Limit diagnostics to one or more namespaces.
+--- @field namespace? integer[]|integer
 ---
 --- Limit diagnostics to the given line number.
 --- @field lnum? integer
