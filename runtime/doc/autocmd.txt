@@ -884,6 +884,9 @@ SafeState			When nothing is pending, going to wait for the
 							*SessionLoadPost*
 SessionLoadPost			After loading the session file created using
 				the |:mksession| command.
+							*SessionWritePost*
+SessionWritePost		After writing a session file by calling
+				the |:mksession| command.
 							*ShellCmdPost*
 ShellCmdPost			After executing a shell command with |:!cmd|,
 				|:make| and |:grep|.  Can be used to check for

@@ -88,6 +88,7 @@ return {
     'SafeState', -- going to wait for a character
     'SearchWrapped', -- after the search wrapped around
     'SessionLoadPost', -- after loading a session file
+    'SessionWritePost', -- after writing a session file
     'ShellCmdPost', -- after ":!cmd"
     'ShellFilterPost', -- after ":1,2!cmd", ":w !cmd", ":r !cmd".
     'Signal', -- after nvim process received a signal
