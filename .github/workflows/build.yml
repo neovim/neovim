@@ -10,6 +10,7 @@ on:
       - '**/CMakePresets.json'
       - 'cmake.*/**'
       - '.github/**'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

@@ -10,6 +10,8 @@ on:
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ "master" ]
+  workflow_dispatch:
+
 jobs:
   analyze:
     name: Analyze
