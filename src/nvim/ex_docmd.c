@@ -216,7 +216,6 @@ static void restore_dbg_stuff(struct dbg_stuff *dsp)
   current_exception = dsp->current_exception;
 }
 
-
 /// Check if ffname differs from fnum.
 /// fnum is a buffer number. 0 == current buffer, 1-or-more must be a valid buffer ID.
 /// ffname is a full path to where a buffer lives on-disk or would live on-disk.
