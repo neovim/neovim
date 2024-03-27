@@ -1265,15 +1265,6 @@ describe('cmdheight=0', function()
   before_each(function()
     clear()
     screen = Screen.new(25, 5)
-    screen:set_default_attr_ids {
-      [1] = { bold = true, foreground = Screen.colors.Blue },
-      [2] = { bold = true, reverse = true },
-      [3] = { bold = true },
-      [4] = { foreground = Screen.colors.White, background = Screen.colors.Red },
-      [5] = { foreground = Screen.colors.SeaGreen4, bold = true },
-      [6] = { reverse = true },
-      [7] = { background = Screen.colors.Yellow },
-    }
     screen:attach()
   end)
 
@@ -1302,7 +1293,7 @@ describe('cmdheight=0', function()
       grid = [[
       ^                         |
       {1:~                        }|*2
-      {2:[No Name]                }|
+      {3:[No Name]                }|
                                |
     ]],
     }
@@ -1314,7 +1305,7 @@ describe('cmdheight=0', function()
       grid = [[
       ^                         |
       {1:~                        }|*3
-      {2:[No Name]                }|
+      {3:[No Name]                }|
     ]],
     }
   end)
@@ -1364,7 +1355,7 @@ describe('cmdheight=0', function()
       grid = [[
       ^                         |
       {1:~                        }|*3
-      {3:-- INSERT --}             |
+      {5:-- INSERT --}             |
     ]],
     }
     feed('<Esc>')
@@ -1400,7 +1391,7 @@ describe('cmdheight=0', function()
       grid = [[
                                |
       {1:~                        }|
-      {2:                         }|
+      {3:                         }|
       :call input("foo >")     |
       foo >^                    |
     ]],
@@ -1422,26 +1413,26 @@ describe('cmdheight=0', function()
     feed(':split<CR>')
     screen:expect {
       grid = [[
-      {2:                         }|
+      {3:                         }|
       :split                   |
-      {4:E36: Not enough room}     |
-      {5:Press ENTER or type comma}|
-      {5:nd to continue}^           |
+      {9:E36: Not enough room}     |
+      {6:Press ENTER or type comma}|
+      {6:nd to continue}^           |
     ]],
     }
     feed('<CR>')
     screen:expect {
       grid = [[
-      {3:foo                      }|
+      {5:foo                      }|
       ^                         |
       {1:~                        }|*2
-      {2:[No Name]                }|
+      {3:[No Name]                }|
     ]],
     }
     feed(':')
     screen:expect {
       grid = [[
-      {3:foo                      }|
+      {5:foo                      }|
                                |
       {1:~                        }|*2
       :^                        |
@@ -1450,10 +1441,10 @@ describe('cmdheight=0', function()
     feed('<Esc>')
     screen:expect {
       grid = [[
-      {3:foo                      }|
+      {5:foo                      }|
       ^                         |
       {1:~                        }|*2
-      {2:[No Name]                }|
+      {3:[No Name]                }|
     ]],
       showmode = {},
     }
@@ -1488,16 +1479,16 @@ describe('cmdheight=0', function()
       grid = [[
       fo^o                      |
       {1:~                        }|*3
-      {2:[No Name] [+]            }|
+      {3:[No Name] [+]            }|
     ]],
     }
 
     feed(':%s/foo/bar/gc<CR>')
     screen:expect {
       grid = [[
-      {6:foo}                      |
+      {2:foo}                      |
       {1:~                        }|*3
-      {5:replace wi...q/l/^E/^Y)?}^ |
+      {6:replace wi...q/l/^E/^Y)?}^ |
     ]],
     }
 
@@ -1506,7 +1497,7 @@ describe('cmdheight=0', function()
       grid = [[
       ^bar                      |
       {1:~                        }|*3
-      {2:[No Name] [+]            }|
+      {3:[No Name] [+]            }|
     ]],
     }
 
@@ -1525,7 +1516,7 @@ describe('cmdheight=0', function()
     feed('iaabbaa<esc>/aa<cr>')
     screen:expect {
       grid = [[
-      {7:^aa}bb{7:aa}                   |
+      {10:^aa}bb{10:aa}                   |
       {1:~                        }|*4
     ]],
     }
@@ -1584,7 +1575,7 @@ describe('cmdheight=0', function()
       [2:-------------------------]|*4
       [3:-------------------------]|
     ## grid 2
-      {6:p}                        |
+      {2:p}                        |
       {1:~                        }|*4
     ## grid 3
       /p^                       |
@@ -1610,7 +1601,7 @@ describe('cmdheight=0', function()
     ]])
     feed(':')
     screen:expect([[
-      {3:c                       :}|
+      {5:c                       :}|
                                |
       {1:~                        }|*2
       :^                        |
@@ -1618,14 +1609,14 @@ describe('cmdheight=0', function()
     feed('echo')
     -- not redrawn yet
     screen:expect([[
-      {3:c                       :}|
+      {5:c                       :}|
                                |
       {1:~                        }|*2
       :echo^                    |
     ]])
     command('redrawstatus')
     screen:expect([[
-      {3:c                   :echo}|
+      {5:c                   :echo}|
                                |
       {1:~                        }|*2
       :echo^                    |
@@ -1646,7 +1637,7 @@ describe('cmdheight=0', function()
     screen:expect([[
       ^                              │                             |
       {1:~                             }│{1:~                            }|*3
-      {2:[No Name]                     }│{1:~                            }|
+      {3:[No Name]                     }│{1:~                            }|
                                     │{1:~                            }|
       {1:~                             }│{1:~                            }|*3
     ]])
@@ -1654,7 +1645,7 @@ describe('cmdheight=0', function()
     screen:expect([[
       ^                              │                             |
       {1:~                             }│{1:~                            }|
-      {2:[No Name]                     }│{1:~                            }|
+      {3:[No Name]                     }│{1:~                            }|
                                     │{1:~                            }|
       {1:~                             }│{1:~                            }|*5
     ]])
@@ -1664,7 +1655,7 @@ describe('cmdheight=0', function()
     screen:expect([[
       ^                              │                             |
       {1:~                             }│{1:~                            }|*3
-      {2:[No Name]                     }│{1:~                            }|
+      {3:[No Name]                     }│{1:~                            }|
                                     │{1:~                            }|
       {1:~                             }│{1:~                            }|*3
     ]])
@@ -1686,7 +1677,7 @@ describe('cmdheight=0', function()
     screen:expect([[
       ^                         |
       {1:~                        }|*2
-      {2:[No Name]                }|
+      {3:[No Name]                }|
                                |
     ]])
     command('set cmdheight=0')
@@ -1694,7 +1685,7 @@ describe('cmdheight=0', function()
       grid = [[
       ^                         |
       {1:~                        }|*3
-      {2:[No Name]                }|
+      {3:[No Name]                }|
     ]],
     }
     command('resize -1')
@@ -1702,7 +1693,7 @@ describe('cmdheight=0', function()
       grid = [[
       ^                         |
       {1:~                        }|*2
-      {2:[No Name]                }|
+      {3:[No Name]                }|
                                |
     ]],
     }
@@ -1710,7 +1701,7 @@ describe('cmdheight=0', function()
     screen:expect([[
       ^                         |
       {1:~                        }|*3
-      {2:[No Name]                }|
+      {3:[No Name]                }|
     ]])
   end)
 

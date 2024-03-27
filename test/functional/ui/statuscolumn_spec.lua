@@ -140,58 +140,54 @@ describe('statuscolumn', function()
         .. [[%=%{&rnu&&(v:lnum%2)?'\ '.v:relnum:''}]]
         .. [[%#LineNr#%{&rnu&&!(v:lnum%2)?'\ '.v:relnum:''}│]]
     )
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { foreground = Screen.colors.Brown },
-    })
     screen:expect([[
-      {0:4 }{1:│}aaaaa                                             |
-      {0:5 }{1:│}aaaaa                                             |
-      {0:6 }{1:│}aaaaa                                             |
-      {0:7 }{1:│}aaaaa                                             |
-      {0:8 }{1:│}^aaaaa                                             |
-      {0:9 }{1:│}aaaaa                                             |
-      {0:10}{1:│}aaaaa                                             |
-      {0:11}{1:│}aaaaa                                             |
-      {0:12}{1:│}aaaaa                                             |
-      {0:13}{1:│}aaaaa                                             |
-      {0:14}{1:│}aaaaa                                             |
-      {0:15}{1:│}aaaaa                                             |
-      {0:16}{1:│}aaaaa                                             |
+      {1:4 }{8:│}aaaaa                                             |
+      {1:5 }{8:│}aaaaa                                             |
+      {1:6 }{8:│}aaaaa                                             |
+      {1:7 }{8:│}aaaaa                                             |
+      {1:8 }{8:│}^aaaaa                                             |
+      {1:9 }{8:│}aaaaa                                             |
+      {1:10}{8:│}aaaaa                                             |
+      {1:11}{8:│}aaaaa                                             |
+      {1:12}{8:│}aaaaa                                             |
+      {1:13}{8:│}aaaaa                                             |
+      {1:14}{8:│}aaaaa                                             |
+      {1:15}{8:│}aaaaa                                             |
+      {1:16}{8:│}aaaaa                                             |
                                                            |
     ]])
     command('set relativenumber')
     screen:expect([[
-      {0:4 }{1: 4│}aaaaa                                           |
-      {0:5  3}{1:│}aaaaa                                           |
-      {0:6 }{1: 2│}aaaaa                                           |
-      {0:7  1}{1:│}aaaaa                                           |
-      {0:8 }{1: 0│}^aaaaa                                           |
-      {0:9  1}{1:│}aaaaa                                           |
-      {0:10}{1: 2│}aaaaa                                           |
-      {0:11 3}{1:│}aaaaa                                           |
-      {0:12}{1: 4│}aaaaa                                           |
-      {0:13 5}{1:│}aaaaa                                           |
-      {0:14}{1: 6│}aaaaa                                           |
-      {0:15 7}{1:│}aaaaa                                           |
-      {0:16}{1: 8│}aaaaa                                           |
+      {1:4 }{8: 4│}aaaaa                                           |
+      {1:5  3}{8:│}aaaaa                                           |
+      {1:6 }{8: 2│}aaaaa                                           |
+      {1:7  1}{8:│}aaaaa                                           |
+      {1:8 }{8: 0│}^aaaaa                                           |
+      {1:9  1}{8:│}aaaaa                                           |
+      {1:10}{8: 2│}aaaaa                                           |
+      {1:11 3}{8:│}aaaaa                                           |
+      {1:12}{8: 4│}aaaaa                                           |
+      {1:13 5}{8:│}aaaaa                                           |
+      {1:14}{8: 6│}aaaaa                                           |
+      {1:15 7}{8:│}aaaaa                                           |
+      {1:16}{8: 8│}aaaaa                                           |
                                                            |
     ]])
     command('set nonumber')
     screen:expect([[
-      {1:4│}aaaaa                                              |
-      {0:3}{1:│}aaaaa                                              |
-      {1:2│}aaaaa                                              |
-      {0:1}{1:│}aaaaa                                              |
-      {1:0│}^aaaaa                                              |
-      {0:1}{1:│}aaaaa                                              |
-      {1:2│}aaaaa                                              |
-      {0:3}{1:│}aaaaa                                              |
-      {1:4│}aaaaa                                              |
-      {0:5}{1:│}aaaaa                                              |
-      {1:6│}aaaaa                                              |
-      {0:7}{1:│}aaaaa                                              |
-      {1:8│}aaaaa                                              |
+      {8:4│}aaaaa                                              |
+      {1:3}{8:│}aaaaa                                              |
+      {8:2│}aaaaa                                              |
+      {1:1}{8:│}aaaaa                                              |
+      {8:0│}^aaaaa                                              |
+      {1:1}{8:│}aaaaa                                              |
+      {8:2│}aaaaa                                              |
+      {1:3}{8:│}aaaaa                                              |
+      {8:4│}aaaaa                                              |
+      {1:5}{8:│}aaaaa                                              |
+      {8:6│}aaaaa                                              |
+      {1:7}{8:│}aaaaa                                              |
+      {8:8│}aaaaa                                              |
                                                            |
     ]])
   end)
@@ -532,15 +528,11 @@ describe('statuscolumn', function()
 
   it('does not corrupt the screen with minwid sign item', function()
     screen:try_resize(screen._width, 3)
-    screen:set_default_attr_ids({
-      [0] = { foreground = Screen.colors.Brown },
-      [1] = { foreground = Screen.colors.Blue4, background = Screen.colors.Gray },
-    })
     command([[set stc=%6s\ %l]])
     exec_lua('vim.api.nvim_buf_set_extmark(0, ns, 7, 0, {sign_text = "𒀀"})')
     screen:expect([[
-      {0:    𒀀  8 }^aaaaa                                       |
-      {0:    }{1:  }{0: 9 }aaaaa                                       |
+      {8:    𒀀  8 }^aaaaa                                       |
+      {8:    }{7:  }{8: 9 }aaaaa                                       |
                                                            |
     ]])
   end)
