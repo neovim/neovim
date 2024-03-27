@@ -5405,6 +5405,7 @@ static void ex_edit(exarg_T *eap)
 {
   char *ffname = eap->cmdidx == CMD_enew ? NULL : eap->arg;
 
+  // Exclude commands which keep the window's current buffer
   if (eap->cmdidx != CMD_badd
       && eap->cmdidx != CMD_balt
       // All other commands must obey 'winfixbuf' / ! rules
