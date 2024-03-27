@@ -225,6 +225,26 @@ void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
   }
 }
 
+/// Query the terminal emulator to see if it supports extended underline.
+static void tui_query_extended_underline(TUIData *tui)
+{
+  // Try to set an undercurl using an SGR sequence, followed by a DECRQSS SGR query.
+  // Reset attributes first, as other code may have set attributes.
+  out(tui, S_LEN("\x1b[0m\x1b[4:3m\x1bP$qm\x1b\\"));
+  tui->print_attr_id = -1;
+}
+
+void tui_enable_extended_underline(TUIData *tui)
+{
+  if (tui->unibi_ext.set_underline_style == -1) {
+    tui->unibi_ext.set_underline_style = (int)unibi_add_ext_str(tui->ut, "ext.set_underline_style",
+                                                                "\x1b[4:%p1%dm");
+  }
+  // Only support colon syntax. #9270
+  tui->unibi_ext.set_underline_color = (int)unibi_add_ext_str(tui->ut, "ext.set_underline_color",
+                                                              "\x1b[58:2::%p1%d:%p2%d:%p3%dm");
+}
+
 /// Query the terminal emulator to see if it supports Kitty's keyboard protocol.
 ///
 /// Write CSI ? u followed by a primary device attributes request (CSI c). If
@@ -306,6 +326,7 @@ static void terminfo_start(TUIData *tui)
   tui->unibi_ext.reset_scroll_region = -1;
   tui->unibi_ext.set_cursor_style = -1;
   tui->unibi_ext.reset_cursor_style = -1;
+  tui->unibi_ext.set_underline_style = -1;
   tui->unibi_ext.set_underline_color = -1;
   tui->unibi_ext.sync = -1;
   tui->out_fd = STDOUT_FILENO;
@@ -389,6 +410,11 @@ static void terminfo_start(TUIData *tui)
   // support an older DCS sequence for synchronized output, but we will only use
   // mode 2026
   tui_request_term_mode(tui, kTermModeSynchronizedOutput);
+
+  if (tui->unibi_ext.set_underline_style == -1) {
+    // Query the terminal to see if it supports extended underline.
+    tui_query_extended_underline(tui);
+  }
 
   // Query the terminal to see if it supports Kitty's keyboard protocol
   tui_query_kitty_keyboard(tui);
@@ -2331,14 +2357,10 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
     if (vte_version >= 5102 || konsolev >= 221170
         || (ext_bool_Su != -1 && unibi_get_ext_bool(ut, (size_t)ext_bool_Su))
         || (weztermv != NULL && strcmp(weztermv, "20210203-095643") > 0)) {
-      tui->unibi_ext.set_underline_style = (int)unibi_add_ext_str(ut, "ext.set_underline_style",
-                                                                  "\x1b[4:%p1%dm");
+      tui_enable_extended_underline(tui);
     }
-  }
-  if (tui->unibi_ext.set_underline_style != -1) {
-    // Only support colon syntax. #9270
-    tui->unibi_ext.set_underline_color = (int)unibi_add_ext_str(ut, "ext.set_underline_color",
-                                                                "\x1b[58:2::%p1%d:%p2%d:%p3%dm");
+  } else {
+    tui_enable_extended_underline(tui);
   }
 
   if (!kitty && (vte_version == 0 || vte_version >= 5400)) {

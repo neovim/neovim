@@ -384,13 +384,13 @@ if tty then
             -- attributes, so there should be no attributes in the list.
             local attrs = vim.split(decrqss, ';')
             if #attrs ~= 1 and (#attrs ~= 2 or attrs[1] ~= '0') then
-              return true
+              return false
             end
 
             -- The returned SGR sequence should begin with 48:2
             local sgr = attrs[#attrs]:match('^48:2:([%d:]+)$')
             if not sgr then
-              return true
+              return false
             end
 
             -- The remaining elements of the SGR sequence should be the 3 colors
@@ -422,7 +422,8 @@ if tty then
       if os.getenv('TMUX') then
         decrqss = string.format('\027Ptmux;%s\027\\', decrqss:gsub('\027', '\027\027'))
       end
-      io.stdout:write(string.format('\027[48;2;%d;%d;%dm%s', r, g, b, decrqss))
+      -- Reset attributes first, as other code may have set attributes.
+      io.stdout:write(string.format('\027[0m\027[48;2;%d;%d;%dm%s', r, g, b, decrqss))
 
       timer:start(1000, 0, function()
         -- Delete the autocommand if no response was received
