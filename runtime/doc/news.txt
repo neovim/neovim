@@ -408,6 +408,9 @@ The following changes to existing APIs or features add new behavior.
   "virtual_text" table, which gives users more control over how diagnostic
   virtual text is displayed.
 
+• |vim.diagnostic.get()| and |vim.diagnostic.count()| accept multiple
+  namespaces rather than just a single namespace.
+
 • Extmarks now fully support multi-line ranges, and a single extmark can be
   used to highlight a range of arbitrary length. The |nvim_buf_set_extmark()|
   API function already allowed you to define such ranges, but highlight regions
