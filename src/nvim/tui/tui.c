@@ -189,36 +189,6 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
   *rgb = tui->rgb;
 }
 
-void tui_set_key_encoding(TUIData *tui)
-  FUNC_ATTR_NONNULL_ALL
-{
-  switch (tui->input.key_encoding) {
-  case kKeyEncodingKitty:
-    out(tui, S_LEN("\x1b[>1u"));
-    break;
-  case kKeyEncodingXterm:
-    out(tui, S_LEN("\x1b[>4;2m"));
-    break;
-  case kKeyEncodingLegacy:
-    break;
-  }
-}
-
-static void tui_reset_key_encoding(TUIData *tui)
-  FUNC_ATTR_NONNULL_ALL
-{
-  switch (tui->input.key_encoding) {
-  case kKeyEncodingKitty:
-    out(tui, S_LEN("\x1b[<1u"));
-    break;
-  case kKeyEncodingXterm:
-    out(tui, S_LEN("\x1b[>4;0m"));
-    break;
-  case kKeyEncodingLegacy:
-    break;
-  }
-}
-
 /// Request the terminal's mode (DECRQM).
 ///
 /// @see handle_modereport
@@ -268,6 +238,36 @@ static void tui_query_kitty_keyboard(TUIData *tui)
 {
   tui->input.waiting_for_kkp_response = true;
   out(tui, S_LEN("\x1b[?u\x1b[c"));
+}
+
+void tui_set_key_encoding(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
+{
+  switch (tui->input.key_encoding) {
+  case kKeyEncodingKitty:
+    out(tui, S_LEN("\x1b[>1u"));
+    break;
+  case kKeyEncodingXterm:
+    out(tui, S_LEN("\x1b[>4;2m"));
+    break;
+  case kKeyEncodingLegacy:
+    break;
+  }
+}
+
+static void tui_reset_key_encoding(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
+{
+  switch (tui->input.key_encoding) {
+  case kKeyEncodingKitty:
+    out(tui, S_LEN("\x1b[<1u"));
+    break;
+  case kKeyEncodingXterm:
+    out(tui, S_LEN("\x1b[>4;0m"));
+    break;
+  case kKeyEncodingLegacy:
+    break;
+  }
 }
 
 /// Enable the alternate screen and emit other control sequences to start the TUI.

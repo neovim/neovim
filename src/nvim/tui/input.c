@@ -442,12 +442,12 @@ static void tk_getkeys(TermInput *input, bool force)
       forward_modified_utf8(input, &key);
     } else if (key.type == TERMKEY_TYPE_MOUSE) {
       forward_mouse_event(input, &key);
+    } else if (key.type == TERMKEY_TYPE_MODEREPORT) {
+      handle_modereport(input, &key);
     } else if (key.type == TERMKEY_TYPE_UNKNOWN_CSI) {
       handle_unknown_csi(input, &key);
     } else if (key.type == TERMKEY_TYPE_OSC || key.type == TERMKEY_TYPE_DCS) {
       handle_term_response(input, &key);
-    } else if (key.type == TERMKEY_TYPE_MODEREPORT) {
-      handle_modereport(input, &key);
     }
   }
 
