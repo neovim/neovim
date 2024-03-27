@@ -1239,30 +1239,34 @@ endfunc
 func Test_edit_same_buffer_in_memory()
   call s:reset_all_buffers()
 
-  let l:current = bufnr()
+  let current = bufnr()
   file same_buffer
 
-  call assert_equal(l:current, bufnr())
+  call assert_equal(current, bufnr())
   set winfixbuf
   edit same_buffer
-  call assert_equal(l:current, bufnr())
+  call assert_equal(current, bufnr())
+  set nowinfixbuf
 endfunc
 
 " Allow :e selecting the current buffer as a full path
 func Test_edit_same_buffer_on_disk_absolute_path()
+  " This fails on CI (Windows builds), why?
+  " CheckNotMSWindows
   call s:reset_all_buffers()
 
-  let l:file = tempname()
-  let l:current = bufnr()
-  execute "edit " . l:file
+  let file = tempname()
+  let current = bufnr()
+  execute "edit " . file
   write!
 
-  call assert_equal(l:current, bufnr())
+  call assert_equal(current, bufnr())
   set winfixbuf
-  execute "edit " l:file
-  call assert_equal(l:current, bufnr())
+  execute "edit " file
+  call assert_equal(current, bufnr())
 
-  call delete(l:file)
+  call delete(file)
+  set nowinfixbuf
 endfunc
 
 " Fail :enew but :enew! is allowed
