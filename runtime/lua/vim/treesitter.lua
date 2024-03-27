@@ -170,21 +170,28 @@ end
 
 ---Get the range of a |TSNode|. Can also supply {source} and {metadata}
 ---to get the range with directives applied.
----@param node TSNode
+---@param node TSNode|TSNode[]
 ---@param source integer|string|nil Buffer or string from which the {node} is extracted
----@param metadata vim.treesitter.query.TSMetadata|nil
+---@param metadata? vim.treesitter.TSMetadata.group|vim.treesitter.TSMetadata.node|
 ---@return Range6
 function M.get_range(node, source, metadata)
   if metadata and metadata.range then
     assert(source)
     return M._range.add_bytes(source, metadata.range)
   end
+
+  if type(node) == 'table' then
+    local srow, scol, sbyte = node[1]:start()
+    local erow, ecol, ebyte = node[#node]:end_()
+    return { srow, scol, sbyte, erow, ecol, ebyte }
+  end
+
   return { node:range(true) }
 end
 
 ---@param buf integer
 ---@param range Range
----@returns string
+---@return string
 local function buf_range_get_text(buf, range)
   local start_row, start_col, end_row, end_col = M._range.unpack4(range)
   if end_col == 0 then
@@ -199,13 +206,19 @@ local function buf_range_get_text(buf, range)
   return table.concat(lines, '\n')
 end
 
+--- @class vim.treesitter.get_node_text.Opts
+--- @inlinedoc
+---
+--- Metadata of a specific capture.
+--- This would be set to `metadata[capture_id][capture_index]` when using
+--- [vim.treesitter.query.add_directive()].
+--- @field metadata? vim.treesitter.TSMetadata.node
+
 --- Gets the text corresponding to a given node
 ---
----@param node TSNode
+---@param node TSNode|TSNode[]
 ---@param source (integer|string) Buffer or string from which the {node} is extracted
----@param opts (table|nil) Optional parameters.
----          - metadata (table) Metadata of a specific capture. This would be
----            set to `metadata[capture_id]` when using |vim.treesitter.query.add_directive()|.
+---@param opts? vim.treesitter.get_node_text.Opts
 ---@return string
 function M.get_node_text(node, source, opts)
   opts = opts or {}
@@ -218,8 +231,14 @@ function M.get_node_text(node, source, opts)
     return buf_range_get_text(source, range)
   end
 
+  local first = type(node) == 'table' and node[1] or node
+  local last = type(node) == 'table' and node[#node] or node
+
+  local sbyte = select(3, first:start())
+  local ebyte = select(3, last:end_())
+
   ---@cast source string
-  return source:sub(select(3, node:start()) + 1, select(3, node:end_()))
+  return source:sub(sbyte + 1, ebyte)
 end
 
 --- Determines whether (line, col) position is in node range
@@ -257,7 +276,7 @@ end
 ---@param row integer Position row
 ---@param col integer Position column
 ---
----@return table[] List of captures `{ capture = "name", metadata = { ... } }`
+---@return {capture: string, metadata: vim.treesitter.TSMetadata, lang: string}[]
 function M.get_captures_at_pos(bufnr, row, col)
   if bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
@@ -309,7 +328,7 @@ end
 ---
 ---@param winnr (integer|nil) Window handle or 0 for current window (default)
 ---
----@return string[] List of capture names
+---@return string[] captures List of capture names
 function M.get_captures_at_cursor(winnr)
   winnr = winnr or 0
   local bufnr = api.nvim_win_get_buf(winnr)

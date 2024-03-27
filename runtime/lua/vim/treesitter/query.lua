@@ -492,14 +492,47 @@ local predicate_handlers = {
 predicate_handlers['vim-match?'] = predicate_handlers['match?']
 predicate_handlers['any-vim-match?'] = predicate_handlers['any-match?']
 
----@nodoc
----@class vim.treesitter.query.TSMetadata
----@field range? Range
----@field conceal? string
----@field [integer] vim.treesitter.query.TSMetadata
----@field [string] integer|string
+--- @nodoc
+--- @class vim.treesitter.TSMetadata.node
+--- @field range? Range
+--- @field text? string
+--- @field [string] string|integer
 
----@alias TSDirective fun(match: table<integer,TSNode[]>, _, _, predicate: (string|integer)[], metadata: vim.treesitter.query.TSMetadata)
+--- @nodoc
+--- @class vim.treesitter.TSMetadata.common
+
+--- @nodoc
+--- @class vim.treesitter.TSMetadata.group
+--- @field range? Range
+--- @field text? string
+---
+--- @field conceal? string
+--- @field url? integer|string
+--- @field priority? integer
+---
+--- @field [integer] vim.treesitter.TSMetadata.node
+--- @field [string] string|integer
+
+--- @nodoc
+--- Metadata is upto 3 levels deeps:
+--- 1: match level
+--- 2: capture group level
+--- 3: capture node level
+--- @class vim.treesitter.TSMetadata
+---
+--- @field conceal? string
+--- @field url? integer|string
+--- @field priority? integer
+---
+--- @field ['injection.language']? string
+--- @field ['injection.combined']? boolean
+--- @field ['injection.include-children']? boolean
+--- @field ['injection.self']? boolean
+--- @field ['injection.parent']? boolean
+--- @field [integer] vim.treesitter.TSMetadata.group
+--- @field [string] string|integer
+
+---@alias TSDirective fun(captures: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: (string|integer)[], metadata: vim.treesitter.TSMetadata)
 
 -- Predicate handler receive the following arguments
 -- (match, pattern, bufnr, predicate)
@@ -514,6 +547,9 @@ local directive_handlers = {
     if #pred >= 3 and type(pred[2]) == 'number' then
       -- (#set! @capture key value)
       local capture_id, key, value = pred[2], pred[3], pred[4]
+      assert(type(capture_id) == 'number')
+      assert(type(key) == 'string')
+
       if not metadata[capture_id] then
         metadata[capture_id] = {}
       end
@@ -524,58 +560,58 @@ local directive_handlers = {
       metadata[key] = value or true
     end
   end,
+
   -- Shifts the range of a node.
   -- Example: (#offset! @_node 0 1 0 -1)
   ['offset!'] = function(match, _, _, pred, metadata)
-    local capture_id = pred[2] --[[@as integer]]
+    local capture_id = pred[2]
+    assert(type(capture_id) == 'number')
+
     local nodes = match[capture_id]
-    assert(#nodes == 1, '#offset! does not support captures on multiple nodes')
 
-    local node = nodes[1]
+    metadata[capture_id] = metadata[capture_id] or {}
 
-    if not metadata[capture_id] then
-      metadata[capture_id] = {}
-    end
+    for i, node in ipairs(nodes) do
+      metadata[capture_id][i] = metadata[capture_id][i] or {}
 
-    local range = metadata[capture_id].range or { node:range() }
-    local start_row_offset = pred[3] or 0
-    local start_col_offset = pred[4] or 0
-    local end_row_offset = pred[5] or 0
-    local end_col_offset = pred[6] or 0
+      local range = metadata[capture_id][i].range or { node:range() }
 
-    range[1] = range[1] + start_row_offset
-    range[2] = range[2] + start_col_offset
-    range[3] = range[3] + end_row_offset
-    range[4] = range[4] + end_col_offset
+      range[1] = range[1] + (pred[3] or 0)
+      range[2] = range[2] + (pred[4] or 0)
+      range[3] = range[3] + (pred[5] or 0)
+      range[4] = range[4] + (pred[6] or 0)
 
-    -- If this produces an invalid range, we just skip it.
-    if range[1] < range[3] or (range[1] == range[3] and range[2] <= range[4]) then
-      metadata[capture_id].range = range
+      -- If this produces an invalid range, we just skip it.
+      if range[1] < range[3] or (range[1] == range[3] and range[2] <= range[4]) then
+        metadata[capture_id][i].range = range
+      end
     end
   end,
+
   -- Transform the content of the node
   -- Example: (#gsub! @_node ".*%.(.*)" "%1")
   ['gsub!'] = function(match, _, bufnr, pred, metadata)
     assert(#pred == 4)
 
-    local id = pred[2]
-    assert(type(id) == 'number')
+    local capture_id = pred[2]
+    assert(type(capture_id) == 'number')
 
-    local nodes = match[id]
-    assert(#nodes == 1, '#gsub! does not support captures on multiple nodes')
-    local node = nodes[1]
-    local text = vim.treesitter.get_node_text(node, bufnr, { metadata = metadata[id] }) or ''
+    local nodes = match[capture_id]
 
-    if not metadata[id] then
-      metadata[id] = {}
-    end
+    metadata[capture_id] = metadata[capture_id] or {}
 
     local pattern, replacement = pred[3], pred[4]
     assert(type(pattern) == 'string')
     assert(type(replacement) == 'string')
 
-    metadata[id].text = text:gsub(pattern, replacement)
+    for i, node in ipairs(nodes) do
+      metadata[capture_id][i] = metadata[capture_id][i] or {}
+      local text = vim.treesitter.get_node_text(node, bufnr, { metadata = metadata[capture_id][i] })
+        or ''
+      metadata[capture_id][i].text = text:gsub(pattern, replacement)
+    end
   end,
+
   -- Trim blank lines from end of the node
   -- Example: (#trim! @fold)
   -- TODO(clason): generalize to arbitrary whitespace removal
@@ -583,32 +619,32 @@ local directive_handlers = {
     local capture_id = pred[2]
     assert(type(capture_id) == 'number')
 
+    metadata[capture_id] = metadata[capture_id] or {}
+
     local nodes = match[capture_id]
-    assert(#nodes == 1, '#trim! does not support captures on multiple nodes')
-    local node = nodes[1]
 
-    local start_row, start_col, end_row, end_col = node:range()
+    for i, node in ipairs(nodes) do
+      metadata[capture_id][i] = metadata[capture_id][i] or {}
+      local start_row, start_col, end_row, end_col = node:range()
 
-    -- Don't trim if region ends in middle of a line
-    if end_col ~= 0 then
-      return
-    end
+      -- Don't trim if region ends in middle of a line
+      if end_col == 0 then
+        while end_row >= start_row do
+          -- As we only care when end_col == 0, always inspect one line above end_row.
+          local end_line = api.nvim_buf_get_lines(bufnr, end_row - 1, end_row, true)[1]
 
-    while end_row >= start_row do
-      -- As we only care when end_col == 0, always inspect one line above end_row.
-      local end_line = api.nvim_buf_get_lines(bufnr, end_row - 1, end_row, true)[1]
+          if end_line ~= '' then
+            break
+          end
 
-      if end_line ~= '' then
-        break
+          end_row = end_row - 1
+        end
+
+        -- If this produces an invalid range, we just skip it.
+        if start_row < end_row or (start_row == end_row and start_col <= end_col) then
+          metadata[capture_id][i].range = { start_row, start_col, end_row, end_col }
+        end
       end
-
-      end_row = end_row - 1
-    end
-
-    -- If this produces an invalid range, we just skip it.
-    if start_row < end_row or (start_row == end_row and start_col <= end_col) then
-      metadata[capture_id] = metadata[capture_id] or {}
-      metadata[capture_id].range = { start_row, start_col, end_row, end_col }
     end
   end,
 }
@@ -767,9 +803,9 @@ end
 
 ---@private
 ---@param match TSQueryMatch
----@return vim.treesitter.query.TSMetadata metadata
+---@return vim.treesitter.TSMetadata metadata
 function Query:apply_directives(match, source)
-  ---@type vim.treesitter.query.TSMetadata
+  ---@type vim.treesitter.TSMetadata
   local metadata = {}
   local _, pattern = match:info()
   local preds = self.info.patterns[pattern]
@@ -848,8 +884,8 @@ end
 ---@param start? integer Starting line for the search. Defaults to `node:start()`.
 ---@param stop? integer Stopping line for the search (end-exclusive). Defaults to `node:end_()`.
 ---
----@return (fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch):
----        capture id, capture node, metadata, match
+---@return (fun(end_line: integer|nil): integer, TSNode, vim.treesitter.TSMetadata, TSQueryMatch, integer):
+---        capture id, capture node, metadata, match, capture index
 ---
 ---@note Captures are only returned if the query pattern of a specific capture contained predicates.
 function Query:iter_captures(node, source, start, stop)
@@ -864,6 +900,9 @@ function Query:iter_captures(node, source, start, stop)
   local apply_directives = memoize(match_id_hash, self.apply_directives, true)
   local match_preds = memoize(match_id_hash, self.match_preds, true)
 
+  local cur_match_id = -1
+  local capture_index = 1
+
   local function iter(end_line)
     local capture, captured_node, match = cursor:next_capture()
 
@@ -871,8 +910,15 @@ function Query:iter_captures(node, source, start, stop)
       return
     end
 
+    local match_id = match:info()
+    if match_id == cur_match_id then
+      capture_index = capture_index + 1
+    else
+      cur_match_id = match_id
+      capture_index = 1
+    end
+
     if not match_preds(self, match, source) then
-      local match_id = match:info()
       cursor:remove_match(match_id)
       if end_line and captured_node:range() > end_line then
         return nil, captured_node, nil, nil
@@ -882,9 +928,34 @@ function Query:iter_captures(node, source, start, stop)
 
     local metadata = apply_directives(self, match, source)
 
-    return capture, captured_node, metadata, match
+    return capture, captured_node, metadata, match, capture_index
   end
   return iter
+end
+
+--- @package
+--- Return the most specific metadata available for a given capture_id and
+--- capture_index.
+--- @param metadata table
+--- @param capture_id integer
+--- @param capture_index? integer
+--- @param key? string
+--- @return any
+function M._get_metadata(metadata, capture_id, capture_index, key)
+  if capture_index then
+    local r = vim.tbl_get(metadata, capture_id, capture_index, key)
+    if r then
+      return r
+    end
+  end
+  local r = vim.tbl_get(metadata, capture_id, key)
+  if r then
+    return r
+  end
+  r = vim.tbl_get(metadata, key)
+  if r then
+    return r
+  end
 end
 
 --- Iterates the matches of self on a given range.

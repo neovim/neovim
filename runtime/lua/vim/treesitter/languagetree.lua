@@ -675,7 +675,7 @@ end
 
 ---@param node TSNode
 ---@param source string|integer
----@param metadata vim.treesitter.query.TSMetadata
+---@param metadata vim.treesitter.TSMetadata.node
 ---@param include_children boolean
 ---@return Range6[]
 local function get_node_ranges(node, source, metadata, include_children)
@@ -791,7 +791,7 @@ end
 --- Extract injections according to:
 --- https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-injection
 ---@param match table<integer,TSNode[]>
----@param metadata vim.treesitter.query.TSMetadata
+---@param metadata vim.treesitter.TSMetadata
 ---@return string?, boolean, Range6[]
 function LanguageTree:_get_injection(match, metadata)
   local ranges = {} ---@type Range6[]
@@ -802,15 +802,16 @@ function LanguageTree:_get_injection(match, metadata)
     or (injection_lang and resolve_lang(injection_lang))
   local include_children = metadata['injection.include-children'] ~= nil
 
-  for id, nodes in pairs(match) do
-    for _, node in ipairs(nodes) do
-      local name = self._injection_query.captures[id]
+  for capture_group, nodes in pairs(match) do
+    for capture_index, node in ipairs(nodes) do
+      local name = self._injection_query.captures[capture_group]
       -- Lang should override any other language tag
+      local node_metadata = query._get_metadata(metadata, capture_group, capture_index)
       if name == 'injection.language' then
-        local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
+        local text = vim.treesitter.get_node_text(node, self._source, { metadata = node_metadata })
         lang = resolve_lang(text)
       elseif name == 'injection.content' then
-        ranges = get_node_ranges(node, self._source, metadata[id], include_children)
+        ranges = get_node_ranges(node, self._source, node_metadata, include_children)
       end
     end
   end

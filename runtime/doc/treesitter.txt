@@ -711,7 +711,7 @@ get_captures_at_cursor({winnr})
       • {winnr}  (`integer?`) Window handle or 0 for current window (default)
 
     Return: ~
-        (`string[]`) List of capture names
+        (`string[]`) captures List of capture names
 
                                         *vim.treesitter.get_captures_at_pos()*
 get_captures_at_pos({bufnr}, {row}, {col})
@@ -727,8 +727,7 @@ get_captures_at_pos({bufnr}, {row}, {col})
       • {col}    (`integer`) Position column
 
     Return: ~
-        (`table[]`) List of captures
-        `{ capture = "name", metadata = { ... } }`
+        (`{capture: string, metadata: vim.treesitter.TSMetadata, lang: string}[]`)
 
 get_node({opts})                                   *vim.treesitter.get_node()*
     Returns the smallest named node at the given position
@@ -771,12 +770,13 @@ get_node_text({node}, {source}, {opts})
     Gets the text corresponding to a given node
 
     Parameters: ~
-      • {node}    (`TSNode`)
+      • {node}    (`TSNode|TSNode[]`)
       • {source}  (`integer|string`) Buffer or string from which the {node} is
                   extracted
-      • {opts}    (`table?`) Optional parameters.
-                  • metadata (table) Metadata of a specific capture. This
-                    would be set to `metadata[capture_id]` when using
+      • {opts}    (`table?`) A table with the following fields:
+                  • {metadata}? (`vim.treesitter.TSMetadata.node`) Metadata of
+                    a specific capture. This would be set to
+                    `metadata[capture_id][capture_index]` when using
                     |vim.treesitter.query.add_directive()|.
 
     Return: ~
@@ -802,10 +802,10 @@ get_range({node}, {source}, {metadata})           *vim.treesitter.get_range()*
     get the range with directives applied.
 
     Parameters: ~
-      • {node}      (`TSNode`)
+      • {node}      (`TSNode|TSNode[]`)
       • {source}    (`integer|string?`) Buffer or string from which the {node}
                     is extracted
-      • {metadata}  (`vim.treesitter.query.TSMetadata?`)
+      • {metadata}  (`vim.treesitter.TSMetadata.group|vim.treesitter.TSMetadata.node?`)
 
     Return: ~
         (`Range6`)
@@ -1166,8 +1166,8 @@ Query:iter_captures({node}, {source}, {start}, {stop})
                   Defaults to `node:end_()`.
 
     Return: ~
-        (`fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch`)
-        capture id, capture node, metadata, match
+        (`fun(end_line: integer?): integer, TSNode, vim.treesitter.TSMetadata, TSQueryMatch, integer`)
+        capture id, capture node, metadata, match, capture index
 
                                                         *Query:iter_matches()*
 Query:iter_matches({node}, {source}, {start}, {stop}, {opts})

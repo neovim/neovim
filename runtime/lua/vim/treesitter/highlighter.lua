@@ -4,7 +4,7 @@ local Range = require('vim.treesitter._range')
 
 local ns = api.nvim_create_namespace('treesitter/highlighter')
 
----@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch
+---@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil): integer, TSNode, vim.treesitter.TSMetadata, TSQueryMatch, integer
 
 ---@class (private) vim.treesitter.highlighter.Query
 ---@field private _query vim.treesitter.Query?
@@ -246,11 +246,11 @@ end
 --- @param match TSQueryMatch
 --- @param bufnr integer
 --- @param capture integer
---- @param metadata vim.treesitter.query.TSMetadata
+--- @param metadata vim.treesitter.TSMetadata
 --- @return string?
 local function get_url(match, bufnr, capture, metadata)
   ---@type string|number|nil
-  local url = metadata[capture] and metadata[capture].url
+  local url = query._get_metadata(metadata, capture, nil, 'url')
 
   if not url or type(url) == 'string' then
     return url
@@ -307,11 +307,12 @@ local function on_line_impl(self, buf, line, is_spell_nav)
     end
 
     while line >= state.next_row do
-      local capture, node, metadata, match = state.iter(line)
+      local capture, node, metadata, match, capture_index = state.iter(line)
 
       local range = { root_end_row + 1, 0, root_end_row + 1, 0 }
       if node then
-        range = vim.treesitter.get_range(node, buf, metadata and metadata[capture])
+        range =
+          vim.treesitter.get_range(node, buf, query._get_metadata(metadata, capture, capture_index))
       end
       local start_row, start_col, end_row, end_col = Range.unpack4(range)
 
@@ -323,13 +324,15 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         local spell, spell_pri_offset = get_spell(capture_name)
 
         -- The "priority" attribute can be set at the pattern level or on a particular capture
+        --- @type integer
         local priority = (
-          tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
+          query._get_metadata(metadata, capture, nil, 'priority')
           or vim.highlight.priorities.treesitter
         ) + spell_pri_offset
 
         -- The "conceal" attribute can be set at the pattern level or on a particular capture
-        local conceal = metadata.conceal or metadata[capture] and metadata[capture].conceal
+        --- @type string?
+        local conceal = query._get_metadata(metadata, capture, nil, 'conceal')
 
         local url = get_url(match, buf, capture, metadata)
 

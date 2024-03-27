@@ -773,5 +773,43 @@ void ui_refresh(void)
 
       eq({ 2, { 1, 1, 2, 2 } }, result)
     end)
+
+    it('applies directives to quantified captures', function()
+      insert [[
+        // #define FOO BAR
+        // #define FOO BAR
+        // #define FOO BAR
+        import "C";
+      ]]
+
+      local query = [[
+        ((comment)+ @comment
+        (#offset! @comment 0 2 0 0))
+      ]]
+
+      local result = exec_lua(
+        [=[
+        local query = vim.treesitter.query.parse("c", ...)
+        local parser = vim.treesitter.get_parser(0, "c")
+        local root = parser:parse()[1]:root()
+        local t = {}
+        for capture_id, node, metadata, _, capture_index in query:iter_captures(root, 0) do
+          local capture_name = query.captures[capture_id]
+          t[capture_name] = t[capture_name] or {}
+          t[capture_name][capture_index] = metadata[capture_id][capture_index]
+        end
+        return t
+      ]=],
+        query
+      )
+
+      eq({
+        comment = {
+          { range = { 0, 4, 0, 20 } },
+          { range = { 1, 4, 1, 20 } },
+          { range = { 2, 4, 2, 20 } },
+        },
+      }, result)
+    end)
   end)
 end)
