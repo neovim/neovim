@@ -2941,7 +2941,7 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
     msg_scroll = false;
   }
   msg_ext_set_kind("quickfix");
-  msg_attr_keep(gap->ga_data, 0, true, false);
+  msg_hl_keep(gap->ga_data, 0, true, false);
   msg_scroll = (int)i;
 
   qfga_clear();
@@ -3149,9 +3149,9 @@ theend:
 }
 
 // Highlight attributes used for displaying entries from the quickfix list.
-static int qfFileAttr;
-static int qfSepAttr;
-static int qfLineAttr;
+static int qfFileId;
+static int qfSepId;
+static int qfLineId;
 
 /// Display information about a single entry from the quickfix/location list.
 /// Used by ":clist/:llist" commands.
@@ -3199,10 +3199,10 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   }
 
   msg_putchar('\n');
-  msg_outtrans(IObuff, cursel ? HL_ATTR(HLF_QFL) : qfFileAttr);
+  msg_outtrans(IObuff, cursel ? HLF_QFL + 1 : qfFileId, false);
 
   if (qfp->qf_lnum != 0) {
-    msg_puts_attr(":", qfSepAttr);
+    msg_puts_hl(":", qfSepId, false);
   }
   garray_T *gap = qfga_get();
   if (qfp->qf_lnum != 0) {
@@ -3210,14 +3210,14 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   }
   ga_concat(gap, qf_types(qfp->qf_type, qfp->qf_nr));
   ga_append(gap, NUL);
-  msg_puts_attr(gap->ga_data, qfLineAttr);
-  msg_puts_attr(":", qfSepAttr);
+  msg_puts_hl(gap->ga_data, qfLineId, false);
+  msg_puts_hl(":", qfSepId, false);
   if (qfp->qf_pattern != NULL) {
     gap = qfga_get();
     qf_fmt_text(gap, qfp->qf_pattern);
     ga_append(gap, NUL);
     msg_puts(gap->ga_data);
-    msg_puts_attr(":", qfSepAttr);
+    msg_puts_hl(":", qfSepId, false);
   }
   msg_puts(" ");
 
@@ -3279,17 +3279,17 @@ void qf_list(exarg_T *eap)
 
   // Get the attributes for the different quickfix highlight items.  Note
   // that this depends on syntax items defined in the qf.vim syntax file
-  qfFileAttr = syn_name2attr("qfFileName");
-  if (qfFileAttr == 0) {
-    qfFileAttr = HL_ATTR(HLF_D);
+  qfFileId = syn_name2id("qfFileName");
+  if (qfFileId == 0) {
+    qfFileId = HLF_D + 1;
   }
-  qfSepAttr = syn_name2attr("qfSeparator");
-  if (qfSepAttr == 0) {
-    qfSepAttr = HL_ATTR(HLF_D);
+  qfSepId = syn_name2id("qfSeparator");
+  if (qfSepId == 0) {
+    qfSepId = HLF_D + 1;
   }
-  qfLineAttr = syn_name2attr("qfLineNr");
-  if (qfLineAttr == 0) {
-    qfLineAttr = HL_ATTR(HLF_N);
+  qfLineId = syn_name2id("qfLineNr");
+  if (qfLineId == 0) {
+    qfLineId = HLF_N + 1;
   }
 
   if (qfl->qf_nonevalid) {
@@ -4402,7 +4402,7 @@ static char *make_get_fullcmd(const char *makecmd, const char *fname)
   }
   msg_start();
   msg_puts(":!");
-  msg_outtrans(cmd, 0);  // show what we are doing
+  msg_outtrans(cmd, 0, false);  // show what we are doing
 
   return cmd;
 }
@@ -5253,9 +5253,9 @@ static void vgr_display_fname(char *fname)
   msg_start();
   char *p = msg_strtrunc(fname, true);
   if (p == NULL) {
-    msg_outtrans(fname, 0);
+    msg_outtrans(fname, 0, false);
   } else {
-    msg_outtrans(p, 0);
+    msg_outtrans(p, 0, false);
     xfree(p);
   }
   msg_clr_eos();

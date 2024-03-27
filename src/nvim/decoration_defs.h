@@ -55,11 +55,11 @@ typedef struct {
   schar_T conceal_char;
 } DecorHighlightInline;
 
-#define DECOR_HIGHLIGHT_INLINE_INIT { 0, DECOR_PRIORITY_BASE, 0,  0 }
+#define DECOR_HIGHLIGHT_INLINE_INIT { 0, DECOR_PRIORITY_BASE, 0, 0 }
 typedef struct {
   uint16_t flags;
   DecorPriority priority;
-  int hl_id;  // if sign: highlight of sign text
+  int hl_id;    // if sign: highlight of sign text
   schar_T text[SIGN_WIDTH];  // conceal text only uses text[0]
   // NOTE: if more functionality is added to a Highlight these should be overloaded
   // or restructured

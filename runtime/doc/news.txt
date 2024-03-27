@@ -343,6 +343,8 @@ The following new APIs and features were added.
 
 • |extmarks| option `scoped`: only show the extmarks in its namespace's scope.
 
+• |ui-messages| content chunks now also contain the highlight group ID.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

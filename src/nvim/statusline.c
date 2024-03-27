@@ -594,9 +594,10 @@ void win_redr_ruler(win_T *wp)
 
   if (ui_has(kUIMessages) && !part_of_status) {
     MAXSIZE_TEMP_ARRAY(content, 1);
-    MAXSIZE_TEMP_ARRAY(chunk, 2);
+    MAXSIZE_TEMP_ARRAY(chunk, 3);
     ADD_C(chunk, INTEGER_OBJ(attr));
     ADD_C(chunk, CSTR_AS_OBJ(buffer));
+    ADD_C(chunk, INTEGER_OBJ(0));
     ADD_C(content, ARRAY_OBJ(chunk));
     ui_call_msg_ruler(content);
     did_show_ext_ruler = true;
