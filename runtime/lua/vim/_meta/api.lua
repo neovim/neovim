@@ -1636,7 +1636,8 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---                 be fractional.
 ---               • focusable: Enable focus by user actions (wincmds, mouse
 ---                 events). Defaults to true. Non-focusable windows can be
----                 entered by `nvim_set_current_win()`.
+---                 entered by `nvim_set_current_win()`, and are considered UI
+---                 elements; Nvim may treat them as such.
 ---               • external: GUI should display the window as an external
 ---                 top-level window. Currently accepts no other positioning
 ---                 configuration together with this.
