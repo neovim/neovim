@@ -1588,6 +1588,35 @@ describe('TUI', function()
     }
   end)
 
+  -- Note: libvterm doesn't support colored underline or undercurl.
+  it('supports undercurl and underdouble when run in :terminal', function()
+    screen:set_default_attr_ids({
+      [1] = { reverse = true },
+      [2] = { bold = true, reverse = true },
+      [3] = { bold = true },
+      [4] = { foreground = 12 },
+      [5] = { undercurl = true },
+      [6] = { underdouble = true },
+    })
+    child_session:request('nvim_set_hl', 0, 'Visual', { undercurl = true })
+    feed_data('ifoobar\027V')
+    screen:expect([[
+      {5:fooba}{1:r}                                            |
+      {4:~                                                 }|*3
+      {2:[No Name] [+]                                     }|
+      {3:-- VISUAL LINE --}                                 |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    child_session:request('nvim_set_hl', 0, 'Visual', { underdouble = true })
+    screen:expect([[
+      {6:fooba}{1:r}                                            |
+      {4:~                                                 }|*3
+      {2:[No Name] [+]                                     }|
+      {3:-- VISUAL LINE --}                                 |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
+
   it('in nvim_list_uis()', function()
     -- $TERM in :terminal.
     local exp_term = is_os('bsd') and 'builtin_xterm' or 'xterm-256color'
