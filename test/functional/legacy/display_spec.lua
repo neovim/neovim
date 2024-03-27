@@ -13,9 +13,6 @@ describe('display', function()
   it('scroll when modified at topline vim-patch:8.2.1488', function()
     local screen = Screen.new(20, 4)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = { bold = true },
-    })
 
     command([[call setline(1, repeat('a', 21))]])
     feed('O')
@@ -23,7 +20,7 @@ describe('display', function()
       ^                    |
       aaaaaaaaaaaaaaaaaaaa|
       a                   |
-      {1:-- INSERT --}        |
+      {5:-- INSERT --}        |
     ]])
   end)
 
@@ -31,11 +28,6 @@ describe('display', function()
   it('scrolling when modified at topline in Visual mode vim-patch:8.2.4626', function()
     local screen = Screen.new(60, 8)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = { bold = true }, -- ModeMsg
-      [2] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black }, -- Visual
-      [3] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue }, -- SignColumn
-    })
 
     exec([[
       set scrolloff=0
@@ -47,9 +39,9 @@ describe('display', function()
     ]])
     feed('VG7kk')
     screen:expect([[
-      {3:  }^f{2:oo}                                                       |
-      {3:  }foo                                                       |*6
-      {1:-- VISUAL LINE --}                                           |
+      {7:  }^f{17:oo}                                                       |
+      {7:  }foo                                                       |*6
+      {5:-- VISUAL LINE --}                                           |
     ]])
   end)
 

@@ -30,22 +30,17 @@ describe('edit', function()
   -- oldtest: Test_edit_insert_reg()
   it('inserting a register using CTRL-R', function()
     local screen = Screen.new(10, 6)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { foreground = Screen.colors.Blue }, -- SpecialKey
-      [2] = { bold = true }, -- ModeMsg
-    })
     screen:attach()
     feed('a<C-R>')
     screen:expect([[
-      {1:^"}           |
-      {0:~           }|*4
-      {2:-- INSERT --}|
+      {18:^"}           |
+      {1:~           }|*4
+      {5:-- INSERT --}|
     ]])
     feed('=')
     screen:expect([[
-      {1:"}           |
-      {0:~           }|*4
+      {18:"}           |
+      {1:~           }|*4
       =^           |
     ]])
   end)
@@ -53,51 +48,42 @@ describe('edit', function()
   -- oldtest: Test_edit_ctrl_r_failed()
   it('positioning cursor after CTRL-R expression failed', function()
     local screen = Screen.new(60, 6)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { foreground = Screen.colors.Blue }, -- SpecialKey
-      [2] = { foreground = Screen.colors.SlateBlue },
-      [3] = { bold = true }, -- ModeMsg
-      [4] = { reverse = true, bold = true }, -- MsgSeparator
-      [5] = { background = Screen.colors.Red, foreground = Screen.colors.White }, -- ErrorMsg
-      [6] = { foreground = Screen.colors.SeaGreen, bold = true }, -- MoreMsg
-    })
     screen:attach()
 
     feed('i<C-R>')
     screen:expect([[
-      {1:^"}                                                           |
-      {0:~                                                           }|*4
-      {3:-- INSERT --}                                                |
+      {18:^"}                                                           |
+      {1:~                                                           }|*4
+      {5:-- INSERT --}                                                |
     ]])
     feed('={}')
     screen:expect([[
-      {1:"}                                                           |
-      {0:~                                                           }|*4
-      ={2:{}}^                                                         |
+      {18:"}                                                           |
+      {1:~                                                           }|*4
+      ={16:{}}^                                                         |
     ]])
     -- trying to insert a dictionary produces an error
     feed('<CR>')
     screen:expect([[
-      {1:"}                                                           |
-      {0:~                                                           }|
-      {4:                                                            }|
-      ={2:{}}                                                         |
-      {5:E731: Using a Dictionary as a String}                        |
+      {18:"}                                                           |
+      {1:~                                                           }|
+      {3:                                                            }|
+      ={16:{}}                                                         |
+      {9:E731: Using a Dictionary as a String}                        |
       {6:Press ENTER or type command to continue}^                     |
     ]])
 
     feed(':')
     screen:expect([[
       :^                                                           |
-      {0:~                                                           }|*4
-      {3:-- INSERT --}                                                |
+      {1:~                                                           }|*4
+      {5:-- INSERT --}                                                |
     ]])
     -- ending Insert mode should put the cursor back on the ':'
     feed('<Esc>')
     screen:expect([[
       ^:                                                           |
-      {0:~                                                           }|*4
+      {1:~                                                           }|*4
                                                                   |
     ]])
   end)

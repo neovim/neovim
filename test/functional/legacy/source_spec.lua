@@ -16,16 +16,12 @@ describe(':source!', function()
     ]]
     )
     local screen = Screen.new(75, 6)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { background = Screen.colors.Red, foreground = Screen.colors.White }, -- ErrorMsg
-    })
     screen:attach()
     feed(':source! Xscript.vim\n')
     screen:expect([[
       ^                                                                           |
-      {0:~                                                                          }|*4
-      {1:E22: Scripts nested too deep}                                               |
+      {1:~                                                                          }|*4
+      {9:E22: Scripts nested too deep}                                               |
     ]])
     os.remove('Xscript.vim')
   end)

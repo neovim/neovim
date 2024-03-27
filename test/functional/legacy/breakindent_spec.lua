@@ -67,50 +67,43 @@ describe('breakindent', function()
       setlocal breakindent
       call setline(1, "\t" .. join(range(100)))
     ]])
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black }, -- Visual
-      [2] = { bold = true, reverse = true }, -- StatusLine
-      [3] = { reverse = true }, -- StatusLineNC
-      [4] = { bold = true }, -- ModeMsg
-    })
     screen:attach()
 
     feed('v$')
     screen:expect([[
-      {0:<<<}     {1: 93 94 95 96 97 98 99}^                                              |
-      {2:[No Name] [+]                                                              }|
+      {1:<<<}     {17: 93 94 95 96 97 98 99}^                                              |
+      {3:[No Name] [+]                                                              }|
                                                                                  |
-      {0:~                                                                          }|
-      {3:[No Name]                                                                  }|
-      {4:-- VISUAL --}                                                               |
+      {1:~                                                                          }|
+      {2:[No Name]                                                                  }|
+      {5:-- VISUAL --}                                                               |
     ]])
     command('setlocal showbreak=+++')
     screen:expect([[
-              {0:+++}{1: 90 91 92 93 94 95 96 97 98 99}^                                  |
-      {2:[No Name] [+]                                                              }|
+              {1:+++}{17: 90 91 92 93 94 95 96 97 98 99}^                                  |
+      {3:[No Name] [+]                                                              }|
                                                                                  |
-      {0:~                                                                          }|
-      {3:[No Name]                                                                  }|
-      {4:-- VISUAL --}                                                               |
+      {1:~                                                                          }|
+      {2:[No Name]                                                                  }|
+      {5:-- VISUAL --}                                                               |
     ]])
     command('setlocal breakindentopt+=sbr')
     screen:expect([[
-      {0:+++}     {1: 93 94 95 96 97 98 99}^                                              |
-      {2:[No Name] [+]                                                              }|
+      {1:+++}     {17: 93 94 95 96 97 98 99}^                                              |
+      {3:[No Name] [+]                                                              }|
                                                                                  |
-      {0:~                                                                          }|
-      {3:[No Name]                                                                  }|
-      {4:-- VISUAL --}                                                               |
+      {1:~                                                                          }|
+      {2:[No Name]                                                                  }|
+      {5:-- VISUAL --}                                                               |
     ]])
     command('setlocal nobreakindent')
     screen:expect([[
-      {0:+++}{1: 98 99}^                                                                  |
-      {2:[No Name] [+]                                                              }|
+      {1:+++}{17: 98 99}^                                                                  |
+      {3:[No Name] [+]                                                              }|
                                                                                  |
-      {0:~                                                                          }|
-      {3:[No Name]                                                                  }|
-      {4:-- VISUAL --}                                                               |
+      {1:~                                                                          }|
+      {2:[No Name]                                                                  }|
+      {5:-- VISUAL --}                                                               |
     ]])
   end)
 end)

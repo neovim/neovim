@@ -209,11 +209,6 @@ describe(':substitute', function()
 
   it('first char is highlighted with confirmation dialog and empty match', function()
     local screen = Screen.new(60, 8)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { reverse = true }, -- IncSearch
-      [2] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
-    })
     screen:attach()
     exec([[
       set nohlsearch noincsearch
@@ -221,11 +216,11 @@ describe(':substitute', function()
     ]])
     feed(':%s/^/   /c<CR>')
     screen:expect([[
-      {1:o}ne                                                         |
+      {2:o}ne                                                         |
       two                                                         |
       three                                                       |
-      {0:~                                                           }|*4
-      {2:replace with     (y/n/a/q/l/^E/^Y)?}^                         |
+      {1:~                                                           }|*4
+      {6:replace with     (y/n/a/q/l/^E/^Y)?}^                         |
     ]])
   end)
 end)

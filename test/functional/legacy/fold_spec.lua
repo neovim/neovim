@@ -14,12 +14,6 @@ describe('folding', function()
     helpers.clear()
 
     screen = Screen.new(45, 8)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [2] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey }, -- Folded
-      [3] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Grey }, -- FoldColumn
-      [4] = { foreground = Screen.colors.Brown }, -- LineNr
-    })
     screen:attach()
   end)
 
@@ -222,15 +216,15 @@ describe('folding', function()
     command('call setline(1, ["{{{1", "nline 1", "{{{1", "line 2"])')
 
     screen:expect([[
-      {3:+ }{4:  0 }{2:^+--  2 lines: ·························}|
-      {3:+ }{4:  1 }{2:+--  2 lines: ·························}|
+      {7:+ }{8:  0 }{13:^+--  2 lines: ·························}|
+      {7:+ }{8:  1 }{13:+--  2 lines: ·························}|
       {1:~                                            }|*5
                                                    |
     ]])
     feed('j')
     screen:expect([[
-      {3:+ }{4:  1 }{2:+--  2 lines: ·························}|
-      {3:+ }{4:  0 }{2:^+--  2 lines: ·························}|
+      {7:+ }{8:  1 }{13:+--  2 lines: ·························}|
+      {7:+ }{8:  0 }{13:^+--  2 lines: ·························}|
       {1:~                                            }|*5
                                                    |
     ]])
@@ -246,7 +240,7 @@ describe('folding', function()
 
     screen:expect([[
       ^one                                          |
-      {2:+--  2 lines: two····························}|
+      {13:+--  2 lines: two····························}|
       four                                         |
       {1:~                                            }|*4
                                                    |
@@ -263,7 +257,7 @@ describe('folding', function()
     feed('4G')
     screen:expect([[
       one                                          |
-      {2:+--  2 lines: two····························}|
+      {13:+--  2 lines: two····························}|
       ^four                                         |
       {1:~                                            }|*4
                                                    |
@@ -280,7 +274,7 @@ describe('folding', function()
     feed('1G')
     screen:expect([[
       ^one                                          |
-      {2:+--  2 lines: two····························}|
+      {13:+--  2 lines: two····························}|
       four                                         |
       {1:~                                            }|*4
                                                    |
@@ -297,7 +291,7 @@ describe('folding', function()
     feed('k')
     screen:expect([[
       ^one                                          |
-      {2:+--  2 lines: two····························}|
+      {13:+--  2 lines: two····························}|
       four                                         |
       {1:~                                            }|*4
                                                    |

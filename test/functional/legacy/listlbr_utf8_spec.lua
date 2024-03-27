@@ -214,11 +214,6 @@ describe('linebreak', function()
   -- oldtest: Test_visual_ends_before_showbreak()
   it("Visual area is correct when it ends before multibyte 'showbreak'", function()
     local screen = Screen.new(60, 8)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black }, -- Visual
-      [2] = { bold = true }, -- ModeMsg
-    })
     screen:attach()
     exec([[
       let &wrap = v:true
@@ -229,10 +224,10 @@ describe('linebreak', function()
     ]])
     screen:expect([[
       xxxxx                                                       |
-      {0:↪ }{1:yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy}^ {1:   }|
-      {0:↪ }zzzz                                                      |
-      {0:~                                                           }|*4
-      {2:-- VISUAL --}                                                |
+      {1:↪ }{17:yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy}^ {17:   }|
+      {1:↪ }zzzz                                                      |
+      {1:~                                                           }|*4
+      {5:-- VISUAL --}                                                |
     ]])
   end)
 end)

@@ -10,9 +10,6 @@ local feed = helpers.feed
 it('scrolling with laststatus=0 and :botright split', function()
   clear('--cmd', 'set ruler')
   local screen = Screen.new(40, 10)
-  screen:set_default_attr_ids({
-    [1] = { reverse = true }, -- StatusLineNC
-  })
   screen:attach()
   exec([[
     set laststatus=0
@@ -25,7 +22,7 @@ it('scrolling with laststatus=0 and :botright split', function()
     98                                      |
     99                                      |
     100                                     |
-    {1:[No Name] [+]         100,1          Bot}|
+    {2:[No Name] [+]         100,1          Bot}|
     97                                      |
     98                                      |
     99                                      |

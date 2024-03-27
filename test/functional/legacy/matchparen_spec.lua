@@ -12,11 +12,6 @@ describe('matchparen', function()
   it('redraws properly after scrolling with scrolloff=1', function()
     local screen = Screen.new(30, 7)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = { bold = true },
-      [2] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black },
-    })
-
     exec([[
       source $VIMRUNTIME/plugin/matchparen.vim
       set scrolloff=1
@@ -26,13 +21,13 @@ describe('matchparen', function()
 
     feed('V<c-d><c-d>')
     screen:expect([[
-      {2:{}                             |
-      {2:}}                             |
-      {2:{}                             |
-      {2:f}                             |
+      {17:{}                             |
+      {17:}}                             |
+      {17:{}                             |
+      {17:f}                             |
       ^g                             |
       }                             |
-      {1:-- VISUAL LINE --}             |
+      {5:-- VISUAL LINE --}             |
     ]])
   end)
 
@@ -116,13 +111,6 @@ describe('matchparen', function()
   it('is cleared when completion popup is shown', function()
     local screen = Screen.new(30, 9)
     screen:attach()
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { background = Screen.colors.Plum1 },
-      [2] = { background = Screen.colors.Grey },
-      [3] = { bold = true },
-      [4] = { bold = true, foreground = Screen.colors.SeaGreen },
-    })
 
     exec([[
       source $VIMRUNTIME/plugin/matchparen.vim
@@ -138,11 +126,11 @@ describe('matchparen', function()
       aaa                           |
       aaaa                          |
       (aaa^)                         |
-      {1: aa             }{0:              }|
-      {2: aaa            }{0:              }|
-      {1: aaaa           }{0:              }|
-      {0:~                             }|
-      {3:-- }{4:match 2 of 3}               |
+      {4: aa             }{1:              }|
+      {12: aaa            }{1:              }|
+      {4: aaaa           }{1:              }|
+      {1:~                             }|
+      {5:-- }{6:match 2 of 3}               |
     ]],
     }
   end)

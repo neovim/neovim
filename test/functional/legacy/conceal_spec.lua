@@ -19,12 +19,6 @@ describe('Conceal', function()
   -- oldtest: Test_conceal_two_windows()
   it('works', function()
     local screen = Screen.new(75, 12)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { bold = true, reverse = true }, -- StatusLine
-      [2] = { reverse = true }, -- StatusLineNC, IncSearch
-      [3] = { bold = true }, -- ModeMsg
-    })
     screen:attach()
     exec([[
       let lines = ["one one one one one", "two |hidden| here", "three |hidden| three"]
@@ -48,12 +42,12 @@ describe('Conceal', function()
       two  ^here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two  here                                                                  |
       three  three                                                               |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       /here                                                                      |
     ]])
@@ -65,12 +59,12 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two  here                                                                  |
       three  three                                                               |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       /here                                                                      |
     ]])
@@ -83,12 +77,12 @@ describe('Conceal', function()
       two |hidden| ^here                                                          |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two  here                                                                  |
       three  three                                                               |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       /here                                                                      |
     ]])
@@ -100,12 +94,12 @@ describe('Conceal', function()
       two  here                                                                  |
       three |hidden^| three                                                       |
       Second window                                                              |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two  here                                                                  |
       three  three                                                               |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       /here                                                                      |
     ]])
@@ -117,13 +111,13 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two |hidden| ^here                                                          |
       three  three                                                               |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
       /here                                                                      |
     ]])
 
@@ -134,13 +128,13 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two  ^here                                                                  |
       three  three                                                               |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
       /here                                                                      |
     ]])
     feed('a')
@@ -149,14 +143,14 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two |hidden| h^ere                                                          |
       three  three                                                               |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
-      {3:-- INSERT --}                                                               |
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
+      {5:-- INSERT --}                                                               |
     ]])
     feed('<Esc>/e')
     screen:expect([[
@@ -164,13 +158,13 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two |hidden| h{2:e}re                                                          |
       three  three                                                               |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
       /e^                                                                         |
     ]])
     feed('<Esc>v')
@@ -179,14 +173,14 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two |hidden| ^here                                                          |
       three  three                                                               |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
-      {3:-- VISUAL --}                                                               |
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
+      {5:-- VISUAL --}                                                               |
     ]])
     feed('<Esc>')
 
@@ -197,13 +191,13 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two |hidden| ^here                                                          |
       three  three                                                               |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
                                                                                  |
     ]])
     feed('a')
@@ -212,14 +206,14 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two  h^ere                                                                  |
       three  three                                                               |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
-      {3:-- INSERT --}                                                               |
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
+      {5:-- INSERT --}                                                               |
     ]])
     feed('<Esc>/e')
     screen:expect([[
@@ -227,13 +221,13 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two |hidden| h{2:e}re                                                          |
       three  three                                                               |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
       /e^                                                                         |
     ]])
     feed('<Esc>v')
@@ -242,14 +236,14 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two |hidden| ^here                                                          |
       three  three                                                               |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
-      {3:-- VISUAL --}                                                               |
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
+      {5:-- VISUAL --}                                                               |
     ]])
     feed('<Esc>')
 
@@ -260,13 +254,13 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two |hidden| ^here                                                          |
       three  three                                                               |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
                                                                                  |
     ]])
     feed('a')
@@ -275,14 +269,14 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two |hidden| h^ere                                                          |
       three  three                                                               |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
-      {3:-- INSERT --}                                                               |
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
+      {5:-- INSERT --}                                                               |
     ]])
     feed('<Esc>/e')
     screen:expect([[
@@ -290,13 +284,13 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two |hidden| h{2:e}re                                                          |
       three  three                                                               |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
       /e^                                                                         |
     ]])
     feed('<Esc>v')
@@ -305,14 +299,14 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two  ^here                                                                  |
       three  three                                                               |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
-      {3:-- VISUAL --}                                                               |
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
+      {5:-- VISUAL --}                                                               |
     ]])
     feed('<Esc>')
 
@@ -324,14 +318,14 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two |hidden| h^ere                                                          |
       three  three                                                               |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
-      {3:-- INSERT --}                                                               |
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
+      {5:-- INSERT --}                                                               |
     ]])
     feed('<Down>')
     screen:expect([[
@@ -339,14 +333,14 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two  here                                                                  |
       three |hidden|^ three                                                       |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
-      {3:-- INSERT --}                                                               |
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
+      {5:-- INSERT --}                                                               |
     ]])
     feed('<Esc>')
 
@@ -356,13 +350,13 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two  here                                                                  |
       three |hidden^| three                                                       |
-      {0:~                                                                          }|
-      {1:[No Name] [+]                                                              }|
+      {1:~                                                                          }|
+      {3:[No Name] [+]                                                              }|
                                                                                  |
     ]])
     feed('o')
@@ -371,14 +365,14 @@ describe('Conceal', function()
       two  here                                                                  |
       three  three                                                               |
       Second window                                                              |
-      {0:~                                                                          }|
+      {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
       two  here                                                                  |
       three  three                                                               |
       ^                                                                           |
-      {1:[No Name] [+]                                                              }|
-      {3:-- INSERT --}                                                               |
+      {3:[No Name] [+]                                                              }|
+      {5:-- INSERT --}                                                               |
     ]])
     feed('<Esc>')
   end)
@@ -499,10 +493,6 @@ describe('Conceal', function()
   -- oldtest: Test_conceal_resize_term()
   it('resize editor', function()
     local screen = Screen.new(75, 6)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { foreground = Screen.colors.Blue }, -- Comment
-    })
     screen:attach()
     exec([[
       call setline(1, '`one` `two` `three` `four` `five`, the backticks should be concealed')
@@ -512,14 +502,14 @@ describe('Conceal', function()
     ]])
     screen:expect([[
       one two three four five, the ^backticks should be concealed                 |
-      {0:~                                                                          }|*4
+      {1:~                                                                          }|*4
                                                                                  |
     ]])
 
     screen:try_resize(75, 7)
     screen:expect([[
       one two three four five, the ^backticks should be concealed                 |
-      {0:~                                                                          }|*5
+      {1:~                                                                          }|*5
                                                                                  |
     ]])
   end)
@@ -527,9 +517,6 @@ describe('Conceal', function()
   -- oldtest: Test_conceal_linebreak()
   it('with linebreak', function()
     local screen = Screen.new(75, 8)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-    })
     screen:attach()
     exec([[
       let &wrap = v:true
@@ -549,9 +536,9 @@ describe('Conceal', function()
       ^xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|
                                                                                  |
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa           |
-      {0:+ }bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb      |
-      {0:+ }cccccc                                                                   |
-      {0:~                                                                          }|*2
+      {1:+ }bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb      |
+      {1:+ }cccccc                                                                   |
+      {1:~                                                                          }|*2
                                                                                  |
     ]])
   end)

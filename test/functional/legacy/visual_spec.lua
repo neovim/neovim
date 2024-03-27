@@ -12,11 +12,6 @@ describe('Visual highlight', function()
 
   before_each(function()
     screen = Screen.new(50, 6)
-    screen:set_default_attr_ids({
-      [0] = { foreground = Screen.colors.Blue, bold = true }, -- NonText
-      [1] = { bold = true }, -- ModeMsg
-      [2] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black }, -- Visual
-    })
     screen:attach()
   end)
 
@@ -30,20 +25,20 @@ describe('Visual highlight', function()
 
     feed('<C-V>gg$')
     screen:expect([[
-      {2:aaaaaa}^                                            |
-      {2:bbbb   }                                           |
-      {2:cc     }                                           |
-      {0:~                                                 }|*2
-      {1:-- VISUAL BLOCK --}                                |
+      {17:aaaaaa}^                                            |
+      {17:bbbb   }                                           |
+      {17:cc     }                                           |
+      {1:~                                                 }|*2
+      {5:-- VISUAL BLOCK --}                                |
     ]])
 
     feed('<Esc>gg<C-V>G$')
     screen:expect([[
-      {2:aaaaaa }                                           |
-      {2:bbbb   }                                           |
-      {2:cc}^ {2:    }                                           |
-      {0:~                                                 }|*2
-      {1:-- VISUAL BLOCK --}                                |
+      {17:aaaaaa }                                           |
+      {17:bbbb   }                                           |
+      {17:cc}^ {17:    }                                           |
+      {1:~                                                 }|*2
+      {5:-- VISUAL BLOCK --}                                |
     ]])
   end)
 
@@ -57,9 +52,9 @@ describe('Visual highlight', function()
 
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^a|
-      {0:+}{2:aaaa}aaaaaa                                       |
-      {0:~                                                 }|*3
-      {1:-- VISUAL --}                                      |
+      {1:+}{17:aaaa}aaaaaa                                       |
+      {1:~                                                 }|*3
+      {5:-- VISUAL --}                                      |
     ]])
   end)
 end)
