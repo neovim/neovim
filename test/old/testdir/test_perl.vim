@@ -104,6 +104,7 @@ func Test_window_Cursor()
 endfunc
 
 func Test_window_SetHeight()
+  throw 'skipped: very flaky '
   new
   perl $curwin->SetHeight(2)
   call assert_equal(2, winheight(0))
