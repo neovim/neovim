@@ -1485,7 +1485,8 @@ describe('TUI', function()
     feed_data('\027[201~') -- phase 3
     screen:expect_unchanged()
     local _, rv = child_session:request('nvim_exec_lua', [[return _G.paste_phases]], {})
-    eq({ 1, 2, 3 }, rv)
+    -- In rare cases there may be multiple chunks of phase 2 because of timing.
+    eq({ 1, 2, 3 }, { rv[1], rv[2], rv[#rv] })
   end)
 
   it('allows termguicolors to be set at runtime', function()
