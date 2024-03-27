@@ -48,12 +48,6 @@ describe(':confirm command dialog', function()
   local function start_new()
     clear()
     screen = Screen.new(75, 20)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { bold = true, reverse = true }, -- StatusLine, MsgSeparator
-      [2] = { reverse = true }, -- StatusLineNC
-      [3] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
-    })
     screen:attach()
   end
 
@@ -76,17 +70,17 @@ describe(':confirm command dialog', function()
     feed(':confirm qall\n')
     screen:expect([[
       bar2                                                                       |
-      {0:~                                                                          }|*5
+      {1:~                                                                          }|*5
       {2:Xbar [+]                                                                   }|
       foo2                                                                       |
-      {0:~                                                                          }|*4
+      {1:~                                                                          }|*4
       {2:Xfoo [+]                                                                   }|
                                                                                  |
-      {0:~                                                                          }|*2
-      {1:                                                                           }|
+      {1:~                                                                          }|*2
+      {3:                                                                           }|
       :confirm qall                                                              |
-      {3:Save changes to "Xbar"?}                                                    |
-      {3:[Y]es, (N)o, Save (A)ll, (D)iscard All, (C)ancel: }^                         |
+      {6:Save changes to "Xbar"?}                                                    |
+      {6:[Y]es, (N)o, Save (A)ll, (D)iscard All, (C)ancel: }^                         |
     ]])
     expect_exit(1000, feed, 'A')
 
@@ -106,17 +100,17 @@ describe(':confirm command dialog', function()
     feed(':confirm qall\n')
     screen:expect([[
       bar3                                                                       |
-      {0:~                                                                          }|*5
+      {1:~                                                                          }|*5
       {2:Xbar [+]                                                                   }|
       foo3                                                                       |
-      {0:~                                                                          }|*4
+      {1:~                                                                          }|*4
       {2:Xfoo [+]                                                                   }|
                                                                                  |
-      {0:~                                                                          }|*2
-      {1:                                                                           }|
+      {1:~                                                                          }|*2
+      {3:                                                                           }|
       :confirm qall                                                              |
-      {3:Save changes to "Xbar"?}                                                    |
-      {3:[Y]es, (N)o, Save (A)ll, (D)iscard All, (C)ancel: }^                         |
+      {6:Save changes to "Xbar"?}                                                    |
+      {6:[Y]es, (N)o, Save (A)ll, (D)iscard All, (C)ancel: }^                         |
     ]])
     expect_exit(1000, feed, 'D')
 
@@ -136,33 +130,33 @@ describe(':confirm command dialog', function()
     feed(':confirm qall\n')
     screen:expect([[
       bar4                                                                       |
-      {0:~                                                                          }|*5
+      {1:~                                                                          }|*5
       {2:Xbar [+]                                                                   }|
       foo4                                                                       |
-      {0:~                                                                          }|*4
+      {1:~                                                                          }|*4
       {2:Xfoo [+]                                                                   }|
                                                                                  |
-      {0:~                                                                          }|*2
-      {1:                                                                           }|
+      {1:~                                                                          }|*2
+      {3:                                                                           }|
       :confirm qall                                                              |
-      {3:Save changes to "Xbar"?}                                                    |
-      {3:[Y]es, (N)o, Save (A)ll, (D)iscard All, (C)ancel: }^                         |
+      {6:Save changes to "Xbar"?}                                                    |
+      {6:[Y]es, (N)o, Save (A)ll, (D)iscard All, (C)ancel: }^                         |
     ]])
     feed('N')
     screen:expect([[
       bar4                                                                       |
-      {0:~                                                                          }|*5
+      {1:~                                                                          }|*5
       {2:Xbar [+]                                                                   }|
       foo4                                                                       |
-      {0:~                                                                          }|*4
+      {1:~                                                                          }|*4
       {2:Xfoo [+]                                                                   }|
                                                                                  |
-      {1:                                                                           }|
+      {3:                                                                           }|
       :confirm qall                                                              |
-      {3:Save changes to "Xbar"?}                                                    |
+      {6:Save changes to "Xbar"?}                                                    |
                                                                                  |
-      {3:Save changes to "Xfoo"?}                                                    |
-      {3:[Y]es, (N)o, (C)ancel: }^                                                    |
+      {6:Save changes to "Xfoo"?}                                                    |
+      {6:[Y]es, (N)o, (C)ancel: }^                                                    |
     ]])
     expect_exit(1000, feed, 'Y')
 
@@ -186,39 +180,39 @@ describe(':confirm command dialog', function()
     feed(':confirm close\n')
     screen:expect([[
       abc                                                                        |
-      {0:~                                                                          }|*3
-      {1:[No Name] [+]                                                              }|
+      {1:~                                                                          }|*3
+      {3:[No Name] [+]                                                              }|
                                                                                  |
-      {1:                                                                           }|
+      {3:                                                                           }|
       :confirm close                                                             |
-      {3:Save changes to "Untitled"?}                                                |
-      {3:[Y]es, (N)o, (C)ancel: }^                                                    |
+      {6:Save changes to "Untitled"?}                                                |
+      {6:[Y]es, (N)o, (C)ancel: }^                                                    |
     ]])
     feed('C')
     screen:expect([[
       ^abc                                                                        |
-      {0:~                                                                          }|*3
-      {1:[No Name] [+]                                                              }|
+      {1:~                                                                          }|*3
+      {3:[No Name] [+]                                                              }|
                                                                                  |
-      {0:~                                                                          }|*2
+      {1:~                                                                          }|*2
       {2:[No Name]                                                                  }|
                                                                                  |
     ]])
     feed(':confirm close\n')
     screen:expect([[
       abc                                                                        |
-      {0:~                                                                          }|*3
-      {1:[No Name] [+]                                                              }|
+      {1:~                                                                          }|*3
+      {3:[No Name] [+]                                                              }|
                                                                                  |
-      {1:                                                                           }|
+      {3:                                                                           }|
       :confirm close                                                             |
-      {3:Save changes to "Untitled"?}                                                |
-      {3:[Y]es, (N)o, (C)ancel: }^                                                    |
+      {6:Save changes to "Untitled"?}                                                |
+      {6:[Y]es, (N)o, (C)ancel: }^                                                    |
     ]])
     feed('N')
     screen:expect([[
       ^                                                                           |
-      {0:~                                                                          }|*8
+      {1:~                                                                          }|*8
                                                                                  |
     ]])
   end)
@@ -237,16 +231,16 @@ describe(':confirm command dialog', function()
     feed(':confirm q\n')
     screen:expect([[
       foo                                                                        |
-      {0:~                                                                          }|*3
-      {1:                                                                           }|
+      {1:~                                                                          }|*3
+      {3:                                                                           }|
       :confirm q                                                                 |
-      {3:Save changes to "Untitled"?}                                                |
-      {3:[Y]es, (N)o, (C)ancel: }^                                                    |
+      {6:Save changes to "Untitled"?}                                                |
+      {6:[Y]es, (N)o, (C)ancel: }^                                                    |
     ]])
     feed('C')
     screen:expect([[
       ^abc                                                                        |
-      {0:~                                                                          }|*6
+      {1:~                                                                          }|*6
                                                                                  |
     ]])
 
@@ -254,16 +248,16 @@ describe(':confirm command dialog', function()
     feed(':confirm wq\n')
     screen:expect([[
       foo                                                                        |
-      {0:~                                                                          }|*3
-      {1:                                                                           }|
+      {1:~                                                                          }|*3
+      {3:                                                                           }|
       "Xfoo" [noeol] 1L, 3B written                                              |
-      {3:Save changes to "Untitled"?}                                                |
-      {3:[Y]es, (N)o, (C)ancel: }^                                                    |
+      {6:Save changes to "Untitled"?}                                                |
+      {6:[Y]es, (N)o, (C)ancel: }^                                                    |
     ]])
     feed('C')
     screen:expect([[
       ^abc                                                                        |
-      {0:~                                                                          }|*6
+      {1:~                                                                          }|*6
       "Xfoo" [noeol] 1L, 3B written                                              |
     ]])
 
@@ -286,17 +280,17 @@ describe(':confirm command dialog', function()
     feed(':set ro | confirm w\n')
     screen:expect([[
       foobar                                                                     |
-      {0:~                                                                          }|*2
-      {1:                                                                           }|
+      {1:~                                                                          }|*2
+      {3:                                                                           }|
       :set ro | confirm w                                                        |
-      {3:'readonly' option is set for "Xconfirm_write_ro".}                          |
-      {3:Do you wish to write anyway?}                                               |
-      {3:(Y)es, [N]o: }^                                                              |
+      {6:'readonly' option is set for "Xconfirm_write_ro".}                          |
+      {6:Do you wish to write anyway?}                                               |
+      {6:(Y)es, [N]o: }^                                                              |
     ]])
     feed('N')
     screen:expect([[
       fooba^r                                                                     |
-      {0:~                                                                          }|*5
+      {1:~                                                                          }|*5
                                                                                  |
                                                                1,6           All |
     ]])
@@ -305,35 +299,35 @@ describe(':confirm command dialog', function()
     feed(':confirm w\n')
     screen:expect([[
       foobar                                                                     |
-      {0:~                                                                          }|*2
-      {1:                                                                           }|
+      {1:~                                                                          }|*2
+      {3:                                                                           }|
       :confirm w                                                                 |
-      {3:'readonly' option is set for "Xconfirm_write_ro".}                          |
-      {3:Do you wish to write anyway?}                                               |
-      {3:(Y)es, [N]o: }^                                                              |
+      {6:'readonly' option is set for "Xconfirm_write_ro".}                          |
+      {6:Do you wish to write anyway?}                                               |
+      {6:(Y)es, [N]o: }^                                                              |
     ]])
     feed('Y')
     if is_os('win') then
       screen:expect([[
         foobar                                                                     |
-        {0:~                                                                          }|
-        {1:                                                                           }|
+        {1:~                                                                          }|
+        {3:                                                                           }|
         :confirm w                                                                 |
-        {3:'readonly' option is set for "Xconfirm_write_ro".}                          |
-        {3:Do you wish to write anyway?}                                               |
+        {6:'readonly' option is set for "Xconfirm_write_ro".}                          |
+        {6:Do you wish to write anyway?}                                               |
         "Xconfirm_write_ro" [unix] 1L, 7B written                                  |
-        {3:Press ENTER or type command to continue}^                                    |
+        {6:Press ENTER or type command to continue}^                                    |
       ]])
     else
       screen:expect([[
         foobar                                                                     |
-        {0:~                                                                          }|
-        {1:                                                                           }|
+        {1:~                                                                          }|
+        {3:                                                                           }|
         :confirm w                                                                 |
-        {3:'readonly' option is set for "Xconfirm_write_ro".}                          |
-        {3:Do you wish to write anyway?}                                               |
+        {6:'readonly' option is set for "Xconfirm_write_ro".}                          |
+        {6:Do you wish to write anyway?}                                               |
         "Xconfirm_write_ro" 1L, 7B written                                         |
-        {3:Press ENTER or type command to continue}^                                    |
+        {6:Press ENTER or type command to continue}^                                    |
       ]])
     end
     eq('foobar\n', read_file('Xconfirm_write_ro'))
@@ -344,36 +338,36 @@ describe(':confirm command dialog', function()
     feed(':set noro | silent undo | confirm w\n')
     screen:expect([[
       foobar                                                                     |
-      {0:~                                                                          }|
-      {1:                                                                           }|
+      {1:~                                                                          }|
+      {3:                                                                           }|
       :set noro | silent undo | confirm w                                        |
-      {3:File permissions of "Xconfirm_write_ro" are read-only.}                     |
-      {3:It may still be possible to write it.}                                      |
-      {3:Do you wish to try?}                                                        |
-      {3:(Y)es, [N]o: }^                                                              |
+      {6:File permissions of "Xconfirm_write_ro" are read-only.}                     |
+      {6:It may still be possible to write it.}                                      |
+      {6:Do you wish to try?}                                                        |
+      {6:(Y)es, [N]o: }^                                                              |
     ]])
     feed('Y')
     if is_os('win') then
       screen:expect([[
         foobar                                                                     |
-        {1:                                                                           }|
+        {3:                                                                           }|
         :set noro | silent undo | confirm w                                        |
-        {3:File permissions of "Xconfirm_write_ro" are read-only.}                     |
-        {3:It may still be possible to write it.}                                      |
-        {3:Do you wish to try?}                                                        |
+        {6:File permissions of "Xconfirm_write_ro" are read-only.}                     |
+        {6:It may still be possible to write it.}                                      |
+        {6:Do you wish to try?}                                                        |
         "Xconfirm_write_ro" [unix] 1L, 4B written                                  |
-        {3:Press ENTER or type command to continue}^                                    |
+        {6:Press ENTER or type command to continue}^                                    |
       ]])
     else
       screen:expect([[
         foobar                                                                     |
-        {1:                                                                           }|
+        {3:                                                                           }|
         :set noro | silent undo | confirm w                                        |
-        {3:File permissions of "Xconfirm_write_ro" are read-only.}                     |
-        {3:It may still be possible to write it.}                                      |
-        {3:Do you wish to try?}                                                        |
+        {6:File permissions of "Xconfirm_write_ro" are read-only.}                     |
+        {6:It may still be possible to write it.}                                      |
+        {6:Do you wish to try?}                                                        |
         "Xconfirm_write_ro" 1L, 4B written                                         |
-        {3:Press ENTER or type command to continue}^                                    |
+        {6:Press ENTER or type command to continue}^                                    |
       ]])
     end
     eq('foo\n', read_file('Xconfirm_write_ro'))
@@ -399,10 +393,10 @@ describe(':confirm command dialog', function()
       b                                                                          |
       c                                                                          |
       d                                                                          |
-      {1:                                                                           }|
+      {3:                                                                           }|
       :confirm 2,3w                                                              |
-      {3:Write partial file?}                                                        |
-      {3:(Y)es, [N]o: }^                                                              |
+      {6:Write partial file?}                                                        |
+      {6:(Y)es, [N]o: }^                                                              |
     ]])
     feed('N')
     screen:expect([[
@@ -410,7 +404,7 @@ describe(':confirm command dialog', function()
       b                                                                          |
       c                                                                          |
       d                                                                          |
-      {0:~                                                                          }|*2
+      {1:~                                                                          }|*2
                                                                                  |
                                                                1,1           All |
     ]])
@@ -423,10 +417,10 @@ describe(':confirm command dialog', function()
       b                                                                          |
       c                                                                          |
       d                                                                          |
-      {1:                                                                           }|
+      {3:                                                                           }|
       :confirm 2,3w                                                              |
-      {3:Write partial file?}                                                        |
-      {3:(Y)es, [N]o: }^                                                              |
+      {6:Write partial file?}                                                        |
+      {6:(Y)es, [N]o: }^                                                              |
     ]])
     feed('Y')
     if is_os('win') then
@@ -434,22 +428,22 @@ describe(':confirm command dialog', function()
         a                                                                          |
         b                                                                          |
         c                                                                          |
-        {1:                                                                           }|
+        {3:                                                                           }|
         :confirm 2,3w                                                              |
-        {3:Write partial file?}                                                        |
+        {6:Write partial file?}                                                        |
         "Xwrite_partial" [New][unix] 2L, 4B written                                |
-        {3:Press ENTER or type command to continue}^                                    |
+        {6:Press ENTER or type command to continue}^                                    |
       ]])
     else
       screen:expect([[
         a                                                                          |
         b                                                                          |
         c                                                                          |
-        {1:                                                                           }|
+        {3:                                                                           }|
         :confirm 2,3w                                                              |
-        {3:Write partial file?}                                                        |
+        {6:Write partial file?}                                                        |
         "Xwrite_partial" [New] 2L, 4B written                                      |
-        {3:Press ENTER or type command to continue}^                                    |
+        {6:Press ENTER or type command to continue}^                                    |
       ]])
     end
     eq('b\nc\n', read_file('Xwrite_partial'))

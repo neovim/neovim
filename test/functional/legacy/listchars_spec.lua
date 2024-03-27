@@ -102,12 +102,6 @@ describe("'listchars'", function()
 
   it('"exceeds" character does not appear in foldcolumn vim-patch:8.2.3121', function()
     local screen = Screen.new(60, 10)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [2] = { bold = true, reverse = true }, -- StatusLine
-      [3] = { reverse = true }, -- StatusLineNC
-      [4] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue }, -- FoldColumn, SignColumn
-    })
     screen:attach()
     exec([[
       call setline(1, ['aaa', '', 'a', 'aaaaaa'])
@@ -117,83 +111,83 @@ describe("'listchars'", function()
     ]])
     feed('13<C-W>>')
     screen:expect([[
-      {4:   }aaa              │{4:   }a{1:>}│{4:   }^aaa                           |
-      {4:   }                 │{4:   }  │{4:   }                              |
-      {4:   }a                │{4:   }a │{4:   }a                             |
-      {4:   }aaaaaa           │{4:   }a{1:>}│{4:   }aaaaaa                        |
+      {7:   }aaa              │{7:   }a{1:>}│{7:   }^aaa                           |
+      {7:   }                 │{7:   }  │{7:   }                              |
+      {7:   }a                │{7:   }a │{7:   }a                             |
+      {7:   }aaaaaa           │{7:   }a{1:>}│{7:   }aaaaaa                        |
       {1:~                   }│{1:~    }│{1:~                                }|*4
-      {3:[No Name] [+]        <[+]  }{2:[No Name] [+]                    }|
+      {2:[No Name] [+]        <[+]  }{3:[No Name] [+]                    }|
                                                                   |
     ]])
     feed('<C-W>>')
     screen:expect([[
-      {4:   }aaa              │{4:   }{1:>}│{4:   }^aaa                            |
-      {4:   }                 │{4:   } │{4:   }                               |
-      {4:   }a                │{4:   }a│{4:   }a                              |
-      {4:   }aaaaaa           │{4:   }{1:>}│{4:   }aaaaaa                         |
+      {7:   }aaa              │{7:   }{1:>}│{7:   }^aaa                            |
+      {7:   }                 │{7:   } │{7:   }                               |
+      {7:   }a                │{7:   }a│{7:   }a                              |
+      {7:   }aaaaaa           │{7:   }{1:>}│{7:   }aaaaaa                         |
       {1:~                   }│{1:~   }│{1:~                                 }|*4
-      {3:[No Name] [+]        <+]  }{2:[No Name] [+]                     }|
+      {2:[No Name] [+]        <+]  }{3:[No Name] [+]                     }|
                                                                   |
     ]])
     feed('<C-W>>')
     screen:expect([[
-      {4:   }aaa              │{4:   }│{4:   }^aaa                             |
-      {4:   }                 │{4:   }│{4:   }                                |
-      {4:   }a                │{4:   }│{4:   }a                               |
-      {4:   }aaaaaa           │{4:   }│{4:   }aaaaaa                          |
+      {7:   }aaa              │{7:   }│{7:   }^aaa                             |
+      {7:   }                 │{7:   }│{7:   }                                |
+      {7:   }a                │{7:   }│{7:   }a                               |
+      {7:   }aaaaaa           │{7:   }│{7:   }aaaaaa                          |
       {1:~                   }│{1:~  }│{1:~                                  }|*4
-      {3:[No Name] [+]        <]  }{2:[No Name] [+]                      }|
+      {2:[No Name] [+]        <]  }{3:[No Name] [+]                      }|
                                                                   |
     ]])
     feed('<C-W>>')
     screen:expect([[
-      {4:   }aaa              │{4:  }│{4:   }^aaa                              |
-      {4:   }                 │{4:  }│{4:   }                                 |
-      {4:   }a                │{4:  }│{4:   }a                                |
-      {4:   }aaaaaa           │{4:  }│{4:   }aaaaaa                           |
+      {7:   }aaa              │{7:  }│{7:   }^aaa                              |
+      {7:   }                 │{7:  }│{7:   }                                 |
+      {7:   }a                │{7:  }│{7:   }a                                |
+      {7:   }aaaaaa           │{7:  }│{7:   }aaaaaa                           |
       {1:~                   }│{1:~ }│{1:~                                   }|*4
-      {3:[No Name] [+]        <  }{2:[No Name] [+]                       }|
+      {2:[No Name] [+]        <  }{3:[No Name] [+]                       }|
                                                                   |
     ]])
     feed('<C-W>>')
     screen:expect([[
-      {4:   }aaa              │{4: }│{4:   }^aaa                               |
-      {4:   }                 │{4: }│{4:   }                                  |
-      {4:   }a                │{4: }│{4:   }a                                 |
-      {4:   }aaaaaa           │{4: }│{4:   }aaaaaa                            |
+      {7:   }aaa              │{7: }│{7:   }^aaa                               |
+      {7:   }                 │{7: }│{7:   }                                  |
+      {7:   }a                │{7: }│{7:   }a                                 |
+      {7:   }aaaaaa           │{7: }│{7:   }aaaaaa                            |
       {1:~                   }│{1:~}│{1:~                                    }|*4
-      {3:[No Name] [+]        < }{2:[No Name] [+]                        }|
+      {2:[No Name] [+]        < }{3:[No Name] [+]                        }|
                                                                   |
     ]])
     feed('<C-W>h')
     feed_command('set nowrap foldcolumn=4')
     screen:expect([[
-      {4:   }aaa              │{4:      }^aaa           │{4:   }aaa            |
-      {4:   }                 │{4:      }              │{4:   }               |
-      {4:   }a                │{4:      }a             │{4:   }a              |
-      {4:   }aaaaaa           │{4:      }aaaaaa        │{4:   }aaaaaa         |
+      {7:   }aaa              │{7:      }^aaa           │{7:   }aaa            |
+      {7:   }                 │{7:      }              │{7:   }               |
+      {7:   }a                │{7:      }a             │{7:   }a              |
+      {7:   }aaaaaa           │{7:      }aaaaaa        │{7:   }aaaaaa         |
       {1:~                   }│{1:~                   }│{1:~                 }|*4
-      {3:[No Name] [+]        }{2:[No Name] [+]        }{3:[No Name] [+]     }|
+      {2:[No Name] [+]        }{3:[No Name] [+]        }{2:[No Name] [+]     }|
       :set nowrap foldcolumn=4                                    |
     ]])
     feed('15<C-W><lt>')
     screen:expect([[
-      {4:   }aaa              │{4:     }│{4:   }aaa                           |
-      {4:   }                 │{4:     }│{4:   }                              |
-      {4:   }a                │{4:     }│{4:   }a                             |
-      {4:   }aaaaaa           │{4:    ^ }│{4:   }aaaaaa                        |
+      {7:   }aaa              │{7:     }│{7:   }aaa                           |
+      {7:   }                 │{7:     }│{7:   }                              |
+      {7:   }a                │{7:     }│{7:   }a                             |
+      {7:   }aaaaaa           │{7:    ^ }│{7:   }aaaaaa                        |
       {1:~                   }│{1:~    }│{1:~                                }|*4
-      {3:[No Name] [+]        }{2:<[+]  }{3:[No Name] [+]                    }|
+      {2:[No Name] [+]        }{3:<[+]  }{2:[No Name] [+]                    }|
       :set nowrap foldcolumn=4                                    |
     ]])
     feed('4<C-W><lt>')
     screen:expect([[
-      {4:   }aaa              │{4: }│{4:   }aaa                               |
-      {4:   }                 │{4: }│{4:   }                                  |
-      {4:   }a                │{4: }│{4:   }a                                 |
-      {4:   }aaaaaa           │{4:^ }│{4:   }aaaaaa                            |
+      {7:   }aaa              │{7: }│{7:   }aaa                               |
+      {7:   }                 │{7: }│{7:   }                                  |
+      {7:   }a                │{7: }│{7:   }a                                 |
+      {7:   }aaaaaa           │{7:^ }│{7:   }aaaaaa                            |
       {1:~                   }│{1:~}│{1:~                                    }|*4
-      {3:[No Name] [+]        }{2:< }{3:[No Name] [+]                        }|
+      {2:[No Name] [+]        }{3:< }{2:[No Name] [+]                        }|
       :set nowrap foldcolumn=4                                    |
     ]])
   end)

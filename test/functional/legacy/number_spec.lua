@@ -214,10 +214,6 @@ describe("'number' and 'relativenumber'", function()
   -- oldtest: Test_relativenumber_callback()
   it('relative line numbers are updated if cursor is moved from timer', function()
     local screen = Screen.new(50, 8)
-    screen:set_default_attr_ids({
-      [1] = { foreground = Screen.colors.Brown }, -- LineNr
-      [2] = { bold = true, foreground = Screen.colors.Blue1 }, -- NonText
-    })
     screen:attach()
     exec([[
       call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
@@ -232,22 +228,22 @@ describe("'number' and 'relativenumber'", function()
     ]])
     screen:expect({
       grid = [[
-      {1:  3 }aaaaa                                         |
-      {1:  2 }bbbbb                                         |
-      {1:  1 }ccccc                                         |
-      {1:  0 }^ddddd                                         |
-      {2:~                                                 }|*3
+      {8:  3 }aaaaa                                         |
+      {8:  2 }bbbbb                                         |
+      {8:  1 }ccccc                                         |
+      {8:  0 }^ddddd                                         |
+      {1:~                                                 }|*3
                                                         |
     ]],
       timeout = 100,
     })
     screen:expect({
       grid = [[
-      {1:  0 }^aaaaa                                         |
-      {1:  1 }bbbbb                                         |
-      {1:  2 }ccccc                                         |
-      {1:  3 }ddddd                                         |
-      {2:~                                                 }|*3
+      {8:  0 }^aaaaa                                         |
+      {8:  1 }bbbbb                                         |
+      {8:  2 }ccccc                                         |
+      {8:  3 }ddddd                                         |
+      {1:~                                                 }|*3
                                                         |
     ]],
     })
@@ -256,10 +252,6 @@ describe("'number' and 'relativenumber'", function()
   -- oldtest: Test_number_insert_delete_lines()
   it('line numbers are updated when deleting/inserting lines', function()
     local screen = Screen.new(50, 8)
-    screen:set_default_attr_ids({
-      [1] = { foreground = Screen.colors.Brown }, -- LineNr
-      [2] = { bold = true, foreground = Screen.colors.Blue1 }, -- NonText
-    })
     screen:attach()
     exec([[
       call setline(1, range(1, 7))
@@ -267,37 +259,37 @@ describe("'number' and 'relativenumber'", function()
       call cursor(2, 1)
     ]])
     local snapshot1 = [[
-      {1:  1 }1                                             |
-      {1:  2 }^2                                             |
-      {1:  3 }3                                             |
-      {1:  4 }4                                             |
-      {1:  5 }5                                             |
-      {1:  6 }6                                             |
-      {1:  7 }7                                             |
+      {8:  1 }1                                             |
+      {8:  2 }^2                                             |
+      {8:  3 }3                                             |
+      {8:  4 }4                                             |
+      {8:  5 }5                                             |
+      {8:  6 }6                                             |
+      {8:  7 }7                                             |
                                                         |
     ]]
     screen:expect(snapshot1)
     feed('dd')
     screen:expect([[
-      {1:  1 }1                                             |
-      {1:  2 }^3                                             |
-      {1:  3 }4                                             |
-      {1:  4 }5                                             |
-      {1:  5 }6                                             |
-      {1:  6 }7                                             |
-      {2:~                                                 }|
+      {8:  1 }1                                             |
+      {8:  2 }^3                                             |
+      {8:  3 }4                                             |
+      {8:  4 }5                                             |
+      {8:  5 }6                                             |
+      {8:  6 }7                                             |
+      {1:~                                                 }|
                                                         |
     ]])
     feed('P')
     screen:expect(snapshot1)
     feed('2dd')
     screen:expect([[
-      {1:  1 }1                                             |
-      {1:  2 }^4                                             |
-      {1:  3 }5                                             |
-      {1:  4 }6                                             |
-      {1:  5 }7                                             |
-      {2:~                                                 }|*2
+      {8:  1 }1                                             |
+      {8:  2 }^4                                             |
+      {8:  3 }5                                             |
+      {8:  4 }6                                             |
+      {8:  5 }7                                             |
+      {1:~                                                 }|*2
                                                         |
     ]])
     feed('P')

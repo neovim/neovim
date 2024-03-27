@@ -15,12 +15,6 @@ describe('cmdline', function()
   it('is cleared when switching tabs', function()
     local screen = Screen.new(30, 10)
     screen:attach()
-    screen:set_default_attr_ids {
-      [1] = { underline = true, background = Screen.colors.LightGrey },
-      [2] = { bold = true },
-      [3] = { reverse = true },
-      [4] = { bold = true, foreground = Screen.colors.Blue1 },
-    }
 
     feed_command([[call setline(1, range(30))]])
     screen:expect([[
@@ -39,9 +33,9 @@ describe('cmdline', function()
     feed [[:tabnew<cr>]]
     screen:expect {
       grid = [[
-      {1: + [No Name] }{2: [No Name] }{3:     }{1:X}|
+      {24: + [No Name] }{5: [No Name] }{2:     }{24:X}|
       ^                              |
-      {4:~                             }|*7
+      {1:~                             }|*7
       :tabnew                       |
     ]],
     }
@@ -49,9 +43,9 @@ describe('cmdline', function()
     feed [[<C-w>-<C-w>-]]
     screen:expect {
       grid = [[
-      {1: + [No Name] }{2: [No Name] }{3:     }{1:X}|
+      {24: + [No Name] }{5: [No Name] }{2:     }{24:X}|
       ^                              |
-      {4:~                             }|*5
+      {1:~                             }|*5
                                     |*3
     ]],
     }
@@ -59,7 +53,7 @@ describe('cmdline', function()
     feed [[gt]]
     screen:expect {
       grid = [[
-      {2: + [No Name] }{1: [No Name] }{3:     }{1:X}|
+      {5: + [No Name] }{24: [No Name] }{2:     }{24:X}|
       ^0                             |
       1                             |
       2                             |
@@ -74,9 +68,9 @@ describe('cmdline', function()
 
     feed [[gt]]
     screen:expect([[
-      {1: + [No Name] }{2: [No Name] }{3:     }{1:X}|
+      {24: + [No Name] }{5: [No Name] }{2:     }{24:X}|
       ^                              |
-      {4:~                             }|*5
+      {1:~                             }|*5
                                     |*3
     ]])
   end)
@@ -109,10 +103,6 @@ describe('cmdline', function()
   -- oldtest: Test_cmdline_redraw_tabline()
   it('tabline is redrawn on entering cmdline', function()
     local screen = Screen.new(30, 6)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { reverse = true }, -- TabLineFill
-    })
     screen:attach()
     exec([[
       set showtabline=2
@@ -120,9 +110,9 @@ describe('cmdline', function()
     ]])
     feed(':')
     screen:expect([[
-      {1:foo                           }|
+      {2:foo                           }|
                                     |
-      {0:~                             }|*3
+      {1:~                             }|*3
       :^                             |
     ]])
   end)
@@ -130,9 +120,6 @@ describe('cmdline', function()
   -- oldtest: Test_redraw_in_autocmd()
   it('cmdline cursor position is correct after :redraw with cmdheight=2', function()
     local screen = Screen.new(30, 6)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-    })
     screen:attach()
     exec([[
       set cmdheight=2
@@ -141,7 +128,7 @@ describe('cmdline', function()
     feed(':for i in range(3)<CR>')
     screen:expect([[
                                     |
-      {0:~                             }|*3
+      {1:~                             }|*3
       :for i in range(3)            |
       :  ^                           |
     ]])
@@ -149,7 +136,7 @@ describe('cmdline', function()
     -- Note: this may still be considered broken, ref #18140
     screen:expect([[
                                     |
-      {0:~                             }|*3
+      {1:~                             }|*3
       :  :let i =^                   |
                                     |
     ]])
@@ -157,10 +144,6 @@ describe('cmdline', function()
 
   it("setting 'cmdheight' works after outputting two messages vim-patch:9.0.0665", function()
     local screen = Screen.new(60, 8)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { bold = true, reverse = true }, -- StatusLine
-    })
     screen:attach()
     exec([[
       set cmdheight=1 laststatus=2
@@ -175,15 +158,15 @@ describe('cmdline', function()
     feed(':call EchoTwo()')
     screen:expect([[
                                                                   |
-      {0:~                                                           }|*5
-      {1:[No Name]                                                   }|
+      {1:~                                                           }|*5
+      {3:[No Name]                                                   }|
       :call EchoTwo()^                                             |
     ]])
     feed('<CR>')
     screen:expect([[
       ^                                                            |
-      {0:~                                                           }|*5
-      {1:[No Name]                                                   }|
+      {1:~                                                           }|*5
+      {3:[No Name]                                                   }|
                                                                   |
     ]])
   end)
@@ -191,21 +174,15 @@ describe('cmdline', function()
   -- oldtest: Test_cmdheight_tabline()
   it("changing 'cmdheight' when there is a tabline", function()
     local screen = Screen.new(60, 8)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { bold = true, reverse = true }, -- StatusLine
-      [2] = { bold = true }, -- TabLineSel
-      [3] = { reverse = true }, -- TabLineFill
-    })
     screen:attach()
     api.nvim_set_option_value('laststatus', 2, {})
     api.nvim_set_option_value('showtabline', 2, {})
     api.nvim_set_option_value('cmdheight', 1, {})
     screen:expect([[
-      {2: [No Name] }{3:                                                 }|
+      {5: [No Name] }{2:                                                 }|
       ^                                                            |
-      {0:~                                                           }|*4
-      {1:[No Name]                                                   }|
+      {1:~                                                           }|*4
+      {3:[No Name]                                                   }|
                                                                   |
     ]])
   end)
@@ -213,9 +190,6 @@ describe('cmdline', function()
   -- oldtest: Test_rulerformat_position()
   it("ruler has correct position with 'rulerformat' set", function()
     local screen = Screen.new(20, 3)
-    screen:set_default_attr_ids {
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-    }
     screen:attach()
     api.nvim_set_option_value('ruler', true, {})
     api.nvim_set_option_value('rulerformat', 'longish', {})
@@ -224,7 +198,7 @@ describe('cmdline', function()
     feed [[<C-W>v<C-W>|<C-W>p]]
     screen:expect [[
                         │^ |
-      {0:~                 }│{0:~}|
+      {1:~                 }│{1:~}|
                 longish   |
     ]]
   end)

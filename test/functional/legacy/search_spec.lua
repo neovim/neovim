@@ -745,11 +745,6 @@ describe('Search highlight', function()
   -- oldtest: Test_hlsearch_dump()
   it('beyond line end vim-patch:8.2.2542', function()
     local screen = Screen.new(50, 6)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [2] = { background = Screen.colors.Yellow }, -- Search
-      [3] = { background = Screen.colors.Grey90 }, -- CursorLine
-    })
     screen:attach()
     exec([[
       set hlsearch noincsearch cursorline
@@ -759,8 +754,8 @@ describe('Search highlight', function()
     ]])
     feed([[/\_.*<CR>]])
     screen:expect([[
-      {2:xxx }                                              |*2
-      {2:^xxx }{3:                                              }|
+      {10:xxx }                                              |*2
+      {10:^xxx }{21:                                              }|
       {1:~                                                 }|*2
       /\_.*                                             |
     ]])
