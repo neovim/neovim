@@ -837,7 +837,7 @@ add_glob_target(
 # checks we ignore are meant to be removed eventually, but we can only do so
 # after we properly fix the problems without breaking CI.
 add_glob_target(
-  TARGET clang-analyzer
+  TARGET clang-analyzer-main
   COMMAND ${CLANG_TIDY_PRG}
   FILES ${NVIM_SOURCES} ${NVIM_HEADERS}
   FLAGS --quiet
@@ -852,6 +852,45 @@ add_glob_target(
   -clang-analyzer-security.insecureAPI.strcpy,
   '
   EXCLUDE ${EXCLUDE_CLANG_TIDY})
+
+add_custom_target(clang-analyzer)
+add_dependencies(clang-analyzer-main copy_compile_commands)
+add_dependencies(clang-analyzer clang-analyzer-main)
+
+function(clang_analyzer)
+  cmake_parse_arguments(ARG
+    ""
+    "CHECK"
+    "EXCLUDE_FILES"
+    ${ARGN})
+
+  add_glob_target(
+    TARGET ${ARG_CHECK}
+    COMMAND ${CLANG_TIDY_PRG}
+    FILES ${NVIM_SOURCES} ${NVIM_HEADERS}
+    FLAGS --quiet
+    --checks='
+    -*,
+    ${ARG_CHECK},
+    '
+    EXCLUDE ${EXCLUDE_CLANG_TIDY} ${ARG_EXCLUDE_FILES})
+
+  add_dependencies(clang-analyzer ${ARG_CHECK})
+  add_dependencies(${ARG_CHECK} copy_compile_commands)
+endfunction()
+
+# TODO(dundargoc): remove exclude files after fixing the corresponding error
+clang_analyzer(CHECK clang-analyzer-core.UndefinedBinaryOperatorResult
+  EXCLUDE_FILES memfile.c marktree.c)
+
+clang_analyzer(CHECK clang-analyzer-core.NonNullParamChecker
+  EXCLUDE_FILES window.c)
+
+clang_analyzer(CHECK clang-analyzer-core.NullDereference
+  EXCLUDE_FILES ex_cmds.c move.c bufwrite.c diff.c eval/funcs.c buffer.c undo.c window.c)
+
+clang_analyzer(CHECK clang-analyzer-core.uninitialized.Assign
+  EXCLUDE_FILES bufwrite.c marktree.c)
 
 add_custom_target(copy_compile_commands
   COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/compile_commands.json ${PROJECT_SOURCE_DIR}/compile_commands.json)
