@@ -91,6 +91,7 @@ return {
     {
       abbreviation = 'al',
       defaults = { if_true = 224 },
+      enable_if = false,
       full_name = 'aleph',
       scope = { 'global' },
       short_desc = N_('ASCII code of the letter Aleph (Hebrew)'),
@@ -5459,7 +5460,6 @@ return {
         When on, the mouse pointer is hidden when characters are typed.
         The mouse pointer is restored when the mouse is moved.
       ]=],
-      enable_if = false,
       full_name = 'mousehide',
       redraw = { 'ui_option' },
       scope = { 'global' },
@@ -5875,6 +5875,7 @@ return {
     {
       abbreviation = 'pt',
       defaults = { if_true = '' },
+      enable_if = false,
       full_name = 'pastetoggle',
       scope = { 'global' },
       short_desc = N_('No description'),
@@ -8767,6 +8768,7 @@ return {
     {
       abbreviation = 'tenc',
       defaults = { if_true = '' },
+      enable_if = false,
       full_name = 'termencoding',
       scope = { 'global' },
       short_desc = N_('Terminal encoding'),
