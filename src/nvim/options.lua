@@ -1341,7 +1341,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      hidden = true,
+      immutable = true,
     },
     {
       abbreviation = 'cpt',
@@ -2300,7 +2300,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      hidden = true,
+      immutable = true,
     },
     {
       abbreviation = 'emo',
@@ -3889,7 +3889,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      hidden = true,
+      immutable = true,
     },
     {
       abbreviation = 'hkp',
@@ -3898,7 +3898,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      hidden = true,
+      immutable = true,
     },
     {
       abbreviation = 'hls',
@@ -4296,7 +4296,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      hidden = true,
+      immutable = true,
     },
     {
       abbreviation = 'isf',
@@ -5147,7 +5147,7 @@ return {
       scope = { 'global' },
       short_desc = N_('maximum nr of combining characters displayed'),
       type = 'number',
-      immutable = true,
+      hidden = true,
     },
     {
       abbreviation = 'mfd',
@@ -6048,7 +6048,7 @@ return {
       scope = { 'global' },
       short_desc = N_('enable prompt in Ex mode'),
       type = 'boolean',
-      hidden = true,
+      immutable = true,
     },
     {
       abbreviation = 'pb',
@@ -6305,7 +6305,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      hidden = true,
+      immutable = true,
     },
     {
       defaults = { if_true = 2 },
@@ -8844,7 +8844,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      hidden = true,
+      immutable = true,
     },
     {
       abbreviation = 'tw',
@@ -9089,7 +9089,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'boolean',
-      hidden = true,
+      immutable = true,
     },
     {
       abbreviation = 'udir',

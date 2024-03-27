@@ -3481,11 +3481,11 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
     .os_win = curwin
   };
 
-  if (direct || opt->immutable) {
-    // Don't do any extra processing if setting directly or if option is immutable.
+  if (direct || opt->hidden) {
+    // Don't do any extra processing if setting directly or if option is hidden.
   }
-  // Disallow changing hidden options.
-  else if (opt->hidden && !optval_equal(old_value, new_value)) {
+  // Disallow changing immutable options.
+  else if (opt->immutable && !optval_equal(old_value, new_value)) {
     errmsg = e_unsupportedoption;
   }
   // Disallow changing some options from secure mode.
@@ -3509,9 +3509,9 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
     restore_chartab = did_set_cb_args.os_restore_chartab;
   }
 
-  // If option is immutable or if an error is detected, restore the previous value and don't do any
+  // If option is hidden or if an error is detected, restore the previous value and don't do any
   // further processing.
-  if (opt->immutable || errmsg != NULL) {
+  if (opt->hidden || errmsg != NULL) {
     set_option_varp(opt_idx, varp, old_value, true);
     // When resetting some values, need to act on it.
     if (restore_chartab) {
