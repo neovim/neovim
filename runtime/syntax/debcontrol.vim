@@ -3,7 +3,7 @@
 " Maintainer:  Debian Vim Maintainers
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2023 Dec 22
+" Last Change: 2024 Mar 26
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/main/syntax/debcontrol.vim
 
 " Standard syntax initialization
@@ -93,7 +93,7 @@ syn case ignore
 
 " Catch-all for the legal fields
 syn region debcontrolField matchgroup=debcontrolKey start="^\%(\%(XSBC-Original-\)\=Maintainer\|Standards-Version\|Bugs\|Origin\|X[SB]-Python-Version\|\%(XS-\)\=Vcs-Mtn\|\%(XS-\)\=Testsuite\%(-Triggers\)\=\|Build-Profiles\|Tag\|Subarchitecture\|Kernel-Version\|Installer-Menu-Item\): " end="$" contains=debcontrolVariable,debcontrolEmail oneline
-syn region debcontrolMultiField matchgroup=debcontrolKey start="^\%(Build-\%(Conflicts\|Depends\)\%(-Arch\|-Indep\)\=\|\%(Pre-\)\=Depends\|Recommends\|Suggests\|Breaks\|Enhances\|Replaces\|Conflicts\|Provides\|Built-Using\|Uploaders\|X[SBC]\{0,3\}\%(Private-\)\=-[-a-zA-Z0-9]\+\): *" skip="^[ \t]" end="^$"me=s-1 end="^[^ \t#]"me=s-1 contains=debcontrolEmail,debcontrolVariable,debcontrolComment
+syn region debcontrolMultiField matchgroup=debcontrolKey start="^\%(Build-\%(Conflicts\|Depends\)\%(-Arch\|-Indep\)\=\|\%(Pre-\)\=Depends\|Recommends\|Suggests\|Breaks\|Enhances\|Replaces\|Conflicts\|Provides\|Built-Using\|Static-Built-Using\|Uploaders\|X[SBC]\{0,3\}\%(Private-\)\=-[-a-zA-Z0-9]\+\): *" skip="^[ \t]" end="^$"me=s-1 end="^[^ \t#]"me=s-1 contains=debcontrolEmail,debcontrolVariable,debcontrolComment
 syn region debcontrolMultiFieldSpell matchgroup=debcontrolKey start="^Description: *" skip="^[ \t]" end="^$"me=s-1 end="^[^ \t#]"me=s-1 contains=debcontrolEmail,debcontrolVariable,debcontrolComment,@Spell
 
 " Fields for which we do strict syntax checking
