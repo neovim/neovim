@@ -339,7 +339,7 @@ static void parse_msgpack(Channel *channel)
   }
 
   if (unpacker_closed(p)) {
-    chan_close_with_error(channel, p->unpack_error.msg, LOGLVL_ERR);
+    chan_close_with_error(channel, p->unpack_error.msg, LOGLVL_INF);
     api_clear_error(&p->unpack_error);
   }
 }
