@@ -1012,6 +1012,9 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                   request before sending kill -15. If set to
                                   false, nvim exits immediately after sending
                                   the "shutdown" request to the server.
+                                • {progress_on_init}? (`boolean`, default:
+                                  `true`) Send a progress token on
+                                  initialization
       • {get_language_id}       (`fun(bufnr: integer, filetype: string): string`)
       • {capabilities}          (`lsp.ClientCapabilities`) The capabilities
                                 provided by the client (editor or tool)
@@ -1183,6 +1186,9 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 request before sending kill -15. If set to
                                 false, nvim exits immediately after sending
                                 the "shutdown" request to the server.
+                              • {progress_on_init}? (`boolean`, default:
+                                `true`) Send a progress token on
+                                initialization
       • {root_dir}?           (`string`) Directory where the LSP server will
                               base its workspaceFolders, rootUri, and rootPath
                               on initialization.

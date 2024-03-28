@@ -40,7 +40,7 @@ The following changes may require adaptations in user config or plugins.
     set selection=exclusive
     set selectmode=mouse,key
     set mousemodel=popup
-    set keymodel=startsel,stopsel
+    setn keymodel=startsel,stopsel
 <
 • When switching windows, |CursorMoved| autocommands trigger when Nvim is back
   in the main loop rather than immediately. This is more compatible with Vim.
@@ -228,6 +228,9 @@ The following new APIs and features were added.
     (e.g. `commitCharacters`). Note that this might affect plugins and
     language servers that don't support the feature, and in such cases the
     respective capability can be unset.
+  • LSP client now supports sending a progress token on initialization via
+    the `progress_on_init` flag in `ClientConfig`
+
 
 • Treesitter
   • Bundled parsers and queries (highlight, folds) for Markdown, Python, and

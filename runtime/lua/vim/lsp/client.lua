@@ -28,6 +28,10 @@ local validate = vim.validate
 --- immediately after sending the "shutdown" request to the server.
 --- (default: `false`)
 --- @field exit_timeout integer|false
+---
+--- Send a progress token on initialization
+--- (default: `true`)
+--- @field progress_on_init? boolean
 
 --- @class vim.lsp.ClientConfig
 --- command string[] that launches the language
@@ -370,6 +374,7 @@ local function validate_config(config)
     offset_encoding = { config.offset_encoding, 's', true },
     flags = { config.flags, 't', true },
     get_language_id = { config.get_language_id, 'f', true },
+    progress_on_init = { config.progress}
   })
 
   assert(
@@ -580,6 +585,10 @@ function Client:initialize()
     capabilities = self.capabilities,
     trace = self._trace,
   }
+
+  if vim.F.if_nil(config.flags.progress_on_init, true) then
+    initialize_params.work_done_token = "1"
+  end
 
   self:_run_callbacks(
     { self._before_init_cb },
