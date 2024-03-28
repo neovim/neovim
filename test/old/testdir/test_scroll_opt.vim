@@ -1008,16 +1008,37 @@ func Test_smoothscroll_page()
   call setline(1, 'abcde '->repeat(150))
 
   exe "norm! \<C-F>"
-  call assert_equal(320, winsaveview().skipcol)
+  call assert_equal(400, winsaveview().skipcol)
   exe "norm! \<C-F>"
-  call assert_equal(640, winsaveview().skipcol)
+  call assert_equal(800, winsaveview().skipcol)
   exe "norm! \<C-F>"
   call assert_equal(880, winsaveview().skipcol)
   exe "norm! \<C-B>"
-  call assert_equal(560, winsaveview().skipcol)
+  call assert_equal(480, winsaveview().skipcol)
   exe "norm! \<C-B>"
-  call assert_equal(240, winsaveview().skipcol)
+  call assert_equal(80, winsaveview().skipcol)
   exe "norm! \<C-B>"
+  call assert_equal(0, winsaveview().skipcol)
+
+  exe "norm! \<C-D>"
+  call assert_equal(200, winsaveview().skipcol)
+  exe "norm! \<C-D>"
+  call assert_equal(400, winsaveview().skipcol)
+  exe "norm! \<C-D>"
+  call assert_equal(600, winsaveview().skipcol)
+  exe "norm! \<C-D>"
+  call assert_equal(800, winsaveview().skipcol)
+  exe "norm! \<C-D>"
+  call assert_equal(880, winsaveview().skipcol)
+  exe "norm! \<C-U>"
+  call assert_equal(680, winsaveview().skipcol)
+  exe "norm! \<C-U>"
+  call assert_equal(480, winsaveview().skipcol)
+  exe "norm! \<C-U>"
+  call assert_equal(280, winsaveview().skipcol)
+  exe "norm! \<C-U>"
+  call assert_equal(80, winsaveview().skipcol)
+  exe "norm! \<C-U>"
   call assert_equal(0, winsaveview().skipcol)
 
   set smoothscroll&

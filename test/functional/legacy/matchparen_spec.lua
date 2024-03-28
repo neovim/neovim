@@ -19,7 +19,7 @@ describe('matchparen', function()
       call cursor(5, 1)
     ]])
 
-    feed('V<c-d><c-d>')
+    feed('V<c-d><c-d>3j')
     screen:expect([[
       {17:{}                             |
       {17:}}                             |

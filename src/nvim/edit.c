@@ -4193,7 +4193,7 @@ static void ins_pageup(void)
   }
 
   pos_T tpos = curwin->w_cursor;
-  if (onepage(BACKWARD, 1) == OK) {
+  if (pagescroll(BACKWARD, 1, false) == OK) {
     start_arrow(&tpos);
     can_cindent = true;
   } else {
@@ -4238,7 +4238,7 @@ static void ins_pagedown(void)
   }
 
   pos_T tpos = curwin->w_cursor;
-  if (onepage(FORWARD, 1) == OK) {
+  if (pagescroll(FORWARD, 1, false) == OK) {
     start_arrow(&tpos);
     can_cindent = true;
   } else {

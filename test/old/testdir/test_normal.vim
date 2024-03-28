@@ -1283,9 +1283,13 @@ func Test_vert_scroll_cmds()
   exe "normal \<C-D>"
   call assert_equal(46, line('.'))
   exe "normal \<C-U>"
-  call assert_equal(36, line('.'))
+  call assert_equal(36, line('w0'))
+  call assert_equal(46, line('.'))
   exe "normal \<C-U>"
-  call assert_equal(10, line('.'))
+  call assert_equal(1,  line('w0'))
+  call assert_equal(40, line('.'))
+  exe "normal \<C-U>"
+  call assert_equal(30, line('.'))
   exe "normal \<C-U>"
   call assert_equal(1, line('.'))
   set scroll&
@@ -1306,9 +1310,8 @@ func Test_vert_scroll_cmds()
   call assert_equal(50, line('.'))
   call assert_equal(100, line('w$'))
   normal z.
-  let lnum = winline()
   exe "normal \<C-D>"
-  call assert_equal(lnum, winline())
+  call assert_equal(1, winline())
   call assert_equal(50, line('.'))
   normal zt
   exe "normal \<C-D>"
@@ -3077,7 +3080,8 @@ func Test_normal42_halfpage()
   call assert_equal(2, &scroll)
   set scroll=5
   exe "norm! \<c-u>"
-  call assert_equal('3', getline('.'))
+  call assert_equal('3', getline('w0'))
+  call assert_equal('8', getline('.'))
   1
   set scrolloff=5
   exe "norm! \<c-d>"
@@ -3823,11 +3827,11 @@ func Test_normal_vert_scroll_longline()
   call assert_equal(11, line('.'))
   call assert_equal(1, winline())
   exe "normal \<C-B>"
-  call assert_equal(11, line('.'))
-  call assert_equal(9, winline())
+  call assert_equal(10, line('.'))
+  call assert_equal(10, winline())
   exe "normal \<C-B>\<C-B>"
   call assert_equal(5, line('.'))
-  call assert_equal(1, winline())
+  call assert_equal(5, winline())
 
   bwipe!
 endfunc
@@ -4196,11 +4200,15 @@ func Test_single_line_scroll()
   norm! {
   call assert_equal([0, 1, 1, 0], getpos('.'))
 
-  " Ctrl-B scrolls up with hidden "above" virtual text.
+  " Ctrl-B/Ctrl-U scroll up with hidden "above" virtual text.
   set smoothscroll
   exe "normal \<C-E>"
   call assert_notequal(0, winsaveview().skipcol)
   exe "normal \<C-B>"
+  call assert_equal(0, winsaveview().skipcol)
+  exe "normal \<C-E>"
+  call assert_notequal(0, winsaveview().skipcol)
+  exe "normal \<C-U>"
   call assert_equal(0, winsaveview().skipcol)
 
   set smoothscroll&

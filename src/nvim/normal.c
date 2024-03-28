@@ -2258,7 +2258,7 @@ static void nv_page(cmdarg_T *cap)
       goto_tabpage(cap->count0);
     }
   } else {
-    onepage(cap->arg, cap->count1);
+    pagescroll(cap->arg, cap->count1, false);
   }
 }
 
@@ -6394,12 +6394,8 @@ static void nv_at(cmdarg_T *cap)
 /// Handle the CTRL-U and CTRL-D commands.
 static void nv_halfpage(cmdarg_T *cap)
 {
-  if ((cap->cmdchar == Ctrl_U && curwin->w_cursor.lnum == 1)
-      || (cap->cmdchar == Ctrl_D
-          && curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count)) {
-    clearopbeep(cap->oap);
-  } else if (!checkclearop(cap->oap)) {
-    halfpage(cap->cmdchar == Ctrl_D, cap->count0);
+  if (!checkclearop(cap->oap)) {
+    pagescroll(cap->cmdchar == Ctrl_D, cap->count0, true);
   }
 }
 
