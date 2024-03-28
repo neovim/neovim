@@ -100,6 +100,7 @@ local function add_keyset(val)
 end
 
 local ui_options_text = nil
+local ui_element_tags_text = nil
 
 -- read each input file, parse and append to the api metadata
 for i = pre_args + 1, #arg do
@@ -124,6 +125,9 @@ for i = pre_args + 1, #arg do
   end
 
   ui_options_text = ui_options_text or string.match(text, 'ui_ext_names%[][^{]+{([^}]+)}')
+  ui_element_tags_text = ui_element_tags_text
+    or string.match(text, 'ui_element_tag_names%[][^{]+{([^}]+)}')
+
   input:close()
 end
 
@@ -229,6 +233,11 @@ for x in string.gmatch(ui_options_text, '"([a-z][a-z_]+)"') do
   table.insert(ui_options, x)
 end
 
+local ui_element_tags = {}
+for x in string.gmatch(ui_element_tags_text, '"(%a+)"') do
+  table.insert(ui_element_tags, x)
+end
+
 local version = require 'nvim_version'
 local git_version = io.open(git_version_inputf):read '*a'
 local version_build = string.match(git_version, '#define NVIM_VERSION_BUILD "([^"]+)"') or vim.NIL
@@ -253,7 +262,7 @@ local function put(item, item2)
   end
 end
 
-fixdict(6)
+fixdict(7)
 
 put('version')
 fixdict(1 + #version)
@@ -268,6 +277,7 @@ put('functions', exported_functions)
 put('ui_events')
 table.insert(pieces, io.open(ui_metadata_inputf, 'rb'):read('*all'))
 put('ui_options', ui_options)
+put('ui_element_tags', ui_element_tags)
 
 put('error_types')
 fixdict(2)

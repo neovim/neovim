@@ -343,6 +343,9 @@ The following new APIs and features were added.
 
 • |extmarks| option `scoped`: only show the extmarks in its namespace's scope.
 
+• Added a new UI extension `ext_elementtype`, which makes it possible for UIs
+  to track UI elements like floating window borders. |ui-elementtype|
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

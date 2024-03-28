@@ -715,7 +715,7 @@ void end_search_hl(void)
   screen_search_hl.rm.regprog = NULL;
 }
 
-static void win_redr_bordertext(win_T *wp, VirtText vt, int col)
+static void win_redr_bordertext(win_T *wp, VirtText vt, int col, element_type_tag_t placement)
 {
   for (size_t i = 0; i < kv_size(vt);) {
     int attr = 0;
@@ -724,6 +724,7 @@ static void win_redr_bordertext(win_T *wp, VirtText vt, int col)
       break;
     }
     attr = hl_apply_winblend(wp, attr);
+    attr = hl_add_element_tags(attr, ET_FLOATBORDER | ET_FLOATTITLE | placement);
     col += grid_line_puts(col, text, -1, attr);
   }
 }
@@ -773,7 +774,7 @@ static void win_redr_border(win_T *wp)
     if (wp->w_config.title) {
       int title_col = win_get_bordertext_col(icol, wp->w_config.title_width,
                                              wp->w_config.title_pos);
-      win_redr_bordertext(wp, wp->w_config.title_chunks, title_col);
+      win_redr_bordertext(wp, wp->w_config.title_chunks, title_col, ET_TOP);
     }
     if (adj[1]) {
       grid_line_put_schar(icol + adj[3], chars[2], attrs[2]);
@@ -809,7 +810,7 @@ static void win_redr_border(win_T *wp)
     if (wp->w_config.footer) {
       int footer_col = win_get_bordertext_col(icol, wp->w_config.footer_width,
                                               wp->w_config.footer_pos);
-      win_redr_bordertext(wp, wp->w_config.footer_chunks, footer_col);
+      win_redr_bordertext(wp, wp->w_config.footer_chunks, footer_col, ET_BOTTOM);
     }
     if (adj[1]) {
       grid_line_put_schar(icol + adj[3], chars[4], attrs[4]);
@@ -1316,7 +1317,9 @@ static void draw_vsep_win(win_T *wp)
   // draw the vertical separator right of this window
   for (int row = wp->w_winrow; row < W_ENDROW(wp); row++) {
     grid_line_start(&default_grid, row);
-    grid_line_put_schar(W_ENDCOL(wp), wp->w_p_fcs_chars.vert, win_hl_attr(wp, HLF_C));
+    int attr = win_hl_attr(wp, HLF_C);
+    attr = hl_add_element_tags(attr, ET_VSPLIT);
+    grid_line_put_schar(W_ENDCOL(wp), wp->w_p_fcs_chars.vert, attr);
     grid_line_flush();
   }
 }
@@ -1330,7 +1333,9 @@ static void draw_hsep_win(win_T *wp)
 
   // draw the horizontal separator below this window
   grid_line_start(&default_grid, W_ENDROW(wp));
-  grid_line_fill(wp->w_wincol, W_ENDCOL(wp), wp->w_p_fcs_chars.horiz, win_hl_attr(wp, HLF_C));
+  int attr = win_hl_attr(wp, HLF_C);
+  attr = hl_add_element_tags(attr, ET_VSPLIT);
+  grid_line_fill(wp->w_wincol, W_ENDCOL(wp), wp->w_p_fcs_chars.horiz, attr);
   grid_line_flush();
 }
 
@@ -1364,6 +1369,7 @@ static void draw_sep_connectors_win(win_T *wp)
   }
 
   int hl = win_hl_attr(wp, HLF_C);
+  hl = hl_add_element_tags(hl, ET_HSPLIT | ET_VSPLIT);
 
   // Determine which edges of the screen the window is located on so we can avoid drawing separators
   // on corners contained in those edges

@@ -28,6 +28,7 @@ describe('UI receives option updates', function()
       ttimeoutlen = 50,
       verbose = 0,
       ext_cmdline = false,
+      ext_elementtype = false,
       ext_popupmenu = false,
       ext_tabline = false,
       ext_wildmenu = false,
@@ -209,6 +210,15 @@ describe('UI receives option updates', function()
   end)
   it('from startup options with --embed', function()
     startup_test(false)
+  end)
+
+  it('ext_elementtype sets linegrid', function()
+    local expected = reset({ ext_elementtype = true })
+    expected.ext_elementtype = true
+    expected.ext_linegrid = true
+    screen:expect(function()
+      eq(expected, screen.options)
+    end)
   end)
 end)
 

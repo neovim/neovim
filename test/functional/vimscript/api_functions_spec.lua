@@ -185,7 +185,15 @@ describe('eval-API', function()
 
   it('have metadata accessible with api_info()', function()
     local api_keys = eval('sort(keys(api_info()))')
-    eq({ 'error_types', 'functions', 'types', 'ui_events', 'ui_options', 'version' }, api_keys)
+    eq({
+      'error_types',
+      'functions',
+      'types',
+      'ui_element_tags',
+      'ui_events',
+      'ui_options',
+      'version',
+    }, api_keys)
   end)
 
   it('are highlighted by vim.vim syntax file', function()

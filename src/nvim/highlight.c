@@ -37,6 +37,7 @@
 #endif
 
 static bool hlstate_active = false;
+static bool element_type_active = false;
 
 static Set(HlEntry) attr_entries = SET_INIT;
 static Map(int, int) combine_attr_entries = MAP_INIT;
@@ -59,12 +60,17 @@ void highlight_init(void)
 }
 
 /// @return true if hl table was reset
-bool highlight_use_hlstate(void)
+bool highlight_ext_enable(bool hl_state, bool element_type)
 {
-  if (hlstate_active) {
+  // Disabling is not supported
+  hl_state |= hlstate_active;
+  element_type |= element_type_active;
+
+  if (hlstate_active == hl_state && element_type_active == element_type) {
     return false;
   }
-  hlstate_active = true;
+  hlstate_active = hl_state;
+  element_type_active = element_type;
   // hl tables must now be rebuilt.
   clear_hl_tables(true);
   return true;
@@ -121,7 +127,7 @@ retry: {}
 
   // Note: internally we don't distinguish between cterm and rgb attributes,
   // remote_ui_hl_attr_define will however.
-  ui_call_hl_attr_define(id, entry.attr, entry.attr, inspect);
+  ui_call_hl_attr_define(id, entry.attr, entry.attr, inspect,  (Integer)entry.element_tags);
   arena_mem_free(arena_finish(&arena));
   return id;
 }
@@ -132,8 +138,9 @@ void ui_send_all_hls(RemoteUI *ui)
   for (size_t i = 1; i < set_size(&attr_entries); i++) {
     Arena arena = ARENA_EMPTY;
     Array inspect = hl_inspect((int)i, &arena);
-    HlAttrs attr = attr_entry(i).attr;
-    remote_ui_hl_attr_define(ui, (Integer)i, attr, attr, inspect);
+    HlEntry *entry = &attr_entry(i);
+    HlAttrs attr = entry->attr;
+    remote_ui_hl_attr_define(ui, (Integer)i, attr, attr, inspect, (Integer)entry->element_tags);
     arena_mem_free(arena_finish(&arena));
   }
   for (size_t hlf = 0; hlf < HLF_COUNT; hlf++) {
@@ -394,6 +401,20 @@ void update_window_hl(win_T *wp, bool invalid)
       if (syn_attr2entry(attr).hl_blend > 0) {
         wp->w_config.shadow = true;
       }
+      uint32_t tags = ET_FLOATBORDER;
+      if (i <= 2) {
+        tags |= ET_TOP;
+      }
+      if (i >= 4 && i <= 6) {
+        tags |= ET_BOTTOM;
+      }
+      if (i >= 6 || i == 0) {
+        tags |= ET_LEFT;
+      }
+      if (i >= 2 && i <= 4) {
+        tags |= ET_RIGHT;
+      }
+      attr = hl_add_element_tags(attr, tags);
       wp->w_config.border_attr[i] = attr;
     }
   }
@@ -658,6 +679,17 @@ int hl_combine_attr(int char_attr, int prim_attr)
   }
 
   return id;
+}
+
+int hl_add_element_tags(int attribute, uint32_t element_tags)
+{
+  if (element_type_active) {
+    HlEntry entry = attr_entry(attribute);
+    entry.element_tags |= element_tags;
+    return get_attr_entry(entry);
+  } else {
+    return attribute;
+  }
 }
 
 /// Get the used rgb colors for an attr group.
