@@ -150,6 +150,7 @@ syn match	vimNumber	'\<\d\+\%(\.\d\+\%(e[+-]\=\d\+\)\=\)\='	skipwhite nextgroup=
 syn match	vimNumber	'\<0b[01]\+'			skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,vimComment,vim9Comment
 syn match	vimNumber	'\<0o\=\o\+'			skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,vimComment,vim9Comment
 syn match	vimNumber	'\<0x\x\+'			skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,vimComment,vim9Comment
+syn match	vimNumber	'\<0z\>'			skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,vimComment,vim9Comment
 syn match	vimNumber	'\<0z\%(\x\x\)\+\%(\.\%(\x\x\)\+\)*'	skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,vimComment,vim9Comment
 syn match	vimNumber	'\%(^\|\A\)\zs#\x\{6}'		skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,vimComment,vim9Comment
 syn case match
@@ -465,6 +466,8 @@ syn keyword	vimFor	for	skipwhite nextgroup=vimVar,vimVarList
 " =============
 " GEN_SYN_VIM: vimCommand abbrev, START_STR='syn keyword vimAbb', END_STR='skipwhite nextgroup=vimMapMod,vimMapLhs'
 syn keyword vimAbb ab[breviate] ca[bbrev] cnorea[bbrev] cuna[bbrev] ia[bbrev] inorea[bbrev] iuna[bbrev] norea[bbrev] una[bbreviate] skipwhite nextgroup=vimMapMod,vimMapLhs
+" GEN_SYN_VIM: vimCommand abclear, START_STR='syn keyword vimAbb', END_STR='skipwhite nextgroup=vimMapMod'
+syn keyword vimAbb abc[lear] cabc[lear] iabc[lear] skipwhite nextgroup=vimMapMod
 
 " Autocmd: {{{2
 " =======
