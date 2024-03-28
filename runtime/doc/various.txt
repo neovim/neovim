@@ -36,6 +36,13 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 			the 'ruler'. Useful if 'statusline' or 'winbar' includes
 			an item that doesn't cause automatic updating.
 
+			             *:redrawstatusc* *:redrawstatuscolumn*
+:redrawstatusc[olumn][!]Rebuilds the status column of the current window from
+			scratch, or all status columns if "!" is included.
+			Useful if |'statuscolumn'| is evaluated to a smaller
+			width, but the number of lines in the buffer did not
+			change.
+
 						*:redrawt* *:redrawtabline*
 :redrawt[abline]	Redraw the tabline.  Useful to update the tabline when
 			'tabline' includes an item that doesn't trigger

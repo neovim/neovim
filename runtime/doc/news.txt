@@ -343,6 +343,8 @@ The following new APIs and features were added.
 
 • |extmarks| option `scoped`: only show the extmarks in its namespace's scope.
 
+• |:redrawstatuscolumn| to rebuild the |'statuscolumn'| from scratch.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
