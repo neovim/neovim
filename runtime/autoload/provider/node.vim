@@ -24,21 +24,6 @@ function! provider#node#Detect() abort
     return ['', printf('node version %s not found', minver)]
   endif
 
-  let npm_opts = {}
-  if executable('npm')
-    let npm_opts = deepcopy(s:NodeHandler)
-    let npm_opts.entry_point = '/neovim/bin/cli.js'
-    let npm_opts.job_id = jobstart('npm --loglevel silent root -g', npm_opts)
-  endif
-
-  " npm returns the directory faster, so let's check that first
-  if !empty(npm_opts)
-    let result = jobwait([npm_opts.job_id])
-    if result[0] == 0 && npm_opts.result != ''
-      return [npm_opts.result, '']
-    endif
-  endif
-
   let yarn_opts = {}
   if executable('yarn')
     let yarn_opts = deepcopy(s:NodeHandler)

@@ -37,6 +37,13 @@ function M.can_inspect()
 end
 
 function M.detect()
+  local p = vim.system({ 'npm', '--loglevel', 'silent', 'root', '-g' }):wait()
+  if p.code == 0 and vim.trim(p.stdout) ~= '' then
+    return { p.stdout, '' }
+  end
+
+  -- Add yarn and pnmp code here later
+
   return { '', 'failed to detect node' }
 end
 
