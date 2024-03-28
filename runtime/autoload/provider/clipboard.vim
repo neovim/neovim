@@ -67,7 +67,8 @@ function! provider#clipboard#Error() abort
 endfunction
 
 function! provider#clipboard#Executable() abort
-  if exists('g:clipboard')
+  " Setting g:clipboard to v:false explicitly opts-in to using the "builtin" clipboard providers below
+  if exists('g:clipboard') && g:clipboard isnot# v:false
     if type({}) isnot# type(g:clipboard)
           \ || type({}) isnot# type(get(g:clipboard, 'copy', v:null))
           \ || type({}) isnot# type(get(g:clipboard, 'paste', v:null))
