@@ -1208,7 +1208,7 @@ func Test_complete_wholeline_unlistedbuf()
   edit Xfile1
   enew
   set complete=U
-  " completing from a unloaded buffer should fail
+  " completing from an unloaded buffer should fail
   exe "normal! ia\<C-X>\<C-L>\<C-P>"
   call assert_equal('a', getline(1))
   %d

@@ -1151,7 +1151,7 @@ func Test_visual_inner_block()
   " try to select non-existing inner block
   call cursor(5, 1)
   call assert_beeps('normal ViBiBiB')
-  " try to select a unclosed inner block
+  " try to select an unclosed inner block
   8,9d
   call cursor(5, 1)
   call assert_beeps('normal ViBiB')

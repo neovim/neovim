@@ -842,7 +842,7 @@ func Regex_Mark()
   %d
 endfunc
 
-" Same test as abobe, but use verymagic
+" Same test as above, but use verymagic
 func Regex_Mark_Verymagic()
   call append(0, ['', '', '', 'Marks:', 'asdfSasdfsadfEasdf', 'asdfSas',
         \ 'dfsadfEasdf', '', '', '', '', ''])
