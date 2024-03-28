@@ -203,7 +203,7 @@ static void init_users(void)
   os_get_usernames(&ga_users);
 }
 
-/// Given to ExpandGeneric() to obtain an user names.
+/// Given to ExpandGeneric() to obtain user names.
 char *get_users(expand_T *xp, int idx)
 {
   init_users();
