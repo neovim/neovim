@@ -413,7 +413,7 @@ static void terminfo_start(TUIData *tui)
   // mode 2026
   tui_request_term_mode(tui, kTermModeSynchronizedOutput);
 
-  // Don't use DECRQSS in screen or tmux, as they behave strangely when receving that.
+  // Don't use DECRQSS in screen or tmux, as they behave strangely when receiving it.
   if (tui->unibi_ext.set_underline_style == -1 && !(screen || tmux)) {
     // Query the terminal to see if it supports extended underline.
     tui_query_extended_underline(tui);
