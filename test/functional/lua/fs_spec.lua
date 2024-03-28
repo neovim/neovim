@@ -36,6 +36,7 @@ local test_basename_dirname_eq = {
   'c:/users/foo',
   'c:/users/foo/bar.lua',
   'c:/users/foo/bar/../',
+  '~/foo/bar\\baz',
 }
 
 local tests_windows_paths = {
@@ -70,26 +71,26 @@ describe('vim.fs', function()
     it('works', function()
       eq(test_build_dir, vim.fs.dirname(nvim_dir))
 
-      --- @param paths string[]
-      local function test_paths(paths)
+      ---@param paths string[]
+      ---@param is_win? boolean
+      local function test_paths(paths, is_win)
+        local gsub = is_win and [[:gsub('\\', '/')]] or ''
+        local code = string.format(
+          [[
+          local path = ...
+          return vim.fn.fnamemodify(path,':h')%s
+        ]],
+          gsub
+        )
+
         for _, path in ipairs(paths) do
-          eq(
-            exec_lua(
-              [[
-              local path = ...
-              return vim.fn.fnamemodify(path,':h'):gsub('\\', '/')
-            ]],
-              path
-            ),
-            vim.fs.dirname(path),
-            path
-          )
+          eq(exec_lua(code, path), vim.fs.dirname(path), path)
         end
       end
 
       test_paths(test_basename_dirname_eq)
       if is_os('win') then
-        test_paths(tests_windows_paths)
+        test_paths(tests_windows_paths, true)
       end
     end)
   end)
@@ -98,26 +99,26 @@ describe('vim.fs', function()
     it('works', function()
       eq(nvim_prog_basename, vim.fs.basename(nvim_prog))
 
-      --- @param paths string[]
-      local function test_paths(paths)
+      ---@param paths string[]
+      ---@param is_win? boolean
+      local function test_paths(paths, is_win)
+        local gsub = is_win and [[:gsub('\\', '/')]] or ''
+        local code = string.format(
+          [[
+          local path = ...
+          return vim.fn.fnamemodify(path,':t')%s
+        ]],
+          gsub
+        )
+
         for _, path in ipairs(paths) do
-          eq(
-            exec_lua(
-              [[
-              local path = ...
-              return vim.fn.fnamemodify(path,':t'):gsub('\\', '/')
-            ]],
-              path
-            ),
-            vim.fs.basename(path),
-            path
-          )
+          eq(exec_lua(code, path), vim.fs.basename(path), path)
         end
       end
 
       test_paths(test_basename_dirname_eq)
       if is_os('win') then
-        test_paths(tests_windows_paths)
+        test_paths(tests_windows_paths, true)
       end
     end)
   end)
@@ -284,9 +285,6 @@ describe('vim.fs', function()
   end)
 
   describe('normalize()', function()
-    it('works with backward slashes', function()
-      eq('C:/Users/jdoe', vim.fs.normalize('C:\\Users\\jdoe'))
-    end)
     it('removes trailing /', function()
       eq('/home/user', vim.fs.normalize('/home/user/'))
     end)
@@ -309,9 +307,17 @@ describe('vim.fs', function()
         )
       )
     end)
+
     if is_os('win') then
       it('Last slash is not truncated from root drive', function()
         eq('C:/', vim.fs.normalize('C:/'))
+      end)
+      it('converts backward slashes', function()
+        eq('C:/Users/jdoe', vim.fs.normalize('C:\\Users\\jdoe'))
+      end)
+    else
+      it('allows backslashes on unix-based os', function()
+        eq('/home/user/hello\\world', vim.fs.normalize('/home/user/hello\\world'))
       end)
     end
   end)
