@@ -1727,6 +1727,48 @@ describe('ui/ext_messages', function()
     }
   end)
 
+  it('clears intro screen when new buffer is active in floating window', function()
+    local win_opts = { relative = 'editor', height = 1, width = 5, row = 1, col = 5 }
+    api.nvim_open_win(api.nvim_create_buf(false, false), true, win_opts)
+    screen:expect {
+      grid = [[
+                                                                                      |
+      {1:~    }{8:^     }{1:                                                                      }|
+      {1:~                                                                               }|*22
+    ]],
+    }
+  end)
+
+  it('clears intro screen when initial buffer is active in floating window', function()
+    local win_opts = { relative = 'editor', height = 1, width = 5, row = 1, col = 5 }
+    api.nvim_open_win(api.nvim_get_current_buf(), true, win_opts)
+    screen:expect {
+      grid = [[
+                                                                                      |
+      {1:~    }{8:^     }{1:                                                                      }|
+      {1:~                                                                               }|*22
+    ]],
+    }
+  end)
+
+  it('clears intro screen when initial window is converted to be floating', function()
+    exec_lua([[
+      local init_win_id = vim.api.nvim_get_current_win()
+      vim.cmd('split')
+      local win_opts = { relative = 'editor', height = 1, width = 5, row = 1, col = 5 }
+      vim.api.nvim_win_set_config(init_win_id, win_opts)
+      vim.api.nvim_set_current_win(init_win_id)
+    ]])
+    screen:expect {
+      grid = [[
+                                                                                      |
+      {1:~    }{8:^     }{1:                                                                      }|
+      {1:~                                                                               }|*21
+      {6:[No Name]                                                                       }|
+    ]],
+    }
+  end)
+
   it('supports global statusline', function()
     feed(':set laststatus=3<cr>')
     feed(':sp<cr>')
