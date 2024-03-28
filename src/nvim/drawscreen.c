@@ -119,6 +119,7 @@
 #include "nvim/version.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 /// corner value flags for hsep_connected and vsep_connected
 typedef enum {
@@ -715,7 +716,7 @@ void end_search_hl(void)
   screen_search_hl.rm.regprog = NULL;
 }
 
-static void win_redr_bordertext(win_T *wp, VirtText vt, int col)
+static void win_redr_bordertext(win_T *wp, VirtText vt, int col, int bg_attr)
 {
   for (size_t i = 0; i < kv_size(vt);) {
     int attr = 0;
@@ -724,7 +725,11 @@ static void win_redr_bordertext(win_T *wp, VirtText vt, int col)
       break;
     }
     attr = hl_apply_winblend(wp, attr);
-    col += grid_line_puts(col, text, -1, attr);
+    col += grid_line_puts(col, text, -1,
+                          bg_attr > 0
+                          && syn_attr2entry(attr).rgb_bg_color == -1 ? hl_combine_attr(bg_attr,
+                                                                                       attr)
+                                                                     : attr);
   }
 }
 
@@ -773,7 +778,7 @@ static void win_redr_border(win_T *wp)
     if (wp->w_config.title) {
       int title_col = win_get_bordertext_col(icol, wp->w_config.title_width,
                                              wp->w_config.title_pos);
-      win_redr_bordertext(wp, wp->w_config.title_chunks, title_col);
+      win_redr_bordertext(wp, wp->w_config.title_chunks, title_col, -1);
     }
     if (adj[1]) {
       grid_line_put_schar(icol + adj[3], chars[2], attrs[2]);
@@ -797,22 +802,30 @@ static void win_redr_border(win_T *wp)
 
   if (adj[2]) {
     grid_line_start(grid, irow + adj[0]);
+    bool bot_on_stl = p_ls > 0 && grid->rows == Rows - p_ch;
+    int bg_attr = curwin == wp ? wp->w_ns_hl_attr[HLF_SNC] : wp->w_ns_hl_attr[HLF_S];
     if (adj[3]) {
-      grid_line_put_schar(0, chars[6], attrs[6]);
+      int new_attr = bot_on_stl && syn_attr2entry(attrs[6]).rgb_bg_color == -1
+                     ? hl_combine_attr(bg_attr, attrs[6]) : attrs[6];
+      grid_line_put_schar(0, chars[6], new_attr);
     }
 
     for (int i = 0; i < icol; i++) {
       int ic = (i == 0 && !adj[3] && chars[6]) ? 6 : 5;
-      grid_line_put_schar(i + adj[3], chars[ic], attrs[ic]);
+      int new_attr = bot_on_stl && syn_attr2entry(attrs[ic]).rgb_bg_color == -1
+                     ? hl_combine_attr(bg_attr, attrs[ic]) : attrs[ic];
+      grid_line_put_schar(i + adj[3], chars[ic], new_attr);
     }
 
     if (wp->w_config.footer) {
       int footer_col = win_get_bordertext_col(icol, wp->w_config.footer_width,
                                               wp->w_config.footer_pos);
-      win_redr_bordertext(wp, wp->w_config.footer_chunks, footer_col);
+      win_redr_bordertext(wp, wp->w_config.footer_chunks, footer_col, bg_attr);
     }
     if (adj[1]) {
-      grid_line_put_schar(icol + adj[3], chars[4], attrs[4]);
+      int new_attr = bot_on_stl && syn_attr2entry(attrs[4]).rgb_bg_color == -1
+                     ? hl_combine_attr(bg_attr, attrs[4]) : attrs[4];
+      grid_line_put_schar(icol + adj[3], chars[4], new_attr);
     }
     grid_line_flush();
   }
@@ -2777,6 +2790,15 @@ void status_redraw_buf(buf_T *buf)
   if (p_ru && !curwin->w_status_height && !curwin->w_redr_status) {
     redraw_cmdline = true;
     redraw_later(curwin, UPD_VALID);
+  }
+}
+
+void redraw_float_bot_border(void)
+{
+  FOR_ALL_FLOAT_WINDOWS(wp) {
+    if (wp->w_config.border && wp->w_grid.rows + wp->w_grid.row_offset == Rows - p_ch - 1) {
+      win_redr_border(wp);
+    }
   }
 }
 

@@ -17,6 +17,7 @@
 #include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
