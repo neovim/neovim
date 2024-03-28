@@ -1251,11 +1251,12 @@ endfunc
 
 " Allow :e selecting the current buffer as a full path
 func Test_edit_same_buffer_on_disk_absolute_path()
-  " This fails on CI (Windows builds), why?
-  " CheckNotMSWindows
   call s:reset_all_buffers()
 
   let file = tempname()
+  " file must exist for expansion of 8.3 paths to succeed
+  call writefile([], file, 'D')
+  let file = fnamemodify(file, ':p')
   let current = bufnr()
   execute "edit " . file
   write!
@@ -1265,7 +1266,6 @@ func Test_edit_same_buffer_on_disk_absolute_path()
   execute "edit " file
   call assert_equal(current, bufnr())
 
-  call delete(file)
   set nowinfixbuf
 endfunc
 
