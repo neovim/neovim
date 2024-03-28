@@ -249,7 +249,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
         }
         csarg->indent_width = head_mid;
       }
-      if (head_mid > 0 && wcol + size > wp->w_width_inner) {
+      if (head_mid > 0) {
         // Calculate effective window width.
         int prev_rem = wp->w_width_inner - wcol;
         int width = width2 - head_mid;
