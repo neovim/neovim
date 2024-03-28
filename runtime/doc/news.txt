@@ -228,6 +228,9 @@ The following new APIs and features were added.
     (e.g. `commitCharacters`). Note that this might affect plugins and
     language servers that don't support the feature, and in such cases the
     respective capability can be unset.
+  • LSP client now supports sending a progress token on initialization via
+    the `progress_on_init` flag in `ClientConfig`
+
 
 • Treesitter
   • Bundled parsers and queries (highlight, folds) for Markdown, Python, and
