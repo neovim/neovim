@@ -22,12 +22,12 @@ describe('vim._watch', function()
   local function run(watchfunc)
     it('detects file changes (watchfunc=' .. watchfunc .. '())', function()
       if watchfunc == 'fswatch' then
+        skip(is_os('win'), 'not supported on windows')
         skip(is_os('mac'), 'flaky test on mac')
         skip(
           not is_ci() and helpers.fn.executable('fswatch') == 0,
           'fswatch not installed and not on CI'
         )
-        skip(is_os('win'), 'not supported on windows')
       end
 
       if watchfunc == 'watch' then

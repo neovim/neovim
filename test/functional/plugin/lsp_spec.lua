@@ -4537,18 +4537,26 @@ describe('LSP', function()
         string.format('sends notifications when files change (watchfunc=%s)', watchfunc),
         function()
           if watchfunc == 'fswatch' then
+            skip(is_os('win'), 'not supported on windows')
+            skip(is_os('mac'), 'flaky test on mac')
             skip(
               not is_ci() and fn.executable('fswatch') == 0,
               'fswatch not installed and not on CI'
             )
-            skip(is_os('win'), 'not supported on windows')
-            skip(is_os('mac'), 'flaky')
           end
 
-          skip(
-            is_os('bsd'),
-            'kqueue only reports events on watched folder itself, not contained files #26110'
-          )
+          if watchfunc == 'watch' then
+            skip(is_os('mac'), 'flaky test on mac')
+            skip(
+              is_os('bsd'),
+              'Stopped working on bsd after 3ca967387c49c754561c3b11a574797504d40f38'
+            )
+          else
+            skip(
+              is_os('bsd'),
+              'kqueue only reports events on watched folder itself, not contained files #26110'
+            )
+          end
 
           local root_dir = tmpname()
           os.remove(root_dir)
