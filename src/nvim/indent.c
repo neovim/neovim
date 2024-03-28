@@ -177,7 +177,7 @@ colnr_T tabstop_start(colnr_T col, int ts, colnr_T *vts)
   colnr_T tabcol = 0;
 
   if (vts == NULL || vts[0] == 0) {
-    return ((col / ts) * ts);
+    return col - col % ts;
   }
 
   const int tabcount = vts[0];
@@ -189,7 +189,7 @@ colnr_T tabstop_start(colnr_T col, int ts, colnr_T *vts)
   }
 
   const int excess = (tabcol % vts[tabcount]);
-  return (excess + ((col - excess) / vts[tabcount]) * vts[tabcount]);
+  return col - (col - excess) % vts[tabcount];
 }
 
 /// Find the number of tabs and spaces necessary to get from one column
