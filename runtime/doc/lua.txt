@@ -1075,17 +1075,26 @@ vim.ui_attach({ns}, {options}, {callback})                   *vim.ui_attach()*
     |ui-popupmenu| and the sections below for event format for respective
     events.
 
+    As opposed to remote UIs, the Lua callback for the "msg_show" event
+    receives an array of messages. Each array member has the signature of
+    `[kind, content, replace_last]` as listed in |ui-messages|.
+
     WARNING: This api is considered experimental. Usability will vary for
     different screen elements. In particular `ext_messages` behavior is
     subject to further changes and usability improvements. This is expected to
     be used to handle messages when setting 'cmdheight' to zero (which is
     likewise experimental).
 
-    Example (stub for a |ui-popupmenu| implementation): >lua
-        ns = vim.api.nvim_create_namespace('my_fancy_pum')
+    Example with stubs for |ext_messages| and |ui-popupmenu|: >lua
+        ns = vim.api.nvim_create_namespace('')
 
-        vim.ui_attach(ns, {ext_popupmenu=true}, function(event, ...)
-          if event == "popupmenu_show" then
+        vim.ui_attach(ns, {ext_messages=true, ext_popupmenu=true}, function(event, ...)
+          if event == "msg_show" then
+            for _, msg in ipairs(...) do
+              local kind, content, replace_last = unpack(msg)
+              vim.api.nvim_buf_set_lines(0, -2, -1, false, {content[1][2]})
+            end
+          elseif event == "popupmenu_show" then
             local items, selected, row, col, grid = ...
             print("display pum ", #items)
           elseif event == "popupmenu_select" then
