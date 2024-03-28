@@ -6834,14 +6834,12 @@ void command_height(void)
         grid_clear(&default_grid, cmdline_row, Rows, 0, Columns, 0);
       }
       msg_row = cmdline_row;
-      redraw_cmdline = true;
       return;
     }
 
     if (msg_row < cmdline_row) {
       msg_row = cmdline_row;
     }
-    redraw_cmdline = true;
   }
   frame_add_height(frp, (int)(old_p_ch - p_ch));
 

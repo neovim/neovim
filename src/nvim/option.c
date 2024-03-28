@@ -1361,6 +1361,7 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
         option_last_set_msg(curbuf->b_p_script_ctx[(int)options[opt_idx].indir & PV_MASK]);
       }
     }
+    msg_ext_ui_flush();
 
     if (nextchar != '?' && nextchar != NUL && !ascii_iswhite(afterchar)) {
       *errmsg = e_trailing;
@@ -4217,6 +4218,7 @@ static void showoptions(bool all, int opt_flags)
       os_breakcheck();
     }
   }
+  msg_ext_ui_flush();
   xfree(items);
 }
 
