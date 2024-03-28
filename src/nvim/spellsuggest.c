@@ -604,10 +604,6 @@ void spell_suggest(int count)
     // Ask for choice.
     selected = prompt_for_number(&mouse_used);
 
-    if (ui_has(kUIMessages)) {
-      ui_call_msg_clear();
-    }
-
     if (mouse_used) {
       selected -= lines_left;
     }

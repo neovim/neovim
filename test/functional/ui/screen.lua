@@ -679,6 +679,8 @@ screen:redraw_debug() to show all intermediate screen states.]]
       end
     end
   end, expected)
+
+  self.messages = {}
 end
 
 function Screen:expect_unchanged(intermediate, waittime_ms, ignore_attrs)
@@ -1344,10 +1346,6 @@ function Screen:_handle_msg_show(kind, chunks, replace_last)
     pos = pos + 1
   end
   self.messages[pos] = { kind = kind, content = chunks }
-end
-
-function Screen:_handle_msg_clear()
-  self.messages = {}
 end
 
 function Screen:_handle_msg_showcmd(msg)

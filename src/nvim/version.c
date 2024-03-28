@@ -20,6 +20,7 @@
 #include "nvim/charset.h"
 #include "nvim/drawscreen.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
@@ -2839,5 +2840,13 @@ void ex_intro(exarg_T *eap)
   // TODO(bfredl): use msg_grid instead!
   screenclear();
   intro_message(true);
-  wait_return(true);
+  if (ui_has(kUIMessages)) {
+    no_mapping++;   // don't map this key
+    allow_keys++;   // allow special keys
+    plain_vgetc();
+    no_mapping--;
+    allow_keys--;
+  } else {
+    wait_return(true);
+  }
 }
