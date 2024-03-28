@@ -1686,23 +1686,26 @@ function Screen:_print_snapshot(attrs, ignore)
       if self._options.ext_linegrid then
         dict = self:_pprint_hlitem(a)
       else
-        dict = '{' .. self:_pprint_attrs(a) .. '}'
+        dict = '{ ' .. self:_pprint_attrs(a) .. ' }'
       end
       local keyval = (type(i) == 'number') and '[' .. tostring(i) .. ']' or i
-      table.insert(attrstrs, '  ' .. keyval .. ' = ' .. dict .. ';')
+      table.insert(attrstrs, '  ' .. keyval .. ' = ' .. dict .. ',')
     end
-    attrstr = (', attr_ids={\n' .. table.concat(attrstrs, '\n') .. '\n}')
+    attrstr = (',\n  attr_ids = {\n  ' .. table.concat(attrstrs, '\n  ') .. '\n  },')
   elseif isempty(attrs) then
-    attrstr = ', attr_ids={}'
+    attrstr = ',\n  attr_ids = {},'
   end
 
-  local result = 'screen:expect{grid=[[\n' .. kwargs.grid .. '\n]]' .. attrstr
+  local result = ('screen:expect({\n  grid = [[\n  %s\n  ]]%s'):format(
+    kwargs.grid:gsub('\n', '\n  '),
+    attrstr
+  )
   for _, k in ipairs(ext_keys) do
     if ext_state[k] ~= nil and not (k == 'win_viewport' and not self.options.ext_multigrid) then
       result = result .. ', ' .. k .. '=' .. fmt_ext_state(k, ext_state[k])
     end
   end
-  result = result .. '}'
+  result = result .. '\n})'
 
   return result
 end
@@ -1808,20 +1811,20 @@ function Screen:_pprint_hlitem(item)
   -- print(inspect(item))
   local multi = self._rgb_cterm or self._options.ext_hlstate
   local cterm = (not self._rgb_cterm and not self._options.rgb)
-  local attrdict = '{' .. self:_pprint_attrs(multi and item[1] or item, cterm) .. '}'
+  local attrdict = '{ ' .. self:_pprint_attrs(multi and item[1] or item, cterm) .. ' }'
   local attrdict2, hlinfo
   local descdict = ''
   if self._rgb_cterm then
-    attrdict2 = ', {' .. self:_pprint_attrs(item[2], true) .. '}'
+    attrdict2 = ', { ' .. self:_pprint_attrs(item[2], true) .. ' }'
     hlinfo = item[3]
   else
     attrdict2 = ''
     hlinfo = item[2]
   end
   if self._options.ext_hlstate then
-    descdict = ', {' .. self:_pprint_hlinfo(hlinfo) .. '}'
+    descdict = ', { ' .. self:_pprint_hlinfo(hlinfo) .. ' }'
   end
-  return (multi and '{' or '') .. attrdict .. attrdict2 .. descdict .. (multi and '}' or '')
+  return (multi and '{ ' or '') .. attrdict .. attrdict2 .. descdict .. (multi and ' }' or '')
 end
 
 function Screen:_pprint_hlinfo(states)
