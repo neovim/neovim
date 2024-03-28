@@ -7663,8 +7663,8 @@ return {
         highlighted with |hl-NonText|.
         You may also want to add "lastline" to the 'display' option to show as
         much of the last line as possible.
-        NOTE: only partly implemented, currently works with CTRL-E, CTRL-Y
-        and scrolling with the mouse.
+        NOTE: only partly implemented, currently works with CTRL-E, CTRL-Y,
+        CTRL-D, CTRL-U, CTRL-F, CTRL-B and scrolling with the mouse.
       ]=],
       full_name = 'smoothscroll',
       pv_name = 'p_sms',
@@ -9806,8 +9806,8 @@ return {
         will scroll 'window' minus two lines, with a minimum of one.
         When 'window' is equal to 'lines' minus one CTRL-F and CTRL-B scroll
         in a much smarter way, taking care of wrapping lines.
-        When resizing the Vim window, the value is smaller than 1 or more than
-        or equal to 'lines' it will be set to 'lines' minus 1.
+        When resizing the Vim window, and the value is smaller than 1 or more
+        than or equal to 'lines' it will be set to 'lines' minus 1.
         Note: Do not confuse this with the height of the Vim window, use
         'lines' for that.
       ]=],

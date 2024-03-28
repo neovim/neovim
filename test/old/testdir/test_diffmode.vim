@@ -1632,34 +1632,38 @@ endfunc
 func Test_diff_scroll_many_filler()
   20new
   vnew
-  call setline(1, ['^^^', '^^^', '$$$', '$$$'])
+  call setline(1, range(1, 40))
   diffthis
   setlocal scrolloff=0
   wincmd p
-  call setline(1, ['^^^', '^^^'] + repeat(['###'], 41) + ['$$$', '$$$'])
+  call setline(1, range(1, 20)->reverse() + ['###']->repeat(41) + range(21, 40)->reverse())
   diffthis
   setlocal scrolloff=0
   wincmd p
   redraw
 
   " Note: need a redraw after each scroll, otherwise the test always passes.
-  normal! G
-  redraw
-  call assert_equal(3, winsaveview().topline)
-  call assert_equal(18, winsaveview().topfill)
-  exe "normal! \<C-B>"
-  redraw
-  call assert_equal(3, winsaveview().topline)
-  call assert_equal(19, winsaveview().topfill)
-  exe "normal! \<C-B>"
-  redraw
-  call assert_equal(2, winsaveview().topline)
-  call assert_equal(0, winsaveview().topfill)
-  exe "normal! \<C-B>"
-  redraw
-  call assert_equal(1, winsaveview().topline)
-  call assert_equal(0, winsaveview().topfill)
+  for _ in range(2)
+    normal! G
+    redraw
+    call assert_equal(40, winsaveview().topline)
+    call assert_equal(19, winsaveview().topfill)
+    exe "normal! \<C-B>"
+    redraw
+    call assert_equal(22, winsaveview().topline)
+    call assert_equal(0, winsaveview().topfill)
+    exe "normal! \<C-B>"
+    redraw
+    call assert_equal(4, winsaveview().topline)
+    call assert_equal(0, winsaveview().topfill)
+    exe "normal! \<C-B>"
+    redraw
+    call assert_equal(1, winsaveview().topline)
+    call assert_equal(0, winsaveview().topfill)
+    set smoothscroll
+  endfor
 
+  set smoothscroll&
   bwipe!
   bwipe!
 endfunc

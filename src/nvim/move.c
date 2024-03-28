@@ -36,6 +36,7 @@
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
+#include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
 #include "nvim/plines.h"
@@ -1552,21 +1553,6 @@ void check_topfill(win_T *wp, bool down)
   win_check_anchored_floats(wp);
 }
 
-// Use as many filler lines as possible for w_topline.  Make sure w_topline
-// is still visible.
-static void max_topfill(void)
-{
-  int n = plines_win_nofill(curwin, curwin->w_topline, true);
-  if (n >= curwin->w_height_inner) {
-    curwin->w_topfill = 0;
-  } else {
-    curwin->w_topfill = win_get_fill(curwin, curwin->w_topline);
-    if (curwin->w_topfill + n > curwin->w_height_inner) {
-      curwin->w_topfill = curwin->w_height_inner - n;
-    }
-  }
-}
-
 // Scroll the screen one line down, but don't do it if it would move the
 // cursor off the screen.
 void scrolldown_clamp(void)
@@ -1694,28 +1680,6 @@ static void botline_forw(win_T *wp, lineoff_T *lp)
     } else {
       lp->height = plines_win_nofill(wp, lp->lnum, true);
     }
-  }
-}
-
-// Switch from including filler lines below lp->lnum to including filler
-// lines above loff.lnum + 1.  This keeps pointing to the same line.
-// When there are no filler lines nothing changes.
-static void botline_topline(lineoff_T *lp)
-{
-  if (lp->fill > 0) {
-    lp->lnum++;
-    lp->fill = win_get_fill(curwin, lp->lnum) - lp->fill + 1;
-  }
-}
-
-// Switch from including filler lines above lp->lnum to including filler
-// lines below loff.lnum - 1.  This keeps pointing to the same line.
-// When there are no filler lines nothing changes.
-static void topline_botline(lineoff_T *lp)
-{
-  if (lp->fill > 0) {
-    lp->fill = win_get_fill(curwin, lp->lnum) - lp->fill + 1;
-    lp->lnum--;
   }
 }
 
@@ -2314,371 +2278,127 @@ void cursor_correct(win_T *wp)
   wp->w_viewport_invalid = true;
 }
 
+/// Decide how much overlap to use for page-up or page-down scrolling.
+/// This is symmetric, so that doing both keeps the same lines displayed.
+/// Three lines are examined:
+///
+///  before CTRL-F          after CTRL-F / before CTRL-B
+///     etc.                    l1
+///  l1 last but one line       ------------
+///  l2 last text line          l2 top text line
+///  -------------              l3 second text line
+///  l3                            etc.
+static int get_scroll_overlap(Direction dir)
+{
+  lineoff_T loff;
+  int min_height = curwin->w_height_inner - 2;
+
+  validate_botline(curwin);
+  if (dir == FORWARD && curwin->w_botline > curbuf->b_ml.ml_line_count) {
+    return min_height + 2;  // no overlap, still handle 'smoothscroll'
+  }
+
+  loff.lnum = dir == FORWARD ? curwin->w_botline : curwin->w_topline - 1;
+  loff.fill = win_get_fill(curwin, loff.lnum + dir == BACKWARD)
+              - (dir == FORWARD ? curwin->w_filler_rows : curwin->w_topfill);
+  loff.height = loff.fill > 0 ? 1 : plines_win_nofill(curwin, loff.lnum, true);
+
+  int h1 = loff.height;
+  if (h1 > min_height) {
+    return min_height + 2;  // no overlap
+  }
+  if (dir == FORWARD) {
+    topline_back(curwin, &loff);
+  } else {
+    botline_forw(curwin, &loff);
+  }
+
+  int h2 = loff.height;
+  if (h2 == MAXCOL || h2 + h1 > min_height) {
+    return min_height + 2;  // no overlap
+  }
+  if (dir == FORWARD) {
+    topline_back(curwin, &loff);
+  } else {
+    botline_forw(curwin, &loff);
+  }
+
+  int h3 = loff.height;
+  if (h3 == MAXCOL || h3 + h2 > min_height) {
+    return min_height + 2;  // no overlap
+  }
+  if (dir == FORWARD) {
+    topline_back(curwin, &loff);
+  } else {
+    botline_forw(curwin, &loff);
+  }
+
+  int h4 = loff.height;
+  if (h4 == MAXCOL || h4 + h3 + h2 > min_height || h3 + h2 + h1 > min_height) {
+    return min_height + 1;  // 1 line overlap
+  } else {
+    return min_height;      // 2 lines overlap
+  }
+}
+
 /// Move screen "count" pages up ("dir" is BACKWARD) or down ("dir" is FORWARD)
 /// and update the screen.
 ///
 /// @return  FAIL for failure, OK otherwise.
-int onepage(Direction dir, int count)
+int pagescroll(Direction dir, int count, bool half)
 {
-  int retval = OK;
-  lineoff_T loff;
-  linenr_T old_topline = curwin->w_topline;
-  int so = get_scrolloff_value(curwin);
+  int prev_topfill = curwin->w_topfill;
+  linenr_T prev_topline = curwin->w_topline;
+  colnr_T prev_skipcol = curwin->w_skipcol;
 
-  if (curbuf->b_ml.ml_line_count == 1) {    // nothing to do
-    beep_flush();
-    return FAIL;
-  }
-
-  for (; count > 0; count--) {
-    validate_botline(curwin);
-    // It's an error to move a page up when the first line is already on
-    // the screen. It's an error to move a page down when the last line
-    // is on the screen and the topline is 'scrolloff' lines from the
-    // last line.
-    if (dir == FORWARD
-        ? ((curwin->w_topline >= curbuf->b_ml.ml_line_count - so)
-           && curwin->w_botline > curbuf->b_ml.ml_line_count)
-        : (curwin->w_topline == 1
-           && curwin->w_topfill == win_get_fill(curwin, curwin->w_topline))) {
-      beep_flush();
-      retval = FAIL;
-      break;
+  if (half) {
+    // Scroll [count], 'scroll' or current window height lines.
+    if (count) {
+      curwin->w_p_scr = MIN(curwin->w_height_inner, count);
     }
-
-    loff.fill = 0;
-    if (dir == FORWARD) {
-      if (ONE_WINDOW && p_window > 0 && p_window < Rows - 1) {
-        // Vi compatible scrolling
-        if (p_window <= 2) {
-          curwin->w_topline++;
-        } else {
-          curwin->w_topline += (linenr_T)p_window - 2;
-        }
-        if (curwin->w_topline > curbuf->b_ml.ml_line_count) {
-          curwin->w_topline = curbuf->b_ml.ml_line_count;
-        }
-        curwin->w_cursor.lnum = curwin->w_topline;
-      } else if (curwin->w_botline > curbuf->b_ml.ml_line_count) {
-        // at end of file
-        curwin->w_topline = curbuf->b_ml.ml_line_count;
-        curwin->w_topfill = 0;
-        curwin->w_valid &= ~(VALID_WROW|VALID_CROW);
-      } else {
-        // For the overlap, start with the line just below the window
-        // and go upwards.
-        loff.lnum = curwin->w_botline;
-        loff.fill = win_get_fill(curwin, loff.lnum)
-                    - curwin->w_filler_rows;
-        get_scroll_overlap(&loff, -1);
-        curwin->w_topline = loff.lnum;
-        curwin->w_topfill = loff.fill;
-        check_topfill(curwin, false);
-        curwin->w_cursor.lnum = curwin->w_topline;
-        curwin->w_valid &= ~(VALID_WCOL|VALID_CHEIGHT|VALID_WROW|
-                             VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
-      }
-    } else {  // dir == BACKWARDS
-      if (curwin->w_topline == 1) {
-        // Include max number of filler lines
-        max_topfill();
-        continue;
-      }
-      if (ONE_WINDOW && p_window > 0 && p_window < Rows - 1) {
-        // Vi compatible scrolling (sort of)
-        if (p_window <= 2) {
-          curwin->w_topline--;
-        } else {
-          curwin->w_topline -= (linenr_T)p_window - 2;
-        }
-        if (curwin->w_topline < 1) {
-          curwin->w_topline = 1;
-        }
-        curwin->w_cursor.lnum = curwin->w_topline + (linenr_T)p_window - 1;
-        if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
-          curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-        }
-        continue;
-      }
-
-      // Find the line at the top of the window that is going to be the
-      // line at the bottom of the window.  Make sure this results in
-      // the same line as before doing CTRL-F.
-      loff.lnum = curwin->w_topline - 1;
-      loff.fill = win_get_fill(curwin, loff.lnum + 1) - curwin->w_topfill;
-      get_scroll_overlap(&loff, 1);
-
-      if (loff.lnum >= curbuf->b_ml.ml_line_count) {
-        loff.lnum = curbuf->b_ml.ml_line_count;
-        loff.fill = 0;
-      } else {
-        botline_topline(&loff);
-      }
-      curwin->w_cursor.lnum = loff.lnum;
-
-      // Find the line just above the new topline to get the right line
-      // at the bottom of the window.
-      int n = 0;
-      while (n <= curwin->w_height_inner && loff.lnum >= 1) {
-        topline_back(curwin, &loff);
-        if (loff.height == MAXCOL) {
-          n = MAXCOL;
-        } else {
-          n += loff.height;
-        }
-      }
-      if (loff.lnum < 1) {                      // at begin of file
-        curwin->w_topline = 1;
-        max_topfill();
-        curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE);
-      } else {
-        // Go two lines forward again.
-        topline_botline(&loff);
-        botline_forw(curwin, &loff);
-        botline_forw(curwin, &loff);
-        botline_topline(&loff);
-        // We're at the wrong end of a fold now.
-        hasFolding(curwin, loff.lnum, &loff.lnum, NULL);
-
-        // Always scroll at least one line.  Avoid getting stuck on
-        // very long lines.
-        if (loff.lnum >= curwin->w_topline
-            && (loff.lnum > curwin->w_topline
-                || loff.fill >= curwin->w_topfill)) {
-          // First try using the maximum number of filler lines.  If
-          // that's not enough, backup one line.
-          loff.fill = curwin->w_topfill;
-          if (curwin->w_topfill < win_get_fill(curwin, curwin->w_topline)) {
-            max_topfill();
-          }
-          if (curwin->w_topfill == loff.fill) {
-            curwin->w_topline--;
-            curwin->w_topfill = 0;
-            curwin->w_valid &= ~(VALID_WROW|VALID_CROW);
-          }
-          comp_botline(curwin);
-          curwin->w_cursor.lnum = curwin->w_botline - 1;
-          curwin->w_valid &= ~(VALID_WCOL|VALID_CHEIGHT|VALID_WROW|VALID_CROW);
-        } else {
-          curwin->w_topline = loff.lnum;
-          curwin->w_topfill = loff.fill;
-          check_topfill(curwin, false);
-          curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE);
-        }
-      }
-    }
-  }
-  foldAdjustCursor(curwin);
-  cursor_correct(curwin);
-  check_cursor_col(curwin);
-  if (retval == OK) {
-    beginline(BL_SOL | BL_FIX);
-  }
-  curwin->w_valid &= ~(VALID_WCOL|VALID_WROW|VALID_VIRTCOL);
-
-  if (retval == OK && dir == FORWARD) {
-    // Avoid the screen jumping up and down when 'scrolloff' is non-zero.
-    // But make sure we scroll at least one line (happens with mix of long
-    // wrapping lines and non-wrapping line).
-    if (check_top_offset()) {
-      scroll_cursor_top(curwin, 1, false);
-      if (curwin->w_topline <= old_topline
-          && old_topline < curbuf->b_ml.ml_line_count) {
-        curwin->w_topline = old_topline + 1;
-        hasFolding(curwin, curwin->w_topline, &curwin->w_topline, NULL);
-      }
-    } else if (curwin->w_botline > curbuf->b_ml.ml_line_count) {
-      hasFolding(curwin, curwin->w_topline, &curwin->w_topline, NULL);
-    }
-  }
-
-  redraw_later(curwin, UPD_VALID);
-  return retval;
-}
-
-// Decide how much overlap to use for page-up or page-down scrolling.
-// This is symmetric, so that doing both keeps the same lines displayed.
-// Three lines are examined:
-//
-//  before CTRL-F           after CTRL-F / before CTRL-B
-//     etc.                     l1
-//  l1 last but one line        ------------
-//  l2 last text line           l2 top text line
-//  -------------               l3 second text line
-//  l3                             etc.
-static void get_scroll_overlap(lineoff_T *lp, int dir)
-{
-  int min_height = curwin->w_height_inner - 2;
-
-  if (lp->fill > 0) {
-    lp->height = 1;
+    count = MIN(curwin->w_height_inner, (int)curwin->w_p_scr);
   } else {
-    lp->height = plines_win_nofill(curwin, lp->lnum, true);
+    // Scroll 'window' or current window height lines.
+    count *= ((ONE_WINDOW && p_window > 0 && p_window < Rows - 1)
+              ? (int)p_window - 2 : get_scroll_overlap(dir));
   }
-  int h1 = lp->height;
-  if (h1 > min_height) {
-    return;             // no overlap
-  }
-  lineoff_T loff0 = *lp;
-  if (dir > 0) {
-    botline_forw(curwin, lp);
+
+  if (curwin->w_p_sms) {
+    scroll_redraw(dir == FORWARD, count);
   } else {
-    topline_back(curwin, lp);
-  }
-  int h2 = lp->height;
-  if (h2 == MAXCOL || h2 + h1 > min_height) {
-    *lp = loff0;        // no overlap
-    return;
-  }
+    // Scroll at least one full line without 'smoothscroll'.
+    count -= plines_win_nofill(curwin, curwin->w_topline, false);
+    scroll_redraw(dir == FORWARD, 1);
 
-  lineoff_T loff1 = *lp;
-  if (dir > 0) {
-    botline_forw(curwin, lp);
-  } else {
-    topline_back(curwin, lp);
-  }
-  int h3 = lp->height;
-  if (h3 == MAXCOL || h3 + h2 > min_height) {
-    *lp = loff0;        // no overlap
-    return;
-  }
-
-  lineoff_T loff2 = *lp;
-  if (dir > 0) {
-    botline_forw(curwin, lp);
-  } else {
-    topline_back(curwin, lp);
-  }
-  int h4 = lp->height;
-  if (h4 == MAXCOL || h4 + h3 + h2 > min_height || h3 + h2 + h1 > min_height) {
-    *lp = loff1;        // 1 line overlap
-  } else {
-    *lp = loff2;        // 2 lines overlap
-  }
-}
-
-// Scroll 'scroll' lines up or down.
-void halfpage(bool flag, linenr_T Prenum)
-{
-  int scrolled = 0;
-  int i;
-
-  if (Prenum) {
-    curwin->w_p_scr = (Prenum > curwin->w_height_inner) ? curwin->w_height_inner
-                                                        : Prenum;
-  }
-  assert(curwin->w_p_scr <= INT_MAX);
-  int n = curwin->w_p_scr <= curwin->w_height_inner ? (int)curwin->w_p_scr
-                                                    : curwin->w_height_inner;
-
-  update_topline(curwin);
-  validate_botline(curwin);
-  int room = curwin->w_empty_rows + curwin->w_filler_rows;
-  if (flag) {
-    // scroll the text up
-    while (n > 0 && curwin->w_botline <= curbuf->b_ml.ml_line_count) {
-      if (curwin->w_topfill > 0) {
-        i = 1;
-        n--;
-        curwin->w_topfill--;
-      } else {
-        i = plines_win_nofill(curwin, curwin->w_topline, true);
-        n -= i;
-        if (n < 0 && scrolled > 0) {
-          break;
-        }
-        hasFolding(curwin, curwin->w_topline, NULL, &curwin->w_topline);
-        curwin->w_topline++;
-        curwin->w_topfill = win_get_fill(curwin, curwin->w_topline);
-
-        if (curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
-          curwin->w_cursor.lnum++;
-          curwin->w_valid &=
-            ~(VALID_VIRTCOL|VALID_CHEIGHT|VALID_WCOL);
-        }
-      }
-      curwin->w_valid &= ~(VALID_CROW|VALID_WROW);
-      scrolled += i;
-
-      // Correct w_botline for changed w_topline.
-      // Won't work when there are filler lines.
-      if (win_may_fill(curwin)) {
-        curwin->w_valid &= ~(VALID_BOTLINE|VALID_BOTLINE_AP);
-      } else {
-        room += i;
-        do {
-          i = plines_win(curwin, curwin->w_botline, true);
-          if (i > room) {
-            break;
-          }
-          hasFolding(curwin, curwin->w_botline, NULL, &curwin->w_botline);
-          curwin->w_botline++;
-          room -= i;
-        } while (curwin->w_botline <= curbuf->b_ml.ml_line_count);
-      }
+    // Temporarily set 'smoothscroll' so that scrolling count lines
+    // does not skip over parts of the buffer with wrapped lines.
+    curwin->w_p_sms = true;
+    if (count > 0) {
+      scroll_redraw(dir == FORWARD, count);
     }
-
-    // When hit bottom of the file: move cursor down.
-    if (n > 0) {
-      if (hasAnyFolding(curwin)) {
-        while (--n >= 0
-               && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
-          hasFolding(curwin, curwin->w_cursor.lnum, NULL,
-                     &curwin->w_cursor.lnum);
-          curwin->w_cursor.lnum++;
-        }
-      } else {
-        curwin->w_cursor.lnum += n;
-      }
-      check_cursor_lnum(curwin);
-    }
-  } else {
-    // scroll the text down
-    while (n > 0 && curwin->w_topline > 1) {
-      if (curwin->w_topfill < win_get_fill(curwin, curwin->w_topline)) {
-        i = 1;
-        n--;
-        curwin->w_topfill++;
-      } else {
-        i = plines_win_nofill(curwin, curwin->w_topline - 1, true);
-        n -= i;
-        if (n < 0 && scrolled > 0) {
-          break;
-        }
-        curwin->w_topline--;
-        hasFolding(curwin, curwin->w_topline, &curwin->w_topline, NULL);
-        curwin->w_topfill = 0;
-      }
-      curwin->w_valid &= ~(VALID_CROW|VALID_WROW|
-                           VALID_BOTLINE|VALID_BOTLINE_AP);
-      scrolled += i;
-      if (curwin->w_cursor.lnum > 1) {
-        curwin->w_cursor.lnum--;
-        curwin->w_valid &= ~(VALID_VIRTCOL|VALID_CHEIGHT|VALID_WCOL);
-      }
-    }
-
-    // When hit top of the file: move cursor up.
-    if (n > 0) {
-      if (curwin->w_cursor.lnum <= (linenr_T)n) {
-        curwin->w_cursor.lnum = 1;
-      } else if (hasAnyFolding(curwin)) {
-        while (--n >= 0 && curwin->w_cursor.lnum > 1) {
-          curwin->w_cursor.lnum--;
-          hasFolding(curwin, curwin->w_cursor.lnum,
-                     &curwin->w_cursor.lnum, NULL);
-        }
-      } else {
-        curwin->w_cursor.lnum -= n;
-      }
-    }
+    curwin->w_p_sms = false;
   }
   // Move cursor to first line of closed fold.
   foldAdjustCursor(curwin);
-  check_topfill(curwin, !flag);
-  cursor_correct(curwin);
-  beginline(BL_SOL | BL_FIX);
-  redraw_later(curwin, UPD_VALID);
+
+  int nochange = curwin->w_topline == prev_topline
+                 && curwin->w_topfill == prev_topfill
+                 && curwin->w_skipcol == prev_skipcol;
+
+  // Error if the viewport did not change and the cursor is already
+  // at the boundary.
+  if (nochange) {
+    int prev_cursor = curwin->w_cursor.lnum;
+    curwin->w_cursor.lnum += (count + 1) * (dir == FORWARD ? 1 : -1);
+    check_cursor(curwin);
+    if (curwin->w_cursor.lnum == prev_cursor) {
+      beep_flush();
+    }
+  } else if (!curwin->w_p_sms || curwin->w_skipcol == prev_skipcol) {
+    beginline(BL_SOL | BL_FIX);
+  }
+
+  return nochange;
 }
 
 void do_check_cursorbind(void)

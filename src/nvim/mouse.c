@@ -1024,7 +1024,7 @@ void do_mousescroll(cmdarg_T *cap)
     // Vertical scrolling
     if ((State & MODE_NORMAL) && shift_or_ctrl) {
       // whole page up or down
-      onepage(cap->arg ? FORWARD : BACKWARD, 1);
+      pagescroll(cap->arg ? FORWARD : BACKWARD, 1, false);
     } else {
       if (shift_or_ctrl) {
         // whole page up or down

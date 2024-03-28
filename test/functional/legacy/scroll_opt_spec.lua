@@ -740,7 +740,7 @@ describe('smoothscroll', function()
                                               |
     ]])
     exec("call setline(92, 'a'->repeat(100))")
-    feed('<C-B>G')
+    feed('<C-L><C-B>G')
     -- cursor is not placed below window
     screen:expect([[
       {1:<<<}aaaaaaaaaaaaaaaaa                    |
