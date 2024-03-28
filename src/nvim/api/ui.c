@@ -38,6 +38,7 @@
 #include "nvim/option.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_defs.h"
 
 #define BUF_POS(ui) ((size_t)((ui)->packer.ptr - (ui)->packer.startptr))
 
@@ -161,7 +162,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dictiona
     }
   }
 
-  if (ui->ui_ext[kUIHlState] || ui->ui_ext[kUIMultigrid]) {
+  if (ui->ui_ext[kUIHlState] || ui->ui_ext[kUIMultigrid] || ui->ui_ext[kUIElementType]) {
     ui->ui_ext[kUILinegrid] = true;
   }
 
@@ -672,7 +673,7 @@ void remote_ui_default_colors_set(RemoteUI *ui, Integer rgb_fg, Integer rgb_bg, 
 }
 
 void remote_ui_hl_attr_define(RemoteUI *ui, Integer id, HlAttrs rgb_attrs, HlAttrs cterm_attrs,
-                              Array info)
+                              Array info, Integer element_tags)
 {
   if (!ui->ui_ext[kUILinegrid]) {
     return;
@@ -700,6 +701,8 @@ void remote_ui_hl_attr_define(RemoteUI *ui, Integer id, HlAttrs rgb_attrs, HlAtt
   } else {
     ADD_C(args, ARRAY_OBJ((Array)ARRAY_DICT_INIT));
   }
+
+  ADD_C(args, INTEGER_OBJ(element_tags));
 
   push_call(ui, "hl_attr_define", args);
 }

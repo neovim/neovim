@@ -139,12 +139,32 @@ typedef enum {
   kHlInvalid,
 } HlKind;
 
+/// When making changes, also update element_tag_names in apy/ui.h!
+/// Only add new elements to the end, and keep the ordering for protocol compatibility.
+/// Only 32 tags are supported at the moment.
+/// 64 would be possible, but the rpc protocol only supports signed Integers
+/// And Lua can only do bit operations on 32 bit values
+// So if more tags are needed another field in HLEntry is probably the best option
+typedef enum {
+  ET_STATUSBAR = 1U << 0,
+  ET_WINBAR = 1U << 1,
+  ET_FLOATBORDER = 1U << 2,
+  ET_FLOATTITLE = 1U << 3,
+  ET_TOP = 1U << 4,
+  ET_BOTTOM = 1U << 5,
+  ET_LEFT = 1U << 6,
+  ET_RIGHT = 1U << 7,
+  ET_HSPLIT = 1U << 8,
+  ET_VSPLIT = 1U << 9,
+} element_type_tag_t;
+
 typedef struct {
   HlAttrs attr;
   HlKind kind;
   int id1;
   int id2;
   int winid;
+  uint32_t element_tags;
 } HlEntry;
 
 typedef struct {

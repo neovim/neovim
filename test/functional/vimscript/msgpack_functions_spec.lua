@@ -478,7 +478,15 @@ describe('msgpackparse() function', function()
       pending('msgpackparse() has a bug on windows')
       return
     end
-    eq({ 'error_types', 'functions', 'types', 'ui_events', 'ui_options', 'version' }, api_info)
+    eq({
+      'error_types',
+      'functions',
+      'types',
+      'ui_element_tags',
+      'ui_events',
+      'ui_options',
+      'version',
+    }, api_info)
   end)
 
   it('fails when called with no arguments', function()

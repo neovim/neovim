@@ -395,10 +395,7 @@ void ui_attach_impl(RemoteUI *ui, uint64_t chanid)
     ui_set_ext_option(ui, i, ui->ui_ext[i]);
   }
 
-  bool sent = false;
-  if (ui->ui_ext[kUIHlState]) {
-    sent = highlight_use_hlstate();
-  }
+  bool sent = highlight_ext_enable(ui->ui_ext[kUIHlState], ui->ui_ext[kUIElementType]);
   if (!sent) {
     ui_send_all_hls(ui);
   }

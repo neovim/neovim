@@ -1376,7 +1376,8 @@ int32_t tui_add_url(TUIData *tui, const char *url)
   return (int32_t)k;
 }
 
-void tui_hl_attr_define(TUIData *tui, Integer id, HlAttrs attrs, HlAttrs cterm_attrs, Array info)
+void tui_hl_attr_define(TUIData *tui, Integer id, HlAttrs attrs, HlAttrs cterm_attrs, Array info,
+                        Integer element_tags)
 {
   attrs.cterm_ae_attr = cterm_attrs.cterm_ae_attr;
   attrs.cterm_fg_color = cterm_attrs.cterm_fg_color;

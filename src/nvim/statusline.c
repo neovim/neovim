@@ -93,6 +93,7 @@ void win_redr_status(win_T *wp)
     redraw_custom_statusline(wp);
   } else {
     schar_T fillchar = fillchar_status(&attr, wp);
+    attr = hl_add_element_tags(attr, ET_STATUSBAR | ET_HSPLIT);
     const int stl_width = is_stl_global ? Columns : wp->w_width;
 
     get_trans_bufname(wp->w_buffer);
@@ -180,8 +181,10 @@ void win_redr_status(win_T *wp)
     schar_T fillchar;
     if (stl_connected(wp)) {
       fillchar = fillchar_status(&attr, wp);
+      attr = hl_add_element_tags(attr, ET_STATUSBAR | ET_HSPLIT | ET_VSPLIT);
     } else {
       attr = win_hl_attr(wp, HLF_C);
+      attr = hl_add_element_tags(attr, ET_HSPLIT | ET_VSPLIT);
       fillchar = wp->w_p_fcs_chars.vert;
     }
     grid_line_start(&default_grid, W_ENDROW(wp));
@@ -344,6 +347,8 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
 
     fillchar = wp->w_p_fcs_chars.wbr;
     attr = (wp == curwin) ? win_hl_attr(wp, HLF_WBR) : win_hl_attr(wp, HLF_WBRNC);
+    attr = hl_add_element_tags(attr, ET_WINBAR);
+
     maxwidth = wp->w_width_inner;
     stl_clear_click_defs(wp->w_winbar_click_defs, wp->w_winbar_click_defs_size);
     wp->w_winbar_click_defs = stl_alloc_click_defs(wp->w_winbar_click_defs, maxwidth,
@@ -390,6 +395,8 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       opt_idx = kOptStatusline;
       stl = ((*wp->w_p_stl != NUL) ? wp->w_p_stl : p_stl);
       opt_scope = ((*wp->w_p_stl != NUL) ? OPT_LOCAL : 0);
+
+      attr = hl_add_element_tags(attr, ET_STATUSBAR | ET_HSPLIT);
     }
 
     if (in_status_line && !is_stl_global) {
@@ -441,6 +448,11 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       curattr = highlight_stlnc[hltab[n].userhl - 1];
     } else {
       curattr = highlight_user[hltab[n].userhl - 1];
+    }
+    if (opt_idx == kOptStatusline) {
+      curattr = hl_add_element_tags(curattr, ET_STATUSBAR | ET_HSPLIT);
+    } else if (opt_idx == kOptWinbar) {
+      curattr = hl_add_element_tags(curattr, ET_WINBAR);
     }
   }
   // Make sure to use an empty string instead of p, if p is beyond buf + len.
