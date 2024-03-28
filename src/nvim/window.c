@@ -5891,10 +5891,6 @@ static void frame_setheight(frame_T *curfrp, int height)
 
   if (curfrp->fr_parent == NULL) {
     // topframe: can only change the command line height
-    // Avoid doing so with external messages.
-    if (ui_has(kUIMessages)) {
-      return;
-    }
     if (height > ROWS_AVAIL) {
       // If height is greater than the available space, try to create space for
       // the frame by reducing 'cmdheight' if possible, while making sure
@@ -6233,12 +6229,6 @@ const char *did_set_winminwidth(optset_T *args FUNC_ATTR_UNUSED)
 void win_drag_status_line(win_T *dragwin, int offset)
 {
   frame_T *fr = dragwin->w_frame;
-
-  // Avoid changing command line height with external messages.
-  if (fr->fr_next == NULL && ui_has(kUIMessages)) {
-    return;
-  }
-
   frame_T *curfr = fr;
   if (fr != topframe) {         // more than one window
     fr = fr->fr_parent;
