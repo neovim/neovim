@@ -877,24 +877,27 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
   int idx = id - 1;  // Index is ID minus one.
   bool is_default = attrs.rgb_ae_attr & HL_DEFAULT;
 
-  // Return if "default" was used and the group already has settings
-  if (is_default && hl_has_settings(idx, true) && !dict->force) {
-    return;
-  }
-
   HlGroup *g = &hl_table[idx];
   g->sg_cleared = false;
+
+  if (is_default) {
+    if (link_id > 0 && (dict->force || g->sg_deflink == 0)) {
+      g->sg_deflink = link_id;
+      g->sg_deflink_sctx = current_sctx;
+      g->sg_deflink_sctx.sc_lnum += SOURCING_LNUM;
+      nlua_set_sctx(&g->sg_deflink_sctx);
+    }
+
+    if (hl_has_settings(idx, true) && !dict->force) {
+      return;
+    }
+  }
 
   if (link_id > 0) {
     g->sg_link = link_id;
     g->sg_script_ctx = current_sctx;
     g->sg_script_ctx.sc_lnum += SOURCING_LNUM;
     g->sg_set |= SG_LINK;
-    if (is_default) {
-      g->sg_deflink = link_id;
-      g->sg_deflink_sctx = current_sctx;
-      g->sg_deflink_sctx.sc_lnum += SOURCING_LNUM;
-    }
   } else {
     g->sg_link = 0;
   }
