@@ -2534,6 +2534,10 @@ error('Cannot require a meta file')
 ---@proposed
 ---@field inlineCompletionProvider? boolean|lsp.InlineCompletionOptions
 ---
+---@since 3.18.0
+---Text document specific server capabilities.
+---@field textDocument? { diagnostic?: { markupMessageSupport?: boolean } }
+---
 ---Workspace specific server capabilities.
 ---@field workspace? lsp._anonym12.workspace
 ---
@@ -2599,7 +2603,10 @@ error('Cannot require a meta file')
 ---@field source? string
 ---
 ---The diagnostic's message. It usually appears in the user interface
----@field message string
+---
+---@since 3.18.0 - support for MarkupContent. This is guarded by the client
+---capability `workspace.diagnostic.markupMessageSupport`.
+---@field message string | lsp.MarkupContent
 ---
 ---Additional metadata about the diagnostic.
 ---
@@ -4216,6 +4223,11 @@ error('Cannot require a meta file')
 ---
 ---Whether the clients supports related documents for document diagnostic pulls.
 ---@field relatedDocumentSupport? boolean
+---
+---Whether the client supports markup content in diagnostic messages.
+---@since 3.18.0
+---@proposed
+---@field markupMessageSupport? boolean 
 
 ---Client capabilities specific to inline completions.
 ---
