@@ -185,7 +185,7 @@ See 'clipboard' for details and options.
 The presence of a working clipboard tool implicitly enables the '+' and "*"
 registers. Nvim looks for these clipboard tools, in order of priority:
 
-  - |g:clipboard|
+  - |g:clipboard| (unless unset or `false`)
   - pbcopy, pbpaste (macOS)
   - wl-copy, wl-paste (if $WAYLAND_DISPLAY is set)
   - waycopy, waypaste (if $WAYLAND_DISPLAY is set)
