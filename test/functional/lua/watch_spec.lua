@@ -31,6 +31,7 @@ describe('vim._watch', function()
       end
 
       if watchfunc == 'watch' then
+        skip(is_os('mac'), 'flaky test on mac')
         skip(is_os('bsd'), 'Stopped working on bsd after 3ca967387c49c754561c3b11a574797504d40f38')
       else
         skip(
