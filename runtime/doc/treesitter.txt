@@ -149,7 +149,7 @@ TSNode:sexpr()                                          *TSNode:sexpr()*
     Get an S-expression representing the node as a string.
 
 TSNode:id()                                             *TSNode:id()*
-    Get an unique identifier for the node inside its own tree.
+    Get a unique identifier for the node inside its own tree.
 
     No guarantees are made about this identifier's internal representation,
     except for being a primitive Lua type with value equality (so not a
@@ -524,7 +524,7 @@ the exact definition):
 @keyword.operator       operators that are English words (e.g. `and`, `or`)
 @keyword.import         keywords for including modules (e.g. `import`, `from` in Python)
 @keyword.type           keywords defining composite types (e.g. `struct`, `enum`)
-@keyword.modifier       keywords definining type modifiers (e.g. `const`, `static`, `public`)
+@keyword.modifier       keywords defining type modifiers (e.g. `const`, `static`, `public`)
 @keyword.repeat         keywords related to loops (e.g. `for`, `while`)
 @keyword.return         keywords like `return` and `yield`
 @keyword.debug          keywords related to debugging

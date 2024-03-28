@@ -252,7 +252,7 @@ by the semantic component they are testing.
 - _Functional tests_
   ([test/functional](https://github.com/neovim/neovim/tree/master/test/functional))
   are higher-level (plugins and user input) than unit tests; they are organized
-  by concept. 
+  by concept.
     - Try to find an existing `test/functional/*/*_spec.lua` group that makes
       sense, before creating a new one.
 
@@ -276,9 +276,9 @@ the file).
 Configuration
 =============
 
-Test behaviour is affected by environment variables. Currently supported 
-(Functional, Unit, Benchmarks) (when Defined; when set to _1_; when defined, 
-treated as Integer; when defined, treated as String; when defined, treated as 
+Test behaviour is affected by environment variables. Currently supported
+(Functional, Unit, Benchmarks) (when Defined; when set to _1_; when defined,
+treated as Integer; when defined, treated as String; when defined, treated as
 Number; !must be defined to function properly):
 
 - `BUSTED_ARGS` (F) (U): arguments forwarded to `busted`.

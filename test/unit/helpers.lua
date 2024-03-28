@@ -209,7 +209,7 @@ local function cimport(...)
       local new_cdefs = Set:new()
       for line in body:gmatch('[^\r\n]+') do
         line = trim(line)
-        -- give each #pragma pack an unique id, so that they don't get removed
+        -- give each #pragma pack a unique id, so that they don't get removed
         -- if they are inserted into the set
         -- (they are needed in the right order with the struct definitions,
         -- otherwise luajit has wrong memory layouts for the structs)

@@ -1,6 +1,3 @@
-# BuildLuajit(TARGET targetname CONFIGURE_COMMAND ... BUILD_COMMAND ... INSTALL_COMMAND ...)
-# Reusable function to build luajit, wraps ExternalProject_Add.
-# Failing to pass a command argument will result in no command being run
 function(BuildLuajit)
   cmake_parse_arguments(_luajit
     ""

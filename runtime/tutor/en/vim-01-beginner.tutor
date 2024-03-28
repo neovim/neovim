@@ -39,7 +39,7 @@ instead of text to type.
 
 Now, move to the next lesson (use the `j`{normal} key to scroll down).
 
-## Lesson 1.1: MOVING THE CURSOR
+# Lesson 1.1: MOVING THE CURSOR
 
 ** To move the cursor, press the `h`, `j`, `k`, `l` keys as indicated. **
 
@@ -87,7 +87,7 @@ NOTE: [:q!](:q) `<Enter>`{normal} discards any changes you made. In a few lesson
 
  5. Move the cursor down to Lesson 1.3.
 
-## Lesson 1.3: TEXT EDITING - DELETION
+# Lesson 1.3: TEXT EDITING: DELETION
 
 ** Press `x`{normal} to delete the character under the cursor. **
 
@@ -251,8 +251,8 @@ The format for a delete command with the [d](d) delete operator is as follows:
 
   Thus typing `de`{normal} will delete from the cursor to the end of the word.
 
-NOTE:  Pressing just the motion while in Normal mode without an operator
-       will move the cursor as specified.
+NOTE: Pressing just the motion while in Normal mode without an operator
+      will move the cursor as specified.
 
 # Lesson 2.4: USING A COUNT FOR A MOTION
 
@@ -381,7 +381,7 @@ b) Violets are blue,
 c) Intelligence is learned,
 a) Roses are red,
 
-NOTE: You can also put the text before the cursor with `P`{normal} (capital P)
+NOTE: You can also put the text before the cursor with `P`{normal} (capital P).
 
 # Lesson 3.2: THE REPLACE COMMAND
 
@@ -534,7 +534,7 @@ NOTE: This is very useful in debugging a program with unmatched parentheses!
 ~~~ cmd
         :s/thee/the/
 ~~~
-    NOTE: the [:s](:s) command only changed the first match of "thee" in the line.
+    NOTE: The [:s](:s) command only changed the first match of "thee" in the line.
 
  3. Now type
 ~~~ cmd
@@ -565,14 +565,14 @@ Usually thee best time to see thee flowers is in thee spring.
     to find every occurrence in the whole file, with a prompt whether to
     substitute or not.
 
-NOTE: You can also select the lines you want to substitute first using visual-mode.
+NOTE: You can also select the lines you want to substitute first using Visual mode.
       This will be explained more in a future lesson.
 
 # Lesson 4 SUMMARY
 
  1. `<C-g>`{normal}     displays your location and the file status.
     `G`{normal}         moves to the end of the file.
-    number `G`{normal} moves to that line number.
+    number `G`{normal}  moves to that line number.
     `gg`{normal}        moves to the first line.
 
  2. Typing `/`{normal} followed by a phrase searches FORWARD for the phrase.
@@ -638,7 +638,7 @@ NOTE: All `:`{vim} commands are executed when you press `<Enter>`{normal}.
 ~~~ cmd
         :w TEST
 ~~~
-   (where TEST is the filename you chose.)
+    (where TEST is the filename you chose.)
 
  4. This saves the current file under the name TEST.
     To verify this, type `:!{unix:(ls),win:(dir)}`{vim} again to see your directory.
@@ -688,8 +688,8 @@ NOTE: Pressing [v](v) starts [Visual selection](visual-mode). You can move the c
 
  1. Place the cursor just above this line.
 
-NOTE:  After executing Step 2 you will see text from Lesson 5.3. Then move
-       DOWN to see this lesson again.
+NOTE: After executing Step 2 you will see text from Lesson 5.3. Then move
+      DOWN to see this lesson again.
 
  2. Now retrieve your TEST file using the command
 
@@ -810,9 +810,9 @@ NOTE: Replace mode is like Insert mode, but every typed character
 a) This is the first item.
 b)
 
-NOTE: you can use `y`{normal} as an operator: `yw`{normal} yanks one word.
+NOTE: You can use `y`{normal} as an operator: `yw`{normal} yanks one word.
 
-NOTE: you can use `P`{normal} to put before the cursor, rather than after.
+NOTE: You can use `P`{normal} to put before the cursor, rather than after.
 
 # Lesson 6.5: SET OPTION
 
@@ -864,7 +864,7 @@ NOTE: If you want to ignore case for just one search command, use [\c](/\c)
  4. The `y`{normal} operator copies text, `p`{normal} pastes it.
 
  5. Typing a capital `R`{normal} enters Replace mode until `<Esc>`{normal} is
-     pressed.
+    pressed.
 
  6. Typing "[:set](:set) xxx" sets the option "xxx". Some options are:
 
@@ -872,7 +872,7 @@ NOTE: If you want to ignore case for just one search command, use [\c](/\c)
         'is' 'incsearch'    show partial matches for a search phrase
         'hls' 'hlsearch'    highlight all matching phrases
 
-     You can either use the long or the short option name.
+    You can either use the long or the short option name.
 
  7. Prepend "no" to switch an option off:
 ~~~ cmd
@@ -921,8 +921,8 @@ To start using more features create an "init.vim" file.
 
     `:w`{vim}
 
-  You can add all your preferred settings to this "init.vim" file.
-  For more information type `:help init.vim`{vim}.
+You can add all your preferred settings to this "init.vim" file.
+For more information type `:help init.vim`{vim}.
 
 # Lesson 7.3: COMPLETION
 

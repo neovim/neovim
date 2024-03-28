@@ -669,7 +669,7 @@ function vim.api.nvim_buf_set_lines(buffer, start, end_, strict_indexing, replac
 --- @return boolean
 function vim.api.nvim_buf_set_mark(buffer, name, line, col, opts) end
 
---- Sets the full file name for a buffer
+--- Sets the full file name for a buffer, like `:file_f`
 ---
 --- @param buffer integer Buffer handle, or 0 for current buffer
 --- @param name string Buffer name

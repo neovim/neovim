@@ -115,7 +115,7 @@ function vim.stricmp(a, b) end
 --- Convert UTF-32 or UTF-16 {index} to byte index. If {use_utf16} is not
 --- supplied, it defaults to false (use UTF-32). Returns the byte index.
 ---
---- Invalid UTF-8 and NUL is treated like by |vim.str_byteindex()|.
+--- Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|.
 --- An {index} in the middle of a UTF-16 sequence is rounded upwards to
 --- the end of that sequence.
 --- @param str string
