@@ -715,12 +715,12 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *err)
 void ui_call_event(char *name, Array args)
 {
   UIEventCallback *event_cb;
-  bool handled = false;
+  ui_did_lua_cb = false;
   map_foreach_value(&ui_event_cbs, event_cb, {
     Error err = ERROR_INIT;
     Object res = nlua_call_ref(event_cb->cb, name, args, kRetNilBool, NULL, &err);
     if (LUARET_TRUTHY(res)) {
-      handled = true;
+      ui_did_lua_cb = true;
     }
     if (ERROR_SET(&err)) {
       ELOG("Error while executing ui_comp_event callback: %s", err.msg);
@@ -728,7 +728,7 @@ void ui_call_event(char *name, Array args)
     api_clear_error(&err);
   })
 
-  if (!handled) {
+  if (!ui_did_lua_cb) {
     UI_CALL(true, event, ui, name, args);
   }
 

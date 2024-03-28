@@ -43,7 +43,7 @@ typedef enum {
   kRetLuaref,  ///< return value becomes a single Luaref, regardless of type (except NIL)
 } LuaRetMode;
 
-/// To use with kRetNilBool for quick thuthyness check
+/// To use with kRetNilBool for quick truthiness check
 #define LUARET_TRUTHY(res) ((res).type == kObjectTypeBoolean && (res).data.boolean == true)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

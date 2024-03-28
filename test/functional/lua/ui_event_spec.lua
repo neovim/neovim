@@ -31,6 +31,9 @@ describe('vim.ui_attach', function()
       [2] = { bold = true },
       [3] = { background = Screen.colors.Grey },
       [4] = { background = Screen.colors.LightMagenta },
+      [5] = { reverse = true },
+      [6] = { reverse = true, bold = true },
+      [7] = { background = Screen.colors.Yellow1 },
     })
     screen:attach()
   end)
@@ -148,5 +151,54 @@ describe('vim.ui_attach', function()
         },
       },
     }, actual, vim.inspect(actual))
+  end)
+
+  it('screen is updated without calling :redraw from ext_cmdline', function()
+    exec_lua([[
+      vim.cmd.norm('ifoobar')
+      vim.cmd('1split cmdline')
+      local buf = vim.api.nvim_get_current_buf()
+      vim.cmd.wincmd('p')
+      vim.ui_attach(ns, { ext_cmdline = true }, function(event, ...)
+        if event == 'cmdline_show' then
+          local content = select(1, ...)
+          vim.api.nvim_buf_set_lines(buf, -2, -1, false, {content[1][2]})
+        end
+        return true
+      end)
+    ]])
+    -- Updates a cmdline window
+    feed(':cmdline')
+    screen:expect {
+      grid = [[
+      cmdline                                 |
+      {5:cmdline [+]                             }|
+      fooba^r                                  |
+      {6:[No Name] [+]                           }|
+                                              |
+    ]],
+    }
+    -- Does not clear 'incsearch' highlighting
+    feed('<Esc>/foo')
+    screen:expect {
+      grid = [[
+      {7:foo}                                     |
+      {5:cmdline [+]                             }|
+      {5:foo}ba^r                                  |
+      {6:[No Name] [+]                           }|
+                                              |
+    ]],
+    }
+    -- Does not clear 'inccommand' screen
+    feed('<Esc>:%s/bar/baz')
+    screen:expect {
+      grid = [[
+      %s/bar/baz                              |
+      {5:cmdline [+]                             }|
+      foo{7:ba^z}                                  |
+      {6:[No Name] [+]                           }|
+                                              |
+    ]],
+    }
   end)
 end)
