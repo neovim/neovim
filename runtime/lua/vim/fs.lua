@@ -1,6 +1,7 @@
 local M = {}
 
 local iswin = vim.uv.os_uname().sysname == 'Windows_NT'
+local os_sep = iswin and '\\' or '/'
 
 --- Iterate over all the parents of the given path.
 ---
@@ -47,19 +48,23 @@ function M.dirname(file)
     return nil
   end
   vim.validate({ file = { file, 's' } })
-  if iswin and file:match('^%w:[\\/]?$') then
-    return (file:gsub('\\', '/'))
-  elseif not file:match('[\\/]') then
+  if iswin then
+    file = file:gsub(os_sep, '/') --[[@as string]]
+    if file:match('^%w:/?$') then
+      return file
+    end
+  end
+  if not file:match('/') then
     return '.'
   elseif file == '/' or file:match('^/[^/]+$') then
     return '/'
   end
   ---@type string
-  local dir = file:match('[/\\]$') and file:sub(1, #file - 1) or file:match('^([/\\]?.+)[/\\]')
+  local dir = file:match('/$') and file:sub(1, #file - 1) or file:match('^(/?.+)/')
   if iswin and dir:match('^%w:$') then
     return dir .. '/'
   end
-  return (dir:gsub('\\', '/'))
+  return dir
 end
 
 --- Return the basename of the given path
@@ -72,10 +77,13 @@ function M.basename(file)
     return nil
   end
   vim.validate({ file = { file, 's' } })
-  if iswin and file:match('^%w:[\\/]?$') then
-    return ''
+  if iswin then
+    file = file:gsub(os_sep, '/') --[[@as string]]
+    if file:match('^%w:/?$') then
+      return ''
+    end
   end
-  return file:match('[/\\]$') and '' or (file:match('[^\\/]*$'):gsub('\\', '/'))
+  return file:match('/$') and '' or (file:match('[^/]*$'))
 end
 
 --- Concatenate directories and/or file paths into a single path with normalization
@@ -334,15 +342,16 @@ end
 --- @field expand_env boolean
 
 --- Normalize a path to a standard format. A tilde (~) character at the
---- beginning of the path is expanded to the user's home directory and any
---- backslash (\) characters are converted to forward slashes (/). Environment
---- variables are also expanded.
+--- beginning of the path is expanded to the user's home directory and
+--- environment variables are also expanded.
+---
+--- On Windows, backslash (\) characters are converted to forward slashes (/).
 ---
 --- Examples:
 ---
 --- ```lua
 --- vim.fs.normalize('C:\\\\Users\\\\jdoe')
---- -- 'C:/Users/jdoe'
+--- -- On Windows: 'C:/Users/jdoe'
 ---
 --- vim.fs.normalize('~/src/neovim')
 --- -- '/home/jdoe/src/neovim'
@@ -364,7 +373,7 @@ function M.normalize(path, opts)
 
   if path:sub(1, 1) == '~' then
     local home = vim.uv.os_homedir() or '~'
-    if home:sub(-1) == '\\' or home:sub(-1) == '/' then
+    if home:sub(-1) == os_sep then
       home = home:sub(1, -2)
     end
     path = home .. path:sub(2)
@@ -374,7 +383,7 @@ function M.normalize(path, opts)
     path = path:gsub('%$([%w_]+)', vim.uv.os_getenv)
   end
 
-  path = path:gsub('\\', '/'):gsub('/+', '/')
+  path = path:gsub(os_sep, '/'):gsub('/+', '/')
   if iswin and path:match('^%w:/$') then
     return path
   end
