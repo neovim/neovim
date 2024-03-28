@@ -6744,6 +6744,13 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
   wp->w_width_outer = (wp->w_width_inner + win_border_width(wp));
   wp->w_winrow_off = wp->w_border_adj[0] + wp->w_winbar_height;
   wp->w_wincol_off = wp->w_border_adj[3];
+
+  if (ui_has(kUIMultigrid)) {
+    ui_call_win_viewport_margins(wp->w_grid_alloc.handle, wp->handle,
+                                 wp->w_winrow_off, wp->w_border_adj[2],
+                                 wp->w_wincol_off, wp->w_border_adj[1]);
+  }
+
   wp->w_redr_status = true;
 }
 

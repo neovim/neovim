@@ -204,6 +204,7 @@ function Screen.new(width, height)
     wildmenu_selected = nil,
     win_position = {},
     win_viewport = {},
+    win_viewport_margins = {},
     float_pos = {},
     msg_grid = nil,
     msg_grid_pos = nil,
@@ -337,6 +338,7 @@ local ext_keys = {
   'ruler',
   'float_pos',
   'win_viewport',
+  'win_viewport_margins',
 }
 
 local expect_keys = {
@@ -620,6 +622,9 @@ screen:redraw_debug() to show all intermediate screen states.]]
     end
     if expected.win_viewport == nil then
       extstate.win_viewport = nil
+    end
+    if expected.win_viewport_margins == nil then
+      extstate.win_viewport_margins = nil
     end
 
     if expected.float_pos then
@@ -993,6 +998,7 @@ function Screen:_handle_grid_destroy(grid)
   if self._options.ext_multigrid then
     self.win_position[grid] = nil
     self.win_viewport[grid] = nil
+    self.win_viewport_margins[grid] = nil
   end
 end
 
@@ -1045,6 +1051,16 @@ function Screen:_handle_win_viewport(
     curcol = curcol,
     linecount = linecount,
     sum_scroll_delta = scroll_delta + last_scroll_delta,
+  }
+end
+
+function Screen:_handle_win_viewport_margins(grid, win, top, bottom, left, right)
+  self.win_viewport_margins[grid] = {
+    win = win,
+    top = top,
+    bottom = bottom,
+    left = left,
+    right = right,
   }
 end
 
@@ -1466,6 +1482,8 @@ function Screen:_extstate_repr(attr_state)
   end
 
   local win_viewport = (next(self.win_viewport) and self.win_viewport) or nil
+  local win_viewport_margins = (next(self.win_viewport_margins) and self.win_viewport_margins)
+    or nil
 
   return {
     popupmenu = self.popupmenu,
@@ -1480,6 +1498,7 @@ function Screen:_extstate_repr(attr_state)
     msg_history = msg_history,
     float_pos = self.float_pos,
     win_viewport = win_viewport,
+    win_viewport_margins = win_viewport_margins,
   }
 end
 
