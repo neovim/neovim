@@ -736,6 +736,14 @@ commands                                                    *vim.lsp.commands*
 
     The second argument is the `ctx` of |lsp-handler|
 
+detach_completion({client_id}, {bufnr})          *vim.lsp.detach_completion()*
+    Detaches a client from the given buffer to stop requesting LSP
+    completions.
+
+    Parameters: ~
+      • {client_id}  (`integer`)
+      • {bufnr}      (`integer`)
+
 formatexpr({opts})                                      *vim.lsp.formatexpr()*
     Provides an interface between the built-in client and a `formatexpr`
     function.

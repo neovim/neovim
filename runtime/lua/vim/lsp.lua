@@ -972,6 +972,14 @@ function lsp.omnifunc(findstart, base)
   return vim.lsp._completion.omnifunc(findstart, base)
 end
 
+--- Detaches a client from the given buffer to stop requesting LSP completions.
+---
+--- @param client_id integer
+--- @param bufnr integer
+function lsp.detach_completion(client_id, bufnr)
+  vim.lsp._completion.detach(client_id, bufnr)
+end
+
 --- @class vim.lsp.formatexpr.Opts
 --- @inlinedoc
 ---
