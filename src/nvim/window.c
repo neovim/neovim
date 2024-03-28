@@ -937,6 +937,12 @@ void ui_ext_win_viewport(win_T *wp)
     wp->w_viewport_last_topfill = wp->w_topfill;
     wp->w_viewport_last_skipcol = wp->w_skipcol;
   }
+
+  if (wp->w_viewport_last_winbar_height != wp->w_winbar_height) {
+    // currently, viewport only has a margin on top (winbar).
+    ui_call_win_viewport_margins(wp->w_grid_alloc.handle, wp->handle, wp->w_winbar_height, 0, 0, 0);
+    wp->w_viewport_last_winbar_height = wp->w_winbar_height;
+  }
 }
 
 /// If "split_disallowed" is set, or "wp"'s buffer is closing, give an error and return FAIL.
@@ -5133,6 +5139,7 @@ win_T *win_alloc(win_T *after, bool hidden)
   new_wp->w_config = WIN_CONFIG_INIT;
   new_wp->w_viewport_invalid = true;
   new_wp->w_viewport_last_topline = 1;
+  new_wp->w_viewport_last_winbar_height = -1;  // sentinel.
 
   new_wp->w_ns_hl = -1;
 
