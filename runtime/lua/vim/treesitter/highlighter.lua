@@ -384,6 +384,8 @@ function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
   end
 end
 
+local redrawing = {} ---@type table<integer, true> buffers being redrawn
+
 ---@private
 ---@param _win integer
 ---@param buf integer
@@ -394,16 +396,31 @@ function TSHighlighter._on_win(_, _win, buf, topline, botline)
   if not self then
     return false
   end
+  if not redrawing[buf] then
+    redrawing[buf] = true
+    self.tree:_start_batch()
+  end
   self.tree:parse({ topline, botline + 1 })
   self:prepare_highlight_states(topline, botline + 1)
   self.redraw_count = self.redraw_count + 1
   return true
 end
 
+function TSHighlighter._on_end()
+  for buf, _ in pairs(redrawing) do
+    local self = TSHighlighter.active[buf]
+    if self then
+      self.tree:_finish_batch()
+    end
+    redrawing[buf] = nil
+  end
+end
+
 api.nvim_set_decoration_provider(ns, {
   on_win = TSHighlighter._on_win,
   on_line = TSHighlighter._on_line,
   _on_spell_nav = TSHighlighter._on_spell_nav,
+  on_end = TSHighlighter._on_end,
 })
 
 return TSHighlighter
