@@ -4494,7 +4494,7 @@ static uint8_t *regatom(int *flagp)
           n = n * 10 + (uint32_t)(c - '0');
           c = getchr();
         }
-        if (c == '\'' && n == 0) {
+        if (no_Magic(c) == '\'' && n == 0) {
           // "\%'m", "\%<'m" and "\%>'m": Mark
           c = getchr();
           ret = regnode(RE_MARK);
@@ -10218,7 +10218,7 @@ static int nfa_regatom(void)
         }
         EMIT((int)n);
         break;
-      } else if (c == '\'' && n == 0) {
+      } else if (no_Magic(c) == '\'' && n == 0) {
         // \%'m  \%<'m  \%>'m
         EMIT(cmp == '<' ? NFA_MARK_LT
                         : cmp == '>' ? NFA_MARK_GT : NFA_MARK);
