@@ -136,4 +136,29 @@ describe('vim.uv', function()
   it("is equal to require('luv')", function()
     eq(true, exec_lua("return vim.uv == require('luv')"))
   end)
+
+  it("doesn't crash on async callbacks throwing nil error", function()
+    local screen = Screen.new(50, 4)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = { bold = true, reverse = true },
+      [2] = { background = Screen.colors.Red, foreground = Screen.colors.Grey100 },
+      [3] = { foreground = Screen.colors.SeaGreen4, bold = true },
+    }
+
+    exec_lua [[
+      local idle = vim.uv.new_idle()
+      idle:start(function()
+        idle:stop()
+        error()
+      end)
+    ]]
+
+    screen:expect([[
+      {1:                                                  }|
+      {2:Error executing luv callback:}                     |
+      {2:[?????]}                                           |
+      {3:Press ENTER or type command to continue}^           |
+    ]])
+  end)
 end)
