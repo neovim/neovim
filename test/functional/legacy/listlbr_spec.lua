@@ -141,10 +141,10 @@ describe('listlbr', function()
       	abcdef hijklmn	pqrstuvwxyz_1060ABCDEFGHIJKLMNOP 
 
       Test 1: set linebreak
-          abcdef          
-      +hijklmn            
+          abcdef hijklmn  
       +pqrstuvwxyz_1060ABC
       +DEFGHIJKLMNOP      
+      ~                   
 
       Test 2: set linebreak + set list
       ^Iabcdef hijklmn^I  
@@ -153,10 +153,10 @@ describe('listlbr', function()
                           
 
       Test 3: set linebreak nolist
-          abcdef          
-      +hijklmn            
+          abcdef hijklmn  
       +pqrstuvwxyz_1060ABC
       +DEFGHIJKLMNOP      
+                          
       1	aaaaaaaaaaaaaaaaaa
 
       Test 4: set linebreak with tab and 1 line as long as screen: should break!
