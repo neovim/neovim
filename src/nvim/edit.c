@@ -3838,7 +3838,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
 
       bool const use_ts = !curwin->w_p_list || curwin->w_p_lcs_chars.tab1;
       char *const line = get_cursor_line_ptr();
-      char *const end_ptr = line + curwin->w_cursor.col;
+      char *const cursor_ptr = line + curwin->w_cursor.col;
 
       colnr_T vcol = 0;
       colnr_T space_vcol = 0;
@@ -3846,9 +3846,10 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       StrCharInfo space_sci = sci;
       bool prev_space = false;
 
-      // Find the last whitespace that is preceded by non-whitespace.
+      // Compute virtual column of cursor position, and find the last
+      // whitespace before cursor that is preceded by non-whitespace.
       // Use charsize_nowrap() so that virtual text and wrapping are ignored.
-      while (sci.ptr < end_ptr) {
+      while (sci.ptr < cursor_ptr) {
         bool cur_space = ascii_iswhite(sci.chr.value);
         if (!prev_space && cur_space) {
           space_sci = sci;
@@ -3860,11 +3861,9 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       }
 
       // Compute the virtual column where we want to be.
-      colnr_T want_vcol = vcol - 1;
-      if (want_vcol <= 0) {
-        want_vcol = 0;
-      } else if (p_sta && in_indent) {
-        want_vcol = want_vcol - want_vcol % get_sw_value(curbuf);
+      colnr_T want_vcol = vcol > 0 ? vcol - 1 : 0;
+      if (p_sta && in_indent) {
+        want_vcol -= want_vcol % get_sw_value(curbuf);
       } else {
         want_vcol = tabstop_start(want_vcol, get_sts_value(), curbuf->b_p_vsts_array);
       }
