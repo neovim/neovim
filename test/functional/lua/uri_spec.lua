@@ -49,6 +49,21 @@ describe('URI methods', function()
         eq('file:///C:/Foo%20/Bar/Baz.txt', exec_lua('return vim.uri_from_fname(filepath)'))
       end)
 
+      it('UNC path includes only ascii characters', function()
+        exec_lua([[filepath = '\\\\wsl.local-host\\Foo\\Bar\\Baz.txt']])
+
+        eq('file://wsl.local-host/Foo/Bar/Baz.txt', exec_lua('return vim.uri_from_fname(filepath)'))
+      end)
+
+      it('UNC path including white space', function()
+        exec_lua([[filepath = '\\\\wsl.local-host\\Foo \\Bar\\Baz.txt']])
+
+        eq(
+          'file://wsl.local-host/Foo%20/Bar/Baz.txt',
+          exec_lua('return vim.uri_from_fname(filepath)')
+        )
+      end)
+
       it('file path including Unicode characters', function()
         exec_lua([[filepath = 'C:\\xy\\åäö\\ɧ\\汉语\\↥\\🤦\\🦄\\å\\بِيَّ.txt']])
 
@@ -131,6 +146,26 @@ describe('URI methods', function()
         ]]
 
         eq('C:\\Foo \\Bar\\Baz.txt', exec_lua(test_case))
+      end)
+
+      it('UNC path includes only ascii characters', function()
+        skip(not is_os('win'), 'Not applicable on non-Windows')
+        local test_case = [[
+        local uri = 'file://wsl.local-host/Foo/Bar/Baz.txt'
+        return vim.uri_to_fname(uri)
+        ]]
+
+        eq('\\\\wsl.local-host\\Foo\\Bar\\Baz.txt', exec_lua(test_case))
+      end)
+
+      it('UNC path including white space', function()
+        skip(not is_os('win'), 'Not applicable on non-Windows')
+        local test_case = [[
+        local uri = 'file://wsl.local-host/Foo%20/Bar/Baz.txt'
+        return vim.uri_to_fname(uri)
+        ]]
+
+        eq('\\\\wsl.local-host\\Foo \\Bar\\Baz.txt', exec_lua(test_case))
       end)
 
       it('file path including Unicode characters', function()
