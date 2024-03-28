@@ -370,6 +370,8 @@ static void terminfo_start(TUIData *tui)
                               : (konsole ? 1 : 0);
   bool wezterm = strequal(termprg, "WezTerm");
   const char *weztermv = wezterm ? os_getenv("TERM_PROGRAM_VERSION") : NULL;
+  bool screen = terminfo_is_term_family(term, "screen");
+  bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
 
   // truecolor support must be checked before patching/augmenting terminfo
   tui->rgb = term_has_truecolor(tui, colorterm);
@@ -411,7 +413,8 @@ static void terminfo_start(TUIData *tui)
   // mode 2026
   tui_request_term_mode(tui, kTermModeSynchronizedOutput);
 
-  if (tui->unibi_ext.set_underline_style == -1) {
+  // Don't use DECRQSS in screen or tmux, as they behave strangely when receving that.
+  if (tui->unibi_ext.set_underline_style == -1 && !(screen || tmux)) {
     // Query the terminal to see if it supports extended underline.
     tui_query_extended_underline(tui);
   }
