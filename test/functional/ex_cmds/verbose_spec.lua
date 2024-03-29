@@ -230,7 +230,7 @@ describe('lua verbose:', function()
     eq(
       [[
 nohlsearch
-	Last set from Lua]],
+	Last set from Lua (run Nvim with -V1 for more details)]],
       result
     )
   end)
