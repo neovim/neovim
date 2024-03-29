@@ -1102,25 +1102,57 @@ void del_typebuf(int len, int offset)
 }
 
 /// Write typed characters to script file.
-/// If recording is on put the character in the recordbuffer.
+/// If recording is on put the character in the record buffer.
 static void gotchars(const uint8_t *chars, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   const uint8_t *s = chars;
-  static uint8_t buf[4] = { 0 };
+  int c = NUL;
+  static int prev_c = NUL;
+  static uint8_t buf[MB_MAXBYTES * 3 + 4] = { 0 };
   static size_t buflen = 0;
+  static unsigned pending = 0;
+  static bool in_special = false;
+  static bool in_mbyte = false;
   size_t todo = len;
 
-  while (todo--) {
-    buf[buflen++] = *s++;
+  for (; todo--; prev_c = c) {
+    c = buf[buflen++] = *s++;
+    if (pending > 0) {
+      pending--;
+    }
 
-    // When receiving a special key sequence, store it until we have all
-    // the bytes and we can decide what to do with it.
-    if (buflen == 1 && buf[0] == K_SPECIAL) {
+    if ((pending == 0 || in_mbyte) && c == K_SPECIAL) {
+      pending += 2;
+      if (!in_mbyte) {
+        in_special = true;
+      }
+    }
+
+    if (pending > 0) {
       continue;
     }
-    if (buflen == 2) {
-      continue;
+
+    if (!in_mbyte) {
+      if (in_special) {
+        in_special = false;
+        if (prev_c == KS_MODIFIER) {
+          // When receiving a modifier, wait for the modified key.
+          continue;
+        }
+        c = TO_SPECIAL(prev_c, c);
+      }
+      // When receiving a multibyte character, store it until we have all
+      // the bytes, so that it won't be split between two buffer blocks,
+      // and delete_buff_tail() will work properly.
+      pending = MB_BYTE2LEN_CHECK(c) - 1;
+      if (pending > 0) {
+        in_mbyte = true;
+        continue;
+      }
+    } else {
+      // Stored all bytes of a multibyte character.
+      in_mbyte = false;
     }
 
     // Handle one byte at a time; no translation to be done.
