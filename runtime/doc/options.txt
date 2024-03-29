@@ -5693,8 +5693,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	highlighted with |hl-NonText|.
 	You may also want to add "lastline" to the 'display' option to show as
 	much of the last line as possible.
-	NOTE: only partly implemented, currently works with CTRL-E, CTRL-Y,
-	CTRL-D, CTRL-U, CTRL-F, CTRL-B and scrolling with the mouse.
+	NOTE: partly implemented, doesn't work yet for |gj| and |gk|.
 
 						*'softtabstop'* *'sts'*
 'softtabstop' 'sts'	number	(default 0)

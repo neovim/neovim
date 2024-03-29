@@ -741,6 +741,7 @@ func Test_smoothscroll_mouse_pos()
   let &mouse = save_mouse
   "let &term = save_term
   "let &ttymouse = save_ttymouse
+  bwipe!
 endfunc
 
 " this was dividing by zero
@@ -1002,9 +1003,8 @@ func Test_smoothscroll_textoff_small_winwidth()
 endfunc
 
 func Test_smoothscroll_page()
-  set smoothscroll
-
-  10split | 40vsplit
+  call NewWindow(10, 40)
+  setlocal smoothscroll
   call setline(1, 'abcde '->repeat(150))
 
   exe "norm! \<C-F>"
@@ -1041,7 +1041,7 @@ func Test_smoothscroll_page()
   exe "norm! \<C-U>"
   call assert_equal(0, winsaveview().skipcol)
 
-  set smoothscroll&
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
