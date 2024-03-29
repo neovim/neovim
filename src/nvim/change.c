@@ -1838,6 +1838,13 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
       saved_line = NULL;
       if (did_append) {
+        // Always move extmarks - Here we move only the line where the
+        // cursor is, the later mark_adjust takes care of the lines after.
+        int cols_added = mincol - 1 + less_cols_off - less_cols;
+        extmark_splice(curbuf, (int)lnum - 1, mincol - 1 - cols_spliced,
+                       0, less_cols_off, less_cols_off,
+                       1, cols_added, 1 + cols_added, kExtmarkUndo);
+
         changed_lines(curbuf, curwin->w_cursor.lnum, curwin->w_cursor.col,
                       curwin->w_cursor.lnum + 1, 1, true);
         did_append = false;
@@ -1848,12 +1855,6 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
                           curwin->w_cursor.col + less_cols_off,
                           1, -less_cols, 0);
         }
-        // Always move extmarks - Here we move only the line where the
-        // cursor is, the previous mark_adjust takes care of the lines after
-        int cols_added = mincol - 1 + less_cols_off - less_cols;
-        extmark_splice(curbuf, (int)lnum - 1, mincol - 1 - cols_spliced,
-                       0, less_cols_off, less_cols_off,
-                       1, cols_added, 1 + cols_added, kExtmarkUndo);
       } else {
         changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
       }
