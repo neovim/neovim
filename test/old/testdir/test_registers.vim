@@ -214,6 +214,58 @@ func Test_recording_with_select_mode()
   bwipe!
 endfunc
 
+func Run_test_recording_with_select_mode_utf8()
+  new
+
+  " Test with different text lengths: 5, 7, 9, 11, 13, 15, to check that
+  " a character isn't split between two buffer blocks.
+  for s in ['12345', '口=口', '口口口', '口=口=口', '口口=口口', '口口口口口']
+    " 0x80 is K_SPECIAL
+    " 0x9B is CSI
+    " 哦: 0xE5 0x93 0xA6
+    " 洛: 0xE6 0xB4 0x9B
+    " 固: 0xE5 0x9B 0xBA
+    " 四: 0xE5 0x9B 0x9B
+    " 最: 0xE6 0x9C 0x80
+    " 倒: 0xE5 0x80 0x92
+    " 倀: 0xE5 0x80 0x80
+    for c in ['哦', '洛', '固', '四', '最', '倒', '倀']
+      call setline(1, 'asdf')
+      call feedkeys($"qacc{s}\<Esc>gH{c}\<Esc>q", "tx")
+      call assert_equal(c, getline(1))
+      call assert_equal($"cc{s}\<Esc>gH{c}\<Esc>", @a)
+      call setline(1, 'asdf')
+      normal! @a
+      call assert_equal(c, getline(1))
+
+      " Test with Shift modifier.
+      let shift_c = eval($'"\<S-{c}>"')
+      call setline(1, 'asdf')
+      call feedkeys($"qacc{s}\<Esc>gH{shift_c}\<Esc>q", "tx")
+      call assert_equal(c, getline(1))
+      call assert_equal($"cc{s}\<Esc>gH{shift_c}\<Esc>", @a)
+      call setline(1, 'asdf')
+      normal! @a
+      call assert_equal(c, getline(1))
+    endfor
+  endfor
+
+  bwipe!
+endfunc
+
+func Test_recording_with_select_mode_utf8()
+  call Run_test_recording_with_select_mode_utf8()
+endfunc
+
+" This must be done as one of the last tests, because it starts the GUI, which
+" cannot be undone.
+func Test_zz_recording_with_select_mode_utf8_gui()
+  CheckCanRunGui
+
+  gui -f
+  call Run_test_recording_with_select_mode_utf8()
+endfunc
+
 " Test for executing the last used register (@)
 func Test_last_used_exec_reg()
   " Test for the @: command
