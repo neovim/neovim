@@ -308,6 +308,15 @@ describe('vim.fs', function()
       )
     end)
 
+    it('works with UNC paths', function()
+      eq('//foo', vim.fs.normalize('//foo')) -- UNC path
+      eq('//foo/bar', vim.fs.normalize('//foo//bar////')) -- UNC path
+      eq('/foo', vim.fs.normalize('///foo')) -- Not a UNC path
+      eq('/', vim.fs.normalize('//')) -- Not a UNC path
+      eq('/', vim.fs.normalize('///')) -- Not a UNC path
+      eq('/foo/bar', vim.fs.normalize('/foo//bar////')) -- Not a UNC path
+    end)
+
     if is_os('win') then
       it('Last slash is not truncated from root drive', function()
         eq('C:/', vim.fs.normalize('C:/'))

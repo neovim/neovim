@@ -371,7 +371,8 @@ function M.normalize(path, opts)
     expand_env = { opts.expand_env, { 'boolean' }, true },
   })
 
-  if path:sub(1, 1) == '~' then
+  -- Expand ~ to users home directory
+  if vim.startswith(path, '~') then
     local home = vim.uv.os_homedir() or '~'
     if home:sub(-1) == os_sep then
       home = home:sub(1, -2)
@@ -379,15 +380,32 @@ function M.normalize(path, opts)
     path = home .. path:sub(2)
   end
 
+  -- Expand environment variables if `opts.expand_env` isn't `false`
   if opts.expand_env == nil or opts.expand_env then
     path = path:gsub('%$([%w_]+)', vim.uv.os_getenv)
   end
 
-  path = path:gsub(os_sep, '/'):gsub('/+', '/')
+  -- Convert path separator to `/`
+  path = path:gsub(os_sep, '/')
+
+  -- Don't modify leading double slash as those have implementation-defined behavior according to
+  -- POSIX. They are also valid UNC paths. Three or more leading slashes are however collapsed to
+  -- a single slash.
+  if vim.startswith(path, '//') and not vim.startswith(path, '///') then
+    path = '/' .. path:gsub('/+', '/')
+  else
+    path = path:gsub('/+', '/')
+  end
+
+  -- Ensure last slash is not truncated from root drive on Windows
   if iswin and path:match('^%w:/$') then
     return path
   end
-  return (path:gsub('(.)/$', '%1'))
+
+  -- Remove trailing slashes
+  path = path:gsub('(.)/$', '%1')
+
+  return path
 end
 
 return M
