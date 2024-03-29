@@ -1631,7 +1631,10 @@ end:
     return false;
   }
 
-  ins_char_typebuf(vgetc_char, vgetc_mod_mask);
+  int len = ins_char_typebuf(vgetc_char, vgetc_mod_mask);
+  if (KeyTyped) {
+    ungetchars(len);
+  }
   return true;
 }
 
