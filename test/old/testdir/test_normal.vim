@@ -4184,7 +4184,20 @@ func Test_normal34_zet_large()
   norm! z9765405999999999999
 endfunc
 
-" Test for { and } paragraph movements and Ctrl-B in buffer with a single line
+" Test for { and } paragraph movements in a single line
+func Test_brace_single_line()
+  new
+  call setline(1, ['foobar one two three'])
+  1
+  norm! 0}
+
+  call assert_equal([0, 1, 20, 0], getpos('.'))
+  norm! {
+  call assert_equal([0, 1, 1, 0], getpos('.'))
+  bw!
+endfunc
+
+" Test for Ctrl-B/Ctrl-U in buffer with a single line
 func Test_single_line_scroll()
   CheckFeature textprop
 
@@ -4193,12 +4206,7 @@ func Test_single_line_scroll()
   let vt = 'virt_above'
   call prop_type_add(vt, {'highlight': 'IncSearch'})
   call prop_add(1, 0, {'type': vt, 'text': '---', 'text_align': 'above'})
-  1
-  norm! 0}
-
-  call assert_equal([0, 1, 20, 0], getpos('.'))
-  norm! {
-  call assert_equal([0, 1, 1, 0], getpos('.'))
+  call cursor(1, 1)
 
   " Ctrl-B/Ctrl-U scroll up with hidden "above" virtual text.
   set smoothscroll
@@ -4213,6 +4221,7 @@ func Test_single_line_scroll()
 
   set smoothscroll&
   bw!
+  call prop_type_delete(vt)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

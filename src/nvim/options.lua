@@ -7663,8 +7663,7 @@ return {
         highlighted with |hl-NonText|.
         You may also want to add "lastline" to the 'display' option to show as
         much of the last line as possible.
-        NOTE: only partly implemented, currently works with CTRL-E, CTRL-Y,
-        CTRL-D, CTRL-U, CTRL-F, CTRL-B and scrolling with the mouse.
+        NOTE: partly implemented, doesn't work yet for |gj| and |gk|.
       ]=],
       full_name = 'smoothscroll',
       pv_name = 'p_sms',
