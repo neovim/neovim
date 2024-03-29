@@ -3012,13 +3012,18 @@ describe('lua stdlib', function()
 
       exec_lua [[
         keys = {}
+        typed = {}
 
-        vim.on_key(function(buf)
+        vim.on_key(function(buf, typed_buf)
           if buf:byte() == 27 then
             buf = "<ESC>"
           end
+          if typed_buf:byte() == 27 then
+            typed_buf = "<ESC>"
+          end
 
           table.insert(keys, buf)
+          table.insert(typed, typed_buf)
         end)
       ]]
 
@@ -3026,20 +3031,41 @@ describe('lua stdlib', function()
 
       -- It has escape in the keys pressed
       eq('inext 🤦 lines å …<ESC>', exec_lua [[return table.concat(keys, '')]])
+      eq('inext 🤦 lines å …<ESC>', exec_lua [[return table.concat(typed, '')]])
     end)
 
     it('tracks input with modifiers', function()
       exec_lua [[
         keys = {}
+        typed = {}
 
-        vim.on_key(function(buf)
+        vim.on_key(function(buf, typed_buf)
           table.insert(keys, vim.fn.keytrans(buf))
+          table.insert(typed, vim.fn.keytrans(typed_buf))
         end)
       ]]
 
       feed([[i<C-V><C-;><C-V><C-…><Esc>]])
 
       eq('i<C-V><C-;><C-V><C-…><Esc>', exec_lua [[return table.concat(keys, '')]])
+      eq('i<C-V><C-;><C-V><C-…><Esc>', exec_lua [[return table.concat(typed, '')]])
+    end)
+
+    it('works with character find and Select mode', function()
+      insert('12345')
+
+      exec_lua [[
+        typed = {}
+
+        vim.cmd('snoremap # @')
+
+        vim.on_key(function(buf, typed_buf)
+          table.insert(typed, vim.fn.keytrans(typed_buf))
+        end)
+      ]]
+
+      feed('F3gHβγδεζ<Esc>gH…<Esc>gH#$%^')
+      eq('F3gHβγδεζ<Esc>gH…<Esc>gH#$%^', exec_lua [[return table.concat(typed, '')]])
     end)
 
     it('allows removing on_key listeners', function()
@@ -3101,23 +3127,29 @@ describe('lua stdlib', function()
       eq('inext l', exec_lua [[ return table.concat(keys, '') ]])
     end)
 
-    it('processes mapped keys, not unmapped keys', function()
+    it('argument 1 is keys after mapping, argument 2 is typed keys', function()
       exec_lua [[
         keys = {}
+        typed = {}
 
         vim.cmd("inoremap hello world")
 
-        vim.on_key(function(buf)
+        vim.on_key(function(buf, typed_buf)
           if buf:byte() == 27 then
             buf = "<ESC>"
           end
+          if typed_buf:byte() == 27 then
+            typed_buf = "<ESC>"
+          end
 
           table.insert(keys, buf)
+          table.insert(typed, typed_buf)
         end)
       ]]
       insert('hello')
 
       eq('iworld<ESC>', exec_lua [[return table.concat(keys, '')]])
+      eq('ihello<ESC>', exec_lua [[return table.concat(typed, '')]])
     end)
 
     it('can call vim.fn functions on Ctrl-C #17273', function()

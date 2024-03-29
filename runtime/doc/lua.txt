@@ -1640,12 +1640,14 @@ vim.on_key({fn}, {ns_id})                                       *vim.on_key()*
     Note: ~
       • {fn} will be removed on error.
       • {fn} will not be cleared by |nvim_buf_clear_namespace()|
-      • {fn} will receive the keys after mappings have been evaluated
 
     Parameters: ~
-      • {fn}     (`fun(key: string)?`) Function invoked on every key press.
-                 |i_CTRL-V| Passing in nil when {ns_id} is specified removes
-                 the callback associated with namespace {ns_id}.
+      • {fn}     (`fun(key: string, typed: string)?`) Function invoked on
+                 every key press. |i_CTRL-V| {key} is the key after mappings
+                 have been applied, and {typed} is the key(s) before mappings
+                 are applied, which may be empty if {key} is produced by
+                 non-typed keys. When {fn} is nil and {ns_id} is specified,
+                 the callback associated with namespace {ns_id} is removed.
       • {ns_id}  (`integer?`) Namespace ID. If nil or 0, generates and returns
                  a new |nvim_create_namespace()| id.
 

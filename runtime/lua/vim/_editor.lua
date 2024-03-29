@@ -654,11 +654,14 @@ local on_key_cbs = {} --- @type table<integer,function>
 ---
 ---@note {fn} will be removed on error.
 ---@note {fn} will not be cleared by |nvim_buf_clear_namespace()|
----@note {fn} will receive the keys after mappings have been evaluated
 ---
----@param fn fun(key: string)? Function invoked on every key press. |i_CTRL-V|
----                   Passing in nil when {ns_id} is specified removes the
----                   callback associated with namespace {ns_id}.
+---@param fn fun(key: string, typed: string)?
+---                   Function invoked on every key press. |i_CTRL-V|
+---                   {key} is the key after mappings have been applied, and
+---                   {typed} is the key(s) before mappings are applied, which
+---                   may be empty if {key} is produced by non-typed keys.
+---                   When {fn} is nil and {ns_id} is specified, the callback
+---                   associated with namespace {ns_id} is removed.
 ---@param ns_id integer? Namespace ID. If nil or 0, generates and returns a
 ---                     new |nvim_create_namespace()| id.
 ---
@@ -684,11 +687,11 @@ end
 
 --- Executes the on_key callbacks.
 ---@private
-function vim._on_key(char)
+function vim._on_key(buf, typed_buf)
   local failed_ns_ids = {}
   local failed_messages = {}
   for k, v in pairs(on_key_cbs) do
-    local ok, err_msg = pcall(v, char)
+    local ok, err_msg = pcall(v, buf, typed_buf)
     if not ok then
       vim.on_key(nil, k)
       table.insert(failed_ns_ids, k)

@@ -354,6 +354,9 @@ The following changes to existing APIs or features add new behavior.
 
 • |vim.region()| can use a string accepted by |getpos()| as position.
 
+• |vim.on_key()| callbacks receive a second argument for keys typed before
+  mappings are applied.
+
 • |vim.diagnostic.config()| now accepts a function for the virtual_text.prefix
   option, which allows for rendering e.g., diagnostic severities differently.
 
