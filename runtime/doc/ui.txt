@@ -656,6 +656,11 @@ tabs.
 	the screen and copy it to the viewport destination once `win_viewport`
 	is received.
 
+["win_viewport_margins", grid, win, top, bottom, left, right] ~
+	Indicates the margins of a window grid which are _not_ part of the
+	viewport as indicated by the `win_viewport` event. This happens
+	e.g. in the presence of 'winbar' and floating window borders.
+
 ["win_extmark", grid, win, ns_id, mark_id, row, col] ~
 	Updates the position of an extmark which is currently visible in a
 	window. Only emitted if the mark has the `ui_watched` attribute.

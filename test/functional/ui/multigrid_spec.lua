@@ -2354,6 +2354,9 @@ describe('ext_multigrid', function()
     ]], win_viewport={
       [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
       [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+    }, win_viewport_margins={
+      [2] = {win = 1000, top = 0, bottom = 0, left = 0, right = 0};
+      [4] = {win = 1001, top = 0, bottom = 0, left = 0, right = 0};
     }}
 
     -- XXX: hack to get notifications. Could use next_msg() also.
@@ -2384,6 +2387,9 @@ describe('ext_multigrid', function()
     ]], win_viewport={
       [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
       [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+    }, win_viewport_margins={
+      [2] = {win = 1000, top = 0, bottom = 0, left = 0, right = 0};
+      [4] = {win = 1001, top = 1, bottom = 0, left = 0, right = 0};
     }}
     eq({}, win_pos)
 
@@ -2406,6 +2412,9 @@ describe('ext_multigrid', function()
     ]], win_viewport={
       [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
       [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+    }, win_viewport_margins={
+      [2] = {win = 1000, top = 0, bottom = 0, left = 0, right = 0};
+      [4] = {win = 1001, top = 0, bottom = 0, left = 0, right = 0};
     }}
     eq({}, win_pos)
   end)
