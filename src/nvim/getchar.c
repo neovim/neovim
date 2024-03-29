@@ -1122,6 +1122,8 @@ static void gotchars(const uint8_t *chars, size_t len)
       pending--;
     }
 
+    // When receiving a special key sequence, store it until we have all
+    // the bytes and we can decide what to do with it.
     if ((pending == 0 || in_mbyte) && c == K_SPECIAL) {
       pending += 2;
       if (!in_mbyte) {
