@@ -1598,7 +1598,7 @@ describe('API', function()
       api.nvim_exec_lua('vim.api.nvim_set_option_value("equalalways", true, {})', {})
       status, rv = pcall(command_output, 'verbose set equalalways?')
       eq(true, status)
-      eq('  equalalways\n\tLast set from Lua', rv)
+      eq('  equalalways\n\tLast set from Lua (run Nvim with -V1 for more details)', rv)
     end)
 
     it('updates whether the option has ever been set #25025', function()

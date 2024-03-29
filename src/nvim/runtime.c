@@ -2392,7 +2392,7 @@ char *get_scriptname(LastSet last_set, bool *should_free)
   case SID_WINLAYOUT:
     return _("changed window size");
   case SID_LUA:
-    return _("Lua");
+    return _("Lua (run Nvim with -V1 for more details)");
   case SID_API_CLIENT:
     snprintf(IObuff, IOSIZE, _("API client (channel id %" PRIu64 ")"), last_set.channel_id);
     return IObuff;
