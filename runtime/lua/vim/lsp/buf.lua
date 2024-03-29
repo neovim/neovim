@@ -461,7 +461,14 @@ local function call_hierarchy(method)
       vim.notify(err.message, vim.log.levels.WARN)
       return
     end
+    if not result then
+      vim.notify('No item resolved', vim.log.levels.WARN)
+      return
+    end
     local call_hierarchy_item = pick_call_hierarchy_item(result)
+    if not call_hierarchy_item then
+      return
+    end
     local client = vim.lsp.get_client_by_id(ctx.client_id)
     if client then
       client.request(method, { item = call_hierarchy_item }, nil, ctx.bufnr)
