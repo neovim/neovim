@@ -31,11 +31,17 @@ if [[ $os == Linux ]]; then
 
   if [[ -n $TEST ]]; then
     sudo apt-get install -y locales-all cpanminus attr libattr1-dev gdb fswatch
+
+    # Use default CC to avoid compilation problems when installing Python modules
+    CC=cc python3 -m pip -q install --user --upgrade pynvim
   fi
 elif [[ $os == Darwin ]]; then
   brew update --quiet
   brew install ninja
   if [[ -n $TEST ]]; then
     brew install cpanminus fswatch
+
+    # Use default CC to avoid compilation problems when installing Python modules
+    CC=cc python3 -m pip -q install --user --upgrade --break-system-packages pynvim
   fi
 fi

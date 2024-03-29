@@ -134,10 +134,6 @@ jobs:
       - if: ${{ matrix.test != 'unittest' }}
         name: Set up interpreter packages
         run: |
-          # Use default CC to avoid compilation problems when installing Python modules.
-          echo "Install neovim module for Python."
-          CC=cc python3 -m pip -q install --user --upgrade pynvim
-
           echo "Install neovim RubyGem."
           gem install --no-document --bindir "$BIN_DIR" --user-install --pre neovim
 
