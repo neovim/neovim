@@ -1914,7 +1914,7 @@ static void set_hl_attr(int idx)
   at_en.cterm_bg_color = (int16_t)sgp->sg_cterm_bg;
   at_en.rgb_ae_attr = (int16_t)sgp->sg_gui;
   // FIXME(tarruda): The "unset value" for rgb is -1, but since hlgroup is
-  // initialized with 0(by garray functions), check for sg_rgb_{f,b}g_name
+  // initialized with 0 (by garray functions), check for sg_rgb_{f,b}g_name
   // before setting attr_entry->{f,g}g_color to a other than -1
   at_en.rgb_fg_color = sgp->sg_rgb_fg_idx != kColorIdxNone ? sgp->sg_rgb_fg : -1;
   at_en.rgb_bg_color = sgp->sg_rgb_bg_idx != kColorIdxNone ? sgp->sg_rgb_bg : -1;

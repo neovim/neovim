@@ -255,9 +255,9 @@ size_t input_enqueue(String keys)
   while (rbuffer_space(input_buffer) >= 19 && ptr < end) {
     // A "<x>" form occupies at least 1 characters, and produces up
     // to 19 characters (1 + 5 * 3 for the char and 3 for a modifier).
-    // In the case of K_SPECIAL(0x80), 3 bytes are escaped and needed,
+    // In the case of K_SPECIAL (0x80), 3 bytes are escaped and needed,
     // but since the keys are UTF-8, so the first byte cannot be
-    // K_SPECIAL(0x80).
+    // K_SPECIAL (0x80).
     uint8_t buf[19] = { 0 };
     // Do not simplify the keys here. Simplification will be done later.
     unsigned new_size

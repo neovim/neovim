@@ -3007,7 +3007,7 @@ describe('lua stdlib', function()
   end)
 
   describe('vim.on_key', function()
-    it('tracks keystrokes', function()
+    it('tracks Unicode input', function()
       insert([[hello world ]])
 
       exec_lua [[
@@ -3022,10 +3022,24 @@ describe('lua stdlib', function()
         end)
       ]]
 
-      insert([[next 🤦 lines å ]])
+      insert([[next 🤦 lines å …]])
 
       -- It has escape in the keys pressed
-      eq('inext 🤦 lines å <ESC>', exec_lua [[return table.concat(keys, '')]])
+      eq('inext 🤦 lines å …<ESC>', exec_lua [[return table.concat(keys, '')]])
+    end)
+
+    it('tracks input with modifiers', function()
+      exec_lua [[
+        keys = {}
+
+        vim.on_key(function(buf)
+          table.insert(keys, vim.fn.keytrans(buf))
+        end)
+      ]]
+
+      feed([[i<C-V><C-;><C-V><C-…><Esc>]])
+
+      eq('i<C-V><C-;><C-V><C-…><Esc>', exec_lua [[return table.concat(keys, '')]])
     end)
 
     it('allows removing on_key listeners', function()
