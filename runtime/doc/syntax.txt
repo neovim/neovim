@@ -4776,11 +4776,11 @@ guisp={color-name}					*guisp*
 	Colors which define Nvim's default color scheme:
 	    NvimDarkBlue    NvimLightBlue
 	    NvimDarkCyan    NvimLightCyan
+	    NvimDarkGray1   NvimLightGray1
+	    NvimDarkGray2   NvimLightGray2
+	    NvimDarkGray3   NvimLightGray3
+	    NvimDarkGray4   NvimLightGray4
 	    NvimDarkGreen   NvimLightGreen
-	    NvimDarkGrey1   NvimLightGrey1
-	    NvimDarkGrey2   NvimLightGrey2
-	    NvimDarkGrey3   NvimLightGrey3
-	    NvimDarkGrey4   NvimLightGrey4
 	    NvimDarkMagenta NvimLightMagenta
 	    NvimDarkRed     NvimLightRed
 	    NvimDarkYellow  NvimLightYellow
