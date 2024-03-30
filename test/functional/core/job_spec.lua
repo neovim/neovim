@@ -73,7 +73,7 @@ describe('jobs', function()
         command("let j = jobstart('env', g:job_opts)")
       end
     end)
-    ok(string.find(err, 'E475: Invalid argument: env') ~= nil)
+    matches('E475: Invalid argument: env', err)
   end)
 
   it('append environment #env', function()
@@ -227,7 +227,7 @@ describe('jobs', function()
         command("let j = jobstart('pwd', g:job_opts)")
       end
     end)
-    ok(string.find(err, 'E475: Invalid argument: expected valid directory$') ~= nil)
+    matches('E475: Invalid argument: expected valid directory$', err)
   end)
 
   it('error on non-executable `cwd`', function()
@@ -980,10 +980,7 @@ describe('jobs', function()
     command('let g:job_opts.pty = v:true')
     command('let g:job_opts.rpc = v:true')
     local _, err = pcall(command, "let j = jobstart(['cat', '-'], g:job_opts)")
-    ok(
-      string.find(err, "E475: Invalid argument: job cannot have both 'pty' and 'rpc' options set")
-        ~= nil
-    )
+    matches("E475: Invalid argument: job cannot have both 'pty' and 'rpc' options set", err)
   end)
 
   it('does not crash when repeatedly failing to start shell', function()

@@ -1838,8 +1838,8 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
       saved_line = NULL;
       if (did_append) {
-        // Always move extmarks - Here we move only the line where the
-        // cursor is, the later mark_adjust takes care of the lines after.
+        // Always move extmarks - Here we move only the line where the cursor is,
+        // the previous mark_adjust() took care of the lines after.
         int cols_added = mincol - 1 + less_cols_off - less_cols;
         extmark_splice(curbuf, (int)lnum - 1, mincol - 1 - cols_spliced,
                        0, less_cols_off, less_cols_off,

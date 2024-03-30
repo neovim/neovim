@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, ok = helpers.clear, helpers.eq, helpers.ok
 local neq, command, fn = helpers.neq, helpers.command, helpers.fn
+local matches = helpers.matches
 local reltime, reltimestr, reltimefloat = fn.reltime, fn.reltimestr, fn.reltimefloat
 
 describe('reltimestr(), reltimefloat()', function()
@@ -15,7 +16,7 @@ describe('reltimestr(), reltimefloat()', function()
     neq('0.0', reltimestr(elapsed))
     ok(reltimefloat(elapsed) > 0.0)
     -- original vim test for < 0.1, but easily fails on travis
-    ok(nil ~= string.match(reltimestr(elapsed), '0%.'))
+    matches('0%.', reltimestr(elapsed))
     ok(reltimefloat(elapsed) < 1.0)
 
     local same = reltime(now, now)
@@ -29,7 +30,7 @@ describe('reltimestr(), reltimefloat()', function()
     neq('0.0', reltimestr(differs))
     ok(reltimefloat(differs) > 0.0)
     -- original vim test for < 0.1, but easily fails on travis
-    ok(nil ~= string.match(reltimestr(differs), '0%.'))
+    matches('0%.', reltimestr(differs))
     ok(reltimefloat(differs) < 1.0)
   end)
 

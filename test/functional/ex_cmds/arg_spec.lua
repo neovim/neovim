@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local eq, command, fn = helpers.eq, helpers.command, helpers.fn
 local ok = helpers.ok
+local matches = helpers.matches
 local clear = helpers.clear
 
 describe(':argument', function()
@@ -15,7 +16,7 @@ describe(':argument', function()
     helpers.feed([[<C-\><C-N>]])
     local bufname_before = fn.bufname('%')
     local bufnr_before = fn.bufnr('%')
-    helpers.ok(nil ~= string.find(bufname_before, '^term://')) -- sanity
+    matches('^term://', bufname_before) -- sanity
 
     command('argument 1')
     helpers.feed([[<C-\><C-N>]])
