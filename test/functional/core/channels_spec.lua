@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, eval, next_msg, ok, source =
   helpers.clear, helpers.eq, helpers.eval, helpers.next_msg, helpers.ok, helpers.source
 local command, fn, api = helpers.command, helpers.fn, helpers.api
+local matches = helpers.matches
 local sleep = vim.uv.sleep
 local spawn, nvim_argv = helpers.spawn, helpers.nvim_argv
 local get_session, set_session = helpers.get_session, helpers.set_session
@@ -277,7 +278,7 @@ describe('channels', function()
 
     local _, err =
       pcall(command, "call rpcrequest(id, 'nvim_command', 'call chanclose(v:stderr, \"stdin\")')")
-    ok(string.find(err, 'E906: invalid stream for channel') ~= nil)
+    matches('E906: invalid stream for channel', err)
 
     eq(1, eval("rpcrequest(id, 'nvim_eval', 'chanclose(v:stderr, \"stderr\")')"))
     eq({ 'notification', 'stderr', { 3, { '' } } }, next_msg())

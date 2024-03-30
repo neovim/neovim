@@ -100,14 +100,14 @@ describe('server', function()
 
     local s = fn.serverstart('127.0.0.1:0') -- assign random port
     if #s > 0 then
-      assert(string.match(s, '127.0.0.1:%d+'))
+      matches('127.0.0.1:%d+', s)
       eq(s, fn.serverlist()[1])
       clear_serverlist()
     end
 
     s = fn.serverstart('127.0.0.1:') -- assign random port
     if #s > 0 then
-      assert(string.match(s, '127.0.0.1:%d+'))
+      matches('127.0.0.1:%d+', s)
       eq(s, fn.serverlist()[1])
       clear_serverlist()
     end
