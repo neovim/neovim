@@ -2466,7 +2466,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
   // Since we are starting to edit a file, consider the filetype to be
   // unset.  Helps for when an autocommand changes files and expects syntax
   // highlighting to work in the other file.
-  did_filetype = false;
+  curbuf->b_did_filetype = false;
 
   // other_file oldbuf
   //  false     false       re-edit same file, buffer is re-used

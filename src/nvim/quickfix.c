@@ -4274,10 +4274,10 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     set_option_value_give_err(kOptFiletype, STATIC_CSTR_AS_OPTVAL("qf"), OPT_LOCAL);
     curbuf->b_p_ma = false;
 
-    keep_filetype = true;                 // don't detect 'filetype'
+    curbuf->b_keep_filetype = true;  // don't detect 'filetype'
     apply_autocmds(EVENT_BUFREADPOST, "quickfix", NULL, false, curbuf);
     apply_autocmds(EVENT_BUFWINENTER, "quickfix", NULL, false, curbuf);
-    keep_filetype = false;
+    curbuf->b_keep_filetype = false;
     curbuf->b_ro_locked--;
 
     // make sure it will be redrawn

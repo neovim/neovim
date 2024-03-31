@@ -7382,7 +7382,7 @@ void filetype_maybe_enable(void)
 /// ":setfiletype [FALLBACK] {name}"
 static void ex_setfiletype(exarg_T *eap)
 {
-  if (did_filetype) {
+  if (curbuf->b_did_filetype) {
     return;
   }
 
@@ -7393,7 +7393,7 @@ static void ex_setfiletype(exarg_T *eap)
 
   set_option_value_give_err(kOptFiletype, CSTR_AS_OPTVAL(arg), OPT_LOCAL);
   if (arg != eap->arg) {
-    did_filetype = false;
+    curbuf->b_did_filetype = false;
   }
 }
 

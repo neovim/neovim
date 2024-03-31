@@ -234,7 +234,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   int using_b_fname;
   static char *msg_is_a_directory = N_("is a directory");
 
-  au_did_filetype = false;  // reset before triggering any autocommands
+  curbuf->b_au_did_filetype = false;  // reset before triggering any autocommands
 
   curbuf->b_no_eol_lnum = 0;    // in case it was set by the previous read
 
@@ -1854,7 +1854,7 @@ failed:
     } else if (newfile || (read_buffer && sfname != NULL)) {
       apply_autocmds_exarg(EVENT_BUFREADPOST, NULL, sfname,
                            false, curbuf, eap);
-      if (!au_did_filetype && *curbuf->b_p_ft != NUL) {
+      if (!curbuf->b_au_did_filetype && *curbuf->b_p_ft != NUL) {
         // EVENT_FILETYPE was not triggered but the buffer already has a
         // filetype.  Trigger EVENT_FILETYPE using the existing filetype.
         apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname, true, curbuf);
@@ -3151,7 +3151,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
 
   if (saved == OK) {
     curbuf->b_flags |= BF_CHECK_RO;           // check for RO again
-    keep_filetype = true;                     // don't detect 'filetype'
+    curbuf->b_keep_filetype = true;           // don't detect 'filetype'
     if (readfile(buf->b_ffname, buf->b_fname, 0, 0,
                  (linenr_T)MAXLNUM, &ea, flags, shortmess(SHM_FILEINFO)) != OK) {
       if (!aborting()) {
@@ -3199,7 +3199,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
   curwin->w_cursor = old_cursor;
   check_cursor(curwin);
   update_topline(curwin);
-  keep_filetype = false;
+  curbuf->b_keep_filetype = false;
 
   // Update folds unless they are defined manually.
   FOR_ALL_TAB_WINDOWS(tp, wp) {

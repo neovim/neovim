@@ -1750,7 +1750,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
       saveRedobuff(&save_redo);
       did_save_redobuff = true;
     }
-    did_filetype = keep_filetype;
+    curbuf->b_did_filetype = curbuf->b_keep_filetype;
   }
 
   // Note that we are applying autocmds.  Some commands need to know.
@@ -1760,7 +1760,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
 
   // Remember that FileType was triggered.  Used for did_filetype().
   if (event == EVENT_FILETYPE) {
-    did_filetype = true;
+    curbuf->b_did_filetype = true;
   }
 
   char *tail = path_tail(fname);
@@ -1864,7 +1864,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     if (did_save_redobuff) {
       restoreRedobuff(&save_redo);
     }
-    did_filetype = false;
+    curbuf->b_did_filetype = false;
     while (au_pending_free_buf != NULL) {
       buf_T *b = au_pending_free_buf->b_next;
 
@@ -1901,7 +1901,7 @@ BYPASS_AU:
   }
 
   if (retval == OK && event == EVENT_FILETYPE) {
-    au_did_filetype = true;
+    curbuf->b_au_did_filetype = true;
   }
 
   return retval;
@@ -2645,7 +2645,7 @@ void do_filetype_autocmd(buf_T *buf, bool force)
   secure = 0;
 
   ft_recursive++;
-  did_filetype = true;
+  buf->b_did_filetype = true;
   // Only pass true for "force" when it is true or
   // used recursively, to avoid endless recurrence.
   apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, force || ft_recursive == 1, buf);

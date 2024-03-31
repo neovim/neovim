@@ -461,6 +461,19 @@ struct file_buffer {
 
   bool b_marks_read;            // Have we read ShaDa marks yet?
 
+  bool b_modified_was_set;  ///< did ":set modified"
+  bool b_did_filetype;      ///< FileType event found
+  bool b_keep_filetype;     ///< value for did_filetype when starting
+                            ///< to execute autocommands
+
+  /// Set by the apply_autocmds_group function if the given event is equal to
+  /// EVENT_FILETYPE. Used by the readfile function in order to determine if
+  /// EVENT_BUFREADPOST triggered the EVENT_FILETYPE.
+  ///
+  /// Relying on this value requires one to reset it prior calling
+  /// apply_autocmds_group().
+  bool b_au_did_filetype;
+
   // The following only used in undo.c.
   u_header_T *b_u_oldhead;     // pointer to oldest header
   u_header_T *b_u_newhead;     // pointer to newest header; may not be valid

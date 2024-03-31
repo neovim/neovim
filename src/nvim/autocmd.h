@@ -15,14 +15,6 @@
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 
-// Set by the apply_autocmds_group function if the given event is equal to
-// EVENT_FILETYPE. Used by the readfile function in order to determine if
-// EVENT_BUFREADPOST triggered the EVENT_FILETYPE.
-//
-// Relying on this value requires one to reset it prior calling
-// apply_autocmds_group.
-EXTERN bool au_did_filetype INIT( = false);
-
 /// For CursorMoved event
 EXTERN win_T *last_cursormoved_win INIT( = NULL);
 /// For CursorMoved event, only used when last_cursormoved_win == curwin
@@ -31,9 +23,6 @@ EXTERN pos_T last_cursormoved INIT( = { 0, 0, 0 });
 EXTERN bool autocmd_busy INIT( = false);     ///< Is apply_autocmds() busy?
 EXTERN int autocmd_no_enter INIT( = false);  ///< Buf/WinEnter autocmds disabled
 EXTERN int autocmd_no_leave INIT( = false);  ///< Buf/WinLeave autocmds disabled
-EXTERN bool did_filetype INIT( = false);     ///< FileType event found
-/// value for did_filetype when starting to execute autocommands
-EXTERN bool keep_filetype INIT( = false);
 
 /// When deleting the current buffer, another one must be loaded.
 /// If we know which one is preferred, au_new_curbuf is set to it.

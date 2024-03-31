@@ -341,8 +341,6 @@ EXTERN bool did_check_timestamps INIT( = false);   // did check timestamps
                                                    // recently
 EXTERN int no_check_timestamps INIT( = 0);         // Don't check timestamps
 
-EXTERN int modified_was_set;                     // did ":set modified"
-
 // Mouse coordinates, set by handle_mouse_event()
 EXTERN int mouse_grid;
 EXTERN int mouse_row;
