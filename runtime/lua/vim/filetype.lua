@@ -1570,6 +1570,7 @@ local filename = {
   ['.clangd'] = 'yaml',
   ['.clang-format'] = 'yaml',
   ['.clang-tidy'] = 'yaml',
+  ['yarn.lock'] = 'yaml',
   ['/etc/zprofile'] = 'zsh',
   ['.zlogin'] = 'zsh',
   ['.zlogout'] = 'zsh',
