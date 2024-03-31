@@ -1236,6 +1236,7 @@ describe('pty process teardown', function()
   end)
 
   it('does not prevent/delay exit. #4798 #4900', function()
+    skip(fn.executable('sleep') == 0, 'missing "sleep" command')
     -- Use a nested nvim (in :term) to test without --headless.
     fn.termopen({
       helpers.nvim_prog,
