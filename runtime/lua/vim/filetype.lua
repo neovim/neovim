@@ -1542,6 +1542,7 @@ local filename = {
   vgrindefs = 'vgrindefs',
   ['.exrc'] = 'vim',
   ['_exrc'] = 'vim',
+  ['.netrwhist'] = 'vim',
   ['_viminfo'] = 'viminfo',
   ['.viminfo'] = 'viminfo',
   ['.wgetrc'] = 'wget',
