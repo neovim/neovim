@@ -2052,6 +2052,7 @@ local pattern = {
   -- Increase priority to run before the pattern below
   ['XF86Config%-4.*'] = starsetf(detect.xfree86_v4, { priority = -math.huge + 1 }),
   ['XF86Config.*'] = starsetf(detect.xfree86_v3),
+  ['.*/%.bundle/config'] = 'yaml',
   ['%.zcompdump.*'] = starsetf('zsh'),
   -- .zlog* and zlog*
   ['%.?zlog.*'] = starsetf('zsh'),
