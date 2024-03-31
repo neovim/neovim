@@ -637,6 +637,7 @@ local extension = {
   nse = 'lua',
   rockspec = 'lua',
   lua = 'lua',
+  tlu = 'lua',
   luau = 'luau',
   lrc = 'lyrics',
   m = detect.m,
