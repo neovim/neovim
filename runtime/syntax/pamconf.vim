@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language:             pam(8) configuration file
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2020/08/04
+" Latest Change:        2024/03/31
 " Changes By:		Haochen Tong
-
+" 			Vim Project for the @include syntax
 
 if exists("b:current_syntax")
   finish
@@ -22,6 +22,13 @@ syn match   pamconfType             '-\?[[:alpha:]]\+'
                                     \ pamconfTypeLineCont skipwhite
 
 syn keyword pamconfTypeKeyword      contained account auth password session
+
+" The @include syntax is Debian specific
+syn match   pamconfInclude         '^@include'
+                                    \ nextgroup=pamconfIncludeFile
+                                    \ skipwhite
+
+syn match   pamconfIncludeFile     '\f\+$'
 
 if s:has_service_field
     syn match   pamconfService          '^[[:graph:]]\+'
@@ -124,6 +131,8 @@ hi def link pamconfMPath            String
 hi def link pamconfMPathLineCont    pamconfServiceLineCont
 hi def link pamconfArgs             Normal
 hi def link pamconfArgsLineCont     pamconfServiceLineCont
+hi def link pamconfInclude          Include
+hi def link pamconfIncludeFile      Include
 
 let b:current_syntax = "pamconf"
 
