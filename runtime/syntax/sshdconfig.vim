@@ -64,8 +64,7 @@ syn keyword sshdconfigMAC hmac-sha2-256
 syn keyword sshdconfigMAC hmac-sha2-512
 syn keyword sshdconfigMAC hmac-md5
 syn keyword sshdconfigMAC hmac-md5-96
-syn keyword sshdconfigMAC hmac-ripemd160
-syn match   sshdconfigMAC "\<hmac-ripemd160@openssh\.com\>"
+syn match   sshdconfigMAC "\<hmac-ripemd160\%(@openssh\.com\)\?\>"
 syn match   sshdconfigMAC "\<umac-64@openssh\.com\>"
 syn match   sshdconfigMAC "\<umac-128@openssh\.com\>"
 syn match   sshdconfigMAC "\<hmac-sha1-etm@openssh\.com\>"
@@ -108,12 +107,9 @@ syn keyword sshdconfigSysLogFacility LOCAL2 LOCAL3 LOCAL4 LOCAL5 LOCAL6 LOCAL7
 
 syn keyword sshdconfigCompression    delayed
 
-syn match   sshdconfigIPQoS	"af1[123]"
-syn match   sshdconfigIPQoS	"af2[123]"
-syn match   sshdconfigIPQoS	"af3[123]"
-syn match   sshdconfigIPQoS	"af4[123]"
-syn match   sshdconfigIPQoS	"cs[0-7]"
-syn keyword sshdconfigIPQoS	ef lowdelay throughput reliability
+syn match   sshdconfigIPQoS	"\<af[1-4][1-3]\>"
+syn match   sshdconfigIPQoS	"\<cs[0-7]\>"
+syn keyword sshdconfigIPQoS	ef le lowdelay throughput reliability
 
 syn keyword sshdconfigKexAlgo diffie-hellman-group1-sha1
 syn keyword sshdconfigKexAlgo diffie-hellman-group14-sha1
@@ -125,20 +121,20 @@ syn keyword sshdconfigKexAlgo diffie-hellman-group-exchange-sha256
 syn keyword sshdconfigKexAlgo ecdh-sha2-nistp256
 syn keyword sshdconfigKexAlgo ecdh-sha2-nistp384
 syn keyword sshdconfigKexAlgo ecdh-sha2-nistp521
-syn keyword sshdconfigKexAlgo curve25519-sha256
-syn match sshdconfigKexAlgo "\<curve25519-sha256@libssh\.org\>"
+syn match sshdconfigKexAlgo "\<curve25519-sha256\%(@libssh\.org\)\?\>"
 syn match sshdconfigKexAlgo "\<sntrup4591761x25519-sha512@tinyssh\.org\>"
+syn match sshdconfigKexAlgo "\<sntrup761x25519-sha512@openssh\.com\>"
 
 syn keyword sshdconfigTunnel	point-to-point ethernet
 
 syn keyword sshdconfigSubsystem internal-sftp
 
-syn match sshdconfigVar	    "%[hu]\>"
+syn match sshdconfigVar	    "%[CDFfhiKksTtUu]\>"
 syn match sshdconfigVar	    "%%"
 
 syn match sshdconfigSpecial "[*?]"
 
-syn match sshdconfigNumber "\d\+"
+syn match sshdconfigNumber "\<\d\+\>"
 syn match sshdconfigHostPort "\<\(\d\{1,3}\.\)\{3}\d\{1,3}\(:\d\+\)\?\>"
 syn match sshdconfigHostPort "\<\([-a-zA-Z0-9]\+\.\)\+[-a-zA-Z0-9]\{2,}\(:\d\+\)\?\>"
 " FIXME: this matches quite a few things which are NOT valid IPv6 addresses
@@ -162,15 +158,16 @@ syn keyword sshdconfigKeyword AllowStreamLocalForwarding
 syn keyword sshdconfigKeyword AllowTcpForwarding
 syn keyword sshdconfigKeyword AllowUsers
 syn keyword sshdconfigKeyword AuthenticationMethods
-syn keyword sshdconfigKeyword AuthorizedKeysFile
 syn keyword sshdconfigKeyword AuthorizedKeysCommand
 syn keyword sshdconfigKeyword AuthorizedKeysCommandUser
+syn keyword sshdconfigKeyword AuthorizedKeysFile
 syn keyword sshdconfigKeyword AuthorizedPrincipalsCommand
 syn keyword sshdconfigKeyword AuthorizedPrincipalsCommandUser
 syn keyword sshdconfigKeyword AuthorizedPrincipalsFile
 syn keyword sshdconfigKeyword Banner
 syn keyword sshdconfigKeyword CASignatureAlgorithms
 syn keyword sshdconfigKeyword ChallengeResponseAuthentication
+syn keyword sshdconfigKeyword ChannelTimeout
 syn keyword sshdconfigKeyword ChrootDirectory
 syn keyword sshdconfigKeyword Ciphers
 syn keyword sshdconfigKeyword ClientAliveCountMax
@@ -187,22 +184,22 @@ syn keyword sshdconfigKeyword GatewayPorts
 syn keyword sshdconfigKeyword GSSAPIAuthentication
 syn keyword sshdconfigKeyword GSSAPICleanupCredentials
 syn keyword sshdconfigKeyword GSSAPIEnablek5users
-syn keyword sshdconfigKeyword GSSAPIKeyExchange
 syn keyword sshdconfigKeyword GSSAPIKexAlgorithms
+syn keyword sshdconfigKeyword GSSAPIKeyExchange
 syn keyword sshdconfigKeyword GSSAPIStoreCredentialsOnRekey
 syn keyword sshdconfigKeyword GSSAPIStrictAcceptorCheck
-syn keyword sshdconfigKeyword HostCertificate
-syn keyword sshdconfigKeyword HostKey
-syn keyword sshdconfigKeyword HostKeyAgent
-syn keyword sshdconfigKeyword HostKeyAlgorithms
 syn keyword sshdconfigKeyword HostbasedAcceptedAlgorithms
 syn keyword sshdconfigKeyword HostbasedAcceptedKeyTypes
 syn keyword sshdconfigKeyword HostbasedAuthentication
 syn keyword sshdconfigKeyword HostbasedUsesNameFromPacketOnly
-syn keyword sshdconfigKeyword IPQoS
+syn keyword sshdconfigKeyword HostCertificate
+syn keyword sshdconfigKeyword HostKey
+syn keyword sshdconfigKeyword HostKeyAgent
+syn keyword sshdconfigKeyword HostKeyAlgorithms
 syn keyword sshdconfigKeyword IgnoreRhosts
 syn keyword sshdconfigKeyword IgnoreUserKnownHosts
 syn keyword sshdconfigKeyword Include
+syn keyword sshdconfigKeyword IPQoS
 syn keyword sshdconfigKeyword KbdInteractiveAuthentication
 syn keyword sshdconfigKeyword KerberosAuthentication
 syn keyword sshdconfigKeyword KerberosGetAFSToken
@@ -213,9 +210,9 @@ syn keyword sshdconfigKeyword KerberosUseKuserok
 syn keyword sshdconfigKeyword KexAlgorithms
 syn keyword sshdconfigKeyword KeyRegenerationInterval
 syn keyword sshdconfigKeyword ListenAddress
+syn keyword sshdconfigKeyword LoginGraceTime
 syn keyword sshdconfigKeyword LogLevel
 syn keyword sshdconfigKeyword LogVerbose
-syn keyword sshdconfigKeyword LoginGraceTime
 syn keyword sshdconfigKeyword MACs
 syn keyword sshdconfigKeyword Match
 syn keyword sshdconfigKeyword MaxAuthTries
@@ -223,8 +220,6 @@ syn keyword sshdconfigKeyword MaxSessions
 syn keyword sshdconfigKeyword MaxStartups
 syn keyword sshdconfigKeyword ModuliFile
 syn keyword sshdconfigKeyword PasswordAuthentication
-syn keyword sshdconfigKeyword PerSourceMaxStartups
-syn keyword sshdconfigKeyword PerSourceNetBlockSize
 syn keyword sshdconfigKeyword PermitBlacklistedKeys
 syn keyword sshdconfigKeyword PermitEmptyPasswords
 syn keyword sshdconfigKeyword PermitListen
@@ -234,6 +229,8 @@ syn keyword sshdconfigKeyword PermitTTY
 syn keyword sshdconfigKeyword PermitTunnel
 syn keyword sshdconfigKeyword PermitUserEnvironment
 syn keyword sshdconfigKeyword PermitUserRC
+syn keyword sshdconfigKeyword PerSourceMaxStartups
+syn keyword sshdconfigKeyword PerSourceNetBlockSize
 syn keyword sshdconfigKeyword PidFile
 syn keyword sshdconfigKeyword Port
 syn keyword sshdconfigKeyword PrintLastLog
@@ -243,23 +240,24 @@ syn keyword sshdconfigKeyword PubkeyAcceptedAlgorithms
 syn keyword sshdconfigKeyword PubkeyAcceptedKeyTypes
 syn keyword sshdconfigKeyword PubkeyAuthentication
 syn keyword sshdconfigKeyword PubkeyAuthOptions
-syn keyword sshdconfigKeyword RSAAuthentication
+syn keyword sshdconfigKeyword RDomain
 syn keyword sshdconfigKeyword RekeyLimit
 syn keyword sshdconfigKeyword RequiredRSASize
 syn keyword sshdconfigKeyword RevokedKeys
-syn keyword sshdconfigKeyword RDomain
 syn keyword sshdconfigKeyword RhostsRSAAuthentication
+syn keyword sshdconfigKeyword RSAAuthentication
 syn keyword sshdconfigKeyword SecurityKeyProvider
 syn keyword sshdconfigKeyword ServerKeyBits
 syn keyword sshdconfigKeyword SetEnv
 syn keyword sshdconfigKeyword ShowPatchLevel
-syn keyword sshdconfigKeyword StrictModes
 syn keyword sshdconfigKeyword StreamLocalBindMask
 syn keyword sshdconfigKeyword StreamLocalBindUnlink
+syn keyword sshdconfigKeyword StrictModes
 syn keyword sshdconfigKeyword Subsystem
 syn keyword sshdconfigKeyword SyslogFacility
 syn keyword sshdconfigKeyword TCPKeepAlive
 syn keyword sshdconfigKeyword TrustedUserCAKeys
+syn keyword sshdconfigKeyword UnusedConnectionTimeout
 syn keyword sshdconfigKeyword UseBlacklist
 syn keyword sshdconfigKeyword UseBlocklist
 syn keyword sshdconfigKeyword UseDNS
@@ -278,14 +276,13 @@ syn keyword sshdconfigKeyword XAuthLocation
 hi def link sshdconfigComment              Comment
 hi def link sshdconfigTodo                 Todo
 hi def link sshdconfigHostPort             sshdconfigConstant
-hi def link sshdconfigTime                 sshdconfigConstant
-hi def link sshdconfigNumber               sshdconfigConstant
+hi def link sshdconfigTime                 Number
+hi def link sshdconfigNumber               Number
 hi def link sshdconfigConstant             Constant
-hi def link sshdconfigYesNo                sshdconfigEnum
+hi def link sshdconfigYesNo                Boolean
 hi def link sshdconfigAddressFamily        sshdconfigEnum
 hi def link sshdconfigPrivilegeSeparation  sshdconfigEnum
 hi def link sshdconfigTcpForwarding        sshdconfigEnum
-hi def link sshdconfigRootLogin            sshdconfigEnum
 hi def link sshdconfigCiphers              sshdconfigEnum
 hi def link sshdconfigMAC                  sshdconfigEnum
 hi def link sshdconfigHostKeyAlgo          sshdconfigEnum
