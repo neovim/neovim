@@ -1155,6 +1155,8 @@ local extension = {
   zut = 'zimbutempl',
   zs = 'zserio',
   zsh = 'zsh',
+  zunit = 'zsh',
+  ['zsh-theme'] = 'zsh',
   vala = 'vala',
   web = detect.web,
   pl = detect.pl,
@@ -1573,6 +1575,7 @@ local filename = {
   ['.zshrc'] = 'zsh',
   ['.zprofile'] = 'zsh',
   ['.zcompdump'] = 'zsh',
+  ['.zsh_history'] = 'zsh',
   ['.zshenv'] = 'zsh',
   ['.zfbfmarks'] = 'zsh',
   -- END FILENAME
