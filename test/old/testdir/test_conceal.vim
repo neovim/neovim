@@ -197,6 +197,7 @@ endfunc
 
 " Same as Test_conceal_wrapped_cursorline_wincolor(), but with 'rightleft'.
 func Test_conceal_wrapped_cursorline_wincolor_rightleft()
+  CheckFeature rightleft
   CheckScreendump
 
   let code =<< trim [CODE]
