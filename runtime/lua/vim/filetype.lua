@@ -1953,6 +1953,7 @@ local pattern = {
   ['.*/etc/serial%.conf'] = 'setserial',
   ['.*/etc/udev/cdsymlinks%.conf'] = 'sh',
   ['%.bash[_%-]aliases'] = detect.bash,
+  ['%.bash[_%-]history'] = detect.bash,
   ['%.bash[_%-]logout'] = detect.bash,
   ['%.bash[_%-]profile'] = detect.bash,
   ['%.kshrc.*'] = detect.ksh,
