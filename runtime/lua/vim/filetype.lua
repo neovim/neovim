@@ -1141,6 +1141,7 @@ local extension = {
   yml = 'yaml',
   yaml = 'yaml',
   eyaml = 'yaml',
+  mplstyle = 'yaml',
   yang = 'yang',
   yuck = 'yuck',
   z8a = 'z8a',
