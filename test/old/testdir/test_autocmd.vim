@@ -3957,4 +3957,24 @@ func Test_implicit_session()
   call delete(expected)
 endfunc
 
+" Test TextChangedI and TextChanged
+func Test_Changed_ChangedI_2()
+  CheckRunVimInTerminal
+  call writefile(['one', 'two', 'three'], 'XTextChangedI2', 'D')
+  let before =<< trim END
+      autocmd TextChanged,TextChangedI * call writefile([b:changedtick], 'XTextChangedI3')
+      nnoremap <CR> o<Esc>
+      call writefile([], 'XTextChangedI3')
+  END
+
+  call writefile(before, 'Xinit', 'D')
+  let buf = RunVimInTerminal('-S Xinit XtextChangedI2', {})
+  call term_sendkeys(buf, "\<cr>")
+  call term_wait(buf)
+  call StopVimInTerminal(buf)
+  call assert_equal(['4'], readfile('XTextChangedI3'))
+
+  call delete('XTextChangedI3')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

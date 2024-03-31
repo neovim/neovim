@@ -155,10 +155,9 @@ it('TextChangedI and TextChanged', function()
   feed('yypi<esc>')
   eq('', eval('g:autocmd_i'))
 
-  -- TextChanged should only trigger if change was done in Normal mode
   command([[let g:autocmd_n = '']])
   feed('ibar<esc>')
-  eq('', eval('g:autocmd_n'))
+  eq('N8', eval('g:autocmd_n'))
 
   local function validate_mixed_textchangedi(keys)
     feed('ifoo<esc>')
@@ -190,4 +189,27 @@ it('TextChanged is triggered after :norm that enters Insert mode', function()
   eq(0, eval('g:a'))
   feed(':norm! ia<CR>')
   eq(1, eval('g:a'))
+end)
+
+-- oldtest: Test_Changed_ChangedI_2()
+it('TextChanged is triggered after mapping that enters & exits Insert mode', function()
+  exec([[
+    let [g:autocmd_i, g:autocmd_n] = ['','']
+
+    func! TextChangedAutocmdI(char)
+      let g:autocmd_{tolower(a:char)} = a:char .. b:changedtick
+    endfunc
+
+    augroup Test_TextChanged
+      au!
+      au TextChanged  <buffer> :call TextChangedAutocmdI('N')
+      au TextChangedI <buffer> :call TextChangedAutocmdI('I')
+    augroup END
+
+    nnoremap <CR> o<Esc>
+  ]])
+
+  feed('<CR>')
+  eq('N3', eval('g:autocmd_n'))
+  eq('', eval('g:autocmd_i'))
 end)
