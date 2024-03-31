@@ -582,7 +582,7 @@ func s:GetFilenameChecks() abort
     \ 'services': ['/etc/services', 'any/etc/services'],
     \ 'setserial': ['/etc/serial.conf', 'any/etc/serial.conf'],
     \ 'sexplib': ['file.sexp'],
-    \ 'sh': ['.bashrc', '.bash_profile', '.bash-profile', '.bash_logout', '.bash-logout', '.bash_aliases', '.bash-aliases', '/tmp/bash-fc-3Ozjlw', '/tmp/bash-fc.3Ozjlw', 'PKGBUILD', 'APKBUILD', 'file.bash', '/usr/share/doc/bash-completion/filter.sh', '/etc/udev/cdsymlinks.conf', 'any/etc/udev/cdsymlinks.conf', 'file.bats'],
+    \ 'sh': ['.bashrc', '.bash_profile', '.bash-profile', '.bash_logout', '.bash-logout', '.bash_aliases', '.bash-aliases', '.bash_history', '.bash-history', '/tmp/bash-fc-3Ozjlw', '/tmp/bash-fc.3Ozjlw', 'PKGBUILD', 'APKBUILD', 'file.bash', '/usr/share/doc/bash-completion/filter.sh', '/etc/udev/cdsymlinks.conf', 'any/etc/udev/cdsymlinks.conf', 'file.bats'],
     \ 'sieve': ['file.siv', 'file.sieve'],
     \ 'sil': ['file.sil'],
     \ 'simula': ['file.sim'],
