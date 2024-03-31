@@ -1,7 +1,8 @@
 " Vim compiler file
 " Compiler:             BDF to PCF Conversion
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2006-04-19
+" Contributors:         Enno Nagel
+" Last Change:          2024 Mar 29
 
 if exists("current_compiler")
   finish
@@ -11,9 +12,12 @@ let current_compiler = "bdf"
 let s:cpo_save = &cpo
 set cpo-=C
 
-setlocal makeprg=bdftopcf\ $*
+if exists(":CompilerSet") != 2 " Older Vim always used :setlocal
+  command -nargs=* CompilerSet setlocal <args>
+endif
 
-setlocal errorformat=%ABDF\ %trror\ on\ line\ %l:\ %m,
+CompilerSet makeprg=bdftopcf\ $*
+CompilerSet errorformat=%ABDF\ %trror\ on\ line\ %l:\ %m,
       \%-Z%p^,
       \%Cbdftopcf:\ bdf\ input\\,\ %f\\,\ corrupt,
       \%-G%.%#
