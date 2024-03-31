@@ -1361,7 +1361,7 @@ static void f_dictwatcherdel(typval_T *argvars, typval_T *rettv, EvalFuncData fp
 /// "did_filetype()" function
 static void f_did_filetype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  rettv->vval.v_number = did_filetype;
+  rettv->vval.v_number = curbuf->b_did_filetype;
 }
 
 /// "diff_filler()" function

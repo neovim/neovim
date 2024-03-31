@@ -2244,7 +2244,7 @@ static const char *did_set_modified(optset_T *args)
     save_file_ff(buf);  // Buffer is unchanged
   }
   redraw_titles();
-  modified_was_set = (int)args->os_newval.boolean;
+  buf->b_modified_was_set = (int)args->os_newval.boolean;
   return NULL;
 }
 

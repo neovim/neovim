@@ -267,7 +267,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
   // The autocommands in readfile() may change the buffer, but only AFTER
   // reading the file.
   set_bufref(&old_curbuf, curbuf);
-  modified_was_set = false;
+  curbuf->b_modified_was_set = false;
 
   // mark cursor position as being invalid
   curwin->w_valid = 0;
@@ -350,7 +350,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
   // the changed flag.  Unless in readonly mode: "ls | nvim -R -".
   // When interrupted and 'cpoptions' contains 'i' set changed flag.
   if ((got_int && vim_strchr(p_cpo, CPO_INTMOD) != NULL)
-      || modified_was_set               // ":set modified" used in autocmd
+      || curbuf->b_modified_was_set  // autocmd did ":set modified"
       || (aborting() && vim_strchr(p_cpo, CPO_INTMOD) != NULL)) {
     changed(curbuf);
   } else if (retval != FAIL && !read_stdin && !read_fifo) {
@@ -1725,7 +1725,7 @@ void enter_buffer(buf_T *buf)
     // ":ball" used in an autocommand.  If there already is a filetype we
     // might prefer to keep it.
     if (*curbuf->b_p_ft == NUL) {
-      did_filetype = false;
+      curbuf->b_did_filetype = false;
     }
 
     open_buffer(false, NULL, 0);

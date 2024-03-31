@@ -3977,4 +3977,81 @@ func Test_Changed_ChangedI_2()
   call delete('XTextChangedI3')
 endfunc
 
+" Test that filetype detection still works when SwapExists autocommand sets
+" filetype in another buffer.
+func Test_SwapExists_set_other_buf_filetype()
+  let lines =<< trim END
+    set nocompatible directory=.
+    filetype on
+
+    let g:buf = bufnr()
+    new
+
+    func SwapExists()
+      let v:swapchoice = 'o'
+      call setbufvar(g:buf, '&filetype', 'text')
+    endfunc
+
+    func SafeState()
+      edit <script>
+      redir! > XftSwapExists.out
+        set readonly? filetype?
+      redir END
+      qall!
+    endfunc
+
+    autocmd SwapExists * ++nested call SwapExists()
+    autocmd SafeState * ++nested ++once call SafeState()
+  END
+  call writefile(lines, 'XftSwapExists.vim', 'D')
+
+  new XftSwapExists.vim
+  if RunVim('', '', ' -S XftSwapExists.vim')
+    call assert_equal(
+          \ ['', '  readonly', '  filetype=vim'],
+          \ readfile('XftSwapExists.out'))
+    call delete('XftSwapExists.out')
+  endif
+
+  bwipe!
+endfunc
+
+" Test that file is not marked as modified when SwapExists autocommand sets
+" 'modified' in another buffer.
+func Test_SwapExists_set_other_buf_modified()
+  let lines =<< trim END
+    set nocompatible directory=.
+
+    let g:buf = bufnr()
+    new
+
+    func SwapExists()
+      let v:swapchoice = 'o'
+      call setbufvar(g:buf, '&modified', 1)
+    endfunc
+
+    func SafeState()
+      edit <script>
+      redir! > XmodSwapExists.out
+        set readonly? modified?
+      redir END
+      qall!
+    endfunc
+
+    autocmd SwapExists * ++nested call SwapExists()
+    autocmd SafeState * ++nested ++once call SafeState()
+  END
+  call writefile(lines, 'XmodSwapExists.vim', 'D')
+
+  new XmodSwapExists.vim
+  if RunVim('', '', ' -S XmodSwapExists.vim')
+    call assert_equal(
+          \ ['', '  readonly', 'nomodified'],
+          \ readfile('XmodSwapExists.out'))
+    call delete('XmodSwapExists.out')
+  endif
+
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
