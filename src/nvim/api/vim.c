@@ -167,7 +167,7 @@ Dictionary nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena *arena, E
 /// @param[out] err Error details, if any
 ///
 // TODO(bfredl): val should take update vs reset flag
-void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
+void nvim_set_hl(uint64_t channel_id, Integer ns_id, String name, Dict(highlight) *val, Error *err)
   FUNC_API_SINCE(7)
 {
   int hl_id = syn_check_group(name.data, name.size);
@@ -184,7 +184,9 @@ void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
 
   HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
   if (!ERROR_SET(err)) {
-    ns_hl_def((NS)ns_id, hl_id, attrs, link_id, val);
+    WITH_SCRIPT_CONTEXT(channel_id, {
+      ns_hl_def((NS)ns_id, hl_id, attrs, link_id, val);
+    });
   }
 }
 
