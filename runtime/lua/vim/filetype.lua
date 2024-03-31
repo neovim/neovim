@@ -1775,6 +1775,7 @@ local pattern = {
   ['.*%.[Ss][Uu][Bb]'] = 'krl',
   ['lilo%.conf.*'] = starsetf('lilo'),
   ['.*/etc/logcheck/.*%.d.*/.*'] = starsetf('logcheck'),
+  ['.*/ldscripts/.*'] = 'ld',
   ['.*lftp/rc'] = 'lftp',
   ['.*/%.libao'] = 'libao',
   ['.*/etc/libao%.conf'] = 'libao',
