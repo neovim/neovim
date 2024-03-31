@@ -141,4 +141,29 @@ describe('meta-keys #8226 #13042', function()
       // This is some text: bar
       // This is some text: baz]])
   end)
+
+  it('ALT/META with vim.on_key()', function()
+    feed('ifoo<CR>bar<CR>baz<Esc>gg0')
+
+    exec_lua [[
+      keys = {}
+      typed = {}
+
+      vim.on_key(function(buf, typed_buf)
+        table.insert(keys, vim.fn.keytrans(buf))
+        table.insert(typed, vim.fn.keytrans(typed_buf))
+      end)
+    ]]
+
+    -- <M-"> is reinterpreted as <Esc>"
+    feed('qrviw"ayc$FOO.<M-">apq')
+    expect([[
+      FOO.foo
+      bar
+      baz]])
+
+    -- vim.on_key() callback should only receive <Esc>"
+    eq('qrviw"ayc$FOO.<Esc>"apq', exec_lua [[return table.concat(keys, '')]])
+    eq('qrviw"ayc$FOO.<Esc>"apq', exec_lua [[return table.concat(typed, '')]])
+  end)
 end)

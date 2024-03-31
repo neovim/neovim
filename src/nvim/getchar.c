@@ -94,6 +94,12 @@ static buffheader_T readbuf1 = { { NULL, { NUL } }, NULL, 0, 0 };
 /// Second read ahead buffer. Used for redo.
 static buffheader_T readbuf2 = { { NULL, { NUL } }, NULL, 0, 0 };
 
+/// Buffer used to store typed characters for vim.on_key().
+static kvec_withinit_t(char, MAXMAPLEN) on_key_buf = KVI_INITIAL_VALUE(on_key_buf);
+
+/// Number of following bytes that should not be stored for vim.on_key().
+static size_t no_on_key_len = 0;
+
 static int typeahead_char = 0;  ///< typeahead char that's not flushed
 
 /// When block_redo is true the redo buffer will not be changed.
@@ -994,14 +1000,19 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
 /// Uses cmd_silent, KeyTyped and KeyNoremap to restore the flags belonging to
 /// the char.
 ///
+/// @param no_on_key don't store these bytes for vim.on_key()
+///
 /// @return the length of what was inserted
-int ins_char_typebuf(int c, int modifiers)
+int ins_char_typebuf(int c, int modifiers, bool no_on_key)
 {
   char buf[MB_MAXBYTES * 3 + 4];
   unsigned len = special_to_buf(c, modifiers, true, buf);
   assert(len < sizeof(buf));
   buf[len] = NUL;
   ins_typebuf(buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
+  if (KeyTyped && no_on_key) {
+    no_on_key_len += len;
+  }
   return (int)len;
 }
 
@@ -1162,12 +1173,22 @@ static void gotchars(const uint8_t *chars, size_t len)
       updatescript(buf[i]);
     }
 
+    buf[buflen] = NUL;
+
     if (reg_recording != 0) {
-      buf[buflen] = NUL;
       add_buff(&recordbuff, (char *)buf, (ptrdiff_t)buflen);
       // remember how many chars were last recorded
       last_recorded_len += buflen;
     }
+
+    if (buflen > no_on_key_len) {
+      vim_unescape_ks((char *)buf + no_on_key_len);
+      kvi_concat(on_key_buf, (char *)buf + no_on_key_len);
+      no_on_key_len = 0;
+    } else {
+      no_on_key_len -= buflen;
+    }
+
     buflen = 0;
   }
 
@@ -1185,6 +1206,7 @@ static void gotchars(const uint8_t *chars, size_t len)
 void gotchars_ignore(void)
 {
   uint8_t nop_buf[3] = { K_SPECIAL, KS_EXTRA, KE_IGNORE };
+  no_on_key_len += 3;
   gotchars(nop_buf, 3);
 }
 
@@ -1655,9 +1677,13 @@ int vgetc(void)
       if (!no_mapping && KeyTyped && mod_mask == MOD_MASK_ALT && !(State & MODE_TERMINAL)
           && !is_mouse_key(c)) {
         mod_mask = 0;
-        int len = ins_char_typebuf(c, 0);
-        ins_char_typebuf(ESC, 0);
-        ungetchars(len + 3);  // K_SPECIAL KS_MODIFIER MOD_MASK_ALT takes 3 more bytes
+        int len = ins_char_typebuf(c, 0, false);
+        ins_char_typebuf(ESC, 0, false);
+        int old_len = len + 3;  // K_SPECIAL KS_MODIFIER MOD_MASK_ALT takes 3 more bytes
+        ungetchars(old_len);
+        if (on_key_buf.size >= (size_t)old_len) {
+          on_key_buf.size -= (size_t)old_len;
+        }
         continue;
       }
 
@@ -1673,7 +1699,9 @@ int vgetc(void)
   may_garbage_collect = false;
 
   // Execute Lua on_key callbacks.
-  nlua_execute_on_key(c);
+  nlua_execute_on_key(c, on_key_buf.items, on_key_buf.size);
+  kvi_destroy(on_key_buf);
+  kvi_init(on_key_buf);
 
   // Need to process the character before we know it's safe to do something
   // else.
