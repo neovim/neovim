@@ -63,8 +63,7 @@ syn keyword sshconfigMAC hmac-sha2-256
 syn keyword sshconfigMAC hmac-sha2-512
 syn keyword sshconfigMAC hmac-md5
 syn keyword sshconfigMAC hmac-md5-96
-syn keyword sshconfigMAC hmac-ripemd160
-syn match   sshconfigMAC "\<hmac-ripemd160@openssh\.com\>"
+syn match   sshconfigMAC "\<hmac-ripemd160\%(@openssh\.com\)\?\>"
 syn match   sshconfigMAC "\<umac-64@openssh\.com\>"
 syn match   sshconfigMAC "\<umac-128@openssh\.com\>"
 syn match   sshconfigMAC "\<hmac-sha1-etm@openssh\.com\>"
@@ -107,33 +106,35 @@ syn keyword sshconfigSysLogFacility DAEMON USER AUTH AUTHPRIV LOCAL0 LOCAL1
 syn keyword sshconfigSysLogFacility LOCAL2 LOCAL3 LOCAL4 LOCAL5 LOCAL6 LOCAL7
 syn keyword sshconfigAddressFamily  inet inet6
 
-syn match   sshconfigIPQoS	"af1[123]"
-syn match   sshconfigIPQoS	"af2[123]"
-syn match   sshconfigIPQoS	"af3[123]"
-syn match   sshconfigIPQoS	"af4[123]"
-syn match   sshconfigIPQoS	"cs[0-7]"
-syn keyword sshconfigIPQoS	ef lowdelay throughput reliability
+syn match   sshconfigIPQoS	"\<af[1-4][1-3]\>"
+syn match   sshconfigIPQoS	"\<cs[0-7]\>"
+syn keyword sshconfigIPQoS	ef le lowdelay throughput reliability
 syn keyword sshconfigKbdInteractive bsdauth pam skey
 
 syn keyword sshconfigKexAlgo diffie-hellman-group1-sha1
 syn keyword sshconfigKexAlgo diffie-hellman-group14-sha1
 syn keyword sshconfigKexAlgo diffie-hellman-group-exchange-sha1
 syn keyword sshconfigKexAlgo diffie-hellman-group-exchange-sha256
+syn keyword sshconfigKexAlgo diffie-hellman-group16-sha512
+syn keyword sshconfigKexAlgo diffie-hellman-group18-sha512
+syn keyword sshconfigKexAlgo diffie-hellman-group14-sha256
 syn keyword sshconfigKexAlgo ecdh-sha2-nistp256
 syn keyword sshconfigKexAlgo ecdh-sha2-nistp384
 syn keyword sshconfigKexAlgo ecdh-sha2-nistp521
-syn match sshconfigKexAlgo "\<curve25519-sha256@libssh\.org\>"
+syn match sshconfigKexAlgo "\<curve25519-sha256\%(@libssh\.org\)\?\>"
+syn match sshconfigKexAlgo "\<sntrup761x25519-sha512@openssh\.com\>"
 
 syn keyword sshconfigTunnel	point-to-point ethernet
 
-syn match sshconfigVar "%[rhplLdun]\>"
+syn match sshconfigVar "%[CdfHhIijKkLlnprTtu]\>"
+syn match sshconfigVar "%%"
 syn match sshconfigSpecial "[*?]"
-syn match sshconfigNumber "\d\+"
+syn match sshconfigNumber "\<\d\+\>"
 syn match sshconfigHostPort "\<\(\d\{1,3}\.\)\{3}\d\{1,3}\(:\d\+\)\?\>"
 syn match sshconfigHostPort "\<\([-a-zA-Z0-9]\+\.\)\+[-a-zA-Z0-9]\{2,}\(:\d\+\)\?\>"
 syn match sshconfigHostPort "\<\(\x\{,4}:\)\+\x\{,4}[:/]\d\+\>"
-syn match sshconfigHostPort "\(Host \)\@<=.\+"
-syn match sshconfigHostPort "\(HostName \)\@<=.\+"
+syn match sshconfigHostPort "\<\c\(Host \+\)\@<=.\+"
+syn match sshconfigHostPort "\<\c\(Hostname \+\)\@<=.\+"
 
 " case off
 syn case ignore
@@ -142,10 +143,10 @@ syn case ignore
 " Keywords
 syn keyword sshconfigHostSect Host
 
-syn keyword sshconfigMatch canonical final exec host originalhost user localuser all
+syn keyword sshconfigMatch canonical final exec localnetwork host originalhost tagged user localuser all
 
-syn keyword sshconfigKeyword AddressFamily
 syn keyword sshconfigKeyword AddKeysToAgent
+syn keyword sshconfigKeyword AddressFamily
 syn keyword sshconfigKeyword BatchMode
 syn keyword sshconfigKeyword BindAddress
 syn keyword sshconfigKeyword BindInterface
@@ -157,16 +158,18 @@ syn keyword sshconfigKeyword CanonicalizePermittedCNAMEs
 syn keyword sshconfigKeyword CASignatureAlgorithms
 syn keyword sshconfigKeyword CertificateFile
 syn keyword sshconfigKeyword ChallengeResponseAuthentication
+syn keyword sshconfigKeyword ChannelTimeout
 syn keyword sshconfigKeyword CheckHostIP
 syn keyword sshconfigKeyword Ciphers
 syn keyword sshconfigKeyword ClearAllForwardings
 syn keyword sshconfigKeyword Compression
-syn keyword sshconfigKeyword ConnectTimeout
 syn keyword sshconfigKeyword ConnectionAttempts
+syn keyword sshconfigKeyword ConnectTimeout
 syn keyword sshconfigKeyword ControlMaster
 syn keyword sshconfigKeyword ControlPath
 syn keyword sshconfigKeyword ControlPersist
 syn keyword sshconfigKeyword DynamicForward
+syn keyword sshconfigKeyword EnableEscapeCommandline
 syn keyword sshconfigKeyword EnableSSHKeysign
 syn keyword sshconfigKeyword EscapeChar
 syn keyword sshconfigKeyword ExitOnForwardFailure
@@ -176,18 +179,17 @@ syn keyword sshconfigKeyword ForwardAgent
 syn keyword sshconfigKeyword ForwardX11
 syn keyword sshconfigKeyword ForwardX11Timeout
 syn keyword sshconfigKeyword ForwardX11Trusted
-syn keyword sshconfigKeyword GSSAPIAuthentication
-syn keyword sshconfigKeyword GSSAPIDelegateCredentials
 syn keyword sshconfigKeyword GatewayPorts
 syn keyword sshconfigKeyword GlobalKnownHostsFile
+syn keyword sshconfigKeyword GSSAPIAuthentication
+syn keyword sshconfigKeyword GSSAPIDelegateCredentials
 syn keyword sshconfigKeyword HashKnownHosts
+syn keyword sshconfigKeyword HostbasedAcceptedAlgorithms
+syn keyword sshconfigKeyword HostbasedAuthentication
+syn keyword sshconfigKeyword HostbasedKeyTypes
 syn keyword sshconfigKeyword HostKeyAlgorithms
 syn keyword sshconfigKeyword HostKeyAlias
-syn keyword sshconfigKeyword HostName
-syn keyword sshconfigKeyword HostbasedAuthentication
-syn keyword sshconfigKeyword HostbasedAcceptedAlgorithms
-syn keyword sshconfigKeyword HostbasedKeyTypes
-syn keyword sshconfigKeyword IPQoS
+syn keyword sshconfigKeyword Hostname
 syn keyword sshconfigKeyword IdentitiesOnly
 syn keyword sshconfigKeyword IdentityAgent
 syn keyword sshconfigKeyword IdentityFile
@@ -206,15 +208,16 @@ syn keyword sshconfigKeyword MACs
 syn keyword sshconfigKeyword Match
 syn keyword sshconfigKeyword NoHostAuthenticationForLocalhost
 syn keyword sshconfigKeyword NumberOfPasswordPrompts
-syn keyword sshconfigKeyword PKCS11Provider
+syn keyword sshconfigKeyword ObscureKeystrokeTiming
 syn keyword sshconfigKeyword PasswordAuthentication
 syn keyword sshconfigKeyword PermitLocalCommand
 syn keyword sshconfigKeyword PermitRemoteOpen
+syn keyword sshconfigKeyword PKCS11Provider
 syn keyword sshconfigKeyword Port
 syn keyword sshconfigKeyword PreferredAuthentications
 syn keyword sshconfigKeyword ProxyCommand
 syn keyword sshconfigKeyword ProxyJump
-syn keyword sshconfigKeyword ProxyUseFDPass
+syn keyword sshconfigKeyword ProxyUseFdpass
 syn keyword sshconfigKeyword PubkeyAcceptedAlgorithms
 syn keyword sshconfigKeyword PubkeyAcceptedKeyTypes
 syn keyword sshconfigKeyword PubkeyAuthentication
@@ -229,18 +232,19 @@ syn keyword sshconfigKeyword SendEnv
 syn keyword sshconfigKeyword ServerAliveCountMax
 syn keyword sshconfigKeyword ServerAliveInterval
 syn keyword sshconfigKeyword SessionType
-syn keyword sshconfigKeyword SmartcardDevice
 syn keyword sshconfigKeyword SetEnv
+syn keyword sshconfigKeyword SmartcardDevice
 syn keyword sshconfigKeyword StdinNull
 syn keyword sshconfigKeyword StreamLocalBindMask
 syn keyword sshconfigKeyword StreamLocalBindUnlink
 syn keyword sshconfigKeyword StrictHostKeyChecking
 syn keyword sshconfigKeyword SyslogFacility
+syn keyword sshconfigKeyword Tag
 syn keyword sshconfigKeyword TCPKeepAlive
 syn keyword sshconfigKeyword Tunnel
 syn keyword sshconfigKeyword TunnelDevice
-syn keyword sshconfigKeyword UseBlacklistedKeys
 syn keyword sshconfigKeyword UpdateHostKeys
+syn keyword sshconfigKeyword UseBlacklistedKeys
 syn keyword sshconfigKeyword User
 syn keyword sshconfigKeyword UserKnownHostsFile
 syn keyword sshconfigKeyword VerifyHostKeyDNS
@@ -268,9 +272,9 @@ syn keyword sshconfigDeprecated UsePrivilegedPort
 hi def link sshconfigComment        Comment
 hi def link sshconfigTodo           Todo
 hi def link sshconfigHostPort       sshconfigConstant
-hi def link sshconfigNumber         sshconfigConstant
+hi def link sshconfigNumber         Number
 hi def link sshconfigConstant       Constant
-hi def link sshconfigYesNo          sshconfigEnum
+hi def link sshconfigYesNo          Boolean
 hi def link sshconfigCipher         sshconfigDeprecated
 hi def link sshconfigCiphers        sshconfigEnum
 hi def link sshconfigMAC            sshconfigEnum
