@@ -750,8 +750,7 @@ func s:GetFilenameChecks() abort
     \ 'zimbu': ['file.zu'],
     \ 'zimbutempl': ['file.zut'],
     \ 'zserio': ['file.zs'],
-    \ 'zsh': ['.zprofile', '/etc/zprofile', '.zfbfmarks', 'file.zsh', '.zcompdump', '.zlogin', '.zlogout', '.zshenv', '.zshrc', '.zcompdump-file', '.zlog', '.zlog-file', '.zsh', '.zsh-file', 'any/etc/zprofile', 'zlog', 'zlog-file', 'zsh', 'zsh-file'],
-    \
+    \ 'zsh': ['.zprofile', '/etc/zprofile', '.zfbfmarks', 'file.zsh', 'file.zsh-theme', 'file.zunit', '.zcompdump', '.zlogin', '.zlogout', '.zshenv', '.zshrc', '.zsh_history', '.zcompdump-file', '.zlog', '.zlog-file', '.zsh', '.zsh-file', 'any/etc/zprofile', 'zlog', 'zlog-file', 'zsh', 'zsh-file'],
     \ 'help': [$VIMRUNTIME . '/doc/help.txt'],
     \ }
 endfunc
