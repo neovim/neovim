@@ -463,7 +463,7 @@ func s:GetFilenameChecks() abort
     \ 'obse': ['file.obl', 'file.obse', 'file.oblivion', 'file.obscript'],
     \ 'ocaml': ['file.ml', 'file.mli', 'file.mll', 'file.mly', '.ocamlinit', 'file.mlt', 'file.mlp', 'file.mlip', 'file.mli.cppo', 'file.ml.cppo'],
     \ 'occam': ['file.occ'],
-    \ 'octave': ['octaverc', '.octaverc', 'octave.conf'],
+    \ 'octave': ['octaverc', '.octaverc', 'octave.conf', 'any/.local/share/octave/history'],
     \ 'odin': ['file.odin'],
     \ 'omnimark': ['file.xom', 'file.xin'],
     \ 'opam': ['opam', 'file.opam', 'file.opam.template'],

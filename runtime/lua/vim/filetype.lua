@@ -1912,6 +1912,7 @@ local pattern = {
   ['.*%.[1-9]'] = detect.nroff,
   ['.*%.ml%.cppo'] = 'ocaml',
   ['.*%.mli%.cppo'] = 'ocaml',
+  ['.*/octave/history'] = 'octave',
   ['.*%.opam%.template'] = 'opam',
   ['.*/openvpn/.*/.*%.conf'] = 'openvpn',
   ['.*%.[Oo][Pp][Ll]'] = 'opl',
