@@ -2064,7 +2064,7 @@ local pattern = {
   ['%.?zsh.*'] = starsetf('zsh'),
   -- Ignored extension
   ['.*~'] = function(path, bufnr)
-    local short = path:gsub('~$', '', 1)
+    local short = path:gsub('~+$', '', 1)
     if path ~= short and short ~= '' then
       return M.match({ buf = bufnr, filename = fn.fnameescape(short) })
     end
