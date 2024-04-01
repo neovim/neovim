@@ -194,17 +194,14 @@ end)
 -- oldtest: Test_Changed_ChangedI_2()
 it('TextChanged is triggered after mapping that enters & exits Insert mode', function()
   exec([[
-    let [g:autocmd_i, g:autocmd_n] = ['','']
+    let [g:autocmd_n, g:autocmd_i] = ['','']
 
-    func! TextChangedAutocmdI(char)
+    func TextChangedAutocmd(char)
       let g:autocmd_{tolower(a:char)} = a:char .. b:changedtick
     endfunc
 
-    augroup Test_TextChanged
-      au!
-      au TextChanged  <buffer> :call TextChangedAutocmdI('N')
-      au TextChangedI <buffer> :call TextChangedAutocmdI('I')
-    augroup END
+    au TextChanged  <buffer> :call TextChangedAutocmd('N')
+    au TextChangedI <buffer> :call TextChangedAutocmd('I')
 
     nnoremap <CR> o<Esc>
   ]])

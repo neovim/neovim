@@ -3530,11 +3530,6 @@ func Test_Changed_ChangedI()
   call feedkeys("yypi\<esc>", 'tnix')
   call assert_equal('', g:autocmd_i)
 
-  " TextChanged should only trigger if change was done in Normal mode
-  let g:autocmd_n = ''
-  call feedkeys("ibar\<esc>", 'tnix')
-  call assert_equal('', g:autocmd_n)
-
   " If change is a mix of Normal and Insert modes, TextChangedI should trigger
   func s:validate_mixed_textchangedi(keys)
     call feedkeys("ifoo\<esc>", 'tnix')
@@ -3959,20 +3954,30 @@ endfunc
 
 " Test TextChangedI and TextChanged
 func Test_Changed_ChangedI_2()
+  " Run this test in a terminal because it requires running the main loop.
   CheckRunVimInTerminal
   call writefile(['one', 'two', 'three'], 'XTextChangedI2', 'D')
   let before =<< trim END
-      autocmd TextChanged,TextChangedI * call writefile([b:changedtick], 'XTextChangedI3')
+      let [g:autocmd_n, g:autocmd_i] = ['','']
+
+      func TextChangedAutocmd(char)
+        let g:autocmd_{tolower(a:char)} = a:char .. b:changedtick
+        call writefile([g:autocmd_n, g:autocmd_i], 'XTextChangedI3')
+      endfunc
+
+      au TextChanged  <buffer> :call TextChangedAutocmd('N')
+      au TextChangedI <buffer> :call TextChangedAutocmd('I')
+
       nnoremap <CR> o<Esc>
       call writefile([], 'XTextChangedI3')
   END
 
   call writefile(before, 'Xinit', 'D')
   let buf = RunVimInTerminal('-S Xinit XtextChangedI2', {})
+  call WaitForAssert({-> assert_true(filereadable('XTextChangedI3'))})
   call term_sendkeys(buf, "\<cr>")
-  call term_wait(buf)
+  call WaitForAssert({-> assert_equal(['N4', ''], readfile('XTextChangedI3'))})
   call StopVimInTerminal(buf)
-  call assert_equal(['4'], readfile('XTextChangedI3'))
 
   call delete('XTextChangedI3')
 endfunc
