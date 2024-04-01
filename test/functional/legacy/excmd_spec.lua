@@ -167,6 +167,35 @@ describe(':confirm command dialog', function()
     os.remove('Xbar')
   end)
 
+  it('can save Untitled #21682', function()
+    write_file('Xfoo', 'foo1\n')
+    start_new()
+    screen:try_resize(75, 10)
+    exec([[
+    set nohidden confirm
+    new
+    call setline(1, 'abc')
+    ]])
+    feed(':e Xfoo<CR>')
+    screen:expect({
+      grid = [[
+        abc                                                                        |
+        {1:~                                                                          }|*3
+        {3:[No Name] [+]                                                              }|
+                                                                                   |
+        {3:                                                                           }|
+        :e Xfoo                                                                    |
+        {6:Save changes to "Untitled"?}                                                |
+        {6:[Y]es, (N)o, (C)ancel: }^                                                    |
+      ]],
+    })
+    feed('Y')
+
+    eq('abc\n', read_file('Untitled'))
+    os.remove('Untitled')
+    os.remove('Xfoo')
+  end)
+
   -- oldtest: Test_confirm_cmd_cancel()
   it('can be cancelled', function()
     -- Test for closing a window with a modified buffer

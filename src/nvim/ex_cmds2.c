@@ -212,8 +212,12 @@ void dialog_changed(buf_T *buf, bool checkall)
   }
 
   if (ret == VIM_YES) {
-    if (buf->b_fname != NULL
-        && check_overwrite(&ea, buf, buf->b_fname, buf->b_ffname, false) == OK) {
+    if (buf->b_fname == NULL) {
+      buf->b_fname = "Untitled";
+      buf->b_ffname = xstrdup(NameBuff);
+    }
+
+    if (check_overwrite(&ea, buf, buf->b_fname, buf->b_ffname, false) == OK) {
       // didn't hit Cancel
       buf_write_all(buf, false);
     }
