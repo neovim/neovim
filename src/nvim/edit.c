@@ -367,7 +367,7 @@ static void insert_enter(InsertState *s)
   // ins_redraw() triggers TextChangedI only when no characters
   // are in the typeahead buffer, so reset curbuf->b_last_changedtick
   // if the TextChangedI was not blocked by char_avail() (e.g. using :norm!)
-  // and the TextChangedI autocommand has been triggered
+  // and the TextChangedI autocommand has been triggered.
   if (!char_avail() && curbuf->b_last_changedtick_i == buf_get_changedtick(curbuf)) {
     curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
   }
