@@ -1,5 +1,16 @@
 " Test :setfiletype
 
+func Test_backup_strip()
+  filetype on
+  let fname = 'Xdetect.js~~~~~~~~~~~'
+  call writefile(['one', 'two', 'three'], fname, 'D')
+  exe 'edit ' .. fname
+  call assert_equal('javascript', &filetype)
+
+  bwipe!
+  filetype off
+endfunc
+
 func Test_detection()
   filetype on
   augroup filetypedetect
