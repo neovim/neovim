@@ -424,7 +424,7 @@ int update_screen(void)
   static bool still_may_intro = true;
   if (still_may_intro) {
     if (!may_show_intro()) {
-      must_redraw = UPD_NOT_VALID;
+      redraw_later(firstwin, UPD_NOT_VALID);
       still_may_intro = false;
     }
   }
