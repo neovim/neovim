@@ -1664,8 +1664,7 @@ func Test_diff_scroll_many_filler()
   endfor
 
   set smoothscroll&
-  bwipe!
-  bwipe!
+  %bwipe!
 endfunc
 
 " This was trying to update diffs for a buffer being closed
