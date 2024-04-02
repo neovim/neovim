@@ -8,6 +8,7 @@ local eq = helpers.eq
 local matches = helpers.matches
 local api = helpers.api
 local pcall_err = helpers.pcall_err
+local fn = helpers.fn
 
 describe('vim.diagnostic', function()
   before_each(function()
@@ -109,7 +110,7 @@ describe('vim.diagnostic', function()
       'DiagnosticVirtualTextOk',
       'DiagnosticVirtualTextWarn',
       'DiagnosticWarn',
-    }, exec_lua([[return vim.fn.getcompletion('Diagnostic', 'highlight')]]))
+    }, fn.getcompletion('Diagnostic', 'highlight'))
   end)
 
   it('retrieves diagnostics from all buffers and namespaces', function()

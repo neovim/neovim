@@ -1374,12 +1374,7 @@ describe('api/buf', function()
           -- immediate call to nvim_win_get_cursor should have returned the same position
           eq({ 2, 12 }, cursor)
           -- coladd should be 0
-          eq(
-            0,
-            exec_lua([[
-            return vim.fn.winsaveview().coladd
-          ]])
-          )
+          eq(0, fn.winsaveview().coladd)
         end)
 
         it('does not change cursor screen column when cursor >EOL and row got shorter', function()
@@ -1393,9 +1388,7 @@ describe('api/buf', function()
           -- turn on virtualedit
           command('set virtualedit=all')
           -- move cursor after eol
-          exec_lua([[
-            vim.fn.winrestview({ coladd = 5 })
-          ]])
+          fn.winrestview({ coladd = 5 })
 
           local cursor = exec_lua([[
             vim.api.nvim_buf_set_text(0, 0, 15, 2, 11, {
@@ -1414,12 +1407,7 @@ describe('api/buf', function()
           -- immediate call to nvim_win_get_cursor should have returned the same position
           eq({ 2, 26 }, cursor)
           -- coladd should be increased so that cursor stays in the same screen column
-          eq(
-            13,
-            exec_lua([[
-            return vim.fn.winsaveview().coladd
-          ]])
-          )
+          eq(13, fn.winsaveview().coladd)
         end)
 
         it(
@@ -1435,9 +1423,7 @@ describe('api/buf', function()
             -- turn on virtualedit
             command('set virtualedit=all')
             -- move cursor after eol
-            exec_lua([[
-            vim.fn.winrestview({ coladd = 21 })
-          ]])
+            fn.winrestview({ coladd = 21 })
 
             local cursor = exec_lua([[
             vim.api.nvim_buf_set_text(0, 0, 15, 2, 11, {
@@ -1456,12 +1442,7 @@ describe('api/buf', function()
             -- immediate call to nvim_win_get_cursor should have returned the same position
             eq({ 1, 38 }, cursor)
             -- coladd should be increased so that cursor stays in the same screen column
-            eq(
-              2,
-              exec_lua([[
-            return vim.fn.winsaveview().coladd
-          ]])
-            )
+            eq(2, fn.winsaveview().coladd)
           end
         )
 
@@ -1478,9 +1459,7 @@ describe('api/buf', function()
             -- turn on virtualedit
             command('set virtualedit=all')
             -- move cursor after eol just a bit
-            exec_lua([[
-            vim.fn.winrestview({ coladd = 3 })
-          ]])
+            fn.winrestview({ coladd = 3 })
 
             local cursor = exec_lua([[
             vim.api.nvim_buf_set_text(0, 0, 15, 2, 11, {
@@ -1499,12 +1478,7 @@ describe('api/buf', function()
             -- immediate call to nvim_win_get_cursor should have returned the same position
             eq({ 1, 22 }, cursor)
             -- coladd should become 0
-            eq(
-              0,
-              exec_lua([[
-            return vim.fn.winsaveview().coladd
-          ]])
-            )
+            eq(0, fn.winsaveview().coladd)
           end
         )
 
@@ -1522,9 +1496,7 @@ describe('api/buf', function()
             -- turn on virtualedit
             command('set virtualedit=all')
             -- move cursor after eol
-            exec_lua([[
-            vim.fn.winrestview({ coladd = 28 })
-          ]])
+            fn.winrestview({ coladd = 28 })
 
             local cursor = exec_lua([[
             vim.api.nvim_buf_set_text(0, 0, 15, 3, 11, {
@@ -1543,12 +1515,7 @@ describe('api/buf', function()
             -- immediate call to nvim_win_get_cursor should have returned the same position
             eq({ 2, 26 }, cursor)
             -- coladd should be increased so that cursor stays in the same screen column
-            eq(
-              13,
-              exec_lua([[
-            return vim.fn.winsaveview().coladd
-          ]])
-            )
+            eq(13, fn.winsaveview().coladd)
           end
         )
       end)

@@ -83,7 +83,7 @@ describe('LSP', function()
   end)
 
   after_each(function()
-    exec_lua("vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })")
+    api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
     -- exec_lua("lsp.stop_all_clients(true)")
   end)
 
@@ -146,7 +146,7 @@ describe('LSP', function()
     after_each(function()
       stop()
       exec_lua('lsp.stop_client(lsp.get_clients(), true)')
-      exec_lua("vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })")
+      api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
     end)
 
     it('should run correctly', function()
@@ -1803,7 +1803,7 @@ describe('LSP', function()
         make_edit(1, 0, 2, 5, 'foobar'),
         make_edit(4, 0, 5, 0, 'barfoo'),
       }
-      eq(true, exec_lua('return vim.api.nvim_buf_set_mark(1, "a", 2, 1, {})'))
+      eq(true, api.nvim_buf_set_mark(1, 'a', 2, 1, {}))
       exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, 'utf-16')
       eq({
         'First line of text',
@@ -1811,7 +1811,7 @@ describe('LSP', function()
         'Fourth line of text',
         'barfoo',
       }, buf_lines(1))
-      local mark = exec_lua('return vim.api.nvim_buf_get_mark(1, "a")')
+      local mark = api.nvim_buf_get_mark(1, 'a')
       eq({ 2, 1 }, mark)
     end)
 
@@ -1820,7 +1820,7 @@ describe('LSP', function()
         make_edit(1, 0, 2, 15, 'foobar'),
         make_edit(4, 0, 5, 0, 'barfoo'),
       }
-      eq(true, exec_lua('return vim.api.nvim_buf_set_mark(1, "a", 2, 10, {})'))
+      eq(true, api.nvim_buf_set_mark(1, 'a', 2, 10, {}))
       exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, 'utf-16')
       eq({
         'First line of text',
@@ -1828,7 +1828,7 @@ describe('LSP', function()
         'Fourth line of text',
         'barfoo',
       }, buf_lines(1))
-      local mark = exec_lua('return vim.api.nvim_buf_get_mark(1, "a")')
+      local mark = api.nvim_buf_get_mark(1, 'a')
       eq({ 2, 9 }, mark)
     end)
 
@@ -1837,13 +1837,13 @@ describe('LSP', function()
         make_edit(1, 0, 4, 5, 'foobar'),
         make_edit(4, 0, 5, 0, 'barfoo'),
       }
-      eq(true, exec_lua('return vim.api.nvim_buf_set_mark(1, "a", 4, 1, {})'))
+      eq(true, api.nvim_buf_set_mark(1, 'a', 4, 1, {}))
       exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, 'utf-16')
       eq({
         'First line of text',
         'foobaro',
       }, buf_lines(1))
-      local mark = exec_lua('return vim.api.nvim_buf_get_mark(1, "a")')
+      local mark = api.nvim_buf_get_mark(1, 'a')
       eq({ 2, 1 }, mark)
     end)
 
@@ -1911,7 +1911,7 @@ describe('LSP', function()
 
       it('fix the cursor col', function()
         -- append empty last line. See #22636
-        exec_lua('vim.api.nvim_buf_set_lines(...)', 1, -1, -1, true, { '' })
+        api.nvim_buf_set_lines(1, -1, -1, true, { '' })
 
         api.nvim_win_set_cursor(0, { 2, 11 })
         local edits = {
@@ -2263,7 +2263,7 @@ describe('LSP', function()
         },
       }
       exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16')
-      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', tmpfile))
+      eq(true, vim.uv.fs_stat(tmpfile) ~= nil)
     end)
     it(
       'Supports file creation in folder that needs to be created with CreateFile payload',
@@ -2281,7 +2281,7 @@ describe('LSP', function()
           },
         }
         exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16')
-        eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', tmpfile))
+        eq(true, vim.uv.fs_stat(tmpfile) ~= nil)
       end
     )
     it('createFile does not touch file if it exists and ignoreIfExists is set', function()
@@ -2300,7 +2300,7 @@ describe('LSP', function()
         },
       }
       exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16')
-      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', tmpfile))
+      eq(true, vim.uv.fs_stat(tmpfile) ~= nil)
       eq('Dummy content', read_file(tmpfile))
     end)
     it('createFile overrides file if overwrite is set', function()
@@ -2320,7 +2320,7 @@ describe('LSP', function()
         },
       }
       exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16')
-      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', tmpfile))
+      eq(true, vim.uv.fs_stat(tmpfile) ~= nil)
       eq('', read_file(tmpfile))
     end)
     it('DeleteFile delete file and buffer', function()
@@ -2344,8 +2344,8 @@ describe('LSP', function()
         },
       }
       eq(true, pcall(exec_lua, 'vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16'))
-      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', tmpfile))
-      eq(false, exec_lua('return vim.api.nvim_buf_is_loaded(vim.fn.bufadd(...))', tmpfile))
+      eq(false, vim.uv.fs_stat(tmpfile) ~= nil)
+      eq(false, api.nvim_buf_is_loaded(fn.bufadd(tmpfile)))
     end)
     it('DeleteFile fails if file does not exist and ignoreIfNotExists is false', function()
       local tmpfile = tmpname()
@@ -2363,7 +2363,7 @@ describe('LSP', function()
         },
       }
       eq(false, pcall(exec_lua, 'vim.lsp.util.apply_workspace_edit(...)', edit))
-      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', tmpfile))
+      eq(false, vim.uv.fs_stat(tmpfile) ~= nil)
     end)
   end)
 
@@ -2391,9 +2391,9 @@ describe('LSP', function()
         new
       )
       eq({ 'Test content' }, lines)
-      local exists = exec_lua('return vim.uv.fs_stat(...) ~= nil', old)
+      local exists = vim.uv.fs_stat(old) ~= nil
       eq(false, exists)
-      exists = exec_lua('return vim.uv.fs_stat(...) ~= nil', new)
+      exists = vim.uv.fs_stat(new) ~= nil
       eq(true, exists)
       os.remove(new)
     end)
@@ -2429,9 +2429,9 @@ describe('LSP', function()
         file
       )
       eq({ 'Test content' }, lines)
-      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old_dir))
-      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new_dir))
-      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new_dir .. pathsep .. file))
+      eq(false, vim.uv.fs_stat(old_dir) ~= nil)
+      eq(true, vim.uv.fs_stat(new_dir) ~= nil)
+      eq(true, vim.uv.fs_stat(new_dir .. pathsep .. file) ~= nil)
 
       os.remove(new_dir)
     end)
@@ -2495,7 +2495,7 @@ describe('LSP', function()
           new
         )
 
-        eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
+        eq(true, vim.uv.fs_stat(old) ~= nil)
         eq('New file', read_file(new))
 
         exec_lua(
@@ -2509,7 +2509,7 @@ describe('LSP', function()
           new
         )
 
-        eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
+        eq(true, vim.uv.fs_stat(old) ~= nil)
         eq('New file', read_file(new))
       end
     )
@@ -2539,8 +2539,8 @@ describe('LSP', function()
         old,
         new
       )
-      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
-      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new))
+      eq(false, vim.uv.fs_stat(old) ~= nil)
+      eq(true, vim.uv.fs_stat(new) ~= nil)
       eq(true, undo_kept)
     end)
     it('Maintains undo information for unloaded buffer', function()
@@ -2566,8 +2566,8 @@ describe('LSP', function()
         old,
         new
       )
-      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
-      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new))
+      eq(false, vim.uv.fs_stat(old) ~= nil)
+      eq(true, vim.uv.fs_stat(new) ~= nil)
       eq(true, undo_kept)
     end)
     it('Does not rename file when it conflicts with a buffer without file', function()
@@ -2611,8 +2611,8 @@ describe('LSP', function()
         new
       )
 
-      eq(false, exec_lua('return vim.uv.fs_stat(...) ~= nil', old))
-      eq(true, exec_lua('return vim.uv.fs_stat(...) ~= nil', new))
+      eq(false, vim.uv.fs_stat(old) ~= nil)
+      eq(true, vim.uv.fs_stat(new) ~= nil)
       eq('Old file', read_file(new))
     end)
   end)
@@ -2991,10 +2991,10 @@ describe('LSP', function()
 
     local jump = function(msg)
       eq(true, exec_lua('return vim.lsp.util.jump_to_location(...)', msg, 'utf-16'))
-      eq(target_bufnr, exec_lua [[return vim.fn.bufnr('%')]])
+      eq(target_bufnr, fn.bufnr('%'))
       return {
-        line = exec_lua [[return vim.fn.line('.')]],
-        col = exec_lua [[return vim.fn.col('.')]],
+        line = fn.line('.'),
+        col = fn.col('.'),
       }
     end
 
@@ -3024,7 +3024,7 @@ describe('LSP', function()
       local pos = jump(location(1, 2, 1, 2))
       eq(2, pos.line)
       eq(4, pos.col)
-      eq('å', exec_lua [[return vim.fn.expand('<cword>')]])
+      eq('å', fn.expand('<cword>'))
     end)
 
     it('adds current position to jumplist before jumping', function()
@@ -3081,11 +3081,11 @@ describe('LSP', function()
         )
       )
       if focus == true or focus == nil then
-        eq(target_bufnr, exec_lua([[return vim.fn.bufnr('%')]]))
+        eq(target_bufnr, fn.bufnr('%'))
       end
       return {
-        line = exec_lua([[return vim.fn.line('.')]]),
-        col = exec_lua([[return vim.fn.col('.')]]),
+        line = fn.line('.'),
+        col = fn.col('.'),
       }
     end
 
