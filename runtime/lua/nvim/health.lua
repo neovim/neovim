@@ -1,18 +1,6 @@
 local M = {}
 local health = require('vim.health')
 
-local fn_bool = function(key)
-  return function(...)
-    return vim.fn[key](...) == 1
-  end
-end
-
-local has = fn_bool('has')
-local executable = fn_bool('executable')
-local empty = fn_bool('empty')
-local filereadable = fn_bool('filereadable')
-local filewritable = fn_bool('filewritable')
-
 local shell_error = function()
   return vim.v.shell_error ~= 0
 end
@@ -62,11 +50,11 @@ local function check_config()
 
   local init_lua = vim.fn.stdpath('config') .. '/init.lua'
   local init_vim = vim.fn.stdpath('config') .. '/init.vim'
-  local vimrc = empty(vim.env.MYVIMRC) and init_lua or vim.env.MYVIMRC
+  local vimrc = vim.env.MYVIMRC or init_lua
 
-  if not filereadable(vimrc) and not filereadable(init_vim) then
+  if vim.fn.filereadable(vimrc) == 0 and vim.fn.filereadable(init_vim) == 0 then
     ok = false
-    local has_vim = filereadable(vim.fn.expand('~/.vimrc'))
+    local has_vim = vim.fn.filereadable(vim.fn.expand('~/.vimrc')) == 1
     health.warn(
       ('%s user config file: %s'):format(
         -1 == vim.fn.getfsize(vimrc) and 'Missing' or 'Unreadable',
@@ -77,7 +65,7 @@ local function check_config()
   end
 
   -- If $VIM is empty we don't care. Else make sure it is valid.
-  if not empty(vim.env.VIM) and not filereadable(vim.env.VIM .. '/runtime/doc/nvim.txt') then
+  if vim.env.VIM and vim.fn.filereadable(vim.env.VIM .. '/runtime/doc/nvim.txt') == 0 then
     ok = false
     health.error('$VIM is invalid: ' .. vim.env.VIM)
   end
@@ -121,17 +109,17 @@ local function check_config()
   local writeable = true
   local shadaopt = vim.fn.split(vim.o.shada, ',')
   local shadafile = (
-    empty(vim.o.shada) and vim.o.shada
+    vim.o.shada == '' and vim.o.shada
     or vim.fn.substitute(vim.fn.matchstr(shadaopt[#shadaopt], '^n.\\+'), '^n', '', '')
   )
   shadafile = (
-    empty(vim.o.shadafile)
-      and (empty(shadafile) and vim.fn.stdpath('state') .. '/shada/main.shada' or vim.fn.expand(
+    vim.o.shadafile == ''
+      and (shadafile == '' and vim.fn.stdpath('state') .. '/shada/main.shada' or vim.fn.expand(
         shadafile
       ))
     or (vim.o.shadafile == 'NONE' and '' or vim.o.shadafile)
   )
-  if not empty(shadafile) and empty(vim.fn.glob(shadafile)) then
+  if shadafile ~= '' and vim.fn.glob(shadafile) == '' then
     -- Since this may be the first time Nvim has been run, try to create a shada file.
     if not pcall(vim.cmd.wshada) then
       writeable = false
@@ -139,12 +127,15 @@ local function check_config()
   end
   if
     not writeable
-    or (not empty(shadafile) and (not filereadable(shadafile) or not filewritable(shadafile)))
+    or (
+      shadafile ~= ''
+      and (vim.fn.filereadable(shadafile) == 0 or vim.fn.filewritable(shadafile) ~= 1)
+    )
   then
     ok = false
     health.error(
       'shada file is not '
-        .. ((not writeable or filereadable(shadafile)) and 'writeable' or 'readable')
+        .. ((not writeable or vim.fn.filereadable(shadafile) == 1) and 'writeable' or 'readable')
         .. ':\n'
         .. shadafile
     )
@@ -160,7 +151,7 @@ local function check_performance()
 
   -- Check buildtype
   local buildtype = vim.fn.matchstr(vim.fn.execute('version'), [[\v\cbuild type:?\s*[^\n\r\t ]+]])
-  if empty(buildtype) then
+  if buildtype == '' then
     health.error('failed to get build type from :version')
   elseif vim.regex([[\v(MinSizeRel|Release|RelWithDebInfo)]]):match_str(buildtype) then
     health.ok(buildtype)
@@ -196,12 +187,12 @@ local function check_rplugin_manifest()
   local require_update = false
   local handle_path = function(path)
     local python_glob = vim.fn.glob(path .. '/rplugin/python*', true, true)
-    if empty(python_glob) then
+    if python_glob == '' then
       return
     end
 
     local python_dir = python_glob[1]
-    local python_version = vim.fn.fnamemodify(python_dir, ':t')
+    local python_version = vim.fs.basename(python_dir)
 
     local scripts = vim.fn.glob(python_dir .. '/*.py', true, true)
     vim.list_extend(scripts, vim.fn.glob(python_dir .. '/*/__init__.py', true, true))
@@ -213,12 +204,12 @@ local function check_rplugin_manifest()
           script = vim.fn.tr(vim.fn.fnamemodify(script, ':h'), '\\', '/')
         end
         if not existing_rplugins[script] then
-          local msg = vim.fn.printf('"%s" is not registered.', vim.fn.fnamemodify(path, ':t'))
+          local msg = vim.fn.printf('"%s" is not registered.', vim.fs.basename(path))
           if python_version == 'pythonx' then
-            if not has('python3') then
+            if vim.fn.has('python3') == 0 then
               msg = msg .. ' (python3 not available)'
             end
-          elseif not has(python_version) then
+          elseif vim.fn.has(python_version) == 0 then
             msg = msg .. vim.fn.printf(' (%s not available)', python_version)
           else
             require_update = true
@@ -232,7 +223,7 @@ local function check_rplugin_manifest()
     end
   end
 
-  for _, path in ipairs(vim.fn.map(vim.fn.split(vim.o.runtimepath, ','), 'resolve(v:val)')) do
+  for _, path in ipairs(vim.fn.map(vim.split(vim.o.runtimepath, ','), 'resolve(v:val)')) do
     handle_path(path)
   end
 
@@ -244,7 +235,7 @@ local function check_rplugin_manifest()
 end
 
 local function check_tmux()
-  if empty(vim.env.TMUX) or not executable('tmux') then
+  if not vim.env.TMUX or vim.fn.executable('tmux') == 0 then
     return
   end
 
@@ -255,7 +246,7 @@ local function check_tmux()
     if shell_error() then
       health.error('command failed: ' .. cmd .. '\n' .. out)
       return 'error'
-    elseif empty(val) then
+    elseif val == '' then
       cmd = 'tmux show-option -qvgs ' .. option -- try session scope
       out = vim.fn.system(vim.fn.split(cmd))
       val = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
@@ -274,7 +265,7 @@ local function check_tmux()
     { 'set escape-time in ~/.tmux.conf:\nset-option -sg escape-time 10', suggest_faq }
   local tmux_esc_time = get_tmux_option('escape-time')
   if tmux_esc_time ~= 'error' then
-    if empty(tmux_esc_time) then
+    if tmux_esc_time == '' then
       health.error('`escape-time` is not set', suggestions)
     elseif tonumber(tmux_esc_time) > 300 then
       health.error('`escape-time` (' .. tmux_esc_time .. ') is higher than 300ms', suggestions)
@@ -286,7 +277,7 @@ local function check_tmux()
   -- check focus-events
   local tmux_focus_events = get_tmux_option('focus-events')
   if tmux_focus_events ~= 'error' then
-    if empty(tmux_focus_events) or tmux_focus_events ~= 'on' then
+    if tmux_focus_events == '' or tmux_focus_events ~= 'on' then
       health.warn(
         "`focus-events` is not enabled. |'autoread'| may not work.",
         { '(tmux 1.9+ only) Set `focus-events` in ~/.tmux.conf:\nset-option -g focus-events on' }
@@ -301,7 +292,7 @@ local function check_tmux()
   local cmd = 'tmux show-option -qvg default-terminal'
   local out = vim.fn.system(vim.fn.split(cmd))
   local tmux_default_term = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
-  if empty(tmux_default_term) then
+  if tmux_default_term == '' then
     cmd = 'tmux show-option -qvgs default-terminal'
     out = vim.fn.system(vim.fn.split(cmd))
     tmux_default_term = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
@@ -341,7 +332,7 @@ local function check_tmux()
 end
 
 local function check_terminal()
-  if not executable('infocmp') then
+  if vim.fn.executable('infocmp') == 0 then
     return
   end
 
@@ -354,13 +345,12 @@ local function check_terminal()
   if
     shell_error()
     and (
-      not has('win32')
-      or empty(
-        vim.fn.matchstr(
+      vim.fn.has('win32') == 0
+      or vim.fn.matchstr(
           out,
           [[infocmp: couldn't open terminfo file .\+\%(conemu\|vtpcon\|win32con\)]]
         )
-      )
+        == ''
     )
   then
     health.error('command failed: ' .. cmd .. '\n' .. out)
@@ -368,14 +358,14 @@ local function check_terminal()
     health.info(
       vim.fn.printf(
         'key_backspace (kbs) terminfo entry: `%s`',
-        (empty(kbs_entry) and '? (not found)' or kbs_entry)
+        (kbs_entry == '' and '? (not found)' or kbs_entry)
       )
     )
 
     health.info(
       vim.fn.printf(
         'key_dc (kdch1) terminfo entry: `%s`',
-        (empty(kbs_entry) and '? (not found)' or kdch1_entry)
+        (kbs_entry == '' and '? (not found)' or kdch1_entry)
       )
     )
   end

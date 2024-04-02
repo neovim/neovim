@@ -386,7 +386,7 @@ local path2name = function(path)
     path = path:gsub('^.*/lua/', '')
 
     -- Remove the filename (health.lua)
-    path = vim.fn.fnamemodify(path, ':h')
+    path = vim.fs.dirname(path)
 
     -- Change slashes to dots
     path = path:gsub('/', '.')
@@ -496,12 +496,5 @@ function M._check(mods, plugin_names)
   vim.cmd.redraw()
   vim.print('')
 end
-
-local fn_bool = function(key)
-  return function(...)
-    return vim.fn[key](...) == 1
-  end
-end
-M.executable = fn_bool('executable')
 
 return M

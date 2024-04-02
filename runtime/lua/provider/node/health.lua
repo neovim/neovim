@@ -1,5 +1,4 @@
 local health = vim.health
-local executable = health.executable
 local iswin = vim.loop.os_uname().sysname == 'Windows_NT'
 
 local M = {}
@@ -12,8 +11,12 @@ function M.check()
   end
 
   if
-    not executable('node')
-    or (not executable('npm') and not executable('yarn') and not executable('pnpm'))
+    vim.fn.executable('node') == 0
+    or (
+      vim.fn.executable('npm') == 0
+      and vim.fn.executable('yarn') == 0
+      and vim.fn.executable('pnpm') == 0
+    )
   then
     health.warn(
       '`node` and `npm` (or `yarn`, `pnpm`) must be in $PATH.',
@@ -50,9 +53,9 @@ function M.check()
   health.info('Nvim node.js host: ' .. host)
 
   local manager = 'npm'
-  if executable('yarn') then
+  if vim.fn.executable('yarn') == 1 then
     manager = 'yarn'
-  elseif executable('pnpm') then
+  elseif vim.fn.executable('pnpm') == 1 then
     manager = 'pnpm'
   end
 
