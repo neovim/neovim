@@ -521,28 +521,9 @@ function M.add_workspace_folder(workspace_folder)
     print(workspace_folder, ' is not a valid directory')
     return
   end
-  local new_workspace = {
-    uri = vim.uri_from_fname(workspace_folder),
-    name = workspace_folder,
-  }
-  local params = { event = { added = { new_workspace }, removed = {} } }
-  local bufnr = vim.api.nvim_get_current_buf()
+  local bufnr = api.nvim_get_current_buf()
   for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
-    local found = false
-    for _, folder in pairs(client.workspace_folders or {}) do
-      if folder.name == workspace_folder then
-        found = true
-        print(workspace_folder, 'is already part of this workspace')
-        break
-      end
-    end
-    if not found then
-      client.notify(ms.workspace_didChangeWorkspaceFolders, params)
-      if not client.workspace_folders then
-        client.workspace_folders = {}
-      end
-      table.insert(client.workspace_folders, new_workspace)
-    end
+    client:_add_workspace_folder(workspace_folder)
   end
 end
 
@@ -554,23 +535,12 @@ function M.remove_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder
     or npcall(vim.fn.input, 'Workspace Folder: ', vim.fn.expand('%:p:h'))
   api.nvim_command('redraw')
-  if not (workspace_folder and #workspace_folder > 0) then
+  if not workspace_folder or #workspace_folder == 0 then
     return
   end
-  local workspace = {
-    uri = vim.uri_from_fname(workspace_folder),
-    name = workspace_folder,
-  }
-  local params = { event = { added = {}, removed = { workspace } } }
-  local bufnr = vim.api.nvim_get_current_buf()
+  local bufnr = api.nvim_get_current_buf()
   for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
-    for idx, folder in pairs(client.workspace_folders) do
-      if folder.name == workspace_folder then
-        client.notify(ms.workspace_didChangeWorkspaceFolders, params)
-        client.workspace_folders[idx] = nil
-        return
-      end
-    end
+    client:_remove_workspace_folder(workspace_folder)
   end
   print(workspace_folder, 'is not currently part of the workspace')
 end

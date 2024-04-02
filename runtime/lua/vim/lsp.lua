@@ -164,6 +164,28 @@ local function once(fn)
   end
 end
 
+--- @param client vim.lsp.Client
+--- @param config vim.lsp.ClientConfig
+--- @return boolean
+local function reuse_client_default(client, config)
+  if client.name ~= config.name then
+    return false
+  end
+
+  if config.root_dir then
+    for _, dir in ipairs(client.workspace_folders or {}) do
+      -- note: do not need to check client.root_dir since that should be client.workspace_folders[1]
+      if config.root_dir == dir.name then
+        return true
+      end
+    end
+  end
+
+  -- TODO(lewis6991): also check config.workspace_folders
+
+  return false
+end
+
 --- @class vim.lsp.start.Opts
 --- @inlinedoc
 ---
@@ -216,11 +238,7 @@ end
 --- @return integer? client_id
 function lsp.start(config, opts)
   opts = opts or {}
-  local reuse_client = opts.reuse_client
-    or function(client, conf)
-      return client.root_dir == conf.root_dir and client.name == conf.name
-    end
-
+  local reuse_client = opts.reuse_client or reuse_client_default
   local bufnr = resolve_bufnr(opts.bufnr)
 
   for _, client in pairs(all_clients) do
