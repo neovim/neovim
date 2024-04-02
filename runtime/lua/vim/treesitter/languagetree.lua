@@ -809,6 +809,10 @@ function LanguageTree:_get_injection(match, metadata)
       if name == 'injection.language' then
         local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
         lang = resolve_lang(text)
+      elseif name == 'injection.filename' then
+        local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
+        local ft = vim.filetype.match({ filename = text })
+        lang = ft and resolve_lang(ft)
       elseif name == 'injection.content' then
         ranges = get_node_ranges(node, self._source, metadata[id], include_children)
       end

@@ -240,6 +240,9 @@ The following new APIs and features were added.
     language aliases (e.g., filetype or custom shorthands) registered via
     |vim.treesitter.language.register()| and/or attempt lower case variants of
     the text.
+  • `@injection.filename` will try to match the node text via
+    |vim.filetype.match()| and treat the result as a language name in the same
+    way as `@injection.language`.
   • The `#set!` directive now supports `injection.self` and `injection.parent`
     for injecting either the current node's language or the parent
     |LanguageTree|'s language, respectively.

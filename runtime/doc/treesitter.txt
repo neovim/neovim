@@ -654,6 +654,10 @@ parent tree. The language injection query allows you to specify these
     • `@injection.language` - indicates that the captured node’s text may
       contain the name of a language that should be used to re-parse the
       `@injection.content`.
+    • `@injection.filename` - indicates that the captured node’s text may
+      contain a filename; the corresponding filetype is then looked-up up via
+      |vim.filetype.match()| and treated as the name of a language that should
+      be used to re-parse the `@injection.content`.
 
 The language injection behavior can also be configured by some properties
 associated with patterns:
