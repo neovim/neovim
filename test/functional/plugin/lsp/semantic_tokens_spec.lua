@@ -10,6 +10,7 @@ local feed = helpers.feed
 local feed_command = helpers.feed_command
 local insert = helpers.insert
 local matches = helpers.matches
+local api = helpers.api
 
 local clear_notrace = lsp_helpers.clear_notrace
 local create_server_definition = lsp_helpers.create_server_definition
@@ -19,7 +20,7 @@ before_each(function()
 end)
 
 after_each(function()
-  exec_lua("vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })")
+  api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
 end)
 
 describe('semantic token highlighting', function()

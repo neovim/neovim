@@ -4,6 +4,7 @@ local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local run = helpers.run
 local stop = helpers.stop
+local api = helpers.api
 local NIL = vim.NIL
 
 local M = {}
@@ -211,7 +212,7 @@ function M.test_rpc_server(config)
   end
   stop()
   if config.test_name then
-    exec_lua("vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })")
+    api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
   end
 end
 

@@ -6,6 +6,7 @@ local eq = helpers.eq
 local dedent = helpers.dedent
 local exec_lua = helpers.exec_lua
 local insert = helpers.insert
+local api = helpers.api
 
 local clear_notrace = lsp_helpers.clear_notrace
 local create_server_definition = lsp_helpers.create_server_definition
@@ -88,7 +89,7 @@ before_each(function()
 end)
 
 after_each(function()
-  exec_lua("vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })")
+  api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
 end)
 
 describe('vim.lsp.inlay_hint', function()

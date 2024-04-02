@@ -5,6 +5,7 @@ local ok = helpers.ok
 local exec_lua = helpers.exec_lua
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
+local fn = helpers.fn
 
 local function v(ver)
   return vim.version._version(ver)
@@ -17,7 +18,7 @@ describe('version', function()
   end)
 
   it('version() returns Nvim version', function()
-    local expected = exec_lua('return vim.fn.api_info().version')
+    local expected = fn.api_info().version
     local actual = exec_lua('return vim.version()')
     eq(expected.major, actual.major)
     eq(expected.minor, actual.minor)

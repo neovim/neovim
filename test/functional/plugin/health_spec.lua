@@ -8,7 +8,8 @@ local eq, neq, matches = helpers.eq, helpers.neq, helpers.matches
 local getcompletion = helpers.fn.getcompletion
 local insert = helpers.insert
 local source = helpers.source
-local exec_lua = helpers.exec_lua
+local fn = helpers.fn
+local api = helpers.api
 
 describe(':checkhealth', function()
   it('detects invalid $VIMRUNTIME', function()
@@ -381,7 +382,7 @@ describe(':checkhealth window', function()
 
   it('opens in tab', function()
     -- create an empty buffer called "my_buff"
-    exec_lua 'vim.api.nvim_create_buf(false, true)'
+    api.nvim_create_buf(false, true)
     command('file my_buff')
     command('checkhealth success1')
     -- define a function that collects all buffers in each tab
@@ -400,7 +401,7 @@ describe(':checkhealth window', function()
                 return buffs
         endfunction
     ]])
-    local buffers_per_tab = exec_lua('return vim.fn.CollectBuffersPerTab()')
+    local buffers_per_tab = fn.CollectBuffersPerTab()
     eq(buffers_per_tab, { tab1 = { 'my_buff' }, tab2 = { 'health://' } })
   end)
 end)
