@@ -1052,6 +1052,7 @@ local extension = {
   mts = 'typescript',
   cts = 'typescript',
   tsx = 'typescriptreact',
+  tsp = 'typespec',
   uc = 'uc',
   uit = 'uil',
   uil = 'uil',
