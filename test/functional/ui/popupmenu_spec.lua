@@ -1171,6 +1171,10 @@ describe('builtin popupmenu', function()
         [6] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
         [7] = { background = Screen.colors.Yellow }, -- Search
         [8] = { foreground = Screen.colors.Red },
+        kn = { foreground = Screen.colors.Red, background = Screen.colors.Magenta },
+        ks = { foreground = Screen.colors.Red, background = Screen.colors.Grey },
+        xn = { foreground = Screen.colors.White, background = Screen.colors.Magenta },
+        xs = { foreground = Screen.colors.Black, background = Screen.colors.Grey },
       })
       screen:attach({ ext_multigrid = multigrid })
     end)
@@ -4477,23 +4481,15 @@ describe('builtin popupmenu', function()
             hi PmenuExtra     guifg=White guibg=Magenta
             hi PmenuExtraSel  guifg=Black guibg=Grey
           ]])
-          local attrs = screen:get_default_attr_ids()
-          attrs.kn = { foreground = Screen.colors.Red, background = Screen.colors.Magenta }
-          attrs.ks = { foreground = Screen.colors.Red, background = Screen.colors.Grey }
-          attrs.xn = { foreground = Screen.colors.White, background = Screen.colors.Magenta }
-          attrs.xs = { foreground = Screen.colors.Black, background = Screen.colors.Grey }
           feed('iaw<C-X><C-u>')
-          screen:expect(
-            [[
+          screen:expect([[
             aword1^                        |
             {s:aword1 }{ks:W }{xs:extra text 1 }{1:        }|
             {n:aword2 }{kn:W }{xn:extra text 2 }{1:        }|
             {n:aword3 }{kn:W }{xn:extra text 3 }{1:        }|
             {1:~                             }|*3
             {2:-- }{5:match 1 of 3}               |
-          ]],
-            attrs
-          )
+          ]])
         end)
       end)
     end

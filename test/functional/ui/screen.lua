@@ -255,6 +255,17 @@ function Screen:set_default_attr_ids(attr_ids)
   self._default_attr_ids = attr_ids
 end
 
+function Screen:add_extra_attr_ids(extra_attr_ids)
+  local attr_ids = vim.deepcopy(Screen._global_default_attr_ids)
+  for id, attr in pairs(extra_attr_ids) do
+    if type(id) == 'number' and id < 100 then
+      error('extra attr ids should be at least 100 or be strings')
+    end
+    attr_ids[id] = attr
+  end
+  self._default_attr_ids = attr_ids
+end
+
 function Screen:get_default_attr_ids()
   return deepcopy(self._default_attr_ids)
 end
