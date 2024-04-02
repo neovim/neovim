@@ -1267,7 +1267,7 @@ static bool parse_float_config(Dict(win_config) *config, WinConfig *fconfig, boo
 
   if (HAS_KEY_X(config, noautocmd)) {
     if (!new_win) {
-      api_set_error(err, kErrorTypeValidation, "Invalid key: 'noautocmd'");
+      api_set_error(err, kErrorTypeValidation, "'noautocmd' cannot be used with existing windows");
       return false;
     }
     fconfig->noautocmd = config->noautocmd;
