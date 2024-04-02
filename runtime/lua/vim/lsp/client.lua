@@ -420,7 +420,7 @@ local function get_workspace_folders(workspace_folders, root_dir)
     return {
       {
         uri = vim.uri_from_fname(root_dir),
-        name = string.format('%s', root_dir),
+        name = root_dir,
       },
     }
   end
@@ -1063,6 +1063,47 @@ function Client:_on_exit(code, signal)
     signal,
     self.id
   )
+end
+
+--- @package
+--- Add a directory to the workspace folders.
+--- @param dir string?
+function Client:_add_workspace_folder(dir)
+  for _, folder in pairs(self.workspace_folders or {}) do
+    if folder.name == dir then
+      print(dir, 'is already part of this workspace')
+      return
+    end
+  end
+
+  local wf = assert(get_workspace_folders(nil, dir))
+
+  self:_notify(ms.workspace_didChangeWorkspaceFolders, {
+    event = { added = wf, removed = {} },
+  })
+
+  if not self.workspace_folders then
+    self.workspace_folders = {}
+  end
+  vim.list_extend(self.workspace_folders, wf)
+end
+
+--- @package
+--- Remove a directory to the workspace folders.
+--- @param dir string?
+function Client:_remove_workspace_folder(dir)
+  local wf = assert(get_workspace_folders(nil, dir))
+
+  self:_notify(ms.workspace_didChangeWorkspaceFolders, {
+    event = { added = {}, removed = wf },
+  })
+
+  for idx, folder in pairs(self.workspace_folders) do
+    if folder.name == dir then
+      table.remove(self.workspace_folders, idx)
+      break
+    end
+  end
 end
 
 return Client
