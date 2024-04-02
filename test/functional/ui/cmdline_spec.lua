@@ -365,7 +365,7 @@ local function test_cmdline(linegrid)
       grid = [[
                                |
       {2:[No Name]                }|
-      {1::}mak^e                    |
+      {1::}make^                    |
       {3:[Command Line]           }|
                                |
     ]],
@@ -377,7 +377,7 @@ local function test_cmdline(linegrid)
       grid = [[
                                |
       {2:[No Name]                }|
-      {1::}mak^e                    |
+      {1::}make^                    |
       {3:[Command Line]           }|
                                |
     ]],
@@ -396,7 +396,7 @@ local function test_cmdline(linegrid)
       grid = [[
                                |
       {2:[No Name]                }|
-      {1::}mak^e                    |
+      {1::}make^                    |
       {3:[Command Line]           }|
                                |
     ]],
@@ -416,7 +416,7 @@ local function test_cmdline(linegrid)
       grid = [[
                                |
       {2:[No Name]                }|
-      {1::}mak^e                    |
+      {1::}make^                    |
       {3:[Command Line]           }|
                                |
     ]],
@@ -1586,7 +1586,7 @@ describe('cmdheight=0', function()
           topline = 0,
           botline = 2,
           curline = 0,
-          curcol = 0,
+          curcol = 1,
           linecount = 1,
           sum_scroll_delta = 0,
         },

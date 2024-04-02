@@ -196,7 +196,7 @@ static void redraw_for_cursorcolumn(win_T *wp)
 int sms_marker_overlap(win_T *wp, int extra2)
 {
   // There is no marker overlap when in showbreak mode, thus no need to
-  // account for it.  See grid_put_linebuf().
+  // account for it.  See wlv_put_linebuf().
   if (*get_showbreak_value(wp) != NUL) {
     return 0;
   }
@@ -621,7 +621,7 @@ int cursor_valid(win_T *wp)
 // w_topline must be valid, you may need to call update_topline() first!
 void validate_cursor(win_T *wp)
 {
-  check_cursor(wp);
+  check_cursor_lnum(wp);
   check_cursor_moved(wp);
   if ((wp->w_valid & (VALID_WCOL|VALID_WROW)) != (VALID_WCOL|VALID_WROW)) {
     curs_columns(wp, true);

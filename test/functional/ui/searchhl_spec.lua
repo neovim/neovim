@@ -53,7 +53,7 @@ describe('search highlighting', function()
           topline = 0,
           botline = 3,
           curline = 0,
-          curcol = 8,
+          curcol = 9,
           linecount = 2,
           sum_scroll_delta = 0,
         },
