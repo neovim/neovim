@@ -289,7 +289,7 @@ static bool is_safe_now(void)
          && !debug_mode;
 }
 
-/// Trigger SafeState if currently in s safe state, that is "safe" is TRUE and
+/// Trigger SafeState if currently in a safe state, that is "safe" is true and
 /// there is no typeahead.
 void may_trigger_safestate(bool safe)
 {
