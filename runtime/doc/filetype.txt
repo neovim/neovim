@@ -400,6 +400,19 @@ So to enable this only for ruby, set the following variable: >
 If both, the global `plugin_exec` and the `<filetype>_exec` specific variable
 are set, the filetype specific variable should have precedent.
 
+
+ASCIIDOC						*ft-asciidoc-plugin*
+
+To enable |folding| use this: >
+	let g:asciidoc_folding = 1
+
+To disable nesting of folded headers use this: >
+	let g:asciidoc_foldnested = 0
+
+To disable folding everything under the title use this: >
+	let asciidoc_fold_under_title = 0
+
+
 AWK							*ft-awk-plugin*
 
 Support for features specific to GNU Awk, like @include, can be enabled by
@@ -525,18 +538,6 @@ After figuring out the current date and user, the file is searched for an
 entry beginning with the current date and user and if found adds another item
 under it.  If not found, a new entry and item is prepended to the beginning of
 the Changelog.
-
-
-ASCIIDOC						*ft-asciidoc-plugin*
-
-To enable |folding| use this: >
-	let g:asciidoc_folding = 1
-
-To disable nesting of folded headers use this: >
-	let g:asciidoc_foldnested = 0
-
-To disable folding everything under the title use this: >
-	let asciidoc_fold_under_title = 0
 
 
 FORTRAN							*ft-fortran-plugin*
