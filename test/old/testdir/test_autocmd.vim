@@ -3497,69 +3497,6 @@ func Test_autocmd_vimgrep()
   augroup END
 endfunc
 
-" Test TextChangedI and TextChanged
-func Test_Changed_ChangedI()
-  throw 'Skipped: use test/functional/autocmd/textchanged_spec.lua'
-  new
-  call test_override("char_avail", 1)
-  let [g:autocmd_i, g:autocmd_n] = ['','']
-
-  func! TextChangedAutocmdI(char)
-    let g:autocmd_{tolower(a:char)} = a:char .. b:changedtick
-  endfunc
-
-  augroup Test_TextChanged
-    au!
-    au TextChanged  <buffer> :call TextChangedAutocmdI('N')
-    au TextChangedI <buffer> :call TextChangedAutocmdI('I')
-  augroup END
-
-  call feedkeys("ifoo\<esc>", 'tnix')
-  " TODO: Test test does not seem to trigger TextChanged autocommand, this
-  " requires running Vim in a terminal window.
-  " call assert_equal('N3', g:autocmd_n)
-  call assert_equal('I3', g:autocmd_i)
-
-  call feedkeys("yyp", 'tnix')
-  " TODO: Test test does not seem to trigger TextChanged autocommand.
-  " call assert_equal('N4', g:autocmd_n)
-  call assert_equal('I3', g:autocmd_i)
-
-  " TextChangedI should only trigger if change was done in Insert mode
-  let g:autocmd_i = ''
-  call feedkeys("yypi\<esc>", 'tnix')
-  call assert_equal('', g:autocmd_i)
-
-  " If change is a mix of Normal and Insert modes, TextChangedI should trigger
-  func s:validate_mixed_textchangedi(keys)
-    call feedkeys("ifoo\<esc>", 'tnix')
-    let g:autocmd_i = ''
-    let g:autocmd_n = ''
-    call feedkeys(a:keys, 'tnix')
-    call assert_notequal('', g:autocmd_i)
-    call assert_equal('', g:autocmd_n)
-  endfunc
-
-  call s:validate_mixed_textchangedi("o\<esc>")
-  call s:validate_mixed_textchangedi("O\<esc>")
-  call s:validate_mixed_textchangedi("ciw\<esc>")
-  call s:validate_mixed_textchangedi("cc\<esc>")
-  call s:validate_mixed_textchangedi("C\<esc>")
-  call s:validate_mixed_textchangedi("s\<esc>")
-  call s:validate_mixed_textchangedi("S\<esc>")
-
-
-  " CleanUp
-  call test_override("char_avail", 0)
-  au! TextChanged  <buffer>
-  au! TextChangedI <buffer>
-  augroup! Test_TextChanged
-  delfu TextChangedAutocmdI
-  unlet! g:autocmd_i g:autocmd_n
-
-  bw!
-endfunc
-
 func Test_closing_autocmd_window()
   let lines =<< trim END
       edit Xa.txt
@@ -3953,32 +3890,97 @@ func Test_implicit_session()
 endfunc
 
 " Test TextChangedI and TextChanged
-func Test_Changed_ChangedI_2()
+func Test_Changed_ChangedI()
   " Run this test in a terminal because it requires running the main loop.
-  CheckRunVimInTerminal
+  " Don't use CheckRunVimInTerminal as that will skip the test on Windows.
+  CheckFeature terminal
+  CheckNotGui
+  " Starting a terminal to run Vim is always considered flaky.
+  let g:test_is_flaky = 1
+
   call writefile(['one', 'two', 'three'], 'XTextChangedI2', 'D')
   let before =<< trim END
+      set ttimeout ttimeoutlen=10
       let [g:autocmd_n, g:autocmd_i] = ['','']
 
       func TextChangedAutocmd(char)
         let g:autocmd_{tolower(a:char)} = a:char .. b:changedtick
-        call writefile([g:autocmd_n, g:autocmd_i], 'XTextChangedI3')
+        call writefile([$'{g:autocmd_n},{g:autocmd_i}'], 'XTextChangedI3')
       endfunc
 
       au TextChanged  <buffer> :call TextChangedAutocmd('N')
       au TextChangedI <buffer> :call TextChangedAutocmd('I')
 
       nnoremap <CR> o<Esc>
-      call writefile([], 'XTextChangedI3')
+      call writefile([''], 'XTextChangedI3')
   END
 
   call writefile(before, 'Xinit', 'D')
-  let buf = RunVimInTerminal('-S Xinit XtextChangedI2', {})
+  let buf = term_start(
+        \ GetVimCommandCleanTerm() .. '-n -S Xinit XTextChangedI2',
+        \ {'term_rows': 10})
+  call assert_equal('running', term_getstatus(buf))
   call WaitForAssert({-> assert_true(filereadable('XTextChangedI3'))})
-  call term_sendkeys(buf, "\<cr>")
-  call WaitForAssert({-> assert_equal(['N4', ''], readfile('XTextChangedI3'))})
-  call StopVimInTerminal(buf)
 
+  " TextChanged should trigger if a mapping enters and leaves Insert mode.
+  call term_sendkeys(buf, "\<CR>")
+  call WaitForAssert({-> assert_equal('N4,', readfile('XTextChangedI3')[0])})
+
+  call term_sendkeys(buf, "i")
+  call WaitForAssert({-> assert_match('^-- INSERT --', term_getline(buf, 10))})
+  call WaitForAssert({-> assert_equal('N4,', readfile('XTextChangedI3')[0])})
+  " TextChangedI should trigger if change is done in Insert mode.
+  call term_sendkeys(buf, "f")
+  call WaitForAssert({-> assert_equal('N4,I5', readfile('XTextChangedI3')[0])})
+  call term_sendkeys(buf, "o")
+  call WaitForAssert({-> assert_equal('N4,I6', readfile('XTextChangedI3')[0])})
+  call term_sendkeys(buf, "o")
+  call WaitForAssert({-> assert_equal('N4,I7', readfile('XTextChangedI3')[0])})
+  " TextChanged shouldn't trigger when leaving Insert mode and TextChangedI
+  " has been triggered.
+  call term_sendkeys(buf, "\<Esc>")
+  call WaitForAssert({-> assert_notmatch('^-- INSERT --', term_getline(buf, 10))})
+  call WaitForAssert({-> assert_equal('N4,I7', readfile('XTextChangedI3')[0])})
+
+  " TextChanged should trigger if change is done in Normal mode.
+  call term_sendkeys(buf, "yyp")
+  call WaitForAssert({-> assert_equal('N8,I7', readfile('XTextChangedI3')[0])})
+
+  " TextChangedI shouldn't trigger if change isn't done in Insert mode.
+  call term_sendkeys(buf, "i")
+  call WaitForAssert({-> assert_match('^-- INSERT --', term_getline(buf, 10))})
+  call WaitForAssert({-> assert_equal('N8,I7', readfile('XTextChangedI3')[0])})
+  call term_sendkeys(buf, "\<Esc>")
+  call WaitForAssert({-> assert_notmatch('^-- INSERT --', term_getline(buf, 10))})
+  call WaitForAssert({-> assert_equal('N8,I7', readfile('XTextChangedI3')[0])})
+
+  " TextChangedI should trigger if change is a mix of Normal and Insert modes.
+  func! s:validate_mixed_textchangedi(buf, keys)
+    let buf = a:buf
+    call term_sendkeys(buf, "ifoo")
+    call WaitForAssert({-> assert_match('^-- INSERT --', term_getline(buf, 10))})
+    call term_sendkeys(buf, "\<Esc>")
+    call WaitForAssert({-> assert_notmatch('^-- INSERT --', term_getline(buf, 10))})
+    call term_sendkeys(buf, ":let [g:autocmd_n, g:autocmd_i] = ['', '']\<CR>")
+    call delete('XTextChangedI3')
+    call term_sendkeys(buf, a:keys)
+    call WaitForAssert({-> assert_match('^-- INSERT --', term_getline(buf, 10))})
+    call WaitForAssert({-> assert_match('^,I\d\+', readfile('XTextChangedI3')[0])})
+    call term_sendkeys(buf, "\<Esc>")
+    call WaitForAssert({-> assert_notmatch('^-- INSERT --', term_getline(buf, 10))})
+    call WaitForAssert({-> assert_match('^,I\d\+', readfile('XTextChangedI3')[0])})
+  endfunc
+
+  call s:validate_mixed_textchangedi(buf, "o")
+  call s:validate_mixed_textchangedi(buf, "O")
+  call s:validate_mixed_textchangedi(buf, "ciw")
+  call s:validate_mixed_textchangedi(buf, "cc")
+  call s:validate_mixed_textchangedi(buf, "C")
+  call s:validate_mixed_textchangedi(buf, "s")
+  call s:validate_mixed_textchangedi(buf, "S")
+
+  " clean up
+  bwipe!
   call delete('XTextChangedI3')
 endfunc
 
