@@ -1231,6 +1231,10 @@ bool scrolldown(win_T *wp, linenr_T line_count, int byfold)
         wp->w_topline--;
         wp->w_skipcol = 0;
         wp->w_topfill = 0;
+        // Adjusting the cursor later should not adjust skipcol.
+        if (do_sms) {
+          curwin->w_curswant = MAXCOL;
+        }
         // A sequence of folded lines only counts for one logical line
         linenr_T first;
         if (hasFolding(wp, wp->w_topline, &first, NULL)) {
@@ -1385,9 +1389,10 @@ bool scrollup(win_T *wp, linenr_T line_count, bool byfold)
           wp->w_topline = lnum;
           wp->w_topfill = win_get_fill(wp, lnum);
           wp->w_skipcol = 0;
-          // Adjusting the cursor later should not adjust skipcol:
-          // bring it to the first screenline on this new topline.
-          wp->w_curswant %= width1;
+          // Adjusting the cursor later should not adjust skipcol.
+          if (do_sms) {
+            curwin->w_curswant = 0;
+          }
           if (todo > 1 && do_sms) {
             size = linetabsize(wp, wp->w_topline);
           }
@@ -1846,15 +1851,11 @@ void scroll_cursor_bot(win_T *wp, int min_scroll, bool set_topbot)
   bool do_sms = wp->w_p_wrap && wp->w_p_sms;
 
   if (set_topbot) {
-    bool set_skipcol = false;
-
     int used = 0;
     wp->w_botline = cln + 1;
+    loff.lnum = cln + 1;
     loff.fill = 0;
-    for (wp->w_topline = wp->w_botline;
-         wp->w_topline > 1;
-         wp->w_topline = loff.lnum) {
-      loff.lnum = wp->w_topline;
+    while (true) {
       topline_back_winheight(wp, &loff, false);
       if (loff.height == MAXCOL) {
         break;
@@ -1872,25 +1873,23 @@ void scroll_cursor_bot(win_T *wp, int min_scroll, bool set_topbot)
             wp->w_topline = loff.lnum;
             wp->w_skipcol = skipcol_from_plines(wp, plines_offset);
             wp->w_cursor.col = wp->w_skipcol + overlap;
-            set_skipcol = true;
           }
         }
         break;
       }
-      used += loff.height;
       wp->w_topfill = loff.fill;
+      wp->w_topline = loff.lnum;
+      used += loff.height;
     }
-    if (wp->w_topline > wp->w_buffer->b_ml.ml_line_count) {
-      wp->w_topline = wp->w_buffer->b_ml.ml_line_count;
-    }
+
     set_empty_rows(wp, used);
     wp->w_valid |= VALID_BOTLINE|VALID_BOTLINE_AP;
     if (wp->w_topline != old_topline
         || wp->w_topfill != old_topfill
-        || set_skipcol
+        || wp->w_skipcol != old_skipcol
         || wp->w_skipcol != 0) {
       wp->w_valid &= ~(VALID_WROW|VALID_CROW);
-      if (set_skipcol) {
+      if (wp->w_skipcol != old_skipcol) {
         redraw_later(wp, UPD_NOT_VALID);
       } else {
         reset_skipcol(wp);
@@ -2305,7 +2304,8 @@ static int get_scroll_overlap(Direction dir)
   int min_height = curwin->w_height_inner - 2;
 
   validate_botline(curwin);
-  if (dir == FORWARD && curwin->w_botline > curbuf->b_ml.ml_line_count) {
+  if ((dir == BACKWARD && curwin->w_topline == 1)
+      || (dir == FORWARD && curwin->w_botline > curbuf->b_ml.ml_line_count)) {
     return min_height + 2;  // no overlap, still handle 'smoothscroll'
   }
 
@@ -2435,7 +2435,6 @@ int pagescroll(Direction dir, int count, bool half)
     } else {
       cursor_up_inner(curwin, count);
     }
-    curwin->w_curswant = prev_curswant;
 
     if (get_scrolloff_value(curwin)) {
       cursor_correct(curwin);
@@ -2453,12 +2452,13 @@ int pagescroll(Direction dir, int count, bool half)
     nochange = scroll_with_sms(dir, &count);
   }
 
+  curwin->w_curswant = prev_curswant;
   // Error if both the viewport and cursor did not change.
   if (nochange) {
     beep_flush();
   } else if (!curwin->w_p_sms) {
     beginline(BL_SOL | BL_FIX);
-  } else if (p_sol) {
+  } else if (p_sol || curwin->w_skipcol) {
     nv_g_home_m_cmd(&ca);
   }
 

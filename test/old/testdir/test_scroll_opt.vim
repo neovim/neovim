@@ -1021,6 +1021,8 @@ func Test_smoothscroll_page()
   call assert_equal(0, winsaveview().skipcol)
 
   " Half-page scrolling does not go beyond end of buffer and moves the cursor.
+  " Even with 'nostartofline', the correct amount of lines is scrolled.
+  setl nostartofline
   exe "norm! 0\<C-D>"
   call assert_equal(200, winsaveview().skipcol)
   call assert_equal(204, col('.'))
@@ -1044,7 +1046,7 @@ func Test_smoothscroll_page()
   call assert_equal(204, col('.'))
   exe "norm! \<C-U>"
   call assert_equal(0, winsaveview().skipcol)
-  call assert_equal(1, col('.'))
+  call assert_equal(40, col('.'))
 
   bwipe!
 endfunc
@@ -1061,6 +1063,11 @@ func Test_smoothscroll_next_topline()
   exe "norm! \<C-E>"
   redraw
   call assert_equal(0, winsaveview().skipcol)
+
+  " Also when scrolling back.
+  exe "norm! G\<C-Y>"
+  redraw
+  call assert_equal(880, winsaveview().skipcol)
 
   " Cursor in correct place when not in the first screenline of a buffer line.
   exe "norm! gg4gj20\<C-D>\<C-D>"

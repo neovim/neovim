@@ -4220,4 +4220,19 @@ func Test_single_line_scroll()
   call prop_type_delete(vt)
 endfunc
 
+" Test for zb in buffer with a single line and filler lines
+func Test_single_line_filler_zb()
+  call setline(1, ['', 'foobar one two three'])
+  diffthis
+  new
+  call setline(1, ['foobar one two three'])
+  diffthis
+
+  " zb scrolls to reveal filler lines at the start of the buffer.
+  exe "normal \<C-E>zb"
+  call assert_equal(1, winsaveview().topfill)
+
+  bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

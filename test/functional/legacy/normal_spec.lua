@@ -94,10 +94,9 @@ describe('normal', function()
     feed('ggG<C-D>')
     screen:expect({
       grid = [[
-        foobar one two three                    |*8
+        foobar one two three                    |*16
         ^foobar one two three                    |
         {2:---}                                     |
-        {1:~                                       }|*8
                                                 |
       ]],
     })
