@@ -382,7 +382,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 /// @param opts  Optional parameters.
 ///               - id : id of the extmark to edit.
 ///               - end_row : ending line of the mark, 0-based inclusive.
-///               - end_col : ending col of the mark, 0-based exclusive.
+///               - end_col : ending col of the mark, 0-based exclusive, or -1 to extend the range of the extmark to the end of the line.
 ///               - hl_group : name of the highlight group used to highlight
 ///                   this mark.
 ///               - hl_eol : when true, for a multiline highlight covering the
@@ -552,9 +552,9 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   colnr_T col2 = -1;
   if (HAS_KEY(opts, set_extmark, end_col)) {
     Integer val = opts->end_col;
-    VALIDATE_RANGE((val >= 0 && val <= MAXCOL), "end_col", {
-      goto error;
-    });
+    if (val < 0 || val > MAXCOL) {
+      val = MAXCOL;
+    }
     col2 = (int)val;
   }
 
