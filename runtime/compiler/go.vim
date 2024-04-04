@@ -2,6 +2,7 @@
 " Compiler:	Go
 " Maintainer:	David Barnett (https://github.com/google/vim-ft-go)
 " Last Change:	2014 Aug 16
+"		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 
 if exists('current_compiler')
   finish

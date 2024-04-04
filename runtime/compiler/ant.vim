@@ -2,15 +2,12 @@
 " Compiler:	ant
 " Maintainer:	Johannes Zellner <johannes@zellner.org>
 " Last Change:	Mi, 13 Apr 2005 22:50:07 CEST
+"		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 
 if exists("current_compiler")
     finish
 endif
 let current_compiler = "ant"
-
-if exists(":CompilerSet") != 2		" older Vim always used :setlocal
-  command -nargs=* CompilerSet setlocal <args>
-endif
 
 let s:cpo_save = &cpo
 set cpo&vim

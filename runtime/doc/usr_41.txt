@@ -2500,13 +2500,9 @@ When you write a compiler file and put it in your personal runtime directory
 variable to make the default file skip the settings.
 							*:CompilerSet*
 The second mechanism is to use ":set" for ":compiler!" and ":setlocal" for
-":compiler".  Vim defines the ":CompilerSet" user command for this.  However,
-older Vim versions don't, thus your plugin should define it then.  This is an
-example: >
+":compiler".  Vim defines the ":CompilerSet" user command for this.  This is
+an example: >
 
-  if exists(":CompilerSet") != 2
-    command -nargs=* CompilerSet setlocal <args>
-  endif
   CompilerSet errorformat&		" use the default 'errorformat'
   CompilerSet makeprg=nmake
 

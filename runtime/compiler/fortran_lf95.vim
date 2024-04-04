@@ -3,16 +3,13 @@
 " URL:		http://www.unb.ca/chem/ajit/compiler/fortran_lf95.vim
 " Maintainer:	Ajit J. Thakkar (ajit AT unb.ca); <http://www.unb.ca/chem/ajit/>
 " Version:	0.2
-" Last Change: 2004 Mar 27
+" Last Change:	2004 Mar 27
+"		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 
 if exists("current_compiler")
   finish
 endif
 let current_compiler = "fortran_lf95"
-
-if exists(":CompilerSet") != 2		" older Vim always used :setlocal
-  command -nargs=* CompilerSet setlocal <args>
-endif
 
 let s:cposet=&cpoptions
 set cpoptions-=C

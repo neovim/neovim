@@ -14,10 +14,6 @@ let s:save_cpo = &cpo
 set cpo&vim
 " vint: +ProhibitAbbreviationOption
 
-if exists(":CompilerSet") != 2
-    command -nargs=* CompilerSet setlocal <args>
-endif
-
 if get(g:, 'rustc_makeprg_no_percent', 0)
     CompilerSet makeprg=rustc
 else

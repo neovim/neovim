@@ -3,6 +3,7 @@
 " Maintainer:	Matthias Ulrich <matthias-ulrich@web.de>
 " URL:          http://www.subhome.de/vim/hp_acc.vim
 " Last Change:	2012 Apr 30
+"		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 "
 "  aCC --version says: "HP ANSI C++ B3910B A.03.13"
 "  This compiler has been tested on:
@@ -21,10 +22,6 @@ endif
 let current_compiler = "hp_acc"
 let s:keepcpo= &cpo
 set cpo&vim
-
-if exists(":CompilerSet") != 2		" older Vim always used :setlocal
-  command -nargs=* CompilerSet setlocal <args>
-endif
 
 CompilerSet errorformat=%A%trror\ %n\:\ \"%f\"\\,\ line\ %l\ \#\ %m,
          \%A%tarning\ (suggestion)\ %n\:\ \"%f\"\\,\ line\ %l\ \#\ %m\ %#,

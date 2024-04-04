@@ -3,16 +3,13 @@
 " Maintainer:   Artem Chuprina <ran@ran.pp.ru>
 " Contributors: Enno Nagel
 " Last Change:  2024 Mar 29
+"		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 
 if exists("current_compiler")
 	finish
 endif
 let s:keepcpo= &cpo
 set cpo&vim
-
-if exists(":CompilerSet") != 2		" older Vim always used :setlocal
-  command -nargs=* CompilerSet setlocal <args>
-endif
 
 " If makefile exists and we are not asked to ignore it, we use standard make
 " (do not redefine makeprg)

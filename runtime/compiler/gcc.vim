@@ -1,10 +1,11 @@
 " Vim compiler file
-" Compiler:             GNU C Compiler
-" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2010-10-14
-" 			changed pattern for entering/leaving directories
-" 			by Daniel Hahler, 2019 Jul 12
-" 			added line suggested by Anton Lindqvist 2016 Mar 31
+" Compiler:		GNU C Compiler
+" Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
+" Last Change:		2010 Oct 14
+"			changed pattern for entering/leaving directories
+"			by Daniel Hahler, 2019 Jul 12
+"			added line suggested by Anton Lindqvist 2016 Mar 31
+"			2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 
 if exists("current_compiler")
   finish

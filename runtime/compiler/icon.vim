@@ -1,16 +1,12 @@
 " Vim compiler file
 " Compiler:	Icon Compiler
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2022 Jun 16
+" Last Change:	2024 Apr 03
 
 if exists("current_compiler")
   finish
 endif
 let current_compiler = "icont"
-
-if exists(":CompilerSet") != 2		" older Vim always used :setlocal
-  command -nargs=* CompilerSet setlocal <args>
-endif
 
 let s:cpo_save = &cpo
 set cpo&vim

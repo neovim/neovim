@@ -2,6 +2,7 @@
 " Compiler:            dotnet build (.NET CLI)
 " Maintainer:          Nick Jensen <nickspoon@gmail.com>
 " Last Change:         2022-12-06
+"                      2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 " License:             Vim (see :h license)
 " Repository:          https://github.com/nickspoons/vim-cs
 
@@ -9,10 +10,6 @@ if exists("current_compiler")
   finish
 endif
 let current_compiler = "dotnet"
-
-if exists(":CompilerSet") != 2		" older Vim always used :setlocal
-  command -nargs=* CompilerSet setlocal <args>
-endif
 
 let s:cpo_save = &cpo
 set cpo&vim
