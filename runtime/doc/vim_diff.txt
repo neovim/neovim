@@ -134,6 +134,8 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
 - @ |v_@-default|
 - # |v_#-default|
 - * |v_star-default|
+- gc |gc-default| |v_gc-default| |o_gc-default|
+- gcc |gcc-default|
 - Nvim LSP client defaults |lsp-defaults|
   - K |K-lsp-default|
 
