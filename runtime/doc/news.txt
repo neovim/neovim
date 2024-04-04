@@ -346,6 +346,8 @@ The following new APIs and features were added.
 
 • |extmarks| option `scoped`: only show the extmarks in its namespace's scope.
 
+• Added built-in |commenting| support.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
