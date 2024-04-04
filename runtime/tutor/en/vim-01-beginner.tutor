@@ -304,6 +304,8 @@ it would be easier to simply type two d's to delete a line.
 
  4. Type `2dd`{normal} to delete two lines.
 
+ 5. Type \<command\> here to reload the tutor for its proper working.
+
 1)  Roses are red,
 2)  Mud is fun,
 3)  Violets are blue,
