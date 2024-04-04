@@ -6,15 +6,12 @@
 " Bugs/requests: https://github.com/vim-perl/vim-perl/issues
 " License:       Vim License (see :help license)
 " Last Change:   2021 Nov 2
+"		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 
 if exists("current_compiler")
   finish
 endif
 let current_compiler = "perl"
-
-if exists(":CompilerSet") != 2		" older Vim always used :setlocal
-  command -nargs=* CompilerSet setlocal <args>
-endif
 
 let s:savecpo = &cpo
 set cpo&vim

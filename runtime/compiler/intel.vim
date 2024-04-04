@@ -2,6 +2,7 @@
 " Compiler:     Intel C++ 7.1
 " Maintainer:   David Harrison <david_jr@users.sourceforge.net>
 " Last Change:  2012 Apr 30
+"		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 
 if exists("current_compiler")
   finish
@@ -9,10 +10,6 @@ endif
 let current_compiler = "intel"
 let s:keepcpo= &cpo
 set cpo&vim
-
-if exists(":CompilerSet") != 2		" older Vim always used :setlocal
-  command -nargs=* CompilerSet setlocal <args>
-endif
 
 CompilerSet errorformat=%E%f(%l):\ error:\ %m,
 		    \%W%f(%l):\ warning:\ %m,

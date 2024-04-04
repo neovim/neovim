@@ -3,6 +3,7 @@
 " Maintainer:   Jarek Sobiecki <harijari@go2.pl>
 " Contributors: Peter Collingbourne and Enno Nagel
 " Last Change:  2024 Mar 29
+"		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 
 if exists("current_compiler")
   finish

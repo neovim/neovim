@@ -2,6 +2,7 @@
 " Compiler: Hare Compiler
 " Maintainer: Amelia Clarke <me@rsaihe.dev>
 " Last Change: 2022-09-21
+"		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 
 if exists("g:current_compiler")
   finish

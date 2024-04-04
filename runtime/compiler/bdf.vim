@@ -3,6 +3,7 @@
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
 " Contributors:         Enno Nagel
 " Last Change:          2024 Mar 29
+"                       2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 
 if exists("current_compiler")
   finish
@@ -11,10 +12,6 @@ let current_compiler = "bdf"
 
 let s:cpo_save = &cpo
 set cpo-=C
-
-if exists(":CompilerSet") != 2 " Older Vim always used :setlocal
-  command -nargs=* CompilerSet setlocal <args>
-endif
 
 CompilerSet makeprg=bdftopcf\ $*
 CompilerSet errorformat=%ABDF\ %trror\ on\ line\ %l:\ %m,

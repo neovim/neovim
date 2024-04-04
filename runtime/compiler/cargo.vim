@@ -2,6 +2,7 @@
 " Compiler:         Cargo Compiler
 " Maintainer:       Damien Radtke <damienradtke@gmail.com>
 " Latest Revision:  2023-09-11
+"                   2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 
 if exists('current_compiler')

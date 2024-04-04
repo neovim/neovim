@@ -9,10 +9,6 @@ endif
 let s:keepcpo= &cpo
 set cpo&vim
 
-if exists(":CompilerSet") != 2    " older Vim always used :setlocal
-  command -nargs=* CompilerSet setlocal <args>
-endif
-
 " If makefile exists and we are not asked to ignore it, we use standard make
 " (do not redefine makeprg)
 if get(b:, 'context_ignore_makefile', get(g:, 'context_ignore_makefile', 0)) ||

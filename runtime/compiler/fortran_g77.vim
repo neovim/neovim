@@ -2,16 +2,13 @@
 " Compiler:     g77 (GNU Fortran)
 " Maintainer:   Ralf Wildenhues <Ralf.Wildenhues@gmx.de>
 " Last Change:  $Date: 2004/06/13 18:17:36 $
+"		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 " $Revision: 1.1 $
 
 if exists("current_compiler")
   finish
 endif
 let current_compiler = "fortran_g77"
-
-if exists(":CompilerSet") != 2		" older Vim always used :setlocal
-  command -nargs=* CompilerSet setlocal <args>
-endif
 
 let s:cpo_save = &cpo
 set cpo-=C

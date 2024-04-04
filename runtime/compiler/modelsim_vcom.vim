@@ -3,16 +3,13 @@
 " Maintainer:	Paul Baleme <pbaleme@mail.com>
 " Contributors: Enno Nagel
 " Last Change:	2024 Mar 29
+"		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 " Thanks to:    allanherriman@hotmail.com
 
 if exists("current_compiler")
   finish
 endif
 let current_compiler = "modelsim_vcom"
-
-if exists(":CompilerSet") != 2		" older Vim always used :setlocal
-  command -nargs=* CompilerSet setlocal <args>
-endif
 
 CompilerSet makeprg=vcom
 
