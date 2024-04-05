@@ -579,6 +579,7 @@ function Client:initialize()
     initializationOptions = config.init_options,
     capabilities = self.capabilities,
     trace = self._trace,
+    workDoneToken = '1',
   }
 
   self:_run_callbacks(
