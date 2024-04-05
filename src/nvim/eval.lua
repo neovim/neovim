@@ -2071,14 +2071,13 @@ M.funcs = {
       The result is a Number:
       	1	exists
       	0	does not exist
-      	-1	not implemented on this system
       |exepath()| can be used to get the full path of an executable.
 
     ]=],
     fast = true,
     name = 'executable',
     params = { { 'expr', 'any' } },
-    returns = '0|1|-1',
+    returns = '0|1',
     signature = 'executable({expr})',
   },
   execute = {

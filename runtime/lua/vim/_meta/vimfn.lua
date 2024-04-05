@@ -1598,11 +1598,10 @@ function vim.fn.eventhandler() end
 --- The result is a Number:
 ---   1  exists
 ---   0  does not exist
----   -1  not implemented on this system
 --- |exepath()| can be used to get the full path of an executable.
 ---
 --- @param expr any
---- @return 0|1|-1
+--- @return 0|1
 function vim.fn.executable(expr) end
 
 --- Execute {command} and capture its output.
