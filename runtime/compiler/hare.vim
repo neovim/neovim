@@ -2,7 +2,7 @@
 " Compiler: Hare Compiler
 " Maintainer: Amelia Clarke <me@rsaihe.dev>
 " Last Change: 2022-09-21
-"		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
+"              2024 Apr 05 by The Vim Project (removed :CompilerSet definition)
 
 if exists("g:current_compiler")
   finish
@@ -11,10 +11,6 @@ let g:current_compiler = "hare"
 
 let s:cpo_save = &cpo
 set cpo&vim
-
-if exists(':CompilerSet') != 2
-  command -nargs=* CompilerSet setlocal <args>
-endif
 
 if filereadable("Makefile") || filereadable("makefile")
   CompilerSet makeprg=make
