@@ -252,21 +252,30 @@ func Test_goto_buf_with_confirm()
   CheckUnix
   CheckNotGui
   CheckFeature dialog_con
+  " When dialog_con_gui is defined, Vim is compiled with GUI support
+  " and FEAT_BROWSE will be defined, which causes :confirm :b to
+  " call do_browse(), which will try to use a GUI file browser,
+  " which aborts if a GUI is not available.
+  CheckNotFeature dialog_con_gui
   new XgotoConf
   enew
   call setline(1, 'test')
   call assert_fails('b XgotoConf', 'E37:')
   call feedkeys('c', 'L')
   call assert_fails('confirm b XgotoConf', 'E37:')
-  call assert_equal(1, &modified)
-  call assert_equal('', @%)
+  call assert_true(&modified)
+  call assert_true(empty(bufname('%')))
   call feedkeys('y', 'L')
-  call assert_fails('confirm b XgotoConf', ['', 'E37:'])
-  call assert_equal(1, &modified)
-  call assert_equal('', @%)
+  confirm b XgotoConf
+  call assert_equal('XgotoConf', bufname('%'))
+  call assert_equal(['test'], readfile('Untitled'))
+  e Untitled
+  call setline(2, 'test2')
   call feedkeys('n', 'L')
   confirm b XgotoConf
-  call assert_equal('XgotoConf', @%)
+  call assert_equal('XgotoConf', bufname('%'))
+  call assert_equal(['test'], readfile('Untitled'))
+  call delete('Untitled')
   close!
 endfunc
 
