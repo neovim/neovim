@@ -247,6 +247,13 @@ bool os_isatty(int fd)
   return uv_guess_handle(fd) == UV_TTY;
 }
 
+void input_enqueue_raw(String keys)
+{
+  if (keys.size > 0) {
+    rbuffer_write(input_buffer, keys.data, keys.size);
+  }
+}
+
 size_t input_enqueue(String keys)
 {
   const char *ptr = keys.data;

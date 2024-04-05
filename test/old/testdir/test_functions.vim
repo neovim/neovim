@@ -2590,8 +2590,6 @@ endfunc
 
 " Test confirm({msg} [, {choices} [, {default} [, {type}]]])
 func Test_confirm()
-  " requires a UI to be active
-  throw 'Skipped: use test/functional/vimscript/input_spec.lua'
   CheckUnix
   CheckNotGui
 

@@ -277,6 +277,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
   bool typed = false;
   bool execute = false;
   bool dangerous = false;
+  bool lowlevel = false;
 
   for (size_t i = 0; i < mode.size; i++) {
     switch (mode.data[i]) {
@@ -292,6 +293,8 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
       execute = true; break;
     case '!':
       dangerous = true; break;
+    case 'L':
+      lowlevel = true; break;
     }
   }
 
@@ -307,10 +310,14 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
   } else {
     keys_esc = keys.data;
   }
-  ins_typebuf(keys_esc, (remap ? REMAP_YES : REMAP_NONE),
-              insert ? 0 : typebuf.tb_len, !typed, false);
-  if (vgetc_busy) {
-    typebuf_was_filled = true;
+  if (lowlevel) {
+    input_enqueue_raw(cstr_as_string(keys_esc));
+  } else {
+    ins_typebuf(keys_esc, (remap ? REMAP_YES : REMAP_NONE),
+                insert ? 0 : typebuf.tb_len, !typed, false);
+    if (vgetc_busy) {
+      typebuf_was_filled = true;
+    }
   }
 
   if (escape_ks) {
