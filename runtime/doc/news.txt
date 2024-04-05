@@ -268,6 +268,7 @@ LUA
   is more performant and easier to read.
 • |vim.str_byteindex()| and |vim.str_utfindex()| gained overload signatures
   supporting two new parameters, `encoding` and `strict_indexing`.
+• |vim.fs.abspath()| converts paths to absolute paths.
 
 OPTIONS
 
