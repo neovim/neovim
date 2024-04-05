@@ -110,7 +110,8 @@ local tests = {}
 
 function tests.basic_init()
   skeleton {
-    on_init = function(_)
+    on_init = function(params)
+      assert_eq(params.workDoneToken, '1')
       return {
         capabilities = {
           textDocumentSync = protocol.TextDocumentSyncKind.None,
