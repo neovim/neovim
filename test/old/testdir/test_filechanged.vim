@@ -140,8 +140,6 @@ func Test_FileChangedShell_edit()
 endfunc
 
 func Test_FileChangedShell_edit_dialog()
-  " requires a UI to be active
-  throw 'Skipped: use test/functional/legacy/filechanged_spec.lua'
   CheckNotGui
   CheckUnix  " Using low level feedkeys() does not work on MS-Windows.
 
@@ -156,6 +154,7 @@ func Test_FileChangedShell_edit_dialog()
     au FileChangedShell Xchanged_r let g:reason = v:fcs_reason | let v:fcs_choice = 'ask'
   augroup END
   call assert_equal(&fileformat, 'unix')
+  sleep 10m  " make the test less flaky in Nvim
   call writefile(["line1\r", "line2\r"], 'Xchanged_r')
   let g:reason = ''
   call feedkeys('L', 'L') " load file content only
@@ -173,6 +172,7 @@ func Test_FileChangedShell_edit_dialog()
     au FileChangedShell Xchanged_r let g:reason = v:fcs_reason | let v:fcs_choice = 'ask'
   augroup END
   call assert_equal(&fileformat, 'unix')
+  sleep 10m  " make the test less flaky in Nvim
   call writefile(["line1\r", "line2\r"], 'Xchanged_r')
   let g:reason = ''
   call feedkeys('a', 'L') " load file content and options
@@ -191,8 +191,6 @@ func Test_FileChangedShell_edit_dialog()
 endfunc
 
 func Test_file_changed_dialog()
-  " requires a UI to be active
-  throw 'Skipped: use test/functional/legacy/filechanged_spec.lua'
   CheckUnix
   CheckNotGui
   au! FileChangedShell

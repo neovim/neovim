@@ -232,8 +232,6 @@ endfunc
 
 " Test for deleting a modified buffer with :confirm
 func Test_bdel_with_confirm()
-  " requires a UI to be active
-  throw 'Skipped: use test/functional/legacy/buffer_spec.lua'
   CheckUnix
   CheckNotGui
   CheckFeature dialog_con
@@ -251,8 +249,6 @@ endfunc
 
 " Test for editing another buffer from a modified buffer with :confirm
 func Test_goto_buf_with_confirm()
-  " requires a UI to be active
-  throw 'Skipped: use test/functional/legacy/buffer_spec.lua'
   CheckUnix
   CheckNotGui
   CheckFeature dialog_con

@@ -3395,9 +3395,7 @@ int do_dialog(int type, const char *title, const char *message, const char *butt
   int retval = 0;
   int i;
 
-  if (silent_mode      // No dialogs in silent mode ("ex -s")
-      || !ui_active()  // Without a UI Nvim waits for input forever.
-      ) {
+  if (silent_mode) {  // No dialogs in silent mode ("ex -s")
     return dfltbutton;  // return default option
   }
 
@@ -3414,6 +3412,12 @@ int do_dialog(int type, const char *title, const char *message, const char *butt
   char *hotkeys = msg_show_console_dialog(message, buttons, dfltbutton);
 
   while (true) {
+    // Without a UI Nvim waits for input forever.
+    if (!ui_active() && !input_available()) {
+      retval = dfltbutton;
+      break;
+    }
+
     // Get a typed character directly from the user.
     int c = get_keystroke(NULL);
     switch (c) {
