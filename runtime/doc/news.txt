@@ -353,6 +353,8 @@ The following new APIs and features were added.
 
 • Added built-in |commenting| support.
 
+• |vim.fs.abspath()| converts paths to absolute paths.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

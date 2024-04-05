@@ -416,4 +416,46 @@ describe('vim.fs', function()
       end)
     end)
   end)
+
+  describe('abspath', function()
+    local cwd = vim.uv.cwd()
+    local home = vim.uv.os_homedir()
+
+    assert(cwd ~= nil)
+    assert(home ~= nil)
+
+    if is_os('win') then
+      cwd = cwd:gsub('\\', '/')
+      home = home:gsub('\\', '/')
+    end
+
+    it('works', function()
+      eq(cwd .. '/foo', vim.fs.abspath('foo'))
+      eq(cwd .. '/././foo', vim.fs.abspath('././foo'))
+      eq(cwd .. '/.././../foo', vim.fs.abspath('.././../foo'))
+    end)
+
+    it('works with absolute paths', function()
+      if is_os('win') then
+        eq([[C:/foo]], vim.fs.abspath([[C:\foo]]))
+        eq([[C:/foo/../.]], vim.fs.abspath([[C:\foo\..\.]]))
+      else
+        eq('/foo/../.', vim.fs.abspath('/foo/../.'))
+        eq('/foo/bar', vim.fs.abspath('/foo/bar'))
+      end
+    end)
+
+    it('expands ~', function()
+      eq(home .. '/foo', vim.fs.abspath('~/foo'))
+      eq(home .. '/./.././foo', vim.fs.abspath('~/./.././foo'))
+    end)
+
+    if is_os('win') then
+      it('works with drive-specific cwd on Windows', function()
+        local cwd_drive = cwd:match('^%w:')
+
+        eq(cwd .. '/foo', vim.fs.abspath(cwd_drive .. 'foo'))
+      end)
+    end
+  end)
 end)
