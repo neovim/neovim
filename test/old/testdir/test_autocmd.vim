@@ -3921,39 +3921,40 @@ func Test_Changed_ChangedI()
         \ {'term_rows': 10})
   call assert_equal('running', term_getstatus(buf))
   call WaitForAssert({-> assert_true(filereadable('XTextChangedI3'))})
+  defer delete('XTextChangedI3')
   call WaitForAssert({-> assert_equal([''], readfile('XTextChangedI3'))})
 
   " TextChanged should trigger if a mapping enters and leaves Insert mode.
   call term_sendkeys(buf, "\<CR>")
-  call WaitForAssert({-> assert_equal('N4,', readfile('XTextChangedI3')[0])})
+  call WaitForAssert({-> assert_equal('N4,', readfile('XTextChangedI3')->join("\n"))})
 
   call term_sendkeys(buf, "i")
   call WaitForAssert({-> assert_match('^-- INSERT --', term_getline(buf, 10))})
-  call WaitForAssert({-> assert_equal('N4,', readfile('XTextChangedI3')[0])})
+  call WaitForAssert({-> assert_equal('N4,', readfile('XTextChangedI3')->join("\n"))})
   " TextChangedI should trigger if change is done in Insert mode.
   call term_sendkeys(buf, "f")
-  call WaitForAssert({-> assert_equal('N4,I5', readfile('XTextChangedI3')[0])})
+  call WaitForAssert({-> assert_equal('N4,I5', readfile('XTextChangedI3')->join("\n"))})
   call term_sendkeys(buf, "o")
-  call WaitForAssert({-> assert_equal('N4,I6', readfile('XTextChangedI3')[0])})
+  call WaitForAssert({-> assert_equal('N4,I6', readfile('XTextChangedI3')->join("\n"))})
   call term_sendkeys(buf, "o")
-  call WaitForAssert({-> assert_equal('N4,I7', readfile('XTextChangedI3')[0])})
+  call WaitForAssert({-> assert_equal('N4,I7', readfile('XTextChangedI3')->join("\n"))})
   " TextChanged shouldn't trigger when leaving Insert mode and TextChangedI
   " has been triggered.
   call term_sendkeys(buf, "\<Esc>")
   call WaitForAssert({-> assert_notmatch('^-- INSERT --', term_getline(buf, 10))})
-  call WaitForAssert({-> assert_equal('N4,I7', readfile('XTextChangedI3')[0])})
+  call WaitForAssert({-> assert_equal('N4,I7', readfile('XTextChangedI3')->join("\n"))})
 
   " TextChanged should trigger if change is done in Normal mode.
   call term_sendkeys(buf, "yyp")
-  call WaitForAssert({-> assert_equal('N8,I7', readfile('XTextChangedI3')[0])})
+  call WaitForAssert({-> assert_equal('N8,I7', readfile('XTextChangedI3')->join("\n"))})
 
   " TextChangedI shouldn't trigger if change isn't done in Insert mode.
   call term_sendkeys(buf, "i")
   call WaitForAssert({-> assert_match('^-- INSERT --', term_getline(buf, 10))})
-  call WaitForAssert({-> assert_equal('N8,I7', readfile('XTextChangedI3')[0])})
+  call WaitForAssert({-> assert_equal('N8,I7', readfile('XTextChangedI3')->join("\n"))})
   call term_sendkeys(buf, "\<Esc>")
   call WaitForAssert({-> assert_notmatch('^-- INSERT --', term_getline(buf, 10))})
-  call WaitForAssert({-> assert_equal('N8,I7', readfile('XTextChangedI3')[0])})
+  call WaitForAssert({-> assert_equal('N8,I7', readfile('XTextChangedI3')->join("\n"))})
 
   " TextChangedI should trigger if change is a mix of Normal and Insert modes.
   func! s:validate_mixed_textchangedi(buf, keys)
@@ -3963,13 +3964,13 @@ func Test_Changed_ChangedI()
     call term_sendkeys(buf, "\<Esc>")
     call WaitForAssert({-> assert_notmatch('^-- INSERT --', term_getline(buf, 10))})
     call term_sendkeys(buf, ":let [g:autocmd_n, g:autocmd_i] = ['', '']\<CR>")
-    call delete('XTextChangedI3')
+    call writefile([], 'XTextChangedI3')
     call term_sendkeys(buf, a:keys)
     call WaitForAssert({-> assert_match('^-- INSERT --', term_getline(buf, 10))})
-    call WaitForAssert({-> assert_match('^,I\d\+', readfile('XTextChangedI3')[0])})
+    call WaitForAssert({-> assert_match('^,I\d\+', readfile('XTextChangedI3')->join("\n"))})
     call term_sendkeys(buf, "\<Esc>")
     call WaitForAssert({-> assert_notmatch('^-- INSERT --', term_getline(buf, 10))})
-    call WaitForAssert({-> assert_match('^,I\d\+', readfile('XTextChangedI3')[0])})
+    call WaitForAssert({-> assert_match('^,I\d\+', readfile('XTextChangedI3')->join("\n"))})
   endfunc
 
   call s:validate_mixed_textchangedi(buf, "o")
@@ -3982,7 +3983,6 @@ func Test_Changed_ChangedI()
 
   " clean up
   bwipe!
-  call delete('XTextChangedI3')
 endfunc
 
 " Test that filetype detection still works when SwapExists autocommand sets

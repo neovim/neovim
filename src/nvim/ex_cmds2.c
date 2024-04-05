@@ -203,7 +203,6 @@ void dialog_changed(buf_T *buf, bool checkall)
     .append = false,
     .forceit = false,
   };
-  bool empty_buf = buf->b_fname == NULL;
 
   dialog_msg(buff, _("Save changes to \"%s\"?"), buf->b_fname);
   if (checkall) {
@@ -213,7 +212,8 @@ void dialog_changed(buf_T *buf, bool checkall)
   }
 
   if (ret == VIM_YES) {
-    if (empty_buf) {
+    bool empty_bufname = buf->b_fname == NULL;
+    if (empty_bufname) {
       buf_set_name(buf->b_fnum, "Untitled");
     }
 
@@ -225,7 +225,7 @@ void dialog_changed(buf_T *buf, bool checkall)
     }
 
     // restore to empty when write failed
-    if (empty_buf) {
+    if (empty_bufname) {
       XFREE_CLEAR(buf->b_fname);
       XFREE_CLEAR(buf->b_ffname);
       XFREE_CLEAR(buf->b_sfname);
