@@ -4,6 +4,7 @@
 " Contributors: Enno Nagel
 " Last Change:  2024 Mar 29
 "		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
+"		2024 Apr 05 by The Vim Project (avoid leaving behind g:makeprg)
 
 if exists("current_compiler")
 	finish
@@ -25,8 +26,8 @@ if exists('b:tex_ignore_makefile') || exists('g:tex_ignore_makefile') ||
 	else
 		let current_compiler = "latex"
 	endif
-	let makeprg=current_compiler .. ' -interaction=nonstopmode'
-	execute 'CompilerSet makeprg=' .. escape(makeprg, ' ')
+	let s:makeprg=current_compiler .. ' -interaction=nonstopmode'
+	execute 'CompilerSet makeprg=' .. escape(s:makeprg, ' ')
 else
 	let current_compiler = 'make'
 endif
