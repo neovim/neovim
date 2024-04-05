@@ -689,7 +689,7 @@ static void normal_redraw_mode_message(NormalState *s)
     keep_msg = kmsg;
 
     kmsg = xstrdup(keep_msg);
-    msg(kmsg, keep_msg_attr);
+    msg(kmsg, keep_msg_hlid);
     xfree(kmsg);
   }
   setcursor();
@@ -1373,7 +1373,7 @@ static void normal_redraw(NormalState *s)
     // check for duplicates.  Never put this message in
     // history.
     msg_hist_off = true;
-    msg(p, keep_msg_attr);
+    msg(p, keep_msg_hlid);
     msg_hist_off = false;
     xfree(p);
   }
@@ -2063,11 +2063,12 @@ static void display_showcmd(void)
 
   if (ui_has(kUIMessages)) {
     MAXSIZE_TEMP_ARRAY(content, 1);
-    MAXSIZE_TEMP_ARRAY(chunk, 2);
+    MAXSIZE_TEMP_ARRAY(chunk, 3);
     if (len > 0) {
       // placeholder for future highlight support
       ADD_C(chunk, INTEGER_OBJ(0));
       ADD_C(chunk, CSTR_AS_OBJ(showcmd_buf));
+      ADD_C(chunk, INTEGER_OBJ(0));
       ADD_C(content, ARRAY_OBJ(chunk));
     }
     ui_call_msg_showcmd(content);
