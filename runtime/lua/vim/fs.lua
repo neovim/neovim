@@ -505,6 +505,27 @@ local function path_resolve_dot(path)
   return (is_path_absolute and '/' or '') .. table.concat(new_path_components, '/')
 end
 
+--- Expand tilde (~) character at the beginning of the path to the user's home directory.
+---
+--- @param path string Path to expand.
+--- @param sep string|nil Path separator to use. Uses os_sep by default.
+--- @return string Expanded path.
+local function expand_home(path, sep)
+  sep = sep or os_sep
+
+  if vim.startswith(path, '~') then
+    local home = uv.os_homedir() or '~' --- @type string
+
+    if home:sub(-1) == sep then
+      home = home:sub(1, -2)
+    end
+
+    path = home .. path:sub(2)
+  end
+
+  return path
+end
+
 --- @class vim.fs.normalize.Opts
 --- @inlinedoc
 ---
@@ -568,14 +589,8 @@ function M.normalize(path, opts)
     return ''
   end
 
-  -- Expand ~ to users home directory
-  if vim.startswith(path, '~') then
-    local home = uv.os_homedir() or '~'
-    if home:sub(-1) == os_sep_local then
-      home = home:sub(1, -2)
-    end
-    path = home .. path:sub(2)
-  end
+  -- Expand ~ to user's home directory
+  path = expand_home(path, os_sep_local)
 
   -- Expand environment variables if `opts.expand_env` isn't `false`
   if opts.expand_env == nil or opts.expand_env then
@@ -677,6 +692,44 @@ function M.rm(path, opts)
   elseif not opts.force or errnm ~= 'ENOENT' then
     error(err)
   end
+end
+
+--- Convert path to an absolute path. A tilde (~) character at the beginning of the path is expanded
+--- to the user's home directory. Does not check if the path exists, normalize the path, resolve
+--- symlinks or hardlinks (including `.` and `..`), or expand environment variables. If the path is
+--- already absolute, it is returned unchanged. Also converts `\` path separators to `/`.
+---
+--- @param path string Path
+--- @return string Absolute path
+function M.abspath(path)
+  vim.validate('path', path, 'string')
+
+  -- Expand ~ to user's home directory
+  path = expand_home(path)
+
+  -- Convert path separator to `/`
+  path = path:gsub(os_sep, '/')
+
+  local prefix = ''
+
+  if iswin then
+    prefix, path = split_windows_path(path)
+  end
+
+  if vim.startswith(path, '/') then
+    -- Path is already absolute, do nothing
+    return prefix .. path
+  end
+
+  -- Windows allows paths like C:foo/bar, these paths are relative to the current working directory
+  -- of the drive specified in the path
+  local cwd = (iswin and prefix:match('^%w:$')) and uv.fs_realpath(prefix) or uv.cwd()
+  assert(cwd ~= nil)
+  -- Convert cwd path separator to `/`
+  cwd = cwd:gsub(os_sep, '/')
+
+  -- Prefix is not needed for expanding relative paths, as `cwd` already contains it.
+  return M.joinpath(cwd, path)
 end
 
 return M

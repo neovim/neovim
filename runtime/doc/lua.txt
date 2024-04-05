@@ -2945,6 +2945,20 @@ Example: >lua
 <
 
 
+vim.fs.abspath({path})                                      *vim.fs.abspath()*
+    Convert path to an absolute path. A tilde (~) character at the beginning
+    of the path is expanded to the user's home directory. Does not check if
+    the path exists, normalize the path, resolve symlinks or hardlinks
+    (including `.` and `..`), or expand environment variables. If the path is
+    already absolute, it is returned unchanged. Also converts `\` path
+    separators to `/`.
+
+    Parameters: ~
+      • {path}  (`string`) Path
+
+    Return: ~
+        (`string`) Absolute path
+
 vim.fs.basename({file})                                    *vim.fs.basename()*
     Return the basename of the given path
 
