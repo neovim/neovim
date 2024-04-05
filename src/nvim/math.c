@@ -56,7 +56,7 @@ int xctz(uint64_t x)
   // Use compiler builtin if possible.
 #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ >= 4))
   return __builtin_ctzll(x);
-#elif defined(_MSC_VER)
+#elif defined(HAVE_BITSCANFORWARD64)
   unsigned long index;
   _BitScanForward64(&index, x);
   return (int)index;

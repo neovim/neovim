@@ -79,6 +79,17 @@ int main(void)
 }
 " HAVE_PWD_FUNCS)
 
+check_c_source_compiles("
+#include <intrin.h>
+
+int main(void)
+{
+  unsigned long index;
+  unsigned char mask = 0x8000;
+  _BitScanForward64(&index, mask);
+  return 0;
+}
+" HAVE_BITSCANFORWARD64)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
   check_c_source_compiles("
