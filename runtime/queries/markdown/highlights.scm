@@ -111,6 +111,12 @@
 ((block_quote) @markup.quote
   (#set! "priority" 90))
 
+([
+  (plus_metadata)
+  (minus_metadata)
+] @keyword.directive
+  (#set! "priority" 90))
+
 [
   (block_continuation)
   (block_quote_marker)

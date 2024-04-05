@@ -180,27 +180,24 @@
 (vararg_expression) @variable.parameter.builtin
 
 (function_declaration
-  name:
-    [
-      (identifier) @function
-      (dot_index_expression
-        field: (identifier) @function)
-    ])
+  name: [
+    (identifier) @function
+    (dot_index_expression
+      field: (identifier) @function)
+  ])
 
 (function_declaration
-  name:
-    (method_index_expression
-      method: (identifier) @function.method))
+  name: (method_index_expression
+    method: (identifier) @function.method))
 
 (assignment_statement
   (variable_list
     .
-    name:
-      [
-        (identifier) @function
-        (dot_index_expression
-          field: (identifier) @function)
-      ])
+    name: [
+      (identifier) @function
+      (dot_index_expression
+        field: (identifier) @function)
+    ])
   (expression_list
     .
     value: (function_definition)))
@@ -211,14 +208,13 @@
     value: (function_definition)))
 
 (function_call
-  name:
-    [
-      (identifier) @function.call
-      (dot_index_expression
-        field: (identifier) @function.call)
-      (method_index_expression
-        method: (identifier) @function.method.call)
-    ])
+  name: [
+    (identifier) @function.call
+    (dot_index_expression
+      field: (identifier) @function.call)
+    (method_index_expression
+      method: (identifier) @function.method.call)
+  ])
 
 (function_call
   (identifier) @function.builtin
@@ -253,21 +249,19 @@
   (dot_index_expression
     field: (identifier) @_method
     (#any-of? @_method "find" "match" "gmatch" "gsub"))
-  arguments:
-    (arguments
-      .
-      (_)
-      .
-      (string
-        content: (string_content) @string.regexp)))
+  arguments: (arguments
+    .
+    (_)
+    .
+    (string
+      content: (string_content) @string.regexp)))
 
 ;("123"):match("%d+")
 (function_call
   (method_index_expression
     method: (identifier) @_method
     (#any-of? @_method "find" "match" "gmatch" "gsub"))
-  arguments:
-    (arguments
-      .
-      (string
-        content: (string_content) @string.regexp)))
+  arguments: (arguments
+    .
+    (string
+      content: (string_content) @string.regexp)))
