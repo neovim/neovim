@@ -68,20 +68,18 @@
 
 ((predicate
   name: (identifier) @_name
-  parameters:
-    (parameters
-      (string
-        "\"" @string
-        "\"" @string) @string.regexp))
+  parameters: (parameters
+    (string
+      "\"" @string
+      "\"" @string) @string.regexp))
   (#any-of? @_name "match" "not-match" "vim-match" "not-vim-match" "lua-match" "not-lua-match"))
 
 ((predicate
   name: (identifier) @_name
-  parameters:
-    (parameters
-      (string
-        "\"" @string
-        "\"" @string) @string.regexp
-      .
-      (string) .))
+  parameters: (parameters
+    (string
+      "\"" @string
+      "\"" @string) @string.regexp
+    .
+    (string) .))
   (#any-of? @_name "gsub" "not-gsub"))
