@@ -44,7 +44,8 @@ if exists('s:did_load')
 endif
 let s:did_load = 1
 
-" Clear Nvim default mappings and menus.
+" Clear Nvim default user commands, mappings and menus.
+comclear
 mapclear
 mapclear!
 aunmenu *

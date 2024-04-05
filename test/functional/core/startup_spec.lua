@@ -101,15 +101,7 @@ describe('startup', function()
         VIMRUNTIME = os.getenv('VIMRUNTIME'),
       },
     })
-    screen:expect([[
-      ^                                                            |
-                                                                  |
-      Entering Debug mode.  Type "cont" to continue.              |
-      nvim_exec2()                                                |
-      cmd: aunmenu *                                              |
-      >                                                           |
-                                                                  |
-    ]])
+    screen:expect({ any = pesc('Entering Debug mode.  Type "cont" to continue.') })
     fn.chansend(id, 'cont\n')
     screen:expect([[
       ^                                                            |
