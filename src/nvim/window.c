@@ -735,16 +735,13 @@ static void cmd_with_count(char *cmd, char *bufp, size_t bufsize, int64_t Prenum
   }
 }
 
-void win_set_buf(win_T *win, buf_T *buf, bool noautocmd, Error *err)
+void win_set_buf(win_T *win, buf_T *buf, Error *err)
   FUNC_ATTR_NONNULL_ALL
 {
   tabpage_T *tab = win_find_tabpage(win);
 
   // no redrawing and don't set the window title
   RedrawingDisabled++;
-  if (noautocmd) {
-    block_autocmds();
-  }
 
   switchwin_T switchwin;
   if (switch_win_noblock(&switchwin, win, tab, true) == FAIL) {
@@ -770,9 +767,6 @@ void win_set_buf(win_T *win, buf_T *buf, bool noautocmd, Error *err)
 
 cleanup:
   restore_win_noblock(&switchwin, true);
-  if (noautocmd) {
-    unblock_autocmds();
-  }
   RedrawingDisabled--;
 }
 

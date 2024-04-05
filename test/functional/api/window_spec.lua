@@ -1162,27 +1162,6 @@ describe('API/win', function()
   end)
 
   describe('open_win', function()
-    it('noautocmd option works', function()
-      command('autocmd BufEnter,BufLeave,BufWinEnter * let g:fired = 1')
-      api.nvim_open_win(api.nvim_create_buf(true, true), true, {
-        relative = 'win',
-        row = 3,
-        col = 3,
-        width = 12,
-        height = 3,
-        noautocmd = true,
-      })
-      eq(0, fn.exists('g:fired'))
-      api.nvim_open_win(api.nvim_create_buf(true, true), true, {
-        relative = 'win',
-        row = 3,
-        col = 3,
-        width = 12,
-        height = 3,
-      })
-      eq(1, fn.exists('g:fired'))
-    end)
-
     it('disallowed in cmdwin if enter=true or buf=cmdwin_buf', function()
       local new_buf = api.nvim_create_buf(true, true)
       feed('q:')
@@ -1405,6 +1384,24 @@ describe('API/win', function()
       ]=])
       return info
     end
+
+    it('noautocmd option works', function()
+      local info = setup_tabbed_autocmd_test()
+
+      api.nvim_open_win(
+        info.other_buf,
+        true,
+        { split = 'left', win = info.tab2_curwin, noautocmd = true }
+      )
+      eq({}, eval('result'))
+
+      api.nvim_open_win(
+        info.orig_buf,
+        true,
+        { relative = 'editor', row = 0, col = 0, width = 10, height = 10, noautocmd = true }
+      )
+      eq({}, eval('result'))
+    end)
 
     it('fires expected autocmds when creating splits without entering', function()
       local info = setup_tabbed_autocmd_test()

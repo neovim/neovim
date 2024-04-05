@@ -71,7 +71,7 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
     api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return;
   }
-  win_set_buf(win, buf, false, err);
+  win_set_buf(win, buf, err);
 }
 
 /// Gets the (1,0)-indexed, buffer-relative cursor position for a given window
