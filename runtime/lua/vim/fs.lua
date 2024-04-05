@@ -437,6 +437,24 @@ local function path_resolve_dot(path)
   return (is_path_absolute and '/' or '') .. table.concat(new_path_components, '/')
 end
 
+--- Expand tilde (~) character at the beginning of the path to the user's home directory.
+---
+--- @param path string Path to expand.
+--- @return string Expanded path.
+local function expand_home(path)
+  if vim.startswith(path, '~') then
+    local home = vim.uv.os_homedir() or '~'
+
+    if home:sub(-1) == os_sep then
+      home = home:sub(1, -2)
+    end
+
+    path = home .. path:sub(2)
+  end
+
+  return path
+end
+
 --- @class vim.fs.normalize.Opts
 --- @inlinedoc
 ---
@@ -489,14 +507,8 @@ function M.normalize(path, opts)
     return ''
   end
 
-  -- Expand ~ to users home directory
-  if vim.startswith(path, '~') then
-    local home = vim.uv.os_homedir() or '~'
-    if home:sub(-1) == os_sep then
-      home = home:sub(1, -2)
-    end
-    path = home .. path:sub(2)
-  end
+  -- Expand ~ to user's home directory
+  path = expand_home(path)
 
   -- Expand environment variables if `opts.expand_env` isn't `false`
   if opts.expand_env == nil or opts.expand_env then
@@ -528,6 +540,59 @@ function M.normalize(path, opts)
   end
 
   return path
+end
+
+--- @class vim.fs.abspath.Opts
+--- @inlinedoc
+---
+--- Current working directory to use as the base for the relative path.
+--- This option is ignored for C:foo\bar style paths on Windows, as those paths use the current
+--- directory of the drive specified in the path.
+--- (default: |current-directory|)
+--- @field cwd? string
+
+--- Convert path to an absolute path. A tilde (~) character at the beginning of the path is expanded
+--- to the user's home directory. Does not check if the path exists, normalize the path, resolve
+--- symlinks or hardlinks (including `.` and `..`), or expand environment variables. If the path is
+--- already absolute, it is returned unchanged.
+---
+--- @param path string Path
+--- @param opts vim.fs.abspath.Opts? Optional keyword arguments:
+--- @return string Absolute path
+function M.abspath(path, opts)
+  opts = opts or {}
+
+  vim.validate({
+    path = { path, { 'string' } },
+    cwd = { opts.cwd, { 'string' }, true },
+  })
+
+  -- Expand ~ to user's home directory
+  path = expand_home(path)
+
+  local prefix = ''
+
+  if iswin then
+    prefix, path = split_windows_path(path)
+  end
+
+  if vim.startswith(path, '/') or (iswin and vim.startswith(path, '\\')) then
+    -- Path is already absolute, do nothing
+    return prefix .. path
+  end
+
+  local cwd --- @type string
+
+  -- Windows allows paths like C:foo\bar, these paths are relative to the current working directory
+  -- of the drive specified in the path, we ignore `opts.cwd` for these paths.
+  if iswin and prefix:match('^%w:$') then
+    cwd = vim._fs_get_drive_cwd(prefix) --[[@as string]]
+  else
+    cwd = opts.cwd or vim.uv.cwd() --[[@as string]]
+  end
+
+  -- Prefix is not needed for relative paths
+  return M.joinpath(cwd, path)
 end
 
 return M

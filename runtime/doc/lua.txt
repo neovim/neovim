@@ -2847,6 +2847,24 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
 ==============================================================================
 Lua module: vim.fs                                                    *vim.fs*
 
+vim.fs.abspath({path}, {opts})                              *vim.fs.abspath()*
+    Convert path to an absolute path. Does not check if the path exists,
+    resolve symlinks or hardlinks (including `.` and `..`), or expand
+    environment variables. If the path is already absolute, it is returned
+    unchanged.
+
+    Parameters: ~
+      • {path}  (`string`) Path
+      • {opts}  (`table?`) Optional keyword arguments:
+                • {cwd}? (`string`, default: |current-directory|) Current
+                  working directory to use as the base for the relative path.
+                  This option is ignored for C:foo\bar style paths on Windows,
+                  as those paths use the current directory of the drive
+                  specified in the path.
+
+    Return: ~
+        (`string`) Absolute path
+
 vim.fs.basename({file})                                    *vim.fs.basename()*
     Return the basename of the given path
 
