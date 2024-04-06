@@ -239,7 +239,7 @@ local group = api.nvim_create_augroup('treesitter/fold', {})
 local function foldupdate(bufnr)
   local function do_update()
     for _, win in ipairs(vim.fn.win_findbuf(bufnr)) do
-      api.nvim_win_call(win, function()
+      vim._context({ win = win }, function()
         if vim.wo.foldmethod == 'expr' then
           vim._foldupdate()
         end

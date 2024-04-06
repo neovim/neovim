@@ -864,7 +864,7 @@ local function diagnostic_move_pos(opts, pos)
     return
   end
 
-  api.nvim_win_call(win_id, function()
+  vim._context({ win = win_id }, function()
     -- Save position in the window's jumplist
     vim.cmd("normal! m'")
     api.nvim_win_set_cursor(win_id, { pos[1] + 1, pos[2] })

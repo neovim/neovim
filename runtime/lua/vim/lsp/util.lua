@@ -1134,7 +1134,7 @@ function M.show_document(location, offset_encoding, opts)
     local row = range.start.line
     local col = get_line_byte_from_position(bufnr, range.start, offset_encoding)
     api.nvim_win_set_cursor(win, { row + 1, col })
-    api.nvim_win_call(win, function()
+    vim._context({ win = win }, function()
       -- Open folds under the cursor
       vim.cmd('normal! zv')
     end)
