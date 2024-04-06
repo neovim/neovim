@@ -581,16 +581,16 @@ to look up the value of 'commentstring' corresponding to the cursor position.
 (This can be different from the buffer's 'commentstring' in case of
 |treesitter-language-injections|.)
 
-							*gc-default*
+							*gc* *gc-default*
 gc{motion}		Comment or uncomment lines covered by {motion}.
 
-							*gcc-default*
+							*gcc* *gcc-default*
 gcc			Comment or uncomment [count] lines starting at cursor.
 
-							*v_gc-default*
+							*v_gc* *v_gc-default*
 {Visual}gc		Comment or uncomment the selected line(s).
 
-							*o_gc-default*
+							*o_gc* *o_gc-default*
 gc			Text object for the largest contiguous block of
 			non-blank commented lines around the cursor (e.g.
 			`gcgc` uncomments a comment block; `dgc` deletes it).
