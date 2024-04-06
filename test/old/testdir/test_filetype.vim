@@ -221,6 +221,7 @@ func s:GetFilenameChecks() abort
     \ 'dylan': ['file.dylan'],
     \ 'dylanintr': ['file.intr'],
     \ 'dylanlid': ['file.lid'],
+    \ 'earthfile': ['Earthfile'],
     \ 'ecd': ['file.ecd'],
     \ 'edif': ['file.edf', 'file.edif', 'file.edo'],
     \ 'editorconfig': ['.editorconfig'],
