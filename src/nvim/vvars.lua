@@ -64,9 +64,10 @@ M.vars = {
   },
   completed_item = {
     desc = [=[
-      Dictionary containing the most recent |complete-items| after
-      |CompleteDone|.  Empty if the completion failed, or after
-      leaving and re-entering insert mode.
+      Dictionary containing the |complete-items| for the most
+      recently completed word after |CompleteDone|.  Empty if the
+      completion failed, or after leaving and re-entering insert
+      mode.
       Note: Plugins can modify the value to emulate the builtin
       |CompleteDone| event behavior.
     ]=],

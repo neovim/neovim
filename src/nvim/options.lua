@@ -1324,7 +1324,7 @@ return {
       defaults = { if_true = '' },
       desc = [=[
         A template for a comment.  The "%s" in the value is replaced with the
-        comment text.  For example, C uses "/*%s*/". Currently only used to
+        comment text. For example, C uses "/*%s*/". Used for |commenting| and to
         add markers for folding, see |fold-marker|.
       ]=],
       full_name = 'commentstring',

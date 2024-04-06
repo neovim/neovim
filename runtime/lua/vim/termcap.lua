@@ -12,7 +12,7 @@ local M = {}
 --- emulator supports the XTGETTCAP sequence.
 ---
 --- @param caps string|table A terminal capability or list of capabilities to query
---- @param cb fun(cap:string, found:bool, seq:string?) Callback function which is called for
+--- @param cb fun(cap:string, found:boolean, seq:string?) Callback function which is called for
 ---           each capability in {caps}. {found} is set to true if the capability was found or false
 ---           otherwise. {seq} is the control sequence for the capability if found, or nil for
 ---           boolean capabilities.
