@@ -148,6 +148,33 @@ function(add_glob_target)
   add_custom_target(${ARG_TARGET} DEPENDS ${touch_list})
 endfunction()
 
+# A wrapper function that combines add_custom_command and add_custom_target. It
+# essentially models the "make" dependency where a target is only rebuilt if
+# any dependencies have been changed.
+#
+# Important to note is that `DEPENDS` is a bit misleading; it should not only
+# specify dependencies but also the files that are being generated/output
+# files in order to work correctly.
+function(add_target)
+  cmake_parse_arguments(ARG
+    ""
+    ""
+    "COMMAND;DEPENDS;CUSTOM_COMMAND_ARGS"
+    ${ARGN}
+  )
+  set(target ${ARGV0})
+
+  set(touch_file ${TOUCHES_DIR}/${target})
+  add_custom_command(
+    OUTPUT ${touch_file}
+    COMMAND ${CMAKE_COMMAND} -E touch ${touch_file}
+    COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${NVIM_RUNTIME_DIR}" ${ARG_COMMAND}
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    DEPENDS ${ARG_DEPENDS}
+    ${ARG_CUSTOM_COMMAND_ARGS})
+  add_custom_target(${target} DEPENDS ${touch_file})
+endfunction()
+
 # Set default build type to BUILD_TYPE. Also limit the list of allowable build
 # types to the ones defined in variable allowableBuildTypes.
 #

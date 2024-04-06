@@ -909,14 +909,6 @@ add_custom_target(generated-sources DEPENDS
   ${NVIM_GENERATED_SOURCES}
 )
 
-set(VIMDOC_FILES
-  ${NVIM_RUNTIME_DIR}/doc/api.txt
-  ${NVIM_RUNTIME_DIR}/doc/diagnostic.txt
-  ${NVIM_RUNTIME_DIR}/doc/lsp.txt
-  ${NVIM_RUNTIME_DIR}/doc/lua.txt
-  ${NVIM_RUNTIME_DIR}/doc/treesitter.txt
-)
-
 file(GLOB API_SOURCES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/nvim/api/*.c)
 
 file(GLOB LUA_SOURCES CONFIGURE_DEPENDS
@@ -927,23 +919,22 @@ file(GLOB LUA_SOURCES CONFIGURE_DEPENDS
   ${NVIM_RUNTIME_DIR}/lua/vim/treesitter/*.lua
 )
 
-add_custom_command(
-  OUTPUT ${VIMDOC_FILES}
-  COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${NVIM_RUNTIME_DIR}"
-    $<TARGET_FILE:nvim_bin> -l scripts/gen_vimdoc.lua
+add_target(doc-vim
+  COMMAND $<TARGET_FILE:nvim_bin> -l scripts/gen_vimdoc.lua
   DEPENDS
     nvim
     ${API_SOURCES}
     ${LUA_SOURCES}
     ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.lua
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-)
+    ${NVIM_RUNTIME_DIR}/doc/api.txt
+    ${NVIM_RUNTIME_DIR}/doc/diagnostic.txt
+    ${NVIM_RUNTIME_DIR}/doc/lsp.txt
+    ${NVIM_RUNTIME_DIR}/doc/lua.txt
+    ${NVIM_RUNTIME_DIR}/doc/treesitter.txt
+  )
 
-add_custom_command(
-  OUTPUT ${GEN_EVAL_TOUCH}
-  COMMAND ${CMAKE_COMMAND} -E touch ${GEN_EVAL_TOUCH}
-  COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${NVIM_RUNTIME_DIR}"
-    $<TARGET_FILE:nvim_bin> -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
+add_target(doc-eval
+  COMMAND $<TARGET_FILE:nvim_bin> -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
   DEPENDS
     nvim
     ${FUNCS_METADATA}
@@ -951,22 +942,14 @@ add_custom_command(
     ${PROJECT_SOURCE_DIR}/src/nvim/eval.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/options.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/vvars.lua
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-)
+    ${NVIM_RUNTIME_DIR}/doc/builtin.txt
+  )
 
-add_custom_target(doc-eval DEPENDS ${GEN_EVAL_TOUCH})
-add_custom_target(doc-vim DEPENDS ${VIMDOC_FILES})
 add_custom_target(doc)
 add_dependencies(doc doc-vim doc-eval)
 
-set(lintdoc_touch ${TOUCHES_DIR}/lintdoc)
-add_custom_command(
-  OUTPUT ${lintdoc_touch}
-  COMMAND ${CMAKE_COMMAND} -E touch ${lintdoc_touch}
-  COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${NVIM_RUNTIME_DIR}"
-    $<TARGET_FILE:nvim_bin> --clean -l scripts/lintdoc.lua
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+add_target(lintdoc
+  COMMAND $<TARGET_FILE:nvim_bin> --clean -l scripts/lintdoc.lua
   DEPENDS ${DOCFILES}
-  USES_TERMINAL)
-add_custom_target(lintdoc DEPENDS ${lintdoc_touch})
+  CUSTOM_COMMAND_ARGS USES_TERMINAL)
 add_dependencies(lintdoc nvim)
