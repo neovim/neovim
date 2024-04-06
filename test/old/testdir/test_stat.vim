@@ -55,7 +55,7 @@ func SleepForTimestamp()
   if has('win32')
     sleep 2
   else
-    sleep 2
+    sleep 1
   endif
 endfunc
 
