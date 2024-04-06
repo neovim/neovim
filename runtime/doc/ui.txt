@@ -815,10 +815,6 @@ events, which the UI must handle.
 	    true:  Replace the message in the most-recent `msg_show` call,
 		   but any other visible message should still remain.
 
-["msg_clear"] ~
-	Clear all messages currently displayed by "msg_show". (Messages sent
-	by other "msg_" events below will not be affected).
-
 ["msg_showmode", content] ~
 	Shows 'showmode' and |recording| messages. `content` has the same
 	format as in "msg_show". This event is sent with empty `content` to

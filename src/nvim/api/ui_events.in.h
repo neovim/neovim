@@ -160,8 +160,6 @@ void wildmenu_hide(void)
 
 void msg_show(String kind, Array content, Boolean replace_last)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
-void msg_clear(void)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void msg_showcmd(Array content)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void msg_showmode(Array content)

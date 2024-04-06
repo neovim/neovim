@@ -731,9 +731,6 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     gotocmdline(true);
     redrawcmdprompt();          // draw prompt or indent
     ccline.cmdspos = cmd_startcol();
-    if (!msg_scroll) {
-      msg_ext_clear(false);
-    }
   }
   s->xpc.xp_context = EXPAND_NOTHING;
   s->xpc.xp_backslash = XP_BS_NONE;
@@ -938,7 +935,6 @@ theend:
 
   if (ui_has(kUICmdline)) {
     ui_call_cmdline_hide(ccline.level);
-    msg_ext_clear_later();
   }
   if (!cmd_silent) {
     status_redraw_all();  // redraw to show mode change
