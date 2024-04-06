@@ -336,8 +336,8 @@ describe('input non-printable chars', function()
       "Xtest-overwrite" [noeol] 1L, 6B                            |
     ]])
 
-    -- The timestamp is in second resolution, wait two seconds to be sure.
-    screen:sleep(2000)
+    -- Wait for some time so that the timestamp changes.
+    vim.uv.sleep(10)
     write_file('Xtest-overwrite', [[smurf]])
     feed_command('w')
     screen:expect([[

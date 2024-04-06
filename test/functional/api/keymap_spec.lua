@@ -738,7 +738,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     end
   end
 
-  it('can set mappings containing literal keycodes', function()
+  it('can set mappings containing C0 control codes', function()
     api.nvim_set_keymap('n', '\n\r\n', 'rhs', {})
     local expected = generate_mapargs('n', '<NL><CR><NL>', 'rhs')
     eq(expected, get_mapargs('n', '<NL><CR><NL>'))
