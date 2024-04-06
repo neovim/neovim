@@ -111,7 +111,7 @@ See |45.2| for the basics, esp. using 'langmenu'.
 
 Note that if changes have been made to the menus after the translation was
 done, some of the menus may be shown in English.  Please try contacting the
-maintainer of the translation and ask him to update it.  You can find the
+maintainer of the translation and ask them to update it.  You can find the
 name and e-mail address of the translator in
 "$VIMRUNTIME/lang/menu_<lang>.vim".
 
