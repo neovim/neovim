@@ -6,6 +6,7 @@ local api = helpers.api
 local exec_lua = helpers.exec_lua
 local retry = helpers.retry
 local assert_alive = helpers.assert_alive
+local check_close = helpers.check_close
 
 local testlog = 'Xtest-server-notify-log'
 
@@ -18,6 +19,7 @@ describe('notify', function()
   end)
 
   after_each(function()
+    check_close()
     os.remove(testlog)
   end)
 

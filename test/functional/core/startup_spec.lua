@@ -32,6 +32,7 @@ local dedent = helpers.dedent
 local tbl_map = vim.tbl_map
 local tbl_filter = vim.tbl_filter
 local endswith = vim.endswith
+local check_close = helpers.check_close
 
 local testlog = 'Xtest-startupspec-log'
 
@@ -116,6 +117,7 @@ describe('startup', function()
   before_each(clear)
 
   after_each(function()
+    check_close()
     os.remove(testlog)
   end)
 

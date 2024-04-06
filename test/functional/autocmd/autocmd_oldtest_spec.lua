@@ -8,6 +8,7 @@ local fn = helpers.fn
 local exec = helpers.exec
 local feed = helpers.feed
 local assert_log = helpers.assert_log
+local check_close = helpers.check_close
 local is_os = helpers.is_os
 
 local testlog = 'Xtest_autocmd_oldtest_log'
@@ -16,6 +17,7 @@ describe('oldtests', function()
   before_each(clear)
 
   after_each(function()
+    check_close()
     os.remove(testlog)
   end)
 

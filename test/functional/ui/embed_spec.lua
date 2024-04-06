@@ -14,6 +14,7 @@ local nvim_prog = helpers.nvim_prog
 local retry = helpers.retry
 local write_file = helpers.write_file
 local assert_log = helpers.assert_log
+local check_close = helpers.check_close
 local is_os = helpers.is_os
 
 local testlog = 'Xtest-embed-log'
@@ -98,6 +99,7 @@ end)
 
 describe('--embed UI', function()
   after_each(function()
+    check_close()
     os.remove(testlog)
   end)
 
