@@ -5,6 +5,7 @@ local clear, fn, api = helpers.clear, helpers.fn, helpers.api
 local ok = helpers.ok
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
+local check_close = helpers.check_close
 local mkdir = helpers.mkdir
 local is_os = helpers.is_os
 
@@ -18,6 +19,7 @@ end
 
 describe('server', function()
   after_each(function()
+    check_close()
     os.remove(testlog)
   end)
 

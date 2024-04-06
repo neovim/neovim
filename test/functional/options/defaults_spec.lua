@@ -20,6 +20,7 @@ local rmdir = helpers.rmdir
 local alter_slashes = helpers.alter_slashes
 local tbl_contains = vim.tbl_contains
 local expect_exit = helpers.expect_exit
+local check_close = helpers.check_close
 local is_os = helpers.is_os
 
 local testlog = 'Xtest-defaults-log'
@@ -274,6 +275,7 @@ describe('XDG defaults', function()
   -- Do not put before_each() here for the same reasons.
 
   after_each(function()
+    check_close()
     os.remove(testlog)
   end)
 
@@ -866,6 +868,7 @@ end)
 
 describe('stdpath()', function()
   after_each(function()
+    check_close()
     os.remove(testlog)
   end)
 
@@ -1227,6 +1230,8 @@ describe('stdpath()', function()
   end)
 
   describe('errors', function()
+    before_each(clear)
+
     it('on unknown strings', function()
       eq('Vim(call):E6100: "capybara" is not a valid stdpath', exc_exec('call stdpath("capybara")'))
       eq('Vim(call):E6100: "" is not a valid stdpath', exc_exec('call stdpath("")'))
@@ -1242,6 +1247,7 @@ end)
 
 describe('autocommands', function()
   it('closes terminal with default shell on success', function()
+    clear()
     api.nvim_set_option_value('shell', helpers.testprg('shell-test'), {})
     command('set shellcmdflag=EXIT shellredir= shellpipe= shellquote= shellxquote=')
 

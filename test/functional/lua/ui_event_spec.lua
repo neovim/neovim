@@ -5,6 +5,10 @@ local exec_lua = helpers.exec_lua
 local clear = helpers.clear
 local feed = helpers.feed
 local fn = helpers.fn
+local assert_log = helpers.assert_log
+local check_close = helpers.check_close
+
+local testlog = 'Xtest_lua_ui_event_log'
 
 describe('vim.ui_attach', function()
   local screen
@@ -148,5 +152,24 @@ describe('vim.ui_attach', function()
         },
       },
     }, actual, vim.inspect(actual))
+  end)
+end)
+
+describe('vim.ui_attach', function()
+  after_each(function()
+    check_close()
+    os.remove(testlog)
+  end)
+
+  it('error in callback is logged', function()
+    clear({ env = { NVIM_LOG_FILE = testlog } })
+    local screen = Screen.new()
+    screen:attach()
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace('testspace')
+      vim.ui_attach(ns, { ext_popupmenu = true }, function() error(42) end)
+    ]])
+    feed('ifoo<CR>foobar<CR>fo<C-X><C-N>')
+    assert_log('Error executing UI event callback: Error executing lua: .*: 42', testlog, 100)
   end)
 end)

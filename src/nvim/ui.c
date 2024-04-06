@@ -723,7 +723,7 @@ void ui_call_event(char *name, Array args)
       handled = true;
     }
     if (ERROR_SET(&err)) {
-      ELOG("Error while executing ui_comp_event callback: %s", err.msg);
+      ELOG("Error executing UI event callback: %s", err.msg);
     }
     api_clear_error(&err);
   })
