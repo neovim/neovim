@@ -187,7 +187,7 @@ local function check_rplugin_manifest()
   local require_update = false
   local handle_path = function(path)
     local python_glob = vim.fn.glob(path .. '/rplugin/python*', true, true)
-    if python_glob == '' then
+    if vim.tbl_isempty(python_glob) then
       return
     end
 
