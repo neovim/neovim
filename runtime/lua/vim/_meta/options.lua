@@ -975,8 +975,9 @@ vim.bo.comments = vim.o.comments
 vim.bo.com = vim.bo.comments
 
 --- A template for a comment.  The "%s" in the value is replaced with the
---- comment text.  For example, C uses "/*%s*/". Currently only used to
---- add markers for folding, see `fold-marker`.
+--- comment text. For example, C uses "/*%s*/". Most importantly, this
+--- is used for commenting and uncommenting, see `commenting`.
+--- Also used to add markers for folding, see `fold-marker`.
 ---
 --- @type string
 vim.o.commentstring = ""
