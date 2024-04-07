@@ -3522,6 +3522,49 @@ func Test_switch_window_in_autocmd_window()
   call assert_false(bufexists('Xb.txt'))
 endfunc
 
+" Test that using the autocommand window doesn't change current directory.
+func Test_autocmd_window_cwd()
+  let saveddir = getcwd()
+  call mkdir('Xcwd/a/b/c/d', 'pR')
+
+  new Xa.txt
+  tabnew
+  new Xb.txt
+
+  tabprev
+  cd Xcwd
+  call assert_match('/Xcwd$', getcwd())
+  call assert_match('\[global\] .*/Xcwd$', trim(execute('verbose pwd')))
+
+  autocmd BufEnter Xb.txt lcd ./a/b/c/d
+  doautoall BufEnter
+  au! BufEnter
+  call assert_match('/Xcwd$', getcwd())
+  call assert_match('\[global\] .*/Xcwd$', trim(execute('verbose pwd')))
+
+  tabnext
+  cd ./a
+  tcd ./b
+  lcd ./c
+  call assert_match('/Xcwd/a/b/c$', getcwd())
+  call assert_match('\[window\] .*/Xcwd/a/b/c$', trim(execute('verbose pwd')))
+
+  autocmd BufEnter Xa.txt call assert_match('Xcwd/a/b/c$', getcwd())
+  doautoall BufEnter
+  au! BufEnter
+  call assert_match('/Xcwd/a/b/c$', getcwd())
+  call assert_match('\[window\] .*/Xcwd/a/b/c$', trim(execute('verbose pwd')))
+  bwipe!
+  call assert_match('/Xcwd/a/b$', getcwd())
+  call assert_match('\[tabpage\] .*/Xcwd/a/b$', trim(execute('verbose pwd')))
+  bwipe!
+  call assert_match('/Xcwd/a$', getcwd())
+  call assert_match('\[global\] .*/Xcwd/a$', trim(execute('verbose pwd')))
+  bwipe!
+
+  call chdir(saveddir)
+endfunc
+
 func Test_bufwipeout_changes_window()
   " This should not crash, but we don't have any expectations about what
   " happens, changing window in BufWipeout has unpredictable results.
