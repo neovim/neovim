@@ -17,6 +17,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/change.h"
 #include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
@@ -8907,6 +8908,7 @@ void invoke_prompt_callback(void)
   ml_append(lnum, "", 0, false);
   curwin->w_cursor.lnum = lnum + 1;
   curwin->w_cursor.col = 0;
+  appended_lines(lnum, 1);
 
   if (curbuf->b_prompt_callback.type == kCallbackNone) {
     return;
