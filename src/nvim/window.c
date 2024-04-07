@@ -4936,7 +4936,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
     win_fix_cursor(get_real_state() & (MODE_NORMAL|MODE_CMDLINE|MODE_TERMINAL));
   }
 
-  fix_current_dir();
+  win_fix_current_dir();
 
   entering_window(curwin);
   // Careful: autocommands may close the window and make "wp" invalid
@@ -4989,7 +4989,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
 }
 
 /// Used after making another window the current one: change directory if needed.
-void fix_current_dir(void)
+void win_fix_current_dir(void)
 {
   // New directory is either the local directory of the window, tab or NULL.
   char *new_dir = curwin->w_localdir ? curwin->w_localdir : curtab->tp_localdir;
