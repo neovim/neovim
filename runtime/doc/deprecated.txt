@@ -80,12 +80,15 @@ HIGHLIGHTS
 - *hl-VertSplit*	Use |hl-WinSeparator| instead.
 
 LSP DIAGNOSTICS
+- *vim.diagnostic.disable()*		Use |vim.diagnostic.enable()|
+- *vim.diagnostic.is_disabled()*	Use |vim.diagnostic.is_enabled()|
+
 For each of the functions below, use the corresponding function in
 |vim.diagnostic| instead (unless otherwise noted). For example, use
 |vim.diagnostic.get()| instead of |vim.lsp.diagnostic.get()|.
 
 - *vim.lsp.diagnostic.clear()*		Use |vim.diagnostic.hide()| instead.
-- *vim.lsp.diagnostic.disable()*
+- *vim.lsp.diagnostic.disable()*          Use |vim.diagnostic.enable()| instead.
 - *vim.lsp.diagnostic.display()*	Use |vim.diagnostic.show()| instead.
 - *vim.lsp.diagnostic.enable()*
 - *vim.lsp.diagnostic.get()*

@@ -162,7 +162,7 @@ The following new APIs or features were added.
 • |vim.diagnostic| now supports LSP DiagnosticsTag.
   See: https://microsoft.github.io/language-server-protocol/specification/#diagnosticTag
 
-• |vim.diagnostic.is_disabled()| checks if diagnostics are disabled in a given
+• vim.diagnostic.is_disabled() checks if diagnostics are disabled in a given
   buffer or namespace.
 
 • Treesitter captures can now be transformed by directives. This will allow

@@ -1492,7 +1492,7 @@ end
 --- diagnostics, use |vim.diagnostic.reset()|.
 ---
 --- To hide diagnostics and prevent them from re-displaying, use
---- |vim.diagnostic.disable()|.
+--- |vim.diagnostic.enable()|.
 ---
 ---@param namespace integer? Diagnostic namespace. When omitted, hide
 ---                          diagnostics from all namespaces.
@@ -1517,25 +1517,35 @@ function M.hide(namespace, bufnr)
   end
 end
 
---- Check whether diagnostics are disabled in a given buffer.
+--- Check whether diagnostics are enabled.
 ---
----@param bufnr integer? Buffer number, or 0 for current buffer.
----@param namespace integer? Diagnostic namespace. When omitted, checks if
----                          all diagnostics are disabled in {bufnr}.
----                          Otherwise, only checks if diagnostics from
----                          {namespace} are disabled.
----@return boolean
-function M.is_disabled(bufnr, namespace)
+--- @param bufnr integer? Buffer number, or 0 for current buffer.
+--- @param namespace integer? Diagnostic namespace, or `nil` for all diagnostics in {bufnr}.
+--- @return boolean
+--- @since 12
+function M.is_enabled(bufnr, namespace)
   bufnr = get_bufnr(bufnr)
   if namespace and M.get_namespace(namespace).disabled then
-    return true
+    return false
   end
 
   if type(diagnostic_disabled[bufnr]) == 'table' then
-    return diagnostic_disabled[bufnr][namespace]
+    return not diagnostic_disabled[bufnr][namespace]
   end
 
-  return diagnostic_disabled[bufnr] ~= nil
+  return diagnostic_disabled[bufnr] == nil
+end
+
+--- @deprecated use `vim.diagnostic.is_enabled()`
+function M.is_disabled(bufnr, namespace)
+  vim.deprecate(
+    'Defining diagnostic signs with :sign-define or sign_define()',
+    'vim.diagnostic.is_enabled()',
+    '0.12',
+    nil,
+    false
+  )
+  return not M.is_enabled(bufnr, namespace)
 end
 
 --- Display diagnostics for the given namespace and buffer.
@@ -1923,71 +1933,75 @@ function M.setloclist(opts)
   set_list(true, opts)
 end
 
---- Disable diagnostics in the given buffer.
----
----@param bufnr integer? Buffer number, or 0 for current buffer. When
----                      omitted, disable diagnostics in all buffers.
----@param namespace integer? Only disable diagnostics for the given namespace.
+--- @deprecated use `vim.diagnostic.enabled(…, false)`
 function M.disable(bufnr, namespace)
-  vim.validate({ bufnr = { bufnr, 'n', true }, namespace = { namespace, 'n', true } })
-  if bufnr == nil then
-    if namespace == nil then
-      -- Disable everything (including as yet non-existing buffers and
-      -- namespaces) by setting diagnostic_disabled to an empty table and set
-      -- its metatable to always return true. This metatable is removed
-      -- in enable()
-      diagnostic_disabled = setmetatable({}, {
-        __index = function()
-          return true
-        end,
-      })
-    else
-      local ns = M.get_namespace(namespace)
-      ns.disabled = true
-    end
-  else
-    bufnr = get_bufnr(bufnr)
-    if namespace == nil then
-      diagnostic_disabled[bufnr] = true
-    else
-      if type(diagnostic_disabled[bufnr]) ~= 'table' then
-        diagnostic_disabled[bufnr] = {}
-      end
-      diagnostic_disabled[bufnr][namespace] = true
-    end
-  end
-
-  M.hide(namespace, bufnr)
+  vim.deprecate(
+    'vim.diagnostic.disable()',
+    'vim.diagnostic.enabled(…, false)',
+    '0.12',
+    nil,
+    false
+  )
+  M.enable(bufnr, namespace, false)
 end
 
---- Enable diagnostics in the given buffer.
+--- Enables or disables diagnostics.
 ---
----@param bufnr integer? Buffer number, or 0 for current buffer. When
----                      omitted, enable diagnostics in all buffers.
----@param namespace integer? Only enable diagnostics for the given namespace.
-function M.enable(bufnr, namespace)
-  vim.validate({ bufnr = { bufnr, 'n', true }, namespace = { namespace, 'n', true } })
+--- To "toggle", pass the inverse of `is_enabled()`:
+---
+--- ```lua
+--- vim.diagnostic.enable(0, not vim.diagnostic.is_enabled())
+--- ```
+---
+--- @param bufnr integer? Buffer number, or 0 for current buffer, or `nil` for all buffers.
+--- @param namespace integer? Only for the given namespace, or `nil` for all.
+--- @param enable (boolean|nil) true/nil to enable, false to disable
+function M.enable(bufnr, namespace, enable)
+  vim.validate({
+    bufnr = { bufnr, 'n', true },
+    namespace = { namespace, 'n', true },
+    enable = { enable, 'b', true },
+  })
+  enable = enable == nil and true or enable
   if bufnr == nil then
     if namespace == nil then
-      -- Enable everything by setting diagnostic_disabled to an empty table
-      diagnostic_disabled = {}
+      diagnostic_disabled = (
+        enable
+          -- Enable everything by setting diagnostic_disabled to an empty table.
+          and {}
+        -- Disable everything (including as yet non-existing buffers and namespaces) by setting
+        -- diagnostic_disabled to an empty table and set its metatable to always return true.
+        or setmetatable({}, {
+          __index = function()
+            return true
+          end,
+        })
+      )
     else
       local ns = M.get_namespace(namespace)
-      ns.disabled = false
+      ns.disabled = not enable
     end
   else
     bufnr = get_bufnr(bufnr)
     if namespace == nil then
-      diagnostic_disabled[bufnr] = nil
+      diagnostic_disabled[bufnr] = (not enable) and true or nil
     else
       if type(diagnostic_disabled[bufnr]) ~= 'table' then
-        return
+        if enable then
+          return
+        else
+          diagnostic_disabled[bufnr] = {}
+        end
       end
-      diagnostic_disabled[bufnr][namespace] = nil
+      diagnostic_disabled[bufnr][namespace] = (not enable) and true or nil
     end
   end
 
-  M.show(namespace, bufnr)
+  if enable then
+    M.show(namespace, bufnr)
+  else
+    M.hide(namespace, bufnr)
+  end
 end
 
 --- Parse a diagnostic from a string.

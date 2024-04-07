@@ -329,7 +329,7 @@ describe('vim.diagnostic', function()
     eq(
       { 1, 1, 2, 0, 2 },
       exec_lua [[
-      vim.diagnostic.disable(diagnostic_bufnr, diagnostic_ns)
+      vim.diagnostic.enable(diagnostic_bufnr, diagnostic_ns, false)
       return {
         count_diagnostics(diagnostic_bufnr, vim.diagnostic.severity.ERROR, diagnostic_ns),
         count_diagnostics(diagnostic_bufnr, vim.diagnostic.severity.WARN, other_ns),
@@ -371,7 +371,7 @@ describe('vim.diagnostic', function()
       vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, ns_1_diags)
       vim.diagnostic.set(other_ns, diagnostic_bufnr, ns_2_diags)
 
-      vim.diagnostic.disable(diagnostic_bufnr, diagnostic_ns)
+      vim.diagnostic.enable(diagnostic_bufnr, diagnostic_ns, false)
 
       return {
         count_extmarks(diagnostic_bufnr, diagnostic_ns),
@@ -384,7 +384,7 @@ describe('vim.diagnostic', function()
       { 4, 0 },
       exec_lua [[
       vim.diagnostic.enable(diagnostic_bufnr, diagnostic_ns)
-      vim.diagnostic.disable(diagnostic_bufnr, other_ns)
+      vim.diagnostic.enable(diagnostic_bufnr, other_ns, false)
 
       return {
         count_extmarks(diagnostic_bufnr, diagnostic_ns),
@@ -500,7 +500,7 @@ describe('vim.diagnostic', function()
         table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
                              count_extmarks(diagnostic_bufnr, other_ns))
 
-        vim.diagnostic.disable()
+        vim.diagnostic.enable(nil, nil, false)
 
         table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
                              count_extmarks(diagnostic_bufnr, other_ns))
@@ -561,7 +561,7 @@ describe('vim.diagnostic', function()
                              count_extmarks(diagnostic_bufnr, other_ns) +
                              count_extmarks(other_bufnr, diagnostic_ns))
 
-        vim.diagnostic.disable(diagnostic_bufnr)
+        vim.diagnostic.enable(diagnostic_bufnr, nil, false)
 
         table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
                              count_extmarks(diagnostic_bufnr, other_ns) +
@@ -573,7 +573,7 @@ describe('vim.diagnostic', function()
                              count_extmarks(diagnostic_bufnr, other_ns) +
                              count_extmarks(other_bufnr, diagnostic_ns))
 
-        vim.diagnostic.disable(other_bufnr)
+        vim.diagnostic.enable(other_bufnr, nil, false)
 
         table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
                              count_extmarks(diagnostic_bufnr, other_ns) +
@@ -610,7 +610,7 @@ describe('vim.diagnostic', function()
         table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
                              count_extmarks(diagnostic_bufnr, other_ns))
 
-        vim.diagnostic.disable(nil, diagnostic_ns)
+        vim.diagnostic.enable(nil, diagnostic_ns, false)
 
         table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
                              count_extmarks(diagnostic_bufnr, other_ns))
@@ -620,7 +620,7 @@ describe('vim.diagnostic', function()
         table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
                              count_extmarks(diagnostic_bufnr, other_ns))
 
-        vim.diagnostic.disable(nil, other_ns)
+        vim.diagnostic.enable(nil, other_ns, false)
 
         table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
                              count_extmarks(diagnostic_bufnr, other_ns))
@@ -663,13 +663,13 @@ describe('vim.diagnostic', function()
                              count_extmarks(diagnostic_bufnr, other_ns) +
                              count_extmarks(other_bufnr, diagnostic_ns))
 
-        vim.diagnostic.disable(diagnostic_bufnr, diagnostic_ns)
+        vim.diagnostic.enable(diagnostic_bufnr, diagnostic_ns, false)
 
         table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
                              count_extmarks(diagnostic_bufnr, other_ns) +
                              count_extmarks(other_bufnr, diagnostic_ns))
 
-        vim.diagnostic.disable(diagnostic_bufnr, other_ns)
+        vim.diagnostic.enable(diagnostic_bufnr, other_ns, false)
 
         table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
                              count_extmarks(diagnostic_bufnr, other_ns) +
@@ -682,7 +682,7 @@ describe('vim.diagnostic', function()
                              count_extmarks(other_bufnr, diagnostic_ns))
 
         -- Should have no effect
-        vim.diagnostic.disable(other_bufnr, other_ns)
+        vim.diagnostic.enable(other_bufnr, other_ns, false)
 
         table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
                              count_extmarks(diagnostic_bufnr, other_ns) +
@@ -1742,7 +1742,7 @@ describe('vim.diagnostic', function()
       eq(
         0,
         exec_lua [[
-        vim.diagnostic.disable(diagnostic_bufnr, diagnostic_ns)
+        vim.diagnostic.enable(diagnostic_bufnr, diagnostic_ns, false)
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
           make_error('Diagnostic From Server 1:1', 1, 1, 1, 1),
         })
@@ -2711,7 +2711,39 @@ describe('vim.diagnostic', function()
       )
     end)
 
-    it('checks if diagnostics are disabled in a buffer', function()
+    it('is_enabled', function()
+      eq(
+        { false, false, false, false },
+        exec_lua [[
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_error('Diagnostic #1', 1, 1, 1, 1),
+        })
+        vim.api.nvim_set_current_buf(diagnostic_bufnr)
+        vim.diagnostic.enable(nil, nil, false)
+        return {
+          vim.diagnostic.is_enabled(),
+          vim.diagnostic.is_enabled(diagnostic_bufnr),
+          vim.diagnostic.is_enabled(diagnostic_bufnr, diagnostic_ns),
+          vim.diagnostic.is_enabled(_, diagnostic_ns),
+        }
+      ]]
+      )
+
+      eq(
+        { true, true, true, true },
+        exec_lua [[
+        vim.diagnostic.enable()
+        return {
+          vim.diagnostic.is_enabled(),
+          vim.diagnostic.is_enabled(diagnostic_bufnr),
+          vim.diagnostic.is_enabled(diagnostic_bufnr, diagnostic_ns),
+          vim.diagnostic.is_enabled(_, diagnostic_ns),
+        }
+      ]]
+      )
+    end)
+
+    it('is_disabled (deprecated)', function()
       eq(
         { true, true, true, true },
         exec_lua [[
