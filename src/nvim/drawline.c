@@ -1030,7 +1030,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
     has_decor = decor_redraw_line(wp, lnum - 1, &decor_state);
 
-    decor_providers_invoke_line(wp, lnum - 1, &has_decor);
+    if (!end_fill) {
+      decor_providers_invoke_line(wp, lnum - 1, &has_decor);
+    }
 
     if (has_decor) {
       extra_check = true;
