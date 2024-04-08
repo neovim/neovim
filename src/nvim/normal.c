@@ -2614,58 +2614,6 @@ void nv_scroll_line(cmdarg_T *cap)
   }
 }
 
-/// Scroll "count" lines up or down, and redraw.
-void scroll_redraw(bool up, linenr_T count)
-{
-  linenr_T prev_topline = curwin->w_topline;
-  int prev_skipcol = curwin->w_skipcol;
-  int prev_topfill = curwin->w_topfill;
-  linenr_T prev_lnum = curwin->w_cursor.lnum;
-
-  bool moved = up
-               ? scrollup(curwin, count, true)
-               : scrolldown(curwin, count, true);
-
-  if (get_scrolloff_value(curwin) > 0) {
-    // Adjust the cursor position for 'scrolloff'.  Mark w_topline as
-    // valid, otherwise the screen jumps back at the end of the file.
-    cursor_correct(curwin);
-    check_cursor_moved(curwin);
-    curwin->w_valid |= VALID_TOPLINE;
-
-    // If moved back to where we were, at least move the cursor, otherwise
-    // we get stuck at one position.  Don't move the cursor up if the
-    // first line of the buffer is already on the screen
-    while (curwin->w_topline == prev_topline
-           && curwin->w_skipcol == prev_skipcol
-           && curwin->w_topfill == prev_topfill) {
-      if (up) {
-        if (curwin->w_cursor.lnum > prev_lnum
-            || cursor_down(1, false) == false) {
-          break;
-        }
-      } else {
-        if (curwin->w_cursor.lnum < prev_lnum
-            || prev_topline == 1
-            || cursor_up(1, false) == false) {
-          break;
-        }
-      }
-      // Mark w_topline as valid, otherwise the screen jumps back at the
-      // end of the file.
-      check_cursor_moved(curwin);
-      curwin->w_valid |= VALID_TOPLINE;
-    }
-  }
-  if (curwin->w_cursor.lnum != prev_lnum) {
-    coladvance(curwin, curwin->w_curswant);
-  }
-  if (moved) {
-    curwin->w_viewport_invalid = true;
-  }
-  redraw_later(curwin, UPD_VALID);
-}
-
 /// Get the count specified after a 'z' command. Only the 'z<CR>', 'zl', 'zh',
 /// 'z<Left>', and 'z<Right>' commands accept a count after 'z'.
 /// @return  true to process the 'z' command and false to skip it.

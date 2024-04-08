@@ -885,6 +885,9 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last, bool limit_winheight)
     count += plines_win_full(wp, first, &next, NULL, false, limit_winheight);
     first = next + 1;
   }
+  if (first == wp->w_buffer->b_ml.ml_line_count + 1) {
+    count += win_get_fill(wp, first);
+  }
   return count;
 }
 

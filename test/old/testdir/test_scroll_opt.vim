@@ -1023,30 +1023,36 @@ func Test_smoothscroll_page()
   " Half-page scrolling does not go beyond end of buffer and moves the cursor.
   " Even with 'nostartofline', the correct amount of lines is scrolled.
   setl nostartofline
-  exe "norm! 0\<C-D>"
+  exe "norm! 15|\<C-D>"
   call assert_equal(200, winsaveview().skipcol)
-  call assert_equal(204, col('.'))
+  call assert_equal(215, col('.'))
   exe "norm! \<C-D>"
   call assert_equal(400, winsaveview().skipcol)
-  call assert_equal(404, col('.'))
+  call assert_equal(415, col('.'))
   exe "norm! \<C-D>"
   call assert_equal(520, winsaveview().skipcol)
-  call assert_equal(601, col('.'))
+  call assert_equal(535, col('.'))
   exe "norm! \<C-D>"
   call assert_equal(520, winsaveview().skipcol)
-  call assert_equal(801, col('.'))
-  exe "norm! \<C-U>"
+  call assert_equal(735, col('.'))
+  exe "norm! \<C-D>"
   call assert_equal(520, winsaveview().skipcol)
-  call assert_equal(601, col('.'))
+  call assert_equal(895, col('.'))
   exe "norm! \<C-U>"
-  call assert_equal(400, winsaveview().skipcol)
-  call assert_equal(404, col('.'))
+  call assert_equal(320, winsaveview().skipcol)
+  call assert_equal(695, col('.'))
   exe "norm! \<C-U>"
-  call assert_equal(200, winsaveview().skipcol)
-  call assert_equal(204, col('.'))
+  call assert_equal(120, winsaveview().skipcol)
+  call assert_equal(495, col('.'))
   exe "norm! \<C-U>"
   call assert_equal(0, winsaveview().skipcol)
-  call assert_equal(40, col('.'))
+  call assert_equal(375, col('.'))
+  exe "norm! \<C-U>"
+  call assert_equal(0, winsaveview().skipcol)
+  call assert_equal(175, col('.'))
+  exe "norm! \<C-U>"
+  call assert_equal(0, winsaveview().skipcol)
+  call assert_equal(15, col('.'))
 
   bwipe!
 endfunc
@@ -1074,6 +1080,14 @@ func Test_smoothscroll_next_topline()
   redraw
   call assert_equal(2, line('w0'))
 
+  " Cursor does not end up above topline, adjusting topline later.
+  setlocal nu cpo+=n
+  exe "norm! G$g013\<C-Y>"
+  redraw
+  call assert_equal(2, line('.'))
+  call assert_equal(0, winsaveview().skipcol)
+
+  set cpo-=n
   bwipe!
 endfunc
 
