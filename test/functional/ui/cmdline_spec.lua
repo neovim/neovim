@@ -825,7 +825,8 @@ local function test_cmdline(linegrid)
     ]])
   end)
 
-  it('does not move cursor to curwin #20309', function()
+  -- Needs new API
+  pending('does not move cursor to curwin #20309', function()
     local win = api.nvim_get_current_win()
     command('norm icmdlinewin')
     command('new')
