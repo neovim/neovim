@@ -920,7 +920,7 @@ file(GLOB LUA_SOURCES CONFIGURE_DEPENDS
 )
 
 add_target(doc-vim
-  COMMAND $<TARGET_FILE:nvim_bin> -l scripts/gen_vimdoc.lua
+  COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l scripts/gen_vimdoc.lua
   DEPENDS
     nvim
     ${API_SOURCES}
@@ -934,7 +934,7 @@ add_target(doc-vim
   )
 
 add_target(doc-eval
-  COMMAND $<TARGET_FILE:nvim_bin> -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
+  COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
   DEPENDS
     nvim
     ${FUNCS_METADATA}
@@ -949,7 +949,7 @@ add_custom_target(doc)
 add_dependencies(doc doc-vim doc-eval)
 
 add_target(lintdoc
-  COMMAND $<TARGET_FILE:nvim_bin> --clean -l scripts/lintdoc.lua
+  COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l scripts/lintdoc.lua
   DEPENDS ${DOCFILES}
   CUSTOM_COMMAND_ARGS USES_TERMINAL)
 add_dependencies(lintdoc nvim)
