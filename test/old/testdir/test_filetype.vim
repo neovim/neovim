@@ -567,6 +567,7 @@ func s:GetFilenameChecks() abort
     \ 'rpgle': ['file.rpgle', 'file.rpgleinc'],
     \ 'robot': ['file.robot', 'file.resource'],
     \ 'robots': ['robots.txt'],
+    \ 'roc': ['file.roc'],
     \ 'ron': ['file.ron'],
     \ 'routeros': ['file.rsc'],
     \ 'rpcgen': ['file.x'],
