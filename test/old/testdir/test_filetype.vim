@@ -760,6 +760,7 @@ func s:GetFilenameChecks() abort
     \ 'yang': ['file.yang'],
     \ 'yuck': ['file.yuck'],
     \ 'z8a': ['file.z8a'],
+    \ 'zathurarc': ['zathurarc'],
     \ 'zig': ['file.zig', 'build.zig.zon'],
     \ 'zimbu': ['file.zu'],
     \ 'zimbutempl': ['file.zut'],
