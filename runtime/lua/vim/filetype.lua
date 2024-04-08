@@ -886,6 +886,7 @@ local extension = {
   Snw = 'rnoweb',
   robot = 'robot',
   resource = 'robot',
+  roc = 'roc',
   ron = 'ron',
   rsc = 'routeros',
   x = 'rpcgen',
