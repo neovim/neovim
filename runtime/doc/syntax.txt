@@ -1994,6 +1994,95 @@ by the camlp4 preprocessor.  Setting the variable >
 prevents highlighting of "end" as error, which is useful when sources
 contain very long structures that Vim does not synchronize anymore.
 
+PANDOC						*ft-pandoc-syntax*
+
+By default, markdown files will be detected as filetype "markdown".
+Alternatively, you may want them to be detected as filetype "pandoc" instead.
+To do so, set the following: >
+
+	:let g:markdown_md = 'pandoc'
+
+The pandoc syntax plugin uses |conceal| for pretty highlighting. Default is 1 >
+
+	:let g:pandoc#syntax#conceal#use = 1
+
+To specify elements that should not be concealed, set the following variable: >
+
+	:let g:pandoc#syntax#conceal#blacklist = []
+
+This is a list of the rules wich can be used here:
+
+  - titleblock
+  - image
+  - block
+  - subscript
+  - superscript
+  - strikeout
+  - atx
+  - codeblock_start
+  - codeblock_delim
+  - footnote
+  - definition
+  - list
+  - newline
+  - dashes
+  - ellipses
+  - quotes
+  - inlinecode
+  - inlinemath
+
+You can customize the way concealing works. For example, if you prefer to mark
+footnotes with the `*` symbol: >
+
+	:let g:pandoc#syntax#conceal#cchar_overrides = {"footnote" : "*"}
+
+To conceal the urls in links, use: >
+
+	:let g:pandoc#syntax#conceal#urls = 1
+
+Prevent highlighting specific codeblock types so that they remain Normal.
+Codeblock types include "definition" for codeblocks inside definition blocks
+and "delimited" for delimited codeblocks. Default = [] >
+
+	:let g:pandoc#syntax#codeblocks#ignore = ['definition']
+
+Use embedded highlighting for delimited codeblocks where a language is
+specified. Default = 1 >
+
+	:let g:pandoc#syntax#codeblocks#embeds#use = 1
+
+For specify what languages and using what syntax files to highlight embeds. This is a
+list of language names. When the language pandoc and vim use don't match, you
+can use the "PANDOC=VIM" syntax. For example: >
+
+	:let g:pandoc#syntax#codeblocks#embeds#langs = ["ruby", "bash=sh"]
+
+To use italics and strong in emphases. Default = 1 >
+
+	:let *g:pandoc#syntax#style#emphases = 1
+
+"0" will add "block" to g:pandoc#syntax#conceal#blacklist, because otherwise
+you couldn't tell where the styles are applied.
+
+To add underline subscript, superscript and strikeout text styles. Default = 1 >
+
+	:let g:pandoc#syntax#style#underline_special = 1
+
+Detect and highlight definition lists. Disabling this can improve performance.
+Default = 1 (i.e., enabled by default) >
+
+	:let g:pandoc#syntax#style#use_definition_lists = 1
+
+The pandoc syntax script also comes with the following commands: >
+
+	:PandocHighlight LANG
+
+Enables embedded highlighting for language LANG in codeblocks. Uses the
+syntax for items in g:pandoc#syntax#codeblocks#embeds#langs. >
+
+	:PandocUnhighlight LANG
+
+Disables embedded highlighting for language LANG in codeblocks.
 
 PAPP						*papp.vim* *ft-papp-syntax*
 

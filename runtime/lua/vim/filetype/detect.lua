@@ -889,6 +889,11 @@ local function m4(contents)
   end
 end
 
+--- @type vim.filetype.mapfn
+function M.markdown(_, _)
+  return vim.g.filetype_md or 'markdown'
+end
+
 --- Rely on the file to start with a comment.
 --- MS message text files use ';', Sendmail files use '#' or 'dnl'
 --- @type vim.filetype.mapfn

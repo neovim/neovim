@@ -155,6 +155,8 @@ variables can be used to overrule the filetype used for certain extensions:
 	`*.inc`		g:filetype_inc
 	`*.lsl`		g:filetype_lsl
 	`*.m`		g:filetype_m		|ft-mathematica-syntax|
+	`*.markdown,*.mdown,*.mkd,*.mkdn,*.mdwn,*.md`
+			g:filetype_md		|ft-pandoc-syntax|
 	`*.mod`		g:filetype_mod
 	`*.p`		g:filetype_p		|ft-pascal-syntax|
 	`*.pl`		g:filetype_pl
