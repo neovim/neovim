@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local curwin = helpers.api.nvim_get_current_win
-local eq = helpers.eq
-local exec_lua = helpers.exec_lua
-local feed = helpers.feed
-local fn = helpers.fn
-local api = helpers.api
-local is_os = helpers.is_os
+local clear = t.clear
+local command = t.command
+local curwin = t.api.nvim_get_current_win
+local eq = t.eq
+local exec_lua = t.exec_lua
+local feed = t.feed
+local fn = t.fn
+local api = t.api
+local is_os = t.is_os
 
 describe('title', function()
   local screen

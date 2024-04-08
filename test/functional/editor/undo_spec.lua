@@ -1,16 +1,16 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local command = helpers.command
-local eval = helpers.eval
-local expect = helpers.expect
-local eq = helpers.eq
-local feed = helpers.feed
-local feed_command = helpers.feed_command
-local insert = helpers.insert
-local fn = helpers.fn
-local exec = helpers.exec
-local exec_lua = helpers.exec_lua
+local clear = t.clear
+local command = t.command
+local eval = t.eval
+local expect = t.expect
+local eq = t.eq
+local feed = t.feed
+local feed_command = t.feed_command
+local insert = t.insert
+local fn = t.fn
+local exec = t.exec
+local exec_lua = t.exec_lua
 
 local function lastmessage()
   local messages = fn.split(fn.execute('messages'), '\n')
@@ -44,7 +44,7 @@ describe('u CTRL-R g- g+', function()
   local function undo_and_redo(hist_pos, undo, redo, expect_str)
     command('enew!')
     create_history(hist_pos)
-    local cur_contents = helpers.curbuf_contents()
+    local cur_contents = t.curbuf_contents()
     feed(undo)
     expect(expect_str)
     feed(redo)

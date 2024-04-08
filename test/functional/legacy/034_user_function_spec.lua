@@ -3,9 +3,9 @@
 -- Also test that a builtin function cannot be replaced.
 -- Also test for regression when calling arbitrary expression.
 
-local helpers = require('test.functional.helpers')(after_each)
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
+local t = require('test.functional.testutil')(after_each)
+local feed, insert, source = t.feed, t.insert, t.source
+local clear, feed_command, expect = t.clear, t.feed_command, t.expect
 
 describe(
   'user functions, expr-mappings, overwrite protected builtin functions and regression on calling expressions',

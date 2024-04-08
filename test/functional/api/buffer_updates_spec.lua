@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local eq, ok = helpers.eq, helpers.ok
-local fn = helpers.fn
-local api = helpers.api
-local command, eval, next_msg = helpers.command, helpers.eval, helpers.next_msg
-local nvim_prog = helpers.nvim_prog
-local pcall_err = helpers.pcall_err
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local eq, ok = t.eq, t.ok
+local fn = t.fn
+local api = t.api
+local command, eval, next_msg = t.command, t.eval, t.next_msg
+local nvim_prog = t.nvim_prog
+local pcall_err = t.pcall_err
 local sleep = vim.uv.sleep
-local write_file = helpers.write_file
+local write_file = t.write_file
 
 local origlines = {
   'original line 1',
@@ -34,7 +34,7 @@ local function sendkeys(keys)
 end
 
 local function open(activate, lines)
-  local filename = helpers.tmpname()
+  local filename = t.tmpname()
   write_file(filename, table.concat(lines, '\n') .. '\n', true)
   command('edit ' .. filename)
   local b = api.nvim_get_current_buf()
@@ -511,11 +511,11 @@ describe('API: buffer events:', function()
 
     -- create several new sessions, in addition to our main API
     local sessions = {}
-    local pipe = helpers.new_pipename()
+    local pipe = t.new_pipename()
     eval("serverstart('" .. pipe .. "')")
-    sessions[1] = helpers.connect(pipe)
-    sessions[2] = helpers.connect(pipe)
-    sessions[3] = helpers.connect(pipe)
+    sessions[1] = t.connect(pipe)
+    sessions[2] = t.connect(pipe)
+    sessions[3] = t.connect(pipe)
 
     local function request(sessionnr, method, ...)
       local status, rv = sessions[sessionnr]:request(method, ...)
@@ -814,7 +814,7 @@ describe('API: buffer events:', function()
     clear()
     sleep(250)
     -- response
-    eq(true, helpers.request('nvim_buf_attach', 0, false, {}))
+    eq(true, t.request('nvim_buf_attach', 0, false, {}))
     -- notification
     eq({
       [1] = 'notification',

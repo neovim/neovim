@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local clear = helpers.clear
-local command = helpers.command
-local dedent = helpers.dedent
-local eq = helpers.eq
-local fn = helpers.fn
-local eval = helpers.eval
-local exec = helpers.exec
-local feed = helpers.feed
+local clear = t.clear
+local command = t.command
+local dedent = t.dedent
+local eq = t.eq
+local fn = t.fn
+local eval = t.eval
+local exec = t.exec
+local feed = t.feed
 
 describe(':autocmd', function()
   before_each(function()

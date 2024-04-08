@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local call = helpers.call
-local clear = helpers.clear
-local eq = helpers.eq
-local expect = helpers.expect
+local call = t.call
+local clear = t.clear
+local eq = t.eq
+local expect = t.expect
 
 describe('getline()', function()
   before_each(function()

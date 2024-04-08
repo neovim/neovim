@@ -1,10 +1,10 @@
-local helpers = require('test.functional.helpers')(after_each)
-local eq = helpers.eq
-local exec_lua = helpers.exec_lua
+local t = require('test.functional.testutil')(after_each)
+local eq = t.eq
+local exec_lua = t.exec_lua
 
 describe('glob', function()
-  before_each(helpers.clear)
-  after_each(helpers.clear)
+  before_each(t.clear)
+  after_each(t.clear)
 
   local match = function(...)
     return exec_lua(

@@ -1,15 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local exec = helpers.exec
-local eval = helpers.eval
-local exec_lua = helpers.exec_lua
-local feed = helpers.feed
-local api = helpers.api
-local pcall_err = helpers.pcall_err
-local assert_alive = helpers.assert_alive
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local exec = t.exec
+local eval = t.eval
+local exec_lua = t.exec_lua
+local feed = t.feed
+local api = t.api
+local pcall_err = t.pcall_err
+local assert_alive = t.assert_alive
 
 local mousemodels = { 'extend', 'popup', 'popup_setpos' }
 

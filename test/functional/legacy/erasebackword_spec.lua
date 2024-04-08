@@ -1,7 +1,7 @@
 -- Test for CTRL-W in Insert mode
 
-local helpers = require('test.functional.helpers')(after_each)
-local clear, feed, expect = helpers.clear, helpers.feed, helpers.expect
+local t = require('test.functional.testutil')(after_each)
+local clear, feed, expect = t.clear, t.feed, t.expect
 
 describe('CTRL-W in Insert mode', function()
   setup(clear)

@@ -1,27 +1,27 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
 local Screen = require('test.functional.ui.screen')
 
-local assert_alive = helpers.assert_alive
-local assert_log = helpers.assert_log
-local api = helpers.api
-local command = helpers.command
-local clear = helpers.clear
-local exc_exec = helpers.exc_exec
-local exec_lua = helpers.exec_lua
-local eval = helpers.eval
-local eq = helpers.eq
-local ok = helpers.ok
-local fn = helpers.fn
-local insert = helpers.insert
-local neq = helpers.neq
-local mkdir = helpers.mkdir
-local rmdir = helpers.rmdir
-local alter_slashes = helpers.alter_slashes
+local assert_alive = t.assert_alive
+local assert_log = t.assert_log
+local api = t.api
+local command = t.command
+local clear = t.clear
+local exc_exec = t.exc_exec
+local exec_lua = t.exec_lua
+local eval = t.eval
+local eq = t.eq
+local ok = t.ok
+local fn = t.fn
+local insert = t.insert
+local neq = t.neq
+local mkdir = t.mkdir
+local rmdir = t.rmdir
+local alter_slashes = t.alter_slashes
 local tbl_contains = vim.tbl_contains
-local expect_exit = helpers.expect_exit
-local check_close = helpers.check_close
-local is_os = helpers.is_os
+local expect_exit = t.expect_exit
+local check_close = t.check_close
+local is_os = t.is_os
 
 local testlog = 'Xtest-defaults-log'
 
@@ -1248,7 +1248,7 @@ end)
 describe('autocommands', function()
   it('closes terminal with default shell on success', function()
     clear()
-    api.nvim_set_option_value('shell', helpers.testprg('shell-test'), {})
+    api.nvim_set_option_value('shell', t.testprg('shell-test'), {})
     command('set shellcmdflag=EXIT shellredir= shellpipe= shellquote= shellxquote=')
 
     -- Should not block other events
@@ -1258,7 +1258,7 @@ describe('autocommands', function()
     command('terminal')
     eq(1, eval('get(g:, "n", 0)'))
 
-    helpers.retry(nil, 1000, function()
+    t.retry(nil, 1000, function()
       neq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
       eq(2, eval('get(g:, "n", 0)'))
     end)

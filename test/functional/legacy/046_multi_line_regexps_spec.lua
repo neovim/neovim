@@ -1,9 +1,9 @@
 -- vim: set foldmethod=marker foldmarker=[[,]] :
 -- Tests for multi-line regexps with ":s"
 
-local helpers = require('test.functional.helpers')(after_each)
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local expect = helpers.expect
+local t = require('test.functional.testutil')(after_each)
+local clear, feed, insert = t.clear, t.feed, t.insert
+local expect = t.expect
 
 describe('multi-line regexp', function()
   setup(clear)

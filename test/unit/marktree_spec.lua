@@ -1,15 +1,15 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
 
-local ffi = helpers.ffi
-local eq = helpers.eq
-local ok = helpers.ok
+local ffi = t.ffi
+local eq = t.eq
+local ok = t.ok
 
-local lib = helpers.cimport('./src/nvim/marktree.h')
+local lib = t.cimport('./src/nvim/marktree.h')
 
-local function tablelength(t)
+local function tablelength(tbl)
   local count = 0
-  for _ in pairs(t) do
+  for _ in pairs(tbl) do
     count = count + 1
   end
   return count
@@ -460,7 +460,7 @@ describe('marktree', function()
     local ids = {}
 
     -- too much overhead on ASAN
-    local size_factor = helpers.is_asan() and 3 or 10
+    local size_factor = t.is_asan() and 3 or 10
 
     local at_row = {}
     for i = 1, 10 do
@@ -528,7 +528,7 @@ describe('marktree', function()
     local tree = ffi.new('MarkTree[1]') -- zero initialized by luajit
 
     -- too much overhead on ASAN
-    local size_factor = helpers.is_asan() and 3 or 10
+    local size_factor = t.is_asan() and 3 or 10
 
     local at_row = {}
     for i = 1, 10 do

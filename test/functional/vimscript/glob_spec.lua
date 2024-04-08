@@ -1,6 +1,6 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear, command, eval, eq = helpers.clear, helpers.command, helpers.eval, helpers.eq
-local mkdir = helpers.mkdir
+local t = require('test.functional.testutil')(after_each)
+local clear, command, eval, eq = t.clear, t.command, t.eval, t.eq
+local mkdir = t.mkdir
 
 before_each(function()
   clear()

@@ -1,15 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local api = helpers.api
-local clear = helpers.clear
-local command = helpers.command
-local fn = helpers.fn
-local eq = helpers.eq
-local feed = helpers.feed
-local write_file = helpers.write_file
-local pcall_err = helpers.pcall_err
+local api = t.api
+local clear = t.clear
+local command = t.command
+local fn = t.fn
+local eq = t.eq
+local feed = t.feed
+local write_file = t.write_file
+local pcall_err = t.pcall_err
 local cursor = function()
-  return helpers.api.nvim_win_get_cursor(0)
+  return t.api.nvim_win_get_cursor(0)
 end
 
 describe('named marks', function()
@@ -39,59 +39,59 @@ describe('named marks', function()
 
   it('errors when set out of range with :mark', function()
     command('edit ' .. file1)
-    local err = pcall_err(helpers.exec_capture, '1000mark x')
+    local err = pcall_err(t.exec_capture, '1000mark x')
     eq('nvim_exec2(): Vim(mark):E16: Invalid range: 1000mark x', err)
   end)
 
   it('errors when set out of range with :k', function()
     command('edit ' .. file1)
-    local err = pcall_err(helpers.exec_capture, '1000kx')
+    local err = pcall_err(t.exec_capture, '1000kx')
     eq('nvim_exec2(): Vim(k):E16: Invalid range: 1000kx', err)
   end)
 
   it('errors on unknown mark name with :mark', function()
     command('edit ' .. file1)
-    local err = pcall_err(helpers.exec_capture, 'mark #')
+    local err = pcall_err(t.exec_capture, 'mark #')
     eq('nvim_exec2(): Vim(mark):E191: Argument must be a letter or forward/backward quote', err)
   end)
 
   it("errors on unknown mark name with '", function()
     command('edit ' .. file1)
-    local err = pcall_err(helpers.exec_capture, "normal! '#")
+    local err = pcall_err(t.exec_capture, "normal! '#")
     eq('nvim_exec2(): Vim(normal):E78: Unknown mark', err)
   end)
 
   it('errors on unknown mark name with `', function()
     command('edit ' .. file1)
-    local err = pcall_err(helpers.exec_capture, 'normal! `#')
+    local err = pcall_err(t.exec_capture, 'normal! `#')
     eq('nvim_exec2(): Vim(normal):E78: Unknown mark', err)
   end)
 
   it("errors when moving to a mark that is not set with '", function()
     command('edit ' .. file1)
-    local err = pcall_err(helpers.exec_capture, "normal! 'z")
+    local err = pcall_err(t.exec_capture, "normal! 'z")
     eq('nvim_exec2(): Vim(normal):E20: Mark not set', err)
-    err = pcall_err(helpers.exec_capture, "normal! '.")
+    err = pcall_err(t.exec_capture, "normal! '.")
     eq('nvim_exec2(): Vim(normal):E20: Mark not set', err)
   end)
 
   it('errors when moving to a mark that is not set with `', function()
     command('edit ' .. file1)
-    local err = pcall_err(helpers.exec_capture, 'normal! `z')
+    local err = pcall_err(t.exec_capture, 'normal! `z')
     eq('nvim_exec2(): Vim(normal):E20: Mark not set', err)
-    err = pcall_err(helpers.exec_capture, 'normal! `>')
+    err = pcall_err(t.exec_capture, 'normal! `>')
     eq('nvim_exec2(): Vim(normal):E20: Mark not set', err)
   end)
 
   it("errors when moving to a global mark that is not set with '", function()
     command('edit ' .. file1)
-    local err = pcall_err(helpers.exec_capture, "normal! 'Z")
+    local err = pcall_err(t.exec_capture, "normal! 'Z")
     eq('nvim_exec2(): Vim(normal):E20: Mark not set', err)
   end)
 
   it('errors when moving to a global mark that is not set with `', function()
     command('edit ' .. file1)
-    local err = pcall_err(helpers.exec_capture, 'normal! `Z')
+    local err = pcall_err(t.exec_capture, 'normal! `Z')
     eq('nvim_exec2(): Vim(normal):E20: Mark not set', err)
   end)
 
@@ -166,7 +166,7 @@ describe('named marks', function()
     feed('mA')
     command('next')
     command('bw! ' .. file1)
-    local err = pcall_err(helpers.exec_capture, "normal! 'A")
+    local err = pcall_err(t.exec_capture, "normal! 'A")
     eq('nvim_exec2(): Vim(normal):E92: Buffer 1 not found', err)
     os.remove(file1)
   end)

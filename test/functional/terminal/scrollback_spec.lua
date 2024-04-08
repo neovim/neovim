@@ -1,26 +1,26 @@
 local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
-local thelpers = require('test.functional.terminal.helpers')
-local clear, eq = helpers.clear, helpers.eq
-local feed, testprg = helpers.feed, helpers.testprg
-local eval = helpers.eval
-local command = helpers.command
-local poke_eventloop = helpers.poke_eventloop
-local retry = helpers.retry
-local api = helpers.api
-local feed_data = thelpers.feed_data
-local pcall_err = helpers.pcall_err
-local exec_lua = helpers.exec_lua
-local assert_alive = helpers.assert_alive
-local skip = helpers.skip
-local is_os = helpers.is_os
+local t = require('test.functional.testutil')(after_each)
+local tt = require('test.functional.terminal.testutil')
+local clear, eq = t.clear, t.eq
+local feed, testprg = t.feed, t.testprg
+local eval = t.eval
+local command = t.command
+local poke_eventloop = t.poke_eventloop
+local retry = t.retry
+local api = t.api
+local feed_data = tt.feed_data
+local pcall_err = t.pcall_err
+local exec_lua = t.exec_lua
+local assert_alive = t.assert_alive
+local skip = t.skip
+local is_os = t.is_os
 
 describe(':terminal scrollback', function()
   local screen
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup(nil, nil, 30)
+    screen = tt.screen_setup(nil, nil, 30)
   end)
 
   describe('when the limit is exceeded', function()
@@ -397,9 +397,9 @@ describe("'scrollback' option", function()
   it('set to 0 behaves as 1', function()
     local screen
     if is_os('win') then
-      screen = thelpers.screen_setup(nil, { 'cmd.exe' }, 30)
+      screen = tt.screen_setup(nil, { 'cmd.exe' }, 30)
     else
-      screen = thelpers.screen_setup(nil, { 'sh' }, 30)
+      screen = tt.screen_setup(nil, { 'sh' }, 30)
     end
 
     api.nvim_set_option_value('scrollback', 0, {})
@@ -414,10 +414,10 @@ describe("'scrollback' option", function()
     local screen
     if is_os('win') then
       command([[let $PROMPT='$$']])
-      screen = thelpers.screen_setup(nil, { 'cmd.exe' }, 30)
+      screen = tt.screen_setup(nil, { 'cmd.exe' }, 30)
     else
       command('let $PS1 = "$"')
-      screen = thelpers.screen_setup(nil, { 'sh' }, 30)
+      screen = tt.screen_setup(nil, { 'sh' }, 30)
     end
 
     api.nvim_set_option_value('scrollback', 200, {})
@@ -479,7 +479,7 @@ describe("'scrollback' option", function()
 
   it('deletes extra lines immediately', function()
     -- Scrollback is 10 on screen_setup
-    local screen = thelpers.screen_setup(nil, nil, 30)
+    local screen = tt.screen_setup(nil, nil, 30)
     local lines = {}
     for i = 1, 30 do
       table.insert(lines, 'line' .. tostring(i))

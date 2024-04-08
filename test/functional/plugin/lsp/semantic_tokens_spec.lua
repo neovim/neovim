@@ -1,19 +1,19 @@
-local helpers = require('test.functional.helpers')(after_each)
-local lsp_helpers = require('test.functional.plugin.lsp.helpers')
+local t = require('test.functional.testutil')(after_each)
+local t_lsp = require('test.functional.plugin.lsp.testutil')
 local Screen = require('test.functional.ui.screen')
 
-local command = helpers.command
-local dedent = helpers.dedent
-local eq = helpers.eq
-local exec_lua = helpers.exec_lua
-local feed = helpers.feed
-local feed_command = helpers.feed_command
-local insert = helpers.insert
-local matches = helpers.matches
-local api = helpers.api
+local command = t.command
+local dedent = t.dedent
+local eq = t.eq
+local exec_lua = t.exec_lua
+local feed = t.feed
+local feed_command = t.feed_command
+local insert = t.insert
+local matches = t.matches
+local api = t.api
 
-local clear_notrace = lsp_helpers.clear_notrace
-local create_server_definition = lsp_helpers.create_server_definition
+local clear_notrace = t_lsp.clear_notrace
+local create_server_definition = t_lsp.create_server_definition
 
 before_each(function()
   clear_notrace()

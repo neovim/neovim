@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eval = helpers.eval
-local clear = helpers.clear
-local command = helpers.command
+local eval = t.eval
+local clear = t.clear
+local command = t.command
 
 describe('autocmd FileType', function()
   before_each(clear)
 
   it('is triggered by :help only once', function()
-    helpers.add_builddir_to_rtp()
+    t.add_builddir_to_rtp()
     command('let g:foo = 0')
     command('autocmd FileType help let g:foo = g:foo + 1')
     command('help help')

@@ -1,13 +1,13 @@
 -- Tests for :[count]close! and :[count]hide
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eq = helpers.eq
-local poke_eventloop = helpers.poke_eventloop
-local eval = helpers.eval
-local feed = helpers.feed
-local clear = helpers.clear
-local command = helpers.command
+local eq = t.eq
+local poke_eventloop = t.poke_eventloop
+local eval = t.eval
+local feed = t.feed
+local clear = t.clear
+local command = t.command
 
 describe('close_count', function()
   setup(clear)

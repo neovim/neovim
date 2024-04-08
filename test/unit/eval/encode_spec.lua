@@ -1,16 +1,16 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
-local eval_helpers = require('test.unit.eval.helpers')
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
+local t_eval = require('test.unit.eval.testutil')
 
-local cimport = helpers.cimport
-local to_cstr = helpers.to_cstr
-local eq = helpers.eq
+local cimport = t.cimport
+local to_cstr = t.to_cstr
+local eq = t.eq
 
-local list = eval_helpers.list
-local lst2tbl = eval_helpers.lst2tbl
-local type_key = eval_helpers.type_key
-local list_type = eval_helpers.list_type
-local null_string = eval_helpers.null_string
+local list = t_eval.list
+local lst2tbl = t_eval.lst2tbl
+local type_key = t_eval.type_key
+local list_type = t_eval.list_type
+local null_string = t_eval.null_string
 
 local encode = cimport('./src/nvim/eval/encode.h')
 

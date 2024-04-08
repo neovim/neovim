@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local api = helpers.api
-local clear = helpers.clear
-local eq = helpers.eq
-local exec_capture = helpers.exec_capture
-local exec_lua = helpers.exec_lua
-local feed = helpers.feed
+local api = t.api
+local clear = t.clear
+local eq = t.eq
+local exec_capture = t.exec_capture
+local exec_lua = t.exec_lua
+local feed = t.feed
 
 -- Reference text
 -- aa

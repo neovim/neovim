@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local exc_exec = helpers.exc_exec
-local command = helpers.command
-local clear = helpers.clear
-local api = helpers.api
-local fn = helpers.fn
-local eq = helpers.eq
+local exc_exec = t.exc_exec
+local command = t.command
+local clear = t.clear
+local api = t.api
+local fn = t.fn
+local eq = t.eq
 
 local function redir_exec(cmd)
   api.nvim_set_var('__redir_exec_cmd', cmd)

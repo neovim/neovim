@@ -1,11 +1,11 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
 
-local cimport = helpers.cimport
-local cstr = helpers.cstr
-local eq = helpers.eq
-local ffi = helpers.ffi
-local to_cstr = helpers.to_cstr
+local cimport = t.cimport
+local cstr = t.cstr
+local eq = t.eq
+local ffi = t.ffi
+local to_cstr = t.to_cstr
 
 local cimp = cimport('stdlib.h', './src/nvim/memory.h')
 

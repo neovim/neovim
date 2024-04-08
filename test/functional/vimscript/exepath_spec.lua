@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
-local eq, clear, call = helpers.eq, helpers.clear, helpers.call
-local command = helpers.command
-local exc_exec = helpers.exc_exec
-local matches = helpers.matches
-local is_os = helpers.is_os
-local set_shell_powershell = helpers.set_shell_powershell
-local eval = helpers.eval
+local t = require('test.functional.testutil')(after_each)
+local eq, clear, call = t.eq, t.clear, t.call
+local command = t.command
+local exc_exec = t.exc_exec
+local matches = t.matches
+local is_os = t.is_os
+local set_shell_powershell = t.set_shell_powershell
+local eval = t.eval
 
 local find_dummies = function(ext_pat)
   local tmp_path = eval('$PATH')

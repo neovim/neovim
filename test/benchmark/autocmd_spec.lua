@@ -1,7 +1,7 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local exec_lua = helpers.exec_lua
+local clear = t.clear
+local exec_lua = t.exec_lua
 
 local N = 7500
 

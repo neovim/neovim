@@ -1,10 +1,10 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
 
-local child_call_once = helpers.child_call_once
-local cimport = helpers.cimport
-local ffi = helpers.ffi
-local eq = helpers.eq
+local child_call_once = t.child_call_once
+local cimport = t.cimport
+local ffi = t.ffi
+local eq = t.eq
 
 local multiqueue = cimport('./test/unit/fixtures/multiqueue.h')
 

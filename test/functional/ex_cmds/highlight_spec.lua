@@ -1,11 +1,11 @@
 local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
-local eq, command = helpers.eq, helpers.command
-local clear = helpers.clear
-local eval, exc_exec = helpers.eval, helpers.exc_exec
-local exec = helpers.exec
-local fn = helpers.fn
-local api = helpers.api
+local t = require('test.functional.testutil')(after_each)
+local eq, command = t.eq, t.command
+local clear = t.clear
+local eval, exc_exec = t.eval, t.exc_exec
+local exec = t.exec
+local fn = t.fn
+local api = t.api
 
 describe(':highlight', function()
   local screen

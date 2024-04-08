@@ -1,8 +1,8 @@
 -- Tests for List and Dictionary types.
 
-local helpers = require('test.functional.helpers')(after_each)
-local feed, source = helpers.feed, helpers.source
-local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
+local t = require('test.functional.testutil')(after_each)
+local feed, source = t.feed, t.source
+local clear, feed_command, expect = t.clear, t.feed_command, t.expect
 
 describe('list and dictionary types', function()
   before_each(clear)

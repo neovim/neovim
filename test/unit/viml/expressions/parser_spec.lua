@@ -1,29 +1,29 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
-local viml_helpers = require('test.unit.viml.helpers')
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
+local t_viml = require('test.unit.viml.testutil')
 
-local make_enum_conv_tab = helpers.make_enum_conv_tab
-local child_call_once = helpers.child_call_once
-local alloc_log_new = helpers.alloc_log_new
-local kvi_destroy = helpers.kvi_destroy
-local conv_enum = helpers.conv_enum
-local debug_log = helpers.debug_log
-local ptr2key = helpers.ptr2key
-local cimport = helpers.cimport
-local ffi = helpers.ffi
-local neq = helpers.neq
-local eq = helpers.eq
-local mergedicts_copy = helpers.mergedicts_copy
+local make_enum_conv_tab = t.make_enum_conv_tab
+local child_call_once = t.child_call_once
+local alloc_log_new = t.alloc_log_new
+local kvi_destroy = t.kvi_destroy
+local conv_enum = t.conv_enum
+local debug_log = t.debug_log
+local ptr2key = t.ptr2key
+local cimport = t.cimport
+local ffi = t.ffi
+local neq = t.neq
+local eq = t.eq
+local mergedicts_copy = t.mergedicts_copy
 local format_string = require('test.format_string').format_string
 local format_luav = require('test.format_string').format_luav
-local intchar2lua = helpers.intchar2lua
-local dictdiff = helpers.dictdiff
+local intchar2lua = t.intchar2lua
+local dictdiff = t.dictdiff
 
-local conv_ccs = viml_helpers.conv_ccs
-local new_pstate = viml_helpers.new_pstate
-local conv_cmp_type = viml_helpers.conv_cmp_type
-local pstate_set_str = viml_helpers.pstate_set_str
-local conv_expr_asgn_type = viml_helpers.conv_expr_asgn_type
+local conv_ccs = t_viml.conv_ccs
+local new_pstate = t_viml.new_pstate
+local conv_cmp_type = t_viml.conv_cmp_type
+local pstate_set_str = t_viml.pstate_set_str
+local conv_expr_asgn_type = t_viml.conv_expr_asgn_type
 
 local lib = cimport('./src/nvim/viml/parser/expressions.h', './src/nvim/syntax.h')
 

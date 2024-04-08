@@ -1,17 +1,17 @@
 -- Test server -> client RPC scenarios. Note: unlike `rpcnotify`, to evaluate
 -- `rpcrequest` calls we need the client event loop to be running.
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear, eval = helpers.clear, helpers.eval
-local eq, neq, run, stop = helpers.eq, helpers.neq, helpers.run, helpers.stop
-local nvim_prog, command, fn = helpers.nvim_prog, helpers.command, helpers.fn
-local source, next_msg = helpers.source, helpers.next_msg
-local ok = helpers.ok
-local api = helpers.api
-local spawn, merge_args = helpers.spawn, helpers.merge_args
-local set_session = helpers.set_session
-local pcall_err = helpers.pcall_err
-local assert_alive = helpers.assert_alive
+local clear, eval = t.clear, t.eval
+local eq, neq, run, stop = t.eq, t.neq, t.run, t.stop
+local nvim_prog, command, fn = t.nvim_prog, t.command, t.fn
+local source, next_msg = t.source, t.next_msg
+local ok = t.ok
+local api = t.api
+local spawn, merge_args = t.spawn, t.merge_args
+local set_session = t.set_session
+local pcall_err = t.pcall_err
+local assert_alive = t.assert_alive
 
 describe('server -> client', function()
   local cid
@@ -259,7 +259,7 @@ describe('server -> client', function()
       pcall(fn.jobstop, jobid)
     end)
 
-    if helpers.skip(helpers.is_os('win')) then
+    if t.skip(t.is_os('win')) then
       return
     end
 
@@ -280,7 +280,7 @@ describe('server -> client', function()
   end)
 
   describe('connecting to another (peer) nvim', function()
-    local nvim_argv = merge_args(helpers.nvim_argv, { '--headless' })
+    local nvim_argv = merge_args(t.nvim_argv, { '--headless' })
     local function connect_test(server, mode, address)
       local serverpid = fn.getpid()
       local client = spawn(nvim_argv, false, nil, true)

@@ -1,17 +1,17 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local eq = helpers.eq
-local eval = helpers.eval
-local exec = helpers.exec
-local fn = helpers.fn
-local mkdir_p = helpers.mkdir_p
-local rmdir = helpers.rmdir
-local write_file = helpers.write_file
+local clear = t.clear
+local eq = t.eq
+local eval = t.eval
+local exec = t.exec
+local fn = t.fn
+local mkdir_p = t.mkdir_p
+local rmdir = t.rmdir
+local write_file = t.write_file
 
 describe('runtime:', function()
   local plug_dir = 'Test_Plugin'
-  local sep = helpers.get_pathsep()
+  local sep = t.get_pathsep()
   local init = 'dummy_init.lua'
 
   setup(function()

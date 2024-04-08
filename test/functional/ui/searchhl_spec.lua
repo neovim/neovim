@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local command = helpers.command
-local feed_command = helpers.feed_command
-local eq = helpers.eq
-local eval = helpers.eval
-local fn = helpers.fn
-local testprg = helpers.testprg
+local clear, feed, insert = t.clear, t.feed, t.insert
+local command = t.command
+local feed_command = t.feed_command
+local eq = t.eq
+local eval = t.eval
+local fn = t.fn
+local testprg = t.testprg
 
 describe('search highlighting', function()
   local screen

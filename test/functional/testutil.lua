@@ -1,25 +1,25 @@
 local uv = vim.uv
-local global_helpers = require('test.helpers')
+local t_global = require('test.testutil')
 
 local Session = require('test.client.session')
 local uv_stream = require('test.client.uv_stream')
 local SocketStream = uv_stream.SocketStream
 local ChildProcessStream = uv_stream.ChildProcessStream
 
-local check_cores = global_helpers.check_cores
-local check_logs = global_helpers.check_logs
-local dedent = global_helpers.dedent
-local eq = global_helpers.eq
-local is_os = global_helpers.is_os
-local ok = global_helpers.ok
+local check_cores = t_global.check_cores
+local check_logs = t_global.check_logs
+local dedent = t_global.dedent
+local eq = t_global.eq
+local is_os = t_global.is_os
+local ok = t_global.ok
 local sleep = uv.sleep
-local fail = global_helpers.fail
+local fail = t_global.fail
 
---- @class test.functional.helpers: test.helpers
-local module = vim.deepcopy(global_helpers)
+--- @class test.functional.testutil: test.testutil
+local module = vim.deepcopy(t_global)
 
 local runtime_set = 'set runtimepath^=./build/lib/nvim/'
-module.nvim_prog = (os.getenv('NVIM_PRG') or global_helpers.paths.test_build_dir .. '/bin/nvim')
+module.nvim_prog = (os.getenv('NVIM_PRG') or t_global.paths.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
 module.nvim_set = (
   'set shortmess+=IS background=light termguicolors noswapfile noautoindent startofline'
@@ -790,7 +790,7 @@ local function do_rmdir(path)
   for file in vim.fs.dir(path) do
     if file ~= '.' and file ~= '..' then
       local abspath = path .. '/' .. file
-      if global_helpers.isdir(abspath) then
+      if t_global.isdir(abspath) then
         do_rmdir(abspath) -- recurse
       else
         local ret, err = os.remove(abspath)
@@ -965,7 +965,7 @@ function module.alter_slashes(obj)
 end
 
 local load_factor = 1
-if global_helpers.is_ci() then
+if t_global.is_ci() then
   -- Compute load factor only once (but outside of any tests).
   module.clear()
   module.request('nvim_command', 'source test/old/testdir/load.vim')
@@ -1022,7 +1022,7 @@ function module.mkdir_p(path)
   return os.execute((is_os('win') and 'mkdir ' .. path or 'mkdir -p ' .. path))
 end
 
---- @return test.functional.helpers
+--- @return test.functional.testutil
 return function(after_each)
   if after_each then
     after_each(function()

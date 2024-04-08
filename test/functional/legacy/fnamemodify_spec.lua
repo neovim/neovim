@@ -1,8 +1,8 @@
 -- Test filename modifiers.
 
-local helpers = require('test.functional.helpers')(after_each)
-local clear, source = helpers.clear, helpers.source
-local call, eq, nvim = helpers.call, helpers.eq, helpers.api
+local t = require('test.functional.testutil')(after_each)
+local clear, source = t.clear, t.source
+local call, eq, nvim = t.call, t.eq, t.api
 
 local function expected_empty()
   eq({}, nvim.nvim_get_vvar('errors'))

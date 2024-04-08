@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local clear, insert = helpers.clear, helpers.insert
-local command = helpers.command
-local api = helpers.api
-local testprg = helpers.testprg
-local thelpers = require('test.functional.terminal.helpers')
-local skip = helpers.skip
-local is_os = helpers.is_os
+local clear, insert = t.clear, t.insert
+local command = t.command
+local api = t.api
+local testprg = t.testprg
+local tt = require('test.functional.terminal.testutil')
+local skip = t.skip
+local is_os = t.is_os
 
 describe('ext_hlstate detailed highlights', function()
   local screen
@@ -236,11 +236,11 @@ describe('ext_hlstate detailed highlights', function()
       {7:                                        }|
     ]])
 
-    thelpers.feed_data('x ')
-    thelpers.set_fg(45)
-    thelpers.feed_data('y ')
-    thelpers.set_bold()
-    thelpers.feed_data('z\n')
+    tt.feed_data('x ')
+    tt.set_fg(45)
+    tt.feed_data('y ')
+    tt.set_bold()
+    tt.feed_data('z\n')
     -- TODO(bfredl): check if this distinction makes sense
     if is_os('win') then
       screen:expect([[
@@ -260,8 +260,8 @@ describe('ext_hlstate detailed highlights', function()
       ]])
     end
 
-    thelpers.feed_termcode('[A')
-    thelpers.feed_termcode('[2C')
+    tt.feed_termcode('[A')
+    tt.feed_termcode('[2C')
     if is_os('win') then
       screen:expect([[
         ^tty ready                               |
@@ -381,7 +381,7 @@ describe('ext_hlstate detailed highlights', function()
       },
     }
 
-    helpers.feed('3ggV2jd')
+    t.feed('3ggV2jd')
     --screen:redraw_debug()
     screen:expect {
       grid = [[
@@ -478,7 +478,7 @@ describe('ext_hlstate detailed highlights', function()
       },
     }
 
-    helpers.feed('3ggV2jd')
+    t.feed('3ggV2jd')
     --screen:redraw_debug()
     screen:expect {
       grid = [[
@@ -512,7 +512,7 @@ describe('ext_hlstate detailed highlights', function()
     end
     insert('last line')
 
-    helpers.feed('gg')
+    t.feed('gg')
     screen:expect {
       grid = [[
       ^first line                              |
@@ -555,7 +555,7 @@ describe('ext_hlstate detailed highlights', function()
       },
     }
 
-    helpers.feed(string.format('3ggV%ijd', num_lines - 2))
+    t.feed(string.format('3ggV%ijd', num_lines - 2))
     --screen:redraw_debug(nil, nil, 100000)
 
     local expected_ids = {}

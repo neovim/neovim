@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, command, eq = helpers.clear, helpers.command, helpers.eq
-local insert = helpers.insert
-local api = helpers.api
-local assert_alive = helpers.assert_alive
+local clear, command, eq = t.clear, t.command, t.eq
+local insert = t.insert
+local api = t.api
+local assert_alive = t.assert_alive
 
 describe('ui/ext_tabline', function()
   local screen

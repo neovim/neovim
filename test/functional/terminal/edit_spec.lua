@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local screen = require('test.functional.ui.screen')
 
-local testprg = helpers.testprg
-local command = helpers.command
-local fn = helpers.fn
-local api = helpers.api
-local clear = helpers.clear
-local eq = helpers.eq
-local matches = helpers.matches
+local testprg = t.testprg
+local command = t.command
+local fn = t.fn
+local api = t.api
+local clear = t.clear
+local eq = t.eq
+local matches = t.matches
 local pesc = vim.pesc
 
 describe(':edit term://*', function()

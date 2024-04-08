@@ -1,12 +1,12 @@
 -- Test for joining lines with marks in them (and with 'joinspaces' set/reset)
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local feed = helpers.feed
-local clear = helpers.clear
-local insert = helpers.insert
-local expect = helpers.expect
-local feed_command = helpers.feed_command
+local feed = t.feed
+local clear = t.clear
+local insert = t.insert
+local expect = t.expect
+local feed_command = t.feed_command
 
 describe('joining lines', function()
   before_each(clear)

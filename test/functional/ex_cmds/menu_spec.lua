@@ -1,8 +1,8 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear, command = helpers.clear, helpers.command
-local expect, feed = helpers.expect, helpers.feed
-local eq, eval = helpers.eq, helpers.eval
-local fn = helpers.fn
+local t = require('test.functional.testutil')(after_each)
+local clear, command = t.clear, t.command
+local expect, feed = t.expect, t.feed
+local eq, eval = t.eq, t.eval
+local fn = t.fn
 
 describe(':emenu', function()
   before_each(function()

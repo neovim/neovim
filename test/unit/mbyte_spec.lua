@@ -1,10 +1,10 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
 
-local ffi = helpers.ffi
-local eq = helpers.eq
+local ffi = t.ffi
+local eq = t.eq
 
-local lib = helpers.cimport('./src/nvim/mbyte.h', './src/nvim/charset.h', './src/nvim/grid.h')
+local lib = t.cimport('./src/nvim/mbyte.h', './src/nvim/charset.h', './src/nvim/grid.h')
 
 describe('mbyte', function()
   -- Convert from bytes to string
@@ -205,7 +205,7 @@ describe('mbyte', function()
   end)
 
   describe('utf_cp_bounds_len', function()
-    local to_cstr = helpers.to_cstr
+    local to_cstr = t.to_cstr
 
     local tests = {
       {

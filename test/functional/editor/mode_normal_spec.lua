@@ -1,11 +1,11 @@
 -- Normal mode tests.
 
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local feed = helpers.feed
-local fn = helpers.fn
-local command = helpers.command
-local eq = helpers.eq
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local feed = t.feed
+local fn = t.fn
+local command = t.command
+local eq = t.eq
 
 describe('Normal mode', function()
   before_each(clear)

@@ -1,10 +1,10 @@
 -- Some tests for buffer-local autocommands
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local expect = helpers.expect
-local command = helpers.command
+local clear = t.clear
+local expect = t.expect
+local command = t.command
 
 local fname = 'Xtest-functional-legacy-054'
 

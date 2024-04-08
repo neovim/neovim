@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local expect = helpers.expect
-local eval = helpers.eval
-local next_msg = helpers.next_msg
-local feed = helpers.feed
-local api = helpers.api
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local expect = t.expect
+local eval = t.eval
+local next_msg = t.next_msg
+local feed = t.feed
+local api = t.api
 
 describe('cmdline autocommands', function()
   local channel

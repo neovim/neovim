@@ -1,10 +1,10 @@
 -- Test for wordcount() function
 
-local helpers = require('test.functional.helpers')(after_each)
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, command = helpers.clear, helpers.command
-local eq, eval = helpers.eq, helpers.eval
-local poke_eventloop = helpers.poke_eventloop
+local t = require('test.functional.testutil')(after_each)
+local feed, insert, source = t.feed, t.insert, t.source
+local clear, command = t.clear, t.command
+local eq, eval = t.eq, t.eval
+local poke_eventloop = t.poke_eventloop
 
 describe('wordcount', function()
   before_each(clear)

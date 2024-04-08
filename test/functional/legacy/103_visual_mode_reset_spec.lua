@@ -1,8 +1,8 @@
 -- Test for visual mode not being reset causing E315 error.
 
-local helpers = require('test.functional.helpers')(after_each)
-local feed, source = helpers.feed, helpers.source
-local clear, expect = helpers.clear, helpers.expect
+local t = require('test.functional.testutil')(after_each)
+local feed, source = t.feed, t.source
+local clear, expect = t.clear, t.expect
 
 describe('E315 error', function()
   setup(clear)

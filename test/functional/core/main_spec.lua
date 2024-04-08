@@ -1,17 +1,17 @@
 local uv = vim.uv
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local eq = helpers.eq
-local matches = helpers.matches
-local feed = helpers.feed
-local eval = helpers.eval
-local clear = helpers.clear
-local fn = helpers.fn
-local nvim_prog_abs = helpers.nvim_prog_abs
-local write_file = helpers.write_file
-local is_os = helpers.is_os
-local skip = helpers.skip
+local eq = t.eq
+local matches = t.matches
+local feed = t.feed
+local eval = t.eval
+local clear = t.clear
+local fn = t.fn
+local nvim_prog_abs = t.nvim_prog_abs
+local write_file = t.write_file
+local is_os = t.is_os
+local skip = t.skip
 
 describe('command-line option', function()
   describe('-s', function()

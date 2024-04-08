@@ -1,18 +1,17 @@
 -- ShaDa compatibility support
-local helpers = require('test.functional.helpers')(after_each)
-local nvim_command, fn, eq = helpers.command, helpers.fn, helpers.eq
-local exc_exec = helpers.exc_exec
+local t = require('test.functional.testutil')(after_each)
+local nvim_command, fn, eq = t.command, t.fn, t.eq
+local exc_exec = t.exc_exec
 
-local shada_helpers = require('test.functional.shada.helpers')
-local reset, clear, get_shada_rw =
-  shada_helpers.reset, shada_helpers.clear, shada_helpers.get_shada_rw
-local read_shada_file = shada_helpers.read_shada_file
+local t_shada = require('test.functional.shada.testutil')
+local reset, clear, get_shada_rw = t_shada.reset, t_shada.clear, t_shada.get_shada_rw
+local read_shada_file = t_shada.read_shada_file
 
 local wshada, sdrcmd, shada_fname = get_shada_rw('Xtest-functional-shada-compatibility.shada')
 
 local mock_file_path = '/a/b/'
 local mock_file_path2 = '/d/e/'
-if helpers.is_os('win') then
+if t.is_os('win') then
   mock_file_path = 'C:/a/'
   mock_file_path2 = 'C:/d/'
 end

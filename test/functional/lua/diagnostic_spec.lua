@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
 local NIL = vim.NIL
-local command = helpers.command
-local clear = helpers.clear
-local exec_lua = helpers.exec_lua
-local eq = helpers.eq
-local matches = helpers.matches
-local api = helpers.api
-local pcall_err = helpers.pcall_err
-local fn = helpers.fn
+local command = t.command
+local clear = t.clear
+local exec_lua = t.exec_lua
+local eq = t.eq
+local matches = t.matches
+local api = t.api
+local pcall_err = t.pcall_err
+local fn = t.fn
 
 describe('vim.diagnostic', function()
   before_each(function()
@@ -1826,20 +1826,12 @@ describe('vim.diagnostic', function()
 
     it('respects legacy signs placed with :sign define or sign_define #26618', function()
       -- Legacy signs for diagnostics were deprecated in 0.10 and will be removed in 0.12
-      eq(0, helpers.fn.has('nvim-0.12'))
+      eq(0, t.fn.has('nvim-0.12'))
 
-      helpers.command(
-        'sign define DiagnosticSignError text= texthl= linehl=ErrorMsg numhl=ErrorMsg'
-      )
-      helpers.command(
-        'sign define DiagnosticSignWarn text= texthl= linehl=WarningMsg numhl=WarningMsg'
-      )
-      helpers.command(
-        'sign define DiagnosticSignInfo text= texthl= linehl=Underlined numhl=Underlined'
-      )
-      helpers.command(
-        'sign define DiagnosticSignHint text= texthl= linehl=Underlined numhl=Underlined'
-      )
+      t.command('sign define DiagnosticSignError text= texthl= linehl=ErrorMsg numhl=ErrorMsg')
+      t.command('sign define DiagnosticSignWarn text= texthl= linehl=WarningMsg numhl=WarningMsg')
+      t.command('sign define DiagnosticSignInfo text= texthl= linehl=Underlined numhl=Underlined')
+      t.command('sign define DiagnosticSignHint text= texthl= linehl=Underlined numhl=Underlined')
 
       local result = exec_lua [[
         vim.diagnostic.config({

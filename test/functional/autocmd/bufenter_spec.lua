@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local eval = helpers.eval
-local request = helpers.request
-local source = helpers.source
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local eval = t.eval
+local request = t.request
+local source = t.source
 
 describe('autocmd BufEnter', function()
   before_each(clear)
@@ -33,7 +33,7 @@ describe('autocmd BufEnter', function()
   end)
 
   it('triggered by ":split normal|:help|:bw"', function()
-    helpers.add_builddir_to_rtp()
+    t.add_builddir_to_rtp()
     command('split normal')
     command('wincmd j')
     command('help')

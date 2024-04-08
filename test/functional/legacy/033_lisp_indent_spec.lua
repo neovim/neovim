@@ -1,10 +1,10 @@
 -- Test for 'lisp'
 -- If the lisp feature is not enabled, this will fail!
 
-local helpers = require('test.functional.helpers')(after_each)
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local command, expect = helpers.command, helpers.expect
-local poke_eventloop = helpers.poke_eventloop
+local t = require('test.functional.testutil')(after_each)
+local clear, feed, insert = t.clear, t.feed, t.insert
+local command, expect = t.command, t.expect
+local poke_eventloop = t.poke_eventloop
 
 describe('lisp indent', function()
   setup(clear)

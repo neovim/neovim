@@ -1,8 +1,8 @@
 -- Tests for errorformat.
 
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local command, expect = helpers.command, helpers.expect
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local command, expect = t.command, t.expect
 
 describe('errorformat', function()
   setup(clear)

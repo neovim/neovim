@@ -1,13 +1,13 @@
 -- Test for various eval features.
 
-local helpers = require('test.functional.helpers')(after_each)
-local assert_alive = helpers.assert_alive
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, command, expect = helpers.clear, helpers.command, helpers.expect
-local eq, eval, write_file = helpers.eq, helpers.eval, helpers.write_file
-local poke_eventloop = helpers.poke_eventloop
-local exc_exec = helpers.exc_exec
-local dedent = helpers.dedent
+local t = require('test.functional.testutil')(after_each)
+local assert_alive = t.assert_alive
+local feed, insert, source = t.feed, t.insert, t.source
+local clear, command, expect = t.clear, t.command, t.expect
+local eq, eval, write_file = t.eq, t.eval, t.write_file
+local poke_eventloop = t.poke_eventloop
+local exc_exec = t.exc_exec
+local dedent = t.dedent
 
 describe('eval', function()
   setup(function()

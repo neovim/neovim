@@ -1,15 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
-local assert_alive = helpers.assert_alive
-local eval, command, feed = helpers.eval, helpers.command, helpers.feed
-local eq, clear, insert = helpers.eq, helpers.clear, helpers.insert
-local expect, write_file = helpers.expect, helpers.write_file
-local feed_command = helpers.feed_command
-local source = helpers.source
-local missing_provider = helpers.missing_provider
-local matches = helpers.matches
-local pcall_err = helpers.pcall_err
-local fn = helpers.fn
-local dedent = helpers.dedent
+local t = require('test.functional.testutil')(after_each)
+local assert_alive = t.assert_alive
+local eval, command, feed = t.eval, t.command, t.feed
+local eq, clear, insert = t.eq, t.clear, t.insert
+local expect, write_file = t.expect, t.write_file
+local feed_command = t.feed_command
+local source = t.source
+local missing_provider = t.missing_provider
+local matches = t.matches
+local pcall_err = t.pcall_err
+local fn = t.fn
+local dedent = t.dedent
 
 do
   clear()
@@ -153,7 +153,7 @@ describe('python3 provider', function()
   end)
 
   it('RPC call to expand("<afile>") during BufDelete #5245 #5617', function()
-    helpers.add_builddir_to_rtp()
+    t.add_builddir_to_rtp()
     source([=[
       python3 << EOF
       import vim

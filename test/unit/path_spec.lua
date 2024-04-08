@@ -1,17 +1,17 @@
 local uv = vim.uv
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
 
-local cimport = helpers.cimport
-local eq = helpers.eq
-local neq = helpers.neq
-local ffi = helpers.ffi
-local cstr = helpers.cstr
-local to_cstr = helpers.to_cstr
-local NULL = helpers.NULL
-local OK = helpers.OK
-local FAIL = helpers.FAIL
-local mkdir = helpers.mkdir
+local cimport = t.cimport
+local eq = t.eq
+local neq = t.neq
+local ffi = t.ffi
+local cstr = t.cstr
+local to_cstr = t.to_cstr
+local NULL = t.NULL
+local OK = t.OK
+local FAIL = t.FAIL
+local mkdir = t.mkdir
 
 cimport('string.h')
 local cimp = cimport('./src/nvim/os/os.h', './src/nvim/path.h')
@@ -380,8 +380,8 @@ describe('path.c', function()
       return buf, result
     end
 
-    local function get_buf_len(s, t)
-      return math.max(string.len(s), string.len(t)) + 1
+    local function get_buf_len(s, q)
+      return math.max(string.len(s), string.len(q)) + 1
     end
 
     itp('fails if given filename is NULL', function()

@@ -1,15 +1,15 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
 local uv = vim.uv
-local child_call_once = helpers.child_call_once
+local child_call_once = t.child_call_once
 local sleep = uv.sleep
 
-local ffi = helpers.ffi
-local cimport = helpers.cimport
-local to_cstr = helpers.to_cstr
-local neq = helpers.neq
-local eq = helpers.eq
-local mkdir = helpers.mkdir
+local ffi = t.ffi
+local cimport = t.cimport
+local to_cstr = t.to_cstr
+local neq = t.neq
+local eq = t.eq
+local mkdir = t.mkdir
 
 local options = cimport('./src/nvim/option_vars.h')
 local undo = cimport('./src/nvim/undo.h')
@@ -151,12 +151,12 @@ describe('u_write_undo', function()
     local file_contents = 'testing permissions'
     -- Write a text file where the undofile should go
     local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, false))
-    helpers.write_file(correct_name, file_contents, true, false)
+    t.write_file(correct_name, file_contents, true, false)
 
     -- Call with `forceit`.
     u_write_undo(correct_name, true, file_buffer, buffer_hash)
 
-    local undo_file_contents = helpers.read_file(correct_name)
+    local undo_file_contents = t.read_file(correct_name)
 
     neq(file_contents, undo_file_contents)
     local success, deletion_err = os.remove(correct_name) -- delete the file now that we're done with it.

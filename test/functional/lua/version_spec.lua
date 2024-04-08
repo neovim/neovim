@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local eq = helpers.eq
-local ok = helpers.ok
-local exec_lua = helpers.exec_lua
-local matches = helpers.matches
-local pcall_err = helpers.pcall_err
-local fn = helpers.fn
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local eq = t.eq
+local ok = t.ok
+local exec_lua = t.exec_lua
+local matches = t.matches
+local pcall_err = t.pcall_err
+local fn = t.fn
 
 local function v(ver)
   return vim.version._version(ver)

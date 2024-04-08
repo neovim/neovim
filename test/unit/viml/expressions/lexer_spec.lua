@@ -1,20 +1,20 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
-local viml_helpers = require('test.unit.viml.helpers')
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
+local t_viml = require('test.unit.viml.testutil')
 
-local child_call_once = helpers.child_call_once
-local conv_enum = helpers.conv_enum
-local cimport = helpers.cimport
-local ffi = helpers.ffi
-local eq = helpers.eq
-local shallowcopy = helpers.shallowcopy
-local intchar2lua = helpers.intchar2lua
+local child_call_once = t.child_call_once
+local conv_enum = t.conv_enum
+local cimport = t.cimport
+local ffi = t.ffi
+local eq = t.eq
+local shallowcopy = t.shallowcopy
+local intchar2lua = t.intchar2lua
 
-local conv_ccs = viml_helpers.conv_ccs
-local new_pstate = viml_helpers.new_pstate
-local conv_cmp_type = viml_helpers.conv_cmp_type
-local pstate_set_str = viml_helpers.pstate_set_str
-local conv_expr_asgn_type = viml_helpers.conv_expr_asgn_type
+local conv_ccs = t_viml.conv_ccs
+local new_pstate = t_viml.new_pstate
+local conv_cmp_type = t_viml.conv_cmp_type
+local pstate_set_str = t_viml.pstate_set_str
+local conv_expr_asgn_type = t_viml.conv_expr_asgn_type
 
 local lib = cimport('./src/nvim/viml/parser/expressions.h')
 

@@ -2,9 +2,9 @@
 -- Also test formatting a paragraph.
 -- Also test undo after ":%s" and formatting.
 
-local helpers = require('test.functional.helpers')(after_each)
-local feed, insert = helpers.feed, helpers.insert
-local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
+local t = require('test.functional.testutil')(after_each)
+local feed, insert = t.feed, t.insert
+local clear, feed_command, expect = t.clear, t.feed_command, t.expect
 
 describe('alignment', function()
   setup(clear)

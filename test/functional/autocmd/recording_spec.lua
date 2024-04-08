@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local eq = helpers.eq
-local eval = helpers.eval
-local source_vim = helpers.source
+local clear = t.clear
+local eq = t.eq
+local eval = t.eval
+local source_vim = t.source
 
 describe('RecordingEnter', function()
   before_each(clear)

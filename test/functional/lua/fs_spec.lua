@@ -1,16 +1,16 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local exec_lua = helpers.exec_lua
-local eq = helpers.eq
-local mkdir_p = helpers.mkdir_p
-local rmdir = helpers.rmdir
-local nvim_dir = helpers.nvim_dir
-local test_build_dir = helpers.paths.test_build_dir
-local test_source_path = helpers.paths.test_source_path
-local nvim_prog = helpers.nvim_prog
-local is_os = helpers.is_os
-local mkdir = helpers.mkdir
+local clear = t.clear
+local exec_lua = t.exec_lua
+local eq = t.eq
+local mkdir_p = t.mkdir_p
+local rmdir = t.rmdir
+local nvim_dir = t.nvim_dir
+local test_build_dir = t.paths.test_build_dir
+local test_source_path = t.paths.test_source_path
+local nvim_prog = t.nvim_prog
+local is_os = t.is_os
+local mkdir = t.mkdir
 
 local nvim_prog_basename = is_os('win') and 'nvim.exe' or 'nvim'
 

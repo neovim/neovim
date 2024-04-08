@@ -1,15 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local clear = helpers.clear
-local command = helpers.command
-local dedent = helpers.dedent
-local eq = helpers.eq
-local fn = helpers.fn
-local feed = helpers.feed
-local exec_capture = helpers.exec_capture
-local write_file = helpers.write_file
-local api = helpers.api
+local clear = t.clear
+local command = t.command
+local dedent = t.dedent
+local eq = t.eq
+local fn = t.fn
+local feed = t.feed
+local exec_capture = t.exec_capture
+local write_file = t.write_file
+local api = t.api
 
 describe('jumplist', function()
   local fname1 = 'Xtest-functional-normal-jump'

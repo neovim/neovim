@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local api = helpers.api
-local eq = helpers.eq
-local nvim_eval = helpers.eval
-local nvim_command = helpers.command
-local exc_exec = helpers.exc_exec
-local ok = helpers.ok
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local api = t.api
+local eq = t.eq
+local nvim_eval = t.eval
+local nvim_command = t.command
+local exc_exec = t.exc_exec
+local ok = t.ok
 local NIL = vim.NIL
 
 describe('autoload/msgpack.vim', function()

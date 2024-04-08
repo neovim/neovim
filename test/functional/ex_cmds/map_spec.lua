@@ -1,16 +1,16 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local eq = helpers.eq
-local exec = helpers.exec
-local exec_capture = helpers.exec_capture
-local feed = helpers.feed
-local api = helpers.api
-local clear = helpers.clear
-local command = helpers.command
-local expect = helpers.expect
-local insert = helpers.insert
-local eval = helpers.eval
+local eq = t.eq
+local exec = t.exec
+local exec_capture = t.exec_capture
+local feed = t.feed
+local api = t.api
+local clear = t.clear
+local command = t.command
+local expect = t.expect
+local insert = t.insert
+local eval = t.eval
 
 describe(':*map', function()
   before_each(clear)

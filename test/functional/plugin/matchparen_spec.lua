@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local clear = helpers.clear
-local command = helpers.command
-local api = helpers.api
-local feed = helpers.feed
-local eq = helpers.eq
+local clear = t.clear
+local command = t.command
+local api = t.api
+local feed = t.feed
+local eq = t.eq
 
 describe('matchparen', function()
   local screen --- @type test.functional.ui.screen

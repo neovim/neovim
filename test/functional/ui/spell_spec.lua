@@ -1,13 +1,13 @@
 -- Test for scenarios involving 'spell'
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local exec = helpers.exec
-local feed = helpers.feed
-local insert = helpers.insert
-local api = helpers.api
-local is_os = helpers.is_os
+local clear = t.clear
+local exec = t.exec
+local feed = t.feed
+local insert = t.insert
+local api = t.api
+local is_os = t.is_os
 
 describe("'spell'", function()
   local screen

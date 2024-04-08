@@ -1,8 +1,8 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local command = helpers.command
-local fn = helpers.fn
-local eq = helpers.eq
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local command = t.command
+local fn = t.fn
+local eq = t.eq
 
 describe('mksession', function()
   before_each(clear)

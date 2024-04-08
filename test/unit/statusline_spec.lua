@@ -1,15 +1,15 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
 
-local to_cstr = helpers.to_cstr
-local get_str = helpers.ffi.string
-local eq = helpers.eq
-local NULL = helpers.NULL
+local to_cstr = t.to_cstr
+local get_str = t.ffi.string
+local eq = t.eq
+local NULL = t.NULL
 
-local buffer = helpers.cimport('./src/nvim/buffer.h')
-local globals = helpers.cimport('./src/nvim/globals.h')
-local stl = helpers.cimport('./src/nvim/statusline.h')
-local grid = helpers.cimport('./src/nvim/grid.h')
+local buffer = t.cimport('./src/nvim/buffer.h')
+local globals = t.cimport('./src/nvim/globals.h')
+local stl = t.cimport('./src/nvim/statusline.h')
+local grid = t.cimport('./src/nvim/grid.h')
 
 describe('build_stl_str_hl', function()
   local buffer_byte_size = 100

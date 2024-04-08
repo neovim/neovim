@@ -1,18 +1,18 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local eq = helpers.eq
-local eval = helpers.eval
-local exec = helpers.exec
-local exec_lua = helpers.exec_lua
-local expect = helpers.expect
-local feed = helpers.feed
-local fn = helpers.fn
-local api = helpers.api
-local source = helpers.source
-local command = helpers.command
-local exec_capture = helpers.exec_capture
-local pcall_err = helpers.pcall_err
+local clear = t.clear
+local eq = t.eq
+local eval = t.eval
+local exec = t.exec
+local exec_lua = t.exec_lua
+local expect = t.expect
+local feed = t.feed
+local fn = t.fn
+local api = t.api
+local source = t.source
+local command = t.command
+local exec_capture = t.exec_capture
+local pcall_err = t.pcall_err
 
 describe('maparg()', function()
   before_each(clear)

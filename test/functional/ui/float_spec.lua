@@ -1,24 +1,24 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 local os = require('os')
-local clear, feed = helpers.clear, helpers.feed
-local assert_alive = helpers.assert_alive
-local command, feed_command = helpers.command, helpers.feed_command
-local eval = helpers.eval
-local eq = helpers.eq
-local neq = helpers.neq
-local expect = helpers.expect
-local exec = helpers.exec
-local exec_lua = helpers.exec_lua
-local insert = helpers.insert
-local api = helpers.api
-local fn = helpers.fn
-local run = helpers.run
-local pcall_err = helpers.pcall_err
+local clear, feed = t.clear, t.feed
+local assert_alive = t.assert_alive
+local command, feed_command = t.command, t.feed_command
+local eval = t.eval
+local eq = t.eq
+local neq = t.neq
+local expect = t.expect
+local exec = t.exec
+local exec_lua = t.exec_lua
+local insert = t.insert
+local api = t.api
+local fn = t.fn
+local run = t.run
+local pcall_err = t.pcall_err
 local tbl_contains = vim.tbl_contains
-local curbuf = helpers.api.nvim_get_current_buf
-local curwin = helpers.api.nvim_get_current_win
-local curtab = helpers.api.nvim_get_current_tabpage
+local curbuf = t.api.nvim_get_current_buf
+local curwin = t.api.nvim_get_current_win
+local curtab = t.api.nvim_get_current_tabpage
 local NIL = vim.NIL
 
 describe('float window', function()
@@ -4080,7 +4080,7 @@ describe('float window', function()
 
     if multigrid then
       pending("supports second UI without multigrid", function()
-        local session2 = helpers.connect(eval('v:servername'))
+        local session2 = t.connect(eval('v:servername'))
         print(session2:request("nvim_eval", "2+2"))
         local screen2 = Screen.new(40,7)
         screen2:attach(nil, session2)
@@ -7978,7 +7978,7 @@ describe('float window', function()
     end)
 
     it("correctly redraws when overlaid windows are resized #13991", function()
-	  helpers.source([[
+	  t.source([[
         let popup_config = {"relative" : "editor",
                     \ "width" : 7,
                     \ "height" : 3,
@@ -8042,7 +8042,7 @@ describe('float window', function()
         ]])
       end
 
-      helpers.source([[
+      t.source([[
         let new_popup_config = {"width" : 1, "height" : 3}
         let new_border_config = {"width" : 3, "height" : 5}
 
@@ -8057,7 +8057,7 @@ describe('float window', function()
         nnoremap zz <cmd>call Resize()<cr>
       ]])
 
-      helpers.feed("zz")
+      t.feed("zz")
       if multigrid then
         screen:expect{grid=[[
         ## grid 1

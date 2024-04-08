@@ -1,12 +1,12 @@
 local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
-local clear, feed = helpers.clear, helpers.feed
-local expect = helpers.expect
-local eq = helpers.eq
-local poke_eventloop = helpers.poke_eventloop
-local exc_exec = helpers.exc_exec
-local feed_command = helpers.feed_command
-local exec = helpers.exec
+local t = require('test.functional.testutil')(after_each)
+local clear, feed = t.clear, t.feed
+local expect = t.expect
+local eq = t.eq
+local poke_eventloop = t.poke_eventloop
+local exc_exec = t.exc_exec
+local feed_command = t.feed_command
+local exec = t.exec
 
 before_each(clear)
 

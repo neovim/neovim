@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local exec = helpers.exec
-local feed = helpers.feed
-local api = helpers.api
-local nvim_dir = helpers.nvim_dir
-local assert_alive = helpers.assert_alive
+local clear = t.clear
+local command = t.command
+local exec = t.exec
+local feed = t.feed
+local api = t.api
+local nvim_dir = t.nvim_dir
+local assert_alive = t.assert_alive
 
 before_each(clear)
 

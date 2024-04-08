@@ -1,10 +1,10 @@
 -- shada buffer list saving/reading support
-local helpers = require('test.functional.helpers')(after_each)
-local nvim_command, fn, eq, api = helpers.command, helpers.fn, helpers.eq, helpers.api
-local expect_exit = helpers.expect_exit
+local t = require('test.functional.testutil')(after_each)
+local nvim_command, fn, eq, api = t.command, t.fn, t.eq, t.api
+local expect_exit = t.expect_exit
 
-local shada_helpers = require('test.functional.shada.helpers')
-local reset, clear = shada_helpers.reset, shada_helpers.clear
+local t_shada = require('test.functional.shada.testutil')
+local reset, clear = t_shada.reset, t_shada.clear
 
 describe('shada support code', function()
   local testfilename = 'Xtestfile-functional-shada-buffers'

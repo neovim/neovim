@@ -1,9 +1,8 @@
-local helpers = require('test.functional.helpers')(after_each)
-local eq, clear, call, write_file, command =
-  helpers.eq, helpers.clear, helpers.call, helpers.write_file, helpers.command
-local exc_exec = helpers.exc_exec
-local eval = helpers.eval
-local is_os = helpers.is_os
+local t = require('test.functional.testutil')(after_each)
+local eq, clear, call, write_file, command = t.eq, t.clear, t.call, t.write_file, t.command
+local exc_exec = t.exc_exec
+local eval = t.eval
+local is_os = t.is_os
 
 describe('executable()', function()
   before_each(clear)

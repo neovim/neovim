@@ -1,7 +1,7 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local command = helpers.command
-local feed = helpers.feed
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local command = t.command
+local feed = t.feed
 local Screen = require('test.functional.ui.screen')
 
 describe(':digraphs', function()

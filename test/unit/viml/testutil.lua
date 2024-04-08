@@ -1,11 +1,11 @@
-local helpers = require('test.unit.helpers')(nil)
+local t = require('test.unit.testutil')(nil)
 
-local ffi = helpers.ffi
-local cimport = helpers.cimport
-local kvi_new = helpers.kvi_new
-local kvi_init = helpers.kvi_init
-local conv_enum = helpers.conv_enum
-local make_enum_conv_tab = helpers.make_enum_conv_tab
+local ffi = t.ffi
+local cimport = t.cimport
+local kvi_new = t.kvi_new
+local kvi_init = t.kvi_init
+local conv_enum = t.conv_enum
+local make_enum_conv_tab = t.make_enum_conv_tab
 
 local lib = cimport('./src/nvim/viml/parser/expressions.h')
 

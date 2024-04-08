@@ -1,10 +1,10 @@
-local helpers = require('test.functional.helpers')(after_each)
-local thelpers = require('test.functional.terminal.helpers')
-local clear = helpers.clear
-local feed_command = helpers.feed_command
-local feed_data = thelpers.feed_data
+local t = require('test.functional.testutil')(after_each)
+local tt = require('test.functional.terminal.testutil')
+local clear = t.clear
+local feed_command = t.feed_command
+local feed_data = tt.feed_data
 
-if helpers.skip(helpers.is_os('win')) then
+if t.skip(t.is_os('win')) then
   return
 end
 
@@ -14,7 +14,7 @@ describe('autoread TUI FocusGained/FocusLost', function()
 
   before_each(function()
     clear()
-    screen = thelpers.setup_child_nvim({
+    screen = tt.setup_child_nvim({
       '-u',
       'NONE',
       '-i',
@@ -39,7 +39,7 @@ describe('autoread TUI FocusGained/FocusLost', function()
     line 4
     ]]
 
-    helpers.write_file(path, '')
+    t.write_file(path, '')
     local atime = os.time() - 10
     vim.uv.fs_utime(path, atime, atime)
 
@@ -75,7 +75,7 @@ describe('autoread TUI FocusGained/FocusLost', function()
       unchanged = true,
     }
 
-    helpers.write_file(path, expected_addition)
+    t.write_file(path, expected_addition)
 
     feed_data('\027[I')
 

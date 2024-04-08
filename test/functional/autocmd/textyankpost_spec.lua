@@ -1,7 +1,7 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear, eval, eq = helpers.clear, helpers.eval, helpers.eq
-local feed, command, expect = helpers.feed, helpers.command, helpers.expect
-local api, fn, neq = helpers.api, helpers.fn, helpers.neq
+local t = require('test.functional.testutil')(after_each)
+local clear, eval, eq = t.clear, t.eval, t.eq
+local feed, command, expect = t.feed, t.command, t.expect
+local api, fn, neq = t.api, t.fn, t.neq
 
 describe('TextYankPost', function()
   before_each(function()

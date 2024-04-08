@@ -1,18 +1,18 @@
 local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local insert = helpers.insert
-local feed = helpers.feed
-local expect = helpers.expect
-local eq = helpers.eq
+local clear = t.clear
+local insert = t.insert
+local feed = t.feed
+local expect = t.expect
+local eq = t.eq
 local map = vim.tbl_map
 local filter = vim.tbl_filter
-local feed_command = helpers.feed_command
-local command = helpers.command
-local curbuf_contents = helpers.curbuf_contents
-local fn = helpers.fn
-local dedent = helpers.dedent
+local feed_command = t.feed_command
+local command = t.command
+local curbuf_contents = t.curbuf_contents
+local fn = t.fn
+local dedent = t.dedent
 
 local function reset()
   command('bwipe! | new')
@@ -75,7 +75,7 @@ describe('put command', function()
           extra_setup()
         end
         local orig_dotstr = fn.getreg('.')
-        helpers.ok(visual_marks_zero())
+        t.ok(visual_marks_zero())
         -- Make sure every test starts from the same conditions
         assert_no_change(test.exception_table, false)
         local was_cli = test.test_action()
@@ -890,7 +890,7 @@ describe('put command', function()
         -- check bell is not set by nvim before the action
         screen:sleep(50)
       end
-      helpers.ok(not screen.bell and not screen.visualbell)
+      t.ok(not screen.bell and not screen.visualbell)
       actions()
       screen:expect {
         condition = function()

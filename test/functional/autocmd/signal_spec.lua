@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local fn = helpers.fn
-local next_msg = helpers.next_msg
-local is_os = helpers.is_os
-local skip = helpers.skip
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local fn = t.fn
+local next_msg = t.next_msg
+local is_os = t.is_os
+local skip = t.skip
 
 if skip(is_os('win'), 'Only applies to POSIX systems') then
   return

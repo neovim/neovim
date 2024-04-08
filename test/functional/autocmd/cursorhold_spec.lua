@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local eq = helpers.eq
-local feed = helpers.feed
-local retry = helpers.retry
-local exec = helpers.source
+local clear = t.clear
+local eq = t.eq
+local feed = t.feed
+local retry = t.retry
+local exec = t.source
 local sleep = vim.uv.sleep
-local api = helpers.api
+local api = t.api
 
 before_each(clear)
 

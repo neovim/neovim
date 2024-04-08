@@ -1,7 +1,7 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear, eq, ok = helpers.clear, helpers.eq, helpers.ok
-local neq, command, fn = helpers.neq, helpers.command, helpers.fn
-local matches = helpers.matches
+local t = require('test.functional.testutil')(after_each)
+local clear, eq, ok = t.clear, t.eq, t.ok
+local neq, command, fn = t.neq, t.command, t.fn
+local matches = t.matches
 local reltime, reltimestr, reltimefloat = fn.reltime, fn.reltimestr, fn.reltimefloat
 
 describe('reltimestr(), reltimefloat()', function()

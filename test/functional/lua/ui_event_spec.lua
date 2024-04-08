@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local eq = helpers.eq
-local exec_lua = helpers.exec_lua
-local clear = helpers.clear
-local feed = helpers.feed
-local fn = helpers.fn
-local assert_log = helpers.assert_log
-local check_close = helpers.check_close
+local eq = t.eq
+local exec_lua = t.exec_lua
+local clear = t.clear
+local feed = t.feed
+local fn = t.fn
+local assert_log = t.assert_log
+local check_close = t.check_close
 
 local testlog = 'Xtest_lua_ui_event_log'
 
@@ -112,7 +112,7 @@ describe('vim.ui_attach', function()
 
   it('does not crash on exit', function()
     fn.system({
-      helpers.nvim_prog,
+      t.nvim_prog,
       '-u',
       'NONE',
       '-i',
@@ -124,7 +124,7 @@ describe('vim.ui_attach', function()
       '--cmd',
       'quitall!',
     })
-    eq(0, helpers.eval('v:shell_error'))
+    eq(0, t.eval('v:shell_error'))
   end)
 
   it('can receive accurate message kinds even if they are history', function()

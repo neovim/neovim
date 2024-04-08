@@ -1,11 +1,11 @@
 -- Test Visual block mode commands
 -- And test "U" in Visual mode, also on German sharp S.
 
-local helpers = require('test.functional.helpers')(after_each)
-local nvim, eq = helpers.api, helpers.eq
-local insert, feed = helpers.insert, helpers.feed
-local clear, expect = helpers.clear, helpers.expect
-local feed_command = helpers.feed_command
+local t = require('test.functional.testutil')(after_each)
+local nvim, eq = t.api, t.eq
+local insert, feed = t.insert, t.feed
+local clear, expect = t.clear, t.expect
+local feed_command = t.feed_command
 
 describe('Visual block mode', function()
   before_each(function()

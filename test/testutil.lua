@@ -16,7 +16,7 @@ local function shell_quote(str)
   return str
 end
 
---- @class test.helpers
+--- @class test.testutil
 local module = {
   paths = Paths,
 }
@@ -254,7 +254,7 @@ function module.pcall_err_withtrace(fn, ...)
 
   return (
     errmsg
-      :gsub('^%.%.%./helpers%.lua:0: ', '')
+      :gsub('^%.%.%./testutil%.lua:0: ', '')
       :gsub('^Error executing lua:- ', '')
       :gsub('^%[string "<nvim>"%]:0: ', '')
   )

@@ -1,13 +1,13 @@
 local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local command = helpers.command
-local expect_exit = helpers.expect_exit
-local api, eq, feed_command = helpers.api, helpers.eq, helpers.feed_command
-local feed, poke_eventloop = helpers.feed, helpers.poke_eventloop
-local ok = helpers.ok
-local eval = helpers.eval
+local clear = t.clear
+local command = t.command
+local expect_exit = t.expect_exit
+local api, eq, feed_command = t.api, t.eq, t.feed_command
+local feed, poke_eventloop = t.feed, t.poke_eventloop
+local ok = t.ok
+local eval = t.eval
 
 local shada_file = 'Xtest.shada'
 
@@ -66,12 +66,12 @@ describe(':oldfiles', function()
     feed_command('rshada!')
 
     local function get_oldfiles(cmd)
-      local t = eval([[split(execute(']] .. cmd .. [['), "\n")]])
-      for i, _ in ipairs(t) do
-        t[i] = t[i]:gsub('^%d+:%s+', '')
+      local q = eval([[split(execute(']] .. cmd .. [['), "\n")]])
+      for i, _ in ipairs(q) do
+        q[i] = q[i]:gsub('^%d+:%s+', '')
       end
-      table.sort(t)
-      return t
+      table.sort(q)
+      return q
     end
 
     local oldfiles = get_oldfiles('oldfiles')
@@ -109,7 +109,7 @@ describe(':browse oldfiles', function()
     -- Ensure v:oldfiles isn't busted.  Since things happen so fast,
     -- the ordering of v:oldfiles is unstable (it uses qsort() under-the-hood).
     -- Let's verify the contents and the length of v:oldfiles before moving on.
-    oldfiles = helpers.api.nvim_get_vvar('oldfiles')
+    oldfiles = t.api.nvim_get_vvar('oldfiles')
     eq(2, #oldfiles)
     ok(filename == oldfiles[1] or filename == oldfiles[2])
     ok(filename2 == oldfiles[1] or filename2 == oldfiles[2])

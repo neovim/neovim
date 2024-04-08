@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eq = helpers.eq
-local eval = helpers.eval
-local command = helpers.command
-local clear = helpers.clear
-local fn = helpers.fn
-local pcall_err = helpers.pcall_err
+local eq = t.eq
+local eval = t.eval
+local command = t.command
+local clear = t.clear
+local fn = t.fn
+local pcall_err = t.pcall_err
 
 before_each(clear)
 for _, func in ipairs({ 'min', 'max' }) do

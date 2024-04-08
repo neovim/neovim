@@ -1,8 +1,8 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local eval = helpers.eval
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local eval = t.eval
 
 -- oldtest: Test_missing_attr()
 describe('synIDattr()', function()

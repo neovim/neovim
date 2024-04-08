@@ -1,26 +1,26 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed = helpers.clear, helpers.feed
-local eval = helpers.eval
-local eq = helpers.eq
-local neq = helpers.neq
-local command = helpers.command
-local set_method_error = helpers.set_method_error
-local api = helpers.api
-local async_meths = helpers.async_meths
-local test_build_dir = helpers.paths.test_build_dir
-local nvim_prog = helpers.nvim_prog
-local testprg = helpers.testprg
-local exec = helpers.exec
-local exec_capture = helpers.exec_capture
-local exc_exec = helpers.exc_exec
-local exec_lua = helpers.exec_lua
-local poke_eventloop = helpers.poke_eventloop
-local assert_alive = helpers.assert_alive
-local retry = helpers.retry
-local is_os = helpers.is_os
-local fn = helpers.fn
-local skip = helpers.skip
+local clear, feed = t.clear, t.feed
+local eval = t.eval
+local eq = t.eq
+local neq = t.neq
+local command = t.command
+local set_method_error = t.set_method_error
+local api = t.api
+local async_meths = t.async_meths
+local test_build_dir = t.paths.test_build_dir
+local nvim_prog = t.nvim_prog
+local testprg = t.testprg
+local exec = t.exec
+local exec_capture = t.exec_capture
+local exc_exec = t.exc_exec
+local exec_lua = t.exec_lua
+local poke_eventloop = t.poke_eventloop
+local assert_alive = t.assert_alive
+local retry = t.retry
+local is_os = t.is_os
+local fn = t.fn
+local skip = t.skip
 
 describe('ui/ext_messages', function()
   local screen
@@ -2683,13 +2683,13 @@ end)
 it('pager works in headless mode with UI attached', function()
   skip(is_os('win'))
   clear()
-  local child_server = assert(helpers.new_pipename())
+  local child_server = assert(t.new_pipename())
   fn.jobstart({ nvim_prog, '--clean', '--headless', '--listen', child_server })
   retry(nil, nil, function()
     neq(nil, vim.uv.fs_stat(child_server))
   end)
 
-  local child_session = helpers.connect(child_server)
+  local child_session = t.connect(child_server)
   local child_screen = Screen.new(40, 6)
   child_screen:attach(nil, child_session)
   child_screen._default_attr_ids = nil -- TODO: unskip with new color scheme

@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local feed, eq, eval, ok = helpers.feed, helpers.eq, helpers.eval, helpers.ok
-local source, async_meths, run = helpers.source, helpers.async_meths, helpers.run
-local clear, command, fn = helpers.clear, helpers.command, helpers.fn
-local exc_exec = helpers.exc_exec
-local api = helpers.api
-local load_adjust = helpers.load_adjust
-local retry = helpers.retry
+local feed, eq, eval, ok = t.feed, t.eq, t.eval, t.ok
+local source, async_meths, run = t.source, t.async_meths, t.run
+local clear, command, fn = t.clear, t.command, t.fn
+local exc_exec = t.exc_exec
+local api = t.api
+local load_adjust = t.load_adjust
+local retry = t.retry
 
 describe('timers', function()
   before_each(function()

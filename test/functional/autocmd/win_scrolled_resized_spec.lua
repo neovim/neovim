@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local clear = helpers.clear
-local eq = helpers.eq
-local eval = helpers.eval
-local exec = helpers.exec
-local command = helpers.command
-local feed = helpers.feed
-local api = helpers.api
-local assert_alive = helpers.assert_alive
+local clear = t.clear
+local eq = t.eq
+local eval = t.eval
+local exec = t.exec
+local command = t.command
+local feed = t.feed
+local api = t.api
+local assert_alive = t.assert_alive
 
 before_each(clear)
 

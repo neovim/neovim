@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local eq = helpers.eq
-local eval = helpers.eval
-local fn = helpers.fn
-local api = helpers.api
-local exc_exec = helpers.exc_exec
+local clear = t.clear
+local eq = t.eq
+local eval = t.eval
+local fn = t.fn
+local api = t.api
+local exc_exec = t.exc_exec
 
 describe('printf()', function()
   before_each(clear)

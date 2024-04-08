@@ -1,19 +1,19 @@
 -- Test suite for testing luaeval() function
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local pcall_err = helpers.pcall_err
-local exc_exec = helpers.exc_exec
-local remove_trace = helpers.remove_trace
-local exec_lua = helpers.exec_lua
-local command = helpers.command
-local api = helpers.api
-local fn = helpers.fn
-local clear = helpers.clear
-local eval = helpers.eval
-local feed = helpers.feed
+local pcall_err = t.pcall_err
+local exc_exec = t.exc_exec
+local remove_trace = t.remove_trace
+local exec_lua = t.exec_lua
+local command = t.command
+local api = t.api
+local fn = t.fn
+local clear = t.clear
+local eval = t.eval
+local feed = t.feed
 local NIL = vim.NIL
-local eq = helpers.eq
+local eq = t.eq
 
 before_each(clear)
 
@@ -38,8 +38,8 @@ describe('luaeval()', function()
 
   describe('second argument', function()
     it('is successfully received', function()
-      local t = {t=true, f=false, --[[n=NIL,]] d={l={'string', 42, 0.42}}}
-      eq(t, fn.luaeval("_A", t))
+      local q = {t=true, f=false, --[[n=NIL,]] d={l={'string', 42, 0.42}}}
+      eq(q, fn.luaeval("_A", q))
       -- Not tested: nil, funcrefs, returned object identity: behaviour will
       -- most likely change.
     end)

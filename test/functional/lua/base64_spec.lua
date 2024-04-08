@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local exec_lua = helpers.exec_lua
-local eq = helpers.eq
-local pcall_err = helpers.pcall_err
-local matches = helpers.matches
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local exec_lua = t.exec_lua
+local eq = t.eq
+local pcall_err = t.pcall_err
+local matches = t.matches
 
 describe('vim.base64', function()
   before_each(clear)

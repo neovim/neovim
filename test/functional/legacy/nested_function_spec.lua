@@ -1,8 +1,8 @@
 -- Tests for nested function.
 
-local helpers = require('test.functional.helpers')(after_each)
-local clear, insert = helpers.clear, helpers.insert
-local command, expect, source = helpers.command, helpers.expect, helpers.source
+local t = require('test.functional.testutil')(after_each)
+local clear, insert = t.clear, t.insert
+local command, expect, source = t.command, t.expect, t.source
 
 describe('test_nested_function', function()
   setup(clear)

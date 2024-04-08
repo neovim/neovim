@@ -1,10 +1,10 @@
 -- Test suite for testing interactions with API bindings
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local exec_lua = helpers.exec_lua
-local command = helpers.command
-local clear = helpers.clear
-local eq = helpers.eq
+local exec_lua = t.exec_lua
+local command = t.command
+local clear = t.clear
+local eq = t.eq
 
 describe('vim.loader', function()
   before_each(clear)
@@ -35,7 +35,7 @@ describe('vim.loader', function()
       vim.loader.enable()
     ]]
 
-    local tmp = helpers.tmpname()
+    local tmp = t.tmpname()
     command('edit ' .. tmp)
 
     eq(
@@ -73,15 +73,15 @@ describe('vim.loader', function()
       vim.loader.enable()
     ]]
 
-    local t = helpers.tmpname()
-    assert(os.remove(t))
-    assert(helpers.mkdir(t))
-    assert(helpers.mkdir(t .. '/%'))
-    local tmp1 = t .. '/%/x'
-    local tmp2 = t .. '/%%x'
+    local tmp = t.tmpname()
+    assert(os.remove(tmp))
+    assert(t.mkdir(tmp))
+    assert(t.mkdir(tmp .. '/%'))
+    local tmp1 = tmp .. '/%/x'
+    local tmp2 = tmp .. '/%%x'
 
-    helpers.write_file(tmp1, 'return 1', true)
-    helpers.write_file(tmp2, 'return 2', true)
+    t.write_file(tmp1, 'return 1', true)
+    t.write_file(tmp2, 'return 2', true)
     vim.uv.fs_utime(tmp1, 0, 0)
     vim.uv.fs_utime(tmp2, 0, 0)
     eq(1, exec_lua('return loadfile(...)()', tmp1))

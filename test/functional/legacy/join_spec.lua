@@ -1,8 +1,8 @@
 -- Test for joining lines
 
-local helpers = require('test.functional.helpers')(after_each)
-local clear, eq = helpers.clear, helpers.eq
-local eval, command = helpers.eval, helpers.command
+local t = require('test.functional.testutil')(after_each)
+local clear, eq = t.clear, t.eq
+local eval, command = t.eval, t.command
 
 describe('joining lines', function()
   before_each(clear)

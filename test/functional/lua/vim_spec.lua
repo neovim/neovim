@@ -1,32 +1,32 @@
 -- Test suite for testing interactions with API bindings
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local nvim_prog = helpers.nvim_prog
-local fn = helpers.fn
-local api = helpers.api
-local command = helpers.command
-local dedent = helpers.dedent
-local insert = helpers.insert
-local clear = helpers.clear
-local eq = helpers.eq
-local ok = helpers.ok
+local nvim_prog = t.nvim_prog
+local fn = t.fn
+local api = t.api
+local command = t.command
+local dedent = t.dedent
+local insert = t.insert
+local clear = t.clear
+local eq = t.eq
+local ok = t.ok
 local pesc = vim.pesc
-local eval = helpers.eval
-local feed = helpers.feed
-local pcall_err = helpers.pcall_err
-local exec_lua = helpers.exec_lua
-local matches = helpers.matches
-local exec = helpers.exec
+local eval = t.eval
+local feed = t.feed
+local pcall_err = t.pcall_err
+local exec_lua = t.exec_lua
+local matches = t.matches
+local exec = t.exec
 local NIL = vim.NIL
-local retry = helpers.retry
-local next_msg = helpers.next_msg
-local remove_trace = helpers.remove_trace
-local mkdir_p = helpers.mkdir_p
-local rmdir = helpers.rmdir
-local write_file = helpers.write_file
-local poke_eventloop = helpers.poke_eventloop
-local assert_alive = helpers.assert_alive
+local retry = t.retry
+local next_msg = t.next_msg
+local remove_trace = t.remove_trace
+local mkdir_p = t.mkdir_p
+local rmdir = t.rmdir
+local write_file = t.write_file
+local poke_eventloop = t.poke_eventloop
+local assert_alive = t.assert_alive
 
 describe('lua stdlib', function()
   before_each(clear)
@@ -592,8 +592,8 @@ describe('lua stdlib', function()
       { 'x*yz*oo*l', '*', true, false, { 'x', 'yz', 'oo', 'l' } },
     }
 
-    for _, t in ipairs(tests) do
-      eq(t[5], vim.split(t[1], t[2], { plain = t[3], trimempty = t[4] }), t[1])
+    for _, q in ipairs(tests) do
+      eq(q[5], vim.split(q[1], q[2], { plain = q[3], trimempty = q[4] }), q[1])
     end
 
     -- Test old signature
@@ -603,8 +603,8 @@ describe('lua stdlib', function()
       { 'abc', '.-' },
     }
 
-    for _, t in ipairs(loops) do
-      matches('Infinite loop detected', pcall_err(vim.split, t[1], t[2]))
+    for _, q in ipairs(loops) do
+      matches('Infinite loop detected', pcall_err(vim.split, q[1], q[2]))
     end
 
     -- Validates args.
@@ -626,8 +626,8 @@ describe('lua stdlib', function()
       { 'r\n', 'r' },
     }
 
-    for _, t in ipairs(trims) do
-      assert(t[2], trim(t[1]))
+    for _, q in ipairs(trims) do
+      assert(q[2], trim(q[1]))
     end
 
     -- Validates args.
@@ -636,8 +636,8 @@ describe('lua stdlib', function()
 
   it('vim.inspect', function()
     -- just make sure it basically works, it has its own test suite
-    local inspect = function(t, opts)
-      return exec_lua('return vim.inspect(...)', t, opts)
+    local inspect = function(q, opts)
+      return exec_lua('return vim.inspect(...)', q, opts)
     end
 
     eq('2', inspect(2))
@@ -1569,7 +1569,7 @@ describe('lua stdlib', function()
     eq(NIL, exec_lua([[return vim.g.Unknown_script_func]]))
 
     -- Check if autoload works properly
-    local pathsep = helpers.get_pathsep()
+    local pathsep = t.get_pathsep()
     local xconfig = 'Xhome' .. pathsep .. 'Xconfig'
     local xdata = 'Xhome' .. pathsep .. 'Xdata'
     local autoload_folder = table.concat({ xconfig, 'nvim', 'autoload' }, pathsep)
@@ -4071,7 +4071,7 @@ describe('vim.keymap', function()
     feed('asdf\n')
 
     eq(1, exec_lua [[return GlobalCount]])
-    eq('\nNo mapping found', helpers.exec_capture('nmap asdf'))
+    eq('\nNo mapping found', t.exec_capture('nmap asdf'))
   end)
 
   it('works with buffer-local mappings', function()
@@ -4095,7 +4095,7 @@ describe('vim.keymap', function()
     feed('asdf\n')
 
     eq(1, exec_lua [[return GlobalCount]])
-    eq('\nNo mapping found', helpers.exec_capture('nmap asdf'))
+    eq('\nNo mapping found', t.exec_capture('nmap asdf'))
   end)
 
   it('does not mutate the opts parameter', function()

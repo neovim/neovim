@@ -1,27 +1,27 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, curbuf, curbuf_contents, curwin, eq, neq, matches, ok, feed, insert, eval =
-  helpers.clear,
-  helpers.api.nvim_get_current_buf,
-  helpers.curbuf_contents,
-  helpers.api.nvim_get_current_win,
-  helpers.eq,
-  helpers.neq,
-  helpers.matches,
-  helpers.ok,
-  helpers.feed,
-  helpers.insert,
-  helpers.eval
-local poke_eventloop = helpers.poke_eventloop
-local exec = helpers.exec
-local exec_lua = helpers.exec_lua
-local fn = helpers.fn
-local request = helpers.request
+  t.clear,
+  t.api.nvim_get_current_buf,
+  t.curbuf_contents,
+  t.api.nvim_get_current_win,
+  t.eq,
+  t.neq,
+  t.matches,
+  t.ok,
+  t.feed,
+  t.insert,
+  t.eval
+local poke_eventloop = t.poke_eventloop
+local exec = t.exec
+local exec_lua = t.exec_lua
+local fn = t.fn
+local request = t.request
 local NIL = vim.NIL
-local api = helpers.api
-local command = helpers.command
-local pcall_err = helpers.pcall_err
-local assert_alive = helpers.assert_alive
+local api = t.api
+local command = t.command
+local pcall_err = t.pcall_err
+local assert_alive = t.assert_alive
 
 describe('API/win', function()
   before_each(clear)
@@ -1297,7 +1297,7 @@ describe('API/win', function()
         local tab1 = api.nvim_get_current_tabpage()
         local tab1_win = api.nvim_get_current_win()
 
-        helpers.command('tabnew')
+        t.command('tabnew')
         local tab2 = api.nvim_get_current_tabpage()
         local tab2_win = api.nvim_get_current_win()
 

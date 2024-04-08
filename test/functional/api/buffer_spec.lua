@@ -1,21 +1,21 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local eq = helpers.eq
-local ok = helpers.ok
-local describe_lua_and_rpc = helpers.describe_lua_and_rpc(describe)
-local api = helpers.api
-local fn = helpers.fn
-local request = helpers.request
-local exc_exec = helpers.exc_exec
-local exec_lua = helpers.exec_lua
-local feed_command = helpers.feed_command
-local insert = helpers.insert
+local clear = t.clear
+local eq = t.eq
+local ok = t.ok
+local describe_lua_and_rpc = t.describe_lua_and_rpc(describe)
+local api = t.api
+local fn = t.fn
+local request = t.request
+local exc_exec = t.exc_exec
+local exec_lua = t.exec_lua
+local feed_command = t.feed_command
+local insert = t.insert
 local NIL = vim.NIL
-local command = helpers.command
-local feed = helpers.feed
-local pcall_err = helpers.pcall_err
-local assert_alive = helpers.assert_alive
+local command = t.command
+local feed = t.feed
+local pcall_err = t.pcall_err
+local assert_alive = t.assert_alive
 
 describe('api/buf', function()
   before_each(clear)

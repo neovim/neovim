@@ -1,4 +1,4 @@
-" Also used by: test/functional/helpers.lua
+" Also used by: test/functional/testutil.lua
 
 function! s:load_factor() abort
   let timeout = 200

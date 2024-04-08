@@ -1,10 +1,10 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local feed = helpers.feed
-local clear = helpers.clear
-local insert = helpers.insert
-local feed_command = helpers.feed_command
-local expect = helpers.expect
+local feed = t.feed
+local clear = t.clear
+local insert = t.insert
+local feed_command = t.feed_command
+local expect = t.expect
 
 describe('text formatting', function()
   setup(clear)

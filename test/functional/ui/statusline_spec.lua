@@ -1,17 +1,17 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local assert_alive = helpers.assert_alive
-local clear = helpers.clear
-local command = helpers.command
-local feed = helpers.feed
-local eq = helpers.eq
-local fn = helpers.fn
-local api = helpers.api
-local exec = helpers.exec
-local exec_lua = helpers.exec_lua
-local eval = helpers.eval
+local assert_alive = t.assert_alive
+local clear = t.clear
+local command = t.command
+local feed = t.feed
+local eq = t.eq
+local fn = t.fn
+local api = t.api
+local exec = t.exec
+local exec_lua = t.exec_lua
+local eval = t.eval
 local sleep = vim.uv.sleep
-local pcall_err = helpers.pcall_err
+local pcall_err = t.pcall_err
 
 local mousemodels = { 'extend', 'popup', 'popup_setpos' }
 

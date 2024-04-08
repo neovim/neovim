@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
-local eq = helpers.eq
-local ok = helpers.ok
-local call = helpers.call
-local clear = helpers.clear
-local is_os = helpers.is_os
+local t = require('test.functional.testutil')(after_each)
+local eq = t.eq
+local ok = t.ok
+local call = t.call
+local clear = t.clear
+local is_os = t.is_os
 
 describe('hostname()', function()
   before_each(clear)

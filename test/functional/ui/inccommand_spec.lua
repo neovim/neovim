@@ -1,22 +1,22 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local eval = helpers.eval
-local expect = helpers.expect
-local feed = helpers.feed
-local insert = helpers.insert
-local fn = helpers.fn
-local api = helpers.api
-local neq = helpers.neq
-local ok = helpers.ok
-local retry = helpers.retry
-local source = helpers.source
-local poke_eventloop = helpers.poke_eventloop
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local eval = t.eval
+local expect = t.expect
+local feed = t.feed
+local insert = t.insert
+local fn = t.fn
+local api = t.api
+local neq = t.neq
+local ok = t.ok
+local retry = t.retry
+local source = t.source
+local poke_eventloop = t.poke_eventloop
 local sleep = vim.uv.sleep
-local testprg = helpers.testprg
-local assert_alive = helpers.assert_alive
+local testprg = t.testprg
+local assert_alive = t.assert_alive
 
 local default_text = [[
   Inc substitution on
@@ -1736,9 +1736,9 @@ describe("'inccommand' autocommands", function()
     CmdwinLeave = {},
   }
 
-  local function bufferlist(t)
+  local function bufferlist(q)
     local s = ''
-    for _, buffer in pairs(t) do
+    for _, buffer in pairs(q) do
       s = s .. ', ' .. tostring(buffer)
     end
     return s
@@ -2559,7 +2559,7 @@ describe(':substitute', function()
 end)
 
 it(':substitute with inccommand during :terminal activity', function()
-  if helpers.skip_fragile(pending) then
+  if t.skip_fragile(pending) then
     return
   end
   retry(2, 40000, function()

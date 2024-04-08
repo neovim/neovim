@@ -1,11 +1,11 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
 
-local eq = helpers.eq
-local neq = helpers.neq
-local cimport = helpers.cimport
-local child_call_once = helpers.child_call_once
-local child_cleanup_once = helpers.child_cleanup_once
+local eq = t.eq
+local neq = t.neq
+local cimport = t.cimport
+local child_call_once = t.child_call_once
+local child_cleanup_once = t.child_cleanup_once
 
 local lib = cimport('./src/nvim/os/os.h', './src/nvim/fileio.h')
 
@@ -19,7 +19,7 @@ describe('tempfile related functions', function()
   end)
 
   local vim_gettempdir = function()
-    return helpers.ffi.string(lib.vim_gettempdir())
+    return t.ffi.string(lib.vim_gettempdir())
   end
 
   describe('vim_gettempdir', function()
@@ -28,7 +28,7 @@ describe('tempfile related functions', function()
       assert.True(dir ~= nil and dir:len() > 0)
       -- os_file_is_writable returns 2 for a directory which we have rights
       -- to write into.
-      eq(2, lib.os_file_is_writable(helpers.to_cstr(dir)))
+      eq(2, lib.os_file_is_writable(t.to_cstr(dir)))
       for entry in vim.fs.dir(dir) do
         assert.True(entry == '.' or entry == '..')
       end
@@ -41,7 +41,7 @@ describe('tempfile related functions', function()
 
   describe('vim_tempname', function()
     local vim_tempname = function()
-      return helpers.ffi.string(lib.vim_tempname())
+      return t.ffi.string(lib.vim_tempname())
     end
 
     itp('generate name of non-existing file', function()

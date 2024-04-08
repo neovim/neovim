@@ -1,40 +1,40 @@
-local helpers = require('test.functional.helpers')(after_each)
-local thelpers = require('test.functional.terminal.helpers')
+local t = require('test.functional.testutil')(after_each)
+local tt = require('test.functional.terminal.testutil')
 
-local clear = helpers.clear
-local eq = helpers.eq
-local eval = helpers.eval
-local exc_exec = helpers.exc_exec
-local feed_command = helpers.feed_command
-local feed = helpers.feed
-local insert = helpers.insert
-local neq = helpers.neq
-local next_msg = helpers.next_msg
-local testprg = helpers.testprg
-local ok = helpers.ok
-local source = helpers.source
-local write_file = helpers.write_file
-local mkdir = helpers.mkdir
-local rmdir = helpers.rmdir
-local assert_alive = helpers.assert_alive
-local command = helpers.command
-local fn = helpers.fn
-local os_kill = helpers.os_kill
-local retry = helpers.retry
-local api = helpers.api
+local clear = t.clear
+local eq = t.eq
+local eval = t.eval
+local exc_exec = t.exc_exec
+local feed_command = t.feed_command
+local feed = t.feed
+local insert = t.insert
+local neq = t.neq
+local next_msg = t.next_msg
+local testprg = t.testprg
+local ok = t.ok
+local source = t.source
+local write_file = t.write_file
+local mkdir = t.mkdir
+local rmdir = t.rmdir
+local assert_alive = t.assert_alive
+local command = t.command
+local fn = t.fn
+local os_kill = t.os_kill
+local retry = t.retry
+local api = t.api
 local NIL = vim.NIL
-local poke_eventloop = helpers.poke_eventloop
-local get_pathsep = helpers.get_pathsep
-local pathroot = helpers.pathroot
-local exec_lua = helpers.exec_lua
-local nvim_set = helpers.nvim_set
-local expect_twostreams = helpers.expect_twostreams
-local expect_msg_seq = helpers.expect_msg_seq
-local pcall_err = helpers.pcall_err
-local matches = helpers.matches
+local poke_eventloop = t.poke_eventloop
+local get_pathsep = t.get_pathsep
+local pathroot = t.pathroot
+local exec_lua = t.exec_lua
+local nvim_set = t.nvim_set
+local expect_twostreams = t.expect_twostreams
+local expect_msg_seq = t.expect_msg_seq
+local pcall_err = t.pcall_err
+local matches = t.matches
 local Screen = require('test.functional.ui.screen')
-local skip = helpers.skip
-local is_os = helpers.is_os
+local skip = t.skip
+local is_os = t.is_os
 
 describe('jobs', function()
   local channel
@@ -307,7 +307,7 @@ describe('jobs', function()
 
   it('preserves NULs', function()
     -- Make a file with NULs in it.
-    local filename = helpers.tmpname()
+    local filename = t.tmpname()
     write_file(filename, 'abc\0def\n')
 
     command("let j = jobstart(['cat', '" .. filename .. "'], g:job_opts)")
@@ -732,7 +732,7 @@ describe('jobs', function()
   describe('jobwait()', function()
     before_each(function()
       if is_os('win') then
-        helpers.set_shell_powershell()
+        t.set_shell_powershell()
       end
     end)
 
@@ -1182,7 +1182,7 @@ describe('jobs', function()
   end)
 
   it('does not close the same handle twice on exit #25086', function()
-    local filename = string.format('%s.lua', helpers.tmpname())
+    local filename = string.format('%s.lua', t.tmpname())
     write_file(
       filename,
       [[
@@ -1195,7 +1195,7 @@ describe('jobs', function()
     ]]
     )
 
-    local screen = thelpers.setup_child_nvim({
+    local screen = tt.setup_child_nvim({
       '--cmd',
       'set notermguicolors',
       '-i',
@@ -1239,7 +1239,7 @@ describe('pty process teardown', function()
     skip(fn.executable('sleep') == 0, 'missing "sleep" command')
     -- Use a nested nvim (in :term) to test without --headless.
     fn.termopen({
-      helpers.nvim_prog,
+      t.nvim_prog,
       '-u',
       'NONE',
       '-i',

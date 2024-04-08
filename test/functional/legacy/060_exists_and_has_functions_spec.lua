@@ -1,9 +1,9 @@
 -- Tests for the exists() and has() functions.
 
-local helpers = require('test.functional.helpers')(after_each)
-local source = helpers.source
-local clear, expect = helpers.clear, helpers.expect
-local write_file = helpers.write_file
+local t = require('test.functional.testutil')(after_each)
+local source = t.source
+local clear, expect = t.clear, t.expect
+local write_file = t.write_file
 
 describe('exists() and has() functions', function()
   setup(function()

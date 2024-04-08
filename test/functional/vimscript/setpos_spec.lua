@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
-local setpos = helpers.fn.setpos
-local getpos = helpers.fn.getpos
-local insert = helpers.insert
-local clear = helpers.clear
-local command = helpers.command
-local eval = helpers.eval
-local eq = helpers.eq
-local exc_exec = helpers.exc_exec
+local t = require('test.functional.testutil')(after_each)
+local setpos = t.fn.setpos
+local getpos = t.fn.getpos
+local insert = t.insert
+local clear = t.clear
+local command = t.command
+local eval = t.eval
+local eq = t.eq
+local exc_exec = t.exc_exec
 
 describe('setpos() function', function()
   before_each(function()

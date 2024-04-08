@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
+local clear = t.clear
 local eq, api, nvim_eval, nvim_command, exc_exec, fn, nvim_feed =
-  helpers.eq, helpers.api, helpers.eval, helpers.command, helpers.exc_exec, helpers.fn, helpers.feed
-local neq = helpers.neq
-local read_file = helpers.read_file
+  t.eq, t.api, t.eval, t.command, t.exc_exec, t.fn, t.feed
+local neq = t.neq
+local read_file = t.read_file
 
-local shada_helpers = require('test.functional.shada.helpers')
-local get_shada_rw = shada_helpers.get_shada_rw
+local t_shada = require('test.functional.shada.testutil')
+local get_shada_rw = t_shada.get_shada_rw
 
 local function reset(shada_file)
   clear { args = { '-u', 'NORC', '-i', shada_file or 'NONE' } }
@@ -2612,7 +2612,7 @@ end)
 
 describe('plugin/shada.vim', function()
   local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
-  local eol = helpers.is_os('win') and '\r\n' or '\n'
+  local eol = t.is_os('win') and '\r\n' or '\n'
   before_each(function()
     -- Note: reset() is called explicitly in each test.
     os.remove(fname)

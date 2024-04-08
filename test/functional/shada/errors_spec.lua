@@ -1,10 +1,9 @@
 -- ShaDa errors handling support
-local helpers = require('test.functional.helpers')(after_each)
-local nvim_command, eq, exc_exec = helpers.command, helpers.eq, helpers.exc_exec
+local t = require('test.functional.testutil')(after_each)
+local nvim_command, eq, exc_exec = t.command, t.eq, t.exc_exec
 
-local shada_helpers = require('test.functional.shada.helpers')
-local reset, clear, get_shada_rw =
-  shada_helpers.reset, shada_helpers.clear, shada_helpers.get_shada_rw
+local t_shada = require('test.functional.shada.testutil')
+local reset, clear, get_shada_rw = t_shada.reset, t_shada.clear, t_shada.get_shada_rw
 
 local wshada, sdrcmd, shada_fname, clean = get_shada_rw('Xtest-functional-shada-errors.shada')
 

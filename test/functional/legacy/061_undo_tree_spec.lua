@@ -1,18 +1,18 @@
 -- Tests for undo tree and :earlier and :later.
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local feed_command = helpers.feed_command
-local write_file = helpers.write_file
-local command = helpers.command
-local source = helpers.source
-local expect = helpers.expect
-local clear = helpers.clear
-local feed = helpers.feed
-local eval = helpers.eval
-local eq = helpers.eq
+local feed_command = t.feed_command
+local write_file = t.write_file
+local command = t.command
+local source = t.source
+local expect = t.expect
+local clear = t.clear
+local feed = t.feed
+local eval = t.eval
+local eq = t.eq
 
 local function expect_empty_buffer()
-  -- The space will be removed by helpers.dedent but is needed because dedent
+  -- The space will be removed by t.dedent but is needed because dedent
   -- will fail if it can not find the common indent of the given lines.
   return expect(' ')
 end
@@ -99,7 +99,7 @@ describe('undo tree:', function()
         expect_line('123456abc')
       end
 
-      helpers.retry(2, nil, test_earlier_later)
+      t.retry(2, nil, test_earlier_later)
     end)
 
     it('file-write specifications', function()

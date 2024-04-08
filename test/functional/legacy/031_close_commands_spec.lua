@@ -9,15 +9,15 @@
 -- :buf
 -- :edit
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local feed = helpers.feed
-local clear = helpers.clear
-local source = helpers.source
-local insert = helpers.insert
-local expect = helpers.expect
-local feed_command = helpers.feed_command
-local expect_exit = helpers.expect_exit
+local feed = t.feed
+local clear = t.clear
+local source = t.source
+local insert = t.insert
+local expect = t.expect
+local feed_command = t.feed_command
+local expect_exit = t.expect_exit
 
 describe('Commands that close windows and/or buffers', function()
   local function cleanup()

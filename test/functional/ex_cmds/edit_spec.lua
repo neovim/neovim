@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
-local eq, command, fn = helpers.eq, helpers.command, helpers.fn
-local ok = helpers.ok
-local matches = helpers.matches
-local clear = helpers.clear
-local feed = helpers.feed
+local t = require('test.functional.testutil')(after_each)
+local eq, command, fn = t.eq, t.command, t.fn
+local ok = t.ok
+local matches = t.matches
+local clear = t.clear
+local feed = t.feed
 
 describe(':edit', function()
   before_each(function()

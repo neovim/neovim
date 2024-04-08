@@ -1,7 +1,7 @@
-local helpers = require('test.functional.helpers')(after_each)
-local eq = helpers.eq
-local eval = helpers.eval
-local clear = helpers.clear
+local t = require('test.functional.testutil')(after_each)
+local eq = t.eq
+local eval = t.eval
+local clear = t.clear
 
 describe('Division operator', function()
   before_each(clear)

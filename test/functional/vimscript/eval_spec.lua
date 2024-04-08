@@ -9,37 +9,37 @@
 --    test/functional/vimscript/<funcname>_spec.lua
 --    test/functional/vimscript/functions_spec.lua
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local mkdir = helpers.mkdir
-local clear = helpers.clear
-local eq = helpers.eq
-local exec = helpers.exec
-local exc_exec = helpers.exc_exec
-local exec_lua = helpers.exec_lua
-local exec_capture = helpers.exec_capture
-local eval = helpers.eval
-local command = helpers.command
-local write_file = helpers.write_file
-local api = helpers.api
+local mkdir = t.mkdir
+local clear = t.clear
+local eq = t.eq
+local exec = t.exec
+local exc_exec = t.exc_exec
+local exec_lua = t.exec_lua
+local exec_capture = t.exec_capture
+local eval = t.eval
+local command = t.command
+local write_file = t.write_file
+local api = t.api
 local sleep = vim.uv.sleep
-local matches = helpers.matches
-local pcall_err = helpers.pcall_err
-local assert_alive = helpers.assert_alive
-local poke_eventloop = helpers.poke_eventloop
-local feed = helpers.feed
-local expect_exit = helpers.expect_exit
+local matches = t.matches
+local pcall_err = t.pcall_err
+local assert_alive = t.assert_alive
+local poke_eventloop = t.poke_eventloop
+local feed = t.feed
+local expect_exit = t.expect_exit
 
 describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
   local max_func_args = 20 -- from eval.h
-  local range = helpers.fn.range
+  local range = t.fn.range
 
   before_each(clear)
 
   it('printf()', function()
-    local printf = helpers.fn.printf
-    local rep = helpers.fn['repeat']
+    local printf = t.fn.printf
+    local rep = t.fn['repeat']
     local expected = '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,'
     eq(expected, printf(rep('%d,', max_func_args - 1), unpack(range(2, max_func_args))))
     local ret = exc_exec('call printf("", 2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21)')
@@ -47,7 +47,7 @@ describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
   end)
 
   it('rpcnotify()', function()
-    local rpcnotify = helpers.fn.rpcnotify
+    local rpcnotify = t.fn.rpcnotify
     local ret = rpcnotify(0, 'foo', unpack(range(3, max_func_args)))
     eq(1, ret)
     ret = exc_exec('call rpcnotify(0, "foo", 3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21)')
@@ -69,17 +69,17 @@ describe('backtick expansion', function()
   end)
 
   teardown(function()
-    helpers.rmdir('test-backticks')
+    t.rmdir('test-backticks')
   end)
 
   it("with default 'shell'", function()
-    if helpers.is_os('win') then
+    if t.is_os('win') then
       command(':silent args `dir /b *2`')
     else
       command(':silent args `echo ***2`')
     end
     eq({ 'file2' }, eval('argv()'))
-    if helpers.is_os('win') then
+    if t.is_os('win') then
       command(':silent args `dir /s/b *4`')
       eq({ 'subdir\\file4' }, eval('map(argv(), \'fnamemodify(v:val, ":.")\')'))
     else

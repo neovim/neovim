@@ -1,10 +1,10 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eq = helpers.eq
-local clear = helpers.clear
-local command = helpers.command
-local exc_exec = helpers.exc_exec
-local pcall_err = helpers.pcall_err
+local eq = t.eq
+local clear = t.clear
+local command = t.command
+local exc_exec = t.exc_exec
+local pcall_err = t.pcall_err
 
 before_each(clear)
 

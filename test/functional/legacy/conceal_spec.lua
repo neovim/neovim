@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local exec = helpers.exec
-local feed = helpers.feed
-local api = helpers.api
+local clear = t.clear
+local command = t.command
+local exec = t.exec
+local feed = t.feed
+local api = t.api
 
 local expect_pos = function(row, col)
-  return helpers.eq({ row, col }, helpers.eval('[screenrow(), screencol()]'))
+  return t.eq({ row, col }, t.eval('[screenrow(), screencol()]'))
 end
 
 describe('Conceal', function()

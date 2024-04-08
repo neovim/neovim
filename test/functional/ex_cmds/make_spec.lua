@@ -1,10 +1,10 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local eval = helpers.eval
-local has_powershell = helpers.has_powershell
-local matches = helpers.matches
-local api = helpers.api
-local testprg = helpers.testprg
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local eval = t.eval
+local has_powershell = t.has_powershell
+local matches = t.matches
+local api = t.api
+local testprg = t.testprg
 
 describe(':make', function()
   clear()
@@ -18,7 +18,7 @@ describe(':make', function()
       return
     end
     before_each(function()
-      helpers.set_shell_powershell()
+      t.set_shell_powershell()
     end)
 
     it('captures stderr & non zero exit code #14349', function()

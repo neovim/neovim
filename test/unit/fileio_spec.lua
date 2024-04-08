@@ -1,13 +1,13 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
---{:cimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
+--{:cimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.testutil'
 
-local eq = helpers.eq
-local ffi = helpers.ffi
-local to_cstr = helpers.to_cstr
-local NULL = helpers.NULL
+local eq = t.eq
+local ffi = t.ffi
+local to_cstr = t.to_cstr
+local NULL = t.NULL
 
-local fileio = helpers.cimport('./src/nvim/fileio.h')
+local fileio = t.cimport('./src/nvim/fileio.h')
 
 describe('file_pat functions', function()
   describe('file_pat_to_reg_pat', function()

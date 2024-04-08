@@ -6,9 +6,9 @@
 -- C. make sure that the location list window is not reused instead of the window
 --    it belongs to.
 
-local helpers = require('test.functional.helpers')(after_each)
-local source = helpers.source
-local clear, command, expect = helpers.clear, helpers.command, helpers.expect
+local t = require('test.functional.testutil')(after_each)
+local source = t.source
+local clear, command, expect = t.clear, t.command, t.expect
 
 describe('location list', function()
   local test_file = 'Xtest-096_location_list.out'

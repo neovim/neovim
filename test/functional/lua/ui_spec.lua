@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
-local eq = helpers.eq
-local matches = helpers.matches
-local exec_lua = helpers.exec_lua
-local clear = helpers.clear
-local feed = helpers.feed
-local eval = helpers.eval
-local is_ci = helpers.is_ci
-local is_os = helpers.is_os
-local poke_eventloop = helpers.poke_eventloop
+local t = require('test.functional.testutil')(after_each)
+local eq = t.eq
+local matches = t.matches
+local exec_lua = t.exec_lua
+local clear = t.clear
+local feed = t.feed
+local eval = t.eval
+local is_ci = t.is_ci
+local is_os = t.is_os
+local poke_eventloop = t.poke_eventloop
 
 describe('vim.ui', function()
   before_each(function()

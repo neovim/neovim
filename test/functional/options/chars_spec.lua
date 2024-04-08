@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, command = helpers.clear, helpers.command
-local pcall_err = helpers.pcall_err
-local eval = helpers.eval
-local eq = helpers.eq
-local insert = helpers.insert
-local feed = helpers.feed
-local api = helpers.api
+local clear, command = t.clear, t.command
+local pcall_err = t.pcall_err
+local eval = t.eval
+local eq = t.eq
+local insert = t.insert
+local feed = t.feed
+local api = t.api
 
 describe("'fillchars'", function()
   local screen

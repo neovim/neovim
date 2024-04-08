@@ -1,6 +1,5 @@
-local helpers = require('test.functional.helpers')(after_each)
-local eq, clear, eval, feed, api, retry =
-  helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.api, helpers.retry
+local t = require('test.functional.testutil')(after_each)
+local eq, clear, eval, feed, api, retry = t.eq, t.clear, t.eval, t.feed, t.api, t.retry
 
 describe('K', function()
   local test_file = 'K_spec_out'
@@ -13,19 +12,19 @@ describe('K', function()
   end)
 
   it("invokes colon-prefixed 'keywordprg' as Vim command", function()
-    helpers.source([[
+    t.source([[
       let @a='fnord'
       set keywordprg=:put]])
 
     -- K on the text "a" resolves to `:put a`.
     feed('ia<ESC>K')
-    helpers.expect([[
+    t.expect([[
       a
       fnord]])
   end)
 
   it("invokes non-prefixed 'keywordprg' as shell command", function()
-    helpers.source([[
+    t.source([[
       let @a='fnord'
       set keywordprg=echo\ fnord>>]])
 
@@ -43,7 +42,7 @@ describe('K', function()
   end)
 
   it("<esc> kills the buffer for a running 'keywordprg' command", function()
-    helpers.source('set keywordprg=less')
+    t.source('set keywordprg=less')
     eval('writefile(["hello", "world"], "' .. test_file .. '")')
     feed('i' .. test_file .. '<esc>K')
     eq('t', eval('mode()'))
@@ -57,7 +56,7 @@ describe('K', function()
     local bufnr = eval('bufnr()')
     feed('<esc>')
     eq('n', eval('mode()'))
-    helpers.neq(bufnr, eval('bufnr()'))
+    t.neq(bufnr, eval('bufnr()'))
   end)
 
   it('empty string falls back to :help #19298', function()

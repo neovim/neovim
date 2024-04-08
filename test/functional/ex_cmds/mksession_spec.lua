@@ -1,20 +1,20 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local clear = helpers.clear
-local command = helpers.command
-local get_pathsep = helpers.get_pathsep
-local eq = helpers.eq
-local neq = helpers.neq
-local fn = helpers.fn
-local matches = helpers.matches
+local clear = t.clear
+local command = t.command
+local get_pathsep = t.get_pathsep
+local eq = t.eq
+local neq = t.neq
+local fn = t.fn
+local matches = t.matches
 local pesc = vim.pesc
-local rmdir = helpers.rmdir
+local rmdir = t.rmdir
 local sleep = vim.uv.sleep
-local api = helpers.api
-local skip = helpers.skip
-local is_os = helpers.is_os
-local mkdir = helpers.mkdir
+local api = t.api
+local skip = t.skip
+local is_os = t.is_os
+local mkdir = t.mkdir
 
 local file_prefix = 'Xtest-functional-ex_cmds-mksession_spec'
 

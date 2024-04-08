@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local api = helpers.api
-local clear = helpers.clear
-local eq = helpers.eq
-local exec_lua = helpers.exec_lua
-local insert = helpers.insert
-local feed = helpers.feed
-local command = helpers.command
-local assert_alive = helpers.assert_alive
+local api = t.api
+local clear = t.clear
+local eq = t.eq
+local exec_lua = t.exec_lua
+local insert = t.insert
+local feed = t.feed
+local command = t.command
+local assert_alive = t.assert_alive
 
 -- Implements a :Replace command that works like :substitute and has multibuffer support.
 local setup_replace_cmd = [[

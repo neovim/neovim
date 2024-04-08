@@ -1,12 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
-local assert_log = helpers.assert_log
-local eq, clear, eval, command, next_msg =
-  helpers.eq, helpers.clear, helpers.eval, helpers.command, helpers.next_msg
-local api = helpers.api
-local exec_lua = helpers.exec_lua
-local retry = helpers.retry
-local assert_alive = helpers.assert_alive
-local check_close = helpers.check_close
+local t = require('test.functional.testutil')(after_each)
+local assert_log = t.assert_log
+local eq, clear, eval, command, next_msg = t.eq, t.clear, t.eval, t.command, t.next_msg
+local api = t.api
+local exec_lua = t.exec_lua
+local retry = t.retry
+local assert_alive = t.assert_alive
+local check_close = t.check_close
 
 local testlog = 'Xtest-server-notify-log'
 

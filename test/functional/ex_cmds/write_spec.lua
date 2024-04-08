@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local eq, eval, clear, write_file, source, insert =
-  helpers.eq, helpers.eval, helpers.clear, helpers.write_file, helpers.source, helpers.insert
-local pcall_err = helpers.pcall_err
-local command = helpers.command
-local feed_command = helpers.feed_command
-local fn = helpers.fn
-local api = helpers.api
-local skip = helpers.skip
-local is_os = helpers.is_os
-local is_ci = helpers.is_ci
+  t.eq, t.eval, t.clear, t.write_file, t.source, t.insert
+local pcall_err = t.pcall_err
+local command = t.command
+local feed_command = t.feed_command
+local fn = t.fn
+local api = t.api
+local skip = t.skip
+local is_os = t.is_os
+local is_ci = t.is_ci
 
 local fname = 'Xtest-functional-ex_cmds-write'
 local fname_bak = fname .. '~'

@@ -1,9 +1,9 @@
 -- Test for linebreak and list option (non-utf8)
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
+local feed, insert, source = t.feed, t.insert, t.source
+local clear, feed_command, expect = t.clear, t.feed_command, t.expect
 
 describe('listlbr', function()
   before_each(clear)

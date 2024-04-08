@@ -1,7 +1,7 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local api, clear, eq = helpers.api, helpers.clear, helpers.eq
-local eval, exec, feed = helpers.eval, helpers.exec, helpers.feed
+local api, clear, eq = t.api, t.clear, t.eq
+local eval, exec, feed = t.eval, t.exec, t.feed
 
 describe('Signs', function()
   local screen

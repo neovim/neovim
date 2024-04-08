@@ -1,13 +1,13 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
 
-local cimport = helpers.cimport
-local eq = helpers.eq
-local ffi = helpers.ffi
-local lib = helpers.lib
-local NULL = helpers.NULL
-local OK = helpers.OK
-local FAIL = helpers.FAIL
+local cimport = t.cimport
+local eq = t.eq
+local ffi = t.ffi
+local lib = t.lib
+local NULL = t.NULL
+local OK = t.OK
+local FAIL = t.FAIL
 
 local users = cimport('./src/nvim/os/os.h', 'unistd.h')
 

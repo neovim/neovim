@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed, command = helpers.clear, helpers.feed, helpers.command
-local fn = helpers.fn
-local api = helpers.api
-local eq = helpers.eq
-local eval = helpers.eval
-local retry = helpers.retry
-local testprg = helpers.testprg
-local is_os = helpers.is_os
+local clear, feed, command = t.clear, t.feed, t.command
+local fn = t.fn
+local api = t.api
+local eq = t.eq
+local eval = t.eval
+local retry = t.retry
+local testprg = t.testprg
+local is_os = t.is_os
 
 describe("'wildmenu'", function()
   local screen

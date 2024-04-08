@@ -1,10 +1,10 @@
-local helpers = require('test.unit.helpers')(nil)
+local t = require('test.unit.testutil')(nil)
 
-local ptr2key = helpers.ptr2key
-local cimport = helpers.cimport
-local to_cstr = helpers.to_cstr
-local ffi = helpers.ffi
-local eq = helpers.eq
+local ptr2key = t.ptr2key
+local cimport = t.cimport
+local to_cstr = t.to_cstr
+local ffi = t.ffi
+local eq = t.eq
 
 local eval = cimport(
   './src/nvim/eval.h',
@@ -142,56 +142,56 @@ local function typvalt2lua_tab_init()
     return
   end
   typvalt2lua_tab = {
-    [tonumber(eval.VAR_BOOL)] = function(t)
+    [tonumber(eval.VAR_BOOL)] = function(q)
       return ({
         [tonumber(eval.kBoolVarFalse)] = false,
         [tonumber(eval.kBoolVarTrue)] = true,
-      })[tonumber(t.vval.v_bool)]
+      })[tonumber(q.vval.v_bool)]
     end,
-    [tonumber(eval.VAR_SPECIAL)] = function(t)
+    [tonumber(eval.VAR_SPECIAL)] = function(q)
       return ({
         [tonumber(eval.kSpecialVarNull)] = nil_value,
-      })[tonumber(t.vval.v_special)]
+      })[tonumber(q.vval.v_special)]
     end,
-    [tonumber(eval.VAR_NUMBER)] = function(t)
-      return { [type_key] = int_type, value = tonumber(t.vval.v_number) }
+    [tonumber(eval.VAR_NUMBER)] = function(q)
+      return { [type_key] = int_type, value = tonumber(q.vval.v_number) }
     end,
-    [tonumber(eval.VAR_FLOAT)] = function(t)
-      return tonumber(t.vval.v_float)
+    [tonumber(eval.VAR_FLOAT)] = function(q)
+      return tonumber(q.vval.v_float)
     end,
-    [tonumber(eval.VAR_STRING)] = function(t)
-      local str = t.vval.v_string
+    [tonumber(eval.VAR_STRING)] = function(q)
+      local str = q.vval.v_string
       if str == nil then
         return null_string
       else
         return ffi.string(str)
       end
     end,
-    [tonumber(eval.VAR_LIST)] = function(t, processed)
-      return lst2tbl(t.vval.v_list, processed)
+    [tonumber(eval.VAR_LIST)] = function(q, processed)
+      return lst2tbl(q.vval.v_list, processed)
     end,
-    [tonumber(eval.VAR_DICT)] = function(t, processed)
-      return dct2tbl(t.vval.v_dict, processed)
+    [tonumber(eval.VAR_DICT)] = function(q, processed)
+      return dct2tbl(q.vval.v_dict, processed)
     end,
-    [tonumber(eval.VAR_FUNC)] = function(t, processed)
-      return { [type_key] = func_type, value = typvalt2lua_tab[eval.VAR_STRING](t, processed or {}) }
+    [tonumber(eval.VAR_FUNC)] = function(q, processed)
+      return { [type_key] = func_type, value = typvalt2lua_tab[eval.VAR_STRING](q, processed or {}) }
     end,
-    [tonumber(eval.VAR_PARTIAL)] = function(t, processed)
-      local p_key = ptr2key(t)
+    [tonumber(eval.VAR_PARTIAL)] = function(q, processed)
+      local p_key = ptr2key(q)
       if processed[p_key] then
         return processed[p_key]
       end
-      return partial2lua(t.vval.v_partial, processed)
+      return partial2lua(q.vval.v_partial, processed)
     end,
   }
 end
 
-typvalt2lua = function(t, processed)
+typvalt2lua = function(q, processed)
   typvalt2lua_tab_init()
   return (
-    (typvalt2lua_tab[tonumber(t.v_type)] or function(t_inner)
+    (typvalt2lua_tab[tonumber(q.v_type)] or function(t_inner)
       assert(false, 'Converting ' .. tonumber(t_inner.v_type) .. ' was not implemented yet')
-    end)(t, processed or {})
+    end)(q, processed or {})
   )
 end
 
@@ -419,7 +419,7 @@ local function alloc_len(len, get_ptr)
   end
 end
 
-local alloc_logging_helpers = {
+local alloc_logging_t = {
   list = function(l)
     return { func = 'calloc', args = { 1, ffi.sizeof('list_T') }, ret = void(l) }
   end,
@@ -523,7 +523,7 @@ local function tbl2callback(tbl)
   else
     assert(false)
   end
-  return ffi.gc(ffi.cast('Callback*', ret), helpers.callback_free)
+  return ffi.gc(ffi.cast('Callback*', ret), t.callback_free)
 end
 
 local function dict_watchers(d)
@@ -591,7 +591,7 @@ return {
   list_iter = list_iter,
   first_di = first_di,
 
-  alloc_logging_helpers = alloc_logging_helpers,
+  alloc_logging_t = alloc_logging_t,
 
   list_items = list_items,
   dict_items = dict_items,

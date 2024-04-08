@@ -1,8 +1,8 @@
 -- Test for benchmarking the RE engine.
 
-local helpers = require('test.functional.helpers')(after_each)
-local insert, source = helpers.insert, helpers.source
-local clear, command = helpers.clear, helpers.command
+local t = require('test.functional.testutil')(after_each)
+local insert, source = t.insert, t.source
+local clear, command = t.clear, t.command
 
 -- Temporary file for gathering benchmarking results for each regexp engine.
 local result_file = 'benchmark.out'

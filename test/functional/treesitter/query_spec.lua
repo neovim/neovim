@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local dedent = helpers.dedent
-local eq = helpers.eq
-local insert = helpers.insert
-local exec_lua = helpers.exec_lua
-local pcall_err = helpers.pcall_err
-local is_os = helpers.is_os
-local api = helpers.api
-local fn = helpers.fn
+local clear = t.clear
+local dedent = t.dedent
+local eq = t.eq
+local insert = t.insert
+local exec_lua = t.exec_lua
+local pcall_err = t.pcall_err
+local is_os = t.is_os
+local api = t.api
+local fn = t.fn
 
 describe('treesitter query API', function()
   before_each(function()

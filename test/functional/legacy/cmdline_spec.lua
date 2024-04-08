@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local feed = helpers.feed
-local feed_command = helpers.feed_command
-local exec = helpers.exec
-local api = helpers.api
+local clear = t.clear
+local command = t.command
+local feed = t.feed
+local feed_command = t.feed_command
+local exec = t.exec
+local api = t.api
 local pesc = vim.pesc
 
 describe('cmdline', function()

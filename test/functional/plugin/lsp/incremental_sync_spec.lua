@@ -1,11 +1,11 @@
 -- Test suite for testing interactions with the incremental sync algorithms powering the LSP client
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local api = helpers.api
-local clear = helpers.clear
-local eq = helpers.eq
-local exec_lua = helpers.exec_lua
-local feed = helpers.feed
+local api = t.api
+local clear = t.clear
+local eq = t.eq
+local exec_lua = t.exec_lua
+local feed = t.feed
 
 before_each(function()
   clear()

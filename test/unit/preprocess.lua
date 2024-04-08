@@ -2,10 +2,10 @@
 -- windows, will probably need quite a bit of adjustment to run there.
 
 local ffi = require('ffi')
-local global_helpers = require('test.helpers')
+local global_t = require('test.testutil')
 
-local argss_to_cmd = global_helpers.argss_to_cmd
-local repeated_read_cmd = global_helpers.repeated_read_cmd
+local argss_to_cmd = global_t.argss_to_cmd
+local repeated_read_cmd = global_t.repeated_read_cmd
 
 --- @alias Compiler {path: string[], type: string}
 

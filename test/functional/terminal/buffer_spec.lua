@@ -1,25 +1,25 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local thelpers = require('test.functional.terminal.helpers')
-local assert_alive = helpers.assert_alive
-local feed, clear = helpers.feed, helpers.clear
-local poke_eventloop = helpers.poke_eventloop
-local nvim_prog = helpers.nvim_prog
-local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.source
-local pcall_err = helpers.pcall_err
-local eq, neq = helpers.eq, helpers.neq
-local api = helpers.api
-local retry = helpers.retry
-local testprg = helpers.testprg
-local write_file = helpers.write_file
-local command = helpers.command
-local exc_exec = helpers.exc_exec
-local matches = helpers.matches
-local exec_lua = helpers.exec_lua
+local tt = require('test.functional.terminal.testutil')
+local assert_alive = t.assert_alive
+local feed, clear = t.feed, t.clear
+local poke_eventloop = t.poke_eventloop
+local nvim_prog = t.nvim_prog
+local eval, feed_command, source = t.eval, t.feed_command, t.source
+local pcall_err = t.pcall_err
+local eq, neq = t.eq, t.neq
+local api = t.api
+local retry = t.retry
+local testprg = t.testprg
+local write_file = t.write_file
+local command = t.command
+local exc_exec = t.exc_exec
+local matches = t.matches
+local exec_lua = t.exec_lua
 local sleep = vim.uv.sleep
-local fn = helpers.fn
-local is_os = helpers.is_os
-local skip = helpers.skip
+local fn = t.fn
+local is_os = t.is_os
+local skip = t.skip
 
 describe(':terminal buffer', function()
   local screen
@@ -27,7 +27,7 @@ describe(':terminal buffer', function()
   before_each(function()
     clear()
     command('set modifiable swapfile undolevels=20')
-    screen = thelpers.screen_setup()
+    screen = tt.screen_setup()
   end)
 
   it('terminal-mode forces various options', function()
@@ -266,7 +266,7 @@ describe(':terminal buffer', function()
   it('does not segfault when pasting empty register #13955', function()
     feed('<c-\\><c-n>')
     feed_command('put a') -- register a is empty
-    helpers.assert_alive()
+    t.assert_alive()
   end)
 
   it([[can use temporary normal mode <c-\><c-o>]], function()
@@ -473,7 +473,7 @@ end)
 describe('terminal input', function()
   it('sends various special keys with modifiers', function()
     clear()
-    local screen = thelpers.setup_child_nvim({
+    local screen = tt.setup_child_nvim({
       '-u',
       'NONE',
       '-i',
@@ -560,7 +560,7 @@ if is_os('win') then
       feed_command('set modifiable swapfile undolevels=20')
       poke_eventloop()
       local cmd = { 'cmd.exe', '/K', 'PROMPT=$g$s' }
-      screen = thelpers.screen_setup(nil, cmd)
+      screen = tt.screen_setup(nil, cmd)
     end)
 
     it('"put" operator sends data normally', function()

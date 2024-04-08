@@ -1,10 +1,10 @@
-local helpers = require('test.functional.helpers')(after_each)
-local thelpers = require('test.functional.terminal.helpers')
-local clear, eq, eval = helpers.clear, helpers.eq, helpers.eval
-local feed, api, command = helpers.feed, helpers.api, helpers.command
-local feed_data = thelpers.feed_data
-local is_os = helpers.is_os
-local skip = helpers.skip
+local t = require('test.functional.testutil')(after_each)
+local tt = require('test.functional.terminal.testutil')
+local clear, eq, eval = t.clear, t.eq, t.eval
+local feed, api, command = t.feed, t.api, t.command
+local feed_data = tt.feed_data
+local is_os = t.is_os
+local skip = t.skip
 
 describe(':terminal mouse', function()
   local screen
@@ -15,7 +15,7 @@ describe(':terminal mouse', function()
     command('highlight StatusLine cterm=NONE')
     command('highlight StatusLineNC cterm=NONE')
     command('highlight VertSplit cterm=NONE')
-    screen = thelpers.screen_setup()
+    screen = tt.screen_setup()
     local lines = {}
     for i = 1, 30 do
       table.insert(lines, 'line' .. tostring(i))
@@ -95,8 +95,8 @@ describe(':terminal mouse', function()
 
     describe('with mouse events enabled by the program', function()
       before_each(function()
-        thelpers.enable_mouse()
-        thelpers.feed_data('mouse enabled\n')
+        tt.enable_mouse()
+        tt.feed_data('mouse enabled\n')
         screen:expect([[
           line27                                            |
           line28                                            |
@@ -423,8 +423,8 @@ describe(':terminal mouse', function()
         ]])
 
         -- enabling mouse won't affect interaction with other windows
-        thelpers.enable_mouse()
-        thelpers.feed_data('mouse enabled\n')
+        tt.enable_mouse()
+        tt.feed_data('mouse enabled\n')
         screen:expect([[
           {7: 27 }line                 │line30                  |
           {7: 28 }line                 │rows: 5, cols: 25       |

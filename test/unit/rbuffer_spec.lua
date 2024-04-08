@@ -1,13 +1,13 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
 
-local eq = helpers.eq
-local ffi = helpers.ffi
-local cstr = helpers.cstr
-local to_cstr = helpers.to_cstr
-local child_call_once = helpers.child_call_once
+local eq = t.eq
+local ffi = t.ffi
+local cstr = t.cstr
+local to_cstr = t.to_cstr
+local child_call_once = t.child_call_once
 
-local rbuffer = helpers.cimport('./test/unit/fixtures/rbuffer.h')
+local rbuffer = t.cimport('./test/unit/fixtures/rbuffer.h')
 
 describe('rbuffer functions', function()
   local capacity = 16

@@ -1,14 +1,14 @@
 -- Insert-mode tests.
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local expect = helpers.expect
-local command = helpers.command
-local eq = helpers.eq
-local eval = helpers.eval
-local curbuf_contents = helpers.curbuf_contents
-local api = helpers.api
+local clear, feed, insert = t.clear, t.feed, t.insert
+local expect = t.expect
+local command = t.command
+local eq = t.eq
+local eval = t.eval
+local curbuf_contents = t.curbuf_contents
+local api = t.api
 
 describe('insert-mode', function()
   before_each(function()
@@ -232,10 +232,10 @@ describe('insert-mode', function()
     end
 
     local function test_cols(expected_cols)
-      local cols = { { helpers.fn.col('.'), helpers.fn.virtcol('.') } }
+      local cols = { { t.fn.col('.'), t.fn.virtcol('.') } }
       for _ = 2, #expected_cols do
         feed('<BS>')
-        table.insert(cols, { helpers.fn.col('.'), helpers.fn.virtcol('.') })
+        table.insert(cols, { t.fn.col('.'), t.fn.virtcol('.') })
       end
       eq(expected_cols, cols)
     end
