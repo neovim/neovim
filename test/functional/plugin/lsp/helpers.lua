@@ -23,57 +23,26 @@ end
 
 M.create_server_definition = [[
   function _create_server(opts)
-    opts = opts or {}
-    local server = {}
-    server.messages = {}
-
-    function server.cmd(dispatchers)
-      local closing = false
-      local handlers = opts.handlers or {}
-      local srv = {}
-
-      function srv.request(method, params, callback)
-        table.insert(server.messages, {
+    local messages = {}
+    opts = vim.tbl_extend("error", opts or {}, {
+      on_request = function(method, params)
+        table.insert(messages, {
           method = method,
           params = params,
         })
-        local handler = handlers[method]
-        if handler then
-          local response, err = handler(method, params)
-          callback(err, response)
-        elseif method == 'initialize' then
-          callback(nil, {
-            capabilities = opts.capabilities or {}
-          })
-        elseif method == 'shutdown' then
-          callback(nil, nil)
-        end
-        local request_id = #server.messages
-        return true, request_id
-      end
-
-      function srv.notify(method, params)
-        table.insert(server.messages, {
+      end,
+      on_notify = function(method, params)
+        table.insert(messages, {
           method = method,
           params = params
         })
-        if method == 'exit' then
-          dispatchers.on_exit(0, 15)
-        end
       end
-
-      function srv.is_closing()
-        return closing
-      end
-
-      function srv.terminate()
-        closing = true
-      end
-
-      return srv
-    end
-
-    return server
+    })
+    local server = vim.lsp.server(opts)
+    return {
+      messages = messages,
+      cmd = server,
+    }
   end
 ]]
 
