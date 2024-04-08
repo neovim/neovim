@@ -2460,7 +2460,7 @@ bool find_decl(char *ptr, size_t len, bool locally, bool thisblock, int flags_ar
 /// 'dist' must be positive.
 ///
 /// @return  true if able to move cursor, false otherwise.
-static bool nv_screengo(oparg_T *oap, int dir, int dist)
+bool nv_screengo(oparg_T *oap, int dir, int dist)
 {
   int linelen = linetabsize(curwin, curwin->w_cursor.lnum);
   bool retval = true;
@@ -2612,58 +2612,6 @@ void nv_scroll_line(cmdarg_T *cap)
   if (!checkclearop(cap->oap)) {
     scroll_redraw(cap->arg, cap->count1);
   }
-}
-
-/// Scroll "count" lines up or down, and redraw.
-void scroll_redraw(bool up, linenr_T count)
-{
-  linenr_T prev_topline = curwin->w_topline;
-  int prev_skipcol = curwin->w_skipcol;
-  int prev_topfill = curwin->w_topfill;
-  linenr_T prev_lnum = curwin->w_cursor.lnum;
-
-  bool moved = up
-               ? scrollup(curwin, count, true)
-               : scrolldown(curwin, count, true);
-
-  if (get_scrolloff_value(curwin) > 0) {
-    // Adjust the cursor position for 'scrolloff'.  Mark w_topline as
-    // valid, otherwise the screen jumps back at the end of the file.
-    cursor_correct(curwin);
-    check_cursor_moved(curwin);
-    curwin->w_valid |= VALID_TOPLINE;
-
-    // If moved back to where we were, at least move the cursor, otherwise
-    // we get stuck at one position.  Don't move the cursor up if the
-    // first line of the buffer is already on the screen
-    while (curwin->w_topline == prev_topline
-           && curwin->w_skipcol == prev_skipcol
-           && curwin->w_topfill == prev_topfill) {
-      if (up) {
-        if (curwin->w_cursor.lnum > prev_lnum
-            || cursor_down(1, false) == false) {
-          break;
-        }
-      } else {
-        if (curwin->w_cursor.lnum < prev_lnum
-            || prev_topline == 1
-            || cursor_up(1, false) == false) {
-          break;
-        }
-      }
-      // Mark w_topline as valid, otherwise the screen jumps back at the
-      // end of the file.
-      check_cursor_moved(curwin);
-      curwin->w_valid |= VALID_TOPLINE;
-    }
-  }
-  if (curwin->w_cursor.lnum != prev_lnum) {
-    coladvance(curwin, curwin->w_curswant);
-  }
-  if (moved) {
-    curwin->w_viewport_invalid = true;
-  }
-  redraw_later(curwin, UPD_VALID);
 }
 
 /// Get the count specified after a 'z' command. Only the 'z<CR>', 'zl', 'zh',
@@ -5223,7 +5171,7 @@ static void nv_gv_cmd(cmdarg_T *cap)
 
 /// "g0", "g^" : Like "0" and "^" but for screen lines.
 /// "gm": middle of "g0" and "g$".
-static void nv_g_home_m_cmd(cmdarg_T *cap)
+void nv_g_home_m_cmd(cmdarg_T *cap)
 {
   int i;
   const bool flag = cap->nchar == '^';
@@ -5238,6 +5186,15 @@ static void nv_g_home_m_cmd(cmdarg_T *cap)
     i = 0;
     if (curwin->w_virtcol >= (colnr_T)width1 && width2 > 0) {
       i = (curwin->w_virtcol - width1) / width2 * width2 + width1;
+    }
+
+    // When ending up below 'smoothscroll' marker, move just beyond it so
+    // that skipcol is not adjusted later.
+    if (curwin->w_skipcol > 0 && curwin->w_cursor.lnum == curwin->w_topline) {
+      int overlap = sms_marker_overlap(curwin, -1);
+      if (overlap > 0 && i == curwin->w_skipcol) {
+        i += overlap;
+      }
     }
   } else {
     i = curwin->w_leftcol;
@@ -6402,7 +6359,7 @@ static void nv_at(cmdarg_T *cap)
 static void nv_halfpage(cmdarg_T *cap)
 {
   if (!checkclearop(cap->oap)) {
-    pagescroll(cap->cmdchar == Ctrl_D, cap->count0, true);
+    pagescroll(cap->cmdchar == Ctrl_D ? FORWARD : BACKWARD, cap->count0, true);
   }
 }
 

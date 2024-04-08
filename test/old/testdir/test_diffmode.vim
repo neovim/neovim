@@ -1664,8 +1664,7 @@ func Test_diff_scroll_many_filler()
   endfor
 
   set smoothscroll&
-  bwipe!
-  bwipe!
+  %bwipe!
 endfunc
 
 " This was trying to update diffs for a buffer being closed
@@ -1771,6 +1770,21 @@ func Test_diff_toggle_wrap_skipcol_leftcol()
 
   bwipe!
   bwipe!
+endfunc
+
+" Ctrl-D reveals filler lines below the last line in the buffer.
+func Test_diff_eob_halfpage()
+  5new
+  call setline(1, ['']->repeat(10) + ['a'])
+  diffthis
+  5new
+  call setline(1, ['']->repeat(3) + ['a', 'b'])
+  diffthis
+  wincmd j
+  exe "norm! G\<C-D>"
+  call assert_equal(6, line('w0'))
+
+  %bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
