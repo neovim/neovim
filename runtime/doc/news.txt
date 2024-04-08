@@ -393,9 +393,6 @@ The following changes to existing APIs or features add new behavior.
 • |:lua| with a |[range]| executes that range in the current buffer as Lua code
   regardless of its extension.
 
-• |:checkhealth| buffer now implements |folding|. The initial folding status is
-  defined by the 'foldenable' option.
-
 • |:Man| now respects 'wrapmargin'
 
 • |gx| now uses |vim.ui.open()| and not netrw. To customize, you can redefine

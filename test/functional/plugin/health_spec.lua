@@ -159,24 +159,6 @@ describe('health.vim', function()
       }
     end)
 
-    it('fold healthchecks', function()
-      local screen = Screen.new(50, 7)
-      screen:attach()
-      command('checkhealth foo success1')
-      command('set nowrap laststatus=0')
-      screen:expect {
-        grid = [[
-        ^                                                  |
-        {14:──────────────────────────────────────────────────}|
-        {13:+WE  4 lines: foo: ·······························}|
-        {14:──────────────────────────────────────────────────}|
-        {13:+--  8 lines: test_plug.success1: require("test_pl}|
-        {1:~                                                 }|
-                                                          |
-      ]],
-      }
-    end)
-
     it('gracefully handles invalid healthcheck', function()
       command('checkhealth non_existent_healthcheck')
       -- luacheck: ignore 613
