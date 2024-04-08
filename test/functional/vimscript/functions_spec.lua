@@ -5,12 +5,12 @@
 --
 -- Core "eval" tests live in eval_spec.lua.
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local eval = helpers.eval
-local matches = helpers.matches
-local is_os = helpers.is_os
+local clear = t.clear
+local eval = t.eval
+local matches = t.matches
+local is_os = t.is_os
 
 before_each(clear)
 

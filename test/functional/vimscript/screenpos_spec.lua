@@ -1,7 +1,7 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear, eq, api = helpers.clear, helpers.eq, helpers.api
-local command, fn = helpers.command, helpers.fn
-local feed = helpers.feed
+local t = require('test.functional.testutil')(after_each)
+local clear, eq, api = t.clear, t.eq, t.api
+local command, fn = t.command, t.fn
+local feed = t.feed
 
 before_each(clear)
 

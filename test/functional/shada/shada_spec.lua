@@ -1,18 +1,17 @@
 -- Other ShaDa tests
-local helpers = require('test.functional.helpers')(after_each)
-local api, nvim_command, fn, eq = helpers.api, helpers.command, helpers.fn, helpers.eq
+local t = require('test.functional.testutil')(after_each)
+local api, nvim_command, fn, eq = t.api, t.command, t.fn, t.eq
 local write_file, spawn, set_session, nvim_prog, exc_exec =
-  helpers.write_file, helpers.spawn, helpers.set_session, helpers.nvim_prog, helpers.exc_exec
-local is_os = helpers.is_os
-local skip = helpers.skip
+  t.write_file, t.spawn, t.set_session, t.nvim_prog, t.exc_exec
+local is_os = t.is_os
+local skip = t.skip
 
 local uv = vim.uv
-local paths = helpers.paths
+local paths = t.paths
 
-local shada_helpers = require('test.functional.shada.helpers')
-local reset, clear, get_shada_rw =
-  shada_helpers.reset, shada_helpers.clear, shada_helpers.get_shada_rw
-local read_shada_file = shada_helpers.read_shada_file
+local t_shada = require('test.functional.shada.testutil')
+local reset, clear, get_shada_rw = t_shada.reset, t_shada.clear, t_shada.get_shada_rw
+local read_shada_file = t_shada.read_shada_file
 
 local wshada, _, shada_fname, clean = get_shada_rw('Xtest-functional-shada-shada.shada')
 

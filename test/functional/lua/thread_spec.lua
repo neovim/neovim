@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local assert_alive = helpers.assert_alive
-local clear = helpers.clear
-local feed = helpers.feed
-local eq = helpers.eq
-local exec_lua = helpers.exec_lua
-local next_msg = helpers.next_msg
+local assert_alive = t.assert_alive
+local clear = t.clear
+local feed = t.feed
+local eq = t.eq
+local exec_lua = t.exec_lua
+local next_msg = t.next_msg
 local NIL = vim.NIL
-local pcall_err = helpers.pcall_err
+local pcall_err = t.pcall_err
 
 describe('thread', function()
   local screen

@@ -1,8 +1,8 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear, feed, eq = helpers.clear, helpers.feed, helpers.eq
-local expect, command, eval = helpers.expect, helpers.command, helpers.eval
-local insert, call = helpers.insert, helpers.call
-local exec_capture, dedent = helpers.exec_capture, helpers.dedent
+local t = require('test.functional.testutil')(after_each)
+local clear, feed, eq = t.clear, t.feed, t.eq
+local expect, command, eval = t.expect, t.command, t.eval
+local insert, call = t.insert, t.call
+local exec_capture, dedent = t.exec_capture, t.dedent
 
 -- First test it's implemented using the :lmap and :lnoremap commands, then
 -- check those mappings behave as expected.

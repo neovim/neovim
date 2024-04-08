@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eq = helpers.eq
-local exec_lua = helpers.exec_lua
-local pcall_err = helpers.pcall_err
-local matches = helpers.matches
+local eq = t.eq
+local exec_lua = t.exec_lua
+local pcall_err = t.pcall_err
+local matches = t.matches
 
 describe('lsp-handlers', function()
   describe('vim.lsp._with_extend', function()

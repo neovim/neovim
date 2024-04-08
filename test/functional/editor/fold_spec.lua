@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local insert = helpers.insert
-local exec = helpers.exec
-local feed = helpers.feed
-local expect = helpers.expect
-local command = helpers.command
-local fn = helpers.fn
-local eq = helpers.eq
-local neq = helpers.neq
+local clear = t.clear
+local insert = t.insert
+local exec = t.exec
+local feed = t.feed
+local expect = t.expect
+local command = t.command
+local fn = t.fn
+local eq = t.eq
+local neq = t.neq
 
 describe('Folding', function()
   local tempfname = 'Xtest-fold.txt'
@@ -301,7 +301,7 @@ a]],
 
   it('updates correctly on :read', function()
     -- luacheck: ignore 621
-    helpers.write_file(
+    t.write_file(
       tempfname,
       [[
     a
@@ -376,7 +376,7 @@ a]],
   end)
 
   it('splits folds according to >N and <N with foldexpr', function()
-    helpers.source([[
+    t.source([[
     function TestFoldExpr(lnum)
       let thisline = getline(a:lnum)
       if thisline == 'a'
@@ -391,7 +391,7 @@ a]],
       return 0
     endfunction
     ]])
-    helpers.write_file(
+    t.write_file(
       tempfname,
       [[
     b

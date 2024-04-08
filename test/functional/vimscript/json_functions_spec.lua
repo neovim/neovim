@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local fn = helpers.fn
-local api = helpers.api
-local eq = helpers.eq
-local eval = helpers.eval
-local command = helpers.command
-local exc_exec = helpers.exc_exec
-local pcall_err = helpers.pcall_err
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local fn = t.fn
+local api = t.api
+local eq = t.eq
+local eval = t.eval
+local command = t.command
+local exc_exec = t.exc_exec
+local pcall_err = t.pcall_err
 local NIL = vim.NIL
-local source = helpers.source
+local source = t.source
 
 describe('json_decode() function', function()
   local restart = function(...)

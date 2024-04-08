@@ -1,12 +1,12 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
 
-local to_cstr = helpers.to_cstr
-local ffi = helpers.ffi
-local eq = helpers.eq
+local to_cstr = t.to_cstr
+local ffi = t.ffi
+local eq = t.eq
 
-local indent = helpers.cimport('./src/nvim/indent.h')
-local globals = helpers.cimport('./src/nvim/globals.h')
+local indent = t.cimport('./src/nvim/indent.h')
+local globals = t.cimport('./src/nvim/globals.h')
 
 describe('get_sts_value', function()
   itp([[returns 'softtabstop' when it is non-negative]], function()

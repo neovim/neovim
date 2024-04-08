@@ -1,7 +1,7 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear, eval, eq = helpers.clear, helpers.eval, helpers.eq
-local feed, command = helpers.feed, helpers.command
-local exec_lua = helpers.exec_lua
+local t = require('test.functional.testutil')(after_each)
+local clear, eval, eq = t.clear, t.eval, t.eq
+local feed, command = t.feed, t.command
+local exec_lua = t.exec_lua
 
 describe('ModeChanged', function()
   before_each(function()

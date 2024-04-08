@@ -1,5 +1,5 @@
-local helpers = require('test.functional.helpers')(after_each)
-local api = helpers.api
+local t = require('test.functional.testutil')(after_each)
+local api = t.api
 local Screen = require('test.functional.ui.screen')
 
 local function rand_utf8(count, seed)
@@ -78,7 +78,7 @@ local N = 10000
 local function benchmark(lines, expected_value)
   local lnum = #lines
 
-  local results = helpers.exec_lua(
+  local results = t.exec_lua(
     [==[
     local N, lnum = ...
 
@@ -99,7 +99,7 @@ local function benchmark(lines, expected_value)
   )
 
   for _, value in ipairs(results[1]) do
-    helpers.eq(expected_value, value)
+    t.eq(expected_value, value)
   end
   local stats = results[2]
   table.sort(stats)
@@ -119,7 +119,7 @@ end
 
 local function benchmarks(benchmark_results)
   describe('screenpos() perf', function()
-    before_each(helpers.clear)
+    before_each(t.clear)
 
     -- no breakindent
     for li, lines_type in ipairs(benchmark_lines) do
@@ -134,7 +134,7 @@ local function benchmarks(benchmark_results)
           screen:attach()
           api.nvim_buf_set_lines(0, 0, 1, false, lines)
           -- for smaller screen expect (last line always different, first line same as others)
-          helpers.feed('G$')
+          t.feed('G$')
           screen:expect(result.screen)
           benchmark(lines, result.value)
         end)
@@ -153,9 +153,9 @@ local function benchmarks(benchmark_results)
           local screen = Screen.new(width, height + 1)
           screen:attach()
           api.nvim_buf_set_lines(0, 0, 1, false, lines)
-          helpers.command('set breakindent')
+          t.command('set breakindent')
           -- for smaller screen expect (last line always different, first line same as others)
-          helpers.feed('G$')
+          t.feed('G$')
           screen:expect(result.screen)
           benchmark(lines, result.value)
         end)

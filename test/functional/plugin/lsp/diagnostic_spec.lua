@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
-local lsp_helpers = require('test.functional.plugin.lsp.helpers')
+local t = require('test.functional.testutil')(after_each)
+local t_lsp = require('test.functional.plugin.lsp.testutil')
 
-local clear = helpers.clear
-local exec_lua = helpers.exec_lua
-local eq = helpers.eq
-local neq = require('test.helpers').neq
+local clear = t.clear
+local exec_lua = t.exec_lua
+local eq = t.eq
+local neq = t.neq
 
-local create_server_definition = lsp_helpers.create_server_definition
+local create_server_definition = t_lsp.create_server_definition
 
 describe('vim.lsp.diagnostic', function()
   local fake_uri

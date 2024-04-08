@@ -1,16 +1,16 @@
 -- Specs for :cd, :tcd, :lcd and getcwd()
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eq = helpers.eq
-local call = helpers.call
-local clear = helpers.clear
-local command = helpers.command
-local exc_exec = helpers.exc_exec
-local pathsep = helpers.get_pathsep()
-local skip = helpers.skip
-local is_os = helpers.is_os
-local mkdir = helpers.mkdir
+local eq = t.eq
+local call = t.call
+local clear = t.clear
+local command = t.command
+local exc_exec = t.exc_exec
+local pathsep = t.get_pathsep()
+local skip = t.skip
+local is_os = t.is_os
+local mkdir = t.mkdir
 
 -- These directories will be created for testing
 local directories = {
@@ -289,14 +289,14 @@ describe('getcwd()', function()
   end)
 
   after_each(function()
-    helpers.rmdir(directories.global)
+    t.rmdir(directories.global)
   end)
 
   it('returns empty string if working directory does not exist', function()
     skip(is_os('win'))
     command('cd ' .. directories.global)
     command("call delete('../" .. directories.global .. "', 'd')")
-    eq('', helpers.eval('getcwd()'))
+    eq('', t.eval('getcwd()'))
   end)
 
   it("works with 'autochdir' after local directory was set (#9892)", function()

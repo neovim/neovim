@@ -1,21 +1,21 @@
 local uv = vim.uv
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local api = helpers.api
-local feed = helpers.feed
-local eq = helpers.eq
-local neq = helpers.neq
-local clear = helpers.clear
-local ok = helpers.ok
-local fn = helpers.fn
-local nvim_prog = helpers.nvim_prog
-local retry = helpers.retry
-local write_file = helpers.write_file
-local assert_log = helpers.assert_log
-local check_close = helpers.check_close
-local is_os = helpers.is_os
+local api = t.api
+local feed = t.feed
+local eq = t.eq
+local neq = t.neq
+local clear = t.clear
+local ok = t.ok
+local fn = t.fn
+local nvim_prog = t.nvim_prog
+local retry = t.retry
+local write_file = t.write_file
+local assert_log = t.assert_log
+local check_close = t.check_close
+local is_os = t.is_os
 
 local testlog = 'Xtest-embed-log'
 
@@ -58,7 +58,7 @@ local function test_embed(ext_linegrid)
   end)
 
   it("doesn't erase output when setting color scheme", function()
-    if helpers.is_os('openbsd') then
+    if t.is_os('openbsd') then
       pending('FIXME #10804')
     end
     startup('--cmd', 'echoerr "foo"', '--cmd', 'color default', '--cmd', 'echoerr "bar"')
@@ -143,7 +143,7 @@ describe('--embed UI', function()
     ]]
 
     if not is_os('win') then
-      assert_log('Failed to get flags on descriptor 3: Bad file descriptor', testlog)
+      assert_log('Failed to get flags on descriptor 3: Bad file descriptor', testlog, 100)
     end
   end)
 
@@ -233,7 +233,7 @@ describe('--embed UI', function()
     }
     eq({ [16777215] = true }, seen)
 
-    -- NB: by accident how functional/helpers.lua currently handles the default color scheme, the
+    -- NB: by accident how functional/t.lua currently handles the default color scheme, the
     -- above is sufficient to test the behavior. But in case that workaround is removed, we need
     -- a test with an explicit override like below, so do it to remain safe.
     startup('--cmd', 'hi NORMAL guibg=#FF00FF')
@@ -253,44 +253,44 @@ describe('--embed UI', function()
 
     screen:expect {
       condition = function()
-        eq(helpers.paths.test_source_path, screen.pwd)
+        eq(t.paths.test_source_path, screen.pwd)
       end,
     }
 
     -- Change global cwd
-    helpers.command(string.format('cd %s/src/nvim', helpers.paths.test_source_path))
+    t.command(string.format('cd %s/src/nvim', t.paths.test_source_path))
 
     screen:expect {
       condition = function()
-        eq(string.format('%s/src/nvim', helpers.paths.test_source_path), screen.pwd)
+        eq(string.format('%s/src/nvim', t.paths.test_source_path), screen.pwd)
       end,
     }
 
     -- Split the window and change the cwd in the split
-    helpers.command('new')
-    helpers.command(string.format('lcd %s/test', helpers.paths.test_source_path))
+    t.command('new')
+    t.command(string.format('lcd %s/test', t.paths.test_source_path))
 
     screen:expect {
       condition = function()
-        eq(string.format('%s/test', helpers.paths.test_source_path), screen.pwd)
+        eq(string.format('%s/test', t.paths.test_source_path), screen.pwd)
       end,
     }
 
     -- Move to the original window
-    helpers.command('wincmd p')
+    t.command('wincmd p')
 
     screen:expect {
       condition = function()
-        eq(string.format('%s/src/nvim', helpers.paths.test_source_path), screen.pwd)
+        eq(string.format('%s/src/nvim', t.paths.test_source_path), screen.pwd)
       end,
     }
 
     -- Change global cwd again
-    helpers.command(string.format('cd %s', helpers.paths.test_source_path))
+    t.command(string.format('cd %s', t.paths.test_source_path))
 
     screen:expect {
       condition = function()
-        eq(helpers.paths.test_source_path, screen.pwd)
+        eq(t.paths.test_source_path, screen.pwd)
       end,
     }
   end)
@@ -298,9 +298,9 @@ end)
 
 describe('--embed --listen UI', function()
   it('waits for connection on listening address', function()
-    helpers.skip(helpers.is_os('win'))
+    t.skip(t.is_os('win'))
     clear()
-    local child_server = assert(helpers.new_pipename())
+    local child_server = assert(t.new_pipename())
     fn.jobstart({
       nvim_prog,
       '--embed',
@@ -314,7 +314,7 @@ describe('--embed --listen UI', function()
       neq(nil, uv.fs_stat(child_server))
     end)
 
-    local child_session = helpers.connect(child_server)
+    local child_session = t.connect(child_server)
 
     local info_ok, api_info = child_session:request('nvim_get_api_info')
     ok(info_ok)

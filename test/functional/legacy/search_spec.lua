@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local eval = helpers.eval
-local feed = helpers.feed
-local fn = helpers.fn
-local poke_eventloop = helpers.poke_eventloop
-local exec = helpers.exec
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local eval = t.eval
+local feed = t.feed
+local fn = t.fn
+local poke_eventloop = t.poke_eventloop
+local exec = t.exec
 
 describe('search cmdline', function()
   local screen

@@ -282,9 +282,9 @@ open my $spec_file_handle, ">", $spec_file;
 print $spec_file_handle <<"EOS";
 @{[join "\n", @{$description_lines}]}
 
-local helpers = require('test.functional.helpers')
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local t = require('test.functional.testutil')
+local feed, insert, source = t.feed, t.insert, t.source
+local clear, execute, expect = t.clear, t.execute, t.expect
 
 describe('$test_name', function()
   before_each(clear)

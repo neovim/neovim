@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local command = helpers.command
-local exec_lua = helpers.exec_lua
-local eval = helpers.eval
-local expect = helpers.expect
-local fn = helpers.fn
-local eq = helpers.eq
+local t = require('test.functional.testutil')(after_each)
+local clear, feed, insert = t.clear, t.feed, t.insert
+local command = t.command
+local exec_lua = t.exec_lua
+local eval = t.eval
+local expect = t.expect
+local fn = t.fn
+local eq = t.eq
 
 describe('meta-keys #8226 #13042', function()
   before_each(function()

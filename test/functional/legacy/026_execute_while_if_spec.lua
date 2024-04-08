@@ -1,11 +1,11 @@
 -- Test for :execute, :while and :if
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local expect = helpers.expect
-local source = helpers.source
-local command = helpers.command
+local clear = t.clear
+local expect = t.expect
+local source = t.source
+local command = t.command
 
 describe(':execute, :while and :if', function()
   setup(clear)

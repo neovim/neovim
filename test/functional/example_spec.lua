@@ -1,12 +1,12 @@
 -- To run this test:
 --    TEST_FILE=test/functional/example_spec.lua make functionaltest
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local feed = helpers.feed
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local feed = t.feed
 
 describe('example', function()
   local screen

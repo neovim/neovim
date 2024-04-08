@@ -1,9 +1,9 @@
 -- Test for mappings and abbreviations
 
-local helpers = require('test.functional.helpers')(after_each)
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local expect, poke_eventloop = helpers.expect, helpers.poke_eventloop
-local command, eq, eval, api = helpers.command, helpers.eq, helpers.eval, helpers.api
+local t = require('test.functional.testutil')(after_each)
+local clear, feed, insert = t.clear, t.feed, t.insert
+local expect, poke_eventloop = t.expect, t.poke_eventloop
+local command, eq, eval, api = t.command, t.eq, t.eval, t.api
 local sleep = vim.uv.sleep
 
 describe('mapping', function()

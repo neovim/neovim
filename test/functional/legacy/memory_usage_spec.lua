@@ -1,17 +1,17 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local eval = helpers.eval
-local eq = helpers.eq
-local feed_command = helpers.feed_command
-local retry = helpers.retry
-local ok = helpers.ok
-local source = helpers.source
-local poke_eventloop = helpers.poke_eventloop
-local load_adjust = helpers.load_adjust
-local write_file = helpers.write_file
-local is_os = helpers.is_os
-local is_ci = helpers.is_ci
-local is_asan = helpers.is_asan
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local eval = t.eval
+local eq = t.eq
+local feed_command = t.feed_command
+local retry = t.retry
+local ok = t.ok
+local source = t.source
+local poke_eventloop = t.poke_eventloop
+local load_adjust = t.load_adjust
+local write_file = t.write_file
+local is_os = t.is_os
+local is_ci = t.is_ci
+local is_asan = t.is_asan
 
 clear()
 if is_asan() then

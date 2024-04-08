@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local fn = helpers.fn
-local eval, eq = helpers.eval, helpers.eq
-local command = helpers.command
-local api = helpers.api
-local exc_exec = helpers.exc_exec
-local is_os = helpers.is_os
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local fn = t.fn
+local eval, eq = t.eval, t.eq
+local command = t.command
+local api = t.api
+local exc_exec = t.exc_exec
+local is_os = t.is_os
 
 describe('msgpack*() functions', function()
   before_each(clear)
@@ -469,12 +469,12 @@ describe('msgpackparse() function', function()
   end)
 
   it('msgpackparse(systemlist(...)) does not segfault. #3135', function()
-    local cmd = "sort(keys(msgpackparse(systemlist('" .. helpers.nvim_prog .. " --api-info'))[0]))"
+    local cmd = "sort(keys(msgpackparse(systemlist('" .. t.nvim_prog .. " --api-info'))[0]))"
     eval(cmd)
     eval(cmd) -- do it again (try to force segfault)
     local api_info = eval(cmd) -- do it again
     if is_os('win') then
-      helpers.assert_alive()
+      t.assert_alive()
       pending('msgpackparse() has a bug on windows')
       return
     end

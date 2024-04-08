@@ -1,8 +1,7 @@
 -- Tests for :setlocal and :setglobal
 
-local helpers = require('test.functional.helpers')(after_each)
-local clear, feed_command, eval, eq, api =
-  helpers.clear, helpers.feed_command, helpers.eval, helpers.eq, helpers.api
+local t = require('test.functional.testutil')(after_each)
+local clear, feed_command, eval, eq, api = t.clear, t.feed_command, t.eval, t.eq, t.api
 
 local function should_fail(opt, value, errmsg)
   feed_command('setglobal ' .. opt .. '=' .. value)

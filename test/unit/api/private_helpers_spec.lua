@@ -1,24 +1,24 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
-local eval_helpers = require('test.unit.eval.helpers')
-local api_helpers = require('test.unit.api.helpers')
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
+local t_eval = require('test.unit.eval.testutil')
+local api_t = require('test.unit.api.testutil')
 
-local cimport = helpers.cimport
-local NULL = helpers.NULL
-local eq = helpers.eq
+local cimport = t.cimport
+local NULL = t.NULL
+local eq = t.eq
 
-local lua2typvalt = eval_helpers.lua2typvalt
-local typvalt2lua = eval_helpers.typvalt2lua
-local typvalt = eval_helpers.typvalt
+local lua2typvalt = t_eval.lua2typvalt
+local typvalt2lua = t_eval.typvalt2lua
+local typvalt = t_eval.typvalt
 
-local nil_value = api_helpers.nil_value
-local list_type = api_helpers.list_type
-local int_type = api_helpers.int_type
-local type_key = api_helpers.type_key
-local obj2lua = api_helpers.obj2lua
-local func_type = api_helpers.func_type
+local nil_value = api_t.nil_value
+local list_type = api_t.list_type
+local int_type = api_t.int_type
+local type_key = api_t.type_key
+local obj2lua = api_t.obj2lua
+local func_type = api_t.func_type
 
-local api = cimport('./src/nvim/api/private/helpers.h', './src/nvim/api/private/converter.h')
+local api = cimport('./src/nvim/api/private/t.h', './src/nvim/api/private/converter.h')
 
 describe('vim_to_object', function()
   local vim_to_object = function(l)

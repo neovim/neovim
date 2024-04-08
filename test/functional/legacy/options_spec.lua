@@ -1,9 +1,9 @@
 -- See also: test/old/testdir/test_options.vim
-local helpers = require('test.functional.helpers')(after_each)
-local command, clear = helpers.command, helpers.clear
-local source, expect = helpers.source, helpers.expect
-local exc_exec = helpers.exc_exec
-local matches = helpers.matches
+local t = require('test.functional.testutil')(after_each)
+local command, clear = t.command, t.clear
+local source, expect = t.source, t.expect
+local exc_exec = t.exc_exec
+local matches = t.matches
 local Screen = require('test.functional.ui.screen')
 
 describe('options', function()

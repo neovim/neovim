@@ -1,7 +1,7 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local feed = helpers.feed
+local clear = t.clear
+local feed = t.feed
 
 before_each(clear)
 

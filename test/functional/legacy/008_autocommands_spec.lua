@@ -1,13 +1,12 @@
 -- Test for BufWritePre autocommand that deletes or unloads the buffer.
 -- Test for BufUnload autocommand that unloads all other buffers.
 
-local helpers = require('test.functional.helpers')(after_each)
-local source = helpers.source
-local clear, command, expect, eq, eval =
-  helpers.clear, helpers.command, helpers.expect, helpers.eq, helpers.eval
-local write_file, dedent = helpers.write_file, helpers.dedent
-local read_file = helpers.read_file
-local expect_exit = helpers.expect_exit
+local t = require('test.functional.testutil')(after_each)
+local source = t.source
+local clear, command, expect, eq, eval = t.clear, t.command, t.expect, t.eq, t.eval
+local write_file, dedent = t.write_file, t.dedent
+local read_file = t.read_file
+local expect_exit = t.expect_exit
 
 describe('autocommands that delete and unload buffers:', function()
   local test_file = 'Xtest-008_autocommands.out'

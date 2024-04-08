@@ -1,29 +1,29 @@
 local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local uv = vim.uv
-local eq, eval, expect, exec = helpers.eq, helpers.eval, helpers.expect, helpers.exec
-local assert_alive = helpers.assert_alive
-local clear = helpers.clear
-local command = helpers.command
-local feed = helpers.feed
-local fn = helpers.fn
-local nvim_prog = helpers.nvim_prog
-local ok = helpers.ok
-local rmdir = helpers.rmdir
-local new_argv = helpers.new_argv
-local new_pipename = helpers.new_pipename
+local eq, eval, expect, exec = t.eq, t.eval, t.expect, t.exec
+local assert_alive = t.assert_alive
+local clear = t.clear
+local command = t.command
+local feed = t.feed
+local fn = t.fn
+local nvim_prog = t.nvim_prog
+local ok = t.ok
+local rmdir = t.rmdir
+local new_argv = t.new_argv
+local new_pipename = t.new_pipename
 local pesc = vim.pesc
-local os_kill = helpers.os_kill
-local set_session = helpers.set_session
-local spawn = helpers.spawn
-local async_meths = helpers.async_meths
-local expect_msg_seq = helpers.expect_msg_seq
-local pcall_err = helpers.pcall_err
-local mkdir = helpers.mkdir
-local poke_eventloop = helpers.poke_eventloop
-local api = helpers.api
-local retry = helpers.retry
-local write_file = helpers.write_file
+local os_kill = t.os_kill
+local set_session = t.set_session
+local spawn = t.spawn
+local async_meths = t.async_meths
+local expect_msg_seq = t.expect_msg_seq
+local pcall_err = t.pcall_err
+local mkdir = t.mkdir
+local poke_eventloop = t.poke_eventloop
+local api = t.api
+local retry = t.retry
+local write_file = t.write_file
 
 describe(':recover', function()
   before_each(clear)
@@ -110,7 +110,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
   end)
 
   it('killing TUI process without :preserve #22096', function()
-    helpers.skip(helpers.is_os('win'))
+    t.skip(t.is_os('win'))
     local screen0 = Screen.new()
     screen0:attach()
     local child_server = new_pipename()
@@ -118,7 +118,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
       env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
     })
     screen0:expect({ any = pesc('[No Name]') }) -- Wait for the child process to start.
-    local child_session = helpers.connect(child_server)
+    local child_session = t.connect(child_server)
     set_session(child_session)
     local swappath1 = setup_swapname()
     set_session(nvim0)

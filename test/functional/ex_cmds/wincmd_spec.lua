@@ -1,8 +1,8 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local eq = helpers.eq
-local fn = helpers.fn
-local command = helpers.command
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local eq = t.eq
+local fn = t.fn
+local command = t.command
 
 it(':wincmd accepts a count', function()
   clear()

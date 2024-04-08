@@ -1,23 +1,20 @@
-local helpers = require('test.unit.helpers')(nil)
-local eval_helpers = require('test.unit.eval.helpers')
+local t = require('test.unit.testutil')(nil)
+local t_eval = require('test.unit.eval.testutil')
 
-local cimport = helpers.cimport
-local to_cstr = helpers.to_cstr
-local ffi = helpers.ffi
+local cimport = t.cimport
+local to_cstr = t.to_cstr
+local ffi = t.ffi
 
-local list_type = eval_helpers.list_type
-local dict_type = eval_helpers.dict_type
-local func_type = eval_helpers.func_type
-local nil_value = eval_helpers.nil_value
-local int_type = eval_helpers.int_type
-local flt_type = eval_helpers.flt_type
-local type_key = eval_helpers.type_key
+local list_type = t_eval.list_type
+local dict_type = t_eval.dict_type
+local func_type = t_eval.func_type
+local nil_value = t_eval.nil_value
+local int_type = t_eval.int_type
+local flt_type = t_eval.flt_type
+local type_key = t_eval.type_key
 
-local api = cimport(
-  './src/nvim/api/private/defs.h',
-  './src/nvim/api/private/helpers.h',
-  './src/nvim/memory.h'
-)
+local api =
+  cimport('./src/nvim/api/private/defs.h', './src/nvim/api/private/t.h', './src/nvim/memory.h')
 
 local obj2lua
 

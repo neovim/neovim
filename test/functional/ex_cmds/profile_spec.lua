@@ -1,14 +1,14 @@
 require('os')
 local uv = vim.uv
 
-local helpers = require('test.functional.helpers')(after_each)
-local eval = helpers.eval
-local command = helpers.command
-local eq, neq = helpers.eq, helpers.neq
-local tempfile = helpers.tmpname()
-local source = helpers.source
-local matches = helpers.matches
-local read_file = helpers.read_file
+local t = require('test.functional.testutil')(after_each)
+local eval = t.eval
+local command = t.command
+local eq, neq = t.eq, t.neq
+local tempfile = t.tmpname()
+local source = t.source
+local matches = t.matches
+local read_file = t.read_file
 
 -- tmpname() also creates the file on POSIX systems. Remove it again.
 -- We just need the name, ignoring any race conditions.
@@ -25,10 +25,10 @@ local function assert_file_exists_not(filepath)
 end
 
 describe(':profile', function()
-  before_each(helpers.clear)
+  before_each(t.clear)
 
   after_each(function()
-    helpers.expect_exit(command, 'qall!')
+    t.expect_exit(command, 'qall!')
     if uv.fs_stat(tempfile).uid ~= nil then
       os.remove(tempfile)
     end

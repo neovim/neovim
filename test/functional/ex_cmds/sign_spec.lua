@@ -1,7 +1,7 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear, eq, assert_alive = helpers.clear, helpers.eq, helpers.assert_alive
-local command = helpers.command
-local api = helpers.api
+local t = require('test.functional.testutil')(after_each)
+local clear, eq, assert_alive = t.clear, t.eq, t.assert_alive
+local command = t.command
+local api = t.api
 
 describe('sign', function()
   before_each(clear)

@@ -3,19 +3,19 @@
 -- - "./dir", in directory relative to file
 -- - "dir", in directory relative to current dir
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eq = helpers.eq
-local neq = helpers.neq
-local poke_eventloop = helpers.poke_eventloop
-local fn = helpers.fn
-local api = helpers.api
-local clear = helpers.clear
-local insert = helpers.insert
-local command = helpers.command
-local write_file = helpers.write_file
-local expect_exit = helpers.expect_exit
-local mkdir = helpers.mkdir
+local eq = t.eq
+local neq = t.neq
+local poke_eventloop = t.poke_eventloop
+local fn = t.fn
+local api = t.api
+local clear = t.clear
+local insert = t.insert
+local command = t.command
+local write_file = t.write_file
+local expect_exit = t.expect_exit
+local mkdir = t.mkdir
 
 local function ls_dir_sorted(dirname)
   local files = {}
@@ -44,8 +44,8 @@ describe("'directory' option", function()
   end)
   teardown(function()
     expect_exit(command, 'qall!')
-    helpers.rmdir('Xtest.je')
-    helpers.rmdir('Xtest2')
+    t.rmdir('Xtest.je')
+    t.rmdir('Xtest2')
     os.remove('Xtest1')
   end)
 

@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local feed = helpers.feed
+local feed = t.feed
 
-local eq = helpers.eq
-local exec_lua = helpers.exec_lua
+local eq = t.eq
+local exec_lua = t.exec_lua
 
 describe('vim.lsp.util', function()
-  before_each(helpers.clear)
+  before_each(t.clear)
 
   describe('stylize_markdown', function()
     local stylize_markdown = function(content, opts)
@@ -142,7 +142,7 @@ describe('vim.lsp.util', function()
 
     local screen
     before_each(function()
-      helpers.clear()
+      t.clear()
       screen = Screen.new(80, 80)
       screen:attach()
       feed('79i<CR><Esc>') -- fill screen with empty lines

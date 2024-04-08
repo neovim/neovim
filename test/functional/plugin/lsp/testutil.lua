@@ -1,10 +1,10 @@
-local helpers = require('test.functional.helpers')(nil)
+local t = require('test.functional.testutil')(nil)
 
-local clear = helpers.clear
-local exec_lua = helpers.exec_lua
-local run = helpers.run
-local stop = helpers.stop
-local api = helpers.api
+local clear = t.clear
+local exec_lua = t.exec_lua
+local run = t.run
+local stop = t.stop
+local api = t.api
 local NIL = vim.NIL
 
 local M = {}

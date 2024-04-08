@@ -1,17 +1,17 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eq = helpers.eq
+local eq = t.eq
 local NIL = vim.NIL
-local eval = helpers.eval
-local clear = helpers.clear
-local api = helpers.api
-local fn = helpers.fn
-local source = helpers.source
-local dedent = helpers.dedent
-local command = helpers.command
-local exc_exec = helpers.exc_exec
-local exec_capture = helpers.exec_capture
-local matches = helpers.matches
+local eval = t.eval
+local clear = t.clear
+local api = t.api
+local fn = t.fn
+local source = t.source
+local dedent = t.dedent
+local command = t.command
+local exc_exec = t.exc_exec
+local exec_capture = t.exec_capture
+local matches = t.matches
 
 describe(':echo :echon :echomsg :echoerr', function()
   local fn_tbl = { 'String', 'StringN', 'StringMsg', 'StringErr' }
@@ -255,7 +255,7 @@ describe(':echo :echon :echomsg :echoerr', function()
       eval('add(l, l)')
       -- Regression: the below line used to crash (add returns original list and
       -- there was error in dumping partials). Tested explicitly in
-      -- test/unit/api/private_helpers_spec.lua.
+      -- test/unit/api/private_t_spec.lua.
       eval('add(l, function("Test1", l))')
       eq(
         dedent(

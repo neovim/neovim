@@ -1,10 +1,10 @@
 -- Tests for :sort command.
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
 local insert, command, clear, expect, eq, poke_eventloop =
-  helpers.insert, helpers.command, helpers.clear, helpers.expect, helpers.eq, helpers.poke_eventloop
-local exc_exec = helpers.exc_exec
+  t.insert, t.command, t.clear, t.expect, t.eq, t.poke_eventloop
+local exc_exec = t.exc_exec
 
 describe(':sort', function()
   local text = [[

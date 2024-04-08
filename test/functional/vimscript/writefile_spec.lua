@@ -1,15 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local mkdir = helpers.mkdir
-local clear = helpers.clear
-local eq = helpers.eq
-local fn = helpers.fn
-local api = helpers.api
-local exc_exec = helpers.exc_exec
-local read_file = helpers.read_file
-local write_file = helpers.write_file
-local pcall_err = helpers.pcall_err
-local command = helpers.command
+local mkdir = t.mkdir
+local clear = t.clear
+local eq = t.eq
+local fn = t.fn
+local api = t.api
+local exc_exec = t.exc_exec
+local read_file = t.read_file
+local write_file = t.write_file
+local pcall_err = t.pcall_err
+local command = t.command
 
 local fname = 'Xtest-functional-eval-writefile'
 local dname = fname .. '.d'

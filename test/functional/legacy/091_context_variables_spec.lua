@@ -1,8 +1,8 @@
 -- Tests for getbufvar(), getwinvar(), gettabvar() and gettabwinvar().
 
-local helpers = require('test.functional.helpers')(after_each)
-local insert, source = helpers.insert, helpers.source
-local clear, expect = helpers.clear, helpers.expect
+local t = require('test.functional.testutil')(after_each)
+local insert, source = t.insert, t.source
+local clear, expect = t.clear, t.expect
 
 describe('context variables', function()
   setup(clear)

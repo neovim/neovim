@@ -1,8 +1,8 @@
 -- Tests for 'fixeol'
 
-local helpers = require('test.functional.helpers')(after_each)
-local feed = helpers.feed
-local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
+local t = require('test.functional.testutil')(after_each)
+local feed = t.feed
+local clear, feed_command, expect = t.clear, t.feed_command, t.expect
 
 describe('fixeol', function()
   local function rmtestfiles()

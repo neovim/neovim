@@ -1,15 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
-local eq = helpers.eq
-local eval = helpers.eval
-local clear = helpers.clear
-local source = helpers.source
-local exc_exec = helpers.exc_exec
-local pcall_err = helpers.pcall_err
-local fn = helpers.fn
+local t = require('test.functional.testutil')(after_each)
+local eq = t.eq
+local eval = t.eval
+local clear = t.clear
+local source = t.source
+local exc_exec = t.exc_exec
+local pcall_err = t.pcall_err
+local fn = t.fn
 local Screen = require('test.functional.ui.screen')
-local command = helpers.command
-local feed = helpers.feed
-local is_os = helpers.is_os
+local command = t.command
+local feed = t.feed
+local is_os = t.is_os
 
 describe('execute()', function()
   before_each(clear)

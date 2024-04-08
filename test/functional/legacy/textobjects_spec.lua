@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
-local call = helpers.call
-local clear = helpers.clear
-local command = helpers.command
-local expect = helpers.expect
-local source = helpers.source
+local t = require('test.functional.testutil')(after_each)
+local call = t.call
+local clear = t.clear
+local command = t.command
+local expect = t.expect
+local source = t.source
 
 describe('Text object', function()
   before_each(function()

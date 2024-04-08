@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local feed = helpers.feed
-local source = helpers.source
-local clear = helpers.clear
-local command = helpers.command
-local expect = helpers.expect
-local poke_eventloop = helpers.poke_eventloop
-local api = helpers.api
-local eq = helpers.eq
-local neq = helpers.neq
+local feed = t.feed
+local source = t.source
+local clear = t.clear
+local command = t.command
+local expect = t.expect
+local poke_eventloop = t.poke_eventloop
+local api = t.api
+local eq = t.eq
+local neq = t.neq
 
 describe('prompt buffer', function()
   local screen

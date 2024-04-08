@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eq = helpers.eq
+local eq = t.eq
 local NIL = vim.NIL
-local eval = helpers.eval
-local clear = helpers.clear
-local api = helpers.api
-local fn = helpers.fn
-local command = helpers.command
-local exc_exec = helpers.exc_exec
-local pcall_err = helpers.pcall_err
+local eval = t.eval
+local clear = t.clear
+local api = t.api
+local fn = t.fn
+local command = t.command
+local exc_exec = t.exc_exec
+local pcall_err = t.pcall_err
 
 before_each(clear)
 

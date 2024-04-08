@@ -1,17 +1,17 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
 local NIL = vim.NIL
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local api = helpers.api
-local matches = helpers.matches
-local source = helpers.source
-local pcall_err = helpers.pcall_err
-local exec_lua = helpers.exec_lua
-local assert_alive = helpers.assert_alive
-local feed = helpers.feed
-local fn = helpers.fn
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local api = t.api
+local matches = t.matches
+local source = t.source
+local pcall_err = t.pcall_err
+local exec_lua = t.exec_lua
+local assert_alive = t.assert_alive
+local feed = t.feed
+local fn = t.fn
 
 describe('nvim_get_commands', function()
   local cmd_dict = {

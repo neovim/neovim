@@ -1,12 +1,12 @@
 -- Tests for adjusting window and contents
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local poke_eventloop = helpers.poke_eventloop
-local clear = helpers.clear
-local insert = helpers.insert
-local command = helpers.command
+local poke_eventloop = t.poke_eventloop
+local clear = t.clear
+local insert = t.insert
+local command = t.command
 
 describe('107', function()
   setup(clear)

@@ -1,24 +1,18 @@
 -- Tests for system() and :! shell.
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local assert_alive = helpers.assert_alive
-local testprg = helpers.testprg
+local assert_alive = t.assert_alive
+local testprg = t.testprg
 local eq, call, clear, eval, feed_command, feed, api =
-  helpers.eq,
-  helpers.call,
-  helpers.clear,
-  helpers.eval,
-  helpers.feed_command,
-  helpers.feed,
-  helpers.api
-local command = helpers.command
-local insert = helpers.insert
-local expect = helpers.expect
-local exc_exec = helpers.exc_exec
-local os_kill = helpers.os_kill
-local pcall_err = helpers.pcall_err
-local is_os = helpers.is_os
+  t.eq, t.call, t.clear, t.eval, t.feed_command, t.feed, t.api
+local command = t.command
+local insert = t.insert
+local expect = t.expect
+local exc_exec = t.exc_exec
+local os_kill = t.os_kill
+local pcall_err = t.pcall_err
+local is_os = t.is_os
 
 local Screen = require('test.functional.ui.screen')
 
@@ -189,7 +183,7 @@ describe('system()', function()
       end)
 
       it('with powershell', function()
-        helpers.set_shell_powershell()
+        t.set_shell_powershell()
         eq('a\nb\n', eval([[system('Write-Output a b')]]))
         eq('C:\\\n', eval([[system('cd c:\; (Get-Location).Path')]]))
         eq('a b\n', eval([[system('Write-Output "a b"')]]))
@@ -197,11 +191,11 @@ describe('system()', function()
     end
 
     it('powershell w/ UTF-8 text #13713', function()
-      if not helpers.has_powershell() then
+      if not t.has_powershell() then
         pending('powershell not found', function() end)
         return
       end
-      helpers.set_shell_powershell()
+      t.set_shell_powershell()
       eq('ああ\n', eval([[system('Write-Output "ああ"')]]))
       -- Sanity test w/ default encoding
       -- * on Windows, expected to default to Western European enc
@@ -234,7 +228,7 @@ describe('system()', function()
     end)
 
     it('self and total time recorded separately', function()
-      local tempfile = helpers.tmpname()
+      local tempfile = t.tmpname()
 
       feed(':function! AlmostNoSelfTime()<cr>')
       feed('echo system("echo hi")<cr>')
@@ -247,11 +241,11 @@ describe('system()', function()
 
       feed(':edit ' .. tempfile .. '<cr>')
 
-      local command_total_time = tonumber(helpers.fn.split(helpers.fn.getline(7))[2])
-      local command_self_time = tonumber(helpers.fn.split(helpers.fn.getline(7))[3])
+      local command_total_time = tonumber(t.fn.split(t.fn.getline(7))[2])
+      local command_self_time = tonumber(t.fn.split(t.fn.getline(7))[3])
 
-      helpers.neq(nil, command_total_time)
-      helpers.neq(nil, command_self_time)
+      t.neq(nil, command_total_time)
+      t.neq(nil, command_self_time)
     end)
 
     it('`yes` interrupted with CTRL-C', function()
@@ -554,11 +548,11 @@ describe('systemlist()', function()
   end)
 
   it('powershell w/ UTF-8 text #13713', function()
-    if not helpers.has_powershell() then
+    if not t.has_powershell() then
       pending('powershell not found', function() end)
       return
     end
-    helpers.set_shell_powershell()
+    t.set_shell_powershell()
     eq({ is_os('win') and 'あ\r' or 'あ' }, eval([[systemlist('Write-Output あ')]]))
     -- Sanity test w/ default encoding
     -- * on Windows, expected to default to Western European enc
@@ -574,7 +568,7 @@ describe('shell :!', function()
   it(':{range}! with powershell filter/redirect #16271 #19250', function()
     local screen = Screen.new(500, 8)
     screen:attach()
-    local found = helpers.set_shell_powershell(true)
+    local found = t.set_shell_powershell(true)
     insert([[
       3
       1
@@ -621,12 +615,12 @@ describe('shell :!', function()
       }
     end
     feed('<CR>')
-    helpers.set_shell_powershell(true)
+    t.set_shell_powershell(true)
     feed(':4verbose %w !sort<cr>')
     screen:expect {
       any = [[Executing command: .?& { Get%-Content .* | & sort }]],
     }
     feed('<CR>')
-    helpers.expect_exit(command, 'qall!')
+    t.expect_exit(command, 'qall!')
   end)
 end)

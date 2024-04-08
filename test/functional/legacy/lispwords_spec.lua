@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local eq = helpers.eq
-local eval = helpers.eval
-local command = helpers.command
-local source = helpers.source
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local eq = t.eq
+local eval = t.eval
+local command = t.command
+local source = t.source
 
 describe('lispwords', function()
   before_each(clear)

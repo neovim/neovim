@@ -1,21 +1,21 @@
-local helpers = require('test.functional.helpers')(after_each)
-local thelpers = require('test.functional.terminal.helpers')
-local feed_data = thelpers.feed_data
-local feed, clear = helpers.feed, helpers.clear
-local poke_eventloop = helpers.poke_eventloop
-local command = helpers.command
-local retry = helpers.retry
-local eq = helpers.eq
-local eval = helpers.eval
-local skip = helpers.skip
-local is_os = helpers.is_os
+local t = require('test.functional.testutil')(after_each)
+local tt = require('test.functional.terminal.testutil')
+local feed_data = tt.feed_data
+local feed, clear = t.feed, t.clear
+local poke_eventloop = t.poke_eventloop
+local command = t.command
+local retry = t.retry
+local eq = t.eq
+local eval = t.eval
+local skip = t.skip
+local is_os = t.is_os
 
 describe(':terminal window', function()
   local screen
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup()
+    screen = tt.screen_setup()
   end)
 
   it('sets topline correctly #8556', function()
@@ -176,7 +176,7 @@ describe(':terminal with multigrid', function()
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup(0, nil, 50, nil, { ext_multigrid = true })
+    screen = tt.screen_setup(0, nil, 50, nil, { ext_multigrid = true })
   end)
 
   it('resizes to requested size', function()

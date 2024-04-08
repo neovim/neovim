@@ -1,36 +1,36 @@
-local helpers = require('test.functional.helpers')(after_each)
-local lsp_helpers = require('test.functional.plugin.lsp.helpers')
+local t = require('test.functional.testutil')(after_each)
+local t_lsp = require('test.functional.plugin.lsp.testutil')
 
-local assert_log = helpers.assert_log
-local buf_lines = helpers.buf_lines
-local clear = helpers.clear
-local command = helpers.command
-local dedent = helpers.dedent
-local exec_lua = helpers.exec_lua
-local eq = helpers.eq
-local eval = helpers.eval
-local matches = helpers.matches
-local pcall_err = helpers.pcall_err
+local assert_log = t.assert_log
+local buf_lines = t.buf_lines
+local clear = t.clear
+local command = t.command
+local dedent = t.dedent
+local exec_lua = t.exec_lua
+local eq = t.eq
+local eval = t.eval
+local matches = t.matches
+local pcall_err = t.pcall_err
 local pesc = vim.pesc
-local insert = helpers.insert
-local fn = helpers.fn
-local retry = helpers.retry
-local stop = helpers.stop
+local insert = t.insert
+local fn = t.fn
+local retry = t.retry
+local stop = t.stop
 local NIL = vim.NIL
-local read_file = helpers.read_file
-local write_file = helpers.write_file
-local is_ci = helpers.is_ci
-local api = helpers.api
-local is_os = helpers.is_os
-local skip = helpers.skip
-local mkdir = helpers.mkdir
-local tmpname = helpers.tmpname
+local read_file = t.read_file
+local write_file = t.write_file
+local is_ci = t.is_ci
+local api = t.api
+local is_os = t.is_os
+local skip = t.skip
+local mkdir = t.mkdir
+local tmpname = t.tmpname
 
-local clear_notrace = lsp_helpers.clear_notrace
-local create_server_definition = lsp_helpers.create_server_definition
-local fake_lsp_code = lsp_helpers.fake_lsp_code
-local fake_lsp_logfile = lsp_helpers.fake_lsp_logfile
-local test_rpc_server = lsp_helpers.test_rpc_server
+local clear_notrace = t_lsp.clear_notrace
+local create_server_definition = t_lsp.create_server_definition
+local fake_lsp_code = t_lsp.fake_lsp_code
+local fake_lsp_logfile = t_lsp.fake_lsp_logfile
+local test_rpc_server = t_lsp.test_rpc_server
 
 local function get_buf_option(name, bufnr)
   bufnr = bufnr or 'BUFFER'
@@ -249,7 +249,7 @@ describe('LSP', function()
       if is_ci() then
         pending('hangs the build on CI #14028, re-enable with freeze timeout #14204')
         return
-      elseif helpers.skip_fragile(pending) then
+      elseif t.skip_fragile(pending) then
         return
       end
       local expected_handlers = {
@@ -1481,7 +1481,7 @@ describe('LSP', function()
         end,
         on_handler = function(err, result, ctx)
           if ctx.method == 'start' then
-            helpers.command('normal! 1Go')
+            t.command('normal! 1Go')
             client.notify('finish')
           end
           eq(table.remove(expected_handlers), { err, result, ctx }, 'expected handler')
@@ -2368,7 +2368,7 @@ describe('LSP', function()
   end)
 
   describe('lsp.util.rename', function()
-    local pathsep = helpers.get_pathsep()
+    local pathsep = t.get_pathsep()
 
     it('Can rename an existing file', function()
       local old = tmpname()
@@ -2404,7 +2404,7 @@ describe('LSP', function()
       os.remove(old_dir)
       os.remove(new_dir)
 
-      helpers.mkdir_p(old_dir)
+      t.mkdir_p(old_dir)
 
       local file = 'file.txt'
       write_file(old_dir .. pathsep .. file, 'Test content')
@@ -2440,7 +2440,7 @@ describe('LSP', function()
       local new = tmpname()
       os.remove(old)
       os.remove(new)
-      helpers.mkdir_p(old)
+      t.mkdir_p(old)
 
       local result = exec_lua(
         [[

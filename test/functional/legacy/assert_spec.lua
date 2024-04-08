@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
-local nvim, call = helpers.api, helpers.call
-local clear, eq = helpers.clear, helpers.eq
-local source, command = helpers.source, helpers.command
-local exc_exec = helpers.exc_exec
-local eval = helpers.eval
+local t = require('test.functional.testutil')(after_each)
+local nvim, call = t.api, t.call
+local clear, eq = t.clear, t.eq
+local source, command = t.source, t.command
+local exc_exec = t.exc_exec
+local eval = t.eval
 
 local function expected_errors(errors)
   eq(errors, nvim.nvim_get_vvar('errors'))

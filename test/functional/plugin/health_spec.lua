@@ -1,15 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local clear = helpers.clear
-local curbuf_contents = helpers.curbuf_contents
-local command = helpers.command
-local eq, neq, matches = helpers.eq, helpers.neq, helpers.matches
-local getcompletion = helpers.fn.getcompletion
-local insert = helpers.insert
-local source = helpers.source
-local fn = helpers.fn
-local api = helpers.api
+local clear = t.clear
+local curbuf_contents = t.curbuf_contents
+local command = t.command
+local eq, neq, matches = t.eq, t.neq, t.matches
+local getcompletion = t.fn.getcompletion
+local insert = t.insert
+local source = t.source
+local fn = t.fn
+local api = t.api
 
 describe(':checkhealth', function()
   it('detects invalid $VIMRUNTIME', function()
@@ -53,7 +53,7 @@ describe('health.vim', function()
   describe(':checkhealth', function()
     it('functions report_*() render correctly', function()
       command('checkhealth full_render')
-      helpers.expect([[
+      t.expect([[
 
       ==============================================================================
       test_plug.full_render: require("test_plug.full_render.health").check()
@@ -76,7 +76,7 @@ describe('health.vim', function()
 
     it('concatenates multiple reports', function()
       command('checkhealth success1 success2 test_plug')
-      helpers.expect([[
+      t.expect([[
 
         ==============================================================================
         test_plug: require("test_plug.health").check()
@@ -106,7 +106,7 @@ describe('health.vim', function()
 
     it('lua plugins submodules', function()
       command('checkhealth test_plug.submodule')
-      helpers.expect([[
+      t.expect([[
 
         ==============================================================================
         test_plug.submodule: require("test_plug.submodule.health").check()
@@ -121,7 +121,7 @@ describe('health.vim', function()
 
     it('... including empty reports', function()
       command('checkhealth test_plug.submodule_empty')
-      helpers.expect([[
+      t.expect([[
 
       ==============================================================================
       test_plug.submodule_empty: require("test_plug.submodule_empty.health").check()
@@ -180,7 +180,7 @@ describe('health.vim', function()
     it('gracefully handles invalid healthcheck', function()
       command('checkhealth non_existent_healthcheck')
       -- luacheck: ignore 613
-      helpers.expect([[
+      t.expect([[
 
         ==============================================================================
         non_existent_healthcheck: 
@@ -192,7 +192,7 @@ describe('health.vim', function()
     it('does not use vim.health as a healtcheck', function()
       -- vim.health is not a healthcheck
       command('checkhealth vim')
-      helpers.expect([[
+      t.expect([[
       ERROR: No healthchecks found.]])
     end)
   end)

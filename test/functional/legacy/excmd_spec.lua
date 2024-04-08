@@ -1,18 +1,18 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local exec = helpers.exec
-local exec_lua = helpers.exec_lua
-local expect_exit = helpers.expect_exit
-local feed = helpers.feed
-local fn = helpers.fn
-local api = helpers.api
-local read_file = helpers.read_file
-local source = helpers.source
-local eq = helpers.eq
-local write_file = helpers.write_file
-local is_os = helpers.is_os
+local clear = t.clear
+local command = t.command
+local exec = t.exec
+local exec_lua = t.exec_lua
+local expect_exit = t.expect_exit
+local feed = t.feed
+local fn = t.fn
+local api = t.api
+local read_file = t.read_file
+local source = t.source
+local eq = t.eq
+local write_file = t.write_file
+local is_os = t.is_os
 
 local function sizeoflong()
   if not exec_lua('return pcall(require, "ffi")') then

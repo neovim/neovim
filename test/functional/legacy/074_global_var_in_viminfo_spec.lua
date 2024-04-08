@@ -1,8 +1,8 @@
 -- Tests for storing global variables in the .shada file
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local clear, command, eq, neq, eval, poke_eventloop =
-  helpers.clear, helpers.command, helpers.eq, helpers.neq, helpers.eval, helpers.poke_eventloop
+  t.clear, t.command, t.eq, t.neq, t.eval, t.poke_eventloop
 
 describe('storing global variables in ShaDa files', function()
   local tempname = 'Xtest-functional-legacy-074'

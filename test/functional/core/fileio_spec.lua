@@ -1,37 +1,37 @@
 local uv = vim.uv
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local assert_log = helpers.assert_log
-local assert_nolog = helpers.assert_nolog
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local neq = helpers.neq
-local ok = helpers.ok
-local feed = helpers.feed
-local fn = helpers.fn
-local nvim_prog = helpers.nvim_prog
-local request = helpers.request
-local retry = helpers.retry
-local rmdir = helpers.rmdir
-local matches = helpers.matches
-local api = helpers.api
-local mkdir = helpers.mkdir
+local assert_log = t.assert_log
+local assert_nolog = t.assert_nolog
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local neq = t.neq
+local ok = t.ok
+local feed = t.feed
+local fn = t.fn
+local nvim_prog = t.nvim_prog
+local request = t.request
+local retry = t.retry
+local rmdir = t.rmdir
+local matches = t.matches
+local api = t.api
+local mkdir = t.mkdir
 local sleep = vim.uv.sleep
-local read_file = helpers.read_file
+local read_file = t.read_file
 local trim = vim.trim
-local currentdir = helpers.fn.getcwd
-local assert_alive = helpers.assert_alive
-local check_close = helpers.check_close
-local expect_exit = helpers.expect_exit
-local write_file = helpers.write_file
+local currentdir = t.fn.getcwd
+local assert_alive = t.assert_alive
+local check_close = t.check_close
+local expect_exit = t.expect_exit
+local write_file = t.write_file
 local Screen = require('test.functional.ui.screen')
-local feed_command = helpers.feed_command
-local skip = helpers.skip
-local is_os = helpers.is_os
-local is_ci = helpers.is_ci
-local spawn = helpers.spawn
-local set_session = helpers.set_session
+local feed_command = t.feed_command
+local skip = t.skip
+local is_os = t.is_os
+local is_ci = t.is_ci
+local spawn = t.spawn
+local set_session = t.set_session
 
 describe('fileio', function()
   before_each(function() end)
@@ -228,7 +228,7 @@ describe('fileio', function()
 
     local initial_content = 'foo'
     local backup_dir = 'Xtest_backupdir'
-    local sep = helpers.get_pathsep()
+    local sep = t.get_pathsep()
     local link_file_name = 'Xtest_startup_file2'
     local backup_file_name = backup_dir .. sep .. link_file_name .. '~'
 
@@ -329,7 +329,7 @@ describe('tmpdir', function()
 
   before_each(function()
     -- Fake /tmp dir so that we can mess it up.
-    os_tmpdir = vim.uv.fs_mkdtemp(vim.fs.dirname(helpers.tmpname()) .. '/nvim_XXXXXXXXXX')
+    os_tmpdir = vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname()) .. '/nvim_XXXXXXXXXX')
   end)
 
   after_each(function()

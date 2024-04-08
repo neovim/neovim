@@ -1,7 +1,7 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local exec_lua = helpers.exec_lua
+local clear = t.clear
+local exec_lua = t.exec_lua
 
 describe('treesitter perf', function()
   setup(function()
@@ -9,7 +9,7 @@ describe('treesitter perf', function()
   end)
 
   it('can handle large folds', function()
-    helpers.command 'edit ./src/nvim/eval.c'
+    t.command 'edit ./src/nvim/eval.c'
     exec_lua [[
       local parser = vim.treesitter.get_parser(0, "c", {})
       vim.treesitter.highlighter.new(parser)

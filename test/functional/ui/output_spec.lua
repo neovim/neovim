@@ -1,19 +1,20 @@
 local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
-local child_session = require('test.functional.terminal.helpers')
-local assert_alive = helpers.assert_alive
-local mkdir, write_file, rmdir = helpers.mkdir, helpers.write_file, helpers.rmdir
-local eq = helpers.eq
-local feed = helpers.feed
-local feed_command = helpers.feed_command
-local clear = helpers.clear
-local command = helpers.command
-local testprg = helpers.testprg
-local nvim_dir = helpers.nvim_dir
-local has_powershell = helpers.has_powershell
-local set_shell_powershell = helpers.set_shell_powershell
-local skip = helpers.skip
-local is_os = helpers.is_os
+local t = require('test.functional.testutil')(after_each)
+local tt = require('test.functional.terminal.testutil')
+
+local assert_alive = t.assert_alive
+local mkdir, write_file, rmdir = t.mkdir, t.write_file, t.rmdir
+local eq = t.eq
+local feed = t.feed
+local feed_command = t.feed_command
+local clear = t.clear
+local command = t.command
+local testprg = t.testprg
+local nvim_dir = t.nvim_dir
+local has_powershell = t.has_powershell
+local set_shell_powershell = t.set_shell_powershell
+local skip = t.skip
+local is_os = t.is_os
 
 clear() -- for has_powershell()
 
@@ -21,7 +22,7 @@ describe('shell command :!', function()
   local screen
   before_each(function()
     clear()
-    screen = child_session.setup_child_nvim({
+    screen = tt.setup_child_nvim({
       '-u',
       'NONE',
       '-i',
@@ -29,7 +30,7 @@ describe('shell command :!', function()
       '--cmd',
       'colorscheme vim',
       '--cmd',
-      helpers.nvim_set .. ' notermguicolors',
+      t.nvim_set .. ' notermguicolors',
     })
     screen:expect([[
       {1: }                                                 |
@@ -40,14 +41,14 @@ describe('shell command :!', function()
   end)
 
   after_each(function()
-    child_session.feed_data('\3') -- Ctrl-C
+    tt.feed_data('\3') -- Ctrl-C
   end)
 
   it('displays output without LF/EOF. #4646 #4569 #3772', function()
     skip(is_os('win'))
     -- NOTE: We use a child nvim (within a :term buffer)
     --       to avoid triggering a UI flush.
-    child_session.feed_data(':!printf foo; sleep 200\n')
+    tt.feed_data(':!printf foo; sleep 200\n')
     screen:expect([[
                                                         |
       {4:~                                                 }|*2
@@ -61,7 +62,7 @@ describe('shell command :!', function()
   it('throttles shell-command output greater than ~10KB', function()
     skip(is_os('openbsd'), 'FIXME #10804')
     skip(is_os('win'))
-    child_session.feed_data((':!%s REP 30001 foo\n'):format(testprg('shell-test')))
+    tt.feed_data((':!%s REP 30001 foo\n'):format(testprg('shell-test')))
 
     -- If we observe any line starting with a dot, then throttling occurred.
     -- Avoid false failure on slow systems.
@@ -80,7 +81,7 @@ describe('shell command :!', function()
       {3:-- TERMINAL --}                                    |
     ]],
       {
-        -- test/functional/helpers.lua defaults to background=light.
+        -- test/functional/t.lua defaults to background=light.
         [1] = { reverse = true },
         [3] = { bold = true },
         [10] = { foreground = 2 },

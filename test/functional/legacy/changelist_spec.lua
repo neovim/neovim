@@ -1,9 +1,9 @@
 -- Test changelist position after splitting window
 -- Set 'undolevels' to make changelist for sourced file
 
-local helpers = require('test.functional.helpers')(after_each)
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local feed_command, expect = helpers.feed_command, helpers.expect
+local t = require('test.functional.testutil')(after_each)
+local clear, feed, insert = t.clear, t.feed, t.insert
+local feed_command, expect = t.feed_command, t.expect
 
 describe('changelist', function()
   setup(clear)

@@ -1,14 +1,14 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
-local cimported = helpers.cimport(
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
+local cimported = t.cimport(
   './src/nvim/os/shell.h',
   './src/nvim/option_vars.h',
   './src/nvim/main.h',
   './src/nvim/memory.h'
 )
-local ffi, eq = helpers.ffi, helpers.eq
-local intern = helpers.internalize
-local to_cstr = helpers.to_cstr
+local ffi, eq = t.ffi, t.eq
+local intern = t.internalize
+local to_cstr = t.to_cstr
 local NULL = ffi.cast('void *', 0)
 
 describe('shell functions', function()

@@ -1,10 +1,10 @@
-local helpers = require('test.unit.helpers')(after_each)
-local cimport = helpers.cimport
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local cimport = t.cimport
+local itp = t.gen_itp(it)
 local lib = cimport('./src/nvim/msgpack_rpc/unpacker.h', './src/nvim/memory.h')
-local ffi = helpers.ffi
-local eq = helpers.eq
-local to_cstr = helpers.to_cstr
+local ffi = t.ffi
+local eq = t.eq
+local to_cstr = t.to_cstr
 
 --- @class Unpacker
 --- @field read_ptr ffi.cdata*

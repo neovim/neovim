@@ -1,12 +1,11 @@
 -- Cmdline-mode tests.
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, insert, fn, eq, feed =
-  helpers.clear, helpers.insert, helpers.fn, helpers.eq, helpers.feed
-local eval = helpers.eval
-local command = helpers.command
-local api = helpers.api
+local clear, insert, fn, eq, feed = t.clear, t.insert, t.fn, t.eq, t.feed
+local eval = t.eval
+local command = t.command
+local api = t.api
 
 describe('cmdline', function()
   before_each(clear)

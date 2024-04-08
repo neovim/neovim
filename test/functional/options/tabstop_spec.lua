@@ -1,8 +1,8 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local assert_alive = helpers.assert_alive
-local clear = helpers.clear
-local feed = helpers.feed
+local assert_alive = t.assert_alive
+local clear = t.clear
+local feed = t.feed
 
 describe("'tabstop' option", function()
   before_each(function()

@@ -1,8 +1,8 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear, insert, eq = helpers.clear, helpers.insert, helpers.eq
-local command, expect = helpers.command, helpers.expect
-local feed, eval = helpers.feed, helpers.eval
-local exc_exec = helpers.exc_exec
+local t = require('test.functional.testutil')(after_each)
+local clear, insert, eq = t.clear, t.insert, t.eq
+local command, expect = t.command, t.expect
+local feed, eval = t.feed, t.eval
+local exc_exec = t.exc_exec
 
 describe('gu and gU', function()
   before_each(clear)

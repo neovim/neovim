@@ -1,8 +1,8 @@
-local helpers = require('test.functional.helpers')(after_each)
-local command = helpers.command
+local t = require('test.functional.testutil')(after_each)
+local command = t.command
 local Screen = require('test.functional.ui.screen')
-local clear, feed, feed_command = helpers.clear, helpers.feed, helpers.feed_command
-local exec = helpers.exec
+local clear, feed, feed_command = t.clear, t.feed, t.feed_command
+local exec = t.exec
 
 describe(':drop', function()
   local screen

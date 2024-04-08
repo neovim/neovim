@@ -1,10 +1,10 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eq, neq, call = helpers.eq, helpers.neq, helpers.call
-local eval, feed, clear = helpers.eval, helpers.feed, helpers.clear
-local command, insert, expect = helpers.command, helpers.insert, helpers.expect
-local feed_command = helpers.feed_command
-local curwin = helpers.api.nvim_get_current_win
+local eq, neq, call = t.eq, t.neq, t.call
+local eval, feed, clear = t.eval, t.feed, t.clear
+local command, insert, expect = t.command, t.insert, t.expect
+local feed_command = t.feed_command
+local curwin = t.api.nvim_get_current_win
 
 describe("'langmap'", function()
   before_each(function()
@@ -133,7 +133,7 @@ describe("'langmap'", function()
       hello]])
     end)
     it('command-line CTRL-R', function()
-      helpers.source([[
+      t.source([[
         let i_value = 0
         let j_value = 0
         call setreg('i', 'i_value')
@@ -171,7 +171,7 @@ describe("'langmap'", function()
     end)
     it('prompt for number', function()
       command('set langmap=12,21')
-      helpers.source([[
+      t.source([[
         let gotten_one = 0
         function Map()
           let answer = inputlist(['a', '1.', '2.', '3.'])
@@ -214,10 +214,7 @@ describe("'langmap'", function()
     end
     feed('qa' .. command_string .. 'q')
     expect(expect_string)
-    eq(
-      expect_macro or helpers.fn.nvim_replace_termcodes(command_string, true, true, true),
-      eval('@a')
-    )
+    eq(expect_macro or t.fn.nvim_replace_termcodes(command_string, true, true, true), eval('@a'))
     if setup_function then
       setup_function()
     end

@@ -1,5 +1,5 @@
-local helpers = require('test.functional.helpers')(after_each)
-local eq = helpers.eq
+local t = require('test.functional.testutil')(after_each)
+local eq = t.eq
 
 local grammar = require('scripts/luacats_grammar')
 

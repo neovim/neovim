@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
-local assert_log = helpers.assert_log
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local exec_lua = helpers.exec_lua
-local expect_exit = helpers.expect_exit
-local request = helpers.request
+local t = require('test.functional.testutil')(after_each)
+local assert_log = t.assert_log
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local exec_lua = t.exec_lua
+local expect_exit = t.expect_exit
+local request = t.request
 
 describe('log', function()
   local testlog = 'Xtest_logging'

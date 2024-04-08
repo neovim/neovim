@@ -1,9 +1,9 @@
 local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local command = helpers.command
-local feed = helpers.feed
-local is_os = helpers.is_os
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local command = t.command
+local feed = t.feed
+local is_os = t.is_os
 
 describe(':Tutor', function()
   local screen --- @type test.functional.ui.screen

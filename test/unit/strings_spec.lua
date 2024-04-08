@@ -1,10 +1,10 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
 
-local cimport = helpers.cimport
-local eq = helpers.eq
-local ffi = helpers.ffi
-local to_cstr = helpers.to_cstr
+local cimport = t.cimport
+local eq = t.eq
+local ffi = t.ffi
+local to_cstr = t.to_cstr
 
 local strings = cimport('stdlib.h', './src/nvim/strings.h', './src/nvim/memory.h')
 
@@ -261,7 +261,7 @@ end)
 
 describe('reverse_text', function()
   local reverse_text = function(str)
-    return helpers.internalize(strings.reverse_text(to_cstr(str)))
+    return t.internalize(strings.reverse_text(to_cstr(str)))
   end
 
   itp('handles empty string', function()

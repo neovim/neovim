@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear, feed_command = helpers.clear, helpers.feed_command
-local feed, next_msg, eq = helpers.feed, helpers.next_msg, helpers.eq
-local command = helpers.command
-local expect = helpers.expect
-local curbuf_contents = helpers.curbuf_contents
-local api = helpers.api
-local exec_lua = helpers.exec_lua
-local write_file = helpers.write_file
-local fn = helpers.fn
-local eval = helpers.eval
+local t = require('test.functional.testutil')(after_each)
+local clear, feed_command = t.clear, t.feed_command
+local feed, next_msg, eq = t.feed, t.next_msg, t.eq
+local command = t.command
+local expect = t.expect
+local curbuf_contents = t.curbuf_contents
+local api = t.api
+local exec_lua = t.exec_lua
+local write_file = t.write_file
+local fn = t.fn
+local eval = t.eval
 local Screen = require('test.functional.ui.screen')
 
 before_each(clear)

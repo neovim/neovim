@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eq = helpers.eq
-local clear = helpers.clear
-local api = helpers.api
-local exc_exec = helpers.exc_exec
-local fn = helpers.fn
-local rmdir = helpers.rmdir
-local write_file = helpers.write_file
-local mkdir = helpers.mkdir
+local eq = t.eq
+local clear = t.clear
+local api = t.api
+local exc_exec = t.exc_exec
+local fn = t.fn
+local rmdir = t.rmdir
+local write_file = t.write_file
+local mkdir = t.mkdir
 
 local testdir = 'Xtest-functional-spell-spellfile.d'
 

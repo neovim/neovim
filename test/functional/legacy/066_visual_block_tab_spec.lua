@@ -1,9 +1,9 @@
 -- vim: set foldmethod=marker foldmarker=[[,]] :
 -- Test for visual block shift and tab characters.
 
-local helpers = require('test.functional.helpers')(after_each)
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local feed_command, expect = helpers.feed_command, helpers.expect
+local t = require('test.functional.testutil')(after_each)
+local clear, feed, insert = t.clear, t.feed, t.insert
+local feed_command, expect = t.feed_command, t.expect
 
 describe('visual block shift and tab characters', function()
   setup(clear)

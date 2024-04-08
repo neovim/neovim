@@ -1,18 +1,17 @@
 -- ShaDa merging data support
-local helpers = require('test.functional.helpers')(after_each)
-local nvim_command, fn, eq = helpers.command, helpers.fn, helpers.eq
-local exc_exec, exec_capture = helpers.exc_exec, helpers.exec_capture
-local api = helpers.api
+local t = require('test.functional.testutil')(after_each)
+local nvim_command, fn, eq = t.command, t.fn, t.eq
+local exc_exec, exec_capture = t.exc_exec, t.exec_capture
+local api = t.api
 
-local shada_helpers = require('test.functional.shada.helpers')
-local reset, clear, get_shada_rw =
-  shada_helpers.reset, shada_helpers.clear, shada_helpers.get_shada_rw
-local read_shada_file = shada_helpers.read_shada_file
+local t_shada = require('test.functional.shada.testutil')
+local reset, clear, get_shada_rw = t_shada.reset, t_shada.clear, t_shada.get_shada_rw
+local read_shada_file = t_shada.read_shada_file
 
 local wshada, sdrcmd, shada_fname = get_shada_rw('Xtest-functional-shada-merging.shada')
 
 local mock_file_path = '/a/b/'
-if helpers.is_os('win') then
+if t.is_os('win') then
   mock_file_path = 'C:/a/'
 end
 
@@ -698,9 +697,9 @@ describe('ShaDa marks support code', function()
     for _, v in ipairs(read_shada_file(shada_fname)) do
       if v.type == 7 then
         local name = ('%c'):format(v.value.n)
-        local t = found[name] or {}
-        t[v.value.f] = (t[v.value.f] or 0) + 1
-        found[name] = t
+        local _t = found[name] or {}
+        _t[v.value.f] = (_t[v.value.f] or 0) + 1
+        found[name] = _t
       end
     end
     eq({ ['0'] = { [mock_file_path .. '-'] = 1 }, A = { [mock_file_path .. '?'] = 1 } }, found)
@@ -1018,14 +1017,14 @@ describe('ShaDa jumps support code', function()
     eq(0, exc_exec(sdrcmd()))
     shada = ''
     for i = 1, 101 do
-      local t = i * 2
+      local _t = i * 2
       shada = shada
         .. ('\008\204%c\019\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\204%c'):format(
-          t,
-          t
+          _t,
+          _t
         )
-      jumps[(t > #jumps + 1) and (#jumps + 1) or t] =
-        { file = '' .. mock_file_path .. 'c', line = t }
+      jumps[(_t > #jumps + 1) and (#jumps + 1) or _t] =
+        { file = '' .. mock_file_path .. 'c', line = _t }
     end
     wshada(shada)
     eq(0, exc_exec('wshada ' .. shada_fname))
@@ -1149,13 +1148,13 @@ describe('ShaDa changes support code', function()
     eq(0, exc_exec(sdrcmd()))
     shada = ''
     for i = 1, 101 do
-      local t = i * 2
+      local _t = i * 2
       shada = shada
         .. ('\011\204%c\019\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\204%c'):format(
-          t,
-          t
+          _t,
+          _t
         )
-      changes[(t > #changes + 1) and (#changes + 1) or t] = { line = t }
+      changes[(_t > #changes + 1) and (#changes + 1) or _t] = { line = _t }
     end
     wshada(shada)
     eq(0, exc_exec('wshada ' .. shada_fname))
@@ -1178,11 +1177,11 @@ describe('ShaDa changes support code', function()
     nvim_command('keepjumps call setline(1, range(202))')
     local shada = ''
     for i = 1, 101 do
-      local t = i * 2
+      local _t = i * 2
       shada = shada
         .. ('\011\204%c\019\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\204%c'):format(
-          t,
-          t
+          _t,
+          _t
         )
     end
     wshada(shada)
@@ -1197,8 +1196,8 @@ describe('ShaDa changes support code', function()
       changes[i] = { line = i }
     end
     for i = 1, 101 do
-      local t = i * 2
-      changes[(t > #changes + 1) and (#changes + 1) or t] = { line = t }
+      local _t = i * 2
+      changes[(_t > #changes + 1) and (#changes + 1) or _t] = { line = _t }
     end
     wshada(shada)
     eq(0, exc_exec('wshada ' .. shada_fname))

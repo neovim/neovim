@@ -1,9 +1,9 @@
 -- Test that groups and patterns are tested correctly when calling exists() for
 -- autocommands.
 
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local command, expect = helpers.command, helpers.expect
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local command, expect = t.command, t.expect
 
 describe('augroup when calling exists()', function()
   setup(clear)

@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local clear = helpers.clear
-local insert = helpers.insert
-local exec_lua = helpers.exec_lua
-local feed = helpers.feed
-local command = helpers.command
-local api = helpers.api
-local eq = helpers.eq
+local clear = t.clear
+local insert = t.insert
+local exec_lua = t.exec_lua
+local feed = t.feed
+local command = t.command
+local api = t.api
+local eq = t.eq
 
 before_each(clear)
 
@@ -872,7 +872,7 @@ describe('treesitter highlighting (help)', function()
     ]],
     }
 
-    helpers.api.nvim_buf_set_text(0, 0, 1, 0, 5, { 'lua' })
+    t.api.nvim_buf_set_text(0, 0, 1, 0, 5, { 'lua' })
 
     screen:expect {
       grid = [[
@@ -885,7 +885,7 @@ describe('treesitter highlighting (help)', function()
     ]],
     }
 
-    helpers.api.nvim_buf_set_text(0, 0, 1, 0, 4, { 'ruby' })
+    t.api.nvim_buf_set_text(0, 0, 1, 0, 4, { 'ruby' })
 
     screen:expect {
       grid = [[

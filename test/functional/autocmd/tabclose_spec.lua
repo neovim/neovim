@@ -1,7 +1,7 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear, eq = helpers.clear, helpers.eq
-local api = helpers.api
-local command = helpers.command
+local t = require('test.functional.testutil')(after_each)
+local clear, eq = t.clear, t.eq
+local api = t.api
+local command = t.command
 
 describe('TabClosed', function()
   before_each(clear)

@@ -1,17 +1,17 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local assert_alive = helpers.assert_alive
-local clear, feed = helpers.clear, helpers.feed
-local source = helpers.source
-local insert = helpers.insert
-local api = helpers.api
-local async_meths = helpers.async_meths
-local command = helpers.command
-local fn = helpers.fn
-local eq = helpers.eq
-local pcall_err = helpers.pcall_err
-local exec_lua = helpers.exec_lua
-local exec = helpers.exec
+local assert_alive = t.assert_alive
+local clear, feed = t.clear, t.feed
+local source = t.source
+local insert = t.insert
+local api = t.api
+local async_meths = t.async_meths
+local command = t.command
+local fn = t.fn
+local eq = t.eq
+local pcall_err = t.pcall_err
+local exec_lua = t.exec_lua
+local exec = t.exec
 
 describe('ui/ext_popupmenu', function()
   local screen

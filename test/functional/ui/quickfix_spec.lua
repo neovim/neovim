@@ -1,7 +1,7 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed, api = helpers.clear, helpers.feed, helpers.api
-local insert, command = helpers.insert, helpers.command
+local clear, feed, api = t.clear, t.feed, t.api
+local insert, command = t.insert, t.command
 
 describe('quickfix selection highlight', function()
   local screen

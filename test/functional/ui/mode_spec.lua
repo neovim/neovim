@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local command = helpers.command
-local retry = helpers.retry
+local clear, feed, insert = t.clear, t.feed, t.insert
+local command = t.command
+local retry = t.retry
 
 describe('ui mode_change event', function()
   local screen

@@ -1,15 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local eval = helpers.eval
-local feed = helpers.feed
-local fn = helpers.fn
-local insert = helpers.insert
-local is_os = helpers.is_os
-local mkdir = helpers.mkdir
-local rmdir = helpers.rmdir
-local write_file = helpers.write_file
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local eval = t.eval
+local feed = t.feed
+local fn = t.fn
+local insert = t.insert
+local is_os = t.is_os
+local mkdir = t.mkdir
+local rmdir = t.rmdir
+local write_file = t.write_file
 
 local function join_path(...)
   local pathsep = (is_os('win') and '\\' or '/')

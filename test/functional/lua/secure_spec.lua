@@ -1,20 +1,20 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local eq = helpers.eq
-local clear = helpers.clear
-local command = helpers.command
-local pathsep = helpers.get_pathsep()
-local is_os = helpers.is_os
-local api = helpers.api
-local exec_lua = helpers.exec_lua
-local feed_command = helpers.feed_command
-local feed = helpers.feed
-local fn = helpers.fn
+local eq = t.eq
+local clear = t.clear
+local command = t.command
+local pathsep = t.get_pathsep()
+local is_os = t.is_os
+local api = t.api
+local exec_lua = t.exec_lua
+local feed_command = t.feed_command
+local feed = t.feed
+local fn = t.fn
 local stdpath = fn.stdpath
-local pcall_err = helpers.pcall_err
-local matches = helpers.matches
-local read_file = helpers.read_file
+local pcall_err = t.pcall_err
+local matches = t.matches
+local read_file = t.read_file
 
 describe('vim.secure', function()
   describe('read()', function()
@@ -22,8 +22,8 @@ describe('vim.secure', function()
 
     setup(function()
       clear { env = { XDG_STATE_HOME = xstate } }
-      helpers.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
-      helpers.write_file(
+      t.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
+      t.write_file(
         'Xfile',
         [[
         let g:foobar = 42
@@ -33,7 +33,7 @@ describe('vim.secure', function()
 
     teardown(function()
       os.remove('Xfile')
-      helpers.rmdir(xstate)
+      t.rmdir(xstate)
     end)
 
     it('works', function()
@@ -181,15 +181,15 @@ describe('vim.secure', function()
 
     setup(function()
       clear { env = { XDG_STATE_HOME = xstate } }
-      helpers.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
+      t.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
     end)
 
     teardown(function()
-      helpers.rmdir(xstate)
+      t.rmdir(xstate)
     end)
 
     before_each(function()
-      helpers.write_file('test_file', 'test')
+      t.write_file('test_file', 'test')
     end)
 
     after_each(function()

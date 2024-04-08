@@ -1,19 +1,19 @@
 -- Test for Vim overrides of lua built-ins
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local eq = helpers.eq
+local eq = t.eq
 local NIL = vim.NIL
-local feed = helpers.feed
-local clear = helpers.clear
-local fn = helpers.fn
-local api = helpers.api
-local command = helpers.command
-local write_file = helpers.write_file
-local exec_capture = helpers.exec_capture
-local exec_lua = helpers.exec_lua
-local pcall_err = helpers.pcall_err
-local is_os = helpers.is_os
+local feed = t.feed
+local clear = t.clear
+local fn = t.fn
+local api = t.api
+local command = t.command
+local write_file = t.write_file
+local exec_capture = t.exec_capture
+local exec_lua = t.exec_lua
+local pcall_err = t.pcall_err
+local is_os = t.is_os
 
 local fname = 'Xtest-functional-lua-overrides-luafile'
 

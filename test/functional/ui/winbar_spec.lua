@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local insert = helpers.insert
-local api = helpers.api
-local eq = helpers.eq
-local poke_eventloop = helpers.poke_eventloop
-local feed = helpers.feed
-local fn = helpers.fn
-local pcall_err = helpers.pcall_err
+local clear = t.clear
+local command = t.command
+local insert = t.insert
+local api = t.api
+local eq = t.eq
+local poke_eventloop = t.poke_eventloop
+local feed = t.feed
+local fn = t.fn
+local pcall_err = t.pcall_err
 
 describe('winbar', function()
   local screen

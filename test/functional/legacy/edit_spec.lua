@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local expect = helpers.expect
-local feed = helpers.feed
+local clear = t.clear
+local command = t.command
+local expect = t.expect
+local feed = t.feed
 local sleep = vim.uv.sleep
 
 before_each(clear)

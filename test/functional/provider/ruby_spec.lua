@@ -1,20 +1,20 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local assert_alive = helpers.assert_alive
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local exc_exec = helpers.exc_exec
-local expect = helpers.expect
-local feed = helpers.feed
-local feed_command = helpers.feed_command
-local fn = helpers.fn
-local insert = helpers.insert
-local api = helpers.api
-local missing_provider = helpers.missing_provider
-local matches = helpers.matches
-local write_file = helpers.write_file
-local pcall_err = helpers.pcall_err
+local assert_alive = t.assert_alive
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local exc_exec = t.exc_exec
+local expect = t.expect
+local feed = t.feed
+local feed_command = t.feed_command
+local fn = t.fn
+local insert = t.insert
+local api = t.api
+local missing_provider = t.missing_provider
+local matches = t.matches
+local write_file = t.write_file
+local pcall_err = t.pcall_err
 
 do
   clear()
@@ -103,7 +103,7 @@ end)
 
 describe('ruby provider', function()
   it('RPC call to expand("<afile>") during BufDelete #5245 #5617', function()
-    helpers.add_builddir_to_rtp()
+    t.add_builddir_to_rtp()
     command([=[autocmd BufDelete * ruby VIM::evaluate('expand("<afile>")')]=])
     feed_command('help help')
     assert_alive()

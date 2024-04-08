@@ -1,42 +1,42 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 local uv = vim.uv
 
 local fmt = string.format
-local dedent = helpers.dedent
-local assert_alive = helpers.assert_alive
+local dedent = t.dedent
+local assert_alive = t.assert_alive
 local NIL = vim.NIL
-local clear, eq, neq = helpers.clear, helpers.eq, helpers.neq
-local command = helpers.command
-local command_output = helpers.api.nvim_command_output
-local exec = helpers.exec
-local exec_capture = helpers.exec_capture
-local eval = helpers.eval
-local expect = helpers.expect
-local fn = helpers.fn
-local api = helpers.api
-local matches = helpers.matches
+local clear, eq, neq = t.clear, t.eq, t.neq
+local command = t.command
+local command_output = t.api.nvim_command_output
+local exec = t.exec
+local exec_capture = t.exec_capture
+local eval = t.eval
+local expect = t.expect
+local fn = t.fn
+local api = t.api
+local matches = t.matches
 local pesc = vim.pesc
-local mkdir_p = helpers.mkdir_p
-local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
-local async_meths = helpers.async_meths
-local is_os = helpers.is_os
-local parse_context = helpers.parse_context
-local request = helpers.request
-local rmdir = helpers.rmdir
-local source = helpers.source
-local next_msg = helpers.next_msg
-local tmpname = helpers.tmpname
-local write_file = helpers.write_file
-local exec_lua = helpers.exec_lua
-local exc_exec = helpers.exc_exec
-local insert = helpers.insert
-local skip = helpers.skip
+local mkdir_p = t.mkdir_p
+local ok, nvim_async, feed = t.ok, t.nvim_async, t.feed
+local async_meths = t.async_meths
+local is_os = t.is_os
+local parse_context = t.parse_context
+local request = t.request
+local rmdir = t.rmdir
+local source = t.source
+local next_msg = t.next_msg
+local tmpname = t.tmpname
+local write_file = t.write_file
+local exec_lua = t.exec_lua
+local exc_exec = t.exc_exec
+local insert = t.insert
+local skip = t.skip
 
-local pcall_err = helpers.pcall_err
+local pcall_err = t.pcall_err
 local format_string = require('test.format_string').format_string
-local intchar2lua = helpers.intchar2lua
-local mergedicts_copy = helpers.mergedicts_copy
+local intchar2lua = t.intchar2lua
+local mergedicts_copy = t.mergedicts_copy
 local endswith = vim.endswith
 
 describe('API', function()
@@ -702,12 +702,12 @@ describe('API', function()
     end)
 
     after_each(function()
-      helpers.rmdir('Xtestdir')
+      t.rmdir('Xtestdir')
     end)
 
     it('works', function()
       api.nvim_set_current_dir('Xtestdir')
-      eq(start_dir .. helpers.get_pathsep() .. 'Xtestdir', fn.getcwd())
+      eq(start_dir .. t.get_pathsep() .. 'Xtestdir', fn.getcwd())
     end)
 
     it('sets previous directory', function()
@@ -1467,7 +1467,7 @@ describe('API', function()
       eq(NIL, api.nvim_get_var('Unknown_script_func'))
 
       -- Check if autoload works properly
-      local pathsep = helpers.get_pathsep()
+      local pathsep = t.get_pathsep()
       local xconfig = 'Xhome' .. pathsep .. 'Xconfig'
       local xdata = 'Xhome' .. pathsep .. 'Xdata'
       local autoload_folder = table.concat({ xconfig, 'nvim', 'autoload' }, pathsep)
@@ -1951,7 +1951,7 @@ describe('API', function()
 
   describe('RPC (K_EVENT)', function()
     it('does not complete ("interrupt") normal-mode operator-pending #6166', function()
-      helpers.insert([[
+      t.insert([[
         FIRST LINE
         SECOND LINE]])
       api.nvim_input('gg')
@@ -1988,7 +1988,7 @@ describe('API', function()
 
     it('does not complete ("interrupt") normal-mode map-pending #6166', function()
       command("nnoremap dd :let g:foo='it worked...'<CR>")
-      helpers.insert([[
+      t.insert([[
         FIRST LINE
         SECOND LINE]])
       api.nvim_input('gg')
@@ -2000,13 +2000,13 @@ describe('API', function()
       expect([[
         FIRST LINE
         SECOND LINE]])
-      eq('it worked...', helpers.eval('g:foo'))
+      eq('it worked...', t.eval('g:foo'))
     end)
 
     it('does not complete ("interrupt") insert-mode map-pending #6166', function()
       command('inoremap xx foo')
       command('set timeoutlen=9999')
-      helpers.insert([[
+      t.insert([[
         FIRST LINE
         SECOND LINE]])
       api.nvim_input('ix')
@@ -2153,35 +2153,32 @@ describe('API', function()
 
   describe('nvim_replace_termcodes', function()
     it('escapes K_SPECIAL as K_SPECIAL KS_SPECIAL KE_FILLER', function()
-      eq('\128\254X', helpers.api.nvim_replace_termcodes('\128', true, true, true))
+      eq('\128\254X', t.api.nvim_replace_termcodes('\128', true, true, true))
     end)
 
     it('leaves non-K_SPECIAL string unchanged', function()
-      eq('abc', helpers.api.nvim_replace_termcodes('abc', true, true, true))
+      eq('abc', t.api.nvim_replace_termcodes('abc', true, true, true))
     end)
 
     it('converts <expressions>', function()
-      eq('\\', helpers.api.nvim_replace_termcodes('<Leader>', true, true, true))
+      eq('\\', t.api.nvim_replace_termcodes('<Leader>', true, true, true))
     end)
 
     it('converts <LeftMouse> to K_SPECIAL KS_EXTRA KE_LEFTMOUSE', function()
       -- K_SPECIAL KS_EXTRA KE_LEFTMOUSE
       -- 0x80      0xfd     0x2c
       -- 128       253      44
-      eq('\128\253\44', helpers.api.nvim_replace_termcodes('<LeftMouse>', true, true, true))
+      eq('\128\253\44', t.api.nvim_replace_termcodes('<LeftMouse>', true, true, true))
     end)
 
     it('converts keycodes', function()
-      eq(
-        '\nx\27x\rx<x',
-        helpers.api.nvim_replace_termcodes('<NL>x<Esc>x<CR>x<lt>x', true, true, true)
-      )
+      eq('\nx\27x\rx<x', t.api.nvim_replace_termcodes('<NL>x<Esc>x<CR>x<lt>x', true, true, true))
     end)
 
     it('does not convert keycodes if special=false', function()
       eq(
         '<NL>x<Esc>x<CR>x<lt>x',
-        helpers.api.nvim_replace_termcodes('<NL>x<Esc>x<CR>x<lt>x', true, true, false)
+        t.api.nvim_replace_termcodes('<NL>x<Esc>x<CR>x<lt>x', true, true, false)
       )
     end)
 
@@ -2210,18 +2207,18 @@ describe('API', function()
         api.nvim_feedkeys(':let x1="…"\n', '', true)
 
         -- Both nvim_replace_termcodes and nvim_feedkeys escape \x80
-        local inp = helpers.api.nvim_replace_termcodes(':let x2="…"<CR>', true, true, true)
+        local inp = t.api.nvim_replace_termcodes(':let x2="…"<CR>', true, true, true)
         api.nvim_feedkeys(inp, '', true) -- escape_ks=true
 
         -- nvim_feedkeys with K_SPECIAL escaping disabled
-        inp = helpers.api.nvim_replace_termcodes(':let x3="…"<CR>', true, true, true)
+        inp = t.api.nvim_replace_termcodes(':let x3="…"<CR>', true, true, true)
         api.nvim_feedkeys(inp, '', false) -- escape_ks=false
 
-        helpers.stop()
+        t.stop()
       end
 
       -- spin the loop a bit
-      helpers.run(nil, nil, on_setup)
+      t.run(nil, nil, on_setup)
 
       eq('…', api.nvim_get_var('x1'))
       -- Because of the double escaping this is neq
@@ -2364,7 +2361,7 @@ describe('API', function()
         {0:~                                       }|*6
         {1:very fail}                               |
       ]])
-      helpers.poke_eventloop()
+      t.poke_eventloop()
 
       -- shows up to &cmdheight lines
       async_meths.nvim_err_write('more fail\ntoo fail\n')
@@ -2676,7 +2673,7 @@ describe('API', function()
 
   describe('nvim_list_runtime_paths', function()
     setup(function()
-      local pathsep = helpers.get_pathsep()
+      local pathsep = t.get_pathsep()
       mkdir_p('Xtest' .. pathsep .. 'a')
       mkdir_p('Xtest' .. pathsep .. 'b')
     end)
@@ -3183,7 +3180,7 @@ describe('API', function()
   end)
 
   describe('nvim_get_runtime_file', function()
-    local p = helpers.alter_slashes
+    local p = t.alter_slashes
     it('can find files', function()
       eq({}, api.nvim_get_runtime_file('bork.borkbork', false))
       eq({}, api.nvim_get_runtime_file('bork.borkbork', true))
@@ -3410,13 +3407,13 @@ describe('API', function()
         {desc="(global option, fallback requested) points to global",          linenr=9, sid=1, args={'completeopt', {}}},
       }
 
-      for _, t in pairs(tests) do
-        it(t.desc, function()
+      for _, test in pairs(tests) do
+        it(test.desc, function()
           -- Switch to the target buffer/window so that curbuf/curwin are used.
           api.nvim_set_current_win(wins[2])
-          local info = api.nvim_get_option_info2(unpack(t.args))
-          eq(t.linenr, info.last_set_linenr)
-          eq(t.sid, info.last_set_sid)
+          local info = api.nvim_get_option_info2(unpack(test.args))
+          eq(test.linenr, info.last_set_linenr)
+          eq(test.sid, info.last_set_sid)
         end)
       end
 
@@ -3537,9 +3534,9 @@ describe('API', function()
         false,
         { width = 79, height = 31, row = 1, col = 1, relative = 'editor' }
       )
-      local t = api.nvim_open_term(b, {})
+      local term = api.nvim_open_term(b, {})
 
-      api.nvim_chan_send(t, io.open('test/functional/fixtures/smile2.cat', 'r'):read('*a'))
+      api.nvim_chan_send(term, io.open('test/functional/fixtures/smile2.cat', 'r'):read('*a'))
       screen:expect {
         grid = [[
         ^                                                                                                    |

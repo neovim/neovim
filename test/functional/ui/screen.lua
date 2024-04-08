@@ -70,17 +70,17 @@
 -- To help write screen tests, see Screen:snapshot_util().
 -- To debug screen tests, see Screen:redraw_debug().
 
-local helpers = require('test.functional.helpers')(nil)
+local t = require('test.functional.testutil')(nil)
 local busted = require('busted')
 local deepcopy = vim.deepcopy
-local shallowcopy = helpers.shallowcopy
-local concat_tables = helpers.concat_tables
+local shallowcopy = t.shallowcopy
+local concat_tables = t.concat_tables
 local pesc = vim.pesc
-local run_session = helpers.run_session
-local eq = helpers.eq
-local dedent = helpers.dedent
-local get_session = helpers.get_session
-local create_callindex = helpers.create_callindex
+local run_session = t.run_session
+local eq = t.eq
+local dedent = t.dedent
+local get_session = t.get_session
+local create_callindex = t.create_callindex
 
 local inspect = vim.inspect
 

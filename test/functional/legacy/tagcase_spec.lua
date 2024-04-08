@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local eq = helpers.eq
-local eval = helpers.eval
-local exc_exec = helpers.exc_exec
-local expect = helpers.expect
-local insert = helpers.insert
-local source = helpers.source
-local write_file = helpers.write_file
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local eq = t.eq
+local eval = t.eval
+local exc_exec = t.exc_exec
+local expect = t.expect
+local insert = t.insert
+local source = t.source
+local write_file = t.write_file
 
 describe("'tagcase' option", function()
   setup(function()

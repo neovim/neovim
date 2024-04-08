@@ -1,15 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
-local eq = helpers.eq
-local exec_lua = helpers.exec_lua
-local clear = helpers.clear
-local is_ci = helpers.is_ci
-local is_os = helpers.is_os
-local skip = helpers.skip
+local t = require('test.functional.testutil')(after_each)
+local eq = t.eq
+local exec_lua = t.exec_lua
+local clear = t.clear
+local is_ci = t.is_ci
+local is_os = t.is_os
+local skip = t.skip
 
 -- Create a file via a rename to avoid multiple
 -- events which can happen with some backends on some platforms
 local function touch(path)
-  local tmp = helpers.tmpname()
+  local tmp = t.tmpname()
   io.open(tmp, 'w'):close()
   assert(vim.uv.fs_rename(tmp, path))
 end
@@ -24,10 +24,7 @@ describe('vim._watch', function()
       if watchfunc == 'fswatch' then
         skip(is_os('win'), 'not supported on windows')
         skip(is_os('mac'), 'flaky test on mac')
-        skip(
-          not is_ci() and helpers.fn.executable('fswatch') == 0,
-          'fswatch not installed and not on CI'
-        )
+        skip(not is_ci() and t.fn.executable('fswatch') == 0, 'fswatch not installed and not on CI')
       end
 
       if watchfunc == 'watch' then
@@ -40,7 +37,7 @@ describe('vim._watch', function()
         )
       end
 
-      local root_dir = vim.uv.fs_mkdtemp(vim.fs.dirname(helpers.tmpname()) .. '/nvim_XXXXXXXXXX')
+      local root_dir = vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname()) .. '/nvim_XXXXXXXXXX')
 
       local expected_events = 0
 

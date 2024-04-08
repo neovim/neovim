@@ -2,15 +2,15 @@
 -- Test whether glob()/globpath() return correct results with certain escaped
 -- characters.
 
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local command, expect = helpers.command, helpers.expect
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local command, expect = t.command, t.expect
 
 describe('glob() and globpath()', function()
   setup(clear)
 
   setup(function()
-    if helpers.is_os('win') then
+    if t.is_os('win') then
       os.execute('md sautest\\autoload')
       os.execute('.>sautest\\autoload\\Test104.vim 2>nul')
       os.execute('.>sautest\\autoload\\footest.vim 2>nul')
@@ -28,7 +28,7 @@ describe('glob() and globpath()', function()
     -- Consistent sorting of file names
     command('set nofileignorecase')
 
-    if helpers.is_os('win') then
+    if t.is_os('win') then
       command([[$put =glob('Xxx{')]])
       command([[$put =glob('Xxx$')]])
 
@@ -72,7 +72,7 @@ describe('glob() and globpath()', function()
   end)
 
   teardown(function()
-    if helpers.is_os('win') then
+    if t.is_os('win') then
       os.execute('del /q/f Xxx{ Xxx$')
       os.execute('rd /q /s sautest')
     else

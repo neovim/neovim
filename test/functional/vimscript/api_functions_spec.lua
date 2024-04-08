@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local neq, eq, command = helpers.neq, helpers.eq, helpers.command
-local clear = helpers.clear
-local exc_exec, expect, eval = helpers.exc_exec, helpers.expect, helpers.eval
-local exec_lua = helpers.exec_lua
-local insert, pcall_err = helpers.insert, helpers.pcall_err
-local matches = helpers.matches
-local api = helpers.api
-local feed = helpers.feed
+local neq, eq, command = t.neq, t.eq, t.command
+local clear = t.clear
+local exc_exec, expect, eval = t.exc_exec, t.expect, t.eval
+local exec_lua = t.exec_lua
+local insert, pcall_err = t.insert, t.pcall_err
+local matches = t.matches
+local api = t.api
+local feed = t.feed
 
 describe('eval-API', function()
   before_each(clear)

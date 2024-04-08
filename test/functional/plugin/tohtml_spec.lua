@@ -1,13 +1,13 @@
 local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local exec = helpers.exec
-local exec_lua = helpers.exec_lua
-local eq = helpers.eq
-local fn = helpers.fn
-local api = helpers.api
-local insert = helpers.insert
+local clear = t.clear
+local exec = t.exec
+local exec_lua = t.exec_lua
+local eq = t.eq
+local fn = t.fn
+local api = t.api
+local insert = t.insert
 
 local function html_syntax_match()
   local styles =

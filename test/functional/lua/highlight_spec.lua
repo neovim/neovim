@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
-local exec_lua = helpers.exec_lua
-local eq = helpers.eq
-local neq = helpers.neq
-local eval = helpers.eval
-local command = helpers.command
-local clear = helpers.clear
-local api = helpers.api
+local t = require('test.functional.testutil')(after_each)
+local exec_lua = t.exec_lua
+local eq = t.eq
+local neq = t.neq
+local eval = t.eval
+local command = t.command
+local clear = t.clear
+local api = t.api
 
 describe('vim.highlight.on_yank', function()
   before_each(function()
@@ -19,7 +19,7 @@ describe('vim.highlight.on_yank', function()
       vim.cmd('bwipeout!')
     ]])
     vim.uv.sleep(10)
-    helpers.feed('<cr>') -- avoid hang if error message exists
+    t.feed('<cr>') -- avoid hang if error message exists
     eq('', eval('v:errmsg'))
   end)
 

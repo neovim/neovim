@@ -1,19 +1,19 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local fn = helpers.fn
-local api = helpers.api
-local mkdir = helpers.mkdir
-local rmdir = helpers.rmdir
-local write_file = helpers.write_file
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local fn = t.fn
+local api = t.api
+local mkdir = t.mkdir
+local rmdir = t.rmdir
+local write_file = t.write_file
 
 describe(':help', function()
   before_each(clear)
 
   it('window closed makes cursor return to a valid win/buf #9773', function()
-    helpers.add_builddir_to_rtp()
+    t.add_builddir_to_rtp()
     command('help help')
     eq(1001, fn.win_getid())
     command('quit')

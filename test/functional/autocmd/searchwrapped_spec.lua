@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local command = helpers.command
-local api = helpers.api
-local eq = helpers.eq
-local eval = helpers.eval
-local feed = helpers.feed
+local clear = t.clear
+local command = t.command
+local api = t.api
+local eq = t.eq
+local eval = t.eval
+local feed = t.feed
 
 describe('autocmd SearchWrapped', function()
   before_each(function()

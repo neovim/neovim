@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
-local nvim = helpers.api
-local clear, eq, neq, eval = helpers.clear, helpers.eq, helpers.neq, helpers.eval
-local api = helpers.api
-local curbuf = helpers.api.nvim_get_current_buf
-local curwin = helpers.api.nvim_get_current_win
-local exec_capture = helpers.exec_capture
-local source, command = helpers.source, helpers.command
+local t = require('test.functional.testutil')(after_each)
+local nvim = t.api
+local clear, eq, neq, eval = t.clear, t.eq, t.neq, t.eval
+local api = t.api
+local curbuf = t.api.nvim_get_current_buf
+local curwin = t.api.nvim_get_current_win
+local exec_capture = t.exec_capture
+local source, command = t.source, t.command
 
 local function declare_hook_function()
   source([[

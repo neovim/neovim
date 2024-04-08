@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local eq = helpers.eq
-local command = helpers.command
-local exec_lua = helpers.exec_lua
-local pcall_err = helpers.pcall_err
-local matches = helpers.matches
-local insert = helpers.insert
+local clear = t.clear
+local eq = t.eq
+local command = t.command
+local exec_lua = t.exec_lua
+local pcall_err = t.pcall_err
+local matches = t.matches
+local insert = t.insert
 
 before_each(clear)
 

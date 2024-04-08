@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local assert_alive = helpers.assert_alive
-local clear, feed = helpers.clear, helpers.feed
-local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
-local feed_command, source, expect = helpers.feed_command, helpers.source, helpers.expect
-local fn = helpers.fn
-local command = helpers.command
-local api = helpers.api
-local poke_eventloop = helpers.poke_eventloop
+local assert_alive = t.assert_alive
+local clear, feed = t.clear, t.feed
+local eval, eq, neq = t.eval, t.eq, t.neq
+local feed_command, source, expect = t.feed_command, t.source, t.expect
+local fn = t.fn
+local command = t.command
+local api = t.api
+local poke_eventloop = t.poke_eventloop
 
 describe('completion', function()
   local screen

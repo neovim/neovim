@@ -1,10 +1,10 @@
-local helpers = require('test.functional.helpers')(after_each)
-local eq, clear = helpers.eq, helpers.clear
-local missing_provider = helpers.missing_provider
-local command = helpers.command
-local write_file = helpers.write_file
-local eval = helpers.eval
-local retry = helpers.retry
+local t = require('test.functional.testutil')(after_each)
+local eq, clear = t.eq, t.clear
+local missing_provider = t.missing_provider
+local command = t.command
+local write_file = t.write_file
+local eval = t.eval
+local retry = t.retry
 
 do
   clear()

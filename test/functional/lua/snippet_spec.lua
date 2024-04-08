@@ -1,16 +1,16 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local buf_lines = helpers.buf_lines
-local clear = helpers.clear
-local eq = helpers.eq
-local exec_lua = helpers.exec_lua
-local feed = helpers.feed
-local api = helpers.api
-local fn = helpers.fn
-local matches = helpers.matches
-local pcall_err = helpers.pcall_err
-local poke_eventloop = helpers.poke_eventloop
-local retry = helpers.retry
+local buf_lines = t.buf_lines
+local clear = t.clear
+local eq = t.eq
+local exec_lua = t.exec_lua
+local feed = t.feed
+local api = t.api
+local fn = t.fn
+local matches = t.matches
+local pcall_err = t.pcall_err
+local poke_eventloop = t.poke_eventloop
+local retry = t.retry
 
 describe('vim.snippet', function()
   before_each(function()

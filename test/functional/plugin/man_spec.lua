@@ -1,17 +1,17 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local command, feed = helpers.command, helpers.feed
-local clear = helpers.clear
-local exec_lua = helpers.exec_lua
-local fn = helpers.fn
-local nvim_prog = helpers.nvim_prog
-local matches = helpers.matches
-local write_file = helpers.write_file
-local tmpname = helpers.tmpname
-local eq = helpers.eq
+local command, feed = t.command, t.feed
+local clear = t.clear
+local exec_lua = t.exec_lua
+local fn = t.fn
+local nvim_prog = t.nvim_prog
+local matches = t.matches
+local write_file = t.write_file
+local tmpname = t.tmpname
+local eq = t.eq
 local pesc = vim.pesc
-local skip = helpers.skip
-local is_ci = helpers.is_ci
+local skip = t.skip
+local is_ci = t.is_ci
 
 -- Collects all names passed to find_path() after attempting ":Man foo".
 local function get_search_history(name)

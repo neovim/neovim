@@ -1,6 +1,6 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear, fn, eq = helpers.clear, helpers.fn, helpers.eq
-local api = helpers.api
+local t = require('test.functional.testutil')(after_each)
+local clear, fn, eq = t.clear, t.fn, t.eq
+local api = t.api
 
 local function read_mpack_file(fname)
   local fd = io.open(fname, 'rb')

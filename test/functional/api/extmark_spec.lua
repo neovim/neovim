@@ -1,20 +1,20 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local request = helpers.request
-local eq = helpers.eq
-local ok = helpers.ok
-local pcall_err = helpers.pcall_err
-local insert = helpers.insert
-local feed = helpers.feed
-local clear = helpers.clear
-local command = helpers.command
-local exec = helpers.exec
-local api = helpers.api
-local assert_alive = helpers.assert_alive
+local request = t.request
+local eq = t.eq
+local ok = t.ok
+local pcall_err = t.pcall_err
+local insert = t.insert
+local feed = t.feed
+local clear = t.clear
+local command = t.command
+local exec = t.exec
+local api = t.api
+local assert_alive = t.assert_alive
 
 local function expect(contents)
-  return eq(contents, helpers.curbuf_contents())
+  return eq(contents, t.curbuf_contents())
 end
 
 local function set_extmark(ns_id, id, line, col, opts)

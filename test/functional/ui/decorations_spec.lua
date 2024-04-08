@@ -1,18 +1,18 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local clear = helpers.clear
-local feed = helpers.feed
-local insert = helpers.insert
-local exec_lua = helpers.exec_lua
-local exec = helpers.exec
-local expect_events = helpers.expect_events
-local api = helpers.api
-local fn = helpers.fn
-local command = helpers.command
-local eq = helpers.eq
-local assert_alive = helpers.assert_alive
-local pcall_err = helpers.pcall_err
+local clear = t.clear
+local feed = t.feed
+local insert = t.insert
+local exec_lua = t.exec_lua
+local exec = t.exec
+local expect_events = t.expect_events
+local api = t.api
+local fn = t.fn
+local command = t.command
+local eq = t.eq
+local assert_alive = t.assert_alive
+local pcall_err = t.pcall_err
 
 describe('decorations providers', function()
   local screen
@@ -696,7 +696,7 @@ describe('decorations providers', function()
     end
     ]]
 
-    helpers.assert_alive()
+    t.assert_alive()
   end)
 
   it('supports subpriorities (order of definitions in a query file #27131)', function()
@@ -2411,7 +2411,7 @@ describe('extmark decorations', function()
                                                         |
     ]]}
 
-    helpers.assert_alive()
+    t.assert_alive()
   end)
 
   it('priority ordering of overlay or win_col virtual text at same position', function()
@@ -5044,8 +5044,8 @@ l5
     insert(example_test3)
     feed 'gg'
 
-    helpers.command('sign define Oldsign text=x')
-    helpers.command([[exe 'sign place 42 line=2 name=Oldsign buffer=' . bufnr('')]])
+    t.command('sign define Oldsign text=x')
+    t.command([[exe 'sign place 42 line=2 name=Oldsign buffer=' . bufnr('')]])
 
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S1'})
     api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='S2'})
@@ -5068,8 +5068,8 @@ l5
     insert(example_test3)
     feed 'gg'
 
-    helpers.command('sign define Oldsign text=x')
-    helpers.command([[exe 'sign place 42 line=2 name=Oldsign buffer=' . bufnr('')]])
+    t.command('sign define Oldsign text=x')
+    t.command([[exe 'sign place 42 line=2 name=Oldsign buffer=' . bufnr('')]])
 
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S1'})
     api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='S2'})

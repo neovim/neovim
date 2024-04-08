@@ -1,15 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
-local lsp_helpers = require('test.functional.plugin.lsp.helpers')
+local t = require('test.functional.testutil')(after_each)
+local t_lsp = require('test.functional.plugin.lsp.testutil')
 local Screen = require('test.functional.ui.screen')
 
-local eq = helpers.eq
-local dedent = helpers.dedent
-local exec_lua = helpers.exec_lua
-local insert = helpers.insert
-local api = helpers.api
+local eq = t.eq
+local dedent = t.dedent
+local exec_lua = t.exec_lua
+local insert = t.insert
+local api = t.api
 
-local clear_notrace = lsp_helpers.clear_notrace
-local create_server_definition = lsp_helpers.create_server_definition
+local clear_notrace = t_lsp.clear_notrace
+local create_server_definition = t_lsp.create_server_definition
 
 local text = dedent([[
 auto add(int a, int b) { return a + b; }

@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local clear = helpers.clear
-local dedent = helpers.dedent
-local eq = helpers.eq
-local insert = helpers.insert
-local exec_lua = helpers.exec_lua
-local pcall_err = helpers.pcall_err
-local feed = helpers.feed
+local clear = t.clear
+local dedent = t.dedent
+local eq = t.eq
+local insert = t.insert
+local exec_lua = t.exec_lua
+local pcall_err = t.pcall_err
+local feed = t.feed
 
 describe('treesitter parser API', function()
   before_each(function()
@@ -381,7 +381,7 @@ int x = INT_MAX;
           { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
-        helpers.feed('ggo<esc>')
+        t.feed('ggo<esc>')
         eq(5, exec_lua('return #parser:children().c:trees()'))
         eq({
           { 0, 0, 8, 0 }, -- root tree
@@ -418,7 +418,7 @@ int x = INT_MAX;
           -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
-        helpers.feed('ggo<esc>')
+        t.feed('ggo<esc>')
         eq('table', exec_lua('return type(parser:children().c)'))
         eq(2, exec_lua('return #parser:children().c:trees()'))
         eq({
@@ -430,7 +430,7 @@ int x = INT_MAX;
           -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
-        helpers.feed('7ggI//<esc>')
+        t.feed('7ggI//<esc>')
         exec_lua([[parser:parse({6, 7})]])
         eq('table', exec_lua('return type(parser:children().c)'))
         eq(2, exec_lua('return #parser:children().c:trees()'))
@@ -468,7 +468,7 @@ int x = INT_MAX;
           { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
-        helpers.feed('ggo<esc>')
+        t.feed('ggo<esc>')
         eq(5, exec_lua('return #parser:children().c:trees()'))
         eq({
           { 0, 0, 8, 0 }, -- root tree
@@ -657,7 +657,7 @@ int x = INT_MAX;
       { 'declaration', 1, 2, 1, 12 },
     }, run_query())
 
-    helpers.command 'normal ggO'
+    t.command 'normal ggO'
     insert('int a;')
 
     eq({

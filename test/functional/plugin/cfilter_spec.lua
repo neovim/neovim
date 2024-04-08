@@ -1,8 +1,8 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local fn = helpers.fn
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local fn = t.fn
 
 describe('cfilter.lua', function()
   before_each(function()

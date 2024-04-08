@@ -1,12 +1,12 @@
 -- Tests for not doing smart indenting when it isn't set.
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local feed = helpers.feed
-local clear = helpers.clear
-local insert = helpers.insert
-local expect = helpers.expect
-local feed_command = helpers.feed_command
+local feed = t.feed
+local clear = t.clear
+local insert = t.insert
+local expect = t.expect
+local feed_command = t.feed_command
 
 describe('unset smart indenting', function()
   before_each(clear)

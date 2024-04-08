@@ -1,12 +1,11 @@
 -- ShaDa history saving/reading support
-local helpers = require('test.functional.helpers')(after_each)
-local nvim_command, fn, api, nvim_feed, eq =
-  helpers.command, helpers.fn, helpers.api, helpers.feed, helpers.eq
-local assert_alive = helpers.assert_alive
-local expect_exit = helpers.expect_exit
+local t = require('test.functional.testutil')(after_each)
+local nvim_command, fn, api, nvim_feed, eq = t.command, t.fn, t.api, t.feed, t.eq
+local assert_alive = t.assert_alive
+local expect_exit = t.expect_exit
 
-local shada_helpers = require('test.functional.shada.helpers')
-local reset, clear = shada_helpers.reset, shada_helpers.clear
+local t_shada = require('test.functional.shada.testutil')
+local reset, clear = t_shada.reset, t_shada.clear
 
 describe('ShaDa support code', function()
   before_each(reset)

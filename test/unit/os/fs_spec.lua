@@ -1,22 +1,22 @@
 local uv = vim.uv
 local bit = require('bit')
 
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
 
-local cimport = helpers.cimport
-local cppimport = helpers.cppimport
-local internalize = helpers.internalize
-local ok = helpers.ok
-local eq = helpers.eq
-local neq = helpers.neq
-local ffi = helpers.ffi
-local cstr = helpers.cstr
-local to_cstr = helpers.to_cstr
-local OK = helpers.OK
-local FAIL = helpers.FAIL
-local NULL = helpers.NULL
-local mkdir = helpers.mkdir
+local cimport = t.cimport
+local cppimport = t.cppimport
+local internalize = t.internalize
+local ok = t.ok
+local eq = t.eq
+local neq = t.neq
+local ffi = t.ffi
+local cstr = t.cstr
+local to_cstr = t.to_cstr
+local OK = t.OK
+local FAIL = t.FAIL
+local NULL = t.NULL
+local mkdir = t.mkdir
 local endswith = vim.endswith
 
 local NODE_NORMAL = 0

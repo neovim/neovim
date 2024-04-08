@@ -1,9 +1,9 @@
 -- Tests for using Ctrl-A/Ctrl-X on visual selections
 
-local helpers = require('test.functional.helpers')(after_each)
-local source, command = helpers.source, helpers.command
-local call, clear = helpers.call, helpers.clear
-local eq, nvim = helpers.eq, helpers.api
+local t = require('test.functional.testutil')(after_each)
+local source, command = t.source, t.command
+local call, clear = t.call, t.clear
+local eq, nvim = t.eq, t.api
 
 describe('Ctrl-A/Ctrl-X on visual selections', function()
   before_each(function()

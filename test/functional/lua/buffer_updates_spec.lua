@@ -1,18 +1,18 @@
 -- Test suite for testing interactions with API bindings
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local command = helpers.command
-local api = helpers.api
-local fn = helpers.fn
-local clear = helpers.clear
-local eq = helpers.eq
-local fail = helpers.fail
-local exec_lua = helpers.exec_lua
-local feed = helpers.feed
-local expect_events = helpers.expect_events
-local write_file = helpers.write_file
-local dedent = helpers.dedent
+local command = t.command
+local api = t.api
+local fn = t.fn
+local clear = t.clear
+local eq = t.eq
+local fail = t.fail
+local exec_lua = t.exec_lua
+local feed = t.feed
+local expect_events = t.expect_events
+local write_file = t.write_file
+local dedent = t.dedent
 
 local origlines = {
   'original line 1',
@@ -292,11 +292,11 @@ describe('lua buffer event callbacks: on_lines', function()
 
     exec_lua(code)
     command('q!')
-    helpers.assert_alive()
+    t.assert_alive()
 
     exec_lua(code)
     command('bd!')
-    helpers.assert_alive()
+    t.assert_alive()
   end)
 
   it('#12718 lnume', function()
@@ -965,7 +965,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
       command('e! Xtest-undofile')
       command('set undodir=. | set undofile')
 
-      local ns = helpers.request('nvim_create_namespace', 'ns1')
+      local ns = t.request('nvim_create_namespace', 'ns1')
       api.nvim_buf_set_extmark(0, ns, 0, 0, {})
 
       eq({ '12345', 'hello world' }, api.nvim_buf_get_lines(0, 0, -1, true))

@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eq = helpers.eq
-local eval = helpers.eval
-local api = helpers.api
-local clear = helpers.clear
+local eq = t.eq
+local eval = t.eval
+local api = t.api
+local clear = t.clear
 
 before_each(clear)
 

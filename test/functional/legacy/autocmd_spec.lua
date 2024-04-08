@@ -1,10 +1,10 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local write_file = helpers.write_file
-local command = helpers.command
-local feed = helpers.feed
-local api = helpers.api
-local eq = helpers.eq
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local write_file = t.write_file
+local command = t.command
+local feed = t.feed
+local api = t.api
+local eq = t.eq
 
 before_each(clear)
 

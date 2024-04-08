@@ -1,10 +1,10 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local poke_eventloop = helpers.poke_eventloop
-local clear = helpers.clear
-local insert = helpers.insert
-local expect = helpers.expect
-local command = helpers.command
+local poke_eventloop = t.poke_eventloop
+local clear = t.clear
+local insert = t.insert
+local expect = t.expect
+local command = t.command
 
 describe('search_mbyte', function()
   before_each(clear)

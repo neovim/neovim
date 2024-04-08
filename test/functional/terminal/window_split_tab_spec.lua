@@ -1,16 +1,16 @@
-local helpers = require('test.functional.helpers')(after_each)
-local thelpers = require('test.functional.terminal.helpers')
-local assert_alive = helpers.assert_alive
-local clear = helpers.clear
-local feed = helpers.feed
-local feed_command = helpers.feed_command
-local command = helpers.command
-local eq = helpers.eq
-local eval = helpers.eval
-local api = helpers.api
+local t = require('test.functional.testutil')(after_each)
+local tt = require('test.functional.terminal.testutil')
+local assert_alive = t.assert_alive
+local clear = t.clear
+local feed = t.feed
+local feed_command = t.feed_command
+local command = t.command
+local eq = t.eq
+local eval = t.eval
+local api = t.api
 local sleep = vim.uv.sleep
-local retry = helpers.retry
-local is_os = helpers.is_os
+local retry = t.retry
+local is_os = t.is_os
 
 describe(':terminal', function()
   local screen
@@ -23,7 +23,7 @@ describe(':terminal', function()
     command('highlight StatusLine cterm=NONE')
     command('highlight StatusLineNC cterm=NONE')
     command('highlight VertSplit cterm=NONE')
-    screen = thelpers.screen_setup(3)
+    screen = tt.screen_setup(3)
   end)
 
   after_each(function()

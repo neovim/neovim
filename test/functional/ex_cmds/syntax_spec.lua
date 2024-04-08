@@ -1,8 +1,8 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eq = helpers.eq
-local clear = helpers.clear
-local exc_exec = helpers.exc_exec
+local eq = t.eq
+local clear = t.clear
+local exc_exec = t.exc_exec
 
 describe(':syntax', function()
   before_each(clear)

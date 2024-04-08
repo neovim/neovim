@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local eq = helpers.eq
-local feed = helpers.feed
-local api = helpers.api
-local clear = helpers.clear
-local source = helpers.source
-local command = helpers.command
-local exc_exec = helpers.exc_exec
-local async_meths = helpers.async_meths
+local eq = t.eq
+local feed = t.feed
+local api = t.api
+local clear = t.clear
+local source = t.source
+local command = t.command
+local exc_exec = t.exc_exec
+local async_meths = t.async_meths
 local NIL = vim.NIL
 
 local screen

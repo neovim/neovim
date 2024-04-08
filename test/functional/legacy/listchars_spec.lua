@@ -1,9 +1,9 @@
 -- Tests for 'listchars' display with 'list' and :list.
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local feed, insert, exec = helpers.feed, helpers.insert, helpers.exec
-local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
+local feed, insert, exec = t.feed, t.insert, t.exec
+local clear, feed_command, expect = t.clear, t.feed_command, t.expect
 
 -- luacheck: ignore 621 (Indentation)
 describe("'listchars'", function()

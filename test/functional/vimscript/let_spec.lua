@@ -1,15 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eq = helpers.eq
-local clear = helpers.clear
-local command = helpers.command
-local eval = helpers.eval
-local api = helpers.api
-local exec = helpers.exec
-local exec_capture = helpers.exec_capture
-local expect_exit = helpers.expect_exit
-local source = helpers.source
-local testprg = helpers.testprg
+local eq = t.eq
+local clear = t.clear
+local command = t.command
+local eval = t.eval
+local api = t.api
+local exec = t.exec
+local exec_capture = t.exec_capture
+local expect_exit = t.expect_exit
+local source = t.source
+local testprg = t.testprg
 
 before_each(clear)
 

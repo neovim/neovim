@@ -1,15 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local feed = helpers.feed
-local eq = helpers.eq
-local clear = helpers.clear
-local fn = helpers.fn
-local command = helpers.command
-local exc_exec = helpers.exc_exec
-local write_file = helpers.write_file
-local api = helpers.api
-local source = helpers.source
+local feed = t.feed
+local eq = t.eq
+local clear = t.clear
+local fn = t.fn
+local command = t.command
+local exc_exec = t.exc_exec
+local write_file = t.write_file
+local api = t.api
+local source = t.source
 
 local file_base = 'Xtest-functional-ex_cmds-quickfix_commands'
 

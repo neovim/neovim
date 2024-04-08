@@ -1,15 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local clear = helpers.clear
-local eq = helpers.eq
-local api = helpers.api
-local fn = helpers.fn
-local exec = helpers.exec
-local feed = helpers.feed
-local assert_log = helpers.assert_log
-local check_close = helpers.check_close
-local is_os = helpers.is_os
+local clear = t.clear
+local eq = t.eq
+local api = t.api
+local fn = t.fn
+local exec = t.exec
+local feed = t.feed
+local assert_log = t.assert_log
+local check_close = t.check_close
+local is_os = t.is_os
 
 local testlog = 'Xtest_autocmd_oldtest_log'
 

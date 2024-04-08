@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed, eq = helpers.clear, helpers.feed, helpers.eq
-local command = helpers.command
-local feed_command = helpers.feed_command
-local insert = helpers.insert
-local fn = helpers.fn
-local api = helpers.api
-local exec = helpers.exec
-local assert_alive = helpers.assert_alive
+local clear, feed, eq = t.clear, t.feed, t.eq
+local command = t.command
+local feed_command = t.feed_command
+local insert = t.insert
+local fn = t.fn
+local api = t.api
+local exec = t.exec
+local assert_alive = t.assert_alive
 
 local content1 = [[
         This is a

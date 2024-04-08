@@ -1,12 +1,12 @@
-local helpers = require('test.unit.helpers')(after_each)
-local eval_helpers = require('test.unit.eval.helpers')
+local t = require('test.unit.testutil')(after_each)
+local t_eval = require('test.unit.eval.testutil')
 
-local itp = helpers.gen_itp(it)
+local itp = t.gen_itp(it)
 
-local cimport = helpers.cimport
-local eq = helpers.eq
+local cimport = t.cimport
+local eq = t.eq
 
-local eval0 = eval_helpers.eval0
+local eval0 = t_eval.eval0
 
 local eval = cimport('./src/nvim/eval.h', './src/nvim/eval/typval.h', './src/nvim/memory.h')
 

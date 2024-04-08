@@ -1,12 +1,12 @@
 -- ShaDa marks saving/reading support
-local helpers = require('test.functional.helpers')(after_each)
-local api, nvim_command, fn, eq = helpers.api, helpers.command, helpers.fn, helpers.eq
-local feed = helpers.feed
-local exc_exec, exec_capture = helpers.exc_exec, helpers.exec_capture
-local expect_exit = helpers.expect_exit
+local t = require('test.functional.testutil')(after_each)
+local api, nvim_command, fn, eq = t.api, t.command, t.fn, t.eq
+local feed = t.feed
+local exc_exec, exec_capture = t.exc_exec, t.exec_capture
+local expect_exit = t.expect_exit
 
-local shada_helpers = require('test.functional.shada.helpers')
-local reset, clear = shada_helpers.reset, shada_helpers.clear
+local t_shada = require('test.functional.shada.testutil')
+local reset, clear = t_shada.reset, t_shada.clear
 
 local nvim_current_line = function()
   return api.nvim_win_get_cursor(0)[1]
@@ -216,7 +216,7 @@ describe('ShaDa support code', function()
   -- -c temporary sets lnum to zero to make `+/pat` work, so calling setpcmark()
   -- during -c used to add item with zero lnum to jump list.
   it('does not create incorrect file for non-existent buffers when writing from -c', function()
-    local argv = helpers.new_argv {
+    local argv = t.new_argv {
       args_rm = {
         '-i',
         '--embed', -- no --embed
@@ -235,7 +235,7 @@ describe('ShaDa support code', function()
   end)
 
   it('does not create incorrect file for non-existent buffers opened from -c', function()
-    local argv = helpers.new_argv {
+    local argv = t.new_argv {
       args_rm = {
         '-i',
         '--embed', -- no --embed

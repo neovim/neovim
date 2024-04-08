@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local eval = helpers.eval
-local exec = helpers.exec
-local feed = helpers.feed
-local api = helpers.api
-local request = helpers.request
-local pcall_err = helpers.pcall_err
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local eval = t.eval
+local exec = t.exec
+local feed = t.feed
+local api = t.api
+local request = t.request
+local pcall_err = t.pcall_err
 
 describe('nvim_ui_attach()', function()
   before_each(function()

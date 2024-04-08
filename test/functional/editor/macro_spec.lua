@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eq = helpers.eq
-local eval = helpers.eval
-local feed = helpers.feed
-local clear = helpers.clear
-local expect = helpers.expect
-local command = helpers.command
-local fn = helpers.fn
-local api = helpers.api
-local insert = helpers.insert
+local eq = t.eq
+local eval = t.eval
+local feed = t.feed
+local clear = t.clear
+local expect = t.expect
+local command = t.command
+local fn = t.fn
+local api = t.api
+local insert = t.insert
 
 describe('macros', function()
   before_each(function()

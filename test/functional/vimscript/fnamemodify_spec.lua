@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local eq = helpers.eq
-local fnamemodify = helpers.fn.fnamemodify
-local getcwd = helpers.fn.getcwd
-local command = helpers.command
-local write_file = helpers.write_file
-local alter_slashes = helpers.alter_slashes
-local is_os = helpers.is_os
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local eq = t.eq
+local fnamemodify = t.fn.fnamemodify
+local getcwd = t.fn.getcwd
+local command = t.command
+local write_file = t.write_file
+local alter_slashes = t.alter_slashes
+local is_os = t.is_os
 
 local function eq_slashconvert(expected, got)
   eq(alter_slashes(expected), alter_slashes(got))
@@ -24,7 +24,7 @@ describe('fnamemodify()', function()
   end)
 
   it('handles the root path', function()
-    local root = helpers.pathroot()
+    local root = t.pathroot()
     eq(root, fnamemodify([[/]], ':p:h'))
     eq(root, fnamemodify([[/]], ':p'))
     if is_os('win') then

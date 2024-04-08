@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local thelpers = require('test.functional.terminal.helpers')
-local feed, clear = helpers.feed, helpers.clear
-local api = helpers.api
-local testprg, command = helpers.testprg, helpers.command
-local nvim_prog_abs = helpers.nvim_prog_abs
-local fn = helpers.fn
-local nvim_set = helpers.nvim_set
-local is_os = helpers.is_os
-local skip = helpers.skip
+local tt = require('test.functional.terminal.testutil')
+local feed, clear = t.feed, t.clear
+local api = t.api
+local testprg, command = t.testprg, t.command
+local nvim_prog_abs = t.nvim_prog_abs
+local fn = t.fn
+local nvim_set = t.nvim_set
+local is_os = t.is_os
+local skip = t.skip
 
 describe(':terminal highlight', function()
   local screen
@@ -51,9 +51,9 @@ describe(':terminal highlight', function()
     describe(title, function()
       before_each(function()
         set_attrs_fn()
-        thelpers.feed_data('text')
-        thelpers.clear_attrs()
-        thelpers.feed_data('text')
+        tt.feed_data('text')
+        tt.clear_attrs()
+        tt.feed_data('text')
       end)
 
       local function pass_attrs()
@@ -76,7 +76,7 @@ describe(':terminal highlight', function()
           table.insert(lines, 'line' .. tostring(i))
         end
         table.insert(lines, '')
-        thelpers.feed_data(lines)
+        tt.feed_data(lines)
         screen:expect([[
           line4                                             |
           line5                                             |
@@ -101,28 +101,28 @@ describe(':terminal highlight', function()
   end
 
   descr('foreground', 1, function()
-    thelpers.set_fg(45)
+    tt.set_fg(45)
   end)
   descr('background', 2, function()
-    thelpers.set_bg(46)
+    tt.set_bg(46)
   end)
   descr('foreground and background', 3, function()
-    thelpers.set_fg(45)
-    thelpers.set_bg(46)
+    tt.set_fg(45)
+    tt.set_bg(46)
   end)
   descr('bold, italics, underline and strikethrough', 4, function()
-    thelpers.set_bold()
-    thelpers.set_italic()
-    thelpers.set_underline()
-    thelpers.set_strikethrough()
+    tt.set_bold()
+    tt.set_italic()
+    tt.set_underline()
+    tt.set_strikethrough()
   end)
   descr('bold and underdouble', 12, function()
-    thelpers.set_bold()
-    thelpers.set_underdouble()
+    tt.set_bold()
+    tt.set_underdouble()
   end)
   descr('italics and undercurl', 13, function()
-    thelpers.set_italic()
-    thelpers.set_undercurl()
+    tt.set_italic()
+    tt.set_undercurl()
   end)
 end)
 
@@ -206,7 +206,7 @@ it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', functi
     ^tty ready                                         |
                                                       |*6
   ]])
-  thelpers.feed_data((' foobar'):rep(30))
+  tt.feed_data((' foobar'):rep(30))
   screen:expect([[
     ^tty ready                                         |
      foobar foobar foobar foobar foobar foobar foobar |
@@ -319,12 +319,12 @@ describe(':terminal highlight forwarding', function()
 
   it('will handle cterm and rgb attributes', function()
     skip(is_os('win'))
-    thelpers.set_fg(3)
-    thelpers.feed_data('text')
-    thelpers.feed_termcode('[38:2:255:128:0m')
-    thelpers.feed_data('color')
-    thelpers.clear_attrs()
-    thelpers.feed_data('text')
+    tt.set_fg(3)
+    tt.feed_data('text')
+    tt.feed_termcode('[38:2:255:128:0m')
+    tt.feed_data('color')
+    tt.clear_attrs()
+    tt.feed_data('text')
     screen:expect {
       grid = [[
       tty ready                                         |
@@ -366,10 +366,10 @@ describe(':terminal highlight with custom palette', function()
 
   it('will use the custom color', function()
     skip(is_os('win'))
-    thelpers.set_fg(3)
-    thelpers.feed_data('text')
-    thelpers.clear_attrs()
-    thelpers.feed_data('text')
+    tt.set_fg(3)
+    tt.feed_data('text')
+    tt.clear_attrs()
+    tt.feed_data('text')
     screen:expect([[
       tty ready                                         |
       {1:text}text{7: }                                         |

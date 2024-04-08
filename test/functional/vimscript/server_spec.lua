@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
-local assert_log = helpers.assert_log
-local eq, neq, eval = helpers.eq, helpers.neq, helpers.eval
-local clear, fn, api = helpers.clear, helpers.fn, helpers.api
-local ok = helpers.ok
-local matches = helpers.matches
-local pcall_err = helpers.pcall_err
-local check_close = helpers.check_close
-local mkdir = helpers.mkdir
-local rmdir = helpers.rmdir
-local is_os = helpers.is_os
+local t = require('test.functional.testutil')(after_each)
+local assert_log = t.assert_log
+local eq, neq, eval = t.eq, t.neq, t.eval
+local clear, fn, api = t.clear, t.fn, t.api
+local ok = t.ok
+local matches = t.matches
+local pcall_err = t.pcall_err
+local check_close = t.check_close
+local mkdir = t.mkdir
+local rmdir = t.rmdir
+local is_os = t.is_os
 
 local testlog = 'Xtest-server-log'
 
@@ -176,11 +176,11 @@ end)
 describe('startup --listen', function()
   it('validates', function()
     clear()
-    local cmd = { unpack(helpers.nvim_argv) }
+    local cmd = { unpack(t.nvim_argv) }
     table.insert(cmd, '--listen')
     matches('nvim.*: Argument missing after: "%-%-listen"', fn.system(cmd))
 
-    cmd = { unpack(helpers.nvim_argv) }
+    cmd = { unpack(t.nvim_argv) }
     table.insert(cmd, '--listen2')
     matches('nvim.*: Garbage after option argument: "%-%-listen2"', fn.system(cmd))
   end)

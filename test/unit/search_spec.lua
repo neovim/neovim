@@ -1,12 +1,12 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
 
-local to_cstr = helpers.to_cstr
-local eq = helpers.eq
+local to_cstr = t.to_cstr
+local eq = t.eq
 
-local search = helpers.cimport('./src/nvim/search.h')
-local globals = helpers.cimport('./src/nvim/globals.h')
-local ffi = helpers.ffi
+local search = t.cimport('./src/nvim/search.h')
+local globals = t.cimport('./src/nvim/globals.h')
+local ffi = t.ffi
 
 itp('pat_has_uppercase', function()
   -- works on empty string
@@ -42,7 +42,7 @@ describe('search_regcomp', function()
   end
 
   local get_search_pat = function()
-    return helpers.internalize(search.get_search_pat())
+    return t.internalize(search.get_search_pat())
   end
 
   itp('accepts regexp pattern with invalid utf', function()

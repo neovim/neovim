@@ -1,16 +1,16 @@
 -- Test suite for testing interactions with API bindings
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local fn = helpers.fn
-local api = helpers.api
-local clear = helpers.clear
+local fn = t.fn
+local api = t.api
+local clear = t.clear
 local sleep = vim.uv.sleep
-local feed = helpers.feed
-local eq = helpers.eq
-local eval = helpers.eval
-local matches = helpers.matches
-local exec_lua = helpers.exec_lua
-local retry = helpers.retry
+local feed = t.feed
+local eq = t.eq
+local eval = t.eval
+local matches = t.matches
+local exec_lua = t.exec_lua
+local retry = t.retry
 
 before_each(clear)
 

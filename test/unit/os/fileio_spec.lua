@@ -1,13 +1,13 @@
 local uv = vim.uv
 
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
 
-local eq = helpers.eq
-local ffi = helpers.ffi
-local cimport = helpers.cimport
-local cppimport = helpers.cppimport
-local mkdir = helpers.mkdir
+local eq = t.eq
+local ffi = t.ffi
+local cimport = t.cimport
+local cppimport = t.cppimport
+local mkdir = t.mkdir
 
 local m = cimport('./src/nvim/os/os.h', './src/nvim/os/fileio.h')
 cppimport('fcntl.h')

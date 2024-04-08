@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local eq = helpers.eq
-local clear = helpers.clear
-local insert = helpers.insert
-local feed = helpers.feed
-local expect = helpers.expect
-local feed_command = helpers.feed_command
-local exc_exec = helpers.exc_exec
+local eq = t.eq
+local clear = t.clear
+local insert = t.insert
+local feed = t.feed
+local expect = t.expect
+local feed_command = t.feed_command
+local exc_exec = t.exc_exec
 
 describe(':undojoin command', function()
   before_each(function()

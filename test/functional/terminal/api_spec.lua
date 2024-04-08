@@ -1,8 +1,8 @@
-local helpers = require('test.functional.helpers')(after_each)
-local child_session = require('test.functional.terminal.helpers')
-local ok = helpers.ok
+local t = require('test.functional.testutil')(after_each)
+local tt = require('test.functional.terminal.testutil')
+local ok = t.ok
 
-if helpers.skip(helpers.is_os('win')) then
+if t.skip(t.is_os('win')) then
   return
 end
 
@@ -11,9 +11,9 @@ describe('api', function()
   local socket_name = './Xtest_functional_api.sock'
 
   before_each(function()
-    helpers.clear()
+    t.clear()
     os.remove(socket_name)
-    screen = child_session.setup_child_nvim({
+    screen = tt.setup_child_nvim({
       '-u',
       'NONE',
       '-i',
@@ -21,7 +21,7 @@ describe('api', function()
       '--cmd',
       'colorscheme vim',
       '--cmd',
-      helpers.nvim_set .. ' notermguicolors',
+      t.nvim_set .. ' notermguicolors',
     })
   end)
   after_each(function()
@@ -39,7 +39,7 @@ describe('api', function()
     }
 
     -- Start the socket from the child nvim.
-    child_session.feed_data(":echo serverstart('" .. socket_name .. "')\n")
+    tt.feed_data(":echo serverstart('" .. socket_name .. "')\n")
 
     -- Wait for socket creation.
     screen:expect([[
@@ -49,10 +49,10 @@ describe('api', function()
       {3:-- TERMINAL --}                                    |
     ]])
 
-    local socket_session1 = helpers.connect(socket_name)
-    local socket_session2 = helpers.connect(socket_name)
+    local socket_session1 = t.connect(socket_name)
+    local socket_session2 = t.connect(socket_name)
 
-    child_session.feed_data('i[tui] insert-mode')
+    tt.feed_data('i[tui] insert-mode')
     -- Wait for stdin to be processed.
     screen:expect([[
       [tui] insert-mode{1: }                                |

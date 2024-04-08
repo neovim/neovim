@@ -1,17 +1,17 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local eq = helpers.eq
-local eval = helpers.eval
-local command = helpers.command
-local pcall_err = helpers.pcall_err
-local feed = helpers.feed
-local poke_eventloop = helpers.poke_eventloop
-local is_os = helpers.is_os
-local api = helpers.api
-local async_meths = helpers.async_meths
-local testprg = helpers.testprg
-local assert_alive = helpers.assert_alive
+local clear = t.clear
+local eq = t.eq
+local eval = t.eval
+local command = t.command
+local pcall_err = t.pcall_err
+local feed = t.feed
+local poke_eventloop = t.poke_eventloop
+local is_os = t.is_os
+local api = t.api
+local async_meths = t.async_meths
+local testprg = t.testprg
+local assert_alive = t.assert_alive
 
 describe('terminal channel is closed and later released if', function()
   local screen

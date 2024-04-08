@@ -1,18 +1,18 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
-local eval_helpers = require('test.unit.eval.helpers')
+local t = require('test.unit.testutil')(after_each)
+local itp = t.gen_itp(it)
+local t_eval = require('test.unit.eval.testutil')
 
-local alloc_log_new = helpers.alloc_log_new
-local cimport = helpers.cimport
-local ffi = helpers.ffi
-local eq = helpers.eq
+local alloc_log_new = t.alloc_log_new
+local cimport = t.cimport
+local ffi = t.ffi
+local eq = t.eq
 
-local a = eval_helpers.alloc_logging_helpers
-local type_key = eval_helpers.type_key
-local list_type = eval_helpers.list_type
-local list_items = eval_helpers.list_items
-local dict_items = eval_helpers.dict_items
-local lua2typvalt = eval_helpers.lua2typvalt
+local a = t_eval.alloc_logging_t
+local type_key = t_eval.type_key
+local list_type = t_eval.list_type
+local list_items = t_eval.list_items
+local dict_items = t_eval.dict_items
+local lua2typvalt = t_eval.lua2typvalt
 
 local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/eval.h')
 

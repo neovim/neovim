@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local eq = helpers.eq
-local insert = helpers.insert
-local exec_lua = helpers.exec_lua
-local command = helpers.command
-local feed = helpers.feed
-local poke_eventloop = helpers.poke_eventloop
+local t = require('test.functional.testutil')(after_each)
+local clear = t.clear
+local eq = t.eq
+local insert = t.insert
+local exec_lua = t.exec_lua
+local command = t.command
+local feed = t.feed
+local poke_eventloop = t.poke_eventloop
 local Screen = require('test.functional.ui.screen')
 
 before_each(clear)

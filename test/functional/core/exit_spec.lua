@@ -1,24 +1,24 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')(after_each)
 
-local assert_alive = helpers.assert_alive
-local command = helpers.command
-local feed_command = helpers.feed_command
-local feed = helpers.feed
-local eval = helpers.eval
-local eq = helpers.eq
-local run = helpers.run
-local fn = helpers.fn
-local nvim_prog = helpers.nvim_prog
-local pcall_err = helpers.pcall_err
-local exec_capture = helpers.exec_capture
-local poke_eventloop = helpers.poke_eventloop
+local assert_alive = t.assert_alive
+local command = t.command
+local feed_command = t.feed_command
+local feed = t.feed
+local eval = t.eval
+local eq = t.eq
+local run = t.run
+local fn = t.fn
+local nvim_prog = t.nvim_prog
+local pcall_err = t.pcall_err
+local exec_capture = t.exec_capture
+local poke_eventloop = t.poke_eventloop
 
 describe('v:exiting', function()
   local cid
 
   before_each(function()
-    helpers.clear()
-    cid = helpers.api.nvim_get_chan_info(0).id
+    t.clear()
+    cid = t.api.nvim_get_chan_info(0).id
   end)
 
   it('defaults to v:null', function()
@@ -74,7 +74,7 @@ describe(':cquit', function()
   end
 
   before_each(function()
-    helpers.clear()
+    t.clear()
   end)
 
   it('exits with non-zero after :cquit', function()

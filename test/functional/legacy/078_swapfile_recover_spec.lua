@@ -3,8 +3,8 @@
 -- restored. We need about 10000 lines of 100 characters to get two levels of
 -- pointer blocks.
 
-local helpers = require('test.functional.helpers')(after_each)
-local clear, expect, source = helpers.clear, helpers.expect, helpers.source
+local t = require('test.functional.testutil')(after_each)
+local clear, expect, source = t.clear, t.expect, t.source
 
 describe('78', function()
   setup(clear)
