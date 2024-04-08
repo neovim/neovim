@@ -1574,6 +1574,7 @@ local filename = {
   ['.clang-format'] = 'yaml',
   ['.clang-tidy'] = 'yaml',
   ['yarn.lock'] = 'yaml',
+  zathurarc = 'zathurarc',
   ['/etc/zprofile'] = 'zsh',
   ['.zlogin'] = 'zsh',
   ['.zlogout'] = 'zsh',
