@@ -306,7 +306,11 @@ function M.refresh(opts)
         textDocument = util.make_text_document_params(buf),
       }
       active_refreshes[buf] = true
-      vim.lsp.buf_request(buf, ms.textDocument_codeLens, params, M.on_codelens)
+
+      local request_ids = vim.lsp.buf_request(buf, ms.textDocument_codeLens, params, M.on_codelens)
+      if vim.tbl_isempty(request_ids) then
+        active_refreshes[buf] = nil
+      end
     end
   end
 end
