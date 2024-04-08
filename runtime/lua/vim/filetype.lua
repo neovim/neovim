@@ -1471,6 +1471,7 @@ local filename = {
   ['.pythonrc'] = 'python',
   SConstruct = 'python',
   qmldir = 'qmldir',
+  ['.Rhistory'] = 'r',
   ['.Rprofile'] = 'r',
   Rprofile = 'r',
   ['Rprofile.site'] = 'r',
