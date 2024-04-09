@@ -880,13 +880,16 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last, bool limit_winheight)
 {
   int count = 0;
 
-  while (first <= last) {
+  while (first <= last && (!limit_winheight || count < wp->w_height_inner)) {
     linenr_T next = first;
-    count += plines_win_full(wp, first, &next, NULL, false, limit_winheight);
+    count += plines_win_full(wp, first, &next, NULL, false, false);
     first = next + 1;
   }
   if (first == wp->w_buffer->b_ml.ml_line_count + 1) {
     count += win_get_fill(wp, first);
+  }
+  if (limit_winheight && count > wp->w_height_inner) {
+    return wp->w_height_inner;
   }
   return count;
 }

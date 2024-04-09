@@ -1031,10 +1031,10 @@ func Test_smoothscroll_page()
   call assert_equal(415, col('.'))
   exe "norm! \<C-D>"
   call assert_equal(520, winsaveview().skipcol)
-  call assert_equal(535, col('.'))
+  call assert_equal(615, col('.'))
   exe "norm! \<C-D>"
   call assert_equal(520, winsaveview().skipcol)
-  call assert_equal(735, col('.'))
+  call assert_equal(815, col('.'))
   exe "norm! \<C-D>"
   call assert_equal(520, winsaveview().skipcol)
   call assert_equal(895, col('.'))
@@ -1046,10 +1046,10 @@ func Test_smoothscroll_page()
   call assert_equal(495, col('.'))
   exe "norm! \<C-U>"
   call assert_equal(0, winsaveview().skipcol)
-  call assert_equal(375, col('.'))
+  call assert_equal(295, col('.'))
   exe "norm! \<C-U>"
   call assert_equal(0, winsaveview().skipcol)
-  call assert_equal(175, col('.'))
+  call assert_equal(95, col('.'))
   exe "norm! \<C-U>"
   call assert_equal(0, winsaveview().skipcol)
   call assert_equal(15, col('.'))

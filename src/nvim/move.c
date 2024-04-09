@@ -2424,7 +2424,6 @@ static bool scroll_with_sms(Direction dir, int count)
     if (labs(curwin->w_topline - prev_topline) > (dir == BACKWARD)) {
       fixdir = dir * -1;
     }
-    validate_cursor(curwin);
     while (curwin->w_skipcol > 0
            && curwin->w_topline < curbuf->b_ml.ml_line_count) {
       scroll_redraw(fixdir == FORWARD, 1);
@@ -2447,6 +2446,7 @@ int pagescroll(Direction dir, int count, bool half)
   int nochange = true;
   int buflen = curbuf->b_ml.ml_line_count;
   colnr_T prev_col = curwin->w_cursor.col;
+  colnr_T prev_curswant = curwin->w_curswant;
   linenr_T prev_lnum = curwin->w_cursor.lnum;
   oparg_T oa = { 0 };
   cmdarg_T ca = { 0 };
@@ -2464,39 +2464,31 @@ int pagescroll(Direction dir, int count, bool half)
     if (dir == FORWARD) {
       int n = plines_correct_topline(curwin, curwin->w_topline, NULL, false, NULL);
       if (n - count < curwin->w_height_inner && curwin->w_topline < buflen) {
-        n += plines_m_win(curwin, curwin->w_topline + 1, buflen, true);
+        n += plines_m_win(curwin, curwin->w_topline + 1, buflen, false);
       }
       if (n - count < curwin->w_height_inner) {
         count = n - curwin->w_height_inner;
       }
     }
 
-    // Scroll the window and determine number of lines to move the cursor.
+    // (Try to) scroll the window unless already at the end of the buffer.
     if (count > 0) {
-      validate_cursor(curwin);
-      int prev_wrow = curwin->w_wrow;
       nochange = scroll_with_sms(dir, count);
-      if (!nochange) {
-        validate_cursor(curwin);
-        curscount = abs(prev_wrow - curwin->w_wrow);
-        dir = prev_wrow > curwin->w_wrow ? FORWARD : BACKWARD;
-      }
+      curwin->w_cursor.lnum = prev_lnum;
+      curwin->w_cursor.col = prev_col;
+      curwin->w_curswant = prev_curswant;
     }
 
-    int so = get_scrolloff_value(curwin);
-    // Move the cursor the same amount of screen lines except if
-    // 'scrolloff' is set and cursor was at start or end of buffer.
-    if (so == 0 || (prev_lnum != 1 && prev_lnum != buflen)) {
-      if (curwin->w_p_wrap) {
-        nv_screengo(&oa, dir, curscount);
-      } else if (dir == FORWARD) {
-        cursor_down_inner(curwin, curscount);
-      } else {
-        cursor_up_inner(curwin, curscount);
-      }
+    // Move the cursor the same amount of screen lines.
+    if (curwin->w_p_wrap) {
+      nv_screengo(&oa, dir, curscount);
+    } else if (dir == FORWARD) {
+      cursor_down_inner(curwin, curscount);
+    } else {
+      cursor_up_inner(curwin, curscount);
     }
 
-    if (so > 0) {
+    if (get_scrolloff_value(curwin) > 0) {
       cursor_correct(curwin);
     }
     // Move cursor to first line of closed fold.
