@@ -1,6 +1,6 @@
 -- Test for linebreak and list option (non-utf8)
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 local feed, insert, source = t.feed, t.insert, t.source
 local clear, feed_command, expect = t.clear, t.feed_command, t.expect

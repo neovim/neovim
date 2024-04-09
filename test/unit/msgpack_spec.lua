@@ -1,4 +1,4 @@
-local t = require('test.unit.testutil')(after_each)
+local t = require('test.unit.testutil')
 local cimport = t.cimport
 local itp = t.gen_itp(it)
 local lib = cimport('./src/nvim/msgpack_rpc/unpacker.h', './src/nvim/memory.h')

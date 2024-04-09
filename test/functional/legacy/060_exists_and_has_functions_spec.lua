@@ -1,6 +1,6 @@
 -- Tests for the exists() and has() functions.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local source = t.source
 local clear, expect = t.clear, t.expect
 local write_file = t.write_file

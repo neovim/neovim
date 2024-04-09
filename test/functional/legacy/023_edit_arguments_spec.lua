@@ -1,6 +1,6 @@
 -- Tests for complicated + argument to :edit command
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, insert = t.clear, t.insert
 local command, expect = t.command, t.expect
 local poke_eventloop = t.poke_eventloop

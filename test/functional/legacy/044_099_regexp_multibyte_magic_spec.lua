@@ -3,7 +3,7 @@
 --
 -- This test contains both "test44" and "test99" from the old test suite.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local feed, insert = t.feed, t.insert
 local clear, feed_command, expect = t.clear, t.feed_command, t.expect
 

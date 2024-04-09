@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 local clear, curbuf, curbuf_contents, curwin, eq, neq, matches, ok, feed, insert, eval =
   t.clear,

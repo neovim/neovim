@@ -1,6 +1,6 @@
 -- Normal mode tests.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear = t.clear
 local feed = t.feed
 local fn = t.fn

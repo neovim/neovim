@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local t_lsp = require('test.functional.plugin.lsp.testutil')
 local Screen = require('test.functional.ui.screen')
 

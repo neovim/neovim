@@ -1022,8 +1022,12 @@ function module.mkdir_p(path)
   return os.execute((is_os('win') and 'mkdir ' .. path or 'mkdir -p ' .. path))
 end
 
---- @return test.functional.testutil
-return function(after_each)
+return function()
+  local g = getfenv(2)
+
+  --- @type function?
+  local after_each = g.after_each
+
   if after_each then
     after_each(function()
       check_logs()

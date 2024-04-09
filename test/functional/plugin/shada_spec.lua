@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 local clear = t.clear
 local eq, api, nvim_eval, nvim_command, exc_exec, fn, nvim_feed =

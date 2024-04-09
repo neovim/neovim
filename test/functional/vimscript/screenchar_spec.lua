@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, eq, neq = t.clear, t.eq, t.neq
 local command, api, fn = t.command, t.api, t.fn
 local tbl_deep_extend = vim.tbl_deep_extend

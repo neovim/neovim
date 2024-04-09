@@ -1,6 +1,6 @@
 -- Tests for using Ctrl-A/Ctrl-X on visual selections
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local source, command = t.source, t.command
 local call, clear = t.call, t.clear
 local eq, nvim = t.eq, t.api

@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, eval, eq = t.clear, t.eval, t.eq
 local feed, command, expect = t.feed, t.command, t.expect
 local api, fn, neq = t.api, t.fn, t.neq

@@ -1,4 +1,4 @@
-local t = require('test.unit.testutil')(nil)
+local t = require('test.unit.testutil')
 local t_eval = require('test.unit.eval.testutil')
 
 local cimport = t.cimport

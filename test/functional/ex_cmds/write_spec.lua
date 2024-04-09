@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local eq, eval, clear, write_file, source, insert =
   t.eq, t.eval, t.clear, t.write_file, t.source, t.insert
 local pcall_err = t.pcall_err

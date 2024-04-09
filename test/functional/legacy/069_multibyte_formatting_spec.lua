@@ -3,7 +3,7 @@
 -- And test "ra" on multibyte characters.
 -- Also test byteidx() and byteidxcomp()
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local feed, insert, eq, eval, clear, feed_command, expect =
   t.feed, t.insert, t.eq, t.eval, t.clear, t.feed_command, t.expect
 

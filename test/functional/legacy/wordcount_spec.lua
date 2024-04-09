@@ -1,6 +1,6 @@
 -- Test for wordcount() function
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local feed, insert, source = t.feed, t.insert, t.source
 local clear, command = t.clear, t.command
 local eq, eval = t.eq, t.eval

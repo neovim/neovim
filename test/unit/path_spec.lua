@@ -1,5 +1,5 @@
 local uv = vim.uv
-local t = require('test.unit.testutil')(after_each)
+local t = require('test.unit.testutil')
 local itp = t.gen_itp(it)
 
 local cimport = t.cimport

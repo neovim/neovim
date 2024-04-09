@@ -1,7 +1,7 @@
 -- Test for 'lisp'
 -- If the lisp feature is not enabled, this will fail!
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, feed, insert = t.clear, t.feed, t.insert
 local command, expect = t.command, t.expect
 local poke_eventloop = t.poke_eventloop

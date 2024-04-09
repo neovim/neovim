@@ -1,5 +1,5 @@
 -- ShaDa history saving/reading support
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local nvim_command, fn, api, nvim_feed, eq = t.command, t.fn, t.api, t.feed, t.eq
 local assert_alive = t.assert_alive
 local expect_exit = t.expect_exit

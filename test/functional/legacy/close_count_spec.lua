@@ -1,6 +1,6 @@
 -- Tests for :[count]close! and :[count]hide
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 
 local eq = t.eq
 local poke_eventloop = t.poke_eventloop

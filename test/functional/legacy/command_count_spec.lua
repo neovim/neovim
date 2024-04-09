@@ -1,6 +1,6 @@
 -- Test for user command counts
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, source, expect = t.clear, t.source, t.expect
 local feed_command = t.feed_command
 

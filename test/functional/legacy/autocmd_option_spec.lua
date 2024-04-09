@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local nvim = t.api
 local clear, eq, neq, eval = t.clear, t.eq, t.neq, t.eval
 local api = t.api

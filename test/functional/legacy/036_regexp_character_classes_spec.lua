@@ -1,6 +1,6 @@
 -- Test character classes in regexp using regexpengine 0, 1, 2.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, command, expect = t.clear, t.command, t.expect
 local source, write_file = t.source, t.write_file
 

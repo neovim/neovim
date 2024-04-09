@@ -1,6 +1,6 @@
 -- Tests for quickfix window's title
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local insert, source = t.insert, t.source
 local clear, expect = t.clear, t.expect
 

@@ -1,6 +1,6 @@
 -- Tests for storing global variables in the .shada file
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, command, eq, neq, eval, poke_eventloop =
   t.clear, t.command, t.eq, t.neq, t.eval, t.poke_eventloop
 

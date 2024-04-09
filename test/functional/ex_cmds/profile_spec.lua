@@ -1,7 +1,7 @@
 require('os')
 local uv = vim.uv
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local eval = t.eval
 local command = t.command
 local eq, neq = t.eq, t.neq

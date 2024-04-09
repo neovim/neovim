@@ -3,7 +3,7 @@
 -- A pattern that gives the expected result produces OK, so that we know it was
 -- actually tried.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local insert, source = t.insert, t.source
 local clear, expect = t.clear, t.expect
 

@@ -12,7 +12,7 @@
 -- Use a FileChangedShell autocommand to avoid a prompt for "Xtestfile.gz"
 -- being modified outside of Vim (noticed on Solaris).
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, feed_command, expect, eq, neq, dedent, write_file, feed =
   t.clear, t.feed_command, t.expect, t.eq, t.neq, t.dedent, t.write_file, t.feed
 local command = t.command

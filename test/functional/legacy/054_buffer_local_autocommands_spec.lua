@@ -1,6 +1,6 @@
 -- Some tests for buffer-local autocommands
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 
 local clear = t.clear
 local expect = t.expect

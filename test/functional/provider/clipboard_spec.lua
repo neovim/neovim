@@ -1,6 +1,6 @@
 -- Test clipboard provider support
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = t.clear, t.feed, t.insert
 local feed_command, expect, eq, eval, source = t.feed_command, t.expect, t.eq, t.eval, t.source

@@ -1,6 +1,6 @@
 -- Tests for nested function.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, insert = t.clear, t.insert
 local command, expect, source = t.command, t.expect, t.source
 

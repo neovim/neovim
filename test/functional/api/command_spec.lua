@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 
 local NIL = vim.NIL
 local clear = t.clear

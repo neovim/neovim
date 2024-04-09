@@ -1,6 +1,6 @@
 -- Tests for errorformat.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear = t.clear
 local command, expect = t.command, t.expect
 

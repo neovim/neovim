@@ -1,5 +1,5 @@
 local Screen = require('test.functional.ui.screen')
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local uv = vim.uv
 local eq, eval, expect, exec = t.eq, t.eval, t.expect, t.exec
 local assert_alive = t.assert_alive

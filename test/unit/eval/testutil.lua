@@ -1,4 +1,4 @@
-local t = require('test.unit.testutil')(nil)
+local t = require('test.unit.testutil')
 
 local ptr2key = t.ptr2key
 local cimport = t.cimport

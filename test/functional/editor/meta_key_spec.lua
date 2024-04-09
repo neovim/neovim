@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, feed, insert = t.clear, t.feed, t.insert
 local command = t.command
 local exec_lua = t.exec_lua

@@ -1,6 +1,6 @@
 -- Tests for signs
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, command, expect = t.clear, t.command, t.expect
 
 describe('signs', function()

@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local command = t.command
 local Screen = require('test.functional.ui.screen')
 local clear, feed, feed_command = t.clear, t.feed, t.feed_command

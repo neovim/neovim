@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, command, eval, eq = t.clear, t.command, t.eval, t.eq
 local mkdir = t.mkdir
 

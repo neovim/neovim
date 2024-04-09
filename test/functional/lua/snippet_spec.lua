@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 
 local buf_lines = t.buf_lines
 local clear = t.clear

@@ -1,6 +1,6 @@
 -- Tests for getcwd(), haslocaldir(), and :lcd
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local eq, eval, source = t.eq, t.eval, t.source
 local call, clear, command = t.call, t.clear, t.command
 

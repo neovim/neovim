@@ -1,5 +1,5 @@
 -- ShaDa marks saving/reading support
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local api, nvim_command, fn, eq = t.api, t.command, t.fn, t.eq
 local feed = t.feed
 local exc_exec, exec_capture = t.exc_exec, t.exec_capture

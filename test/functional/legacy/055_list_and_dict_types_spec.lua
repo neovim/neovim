@@ -1,6 +1,6 @@
 -- Tests for List and Dictionary types.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local feed, source = t.feed, t.source
 local clear, feed_command, expect = t.clear, t.feed_command, t.expect
 

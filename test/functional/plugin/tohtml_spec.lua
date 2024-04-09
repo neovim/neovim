@@ -1,5 +1,5 @@
 local Screen = require('test.functional.ui.screen')
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 
 local clear = t.clear
 local exec = t.exec

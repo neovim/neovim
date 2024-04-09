@@ -6,7 +6,7 @@
 -- C. make sure that the location list window is not reused instead of the window
 --    it belongs to.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local source = t.source
 local clear, command, expect = t.clear, t.command, t.expect
 

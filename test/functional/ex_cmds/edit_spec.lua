@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local eq, command, fn = t.eq, t.command, t.fn
 local ok = t.ok
 local matches = t.matches

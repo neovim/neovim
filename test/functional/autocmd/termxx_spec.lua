@@ -1,5 +1,5 @@
 local uv = vim.uv
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local tt = require('test.functional.terminal.testutil')
 
 local clear, command, testprg = t.clear, t.command, t.testprg

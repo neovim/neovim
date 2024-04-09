@@ -1,6 +1,6 @@
 -- Test for :execute, :while and :if
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 
 local clear = t.clear
 local expect = t.expect

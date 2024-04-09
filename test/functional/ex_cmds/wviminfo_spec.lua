@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear = t.clear
 local command, eq, neq, write_file = t.command, t.eq, t.neq, t.write_file
 local read_file = t.read_file

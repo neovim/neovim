@@ -906,6 +906,4 @@ local module = {
 --- @class test.unit.testutil: test.unit.testutil.module, test.testutil
 module = vim.tbl_extend('error', module, t_global)
 
-return function()
-  return module
-end
+return module

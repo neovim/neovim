@@ -1,6 +1,6 @@
 -- Test for mappings and abbreviations
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, feed, insert = t.clear, t.feed, t.insert
 local expect, poke_eventloop = t.expect, t.poke_eventloop
 local command, eq, eval, api = t.command, t.eq, t.eval, t.api
