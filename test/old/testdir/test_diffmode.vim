@@ -1774,17 +1774,19 @@ endfunc
 
 " Ctrl-D reveals filler lines below the last line in the buffer.
 func Test_diff_eob_halfpage()
-  5new
+  new
   call setline(1, ['']->repeat(10) + ['a'])
   diffthis
-  call assert_true(5, winheight(5))
-  5new
+  new
   call setline(1, ['']->repeat(3) + ['a', 'b'])
   diffthis
+  resize 5
   wincmd j
-  resize 7
-  exe "norm! G\<C-D>"
-  call assert_equal(6, line('w0'))
+  resize 5
+  norm G
+  call assert_equal(7, line('w0'))
+  exe "norm! \<C-D>"
+  call assert_equal(8, line('w0'))
 
   %bwipe!
 endfunc
