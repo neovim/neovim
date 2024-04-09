@@ -4235,4 +4235,16 @@ func Test_single_line_filler_zb()
   bw!
 endfunc
 
+" Test for Ctrl-U not getting stuck at end of buffer with 'scrolloff'.
+func Test_halfpage_scrolloff_eob()
+  set scrolloff=5
+
+  call setline(1, range(1, 100))
+  exe "norm! Gzz\<C-U>zz"
+  call assert_notequal(100, line('.'))
+
+  set scrolloff&
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
