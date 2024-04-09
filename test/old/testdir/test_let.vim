@@ -397,6 +397,42 @@ func Test_let_heredoc_fails()
     call assert_report('Caught exception: ' .. v:exception)
   endtry
 
+  try
+    let @- =<< trim TEXT
+      change
+      insert
+      append
+    TEXT
+    call assert_report('No exception thrown')
+  catch /E730:/
+  catch
+    call assert_report('Caught exception: ' .. v:exception)
+  endtry
+
+  try
+    let [a b c] =<< trim TEXT
+      change
+      insert
+      append
+    TEXT
+    call assert_report('No exception thrown')
+  catch /E475:/
+  catch
+    call assert_report('Caught exception: ' .. v:exception)
+  endtry
+
+  try
+    let [a; b; c] =<< trim TEXT
+      change
+      insert
+      append
+    TEXT
+    call assert_report('No exception thrown')
+  catch /E452:/
+  catch
+    call assert_report('Caught exception: ' .. v:exception)
+  endtry
+
   let text =<< trim END
   func WrongSyntax()
     let v =<< that there
@@ -568,6 +604,22 @@ insert
 append
 END
   call assert_equal(['change', 'insert', 'append'], [a, b, c])
+
+  " unpack assignment with semicolon
+  let [a; b] =<< END
+change
+insert
+append
+END
+  call assert_equal(['change', ['insert', 'append']], [a, b])
+
+  " unpack assignment with registers
+  let [@/, @", @-] =<< END
+change
+insert
+append
+END
+  call assert_equal(['change', 'insert', 'append'], [@/, @", @-])
 
   " curly braces name and list slice assignment
   let foo_3_bar = ['', '', '']

@@ -2576,10 +2576,14 @@ void ex_function(exarg_T *eap)
       //       and ":let [a, b] =<< [trim] EOF"
       arg = p;
       if (checkforcmd(&arg, "let", 2)) {
-        while (vim_strchr("$@&", *arg) != NULL) {
-          arg++;
+        int var_count = 0;
+        int semicolon = 0;
+        const char *argend = skip_var_list(arg, &var_count, &semicolon, true);
+        if (argend == NULL) {
+          // Invalid list assignment: skip to closing bracket.
+          argend = find_name_end(arg, NULL, NULL, FNE_INCL_BR);
         }
-        arg = skipwhite(find_name_end(arg, NULL, NULL, FNE_INCL_BR));
+        arg = skipwhite(argend);
         if (arg[0] == '=' && arg[1] == '<' && arg[2] == '<') {
           p = skipwhite(arg + 3);
           while (true) {
