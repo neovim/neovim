@@ -611,4 +611,32 @@ func Test_combining_chars_in_collection()
   bw!
 endfunc
 
+func Test_search_multibyte_match_ascii()
+  new
+  " Match single 'ſ' and 's'
+  call setline(1,  'das abc heraus abc ſich abc ſind')
+  for i in range(0, 2)
+    exe "set re="..i
+    let ic_match = matchbufline('%', '\c\%u17f', 1, '$')->mapnew({idx, val -> val.text})
+    let noic_match = matchbufline('%', '\C\%u17f', 1, '$')->mapnew({idx, val -> val.text})
+    call assert_equal(['s', 's', 'ſ','ſ'], ic_match, "Ignorecase Regex-engine: " .. &re)
+    call assert_equal(['ſ','ſ'], noic_match, "No-Ignorecase Regex-engine: " .. &re)
+  endfor
+  " Match several 'ſſ' and 'ss'
+  call setline(1,  'das abc herauss abc ſſich abc ſind')
+  for i in range(0, 2)
+    exe "set re="..i
+    let ic_match = matchbufline('%', '\c\%u17f\%u17f', 1, '$')->mapnew({idx, val -> val.text})
+    let noic_match = matchbufline('%', '\C\%u17f\%u17f', 1, '$')->mapnew({idx, val -> val.text})
+    let ic_match2 = matchbufline('%', '\c\%u17f\+', 1, '$')->mapnew({idx, val -> val.text})
+    let noic_match2 = matchbufline('%', '\C\%u17f\+', 1, '$')->mapnew({idx, val -> val.text})
+
+    call assert_equal(['ss', 'ſſ'], ic_match, "Ignorecase Regex-engine: " .. &re)
+    call assert_equal(['ſſ'], noic_match, "No-Ignorecase Regex-engine: " .. &re)
+    call assert_equal(['s', 'ss', 'ſſ', 'ſ'], ic_match2, "Ignorecase Regex-engine: " .. &re)
+    call assert_equal(['ſſ','ſ'], noic_match2, "No-Ignorecase Regex-engine: " .. &re)
+  endfor
+  bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -1627,7 +1627,9 @@ static void mb_decompose(int c, int *c1, int *c2, int *c3)
 
 /// Compare two strings, ignore case if rex.reg_ic set.
 /// Return 0 if strings match, non-zero otherwise.
-/// Correct the length "*n" when composing characters are ignored.
+/// Correct the length "*n" when composing characters are ignored
+/// or for utf8 when both utf codepoints are considered equal because of
+/// case-folding but have different length (e.g. 's' and 'ſ')
 static int cstrncmp(char *s1, char *s2, int *n)
 {
   int result;
@@ -1635,8 +1637,11 @@ static int cstrncmp(char *s1, char *s2, int *n)
   if (!rex.reg_ic) {
     result = strncmp(s1, s2, (size_t)(*n));
   } else {
-    assert(*n >= 0);
-    result = mb_strnicmp(s1, s2, (size_t)(*n));
+    int l2 = utfc_ptr2len(s2);
+    result = utf_strnicmp(s1, s2, (size_t)(*n), (size_t)l2);
+    if (result == 0 && l2 < *n) {
+      *n = l2;
+    }
   }
 
   // if it failed and it's utf8 and we want to combineignore:
@@ -6490,11 +6495,9 @@ static bool regmatch(uint8_t *scan, const proftime_T *tm, int *timed_out)
               }
             }
           } else {
-            for (i = 0; i < len; i++) {
-              if (opnd[i] != rex.input[i]) {
-                status = RA_NOMATCH;
-                break;
-              }
+            if (cstrncmp((char *)opnd, (char *)rex.input, &len) != 0) {
+              status = RA_NOMATCH;
+              break;
             }
           }
           rex.input += len;
@@ -13845,23 +13848,26 @@ static int skip_to_start(int c, colnr_T *colp)
 // Returns zero for no match, 1 for a match.
 static int find_match_text(colnr_T *startcol, int regstart, uint8_t *match_text)
 {
-#define PTR2LEN(x) utf_ptr2len(x)
-
   colnr_T col = *startcol;
-  int regstart_len = PTR2LEN((char *)rex.line + col);
+  const int regstart_len = utf_char2len(regstart);
 
   while (true) {
     bool match = true;
     uint8_t *s1 = match_text;
-    uint8_t *s2 = rex.line + col + regstart_len;  // skip regstart
+    // skip regstart
+    uint8_t *s2 = rex.line + col + regstart_len;
+    if (regstart_len > 1
+        && utf_char2len(utf_ptr2char((char *)rex.line + col)) != regstart_len) {
+      // because of case-folding of the previously matched text, we may need
+      // to skip fewer bytes than utf_char2len(regstart)
+      s2 = rex.line + col + utf_char2len(utf_fold(regstart));
+    }
     while (*s1) {
-      int c1_len = PTR2LEN((char *)s1);
+      int c1_len = utf_ptr2len((char *)s1);
       int c1 = utf_ptr2char((char *)s1);
-      int c2_len = PTR2LEN((char *)s2);
+      int c2_len = utf_ptr2len((char *)s2);
       int c2 = utf_ptr2char((char *)s2);
-
-      if ((c1 != c2 && (!rex.reg_ic || utf_fold(c1) != utf_fold(c2)))
-          || c1_len != c2_len) {
+      if (c1 != c2 && (!rex.reg_ic || utf_fold(c1) != utf_fold(c2))) {
         match = false;
         break;
       }
@@ -13894,8 +13900,6 @@ static int find_match_text(colnr_T *startcol, int regstart, uint8_t *match_text)
 
   *startcol = col;
   return 0L;
-
-#undef PTR2LEN
 }
 
 static int nfa_did_time_out(void)
@@ -15527,7 +15531,7 @@ static int nfa_regexec_both(uint8_t *line, colnr_T startcol, proftime_T *tm, int
 
     // If match_text is set it contains the full text that must match.
     // Nothing else to try. Doesn't handle combining chars well.
-    if (prog->match_text != NULL && !rex.reg_icombine) {
+    if (prog->match_text != NULL && *prog->match_text != NUL && !rex.reg_icombine) {
       retval = find_match_text(&col, prog->regstart, prog->match_text);
       if (REG_MULTI) {
         rex.reg_mmatch->rmm_matchcol = col;
