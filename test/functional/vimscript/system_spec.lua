@@ -1,6 +1,6 @@
 -- Tests for system() and :! shell.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 
 local assert_alive = t.assert_alive
 local testprg = t.testprg

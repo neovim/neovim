@@ -1,6 +1,6 @@
 -- Tests for backtrace debug commands.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local command = t.command
 local feed, clear = t.feed, t.clear
 local feed_command, expect = t.feed_command, t.expect

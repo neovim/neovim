@@ -1,6 +1,6 @@
 -- Tests for 'listchars' display with 'list' and :list.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 local feed, insert, exec = t.feed, t.insert, t.exec
 local clear, feed_command, expect = t.clear, t.feed_command, t.expect

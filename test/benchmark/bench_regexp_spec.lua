@@ -1,6 +1,6 @@
 -- Test for benchmarking the RE engine.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local insert, source = t.insert, t.source
 local clear, command = t.clear, t.command
 

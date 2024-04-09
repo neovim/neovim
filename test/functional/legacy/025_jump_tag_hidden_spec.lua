@@ -1,7 +1,7 @@
 -- Test for jumping to a tag with 'hidden' set, with symbolic link in path of tag.
 -- This only works for Unix, because of the symbolic link.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, feed, insert = t.clear, t.feed, t.insert
 local feed_command, expect = t.feed_command, t.expect
 

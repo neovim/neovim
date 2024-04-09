@@ -9,7 +9,7 @@
 --    test/functional/vimscript/<funcname>_spec.lua
 --    test/functional/vimscript/functions_spec.lua
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 
 local mkdir = t.mkdir

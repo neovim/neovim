@@ -1,4 +1,4 @@
-local t = require('test.unit.testutil')(after_each)
+local t = require('test.unit.testutil')
 local itp = t.gen_itp(it)
 
 local child_call_once = t.child_call_once

@@ -1,4 +1,4 @@
-local t = require('test.unit.testutil')(after_each)
+local t = require('test.unit.testutil')
 local itp = t.gen_itp(it)
 --{:cimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.testutil'
 

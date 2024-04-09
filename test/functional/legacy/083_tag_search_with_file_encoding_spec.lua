@@ -1,6 +1,6 @@
 -- Tests for tag search with !_TAG_FILE_ENCODING.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local insert, source, clear, expect, write_file =
   t.insert, t.source, t.clear, t.expect, t.write_file
 

@@ -1,6 +1,6 @@
 -- Cmdline-mode tests.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 local clear, insert, fn, eq, feed = t.clear, t.insert, t.fn, t.eq, t.feed
 local eval = t.eval

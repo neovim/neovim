@@ -1,6 +1,6 @@
 -- Test for various eval features.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local assert_alive = t.assert_alive
 local feed, insert, source = t.feed, t.insert, t.source
 local clear, command, expect = t.clear, t.command, t.expect

@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, feed_command, feed, ok, eval = t.clear, t.feed_command, t.feed, t.ok, t.eval
 
 describe(':grep', function()

@@ -1,5 +1,5 @@
 -- Test suite for testing interactions with API bindings
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 
 local exc_exec = t.exc_exec
 local remove_trace = t.remove_trace

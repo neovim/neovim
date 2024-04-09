@@ -1,6 +1,6 @@
 -- Test server -> client RPC scenarios. Note: unlike `rpcnotify`, to evaluate
 -- `rpcrequest` calls we need the client event loop to be running.
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 
 local clear, eval = t.clear, t.eval
 local eq, neq, run, stop = t.eq, t.neq, t.run, t.stop

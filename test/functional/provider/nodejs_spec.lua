@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local eq, clear = t.eq, t.clear
 local missing_provider = t.missing_provider
 local command = t.command

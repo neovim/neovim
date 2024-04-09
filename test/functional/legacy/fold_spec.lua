@@ -1,7 +1,7 @@
 -- Tests for folding.
 local Screen = require('test.functional.ui.screen')
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local feed, insert, feed_command, expect_any = t.feed, t.insert, t.feed_command, t.expect_any
 local command = t.command
 local exec = t.exec

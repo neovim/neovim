@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 
 local poke_eventloop = t.poke_eventloop
 local clear = t.clear

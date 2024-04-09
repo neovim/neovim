@@ -2,7 +2,7 @@
 -- First test for undo working properly when executing commands from a register.
 -- Also test this in an empty buffer.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, feed, insert = t.clear, t.feed, t.insert
 local feed_command, expect = t.feed_command, t.expect
 

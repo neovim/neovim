@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local tt = require('test.functional.terminal.testutil')
 local assert_alive = t.assert_alive
 local clear = t.clear

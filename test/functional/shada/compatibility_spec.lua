@@ -1,5 +1,5 @@
 -- ShaDa compatibility support
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local nvim_command, fn, eq = t.command, t.fn, t.eq
 local exc_exec = t.exc_exec
 

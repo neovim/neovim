@@ -2,7 +2,7 @@
 -- Test for submatch() on substitute().
 -- Test for *:s%* on :substitute.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 local feed, insert = t.feed, t.insert
 local exec = t.exec

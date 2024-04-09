@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local setpos = t.fn.setpos
 local getpos = t.fn.getpos
 local insert = t.insert

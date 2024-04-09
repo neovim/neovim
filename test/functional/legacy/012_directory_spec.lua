@@ -3,7 +3,7 @@
 -- - "./dir", in directory relative to file
 -- - "dir", in directory relative to current dir
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 
 local eq = t.eq
 local neq = t.neq

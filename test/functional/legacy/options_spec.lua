@@ -1,5 +1,5 @@
 -- See also: test/old/testdir/test_options.vim
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local command, clear = t.command, t.clear
 local source, expect = t.source, t.expect
 local exc_exec = t.exc_exec

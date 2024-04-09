@@ -1,6 +1,6 @@
 -- Tests for Unicode manipulations
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, feed, insert = t.clear, t.feed, t.insert
 local command, expect = t.command, t.expect
 local eq, eval = t.eq, t.eval

@@ -1,6 +1,6 @@
 -- Tests for :sort command.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 
 local insert, command, clear, expect, eq, poke_eventloop =
   t.insert, t.command, t.clear, t.expect, t.eq, t.poke_eventloop

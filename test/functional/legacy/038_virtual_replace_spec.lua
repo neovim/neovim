@@ -1,6 +1,6 @@
 -- Test Virtual replace mode.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local feed = t.feed
 local clear, feed_command, expect = t.clear, t.feed_command, t.expect
 

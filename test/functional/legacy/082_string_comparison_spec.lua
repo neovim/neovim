@@ -1,7 +1,7 @@
 -- Tests for case-insensitive UTF-8 comparisons (utf_strnicmp() in mbyte.c)
 -- Also test "g~ap".
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local feed, source = t.feed, t.source
 local clear, feed_command, expect = t.clear, t.feed_command, t.expect
 

@@ -1,5 +1,5 @@
 -- shada buffer list saving/reading support
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local nvim_command, fn, eq, api = t.command, t.fn, t.eq, t.api
 local expect_exit = t.expect_exit
 

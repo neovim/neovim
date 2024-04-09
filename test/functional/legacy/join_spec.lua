@@ -1,6 +1,6 @@
 -- Test for joining lines
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, eq = t.clear, t.eq
 local eval, command = t.eval, t.command
 

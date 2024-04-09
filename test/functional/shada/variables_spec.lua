@@ -1,5 +1,5 @@
 -- ShaDa variables saving/reading support
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local api, fn, nvim_command, eq, eval = t.api, t.fn, t.command, t.eq, t.eval
 local expect_exit = t.expect_exit
 

@@ -1,7 +1,7 @@
 -- To run this test:
 --    TEST_FILE=test/functional/example_spec.lua make functionaltest
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 local clear = t.clear
 local command = t.command

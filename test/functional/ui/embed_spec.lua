@@ -1,6 +1,6 @@
 local uv = vim.uv
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 
 local api = t.api

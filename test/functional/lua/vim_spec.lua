@@ -1,5 +1,5 @@
 -- Test suite for testing interactions with API bindings
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 
 local nvim_prog = t.nvim_prog

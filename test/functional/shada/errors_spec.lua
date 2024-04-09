@@ -1,5 +1,5 @@
 -- ShaDa errors handling support
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local nvim_command, eq, exc_exec = t.command, t.eq, t.exc_exec
 
 local t_shada = require('test.functional.shada.testutil')

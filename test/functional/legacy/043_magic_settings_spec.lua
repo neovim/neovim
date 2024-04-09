@@ -1,6 +1,6 @@
 -- Tests for regexp with various magic settings.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local clear, feed, insert = t.clear, t.feed, t.insert
 local feed_command, expect = t.feed_command, t.expect
 

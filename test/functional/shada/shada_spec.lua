@@ -1,5 +1,5 @@
 -- Other ShaDa tests
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local api, nvim_command, fn, eq = t.api, t.command, t.fn, t.eq
 local write_file, spawn, set_session, nvim_prog, exc_exec =
   t.write_file, t.spawn, t.set_session, t.nvim_prog, t.exc_exec

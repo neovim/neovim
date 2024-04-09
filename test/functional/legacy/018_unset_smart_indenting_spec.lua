@@ -1,6 +1,6 @@
 -- Tests for not doing smart indenting when it isn't set.
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 
 local feed = t.feed
 local clear = t.clear

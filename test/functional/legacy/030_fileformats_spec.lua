@@ -1,6 +1,6 @@
 -- Test for a lot of variations of the 'fileformats' option
 
-local t = require('test.functional.testutil')(after_each)
+local t = require('test.functional.testutil')()
 local feed, clear, command = t.feed, t.clear, t.command
 local eq, write_file = t.eq, t.write_file
 local poke_eventloop = t.poke_eventloop

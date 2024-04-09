@@ -1,5 +1,5 @@
 local bit = require('bit')
-local t = require('test.unit.testutil')(after_each)
+local t = require('test.unit.testutil')
 local t_eval = require('test.unit.eval.testutil')
 
 local itp = t.gen_itp(it)
