@@ -108,20 +108,15 @@ describe('shell command :!', function()
   it('handles control codes', function()
     skip(is_os('win'), 'missing printf')
     local screen = Screen.new(50, 4)
-    screen:set_default_attr_ids {
-      [1] = { bold = true, reverse = true },
-      [2] = { bold = true, foreground = Screen.colors.SeaGreen },
-      [3] = { foreground = Screen.colors.Blue },
-    }
     screen:attach()
     -- Print TAB chars. #2958
     feed([[:!printf '1\t2\t3'<CR>]])
     screen:expect {
       grid = [[
-      {1:                                                  }|
+      {3:                                                  }|
       :!printf '1\t2\t3'                                |
       1       2       3                                 |
-      {2:Press ENTER or type command to continue}^           |
+      {6:Press ENTER or type command to continue}^           |
     ]],
     }
     feed([[<CR>]])
@@ -131,10 +126,10 @@ describe('shell command :!', function()
     feed([[:!printf '\007\007\007\007text'<CR>]])
     screen:expect {
       grid = [[
-      {1:                                                  }|
+      {3:                                                  }|
       :!printf '\007\007\007\007text'                   |
       text                                              |
-      {2:Press ENTER or type command to continue}^           |
+      {6:Press ENTER or type command to continue}^           |
     ]],
       condition = function()
         eq(true, screen.bell)
@@ -145,10 +140,10 @@ describe('shell command :!', function()
     -- Print BS control code.
     feed([[:echo system('printf ''\010\n''')<CR>]])
     screen:expect([[
-      {1:                                                  }|
-      {3:^H}                                                |
+      {3:                                                  }|
+      {18:^H}                                                |
                                                         |
-      {2:Press ENTER or type command to continue}^           |
+      {6:Press ENTER or type command to continue}^           |
     ]])
     feed([[<CR>]])
 
@@ -157,7 +152,7 @@ describe('shell command :!', function()
     screen:expect([[
       :!printf '\n'                                     |
                                                         |*2
-      {2:Press ENTER or type command to continue}^           |
+      {6:Press ENTER or type command to continue}^           |
     ]])
     feed([[<CR>]])
   end)
@@ -171,12 +166,6 @@ describe('shell command :!', function()
       write_file('bang_filter_spec/f2', 'f2')
       write_file('bang_filter_spec/f3', 'f3')
       screen = Screen.new(53, 10)
-      screen:set_default_attr_ids({
-        [1] = { bold = true, foreground = Screen.colors.Blue1 },
-        [2] = { foreground = Screen.colors.Blue1 },
-        [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
-        [4] = { bold = true, reverse = true },
-      })
       screen:attach()
     end)
 
@@ -196,13 +185,13 @@ describe('shell command :!', function()
       screen:expect([[
                                                              |
         {1:~                                                    }|*2
-        {4:                                                     }|
+        {3:                                                     }|
         ]] .. result .. [[                            |
         f1                                                   |
         f2                                                   |
         f3                                                   |
                                                              |
-        {3:Press ENTER or type command to continue}^              |
+        {6:Press ENTER or type command to continue}^              |
       ]])
     end)
 
@@ -213,14 +202,14 @@ describe('shell command :!', function()
         grid = [[
                                                              |
         {1:~                                                    }|
-        {4:                                                     }|
+        {3:                                                     }|
         :!cat test/functional/fixtures/shell_data.txt        |
-        {2:^@^A^B^C^D^E^F^H}                                     |
-        {2:^N^O^P^Q^R^S^T^U^V^W^X^Y^Z^[^\^]^^^_}                 |
-        ö 한글 {2:<a5><c3>}                                      |
-        t       {2:<ff>}                                         |
+        {18:^@^A^B^C^D^E^F^H}                                     |
+        {18:^N^O^P^Q^R^S^T^U^V^W^X^Y^Z^[^\^]^^^_}                 |
+        ö 한글 {18:<a5><c3>}                                      |
+        t       {18:<ff>}                                         |
                                                              |
-        {3:Press ENTER or type command to continue}^              |
+        {6:Press ENTER or type command to continue}^              |
       ]],
         condition = function()
           eq(true, screen.bell)
@@ -235,7 +224,7 @@ describe('shell command :!', function()
       -- Note: only the first example of split composed char works
       screen:expect([[
                                                              |
-        {4:                                                     }|
+        {3:                                                     }|
         :]] .. cmd .. [[                                 |
         å                                                    |
         ref: å̲                                               |
@@ -243,7 +232,7 @@ describe('shell command :!', function()
         2: å ̲                                                |
         3: å ̲                                                |
                                                              |
-        {3:Press ENTER or type command to continue}^              |
+        {6:Press ENTER or type command to continue}^              |
       ]])
     end)
   end)
