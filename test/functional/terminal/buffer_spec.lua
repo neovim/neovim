@@ -483,7 +483,7 @@ describe('terminal input', function()
       '--cmd',
       'set notermguicolors',
       '-c',
-      'while 1 | redraw | call setline(1, keytrans(getcharstr())) | endwhile',
+      'while 1 | redraw | echo keytrans(getcharstr()) | endwhile',
     })
     screen:expect([[
       {1: }                                                 |
@@ -542,9 +542,13 @@ describe('terminal input', function()
       '<ScrollWheelRight>',
     }) do
       feed(key)
-      retry(nil, nil, function()
-        eq(key, vim.trim(api.nvim_get_current_line()))
-      end)
+      screen:expect(([[
+                                                          |
+        {4:~                                                 }|*3
+        {5:[No Name]                       0,0-1          All}|
+        %s{1: }{MATCH: *}|
+        {3:-- TERMINAL --}                                    |
+      ]]):format(key))
     end
   end)
 end)
