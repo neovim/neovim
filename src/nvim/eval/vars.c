@@ -57,6 +57,8 @@ typedef int (*ex_unletlock_callback)(lval_T *, char *, exarg_T *, int);
 #define DICT_MAXNEST 100        // maximum nesting of lists and dicts
 
 static const char *e_letunexp = N_("E18: Unexpected characters in :let");
+static const char e_double_semicolon_in_list_of_variables[]
+  = N_("E452: Double ; in list of variables");
 static const char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
 static const char e_setting_v_str_to_value_with_wrong_type[]
   = N_("E963: Setting v:%s to value with wrong type");
@@ -541,7 +543,9 @@ const char *skip_var_list(const char *arg, int *var_count, int *semicolon, bool 
         break;
       } else if (*p == ';') {
         if (*semicolon == 1) {
-          emsg(_("E452: Double ; in list of variables"));
+          if (!silent) {
+            emsg(_(e_double_semicolon_in_list_of_variables));
+          }
           return NULL;
         }
         *semicolon = 1;
