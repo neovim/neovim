@@ -341,7 +341,7 @@ void ex_let(exarg_T *eap)
   const char *argend;
   int first = true;
 
-  argend = skip_var_list(arg, &var_count, &semicolon);
+  argend = skip_var_list(arg, &var_count, &semicolon, false);
   if (argend == NULL) {
     return;
   }
@@ -515,10 +515,11 @@ int ex_let_vars(char *arg_start, typval_T *tv, int copy, int semicolon, int var_
 /// Skip over assignable variable "var" or list of variables "[var, var]".
 /// Used for ":let varvar = expr" and ":for varvar in expr".
 /// For "[var, var]" increment "*var_count" for each variable.
-/// for "[var, var; var]" set "semicolon".
+/// for "[var, var; var]" set "semicolon" to 1.
+/// If "silent" is true do not give an "invalid argument" error message.
 ///
 /// @return  NULL for an error.
-const char *skip_var_list(const char *arg, int *var_count, int *semicolon)
+const char *skip_var_list(const char *arg, int *var_count, int *semicolon, bool silent)
 {
   if (*arg == '[') {
     const char *s;
@@ -528,7 +529,9 @@ const char *skip_var_list(const char *arg, int *var_count, int *semicolon)
       p = skipwhite(p + 1);             // skip whites after '[', ';' or ','
       s = skip_var_one(p);
       if (s == p) {
-        semsg(_(e_invarg2), p);
+        if (!silent) {
+          semsg(_(e_invarg2), p);
+        }
         return NULL;
       }
       (*var_count)++;
@@ -543,7 +546,9 @@ const char *skip_var_list(const char *arg, int *var_count, int *semicolon)
         }
         *semicolon = 1;
       } else if (*p != ',') {
-        semsg(_(e_invarg2), p);
+        if (!silent) {
+          semsg(_(e_invarg2), p);
+        }
         return NULL;
       }
     }

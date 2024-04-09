@@ -1892,7 +1892,7 @@ void *eval_for_line(const char *arg, bool *errp, exarg_T *eap, evalarg_T *const 
 
   *errp = true;  // Default: there is an error.
 
-  const char *expr = skip_var_list(arg, &fi->fi_varcount, &fi->fi_semicolon);
+  const char *expr = skip_var_list(arg, &fi->fi_varcount, &fi->fi_semicolon, false);
   if (expr == NULL) {
     return fi;
   }
