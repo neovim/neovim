@@ -1777,10 +1777,12 @@ func Test_diff_eob_halfpage()
   5new
   call setline(1, ['']->repeat(10) + ['a'])
   diffthis
+  call assert_true(5, winheight(5))
   5new
   call setline(1, ['']->repeat(3) + ['a', 'b'])
   diffthis
   wincmd j
+  resize 7
   exe "norm! G\<C-D>"
   call assert_equal(6, line('w0'))
 
