@@ -1237,7 +1237,7 @@ static void tui_set_mode(TUIData *tui, ModeShape mode)
       // We interpret "inverse" as "default" (no termcode for "inverse"...).
       // Hopefully the user's default cursor color is inverse.
       unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
-    } else {
+    } else if (!tui->want_invisible && aep.rgb_bg_color >= 0) {
       char hexbuf[8];
       if (tui->set_cursor_color_as_str) {
         snprintf(hexbuf, 7 + 1, "#%06x", aep.rgb_bg_color);
