@@ -2848,10 +2848,11 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
 Lua module: vim.fs                                                    *vim.fs*
 
 vim.fs.abspath({path}, {opts})                              *vim.fs.abspath()*
-    Convert path to an absolute path. Does not check if the path exists,
-    resolve symlinks or hardlinks (including `.` and `..`), or expand
-    environment variables. If the path is already absolute, it is returned
-    unchanged.
+    Convert path to an absolute path. A tilde (~) character at the beginning
+    of the path is expanded to the user's home directory. Does not check if
+    the path exists, normalize the path, resolve symlinks or hardlinks
+    (including `.` and `..`), or expand environment variables. If the path is
+    already absolute, it is returned unchanged.
 
     Parameters: ~
       • {path}  (`string`) Path
@@ -2971,6 +2972,16 @@ vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
 
     Return: ~
         (`string`)
+
+vim.fs.mkdir({path}, {opts})                                  *vim.fs.mkdir()*
+    Create a directory at the given path. Does nothing if the path already
+    exists.
+
+    Parameters: ~
+      • {path}  (`string`) Path of the directory to create.
+      • {opts}  (`table?`) Optional keyword arguments:
+                • {parents}? (`boolean`, default: `false`) Recursively create
+                  parent directories if they don't exist.
 
 vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
     Normalize a path to a standard format. A tilde (~) character at the

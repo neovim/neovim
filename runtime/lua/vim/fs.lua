@@ -595,4 +595,54 @@ function M.abspath(path, opts)
   return M.joinpath(cwd, path)
 end
 
+--- @class vim.fs.mkdir.Opts
+--- @inlinedoc
+---
+--- Recursively create parent directories if they don't exist.
+--- (default: `false`)
+--- @field parents? boolean
+
+--- Create a directory at the given path. Does nothing if the path already exists.
+---
+--- @param path string Path of the directory to create.
+--- @param opts vim.fs.mkdir.Opts? Optional keyword arguments:
+function M.mkdir(path, opts)
+  opts = opts or {}
+
+  vim.validate({
+    path = { path, { 'string' } },
+    parents = { opts.parents, { 'boolean' }, true },
+  })
+
+  -- Get normalized absolute path to make it easier to process
+  path = M.normalize(M.abspath(path))
+
+  local path_exists = vim.uv.fs_stat(path) ~= nil
+
+  if path_exists then
+    return
+  end
+
+  local parent = M.dirname(path)
+  local parent_exists = vim.uv.fs_stat(parent) ~= nil
+
+  if not parent_exists and not opts.parents then
+    error(string.format("Failed to create directory '%s': Parent directory does not exist", path))
+  elseif not parent_exists then
+    -- Get a list of parent directories, then iterate in reverse to create each directory.
+    local ancestors = vim.iter(M.parents(path)):totable() --- @type string[]
+
+    for i = #ancestors, 1, -1 do
+      local ancestor = ancestors[i]
+
+      if vim.uv.fs_stat(ancestor) == nil then
+        vim.uv.fs_mkdir(ancestor, 493) -- decimal equivalent of 0755
+      end
+    end
+  end
+
+  assert(vim.uv.fs_stat(parent) ~= nil)
+  vim.uv.fs_mkdir(path, 493) -- decimal equivalent of 0755
+end
+
 return M
