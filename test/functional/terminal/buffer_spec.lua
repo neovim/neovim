@@ -482,18 +482,16 @@ describe('terminal input', function()
       'colorscheme vim',
       '--cmd',
       'set notermguicolors',
-      '--cmd',
-      'startinsert',
+      '-c',
+      'while 1 | redraw | call setline(1, keytrans(getcharstr())) | endwhile',
     })
-    screen:expect {
-      grid = [[
+    screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|*3
-      {5:[No Name]                       0,1            All}|
-      {3:-- INSERT --}                                      |
+      {5:[No Name]                       0,0-1          All}|
+                                                        |
       {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]])
     for _, key in ipairs({
       '<M-Tab>',
       '<M-CR>',
@@ -543,9 +541,9 @@ describe('terminal input', function()
       '<ScrollWheelLeft>',
       '<ScrollWheelRight>',
     }) do
-      feed('<CR><C-V>' .. key)
+      feed(key)
       retry(nil, nil, function()
-        eq(key, api.nvim_get_current_line())
+        eq(key, vim.trim(api.nvim_get_current_line()))
       end)
     end
   end)
