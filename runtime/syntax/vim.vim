@@ -266,8 +266,8 @@ syn match	vimEnddef	"\<enddef\>"
 
 if exists("g:vimsyn_folding") && g:vimsyn_folding =~# 'f'
  syn region	vimFuncFold	start="\<fu\%[nction]\>!\=\s*\%(<[sS][iI][dD]>\|[sg]:\)\=\%(\i\|[#.]\|{.\{-1,}}\)\+\s*("	end="\<endf\%[unction]\>" contains=vimFunction fold keepend transparent
- syn region	vimFuncFold	start="\<def\>!\=\s*\%(<[sS][iI][dD]>\|[sg]:\)\=\%(\i\|[#.]\|{.\{-1,}}\)\+("	end="\<enddef\>"	        contains=vimDef      fold keepend transparent
- syn region	vimFuncFold	start="\<def\s\+new\%(\i\|{.\{-1,}}\)\+("			end="\<enddef\>"	        contains=vimDef      fold keepend transparent
+ syn region	vimFuncFold	start="\<def\>!\=\s*\%(<[sS][iI][dD]>\|[sg]:\)\=\%(\i\|[#.]\)\+("		end="\<enddef\>"	        contains=vimDef      fold keepend transparent
+ syn region	vimFuncFold	start="\<def\s\+new\i\+("				end="\<enddef\>"	        contains=vimDef      fold keepend transparent
 endif
 
 syn match	vimFuncVar   contained	"a:\%(\K\k*\|\d\+\)\>"
