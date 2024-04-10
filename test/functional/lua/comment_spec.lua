@@ -495,22 +495,21 @@ describe('commenting', function()
     it("recomputes local 'commentstring' based on cursor position", function()
       setup_treesitter()
       local lines = {
+        '  print(1)',
         'lua << EOF',
         '  print(1)',
         'EOF',
       }
       set_lines(lines)
 
-      -- Vimscript's tree-sitter grammar is (currently) written in a way that Lua's
-      -- injection really starts at the first non-blank character
-      set_cursor(2, 1)
+      set_cursor(1, 1)
       feed('gc_')
-      eq(get_lines()[2], '  "print(1)')
+      eq(get_lines()[1], '  "print(1)')
 
       set_lines(lines)
-      set_cursor(2, 2)
+      set_cursor(3, 2)
       feed('.')
-      eq(get_lines()[2], '  -- print(1)')
+      eq(get_lines()[3], '  -- print(1)')
     end)
 
     it('preserves marks', function()

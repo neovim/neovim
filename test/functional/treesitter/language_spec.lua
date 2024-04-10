@@ -120,6 +120,20 @@ describe('treesitter language API', function()
     eq('<node translation_unit>', exec_lua('return tostring(tree:root())'))
   end)
 
+  it('retrieve the tree given a range when range is out of bounds relative to buffer', function()
+    insert([[
+      int main() {
+        int x = 3;
+      }]])
+
+    exec_lua([[
+      langtree = vim.treesitter.get_parser(0, "c")
+      tree = langtree:tree_for_range({10, 10, 10, 10})
+    ]])
+
+    eq('<node translation_unit>', exec_lua('return tostring(tree:root())'))
+  end)
+
   it('retrieve the node given a range', function()
     insert([[
       int main() {
