@@ -305,7 +305,7 @@ Hints for translators:
   using the "tag@en" notation.
 - Make a package with all the files and the tags file available for download.
   Users can drop it in one of the "doc" directories and start use it.
-  Report this to Bram, so that he can add a link on www.vim.org.
+  Report to the development team, so they can add a link on www.vim.org.
 - Use the |:helptags| command to generate the tags files.  It will find all
   languages in the specified directory.
 
