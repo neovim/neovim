@@ -1,7 +1,7 @@
 " Vim filetype plugin
-" Language:	Vim
-" Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2023 Aug 10
+" Language:		Vim
+" Maintainer:		Doug Kearns <dougkearns@gmail.com>
+" Last Change:		2024 Apr 08
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Only do this when not done yet for this buffer
@@ -50,7 +50,7 @@ setlocal isk+=#
 setlocal keywordprg=:help
 
 " Comments starts with # in Vim9 script.  We have to guess which one to use.
-if "\n" .. getline(1, 10)->join("\n") =~# '\n\s*vim9\%[script]\>'
+if "\n" .. getline(1, 32)->join("\n") =~# '\n\s*vim9\%[script]\>'
   setlocal commentstring=#%s
 else
   setlocal commentstring=\"%s
