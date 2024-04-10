@@ -79,7 +79,7 @@ function M.run()
   local lenses_by_client = lens_cache_by_buf[bufnr] or {}
   for client, lenses in pairs(lenses_by_client) do
     for _, lens in pairs(lenses) do
-      if lens.range.start.line == (line - 1) then
+      if lens.range.start.line == (line - 1) and lens.command and lens.command.command ~= '' then
         table.insert(options, { client = client, lens = lens })
       end
     end
