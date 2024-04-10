@@ -667,6 +667,33 @@ describe('decorations providers', function()
     ]])
   end)
 
+  it('on_line is invoked only for buffer lines', function()
+    insert(mulholland)
+    command('vnew')
+    insert(mulholland)
+    feed('dd')
+    command('windo diffthis')
+
+    exec_lua([[
+      out_of_bound = false
+    ]])
+    setup_provider([[
+      local function on_do(kind, _, bufnr, row)
+        if kind == 'line' then
+          if not api.nvim_buf_get_lines(bufnr, row, row + 1, false)[1] then
+            out_of_bound = true
+          end
+        end
+      end
+    ]])
+
+    feed('<C-e>')
+
+    exec_lua([[
+      assert(out_of_bound == false)
+    ]])
+  end)
+
   it('errors gracefully', function()
     insert(mulholland)
 
