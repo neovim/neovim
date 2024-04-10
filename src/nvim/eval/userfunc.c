@@ -2578,13 +2578,11 @@ void ex_function(exarg_T *eap)
       if (checkforcmd(&arg, "let", 2)) {
         int var_count = 0;
         int semicolon = 0;
-        const char *argend = skip_var_list(arg, &var_count, &semicolon, true);
-        if (argend == NULL) {
-          // Invalid list assignment: skip to closing bracket.
-          argend = find_name_end(arg, NULL, NULL, FNE_INCL_BR);
+        arg = (char *)skip_var_list(arg, &var_count, &semicolon, true);
+        if (arg != NULL) {
+          arg = skipwhite(arg);
         }
-        arg = skipwhite(argend);
-        if (arg[0] == '=' && arg[1] == '<' && arg[2] == '<') {
+        if (arg != NULL && strncmp(arg, "=<<", 3) == 0) {
           p = skipwhite(arg + 3);
           while (true) {
             if (strncmp(p, "trim", 4) == 0) {
