@@ -1100,7 +1100,14 @@ end
 ---@param range Range
 ---@return boolean
 local function tree_contains(tree, range)
-  return Range.contains({ tree:root():range() }, range)
+  local tree_ranges = tree:included_ranges(false)
+
+  return Range.contains({
+    tree_ranges[1][1],
+    tree_ranges[1][2],
+    tree_ranges[#tree_ranges][3],
+    tree_ranges[#tree_ranges][4],
+  }, range)
 end
 
 --- Determines whether {range} is contained in the |LanguageTree|.
