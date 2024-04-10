@@ -827,14 +827,14 @@ local function test_cmdline(linegrid)
     ]])
   end)
 
-  -- Needs new API
-  pending('does not move cursor to curwin #20309', function()
+  it('does not move cursor to curwin #20309', function()
     local win = api.nvim_get_current_win()
     command('norm icmdlinewin')
     command('new')
     command('norm icurwin')
     feed(':')
     api.nvim_win_set_cursor(win, { 1, 7 })
+    api.nvim__redraw({ win = win, cursor = true })
     screen:expect {
       grid = [[
       curwin                   |

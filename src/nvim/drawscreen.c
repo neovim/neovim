@@ -2713,7 +2713,7 @@ void redraw_buf_line_later(buf_T *buf, linenr_T line, bool force)
   }
 }
 
-void redraw_buf_range_later(buf_T *buf,  linenr_T firstline, linenr_T lastline)
+void redraw_buf_range_later(buf_T *buf, linenr_T firstline, linenr_T lastline)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == buf

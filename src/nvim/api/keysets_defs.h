@@ -373,3 +373,17 @@ typedef struct {
   Boolean ignore_blank_lines;
   Boolean indent_heuristic;
 } Dict(xdl_diff);
+
+typedef struct {
+  OptionalKeys is_set__redraw_;
+  Boolean flush;
+  Boolean cursor;
+  Boolean valid;
+  Boolean statuscolumn;
+  Boolean statusline;
+  Boolean tabline;
+  Boolean winbar;
+  Array range;
+  Window win;
+  Buffer buf;
+} Dict(redraw);
