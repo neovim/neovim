@@ -231,7 +231,7 @@ local function resolve_lenses(lenses, bufnr, client_id, callback)
       countdown()
     else
       assert(client)
-      client.request('codeLens/resolve', lens, function(_, result)
+      client.request(ms.codeLens_resolve, lens, function(_, result)
         if api.nvim_buf_is_loaded(bufnr) and result and result.command then
           lens.command = result.command
           -- Eager display to have some sort of incremental feedback
@@ -306,7 +306,11 @@ function M.refresh(opts)
         textDocument = util.make_text_document_params(buf),
       }
       active_refreshes[buf] = true
-      vim.lsp.buf_request(buf, ms.textDocument_codeLens, params, M.on_codelens)
+
+      local request_ids = vim.lsp.buf_request(buf, ms.textDocument_codeLens, params, M.on_codelens)
+      if vim.tbl_isempty(request_ids) then
+        active_refreshes[buf] = nil
+      end
     end
   end
 end
