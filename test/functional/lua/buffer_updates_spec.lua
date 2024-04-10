@@ -1266,6 +1266,25 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it('prompt buffer', function()
+      local check_events = setup_eventcheck(verify, {})
+      api.nvim_set_option_value('buftype', 'prompt', {})
+      feed('i')
+      check_events {
+        { 'test1', 'bytes', 1, 3, 0, 0, 0, 0, 0, 0, 0, 2, 2 },
+      }
+      feed('<CR>')
+      check_events {
+        { 'test1', 'bytes', 1, 4, 1, 0, 3, 0, 0, 0, 1, 0, 1 },
+        { 'test1', 'bytes', 1, 5, 1, 0, 3, 0, 0, 0, 0, 2, 2 },
+      }
+      feed('<CR>')
+      check_events {
+        { 'test1', 'bytes', 1, 6, 2, 0, 6, 0, 0, 0, 1, 0, 1 },
+        { 'test1', 'bytes', 1, 7, 2, 0, 6, 0, 0, 0, 0, 2, 2 },
+      }
+    end)
+
     local function test_lockmarks(mode)
       local description = (mode ~= '') and mode or '(baseline)'
       it('test_lockmarks ' .. description .. ' %delete _', function()
