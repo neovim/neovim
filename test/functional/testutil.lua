@@ -1022,11 +1022,29 @@ function module.mkdir_p(path)
   return os.execute((is_os('win') and 'mkdir ' .. path or 'mkdir -p ' .. path))
 end
 
+local testid = (function()
+  local id = 0
+  return function()
+    id = id + 1
+    return id
+  end
+end)()
+
 return function()
   local g = getfenv(2)
 
   --- @type function?
+  local before_each = g.before_each
+  --- @type function?
   local after_each = g.after_each
+
+  if before_each then
+    before_each(function()
+      local id = ('T%d'):format(testid())
+      _G._nvim_test_id = id
+      return nil, true
+    end)
+  end
 
   if after_each then
     after_each(function()
