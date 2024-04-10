@@ -17,6 +17,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/change.h"
 #include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
@@ -8905,6 +8906,7 @@ void invoke_prompt_callback(void)
   // Add a new line for the prompt before invoking the callback, so that
   // text can always be inserted above the last line.
   ml_append(lnum, "", 0, false);
+  appended_lines_mark(lnum, 1);
   curwin->w_cursor.lnum = lnum + 1;
   curwin->w_cursor.col = 0;
 
