@@ -233,7 +233,7 @@ describe('--embed UI', function()
     }
     eq({ [16777215] = true }, seen)
 
-    -- NB: by accident how functional/t.lua currently handles the default color scheme, the
+    -- NB: by accident how functional/testutil.lua currently handles the default color scheme, the
     -- above is sufficient to test the behavior. But in case that workaround is removed, we need
     -- a test with an explicit override like below, so do it to remain safe.
     startup('--cmd', 'hi NORMAL guibg=#FF00FF')

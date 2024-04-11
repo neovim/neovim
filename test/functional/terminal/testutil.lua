@@ -1,7 +1,7 @@
 -- To test tui/input.c, this module spawns `nvim` inside :terminal and sends
--- bytes via jobsend().  Note: the functional/t.lua test-session methods
+-- bytes via jobsend().  Note: the functional/testutil.lua test-session methods
 -- operate on the _host_ session, _not_ the child session.
-local t = require('test.functional.testutil')(nil)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 local testprg = t.testprg
 local exec_lua = t.exec_lua

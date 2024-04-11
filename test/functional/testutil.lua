@@ -1042,7 +1042,6 @@ return function()
     before_each(function()
       local id = ('T%d'):format(testid())
       _G._nvim_test_id = id
-      return nil, true
     end)
   end
 
