@@ -108,7 +108,7 @@ func s:GetFilenameChecks() abort
     \ 'asterisk': ['asterisk/file.conf', 'asterisk/file.conf-file', 'some-asterisk/file.conf', 'some-asterisk/file.conf-file'],
     \ 'astro': ['file.astro'],
     \ 'atlas': ['file.atl', 'file.as'],
-    \ 'authzed': ['file.zed'],
+    \ 'authzed': ['schema.zed'],
     \ 'autohotkey': ['file.ahk'],
     \ 'autoit': ['file.au3'],
     \ 'automake': ['GNUmakefile.am', 'makefile.am', 'Makefile.am'],
@@ -423,13 +423,32 @@ func s:GetFilenameChecks() abort
     \ 'mel': ['file.mel'],
     \ 'mermaid': ['file.mmd', 'file.mmdc', 'file.mermaid'],
     \ 'meson': ['meson.build', 'meson.options', 'meson_options.txt'],
-    \ 'messages': ['/log/auth', '/log/cron', '/log/daemon', '/log/debug', '/log/kern', '/log/lpr', '/log/mail', '/log/messages', '/log/news/news', '/log/syslog', '/log/user',
-    \     '/log/auth.log', '/log/cron.log', '/log/daemon.log', '/log/debug.log', '/log/kern.log', '/log/lpr.log', '/log/mail.log', '/log/messages.log', '/log/news/news.log', '/log/syslog.log', '/log/user.log',
-    \     '/log/auth.err', '/log/cron.err', '/log/daemon.err', '/log/debug.err', '/log/kern.err', '/log/lpr.err', '/log/mail.err', '/log/messages.err', '/log/news/news.err', '/log/syslog.err', '/log/user.err',
-    \      '/log/auth.info', '/log/cron.info', '/log/daemon.info', '/log/debug.info', '/log/kern.info', '/log/lpr.info', '/log/mail.info', '/log/messages.info', '/log/news/news.info', '/log/syslog.info', '/log/user.info',
-    \      '/log/auth.warn', '/log/cron.warn', '/log/daemon.warn', '/log/debug.warn', '/log/kern.warn', '/log/lpr.warn', '/log/mail.warn', '/log/messages.warn', '/log/news/news.warn', '/log/syslog.warn', '/log/user.warn',
-    \      '/log/auth.crit', '/log/cron.crit', '/log/daemon.crit', '/log/debug.crit', '/log/kern.crit', '/log/lpr.crit', '/log/mail.crit', '/log/messages.crit', '/log/news/news.crit', '/log/syslog.crit', '/log/user.crit',
-    \      '/log/auth.notice', '/log/cron.notice', '/log/daemon.notice', '/log/debug.notice', '/log/kern.notice', '/log/lpr.notice', '/log/mail.notice', '/log/messages.notice', '/log/news/news.notice', '/log/syslog.notice', '/log/user.notice'],
+    \ 'messages': ['/log/auth', '/log/cron', '/log/daemon', '/log/debug',
+    \              '/log/kern', '/log/lpr', '/log/mail', '/log/messages',
+    \              '/log/news/news', '/log/syslog', '/log/user', '/log/auth.log',
+    \              '/log/cron.log', '/log/daemon.log', '/log/debug.log',
+    \              '/log/kern.log', '/log/lpr.log', '/log/mail.log',
+    \              '/log/messages.log', '/log/news/news.log', '/log/syslog.log',
+    \              '/log/user.log', '/log/auth.err', '/log/cron.err',
+    \              '/log/daemon.err', '/log/debug.err', '/log/kern.err',
+    \              '/log/lpr.err', '/log/mail.err', '/log/messages.err',
+    \              '/log/news/news.err', '/log/syslog.err', '/log/user.err',
+    \              '/log/auth.info', '/log/cron.info', '/log/daemon.info',
+    \              '/log/debug.info', '/log/kern.info', '/log/lpr.info',
+    \              '/log/mail.info', '/log/messages.info', '/log/news/news.info',
+    \              '/log/syslog.info', '/log/user.info', '/log/auth.warn',
+    \              '/log/cron.warn', '/log/daemon.warn', '/log/debug.warn',
+    \              '/log/kern.warn', '/log/lpr.warn', '/log/mail.warn',
+    \              '/log/messages.warn', '/log/news/news.warn',
+    \              '/log/syslog.warn', '/log/user.warn', '/log/auth.crit',
+    \              '/log/cron.crit', '/log/daemon.crit', '/log/debug.crit',
+    \              '/log/kern.crit', '/log/lpr.crit', '/log/mail.crit',
+    \              '/log/messages.crit', '/log/news/news.crit',
+    \              '/log/syslog.crit', '/log/user.crit', '/log/auth.notice',
+    \              '/log/cron.notice', '/log/daemon.notice', '/log/debug.notice',
+    \              '/log/kern.notice', '/log/lpr.notice', '/log/mail.notice',
+    \              '/log/messages.notice', '/log/news/news.notice',
+    \              '/log/syslog.notice', '/log/user.notice'],
     \ 'mf': ['file.mf'],
     \ 'mgl': ['file.mgl'],
     \ 'mgp': ['file.mgp'],
@@ -452,7 +471,18 @@ func s:GetFilenameChecks() abort
     \ 'mupad': ['file.mu'],
     \ 'mush': ['file.mush'],
     \ 'mustache': ['file.mustache'],
-    \ 'muttrc': ['Muttngrc', 'Muttrc', '.muttngrc', '.muttngrc-file', '.muttrc', '.muttrc-file', '/.mutt/muttngrc', '/.mutt/muttngrc-file', '/.mutt/muttrc', '/.mutt/muttrc-file', '/.muttng/muttngrc', '/.muttng/muttngrc-file', '/.muttng/muttrc', '/.muttng/muttrc-file', '/etc/Muttrc.d/file', '/etc/Muttrc.d/file.rc', 'Muttngrc-file', 'Muttrc-file', 'any/.mutt/muttngrc', 'any/.mutt/muttngrc-file', 'any/.mutt/muttrc', 'any/.mutt/muttrc-file', 'any/.muttng/muttngrc', 'any/.muttng/muttngrc-file', 'any/.muttng/muttrc', 'any/.muttng/muttrc-file', 'any/etc/Muttrc.d/file', 'muttngrc', 'muttngrc-file', 'muttrc', 'muttrc-file'],
+    \ 'muttrc': ['Muttngrc', 'Muttrc', '.muttngrc', '.muttngrc-file', '.muttrc',
+    \            '.muttrc-file', '/.mutt/muttngrc', '/.mutt/muttngrc-file',
+    \            '/.mutt/muttrc', '/.mutt/muttrc-file', '/.muttng/muttngrc',
+    \            '/.muttng/muttngrc-file', '/.muttng/muttrc',
+    \            '/.muttng/muttrc-file', '/etc/Muttrc.d/file',
+    \            '/etc/Muttrc.d/file.rc', 'Muttngrc-file', 'Muttrc-file',
+    \            'any/.mutt/muttngrc', 'any/.mutt/muttngrc-file',
+    \            'any/.mutt/muttrc', 'any/.mutt/muttrc-file',
+    \            'any/.muttng/muttngrc', 'any/.muttng/muttngrc-file',
+    \            'any/.muttng/muttrc', 'any/.muttng/muttrc-file',
+    \            'any/etc/Muttrc.d/file', 'muttngrc', 'muttngrc-file', 'muttrc',
+    \            'muttrc-file'],
     \ 'mysql': ['file.mysql', '.mysql_history'],
     \ 'n1ql': ['file.n1ql', 'file.nql'],
     \ 'named': ['namedfile.conf', 'rndcfile.conf', 'named-file.conf', 'named.conf', 'rndc-file.conf', 'rndc-file.key', 'rndc.conf', 'rndc.key'],
@@ -653,7 +683,45 @@ func s:GetFilenameChecks() abort
     \ 'swiftgyb': ['file.swift.gyb'],
     \ 'swig': ['file.swg', 'file.swig'],
     \ 'sysctl': ['/etc/sysctl.conf', '/etc/sysctl.d/file.conf', 'any/etc/sysctl.conf', 'any/etc/sysctl.d/file.conf'],
-    \ 'systemd': ['any/systemd/file.automount', 'any/systemd/file.dnssd', 'any/systemd/file.link', 'any/systemd/file.mount', 'any/systemd/file.netdev', 'any/systemd/file.network', 'any/systemd/file.nspawn', 'any/systemd/file.path', 'any/systemd/file.service', 'any/systemd/file.slice', 'any/systemd/file.socket', 'any/systemd/file.swap', 'any/systemd/file.target', 'any/systemd/file.timer', '/etc/systemd/some.conf.d/file.conf', '/etc/systemd/system/some.d/file.conf', '/etc/systemd/system/some.d/.#file', '/etc/systemd/system/.#otherfile', '/home/user/.config/systemd/user/some.d/mine.conf', '/home/user/.config/systemd/user/some.d/.#file', '/home/user/.config/systemd/user/.#otherfile', '/.config/systemd/user/.#', '/.config/systemd/user/.#-file', '/.config/systemd/user/file.d/.#', '/.config/systemd/user/file.d/.#-file', '/.config/systemd/user/file.d/file.conf', '/etc/systemd/file.conf.d/file.conf', '/etc/systemd/system/.#', '/etc/systemd/system/.#-file', '/etc/systemd/system/file.d/.#', '/etc/systemd/system/file.d/.#-file', '/etc/systemd/system/file.d/file.conf', '/systemd/file.automount', '/systemd/file.dnssd', '/systemd/file.link', '/systemd/file.mount', '/systemd/file.netdev', '/systemd/file.network', '/systemd/file.nspawn', '/systemd/file.path', '/systemd/file.service', '/systemd/file.slice', '/systemd/file.socket', '/systemd/file.swap', '/systemd/file.target', '/systemd/file.timer', 'any/.config/systemd/user/.#', 'any/.config/systemd/user/.#-file', 'any/.config/systemd/user/file.d/.#', 'any/.config/systemd/user/file.d/.#-file', 'any/.config/systemd/user/file.d/file.conf', 'any/etc/systemd/file.conf.d/file.conf', 'any/etc/systemd/system/.#', 'any/etc/systemd/system/.#-file', 'any/etc/systemd/system/file.d/.#', 'any/etc/systemd/system/file.d/.#-file', 'any/etc/systemd/system/file.d/file.conf'],
+    \ 'systemd': ['any/systemd/file.automount', 'any/systemd/file.dnssd',
+    \             'any/systemd/file.link', 'any/systemd/file.mount',
+    \             'any/systemd/file.netdev', 'any/systemd/file.network',
+    \             'any/systemd/file.nspawn', 'any/systemd/file.path',
+    \             'any/systemd/file.service', 'any/systemd/file.slice',
+    \             'any/systemd/file.socket', 'any/systemd/file.swap',
+    \             'any/systemd/file.target', 'any/systemd/file.timer',
+    \             '/etc/systemd/some.conf.d/file.conf',
+    \             '/etc/systemd/system/some.d/file.conf',
+    \             '/etc/systemd/system/some.d/.#file',
+    \             '/etc/systemd/system/.#otherfile',
+    \             '/home/user/.config/systemd/user/some.d/mine.conf',
+    \             '/home/user/.config/systemd/user/some.d/.#file',
+    \             '/home/user/.config/systemd/user/.#otherfile',
+    \             '/.config/systemd/user/.#', '/.config/systemd/user/.#-file',
+    \             '/.config/systemd/user/file.d/.#',
+    \             '/.config/systemd/user/file.d/.#-file',
+    \             '/.config/systemd/user/file.d/file.conf',
+    \             '/etc/systemd/file.conf.d/file.conf', '/etc/systemd/system/.#',
+    \             '/etc/systemd/system/.#-file', '/etc/systemd/system/file.d/.#',
+    \             '/etc/systemd/system/file.d/.#-file',
+    \             '/etc/systemd/system/file.d/file.conf',
+    \             '/systemd/file.automount', '/systemd/file.dnssd',
+    \             '/systemd/file.link', '/systemd/file.mount',
+    \             '/systemd/file.netdev', '/systemd/file.network',
+    \             '/systemd/file.nspawn', '/systemd/file.path',
+    \             '/systemd/file.service', '/systemd/file.slice',
+    \             '/systemd/file.socket', '/systemd/file.swap',
+    \             '/systemd/file.target', '/systemd/file.timer',
+    \             'any/.config/systemd/user/.#',
+    \             'any/.config/systemd/user/.#-file',
+    \             'any/.config/systemd/user/file.d/.#',
+    \             'any/.config/systemd/user/file.d/.#-file',
+    \             'any/.config/systemd/user/file.d/file.conf',
+    \             'any/etc/systemd/file.conf.d/file.conf',
+    \             'any/etc/systemd/system/.#', 'any/etc/systemd/system/.#-file',
+    \             'any/etc/systemd/system/file.d/.#',
+    \             'any/etc/systemd/system/file.d/.#-file',
+    \             'any/etc/systemd/system/file.d/file.conf'],
     \ 'systemverilog': ['file.sv', 'file.svh'],
     \ 'trace32': ['file.cmm', 'file.t32'],
     \ 'tags': ['tags'],
@@ -766,15 +834,21 @@ func s:GetFilenameChecks() abort
     \ 'zimbu': ['file.zu'],
     \ 'zimbutempl': ['file.zut'],
     \ 'zserio': ['file.zs'],
-    \ 'zsh': ['.zprofile', '/etc/zprofile', '.zfbfmarks', 'file.zsh', 'file.zsh-theme', 'file.zunit', '.zcompdump', '.zlogin', '.zlogout', '.zshenv', '.zshrc', '.zsh_history', '.zcompdump-file', '.zlog', '.zlog-file', '.zsh', '.zsh-file', 'any/etc/zprofile', 'zlog', 'zlog-file', 'zsh', 'zsh-file'],
-    \ 'help': [$VIMRUNTIME . '/doc/help.txt'],
+    \ 'zsh': ['.zprofile', '/etc/zprofile', '.zfbfmarks', 'file.zsh', 'file.zsh-theme', 'file.zunit',
+    \         '.zcompdump', '.zlogin', '.zlogout', '.zshenv', '.zshrc', '.zsh_history',
+    \         '.zcompdump-file', '.zlog', '.zlog-file', '.zsh', '.zsh-file',
+    \         'any/etc/zprofile', 'zlog', 'zlog-file', 'zsh', 'zsh-file'],
+    \
+    \ 'help': [$VIMRUNTIME .. '/doc/help.txt'],
     \ }
 endfunc
 
-let s:filename_case_checks = {
+func s:GetFilenameCaseChecks() abort
+  return {
     \ 'modula2': ['file.DEF'],
     \ 'bzl': ['file.BUILD', 'BUILD', 'BUCK'],
     \ }
+endfunc
 
 func CheckItems(checks)
   set noswapfile
@@ -809,26 +883,29 @@ func Test_filetype_detection()
   filetype on
   call CheckItems(s:GetFilenameChecks())
   if has('fname_case')
-    call CheckItems(s:filename_case_checks)
+    call CheckItems(s:GetFilenameCaseChecks())
   endif
   filetype off
 endfunc
 
 " Content lines that should not result in filetype detection
-let s:false_positive_checks = {
+func s:GetFalsePositiveChecks() abort
+  return {
       \ '': [['test execve("/usr/bin/pstree", ["pstree"], 0x7ff0 /* 63 vars */) = 0']],
       \ }
+endfunc
 
 " Filetypes detected from the file contents by scripts.vim
-let s:script_checks = {
+func s:GetScriptChecks() abort
+  return {
       \ 'virata': [['% Virata'],
-      \		['', '% Virata'],
-      \		['', '', '% Virata'],
-      \		['', '', '', '% Virata'],
-      \		['', '', '', '', '% Virata']],
+      \            ['', '% Virata'],
+      \            ['', '', '% Virata'],
+      \            ['', '', '', '% Virata'],
+      \            ['', '', '', '', '% Virata']],
       \ 'strace': [['execve("/usr/bin/pstree", ["pstree"], 0x7ff0 /* 63 vars */) = 0'],
-      \		['15:17:47 execve("/usr/bin/pstree", ["pstree"], ... "_=/usr/bin/strace"]) = 0'],
-      \		['__libc_start_main and something']],
+      \            ['15:17:47 execve("/usr/bin/pstree", ["pstree"], ... "_=/usr/bin/strace"]) = 0'],
+      \            ['__libc_start_main and something']],
       \ 'clojure': [['#!/path/clojure']],
       \ 'scala': [['#!/path/scala']],
       \ 'sh':  [['#!/path/sh'],
@@ -892,9 +969,11 @@ let s:script_checks = {
       \ 'janet':  [['#!/path/janet']],
       \ 'dart':   [['#!/path/dart']],
       \ }
+endfunc
 
 " Various forms of "env" optional arguments.
-let s:script_env_checks = {
+func s:GetScriptEnvChecks() abort
+  return {
       \ 'perl': [['#!/usr/bin/env VAR=val perl']],
       \ 'scala': [['#!/usr/bin/env VAR=val VVAR=vval scala']],
       \ 'awk': [['#!/usr/bin/env VAR=val -i awk']],
@@ -904,6 +983,7 @@ let s:script_env_checks = {
       \ 'wml': [['#!/usr/bin/env VAR=val --split-string wml']],
       \ 'nix': [['#!/usr/bin/env nix-shell']],
       \ }
+endfunc
 
 func Run_script_detection(test_dict)
   filetype on
@@ -919,9 +999,9 @@ func Run_script_detection(test_dict)
 endfunc
 
 func Test_script_detection()
-  call Run_script_detection(s:false_positive_checks)
-  call Run_script_detection(s:script_checks)
-  call Run_script_detection(s:script_env_checks)
+  call Run_script_detection(s:GetFalsePositiveChecks())
+  call Run_script_detection(s:GetScriptChecks())
+  call Run_script_detection(s:GetScriptEnvChecks())
 endfunc
 
 func Test_setfiletype_completion()
