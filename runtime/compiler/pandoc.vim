@@ -9,10 +9,6 @@ if exists("current_compiler")
   finish
 endif
 
-if exists(":CompilerSet") != 2		" older Vim always used :setlocal
-  command -nargs=* CompilerSet setlocal <args>
-endif
-
 let s:keepcpo = &cpo
 set cpo&vim
 
@@ -40,9 +36,9 @@ silent! function s:PandocFiletype(filetype) abort
   elseif ft ==# 'text' || empty(ft)
     return 'markdown'
   elseif index(s:supported_filetypes, &ft) >= 0
-    return ft
+      return ft
   else
-    echomsg 'Unsupported filetype: ' . a:filetype ', falling back to Markdown as input format!'
+    echomsg 'Unsupported filetype: ' . ft . ', falling back to Markdown as input format!'
     return 'markdown'
   endif
 endfunction
