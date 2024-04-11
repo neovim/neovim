@@ -9229,6 +9229,12 @@ describe('float window', function()
     end)
   end
 
+  it('#title option switch between float and normal', function()
+    api.nvim_set_option_value('title', true, { scope = 'global'})
+    api.nvim_open_win(0, true, {relative = "editor", row = 0, col = 0, width = 5, height = 5})
+    eq(false, api.nvim_get_option_value('title', {scope = 'global'}))
+  end)
+
   describe('with ext_multigrid', function()
     with_ext_multigrid(true)
   end)

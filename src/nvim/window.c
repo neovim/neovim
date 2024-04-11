@@ -4893,6 +4893,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
       }
     }
     apply_autocmds(EVENT_WINLEAVE, NULL, NULL, false, curbuf);
+    win_float_ptitle_onoff(curwin, wp);
     if (!win_valid(wp)) {
       return;
     }

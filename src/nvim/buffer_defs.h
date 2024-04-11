@@ -1297,6 +1297,9 @@ struct window_S {
   bool w_floating;                      ///< whether the window is floating
   bool w_float_is_info;                 // the floating window is info float
   WinConfig w_config;
+  // store p_title option value. disable title when on floating window and
+  // restore when switch to normal window.
+  bool saved_p_title;
 
   // w_fraction is the fractional row of the cursor within the window, from
   // 0 at the top row to FRACTION_MULT at the last row.

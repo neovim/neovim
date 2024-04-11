@@ -17,6 +17,7 @@
 #include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
@@ -138,6 +139,20 @@ void win_set_minimal_style(win_T *wp)
   if (wp->w_p_stc != NULL && *wp->w_p_stc != NUL) {
     free_string_option(wp->w_p_stc);
     wp->w_p_stc = xstrdup("");
+  }
+}
+
+// save p_title when it enabled and restore before value
+// when switch to normal window.
+void win_float_ptitle_onoff(win_T *wp, win_T *new_win)
+{
+  if (p_title) {
+    wp->saved_p_title = p_title;
+    p_title = false;
+  }
+
+  if (new_win && !new_win->w_floating && wp->saved_p_title) {
+    p_title = wp->saved_p_title;
   }
 }
 

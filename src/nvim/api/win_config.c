@@ -302,6 +302,9 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
     restore_win_noblock(&switchwin, true);
   }
   if (tp && enter) {
+    if (fconfig.style == kWinStyleMinimal) {
+      win_float_ptitle_onoff(wp, NULL);
+    }
     goto_tabpage_win(tp, wp);
     tp = win_find_tabpage(wp);
   }
