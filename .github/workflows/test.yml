@@ -69,7 +69,6 @@ jobs:
       CC: clang
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup
 
       - if: ${{ matrix.build == 'lintlua-stylua' }}
         name: Install stylua
