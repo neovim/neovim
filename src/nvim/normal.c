@@ -48,6 +48,7 @@
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
 #include "nvim/mark_defs.h"
+#include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memline_defs.h"
@@ -2639,11 +2640,10 @@ static bool nv_z_get_count(cmdarg_T *cap, int *nchar_arg)
     if (nchar == K_DEL || nchar == K_KDEL) {
       n /= 10;
     } else if (ascii_isdigit(nchar)) {
-      if (n > INT_MAX / 10) {
+      if (vim_append_digit_int(&n, nchar - '0') == FAIL) {
         clearopbeep(cap->oap);
         break;
       }
-      n = n * 10 + (nchar - '0');
     } else if (nchar == CAR) {
       win_setheight(n);
       break;
