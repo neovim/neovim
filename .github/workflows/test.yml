@@ -82,5 +82,7 @@ jobs:
 
       - run: tar -xvf lint.tar
 
+      - run: ./.github/scripts/install_deps.sh ${{ inputs.install_flags }}
+
       - name: ${{ matrix.build }}
         run: cmake --build build --target ${{ matrix.build }}
