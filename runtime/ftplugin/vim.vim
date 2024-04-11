@@ -15,6 +15,8 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
+compiler vimdoc
+
 if !exists('*VimFtpluginUndo')
   func VimFtpluginUndo()
     setl fo< isk< com< tw< commentstring< keywordprg<
