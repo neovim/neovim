@@ -70,7 +70,7 @@
 -- To help write screen tests, see Screen:snapshot_util().
 -- To debug screen tests, see Screen:redraw_debug().
 
-local t = require('test.functional.testutil')(nil)
+local t = require('test.functional.testutil')()
 local busted = require('busted')
 local deepcopy = vim.deepcopy
 local shallowcopy = t.shallowcopy

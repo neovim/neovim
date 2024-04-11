@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(nil)
+local t = require('test.functional.testutil')()
 local api = t.api
 local write_file = t.write_file
 local concat_tables = t.concat_tables

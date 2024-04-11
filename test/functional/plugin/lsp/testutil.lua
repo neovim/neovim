@@ -1,4 +1,4 @@
-local t = require('test.functional.testutil')(nil)
+local t = require('test.functional.testutil')()
 
 local clear = t.clear
 local exec_lua = t.exec_lua

@@ -81,7 +81,7 @@ describe('shell command :!', function()
       {3:-- TERMINAL --}                                    |
     ]],
       {
-        -- test/functional/t.lua defaults to background=light.
+        -- test/functional/testutil.lua defaults to background=light.
         [1] = { reverse = true },
         [3] = { bold = true },
         [10] = { foreground = 2 },
