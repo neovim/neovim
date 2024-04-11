@@ -372,32 +372,32 @@ func Test_argedit()
   call assert_equal(['a', 'b'], argv())
   call assert_equal('b', expand('%:t'))
   argedit a
-  call assert_equal(['a', 'b', 'a'], argv())
+  call assert_equal(['a', 'b'], argv())
   call assert_equal('a', expand('%:t'))
   " When file name case is ignored, an existing buffer with only case
   " difference is re-used.
   argedit C D
   call assert_equal('C', expand('%:t'))
-  call assert_equal(['a', 'b', 'a', 'C', 'D'], argv())
+  call assert_equal(['a', 'C', 'D', 'b'], argv())
   argedit c
   if has('fname_case')
-    call assert_equal(['a', 'b', 'a', 'C', 'c', 'D'], argv())
+    call assert_equal(['a', 'C', 'c', 'D', 'b'], argv())
   else
-    call assert_equal(['a', 'b', 'a', 'C', 'C', 'D'], argv())
+    call assert_equal(['a', 'C', 'D', 'b'], argv())
   endif
   0argedit x
   if has('fname_case')
-    call assert_equal(['x', 'a', 'b', 'a', 'C', 'c', 'D'], argv())
+    call assert_equal(['x', 'a', 'C', 'c', 'D', 'b'], argv())
   else
-    call assert_equal(['x', 'a', 'b', 'a', 'C', 'C', 'D'], argv())
+    call assert_equal(['x', 'a', 'C', 'D', 'b'], argv())
   endif
   enew! | set modified
   call assert_fails('argedit y', 'E37:')
   argedit! y
   if has('fname_case')
-    call assert_equal(['x', 'y', 'y', 'a', 'b', 'a', 'C', 'c', 'D'], argv())
+    call assert_equal(['x', 'y', 'a', 'C', 'c', 'D', 'b'], argv())
   else
-    call assert_equal(['x', 'y', 'y', 'a', 'b', 'a', 'C', 'C', 'D'], argv())
+    call assert_equal(['x', 'y', 'a', 'C', 'D', 'b'], argv())
   endif
   %argd
   bwipe! C

@@ -637,9 +637,6 @@ list of the current window.
 			This is like using |:argadd| and then |:edit|.
 			Spaces in filenames have to be escaped with "\".
 			[count] is used like with |:argadd|.
-			If the current file cannot be |abandon|ed {name}s will
-			still be added to the argument list, but won't be
-			edited. No check for duplicates is done.
 			Also see |++opt| and |+cmd|.
 
 :[count]arga[dd] {name} ..			*:arga* *:argadd* *E479*

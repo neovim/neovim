@@ -414,6 +414,21 @@ static void arglist_del_files(garray_T *alist_ga)
   ga_clear(alist_ga);
 }
 
+/// Expand the file names in the argument list based on wildcards.
+static bool expand_arglist_files(garray_T *ga, int *count, char ***files)
+{
+  int result;
+  result = expand_wildcards(ga->ga_len, ga->ga_data, count, files,
+                            EW_DIR|EW_FILE|EW_ADDSLASH|EW_NOTFOUND);
+  ga_clear(ga);
+
+  if (result == FAIL || count == 0) {
+    emsg(_(e_nomatch));
+    return false;
+  }
+  return true;
+}
+
 /// @param str
 /// @param what
 ///         AL_SET: Redefine the argument list to 'str'.
@@ -451,12 +466,7 @@ static int do_arglist(char *str, int what, int after, bool will_edit)
   if (what == AL_DEL) {
     arglist_del_files(&new_ga);
   } else {
-    int i = expand_wildcards(new_ga.ga_len, new_ga.ga_data,
-                             &exp_count, &exp_files,
-                             EW_DIR|EW_FILE|EW_ADDSLASH|EW_NOTFOUND);
-    ga_clear(&new_ga);
-    if (i == FAIL || exp_count == 0) {
-      emsg(_(e_nomatch));
+    if (!expand_arglist_files(&new_ga, &exp_count, &exp_files)) {
       return FAIL;
     }
 
@@ -750,23 +760,77 @@ void ex_argdedupe(exarg_T *eap FUNC_ATTR_UNUSED)
 /// ":argedit"
 void ex_argedit(exarg_T *eap)
 {
-  int i = eap->addr_count ? (int)eap->line2 : curwin->w_arg_idx + 1;
   // Whether curbuf will be reused, curbuf->b_ffname will be set.
   bool curbuf_is_reusable = curbuf_reusable();
 
-  if (do_arglist(eap->arg, AL_ADD, i, true) == FAIL) {
+  garray_T new_ga;
+  ga_init(&new_ga, (int)sizeof(char *), 20);
+  // Collect all file name arguments in "new_ga".
+  get_arglist(&new_ga, eap->arg, true);
+
+  int count;
+  char **files;
+  int result = expand_wildcards(new_ga.ga_len, new_ga.ga_data,
+                                &count, &files,
+                                EW_DIR|EW_FILE|EW_ADDSLASH|EW_NOTFOUND);
+  ga_clear(&new_ga);
+
+  if (result == FAIL || count == 0) {
+    emsg(_(e_nomatch));
     return;
   }
+
+  // Initialize the index where files should be inserted in the arglist.
+  // If eap->addr_count is set, use the provided index, otherwise use -1 to set it later.
+  int idx = eap->addr_count ? (int)eap->line2 : -1;
+  // The index of the argument in the arglist that needs to be edited.
+  int argn = -1;
+
+  for (int i = 0; i < count; i++) {
+    int fnum = buflist_add(files[i], BLN_LISTED | BLN_CURBUF);
+    bool found = false;
+    for (int j = 0; j < ARGCOUNT; j++) {
+      if (ARGLIST[j].ae_fnum == fnum) {
+        // If the first argument file is matched in the arglist and there is no explicit
+        // index, insert subsequent files behind this index.
+        if (i == 0 && idx == -1) {
+          idx = j + 1;
+          argn = j;
+        }
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      // If the first file is not matched and idx is not set, insert after
+      // the current argument index.
+      if (idx == -1) {
+        idx = curwin->w_arg_idx + 1;
+      }
+      // If argn is not set and it's the first file, update argn to point to
+      // where the file will be inserted.
+      if (argn == -1 && i == 0) {
+        argn = idx;
+      }
+      alist_add_list(1, &files[i], idx++, true);
+    } else {
+      xfree(files[i]);
+    }
+  }
+
+  xfree(files);
   maketitle();
 
   if (curwin->w_arg_idx == 0
       && (curbuf->b_ml.ml_flags & ML_EMPTY)
       && (curbuf->b_ffname == NULL || curbuf_is_reusable)) {
-    i = 0;
+    argn = 0;
   }
-  // Edit the argument.
-  if (i < ARGCOUNT) {
-    do_argfile(eap, i);
+
+  if (argn < ARGCOUNT) {
+    // Edit the first argument as curbuf.
+    do_argfile(eap, argn);
   }
 }
 
