@@ -1,14 +1,16 @@
 // uncrustify:off
 #include <math.h>
 // uncrustify:on
+#include <limits.h>
 #include <stdint.h>
 #include <string.h>
 
-#ifdef _MSC_VER
+#ifdef HAVE_BITSCANFORWARD64
 # include <intrin.h>  // Required for _BitScanForward64
 #endif
 
 #include "nvim/math.h"
+#include "nvim/vim_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "math.c.generated.h"
@@ -73,4 +75,15 @@ int xctz(uint64_t x)
 
   return count;
 #endif
+}
+
+/// For overflow detection, add a digit safely to an int value.
+int vim_append_digit_int(int *value, int digit)
+{
+  int x = *value;
+  if (x > ((INT_MAX - digit) / 10)) {
+    return FAIL;
+  }
+  *value = x * 10 + digit;
+  return OK;
 }
