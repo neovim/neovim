@@ -131,43 +131,6 @@ helloFOO123
 helloFOO]]
   end)
 
-  -- XXX: does this really make sense?
-  it('can be replayed with @ in blockwise Visual mode', function()
-    insert [[
-hello
-hello
-hello]]
-    feed [[gg]]
-
-    feed [[qqAFOO<esc>qu]]
-    expect [[
-hello
-hello
-hello]]
-
-    feed [[qwA123<esc>qu]]
-    expect [[
-hello
-hello
-hello]]
-
-    feed [[<C-v>3j@q]]
-    expect [[
-helloFOO
-helloFOO
-helloFOO]]
-
-    feed [[gg<C-v>j@w]]
-    expect [[
-helloFOO123
-helloFOO123
-helloFOO]]
-  end)
-end)
-
-describe('macros without default mappings', function()
-  before_each(clear)
-
   it('can be recorded and replayed in Visual mode', function()
     insert('foo BAR BAR foo BAR foo BAR BAR BAR foo BAR BAR')
     feed('0vqifofRq')
