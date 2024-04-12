@@ -5,6 +5,10 @@ inputs:
     description: 'Install script flags'
     required: false
     default: ''
+  enable_cache:
+    description: 'Enable cache'
+    required: false
+    default: ''
 runs:
   using: "composite"
   steps:
@@ -25,5 +29,6 @@ runs:
       run: ./.github/scripts/install_deps.sh ${{ inputs.install_flags }}
       shell: bash
 
-    - name: Cache
+    - if: ${{ inputs.enable_cache == 'true' }}
+      name: Cache
       uses: ./.github/actions/cache

@@ -37,6 +37,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+        with:
+          enable_cache: 'true'
 
       - name: Build third-party deps
         run: |
@@ -69,6 +71,7 @@ jobs:
       CC: clang
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
 
       - if: ${{ matrix.build == 'lintlua-stylua' }}
         name: Install stylua
@@ -81,8 +84,6 @@ jobs:
           name: lint
 
       - run: tar -xvf lint.tar
-
-      - run: ./.github/scripts/install_deps.sh ${{ inputs.install_flags }}
 
       - name: ${{ matrix.build }}
         run: cmake --build build --target ${{ matrix.build }}
