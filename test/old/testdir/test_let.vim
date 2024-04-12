@@ -713,6 +713,20 @@ END
   LINES
   call CheckScriptFailure(lines, 'E15:')
 
+  " Test for using heredoc in a single string using execute()
+  call assert_equal(["['one', 'two']"],
+    \ execute("let x =<< trim END\n  one\n  two\nEND\necho x")->split("\n"))
+  call assert_equal(["['  one', '  two']"],
+    \ execute("let x =<< END\n  one\n  two\nEND\necho x")->split("\n"))
+  let cmd = 'execute("let x =<< END\n  one\n  two\necho x")'
+  call assert_fails(cmd, "E990: Missing end marker 'END'")
+  let cmd = 'execute("let x =<<\n  one\n  two\necho x")'
+  call assert_fails(cmd, "E990: Missing end marker ''")
+  let cmd = 'execute("let x =<< trim\n  one\n  two\necho x")'
+  call assert_fails(cmd, "E221: Marker cannot start with lower case letter")
+  let cmd = 'execute("let x =<< eval END\n  one\n  two{y}\nEND\necho x")'
+  call assert_fails(cmd, 'E121: Undefined variable: y')
+
   " skipped heredoc
   if 0
     let msg =<< trim eval END

@@ -62,8 +62,8 @@ static const char e_double_semicolon_in_list_of_variables[]
 static const char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
 static const char e_setting_v_str_to_value_with_wrong_type[]
   = N_("E963: Setting v:%s to value with wrong type");
-static const char e_cannot_use_heredoc_here[]
-  = N_("E991: Cannot use =<< here");
+static const char e_missing_end_marker_str[] = N_("E990: Missing end marker '%s'");
+static const char e_cannot_use_heredoc_here[] = N_("E991: Cannot use =<< here");
 
 /// Evaluate one Vim expression {expr} in string "p" and append the
 /// resulting string to "gap".  "p" points to the opening "{".
@@ -180,7 +180,7 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
   char *text_indent = NULL;
   char dot[] = ".";
 
-  if (eap->ea_getline == NULL) {
+  if (eap->ea_getline == NULL && vim_strchr(cmd, '\n') == NULL) {
     emsg(_(e_cannot_use_heredoc_here));
     return NULL;
   }
@@ -216,11 +216,18 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
     break;
   }
 
+  const char comment_char = '"';
+  bool heredoc_in_string = false;
+  char *line_arg = NULL;
   // The marker is the next word.
-  if (*cmd != NUL && *cmd != '"') {
+  if (*cmd != NUL && *cmd != comment_char) {
     marker = skipwhite(cmd);
-    char *p = skiptowhite(marker);
-    if (*skipwhite(p) != NUL && *skipwhite(p) != '"') {
+    char *p = skiptowhite_or_nl(marker);
+    if (*p == NL) {
+      // heredoc in a string
+      line_arg = p + 1;
+      heredoc_in_string = true;
+    } else if (*skipwhite(p) != NUL && *skipwhite(p) != comment_char) {
       semsg(_(e_trailing_arg), p);
       return NULL;
     }
@@ -246,13 +253,34 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
     int mi = 0;
     int ti = 0;
 
-    xfree(theline);
-    theline = eap->ea_getline(NUL, eap->cookie, 0, false);
-    if (theline == NULL) {
-      if (!script_get) {
-        semsg(_("E990: Missing end marker '%s'"), marker);
+    if (heredoc_in_string) {
+      // heredoc in a string separated by newlines.  Get the next line
+      // from the string.
+
+      if (*line_arg == NUL) {
+        if (!script_get) {
+          semsg(_(e_missing_end_marker_str), marker);
+        }
+        break;
       }
-      break;
+
+      theline = line_arg;
+      char *next_line = vim_strchr(theline, '\n');
+      if (next_line == NULL) {
+        line_arg += strlen(line_arg);
+      } else {
+        *next_line = NUL;
+        line_arg = next_line + 1;
+      }
+    } else {
+      xfree(theline);
+      theline = eap->ea_getline(NUL, eap->cookie, 0, false);
+      if (theline == NULL) {
+        if (!script_get) {
+          semsg(_(e_missing_end_marker_str), marker);
+        }
+        break;
+      }
     }
 
     // with "trim": skip the indent matching the :let line to find the
@@ -298,13 +326,17 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
         eval_failed = true;
         continue;
       }
-      xfree(theline);
-      theline = str;
+      tv_list_append_allocated_string(l, str);
+    } else {
+      tv_list_append_string(l, str, -1);
     }
-
-    tv_list_append_string(l, str, -1);
   }
-  xfree(theline);
+  if (heredoc_in_string) {
+    // Next command follows the heredoc in the string.
+    eap->nextcmd = line_arg;
+  } else {
+    xfree(theline);
+  }
   xfree(text_indent);
 
   if (eval_failed) {

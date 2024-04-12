@@ -1045,13 +1045,27 @@ char *skiptowhite(const char *p)
   return (char *)p;
 }
 
+/// Skip over text until ' ' or '\t' or newline or NUL
+///
+/// @param[in]  p  Text to skip over.
+///
+/// @return Pointer to the next whitespace or newline or NUL character.
+char *skiptowhite_or_nl(const char *p)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  while (*p != ' ' && *p != '\t' && *p != NL && *p != NUL) {
+    p++;
+  }
+  return (char *)p;
+}
+
 /// skiptowhite_esc: Like skiptowhite(), but also skip escaped chars
 ///
 /// @param p
 ///
 /// @return Pointer to the next whitespace character.
 char *skiptowhite_esc(const char *p)
-  FUNC_ATTR_PURE
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
     if (((*p == '\\') || (*p == Ctrl_V)) && (*(p + 1) != NUL)) {
