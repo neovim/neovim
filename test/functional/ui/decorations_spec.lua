@@ -4894,6 +4894,88 @@ if (h->n_buckets < new_n_buckets) { // expand
                                                         |
     ]])
   end)
+
+  it('works with full page scrolling #28390', function()
+    screen:try_resize(20, 8)
+    command('call setline(1, range(20))')
+    api.nvim_buf_set_extmark(0, ns, 10, 0, { virt_lines = {{{'VIRT1'}}, {{'VIRT2'}}} })
+    screen:expect([[
+      ^0                   |
+      1                   |
+      2                   |
+      3                   |
+      4                   |
+      5                   |
+      6                   |
+                          |
+    ]])
+    feed('<C-F>')
+    screen:expect([[
+      ^5                   |
+      6                   |
+      7                   |
+      8                   |
+      9                   |
+      10                  |
+      VIRT1               |
+                          |
+    ]])
+    feed('<C-F>')
+    screen:expect([[
+      ^10                  |
+      VIRT1               |
+      VIRT2               |
+      11                  |
+      12                  |
+      13                  |
+      14                  |
+                          |
+    ]])
+    feed('<C-F>')
+    screen:expect([[
+      ^13                  |
+      14                  |
+      15                  |
+      16                  |
+      17                  |
+      18                  |
+      19                  |
+                          |
+    ]])
+    feed('<C-B>')
+    screen:expect([[
+      10                  |
+      VIRT1               |
+      VIRT2               |
+      11                  |
+      12                  |
+      ^13                  |
+      14                  |
+                          |
+    ]])
+    feed('<C-B>')
+    screen:expect([[
+      5                   |
+      6                   |
+      7                   |
+      8                   |
+      9                   |
+      ^10                  |
+      VIRT1               |
+                          |
+    ]])
+    feed('<C-B>')
+    screen:expect([[
+      0                   |
+      1                   |
+      2                   |
+      3                   |
+      4                   |
+      5                   |
+      ^6                   |
+                          |
+    ]])
+  end)
 end)
 
 describe('decorations: signs', function()

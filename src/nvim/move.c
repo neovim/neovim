@@ -2362,7 +2362,7 @@ static int get_scroll_overlap(Direction dir)
   }
 
   loff.lnum = dir == FORWARD ? curwin->w_botline : curwin->w_topline - 1;
-  loff.fill = win_get_fill(curwin, loff.lnum + dir == BACKWARD)
+  loff.fill = win_get_fill(curwin, loff.lnum + (dir == BACKWARD))
               - (dir == FORWARD ? curwin->w_filler_rows : curwin->w_topfill);
   loff.height = loff.fill > 0 ? 1 : plines_win_nofill(curwin, loff.lnum, true);
 
