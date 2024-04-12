@@ -93,6 +93,7 @@ do
     "':normal! @'.getcharstr().'<CR>'",
     { silent = true, expr = true, desc = ':help v_@-default' }
   )
+
   --- Map |gx| to call |vim.ui.open| on the identifier under the cursor
   do
     local function do_open(uri)
