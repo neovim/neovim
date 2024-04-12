@@ -1679,7 +1679,7 @@ function M.open_float(opts, ...)
   if scope == 'line' then
     --- @param d vim.Diagnostic
     diagnostics = vim.tbl_filter(function(d)
-      return d.lnum == lnum
+      return lnum >= d.lnum and lnum <= d.end_lnum
     end, diagnostics)
   elseif scope == 'cursor' then
     -- LSP servers can send diagnostics with `end_col` past the length of the line
