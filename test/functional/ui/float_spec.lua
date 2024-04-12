@@ -9227,6 +9227,14 @@ describe('float window', function()
       eq(restcmd, fn.winrestcmd())
       eq(config, api.nvim_win_get_config(0))
     end)
+
+    it("error when relative to itself", function()
+      local buf = api.nvim_create_buf(false, true)
+      local config = { relative='win', width=5, height=2, row=3, col=3 }
+      local winid = api.nvim_open_win(buf, false, config)
+      api.nvim_set_current_win(winid)
+      eq("floating window cannot be relative to itself", pcall_err(api.nvim_win_set_config, winid, config))
+    end)
   end
 
   describe('with ext_multigrid', function()
