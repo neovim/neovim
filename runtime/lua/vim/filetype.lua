@@ -236,6 +236,7 @@ local extension = {
   bbclass = 'bitbake',
   bl = 'blank',
   blp = 'blueprint',
+  bp = 'bp',
   bsd = 'bsdl',
   bsdl = 'bsdl',
   bst = 'bst',
