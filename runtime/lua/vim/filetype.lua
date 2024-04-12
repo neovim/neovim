@@ -1332,6 +1332,7 @@ local filename = {
   ['.coveragerc'] = 'dosini',
   ['psprint.conf'] = 'dosini',
   sofficerc = 'dosini',
+  ['mimeapps.list'] = 'dosini',
   ['/etc/pacman.conf'] = 'confini',
   ['mpv.conf'] = 'confini',
   dune = 'dune',
