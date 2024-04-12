@@ -458,6 +458,9 @@ end
 
 --- @type vim.filetype.mapfn
 function M.def(_, bufnr)
+  if getline(bufnr, 1):find('%%%%') then
+    return 'tex'
+  end
   if vim.g.filetype_def == 'modula2' or is_modula2(bufnr) then
     return modula2(bufnr)
   end
@@ -738,7 +741,9 @@ end
 
 --- @type vim.filetype.mapfn
 function M.inp(_, bufnr)
-  if getline(bufnr, 1):find('^%*') then
+  if getline(bufnr, 1):find('%%%%') then
+    return 'tex'
+  elseif getline(bufnr, 1):find('^%*') then
     return 'abaqus'
   else
     for _, line in ipairs(getlines(bufnr, 1, 500)) do
