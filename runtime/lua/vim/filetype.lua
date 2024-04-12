@@ -1327,6 +1327,7 @@ local filename = {
   npmrc = 'dosini',
   ['/etc/yum.conf'] = 'dosini',
   ['.npmrc'] = 'dosini',
+  ['pip.conf'] = 'dosini',
   ['setup.cfg'] = 'dosini',
   ['pudb.cfg'] = 'dosini',
   ['.coveragerc'] = 'dosini',
