@@ -2783,7 +2783,7 @@ void ex_append(exarg_T *eap)
         indent = get_indent_lnum(lnum);
       }
     }
-    if (eap->getline == NULL) {
+    if (eap->ea_getline == NULL) {
       // No getline() function, use the lines that follow. This ends
       // when there is no more.
       if (eap->nextcmd == NULL || *eap->nextcmd == NUL) {
@@ -2803,7 +2803,8 @@ void ex_append(exarg_T *eap)
       // Set State to avoid the cursor shape to be set to MODE_INSERT
       // state when getline() returns.
       State = MODE_CMDLINE;
-      theline = eap->getline(eap->cstack->cs_looplevel > 0 ? -1 : NUL, eap->cookie, indent, true);
+      theline = eap->ea_getline(eap->cstack->cs_looplevel > 0 ? -1 : NUL,
+                                eap->cookie, indent, true);
       State = save_State;
     }
     lines_left = Rows - 1;

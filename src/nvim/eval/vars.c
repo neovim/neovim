@@ -180,7 +180,7 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
   char *text_indent = NULL;
   char dot[] = ".";
 
-  if (eap->getline == NULL) {
+  if (eap->ea_getline == NULL) {
     emsg(_(e_cannot_use_heredoc_here));
     return NULL;
   }
@@ -247,7 +247,7 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
     int ti = 0;
 
     xfree(theline);
-    theline = eap->getline(NUL, eap->cookie, 0, false);
+    theline = eap->ea_getline(NUL, eap->cookie, 0, false);
     if (theline == NULL) {
       if (!script_get) {
         semsg(_("E990: Missing end marker '%s'"), marker);

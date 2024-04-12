@@ -764,8 +764,8 @@ void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
     return;
   }
 
-  if (getline_equal(eap->getline, eap->cookie, getsourceline)) {
-    evalarg->eval_getline = eap->getline;
+  if (getline_equal(eap->ea_getline, eap->cookie, getsourceline)) {
+    evalarg->eval_getline = eap->ea_getline;
     evalarg->eval_cookie = eap->cookie;
   }
 }
@@ -8203,7 +8203,7 @@ void ex_execute(exarg_T *eap)
         did_emsg = save_did_emsg;
       }
     } else if (eap->cmdidx == CMD_execute) {
-      do_cmdline(ga.ga_data, eap->getline, eap->cookie, DOCMD_NOWAIT|DOCMD_VERBOSE);
+      do_cmdline(ga.ga_data, eap->ea_getline, eap->cookie, DOCMD_NOWAIT|DOCMD_VERBOSE);
     }
   }
 

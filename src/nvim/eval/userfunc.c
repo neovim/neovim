@@ -2409,10 +2409,10 @@ void ex_function(exarg_T *eap)
       }
     } else {
       xfree(line_to_free);
-      if (eap->getline == NULL) {
+      if (eap->ea_getline == NULL) {
         theline = getcmdline(':', 0, indent, do_concat);
       } else {
-        theline = eap->getline(':', eap->cookie, indent, do_concat);
+        theline = eap->ea_getline(':', eap->cookie, indent, do_concat);
       }
       line_to_free = theline;
     }
@@ -2433,7 +2433,7 @@ void ex_function(exarg_T *eap)
     }
 
     // Detect line continuation: SOURCING_LNUM increased more than one.
-    linenr_T sourcing_lnum_off = get_sourced_lnum(eap->getline, eap->cookie);
+    linenr_T sourcing_lnum_off = get_sourced_lnum(eap->ea_getline, eap->cookie);
     if (SOURCING_LNUM < sourcing_lnum_off) {
       sourcing_lnum_off -= SOURCING_LNUM;
     } else {
