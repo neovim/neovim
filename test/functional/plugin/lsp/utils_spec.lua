@@ -126,6 +126,38 @@ describe('vim.lsp.util', function()
     end)
   end)
 
+  describe('convert_input_to_markdown_lines', function()
+    it('correct input', function()
+      eq(
+        { 'test' },
+        exec_lua [[
+        local invalid_input = {kind = 'markdown', value = "test"}
+        return vim.lsp.util.convert_input_to_markdown_lines(invalid_input)
+      ]]
+      )
+    end)
+
+    it('empty value', function()
+      eq(
+        {},
+        exec_lua [[
+        local invalid_input = {kind = 'markdown', value = ""}
+        return vim.lsp.util.convert_input_to_markdown_lines(invalid_input)
+      ]]
+      )
+    end)
+
+    it('code fences with empty line', function()
+      eq(
+        {},
+        exec_lua [[
+        local invalid_input = {kind = 'markdown', value = "```\n\n```"}
+        return vim.lsp.util.convert_input_to_markdown_lines(invalid_input)
+      ]]
+      )
+    end)
+  end)
+
   describe('make_floating_popup_options', function()
     local function assert_anchor(anchor_bias, expected_anchor)
       local opts = exec_lua(

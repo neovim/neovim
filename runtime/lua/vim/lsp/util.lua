@@ -857,6 +857,7 @@ end
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 function M.convert_input_to_markdown_lines(input, contents)
   contents = contents or {}
+  local code_block = '```'
   -- MarkedString variation 1
   if type(input) == 'string' then
     list_extend(contents, split_lines(input))
@@ -868,9 +869,9 @@ function M.convert_input_to_markdown_lines(input, contents)
       list_extend(contents, split_lines(value))
       -- MarkupString variation 2
     elseif input.language then
-      table.insert(contents, '```' .. input.language)
+      table.insert(contents, code_block .. input.language)
       list_extend(contents, split_lines(input.value or ''))
-      table.insert(contents, '```')
+      table.insert(contents, code_block)
       -- By deduction, this must be MarkedString[]
     else
       -- Use our existing logic to handle MarkedString
@@ -879,10 +880,17 @@ function M.convert_input_to_markdown_lines(input, contents)
       end
     end
   end
-  if (contents[1] == '' or contents[1] == nil) and #contents == 1 then
-    return {}
-  end
-  return contents
+
+  local has_invalid_content = vim
+    .iter(contents)
+    :filter(function(item)
+      return not vim.startswith(item, code_block)
+    end)
+    :any(function(item)
+      return item ~= '' and item ~= nil
+    end)
+
+  return not has_invalid_content and {} or contents
 end
 
 --- Converts `textDocument/signatureHelp` response to markdown lines.
