@@ -632,8 +632,8 @@ list of the current window.
 
 :[count]arge[dit][!] [++opt] [+cmd] {name} ..		*:arge* *:argedit*
 			Add {name}s to the argument list and edit it.
-			When {name} already exists in the argument list, this
-			entry is edited.
+			There is no check for duplicates, it is possible to
+			add a file to the argument list twice |:argded|.
 			This is like using |:argadd| and then |:edit| (with
 			the small exception that |:edit| does not change the
 			argument list, so the argument list pointer isn't
