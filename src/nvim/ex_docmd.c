@@ -144,7 +144,7 @@ struct loop_cookie {
   int current_line;                     // last read line from growarray
   int repeating;                        // true when looping a second time
   // When "repeating" is false use "getline" and "cookie" to get lines
-  char *(*getline)(int, void *, int, bool);
+  LineGetter lc_getline;
   void *cookie;
 };
 
@@ -622,7 +622,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
       cmd_cookie = (void *)&cmd_loop_cookie;
       cmd_loop_cookie.lines_gap = &lines_ga;
       cmd_loop_cookie.current_line = current_line;
-      cmd_loop_cookie.getline = fgetline;
+      cmd_loop_cookie.lc_getline = fgetline;
       cmd_loop_cookie.cookie = cookie;
       cmd_loop_cookie.repeating = (current_line < lines_ga.ga_len);
 
@@ -1003,10 +1003,10 @@ static char *get_loop_line(int c, void *cookie, int indent, bool do_concat)
     }
     char *line;
     // First time inside the ":while"/":for": get line normally.
-    if (cp->getline == NULL) {
+    if (cp->lc_getline == NULL) {
       line = getcmdline(c, 0, indent, do_concat);
     } else {
-      line = cp->getline(c, cp->cookie, indent, do_concat);
+      line = cp->lc_getline(c, cp->cookie, indent, do_concat);
     }
     if (line != NULL) {
       store_loop_line(cp->lines_gap, line);
@@ -1043,7 +1043,7 @@ bool getline_equal(LineGetter fgetline, void *cookie, LineGetter func)
   LineGetter gp = fgetline;
   struct loop_cookie *cp = (struct loop_cookie *)cookie;
   while (gp == get_loop_line) {
-    gp = cp->getline;
+    gp = cp->lc_getline;
     cp = cp->cookie;
   }
   return gp == func;
@@ -1061,7 +1061,7 @@ void *getline_cookie(LineGetter fgetline, void *cookie)
   LineGetter gp = fgetline;
   struct loop_cookie *cp = (struct loop_cookie *)cookie;
   while (gp == get_loop_line) {
-    gp = cp->getline;
+    gp = cp->lc_getline;
     cp = cp->cookie;
   }
   return cp;
@@ -1488,7 +1488,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const cha
     .line2 = 1,
     .cmd = cmdline,
     .cmdlinep = &cmdline,
-    .getline = NULL,
+    .ea_getline = NULL,
     .cookie = NULL,
   };
 
@@ -1997,7 +1997,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // The "ea" structure holds the arguments that can be used.
   ea.cmd = *cmdlinep;
   ea.cmdlinep = cmdlinep;
-  ea.getline = fgetline;
+  ea.ea_getline = fgetline;
   ea.cookie = cookie;
   ea.cstack = cstack;
 
@@ -2472,7 +2472,7 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
 
     // in ex mode, an empty line works like :+
     if (*eap->cmd == NUL && exmode_active
-        && getline_equal(eap->getline, eap->cookie, getexline)
+        && getline_equal(eap->ea_getline, eap->cookie, getexline)
         && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
       eap->cmd = "+";
       if (!skip_only) {
