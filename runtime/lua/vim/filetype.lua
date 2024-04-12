@@ -1302,6 +1302,7 @@ local filename = {
   ['csh.login'] = detect.csh,
   ['csh.logout'] = detect.csh,
   ['auto.master'] = 'conf',
+  ['.x11vncrc'] = 'conf',
   ['configure.in'] = 'config',
   ['configure.ac'] = 'config',
   crontab = 'crontab',
