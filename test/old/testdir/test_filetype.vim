@@ -146,6 +146,7 @@ func s:GetFilenameChecks() abort
     \ 'cf': ['file.cfm', 'file.cfi', 'file.cfc'],
     \ 'cfengine': ['cfengine.conf'],
     \ 'cfg': ['file.hgrc', 'filehgrc', 'hgrc', 'some-hgrc'],
+    \ 'cgdbrc': ['cgdbrc'],
     \ 'ch': ['file.chf'],
     \ 'chaiscript': ['file.chai'],
     \ 'chaskell': ['file.chs'],

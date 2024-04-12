@@ -1289,6 +1289,7 @@ local filename = {
   ['/etc/default/cdrdao'] = 'cdrdaoconf',
   ['/etc/defaults/cdrdao'] = 'cdrdaoconf',
   ['cfengine.conf'] = 'cfengine',
+  cgdbrc = 'cgdbrc',
   ['CMakeLists.txt'] = 'cmake',
   ['.alias'] = detect.csh,
   ['.cshrc'] = detect.csh,
