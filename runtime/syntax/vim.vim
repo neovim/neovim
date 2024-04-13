@@ -69,7 +69,7 @@ syn case match
 " Special Vim Highlighting (not automatic) {{{1
 
 " Set up folding commands for this syntax highlighting file {{{2
-if exists("g:vimsyn_folding") && g:vimsyn_folding =~# '[afhlmpPrt]'
+if exists("g:vimsyn_folding") && g:vimsyn_folding =~# '[afhHlmpPrt]'
  if g:vimsyn_folding =~# 'a'
   com! -nargs=* VimFolda <args> fold
  else
@@ -84,6 +84,11 @@ if exists("g:vimsyn_folding") && g:vimsyn_folding =~# '[afhlmpPrt]'
   com! -nargs=* VimFoldh <args> fold
  else
   com! -nargs=* VimFoldh <args>
+ endif
+ if g:vimsyn_folding =~# 'H'
+  com! -nargs=* VimFoldH <args> fold
+ else
+  com! -nargs=* VimFoldH <args>
  endif
  if g:vimsyn_folding =~# 'l'
   com! -nargs=* VimFoldl <args> fold
@@ -119,6 +124,7 @@ else
  com! -nargs=*	VimFolda	<args>
  com! -nargs=*	VimFoldf	<args>
  com! -nargs=*	VimFoldh	<args>
+ com! -nargs=*	VimFoldH	<args>
  com! -nargs=*	VimFoldl	<args>
  com! -nargs=*	VimFoldm	<args>
  com! -nargs=*	VimFoldp	<args>
@@ -820,11 +826,11 @@ syn region	vimGlobal	matchgroup=Statement start='\<v\%[global]!\=/' skip='\\.' e
 " ==================
 
 if s:vim9script
-  syn cluster vimLegacyTop contains=TOP,vimPreVim9script,vim9Comment,vim9LineComment
-  syn region vimPreVim9script start="\%^" end="^\ze\s*vim9s\%[cript]\>" contains=@vimLegacyTop,vimComment,vimLineComment
+  syn cluster vimLegacyTop	contains=TOP,vim9LegacyHeader,vim9Comment,vim9LineComment
+  VimFoldH syn region vim9LegacyHeader start="\%^" end="^\ze\s*vim9s\%[cript]\>" contains=@vimLegacyTop,vimComment,vimLineComment
 
-  syn keyword vim9ScriptArg noclear
-  syn keyword vimCommand vim9s[cript] nextgroup=vim9ScriptArg skipwhite
+  syn keyword vim9Vim9ScriptArg	noclear contained
+  syn keyword vim9Vim9Script	vim9s[cript] nextgroup=vim9Vim9ScriptArg skipwhite
 endif
 
 " Embedded Scripts:  {{{2
@@ -1038,7 +1044,7 @@ if !exists("skip_vim_syntax_inits")
   hi def link vimBufnrWarn	vimWarn
  endif
 
- hi def link vim9ScriptArg	Special
+ hi def link vim9Vim9ScriptArg	Special
  hi def link vimAbb	vimCommand
  hi def link vimAddress	vimMark
  hi def link vimAugroupBang	vimBang
@@ -1168,6 +1174,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimSetMod	vimOption
  hi def link vimSetSep	Statement
  hi def link vimSetString	vimString
+ hi def link vim9Vim9Script	vimCommand
  hi def link vimSpecFile	Identifier
  hi def link vimSpecFileMod	vimSpecFile
  hi def link vimSpecial	Type
@@ -1235,6 +1242,8 @@ let b:current_syntax = "vim"
 " Cleanup: {{{1
 delc VimFolda
 delc VimFoldf
+delc VimFoldh
+delc VimFoldH
 delc VimFoldl
 delc VimFoldm
 delc VimFoldp
