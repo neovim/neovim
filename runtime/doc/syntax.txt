@@ -3271,7 +3271,7 @@ The g:vimsyn_embed option allows users to select what, if any, types of
 embedded script highlighting they wish to have. >
 
    g:vimsyn_embed == 0      : disable (don't embed any scripts)
-   g:vimsyn_embed == 'lPr'  : support embedded lua, python and ruby
+   g:vimsyn_embed == 'lpPr' : support embedded lua, perl, python and ruby
 <
 This option is disabled by default.
 						*g:vimsyn_folding*
@@ -3281,7 +3281,11 @@ Some folding is now supported with syntax/vim.vim: >
    g:vimsyn_folding == 0 or doesn't exist: no syntax-based folding
    g:vimsyn_folding =~ 'a' : augroups
    g:vimsyn_folding =~ 'f' : fold functions
+   g:vimsyn_folding =~ 'h' : fold heredocs
+   g:vimsyn_folding =~ 'l' : fold lua      script
+   g:vimsyn_folding =~ 'p' : fold perl     script
    g:vimsyn_folding =~ 'P' : fold python   script
+   g:vimsyn_folding =~ 'r' : fold ruby     script
 <
 							*g:vimsyn_noerror*
 Not all error highlighting that syntax/vim.vim does may be correct; Vim script
