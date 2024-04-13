@@ -100,7 +100,7 @@ syn match i3ConfigKeyword /^no_focus .*$/ contains=i3ConfigCondition
 " 4.17 Variables
 syn match i3ConfigVariable /\$[0-9A-Za-z_:|[\]-]\+/
 syn keyword i3ConfigSetKeyword set contained
-syn match i3ConfigSet /^set \$.*$/ contains=i3ConfigSetKeyword,i3ConfigVariable,i3ConfigColor,i3ConfigString,i3ConfigNumber,i3ConfigShCommand,i3ConfigShDelim,i3ConfigShParam,i3ConfigShOper,i3ConfigBindModkey
+syn region i3ConfigSet start=/^set\s\+\$/ skip=/\\$/ end=/$/ contains=i3ConfigSetKeyword,i3ConfigVariable,i3ConfigColor,i3ConfigString,i3ConfigNumber,i3ConfigShCommand,i3ConfigShDelim,i3ConfigShParam,i3ConfigShOper,i3ConfigBindModkey keepend
 
 " 4.18 X resources
 syn keyword i3ConfigResourceKeyword set_from_resource contained
