@@ -542,6 +542,13 @@ END
   XX
   call assert_equal(['Line1'], var1)
 
+  let var1 =<< trim XX " comment
+    Line1
+      Line2
+    Line3
+  XX
+  call assert_equal(['Line1', '  Line2', 'Line3'], var1)
+
   " ignore "endfunc"
   let var1 =<< END
 something
@@ -712,6 +719,32 @@ END
       END
   LINES
   call CheckScriptFailure(lines, 'E15:')
+
+  " Test for using heredoc in a single string using execute()
+  call assert_equal("\n['one', 'two']",
+    \ execute("let x =<< trim END\n  one\n  two\nEND\necho x"))
+  call assert_equal("\n['one', '  two']",
+    \ execute("let x =<< trim END\n  one\n    two\nEND\necho x"))
+  call assert_equal("\n['one', 'two']",
+    \ execute("  let x =<< trim END\n    one\n    two\n  END\necho x"))
+  call assert_equal("\n['one', '  two']",
+    \ execute("  let x =<< trim END\n    one\n      two\n  END\necho x"))
+  call assert_equal("\n['  one', '  two']",
+    \ execute("let x =<< END\n  one\n  two\nEND\necho x"))
+  call assert_equal("\n['one', 'two']",
+    \ execute("let x =<< END\none\ntwo\nEND\necho x"))
+  call assert_equal("\n['one', 'two']",
+    \ execute("let x =<< END \" comment\none\ntwo\nEND\necho x"))
+  let cmd = 'execute("let x =<< END\n  one\n  two\necho x")'
+  call assert_fails(cmd, "E990: Missing end marker 'END'")
+  let cmd = 'execute("let x =<<\n  one\n  two\necho x")'
+  call assert_fails(cmd, "E172: Missing marker")
+  let cmd = 'execute("let x =<< trim\n  one\n  two\necho x")'
+  call assert_fails(cmd, "E172: Missing marker")
+  let cmd = 'execute("let x =<< end\n  one\n  two\nend\necho x")'
+  call assert_fails(cmd, "E221: Marker cannot start with lower case letter")
+  let cmd = 'execute("let x =<< eval END\n  one\n  two{y}\nEND\necho x")'
+  call assert_fails(cmd, 'E121: Undefined variable: y')
 
   " skipped heredoc
   if 0
