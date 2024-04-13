@@ -283,6 +283,7 @@ local extension = {
   cbl = 'cobol',
   atg = 'coco',
   recipe = 'conaryrecipe',
+  ctags = 'conf',
   hook = function(path, bufnr)
     return M._getline(bufnr, 1) == '[Trigger]' and 'confini' or nil
   end,
@@ -1305,6 +1306,9 @@ local filename = {
   ['auto.master'] = 'conf',
   ['texdoc.cnf'] = 'conf',
   ['.x11vncrc'] = 'conf',
+  ['.chktexrc'] = 'conf',
+  ['.ripgreprc'] = 'conf',
+  ripgreprc = 'conf',
   ['configure.in'] = 'config',
   ['configure.ac'] = 'config',
   crontab = 'crontab',
