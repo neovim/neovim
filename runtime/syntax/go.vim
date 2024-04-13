@@ -5,7 +5,7 @@
 " go.vim: Vim syntax file for Go.
 " Language:             Go
 " Maintainer:           Billie Cleek <bhcleek@gmail.com>
-" Latest Revision:      2024-03-17
+" Latest Revision:      2024-04-13
 "  2024-03-17:          - fix goPackageComment highlight (by Vim Project)
 " License:              BSD-style. See LICENSE file in source repository.
 " Repository:           https://github.com/fatih/vim-go
@@ -191,7 +191,7 @@ else
   syn region      goRawString         start=+`+ end=+`+
 endif
 
-syn match       goImportString      /^\%(\s\+\|import \)\(\h\w* \)\?\zs"[^"]\+"$/ contained containedin=goImport
+syn match       goImportString      /^\%(\s\+\|import \)\(\h\w* \)\?\zs"[^"]\+"/ contained containedin=goImport
 
 if s:HighlightFormatStrings()
   " [n] notation is valid for specifying explicit argument indexes
