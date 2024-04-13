@@ -1650,7 +1650,7 @@ describe('TUI', function()
     eq(expected, rv)
   end)
 
-  it('allows grid to assume wider ambiguous-width characters than host terminal #19686', function()
+  it('allows grid to assume wider ambiwidth chars than host terminal', function()
     child_session:request(
       'nvim_buf_set_lines',
       0,
@@ -1691,6 +1691,50 @@ describe('TUI', function()
     child_session:request('nvim_call_function', 'setcellwidths', { { { 0x2103, 0x2103, 2 } } })
     screen:expect(doublewidth_screen)
     child_session:request('nvim_call_function', 'setcellwidths', { { { 0x2103, 0x2103, 1 } } })
+    screen:expect(singlewidth_screen)
+  end)
+
+  it('allows grid to assume wider non-ambiwidth chars than host terminal', function()
+    child_session:request(
+      'nvim_buf_set_lines',
+      0,
+      0,
+      -1,
+      true,
+      { ('✓'):rep(60), ('✓'):rep(60) }
+    )
+    child_session:request('nvim_set_option_value', 'cursorline', true, {})
+    child_session:request('nvim_set_option_value', 'list', true, {})
+    child_session:request('nvim_set_option_value', 'listchars', 'eol:$', { win = 0 })
+    feed_data('gg')
+    local singlewidth_screen = [[
+      {13:✓}{12:✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓}|
+      {12:✓✓✓✓✓✓✓✓✓✓}{15:$}{12:                                       }|
+      ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓|
+      ✓✓✓✓✓✓✓✓✓✓{4:$}                                       |
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]
+    -- When grid assumes "✓" to be double-width but host terminal assumes it to be single-width,
+    -- the second cell of "✓" is a space and the attributes of the "✓" are applied to it.
+    local doublewidth_screen = [[
+      {13:✓}{12: ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ }|
+      {12:✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ }|
+      {12:✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ }{15:$}{12:                             }|
+      ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ {4:@@@@}|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]
+    screen:expect(singlewidth_screen)
+    child_session:request('nvim_set_option_value', 'ambiwidth', 'double', {})
+    screen:expect_unchanged()
+    child_session:request('nvim_call_function', 'setcellwidths', { { { 0x2713, 0x2713, 2 } } })
+    screen:expect(doublewidth_screen)
+    child_session:request('nvim_set_option_value', 'ambiwidth', 'single', {})
+    screen:expect_unchanged()
+    child_session:request('nvim_call_function', 'setcellwidths', { { { 0x2713, 0x2713, 1 } } })
     screen:expect(singlewidth_screen)
   end)
 

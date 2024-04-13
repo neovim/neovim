@@ -963,17 +963,17 @@ static void print_spaces(TUIData *tui, int width)
   }
 }
 
-/// Move cursor to the position given by `row` and `col` and print the character in `cell`.
-/// This allows the grid and the host terminal to assume different widths of ambiguous-width chars.
+/// Move cursor to the position given by `row` and `col` and print the char in `cell`.
+/// Allows grid and host terminal to assume different widths of ambiguous-width chars.
 ///
-/// @param is_doublewidth  whether the character is double-width on the grid.
-///                        If true and the character is ambiguous-width, clear two cells.
+/// @param is_doublewidth  whether the char is double-width on the grid.
+///                        If true and the char is ambiguous-width, clear two cells.
 static void print_cell_at_pos(TUIData *tui, int row, int col, UCell *cell, bool is_doublewidth)
 {
   UGrid *grid = &tui->grid;
 
   if (grid->row == -1 && cell->data == NUL) {
-    // If cursor needs to repositioned and there is nothing to print, don't move cursor.
+    // If cursor needs repositioning and there is nothing to print, don't move cursor.
     return;
   }
 
@@ -981,10 +981,14 @@ static void print_cell_at_pos(TUIData *tui, int row, int col, UCell *cell, bool 
 
   char buf[MAX_SCHAR_SIZE];
   schar_get(buf, cell->data);
-  bool is_ambiwidth = utf_ambiguous_width(utf_ptr2char(buf));
-  if (is_ambiwidth && is_doublewidth) {
+  int c = utf_ptr2char(buf);
+  bool is_ambiwidth = utf_ambiguous_width(c);
+  if (is_doublewidth && (is_ambiwidth || utf_char2cells(c) == 1)) {
+    // If the server used setcellwidths() to treat a single-width char as double-width,
+    // it needs to be treated like an ambiguous-width char.
+    is_ambiwidth = true;
     // Clear the two screen cells.
-    // If the character is single-width in the host terminal it won't change the second cell.
+    // If the char is single-width in host terminal it won't change the second cell.
     update_attrs(tui, cell->attr);
     print_spaces(tui, 2);
     cursor_goto(tui, row, col);
@@ -993,7 +997,7 @@ static void print_cell_at_pos(TUIData *tui, int row, int col, UCell *cell, bool 
   print_cell(tui, buf, cell->attr);
 
   if (is_ambiwidth) {
-    // Force repositioning cursor after printing an ambiguous-width character.
+    // Force repositioning cursor after printing an ambiguous-width char.
     grid->row = -1;
   }
 }
