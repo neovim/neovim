@@ -1660,6 +1660,7 @@ local filename = {
   ['.clang-format'] = 'yaml',
   ['.clang-tidy'] = 'yaml',
   ['yarn.lock'] = 'yaml',
+  matplotlibrc = 'yaml',
   zathurarc = 'zathurarc',
   ['/etc/zprofile'] = 'zsh',
   ['.zlogin'] = 'zsh',
