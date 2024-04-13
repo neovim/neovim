@@ -4895,7 +4895,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]])
   end)
 
-  it('works with full page scrolling #28390', function()
+  it('works with full page scrolling #28290', function()
     screen:try_resize(20, 8)
     command('call setline(1, range(20))')
     api.nvim_buf_set_extmark(0, ns, 10, 0, { virt_lines = {{{'VIRT1'}}, {{'VIRT2'}}} })
