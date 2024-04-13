@@ -1023,6 +1023,17 @@ static void parse_border_style(Object style, WinConfig *fconfig, Error *err)
   }
 }
 
+static void generate_api_error(win_T *wp, const char *attribute, Error *err)
+{
+  if (wp->w_floating) {
+    api_set_error(err, kErrorTypeValidation,
+                  "Missing 'relative' field when reconfiguring floating window %d",
+                  wp->handle);
+  } else {
+    api_set_error(err, kErrorTypeValidation, "non-float cannot have '%s'", attribute);
+  }
+}
+
 static bool parse_float_config(win_T *wp, Dict(win_config) *config, WinConfig *fconfig, bool reconf,
                                Error *err)
 {
@@ -1083,7 +1094,7 @@ static bool parse_float_config(win_T *wp, Dict(win_config) *config, WinConfig *f
 
   if (HAS_KEY_X(config, row)) {
     if (!has_relative || is_split) {
-      api_set_error(err, kErrorTypeValidation, "non-float cannot have 'row'");
+      generate_api_error(wp, "row", err);
       return false;
     }
     fconfig->row = config->row;
@@ -1091,7 +1102,7 @@ static bool parse_float_config(win_T *wp, Dict(win_config) *config, WinConfig *f
 
   if (HAS_KEY_X(config, col)) {
     if (!has_relative || is_split) {
-      api_set_error(err, kErrorTypeValidation, "non-float cannot have 'col'");
+      generate_api_error(wp, "col", err);
       return false;
     }
     fconfig->col = config->col;
@@ -1099,7 +1110,7 @@ static bool parse_float_config(win_T *wp, Dict(win_config) *config, WinConfig *f
 
   if (HAS_KEY_X(config, bufpos)) {
     if (!has_relative || is_split) {
-      api_set_error(err, kErrorTypeValidation, "non-float cannot have 'bufpos'");
+      generate_api_error(wp, "bufpos", err);
       return false;
     } else {
       if (!parse_float_bufpos(config->bufpos, &fconfig->bufpos)) {
