@@ -179,8 +179,15 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
   int text_indent_len = 0;
   char *text_indent = NULL;
   char dot[] = ".";
+  bool heredoc_in_string = false;
+  char *line_arg = NULL;
+  char *nl_ptr = vim_strchr(cmd, '\n');
 
-  if (eap->ea_getline == NULL && vim_strchr(cmd, '\n') == NULL) {
+  if (nl_ptr != NULL) {
+    heredoc_in_string = true;
+    line_arg = nl_ptr + 1;
+    *nl_ptr = NUL;
+  } else if (eap->ea_getline == NULL) {
     emsg(_(e_cannot_use_heredoc_here));
     return NULL;
   }
@@ -217,17 +224,11 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
   }
 
   const char comment_char = '"';
-  bool heredoc_in_string = false;
-  char *line_arg = NULL;
   // The marker is the next word.
   if (*cmd != NUL && *cmd != comment_char) {
     marker = skipwhite(cmd);
-    char *p = skiptowhite_or_nl(marker);
-    if (*p == NL) {
-      // heredoc in a string
-      line_arg = p + 1;
-      heredoc_in_string = true;
-    } else if (*skipwhite(p) != NUL && *skipwhite(p) != comment_char) {
+    char *p = skiptowhite(marker);
+    if (*skipwhite(p) != NUL && *skipwhite(p) != comment_char) {
       semsg(_(e_trailing_arg), p);
       return NULL;
     }
