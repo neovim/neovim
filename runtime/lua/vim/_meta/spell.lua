@@ -20,7 +20,7 @@
 --- ```
 ---
 --- @param str string
---- @return {[1]: string, [2]: string, [3]: string}[]
+--- @return {[1]: string, [2]: string, [3]: integer}[]
 ---   List of tuples with three items:
 ---     - The badly spelled word.
 ---     - The type of the spelling error:
