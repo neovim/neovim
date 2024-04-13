@@ -299,7 +299,7 @@ void update_topline(win_T *wp)
       // scrolling down is never needed.
       if (wp->w_cursor.lnum < wp->w_topline) {
         check_topline = true;
-      } else if (check_top_offset()) {
+      } else if (check_top_offset(wp)) {
         check_topline = true;
       } else if (wp->w_skipcol > 0 && wp->w_cursor.lnum == wp->w_topline) {
         colnr_T vcol;
@@ -349,7 +349,7 @@ void update_topline(win_T *wp)
       if (n >= halfheight) {
         scroll_cursor_halfway(wp, false, false);
       } else {
-        scroll_cursor_top(wp, scrolljump_value(), false);
+        scroll_cursor_top(wp, scrolljump_value(wp), false);
         check_botline = true;
       }
     } else {
@@ -422,7 +422,7 @@ void update_topline(win_T *wp)
           line_count = wp->w_cursor.lnum - wp->w_botline + 1 + (int)(*so_ptr);
         }
         if (line_count <= wp->w_height_inner + 1) {
-          scroll_cursor_bot(wp, scrolljump_value(), false);
+          scroll_cursor_bot(wp, scrolljump_value(wp), false);
         } else {
           scroll_cursor_halfway(wp, false, false);
         }
@@ -455,33 +455,30 @@ void update_topline(win_T *wp)
   *so_ptr = save_so;
 }
 
-// Return the scrolljump value to use for the current window.
-// When 'scrolljump' is positive use it as-is.
-// When 'scrolljump' is negative use it as a percentage of the window height.
-static int scrolljump_value(void)
+/// Return the scrolljump value to use for the window "wp".
+/// When 'scrolljump' is positive use it as-is.
+/// When 'scrolljump' is negative use it as a percentage of the window height.
+static int scrolljump_value(win_T *wp)
 {
-  int result = p_sj >= 0 ? (int)p_sj : (curwin->w_height_inner * (int)(-p_sj)) / 100;
+  int result = p_sj >= 0 ? (int)p_sj : (wp->w_height_inner * (int)(-p_sj)) / 100;
   return result;
 }
 
-// Return true when there are not 'scrolloff' lines above the cursor for the
-// current window.
-static bool check_top_offset(void)
+/// Return true when there are not 'scrolloff' lines above the cursor for window "wp".
+static bool check_top_offset(win_T *wp)
 {
-  int so = get_scrolloff_value(curwin);
-  if (curwin->w_cursor.lnum < curwin->w_topline + so
-      || hasAnyFolding(curwin)) {
+  int so = get_scrolloff_value(wp);
+  if (wp->w_cursor.lnum < wp->w_topline + so || hasAnyFolding(wp)) {
     lineoff_T loff;
-    loff.lnum = curwin->w_cursor.lnum;
+    loff.lnum = wp->w_cursor.lnum;
     loff.fill = 0;
-    int n = curwin->w_topfill;          // always have this context
+    int n = wp->w_topfill;  // always have this context
     // Count the visible screen lines above the cursor line.
     while (n < so) {
-      topline_back(curwin, &loff);
+      topline_back(wp, &loff);
       // Stop when included a line above the window.
-      if (loff.lnum < curwin->w_topline
-          || (loff.lnum == curwin->w_topline
-              && loff.fill > 0)) {
+      if (loff.lnum < wp->w_topline
+          || (loff.lnum == wp->w_topline && loff.fill > 0)) {
         break;
       }
       n += loff.height;
