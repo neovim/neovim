@@ -1546,7 +1546,7 @@ LanguageTree:invalidate({reload})                  *LanguageTree:invalidate()*
 
     Should only be called when the tracked state of the LanguageTree is not
     valid against the parse tree in treesitter. Doesn't clear filesystem
-    cache. Called often, so needs to be fast.
+    cache.
 
     Parameters: ~
       • {reload}  (`boolean?`)
@@ -1693,10 +1693,7 @@ LanguageTree:tree_for_range({range}, {opts})
 
 LanguageTree:trees()                                    *LanguageTree:trees()*
     Returns all trees of the regions parsed by this parser. Does not include
-    child languages. The result is list-like if
-    • this LanguageTree is the root, in which case the result is empty or a
-      singleton list; or
-    • the root LanguageTree is fully parsed.
+    child languages.
 
     Return: ~
         (`table<integer, TSTree>`)
