@@ -1,10 +1,8 @@
-local ts = vim.treesitter
-
-local Range = require('vim.treesitter._range')
-
 local api = vim.api
+local ts = vim.treesitter
+local Range = vim.treesitter._range
 
----@class TS.FoldInfo
+---@class vim.treesitter.FoldInfo
 ---@field levels string[] the foldexpr result for each line
 ---@field levels0 integer[] the raw fold levels
 ---@field edits? {[1]: integer, [2]: integer} line range edited since the last invocation of the callback scheduled in on_bytes. 0-indexed, end-exclusive.
@@ -124,8 +122,8 @@ end
 -- TODO(lewis6991): Setup a decor provider so injections folds can be parsed
 -- as the window is redrawn
 ---@param bufnr integer
----@param info TS.FoldInfo
----@param srow integer?
+---@param info vim.treesitter.FoldInfo
+---@param srow integer? 0-indexed, inclusive
 ---@param erow integer? 0-indexed, exclusive
 ---@param parse_injections? boolean
 local function get_folds_levels(bufnr, info, srow, erow, parse_injections)
@@ -226,7 +224,8 @@ end
 
 local M = {}
 
----@type table<integer,TS.FoldInfo>
+--- Used as a per-buffer cache for the foldexpr
+--- @type table<integer,vim.treesitter.FoldInfo>
 local foldinfos = {}
 
 local group = api.nvim_create_augroup('treesitter/fold', {})
@@ -285,7 +284,7 @@ local function schedule_if_loaded(bufnr, fn)
 end
 
 ---@param bufnr integer
----@param foldinfo TS.FoldInfo
+---@param foldinfo vim.treesitter.FoldInfo
 ---@param tree_changes Range4[]
 local function on_changedtree(bufnr, foldinfo, tree_changes)
   schedule_if_loaded(bufnr, function()
@@ -304,7 +303,7 @@ local function on_changedtree(bufnr, foldinfo, tree_changes)
 end
 
 ---@param bufnr integer
----@param foldinfo TS.FoldInfo
+---@param foldinfo vim.treesitter.FoldInfo
 ---@param start_row integer
 ---@param old_row integer
 ---@param old_col integer
@@ -359,13 +358,26 @@ function M.foldexpr(lnum)
   lnum = lnum or vim.v.lnum
   local bufnr = api.nvim_get_current_buf()
 
-  local parser = vim.F.npcall(ts.get_parser, bufnr)
-  if not parser then
-    return '0'
-  end
-
   if not foldinfos[bufnr] then
     foldinfos[bufnr] = FoldInfo.new()
+
+    -- Make sure to invalidate the foldinfo cache upon |nvim_buf_detach_event|
+    vim.api.nvim_buf_attach(bufnr, false, {
+      on_detach = function()
+        foldinfos[bufnr] = nil
+      end,
+    })
+
+    ---@type LanguageTree?
+    local parser = vim.F.npcall(ts.get_parser, bufnr)
+    if not parser then
+      -- get_parser() is expensive, especially when the parser is not avilable.
+      -- Return early and cache the foldinfo, so that get_parser() won't be called again.
+      -- TODO(wookayin): Consider showing helpful warning messages once rather than silence.
+      return '0'
+    end
+
+    -- Perform a full calculation of foldlevel once for the first time.
     get_folds_levels(bufnr, foldinfos[bufnr])
 
     parser:register_cbs({
@@ -375,10 +387,6 @@ function M.foldexpr(lnum)
 
       on_bytes = function(_, _, start_row, start_col, _, old_row, old_col, _, new_row, new_col, _)
         on_bytes(bufnr, foldinfos[bufnr], start_row, start_col, old_row, old_col, new_row, new_col)
-      end,
-
-      on_detach = function()
-        foldinfos[bufnr] = nil
       end,
     })
   end
