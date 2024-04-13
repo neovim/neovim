@@ -175,7 +175,7 @@ do
       end
       local info = vim.api.nvim_get_chan_info(vim.bo[args.buf].channel)
       local argv = info.argv or {}
-      if #argv == 1 and argv[1] == vim.o.shell then
+      if table.concat(argv, ' ') == vim.o.shell then
         vim.api.nvim_buf_delete(args.buf, { force = true })
       end
     end,
