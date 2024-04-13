@@ -77,14 +77,26 @@ local TSCallbackNames = {
 ---@field private _opts table Options
 ---@field private _parser TSParser Parser for language
 ---@field private _has_regions boolean
----@field private _regions table<integer, Range6[]>?
+---
 ---List of regions this tree should manage and parse. If nil then regions are
 ---taken from _trees. This is mostly a short-lived cache for included_regions()
+---@field private _regions table<integer, Range6[]>?
+---
+---Inverse region table, i.e., a (chaining) hash table from regions to their index in `_region`.
+---Used for checking if an added region is already managed by this parser, so that it can reuse
+---the existing tree for incremental parsing.
+---The hash function is simply `region[1][3]` (the start byte of its first range).
+---Each bucket has the shape of { region1, index of region1, region2, index of region2, ... }.
+---@field private _regions_inv table<integer, (Range6[]|integer)[]>?
+---
 ---@field private _lang string Language name
 ---@field private _parent? vim.treesitter.LanguageTree Parent LanguageTree
 ---@field private _source (integer|string) Buffer or string to parse
----@field private _trees table<integer, TSTree> Reference to parsed tree (one for each language).
+---
+---Reference to parsed tree (one for each language).
 ---Each key is the index of region, which is synced with _regions and _valid.
+---@field private _trees table<integer, TSTree>
+---
 ---@field private _valid boolean|table<integer,boolean> If the parsed tree is valid
 ---@field private _logger? fun(logtype: string, msg: string)
 ---@field private _logfile? file*
@@ -228,7 +240,7 @@ end
 --- Invalidates this parser and its children.
 ---
 --- Should only be called when the tracked state of the LanguageTree is not valid against the parse
---- tree in treesitter. Doesn't clear filesystem cache. Called often, so needs to be fast.
+--- tree in treesitter. Doesn't clear filesystem cache.
 ---@param reload boolean|nil
 function LanguageTree:invalidate(reload)
   self._valid = false
@@ -248,9 +260,6 @@ end
 
 --- Returns all trees of the regions parsed by this parser.
 --- Does not include child languages.
---- The result is list-like if
---- * this LanguageTree is the root, in which case the result is empty or a singleton list; or
---- * the root LanguageTree is fully parsed.
 ---
 ---@return table<integer, TSTree>
 function LanguageTree:trees()
@@ -407,6 +416,14 @@ function LanguageTree:_add_injections()
   end
 
   return query_time
+end
+
+---@param region (Range)[]
+---@return Range4
+local function region_range(region)
+  local srow, scol, _, _ = Range.unpack4(region[1])
+  local _, _, erow, ecol = Range.unpack4(region[#region])
+  return { srow, scol, erow, ecol }
 end
 
 --- Recursively parse all regions in the language tree using |treesitter-parsers|
@@ -585,6 +602,125 @@ function LanguageTree:_iter_regions(fn)
   end
 end
 
+---Add a region to the inverse region table.
+---@param regions_inv table<integer, (Range6[]|integer)[]>
+---@param i integer
+---@param region Range6[]
+local function regions_inv_insert(regions_inv, i, region)
+  local start_byte = region[1][3]
+  local bucket = regions_inv[start_byte]
+  if not bucket then
+    regions_inv[start_byte] = { region, i }
+  else
+    table.insert(bucket, region)
+    table.insert(bucket, i)
+  end
+end
+
+---Remove a region from the inverse region table.
+---@param regions_inv table<integer, (Range6[]|integer)[]>
+---@param region Range6[]
+local function regions_inv_remove(regions_inv, region)
+  local start_byte = region[1][3]
+  local bucket = assert(regions_inv[start_byte])
+  for e = 1, #bucket, 2 do
+    if vim.deep_equal(bucket[e], region) then
+      table.remove(bucket, e + 1)
+      table.remove(bucket, e)
+      if #bucket == 0 then
+        regions_inv[start_byte] = nil
+      end
+      return
+    end
+  end
+  error('region not found')
+end
+
+---Whether two region values are approximately equal. Should be implied by equality.
+---See the comment in `set_included_regions` on why we use similarity.
+---For now it simply compares the last bytes of the first and the last regions.
+---@param region1 Range6[]
+---@param region2 Range6[]
+---@return boolean
+local function region_similar(region1, region2)
+  return region1[1][6] == region2[1][6] or region1[#region1][6] == region2[#region2][6]
+end
+
+---Find the given region from the inverse region table.
+---If there is no exact match, find an approximately matching region.
+---@param regions_inv table<integer, (Range6[]|integer)[]>
+---@param region Range6[]
+---@return integer?
+---@return boolean? exact
+local function regions_inv_lookup(regions_inv, region)
+  local bucket = regions_inv[region[1][3]]
+  if not bucket then
+    return
+  end
+
+  local i ---@type integer?
+  for e = 1, #bucket, 2 do
+    local old_region = bucket[e] --[[@as Range6[] ]]
+    if region_similar(old_region, region) then
+      i = bucket[e + 1] --[[@as integer]]
+      if vim.deep_equal(old_region, region) then
+        return i, true
+      end
+    end
+  end
+
+  return i, false
+end
+
+---@param i integer
+function LanguageTree:_invalidate_region(i)
+  if self._valid == true then
+    self._valid = {}
+    for j, _ in pairs(self._regions) do
+      self._valid[j] = true
+    end
+    self._valid[i] = false
+  elseif type(self._valid) == 'table' then
+    self._valid[i] = false
+  end
+end
+
+---@param i integer
+function LanguageTree:_discard_region(i)
+  if not self._has_regions then
+    return
+  end
+
+  if self._regions then
+    regions_inv_remove(self._regions_inv, self._regions[i])
+    self._regions[i] = nil
+  end
+
+  if self._trees[i] then
+    local region = self._trees[i]:included_ranges(true)
+    self:_log(function()
+      return 'discarding region', i, region_tostr(region)
+    end)
+    self:_do_callback('changedtree', region, self._trees[i])
+    local discarded_range = region_range(region)
+    self._trees[i] = nil
+    -- Discard children's regions that are included in the discarded region. This is necessary
+    -- because changes that only remove trees in this parser keep the children parsers untouched.
+    for _, child in pairs(self._children) do
+      for child_i, child_region in pairs(child:included_regions()) do
+        if Range.contains(discarded_range, region_range(child_region)) then
+          child:_discard_region(child_i)
+        end
+      end
+    end
+  end
+
+  -- If it's boolean (fully valid/invalid), deleting a region doesn't change its value.
+  if type(self._valid) == 'table' then
+    self._valid[i] = nil
+  end
+end
+
 --- Sets the included regions that should be parsed by this |LanguageTree|.
 --- A region is a set of nodes and/or ranges that will be parsed in the same context.
 ---
@@ -604,7 +740,23 @@ end
 function LanguageTree:set_included_regions(new_regions)
   self._has_regions = true
 
-  -- Transform the tables from 4 element long to 6 element long (with byte offset)
+  -- Refresh self._regions and self._regions_inv
+  self:included_regions()
+
+  local touched = {} ---@type table<integer, true>
+
+  -- Check if the parser already has each region so that they can be parsed incrementally from an
+  -- existing tree. We find the existing regions by "similarity" instead of the exact equality,
+  -- because the values of an existing region and the matching region in `new_regions` may not be
+  -- equal, in which case the existing tree can't be reused.
+  --
+  -- Inequality of matching regions happens because `_edit` does not accurately track changes in the
+  -- existing regions. One (probably the only?) case is when a multi-range region created from a
+  -- non-`include-children` injection or a combined injection is edited in a way that adds a range
+  -- to the region, e.g., when adding a line in markdown fenced code block (with language).
+  --
+  -- Matching the regions doesn't need to precise: the consequence of false match and false
+  -- non-match is just a minor loss in efficiency due to reparsing a region from scratch.
   for _, region in ipairs(new_regions) do
     for i, range in ipairs(region) do
       if type(range) == 'table' and #range == 4 then
@@ -613,26 +765,50 @@ function LanguageTree:set_included_regions(new_regions)
         region[i] = { range:range(true) }
       end
     end
-  end
+    ---@cast region Range6[]
 
-  -- included_regions is not guaranteed to be list-like, but this is still sound, i.e. if
-  -- new_regions is different from included_regions, then outdated regions in included_regions are
-  -- invalidated. For example, if included_regions = new_regions ++ hole ++ outdated_regions, then
-  -- outdated_regions is invalidated by _iter_regions in else branch.
-  if #self:included_regions() ~= #new_regions then
-    -- TODO(lewis6991): inefficient; invalidate trees incrementally
-    for _, t in pairs(self._trees) do
-      self:_do_callback('changedtree', t:included_ranges(true), t)
+    local i, exact = regions_inv_lookup(self._regions_inv, region)
+
+    if not exact then
+      if i then
+        self:_log(function()
+          return 'invalidating inexactly matched region', i, region_tostr(self._regions[i])
+        end)
+        regions_inv_remove(self._regions_inv, self._regions[i])
+      else
+        i = #self._regions + 1 -- this always gives an unoccupied index even if there are holes
+      end
+      self._regions[i] = region
+      regions_inv_insert(self._regions_inv, i, region)
+      self:_invalidate_region(i)
     end
-    self._trees = {}
-    self:invalidate()
-  else
-    self:_iter_regions(function(i, region)
-      return vim.deep_equal(new_regions[i], region)
-    end)
+    ---@cast i integer
+
+    touched[i] = true
   end
 
-  self._regions = new_regions
+  -- Discard stale regions.
+  for i, _ in pairs(self._regions) do
+    if not touched[i] then
+      self:_discard_region(i)
+    end
+  end
+end
+
+--- @param region Range6[]
+local function prune_empty_ranges(region)
+  local cur = 1
+  for i, range in ipairs(region) do
+    if range[3] ~= range[6] then
+      if cur < i then
+        region[cur] = range
+      end
+      cur = cur + 1
+    end
+  end
+  for i = #region, cur, -1 do
+    region[i] = nil
+  end
 end
 
 ---Gets the set of included regions managed by this LanguageTree. This can be different from the
@@ -649,12 +825,27 @@ function LanguageTree:included_regions()
     return { {} }
   end
 
-  local regions = {} ---@type Range6[][]
+  local regions = {} ---@type table<integer, Range6[]>
+  local regions_inv = {} ---@type table<integer, (Range6[]|integer)[]>
   for i, _ in pairs(self._trees) do
-    regions[i] = self._trees[i]:included_ranges(true)
+    local region = self._trees[i]:included_ranges(true)
+    -- If user deletes a range in a region, `tree:edit()` leaves an empty range instead of deleting
+    -- it. This could be a bug in treesitter.
+    prune_empty_ranges(region)
+    if #region > 0 then
+      regions[i] = region
+      regions_inv_insert(regions_inv, i, region)
+    else
+      self._trees[i] = nil
+      -- If it's boolean (fully valid/invalid), deleting a region doesn't change its value.
+      if type(self._valid) == 'table' then
+        self._valid[i] = nil
+      end
+    end
   end
 
   self._regions = regions
+  self._regions_inv = regions_inv
   return regions
 end
 
@@ -912,6 +1103,7 @@ function LanguageTree:_edit(
   end
 
   self._regions = nil
+  self._regions_inv = nil
 
   local changed_range = {
     start_row,
@@ -1075,14 +1267,7 @@ end
 ---@param range Range
 ---@return boolean
 local function tree_contains(tree, range)
-  local tree_ranges = tree:included_ranges(false)
-
-  return Range.contains({
-    tree_ranges[1][1],
-    tree_ranges[1][2],
-    tree_ranges[#tree_ranges][3],
-    tree_ranges[#tree_ranges][4],
-  }, range)
+  return Range.contains(region_range(tree:included_ranges(false)), range)
 end
 
 --- Determines whether {range} is contained in the |LanguageTree|.
