@@ -1295,6 +1295,8 @@ local filename = {
   ['/etc/defaults/cdrdao'] = 'cdrdaoconf',
   ['cfengine.conf'] = 'cfengine',
   cgdbrc = 'cgdbrc',
+  ['init.trans'] = 'clojure',
+  ['.trans'] = 'clojure',
   ['CMakeLists.txt'] = 'cmake',
   ['.cling_history'] = 'cpp',
   ['.alias'] = detect.csh,
@@ -1738,6 +1740,7 @@ local pattern = {
   },
   ['[cC]hange[lL]og.*'] = starsetf(detect.changelog),
   ['.*%.%.ch'] = 'chill',
+  ['.*/etc/translate%-shell'] = 'clojure',
   ['.*%.cmake%.in'] = 'cmake',
   -- */cmus/rc and */.cmus/rc
   ['.*/%.?cmus/rc'] = 'cmusrc',

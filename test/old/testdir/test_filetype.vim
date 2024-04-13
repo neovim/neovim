@@ -156,7 +156,7 @@ func s:GetFilenameChecks() abort
     \ 'chuck': ['file.ck'],
     \ 'cl': ['file.eni'],
     \ 'clean': ['file.dcl', 'file.icl'],
-    \ 'clojure': ['file.clj', 'file.cljs', 'file.cljx', 'file.cljc'],
+    \ 'clojure': ['file.clj', 'file.cljs', 'file.cljx', 'file.cljc', 'init.trans', 'any/etc/translate-shell', '.trans'],
     \ 'cmake': ['CMakeLists.txt', 'file.cmake', 'file.cmake.in'],
     \ 'cmod': ['file.cmod'],
     \ 'cmusrc': ['any/.cmus/autosave', 'any/.cmus/rc', 'any/.cmus/command-history', 'any/.cmus/file.theme', 'any/cmus/rc', 'any/cmus/file.theme', '/.cmus/autosave', '/.cmus/command-history', '/.cmus/file.theme', '/.cmus/rc', '/cmus/file.theme', '/cmus/rc'],
