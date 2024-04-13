@@ -413,12 +413,15 @@ describe('path.c', function()
     end)
 
     itp('fails and uses filename if given filename contains non-existing directory', function()
-      local filename = 'non_existing_dir/test.file'
-      local buflen = string.len(filename) + 1
-      local do_expand = 1
-      local buf, result = vim_FullName(filename, buflen, do_expand)
-      eq(filename, ffi.string(buf))
-      eq(FAIL, result)
+      -- test with different filename lengths
+      for rep = 1, 10 do
+        local filename = ('non_existing_'):rep(rep) .. 'dir/test.file'
+        local buflen = string.len(filename) + 1
+        local do_expand = 1
+        local buf, result = vim_FullName(filename, buflen, do_expand)
+        eq(filename, ffi.string(buf))
+        eq(FAIL, result)
+      end
     end)
 
     itp('concatenates filename if it does not contain a slash', function()

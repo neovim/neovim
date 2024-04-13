@@ -2301,7 +2301,9 @@ int path_full_dir_name(char *directory, char *buffer, size_t len)
       retval = FAIL;
     } else {
       xstrlcpy(buffer, old_dir, len);
-      append_path(buffer, directory, len);
+      if (append_path(buffer, directory, len) == FAIL) {
+        retval = FAIL;
+      }
     }
   } else if (os_dirname(buffer, len) == FAIL) {
     // Do not return immediately since we are in the wrong directory.
