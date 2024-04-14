@@ -114,8 +114,6 @@ jobs:
             build: { flavor: tsan }
           - test: unittest
             build: { flavor: puc-lua }
-          - test: unittest
-            build: { runner: macos-14 } # unittests don't work on M1 #26145
           - test: oldtest
             build: { flavor: tsan }
     runs-on: ${{ matrix.build.runner }}
