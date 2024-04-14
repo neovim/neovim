@@ -417,6 +417,10 @@ function M.is_arch(s)
   return s == architecture
 end
 
+function M.is_asan()
+  return M.paths.is_asan
+end
+
 local tmpname_id = 0
 local tmpdir = os.getenv('TMPDIR') or os.getenv('TEMP')
 local tmpdir_is_local = not not (tmpdir and tmpdir:find('Xtest'))
