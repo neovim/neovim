@@ -99,3 +99,12 @@ if(res)
 
   message(FATAL_ERROR "${TEST_TYPE} tests failed with error: ${res}")
 endif()
+
+if(CI_BUILD)
+  file(SIZE $ENV{NVIM_LOG_FILE} FILE_SIZE)
+  if(NOT ${FILE_SIZE} MATCHES "^0$")
+    file(READ $ENV{NVIM_LOG_FILE} out)
+    message(STATUS "$NVIM_LOG_FILE: $ENV{NVIM_LOG_FILE}\n${out}")
+    message(FATAL_ERROR "$NVIM_LOG_FILE is not empty")
+  endif()
+endif()

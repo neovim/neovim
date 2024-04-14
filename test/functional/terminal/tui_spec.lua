@@ -2804,6 +2804,7 @@ describe('TUI', function()
   it('with non-tty (pipe) stdout/stderr', function()
     finally(function()
       os.remove('testF')
+      os.remove(testlog)
     end)
     local screen = tt.setup_screen(
       0,
@@ -2811,16 +2812,19 @@ describe('TUI', function()
         nvim_prog
       ),
       nil,
-      { VIMRUNTIME = os.getenv('VIMRUNTIME') }
+      { VIMRUNTIME = os.getenv('VIMRUNTIME'), NVIM_LOG_FILE = testlog }
     )
     feed_data(':w testF\n:q\n')
     screen:expect([[
       :w testF                                          |
       :q                                                |
-      ^                                                  |
-                                                        |*3
+      abc                                               |
+                                                        |
+      [Process exited 0]^                                |
+                                                        |
       {5:-- TERMINAL --}                                    |
     ]])
+    assert_log('TUI: timed out waiting for DA1 response', testlog)
   end)
 
   it('<C-h> #10134', function()
