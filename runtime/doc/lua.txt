@@ -2568,16 +2568,21 @@ vim.ui.open({path})                                            *vim.ui.open()*
     Expands "~/" and environment variables in filesystem paths.
 
     Examples: >lua
+        -- Asynchronous.
         vim.ui.open("https://neovim.io/")
         vim.ui.open("~/path/to/file")
-        vim.ui.open("$VIMRUNTIME")
+        -- Synchronous (wait until the process exits).
+        local cmd, err = vim.ui.open("$VIMRUNTIME")
+        if cmd then
+          cmd:wait()
+        end
 <
 
     Parameters: ~
       • {path}  (`string`) Path or URL to open
 
     Return (multiple): ~
-        (`vim.SystemCompleted?`) Command result, or nil if not found.
+        (`vim.SystemObj?`) Command object, or nil if not found.
         (`string?`) Error message on failure
 
     See also: ~
