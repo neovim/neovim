@@ -666,6 +666,7 @@ void pum_redraw(void)
 }
 
 /// create a floating preview window for info
+/// Autocommands are blocked for the duration of the call.
 /// @return  NULL when no enough room to show
 static win_T *pum_create_float_preview(bool enter)
 {
@@ -690,6 +691,9 @@ static win_T *pum_create_float_preview(bool enter)
   config.height = pum_height;
   config.style = kWinStyleMinimal;
   config.hide = true;
+
+  block_autocmds();
+
   Error err = ERROR_INIT;
   win_T *wp = win_new_float(NULL, true, config, &err);
   // TODO(glepnir): remove win_enter usage
@@ -701,6 +705,7 @@ static win_T *pum_create_float_preview(bool enter)
   Buffer b = nvim_create_buf(false, true, &err);
   if (!b) {
     win_free(wp, NULL);
+    unblock_autocmds();
     return NULL;
   }
   buf_T *buf = find_buffer_by_handle(b, &err);
@@ -709,7 +714,9 @@ static win_T *pum_create_float_preview(bool enter)
   wp->w_float_is_info = true;
   wp->w_p_diff = false;
   buf->b_p_bl = false;
-  win_set_buf(wp, buf, true, &err);
+  win_set_buf(wp, buf, &err);
+
+  unblock_autocmds();
   return wp;
 }
 
