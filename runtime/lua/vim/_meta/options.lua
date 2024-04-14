@@ -2625,6 +2625,8 @@ vim.go.gd = vim.go.gdefault
 --- This is a scanf-like string that uses the same format as the
 --- 'errorformat' option: see `errorformat`.
 ---
+--- If ripgrep ('grepprg') is available, this option defaults to `%f:%l:%c:%m`.
+---
 --- @type string
 vim.o.grepformat = "%f:%l:%m,%f:%l%m,%f  %l%m"
 vim.o.gfm = vim.o.grepformat
@@ -2649,6 +2651,16 @@ vim.go.gfm = vim.go.grepformat
 --- apply equally to 'grepprg'.
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
+--- This option defaults to:
+--- - `rg --vimgrep -uuu $* ...` if ripgrep is available (`:checkhealth`),
+--- - `grep -n $* /dev/null` on Unix,
+--- - `findstr /n $* nul` on Windows.
+--- Ripgrep can perform additional filtering such as using .gitignore rules
+--- and skipping hidden or binary files. This is disabled by default (see the -u option)
+--- to more closely match the behaviour of standard grep.
+--- You can make ripgrep match Vim's case handling using the
+--- -i/--ignore-case and -S/--smart-case options.
+--- An `OptionSet` autocmd can be used to set it up to match automatically.
 ---
 --- @type string
 vim.o.grepprg = "grep -n $* /dev/null"

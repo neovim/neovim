@@ -375,6 +375,7 @@ The following changes to existing APIs or features add new behavior.
     correctly without it. (Use |gF| for filepaths suffixed with ":line:col").
   • 'comments' includes "fb:•".
   • 'shortmess' includes the "C" flag.
+  • 'grepprg' defaults to using ripgrep if available.
   • Automatic linting of treesitter query files (see |ft-query-plugin|).
     Can be disabled via: >lua
       vim.g.query_lint_on = {}
