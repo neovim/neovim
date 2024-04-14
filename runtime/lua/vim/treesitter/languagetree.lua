@@ -325,24 +325,26 @@ function LanguageTree:source()
 end
 
 --- @param region Range6[]
---- @param range? boolean|Range
+--- @param ranges? boolean|(Range)[]
 --- @return boolean
-local function intercepts_region(region, range)
+local function intercepts_region(region, ranges)
   if #region == 0 then
     return true
   end
 
-  if range == nil then
+  if ranges == nil then
     return false
   end
 
-  if type(range) == 'boolean' then
-    return range
+  if type(ranges) == 'boolean' then
+    return ranges
   end
 
-  for _, r in ipairs(region) do
-    if Range.intercepts(r, range) then
-      return true
+  for _, r1 in ipairs(region) do
+    for _, r2 in ipairs(ranges) do
+      if Range.intercepts(r1, r2) then
+        return true
+      end
     end
   end
 
@@ -350,11 +352,11 @@ local function intercepts_region(region, range)
 end
 
 --- @private
---- @param range boolean|Range?
+--- @param ranges boolean|(Range)[]?
 --- @return Range6[] changes
 --- @return integer no_regions_parsed
 --- @return number total_parse_time
-function LanguageTree:_parse_regions(range)
+function LanguageTree:_parse_regions(ranges)
   local changes = {}
   local no_regions_parsed = 0
   local total_parse_time = 0
@@ -363,17 +365,17 @@ function LanguageTree:_parse_regions(range)
     self._valid = {}
   end
 
-  -- If there are no ranges, set to an empty list
+  -- If there is no region, set to an empty list
   -- so the included ranges in the parser are cleared.
-  for i, ranges in pairs(self:included_regions()) do
+  for i, region in pairs(self:included_regions()) do
     if
       not self._valid[i]
       and (
-        intercepts_region(ranges, range)
-        or (self._trees[i] and intercepts_region(self._trees[i]:included_ranges(false), range))
+        intercepts_region(region, ranges)
+        or (self._trees[i] and intercepts_region(self._trees[i]:included_ranges(false), ranges))
       )
     then
-      self._parser:set_included_ranges(ranges)
+      self._parser:set_included_ranges(region)
       local parse_time, tree, tree_changes =
         tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
 
@@ -394,12 +396,12 @@ function LanguageTree:_parse_regions(range)
 end
 
 --- @private
---- @param range boolean|Range|nil
+--- @param ranges boolean|(Range)[]|nil
 --- @return number
-function LanguageTree:_add_injections(range)
+function LanguageTree:_add_injections(ranges)
   local seen_langs = {} ---@type table<string,boolean>
 
-  local query_time, injections_by_lang = tcall(self._get_injections, self, range)
+  local query_time, injections_by_lang = tcall(self._get_injections, self, ranges)
   for lang, injection_regions in pairs(injections_by_lang) do
     local has_lang = pcall(language.add, lang)
 
@@ -442,12 +444,17 @@ end
 --- Any region with empty range (`{}`, typically only the root tree) is always parsed;
 --- otherwise (typically injections) only if it intersects {range} (or if {range} is `true`).
 ---
---- @param range boolean|Range|nil: Parse this range in the parser's source.
+--- @param ranges boolean|Range|(Range)[]|nil: Parse this range(s) in the parser's source.
 ---     Set to `true` to run a complete parse of the source (Note: Can be slow!)
 ---     Set to `false|nil` to only parse regions with empty ranges (typically
 ---     only the root tree without injections).
 --- @return table<integer, TSTree>
-function LanguageTree:parse(range)
+function LanguageTree:parse(ranges)
+  if type(ranges) == 'table' and #ranges > 0 and type(ranges[1]) == 'number' then
+    ranges = { ranges }
+  end
+  ---@cast ranges boolean|(Range)[]|nil
+
   local changes --- @type Range6[]?
 
   -- Collect some stats
@@ -457,7 +464,7 @@ function LanguageTree:parse(range)
 
   -- At least 1 region is invalid
   if not self:is_valid(true) then
-    changes, no_regions_parsed, total_parse_time = self:_parse_regions(range)
+    changes, no_regions_parsed, total_parse_time = self:_parse_regions(ranges)
     -- Need to run injections when we parsed something
     if no_regions_parsed > 0 then
       self._injections_processed = false
@@ -472,9 +479,9 @@ function LanguageTree:parse(range)
   -- * A potential optimization: Track the ranges where the set of injected regions are known to be
   --   complete and valid, and run the injection query only on the intersection of requested ranges
   --   and the invalid ranges. This would be even more beneficial for combined injection.
-  if self._injection_query and not self._injections_processed and range then
-    query_time = self:_add_injections(range)
-    if range == true or self._injection_query.has_combined_injection then
+  if self._injection_query and not self._injections_processed and ranges then
+    query_time = self:_add_injections(ranges)
+    if ranges == true or self._injection_query.has_combined_injection then
       self._injections_processed = true
     end
   end
@@ -484,11 +491,11 @@ function LanguageTree:parse(range)
     regions_parsed = no_regions_parsed,
     parse_time = total_parse_time,
     query_time = query_time,
-    range = range,
+    ranges = ranges,
   })
 
   for _, child in pairs(self._children) do
-    child:parse(range)
+    child:parse(ranges)
   end
 
   return self._trees
@@ -1019,22 +1026,28 @@ end
 ---
 --- This is where most of the injection processing occurs.
 ---
---- @param range boolean|Range|nil
+--- @param ranges boolean|(Range)[]|nil
 --- @private
 --- @return table<string, Range6[][]>
-function LanguageTree:_get_injections(range)
-  if not self._injection_query or not range then
+function LanguageTree:_get_injections(ranges)
+  if not self._injection_query or not ranges then
     return {}
   end
 
   ---@type table<integer,vim.treesitter.languagetree.Injection>
   local injections = {}
 
-  local range_start_line, range_end_line ---@type integer, integer
-  if range ~= true then
-    local sline, _, eline, _ = Range.unpack4(range)
-    range_start_line, range_end_line = sline, eline
+  -- Combined injection must be run on the full source, and currently there is no simply way to
+  -- selectively match each pattern separately.
+  if ranges == true or self._injection_query.has_combined_injection then
+    ranges = { true } ---@diagnostic disable-line: assign-type-mismatch
+  else
+    for i, range in ipairs(ranges) do
+      local sline, _, eline, _ = Range.unpack4(range)
+      ranges[i] = { sline, eline }
+    end
   end
+  ---@cast ranges (true|Range2)[]
 
   for index, tree in pairs(self._trees) do
     local root_node = tree:root()
@@ -1043,29 +1056,29 @@ function LanguageTree:_get_injections(range)
       end_line = end_line + 1
     end
 
-    -- If the query doesn't have combined injection, run the query on the given range. Combined
-    -- injection must be run on the full range. Currently there is no simply way to selectively
-    -- match each pattern separately.
-    if range ~= true and not self._injection_query.has_combined_injection then
-      start_line = math.max(start_line, range_start_line)
-      end_line = math.min(end_line, range_end_line)
-    end
-
-    if start_line < end_line then
-      for pattern, match, metadata in
-        self._injection_query:iter_matches(
-          root_node,
-          self._source,
-          start_line,
-          end_line,
-          { all = true }
-        )
-      do
-        local lang, combined, ranges = self:_get_injection(match, metadata)
-        if lang then
-          add_injection(injections, index, pattern, lang, combined, ranges)
-        else
-          self:_log('match from injection query failed for pattern', pattern)
+    for _, range in ipairs(ranges) do
+      local start_line_in_range, end_line_in_range = start_line, end_line
+      if range ~= true then
+        start_line_in_range = math.max(start_line, range[1])
+        end_line_in_range = math.min(end_line, range[2])
+      end
+      -- Duplicates from overlapping ranges are handled by `set_included_ranges`.
+      if start_line_in_range < end_line_in_range then
+        for pattern, match, metadata in
+          self._injection_query:iter_matches(
+            root_node,
+            self._source,
+            start_line_in_range,
+            end_line_in_range,
+            { all = true }
+          )
+        do
+          local lang, combined, inj_ranges = self:_get_injection(match, metadata)
+          if lang then
+            add_injection(injections, index, pattern, lang, combined, inj_ranges)
+          else
+            self:_log('match from injection query failed for pattern', pattern)
+          end
         end
       end
     end
@@ -1086,8 +1099,8 @@ function LanguageTree:_get_injections(range)
         if entry.combined then
           table.insert(result[lang], combine_regions(entry.regions))
         else
-          for _, ranges in pairs(entry.regions) do
-            table.insert(result[lang], ranges)
+          for _, inj_ranges in pairs(entry.regions) do
+            table.insert(result[lang], inj_ranges)
           end
         end
       end

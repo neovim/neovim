@@ -391,6 +391,23 @@ function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
   self._highlight_states = highlight_states
 end
 
+function TSHighlighter._on_start()
+  local buf_ranges = {} ---@type table<integer, (Range)[]>
+  for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
+    local buf = api.nvim_win_get_buf(win)
+    if TSHighlighter.active[buf] then
+      if not buf_ranges[buf] then
+        buf_ranges[buf] = {}
+      end
+      local topline, botline = vim.fn.line('w0', win) - 1, vim.fn.line('w$', win)
+      table.insert(buf_ranges[buf], { topline, botline })
+    end
+  end
+  for buf, ranges in pairs(buf_ranges) do
+    TSHighlighter.active[buf].tree:parse(ranges)
+  end
+end
+
 ---@private
 ---@param _win integer
 ---@param buf integer
@@ -401,13 +418,13 @@ function TSHighlighter._on_win(_, _win, buf, topline, botline)
   if not self then
     return false
   end
-  self.tree:parse({ topline, botline + 1 })
   self:prepare_highlight_states(topline, botline + 1)
   self.redraw_count = self.redraw_count + 1
   return true
 end
 
 api.nvim_set_decoration_provider(ns, {
+  on_start = TSHighlighter._on_start,
   on_win = TSHighlighter._on_win,
   on_line = TSHighlighter._on_line,
   _on_spell_nav = TSHighlighter._on_spell_nav,
