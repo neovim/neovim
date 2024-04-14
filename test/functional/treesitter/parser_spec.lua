@@ -936,6 +936,23 @@ print()
     )
 
     eq(
+      2,
+      exec_lua [[
+      parser:invalidate()
+      parser:parse({{0, 2}, {2,6}})
+      return vim.tbl_count(parser:children().lua:trees())
+    ]]
+    )
+
+    eq(
+      2,
+      exec_lua [[
+      parser:parse({{0, 5}, {2, 6}})
+      return vim.tbl_count(parser:children().lua:trees())
+    ]]
+    )
+
+    eq(
       7,
       exec_lua(function()
         _G.parser:parse(true)

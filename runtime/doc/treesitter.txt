@@ -1595,7 +1595,7 @@ LanguageTree:node_for_range({range}, {opts})
     Return: ~
         (`TSNode?`)
 
-LanguageTree:parse({range})                             *LanguageTree:parse()*
+LanguageTree:parse({ranges})                            *LanguageTree:parse()*
     Recursively parse all regions in the language tree using
     |treesitter-parsers| for the corresponding languages and run injection
     queries on the parsed trees to determine whether child trees should be
@@ -1606,11 +1606,11 @@ LanguageTree:parse({range})                             *LanguageTree:parse()*
     if {range} is `true`).
 
     Parameters: ~
-      • {range}  (`boolean|Range?`) Parse this range in the parser's source.
-                 Set to `true` to run a complete parse of the source (Note:
-                 Can be slow!) Set to `false|nil` to only parse regions with
-                 empty ranges (typically only the root tree without
-                 injections).
+      • {ranges}  (`boolean|Range|(Range)[]?`) Parse this range(s) in the
+                  parser's source. Set to `true` to run a complete parse of
+                  the source (Note: Can be slow!) Set to `false|nil` to only
+                  parse regions with empty ranges (typically only the root
+                  tree without injections).
 
     Return: ~
         (`table<integer, TSTree>`)
