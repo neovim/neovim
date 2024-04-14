@@ -546,6 +546,14 @@ void changed_window_setting(win_T *wp)
   redraw_later(wp, UPD_NOT_VALID);
 }
 
+/// Call changed_window_setting() for every window.
+void changed_window_setting_all(void)
+{
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    changed_window_setting(wp);
+  }
+}
+
 // Set wp->w_topline to a certain number.
 void set_topline(win_T *wp, linenr_T lnum)
 {
