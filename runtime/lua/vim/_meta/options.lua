@@ -53,7 +53,7 @@ vim.go.ari = vim.go.allowrevins
 --- (https://www.unicode.org/reports/tr11).
 ---
 --- @type string
-vim.o.ambiwidth = "single"
+vim.o.ambiwidth = 'single'
 vim.o.ambw = vim.o.ambiwidth
 vim.go.ambiwidth = vim.o.ambiwidth
 vim.go.ambw = vim.go.ambiwidth
@@ -209,7 +209,7 @@ vim.go.awa = vim.go.autowriteall
 --- the setting of the 'background' option.
 ---
 --- @type string
-vim.o.background = "dark"
+vim.o.background = 'dark'
 vim.o.bg = vim.o.background
 vim.go.background = vim.o.background
 vim.go.bg = vim.go.background
@@ -229,7 +229,7 @@ vim.go.bg = vim.go.background
 --- the ways mentioned for the items above are possible.
 ---
 --- @type string
-vim.o.backspace = "indent,eol,start"
+vim.o.backspace = 'indent,eol,start'
 vim.o.bs = vim.o.backspace
 vim.go.backspace = vim.o.backspace
 vim.go.bs = vim.go.backspace
@@ -314,7 +314,7 @@ vim.go.bk = vim.go.backup
 --- again not rename the file.
 ---
 --- @type string
-vim.o.backupcopy = "auto"
+vim.o.backupcopy = 'auto'
 vim.o.bkc = vim.o.backupcopy
 vim.bo.backupcopy = vim.o.backupcopy
 vim.bo.bkc = vim.bo.backupcopy
@@ -369,7 +369,7 @@ vim.go.bkc = vim.go.backupcopy
 --- security reasons.
 ---
 --- @type string
-vim.o.backupdir = ".,$XDG_STATE_HOME/nvim/backup//"
+vim.o.backupdir = '.,$XDG_STATE_HOME/nvim/backup//'
 vim.o.bdir = vim.o.backupdir
 vim.go.backupdir = vim.o.backupdir
 vim.go.bdir = vim.go.backupdir
@@ -391,7 +391,7 @@ vim.go.bdir = vim.go.backupdir
 --- Use 'backupdir' to put the backup in a different directory.
 ---
 --- @type string
-vim.o.backupext = "~"
+vim.o.backupext = '~'
 vim.o.bex = vim.o.backupext
 vim.go.backupext = vim.o.backupext
 vim.go.bex = vim.go.backupext
@@ -420,7 +420,7 @@ vim.go.bex = vim.go.backupext
 --- the newly created file).  Also see 'backupcopy' and `crontab`.
 ---
 --- @type string
-vim.o.backupskip = "/tmp/*"
+vim.o.backupskip = '/tmp/*'
 vim.o.bsk = vim.o.backupskip
 vim.go.backupskip = vim.o.backupskip
 vim.go.bsk = vim.go.backupskip
@@ -461,7 +461,7 @@ vim.go.bsk = vim.go.backupskip
 --- "error" keyword.
 ---
 --- @type string
-vim.o.belloff = "all"
+vim.o.belloff = 'all'
 vim.o.bo = vim.o.belloff
 vim.go.belloff = vim.o.belloff
 vim.go.bo = vim.go.belloff
@@ -523,7 +523,7 @@ vim.bo.bomb = vim.o.bomb
 --- break if 'linebreak' is on.  Only works for ASCII characters.
 ---
 --- @type string
-vim.o.breakat = " \t!@*-+;:,./?"
+vim.o.breakat = ' \t!@*-+;:,./?'
 vim.o.brk = vim.o.breakat
 vim.go.breakat = vim.o.breakat
 vim.go.brk = vim.go.breakat
@@ -567,7 +567,7 @@ vim.wo.bri = vim.wo.breakindent
 --- 		    (default: off)
 ---
 --- @type string
-vim.o.breakindentopt = ""
+vim.o.breakindentopt = ''
 vim.o.briopt = vim.o.breakindentopt
 vim.wo.breakindentopt = vim.o.breakindentopt
 vim.wo.briopt = vim.wo.breakindentopt
@@ -580,7 +580,7 @@ vim.wo.briopt = vim.wo.breakindentopt
 ---    {path}	Use the specified directory
 ---
 --- @type string
-vim.o.browsedir = ""
+vim.o.browsedir = ''
 vim.o.bsdir = vim.o.browsedir
 vim.go.browsedir = vim.o.browsedir
 vim.go.bsdir = vim.go.browsedir
@@ -606,7 +606,7 @@ vim.go.bsdir = vim.go.browsedir
 --- special kinds of buffers.   See `special-buffers`.
 ---
 --- @type string
-vim.o.bufhidden = ""
+vim.o.bufhidden = ''
 vim.o.bh = vim.o.bufhidden
 vim.bo.bufhidden = vim.o.bufhidden
 vim.bo.bh = vim.bo.bufhidden
@@ -669,7 +669,7 @@ vim.bo.bl = vim.bo.buflisted
 --- |FileWriteCmd` or `FileAppendCmd` autocommands.
 ---
 --- @type string
-vim.o.buftype = ""
+vim.o.buftype = ''
 vim.o.bt = vim.o.buftype
 vim.bo.buftype = vim.o.buftype
 vim.bo.bt = vim.bo.buftype
@@ -685,7 +685,7 @@ vim.bo.bt = vim.bo.buftype
 --- 		This probably only matters for Turkish.
 ---
 --- @type string
-vim.o.casemap = "internal,keepascii"
+vim.o.casemap = 'internal,keepascii'
 vim.o.cmp = vim.o.casemap
 vim.go.casemap = vim.o.casemap
 vim.go.cmp = vim.go.casemap
@@ -723,7 +723,7 @@ vim.go.cdh = vim.go.cdhome
 --- (parts of 'cdpath' can be passed to the shell to expand file names).
 ---
 --- @type string
-vim.o.cdpath = ",,"
+vim.o.cdpath = ',,'
 vim.o.cd = vim.o.cdpath
 vim.go.cdpath = vim.o.cdpath
 vim.go.cd = vim.go.cdpath
@@ -741,7 +741,7 @@ vim.go.cd = vim.go.cdpath
 --- See `cmdwin`.
 ---
 --- @type string
-vim.o.cedit = "\6"
+vim.o.cedit = '\6'
 vim.go.cedit = vim.o.cedit
 
 --- `channel` connected to the buffer, or 0 if no channel is connected.
@@ -789,7 +789,7 @@ vim.bo.channel = vim.o.channel
 --- security reasons.
 ---
 --- @type string
-vim.o.charconvert = ""
+vim.o.charconvert = ''
 vim.o.ccv = vim.o.charconvert
 vim.go.charconvert = vim.o.charconvert
 vim.go.ccv = vim.go.charconvert
@@ -818,7 +818,7 @@ vim.bo.cin = vim.bo.cindent
 --- See `C-indenting`.
 ---
 --- @type string
-vim.o.cinkeys = "0{,0},0),0],:,0#,!^F,o,O,e"
+vim.o.cinkeys = '0{,0},0),0],:,0#,!^F,o,O,e'
 vim.o.cink = vim.o.cinkeys
 vim.bo.cinkeys = vim.o.cinkeys
 vim.bo.cink = vim.bo.cinkeys
@@ -828,7 +828,7 @@ vim.bo.cink = vim.bo.cinkeys
 --- `C-indenting` for info on C indenting in general.
 ---
 --- @type string
-vim.o.cinoptions = ""
+vim.o.cinoptions = ''
 vim.o.cino = vim.o.cinoptions
 vim.bo.cinoptions = vim.o.cinoptions
 vim.bo.cino = vim.bo.cinoptions
@@ -843,7 +843,7 @@ vim.bo.cino = vim.bo.cinoptions
 ---
 ---
 --- @type string
-vim.o.cinscopedecls = "public,protected,private"
+vim.o.cinscopedecls = 'public,protected,private'
 vim.o.cinsd = vim.o.cinscopedecls
 vim.bo.cinscopedecls = vim.o.cinscopedecls
 vim.bo.cinsd = vim.bo.cinscopedecls
@@ -856,7 +856,7 @@ vim.bo.cinsd = vim.bo.cinscopedecls
 --- "if,If,IF".
 ---
 --- @type string
-vim.o.cinwords = "if,else,while,do,for,switch"
+vim.o.cinwords = 'if,else,while,do,for,switch'
 vim.o.cinw = vim.o.cinwords
 vim.bo.cinwords = vim.o.cinwords
 vim.bo.cinw = vim.bo.cinwords
@@ -885,7 +885,7 @@ vim.bo.cinw = vim.bo.cinwords
 --- 		"*". See `clipboard`.
 ---
 --- @type string
-vim.o.clipboard = ""
+vim.o.clipboard = ''
 vim.o.cb = vim.o.clipboard
 vim.go.clipboard = vim.o.clipboard
 vim.go.cb = vim.go.clipboard
@@ -936,7 +936,7 @@ vim.go.cwh = vim.go.cmdwinheight
 --- A maximum of 256 columns are highlighted.
 ---
 --- @type string
-vim.o.colorcolumn = ""
+vim.o.colorcolumn = ''
 vim.o.cc = vim.o.colorcolumn
 vim.wo.colorcolumn = vim.o.colorcolumn
 vim.wo.cc = vim.wo.colorcolumn
@@ -968,7 +968,7 @@ vim.go.co = vim.go.columns
 --- insert a space.
 ---
 --- @type string
-vim.o.comments = "s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-,fb:•"
+vim.o.comments = 's1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-,fb:•'
 vim.o.com = vim.o.comments
 vim.bo.comments = vim.o.comments
 vim.bo.com = vim.bo.comments
@@ -978,7 +978,7 @@ vim.bo.com = vim.bo.comments
 --- add markers for folding, see `fold-marker`.
 ---
 --- @type string
-vim.o.commentstring = ""
+vim.o.commentstring = ''
 vim.o.cms = vim.o.commentstring
 vim.bo.commentstring = vim.o.commentstring
 vim.bo.cms = vim.bo.commentstring
@@ -1020,7 +1020,7 @@ vim.bo.cms = vim.bo.commentstring
 --- `i_CTRL-X_CTRL-I`, tags `i_CTRL-X_CTRL-]` and normal expansions).
 ---
 --- @type string
-vim.o.complete = ".,w,b,u,t"
+vim.o.complete = '.,w,b,u,t'
 vim.o.cpt = vim.o.complete
 vim.bo.complete = vim.o.complete
 vim.bo.cpt = vim.bo.complete
@@ -1035,7 +1035,7 @@ vim.bo.cpt = vim.bo.complete
 --- security reasons.
 ---
 --- @type string
-vim.o.completefunc = ""
+vim.o.completefunc = ''
 vim.o.cfu = vim.o.completefunc
 vim.bo.completefunc = vim.o.completefunc
 vim.bo.cfu = vim.bo.completefunc
@@ -1074,7 +1074,7 @@ vim.bo.cfu = vim.bo.completefunc
 --- 	    with "menu" or "menuone".  Overrides "preview".
 ---
 --- @type string
-vim.o.completeopt = "menu,preview"
+vim.o.completeopt = 'menu,preview'
 vim.o.cot = vim.o.completeopt
 vim.go.completeopt = vim.o.completeopt
 vim.go.cot = vim.go.completeopt
@@ -1092,7 +1092,7 @@ vim.go.cot = vim.go.completeopt
 --- command line completion the global value is used.
 ---
 --- @type string
-vim.o.completeslash = ""
+vim.o.completeslash = ''
 vim.o.csl = vim.o.completeslash
 vim.bo.completeslash = vim.o.completeslash
 vim.bo.csl = vim.bo.completeslash
@@ -1114,7 +1114,7 @@ vim.bo.csl = vim.bo.completeslash
 --- displayed.  E.g., when moving vertically it may change column.
 ---
 --- @type string
-vim.o.concealcursor = ""
+vim.o.concealcursor = ''
 vim.o.cocu = vim.o.concealcursor
 vim.wo.concealcursor = vim.o.concealcursor
 vim.wo.cocu = vim.wo.concealcursor
@@ -1404,7 +1404,7 @@ vim.bo.ci = vim.bo.copyindent
 --- 		whitespace following the word in the motion.
 ---
 --- @type string
-vim.o.cpoptions = "aABceFs_"
+vim.o.cpoptions = 'aABceFs_'
 vim.o.cpo = vim.o.cpoptions
 vim.go.cpoptions = vim.o.cpoptions
 vim.go.cpo = vim.go.cpoptions
@@ -1467,7 +1467,7 @@ vim.wo.cul = vim.wo.cursorline
 --- "line" and "screenline" cannot be used together.
 ---
 --- @type string
-vim.o.cursorlineopt = "both"
+vim.o.cursorlineopt = 'both'
 vim.o.culopt = vim.o.cursorlineopt
 vim.wo.cursorlineopt = vim.o.cursorlineopt
 vim.wo.culopt = vim.wo.cursorlineopt
@@ -1484,7 +1484,7 @@ vim.wo.culopt = vim.wo.cursorlineopt
 --- 'indentexpr'.
 ---
 --- @type string
-vim.o.debug = ""
+vim.o.debug = ''
 vim.go.debug = vim.o.debug
 
 --- Pattern to be used to find a macro definition.  It is a search
@@ -1519,7 +1519,7 @@ vim.go.debug = vim.o.debug
 ---
 ---
 --- @type string
-vim.o.define = ""
+vim.o.define = ''
 vim.o.def = vim.o.define
 vim.bo.define = vim.o.define
 vim.bo.def = vim.bo.define
@@ -1566,7 +1566,7 @@ vim.go.deco = vim.go.delcombine
 --- Backticks cannot be used in this option for security reasons.
 ---
 --- @type string
-vim.o.dictionary = ""
+vim.o.dictionary = ''
 vim.o.dict = vim.o.dictionary
 vim.bo.dictionary = vim.o.dictionary
 vim.bo.dict = vim.bo.dictionary
@@ -1586,7 +1586,7 @@ vim.wo.diff = vim.o.diff
 --- security reasons.
 ---
 --- @type string
-vim.o.diffexpr = ""
+vim.o.diffexpr = ''
 vim.o.dex = vim.o.diffexpr
 vim.go.diffexpr = vim.o.diffexpr
 vim.go.dex = vim.go.diffexpr
@@ -1702,7 +1702,7 @@ vim.go.dex = vim.go.diffexpr
 ---
 ---
 --- @type string
-vim.o.diffopt = "internal,filler,closeoff"
+vim.o.diffopt = 'internal,filler,closeoff'
 vim.o.dip = vim.o.diffopt
 vim.go.diffopt = vim.o.diffopt
 vim.go.dip = vim.go.diffopt
@@ -1763,7 +1763,7 @@ vim.go.dg = vim.go.digraph
 --- security reasons.
 ---
 --- @type string
-vim.o.directory = "$XDG_STATE_HOME/nvim/swap//"
+vim.o.directory = '$XDG_STATE_HOME/nvim/swap//'
 vim.o.dir = vim.o.directory
 vim.go.directory = vim.o.directory
 vim.go.dir = vim.go.directory
@@ -1787,7 +1787,7 @@ vim.go.dir = vim.go.directory
 --- 'fillchars'.  The character is highlighted with `hl-NonText`.
 ---
 --- @type string
-vim.o.display = "lastline"
+vim.o.display = 'lastline'
 vim.o.dy = vim.o.display
 vim.go.display = vim.o.display
 vim.go.dy = vim.go.display
@@ -1798,7 +1798,7 @@ vim.go.dy = vim.go.display
 --- 	both	width and height of windows is affected
 ---
 --- @type string
-vim.o.eadirection = "both"
+vim.o.eadirection = 'both'
 vim.o.ead = vim.o.eadirection
 vim.go.eadirection = vim.o.eadirection
 vim.go.ead = vim.go.eadirection
@@ -1821,7 +1821,7 @@ vim.go.emo = vim.go.emoji
 --- See 'fileencoding' to control file-content encoding.
 ---
 --- @type string
-vim.o.encoding = "utf-8"
+vim.o.encoding = 'utf-8'
 vim.o.enc = vim.o.encoding
 vim.go.encoding = vim.o.encoding
 vim.go.enc = vim.go.encoding
@@ -1888,7 +1888,7 @@ vim.go.ea = vim.go.equalalways
 --- security reasons.
 ---
 --- @type string
-vim.o.equalprg = ""
+vim.o.equalprg = ''
 vim.o.ep = vim.o.equalprg
 vim.bo.equalprg = vim.o.equalprg
 vim.bo.ep = vim.bo.equalprg
@@ -1917,7 +1917,7 @@ vim.go.eb = vim.go.errorbells
 --- security reasons.
 ---
 --- @type string
-vim.o.errorfile = "errors.err"
+vim.o.errorfile = 'errors.err'
 vim.o.ef = vim.o.errorfile
 vim.go.errorfile = vim.o.errorfile
 vim.go.ef = vim.go.errorfile
@@ -1926,7 +1926,7 @@ vim.go.ef = vim.go.errorfile
 --- (see `errorformat`).
 ---
 --- @type string
-vim.o.errorformat = "%*[^\"]\"%f\"%*\\D%l: %m,\"%f\"%*\\D%l: %m,%-Gg%\\?make[%*\\d]: *** [%f:%l:%m,%-Gg%\\?make: *** [%f:%l:%m,%-G%f:%l: (Each undeclared identifier is reported only once,%-G%f:%l: for each function it appears in.),%-GIn file included from %f:%l:%c:,%-GIn file included from %f:%l:%c\\,,%-GIn file included from %f:%l:%c,%-GIn file included from %f:%l,%-G%*[ ]from %f:%l:%c,%-G%*[ ]from %f:%l:,%-G%*[ ]from %f:%l\\,,%-G%*[ ]from %f:%l,%f:%l:%c:%m,%f(%l):%m,%f:%l:%m,\"%f\"\\, line %l%*\\D%c%*[^ ] %m,%D%*\\a[%*\\d]: Entering directory %*[`']%f',%X%*\\a[%*\\d]: Leaving directory %*[`']%f',%D%*\\a: Entering directory %*[`']%f',%X%*\\a: Leaving directory %*[`']%f',%DMaking %*\\a in %f,%f|%l| %m"
+vim.o.errorformat = '%*[^"]"%f"%*\\D%l: %m,"%f"%*\\D%l: %m,%-Gg%\\?make[%*\\d]: *** [%f:%l:%m,%-Gg%\\?make: *** [%f:%l:%m,%-G%f:%l: (Each undeclared identifier is reported only once,%-G%f:%l: for each function it appears in.),%-GIn file included from %f:%l:%c:,%-GIn file included from %f:%l:%c\\,,%-GIn file included from %f:%l:%c,%-GIn file included from %f:%l,%-G%*[ ]from %f:%l:%c,%-G%*[ ]from %f:%l:,%-G%*[ ]from %f:%l\\,,%-G%*[ ]from %f:%l,%f:%l:%c:%m,%f(%l):%m,%f:%l:%m,"%f"\\, line %l%*\\D%c%*[^ ] %m,%D%*\\a[%*\\d]: Entering directory %*[`\']%f\',%X%*\\a[%*\\d]: Leaving directory %*[`\']%f\',%D%*\\a: Entering directory %*[`\']%f\',%X%*\\a: Leaving directory %*[`\']%f\',%DMaking %*\\a in %f,%f|%l| %m'
 vim.o.efm = vim.o.errorformat
 vim.bo.errorformat = vim.o.errorformat
 vim.bo.efm = vim.bo.errorformat
@@ -1944,7 +1944,7 @@ vim.go.efm = vim.go.errorformat
 ---
 ---
 --- @type string
-vim.o.eventignore = ""
+vim.o.eventignore = ''
 vim.o.ei = vim.o.eventignore
 vim.go.eventignore = vim.o.eventignore
 vim.go.ei = vim.go.eventignore
@@ -2016,7 +2016,7 @@ vim.go.ex = vim.go.exrc
 --- This option cannot be changed when 'modifiable' is off.
 ---
 --- @type string
-vim.o.fileencoding = ""
+vim.o.fileencoding = ''
 vim.o.fenc = vim.o.fileencoding
 vim.bo.fileencoding = vim.o.fileencoding
 vim.bo.fenc = vim.bo.fileencoding
@@ -2075,7 +2075,7 @@ vim.bo.fenc = vim.bo.fileencoding
 --- is read.
 ---
 --- @type string
-vim.o.fileencodings = "ucs-bom,utf-8,default,latin1"
+vim.o.fileencodings = 'ucs-bom,utf-8,default,latin1'
 vim.o.fencs = vim.o.fileencodings
 vim.go.fileencodings = vim.o.fileencodings
 vim.go.fencs = vim.go.fileencodings
@@ -2097,7 +2097,7 @@ vim.go.fencs = vim.go.fileencodings
 --- This option cannot be changed when 'modifiable' is off.
 ---
 --- @type string
-vim.o.fileformat = "unix"
+vim.o.fileformat = 'unix'
 vim.o.ff = vim.o.fileformat
 vim.bo.fileformat = vim.o.fileformat
 vim.bo.ff = vim.bo.fileformat
@@ -2149,7 +2149,7 @@ vim.bo.ff = vim.bo.fileformat
 --- Also see `file-formats`.
 ---
 --- @type string
-vim.o.fileformats = "unix,dos"
+vim.o.fileformats = 'unix,dos'
 vim.o.ffs = vim.o.fileformats
 vim.go.fileformats = vim.o.fileformats
 vim.go.ffs = vim.go.fileformats
@@ -2188,7 +2188,7 @@ vim.go.fic = vim.go.fileignorecase
 --- Only normal file name characters can be used, `/\*?[|<>` are illegal.
 ---
 --- @type string
-vim.o.filetype = ""
+vim.o.filetype = ''
 vim.o.ft = vim.o.filetype
 vim.bo.filetype = vim.o.filetype
 vim.bo.ft = vim.bo.filetype
@@ -2257,7 +2257,7 @@ vim.bo.ft = vim.bo.filetype
 ---   lastline	NonText			`hl-NonText`
 ---
 --- @type string
-vim.o.fillchars = ""
+vim.o.fillchars = ''
 vim.o.fcs = vim.o.fillchars
 vim.wo.fillchars = vim.o.fillchars
 vim.wo.fcs = vim.wo.fillchars
@@ -2283,7 +2283,7 @@ vim.bo.fixeol = vim.bo.fixendofline
 --- automatically close when moving out of them.
 ---
 --- @type string
-vim.o.foldclose = ""
+vim.o.foldclose = ''
 vim.o.fcl = vim.o.foldclose
 vim.go.foldclose = vim.o.foldclose
 vim.go.fcl = vim.go.foldclose
@@ -2297,7 +2297,7 @@ vim.go.fcl = vim.go.foldclose
 --- See `folding`.
 ---
 --- @type string
-vim.o.foldcolumn = "0"
+vim.o.foldcolumn = '0'
 vim.o.fdc = vim.o.foldcolumn
 vim.wo.foldcolumn = vim.o.foldcolumn
 vim.wo.fdc = vim.wo.foldcolumn
@@ -2330,7 +2330,7 @@ vim.wo.fen = vim.wo.foldenable
 --- evaluating 'foldexpr' `textlock`.
 ---
 --- @type string
-vim.o.foldexpr = "0"
+vim.o.foldexpr = '0'
 vim.o.fde = vim.o.foldexpr
 vim.wo.foldexpr = vim.o.foldexpr
 vim.wo.fde = vim.wo.foldexpr
@@ -2341,7 +2341,7 @@ vim.wo.fde = vim.wo.foldexpr
 --- The default "#" works well for C programs.  See `fold-indent`.
 ---
 --- @type string
-vim.o.foldignore = "#"
+vim.o.foldignore = '#'
 vim.o.fdi = vim.o.foldignore
 vim.wo.foldignore = vim.o.foldignore
 vim.wo.fdi = vim.wo.foldignore
@@ -2380,7 +2380,7 @@ vim.go.fdls = vim.go.foldlevelstart
 --- See `fold-marker`.
 ---
 --- @type string
-vim.o.foldmarker = "{{{,}}}"
+vim.o.foldmarker = '{{{,}}}'
 vim.o.fmr = vim.o.foldmarker
 vim.wo.foldmarker = vim.o.foldmarker
 vim.wo.fmr = vim.wo.foldmarker
@@ -2394,7 +2394,7 @@ vim.wo.fmr = vim.wo.foldmarker
 --- `fold-diff`	diff	    Fold text that is not changed.
 ---
 --- @type string
-vim.o.foldmethod = "manual"
+vim.o.foldmethod = 'manual'
 vim.o.fdm = vim.o.foldmethod
 vim.wo.foldmethod = vim.o.foldmethod
 vim.wo.fdm = vim.wo.foldmethod
@@ -2455,7 +2455,7 @@ vim.wo.fdn = vim.wo.foldnestmax
 --- set the 'foldclose' option to "all".
 ---
 --- @type string
-vim.o.foldopen = "block,hor,mark,percent,quickfix,search,tag,undo"
+vim.o.foldopen = 'block,hor,mark,percent,quickfix,search,tag,undo'
 vim.o.fdo = vim.o.foldopen
 vim.go.foldopen = vim.o.foldopen
 vim.go.fdo = vim.go.foldopen
@@ -2476,7 +2476,7 @@ vim.go.fdo = vim.go.foldopen
 --- is displayed normally with highlighting and no line wrapping.
 ---
 --- @type string
-vim.o.foldtext = "foldtext()"
+vim.o.foldtext = 'foldtext()'
 vim.o.fdt = vim.o.foldtext
 vim.wo.foldtext = vim.o.foldtext
 vim.wo.fdt = vim.wo.foldtext
@@ -2526,7 +2526,7 @@ vim.wo.fdt = vim.wo.foldtext
 --- NOTE: This option is set to "" when 'compatible' is set.
 ---
 --- @type string
-vim.o.formatexpr = ""
+vim.o.formatexpr = ''
 vim.o.fex = vim.o.formatexpr
 vim.bo.formatexpr = vim.o.formatexpr
 vim.bo.fex = vim.bo.formatexpr
@@ -2542,7 +2542,7 @@ vim.bo.fex = vim.bo.formatexpr
 --- character and white space.
 ---
 --- @type string
-vim.o.formatlistpat = "^\\s*\\d\\+[\\]:.)}\\t ]\\s*"
+vim.o.formatlistpat = '^\\s*\\d\\+[\\]:.)}\\t ]\\s*'
 vim.o.flp = vim.o.formatlistpat
 vim.bo.formatlistpat = vim.o.formatlistpat
 vim.bo.flp = vim.bo.formatlistpat
@@ -2555,7 +2555,7 @@ vim.bo.flp = vim.bo.formatlistpat
 --- "+=" and "-=" feature of ":set" `add-option-flags`.
 ---
 --- @type string
-vim.o.formatoptions = "tcqj"
+vim.o.formatoptions = 'tcqj'
 vim.o.fo = vim.o.formatoptions
 vim.bo.formatoptions = vim.o.formatoptions
 vim.bo.fo = vim.bo.formatoptions
@@ -2573,7 +2573,7 @@ vim.bo.fo = vim.bo.formatoptions
 --- security reasons.
 ---
 --- @type string
-vim.o.formatprg = ""
+vim.o.formatprg = ''
 vim.o.fp = vim.o.formatprg
 vim.bo.formatprg = vim.o.formatprg
 vim.bo.fp = vim.bo.formatprg
@@ -2626,7 +2626,7 @@ vim.go.gd = vim.go.gdefault
 --- 'errorformat' option: see `errorformat`.
 ---
 --- @type string
-vim.o.grepformat = "%f:%l:%m,%f:%l%m,%f  %l%m"
+vim.o.grepformat = '%f:%l:%m,%f:%l%m,%f  %l%m'
 vim.o.gfm = vim.o.grepformat
 vim.go.grepformat = vim.o.grepformat
 vim.go.gfm = vim.go.grepformat
@@ -2651,7 +2651,7 @@ vim.go.gfm = vim.go.grepformat
 --- security reasons.
 ---
 --- @type string
-vim.o.grepprg = "grep -n $* /dev/null"
+vim.o.grepprg = 'grep -n $* /dev/null'
 vim.o.gp = vim.o.grepprg
 vim.bo.grepprg = vim.o.grepprg
 vim.bo.gp = vim.bo.grepprg
@@ -2753,7 +2753,7 @@ vim.go.gp = vim.go.grepprg
 ---
 ---
 --- @type string
-vim.o.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20"
+vim.o.guicursor = 'n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20'
 vim.o.gcr = vim.o.guicursor
 vim.go.guicursor = vim.o.guicursor
 vim.go.gcr = vim.go.guicursor
@@ -2829,7 +2829,7 @@ vim.go.gcr = vim.go.guicursor
 ---
 ---
 --- @type string
-vim.o.guifont = ""
+vim.o.guifont = ''
 vim.o.gfn = vim.o.guifont
 vim.go.guifont = vim.o.guifont
 vim.go.gfn = vim.go.guifont
@@ -2843,7 +2843,7 @@ vim.go.gfn = vim.go.guifont
 --- attempt to set 'guifontwide' to a matching double-width font.
 ---
 --- @type string
-vim.o.guifontwide = ""
+vim.o.guifontwide = ''
 vim.o.gfw = vim.o.guifontwide
 vim.go.guifontwide = vim.o.guifontwide
 vim.go.gfw = vim.go.guifontwide
@@ -2949,7 +2949,7 @@ vim.go.gfw = vim.go.guifontwide
 --- 	removing GUI components.
 ---
 --- @type string
-vim.o.guioptions = ""
+vim.o.guioptions = ''
 vim.o.go = vim.o.guioptions
 vim.go.guioptions = vim.o.guioptions
 vim.go.go = vim.go.guioptions
@@ -2969,7 +2969,7 @@ vim.go.go = vim.go.guioptions
 --- used.
 ---
 --- @type string
-vim.o.guitablabel = ""
+vim.o.guitablabel = ''
 vim.o.gtl = vim.o.guitablabel
 vim.go.guitablabel = vim.o.guitablabel
 vim.go.gtl = vim.go.guitablabel
@@ -2985,7 +2985,7 @@ vim.go.gtl = vim.go.guitablabel
 ---
 ---
 --- @type string
-vim.o.guitabtooltip = ""
+vim.o.guitabtooltip = ''
 vim.o.gtt = vim.o.guitabtooltip
 vim.go.guitabtooltip = vim.o.guitabtooltip
 vim.go.gtt = vim.go.guitabtooltip
@@ -3001,7 +3001,7 @@ vim.go.gtt = vim.go.guitabtooltip
 --- security reasons.
 ---
 --- @type string
-vim.o.helpfile = "$VIMRUNTIME/doc/help.txt"
+vim.o.helpfile = '$VIMRUNTIME/doc/help.txt'
 vim.o.hf = vim.o.helpfile
 vim.go.helpfile = vim.o.helpfile
 vim.go.hf = vim.go.helpfile
@@ -3035,7 +3035,7 @@ vim.go.hh = vim.go.helpheight
 --- See `help-translated`.
 ---
 --- @type string
-vim.o.helplang = ""
+vim.o.helplang = ''
 vim.o.hlg = vim.o.helplang
 vim.go.helplang = vim.o.helplang
 vim.go.hlg = vim.go.helplang
@@ -3117,7 +3117,7 @@ vim.go.icon = vim.o.icon
 --- This option cannot be set in a modeline when 'modelineexpr' is off.
 ---
 --- @type string
-vim.o.iconstring = ""
+vim.o.iconstring = ''
 vim.go.iconstring = vim.o.iconstring
 
 --- Ignore case in search patterns, `cmdline-completion`, when
@@ -3212,7 +3212,7 @@ vim.bo.ims = vim.bo.imsearch
 --- `Command-line-mode` is done.
 ---
 --- @type string
-vim.o.inccommand = "nosplit"
+vim.o.inccommand = 'nosplit'
 vim.o.icm = vim.o.inccommand
 vim.go.inccommand = vim.o.inccommand
 vim.go.icm = vim.go.inccommand
@@ -3229,7 +3229,7 @@ vim.go.icm = vim.go.inccommand
 --- See `option-backslash` about including spaces and backslashes.
 ---
 --- @type string
-vim.o.include = ""
+vim.o.include = ''
 vim.o.inc = vim.o.include
 vim.bo.include = vim.o.include
 vim.bo.inc = vim.bo.include
@@ -3273,7 +3273,7 @@ vim.go.inc = vim.go.include
 --- evaluating 'includeexpr' `textlock`.
 ---
 --- @type string
-vim.o.includeexpr = ""
+vim.o.includeexpr = ''
 vim.o.inex = vim.o.includeexpr
 vim.bo.includeexpr = vim.o.includeexpr
 vim.bo.inex = vim.bo.includeexpr
@@ -3364,7 +3364,7 @@ vim.go.is = vim.go.incsearch
 --- evaluating 'indentexpr' `textlock`.
 ---
 --- @type string
-vim.o.indentexpr = ""
+vim.o.indentexpr = ''
 vim.o.inde = vim.o.indentexpr
 vim.bo.indentexpr = vim.o.indentexpr
 vim.bo.inde = vim.bo.indentexpr
@@ -3375,7 +3375,7 @@ vim.bo.inde = vim.bo.indentexpr
 --- See `C-indenting` and `indent-expression`.
 ---
 --- @type string
-vim.o.indentkeys = "0{,0},0),0],:,0#,!^F,o,O,e"
+vim.o.indentkeys = '0{,0},0),0],:,0#,!^F,o,O,e'
 vim.o.indk = vim.o.indentkeys
 vim.bo.indentkeys = vim.o.indentkeys
 vim.bo.indk = vim.bo.indentkeys
@@ -3442,7 +3442,7 @@ vim.bo.inf = vim.bo.infercase
 --- See `option-backslash` about including spaces and backslashes.
 ---
 --- @type string
-vim.o.isfname = "@,48-57,/,.,-,_,+,,,#,$,%,~,="
+vim.o.isfname = '@,48-57,/,.,-,_,+,,,#,$,%,~,='
 vim.o.isf = vim.o.isfname
 vim.go.isfname = vim.o.isfname
 vim.go.isf = vim.go.isfname
@@ -3458,7 +3458,7 @@ vim.go.isf = vim.go.isfname
 --- change 'iskeyword' instead.
 ---
 --- @type string
-vim.o.isident = "@,48-57,_,192-255"
+vim.o.isident = '@,48-57,_,192-255'
 vim.o.isi = vim.o.isident
 vim.go.isident = vim.o.isident
 vim.go.isi = vim.go.isident
@@ -3477,7 +3477,7 @@ vim.go.isi = vim.go.isident
 --- uses `:syn-iskeyword`.
 ---
 --- @type string
-vim.o.iskeyword = "@,48-57,_,192-255"
+vim.o.iskeyword = '@,48-57,_,192-255'
 vim.o.isk = vim.o.iskeyword
 vim.bo.iskeyword = vim.o.iskeyword
 vim.bo.isk = vim.bo.iskeyword
@@ -3510,7 +3510,7 @@ vim.bo.isk = vim.bo.iskeyword
 --- There is no option to specify these characters.
 ---
 --- @type string
-vim.o.isprint = "@,161-255"
+vim.o.isprint = '@,161-255'
 vim.o.isp = vim.o.isprint
 vim.go.isprint = vim.o.isprint
 vim.go.isp = vim.go.isprint
@@ -3536,7 +3536,7 @@ vim.go.js = vim.go.joinspaces
 --- 		restore the `mark-view` in which the action occurred.
 ---
 --- @type string
-vim.o.jumpoptions = ""
+vim.o.jumpoptions = ''
 vim.o.jop = vim.o.jumpoptions
 vim.go.jumpoptions = vim.o.jumpoptions
 vim.go.jop = vim.go.jumpoptions
@@ -3548,7 +3548,7 @@ vim.go.jop = vim.go.jumpoptions
 --- Only normal file name characters can be used, `/\*?[|<>` are illegal.
 ---
 --- @type string
-vim.o.keymap = ""
+vim.o.keymap = ''
 vim.o.kmp = vim.o.keymap
 vim.bo.keymap = vim.o.keymap
 vim.bo.kmp = vim.bo.keymap
@@ -3563,7 +3563,7 @@ vim.bo.kmp = vim.bo.keymap
 --- <PageUp> and <PageDown>.
 ---
 --- @type string
-vim.o.keymodel = ""
+vim.o.keymodel = ''
 vim.o.km = vim.o.keymodel
 vim.go.keymodel = vim.o.keymodel
 vim.go.km = vim.go.keymodel
@@ -3587,7 +3587,7 @@ vim.go.km = vim.go.keymodel
 --- security reasons.
 ---
 --- @type string
-vim.o.keywordprg = ":Man"
+vim.o.keywordprg = ':Man'
 vim.o.kp = vim.o.keywordprg
 vim.bo.keywordprg = vim.o.keywordprg
 vim.bo.kp = vim.bo.keywordprg
@@ -3641,7 +3641,7 @@ vim.go.kp = vim.go.keywordprg
 --- Use a mapping to avoid having to type it each time!
 ---
 --- @type string
-vim.o.langmap = ""
+vim.o.langmap = ''
 vim.o.lmap = vim.o.langmap
 vim.go.langmap = vim.o.langmap
 vim.go.lmap = vim.go.langmap
@@ -3678,7 +3678,7 @@ vim.go.lmap = vim.go.langmap
 --- Warning: This deletes all menus that you defined yourself!
 ---
 --- @type string
-vim.o.langmenu = ""
+vim.o.langmenu = ''
 vim.o.lm = vim.o.langmenu
 vim.go.langmenu = vim.o.langmenu
 vim.go.lm = vim.go.langmenu
@@ -3793,7 +3793,7 @@ vim.bo.lisp = vim.o.lisp
 --- lines, otherwise the first line is not indented (Vi-compatible).
 ---
 --- @type string
-vim.o.lispoptions = ""
+vim.o.lispoptions = ''
 vim.o.lop = vim.o.lispoptions
 vim.bo.lispoptions = vim.o.lispoptions
 vim.bo.lop = vim.bo.lispoptions
@@ -3802,7 +3802,7 @@ vim.bo.lop = vim.bo.lispoptions
 --- enabled with the `'lisp'` option.
 ---
 --- @type string
-vim.o.lispwords = "defun,define,defmacro,set!,lambda,if,case,let,flet,let*,letrec,do,do*,define-syntax,let-syntax,letrec-syntax,destructuring-bind,defpackage,defparameter,defstruct,deftype,defvar,do-all-symbols,do-external-symbols,do-symbols,dolist,dotimes,ecase,etypecase,eval-when,labels,macrolet,multiple-value-bind,multiple-value-call,multiple-value-prog1,multiple-value-setq,prog1,progv,typecase,unless,unwind-protect,when,with-input-from-string,with-open-file,with-open-stream,with-output-to-string,with-package-iterator,define-condition,handler-bind,handler-case,restart-bind,restart-case,with-simple-restart,store-value,use-value,muffle-warning,abort,continue,with-slots,with-slots*,with-accessors,with-accessors*,defclass,defmethod,print-unreadable-object"
+vim.o.lispwords = 'defun,define,defmacro,set!,lambda,if,case,let,flet,let*,letrec,do,do*,define-syntax,let-syntax,letrec-syntax,destructuring-bind,defpackage,defparameter,defstruct,deftype,defvar,do-all-symbols,do-external-symbols,do-symbols,dolist,dotimes,ecase,etypecase,eval-when,labels,macrolet,multiple-value-bind,multiple-value-call,multiple-value-prog1,multiple-value-setq,prog1,progv,typecase,unless,unwind-protect,when,with-input-from-string,with-open-file,with-open-stream,with-output-to-string,with-package-iterator,define-condition,handler-bind,handler-case,restart-bind,restart-case,with-simple-restart,store-value,use-value,muffle-warning,abort,continue,with-slots,with-slots*,with-accessors,with-accessors*,defclass,defmethod,print-unreadable-object'
 vim.o.lw = vim.o.lispwords
 vim.bo.lispwords = vim.o.lispwords
 vim.bo.lw = vim.bo.lispwords
@@ -3947,7 +3947,7 @@ vim.wo.list = vim.o.list
 --- "lead" and "trail".
 ---
 --- @type string
-vim.o.listchars = "tab:> ,trail:-,nbsp:+"
+vim.o.listchars = 'tab:> ,trail:-,nbsp:+'
 vim.o.lcs = vim.o.listchars
 vim.wo.listchars = vim.o.listchars
 vim.wo.lcs = vim.wo.listchars
@@ -3991,7 +3991,7 @@ vim.go.magic = vim.o.magic
 --- security reasons.
 ---
 --- @type string
-vim.o.makeef = ""
+vim.o.makeef = ''
 vim.o.mef = vim.o.makeef
 vim.go.makeef = vim.o.makeef
 vim.go.mef = vim.go.makeef
@@ -4012,7 +4012,7 @@ vim.go.mef = vim.go.makeef
 ---
 ---
 --- @type string
-vim.o.makeencoding = ""
+vim.o.makeencoding = ''
 vim.o.menc = vim.o.makeencoding
 vim.bo.makeencoding = vim.o.makeencoding
 vim.bo.menc = vim.bo.makeencoding
@@ -4042,7 +4042,7 @@ vim.go.menc = vim.go.makeencoding
 --- security reasons.
 ---
 --- @type string
-vim.o.makeprg = "make"
+vim.o.makeprg = 'make'
 vim.o.mp = vim.o.makeprg
 vim.bo.makeprg = vim.o.makeprg
 vim.bo.mp = vim.bo.makeprg
@@ -4070,7 +4070,7 @@ vim.go.mp = vim.go.makeprg
 --- the $VIMRUNTIME/plugin directory. `add-local-help`
 ---
 --- @type string
-vim.o.matchpairs = "(:),{:},[:]"
+vim.o.matchpairs = '(:),{:},[:]'
 vim.o.mps = vim.o.matchpairs
 vim.bo.matchpairs = vim.o.matchpairs
 vim.bo.mps = vim.bo.matchpairs
@@ -4183,7 +4183,7 @@ vim.go.mis = vim.go.menuitems
 --- security reasons.
 ---
 --- @type string
-vim.o.mkspellmem = "460000,2000,500"
+vim.o.mkspellmem = '460000,2000,500'
 vim.o.msm = vim.o.mkspellmem
 vim.go.mkspellmem = vim.o.mkspellmem
 vim.go.msm = vim.go.mkspellmem
@@ -4308,7 +4308,7 @@ vim.go.more = vim.o.more
 --- 'selectmode'	whether to start Select mode or Visual mode
 ---
 --- @type string
-vim.o.mouse = "nvi"
+vim.o.mouse = 'nvi'
 vim.go.mouse = vim.o.mouse
 
 --- The window that the mouse pointer is on is automatically activated.
@@ -4385,7 +4385,7 @@ vim.go.mh = vim.go.mousehide
 ---     "g<RightMouse>" is "<C-RightMouse>	("CTRL-T")
 ---
 --- @type string
-vim.o.mousemodel = "popup_setpos"
+vim.o.mousemodel = 'popup_setpos'
 vim.o.mousem = vim.o.mousemodel
 vim.go.mousemodel = vim.o.mousemodel
 vim.go.mousem = vim.go.mousemodel
@@ -4424,7 +4424,7 @@ vim.go.mousemev = vim.go.mousemoveevent
 --- scroll 2 columns at a time when scrolling horizontally.
 ---
 --- @type string
-vim.o.mousescroll = "ver:3,hor:6"
+vim.o.mousescroll = 'ver:3,hor:6'
 vim.go.mousescroll = vim.o.mousescroll
 
 --- This option tells Vim what the mouse pointer should look like in
@@ -4490,7 +4490,7 @@ vim.go.mousescroll = vim.o.mousescroll
 --- clicking the mouse has no effect in this state.)
 ---
 --- @type string
-vim.o.mouseshape = ""
+vim.o.mouseshape = ''
 vim.o.mouses = vim.o.mouseshape
 vim.go.mouseshape = vim.o.mouseshape
 vim.go.mouses = vim.go.mouseshape
@@ -4532,7 +4532,7 @@ vim.go.mouset = vim.go.mousetime
 --- recognized as octal or hex.
 ---
 --- @type string
-vim.o.nrformats = "bin,hex"
+vim.o.nrformats = 'bin,hex'
 vim.o.nf = vim.o.nrformats
 vim.bo.nrformats = vim.o.nrformats
 vim.bo.nf = vim.bo.nrformats
@@ -4595,7 +4595,7 @@ vim.wo.nuw = vim.wo.numberwidth
 --- security reasons.
 ---
 --- @type string
-vim.o.omnifunc = ""
+vim.o.omnifunc = ''
 vim.o.ofu = vim.o.omnifunc
 vim.bo.omnifunc = vim.o.omnifunc
 vim.bo.ofu = vim.bo.omnifunc
@@ -4622,7 +4622,7 @@ vim.go.odev = vim.go.opendevice
 --- security reasons.
 ---
 --- @type string
-vim.o.operatorfunc = ""
+vim.o.operatorfunc = ''
 vim.o.opfunc = vim.o.operatorfunc
 vim.go.operatorfunc = vim.o.operatorfunc
 vim.go.opfunc = vim.go.operatorfunc
@@ -4633,7 +4633,7 @@ vim.go.opfunc = vim.go.operatorfunc
 --- security reasons.
 ---
 --- @type string
-vim.o.packpath = "..."
+vim.o.packpath = '...'
 vim.o.pp = vim.o.packpath
 vim.go.packpath = vim.o.packpath
 vim.go.pp = vim.go.packpath
@@ -4642,7 +4642,7 @@ vim.go.pp = vim.go.packpath
 --- of two letters (see `object-motions`).
 ---
 --- @type string
-vim.o.paragraphs = "IPLPPPQPP TPHPLIPpLpItpplpipbp"
+vim.o.paragraphs = 'IPLPPPQPP TPHPLIPpLpItpplpipbp'
 vim.o.para = vim.o.paragraphs
 vim.go.paragraphs = vim.o.paragraphs
 vim.go.para = vim.go.paragraphs
@@ -4653,7 +4653,7 @@ vim.go.para = vim.go.paragraphs
 --- security reasons.
 ---
 --- @type string
-vim.o.patchexpr = ""
+vim.o.patchexpr = ''
 vim.o.pex = vim.o.patchexpr
 vim.go.patchexpr = vim.o.patchexpr
 vim.go.pex = vim.go.patchexpr
@@ -4676,7 +4676,7 @@ vim.go.pex = vim.go.patchexpr
 --- Only normal file name characters can be used, `/\*?[|<>` are illegal.
 ---
 --- @type string
-vim.o.patchmode = ""
+vim.o.patchmode = ''
 vim.o.pm = vim.o.patchmode
 vim.go.patchmode = vim.o.patchmode
 vim.go.pm = vim.go.patchmode
@@ -4760,7 +4760,7 @@ vim.go.pm = vim.go.patchmode
 --- this doesn't work when $INCL contains a comma or white space.
 ---
 --- @type string
-vim.o.path = ".,,"
+vim.o.path = '.,,'
 vim.o.pa = vim.o.path
 vim.bo.path = vim.o.path
 vim.bo.pa = vim.bo.path
@@ -4872,7 +4872,7 @@ vim.go.pyx = vim.go.pyxversion
 --- security reasons.
 ---
 --- @type string
-vim.o.quickfixtextfunc = ""
+vim.o.quickfixtextfunc = ''
 vim.o.qftf = vim.o.quickfixtextfunc
 vim.go.quickfixtextfunc = vim.o.quickfixtextfunc
 vim.go.qftf = vim.go.quickfixtextfunc
@@ -4884,7 +4884,7 @@ vim.go.qftf = vim.go.quickfixtextfunc
 --- text "foo\"bar\\" considered to be one string.
 ---
 --- @type string
-vim.o.quoteescape = "\\"
+vim.o.quoteescape = '\\'
 vim.o.qe = vim.o.quoteescape
 vim.bo.quoteescape = vim.o.quoteescape
 vim.bo.qe = vim.bo.quoteescape
@@ -4936,7 +4936,7 @@ vim.bo.ro = vim.bo.readonly
 --- 		they are unchanged from the already displayed state.
 ---
 --- @type string
-vim.o.redrawdebug = ""
+vim.o.redrawdebug = ''
 vim.o.rdb = vim.o.redrawdebug
 vim.go.redrawdebug = vim.o.redrawdebug
 vim.go.rdb = vim.go.redrawdebug
@@ -5045,7 +5045,7 @@ vim.wo.rl = vim.wo.rightleft
 --- The 'rightleft' option must be set for 'rightleftcmd' to take effect.
 ---
 --- @type string
-vim.o.rightleftcmd = "search"
+vim.o.rightleftcmd = 'search'
 vim.o.rlc = vim.o.rightleftcmd
 vim.wo.rightleftcmd = vim.o.rightleftcmd
 vim.wo.rlc = vim.wo.rightleftcmd
@@ -5094,7 +5094,7 @@ vim.go.ru = vim.go.ruler
 ---
 ---
 --- @type string
-vim.o.rulerformat = ""
+vim.o.rulerformat = ''
 vim.o.ruf = vim.o.rulerformat
 vim.go.rulerformat = vim.o.rulerformat
 vim.go.ruf = vim.go.rulerformat
@@ -5170,7 +5170,7 @@ vim.go.ruf = vim.go.rulerformat
 --- With `--clean` the home directory entries are not included.
 ---
 --- @type string
-vim.o.runtimepath = "..."
+vim.o.runtimepath = '...'
 vim.o.rtp = vim.o.runtimepath
 vim.go.runtimepath = vim.o.runtimepath
 vim.go.rtp = vim.go.runtimepath
@@ -5280,7 +5280,7 @@ vim.go.so = vim.go.scrolloff
 --- even when "ver" isn't there.
 ---
 --- @type string
-vim.o.scrollopt = "ver,jump"
+vim.o.scrollopt = 'ver,jump'
 vim.o.sbo = vim.o.scrollopt
 vim.go.scrollopt = vim.o.scrollopt
 vim.go.sbo = vim.go.scrollopt
@@ -5290,7 +5290,7 @@ vim.go.sbo = vim.go.scrollopt
 --- at the nroff macros ".SH", ".NH", ".H", ".HU", ".nh" and ".sh".
 ---
 --- @type string
-vim.o.sections = "SHNHH HUnhsh"
+vim.o.sections = 'SHNHH HUnhsh'
 vim.o.sect = vim.o.sections
 vim.go.sections = vim.o.sections
 vim.go.sect = vim.go.sections
@@ -5314,7 +5314,7 @@ vim.go.sect = vim.go.sections
 --- starting in Normal mode and 'virtualedit' empty.
 ---
 --- @type string
-vim.o.selection = "inclusive"
+vim.o.selection = 'inclusive'
 vim.o.sel = vim.o.selection
 vim.go.selection = vim.o.selection
 vim.go.sel = vim.go.selection
@@ -5328,7 +5328,7 @@ vim.go.sel = vim.go.selection
 --- See `Select-mode`.
 ---
 --- @type string
-vim.o.selectmode = ""
+vim.o.selectmode = ''
 vim.o.slm = vim.o.selectmode
 vim.go.selectmode = vim.o.selectmode
 vim.go.slm = vim.go.selectmode
@@ -5372,7 +5372,7 @@ vim.go.slm = vim.go.selectmode
 --- the session.
 ---
 --- @type string
-vim.o.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,terminal"
+vim.o.sessionoptions = 'blank,buffers,curdir,folds,help,tabpages,winsize,terminal'
 vim.o.ssop = vim.o.sessionoptions
 vim.go.sessionoptions = vim.o.sessionoptions
 vim.go.ssop = vim.go.sessionoptions
@@ -5505,7 +5505,7 @@ vim.go.sd = vim.go.shada
 --- security reasons.
 ---
 --- @type string
-vim.o.shadafile = ""
+vim.o.shadafile = ''
 vim.o.sdf = vim.o.shadafile
 vim.go.shadafile = vim.o.shadafile
 vim.go.sdf = vim.go.shadafile
@@ -5565,7 +5565,7 @@ vim.go.sdf = vim.go.shadafile
 --- security reasons.
 ---
 --- @type string
-vim.o.shell = "sh"
+vim.o.shell = 'sh'
 vim.o.sh = vim.o.shell
 vim.go.shell = vim.o.shell
 vim.go.sh = vim.go.shell
@@ -5583,7 +5583,7 @@ vim.go.sh = vim.go.shell
 --- security reasons.
 ---
 --- @type string
-vim.o.shellcmdflag = "-c"
+vim.o.shellcmdflag = '-c'
 vim.o.shcf = vim.o.shellcmdflag
 vim.go.shellcmdflag = vim.o.shellcmdflag
 vim.go.shcf = vim.go.shellcmdflag
@@ -5618,7 +5618,7 @@ vim.go.shcf = vim.go.shellcmdflag
 --- security reasons.
 ---
 --- @type string
-vim.o.shellpipe = "| tee"
+vim.o.shellpipe = '| tee'
 vim.o.sp = vim.o.shellpipe
 vim.go.shellpipe = vim.o.shellpipe
 vim.go.sp = vim.go.shellpipe
@@ -5636,7 +5636,7 @@ vim.go.sp = vim.go.shellpipe
 --- security reasons.
 ---
 --- @type string
-vim.o.shellquote = ""
+vim.o.shellquote = ''
 vim.o.shq = vim.o.shellquote
 vim.go.shellquote = vim.o.shellquote
 vim.go.shq = vim.go.shellquote
@@ -5664,7 +5664,7 @@ vim.go.shq = vim.go.shellquote
 --- security reasons.
 ---
 --- @type string
-vim.o.shellredir = ">"
+vim.o.shellredir = '>'
 vim.o.srr = vim.o.shellredir
 vim.go.shellredir = vim.o.shellredir
 vim.go.srr = vim.go.shellredir
@@ -5715,7 +5715,7 @@ vim.go.stmp = vim.go.shelltemp
 --- security reasons.
 ---
 --- @type string
-vim.o.shellxescape = ""
+vim.o.shellxescape = ''
 vim.o.sxe = vim.o.shellxescape
 vim.go.shellxescape = vim.o.shellxescape
 vim.go.sxe = vim.go.shellxescape
@@ -5731,7 +5731,7 @@ vim.go.sxe = vim.go.shellxescape
 --- security reasons.
 ---
 --- @type string
-vim.o.shellxquote = ""
+vim.o.shellxquote = ''
 vim.o.sxq = vim.o.shellxquote
 vim.go.shellxquote = vim.o.shellxquote
 vim.go.sxq = vim.go.shellxquote
@@ -5810,7 +5810,7 @@ vim.bo.sw = vim.bo.shiftwidth
 ---     shm=at	Abbreviation, and truncate message when necessary.
 ---
 --- @type string
-vim.o.shortmess = "ltToOCF"
+vim.o.shortmess = 'ltToOCF'
 vim.o.shm = vim.o.shortmess
 vim.go.shortmess = vim.o.shortmess
 vim.go.shm = vim.go.shortmess
@@ -5838,7 +5838,7 @@ vim.go.shm = vim.go.shortmess
 ---
 ---
 --- @type string
-vim.o.showbreak = ""
+vim.o.showbreak = ''
 vim.o.sbr = vim.o.showbreak
 vim.wo.showbreak = vim.o.showbreak
 vim.wo.sbr = vim.wo.showbreak
@@ -5876,7 +5876,7 @@ vim.go.sc = vim.go.showcmd
 --- displayed in a convenient location.
 ---
 --- @type string
-vim.o.showcmdloc = "last"
+vim.o.showcmdloc = 'last'
 vim.o.sloc = vim.o.showcmdloc
 vim.go.showcmdloc = vim.o.showcmdloc
 vim.go.sloc = vim.go.showcmdloc
@@ -6008,7 +6008,7 @@ vim.go.siso = vim.go.sidescrolloff
 --- 		column is not present, then behaves like "auto".
 ---
 --- @type string
-vim.o.signcolumn = "auto"
+vim.o.signcolumn = 'auto'
 vim.o.scl = vim.o.signcolumn
 vim.wo.signcolumn = vim.o.signcolumn
 vim.wo.scl = vim.wo.signcolumn
@@ -6123,7 +6123,7 @@ vim.wo.spell = vim.o.spell
 --- `set-spc-auto`.
 ---
 --- @type string
-vim.o.spellcapcheck = "[.?!]\\_[\\])'\"\\t ]\\+"
+vim.o.spellcapcheck = '[.?!]\\_[\\])\'"\\t ]\\+'
 vim.o.spc = vim.o.spellcapcheck
 vim.bo.spellcapcheck = vim.o.spellcapcheck
 vim.bo.spc = vim.bo.spellcapcheck
@@ -6151,7 +6151,7 @@ vim.bo.spc = vim.bo.spellcapcheck
 --- security reasons.
 ---
 --- @type string
-vim.o.spellfile = ""
+vim.o.spellfile = ''
 vim.o.spf = vim.o.spellfile
 vim.bo.spellfile = vim.o.spellfile
 vim.bo.spf = vim.bo.spellfile
@@ -6197,7 +6197,7 @@ vim.bo.spf = vim.bo.spellfile
 --- not a dash.  Also see `set-spc-auto`.
 ---
 --- @type string
-vim.o.spelllang = "en"
+vim.o.spelllang = 'en'
 vim.o.spl = vim.o.spelllang
 vim.bo.spelllang = vim.o.spelllang
 vim.bo.spl = vim.bo.spelllang
@@ -6213,7 +6213,7 @@ vim.bo.spl = vim.bo.spelllang
 --- 		this case.
 ---
 --- @type string
-vim.o.spelloptions = ""
+vim.o.spelloptions = ''
 vim.o.spo = vim.o.spelloptions
 vim.bo.spelloptions = vim.o.spelloptions
 vim.bo.spo = vim.bo.spelloptions
@@ -6286,7 +6286,7 @@ vim.bo.spo = vim.bo.spelloptions
 --- security reasons.
 ---
 --- @type string
-vim.o.spellsuggest = "best"
+vim.o.spellsuggest = 'best'
 vim.o.sps = vim.o.spellsuggest
 vim.go.spellsuggest = vim.o.spellsuggest
 vim.go.sps = vim.go.spellsuggest
@@ -6314,7 +6314,7 @@ vim.go.sb = vim.go.splitbelow
 --- be kept on the same screen line when 'wrap' is enabled.
 ---
 --- @type string
-vim.o.splitkeep = "cursor"
+vim.o.splitkeep = 'cursor'
 vim.o.spk = vim.o.splitkeep
 vim.go.splitkeep = vim.o.splitkeep
 vim.go.spk = vim.go.splitkeep
@@ -6406,7 +6406,7 @@ vim.go.sol = vim.go.startofline
 --- an expensive expression can negatively affect render performance.
 ---
 --- @type string
-vim.o.statuscolumn = ""
+vim.o.statuscolumn = ''
 vim.o.stc = vim.o.statuscolumn
 vim.wo.statuscolumn = vim.o.statuscolumn
 vim.wo.stc = vim.wo.statuscolumn
@@ -6653,7 +6653,7 @@ vim.wo.stc = vim.wo.statuscolumn
 ---
 ---
 --- @type string
-vim.o.statusline = ""
+vim.o.statusline = ''
 vim.o.stl = vim.o.statusline
 vim.wo.statusline = vim.o.statusline
 vim.wo.stl = vim.wo.statusline
@@ -6672,7 +6672,7 @@ vim.go.stl = vim.go.statusline
 --- uses another default.
 ---
 --- @type string
-vim.o.suffixes = ".bak,~,.o,.h,.info,.swp,.obj"
+vim.o.suffixes = '.bak,~,.o,.h,.info,.swp,.obj'
 vim.o.su = vim.o.suffixes
 vim.go.suffixes = vim.o.suffixes
 vim.go.su = vim.go.suffixes
@@ -6686,7 +6686,7 @@ vim.go.su = vim.go.suffixes
 ---
 ---
 --- @type string
-vim.o.suffixesadd = ""
+vim.o.suffixesadd = ''
 vim.o.sua = vim.o.suffixesadd
 vim.bo.suffixesadd = vim.o.suffixesadd
 vim.bo.sua = vim.bo.suffixesadd
@@ -6745,7 +6745,7 @@ vim.bo.swf = vim.bo.swapfile
 --- applied to the split window.
 ---
 --- @type string
-vim.o.switchbuf = "uselast"
+vim.o.switchbuf = 'uselast'
 vim.o.swb = vim.o.switchbuf
 vim.go.switchbuf = vim.o.switchbuf
 vim.go.swb = vim.go.switchbuf
@@ -6796,7 +6796,7 @@ vim.bo.smc = vim.bo.synmaxcol
 --- Only normal file name characters can be used, `/\*?[|<>` are illegal.
 ---
 --- @type string
-vim.o.syntax = ""
+vim.o.syntax = ''
 vim.o.syn = vim.o.syntax
 vim.bo.syntax = vim.o.syntax
 vim.bo.syn = vim.bo.syntax
@@ -6823,7 +6823,7 @@ vim.bo.syn = vim.bo.syntax
 --- are invisible and you can't jump to their windows.
 ---
 --- @type string
-vim.o.tabline = ""
+vim.o.tabline = ''
 vim.o.tal = vim.o.tabline
 vim.go.tabline = vim.o.tabline
 vim.go.tal = vim.go.tabline
@@ -6949,7 +6949,7 @@ vim.go.tbs = vim.go.tagbsearch
 ---    smart	Ignore case unless an upper case letter is used
 ---
 --- @type string
-vim.o.tagcase = "followic"
+vim.o.tagcase = 'followic'
 vim.o.tc = vim.o.tagcase
 vim.bo.tagcase = vim.o.tagcase
 vim.bo.tc = vim.bo.tagcase
@@ -6966,7 +6966,7 @@ vim.go.tc = vim.go.tagcase
 --- security reasons.
 ---
 --- @type string
-vim.o.tagfunc = ""
+vim.o.tagfunc = ''
 vim.o.tfu = vim.o.tagfunc
 vim.bo.tagfunc = vim.o.tagfunc
 vim.bo.tfu = vim.bo.tagfunc
@@ -7007,7 +7007,7 @@ vim.go.tr = vim.go.tagrelative
 --- uses another default.
 ---
 --- @type string
-vim.o.tags = "./tags;,tags"
+vim.o.tags = './tags;,tags'
 vim.o.tag = vim.o.tags
 vim.bo.tags = vim.o.tags
 vim.bo.tag = vim.bo.tags
@@ -7077,7 +7077,7 @@ vim.go.tgc = vim.go.termguicolors
 ---    C1	    Control characters 0x80...0x9F
 ---
 --- @type string
-vim.o.termpastefilter = "BS,HT,ESC,DEL"
+vim.o.termpastefilter = 'BS,HT,ESC,DEL'
 vim.o.tpf = vim.o.termpastefilter
 vim.go.termpastefilter = vim.o.termpastefilter
 vim.go.tpf = vim.go.termpastefilter
@@ -7120,7 +7120,7 @@ vim.bo.tw = vim.bo.textwidth
 --- reasons.
 ---
 --- @type string
-vim.o.thesaurus = ""
+vim.o.thesaurus = ''
 vim.o.tsr = vim.o.thesaurus
 vim.bo.thesaurus = vim.o.thesaurus
 vim.bo.tsr = vim.bo.thesaurus
@@ -7136,7 +7136,7 @@ vim.go.tsr = vim.go.thesaurus
 --- security reasons.
 ---
 --- @type string
-vim.o.thesaurusfunc = ""
+vim.o.thesaurusfunc = ''
 vim.o.tsrfu = vim.o.thesaurusfunc
 vim.bo.thesaurusfunc = vim.o.thesaurusfunc
 vim.bo.tsrfu = vim.bo.thesaurusfunc
@@ -7206,7 +7206,7 @@ vim.go.titlelen = vim.o.titlelen
 --- security reasons.
 ---
 --- @type string
-vim.o.titleold = ""
+vim.o.titleold = ''
 vim.go.titleold = vim.o.titleold
 
 --- When this option is not empty, it will be used for the title of the
@@ -7236,7 +7236,7 @@ vim.go.titleold = vim.o.titleold
 --- to be garbled (e.g., when it contains a CR or NL character).
 ---
 --- @type string
-vim.o.titlestring = ""
+vim.o.titlestring = ''
 vim.go.titlestring = vim.o.titlestring
 
 --- This option and 'ttimeoutlen' determine the behavior when part of a
@@ -7287,7 +7287,7 @@ vim.go.ttm = vim.go.ttimeoutlen
 --- means).
 ---
 --- @type string
-vim.o.undodir = "$XDG_STATE_HOME/nvim/undo//"
+vim.o.undodir = '$XDG_STATE_HOME/nvim/undo//'
 vim.o.udir = vim.o.undodir
 vim.go.undodir = vim.o.undodir
 vim.go.udir = vim.go.undodir
@@ -7405,7 +7405,7 @@ vim.go.ut = vim.go.updatetime
 --- 'varsofttabstop' is set.
 ---
 --- @type string
-vim.o.varsofttabstop = ""
+vim.o.varsofttabstop = ''
 vim.o.vsts = vim.o.varsofttabstop
 vim.bo.varsofttabstop = vim.o.varsofttabstop
 vim.bo.vsts = vim.bo.varsofttabstop
@@ -7424,7 +7424,7 @@ vim.bo.vsts = vim.bo.varsofttabstop
 --- is set.
 ---
 --- @type string
-vim.o.vartabstop = ""
+vim.o.vartabstop = ''
 vim.o.vts = vim.o.vartabstop
 vim.bo.vartabstop = vim.o.vartabstop
 vim.bo.vts = vim.bo.vartabstop
@@ -7472,7 +7472,7 @@ vim.go.vbs = vim.go.verbose
 --- security reasons.
 ---
 --- @type string
-vim.o.verbosefile = ""
+vim.o.verbosefile = ''
 vim.o.vfile = vim.o.verbosefile
 vim.go.verbosefile = vim.o.verbosefile
 vim.go.vfile = vim.go.verbosefile
@@ -7482,7 +7482,7 @@ vim.go.vfile = vim.go.verbosefile
 --- security reasons.
 ---
 --- @type string
-vim.o.viewdir = "$XDG_STATE_HOME/nvim/view//"
+vim.o.viewdir = '$XDG_STATE_HOME/nvim/view//'
 vim.o.vdir = vim.o.viewdir
 vim.go.viewdir = vim.o.viewdir
 vim.go.vdir = vim.go.viewdir
@@ -7501,7 +7501,7 @@ vim.go.vdir = vim.go.viewdir
 ---    unix		`deprecated` Always enabled. Uses "\n" line endings.
 ---
 --- @type string
-vim.o.viewoptions = "folds,cursor,curdir"
+vim.o.viewoptions = 'folds,cursor,curdir'
 vim.o.vop = vim.o.viewoptions
 vim.go.viewoptions = vim.o.viewoptions
 vim.go.vop = vim.go.viewoptions
@@ -7534,7 +7534,7 @@ vim.go.vop = vim.go.viewoptions
 --- When combined with other words, "none" is ignored.
 ---
 --- @type string
-vim.o.virtualedit = ""
+vim.o.virtualedit = ''
 vim.o.ve = vim.o.virtualedit
 vim.wo.virtualedit = vim.o.virtualedit
 vim.wo.ve = vim.wo.virtualedit
@@ -7587,7 +7587,7 @@ vim.go.warn = vim.o.warn
 --- makes "dl", "cl", "yl" etc. work normally.
 ---
 --- @type string
-vim.o.whichwrap = "b,s"
+vim.o.whichwrap = 'b,s'
 vim.o.ww = vim.o.whichwrap
 vim.go.whichwrap = vim.o.whichwrap
 vim.go.ww = vim.go.whichwrap
@@ -7647,7 +7647,7 @@ vim.go.wcm = vim.go.wildcharm
 --- uses another default.
 ---
 --- @type string
-vim.o.wildignore = ""
+vim.o.wildignore = ''
 vim.o.wig = vim.o.wildignore
 vim.go.wildignore = vim.o.wildignore
 vim.go.wig = vim.go.wildignore
@@ -7770,7 +7770,7 @@ vim.go.wmnu = vim.go.wildmenu
 --- More info here: `cmdline-completion`.
 ---
 --- @type string
-vim.o.wildmode = "full"
+vim.o.wildmode = 'full'
 vim.o.wim = vim.o.wildmode
 vim.go.wildmode = vim.o.wildmode
 vim.go.wim = vim.go.wildmode
@@ -7794,7 +7794,7 @@ vim.go.wim = vim.go.wildmode
 --- 			f	function
 ---
 --- @type string
-vim.o.wildoptions = "pum,tagfile"
+vim.o.wildoptions = 'pum,tagfile'
 vim.o.wop = vim.o.wildoptions
 vim.go.wildoptions = vim.o.wildoptions
 vim.go.wop = vim.go.wildoptions
@@ -7816,7 +7816,7 @@ vim.go.wop = vim.go.wildoptions
 --- This option is not used for <F10>; on Win32.
 ---
 --- @type string
-vim.o.winaltkeys = "menu"
+vim.o.winaltkeys = 'menu'
 vim.o.wak = vim.o.winaltkeys
 vim.go.winaltkeys = vim.o.winaltkeys
 vim.go.wak = vim.go.winaltkeys
@@ -7836,7 +7836,7 @@ vim.go.wak = vim.go.winaltkeys
 --- This option cannot be set in a modeline when 'modelineexpr' is off.
 ---
 --- @type string
-vim.o.winbar = ""
+vim.o.winbar = ''
 vim.o.wbr = vim.o.winbar
 vim.wo.winbar = vim.o.winbar
 vim.wo.wbr = vim.wo.winbar
@@ -7952,7 +7952,7 @@ vim.go.wh = vim.go.winheight
 ---
 ---
 --- @type string
-vim.o.winhighlight = ""
+vim.o.winhighlight = ''
 vim.o.winhl = vim.o.winhighlight
 vim.wo.winhighlight = vim.o.winhighlight
 vim.wo.winhl = vim.wo.winhighlight
