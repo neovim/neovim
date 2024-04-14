@@ -1291,8 +1291,8 @@ expression (like with the "/" command).
 The expression must evaluate to a String.  A Number is always automatically
 converted to a String.  For the "p" and ":put" command, if the result is a
 Float it's converted into a String.  If the result is a List each element is
-turned into a String and used as a line.  A Dictionary or FuncRef results in
-an error message (use string() to convert).
+turned into a String and used as a line.  A Dictionary is converted into a
+String.  A FuncRef results in an error message (use string() to convert).
 
 If the "= register is used for the "p" command, the String is split up at <NL>
 characters.  If the String ends in a <NL>, it is regarded as a linewise

@@ -687,6 +687,13 @@ END
   END
   call assert_equal(['let a = {abc}', 'let b = X', 'let c = {'], code)
 
+  " Evaluate a dictionary
+  let d1 = #{a: 10, b: 'ss', c: {}}
+  let code =<< eval trim END
+    let d2 = {d1}
+  END
+  call assert_equal(["let d2 = {'a': 10, 'b': 'ss', 'c': {}}"], code)
+
   let code = 'xxx'
   let code =<< eval trim END
     let n = {5 +
