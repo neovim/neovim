@@ -75,53 +75,6 @@ func Test_getvcol()
   call assert_equal(2, virtcol("']"))
 endfunc
 
-func Test_screenchar_utf8()
-  new
-
-  " 1-cell, with composing characters 
-  call setline(1, ["ABC\u0308"])
-  redraw
-  call assert_equal([0x0041], screenchars(1, 1))
-  call assert_equal([0x0042], 1->screenchars(2))
-  call assert_equal([0x0043, 0x0308], screenchars(1, 3))
-  call assert_equal("A", screenstring(1, 1))
-  call assert_equal("B", screenstring(1, 2))
-  call assert_equal("C\u0308", screenstring(1, 3))
-
-  " 1-cell, with 6 composing characters
-  set maxcombine=6
-  call setline(1, ["ABC" .. repeat("\u0308", 6)])
-  redraw
-  call assert_equal([0x0041], screenchars(1, 1))
-  call assert_equal([0x0042], 1->screenchars(2))
-  " This should not use uninitialized memory
-  call assert_equal([0x0043] + repeat([0x0308], 6), screenchars(1, 3))
-  call assert_equal("A", screenstring(1, 1))
-  call assert_equal("B", screenstring(1, 2))
-  call assert_equal("C" .. repeat("\u0308", 6), screenstring(1, 3))
-  set maxcombine&
-
-  " 2-cells, with composing characters
-  let text = "\u3042\u3044\u3046\u3099"
-  call setline(1, text)
-  redraw
-  call assert_equal([0x3042], screenchars(1, 1))
-  call assert_equal([0], screenchars(1, 2))
-  call assert_equal([0x3044], screenchars(1, 3))
-  call assert_equal([0], screenchars(1, 4))
-  call assert_equal([0x3046, 0x3099], screenchars(1, 5))
-
-  call assert_equal("\u3042", screenstring(1, 1))
-  call assert_equal("", screenstring(1, 2))
-  call assert_equal("\u3044", screenstring(1, 3))
-  call assert_equal("", screenstring(1, 4))
-  call assert_equal("\u3046\u3099", screenstring(1, 5))
-
-  call assert_equal([text . '  '], ScreenLines(1, 8))
-
-  bwipe!
-endfunc
-
 func Test_list2str_str2list_utf8()
   " One Unicode codepoint
   let s = "\u3042\u3044"
@@ -169,7 +122,55 @@ func Test_list2str_str2list_latin1()
   call assert_equal(s, sres)
 endfunc
 
+func Test_screenchar_utf8()
+  new
+
+  " 1-cell, with composing characters
+  call setline(1, ["ABC\u0308"])
+  redraw
+  call assert_equal([0x0041], screenchars(1, 1))
+  call assert_equal([0x0042], 1->screenchars(2))
+  call assert_equal([0x0043, 0x0308], screenchars(1, 3))
+  call assert_equal("A", screenstring(1, 1))
+  call assert_equal("B", screenstring(1, 2))
+  call assert_equal("C\u0308", screenstring(1, 3))
+
+  " 1-cell, with 6 composing characters
+  set maxcombine=6
+  call setline(1, ["ABC" .. repeat("\u0308", 6)])
+  redraw
+  call assert_equal([0x0041], screenchars(1, 1))
+  call assert_equal([0x0042], 1->screenchars(2))
+  " This should not use uninitialized memory
+  call assert_equal([0x0043] + repeat([0x0308], 6), screenchars(1, 3))
+  call assert_equal("A", screenstring(1, 1))
+  call assert_equal("B", screenstring(1, 2))
+  call assert_equal("C" .. repeat("\u0308", 6), screenstring(1, 3))
+  set maxcombine&
+
+  " 2-cells, with composing characters
+  let text = "\u3042\u3044\u3046\u3099"
+  call setline(1, text)
+  redraw
+  call assert_equal([0x3042], screenchars(1, 1))
+  call assert_equal([0], screenchars(1, 2))
+  call assert_equal([0x3044], screenchars(1, 3))
+  call assert_equal([0], screenchars(1, 4))
+  call assert_equal([0x3046, 0x3099], screenchars(1, 5))
+
+  call assert_equal("\u3042", screenstring(1, 1))
+  call assert_equal("", screenstring(1, 2))
+  call assert_equal("\u3044", screenstring(1, 3))
+  call assert_equal("", screenstring(1, 4))
+  call assert_equal("\u3046\u3099", screenstring(1, 5))
+
+  call assert_equal([text . '  '], ScreenLines(1, 8))
+
+  bwipe!
+endfunc
+
 func Test_setcellwidths()
+  new
   call setcellwidths([
         \ [0x1330, 0x1330, 2],
         \ [9999, 10000, 1],
@@ -212,6 +213,18 @@ func Test_setcellwidths()
     " Ambiguous width chars
     call assert_equal(2, strwidth("\u00A1"))
     call assert_equal(2, strwidth("\u2010"))
+
+    call setcellwidths([])
+    call setline(1, repeat("\u2103", 10))
+    normal! $
+    redraw
+    call assert_equal((aw == 'single') ? 10 : 19, wincol())
+    call setcellwidths([[0x2103, 0x2103, 1]])
+    redraw
+    call assert_equal(10, wincol())
+    call setcellwidths([[0x2103, 0x2103, 2]])
+    redraw
+    call assert_equal(19, wincol())
   endfor
   set ambiwidth& isprint&
 
@@ -245,6 +258,7 @@ func Test_setcellwidths()
   set listchars&
   set fillchars&
   call setcellwidths([])
+  bwipe!
 endfunc
 
 func Test_getcellwidths()

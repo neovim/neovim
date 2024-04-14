@@ -59,6 +59,7 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/move.h"
 #include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
 #include "nvim/os/os.h"
@@ -2878,6 +2879,7 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   xfree(cw_table_save);
+  changed_window_setting_all();
   redraw_all_later(UPD_NOT_VALID);
 }
 
