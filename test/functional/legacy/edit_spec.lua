@@ -56,20 +56,20 @@ describe('edit', function()
       {1:~                                                           }|*4
       {5:-- INSERT --}                                                |
     ]])
-    feed('={}')
+    feed('=0z')
     screen:expect([[
       {18:"}                                                           |
       {1:~                                                           }|*4
-      ={16:{}}^                                                         |
+      ={26:0}{9:z}^                                                         |
     ]])
-    -- trying to insert a dictionary produces an error
+    -- trying to insert a blob produces an error
     feed('<CR>')
     screen:expect([[
       {18:"}                                                           |
       {1:~                                                           }|
       {3:                                                            }|
-      ={16:{}}                                                         |
-      {9:E731: Using a Dictionary as a String}                        |
+      ={26:0}{9:z}                                                         |
+      {9:E976: Using a Blob as a String}                              |
       {6:Press ENTER or type command to continue}^                     |
     ]])
 

@@ -969,7 +969,8 @@ int skip_expr(char **pp, evalarg_T *const evalarg)
 
 /// Convert "tv" to a string.
 ///
-/// @param convert  when true convert a List into a sequence of lines.
+/// @param convert  when true convert a List into a sequence of lines
+///                 and a Dict into a textual representation of the Dict.
 ///
 /// @return  an allocated string.
 static char *typval2string(typval_T *tv, bool convert)
@@ -985,6 +986,8 @@ static char *typval2string(typval_T *tv, bool convert)
     }
     ga_append(&ga, NUL);
     return (char *)ga.ga_data;
+  } else if (convert && tv->v_type == VAR_DICT) {
+    return encode_tv2string(tv, NULL);
   }
   return xstrdup(tv_get_string(tv));
 }

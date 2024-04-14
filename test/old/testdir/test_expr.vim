@@ -904,6 +904,10 @@ func Test_string_interp()
     endif
     call assert_equal(0, tmp)
 
+    #" Dict interpolation
+    VAR d = {'a': 10, 'b': [1, 2]}
+    call assert_equal("{'a': 10, 'b': [1, 2]}", $'{d}')
+
     #" Stray closing brace.
     call assert_fails('echo $"moo}"', 'E1278:')
     #" Undefined variable in expansion.

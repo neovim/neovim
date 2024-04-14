@@ -1983,8 +1983,8 @@ func Test_edit_ctrl_r_failed()
 
   let buf = RunVimInTerminal('', #{rows: 6, cols: 60})
 
-  " trying to insert a dictionary produces an error
-  call term_sendkeys(buf, "i\<C-R>={}\<CR>")
+  " trying to insert a blob produces an error
+  call term_sendkeys(buf, "i\<C-R>=0z\<CR>")
 
   " ending Insert mode should put the cursor back on the ':'
   call term_sendkeys(buf, ":\<Esc>")

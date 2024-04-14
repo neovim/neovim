@@ -11129,10 +11129,10 @@ M.funcs = {
       for infinite and NaN floating-point values representations
       which use |str2float()|.  Strings are also dumped literally,
       only single quote is escaped, which does not allow using YAML
-      for parsing back binary strings.  |eval()| should always work for
-      strings and floats though and this is the only official
-      method, use |msgpackdump()| or |json_encode()| if you need to
-      share data with other application.
+      for parsing back binary strings.  |eval()| should always work
+      for strings and floats though, and this is the only official
+      method.  Use |msgpackdump()| or |json_encode()| if you need to
+      share data with other applications.
 
     ]=],
     name = 'string',
