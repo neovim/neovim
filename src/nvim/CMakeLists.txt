@@ -450,7 +450,7 @@ if(CI_BUILD)
   # TODO(bfredl): debug log level also exposes some errors with EXITFREE in ASAN build.
 else()
   # Minimize logging for release-type builds.
-  target_compile_definitions(nvim_bin PRIVATE $<$<CONFIG:Debug>:NVIM_LOG_DEBUG>)
+  # target_compile_definitions(nvim_bin PRIVATE $<$<CONFIG:Debug>:NVIM_LOG_DEBUG>)
 endif()
 
 if(ENABLE_ASAN_UBSAN OR ENABLE_MSAN OR ENABLE_TSAN)
