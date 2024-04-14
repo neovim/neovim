@@ -317,8 +317,8 @@ The following new APIs and features were added.
 
 • |nvim_input_mouse()| supports mouse buttons "x1" and "x2".
 
-• |v_Q-default| and |v_@-default| repeat a register for each line of a visual
-  selection.
+• |v_Q-default| and |v_@-default| repeat a register for each line of a linewise
+  visual selection.
 
 • |vim.diagnostic.count()| returns the number of diagnostics for a given
   buffer and/or namespace, by severity. This is a faster alternative to

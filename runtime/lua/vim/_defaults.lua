@@ -78,19 +78,20 @@ do
   --- See |&-default|
   vim.keymap.set('n', '&', ':&&<CR>', { desc = ':help &-default' })
 
-  --- Use Q in visual mode to execute a macro on each line of the selection. #21422
+  --- Use Q in Visual mode to execute a macro on each line of the selection. #21422
+  --- This only make sense in linewise Visual mode. #28287
   ---
   --- Applies to @x and includes @@ too.
   vim.keymap.set(
     'x',
     'Q',
-    ':normal! @<C-R>=reg_recorded()<CR><CR>',
-    { silent = true, desc = ':help v_Q-default' }
+    "mode() == 'V' ? ':normal! @<C-R>=reg_recorded()<CR><CR>' : 'Q'",
+    { silent = true, expr = true, desc = ':help v_Q-default' }
   )
   vim.keymap.set(
     'x',
     '@',
-    "':normal! @'.getcharstr().'<CR>'",
+    "mode() == 'V' ? ':normal! @'.getcharstr().'<CR>' : '@'",
     { silent = true, expr = true, desc = ':help v_@-default' }
   )
 
