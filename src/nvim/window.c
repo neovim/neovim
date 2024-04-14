@@ -1959,6 +1959,7 @@ int win_splitmove(win_T *wp, int size, int flags)
     // Remove the window and frame from the tree of frames.  Don't flatten any
     // frames yet so we can restore things if win_split_ins fails.
     winframe_remove(wp, &dir, NULL, &unflat_altfr);
+    assert(unflat_altfr != NULL);
     win_remove(wp, NULL);
     last_status(false);  // may need to remove last status line
     win_comp_pos();  // recompute window positions
@@ -1967,6 +1968,7 @@ int win_splitmove(win_T *wp, int size, int flags)
   // Split a window on the desired side and put "wp" there.
   if (win_split_ins(size, flags, wp, dir, unflat_altfr) == NULL) {
     if (!wp->w_floating) {
+      assert(unflat_altfr != NULL);
       // win_split_ins doesn't change sizes or layout if it fails to insert an
       // existing window, so just undo winframe_remove.
       winframe_restore(wp, dir, unflat_altfr);

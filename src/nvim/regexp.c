@@ -5320,7 +5320,7 @@ static regprog_T *bt_regcomp(uint8_t *expr, int re_flags)
   }
   // Remember whether this pattern has any \z specials in it.
   r->reghasz = (uint8_t)re_has_z;
-  scan = r->program + 1;        // First BRANCH.
+  scan = &r->program[1];  // First BRANCH.
   if (OP(regnext(scan)) == END) {   // Only one top-level choice.
     scan = OPERAND(scan);
 
@@ -7322,7 +7322,7 @@ static int regtry(bt_regprog_T *prog, colnr_T col, proftime_T *tm, int *timed_ou
   // Clear the external match subpointers if necessaey.
   rex.need_clear_zsubexpr = (prog->reghasz == REX_SET);
 
-  if (regmatch(prog->program + 1, tm, timed_out) == 0) {
+  if (regmatch(&prog->program[1], tm, timed_out) == 0) {
     return 0;
   }
 
@@ -7664,7 +7664,7 @@ static void regdump(uint8_t *pattern, bt_regprog_T *r)
   fprintf(f, "-------------------------------------\n\r\nregcomp(%s):\r\n",
           pattern);
 
-  s = r->program + 1;
+  s = &r->program[1];
   // Loop until we find the END that isn't before a referred next (an END
   // can also appear in a NOMATCH operand).
   while (op != END || s <= end) {
