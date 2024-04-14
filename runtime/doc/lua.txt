@@ -1812,6 +1812,7 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
 
     Return: ~
         (`vim.SystemObj`) Object with the fields:
+        • cmd (string[]) Command name and args
         • pid (integer) Process ID
         • wait (fun(timeout: integer|nil): SystemCompleted) Wait for the
           process to complete. Upon timeout the process is sent the KILL
