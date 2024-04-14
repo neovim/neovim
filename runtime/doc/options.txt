@@ -2851,9 +2851,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This is a scanf-like string that uses the same format as the
 	'errorformat' option: see |errorformat|.
 
+	If ripgrep ('grepprg') is available, this option defaults to `%f:%l:%c:%m`.
+
 						*'grepprg'* *'gp'*
-'grepprg' 'gp'		string	(default "grep -n ",
-                                 Unix: "grep -n $* /dev/null")
+'grepprg' 'gp'		string	(default see below)
 			global or local to buffer |global-local|
 	Program to use for the |:grep| command.  This option may contain '%'
 	and '#' characters, which are expanded like when used in a command-
@@ -2870,6 +2871,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	apply equally to 'grepprg'.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
+	This option defaults to:
+	- `rg --vimgrep -uuu $* ...` if ripgrep is available (|:checkhealth|),
+	- `grep -n $* /dev/null` on Unix,
+	- `findstr /n $* nul` on Windows.
+	Ripgrep can perform additional filtering such as using .gitignore rules
+	and skipping hidden or binary files. This is disabled by default (see the -u option)
+	to more closely match the behaviour of standard grep.
+	You can make ripgrep match Vim's case handling using the
+	-i/--ignore-case and -S/--smart-case options.
+	An |OptionSet| autocmd can be used to set it up to match automatically.
 
 				*'guicursor'* *'gcr'* *E545* *E546* *E548* *E549*
 'guicursor' 'gcr'	string	(default "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20")

@@ -383,6 +383,19 @@ local function check_terminal()
   end
 end
 
+local function check_external_tools()
+  health.start('External Tools')
+
+  if vim.fn.executable('rg') == 1 then
+    local rg = vim.fn.exepath('rg')
+    local cmd = 'rg -V'
+    local out = vim.fn.system(vim.fn.split(cmd))
+    health.ok(('%s (%s)'):format(vim.trim(out), rg))
+  else
+    health.warn('ripgrep not available')
+  end
+end
+
 function M.check()
   check_config()
   check_runtime()
@@ -390,6 +403,7 @@ function M.check()
   check_rplugin_manifest()
   check_terminal()
   check_tmux()
+  check_external_tools()
 end
 
 return M
