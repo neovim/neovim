@@ -333,24 +333,26 @@ function LanguageTree:source()
 end
 
 --- @param region Range6[]
---- @param range? boolean|Range
+--- @param ranges? boolean|(Range)[]
 --- @return boolean
-local function intercepts_region(region, range)
+local function intercepts_region(region, ranges)
   if #region == 0 then
     return true
   end
 
-  if range == nil then
+  if ranges == nil then
     return false
   end
 
-  if type(range) == 'boolean' then
-    return range
+  if type(ranges) == 'boolean' then
+    return ranges
   end
 
-  for _, r in ipairs(region) do
-    if Range.intercepts(r, range) then
-      return true
+  for _, r1 in ipairs(region) do
+    for _, r2 in ipairs(ranges) do
+      if Range.intercepts(r1, r2) then
+        return true
+      end
     end
   end
 
@@ -358,13 +360,13 @@ local function intercepts_region(region, range)
 end
 
 --- @private
---- @param range boolean|Range?
+--- @param ranges boolean|(Range)[]?
 --- @param timeout integer?
 --- @return Range6[] changes
 --- @return integer no_regions_parsed
 --- @return number total_parse_time
 --- @return boolean finished whether async parsing still needs time
-function LanguageTree:_parse_regions(range, timeout)
+function LanguageTree:_parse_regions(ranges, timeout)
   local changes = {}
   local no_regions_parsed = 0
   local total_parse_time = 0
@@ -373,17 +375,17 @@ function LanguageTree:_parse_regions(range, timeout)
     self._valid = {}
   end
 
-  -- If there are no ranges, set to an empty list
+  -- If there is no region, set to an empty list
   -- so the included ranges in the parser are cleared.
-  for i, ranges in pairs(self:included_regions()) do
+  for i, region in pairs(self:included_regions()) do
     if
       not self._valid[i]
       and (
-        intercepts_region(ranges, range)
-        or (self._trees[i] and intercepts_region(self._trees[i]:included_ranges(false), range))
+        intercepts_region(region, ranges)
+        or (self._trees[i] and intercepts_region(self._trees[i]:included_ranges(false), ranges))
       )
     then
-      self._parser:set_included_ranges(ranges)
+      self._parser:set_included_ranges(region)
       self._parser:set_timeout(timeout and timeout * 1000 or 0) -- ms -> micros
       local parse_time, tree, tree_changes =
         tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
@@ -409,12 +411,12 @@ function LanguageTree:_parse_regions(range, timeout)
 end
 
 --- @private
---- @param range boolean|Range|nil
+--- @param ranges boolean|(Range)[]|nil
 --- @return number
-function LanguageTree:_add_injections(range)
+function LanguageTree:_add_injections(ranges)
   local seen_langs = {} ---@type table<string,boolean>
 
-  local query_time, injections_by_lang = tcall(self._get_injections, self, range)
+  local query_time, injections_by_lang = tcall(self._get_injections, self, ranges)
   for lang, injection_regions in pairs(injections_by_lang) do
     local has_lang = pcall(language.add, lang)
 
@@ -442,28 +444,37 @@ function LanguageTree:_add_injections(range)
   return query_time
 end
 
---- @param range boolean|Range?
+--- @param ranges boolean|(Range)[]|nil
 --- @return string
-local function range_to_string(range)
-  return type(range) == 'table' and table.concat(range, ',') or tostring(range)
+local function ranges_to_string(ranges)
+  if type(ranges) ~= 'table' then
+    return tostring(ranges)
+  end
+  local strings = vim
+    .iter(ranges)
+    :map(function(range)
+      return '(' .. table.concat(range, ',') .. ')'
+    end)
+    :totable()
+  return table.concat(strings, ',')
 end
 
 --- @private
---- @param range boolean|Range?
+--- @param ranges boolean|(Range)[]|nil
 --- @param callback fun(err?: string, trees?: table<integer, TSTree>)
-function LanguageTree:_push_async_callback(range, callback)
-  local key = range_to_string(range)
+function LanguageTree:_push_async_callback(ranges, callback)
+  local key = ranges_to_string(ranges)
   self._cb_queues[key] = self._cb_queues[key] or {}
   local queue = self._cb_queues[key]
   queue[#queue + 1] = callback
 end
 
 --- @private
---- @param range boolean|Range?
+--- @param ranges boolean|(Range)[]|nil
 --- @param err? string
 --- @param trees? table<integer, TSTree>
-function LanguageTree:_run_async_callbacks(range, err, trees)
-  local key = range_to_string(range)
+function LanguageTree:_run_async_callbacks(ranges, err, trees)
+  local key = ranges_to_string(ranges)
   for _, cb in ipairs(self._cb_queues[key]) do
     cb(err, trees)
   end
@@ -474,16 +485,16 @@ end
 --- Run an asynchronous parse, calling {on_parse} when complete.
 ---
 --- @private
---- @param range boolean|Range?
+--- @param ranges boolean|(Range)[]|nil
 --- @param on_parse fun(err?: string, trees?: table<integer, TSTree>)
 --- @return table<integer, TSTree>? trees the list of parsed trees, if parsing completed synchronously
-function LanguageTree:_async_parse(range, on_parse)
-  self:_push_async_callback(range, on_parse)
+function LanguageTree:_async_parse(ranges, on_parse)
+  self:_push_async_callback(ranges, on_parse)
 
   -- If we are already running an async parse, just queue the callback.
-  local range_string = range_to_string(range)
-  if not self._ranges_being_parsed[range_string] then
-    self._ranges_being_parsed[range_string] = true
+  local ranges_string = ranges_to_string(ranges)
+  if not self._ranges_being_parsed[ranges_string] then
+    self._ranges_being_parsed[ranges_string] = true
   else
     return
   end
@@ -501,14 +512,14 @@ function LanguageTree:_async_parse(range, on_parse)
       total_parse_time = 0
     end
 
-    local parse_time, trees, finished = tcall(self._parse, self, range, timeout)
+    local parse_time, trees, finished = tcall(self._parse, self, ranges, timeout)
     total_parse_time = total_parse_time + parse_time
 
     if finished then
-      self:_run_async_callbacks(range, nil, trees)
+      self:_run_async_callbacks(ranges, nil, trees)
       return trees
     elseif total_parse_time > redrawtime then
-      self:_run_async_callbacks(range, 'TIMEOUT', nil)
+      self:_run_async_callbacks(ranges, 'TIMEOUT', nil)
       return nil
     else
       vim.schedule(step)
@@ -533,7 +544,7 @@ end
 --- Any region with empty range (`{}`, typically only the root tree) is always parsed;
 --- otherwise (typically injections) only if it intersects {range} (or if {range} is `true`).
 ---
---- @param range boolean|Range|nil: Parse this range in the parser's source.
+--- @param ranges boolean|Range|(Range)[]|nil: Parse this range(s) in the parser's source.
 ---     Set to `true` to run a complete parse of the source (Note: Can be slow!)
 ---     Set to `false|nil` to only parse regions with empty ranges (typically
 ---     only the root tree without injections).
@@ -547,20 +558,25 @@ end
 ---     If parsing was still able to finish synchronously (within 3ms), `parse()` returns the list
 ---     of trees. Otherwise, it returns `nil`.
 --- @return table<integer, TSTree>?
-function LanguageTree:parse(range, on_parse)
-  if on_parse then
-    return self:_async_parse(range, on_parse)
+function LanguageTree:parse(ranges, on_parse)
+  if type(ranges) == 'table' and #ranges > 0 and type(ranges[1]) == 'number' then
+    ranges = { ranges }
   end
-  local trees, _ = self:_parse(range)
+  ---@cast ranges boolean|(Range)[]|nil
+
+  if on_parse then
+    return self:_async_parse(ranges, on_parse)
+  end
+  local trees, _ = self:_parse(ranges)
   return trees
 end
 
 --- @private
---- @param range boolean|Range|nil
+--- @param ranges boolean|(Range)[]|nil
 --- @param timeout integer?
 --- @return table<integer, TSTree> trees
 --- @return boolean finished
-function LanguageTree:_parse(range, timeout)
+function LanguageTree:_parse(ranges, timeout)
   local changes --- @type Range6[]?
 
   -- Collect some stats
@@ -571,7 +587,7 @@ function LanguageTree:_parse(range, timeout)
 
   -- At least 1 region is invalid
   if not self:is_valid(true) then
-    changes, no_regions_parsed, total_parse_time, is_finished = self:_parse_regions(range, timeout)
+    changes, no_regions_parsed, total_parse_time, is_finished = self:_parse_regions(ranges, timeout)
     timeout = timeout and math.max(timeout - total_parse_time, 0)
     if not is_finished then
       return self._trees, is_finished
@@ -590,9 +606,9 @@ function LanguageTree:_parse(range, timeout)
   -- * A potential optimization: Track the ranges where the set of injected regions are known to be
   --   complete and valid, and run the injection query only on the intersection of requested ranges
   --   and the invalid ranges. This would be even more beneficial for combined injection.
-  if self._injection_query and not self._injections_processed and range then
-    query_time = self:_add_injections(range)
-    if range == true or self._injection_query.has_combined_injection then
+  if self._injection_query and not self._injections_processed and ranges then
+    query_time = self:_add_injections(ranges)
+    if ranges == true or self._injection_query.has_combined_injection then
       self._injections_processed = true
     end
   end
@@ -602,14 +618,14 @@ function LanguageTree:_parse(range, timeout)
     regions_parsed = no_regions_parsed,
     parse_time = total_parse_time,
     query_time = query_time,
-    range = range,
+    ranges = ranges,
   })
 
   for _, child in pairs(self._children) do
     if timeout == 0 then
       return self._trees, false
     end
-    local ctime, _, child_finished = tcall(child._parse, child, range, timeout)
+    local ctime, _, child_finished = tcall(child._parse, child, ranges, timeout)
     timeout = timeout and math.max(timeout - ctime, 0)
     if not child_finished then
       return self._trees, child_finished
@@ -1146,22 +1162,28 @@ end
 ---
 --- This is where most of the injection processing occurs.
 ---
---- @param range boolean|Range|nil
+--- @param ranges boolean|(Range)[]|nil
 --- @private
 --- @return table<string, Range6[][]>
-function LanguageTree:_get_injections(range)
-  if not self._injection_query or not range then
+function LanguageTree:_get_injections(ranges)
+  if not self._injection_query or not ranges then
     return {}
   end
 
   ---@type table<integer,vim.treesitter.languagetree.Injection>
   local injections = {}
 
-  local range_start_line, range_end_line ---@type integer, integer
-  if range ~= true then
-    local sline, _, eline, _ = Range.unpack4(range)
-    range_start_line, range_end_line = sline, eline
+  -- Combined injection must be run on the full source, and currently there is no simply way to
+  -- selectively match each pattern separately.
+  if ranges == true or self._injection_query.has_combined_injection then
+    ranges = { true } ---@diagnostic disable-line: assign-type-mismatch
+  else
+    for i, range in ipairs(ranges) do
+      local sline, _, eline, _ = Range.unpack4(range)
+      ranges[i] = { sline, eline }
+    end
   end
+  ---@cast ranges (true|Range2)[]
 
   for index, tree in pairs(self._trees) do
     local root_node = tree:root()
@@ -1170,23 +1192,28 @@ function LanguageTree:_get_injections(range)
       end_line = end_line + 1
     end
 
-    -- If the query doesn't have combined injection, run the query on the given range. Combined
-    -- injection must be run on the full range. Currently there is no simply way to selectively
-    -- match each pattern separately.
-    if range ~= true and not self._injection_query.has_combined_injection then
-      start_line = math.max(start_line, range_start_line)
-      end_line = math.min(end_line, range_end_line)
-    end
-
-    if start_line < end_line then
-      for pattern, match, metadata in
-        self._injection_query:iter_matches(root_node, self._source, start_line, end_line)
-      do
-        local lang, combined, ranges = self:_get_injection(match, metadata)
-        if lang then
-          add_injection(injections, index, pattern, lang, combined, ranges)
-        else
-          self:_log('match from injection query failed for pattern', pattern)
+    for _, range in ipairs(ranges) do
+      local start_line_in_range, end_line_in_range = start_line, end_line
+      if range ~= true then
+        start_line_in_range = math.max(start_line, range[1])
+        end_line_in_range = math.min(end_line, range[2])
+      end
+      -- Duplicates from overlapping ranges are handled by `set_included_ranges`.
+      if start_line_in_range < end_line_in_range then
+        for pattern, match, metadata in
+          self._injection_query:iter_matches(
+            root_node,
+            self._source,
+            start_line_in_range,
+            end_line_in_range
+          )
+        do
+          local lang, combined, inj_ranges = self:_get_injection(match, metadata)
+          if lang then
+            add_injection(injections, index, pattern, lang, combined, inj_ranges)
+          else
+            self:_log('match from injection query failed for pattern', pattern)
+          end
         end
       end
     end
@@ -1207,8 +1234,8 @@ function LanguageTree:_get_injections(range)
         if entry.combined then
           table.insert(result[lang], combine_regions(entry.regions))
         else
-          for _, ranges in pairs(entry.regions) do
-            table.insert(result[lang], ranges)
+          for _, inj_ranges in pairs(entry.regions) do
+            table.insert(result[lang], inj_ranges)
           end
         end
       end
