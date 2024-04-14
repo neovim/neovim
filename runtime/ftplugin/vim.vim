@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:		Vim
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
-" Last Change:		2024 Apr 08
+" Last Change:		2024 Apr 13
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Only do this when not done yet for this buffer
@@ -14,8 +14,6 @@ let b:did_ftplugin = 1
 
 let s:cpo_save = &cpo
 set cpo&vim
-
-compiler vimdoc
 
 if !exists('*VimFtpluginUndo')
   func VimFtpluginUndo()
