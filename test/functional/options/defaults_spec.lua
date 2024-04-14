@@ -4,6 +4,7 @@ local Screen = require('test.functional.ui.screen')
 
 local assert_alive = t.assert_alive
 local assert_log = t.assert_log
+local assert_nolog = t.assert_nolog
 local api = t.api
 local command = t.command
 local clear = t.clear
@@ -935,7 +936,9 @@ describe('stdpath()', function()
     -- Valid appnames:
     test_appname('a/b', 0)
     test_appname('a/b\\c', 0)
-    if not is_os('win') then
+    if is_os('win') then
+      assert_nolog('Failed to start server: no such file or directory:', testlog)
+    else
       assert_log('Failed to start server: no such file or directory:', testlog)
     end
   end)
