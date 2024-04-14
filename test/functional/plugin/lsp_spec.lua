@@ -188,7 +188,7 @@ describe('LSP', function()
           eq(101, code, 'exit code') -- See fake-lsp-server.lua
           eq(0, signal, 'exit signal')
           assert_log(
-            pesc([[assert_eq failed: left == "\"shutdown\"", right == "\"test\""]]),
+            pesc([[assert_eq failed: left == "'shutdown'", right == "'test'"]]),
             fake_lsp_logfile
           )
         end,

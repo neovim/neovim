@@ -4819,7 +4819,7 @@ describe('API', function()
         {}
       )
       eq(
-        [[{ "a quick", "brown fox", "jumps over the", "lazy dog" }]],
+        [[{ 'a quick', 'brown fox', 'jumps over the', 'lazy dog' }]],
         api.nvim_cmd(
           { cmd = 'Foo', args = { 'a quick', 'brown fox', 'jumps over the', 'lazy dog' } },
           { output = true }

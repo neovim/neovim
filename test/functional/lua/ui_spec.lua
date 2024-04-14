@@ -142,7 +142,7 @@ describe('vim.ui', function()
       end
       if not is_os('bsd') then
         matches(
-          'vim.ui.open: command failed %(%d%): { "[^"]+", .*"non%-existent%-file" }',
+          [[vim.ui.open: command failed (2): { 'xdg-open', 'non-existent-file' }]],
           exec_lua [[local _, err = vim.ui.open('non-existent-file') ; return err]]
         )
       end

@@ -203,7 +203,7 @@ describe(':Man', function()
     write_file(actual_file, '')
     local args = { nvim_prog, '--headless', '+:Man ' .. actual_file, '+q' }
     matches(
-      ('Error detected while processing command line:\r\n' .. 'man.lua: "no manual entry for %s"'):format(
+      ('Error detected while processing command line:\r\n' .. "man.lua: 'no manual entry for %s'"):format(
         pesc(actual_file)
       ),
       fn.system(args, { '' })

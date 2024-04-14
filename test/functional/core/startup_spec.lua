@@ -151,8 +151,8 @@ describe('startup', function()
         [[
           bufs:
           nvim args: 7
-          lua args: { "-arg1", "--exitcode", "73", "--arg2",
-            [0] = "test/functional/fixtures/startup.lua"
+          lua args: { '-arg1', '--exitcode', '73', '--arg2',
+            [0] = 'test/functional/fixtures/startup.lua'
           }]],
         {},
         { '-arg1', '--exitcode', '73', '--arg2' }
@@ -208,7 +208,7 @@ describe('startup', function()
           bufs:
           nvim args: 3
           lua args: {
-            [0] = "test/functional/fixtures/startup.lua"
+            [0] = 'test/functional/fixtures/startup.lua'
           }
           ]],
         {},
@@ -221,8 +221,8 @@ describe('startup', function()
         [[
           bufs:
           nvim args: 7
-          lua args: { "-arg1", "--arg2", "--", "arg3",
-            [0] = "test/functional/fixtures/startup.lua"
+          lua args: { '-arg1', '--arg2', '--', 'arg3',
+            [0] = 'test/functional/fixtures/startup.lua'
           }
           ]],
         {},
@@ -235,8 +235,8 @@ describe('startup', function()
         [[
           bufs: file1 file2
           nvim args: 10
-          lua args: { "-arg1", "arg 2", "--", "file3", "file4",
-            [0] = "test/functional/fixtures/startup.lua"
+          lua args: { '-arg1', 'arg 2', '--', 'file3', 'file4',
+            [0] = 'test/functional/fixtures/startup.lua'
           }
           ]],
         { 'file1', 'file2' },
@@ -249,8 +249,8 @@ describe('startup', function()
         [[
           bufs:
           nvim args: 5
-          lua args: { "-c", "set wrap?",
-            [0] = "test/functional/fixtures/startup.lua"
+          lua args: { '-c', 'set wrap?',
+            [0] = 'test/functional/fixtures/startup.lua'
           }
           ]],
         {},
@@ -266,8 +266,8 @@ describe('startup', function()
           
           bufs:
           nvim args: 7
-          lua args: { "-c", "set wrap?",
-            [0] = "test/functional/fixtures/startup.lua"
+          lua args: { '-c', 'set wrap?',
+            [0] = 'test/functional/fixtures/startup.lua'
           }
           ]],
         { '-c', 'set wrap?' },

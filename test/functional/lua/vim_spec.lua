@@ -645,7 +645,7 @@ describe('lua stdlib', function()
 
     -- special value vim.inspect.KEY works
     eq(
-      '{  KEY_a = "x",  KEY_b = "y"}',
+      [[{  KEY_a = 'x',  KEY_b = 'y'}]],
       exec_lua([[
       return vim.inspect({a="x", b="y"}, {newline = '', process = function(item, path)
         if path[#path] == vim.inspect.KEY then
@@ -3941,7 +3941,7 @@ end)
 describe('lua: builtin modules', function()
   local function do_tests()
     eq(2, exec_lua [[return vim.tbl_count {x=1,y=2}]])
-    eq('{ 10, "spam" }', exec_lua [[return vim.inspect {10, 'spam'}]])
+    eq([[{ 10, 'spam' }]], exec_lua [[return vim.inspect {10, 'spam'}]])
   end
 
   it('works', function()
