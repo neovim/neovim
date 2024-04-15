@@ -45,12 +45,13 @@ static int nlua_base64_decode(lua_State *L)
   size_t src_len = 0;
   const char *src = lua_tolstring(L, 1, &src_len);
 
-  const char *ret = base64_decode(src, src_len);
+  size_t out_len = 0;
+  const char *ret = base64_decode(src, src_len, &out_len);
   if (ret == NULL) {
     return luaL_error(L, "Invalid input");
   }
 
-  lua_pushstring(L, ret);
+  lua_pushlstring(L, ret, out_len);
   xfree((void *)ret);
 
   return 1;
