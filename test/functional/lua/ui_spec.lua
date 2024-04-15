@@ -1,6 +1,6 @@
 local t = require('test.functional.testutil')()
 local eq = t.eq
-local matches = t.matches
+local ok = t.ok
 local exec_lua = t.exec_lua
 local clear = t.clear
 local feed = t.feed
@@ -138,13 +138,12 @@ describe('vim.ui', function()
   describe('open()', function()
     it('validation', function()
       if is_os('win') or not is_ci('github') then
-        exec_lua [[vim.system = function() return { wait=function() return { code=3} end } end]]
+        exec_lua [[vim.system = function() return { wait=function() return { code=3 } end } end]]
       end
       if not is_os('bsd') then
-        matches(
-          'vim.ui.open: command failed %(%d%): { "[^"]+", .*"non%-existent%-file" }',
-          exec_lua [[local _, err = vim.ui.open('non-existent-file') ; return err]]
-        )
+        local rv =
+          exec_lua [[local cmd = vim.ui.open('non-existent-file'); return cmd:wait(100).code]]
+        ok(type(rv) == 'number' and rv ~= 0, 'nonzero exit code', rv)
       end
 
       exec_lua [[

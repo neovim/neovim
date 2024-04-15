@@ -615,7 +615,8 @@ M[ms.window_showDocument] = function(_, result, ctx, _)
 
   if result.external then
     -- TODO(lvimuser): ask the user for confirmation
-    local ret, err = vim.ui.open(uri)
+    local cmd, err = vim.ui.open(uri)
+    local ret = cmd and cmd:wait(2000) or nil
 
     if ret == nil or ret.code ~= 0 then
       return {
