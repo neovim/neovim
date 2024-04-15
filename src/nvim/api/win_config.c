@@ -224,7 +224,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
   }
 
   WinConfig fconfig = WIN_CONFIG_INIT;
-  if (!parse_float_config(NULL, config, &fconfig, false, err)) {
+  if (!parse_win_config(NULL, config, &fconfig, false, err)) {
     return 0;
   }
 
@@ -263,8 +263,9 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
     int flags = win_split_flags(fconfig.split, parent == NULL) | WSP_NOENTER;
 
     TRY_WRAP(err, {
+      int size = (flags & WSP_VERT) ? fconfig.width : fconfig.height;
       if (parent == NULL || parent == curwin) {
-        wp = win_split_ins(0, flags, NULL, 0, NULL);
+        wp = win_split_ins(size, flags, NULL, 0, NULL);
       } else {
         tp = win_find_tabpage(parent);
         switchwin_T switchwin;
@@ -272,7 +273,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
         const int result = switch_win(&switchwin, parent, tp, true);
         assert(result == OK);
         (void)result;
-        wp = win_split_ins(0, flags, NULL, 0, NULL);
+        wp = win_split_ins(size, flags, NULL, 0, NULL);
         restore_win(&switchwin, true);
       }
     });
@@ -405,7 +406,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
                   && !(HAS_KEY_X(config, external) ? config->external : fconfig.external)
                   && (has_split || has_vertical || was_split);
 
-  if (!parse_float_config(win, config, &fconfig, !was_split || to_split, err)) {
+  if (!parse_win_config(win, config, &fconfig, !was_split || to_split, err)) {
     return;
   }
   if (was_split && !to_split) {
@@ -1043,8 +1044,8 @@ static void generate_api_error(win_T *wp, const char *attribute, Error *err)
   }
 }
 
-static bool parse_float_config(win_T *wp, Dict(win_config) *config, WinConfig *fconfig, bool reconf,
-                               Error *err)
+static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fconfig, bool reconf,
+                             Error *err)
 {
 #define HAS_KEY_X(d, key) HAS_KEY(d, win_config, key)
   bool has_relative = false, relative_is_win = false, is_split = false;

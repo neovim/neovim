@@ -1227,81 +1227,151 @@ describe('API/win', function()
       eq(wins_before, api.nvim_list_wins())
     end)
 
-    it('creates a split window', function()
-      local win = api.nvim_open_win(0, true, {
-        vertical = false,
-      })
-      eq('', api.nvim_win_get_config(win).relative)
-    end)
-
-    it('creates split windows in the correct direction', function()
-      local initial_win = api.nvim_get_current_win()
-      local win = api.nvim_open_win(0, true, {
-        vertical = true,
-      })
-      eq('', api.nvim_win_get_config(win).relative)
-
-      local layout = fn.winlayout()
-
-      eq({
-        'row',
-        {
-          { 'leaf', win },
-          { 'leaf', initial_win },
-        },
-      }, layout)
-    end)
-
-    it("respects the 'split' option", function()
-      local initial_win = api.nvim_get_current_win()
-      local win = api.nvim_open_win(0, true, {
-        split = 'below',
-      })
-      eq('', api.nvim_win_get_config(win).relative)
-
-      local layout = fn.winlayout()
-
-      eq({
-        'col',
-        {
-          { 'leaf', initial_win },
-          { 'leaf', win },
-        },
-      }, layout)
-    end)
-
-    it(
-      "doesn't change tp_curwin when splitting window in non-current tab with enter=false",
-      function()
-        local tab1 = api.nvim_get_current_tabpage()
-        local tab1_win = api.nvim_get_current_win()
-
-        t.command('tabnew')
-        local tab2 = api.nvim_get_current_tabpage()
-        local tab2_win = api.nvim_get_current_win()
-
-        eq({ tab1_win, tab2_win }, api.nvim_list_wins())
-        eq({ tab1, tab2 }, api.nvim_list_tabpages())
-
-        api.nvim_set_current_tabpage(tab1)
-        eq(tab1_win, api.nvim_get_current_win())
-
-        local tab2_prevwin = fn.tabpagewinnr(tab2, '#')
-
-        -- split in tab2 whine in tab2, with enter = false
-        local tab2_win2 = api.nvim_open_win(api.nvim_create_buf(false, true), false, {
-          win = tab2_win,
-          split = 'right',
+    describe('creates a split window above', function()
+      local function test_open_win_split_above(key, val)
+        local initial_win = api.nvim_get_current_win()
+        local win = api.nvim_open_win(0, true, {
+          [key] = val,
+          height = 10,
         })
-        eq(tab1_win, api.nvim_get_current_win()) -- we should still be in the first tp
-        eq(tab1_win, api.nvim_tabpage_get_win(tab1))
-
-        eq(tab2_win, api.nvim_tabpage_get_win(tab2)) -- tab2's tp_curwin should not have changed
-        eq(tab2_prevwin, fn.tabpagewinnr(tab2, '#')) -- tab2's tp_prevwin should not have changed
-        eq({ tab1_win, tab2_win, tab2_win2 }, api.nvim_list_wins())
-        eq({ tab2_win, tab2_win2 }, api.nvim_tabpage_list_wins(tab2))
+        eq('', api.nvim_win_get_config(win).relative)
+        eq(10, api.nvim_win_get_height(win))
+        local layout = fn.winlayout()
+        eq({
+          'col',
+          {
+            { 'leaf', win },
+            { 'leaf', initial_win },
+          },
+        }, layout)
       end
-    )
+
+      it("with split = 'above'", function()
+        test_open_win_split_above('split', 'above')
+      end)
+
+      it("with vertical = false and 'nosplitbelow'", function()
+        api.nvim_set_option_value('splitbelow', false, {})
+        test_open_win_split_above('vertical', false)
+      end)
+    end)
+
+    describe('creates a split window below', function()
+      local function test_open_win_split_below(key, val)
+        local initial_win = api.nvim_get_current_win()
+        local win = api.nvim_open_win(0, true, {
+          [key] = val,
+          height = 15,
+        })
+        eq('', api.nvim_win_get_config(win).relative)
+        eq(15, api.nvim_win_get_height(win))
+        local layout = fn.winlayout()
+        eq({
+          'col',
+          {
+            { 'leaf', initial_win },
+            { 'leaf', win },
+          },
+        }, layout)
+      end
+
+      it("with split = 'below'", function()
+        test_open_win_split_below('split', 'below')
+      end)
+
+      it("with vertical = false and 'splitbelow'", function()
+        api.nvim_set_option_value('splitbelow', true, {})
+        test_open_win_split_below('vertical', false)
+      end)
+    end)
+
+    describe('creates a split window to the left', function()
+      local function test_open_win_split_left(key, val)
+        local initial_win = api.nvim_get_current_win()
+        local win = api.nvim_open_win(0, true, {
+          [key] = val,
+          width = 25,
+        })
+        eq('', api.nvim_win_get_config(win).relative)
+        eq(25, api.nvim_win_get_width(win))
+        local layout = fn.winlayout()
+        eq({
+          'row',
+          {
+            { 'leaf', win },
+            { 'leaf', initial_win },
+          },
+        }, layout)
+      end
+
+      it("with split = 'left'", function()
+        test_open_win_split_left('split', 'left')
+      end)
+
+      it("with vertical = true and 'nosplitright'", function()
+        api.nvim_set_option_value('splitright', false, {})
+        test_open_win_split_left('vertical', true)
+      end)
+    end)
+
+    describe('creates a split window to the right', function()
+      local function test_open_win_split_right(key, val)
+        local initial_win = api.nvim_get_current_win()
+        local win = api.nvim_open_win(0, true, {
+          [key] = val,
+          width = 30,
+        })
+        eq('', api.nvim_win_get_config(win).relative)
+        eq(30, api.nvim_win_get_width(win))
+        local layout = fn.winlayout()
+        eq({
+          'row',
+          {
+            { 'leaf', initial_win },
+            { 'leaf', win },
+          },
+        }, layout)
+      end
+
+      it("with split = 'right'", function()
+        test_open_win_split_right('split', 'right')
+      end)
+
+      it("with vertical = true and 'splitright'", function()
+        api.nvim_set_option_value('splitright', true, {})
+        test_open_win_split_right('vertical', true)
+      end)
+    end)
+
+    it("doesn't change tp_curwin when splitting window in another tab with enter=false", function()
+      local tab1 = api.nvim_get_current_tabpage()
+      local tab1_win = api.nvim_get_current_win()
+
+      t.command('tabnew')
+      local tab2 = api.nvim_get_current_tabpage()
+      local tab2_win = api.nvim_get_current_win()
+
+      eq({ tab1_win, tab2_win }, api.nvim_list_wins())
+      eq({ tab1, tab2 }, api.nvim_list_tabpages())
+
+      api.nvim_set_current_tabpage(tab1)
+      eq(tab1_win, api.nvim_get_current_win())
+
+      local tab2_prevwin = fn.tabpagewinnr(tab2, '#')
+
+      -- split in tab2 whine in tab2, with enter = false
+      local tab2_win2 = api.nvim_open_win(api.nvim_create_buf(false, true), false, {
+        win = tab2_win,
+        split = 'right',
+      })
+      eq(tab1_win, api.nvim_get_current_win()) -- we should still be in the first tp
+      eq(tab1_win, api.nvim_tabpage_get_win(tab1))
+
+      eq(tab2_win, api.nvim_tabpage_get_win(tab2)) -- tab2's tp_curwin should not have changed
+      eq(tab2_prevwin, fn.tabpagewinnr(tab2, '#')) -- tab2's tp_prevwin should not have changed
+      eq({ tab1_win, tab2_win, tab2_win2 }, api.nvim_list_wins())
+      eq({ tab2_win, tab2_win2 }, api.nvim_tabpage_list_wins(tab2))
+    end)
 
     it('creates splits in the correct location', function()
       local first_win = api.nvim_get_current_win()
