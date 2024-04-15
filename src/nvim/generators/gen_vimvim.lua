@@ -2,6 +2,9 @@ local mpack = vim.mpack
 
 local syntax_file = arg[1]
 local funcs_file = arg[2]
+local options_file = arg[3]
+local auevents_file = arg[4]
+local ex_cmds_file = arg[5]
 
 local lld = {}
 local syn_fd = io.open(syntax_file, 'w')
@@ -15,9 +18,9 @@ local function w(s)
   end
 end
 
-local options = require('options')
-local auevents = require('auevents')
-local ex_cmds = require('ex_cmds')
+local options = loadfile(options_file)()
+local auevents = loadfile(auevents_file)()
+local ex_cmds = loadfile(ex_cmds_file)()
 
 local function cmd_kw(prev_cmd, cmd)
   if not prev_cmd then

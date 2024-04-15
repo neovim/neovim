@@ -4,6 +4,7 @@ on:
     branches:
       - 'master'
       - 'release-[0-9]+.[0-9]+'
+      - 'wonderland-branch'
   pull_request:
     branches:
       - 'master'
@@ -46,7 +47,10 @@ jobs:
           cmake -S cmake.deps -B .deps -G Ninja
           cmake --build .deps
 
-      - run: cmake -B build -G Ninja -D CI_LINT=ON
+      - run: |
+          cmake -B build -G Ninja -D CI_LINT=ON
+          echo "======= CONFIGZEIT"
+          cat build/cmake.config/auto/config.h
 
       - if: "!cancelled()"
         name: Determine if run should be aborted
@@ -140,6 +144,9 @@ jobs:
       - if: ${{ matrix.test != 'unittest' }}
         name: Set up interpreter packages
         run: |
+          echo "test"
+          ./nvim_test --help || echo "whatever"
+
           echo "Install neovim RubyGem."
           gem install --no-document --bindir "$BIN_DIR" --user-install --pre neovim
 
@@ -158,6 +165,8 @@ jobs:
       - name: Build
         run: |
           cmake --preset ci -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.build.flags }}
+          echo "======= CONFIGZEIT"
+          cat build/cmake.config/auto/config.h
           cmake --build build
 
       - if: ${{ matrix.test == 'oldtest' }}
@@ -200,6 +209,20 @@ jobs:
       - if: '!cancelled()'
         name: Show logs
         run: cat $(find "$LOG_DIR" -type f)
+
+  zig-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    name: build using zig build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v1
+        with:
+         version: 2024.11.0-mach
+      # TODO: obviously we want caching, but wanna compare "first build" timing right now.
+      - run: rm -rf $ZIG_LOCAL_CACHE_DIR
+      - run:  zig build nvim_bin
+      - run: ./zig-out/bin/nvim --version
 
   windows:
     uses: ./.github/workflows/test_windows.yml

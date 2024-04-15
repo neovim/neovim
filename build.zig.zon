@@ -1,0 +1,51 @@
+.{
+    .name = "neovim",
+    .version = "0.0.0",
+
+    // This field is optional.
+    // This is currently advisory only; Zig does not yet do anything
+    // with this value.
+    //.minimum_zig_version = "0.12.0",
+
+    // lpeg fetching from https://www.inf.puc-rio.br/~roberto/lpeg/lpeg-1.0.2.tar.gz doesn't work, bundlevendor for now
+
+    .dependencies = .{
+        .ziglua = .{
+            .url = "git+https://github.com/natecraddock/ziglua#86abd0ac13c80ca09b296c64ff8a2817557126c9",
+            .hash = "1220b77010019fed709e40347b4770f49cdf856445eddc40bf9ab1a4efa024de4f99",
+        },
+        .lpeg = .{
+            .url = "https://github.com/neovim/deps/raw/d495ee6f79e7962a53ad79670cb92488abe0b9b4/opt/lpeg-1.1.0.tar.gz",
+            .hash = "122084badadeb91106dd06b2055119a944c340563536caefd8e22d4064182f7cd6e6",
+        },
+        .libluv = .{
+            .url = "https://github.com/luvit/luv/releases/download/1.48.0-2/luv-1.48.0-2.tar.gz",
+            .hash = "122050b45fc1b2d1e72d30d3e4f446735ab95bbb88658bc1de736e5dc71c3e3cd767",
+        },
+        .lua_compat53 = .{
+            .url = "https://github.com/lunarmodules/lua-compat-5.3/archive/v0.13.tar.gz",
+            .hash = "1220e75685f00c242fbf6c1c60e98dd1b24ba99e38277970a10636e44ed08cf2af8a",
+        },
+        .treesitter = .{
+            .url = "git+https://github.com/tree-sitter/tree-sitter?ref=v0.25.1#f5afe475deb7c0bae6407fb776c76824f717bb61",
+            .hash = "12208206dd80ff4c034b425c4a1eb0cd322bcff0ac7289a1c4c1a8fecd5b9db47bf7",
+        },
+        .libuv = .{ .path = "./deps/libuv" },
+        .utf8proc = .{ .path = "./deps/utf8proc/" },
+        .unibilium = .{ .path = "./deps/unibilium/" },
+        .iconv_apple = .{ .path = "./deps/iconv_apple/", .lazy = true },
+    },
+    .paths = .{
+        // This makes *all* files, recursively, included in this package. It is generally
+        // better to explicitly list the files and directories instead, to insure that
+        // fetching from tarballs, file system paths, and version control all result
+        // in the same contents hash.
+        "",
+        // For example...
+        //"build.zig",
+        //"build.zig.zon",
+        //"src",
+        //"LICENSE",
+        //"README.md",
+    },
+}
