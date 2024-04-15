@@ -132,12 +132,18 @@ char *base64_encode(const char *src, size_t src_len)
 
 /// Decode a Base64 encoded string.
 ///
+/// The returned string is NOT null-terminated, because the decoded string may
+/// contain embedded NULLs. Use the output parameter out_lenp to determine the
+/// length of the returned string.
+///
 /// @param src Base64 encoded string
 /// @param src_len Length of {src}
+/// @param [out] out_lenp Returns the length of the decoded string
 /// @return Decoded string
-char *base64_decode(const char *src, size_t src_len)
+char *base64_decode(const char *src, size_t src_len, size_t *out_lenp)
 {
   assert(src != NULL);
+  assert(out_lenp != NULL);
 
   char *dest = NULL;
 
@@ -155,7 +161,7 @@ char *base64_decode(const char *src, size_t src_len)
 
   const uint8_t *s = (const uint8_t *)src;
 
-  dest = xmalloc(out_len + 1);
+  dest = xmalloc(out_len);
 
   int acc = 0;
   int acc_len = 0;
@@ -203,7 +209,7 @@ char *base64_decode(const char *src, size_t src_len)
     }
   }
 
-  dest[out_len] = '\0';
+  *out_lenp = out_len;
 
   return dest;
 
@@ -211,6 +217,8 @@ invalid:
   if (dest) {
     xfree((void *)dest);
   }
+
+  *out_lenp = 0;
 
   return NULL;
 }
