@@ -372,11 +372,13 @@ Use existing common {verb} names (actions) if possible:
     - create:       Creates a new (non-trivial) thing (TODO: rename to "def"?)
     - del:          Deletes a thing (or group of things)
     - detach:       Dispose attached listener (TODO: rename to "un"?)
+    - enable:       Enables/disables functionality.
     - eval:         Evaluates an expression
     - exec:         Executes code
     - fmt:          Formats
     - get:          Gets things (often by a query)
     - inspect:      Presents a high-level, often interactive, view
+    - is_enabled:   Checks if functionality is enabled.
     - open:         Opens something (a buffer, window, …)
     - parse:        Parses something into a structured form
     - set:          Sets a thing (or group of things)

@@ -239,6 +239,9 @@ local M = {}
 --- whole line the sign is placed in.
 --- @field linehl? table<vim.diagnostic.Severity,string>
 
+--- @class vim.diagnostic.Filter : vim.diagnostic.Opts
+--- @field ns_id? integer Namespace
+
 --- @nodoc
 --- @enum vim.diagnostic.Severity
 M.severity = {
@@ -1538,13 +1541,7 @@ end
 
 --- @deprecated use `vim.diagnostic.is_enabled()`
 function M.is_disabled(bufnr, namespace)
-  vim.deprecate(
-    'Defining diagnostic signs with :sign-define or sign_define()',
-    'vim.diagnostic.is_enabled()',
-    '0.12',
-    nil,
-    false
-  )
+  vim.deprecate('vim.diagnostic.is_disabled()', 'vim.diagnostic.is_enabled()', '0.12', nil, false)
   return not M.is_enabled(bufnr, namespace)
 end
 
@@ -1591,7 +1588,7 @@ function M.show(namespace, bufnr, diagnostics, opts)
     return
   end
 
-  if M.is_disabled(bufnr, namespace) then
+  if not M.is_enabled(bufnr, namespace) then
     return
   end
 
@@ -1942,7 +1939,7 @@ function M.disable(bufnr, namespace)
     nil,
     false
   )
-  M.enable(bufnr, namespace, false)
+  M.enable(bufnr, false, { ns_id = namespace })
 end
 
 --- Enables or disables diagnostics.
@@ -1954,17 +1951,49 @@ end
 --- ```
 ---
 --- @param bufnr integer? Buffer number, or 0 for current buffer, or `nil` for all buffers.
---- @param namespace integer? Only for the given namespace, or `nil` for all.
 --- @param enable (boolean|nil) true/nil to enable, false to disable
-function M.enable(bufnr, namespace, enable)
+--- @param opts vim.diagnostic.Filter? Filter by these opts, or `nil` for all. Only `ns_id` is
+--- supported, currently.
+function M.enable(bufnr, enable, opts)
+  opts = opts or {}
+  if type(enable) == 'number' then
+    -- Legacy signature.
+    vim.deprecate(
+      'vim.diagnostic.enable(buf:number, namespace)',
+      'vim.diagnostic.enable(buf:number, enable:boolean, opts)',
+      '0.12',
+      nil,
+      false
+    )
+    opts.ns_id = enable
+    enable = true
+  end
   vim.validate({
     bufnr = { bufnr, 'n', true },
-    namespace = { namespace, 'n', true },
-    enable = { enable, 'b', true },
+    enable = {
+      enable,
+      function(o)
+        return o == nil or type(o) == 'boolean' or type(o) == 'number'
+      end,
+      'boolean or number (deprecated)',
+    },
+    opts = {
+      opts,
+      function(o)
+        return o == nil
+          or (
+            type(o) == 'table'
+            -- TODO(justinmk): support other `vim.diagnostic.Filter` fields.
+            and (vim.tbl_isempty(o) or vim.deep_equal(vim.tbl_keys(o), { 'ns_id' }))
+          )
+      end,
+      'vim.diagnostic.Filter table (only ns_id is supported currently)',
+    },
   })
   enable = enable == nil and true or enable
+
   if bufnr == nil then
-    if namespace == nil then
+    if opts.ns_id == nil then
       diagnostic_disabled = (
         enable
           -- Enable everything by setting diagnostic_disabled to an empty table.
@@ -1978,12 +2007,12 @@ function M.enable(bufnr, namespace, enable)
         })
       )
     else
-      local ns = M.get_namespace(namespace)
+      local ns = M.get_namespace(opts.ns_id)
       ns.disabled = not enable
     end
   else
     bufnr = get_bufnr(bufnr)
-    if namespace == nil then
+    if opts.ns_id == nil then
       diagnostic_disabled[bufnr] = (not enable) and true or nil
     else
       if type(diagnostic_disabled[bufnr]) ~= 'table' then
@@ -1993,14 +2022,14 @@ function M.enable(bufnr, namespace, enable)
           diagnostic_disabled[bufnr] = {}
         end
       end
-      diagnostic_disabled[bufnr][namespace] = (not enable) and true or nil
+      diagnostic_disabled[bufnr][opts.ns_id] = (not enable) and true or nil
     end
   end
 
   if enable then
-    M.show(namespace, bufnr)
+    M.show(opts.ns_id, bufnr)
   else
-    M.hide(namespace, bufnr)
+    M.hide(opts.ns_id, bufnr)
   end
 end
 

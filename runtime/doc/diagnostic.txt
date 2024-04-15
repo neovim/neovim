@@ -367,6 +367,13 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {user_data}?  (`any`) arbitrary data plugins can add
       • {namespace}?  (`integer`)
 
+*vim.diagnostic.Filter*
+    Extends: |vim.diagnostic.Opts|
+
+
+    Fields: ~
+      • {ns_id}?  (`integer`) Namespace
+
 *vim.diagnostic.GetOpts*
     A table with the following keys:
 
@@ -616,7 +623,7 @@ count({bufnr}, {opts})                                *vim.diagnostic.count()*
         (`table`) Table with actually present severity values as keys (see
         |diagnostic-severity|) and integer counts as values.
 
-enable({bufnr}, {namespace}, {enable})               *vim.diagnostic.enable()*
+enable({bufnr}, {enable}, {opts})                    *vim.diagnostic.enable()*
     Enables or disables diagnostics.
 
     To "toggle", pass the inverse of `is_enabled()`: >lua
@@ -624,11 +631,12 @@ enable({bufnr}, {namespace}, {enable})               *vim.diagnostic.enable()*
 <
 
     Parameters: ~
-      • {bufnr}      (`integer?`) Buffer number, or 0 for current buffer, or
-                     `nil` for all buffers.
-      • {namespace}  (`integer?`) Only for the given namespace, or `nil` for
-                     all.
-      • {enable}     (`boolean?`) true/nil to enable, false to disable
+      • {bufnr}   (`integer?`) Buffer number, or 0 for current buffer, or
+                  `nil` for all buffers.
+      • {enable}  (`boolean?`) true/nil to enable, false to disable
+      • {opts}    (`vim.diagnostic.Filter?`) Filter by these opts, or `nil`
+                  for all. Only `ns_id` is supported, currently. See
+                  |vim.diagnostic.Filter|.
 
 fromqflist({list})                               *vim.diagnostic.fromqflist()*
     Convert a list of quickfix items to a list of diagnostics.
