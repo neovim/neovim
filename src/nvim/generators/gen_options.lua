@@ -2,6 +2,7 @@ local options_file = arg[1]
 local options_enum_file = arg[2]
 local options_map_file = arg[3]
 local option_vars_file = arg[4]
+local options_input_file = arg[5]
 
 local opt_fd = assert(io.open(options_file, 'w'))
 local opt_enum_fd = assert(io.open(options_enum_file, 'w'))
@@ -31,7 +32,7 @@ local function vars_w(s)
 end
 
 --- @module 'nvim.options'
-local options = require('options')
+local options = loadfile(options_input_file)()
 local options_meta = options.options
 
 local cstr = options.cstr
