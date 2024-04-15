@@ -1,0 +1,12 @@
+.{
+    .name = "unibilium",
+    .version = "0.0.1",
+    .paths = .{""},
+
+    .dependencies = .{
+        .unibilium = .{
+            .url = "https://github.com/neovim/unibilium/archive/d72c3598e7ac5d1ebf86ee268b8b4ed95c0fa628.tar.gz",
+            .hash = "1220eb029114911f764a2266a8595829343b726d8aa81105a728920fdcba4b482a7d",
+        },
+    },
+}
