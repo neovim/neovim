@@ -92,14 +92,15 @@ function M.check()
 
   if latest_npm ~= 'unable to parse' and vim.version.lt(current_npm, latest_npm) then
     local message = 'Package "neovim" is out-of-date. Installed: '
-      .. current_npm
-      .. ' latest: '
-      .. latest_npm
-    health.warn(message({
+      .. current_npm:gsub('%\n$', '')
+      .. ', latest: '
+      .. latest_npm:gsub('%\n$', '')
+
+    health.warn(message, {
       'Run in shell: npm install -g neovim',
       'Run in shell (if you use yarn): yarn global add neovim',
       'Run in shell (if you use pnpm): pnpm install -g neovim',
-    }))
+    })
   else
     health.ok('Latest "neovim" npm/yarn/pnpm package is installed: ' .. current_npm)
   end
