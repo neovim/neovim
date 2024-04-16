@@ -2376,7 +2376,8 @@ vim.trim({s})                                                     *vim.trim()*
       • https://www.lua.org/pil/20.2.html
 
 vim.validate({opt})                                           *vim.validate()*
-    Validates a parameter specification (types and values).
+    Validates a parameter specification (types and values). Specs are
+    evaluated in alphanumeric order, until the first failure.
 
     Usage example: >lua
         function user.new(name, age, hobbies)
