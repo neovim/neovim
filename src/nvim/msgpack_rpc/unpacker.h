@@ -37,7 +37,8 @@ struct Unpacker {
   int nevents;
   int ncalls;
   UIClientHandler ui_handler;
-  GridLineEvent *grid_line_event;
+  GridLineEvent grid_line_event;
+  bool has_grid_line_event;
 };
 
 // unrecovareble error. unpack_error should be set!

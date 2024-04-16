@@ -187,6 +187,8 @@ void unpacker_init(Unpacker *p)
   p->unpack_error = ERROR_INIT;
 
   p->arena = (Arena)ARENA_EMPTY;
+
+  p->has_grid_line_event = false;
 }
 
 void unpacker_teardown(Unpacker *p)
@@ -303,6 +305,7 @@ error:
 bool unpacker_advance(Unpacker *p)
 {
   assert(p->state >= 0);
+  p->has_grid_line_event = false;
   if (p->state == 0) {
     if (!unpacker_parse_header(p)) {
       return false;
@@ -323,6 +326,7 @@ bool unpacker_advance(Unpacker *p)
 
     if (p->state == 16) {
       // grid_line event already unpacked
+      p->has_grid_line_event = true;
       goto done;
     } else {
       assert(p->state == 12);
@@ -378,7 +382,7 @@ bool unpacker_parse_redraw(Unpacker *p)
 
   const char *data = p->read_ptr;
   size_t size = p->read_size;
-  GridLineEvent *g = p->grid_line_event;
+  GridLineEvent *g = &p->grid_line_event;
 
 #define NEXT_TYPE(tok, typ) \
   result = mpack_rtoken(&data, &size, &tok); \
@@ -420,16 +424,10 @@ bool unpacker_parse_redraw(Unpacker *p)
     p->read_size = size;
     if (p->ui_handler.fn != ui_client_event_grid_line) {
       p->state = 12;
-      if (p->grid_line_event) {
-        arena_mem_free(arena_finish(&p->arena));
-        p->grid_line_event = NULL;
-      }
       return true;
     } else {
       p->state = 14;
       p->arena = (Arena)ARENA_EMPTY;
-      p->grid_line_event = arena_alloc(&p->arena, sizeof *p->grid_line_event, true);
-      g = p->grid_line_event;
     }
     FALLTHROUGH;
 

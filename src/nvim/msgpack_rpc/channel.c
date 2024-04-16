@@ -289,8 +289,9 @@ static void parse_msgpack(Channel *channel)
     if (p->type == kMessageTypeRedrawEvent) {
       // When exiting, ui_client_stop() has already been called, so don't handle UI events.
       if (ui_client_channel_id && !exiting) {
-        if (p->grid_line_event) {
-          ui_client_event_raw_line(p->grid_line_event);
+        if (p->has_grid_line_event) {
+          ui_client_event_raw_line(&p->grid_line_event);
+          p->has_grid_line_event = false;
         } else if (p->ui_handler.fn != NULL && p->result.type == kObjectTypeArray) {
           p->ui_handler.fn(p->result.data.array);
         }
