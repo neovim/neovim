@@ -2019,6 +2019,9 @@ static void extend_dict(typval_T *argvars, const char *arg_errmsg, bool is_new, 
 
     action = tv_get_string_chk(&argvars[2]);
     if (action == NULL) {
+      if (is_new) {
+        tv_dict_unref(d1);
+      }
       return;  // Type error; error message already given.
     }
     size_t i;
@@ -2028,6 +2031,9 @@ static void extend_dict(typval_T *argvars, const char *arg_errmsg, bool is_new, 
       }
     }
     if (i == 3) {
+      if (is_new) {
+        tv_dict_unref(d1);
+      }
       semsg(_(e_invarg2), action);
       return;
     }

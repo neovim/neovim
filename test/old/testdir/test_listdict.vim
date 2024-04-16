@@ -1441,4 +1441,10 @@ func Test_indexof()
   delfunc TestIdx
 endfunc
 
+func Test_extendnew_leak()
+  " This used to leak memory
+  for i in range(100) | silent! call extendnew([], [], []) | endfor
+  for i in range(100) | silent! call extendnew({}, {}, {}) | endfor
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
