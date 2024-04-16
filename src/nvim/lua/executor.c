@@ -103,7 +103,7 @@ typedef struct {
     if (args[i].v_type == VAR_UNKNOWN) { \
       lua_pushnil(lstate); \
     } else { \
-      nlua_push_typval(lstate, &args[i], special); \
+      nlua_push_typval(lstate, &args[i], (special) ? kNluaPushSpecial : 0); \
     } \
   }
 
@@ -325,7 +325,7 @@ static int nlua_thr_api_nvim__get_runtime(lua_State *lstate)
   }
 
   ArrayOf(String) ret = runtime_get_named_thread(is_lua, pat, all);
-  nlua_push_Array(lstate, ret, true);
+  nlua_push_Array(lstate, ret, kNluaPushSpecial);
   api_free_array(ret);
   api_free_array(pat);
 
@@ -1210,7 +1210,7 @@ int nlua_call(lua_State *lstate)
   });
 
   if (!ERROR_SET(&err)) {
-    nlua_push_typval(lstate, &rettv, false);
+    nlua_push_typval(lstate, &rettv, 0);
   }
   tv_clear(&rettv);
 
@@ -1261,7 +1261,7 @@ static int nlua_rpc(lua_State *lstate, bool request)
     ArenaMem res_mem = NULL;
     Object result = rpc_send_call(chan_id, name, args, &res_mem, &err);
     if (!ERROR_SET(&err)) {
-      nlua_push_Object(lstate, &result, false);
+      nlua_push_Object(lstate, &result, 0);
       arena_mem_free(res_mem);
     }
   } else {
@@ -1564,7 +1564,7 @@ Object nlua_exec(const String str, const Array args, LuaRetMode mode, Arena *are
   }
 
   for (size_t i = 0; i < args.size; i++) {
-    nlua_push_Object(lstate, &args.items[i], false);
+    nlua_push_Object(lstate, &args.items[i], 0);
   }
 
   if (nlua_pcall(lstate, (int)args.size, 1)) {
@@ -1611,7 +1611,7 @@ Object nlua_call_ref(LuaRef ref, const char *name, Array args, LuaRetMode mode, 
     nargs++;
   }
   for (size_t i = 0; i < args.size; i++) {
-    nlua_push_Object(lstate, &args.items[i], false);
+    nlua_push_Object(lstate, &args.items[i], 0);
   }
 
   if (nlua_pcall(lstate, nargs, 1)) {
