@@ -578,7 +578,7 @@ end
 ---@return fun(table: table<K, V>, index?: K):K, V # |for-in| iterator over sorted keys and their values
 ---@return T
 function vim.spairs(t)
-  vim.validate({ t = { t, 't' } })
+  assert(type(t) == 'table', ('expected table, got %s'):format(type(t)))
   --- @cast t table<any,any>
 
   -- collect the keys
@@ -795,7 +795,7 @@ do
       return false, string.format('opt: expected table, got %s', type(opt))
     end
 
-    for param_name, spec in pairs(opt) do
+    for param_name, spec in vim.spairs(opt) do
       if type(spec) ~= 'table' then
         return false, string.format('opt[%s]: expected table, got %s', param_name, type(spec))
       end
@@ -851,7 +851,8 @@ do
     return true
   end
 
-  --- Validates a parameter specification (types and values).
+  --- Validates a parameter specification (types and values). Specs are evaluated in alphanumeric
+  --- order, until the first failure.
   ---
   --- Usage example:
   ---
