@@ -758,13 +758,13 @@ func Test_ve_blockpaste()
   call cursor(1,1)
   exe ":norm! \<C-V>3ljdP"
   call assert_equal(1, col('.'))
-  call assert_equal(getline(1, 2), ['QWERTZ', 'ASDFGH'])
+  call assert_equal(['QWERTZ', 'ASDFGH'], getline(1, 2))
   call cursor(1,1)
   exe ":norm! \<C-V>3ljd"
   call cursor(1,1)
   norm! $3lP
   call assert_equal(5, col('.'))
-  call assert_equal(getline(1, 2), ['TZ  QWER', 'GH  ASDF'])
+  call assert_equal(['TZ  QWER', 'GH  ASDF'], getline(1, 2))
   set ve&vim
   bwipe!
 endfunc

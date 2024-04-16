@@ -597,13 +597,13 @@ func Test_digraph_getlist_function()
   call digraph_setlist([['aa', 'き'], ['bb', 'く']])
 
   for pair in digraph_getlist(1)
-    call assert_equal(digraph_get(pair[0]), pair[1])
+    call assert_equal(pair[1], digraph_get(pair[0]))
   endfor
 
   " We don't know how many digraphs are registered before, so check the number
   " of digraphs returned.
   call assert_equal(digraph_getlist()->len(), digraph_getlist(0)->len())
-  call assert_notequal((digraph_getlist()->len()), digraph_getlist(1)->len())
+  call assert_notequal(digraph_getlist()->len(), digraph_getlist(1)->len())
 
   call assert_fails('call digraph_getlist(0z12)', 'E974: Using a Blob as a Number')
 endfunc

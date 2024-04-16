@@ -3907,9 +3907,9 @@ func Test_custom_completion()
   call assert_fails("call getcompletion('', 'custom')", 'E475:')
   call assert_fails("call getcompletion('', 'customlist')", 'E475:')
 
-  call assert_equal(getcompletion('', 'custom,CustomComplete1'), ['a', 'b', 'c'])
-  call assert_equal(getcompletion('', 'customlist,CustomComplete2'), ['a', 'b'])
-  call assert_equal(getcompletion('b', 'customlist,CustomComplete2'), ['b'])
+  call assert_equal(['a', 'b', 'c'], getcompletion('', 'custom,CustomComplete1'))
+  call assert_equal(['a', 'b'], getcompletion('', 'customlist,CustomComplete2'))
+  call assert_equal(['b'], getcompletion('b', 'customlist,CustomComplete2'))
 
   delcom Test1
   delcom Test2
