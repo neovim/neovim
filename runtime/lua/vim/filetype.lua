@@ -1298,6 +1298,7 @@ local filename = {
   ['init.trans'] = 'clojure',
   ['.trans'] = 'clojure',
   ['CMakeLists.txt'] = 'cmake',
+  ['CMakeCache.txt'] = 'cmakecache',
   ['.cling_history'] = 'cpp',
   ['.alias'] = detect.csh,
   ['.cshrc'] = detect.csh,
