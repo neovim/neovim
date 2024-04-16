@@ -680,6 +680,31 @@ describe('API/win', function()
       eq(prevwin, api.nvim_tabpage_get_win(tab))
       assert_alive()
     end)
+
+    it('reset dir after close win', function()
+      local expected = fn.getcwd() .. '/foo'
+      t.mkdir('foo')
+      exec_lua [[
+        vim.opt.autochdir = true
+        local buf = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_buf_set_name(buf, 'Foo')
+        vim.api.nvim_create_autocmd('CmdlineEnter', {
+          callback = function()
+            local winid = vim.api.nvim_open_win(buf, false, {
+              relative = 'editor',
+              height = 1,
+              width = 1,
+              row = 1,
+              col = 1,
+            })
+            vim.api.nvim_win_close(winid, true)
+          end,
+        })
+      ]]
+      t.feed(':edit foo/bar.txt<CR>')
+      eq(t.is_os('win') and expected:gsub('/', '\\') or expected, fn.getcwd())
+      t.rmdir('foo')
+    end)
   end)
 
   describe('hide', function()

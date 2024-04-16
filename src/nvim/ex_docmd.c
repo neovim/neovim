@@ -4872,6 +4872,8 @@ void ex_win_close(int forceit, win_T *win, tabpage_T *tp)
   } else {
     win_close_othertab(win, !need_hide && !buf_hide(buf), tp);
   }
+
+  do_autochdir();
 }
 
 /// ":tabclose": close current tab page, unless it is the last one.
