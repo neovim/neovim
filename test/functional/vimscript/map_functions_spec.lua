@@ -233,7 +233,9 @@ describe('mapset()', function()
       0,
       exec_lua([[
       GlobalCount = 0
-      vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      vim.api.nvim_set_keymap('n', 'asdf', '', {
+        callback = function() GlobalCount = GlobalCount + 1 end,
+      })
       return GlobalCount
     ]])
     )
@@ -242,7 +244,9 @@ describe('mapset()', function()
 
     exec_lua([[
       _G.saved_asdf_map = vim.fn.maparg('asdf', 'n', false, true)
-      vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 10 end })
+      vim.api.nvim_set_keymap('n', 'asdf', '', {
+        callback = function() GlobalCount = GlobalCount + 10 end,
+      })
     ]])
     feed('asdf')
     eq(11, exec_lua([[return GlobalCount]]))
@@ -253,7 +257,10 @@ describe('mapset()', function()
 
     exec([[
       let g:saved_asdf_map = maparg('asdf', 'n', v:false, v:true)
-      lua vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 10 end })
+      lua <<
+      vim.api.nvim_set_keymap('n', 'asdf', '', {
+        callback = function() GlobalCount = GlobalCount + 10 end,
+      })
     ]])
     feed('asdf')
     eq(22, exec_lua([[return GlobalCount]]))

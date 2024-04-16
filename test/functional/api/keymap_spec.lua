@@ -8,6 +8,7 @@ local exec = t.exec
 local feed = t.feed
 local fn = t.fn
 local api = t.api
+local matches = t.matches
 local source = t.source
 local pcall_err = t.pcall_err
 
@@ -398,7 +399,9 @@ describe('nvim_get_keymap', function()
       0,
       exec_lua([[
       GlobalCount = 0
-      vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      vim.api.nvim_set_keymap('n', 'asdf', '', {
+        callback = function() GlobalCount = GlobalCount + 1 end,
+      })
       return GlobalCount
     ]])
     )
@@ -951,7 +954,9 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       0,
       exec_lua [[
       GlobalCount = 0
-      vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      vim.api.nvim_set_keymap('n', 'asdf', '', {
+        callback = function() GlobalCount = GlobalCount + 1 end,
+      })
       return GlobalCount
     ]]
     )
@@ -963,34 +968,38 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
   it(':map command shows lua mapping correctly', function()
     exec_lua [[
-      vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() print('jkl;') end })
+      vim.api.nvim_set_keymap('n', 'asdf', '', {
+        callback = function() print('jkl;') end,
+      })
     ]]
-    assert.truthy(
-      string.match(
-        exec_lua [[return vim.api.nvim_exec2(':nmap asdf', { output = true }).output]],
-        '^\nn  asdf          <Lua %d+>'
-      )
+    matches(
+      '^\nn  asdf          <Lua %d+>',
+      exec_lua [[return vim.api.nvim_exec2(':nmap asdf', { output = true }).output]]
     )
   end)
 
   it('mapcheck() returns lua mapping correctly', function()
     exec_lua [[
-      vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() print('jkl;') end })
+      vim.api.nvim_set_keymap('n', 'asdf', '', {
+        callback = function() print('jkl;') end,
+      })
     ]]
-    assert.truthy(string.match(fn.mapcheck('asdf', 'n'), '^<Lua %d+>'))
+    matches('^<Lua %d+>', fn.mapcheck('asdf', 'n'))
   end)
 
-  it('maparg() returns lua mapping correctly', function()
+  it('maparg() and maplist() return lua mapping correctly', function()
     eq(
       0,
       exec_lua([[
       GlobalCount = 0
-      vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      vim.api.nvim_set_keymap('n', 'asdf', '', {
+        callback = function() GlobalCount = GlobalCount + 1 end,
+      })
       return GlobalCount
     ]])
     )
 
-    assert.truthy(string.match(fn.maparg('asdf', 'n'), '^<Lua %d+>'))
+    matches('^<Lua %d+>', fn.maparg('asdf', 'n'))
 
     local mapargs = fn.maparg('asdf', 'n', false, true)
     mapargs.callback = nil
@@ -1010,11 +1019,20 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       call maparg('asdf', 'n', v:false, v:true).callback()
     ]])
     eq(2, exec_lua([[return GlobalCount]]))
+
+    api.nvim_eval([[
+      maplist()->filter({_, m -> m.lhs == 'asdf'})->foreach({_, m -> m.callback()})
+    ]])
+    eq(3, exec_lua([[return GlobalCount]]))
   end)
 
   it('can make lua expr mappings replacing keycodes', function()
     exec_lua [[
-      vim.api.nvim_set_keymap('n', 'aa', '', {callback = function() return '<Insert>π<C-V><M-π>foo<lt><Esc>' end, expr = true, replace_keycodes = true })
+      vim.api.nvim_set_keymap('n', 'aa', '', {
+        callback = function() return '<Insert>π<C-V><M-π>foo<lt><Esc>' end,
+        expr = true,
+        replace_keycodes = true,
+      })
     ]]
 
     feed('aa')
@@ -1024,7 +1042,10 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
   it('can make lua expr mappings without replacing keycodes', function()
     exec_lua [[
-      vim.api.nvim_set_keymap('i', 'aa', '', {callback = function() return '<space>' end, expr = true })
+      vim.api.nvim_set_keymap('i', 'aa', '', {
+        callback = function() return '<space>' end,
+        expr = true,
+      })
     ]]
 
     feed('iaa<esc>')
@@ -1034,7 +1055,10 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
   it('lua expr mapping returning nil is equivalent to returning an empty string', function()
     exec_lua [[
-      vim.api.nvim_set_keymap('i', 'aa', '', {callback = function() return nil end, expr = true })
+      vim.api.nvim_set_keymap('i', 'aa', '', {
+        callback = function() return nil end,
+        expr = true,
+      })
     ]]
 
     feed('iaa<esc>')
@@ -1047,7 +1071,9 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       0,
       exec_lua [[
       VisibleCount = 0
-      vim.api.nvim_set_keymap('i', '<F2>', '', {callback = function() VisibleCount = VisibleCount + vim.fn.pumvisible() end})
+      vim.api.nvim_set_keymap('i', '<F2>', '', {
+        callback = function() VisibleCount = VisibleCount + vim.fn.pumvisible() end,
+      })
       return VisibleCount
     ]]
     )
@@ -1060,7 +1086,9 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       0,
       exec_lua [[
       OpCount = 0
-      vim.api.nvim_set_keymap('o', '<F2>', '', {callback = function() OpCount = OpCount + 1 end})
+      vim.api.nvim_set_keymap('o', '<F2>', '', {
+        callback = function() OpCount = OpCount + 1 end,
+      })
       return OpCount
     ]]
     )
@@ -1075,7 +1103,9 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       0,
       exec_lua [[
       GlobalCount = 0
-      vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      vim.api.nvim_set_keymap('n', 'asdf', '', {
+        callback = function() GlobalCount = GlobalCount + 1 end,
+      })
       return GlobalCount
     ]]
     )
@@ -1085,7 +1115,9 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq(1, exec_lua [[return GlobalCount]])
 
     exec_lua [[
-      vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount - 1 end })
+      vim.api.nvim_set_keymap('n', 'asdf', '', {
+        callback = function() GlobalCount = GlobalCount - 1 end,
+      })
     ]]
 
     feed('asdf\n')
@@ -1098,7 +1130,9 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       0,
       exec_lua [[
       GlobalCount = 0
-      vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      vim.api.nvim_set_keymap('n', 'asdf', '', {
+        callback = function() GlobalCount = GlobalCount + 1 end,
+      })
       return GlobalCount
     ]]
     )
@@ -1107,9 +1141,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
     eq(1, exec_lua [[return GlobalCount]])
 
-    exec_lua [[
-      vim.api.nvim_del_keymap('n', 'asdf' )
-    ]]
+    exec_lua [[vim.api.nvim_del_keymap('n', 'asdf' )]]
 
     feed('asdf\n')
 
@@ -1122,7 +1154,9 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       0,
       exec_lua [[
       GlobalCount = 0
-      vim.api.nvim_set_keymap('n', '<C-I>', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      vim.api.nvim_set_keymap('n', '<C-I>', '', {
+        callback = function() GlobalCount = GlobalCount + 1 end,
+      })
       return GlobalCount
     ]]
     )
@@ -1131,9 +1165,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
     eq(1, exec_lua [[return GlobalCount]])
 
-    exec_lua [[
-      vim.api.nvim_del_keymap('n', '<C-I>')
-    ]]
+    exec_lua [[vim.api.nvim_del_keymap('n', '<C-I>')]]
 
     feed('<C-I>\n')
 
@@ -1150,10 +1182,13 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   it('can define !-mode abbreviations with lua callbacks', function()
     exec_lua [[
       GlobalCount = 0
-      vim.api.nvim_set_keymap('!a', 'foo', '', {expr = true, callback = function()
-        GlobalCount = GlobalCount + 1
-        return tostring(GlobalCount)
-      end})
+      vim.api.nvim_set_keymap('!a', 'foo', '', {
+        expr = true,
+        callback = function()
+          GlobalCount = GlobalCount + 1
+          return tostring(GlobalCount)
+        end,
+      })
     ]]
 
     feed 'iThe foo and the bar and the foo again<esc>'
@@ -1166,10 +1201,13 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   it('can define insert mode abbreviations with lua callbacks', function()
     exec_lua [[
       GlobalCount = 0
-      vim.api.nvim_set_keymap('ia', 'foo', '', {expr = true, callback = function()
-        GlobalCount = GlobalCount + 1
-        return tostring(GlobalCount)
-      end})
+      vim.api.nvim_set_keymap('ia', 'foo', '', {
+        expr = true,
+        callback = function()
+          GlobalCount = GlobalCount + 1
+          return tostring(GlobalCount)
+        end,
+      })
     ]]
 
     feed 'iThe foo and the bar and the foo again<esc>'
@@ -1182,10 +1220,13 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   it('can define cmdline mode abbreviations with lua callbacks', function()
     exec_lua [[
       GlobalCount = 0
-      vim.api.nvim_set_keymap('ca', 'foo', '', {expr = true, callback = function()
-        GlobalCount = GlobalCount + 1
-        return tostring(GlobalCount)
-      end})
+      vim.api.nvim_set_keymap('ca', 'foo', '', {
+        expr = true,
+        callback = function()
+          GlobalCount = GlobalCount + 1
+          return tostring(GlobalCount)
+        end,
+      })
     ]]
 
     feed 'iThe foo and the bar and the foo again<esc>'
@@ -1298,7 +1339,9 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
       0,
       exec_lua [[
       GlobalCount = 0
-      vim.api.nvim_buf_set_keymap(0, 'n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      vim.api.nvim_buf_set_keymap(0, 'n', 'asdf', '', {
+        callback = function() GlobalCount = GlobalCount + 1 end,
+      })
       return GlobalCount
     ]]
     )
@@ -1310,7 +1353,11 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
   it('can make lua expr mappings replacing keycodes', function()
     exec_lua [[
-      vim.api.nvim_buf_set_keymap(0, 'n', 'aa', '', {callback = function() return '<Insert>π<C-V><M-π>foo<lt><Esc>' end, expr = true, replace_keycodes = true })
+      vim.api.nvim_buf_set_keymap(0, 'n', 'aa', '', {
+        callback = function() return '<Insert>π<C-V><M-π>foo<lt><Esc>' end,
+        expr = true,
+        replace_keycodes = true,
+      })
     ]]
 
     feed('aa')
@@ -1320,7 +1367,10 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
   it('can make lua expr mappings without replacing keycodes', function()
     exec_lua [[
-      vim.api.nvim_buf_set_keymap(0, 'i', 'aa', '', {callback = function() return '<space>' end, expr = true })
+      vim.api.nvim_buf_set_keymap(0, 'i', 'aa', '', {
+        callback = function() return '<space>' end,
+        expr = true,
+      })
     ]]
 
     feed('iaa<esc>')
@@ -1333,7 +1383,9 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
       0,
       exec_lua [[
       GlobalCount = 0
-      vim.api.nvim_buf_set_keymap(0, 'n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      vim.api.nvim_buf_set_keymap(0, 'n', 'asdf', '', {
+        callback = function() GlobalCount = GlobalCount + 1 end,
+      })
       return GlobalCount
     ]]
     )
@@ -1343,7 +1395,9 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
     eq(1, exec_lua [[return GlobalCount]])
 
     exec_lua [[
-      vim.api.nvim_buf_set_keymap(0, 'n', 'asdf', '', {callback = function() GlobalCount = GlobalCount - 1 end })
+      vim.api.nvim_buf_set_keymap(0, 'n', 'asdf', '', {
+        callback = function() GlobalCount = GlobalCount - 1 end,
+      })
     ]]
 
     feed('asdf\n')
@@ -1356,7 +1410,9 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
       0,
       exec_lua [[
       GlobalCount = 0
-      vim.api.nvim_buf_set_keymap(0, 'n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      vim.api.nvim_buf_set_keymap(0, 'n', 'asdf', '', {
+        callback = function() GlobalCount = GlobalCount + 1 end,
+      })
       return GlobalCount
     ]]
     )
@@ -1365,9 +1421,7 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
     eq(1, exec_lua [[return GlobalCount]])
 
-    exec_lua [[
-      vim.api.nvim_buf_del_keymap(0, 'n', 'asdf' )
-    ]]
+    exec_lua [[vim.api.nvim_buf_del_keymap(0, 'n', 'asdf' )]]
 
     feed('asdf\n')
 
@@ -1380,7 +1434,9 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
       0,
       exec_lua [[
       GlobalCount = 0
-      vim.api.nvim_buf_set_keymap(0, 'n', '<C-I>', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      vim.api.nvim_buf_set_keymap(0, 'n', '<C-I>', '', {
+        callback = function() GlobalCount = GlobalCount + 1 end,
+      })
       return GlobalCount
     ]]
     )
@@ -1389,9 +1445,7 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
     eq(1, exec_lua [[return GlobalCount]])
 
-    exec_lua [[
-      vim.api.nvim_buf_del_keymap(0, 'n', '<C-I>')
-    ]]
+    exec_lua [[vim.api.nvim_buf_del_keymap(0, 'n', '<C-I>')]]
 
     feed('<C-I>\n')
 
