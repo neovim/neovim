@@ -31,3 +31,8 @@ runs:
         key: ${{ env.CACHE_KEY }}-${{ steps.image.outputs.version }}-${{ hashFiles('cmake**',
           '.github/**', 'CMakeLists.txt',
           'runtime/CMakeLists.txt', 'src/nvim/**/CMakeLists.txt') }}
+
+    - uses: actions/cache@v4
+      with:
+        path: build
+        key: ${{ env.CACHE_KEY }}-${{ steps.image.outputs.version }}-${{ github.ref }}
