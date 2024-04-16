@@ -204,19 +204,19 @@
   (comment)*
   .
   (expression_statement
-    (string) @string.documentation @spell))
+    (string (string_content) @spell) @string.documentation))
 
 (class_definition
   body: (block
     .
     (expression_statement
-      (string) @string.documentation @spell)))
+      (string (string_content) @spell) @string.documentation)))
 
 (function_definition
   body: (block
     .
     (expression_statement
-      (string) @string.documentation @spell)))
+      (string (string_content) @spell) @string.documentation)))
 
 ; Tokens
 [
