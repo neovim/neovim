@@ -62,10 +62,10 @@ func Test_compiler_completion()
   call assert_match('^"compiler ' .. clist .. '$', @:)
 
   call feedkeys(":compiler p\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_match('"compiler pandoc pbx perl\( p[a-z]\+\)\+ pylint pyunit', @:)
+  call assert_match('"compiler pandoc pbx perl\( p[a-z_]\+\)\+ pylint pyunit', @:)
 
   call feedkeys(":compiler! p\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_match('"compiler! pandoc pbx perl\( p[a-z]\+\)\+ pylint pyunit', @:)
+  call assert_match('"compiler! pandoc pbx perl\( p[a-z_]\+\)\+ pylint pyunit', @:)
 endfunc
 
 func Test_compiler_error()
