@@ -149,6 +149,10 @@ unreleased features on Nvim HEAD.
 • Removed `vim.treesitter.foldtext` as transparent foldtext is now supported
   https://github.com/neovim/neovim/pull/20750
 
+• Changed the signature of `vim.lsp.inlay_hint.enable()`.
+
+• Changed the signature of `vim.diagnostic.enable()`.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 
@@ -529,6 +533,7 @@ release.
 • vim.diagnostic functions:
   - |vim.diagnostic.disable()|
   - |vim.diagnostic.is_disabled()|
+  - Legacy signature: `vim.diagnostic.enable(buf:number, namespace:number)`
 
 • vim.lsp functions:
   - |vim.lsp.util.get_progress_messages()|	Use |vim.lsp.status()| instead.

@@ -147,10 +147,13 @@ describe('lua stdlib', function()
       end)
 
       it('when plugin = nil', function()
+        local was_removed = (
+          vim.version.ge(current_version, '0.10') and 'was removed' or 'will be removed'
+        )
         eq(
-          dedent [[
+          dedent([[
             foo.bar() is deprecated, use zub.wooo{ok=yay} instead. :help deprecated
-            This feature will be removed in Nvim version 0.10]],
+            Feature %s in Nvim 0.10]]):format(was_removed),
           exec_lua('return vim.deprecate(...)', 'foo.bar()', 'zub.wooo{ok=yay}', '0.10')
         )
         -- Same message, skipped.
@@ -166,7 +169,7 @@ describe('lua stdlib', function()
         eq(
           dedent [[
             foo.hard_dep() is deprecated, use vim.new_api() instead. :help deprecated
-            This feature will be removed in Nvim version 0.11]],
+            Feature will be removed in Nvim 0.11]],
           exec_lua('return vim.deprecate(...)', 'foo.hard_dep()', 'vim.new_api()', '0.11')
         )
 
@@ -174,7 +177,7 @@ describe('lua stdlib', function()
         eq(
           dedent [[
             foo.baz() is deprecated. :help deprecated
-            This feature will be removed in Nvim version 1.0]],
+            Feature will be removed in Nvim 1.0]],
           exec_lua [[ return vim.deprecate('foo.baz()', nil, '1.0') ]]
         )
       end)
@@ -184,7 +187,7 @@ describe('lua stdlib', function()
         eq(
           dedent [[
             foo.bar() is deprecated, use zub.wooo{ok=yay} instead.
-            This feature will be removed in my-plugin.nvim version 0.3.0]],
+            Feature will be removed in my-plugin.nvim 0.3.0]],
           exec_lua(
             'return vim.deprecate(...)',
             'foo.bar()',
@@ -199,7 +202,7 @@ describe('lua stdlib', function()
         eq(
           dedent [[
             foo.bar() is deprecated, use zub.wooo{ok=yay} instead.
-            This feature will be removed in my-plugin.nvim version 0.11.0]],
+            Feature will be removed in my-plugin.nvim 0.11.0]],
           exec_lua(
             'return vim.deprecate(...)',
             'foo.bar()',

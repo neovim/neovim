@@ -1588,19 +1588,21 @@ save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
 ==============================================================================
 Lua module: vim.lsp.inlay_hint                                *lsp-inlay_hint*
 
-enable({bufnr}, {enable})                        *vim.lsp.inlay_hint.enable()*
+enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*
     Enables or disables inlay hints for a buffer.
 
     To "toggle", pass the inverse of `is_enabled()`: >lua
-        vim.lsp.inlay_hint.enable(0, not vim.lsp.inlay_hint.is_enabled())
+        vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
 <
 
     Note: ~
       • This API is pre-release (unstable).
 
     Parameters: ~
-      • {bufnr}   (`integer?`) Buffer handle, or 0 or nil for current
       • {enable}  (`boolean?`) true/nil to enable, false to disable
+      • {filter}  (`table?`) Optional filters |kwargs|, or `nil` for all.
+                  • {bufnr} (`integer?`) Buffer number, or 0/nil for current
+                    buffer.
 
 get({filter})                                       *vim.lsp.inlay_hint.get()*
     Get the list of inlay hints, (optionally) restricted by buffer or range.
@@ -1639,7 +1641,7 @@ is_enabled({bufnr})                          *vim.lsp.inlay_hint.is_enabled()*
       • This API is pre-release (unstable).
 
     Parameters: ~
-      • {bufnr}  (`integer?`) Buffer handle, or 0 or nil for current
+      • {bufnr}  (`integer?`) Buffer handle, or 0 for current
 
     Return: ~
         (`boolean`)
