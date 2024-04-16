@@ -2068,7 +2068,7 @@ void f_hasmapto(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhsrawalt,
                                      const int buffer_value, const bool abbr, const bool compatible,
                                      Arena *arena)
-  FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1, 6)
 {
   Dictionary dict = arena_dict(arena, 19);
   char *const lhs = str2special_arena(mp->m_keys, compatible, !compatible, arena);
@@ -2087,7 +2087,7 @@ static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhs
   }
 
   if (mp->m_luaref != LUA_NOREF) {
-    PUT_C(dict, "callback", LUAREF_OBJ(api_new_luaref(mp->m_luaref)));
+    PUT_C(dict, "callback", LUAREF_OBJ(mp->m_luaref));
   } else {
     String rhs = cstr_as_string(compatible
                                 ? mp->m_orig_str
@@ -2191,7 +2191,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
       Arena arena = ARENA_EMPTY;
       Dictionary dict = mapblock_fill_dict(mp, did_simplify ? keys_simplified : NULL,
                                            buffer_local, abbr, true, &arena);
-      object_to_vim_take_luaref(&DICTIONARY_OBJ(dict), rettv, true, NULL);
+      object_to_vim(DICTIONARY_OBJ(dict), rettv, NULL);
       arena_mem_free(arena_finish(&arena));
     } else {
       // Return an empty dictionary.
@@ -2398,7 +2398,7 @@ void f_maplist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         Dictionary dict = mapblock_fill_dict(mp, did_simplify ? keys_buf : NULL,
                                              buffer_local, abbr, true, &arena);
         typval_T d = TV_INITIAL_VALUE;
-        object_to_vim_take_luaref(&DICTIONARY_OBJ(dict), &d, true, NULL);
+        object_to_vim(DICTIONARY_OBJ(dict), &d, NULL);
         assert(d.v_type == VAR_DICT);
         tv_list_append_dict(rettv->vval.v_list, d.vval.v_dict);
         arena_mem_free(arena_finish(&arena));

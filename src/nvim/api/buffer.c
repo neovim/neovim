@@ -1203,7 +1203,7 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Arena *arena, 
 /// @param[out] err   Error details, if any
 /// @return           Return value of function.
 Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
-  FUNC_API_SINCE(7)
+  FUNC_API_SINCE(7) FUNC_API_RET_ALLOC
   FUNC_API_LUA_ONLY
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);

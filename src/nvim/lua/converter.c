@@ -766,8 +766,6 @@ void nlua_push_Object(lua_State *lstate, Object *obj, bool special)
     break;
   case kObjectTypeLuaRef: {
     nlua_pushref(lstate, obj->data.luaref);
-    api_free_luaref(obj->data.luaref);
-    obj->data.luaref = LUA_NOREF;
     break;
   }
 #define ADD_TYPE(type, data_key) \

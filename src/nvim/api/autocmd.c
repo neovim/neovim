@@ -292,7 +292,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Arena *arena, Error *err)
         switch (cb->type) {
         case kCallbackLua:
           if (nlua_ref_is_function(cb->data.luaref)) {
-            PUT_C(autocmd_info, "callback", LUAREF_OBJ(api_new_luaref(cb->data.luaref)));
+            PUT_C(autocmd_info, "callback", LUAREF_OBJ(cb->data.luaref));
           }
           break;
         case kCallbackFuncref:

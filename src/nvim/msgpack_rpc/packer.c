@@ -150,13 +150,10 @@ void mpack_object_inner(Object *current, Object *container, size_t container_idx
   while (true) {
     check_buffer(packer);
     switch (current->type) {
+    // TODO(bfredl): could also be an error. Though kObjectTypeLuaRef
+    // should only appear when the caller has opted in to handle references,
+    // see nlua_pop_Object.
     case kObjectTypeLuaRef:
-      // TODO(bfredl): could also be an error. Though kObjectTypeLuaRef
-      // should only appear when the caller has opted in to handle references,
-      // see nlua_pop_Object.
-      api_free_luaref(current->data.luaref);
-      current->data.luaref = LUA_NOREF;
-      FALLTHROUGH;
     case kObjectTypeNil:
       mpack_nil(&packer->ptr);
       break;

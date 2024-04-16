@@ -705,7 +705,10 @@ Dictionary copy_dictionary(Dictionary dict, Arena *arena)
   return rv;
 }
 
-/// Creates a deep clone of an object
+/// Creates a deep clone of an object.
+///
+/// This doesn't copy luarefs if an arena is used, which is fine for now as that only
+/// happens in nvim__id APIs which return the object immediately to calling code.
 Object copy_object(Object obj, Arena *arena)
 {
   switch (obj.type) {
@@ -728,7 +731,7 @@ Object copy_object(Object obj, Arena *arena)
     return DICTIONARY_OBJ(copy_dictionary(obj.data.dictionary, arena));
 
   case kObjectTypeLuaRef:
-    return LUAREF_OBJ(api_new_luaref(obj.data.luaref));
+    return LUAREF_OBJ(arena ? obj.data.luaref : api_new_luaref(obj.data.luaref));
   }
   UNREACHABLE;
 }

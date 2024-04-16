@@ -431,7 +431,7 @@ void nvim_win_close(Window window, Boolean force, Error *err)
 /// @param[out] err   Error details, if any
 /// @return           Return value of function.
 Object nvim_win_call(Window window, LuaRef fun, Error *err)
-  FUNC_API_SINCE(7)
+  FUNC_API_SINCE(7) FUNC_API_RET_ALLOC
   FUNC_API_LUA_ONLY
 {
   win_T *win = find_window_by_handle(window, err);
