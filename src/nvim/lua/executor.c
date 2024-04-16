@@ -42,6 +42,7 @@
 #include "nvim/keycodes.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
+#include "nvim/lua/fs.h"
 #include "nvim/lua/stdlib.h"
 #include "nvim/lua/treesitter.h"
 #include "nvim/macros_defs.h"
@@ -613,6 +614,9 @@ static void nlua_common_vim_init(lua_State *lstate, bool is_thread, bool is_stan
   lua_pushvalue(lstate, -3);
   lua_setfield(lstate, -2, "luv");
   lua_pop(lstate, 3);
+
+  // internal vim._fs... API
+  nlua_add_fs(lstate);
 }
 
 static int nlua_module_preloader(lua_State *lstate)
@@ -1932,6 +1936,13 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   lua_pushcfunction(lstate, tslua_get_minimum_language_version);
   lua_setfield(lstate, -2, "_ts_get_minimum_language_version");
+}
+
+static void nlua_add_fs(lua_State *const lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  lua_pushcfunction(lstate, fslua_get_drive_cwd);
+  lua_setfield(lstate, -2, "_fs_get_drive_cwd");
 }
 
 int nlua_expand_pat(expand_T *xp, char *pat, int *num_results, char ***results)
