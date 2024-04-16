@@ -372,20 +372,25 @@ Use existing common {verb} names (actions) if possible:
     - create:       Creates a new (non-trivial) thing (TODO: rename to "def"?)
     - del:          Deletes a thing (or group of things)
     - detach:       Dispose attached listener (TODO: rename to "un"?)
+    - enable:       Enables/disables functionality.
     - eval:         Evaluates an expression
     - exec:         Executes code
     - fmt:          Formats
     - get:          Gets things (often by a query)
     - inspect:      Presents a high-level, often interactive, view
+    - is_enabled:   Checks if functionality is enabled.
     - open:         Opens something (a buffer, window, …)
     - parse:        Parses something into a structured form
     - set:          Sets a thing (or group of things)
     - try_{verb}:   Best-effort operation, failure returns null or error obj
 
 Do NOT use these deprecated verbs:
+    - disable:      Prefer `enable(enable: boolean)`.
+    - is_disabled:  Prefer `is_enabled()`.
     - list:         Redundant with "get"
-    - show:         Redundant with "print", "echo"
     - notify:       Redundant with "print", "echo"
+    - show:         Redundant with "print", "echo"
+    - toggle:       Prefer `enable(not is_enabled())`.
 
 Use consistent names for {noun} (nouns) in API functions: buffer is called
 "buf" everywhere, not "buffer" in some places and "buf" in others.

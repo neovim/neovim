@@ -328,6 +328,8 @@ The following new APIs and features were added.
   |vim.diagnostic.get()| when only the number of diagnostics is needed, but
   not the diagnostics themselves.
 
+• Introduced |vim.diagnostic.is_enabled()|
+
 • |vim.deepcopy()| has a `noref` argument to avoid hashing table values.
 
 • Terminal buffers emit a |TermRequest| autocommand event when the child
@@ -418,6 +420,9 @@ The following changes to existing APIs or features add new behavior.
 
 • |vim.diagnostic.get()| and |vim.diagnostic.count()| accept multiple
   namespaces rather than just a single namespace.
+
+• |vim.diagnostic.enable()| gained new parameters, and the old signature is
+  deprecated.
 
 • Extmarks now fully support multi-line ranges, and a single extmark can be
   used to highlight a range of arbitrary length. The |nvim_buf_set_extmark()|
@@ -519,6 +524,10 @@ release.
   - |nvim_set_option()|		Use |nvim_set_option_value()| instead.
   - |nvim_win_get_option()|	Use |nvim_get_option_value()| instead.
   - |nvim_win_set_option()|	Use |nvim_set_option_value()| instead.
+
+• vim.diagnostic functions:
+  - |vim.diagnostic.disable()|
+  - |vim.diagnostic.is_disabled()|
 
 • vim.lsp functions:
   - |vim.lsp.util.get_progress_messages()|	Use |vim.lsp.status()| instead.

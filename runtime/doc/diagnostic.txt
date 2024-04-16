@@ -367,6 +367,13 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {user_data}?  (`any`) arbitrary data plugins can add
       • {namespace}?  (`integer`)
 
+*vim.diagnostic.Filter*
+    Extends: |vim.diagnostic.Opts|
+
+
+    Fields: ~
+      • {ns_id}?  (`integer`) Namespace
+
 *vim.diagnostic.GetOpts*
     A table with the following keys:
 
@@ -616,23 +623,20 @@ count({bufnr}, {opts})                                *vim.diagnostic.count()*
         (`table`) Table with actually present severity values as keys (see
         |diagnostic-severity|) and integer counts as values.
 
-disable({bufnr}, {namespace})                       *vim.diagnostic.disable()*
-    Disable diagnostics in the given buffer.
+enable({bufnr}, {enable}, {opts})                    *vim.diagnostic.enable()*
+    Enables or disables diagnostics.
+
+    To "toggle", pass the inverse of `is_enabled()`: >lua
+        vim.diagnostic.enable(0, not vim.diagnostic.is_enabled())
+<
 
     Parameters: ~
-      • {bufnr}      (`integer?`) Buffer number, or 0 for current buffer. When
-                     omitted, disable diagnostics in all buffers.
-      • {namespace}  (`integer?`) Only disable diagnostics for the given
-                     namespace.
-
-enable({bufnr}, {namespace})                         *vim.diagnostic.enable()*
-    Enable diagnostics in the given buffer.
-
-    Parameters: ~
-      • {bufnr}      (`integer?`) Buffer number, or 0 for current buffer. When
-                     omitted, enable diagnostics in all buffers.
-      • {namespace}  (`integer?`) Only enable diagnostics for the given
-                     namespace.
+      • {bufnr}   (`integer?`) Buffer number, or 0 for current buffer, or
+                  `nil` for all buffers.
+      • {enable}  (`boolean?`) true/nil to enable, false to disable
+      • {opts}    (`vim.diagnostic.Filter?`) Filter by these opts, or `nil`
+                  for all. Only `ns_id` is supported, currently. See
+                  |vim.diagnostic.Filter|.
 
 fromqflist({list})                               *vim.diagnostic.fromqflist()*
     Convert a list of quickfix items to a list of diagnostics.
@@ -733,7 +737,7 @@ hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
     diagnostics, use |vim.diagnostic.reset()|.
 
     To hide diagnostics and prevent them from re-displaying, use
-    |vim.diagnostic.disable()|.
+    |vim.diagnostic.enable()|.
 
     Parameters: ~
       • {namespace}  (`integer?`) Diagnostic namespace. When omitted, hide
@@ -741,14 +745,16 @@ hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
       • {bufnr}      (`integer?`) Buffer number, or 0 for current buffer. When
                      omitted, hide diagnostics in all buffers.
 
-is_disabled({bufnr}, {namespace})               *vim.diagnostic.is_disabled()*
-    Check whether diagnostics are disabled in a given buffer.
+is_enabled({bufnr}, {namespace})                 *vim.diagnostic.is_enabled()*
+    Check whether diagnostics are enabled.
+
+    Note: ~
+      • This API is pre-release (unstable).
 
     Parameters: ~
       • {bufnr}      (`integer?`) Buffer number, or 0 for current buffer.
-      • {namespace}  (`integer?`) Diagnostic namespace. When omitted, checks
-                     if all diagnostics are disabled in {bufnr}. Otherwise,
-                     only checks if diagnostics from {namespace} are disabled.
+      • {namespace}  (`integer?`) Diagnostic namespace, or `nil` for all
+                     diagnostics in {bufnr}.
 
     Return: ~
         (`boolean`)
