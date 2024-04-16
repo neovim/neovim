@@ -913,7 +913,7 @@ exit_0:
       write_shifted_output(string.format(
         [[
     if (lua_gettop(lstate) == 0) {
-      nlua_push_%s(lstate, %sret, true);
+      nlua_push_%s(lstate, %sret, kNluaPushSpecial | kNluaPushFreeRefs);
     }
       ]],
         return_type,
@@ -927,10 +927,10 @@ exit_0:
     else
       local special = (fn.since ~= nil and fn.since < 11)
       write_shifted_output(
-        '    nlua_push_%s(lstate, %sret, %s);\n',
+        '    nlua_push_%s(lstate, %sret, %s | kNluaPushFreeRefs);\n',
         return_type,
         ret_mode,
-        tostring(special)
+        special and 'kNluaPushSpecial' or '0'
       )
     end
 

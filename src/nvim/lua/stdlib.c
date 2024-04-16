@@ -449,7 +449,7 @@ int nlua_getvar(lua_State *lstate)
   if (di == NULL) {
     return 0;  // nil
   }
-  nlua_push_typval(lstate, &di->di_tv, false);
+  nlua_push_typval(lstate, &di->di_tv, 0);
   return 1;
 }
 

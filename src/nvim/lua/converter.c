@@ -597,9 +597,9 @@ static bool typval_conv_special = false;
 /// @param[in]  tv  typval_T to convert.
 ///
 /// @return true in case of success, false otherwise.
-bool nlua_push_typval(lua_State *lstate, typval_T *const tv, bool special)
+bool nlua_push_typval(lua_State *lstate, typval_T *const tv, int flags)
 {
-  typval_conv_special = special;
+  typval_conv_special = (flags & kNluaPushSpecial);
   const int initial_size = lua_gettop(lstate);
 
   if (!lua_checkstack(lstate, initial_size + 2)) {
@@ -662,7 +662,7 @@ static inline void nlua_create_typed_table(lua_State *lstate, const size_t narr,
 /// Convert given String to lua string
 ///
 /// Leaves converted string on top of the stack.
-void nlua_push_String(lua_State *lstate, const String s, bool special)
+void nlua_push_String(lua_State *lstate, const String s, int flags)
   FUNC_ATTR_NONNULL_ALL
 {
   lua_pushlstring(lstate, s.data, s.size);
@@ -671,7 +671,7 @@ void nlua_push_String(lua_State *lstate, const String s, bool special)
 /// Convert given Integer to lua number
 ///
 /// Leaves converted number on top of the stack.
-void nlua_push_Integer(lua_State *lstate, const Integer n, bool special)
+void nlua_push_Integer(lua_State *lstate, const Integer n, int flags)
   FUNC_ATTR_NONNULL_ALL
 {
   lua_pushnumber(lstate, (lua_Number)n);
@@ -680,10 +680,10 @@ void nlua_push_Integer(lua_State *lstate, const Integer n, bool special)
 /// Convert given Float to lua table
 ///
 /// Leaves converted table on top of the stack.
-void nlua_push_Float(lua_State *lstate, const Float f, bool special)
+void nlua_push_Float(lua_State *lstate, const Float f, int flags)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (special) {
+  if (flags & kNluaPushSpecial) {
     nlua_create_typed_table(lstate, 0, 1, kObjectTypeFloat);
     nlua_push_val_idx(lstate);
     lua_pushnumber(lstate, (lua_Number)f);
@@ -696,7 +696,7 @@ void nlua_push_Float(lua_State *lstate, const Float f, bool special)
 /// Convert given Float to lua boolean
 ///
 /// Leaves converted value on top of the stack.
-void nlua_push_Boolean(lua_State *lstate, const Boolean b, bool special)
+void nlua_push_Boolean(lua_State *lstate, const Boolean b, int flags)
   FUNC_ATTR_NONNULL_ALL
 {
   lua_pushboolean(lstate, b);
@@ -705,21 +705,21 @@ void nlua_push_Boolean(lua_State *lstate, const Boolean b, bool special)
 /// Convert given Dictionary to lua table
 ///
 /// Leaves converted table on top of the stack.
-void nlua_push_Dictionary(lua_State *lstate, const Dictionary dict, bool special)
+void nlua_push_Dictionary(lua_State *lstate, const Dictionary dict, int flags)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (dict.size == 0 && special) {
+  if (dict.size == 0 && (flags & kNluaPushSpecial)) {
     nlua_create_typed_table(lstate, 0, 0, kObjectTypeDictionary);
   } else {
     lua_createtable(lstate, 0, (int)dict.size);
-    if (dict.size == 0 && !special) {
+    if (dict.size == 0 && !(flags & kNluaPushSpecial)) {
       nlua_pushref(lstate, nlua_global_refs->empty_dict_ref);
       lua_setmetatable(lstate, -2);
     }
   }
   for (size_t i = 0; i < dict.size; i++) {
-    nlua_push_String(lstate, dict.items[i].key, special);
-    nlua_push_Object(lstate, &dict.items[i].value, special);
+    nlua_push_String(lstate, dict.items[i].key, flags);
+    nlua_push_Object(lstate, &dict.items[i].value, flags);
     lua_rawset(lstate, -3);
   }
 }
@@ -727,18 +727,18 @@ void nlua_push_Dictionary(lua_State *lstate, const Dictionary dict, bool special
 /// Convert given Array to lua table
 ///
 /// Leaves converted table on top of the stack.
-void nlua_push_Array(lua_State *lstate, const Array array, bool special)
+void nlua_push_Array(lua_State *lstate, const Array array, int flags)
   FUNC_ATTR_NONNULL_ALL
 {
   lua_createtable(lstate, (int)array.size, 0);
   for (size_t i = 0; i < array.size; i++) {
-    nlua_push_Object(lstate, &array.items[i], special);
+    nlua_push_Object(lstate, &array.items[i], flags);
     lua_rawseti(lstate, -2, (int)i + 1);
   }
 }
 
 #define GENERATE_INDEX_FUNCTION(type) \
-  void nlua_push_##type(lua_State *lstate, const type item, bool special) \
+  void nlua_push_##type(lua_State *lstate, const type item, int flags) \
   FUNC_ATTR_NONNULL_ALL \
   { \
     lua_pushnumber(lstate, (lua_Number)(item)); \
@@ -753,12 +753,12 @@ GENERATE_INDEX_FUNCTION(Tabpage)
 /// Convert given Object to lua value
 ///
 /// Leaves converted value on top of the stack.
-void nlua_push_Object(lua_State *lstate, Object *obj, bool special)
+void nlua_push_Object(lua_State *lstate, Object *obj, int flags)
   FUNC_ATTR_NONNULL_ALL
 {
   switch (obj->type) {
   case kObjectTypeNil:
-    if (special) {
+    if (flags & kNluaPushSpecial) {
       lua_pushnil(lstate);
     } else {
       nlua_pushref(lstate, nlua_global_refs->nil_ref);
@@ -766,13 +766,15 @@ void nlua_push_Object(lua_State *lstate, Object *obj, bool special)
     break;
   case kObjectTypeLuaRef: {
     nlua_pushref(lstate, obj->data.luaref);
-    api_free_luaref(obj->data.luaref);
-    obj->data.luaref = LUA_NOREF;
+    if (flags & kNluaPushFreeRefs) {
+      api_free_luaref(obj->data.luaref);
+      obj->data.luaref = LUA_NOREF;
+    }
     break;
   }
 #define ADD_TYPE(type, data_key) \
   case kObjectType##type: { \
-      nlua_push_##type(lstate, obj->data.data_key, special); \
+      nlua_push_##type(lstate, obj->data.data_key, flags); \
       break; \
   }
     ADD_TYPE(Boolean,      boolean)
@@ -784,7 +786,7 @@ void nlua_push_Object(lua_State *lstate, Object *obj, bool special)
 #undef ADD_TYPE
 #define ADD_REMOTE_TYPE(type) \
   case kObjectType##type: { \
-      nlua_push_##type(lstate, (type)obj->data.integer, special); \
+      nlua_push_##type(lstate, (type)obj->data.integer, flags); \
       break; \
   }
     ADD_REMOTE_TYPE(Buffer)
@@ -1380,7 +1382,7 @@ void nlua_push_keydict(lua_State *L, void *value, KeySetLink *table)
 
     lua_pushstring(L, field->str);
     if (field->type == kObjectTypeNil) {
-      nlua_push_Object(L, (Object *)mem, false);
+      nlua_push_Object(L, (Object *)mem, 0);
     } else if (field->type == kObjectTypeInteger) {
       lua_pushinteger(L, *(Integer *)mem);
     } else if (field->type == kObjectTypeBuffer || field->type == kObjectTypeWindow
@@ -1391,11 +1393,11 @@ void nlua_push_keydict(lua_State *L, void *value, KeySetLink *table)
     } else if (field->type == kObjectTypeBoolean) {
       lua_pushboolean(L, *(Boolean *)mem);
     } else if (field->type == kObjectTypeString) {
-      nlua_push_String(L, *(String *)mem, false);
+      nlua_push_String(L, *(String *)mem, 0);
     } else if (field->type == kObjectTypeArray) {
-      nlua_push_Array(L, *(Array *)mem, false);
+      nlua_push_Array(L, *(Array *)mem, 0);
     } else if (field->type == kObjectTypeDictionary) {
-      nlua_push_Dictionary(L, *(Dictionary *)mem, false);
+      nlua_push_Dictionary(L, *(Dictionary *)mem, 0);
     } else if (field->type == kObjectTypeLuaRef) {
       nlua_pushref(L, *(LuaRef *)mem);
     } else {

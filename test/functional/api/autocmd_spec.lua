@@ -355,6 +355,44 @@ describe('autocmd api', function()
       test({ 'list' })
       test({ foo = 'bar' })
     end)
+
+    it('function in arbitrary data is passed to all autocmds #28353', function()
+      eq(
+        1303,
+        exec_lua([[
+          local res = 1
+
+          local fun = function(m, x)
+            res = res * m + x
+          end
+
+          local group = vim.api.nvim_create_augroup('MyTest', { clear = false })
+
+          vim.api.nvim_create_autocmd('User', {
+            group = group,
+            callback = function(payload)
+              payload.data.fun(10, payload.data.x)
+            end,
+            pattern = 'MyEvent',
+          })
+          vim.api.nvim_create_autocmd('User', {
+            group = group,
+            callback = function(payload)
+              payload.data.fun(100, payload.data.x)
+            end,
+            pattern = 'MyEvent',
+          })
+
+          vim.api.nvim_exec_autocmds('User', {
+            group = group,
+            pattern = 'MyEvent',
+            data = { x = 3, fun = fun },
+          })
+
+          return res
+        ]])
+      )
+    end)
   end)
 
   describe('nvim_get_autocmds', function()
