@@ -46,6 +46,7 @@ execute 'CompilerSet makeprg=pandoc\ --standalone' .
       \ '\ --metadata\ title=%:t:r:S' .
       \ '\ --metadata\ lang=' . matchstr(&spelllang, '^\a\a') .
       \ '\ --from=' . s:PandocFiletype(&filetype) .
+      \ '\ ' . escape(get(b:, 'pandoc_compiler_args', get(g:, 'pandoc_compiler_args', '')), ' ') .
       \ '\ --output\ %:r:S.$*\ %:S'
 
 CompilerSet errorformat="%f",\ line\ %l:\ %m
