@@ -969,13 +969,12 @@ int skip_expr(char **pp, evalarg_T *const evalarg)
 
 /// Convert "tv" to a string.
 ///
-/// @param convert  when true convert a List into a sequence of lines
-///                 and a Dict into a textual representation of the Dict.
+/// @param join_list  when true convert a List into a sequence of lines.
 ///
 /// @return  an allocated string.
-static char *typval2string(typval_T *tv, bool convert)
+static char *typval2string(typval_T *tv, bool join_list)
 {
-  if (convert && tv->v_type == VAR_LIST) {
+  if (join_list && tv->v_type == VAR_LIST) {
     garray_T ga;
     ga_init(&ga, (int)sizeof(char), 80);
     if (tv->vval.v_list != NULL) {
@@ -986,7 +985,7 @@ static char *typval2string(typval_T *tv, bool convert)
     }
     ga_append(&ga, NUL);
     return (char *)ga.ga_data;
-  } else if (convert && tv->v_type == VAR_DICT) {
+  } else if (tv->v_type == VAR_LIST || tv->v_type == VAR_DICT) {
     return encode_tv2string(tv, NULL);
   }
   return xstrdup(tv_get_string(tv));
@@ -994,23 +993,30 @@ static char *typval2string(typval_T *tv, bool convert)
 
 /// Top level evaluation function, returning a string.
 ///
-/// @param convert  when true convert a List into a sequence of lines.
+/// @param join_list  when true convert a List into a sequence of lines.
 ///
 /// @return  pointer to allocated memory, or NULL for failure.
-char *eval_to_string(char *arg, bool convert)
+char *eval_to_string_eap(char *arg, bool join_list, exarg_T *eap)
 {
   typval_T tv;
   char *retval;
 
-  if (eval0(arg, &tv, NULL, &EVALARG_EVALUATE) == FAIL) {
+  evalarg_T evalarg;
+  fill_evalarg_from_eap(&evalarg, eap, eap != NULL && eap->skip);
+  if (eval0(arg, &tv, NULL, &evalarg) == FAIL) {
     retval = NULL;
   } else {
-    retval = typval2string(&tv, convert);
+    retval = typval2string(&tv, join_list);
     tv_clear(&tv);
   }
   clear_evalarg(&EVALARG_EVALUATE, NULL);
 
   return retval;
+}
+
+char *eval_to_string(char *arg, bool join_list)
+{
+  return eval_to_string_eap(arg, join_list, NULL);
 }
 
 /// Call eval_to_string() without using current local variables and using
