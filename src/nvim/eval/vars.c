@@ -88,7 +88,7 @@ char *eval_one_expr_in_str(char *p, garray_T *gap, bool evaluate)
   }
   if (evaluate) {
     *block_end = NUL;
-    char *expr_val = eval_to_string(block_start, true);
+    char *expr_val = eval_to_string(block_start, false);
     *block_end = '}';
     if (expr_val == NULL) {
       return NULL;

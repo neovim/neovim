@@ -694,6 +694,41 @@ END
   END
   call assert_equal(["let d2 = {'a': 10, 'b': 'ss', 'c': {}}"], code)
 
+  " Empty dictionary
+  let d1 = {}
+  let code =<< eval trim END
+    let d2 = {d1}
+  END
+  call assert_equal(["let d2 = {}"], code)
+
+  " null dictionary
+  let d1 = v:_null_dict
+  let code =<< eval trim END
+    let d2 = {d1}
+  END
+  call assert_equal(["let d2 = {}"], code)
+
+  " Evaluate a List
+  let l1 = ['a', 'b', 'c']
+  let code =<< eval trim END
+    let l2 = {l1}
+  END
+  call assert_equal(["let l2 = ['a', 'b', 'c']"], code)
+
+  " Empty List
+  let l1 = []
+  let code =<< eval trim END
+    let l2 = {l1}
+  END
+  call assert_equal(["let l2 = []"], code)
+
+  " Null List
+  let l1 = v:_null_list
+  let code =<< eval trim END
+    let l2 = {l1}
+  END
+  call assert_equal(["let l2 = []"], code)
+
   let code = 'xxx'
   let code =<< eval trim END
     let n = {5 +

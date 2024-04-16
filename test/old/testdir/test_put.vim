@@ -332,4 +332,12 @@ func Test_put_dict()
   bw!
 endfunc
 
+func Test_put_list()
+  new
+  let l = ['a', 'b', 'c']
+  put! =l
+  call assert_equal(['a', 'b', 'c', ''], getline(1, '$'))
+  bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
