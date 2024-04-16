@@ -559,6 +559,16 @@ describe('API', function()
       eq('Vim:E121: Undefined variable: bogus', pcall_err(request, 'nvim_eval', 'bogus expression'))
       eq('', eval('v:errmsg')) -- v:errmsg was not updated.
     end)
+
+    it('can return Lua function to Lua code', function()
+      eq(
+        [["a string with \"double quotes\" and 'single quotes'"]],
+        exec_lua([=[
+          local fun = vim.api.nvim_eval([[luaeval('string.format')]])
+          return fun('%q', [[a string with "double quotes" and 'single quotes']])
+        ]=])
+      )
+    end)
   end)
 
   describe('nvim_call_function', function()
@@ -622,6 +632,16 @@ describe('API', function()
       eq(
         'Function called with too many arguments',
         pcall_err(request, 'nvim_call_function', 'Foo', too_many_args)
+      )
+    end)
+
+    it('can return Lua function to Lua code', function()
+      eq(
+        [["a string with \"double quotes\" and 'single quotes'"]],
+        exec_lua([=[
+          local fun = vim.api.nvim_call_function('luaeval', { 'string.format' })
+          return fun('%q', [[a string with "double quotes" and 'single quotes']])
+        ]=])
       )
     end)
   end)
