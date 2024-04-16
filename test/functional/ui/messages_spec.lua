@@ -1536,6 +1536,35 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
                                                                   |*4
     ]])
   end)
+
+  it('supports :intro with cmdheight=0 #26505', function()
+    screen:try_resize(80, 24)
+    command('set cmdheight=0')
+    feed(':intro<CR>')
+    screen:expect([[
+                                                                                      |*5
+      {MATCH:.*}|
+                                                                                      |
+                        Nvim is open source and freely distributable                  |
+                                  https://neovim.io/#chat                             |
+                                                                                      |
+                       type  :help nvim{18:<Enter>}       if you are new!                  |
+                       type  :checkhealth{18:<Enter>}     to optimize Nvim                 |
+                       type  :q{18:<Enter>}               to exit                          |
+                       type  :help{18:<Enter>}            for help                         |
+                                                                                      |
+      {MATCH: +}type  :help news{18:<Enter>} to see changes in v{MATCH:%d+%.%d+ +}|
+                                                                                      |
+                               Help poor children in Uganda!                          |
+                       type  :help iccf{18:<Enter>}       for information                  |
+                                                                                      |*2
+      {3:                                                                                }|
+                                                                                      |
+      {6:Press ENTER or type command to continue}^                                         |
+    ]])
+    feed('<CR>')
+    assert_alive()
+  end)
 end)
 
 it('calling screenstring() after redrawing between messages without UI #20999', function()
