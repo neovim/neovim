@@ -111,6 +111,44 @@ describe('API/win', function()
       api.nvim_win_set_buf(new_win, next_buf)
       eq(next_buf, api.nvim_win_get_buf(new_win))
     end)
+
+    describe("with 'autochdir'", function()
+      local topdir
+      local otherbuf
+      local oldwin
+      local newwin
+
+      before_each(function()
+        command('set shellslash')
+        topdir = fn.getcwd()
+        t.mkdir(topdir .. '/Xacd')
+        t.mkdir(topdir .. '/Xacd/foo')
+        otherbuf = api.nvim_create_buf(false, true)
+        api.nvim_buf_set_name(otherbuf, topdir .. '/Xacd/baz.txt')
+
+        command('set autochdir')
+        command('edit Xacd/foo/bar.txt')
+        eq(topdir .. '/Xacd/foo', fn.getcwd())
+
+        oldwin = api.nvim_get_current_win()
+        command('vsplit')
+        newwin = api.nvim_get_current_win()
+      end)
+
+      after_each(function()
+        t.rmdir(topdir .. '/Xacd')
+      end)
+
+      it('does not change cwd with non-current window', function()
+        api.nvim_win_set_buf(oldwin, otherbuf)
+        eq(topdir .. '/Xacd/foo', fn.getcwd())
+      end)
+
+      it('changes cwd with current window', function()
+        api.nvim_win_set_buf(newwin, otherbuf)
+        eq(topdir .. '/Xacd', fn.getcwd())
+      end)
+    end)
   end)
 
   describe('{get,set}_cursor', function()
@@ -1749,29 +1787,44 @@ describe('API/win', function()
       )
     end)
 
-    it('do not change dir when enter is false', function()
-      local expected = fn.getcwd() .. '/foo'
-      t.mkdir('foo')
-      exec_lua [[
-        vim.opt.autochdir = true
-        local buf = vim.api.nvim_create_buf(false, true)
-        vim.api.nvim_buf_set_name(buf, 'Foo')
-        vim.api.nvim_create_autocmd('CmdlineEnter', {
-          callback = function()
-            local winid = vim.api.nvim_open_win(buf, false, {
-              relative = 'editor',
-              height = 1,
-              width = 1,
-              row = 1,
-              col = 1,
-            })
-            vim.api.nvim_win_close(winid, true)
-          end,
-        })
-      ]]
-      t.feed(':edit foo/bar.txt<CR>')
-      eq(t.is_os('win') and expected:gsub('/', '\\') or expected, fn.getcwd())
-      t.rmdir('foo')
+    describe("with 'autochdir'", function()
+      local topdir
+      local otherbuf
+
+      before_each(function()
+        command('set shellslash')
+        topdir = fn.getcwd()
+        t.mkdir(topdir .. '/Xacd')
+        t.mkdir(topdir .. '/Xacd/foo')
+        otherbuf = api.nvim_create_buf(false, true)
+        api.nvim_buf_set_name(otherbuf, topdir .. '/Xacd/baz.txt')
+
+        command('set autochdir')
+        command('edit Xacd/foo/bar.txt')
+        eq(topdir .. '/Xacd/foo', fn.getcwd())
+      end)
+
+      after_each(function()
+        t.rmdir(topdir .. '/Xacd')
+      end)
+
+      it('does not change cwd with enter=false #15280', function()
+        api.nvim_open_win(
+          otherbuf,
+          false,
+          { relative = 'editor', height = 5, width = 5, row = 5, col = 5 }
+        )
+        eq(topdir .. '/Xacd/foo', fn.getcwd())
+      end)
+
+      it('changes cwd with enter=true', function()
+        api.nvim_open_win(
+          otherbuf,
+          true,
+          { relative = 'editor', height = 5, width = 5, row = 5, col = 5 }
+        )
+        eq(topdir .. '/Xacd', fn.getcwd())
+      end)
     end)
   end)
 

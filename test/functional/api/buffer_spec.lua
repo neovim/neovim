@@ -2048,6 +2048,37 @@ describe('api/buf', function()
       eq(1, fn.filereadable(new_name))
       os.remove(new_name)
     end)
+
+    describe("with 'autochdir'", function()
+      local topdir
+      local oldbuf
+      local newbuf
+
+      before_each(function()
+        command('set shellslash')
+        topdir = fn.getcwd()
+        t.mkdir(topdir .. '/Xacd')
+
+        oldbuf = api.nvim_get_current_buf()
+        command('vnew')
+        newbuf = api.nvim_get_current_buf()
+        command('set autochdir')
+      end)
+
+      after_each(function()
+        t.rmdir(topdir .. '/Xacd')
+      end)
+
+      it('does not change cwd with non-current buffer', function()
+        api.nvim_buf_set_name(oldbuf, topdir .. '/Xacd/foo.txt')
+        eq(topdir, fn.getcwd())
+      end)
+
+      it('changes cwd with current buffer', function()
+        api.nvim_buf_set_name(newbuf, topdir .. '/Xacd/foo.txt')
+        eq(topdir .. '/Xacd', fn.getcwd())
+      end)
+    end)
   end)
 
   describe('nvim_buf_is_loaded', function()
