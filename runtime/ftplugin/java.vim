@@ -1,10 +1,9 @@
 " Vim filetype plugin file
 " Language:		Java
-"
-" This runtime file is looking for a new maintainer.
-"
-" Former maintainer:	Dan Sharp
-" Last Change:  	2012 Mar 11
+" Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
+" Former Maintainer:	Dan Sharp
+" Repository:		https://github.com/zzzyxwvut/java-vim.git
+" Last Change:		2024 Apr 13
 "			2024 Jan 14 by Vim Project (browsefilter)
 
 if exists("b:did_ftplugin") | finish | endif

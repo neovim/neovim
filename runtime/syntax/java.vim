@@ -1,8 +1,9 @@
 " Vim syntax file
-" Language:	Java
-" Maintainer:	Claudio Fleiner <claudio@fleiner.com>
-" URL:          https://github.com/fleiner/vim/blob/master/runtime/syntax/java.vim
-" Last Change:	2024 Apr 04
+" Language:		Java
+" Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
+" Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
+" Repository:		https://github.com/zzzyxwvut/java-vim.git
+" Last Change:		2024 Apr 13
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -63,7 +64,7 @@ syn match   javaClassDecl	"\<permits\>\%(\s*(\)\@!"
 syn match   javaClassDecl	"\<record\>\%(\s*(\)\@!"
 syn match   javaClassDecl	"^class\>"
 syn match   javaClassDecl	"[^.]\s*\<class\>"ms=s+1
-syn match   javaAnnotation	"@\([_$a-zA-Z][_$a-zA-Z0-9]*\.\)*[_$a-zA-Z][_$a-zA-Z0-9]*\>" contains=javaString
+syn match   javaAnnotation	"@\%(\K\k*\.\)*\K\k*\>"
 syn match   javaClassDecl	"@interface\>"
 syn keyword javaBranch		break continue nextgroup=javaUserLabelRef skipwhite
 syn match   javaUserLabelRef	"\k\+" contained
@@ -288,18 +289,24 @@ syn cluster javaTop add=javaString,javaStrTempl,javaCharacter,javaNumber,javaSpe
 
 if exists("java_highlight_functions")
   if java_highlight_functions == "indent"
-    syn match  javaFuncDef "^\(\t\| \{8\}\)[_$a-zA-Z][_$a-zA-Z0-9_. \[\]<>]*([^-+*/]*)" contains=javaScopeDecl,javaConceptKind,javaType,javaStorageClass,@javaClasses,javaAnnotation
-    syn region javaFuncDef start=+^\(\t\| \{8\}\)[$_a-zA-Z][$_a-zA-Z0-9_. \[\]<>]*([^-+*/]*,\s*+ end=+)+ contains=javaScopeDecl,javaConceptKind,javaType,javaStorageClass,@javaClasses,javaAnnotation
-    syn match  javaFuncDef "^  [$_a-zA-Z][$_a-zA-Z0-9_. \[\]<>]*([^-+*/]*)" contains=javaScopeDecl,javaConceptKind,javaType,javaStorageClass,@javaClasses,javaAnnotation
-    syn region javaFuncDef start=+^  [$_a-zA-Z][$_a-zA-Z0-9_. \[\]<>]*([^-+*/]*,\s*+ end=+)+ contains=javaScopeDecl,javaConceptKind,javaType,javaStorageClass,@javaClasses,javaAnnotation
+    syn match javaFuncDef "^\%(\t\|  \%( \{6\}\)\=\)\K\%(\k\|[ .,<>\[\]]\)*([^-+*/]*)" contains=javaScopeDecl,javaConceptKind,javaType,javaStorageClass,@javaClasses,javaAnnotation
+    syn region javaFuncDef start=+^\%(\t\|  \%( \{6\}\)\=\)\K\%(\k\|[ .,<>\[\]]\)*([^-+*/]*,\s*+ end=+)+ contains=javaScopeDecl,javaConceptKind,javaType,javaStorageClass,@javaClasses,javaAnnotation
   else
-    " This line catches method declarations at any indentation>0, but it assumes
-    " two things:
-    "	1. class names are always capitalized (ie: Button)
-    "	2. method names are never capitalized (except constructors, of course)
-    "syn region javaFuncDef start=+^\s\+\(\(public\|protected\|private\|static\|abstract\|final\|native\|synchronized\)\s\+\)*\(\(void\|boolean\|char\|byte\|short\|int\|long\|float\|double\|\([A-Za-z_][A-Za-z0-9_$]*\.\)*[A-Z][A-Za-z0-9_$]*\)\(<[^>]*>\)\=\(\[\]\)*\s\+[a-z][A-Za-z0-9_$]*\|[A-Z][A-Za-z0-9_$]*\)\s*([^0-9]+ end=+)+ contains=javaScopeDecl,javaType,javaStorageClass,javaComment,javaLineComment,@javaClasses
-    syn region javaFuncDef start=+^\s\+\%(\%(public\|protected\|private\|static\|\%(abstract\|default\)\|final\|native\|synchronized\)\s\+\)*\%(<.*>\s\+\)\?\%(\%(void\|boolean\|char\|byte\|short\|int\|long\|float\|double\|\%([A-Za-z_][A-Za-z0-9_$]*\.\)*[A-Z][A-Za-z0-9_$]*\)\%(<[^(){}]*>\)\=\%(\[\]\)*\s\+[a-z][A-Za-z0-9_$]*\|[A-Z][A-Za-z0-9_$]*\)\s*(+ end=+)+ contains=javaScopeDecl,javaConceptKind,javaType,javaStorageClass,javaComment,javaLineComment,@javaClasses,javaAnnotation
+    " This is the "style" variant (:help ft-java-syntax).
+    "
+    " Match arbitrarily indented method and constructor declarations
+    " and some enum constants.
+    "
+    " TODO: Come back to refine and fix the parts of javaFuncDef.
+    " TODO: Request the new regexp engine for [:upper:] and [:lower:].
+    "
+    " XXX: \C\<[^a-z0-9]\k*\> rejects "type", but matches "τύπος".
+    " XXX: \C\<[^A-Z0-9]\k*\> rejects "Method", but matches "Μέθοδος".
+    "
+    " Match: [abstract] [<α, β>] [Τʬ][<γ>][[][]] [μΜ]ʭʭ(/* ... */);
+    syn region javaFuncDef start=+^\s\+\%(\%(public\|protected\|private\|static\|\%(abstract\|default\)\|final\|native\|synchronized\)\s\+\)*\%(<.*>\s\+\)\=\%(\%(void\|boolean\|char\|byte\|short\|int\|long\|float\|double\|\%(\K\k*\.\)*\<[^a-z0-9]\k*\>\)\%(<[^(){}]*>\)\=\%(\[\]\)*\s\+\<[^A-Z0-9]\k*\>\|\<[^a-z0-9]\k*\>\)\s*(+ end=+)+ contains=javaScopeDecl,javaConceptKind,javaType,javaStorageClass,javaComment,javaLineComment,@javaClasses,javaAnnotation
   endif
+
   syn match   javaLambdaDef "\<\K\k*\>\%(\<default\>\)\@<!\s*->"
   syn match  javaBraces  "[{}]"
   syn cluster javaTop add=javaFuncDef,javaBraces,javaLambdaDef
@@ -332,11 +339,13 @@ if exists("java_highlight_debug")
   syn keyword javaDebugType		contained null this super
   syn region javaDebugParen  start=+(+ end=+)+ contained contains=javaDebug.*,javaDebugParen
 
-  " to make this work you must define the highlighting for these groups
-  syn match javaDebug "\<System\.\(out\|err\)\.print\(ln\)*\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
-  syn match javaDebug "\<p\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
-  syn match javaDebug "[A-Za-z][a-zA-Z0-9_]*\.printStackTrace\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
-  syn match javaDebug "\<trace[SL]\=\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
+  " To make this work, define the highlighting for these groups.
+  syn match javaDebug "\<System\.\%(out\|err\)\.print\%(ln\)\=\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
+" FIXME: What API does "p" belong to?
+" syn match javaDebug "\<p\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
+  syn match javaDebug "\<\K\k*\.printStackTrace\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
+" FIXME: What API do "trace*" belong to?
+" syn match javaDebug "\<trace[SL]\=\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
 
   syn cluster javaTop add=javaDebug
 
@@ -379,8 +388,8 @@ syn match   javaParenError	 "\]"
 hi def link javaParenError	javaError
 
 if exists("java_highlight_functions")
-   syn match javaLambdaDef "([a-zA-Z0-9_<>\[\], \t]*)\s*->"
-   " needs to be defined after the parenthesis error catcher to work
+  " Make ()-matching definitions after the parenthesis error catcher.
+  syn match javaLambdaDef "\k\@4<!(\%(\k\|[[:space:]<>?\[\]@,.]\)*)\s*->"
 endif
 
 if !exists("java_minlines")
