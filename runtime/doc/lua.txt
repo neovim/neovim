@@ -2964,26 +2964,40 @@ vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
 vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
     Normalize a path to a standard format. A tilde (~) character at the
     beginning of the path is expanded to the user's home directory and
-    environment variables are also expanded.
+    environment variables are also expanded. "." and ".." components are also
+    resolved, except when the path is relative and trying to resolve it would
+    result in an absolute path.
+    • "." as the only part in a relative path:
+      • "." => "."
+      • "././" => "."
+    • ".." when it leads outside the current directory
+      • "foo/../../bar" => "../bar"
+      • "../../foo" => "../../foo"
+    • ".." in the root directory returns the root directory.
+      • "/../../" => "/"
 
     On Windows, backslash (\) characters are converted to forward slashes (/).
 
     Examples: >lua
-        vim.fs.normalize('C:\\\\Users\\\\jdoe')
-        -- On Windows: 'C:/Users/jdoe'
-
-        vim.fs.normalize('~/src/neovim')
-        -- '/home/jdoe/src/neovim'
-
-        vim.fs.normalize('$XDG_CONFIG_HOME/nvim/init.vim')
-        -- '/Users/jdoe/.config/nvim/init.vim'
+        [[C:\Users\jdoe]]                         => "C:/Users/jdoe"
+        "~/src/neovim"                            => "/home/jdoe/src/neovim"
+        "$XDG_CONFIG_HOME/nvim/init.vim"          => "/Users/jdoe/.config/nvim/init.vim"
+        "~/src/nvim/api/../tui/./tui.c"           => "/home/jdoe/src/nvim/tui/tui.c"
+        "./foo/bar"                               => "foo/bar"
+        "foo/../../../bar"                        => "../../bar"
+        "/home/jdoe/../../../bar"                 => "/bar"
+        "C:foo/../../baz"                         => "C:../baz"
+        "C:/foo/../../baz"                        => "C:/baz"
+        [[\\?\UNC\server\share\foo\..\..\..\bar]] => "//?/UNC/server/share/bar"
 <
 
     Parameters: ~
       • {path}  (`string`) Path to normalize
       • {opts}  (`table?`) A table with the following fields:
-                • {expand_env} (`boolean`, default: `true`) Expand environment
-                  variables.
+                • {expand_env}? (`boolean`, default: `true`) Expand
+                  environment variables.
+                • {win}? (`boolean`, default: `true` in Windows, `false`
+                  otherwise) Path is a Windows path.
 
     Return: ~
         (`string`) Normalized path

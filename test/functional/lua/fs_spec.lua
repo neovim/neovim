@@ -308,26 +308,112 @@ describe('vim.fs', function()
       )
     end)
 
-    it('works with UNC paths', function()
-      eq('//foo', vim.fs.normalize('//foo')) -- UNC path
-      eq('//foo/bar', vim.fs.normalize('//foo//bar////')) -- UNC path
-      eq('/foo', vim.fs.normalize('///foo')) -- Not a UNC path
-      eq('/', vim.fs.normalize('//')) -- Not a UNC path
-      eq('/', vim.fs.normalize('///')) -- Not a UNC path
-      eq('/foo/bar', vim.fs.normalize('/foo//bar////')) -- Not a UNC path
+    -- Opts required for testing posix paths and win paths
+    local posix_opts = is_os('win') and { win = false } or {}
+    local win_opts = is_os('win') and {} or { win = true }
+
+    it('preserves leading double slashes in POSIX paths', function()
+      eq('//foo', vim.fs.normalize('//foo', posix_opts))
+      eq('//foo/bar', vim.fs.normalize('//foo//bar////', posix_opts))
+      eq('/foo', vim.fs.normalize('///foo', posix_opts))
+      eq('//', vim.fs.normalize('//', posix_opts))
+      eq('/', vim.fs.normalize('///', posix_opts))
+      eq('/foo/bar', vim.fs.normalize('/foo//bar////', posix_opts))
     end)
 
-    if is_os('win') then
-      it('Last slash is not truncated from root drive', function()
-        eq('C:/', vim.fs.normalize('C:/'))
+    it('allows backslashes on unix-based os', function()
+      eq('/home/user/hello\\world', vim.fs.normalize('/home/user/hello\\world', posix_opts))
+    end)
+
+    it('preserves / after drive letters', function()
+      eq('C:/', vim.fs.normalize([[C:\]], win_opts))
+    end)
+
+    it('works with UNC and DOS device paths', function()
+      eq('//server/share/foo/bar', vim.fs.normalize([[\\server\\share\\\foo\bar\\\]], win_opts))
+      eq('//system07/C$/', vim.fs.normalize([[\\system07\C$\\\\]], win_opts))
+      eq('//./C:/foo/bar', vim.fs.normalize([[\\.\\C:\foo\\\\bar]], win_opts))
+      eq('//?/C:/foo/bar', vim.fs.normalize([[\\?\C:\\\foo\bar\\\\]], win_opts))
+      eq(
+        '//?/UNC/server/share/foo/bar',
+        vim.fs.normalize([[\\?\UNC\server\\\share\\\\foo\\\bar]], win_opts)
+      )
+      eq('//./BootPartition/foo/bar', vim.fs.normalize([[\\.\BootPartition\\foo\bar]], win_opts))
+      eq(
+        '//./Volume{12345678-1234-1234-1234-1234567890AB}/foo/bar',
+        vim.fs.normalize([[\\.\Volume{12345678-1234-1234-1234-1234567890AB}\\\foo\bar\\]], win_opts)
+      )
+    end)
+
+    it('handles invalid UNC and DOS device paths', function()
+      eq('//server/share', vim.fs.normalize([[\\server\share]], win_opts))
+      eq('//server/', vim.fs.normalize([[\\server\]], win_opts))
+      eq('//./UNC/server/share', vim.fs.normalize([[\\.\UNC\server\share]], win_opts))
+      eq('//?/UNC/server/', vim.fs.normalize([[\\?\UNC\server\]], win_opts))
+      eq('//?/UNC/server/..', vim.fs.normalize([[\\?\UNC\server\..]], win_opts))
+      eq('//./', vim.fs.normalize([[\\.\]], win_opts))
+      eq('//./foo', vim.fs.normalize([[\\.\foo]], win_opts))
+      eq('//./BootPartition', vim.fs.normalize([[\\.\BootPartition]], win_opts))
+    end)
+
+    it('converts backward slashes', function()
+      eq('C:/Users/jdoe', vim.fs.normalize([[C:\Users\jdoe]], win_opts))
+    end)
+
+    describe('. and .. component resolving', function()
+      it('works', function()
+        -- Windows paths
+        eq('C:/Users', vim.fs.normalize([[C:\Users\jdoe\Downloads\.\..\..\]], win_opts))
+        eq('C:/Users/jdoe', vim.fs.normalize([[C:\Users\jdoe\Downloads\.\..\.\.\]], win_opts))
+        eq('C:/', vim.fs.normalize('C:/Users/jdoe/Downloads/./../../../', win_opts))
+        eq('C:foo', vim.fs.normalize([[C:foo\bar\.\..\.]], win_opts))
+        -- POSIX paths
+        eq('/home', vim.fs.normalize('/home/jdoe/Downloads/./../..', posix_opts))
+        eq('/home/jdoe', vim.fs.normalize('/home/jdoe/Downloads/./../././', posix_opts))
+        eq('/', vim.fs.normalize('/home/jdoe/Downloads/./../../../', posix_opts))
+        -- OS-agnostic relative paths
+        eq('foo/bar/baz', vim.fs.normalize('foo/bar/foobar/../baz/./'))
+        eq('foo/bar', vim.fs.normalize('foo/bar/foobar/../baz/./../../bar/./.'))
       end)
-      it('converts backward slashes', function()
-        eq('C:/Users/jdoe', vim.fs.normalize('C:\\Users\\jdoe'))
+
+      it('works when relative path reaches current directory', function()
+        eq('C:', vim.fs.normalize('C:foo/bar/../../.', win_opts))
+
+        eq('.', vim.fs.normalize('.'))
+        eq('.', vim.fs.normalize('././././'))
+        eq('.', vim.fs.normalize('foo/bar/../../.'))
       end)
-    else
-      it('allows backslashes on unix-based os', function()
-        eq('/home/user/hello\\world', vim.fs.normalize('/home/user/hello\\world'))
+
+      it('works when relative path goes outside current directory', function()
+        eq('../../foo/bar', vim.fs.normalize('../../foo/bar'))
+        eq('../foo', vim.fs.normalize('foo/bar/../../../foo'))
+
+        eq('C:../foo', vim.fs.normalize('C:../foo', win_opts))
+        eq('C:../../foo/bar', vim.fs.normalize('C:foo/../../../foo/bar', win_opts))
       end)
-    end
+
+      it('.. in root directory resolves to itself', function()
+        eq('C:/', vim.fs.normalize('C:/../../', win_opts))
+        eq('C:/foo', vim.fs.normalize('C:/foo/../../foo', win_opts))
+
+        eq('//server/share/', vim.fs.normalize([[\\server\share\..\..]], win_opts))
+        eq('//server/share/foo', vim.fs.normalize([[\\server\\share\foo\..\..\foo]], win_opts))
+
+        eq('//./C:/', vim.fs.normalize([[\\.\C:\..\..]], win_opts))
+        eq('//?/C:/foo', vim.fs.normalize([[\\?\C:\..\..\foo]], win_opts))
+
+        eq('//./UNC/server/share/', vim.fs.normalize([[\\.\UNC\\server\share\..\..\]], win_opts))
+        eq(
+          '//?/UNC/server/share/foo',
+          vim.fs.normalize([[\\?\UNC\server\\share\..\..\foo]], win_opts)
+        )
+
+        eq('//?/BootPartition/', vim.fs.normalize([[\\?\BootPartition\..\..]], win_opts))
+        eq('//./BootPartition/foo', vim.fs.normalize([[\\.\BootPartition\..\..\foo]], win_opts))
+
+        eq('/', vim.fs.normalize('/../../', posix_opts))
+        eq('/foo', vim.fs.normalize('/foo/../../foo', posix_opts))
+      end)
+    end)
   end)
 end)
