@@ -310,6 +310,7 @@ func Test_matchaddpos_error()
   " call assert_fails("call matchaddpos('Error', [{}])", 'E290:')
   call assert_fails("call matchaddpos('Error', [{}])", 'E5031:')
   call assert_equal(-1, matchaddpos('Error', v:_null_list))
+  call assert_equal(-1, matchaddpos('Error', []))
   call assert_fails("call matchaddpos('Error', [1], [], 1)", 'E745:')
 endfunc
 
@@ -427,13 +428,11 @@ func Test_match_tab_with_linebreak()
     call setline(1, "\tix")
     call matchadd('ErrorMsg', '\t')
   END
-  call writefile(lines, 'XscriptMatchTabLinebreak')
+  call writefile(lines, 'XscriptMatchTabLinebreak', 'D')
   let buf = RunVimInTerminal('-S XscriptMatchTabLinebreak', #{rows: 10})
   call VerifyScreenDump(buf, 'Test_match_tab_linebreak', {})
 
   call StopVimInTerminal(buf)
-  call delete('XscriptMatchTabLinebreak')
 endfunc
-
 
 " vim: shiftwidth=2 sts=2 expandtab

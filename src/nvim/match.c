@@ -100,7 +100,7 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
 
   // Build new match.
   matchitem_T *m = xcalloc(1, sizeof(matchitem_T));
-  if (pos_list != NULL) {
+  if (tv_list_len(pos_list) > 0) {
     m->mit_pos_array = xcalloc((size_t)tv_list_len(pos_list), sizeof(llpos_T));
     m->mit_pos_count = tv_list_len(pos_list);
   }
@@ -1103,7 +1103,7 @@ void f_matchaddpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   list_T *l;
   l = argvars[1].vval.v_list;
-  if (l == NULL) {
+  if (tv_list_len(l) == 0) {
     return;
   }
 
