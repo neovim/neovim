@@ -76,8 +76,7 @@ static Object typval_cbuf_to_obj(EncodedData *edata, const char *data, size_t le
   do { \
     ufunc_T *fp = find_func(fun); \
     if (fp != NULL && (fp->uf_flags & FC_LUAREF)) { \
-      LuaRef ref = api_new_luaref(fp->uf_luaref); \
-      kvi_push(edata->stack, LUAREF_OBJ(ref)); \
+      kvi_push(edata->stack, LUAREF_OBJ(api_new_luaref(fp->uf_luaref))); \
     } else { \
       TYPVAL_ENCODE_CONV_NIL(tv); \
     } \
