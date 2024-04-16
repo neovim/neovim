@@ -1340,7 +1340,7 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
       win_config_float(auc_win, auc_win->w_config);
     }
     // Prevent chdir() call in win_enter_ext(), through do_autochdir()
-    int save_acd = p_acd;
+    const int save_acd = p_acd;
     p_acd = false;
     // no redrawing and don't set the window title
     RedrawingDisabled++;

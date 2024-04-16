@@ -752,15 +752,20 @@ void win_set_buf(win_T *win, buf_T *buf, Error *err)
     goto cleanup;
   }
 
-  // temporarily disable 'autochdir' when using win_set_buf
-  // on non-current window
-  int save_acd = p_acd;
+  try_start();
+
+  const int save_acd = p_acd;
   if (!switchwin.sw_same_win) {
+    // Temporarily disable 'autochdir' when setting buffer in another window.
     p_acd = false;
   }
-  try_start();
+
   int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
-  p_acd = save_acd;
+
+  if (!switchwin.sw_same_win) {
+    p_acd = save_acd;
+  }
+
   if (!try_end(err) && result == FAIL) {
     api_set_error(err,
                   kErrorTypeException,

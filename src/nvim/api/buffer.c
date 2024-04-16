@@ -39,6 +39,7 @@
 #include "nvim/memory_defs.h"
 #include "nvim/move.h"
 #include "nvim/ops.h"
+#include "nvim/option_vars.h"
 #include "nvim/pos_defs.h"
 #include "nvim/state_defs.h"
 #include "nvim/types_defs.h"
@@ -984,11 +985,22 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
 
   try_start();
 
+  const bool is_curbuf = buf == curbuf;
+  const int save_acd = p_acd;
+  if (!is_curbuf) {
+    // Temporarily disable 'autochdir' when setting file name for another buffer.
+    p_acd = false;
+  }
+
   // Using aucmd_*: autocommands will be executed by rename_buffer
   aco_save_T aco;
   aucmd_prepbuf(&aco, buf);
   int ren_ret = rename_buffer(name.data);
   aucmd_restbuf(&aco);
+
+  if (!is_curbuf) {
+    p_acd = save_acd;
+  }
 
   if (try_end(err)) {
     return;
