@@ -50,7 +50,7 @@ local function check_config()
 
   local init_lua = vim.fn.stdpath('config') .. '/init.lua'
   local init_vim = vim.fn.stdpath('config') .. '/init.vim'
-  local vimrc = vim.env.MYVIMRC or init_lua
+  local vimrc = vim.env.MYVIMRC and vim.fn.expand(vim.env.MYVIMRC) or init_lua
 
   if vim.fn.filereadable(vimrc) == 0 and vim.fn.filereadable(init_vim) == 0 then
     ok = false
