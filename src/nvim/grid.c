@@ -1085,8 +1085,14 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
 }
 
 static void grid_draw_bordertext(VirtText vt, int col, int winbl, const int *hl_attr,
-                                 BorderTextType bt)
+                                 BorderTextType bt, int over_flow)
 {
+  int default_attr = hl_attr[bt == kBorderTextTitle ? HLF_BTITLE : HLF_BFOOTER];
+  if (over_flow > 0) {
+    grid_line_puts(1, "<", -1,  hl_apply_winblend(winbl, default_attr));
+    col += 1;
+  }
+
   for (size_t i = 0; i < kv_size(vt);) {
     int attr = -1;
     char *text = next_virt_text_chunk(vt, &i, &attr);
@@ -1094,7 +1100,24 @@ static void grid_draw_bordertext(VirtText vt, int col, int winbl, const int *hl_
       break;
     }
     if (attr == -1) {  // No highlight specified.
-      attr = hl_attr[bt == kBorderTextTitle ? HLF_BTITLE : HLF_BFOOTER];
+      attr = default_attr;
+    }
+    // Skip characters from the beginning when title overflows available width.
+    // over_flow contains the number of cells to skip.
+    if (over_flow > 0) {
+      int cells = (int)mb_string2cells(text);
+      // Skip entire chunk if overflow is larger than chunk width.
+      if (over_flow >= cells) {
+        over_flow -= cells;
+        continue;
+      }
+      // Skip partial characters within the chunk.
+      char *p = text;
+      while (*p && over_flow > 0) {
+        over_flow -= utf_ptr2cells(p);
+        p += utfc_ptr2len(p);
+      }
+      text = p;
     }
     attr = hl_apply_winblend(winbl, attr);
     col += grid_line_puts(col, text, -1, attr);
@@ -1146,7 +1169,8 @@ void grid_draw_border(ScreenGrid *grid, WinConfig *config, int *adj, int winbl, 
 
     if (config->title) {
       int title_col = get_bordertext_col(icol, config->title_width, config->title_pos);
-      grid_draw_bordertext(config->title_chunks, title_col, winbl, hl_attr, kBorderTextTitle);
+      grid_draw_bordertext(config->title_chunks, title_col, winbl, hl_attr, kBorderTextTitle,
+                           config->title_width - icol + 1);
     }
     if (adj[1]) {
       grid_line_put_schar(icol + adj[3], chars[2], attrs[2]);
@@ -1181,7 +1205,8 @@ void grid_draw_border(ScreenGrid *grid, WinConfig *config, int *adj, int winbl, 
 
     if (config->footer) {
       int footer_col = get_bordertext_col(icol, config->footer_width, config->footer_pos);
-      grid_draw_bordertext(config->footer_chunks, footer_col, winbl, hl_attr, kBorderTextFooter);
+      grid_draw_bordertext(config->footer_chunks, footer_col, winbl, hl_attr, kBorderTextFooter,
+                           config->footer_width - icol + 1);
     }
     if (adj[1]) {
       grid_line_put_schar(icol + adj[3], chars[4], attrs[4]);
