@@ -1968,9 +1968,16 @@ bool add_to_showcmd(int c)
     }
   }
 
-  char *p = transchar(c);
-  if (*p == ' ') {
-    STRCPY(p, "<20>");
+  char *p;
+  char mbyte_buf[MB_MAXCHAR + 1];
+  if (c <= 0x7f || !vim_isprintc(c)) {
+    p = transchar(c);
+    if (*p == ' ') {
+      STRCPY(p, "<20>");
+    }
+  } else {
+    mbyte_buf[utf_char2bytes(c, mbyte_buf)] = NUL;
+    p = mbyte_buf;
   }
   size_t old_len = strlen(showcmd_buf);
   size_t extra_len = strlen(p);
@@ -2036,7 +2043,7 @@ void pop_showcmd(void)
 
 static void display_showcmd(void)
 {
-  int len = (int)strlen(showcmd_buf);
+  int len = vim_strsize(showcmd_buf);
   showcmd_is_clear = (len == 0);
 
   if (*p_sloc == 's') {
