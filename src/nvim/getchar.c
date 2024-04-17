@@ -84,6 +84,15 @@ static FileDescriptor scriptin[NSCRIPT] = { 0 };
 
 #define MINIMAL_SIZE 20                 // minimal size for b_str
 
+typedef struct {
+  int prev_c;
+  uint8_t buf[MB_MAXBYTES * 3 + 4];
+  size_t buflen;
+  unsigned pending;
+  bool in_special;
+  bool in_mbyte;
+} gotchars_state_T;
+
 static buffheader_T redobuff = { { NULL, { NUL } }, NULL, 0, 0 };
 static buffheader_T old_redobuff = { { NULL, { NUL } }, NULL, 0, 0 };
 static buffheader_T recordbuff = { { NULL, { NUL } }, NULL, 0, 0 };
@@ -1112,84 +1121,95 @@ void del_typebuf(int len, int offset)
   }
 }
 
+/// Add a single byte to a recording or 'showcmd'.
+/// Return true if a full key has been received, false otherwise.
+static bool gotchars_add_byte(gotchars_state_T *state, uint8_t byte)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int c = state->buf[state->buflen++] = byte;
+  bool retval = false;
+
+  if (state->pending > 0) {
+    state->pending--;
+  }
+
+  // When receiving a special key sequence, store it until we have all
+  // the bytes and we can decide what to do with it.
+  if ((state->pending == 0 || state->in_mbyte) && c == K_SPECIAL) {
+    state->pending += 2;
+    if (!state->in_mbyte) {
+      state->in_special = true;
+    }
+  }
+
+  if (state->pending > 0) {
+    goto ret_false;
+  }
+
+  if (!state->in_mbyte) {
+    if (state->in_special) {
+      state->in_special = false;
+      if (state->prev_c == KS_MODIFIER) {
+        // When receiving a modifier, wait for the modified key.
+        goto ret_false;
+      }
+      c = TO_SPECIAL(state->prev_c, c);
+    }
+    // When receiving a multibyte character, store it until we have all
+    // the bytes, so that it won't be split between two buffer blocks,
+    // and delete_buff_tail() will work properly.
+    state->pending = MB_BYTE2LEN_CHECK(c) - 1;
+    if (state->pending > 0) {
+      state->in_mbyte = true;
+      goto ret_false;
+    }
+  } else {
+    // Stored all bytes of a multibyte character.
+    state->in_mbyte = false;
+  }
+
+  retval = true;
+ret_false:
+  state->prev_c = c;
+  return retval;
+}
+
 /// Write typed characters to script file.
 /// If recording is on put the character in the record buffer.
 static void gotchars(const uint8_t *chars, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   const uint8_t *s = chars;
-  int c = NUL;
-  static int prev_c = NUL;
-  static uint8_t buf[MB_MAXBYTES * 3 + 4] = { 0 };
-  static size_t buflen = 0;
-  static unsigned pending = 0;
-  static bool in_special = false;
-  static bool in_mbyte = false;
   size_t todo = len;
+  static gotchars_state_T state;
 
-  for (; todo--; prev_c = c) {
-    c = buf[buflen++] = *s++;
-    if (pending > 0) {
-      pending--;
-    }
-
-    // When receiving a special key sequence, store it until we have all
-    // the bytes and we can decide what to do with it.
-    if ((pending == 0 || in_mbyte) && c == K_SPECIAL) {
-      pending += 2;
-      if (!in_mbyte) {
-        in_special = true;
-      }
-    }
-
-    if (pending > 0) {
+  while (todo-- > 0) {
+    if (!gotchars_add_byte(&state, *s++)) {
       continue;
     }
 
-    if (!in_mbyte) {
-      if (in_special) {
-        in_special = false;
-        if (prev_c == KS_MODIFIER) {
-          // When receiving a modifier, wait for the modified key.
-          continue;
-        }
-        c = TO_SPECIAL(prev_c, c);
-      }
-      // When receiving a multibyte character, store it until we have all
-      // the bytes, so that it won't be split between two buffer blocks,
-      // and delete_buff_tail() will work properly.
-      pending = MB_BYTE2LEN_CHECK(c) - 1;
-      if (pending > 0) {
-        in_mbyte = true;
-        continue;
-      }
-    } else {
-      // Stored all bytes of a multibyte character.
-      in_mbyte = false;
-    }
-
     // Handle one byte at a time; no translation to be done.
-    for (size_t i = 0; i < buflen; i++) {
-      updatescript(buf[i]);
+    for (size_t i = 0; i < state.buflen; i++) {
+      updatescript(state.buf[i]);
     }
 
-    buf[buflen] = NUL;
+    state.buf[state.buflen] = NUL;
 
     if (reg_recording != 0) {
-      add_buff(&recordbuff, (char *)buf, (ptrdiff_t)buflen);
+      add_buff(&recordbuff, (char *)state.buf, (ptrdiff_t)state.buflen);
       // remember how many chars were last recorded
-      last_recorded_len += buflen;
+      last_recorded_len += state.buflen;
     }
 
-    if (buflen > no_on_key_len) {
-      vim_unescape_ks((char *)buf + no_on_key_len);
-      kvi_concat(on_key_buf, (char *)buf + no_on_key_len);
+    if (state.buflen > no_on_key_len) {
+      vim_unescape_ks((char *)state.buf + no_on_key_len);
+      kvi_concat(on_key_buf, (char *)state.buf + no_on_key_len);
       no_on_key_len = 0;
     } else {
-      no_on_key_len -= buflen;
+      no_on_key_len -= state.buflen;
     }
 
-    buflen = 0;
+    state.buflen = 0;
   }
 
   may_sync_undo();
@@ -1494,6 +1514,61 @@ int merge_modifiers(int c_arg, int *modifiers)
     }
   }
   return c;
+}
+
+/// Add a single byte to 'showcmd' for a partially matched mapping.
+/// Call add_to_showcmd() if a full key has been received.
+static void add_byte_to_showcmd(uint8_t byte)
+{
+  static gotchars_state_T state;
+
+  if (!p_sc || msg_silent != 0) {
+    return;
+  }
+
+  if (!gotchars_add_byte(&state, byte)) {
+    return;
+  }
+
+  state.buf[state.buflen] = NUL;
+  state.buflen = 0;
+
+  int modifiers = 0;
+  int c = NUL;
+
+  const uint8_t *ptr = state.buf;
+  if (ptr[0] == K_SPECIAL && ptr[1] == KS_MODIFIER && ptr[2] != NUL) {
+    modifiers = ptr[2];
+    ptr += 3;
+  }
+
+  if (*ptr != NUL) {
+    const char *mb_ptr = mb_unescape((const char **)&ptr);
+    c = mb_ptr != NULL ? utf_ptr2char(mb_ptr) : *ptr++;
+    if (c <= 0x7f) {
+      // Merge modifiers into the key to make the result more readable.
+      int modifiers_after = modifiers;
+      int mod_c = merge_modifiers(c, &modifiers_after);
+      if (modifiers_after == 0) {
+        modifiers = 0;
+        c = mod_c;
+      }
+    }
+  }
+
+  // TODO(zeertzjq): is there a more readable and yet compact representation of
+  // modifiers and special keys?
+  if (modifiers != 0) {
+    add_to_showcmd(K_SPECIAL);
+    add_to_showcmd(KS_MODIFIER);
+    add_to_showcmd(modifiers);
+  }
+  if (c != NUL) {
+    add_to_showcmd(c);
+  }
+  while (*ptr != NUL) {
+    add_to_showcmd(*ptr++);
+  }
 }
 
 /// Get the next input character.
@@ -2726,7 +2801,7 @@ static int vgetorpeek(bool advance)
               showcmd_idx = typebuf.tb_len - SHOWCMD_COLS;
             }
             while (showcmd_idx < typebuf.tb_len) {
-              add_to_showcmd(typebuf.tb_buf[typebuf.tb_off + showcmd_idx++]);
+              add_byte_to_showcmd(typebuf.tb_buf[typebuf.tb_off + showcmd_idx++]);
             }
             curwin->w_wcol = old_wcol;
             curwin->w_wrow = old_wrow;
