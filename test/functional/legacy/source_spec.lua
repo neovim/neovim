@@ -1,8 +1,8 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local feed = helpers.feed
-local write_file = helpers.write_file
+local clear = t.clear
+local feed = t.feed
+local write_file = t.write_file
 
 before_each(clear)
 
@@ -16,16 +16,12 @@ describe(':source!', function()
     ]]
     )
     local screen = Screen.new(75, 6)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { background = Screen.colors.Red, foreground = Screen.colors.White }, -- ErrorMsg
-    })
     screen:attach()
     feed(':source! Xscript.vim\n')
     screen:expect([[
       ^                                                                           |
-      {0:~                                                                          }|*4
-      {1:E22: Scripts nested too deep}                                               |
+      {1:~                                                                          }|*4
+      {9:E22: Scripts nested too deep}                                               |
     ]])
     os.remove('Xscript.vim')
   end)

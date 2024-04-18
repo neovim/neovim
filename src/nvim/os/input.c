@@ -247,6 +247,13 @@ bool os_isatty(int fd)
   return uv_guess_handle(fd) == UV_TTY;
 }
 
+void input_enqueue_raw(String keys)
+{
+  if (keys.size > 0) {
+    rbuffer_write(input_buffer, keys.data, keys.size);
+  }
+}
+
 size_t input_enqueue(String keys)
 {
   const char *ptr = keys.data;
@@ -255,9 +262,9 @@ size_t input_enqueue(String keys)
   while (rbuffer_space(input_buffer) >= 19 && ptr < end) {
     // A "<x>" form occupies at least 1 characters, and produces up
     // to 19 characters (1 + 5 * 3 for the char and 3 for a modifier).
-    // In the case of K_SPECIAL(0x80), 3 bytes are escaped and needed,
+    // In the case of K_SPECIAL (0x80), 3 bytes are escaped and needed,
     // but since the keys are UTF-8, so the first byte cannot be
-    // K_SPECIAL(0x80).
+    // K_SPECIAL (0x80).
     uint8_t buf[19] = { 0 };
     // Do not simplify the keys here. Simplification will be done later.
     unsigned new_size
@@ -351,8 +358,7 @@ static uint8_t check_multiclick(int code, int grid, int row, int col)
   return modifiers;
 }
 
-// Mouse event handling code(Extract row/col if available and detect multiple
-// clicks)
+/// Mouse event handling code (extract row/col if available and detect multiple clicks)
 static unsigned handle_mouse_event(const char **ptr, uint8_t *buf, unsigned bufsize)
 {
   int mouse_code = 0;

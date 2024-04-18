@@ -42,9 +42,8 @@
   function: (identifier) @function.call)
 
 (call_expression
-  function:
-    (scoped_identifier
-      (identifier) @function.call))
+  function: (scoped_identifier
+    (identifier) @function.call))
 
 (parameters
   (identifier) @variable.parameter)
@@ -132,6 +131,8 @@
 (map_statement
   cmd: _ @keyword)
 
+(keycode) @character.special
+
 (command_name) @function.macro
 
 ; Filetype command
@@ -204,10 +205,9 @@
 
 (command_attribute
   name: _ @property
-  val:
-    (behavior
-      name: _ @constant
-      val: (identifier)? @function)?)
+  val: (behavior
+    name: _ @constant
+    val: (identifier)? @function)?)
 
 ; Edit command
 (plus_plus_opt

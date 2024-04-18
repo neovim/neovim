@@ -1,3 +1,6 @@
+// Low-level functions to manipulate individual character cells on the
+// screen grid.
+//
 // Most of the routines in this file perform screen (grid) manipulations. The
 // given operation is performed physically on the screen. The corresponding
 // change is also made to the internal screen image. In this way, the editor
@@ -338,7 +341,7 @@ static int grid_line_first = INT_MAX;
 static int grid_line_last = 0;
 static int grid_line_clear_to = 0;
 static int grid_line_clear_attr = 0;
-static bool grid_line_rl = false;
+static int grid_line_flags = 0;
 
 /// Start a group of grid_line_puts calls that builds a single grid line.
 ///
@@ -358,7 +361,7 @@ void grid_line_start(ScreenGrid *grid, int row)
   grid_line_last = 0;
   grid_line_clear_to = 0;
   grid_line_clear_attr = 0;
-  grid_line_rl = false;
+  grid_line_flags = 0;
 
   assert((size_t)grid_line_maxcol <= linebuf_size);
 
@@ -515,7 +518,7 @@ void grid_line_mirror(void)
     return;
   }
   linebuf_mirror(&grid_line_first, &grid_line_last, &grid_line_clear_to, grid_line_maxcol);
-  grid_line_rl = true;
+  grid_line_flags |= SLF_RIGHTLEFT;
 }
 
 void linebuf_mirror(int *firstp, int *lastp, int *clearp, int maxcol)
@@ -568,7 +571,7 @@ void grid_line_flush(void)
   }
 
   grid_put_linebuf(grid, grid_line_row, grid_line_coloff, grid_line_first, grid_line_last,
-                   grid_line_clear_to, grid_line_rl, grid_line_clear_attr, false);
+                   grid_line_clear_to, grid_line_clear_attr, -1, grid_line_flags);
 }
 
 /// flush grid line but only if on a valid row
@@ -619,17 +622,21 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int col, size_t off_to, int 
 
 /// Move one buffered line to the window grid, but only the characters that
 /// have actually changed.  Handle insert/delete character.
-/// "coloff" gives the first column on the grid for this line.
-/// "endcol" gives the columns where valid characters are.
-/// "clear_width" is the width of the window.  It's > 0 if the rest of the line
-/// needs to be cleared, negative otherwise.
-/// "rl" is true for rightleft text, like a window with 'rightleft' option set
-///    When true and "clear_width" > 0, clear columns 0 to "endcol"
-///    When false and "clear_width" > 0, clear columns "endcol" to "clear_width"
-/// If "wrap" is true, then hint to the UI that "row" contains a line
-/// which has wrapped into the next row.
+///
+/// @param coloff  gives the first column on the grid for this line.
+/// @param endcol  gives the columns where valid characters are.
+/// @param clear_width  see SLF_RIGHTLEFT.
+/// @param flags  can have bits:
+/// - SLF_RIGHTLEFT  rightleft text, like a window with 'rightleft' option set:
+///   - When false, clear columns "endcol" to "clear_width".
+///   - When true, clear columns "col" to "endcol".
+/// - SLF_WRAP  hint to UI that "row" contains a line wrapped into the next row.
+/// - SLF_INC_VCOL:
+///   - When false, use "last_vcol" for grid->vcols[] of the columns to clear.
+///   - When true, use an increasing sequence starting from "last_vcol + 1" for
+///     grid->vcols[] of the columns to clear.
 void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol, int clear_width,
-                      bool rl, int bg_attr, bool wrap)
+                      int bg_attr, colnr_T last_vcol, int flags)
 {
   bool redraw_next;                         // redraw_this for next character
   bool clear_next = false;
@@ -659,7 +666,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
   }
 
   int clear_start = endcol;
-  if (rl) {
+  if (flags & SLF_RIGHTLEFT) {
     clear_start = col;
     col = endcol;
     endcol = clear_width;
@@ -743,10 +750,15 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
   }
 
   int clear_dirty_start = -1, clear_end = -1;
+  if (flags & SLF_RIGHTLEFT) {
+    for (col = clear_width - 1; col >= clear_start; col--) {
+      size_t off = off_to + (size_t)col;
+      grid->vcols[off] = (flags & SLF_INC_VCOL) ? ++last_vcol : last_vcol;
+    }
+  }
   // blank out the rest of the line
   // TODO(bfredl): we could cache winline widths
-  col = clear_start;
-  while (col < clear_width) {
+  for (col = clear_start; col < clear_width; col++) {
     size_t off = off_to + (size_t)col;
     if (grid->chars[off] != schar_from_ascii(' ')
         || grid->attrs[off] != bg_attr
@@ -758,17 +770,18 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
       }
       clear_end = col + 1;
     }
-    grid->vcols[off] = MAXCOL;
-    col++;
+    if (!(flags & SLF_RIGHTLEFT)) {
+      grid->vcols[off] = (flags & SLF_INC_VCOL) ? ++last_vcol : last_vcol;
+    }
   }
 
-  if (rl && start_dirty != -1 && clear_dirty_start != -1) {
+  if ((flags & SLF_RIGHTLEFT) && start_dirty != -1 && clear_dirty_start != -1) {
     if (grid->throttled || clear_dirty_start >= start_dirty - 5) {
       // cannot draw now or too small to be worth a separate "clear" event
       start_dirty = clear_dirty_start;
     } else {
       ui_line(grid, row, invalid_row, coloff + clear_dirty_start, coloff + clear_dirty_start,
-              coloff + clear_end, bg_attr, wrap);
+              coloff + clear_end, bg_attr, flags & SLF_WRAP);
     }
     clear_end = end_dirty;
   } else {
@@ -785,7 +798,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
   if (clear_end > start_dirty) {
     if (!grid->throttled) {
       ui_line(grid, row, invalid_row, coloff + start_dirty, coloff + end_dirty, coloff + clear_end,
-              bg_attr, wrap);
+              bg_attr, flags & SLF_WRAP);
     } else if (grid->dirty_col) {
       // TODO(bfredl): really get rid of the extra pseudo terminal in message.c
       // by using a linebuf_char copy for "throttled message line"

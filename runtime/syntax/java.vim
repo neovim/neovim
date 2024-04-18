@@ -1,8 +1,9 @@
 " Vim syntax file
-" Language:	Java
-" Maintainer:	Claudio Fleiner <claudio@fleiner.com>
-" URL:          https://github.com/fleiner/vim/blob/master/runtime/syntax/java.vim
-" Last Change:	2024 Mar 06
+" Language:		Java
+" Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
+" Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
+" Repository:		https://github.com/zzzyxwvut/java-vim.git
+" Last Change:		2024 Apr 13
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -19,6 +20,9 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
+" Admit the ASCII dollar sign to keyword characters (JLS-17, §3.8):
+execute printf('syntax iskeyword %s,$', &l:iskeyword)
+
 " some characters that cannot be in a java program (outside a string)
 syn match javaError "[\\@`]"
 syn match javaError "<<<\|\.\.\|=>\|||=\|&&=\|\*\/"
@@ -27,16 +31,17 @@ syn match javaError "<<<\|\.\.\|=>\|||=\|&&=\|\*\/"
 syn match   javaError2 "#\|=<"
 hi def link javaError2 javaError
 
-" keyword definitions
+" Keywords (JLS-17, §3.9):
 syn keyword javaExternal	native package
-syn match javaExternal		"\<import\>\(\s\+static\>\)\?"
+syn match   javaExternal	"\<import\>\%(\s\+static\>\)\="
 syn keyword javaError		goto const
 syn keyword javaConditional	if else switch
 syn keyword javaRepeat		while for do
 syn keyword javaBoolean		true false
 syn keyword javaConstant	null
 syn keyword javaTypedef		this super
-syn keyword javaOperator	var new instanceof
+syn keyword javaOperator	new instanceof
+syn match   javaOperator	"\<var\>\%(\s*(\)\@!"
 " Since the yield statement, which could take a parenthesised operand,
 " and _qualified_ yield methods get along within the switch block
 " (JLS-17, §3.8), it seems futile to make a region definition for this
@@ -48,34 +53,43 @@ syn match   javaOperator	"\%(\%(::\|\.\)[[:space:]\n]*\)\@80<!\<yield\>"
 syn keyword javaType		boolean char byte short int long float double
 syn keyword javaType		void
 syn keyword javaStatement	return
-syn keyword javaStorageClass	static synchronized transient volatile final strictfp serializable
+syn keyword javaStorageClass	static synchronized transient volatile strictfp serializable
 syn keyword javaExceptions	throw try catch finally
 syn keyword javaAssert		assert
-syn keyword javaMethodDecl	synchronized throws
-syn keyword javaClassDecl	extends implements interface
-" to differentiate the keyword class from MyClass.class we use a match here
+syn keyword javaMethodDecl	throws
+" Differentiate a "MyClass.class" literal from the keyword "class".
 syn match   javaTypedef		"\.\s*\<class\>"ms=s+1
-syn keyword javaClassDecl	enum
+syn keyword javaClassDecl	enum extends implements interface
+syn match   javaClassDecl	"\<permits\>\%(\s*(\)\@!"
+syn match   javaClassDecl	"\<record\>\%(\s*(\)\@!"
 syn match   javaClassDecl	"^class\>"
 syn match   javaClassDecl	"[^.]\s*\<class\>"ms=s+1
-syn match   javaAnnotation	"@\([_$a-zA-Z][_$a-zA-Z0-9]*\.\)*[_$a-zA-Z][_$a-zA-Z0-9]*\>" contains=javaString
+syn match   javaAnnotation	"@\%(\K\k*\.\)*\K\k*\>"
 syn match   javaClassDecl	"@interface\>"
 syn keyword javaBranch		break continue nextgroup=javaUserLabelRef skipwhite
 syn match   javaUserLabelRef	"\k\+" contained
 syn match   javaVarArg		"\.\.\."
-syn keyword javaScopeDecl	public protected private abstract
+syn keyword javaScopeDecl	public protected private
+syn keyword javaConceptKind	abstract final
+syn match   javaConceptKind	"\<non-sealed\>"
+syn match   javaConceptKind	"\<sealed\>\%(\s*(\)\@!"
 syn match   javaConceptKind	"\<default\>\%(\s*\%(:\|->\)\)\@!"
 
-function s:isModuleInfoDeclarationCurrentBuffer() abort
-    return fnamemodify(bufname("%"), ":t") =~ '^module-info\%(\.class\>\)\@!'
-endfunction
+" Note that a "module-info" file will be recognised with an arbitrary
+" file extension (or no extension at all) so that more than one such
+" declaration for the same Java module can be maintained for modular
+" testing in a project without attendant confusion for IDEs, with the
+" ".java\=" extension used for a production version and an arbitrary
+" extension used for a testing version.
+let s:module_info_cur_buf = fnamemodify(bufname("%"), ":t") =~ '^module-info\%(\.class\>\)\@!'
+lockvar s:module_info_cur_buf
 
-" Java Modules(Since Java 9, for "module-info.java" file)
-if s:isModuleInfoDeclarationCurrentBuffer()
-    syn keyword javaModuleStorageClass	module transitive
-    syn keyword javaModuleStmt		open requires exports opens uses provides
-    syn keyword javaModuleExternal	to with
-    syn cluster javaTop add=javaModuleStorageClass,javaModuleStmt,javaModuleExternal
+" Java modules (since Java 9, for "module-info.java" file).
+if s:module_info_cur_buf
+  syn keyword javaModuleStorageClass	module transitive
+  syn keyword javaModuleStmt		open requires exports opens uses provides
+  syn keyword javaModuleExternal	to with
+  syn cluster javaTop add=javaModuleStorageClass,javaModuleStmt,javaModuleExternal
 endif
 
 if exists("java_highlight_java_lang_ids")
@@ -91,7 +105,7 @@ if exists("java_highlight_all")  || exists("java_highlight_java")  || exists("ja
   " keywords can be pre-sorted and appended without disturbing
   " the current keyword placement. The below _match_es follow suit.
 
-  syn keyword javaR_JavaLang ArithmeticException ArrayIndexOutOfBoundsException ArrayStoreException ClassCastException IllegalArgumentException IllegalMonitorStateException IllegalThreadStateException IndexOutOfBoundsException NegativeArraySizeException NullPointerException NumberFormatException RuntimeException SecurityException StringIndexOutOfBoundsException IllegalStateException UnsupportedOperationException EnumConstantNotPresentException TypeNotPresentException IllegalCallerException LayerInstantiationException
+  syn keyword javaR_JavaLang ArithmeticException ArrayIndexOutOfBoundsException ArrayStoreException ClassCastException IllegalArgumentException IllegalMonitorStateException IllegalThreadStateException IndexOutOfBoundsException NegativeArraySizeException NullPointerException NumberFormatException RuntimeException SecurityException StringIndexOutOfBoundsException IllegalStateException UnsupportedOperationException EnumConstantNotPresentException TypeNotPresentException IllegalCallerException LayerInstantiationException WrongThreadException MatchException
   syn cluster javaTop add=javaR_JavaLang
   syn cluster javaClasses add=javaR_JavaLang
   hi def link javaR_JavaLang javaR_Java
@@ -111,6 +125,8 @@ if exists("java_highlight_all")  || exists("java_highlight_java")  || exists("ja
   syn match   javaC_JavaLang "\%(\<Enum\.\)\@<=\<EnumDesc\>"
   syn keyword javaC_JavaLang Boolean Character Class ClassLoader Compiler Double Float Integer Long Math Number Object Process Runtime SecurityManager String StringBuffer Thread ThreadGroup Byte Short Void InheritableThreadLocal Package RuntimePermission ThreadLocal StrictMath StackTraceElement Enum ProcessBuilder StringBuilder ClassValue Module ModuleLayer StackWalker Record
   syn match   javaC_JavaLang "\<System\>"	" See javaDebug.
+  " As of JDK 21, java.lang.Compiler is no more (deprecated in JDK 9).
+  syn keyword javaLangDeprecated Compiler
   syn cluster javaTop add=javaC_JavaLang
   syn cluster javaClasses add=javaC_JavaLang
   hi def link javaC_JavaLang javaC_Java
@@ -191,13 +207,20 @@ if exists("java_comment_strings")
   syn cluster javaCommentSpecial2 add=javaComment2String,javaCommentCharacter,javaNumber,javaStrTempl
 endif
 
-syn region  javaComment		 start="/\*"  end="\*/" contains=@javaCommentSpecial,javaTodo,@Spell
+syn region  javaComment		matchgroup=javaCommentStart start="/\*" end="\*/" contains=@javaCommentSpecial,javaTodo,javaCommentError,javaSpaceError,@Spell
 syn match   javaCommentStar	 contained "^\s*\*[^/]"me=e-1
 syn match   javaCommentStar	 contained "^\s*\*$"
-syn match   javaLineComment	 "//.*" contains=@javaCommentSpecial2,javaTodo,@Spell
+syn match   javaLineComment	"//.*" contains=@javaCommentSpecial2,javaTodo,javaCommentMarkupTag,javaSpaceError,@Spell
+syn match   javaCommentMarkupTag contained "@\%(end\|highlight\|link\|replace\|start\)\>" nextgroup=javaCommentMarkupTagAttr,javaSpaceError skipwhite
+syn match   javaCommentMarkupTagAttr contained "\<region\>" nextgroup=javaCommentMarkupTagAttr,javaSpaceError skipwhite
+syn region  javaCommentMarkupTagAttr contained transparent matchgroup=htmlArg start=/\<\%(re\%(gex\|gion\|placement\)\|substring\|t\%(arget\|ype\)\)\%(\s*=\)\@=/ matchgroup=htmlString end=/\%(=\s*\)\@<=\%("[^"]\+"\|'[^']\+'\|\%([.-]\|\k\)\+\)/ nextgroup=javaCommentMarkupTagAttr,javaSpaceError skipwhite oneline
+hi def link javaCommentMarkupTagAttr htmlArg
 hi def link javaCommentString javaString
 hi def link javaComment2String javaString
 hi def link javaCommentCharacter javaCharacter
+syn match   javaCommentError contained "/\*"me=e-1 display
+hi def link javaCommentError javaError
+hi def link javaCommentStart javaComment
 
 syn cluster javaTop add=javaComment,javaLineComment
 
@@ -211,15 +234,20 @@ if !exists("java_ignore_javadoc") && main_syntax != 'jsp'
   " here.
   syntax spell default
 
-  syn region  javaDocComment	start="/\*\*"  end="\*/" keepend contains=javaCommentTitle,@javaHtml,javaDocTags,javaDocSeeTag,javaTodo,@Spell
-  syn region  javaCommentTitle	contained matchgroup=javaDocComment start="/\*\*"   matchgroup=javaCommentTitle keepend end="\.$" end="\.[ \t\r<&]"me=e-1 end="[^{]@"me=s-2,he=s-1 end="\*/"me=s-1,he=s-1 contains=@javaHtml,javaCommentStar,javaTodo,@Spell,javaDocTags,javaDocSeeTag
-
-  syn region javaDocTags	 contained start="{@\(code\|link\|linkplain\|inherit[Dd]oc\|doc[rR]oot\|value\)" end="}"
-  syn match  javaDocTags	 contained "@\(param\|exception\|throws\|since\)\s\+\S\+" contains=javaDocParam
-  syn match  javaDocParam	 contained "\s\S\+"
-  syn match  javaDocTags	 contained "@\(version\|author\|return\|deprecated\|serial\|serialField\|serialData\)\>"
-  syn region javaDocSeeTag	 contained matchgroup=javaDocTags start="@see\s\+" matchgroup=NONE end="\_."re=e-1 contains=javaDocSeeTagParam
-  syn match  javaDocSeeTagParam  contained @"\_[^"]\+"\|<a\s\+\_.\{-}</a>\|\(\k\|\.\)*\(#\k\+\((\_[^)]\+)\)\=\)\=@ extend
+  syn region javaDocComment	start="/\*\*" end="\*/" keepend contains=javaCommentTitle,@javaHtml,javaDocTags,javaDocSeeTag,javaDocCodeTag,javaDocSnippetTag,javaTodo,javaCommentError,javaSpaceError,@Spell
+  syn region javaCommentTitle	contained matchgroup=javaDocComment start="/\*\*" matchgroup=javaCommentTitle end="\.$" end="\.[ \t\r]\@=" end="\%(^\s*\**\s*\)\@<=@"me=s-2,he=s-1 end="\*/"me=s-1,he=s-1 contains=@javaHtml,javaCommentStar,javaTodo,javaCommentError,javaSpaceError,@Spell,javaDocTags,javaDocSeeTag,javaDocCodeTag,javaDocSnippetTag
+  syn region javaCommentTitle	contained matchgroup=javaDocComment start="/\*\*\s*\r\=\n\=\s*\**\s*\%({@return\>\)\@=" matchgroup=javaCommentTitle end="}\%(\s*\.*\)*" contains=@javaHtml,javaCommentStar,javaTodo,javaCommentError,javaSpaceError,@Spell,javaDocTags,javaDocSeeTag,javaDocCodeTag,javaDocSnippetTag
+  syn region javaDocTags	contained start="{@\%(li\%(teral\|nk\%(plain\)\=\)\|inherit[Dd]oc\|doc[rR]oot\|value\)\>" end="}"
+  syn match  javaDocTags	contained "@\%(param\|exception\|throws\|since\)\s\+\S\+" contains=javaDocParam
+  syn match  javaDocParam	contained "\s\S\+"
+  syn match  javaDocTags	contained "@\%(version\|author\|return\|deprecated\|serial\%(Field\|Data\)\=\)\>"
+  syn region javaDocSeeTag	contained matchgroup=javaDocTags start="@see\s\+" matchgroup=NONE end="\_."re=e-1 contains=javaDocSeeTagParam
+  syn match  javaDocSeeTagParam	contained @"\_[^"]\+"\|<a\s\+\_.\{-}</a>\|\%(\k\|\.\)*\%(#\k\+\%((\_[^)]*)\)\=\)\=@ contains=@javaHtml extend
+  syn region javaCodeSkipBlock	contained transparent start="{\%(@code\>\)\@!" end="}" contains=javaCodeSkipBlock,javaDocCodeTag
+  syn region javaDocCodeTag	contained start="{@code\>" end="}" contains=javaDocCodeTag,javaCodeSkipBlock
+  syn region javaDocSnippetTagAttr contained transparent matchgroup=htmlArg start=/\<\%(class\|file\|id\|lang\|region\)\%(\s*=\)\@=/ matchgroup=htmlString end=/:$/ end=/\%(=\s*\)\@<=\%("[^"]\+"\|'[^']\+'\|\%([.\\/-]\|\k\)\+\)/ nextgroup=javaDocSnippetTagAttr skipwhite skipnl
+  syn region javaSnippetSkipBlock contained transparent start="{\%(@snippet\>\)\@!" end="}" contains=javaSnippetSkipBlock,javaDocSnippetTag,javaCommentMarkupTag
+  syn region javaDocSnippetTag	contained start="{@snippet\>" end="}" contains=javaDocSnippetTag,javaSnippetSkipBlock,javaDocSnippetTagAttr,javaCommentMarkupTag
   syntax case match
 endif
 
@@ -261,18 +289,24 @@ syn cluster javaTop add=javaString,javaStrTempl,javaCharacter,javaNumber,javaSpe
 
 if exists("java_highlight_functions")
   if java_highlight_functions == "indent"
-    syn match  javaFuncDef "^\(\t\| \{8\}\)[_$a-zA-Z][_$a-zA-Z0-9_. \[\]<>]*([^-+*/]*)" contains=javaScopeDecl,javaType,javaStorageClass,@javaClasses,javaAnnotation
-    syn region javaFuncDef start=+^\(\t\| \{8\}\)[$_a-zA-Z][$_a-zA-Z0-9_. \[\]<>]*([^-+*/]*,\s*+ end=+)+ contains=javaScopeDecl,javaType,javaStorageClass,@javaClasses,javaAnnotation
-    syn match  javaFuncDef "^  [$_a-zA-Z][$_a-zA-Z0-9_. \[\]<>]*([^-+*/]*)" contains=javaScopeDecl,javaType,javaStorageClass,@javaClasses,javaAnnotation
-    syn region javaFuncDef start=+^  [$_a-zA-Z][$_a-zA-Z0-9_. \[\]<>]*([^-+*/]*,\s*+ end=+)+ contains=javaScopeDecl,javaType,javaStorageClass,@javaClasses,javaAnnotation
+    syn match javaFuncDef "^\%(\t\|  \%( \{6\}\)\=\)\K\%(\k\|[ .,<>\[\]]\)*([^-+*/]*)" contains=javaScopeDecl,javaConceptKind,javaType,javaStorageClass,@javaClasses,javaAnnotation
+    syn region javaFuncDef start=+^\%(\t\|  \%( \{6\}\)\=\)\K\%(\k\|[ .,<>\[\]]\)*([^-+*/]*,\s*+ end=+)+ contains=javaScopeDecl,javaConceptKind,javaType,javaStorageClass,@javaClasses,javaAnnotation
   else
-    " This line catches method declarations at any indentation>0, but it assumes
-    " two things:
-    "	1. class names are always capitalized (ie: Button)
-    "	2. method names are never capitalized (except constructors, of course)
-    "syn region javaFuncDef start=+^\s\+\(\(public\|protected\|private\|static\|abstract\|final\|native\|synchronized\)\s\+\)*\(\(void\|boolean\|char\|byte\|short\|int\|long\|float\|double\|\([A-Za-z_][A-Za-z0-9_$]*\.\)*[A-Z][A-Za-z0-9_$]*\)\(<[^>]*>\)\=\(\[\]\)*\s\+[a-z][A-Za-z0-9_$]*\|[A-Z][A-Za-z0-9_$]*\)\s*([^0-9]+ end=+)+ contains=javaScopeDecl,javaType,javaStorageClass,javaComment,javaLineComment,@javaClasses
-    syn region javaFuncDef start=+^\s\+\%(\%(public\|protected\|private\|static\|\%(abstract\|default\)\|final\|native\|synchronized\)\s\+\)*\%(<.*>\s\+\)\?\%(\%(void\|boolean\|char\|byte\|short\|int\|long\|float\|double\|\%([A-Za-z_][A-Za-z0-9_$]*\.\)*[A-Z][A-Za-z0-9_$]*\)\%(<[^(){}]*>\)\=\%(\[\]\)*\s\+[a-z][A-Za-z0-9_$]*\|[A-Z][A-Za-z0-9_$]*\)\s*(+ end=+)+ contains=javaScopeDecl,javaType,javaStorageClass,javaComment,javaLineComment,@javaClasses,javaAnnotation
+    " This is the "style" variant (:help ft-java-syntax).
+    "
+    " Match arbitrarily indented method and constructor declarations
+    " and some enum constants.
+    "
+    " TODO: Come back to refine and fix the parts of javaFuncDef.
+    " TODO: Request the new regexp engine for [:upper:] and [:lower:].
+    "
+    " XXX: \C\<[^a-z0-9]\k*\> rejects "type", but matches "τύπος".
+    " XXX: \C\<[^A-Z0-9]\k*\> rejects "Method", but matches "Μέθοδος".
+    "
+    " Match: [abstract] [<α, β>] [Τʬ][<γ>][[][]] [μΜ]ʭʭ(/* ... */);
+    syn region javaFuncDef start=+^\s\+\%(\%(public\|protected\|private\|static\|\%(abstract\|default\)\|final\|native\|synchronized\)\s\+\)*\%(<.*>\s\+\)\=\%(\%(void\|boolean\|char\|byte\|short\|int\|long\|float\|double\|\%(\K\k*\.\)*\<[^a-z0-9]\k*\>\)\%(<[^(){}]*>\)\=\%(\[\]\)*\s\+\<[^A-Z0-9]\k*\>\|\<[^a-z0-9]\k*\>\)\s*(+ end=+)+ contains=javaScopeDecl,javaConceptKind,javaType,javaStorageClass,javaComment,javaLineComment,@javaClasses,javaAnnotation
   endif
+
   syn match   javaLambdaDef "\<\K\k*\>\%(\<default\>\)\@<!\s*->"
   syn match  javaBraces  "[{}]"
   syn cluster javaTop add=javaFuncDef,javaBraces,javaLambdaDef
@@ -305,11 +339,13 @@ if exists("java_highlight_debug")
   syn keyword javaDebugType		contained null this super
   syn region javaDebugParen  start=+(+ end=+)+ contained contains=javaDebug.*,javaDebugParen
 
-  " to make this work you must define the highlighting for these groups
-  syn match javaDebug "\<System\.\(out\|err\)\.print\(ln\)*\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
-  syn match javaDebug "\<p\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
-  syn match javaDebug "[A-Za-z][a-zA-Z0-9_]*\.printStackTrace\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
-  syn match javaDebug "\<trace[SL]\=\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
+  " To make this work, define the highlighting for these groups.
+  syn match javaDebug "\<System\.\%(out\|err\)\.print\%(ln\)\=\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
+" FIXME: What API does "p" belong to?
+" syn match javaDebug "\<p\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
+  syn match javaDebug "\<\K\k*\.printStackTrace\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
+" FIXME: What API do "trace*" belong to?
+" syn match javaDebug "\<trace[SL]\=\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
 
   syn cluster javaTop add=javaDebug
 
@@ -352,13 +388,20 @@ syn match   javaParenError	 "\]"
 hi def link javaParenError	javaError
 
 if exists("java_highlight_functions")
-   syn match javaLambdaDef "([a-zA-Z0-9_<>\[\], \t]*)\s*->"
-   " needs to be defined after the parenthesis error catcher to work
+  " Make ()-matching definitions after the parenthesis error catcher.
+  syn match javaLambdaDef "\k\@4<!(\%(\k\|[[:space:]<>?\[\]@,.]\)*)\s*->"
 endif
 
 if !exists("java_minlines")
   let java_minlines = 10
 endif
+
+" Note that variations of a /*/ balanced comment, e.g., /*/*/, /*//*/,
+" /* /*/, /*  /*/, etc., may have their rightmost /*/ part accepted
+" as a comment start by ':syntax sync ccomment'; consider alternatives
+" to make synchronisation start further towards file's beginning by
+" bumping up g:java_minlines or issuing ':syntax sync fromstart' or
+" preferring &foldmethod set to 'syntax'.
 exec "syn sync ccomment javaComment minlines=" . java_minlines
 
 " The default highlighting.
@@ -404,6 +447,8 @@ hi def link javaAnnotation		PreProc
 
 hi def link javaCommentTitle		SpecialComment
 hi def link javaDocTags		Special
+hi def link javaDocCodeTag		Special
+hi def link javaDocSnippetTag		Special
 hi def link javaDocParam		Function
 hi def link javaDocSeeTagParam		Function
 hi def link javaCommentStar		javaComment
@@ -413,12 +458,14 @@ hi def link javaExternal		Include
 
 hi def link htmlComment		Special
 hi def link htmlCommentPart		Special
+hi def link htmlArg			Type
+hi def link htmlString			String
 hi def link javaSpaceError		Error
 
-if s:isModuleInfoDeclarationCurrentBuffer()
-    hi def link javaModuleStorageClass	StorageClass
-    hi def link javaModuleStmt		Statement
-    hi def link javaModuleExternal	Include
+if s:module_info_cur_buf
+  hi def link javaModuleStorageClass	StorageClass
+  hi def link javaModuleStmt		Statement
+  hi def link javaModuleExternal	Include
 endif
 
 let b:current_syntax = "java"
@@ -427,9 +474,8 @@ if main_syntax == 'java'
   unlet main_syntax
 endif
 
-delfunction! s:isModuleInfoDeclarationCurrentBuffer
-let b:spell_options="contained"
+let b:spell_options = "contained"
 let &cpo = s:cpo_save
-unlet s:cpo_save
+unlet s:module_info_cur_buf s:cpo_save
 
 " vim: ts=8

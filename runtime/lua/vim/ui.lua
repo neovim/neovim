@@ -114,14 +114,19 @@ end
 --- Examples:
 ---
 --- ```lua
+--- -- Asynchronous.
 --- vim.ui.open("https://neovim.io/")
 --- vim.ui.open("~/path/to/file")
---- vim.ui.open("$VIMRUNTIME")
+--- -- Synchronous (wait until the process exits).
+--- local cmd, err = vim.ui.open("$VIMRUNTIME")
+--- if cmd then
+---   cmd:wait()
+--- end
 --- ```
 ---
 ---@param path string Path or URL to open
 ---
----@return vim.SystemCompleted|nil # Command result, or nil if not found.
+---@return vim.SystemObj|nil # Command object, or nil if not found.
 ---@return string|nil # Error message on failure
 ---
 ---@see |vim.system()|
@@ -152,13 +157,7 @@ function M.open(path)
     return nil, 'vim.ui.open: no handler found (tried: explorer.exe, xdg-open)'
   end
 
-  local rv = vim.system(cmd, { text = true, detach = true }):wait()
-  if rv.code ~= 0 then
-    local msg = ('vim.ui.open: command failed (%d): %s'):format(rv.code, vim.inspect(cmd))
-    return rv, msg
-  end
-
-  return rv, nil
+  return vim.system(cmd, { text = true, detach = true }), nil
 end
 
 return M

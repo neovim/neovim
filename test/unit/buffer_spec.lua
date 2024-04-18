@@ -1,11 +1,11 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')
+local itp = t.gen_itp(it)
 
-local to_cstr = helpers.to_cstr
-local eq = helpers.eq
-local NULL = helpers.NULL
+local to_cstr = t.to_cstr
+local eq = t.eq
+local NULL = t.NULL
 
-local buffer = helpers.cimport('./src/nvim/buffer.h')
+local buffer = t.cimport('./src/nvim/buffer.h')
 
 describe('buffer functions', function()
   local buflist_new = function(file, flags)

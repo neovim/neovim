@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local clear, command, eq = helpers.clear, helpers.command, helpers.eq
-local insert = helpers.insert
-local api = helpers.api
-local assert_alive = helpers.assert_alive
+local clear, command, eq = t.clear, t.command, t.eq
+local insert = t.insert
+local api = t.api
+local assert_alive = t.assert_alive
 
 describe('ui/ext_tabline', function()
   local screen
@@ -31,7 +31,7 @@ describe('ui/ext_tabline', function()
     screen:expect {
       grid = [[
       ^                         |
-      ~                        |*3
+      {1:~                        }|*3
                                |
     ]],
       condition = function()
@@ -44,7 +44,7 @@ describe('ui/ext_tabline', function()
     screen:expect {
       grid = [[
       ^                         |
-      ~                        |*3
+      {1:~                        }|*3
                                |
     ]],
       condition = function()
@@ -62,7 +62,7 @@ describe('ui/ext_tabline', function()
     screen:expect {
       grid = [[
       ^                         |
-      ~                        |*3
+      {1:~                        }|*3
                                |
     ]],
       condition = function()
@@ -81,7 +81,7 @@ describe('ui/ext_tabline', function()
     screen:expect {
       grid = [[
       ^                         |
-      ~                        |*3
+      {1:~                        }|*3
                                |
     ]],
       condition = function()
@@ -99,10 +99,6 @@ describe('tabline', function()
     clear()
     screen = Screen.new(42, 5)
     screen:attach()
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { reverse = true }, -- TabLineFill
-    })
   end)
 
   it('redraws when tabline option is set', function()
@@ -110,18 +106,18 @@ describe('tabline', function()
     command('set showtabline=2')
     screen:expect {
       grid = [[
-      {1:asdf                                      }|
+      {2:asdf                                      }|
       ^                                          |
-      {0:~                                         }|*2
+      {1:~                                         }|*2
                                                 |
     ]],
     }
     command('set tabline=jkl')
     screen:expect {
       grid = [[
-      {1:jkl                                       }|
+      {2:jkl                                       }|
       ^                                          |
-      {0:~                                         }|*2
+      {1:~                                         }|*2
                                                 |
     ]],
     }
@@ -141,9 +137,9 @@ describe('tabline', function()
     api.nvim_set_option_value('tabline', '%1T口口%2Ta' .. ('b'):rep(38) .. '%999Xc', {})
     screen:expect {
       grid = [[
-      {1:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
+      {2:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
       tab^1                                      |
-      {0:~                                         }|*2
+      {1:~                                         }|*2
                                                 |
     ]],
     }
@@ -151,27 +147,27 @@ describe('tabline', function()
     api.nvim_input_mouse('left', 'press', '', 0, 0, 1)
     screen:expect {
       grid = [[
-      {1:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
+      {2:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
       tab^2                                      |
-      {0:~                                         }|*2
+      {1:~                                         }|*2
                                                 |
     ]],
     }
     api.nvim_input_mouse('left', 'press', '', 0, 0, 0)
     screen:expect {
       grid = [[
-      {1:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
+      {2:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
       tab^1                                      |
-      {0:~                                         }|*2
+      {1:~                                         }|*2
                                                 |
     ]],
     }
     api.nvim_input_mouse('left', 'press', '', 0, 0, 39)
     screen:expect {
       grid = [[
-      {1:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
+      {2:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
       tab^2                                      |
-      {0:~                                         }|*2
+      {1:~                                         }|*2
                                                 |
     ]],
     }
@@ -179,7 +175,7 @@ describe('tabline', function()
     screen:expect {
       grid = [[
       tab^1                                      |
-      {0:~                                         }|*3
+      {1:~                                         }|*3
                                                 |
     ]],
     }

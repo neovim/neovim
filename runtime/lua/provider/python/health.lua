@@ -1,5 +1,4 @@
 local health = vim.health
-local executable = health.executable
 local iswin = vim.loop.os_uname().sysname == 'Windows_NT'
 
 local M = {}
@@ -60,7 +59,7 @@ local function check_bin(bin)
   if not is(bin, 'file') and (not iswin or not is(bin .. '.exe', 'file')) then
     health.error('"' .. bin .. '" was not found.')
     return false
-  elseif not executable(bin) then
+  elseif vim.fn.executable(bin) == 0 then
     health.error('"' .. bin .. '" is not executable.')
     return false
   end
@@ -69,7 +68,7 @@ end
 
 -- Fetch the contents of a URL.
 local function download(url)
-  local has_curl = executable('curl')
+  local has_curl = vim.fn.executable('curl') == 1
   if has_curl and vim.fn.system({ 'curl', '-V' }):find('Protocols:.*https') then
     local out, rc = health.system({ 'curl', '-sL', url }, { stderr = true, ignore_error = true })
     if rc ~= 0 then
@@ -77,7 +76,7 @@ local function download(url)
     else
       return out
     end
-  elseif executable('python') then
+  elseif vim.fn.executable('python') == 1 then
     local script = "try:\n\
           from urllib.request import urlopen\n\
           except ImportError:\n\
@@ -284,7 +283,7 @@ function M.check()
           if
             path_bin ~= vim.fs.normalize(python_exe)
             and vim.tbl_contains(python_multiple, path_bin)
-            and executable(path_bin)
+            and vim.fn.executable(path_bin) == 1
           then
             python_multiple[#python_multiple + 1] = path_bin
           end
@@ -472,7 +471,7 @@ function M.check()
         bin_dir,
         table.concat(
           vim.tbl_map(function(v)
-            return vim.fn.fnamemodify(v, ':t')
+            return vim.fs.basename(v)
           end, venv_bins),
           ', '
         )

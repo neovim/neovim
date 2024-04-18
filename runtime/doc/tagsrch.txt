@@ -400,23 +400,23 @@ the pattern.
 							*tag-!*
 If the tag is in the current file this will always work.  Otherwise the
 performed actions depend on whether the current file was changed, whether a !
-is added to the command and on the 'autowrite' option:
+is added to the command and on the 'autowrite' and 'winfixbuf' options:
 
-  tag in       file	                autowrite			~
-current file  changed	!   winfixbuf   option	      action	~
+  tag in       file	    winfixbuf	autowrite		~
+current file  changed	!   option	option	      action	~
  -----------------------------------------------------------------------------
-    yes		x	x      no         x         goto tag
-    no		no	x      no         x         read other file, goto tag
-    no		yes	yes    no         x         abandon current file,
+    yes		x	x      off	  x	    goto tag
+    no		no	x      off	  x	    read other file, goto tag
+    no		yes	yes    off	  x	    abandon current file,
 						    read other file, goto tag
-    no		yes	no     no         on        write current file,
+    no		yes	no     off	  on	    write current file,
 						    read other file, goto tag
-    no		yes	no     no         off       fail
-    yes		x	yes    x          x         goto tag
-    no		no	no     yes        x         fail
-    no		yes	no     yes        x         fail
-    no		yes	no     yes        on        fail
-    no		yes	no     yes        off       fail
+    no		yes	no     off	  off	    fail
+    yes		x	yes    x	  x	    goto tag
+    no		no	no     on	  x	    fail
+    no		yes	no     on	  x	    fail
+    no		yes	no     on	  on	    fail
+    no		yes	no     on	  off	    fail
  -----------------------------------------------------------------------------
 
 - If the tag is in the current file, the command will always work.

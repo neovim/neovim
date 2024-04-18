@@ -588,7 +588,7 @@ MarkMoveRes mark_move_to(fmark_T *fm, MarkMove flags)
   }
 
   if (res & kMarkSwitchedBuf || res & kMarkChangedCursor) {
-    check_cursor();
+    check_cursor(curwin);
   }
 end:
   return res;
@@ -1243,11 +1243,11 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
       if (win != curwin || by_api) {
         if (win->w_topline >= line1 && win->w_topline <= line2) {
           if (amount == MAXLNUM) {                  // topline is deleted
-            if (line1 <= 1) {
-              win->w_topline = 1;
+            if (by_api && amount_after > line1 - line2 - 1) {
+              // api: if the deleted region was replaced with new contents, topline will
+              // get adjusted later as an effect of the adjusted cursor in fix_cursor()
             } else {
-              // api: if the deleted region was replaced with new contents, display that
-              win->w_topline = (by_api && amount_after > line1 - line2 - 1) ? line1 : line1 - 1;
+              win->w_topline = MAX(line1 - 1, 1);
             }
           } else if (win->w_topline > line1) {
             // keep topline on the same line, unless inserting just
@@ -1715,7 +1715,7 @@ void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
 {
   if (lp->col > 0 || lp->coladd > 1) {
     const char *const p = ml_get_buf(buf, lp->lnum);
-    if (*p == NUL || (int)strlen(p) < lp->col) {
+    if (*p == NUL || ml_get_buf_len(buf, lp->lnum) < lp->col) {
       lp->col = 0;
     } else {
       lp->col -= utf_head_off(p, p + lp->col);

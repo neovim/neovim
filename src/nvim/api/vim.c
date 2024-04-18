@@ -167,7 +167,7 @@ Dictionary nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena *arena, E
 /// @param[out] err Error details, if any
 ///
 // TODO(bfredl): val should take update vs reset flag
-void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
+void nvim_set_hl(uint64_t channel_id, Integer ns_id, String name, Dict(highlight) *val, Error *err)
   FUNC_API_SINCE(7)
 {
   int hl_id = syn_check_group(name.data, name.size);
@@ -184,7 +184,9 @@ void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
 
   HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
   if (!ERROR_SET(err)) {
-    ns_hl_def((NS)ns_id, hl_id, attrs, link_id, val);
+    WITH_SCRIPT_CONTEXT(channel_id, {
+      ns_hl_def((NS)ns_id, hl_id, attrs, link_id, val);
+    });
   }
 }
 
@@ -275,6 +277,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
   bool typed = false;
   bool execute = false;
   bool dangerous = false;
+  bool lowlevel = false;
 
   for (size_t i = 0; i < mode.size; i++) {
     switch (mode.data[i]) {
@@ -290,6 +293,8 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
       execute = true; break;
     case '!':
       dangerous = true; break;
+    case 'L':
+      lowlevel = true; break;
     }
   }
 
@@ -305,10 +310,14 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
   } else {
     keys_esc = keys.data;
   }
-  ins_typebuf(keys_esc, (remap ? REMAP_YES : REMAP_NONE),
-              insert ? 0 : typebuf.tb_len, !typed, false);
-  if (vgetc_busy) {
-    typebuf_was_filled = true;
+  if (lowlevel) {
+    input_enqueue_raw(cstr_as_string(keys_esc));
+  } else {
+    ins_typebuf(keys_esc, (remap ? REMAP_YES : REMAP_NONE),
+                insert ? 0 : typebuf.tb_len, !typed, false);
+    if (vgetc_busy) {
+      typebuf_was_filled = true;
+    }
   }
 
   if (escape_ks) {
@@ -958,21 +967,21 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
   FUNC_API_SINCE(6)
 {
   try_start();
+  // Block autocommands for now so they don't mess with the buffer before we
+  // finish configuring it.
+  block_autocmds();
+
   buf_T *buf = buflist_new(NULL, NULL, 0,
                            BLN_NOOPT | BLN_NEW | (listed ? BLN_LISTED : 0));
-  try_end(err);
   if (buf == NULL) {
+    unblock_autocmds();
     goto fail;
   }
 
   // Open the memline for the buffer. This will avoid spurious autocmds when
   // a later nvim_buf_set_lines call would have needed to "open" the buffer.
-  try_start();
-  block_autocmds();
-  int status = ml_open(buf);
-  unblock_autocmds();
-  try_end(err);
-  if (status == FAIL) {
+  if (ml_open(buf) == FAIL) {
+    unblock_autocmds();
     goto fail;
   }
 
@@ -983,21 +992,39 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
   buf->b_last_changedtick_pum = buf_get_changedtick(buf);
 
   // Only strictly needed for scratch, but could just as well be consistent
-  // and do this now. buffer is created NOW, not when it latter first happen
+  // and do this now. Buffer is created NOW, not when it later first happens
   // to reach a window or aucmd_prepbuf() ..
   buf_copy_options(buf, BCO_ENTER | BCO_NOHELP);
 
   if (scratch) {
-    set_string_option_direct_in_buf(buf, kOptBufhidden, "hide", OPT_LOCAL, 0);
-    set_string_option_direct_in_buf(buf, kOptBuftype, "nofile", OPT_LOCAL, 0);
+    set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL, 0, kOptReqBuf,
+                          buf);
+    set_option_direct_for(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL, 0, kOptReqBuf,
+                          buf);
     assert(buf->b_ml.ml_mfp->mf_fd < 0);  // ml_open() should not have opened swapfile already
     buf->b_p_swf = false;
     buf->b_p_ml = false;
   }
+
+  unblock_autocmds();
+
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
+  if (apply_autocmds(EVENT_BUFNEW, NULL, NULL, false, buf)
+      && !bufref_valid(&bufref)) {
+    goto fail;
+  }
+  if (listed
+      && apply_autocmds(EVENT_BUFADD, NULL, NULL, false, buf)
+      && !bufref_valid(&bufref)) {
+    goto fail;
+  }
+
+  try_end(err);
   return buf->b_fnum;
 
 fail:
-  if (!ERROR_SET(err)) {
+  if (!try_end(err)) {
     api_set_error(err, kErrorTypeException, "Failed to create buffer");
   }
   return 0;

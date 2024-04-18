@@ -1,7 +1,7 @@
-local helpers = require('test.functional.helpers')(after_each)
-local eq = helpers.eq
-local exec_lua = helpers.exec_lua
-local clear = helpers.clear
+local t = require('test.functional.testutil')()
+local eq = t.eq
+local exec_lua = t.exec_lua
+local clear = t.clear
 
 before_each(clear)
 
@@ -13,15 +13,19 @@ describe('ffi.cdef', function()
 
     eq(
       12,
-      exec_lua [[
+      exec_lua [=[
       local ffi = require('ffi')
 
-      ffi.cdef('int curwin_col_off(void);')
+      ffi.cdef [[
+        typedef struct window_S win_T;
+        int win_col_off(win_T *wp);
+        extern win_T *curwin;
+      ]]
 
       vim.cmd('set number numberwidth=4 signcolumn=yes:4')
 
-      return ffi.C.curwin_col_off()
-    ]]
+      return ffi.C.win_col_off(ffi.C.curwin)
+    ]=]
     )
 
     eq(
@@ -30,7 +34,6 @@ describe('ffi.cdef', function()
       local ffi = require('ffi')
 
       ffi.cdef[[
-        typedef struct window_S win_T;
         typedef struct {} stl_hlrec_t;
         typedef struct {} StlClickRecord;
         typedef struct {} statuscol_T;

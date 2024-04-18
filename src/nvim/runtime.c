@@ -2392,7 +2392,7 @@ char *get_scriptname(LastSet last_set, bool *should_free)
   case SID_WINLAYOUT:
     return _("changed window size");
   case SID_LUA:
-    return _("Lua");
+    return _("Lua (run Nvim with -V1 for more details)");
   case SID_API_CLIENT:
     snprintf(IObuff, IOSIZE, _("API client (channel id %" PRIu64 ")"), last_set.channel_id);
     return IObuff;
@@ -2733,7 +2733,7 @@ void ex_scriptencoding(exarg_T *eap)
   struct source_cookie *sp;
   char *name;
 
-  if (!getline_equal(eap->getline, eap->cookie, getsourceline)) {
+  if (!getline_equal(eap->ea_getline, eap->cookie, getsourceline)) {
     emsg(_("E167: :scriptencoding used outside of a sourced file"));
     return;
   }
@@ -2745,7 +2745,7 @@ void ex_scriptencoding(exarg_T *eap)
   }
 
   // Setup for conversion from the specified encoding to 'encoding'.
-  sp = (struct source_cookie *)getline_cookie(eap->getline, eap->cookie);
+  sp = (struct source_cookie *)getline_cookie(eap->ea_getline, eap->cookie);
   convert_setup(&sp->conv, name, p_enc);
 
   if (name != eap->arg) {
@@ -2756,7 +2756,7 @@ void ex_scriptencoding(exarg_T *eap)
 /// ":finish": Mark a sourced file as finished.
 void ex_finish(exarg_T *eap)
 {
-  if (getline_equal(eap->getline, eap->cookie, getsourceline)) {
+  if (getline_equal(eap->ea_getline, eap->cookie, getsourceline)) {
     do_finish(eap, false);
   } else {
     emsg(_("E168: :finish used outside of a sourced file"));
@@ -2769,7 +2769,7 @@ void ex_finish(exarg_T *eap)
 void do_finish(exarg_T *eap, bool reanimate)
 {
   if (reanimate) {
-    ((struct source_cookie *)getline_cookie(eap->getline,
+    ((struct source_cookie *)getline_cookie(eap->ea_getline,
                                             eap->cookie))->finished = false;
   }
 
@@ -2782,7 +2782,7 @@ void do_finish(exarg_T *eap, bool reanimate)
     eap->cstack->cs_pending[idx] = CSTP_FINISH;
     report_make_pending(CSTP_FINISH, NULL);
   } else {
-    ((struct source_cookie *)getline_cookie(eap->getline,
+    ((struct source_cookie *)getline_cookie(eap->ea_getline,
                                             eap->cookie))->finished = true;
   }
 }

@@ -1,8 +1,8 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local clear, feed, source = helpers.clear, helpers.feed, helpers.source
-local command = helpers.command
-local poke_eventloop = helpers.poke_eventloop
+local clear, feed, source = t.clear, t.feed, t.source
+local command = t.command
+local poke_eventloop = t.poke_eventloop
 local sleep = vim.uv.sleep
 
 describe('CTRL-C (mapped)', function()
@@ -16,7 +16,7 @@ describe('CTRL-C (mapped)', function()
 
   it('interrupts :global', function()
     -- Crashes luajit.
-    if helpers.skip_fragile(pending) then
+    if t.skip_fragile(pending) then
       return
     end
 
@@ -66,8 +66,8 @@ describe('CTRL-C (mapped)', function()
     feed('i')
     screen:expect([[
       ^                                                    |
-      ~                                                   |*4
-      -- INSERT --                                        |
+      {1:~                                                   }|*4
+      {5:-- INSERT --}                                        |
     ]])
   end)
 
@@ -81,8 +81,8 @@ describe('CTRL-C (mapped)', function()
     feed('i')
     screen:expect([[
       ^                                                    |
-      ~                                                   |*4
-      -- INSERT --                                        |
+      {1:~                                                   }|*4
+      {5:-- INSERT --}                                        |
     ]])
   end)
 end)

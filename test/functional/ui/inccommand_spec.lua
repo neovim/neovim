@@ -1,22 +1,22 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local eval = helpers.eval
-local expect = helpers.expect
-local feed = helpers.feed
-local insert = helpers.insert
-local fn = helpers.fn
-local api = helpers.api
-local neq = helpers.neq
-local ok = helpers.ok
-local retry = helpers.retry
-local source = helpers.source
-local poke_eventloop = helpers.poke_eventloop
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local eval = t.eval
+local expect = t.expect
+local feed = t.feed
+local insert = t.insert
+local fn = t.fn
+local api = t.api
+local neq = t.neq
+local ok = t.ok
+local retry = t.retry
+local source = t.source
+local poke_eventloop = t.poke_eventloop
 local sleep = vim.uv.sleep
-local testprg = helpers.testprg
-local assert_alive = helpers.assert_alive
+local testprg = t.testprg
+local assert_alive = t.assert_alive
 
 local default_text = [[
   Inc substitution on
@@ -65,26 +65,12 @@ local function common_setup(screen, inccommand, text)
     command('set nohlsearch')
     command('hi Substitute guifg=red guibg=yellow')
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = { foreground = Screen.colors.Fuchsia },
-      [2] = { foreground = Screen.colors.Brown, bold = true },
-      [3] = { foreground = Screen.colors.SlateBlue },
-      [4] = { bold = true, foreground = Screen.colors.SlateBlue },
-      [5] = { foreground = Screen.colors.DarkCyan },
-      [6] = { bold = true },
-      [7] = { underline = true, bold = true, foreground = Screen.colors.SlateBlue },
-      [8] = { foreground = Screen.colors.Slateblue, underline = true },
-      [9] = { background = Screen.colors.Yellow },
-      [10] = { reverse = true },
-      [11] = { reverse = true, bold = true },
-      [12] = { foreground = Screen.colors.Red, background = Screen.colors.Yellow },
-      [13] = { bold = true, foreground = Screen.colors.SeaGreen },
-      [14] = { foreground = Screen.colors.White, background = Screen.colors.Red },
-      [15] = { bold = true, foreground = Screen.colors.Blue },
-      [16] = { background = Screen.colors.Grey90 }, -- cursorline
-      [17] = { foreground = Screen.colors.Blue1 },
+
+    screen:add_extra_attr_ids {
+      [100] = { underline = true },
+      [101] = { underline = true, foreground = Screen.colors.SlateBlue, bold = true },
       vis = { background = Screen.colors.LightGrey },
-    })
+    }
   end
 
   command('set inccommand=' .. (inccommand or ''))
@@ -142,13 +128,13 @@ describe(":substitute, 'inccommand' preserves", function()
 
     screen:expect([[
       BAC                           |
-      {15:~                             }|*3
-      {11:                              }|
+      {1:~                             }|*3
+      {3:                              }|
       :ls                           |
         1 %a + "[No Name]"          |
                 line 1              |
-      {13:Press ENTER or type command to}|
-      {13: continue}^                     |
+      {6:Press ENTER or type command to}|
+      {6: continue}^                     |
     ]])
   end)
 
@@ -577,7 +563,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
         Inc substitution on |
         two lines           |
         ^                    |
-        {15:~                   }|*6
+        {1:~                   }|*6
                             |
       ]])
       command('set undolevels=1')
@@ -613,7 +599,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           ^MOo lines           |
                               |
-          {15:~                   }|*6
+          {1:~                   }|*6
           Already ...t change |
         ]])
       else
@@ -621,7 +607,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           ^MOo lines           |
                               |
-          {15:~                   }|*6
+          {1:~                   }|*6
           Already ...t change |
         ]])
       end
@@ -655,7 +641,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           two line^s           |
                               |
-          {15:~                   }|*6
+          {1:~                   }|*6
           Already ...t change |
         ]])
       else
@@ -663,7 +649,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           two line^s           |
                               |
-          {15:~                   }|*6
+          {1:~                   }|*6
           Already ...t change |
         ]])
       end
@@ -693,7 +679,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           ^MOo lines           |
                               |
-          {15:~                   }|*6
+          {1:~                   }|*6
           Already ...t change |
         ]])
       else
@@ -701,7 +687,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           ^MOo lines           |
                               |
-          {15:~                   }|*6
+          {1:~                   }|*6
           Already ...t change |
         ]])
       end
@@ -725,7 +711,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           ^MOo lines           |
                               |
-          {15:~                   }|*6
+          {1:~                   }|*6
           Already ...t change |
         ]])
       else
@@ -733,7 +719,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           ^MOo lines           |
                               |
-          {15:~                   }|*6
+          {1:~                   }|*6
           Already ...t change |
         ]])
       end
@@ -754,7 +740,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
         ^LInc substitution on|
         two lines           |
                             |
-        {15:~                   }|*6
+        {1:~                   }|*6
         Already ...t change |
       ]])
     end
@@ -775,15 +761,15 @@ describe(':substitute, inccommand=split', function()
     feed(':%s/tw')
     screen:expect([[
       Inc substitution on           |
-      {12:tw}o lines                     |
+      {20:tw}o lines                     |
       Inc substitution on           |
-      {12:tw}o lines                     |
+      {20:tw}o lines                     |
                                     |
-      {11:[No Name]                     }|
-      |2| {12:tw}o lines                 |
-      |4| {12:tw}o lines                 |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
+      {3:[No Name]                     }|
+      |2| {20:tw}o lines                 |
+      |4| {20:tw}o lines                 |
+      {1:~                             }|*5
+      {2:[Preview]                     }|
       :%s/tw^                        |
     ]])
     feed([[<C-\><C-N>]]) -- Cancel the :substitute command.
@@ -793,13 +779,13 @@ describe(':substitute, inccommand=split', function()
   it('shows preview when cmd modifiers are present', function()
     -- one modifier
     feed(':keeppatterns %s/tw/to')
-    screen:expect { any = [[{12:to}o lines]] }
+    screen:expect { any = [[{20:to}o lines]] }
     feed('<Esc>')
     screen:expect { any = [[two lines]] }
 
     -- multiple modifiers
     feed(':keeppatterns silent %s/tw/to')
-    screen:expect { any = [[{12:to}o lines]] }
+    screen:expect { any = [[{20:to}o lines]] }
     feed('<Esc>')
     screen:expect { any = [[two lines]] }
 
@@ -811,14 +797,14 @@ describe(':substitute, inccommand=split', function()
       Inc substitution on           |
       two lines                     |
                                     |
-      {15:~                             }|*9
+      {1:~                             }|*9
       :silent tabedit %s/tw/to^      |
     ]])
     feed('<Esc>')
 
     -- leading colons
     feed(':::%s/tw/to')
-    screen:expect { any = [[{12:to}o lines]] }
+    screen:expect { any = [[{20:to}o lines]] }
     feed('<Esc>')
     screen:expect { any = [[two lines]] }
   end)
@@ -828,15 +814,15 @@ describe(':substitute, inccommand=split', function()
     feed(':topleft %s/tw/to')
     screen:expect([[
       Inc substitution on           |
-      {12:to}o lines                     |
+      {20:to}o lines                     |
       Inc substitution on           |
-      {12:to}o lines                     |
+      {20:to}o lines                     |
                                     |
-      {11:[No Name] [+]                 }|
-      |2| {12:to}o lines                 |
-      |4| {12:to}o lines                 |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      |2| {20:to}o lines                 |
+      |4| {20:to}o lines                 |
+      {1:~                             }|*5
+      {2:[Preview]                     }|
       :topleft %s/tw/to^             |
     ]])
     feed('<Esc>')
@@ -846,15 +832,15 @@ describe(':substitute, inccommand=split', function()
     feed(':topleft vert %s/tw/to')
     screen:expect([[
       Inc substitution on           |
-      {12:to}o lines                     |
+      {20:to}o lines                     |
       Inc substitution on           |
-      {12:to}o lines                     |
+      {20:to}o lines                     |
                                     |
-      {11:[No Name] [+]                 }|
-      |2| {12:to}o lines                 |
-      |4| {12:to}o lines                 |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      |2| {20:to}o lines                 |
+      |4| {20:to}o lines                 |
+      {1:~                             }|*5
+      {2:[Preview]                     }|
       :topleft vert %s/tw/to^        |
     ]])
     feed('<Esc>')
@@ -865,15 +851,15 @@ describe(':substitute, inccommand=split', function()
     feed(':%s/tw')
     screen:expect([[
       Inc substitution on           |
-      {12:tw}o lines                     |
+      {20:tw}o lines                     |
       Inc substitution on           |
-      {12:tw}o lines                     |
+      {20:tw}o lines                     |
                                     |
-      {11:[No Name] [+]                 }|
-      |2| {12:tw}o lines                 |
-      |4| {12:tw}o lines                 |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      |2| {20:tw}o lines                 |
+      |4| {20:tw}o lines                 |
+      {1:~                             }|*5
+      {2:[Preview]                     }|
       :%s/tw^                        |
     ]])
   end)
@@ -886,26 +872,26 @@ describe(':substitute, inccommand=split', function()
       Inc substitution on           |
       o lines                       |
                                     |
-      {11:[No Name] [+]                 }|
+      {3:[No Name] [+]                 }|
       |2| o lines                   |
       |4| o lines                   |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
+      {1:~                             }|*5
+      {2:[Preview]                     }|
       :%s/tw/^                       |
     ]])
 
     feed('x')
     screen:expect([[
       Inc substitution on           |
-      {12:x}o lines                      |
+      {20:x}o lines                      |
       Inc substitution on           |
-      {12:x}o lines                      |
+      {20:x}o lines                      |
                                     |
-      {11:[No Name] [+]                 }|
-      |2| {12:x}o lines                  |
-      |4| {12:x}o lines                  |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      |2| {20:x}o lines                  |
+      |4| {20:x}o lines                  |
+      {1:~                             }|*5
+      {2:[Preview]                     }|
       :%s/tw/x^                      |
     ]])
 
@@ -916,11 +902,11 @@ describe(':substitute, inccommand=split', function()
       Inc substitution on           |
       o lines                       |
                                     |
-      {11:[No Name] [+]                 }|
+      {3:[No Name] [+]                 }|
       |2| o lines                   |
       |4| o lines                   |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
+      {1:~                             }|*5
+      {2:[Preview]                     }|
       :%s/tw/^                       |
     ]])
   end)
@@ -929,15 +915,15 @@ describe(':substitute, inccommand=split', function()
     feed(':%s/tw/XX')
     screen:expect([[
       Inc substitution on           |
-      {12:XX}o lines                     |
+      {20:XX}o lines                     |
       Inc substitution on           |
-      {12:XX}o lines                     |
+      {20:XX}o lines                     |
                                     |
-      {11:[No Name] [+]                 }|
-      |2| {12:XX}o lines                 |
-      |4| {12:XX}o lines                 |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      |2| {20:XX}o lines                 |
+      |4| {20:XX}o lines                 |
+      {1:~                             }|*5
+      {2:[Preview]                     }|
       :%s/tw/XX^                     |
     ]])
   end)
@@ -947,11 +933,11 @@ describe(':substitute, inccommand=split', function()
     feed(':s/tw')
     screen:expect([[
       Inc substitution on           |
-      {12:tw}o lines                     |
+      {20:tw}o lines                     |
       Inc substitution on           |
       two lines                     |
                                     |
-      {15:~                             }|*9
+      {1:~                             }|*9
       :s/tw^                         |
     ]])
   end)
@@ -962,12 +948,12 @@ describe(':substitute, inccommand=split', function()
 
     -- Assert that 'cursorline' is active.
     screen:expect([[
-      {16:^Inc substitution on           }|
+      {21:^Inc substitution on           }|
       two lines                     |
       Inc substitution on           |
       two lines                     |
                                     |
-      {15:~                             }|*9
+      {1:~                             }|*9
                                     |
     ]])
 
@@ -975,15 +961,15 @@ describe(':substitute, inccommand=split', function()
     -- 'cursorline' is NOT active during preview.
     screen:expect([[
       Inc substitution on           |
-      {12:tw}o lines                     |
+      {20:tw}o lines                     |
       Inc substitution on           |
-      {12:tw}o lines                     |
+      {20:tw}o lines                     |
                                     |
-      {11:[No Name] [+]                 }|
-      |2| {12:tw}o lines                 |
-      |4| {12:tw}o lines                 |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      |2| {20:tw}o lines                 |
+      |4| {20:tw}o lines                 |
+      {1:~                             }|*5
+      {2:[Preview]                     }|
       :%s/tw^                        |
     ]])
   end)
@@ -993,15 +979,15 @@ describe(':substitute, inccommand=split', function()
     feed('M     M       M<esc>')
     feed(':%s/M/123/g')
     screen:expect([[
-      {12:123}     {12:123}       {12:123}         |
+      {20:123}     {20:123}       {20:123}         |
       Inc substitution on           |
       two lines                     |
       Inc substitution on           |
       two lines                     |
-      {11:[No Name] [+]                 }|
-      |1| {12:123}     {12:123}       {12:123}     |
-      {15:~                             }|*6
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      |1| {20:123}     {20:123}       {20:123}     |
+      {1:~                             }|*6
+      {2:[Preview]                     }|
       :%s/M/123/g^                   |
     ]])
   end)
@@ -1015,10 +1001,10 @@ describe(':substitute, inccommand=split', function()
       Inc substitution on           |
       two lines                     |
                                     |
-      {11:[No Name] [+]                 }|
+      {3:[No Name] [+]                 }|
                                     |
-      {15:~                             }|*6
-      {10:[Preview]                     }|
+      {1:~                             }|*6
+      {2:[Preview]                     }|
       :%s/Inx^                       |
     ]])
   end)
@@ -1030,12 +1016,12 @@ describe(':substitute, inccommand=split', function()
     insert(string.rep('abc abc abc\n', 20))
     feed(':%s/abc/MMM/g')
     screen:expect([[
-      {12:MMM} {12:MMM} {12:MMM}                   |*9
-      {11:[No Name] [+]                 }|
-      | 1| {12:MMM} {12:MMM} {12:MMM}              |
-      | 2| {12:MMM} {12:MMM} {12:MMM}              |
-      | 3| {12:MMM} {12:MMM} {12:MMM}              |
-      {10:[Preview]                     }|
+      {20:MMM} {20:MMM} {20:MMM}                   |*9
+      {3:[No Name] [+]                 }|
+      | 1| {20:MMM} {20:MMM} {20:MMM}              |
+      | 2| {20:MMM} {20:MMM} {20:MMM}              |
+      | 3| {20:MMM} {20:MMM} {20:MMM}              |
+      {2:[Preview]                     }|
       :%s/abc/MMM/g^                 |
     ]])
   end)
@@ -1051,7 +1037,7 @@ describe(':substitute, inccommand=split', function()
       Inc substitution on           |
       ^XXo lines                     |
                                     |
-      {15:~                             }|*9
+      {1:~                             }|*9
       :%s/tw/XX/g                   |
     ]])
   end)
@@ -1067,17 +1053,17 @@ describe(':substitute, inccommand=split', function()
       Inc substitution on           |
       BBo lines                     |
       Inc substitution on           |
-      {12:X}o lines                      |
+      {20:X}o lines                      |
       Inc substitution on           |
-      {11:[No Name] [+]                 }|
-      |1001| {12:X}o lines               |
-      |1003| {12:X}o lines               |
-      |1005| {12:X}o lines               |
-      |1007| {12:X}o lines               |
-      |1009| {12:X}o lines               |
-      |1011| {12:X}o lines               |
-      |1013| {12:X}o lines               |
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      |1001| {20:X}o lines               |
+      |1003| {20:X}o lines               |
+      |1005| {20:X}o lines               |
+      |1007| {20:X}o lines               |
+      |1009| {20:X}o lines               |
+      |1011| {20:X}o lines               |
+      |1013| {20:X}o lines               |
+      {2:[Preview]                     }|
       :%s/tw/X^                      |
     ]])
   end)
@@ -1111,7 +1097,7 @@ describe(':substitute, inccommand=split', function()
       Inc substitution on           |
       two lines                     |
       ^                              |
-      {15:~                             }|*9
+      {1:~                             }|*9
       2 matches on 2 lines          |
     ]])
   end)
@@ -1196,16 +1182,16 @@ describe(':substitute, inccommand=split', function()
     feed(':1,2s/t/X')
 
     screen:expect([[
-      Inc subs{12:X}itution on           |
-      {12:X}wo lines                     |
+      Inc subs{20:X}itution on           |
+      {20:X}wo lines                     |
       Inc substitution on           |
       two lines                     |
                                     |
-      {11:[No Name] [+]                 }|
-      |1| Inc subs{12:X}itution on       |
-      |2| {12:X}wo lines                 |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      |1| Inc subs{20:X}itution on       |
+      |2| {20:X}wo lines                 |
+      {1:~                             }|*5
+      {2:[Preview]                     }|
       :1,2s/t/X^                     |
     ]])
 
@@ -1218,7 +1204,7 @@ describe(':substitute, inccommand=split', function()
       Inc substitution on           |
       two lines                     |
                                     |
-      {15:~                             }|*9
+      {1:~                             }|*9
       :echo 'foo'^                   |
     ]])
   end)
@@ -1227,65 +1213,65 @@ describe(':substitute, inccommand=split', function()
     feed('gg')
     feed(':1,2s/t/X')
     screen:expect([[
-      Inc subs{12:X}itution on           |
-      {12:X}wo lines                     |
+      Inc subs{20:X}itution on           |
+      {20:X}wo lines                     |
       Inc substitution on           |
       two lines                     |
                                     |
-      {11:[No Name] [+]                 }|
-      |1| Inc subs{12:X}itution on       |
-      |2| {12:X}wo lines                 |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      |1| Inc subs{20:X}itution on       |
+      |2| {20:X}wo lines                 |
+      {1:~                             }|*5
+      {2:[Preview]                     }|
       :1,2s/t/X^                     |
     ]])
 
     feed([[<C-R>='Y']])
     -- preview should be unchanged during c_CTRL-R_= editing
     screen:expect([[
-      Inc subs{12:X}itution on           |
-      {12:X}wo lines                     |
+      Inc subs{20:X}itution on           |
+      {20:X}wo lines                     |
       Inc substitution on           |
       two lines                     |
                                     |
-      {11:[No Name] [+]                 }|
-      |1| Inc subs{12:X}itution on       |
-      |2| {12:X}wo lines                 |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
-      ={1:'Y'}^                          |
+      {3:[No Name] [+]                 }|
+      |1| Inc subs{20:X}itution on       |
+      |2| {20:X}wo lines                 |
+      {1:~                             }|*5
+      {2:[Preview]                     }|
+      ={26:'Y'}^                          |
     ]])
 
     feed('<CR>')
     -- preview should be changed by the result of the expression
     screen:expect([[
-      Inc subs{12:XY}itution on          |
-      {12:XY}wo lines                    |
+      Inc subs{20:XY}itution on          |
+      {20:XY}wo lines                    |
       Inc substitution on           |
       two lines                     |
                                     |
-      {11:[No Name] [+]                 }|
-      |1| Inc subs{12:XY}itution on      |
-      |2| {12:XY}wo lines                |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      |1| Inc subs{20:XY}itution on      |
+      |2| {20:XY}wo lines                |
+      {1:~                             }|*5
+      {2:[Preview]                     }|
       :1,2s/t/XY^                    |
     ]])
 
     feed([[<C-\>e'echo']])
     -- preview should be unchanged during c_CTRL-\_e editing
     screen:expect([[
-      Inc subs{12:XY}itution on          |
-      {12:XY}wo lines                    |
+      Inc subs{20:XY}itution on          |
+      {20:XY}wo lines                    |
       Inc substitution on           |
       two lines                     |
                                     |
-      {11:[No Name] [+]                 }|
-      |1| Inc subs{12:XY}itution on      |
-      |2| {12:XY}wo lines                |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
-      ={1:'echo'}^                       |
+      {3:[No Name] [+]                 }|
+      |1| Inc subs{20:XY}itution on      |
+      |2| {20:XY}wo lines                |
+      {1:~                             }|*5
+      {2:[Preview]                     }|
+      ={26:'echo'}^                       |
     ]])
 
     feed('<CR>')
@@ -1296,7 +1282,7 @@ describe(':substitute, inccommand=split', function()
       Inc substitution on           |
       two lines                     |
                                     |
-      {15:~                             }|*9
+      {1:~                             }|*9
       :echo^                         |
     ]])
   end)
@@ -1321,8 +1307,8 @@ describe('inccommand=nosplit', function()
       two lines           |
       Inc substitution on |
       two lines           |
-      Line *.{12:X}            |
-      {15:~                   }|*4
+      Line *.{20:X}            |
+      {1:~                   }|*4
       :%smagic/3.*/X^      |
     ]])
 
@@ -1333,8 +1319,8 @@ describe('inccommand=nosplit', function()
       two lines           |
       Inc substitution on |
       two lines           |
-      Line *.{12:X} here       |
-      {15:~                   }|*4
+      Line *.{20:X} here       |
+      {1:~                   }|*4
       :%snomagic/3.*/X^    |
     ]])
   end)
@@ -1342,13 +1328,13 @@ describe('inccommand=nosplit', function()
   it('shows preview when cmd modifiers are present', function()
     -- one modifier
     feed(':keeppatterns %s/tw/to')
-    screen:expect { any = [[{12:to}o lines]] }
+    screen:expect { any = [[{20:to}o lines]] }
     feed('<Esc>')
     screen:expect { any = [[two lines]] }
 
     -- multiple modifiers
     feed(':keeppatterns silent %s/tw/to')
-    screen:expect { any = [[{12:to}o lines]] }
+    screen:expect { any = [[{20:to}o lines]] }
     feed('<Esc>')
     screen:expect { any = [[two lines]] }
 
@@ -1360,8 +1346,8 @@ describe('inccommand=nosplit', function()
       Inc substitution on |
       two lines           |
                           |
-      {15:~                   }|*2
-      {11:                    }|
+      {1:~                   }|*2
+      {3:                    }|
       :silent tabedit %s/t|
       w/to^                |
     ]])
@@ -1378,11 +1364,11 @@ describe('inccommand=nosplit', function()
     poke_eventloop()
     screen:expect([[
       Inc substitution on |
-      {12:OKOK}o lines         |
+      {20:OKOK}o lines         |
       Inc substitution on |
-      {12:OKOK}o lines         |
+      {20:OKOK}o lines         |
                           |
-      {15:~                   }|*4
+      {1:~                   }|*4
       :%s/tw/OKOK^         |
     ]])
   end)
@@ -1393,33 +1379,33 @@ describe('inccommand=nosplit', function()
     feed(':%s/tw')
     screen:expect([[
       Inc substitution on |
-      {12:tw}o lines           |
+      {20:tw}o lines           |
       Inc substitution on |
-      {12:tw}o lines           |
+      {20:tw}o lines           |
                           |
-      {15:~                   }|*4
+      {1:~                   }|*4
       :%s/tw^              |
     ]])
 
     feed('/BM')
     screen:expect([[
       Inc substitution on |
-      {12:BM}o lines           |
+      {20:BM}o lines           |
       Inc substitution on |
-      {12:BM}o lines           |
+      {20:BM}o lines           |
                           |
-      {15:~                   }|*4
+      {1:~                   }|*4
       :%s/tw/BM^           |
     ]])
 
     feed('/')
     screen:expect([[
       Inc substitution on |
-      {12:BM}o lines           |
+      {20:BM}o lines           |
       Inc substitution on |
-      {12:BM}o lines           |
+      {20:BM}o lines           |
                           |
-      {15:~                   }|*4
+      {1:~                   }|*4
       :%s/tw/BM/^          |
     ]])
 
@@ -1430,7 +1416,7 @@ describe('inccommand=nosplit', function()
       Inc substitution on |
       ^BMo lines           |
                           |
-      {15:~                   }|*4
+      {1:~                   }|*4
       :%s/tw/BM/          |
     ]])
   end)
@@ -1442,12 +1428,12 @@ describe('inccommand=nosplit', function()
     feed(':1,2s/t/X')
 
     screen:expect([[
-      Inc subs{12:X}itution on |
-      {12:X}wo lines           |
+      Inc subs{20:X}itution on |
+      {20:X}wo lines           |
       Inc substitution on |
       two lines           |
                           |
-      {15:~                   }|*4
+      {1:~                   }|*4
       :1,2s/t/X^           |
     ]])
 
@@ -1460,7 +1446,7 @@ describe('inccommand=nosplit', function()
       Inc substitution on |
       two lines           |
                           |
-      {15:~                   }|*4
+      {1:~                   }|*4
       :echo 'foo'^         |
     ]])
   end)
@@ -1469,11 +1455,11 @@ describe('inccommand=nosplit', function()
     feed(':%s/two/three/g|q!')
     screen:expect([[
       Inc substitution on |
-      {12:three} lines         |
+      {20:three} lines         |
       Inc substitution on |
-      {12:three} lines         |
+      {20:three} lines         |
                           |
-      {15:~                   }|*4
+      {1:~                   }|*4
       :%s/two/three/g|q!^  |
     ]])
     eq(eval('v:null'), eval('v:exiting'))
@@ -1494,7 +1480,7 @@ describe('inccommand=nosplit', function()
       Inc substitution on |
       two lines           |
                           |
-      {15:~                   }|*4
+      {1:~                   }|*4
       :%s/^                |
     ]])
   end)
@@ -1546,7 +1532,7 @@ describe(":substitute, 'inccommand' with a failing expression", function()
         Inc substitution on |
         two lines           |
                             |
-        {15:~                   }|*6
+        {1:~                   }|*6
         :100s/^              |
       ]])
 
@@ -1555,8 +1541,8 @@ describe(":substitute, 'inccommand' with a failing expression", function()
         Inc substitution on |
         two lines           |
         ^                    |
-        {15:~                   }|*6
-        {14:E16: Invalid range}  |
+        {1:~                   }|*6
+        {9:E16: Invalid range}  |
       ]])
     end
   end)
@@ -1649,7 +1635,7 @@ describe("'inccommand' and :cnoremap", function()
       command("cnoremap <expr> x execute('bwipeout!')[-1].'x'")
 
       feed(':%s/tw/tox<enter>')
-      screen:expect { any = [[{14:^E565:]] }
+      screen:expect { any = [[{9:^E565:]] }
       feed('<c-c>')
 
       -- error thrown b/c of the mapping
@@ -1736,9 +1722,9 @@ describe("'inccommand' autocommands", function()
     CmdwinLeave = {},
   }
 
-  local function bufferlist(t)
+  local function bufferlist(q)
     local s = ''
-    for _, buffer in pairs(t) do
+    for _, buffer in pairs(q) do
       s = s .. ', ' .. tostring(buffer)
     end
     return s
@@ -1807,18 +1793,18 @@ describe("'inccommand' split windows", function()
     feed(':%s/tw')
     screen:expect([[
       Inc substitution on │Inc substitution on|
-      {12:tw}o lines           │{12:tw}o lines          |
+      {20:tw}o lines           │{20:tw}o lines          |
                           │                   |
-      {15:~                   }│{15:~                  }|*11
-      {11:[No Name] [+]       }│{15:~                  }|
-      Inc substitution on │{15:~                  }|
-      {12:tw}o lines           │{15:~                  }|
-                          │{15:~                  }|
-      {15:~                   }│{15:~                  }|*2
-      {10:[No Name] [+]        [No Name] [+]      }|
-      |2| {12:tw}o lines                           |
-      {15:~                                       }|*6
-      {10:[Preview]                               }|
+      {1:~                   }│{1:~                  }|*11
+      {3:[No Name] [+]       }│{1:~                  }|
+      Inc substitution on │{1:~                  }|
+      {20:tw}o lines           │{1:~                  }|
+                          │{1:~                  }|
+      {1:~                   }│{1:~                  }|*2
+      {2:[No Name] [+]        [No Name] [+]      }|
+      |2| {20:tw}o lines                           |
+      {1:~                                       }|*6
+      {2:[Preview]                               }|
       :%s/tw^                                  |
     ]])
 
@@ -1830,18 +1816,18 @@ describe("'inccommand' split windows", function()
     feed(':%s/tw')
     screen:expect([[
       Inc substitution on │Inc substitution on|
-      {12:tw}o lines           │{12:tw}o lines          |
+      {20:tw}o lines           │{20:tw}o lines          |
                           │                   |
-      {15:~                   }│{15:~                  }|*11
-      {11:[No Name] [+]        }{10:[No Name] [+]      }|
+      {1:~                   }│{1:~                  }|*11
+      {3:[No Name] [+]        }{2:[No Name] [+]      }|
       Inc substitution on                     |
-      {12:tw}o lines                               |
+      {20:tw}o lines                               |
                                               |
-      {15:~                                       }|*2
-      {10:[No Name] [+]                           }|
-      |2| {12:tw}o lines                           |
-      {15:~                                       }|*6
-      {10:[Preview]                               }|
+      {1:~                                       }|*2
+      {2:[No Name] [+]                           }|
+      |2| {20:tw}o lines                           |
+      {1:~                                       }|*6
+      {2:[Preview]                               }|
       :%s/tw^                                  |
     ]])
   end)
@@ -1864,13 +1850,13 @@ describe("'inccommand' split windows", function()
 
       screen:expect([[
         Inc substitution on                     |
-        {12:tw}o lines                               |
+        {20:tw}o lines                               |
                                                 |
-        {15:~                                       }|*17
-        {11:[No Name] [+]                           }|
-        |2| {12:tw}o lines                           |
-        {15:~                                       }|*6
-        {10:[Preview]                               }|
+        {1:~                                       }|*17
+        {3:[No Name] [+]                           }|
+        |2| {20:tw}o lines                           |
+        {1:~                                       }|*6
+        {2:[Preview]                               }|
         :%s/tw^                                  |
       ]])
     end
@@ -1882,7 +1868,7 @@ describe("'inccommand' split windows", function()
     feed('gg:%s/tw')
     screen:expect([[
       Inc substitution on                     |
-      {12:tw}o lines                               |
+      {20:tw}o lines                               |
       :%s/tw^                                  |
     ]])
   end)
@@ -1931,10 +1917,10 @@ describe("'inccommand' with 'gdefault'", function()
 
     feed(':%s/\\%1c/a/')
     screen:expect([[
-      {12:a}Inc substitution on          |
-      {12:a}two lines                    |
-      {12:a}                             |
-      {15:~                             }|
+      {20:a}Inc substitution on          |
+      {20:a}two lines                    |
+      {20:a}                             |
+      {1:~                             }|
       :%s/\%1c/a/^                   |
     ]])
 
@@ -1943,7 +1929,7 @@ describe("'inccommand' with 'gdefault'", function()
       Inc substitution on           |
       two lines                     |
       ^                              |
-      {15:~                             }|
+      {1:~                             }|
                                     |
     ]])
   end)
@@ -1962,47 +1948,47 @@ describe(':substitute', function()
 
     feed(':%s/2\\_.*X')
     screen:expect([[
-      1 {12:2 3}                         |
-      {12:A B C}                         |
-      {12:4 5 6}                         |
-      {12:X} Y Z                         |
+      1 {20:2 3}                         |
+      {20:A B C}                         |
+      {20:4 5 6}                         |
+      {20:X} Y Z                         |
       7 8 9                         |
-      {11:[No Name] [+]                 }|
-      |1| 1 {12:2 3}                     |
-      |2|{12: A B C}                     |
-      |3|{12: 4 5 6}                     |
-      |4|{12: X} Y Z                     |
-      {15:~                             }|*3
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      |1| 1 {20:2 3}                     |
+      |2|{20: A B C}                     |
+      |3|{20: 4 5 6}                     |
+      |4|{20: X} Y Z                     |
+      {1:~                             }|*3
+      {2:[Preview]                     }|
       :%s/2\_.*X^                    |
     ]])
 
     feed('/MMM')
     screen:expect([[
-      1 {12:MMM} Y Z                     |
+      1 {20:MMM} Y Z                     |
       7 8 9                         |
                                     |
-      {15:~                             }|*2
-      {11:[No Name] [+]                 }|
-      |1| 1 {12:MMM} Y Z                 |
-      {15:~                             }|*6
-      {10:[Preview]                     }|
+      {1:~                             }|*2
+      {3:[No Name] [+]                 }|
+      |1| 1 {20:MMM} Y Z                 |
+      {1:~                             }|*6
+      {2:[Preview]                     }|
       :%s/2\_.*X/MMM^                |
     ]])
 
     feed('\\rK\\rLLL')
     screen:expect([[
-      1 {12:MMM}                         |
-      {12:K}                             |
-      {12:LLL} Y Z                       |
+      1 {20:MMM}                         |
+      {20:K}                             |
+      {20:LLL} Y Z                       |
       7 8 9                         |
                                     |
-      {11:[No Name] [+]                 }|
-      |1| 1 {12:MMM}                     |
-      |2|{12: K}                         |
-      |3|{12: LLL} Y Z                   |
-      {15:~                             }|*4
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      |1| 1 {20:MMM}                     |
+      |2|{20: K}                         |
+      |3|{20: LLL} Y Z                   |
+      {1:~                             }|*4
+      {2:[Preview]                     }|
       :%s/2\_.*X/MMM\rK\rLLL^        |
     ]])
   end)
@@ -2013,21 +1999,21 @@ describe(':substitute', function()
 
     feed(':%s/2\\_.*X/MMM')
     screen:expect([[
-      1 {12:MMM} Y Z                     |
+      1 {20:MMM} Y Z                     |
       7 8 9                         |
                                     |
-      {15:~                             }|*11
+      {1:~                             }|*11
       :%s/2\_.*X/MMM^                |
     ]])
 
     feed('\\rK\\rLLL')
     screen:expect([[
-      1 {12:MMM}                         |
-      {12:K}                             |
-      {12:LLL} Y Z                       |
+      1 {20:MMM}                         |
+      {20:K}                             |
+      {20:LLL} Y Z                       |
       7 8 9                         |
                                     |
-      {15:~                             }|*9
+      {1:~                             }|*9
       :%s/2\_.*X/MMM\rK\rLLL^        |
     ]])
   end)
@@ -2039,15 +2025,15 @@ describe(':substitute', function()
 
     feed(':%s/a/XLK')
     screen:expect([[
-      {12:XLK} bdc e{12:XLK}e {12:XLK} fgl lzi{12:XLK} r|
+      {20:XLK} bdc e{20:XLK}e {20:XLK} fgl lzi{20:XLK} r|
       x                             |
                                     |
-      {15:~                             }|*2
-      {11:[No Name] [+]                 }|
-      |1| {12:XLK} bdc e{12:XLK}e {12:XLK} fgl lzi{12:X}|
-      {12:LK} r                          |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
+      {1:~                             }|*2
+      {3:[No Name] [+]                 }|
+      |1| {20:XLK} bdc e{20:XLK}e {20:XLK} fgl lzi{20:X}|
+      {20:LK} r                          |
+      {1:~                             }|*5
+      {2:[Preview]                     }|
       :%s/a/XLK^                     |
     ]])
   end)
@@ -2059,10 +2045,10 @@ describe(':substitute', function()
 
     feed(':%s/a/XLK')
     screen:expect([[
-      {12:XLK} bdc e{12:XLK}e {12:XLK} fgl lzi{12:XLK} r|
+      {20:XLK} bdc e{20:XLK}e {20:XLK} fgl lzi{20:XLK} r|
       x                             |
                                     |
-      {15:~                             }|*11
+      {1:~                             }|*11
       :%s/a/XLK^                     |
     ]])
   end)
@@ -2073,18 +2059,18 @@ describe(':substitute', function()
 
     feed(':%s/[0-9]\\n\\zs[A-Z]/OKO')
     screen:expect([[
-      {12:OKO} B C                       |
+      {20:OKO} B C                       |
       4 5 6                         |
-      {12:OKO} Y Z                       |
+      {20:OKO} Y Z                       |
       7 8 9                         |
                                     |
-      {11:[No Name] [+]                 }|
+      {3:[No Name] [+]                 }|
       |1| 1 2 3                     |
-      |2| {12:OKO} B C                   |
+      |2| {20:OKO} B C                   |
       |3| 4 5 6                     |
-      |4| {12:OKO} Y Z                   |
-      {15:~                             }|*3
-      {10:[Preview]                     }|
+      |4| {20:OKO} Y Z                   |
+      {1:~                             }|*3
+      {2:[Preview]                     }|
       :%s/[0-9]\n\zs[A-Z]/OKO^       |
     ]])
   end)
@@ -2096,12 +2082,12 @@ describe(':substitute', function()
     feed(':%s/[0-9]\\n\\zs[A-Z]/OKO')
     screen:expect([[
       1 2 3                         |
-      {12:OKO} B C                       |
+      {20:OKO} B C                       |
       4 5 6                         |
-      {12:OKO} Y Z                       |
+      {20:OKO} Y Z                       |
       7 8 9                         |
                                     |
-      {15:~                             }|*8
+      {1:~                             }|*8
       :%s/[0-9]\n\zs[A-Z]/OKO^       |
     ]])
   end)
@@ -2111,14 +2097,14 @@ describe(':substitute', function()
 
     feed(':%s/T\\([0-9]\\+\\)/\\1\\1/g')
     screen:expect([[
-      T {12:123123} {12:22}T TTT {12:090804090804} |
+      T {20:123123} {20:22}T TTT {20:090804090804} |
       x                             |
-      {15:~                             }|*3
-      {11:[No Name] [+]                 }|
-      |1| T {12:123123} {12:22}T TTT {12:090804090}|
-      {12:804}                           |
-      {15:~                             }|*5
-      {10:[Preview]                     }|
+      {1:~                             }|*3
+      {3:[No Name] [+]                 }|
+      |1| T {20:123123} {20:22}T TTT {20:090804090}|
+      {20:804}                           |
+      {1:~                             }|*5
+      {2:[Preview]                     }|
       :%s/T\([0-9]\+\)/\1\1/g^       |
     ]])
   end)
@@ -2128,9 +2114,9 @@ describe(':substitute', function()
 
     feed(':%s/T\\([0-9]\\+\\)/\\1\\1/g')
     screen:expect([[
-      T {12:123123} {12:22}T TTT {12:090804090804} |
+      T {20:123123} {20:22}T TTT {20:090804090804} |
       x                             |
-      {15:~                             }|*12
+      {1:~                             }|*12
       :%s/T\([0-9]\+\)/\1\1/g^       |
     ]])
   end)
@@ -2147,17 +2133,17 @@ describe(':substitute', function()
     common_setup(screen, 'split', text)
     feed(':%s/[QR]\\n')
     screen:expect([[
-      afa {12:Q}                         |
-      adf la;lkd {12:R}                  |
+      afa {20:Q}                         |
+      adf la;lkd {20:R}                  |
       alx                           |
                                     |
-      {15:~                             }|
-      {11:[No Name] [+]                 }|
-      |3| afa {12:Q}                     |
-      |4|{12: }adf la;lkd {12:R}              |
-      |5|{12: }alx                       |
-      {15:~                             }|*4
-      {10:[Preview]                     }|
+      {1:~                             }|
+      {3:[No Name] [+]                 }|
+      |3| afa {20:Q}                     |
+      |4|{20: }adf la;lkd {20:R}              |
+      |5|{20: }alx                       |
+      {1:~                             }|*4
+      {2:[Preview]                     }|
       :%s/[QR]\n^                    |
     ]])
 
@@ -2165,13 +2151,13 @@ describe(':substitute', function()
     screen:expect([[
       T T123 T T123 T2T TT T23423424|
       x                             |
-      afa {12:KKK}adf la;lkd {12:KKK}alx      |
+      afa {20:KKK}adf la;lkd {20:KKK}alx      |
                                     |
-      {15:~                             }|
-      {11:[No Name] [+]                 }|
-      |3| afa {12:KKK}adf la;lkd {12:KKK}alx  |
-      {15:~                             }|*6
-      {10:[Preview]                     }|
+      {1:~                             }|
+      {3:[No Name] [+]                 }|
+      |3| afa {20:KKK}adf la;lkd {20:KKK}alx  |
+      {1:~                             }|*6
+      {2:[Preview]                     }|
       :%s/[QR]\n/KKK^                |
     ]])
   end)
@@ -2190,9 +2176,9 @@ describe(':substitute', function()
     screen:expect([[
       T T123 T T123 T2T TT T23423424|
       x                             |
-      afa {12:KKK}adf la;lkd {12:KKK}alx      |
+      afa {20:KKK}adf la;lkd {20:KKK}alx      |
                                     |
-      {15:~                             }|*10
+      {1:~                             }|*10
       :%s/[QR]\n/KKK^                |
     ]])
   end)
@@ -2218,16 +2204,16 @@ describe(':substitute', function()
       BBB BB                        |
       CCC CC                        |
                                     |
-      {11:[No Name] [+]                 }|
+      {3:[No Name] [+]                 }|
       | 1| AAA AA                   |
-      | 2|{12: }BBB BB                   |
-      | 3|{12: }CCC CC                   |
-      | 4|{12: }AAA AA                   |
-      | 5|{12: }BBB BB                   |
-      | 6|{12: }CCC CC                   |
-      | 7|{12: }AAA AA                   |
-      {10:[Preview]                     }|
-      :%s/\n\n/{17:^M}/g^                 |
+      | 2|{20: }BBB BB                   |
+      | 3|{20: }CCC CC                   |
+      | 4|{20: }AAA AA                   |
+      | 5|{20: }BBB BB                   |
+      | 6|{20: }CCC CC                   |
+      | 7|{20: }AAA AA                   |
+      {2:[Preview]                     }|
+      :%s/\n\n/{18:^M}/g^                 |
     ]],
     }
     assert_alive()
@@ -2261,7 +2247,7 @@ describe(':substitute', function()
       BBB BB                        |
       CCC CC                        |
                                     |
-      :%s/\n\n/{17:^M}/g^                 |
+      :%s/\n\n/{18:^M}/g^                 |
     ]],
     }
     assert_alive()
@@ -2271,36 +2257,36 @@ describe(':substitute', function()
     common_setup(screen, 'split', multibyte_text)
     feed(':%s/£.*ѫ/X¥¥')
     screen:expect([[
-       a{12:X¥¥}¥KOL                     |
+       a{20:X¥¥}¥KOL                     |
       £ ¥  libm                     |
       £ ¥                           |
                                     |
-      {15:~                             }|
-      {11:[No Name] [+]                 }|
-      |1|  {12:X¥¥} PEPPERS              |
-      |2| {12:X¥¥}                       |
-      |3|  a{12:X¥¥}¥KOL                 |
-      {15:~                             }|*4
-      {10:[Preview]                     }|
+      {1:~                             }|
+      {3:[No Name] [+]                 }|
+      |1|  {20:X¥¥} PEPPERS              |
+      |2| {20:X¥¥}                       |
+      |3|  a{20:X¥¥}¥KOL                 |
+      {1:~                             }|*4
+      {2:[Preview]                     }|
       :%s/£.*ѫ/X¥¥^                  |
     ]])
 
     feed('\\ra££   ¥')
     screen:expect([[
-       a{12:X¥¥}                         |
-      {12:a££   ¥}¥KOL                   |
+       a{20:X¥¥}                         |
+      {20:a££   ¥}¥KOL                   |
       £ ¥  libm                     |
       £ ¥                           |
                                     |
-      {11:[No Name] [+]                 }|
-      |1|  {12:X¥¥}                      |
-      |2|{12: a££   ¥} PEPPERS           |
-      |3| {12:X¥¥}                       |
-      |4|{12: a££   ¥}                   |
-      |5|  a{12:X¥¥}                     |
-      |6|{12: a££   ¥}¥KOL               |
-      {15:~                             }|
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      |1|  {20:X¥¥}                      |
+      |2|{20: a££   ¥} PEPPERS           |
+      |3| {20:X¥¥}                       |
+      |4|{20: a££   ¥}                   |
+      |5|  a{20:X¥¥}                     |
+      |6|{20: a££   ¥}¥KOL               |
+      {1:~                             }|
+      {2:[Preview]                     }|
       :%s/£.*ѫ/X¥¥\ra££   ¥^         |
     ]])
   end)
@@ -2309,28 +2295,28 @@ describe(':substitute', function()
     common_setup(screen, 'nosplit', multibyte_text)
     feed(':%s/£.*ѫ/X¥¥')
     screen:expect([[
-       {12:X¥¥} PEPPERS                  |
-      {12:X¥¥}                           |
-       a{12:X¥¥}¥KOL                     |
+       {20:X¥¥} PEPPERS                  |
+      {20:X¥¥}                           |
+       a{20:X¥¥}¥KOL                     |
       £ ¥  libm                     |
       £ ¥                           |
                                     |
-      {15:~                             }|*8
+      {1:~                             }|*8
       :%s/£.*ѫ/X¥¥^                  |
     ]])
 
     feed('\\ra££   ¥')
     screen:expect([[
-       {12:X¥¥}                          |
-      {12:a££   ¥} PEPPERS               |
-      {12:X¥¥}                           |
-      {12:a££   ¥}                       |
-       a{12:X¥¥}                         |
-      {12:a££   ¥}¥KOL                   |
+       {20:X¥¥}                          |
+      {20:a££   ¥} PEPPERS               |
+      {20:X¥¥}                           |
+      {20:a££   ¥}                       |
+       a{20:X¥¥}                         |
+      {20:a££   ¥}¥KOL                   |
       £ ¥  libm                     |
       £ ¥                           |
                                     |
-      {15:~                             }|*5
+      {1:~                             }|*5
       :%s/£.*ѫ/X¥¥\ra££   ¥^         |
     ]])
   end)
@@ -2344,17 +2330,17 @@ describe(':substitute', function()
       X Y Z                         |
       7 8 9                         |
       K L M                         |
-      {12:a} b c                         |
-      {12:d} e f                         |
-      {12:q} r s                         |
-      {12:x} y z                         |
-      £ {12:m} n                         |
-      {12:t} œ ¥                         |
+      {20:a} b c                         |
+      {20:d} e f                         |
+      {20:q} r s                         |
+      {20:x} y z                         |
+      £ {20:m} n                         |
+      {20:t} œ ¥                         |
                                     |
-      {11:[No Name] [+]                 }|
-      | 7| {12:a} b c                    |
-      | 8| {12:d} e f                    |
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      | 7| {20:a} b c                    |
+      | 8| {20:d} e f                    |
+      {2:[Preview]                     }|
       :%s/[a-z]^                     |
     ]])
 
@@ -2363,17 +2349,17 @@ describe(':substitute', function()
       X Y Z                         |
       7 8 9                         |
       K L M                         |
-      {12:JLKR £} b c                    |
-      {12:JLKR £} e f                    |
-      {12:JLKR £} r s                    |
-      {12:JLKR £} y z                    |
-      £ {12:JLKR £} n                    |
-      {12:JLKR £} œ ¥                    |
+      {20:JLKR £} b c                    |
+      {20:JLKR £} e f                    |
+      {20:JLKR £} r s                    |
+      {20:JLKR £} y z                    |
+      £ {20:JLKR £} n                    |
+      {20:JLKR £} œ ¥                    |
                                     |
-      {11:[No Name] [+]                 }|
-      | 7| {12:JLKR £} b c               |
-      | 8| {12:JLKR £} e f               |
-      {10:[Preview]                     }|
+      {3:[No Name] [+]                 }|
+      | 7| {20:JLKR £} b c               |
+      | 8| {20:JLKR £} e f               |
+      {2:[Preview]                     }|
       :%s/[a-z]/JLKR £^              |
     ]])
 
@@ -2381,17 +2367,17 @@ describe(':substitute', function()
     screen:expect([[
       7 8 9                         |
       K L M                         |
-      {12:JLKR £}                        |
-      {12:ѫ ab   }                       |
-      {12:XXXX} b c                      |
-      {12:JLKR £}                        |
-      {12:ѫ ab   }                       |
-      {12:XXXX} e f                      |
-      {12:JLKR £}                        |
-      {12:ѫ ab   }                       |
-      {11:[No Name] [+]                 }|
-      | 7| {12:JLKR £}                   |
-      {11:                              }|
+      {20:JLKR £}                        |
+      {20:ѫ ab   }                       |
+      {20:XXXX} b c                      |
+      {20:JLKR £}                        |
+      {20:ѫ ab   }                       |
+      {20:XXXX} e f                      |
+      {20:JLKR £}                        |
+      {20:ѫ ab   }                       |
+      {3:[No Name] [+]                 }|
+      | 7| {20:JLKR £}                   |
+      {3:                              }|
       :%s/[a-z]/JLKR £\rѫ ab   \rXXX|
       X^                             |
     ]])
@@ -2403,58 +2389,58 @@ describe(':substitute', function()
 
     feed(':%s/. .$')
     screen:expect([[
-      t {12:œ ¥}                         |
-      {11:[No Name] [+]                 }|
-      | 1| 1 {12:2 3}                    |
-      | 2| A {12:B C}                    |
-      | 3| 4 {12:5 6}                    |
-      | 4| X {12:Y Z}                    |
-      | 5| 7 {12:8 9}                    |
-      | 6| K {12:L M}                    |
-      | 7| a {12:b c}                    |
-      | 8| d {12:e f}                    |
-      | 9| q {12:r s}                    |
-      |10| x {12:y z}                    |
-      |11| £ {12:m n}                    |
-      {10:[Preview]                     }|
+      t {20:œ ¥}                         |
+      {3:[No Name] [+]                 }|
+      | 1| 1 {20:2 3}                    |
+      | 2| A {20:B C}                    |
+      | 3| 4 {20:5 6}                    |
+      | 4| X {20:Y Z}                    |
+      | 5| 7 {20:8 9}                    |
+      | 6| K {20:L M}                    |
+      | 7| a {20:b c}                    |
+      | 8| d {20:e f}                    |
+      | 9| q {20:r s}                    |
+      |10| x {20:y z}                    |
+      |11| £ {20:m n}                    |
+      {2:[Preview]                     }|
       :%s/. .$^                      |
     ]])
 
     feed('/ YYY')
     screen:expect([[
-      t {12: YYY}                        |
-      {11:[No Name] [+]                 }|
-      | 1| 1 {12: YYY}                   |
-      | 2| A {12: YYY}                   |
-      | 3| 4 {12: YYY}                   |
-      | 4| X {12: YYY}                   |
-      | 5| 7 {12: YYY}                   |
-      | 6| K {12: YYY}                   |
-      | 7| a {12: YYY}                   |
-      | 8| d {12: YYY}                   |
-      | 9| q {12: YYY}                   |
-      |10| x {12: YYY}                   |
-      |11| £ {12: YYY}                   |
-      {10:[Preview]                     }|
+      t {20: YYY}                        |
+      {3:[No Name] [+]                 }|
+      | 1| 1 {20: YYY}                   |
+      | 2| A {20: YYY}                   |
+      | 3| 4 {20: YYY}                   |
+      | 4| X {20: YYY}                   |
+      | 5| 7 {20: YYY}                   |
+      | 6| K {20: YYY}                   |
+      | 7| a {20: YYY}                   |
+      | 8| d {20: YYY}                   |
+      | 9| q {20: YYY}                   |
+      |10| x {20: YYY}                   |
+      |11| £ {20: YYY}                   |
+      {2:[Preview]                     }|
       :%s/. .$/ YYY^                 |
     ]])
 
     feed('\\r KKK')
     screen:expect([[
-      a {12: YYY}                        |
-      {11:[No Name] [+]                 }|
-      | 1| 1 {12: YYY}                   |
-      | 2|{12:  KKK}                     |
-      | 3| A {12: YYY}                   |
-      | 4|{12:  KKK}                     |
-      | 5| 4 {12: YYY}                   |
-      | 6|{12:  KKK}                     |
-      | 7| X {12: YYY}                   |
-      | 8|{12:  KKK}                     |
-      | 9| 7 {12: YYY}                   |
-      |10|{12:  KKK}                     |
-      |11| K {12: YYY}                   |
-      {10:[Preview]                     }|
+      a {20: YYY}                        |
+      {3:[No Name] [+]                 }|
+      | 1| 1 {20: YYY}                   |
+      | 2|{20:  KKK}                     |
+      | 3| A {20: YYY}                   |
+      | 4|{20:  KKK}                     |
+      | 5| 4 {20: YYY}                   |
+      | 6|{20:  KKK}                     |
+      | 7| X {20: YYY}                   |
+      | 8|{20:  KKK}                     |
+      | 9| 7 {20: YYY}                   |
+      |10|{20:  KKK}                     |
+      |11| K {20: YYY}                   |
+      {2:[Preview]                     }|
       :%s/. .$/ YYY\r KKK^           |
     ]])
   end)
@@ -2463,14 +2449,14 @@ describe(':substitute', function()
     common_setup(screen, 'split', 'something\neverything\nsomeone')
     feed([[:%s/\(some\)\@<lt>=thing/one/]])
     screen:expect([[
-      some{12:one}                       |
+      some{20:one}                       |
       everything                    |
       someone                       |
-      {15:~                             }|*2
-      {11:[No Name] [+]                 }|
-      |1| some{12:one}                   |
-      {15:~                             }|*6
-      {10:[Preview]                     }|
+      {1:~                             }|*2
+      {3:[No Name] [+]                 }|
+      |1| some{20:one}                   |
+      {1:~                             }|*6
+      {2:[Preview]                     }|
       :%s/\(some\)\@<=thing/one/^    |
     ]])
 
@@ -2480,13 +2466,13 @@ describe(':substitute', function()
     feed([[:%s/\(some\)\@<lt>!thing/one/]])
     screen:expect([[
       something                     |
-      every{12:one}                      |
+      every{20:one}                      |
       someone                       |
-      {15:~                             }|*2
-      {11:[No Name] [+]                 }|
-      |2| every{12:one}                  |
-      {15:~                             }|*6
-      {10:[Preview]                     }|
+      {1:~                             }|*2
+      {3:[No Name] [+]                 }|
+      |2| every{20:one}                  |
+      {1:~                             }|*6
+      {2:[Preview]                     }|
       :%s/\(some\)\@<!thing/one/^    |
     ]])
 
@@ -2494,14 +2480,14 @@ describe(':substitute', function()
     poke_eventloop()
     feed([[:%s/some\(thing\)\@=/every/]])
     screen:expect([[
-      {12:every}thing                    |
+      {20:every}thing                    |
       everything                    |
       someone                       |
-      {15:~                             }|*2
-      {11:[No Name] [+]                 }|
-      |1| {12:every}thing                |
-      {15:~                             }|*6
-      {10:[Preview]                     }|
+      {1:~                             }|*2
+      {3:[No Name] [+]                 }|
+      |1| {20:every}thing                |
+      {1:~                             }|*6
+      {2:[Preview]                     }|
       :%s/some\(thing\)\@=/every/^   |
     ]])
 
@@ -2511,12 +2497,12 @@ describe(':substitute', function()
     screen:expect([[
       something                     |
       everything                    |
-      {12:every}one                      |
-      {15:~                             }|*2
-      {11:[No Name] [+]                 }|
-      |3| {12:every}one                  |
-      {15:~                             }|*6
-      {10:[Preview]                     }|
+      {20:every}one                      |
+      {1:~                             }|*2
+      {3:[No Name] [+]                 }|
+      |3| {20:every}one                  |
+      {1:~                             }|*6
+      {2:[Preview]                     }|
       :%s/some\(thing\)\@!/every/^   |
     ]])
   end)
@@ -2528,23 +2514,23 @@ describe(':substitute', function()
 
     -- substitution preview should have been made, without prompting
     screen:expect([[
-      {12:MO}o lines                                         |
-      {11:[No Name] [+]                                     }|
-      |2| {12:MO}o lines                                     |
-      {15:~                                                 }|*3
-      {10:[Preview]                                         }|
+      {20:MO}o lines                                         |
+      {3:[No Name] [+]                                     }|
+      |2| {20:MO}o lines                                     |
+      {1:~                                                 }|*3
+      {2:[Preview]                                         }|
       :2,1s/tw/MO/g^                                     |
     ]])
 
     -- but should be prompted on hitting enter
     feed('<CR>')
     screen:expect([[
-      {12:MO}o lines                                         |
-      {11:[No Name] [+]                                     }|
-      |2| {12:MO}o lines                                     |
-      {15:~                                                 }|*3
-      {10:[Preview]                                         }|
-      {13:Backwards range given, OK to swap (y/n)?}^          |
+      {20:MO}o lines                                         |
+      {3:[No Name] [+]                                     }|
+      |2| {20:MO}o lines                                     |
+      {1:~                                                 }|*3
+      {2:[Preview]                                         }|
+      {6:Backwards range given, OK to swap (y/n)?}^          |
     ]])
 
     feed('y')
@@ -2552,14 +2538,14 @@ describe(':substitute', function()
       Inc substitution on                               |
       ^MOo lines                                         |
                                                         |
-      {15:~                                                 }|*4
-      {13:Backwards range given, OK to swap (y/n)?}y         |
+      {1:~                                                 }|*4
+      {6:Backwards range given, OK to swap (y/n)?}y         |
     ]])
   end)
 end)
 
 it(':substitute with inccommand during :terminal activity', function()
-  if helpers.skip_fragile(pending) then
+  if t.skip_fragile(pending) then
     return
   end
   retry(2, 40000, function()
@@ -2595,15 +2581,15 @@ it(':substitute with inccommand, timer-induced :redraw #9777', function()
   feed(':%s/foo/ZZZ')
   sleep(20) -- Allow some timer activity.
   screen:expect([[
-    {12:ZZZ} bar baz                   |
+    {20:ZZZ} bar baz                   |
     bar baz fox                   |
-    bar {12:ZZZ} baz                   |
-    {15:~                             }|*3
-    {11:[No Name] [+]                 }|
-    |1| {12:ZZZ} bar baz               |
-    |3| bar {12:ZZZ} baz               |
-    {15:~                             }|
-    {10:[Preview]                     }|
+    bar {20:ZZZ} baz                   |
+    {1:~                             }|*3
+    {3:[No Name] [+]                 }|
+    |1| {20:ZZZ} bar baz               |
+    |3| bar {20:ZZZ} baz               |
+    {1:~                             }|
+    {2:[Preview]                     }|
     :%s/foo/ZZZ^                   |
   ]])
 end)
@@ -2627,8 +2613,8 @@ it(':substitute with inccommand, allows :redraw before first separator is typed 
     foo bar baz                   |
     bar baz fox                   |
     bar foo baz                   |
-    {16:     }{15:                         }|
-    {15:~                             }|
+    {21:     }{1:                         }|
+    {1:~                             }|
     :^                             |
   ]])
   feed('%s')
@@ -2636,8 +2622,8 @@ it(':substitute with inccommand, allows :redraw before first separator is typed 
     foo bar baz                   |
     bar baz fox                   |
     bar foo baz                   |
-    {16:     }{15:                         }|
-    {15:~                             }|
+    {21:     }{1:                         }|
+    {1:~                             }|
     :%s^                           |
   ]])
   api.nvim_buf_set_lines(float_buf, 0, -1, true, { 'foo' })
@@ -2646,8 +2632,8 @@ it(':substitute with inccommand, allows :redraw before first separator is typed 
     foo bar baz                   |
     bar baz fox                   |
     bar foo baz                   |
-    {16:foo  }{15:                         }|
-    {15:~                             }|
+    {21:foo  }{1:                         }|
+    {1:~                             }|
     :%s^                           |
   ]])
 end)
@@ -2659,7 +2645,7 @@ it(':substitute with inccommand, does not crash if range contains invalid marks'
   feed([[:'a,'bs]])
   screen:expect([[
     test                          |
-    {15:~                             }|*4
+    {1:~                             }|*4
     :'a,'bs^                       |
   ]])
   -- v:errmsg shouldn't be set either before the first separator is typed
@@ -2667,7 +2653,7 @@ it(':substitute with inccommand, does not crash if range contains invalid marks'
   feed('/')
   screen:expect([[
     test                          |
-    {15:~                             }|*4
+    {1:~                             }|*4
     :'a,'bs/^                      |
   ]])
 end)
@@ -2679,18 +2665,18 @@ it(':substitute with inccommand, no unnecessary redraw if preview is not shown',
   feed(':ls<CR>')
   screen:expect([[
     test                                                        |
-    {15:~                                                           }|
-    {11:                                                            }|
+    {1:~                                                           }|
+    {3:                                                            }|
     :ls                                                         |
       1 %a + "[No Name]"                    line 1              |
-    {13:Press ENTER or type command to continue}^                     |
+    {6:Press ENTER or type command to continue}^                     |
   ]])
   feed(':s')
   -- no unnecessary redraw, so messages are still shown
   screen:expect([[
     test                                                        |
-    {15:~                                                           }|
-    {11:                                                            }|
+    {1:~                                                           }|
+    {3:                                                            }|
     :ls                                                         |
       1 %a + "[No Name]"                    line 1              |
     :s^                                                          |
@@ -2698,8 +2684,8 @@ it(':substitute with inccommand, no unnecessary redraw if preview is not shown',
   feed('o')
   screen:expect([[
     test                                                        |
-    {15:~                                                           }|
-    {11:                                                            }|
+    {1:~                                                           }|
+    {3:                                                            }|
     :ls                                                         |
       1 %a + "[No Name]"                    line 1              |
     :so^                                                         |
@@ -2707,8 +2693,8 @@ it(':substitute with inccommand, no unnecessary redraw if preview is not shown',
   feed('<BS>')
   screen:expect([[
     test                                                        |
-    {15:~                                                           }|
-    {11:                                                            }|
+    {1:~                                                           }|
+    {3:                                                            }|
     :ls                                                         |
       1 %a + "[No Name]"                    line 1              |
     :s^                                                          |
@@ -2716,8 +2702,8 @@ it(':substitute with inccommand, no unnecessary redraw if preview is not shown',
   feed('/test')
   -- now inccommand is shown, so screen is redrawn
   screen:expect([[
-    {12:test}                                                        |
-    {15:~                                                           }|*4
+    {20:test}                                                        |
+    {1:~                                                           }|*4
     :s/test^                                                     |
   ]])
 end)
@@ -2733,8 +2719,8 @@ it(":substitute doesn't crash with inccommand, if undo is empty #12932", functio
   sleep(100)
   feed('f')
   screen:expect([[
-  {12:f}           |
-  {15:~           }|*3
+  {20:f}           |
+  {1:~           }|*3
   :%s/test/f^  |
   ]])
   assert_alive()
@@ -2756,11 +2742,11 @@ it(':substitute with inccommand works properly if undo is not synced #20029', fu
   ]])
   feed('hjkl')
   screen:expect([[
-    aaaaa {12:hjkl}                    |
+    aaaaa {20:hjkl}                    |
     foo                           |
     bar                           |
     baz                           |
-    bbbbb {12:hjkl}                    |
+    bbbbb {20:hjkl}                    |
     :'<,'>s/asdf/hjkl^             |
   ]])
   feed('<CR>')
@@ -2784,25 +2770,25 @@ it(':substitute with inccommand does not unexpectedly change viewport #25697', f
   command('vnew | tabnew | tabclose')
   screen:expect([[
     ^                      │£ m n                 |
-    {15:~                     }│t œ ¥                 |
-    {15:~                     }│                      |
-    {11:[No Name]              }{10:[No Name] [+]         }|
+    {1:~                     }│t œ ¥                 |
+    {1:~                     }│                      |
+    {3:[No Name]              }{2:[No Name] [+]         }|
                                                  |
   ]])
   feed(':s/')
   screen:expect([[
                           │£ m n                 |
-    {15:~                     }│t œ ¥                 |
-    {15:~                     }│                      |
-    {11:[No Name]              }{10:[No Name] [+]         }|
+    {1:~                     }│t œ ¥                 |
+    {1:~                     }│                      |
+    {3:[No Name]              }{2:[No Name] [+]         }|
     :s/^                                          |
   ]])
   feed('<Esc>')
   screen:expect([[
     ^                      │£ m n                 |
-    {15:~                     }│t œ ¥                 |
-    {15:~                     }│                      |
-    {11:[No Name]              }{10:[No Name] [+]         }|
+    {1:~                     }│t œ ¥                 |
+    {1:~                     }│                      |
+    {3:[No Name]              }{2:[No Name] [+]         }|
                                                  |
   ]])
 end)
@@ -2836,7 +2822,7 @@ it('long :%s/ with inccommand does not collapse cmdline', function()
   )
   screen:expect([[
                 |
-    {11:            }|
+    {3:            }|
     :%s/AAAAAAAA|
     AAAAAAAAAAAA|
     AAAAAAA^     |
@@ -2850,7 +2836,7 @@ it("with 'inccommand' typing invalid `={expr}` does not show error", function()
   feed(':edit `=`')
   screen:expect([[
                                   |
-    {15:~                             }|*4
+    {1:~                             }|*4
     :edit `=`^                     |
   ]])
 end)
@@ -2903,26 +2889,26 @@ it("'inccommand' value can be changed multiple times #27086", function()
   for _ = 1, 3 do
     feed(':%s/foo/bar')
     screen:expect([[
-      {12:bar}1                          |
-      {12:bar}2                          |
-      {12:bar}3                          |
-      {15:~                             }|*7
-      {11:[No Name] [+]                 }|
-      |1| {12:bar}1                      |
-      |2| {12:bar}2                      |
-      |3| {12:bar}3                      |
-      {15:~                             }|*4
-      {10:[Preview]                     }|
+      {20:bar}1                          |
+      {20:bar}2                          |
+      {20:bar}3                          |
+      {1:~                             }|*7
+      {3:[No Name] [+]                 }|
+      |1| {20:bar}1                      |
+      |2| {20:bar}2                      |
+      |3| {20:bar}3                      |
+      {1:~                             }|*4
+      {2:[Preview]                     }|
       :%s/foo/bar^                   |
     ]])
     feed('<Esc>')
     command('set inccommand=nosplit')
     feed(':%s/foo/bar')
     screen:expect([[
-      {12:bar}1                          |
-      {12:bar}2                          |
-      {12:bar}3                          |
-      {15:~                             }|*16
+      {20:bar}1                          |
+      {20:bar}2                          |
+      {20:bar}3                          |
+      {1:~                             }|*16
       :%s/foo/bar^                   |
     ]])
     feed('<Esc>')
@@ -2938,10 +2924,10 @@ it("'inccommand' disables preview if preview buffer can't be created #27086", fu
   eq('split', api.nvim_get_option_value('inccommand', {}))
   feed(':%s/foo/bar')
   screen:expect([[
-    {12:bar}1                          |
-    {12:bar}2                          |
-    {12:bar}3                          |
-    {15:~                             }|*16
+    {20:bar}1                          |
+    {20:bar}2                          |
+    {20:bar}3                          |
+    {1:~                             }|*16
     :%s/foo/bar^                   |
   ]])
   eq('nosplit', api.nvim_get_option_value('inccommand', {}))

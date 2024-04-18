@@ -1,10 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local eq = helpers.eq
-local exec_lua = helpers.exec_lua
-local clear = helpers.clear
-local feed = helpers.feed
-local fn = helpers.fn
+local eq = t.eq
+local exec_lua = t.exec_lua
+local clear = t.clear
+local feed = t.feed
+local fn = t.fn
+local assert_log = t.assert_log
+local check_close = t.check_close
+
+local testlog = 'Xtest_lua_ui_event_log'
 
 describe('vim.ui_attach', function()
   local screen
@@ -108,7 +112,7 @@ describe('vim.ui_attach', function()
 
   it('does not crash on exit', function()
     fn.system({
-      helpers.nvim_prog,
+      t.nvim_prog,
       '-u',
       'NONE',
       '-i',
@@ -120,7 +124,7 @@ describe('vim.ui_attach', function()
       '--cmd',
       'quitall!',
     })
-    eq(0, helpers.eval('v:shell_error'))
+    eq(0, t.eval('v:shell_error'))
   end)
 
   it('can receive accurate message kinds even if they are history', function()
@@ -148,5 +152,24 @@ describe('vim.ui_attach', function()
         },
       },
     }, actual, vim.inspect(actual))
+  end)
+end)
+
+describe('vim.ui_attach', function()
+  after_each(function()
+    check_close()
+    os.remove(testlog)
+  end)
+
+  it('error in callback is logged', function()
+    clear({ env = { NVIM_LOG_FILE = testlog } })
+    local screen = Screen.new()
+    screen:attach()
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace('testspace')
+      vim.ui_attach(ns, { ext_popupmenu = true }, function() error(42) end)
+    ]])
+    feed('ifoo<CR>foobar<CR>fo<C-X><C-N>')
+    assert_log('Error executing UI event callback: Error executing lua: .*: 42', testlog, 100)
   end)
 end)

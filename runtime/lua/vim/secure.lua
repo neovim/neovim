@@ -126,7 +126,7 @@ end
 ---
 --- The trust database is located at |$XDG_STATE_HOME|/nvim/trust.
 ---
----@param opts? vim.trust.opts
+---@param opts vim.trust.opts
 ---@return boolean success true if operation was successful
 ---@return string msg full path if operation was successful, else error message
 function M.trust(opts)

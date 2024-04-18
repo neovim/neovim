@@ -106,7 +106,7 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
     // http://docs.libuv.org/en/latest/stream.html#c.uv_read_start.
     //
     // We don't need to do anything with the RBuffer because the next call
-    // to `alloc_cb` will return the same unused pointer(`rbuffer_produced`
+    // to `alloc_cb` will return the same unused pointer (`rbuffer_produced`
     // won't be called)
     if (cnt == UV_ENOBUFS || cnt == 0) {
       return;

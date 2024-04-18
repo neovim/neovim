@@ -1,13 +1,13 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')
+local itp = t.gen_itp(it)
 
-local cimport = helpers.cimport
-local internalize = helpers.internalize
-local eq = helpers.eq
-local neq = helpers.neq
-local ffi = helpers.ffi
-local to_cstr = helpers.to_cstr
-local NULL = helpers.NULL
+local cimport = t.cimport
+local internalize = t.internalize
+local eq = t.eq
+local neq = t.neq
+local ffi = t.ffi
+local to_cstr = t.to_cstr
+local NULL = t.NULL
 
 local garray = cimport('./src/nvim/garray.h')
 

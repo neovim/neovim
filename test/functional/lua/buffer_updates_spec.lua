@@ -1,17 +1,18 @@
 -- Test suite for testing interactions with API bindings
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
+local Screen = require('test.functional.ui.screen')
 
-local command = helpers.command
-local api = helpers.api
-local fn = helpers.fn
-local clear = helpers.clear
-local eq = helpers.eq
-local fail = helpers.fail
-local exec_lua = helpers.exec_lua
-local feed = helpers.feed
-local expect_events = helpers.expect_events
-local write_file = helpers.write_file
-local dedent = helpers.dedent
+local command = t.command
+local api = t.api
+local fn = t.fn
+local clear = t.clear
+local eq = t.eq
+local fail = t.fail
+local exec_lua = t.exec_lua
+local feed = t.feed
+local expect_events = t.expect_events
+local write_file = t.write_file
+local dedent = t.dedent
 
 local origlines = {
   'original line 1',
@@ -291,11 +292,11 @@ describe('lua buffer event callbacks: on_lines', function()
 
     exec_lua(code)
     command('q!')
-    helpers.assert_alive()
+    t.assert_alive()
 
     exec_lua(code)
     command('bd!')
-    helpers.assert_alive()
+    t.assert_alive()
   end)
 
   it('#12718 lnume', function()
@@ -323,20 +324,60 @@ describe('lua buffer event callbacks: on_lines', function()
     eq({ 'lines', 1, 6, 0, 3, 3, 9 }, api.nvim_get_var('linesev'))
   end)
 
-  it(
-    'calling nvim_buf_call() from callback does not cause Normal mode CTRL-A to misbehave #16729',
-    function()
-      exec_lua([[
+  it('nvim_buf_call() from callback does not cause wrong Normal mode CTRL-A #16729', function()
+    exec_lua([[
       vim.api.nvim_buf_attach(0, false, {
         on_lines = function(...)
           vim.api.nvim_buf_call(0, function() end)
         end,
       })
     ]])
-      feed('itest123<Esc><C-A>')
-      eq('test124', api.nvim_get_current_line())
-    end
-  )
+    feed('itest123<Esc><C-A>')
+    eq('test124', api.nvim_get_current_line())
+  end)
+
+  it('setting extmark in on_lines callback works', function()
+    local screen = Screen.new(40, 6)
+    screen:attach()
+
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'aaa', 'bbb', 'ccc' })
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace('')
+      vim.api.nvim_buf_attach(0, false, {
+        on_lines = function(_, _, _, row, _, end_row)
+          vim.api.nvim_buf_clear_namespace(0, ns, row, end_row)
+          for i = row, end_row - 1 do
+            local id = vim.api.nvim_buf_set_extmark(0, ns, i, 0, {
+              virt_text = {{ 'NEW' .. tostring(i), 'WarningMsg' }},
+            })
+          end
+        end,
+      })
+    ]])
+
+    feed('o')
+    screen:expect({
+      grid = [[
+        aaa                                     |
+        ^ {19:NEW1}                                   |
+        bbb                                     |
+        ccc                                     |
+        {1:~                                       }|
+        {5:-- INSERT --}                            |
+      ]],
+    })
+    feed('<CR>')
+    screen:expect({
+      grid = [[
+        aaa                                     |
+         {19:NEW1}                                   |
+        ^ {19:NEW2}                                   |
+        bbb                                     |
+        ccc                                     |
+        {5:-- INSERT --}                            |
+      ]],
+    })
+  end)
 end)
 
 describe('lua: nvim_buf_attach on_bytes', function()
@@ -426,14 +467,14 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     it('opening lines', function()
       local check_events = setup_eventcheck(verify, origlines)
-      -- api.nvim_set_option_value('autoindent', true, {})
+      api.nvim_set_option_value('autoindent', false, {})
       feed 'Go'
       check_events {
         { 'test1', 'bytes', 1, 3, 7, 0, 114, 0, 0, 0, 1, 0, 1 },
       }
       feed '<cr>'
       check_events {
-        { 'test1', 'bytes', 1, 5, 7, 0, 114, 0, 0, 0, 1, 0, 1 },
+        { 'test1', 'bytes', 1, 4, 7, 0, 114, 0, 0, 0, 1, 0, 1 },
       }
     end)
 
@@ -447,7 +488,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
       feed '<cr>'
       check_events {
         { 'test1', 'bytes', 1, 4, 7, 0, 114, 0, 4, 4, 0, 0, 0 },
-        { 'test1', 'bytes', 1, 5, 7, 0, 114, 0, 0, 0, 1, 4, 5 },
+        { 'test1', 'bytes', 1, 4, 7, 0, 114, 0, 0, 0, 1, 4, 5 },
       }
     end)
 
@@ -477,7 +518,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
       api.nvim_set_option_value('filetype', 'c', {})
       feed 'A<CR>'
       check_events {
-        { 'test1', 'bytes', 1, 4, 0, 10, 10, 0, 0, 0, 1, 3, 4 },
+        { 'test1', 'bytes', 1, 3, 0, 10, 10, 0, 0, 0, 1, 3, 4 },
       }
 
       feed '<ESC>'
@@ -493,7 +534,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
       feed '<CR>'
       check_events {
         { 'test1', 'bytes', 1, 6, 1, 2, 13, 0, 1, 1, 0, 0, 0 },
-        { 'test1', 'bytes', 1, 7, 1, 2, 13, 0, 0, 0, 1, 3, 4 },
+        { 'test1', 'bytes', 1, 6, 1, 2, 13, 0, 0, 0, 1, 3, 4 },
       }
     end)
 
@@ -924,7 +965,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
       command('e! Xtest-undofile')
       command('set undodir=. | set undofile')
 
-      local ns = helpers.request('nvim_create_namespace', 'ns1')
+      local ns = t.request('nvim_create_namespace', 'ns1')
       api.nvim_buf_set_extmark(0, ns, 0, 0, {})
 
       eq({ '12345', 'hello world' }, api.nvim_buf_get_lines(0, 0, -1, true))
@@ -1222,6 +1263,25 @@ describe('lua: nvim_buf_attach on_bytes', function()
       command('diffget')
       check_events {
         { 'test1', 'bytes', 1, 4, 1, 0, 4, 1, 0, 4, 1, 0, 4 },
+      }
+    end)
+
+    it('prompt buffer', function()
+      local check_events = setup_eventcheck(verify, {})
+      api.nvim_set_option_value('buftype', 'prompt', {})
+      feed('i')
+      check_events {
+        { 'test1', 'bytes', 1, 3, 0, 0, 0, 0, 0, 0, 0, 2, 2 },
+      }
+      feed('<CR>')
+      check_events {
+        { 'test1', 'bytes', 1, 4, 1, 0, 3, 0, 0, 0, 1, 0, 1 },
+        { 'test1', 'bytes', 1, 5, 1, 0, 3, 0, 0, 0, 0, 2, 2 },
+      }
+      feed('<CR>')
+      check_events {
+        { 'test1', 'bytes', 1, 6, 2, 0, 6, 0, 0, 0, 1, 0, 1 },
+        { 'test1', 'bytes', 1, 7, 2, 0, 6, 0, 0, 0, 0, 2, 2 },
       }
     end)
 

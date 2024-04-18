@@ -44,6 +44,8 @@
 /// @param col
 ///
 /// @return Number of cells.
+///
+/// @see charsize_nowrap()
 int win_chartabsize(win_T *wp, char *p, colnr_T col)
 {
   buf_T *buf = wp->w_buffer;
@@ -234,7 +236,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
       wcol += col_off_prev;
     }
 
-    if (wcol + size > wp->w_width) {
+    if (wcol + size > wp->w_width_inner) {
       // cells taken by 'showbreak'/'breakindent' halfway current char
       int head_mid = csarg->indent_width;
       if (head_mid == INT_MIN) {
@@ -247,7 +249,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
         }
         csarg->indent_width = head_mid;
       }
-      if (head_mid > 0 && wcol + size > wp->w_width_inner) {
+      if (head_mid > 0) {
         // Calculate effective window width.
         int prev_rem = wp->w_width_inner - wcol;
         int width = width2 - head_mid;
@@ -373,6 +375,20 @@ CharSize charsize_fast(CharsizeArg *csarg, colnr_T const vcol, int32_t const cur
   FUNC_ATTR_PURE
 {
   return charsize_fast_impl(csarg->win, csarg->use_tabstop, vcol, cur_char);
+}
+
+/// Get the number of cells taken up on the screen at given virtual column.
+///
+/// @see win_chartabsize()
+int charsize_nowrap(buf_T *buf, bool use_tabstop, colnr_T vcol, int32_t cur_char)
+{
+  if (cur_char == TAB && use_tabstop) {
+    return tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array);
+  } else if (cur_char < 0) {
+    return kInvalidByteCells;
+  } else {
+    return char2cells(cur_char);
+  }
 }
 
 /// Check that virtual column "vcol" is in the rightmost column of window "wp".
@@ -540,7 +556,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
     if (ci.chr.value == TAB
         && (State & MODE_NORMAL)
         && !wp->w_p_list
-        && !virtual_active()
+        && !virtual_active(wp)
         && !(VIsual_active && ((*p_sel == 'e') || ltoreq(*pos, VIsual)))) {
       // cursor at end
       *cursor = vcol + incr - 1;
@@ -583,7 +599,7 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *e
 {
   colnr_T col;
 
-  if (virtual_active()) {
+  if (virtual_active(wp)) {
     // For virtual mode, only want one value
     getvcol(wp, pos, &col, NULL, NULL);
 
@@ -593,7 +609,7 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *e
     // Cannot put the cursor on part of a wide character.
     char *ptr = ml_get_buf(wp->w_buffer, pos->lnum);
 
-    if (pos->col < (colnr_T)strlen(ptr)) {
+    if (pos->col < ml_get_buf_len(wp->w_buffer, pos->lnum)) {
       int c = utf_ptr2char(ptr + pos->col);
       if ((c != TAB) && vim_isprintc(c)) {
         endadd = (colnr_T)(char2cells(c) - 1);
@@ -864,10 +880,16 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last, bool limit_winheight)
 {
   int count = 0;
 
-  while (first <= last) {
+  while (first <= last && (!limit_winheight || count < wp->w_height_inner)) {
     linenr_T next = first;
-    count += plines_win_full(wp, first, &next, NULL, false, limit_winheight);
+    count += plines_win_full(wp, first, &next, NULL, false, false);
     first = next + 1;
+  }
+  if (first == wp->w_buffer->b_ml.ml_line_count + 1) {
+    count += win_get_fill(wp, first);
+  }
+  if (limit_winheight && count > wp->w_height_inner) {
+    return wp->w_height_inner;
   }
   return count;
 }
@@ -902,7 +924,7 @@ int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_
 
   if (start_vcol >= 0) {
     linenr_T lnum_next = lnum;
-    const bool folded = hasFoldingWin(wp, lnum, &lnum, &lnum_next, true, NULL);
+    const bool folded = hasFolding(wp, lnum, &lnum, &lnum_next);
     height_cur_nofill = folded ? 1 : plines_win_nofill(wp, lnum, false);
     height_sum_nofill += height_cur_nofill;
     const int64_t row_off = (start_vcol < width1 || width2 <= 0)
@@ -914,7 +936,7 @@ int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_
 
   while (lnum <= end_lnum) {
     linenr_T lnum_next = lnum;
-    const bool folded = hasFoldingWin(wp, lnum, &lnum, &lnum_next, true, NULL);
+    const bool folded = hasFolding(wp, lnum, &lnum, &lnum_next);
     height_sum_fill += win_get_fill(wp, lnum);
     height_cur_nofill = folded ? 1 : plines_win_nofill(wp, lnum, false);
     height_sum_nofill += height_cur_nofill;

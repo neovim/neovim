@@ -1,17 +1,17 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local assert_alive = helpers.assert_alive
-local clear, feed = helpers.clear, helpers.feed
-local source = helpers.source
-local insert = helpers.insert
-local api = helpers.api
-local async_meths = helpers.async_meths
-local command = helpers.command
-local fn = helpers.fn
-local eq = helpers.eq
-local pcall_err = helpers.pcall_err
-local exec_lua = helpers.exec_lua
-local exec = helpers.exec
+local assert_alive = t.assert_alive
+local clear, feed = t.clear, t.feed
+local source = t.source
+local insert = t.insert
+local api = t.api
+local async_meths = t.async_meths
+local command = t.command
+local fn = t.fn
+local eq = t.eq
+local pcall_err = t.pcall_err
+local exec_lua = t.exec_lua
+local exec = t.exec
 
 describe('ui/ext_popupmenu', function()
   local screen
@@ -1171,6 +1171,10 @@ describe('builtin popupmenu', function()
         [6] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
         [7] = { background = Screen.colors.Yellow }, -- Search
         [8] = { foreground = Screen.colors.Red },
+        kn = { foreground = Screen.colors.Red, background = Screen.colors.Magenta },
+        ks = { foreground = Screen.colors.Red, background = Screen.colors.Grey },
+        xn = { foreground = Screen.colors.White, background = Screen.colors.Magenta },
+        xs = { foreground = Screen.colors.Black, background = Screen.colors.Grey },
       })
       screen:attach({ ext_multigrid = multigrid })
     end)
@@ -2942,7 +2946,7 @@ describe('builtin popupmenu', function()
                                           |
           {3:[No Name]                       }|
           {1::}sign define                    |
-          {1::}sign defin^e                    |
+          {1::}sign define^                    |
           {1:~                               }|*4
           {4:[Command Line]                  }|
           :sign define                    |
@@ -4477,23 +4481,15 @@ describe('builtin popupmenu', function()
             hi PmenuExtra     guifg=White guibg=Magenta
             hi PmenuExtraSel  guifg=Black guibg=Grey
           ]])
-          local attrs = screen:get_default_attr_ids()
-          attrs.kn = { foreground = Screen.colors.Red, background = Screen.colors.Magenta }
-          attrs.ks = { foreground = Screen.colors.Red, background = Screen.colors.Grey }
-          attrs.xn = { foreground = Screen.colors.White, background = Screen.colors.Magenta }
-          attrs.xs = { foreground = Screen.colors.Black, background = Screen.colors.Grey }
           feed('iaw<C-X><C-u>')
-          screen:expect(
-            [[
+          screen:expect([[
             aword1^                        |
             {s:aword1 }{ks:W }{xs:extra text 1 }{1:        }|
             {n:aword2 }{kn:W }{xn:extra text 2 }{1:        }|
             {n:aword3 }{kn:W }{xn:extra text 3 }{1:        }|
             {1:~                             }|*3
             {2:-- }{5:match 1 of 3}               |
-          ]],
-            attrs
-          )
+          ]])
         end)
       end)
     end

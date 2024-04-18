@@ -716,11 +716,11 @@ function M.open_page(count, smods, args)
   local target = ('%s(%s)'):format(name, sect)
 
   local ok, ret = pcall(function()
-    if smods.tab == -1 and find_man() then
-      vim.cmd.tag({ target, mods = { silent = true, keepalt = true } })
+    smods.silent = true
+    smods.keepalt = true
+    if smods.hide or (smods.tab == -1 and find_man()) then
+      vim.cmd.tag({ target, mods = smods })
     else
-      smods.silent = true
-      smods.keepalt = true
       vim.cmd.stag({ target, mods = smods })
     end
   end)

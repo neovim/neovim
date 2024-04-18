@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local eval = helpers.eval
-local feed = helpers.feed
-local fn = helpers.fn
-local poke_eventloop = helpers.poke_eventloop
-local exec = helpers.exec
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local eval = t.eval
+local feed = t.feed
+local fn = t.fn
+local poke_eventloop = t.poke_eventloop
+local exec = t.exec
 
 describe('search cmdline', function()
   local screen
@@ -745,11 +745,6 @@ describe('Search highlight', function()
   -- oldtest: Test_hlsearch_dump()
   it('beyond line end vim-patch:8.2.2542', function()
     local screen = Screen.new(50, 6)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [2] = { background = Screen.colors.Yellow }, -- Search
-      [3] = { background = Screen.colors.Grey90 }, -- CursorLine
-    })
     screen:attach()
     exec([[
       set hlsearch noincsearch cursorline
@@ -759,8 +754,8 @@ describe('Search highlight', function()
     ]])
     feed([[/\_.*<CR>]])
     screen:expect([[
-      {2:xxx }                                              |*2
-      {2:^xxx }{3:                                              }|
+      {10:xxx }                                              |*2
+      {10:^xxx }{21:                                              }|
       {1:~                                                 }|*2
       /\_.*                                             |
     ]])

@@ -24,7 +24,7 @@ function(GetBinaryDep)
     BUILD_COMMAND ""
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_BIN_DIR}
     COMMAND "${_gettool_INSTALL_COMMAND}"
-    ${EXTERNALPROJECT_OPTIONS})
+    DOWNLOAD_NO_PROGRESS TRUE)
 endfunction()
 
 # Download executable and move it to DEPS_BIN_DIR
@@ -49,5 +49,5 @@ function(GetExecutable)
     BUILD_COMMAND ""
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_BIN_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy <DOWNLOADED_FILE> ${DEPS_BIN_DIR}
-    ${EXTERNALPROJECT_OPTIONS})
+    DOWNLOAD_NO_PROGRESS TRUE)
 endfunction()

@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local eval = helpers.eval
-local feed = helpers.feed
-local api = helpers.api
-local poke_eventloop = helpers.poke_eventloop
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local eval = t.eval
+local feed = t.feed
+local api = t.api
+local poke_eventloop = t.poke_eventloop
 
 before_each(clear)
 
@@ -45,60 +45,55 @@ describe('Ex mode', function()
   it('substitute confirmation prompt', function()
     command('set noincsearch nohlsearch inccommand=')
     local screen = Screen.new(60, 6)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, reverse = true }, -- MsgSeparator
-      [1] = { foreground = Screen.colors.Brown }, -- LineNr
-      [2] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-    })
     screen:attach()
     command([[call setline(1, ['foo foo', 'foo foo', 'foo foo'])]])
     command([[set number]])
     feed('gQ')
     screen:expect([[
-      {1:  1 }foo foo                                                 |
-      {1:  2 }foo foo                                                 |
-      {1:  3 }foo foo                                                 |
-      {0:                                                            }|
+      {8:  1 }foo foo                                                 |
+      {8:  2 }foo foo                                                 |
+      {8:  3 }foo foo                                                 |
+      {3:                                                            }|
       Entering Ex mode.  Type "visual" to go to Normal mode.      |
       :^                                                           |
     ]])
 
     feed('%s/foo/bar/gc<CR>')
     screen:expect([[
-      {1:  1 }foo foo                                                 |
-      {0:                                                            }|
+      {8:  1 }foo foo                                                 |
+      {3:                                                            }|
       Entering Ex mode.  Type "visual" to go to Normal mode.      |
       :%s/foo/bar/gc                                              |
-      {1:  1 }foo foo                                                 |
+      {8:  1 }foo foo                                                 |
           ^^^^                                                     |
     ]])
     feed('N<CR>')
     screen:expect([[
       Entering Ex mode.  Type "visual" to go to Normal mode.      |
       :%s/foo/bar/gc                                              |
-      {1:  1 }foo foo                                                 |
+      {8:  1 }foo foo                                                 |
           ^^^N                                                    |
-      {1:  1 }foo foo                                                 |
+      {8:  1 }foo foo                                                 |
           ^^^^                                                     |
     ]])
     feed('n<CR>')
     screen:expect([[
-      {1:  1 }foo foo                                                 |
+      {8:  1 }foo foo                                                 |
           ^^^N                                                    |
-      {1:  1 }foo foo                                                 |
+      {8:  1 }foo foo                                                 |
           ^^^n                                                    |
-      {1:  1 }foo foo                                                 |
+      {8:  1 }foo foo                                                 |
               ^^^^                                                 |
     ]])
     feed('y<CR>')
 
     feed('q<CR>')
     screen:expect([[
-      {1:  1 }foo foo                                                 |
+      {8:  1 }foo foo                                                 |
               ^^^y                                                |
-      {1:  2 }foo foo                                                 |
+      {8:  2 }foo foo                                                 |
           ^^^q                                                    |
-      {1:  2 }foo foo                                                 |
+      {8:  2 }foo foo                                                 |
       :^                                                           |
     ]])
 
@@ -106,35 +101,31 @@ describe('Ex mode', function()
     feed('<CR>')
     screen:expect([[
               ^^^y                                                |
-      {1:  2 }foo foo                                                 |
+      {8:  2 }foo foo                                                 |
           ^^^q                                                    |
-      {1:  2 }foo foo                                                 |
-      {1:  3 }foo foo                                                 |
+      {8:  2 }foo foo                                                 |
+      {8:  3 }foo foo                                                 |
       :^                                                           |
     ]])
 
     feed(':vi<CR>')
     screen:expect([[
-      {1:  1 }foo bar                                                 |
-      {1:  2 }foo foo                                                 |
-      {1:  3 }^foo foo                                                 |
-      {2:~                                                           }|*2
+      {8:  1 }foo bar                                                 |
+      {8:  2 }foo foo                                                 |
+      {8:  3 }^foo foo                                                 |
+      {1:~                                                           }|*2
                                                                   |
     ]])
   end)
 
   it('pressing Ctrl-C in :append inside a loop in Ex mode does not hang', function()
     local screen = Screen.new(60, 6)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, reverse = true }, -- MsgSeparator
-      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-    })
     screen:attach()
     feed('gQ')
     feed('for i in range(1)<CR>')
     feed('append<CR>')
     screen:expect([[
-      {0:                                                            }|
+      {3:                                                            }|
       Entering Ex mode.  Type "visual" to go to Normal mode.      |
       :for i in range(1)                                          |
                                                                   |

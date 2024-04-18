@@ -16,10 +16,10 @@
 ] @string.escape
 
 ; Conceal codeblock and text style markers
-((code_span_delimiter) @markup.raw.delimiter
-  (#set! conceal ""))
-
-((emphasis_delimiter) @conceal
+([
+  (code_span_delimiter)
+  (emphasis_delimiter)
+] @conceal
   (#set! conceal ""))
 
 ; Conceal inline links
@@ -32,6 +32,11 @@
     ")"
   ] @markup.link
   (#set! conceal ""))
+
+(inline_link
+  (link_text) @markup.link.label
+  (link_destination) @markup.link
+  (#set! @markup.link.label "url" @markup.link))
 
 ; Conceal image links
 (image

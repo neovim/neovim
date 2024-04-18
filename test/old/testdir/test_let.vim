@@ -397,6 +397,45 @@ func Test_let_heredoc_fails()
     call assert_report('Caught exception: ' .. v:exception)
   endtry
 
+  try
+    let @- =<< trim TEXT
+      change
+      insert
+      append
+    TEXT
+    call assert_report('No exception thrown')
+  catch /E730:/
+  catch
+    call assert_report('Caught exception: ' .. v:exception)
+  endtry
+
+  try
+    let [] =<< trim TEXT
+    TEXT
+    call assert_report('No exception thrown')
+  catch /E475:/
+  catch
+    call assert_report('Caught exception: ' .. v:exception)
+  endtry
+
+  try
+    let [a b c] =<< trim TEXT
+    TEXT
+    call assert_report('No exception thrown')
+  catch /E475:/
+  catch
+    call assert_report('Caught exception: ' .. v:exception)
+  endtry
+
+  try
+    let [a; b; c] =<< trim TEXT
+    TEXT
+    call assert_report('No exception thrown')
+  catch /E452:/
+  catch
+    call assert_report('Caught exception: ' .. v:exception)
+  endtry
+
   let text =<< trim END
   func WrongSyntax()
     let v =<< that there
@@ -503,6 +542,13 @@ END
   XX
   call assert_equal(['Line1'], var1)
 
+  let var1 =<< trim XX " comment
+    Line1
+      Line2
+    Line3
+  XX
+  call assert_equal(['Line1', '  Line2', 'Line3'], var1)
+
   " ignore "endfunc"
   let var1 =<< END
 something
@@ -569,6 +615,22 @@ append
 END
   call assert_equal(['change', 'insert', 'append'], [a, b, c])
 
+  " unpack assignment with semicolon
+  let [a; b] =<< END
+change
+insert
+append
+END
+  call assert_equal(['change', ['insert', 'append']], [a, b])
+
+  " unpack assignment with registers
+  let [@/, @", @-] =<< END
+change
+insert
+append
+END
+  call assert_equal(['change', 'insert', 'append'], [@/, @", @-])
+
   " curly braces name and list slice assignment
   let foo_3_bar = ['', '', '']
   let foo_{1 + 2}_bar[ : ] =<< END
@@ -625,6 +687,48 @@ END
   END
   call assert_equal(['let a = {abc}', 'let b = X', 'let c = {'], code)
 
+  " Evaluate a dictionary
+  let d1 = #{a: 10, b: 'ss', c: {}}
+  let code =<< eval trim END
+    let d2 = {d1}
+  END
+  call assert_equal(["let d2 = {'a': 10, 'b': 'ss', 'c': {}}"], code)
+
+  " Empty dictionary
+  let d1 = {}
+  let code =<< eval trim END
+    let d2 = {d1}
+  END
+  call assert_equal(["let d2 = {}"], code)
+
+  " null dictionary
+  let d1 = v:_null_dict
+  let code =<< eval trim END
+    let d2 = {d1}
+  END
+  call assert_equal(["let d2 = {}"], code)
+
+  " Evaluate a List
+  let l1 = ['a', 'b', 'c']
+  let code =<< eval trim END
+    let l2 = {l1}
+  END
+  call assert_equal(["let l2 = ['a', 'b', 'c']"], code)
+
+  " Empty List
+  let l1 = []
+  let code =<< eval trim END
+    let l2 = {l1}
+  END
+  call assert_equal(["let l2 = []"], code)
+
+  " Null List
+  let l1 = v:_null_list
+  let code =<< eval trim END
+    let l2 = {l1}
+  END
+  call assert_equal(["let l2 = []"], code)
+
   let code = 'xxx'
   let code =<< eval trim END
     let n = {5 +
@@ -657,6 +761,34 @@ END
       END
   LINES
   call CheckScriptFailure(lines, 'E15:')
+
+  " Test for using heredoc in a single string using :execute or execute()
+  for [cmd, res] in items({
+      \ "let x =<< trim END\n  one\n  two\nEND": ['one', 'two'],
+      \ "let x =<< trim END\n  one\n    two\nEND": ['one', '  two'],
+      \ "  let x =<< trim END\n    one\n    two\n  END": ['one', 'two'],
+      \ "  let x =<< trim END\n    one\n      two\n  END": ['one', '  two'],
+      \ "let x =<< END\n  one\n  two\nEND": ['  one', '  two'],
+      \ "let x =<< END\none\ntwo\nEND": ['one', 'two'],
+      \ "let x =<< END \" comment\none\ntwo\nEND": ['one', 'two'],
+      \ })
+    execute cmd
+    call assert_equal(res, x)
+    unlet x
+    call assert_equal($"\n{string(res)}", execute($"{cmd}\necho x"))
+    unlet x
+  endfor
+  for [cmd, err] in items({
+      \ "let x =<<\none\ntwo": "E172:",
+      \ "let x =<< trim\n  one\n  two": "E172:",
+      \ "let x =<< end\none\ntwo\nend": "E221:",
+      \ "let x =<< END\none\ntwo": "E990: Missing end marker 'END'",
+      \ "let x =<< END !\none\ntwo\nEND": "E488: Trailing characters:  !",
+      \ "let x =<< eval END\none\ntwo{y}\nEND": "E121: Undefined variable: y",
+      \ })
+    call assert_fails('execute cmd', err)
+    call assert_fails('call execute(cmd)', err)
+  endfor
 
   " skipped heredoc
   if 0

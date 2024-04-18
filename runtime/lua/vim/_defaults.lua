@@ -1,3 +1,31 @@
+--- Default user commands
+do
+  vim.api.nvim_create_user_command('Inspect', function(cmd)
+    if cmd.bang then
+      vim.print(vim.inspect_pos())
+    else
+      vim.show_pos()
+    end
+  end, { desc = 'Inspect highlights and extmarks at the cursor', bang = true })
+
+  vim.api.nvim_create_user_command('InspectTree', function(cmd)
+    if cmd.mods ~= '' or cmd.count ~= 0 then
+      local count = cmd.count ~= 0 and cmd.count or ''
+      local new = cmd.mods ~= '' and 'new' or 'vnew'
+
+      vim.treesitter.inspect_tree({
+        command = ('%s %s%s'):format(cmd.mods, count, new),
+      })
+    else
+      vim.treesitter.inspect_tree()
+    end
+  end, { desc = 'Inspect treesitter language tree for buffer', count = true })
+
+  vim.api.nvim_create_user_command('EditQuery', function(cmd)
+    vim.treesitter.query.edit(cmd.fargs[1])
+  end, { desc = 'Edit treesitter query', nargs = '?' })
+end
+
 --- Default mappings
 do
   --- Default maps for * and # in visual mode.
@@ -50,25 +78,36 @@ do
   --- See |&-default|
   vim.keymap.set('n', '&', ':&&<CR>', { desc = ':help &-default' })
 
-  --- Use Q in visual mode to execute a macro on each line of the selection. #21422
+  --- Use Q in Visual mode to execute a macro on each line of the selection. #21422
+  --- This only make sense in linewise Visual mode. #28287
   ---
   --- Applies to @x and includes @@ too.
   vim.keymap.set(
     'x',
     'Q',
-    ':normal! @<C-R>=reg_recorded()<CR><CR>',
-    { silent = true, desc = ':help v_Q-default' }
+    "mode() == 'V' ? ':normal! @<C-R>=reg_recorded()<CR><CR>' : 'Q'",
+    { silent = true, expr = true, desc = ':help v_Q-default' }
   )
   vim.keymap.set(
     'x',
     '@',
-    "':normal! @'.getcharstr().'<CR>'",
+    "mode() == 'V' ? ':normal! @'.getcharstr().'<CR>' : '@'",
     { silent = true, expr = true, desc = ':help v_@-default' }
   )
-  --- Map |gx| to call |vim.ui.open| on the identifier under the cursor
+
+  --- Map |gx| to call |vim.ui.open| on the <cfile> at cursor.
   do
     local function do_open(uri)
-      local _, err = vim.ui.open(uri)
+      local cmd, err = vim.ui.open(uri)
+      local rv = cmd and cmd:wait(1000) or nil
+      if cmd and rv and rv.code ~= 0 then
+        err = ('vim.ui.open: command %s (%d): %s'):format(
+          (rv.code == 124 and 'timeout' or 'failed'),
+          rv.code,
+          vim.inspect(cmd.cmd)
+        )
+      end
+
       if err then
         vim.notify(err, vim.log.levels.ERROR)
       end
@@ -86,6 +125,24 @@ do
       do_open(table.concat(vim.iter(lines):map(vim.trim):totable()))
     end, { desc = gx_desc })
   end
+
+  --- Default maps for built-in commenting
+  do
+    local operator_rhs = function()
+      return require('vim._comment').operator()
+    end
+    vim.keymap.set({ 'n', 'x' }, 'gc', operator_rhs, { expr = true, desc = 'Toggle comment' })
+
+    local line_rhs = function()
+      return require('vim._comment').operator() .. '_'
+    end
+    vim.keymap.set('n', 'gcc', line_rhs, { expr = true, desc = 'Toggle comment line' })
+
+    local textobject_rhs = function()
+      require('vim._comment').textobject()
+    end
+    vim.keymap.set({ 'o' }, 'gc', textobject_rhs, { desc = 'Comment textobject' })
+  end
 end
 
 --- Default menus
@@ -93,7 +150,6 @@ do
   --- Right click popup menu
   -- TODO VimScript, no l10n
   vim.cmd([[
-    aunmenu *
     vnoremenu PopUp.Cut                     "+x
     vnoremenu PopUp.Copy                    "+y
     anoremenu PopUp.Paste                   "+gP
@@ -102,6 +158,7 @@ do
     nnoremenu PopUp.Select\ All             ggVG
     vnoremenu PopUp.Select\ All             gg0oG$
     inoremenu PopUp.Select\ All             <C-Home><C-O>VG
+    anoremenu PopUp.Inspect                 <Cmd>Inspect<CR>
     anoremenu PopUp.-1-                     <Nop>
     anoremenu PopUp.How-to\ disable\ mouse  <Cmd>help disable-mouse<CR>
   ]])
@@ -128,7 +185,7 @@ do
       end
       local info = vim.api.nvim_get_chan_info(vim.bo[args.buf].channel)
       local argv = info.argv or {}
-      if #argv == 1 and argv[1] == vim.o.shell then
+      if table.concat(argv, ' ') == vim.o.shell then
         vim.api.nvim_buf_delete(args.buf, { force = true })
       end
     end,
@@ -384,13 +441,13 @@ if tty then
             -- attributes, so there should be no attributes in the list.
             local attrs = vim.split(decrqss, ';')
             if #attrs ~= 1 and (#attrs ~= 2 or attrs[1] ~= '0') then
-              return true
+              return false
             end
 
             -- The returned SGR sequence should begin with 48:2
             local sgr = attrs[#attrs]:match('^48:2:([%d:]+)$')
             if not sgr then
-              return true
+              return false
             end
 
             -- The remaining elements of the SGR sequence should be the 3 colors
@@ -422,7 +479,8 @@ if tty then
       if os.getenv('TMUX') then
         decrqss = string.format('\027Ptmux;%s\027\\', decrqss:gsub('\027', '\027\027'))
       end
-      io.stdout:write(string.format('\027[48;2;%d;%d;%dm%s', r, g, b, decrqss))
+      -- Reset attributes first, as other code may have set attributes.
+      io.stdout:write(string.format('\027[0m\027[48;2;%d;%d;%dm%s', r, g, b, decrqss))
 
       timer:start(1000, 0, function()
         -- Delete the autocommand if no response was received
@@ -437,4 +495,12 @@ if tty then
       end)
     end
   end
+end
+
+--- Default 'grepprg' to ripgrep if available.
+if vim.fn.executable('rg') == 1 then
+  -- Match :grep default, otherwise rg searches cwd by default
+  -- Use -uuu to make ripgrep not do its default filtering
+  vim.o.grepprg = 'rg --vimgrep -uuu $* ' .. (vim.fn.has('unix') == 1 and '/dev/null' or 'nul')
+  vim.o.grepformat = '%f:%l:%c:%m'
 end

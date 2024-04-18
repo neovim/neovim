@@ -2,13 +2,16 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/globals.h"
 #include "nvim/memory.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/stdpaths_defs.h"
 #include "nvim/path.h"
+#include "nvim/strings.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/stdpaths.c.generated.h"
@@ -93,6 +96,46 @@ bool appname_is_valid(void)
   return true;
 }
 
+/// Remove duplicate directories in the given XDG directory.
+/// @param[in]  List of directories possibly with duplicates
+/// @param[out]  List of directories without duplicates
+static char *xdg_remove_duplicate(char *ret, const char *sep)
+{
+  kvec_t(char *) data = KV_INITIAL_VALUE;
+  char *saveptr;
+
+  char *token = os_strtok(ret, sep, &saveptr);
+  while (token != NULL) {
+    // Check if the directory is not already in the list
+    bool is_duplicate = false;
+    for (size_t i = 0; i < data.size; i++) {
+      if (path_fnamecmp(kv_A(data, i), token) == 0) {
+        is_duplicate = true;
+        break;
+      }
+    }
+    // If it's not a duplicate, add it to the list
+    if (!is_duplicate) {
+      kv_push(data, token);
+    }
+    token = os_strtok(NULL, sep, &saveptr);
+  }
+
+  StringBuilder result = KV_INITIAL_VALUE;
+
+  for (size_t i = 0; i < data.size; i++) {
+    if (i == 0) {
+      kv_printf(result, "%s", kv_A(data, i));
+    } else {
+      kv_printf(result, "%s%s", sep, kv_A(data, i));
+    }
+  }
+
+  kv_destroy(data);
+  xfree(ret);
+  return result.items;
+}
+
 /// Return XDG variable value
 ///
 /// @param[in]  idx  XDG variable to use.
@@ -129,6 +172,10 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
     }
     size_t len = strlen(ret);
     ret = xmemdupz(ret, len >= 2 ? len - 1 : 0);  // Trim trailing slash.
+  }
+
+  if ((idx == kXDGDataDirs || idx == kXDGConfigDirs) && ret != NULL) {
+    ret = xdg_remove_duplicate(ret, ENV_SEPSTR);
   }
 
   return ret;

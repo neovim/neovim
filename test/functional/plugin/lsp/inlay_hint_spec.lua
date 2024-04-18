@@ -1,14 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
-local lsp_helpers = require('test.functional.plugin.lsp.helpers')
+local t = require('test.functional.testutil')()
+local t_lsp = require('test.functional.plugin.lsp.testutil')
 local Screen = require('test.functional.ui.screen')
 
-local eq = helpers.eq
-local dedent = helpers.dedent
-local exec_lua = helpers.exec_lua
-local insert = helpers.insert
+local eq = t.eq
+local dedent = t.dedent
+local exec_lua = t.exec_lua
+local insert = t.insert
+local api = t.api
 
-local clear_notrace = lsp_helpers.clear_notrace
-local create_server_definition = lsp_helpers.create_server_definition
+local clear_notrace = t_lsp.clear_notrace
+local create_server_definition = t_lsp.create_server_definition
 
 local text = dedent([[
 auto add(int a, int b) { return a + b; }
@@ -41,12 +42,12 @@ local grid_without_inlay_hints = [[
 ]]
 
 local grid_with_inlay_hints = [[
-  auto add(int a, int b)-> int { return a + b; }    |
+  auto add(int a, int b){1:-> int} { return a + b; }    |
                                                     |
   int main() {                                      |
       int x = 1;                                    |
       int y = 2;                                    |
-      return add(a: x,b: y);                        |
+      return add({1:a:} x,{1:b:} y);                        |
   }                                                 |
   ^}                                                 |
                                                     |
@@ -88,7 +89,7 @@ before_each(function()
 end)
 
 after_each(function()
-  exec_lua("vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })")
+  api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
 end)
 
 describe('vim.lsp.inlay_hint', function()

@@ -57,7 +57,7 @@ int getviscol2(colnr_T col, colnr_T coladd)
 /// The caller must have saved the cursor line for undo!
 int coladvance_force(colnr_T wcol)
 {
-  int rc = coladvance2(&curwin->w_cursor, true, false, wcol);
+  int rc = coladvance2(curwin, &curwin->w_cursor, true, false, wcol);
 
   if (wcol == MAXCOL) {
     curwin->w_valid &= ~VALID_VIRTCOL;
@@ -76,25 +76,26 @@ int coladvance_force(colnr_T wcol)
 /// beginning at coladd 0.
 ///
 /// @return  OK if desired column is reached, FAIL if not
-int coladvance(colnr_T wcol)
+int coladvance(win_T *wp, colnr_T wcol)
 {
-  int rc = getvpos(&curwin->w_cursor, wcol);
+  int rc = getvpos(wp, &wp->w_cursor, wcol);
 
   if (wcol == MAXCOL || rc == FAIL) {
-    curwin->w_valid &= ~VALID_VIRTCOL;
-  } else if (*get_cursor_pos_ptr() != TAB) {
+    wp->w_valid &= ~VALID_VIRTCOL;
+  } else if (*(ml_get_buf(wp->w_buffer, wp->w_cursor.lnum) + wp->w_cursor.col) != TAB) {
     // Virtcol is valid when not on a TAB
-    curwin->w_valid |= VALID_VIRTCOL;
-    curwin->w_virtcol = wcol;
+    wp->w_valid |= VALID_VIRTCOL;
+    wp->w_virtcol = wcol;
   }
   return rc;
 }
 
-/// @param addspaces  change the text to achieve our goal?
+/// @param addspaces  change the text to achieve our goal? only for wp=curwin!
 /// @param finetune  change char offset for the exact column
 /// @param wcol_arg  column to move to (can be negative)
-static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_arg)
+static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_arg)
 {
+  assert(wp == curwin || !addspaces);
   colnr_T wcol = wcol_arg;
   int idx;
   colnr_T col = 0;
@@ -104,30 +105,31 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
                  || (State & MODE_TERMINAL)
                  || restart_edit != NUL
                  || (VIsual_active && *p_sel != 'o')
-                 || ((get_ve_flags() & VE_ONEMORE) && wcol < MAXCOL);
+                 || ((get_ve_flags(wp) & VE_ONEMORE) && wcol < MAXCOL);
 
-  char *line = ml_get_buf(curbuf, pos->lnum);
+  char *line = ml_get_buf(wp->w_buffer, pos->lnum);
+  int linelen = ml_get_buf_len(wp->w_buffer, pos->lnum);
 
   if (wcol >= MAXCOL) {
-    idx = (int)strlen(line) - 1 + one_more;
+    idx = linelen - 1 + one_more;
     col = wcol;
 
     if ((addspaces || finetune) && !VIsual_active) {
-      curwin->w_curswant = linetabsize(curwin, pos->lnum) + one_more;
-      if (curwin->w_curswant > 0) {
-        curwin->w_curswant--;
+      wp->w_curswant = linetabsize(wp, pos->lnum) + one_more;
+      if (wp->w_curswant > 0) {
+        wp->w_curswant--;
       }
     }
   } else {
-    int width = curwin->w_width_inner - win_col_off(curwin);
+    int width = wp->w_width_inner - win_col_off(wp);
     int csize = 0;
 
     if (finetune
-        && curwin->w_p_wrap
-        && curwin->w_width_inner != 0
+        && wp->w_p_wrap
+        && wp->w_width_inner != 0
         && wcol >= (colnr_T)width
         && width > 0) {
-      csize = linetabsize(curwin, pos->lnum);
+      csize = linetabsize(wp, pos->lnum);
       if (csize > 0) {
         csize--;
       }
@@ -143,7 +145,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
     }
 
     CharsizeArg csarg;
-    CSType cstype = init_charsize_arg(&csarg, curwin, pos->lnum, line);
+    CSType cstype = init_charsize_arg(&csarg, wp, pos->lnum, line);
     StrCharInfo ci = utf_ptr2StrCharInfo(line);
     col = 0;
     while (col <= wcol && *ci.ptr != NUL) {
@@ -159,14 +161,14 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
     // is needed to ensure that a virtual position off the end of
     // a line has the correct indexing.  The one_more comparison
     // replaces an explicit add of one_more later on.
-    if (col > wcol || (!virtual_active() && one_more == 0)) {
+    if (col > wcol || (!virtual_active(wp) && one_more == 0)) {
       idx -= 1;
       // Don't count the chars from 'showbreak'.
       csize -= head;
       col -= csize;
     }
 
-    if (virtual_active()
+    if (virtual_active(wp)
         && addspaces
         && wcol >= 0
         && ((col != wcol && col != wcol + 1) || csize > 1)) {
@@ -187,7 +189,6 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
         col = wcol;
       } else {
         // Break a tab
-        int linelen = (int)strlen(line);
         int correct = wcol - col - csize + 1;             // negative!!
         char *newline;
 
@@ -229,14 +230,14 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
       if (!one_more) {
         colnr_T scol, ecol;
 
-        getvcol(curwin, pos, &scol, NULL, &ecol);
+        getvcol(wp, pos, &scol, NULL, &ecol);
         pos->coladd = ecol - scol;
       }
     } else {
       int b = (int)wcol - (int)col;
 
       // The difference between wcol and col is used to set coladd.
-      if (b > 0 && b < (MAXCOL - 2 * curwin->w_width_inner)) {
+      if (b > 0 && b < (MAXCOL - 2 * wp->w_width_inner)) {
         pos->coladd = b;
       }
 
@@ -245,7 +246,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
   }
 
   // Prevent from moving onto a trail byte.
-  mark_mb_adjustpos(curbuf, pos);
+  mark_mb_adjustpos(wp->w_buffer, pos);
 
   if (wcol < 0 || col < wcol) {
     return FAIL;
@@ -256,9 +257,9 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
 /// Return in "pos" the position of the cursor advanced to screen column "wcol".
 ///
 /// @return  OK if desired column is reached, FAIL if not
-int getvpos(pos_T *pos, colnr_T wcol)
+int getvpos(win_T *wp, pos_T *pos, colnr_T wcol)
 {
-  return coladvance2(pos, false, virtual_active(), wcol);
+  return coladvance2(wp, pos, false, virtual_active(wp), wcol);
 }
 
 /// Increment the cursor position.  See inc() for return values.
@@ -294,7 +295,7 @@ linenr_T get_cursor_rel_lnum(win_T *wp, linenr_T lnum)
   // Loop until we reach to_line, skipping folds.
   for (; from_line < to_line; from_line++, retval++) {
     // If from_line is in a fold, set it to the last line of that fold.
-    hasFoldingWin(wp, from_line, NULL, &from_line, true, NULL);
+    hasFolding(wp, from_line, NULL, &from_line);
   }
 
   // If to_line is in a closed fold, the line count is off by +1. Correct it.
@@ -314,8 +315,7 @@ void check_pos(buf_T *buf, pos_T *pos)
   }
 
   if (pos->col > 0) {
-    char *line = ml_get_buf(buf, pos->lnum);
-    colnr_T len = (colnr_T)strlen(line);
+    colnr_T len = ml_get_buf_len(buf, pos->lnum);
     if (pos->col > len) {
       pos->col = len;
     }
@@ -329,7 +329,7 @@ void check_cursor_lnum(win_T *win)
   if (win->w_cursor.lnum > buf->b_ml.ml_line_count) {
     // If there is a closed fold at the end of the file, put the cursor in
     // its first line.  Otherwise in the last line.
-    if (!hasFolding(buf->b_ml.ml_line_count, &win->w_cursor.lnum, NULL)) {
+    if (!hasFolding(win, buf->b_ml.ml_line_count, &win->w_cursor.lnum, NULL)) {
       win->w_cursor.lnum = buf->b_ml.ml_line_count;
     }
   }
@@ -338,21 +338,15 @@ void check_cursor_lnum(win_T *win)
   }
 }
 
-/// Make sure curwin->w_cursor.col is valid.
-void check_cursor_col(void)
-{
-  check_cursor_col_win(curwin);
-}
-
 /// Make sure win->w_cursor.col is valid. Special handling of insert-mode.
 /// @see mb_check_adjust_col
-void check_cursor_col_win(win_T *win)
+void check_cursor_col(win_T *win)
 {
   colnr_T oldcol = win->w_cursor.col;
   colnr_T oldcoladd = win->w_cursor.col + win->w_cursor.coladd;
-  unsigned cur_ve_flags = get_ve_flags();
+  unsigned cur_ve_flags = get_ve_flags(win);
 
-  colnr_T len = (colnr_T)strlen(ml_get_buf(win->w_buffer, win->w_cursor.lnum));
+  colnr_T len = ml_get_buf_len(win->w_buffer, win->w_cursor.lnum);
   if (len == 0) {
     win->w_cursor.col = 0;
   } else if (win->w_cursor.col >= len) {
@@ -363,7 +357,7 @@ void check_cursor_col_win(win_T *win)
     if ((State & MODE_INSERT) || restart_edit
         || (VIsual_active && *p_sel != 'o')
         || (cur_ve_flags & VE_ONEMORE)
-        || virtual_active()) {
+        || virtual_active(win)) {
       win->w_cursor.col = len;
     } else {
       win->w_cursor.col = len - 1;
@@ -403,10 +397,10 @@ void check_cursor_col_win(win_T *win)
 }
 
 /// Make sure curwin->w_cursor in on a valid character
-void check_cursor(void)
+void check_cursor(win_T *wp)
 {
-  check_cursor_lnum(curwin);
-  check_cursor_col();
+  check_cursor_lnum(wp);
+  check_cursor_col(wp);
 }
 
 /// Check if VIsual position is valid, correct it if not.
@@ -418,7 +412,7 @@ void check_visual_pos(void)
     VIsual.col = 0;
     VIsual.coladd = 0;
   } else {
-    int len = (int)strlen(ml_get(VIsual.lnum));
+    int len = ml_get_len(VIsual.lnum);
 
     if (VIsual.col > len) {
       VIsual.col = len;
@@ -453,8 +447,8 @@ bool set_leftcol(colnr_T leftcol)
   changed_cline_bef_curs(curwin);
   // TODO(hinidu): I think it should be colnr_T or int, but p_siso is long.
   // Perhaps we can change p_siso to int.
-  int64_t lastcol = curwin->w_leftcol + curwin->w_width_inner - curwin_col_off() - 1;
-  validate_virtcol();
+  int64_t lastcol = curwin->w_leftcol + curwin->w_width_inner - win_col_off(curwin) - 1;
+  validate_virtcol(curwin);
 
   bool retval = false;
   // If the cursor is right or left of the screen, move it to last or first
@@ -462,10 +456,10 @@ bool set_leftcol(colnr_T leftcol)
   int siso = get_sidescrolloff_value(curwin);
   if (curwin->w_virtcol > (colnr_T)(lastcol - siso)) {
     retval = true;
-    coladvance((colnr_T)(lastcol - siso));
+    coladvance(curwin, (colnr_T)(lastcol - siso));
   } else if (curwin->w_virtcol < curwin->w_leftcol + siso) {
     retval = true;
-    coladvance((colnr_T)(curwin->w_leftcol + siso));
+    coladvance(curwin, (colnr_T)(curwin->w_leftcol + siso));
   }
 
   // If the start of the character under the cursor is not on the screen,
@@ -475,10 +469,10 @@ bool set_leftcol(colnr_T leftcol)
   getvvcol(curwin, &curwin->w_cursor, &s, NULL, &e);
   if (e > (colnr_T)lastcol) {
     retval = true;
-    coladvance(s - 1);
+    coladvance(curwin, s - 1);
   } else if (s < curwin->w_leftcol) {
     retval = true;
-    if (coladvance(e + 1) == FAIL) {    // there isn't another character
+    if (coladvance(curwin, e + 1) == FAIL) {    // there isn't another character
       curwin->w_leftcol = s;            // adjust w_leftcol instead
       changed_cline_bef_curs(curwin);
     }

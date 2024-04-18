@@ -2,42 +2,7 @@ local M = {}
 
 local s_output = {} ---@type string[]
 
---- Returns the fold text of the current healthcheck section
-function M.foldtext()
-  local foldtext = vim.fn.foldtext()
-
-  if vim.bo.filetype ~= 'checkhealth' then
-    return foldtext
-  end
-
-  if vim.b.failedchecks == nil then
-    vim.b.failedchecks = vim.empty_dict()
-  end
-
-  if vim.b.failedchecks[foldtext] == nil then
-    local warning = '- WARNING '
-    local warninglen = string.len(warning)
-    local err = '- ERROR '
-    local errlen = string.len(err)
-    local failedchecks = vim.b.failedchecks
-    failedchecks[foldtext] = false
-
-    local foldcontent = vim.api.nvim_buf_get_lines(0, vim.v.foldstart - 1, vim.v.foldend, false)
-    for _, line in ipairs(foldcontent) do
-      if string.sub(line, 1, warninglen) == warning or string.sub(line, 1, errlen) == err then
-        failedchecks[foldtext] = true
-        break
-      end
-    end
-
-    vim.b.failedchecks = failedchecks
-  end
-
-  return vim.b.failedchecks[foldtext] and '+WE' .. foldtext:sub(4) or foldtext
-end
-
---- @param path string path to search for the healthcheck
---- @return string[] { name, func, type } representing a healthcheck
+-- From a path return a list [{name}, {func}, {type}] representing a healthcheck
 local function filepath_to_healthcheck(path)
   path = vim.fs.normalize(path)
   local name --- @type string
@@ -386,7 +351,7 @@ local path2name = function(path)
     path = path:gsub('^.*/lua/', '')
 
     -- Remove the filename (health.lua)
-    path = vim.fn.fnamemodify(path, ':h')
+    path = vim.fs.dirname(path)
 
     -- Change slashes to dots
     path = path:gsub('/', '.')
@@ -496,12 +461,5 @@ function M._check(mods, plugin_names)
   vim.cmd.redraw()
   vim.print('')
 end
-
-local fn_bool = function(key)
-  return function(...)
-    return vim.fn[key](...) == 1
-  end
-end
-M.executable = fn_bool('executable')
 
 return M

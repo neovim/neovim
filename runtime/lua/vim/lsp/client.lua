@@ -185,6 +185,10 @@ local validate = vim.validate
 --- @field root_dir string
 ---
 --- @field attached_buffers table<integer,true>
+---
+--- Buffers that should be attached to upon initialize()
+--- @field package _buffers_to_attach table<integer,true>
+---
 --- @field private _log_prefix string
 ---
 --- Track this so that we can escalate automatically if we've already tried a
@@ -225,7 +229,7 @@ local validate = vim.validate
 --- If {status} is `true`, the function returns {request_id} as the second
 --- result. You can use this with `client.cancel_request(request_id)` to cancel
 --- the request.
---- @field request fun(method: string, params: table?, handler: lsp.Handler?, bufnr: integer): boolean, integer?
+--- @field request fun(method: string, params: table?, handler: lsp.Handler?, bufnr: integer?): boolean, integer?
 ---
 --- Sends a request to the server and synchronously waits for the response.
 --- This is a wrapper around {client.request}
@@ -416,7 +420,7 @@ local function get_workspace_folders(workspace_folders, root_dir)
     return {
       {
         uri = vim.uri_from_fname(root_dir),
-        name = string.format('%s', root_dir),
+        name = root_dir,
       },
     }
   end
@@ -575,6 +579,7 @@ function Client:initialize()
     initializationOptions = config.init_options,
     capabilities = self.capabilities,
     trace = self._trace,
+    workDoneToken = '1',
   }
 
   self:_run_callbacks(
@@ -608,7 +613,15 @@ function Client:initialize()
       self:_notify(ms.workspace_didChangeConfiguration, { settings = self.settings })
     end
 
+    -- If server is being restarted, make sure to re-attach to any previously attached buffers.
+    -- Save which buffers before on_init in case new buffers are attached.
+    local reattach_bufs = vim.deepcopy(self.attached_buffers)
+
     self:_run_callbacks(self._on_init_cbs, lsp.client_errors.ON_INIT_CALLBACK_ERROR, self, result)
+
+    for buf in pairs(reattach_bufs) do
+      self:_on_attach(buf)
+    end
 
     log.info(
       self._log_prefix,
@@ -647,10 +660,10 @@ end
 --- checks for capabilities and handler availability.
 ---
 --- @param method string LSP method name.
---- @param params table|nil LSP request params.
---- @param handler lsp.Handler|nil Response |lsp-handler| for this method.
---- @param bufnr integer Buffer handle (0 for current).
---- @return boolean status, integer|nil request_id {status} is a bool indicating
+--- @param params? table LSP request params.
+--- @param handler? lsp.Handler Response |lsp-handler| for this method.
+--- @param bufnr? integer Buffer handle (0 for current).
+--- @return boolean status, integer? request_id {status} is a bool indicating
 --- whether the request was successful. If it is `false`, then it will
 --- always be `false` (the client has shutdown). If it was
 --- successful, then it will return {request_id} as the
@@ -693,7 +706,7 @@ function Client:_request(method, params, handler, bufnr)
     local request = { type = 'pending', bufnr = bufnr, method = method }
     self.requests[request_id] = request
     api.nvim_exec_autocmds('LspRequest', {
-      buffer = bufnr,
+      buffer = api.nvim_buf_is_valid(bufnr) and bufnr or nil,
       modeline = false,
       data = { client_id = self.id, request_id = request_id, request = request },
     })
@@ -761,7 +774,7 @@ function Client:_request_sync(method, params, timeout_ms, bufnr)
   return request_result
 end
 
---- @private
+--- @package
 --- Sends a notification to an LSP server.
 ---
 --- @param method string LSP method name.
@@ -804,7 +817,7 @@ function Client:_cancel_request(id)
   if request and request.type == 'pending' then
     request.type = 'cancel'
     api.nvim_exec_autocmds('LspRequest', {
-      buffer = request.bufnr,
+      buffer = api.nvim_buf_is_valid(request.bufnr) and request.bufnr or nil,
       modeline = false,
       data = { client_id = self.id, request_id = id, request = request },
     })
@@ -1051,6 +1064,47 @@ function Client:_on_exit(code, signal)
     signal,
     self.id
   )
+end
+
+--- @package
+--- Add a directory to the workspace folders.
+--- @param dir string?
+function Client:_add_workspace_folder(dir)
+  for _, folder in pairs(self.workspace_folders or {}) do
+    if folder.name == dir then
+      print(dir, 'is already part of this workspace')
+      return
+    end
+  end
+
+  local wf = assert(get_workspace_folders(nil, dir))
+
+  self:_notify(ms.workspace_didChangeWorkspaceFolders, {
+    event = { added = wf, removed = {} },
+  })
+
+  if not self.workspace_folders then
+    self.workspace_folders = {}
+  end
+  vim.list_extend(self.workspace_folders, wf)
+end
+
+--- @package
+--- Remove a directory to the workspace folders.
+--- @param dir string?
+function Client:_remove_workspace_folder(dir)
+  local wf = assert(get_workspace_folders(nil, dir))
+
+  self:_notify(ms.workspace_didChangeWorkspaceFolders, {
+    event = { added = {}, removed = wf },
+  })
+
+  for idx, folder in pairs(self.workspace_folders) do
+    if folder.name == dir then
+      table.remove(self.workspace_folders, idx)
+      break
+    end
+  end
 end
 
 return Client

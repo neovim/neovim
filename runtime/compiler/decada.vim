@@ -14,6 +14,7 @@
 "               08.09.2006 MK Correct double load protection.
 "    Help Page: compiler-decada
 "------------------------------------------------------------------------------
+" Last Change:	2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 
 if (exists("current_compiler") && current_compiler == "decada") || version < 700
    finish
@@ -32,13 +33,6 @@ if !exists("g:decada")
      \'call decada.Make ()')
 
    call g:decada.Set_Session ()
-endif
-
-if exists(":CompilerSet") != 2
-   "
-   " plugin loaded by other means then the "compiler" command
-   "
-   command -nargs=* CompilerSet setlocal <args>
 endif
 
 execute "CompilerSet makeprg="     . escape (g:decada.Make_Command, ' ')

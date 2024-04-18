@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local exec_lua = helpers.exec_lua
-local eq = helpers.eq
-local pcall_err = helpers.pcall_err
-local matches = helpers.matches
+local t = require('test.functional.testutil')()
+local clear = t.clear
+local exec_lua = t.exec_lua
+local eq = t.eq
+local pcall_err = t.pcall_err
+local matches = t.matches
 
 describe('vim.base64', function()
   before_each(clear)
@@ -42,6 +42,7 @@ describe('vim.base64', function()
         ̦H̬̤̗̤͝e͜ ̜̥̝̻͍̟́w̕h̖̯͓o̝͙̖͎̱̮ ҉̺̙̞̟͈W̷̼̭a̺̪͍į͈͕̭͙̯̜t̶̼̮s̘͙͖̕ ̠̫̠B̻͍͙͉̳ͅe̵h̵̬͇̫͙i̹͓̳̳̮͎̫̕n͟d̴̪̜̖ ̰͉̩͇͙̲͞ͅT͖̼͓̪͢h͏͓̮̻e̬̝̟ͅ ̤̹̝W͙̞̝͔͇͝ͅa͏͓͔̹̼̣l̴͔̰̤̟͔ḽ̫.͕
         Z̮̞̠͙͔ͅḀ̗̞͈̻̗Ḷ͙͎̯̹̞͓G̻O̭̗̮
       ]],
+      'Hello\0world',
     }
 
     for _, v in ipairs(values) do

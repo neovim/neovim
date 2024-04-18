@@ -1,8 +1,8 @@
 name: "codeql"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 on:
   push:
@@ -10,6 +10,8 @@ on:
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ "master" ]
+  workflow_dispatch:
+
 jobs:
   analyze:
     name: Analyze

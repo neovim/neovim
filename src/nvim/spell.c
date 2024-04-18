@@ -1342,7 +1342,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
   while (!got_int) {
     char *line = ml_get_buf(wp->w_buffer, lnum);
 
-    len = strlen(line);
+    len = (size_t)ml_get_buf_len(wp->w_buffer, lnum);
     if (buflen < len + MAXWLEN + 2) {
       xfree(buf);
       buflen = len + MAXWLEN + 2;
@@ -2682,7 +2682,7 @@ void ex_spellrepall(exarg_T *eap)
     char *line = get_cursor_line_ptr();
     if (addlen <= 0
         || strncmp(line + curwin->w_cursor.col, repl_to, repl_to_len) != 0) {
-      char *p = xmalloc(strlen(line) + (size_t)addlen + 1);
+      char *p = xmalloc((size_t)get_cursor_line_len() + (size_t)addlen + 1);
       memmove(p, line, (size_t)curwin->w_cursor.col);
       STRCPY(p + curwin->w_cursor.col, repl_to);
       STRCAT(p, line + curwin->w_cursor.col + repl_from_len);

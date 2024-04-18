@@ -372,7 +372,7 @@ func Test_multibyte_chars()
 endfunc
 
 " check that 'ambiwidth' does not change the meaning of \p
-func Test_ambiwidth()
+func Test_regexp_ambiwidth()
   set regexpengine=1 ambiwidth=single
   call assert_equal(0, match("\u00EC", '\p'))
   set regexpengine=1 ambiwidth=double

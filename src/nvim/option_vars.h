@@ -61,7 +61,7 @@
   "-:Conceal,B:SpellBad,P:SpellCap,R:SpellRare,L:SpellLocal,+:Pmenu,=:PmenuSel," \
   "[:PmenuKind,]:PmenuKindSel,{:PmenuExtra,}:PmenuExtraSel,x:PmenuSbar,X:PmenuThumb," \
   "*:TabLine,#:TabLineSel,_:TabLineFill,!:CursorColumn,.:CursorLine,o:ColorColumn," \
-  "q:QuickFixLine,0:Whitespace,I:NormalNC"
+  "q:QuickFixLine,g:MsgArea,0:Whitespace,I:NormalNC"
 
 // Default values for 'errorformat'.
 // The "%f|%l| %m" one is used for when the contents of the quickfix window is
@@ -128,6 +128,8 @@
 #define DFLT_FO_VI      "vt"
 #define DFLT_FO_VIM     "tcqj"
 #define FO_ALL          "tcro/q2vlb1mMBn,aw]jp"   // for do_set()
+
+#define MAX_MCO  6  // fixed value for 'maxcombine'
 
 // characters for the p_cpo option:
 #define CPO_ALTREAD     'a'     // ":read" sets alternate file name
@@ -549,8 +551,6 @@ EXTERN char *p_mef;             ///< 'makeef'
 EXTERN char *p_mp;              ///< 'makeprg'
 EXTERN char *p_mps;             ///< 'matchpairs'
 EXTERN OptInt p_mat;            ///< 'matchtime'
-EXTERN OptInt p_mco;            ///< 'maxcombine'
-#define MAX_MCO  6  // fixed value for 'maxcombine'
 EXTERN OptInt p_mfd;            ///< 'maxfuncdepth'
 EXTERN OptInt p_mmd;            ///< 'maxmapdepth'
 EXTERN OptInt p_mmp;            ///< 'maxmempattern'

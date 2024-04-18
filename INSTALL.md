@@ -60,9 +60,9 @@ Several Neovim GUIs are available from scoop (extras): [scoop.sh/#/apps?q=neovim
 
 - Add the `bin` folder (e.g. `C:\Program Files\nvim\bin`) to your PATH.
     - This makes it easy to run `nvim` and `nvim-qt` from anywhere.
-- If `:set spell` does not work, create the `C:/Users/foo/AppData/Local/nvim/site/spell` folder. 
-  You can then copy your spell files over (for English, located 
-  [here](https://github.com/vim/vim/blob/master/runtime/spell/en.utf-8.spl) and 
+- If `:set spell` does not work, create the `C:/Users/foo/AppData/Local/nvim/site/spell` folder.
+  You can then copy your spell files over (for English, located
+  [here](https://github.com/vim/vim/blob/master/runtime/spell/en.utf-8.spl) and
   [here](https://github.com/vim/vim/blob/master/runtime/spell/en.utf-8.sug));
 - For Python plugins you need the `pynvim` module. "Virtual envs" are recommended. After activating the virtual env do `pip install pynvim` (in *both*). Edit your `init.vim` so that it contains the path to the env's Python executable:
     ```vim
@@ -78,9 +78,17 @@ Several Neovim GUIs are available from scoop (extras): [scoop.sh/#/apps?q=neovim
 
 The [Releases](https://github.com/neovim/neovim/releases) page provides pre-built binaries for macOS 10.15+.
 
-    curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-macos.tar.gz
-    tar xzf nvim-macos.tar.gz
-    ./nvim-macos/bin/nvim
+For x86_64:
+
+    curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-macos-x86_64.tar.gz
+    tar xzf nvim-macos-x86_64.tar.gz
+    ./nvim-macos-x86_64/bin/nvim
+
+For arm64:
+
+    curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-macos-arm64.tar.gz
+    tar xzf nvim-macos-arm64.tar.gz
+    ./nvim-macos-arm64/bin/nvim
 
 ### [Homebrew](https://brew.sh) on macOS or Linux
 
@@ -122,7 +130,7 @@ To expose nvim globally:
 
 And the following line to `~/.bashrc`:
 
-    export PATH="$PATH:/opt/nvim/" 
+    export PATH="$PATH:/opt/nvim/"
 
 If the `./nvim.appimage` command fails, try:
 ```sh
@@ -206,7 +214,7 @@ You can find Neovim on [Flathub](https://flathub.org/apps/details/io.neovim.nvim
 
 You can add `/var/lib/flatpak/exports/bin` (or `~/.local/share/flatpak/exports/bin` if you used `--user`) to the `$PATH` and run it with `io.neovim.nvim`.
 
-Note that Flatpak'ed Neovim will look for `init.vim` in `~/.var/app/io.neovim.nvim/config/nvim` instead of `~/.config/nvim`. 
+Note that Flatpak'ed Neovim will look for `init.vim` in `~/.var/app/io.neovim.nvim/config/nvim` instead of `~/.config/nvim`.
 
 ### Gentoo Linux
 
@@ -259,7 +267,7 @@ Neovim can be installed with:
     sudo zypper in neovim
 
 To install the Python modules:
-    
+
     sudo zypper in python-neovim python3-neovim
 
 ### PLD Linux

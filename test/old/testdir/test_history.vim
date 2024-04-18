@@ -254,7 +254,7 @@ func Test_history_crypt_key()
   set key& bs& ts&
 endfunc
 
-" The following used to overflow and causing an use-after-free
+" The following used to overflow and causing a use-after-free
 func Test_history_max_val()
 
   set history=10

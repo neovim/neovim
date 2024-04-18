@@ -632,9 +632,12 @@ list of the current window.
 
 :[count]arge[dit][!] [++opt] [+cmd] {name} ..		*:arge* *:argedit*
 			Add {name}s to the argument list and edit it.
-			When {name} already exists in the argument list, this
-			entry is edited.
-			This is like using |:argadd| and then |:edit|.
+			There is no check for duplicates, it is possible to
+			add a file to the argument list twice |:argded|.
+			This is like using |:argadd| and then |:edit| (with
+			the small exception that |:edit| does not change the
+			argument list, so the argument list pointer isn't
+			changed).
 			Spaces in filenames have to be escaped with "\".
 			[count] is used like with |:argadd|.
 			If the current file cannot be |abandon|ed {name}s will
@@ -653,12 +656,12 @@ list of the current window.
 			If the argument list is "a b c", and "b" is the
 			current argument, then these commands result in:
 				command		new argument list ~
-				:argadd x	a b x c
-				:0argadd x	x a b c
-				:1argadd x	a x b c
-				:$argadd x	a b c x
+				:argadd x	a  [b]  x  c
+				:0argadd x	x   a  [b] c
+				:1argadd x	a   x  [b] c
+				:$argadd x	a  [b]  c  x
 			And after the last one:
-				:+2argadd y	a b c x y
+				:+2argadd y	a  [b]  c  x  y
 			There is no check for duplicates, it is possible to
 			add a file to the argument list twice.  You can use
 			|:argdedupe| to fix it afterwards: >

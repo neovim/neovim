@@ -290,10 +290,6 @@ void set_buflocal_tfu_callback(buf_T *buf)
 /// @param verbose  print "tag not found" message
 void do_tag(char *tag, int type, int count, int forceit, bool verbose)
 {
-  if (postponed_split == 0 && !check_can_set_curbuf_forceit(forceit)) {
-    return;
-  }
-
   taggy_T *tagstack = curwin->w_tagstack;
   int tagstackidx = curwin->w_tagstackidx;
   int tagstacklen = curwin->w_tagstacklen;
@@ -320,11 +316,6 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
   static char **matches = NULL;
   static int flags;
 
-  if (tfu_in_use) {
-    emsg(_(e_cannot_modify_tag_stack_within_tagfunc));
-    return;
-  }
-
 #ifdef EXITFREE
   if (type == DT_FREE) {
     // remove the list of matches
@@ -333,6 +324,15 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
     return;
   }
 #endif
+
+  if (tfu_in_use) {
+    emsg(_(e_cannot_modify_tag_stack_within_tagfunc));
+    return;
+  }
+
+  if (postponed_split == 0 && !check_can_set_curbuf_forceit(forceit)) {
+    return;
+  }
 
   if (type == DT_HELP) {
     type = DT_TAG;
@@ -449,7 +449,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
         }
         curwin->w_cursor.col = saved_fmark.mark.col;
         curwin->w_set_curswant = true;
-        check_cursor();
+        check_cursor(curwin);
         if ((fdo_flags & FDO_TAG) && old_KeyTyped) {
           foldOpenCursor();
         }
@@ -3002,7 +3002,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
 
       // A search command may have positioned the cursor beyond the end
       // of the line.  May need to correct that here.
-      check_cursor();
+      check_cursor(curwin);
     } else {
       const int save_secure = secure;
 
@@ -3047,7 +3047,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
     if (l_g_do_tagpreview != 0
         && curwin != curwin_save && win_valid(curwin_save)) {
       // Return cursor to where we were
-      validate_cursor();
+      validate_cursor(curwin);
       redraw_later(curwin, UPD_VALID);
       win_enter(curwin_save, true);
     }

@@ -16,7 +16,7 @@
 
 **Notes**:
 - From the repository's root directory, running `make` will download and build all the needed dependencies and put the `nvim` executable in `build/bin`.
-- Third-party dependencies (libuv, LuaJIT, etc.) are downloaded automatically to `.deps/`. See the [FAQ](FAQ#build-issues) if you have issues.
+- Third-party dependencies (libuv, LuaJIT, etc.) are downloaded automatically to `.deps/`. See the [FAQ](https://neovim.io/doc/user/faq.html#faq-build) if you have issues.
 - After building, you can run the `nvim` executable without installing it by running `VIMRUNTIME=runtime ./build/bin/nvim`.
 - If you plan to develop Neovim, install [Ninja](https://ninja-build.org/) for faster builds. It will automatically be used.
 - Install [ccache](https://ccache.dev/) for faster rebuilds of Neovim. It's used by default. To disable it, use `CCACHE_DISABLE=true make`.
@@ -240,7 +240,7 @@ cmake --build build
 ### How to build without "bundled" dependencies
 
 1. Manually install the dependencies:
-    - libuv libluv libtermkey luajit lua-lpeg lua-mpack msgpack-c tree-sitter unibilium
+    - libuv libluv libvterm luajit lua-lpeg lua-mpack msgpack-c tree-sitter tree-sitter-bash tree-sitter-c tree-sitter-lua tree-sitter-markdown tree-sitter-python tree-sitter-query tree-sitter-vim tree-sitter-vimdoc unibilium
 2. Run CMake:
    ```sh
    cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
@@ -255,11 +255,12 @@ cmake --build build
    ```
 3. Run `make`, `ninja`, or whatever build tool you told CMake to generate.
     - Using `ninja` is strongly recommended.
+4. If treesitter parsers are not bundled, they need to be available in a `parser/` runtime directory (e.g. `/usr/share/nvim/runtime/parser/`).
 
 #### Debian 10 (Buster) example:
 
 ```sh
-sudo apt install luajit libluajit-5.1-dev lua-mpack lua-lpeg libunibilium-dev libmsgpack-dev libtermkey-dev
+sudo apt install luajit libluajit-5.1-dev lua-mpack lua-lpeg libunibilium-dev libmsgpack-dev
 cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_BUNDLED=OFF -DUSE_BUNDLED_LIBUV=ON -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_LIBVTERM=ON -DUSE_BUNDLED_TS=ON
 cmake --build .deps
 cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
@@ -293,10 +294,10 @@ Platform-specific requirements are listed below.
 sudo apt-get install ninja-build gettext cmake unzip curl build-essential
 ```
 
-### CentOS / RHEL / Fedora
+### RHEL / Fedora
 
 ```
-sudo dnf -y install ninja-build cmake gcc make unzip gettext curl
+sudo dnf -y install ninja-build cmake gcc make unzip gettext curl glibc-gconv-extra
 ```
 
 ### openSUSE
@@ -345,7 +346,7 @@ buildPhase
 ```
 
 Tests are not available by default, because of some unfixed failures. You can enable them via adding this package in your overlay:
-``` 
+```
   neovim-dev = (super.pkgs.neovim-unwrapped.override  {
     doCheck=true;
   }).overrideAttrs(oa:{

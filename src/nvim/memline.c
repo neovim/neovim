@@ -30,6 +30,10 @@
 //  changed (lines appended/deleted/changed) or when it is flushed it gets a
 //  positive number. Use mf_trans_del() to get the new number, before calling
 //  mf_get().
+//
+// "Mom, can we get ropes?"
+// "We have ropes at home."
+// Ropes at home:
 
 #include <assert.h>
 #include <errno.h>
@@ -1192,7 +1196,7 @@ void ml_recover(bool checkext)
     ml_delete(curbuf->b_ml.ml_line_count, false);
   }
   curbuf->b_flags |= BF_RECOVERED;
-  check_cursor();
+  check_cursor(curwin);
 
   recoverymode = false;
   if (got_int) {
@@ -1838,6 +1842,12 @@ char *ml_get_pos(const pos_T *pos)
 colnr_T ml_get_len(linenr_T lnum)
 {
   return ml_get_buf_len(curbuf, lnum);
+}
+
+/// @return  length (excluding the NUL) of the text after position "pos".
+colnr_T ml_get_pos_len(pos_T *pos)
+{
+  return ml_get_buf_len(curbuf, pos->lnum) - pos->col;
 }
 
 /// @return  length (excluding the NUL) of the given line in the given buffer.
@@ -4076,14 +4086,14 @@ void goto_byte(int cnt)
   if (lnum < 1) {         // past the end
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     curwin->w_curswant = MAXCOL;
-    coladvance(MAXCOL);
+    coladvance(curwin, MAXCOL);
   } else {
     curwin->w_cursor.lnum = lnum;
     curwin->w_cursor.col = (colnr_T)boff;
     curwin->w_cursor.coladd = 0;
     curwin->w_set_curswant = true;
   }
-  check_cursor();
+  check_cursor(curwin);
 
   // Make sure the cursor is on the first byte of a multi-byte char.
   mb_adjust_cursor();
@@ -4133,7 +4143,7 @@ int dec(pos_T *lp)
   if (lp->col == MAXCOL) {
     // past end of line
     char *p = ml_get(lp->lnum);
-    lp->col = (colnr_T)strlen(p);
+    lp->col = ml_get_len(lp->lnum);
     lp->col -= utf_head_off(p, p + lp->col);
     return 0;
   }
@@ -4149,7 +4159,7 @@ int dec(pos_T *lp)
     // there is a prior line
     lp->lnum--;
     char *p = ml_get(lp->lnum);
-    lp->col = (colnr_T)strlen(p);
+    lp->col = ml_get_len(lp->lnum);
     lp->col -= utf_head_off(p, p + lp->col);
     return 1;
   }

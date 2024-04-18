@@ -4,7 +4,7 @@ local Range = require('vim.treesitter._range')
 
 local ns = api.nvim_create_namespace('treesitter/highlighter')
 
----@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata
+---@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch
 
 ---@class (private) vim.treesitter.highlighter.Query
 ---@field private _query vim.treesitter.Query?
@@ -243,6 +243,46 @@ function TSHighlighter:get_query(lang)
   return self._queries[lang]
 end
 
+--- @param match TSQueryMatch
+--- @param bufnr integer
+--- @param capture integer
+--- @param metadata vim.treesitter.query.TSMetadata
+--- @return string?
+local function get_url(match, bufnr, capture, metadata)
+  ---@type string|number|nil
+  local url = metadata[capture] and metadata[capture].url
+
+  if not url or type(url) == 'string' then
+    return url
+  end
+
+  local captures = match:captures()
+
+  if not captures[url] then
+    return
+  end
+
+  -- Assume there is only one matching node. If there is more than one, take the URL
+  -- from the first.
+  local other_node = captures[url][1]
+
+  return vim.treesitter.get_node_text(other_node, bufnr, {
+    metadata = metadata[url],
+  })
+end
+
+--- @param capture_name string
+--- @return boolean?, integer
+local function get_spell(capture_name)
+  if capture_name == 'spell' then
+    return true, 0
+  elseif capture_name == 'nospell' then
+    -- Give nospell a higher priority so it always overrides spell captures.
+    return false, 1
+  end
+  return nil, 0
+end
+
 ---@param self vim.treesitter.highlighter
 ---@param buf integer
 ---@param line integer
@@ -258,12 +298,16 @@ local function on_line_impl(self, buf, line, is_spell_nav)
     end
 
     if state.iter == nil or state.next_row < line then
+      -- Mainly used to skip over folds
+
+      -- TODO(lewis6991): Creating a new iterator loses the cached predicate results for query
+      -- matches. Move this logic inside iter_captures() so we can maintain the cache.
       state.iter =
         state.highlighter_query:query():iter_captures(root_node, self.bufnr, line, root_end_row + 1)
     end
 
     while line >= state.next_row do
-      local capture, node, metadata = state.iter(line)
+      local capture, node, metadata, match = state.iter(line)
 
       local range = { root_end_row + 1, 0, root_end_row + 1, 0 }
       if node then
@@ -275,27 +319,30 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         local hl = state.highlighter_query:get_hl_from_capture(capture)
 
         local capture_name = state.highlighter_query:query().captures[capture]
-        local spell = nil ---@type boolean?
-        if capture_name == 'spell' then
-          spell = true
-        elseif capture_name == 'nospell' then
-          spell = false
-        end
 
-        -- Give nospell a higher priority so it always overrides spell captures.
-        local spell_pri_offset = capture_name == 'nospell' and 1 or 0
+        local spell, spell_pri_offset = get_spell(capture_name)
+
+        -- The "priority" attribute can be set at the pattern level or on a particular capture
+        local priority = (
+          tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
+          or vim.highlight.priorities.treesitter
+        ) + spell_pri_offset
+
+        -- The "conceal" attribute can be set at the pattern level or on a particular capture
+        local conceal = metadata.conceal or metadata[capture] and metadata[capture].conceal
+
+        local url = get_url(match, buf, capture, metadata)
 
         if hl and end_row >= line and (not is_spell_nav or spell ~= nil) then
-          local priority = (tonumber(metadata.priority) or vim.highlight.priorities.treesitter)
-            + spell_pri_offset
           api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
             end_line = end_row,
             end_col = end_col,
             hl_group = hl,
             ephemeral = true,
             priority = priority,
-            conceal = metadata.conceal,
+            conceal = conceal,
             spell = spell,
+            url = url,
           })
         end
       end

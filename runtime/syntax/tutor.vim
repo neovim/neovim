@@ -8,6 +8,8 @@ syn include @TUTORSHELL syntax/sh.vim
 unlet b:current_syntax
 syn include @VIMNORMAL syntax/vimnormal.vim
 
+syn iskeyword @,-,_,48-57
+
 syn match tutorLink /\[.\{-}\](.\{-})/ contains=tutorInlineNormal
 syn match tutorLinkBands /\[\|\]\|(\|)/ contained containedin=tutorLink,tutorLinkAnchor conceal
 syn match tutorLinkAnchor /(.\{-})/ contained containedin=tutorLink conceal

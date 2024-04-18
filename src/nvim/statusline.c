@@ -1002,11 +1002,11 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
   // Get the byte value now, in case we need it below. This is more
   // efficient than making a copy of the line.
   int byteval;
-  const size_t len = strlen(line_ptr);
-  if (wp->w_cursor.col > (colnr_T)len) {
+  const colnr_T len = ml_get_buf_len(wp->w_buffer, lnum);
+  if (wp->w_cursor.col > len) {
     // Line may have changed since checking the cursor column, or the lnum
     // was adjusted above.
-    wp->w_cursor.col = (colnr_T)len;
+    wp->w_cursor.col = len;
     wp->w_cursor.coladd = 0;
     byteval = 0;
   } else {
@@ -2187,7 +2187,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
   // matter?
   // if (called_emsg > called_emsg_before)
   if (opt_idx != kOptInvalid && did_emsg > did_emsg_before) {
-    set_string_option_direct(opt_idx, "", opt_scope, SID_ERROR);
+    set_option_direct(opt_idx, STATIC_CSTR_AS_OPTVAL(""), opt_scope, SID_ERROR);
   }
 
   // A user function may reset KeyTyped, restore it.

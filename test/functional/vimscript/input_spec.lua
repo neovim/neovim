@@ -1,15 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 
-local eq = helpers.eq
-local feed = helpers.feed
-local api = helpers.api
-local clear = helpers.clear
-local source = helpers.source
-local command = helpers.command
-local exc_exec = helpers.exc_exec
-local pcall_err = helpers.pcall_err
-local async_meths = helpers.async_meths
+local eq = t.eq
+local feed = t.feed
+local api = t.api
+local clear = t.clear
+local source = t.source
+local command = t.command
+local exc_exec = t.exc_exec
+local async_meths = t.async_meths
 local NIL = vim.NIL
 
 local screen
@@ -407,7 +406,6 @@ describe('inputdialog()', function()
 end)
 
 describe('confirm()', function()
-  -- oldtest: Test_confirm()
   it('works', function()
     api.nvim_set_option_value('more', false, {}) -- Avoid hit-enter prompt
     api.nvim_set_option_value('laststatus', 2, {})
@@ -470,20 +468,6 @@ describe('confirm()', function()
       screen:expect({ any = '%[No Name%]' })
       eq(1, api.nvim_get_var('a'))
     end
-
-    eq('Vim(call):E730: Using a List as a String', pcall_err(command, 'call confirm([])'))
-    eq(
-      'Vim(call):E730: Using a List as a String',
-      pcall_err(command, 'call confirm("Are you sure?", [])')
-    )
-    eq(
-      'Vim(call):E745: Using a List as a Number',
-      pcall_err(command, 'call confirm("Are you sure?", "&Yes\n&No\n", [])')
-    )
-    eq(
-      'Vim(call):E730: Using a List as a String',
-      pcall_err(command, 'call confirm("Are you sure?", "&Yes\n&No\n", 0, [])')
-    )
   end)
 
   it('shows dialog even if :silent #8788', function()

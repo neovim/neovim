@@ -57,11 +57,13 @@ typedef int (*ex_unletlock_callback)(lval_T *, char *, exarg_T *, int);
 #define DICT_MAXNEST 100        // maximum nesting of lists and dicts
 
 static const char *e_letunexp = N_("E18: Unexpected characters in :let");
+static const char e_double_semicolon_in_list_of_variables[]
+  = N_("E452: Double ; in list of variables");
 static const char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
 static const char e_setting_v_str_to_value_with_wrong_type[]
   = N_("E963: Setting v:%s to value with wrong type");
-static const char e_cannot_use_heredoc_here[]
-  = N_("E991: Cannot use =<< here");
+static const char e_missing_end_marker_str[] = N_("E990: Missing end marker '%s'");
+static const char e_cannot_use_heredoc_here[] = N_("E991: Cannot use =<< here");
 
 /// Evaluate one Vim expression {expr} in string "p" and append the
 /// resulting string to "gap".  "p" points to the opening "{".
@@ -86,7 +88,7 @@ char *eval_one_expr_in_str(char *p, garray_T *gap, bool evaluate)
   }
   if (evaluate) {
     *block_end = NUL;
-    char *expr_val = eval_to_string(block_start, true);
+    char *expr_val = eval_to_string(block_start, false);
     *block_end = '}';
     if (expr_val == NULL) {
       return NULL;
@@ -177,8 +179,15 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
   int text_indent_len = 0;
   char *text_indent = NULL;
   char dot[] = ".";
+  bool heredoc_in_string = false;
+  char *line_arg = NULL;
+  char *nl_ptr = vim_strchr(cmd, '\n');
 
-  if (eap->getline == NULL) {
+  if (nl_ptr != NULL) {
+    heredoc_in_string = true;
+    line_arg = nl_ptr + 1;
+    *nl_ptr = NUL;
+  } else if (eap->ea_getline == NULL) {
     emsg(_(e_cannot_use_heredoc_here));
     return NULL;
   }
@@ -214,11 +223,12 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
     break;
   }
 
+  const char comment_char = '"';
   // The marker is the next word.
-  if (*cmd != NUL && *cmd != '"') {
+  if (*cmd != NUL && *cmd != comment_char) {
     marker = skipwhite(cmd);
     char *p = skiptowhite(marker);
-    if (*skipwhite(p) != NUL && *skipwhite(p) != '"') {
+    if (*skipwhite(p) != NUL && *skipwhite(p) != comment_char) {
       semsg(_(e_trailing_arg), p);
       return NULL;
     }
@@ -244,13 +254,34 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
     int mi = 0;
     int ti = 0;
 
-    xfree(theline);
-    theline = eap->getline(NUL, eap->cookie, 0, false);
-    if (theline == NULL) {
-      if (!script_get) {
-        semsg(_("E990: Missing end marker '%s'"), marker);
+    if (heredoc_in_string) {
+      // heredoc in a string separated by newlines.  Get the next line
+      // from the string.
+
+      if (*line_arg == NUL) {
+        if (!script_get) {
+          semsg(_(e_missing_end_marker_str), marker);
+        }
+        break;
       }
-      break;
+
+      theline = line_arg;
+      char *next_line = vim_strchr(theline, '\n');
+      if (next_line == NULL) {
+        line_arg += strlen(line_arg);
+      } else {
+        *next_line = NUL;
+        line_arg = next_line + 1;
+      }
+    } else {
+      xfree(theline);
+      theline = eap->ea_getline(NUL, eap->cookie, 0, false);
+      if (theline == NULL) {
+        if (!script_get) {
+          semsg(_(e_missing_end_marker_str), marker);
+        }
+        break;
+      }
     }
 
     // with "trim": skip the indent matching the :let line to find the
@@ -296,13 +327,17 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
         eval_failed = true;
         continue;
       }
-      xfree(theline);
-      theline = str;
+      tv_list_append_allocated_string(l, str);
+    } else {
+      tv_list_append_string(l, str, -1);
     }
-
-    tv_list_append_string(l, str, -1);
   }
-  xfree(theline);
+  if (heredoc_in_string) {
+    // Next command follows the heredoc in the string.
+    eap->nextcmd = line_arg;
+  } else {
+    xfree(theline);
+  }
   xfree(text_indent);
 
   if (eval_failed) {
@@ -341,7 +376,7 @@ void ex_let(exarg_T *eap)
   const char *argend;
   int first = true;
 
-  argend = skip_var_list(arg, &var_count, &semicolon);
+  argend = skip_var_list(arg, &var_count, &semicolon, false);
   if (argend == NULL) {
     return;
   }
@@ -515,10 +550,11 @@ int ex_let_vars(char *arg_start, typval_T *tv, int copy, int semicolon, int var_
 /// Skip over assignable variable "var" or list of variables "[var, var]".
 /// Used for ":let varvar = expr" and ":for varvar in expr".
 /// For "[var, var]" increment "*var_count" for each variable.
-/// for "[var, var; var]" set "semicolon".
+/// for "[var, var; var]" set "semicolon" to 1.
+/// If "silent" is true do not give an "invalid argument" error message.
 ///
 /// @return  NULL for an error.
-const char *skip_var_list(const char *arg, int *var_count, int *semicolon)
+const char *skip_var_list(const char *arg, int *var_count, int *semicolon, bool silent)
 {
   if (*arg == '[') {
     const char *s;
@@ -528,7 +564,9 @@ const char *skip_var_list(const char *arg, int *var_count, int *semicolon)
       p = skipwhite(p + 1);             // skip whites after '[', ';' or ','
       s = skip_var_one(p);
       if (s == p) {
-        semsg(_(e_invarg2), p);
+        if (!silent) {
+          semsg(_(e_invarg2), p);
+        }
         return NULL;
       }
       (*var_count)++;
@@ -538,12 +576,16 @@ const char *skip_var_list(const char *arg, int *var_count, int *semicolon)
         break;
       } else if (*p == ';') {
         if (*semicolon == 1) {
-          emsg(_("E452: Double ; in list of variables"));
+          if (!silent) {
+            emsg(_(e_double_semicolon_in_list_of_variables));
+          }
           return NULL;
         }
         *semicolon = 1;
       } else if (*p != ',') {
-        semsg(_(e_invarg2), p);
+        if (!silent) {
+          semsg(_(e_invarg2), p);
+        }
         return NULL;
       }
     }

@@ -1,5 +1,5 @@
 local pretty = require 'pl.pretty'
-local global_helpers = require('test.helpers')
+local t_global = require('test.testutil')
 
 local colors = setmetatable({}, {
   __index = function()
@@ -236,7 +236,7 @@ return function(options)
     io.write(suiteEndString:format(testCount, tests, fileCount, files, elapsedTime_ms))
     io.write(getSummaryString())
     if failureCount > 0 or errorCount > 0 then
-      io.write(global_helpers.read_nvim_log(nil, true))
+      io.write(t_global.read_nvim_log(nil, true))
     end
     io.flush()
 

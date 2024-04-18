@@ -16,7 +16,7 @@ if [[ $os == Linux ]]; then
 
   if [[ $CC == clang ]]; then
     DEFAULT_CLANG_VERSION=$(echo |  clang -dM -E - | grep __clang_major | awk '{print $3}')
-    CLANG_VERSION=17
+    CLANG_VERSION=18
     if ((DEFAULT_CLANG_VERSION >= CLANG_VERSION)); then
       echo "Default clang version is $DEFAULT_CLANG_VERSION, which equal or larger than wanted version $CLANG_VERSION. Aborting!"
       exit 1
@@ -31,11 +31,17 @@ if [[ $os == Linux ]]; then
 
   if [[ -n $TEST ]]; then
     sudo apt-get install -y locales-all cpanminus attr libattr1-dev gdb fswatch
+
+    # Use default CC to avoid compilation problems when installing Python modules
+    CC=cc python3 -m pip -q install --user --upgrade pynvim
   fi
 elif [[ $os == Darwin ]]; then
   brew update --quiet
   brew install ninja
   if [[ -n $TEST ]]; then
     brew install cpanminus fswatch
+
+    # Use default CC to avoid compilation problems when installing Python modules
+    CC=cc python3 -m pip -q install --user --upgrade --break-system-packages pynvim
   fi
 fi

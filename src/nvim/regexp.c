@@ -4494,7 +4494,7 @@ static uint8_t *regatom(int *flagp)
           n = n * 10 + (uint32_t)(c - '0');
           c = getchr();
         }
-        if (c == '\'' && n == 0) {
+        if (no_Magic(c) == '\'' && n == 0) {
           // "\%'m", "\%<'m" and "\%>'m": Mark
           c = getchr();
           ret = regnode(RE_MARK);
@@ -5320,7 +5320,7 @@ static regprog_T *bt_regcomp(uint8_t *expr, int re_flags)
   }
   // Remember whether this pattern has any \z specials in it.
   r->reghasz = (uint8_t)re_has_z;
-  scan = r->program + 1;        // First BRANCH.
+  scan = &r->program[1];  // First BRANCH.
   if (OP(regnext(scan)) == END) {   // Only one top-level choice.
     scan = OPERAND(scan);
 
@@ -7322,7 +7322,7 @@ static int regtry(bt_regprog_T *prog, colnr_T col, proftime_T *tm, int *timed_ou
   // Clear the external match subpointers if necessaey.
   rex.need_clear_zsubexpr = (prog->reghasz == REX_SET);
 
-  if (regmatch(prog->program + 1, tm, timed_out) == 0) {
+  if (regmatch(&prog->program[1], tm, timed_out) == 0) {
     return 0;
   }
 
@@ -7664,7 +7664,7 @@ static void regdump(uint8_t *pattern, bt_regprog_T *r)
   fprintf(f, "-------------------------------------\n\r\nregcomp(%s):\r\n",
           pattern);
 
-  s = r->program + 1;
+  s = &r->program[1];
   // Loop until we find the END that isn't before a referred next (an END
   // can also appear in a NOMATCH operand).
   while (op != END || s <= end) {
@@ -10218,7 +10218,7 @@ static int nfa_regatom(void)
         }
         EMIT((int)n);
         break;
-      } else if (c == '\'' && n == 0) {
+      } else if (no_Magic(c) == '\'' && n == 0) {
         // \%'m  \%<'m  \%>'m
         EMIT(cmp == '<' ? NFA_MARK_LT
                         : cmp == '>' ? NFA_MARK_GT : NFA_MARK);
@@ -13845,21 +13845,18 @@ static int skip_to_start(int c, colnr_T *colp)
 // Returns zero for no match, 1 for a match.
 static int find_match_text(colnr_T *startcol, int regstart, uint8_t *match_text)
 {
-#define PTR2LEN(x) utf_ptr2len(x)
-
   colnr_T col = *startcol;
-  int regstart_len = PTR2LEN((char *)rex.line + col);
+  const int regstart_len = utf_ptr2len((char *)rex.line + col);
 
   while (true) {
     bool match = true;
     uint8_t *s1 = match_text;
     uint8_t *s2 = rex.line + col + regstart_len;  // skip regstart
     while (*s1) {
-      int c1_len = PTR2LEN((char *)s1);
+      int c1_len = utf_ptr2len((char *)s1);
       int c1 = utf_ptr2char((char *)s1);
-      int c2_len = PTR2LEN((char *)s2);
+      int c2_len = utf_ptr2len((char *)s2);
       int c2 = utf_ptr2char((char *)s2);
-
       if ((c1 != c2 && (!rex.reg_ic || utf_fold(c1) != utf_fold(c2)))
           || c1_len != c2_len) {
         match = false;
@@ -13894,8 +13891,6 @@ static int find_match_text(colnr_T *startcol, int regstart, uint8_t *match_text)
 
   *startcol = col;
   return 0L;
-
-#undef PTR2LEN
 }
 
 static int nfa_did_time_out(void)

@@ -267,7 +267,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
   // The autocommands in readfile() may change the buffer, but only AFTER
   // reading the file.
   set_bufref(&old_curbuf, curbuf);
-  modified_was_set = false;
+  curbuf->b_modified_was_set = false;
 
   // mark cursor position as being invalid
   curwin->w_valid = 0;
@@ -350,7 +350,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
   // the changed flag.  Unless in readonly mode: "ls | nvim -R -".
   // When interrupted and 'cpoptions' contains 'i' set changed flag.
   if ((got_int && vim_strchr(p_cpo, CPO_INTMOD) != NULL)
-      || modified_was_set               // ":set modified" used in autocmd
+      || curbuf->b_modified_was_set  // autocmd did ":set modified"
       || (aborting() && vim_strchr(p_cpo, CPO_INTMOD) != NULL)) {
     changed(curbuf);
   } else if (retval != FAIL && !read_stdin && !read_fifo) {
@@ -1725,7 +1725,7 @@ void enter_buffer(buf_T *buf)
     // ":ball" used in an autocommand.  If there already is a filetype we
     // might prefer to keep it.
     if (*curbuf->b_p_ft == NUL) {
-      did_filetype = false;
+      curbuf->b_did_filetype = false;
     }
 
     open_buffer(false, NULL, 0);
@@ -1752,7 +1752,7 @@ void enter_buffer(buf_T *buf)
   maketitle();
   // when autocmds didn't change it
   if (curwin->w_topline == 1 && !curwin->w_topline_was_set) {
-    scroll_cursor_halfway(false, false);  // redisplay at correct position
+    scroll_cursor_halfway(curwin, false, false);  // redisplay at correct position
   }
 
   // Change directories when the 'acd' option is set.
@@ -2172,7 +2172,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     // cursor is at to BOL and w_cursor.lnum is checked due to getfile()
     if (!p_sol && col != 0) {
       curwin->w_cursor.col = col;
-      check_cursor_col();
+      check_cursor_col(curwin);
       curwin->w_cursor.coladd = 0;
       curwin->w_set_curswant = true;
     }
@@ -2197,7 +2197,7 @@ void buflist_getfpos(void)
     curwin->w_cursor.col = 0;
   } else {
     curwin->w_cursor.col = fpos->col;
-    check_cursor_col();
+    check_cursor_col(curwin);
     curwin->w_cursor.coladd = 0;
     curwin->w_set_curswant = true;
   }
@@ -3257,7 +3257,7 @@ void fileinfo(int fullname, int shorthelp, bool dont_truncate)
                      (int64_t)curwin->w_cursor.lnum,
                      (int64_t)curbuf->b_ml.ml_line_count,
                      n);
-    validate_virtcol();
+    validate_virtcol(curwin);
     size_t len = strlen(buffer);
     col_print(buffer + len, IOSIZE - len,
               (int)curwin->w_cursor.col + 1, (int)curwin->w_virtcol + 1);

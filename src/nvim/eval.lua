@@ -2071,14 +2071,13 @@ M.funcs = {
       The result is a Number:
       	1	exists
       	0	does not exist
-      	-1	not implemented on this system
       |exepath()| can be used to get the full path of an executable.
 
     ]=],
     fast = true,
     name = 'executable',
     params = { { 'expr', 'any' } },
-    returns = '0|1|-1',
+    returns = '0|1',
     signature = 'executable({expr})',
   },
   execute = {
@@ -2481,6 +2480,7 @@ M.funcs = {
       't'	Handle keys as if typed; otherwise they are handled as
       	if coming from a mapping.  This matters for undo,
       	opening folds, etc.
+      'L'	Lowlevel input.  Other flags are not used.
       'i'	Insert the string instead of appending (see above).
       'x'	Execute commands until typeahead is empty.  This is
       	similar to using ":normal!".  You can call feedkeys()
@@ -3383,14 +3383,14 @@ M.funcs = {
     args = { 0, 1 },
     desc = [=[
       Get a single character from the user or input stream.
-      If [expr] is omitted, wait until a character is available.
-      If [expr] is 0, only get a character when one is available.
+      If {expr} is omitted, wait until a character is available.
+      If {expr} is 0, only get a character when one is available.
       	Return zero otherwise.
-      If [expr] is 1, only check if a character is available, it is
+      If {expr} is 1, only check if a character is available, it is
       	not consumed.  Return zero if no character available.
       If you prefer always getting a string use |getcharstr()|.
 
-      Without [expr] and when [expr] is 0 a whole character or
+      Without {expr} and when {expr} is 0 a whole character or
       special key is returned.  If it is a single character, the
       result is a Number.  Use |nr2char()| to convert it to a String.
       Otherwise a String is returned with the encoded character.
@@ -3400,11 +3400,11 @@ M.funcs = {
       also a String when a modifier (shift, control, alt) was used
       that is not included in the character.
 
-      When [expr] is 0 and Esc is typed, there will be a short delay
+      When {expr} is 0 and Esc is typed, there will be a short delay
       while Vim waits to see if this is the start of an escape
       sequence.
 
-      When [expr] is 1 only the first byte is returned.  For a
+      When {expr} is 1 only the first byte is returned.  For a
       one-byte character it is the character itself as a number.
       Use nr2char() to convert it to a String.
 
@@ -3449,7 +3449,7 @@ M.funcs = {
     name = 'getchar',
     params = {},
     returns = 'integer',
-    signature = 'getchar([expr])',
+    signature = 'getchar([{expr}])',
   },
   getcharmod = {
     desc = [=[
@@ -3526,10 +3526,10 @@ M.funcs = {
     desc = [=[
       Get a single character from the user or input stream as a
       string.
-      If [expr] is omitted, wait until a character is available.
-      If [expr] is 0 or false, only get a character when one is
+      If {expr} is omitted, wait until a character is available.
+      If {expr} is 0 or false, only get a character when one is
       	available.  Return an empty string otherwise.
-      If [expr] is 1 or true, only check if a character is
+      If {expr} is 1 or true, only check if a character is
       	available, it is not consumed.  Return an empty string
       	if no character is available.
       Otherwise this works like |getchar()|, except that a number
@@ -3538,7 +3538,7 @@ M.funcs = {
     name = 'getcharstr',
     params = {},
     returns = 'string',
-    signature = 'getcharstr([expr])',
+    signature = 'getcharstr([{expr}])',
   },
   getcmdcompltype = {
     desc = [=[
@@ -7249,7 +7249,7 @@ M.funcs = {
     base = 1,
     desc = [=[
       Return a string that indicates the current mode.
-      If [expr] is supplied and it evaluates to a non-zero Number or
+      If {expr} is supplied and it evaluates to a non-zero Number or
       a non-empty String (|non-zero-arg|), then the full mode is
       returned, otherwise only the first letter is returned.
       Also see |state()|.
@@ -7304,7 +7304,7 @@ M.funcs = {
     ]=],
     name = 'mode',
     params = { { 'expr', 'any' } },
-    signature = 'mode([expr])',
+    signature = 'mode([{expr}])',
   },
   msgpackdump = {
     args = { 1, 2 },
@@ -7835,6 +7835,9 @@ M.funcs = {
       <    1.4142 >vim
           echo printf("%1$*2$.*3$f", 1.4142135, 6, 2)
       <      1.41
+
+      You will get an overflow error |E1510|, when the field-width
+      or precision will result in a string longer than 6400 chars.
 
       					*E1500*
       You cannot mix positional and non-positional arguments: >vim
@@ -8746,6 +8749,7 @@ M.funcs = {
       When a match has been found its line number is returned.
       If there is no match a 0 is returned and the cursor doesn't
       move.  No error message is given.
+      To get the matched string, use |matchbufline()|.
 
       {flags} is a String, which can contain these character flags:
       'b'	search Backward instead of forward
@@ -10481,7 +10485,8 @@ M.funcs = {
       Similar to using a |slice| "expr[start : end]", but "end" is
       used exclusive.  And for a string the indexes are used as
       character indexes instead of byte indexes.
-      Also, composing characters are not counted.
+      Also, composing characters are treated as a part of the
+      preceding base character.
       When {end} is omitted the slice continues to the last item.
       When {end} is -1 the last item is omitted.
       Returns an empty value if {start} or {end} are invalid.
@@ -10953,8 +10958,8 @@ M.funcs = {
       of byte index and length.
       When {skipcc} is omitted or zero, composing characters are
       counted separately.
-      When {skipcc} set to 1, Composing characters are ignored,
-      similar to  |slice()|.
+      When {skipcc} set to 1, composing characters are treated as a
+      part of the preceding base character, similar to |slice()|.
       When a character index is used where a character does not
       exist it is omitted and counted as one character.  For
       example: >vim
@@ -10977,7 +10982,7 @@ M.funcs = {
       in String {string}.
       When {skipcc} is omitted or zero, composing characters are
       counted separately.
-      When {skipcc} set to 1, Composing characters are ignored.
+      When {skipcc} set to 1, composing characters are ignored.
       |strcharlen()| always does this.
 
       Returns zero on error.
@@ -11124,10 +11129,10 @@ M.funcs = {
       for infinite and NaN floating-point values representations
       which use |str2float()|.  Strings are also dumped literally,
       only single quote is escaped, which does not allow using YAML
-      for parsing back binary strings.  |eval()| should always work for
-      strings and floats though and this is the only official
-      method, use |msgpackdump()| or |json_encode()| if you need to
-      share data with other application.
+      for parsing back binary strings.  |eval()| should always work
+      for strings and floats though, and this is the only official
+      method.  Use |msgpackdump()| or |json_encode()| if you need to
+      share data with other applications.
 
     ]=],
     name = 'string',
@@ -12687,9 +12692,7 @@ M.funcs = {
       [1, 1], unless there is a tabline, then it is [2, 1].
       {nr} can be the window number or the |window-ID|.  Use zero
       for the current window.
-      Returns [0, 0] if the window cannot be found in the current
-      tabpage.
-
+      Returns [0, 0] if the window cannot be found.
     ]=],
     name = 'win_screenpos',
     params = { { 'nr', 'integer' } },
@@ -12856,7 +12859,9 @@ M.funcs = {
       	#	the number of the last accessed window (where
       		|CTRL-W_p| goes to).  If there is no previous
       		window or it is in another tab page 0 is
-      		returned.
+      		returned.  May refer to the current window in
+      		some cases (e.g. when evaluating 'statusline'
+      		expressions).
       	{N}j	the number of the Nth window below the
       		current window (where |CTRL-W_j| goes to).
       	{N}k	the number of the Nth window above the current

@@ -105,14 +105,9 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     colnr_T col;
     bool did_do_comment = false;
 
-    // Cursor is currently at the end of line. No need to format
-    // if line length is less than textwidth (8 * textwidth for
-    // utf safety)
-    if (curwin->w_cursor.col < 8 * textwidth) {
-      colnr_T virtcol = get_nolist_virtcol() + char2cells(c != NUL ? c : gchar_cursor());
-      if (virtcol <= (colnr_T)textwidth) {
-        break;
-      }
+    colnr_T virtcol = get_nolist_virtcol() + char2cells(c != NUL ? c : gchar_cursor());
+    if (virtcol <= (colnr_T)textwidth) {
+      break;
     }
 
     if (no_leader) {
@@ -157,19 +152,12 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     }
 
     // find column of textwidth border
-    coladvance((colnr_T)textwidth);
+    coladvance(curwin, (colnr_T)textwidth);
     wantcol = curwin->w_cursor.col;
 
-    // If startcol is large (a long line), formatting takes too much
-    // time. The algorithm is O(n^2), it walks from the end of the
-    // line to textwidth border every time for each line break.
-    //
-    // Ceil to 8 * textwidth to optimize.
-    curwin->w_cursor.col = startcol < 8 * textwidth ? startcol : 8 * textwidth;
-
+    curwin->w_cursor.col = startcol;
     foundcol = 0;
     int skip_pos = 0;
-    bool first_pass = true;
 
     // Find position to break at.
     // Stop at first entered white when 'formatoptions' has 'v'
@@ -177,9 +165,8 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
            || (flags & INSCHAR_FORMAT)
            || curwin->w_cursor.lnum != Insstart.lnum
            || curwin->w_cursor.col >= Insstart.col) {
-      if (first_pass && c != NUL) {
+      if (curwin->w_cursor.col == startcol && c != NUL) {
         cc = c;
-        first_pass = false;
       } else {
         cc = gchar_cursor();
       }
@@ -445,7 +432,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
       // Check if cursor is not past the NUL off the line, cindent
       // may have added or removed indent.
       curwin->w_cursor.col += startcol;
-      colnr_T len = (colnr_T)strlen(get_cursor_line_ptr());
+      colnr_T len = get_cursor_line_len();
       if (curwin->w_cursor.col > len) {
         curwin->w_cursor.col = len;
       }
@@ -506,12 +493,11 @@ static int fmt_check_par(linenr_T lnum, int *leader_len, char **leader_flags, bo
 static bool ends_in_white(linenr_T lnum)
 {
   char *s = ml_get(lnum);
-  size_t l;
 
   if (*s == NUL) {
     return false;
   }
-  l = strlen(s) - 1;
+  colnr_T l = ml_get_len(lnum) - 1;
   return ascii_iswhite((uint8_t)s[l]);
 }
 
@@ -544,7 +530,7 @@ static bool same_leader(linenr_T lnum, int leader1_len, char *leader1_flags, int
         return false;
       }
       if (*p == COM_START) {
-        int line_len = (int)strlen(ml_get(lnum));
+        int line_len = ml_get_len(lnum);
         if (line_len <= leader1_len) {
           return false;
         }
@@ -647,7 +633,7 @@ void auto_format(bool trailblank, bool prev_line)
   // in 'formatoptions' and there is a single character before the cursor.
   // Otherwise the line would be broken and when typing another non-white
   // next they are not joined back together.
-  int wasatend = (pos.col == (colnr_T)strlen(old));
+  bool wasatend = (pos.col == get_cursor_line_len());
   if (*old != NUL && !trailblank && wasatend) {
     dec_cursor();
     int cc = gchar_cursor();
@@ -690,9 +676,9 @@ void auto_format(bool trailblank, bool prev_line)
   if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
     // "cannot happen"
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-    coladvance(MAXCOL);
+    coladvance(curwin, MAXCOL);
   } else {
-    check_cursor_col();
+    check_cursor_col(curwin);
   }
 
   // Insert mode: If the cursor is now after the end of the line while it
@@ -701,7 +687,7 @@ void auto_format(bool trailblank, bool prev_line)
   // formatted.
   if (!wasatend && has_format_option(FO_WHITE_PAR)) {
     char *linep = get_cursor_line_ptr();
-    colnr_T len = (colnr_T)strlen(linep);
+    colnr_T len = get_cursor_line_len();
     if (curwin->w_cursor.col == len) {
       char *plinep = xstrnsave(linep, (size_t)len + 2);
       plinep[len] = ' ';
@@ -715,7 +701,7 @@ void auto_format(bool trailblank, bool prev_line)
     }
   }
 
-  check_cursor();
+  check_cursor(curwin);
 }
 
 /// When an extra space was added to continue a paragraph for auto-formatting,
@@ -839,7 +825,7 @@ void op_format(oparg_T *oap, bool keep_cursor)
     saved_cursor.lnum = 0;
 
     // formatting may have made the cursor position invalid
-    check_cursor();
+    check_cursor(curwin);
   }
 
   if (oap->is_VIsual) {
@@ -1063,7 +1049,7 @@ void format_lines(linenr_T line_count, bool avoid_fex)
 
         // put cursor on last non-space
         State = MODE_NORMAL;  // don't go past end-of-line
-        coladvance(MAXCOL);
+        coladvance(curwin, MAXCOL);
         while (curwin->w_cursor.col && ascii_isspace(gchar_cursor())) {
           dec_cursor();
         }
@@ -1119,7 +1105,7 @@ void format_lines(linenr_T line_count, bool avoid_fex)
         }
         first_par_line = false;
         // If the line is getting long, format it next time
-        if (strlen(get_cursor_line_ptr()) > (size_t)max_len) {
+        if (get_cursor_line_len() > max_len) {
           force_format = true;
         } else {
           force_format = false;

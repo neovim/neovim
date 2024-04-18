@@ -1,16 +1,16 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 
-local clear = helpers.clear
-local exec_lua = helpers.exec_lua
-local eq = helpers.eq
-local mkdir_p = helpers.mkdir_p
-local rmdir = helpers.rmdir
-local nvim_dir = helpers.nvim_dir
-local test_build_dir = helpers.paths.test_build_dir
-local test_source_path = helpers.paths.test_source_path
-local nvim_prog = helpers.nvim_prog
-local is_os = helpers.is_os
-local mkdir = helpers.mkdir
+local clear = t.clear
+local exec_lua = t.exec_lua
+local eq = t.eq
+local mkdir_p = t.mkdir_p
+local rmdir = t.rmdir
+local nvim_dir = t.nvim_dir
+local test_build_dir = t.paths.test_build_dir
+local test_source_path = t.paths.test_source_path
+local nvim_prog = t.nvim_prog
+local is_os = t.is_os
+local mkdir = t.mkdir
 
 local nvim_prog_basename = is_os('win') and 'nvim.exe' or 'nvim'
 
@@ -36,6 +36,7 @@ local test_basename_dirname_eq = {
   'c:/users/foo',
   'c:/users/foo/bar.lua',
   'c:/users/foo/bar/../',
+  '~/foo/bar\\baz',
 }
 
 local tests_windows_paths = {
@@ -54,7 +55,7 @@ describe('vim.fs', function()
     it('works', function()
       local test_dir = nvim_dir .. '/test'
       mkdir_p(test_dir)
-      local dirs = {}
+      local dirs = {} --- @type string[]
       for dir in vim.fs.parents(test_dir .. '/foo.txt') do
         dirs[#dirs + 1] = dir
         if dir == test_build_dir then
@@ -70,25 +71,26 @@ describe('vim.fs', function()
     it('works', function()
       eq(test_build_dir, vim.fs.dirname(nvim_dir))
 
-      local function test_paths(paths)
+      ---@param paths string[]
+      ---@param is_win? boolean
+      local function test_paths(paths, is_win)
+        local gsub = is_win and [[:gsub('\\', '/')]] or ''
+        local code = string.format(
+          [[
+          local path = ...
+          return vim.fn.fnamemodify(path,':h')%s
+        ]],
+          gsub
+        )
+
         for _, path in ipairs(paths) do
-          eq(
-            exec_lua(
-              [[
-              local path = ...
-              return vim.fn.fnamemodify(path,':h'):gsub('\\', '/')
-            ]],
-              path
-            ),
-            vim.fs.dirname(path),
-            path
-          )
+          eq(exec_lua(code, path), vim.fs.dirname(path), path)
         end
       end
 
       test_paths(test_basename_dirname_eq)
       if is_os('win') then
-        test_paths(tests_windows_paths)
+        test_paths(tests_windows_paths, true)
       end
     end)
   end)
@@ -97,25 +99,26 @@ describe('vim.fs', function()
     it('works', function()
       eq(nvim_prog_basename, vim.fs.basename(nvim_prog))
 
-      local function test_paths(paths)
+      ---@param paths string[]
+      ---@param is_win? boolean
+      local function test_paths(paths, is_win)
+        local gsub = is_win and [[:gsub('\\', '/')]] or ''
+        local code = string.format(
+          [[
+          local path = ...
+          return vim.fn.fnamemodify(path,':t')%s
+        ]],
+          gsub
+        )
+
         for _, path in ipairs(paths) do
-          eq(
-            exec_lua(
-              [[
-              local path = ...
-              return vim.fn.fnamemodify(path,':t'):gsub('\\', '/')
-            ]],
-              path
-            ),
-            vim.fs.basename(path),
-            path
-          )
+          eq(exec_lua(code, path), vim.fs.basename(path), path)
         end
       end
 
       test_paths(test_basename_dirname_eq)
       if is_os('win') then
-        test_paths(tests_windows_paths)
+        test_paths(tests_windows_paths, true)
       end
     end)
   end)
@@ -282,9 +285,6 @@ describe('vim.fs', function()
   end)
 
   describe('normalize()', function()
-    it('works with backward slashes', function()
-      eq('C:/Users/jdoe', vim.fs.normalize('C:\\Users\\jdoe'))
-    end)
     it('removes trailing /', function()
       eq('/home/user', vim.fs.normalize('/home/user/'))
     end)
@@ -292,7 +292,7 @@ describe('vim.fs', function()
       eq('/', vim.fs.normalize('/'))
     end)
     it('works with ~', function()
-      eq(vim.fs.normalize(vim.uv.os_homedir()) .. '/src/foo', vim.fs.normalize('~/src/foo'))
+      eq(vim.fs.normalize(assert(vim.uv.os_homedir())) .. '/src/foo', vim.fs.normalize('~/src/foo'))
     end)
     it('works with environment variables', function()
       local xdg_config_home = test_build_dir .. '/.config'
@@ -307,10 +307,113 @@ describe('vim.fs', function()
         )
       )
     end)
-    if is_os('win') then
-      it('Last slash is not truncated from root drive', function()
-        eq('C:/', vim.fs.normalize('C:/'))
+
+    -- Opts required for testing posix paths and win paths
+    local posix_opts = is_os('win') and { win = false } or {}
+    local win_opts = is_os('win') and {} or { win = true }
+
+    it('preserves leading double slashes in POSIX paths', function()
+      eq('//foo', vim.fs.normalize('//foo', posix_opts))
+      eq('//foo/bar', vim.fs.normalize('//foo//bar////', posix_opts))
+      eq('/foo', vim.fs.normalize('///foo', posix_opts))
+      eq('//', vim.fs.normalize('//', posix_opts))
+      eq('/', vim.fs.normalize('///', posix_opts))
+      eq('/foo/bar', vim.fs.normalize('/foo//bar////', posix_opts))
+    end)
+
+    it('allows backslashes on unix-based os', function()
+      eq('/home/user/hello\\world', vim.fs.normalize('/home/user/hello\\world', posix_opts))
+    end)
+
+    it('preserves / after drive letters', function()
+      eq('C:/', vim.fs.normalize([[C:\]], win_opts))
+    end)
+
+    it('works with UNC and DOS device paths', function()
+      eq('//server/share/foo/bar', vim.fs.normalize([[\\server\\share\\\foo\bar\\\]], win_opts))
+      eq('//system07/C$/', vim.fs.normalize([[\\system07\C$\\\\]], win_opts))
+      eq('//./C:/foo/bar', vim.fs.normalize([[\\.\\C:\foo\\\\bar]], win_opts))
+      eq('//?/C:/foo/bar', vim.fs.normalize([[\\?\C:\\\foo\bar\\\\]], win_opts))
+      eq(
+        '//?/UNC/server/share/foo/bar',
+        vim.fs.normalize([[\\?\UNC\server\\\share\\\\foo\\\bar]], win_opts)
+      )
+      eq('//./BootPartition/foo/bar', vim.fs.normalize([[\\.\BootPartition\\foo\bar]], win_opts))
+      eq(
+        '//./Volume{12345678-1234-1234-1234-1234567890AB}/foo/bar',
+        vim.fs.normalize([[\\.\Volume{12345678-1234-1234-1234-1234567890AB}\\\foo\bar\\]], win_opts)
+      )
+    end)
+
+    it('handles invalid UNC and DOS device paths', function()
+      eq('//server/share', vim.fs.normalize([[\\server\share]], win_opts))
+      eq('//server/', vim.fs.normalize([[\\server\]], win_opts))
+      eq('//./UNC/server/share', vim.fs.normalize([[\\.\UNC\server\share]], win_opts))
+      eq('//?/UNC/server/', vim.fs.normalize([[\\?\UNC\server\]], win_opts))
+      eq('//?/UNC/server/..', vim.fs.normalize([[\\?\UNC\server\..]], win_opts))
+      eq('//./', vim.fs.normalize([[\\.\]], win_opts))
+      eq('//./foo', vim.fs.normalize([[\\.\foo]], win_opts))
+      eq('//./BootPartition', vim.fs.normalize([[\\.\BootPartition]], win_opts))
+    end)
+
+    it('converts backward slashes', function()
+      eq('C:/Users/jdoe', vim.fs.normalize([[C:\Users\jdoe]], win_opts))
+    end)
+
+    describe('. and .. component resolving', function()
+      it('works', function()
+        -- Windows paths
+        eq('C:/Users', vim.fs.normalize([[C:\Users\jdoe\Downloads\.\..\..\]], win_opts))
+        eq('C:/Users/jdoe', vim.fs.normalize([[C:\Users\jdoe\Downloads\.\..\.\.\]], win_opts))
+        eq('C:/', vim.fs.normalize('C:/Users/jdoe/Downloads/./../../../', win_opts))
+        eq('C:foo', vim.fs.normalize([[C:foo\bar\.\..\.]], win_opts))
+        -- POSIX paths
+        eq('/home', vim.fs.normalize('/home/jdoe/Downloads/./../..', posix_opts))
+        eq('/home/jdoe', vim.fs.normalize('/home/jdoe/Downloads/./../././', posix_opts))
+        eq('/', vim.fs.normalize('/home/jdoe/Downloads/./../../../', posix_opts))
+        -- OS-agnostic relative paths
+        eq('foo/bar/baz', vim.fs.normalize('foo/bar/foobar/../baz/./'))
+        eq('foo/bar', vim.fs.normalize('foo/bar/foobar/../baz/./../../bar/./.'))
       end)
-    end
+
+      it('works when relative path reaches current directory', function()
+        eq('C:', vim.fs.normalize('C:foo/bar/../../.', win_opts))
+
+        eq('.', vim.fs.normalize('.'))
+        eq('.', vim.fs.normalize('././././'))
+        eq('.', vim.fs.normalize('foo/bar/../../.'))
+      end)
+
+      it('works when relative path goes outside current directory', function()
+        eq('../../foo/bar', vim.fs.normalize('../../foo/bar'))
+        eq('../foo', vim.fs.normalize('foo/bar/../../../foo'))
+
+        eq('C:../foo', vim.fs.normalize('C:../foo', win_opts))
+        eq('C:../../foo/bar', vim.fs.normalize('C:foo/../../../foo/bar', win_opts))
+      end)
+
+      it('.. in root directory resolves to itself', function()
+        eq('C:/', vim.fs.normalize('C:/../../', win_opts))
+        eq('C:/foo', vim.fs.normalize('C:/foo/../../foo', win_opts))
+
+        eq('//server/share/', vim.fs.normalize([[\\server\share\..\..]], win_opts))
+        eq('//server/share/foo', vim.fs.normalize([[\\server\\share\foo\..\..\foo]], win_opts))
+
+        eq('//./C:/', vim.fs.normalize([[\\.\C:\..\..]], win_opts))
+        eq('//?/C:/foo', vim.fs.normalize([[\\?\C:\..\..\foo]], win_opts))
+
+        eq('//./UNC/server/share/', vim.fs.normalize([[\\.\UNC\\server\share\..\..\]], win_opts))
+        eq(
+          '//?/UNC/server/share/foo',
+          vim.fs.normalize([[\\?\UNC\server\\share\..\..\foo]], win_opts)
+        )
+
+        eq('//?/BootPartition/', vim.fs.normalize([[\\?\BootPartition\..\..]], win_opts))
+        eq('//./BootPartition/foo', vim.fs.normalize([[\\.\BootPartition\..\..\foo]], win_opts))
+
+        eq('/', vim.fs.normalize('/../../', posix_opts))
+        eq('/foo', vim.fs.normalize('/foo/../../foo', posix_opts))
+      end)
+    end)
   end)
 end)

@@ -77,7 +77,7 @@ for term in $sorted_terms; do
     continue
   fi
   printf '\n'
-  infocmp -L -1 -A "$db" "$term" | sed -e '1d' -e 's#^#// #' | tr '\t' ' '
+  infocmp -L -x -1 -A "$db" "$term" | sed -e '1d' -e 's#^#// #' | tr '\t' ' '
   printf 'static const int8_t %s[] = {\n' "${entries[$term]}"
   printf '  '
   od -v -t d1 < "$path" | cut -c9- | xargs | tr ' ' ','

@@ -552,14 +552,14 @@ func Test_smoothscroll_cursor_position()
   exe "normal \<C-Y>"
   call s:check_col_calc(1, 3, 41)
 
-   " Test "g0/g<Home>"
+  " Test "g0/g<Home>"
   exe "normal gg\<C-E>"
   norm $gkg0
-  call s:check_col_calc(1, 2, 21)
+  call s:check_col_calc(4, 1, 24)
 
   " Test moving the cursor behind the <<< display with 'virtualedit'
   set virtualedit=all
-  exe "normal \<C-E>3lgkh"
+  exe "normal \<C-E>gkh"
   call s:check_col_calc(3, 2, 23)
   set virtualedit&
 
@@ -741,6 +741,7 @@ func Test_smoothscroll_mouse_pos()
   let &mouse = save_mouse
   "let &term = save_term
   "let &ttymouse = save_ttymouse
+  bwipe!
 endfunc
 
 " this was dividing by zero
@@ -832,7 +833,7 @@ func Test_smoothscroll_eob()
   call VerifyScreenDump(buf, 'Test_smooth_eob_1', {})
 
   " cursor is not placed below window
-  call term_sendkeys(buf, ":call setline(92, 'a'->repeat(100))\<CR>\<C-B>G")
+  call term_sendkeys(buf, ":call setline(92, 'a'->repeat(100))\<CR>\<C-L>\<C-B>G")
   call VerifyScreenDump(buf, 'Test_smooth_eob_2', {})
 
   call StopVimInTerminal(buf)
@@ -999,6 +1000,115 @@ func Test_smoothscroll_textoff_small_winwidth()
 
   %bw!
   set smoothscroll& number&
+endfunc
+
+func Test_smoothscroll_page()
+  call NewWindow(10, 40)
+  setlocal smoothscroll
+  call setline(1, 'abcde '->repeat(150))
+
+  exe "norm! \<C-F>"
+  call assert_equal(400, winsaveview().skipcol)
+  exe "norm! \<C-F>"
+  call assert_equal(800, winsaveview().skipcol)
+  exe "norm! \<C-F>"
+  call assert_equal(880, winsaveview().skipcol)
+  exe "norm! \<C-B>"
+  call assert_equal(480, winsaveview().skipcol)
+  exe "norm! \<C-B>"
+  call assert_equal(80, winsaveview().skipcol)
+  exe "norm! \<C-B>"
+  call assert_equal(0, winsaveview().skipcol)
+
+  " Half-page scrolling does not go beyond end of buffer and moves the cursor.
+  " Even with 'nostartofline', the correct amount of lines is scrolled.
+  setl nostartofline
+  exe "norm! 15|\<C-D>"
+  call assert_equal(200, winsaveview().skipcol)
+  call assert_equal(215, col('.'))
+  exe "norm! \<C-D>"
+  call assert_equal(400, winsaveview().skipcol)
+  call assert_equal(415, col('.'))
+  exe "norm! \<C-D>"
+  call assert_equal(520, winsaveview().skipcol)
+  call assert_equal(615, col('.'))
+  exe "norm! \<C-D>"
+  call assert_equal(520, winsaveview().skipcol)
+  call assert_equal(815, col('.'))
+  exe "norm! \<C-D>"
+  call assert_equal(520, winsaveview().skipcol)
+  call assert_equal(895, col('.'))
+  exe "norm! \<C-U>"
+  call assert_equal(320, winsaveview().skipcol)
+  call assert_equal(695, col('.'))
+  exe "norm! \<C-U>"
+  call assert_equal(120, winsaveview().skipcol)
+  call assert_equal(495, col('.'))
+  exe "norm! \<C-U>"
+  call assert_equal(0, winsaveview().skipcol)
+  call assert_equal(295, col('.'))
+  exe "norm! \<C-U>"
+  call assert_equal(0, winsaveview().skipcol)
+  call assert_equal(95, col('.'))
+  exe "norm! \<C-U>"
+  call assert_equal(0, winsaveview().skipcol)
+  call assert_equal(15, col('.'))
+
+  bwipe!
+endfunc
+
+func Test_smoothscroll_next_topline()
+  call NewWindow(10, 40)
+  setlocal smoothscroll
+  call setline(1, ['abcde '->repeat(150)]->repeat(2))
+
+  " Scrolling a screenline that causes the cursor to move to the next buffer
+  " line should not skip part of that line to bring the cursor into view.
+  exe "norm! 22\<C-E>"
+  call assert_equal(880, winsaveview().skipcol)
+  exe "norm! \<C-E>"
+  redraw
+  call assert_equal(0, winsaveview().skipcol)
+
+  " Also when scrolling back.
+  exe "norm! G\<C-Y>"
+  redraw
+  call assert_equal(880, winsaveview().skipcol)
+
+  " Cursor in correct place when not in the first screenline of a buffer line.
+  exe "norm! gg4gj20\<C-D>\<C-D>"
+  redraw
+  call assert_equal(2, line('w0'))
+
+  " Cursor does not end up above topline, adjusting topline later.
+  setlocal nu cpo+=n
+  exe "norm! G$g013\<C-Y>"
+  redraw
+  call assert_equal(2, line('.'))
+  call assert_equal(0, winsaveview().skipcol)
+
+  set cpo-=n
+  bwipe!
+endfunc
+
+func Test_smoothscroll_long_line_zb()
+  call NewWindow(10, 40)
+  call setline(1, 'abcde '->repeat(150))
+
+  " Also works without 'smoothscroll' when last line of buffer doesn't fit.
+  " Used to set topline to buffer line count plus one, causing an empty screen.
+  norm zb
+  redraw
+  call assert_equal(1, winsaveview().topline)
+
+  " Moving cursor to bottom works on line that doesn't fit with 'smoothscroll'.
+  " Skipcol was adjusted later for cursor being on not visible part of line.
+  setlocal smoothscroll
+  norm zb
+  redraw
+  call assert_equal(520, winsaveview().skipcol)
+
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

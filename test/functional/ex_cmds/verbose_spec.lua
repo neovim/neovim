@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 
-local clear = helpers.clear
-local eq = helpers.eq
-local exec = helpers.exec
-local exec_capture = helpers.exec_capture
-local write_file = helpers.write_file
-local call_viml_function = helpers.api.nvim_call_function
+local clear = t.clear
+local eq = t.eq
+local exec = t.exec
+local exec_capture = t.exec_capture
+local write_file = t.write_file
+local call_viml_function = t.api.nvim_call_function
 
 local function last_set_tests(cmd)
   local script_location, script_file
@@ -15,7 +15,7 @@ local function last_set_tests(cmd)
     script_file = 'test_verbose.lua'
     local current_dir = call_viml_function('getcwd', {})
     current_dir = call_viml_function('fnamemodify', { current_dir, ':~' })
-    script_location = table.concat { current_dir, helpers.get_pathsep(), script_file }
+    script_location = table.concat { current_dir, t.get_pathsep(), script_file }
 
     write_file(
       script_file,
@@ -32,21 +32,30 @@ vim.api.nvim_exec2("augroup test_group\
                      augroup END\
                   ", {})
 
+vim.api.nvim_create_autocmd('FileType', {
+  group = 'test_group',
+  pattern = 'cpp',
+  command = 'setl cindent',
+})
+
+vim.api.nvim_exec2(':highlight TestHL1 guibg=Blue', {})
+vim.api.nvim_set_hl(0, 'TestHL2', { bg = 'Green' })
+
 vim.api.nvim_command("command Bdelete :bd")
 vim.api.nvim_create_user_command("TestCommand", ":echo 'Hello'", {})
 
-vim.api.nvim_exec ("\
+vim.api.nvim_exec2 ("\
 function Close_Window() abort\
   wincmd -\
 endfunction\
-", false)
+", {})
 
-local ret = vim.api.nvim_exec ("\
+local ret = vim.api.nvim_exec2 ("\
 function! s:return80()\
   return 80\
 endfunction\
 let &tw = s:return80()\
-", true)
+", {})
 ]]
     )
     exec(cmd .. ' ' .. script_file)
@@ -109,7 +118,7 @@ n  \key1       * :echo "test"<CR>
     )
   end)
 
-  it('"Last set" for mapping set by vim.keymap', function()
+  it('"Last set" for mapping set by vim.keymap.set', function()
     local result = exec_capture(':verbose map <leader>key2')
     eq(
       string.format(
@@ -123,7 +132,7 @@ n  \key2       * :echo "test"<CR>
     )
   end)
 
-  it('"Last set" for autocmd by vim.api.nvim_exec', function()
+  it('"Last set" for autocmd set by nvim_exec2', function()
     local result = exec_capture(':verbose autocmd test_group Filetype c')
     eq(
       string.format(
@@ -132,6 +141,47 @@ n  \key2       * :echo "test"<CR>
 test_group  FileType
     c         setl cindent
 	Last set from %s line 7]],
+        script_location
+      ),
+      result
+    )
+  end)
+
+  it('"Last set" for autocmd set by nvim_create_autocmd', function()
+    local result = exec_capture(':verbose autocmd test_group Filetype cpp')
+    eq(
+      string.format(
+        [[
+--- Autocommands ---
+test_group  FileType
+    cpp       setl cindent
+	Last set from %s line 13]],
+        script_location
+      ),
+      result
+    )
+  end)
+
+  it('"Last set" for highlight group set by nvim_exec2', function()
+    local result = exec_capture(':verbose highlight TestHL1')
+    eq(
+      string.format(
+        [[
+TestHL1        xxx guibg=Blue
+	Last set from %s line 19]],
+        script_location
+      ),
+      result
+    )
+  end)
+
+  it('"Last set" for highlight group set by nvim_set_hl', function()
+    local result = exec_capture(':verbose highlight TestHL2')
+    eq(
+      string.format(
+        [[
+TestHL2        xxx guibg=Green
+	Last set from %s line 20]],
         script_location
       ),
       result
@@ -148,7 +198,7 @@ test_group  FileType
         [[
     Name              Args Address Complete    Definition
     Bdelete           0                        :bd
-	Last set from %s line 13]],
+	Last set from %s line 22]],
         script_location
       ),
       result
@@ -162,7 +212,7 @@ test_group  FileType
         [[
     Name              Args Address Complete    Definition
     TestCommand       0                        :echo 'Hello'
-	Last set from %s line 14]],
+	Last set from %s line 23]],
         script_location
       ),
       result
@@ -175,7 +225,7 @@ test_group  FileType
       string.format(
         [[
    function Close_Window() abort
-	Last set from %s line 16
+	Last set from %s line 25
 1    wincmd -
    endfunction]],
         script_location
@@ -190,7 +240,7 @@ test_group  FileType
       string.format(
         [[
   textwidth=80
-	Last set from %s line 22]],
+	Last set from %s line 31]],
         script_location
       ),
       result
@@ -230,7 +280,7 @@ describe('lua verbose:', function()
     eq(
       [[
 nohlsearch
-	Last set from Lua]],
+	Last set from Lua (run Nvim with -V1 for more details)]],
       result
     )
   end)

@@ -81,7 +81,7 @@ local TSCallbackNames = {
 ---List of regions this tree should manage and parse. If nil then regions are
 ---taken from _trees. This is mostly a short-lived cache for included_regions()
 ---@field private _lang string Language name
----@field private _parent_lang? string Parent language name
+---@field private _parent? vim.treesitter.LanguageTree Parent LanguageTree
 ---@field private _source (integer|string) Buffer or string to parse
 ---@field private _trees table<integer, TSTree> Reference to parsed tree (one for each language).
 ---Each key is the index of region, which is synced with _regions and _valid.
@@ -106,9 +106,8 @@ LanguageTree.__index = LanguageTree
 ---@param source (integer|string) Buffer or text string to parse
 ---@param lang string Root language of this tree
 ---@param opts vim.treesitter.LanguageTree.new.Opts?
----@param parent_lang? string Parent language name of this tree
 ---@return vim.treesitter.LanguageTree parser object
-function LanguageTree.new(source, lang, opts, parent_lang)
+function LanguageTree.new(source, lang, opts)
   language.add(lang)
   opts = opts or {}
 
@@ -122,7 +121,6 @@ function LanguageTree.new(source, lang, opts, parent_lang)
   local self = {
     _source = source,
     _lang = lang,
-    _parent_lang = parent_lang,
     _children = {},
     _trees = {},
     _opts = opts,
@@ -158,8 +156,10 @@ function LanguageTree:_set_logger()
 
   local lang = self:lang()
 
-  vim.fn.mkdir(vim.fn.stdpath('log'), 'p')
-  local logfilename = vim.fs.joinpath(vim.fn.stdpath('log'), 'treesitter.log')
+  local logdir = vim.fn.stdpath('log') --[[@as string]]
+
+  vim.fn.mkdir(logdir, 'p')
+  local logfilename = vim.fs.joinpath(logdir, 'treesitter.log')
 
   local logfile, openerr = io.open(logfilename, 'a+')
 
@@ -465,7 +465,7 @@ end
 --- Invokes the callback for each |LanguageTree| and its children recursively
 ---
 ---@param fn fun(tree: vim.treesitter.LanguageTree, lang: string)
----@param include_self boolean|nil Whether to include the invoking tree in the results
+---@param include_self? boolean Whether to include the invoking tree in the results
 function LanguageTree:for_each_child(fn, include_self)
   vim.deprecate('LanguageTree:for_each_child()', 'LanguageTree:children()', '0.11')
   if include_self then
@@ -505,17 +505,23 @@ function LanguageTree:add_child(lang)
     self:remove_child(lang)
   end
 
-  local child = LanguageTree.new(self._source, lang, self._opts, self:lang())
+  local child = LanguageTree.new(self._source, lang, self._opts)
 
   -- Inherit recursive callbacks
   for nm, cb in pairs(self._callbacks_rec) do
     vim.list_extend(child._callbacks_rec[nm], cb)
   end
 
+  child._parent = self
   self._children[lang] = child
   self:_do_callback('child_added', self._children[lang])
 
   return self._children[lang]
+end
+
+--- @package
+function LanguageTree:parent()
+  return self._parent
 end
 
 --- Removes a child language from this |LanguageTree|.
@@ -792,7 +798,7 @@ function LanguageTree:_get_injection(match, metadata)
   local combined = metadata['injection.combined'] ~= nil
   local injection_lang = metadata['injection.language'] --[[@as string?]]
   local lang = metadata['injection.self'] ~= nil and self:lang()
-    or metadata['injection.parent'] ~= nil and self._parent_lang
+    or metadata['injection.parent'] ~= nil and self._parent:lang()
     or (injection_lang and resolve_lang(injection_lang))
   local include_children = metadata['injection.include-children'] ~= nil
 
@@ -803,6 +809,10 @@ function LanguageTree:_get_injection(match, metadata)
       if name == 'injection.language' then
         local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
         lang = resolve_lang(text)
+      elseif name == 'injection.filename' then
+        local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
+        local ft = vim.filetype.match({ filename = text })
+        lang = ft and resolve_lang(ft)
       elseif name == 'injection.content' then
         ranges = get_node_ranges(node, self._source, metadata[id], include_children)
       end
@@ -1054,20 +1064,19 @@ function LanguageTree:_on_detach(...)
   end
 end
 
---- Registers callbacks for the |LanguageTree|.
----@param cbs table An |nvim_buf_attach()|-like table argument with the following handlers:
----           - `on_bytes` : see |nvim_buf_attach()|, but this will be called _after_ the parsers callback.
+--- Registers callbacks for the [LanguageTree].
+---@param cbs table<TSCallbackNameOn,function> An [nvim_buf_attach()]-like table argument with the following handlers:
+---           - `on_bytes` : see [nvim_buf_attach()], but this will be called _after_ the parsers callback.
 ---           - `on_changedtree` : a callback that will be called every time the tree has syntactical changes.
 ---              It will be passed two arguments: a table of the ranges (as node ranges) that
 ---              changed and the changed tree.
 ---           - `on_child_added` : emitted when a child is added to the tree.
 ---           - `on_child_removed` : emitted when a child is removed from the tree.
----           - `on_detach` : emitted when the buffer is detached, see |nvim_buf_detach_event|.
+---           - `on_detach` : emitted when the buffer is detached, see [nvim_buf_detach_event].
 ---              Takes one argument, the number of the buffer.
 --- @param recursive? boolean Apply callbacks recursively for all children. Any new children will
 ---                           also inherit the callbacks.
 function LanguageTree:register_cbs(cbs, recursive)
-  ---@cast cbs table<TSCallbackNameOn,function>
   if not cbs then
     return
   end
@@ -1091,7 +1100,14 @@ end
 ---@param range Range
 ---@return boolean
 local function tree_contains(tree, range)
-  return Range.contains({ tree:root():range() }, range)
+  local tree_ranges = tree:included_ranges(false)
+
+  return Range.contains({
+    tree_ranges[1][1],
+    tree_ranges[1][2],
+    tree_ranges[#tree_ranges][3],
+    tree_ranges[#tree_ranges][4],
+  }, range)
 end
 
 --- Determines whether {range} is contained in the |LanguageTree|.
@@ -1108,12 +1124,18 @@ function LanguageTree:contains(range)
   return false
 end
 
+--- @class vim.treesitter.LanguageTree.tree_for_range.Opts
+--- @inlinedoc
+---
+--- Ignore injected languages
+--- (default: `true`)
+--- @field ignore_injections? boolean
+
 --- Gets the tree that contains {range}.
 ---
 ---@param range Range4 `{ start_line, start_col, end_line, end_col }`
----@param opts table|nil Optional keyword arguments:
----             - ignore_injections boolean Ignore injected languages (default true)
----@return TSTree|nil
+---@param opts? vim.treesitter.LanguageTree.tree_for_range.Opts
+---@return TSTree?
 function LanguageTree:tree_for_range(range, opts)
   opts = opts or {}
   local ignore = vim.F.if_nil(opts.ignore_injections, true)
@@ -1139,9 +1161,8 @@ end
 --- Gets the smallest named node that contains {range}.
 ---
 ---@param range Range4 `{ start_line, start_col, end_line, end_col }`
----@param opts table|nil Optional keyword arguments:
----             - ignore_injections boolean Ignore injected languages (default true)
----@return TSNode | nil Found node
+---@param opts? vim.treesitter.LanguageTree.tree_for_range.Opts
+---@return TSNode?
 function LanguageTree:named_node_for_range(range, opts)
   local tree = self:tree_for_range(range, opts)
   if tree then
@@ -1152,7 +1173,7 @@ end
 --- Gets the appropriate language that contains {range}.
 ---
 ---@param range Range4 `{ start_line, start_col, end_line, end_col }`
----@return vim.treesitter.LanguageTree Managing {range}
+---@return vim.treesitter.LanguageTree tree Managing {range}
 function LanguageTree:language_for_range(range)
   for _, child in pairs(self._children) do
     if child:contains(range) then

@@ -1,10 +1,10 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local exec = helpers.exec
-local feed = helpers.feed
-local command = helpers.command
+local clear = t.clear
+local exec = t.exec
+local feed = t.feed
+local command = t.command
 
 describe('display', function()
   before_each(clear)
@@ -13,9 +13,6 @@ describe('display', function()
   it('scroll when modified at topline vim-patch:8.2.1488', function()
     local screen = Screen.new(20, 4)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = { bold = true },
-    })
 
     command([[call setline(1, repeat('a', 21))]])
     feed('O')
@@ -23,7 +20,7 @@ describe('display', function()
       ^                    |
       aaaaaaaaaaaaaaaaaaaa|
       a                   |
-      {1:-- INSERT --}        |
+      {5:-- INSERT --}        |
     ]])
   end)
 
@@ -31,11 +28,6 @@ describe('display', function()
   it('scrolling when modified at topline in Visual mode vim-patch:8.2.4626', function()
     local screen = Screen.new(60, 8)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = { bold = true }, -- ModeMsg
-      [2] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black }, -- Visual
-      [3] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue }, -- SignColumn
-    })
 
     exec([[
       set scrolloff=0
@@ -47,9 +39,9 @@ describe('display', function()
     ]])
     feed('VG7kk')
     screen:expect([[
-      {3:  }^f{2:oo}                                                       |
-      {3:  }foo                                                       |*6
-      {1:-- VISUAL LINE --}                                           |
+      {7:  }^f{17:oo}                                                       |
+      {7:  }foo                                                       |*6
+      {5:-- VISUAL LINE --}                                           |
     ]])
   end)
 
@@ -149,7 +141,7 @@ describe('display', function()
     ]])
     feed('736|')
     screen:expect([[
-      <<<aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:<<<}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|*11
       ^aaaaaaaaaaaaaaa                    |
                                          |
@@ -157,22 +149,22 @@ describe('display', function()
     -- The correct part of the last line is moved into view.
     feed('D')
     screen:expect([[
-      <<<aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:<<<}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|*10
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^a|
-      bbbbb bbbbb bbbbb bbbbb bbbbb bb@@@|
+      bbbbb bbbbb bbbbb bbbbb bbbbb bb{1:@@@}|
                                          |
     ]])
     -- "w_skipcol" does not change because the topline is still long enough
     -- to maintain the current skipcol.
     feed('g04l11gkD')
     screen:expect([[
-      <<<^a                               |
+      {1:<<<}^a                               |
       bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb|
        bbbbb ccccc ccccc ccccc ccccc cccc|
       c ccccc ccccc ddddd ddddd ddddd ddd|
       dd ddddd ddddd ddddd               |
-      ~                                  |*8
+      {1:~                                  }|*8
                                          |
     ]])
     -- "w_skipcol" is reset to bring the entire topline into view because
@@ -183,7 +175,7 @@ describe('display', function()
       aa^a                                |
       bbbbb bbbbb bbbbb bbbbb bbbbb bbbbb|
        bbbbb ccccc ccccc ccccc ccccc cccc|
-      c ccccc ccccc ddddd ddddd ddddd @@@|
+      c ccccc ccccc ddddd ddddd ddddd {1:@@@}|
                                          |
     ]])
   end)
@@ -197,7 +189,7 @@ describe('display', function()
       norm $j
     ]])
     screen:expect([[
-      <<<bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      {1:<<<}bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
       bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|*5
       b^b                                                                         |
                                                                                  |
@@ -207,7 +199,7 @@ describe('display', function()
     exec('set number cpo+=n scrolloff=0')
     feed('$0')
     screen:expect([[
-      <<<b^bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      {1:<<<}b^bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
       bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|*6
                                                                                  |
     ]])
@@ -215,14 +207,14 @@ describe('display', function()
     exec('set smoothscroll')
     feed('$b')
     screen:expect([[
-        2 b ^bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      {8:  2 }b ^bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
       bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|*6
                                                                                  |
     ]])
     -- Same for "ge".
     feed('$ge')
     screen:expect([[
-        2 ^b bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      {8:  2 }^b bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
       bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|*6
                                                                                  |
     ]])

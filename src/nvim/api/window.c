@@ -71,7 +71,7 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
     api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return;
   }
-  win_set_buf(win, buf, false, err);
+  win_set_buf(win, buf, err);
 }
 
 /// Gets the (1,0)-indexed, buffer-relative cursor position for a given window
@@ -138,7 +138,7 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   win->w_cursor.col = (colnr_T)col;
   win->w_cursor.coladd = 0;
   // When column is out of range silently correct it.
-  check_cursor_col_win(win);
+  check_cursor_col(win);
 
   // Make sure we stick in this column.
   win->w_set_curswant = true;
@@ -148,7 +148,7 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   switchwin_T switchwin;
   switch_win(&switchwin, win, NULL, true);
   update_topline(curwin);
-  validate_cursor();
+  setcursor_mayforce(true);
   restore_win(&switchwin, true);
 
   redraw_later(win, UPD_VALID);

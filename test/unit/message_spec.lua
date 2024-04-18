@@ -1,11 +1,11 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')
+local itp = t.gen_itp(it)
 
-local ffi = helpers.ffi
-local eq = helpers.eq
-local to_cstr = helpers.to_cstr
+local ffi = t.ffi
+local eq = t.eq
+local to_cstr = t.to_cstr
 
-local cimp = helpers.cimport('./src/nvim/message.h', './src/nvim/memory.h', './src/nvim/strings.h')
+local cimp = t.cimport('./src/nvim/message.h', './src/nvim/memory.h', './src/nvim/strings.h')
 
 describe('trunc_string', function()
   local buflen = 40
@@ -33,26 +33,26 @@ describe('trunc_string', function()
     { ['desc'] = 'by copy', ['func'] = test_copy },
   }
 
-  for _, t in ipairs(permutations) do
-    describe('populates buf ' .. t.desc, function()
+  for _, q in ipairs(permutations) do
+    describe('populates buf ' .. q.desc, function()
       itp('with a small string', function()
-        t.func('text', 'text')
+        q.func('text', 'text')
       end)
 
       itp('with a medium string', function()
-        t.func('a short text', 'a short text')
+        q.func('a short text', 'a short text')
       end)
 
       itp('with a string of length == 1/2 room', function()
-        t.func('a text that fits', 'a text that fits', 34)
+        q.func('a text that fits', 'a text that fits', 34)
       end)
 
       itp('with a string exactly the truncate size', function()
-        t.func('a text tha just fits', 'a text tha just fits')
+        q.func('a text tha just fits', 'a text tha just fits')
       end)
 
       itp('with a string that must be truncated', function()
-        t.func('a text that nott fits', 'a text t...nott fits')
+        q.func('a text that nott fits', 'a text t...nott fits')
       end)
     end)
   end

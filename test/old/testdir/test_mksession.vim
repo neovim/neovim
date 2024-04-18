@@ -631,11 +631,11 @@ endfunc
 
 func Test_mkview_no_file_name()
   new
-  " :mkview or :mkview {nr} should fail in a unnamed buffer.
+  " :mkview or :mkview {nr} should fail in an unnamed buffer.
   call assert_fails('mkview', 'E32:')
   call assert_fails('mkview 1', 'E32:')
 
-  " :mkview {file} should succeed in a unnamed buffer.
+  " :mkview {file} should succeed in an unnamed buffer.
   mkview Xview
   help
   source Xview

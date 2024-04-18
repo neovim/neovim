@@ -1,26 +1,26 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local thelpers = require('test.functional.terminal.helpers')
-local feed, clear = helpers.feed, helpers.clear
-local testprg, command = helpers.testprg, helpers.command
-local eq, eval = helpers.eq, helpers.eval
-local matches = helpers.matches
-local poke_eventloop = helpers.poke_eventloop
-local hide_cursor = thelpers.hide_cursor
-local show_cursor = thelpers.show_cursor
-local is_os = helpers.is_os
-local skip = helpers.skip
+local tt = require('test.functional.terminal.testutil')
+local feed, clear = t.feed, t.clear
+local testprg, command = t.testprg, t.command
+local eq, eval = t.eq, t.eval
+local matches = t.matches
+local poke_eventloop = t.poke_eventloop
+local hide_cursor = tt.hide_cursor
+local show_cursor = tt.show_cursor
+local is_os = t.is_os
+local skip = t.skip
 
 describe(':terminal cursor', function()
   local screen
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup()
+    screen = tt.screen_setup()
   end)
 
   it('moves the screen cursor when focused', function()
-    thelpers.feed_data('testing cursor')
+    tt.feed_data('testing cursor')
     screen:expect([[
       tty ready                                         |
       testing cursor{1: }                                   |
@@ -66,7 +66,7 @@ describe(':terminal cursor', function()
         :set number                                       |
       ]])
       feed('i')
-      helpers.poke_eventloop()
+      t.poke_eventloop()
       screen:expect([[
         {7:  1 }tty ready                                     |
         {7:  2 }rows: 6, cols: 46                             |
@@ -152,7 +152,7 @@ describe('buffer cursor position is correct in terminal without number column', 
   local screen
 
   local function setup_ex_register(str)
-    screen = thelpers.setup_child_nvim({
+    screen = tt.setup_child_nvim({
       '-u',
       'NONE',
       '-i',
@@ -189,7 +189,7 @@ describe('buffer cursor position is correct in terminal without number column', 
 
   before_each(clear)
 
-  describe('in a line with no multibyte characters or trailing spaces,', function()
+  describe('in a line with no multibyte chars or trailing spaces,', function()
     before_each(function()
       setup_ex_register('aaaaaaaa')
     end)
@@ -252,7 +252,7 @@ describe('buffer cursor position is correct in terminal without number column', 
     end)
   end)
 
-  describe('in a line with single-cell multibyte characters and no trailing spaces,', function()
+  describe('in a line with single-cell multibyte chars and no trailing spaces,', function()
     before_each(function()
       setup_ex_register('µµµµµµµµ')
     end)
@@ -315,81 +315,72 @@ describe('buffer cursor position is correct in terminal without number column', 
     end)
   end)
 
-  describe(
-    'in a line with single-cell composed multibyte characters and no trailing spaces,',
-    function()
-      if skip(is_os('win'), 'Encoding problem?') then
-        return
-      end
+  describe('in a line with single-cell composed multibyte chars and no trailing spaces,', function()
+    before_each(function()
+      setup_ex_register('µ̳µ̳µ̳µ̳µ̳µ̳µ̳µ̳')
+    end)
 
-      before_each(function()
-        setup_ex_register('µ̳µ̳µ̳µ̳µ̳µ̳µ̳µ̳')
-      end)
-
-      it('at the end', function()
-        feed('<C-R>r')
-        screen:expect([[
+    it('at the end', function()
+      feed('<C-R>r')
+      screen:expect([[
                                                                               |*4
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ̳µ̳µ̳µ̳µ̳µ̳µ̳µ̳{2:^ }                                                            |
         {3:-- TERMINAL --}                                                        |
       ]])
-        eq({ 6, 33 }, eval('nvim_win_get_cursor(0)'))
-        feed([[<C-\><C-N>]])
-        screen:expect([[
+      eq({ 6, 33 }, eval('nvim_win_get_cursor(0)'))
+      feed([[<C-\><C-N>]])
+      screen:expect([[
                                                                               |*4
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ̳µ̳µ̳µ̳µ̳µ̳µ̳^µ̳{4: }                                                            |
                                                                               |
       ]])
-        eq({ 6, 29 }, eval('nvim_win_get_cursor(0)'))
-      end)
+      eq({ 6, 29 }, eval('nvim_win_get_cursor(0)'))
+    end)
 
-      it('near the end', function()
-        feed('<C-R>r<C-X><C-X>')
-        screen:expect([[
+    it('near the end', function()
+      skip(is_os('win'))
+      feed('<C-R>r<C-X><C-X>')
+      screen:expect([[
                                                                               |*4
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ̳µ̳µ̳µ̳µ̳µ̳{2:^µ̳}µ̳                                                             |
         {3:-- TERMINAL --}                                                        |
       ]])
-        eq({ 6, 25 }, eval('nvim_win_get_cursor(0)'))
-        feed([[<C-\><C-N>]])
-        screen:expect([[
+      eq({ 6, 25 }, eval('nvim_win_get_cursor(0)'))
+      feed([[<C-\><C-N>]])
+      screen:expect([[
                                                                               |*4
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ̳µ̳µ̳µ̳µ̳^µ̳{4:µ̳}µ̳                                                             |
                                                                               |
       ]])
-        eq({ 6, 21 }, eval('nvim_win_get_cursor(0)'))
-      end)
+      eq({ 6, 21 }, eval('nvim_win_get_cursor(0)'))
+    end)
 
-      it('near the start', function()
-        feed('<C-R>r<C-B><C-O>')
-        screen:expect([[
+    it('near the start', function()
+      skip(is_os('win'))
+      feed('<C-R>r<C-B><C-O>')
+      screen:expect([[
                                                                               |*4
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ̳{2:^µ̳}µ̳µ̳µ̳µ̳µ̳µ̳                                                             |
         {3:-- TERMINAL --}                                                        |
       ]])
-        eq({ 6, 5 }, eval('nvim_win_get_cursor(0)'))
-        feed([[<C-\><C-N>]])
-        screen:expect([[
+      eq({ 6, 5 }, eval('nvim_win_get_cursor(0)'))
+      feed([[<C-\><C-N>]])
+      screen:expect([[
                                                                               |*4
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :^µ̳{4:µ̳}µ̳µ̳µ̳µ̳µ̳µ̳                                                             |
                                                                               |
       ]])
-        eq({ 6, 1 }, eval('nvim_win_get_cursor(0)'))
-      end)
-    end
-  )
+      eq({ 6, 1 }, eval('nvim_win_get_cursor(0)'))
+    end)
+  end)
 
-  describe('in a line with double-cell multibyte characters and no trailing spaces,', function()
-    if skip(is_os('win'), 'Encoding problem?') then
-      return
-    end
-
+  describe('in a line with double-cell multibyte chars and no trailing spaces,', function()
     before_each(function()
       setup_ex_register('哦哦哦哦哦哦哦哦')
     end)
@@ -478,7 +469,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
   local screen
 
   local function setup_ex_register(str)
-    screen = thelpers.setup_child_nvim({
+    screen = tt.setup_child_nvim({
       '-u',
       'NONE',
       '-i',
@@ -522,7 +513,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
     command('set number')
   end)
 
-  describe('in a line with no multibyte characters or trailing spaces,', function()
+  describe('in a line with no multibyte chars or trailing spaces,', function()
     before_each(function()
       setup_ex_register('aaaaaaaa')
     end)
@@ -603,7 +594,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
     end)
   end)
 
-  describe('in a line with single-cell multibyte characters and no trailing spaces,', function()
+  describe('in a line with single-cell multibyte chars and no trailing spaces,', function()
     before_each(function()
       setup_ex_register('µµµµµµµµ')
     end)
@@ -684,20 +675,14 @@ describe('buffer cursor position is correct in terminal with number column', fun
     end)
   end)
 
-  describe(
-    'in a line with single-cell composed multibyte characters and no trailing spaces,',
-    function()
-      if skip(is_os('win'), 'Encoding problem?') then
-        return
-      end
+  describe('in a line with single-cell composed multibyte chars and no trailing spaces,', function()
+    before_each(function()
+      setup_ex_register('µ̳µ̳µ̳µ̳µ̳µ̳µ̳µ̳')
+    end)
 
-      before_each(function()
-        setup_ex_register('µ̳µ̳µ̳µ̳µ̳µ̳µ̳µ̳')
-      end)
-
-      it('at the end', function()
-        feed('<C-R>r')
-        screen:expect([[
+    it('at the end', function()
+      feed('<C-R>r')
+      screen:expect([[
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
@@ -706,9 +691,9 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:µ̳µ̳µ̳µ̳µ̳µ̳µ̳µ̳{2:^ }                                                        |
         {3:-- TERMINAL --}                                                        |
       ]])
-        eq({ 6, 33 }, eval('nvim_win_get_cursor(0)'))
-        feed([[<C-\><C-N>]])
-        screen:expect([[
+      eq({ 6, 33 }, eval('nvim_win_get_cursor(0)'))
+      feed([[<C-\><C-N>]])
+      screen:expect([[
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
@@ -717,12 +702,13 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:µ̳µ̳µ̳µ̳µ̳µ̳µ̳^µ̳{4: }                                                        |
                                                                               |
       ]])
-        eq({ 6, 29 }, eval('nvim_win_get_cursor(0)'))
-      end)
+      eq({ 6, 29 }, eval('nvim_win_get_cursor(0)'))
+    end)
 
-      it('near the end', function()
-        feed('<C-R>r<C-X><C-X>')
-        screen:expect([[
+    it('near the end', function()
+      skip(is_os('win'))
+      feed('<C-R>r<C-X><C-X>')
+      screen:expect([[
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
@@ -731,9 +717,9 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:µ̳µ̳µ̳µ̳µ̳µ̳{2:^µ̳}µ̳                                                         |
         {3:-- TERMINAL --}                                                        |
       ]])
-        eq({ 6, 25 }, eval('nvim_win_get_cursor(0)'))
-        feed([[<C-\><C-N>]])
-        screen:expect([[
+      eq({ 6, 25 }, eval('nvim_win_get_cursor(0)'))
+      feed([[<C-\><C-N>]])
+      screen:expect([[
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
@@ -742,12 +728,13 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:µ̳µ̳µ̳µ̳µ̳^µ̳{4:µ̳}µ̳                                                         |
                                                                               |
       ]])
-        eq({ 6, 21 }, eval('nvim_win_get_cursor(0)'))
-      end)
+      eq({ 6, 21 }, eval('nvim_win_get_cursor(0)'))
+    end)
 
-      it('near the start', function()
-        feed('<C-R>r<C-B><C-O>')
-        screen:expect([[
+    it('near the start', function()
+      skip(is_os('win'))
+      feed('<C-R>r<C-B><C-O>')
+      screen:expect([[
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
@@ -756,9 +743,9 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:µ̳{2:^µ̳}µ̳µ̳µ̳µ̳µ̳µ̳                                                         |
         {3:-- TERMINAL --}                                                        |
       ]])
-        eq({ 6, 5 }, eval('nvim_win_get_cursor(0)'))
-        feed([[<C-\><C-N>]])
-        screen:expect([[
+      eq({ 6, 5 }, eval('nvim_win_get_cursor(0)'))
+      feed([[<C-\><C-N>]])
+      screen:expect([[
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
@@ -767,16 +754,11 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:^µ̳{4:µ̳}µ̳µ̳µ̳µ̳µ̳µ̳                                                         |
                                                                               |
       ]])
-        eq({ 6, 1 }, eval('nvim_win_get_cursor(0)'))
-      end)
-    end
-  )
+      eq({ 6, 1 }, eval('nvim_win_get_cursor(0)'))
+    end)
+  end)
 
-  describe('in a line with double-cell multibyte characters and no trailing spaces,', function()
-    if skip(is_os('win'), 'Encoding problem?') then
-      return
-    end
-
+  describe('in a line with double-cell multibyte chars and no trailing spaces,', function()
     before_each(function()
       setup_ex_register('哦哦哦哦哦哦哦哦')
     end)

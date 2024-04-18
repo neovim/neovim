@@ -539,6 +539,8 @@ func Test_digraph_set_function()
   call assert_fails('call digraph_set("あ", "あ")', 'E1214: Digraph must be just two characters: あ')
   call assert_fails('call digraph_set("aa", "ああ")', 'E1215: Digraph must be one character: ああ')
   call assert_fails('call digraph_set("aa", "か" .. nr2char(0x3099))',  'E1215: Digraph must be one character: か' .. nr2char(0x3099))
+  call assert_fails('call digraph_set(v:_null_string, "い")',  'E1214: Digraph must be just two characters')
+  call assert_fails('call digraph_set("aa", 0z10)',  'E976: Using a Blob as a String')
   bwipe!
 endfunc
 
@@ -556,6 +558,8 @@ func Test_digraph_get_function()
   call assert_equal('う', digraph_get('  '))
   call assert_fails('call digraph_get("aaa")', 'E1214: Digraph must be just two characters: aaa')
   call assert_fails('call digraph_get("b")', 'E1214: Digraph must be just two characters: b')
+  call assert_fails('call digraph_get(v:_null_string)', 'E1214: Digraph must be just two characters:')
+  call assert_fails('call digraph_get(0z10)', 'E976: Using a Blob as a String')
 endfunc
 
 func Test_digraph_get_function_encode()
@@ -580,8 +584,12 @@ func Test_digraph_setlist_function()
   call assert_equal('く', digraph_get('bb'))
 
   call assert_fails('call digraph_setlist([[]])', 'E1216:')
-  call assert_fails('call digraph_setlist([["aa", "b", "cc"]])', '1216:')
+  call assert_fails('call digraph_setlist([["aa", "b", "cc"]])', 'E1216:')
   call assert_fails('call digraph_setlist([["あ", "あ"]])', 'E1214: Digraph must be just two characters: あ')
+  call assert_fails('call digraph_setlist([v:_null_list])', 'E1216:')
+  call assert_fails('call digraph_setlist({})', 'E1216:')
+  call assert_fails('call digraph_setlist([{}])', 'E1216:')
+  call assert_true(digraph_setlist(v:_null_list))
 endfunc
 
 func Test_digraph_getlist_function()
@@ -589,13 +597,15 @@ func Test_digraph_getlist_function()
   call digraph_setlist([['aa', 'き'], ['bb', 'く']])
 
   for pair in digraph_getlist(1)
-    call assert_equal(digraph_get(pair[0]), pair[1])
+    call assert_equal(pair[1], digraph_get(pair[0]))
   endfor
 
   " We don't know how many digraphs are registered before, so check the number
   " of digraphs returned.
   call assert_equal(digraph_getlist()->len(), digraph_getlist(0)->len())
-  call assert_notequal((digraph_getlist()->len()), digraph_getlist(1)->len())
+  call assert_notequal(digraph_getlist()->len(), digraph_getlist(1)->len())
+
+  call assert_fails('call digraph_getlist(0z12)', 'E974: Using a Blob as a Number')
 endfunc
 
 

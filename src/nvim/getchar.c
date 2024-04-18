@@ -64,6 +64,15 @@
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 
+typedef struct {
+  int prev_c;
+  uint8_t buf[MB_MAXBYTES * 3 + 4];
+  size_t buflen;
+  unsigned pending;
+  bool in_special;
+  bool in_mbyte;
+} gotchars_state_T;
+
 /// Index in scriptin
 static int curscript = -1;
 /// Streams to read script from
@@ -93,6 +102,12 @@ static buffheader_T readbuf1 = { { NULL, { NUL } }, NULL, 0, 0 };
 
 /// Second read ahead buffer. Used for redo.
 static buffheader_T readbuf2 = { { NULL, { NUL } }, NULL, 0, 0 };
+
+/// Buffer used to store typed characters for vim.on_key().
+static kvec_withinit_t(char, MAXMAPLEN) on_key_buf = KVI_INITIAL_VALUE(on_key_buf);
+
+/// Number of following bytes that should not be stored for vim.on_key().
+static size_t no_on_key_len = 0;
 
 static int typeahead_char = 0;  ///< typeahead char that's not flushed
 
@@ -994,14 +1009,19 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
 /// Uses cmd_silent, KeyTyped and KeyNoremap to restore the flags belonging to
 /// the char.
 ///
+/// @param no_on_key don't store these bytes for vim.on_key()
+///
 /// @return the length of what was inserted
-int ins_char_typebuf(int c, int modifiers)
+int ins_char_typebuf(int c, int modifiers, bool no_on_key)
 {
   char buf[MB_MAXBYTES * 3 + 4];
   unsigned len = special_to_buf(c, modifiers, true, buf);
   assert(len < sizeof(buf));
   buf[len] = NUL;
   ins_typebuf(buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
+  if (KeyTyped && no_on_key) {
+    no_on_key_len += len;
+  }
   return (int)len;
 }
 
@@ -1101,40 +1121,95 @@ void del_typebuf(int len, int offset)
   }
 }
 
+/// Add a single byte to a recording or 'showcmd'.
+/// Return true if a full key has been received, false otherwise.
+static bool gotchars_add_byte(gotchars_state_T *state, uint8_t byte)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int c = state->buf[state->buflen++] = byte;
+  bool retval = false;
+
+  if (state->pending > 0) {
+    state->pending--;
+  }
+
+  // When receiving a special key sequence, store it until we have all
+  // the bytes and we can decide what to do with it.
+  if ((state->pending == 0 || state->in_mbyte) && c == K_SPECIAL) {
+    state->pending += 2;
+    if (!state->in_mbyte) {
+      state->in_special = true;
+    }
+  }
+
+  if (state->pending > 0) {
+    goto ret_false;
+  }
+
+  if (!state->in_mbyte) {
+    if (state->in_special) {
+      state->in_special = false;
+      if (state->prev_c == KS_MODIFIER) {
+        // When receiving a modifier, wait for the modified key.
+        goto ret_false;
+      }
+      c = TO_SPECIAL(state->prev_c, c);
+    }
+    // When receiving a multibyte character, store it until we have all
+    // the bytes, so that it won't be split between two buffer blocks,
+    // and delete_buff_tail() will work properly.
+    state->pending = MB_BYTE2LEN_CHECK(c) - 1;
+    if (state->pending > 0) {
+      state->in_mbyte = true;
+      goto ret_false;
+    }
+  } else {
+    // Stored all bytes of a multibyte character.
+    state->in_mbyte = false;
+  }
+
+  retval = true;
+ret_false:
+  state->prev_c = c;
+  return retval;
+}
+
 /// Write typed characters to script file.
-/// If recording is on put the character in the recordbuffer.
+/// If recording is on put the character in the record buffer.
 static void gotchars(const uint8_t *chars, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   const uint8_t *s = chars;
-  static uint8_t buf[4] = { 0 };
-  static size_t buflen = 0;
   size_t todo = len;
+  static gotchars_state_T state;
 
-  while (todo--) {
-    buf[buflen++] = *s++;
-
-    // When receiving a special key sequence, store it until we have all
-    // the bytes and we can decide what to do with it.
-    if (buflen == 1 && buf[0] == K_SPECIAL) {
-      continue;
-    }
-    if (buflen == 2) {
+  while (todo-- > 0) {
+    if (!gotchars_add_byte(&state, *s++)) {
       continue;
     }
 
     // Handle one byte at a time; no translation to be done.
-    for (size_t i = 0; i < buflen; i++) {
-      updatescript(buf[i]);
+    for (size_t i = 0; i < state.buflen; i++) {
+      updatescript(state.buf[i]);
     }
 
+    state.buf[state.buflen] = NUL;
+
     if (reg_recording != 0) {
-      buf[buflen] = NUL;
-      add_buff(&recordbuff, (char *)buf, (ptrdiff_t)buflen);
+      add_buff(&recordbuff, (char *)state.buf, (ptrdiff_t)state.buflen);
       // remember how many chars were last recorded
-      last_recorded_len += buflen;
+      last_recorded_len += state.buflen;
     }
-    buflen = 0;
+
+    if (state.buflen > no_on_key_len) {
+      vim_unescape_ks((char *)state.buf + no_on_key_len);
+      kvi_concat(on_key_buf, (char *)state.buf + no_on_key_len);
+      no_on_key_len = 0;
+    } else {
+      no_on_key_len -= state.buflen;
+    }
+
+    state.buflen = 0;
   }
 
   may_sync_undo();
@@ -1151,6 +1226,7 @@ static void gotchars(const uint8_t *chars, size_t len)
 void gotchars_ignore(void)
 {
   uint8_t nop_buf[3] = { K_SPECIAL, KS_EXTRA, KE_IGNORE };
+  no_on_key_len += 3;
   gotchars(nop_buf, 3);
 }
 
@@ -1440,6 +1516,61 @@ int merge_modifiers(int c_arg, int *modifiers)
   return c;
 }
 
+/// Add a single byte to 'showcmd' for a partially matched mapping.
+/// Call add_to_showcmd() if a full key has been received.
+static void add_byte_to_showcmd(uint8_t byte)
+{
+  static gotchars_state_T state;
+
+  if (!p_sc || msg_silent != 0) {
+    return;
+  }
+
+  if (!gotchars_add_byte(&state, byte)) {
+    return;
+  }
+
+  state.buf[state.buflen] = NUL;
+  state.buflen = 0;
+
+  int modifiers = 0;
+  int c = NUL;
+
+  const uint8_t *ptr = state.buf;
+  if (ptr[0] == K_SPECIAL && ptr[1] == KS_MODIFIER && ptr[2] != NUL) {
+    modifiers = ptr[2];
+    ptr += 3;
+  }
+
+  if (*ptr != NUL) {
+    const char *mb_ptr = mb_unescape((const char **)&ptr);
+    c = mb_ptr != NULL ? utf_ptr2char(mb_ptr) : *ptr++;
+    if (c <= 0x7f) {
+      // Merge modifiers into the key to make the result more readable.
+      int modifiers_after = modifiers;
+      int mod_c = merge_modifiers(c, &modifiers_after);
+      if (modifiers_after == 0) {
+        modifiers = 0;
+        c = mod_c;
+      }
+    }
+  }
+
+  // TODO(zeertzjq): is there a more readable and yet compact representation of
+  // modifiers and special keys?
+  if (modifiers != 0) {
+    add_to_showcmd(K_SPECIAL);
+    add_to_showcmd(KS_MODIFIER);
+    add_to_showcmd(modifiers);
+  }
+  if (c != NUL) {
+    add_to_showcmd(c);
+  }
+  while (*ptr != NUL) {
+    add_to_showcmd(*ptr++);
+  }
+}
+
 /// Get the next input character.
 /// Can return a special key or a multi-byte character.
 /// Can return NUL when called recursively, use safe_vgetc() if that's not
@@ -1621,9 +1752,13 @@ int vgetc(void)
       if (!no_mapping && KeyTyped && mod_mask == MOD_MASK_ALT && !(State & MODE_TERMINAL)
           && !is_mouse_key(c)) {
         mod_mask = 0;
-        int len = ins_char_typebuf(c, 0);
-        ins_char_typebuf(ESC, 0);
-        ungetchars(len + 3);  // K_SPECIAL KS_MODIFIER MOD_MASK_ALT takes 3 more bytes
+        int len = ins_char_typebuf(c, 0, false);
+        ins_char_typebuf(ESC, 0, false);
+        int old_len = len + 3;  // K_SPECIAL KS_MODIFIER MOD_MASK_ALT takes 3 more bytes
+        ungetchars(old_len);
+        if (on_key_buf.size >= (size_t)old_len) {
+          on_key_buf.size -= (size_t)old_len;
+        }
         continue;
       }
 
@@ -1639,7 +1774,9 @@ int vgetc(void)
   may_garbage_collect = false;
 
   // Execute Lua on_key callbacks.
-  nlua_execute_on_key(c);
+  nlua_execute_on_key(c, on_key_buf.items, on_key_buf.size);
+  kvi_destroy(on_key_buf);
+  kvi_init(on_key_buf);
 
   // Need to process the character before we know it's safe to do something
   // else.
@@ -2508,7 +2645,7 @@ static int vgetorpeek(bool advance)
             unshowmode(true);
             mode_deleted = true;
           }
-          validate_cursor();
+          validate_cursor(curwin);
           int old_wcol = curwin->w_wcol;
           int old_wrow = curwin->w_wrow;
 
@@ -2541,7 +2678,7 @@ static int vgetorpeek(bool advance)
                 curwin->w_wrow = curwin->w_cline_row
                                  + curwin->w_wcol / curwin->w_width_inner;
                 curwin->w_wcol %= curwin->w_width_inner;
-                curwin->w_wcol += curwin_col_off();
+                curwin->w_wcol += win_col_off(curwin);
                 col = 0;  // no correction needed
               } else {
                 curwin->w_wcol--;
@@ -2664,7 +2801,7 @@ static int vgetorpeek(bool advance)
               showcmd_idx = typebuf.tb_len - SHOWCMD_COLS;
             }
             while (showcmd_idx < typebuf.tb_len) {
-              add_to_showcmd(typebuf.tb_buf[typebuf.tb_off + showcmd_idx++]);
+              add_byte_to_showcmd(typebuf.tb_buf[typebuf.tb_off + showcmd_idx++]);
             }
             curwin->w_wcol = old_wcol;
             curwin->w_wrow = old_wrow;

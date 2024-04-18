@@ -1,11 +1,11 @@
-local helpers = require('test.unit.helpers')(after_each)
+local t = require('test.unit.testutil')
 local bit = require('bit')
 
-local itp = helpers.gen_itp(it)
+local itp = t.gen_itp(it)
 
-local child_call_once = helpers.child_call_once
-local cimport = helpers.cimport
-local ffi = helpers.ffi
+local child_call_once = t.child_call_once
+local cimport = t.cimport
+local ffi = t.ffi
 
 local lib = cimport('./src/nvim/charset.h')
 

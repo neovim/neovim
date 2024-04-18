@@ -15,8 +15,32 @@ on:
 # Build on the oldest supported images, so we have broader compatibility
 # Build with gcc-10 to prevent triggering #14150 (default is still gcc-9 on 20.04)
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      build_type: ${{ steps.build.outputs.build_type }}
+      appimage_tag: ${{ steps.build.outputs.appimage_tag }}
+    steps:
+      # Nightly uses RelWithDebInfo while stable uses Release (which disables
+      # asserts). This helps get better debug info from people brave enough to
+      # use the nightly builds.
+      - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
+        run: |
+          echo 'CMAKE_BUILD_TYPE=Release' >> $GITHUB_ENV
+          echo 'APPIMAGE_TAG=latest' >> $GITHUB_ENV
+      - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
+        run: |
+          echo 'CMAKE_BUILD_TYPE=RelWithDebInfo' >> $GITHUB_ENV
+          echo 'APPIMAGE_TAG=nightly' >> $GITHUB_ENV
+      - name: Export build information
+        id: build
+        run: |
+          printf "build_type=${CMAKE_BUILD_TYPE}\n" >> $GITHUB_OUTPUT
+          printf "appimage_tag=${APPIMAGE_TAG}\n" >> $GITHUB_OUTPUT
+
   linux:
     runs-on: ubuntu-20.04
+    needs: setup
     env:
       CC: gcc-10
     outputs:
@@ -27,16 +51,9 @@ jobs:
           # Perform a full checkout #13471
           fetch-depth: 0
       - run: ./.github/scripts/install_deps.sh
-      - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
-        run: |
-          echo 'CMAKE_BUILD_TYPE=Release' >> $GITHUB_ENV
-          echo 'APPIMAGE_TAG=latest' >> $GITHUB_ENV
-      - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
-        run: |
-          echo 'CMAKE_BUILD_TYPE=RelWithDebInfo' >> $GITHUB_ENV
-          echo 'APPIMAGE_TAG=nightly' >> $GITHUB_ENV
+      - run: echo "CMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}" >> $GITHUB_ENV
       - name: appimage
-        run: ./scripts/genappimage.sh ${APPIMAGE_TAG}
+        run: ./scripts/genappimage.sh ${{ needs.setup.outputs.appimage_tag }}
       - name: tar.gz
         run: cpack --config build/CPackConfig.cmake -G TGZ
       - uses: actions/upload-artifact@v4
@@ -59,8 +76,20 @@ jobs:
           ./build/bin/nvim --version | head -n 3 >> $GITHUB_OUTPUT
           printf 'END\n' >> $GITHUB_OUTPUT
 
-  macOS:
-    runs-on: macos-14
+  macos:
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ macos-12, macos-14 ]
+        include:
+          - runner: macos-12
+            arch: x86_64
+          - runner: macos-14
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    env:
+      MACOSX_DEPLOYMENT_TARGET: 11.0
     steps:
       - uses: actions/checkout@v4
         with:
@@ -68,21 +97,34 @@ jobs:
           fetch-depth: 0
       - name: Install dependencies
         run: ./.github/scripts/install_deps.sh
-      - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
-        run: printf 'CMAKE_BUILD_TYPE=Release\n' >> $GITHUB_ENV
-      - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
-        run: printf 'CMAKE_BUILD_TYPE=RelWithDebInfo\n' >> $GITHUB_ENV
-      - name: Build universal binary
-        run: ./.github/scripts/build_universal_macos.sh
+
+      - name: Build deps
+        run: |
+          cmake -S cmake.deps -B .deps -G Ninja \
+            -D CMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }} \
+            -D CMAKE_FIND_FRAMEWORK=NEVER
+          cmake --build .deps
+
+      - name: Build neovim
+        run: |
+          cmake -B build -G Ninja \
+            -D CMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }} \
+            -D ENABLE_LIBINTL=OFF \
+            -D CMAKE_FIND_FRAMEWORK=NEVER
+          cmake --build build
+
+      - name: Package
+        run: cpack --config build/CPackConfig.cmake
+
       - uses: actions/upload-artifact@v4
         with:
-          name: nvim-macos
-          path: build/nvim-macos.tar.gz
+          name: nvim-macos-${{ matrix.arch }}
+          path: build/nvim-macos-${{ matrix.arch }}.tar.gz
           retention-days: 1
 
   windows:
+    needs: setup
     runs-on: windows-2019
-    name: windows (MSVC_64)
     steps:
       - uses: actions/checkout@v4
         with:
@@ -91,11 +133,11 @@ jobs:
       - run: .github/scripts/env.ps1
       - name: Build deps
         run: |
-          cmake -S cmake.deps -B .deps -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
+          cmake -S cmake.deps -B .deps -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}
           cmake --build .deps
       - name: build package
         run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}
           cmake --build build --target package
       - uses: actions/upload-artifact@v4
         with:
@@ -106,7 +148,7 @@ jobs:
           retention-days: 1
 
   publish:
-    needs: [linux, macOS, windows]
+    needs: [linux, macos, windows]
     runs-on: ubuntu-latest
     env:
       GH_REPO: ${{ github.repository }}
@@ -160,11 +202,16 @@ jobs:
           cd ./appimage
           sha256sum nvim.appimage.zsync > nvim.appimage.zsync.sha256sum
           echo "SHA_APP_IMAGE_ZSYNC=$(cat nvim.appimage.zsync.sha256sum)" >> $GITHUB_ENV
-      - name: Generate macOS SHA256 checksums
+      - name: Generate macos x86_64 SHA256 checksums
         run: |
-          cd ./nvim-macos
-          sha256sum nvim-macos.tar.gz > nvim-macos.tar.gz.sha256sum
-          echo "SHA_MACOS=$(cat nvim-macos.tar.gz.sha256sum)" >> $GITHUB_ENV
+          cd ./nvim-macos-x86_64
+          sha256sum nvim-macos-x86_64.tar.gz > nvim-macos-x86_64.tar.gz.sha256sum
+          echo "SHA_MACOS_X86_64=$(cat nvim-macos-x86_64.tar.gz.sha256sum)" >> $GITHUB_ENV
+      - name: Generate macos arm64 SHA256 checksums
+        run: |
+          cd ./nvim-macos-arm64
+          sha256sum nvim-macos-arm64.tar.gz > nvim-macos-arm64.tar.gz.sha256sum
+          echo "SHA_MACOS_ARM64=$(cat nvim-macos-arm64.tar.gz.sha256sum)" >> $GITHUB_ENV
       - name: Generate Win64 SHA256 checksums
         run: |
           cd ./nvim-win64
@@ -179,6 +226,6 @@ jobs:
         run: |
           envsubst < "$GITHUB_WORKSPACE/.github/workflows/notes.md" > "$RUNNER_TEMP/notes.md"
           if [ "$TAG_NAME" != "nightly" ]; then
-            gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos/* nvim-linux64/* appimage/* nvim-win64/*
+            gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux64/* appimage/* nvim-win64/*
           fi
-          gh release create $TAG_NAME $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos/* nvim-linux64/* appimage/* nvim-win64/*
+          gh release create $TAG_NAME $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux64/* appimage/* nvim-win64/*

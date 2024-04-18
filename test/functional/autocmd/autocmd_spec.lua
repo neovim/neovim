@@ -1,24 +1,24 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 
-local assert_visible = helpers.assert_visible
-local assert_alive = helpers.assert_alive
-local dedent = helpers.dedent
-local eq = helpers.eq
-local neq = helpers.neq
-local eval = helpers.eval
-local feed = helpers.feed
-local clear = helpers.clear
-local matches = helpers.matches
-local api = helpers.api
-local pcall_err = helpers.pcall_err
-local fn = helpers.fn
-local expect = helpers.expect
-local command = helpers.command
-local exc_exec = helpers.exc_exec
-local exec_lua = helpers.exec_lua
-local retry = helpers.retry
-local source = helpers.source
+local assert_visible = t.assert_visible
+local assert_alive = t.assert_alive
+local dedent = t.dedent
+local eq = t.eq
+local neq = t.neq
+local eval = t.eval
+local feed = t.feed
+local clear = t.clear
+local matches = t.matches
+local api = t.api
+local pcall_err = t.pcall_err
+local fn = t.fn
+local expect = t.expect
+local command = t.command
+local exc_exec = t.exc_exec
+local exec_lua = t.exec_lua
+local retry = t.retry
+local source = t.source
 
 describe('autocmd', function()
   before_each(clear)
@@ -371,6 +371,31 @@ describe('autocmd', function()
     assert_alive()
     screen:expect_unchanged()
 
+    -- Also check with win_splitmove().
+    exec_lua [[
+      vim.api.nvim_buf_call(_G.buf, function()
+        vim.fn.win_splitmove(vim.fn.winnr(), vim.fn.win_getid(1))
+      end)
+    ]]
+    screen:expect_unchanged()
+
+    -- Also check with nvim_win_set_config().
+    matches(
+      ': Failed to move window %d+ into split$',
+      pcall_err(
+        exec_lua,
+        [[
+          vim.api.nvim_buf_call(_G.buf, function()
+            vim.api.nvim_win_set_config(0, {
+              vertical = true,
+              win = vim.fn.win_getid(1)
+            })
+          end)
+        ]]
+      )
+    )
+    screen:expect_unchanged()
+
     -- Ensure splitting still works from inside the aucmd_win.
     exec_lua [[vim.api.nvim_buf_call(_G.buf, function() vim.cmd "split" end)]]
     screen:expect [[
@@ -391,12 +416,12 @@ describe('autocmd', function()
     eq(
       'editor',
       exec_lua [[
-      vim.cmd "only"
-      vim.api.nvim_buf_call(_G.buf, function()
-        _G.config = vim.api.nvim_win_get_config(0)
-      end)
-      return _G.config.relative
-    ]]
+        vim.cmd "only"
+        vim.api.nvim_buf_call(_G.buf, function()
+          _G.config = vim.api.nvim_win_get_config(0)
+        end)
+        return _G.config.relative
+      ]]
     )
   end)
 
@@ -437,11 +462,11 @@ describe('autocmd', function()
       pcall_err(
         exec_lua,
         [[
-      vim.api.nvim_buf_call(_G.buf, function()
-        local win = vim.api.nvim_get_current_win()
-        vim.api.nvim_win_close(win, true)
-      end)
-    ]]
+          vim.api.nvim_buf_call(_G.buf, function()
+            local win = vim.api.nvim_get_current_win()
+            vim.api.nvim_win_close(win, true)
+          end)
+        ]]
       )
     )
     matches(
@@ -449,12 +474,12 @@ describe('autocmd', function()
       pcall_err(
         exec_lua,
         [[
-      vim.api.nvim_buf_call(_G.buf, function()
-        local win = vim.api.nvim_get_current_win()
-        vim.cmd('tabnext')
-        vim.api.nvim_win_close(win, true)
-      end)
-    ]]
+          vim.api.nvim_buf_call(_G.buf, function()
+            local win = vim.api.nvim_get_current_win()
+            vim.cmd('tabnext')
+            vim.api.nvim_win_close(win, true)
+          end)
+        ]]
       )
     )
     matches(
@@ -462,11 +487,11 @@ describe('autocmd', function()
       pcall_err(
         exec_lua,
         [[
-      vim.api.nvim_buf_call(_G.buf, function()
-        local win = vim.api.nvim_get_current_win()
-        vim.api.nvim_win_hide(win)
-      end)
-    ]]
+          vim.api.nvim_buf_call(_G.buf, function()
+            local win = vim.api.nvim_get_current_win()
+            vim.api.nvim_win_hide(win)
+          end)
+        ]]
       )
     )
     matches(
@@ -474,12 +499,12 @@ describe('autocmd', function()
       pcall_err(
         exec_lua,
         [[
-      vim.api.nvim_buf_call(_G.buf, function()
-        local win = vim.api.nvim_get_current_win()
-        vim.cmd('tabnext')
-        vim.api.nvim_win_hide(win)
-      end)
-    ]]
+          vim.api.nvim_buf_call(_G.buf, function()
+            local win = vim.api.nvim_get_current_win()
+            vim.cmd('tabnext')
+            vim.api.nvim_win_hide(win)
+          end)
+        ]]
       )
     )
   end)

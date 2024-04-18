@@ -11,10 +11,9 @@ vim.bo = vim.bo
 ---@field [integer] vim.wo
 vim.wo = vim.wo
 
---- Allow CTRL-_ in Insert and Command-line mode.  This is default off, to
---- avoid that users that accidentally type CTRL-_ instead of SHIFT-_ get
---- into reverse Insert mode, and don't know how to get out.  See
---- 'revins'.
+--- Allow CTRL-_ in Insert mode.  This is default off, to avoid that users
+--- that accidentally type CTRL-_ instead of SHIFT-_ get into reverse
+--- Insert mode, and don't know how to get out.  See 'revins'.
 ---
 --- @type boolean
 vim.o.allowrevins = false
@@ -2626,6 +2625,8 @@ vim.go.gd = vim.go.gdefault
 --- This is a scanf-like string that uses the same format as the
 --- 'errorformat' option: see `errorformat`.
 ---
+--- If ripgrep ('grepprg') is available, this option defaults to `%f:%l:%c:%m`.
+---
 --- @type string
 vim.o.grepformat = "%f:%l:%m,%f:%l%m,%f  %l%m"
 vim.o.gfm = vim.o.grepformat
@@ -2650,6 +2651,16 @@ vim.go.gfm = vim.go.grepformat
 --- apply equally to 'grepprg'.
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
+--- This option defaults to:
+--- - `rg --vimgrep -uuu $* ...` if ripgrep is available (`:checkhealth`),
+--- - `grep -n $* /dev/null` on Unix,
+--- - `findstr /n $* nul` on Windows.
+--- Ripgrep can perform additional filtering such as using .gitignore rules
+--- and skipping hidden or binary files. This is disabled by default (see the -u option)
+--- to more closely match the behaviour of standard grep.
+--- You can make ripgrep match Vim's case handling using the
+--- -i/--ignore-case and -S/--smart-case options.
+--- An `OptionSet` autocmd can be used to set it up to match automatically.
 ---
 --- @type string
 vim.o.grepprg = "grep -n $* /dev/null"
@@ -5195,9 +5206,6 @@ vim.wo.scr = vim.wo.scroll
 --- Minimum is 1, maximum is 100000.
 --- Only in `terminal` buffers.
 ---
---- Note: Lines that are not visible and kept in scrollback are not
---- reflown when the terminal buffer is resized horizontally.
----
 --- @type integer
 vim.o.scrollback = -1
 vim.o.scbk = vim.o.scrollback
@@ -6079,8 +6087,7 @@ vim.go.sta = vim.go.smarttab
 --- highlighted with `hl-NonText`.
 --- You may also want to add "lastline" to the 'display' option to show as
 --- much of the last line as possible.
---- NOTE: only partly implemented, currently works with CTRL-E, CTRL-Y
---- and scrolling with the mouse.
+--- NOTE: partly implemented, doesn't work yet for `gj` and `gk`.
 ---
 --- @type boolean
 vim.o.smoothscroll = false
@@ -6849,7 +6856,7 @@ vim.go.tpm = vim.go.tabpagemax
 --- appear wrong in many places.
 --- The value must be more than 0 and less than 10000.
 ---
---- There are four main ways to use tabs in Vim:
+--- There are five main ways to use tabs in Vim:
 --- 1. Always keep 'tabstop' at 8, set 'softtabstop' and 'shiftwidth' to 4
 ---    (or 3 or whatever you prefer) and use 'noexpandtab'.  Then Vim
 ---    will use a mix of tabs and spaces, but typing <Tab> and <BS> will
@@ -7865,8 +7872,8 @@ vim.wo.winbl = vim.wo.winblend
 --- will scroll 'window' minus two lines, with a minimum of one.
 --- When 'window' is equal to 'lines' minus one CTRL-F and CTRL-B scroll
 --- in a much smarter way, taking care of wrapping lines.
---- When resizing the Vim window, the value is smaller than 1 or more than
---- or equal to 'lines' it will be set to 'lines' minus 1.
+--- When resizing the Vim window, and the value is smaller than 1 or more
+--- than or equal to 'lines' it will be set to 'lines' minus 1.
 --- Note: Do not confuse this with the height of the Vim window, use
 --- 'lines' for that.
 ---

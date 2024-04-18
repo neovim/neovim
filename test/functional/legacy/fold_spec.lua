@@ -1,25 +1,18 @@
 -- Tests for folding.
 local Screen = require('test.functional.ui.screen')
 
-local helpers = require('test.functional.helpers')(after_each)
-local feed, insert, feed_command, expect_any =
-  helpers.feed, helpers.insert, helpers.feed_command, helpers.expect_any
-local command = helpers.command
-local exec = helpers.exec
+local t = require('test.functional.testutil')()
+local feed, insert, feed_command, expect_any = t.feed, t.insert, t.feed_command, t.expect_any
+local command = t.command
+local exec = t.exec
 
 describe('folding', function()
   local screen
 
   before_each(function()
-    helpers.clear()
+    t.clear()
 
     screen = Screen.new(45, 8)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [2] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey }, -- Folded
-      [3] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Grey }, -- FoldColumn
-      [4] = { foreground = Screen.colors.Brown }, -- LineNr
-    })
     screen:attach()
   end)
 
@@ -67,7 +60,7 @@ describe('folding', function()
     feed('kYpj')
     feed_command('call append("$", foldlevel("."))')
 
-    helpers.poke_eventloop()
+    t.poke_eventloop()
     screen:expect([[
         dd {{{            |
         ee {{{ }}}        |
@@ -93,7 +86,7 @@ describe('folding', function()
     feed_command('call append("$", foldlevel(2))')
     feed('zR')
 
-    helpers.poke_eventloop()
+    t.poke_eventloop()
     screen:expect([[
       aa                  |
         bb                |
@@ -222,15 +215,15 @@ describe('folding', function()
     command('call setline(1, ["{{{1", "nline 1", "{{{1", "line 2"])')
 
     screen:expect([[
-      {3:+ }{4:  0 }{2:^+--  2 lines: ·························}|
-      {3:+ }{4:  1 }{2:+--  2 lines: ·························}|
+      {7:+ }{8:  0 }{13:^+--  2 lines: ·························}|
+      {7:+ }{8:  1 }{13:+--  2 lines: ·························}|
       {1:~                                            }|*5
                                                    |
     ]])
     feed('j')
     screen:expect([[
-      {3:+ }{4:  1 }{2:+--  2 lines: ·························}|
-      {3:+ }{4:  0 }{2:^+--  2 lines: ·························}|
+      {7:+ }{8:  1 }{13:+--  2 lines: ·························}|
+      {7:+ }{8:  0 }{13:^+--  2 lines: ·························}|
       {1:~                                            }|*5
                                                    |
     ]])
@@ -246,7 +239,7 @@ describe('folding', function()
 
     screen:expect([[
       ^one                                          |
-      {2:+--  2 lines: two····························}|
+      {13:+--  2 lines: two····························}|
       four                                         |
       {1:~                                            }|*4
                                                    |
@@ -263,7 +256,7 @@ describe('folding', function()
     feed('4G')
     screen:expect([[
       one                                          |
-      {2:+--  2 lines: two····························}|
+      {13:+--  2 lines: two····························}|
       ^four                                         |
       {1:~                                            }|*4
                                                    |
@@ -280,7 +273,7 @@ describe('folding', function()
     feed('1G')
     screen:expect([[
       ^one                                          |
-      {2:+--  2 lines: two····························}|
+      {13:+--  2 lines: two····························}|
       four                                         |
       {1:~                                            }|*4
                                                    |
@@ -297,7 +290,7 @@ describe('folding', function()
     feed('k')
     screen:expect([[
       ^one                                          |
-      {2:+--  2 lines: two····························}|
+      {13:+--  2 lines: two····························}|
       four                                         |
       {1:~                                            }|*4
                                                    |

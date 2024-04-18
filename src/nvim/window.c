@@ -735,16 +735,13 @@ static void cmd_with_count(char *cmd, char *bufp, size_t bufsize, int64_t Prenum
   }
 }
 
-void win_set_buf(win_T *win, buf_T *buf, bool noautocmd, Error *err)
+void win_set_buf(win_T *win, buf_T *buf, Error *err)
   FUNC_ATTR_NONNULL_ALL
 {
   tabpage_T *tab = win_find_tabpage(win);
 
   // no redrawing and don't set the window title
   RedrawingDisabled++;
-  if (noautocmd) {
-    block_autocmds();
-  }
 
   switchwin_T switchwin;
   if (switch_win_noblock(&switchwin, win, tab, true) == FAIL) {
@@ -756,7 +753,19 @@ void win_set_buf(win_T *win, buf_T *buf, bool noautocmd, Error *err)
   }
 
   try_start();
+
+  const int save_acd = p_acd;
+  if (!switchwin.sw_same_win) {
+    // Temporarily disable 'autochdir' when setting buffer in another window.
+    p_acd = false;
+  }
+
   int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
+
+  if (!switchwin.sw_same_win) {
+    p_acd = save_acd;
+  }
+
   if (!try_end(err) && result == FAIL) {
     api_set_error(err,
                   kErrorTypeException,
@@ -766,13 +775,10 @@ void win_set_buf(win_T *win, buf_T *buf, bool noautocmd, Error *err)
 
   // If window is not current, state logic will not validate its cursor. So do it now.
   // Still needed if do_buffer returns FAIL (e.g: autocmds abort script after buffer was set).
-  validate_cursor();
+  validate_cursor(curwin);
 
 cleanup:
   restore_win_noblock(&switchwin, true);
-  if (noautocmd) {
-    unblock_autocmds();
-  }
   RedrawingDisabled--;
 }
 
@@ -939,7 +945,7 @@ void ui_ext_win_viewport(win_T *wp)
   }
 }
 
-/// If "split_disallowed" is set or "wp"s buffer is closing, give an error and return FAIL.
+/// If "split_disallowed" is set, or "wp"'s buffer is closing, give an error and return FAIL.
 /// Otherwise return OK.
 int check_split_disallowed(const win_T *wp)
   FUNC_ATTR_NONNULL_ALL
@@ -1959,6 +1965,7 @@ int win_splitmove(win_T *wp, int size, int flags)
     // Remove the window and frame from the tree of frames.  Don't flatten any
     // frames yet so we can restore things if win_split_ins fails.
     winframe_remove(wp, &dir, NULL, &unflat_altfr);
+    assert(unflat_altfr != NULL);
     win_remove(wp, NULL);
     last_status(false);  // may need to remove last status line
     win_comp_pos();  // recompute window positions
@@ -1966,13 +1973,13 @@ int win_splitmove(win_T *wp, int size, int flags)
 
   // Split a window on the desired side and put "wp" there.
   if (win_split_ins(size, flags, wp, dir, unflat_altfr) == NULL) {
-    win_append(wp->w_prev, wp, NULL);
     if (!wp->w_floating) {
+      assert(unflat_altfr != NULL);
       // win_split_ins doesn't change sizes or layout if it fails to insert an
       // existing window, so just undo winframe_remove.
       winframe_restore(wp, dir, unflat_altfr);
-      win_comp_pos();  // recompute window positions
     }
+    win_append(wp->w_prev, wp, NULL);
     return FAIL;
   }
 
@@ -2873,7 +2880,7 @@ int win_close(win_T *win, bool free_buf, bool force)
 
     // The cursor position may be invalid if the buffer changed after last
     // using the window.
-    check_cursor();
+    check_cursor(curwin);
   }
 
   if (!was_floating) {
@@ -3149,6 +3156,13 @@ win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp, frame_T **unflat_al
   }
 
   frame_T *frp_close = win->w_frame;
+
+  // Save the position of the containing frame (which will also contain the
+  // altframe) before we remove anything, to recompute window positions later.
+  const win_T *const topleft = frame2win(frp_close->fr_parent);
+  int row = topleft->w_winrow;
+  int col = topleft->w_wincol;
+
   // Remove this frame from the list of frames.
   frame_remove(frp_close);
 
@@ -3161,13 +3175,10 @@ win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp, frame_T **unflat_al
                     altfr == frp_close->fr_next, false);
   }
 
-  // If rows/columns go to a window below/right its positions need to be
-  // updated.  Can only be done after the sizes have been updated.
-  if (altfr == frp_close->fr_next) {
-    int row = win->w_winrow;
-    int col = win->w_wincol;
-
-    frame_comp_pos(altfr, &row, &col);
+  // If the altframe wasn't adjacent and left/above, resizing it will have
+  // changed window positions within the parent frame.  Recompute them.
+  if (altfr != frp_close->fr_prev) {
+    frame_comp_pos(frp_close->fr_parent, &row, &col);
   }
 
   if (unflat_altfr == NULL) {
@@ -3271,7 +3282,6 @@ win_T *winframe_find_altwin(win_T *win, int *dirp, tabpage_T *tp, frame_T **altf
 /// Flatten "frp" into its parent frame if it's the only child, also merging its
 /// list with the grandparent if they share the same layout.
 /// Frees "frp" if flattened; also "frp->fr_parent" if it has the same layout.
-/// "frp" must be valid in the current tabpage.
 static void frame_flatten(frame_T *frp)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -3356,24 +3366,24 @@ void winframe_restore(win_T *wp, int dir, frame_T *unflat_altfr)
     }
   }
 
-  int row = wp->w_winrow;
-  int col = wp->w_wincol;
-
-  // Restore the lost room that was redistributed to the altframe.
+  // Restore the lost room that was redistributed to the altframe.  Also
+  // adjusts window sizes to fit restored statuslines/separators, if needed.
   if (dir == 'v') {
     frame_new_height(unflat_altfr, unflat_altfr->fr_height - frp->fr_height,
                      unflat_altfr == frp->fr_next, false);
-    row += frp->fr_height;
   } else if (dir == 'h') {
     frame_new_width(unflat_altfr, unflat_altfr->fr_width - frp->fr_width,
                     unflat_altfr == frp->fr_next, false);
-    col += frp->fr_width;
   }
 
-  // If rows/columns went to a window below/right, its positions need to be
-  // restored.  Can only be done after the sizes have been updated.
-  if (unflat_altfr == frp->fr_next) {
-    frame_comp_pos(unflat_altfr, &row, &col);
+  // Recompute window positions within the parent frame to restore them.
+  // Positions were unchanged if the altframe was adjacent and left/above.
+  if (unflat_altfr != frp->fr_prev) {
+    const win_T *const topleft = frame2win(frp->fr_parent);
+    int row = topleft->w_winrow;
+    int col = topleft->w_wincol;
+
+    frame_comp_pos(frp->fr_parent, &row, &col);
   }
 }
 
@@ -4915,19 +4925,15 @@ static void win_enter_ext(win_T *const wp, const int flags)
   if (wp->w_buffer != curbuf) {
     buf_copy_options(wp->w_buffer, BCO_ENTER | BCO_NOHELP);
   }
-
   if (!curwin_invalid) {
     prevwin = curwin;           // remember for CTRL-W p
     curwin->w_redr_status = true;
-  } else if (wp == prevwin) {
-    prevwin = NULL;             // don't want it to be the new curwin
   }
-
   curwin = wp;
   curbuf = wp->w_buffer;
 
-  check_cursor();
-  if (!virtual_active()) {
+  check_cursor(curwin);
+  if (!virtual_active(curwin)) {
     curwin->w_cursor.coladd = 0;
   }
   if (*p_spk == 'c') {
@@ -4938,7 +4944,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
     win_fix_cursor(get_real_state() & (MODE_NORMAL|MODE_CMDLINE|MODE_TERMINAL));
   }
 
-  fix_current_dir();
+  win_fix_current_dir();
 
   entering_window(curwin);
   // Careful: autocommands may close the window and make "wp" invalid
@@ -4991,7 +4997,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
 }
 
 /// Used after making another window the current one: change directory if needed.
-void fix_current_dir(void)
+void win_fix_current_dir(void)
 {
   // New directory is either the local directory of the window, tab or NULL.
   char *new_dir = curwin->w_localdir ? curwin->w_localdir : curtab->tp_localdir;
@@ -6643,7 +6649,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
       }
     } else if (sline > 0) {
       while (sline > 0 && lnum > 1) {
-        hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
+        hasFolding(wp, lnum, &lnum, NULL);
         if (lnum == 1) {
           // first line in buffer is folded
           line_size = 1;
@@ -6663,7 +6669,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
       if (sline < 0) {
         // Line we want at top would go off top of screen.  Use next
         // line instead.
-        hasFoldingWin(wp, lnum, NULL, &lnum, true, NULL);
+        hasFolding(wp, lnum, NULL, &lnum);
         lnum++;
         wp->w_wrow -= line_size + sline;
       } else if (sline > 0) {
@@ -6704,7 +6710,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
       if (wp == curwin && *p_spk == 'c') {
         // w_wrow needs to be valid. When setting 'laststatus' this may
         // call win_new_height() recursively.
-        validate_cursor();
+        validate_cursor(curwin);
       }
       if (wp->w_height_inner != prev_height) {
         return;  // Recursive call already changed the size, bail out.
@@ -6746,6 +6752,13 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
   wp->w_width_outer = (wp->w_width_inner + win_border_width(wp));
   wp->w_winrow_off = wp->w_border_adj[0] + wp->w_winbar_height;
   wp->w_wincol_off = wp->w_border_adj[3];
+
+  if (ui_has(kUIMultigrid)) {
+    ui_call_win_viewport_margins(wp->w_grid_alloc.handle, wp->handle,
+                                 wp->w_winrow_off, wp->w_border_adj[2],
+                                 wp->w_wincol_off, wp->w_border_adj[1]);
+  }
+
   wp->w_redr_status = true;
 }
 

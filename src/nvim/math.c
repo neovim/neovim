@@ -1,10 +1,16 @@
 // uncrustify:off
 #include <math.h>
 // uncrustify:on
+#include <limits.h>
 #include <stdint.h>
 #include <string.h>
 
+#ifdef HAVE_BITSCANFORWARD64
+# include <intrin.h>  // Required for _BitScanForward64
+#endif
+
 #include "nvim/math.h"
+#include "nvim/vim_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "math.c.generated.h"
@@ -52,6 +58,10 @@ int xctz(uint64_t x)
   // Use compiler builtin if possible.
 #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ >= 4))
   return __builtin_ctzll(x);
+#elif defined(HAVE_BITSCANFORWARD64)
+  unsigned long index;
+  _BitScanForward64(&index, x);
+  return (int)index;
 #else
   int count = 0;
   // Set x's trailing zeroes to ones and zero the rest.
@@ -65,4 +75,15 @@ int xctz(uint64_t x)
 
   return count;
 #endif
+}
+
+/// For overflow detection, add a digit safely to an int value.
+int vim_append_digit_int(int *value, int digit)
+{
+  int x = *value;
+  if (x > ((INT_MAX - digit) / 10)) {
+    return FAIL;
+  }
+  *value = x * 10 + digit;
+  return OK;
 }

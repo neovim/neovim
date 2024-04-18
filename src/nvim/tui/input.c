@@ -442,12 +442,12 @@ static void tk_getkeys(TermInput *input, bool force)
       forward_modified_utf8(input, &key);
     } else if (key.type == TERMKEY_TYPE_MOUSE) {
       forward_mouse_event(input, &key);
+    } else if (key.type == TERMKEY_TYPE_MODEREPORT) {
+      handle_modereport(input, &key);
     } else if (key.type == TERMKEY_TYPE_UNKNOWN_CSI) {
       handle_unknown_csi(input, &key);
     } else if (key.type == TERMKEY_TYPE_OSC || key.type == TERMKEY_TYPE_DCS) {
       handle_term_response(input, &key);
-    } else if (key.type == TERMKEY_TYPE_MODEREPORT) {
-      handle_modereport(input, &key);
     }
   }
 
@@ -552,6 +552,13 @@ static void handle_term_response(TermInput *input, const TermKeyKey *key)
   const char *str = NULL;
   if (termkey_interpret_string(input->tk, key, &str) == TERMKEY_RES_KEY) {
     assert(str != NULL);
+
+    // Handle DECRQSS SGR response for the query from tui_query_extended_underline().
+    // Some terminals include "0" in the attribute list unconditionally; others don't.
+    if (key->type == TERMKEY_TYPE_DCS
+        && (strnequal(str, S_LEN("1$r4:3m")) || strnequal(str, S_LEN("1$r0;4:3m")))) {
+      tui_enable_extended_underline(input->tui_data);
+    }
 
     // Send an event to nvim core. This will update the v:termresponse variable
     // and fire the TermResponse event

@@ -7,6 +7,7 @@
 --- @field varname? string
 --- @field pv_name? string
 --- @field type 'boolean'|'number'|'string'
+--- @field hidden? boolean
 --- @field immutable? boolean
 --- @field list? 'comma'|'onecomma'|'commacolon'|'onecommacolon'|'flags'|'flagscomma'
 --- @field scope vim.option_scope[]
@@ -90,6 +91,7 @@ return {
     {
       abbreviation = 'al',
       defaults = { if_true = 224 },
+      enable_if = false,
       full_name = 'aleph',
       scope = { 'global' },
       short_desc = N_('ASCII code of the letter Aleph (Hebrew)'),
@@ -99,14 +101,13 @@ return {
       abbreviation = 'ari',
       defaults = { if_true = false },
       desc = [=[
-        Allow CTRL-_ in Insert and Command-line mode.  This is default off, to
-        avoid that users that accidentally type CTRL-_ instead of SHIFT-_ get
-        into reverse Insert mode, and don't know how to get out.  See
-        'revins'.
+        Allow CTRL-_ in Insert mode.  This is default off, to avoid that users
+        that accidentally type CTRL-_ instead of SHIFT-_ get into reverse
+        Insert mode, and don't know how to get out.  See 'revins'.
       ]=],
       full_name = 'allowrevins',
       scope = { 'global' },
-      short_desc = N_('allow CTRL-_ in Insert and Command-line mode'),
+      short_desc = N_('allow CTRL-_ in Insert mode'),
       type = 'boolean',
       varname = 'p_ari',
     },
@@ -3367,6 +3368,8 @@ return {
         Format to recognize for the ":grep" command output.
         This is a scanf-like string that uses the same format as the
         'errorformat' option: see |errorformat|.
+
+        If ripgrep ('grepprg') is available, this option defaults to `%f:%l:%c:%m`.
       ]=],
       full_name = 'grepformat',
       list = 'onecomma',
@@ -3381,8 +3384,7 @@ return {
         condition = 'MSWIN',
         if_false = 'grep -n $* /dev/null',
         if_true = 'findstr /n $* nul',
-        doc = [["grep -n ",
-           Unix: "grep -n $* /dev/null"]],
+        doc = [[see below]],
       },
       desc = [=[
         Program to use for the |:grep| command.  This option may contain '%'
@@ -3400,6 +3402,16 @@ return {
         apply equally to 'grepprg'.
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
+        This option defaults to:
+        - `rg --vimgrep -uuu $* ...` if ripgrep is available (|:checkhealth|),
+        - `grep -n $* /dev/null` on Unix,
+        - `findstr /n $* nul` on Windows.
+        Ripgrep can perform additional filtering such as using .gitignore rules
+        and skipping hidden or binary files. This is disabled by default (see the -u option)
+        to more closely match the behaviour of standard grep.
+        You can make ripgrep match Vim's case handling using the
+        -i/--ignore-case and -S/--smart-case options.
+        An |OptionSet| autocmd can be used to set it up to match automatically.
       ]=],
       expand = true,
       full_name = 'grepprg',
@@ -5142,12 +5154,12 @@ return {
     },
     {
       abbreviation = 'mco',
-      defaults = { if_true = 6 },
+      defaults = { if_true = imacros('MAX_MCO') },
       full_name = 'maxcombine',
       scope = { 'global' },
       short_desc = N_('maximum nr of combining characters displayed'),
       type = 'number',
-      varname = 'p_mco',
+      hidden = true,
     },
     {
       abbreviation = 'mfd',
@@ -5459,7 +5471,6 @@ return {
         When on, the mouse pointer is hidden when characters are typed.
         The mouse pointer is restored when the mouse is moved.
       ]=],
-      enable_if = false,
       full_name = 'mousehide',
       redraw = { 'ui_option' },
       scope = { 'global' },
@@ -5875,6 +5886,7 @@ return {
     {
       abbreviation = 'pt',
       defaults = { if_true = '' },
+      enable_if = false,
       full_name = 'pastetoggle',
       scope = { 'global' },
       short_desc = N_('No description'),
@@ -6573,9 +6585,6 @@ return {
         top are deleted if new lines exceed this limit.
         Minimum is 1, maximum is 100000.
         Only in |terminal| buffers.
-
-        Note: Lines that are not visible and kept in scrollback are not
-        reflown when the terminal buffer is resized horizontally.
       ]=],
       full_name = 'scrollback',
       redraw = { 'current_buffer' },
@@ -7665,8 +7674,7 @@ return {
         highlighted with |hl-NonText|.
         You may also want to add "lastline" to the 'display' option to show as
         much of the last line as possible.
-        NOTE: only partly implemented, currently works with CTRL-E, CTRL-Y
-        and scrolling with the mouse.
+        NOTE: partly implemented, doesn't work yet for |gj| and |gk|.
       ]=],
       full_name = 'smoothscroll',
       pv_name = 'p_sms',
@@ -8532,7 +8540,7 @@ return {
         appear wrong in many places.
         The value must be more than 0 and less than 10000.
 
-        There are four main ways to use tabs in Vim:
+        There are five main ways to use tabs in Vim:
         1. Always keep 'tabstop' at 8, set 'softtabstop' and 'shiftwidth' to 4
            (or 3 or whatever you prefer) and use 'noexpandtab'.  Then Vim
            will use a mix of tabs and spaces, but typing <Tab> and <BS> will
@@ -8770,6 +8778,7 @@ return {
     {
       abbreviation = 'tenc',
       defaults = { if_true = '' },
+      enable_if = false,
       full_name = 'termencoding',
       scope = { 'global' },
       short_desc = N_('Terminal encoding'),
@@ -9807,8 +9816,8 @@ return {
         will scroll 'window' minus two lines, with a minimum of one.
         When 'window' is equal to 'lines' minus one CTRL-F and CTRL-B scroll
         in a much smarter way, taking care of wrapping lines.
-        When resizing the Vim window, the value is smaller than 1 or more than
-        or equal to 'lines' it will be set to 'lines' minus 1.
+        When resizing the Vim window, and the value is smaller than 1 or more
+        than or equal to 'lines' it will be set to 'lines' minus 1.
         Note: Do not confuse this with the height of the Vim window, use
         'lines' for that.
       ]=],

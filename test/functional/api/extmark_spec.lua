@@ -1,20 +1,20 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 
-local request = helpers.request
-local eq = helpers.eq
-local ok = helpers.ok
-local pcall_err = helpers.pcall_err
-local insert = helpers.insert
-local feed = helpers.feed
-local clear = helpers.clear
-local command = helpers.command
-local exec = helpers.exec
-local api = helpers.api
-local assert_alive = helpers.assert_alive
+local request = t.request
+local eq = t.eq
+local ok = t.ok
+local pcall_err = t.pcall_err
+local insert = t.insert
+local feed = t.feed
+local clear = t.clear
+local command = t.command
+local exec = t.exec
+local api = t.api
+local assert_alive = t.assert_alive
 
 local function expect(contents)
-  return eq(contents, helpers.curbuf_contents())
+  return eq(contents, t.curbuf_contents())
 end
 
 local function set_extmark(ns_id, id, line, col, opts)
@@ -460,7 +460,7 @@ describe('API/extmarks', function()
     -- This shouldn't seg fault
     screen:expect([[
       12345^ 1        |
-      ~              |*8
+      {1:~              }|*8
                      |
     ]])
   end)
@@ -513,7 +513,7 @@ describe('API/extmarks', function()
     insert('abc')
     screen:expect([[
       ab^c12345       |
-      ~              |*8
+      {1:~              }|*8
                      |
     ]])
     local rv = get_extmark_by_id(ns, marks[1])
@@ -1734,16 +1734,17 @@ describe('API/extmarks', function()
     command('d2')
     screen:expect([[
       S2^aaa bbb ccc                           |
-        aaa bbb ccc                           |*3
-                                              |*2
+      {7:  }aaa bbb ccc                           |*3
+      {7:  }                                      |
+                                              |
     ]])
     -- mark is restored with undo_restore == true
     command('silent undo')
     screen:expect([[
-      S1  ^aaa bbb ccc                         |
+      S1{7:  }^aaa bbb ccc                         |
       S1S2aaa bbb ccc                         |
-      S2  aaa bbb ccc                         |
-          aaa bbb ccc                         |*2
+      S2{7:  }aaa bbb ccc                         |
+      {7:    }aaa bbb ccc                         |*2
                                               |
     ]])
     -- decor is not removed twice
@@ -1964,7 +1965,7 @@ describe('API/win_extmark', function()
       grid = [[
       non ui-watched line |
       ui-watched lin^e     |
-      ~                   |
+      {1:~                   }|
                           |
     ]],
       extmarks = {
@@ -2052,7 +2053,7 @@ describe('API/win_extmark', function()
       grid = [[
       ui-watched linupdat^e|
       e                   |
-      ~                   |
+      {1:~                   }|
                           |
     ]],
       extmarks = {
@@ -2079,9 +2080,9 @@ describe('API/win_extmark', function()
       grid = [[
         ## grid 1
           [4:--------------------]|*3
-          [No Name] [+]       |
+          {3:[No Name] [+]       }|
           [2:--------------------]|*2
-          [No Name] [+]       |
+          {2:[No Name] [+]       }|
           [3:--------------------]|
         ## grid 2
           non ui-watched line |
@@ -2091,7 +2092,7 @@ describe('API/win_extmark', function()
         ## grid 4
           non ui-watched line |
           ui-watched lin^e     |
-          ~                   |
+          {1:~                   }|
     ]],
       extmarks = {
         [2] = {
@@ -2112,13 +2113,13 @@ describe('API/win_extmark', function()
       grid = [[
         ## grid 1
           [4:--------------------]|*3
-          [No Name] [+]       |
+          {3:[No Name] [+]       }|
           [2:--------------------]|*2
-          [No Name] [+]       |
+          {2:[No Name] [+]       }|
           [3:--------------------]|
         ## grid 2
           non ui-watched line |
-          ui-watched linupd@@@|
+          ui-watched linupd{1:@@@}|
         ## grid 3
                               |
         ## grid 4

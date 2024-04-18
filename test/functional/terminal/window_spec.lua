@@ -1,21 +1,21 @@
-local helpers = require('test.functional.helpers')(after_each)
-local thelpers = require('test.functional.terminal.helpers')
-local feed_data = thelpers.feed_data
-local feed, clear = helpers.feed, helpers.clear
-local poke_eventloop = helpers.poke_eventloop
-local command = helpers.command
-local retry = helpers.retry
-local eq = helpers.eq
-local eval = helpers.eval
-local skip = helpers.skip
-local is_os = helpers.is_os
+local t = require('test.functional.testutil')()
+local tt = require('test.functional.terminal.testutil')
+local feed_data = tt.feed_data
+local feed, clear = t.feed, t.clear
+local poke_eventloop = t.poke_eventloop
+local command = t.command
+local retry = t.retry
+local eq = t.eq
+local eval = t.eval
+local skip = t.skip
+local is_os = t.is_os
 
 describe(':terminal window', function()
   local screen
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup()
+    screen = tt.screen_setup()
   end)
 
   it('sets topline correctly #8556', function()
@@ -35,6 +35,7 @@ describe(':terminal window', function()
 
   describe("with 'number'", function()
     it('wraps text', function()
+      skip(is_os('win')) -- todo(clason): unskip when reenabling reflow
       feed([[<C-\><C-N>]])
       feed([[:set numberwidth=1 number<CR>i]])
       screen:expect([[
@@ -64,7 +65,7 @@ describe(':terminal window', function()
         {7:       1 }tty ready                                |
         {7:       2 }rows: 6, cols: 48                        |
         {7:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
-        {7:       4 }PQRSTUVWXYZrows: 6, cols: 41             |
+        {7:       4 }WXYZrows: 6, cols: 41                    |
         {7:       5 }{1: }                                        |
         {7:       6 }                                         |
         {3:-- TERMINAL --}                                    |
@@ -74,7 +75,7 @@ describe(':terminal window', function()
         {7:       1 }tty ready                                |
         {7:       2 }rows: 6, cols: 48                        |
         {7:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
-        {7:       4 }PQRSTUVWXYZrows: 6, cols: 41             |
+        {7:       4 }WXYZrows: 6, cols: 41                    |
         {7:       5 } abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN|
         {7:       6 }OPQRSTUVWXYZ{1: }                            |
         {3:-- TERMINAL --}                                    |
@@ -84,6 +85,7 @@ describe(':terminal window', function()
 
   describe("with 'statuscolumn'", function()
     it('wraps text', function()
+      skip(is_os('win')) -- todo(clason): unskip when reenabling reflow
       command([[set number statuscolumn=++%l\ \ ]])
       screen:expect([[
         {7:++1  }tty ready                                    |
@@ -108,9 +110,9 @@ describe(':terminal window', function()
       screen:expect([[
         {7:++7   }                                            |
         {7:++8   }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
-        {7:++9   }STUVWXYZ                                    |
+        {7:++9   }TUVWXYZ                                     |
         {7:++10  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
-        {7:++11  }STUVWXYZrows: 6, cols: 44                   |
+        {7:++11  }TUVWXYZrows: 6, cols: 44                    |
         {7:++12  }{1: }                                           |
         {3:-- TERMINAL --}                                    |
       ]])
@@ -174,7 +176,7 @@ describe(':terminal with multigrid', function()
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup(0, nil, 50, nil, { ext_multigrid = true })
+    screen = tt.screen_setup(0, nil, 50, nil, { ext_multigrid = true })
   end)
 
   it('resizes to requested size', function()

@@ -1,16 +1,12 @@
 " Vim compiler file
 " Compiler:	HTML Tidy
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2020 Sep 4
+" Last Change:	2024 Apr 03
 
 if exists("current_compiler")
   finish
 endif
 let current_compiler = "tidy"
-
-if exists(":CompilerSet") != 2		" older Vim always used :setlocal
-  command -nargs=* CompilerSet setlocal <args>
-endif
 
 let s:cpo_save = &cpo
 set cpo&vim

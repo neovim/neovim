@@ -1,11 +1,11 @@
 -- Test argument list commands
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local clear, command, eq = helpers.clear, helpers.command, helpers.eq
-local expect_exit = helpers.expect_exit
-local feed = helpers.feed
-local pcall_err = helpers.pcall_err
+local clear, command, eq = t.clear, t.command, t.eq
+local expect_exit = t.expect_exit
+local feed = t.feed
+local pcall_err = t.pcall_err
 
 describe('argument list commands', function()
   before_each(clear)
@@ -24,26 +24,26 @@ describe('argument list commands', function()
     feed(':confirm quit\n')
     screen:expect([[
                                                                   |
-      ~                                                           |
-                                                                  |
+      {1:~                                                           }|
+      {3:                                                            }|
       :confirm quit                                               |
-      2 more files to edit.  Quit anyway?                         |
-      [Y]es, (N)o: ^                                               |
+      {6:2 more files to edit.  Quit anyway?}                         |
+      {6:[Y]es, (N)o: }^                                               |
     ]])
     feed('N')
     screen:expect([[
       ^                                                            |
-      ~                                                           |*4
+      {1:~                                                           }|*4
                                                                   |
     ]])
     feed(':confirm quit\n')
     screen:expect([[
                                                                   |
-      ~                                                           |
-                                                                  |
+      {1:~                                                           }|
+      {3:                                                            }|
       :confirm quit                                               |
-      2 more files to edit.  Quit anyway?                         |
-      [Y]es, (N)o: ^                                               |
+      {6:2 more files to edit.  Quit anyway?}                         |
+      {6:[Y]es, (N)o: }^                                               |
     ]])
     expect_exit(1000, feed, 'Y')
   end)

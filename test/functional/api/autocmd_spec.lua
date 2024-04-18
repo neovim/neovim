@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 
-local clear = helpers.clear
-local command = helpers.command
-local eq = helpers.eq
-local neq = helpers.neq
-local exec_lua = helpers.exec_lua
-local matches = helpers.matches
-local api = helpers.api
-local source = helpers.source
-local pcall_err = helpers.pcall_err
+local clear = t.clear
+local command = t.command
+local eq = t.eq
+local neq = t.neq
+local exec_lua = t.exec_lua
+local matches = t.matches
+local api = t.api
+local source = t.source
+local pcall_err = t.pcall_err
 
 before_each(clear)
 
@@ -355,6 +355,44 @@ describe('autocmd api', function()
       test({ 'list' })
       test({ foo = 'bar' })
     end)
+
+    it('function in arbitrary data is passed to all autocmds #28353', function()
+      eq(
+        1303,
+        exec_lua([[
+          local res = 1
+
+          local fun = function(m, x)
+            res = res * m + x
+          end
+
+          local group = vim.api.nvim_create_augroup('MyTest', { clear = false })
+
+          vim.api.nvim_create_autocmd('User', {
+            group = group,
+            callback = function(payload)
+              payload.data.fun(10, payload.data.x)
+            end,
+            pattern = 'MyEvent',
+          })
+          vim.api.nvim_create_autocmd('User', {
+            group = group,
+            callback = function(payload)
+              payload.data.fun(100, payload.data.x)
+            end,
+            pattern = 'MyEvent',
+          })
+
+          vim.api.nvim_exec_autocmds('User', {
+            group = group,
+            pattern = 'MyEvent',
+            data = { x = 3, fun = fun },
+          })
+
+          return res
+        ]])
+      )
+    end)
   end)
 
   describe('nvim_get_autocmds', function()
@@ -610,15 +648,17 @@ describe('autocmd api', function()
       it('can retrieve a callback from an autocmd', function()
         local content = 'I Am A Callback'
         api.nvim_set_var('content', content)
-
-        local result = exec_lua([[
+        exec_lua([[
           local cb = function() return vim.g.content end
           vim.api.nvim_create_autocmd("User", {
             pattern = "TestTrigger",
             desc = "A test autocommand with a callback",
             callback = cb,
           })
-          local aus = vim.api.nvim_get_autocmds({ event = 'User', pattern = 'TestTrigger'})
+        ]])
+
+        local result = exec_lua([[
+          local aus = vim.api.nvim_get_autocmds({ event = 'User', pattern = 'TestTrigger' })
           local first = aus[1]
           return {
             cb = {
@@ -627,9 +667,14 @@ describe('autocmd api', function()
             }
           }
         ]])
+        eq({ cb = { type = 'function', can_retrieve = true } }, result)
 
-        eq('function', result.cb.type)
-        eq(true, result.cb.can_retrieve)
+        -- Also test with Vimscript
+        source([[
+          let s:aus = nvim_get_autocmds({'event': 'User', 'pattern': 'TestTrigger'})
+          let g:result = s:aus[0].callback()
+        ]])
+        eq(content, api.nvim_get_var('result'))
       end)
 
       it(

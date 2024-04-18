@@ -516,7 +516,7 @@ bool win_execute_before(win_execute_T *args, win_T *wp, tabpage_T *tp)
   }
 
   if (switch_win_noblock(&args->switchwin, wp, tp, true) == OK) {
-    check_cursor();
+    check_cursor(curwin);
     return true;
   }
   return false;
@@ -540,7 +540,7 @@ void win_execute_after(win_execute_T *args)
 
   // In case the command moved the cursor or changed the Visual area,
   // check it is valid.
-  check_cursor();
+  check_cursor(curwin);
   if (VIsual_active) {
     check_pos(curbuf, &VIsual);
   }
@@ -701,8 +701,8 @@ void f_win_splitmove(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     size = (int)tv_dict_get_number(d, "size");
   }
 
-  // Check if we can split the target before we bother switching windows.
-  if (is_aucmd_win(wp) || text_or_buf_locked() || check_split_disallowed(targetwin) == FAIL) {
+  // Check if we're allowed to continue before we bother switching windows.
+  if (is_aucmd_win(wp) || text_or_buf_locked() || check_split_disallowed(wp) == FAIL) {
     return;
   }
 
@@ -774,7 +774,7 @@ void f_winbufnr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "wincol()" function
 void f_wincol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  validate_cursor();
+  validate_cursor(curwin);
   rettv->vval.v_number = curwin->w_wcol + 1;
 }
 
@@ -811,7 +811,7 @@ void f_winlayout(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "winline()" function
 void f_winline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  validate_cursor();
+  validate_cursor(curwin);
   rettv->vval.v_number = curwin->w_wrow + 1;
 }
 
@@ -883,10 +883,10 @@ void f_winrestview(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     curwin->w_skipcol = (colnr_T)tv_get_number(&di->di_tv);
   }
 
-  check_cursor();
+  check_cursor(curwin);
   win_new_height(curwin, curwin->w_height);
   win_new_width(curwin, curwin->w_width);
-  changed_window_setting();
+  changed_window_setting(curwin);
 
   if (curwin->w_topline <= 0) {
     curwin->w_topline = 1;
@@ -956,13 +956,8 @@ int switch_win_noblock(switchwin_T *switchwin, win_T *win, tabpage_T *tp, bool n
   if (tp != NULL) {
     switchwin->sw_curtab = curtab;
     if (no_display) {
-      curtab->tp_firstwin = firstwin;
-      curtab->tp_lastwin = lastwin;
-      curtab->tp_topframe = topframe;
-      curtab = tp;
-      firstwin = curtab->tp_firstwin;
-      lastwin = curtab->tp_lastwin;
-      topframe = curtab->tp_topframe;
+      unuse_tabpage(curtab);
+      use_tabpage(tp);
     } else {
       goto_tabpage_tp(tp, false, false);
     }
@@ -989,13 +984,12 @@ void restore_win_noblock(switchwin_T *switchwin, bool no_display)
 {
   if (switchwin->sw_curtab != NULL && valid_tabpage(switchwin->sw_curtab)) {
     if (no_display) {
-      curtab->tp_firstwin = firstwin;
-      curtab->tp_lastwin = lastwin;
-      curtab->tp_topframe = topframe;
-      curtab = switchwin->sw_curtab;
-      firstwin = curtab->tp_firstwin;
-      lastwin = curtab->tp_lastwin;
-      topframe = curtab->tp_topframe;
+      win_T *const old_tp_curwin = curtab->tp_curwin;
+
+      unuse_tabpage(curtab);
+      // Don't change the curwin of the tabpage we temporarily visited.
+      curtab->tp_curwin = old_tp_curwin;
+      use_tabpage(switchwin->sw_curtab);
     } else {
       goto_tabpage_tp(switchwin->sw_curtab, false, false);
     }

@@ -1,26 +1,27 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 
 local Screen = require('test.functional.ui.screen')
 
-local assert_alive = helpers.assert_alive
-local assert_log = helpers.assert_log
-local api = helpers.api
-local command = helpers.command
-local clear = helpers.clear
-local exc_exec = helpers.exc_exec
-local exec_lua = helpers.exec_lua
-local eval = helpers.eval
-local eq = helpers.eq
-local ok = helpers.ok
-local fn = helpers.fn
-local insert = helpers.insert
-local neq = helpers.neq
-local mkdir = helpers.mkdir
-local rmdir = helpers.rmdir
-local alter_slashes = helpers.alter_slashes
+local assert_alive = t.assert_alive
+local assert_log = t.assert_log
+local api = t.api
+local command = t.command
+local clear = t.clear
+local exc_exec = t.exc_exec
+local exec_lua = t.exec_lua
+local eval = t.eval
+local eq = t.eq
+local ok = t.ok
+local fn = t.fn
+local insert = t.insert
+local neq = t.neq
+local mkdir = t.mkdir
+local rmdir = t.rmdir
+local alter_slashes = t.alter_slashes
 local tbl_contains = vim.tbl_contains
-local expect_exit = helpers.expect_exit
-local is_os = helpers.is_os
+local expect_exit = t.expect_exit
+local check_close = t.check_close
+local is_os = t.is_os
 
 local testlog = 'Xtest-defaults-log'
 
@@ -32,7 +33,7 @@ describe('startup defaults', function()
       command('filetype')
       screen:expect([[
         ^                                                  |
-        ~                                                 |*2
+        {1:~                                                 }|*2
         ]] .. expected)
     end
 
@@ -132,9 +133,9 @@ describe('startup defaults', function()
       command('vsp')
       screen:expect([[
         1                        │1                       |
-        ^+--  2 lines: 2··········│+--  2 lines: 2·········|
+        {13:^+--  2 lines: 2··········}│{13:+--  2 lines: 2·········}|
         4                        │4                       |
-        ~                        │~                       |
+        {1:~                        }│{1:~                       }|
                                                           |
       ]])
 
@@ -142,9 +143,9 @@ describe('startup defaults', function()
       command('set ambiwidth=double')
       screen:expect([[
         1                        |1                       |
-        ^+--  2 lines: 2----------|+--  2 lines: 2---------|
+        {13:^+--  2 lines: 2----------}|{13:+--  2 lines: 2---------}|
         4                        |4                       |
-        ~                        |~                       |
+        {1:~                        }|{1:~                       }|
                                                           |
       ]])
 
@@ -152,9 +153,9 @@ describe('startup defaults', function()
       fn.setcellwidths({ { 0x2502, 0x2502, 1 } })
       screen:expect([[
         1                        │1                       |
-        ^+--  2 lines: 2----------│+--  2 lines: 2---------|
+        {13:^+--  2 lines: 2----------}│{13:+--  2 lines: 2---------}|
         4                        │4                       |
-        ~                        │~                       |
+        {1:~                        }│{1:~                       }|
                                                           |
       ]])
 
@@ -162,9 +163,9 @@ describe('startup defaults', function()
       fn.setcellwidths({ { 0x2502, 0x2502, 2 } })
       screen:expect([[
         1                        |1                       |
-        ^+--  2 lines: 2----------|+--  2 lines: 2---------|
+        {13:^+--  2 lines: 2----------}|{13:+--  2 lines: 2---------}|
         4                        |4                       |
-        ~                        |~                       |
+        {1:~                        }|{1:~                       }|
                                                           |
       ]])
 
@@ -172,9 +173,9 @@ describe('startup defaults', function()
       command('set ambiwidth=single')
       screen:expect([[
         1                        |1                       |
-        ^+--  2 lines: 2··········|+--  2 lines: 2·········|
+        {13:^+--  2 lines: 2··········}|{13:+--  2 lines: 2·········}|
         4                        |4                       |
-        ~                        |~                       |
+        {1:~                        }|{1:~                       }|
                                                           |
       ]])
     end)
@@ -274,6 +275,7 @@ describe('XDG defaults', function()
   -- Do not put before_each() here for the same reasons.
 
   after_each(function()
+    check_close()
     os.remove(testlog)
   end)
 
@@ -378,7 +380,7 @@ describe('XDG defaults', function()
             .. root_path
             .. ('/b'):rep(2048)
             .. '/nvim'
-            .. (',' .. root_path .. '/c/nvim'):rep(512)
+            .. (',' .. root_path .. '/c/nvim')
             .. ','
             .. root_path
             .. ('/X'):rep(4096)
@@ -393,12 +395,12 @@ describe('XDG defaults', function()
             .. root_path
             .. ('/B'):rep(2048)
             .. '/nvim/site'
-            .. (',' .. root_path .. '/C/nvim/site'):rep(512)
+            .. (',' .. root_path .. '/C/nvim/site')
             .. ','
             .. vimruntime
             .. ','
             .. libdir
-            .. (',' .. root_path .. '/C/nvim/site/after'):rep(512)
+            .. (',' .. root_path .. '/C/nvim/site/after')
             .. ','
             .. root_path
             .. ('/B'):rep(2048)
@@ -413,7 +415,7 @@ describe('XDG defaults', function()
             .. '/'
             .. data_dir
             .. '/site/after'
-            .. (',' .. root_path .. '/c/nvim/after'):rep(512)
+            .. (',' .. root_path .. '/c/nvim/after')
             .. ','
             .. root_path
             .. ('/b'):rep(2048)
@@ -449,7 +451,7 @@ describe('XDG defaults', function()
             .. root_path
             .. ('/b'):rep(2048)
             .. '/nvim'
-            .. (',' .. root_path .. '/c/nvim'):rep(512)
+            .. (',' .. root_path .. '/c/nvim')
             .. ','
             .. root_path
             .. ('/X'):rep(4096)
@@ -464,12 +466,12 @@ describe('XDG defaults', function()
             .. root_path
             .. ('/B'):rep(2048)
             .. '/nvim/site'
-            .. (',' .. root_path .. '/C/nvim/site'):rep(512)
+            .. (',' .. root_path .. '/C/nvim/site')
             .. ','
             .. vimruntime
             .. ','
             .. libdir
-            .. (',' .. root_path .. '/C/nvim/site/after'):rep(512)
+            .. (',' .. root_path .. '/C/nvim/site/after')
             .. ','
             .. root_path
             .. ('/B'):rep(2048)
@@ -484,7 +486,7 @@ describe('XDG defaults', function()
             .. '/'
             .. data_dir
             .. '/site/after'
-            .. (',' .. root_path .. '/c/nvim/after'):rep(512)
+            .. (',' .. root_path .. '/c/nvim/after')
             .. ','
             .. root_path
             .. ('/b'):rep(2048)
@@ -865,6 +867,11 @@ describe('XDG defaults', function()
 end)
 
 describe('stdpath()', function()
+  after_each(function()
+    check_close()
+    os.remove(testlog)
+  end)
+
   -- Windows appends 'nvim-data' instead of just 'nvim' to prevent collisions
   -- due to XDG_CONFIG_HOME, XDG_DATA_HOME and XDG_STATE_HOME being the same.
   local function maybe_data(name)
@@ -890,7 +897,7 @@ describe('stdpath()', function()
 
   it('reacts to $NVIM_APPNAME', function()
     local appname = 'NVIM_APPNAME_TEST' .. ('_'):rep(106)
-    clear({ env = { NVIM_APPNAME = appname } })
+    clear({ env = { NVIM_APPNAME = appname, NVIM_LOG_FILE = testlog } })
     eq(appname, fn.fnamemodify(fn.stdpath('config'), ':t'))
     eq(appname, fn.fnamemodify(fn.stdpath('cache'), ':t'))
     eq(maybe_data(appname), fn.fnamemodify(fn.stdpath('log'), ':t'))
@@ -928,6 +935,9 @@ describe('stdpath()', function()
     -- Valid appnames:
     test_appname('a/b', 0)
     test_appname('a/b\\c', 0)
+    if not is_os('win') then
+      assert_log('Failed to start server: no such file or directory:', testlog)
+    end
   end)
 
   describe('returns a String', function()
@@ -1220,6 +1230,8 @@ describe('stdpath()', function()
   end)
 
   describe('errors', function()
+    before_each(clear)
+
     it('on unknown strings', function()
       eq('Vim(call):E6100: "capybara" is not a valid stdpath', exc_exec('call stdpath("capybara")'))
       eq('Vim(call):E6100: "" is not a valid stdpath', exc_exec('call stdpath("")'))
@@ -1235,7 +1247,8 @@ end)
 
 describe('autocommands', function()
   it('closes terminal with default shell on success', function()
-    api.nvim_set_option_value('shell', helpers.testprg('shell-test'), {})
+    clear()
+    api.nvim_set_option_value('shell', t.testprg('shell-test'), {})
     command('set shellcmdflag=EXIT shellredir= shellpipe= shellquote= shellxquote=')
 
     -- Should not block other events
@@ -1245,7 +1258,7 @@ describe('autocommands', function()
     command('terminal')
     eq(1, eval('get(g:, "n", 0)'))
 
-    helpers.retry(nil, 1000, function()
+    t.retry(nil, 1000, function()
       neq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
       eq(2, eval('get(g:, "n", 0)'))
     end)

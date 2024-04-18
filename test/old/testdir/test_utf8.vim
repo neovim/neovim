@@ -62,6 +62,9 @@ func Test_customlist_completion()
   call assert_equal('"Test3 N', getreg(':'))
 
   call garbagecollect(1)
+  delcommand Test1
+  delcommand Test2
+  delcommand Test3
 endfunc
 
 " Yank one 3 byte character and check the mark columns.
@@ -73,53 +76,6 @@ func Test_getvcol()
   call assert_equal(4, col("']"))
   call assert_equal(2, virtcol("'["))
   call assert_equal(2, virtcol("']"))
-endfunc
-
-func Test_screenchar_utf8()
-  new
-
-  " 1-cell, with composing characters 
-  call setline(1, ["ABC\u0308"])
-  redraw
-  call assert_equal([0x0041], screenchars(1, 1))
-  call assert_equal([0x0042], 1->screenchars(2))
-  call assert_equal([0x0043, 0x0308], screenchars(1, 3))
-  call assert_equal("A", screenstring(1, 1))
-  call assert_equal("B", screenstring(1, 2))
-  call assert_equal("C\u0308", screenstring(1, 3))
-
-  " 1-cell, with 6 composing characters
-  set maxcombine=6
-  call setline(1, ["ABC" .. repeat("\u0308", 6)])
-  redraw
-  call assert_equal([0x0041], screenchars(1, 1))
-  call assert_equal([0x0042], 1->screenchars(2))
-  " This should not use uninitialized memory
-  call assert_equal([0x0043] + repeat([0x0308], 6), screenchars(1, 3))
-  call assert_equal("A", screenstring(1, 1))
-  call assert_equal("B", screenstring(1, 2))
-  call assert_equal("C" .. repeat("\u0308", 6), screenstring(1, 3))
-  set maxcombine&
-
-  " 2-cells, with composing characters
-  let text = "\u3042\u3044\u3046\u3099"
-  call setline(1, text)
-  redraw
-  call assert_equal([0x3042], screenchars(1, 1))
-  call assert_equal([0], screenchars(1, 2))
-  call assert_equal([0x3044], screenchars(1, 3))
-  call assert_equal([0], screenchars(1, 4))
-  call assert_equal([0x3046, 0x3099], screenchars(1, 5))
-
-  call assert_equal("\u3042", screenstring(1, 1))
-  call assert_equal("", screenstring(1, 2))
-  call assert_equal("\u3044", screenstring(1, 3))
-  call assert_equal("", screenstring(1, 4))
-  call assert_equal("\u3046\u3099", screenstring(1, 5))
-
-  call assert_equal([text . '  '], ScreenLines(1, 8))
-
-  bwipe!
 endfunc
 
 func Test_list2str_str2list_utf8()
@@ -169,7 +125,55 @@ func Test_list2str_str2list_latin1()
   call assert_equal(s, sres)
 endfunc
 
+func Test_screenchar_utf8()
+  new
+
+  " 1-cell, with composing characters
+  call setline(1, ["ABC\u0308"])
+  redraw
+  call assert_equal([0x0041], screenchars(1, 1))
+  call assert_equal([0x0042], 1->screenchars(2))
+  call assert_equal([0x0043, 0x0308], screenchars(1, 3))
+  call assert_equal("A", screenstring(1, 1))
+  call assert_equal("B", screenstring(1, 2))
+  call assert_equal("C\u0308", screenstring(1, 3))
+
+  " 1-cell, with 6 composing characters
+  set maxcombine=6
+  call setline(1, ["ABC" .. repeat("\u0308", 6)])
+  redraw
+  call assert_equal([0x0041], screenchars(1, 1))
+  call assert_equal([0x0042], 1->screenchars(2))
+  " This should not use uninitialized memory
+  call assert_equal([0x0043] + repeat([0x0308], 6), screenchars(1, 3))
+  call assert_equal("A", screenstring(1, 1))
+  call assert_equal("B", screenstring(1, 2))
+  call assert_equal("C" .. repeat("\u0308", 6), screenstring(1, 3))
+  set maxcombine&
+
+  " 2-cells, with composing characters
+  let text = "\u3042\u3044\u3046\u3099"
+  call setline(1, text)
+  redraw
+  call assert_equal([0x3042], screenchars(1, 1))
+  call assert_equal([0], screenchars(1, 2))
+  call assert_equal([0x3044], screenchars(1, 3))
+  call assert_equal([0], screenchars(1, 4))
+  call assert_equal([0x3046, 0x3099], screenchars(1, 5))
+
+  call assert_equal("\u3042", screenstring(1, 1))
+  call assert_equal("", screenstring(1, 2))
+  call assert_equal("\u3044", screenstring(1, 3))
+  call assert_equal("", screenstring(1, 4))
+  call assert_equal("\u3046\u3099", screenstring(1, 5))
+
+  call assert_equal([text . '  '], ScreenLines(1, 8))
+
+  bwipe!
+endfunc
+
 func Test_setcellwidths()
+  new
   call setcellwidths([
         \ [0x1330, 0x1330, 2],
         \ [9999, 10000, 1],
@@ -212,6 +216,18 @@ func Test_setcellwidths()
     " Ambiguous width chars
     call assert_equal(2, strwidth("\u00A1"))
     call assert_equal(2, strwidth("\u2010"))
+
+    call setcellwidths([])
+    call setline(1, repeat("\u2103", 10))
+    normal! $
+    redraw
+    call assert_equal((aw == 'single') ? 10 : 19, wincol())
+    call setcellwidths([[0x2103, 0x2103, 1]])
+    redraw
+    call assert_equal(10, wincol())
+    call setcellwidths([[0x2103, 0x2103, 2]])
+    redraw
+    call assert_equal(19, wincol())
   endfor
   set ambiwidth& isprint&
 
@@ -245,6 +261,7 @@ func Test_setcellwidths()
   set listchars&
   set fillchars&
   call setcellwidths([])
+  bwipe!
 endfunc
 
 func Test_getcellwidths()
@@ -283,6 +300,60 @@ func Test_setcellwidths_dump()
   call StopVimInTerminal(buf)
 endfunc
 
+" When `setcellwidth` is used on characters that are not targets of `ambiwidth`.
+func Test_setcellwidths_with_non_ambiwidth_character_dump()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      call setline(1, [repeat("\u279c", 60), repeat("\u279c", 60)])
+      set ambiwidth=single
+  END
+  call writefile(lines, 'XCellwidthsWithNonAmbiwidthCharacter', 'D')
+  let buf = RunVimInTerminal('-S XCellwidthsWithNonAmbiwidthCharacter', {'rows': 6, 'cols': 50})
+  call term_sendkeys(buf, ":call setcellwidths([[0x279c, 0x279c, 1]])\<CR>")
+  call term_sendkeys(buf, ":echo\<CR>")
+  call VerifyScreenDump(buf, 'Test_setcellwidths_with_non_ambiwidth_character_dump_1', {})
+
+  call term_sendkeys(buf, ":call setcellwidths([[0x279c, 0x279c, 2]])\<CR>")
+  call term_sendkeys(buf, ":echo\<CR>")
+  call VerifyScreenDump(buf, 'Test_setcellwidths_with_non_ambiwidth_character_dump_2', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+
+" For some reason this test causes Test_customlist_completion() to fail on CI,
+" so run it as the last test.
+func Test_zz_ambiwidth_hl_dump()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      call setline(1, [repeat("\u2103", 60), repeat("\u2103", 60)])
+      set ambiwidth=single cursorline list display=lastline
+  END
+  call writefile(lines, 'XAmbiwidthHl', 'D')
+  let buf = RunVimInTerminal('-S XAmbiwidthHl', {'rows': 6, 'cols': 50})
+  call VerifyScreenDump(buf, 'Test_ambiwidth_hl_dump_1', {})
+
+  call term_sendkeys(buf, ":set ambiwidth=double\<CR>")
+  call term_sendkeys(buf, ":echo\<CR>")
+  call VerifyScreenDump(buf, 'Test_ambiwidth_hl_dump_2', {})
+
+  call term_sendkeys(buf, ":set ambiwidth=single\<CR>")
+  call term_sendkeys(buf, ":echo\<CR>")
+  call VerifyScreenDump(buf, 'Test_ambiwidth_hl_dump_1', {})
+
+  call term_sendkeys(buf, ":call setcellwidths([[0x2103, 0x2103, 2]])\<CR>")
+  call term_sendkeys(buf, ":echo\<CR>")
+  call VerifyScreenDump(buf, 'Test_ambiwidth_hl_dump_2', {})
+
+  call term_sendkeys(buf, ":call setcellwidths([[0x2103, 0x2103, 1]])\<CR>")
+  call term_sendkeys(buf, ":echo\<CR>")
+  call VerifyScreenDump(buf, 'Test_ambiwidth_hl_dump_1', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_print_overlong()
   " Text with more composing characters than MB_MAXBYTES.
   new
@@ -290,57 +361,6 @@ func Test_print_overlong()
   s/x/\=nr2char(1629)/g
   print
   bwipe!
-endfunc
-
-func Test_recording_with_select_mode_utf8()
-  call Run_test_recording_with_select_mode_utf8()
-endfunc
-
-func Run_test_recording_with_select_mode_utf8()
-  new
-
-  " No escaping
-  call feedkeys("qacc12345\<Esc>gH哦\<Esc>q", "tx")
-  call assert_equal("哦", getline(1))
-  call assert_equal("cc12345\<Esc>gH哦\<Esc>", @a)
-  call setline(1, 'asdf')
-  normal! @a
-  call assert_equal("哦", getline(1))
-
-  " 固 is 0xE5 0x9B 0xBA where 0x9B is CSI
-  call feedkeys("qacc12345\<Esc>gH固\<Esc>q", "tx")
-  call assert_equal("固", getline(1))
-  call assert_equal("cc12345\<Esc>gH固\<Esc>", @a)
-  call setline(1, 'asdf')
-  normal! @a
-  call assert_equal("固", getline(1))
-
-  " 四 is 0xE5 0x9B 0x9B where 0x9B is CSI
-  call feedkeys("qacc12345\<Esc>gH四\<Esc>q", "tx")
-  call assert_equal("四", getline(1))
-  call assert_equal("cc12345\<Esc>gH四\<Esc>", @a)
-  call setline(1, 'asdf')
-  normal! @a
-  call assert_equal("四", getline(1))
-
-  " 倒 is 0xE5 0x80 0x92 where 0x80 is K_SPECIAL
-  call feedkeys("qacc12345\<Esc>gH倒\<Esc>q", "tx")
-  call assert_equal("倒", getline(1))
-  call assert_equal("cc12345\<Esc>gH倒\<Esc>", @a)
-  call setline(1, 'asdf')
-  normal! @a
-  call assert_equal("倒", getline(1))
-
-  bwipe!
-endfunc
-
-" This must be done as one of the last tests, because it starts the GUI, which
-" cannot be undone.
-func Test_zz_recording_with_select_mode_utf8_gui()
-  CheckCanRunGui
-
-  gui -f
-  call Run_test_recording_with_select_mode_utf8()
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

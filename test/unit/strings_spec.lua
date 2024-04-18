@@ -1,10 +1,10 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')
+local itp = t.gen_itp(it)
 
-local cimport = helpers.cimport
-local eq = helpers.eq
-local ffi = helpers.ffi
-local to_cstr = helpers.to_cstr
+local cimport = t.cimport
+local eq = t.eq
+local ffi = t.ffi
+local to_cstr = t.to_cstr
 
 local strings = cimport('stdlib.h', './src/nvim/strings.h', './src/nvim/memory.h')
 
@@ -188,7 +188,7 @@ describe('vim_snprintf()', function()
       a('nan', buf, bsize, '%f', 0.0 / 0.0)
       a('inf', buf, bsize, '%f', 1.0 / 0.0)
       a('-inf', buf, bsize, '%f', -1.0 / 0.0)
-      a('-0.000000', buf, bsize, '%f', -0.0)
+      a('-0.000000', buf, bsize, '%f', tonumber('-0.0'))
       a('漢語', buf, bsize, '%s', '漢語')
       a('  漢語', buf, bsize, '%8s', '漢語')
       a('漢語  ', buf, bsize, '%-8s', '漢語')
@@ -233,7 +233,7 @@ describe('vim_snprintf()', function()
       a('nan', buf, bsize, '%1$f', 0.0 / 0.0)
       a('inf', buf, bsize, '%1$f', 1.0 / 0.0)
       a('-inf', buf, bsize, '%1$f', -1.0 / 0.0)
-      a('-0.000000', buf, bsize, '%1$f', -0.0)
+      a('-0.000000', buf, bsize, '%1$f', tonumber('-0.0'))
     end
   end)
 
@@ -261,7 +261,7 @@ end)
 
 describe('reverse_text', function()
   local reverse_text = function(str)
-    return helpers.internalize(strings.reverse_text(to_cstr(str)))
+    return t.internalize(strings.reverse_text(to_cstr(str)))
   end
 
   itp('handles empty string', function()

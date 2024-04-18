@@ -17,6 +17,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/change.h"
 #include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
@@ -763,8 +764,8 @@ void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
     return;
   }
 
-  if (getline_equal(eap->getline, eap->cookie, getsourceline)) {
-    evalarg->eval_getline = eap->getline;
+  if (getline_equal(eap->ea_getline, eap->cookie, getsourceline)) {
+    evalarg->eval_getline = eap->ea_getline;
     evalarg->eval_cookie = eap->cookie;
   }
 }
@@ -968,12 +969,12 @@ int skip_expr(char **pp, evalarg_T *const evalarg)
 
 /// Convert "tv" to a string.
 ///
-/// @param convert  when true convert a List into a sequence of lines.
+/// @param join_list  when true convert a List into a sequence of lines.
 ///
 /// @return  an allocated string.
-static char *typval2string(typval_T *tv, bool convert)
+static char *typval2string(typval_T *tv, bool join_list)
 {
-  if (convert && tv->v_type == VAR_LIST) {
+  if (join_list && tv->v_type == VAR_LIST) {
     garray_T ga;
     ga_init(&ga, (int)sizeof(char), 80);
     if (tv->vval.v_list != NULL) {
@@ -984,29 +985,38 @@ static char *typval2string(typval_T *tv, bool convert)
     }
     ga_append(&ga, NUL);
     return (char *)ga.ga_data;
+  } else if (tv->v_type == VAR_LIST || tv->v_type == VAR_DICT) {
+    return encode_tv2string(tv, NULL);
   }
   return xstrdup(tv_get_string(tv));
 }
 
 /// Top level evaluation function, returning a string.
 ///
-/// @param convert  when true convert a List into a sequence of lines.
+/// @param join_list  when true convert a List into a sequence of lines.
 ///
 /// @return  pointer to allocated memory, or NULL for failure.
-char *eval_to_string(char *arg, bool convert)
+char *eval_to_string_eap(char *arg, bool join_list, exarg_T *eap)
 {
   typval_T tv;
   char *retval;
 
-  if (eval0(arg, &tv, NULL, &EVALARG_EVALUATE) == FAIL) {
+  evalarg_T evalarg;
+  fill_evalarg_from_eap(&evalarg, eap, eap != NULL && eap->skip);
+  if (eval0(arg, &tv, NULL, &evalarg) == FAIL) {
     retval = NULL;
   } else {
-    retval = typval2string(&tv, convert);
+    retval = typval2string(&tv, join_list);
     tv_clear(&tv);
   }
   clear_evalarg(&EVALARG_EVALUATE, NULL);
 
   return retval;
+}
+
+char *eval_to_string(char *arg, bool join_list)
+{
+  return eval_to_string_eap(arg, join_list, NULL);
 }
 
 /// Call eval_to_string() without using current local variables and using
@@ -1892,7 +1902,7 @@ void *eval_for_line(const char *arg, bool *errp, exarg_T *eap, evalarg_T *const 
 
   *errp = true;  // Default: there is an error.
 
-  const char *expr = skip_var_list(arg, &fi->fi_varcount, &fi->fi_semicolon);
+  const char *expr = skip_var_list(arg, &fi->fi_varcount, &fi->fi_semicolon, false);
   if (expr == NULL) {
     return fi;
   }
@@ -7519,29 +7529,44 @@ int check_luafunc_name(const char *const str, const bool paren)
   return (int)(p - str);
 }
 
-/// Return the character "str[index]" where "index" is the character index.  If
-/// "index" is out of range NULL is returned.
+/// Return the character "str[index]" where "index" is the character index,
+/// including composing characters.
+/// If "index" is out of range NULL is returned.
 char *char_from_string(const char *str, varnumber_T index)
 {
-  size_t nbyte = 0;
   varnumber_T nchar = index;
 
-  if (str == NULL || index < 0) {
+  if (str == NULL) {
     return NULL;
   }
   size_t slen = strlen(str);
-  while (nchar > 0 && nbyte < slen) {
-    nbyte += (size_t)utf_ptr2len(str + nbyte);
-    nchar--;
+
+  // do the same as for a list: a negative index counts from the end
+  if (index < 0) {
+    int clen = 0;
+
+    for (size_t nbyte = 0; nbyte < slen; clen++) {
+      nbyte += (size_t)utfc_ptr2len(str + nbyte);
+    }
+    nchar = clen + index;
+    if (nchar < 0) {
+      // unlike list: index out of range results in empty string
+      return NULL;
+    }
+  }
+
+  size_t nbyte = 0;
+  for (; nchar > 0 && nbyte < slen; nchar--) {
+    nbyte += (size_t)utfc_ptr2len(str + nbyte);
   }
   if (nbyte >= slen) {
     return NULL;
   }
-  return xmemdupz(str + nbyte, (size_t)utf_ptr2len(str + nbyte));
+  return xmemdupz(str + nbyte, (size_t)utfc_ptr2len(str + nbyte));
 }
 
 /// Get the byte index for character index "idx" in string "str" with length
-/// "str_len".
+/// "str_len".  Composing characters are included.
 /// If going over the end return "str_len".
 /// If "idx" is negative count from the end, -1 is the last character.
 /// When going over the start return -1.
@@ -7552,7 +7577,7 @@ static ssize_t char_idx2byte(const char *str, size_t str_len, varnumber_T idx)
 
   if (nchar >= 0) {
     while (nchar > 0 && nbyte < str_len) {
-      nbyte += (size_t)utf_ptr2len(str + nbyte);
+      nbyte += (size_t)utfc_ptr2len(str + nbyte);
       nchar--;
     }
   } else {
@@ -7569,7 +7594,8 @@ static ssize_t char_idx2byte(const char *str, size_t str_len, varnumber_T idx)
   return (ssize_t)nbyte;
 }
 
-/// Return the slice "str[first:last]" using character indexes.
+/// Return the slice "str[first : last]" using character indexes.  Composing
+/// characters are included.
 ///
 /// @param exclusive  true for slice().
 ///
@@ -7591,7 +7617,7 @@ char *string_slice(const char *str, varnumber_T first, varnumber_T last, bool ex
     end_byte = char_idx2byte(str, slen, last);
     if (!exclusive && end_byte >= 0 && end_byte < (ssize_t)slen) {
       // end index is inclusive
-      end_byte += utf_ptr2len(str + end_byte);
+      end_byte += utfc_ptr2len(str + end_byte);
     }
   }
 
@@ -8085,10 +8111,12 @@ void ex_echo(exarg_T *eap)
         // Call msg_start() after eval1(), evaluating the expression
         // may cause a message to appear.
         if (eap->cmdidx == CMD_echo) {
-          // Mark the saved text as finishing the line, so that what
-          // follows is displayed on a new line when scrolling back
-          // at the more prompt.
-          msg_sb_eol();
+          if (!msg_didout) {
+            // Mark the saved text as finishing the line, so that what
+            // follows is displayed on a new line when scrolling back
+            // at the more prompt.
+            msg_sb_eol();
+          }
           msg_start();
         }
       } else if (eap->cmdidx == CMD_echo) {
@@ -8184,7 +8212,7 @@ void ex_execute(exarg_T *eap)
         did_emsg = save_did_emsg;
       }
     } else if (eap->cmdidx == CMD_execute) {
-      do_cmdline(ga.ga_data, eap->getline, eap->cookie, DOCMD_NOWAIT|DOCMD_VERBOSE);
+      do_cmdline(ga.ga_data, eap->ea_getline, eap->cookie, DOCMD_NOWAIT|DOCMD_VERBOSE);
     }
   }
 
@@ -8887,6 +8915,7 @@ void invoke_prompt_callback(void)
   // Add a new line for the prompt before invoking the callback, so that
   // text can always be inserted above the last line.
   ml_append(lnum, "", 0, false);
+  appended_lines_mark(lnum, 1);
   curwin->w_cursor.lnum = lnum + 1;
   curwin->w_cursor.col = 0;
 

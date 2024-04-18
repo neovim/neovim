@@ -52,13 +52,6 @@ if !exists("g:gnat")
    call g:gnat.Set_Session ()
 endif
 
-if exists(":CompilerSet") != 2
-   "
-   " plugin loaded by other means then the "compiler" command
-   "
-   command -nargs=* CompilerSet setlocal <args>
-endif
-
 execute "CompilerSet makeprg="     . escape (g:gnat.Get_Command('Make'), ' ')
 execute "CompilerSet errorformat=" . escape (g:gnat.Error_Format, ' ')
 

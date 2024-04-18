@@ -140,7 +140,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     // to avoid that must_redraw is set when 'cursorcolumn' is on.
     pum_is_visible = true;
     pum_is_drawn = true;
-    validate_cursor_col();
+    validate_cursor_col(curwin);
     int above_row = 0;
     int below_row = cmdline_row;
 
@@ -273,7 +273,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         context_lines = 0;
       } else {
         // Leave two lines of context if possible
-        validate_cheight();
+        validate_cheight(curwin);
         if (curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow >= 3) {
           context_lines = 3;
         } else {
@@ -666,6 +666,7 @@ void pum_redraw(void)
 }
 
 /// create a floating preview window for info
+/// Autocommands are blocked for the duration of the call.
 /// @return  NULL when no enough room to show
 static win_T *pum_create_float_preview(bool enter)
 {
@@ -690,6 +691,9 @@ static win_T *pum_create_float_preview(bool enter)
   config.height = pum_height;
   config.style = kWinStyleMinimal;
   config.hide = true;
+
+  block_autocmds();
+
   Error err = ERROR_INIT;
   win_T *wp = win_new_float(NULL, true, config, &err);
   // TODO(glepnir): remove win_enter usage
@@ -701,14 +705,18 @@ static win_T *pum_create_float_preview(bool enter)
   Buffer b = nvim_create_buf(false, true, &err);
   if (!b) {
     win_free(wp, NULL);
+    unblock_autocmds();
     return NULL;
   }
   buf_T *buf = find_buffer_by_handle(b, &err);
-  set_string_option_direct_in_buf(buf, kOptBufhidden, "wipe", OPT_LOCAL, 0);
+  set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL, 0, kOptReqBuf,
+                        buf);
   wp->w_float_is_info = true;
   wp->w_p_diff = false;
   buf->b_p_bl = false;
-  win_set_buf(wp, buf, true, &err);
+  win_set_buf(wp, buf, &err);
+
+  unblock_autocmds();
   return wp;
 }
 
@@ -995,7 +1003,7 @@ static bool pum_set_selected(int n, int repeat)
             }
 
             // Return cursor to where we were
-            validate_cursor();
+            validate_cursor(curwin);
             redraw_later(curwin, UPD_SOME_VALID);
 
             // When the preview window was resized we need to

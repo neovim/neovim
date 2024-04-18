@@ -18,7 +18,7 @@ if(POLICY CMP0135)
 endif()
 
 if(XCODE)
-  message(FATAL_ERROR [[Xcode generator is not supported. Use "Ninja" or "Unix Makefiles" instead.]])
+  message(FATAL_ERROR [[Xcode generator is not supported. Use "Ninja" or "Unix Makefiles" instead]])
 endif()
 
 # Point CMake at any custom modules we may ship
@@ -307,9 +307,8 @@ ExternalProject_Add(uncrustify
   URL_HASH SHA256=ecaf4c0adca14c36dfffa30bc28e69865115ecd602c90eb16a8cddccb41caad2
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/uncrustify
   CMAKE_ARGS ${DEPS_CMAKE_ARGS}
-  CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS}
   EXCLUDE_FROM_ALL TRUE
-  ${EXTERNALPROJECT_OPTIONS})
+  DOWNLOAD_NO_PROGRESS TRUE)
 
 option(USE_BUNDLED_BUSTED "Use bundled busted" ON)
 if(USE_BUNDLED_BUSTED)
@@ -322,7 +321,7 @@ if(USE_BUNDLED_BUSTED)
     BUILD_COMMAND ""
     INSTALL_COMMAND ""
     EXCLUDE_FROM_ALL TRUE
-    ${EXTERNALPROJECT_OPTIONS})
+    DOWNLOAD_NO_PROGRESS TRUE)
 else()
   add_custom_target(lua-dev-deps)
 endif()

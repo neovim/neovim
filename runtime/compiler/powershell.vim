@@ -1,16 +1,15 @@
 " Vim compiler file
 " Compiler:	powershell
 " URL: https://github.com/PProvost/vim-ps1
-" Last Change: 2020 Mar 30
+" Contributors: Enno Nagel
+" Last Change: 2024 Mar 29
+"		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
+"		2024 Apr 05 by The Vim Project (avoid leaving behind g:makeprg)
 
 if exists("current_compiler")
   finish
 endif
 let current_compiler = "powershell"
-
-if exists(":CompilerSet") != 2		" older Vim always used :setlocal
-  command -nargs=* CompilerSet setlocal <args>
-endif
 
 let s:cpo_save = &cpo
 set cpo-=C
@@ -37,7 +36,7 @@ let g:ps1_efm_show_error_categories = get(g:, 'ps1_efm_show_error_categories', 0
 
 " Use absolute path because powershell requires explicit relative paths
 " (./file.ps1 is okay, but # expands to file.ps1)
-let &l:makeprg = g:ps1_makeprg_cmd .' %:p:S'
+let s:makeprg = g:ps1_makeprg_cmd .. ' %:p:S'
 
 " Parse file, line, char from callstacks:
 "     Write-Ouput : The term 'Write-Ouput' is not recognized as the name of a
@@ -49,6 +48,8 @@ let &l:makeprg = g:ps1_makeprg_cmd .' %:p:S'
 "     +     ~~~~~~~~~~~
 "         + CategoryInfo          : ObjectNotFound: (Write-Ouput:String) [], CommandNotFoundException
 "         + FullyQualifiedErrorId : CommandNotFoundException
+
+execute 'CompilerSet makeprg=' .. escape(s:makeprg, ' ')
 
 " Showing error in context with underlining.
 CompilerSet errorformat=%+G+%m

@@ -366,15 +366,15 @@ one of the last commands to extend the highlighted text, the repeating will
 be applied up to the rightmost column of the longest line.  Any count passed
 to the `.` command is not used.
 
-Visual mode |default-mappings| "@" and "Q" can repeat commands in a register
-for all selected lines. See |v_@-default| and |v_Q-default| for details. For
-example, given the text:
+Visual mode |default-mappings| "@" and "Q" repeat a register for all selected
+lines if the selection is linewise.  See |v_@-default| and |v_Q-default| for
+details.  For example, given the text:
 
 	123(hello)321
 	456(world)654
 	456(NOT THIS)654
 
-With register "x" containing the commands `yi(VP`, Visually selecting the
+With register "x" containing the commands `yi(VP`, visually selecting the
 first two lines and typing `@x` produces:
 
 	hello

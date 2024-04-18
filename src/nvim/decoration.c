@@ -792,12 +792,11 @@ static const uint32_t signtext_filter[4] = {[kMTMetaSignText] = kMTFilterSelect 
 /// @param clear  kFalse, kTrue or kNone for an, added/deleted, cleared, or initialized range.
 void buf_signcols_count_range(buf_T *buf, int row1, int row2, int add, TriState clear)
 {
-  if (!buf->b_signcols.autom || !buf_meta_total(buf, kMTMetaSignText)) {
+  if (!buf->b_signcols.autom || row2 < row1 || !buf_meta_total(buf, kMTMetaSignText)) {
     return;
   }
 
   // Allocate an array of integers holding the number of signs in the range.
-  assert(row2 >= row1);
   int *count = xcalloc(sizeof(int), (size_t)(row2 + 1 - row1));
   MarkTreeIter itr[1];
   MTPair pair = { 0 };
@@ -890,9 +889,9 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fo
   }
 
   assert(lnum > 0);
-  bool below_fold = lnum > 1 && hasFoldingWin(wp, lnum - 1, NULL, NULL, true, NULL);
+  bool below_fold = lnum > 1 && hasFolding(wp, lnum - 1, NULL, NULL);
   if (has_fold == kNone) {
-    has_fold = hasFoldingWin(wp, lnum, NULL, NULL, true, NULL);
+    has_fold = hasFolding(wp, lnum, NULL, NULL);
   }
 
   const int row = lnum - 1;

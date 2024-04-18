@@ -1191,7 +1191,15 @@ void wait_return(int redraw)
       check_timestamps(false);
     }
 
-    hit_return_msg();
+    // if cmdheight=0, we need to scroll in the first line of msg_grid upon the screen
+    if (p_ch == 0 && !ui_has(kUIMessages) && !msg_scrolled) {
+      msg_grid_validate();
+      msg_scroll_up(false, true);
+      msg_scrolled++;
+      cmdline_row = Rows - 1;
+    }
+
+    hit_return_msg(true);
 
     do {
       // Remember "got_int", if it is set vgetc() probably returns a
@@ -1240,7 +1248,7 @@ void wait_return(int redraw)
             got_int = false;
           } else if (c != K_IGNORE) {
             c = K_IGNORE;
-            hit_return_msg();
+            hit_return_msg(false);
           }
         } else if (msg_scrolled > Rows - 2
                    && (c == 'j' || c == 'd' || c == 'f'
@@ -1265,7 +1273,7 @@ void wait_return(int redraw)
     } else if (vim_strchr("\r\n ", c) == NULL && c != Ctrl_C) {
       // Put the character back in the typeahead buffer.  Don't use the
       // stuff buffer, because lmaps wouldn't work.
-      ins_char_typebuf(vgetc_char, vgetc_mod_mask);
+      ins_char_typebuf(vgetc_char, vgetc_mod_mask, true);
       do_redraw = true;             // need a redraw even though there is
                                     // typeahead
     }
@@ -1313,14 +1321,19 @@ void wait_return(int redraw)
 }
 
 /// Write the hit-return prompt.
-static void hit_return_msg(void)
+///
+/// @param newline_sb  if starting a new line, add it to the scrollback.
+static void hit_return_msg(bool newline_sb)
 {
   int save_p_more = p_more;
 
-  p_more = false;       // don't want to see this message when scrolling back
+  if (!newline_sb) {
+    p_more = false;
+  }
   if (msg_didout) {     // start on a new line
     msg_putchar('\n');
   }
+  p_more = false;       // don't want to see this message when scrolling back
   msg_ext_set_kind("return_prompt");
   if (got_int) {
     msg_puts(_("Interrupt: "));
@@ -2281,7 +2294,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
   }
   msg_cursor_goto(msg_row, msg_col);
 
-  if (p_more && !recurse && !(s == sb_str + 1 && *sb_str == '\n')) {
+  if (p_more && !recurse) {
     store_sb_text(&sb_str, s, attr, &sb_col, false);
   }
 
@@ -2713,7 +2726,7 @@ static bool do_more_prompt(int typed_char)
   // If headless mode is enabled and no input is required, this variable
   // will be true. However If server mode is enabled, the message "--more--"
   // should be displayed.
-  bool no_need_more = headless_mode && !embedded_mode;
+  bool no_need_more = headless_mode && !embedded_mode && !ui_active();
 
   // We get called recursively when a timer callback outputs a message. In
   // that case don't show another prompt. Also when at the hit-Enter prompt
@@ -2968,7 +2981,7 @@ void repeat_message(void)
       msg_col = 0;
       msg_clr_eos();
     }
-    hit_return_msg();
+    hit_return_msg(false);
     msg_row = Rows - 1;
   }
 }
@@ -3390,9 +3403,7 @@ int do_dialog(int type, const char *title, const char *message, const char *butt
   int retval = 0;
   int i;
 
-  if (silent_mode      // No dialogs in silent mode ("ex -s")
-      || !ui_active()  // Without a UI Nvim waits for input forever.
-      ) {
+  if (silent_mode) {  // No dialogs in silent mode ("ex -s")
     return dfltbutton;  // return default option
   }
 
@@ -3409,6 +3420,12 @@ int do_dialog(int type, const char *title, const char *message, const char *butt
   char *hotkeys = msg_show_console_dialog(message, buttons, dfltbutton);
 
   while (true) {
+    // Without a UI Nvim waits for input forever.
+    if (!ui_active() && !input_available()) {
+      retval = dfltbutton;
+      break;
+    }
+
     // Get a typed character directly from the user.
     int c = get_keystroke(NULL);
     switch (c) {
@@ -3426,7 +3443,7 @@ int do_dialog(int type, const char *title, const char *message, const char *butt
       }
       if (c == ':' && ex_cmd) {
         retval = dfltbutton;
-        ins_char_typebuf(':', 0);
+        ins_char_typebuf(':', 0, false);
         break;
       }
 

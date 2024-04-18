@@ -1,9 +1,9 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local feed = helpers.feed
-local write_file = helpers.write_file
+local clear = t.clear
+local command = t.command
+local feed = t.feed
+local write_file = t.write_file
 
 before_each(clear)
 
@@ -12,10 +12,6 @@ describe('debugger', function()
 
   before_each(function()
     screen = Screen.new(999, 10)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { reverse = true, bold = true },
-    })
     screen:attach()
   end)
 
@@ -33,7 +29,7 @@ describe('debugger', function()
     screen:expect {
       grid = [[
       ^let g:Xtest_var += 1{MATCH: *}|
-      {0:~{MATCH: *}}|*8
+      {1:~{MATCH: *}}|*8
       :source %{MATCH: *}|
     ]],
     }
@@ -41,8 +37,8 @@ describe('debugger', function()
     screen:expect {
       grid = [[
       let g:Xtest_var += 1{MATCH: *}|
-      {0:~{MATCH: *}}|
-      {1:{MATCH: *}}|
+      {1:~{MATCH: *}}|
+      {3:{MATCH: *}}|
       Breakpoint in "{MATCH:.*}XdebugBreakExpr.vim" line 1{MATCH: *}|
       Entering Debug mode.  Type "cont" to continue.{MATCH: *}|
       Oldval = "10"{MATCH: *}|
@@ -56,7 +52,7 @@ describe('debugger', function()
     screen:expect {
       grid = [[
       ^let g:Xtest_var += 1{MATCH: *}|
-      {0:~{MATCH: *}}|*8
+      {1:~{MATCH: *}}|*8
       {MATCH: *}|
     ]],
     }
@@ -64,8 +60,8 @@ describe('debugger', function()
     screen:expect {
       grid = [[
       let g:Xtest_var += 1{MATCH: *}|
-      {0:~{MATCH: *}}|
-      {1:{MATCH: *}}|
+      {1:~{MATCH: *}}|
+      {3:{MATCH: *}}|
       Breakpoint in "{MATCH:.*}XdebugBreakExpr.vim" line 1{MATCH: *}|
       Entering Debug mode.  Type "cont" to continue.{MATCH: *}|
       Oldval = "11"{MATCH: *}|

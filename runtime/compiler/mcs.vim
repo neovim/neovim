@@ -1,8 +1,9 @@
 " Vim compiler file
-" Compiler:    Mono C# Compiler
-" Maintainer:  Jarek Sobiecki <harijari@go2.pl>
-" Last Updated By: Peter Collingbourne
-" Latest Revision: 2012 Jul 19
+" Compiler:     Mono C# Compiler
+" Maintainer:   Jarek Sobiecki <harijari@go2.pl>
+" Contributors: Peter Collingbourne and Enno Nagel
+" Last Change:  2024 Mar 29
+"               2024 Apr 05 by The Vim Project (removed :CompilerSet definition)
 
 if exists("current_compiler")
   finish
@@ -12,7 +13,8 @@ let current_compiler = "mcs"
 let s:cpo_save = &cpo
 set cpo-=C
 
-setlocal errorformat=
+CompilerSet makeprg=mcs
+CompilerSet errorformat=
          \%D%.%#Project\ \"%f/%[%^/\"]%#\"%.%#,
          \%X%.%#Done\ building\ project\ \"%f/%[%^/\"]%#\"%.%#,
          \%-G%\\s%.%#,

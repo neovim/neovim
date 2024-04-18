@@ -2,15 +2,12 @@
 " Compiler:	Go
 " Maintainer:	David Barnett (https://github.com/google/vim-ft-go)
 " Last Change:	2014 Aug 16
+"             	2024 Apr 05 by The Vim Project (removed :CompilerSet definition)
 
 if exists('current_compiler')
   finish
 endif
 let current_compiler = 'go'
-
-if exists(':CompilerSet') != 2
-  command -nargs=* CompilerSet setlocal <args>
-endif
 
 let s:save_cpo = &cpo
 set cpo-=C

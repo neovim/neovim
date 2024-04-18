@@ -1,15 +1,25 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 
-local clear = helpers.clear
-local eq = helpers.eq
-local api = helpers.api
-local fn = helpers.fn
-local exec = helpers.exec
-local feed = helpers.feed
+local clear = t.clear
+local eq = t.eq
+local api = t.api
+local fn = t.fn
+local exec = t.exec
+local feed = t.feed
+local assert_log = t.assert_log
+local check_close = t.check_close
+local is_os = t.is_os
+
+local testlog = 'Xtest_autocmd_oldtest_log'
 
 describe('oldtests', function()
   before_each(clear)
+
+  after_each(function()
+    check_close()
+    os.remove(testlog)
+  end)
 
   local exec_lines = function(str)
     return fn.split(fn.execute(str), '\n')
@@ -49,6 +59,7 @@ describe('oldtests', function()
   end)
 
   it('should fire on unload buf', function()
+    clear({ env = { NVIM_LOG_FILE = testlog } })
     fn.writefile({ 'Test file Xxx1' }, 'Xxx1')
     fn.writefile({ 'Test file Xxx2' }, 'Xxx2')
     local fname = 'Xtest_functional_autocmd_unload'
@@ -81,6 +92,10 @@ describe('oldtests', function()
     fn.delete('Xxx2')
     fn.delete(fname)
     fn.delete('Xout')
+
+    if is_os('win') then
+      assert_log('stream write failed. RPC canceled; closing channel', testlog)
+    end
   end)
 
   -- oldtest: Test_delete_ml_get_errors()

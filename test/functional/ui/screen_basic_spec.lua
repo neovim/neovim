@@ -1,15 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local spawn, set_session, clear = helpers.spawn, helpers.set_session, helpers.clear
-local feed, command = helpers.feed, helpers.command
-local insert = helpers.insert
-local eq = helpers.eq
-local fn, api = helpers.fn, helpers.api
+local spawn, set_session, clear = t.spawn, t.set_session, t.clear
+local feed, command = t.feed, t.command
+local insert = t.insert
+local eq = t.eq
+local fn, api = t.fn, t.api
 
 describe('screen', function()
   local screen
   local nvim_argv = {
-    helpers.nvim_prog,
+    t.nvim_prog,
     '-u',
     'NONE',
     '-i',
@@ -27,17 +27,13 @@ describe('screen', function()
     set_session(screen_nvim)
     screen = Screen.new()
     screen:attach()
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = 255 },
-      [1] = { bold = true, reverse = true },
-    })
   end)
 
   it('default initial screen', function()
     screen:expect([[
       ^                                                     |
-      {0:~                                                    }|*11
-      {1:[No Name]                                            }|
+      {1:~                                                    }|*11
+      {3:[No Name]                                            }|
                                                            |
     ]])
   end)
@@ -704,7 +700,7 @@ describe('Screen default colors', function()
     local extra = (light and ' background=light') or ''
 
     local nvim_argv = {
-      helpers.nvim_prog,
+      t.nvim_prog,
       '-u',
       'NONE',
       '-i',
@@ -811,9 +807,6 @@ end)
 it("showcmd doesn't cause empty grid_line with redrawdebug=compositor #22593", function()
   clear()
   local screen = Screen.new(30, 2)
-  screen:set_default_attr_ids({
-    [0] = { bold = true, foreground = Screen.colors.Blue },
-  })
   screen:attach()
   command('set showcmd redrawdebug=compositor')
   feed('d')

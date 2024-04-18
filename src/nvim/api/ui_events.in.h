@@ -118,6 +118,10 @@ void win_viewport(Integer grid, Window win, Integer topline, Integer botline, In
                   Integer curcol, Integer line_count, Integer scroll_delta)
   FUNC_API_SINCE(7) FUNC_API_CLIENT_IGNORE;
 
+void win_viewport_margins(Integer grid, Window win, Integer top, Integer bottom, Integer left,
+                          Integer right)
+  FUNC_API_SINCE(12) FUNC_API_CLIENT_IGNORE;
+
 void win_extmark(Integer grid, Window win, Integer ns_id, Integer mark_id, Integer row, Integer col)
   FUNC_API_SINCE(10) FUNC_API_REMOTE_ONLY;
 

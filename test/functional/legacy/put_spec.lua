@@ -1,10 +1,10 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local exec_lua = helpers.exec_lua
-local api = helpers.api
-local source = helpers.source
-local eq = helpers.eq
+local clear = t.clear
+local exec_lua = t.exec_lua
+local api = t.api
+local source = t.source
+local eq = t.eq
 
 local function sizeoflong()
   if not exec_lua('return pcall(require, "ffi")') then
@@ -66,8 +66,8 @@ describe('put', function()
         three more text                       │  three more text                      |
         ^four more text                        │  four more text                       |
                                               │                                       |
-      ~                                       │~                                      |*2
-      [No Name] [+]                            [No Name] [+]                          |
+      {1:~                                       }│{1:~                                      }|*2
+      {3:[No Name] [+]                            }{2:[No Name] [+]                          }|
                                                                                       |
     ]])
   end)

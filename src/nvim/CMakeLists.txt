@@ -450,19 +450,26 @@ endif()
 #-------------------------------------------------------------------------------
 
 get_target_property(prop main_lib INTERFACE_COMPILE_DEFINITIONS)
-foreach(gen_cdef ${prop})
-  if(NOT ${gen_cdef} MATCHES "INCLUDE_GENERATED_DECLARATIONS")
-    list(APPEND gen_cflags "-D${gen_cdef}")
-  endif()
-endforeach()
+if(NOT "${prop}" STREQUAL "prop-NOTFOUND")
+  foreach(gen_cdef ${prop})
+    if(NOT ${gen_cdef} MATCHES "INCLUDE_GENERATED_DECLARATIONS")
+      list(APPEND gen_cflags "-D${gen_cdef}")
+    endif()
+  endforeach()
+endif()
 
 get_directory_property(targets BUILDSYSTEM_TARGETS)
 foreach(target ${targets})
   get_target_property(prop ${target} INTERFACE_INCLUDE_DIRECTORIES)
-  foreach(gen_include ${prop})
-    list(APPEND gen_cflags "-I${gen_include}")
-  endforeach()
+  if(NOT "${prop}" STREQUAL "prop-NOTFOUND")
+    message(STATUS "${target} props '${prop}'")
+    foreach(gen_include ${prop})
+      list(APPEND gen_cflags "-I${gen_include}")
+    endforeach()
+  endif()
 endforeach()
+
+list(REMOVE_DUPLICATES gen_cflags)
 
 if(APPLE AND CMAKE_OSX_SYSROOT)
   list(APPEND gen_cflags "-isysroot" "${CMAKE_OSX_SYSROOT}")
@@ -826,9 +833,12 @@ add_glob_target(
   FLAGS --quiet
   EXCLUDE ${EXCLUDE_CLANG_TIDY})
 
-# These are the same warnings as https://neovim.io/doc/reports/clang/. The
-# checks we ignore are meant to be removed eventually, but we can only do so
-# after we properly fix the problems without breaking CI.
+# The checks we ignore are meant to be removed eventually, but we can only
+# enable each warning after we fix all instances of that specific warning as to
+# not break CI.
+if(APPLE)
+  string(APPEND CLANG_ANALYZER_IGNORE "-clang-analyzer-core.NonNullParamChecker,")
+endif()
 add_glob_target(
   TARGET clang-analyzer
   COMMAND ${CLANG_TIDY_PRG}
@@ -837,12 +847,12 @@ add_glob_target(
   --checks='
   -*,
   clang-analyzer-*,
-  -clang-analyzer-core.NonNullParamChecker,
   -clang-analyzer-core.NullDereference,
   -clang-analyzer-core.UndefinedBinaryOperatorResult,
   -clang-analyzer-core.uninitialized.Assign,
   -clang-analyzer-optin.performance.Padding,
   -clang-analyzer-security.insecureAPI.strcpy,
+  ${CLANG_ANALYZER_IGNORE}
   '
   EXCLUDE ${EXCLUDE_CLANG_TIDY})
 
@@ -902,14 +912,6 @@ add_custom_target(generated-sources DEPENDS
   ${NVIM_GENERATED_SOURCES}
 )
 
-set(VIMDOC_FILES
-  ${NVIM_RUNTIME_DIR}/doc/api.txt
-  ${NVIM_RUNTIME_DIR}/doc/diagnostic.txt
-  ${NVIM_RUNTIME_DIR}/doc/lsp.txt
-  ${NVIM_RUNTIME_DIR}/doc/lua.txt
-  ${NVIM_RUNTIME_DIR}/doc/treesitter.txt
-)
-
 file(GLOB API_SOURCES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/nvim/api/*.c)
 
 file(GLOB LUA_SOURCES CONFIGURE_DEPENDS
@@ -920,23 +922,22 @@ file(GLOB LUA_SOURCES CONFIGURE_DEPENDS
   ${NVIM_RUNTIME_DIR}/lua/vim/treesitter/*.lua
 )
 
-add_custom_command(
-  OUTPUT ${VIMDOC_FILES}
-  COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${NVIM_RUNTIME_DIR}"
-    $<TARGET_FILE:nvim_bin> -l scripts/gen_vimdoc.lua
+add_target(doc-vim
+  COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l scripts/gen_vimdoc.lua
   DEPENDS
     nvim
     ${API_SOURCES}
     ${LUA_SOURCES}
     ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.lua
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-)
+    ${NVIM_RUNTIME_DIR}/doc/api.txt
+    ${NVIM_RUNTIME_DIR}/doc/diagnostic.txt
+    ${NVIM_RUNTIME_DIR}/doc/lsp.txt
+    ${NVIM_RUNTIME_DIR}/doc/lua.txt
+    ${NVIM_RUNTIME_DIR}/doc/treesitter.txt
+  )
 
-add_custom_command(
-  OUTPUT ${GEN_EVAL_TOUCH}
-  COMMAND ${CMAKE_COMMAND} -E touch ${GEN_EVAL_TOUCH}
-  COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${NVIM_RUNTIME_DIR}"
-    $<TARGET_FILE:nvim_bin> -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
+add_target(doc-eval
+  COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
   DEPENDS
     nvim
     ${FUNCS_METADATA}
@@ -944,22 +945,14 @@ add_custom_command(
     ${PROJECT_SOURCE_DIR}/src/nvim/eval.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/options.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/vvars.lua
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-)
+    ${NVIM_RUNTIME_DIR}/doc/builtin.txt
+  )
 
-add_custom_target(doc-eval DEPENDS ${GEN_EVAL_TOUCH})
-add_custom_target(doc-vim DEPENDS ${VIMDOC_FILES})
 add_custom_target(doc)
 add_dependencies(doc doc-vim doc-eval)
 
-set(lintdoc_touch ${TOUCHES_DIR}/lintdoc)
-add_custom_command(
-  OUTPUT ${lintdoc_touch}
-  COMMAND ${CMAKE_COMMAND} -E touch ${lintdoc_touch}
-  COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${NVIM_RUNTIME_DIR}"
-    $<TARGET_FILE:nvim_bin> --clean -l scripts/lintdoc.lua
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+add_target(lintdoc
+  COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l scripts/lintdoc.lua
   DEPENDS ${DOCFILES}
-  USES_TERMINAL)
-add_custom_target(lintdoc DEPENDS ${lintdoc_touch})
+  CUSTOM_COMMAND_ARGS USES_TERMINAL)
 add_dependencies(lintdoc nvim)

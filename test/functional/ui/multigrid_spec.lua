@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local feed, command, insert = helpers.feed, helpers.command, helpers.insert
-local eq = helpers.eq
-local fn = helpers.fn
-local api = helpers.api
-local curwin = helpers.api.nvim_get_current_win
-local poke_eventloop = helpers.poke_eventloop
+local clear = t.clear
+local feed, command, insert = t.feed, t.command, t.insert
+local eq = t.eq
+local fn = t.fn
+local api = t.api
+local curwin = t.api.nvim_get_current_win
+local poke_eventloop = t.poke_eventloop
 
 
 describe('ext_multigrid', function()
@@ -412,9 +412,23 @@ describe('ext_multigrid', function()
   end)
 
   describe('grid of smaller inner size', function()
-    it('is rendered correctly', function()
-      screen:try_resize_grid(2, 8, 5)
+    before_each(function()
+      screen:try_resize_grid(2, 20, 5)
+    end)
 
+    it('is rendered correctly', function()
+      screen:expect{grid=[[
+      ## grid 1
+        [2:-----------------------------------------------------]|*12
+        {11:[No Name]                                            }|
+        [3:-----------------------------------------------------]|
+      ## grid 2
+        ^                    |
+        {1:~                   }|*4
+      ## grid 3
+                                                             |
+      ]]}
+      screen:try_resize_grid(2, 8, 5)
       screen:expect{grid=[[
       ## grid 1
         [2:-----------------------------------------------------]|*12
@@ -427,12 +441,43 @@ describe('ext_multigrid', function()
                                                              |
       ]]}
     end)
+
+    it("cursor draws correctly with double-width char and 'showbreak'", function()
+      insert(('a'):rep(19) .. '哦bbbb')
+      command('setlocal showbreak=++')
+      screen:expect{grid=[[
+      ## grid 1
+        [2:-----------------------------------------------------]|*12
+        {11:[No Name] [+]                                        }|
+        [3:-----------------------------------------------------]|
+      ## grid 2
+        aaaaaaaaaaaaaaaaaaa{1:>}|
+        {1:++}哦bbb^b            |
+        {1:~                   }|*3
+      ## grid 3
+                                                             |
+      ]]}
+    end)
   end)
 
   describe('grid of bigger inner size', function()
-    it('is rendered correctly', function()
-      screen:try_resize_grid(2, 80, 20)
+    before_each(function()
+      screen:try_resize_grid(2, 60, 20)
+    end)
 
+    it('is rendered correctly', function()
+      screen:expect{grid=[[
+      ## grid 1
+        [2:-----------------------------------------------------]|*12
+        {11:[No Name]                                            }|
+        [3:-----------------------------------------------------]|
+      ## grid 2
+        ^                                                            |
+        {1:~                                                           }|*19
+      ## grid 3
+                                                             |
+      ]]}
+      screen:try_resize_grid(2, 80, 20)
       screen:expect{grid=[[
       ## grid 1
         [2:-----------------------------------------------------]|*12
@@ -444,13 +489,6 @@ describe('ext_multigrid', function()
       ## grid 3
                                                              |
       ]]}
-    end)
-  end)
-
-
-  describe('with resized grid', function()
-    before_each(function()
-      screen:try_resize_grid(2, 60, 20)
     end)
 
     it('winwidth() winheight() getwininfo() return inner width and height #19743', function()
@@ -483,7 +521,7 @@ describe('ext_multigrid', function()
       ]]}
     end)
 
-    it('"g$" works correctly with double-width characters and no wrapping', function()
+    it('g$ works correctly with double-width chars and no wrapping', function()
       command('set nowrap')
       insert(('a'):rep(58) .. ('哦'):rep(3))
       feed('0')
@@ -538,6 +576,22 @@ describe('ext_multigrid', function()
         bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
         {23:^bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}|
         bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                    |
+                                                                    |
+        {1:~                                                           }|*16
+      ## grid 3
+                                                             |
+      ]]}
+      command('setlocal breakindent breakindentopt=shift:8')
+      feed('g$')
+      screen:expect{grid=[[
+      ## grid 1
+        [2:-----------------------------------------------------]|*12
+        {11:[No Name] [+]                                        }|
+        [3:-----------------------------------------------------]|
+      ## grid 2
+        bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+                {23:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb^b}|
+                bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb    |
                                                                     |
         {1:~                                                           }|*16
       ## grid 3
@@ -2300,6 +2354,9 @@ describe('ext_multigrid', function()
     ]], win_viewport={
       [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
       [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+    }, win_viewport_margins={
+      [2] = {win = 1000, top = 0, bottom = 0, left = 0, right = 0};
+      [4] = {win = 1001, top = 0, bottom = 0, left = 0, right = 0};
     }}
 
     -- XXX: hack to get notifications. Could use next_msg() also.
@@ -2330,6 +2387,9 @@ describe('ext_multigrid', function()
     ]], win_viewport={
       [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
       [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+    }, win_viewport_margins={
+      [2] = {win = 1000, top = 0, bottom = 0, left = 0, right = 0};
+      [4] = {win = 1001, top = 1, bottom = 0, left = 0, right = 0};
     }}
     eq({}, win_pos)
 
@@ -2352,6 +2412,9 @@ describe('ext_multigrid', function()
     ]], win_viewport={
       [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
       [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+    }, win_viewport_margins={
+      [2] = {win = 1000, top = 0, bottom = 0, left = 0, right = 0};
+      [4] = {win = 1001, top = 0, bottom = 0, left = 0, right = 0};
     }}
     eq({}, win_pos)
   end)

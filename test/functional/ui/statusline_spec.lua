@@ -1,17 +1,17 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local assert_alive = helpers.assert_alive
-local clear = helpers.clear
-local command = helpers.command
-local feed = helpers.feed
-local eq = helpers.eq
-local fn = helpers.fn
-local api = helpers.api
-local exec = helpers.exec
-local exec_lua = helpers.exec_lua
-local eval = helpers.eval
+local assert_alive = t.assert_alive
+local clear = t.clear
+local command = t.command
+local feed = t.feed
+local eq = t.eq
+local fn = t.fn
+local api = t.api
+local exec = t.exec
+local exec_lua = t.exec_lua
+local eval = t.eval
 local sleep = vim.uv.sleep
-local pcall_err = helpers.pcall_err
+local pcall_err = t.pcall_err
 
 local mousemodels = { 'extend', 'popup', 'popup_setpos' }
 
@@ -596,57 +596,59 @@ it('statusline is redrawn on various state changes', function()
   command('set ls=2 stl=%{repeat(reg_recording(),5)}')
   screen:expect([[
     ^                                        |
-    ~                                       |
-                                            |*2
+    {1:~                                       }|
+    {3:                                        }|
+                                            |
   ]])
   feed('qQ')
   screen:expect([[
     ^                                        |
-    ~                                       |
-    QQQQQ                                   |
-    recording @Q                            |
+    {1:~                                       }|
+    {3:QQQQQ                                   }|
+    {5:recording @Q}                            |
   ]])
   feed('q')
   screen:expect([[
     ^                                        |
-    ~                                       |
-                                            |*2
+    {1:~                                       }|
+    {3:                                        }|
+                                            |
   ]])
 
   -- Visual mode change #23932
   command('set ls=2 stl=%{mode(1)}')
   screen:expect([[
     ^                                        |
-    ~                                       |
-    n                                       |
+    {1:~                                       }|
+    {3:n                                       }|
                                             |
   ]])
   feed('v')
   screen:expect([[
     ^                                        |
-    ~                                       |
-    v                                       |
-    -- VISUAL --                            |
+    {1:~                                       }|
+    {3:v                                       }|
+    {5:-- VISUAL --}                            |
   ]])
   feed('V')
   screen:expect([[
     ^                                        |
-    ~                                       |
-    V                                       |
-    -- VISUAL LINE --                       |
+    {1:~                                       }|
+    {3:V                                       }|
+    {5:-- VISUAL LINE --}                       |
   ]])
   feed('<C-V>')
   screen:expect([[
     ^                                        |
-    ~                                       |
-    ^V                                      |
-    -- VISUAL BLOCK --                      |
+    {1:~                                       }|
+    {3:^V                                      }|
+    {5:-- VISUAL BLOCK --}                      |
   ]])
   feed('<Esc>')
   screen:expect([[
     ^                                        |
-    ~                                       |
-    n                                       |
+    {1:~                                       }|
+    {3:n                                       }|
                                             |
   ]])
 end)

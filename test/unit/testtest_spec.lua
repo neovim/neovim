@@ -1,9 +1,9 @@
-local helpers = require('test.unit.helpers')(after_each)
+local t = require('test.unit.testutil')
 local assert = require('luassert')
 
-local itp = helpers.gen_itp(it)
+local itp = t.gen_itp(it)
 
-local sc = helpers.sc
+local sc = t.sc
 
 -- All of the below tests must fail. Check how exactly they fail.
 if os.getenv('NVIM_TEST_RUN_TESTTEST') ~= '1' then

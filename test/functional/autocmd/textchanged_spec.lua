@@ -1,17 +1,17 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
-local exec = helpers.exec
-local command = helpers.command
-local feed = helpers.feed
-local eq = helpers.eq
-local neq = helpers.neq
-local eval = helpers.eval
-local poke_eventloop = helpers.poke_eventloop
-
-before_each(clear)
+local t = require('test.functional.testutil')()
+local clear = t.clear
+local exec = t.exec
+local command = t.command
+local feed = t.feed
+local eq = t.eq
+local neq = t.neq
+local eval = t.eval
+local poke_eventloop = t.poke_eventloop
+local write_file = t.write_file
 
 -- oldtest: Test_ChangedP()
 it('TextChangedI and TextChangedP autocommands', function()
+  clear()
   -- The oldtest uses feedkeys() with 'x' flag, which never triggers TextChanged.
   -- So don't add TextChanged autocommand here.
   exec([[
@@ -93,6 +93,7 @@ end)
 
 -- oldtest: Test_TextChangedI_with_setline()
 it('TextChangedI with setline()', function()
+  clear()
   exec([[
     let g:setline_handled = v:false
     func SetLineOne()
@@ -118,71 +119,9 @@ it('TextChangedI with setline()', function()
   eq('', eval('getline(2)'))
 end)
 
--- oldtest: Test_Changed_ChangedI()
-it('TextChangedI and TextChanged', function()
-  exec([[
-    let [g:autocmd_i, g:autocmd_n] = ['','']
-
-    func! TextChangedAutocmdI(char)
-      let g:autocmd_{tolower(a:char)} = a:char .. b:changedtick
-    endfunc
-
-    augroup Test_TextChanged
-      au!
-      au TextChanged  <buffer> :call TextChangedAutocmdI('N')
-      au TextChangedI <buffer> :call TextChangedAutocmdI('I')
-    augroup END
-  ]])
-
-  feed('i')
-  poke_eventloop()
-  feed('f')
-  poke_eventloop()
-  feed('o')
-  poke_eventloop()
-  feed('o')
-  poke_eventloop()
-  feed('<esc>')
-  eq('', eval('g:autocmd_n'))
-  eq('I5', eval('g:autocmd_i'))
-
-  feed('yyp')
-  eq('N6', eval('g:autocmd_n'))
-  eq('I5', eval('g:autocmd_i'))
-
-  -- TextChangedI should only trigger if change was done in Insert mode
-  command([[let g:autocmd_i = '']])
-  feed('yypi<esc>')
-  eq('', eval('g:autocmd_i'))
-
-  -- TextChanged should only trigger if change was done in Normal mode
-  command([[let g:autocmd_n = '']])
-  feed('ibar<esc>')
-  eq('', eval('g:autocmd_n'))
-
-  local function validate_mixed_textchangedi(keys)
-    feed('ifoo<esc>')
-    command([[let g:autocmd_i = '']])
-    command([[let g:autocmd_n = '']])
-    for _, s in ipairs(keys) do
-      feed(s)
-      poke_eventloop()
-    end
-    neq('', eval('g:autocmd_i'))
-    eq('', eval('g:autocmd_n'))
-  end
-
-  validate_mixed_textchangedi({ 'o', '<esc>' })
-  validate_mixed_textchangedi({ 'O', '<esc>' })
-  validate_mixed_textchangedi({ 'ciw', '<esc>' })
-  validate_mixed_textchangedi({ 'cc', '<esc>' })
-  validate_mixed_textchangedi({ 'C', '<esc>' })
-  validate_mixed_textchangedi({ 's', '<esc>' })
-  validate_mixed_textchangedi({ 'S', '<esc>' })
-end)
-
 -- oldtest: Test_TextChanged_with_norm()
 it('TextChanged is triggered after :norm that enters Insert mode', function()
+  clear()
   exec([[
     let g:a = 0
     au TextChanged * let g:a += 1
@@ -190,4 +129,83 @@ it('TextChanged is triggered after :norm that enters Insert mode', function()
   eq(0, eval('g:a'))
   feed(':norm! ia<CR>')
   eq(1, eval('g:a'))
+end)
+
+-- oldtest: Test_Changed_ChangedI()
+it('TextChangedI and TextChanged', function()
+  write_file('XTextChangedI2', 'one\ntwo\nthree')
+  finally(function()
+    os.remove('XTextChangedI2')
+  end)
+  clear('XTextChangedI2')
+
+  exec([[
+    let [g:autocmd_n, g:autocmd_i] = ['','']
+
+    func TextChangedAutocmd(char)
+      let g:autocmd_{tolower(a:char)} = a:char .. b:changedtick
+    endfunc
+
+    au TextChanged  <buffer> :call TextChangedAutocmd('N')
+    au TextChangedI <buffer> :call TextChangedAutocmd('I')
+
+    nnoremap <CR> o<Esc>
+  ]])
+
+  -- TextChanged should trigger if a mapping enters and leaves Insert mode.
+  feed('<CR>')
+  eq('N4', eval('g:autocmd_n'))
+  eq('', eval('g:autocmd_i'))
+
+  feed('i')
+  eq('N4', eval('g:autocmd_n'))
+  eq('', eval('g:autocmd_i'))
+  -- TextChangedI should trigger if change is done in Insert mode.
+  feed('f')
+  eq('N4', eval('g:autocmd_n'))
+  eq('I5', eval('g:autocmd_i'))
+  feed('o')
+  eq('N4', eval('g:autocmd_n'))
+  eq('I6', eval('g:autocmd_i'))
+  feed('o')
+  eq('N4', eval('g:autocmd_n'))
+  eq('I7', eval('g:autocmd_i'))
+  -- TextChanged shouldn't trigger when leaving Insert mode and TextChangedI
+  -- has been triggered.
+  feed('<Esc>')
+  eq('N4', eval('g:autocmd_n'))
+  eq('I7', eval('g:autocmd_i'))
+
+  -- TextChanged should trigger if change is done in Normal mode.
+  feed('yyp')
+  eq('N8', eval('g:autocmd_n'))
+  eq('I7', eval('g:autocmd_i'))
+
+  -- TextChangedI shouldn't trigger if change isn't done in Insert mode.
+  feed('i')
+  eq('N8', eval('g:autocmd_n'))
+  eq('I7', eval('g:autocmd_i'))
+  feed('<Esc>')
+  eq('N8', eval('g:autocmd_n'))
+  eq('I7', eval('g:autocmd_i'))
+
+  -- TextChangedI should trigger if change is a mix of Normal and Insert modes.
+  local function validate_mixed_textchangedi(keys)
+    feed('ifoo<Esc>')
+    command(":let [g:autocmd_n, g:autocmd_i] = ['', '']")
+    feed(keys)
+    eq('', eval('g:autocmd_n'))
+    neq('', eval('g:autocmd_i'))
+    feed('<Esc>')
+    eq('', eval('g:autocmd_n'))
+    neq('', eval('g:autocmd_i'))
+  end
+
+  validate_mixed_textchangedi('o')
+  validate_mixed_textchangedi('O')
+  validate_mixed_textchangedi('ciw')
+  validate_mixed_textchangedi('cc')
+  validate_mixed_textchangedi('C')
+  validate_mixed_textchangedi('s')
+  validate_mixed_textchangedi('S')
 end)

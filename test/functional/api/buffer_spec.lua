@@ -1,21 +1,21 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local eq = helpers.eq
-local ok = helpers.ok
-local describe_lua_and_rpc = helpers.describe_lua_and_rpc(describe)
-local api = helpers.api
-local fn = helpers.fn
-local request = helpers.request
-local exc_exec = helpers.exc_exec
-local exec_lua = helpers.exec_lua
-local feed_command = helpers.feed_command
-local insert = helpers.insert
+local clear = t.clear
+local eq = t.eq
+local ok = t.ok
+local describe_lua_and_rpc = t.describe_lua_and_rpc(describe)
+local api = t.api
+local fn = t.fn
+local request = t.request
+local exc_exec = t.exc_exec
+local exec_lua = t.exec_lua
+local feed_command = t.feed_command
+local insert = t.insert
 local NIL = vim.NIL
-local command = helpers.command
-local feed = helpers.feed
-local pcall_err = helpers.pcall_err
-local assert_alive = helpers.assert_alive
+local command = t.command
+local feed = t.feed
+local pcall_err = t.pcall_err
+local assert_alive = t.assert_alive
 
 describe('api/buf', function()
   before_each(clear)
@@ -119,6 +119,65 @@ describe('api/buf', function()
       eq({ 'line1', 'line5', 'line6', 'line3', 'line4' }, api.nvim_buf_get_lines(buf, 0, -1, true))
       eq({ 4, 2 }, api.nvim_win_get_cursor(win))
       eq({ 5, 2 }, api.nvim_win_get_cursor(win2))
+    end)
+
+    it('cursor position is maintained consistently with viewport', function()
+      local screen = Screen.new(20, 12)
+      screen:set_default_attr_ids {
+        [1] = { bold = true, foreground = Screen.colors.Blue1 },
+        [2] = { reverse = true, bold = true },
+        [3] = { reverse = true },
+      }
+      screen:attach()
+
+      local lines = { 'line1', 'line2', 'line3', 'line4', 'line5', 'line6' }
+      local buf = api.nvim_get_current_buf()
+
+      api.nvim_buf_set_lines(buf, 0, -1, true, lines)
+
+      command('6')
+      command('new')
+      screen:expect {
+        grid = [[
+        ^                    |
+        {1:~                   }|*4
+        {2:[No Name]           }|
+        line5               |
+        line6               |
+        {1:~                   }|*2
+        {3:[No Name] [+]       }|
+                            |
+      ]],
+      }
+
+      lines[5] = 'boogalo 5'
+      api.nvim_buf_set_lines(buf, 0, -1, true, lines)
+      screen:expect {
+        grid = [[
+        ^                    |
+        {1:~                   }|*4
+        {2:[No Name]           }|
+        boogalo 5           |
+        line6               |
+        {1:~                   }|*2
+        {3:[No Name] [+]       }|
+                            |
+      ]],
+      }
+
+      command('wincmd w')
+      screen:expect {
+        grid = [[
+                            |
+        {1:~                   }|*4
+        {3:[No Name]           }|
+        boogalo 5           |
+        ^line6               |
+        {1:~                   }|*2
+        {2:[No Name] [+]       }|
+                            |
+      ]],
+      }
     end)
 
     it('line_count has defined behaviour for unloaded buffers', function()
@@ -323,20 +382,20 @@ describe('api/buf', function()
         ]],
         }
 
-        -- inserting just before topline scrolls up
         api.nvim_buf_set_lines(buf, 3, 3, true, { 'mmm' })
         screen:expect {
           grid = [[
           ^                    |
           {1:~                   }|*4
           {2:[No Name]           }|
-          mmm                 |
           wwweeee             |
           xxx                 |
           yyy                 |
+          zzz                 |
           {3:[No Name] [+]       }|
                               |
         ]],
+          unchanged = true,
         }
       end)
 
@@ -402,7 +461,6 @@ describe('api/buf', function()
         ]],
         }
 
-        -- inserting just before topline scrolls up
         api.nvim_buf_set_lines(buf, 3, 3, true, { 'mmm' })
         screen:expect {
           grid = [[
@@ -412,10 +470,10 @@ describe('api/buf', function()
           mmm                 |
           wwweeee             |
           {2:[No Name] [+]       }|
-          mmm                 |
           wwweeee             |
           xxx                 |
           yyy                 |
+          zzz                 |
           {3:[No Name] [+]       }|
                               |
         ]],
@@ -1316,12 +1374,7 @@ describe('api/buf', function()
           -- immediate call to nvim_win_get_cursor should have returned the same position
           eq({ 2, 12 }, cursor)
           -- coladd should be 0
-          eq(
-            0,
-            exec_lua([[
-            return vim.fn.winsaveview().coladd
-          ]])
-          )
+          eq(0, fn.winsaveview().coladd)
         end)
 
         it('does not change cursor screen column when cursor >EOL and row got shorter', function()
@@ -1335,9 +1388,7 @@ describe('api/buf', function()
           -- turn on virtualedit
           command('set virtualedit=all')
           -- move cursor after eol
-          exec_lua([[
-            vim.fn.winrestview({ coladd = 5 })
-          ]])
+          fn.winrestview({ coladd = 5 })
 
           local cursor = exec_lua([[
             vim.api.nvim_buf_set_text(0, 0, 15, 2, 11, {
@@ -1356,12 +1407,7 @@ describe('api/buf', function()
           -- immediate call to nvim_win_get_cursor should have returned the same position
           eq({ 2, 26 }, cursor)
           -- coladd should be increased so that cursor stays in the same screen column
-          eq(
-            13,
-            exec_lua([[
-            return vim.fn.winsaveview().coladd
-          ]])
-          )
+          eq(13, fn.winsaveview().coladd)
         end)
 
         it(
@@ -1377,9 +1423,7 @@ describe('api/buf', function()
             -- turn on virtualedit
             command('set virtualedit=all')
             -- move cursor after eol
-            exec_lua([[
-            vim.fn.winrestview({ coladd = 21 })
-          ]])
+            fn.winrestview({ coladd = 21 })
 
             local cursor = exec_lua([[
             vim.api.nvim_buf_set_text(0, 0, 15, 2, 11, {
@@ -1398,12 +1442,7 @@ describe('api/buf', function()
             -- immediate call to nvim_win_get_cursor should have returned the same position
             eq({ 1, 38 }, cursor)
             -- coladd should be increased so that cursor stays in the same screen column
-            eq(
-              2,
-              exec_lua([[
-            return vim.fn.winsaveview().coladd
-          ]])
-            )
+            eq(2, fn.winsaveview().coladd)
           end
         )
 
@@ -1420,9 +1459,7 @@ describe('api/buf', function()
             -- turn on virtualedit
             command('set virtualedit=all')
             -- move cursor after eol just a bit
-            exec_lua([[
-            vim.fn.winrestview({ coladd = 3 })
-          ]])
+            fn.winrestview({ coladd = 3 })
 
             local cursor = exec_lua([[
             vim.api.nvim_buf_set_text(0, 0, 15, 2, 11, {
@@ -1441,12 +1478,7 @@ describe('api/buf', function()
             -- immediate call to nvim_win_get_cursor should have returned the same position
             eq({ 1, 22 }, cursor)
             -- coladd should become 0
-            eq(
-              0,
-              exec_lua([[
-            return vim.fn.winsaveview().coladd
-          ]])
-            )
+            eq(0, fn.winsaveview().coladd)
           end
         )
 
@@ -1464,9 +1496,7 @@ describe('api/buf', function()
             -- turn on virtualedit
             command('set virtualedit=all')
             -- move cursor after eol
-            exec_lua([[
-            vim.fn.winrestview({ coladd = 28 })
-          ]])
+            fn.winrestview({ coladd = 28 })
 
             local cursor = exec_lua([[
             vim.api.nvim_buf_set_text(0, 0, 15, 3, 11, {
@@ -1485,12 +1515,7 @@ describe('api/buf', function()
             -- immediate call to nvim_win_get_cursor should have returned the same position
             eq({ 2, 26 }, cursor)
             -- coladd should be increased so that cursor stays in the same screen column
-            eq(
-              13,
-              exec_lua([[
-            return vim.fn.winsaveview().coladd
-          ]])
-            )
+            eq(13, fn.winsaveview().coladd)
           end
         )
       end)
@@ -1686,12 +1711,11 @@ describe('api/buf', function()
       api.nvim_buf_set_text(0, 0, 0, 1, 3, { 'XXX', 'YYY' })
 
       screen:expect([[
-  XXX                 |
-  YYY                 |
-  ^                    |
-  ~                   |
-                      |
-
+        XXX                 |
+        YYY                 |
+        ^                    |
+        {1:~                   }|
+                            |
       ]])
     end)
 
@@ -2023,6 +2047,37 @@ describe('api/buf', function()
       command('w!')
       eq(1, fn.filereadable(new_name))
       os.remove(new_name)
+    end)
+
+    describe("with 'autochdir'", function()
+      local topdir
+      local oldbuf
+      local newbuf
+
+      before_each(function()
+        command('set shellslash')
+        topdir = fn.getcwd()
+        t.mkdir(topdir .. '/Xacd')
+
+        oldbuf = api.nvim_get_current_buf()
+        command('vnew')
+        newbuf = api.nvim_get_current_buf()
+        command('set autochdir')
+      end)
+
+      after_each(function()
+        t.rmdir(topdir .. '/Xacd')
+      end)
+
+      it('does not change cwd with non-current buffer', function()
+        api.nvim_buf_set_name(oldbuf, topdir .. '/Xacd/foo.txt')
+        eq(topdir, fn.getcwd())
+      end)
+
+      it('changes cwd with current buffer', function()
+        api.nvim_buf_set_name(newbuf, topdir .. '/Xacd/foo.txt')
+        eq(topdir .. '/Xacd', fn.getcwd())
+      end)
     end)
   end)
 

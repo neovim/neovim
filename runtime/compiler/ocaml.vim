@@ -3,6 +3,7 @@
 " Maintainer:  Markus Mottl <markus.mottl@gmail.com>
 " URL:         https://github.com/ocaml/vim-ocaml
 " Last Change:
+"		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 "              2020 Mar 28 - Improved error format (Thomas Leonard)
 "              2017 Nov 26 - Improved error format (Markus Mottl)
 "              2013 Aug 27 - Added a new OCaml error format (Markus Mottl)

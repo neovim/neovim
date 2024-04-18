@@ -70,17 +70,17 @@
 -- To help write screen tests, see Screen:snapshot_util().
 -- To debug screen tests, see Screen:redraw_debug().
 
-local helpers = require('test.functional.helpers')(nil)
+local t = require('test.functional.testutil')()
 local busted = require('busted')
 local deepcopy = vim.deepcopy
-local shallowcopy = helpers.shallowcopy
-local concat_tables = helpers.concat_tables
+local shallowcopy = t.shallowcopy
+local concat_tables = t.concat_tables
 local pesc = vim.pesc
-local run_session = helpers.run_session
-local eq = helpers.eq
-local dedent = helpers.dedent
-local get_session = helpers.get_session
-local create_callindex = helpers.create_callindex
+local run_session = t.run_session
+local eq = t.eq
+local dedent = t.dedent
+local get_session = t.get_session
+local create_callindex = t.create_callindex
 
 local inspect = vim.inspect
 
@@ -139,6 +139,43 @@ local function _init_colors()
   end
   Screen.colors = colors
   Screen.colornames = colornames
+
+  Screen._global_default_attr_ids = {
+    [1] = { foreground = Screen.colors.Blue1, bold = true },
+    [2] = { reverse = true },
+    [3] = { bold = true, reverse = true },
+    [4] = { background = Screen.colors.LightMagenta },
+    [5] = { bold = true },
+    [6] = { foreground = Screen.colors.SeaGreen, bold = true },
+    [7] = { background = Screen.colors.Gray, foreground = Screen.colors.DarkBlue },
+    [8] = { foreground = Screen.colors.Brown },
+    [9] = { background = Screen.colors.Red, foreground = Screen.colors.Grey100 },
+    [10] = { background = Screen.colors.Yellow },
+    [11] = {
+      foreground = Screen.colors.Blue1,
+      background = Screen.colors.LightMagenta,
+      bold = true,
+    },
+    [12] = { background = Screen.colors.Gray },
+    [13] = { background = Screen.colors.LightGrey, foreground = Screen.colors.DarkBlue },
+    [14] = { background = Screen.colors.DarkGray, foreground = Screen.colors.LightGrey },
+    [15] = { foreground = Screen.colors.Brown, bold = true },
+    [16] = { foreground = Screen.colors.SlateBlue },
+    [17] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black },
+    [18] = { foreground = Screen.colors.Blue1 },
+    [19] = { foreground = Screen.colors.Red },
+    [20] = { background = Screen.colors.Yellow, foreground = Screen.colors.Red },
+    [21] = { background = Screen.colors.Grey90 },
+    [22] = { background = Screen.colors.LightBlue },
+    [23] = { foreground = Screen.colors.Blue1, background = Screen.colors.LightCyan, bold = true },
+    [24] = { background = Screen.colors.LightGrey, underline = true },
+    [25] = { foreground = Screen.colors.Cyan4 },
+    [26] = { foreground = Screen.colors.Fuchsia },
+    [27] = { background = Screen.colors.Red, bold = true },
+    [28] = { foreground = Screen.colors.SlateBlue, underline = true },
+    [29] = { foreground = Screen.colors.SlateBlue, bold = true },
+    [30] = { background = Screen.colors.Red },
+  }
 end
 
 --- @param width? integer
@@ -167,6 +204,7 @@ function Screen.new(width, height)
     wildmenu_selected = nil,
     win_position = {},
     win_viewport = {},
+    win_viewport_margins = {},
     float_pos = {},
     msg_grid = nil,
     msg_grid_pos = nil,
@@ -217,6 +255,17 @@ function Screen:set_default_attr_ids(attr_ids)
   self._default_attr_ids = attr_ids
 end
 
+function Screen:add_extra_attr_ids(extra_attr_ids)
+  local attr_ids = vim.deepcopy(Screen._global_default_attr_ids)
+  for id, attr in pairs(extra_attr_ids) do
+    if type(id) == 'number' and id < 100 then
+      error('extra attr ids should be at least 100 or be strings')
+    end
+    attr_ids[id] = attr
+  end
+  self._default_attr_ids = attr_ids
+end
+
 function Screen:get_default_attr_ids()
   return deepcopy(self._default_attr_ids)
 end
@@ -234,7 +283,7 @@ end
 --- @field rgb? boolean
 --- @field _debug_float? boolean
 
---- @param options test.functional.ui.screen.Opts
+--- @param options? test.functional.ui.screen.Opts
 --- @param session? test.Session
 function Screen:attach(options, session)
   session = session or get_session()
@@ -256,6 +305,10 @@ function Screen:attach(options, session)
   end
   if self._options.ext_multigrid then
     self._options.ext_linegrid = true
+  end
+
+  if self._default_attr_ids == nil then
+    self._default_attr_ids = Screen._global_default_attr_ids
   end
 end
 
@@ -296,6 +349,7 @@ local ext_keys = {
   'ruler',
   'float_pos',
   'win_viewport',
+  'win_viewport_margins',
 }
 
 local expect_keys = {
@@ -480,7 +534,10 @@ function Screen:expect(expected, attr_ids, ...)
       attr_state.id_to_index = self:linegrid_check_attrs(attr_state.ids or {})
     end
 
-    local actual_rows = self:render(not expected.any, attr_state)
+    local actual_rows
+    if expected.any or grid then
+      actual_rows = self:render(not expected.any, attr_state)
+    end
 
     if expected.any then
       -- Search for `any` anywhere in the screen lines.
@@ -576,6 +633,9 @@ screen:redraw_debug() to show all intermediate screen states.]]
     end
     if expected.win_viewport == nil then
       extstate.win_viewport = nil
+    end
+    if expected.win_viewport_margins == nil then
+      extstate.win_viewport_margins = nil
     end
 
     if expected.float_pos then
@@ -949,6 +1009,7 @@ function Screen:_handle_grid_destroy(grid)
   if self._options.ext_multigrid then
     self.win_position[grid] = nil
     self.win_viewport[grid] = nil
+    self.win_viewport_margins[grid] = nil
   end
 end
 
@@ -1001,6 +1062,16 @@ function Screen:_handle_win_viewport(
     curcol = curcol,
     linecount = linecount,
     sum_scroll_delta = scroll_delta + last_scroll_delta,
+  }
+end
+
+function Screen:_handle_win_viewport_margins(grid, win, top, bottom, left, right)
+  self.win_viewport_margins[grid] = {
+    win = win,
+    top = top,
+    bottom = bottom,
+    left = left,
+    right = right,
   }
 end
 
@@ -1422,6 +1493,8 @@ function Screen:_extstate_repr(attr_state)
   end
 
   local win_viewport = (next(self.win_viewport) and self.win_viewport) or nil
+  local win_viewport_margins = (next(self.win_viewport_margins) and self.win_viewport_margins)
+    or nil
 
   return {
     popupmenu = self.popupmenu,
@@ -1436,6 +1509,7 @@ function Screen:_extstate_repr(attr_state)
     msg_history = msg_history,
     float_pos = self.float_pos,
     win_viewport = win_viewport,
+    win_viewport_margins = win_viewport_margins,
   }
 end
 
@@ -1642,23 +1716,26 @@ function Screen:_print_snapshot(attrs, ignore)
       if self._options.ext_linegrid then
         dict = self:_pprint_hlitem(a)
       else
-        dict = '{' .. self:_pprint_attrs(a) .. '}'
+        dict = '{ ' .. self:_pprint_attrs(a) .. ' }'
       end
       local keyval = (type(i) == 'number') and '[' .. tostring(i) .. ']' or i
-      table.insert(attrstrs, '  ' .. keyval .. ' = ' .. dict .. ';')
+      table.insert(attrstrs, '  ' .. keyval .. ' = ' .. dict .. ',')
     end
-    attrstr = (', attr_ids={\n' .. table.concat(attrstrs, '\n') .. '\n}')
+    attrstr = (',\n  attr_ids = {\n  ' .. table.concat(attrstrs, '\n  ') .. '\n  },')
   elseif isempty(attrs) then
-    attrstr = ', attr_ids={}'
+    attrstr = ',\n  attr_ids = {},'
   end
 
-  local result = 'screen:expect{grid=[[\n' .. kwargs.grid .. '\n]]' .. attrstr
+  local result = ('screen:expect({\n  grid = [[\n  %s\n  ]]%s'):format(
+    kwargs.grid:gsub('\n', '\n  '),
+    attrstr
+  )
   for _, k in ipairs(ext_keys) do
     if ext_state[k] ~= nil and not (k == 'win_viewport' and not self.options.ext_multigrid) then
       result = result .. ', ' .. k .. '=' .. fmt_ext_state(k, ext_state[k])
     end
   end
-  result = result .. '}'
+  result = result .. '\n})'
 
   return result
 end
@@ -1764,20 +1841,20 @@ function Screen:_pprint_hlitem(item)
   -- print(inspect(item))
   local multi = self._rgb_cterm or self._options.ext_hlstate
   local cterm = (not self._rgb_cterm and not self._options.rgb)
-  local attrdict = '{' .. self:_pprint_attrs(multi and item[1] or item, cterm) .. '}'
+  local attrdict = '{ ' .. self:_pprint_attrs(multi and item[1] or item, cterm) .. ' }'
   local attrdict2, hlinfo
   local descdict = ''
   if self._rgb_cterm then
-    attrdict2 = ', {' .. self:_pprint_attrs(item[2], true) .. '}'
+    attrdict2 = ', { ' .. self:_pprint_attrs(item[2], true) .. ' }'
     hlinfo = item[3]
   else
     attrdict2 = ''
     hlinfo = item[2]
   end
   if self._options.ext_hlstate then
-    descdict = ', {' .. self:_pprint_hlinfo(hlinfo) .. '}'
+    descdict = ', { ' .. self:_pprint_hlinfo(hlinfo) .. ' }'
   end
-  return (multi and '{' or '') .. attrdict .. attrdict2 .. descdict .. (multi and '}' or '')
+  return (multi and '{ ' or '') .. attrdict .. attrdict2 .. descdict .. (multi and ' }' or '')
 end
 
 function Screen:_pprint_hlinfo(states)

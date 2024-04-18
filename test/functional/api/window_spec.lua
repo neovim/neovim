@@ -1,27 +1,27 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
 local clear, curbuf, curbuf_contents, curwin, eq, neq, matches, ok, feed, insert, eval =
-  helpers.clear,
-  helpers.api.nvim_get_current_buf,
-  helpers.curbuf_contents,
-  helpers.api.nvim_get_current_win,
-  helpers.eq,
-  helpers.neq,
-  helpers.matches,
-  helpers.ok,
-  helpers.feed,
-  helpers.insert,
-  helpers.eval
-local poke_eventloop = helpers.poke_eventloop
-local exec = helpers.exec
-local exec_lua = helpers.exec_lua
-local fn = helpers.fn
-local request = helpers.request
+  t.clear,
+  t.api.nvim_get_current_buf,
+  t.curbuf_contents,
+  t.api.nvim_get_current_win,
+  t.eq,
+  t.neq,
+  t.matches,
+  t.ok,
+  t.feed,
+  t.insert,
+  t.eval
+local poke_eventloop = t.poke_eventloop
+local exec = t.exec
+local exec_lua = t.exec_lua
+local fn = t.fn
+local request = t.request
 local NIL = vim.NIL
-local api = helpers.api
-local command = helpers.command
-local pcall_err = helpers.pcall_err
-local assert_alive = helpers.assert_alive
+local api = t.api
+local command = t.command
+local pcall_err = t.pcall_err
+local assert_alive = t.assert_alive
 
 describe('API/win', function()
   before_each(clear)
@@ -110,6 +110,44 @@ describe('API/win', function()
       local next_buf = api.nvim_create_buf(true, true)
       api.nvim_win_set_buf(new_win, next_buf)
       eq(next_buf, api.nvim_win_get_buf(new_win))
+    end)
+
+    describe("with 'autochdir'", function()
+      local topdir
+      local otherbuf
+      local oldwin
+      local newwin
+
+      before_each(function()
+        command('set shellslash')
+        topdir = fn.getcwd()
+        t.mkdir(topdir .. '/Xacd')
+        t.mkdir(topdir .. '/Xacd/foo')
+        otherbuf = api.nvim_create_buf(false, true)
+        api.nvim_buf_set_name(otherbuf, topdir .. '/Xacd/baz.txt')
+
+        command('set autochdir')
+        command('edit Xacd/foo/bar.txt')
+        eq(topdir .. '/Xacd/foo', fn.getcwd())
+
+        oldwin = api.nvim_get_current_win()
+        command('vsplit')
+        newwin = api.nvim_get_current_win()
+      end)
+
+      after_each(function()
+        t.rmdir(topdir .. '/Xacd')
+      end)
+
+      it('does not change cwd with non-current window', function()
+        api.nvim_win_set_buf(oldwin, otherbuf)
+        eq(topdir .. '/Xacd/foo', fn.getcwd())
+      end)
+
+      it('changes cwd with current window', function()
+        api.nvim_win_set_buf(newwin, otherbuf)
+        eq(topdir .. '/Xacd', fn.getcwd())
+      end)
     end)
   end)
 
@@ -219,6 +257,21 @@ describe('API/win', function()
 
       -- curwin didn't change back
       neq(win, curwin())
+
+      -- shows updated position after getchar() #20793
+      feed(':call getchar()<CR>')
+      api.nvim_win_set_cursor(win, { 1, 5 })
+      screen:expect {
+        grid = [[
+                                      |
+        {1:~                             }|*2
+        {2:[No Name]                     }|
+        prolo^gue                      |
+                                      |*2
+        {3:[No Name] [+]                 }|
+        :call getchar()               |
+      ]],
+      }
     end)
 
     it('remembers what column it wants to be in', function()
@@ -1147,27 +1200,6 @@ describe('API/win', function()
   end)
 
   describe('open_win', function()
-    it('noautocmd option works', function()
-      command('autocmd BufEnter,BufLeave,BufWinEnter * let g:fired = 1')
-      api.nvim_open_win(api.nvim_create_buf(true, true), true, {
-        relative = 'win',
-        row = 3,
-        col = 3,
-        width = 12,
-        height = 3,
-        noautocmd = true,
-      })
-      eq(0, fn.exists('g:fired'))
-      api.nvim_open_win(api.nvim_create_buf(true, true), true, {
-        relative = 'win',
-        row = 3,
-        col = 3,
-        width = 12,
-        height = 3,
-      })
-      eq(1, fn.exists('g:fired'))
-    end)
-
     it('disallowed in cmdwin if enter=true or buf=cmdwin_buf', function()
       local new_buf = api.nvim_create_buf(true, true)
       feed('q:')
@@ -1233,81 +1265,151 @@ describe('API/win', function()
       eq(wins_before, api.nvim_list_wins())
     end)
 
-    it('creates a split window', function()
-      local win = api.nvim_open_win(0, true, {
-        vertical = false,
-      })
-      eq('', api.nvim_win_get_config(win).relative)
-    end)
-
-    it('creates split windows in the correct direction', function()
-      local initial_win = api.nvim_get_current_win()
-      local win = api.nvim_open_win(0, true, {
-        vertical = true,
-      })
-      eq('', api.nvim_win_get_config(win).relative)
-
-      local layout = fn.winlayout()
-
-      eq({
-        'row',
-        {
-          { 'leaf', win },
-          { 'leaf', initial_win },
-        },
-      }, layout)
-    end)
-
-    it("respects the 'split' option", function()
-      local initial_win = api.nvim_get_current_win()
-      local win = api.nvim_open_win(0, true, {
-        split = 'below',
-      })
-      eq('', api.nvim_win_get_config(win).relative)
-
-      local layout = fn.winlayout()
-
-      eq({
-        'col',
-        {
-          { 'leaf', initial_win },
-          { 'leaf', win },
-        },
-      }, layout)
-    end)
-
-    it(
-      "doesn't change tp_curwin when splitting window in non-current tab with enter=false",
-      function()
-        local tab1 = api.nvim_get_current_tabpage()
-        local tab1_win = api.nvim_get_current_win()
-
-        helpers.command('tabnew')
-        local tab2 = api.nvim_get_current_tabpage()
-        local tab2_win = api.nvim_get_current_win()
-
-        eq({ tab1_win, tab2_win }, api.nvim_list_wins())
-        eq({ tab1, tab2 }, api.nvim_list_tabpages())
-
-        api.nvim_set_current_tabpage(tab1)
-        eq(tab1_win, api.nvim_get_current_win())
-
-        local tab2_prevwin = fn.tabpagewinnr(tab2, '#')
-
-        -- split in tab2 whine in tab2, with enter = false
-        local tab2_win2 = api.nvim_open_win(api.nvim_create_buf(false, true), false, {
-          win = tab2_win,
-          split = 'right',
+    describe('creates a split window above', function()
+      local function test_open_win_split_above(key, val)
+        local initial_win = api.nvim_get_current_win()
+        local win = api.nvim_open_win(0, true, {
+          [key] = val,
+          height = 10,
         })
-        eq(tab1_win, api.nvim_get_current_win()) -- we should still be in the first tp
-        eq(tab1_win, api.nvim_tabpage_get_win(tab1))
-
-        eq(tab2_win, api.nvim_tabpage_get_win(tab2)) -- tab2's tp_curwin should not have changed
-        eq(tab2_prevwin, fn.tabpagewinnr(tab2, '#')) -- tab2's tp_prevwin should not have changed
-        eq({ tab1_win, tab2_win, tab2_win2 }, api.nvim_list_wins())
-        eq({ tab2_win, tab2_win2 }, api.nvim_tabpage_list_wins(tab2))
+        eq('', api.nvim_win_get_config(win).relative)
+        eq(10, api.nvim_win_get_height(win))
+        local layout = fn.winlayout()
+        eq({
+          'col',
+          {
+            { 'leaf', win },
+            { 'leaf', initial_win },
+          },
+        }, layout)
       end
-    )
+
+      it("with split = 'above'", function()
+        test_open_win_split_above('split', 'above')
+      end)
+
+      it("with vertical = false and 'nosplitbelow'", function()
+        api.nvim_set_option_value('splitbelow', false, {})
+        test_open_win_split_above('vertical', false)
+      end)
+    end)
+
+    describe('creates a split window below', function()
+      local function test_open_win_split_below(key, val)
+        local initial_win = api.nvim_get_current_win()
+        local win = api.nvim_open_win(0, true, {
+          [key] = val,
+          height = 15,
+        })
+        eq('', api.nvim_win_get_config(win).relative)
+        eq(15, api.nvim_win_get_height(win))
+        local layout = fn.winlayout()
+        eq({
+          'col',
+          {
+            { 'leaf', initial_win },
+            { 'leaf', win },
+          },
+        }, layout)
+      end
+
+      it("with split = 'below'", function()
+        test_open_win_split_below('split', 'below')
+      end)
+
+      it("with vertical = false and 'splitbelow'", function()
+        api.nvim_set_option_value('splitbelow', true, {})
+        test_open_win_split_below('vertical', false)
+      end)
+    end)
+
+    describe('creates a split window to the left', function()
+      local function test_open_win_split_left(key, val)
+        local initial_win = api.nvim_get_current_win()
+        local win = api.nvim_open_win(0, true, {
+          [key] = val,
+          width = 25,
+        })
+        eq('', api.nvim_win_get_config(win).relative)
+        eq(25, api.nvim_win_get_width(win))
+        local layout = fn.winlayout()
+        eq({
+          'row',
+          {
+            { 'leaf', win },
+            { 'leaf', initial_win },
+          },
+        }, layout)
+      end
+
+      it("with split = 'left'", function()
+        test_open_win_split_left('split', 'left')
+      end)
+
+      it("with vertical = true and 'nosplitright'", function()
+        api.nvim_set_option_value('splitright', false, {})
+        test_open_win_split_left('vertical', true)
+      end)
+    end)
+
+    describe('creates a split window to the right', function()
+      local function test_open_win_split_right(key, val)
+        local initial_win = api.nvim_get_current_win()
+        local win = api.nvim_open_win(0, true, {
+          [key] = val,
+          width = 30,
+        })
+        eq('', api.nvim_win_get_config(win).relative)
+        eq(30, api.nvim_win_get_width(win))
+        local layout = fn.winlayout()
+        eq({
+          'row',
+          {
+            { 'leaf', initial_win },
+            { 'leaf', win },
+          },
+        }, layout)
+      end
+
+      it("with split = 'right'", function()
+        test_open_win_split_right('split', 'right')
+      end)
+
+      it("with vertical = true and 'splitright'", function()
+        api.nvim_set_option_value('splitright', true, {})
+        test_open_win_split_right('vertical', true)
+      end)
+    end)
+
+    it("doesn't change tp_curwin when splitting window in another tab with enter=false", function()
+      local tab1 = api.nvim_get_current_tabpage()
+      local tab1_win = api.nvim_get_current_win()
+
+      t.command('tabnew')
+      local tab2 = api.nvim_get_current_tabpage()
+      local tab2_win = api.nvim_get_current_win()
+
+      eq({ tab1_win, tab2_win }, api.nvim_list_wins())
+      eq({ tab1, tab2 }, api.nvim_list_tabpages())
+
+      api.nvim_set_current_tabpage(tab1)
+      eq(tab1_win, api.nvim_get_current_win())
+
+      local tab2_prevwin = fn.tabpagewinnr(tab2, '#')
+
+      -- split in tab2 whine in tab2, with enter = false
+      local tab2_win2 = api.nvim_open_win(api.nvim_create_buf(false, true), false, {
+        win = tab2_win,
+        split = 'right',
+      })
+      eq(tab1_win, api.nvim_get_current_win()) -- we should still be in the first tp
+      eq(tab1_win, api.nvim_tabpage_get_win(tab1))
+
+      eq(tab2_win, api.nvim_tabpage_get_win(tab2)) -- tab2's tp_curwin should not have changed
+      eq(tab2_prevwin, fn.tabpagewinnr(tab2, '#')) -- tab2's tp_prevwin should not have changed
+      eq({ tab1_win, tab2_win, tab2_win2 }, api.nvim_list_wins())
+      eq({ tab2_win, tab2_win2 }, api.nvim_tabpage_list_wins(tab2))
+    end)
 
     it('creates splits in the correct location', function()
       local first_win = api.nvim_get_current_win()
@@ -1390,6 +1492,24 @@ describe('API/win', function()
       ]=])
       return info
     end
+
+    it('noautocmd option works', function()
+      local info = setup_tabbed_autocmd_test()
+
+      api.nvim_open_win(
+        info.other_buf,
+        true,
+        { split = 'left', win = info.tab2_curwin, noautocmd = true }
+      )
+      eq({}, eval('result'))
+
+      api.nvim_open_win(
+        info.orig_buf,
+        true,
+        { relative = 'editor', row = 0, col = 0, width = 10, height = 10, noautocmd = true }
+      )
+      eq({}, eval('result'))
+    end)
 
     it('fires expected autocmds when creating splits without entering', function()
       local info = setup_tabbed_autocmd_test()
@@ -1665,6 +1785,46 @@ describe('API/win', function()
         'E36: Not enough room$',
         pcall_err(api.nvim_open_win, 0, true, { split = 'below', win = 0 })
       )
+    end)
+
+    describe("with 'autochdir'", function()
+      local topdir
+      local otherbuf
+
+      before_each(function()
+        command('set shellslash')
+        topdir = fn.getcwd()
+        t.mkdir(topdir .. '/Xacd')
+        t.mkdir(topdir .. '/Xacd/foo')
+        otherbuf = api.nvim_create_buf(false, true)
+        api.nvim_buf_set_name(otherbuf, topdir .. '/Xacd/baz.txt')
+
+        command('set autochdir')
+        command('edit Xacd/foo/bar.txt')
+        eq(topdir .. '/Xacd/foo', fn.getcwd())
+      end)
+
+      after_each(function()
+        t.rmdir(topdir .. '/Xacd')
+      end)
+
+      it('does not change cwd with enter=false #15280', function()
+        api.nvim_open_win(
+          otherbuf,
+          false,
+          { relative = 'editor', height = 5, width = 5, row = 5, col = 5 }
+        )
+        eq(topdir .. '/Xacd/foo', fn.getcwd())
+      end)
+
+      it('changes cwd with enter=true', function()
+        api.nvim_open_win(
+          otherbuf,
+          true,
+          { relative = 'editor', height = 5, width = 5, row = 5, col = 5 }
+        )
+        eq(topdir .. '/Xacd', fn.getcwd())
+      end)
     end)
   end)
 

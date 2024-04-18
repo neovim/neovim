@@ -19,6 +19,7 @@ typedef struct {
   handle_T new_curwin_handle;     ///< ID of new curwin
   handle_T save_prevwin_handle;   ///< ID of saved prevwin
   bufref_T new_curbuf;            ///< new curbuf
+  char *tp_localdir;              ///< saved value of tp_localdir
   char *globaldir;                ///< saved value of globaldir
   bool save_VIsual_active;        ///< saved VIsual_active
   int save_State;                 ///< saved State

@@ -2,16 +2,16 @@ local ffi = require('ffi')
 local formatc = require('test.unit.formatc')
 local Set = require('test.unit.set')
 local Preprocess = require('test.unit.preprocess')
-local global_helpers = require('test.helpers')
-local paths = global_helpers.paths
+local t_global = require('test.testutil')
+local paths = t_global.paths
 local assert = require('luassert')
 local say = require('say')
 
-local check_cores = global_helpers.check_cores
-local dedent = global_helpers.dedent
-local neq = global_helpers.neq
+local check_cores = t_global.check_cores
+local dedent = t_global.dedent
+local neq = t_global.neq
 local map = vim.tbl_map
-local eq = global_helpers.eq
+local eq = t_global.eq
 local trim = vim.trim
 
 -- add some standard header locations
@@ -146,6 +146,9 @@ local function filter_complex_blocks(body)
         or string.find(line, 'value_init_')
         or string.find(line, 'UUID_NULL') -- static const uuid_t UUID_NULL = {...}
         or string.find(line, 'inline _Bool')
+        -- used by macOS headers
+        or string.find(line, 'typedef enum : ')
+        or string.find(line, 'mach_vm_range_recipe')
       )
     then
       result[#result + 1] = line
@@ -209,7 +212,7 @@ local function cimport(...)
       local new_cdefs = Set:new()
       for line in body:gmatch('[^\r\n]+') do
         line = trim(line)
-        -- give each #pragma pack an unique id, so that they don't get removed
+        -- give each #pragma pack a unique id, so that they don't get removed
         -- if they are inserted into the set
         -- (they are needed in the right order with the struct definitions,
         -- otherwise luajit has wrong memory layouts for the structs)
@@ -873,7 +876,7 @@ local function is_asan()
   end
 end
 
---- @class test.unit.helpers.module
+--- @class test.unit.testutil.module
 local module = {
   cimport = cimport,
   cppimport = cppimport,
@@ -903,9 +906,7 @@ local module = {
   debug_log = debug_log,
   is_asan = is_asan,
 }
---- @class test.unit.helpers: test.unit.helpers.module, test.helpers
-module = vim.tbl_extend('error', module, global_helpers)
+--- @class test.unit.testutil: test.unit.testutil.module, test.testutil
+module = vim.tbl_extend('error', module, t_global)
 
-return function()
-  return module
-end
+return module

@@ -10,10 +10,11 @@ on:
       - 'release-[0-9]+.[0-9]+'
     paths-ignore:
       - 'contrib/**'
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   ASAN_OPTIONS: detect_leaks=1:check_initialization_order=1:log_path=${{ github.workspace }}/build/log/asan:intercept_tls_get_addr=0
@@ -113,8 +114,6 @@ jobs:
             build: { flavor: tsan }
           - test: unittest
             build: { flavor: puc-lua }
-          - test: unittest
-            build: { runner: macos-14 } # unittests don't work on M1 #26145
           - test: oldtest
             build: { flavor: tsan }
     runs-on: ${{ matrix.build.runner }}
@@ -133,10 +132,6 @@ jobs:
       - if: ${{ matrix.test != 'unittest' }}
         name: Set up interpreter packages
         run: |
-          # Use default CC to avoid compilation problems when installing Python modules.
-          echo "Install neovim module for Python."
-          CC=cc python3 -m pip -q install --user --upgrade pynvim
-
           echo "Install neovim RubyGem."
           gem install --no-document --bindir "$BIN_DIR" --user-install --pre neovim
 
@@ -193,65 +188,7 @@ jobs:
         run: cat $(find "$LOG_DIR" -type f)
 
   windows:
-    runs-on: windows-2022
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        test: [functional, old]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup
-
-      - name: Build deps
-        run: |
-          cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo'
-          cmake --build .deps
-
-      - name: Build
-        run: |
-          cmake --preset ci -D CMAKE_BUILD_TYPE='RelWithDebInfo'
-          cmake --build build
-
-      - name: Install test deps
-        run: |
-          $PSNativeCommandArgumentPassing = 'Legacy'
-
-          & build\bin\nvim.exe "--version"
-
-          # Ensure that the "win32" feature is set.
-          & build\bin\nvim -u NONE --headless -c 'exe !has(\"win32\").\"cq\"'
-
-          python -m pip install pynvim
-          # Sanity check
-          python -c "import pynvim; print(str(pynvim))"
-
-          node --version
-          npm.cmd --version
-
-          npm.cmd install -g neovim
-          Get-Command -CommandType Application neovim-node-host.cmd
-          npm.cmd link neovim
-
-      - if: ${{ matrix.test == 'functional' }}
-        name: functionaltest
-        timeout-minutes: 20
-        run: cmake --build build --target functionaltest
-
-      - if: ${{ matrix.test == 'old' }}
-        uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          pacboy: >-
-            make:p gcc:p diffutils:p
-          release: false
-
-      - if: ${{ matrix.test == 'old' }}
-        name: oldtest
-        shell: msys2 {0}
-        run: |
-          cd test/old/testdir
-          mingw32-make VERBOSE=1
+    uses: ./.github/workflows/test_windows.yml
 
   # This job tests the following things:
   # - Check if Release, MinSizeRel and RelWithDebInfo compiles correctly.

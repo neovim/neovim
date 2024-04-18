@@ -2,6 +2,7 @@
 " Compiler:         Cargo Compiler
 " Maintainer:       Damien Radtke <damienradtke@gmail.com>
 " Latest Revision:  2023-09-11
+"                   2024 Apr 05 by The Vim Project (removed :CompilerSet definition)
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 
 if exists('current_compiler')
@@ -14,10 +15,6 @@ let current_compiler = "cargo"
 let s:save_cpo = &cpo
 set cpo&vim
 " vint: +ProhibitAbbreviationOption
-
-if exists(':CompilerSet') != 2
-    command -nargs=* CompilerSet setlocal <args>
-endif
 
 if exists('g:cargo_makeprg_params')
     execute 'CompilerSet makeprg=cargo\ '.escape(g:cargo_makeprg_params, ' \|"').'\ $*'

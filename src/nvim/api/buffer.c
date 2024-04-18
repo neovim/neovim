@@ -39,6 +39,7 @@
 #include "nvim/memory_defs.h"
 #include "nvim/move.h"
 #include "nvim/ops.h"
+#include "nvim/option_vars.h"
 #include "nvim/pos_defs.h"
 #include "nvim/state_defs.h"
 #include "nvim/types_defs.h"
@@ -968,7 +969,7 @@ String nvim_buf_get_name(Buffer buffer, Error *err)
   return cstr_as_string(buf->b_ffname);
 }
 
-/// Sets the full file name for a buffer
+/// Sets the full file name for a buffer, like |:file_f|
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Buffer name
@@ -984,11 +985,22 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
 
   try_start();
 
+  const bool is_curbuf = buf == curbuf;
+  const int save_acd = p_acd;
+  if (!is_curbuf) {
+    // Temporarily disable 'autochdir' when setting file name for another buffer.
+    p_acd = false;
+  }
+
   // Using aucmd_*: autocommands will be executed by rename_buffer
   aco_save_T aco;
   aucmd_prepbuf(&aco, buf);
   int ren_ret = rename_buffer(name.data);
   aucmd_restbuf(&aco);
+
+  if (!is_curbuf) {
+    p_acd = save_acd;
+  }
 
   if (try_end(err)) {
     return;
@@ -1269,10 +1281,13 @@ static void fix_cursor(win_T *win, linenr_T lo, linenr_T hi, linenr_T extra)
     } else if (extra < 0) {
       check_cursor_lnum(win);
     }
-    check_cursor_col_win(win);
+    check_cursor_col(win);
     changed_cline_bef_curs(win);
+    win->w_valid &= ~(VALID_BOTLINE_AP);
+    update_topline(win);
+  } else {
+    invalidate_botline(win);
   }
-  invalidate_botline(win);
 }
 
 /// Fix cursor position after replacing text
@@ -1307,7 +1322,7 @@ static void fix_cursor_cols(win_T *win, linenr_T start_row, colnr_T start_col, l
 
     // it's easier to work with a single value here.
     // col and coladd are fixed by a later call
-    // to check_cursor_col_win when necessary
+    // to check_cursor_col when necessary
     win->w_cursor.col += win->w_cursor.coladd;
     win->w_cursor.coladd = 0;
 
@@ -1343,7 +1358,7 @@ static void fix_cursor_cols(win_T *win, linenr_T start_row, colnr_T start_col, l
     }
   }
 
-  check_cursor_col_win(win);
+  check_cursor_col(win);
   changed_cline_bef_curs(win);
   invalidate_botline(win);
 }

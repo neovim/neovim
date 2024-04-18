@@ -29,6 +29,7 @@
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/msgpack_rpc/channel.h"
@@ -543,8 +544,12 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
   }
 #else
   if (embedded_mode) {
-    stdin_dup_fd = dup(STDIN_FILENO);
-    stdout_dup_fd = dup(STDOUT_FILENO);
+    // In embedded mode redirect stdout and stdin to stderr, since they are used for the UI channel.
+    // NOTE: fnctl with F_DUPFD_CLOEXEC is used instead of dup to prevent child processes from
+    // inheriting the file descriptors, which make it impossible for UIs to detect when nvim exits
+    // while one or more of its child processes are still running.
+    stdin_dup_fd = fcntl(STDIN_FILENO, F_DUPFD_CLOEXEC, STDERR_FILENO + 1);
+    stdout_dup_fd = fcntl(STDOUT_FILENO, F_DUPFD_CLOEXEC, STDERR_FILENO + 1);
     dup2(STDERR_FILENO, STDOUT_FILENO);
     dup2(STDERR_FILENO, STDIN_FILENO);
   }
@@ -646,35 +651,52 @@ static inline list_T *buffer_to_tv_list(const char *const buf, const size_t len)
 void on_channel_data(Stream *stream, RBuffer *buf, size_t count, void *data, bool eof)
 {
   Channel *chan = data;
-  on_channel_output(stream, chan, buf, count, eof, &chan->on_data);
+  on_channel_output(stream, chan, buf, eof, &chan->on_data);
 }
 
 void on_job_stderr(Stream *stream, RBuffer *buf, size_t count, void *data, bool eof)
 {
   Channel *chan = data;
-  on_channel_output(stream, chan, buf, count, eof, &chan->on_stderr);
+  on_channel_output(stream, chan, buf, eof, &chan->on_stderr);
 }
 
-static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf, size_t count, bool eof,
+static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf, bool eof,
                               CallbackReader *reader)
 {
-  // stub variable, to keep reading consistent with the order of events, only
-  // consider the count parameter.
-  size_t r;
-  char *ptr = rbuffer_read_ptr(buf, &r);
+  size_t count;
+  char *output = rbuffer_read_ptr(buf, &count);
+
+  if (chan->term) {
+    if (!eof) {
+      char *p = output;
+      char *end = output + count;
+      while (p < end) {
+        // Don't pass incomplete UTF-8 sequences to libvterm. #16245
+        // Composing chars can be passed separately, so utf_ptr2len_len() is enough.
+        int clen = utf_ptr2len_len(p, (int)(end - p));
+        if (clen > end - p) {
+          count = (size_t)(p - output);
+          break;
+        }
+        p += clen;
+      }
+    }
+
+    terminal_receive(chan->term, output, count);
+  }
+
+  if (count) {
+    rbuffer_consumed(buf, count);
+  }
+  // Move remaining data to start of buffer, so the buffer can never wrap around.
+  rbuffer_reset(buf);
+
+  if (callback_reader_set(*reader)) {
+    ga_concat_len(&reader->buffer, output, count);
+  }
 
   if (eof) {
     reader->eof = true;
-  } else {
-    if (chan->term) {
-      terminal_receive(chan->term, ptr, count);
-    }
-
-    rbuffer_consumed(buf, count);
-
-    if (callback_reader_set(*reader)) {
-      ga_concat_len(&reader->buffer, ptr, count);
-    }
   }
 
   if (callback_reader_set(*reader)) {

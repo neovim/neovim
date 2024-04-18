@@ -153,6 +153,12 @@
     type init_array[INIT_SIZE]; \
   }
 
+#define KVI_INITIAL_VALUE(v) { \
+  .size = 0, \
+  .capacity = ARRAY_SIZE((v).init_array), \
+  .items = (v).init_array \
+}
+
 /// Initialize vector with preallocated array
 ///
 /// @param[out]  v  Vector to initialize.
@@ -217,6 +223,17 @@ static inline void *_memcpy_free(void *const restrict dest, void *const restrict
       kvi_resize((v), (v).capacity); \
     } \
   } while (0)
+
+#define kvi_concat_len(v, data, len) \
+  if (len > 0) { \
+    kvi_ensure_more_space(v, len); \
+    assert((v).items); \
+    memcpy((v).items + (v).size, data, sizeof((v).items[0]) * len); \
+    (v).size = (v).size + len; \
+  }
+
+#define kvi_concat(v, str) kvi_concat_len(v, str, strlen(str))
+#define kvi_splice(v1, v0) kvi_concat_len(v1, (v0).items, (v0).size)
 
 /// Get location where to store new element to a vector with preallocated array
 ///

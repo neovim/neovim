@@ -37,7 +37,7 @@ enum {
 /// attrs[] contains the highlighting attribute for each cell.
 ///
 /// vcols[] contains the virtual columns in the line. -1 means not available
-/// or before buffer text, MAXCOL means after the end of the line.
+/// or before buffer text.
 /// -2 or -3 means in fold column and a mouse click should:
 ///  -2: open a fold
 ///  -3: close a fold

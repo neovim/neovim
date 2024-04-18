@@ -1,12 +1,12 @@
-local helpers = require('test.unit.helpers')(after_each)
-local itp = helpers.gen_itp(it)
+local t = require('test.unit.testutil')
+local itp = t.gen_itp(it)
 
-local ffi = helpers.ffi
-local eq = helpers.eq
-local neq = helpers.neq
+local ffi = t.ffi
+local eq = t.eq
+local neq = t.neq
 
-local keycodes = helpers.cimport('./src/nvim/keycodes.h')
-local NULL = helpers.NULL
+local keycodes = t.cimport('./src/nvim/keycodes.h')
+local NULL = t.NULL
 
 describe('keycodes.c', function()
   describe('find_special_key()', function()

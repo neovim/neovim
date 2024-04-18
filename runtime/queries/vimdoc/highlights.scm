@@ -7,39 +7,46 @@
 (column_heading) @markup.heading.4
 
 (column_heading
-  "~" @markup.heading.4.marker
+  "~" @markup.heading.4
   (#set! conceal ""))
 
 (tag
-  "*" @markup.heading.5.marker
-  (#set! conceal "")
+  "*" @label
+  (#set! conceal ""))
+
+(tag
   text: (_) @label)
 
 (taglink
   "|" @markup.link
-  (#set! conceal "")
+  (#set! conceal ""))
+
+(taglink
   text: (_) @markup.link)
 
 (optionlink
   text: (_) @markup.link)
 
 (codespan
-  "`" @markup.raw.delimiter
-  (#set! conceal "")
+  "`" @markup.raw
+  (#set! conceal ""))
+
+(codespan
   text: (_) @markup.raw)
 
 ((codeblock) @markup.raw.block
   (#set! "priority" 90))
 
 (codeblock
-  [
-    ">"
-    (language)
-  ] @markup.raw.delimiter
+  ">" @markup.raw
+  (#set! conceal ""))
+
+(codeblock
+  (language) @label
   (#set! conceal ""))
 
 (block
-  "<" @markup.raw.delimiter
+  "<" @markup.raw
   (#set! conceal ""))
 
 (argument) @variable.parameter
@@ -47,6 +54,8 @@
 (keycode) @string.special
 
 (url) @string.special.url
+
+(modeline) @keyword.directive
 
 ((note) @comment.note
   (#any-of? @comment.note "Note:" "NOTE:" "Notes:"))

@@ -110,7 +110,8 @@ local tests = {}
 
 function tests.basic_init()
   skeleton {
-    on_init = function(_)
+    on_init = function(params)
+      assert_eq(params.workDoneToken, '1')
       return {
         capabilities = {
           textDocumentSync = protocol.TextDocumentSyncKind.None,
@@ -983,7 +984,7 @@ local test_name = arg[1]
 local timeout = arg[2]
 assert(type(test_name) == 'string', 'test_name must be specified as first arg.')
 
-local kill_timer = vim.uv.new_timer()
+local kill_timer = assert(vim.uv.new_timer())
 kill_timer:start(timeout or 1e3, 0, function()
   kill_timer:stop()
   kill_timer:close()

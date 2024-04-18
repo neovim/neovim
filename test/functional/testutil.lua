@@ -1,24 +1,25 @@
 local uv = vim.uv
-local global_helpers = require('test.helpers')
+local t_global = require('test.testutil')
 
 local Session = require('test.client.session')
 local uv_stream = require('test.client.uv_stream')
 local SocketStream = uv_stream.SocketStream
 local ChildProcessStream = uv_stream.ChildProcessStream
 
-local check_cores = global_helpers.check_cores
-local check_logs = global_helpers.check_logs
-local dedent = global_helpers.dedent
-local eq = global_helpers.eq
-local is_os = global_helpers.is_os
-local ok = global_helpers.ok
+local check_cores = t_global.check_cores
+local check_logs = t_global.check_logs
+local dedent = t_global.dedent
+local eq = t_global.eq
+local is_os = t_global.is_os
+local ok = t_global.ok
 local sleep = uv.sleep
-local fail = global_helpers.fail
+local fail = t_global.fail
 
-local module = {}
+--- @class test.functional.testutil: test.testutil
+local module = vim.deepcopy(t_global)
 
 local runtime_set = 'set runtimepath^=./build/lib/nvim/'
-module.nvim_prog = (os.getenv('NVIM_PRG') or global_helpers.paths.test_build_dir .. '/bin/nvim')
+module.nvim_prog = (os.getenv('NVIM_PRG') or t_global.paths.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
 module.nvim_set = (
   'set shortmess+=IS background=light termguicolors noswapfile noautoindent startofline'
@@ -36,9 +37,9 @@ module.nvim_argv = {
   runtime_set,
   '--cmd',
   module.nvim_set,
-  -- Remove default mappings.
+  -- Remove default user commands and mappings.
   '--cmd',
-  'mapclear | mapclear!',
+  'comclear | mapclear | mapclear!',
   -- Make screentest work after changing to the new default color scheme
   -- Source 'vim' color scheme without side effects
   -- TODO: rewrite tests
@@ -367,13 +368,6 @@ function module.feed(...)
   end
 end
 
---- @param ... string
-function module.rawfeed(...)
-  for _, v in ipairs({ ... }) do
-    nvim_feed(dedent(v))
-  end
-end
-
 ---@param ... string[]?
 ---@return string[]
 function module.merge_args(...)
@@ -583,7 +577,7 @@ function module.insert(...)
   nvim_feed('i')
   for _, v in ipairs({ ... }) do
     local escaped = v:gsub('<', '<lt>')
-    module.rawfeed(escaped)
+    module.feed(escaped)
   end
   nvim_feed('<ESC>')
 end
@@ -796,7 +790,7 @@ local function do_rmdir(path)
   for file in vim.fs.dir(path) do
     if file ~= '.' and file ~= '..' then
       local abspath = path .. '/' .. file
-      if global_helpers.isdir(abspath) then
+      if t_global.isdir(abspath) then
         do_rmdir(abspath) -- recurse
       else
         local ret, err = os.remove(abspath)
@@ -853,7 +847,7 @@ function module.exc_exec(cmd)
 end
 
 --- @param cond boolean
---- @param reason string
+--- @param reason? string
 --- @return boolean
 function module.skip(cond, reason)
   if cond then
@@ -971,7 +965,7 @@ function module.alter_slashes(obj)
 end
 
 local load_factor = 1
-if global_helpers.is_ci() then
+if t_global.is_ci() then
   -- Compute load factor only once (but outside of any tests).
   module.clear()
   module.request('nvim_command', 'source test/old/testdir/load.vim')
@@ -1028,11 +1022,29 @@ function module.mkdir_p(path)
   return os.execute((is_os('win') and 'mkdir ' .. path or 'mkdir -p ' .. path))
 end
 
---- @class test.functional.helpers: test.helpers
-module = vim.tbl_extend('error', module, global_helpers)
+local testid = (function()
+  local id = 0
+  return function()
+    id = id + 1
+    return id
+  end
+end)()
 
---- @return test.functional.helpers
-return function(after_each)
+return function()
+  local g = getfenv(2)
+
+  --- @type function?
+  local before_each = g.before_each
+  --- @type function?
+  local after_each = g.after_each
+
+  if before_each then
+    before_each(function()
+      local id = ('T%d'):format(testid())
+      _G._nvim_test_id = id
+    end)
+  end
+
   if after_each then
     after_each(function()
       check_logs()

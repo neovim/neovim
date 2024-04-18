@@ -177,7 +177,7 @@ colnr_T tabstop_start(colnr_T col, int ts, colnr_T *vts)
   colnr_T tabcol = 0;
 
   if (vts == NULL || vts[0] == 0) {
-    return ((col / ts) * ts);
+    return col - col % ts;
   }
 
   const int tabcount = vts[0];
@@ -189,7 +189,7 @@ colnr_T tabstop_start(colnr_T col, int ts, colnr_T *vts)
   }
 
   const int excess = (tabcol % vts[tabcount]);
-  return (excess + ((col - excess) / vts[tabcount]) * vts[tabcount]);
+  return col - (col - excess) % vts[tabcount];
 }
 
 /// Find the number of tabs and spaces necessary to get from one column
@@ -1105,7 +1105,7 @@ void ex_retab(exarg_T *eap)
     colnr_T *old_vts_ary = curbuf->b_p_vts_array;
 
     if (tabstop_count(old_vts_ary) > 0 || tabstop_count(new_vts_array) > 1) {
-      set_string_option_direct(kOptVartabstop, new_ts_str, OPT_LOCAL, 0);
+      set_option_direct(kOptVartabstop, CSTR_AS_OPTVAL(new_ts_str), OPT_LOCAL, 0);
       curbuf->b_p_vts_array = new_vts_array;
       xfree(old_vts_ary);
     } else {
@@ -1116,7 +1116,7 @@ void ex_retab(exarg_T *eap)
     }
     xfree(new_ts_str);
   }
-  coladvance(curwin->w_curswant);
+  coladvance(curwin, curwin->w_curswant);
 
   u_clearline(curbuf);
 }
@@ -1160,7 +1160,7 @@ int get_expr_indent(void)
   curwin->w_cursor = save_pos;
   curwin->w_curswant = save_curswant;
   curwin->w_set_curswant = save_set_curswant;
-  check_cursor();
+  check_cursor(curwin);
   State = save_State;
 
   // Reset did_throw, unless 'debug' has "throw" and inside a try/catch.

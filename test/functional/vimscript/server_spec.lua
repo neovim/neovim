@@ -1,12 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
-local assert_log = helpers.assert_log
-local eq, neq, eval = helpers.eq, helpers.neq, helpers.eval
-local clear, fn, api = helpers.clear, helpers.fn, helpers.api
-local ok = helpers.ok
-local matches = helpers.matches
-local pcall_err = helpers.pcall_err
-local mkdir = helpers.mkdir
-local is_os = helpers.is_os
+local t = require('test.functional.testutil')()
+local assert_log = t.assert_log
+local eq, neq, eval = t.eq, t.neq, t.eval
+local clear, fn, api = t.clear, t.fn, t.api
+local ok = t.ok
+local matches = t.matches
+local pcall_err = t.pcall_err
+local check_close = t.check_close
+local mkdir = t.mkdir
+local rmdir = t.rmdir
+local is_os = t.is_os
 
 local testlog = 'Xtest-server-log'
 
@@ -18,12 +20,16 @@ end
 
 describe('server', function()
   after_each(function()
+    check_close()
     os.remove(testlog)
   end)
 
   it('serverstart() stores sockets in $XDG_RUNTIME_DIR', function()
     local dir = 'Xtest_xdg_run'
     mkdir(dir)
+    finally(function()
+      rmdir(dir)
+    end)
     clear({ env = { XDG_RUNTIME_DIR = dir } })
     matches(dir, fn.stdpath('run'))
     if not is_os('win') then
@@ -100,14 +106,14 @@ describe('server', function()
 
     local s = fn.serverstart('127.0.0.1:0') -- assign random port
     if #s > 0 then
-      assert(string.match(s, '127.0.0.1:%d+'))
+      matches('127.0.0.1:%d+', s)
       eq(s, fn.serverlist()[1])
       clear_serverlist()
     end
 
     s = fn.serverstart('127.0.0.1:') -- assign random port
     if #s > 0 then
-      assert(string.match(s, '127.0.0.1:%d+'))
+      matches('127.0.0.1:%d+', s)
       eq(s, fn.serverlist()[1])
       clear_serverlist()
     end
@@ -170,11 +176,11 @@ end)
 describe('startup --listen', function()
   it('validates', function()
     clear()
-    local cmd = { unpack(helpers.nvim_argv) }
+    local cmd = { unpack(t.nvim_argv) }
     table.insert(cmd, '--listen')
     matches('nvim.*: Argument missing after: "%-%-listen"', fn.system(cmd))
 
-    cmd = { unpack(helpers.nvim_argv) }
+    cmd = { unpack(t.nvim_argv) }
     table.insert(cmd, '--listen2')
     matches('nvim.*: Garbage after option argument: "%-%-listen2"', fn.system(cmd))
   end)

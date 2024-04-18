@@ -14,6 +14,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/input.h"
 #include "nvim/keycodes.h"
+#include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -21,6 +22,7 @@
 #include "nvim/os/input.h"
 #include "nvim/state_defs.h"
 #include "nvim/ui.h"
+#include "nvim/vim_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "input.c.generated.h"  // IWYU pragma: export
@@ -180,10 +182,9 @@ int get_number(int colon, bool *mouse_used)
     ui_cursor_goto(msg_row, msg_col);
     int c = safe_vgetc();
     if (ascii_isdigit(c)) {
-      if (n > INT_MAX / 10) {
+      if (vim_append_digit_int(&n, c - '0') == FAIL) {
         return 0;
       }
-      n = n * 10 + c - '0';
       msg_putchar(c);
       typed++;
     } else if (c == K_DEL || c == K_KDEL || c == K_BS || c == Ctrl_H) {

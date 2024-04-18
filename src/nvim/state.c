@@ -135,9 +135,9 @@ void state_handle_k_event(void)
 }
 
 /// Return true if in the current mode we need to use virtual.
-bool virtual_active(void)
+bool virtual_active(win_T *wp)
 {
-  unsigned cur_ve_flags = get_ve_flags();
+  unsigned cur_ve_flags = get_ve_flags(wp);
 
   // While an operator is being executed we return "virtual_op", because
   // VIsual_active has already been reset, thus we can't check for "block"
@@ -289,7 +289,7 @@ static bool is_safe_now(void)
          && !debug_mode;
 }
 
-/// Trigger SafeState if currently in s safe state, that is "safe" is TRUE and
+/// Trigger SafeState if currently in a safe state, that is "safe" is true and
 /// there is no typeahead.
 void may_trigger_safestate(bool safe)
 {

@@ -1994,6 +1994,95 @@ by the camlp4 preprocessor.  Setting the variable >
 prevents highlighting of "end" as error, which is useful when sources
 contain very long structures that Vim does not synchronize anymore.
 
+PANDOC						*ft-pandoc-syntax*
+
+By default, markdown files will be detected as filetype "markdown".
+Alternatively, you may want them to be detected as filetype "pandoc" instead.
+To do so, set the following: >
+
+	:let g:markdown_md = 'pandoc'
+
+The pandoc syntax plugin uses |conceal| for pretty highlighting. Default is 1 >
+
+	:let g:pandoc#syntax#conceal#use = 1
+
+To specify elements that should not be concealed, set the following variable: >
+
+	:let g:pandoc#syntax#conceal#blacklist = []
+
+This is a list of the rules wich can be used here:
+
+  - titleblock
+  - image
+  - block
+  - subscript
+  - superscript
+  - strikeout
+  - atx
+  - codeblock_start
+  - codeblock_delim
+  - footnote
+  - definition
+  - list
+  - newline
+  - dashes
+  - ellipses
+  - quotes
+  - inlinecode
+  - inlinemath
+
+You can customize the way concealing works. For example, if you prefer to mark
+footnotes with the `*` symbol: >
+
+	:let g:pandoc#syntax#conceal#cchar_overrides = {"footnote" : "*"}
+
+To conceal the urls in links, use: >
+
+	:let g:pandoc#syntax#conceal#urls = 1
+
+Prevent highlighting specific codeblock types so that they remain Normal.
+Codeblock types include "definition" for codeblocks inside definition blocks
+and "delimited" for delimited codeblocks. Default = [] >
+
+	:let g:pandoc#syntax#codeblocks#ignore = ['definition']
+
+Use embedded highlighting for delimited codeblocks where a language is
+specified. Default = 1 >
+
+	:let g:pandoc#syntax#codeblocks#embeds#use = 1
+
+For specify what languages and using what syntax files to highlight embeds. This is a
+list of language names. When the language pandoc and vim use don't match, you
+can use the "PANDOC=VIM" syntax. For example: >
+
+	:let g:pandoc#syntax#codeblocks#embeds#langs = ["ruby", "bash=sh"]
+
+To use italics and strong in emphases. Default = 1 >
+
+	:let g:pandoc#syntax#style#emphases = 1
+
+"0" will add "block" to g:pandoc#syntax#conceal#blacklist, because otherwise
+you couldn't tell where the styles are applied.
+
+To add underline subscript, superscript and strikeout text styles. Default = 1 >
+
+	:let g:pandoc#syntax#style#underline_special = 1
+
+Detect and highlight definition lists. Disabling this can improve performance.
+Default = 1 (i.e., enabled by default) >
+
+	:let g:pandoc#syntax#style#use_definition_lists = 1
+
+The pandoc syntax script also comes with the following commands: >
+
+	:PandocHighlight LANG
+
+Enables embedded highlighting for language LANG in codeblocks. Uses the
+syntax for items in g:pandoc#syntax#codeblocks#embeds#langs. >
+
+	:PandocUnhighlight LANG
+
+Disables embedded highlighting for language LANG in codeblocks.
 
 PAPP						*papp.vim* *ft-papp-syntax*
 
@@ -3182,7 +3271,7 @@ The g:vimsyn_embed option allows users to select what, if any, types of
 embedded script highlighting they wish to have. >
 
    g:vimsyn_embed == 0      : disable (don't embed any scripts)
-   g:vimsyn_embed == 'lPr'  : support embedded lua, python and ruby
+   g:vimsyn_embed == 'lpPr' : support embedded lua, perl, python and ruby
 <
 This option is disabled by default.
 						*g:vimsyn_folding*
@@ -3192,7 +3281,11 @@ Some folding is now supported with syntax/vim.vim: >
    g:vimsyn_folding == 0 or doesn't exist: no syntax-based folding
    g:vimsyn_folding =~ 'a' : augroups
    g:vimsyn_folding =~ 'f' : fold functions
+   g:vimsyn_folding =~ 'h' : fold heredocs
+   g:vimsyn_folding =~ 'l' : fold lua      script
+   g:vimsyn_folding =~ 'p' : fold perl     script
    g:vimsyn_folding =~ 'P' : fold python   script
+   g:vimsyn_folding =~ 'r' : fold ruby     script
 <
 							*g:vimsyn_noerror*
 Not all error highlighting that syntax/vim.vim does may be correct; Vim script
@@ -4776,11 +4869,11 @@ guisp={color-name}					*guisp*
 	Colors which define Nvim's default color scheme:
 	    NvimDarkBlue    NvimLightBlue
 	    NvimDarkCyan    NvimLightCyan
+	    NvimDarkGray1   NvimLightGray1
+	    NvimDarkGray2   NvimLightGray2
+	    NvimDarkGray3   NvimLightGray3
+	    NvimDarkGray4   NvimLightGray4
 	    NvimDarkGreen   NvimLightGreen
-	    NvimDarkGrey1   NvimLightGrey1
-	    NvimDarkGrey2   NvimLightGrey2
-	    NvimDarkGrey3   NvimLightGrey3
-	    NvimDarkGrey4   NvimLightGrey4
 	    NvimDarkMagenta NvimLightMagenta
 	    NvimDarkRed     NvimLightRed
 	    NvimDarkYellow  NvimLightYellow
@@ -4877,7 +4970,7 @@ MatchParen	Character under the cursor or just before it, if it
 							*hl-ModeMsg*
 ModeMsg		'showmode' message (e.g., "-- INSERT --").
 							*hl-MsgArea*
-MsgArea		Area for messages and cmdline.
+MsgArea		Area for messages and command-line, see also 'cmdheight'.
 							*hl-MsgSeparator*
 MsgSeparator	Separator for scrolled messages |msgsep|.
 							*hl-MoreMsg*

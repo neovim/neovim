@@ -1,15 +1,15 @@
-local helpers = require('test.functional.helpers')(after_each)
-local eq = helpers.eq
-local eval = helpers.eval
-local clear = helpers.clear
-local source = helpers.source
-local exc_exec = helpers.exc_exec
-local pcall_err = helpers.pcall_err
-local fn = helpers.fn
+local t = require('test.functional.testutil')()
+local eq = t.eq
+local eval = t.eval
+local clear = t.clear
+local source = t.source
+local exc_exec = t.exc_exec
+local pcall_err = t.pcall_err
+local fn = t.fn
 local Screen = require('test.functional.ui.screen')
-local command = helpers.command
-local feed = helpers.feed
-local is_os = helpers.is_os
+local command = t.command
+local feed = t.feed
+local is_os = t.is_os
 
 describe('execute()', function()
   before_each(clear)
@@ -191,21 +191,21 @@ describe('execute()', function()
     feed([[:call Test1()<cr>]])
     screen:expect([[
       ^                                        |
-      ~                                       |*4
+      {1:~                                       }|*4
       ABCD                                    |
     ]])
 
     feed([[:call Test2()<cr>]])
     screen:expect([[
       ^                                        |
-      ~                                       |*4
+      {1:~                                       }|*4
       1234ABCD                                |
     ]])
 
     feed([[:call Test3()<cr>]])
     screen:expect([[
       ^                                        |
-      ~                                       |*4
+      {1:~                                       }|*4
       1234ABCDXZYZ                            |
     ]])
 
@@ -215,39 +215,39 @@ describe('execute()', function()
     -- "ef" was overwritten since msg_col was recovered wrongly
     screen:expect([[
       1234                                    |
-      Error detected while processing function|
-       Test4:                                 |
-      line    2:                              |
-      abcdABCD                                |
-      Press ENTER or type command to continue^ |
+      {9:Error detected while processing function}|
+      {9: Test4:}                                 |
+      {8:line    2:}                              |
+      {9:abcd}ABCD                                |
+      {6:Press ENTER or type command to continue}^ |
     ]])
 
     feed([[<cr>]]) -- to clear screen
     feed([[:call Test5()<cr>]])
     screen:expect([[
       ^                                        |
-      ~                                       |*4
+      {1:~                                       }|*4
       1234ABCD                                |
     ]])
 
     feed([[:call Test6()<cr>]])
     screen:expect([[
                                               |
-      Error detected while processing function|
-       Test6:                                 |
-      line    2:                              |
-      E121ABCD                                |
-      Press ENTER or type command to continue^ |
+      {9:Error detected while processing function}|
+      {9: Test6:}                                 |
+      {8:line    2:}                              |
+      {9:E121}ABCD                                |
+      {6:Press ENTER or type command to continue}^ |
     ]])
 
     feed([[:call Test7()<cr>]])
     screen:expect([[
-      Error detected while processing function|
-       Test6:                                 |
-      line    2:                              |
-      E121ABCD                                |
+      {9:Error detected while processing function}|
+      {9: Test6:}                                 |
+      {8:line    2:}                              |
+      {9:E121}ABCD                                |
       ABCD                                    |
-      Press ENTER or type command to continue^ |
+      {6:Press ENTER or type command to continue}^ |
     ]])
   end)
 
@@ -265,7 +265,7 @@ describe('execute()', function()
       command('let g:mes = execute("echon 42", "")')
       screen:expect([[
       ^                                        |
-      ~                                       |*3
+      {1:~                                       }|*3
       42                                      |
       ]])
       eq('42', eval('g:mes'))
@@ -289,7 +289,7 @@ describe('execute()', function()
       command('let g:mes = execute("echon 42")')
       screen:expect([[
       ^                                        |
-      ~                                       |*3
+      {1:~                                       }|*3
                                               |
       ]])
       eq('42', eval('g:mes'))
@@ -298,7 +298,7 @@ describe('execute()', function()
       screen:expect {
         grid = [[
       ^                                        |
-      ~                                       |*3
+      {1:~                                       }|*3
                                               |
       ]],
         unchanged = true,

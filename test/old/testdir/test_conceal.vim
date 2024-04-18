@@ -169,6 +169,58 @@ func Test_conceal_with_cursorcolumn()
   call StopVimInTerminal(buf)
 endfunc
 
+" Check that 'cursorline' and 'wincolor' apply to the whole line in presence
+" of wrapped lines containing concealed text.
+func Test_conceal_wrapped_cursorline_wincolor()
+  CheckScreendump
+
+  let code =<< trim [CODE]
+    call setline(1, 'one one one |hidden| one one one one one one one one')
+    syntax match test /|hidden|/ conceal
+    set conceallevel=2 concealcursor=n cursorline
+    normal! g$
+  [CODE]
+
+  call writefile(code, 'XTest_conceal_cul_wcr', 'D')
+  let buf = RunVimInTerminal('-S XTest_conceal_cul_wcr', {'rows': 4, 'cols': 40})
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_01', {})
+
+  call term_sendkeys(buf, ":set wincolor=ErrorMsg\n")
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_02', {})
+
+  call term_sendkeys(buf, ":set nocursorline\n")
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_03', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+" Same as Test_conceal_wrapped_cursorline_wincolor(), but with 'rightleft'.
+func Test_conceal_wrapped_cursorline_wincolor_rightleft()
+  CheckFeature rightleft
+  CheckScreendump
+
+  let code =<< trim [CODE]
+    call setline(1, 'one one one |hidden| one one one one one one one one')
+    syntax match test /|hidden|/ conceal
+    set conceallevel=2 concealcursor=n cursorline rightleft
+    normal! g$
+  [CODE]
+
+  call writefile(code, 'XTest_conceal_cul_wcr_rl', 'D')
+  let buf = RunVimInTerminal('-S XTest_conceal_cul_wcr_rl', {'rows': 4, 'cols': 40})
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_rl_01', {})
+
+  call term_sendkeys(buf, ":set wincolor=ErrorMsg\n")
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_rl_02', {})
+
+  call term_sendkeys(buf, ":set nocursorline\n")
+  call VerifyScreenDump(buf, 'Test_conceal_cul_wcr_rl_03', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_conceal_resize_term()
   CheckScreendump
 
@@ -336,77 +388,290 @@ func Test_conceal_eol()
 endfunc
 
 func Test_conceal_mouse_click()
-  enew!
+  call NewWindow(10, 40)
   set mouse=a
   setlocal conceallevel=2 concealcursor=nc
   syn match Concealed "this" conceal
   hi link Concealed Search
-  call setline(1, 'conceal this click here')
-  redraw
-  call assert_equal(['conceal  click here '], ScreenLines(1, 20))
 
-  " click on the space between "this" and "click" puts cursor there
-  call Ntest_setmouse(1, 9)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 13, 0, 13], getcurpos())
-  " click on 'h' of "here" puts cursor there
-  call Ntest_setmouse(1, 16)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 20, 0, 20], getcurpos())
-  " click on 'e' of "here" puts cursor there
-  call Ntest_setmouse(1, 19)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 23, 0, 23], getcurpos())
-  " click after end of line puts cursor on 'e' without 'virtualedit'
-  call Ntest_setmouse(1, 20)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 23, 0, 24], getcurpos())
-  call Ntest_setmouse(1, 21)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 23, 0, 25], getcurpos())
-  call Ntest_setmouse(1, 22)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 23, 0, 26], getcurpos())
-  call Ntest_setmouse(1, 31)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 23, 0, 35], getcurpos())
-  call Ntest_setmouse(1, 32)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 23, 0, 36], getcurpos())
+  " Test with both 'nocursorline' and 'cursorline', as they use two different
+  " code paths to set virtual columns for the cells to clear.
+  for cul in [v:false, v:true]
+    let &l:cursorline = cul
 
-  set virtualedit=all
-  redraw
-  " click on the space between "this" and "click" puts cursor there
-  call Ntest_setmouse(1, 9)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 13, 0, 13], getcurpos())
-  " click on 'h' of "here" puts cursor there
-  call Ntest_setmouse(1, 16)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 20, 0, 20], getcurpos())
-  " click on 'e' of "here" puts cursor there
-  call Ntest_setmouse(1, 19)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 23, 0, 23], getcurpos())
-  " click after end of line puts cursor there without 'virtualedit'
-  call Ntest_setmouse(1, 20)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 24, 0, 24], getcurpos())
-  call Ntest_setmouse(1, 21)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 24, 1, 25], getcurpos())
-  call Ntest_setmouse(1, 22)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 24, 2, 26], getcurpos())
-  call Ntest_setmouse(1, 31)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 24, 11, 35], getcurpos())
-  call Ntest_setmouse(1, 32)
-  call feedkeys("\<LeftMouse>", "tx")
-  call assert_equal([0, 1, 24, 12, 36], getcurpos())
+    call setline(1, 'conceal this click here')
+    call assert_equal([
+          \ 'conceal  click here                     ',
+          \ ], ScreenLines(1, 40))
 
-  bwipe!
-  set mouse& virtualedit&
+    " Click on the space between "this" and "click" puts cursor there.
+    call Ntest_setmouse(1, 9)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 13, 0, 13], getcurpos())
+    " Click on 'h' of "here" puts cursor there.
+    call Ntest_setmouse(1, 16)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 20, 0, 20], getcurpos())
+    " Click on 'e' of "here" puts cursor there.
+    call Ntest_setmouse(1, 19)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 23, 0, 23], getcurpos())
+    " Click after end of line puts cursor on 'e' without 'virtualedit'.
+    call Ntest_setmouse(1, 20)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 23, 0, 24], getcurpos())
+    call Ntest_setmouse(1, 21)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 23, 0, 25], getcurpos())
+    call Ntest_setmouse(1, 22)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 23, 0, 26], getcurpos())
+    call Ntest_setmouse(1, 31)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 23, 0, 35], getcurpos())
+    call Ntest_setmouse(1, 32)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 23, 0, 36], getcurpos())
+
+    set virtualedit=all
+    redraw
+    " Click on the space between "this" and "click" puts cursor there.
+    call Ntest_setmouse(1, 9)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 13, 0, 13], getcurpos())
+    " Click on 'h' of "here" puts cursor there.
+    call Ntest_setmouse(1, 16)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 20, 0, 20], getcurpos())
+    " Click on 'e' of "here" puts cursor there.
+    call Ntest_setmouse(1, 19)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 23, 0, 23], getcurpos())
+    " Click after end of line puts cursor there with 'virtualedit'.
+    call Ntest_setmouse(1, 20)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 24, 0, 24], getcurpos())
+    call Ntest_setmouse(1, 21)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 24, 1, 25], getcurpos())
+    call Ntest_setmouse(1, 22)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 24, 2, 26], getcurpos())
+    call Ntest_setmouse(1, 31)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 24, 11, 35], getcurpos())
+    call Ntest_setmouse(1, 32)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 24, 12, 36], getcurpos())
+    " Behavior should also be the same with 'colorcolumn'.
+    setlocal colorcolumn=30
+    redraw
+    call Ntest_setmouse(1, 31)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 24, 11, 35], getcurpos())
+    call Ntest_setmouse(1, 32)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 24, 12, 36], getcurpos())
+    setlocal colorcolumn&
+
+    if has('rightleft')
+      setlocal rightleft
+      call assert_equal([
+            \ '                     ereh kcilc  laecnoc',
+            \ ], ScreenLines(1, 40))
+      " Click on the space between "this" and "click" puts cursor there.
+      call Ntest_setmouse(1, 41 - 9)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 13, 0, 13], getcurpos())
+      " Click on 'h' of "here" puts cursor there.
+      call Ntest_setmouse(1, 41 - 16)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 20, 0, 20], getcurpos())
+      " Click on 'e' of "here" puts cursor there.
+      call Ntest_setmouse(1, 41 - 19)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 23, 0, 23], getcurpos())
+      " Click after end of line puts cursor there with 'virtualedit'.
+      call Ntest_setmouse(1, 41 - 20)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 24, 0, 24], getcurpos())
+      call Ntest_setmouse(1, 41 - 21)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 24, 1, 25], getcurpos())
+      call Ntest_setmouse(1, 41 - 22)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 24, 2, 26], getcurpos())
+      call Ntest_setmouse(1, 41 - 31)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 24, 11, 35], getcurpos())
+      call Ntest_setmouse(1, 41 - 32)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 24, 12, 36], getcurpos())
+      setlocal rightleft&
+    endif
+
+    set virtualedit&
+
+    " Test with a wrapped line.
+    call setline(1, ['conceal this click here']->repeat(3)->join())
+    call assert_equal([
+          \ 'conceal  click here conceal  cli        ',
+          \ 'ck here conceal  click here             ',
+          \ ], ScreenLines([1, 2], 40))
+    " Click on boguscols puts cursor on the last char of a screen line.
+    for col in range(33, 40)
+      call Ntest_setmouse(1, col)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 40, 0, 40], getcurpos())
+    endfor
+
+    " Also test with the last char of a screen line concealed.
+    setlocal number signcolumn=yes
+    call assert_equal([
+          \ '    1 conceal  click here conceal       ',
+          \ '       click here conceal  click h      ',
+          \ '      ere                               ',
+          \ ], ScreenLines([1, 3], 40))
+    call Ntest_setmouse(1, 34)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 32, 0, 32], getcurpos())
+    call Ntest_setmouse(2, 7)
+    call feedkeys("\<LeftMouse>", "tx")
+    call assert_equal([0, 1, 37, 0, 37], getcurpos())
+    " Click on boguscols puts cursor on the last char of a screen line.
+    for col in range(35, 40)
+      call Ntest_setmouse(1, col)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 34, 0, 34], getcurpos())
+      call Ntest_setmouse(2, col)
+      call feedkeys("\<LeftMouse>", "tx")
+      call assert_equal([0, 1, 68, 0, 68], getcurpos())
+    endfor
+    setlocal number& signcolumn&
+  endfor
+
+  call CloseWindow()
+  set mouse&
+endfunc
+
+" Test that cursor is drawn at the correct column when it is after end of the
+" line with 'virtualedit' and concealing.
+func Run_test_conceal_virtualedit_after_eol(wrap)
+  let code =<< trim eval [CODE]
+    let &wrap = {a:wrap}
+    call setline(1, 'abcdefgh|hidden|ijklmnpop')
+    syntax match test /|hidden|/ conceal
+    set conceallevel=2 concealcursor=n virtualedit=all
+    normal! $
+  [CODE]
+  call writefile(code, 'XTest_conceal_ve_after_eol', 'D')
+  let buf = RunVimInTerminal('-S XTest_conceal_ve_after_eol', {'rows': 3})
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_1', {})
+  call term_sendkeys(buf, "l")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_2', {})
+  call term_sendkeys(buf, "l")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_3', {})
+  call term_sendkeys(buf, "l")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_4', {})
+  call term_sendkeys(buf, "rr")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_5', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_conceal_virtualedit_after_eol()
+  CheckScreendump
+
+  call Run_test_conceal_virtualedit_after_eol(1)
+  call Run_test_conceal_virtualedit_after_eol(0)
+endfunc
+
+" Same as Run_test_conceal_virtualedit_after_eol(), but with 'rightleft'.
+func Run_test_conceal_virtualedit_after_eol_rightleft(wrap)
+  let code =<< trim eval [CODE]
+    let &wrap = {a:wrap}
+    call setline(1, 'abcdefgh|hidden|ijklmnpop')
+    syntax match test /|hidden|/ conceal
+    set conceallevel=2 concealcursor=n virtualedit=all rightleft
+    normal! $
+  [CODE]
+  call writefile(code, 'XTest_conceal_ve_after_eol_rl', 'D')
+  let buf = RunVimInTerminal('-S XTest_conceal_ve_after_eol_rl', {'rows': 3})
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_rl_1', {})
+  call term_sendkeys(buf, "h")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_rl_2', {})
+  call term_sendkeys(buf, "h")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_rl_3', {})
+  call term_sendkeys(buf, "h")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_rl_4', {})
+  call term_sendkeys(buf, "rr")
+  call VerifyScreenDump(buf, 'Test_conceal_ve_after_eol_rl_5', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_conceal_virtualedit_after_eol_rightleft()
+  CheckFeature rightleft
+  CheckScreendump
+
+  call Run_test_conceal_virtualedit_after_eol_rightleft(1)
+  call Run_test_conceal_virtualedit_after_eol_rightleft(0)
+endfunc
+
+" Test that cursor position is correct when double-width chars are concealed.
+func Run_test_conceal_double_width(wrap)
+  let code =<< trim eval [CODE]
+    let &wrap = {a:wrap}
+    call setline(1, ['aaaaa口=口bbbbb口=口ccccc', 'foobar'])
+    syntax match test /口=口/ conceal cchar=β
+    set conceallevel=2 concealcursor=n colorcolumn=30
+    normal! $
+  [CODE]
+  call writefile(code, 'XTest_conceal_double_width', 'D')
+  let buf = RunVimInTerminal('-S XTest_conceal_double_width', {'rows': 4})
+  call VerifyScreenDump(buf, 'Test_conceal_double_width_1', {})
+  call term_sendkeys(buf, "gM")
+  call VerifyScreenDump(buf, 'Test_conceal_double_width_2', {})
+  call term_sendkeys(buf, ":set conceallevel=3\<CR>")
+  call VerifyScreenDump(buf, 'Test_conceal_double_width_3', {})
+  call term_sendkeys(buf, "$")
+  call VerifyScreenDump(buf, 'Test_conceal_double_width_4', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_conceal_double_width()
+  CheckScreendump
+
+  call Run_test_conceal_double_width(1)
+  call Run_test_conceal_double_width(0)
+endfunc
+
+" Test that line wrapping is correct when double-width chars are concealed.
+func Test_conceal_double_width_wrap()
+  CheckScreendump
+
+  let code =<< trim [CODE]
+    call setline(1, 'aaaaaaaaaa口=口bbbbbbbbbb口=口cccccccccc')
+    syntax match test /口=口/ conceal cchar=β
+    set conceallevel=2 concealcursor=n
+    normal! $
+  [CODE]
+  call writefile(code, 'XTest_conceal_double_width_wrap', 'D')
+  let buf = RunVimInTerminal('-S XTest_conceal_double_width_wrap', {'rows': 4, 'cols': 20})
+  call VerifyScreenDump(buf, 'Test_conceal_double_width_wrap_1', {})
+  call term_sendkeys(buf, "gM")
+  call VerifyScreenDump(buf, 'Test_conceal_double_width_wrap_2', {})
+  call term_sendkeys(buf, ":set conceallevel=3\<CR>")
+  call VerifyScreenDump(buf, 'Test_conceal_double_width_wrap_3', {})
+  call term_sendkeys(buf, "$")
+  call VerifyScreenDump(buf, 'Test_conceal_double_width_wrap_4', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

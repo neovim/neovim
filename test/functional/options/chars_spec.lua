@@ -1,12 +1,12 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local clear, command = helpers.clear, helpers.command
-local pcall_err = helpers.pcall_err
-local eval = helpers.eval
-local eq = helpers.eq
-local insert = helpers.insert
-local feed = helpers.feed
-local api = helpers.api
+local clear, command = t.clear, t.command
+local pcall_err = t.pcall_err
+local eval = t.eval
+local eq = t.eq
+local insert = t.insert
+local feed = t.feed
+local api = t.api
 
 describe("'fillchars'", function()
   local screen
@@ -22,7 +22,7 @@ describe("'fillchars'", function()
       eq('', eval('&fillchars'))
       screen:expect([[
         ^                         |
-        ~                        |*3
+        {1:~                        }|*3
                                  |
       ]])
     end)
@@ -30,13 +30,14 @@ describe("'fillchars'", function()
     it('supports whitespace', function()
       screen:expect([[
         ^                         |
-        ~                        |*3
+        {1:~                        }|*3
                                  |
       ]])
       command('set fillchars=eob:\\ ')
       screen:expect([[
         ^                         |
-                                 |*4
+        {1:                         }|*3
+                                 |
       ]])
     end)
 
@@ -44,7 +45,7 @@ describe("'fillchars'", function()
       command('set fillchars=eob:ñ')
       screen:expect([[
         ^                         |
-        ñ                        |*3
+        {1:ñ                        }|*3
                                  |
       ]])
     end)
@@ -53,7 +54,7 @@ describe("'fillchars'", function()
       command('set fillchars=eob:å̲')
       screen:expect([[
         ^                         |
-        å̲                        |*3
+        {1:å̲                        }|*3
                                  |
       ]])
     end)
@@ -112,8 +113,8 @@ describe("'fillchars'", function()
     command('vsplit')
     command('set fillchars=fold:x')
     screen:expect([[
-      ^+--  2 lines: fooxxxxxxxx│+--  2 lines: fooxxxxxxx|
-      ~                        │~                       |*3
+      {13:^+--  2 lines: fooxxxxxxxx}│{13:+--  2 lines: fooxxxxxxx}|
+      {1:~                        }│{1:~                       }|*3
                                                         |
     ]])
   end)
@@ -126,8 +127,8 @@ describe("'fillchars'", function()
     command('vsplit')
     command('setl fillchars=fold:x')
     screen:expect([[
-      ^+--  2 lines: fooxxxxxxxx│+--  2 lines: foo·······|
-      ~                        │~                       |*3
+      {13:^+--  2 lines: fooxxxxxxxx}│{13:+--  2 lines: foo·······}|
+      {1:~                        }│{1:~                       }|*3
                                                         |
     ]])
   end)
@@ -141,8 +142,8 @@ describe("'fillchars'", function()
     command('vsplit')
     command('set fillchars&')
     screen:expect([[
-      ^+--  2 lines: foo········│+--  2 lines: fooxxxxxxx|
-      ~                        │~                       |*3
+      {13:^+--  2 lines: foo········}│{13:+--  2 lines: fooxxxxxxx}|
+      {1:~                        }│{1:~                       }|*3
                                                         |
     ]])
   end)
@@ -163,8 +164,8 @@ describe("'listchars'", function()
     command('vsplit')
     command('set listchars=tab:<->')
     screen:expect([[
-      <------><------>^<------> │<------><------><------>|
-      ~                        │~                       |*3
+      {1:<------><------>^<------>} │{1:<------><------><------>}|
+      {1:~                        }│{1:~                       }|*3
                                                         |
     ]])
   end)
@@ -176,8 +177,8 @@ describe("'listchars'", function()
     command('vsplit')
     command('setl listchars<')
     screen:expect([[
-      >       >       ^>        │<------><------><------>|
-      ~                        │~                       |*3
+      {1:>       >       ^>       } │{1:<------><------><------>}|
+      {1:~                        }│{1:~                       }|*3
                                                         |
     ]])
   end)
@@ -189,8 +190,8 @@ describe("'listchars'", function()
     command('vsplit')
     command('set listchars=tab:>-,eol:$')
     screen:expect([[
-      >------->-------^>-------$│<------><------><------>|
-      ~                        │~                       |*3
+      {1:>------->-------^>-------$}│{1:<------><------><------>}|
+      {1:~                        }│{1:~                       }|*3
                                                         |
     ]])
   end)

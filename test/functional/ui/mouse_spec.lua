@@ -1,11 +1,11 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local clear, feed, api = helpers.clear, helpers.feed, helpers.api
-local insert, feed_command = helpers.insert, helpers.feed_command
-local eq, fn = helpers.eq, helpers.fn
-local poke_eventloop = helpers.poke_eventloop
-local command = helpers.command
-local exec = helpers.exec
+local clear, feed, api = t.clear, t.feed, t.api
+local insert, feed_command = t.insert, t.feed_command
+local eq, fn = t.eq, t.fn
+local poke_eventloop = t.poke_eventloop
+local command = t.command
+local exec = t.exec
 
 describe('ui/mouse/input', function()
   local screen
@@ -34,6 +34,7 @@ describe('ui/mouse/input', function()
       [6] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
       [7] = { bold = true, foreground = Screen.colors.SeaGreen4 },
       [8] = { foreground = Screen.colors.Brown },
+      [9] = { background = Screen.colors.DarkGrey, foreground = Screen.colors.LightGrey },
     })
     command('set mousemodel=extend')
     feed('itesting<cr>mouse<cr>support and selection<esc>')
@@ -574,7 +575,7 @@ describe('ui/mouse/input', function()
       :tabprevious             |
     ]])
     feed('<LeftMouse><10,0><LeftRelease>') -- go to second tab
-    helpers.poke_eventloop()
+    t.poke_eventloop()
     feed('<LeftMouse><0,1>')
     screen:expect([[
       {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
@@ -1638,6 +1639,59 @@ describe('ui/mouse/input', function()
     end)
   end)
 
+  it('virtual text does not change cursor placement on concealed line', function()
+    command('%delete')
+    insert('aaaaaaaaaa|hidden|bbbbbbbbbb|hidden|cccccccccc')
+    command('syntax match test /|hidden|/ conceal cchar=X')
+    command('set conceallevel=2 concealcursor=n virtualedit=all')
+    screen:expect([[
+      aaaaaaaaaa{9:X}bbbbbbb       |
+      bbb{9:X}ccccccccc^c           |
+      {0:~                        }|*2
+                               |
+    ]])
+    api.nvim_input_mouse('left', 'press', '', 0, 0, 22)
+    screen:expect([[
+      aaaaaaaaaa{9:X}bbbbbb^b       |
+      bbb{9:X}cccccccccc           |
+      {0:~                        }|*2
+                               |
+    ]])
+    api.nvim_input_mouse('left', 'press', '', 0, 1, 16)
+    screen:expect([[
+      aaaaaaaaaa{9:X}bbbbbbb       |
+      bbb{9:X}cccccccccc  ^         |
+      {0:~                        }|*2
+                               |
+    ]])
+
+    api.nvim_buf_set_extmark(0, api.nvim_create_namespace(''), 0, 0, {
+      virt_text = { { '?', 'ErrorMsg' } },
+      virt_text_pos = 'right_align',
+      virt_text_repeat_linebreak = true,
+    })
+    screen:expect([[
+      aaaaaaaaaa{9:X}bbbbbbb      {6:?}|
+      bbb{9:X}cccccccccc  ^        {6:?}|
+      {0:~                        }|*2
+                               |
+    ]])
+    api.nvim_input_mouse('left', 'press', '', 0, 0, 22)
+    screen:expect([[
+      aaaaaaaaaa{9:X}bbbbbb^b      {6:?}|
+      bbb{9:X}cccccccccc          {6:?}|
+      {0:~                        }|*2
+                               |
+    ]])
+    api.nvim_input_mouse('left', 'press', '', 0, 1, 16)
+    screen:expect([[
+      aaaaaaaaaa{9:X}bbbbbbb      {6:?}|
+      bbb{9:X}cccccccccc  ^        {6:?}|
+      {0:~                        }|*2
+                               |
+    ]])
+  end)
+
   it('getmousepos() works correctly', function()
     local winwidth = api.nvim_get_option_value('winwidth', {})
     -- Set winwidth=1 so that window sizes don't change.
@@ -1802,8 +1856,8 @@ describe('ui/mouse/input', function()
 
   it('feeding <MouseMove> in Normal mode does not use uninitialized memory #19480', function()
     feed('<MouseMove>')
-    helpers.poke_eventloop()
-    helpers.assert_alive()
+    t.poke_eventloop()
+    t.assert_alive()
   end)
 
   it('mousemodel=popup_setpos', function()

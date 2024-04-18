@@ -1,5 +1,4 @@
 local health = vim.health
-local executable = health.executable
 local iswin = vim.loop.os_uname().sysname == 'Windows_NT'
 
 local M = {}
@@ -11,7 +10,7 @@ function M.check()
     return
   end
 
-  if not executable('ruby') or not executable('gem') then
+  if vim.fn.executable('ruby') == 0 or vim.fn.executable('gem') == 0 then
     health.warn(
       '`ruby` and `gem` must be in $PATH.',
       'Install Ruby and verify that `ruby` and `gem` commands work.'

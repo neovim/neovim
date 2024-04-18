@@ -34,22 +34,6 @@ error('Cannot require a meta file')
 ---@field byte_length fun(self: TSNode): integer
 local TSNode = {}
 
----@param query TSQuery
----@param captures true
----@param start? integer
----@param end_? integer
----@param opts? table
----@return fun(): integer, TSNode, vim.treesitter.query.TSMatch
-function TSNode:_rawquery(query, captures, start, end_, opts) end
-
----@param query TSQuery
----@param captures false
----@param start? integer
----@param end_? integer
----@param opts? table
----@return fun(): integer, vim.treesitter.query.TSMatch
-function TSNode:_rawquery(query, captures, start, end_, opts) end
-
 ---@alias TSLoggerCallback fun(logtype: 'parse'|'lex', msg: string)
 
 ---@class TSParser: userdata
@@ -90,3 +74,31 @@ vim._ts_parse_query = function(lang, query) end
 ---@param lang string
 ---@return TSParser
 vim._create_ts_parser = function(lang) end
+
+--- @class TSQueryMatch: userdata
+--- @field captures fun(self: TSQueryMatch): table<integer,TSNode[]>
+local TSQueryMatch = {}
+
+--- @return integer match_id
+--- @return integer pattern_index
+function TSQueryMatch:info() end
+
+--- @class TSQueryCursor: userdata
+--- @field remove_match fun(self: TSQueryCursor, id: integer)
+local TSQueryCursor = {}
+
+--- @return integer capture
+--- @return TSNode captured_node
+--- @return TSQueryMatch match
+function TSQueryCursor:next_capture() end
+
+--- @return TSQueryMatch match
+function TSQueryCursor:next_match() end
+
+--- @param node TSNode
+--- @param query TSQuery
+--- @param start integer?
+--- @param stop integer?
+--- @param opts? { max_start_depth?: integer, match_limit?: integer}
+--- @return TSQueryCursor
+function vim._create_ts_querycursor(node, query, start, stop, opts) end

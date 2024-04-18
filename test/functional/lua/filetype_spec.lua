@@ -1,10 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
-local exec_lua = helpers.exec_lua
-local eq = helpers.eq
-local api = helpers.api
-local clear = helpers.clear
-local pathroot = helpers.pathroot
-local command = helpers.command
+local t = require('test.functional.testutil')()
+local exec_lua = t.exec_lua
+local eq = t.eq
+local api = t.api
+local clear = t.clear
+local pathroot = t.pathroot
+local command = t.command
+local mkdir = t.mkdir
+local rmdir = t.rmdir
+local write_file = t.write_file
+local uv = vim.uv
 
 local root = pathroot()
 
@@ -161,10 +165,30 @@ describe('vim.filetype', function()
 end)
 
 describe('filetype.lua', function()
+  before_each(function()
+    mkdir('Xfiletype')
+  end)
+
+  after_each(function()
+    rmdir('Xfiletype')
+  end)
+
   it('does not override user autocommands that set filetype #20333', function()
     clear({
       args = { '--clean', '--cmd', 'autocmd BufRead *.md set filetype=notmarkdown', 'README.md' },
     })
     eq('notmarkdown', api.nvim_get_option_value('filetype', {}))
+  end)
+
+  it('uses unexpanded path for matching when editing a symlink #27914', function()
+    mkdir('Xfiletype/.config')
+    mkdir('Xfiletype/actual')
+    write_file('Xfiletype/actual/config', '')
+    uv.fs_symlink(assert(uv.fs_realpath('Xfiletype/actual')), 'Xfiletype/.config/git')
+    finally(function()
+      uv.fs_unlink('Xfiletype/.config/git')
+    end)
+    clear({ args = { '--clean', 'Xfiletype/.config/git/config' } })
+    eq('gitconfig', api.nvim_get_option_value('filetype', {}))
   end)
 end)

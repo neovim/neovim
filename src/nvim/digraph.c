@@ -2078,7 +2078,7 @@ void ex_loadkeymap(exarg_T *eap)
   char buf[KMAP_LLEN + 11];
   char *save_cpo = p_cpo;
 
-  if (!getline_equal(eap->getline, eap->cookie, getsourceline)) {
+  if (!getline_equal(eap->ea_getline, eap->cookie, getsourceline)) {
     emsg(_("E105: Using :loadkeymap not in a sourced file"));
     return;
   }
@@ -2094,7 +2094,7 @@ void ex_loadkeymap(exarg_T *eap)
 
   // Get each line of the sourced file, break at the end.
   while (true) {
-    char *line = eap->getline(0, eap->cookie, 0, true);
+    char *line = eap->ea_getline(0, eap->cookie, 0, true);
 
     if (line == NULL) {
       break;

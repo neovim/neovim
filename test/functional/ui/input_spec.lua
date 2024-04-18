@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear, feed_command = helpers.clear, helpers.feed_command
-local feed, next_msg, eq = helpers.feed, helpers.next_msg, helpers.eq
-local command = helpers.command
-local expect = helpers.expect
-local curbuf_contents = helpers.curbuf_contents
-local api = helpers.api
-local exec_lua = helpers.exec_lua
-local write_file = helpers.write_file
-local fn = helpers.fn
-local eval = helpers.eval
+local t = require('test.functional.testutil')()
+local clear, feed_command = t.clear, t.feed_command
+local feed, next_msg, eq = t.feed, t.next_msg, t.eq
+local command = t.command
+local expect = t.expect
+local curbuf_contents = t.curbuf_contents
+local api = t.api
+local exec_lua = t.exec_lua
+local write_file = t.write_file
+local fn = t.fn
+local eval = t.eval
 local Screen = require('test.functional.ui.screen')
 
 before_each(clear)
@@ -280,21 +280,16 @@ end)
 
 it('typing a simplifiable key at hit-enter prompt triggers mapping vim-patch:8.2.0839', function()
   local screen = Screen.new(60, 8)
-  screen:set_default_attr_ids({
-    [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-    [2] = { bold = true, reverse = true }, -- MsgSeparator
-    [3] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
-  })
   screen:attach()
   command([[nnoremap <C-6> <Cmd>echo 'hit ctrl-6'<CR>]])
   feed_command('ls')
   screen:expect([[
                                                                 |
     {1:~                                                           }|*3
-    {2:                                                            }|
+    {3:                                                            }|
     :ls                                                         |
       1 %a   "[No Name]"                    line 1              |
-    {3:Press ENTER or type command to continue}^                     |
+    {6:Press ENTER or type command to continue}^                     |
   ]])
   feed('<C-6>')
   screen:expect([[
@@ -331,12 +326,6 @@ describe('input non-printable chars', function()
   it("doesn't crash when echoing them back", function()
     write_file('Xtest-overwrite', [[foobar]])
     local screen = Screen.new(60, 8)
-    screen:set_default_attr_ids {
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
-      [4] = { bold = true, reverse = true },
-    }
     screen:attach()
     command('set shortmess-=F')
 
@@ -347,52 +336,52 @@ describe('input non-printable chars', function()
       "Xtest-overwrite" [noeol] 1L, 6B                            |
     ]])
 
-    -- The timestamp is in second resolution, wait two seconds to be sure.
-    screen:sleep(2000)
+    -- Wait for some time so that the timestamp changes.
+    vim.uv.sleep(10)
     write_file('Xtest-overwrite', [[smurf]])
     feed_command('w')
     screen:expect([[
       foobar                                                      |
       {1:~                                                           }|*3
-      {4:                                                            }|
+      {3:                                                            }|
       "Xtest-overwrite"                                           |
-      {2:WARNING: The file has been changed since reading it!!!}      |
-      {3:Do you really want to write to it (y/n)?}^                    |
+      {9:WARNING: The file has been changed since reading it!!!}      |
+      {6:Do you really want to write to it (y/n)?}^                    |
     ]])
 
     feed('u')
     screen:expect([[
       foobar                                                      |
       {1:~                                                           }|*2
-      {4:                                                            }|
+      {3:                                                            }|
       "Xtest-overwrite"                                           |
-      {2:WARNING: The file has been changed since reading it!!!}      |
-      {3:Do you really want to write to it (y/n)?}u                   |
-      {3:Do you really want to write to it (y/n)?}^                    |
+      {9:WARNING: The file has been changed since reading it!!!}      |
+      {6:Do you really want to write to it (y/n)?}u                   |
+      {6:Do you really want to write to it (y/n)?}^                    |
     ]])
 
     feed('\005')
     screen:expect([[
       foobar                                                      |
       {1:~                                                           }|
-      {4:                                                            }|
+      {3:                                                            }|
       "Xtest-overwrite"                                           |
-      {2:WARNING: The file has been changed since reading it!!!}      |
-      {3:Do you really want to write to it (y/n)?}u                   |
-      {3:Do you really want to write to it (y/n)?}                    |
-      {3:Do you really want to write to it (y/n)?}^                    |
+      {9:WARNING: The file has been changed since reading it!!!}      |
+      {6:Do you really want to write to it (y/n)?}u                   |
+      {6:Do you really want to write to it (y/n)?}                    |
+      {6:Do you really want to write to it (y/n)?}^                    |
     ]])
 
     feed('n')
     screen:expect([[
       foobar                                                      |
-      {4:                                                            }|
+      {3:                                                            }|
       "Xtest-overwrite"                                           |
-      {2:WARNING: The file has been changed since reading it!!!}      |
-      {3:Do you really want to write to it (y/n)?}u                   |
-      {3:Do you really want to write to it (y/n)?}                    |
-      {3:Do you really want to write to it (y/n)?}n                   |
-      {3:Press ENTER or type command to continue}^                     |
+      {9:WARNING: The file has been changed since reading it!!!}      |
+      {6:Do you really want to write to it (y/n)?}u                   |
+      {6:Do you really want to write to it (y/n)?}                    |
+      {6:Do you really want to write to it (y/n)?}n                   |
+      {6:Press ENTER or type command to continue}^                     |
     ]])
 
     feed('<cr>')
@@ -437,10 +426,6 @@ describe('display is updated', function()
   local screen
   before_each(function()
     screen = Screen.new(60, 8)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue1 }, -- NonText
-      [2] = { bold = true }, -- ModeMsg
-    })
     screen:attach()
   end)
 
@@ -452,7 +437,7 @@ describe('display is updated', function()
       abc                                                         |
       ^                                                            |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]])
   end)
 
@@ -464,7 +449,7 @@ describe('display is updated', function()
       abc                                                         |
       ^                                                            |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]])
   end)
 end)

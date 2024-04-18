@@ -480,9 +480,8 @@ void spell_suggest(int count)
     badlen++;
     end_visual_mode();
     // make sure we don't include the NUL at the end of the line
-    char *line = get_cursor_line_ptr();
-    if (badlen > (int)strlen(line) - (int)curwin->w_cursor.col) {
-      badlen = (int)strlen(line) - (int)curwin->w_cursor.col;
+    if (badlen > get_cursor_line_len() - curwin->w_cursor.col) {
+      badlen = get_cursor_line_len() - curwin->w_cursor.col;
     }
     // Find the start of the badly spelled word.
   } else if (spell_move_to(curwin, FORWARD, true, true, NULL) == 0
@@ -514,7 +513,7 @@ void spell_suggest(int count)
   int need_cap = check_need_cap(curwin, curwin->w_cursor.lnum, curwin->w_cursor.col);
 
   // Make a copy of current line since autocommands may free the line.
-  char *line = xstrdup(get_cursor_line_ptr());
+  char *line = xstrnsave(get_cursor_line_ptr(), (size_t)get_cursor_line_len());
   spell_suggest_timeout = 5000;
 
   // Get the list of suggestions.  Limit to 'lines' - 2 or the number in

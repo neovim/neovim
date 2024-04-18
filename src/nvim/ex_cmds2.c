@@ -212,10 +212,24 @@ void dialog_changed(buf_T *buf, bool checkall)
   }
 
   if (ret == VIM_YES) {
-    if (buf->b_fname != NULL
-        && check_overwrite(&ea, buf, buf->b_fname, buf->b_ffname, false) == OK) {
+    bool empty_bufname = buf->b_fname == NULL;
+    if (empty_bufname) {
+      buf_set_name(buf->b_fnum, "Untitled");
+    }
+
+    if (check_overwrite(&ea, buf, buf->b_fname, buf->b_ffname, false) == OK) {
       // didn't hit Cancel
-      buf_write_all(buf, false);
+      if (buf_write_all(buf, false) == OK) {
+        return;
+      }
+    }
+
+    // restore to empty when write failed
+    if (empty_bufname) {
+      XFREE_CLEAR(buf->b_fname);
+      XFREE_CLEAR(buf->b_ffname);
+      XFREE_CLEAR(buf->b_sfname);
+      unchanged(buf, true, false);
     }
   } else if (ret == VIM_NO) {
     unchanged(buf, true, false);
@@ -606,7 +620,7 @@ void ex_listdo(exarg_T *eap)
       i++;
       // execute the command
       if (execute) {
-        do_cmdline(eap->arg, eap->getline, eap->cookie, DOCMD_VERBOSE + DOCMD_NOWAIT);
+        do_cmdline(eap->arg, eap->ea_getline, eap->cookie, DOCMD_VERBOSE + DOCMD_NOWAIT);
       }
 
       if (eap->cmdidx == CMD_bufdo) {
@@ -654,7 +668,7 @@ void ex_listdo(exarg_T *eap)
       }
 
       if (eap->cmdidx == CMD_windo && execute) {
-        validate_cursor();              // cursor may have moved
+        validate_cursor(curwin);              // cursor may have moved
         // required when 'scrollbind' has been set
         if (curwin->w_p_scb) {
           do_check_scrollbind(true);
@@ -866,11 +880,13 @@ void ex_drop(exarg_T *eap)
         const int save_ar = curbuf->b_p_ar;
 
         // reload the file if it is newer
-        curbuf->b_p_ar = 1;
+        curbuf->b_p_ar = true;
         buf_check_timestamp(curbuf);
         curbuf->b_p_ar = save_ar;
       }
-      ex_rewind(eap);
+      if (curbuf->b_ml.ml_flags & ML_EMPTY) {
+        ex_rewind(eap);
+      }
       return;
     }
   }

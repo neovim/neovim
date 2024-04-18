@@ -557,5 +557,43 @@ LessInitFunc in your vimrc, for example: >
 	  set nocursorcolumn nocursorline
 	endfunc
 <
+==============================================================================
+3. Commenting							*commenting*
+
+Nvim supports commenting and uncommenting of lines based on 'commentstring'.
+
+Acting on a single line behaves as follows:
+- If the line matches 'commentstring', the comment markers are removed (e.g.
+  `/*foo*/` is transformed to `foo`).
+- Otherwise the comment markers are added to the current line (e.g. `foo` is
+  transformed to `/*foo*/`). Blank lines are ignored.
+
+Acting on multiple lines behaves as follows:
+- If each affected non-blank line matches 'commentstring', then all comment
+  markers are removed.
+- Otherwise all affected lines are converted to comments; blank lines are
+  transformed to empty comments (e.g. `/**/`). Comment markers are aligned to
+  the least indented line.
+
+If the filetype of the buffer is associated with a language for which a
+|treesitter| parser is installed, then |vim.filetype.get_option()| is called
+to look up the value of 'commentstring' corresponding to the cursor position.
+(This can be different from the buffer's 'commentstring' in case of
+|treesitter-language-injections|.)
+
+							*gc* *gc-default*
+gc{motion}		Comment or uncomment lines covered by {motion}.
+
+							*gcc* *gcc-default*
+gcc			Comment or uncomment [count] lines starting at cursor.
+
+							*v_gc* *v_gc-default*
+{Visual}gc		Comment or uncomment the selected line(s).
+
+							*o_gc* *o_gc-default*
+gc			Text object for the largest contiguous block of
+			non-blank commented lines around the cursor (e.g.
+			`gcgc` uncomments a comment block; `dgc` deletes it).
+			Works only in Operator-pending mode.
 
  vim:noet:tw=78:ts=8:ft=help:norl:

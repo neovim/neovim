@@ -1,19 +1,20 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 
-local eq = helpers.eq
-local eval = helpers.eval
-local feed = helpers.feed
-local clear = helpers.clear
-local expect = helpers.expect
-local command = helpers.command
-local fn = helpers.fn
-local api = helpers.api
-local insert = helpers.insert
+local eq = t.eq
+local eval = t.eval
+local feed = t.feed
+local clear = t.clear
+local expect = t.expect
+local command = t.command
+local fn = t.fn
+local api = t.api
+local insert = t.insert
 
-describe('macros', function()
+describe('macros with default mappings', function()
   before_each(function()
     clear({ args_rm = { '--cmd' } })
   end)
+
   it('can be recorded and replayed', function()
     feed('qiahello<esc>q')
     expect('hello')
@@ -22,6 +23,7 @@ describe('macros', function()
     expect('hellohello')
     eq('ahello', eval('@i'))
   end)
+
   it('applies maps', function()
     command('imap x l')
     command('nmap l a')
@@ -34,87 +36,147 @@ describe('macros', function()
   end)
 
   it('can be replayed with Q', function()
-    insert [[hello
+    insert [[
+hello
 hello
 hello]]
     feed [[gg]]
 
     feed [[qqAFOO<esc>q]]
-    eq({ 'helloFOO', 'hello', 'hello' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    expect [[
+helloFOO
+hello
+hello]]
 
     feed [[Q]]
-    eq({ 'helloFOOFOO', 'hello', 'hello' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    expect [[
+helloFOOFOO
+hello
+hello]]
 
     feed [[G3Q]]
-    eq({ 'helloFOOFOO', 'hello', 'helloFOOFOOFOO' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    expect [[
+helloFOOFOO
+hello
+helloFOOFOOFOO]]
 
     feed [[ggV3jQ]]
-    eq(
-      { 'helloFOOFOOFOO', 'helloFOO', 'helloFOOFOOFOOFOO' },
-      api.nvim_buf_get_lines(0, 0, -1, false)
-    )
+    expect [[
+helloFOOFOOFOO
+helloFOO
+helloFOOFOOFOOFOO]]
   end)
 
-  it('can be replayed with @', function()
-    insert [[hello
+  it('can be replayed with Q and @@', function()
+    insert [[
+hello
 hello
 hello]]
     feed [[gg]]
 
     feed [[qqAFOO<esc>q]]
-    eq({ 'helloFOO', 'hello', 'hello' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    expect [[
+helloFOO
+hello
+hello]]
 
     feed [[Q]]
-    eq({ 'helloFOOFOO', 'hello', 'hello' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    expect [[
+helloFOOFOO
+hello
+hello]]
 
     feed [[G3@@]]
-    eq({ 'helloFOOFOO', 'hello', 'helloFOOFOOFOO' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    expect [[
+helloFOOFOO
+hello
+helloFOOFOOFOO]]
 
     feed [[ggV2j@@]]
-    eq(
-      { 'helloFOOFOOFOO', 'helloFOO', 'helloFOOFOOFOOFOO' },
-      api.nvim_buf_get_lines(0, 0, -1, false)
-    )
+    expect [[
+helloFOOFOOFOO
+helloFOO
+helloFOOFOOFOOFOO]]
   end)
 
-  it('can be replayed with @q and @w', function()
-    insert [[hello
+  it('can be replayed with @ in linewise Visual mode', function()
+    insert [[
+hello
 hello
 hello]]
     feed [[gg]]
 
     feed [[qqAFOO<esc>qu]]
-    eq({ 'hello', 'hello', 'hello' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    expect [[
+hello
+hello
+hello]]
 
     feed [[qwA123<esc>qu]]
-    eq({ 'hello', 'hello', 'hello' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    expect [[
+hello
+hello
+hello]]
 
     feed [[V3j@q]]
-    eq({ 'helloFOO', 'helloFOO', 'helloFOO' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    expect [[
+helloFOO
+helloFOO
+helloFOO]]
 
-    feed [[gg]]
-    feed [[Vj@w]]
-    eq({ 'helloFOO123', 'helloFOO123', 'helloFOO' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    feed [[ggVj@w]]
+    expect [[
+helloFOO123
+helloFOO123
+helloFOO]]
   end)
 
-  it('can be replayed with @q and @w visual-block', function()
-    insert [[hello
+  it('can be recorded and replayed in Visual mode', function()
+    insert('foo BAR BAR foo BAR foo BAR BAR BAR foo BAR BAR')
+    feed('0vqifofRq')
+    eq({ 0, 1, 7, 0 }, fn.getpos('.'))
+    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
+    feed('Q')
+    eq({ 0, 1, 19, 0 }, fn.getpos('.'))
+    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
+    feed('Q')
+    eq({ 0, 1, 27, 0 }, fn.getpos('.'))
+    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
+    feed('@i')
+    eq({ 0, 1, 43, 0 }, fn.getpos('.'))
+    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
+  end)
+
+  it('can be replayed with @ in blockwise Visual mode', function()
+    insert [[
+hello
 hello
 hello]]
     feed [[gg]]
 
     feed [[qqAFOO<esc>qu]]
-    eq({ 'hello', 'hello', 'hello' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    expect [[
+hello
+hello
+hello]]
 
     feed [[qwA123<esc>qu]]
-    eq({ 'hello', 'hello', 'hello' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    expect [[
+hello
+hello
+hello]]
 
-    feed [[<C-v>3j@q]]
-    eq({ 'helloFOO', 'helloFOO', 'helloFOO' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    feed [[0<C-v>3jl@q]]
+    expect [[
+heFOOllo
+heFOOllo
+heFOOllo]]
 
-    feed [[gg]]
-    feed [[<C-v>j@w]]
-    eq({ 'helloFOO123', 'helloFOO123', 'helloFOO' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    feed [[gg0<C-v>j@w]]
+    expect [[
+h123eFOOllo
+h123eFOOllo
+heFOOllo]]
   end)
 end)
 

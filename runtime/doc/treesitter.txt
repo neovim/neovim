@@ -149,7 +149,7 @@ TSNode:sexpr()                                          *TSNode:sexpr()*
     Get an S-expression representing the node as a string.
 
 TSNode:id()                                             *TSNode:id()*
-    Get an unique identifier for the node inside its own tree.
+    Get a unique identifier for the node inside its own tree.
 
     No guarantees are made about this identifier's internal representation,
     except for being a primitive Lua type with value equality (so not a
@@ -469,10 +469,11 @@ The following is a list of standard captures used in queries for Nvim,
 highlighted according to the current colorscheme (use |:Inspect| on one to see
 the exact definition):
 
-@variable               various variable names
-@variable.builtin       built-in variable names (e.g. `this` / `self`)
-@variable.parameter     parameters of a function
-@variable.member        object and struct fields
+@variable                       various variable names
+@variable.builtin               built-in variable names (e.g. `this`, `self`)
+@variable.parameter             parameters of a function
+@variable.parameter.builtin     special parameters (e.g. `_`, `it`)
+@variable.member                object and struct fields
 
 @constant               constant identifiers
 @constant.builtin       built-in constant values
@@ -480,7 +481,7 @@ the exact definition):
 
 @module                 modules or namespaces
 @module.builtin         built-in modules or namespaces
-@label                  GOTO and other labels (e.g. `label:` in C), including heredoc labels
+@label                  `GOTO` and other labels (e.g. `label:` in C), including heredoc labels
 
 @string                 string literals
 @string.documentation   string documenting code (e.g. Python docstrings)
@@ -501,9 +502,9 @@ the exact definition):
 @type                   type or class definitions and annotations
 @type.builtin           built-in types
 @type.definition        identifiers in type definitions (e.g. `typedef <type> <identifier>` in C)
-@type.qualifier         type qualifiers (e.g. `const`)
 
-@attribute              attribute annotations (e.g. Python decorators)
+@attribute              attribute annotations (e.g. Python decorators, Rust lifetimes)
+@attribute.builtin      builtin annotations (e.g. `@property` in Python)
 @property               the key in key/value pairs
 
 @function               function definitions
@@ -515,27 +516,28 @@ the exact definition):
 @function.method.call   method calls
 
 @constructor            constructor calls and definitions
-@operator               symbolic operators (e.g. `+` / `*`)
+@operator               symbolic operators (e.g. `+`, `*`)
 
 @keyword                keywords not fitting into specific categories
 @keyword.coroutine      keywords related to coroutines (e.g. `go` in Go, `async/await` in Python)
 @keyword.function       keywords that define a function (e.g. `func` in Go, `def` in Python)
-@keyword.operator       operators that are English words (e.g. `and` / `or`)
-@keyword.import         keywords for including modules (e.g. `import` / `from` in Python)
-@keyword.storage        modifiers that affect storage in memory or life-time
-@keyword.repeat         keywords related to loops (e.g. `for` / `while`)
+@keyword.operator       operators that are English words (e.g. `and`, `or`)
+@keyword.import         keywords for including modules (e.g. `import`, `from` in Python)
+@keyword.type           keywords defining composite types (e.g. `struct`, `enum`)
+@keyword.modifier       keywords defining type modifiers (e.g. `const`, `static`, `public`)
+@keyword.repeat         keywords related to loops (e.g. `for`, `while`)
 @keyword.return         keywords like `return` and `yield`
 @keyword.debug          keywords related to debugging
-@keyword.exception      keywords related to exceptions (e.g. `throw` / `catch`)
+@keyword.exception      keywords related to exceptions (e.g. `throw`, `catch`)
 
-@keyword.conditional         keywords related to conditionals (e.g. `if` / `else`)
-@keyword.conditional.ternary ternary operator (e.g. `?` / `:`)
+@keyword.conditional         keywords related to conditionals (e.g. `if`, `else`)
+@keyword.conditional.ternary ternary operator (e.g. `?`, `:`)
 
 @keyword.directive           various preprocessor directives and shebangs
 @keyword.directive.define    preprocessor definition directives
 
-@punctuation.delimiter  delimiters (e.g. `;` / `.` / `,`)
-@punctuation.bracket    brackets (e.g. `()` / `{}` / `[]`)
+@punctuation.delimiter  delimiters (e.g. `;`, `.`, `,`)
+@punctuation.bracket    brackets (e.g. `()`, `{}`, `[]`)
 @punctuation.special    special symbols (e.g. `{}` in string interpolation)
 
 @comment                line and block comments
@@ -543,7 +545,7 @@ the exact definition):
 
 @comment.error          error-type comments (e.g. `ERROR`, `FIXME`, `DEPRECATED`)
 @comment.warning        warning-type comments (e.g. `WARNING`, `FIX`, `HACK`)
-@comment.todo           todo-type comments (e.g. `TODO`, `WIP`, `FIXME`)
+@comment.todo           todo-type comments (e.g. `TODO`, `WIP`)
 @comment.note           note-type comments (e.g. `NOTE`, `INFO`, `XXX`)
 
 @markup.strong          bold text
@@ -552,10 +554,15 @@ the exact definition):
 @markup.underline       underlined text (only for literal underline markup!)
 
 @markup.heading         headings, titles (including markers)
+@markup.heading.1       top-level heading
+@markup.heading.2       section heading
+@markup.heading.3       subsection heading
+@markup.heading.4       and so on
+@markup.heading.5       and so forth
+@markup.heading.6       six levels ought to be enough for anybody
 
 @markup.quote           block quotes
 @markup.math            math environments (e.g. `$ ... $` in LaTeX)
-@markup.environment     environments (e.g. in LaTeX)
 
 @markup.link            text references, footnotes, citations, etc.
 @markup.link.label      link, reference descriptions
@@ -573,6 +580,7 @@ the exact definition):
 @diff.delta             changed text (for diff files)
 
 @tag                    XML-style tag names (e.g. in XML, HTML, etc.)
+@tag.builtin            XML-style tag names (e.g. HTML5 tags)
 @tag.attribute          XML-style tag attributes
 @tag.delimiter          XML-style tag delimiters
 
@@ -646,6 +654,10 @@ parent tree. The language injection query allows you to specify these
     • `@injection.language` - indicates that the captured node’s text may
       contain the name of a language that should be used to re-parse the
       `@injection.content`.
+    • `@injection.filename` - indicates that the captured node’s text may
+      contain a filename; the corresponding filetype is then looked-up up via
+      |vim.filetype.match()| and treated as the name of a language that should
+      be used to re-parse the `@injection.content`.
 
 The language injection behavior can also be configured by some properties
 associated with patterns:
@@ -978,7 +990,7 @@ add_directive({name}, {handler}, {opts})
 
     Parameters: ~
       • {name}     (`string`) Name of the directive, without leading #
-      • {handler}  (`function`)
+      • {handler}  (`fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: table)`)
                    • match: A table mapping capture IDs to a list of captured
                      nodes
                    • pattern: the index of the matching pattern in the query
@@ -986,10 +998,10 @@ add_directive({name}, {handler}, {opts})
                    • predicate: list of strings containing the full directive
                      being called, e.g. `(node (#set! conceal "-"))` would get
                      the predicate `{ "#set!", "conceal", "-" }`
-      • {opts}     (`table<string, any>`) Optional options:
-                   • force (boolean): Override an existing predicate of the
-                     same name
-                   • all (boolean): Use the correct implementation of the
+      • {opts}     (`table`) A table with the following fields:
+                   • {force}? (`boolean`) Override an existing predicate of
+                     the same name
+                   • {all}? (`boolean`) Use the correct implementation of the
                      match table where capture IDs map to a list of nodes
                      instead of a single node. Defaults to false (for backward
                      compatibility). This option will eventually become the
@@ -1001,13 +1013,13 @@ add_predicate({name}, {handler}, {opts})
 
     Parameters: ~
       • {name}     (`string`) Name of the predicate, without leading #
-      • {handler}  (`function`)
+      • {handler}  (`fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: table)`)
                    • see |vim.treesitter.query.add_directive()| for argument
                      meanings
-      • {opts}     (`table<string, any>`) Optional options:
-                   • force (boolean): Override an existing predicate of the
-                     same name
-                   • all (boolean): Use the correct implementation of the
+      • {opts}     (`table`) A table with the following fields:
+                   • {force}? (`boolean`) Override an existing predicate of
+                     the same name
+                   • {all}? (`boolean`) Use the correct implementation of the
                      match table where capture IDs map to a list of nodes
                      instead of a single node. Defaults to false (for backward
                      compatibility). This option will eventually become the
@@ -1079,13 +1091,13 @@ list_directives()                     *vim.treesitter.query.list_directives()*
     Lists the currently available directives to use in queries.
 
     Return: ~
-        (`string[]`) List of supported directives.
+        (`string[]`) Supported directives.
 
 list_predicates()                     *vim.treesitter.query.list_predicates()*
     Lists the currently available predicates to use in queries.
 
     Return: ~
-        (`string[]`) List of supported predicates.
+        (`string[]`) Supported predicates.
 
 omnifunc({findstart}, {base})                *vim.treesitter.query.omnifunc()*
     Omnifunc for completing node names and predicates in treesitter queries.
@@ -1132,10 +1144,10 @@ Query:iter_captures({node}, {source}, {start}, {stop})
     i.e., to get syntax highlight matches in the current viewport). When
     omitted, the {start} and {stop} row values are used from the given node.
 
-    The iterator returns three values: a numeric id identifying the capture,
-    the captured node, and metadata from any directives processing the match.
-    The following example shows how to get captures by name: >lua
-        for id, node, metadata in query:iter_captures(tree:root(), bufnr, first, last) do
+    The iterator returns four values: a numeric id identifying the capture,
+    the captured node, metadata from any directives processing the match, and
+    the match itself. The following example shows how to get captures by name: >lua
+        for id, node, metadata, match in query:iter_captures(tree:root(), bufnr, first, last) do
           local name = query.captures[id] -- name of the capture in the query
           -- typically useful info about the node:
           local type = node:type() -- type of the captured node
@@ -1143,6 +1155,10 @@ Query:iter_captures({node}, {source}, {start}, {stop})
           -- ... use the info here ...
         end
 <
+
+    Note: ~
+      • Captures are only returned if the query pattern of a specific capture
+        contained predicates.
 
     Parameters: ~
       • {node}    (`TSNode`) under which the search will occur
@@ -1154,8 +1170,8 @@ Query:iter_captures({node}, {source}, {start}, {stop})
                   Defaults to `node:end_()`.
 
     Return: ~
-        (`fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata`)
-        capture id, capture node, metadata
+        (`fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch`)
+        capture id, capture node, metadata, match
 
                                                         *Query:iter_matches()*
 Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
@@ -1198,6 +1214,8 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
                   • max_start_depth (integer) if non-zero, sets the maximum
                     start depth for each match. This is used to prevent
                     traversing too deep into a tree.
+                  • match_limit (integer) Set the maximum number of
+                    in-progress matches (Default: 256).
                   • all (boolean) When set, the returned match table maps
                     capture IDs to a list of nodes. Older versions of
                     iter_matches incorrectly mapped capture IDs to a single
@@ -1319,7 +1337,7 @@ LanguageTree:language_for_range({range})
       • {range}  (`Range4`) `{ start_line, start_col, end_line, end_col }`
 
     Return: ~
-        (`vim.treesitter.LanguageTree`) Managing {range}
+        (`vim.treesitter.LanguageTree`) tree Managing {range}
 
                                          *LanguageTree:named_node_for_range()*
 LanguageTree:named_node_for_range({range}, {opts})
@@ -1327,12 +1345,12 @@ LanguageTree:named_node_for_range({range}, {opts})
 
     Parameters: ~
       • {range}  (`Range4`) `{ start_line, start_col, end_line, end_col }`
-      • {opts}   (`table?`) Optional keyword arguments:
-                 • ignore_injections boolean Ignore injected languages
-                   (default true)
+      • {opts}   (`table?`) A table with the following fields:
+                 • {ignore_injections}? (`boolean`, default: `true`) Ignore
+                   injected languages
 
     Return: ~
-        (`TSNode?`) Found node
+        (`TSNode?`)
 
 LanguageTree:parse({range})                             *LanguageTree:parse()*
     Recursively parse all regions in the language tree using
@@ -1359,8 +1377,9 @@ LanguageTree:register_cbs({cbs}, {recursive})
     Registers callbacks for the |LanguageTree|.
 
     Parameters: ~
-      • {cbs}        (`table`) An |nvim_buf_attach()|-like table argument with
-                     the following handlers:
+      • {cbs}        (`table<TSCallbackNameOn,function>`) An
+                     |nvim_buf_attach()|-like table argument with the
+                     following handlers:
                      • `on_bytes` : see |nvim_buf_attach()|, but this will be
                        called after the parsers callback.
                      • `on_changedtree` : a callback that will be called every
@@ -1387,9 +1406,9 @@ LanguageTree:tree_for_range({range}, {opts})
 
     Parameters: ~
       • {range}  (`Range4`) `{ start_line, start_col, end_line, end_col }`
-      • {opts}   (`table?`) Optional keyword arguments:
-                 • ignore_injections boolean Ignore injected languages
-                   (default true)
+      • {opts}   (`table?`) A table with the following fields:
+                 • {ignore_injections}? (`boolean`, default: `true`) Ignore
+                   injected languages
 
     Return: ~
         (`TSTree?`)

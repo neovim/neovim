@@ -11,8 +11,12 @@ func Test_FileChangedShell_reload()
   new Xchanged_r
   call setline(1, 'reload this')
   write
-  " Need to wait until the timestamp would change by at least a second.
-  sleep 2
+  " Need to wait until the timestamp would change.
+  if has('nanotime')
+    sleep 10m
+  else
+    sleep 2
+  endif
   silent !echo 'extra line' >>Xchanged_r
   checktime
   call assert_equal('changed', g:reason)
@@ -50,7 +54,11 @@ func Test_FileChangedShell_reload()
   call assert_equal('new line', getline(1))
 
   " Only time changed
-  sleep 2
+  if has('nanotime')
+    sleep 10m
+  else
+    sleep 2
+  endif
   silent !touch Xchanged_r
   let g:reason = ''
   checktime
@@ -65,7 +73,11 @@ func Test_FileChangedShell_reload()
     call setline(2, 'before write')
     write
     call setline(2, 'after write')
-    sleep 2
+    if has('nanotime')
+      sleep 10m
+    else
+      sleep 2
+    endif
     silent !echo 'different line' >>Xchanged_r
     let g:reason = ''
     checktime
@@ -140,8 +152,6 @@ func Test_FileChangedShell_edit()
 endfunc
 
 func Test_FileChangedShell_edit_dialog()
-  " requires a UI to be active
-  throw 'Skipped: use test/functional/legacy/filechanged_spec.lua'
   CheckNotGui
   CheckUnix  " Using low level feedkeys() does not work on MS-Windows.
 
@@ -156,6 +166,7 @@ func Test_FileChangedShell_edit_dialog()
     au FileChangedShell Xchanged_r let g:reason = v:fcs_reason | let v:fcs_choice = 'ask'
   augroup END
   call assert_equal(&fileformat, 'unix')
+  sleep 10m  " make the test less flaky in Nvim
   call writefile(["line1\r", "line2\r"], 'Xchanged_r')
   let g:reason = ''
   call feedkeys('L', 'L') " load file content only
@@ -173,6 +184,7 @@ func Test_FileChangedShell_edit_dialog()
     au FileChangedShell Xchanged_r let g:reason = v:fcs_reason | let v:fcs_choice = 'ask'
   augroup END
   call assert_equal(&fileformat, 'unix')
+  sleep 10m  " make the test less flaky in Nvim
   call writefile(["line1\r", "line2\r"], 'Xchanged_r')
   let g:reason = ''
   call feedkeys('a', 'L') " load file content and options
@@ -191,8 +203,6 @@ func Test_FileChangedShell_edit_dialog()
 endfunc
 
 func Test_file_changed_dialog()
-  " requires a UI to be active
-  throw 'Skipped: use test/functional/legacy/filechanged_spec.lua'
   CheckUnix
   CheckNotGui
   au! FileChangedShell
@@ -200,8 +210,12 @@ func Test_file_changed_dialog()
   new Xchanged_d
   call setline(1, 'reload this')
   write
-  " Need to wait until the timestamp would change by at least a second.
-  sleep 2
+  " Need to wait until the timestamp would change.
+  if has('nanotime')
+    sleep 10m
+  else
+    sleep 2
+  endif
   silent !echo 'extra line' >>Xchanged_d
   call feedkeys('L', 'L')
   checktime
@@ -236,7 +250,11 @@ func Test_file_changed_dialog()
   call assert_equal('new line', getline(1))
 
   " Only time changed, no prompt
-  sleep 2
+  if has('nanotime')
+    sleep 10m
+  else
+    sleep 2
+  endif
   silent !touch Xchanged_d
   let v:warningmsg = ''
   checktime Xchanged_d

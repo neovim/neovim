@@ -1,11 +1,11 @@
 -- Test for linebreak and list option in utf-8 mode
 
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local source = helpers.source
-local feed = helpers.feed
-local exec = helpers.exec
-local clear, expect = helpers.clear, helpers.expect
+local source = t.source
+local feed = t.feed
+local exec = t.exec
+local clear, expect = t.clear, t.expect
 
 describe('linebreak', function()
   before_each(clear)
@@ -214,11 +214,6 @@ describe('linebreak', function()
   -- oldtest: Test_visual_ends_before_showbreak()
   it("Visual area is correct when it ends before multibyte 'showbreak'", function()
     local screen = Screen.new(60, 8)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black }, -- Visual
-      [2] = { bold = true }, -- ModeMsg
-    })
     screen:attach()
     exec([[
       let &wrap = v:true
@@ -229,10 +224,10 @@ describe('linebreak', function()
     ]])
     screen:expect([[
       xxxxx                                                       |
-      {0:↪ }{1:yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy}^ {1:   }|
-      {0:↪ }zzzz                                                      |
-      {0:~                                                           }|*4
-      {2:-- VISUAL --}                                                |
+      {1:↪ }{17:yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy}^ {17:   }|
+      {1:↪ }zzzz                                                      |
+      {1:~                                                           }|*4
+      {5:-- VISUAL --}                                                |
     ]])
   end)
 end)

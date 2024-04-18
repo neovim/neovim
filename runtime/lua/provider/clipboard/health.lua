@@ -1,5 +1,4 @@
 local health = vim.health
-local executable = health.executable
 
 local M = {}
 
@@ -8,8 +7,8 @@ function M.check()
 
   if
     os.getenv('TMUX')
-    and executable('tmux')
-    and executable('pbpaste')
+    and vim.fn.executable('tmux') == 1
+    and vim.fn.executable('pbpaste') == 1
     and not health.cmd_ok('pbpaste')
   then
     local tmux_version = string.match(vim.fn.system('tmux -V'), '%d+%.%d+')

@@ -212,4 +212,28 @@ func Test_execute_cmd_with_null()
   endif
 endfunc
 
+func Test_win_execute_tabpagewinnr()
+  belowright split
+  tab split
+  belowright split
+  call assert_equal(2, tabpagewinnr(1))
+
+  tabprevious
+  wincmd p
+  call assert_equal(1, tabpagenr())
+  call assert_equal(1, tabpagewinnr(1))
+  call assert_equal(2, tabpagewinnr(2))
+
+  call win_execute(win_getid(1, 2),
+        \      'call assert_equal(2, tabpagenr())'
+        \ .. '| call assert_equal(1, tabpagewinnr(1))'
+        \ .. '| call assert_equal(1, tabpagewinnr(2))')
+
+  call assert_equal(1, tabpagenr())
+  call assert_equal(1, tabpagewinnr(1))
+  call assert_equal(2, tabpagewinnr(2))
+
+  %bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -1,14 +1,14 @@
-local helpers = require('test.functional.helpers')(after_each)
+local t = require('test.functional.testutil')()
 local Screen = require('test.functional.ui.screen')
-local clear = helpers.clear
-local command = helpers.command
-local insert = helpers.insert
-local api = helpers.api
-local eq = helpers.eq
-local poke_eventloop = helpers.poke_eventloop
-local feed = helpers.feed
-local fn = helpers.fn
-local pcall_err = helpers.pcall_err
+local clear = t.clear
+local command = t.command
+local insert = t.insert
+local api = t.api
+local eq = t.eq
+local poke_eventloop = t.poke_eventloop
+local feed = t.feed
+local fn = t.fn
+local pcall_err = t.pcall_err
 
 describe('winbar', function()
   local screen
@@ -525,30 +525,24 @@ describe('local winbar with tabs', function()
     clear()
     screen = Screen.new(60, 10)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = { bold = true },
-      [2] = { reverse = true },
-      [3] = { bold = true, foreground = Screen.colors.Blue },
-      [4] = { underline = true, background = Screen.colors.LightGray },
-    })
     api.nvim_set_option_value('winbar', 'foo', { scope = 'local', win = 0 })
   end)
 
   it('works', function()
     command('tabnew')
     screen:expect([[
-      {4: [No Name] }{1: [No Name] }{2:                                     }{4:X}|
+      {24: [No Name] }{5: [No Name] }{2:                                     }{24:X}|
       ^                                                            |
-      {3:~                                                           }|*7
+      {1:~                                                           }|*7
                                                                   |
     ]])
     command('tabnext')
     screen:expect {
       grid = [[
-      {1: [No Name] }{4: [No Name] }{2:                                     }{4:X}|
-      {1:foo                                                         }|
+      {5: [No Name] }{24: [No Name] }{2:                                     }{24:X}|
+      {5:foo                                                         }|
       ^                                                            |
-      {3:~                                                           }|*6
+      {1:~                                                           }|*6
                                                                   |
     ]],
     }
@@ -561,11 +555,11 @@ describe('local winbar with tabs', function()
       text]]
     screen:expect {
       grid = [[
-      {1:foo                                                         }|
+      {5:foo                                                         }|
       some                                                        |
       goofy                                                       |
       tex^t                                                        |
-      {3:~                                                           }|*5
+      {1:~                                                           }|*5
                                                                   |
     ]],
     }
@@ -574,9 +568,9 @@ describe('local winbar with tabs', function()
     command 'tabedit'
     screen:expect {
       grid = [[
-      {4: + [No Name] }{1: [No Name] }{2:                                   }{4:X}|
+      {24: + [No Name] }{5: [No Name] }{2:                                   }{24:X}|
       ^                                                            |
-      {3:~                                                           }|*7
+      {1:~                                                           }|*7
                                                                   |
     ]],
     }
@@ -584,12 +578,12 @@ describe('local winbar with tabs', function()
     command 'tabprev'
     screen:expect {
       grid = [[
-      {1: + [No Name] }{4: [No Name] }{2:                                   }{4:X}|
-      {1:foo                                                         }|
+      {5: + [No Name] }{24: [No Name] }{2:                                   }{24:X}|
+      {5:foo                                                         }|
       some                                                        |
       goofy                                                       |
       tex^t                                                        |
-      {3:~                                                           }|*4
+      {1:~                                                           }|*4
                                                                   |
     ]],
     }
@@ -609,16 +603,11 @@ it('winbar works properly when redrawing is postponed #23534', function()
   })
   local screen = Screen.new(60, 6)
   screen:attach()
-  screen:set_default_attr_ids({
-    [0] = { foreground = Screen.colors.Blue, bold = true },
-    [1] = { bold = true },
-    [2] = { bold = true, reverse = true },
-  })
   screen:expect([[
-    {1:(winbar)                                                    }|
+    {5:(winbar)                                                    }|
     ^                                                            |
-    {0:~                                                           }|*2
-    {2:(statusline)                                                }|
+    {1:~                                                           }|*2
+    {3:(statusline)                                                }|
                                                                 |
   ]])
 end)

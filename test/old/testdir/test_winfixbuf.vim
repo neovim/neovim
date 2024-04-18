@@ -1,6 +1,7 @@
 " Test 'winfixbuf'
 
 source check.vim
+source shared.vim
 
 " Find the number of open windows in the current tab
 func s:get_windows_count()
@@ -493,7 +494,7 @@ func Test_browse_edit_fail()
   try
     browse edit! other
     call assert_equal(l:other, bufnr())
-  catch /E338:/
+  catch /^Vim\%((\a\+)\)\=:E338:/
     " Ignore E338, which occurs if console Vim is built with +browse.
     " Console Vim without +browse will treat this as a regular :edit.
   endtry
@@ -511,7 +512,7 @@ func Test_browse_edit_pass()
 
   try
     browse write other
-  catch /E338:/
+  catch /^Vim\%((\a\+)\)\=:E338:/
     " Ignore E338, which occurs if console Vim is built with +browse.
     " Console Vim without +browse will treat this as a regular :write.
   endtry
@@ -1123,6 +1124,150 @@ func Test_edit()
 
   edit! other
   call assert_equal(l:other, bufnr())
+endfunc
+
+" Fail :e when selecting a buffer from a relative path if in a different folder
+"
+" In this tests there's 2 buffers
+"
+" foo - lives on disk, in some folder. e.g. /tmp/foo
+" foo - an in-memory buffer that has not been saved to disk. If saved, it
+"       would live in a different folder, /other/foo.
+"
+" The 'winfixbuf' is looking at the in-memory buffer and trying to switch to
+" the buffer on-disk (and fails, because it's a different buffer)
+func Test_edit_different_buffer_on_disk_and_relative_path_to_disk()
+  call s:reset_all_buffers()
+
+  let l:file_on_disk = tempname()
+  let l:directory_on_disk1 = fnamemodify(l:file_on_disk, ":p:h")
+  let l:name = fnamemodify(l:file_on_disk, ":t")
+  execute "edit " . l:file_on_disk
+  write!
+
+  let l:directory_on_disk2 = l:directory_on_disk1 . "_something_else"
+
+  if !isdirectory(l:directory_on_disk2)
+    call mkdir(l:directory_on_disk2)
+  endif
+
+  execute "cd " . l:directory_on_disk2
+  execute "edit " l:name
+
+  let l:current = bufnr()
+
+  call assert_equal(l:current, bufnr())
+  set winfixbuf
+  call assert_fails("edit " . l:file_on_disk, "E1513:")
+  call assert_equal(l:current, bufnr())
+
+  call delete(l:directory_on_disk1)
+  call delete(l:directory_on_disk2)
+endfunc
+
+" Fail :e when selecting a buffer from a relative path if in a different folder
+"
+" In this tests there's 2 buffers
+"
+" foo - lives on disk, in some folder. e.g. /tmp/foo
+" foo - an in-memory buffer that has not been saved to disk. If saved, it
+"       would live in a different folder, /other/foo.
+"
+" The 'winfixbuf' is looking at the on-disk buffer and trying to switch to
+" the in-memory buffer (and fails, because it's a different buffer)
+func Test_edit_different_buffer_on_disk_and_relative_path_to_memory()
+  call s:reset_all_buffers()
+
+  let l:file_on_disk = tempname()
+  let l:directory_on_disk1 = fnamemodify(l:file_on_disk, ":p:h")
+  let l:name = fnamemodify(l:file_on_disk, ":t")
+  execute "edit " . l:file_on_disk
+  write!
+
+  let l:directory_on_disk2 = l:directory_on_disk1 . "_something_else"
+
+  if !isdirectory(l:directory_on_disk2)
+    call mkdir(l:directory_on_disk2)
+  endif
+
+  execute "cd " . l:directory_on_disk2
+  execute "edit " l:name
+  execute "cd " . l:directory_on_disk1
+  execute "edit " l:file_on_disk
+  execute "cd " . l:directory_on_disk2
+
+  let l:current = bufnr()
+
+  call assert_equal(l:current, bufnr())
+  set winfixbuf
+  call assert_fails("edit " . l:name, "E1513:")
+  call assert_equal(l:current, bufnr())
+
+  call delete(l:directory_on_disk1)
+  call delete(l:directory_on_disk2)
+endfunc
+
+" Fail to call `:e first` if called from a starting, in-memory buffer
+func Test_edit_first_buffer()
+  call s:reset_all_buffers()
+
+  set winfixbuf
+  let l:current = bufnr()
+
+  call assert_fails("edit first", "E1513:")
+  call assert_equal(l:current, bufnr())
+
+  edit! first
+  call assert_equal(l:current, bufnr())
+  edit! somewhere_else
+  call assert_notequal(l:current, bufnr())
+endfunc
+
+" Allow reloading a buffer using :e
+func Test_edit_no_arguments()
+  call s:reset_all_buffers()
+
+  let l:current = bufnr()
+  file some_buffer
+
+  call assert_equal(l:current, bufnr())
+  set winfixbuf
+  edit
+  call assert_equal(l:current, bufnr())
+endfunc
+
+" Allow :e selecting the current buffer
+func Test_edit_same_buffer_in_memory()
+  call s:reset_all_buffers()
+
+  let current = bufnr()
+  file same_buffer
+
+  call assert_equal(current, bufnr())
+  set winfixbuf
+  edit same_buffer
+  call assert_equal(current, bufnr())
+  set nowinfixbuf
+endfunc
+
+" Allow :e selecting the current buffer as a full path
+func Test_edit_same_buffer_on_disk_absolute_path()
+  call s:reset_all_buffers()
+
+  let file = tempname()
+  " file must exist for expansion of 8.3 paths to succeed
+  call writefile([], file, 'D')
+  let file = fnamemodify(file, ':p')
+  let current = bufnr()
+  execute "edit " . file
+  write!
+
+  call assert_equal(current, bufnr())
+  set winfixbuf
+  execute "edit " file
+  call assert_equal(current, bufnr())
+
+  set nowinfixbuf
 endfunc
 
 " Fail :enew but :enew! is allowed
@@ -2532,7 +2677,7 @@ EOF
 
   try
     pyxdo test_winfixbuf_Test_pythonx_pyxdo_set_buffer()
-  catch /pynvim\.api\.common\.NvimError: E1513: Cannot edit buffer\. 'winfixbuf' is enabled/
+  catch /pynvim\.api\.common\.NvimError: E1513:/
     let l:caught = 1
   endtry
 
@@ -2563,7 +2708,7 @@ func Test_pythonx_pyxfile()
 
   try
     pyxfile file.py
-  catch /pynvim\.api\.common\.NvimError: E1513: Cannot edit buffer\. 'winfixbuf' is enabled/
+  catch /pynvim\.api\.common\.NvimError: E1513:/
     let l:caught = 1
   endtry
 
@@ -2596,7 +2741,7 @@ import vim
 buffer = vim.vars["_previous_buffer"]
 vim.current.buffer = vim.buffers[buffer]
 EOF
-  catch /pynvim\.api\.common\.NvimError: E1513: Cannot edit buffer\. 'winfixbuf' is enabled/
+  catch /pynvim\.api\.common\.NvimError: E1513:/
     let l:caught = 1
   endtry
 
@@ -3281,6 +3426,17 @@ func Test_bufdo_cnext_splitwin_fails()
   " Ensure the entry didn't change.
   call assert_equal(1, getqflist(#{idx: 0}).idx)
   set winminheight&vim winheight&vim
+endfunc
+
+" Test that exiting with 'winfixbuf' and EXITFREE doesn't cause an error.
+func Test_exitfree_no_error()
+  let lines =<< trim END
+    set winfixbuf
+    qall!
+  END
+  call writefile(lines, 'Xwfb_exitfree', 'D')
+  call assert_notmatch('E1513:',
+        \ system(GetVimCommandClean() .. ' -X -S Xwfb_exitfree'))
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
