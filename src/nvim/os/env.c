@@ -701,7 +701,7 @@ void expand_env_esc(char *restrict srcp, char *restrict dst, int dstlen, bool es
         }
         var = p;
         mustfree = true;
-        forward_slash(var);
+        slash_adjust(var);
       }
 #endif
 

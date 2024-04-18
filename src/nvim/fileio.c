@@ -3242,22 +3242,6 @@ void write_lnum_adjust(linenr_T offset)
   }
 }
 
-#if defined(BACKSLASH_IN_FILENAME)
-/// Convert all backslashes in fname to forward slashes in-place,
-/// unless when it looks like a URL.
-void forward_slash(char *fname)
-{
-  if (path_with_url(fname)) {
-    return;
-  }
-  for (char *p = fname; *p != NUL; p++) {
-    if (*p == '\\') {
-      *p = '/';
-    }
-  }
-}
-#endif
-
 /// Path to Nvim's own temp dir. Ends in a slash.
 static char *vim_tempdir = NULL;
 #ifdef HAVE_DIRFD_AND_FLOCK

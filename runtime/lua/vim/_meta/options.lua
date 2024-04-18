@@ -1079,24 +1079,6 @@ vim.o.cot = vim.o.completeopt
 vim.go.completeopt = vim.o.completeopt
 vim.go.cot = vim.go.completeopt
 
---- 		only for MS-Windows
---- When this option is set it overrules 'shellslash' for completion:
---- - When this option is set to "slash", a forward slash is used for path
----   completion in insert mode. This is useful when editing HTML tag, or
----   Makefile with 'noshellslash' on MS-Windows.
---- - When this option is set to "backslash", backslash is used. This is
----   useful when editing a batch file with 'shellslash' set on MS-Windows.
---- - When this option is empty, same character is used as for
----   'shellslash'.
---- For Insert mode completion the buffer-local value is used.  For
---- command line completion the global value is used.
----
---- @type string
-vim.o.completeslash = ""
-vim.o.csl = vim.o.completeslash
-vim.bo.completeslash = vim.o.completeslash
-vim.bo.csl = vim.bo.completeslash
-
 --- Sets the modes in which text in the cursor line can also be concealed.
 --- When the current mode is listed then concealing happens just like in
 --- other lines.
@@ -5680,28 +5662,6 @@ vim.o.shellredir = ">"
 vim.o.srr = vim.o.shellredir
 vim.go.shellredir = vim.o.shellredir
 vim.go.srr = vim.go.shellredir
-
---- 		only for MS-Windows
---- When set, a forward slash is used when expanding file names.  This is
---- useful when a Unix-like shell is used instead of cmd.exe.  Backward
---- slashes can still be typed, but they are changed to forward slashes by
---- Vim.
---- Note that setting or resetting this option has no effect for some
---- existing file names, thus this option needs to be set before opening
---- any file for best results.  This might change in the future.
---- 'shellslash' only works when a backslash can be used as a path
---- separator.  To test if this is so use:
----
---- ```vim
---- 	if exists('+shellslash')
---- ```
---- Also see 'completeslash'.
----
---- @type boolean
-vim.o.shellslash = false
-vim.o.ssl = vim.o.shellslash
-vim.go.shellslash = vim.o.shellslash
-vim.go.ssl = vim.go.shellslash
 
 --- When on, use temp files for shell commands.  When off use a pipe.
 --- When using a pipe is not possible temp files are used anyway.

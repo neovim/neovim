@@ -7165,7 +7165,7 @@ return {
     },
     {
       abbreviation = 'ssl',
-      defaults = { if_true = false },
+      defaults = { if_true = true },
       full_name = 'shellslash',
       scope = { 'global' },
       short_desc = N_('No description'),

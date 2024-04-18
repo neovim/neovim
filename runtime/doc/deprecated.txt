@@ -180,10 +180,12 @@ NORMAL COMMANDS
 OPTIONS
 - *cpo-<* *:menu-<special>* *:menu-special* *:map-<special>* *:map-special*
   `<>` notation is always enabled.
+- *'completeslash'*	Path separator is always `/` on Windows.
 - *'fe'*		'fenc'+'enc' before Vim 6.0; no longer used.
 - *'highlight'* *'hl'*	Names of builtin |highlight-groups| cannot be changed.
 - *'langnoremap'*	Deprecated alias to 'nolangremap'.
 - 'sessionoptions'	Flags "unix", "slash" are ignored and always enabled.
+- *'shellslash'*	Path separator is always `/` on Windows.
 - *'vi'*
 - 'viewoptions'		Flags "unix", "slash" are ignored and always enabled.
 - *'viminfo'*		Deprecated alias to 'shada' option.

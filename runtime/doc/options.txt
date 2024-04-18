@@ -1529,21 +1529,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		    completion in a popup window.  Only works in combination
 		    with "menu" or "menuone".  Overrides "preview".
 
-						*'completeslash'* *'csl'*
-'completeslash' 'csl'	string	(default "")
-			local to buffer
-			only for MS-Windows
-	When this option is set it overrules 'shellslash' for completion:
-	- When this option is set to "slash", a forward slash is used for path
-	  completion in insert mode. This is useful when editing HTML tag, or
-	  Makefile with 'noshellslash' on MS-Windows.
-	- When this option is set to "backslash", backslash is used. This is
-	  useful when editing a batch file with 'shellslash' set on MS-Windows.
-	- When this option is empty, same character is used as for
-	  'shellslash'.
-	For Insert mode completion the buffer-local value is used.  For
-	command line completion the global value is used.
-
 					*'concealcursor'* *'cocu'*
 'concealcursor' 'cocu'	string	(default "")
 			local to window
@@ -5373,22 +5358,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	become obsolete (at least for Unix).
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
-
-			*'shellslash'* *'ssl'* *'noshellslash'* *'nossl'*
-'shellslash' 'ssl'	boolean	(default off)
-			global
-			only for MS-Windows
-	When set, a forward slash is used when expanding file names.  This is
-	useful when a Unix-like shell is used instead of cmd.exe.  Backward
-	slashes can still be typed, but they are changed to forward slashes by
-	Vim.
-	Note that setting or resetting this option has no effect for some
-	existing file names, thus this option needs to be set before opening
-	any file for best results.  This might change in the future.
-	'shellslash' only works when a backslash can be used as a path
-	separator.  To test if this is so use: >vim
-		if exists('+shellslash')
-<	Also see 'completeslash'.
 
 			*'shelltemp'* *'stmp'* *'noshelltemp'* *'nostmp'*
 'shelltemp' 'stmp'	boolean	(default on)
