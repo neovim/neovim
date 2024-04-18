@@ -2229,32 +2229,20 @@ Lua module: vim.lsp.rpc                                              *lsp-rpc*
       • {terminate}   (`fun()`)
 
 
-connect({host}, {port})                                *vim.lsp.rpc.connect()*
-    Create a LSP RPC client factory that connects via TCP to the given host
-    and port.
+connect({host_or_path}, {port})                        *vim.lsp.rpc.connect()*
+    Create a LSP RPC client factory that connects to either:
+    • a named pipe (windows)
+    • a domain socket (unix)
+    • a host and port via TCP
 
     Return a function that can be passed to the `cmd` field for
     |vim.lsp.start_client()| or |vim.lsp.start()|.
 
     Parameters: ~
-      • {host}  (`string`) host to connect to
-      • {port}  (`integer`) port to connect to
-
-    Return: ~
-        (`fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient`)
-
-                                         *vim.lsp.rpc.domain_socket_connect()*
-domain_socket_connect({pipe_path})
-    Create a LSP RPC client factory that connects via named pipes (Windows) or
-    unix domain sockets (Unix) to the given pipe_path (file path on Unix and
-    name on Windows).
-
-    Return a function that can be passed to the `cmd` field for
-    |vim.lsp.start_client()| or |vim.lsp.start()|.
-
-    Parameters: ~
-      • {pipe_path}  (`string`) file path of the domain socket (Unix) or name
-                     of the named pipe (Windows) to connect to
+      • {host_or_path}  (`string`) host to connect to or path to a pipe/domain
+                        socket
+      • {port}          (`integer?`) TCP port to connect to. If absent the
+                        first argument must be a pipe
 
     Return: ~
         (`fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient`)
