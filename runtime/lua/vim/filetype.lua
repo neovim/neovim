@@ -14,7 +14,8 @@ local M = {}
 local function starsetf(ft, opts)
   return {
     function(path, bufnr)
-      local f = type(ft) == 'function' and ft(path, bufnr) or ft
+      -- Note: when `ft` is a function its return value may be nil.
+      local f = type(ft) ~= 'function' and ft or ft(path, bufnr)
       if not vim.g.ft_ignore_pat then
         return f
       end
@@ -2138,6 +2139,7 @@ local pattern = {
   ['.*/%.init/.*%.conf'] = 'upstart',
   ['.*/usr/share/upstart/.*%.override'] = 'upstart',
   ['.*%.[Ll][Oo][Gg]'] = detect.log,
+  ['.*/etc/config/.*'] = starsetf(detect.uci),
   ['.*%.vhdl_[0-9].*'] = starsetf('vhdl'),
   ['.*%.ws[fc]'] = 'wsh',
   ['.*/Xresources/.*'] = starsetf('xdefaults'),

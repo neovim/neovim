@@ -2439,4 +2439,26 @@ func Test_def_file()
   filetype off
 endfunc
 
+func Test_uci_file()
+  filetype on
+
+  call mkdir('any/etc/config', 'pR')
+  call writefile(['config firewall'], 'any/etc/config/firewall', 'D')
+  split any/etc/config/firewall
+  call assert_equal('uci', &filetype)
+  bwipe!
+
+  call writefile(['# config for nginx here'], 'any/etc/config/firewall', 'D')
+  split any/etc/config/firewall
+  call assert_notequal('uci', &filetype)
+  bwipe!
+
+  call writefile(['# Copyright Cool Cats 1997', 'config firewall'], 'any/etc/config/firewall', 'D')
+  split any/etc/config/firewall
+  call assert_equal('uci', &filetype)
+  bwipe!
+
+  filetype off
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

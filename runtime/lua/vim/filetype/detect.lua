@@ -1584,6 +1584,26 @@ function M.typ(_, bufnr)
   return 'typst'
 end
 
+--- @type vim.filetype.mapfn
+function M.uci(_, bufnr)
+  -- Return "uci" iff the file has a config or package statement near the
+  -- top of the file and all preceding lines were comments or blank.
+  for _, line in ipairs(getlines(bufnr, 1, 3)) do
+    -- Match a config or package statement at the start of the line.
+    if
+      line:find('^%s*[cp]%s+%S')
+      or line:find('^%s*config%s+%S')
+      or line:find('^%s*package%s+%S')
+    then
+      return 'uci'
+    end
+    -- Match a line that is either all blank or blank followed by a comment
+    if not (line:find('^%s*$') or line:find('^%s*#')) then
+      break
+    end
+  end
+end
+
 -- Determine if a .v file is Verilog, V, or Coq
 --- @type vim.filetype.mapfn
 function M.v(_, bufnr)
