@@ -64,6 +64,7 @@
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 
+/// State for adding bytes to a recording or 'showcmd'.
 typedef struct {
   int prev_c;
   uint8_t buf[MB_MAXBYTES * 3 + 4];

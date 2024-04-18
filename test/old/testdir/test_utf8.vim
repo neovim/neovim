@@ -300,7 +300,7 @@ func Test_setcellwidths_dump()
   call StopVimInTerminal(buf)
 endfunc
 
-" When `setcellwidth` is used on characters that are not targets of `ambiwidth`.
+" Test setcellwidths() on characters that are not targets of 'ambiwidth'.
 func Test_setcellwidths_with_non_ambiwidth_character_dump()
   CheckRunVimInTerminal
 
@@ -320,7 +320,6 @@ func Test_setcellwidths_with_non_ambiwidth_character_dump()
 
   call StopVimInTerminal(buf)
 endfunc
-
 
 " For some reason this test causes Test_customlist_completion() to fail on CI,
 " so run it as the last test.

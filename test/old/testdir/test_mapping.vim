@@ -1716,7 +1716,7 @@ endfunc
 func Test_showcmd_part_map()
   CheckRunVimInTerminal
 
-  let lines =<< trim eval END
+  let lines =<< trim END
     set notimeout showcmd
     nnoremap ,a <Ignore>
     nnoremap ;a <Ignore>
@@ -1736,20 +1736,21 @@ func Test_showcmd_part_map()
   for c in [',', ';', 'À', 'Ë', 'β', 'ω', '…']
     call term_sendkeys(buf, c)
     call WaitForAssert({-> assert_equal(c, trim(term_getline(buf, 6)))})
-    call term_sendkeys(buf, "\<C-C>:echo\<CR>")
-    call WaitForAssert({-> assert_equal('', term_getline(buf, 6))})
+    call term_sendkeys(buf, 'a')
+    call WaitForAssert({-> assert_equal('', trim(term_getline(buf, 6)))})
   endfor
 
   call term_sendkeys(buf, "\<C-W>")
   call WaitForAssert({-> assert_equal('^W', trim(term_getline(buf, 6)))})
-  call term_sendkeys(buf, "\<C-C>:echo\<CR>")
-  call WaitForAssert({-> assert_equal('', term_getline(buf, 6))})
+  call term_sendkeys(buf, 'a')
+  call WaitForAssert({-> assert_equal('', trim(term_getline(buf, 6)))})
 
-  " Use feedkeys() as terminal buffer cannot forward this
+  " Use feedkeys() as terminal buffer cannot forward unsimplified Ctrl-W.
+  " This is like typing Ctrl-W with modifyOtherKeys enabled.
   call term_sendkeys(buf, ':call feedkeys("\<*C-W>", "m")' .. " | echo\<CR>")
   call WaitForAssert({-> assert_equal('^W', trim(term_getline(buf, 6)))})
-  call term_sendkeys(buf, "\<C-C>:echo\<CR>")
-  call WaitForAssert({-> assert_equal('', term_getline(buf, 6))})
+  call term_sendkeys(buf, 'a')
+  call WaitForAssert({-> assert_equal('', trim(term_getline(buf, 6)))})
 
   call StopVimInTerminal(buf)
 endfunc
