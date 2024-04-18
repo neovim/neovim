@@ -1465,27 +1465,12 @@ return {
     },
     {
       abbreviation = 'csl',
-      cb = 'did_set_completeslash',
       defaults = { if_true = '' },
-      desc = [=[
-        		only for MS-Windows
-        When this option is set it overrules 'shellslash' for completion:
-        - When this option is set to "slash", a forward slash is used for path
-          completion in insert mode. This is useful when editing HTML tag, or
-          Makefile with 'noshellslash' on MS-Windows.
-        - When this option is set to "backslash", backslash is used. This is
-          useful when editing a batch file with 'shellslash' set on MS-Windows.
-        - When this option is empty, same character is used as for
-          'shellslash'.
-        For Insert mode completion the buffer-local value is used.  For
-        command line completion the global value is used.
-      ]=],
-      enable_if = 'BACKSLASH_IN_FILENAME',
-      expand_cb = 'expand_set_completeslash',
       full_name = 'completeslash',
       scope = { 'buffer' },
+      short_desc = N_('No description'),
       type = 'string',
-      varname = 'p_csl',
+      hidden = true,
     },
     {
       abbreviation = 'cocu',
@@ -7180,28 +7165,12 @@ return {
     },
     {
       abbreviation = 'ssl',
-      cb = 'did_set_shellslash',
       defaults = { if_true = false },
-      desc = [=[
-        		only for MS-Windows
-        When set, a forward slash is used when expanding file names.  This is
-        useful when a Unix-like shell is used instead of cmd.exe.  Backward
-        slashes can still be typed, but they are changed to forward slashes by
-        Vim.
-        Note that setting or resetting this option has no effect for some
-        existing file names, thus this option needs to be set before opening
-        any file for best results.  This might change in the future.
-        'shellslash' only works when a backslash can be used as a path
-        separator.  To test if this is so use: >vim
-        	if exists('+shellslash')
-        <	Also see 'completeslash'.
-      ]=],
-      enable_if = 'BACKSLASH_IN_FILENAME',
       full_name = 'shellslash',
       scope = { 'global' },
-      short_desc = N_('use forward slash for shell file names'),
+      short_desc = N_('No description'),
       type = 'boolean',
-      varname = 'p_ssl',
+      hidden = true,
     },
     {
       abbreviation = 'stmp',

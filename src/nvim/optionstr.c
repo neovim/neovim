@@ -1008,28 +1008,6 @@ int expand_set_completeopt(optexpand_T *args, int *numMatches, char ***matches)
                                matches);
 }
 
-#ifdef BACKSLASH_IN_FILENAME
-/// The 'completeslash' option is changed.
-const char *did_set_completeslash(optset_T *args)
-{
-  buf_T *buf = (buf_T *)args->os_buf;
-  if (check_opt_strings(p_csl, p_csl_values, false) != OK
-      || check_opt_strings(buf->b_p_csl, p_csl_values, false) != OK) {
-    return e_invarg;
-  }
-  return NULL;
-}
-
-int expand_set_completeslash(optexpand_T *args, int *numMatches, char ***matches)
-{
-  return expand_set_opt_string(args,
-                               p_csl_values,
-                               ARRAY_SIZE(p_csl_values) - 1,
-                               numMatches,
-                               matches);
-}
-#endif
-
 /// The 'concealcursor' option is changed.
 const char *did_set_concealcursor(optset_T *args)
 {

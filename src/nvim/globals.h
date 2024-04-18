@@ -776,12 +776,6 @@ EXTERN bool no_hlsearch INIT( = false);
 EXTERN bool typebuf_was_filled INIT( = false);     // received text from client
                                                    // or from feedkeys()
 
-#ifdef BACKSLASH_IN_FILENAME
-EXTERN char psepc INIT( = '\\');            // normal path separator character
-EXTERN char psepcN INIT( = '/');            // abnormal path separator character
-EXTERN char pseps[2] INIT( = { '\\', 0 });  // normal path separator string
-#endif
-
 // Set to kTrue when an operator is being executed with virtual editing
 // kNone when no operator is being executed, kFalse otherwise.
 EXTERN TriState virtual_op INIT( = kNone);

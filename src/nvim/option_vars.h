@@ -430,9 +430,6 @@ EXTERN char *p_cpt;             ///< 'complete'
 EXTERN OptInt p_columns;        ///< 'columns'
 EXTERN int p_confirm;           ///< 'confirm'
 EXTERN char *p_cot;             ///< 'completeopt'
-#ifdef BACKSLASH_IN_FILENAME
-EXTERN char *p_csl;             ///< 'completeslash'
-#endif
 EXTERN OptInt p_pb;             ///< 'pumblend'
 EXTERN OptInt p_ph;             ///< 'pumheight'
 EXTERN OptInt p_pw;             ///< 'pumwidth'
@@ -642,9 +639,6 @@ EXTERN char *p_sxq;             ///< 'shellxquote'
 EXTERN char *p_sxe;             ///< 'shellxescape'
 EXTERN char *p_srr;             ///< 'shellredir'
 EXTERN int p_stmp;              ///< 'shelltemp'
-#ifdef BACKSLASH_IN_FILENAME
-EXTERN int p_ssl;               ///< 'shellslash'
-#endif
 EXTERN char *p_stl;             ///< 'statusline'
 EXTERN char *p_wbr;             ///< 'winbar'
 EXTERN int p_sr;                ///< 'shiftround'
