@@ -356,7 +356,9 @@ end
 
 --- We only merge empty tables or tables that are not an array (indexed by integers)
 local function can_merge(v)
-  return type(v) == 'table' and (vim.tbl_isempty(v) or not vim.tbl_isarray(v))
+  return type(v) == 'table'
+    and (vim.tbl_isempty(v) or not vim.tbl_isarray(v))
+    and getmetatable(v) == nil
 end
 
 local function tbl_extend(behavior, deep_extend, ...)
@@ -391,6 +393,17 @@ local function tbl_extend(behavior, deep_extend, ...)
           end -- Else behavior is "keep".
         else
           ret[k] = v
+        end
+      end
+
+      local mt = getmetatable(tbl)
+      if mt ~= nil then
+        if behavior ~= 'force' and getmetatable(ret) ~= nil then
+          if behavior == 'error' then
+            error('metatable found in more than one map.')
+          end
+        else
+          setmetatable(ret, mt)
         end
       end
     end
