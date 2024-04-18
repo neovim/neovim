@@ -381,7 +381,7 @@ function M.enable(enable, filter)
   if type(enable) == 'number' or type(filter) == 'boolean' then
     vim.deprecate(
       'vim.lsp.inlay_hint.enable(bufnr:number, enable:boolean)',
-      'vim.diagnostic.enable(enable:boolean, filter:table)',
+      'vim.lsp.inlay_hint.enable(enable:boolean, filter:table)',
       '0.10-dev'
     )
     error('see :help vim.lsp.inlay_hint.enable() for updated parameters')
