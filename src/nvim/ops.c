@@ -3429,7 +3429,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
           lnum = new_cursor.lnum;
           char *ptr = ml_get(lnum) + col;
           totlen = strlen(y_array[y_size - 1]);
-          char *newp = xmalloc((size_t)(ml_get_len(lnum) - (size_t)col + totlen + 1));
+          char *newp = xmalloc((size_t)ml_get_len(lnum) - (size_t)col + totlen + 1);
           char *newp_e = xstpcpy(newp, y_array[y_size - 1]);
           newp_e = xstpcpy(newp_e, ptr);
           // insert second line
