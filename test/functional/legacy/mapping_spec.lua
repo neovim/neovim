@@ -214,8 +214,7 @@ describe('mapping', function()
         {1:~                                                           }|*4
                                                          %s          |
       ]]):format(c))
-      feed('<C-C>')
-      command('echo')
+      feed('a')
       screen:expect([[
         ^                                                            |
         {1:~                                                           }|*4
@@ -229,8 +228,7 @@ describe('mapping', function()
       {1:~                                                           }|*4
                                                        ^W         |
     ]])
-    feed('<C-C>')
-    command('echo')
+    feed('a')
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*4
@@ -243,8 +241,7 @@ describe('mapping', function()
       {1:~                                                           }|*4
                                                        ^W         |
     ]])
-    feed('<C-C>')
-    command('echo')
+    feed('a')
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*4
