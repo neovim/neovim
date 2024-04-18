@@ -225,7 +225,7 @@ The following new APIs and features were added.
   • |vim.lsp.util.locations_to_items()| sets the `user_data` of each item to
     the original LSP `Location` or `LocationLink`.
   • Added support for connecting to servers using named pipes (Windows) or
-    unix domain sockets (Unix) via |vim.lsp.rpc.domain_socket_connect()|.
+    unix domain sockets (Unix) via |vim.lsp.rpc.connect()|.
   • Added support for `completionList.itemDefaults`, reducing overhead when
     computing completion items where properties often share the same value
     (e.g. `commitCharacters`). Note that this might affect plugins and
