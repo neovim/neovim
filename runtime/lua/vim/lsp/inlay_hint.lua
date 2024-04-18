@@ -349,7 +349,7 @@ api.nvim_set_decoration_provider(namespace, {
   end,
 })
 
---- @param bufnr (integer|nil) Buffer handle, or 0 or nil for current
+--- @param bufnr (integer|nil) Buffer handle, or 0 for current
 --- @return boolean
 --- @since 12
 function M.is_enabled(bufnr)
@@ -360,23 +360,39 @@ function M.is_enabled(bufnr)
   return bufstates[bufnr] and bufstates[bufnr].enabled or false
 end
 
+--- Optional filters |kwargs|, or `nil` for all.
+--- @class vim.lsp.inlay_hint.enable.Filter
+--- @inlinedoc
+--- Buffer number, or 0/nil for current buffer.
+--- @field bufnr integer?
+
 --- Enables or disables inlay hints for a buffer.
 ---
 --- To "toggle", pass the inverse of `is_enabled()`:
 ---
 --- ```lua
---- vim.lsp.inlay_hint.enable(0, not vim.lsp.inlay_hint.is_enabled())
+--- vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
 --- ```
 ---
---- @param bufnr (integer|nil) Buffer handle, or 0 or nil for current
 --- @param enable (boolean|nil) true/nil to enable, false to disable
+--- @param filter vim.lsp.inlay_hint.enable.Filter?
 --- @since 12
-function M.enable(bufnr, enable)
-  vim.validate({ enable = { enable, 'boolean', true }, bufnr = { bufnr, 'number', true } })
+function M.enable(enable, filter)
+  if type(enable) == 'number' or type(filter) == 'boolean' then
+    vim.deprecate(
+      'vim.lsp.inlay_hint.enable(bufnr:number, enable:boolean)',
+      'vim.diagnostic.enable(enable:boolean, filter:table)',
+      '0.10-dev'
+    )
+    error('see :help vim.lsp.inlay_hint.enable() for updated parameters')
+  end
+
+  vim.validate({ enable = { enable, 'boolean', true }, filter = { filter, 'table', true } })
+  filter = filter or {}
   if enable == false then
-    _disable(bufnr)
+    _disable(filter.bufnr)
   else
-    _enable(bufnr)
+    _enable(filter.bufnr)
   end
 end
 

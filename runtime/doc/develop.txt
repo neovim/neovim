@@ -372,7 +372,8 @@ Use existing common {verb} names (actions) if possible:
     - create:       Creates a new (non-trivial) thing (TODO: rename to "def"?)
     - del:          Deletes a thing (or group of things)
     - detach:       Dispose attached listener (TODO: rename to "un"?)
-    - enable:       Enables/disables functionality.
+    - enable:       Enables/disables functionality. Signature should be
+                    `enable(enable?:boolean, filter?:table)`.
     - eval:         Evaluates an expression
     - exec:         Executes code
     - fmt:          Formats

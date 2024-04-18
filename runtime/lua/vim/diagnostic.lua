@@ -239,8 +239,16 @@ local M = {}
 --- whole line the sign is placed in.
 --- @field linehl? table<vim.diagnostic.Severity,string>
 
---- @class vim.diagnostic.Filter : vim.diagnostic.Opts
---- @field ns_id? integer Namespace
+-- TODO: inherit from `vim.diagnostic.Opts`, implement its fields.
+--- Optional filters |kwargs|, or `nil` for all.
+--- @class vim.diagnostic.Filter
+--- @inlinedoc
+---
+--- Diagnostic namespace, or `nil` for all.
+--- @field ns_id? integer
+---
+--- Buffer number, or 0 for current buffer, or `nil` for all buffers.
+--- @field bufnr? integer
 
 --- @nodoc
 --- @enum vim.diagnostic.Severity
@@ -1522,18 +1530,21 @@ end
 
 --- Check whether diagnostics are enabled.
 ---
---- @param bufnr integer? Buffer number, or 0 for current buffer.
---- @param namespace integer? Diagnostic namespace, or `nil` for all diagnostics in {bufnr}.
+--- @param filter vim.diagnostic.Filter?
 --- @return boolean
 --- @since 12
-function M.is_enabled(bufnr, namespace)
-  bufnr = get_bufnr(bufnr)
-  if namespace and M.get_namespace(namespace).disabled then
+function M.is_enabled(filter)
+  filter = filter or {}
+  if filter.ns_id and M.get_namespace(filter.ns_id).disabled then
     return false
+  elseif filter.bufnr == nil then
+    -- See enable() logic.
+    return vim.tbl_isempty(diagnostic_disabled) and not diagnostic_disabled[1]
   end
 
+  local bufnr = get_bufnr(filter.bufnr)
   if type(diagnostic_disabled[bufnr]) == 'table' then
-    return not diagnostic_disabled[bufnr][namespace]
+    return not diagnostic_disabled[bufnr][filter.ns_id]
   end
 
   return diagnostic_disabled[bufnr] == nil
@@ -1542,7 +1553,7 @@ end
 --- @deprecated use `vim.diagnostic.is_enabled()`
 function M.is_disabled(bufnr, namespace)
   vim.deprecate('vim.diagnostic.is_disabled()', 'vim.diagnostic.is_enabled()', '0.12', nil, false)
-  return not M.is_enabled(bufnr, namespace)
+  return not M.is_enabled { bufnr = bufnr or 0, ns_id = namespace }
 end
 
 --- Display diagnostics for the given namespace and buffer.
@@ -1588,7 +1599,7 @@ function M.show(namespace, bufnr, diagnostics, opts)
     return
   end
 
-  if not M.is_enabled(bufnr, namespace) then
+  if not M.is_enabled { bufnr = bufnr or 0, ns_id = namespace } then
     return
   end
 
@@ -1934,12 +1945,12 @@ end
 function M.disable(bufnr, namespace)
   vim.deprecate(
     'vim.diagnostic.disable()',
-    'vim.diagnostic.enabled(…, false)',
+    'vim.diagnostic.enabled(false, …)',
     '0.12',
     nil,
     false
   )
-  M.enable(bufnr, false, { ns_id = namespace })
+  M.enable(false, { bufnr = bufnr, ns_id = namespace })
 end
 
 --- Enables or disables diagnostics.
@@ -1947,53 +1958,49 @@ end
 --- To "toggle", pass the inverse of `is_enabled()`:
 ---
 --- ```lua
---- vim.diagnostic.enable(0, not vim.diagnostic.is_enabled())
+--- vim.diagnostic.enable(not vim.diagnostic.is_enabled())
 --- ```
 ---
---- @param bufnr integer? Buffer number, or 0 for current buffer, or `nil` for all buffers.
 --- @param enable (boolean|nil) true/nil to enable, false to disable
---- @param opts vim.diagnostic.Filter? Filter by these opts, or `nil` for all. Only `ns_id` is
---- supported, currently.
-function M.enable(bufnr, enable, opts)
-  opts = opts or {}
-  if type(enable) == 'number' then
-    -- Legacy signature.
+--- @param filter vim.diagnostic.Filter?
+function M.enable(enable, filter)
+  -- Deprecated signature. Drop this in 0.12
+  local legacy = (enable or filter)
+    and vim.tbl_contains({ 'number', 'nil' }, type(enable))
+    and vim.tbl_contains({ 'number', 'nil' }, type(filter))
+
+  if legacy then
     vim.deprecate(
-      'vim.diagnostic.enable(buf:number, namespace)',
-      'vim.diagnostic.enable(buf:number, enable:boolean, opts)',
+      'vim.diagnostic.enable(buf:number, namespace:number)',
+      'vim.diagnostic.enable(enable:boolean, filter:table)',
       '0.12',
       nil,
       false
     )
-    opts.ns_id = enable
+
+    vim.validate({
+      enable = { enable, 'n', true }, -- Legacy `bufnr` arg.
+      filter = { filter, 'n', true }, -- Legacy `namespace` arg.
+    })
+
+    local ns_id = type(filter) == 'number' and filter or nil
+    filter = {}
+    filter.ns_id = ns_id
+    filter.bufnr = type(enable) == 'number' and enable or nil
     enable = true
+  else
+    filter = filter or {}
+    vim.validate({
+      enable = { enable, 'b', true },
+      filter = { filter, 't', true },
+    })
   end
-  vim.validate({
-    bufnr = { bufnr, 'n', true },
-    enable = {
-      enable,
-      function(o)
-        return o == nil or type(o) == 'boolean' or type(o) == 'number'
-      end,
-      'boolean or number (deprecated)',
-    },
-    opts = {
-      opts,
-      function(o)
-        return o == nil
-          or (
-            type(o) == 'table'
-            -- TODO(justinmk): support other `vim.diagnostic.Filter` fields.
-            and (vim.tbl_isempty(o) or vim.deep_equal(vim.tbl_keys(o), { 'ns_id' }))
-          )
-      end,
-      'vim.diagnostic.Filter table (only ns_id is supported currently)',
-    },
-  })
+
   enable = enable == nil and true or enable
+  local bufnr = filter.bufnr
 
   if bufnr == nil then
-    if opts.ns_id == nil then
+    if filter.ns_id == nil then
       diagnostic_disabled = (
         enable
           -- Enable everything by setting diagnostic_disabled to an empty table.
@@ -2007,12 +2014,12 @@ function M.enable(bufnr, enable, opts)
         })
       )
     else
-      local ns = M.get_namespace(opts.ns_id)
+      local ns = M.get_namespace(filter.ns_id)
       ns.disabled = not enable
     end
   else
     bufnr = get_bufnr(bufnr)
-    if opts.ns_id == nil then
+    if filter.ns_id == nil then
       diagnostic_disabled[bufnr] = (not enable) and true or nil
     else
       if type(diagnostic_disabled[bufnr]) ~= 'table' then
@@ -2022,14 +2029,14 @@ function M.enable(bufnr, enable, opts)
           diagnostic_disabled[bufnr] = {}
         end
       end
-      diagnostic_disabled[bufnr][opts.ns_id] = (not enable) and true or nil
+      diagnostic_disabled[bufnr][filter.ns_id] = (not enable) and true or nil
     end
   end
 
   if enable then
-    M.show(opts.ns_id, bufnr)
+    M.show(filter.ns_id, bufnr)
   else
-    M.hide(opts.ns_id, bufnr)
+    M.hide(filter.ns_id, bufnr)
   end
 end
 
