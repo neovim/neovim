@@ -64,6 +64,15 @@
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 
+typedef struct {
+  int prev_c;
+  uint8_t buf[MB_MAXBYTES * 3 + 4];
+  size_t buflen;
+  unsigned pending;
+  bool in_special;
+  bool in_mbyte;
+} gotchars_state_T;
+
 /// Index in scriptin
 static int curscript = -1;
 /// Streams to read script from
@@ -83,15 +92,6 @@ static FileDescriptor scriptin[NSCRIPT] = { 0 };
 // Un-escaping is done by vgetc().
 
 #define MINIMAL_SIZE 20                 // minimal size for b_str
-
-typedef struct {
-  int prev_c;
-  uint8_t buf[MB_MAXBYTES * 3 + 4];
-  size_t buflen;
-  unsigned pending;
-  bool in_special;
-  bool in_mbyte;
-} gotchars_state_T;
 
 static buffheader_T redobuff = { { NULL, { NUL } }, NULL, 0, 0 };
 static buffheader_T old_redobuff = { { NULL, { NUL } }, NULL, 0, 0 };
