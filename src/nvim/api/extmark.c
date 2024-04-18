@@ -552,9 +552,13 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   colnr_T col2 = -1;
   if (HAS_KEY(opts, set_extmark, end_col)) {
     Integer val = opts->end_col;
-    if (val < 0 || val > MAXCOL) {
+    VALIDATE_RANGE((val >= -1 && val <= MAXCOL), "end_col", {
+      goto error;
+    });
+    if (val == -1) {
       val = MAXCOL;
     }
+
     col2 = (int)val;
   }
 
