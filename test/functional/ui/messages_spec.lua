@@ -685,7 +685,18 @@ describe('ui/ext_messages', function()
     ]],
       ruler = { { '2,1     All' } },
     }
-    feed('d')
+    feed('<c-v>k2l')
+    screen:expect({
+      grid = [[
+        {17:ab}^cde                    |
+        {17:123}45                    |
+        {1:~                        }|*3
+      ]],
+      showmode = { { '-- VISUAL BLOCK --', 5 } },
+      showcmd = { { '2x3' } },
+      ruler = { { '1,3     All' } },
+    })
+    feed('o<esc>d')
     screen:expect {
       grid = [[
       abcde                    |
