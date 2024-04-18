@@ -31,39 +31,19 @@ env:
 jobs:
 
   with-external-deps:
-    runs-on: ubuntu-22.04
+    runs-on: macos-14
     timeout-minutes: 10
-    env:
-      CC: gcc
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
 
-      - name: Install dependencies
-        run: |
-          sudo add-apt-repository ppa:neovim-ppa/stable
-          sudo apt-get install -y \
-            libluajit-5.1-dev \
-            libmsgpack-dev \
-            libtermkey-dev \
-            libunibilium-dev \
-            libuv1-dev \
-            lua-filesystem \
-            lua-lpeg \
-            luajit \
-            lua-luv-dev
-            # libtree-sitter-dev \
-            # libvterm-dev
+      - run: |
+          brew install gettext libtermkey libuv libvterm luajit luv msgpack tree-sitter unibilium
 
-            # Remove comments from packages once we start using these external
-            # dependencies.
-
-      - name: Build third-party deps
-        run: |
-          cmake -S cmake.deps --preset external_deps
+      - run: |
+          cmake -S cmake.deps --preset ci -D USE_BUNDLED=OFF
           cmake --build .deps
 
-      - name: Build
-        run: |
+      - run: |
           cmake --preset ci
           cmake --build build
