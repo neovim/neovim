@@ -30,9 +30,12 @@ endfunc
 " Test findfile({name} [, {path} [, {count}]])
 func Test_findfile()
   let save_path = &path
-  let save_shellslash = &shellslash
   let save_dir = getcwd()
-  set shellslash
+  " Nvim doesn't allow setting the value of a hidden option
+  if exists('+shellslash')
+    let save_shellslash = &shellslash
+    set shellslash
+  endif
   call CreateFiles()
   cd Xfinddir1
   e Xdir2/foo
@@ -150,7 +153,9 @@ func Test_findfile()
   call chdir(save_dir)
   call CleanFiles()
   let &path = save_path
-  let &shellslash = save_shellslash
+  if exists('save_shellslash')
+    let &shellslash = save_shellslash
+  endif
 endfunc
 
 func Test_findfile_error()
@@ -164,10 +169,13 @@ endfunc
 " Test finddir({name} [, {path} [, {count}]])
 func Test_finddir()
   let save_path = &path
-  let save_shellslash = &shellslash
   let save_dir = getcwd()
   set path=,,
-  set shellslash
+  " Nvim doesn't allow setting the value of a hidden option
+  if exists('+shellslash')
+    let save_shellslash = &shellslash
+    set shellslash
+  endif
   call CreateFiles()
   cd Xfinddir1
 
@@ -208,7 +216,9 @@ func Test_finddir()
   call chdir(save_dir)
   call CleanFiles()
   let &path = save_path
-  let &shellslash = save_shellslash
+  if exists('save_shellslash')
+    let &shellslash = save_shellslash
+  endif
 endfunc
 
 func Test_finddir_error()

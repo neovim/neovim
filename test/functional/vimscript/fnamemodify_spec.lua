@@ -31,7 +31,7 @@ describe('fnamemodify()', function()
     if is_os('win') then
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))
-      command('set shellslash')
+      command('if exists("+shellslash") | set shellslash | endif')
       root = string.sub(root, 1, -2) .. '/'
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))

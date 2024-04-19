@@ -3,10 +3,13 @@
 func Test_fnamemodify()
   let save_home = $HOME
   let save_shell = &shell
-  let save_shellslash = &shellslash
   let $HOME = fnamemodify('.', ':p:h:h')
   set shell=sh
-  set shellslash
+  " Nvim doesn't allow setting the value of a hidden option
+  if exists('+shellslash')
+    let save_shellslash = &shellslash
+    set shellslash
+  endif
 
   call assert_equal('/', fnamemodify('.', ':p')[-1:])
   call assert_equal('r', fnamemodify('.', ':p:h')[-1:])
@@ -66,7 +69,9 @@ func Test_fnamemodify()
 
   let $HOME = save_home
   let &shell = save_shell
-  let &shellslash = save_shellslash
+  if exists('save_shellslash')
+    let &shellslash = save_shellslash
+  endif
 endfunc
 
 func Test_fnamemodify_er()

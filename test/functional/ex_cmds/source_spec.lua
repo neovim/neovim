@@ -181,7 +181,7 @@ describe(':source', function()
     ]]
     )
 
-    command('set shellslash')
+    command('if exists("+shellslash") | set shellslash | endif')
     command('source ' .. test_file)
     eq(1, eval('g:sourced_lua'))
     matches([[/test%.lua$]], api.nvim_get_var('sfile_value'))

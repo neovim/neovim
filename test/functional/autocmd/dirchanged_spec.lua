@@ -88,7 +88,7 @@ describe('autocmd DirChanged and DirChangedPre', function()
   end)
 
   it('disallow recursion', function()
-    command('set shellslash')
+    command('if exists("+shellslash") | set shellslash | endif')
     -- Set up a _nested_ handler.
     command('autocmd DirChanged * nested lcd ' .. dirs[3])
     command('lcd ' .. dirs[1])
