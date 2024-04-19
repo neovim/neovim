@@ -6971,8 +6971,8 @@ return {
       },
       desc = [=[
         Name of the shell to use for ! and :! commands.  When changing the
-        value also check these options: 'shellpipe', 'shellslash'
-        'shellredir', 'shellquote', 'shellxquote' and 'shellcmdflag'.
+        value also check these options: 'shellpipe', 'shellredir',
+        'shellquote', 'shellxquote' and 'shellcmdflag'.
         It is allowed to give an argument to the command, e.g.  "csh -f".
         See |option-backslash| about including spaces and backslashes.
         Environment variables are expanded |:set_env|.

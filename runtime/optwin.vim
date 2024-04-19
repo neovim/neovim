@@ -1070,16 +1070,6 @@ if has("quickfix")
   call <SID>OptionG("menc", &menc)
 endif
 
-
-if has("win32")
-  call <SID>Header(gettext("system specific"))
-  call <SID>AddOption("shellslash", gettext("use forward slashes in file names; for Unix-like shells"))
-  call <SID>BinOptionG("ssl", &ssl)
-  call <SID>AddOption("completeslash", gettext("specifies slash/backslash used for completion"))
-  call <SID>OptionG("csl", &csl)
-endif
-
-
 call <SID>Header(gettext("language specific"))
 call <SID>AddOption("isfname", gettext("specifies the characters in a file name"))
 call <SID>OptionG("isf", &isf)

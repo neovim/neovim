@@ -9895,10 +9895,8 @@ M.funcs = {
     desc = [=[
       Escape {string} for use as a shell command argument.
 
-      On Windows when 'shellslash' is not set, encloses {string} in
-      double-quotes and doubles all double-quotes within {string}.
-      Otherwise encloses {string} in single-quotes and replaces all
-      "'" with "'\''".
+      On Windows, encloses {string} in single-quotes and replaces
+      all "'" with "'\''".
 
       If {special} is a |non-zero-arg|:
       - Special items such as "!", "%", "#" and "<cword>" will be
