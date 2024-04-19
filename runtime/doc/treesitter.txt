@@ -51,6 +51,13 @@ treesitter parser for buffers with filetype `svg` or `xslt`, use: >lua
 
     vim.treesitter.language.register('xml', { 'svg', 'xslt' })
 <
+                                                    *treesitter-parsers-wasm*
+
+If Nvim is built with `ENABLE_WASMTIME`, then wasm parsers can also be
+loaded: >lua
+
+    vim.treesitter.language.add('python', { path = "/path/to/python.wasm" })
+<
 
 ==============================================================================
 TREESITTER TREES                                             *treesitter-tree*

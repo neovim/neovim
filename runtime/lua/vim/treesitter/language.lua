@@ -109,7 +109,14 @@ function M.add(lang, opts)
     path = paths[1]
   end
 
-  vim._ts_add_language(path, lang, symbol_name)
+  if vim.endswith(path, '.wasm') then
+    if not vim._ts_add_language_from_wasm then
+      error(string.format("Unable to load wasm parser '%s': not built with ENABLE_WASMTIME ", path))
+    end
+    vim._ts_add_language_from_wasm(path, lang)
+  else
+    vim._ts_add_language_from_object(path, lang, symbol_name)
+  end
   M.register(lang, filetype)
 end
 

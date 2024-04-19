@@ -5,7 +5,7 @@ add_compile_options(-w)
 
 add_library(tree-sitter lib/src/lib.c)
 target_include_directories(tree-sitter
-  PRIVATE lib/src lib/include)
+  PRIVATE lib/src lib/src/wasm lib/include)
 
 install(FILES
   lib/include/tree_sitter/api.h
