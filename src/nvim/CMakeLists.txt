@@ -50,6 +50,12 @@ if(ENABLE_LIBINTL)
   target_link_libraries(main_lib INTERFACE libintl)
 endif()
 
+if(ENABLE_WASMTIME)
+  find_package(Wasmtime 20.0.2 EXACT REQUIRED)
+  target_link_libraries(main_lib INTERFACE wasmtime)
+  target_compile_definitions(nvim_bin PRIVATE HAVE_WASMTIME)
+endif()
+
 target_compile_definitions(main_lib INTERFACE HAVE_UNIBILIUM)
 
 # The unit test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
