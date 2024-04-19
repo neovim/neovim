@@ -167,8 +167,11 @@ local function dump_option(i, o)
 
   -- An option cannot be both hidden and immutable.
   assert(not o.hidden or not o.immutable)
+  -- Hidden options cannot have a varname.
+  assert(not o.hidden or not o.varname)
+  -- `enable_if` cannot be used with `hidden`.
+  assert(not o.enable_if or not o.hidden)
 
-  local has_var = true
   if o.varname then
     w('    .var=&' .. o.varname)
   elseif o.hidden or o.immutable then
@@ -177,11 +180,11 @@ local function dump_option(i, o)
   elseif #o.scope == 1 and o.scope[1] == 'window' then
     w('    .var=VAR_WIN')
   else
-    has_var = false
+    -- Option must be either hidden or have a variable.
+    assert(false)
   end
-  -- `enable_if = false` should be present iff there is no variable.
-  assert((o.enable_if == false) == not has_var)
-  w('    .hidden=' .. (o.hidden and 'true' or 'false'))
+  -- Option is never hidden on the true branch of `enable_if`.
+  w('    .hidden=' .. ((o.enable_if or not o.hidden) and 'false' or 'true'))
   w('    .immutable=' .. (o.immutable and 'true' or 'false'))
   if #o.scope == 1 and o.scope[1] == 'global' then
     w('    .indir=PV_NONE')
@@ -211,7 +214,10 @@ local function dump_option(i, o)
   end
   if o.enable_if then
     w('#else')
-    w('    .var=NULL')
+    -- Hidden option directly points to default value.
+    w(('    .var=&options[%u].def_val'):format(i - 1))
+    -- Option is always hidden on the false branch of `enable_if`.
+    w('    .hidden=true')
     w('    .indir=PV_NONE')
     w('#endif')
   end
