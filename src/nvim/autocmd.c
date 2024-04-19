@@ -801,15 +801,7 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
     // Expand environment variables in the pattern.  Set 'shellslash', we want
     // forward slashes here.
     if (vim_strchr(pat, '$') != NULL || vim_strchr(pat, '~') != NULL) {
-#ifdef BACKSLASH_IN_FILENAME
-      int p_ssl_save = p_ssl;
-
-      p_ssl = true;
-#endif
       envpat = expand_env_save(pat);
-#ifdef BACKSLASH_IN_FILENAME
-      p_ssl = p_ssl_save;
-#endif
       if (envpat != NULL) {
         pat = envpat;
       }

@@ -123,10 +123,6 @@ static char *(p_fdm_values[]) = { "manual", "expr", "marker", "indent",
 static char *(p_fcl_values[]) = { "all", NULL };
 static char *(p_cot_values[]) = { "menu", "menuone", "longest", "preview", "noinsert", "noselect",
                                   "popup", NULL };
-#ifdef BACKSLASH_IN_FILENAME
-static char *(p_csl_values[]) = { "slash", "backslash", NULL };
-#endif
-
 static char *(p_scl_values[]) = { "yes", "no", "auto", "auto:1", "auto:2", "auto:3", "auto:4",
                                   "auto:5", "auto:6", "auto:7", "auto:8", "auto:9", "yes:1",
                                   "yes:2", "yes:3", "yes:4", "yes:5", "yes:6", "yes:7", "yes:8",

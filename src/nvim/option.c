@@ -4753,10 +4753,6 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(buf->b_p_cms);
   case PV_CPT:
     return &(buf->b_p_cpt);
-#ifdef BACKSLASH_IN_FILENAME
-  case PV_CSL:
-    return &(buf->b_p_csl);
-#endif
   case PV_CFU:
     return &(buf->b_p_cfu);
   case PV_OFU:
@@ -5179,10 +5175,6 @@ void buf_copy_options(buf_T *buf, int flags)
       }
       buf->b_p_cpt = xstrdup(p_cpt);
       COPY_OPT_SCTX(buf, BV_CPT);
-#ifdef BACKSLASH_IN_FILENAME
-      buf->b_p_csl = xstrdup(p_csl);
-      COPY_OPT_SCTX(buf, BV_CSL);
-#endif
       buf->b_p_cfu = xstrdup(p_cfu);
       COPY_OPT_SCTX(buf, BV_CFU);
       set_buflocal_cfu_callback(buf);

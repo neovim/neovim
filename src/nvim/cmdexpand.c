@@ -2503,21 +2503,6 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
   if (free_pat) {
     xfree(pat);
   }
-#ifdef BACKSLASH_IN_FILENAME
-  if (p_csl[0] != NUL && (options & WILD_IGNORE_COMPLETESLASH) == 0) {
-    for (int j = 0; j < *numMatches; j++) {
-      char *ptr = (*matches)[j];
-      while (*ptr != NUL) {
-        if (p_csl[0] == 's' && *ptr == '\\') {
-          *ptr = '/';
-        } else if (p_csl[0] == 'b' && *ptr == '/') {
-          *ptr = '\\';
-        }
-        ptr += utfc_ptr2len(ptr);
-      }
-    }
-  }
-#endif
   return ret;
 }
 
