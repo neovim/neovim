@@ -642,11 +642,12 @@ Hidden options						*hidden-options*
 
 Not all options are supported in all versions.  This depends on the supported
 features and sometimes on the system.  A remark about this is in curly braces
-below.  When an option is not supported it may still be set without getting an
-error, this is called a hidden option.  You can't get the value of a hidden
-option though, it is not stored.
+below.  When an option is not supported, it is called a hidden option.  Trying
+to get the value of a hidden option will not give an error, it will return the
+default value for that option instead. You can't change the value of a hidden
+option.
 
-To test if option "foo" can be used with ":set" use something like this: >
+To test if "foo" is a valid option name, use something like this: >
 	if exists('&foo')
 This also returns true for a hidden option.  To test if option "foo" is really
 supported use something like this: >
@@ -1573,7 +1574,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'completeslash'* *'csl'*
 'completeslash' 'csl'	string	(default "")
 			local to buffer
-			only for MS-Windows
+			only modifiable in MS-Windows
 	When this option is set it overrules 'shellslash' for completion:
 	- When this option is set to "slash", a forward slash is used for path
 	  completion in insert mode. This is useful when editing HTML tag, or
@@ -5277,9 +5278,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 			*'shellslash'* *'ssl'* *'noshellslash'* *'nossl'*
-'shellslash' 'ssl'	boolean	(default off)
+'shellslash' 'ssl'	boolean	(default on, Windows: off)
 			global
-			only for MS-Windows
+			only modifiable in MS-Windows
 	When set, a forward slash is used when expanding file names.  This is
 	useful when a Unix-like shell is used instead of cmd.exe.  Backward
 	slashes can still be typed, but they are changed to forward slashes by

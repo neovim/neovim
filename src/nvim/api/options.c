@@ -80,7 +80,7 @@ static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *
   *opt_idxp = find_option(name);
   int flags = get_option_attrs(*opt_idxp);
   if (flags == 0) {
-    // hidden or unknown option
+    // unknown option
     api_set_error(err, kErrorTypeValidation, "Unknown option '%s'", name);
   } else if (*req_scope == kOptReqBuf || *req_scope == kOptReqWin) {
     // if 'buf' or 'win' is passed, make sure the option supports it
@@ -175,7 +175,6 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   }
 
   OptVal value = get_option_value_for(opt_idx, scope, req_scope, from, err);
-  bool hidden = is_option_hidden(opt_idx);
 
   if (ftbuf != NULL) {
     // restore curwin/curbuf and a few other things
@@ -189,7 +188,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     goto err;
   }
 
-  VALIDATE_S(!hidden && value.type != kOptValTypeNil, "option", name.data, {
+  VALIDATE_S(value.type != kOptValTypeNil, "option", name.data, {
     goto err;
   });
 

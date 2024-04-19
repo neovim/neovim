@@ -2003,7 +2003,10 @@ func Test_Cmdline()
   au! CmdlineLeave
 
   let save_shellslash = &shellslash
-  set noshellslash
+  " Nvim doesn't allow setting value of a hidden option to non-default value
+  if exists('+shellslash')
+    set noshellslash
+  endif
   au! CmdlineEnter / let g:entered = expand('<afile>')
   au! CmdlineLeave / let g:left = expand('<afile>')
   let g:entered = 0

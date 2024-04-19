@@ -2319,6 +2319,7 @@ endfunc
 " Test for 'imcmdline' and 'imsearch'
 " This test doesn't actually test the input method functionality.
 func Test_cmdline_inputmethod()
+  throw 'Skipped: Nvim does not allow setting the value of a hidden option'
   new
   call setline(1, ['', 'abc', ''])
   set imcmdline

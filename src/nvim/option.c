@@ -565,13 +565,16 @@ static char *find_dup_item(char *origval, const char *newval, const size_t newva
 void free_all_options(void)
 {
   for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
-    if (options[opt_idx].indir == PV_NONE) {
+    bool hidden = is_option_hidden(opt_idx);
+
+    if (options[opt_idx].indir == PV_NONE || hidden) {
       // global option: free value and default value.
-      if (options[opt_idx].var != NULL) {
+      // hidden option: free default value only.
+      if (!hidden) {
         optval_free(optval_from_varp(opt_idx, options[opt_idx].var));
       }
     } else if (options[opt_idx].var != VAR_WIN) {
-      // buffer-local option: free global value
+      // buffer-local option: free global value.
       optval_free(optval_from_varp(opt_idx, options[opt_idx].var));
     }
     optval_free(options[opt_idx].def_val);
@@ -1244,16 +1247,6 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
   uint32_t flags = 0;  // flags for current option
   void *varp = NULL;  // pointer to variable for current option
 
-  if (options[opt_idx].var == NULL) {  // hidden option: skip
-    // Only give an error message when requesting the value of
-    // a hidden option, ignore setting it.
-    if (vim_strchr("=:!&<", nextchar) == NULL
-        && (!option_has_type(opt_idx, kOptValTypeBoolean) || nextchar == '?')) {
-      *errmsg = e_unsupportedoption;
-    }
-    return;
-  }
-
   flags = options[opt_idx].flags;
   varp = get_varp_scope(&(options[opt_idx]), opt_flags);
 
@@ -1323,11 +1316,6 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
       *errmsg = e_invarg;
       return;
     }
-  }
-
-  // Don't try to change hidden option.
-  if (varp == NULL) {
-    return;
   }
 
   OptVal newval = get_option_newval(opt_idx, opt_flags, prefix, argp, nextchar, op, flags, varp,
@@ -1587,7 +1575,7 @@ char *find_shada_parameter(int type)
 static char *option_expand(OptIndex opt_idx, char *val)
 {
   // if option doesn't need expansion nothing to do
-  if (!(options[opt_idx].flags & kOptFlagExpand) || options[opt_idx].var == NULL) {
+  if (!(options[opt_idx].flags & kOptFlagExpand) || is_option_hidden(opt_idx)) {
     return NULL;
   }
 
@@ -2863,6 +2851,8 @@ static const char *validate_num_option(OptIndex opt_idx, void *varp, OptInt *new
     } else if (value > p_wiw) {
       return e_winwidth;
     }
+  } else if (varp == &p_mco) {
+    *newval = MAX_MCO;
   } else if (varp == &p_titlelen) {
     if (value < 0) {
       return e_positive;
@@ -3161,6 +3151,7 @@ static OptValType option_get_type(const OptIndex opt_idx)
 ///
 /// @return Option value stored in varp.
 OptVal optval_from_varp(OptIndex opt_idx, void *varp)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   // Special case: 'modified' is b_changed, but we also want to consider it set when 'ff' or 'fenc'
   // changed.
@@ -3170,7 +3161,7 @@ OptVal optval_from_varp(OptIndex opt_idx, void *varp)
 
   if (option_is_multitype(opt_idx)) {
     // Multitype options are stored as OptVal.
-    return varp == NULL ? NIL_OPTVAL : *(OptVal *)varp;
+    return *(OptVal *)varp;
   }
 
   OptValType type = option_get_type(opt_idx);
@@ -3179,11 +3170,11 @@ OptVal optval_from_varp(OptIndex opt_idx, void *varp)
   case kOptValTypeNil:
     return NIL_OPTVAL;
   case kOptValTypeBoolean:
-    return BOOLEAN_OPTVAL(varp == NULL ? false : TRISTATE_FROM_INT(*(int *)varp));
+    return BOOLEAN_OPTVAL(TRISTATE_FROM_INT(*(int *)varp));
   case kOptValTypeNumber:
-    return NUMBER_OPTVAL(varp == NULL ? 0 : *(OptInt *)varp);
+    return NUMBER_OPTVAL(*(OptInt *)varp);
   case kOptValTypeString:
-    return STRING_OPTVAL(varp == NULL ? (String)STRING_INIT : cstr_as_string(*(char **)varp));
+    return STRING_OPTVAL(cstr_as_string(*(char **)varp));
   }
   UNREACHABLE;
 }
@@ -3319,7 +3310,10 @@ static char *option_get_valid_types(OptIndex opt_idx)
 /// @return  True if option is hidden, false otherwise. Returns false if option name is invalid.
 bool is_option_hidden(OptIndex opt_idx)
 {
-  return opt_idx == kOptInvalid ? false : get_varp(&options[opt_idx]) == NULL;
+  // Hidden options are always immutable and point to their default value
+  return opt_idx == kOptInvalid
+         ? false
+         : (options[opt_idx].immutable && options[opt_idx].var == &options[opt_idx].def_val.data);
 }
 
 static inline bool option_is_global_local(OptIndex opt_idx)
@@ -3459,8 +3453,8 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
     .os_win = curwin
   };
 
-  if (direct || opt->hidden) {
-    // Don't do any extra processing if setting directly or if option is hidden.
+  if (direct) {
+    // Don't do any extra processing if setting directly.
   }
   // Disallow changing immutable options.
   else if (opt->immutable && !optval_equal(old_value, new_value)) {
@@ -3489,7 +3483,7 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
 
   // If option is hidden or if an error is detected, restore the previous value and don't do any
   // further processing.
-  if (opt->hidden || errmsg != NULL) {
+  if (errmsg != NULL) {
     set_option_varp(opt_idx, varp, old_value, true);
     // When resetting some values, need to act on it.
     if (restore_chartab) {
@@ -3749,7 +3743,7 @@ void set_option_direct(OptIndex opt_idx, OptVal value, int opt_flags, scid_T set
 
   vimoption_T *opt = get_option(opt_idx);
 
-  if (opt->var == NULL) {
+  if (is_option_hidden(opt_idx)) {
     return;
   }
 
@@ -3960,11 +3954,6 @@ int get_option_attrs(OptIndex opt_idx)
 
   vimoption_T *opt = get_option(opt_idx);
 
-  // Hidden option
-  if (opt->var == NULL) {
-    return 0;
-  }
-
   int attrs = 0;
 
   if (opt->indir == PV_NONE || (opt->indir & PV_BOTH)) {
@@ -3976,6 +3965,7 @@ int get_option_attrs(OptIndex opt_idx)
     attrs |= SOPT_BUF;
   }
 
+  assert(attrs != 0);
   return attrs;
 }
 
@@ -4143,8 +4133,8 @@ static int optval_default(OptIndex opt_idx, void *varp)
 {
   vimoption_T *opt = &options[opt_idx];
 
-  // Hidden or immutable options always use their default value.
-  if (varp == NULL || opt->hidden || opt->immutable) {
+  // Hidden options always use their default value.
+  if (is_option_hidden(opt_idx)) {
     return true;
   }
 
@@ -4554,9 +4544,9 @@ void *get_option_varp_scope_from(OptIndex opt_idx, int scope, buf_T *buf, win_T 
 
 void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
 {
-  // hidden option, always return NULL
-  if (p->var == NULL) {
-    return NULL;
+  // hidden options always use the same var pointer
+  if (is_option_hidden(get_opt_idx(p))) {
+    return p->var;
   }
 
   switch ((int)p->indir) {
@@ -5456,7 +5446,7 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
       }
       nextchar = *p;
       opt_idx = find_option_len(arg, (size_t)(p - arg));
-      if (opt_idx == kOptInvalid || options[opt_idx].var == NULL) {
+      if (opt_idx == kOptInvalid || is_option_hidden(opt_idx)) {
         xp->xp_context = EXPAND_NOTHING;
         return;
       }
@@ -5680,7 +5670,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, char *fuzzystr, int *numM
     char *str;
     for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
       str = options[opt_idx].fullname;
-      if (options[opt_idx].var == NULL) {
+      if (is_option_hidden(opt_idx)) {
         continue;
       }
       if (xp->xp_context == EXPAND_BOOL_SETTINGS
@@ -5928,6 +5918,7 @@ int ExpandSettingSubtract(expand_T *xp, regmatch_T *regmatch, int *numMatches, c
 static void option_value2string(vimoption_T *opt, int scope)
 {
   void *varp = get_varp_scope(opt, scope);
+  assert(varp != NULL);
 
   if (option_has_type(get_opt_idx(opt), kOptValTypeNumber)) {
     OptInt wc = 0;
@@ -5944,9 +5935,8 @@ static void option_value2string(vimoption_T *opt, int scope)
     }
   } else {  // string
     varp = *(char **)(varp);
-    if (varp == NULL) {  // Just in case.
-      NameBuff[0] = NUL;
-    } else if (opt->flags & kOptFlagExpand) {
+
+    if (opt->flags & kOptFlagExpand) {
       home_replace(NULL, varp, NameBuff, MAXPATHL, false);
     } else {
       xstrlcpy(NameBuff, varp, MAXPATHL);
