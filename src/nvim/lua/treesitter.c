@@ -15,6 +15,10 @@
 #include <tree_sitter/api.h>
 #include <uv.h>
 
+#ifdef HAVE_WASMTIME
+# include <wasm.h>
+#endif
+
 #include "klib/kvec.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/buffer_defs.h"
@@ -24,6 +28,7 @@
 #include "nvim/map_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/os/fs.h"
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -53,6 +58,11 @@ typedef struct {
 
 static PMap(cstr_t) langs = MAP_INIT;
 
+#ifdef HAVE_WASMTIME
+static wasm_engine_t *wasmengine;
+static TSWasmStore *ts_wasmstore;
+#endif
+
 // TSLanguage
 
 int tslua_has_language(lua_State *L)
@@ -62,8 +72,59 @@ int tslua_has_language(lua_State *L)
   return 1;
 }
 
-static TSLanguage *load_language(lua_State *L, const char *path, const char *lang_name,
-                                 const char *symbol)
+#ifdef HAVE_WASMTIME
+static char *read_file(const char *path, size_t *len)
+  FUNC_ATTR_MALLOC
+{
+  FILE *file = os_fopen(path, "r");
+  if (file == NULL) {
+    return NULL;
+  }
+  fseek(file, 0L, SEEK_END);
+  *len = (size_t)ftell(file);
+  fseek(file, 0L, SEEK_SET);
+  char *data = xmalloc(*len);
+  if (fread(data, *len, 1, file) != 1) {
+    xfree(data);
+    fclose(file);
+    return NULL;
+  }
+  fclose(file);
+  return data;
+}
+
+static const char *wasmerr_to_str(TSWasmErrorKind werr)
+{
+  switch (werr) {
+  case TSWasmErrorKindParse:
+    return "PARSE";
+  case TSWasmErrorKindCompile:
+    return "COMPILE";
+  case TSWasmErrorKindInstantiate:
+    return "INSTANTIATE";
+  case TSWasmErrorKindAllocate:
+    return "ALLOCATE";
+  default:
+    return "UNKNOWN";
+  }
+}
+#endif
+
+int tslua_add_language_from_wasm(lua_State *L)
+{
+  return add_language(L, true);
+}
+
+// Creates the language into the internal language map.
+//
+// Returns true if the language is correctly loaded in the language map
+int tslua_add_language_from_object(lua_State *L)
+{
+  return add_language(L, false);
+}
+
+static const TSLanguage *load_language_from_object(lua_State *L, const char *path,
+                                                   const char *lang_name, const char *symbol)
 {
   uv_lib_t lib;
   if (uv_dlopen(path, &lib)) {
@@ -91,16 +152,59 @@ static TSLanguage *load_language(lua_State *L, const char *path, const char *lan
   return lang;
 }
 
-// Creates the language into the internal language map.
-//
-// Returns true if the language is correctly loaded in the language map
-int tslua_add_language(lua_State *L)
+static const TSLanguage *load_language_from_wasm(lua_State *L, const char *path,
+                                                 const char *lang_name)
+{
+#ifndef HAVE_WASMTIME
+  luaL_error(L, "Not supported");
+  return NULL;
+#else
+  if (wasmengine == NULL) {
+    wasmengine = wasm_engine_new();
+  }
+  assert(wasmengine != NULL);
+
+  TSWasmError werr = { 0 };
+  if (ts_wasmstore == NULL) {
+    ts_wasmstore = ts_wasm_store_new(wasmengine, &werr);
+  }
+
+  if (werr.kind > 0) {
+    luaL_error(L, "Error creating wasm store: (%s) %s", wasmerr_to_str(werr.kind), werr.message);
+  }
+
+  size_t file_size = 0;
+  char *data = read_file(path, &file_size);
+
+  if (data == NULL) {
+    luaL_error(L, "Unable to read file", path);
+  }
+
+  const TSLanguage *lang = ts_wasm_store_load_language(ts_wasmstore, lang_name, data,
+                                                       (uint32_t)file_size, &werr);
+
+  xfree(data);
+
+  if (werr.kind > 0) {
+    luaL_error(L, "Failed to load WASM parser %s: (%s) %s", path, wasmerr_to_str(werr.kind),
+               werr.message);
+  }
+
+  if (lang == NULL) {
+    luaL_error(L, "Failed to load parser %s: internal error", path);
+  }
+
+  return lang;
+#endif
+}
+
+static int add_language(lua_State *L, bool is_wasm)
 {
   const char *path = luaL_checkstring(L, 1);
   const char *lang_name = luaL_checkstring(L, 2);
   const char *symbol_name = lang_name;
 
-  if (lua_gettop(L) >= 3 && !lua_isnil(L, 3)) {
+  if (!is_wasm && lua_gettop(L) >= 3 && !lua_isnil(L, 3)) {
     symbol_name = luaL_checkstring(L, 3);
   }
 
@@ -109,7 +213,9 @@ int tslua_add_language(lua_State *L)
     return 1;
   }
 
-  TSLanguage *lang = load_language(L, path, lang_name, symbol_name);
+  const TSLanguage *lang = is_wasm
+                           ? load_language_from_wasm(L, path, lang_name)
+                           : load_language_from_object(L, path, lang_name, symbol_name);
 
   uint32_t lang_version = ts_language_version(lang);
   if (lang_version < TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION
@@ -121,7 +227,7 @@ int tslua_add_language(lua_State *L)
                       TREE_SITTER_LANGUAGE_VERSION, lang_version);
   }
 
-  pmap_put(cstr_t)(&langs, xstrdup(lang_name), lang);
+  pmap_put(cstr_t)(&langs, xstrdup(lang_name), (TSLanguage *)lang);
 
   lua_pushboolean(L, true);
   return 1;
@@ -186,6 +292,9 @@ int tslua_inspect_lang(lua_State *L)
 
   lua_setfield(L, -2, "fields");  // [retval]
 
+  lua_pushboolean(L, ts_language_is_wasm(lang));
+  lua_setfield(L, -2, "_wasm");
+
   lua_pushinteger(L, ts_language_version(lang));  // [retval, version]
   lua_setfield(L, -2, "_abi_version");
 
@@ -214,6 +323,13 @@ int tslua_push_parser(lua_State *L)
 
   TSParser **parser = lua_newuserdata(L, sizeof(TSParser *));
   *parser = ts_parser_new();
+
+#ifdef HAVE_WASMTIME
+  if (ts_language_is_wasm(lang)) {
+    assert(wasmengine != NULL);
+    ts_parser_set_wasm_store(*parser, ts_wasmstore);
+  }
+#endif
 
   if (!ts_parser_set_language(*parser, lang)) {
     ts_parser_delete(*parser);
@@ -1560,4 +1676,16 @@ void tslua_init(lua_State *L)
   build_meta(L, TS_META_TREECURSOR, treecursor_meta);
 
   ts_set_allocator(xmalloc, xcalloc, xrealloc, xfree);
+}
+
+void tslua_free(void)
+{
+#ifdef HAVE_WASMTIME
+  if (wasmengine != NULL) {
+    wasm_engine_delete(wasmengine);
+  }
+  if (ts_wasmstore != NULL) {
+    ts_wasm_store_delete(ts_wasmstore);
+  }
+#endif
 }
