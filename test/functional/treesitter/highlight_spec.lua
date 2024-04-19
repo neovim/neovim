@@ -9,6 +9,7 @@ local feed = n.feed
 local command = n.command
 local api = n.api
 local fn = n.fn
+local exec = n.exec
 local eq = t.eq
 
 local hl_query_c = [[
@@ -1144,4 +1145,79 @@ it('starting and stopping treesitter highlight in init.lua works #29541', functi
   feed('i<C-R><C-O>r<Esc>gg')
   -- legacy syntax highlighting is used
   screen:expect(hl_grid_legacy_c)
+end)
+
+describe('vim.treesitter._get_highlight()', function()
+  --- @type test.functional.ui.screen
+  local screen
+  before_each(function()
+    clear({ args = { '--clean' } })
+    screen = Screen.new(80, 80)
+    screen:attach({ term_name = 'xterm' })
+    exec('colorscheme default')
+  end)
+
+  local function run_assert()
+    exec_lua('vim.treesitter.start()')
+    exec('norm! ggO#;')
+    screen:expect({ any = vim.pesc('#^;') })
+    exec('norm! :\rh')
+    screen:expect({ any = vim.pesc('^#;') })
+    local expected = screen:get_snapshot()
+
+    local ns = api.nvim_create_namespace 'test-namespace'
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    for _, result in
+      ipairs(exec_lua [[
+      local parser = vim.treesitter.get_parser()
+      parser:parse(true)
+      return vim.treesitter._get_highlight(parser)
+    ]]) --[[@as fun():number,table]]
+    do
+      api.nvim_buf_set_extmark(0, ns, result.range[1], result.range[2], {
+        end_row = result.range[4],
+        end_col = result.range[5],
+        hl_group = result.hl_group,
+        priority = result.priority,
+      })
+    end
+
+    exec_lua('vim.treesitter.stop()')
+    exec('syntax off')
+    exec('norm! gg0f;')
+    screen:expect({ any = vim.pesc('#^;') })
+    exec('norm! :\rh')
+    screen:expect({ grid = expected.grid, attr_ids = expected.attr_ids })
+  end
+
+  it('works', function()
+    insert [[
+    function main()
+      print("hello world")
+    end
+    ]]
+
+    exec('setf lua')
+    run_assert()
+
+    eq(
+      { hl_group = '@keyword.function.lua', priority = 100, range = { 1, 0, 3, 1, 8, 11 } },
+      exec_lua [[
+    local parser = vim.treesitter.get_parser()
+    parser:parse(true)
+    return vim.treesitter._get_highlight(parser)
+    ]][2]
+    )
+  end)
+
+  it('works with injected languages', function()
+    insert [[
+    lua << EOF
+    print("hello world")
+    EOF
+    ]]
+
+    exec('setf vim')
+    run_assert()
+  end)
 end)

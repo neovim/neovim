@@ -460,25 +460,28 @@ local function styletable_treesitter(state)
       return
     end
     local root = tstree:root()
-    local q = buf_highlighter:get_query(tree:lang())
     --- @type vim.treesitter.Query?
-    local query = q:query()
+    local query = buf_highlighter:get_query(tree:lang()):query()
     if not query then
       return
     end
-    for capture, node, metadata in
-      query:iter_captures(root, buf_highlighter.bufnr, state.start - 1, state.end_)
+    for info in
+      buf_highlighter._iter_highlight_info(
+        query,
+        root,
+        buf_highlighter.bufnr,
+        state.start - 1,
+        state.end_
+      )
     do
-      local srow, scol, erow, ecol = node:range()
+      --- @type integer,integer,integer,integer,integer,integer
+      local srow, scol, _, erow, ecol, _ = unpack(info.range)
       --- @diagnostic disable-next-line: invisible
-      local c = q._query.captures[capture]
-      if c ~= nil then
-        local hlid = register_hl(state, '@' .. c .. '.' .. tree:lang())
-        if metadata.conceal and state.opt.conceallevel ~= 0 then
-          styletable_insert_conceal(state, srow + 1, scol + 1, erow + 1, ecol + 1, metadata.conceal)
-        end
-        styletable_insert_range(state, srow + 1, scol + 1, erow + 1, ecol + 1, hlid)
+      local hlid = register_hl(state, info.hl_group)
+      if info.conceal and state.opt.conceallevel ~= 0 then
+        styletable_insert_conceal(state, srow + 1, scol + 1, erow + 1, ecol + 1, info.conceal)
       end
+      styletable_insert_range(state, srow + 1, scol + 1, erow + 1, ecol + 1, hlid)
     end
   end)
 end
