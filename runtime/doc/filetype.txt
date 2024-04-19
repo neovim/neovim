@@ -590,6 +590,37 @@ The mapping can be disabled with: >
 	let g:no_gprof_maps = 1
 
 
+JAVA							*ft-java-plugin*
+
+Whenever the variable "g:ftplugin_java_source_path" is defined and its value
+is a filename whose extension is either ".jar" or ".zip", e.g.: >
+	let g:ftplugin_java_source_path = '/path/to/src.jar'
+	let g:ftplugin_java_source_path = '/path/to/src.zip'
+<
+and the |zip| plugin has already been sourced, the |gf| command can be used to
+open the archive and the |n| command can be used to look for the selected type
+and the <Return> key can be used to load a listed file.
+
+Note that the effect of using the "gf" command WITHIN a buffer loaded with the
+Zip plugin depends on the version of the Zip plugin.  For the Zip plugin
+versions that do not support Jar type archives, consider creating symbolic
+links with the ".zip" extension for each Jar archive of interest and assigning
+any such file to the variable from now on.
+
+Otherwise, for the defined variable "g:ftplugin_java_source_path", the local
+value of the 'path' option will be further modified by prefixing the value of
+the variable, e.g.: >
+	let g:ftplugin_java_source_path = $JDK_SRC_PATH
+	let &l:path = g:ftplugin_java_source_path . ',' . &l:path
+<
+and the "gf" command can be used on a fully-qualified type to look for a file
+in the "path" and to try to load it.
+
+Remember to manually trigger the |FileType| event from a buffer with a Java
+file loaded in it each time after assigning a new value to the variable: >
+	doautocmd FileType
+<
+
 MAIL							*ft-mail-plugin*
 
 Options:
