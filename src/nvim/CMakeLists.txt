@@ -31,7 +31,7 @@ target_link_libraries(main_lib INTERFACE ${LUV_LIBRARY})
 find_package(Iconv REQUIRED)
 find_package(Libuv 1.28.0 REQUIRED)
 find_package(Lpeg REQUIRED)
-find_package(Treesitter 0.22.6 REQUIRED)
+find_package(Treesitter 0.23.0 REQUIRED)
 find_package(Unibilium 2.0 REQUIRED)
 find_package(UTF8proc REQUIRED)
 
@@ -46,6 +46,12 @@ target_link_libraries(nlua0 PUBLIC lpeg)
 if(ENABLE_LIBINTL)
   find_package(Libintl REQUIRED) # Libintl (not Intl) selects our FindLibintl.cmake script. #8464
   target_link_libraries(main_lib INTERFACE libintl)
+endif()
+
+if(ENABLE_WASMTIME)
+  find_package(Wasmtime 24.0.0 EXACT REQUIRED)
+  target_link_libraries(main_lib INTERFACE wasmtime)
+  target_compile_definitions(nvim_bin PRIVATE HAVE_WASMTIME)
 endif()
 
 target_compile_definitions(main_lib INTERFACE HAVE_UNIBILIUM)

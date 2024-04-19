@@ -53,6 +53,9 @@ TREESITTER_MARKDOWN_SHA256 4909d6023643f1afc3ab219585d4035b7403f3a17849782ab803c
 TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/v0.23.0.tar.gz
 TREESITTER_SHA256 6403b361b0014999e96f61b9c84d6950d42f0c7d6e806be79382e0232e48a11b
 
+WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v24.0.0.tar.gz
+WASMTIME_SHA256 2ccb49bb3bfa4d86907ad4c80d1147aef6156c7b6e3f7f14ed02a39de9761155
+
 UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.79.0.tar.gz
 UNCRUSTIFY_SHA256 e7afaeabf636b7f0ce4e3e9747b95f7bd939613a8db49579755dddf44fedca5f
 LUA_DEV_DEPS_URL https://github.com/neovim/deps/raw/5a1f71cceb24990a0b15fd9a472a5f549f019248/opt/lua-dev-deps.tar.gz

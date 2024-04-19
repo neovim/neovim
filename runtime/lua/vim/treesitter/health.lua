@@ -28,6 +28,9 @@ function M.check()
       )
     end
   end
+
+  local can_wasm = vim._ts_add_language_from_wasm ~= nil
+  health.info(string.format('Can load WASM parsers: %s', tostring(can_wasm)))
 end
 
 return M

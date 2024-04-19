@@ -57,8 +57,12 @@ describe('treesitter language API', function()
     local keys, fields, symbols = unpack(exec_lua(function()
       local lang = vim.treesitter.language.inspect('c')
       local keys, symbols = {}, {}
-      for k, _ in pairs(lang) do
-        keys[k] = true
+      for k, v in pairs(lang) do
+        if type(v) == 'boolean' then
+          keys[k] = v
+        else
+          keys[k] = true
+        end
       end
 
       -- symbols array can have "holes" and is thus not a valid msgpack array
@@ -69,7 +73,7 @@ describe('treesitter language API', function()
       return { keys, lang.fields, symbols }
     end))
 
-    eq({ fields = true, symbols = true, _abi_version = true }, keys)
+    eq({ fields = true, symbols = true, _abi_version = true, _wasm = false }, keys)
 
     local fset = {}
     for _, f in pairs(fields) do

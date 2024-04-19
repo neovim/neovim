@@ -21,6 +21,21 @@ env:
   INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
 
 jobs:
+  wasmtime:
+    strategy:
+      fail-fast: false
+      matrix:
+        test: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.test }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: |
+          cmake -S cmake.deps --preset ci -D ENABLE_WASMTIME=ON
+          cmake --build .deps
+          cmake --preset ci -D ENABLE_WASMTIME=ON
+          cmake --build build
+
   old-cmake:
     name: Test oldest supported cmake
     runs-on: ubuntu-latest
