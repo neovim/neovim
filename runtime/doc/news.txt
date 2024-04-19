@@ -153,6 +153,8 @@ unreleased features on Nvim HEAD.
 
 • Changed the signature of `vim.diagnostic.enable()`.
 
+• Removed vim.iter.map(), vim.iter.filter(), vim.iter.totable().
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 
