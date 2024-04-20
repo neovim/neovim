@@ -404,6 +404,28 @@ t3]])
     }, get_fold_levels())
   end)
 
+  it('handles quantified patterns', function()
+    insert([[
+import hello
+import hello
+import hello
+import hello
+import hello
+import hello]])
+
+    exec_lua([[vim.treesitter.query.set('python', 'folds', '(import_statement)+ @fold')]])
+    parse('python')
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '1',
+      [4] = '1',
+      [5] = '1',
+      [6] = '1',
+    }, get_fold_levels())
+  end)
+
   it('updates folds in all windows', function()
     local screen = Screen.new(60, 48)
     screen:attach()

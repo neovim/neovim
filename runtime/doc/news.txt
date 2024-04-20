@@ -267,6 +267,8 @@ The following new APIs and features were added.
   • The `#set!` directive can set the "url" property of a node to have the
     node emit a hyperlink. Hyperlinks are UI specific: in the TUI, the OSC 8
     control sequence is used.
+  • |vim.treesitter.foldexpr()| now recognizes folds captured using a
+    quantified query pattern.
 
 • |:Man| now supports `:hide` modifier to open page in the current window.
 
