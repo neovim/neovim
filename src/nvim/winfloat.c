@@ -221,7 +221,7 @@ void win_config_float(win_T *wp, WinConfig fconfig)
       row += row_off;
       col += col_off;
       if (wp->w_config.bufpos.lnum >= 0) {
-        pos_T pos = { wp->w_config.bufpos.lnum + 1,
+        pos_T pos = { MIN(wp->w_config.bufpos.lnum + 1, parent->w_buffer->b_ml.ml_line_count),
                       wp->w_config.bufpos.col, 0 };
         int trow, tcol, tcolc, tcole;
         textpos2screenpos(parent, &pos, &trow, &tcol, &tcolc, &tcole, true);
