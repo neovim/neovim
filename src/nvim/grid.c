@@ -436,9 +436,8 @@ int grid_line_puts(int col, const char *text, int textlen, int attr)
                     ? utfc_ptr2schar_len(ptr, (int)((text + len) - ptr), &firstc)
                     : utfc_ptr2schar(ptr, &firstc);
     int mbyte_cells = utf_char2cells(firstc);
-    if (mbyte_cells > 2) {
+    if (mbyte_cells > 2 || schar == 0) {
       mbyte_cells = 1;
-
       schar = schar_from_char(0xFFFD);
     }
 
