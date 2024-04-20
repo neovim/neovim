@@ -222,9 +222,7 @@ void *xmemdupz(const void *data, size_t len)
   return memcpy(xmallocz(len), data, len);
 }
 
-/// Duplicates `len` bytes of `src` to `dst` and zero terminates it.
-/// and returns a pointer to the allocated memory. If the allocation fails,
-/// the program dies.
+/// Copies `len` bytes of `src` to `dst` and zero terminates it.
 ///
 /// @see {xstrlcpy}
 /// @param[out]  dst  Buffer to store the result.
