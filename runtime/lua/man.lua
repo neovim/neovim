@@ -419,7 +419,7 @@ local function set_options(pager)
   vim.bo.modified = false
   vim.bo.readonly = true
   vim.bo.modifiable = false
-  vim.b.pager = pager
+  vim.g.pager = pager
   vim.bo.filetype = 'man'
 end
 
