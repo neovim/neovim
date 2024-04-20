@@ -387,6 +387,19 @@ function module.is_os(s)
   )
 end
 
+function module.is_asan()
+  cimport('./src/nvim/version.h')
+  local status, res = pcall(function()
+    return lib.version_cflags
+  end)
+  if status then
+    return ffi.string(res):match('-fsanitize=[a-z,]*address')
+  else
+    return false
+  end
+end
+
+
 local function tmpdir_get()
   return os.getenv('TMPDIR') and os.getenv('TMPDIR') or os.getenv('TEMP')
 end

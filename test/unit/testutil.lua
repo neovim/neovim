@@ -864,18 +864,6 @@ local function ptr2key(ptr)
   return ffi.string(s)
 end
 
-local function is_asan()
-  cimport('./src/nvim/version.h')
-  local status, res = pcall(function()
-    return lib.version_cflags
-  end)
-  if status then
-    return ffi.string(res):match('-fsanitize=[a-z,]*address')
-  else
-    return false
-  end
-end
-
 --- @class test.unit.testutil.module
 local module = {
   cimport = cimport,
