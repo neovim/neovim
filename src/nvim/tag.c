@@ -1002,7 +1002,7 @@ static int add_llist_tags(char *tag, int num_matches, char **matches)
     if (len > 128) {
       len = 128;
     }
-    xstrlcpy(tag_name, tagp.tagname, (size_t)len + 1);
+    xmemcpyz(tag_name, tagp.tagname, (size_t)len);
     tag_name[len] = NUL;
 
     // Save the tag file name
@@ -1468,7 +1468,7 @@ static bool findtags_in_help_init(findtags_state_T *st)
     // language name in help_lang[].
     i = (int)strlen(st->tag_fname);
     if (i > 3 && st->tag_fname[i - 3] == '-') {
-      xstrlcpy(st->help_lang, st->tag_fname + i - 2, 3);
+      xmemcpyz(st->help_lang, st->tag_fname + i - 2, 2);
     } else {
       STRCPY(st->help_lang, "en");
     }
@@ -2015,7 +2015,7 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
       if (tagpp->command + 2 < temp_end) {
         len = (size_t)(temp_end - tagpp->command - 2);
         mfp = xmalloc(len + 2);
-        xstrlcpy(mfp, tagpp->command + 2, len + 1);
+        xmemcpyz(mfp, tagpp->command + 2, len);
       } else {
         mfp = NULL;
       }
@@ -2023,7 +2023,7 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
     } else {
       len = (size_t)(tagpp->tagname_end - tagpp->tagname);
       mfp = xmalloc(sizeof(char) + len + 1);
-      xstrlcpy(mfp, tagpp->tagname, len + 1);
+      xmemcpyz(mfp, tagpp->tagname, len);
 
       // if wanted, re-read line to get long form too
       if (State & MODE_INSERT) {
@@ -3268,7 +3268,7 @@ static int add_tag_field(dict_T *dict, const char *field_name, const char *start
     if (len > MAXPATHL - 1) {
       len = MAXPATHL - 1;
     }
-    xstrlcpy(buf, start, (size_t)len + 1);
+    xmemcpyz(buf, start, (size_t)len);
   }
   buf[len] = NUL;
   int retval = tv_dict_add_str(dict, field_name, strlen(field_name), buf);

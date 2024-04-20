@@ -202,7 +202,7 @@ void *xmallocz(size_t size)
   }
 
   void *ret = xmalloc(total_size);
-  ((char *)ret)[size] = 0;
+  ((char *)ret)[size] = '\0';
 
   return ret;
 }
@@ -220,6 +220,21 @@ void *xmemdupz(const void *data, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   return memcpy(xmallocz(len), data, len);
+}
+
+/// Duplicates `len` bytes of `src` to `dst` and zero terminates it.
+/// and returns a pointer to the allocated memory. If the allocation fails,
+/// the program dies.
+///
+/// @see {xstrlcpy}
+/// @param[out]  dst  Buffer to store the result.
+/// @param[in]  src  Buffer to be copied.
+/// @param[in]  len  Number of bytes to be copied.
+void *xmemcpyz(void *dst, const void *src, size_t len)
+{
+  memcpy(dst, src, len);
+  ((char *)dst)[len] = '\0';
+  return dst;
 }
 
 #ifndef HAVE_STRNLEN

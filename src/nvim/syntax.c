@@ -2733,7 +2733,7 @@ static int check_keyword_id(char *const line, const int startcol, int *const end
   // Must make a copy of the keyword, so we can add a NUL and make it
   // lowercase.
   char keyword[MAXKEYWLEN + 1];         // assume max. keyword len is 80
-  xstrlcpy(keyword, kwp, (size_t)kwlen + 1);
+  xmemcpyz(keyword, kwp, (size_t)kwlen);
 
   keyentry_T *kp = NULL;
 
@@ -4949,7 +4949,7 @@ static int get_id_list(char **const arg, const int keylen, int16_t **const list,
     do {
       for (end = p; *end && !ascii_iswhite(*end) && *end != ','; end++) {}
       char *const name = xmalloc((size_t)(end - p) + 3);   // leave room for "^$"
-      xstrlcpy(name + 1, p, (size_t)(end - p) + 1);
+      xmemcpyz(name + 1, p, (size_t)(end - p));
       if (strcmp(name + 1, "ALLBUT") == 0
           || strcmp(name + 1, "ALL") == 0
           || strcmp(name + 1, "TOP") == 0

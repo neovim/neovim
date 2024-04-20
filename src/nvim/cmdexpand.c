@@ -1294,7 +1294,7 @@ char *addstar(char *fname, size_t len, int context)
     }
   } else {
     retval = xmalloc(len + 4);
-    xstrlcpy(retval, fname, len + 1);
+    xmemcpyz(retval, fname, len);
 
     // Don't add a star to *, ~, ~user, $var or `cmd`.
     // * would become **, which walks the whole tree.
@@ -2938,7 +2938,7 @@ void ExpandGeneric(const char *const pat, expand_T *xp, regmatch_T *regmatch, ch
 static void expand_shellcmd_onedir(char *buf, char *s, size_t l, char *pat, char ***matches,
                                    int *numMatches, int flags, hashtab_T *ht, garray_T *gap)
 {
-  xstrlcpy(buf, s, l + 1);
+  xmemcpyz(buf, s, l);
   add_pathsep(buf);
   l = strlen(buf);
   xstrlcpy(buf + l, pat, MAXPATHL - l);

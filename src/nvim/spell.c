@@ -811,7 +811,7 @@ static void find_word(matchinf_T *mip, int mode)
             if (ptr == mip->mi_word) {
               spell_casefold(mip->mi_win, ptr, wlen, fword, MAXWLEN);
             } else {
-              xstrlcpy(fword, ptr, (size_t)endlen[endidxcnt] + 1);
+              xmemcpyz(fword, ptr, (size_t)endlen[endidxcnt]);
             }
           }
           if (!can_compound(slang, fword, mip->mi_compflags)) {
@@ -1810,7 +1810,7 @@ void count_common_word(slang_T *lp, char *word, int len, uint8_t count)
   } else if (len >= MAXWLEN) {
     return;
   } else {
-    xstrlcpy(buf, word, (size_t)len + 1);
+    xmemcpyz(buf, word, (size_t)len);
     p = buf;
   }
 
@@ -1868,7 +1868,7 @@ int init_syl_tab(slang_T *slang)
     }
 
     syl_item_T *syl = GA_APPEND_VIA_PTR(syl_item_T, &slang->sl_syl_items);
-    xstrlcpy(syl->sy_chars, s, (size_t)l + 1);
+    xmemcpyz(syl->sy_chars, s, (size_t)l);
     syl->sy_len = l;
   }
   return OK;
@@ -2253,7 +2253,7 @@ static void use_midword(slang_T *lp, win_T *wp)
       char *bp = xstrnsave(wp->w_s->b_spell_ismw_mb, (size_t)n + (size_t)l);
       xfree(wp->w_s->b_spell_ismw_mb);
       wp->w_s->b_spell_ismw_mb = bp;
-      xstrlcpy(bp + n, p, (size_t)l + 1);
+      xmemcpyz(bp + n, p, (size_t)l);
     }
     p += l;
   }

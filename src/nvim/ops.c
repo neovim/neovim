@@ -2476,7 +2476,7 @@ int op_change(oparg_T *oap)
       // Subsequent calls to ml_get() flush the firstline data - take a
       // copy of the inserted text.
       char *ins_text = xmalloc((size_t)ins_len + 1);
-      xstrlcpy(ins_text, firstline + bd.textcol, (size_t)ins_len + 1);
+      xmemcpyz(ins_text, firstline + bd.textcol, (size_t)ins_len);
       for (linenr_T linenr = oap->start.lnum + 1; linenr <= oap->end.lnum;
            linenr++) {
         block_prep(oap, &bd, linenr, true);

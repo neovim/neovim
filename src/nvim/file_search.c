@@ -291,7 +291,7 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
 
     if (!vim_isAbsName(rel_fname) && len + 1 < MAXPATHL) {
       // Make the start dir an absolute path name.
-      xstrlcpy(ff_expand_buffer, rel_fname, len + 1);
+      xmemcpyz(ff_expand_buffer, rel_fname, len);
       search_ctx->ffsc_start_dir = FullName_save(ff_expand_buffer, false);
     } else {
       search_ctx->ffsc_start_dir = xmemdupz(rel_fname, len);
