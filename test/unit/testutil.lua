@@ -877,7 +877,7 @@ local function is_asan()
 end
 
 --- @class test.unit.testutil.module
-local module = {
+local M = {
   cimport = cimport,
   cppimport = cppimport,
   internalize = internalize,
@@ -907,6 +907,6 @@ local module = {
   is_asan = is_asan,
 }
 --- @class test.unit.testutil: test.unit.testutil.module, test.testutil
-module = vim.tbl_extend('error', module, t_global)
+M = vim.tbl_extend('error', M, t_global)
 
-return module
+return M
