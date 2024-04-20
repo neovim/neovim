@@ -17,7 +17,7 @@ local function shell_quote(str)
 end
 
 --- @class test.testutil
-local module = {
+local M = {
   paths = Paths,
 }
 
@@ -30,7 +30,7 @@ end
 
 --- @param path string
 --- @return boolean
-function module.isdir(path)
+function M.isdir(path)
   if not path then
     return false
   end
@@ -43,7 +43,7 @@ end
 
 --- @param ... string|string[]
 --- @return string
-function module.argss_to_cmd(...)
+function M.argss_to_cmd(...)
   local cmd = {} --- @type string[]
   for i = 1, select('#', ...) do
     local arg = select(i, ...)
@@ -59,8 +59,8 @@ function module.argss_to_cmd(...)
   return table.concat(cmd, ' ')
 end
 
-function module.popen_r(...)
-  return io.popen(module.argss_to_cmd(...), 'r')
+function M.popen_r(...)
+  return io.popen(M.argss_to_cmd(...), 'r')
 end
 
 --- Calls fn() until it succeeds, up to `max` times or until `max_ms`
@@ -69,7 +69,7 @@ end
 --- @param max_ms integer?
 --- @param fn function
 --- @return any
-function module.retry(max, max_ms, fn)
+function M.retry(max, max_ms, fn)
   luaassert(max == nil or max > 0)
   luaassert(max_ms == nil or max_ms > 0)
   local tries = 1
@@ -96,10 +96,10 @@ local check_logs_useless_lines = {
   ['See README_MISSING_SYSCALL_OR_IOCTL for guidance'] = 3,
 }
 
-function module.eq(expected, actual, context)
+function M.eq(expected, actual, context)
   return luaassert.are.same(expected, actual, context)
 end
-function module.neq(expected, actual, context)
+function M.neq(expected, actual, context)
   return luaassert.are_not.same(expected, actual, context)
 end
 
@@ -108,7 +108,7 @@ end
 --- @param cond (boolean) expression to assert
 --- @param expected (any) description of expected result
 --- @param actual (any) description of actual result
-function module.ok(cond, expected, actual)
+function M.ok(cond, expected, actual)
   luaassert(
     (not expected and not actual) or (expected and actual),
     'if "expected" is given, "actual" is also required'
@@ -122,14 +122,14 @@ local function epicfail(state, arguments, _)
   return false
 end
 luaassert:register('assertion', 'epicfail', epicfail)
-function module.fail(msg)
+function M.fail(msg)
   return luaassert.epicfail(msg)
 end
 
 --- @param pat string
 --- @param actual string
 --- @return boolean
-function module.matches(pat, actual)
+function M.matches(pat, actual)
   if nil ~= string.match(actual, pat) then
     return true
   end
@@ -144,14 +144,14 @@ end
 ---@param logfile? (string) Full path to log file (default=$NVIM_LOG_FILE)
 ---@param nrlines? (number) Search up to this many log lines
 ---@param inverse? (boolean) Assert that the pattern does NOT match.
-function module.assert_log(pat, logfile, nrlines, inverse)
+function M.assert_log(pat, logfile, nrlines, inverse)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
   luaassert(logfile ~= nil, 'no logfile')
   nrlines = nrlines or 10
   inverse = inverse or false
 
-  module.retry(nil, 1000, function()
-    local lines = module.read_file_list(logfile, -nrlines) or {}
+  M.retry(nil, 1000, function()
+    local lines = M.read_file_list(logfile, -nrlines) or {}
     local msg = string.format(
       'Pattern %q %sfound in log (last %d lines): %s:\n%s',
       pat,
@@ -181,14 +181,14 @@ end
 --- @param pat (string) Lua pattern to match lines in the log file
 --- @param logfile? (string) Full path to log file (default=$NVIM_LOG_FILE)
 --- @param nrlines? (number) Search up to this many log lines
-function module.assert_nolog(pat, logfile, nrlines)
-  return module.assert_log(pat, logfile, nrlines, true)
+function M.assert_nolog(pat, logfile, nrlines)
+  return M.assert_log(pat, logfile, nrlines, true)
 end
 
 --- @param fn fun(...): any
 --- @param ... any
 --- @return boolean, any
-function module.pcall(fn, ...)
+function M.pcall(fn, ...)
   luaassert(type(fn) == 'function')
   local status, rv = pcall(fn, ...)
   if status then
@@ -237,9 +237,9 @@ end
 --
 --- @param fn function
 --- @return string
-function module.pcall_err_withfile(fn, ...)
+function M.pcall_err_withfile(fn, ...)
   luaassert(type(fn) == 'function')
-  local status, rv = module.pcall(fn, ...)
+  local status, rv = M.pcall(fn, ...)
   if status == true then
     error('expected failure, but got success')
   end
@@ -249,8 +249,8 @@ end
 --- @param fn function
 --- @param ... any
 --- @return string
-function module.pcall_err_withtrace(fn, ...)
-  local errmsg = module.pcall_err_withfile(fn, ...)
+function M.pcall_err_withtrace(fn, ...)
+  local errmsg = M.pcall_err_withfile(fn, ...)
 
   return (
     errmsg
@@ -263,20 +263,20 @@ end
 --- @param fn function
 --- @param ... any
 --- @return string
-function module.pcall_err(fn, ...)
-  return module.remove_trace(module.pcall_err_withtrace(fn, ...))
+function M.pcall_err(fn, ...)
+  return M.remove_trace(M.pcall_err_withtrace(fn, ...))
 end
 
 --- @param s string
 --- @return string
-function module.remove_trace(s)
+function M.remove_trace(s)
   return (s:gsub('\n%s*stack traceback:.*', ''))
 end
 
 -- initial_path:  directory to recurse into
 -- re:            include pattern (string)
 -- exc_re:        exclude pattern(s) (string or table)
-function module.glob(initial_path, re, exc_re)
+function M.glob(initial_path, re, exc_re)
   exc_re = type(exc_re) == 'table' and exc_re or { exc_re }
   local paths_to_check = { initial_path } --- @type string[]
   local ret = {} --- @type string[]
@@ -318,10 +318,10 @@ function module.glob(initial_path, re, exc_re)
   return ret
 end
 
-function module.check_logs()
+function M.check_logs()
   local log_dir = os.getenv('LOG_DIR')
   local runtime_errors = {}
-  if log_dir and module.isdir(log_dir) then
+  if log_dir and M.isdir(log_dir) then
     for tail in vim.fs.dir(log_dir) do
       if tail:sub(1, 30) == 'valgrind-' or tail:find('san%.') then
         local file = log_dir .. '/' .. tail
@@ -343,7 +343,7 @@ function module.check_logs()
           local status, f
           local out = io.stdout
           if os.getenv('SYMBOLIZER') then
-            status, f = pcall(module.popen_r, os.getenv('SYMBOLIZER'), '-l', file)
+            status, f = pcall(M.popen_r, os.getenv('SYMBOLIZER'), '-l', file)
           end
           out:write(start_msg .. '\n')
           if status then
@@ -368,22 +368,22 @@ function module.check_logs()
   )
 end
 
-function module.sysname()
+function M.sysname()
   return uv.os_uname().sysname:lower()
 end
 
 --- @param s 'win'|'mac'|'freebsd'|'openbsd'|'bsd'
 --- @return boolean
-function module.is_os(s)
+function M.is_os(s)
   if not (s == 'win' or s == 'mac' or s == 'freebsd' or s == 'openbsd' or s == 'bsd') then
     error('unknown platform: ' .. tostring(s))
   end
   return not not (
-    (s == 'win' and (module.sysname():find('windows') or module.sysname():find('mingw')))
-    or (s == 'mac' and module.sysname() == 'darwin')
-    or (s == 'freebsd' and module.sysname() == 'freebsd')
-    or (s == 'openbsd' and module.sysname() == 'openbsd')
-    or (s == 'bsd' and module.sysname():find('bsd'))
+    (s == 'win' and (M.sysname():find('windows') or M.sysname():find('mingw')))
+    or (s == 'mac' and M.sysname() == 'darwin')
+    or (s == 'freebsd' and M.sysname() == 'freebsd')
+    or (s == 'openbsd' and M.sysname() == 'openbsd')
+    or (s == 'bsd' and M.sysname():find('bsd'))
   )
 end
 
@@ -402,7 +402,7 @@ local tmpname_id = 0
 local tmpdir = tmpdir_get()
 
 --- Creates a new temporary file for use by tests.
-function module.tmpname()
+function M.tmpname()
   if tmpdir_is_local(tmpdir) then
     -- Cannot control os.tmpname() dir, so hack our own tmpname() impl.
     tmpname_id = tmpname_id + 1
@@ -413,11 +413,11 @@ function module.tmpname()
   end
 
   local fname = os.tmpname()
-  if module.is_os('win') and fname:sub(1, 2) == '\\s' then
+  if M.is_os('win') and fname:sub(1, 2) == '\\s' then
     -- In Windows tmpname() returns a filename starting with
     -- special sequence \s, prepend $TEMP path
     return tmpdir .. fname
-  elseif module.is_os('mac') and fname:match('^/tmp') then
+  elseif M.is_os('mac') and fname:match('^/tmp') then
     -- In OS X /tmp links to /private/tmp
     return '/private' .. fname
   end
@@ -432,7 +432,7 @@ end
 
 local tests_skipped = 0
 
-function module.check_cores(app, force) -- luacheck: ignore
+function M.check_cores(app, force) -- luacheck: ignore
   -- Temporary workaround: skip core check as it interferes with CI.
   if true then
     return
@@ -459,14 +459,14 @@ function module.check_cores(app, force) -- luacheck: ignore
     exc_re = { os.getenv('NVIM_TEST_CORE_EXC_RE'), local_tmpdir }
     db_cmd = os.getenv('NVIM_TEST_CORE_DB_CMD') or gdb_db_cmd
     random_skip = os.getenv('NVIM_TEST_CORE_RANDOM_SKIP') ~= ''
-  elseif module.is_os('mac') then
+  elseif M.is_os('mac') then
     initial_path = '/cores'
     re = nil
     exc_re = { local_tmpdir }
     db_cmd = lldb_db_cmd
   else
     initial_path = '.'
-    if module.is_os('freebsd') then
+    if M.is_os('freebsd') then
       re = '/nvim.core$'
     else
       re = '/core[^/]*$'
@@ -480,7 +480,7 @@ function module.check_cores(app, force) -- luacheck: ignore
     tests_skipped = tests_skipped + 1
     return
   end
-  local cores = module.glob(initial_path, re, exc_re)
+  local cores = M.glob(initial_path, re, exc_re)
   local found_cores = 0
   local out = io.stdout
   for _, core in ipairs(cores) do
@@ -503,23 +503,23 @@ function module.check_cores(app, force) -- luacheck: ignore
 end
 
 --- @return string?
-function module.repeated_read_cmd(...)
+function M.repeated_read_cmd(...)
   for _ = 1, 10 do
-    local stream = module.popen_r(...)
+    local stream = M.popen_r(...)
     local ret = stream:read('*a')
     stream:close()
     if ret then
       return ret
     end
   end
-  print('ERROR: Failed to execute ' .. module.argss_to_cmd(...) .. ': nil return after 10 attempts')
+  print('ERROR: Failed to execute ' .. M.argss_to_cmd(...) .. ': nil return after 10 attempts')
   return nil
 end
 
 --- @generic T
 --- @param orig T
 --- @return T
-function module.shallowcopy(orig)
+function M.shallowcopy(orig)
   if type(orig) ~= 'table' then
     return orig
   end
@@ -534,13 +534,13 @@ end
 --- @param d1 table<any,any>
 --- @param d2 table<any,any>
 --- @return table<any,any>
-function module.mergedicts_copy(d1, d2)
-  local ret = module.shallowcopy(d1)
+function M.mergedicts_copy(d1, d2)
+  local ret = M.shallowcopy(d1)
   for k, v in pairs(d2) do
     if d2[k] == vim.NIL then
       ret[k] = nil
     elseif type(d1[k]) == 'table' and type(v) == 'table' then
-      ret[k] = module.mergedicts_copy(d1[k], v)
+      ret[k] = M.mergedicts_copy(d1[k], v)
     else
       ret[k] = v
     end
@@ -553,7 +553,7 @@ end
 --- Note: does not do copies of d2 values used.
 --- @param d1 table<any,any>
 --- @param d2 table<any,any>
-function module.dictdiff(d1, d2)
+function M.dictdiff(d1, d2)
   local ret = {} --- @type table<any,any>
   local hasdiff = false
   for k, v in pairs(d1) do
@@ -562,7 +562,7 @@ function module.dictdiff(d1, d2)
       ret[k] = vim.NIL
     elseif type(v) == type(d2[k]) then
       if type(v) == 'table' then
-        local subdiff = module.dictdiff(v, d2[k])
+        local subdiff = M.dictdiff(v, d2[k])
         if subdiff ~= nil then
           hasdiff = true
           ret[k] = subdiff
@@ -576,7 +576,7 @@ function module.dictdiff(d1, d2)
       hasdiff = true
     end
   end
-  local shallowcopy = module.shallowcopy
+  local shallowcopy = M.shallowcopy
   for k, v in pairs(d2) do
     if d1[k] == nil then
       ret[k] = shallowcopy(v)
@@ -591,7 +591,7 @@ function module.dictdiff(d1, d2)
 end
 
 -- Concat list-like tables.
-function module.concat_tables(...)
+function M.concat_tables(...)
   local ret = {} --- @type table<any,any>
   for i = 1, select('#', ...) do
     --- @type table<any,any>
@@ -608,7 +608,7 @@ end
 --- @param str string
 --- @param leave_indent? integer
 --- @return string
-function module.dedent(str, leave_indent)
+function M.dedent(str, leave_indent)
   -- find minimum common indent across lines
   local indent --- @type string?
   for line in str:gmatch('[^\n]+') do
@@ -633,14 +633,14 @@ function module.dedent(str, leave_indent)
   return str
 end
 
-function module.intchar2lua(ch)
+function M.intchar2lua(ch)
   ch = tonumber(ch)
   return (20 <= ch and ch < 127) and ('%c'):format(ch) or ch
 end
 
 --- @param str string
 --- @return string
-function module.hexdump(str)
+function M.hexdump(str)
   local len = string.len(str)
   local dump = ''
   local hex = ''
@@ -669,7 +669,7 @@ end
 --- @param filename string path to file
 --- @param start? integer start line (1-indexed), negative means "lines before end" (tail)
 --- @return string[]?
-function module.read_file_list(filename, start)
+function M.read_file_list(filename, start)
   local lnum = (start ~= nil and type(start) == 'number') and start or 1
   local tail = (lnum < 0)
   local maxlines = tail and math.abs(lnum) or nil
@@ -707,7 +707,7 @@ end
 --- Reads the entire contents of `filename` into a string.
 --- @param filename string
 --- @return string?
-function module.read_file(filename)
+function M.read_file(filename)
   local file = io.open(filename, 'r')
   if not file then
     return nil
@@ -718,7 +718,7 @@ function module.read_file(filename)
 end
 
 -- Dedent the given text and write it to the file name.
-function module.write_file(name, text, no_dedent, append)
+function M.write_file(name, text, no_dedent, append)
   local file = assert(io.open(name, (append and 'a' or 'w')))
   if type(text) == 'table' then
     -- Byte blob
@@ -729,7 +729,7 @@ function module.write_file(name, text, no_dedent, append)
       text = ('%s%c'):format(text, char)
     end
   elseif not no_dedent then
-    text = module.dedent(text)
+    text = M.dedent(text)
   end
   file:write(text)
   file:flush()
@@ -738,7 +738,7 @@ end
 
 --- @param name? 'cirrus'|'github'
 --- @return boolean
-function module.is_ci(name)
+function M.is_ci(name)
   local any = (name == nil)
   luaassert(any or name == 'github' or name == 'cirrus')
   local gh = ((any or name == 'github') and nil ~= os.getenv('GITHUB_ACTIONS'))
@@ -748,11 +748,11 @@ end
 
 -- Gets the (tail) contents of `logfile`.
 -- Also moves the file to "${NVIM_LOG_FILE}.displayed" on CI environments.
-function module.read_nvim_log(logfile, ci_rename)
+function M.read_nvim_log(logfile, ci_rename)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
-  local is_ci = module.is_ci()
+  local is_ci = M.is_ci()
   local keep = is_ci and 100 or 10
-  local lines = module.read_file_list(logfile, -keep) or {}
+  local lines = M.read_file_list(logfile, -keep) or {}
   local log = (
     ('-'):rep(78)
     .. '\n'
@@ -771,9 +771,9 @@ end
 
 --- @param path string
 --- @return boolean?
-function module.mkdir(path)
+function M.mkdir(path)
   -- 493 is 0755 in decimal
   return (uv.fs_mkdir(path, 493))
 end
 
-return module
+return M

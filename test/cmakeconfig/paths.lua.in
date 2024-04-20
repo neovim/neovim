@@ -1,22 +1,22 @@
-local module = {}
+local M = {}
 
-module.include_paths = {}
+M.include_paths = {}
 for p in ("${TEST_INCLUDE_DIRS}" .. ";"):gmatch("[^;]+") do
-  table.insert(module.include_paths, p)
+  table.insert(M.include_paths, p)
 end
 
-module.test_build_dir = "${CMAKE_BINARY_DIR}"
-module.test_source_path = "${CMAKE_SOURCE_DIR}"
-module.test_lua_prg = "${LUA_PRG}"
-module.test_luajit_prg = ""
-if module.test_luajit_prg == '' then
-  if module.test_lua_prg:sub(-6) == 'luajit' then
-    module.test_luajit_prg = module.test_lua_prg
+M.test_build_dir = "${CMAKE_BINARY_DIR}"
+M.test_source_path = "${CMAKE_SOURCE_DIR}"
+M.test_lua_prg = "${LUA_PRG}"
+M.test_luajit_prg = ""
+if M.test_luajit_prg == '' then
+  if M.test_lua_prg:sub(-6) == 'luajit' then
+    M.test_luajit_prg = M.test_lua_prg
   else
-    module.test_luajit_prg = nil
+    M.test_luajit_prg = nil
   end
 end
-table.insert(module.include_paths, "${CMAKE_BINARY_DIR}/include")
-table.insert(module.include_paths, "${CMAKE_BINARY_DIR}/src/nvim/auto")
+table.insert(M.include_paths, "${CMAKE_BINARY_DIR}/include")
+table.insert(M.include_paths, "${CMAKE_BINARY_DIR}/src/nvim/auto")
 
-return module
+return M
