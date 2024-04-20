@@ -181,7 +181,7 @@ describe('API/extmarks', function()
     })
     eq(
       "Invalid 'end_col': out of range",
-      pcall_err(set_extmark, ns, marks[2], 0, 0, { end_col = -1 })
+      pcall_err(set_extmark, ns, marks[2], 0, 0, { end_col = -1, end_row = 0, strict = true })
     )
   end)
 
