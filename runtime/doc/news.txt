@@ -533,6 +533,7 @@ release.
 • |API| functions:
   - |nvim_buf_get_option()|	Use |nvim_get_option_value()| instead.
   - |nvim_buf_set_option()|	Use |nvim_set_option_value()| instead.
+  - nvim_call_atomic()		Use |nvim_exec_lua()| instead.
   - |nvim_get_option()|		Use |nvim_get_option_value()| instead.
   - |nvim_set_option()|		Use |nvim_set_option_value()| instead.
   - |nvim_win_get_option()|	Use |nvim_get_option_value()| instead.

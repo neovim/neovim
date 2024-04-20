@@ -655,33 +655,6 @@ nvim__stats()                                                  *nvim__stats()*
     Return: ~
         Map of various internal stats.
 
-nvim_call_atomic({calls})                                 *nvim_call_atomic()*
-    Calls many API methods atomically.
-
-    This has two main usages:
-    1. To perform several requests from an async context atomically, i.e.
-       without interleaving redraws, RPC requests from other clients, or user
-       interactions (however API methods may trigger autocommands or event
-       processing which have such side effects, e.g. |:sleep| may wake
-       timers).
-    2. To minimize RPC overhead (roundtrips) of a sequence of many requests.
-
-    Attributes: ~
-        |RPC| only
-
-    Parameters: ~
-      • {calls}  an array of calls, where each call is described by an array
-                 with two elements: the request name, and an array of
-                 arguments.
-
-    Return: ~
-        Array of two elements. The first is an array of return values. The
-        second is NIL if all calls succeeded. If a call resulted in an error,
-        it is a three-element array with the zero-based index of the call
-        which resulted in an error, the error type and the error message. If
-        an error occurred, the values from all preceding calls will still be
-        returned.
-
 nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
     Send data to channel `id`. For a job, it writes it to the stdin of the
     process. For the stdio channel |channel-stdio|, it writes to Nvim's
