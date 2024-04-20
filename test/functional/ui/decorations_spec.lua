@@ -5701,7 +5701,7 @@ describe('decorations: window scoped', function()
                           |
     ]]}
 
-    api.nvim_win_remove_ns(0, ns)
+    api.nvim_win_del_ns(0, ns)
 
     screen:expect(noextmarks)
   end)
@@ -5906,7 +5906,7 @@ describe('decorations: window scoped', function()
                           |
     ]]}
 
-    eq(true, api.nvim_win_remove_ns(0, ns))
+    eq(true, api.nvim_win_del_ns(0, ns))
     eq({}, api.nvim_win_get_ns(0))
 
     screen:expect(noextmarks)
