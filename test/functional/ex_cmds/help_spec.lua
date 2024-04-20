@@ -1,19 +1,20 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local command = t.command
+local clear = n.clear
+local command = n.command
 local eq = t.eq
-local fn = t.fn
-local api = t.api
+local fn = n.fn
+local api = n.api
 local mkdir = t.mkdir
-local rmdir = t.rmdir
+local rmdir = n.rmdir
 local write_file = t.write_file
 
 describe(':help', function()
   before_each(clear)
 
   it('window closed makes cursor return to a valid win/buf #9773', function()
-    t.add_builddir_to_rtp()
+    n.add_builddir_to_rtp()
     command('help help')
     eq(1001, fn.win_getid())
     command('quit')

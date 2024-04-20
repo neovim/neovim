@@ -1,6 +1,8 @@
-local t = require('test.functional.testutil')()
-local api = t.api
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+
+local api = n.api
 
 local function rand_utf8(count, seed)
   math.randomseed(seed)
@@ -119,7 +121,7 @@ end
 
 local function benchmarks(benchmark_results)
   describe('screenpos() perf', function()
-    before_each(t.clear)
+    before_each(n.clear)
 
     -- no breakindent
     for li, lines_type in ipairs(benchmark_lines) do
@@ -134,7 +136,7 @@ local function benchmarks(benchmark_results)
           screen:attach()
           api.nvim_buf_set_lines(0, 0, 1, false, lines)
           -- for smaller screen expect (last line always different, first line same as others)
-          t.feed('G$')
+          n.feed('G$')
           screen:expect(result.screen)
           benchmark(lines, result.value)
         end)
@@ -153,9 +155,9 @@ local function benchmarks(benchmark_results)
           local screen = Screen.new(width, height + 1)
           screen:attach()
           api.nvim_buf_set_lines(0, 0, 1, false, lines)
-          t.command('set breakindent')
+          n.command('set breakindent')
           -- for smaller screen expect (last line always different, first line same as others)
-          t.feed('G$')
+          n.feed('G$')
           screen:expect(result.screen)
           benchmark(lines, result.value)
         end)

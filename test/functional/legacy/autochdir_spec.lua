@@ -1,7 +1,9 @@
-local t = require('test.functional.testutil')()
-local clear, eq, matches = t.clear, t.eq, t.matches
-local eval, command, call, api = t.eval, t.command, t.call, t.api
-local source, exec_capture = t.source, t.exec_capture
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, eq, matches = n.clear, t.eq, t.matches
+local eval, command, call, api = n.eval, n.command, n.call, n.api
+local source, exec_capture = n.source, n.exec_capture
 local mkdir = t.mkdir
 
 local function expected_empty()
@@ -18,7 +20,7 @@ describe('autochdir behavior', function()
   end)
 
   after_each(function()
-    t.rmdir(dir)
+    n.rmdir(dir)
   end)
 
   -- Tests vim/vim#777 without test_autochdir().

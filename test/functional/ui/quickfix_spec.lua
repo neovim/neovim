@@ -1,7 +1,8 @@
-local t = require('test.functional.testutil')()
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear, feed, api = t.clear, t.feed, t.api
-local insert, command = t.insert, t.command
+
+local clear, feed, api = n.clear, n.feed, n.api
+local insert, command = n.insert, n.command
 
 describe('quickfix selection highlight', function()
   local screen

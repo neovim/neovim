@@ -1,12 +1,14 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear = t.clear
-local command = t.command
-local feed = t.feed
-local feed_command = t.feed_command
-local insert = t.insert
-local fn = t.fn
-local api = t.api
+
+local clear = n.clear
+local command = n.command
+local feed = n.feed
+local feed_command = n.feed_command
+local insert = n.insert
+local fn = n.fn
+local api = n.api
 local split = vim.split
 local dedent = t.dedent
 

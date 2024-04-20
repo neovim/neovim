@@ -1,25 +1,25 @@
 local uv = vim.uv
-local t_global = require('test.testutil')
+local t = require('test.testutil')
 
 local Session = require('test.client.session')
 local uv_stream = require('test.client.uv_stream')
 local SocketStream = uv_stream.SocketStream
 local ChildProcessStream = uv_stream.ChildProcessStream
 
-local check_cores = t_global.check_cores
-local check_logs = t_global.check_logs
-local dedent = t_global.dedent
-local eq = t_global.eq
-local is_os = t_global.is_os
-local ok = t_global.ok
+local check_cores = t.check_cores
+local check_logs = t.check_logs
+local dedent = t.dedent
+local eq = t.eq
+local is_os = t.is_os
+local ok = t.ok
 local sleep = uv.sleep
-local fail = t_global.fail
 
---- @class test.functional.testutil: test.testutil
-local M = vim.deepcopy(t_global)
+--- This module uses functions from the context of the test session, i.e. in the context of the
+--- nvim being tests.
+local M = {}
 
 local runtime_set = 'set runtimepath^=./build/lib/nvim/'
-M.nvim_prog = (os.getenv('NVIM_PRG') or t_global.paths.test_build_dir .. '/bin/nvim')
+M.nvim_prog = (os.getenv('NVIM_PRG') or t.paths.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
 M.nvim_set = (
   'set shortmess+=IS background=light termguicolors noswapfile noautoindent startofline'
@@ -321,11 +321,11 @@ end
 function M.expect_exit(fn_or_timeout, ...)
   local eof_err_msg = 'EOF was received from Nvim. Likely the Nvim process crashed.'
   if type(fn_or_timeout) == 'function' then
-    eq(eof_err_msg, M.pcall_err(fn_or_timeout, ...))
+    eq(eof_err_msg, t.pcall_err(fn_or_timeout, ...))
   else
     eq(
       eof_err_msg,
-      M.pcall_err(function(timeout, fn, ...)
+      t.pcall_err(function(timeout, fn, ...)
         fn(...)
         assert(session)
         while session:next_message(timeout) do
@@ -735,27 +735,6 @@ function M.expect_any(contents)
   return ok(nil ~= string.find(M.curbuf_contents(), contents, 1, true))
 end
 
---- @param expected any[]
---- @param received any[]
---- @param kind string
---- @return any
-function M.expect_events(expected, received, kind)
-  if not pcall(eq, expected, received) then
-    local msg = 'unexpected ' .. kind .. ' received.\n\n'
-
-    msg = msg .. 'received events:\n'
-    for _, e in ipairs(received) do
-      msg = msg .. '  ' .. vim.inspect(e) .. ';\n'
-    end
-    msg = msg .. '\nexpected events:\n'
-    for _, e in ipairs(expected) do
-      msg = msg .. '  ' .. vim.inspect(e) .. ';\n'
-    end
-    fail(msg)
-  end
-  return received
-end
-
 -- Checks that the Nvim session did not terminate.
 function M.assert_alive()
   assert(2 == M.eval('1+1'), 'crash? request failed')
@@ -790,7 +769,7 @@ local function do_rmdir(path)
   for file in vim.fs.dir(path) do
     if file ~= '.' and file ~= '..' then
       local abspath = path .. '/' .. file
-      if t_global.isdir(abspath) then
+      if t.isdir(abspath) then
         do_rmdir(abspath) -- recurse
       else
         local ret, err = os.remove(abspath)
@@ -846,35 +825,6 @@ function M.exc_exec(cmd)
   return ret
 end
 
---- @param cond boolean
---- @param reason? string
---- @return boolean
-function M.skip(cond, reason)
-  if cond then
-    --- @type fun(reason: string)
-    local pending = getfenv(2).pending
-    pending(reason or 'FIXME')
-    return true
-  end
-  return false
-end
-
--- Calls pending() and returns `true` if the system is too slow to
--- run fragile or expensive tests. Else returns `false`.
-function M.skip_fragile(pending_fn, cond)
-  if pending_fn == nil or type(pending_fn) ~= type(function() end) then
-    error('invalid pending_fn')
-  end
-  if cond then
-    pending_fn('skipped (test is fragile on this system)', function() end)
-    return true
-  elseif os.getenv('TEST_SKIP_FRAGILE') then
-    pending_fn('skipped (TEST_SKIP_FRAGILE)', function() end)
-    return true
-  end
-  return false
-end
-
 function M.exec(code)
   M.api.nvim_exec2(code, {})
 end
@@ -906,7 +856,7 @@ end
 ---
 --- @param name (string) Name of the test program.
 function M.testprg(name)
-  local ext = M.is_os('win') and '.exe' or ''
+  local ext = is_os('win') and '.exe' or ''
   return ('%s/%s%s'):format(M.nvim_dir, name, ext)
 end
 
@@ -965,7 +915,7 @@ function M.alter_slashes(obj)
 end
 
 local load_factor = 1
-if t_global.is_ci() then
+if t.is_ci() then
   -- Compute load factor only once (but outside of any tests).
   M.clear()
   M.request('nvim_command', 'source test/old/testdir/load.vim')
@@ -1000,7 +950,7 @@ end
 
 function M.add_builddir_to_rtp()
   -- Add runtime from build dir for doc/tags (used with :help).
-  M.command(string.format([[set rtp+=%s/runtime]], M.paths.test_build_dir))
+  M.command(string.format([[set rtp+=%s/runtime]], t.paths.test_build_dir))
 end
 
 --- Kill (reap) a process by PID.

@@ -1,8 +1,9 @@
 -- Tests for errorformat.
 
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local command, expect = t.command, t.expect
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
+local command, expect = n.command, n.expect
 
 describe('errorformat', function()
   setup(clear)

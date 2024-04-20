@@ -1,16 +1,17 @@
 -- Tests for folding.
+
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local t = require('test.functional.testutil')()
-local feed, insert, feed_command, expect_any = t.feed, t.insert, t.feed_command, t.expect_any
-local command = t.command
-local exec = t.exec
+local feed, insert, feed_command, expect_any = n.feed, n.insert, n.feed_command, n.expect_any
+local command = n.command
+local exec = n.exec
 
 describe('folding', function()
   local screen
 
   before_each(function()
-    t.clear()
+    n.clear()
 
     screen = Screen.new(45, 8)
     screen:attach()
@@ -60,7 +61,7 @@ describe('folding', function()
     feed('kYpj')
     feed_command('call append("$", foldlevel("."))')
 
-    t.poke_eventloop()
+    n.poke_eventloop()
     screen:expect([[
         dd {{{            |
         ee {{{ }}}        |
@@ -86,7 +87,7 @@ describe('folding', function()
     feed_command('call append("$", foldlevel(2))')
     feed('zR')
 
-    t.poke_eventloop()
+    n.poke_eventloop()
     screen:expect([[
       aa                  |
         bb                |

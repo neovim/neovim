@@ -1,11 +1,12 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-
-local clear, insert = t.clear, t.insert
-local command = t.command
-local api = t.api
-local testprg = t.testprg
 local tt = require('test.functional.terminal.testutil')
+
+local clear, insert = n.clear, n.insert
+local command = n.command
+local api = n.api
+local testprg = n.testprg
 local skip = t.skip
 local is_os = t.is_os
 
@@ -381,7 +382,7 @@ describe('ext_hlstate detailed highlights', function()
       },
     }
 
-    t.feed('3ggV2jd')
+    n.feed('3ggV2jd')
     --screen:redraw_debug()
     screen:expect {
       grid = [[
@@ -478,7 +479,7 @@ describe('ext_hlstate detailed highlights', function()
       },
     }
 
-    t.feed('3ggV2jd')
+    n.feed('3ggV2jd')
     --screen:redraw_debug()
     screen:expect {
       grid = [[
@@ -512,7 +513,7 @@ describe('ext_hlstate detailed highlights', function()
     end
     insert('last line')
 
-    t.feed('gg')
+    n.feed('gg')
     screen:expect {
       grid = [[
       ^first line                              |
@@ -555,7 +556,7 @@ describe('ext_hlstate detailed highlights', function()
       },
     }
 
-    t.feed(string.format('3ggV%ijd', num_lines - 2))
+    n.feed(string.format('3ggV%ijd', num_lines - 2))
     --screen:redraw_debug(nil, nil, 100000)
 
     local expected_ids = {}

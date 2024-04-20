@@ -1,8 +1,10 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
 local eq = t.eq
 local ok = t.ok
-local call = t.call
-local clear = t.clear
+local call = n.call
+local clear = n.clear
 local is_os = t.is_os
 
 describe('hostname()', function()

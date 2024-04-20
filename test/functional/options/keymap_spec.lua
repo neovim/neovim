@@ -1,8 +1,10 @@
-local t = require('test.functional.testutil')()
-local clear, feed, eq = t.clear, t.feed, t.eq
-local expect, command, eval = t.expect, t.command, t.eval
-local insert, call = t.insert, t.call
-local exec_capture, dedent = t.exec_capture, t.dedent
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, feed, eq = n.clear, n.feed, t.eq
+local expect, command, eval = n.expect, n.command, n.eval
+local insert, call = n.insert, n.call
+local exec_capture, dedent = n.exec_capture, t.dedent
 
 -- First test it's implemented using the :lmap and :lnoremap commands, then
 -- check those mappings behave as expected.

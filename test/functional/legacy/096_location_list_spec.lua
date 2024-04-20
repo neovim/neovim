@@ -6,9 +6,10 @@
 -- C. make sure that the location list window is not reused instead of the window
 --    it belongs to.
 
-local t = require('test.functional.testutil')()
-local source = t.source
-local clear, command, expect = t.clear, t.command, t.expect
+local n = require('test.functional.testnvim')()
+
+local source = n.source
+local clear, command, expect = n.clear, n.command, n.expect
 
 describe('location list', function()
   local test_file = 'Xtest-096_location_list.out'

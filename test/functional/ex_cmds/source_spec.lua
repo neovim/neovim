@@ -1,22 +1,24 @@
-local t = require('test.functional.testutil')()
-local command = t.command
-local insert = t.insert
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local command = n.command
+local insert = n.insert
 local eq = t.eq
-local clear = t.clear
-local api = t.api
-local feed = t.feed
-local feed_command = t.feed_command
+local clear = n.clear
+local api = n.api
+local feed = n.feed
+local feed_command = n.feed_command
 local write_file = t.write_file
 local tmpname = t.tmpname
-local exec = t.exec
-local exc_exec = t.exc_exec
-local exec_lua = t.exec_lua
-local eval = t.eval
-local exec_capture = t.exec_capture
+local exec = n.exec
+local exc_exec = n.exc_exec
+local exec_lua = n.exec_lua
+local eval = n.eval
+local exec_capture = n.exec_capture
 local neq = t.neq
 local matches = t.matches
 local mkdir = t.mkdir
-local rmdir = t.rmdir
+local rmdir = n.rmdir
 local is_os = t.is_os
 
 describe(':source', function()

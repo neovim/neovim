@@ -1,15 +1,17 @@
-local t = require('test.functional.testutil')()
-local clear, feed_command = t.clear, t.feed_command
-local feed, next_msg, eq = t.feed, t.next_msg, t.eq
-local command = t.command
-local expect = t.expect
-local curbuf_contents = t.curbuf_contents
-local api = t.api
-local exec_lua = t.exec_lua
-local write_file = t.write_file
-local fn = t.fn
-local eval = t.eval
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+
+local clear, feed_command = n.clear, n.feed_command
+local feed, next_msg, eq = n.feed, n.next_msg, t.eq
+local command = n.command
+local expect = n.expect
+local curbuf_contents = n.curbuf_contents
+local api = n.api
+local exec_lua = n.exec_lua
+local write_file = t.write_file
+local fn = n.fn
+local eval = n.eval
 
 before_each(clear)
 

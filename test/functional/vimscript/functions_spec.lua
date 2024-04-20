@@ -5,10 +5,11 @@
 --
 -- Core "eval" tests live in eval_spec.lua.
 
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local eval = t.eval
+local clear = n.clear
+local eval = n.eval
 local matches = t.matches
 local is_os = t.is_os
 

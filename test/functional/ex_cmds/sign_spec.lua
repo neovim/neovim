@@ -1,7 +1,9 @@
-local t = require('test.functional.testutil')()
-local clear, eq, assert_alive = t.clear, t.eq, t.assert_alive
-local command = t.command
-local api = t.api
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, eq, assert_alive = n.clear, t.eq, n.assert_alive
+local command = n.command
+local api = n.api
 
 describe('sign', function()
   before_each(clear)

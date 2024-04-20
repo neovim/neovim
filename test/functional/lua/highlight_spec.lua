@@ -1,11 +1,13 @@
-local t = require('test.functional.testutil')()
-local exec_lua = t.exec_lua
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local exec_lua = n.exec_lua
 local eq = t.eq
 local neq = t.neq
-local eval = t.eval
-local command = t.command
-local clear = t.clear
-local api = t.api
+local eval = n.eval
+local command = n.command
+local clear = n.clear
+local api = n.api
 
 describe('vim.highlight.on_yank', function()
   before_each(function()
@@ -19,7 +21,7 @@ describe('vim.highlight.on_yank', function()
       vim.cmd('bwipeout!')
     ]])
     vim.uv.sleep(10)
-    t.feed('<cr>') -- avoid hang if error message exists
+    n.feed('<cr>') -- avoid hang if error message exists
     eq('', eval('v:errmsg'))
   end)
 

@@ -1,12 +1,14 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local exec = t.exec
-local command = t.command
-local feed = t.feed
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
+local exec = n.exec
+local command = n.command
+local feed = n.feed
 local eq = t.eq
 local neq = t.neq
-local eval = t.eval
-local poke_eventloop = t.poke_eventloop
+local eval = n.eval
+local poke_eventloop = n.poke_eventloop
 local write_file = t.write_file
 
 -- oldtest: Test_ChangedP()

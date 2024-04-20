@@ -87,9 +87,8 @@ Then, in another terminal:
 >bash
     gdb build/bin/nvim
     target remote localhost:7777
-<
-- See also test/functional/testutil.lua https://github.com/neovim/neovim/blob/3098b18a2b63a841351f6d5e3697cb69db3035ef/test/functional/testutil.lua#L38-L44.
 
+-- See `nvim_argv` in https://github.com/neovim/neovim/blob/master/test/functional/testnvim.lua.
 
 USING LLDB TO STEP THROUGH UNIT TESTS ~
 

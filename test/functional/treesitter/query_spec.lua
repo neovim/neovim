@@ -1,14 +1,15 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
+local clear = n.clear
 local dedent = t.dedent
 local eq = t.eq
-local insert = t.insert
-local exec_lua = t.exec_lua
+local insert = n.insert
+local exec_lua = n.exec_lua
 local pcall_err = t.pcall_err
 local is_os = t.is_os
-local api = t.api
-local fn = t.fn
+local api = n.api
+local fn = n.fn
 
 describe('treesitter query API', function()
   before_each(function()
@@ -67,7 +68,7 @@ void ui_refresh(void)
   it('supports caching queries', function()
     local long_query = test_query:rep(100)
     ---@return number
-    local function q(n)
+    local function q(_n)
       return exec_lua(
         [[
           local query, n = ...
@@ -79,7 +80,7 @@ void ui_refresh(void)
           return after - before
         ]],
         long_query,
-        n
+        _n
       )
     end
 

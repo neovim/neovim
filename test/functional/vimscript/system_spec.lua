@@ -1,20 +1,20 @@
 -- Tests for system() and :! shell.
 
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 
-local assert_alive = t.assert_alive
-local testprg = t.testprg
+local assert_alive = n.assert_alive
+local testprg = n.testprg
 local eq, call, clear, eval, feed_command, feed, api =
-  t.eq, t.call, t.clear, t.eval, t.feed_command, t.feed, t.api
-local command = t.command
-local insert = t.insert
-local expect = t.expect
-local exc_exec = t.exc_exec
-local os_kill = t.os_kill
+  t.eq, n.call, n.clear, n.eval, n.feed_command, n.feed, n.api
+local command = n.command
+local insert = n.insert
+local expect = n.expect
+local exc_exec = n.exc_exec
+local os_kill = n.os_kill
 local pcall_err = t.pcall_err
 local is_os = t.is_os
-
-local Screen = require('test.functional.ui.screen')
 
 local function create_file_with_nuls(name)
   return function()
@@ -183,7 +183,7 @@ describe('system()', function()
       end)
 
       it('with powershell', function()
-        t.set_shell_powershell()
+        n.set_shell_powershell()
         eq('a\nb\n', eval([[system('Write-Output a b')]]))
         eq('C:\\\n', eval([[system('cd c:\; (Get-Location).Path')]]))
         eq('a b\n', eval([[system('Write-Output "a b"')]]))
@@ -191,11 +191,11 @@ describe('system()', function()
     end
 
     it('powershell w/ UTF-8 text #13713', function()
-      if not t.has_powershell() then
+      if not n.has_powershell() then
         pending('powershell not found', function() end)
         return
       end
-      t.set_shell_powershell()
+      n.set_shell_powershell()
       eq('ああ\n', eval([[system('Write-Output "ああ"')]]))
       -- Sanity test w/ default encoding
       -- * on Windows, expected to default to Western European enc
@@ -241,8 +241,8 @@ describe('system()', function()
 
       feed(':edit ' .. tempfile .. '<cr>')
 
-      local command_total_time = tonumber(t.fn.split(t.fn.getline(7))[2])
-      local command_self_time = tonumber(t.fn.split(t.fn.getline(7))[3])
+      local command_total_time = tonumber(n.fn.split(n.fn.getline(7))[2])
+      local command_self_time = tonumber(n.fn.split(n.fn.getline(7))[3])
 
       t.neq(nil, command_total_time)
       t.neq(nil, command_self_time)
@@ -548,11 +548,11 @@ describe('systemlist()', function()
   end)
 
   it('powershell w/ UTF-8 text #13713', function()
-    if not t.has_powershell() then
+    if not n.has_powershell() then
       pending('powershell not found', function() end)
       return
     end
-    t.set_shell_powershell()
+    n.set_shell_powershell()
     eq({ is_os('win') and 'あ\r' or 'あ' }, eval([[systemlist('Write-Output あ')]]))
     -- Sanity test w/ default encoding
     -- * on Windows, expected to default to Western European enc
@@ -568,7 +568,7 @@ describe('shell :!', function()
   it(':{range}! with powershell filter/redirect #16271 #19250', function()
     local screen = Screen.new(500, 8)
     screen:attach()
-    local found = t.set_shell_powershell(true)
+    local found = n.set_shell_powershell(true)
     insert([[
       3
       1
@@ -615,12 +615,12 @@ describe('shell :!', function()
       }
     end
     feed('<CR>')
-    t.set_shell_powershell(true)
+    n.set_shell_powershell(true)
     feed(':4verbose %w !sort<cr>')
     screen:expect {
       any = [[Executing command: .?& { Get%-Content .* | & sort }]],
     }
     feed('<CR>')
-    t.expect_exit(command, 'qall!')
+    n.expect_exit(command, 'qall!')
   end)
 end)

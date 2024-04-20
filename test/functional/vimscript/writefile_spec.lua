@@ -1,15 +1,16 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local mkdir = t.mkdir
-local clear = t.clear
+local clear = n.clear
 local eq = t.eq
-local fn = t.fn
-local api = t.api
-local exc_exec = t.exc_exec
+local fn = n.fn
+local api = n.api
+local exc_exec = n.exc_exec
 local read_file = t.read_file
 local write_file = t.write_file
 local pcall_err = t.pcall_err
-local command = t.command
+local command = n.command
 
 local fname = 'Xtest-functional-eval-writefile'
 local dname = fname .. '.d'

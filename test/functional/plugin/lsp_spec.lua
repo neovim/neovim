@@ -1,26 +1,28 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
 local t_lsp = require('test.functional.plugin.lsp.testutil')
 
 local assert_log = t.assert_log
-local buf_lines = t.buf_lines
-local clear = t.clear
-local command = t.command
+local buf_lines = n.buf_lines
+local clear = n.clear
+local command = n.command
 local dedent = t.dedent
-local exec_lua = t.exec_lua
+local exec_lua = n.exec_lua
 local eq = t.eq
-local eval = t.eval
+local eval = n.eval
 local matches = t.matches
 local pcall_err = t.pcall_err
 local pesc = vim.pesc
-local insert = t.insert
-local fn = t.fn
+local insert = n.insert
+local fn = n.fn
 local retry = t.retry
-local stop = t.stop
+local stop = n.stop
 local NIL = vim.NIL
 local read_file = t.read_file
 local write_file = t.write_file
 local is_ci = t.is_ci
-local api = t.api
+local api = n.api
 local is_os = t.is_os
 local skip = t.skip
 local mkdir = t.mkdir
@@ -1481,7 +1483,7 @@ describe('LSP', function()
         end,
         on_handler = function(err, result, ctx)
           if ctx.method == 'start' then
-            t.command('normal! 1Go')
+            n.command('normal! 1Go')
             client.notify('finish')
           end
           eq(table.remove(expected_handlers), { err, result, ctx }, 'expected handler')
@@ -2368,7 +2370,7 @@ describe('LSP', function()
   end)
 
   describe('lsp.util.rename', function()
-    local pathsep = t.get_pathsep()
+    local pathsep = n.get_pathsep()
 
     it('Can rename an existing file', function()
       local old = tmpname()
@@ -2404,7 +2406,7 @@ describe('LSP', function()
       os.remove(old_dir)
       os.remove(new_dir)
 
-      t.mkdir_p(old_dir)
+      n.mkdir_p(old_dir)
 
       local file = 'file.txt'
       write_file(old_dir .. pathsep .. file, 'Test content')
@@ -2440,7 +2442,7 @@ describe('LSP', function()
       local new = tmpname()
       os.remove(old)
       os.remove(new)
-      t.mkdir_p(old)
+      n.mkdir_p(old)
 
       local result = exec_lua(
         [[

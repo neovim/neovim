@@ -1,11 +1,13 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local tt = require('test.functional.terminal.testutil')
-local feed, clear = t.feed, t.clear
-local testprg, command = t.testprg, t.command
-local eq, eval = t.eq, t.eval
+
+local feed, clear = n.feed, n.clear
+local testprg, command = n.testprg, n.command
+local eq, eval = t.eq, n.eval
 local matches = t.matches
-local poke_eventloop = t.poke_eventloop
+local poke_eventloop = n.poke_eventloop
 local hide_cursor = tt.hide_cursor
 local show_cursor = tt.show_cursor
 local is_os = t.is_os
@@ -66,7 +68,7 @@ describe(':terminal cursor', function()
         :set number                                       |
       ]])
       feed('i')
-      t.poke_eventloop()
+      n.poke_eventloop()
       screen:expect([[
         {7:  1 }tty ready                                     |
         {7:  2 }rows: 6, cols: 46                             |

@@ -1,24 +1,26 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local os = require('os')
-local clear, feed = t.clear, t.feed
-local assert_alive = t.assert_alive
-local command, feed_command = t.command, t.feed_command
-local eval = t.eval
+
+local clear, feed = n.clear, n.feed
+local assert_alive = n.assert_alive
+local command, feed_command = n.command, n.feed_command
+local eval = n.eval
 local eq = t.eq
 local neq = t.neq
-local expect = t.expect
-local exec = t.exec
-local exec_lua = t.exec_lua
-local insert = t.insert
-local api = t.api
-local fn = t.fn
-local run = t.run
+local expect = n.expect
+local exec = n.exec
+local exec_lua = n.exec_lua
+local insert = n.insert
+local api = n.api
+local fn = n.fn
+local run = n.run
 local pcall_err = t.pcall_err
 local tbl_contains = vim.tbl_contains
-local curbuf = t.api.nvim_get_current_buf
-local curwin = t.api.nvim_get_current_win
-local curtab = t.api.nvim_get_current_tabpage
+local curbuf = n.api.nvim_get_current_buf
+local curwin = n.api.nvim_get_current_win
+local curtab = n.api.nvim_get_current_tabpage
 local NIL = vim.NIL
 
 describe('float window', function()
@@ -4120,7 +4122,7 @@ describe('float window', function()
 
     if multigrid then
       pending("supports second UI without multigrid", function()
-        local session2 = t.connect(eval('v:servername'))
+        local session2 = n.connect(eval('v:servername'))
         print(session2:request("nvim_eval", "2+2"))
         local screen2 = Screen.new(40,7)
         screen2:attach(nil, session2)
@@ -8018,7 +8020,7 @@ describe('float window', function()
     end)
 
     it("correctly redraws when overlaid windows are resized #13991", function()
-	  t.source([[
+	  n.source([[
         let popup_config = {"relative" : "editor",
                     \ "width" : 7,
                     \ "height" : 3,
@@ -8082,7 +8084,7 @@ describe('float window', function()
         ]])
       end
 
-      t.source([[
+      n.source([[
         let new_popup_config = {"width" : 1, "height" : 3}
         let new_border_config = {"width" : 3, "height" : 5}
 
@@ -8097,7 +8099,7 @@ describe('float window', function()
         nnoremap zz <cmd>call Resize()<cr>
       ]])
 
-      t.feed("zz")
+      n.feed("zz")
       if multigrid then
         screen:expect{grid=[[
         ## grid 1

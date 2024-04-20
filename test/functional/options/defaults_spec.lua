@@ -1,26 +1,26 @@
-local t = require('test.functional.testutil')()
-
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local assert_alive = t.assert_alive
+local assert_alive = n.assert_alive
 local assert_log = t.assert_log
-local api = t.api
-local command = t.command
-local clear = t.clear
-local exc_exec = t.exc_exec
-local exec_lua = t.exec_lua
-local eval = t.eval
+local api = n.api
+local command = n.command
+local clear = n.clear
+local exc_exec = n.exc_exec
+local exec_lua = n.exec_lua
+local eval = n.eval
 local eq = t.eq
 local ok = t.ok
-local fn = t.fn
-local insert = t.insert
+local fn = n.fn
+local insert = n.insert
 local neq = t.neq
 local mkdir = t.mkdir
-local rmdir = t.rmdir
-local alter_slashes = t.alter_slashes
+local rmdir = n.rmdir
+local alter_slashes = n.alter_slashes
 local tbl_contains = vim.tbl_contains
-local expect_exit = t.expect_exit
-local check_close = t.check_close
+local expect_exit = n.expect_exit
+local check_close = n.check_close
 local is_os = t.is_os
 
 local testlog = 'Xtest-defaults-log'
@@ -1248,7 +1248,7 @@ end)
 describe('autocommands', function()
   it('closes terminal with default shell on success', function()
     clear()
-    api.nvim_set_option_value('shell', t.testprg('shell-test'), {})
+    api.nvim_set_option_value('shell', n.testprg('shell-test'), {})
     command('set shellcmdflag=EXIT shellredir= shellpipe= shellquote= shellxquote=')
 
     -- Should not block other events

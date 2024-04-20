@@ -3,18 +3,19 @@
 -- - "./dir", in directory relative to file
 -- - "dir", in directory relative to current dir
 
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local eq = t.eq
 local neq = t.neq
-local poke_eventloop = t.poke_eventloop
-local fn = t.fn
-local api = t.api
-local clear = t.clear
-local insert = t.insert
-local command = t.command
+local poke_eventloop = n.poke_eventloop
+local fn = n.fn
+local api = n.api
+local clear = n.clear
+local insert = n.insert
+local command = n.command
 local write_file = t.write_file
-local expect_exit = t.expect_exit
+local expect_exit = n.expect_exit
 local mkdir = t.mkdir
 
 local function ls_dir_sorted(dirname)
@@ -44,8 +45,8 @@ describe("'directory' option", function()
   end)
   teardown(function()
     expect_exit(command, 'qall!')
-    t.rmdir('Xtest.je')
-    t.rmdir('Xtest2')
+    n.rmdir('Xtest.je')
+    n.rmdir('Xtest2')
     os.remove('Xtest1')
   end)
 

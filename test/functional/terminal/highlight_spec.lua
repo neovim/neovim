@@ -1,12 +1,14 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local tt = require('test.functional.terminal.testutil')
-local feed, clear = t.feed, t.clear
-local api = t.api
-local testprg, command = t.testprg, t.command
-local nvim_prog_abs = t.nvim_prog_abs
-local fn = t.fn
-local nvim_set = t.nvim_set
+
+local feed, clear = n.feed, n.clear
+local api = n.api
+local testprg, command = n.testprg, n.command
+local nvim_prog_abs = n.nvim_prog_abs
+local fn = n.fn
+local nvim_set = n.nvim_set
 local is_os = t.is_os
 local skip = t.skip
 

@@ -1,11 +1,13 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
 local eq = t.eq
-local fnamemodify = t.fn.fnamemodify
-local getcwd = t.fn.getcwd
-local command = t.command
+local fnamemodify = n.fn.fnamemodify
+local getcwd = n.fn.getcwd
+local command = n.command
 local write_file = t.write_file
-local alter_slashes = t.alter_slashes
+local alter_slashes = n.alter_slashes
 local is_os = t.is_os
 
 local function eq_slashconvert(expected, got)
@@ -24,7 +26,7 @@ describe('fnamemodify()', function()
   end)
 
   it('handles the root path', function()
-    local root = t.pathroot()
+    local root = n.pathroot()
     eq(root, fnamemodify([[/]], ':p:h'))
     eq(root, fnamemodify([[/]], ':p'))
     if is_os('win') then

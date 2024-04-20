@@ -1,9 +1,10 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local insert = t.insert
+local clear = n.clear
+local insert = n.insert
 local eq = t.eq
-local exec_lua = t.exec_lua
+local exec_lua = n.exec_lua
 
 before_each(clear)
 

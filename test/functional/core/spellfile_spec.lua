@@ -1,11 +1,12 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local eq = t.eq
-local clear = t.clear
-local api = t.api
-local exc_exec = t.exc_exec
-local fn = t.fn
-local rmdir = t.rmdir
+local clear = n.clear
+local api = n.api
+local exc_exec = n.exc_exec
+local fn = n.fn
+local rmdir = n.rmdir
 local write_file = t.write_file
 local mkdir = t.mkdir
 

@@ -1,14 +1,16 @@
 -- Tests for getcwd(), haslocaldir(), and :lcd
 
-local t = require('test.functional.testutil')()
-local eq, eval, source = t.eq, t.eval, t.source
-local call, clear, command = t.call, t.clear, t.command
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local eq, eval, source = t.eq, n.eval, n.source
+local call, clear, command = n.call, n.clear, n.command
 
 describe('getcwd', function()
   before_each(clear)
 
   after_each(function()
-    t.rmdir('Xtopdir')
+    n.rmdir('Xtopdir')
   end)
 
   it('is working', function()

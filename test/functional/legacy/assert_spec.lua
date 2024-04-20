@@ -1,16 +1,18 @@
-local t = require('test.functional.testutil')()
-local nvim, call = t.api, t.call
-local clear, eq = t.clear, t.eq
-local source, command = t.source, t.command
-local exc_exec = t.exc_exec
-local eval = t.eval
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local api, call = n.api, n.call
+local clear, eq = n.clear, t.eq
+local source, command = n.source, n.command
+local exc_exec = n.exc_exec
+local eval = n.eval
 
 local function expected_errors(errors)
-  eq(errors, nvim.nvim_get_vvar('errors'))
+  eq(errors, api.nvim_get_vvar('errors'))
 end
 
 local function expected_empty()
-  eq({}, nvim.nvim_get_vvar('errors'))
+  eq({}, api.nvim_get_vvar('errors'))
 end
 
 describe('assert function:', function()

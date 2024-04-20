@@ -1,14 +1,15 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local eq = t.eq
-local eval = t.eval
-local feed = t.feed
-local clear = t.clear
-local expect = t.expect
-local command = t.command
-local fn = t.fn
-local api = t.api
-local insert = t.insert
+local eval = n.eval
+local feed = n.feed
+local clear = n.clear
+local expect = n.expect
+local command = n.command
+local fn = n.fn
+local api = n.api
+local insert = n.insert
 
 describe('macros with default mappings', function()
   before_each(function()

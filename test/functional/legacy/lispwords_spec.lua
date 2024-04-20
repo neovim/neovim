@@ -1,9 +1,11 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
 local eq = t.eq
-local eval = t.eval
-local command = t.command
-local source = t.source
+local eval = n.eval
+local command = n.command
+local source = n.source
 
 describe('lispwords', function()
   before_each(clear)

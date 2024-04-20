@@ -1,10 +1,12 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local command, feed = t.command, t.feed
-local clear = t.clear
-local exec_lua = t.exec_lua
-local fn = t.fn
-local nvim_prog = t.nvim_prog
+
+local command, feed = n.command, n.feed
+local clear = n.clear
+local exec_lua = n.exec_lua
+local fn = n.fn
+local nvim_prog = n.nvim_prog
 local matches = t.matches
 local write_file = t.write_file
 local tmpname = t.tmpname

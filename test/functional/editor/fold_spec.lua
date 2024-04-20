@@ -1,12 +1,13 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local insert = t.insert
-local exec = t.exec
-local feed = t.feed
-local expect = t.expect
-local command = t.command
-local fn = t.fn
+local clear = n.clear
+local insert = n.insert
+local exec = n.exec
+local feed = n.feed
+local expect = n.expect
+local command = n.command
+local fn = n.fn
 local eq = t.eq
 local neq = t.neq
 
@@ -376,7 +377,7 @@ a]],
   end)
 
   it('splits folds according to >N and <N with foldexpr', function()
-    t.source([[
+    n.source([[
     function TestFoldExpr(lnum)
       let thisline = getline(a:lnum)
       if thisline == 'a'

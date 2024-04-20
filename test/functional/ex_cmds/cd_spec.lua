@@ -1,13 +1,14 @@
 -- Specs for :cd, :tcd, :lcd and getcwd()
 
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local eq = t.eq
-local call = t.call
-local clear = t.clear
-local command = t.command
-local exc_exec = t.exc_exec
-local pathsep = t.get_pathsep()
+local call = n.call
+local clear = n.clear
+local command = n.command
+local exc_exec = n.exc_exec
+local pathsep = n.get_pathsep()
 local skip = t.skip
 local is_os = t.is_os
 local mkdir = t.mkdir
@@ -289,14 +290,14 @@ describe('getcwd()', function()
   end)
 
   after_each(function()
-    t.rmdir(directories.global)
+    n.rmdir(directories.global)
   end)
 
   it('returns empty string if working directory does not exist', function()
     skip(is_os('win'))
     command('cd ' .. directories.global)
     command("call delete('../" .. directories.global .. "', 'd')")
-    eq('', t.eval('getcwd()'))
+    eq('', n.eval('getcwd()'))
   end)
 
   it("works with 'autochdir' after local directory was set (#9892)", function()

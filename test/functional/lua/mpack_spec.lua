@@ -1,9 +1,10 @@
 -- Test suite for testing interactions with API bindings
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
+local clear = n.clear
 local eq = t.eq
-local exec_lua = t.exec_lua
+local exec_lua = n.exec_lua
 
 describe('lua vim.mpack', function()
   before_each(clear)

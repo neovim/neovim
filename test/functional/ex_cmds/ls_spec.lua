@@ -1,11 +1,13 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local command = t.command
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
+local command = n.command
 local eq = t.eq
-local eval = t.eval
-local feed = t.feed
-local api = t.api
-local testprg = t.testprg
+local eval = n.eval
+local feed = n.feed
+local api = n.api
+local testprg = n.testprg
 local retry = t.retry
 
 describe(':ls', function()

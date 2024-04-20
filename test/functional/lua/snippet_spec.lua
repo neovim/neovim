@@ -1,15 +1,16 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local buf_lines = t.buf_lines
-local clear = t.clear
+local buf_lines = n.buf_lines
+local clear = n.clear
 local eq = t.eq
-local exec_lua = t.exec_lua
-local feed = t.feed
-local api = t.api
-local fn = t.fn
+local exec_lua = n.exec_lua
+local feed = n.feed
+local api = n.api
+local fn = n.fn
 local matches = t.matches
 local pcall_err = t.pcall_err
-local poke_eventloop = t.poke_eventloop
+local poke_eventloop = n.poke_eventloop
 local retry = t.retry
 
 describe('vim.snippet', function()

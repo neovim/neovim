@@ -1,17 +1,18 @@
 -- Test for Vim overrides of lua built-ins
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local eq = t.eq
 local NIL = vim.NIL
-local feed = t.feed
-local clear = t.clear
-local fn = t.fn
-local api = t.api
-local command = t.command
+local feed = n.feed
+local clear = n.clear
+local fn = n.fn
+local api = n.api
+local command = n.command
 local write_file = t.write_file
-local exec_capture = t.exec_capture
-local exec_lua = t.exec_lua
+local exec_capture = n.exec_capture
+local exec_lua = n.exec_lua
 local pcall_err = t.pcall_err
 local is_os = t.is_os
 

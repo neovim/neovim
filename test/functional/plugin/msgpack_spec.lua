@@ -1,10 +1,12 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local api = t.api
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
+local api = n.api
 local eq = t.eq
-local nvim_eval = t.eval
-local nvim_command = t.command
-local exc_exec = t.exc_exec
+local nvim_eval = n.eval
+local nvim_command = n.command
+local exc_exec = n.exc_exec
 local ok = t.ok
 local NIL = vim.NIL
 

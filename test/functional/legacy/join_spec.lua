@@ -1,8 +1,10 @@
 -- Test for joining lines
 
-local t = require('test.functional.testutil')()
-local clear, eq = t.clear, t.eq
-local eval, command = t.eval, t.command
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, eq = n.clear, t.eq
+local eval, command = n.eval, n.command
 
 describe('joining lines', function()
   before_each(clear)

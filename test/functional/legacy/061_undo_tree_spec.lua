@@ -1,14 +1,15 @@
 -- Tests for undo tree and :earlier and :later.
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local feed_command = t.feed_command
+local feed_command = n.feed_command
 local write_file = t.write_file
-local command = t.command
-local source = t.source
-local expect = t.expect
-local clear = t.clear
-local feed = t.feed
-local eval = t.eval
+local command = n.command
+local source = n.source
+local expect = n.expect
+local clear = n.clear
+local feed = n.feed
+local eval = n.eval
 local eq = t.eq
 
 local function expect_empty_buffer()

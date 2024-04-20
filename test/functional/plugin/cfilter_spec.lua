@@ -1,8 +1,10 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local command = t.command
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
+local command = n.command
 local eq = t.eq
-local fn = t.fn
+local fn = n.fn
 
 describe('cfilter.lua', function()
   before_each(function()

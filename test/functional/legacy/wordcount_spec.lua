@@ -1,10 +1,12 @@
 -- Test for wordcount() function
 
-local t = require('test.functional.testutil')()
-local feed, insert, source = t.feed, t.insert, t.source
-local clear, command = t.clear, t.command
-local eq, eval = t.eq, t.eval
-local poke_eventloop = t.poke_eventloop
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local feed, insert, source = n.feed, n.insert, n.source
+local clear, command = n.clear, n.command
+local eq, eval = t.eq, n.eval
+local poke_eventloop = n.poke_eventloop
 
 describe('wordcount', function()
   before_each(clear)

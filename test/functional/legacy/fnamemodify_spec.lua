@@ -1,11 +1,13 @@
 -- Test filename modifiers.
 
-local t = require('test.functional.testutil')()
-local clear, source = t.clear, t.source
-local call, eq, nvim = t.call, t.eq, t.api
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, source = n.clear, n.source
+local call, eq, api = n.call, t.eq, n.api
 
 local function expected_empty()
-  eq({}, nvim.nvim_get_vvar('errors'))
+  eq({}, api.nvim_get_vvar('errors'))
 end
 
 describe('filename modifiers', function()

@@ -1,17 +1,19 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local insert = t.insert
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
+local insert = n.insert
 local dedent = t.dedent
 local eq = t.eq
-local exec_lua = t.exec_lua
-local feed = t.feed
+local exec_lua = n.exec_lua
+local feed = n.feed
 
 describe('vim.treesitter.inspect_tree', function()
   before_each(clear)
 
   local expect_tree = function(x)
     local expected = vim.split(vim.trim(dedent(x)), '\n')
-    local actual = t.buf_lines(0) ---@type string[]
+    local actual = n.buf_lines(0) ---@type string[]
     eq(expected, actual)
   end
 

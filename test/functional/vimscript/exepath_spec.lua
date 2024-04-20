@@ -1,11 +1,13 @@
-local t = require('test.functional.testutil')()
-local eq, clear, call = t.eq, t.clear, t.call
-local command = t.command
-local exc_exec = t.exc_exec
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local eq, clear, call = t.eq, n.clear, n.call
+local command = n.command
+local exc_exec = n.exc_exec
 local matches = t.matches
 local is_os = t.is_os
-local set_shell_powershell = t.set_shell_powershell
-local eval = t.eval
+local set_shell_powershell = n.set_shell_powershell
+local eval = n.eval
 
 local find_dummies = function(ext_pat)
   local tmp_path = eval('$PATH')

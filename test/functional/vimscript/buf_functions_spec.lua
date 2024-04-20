@@ -1,13 +1,14 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local eq = t.eq
-local clear = t.clear
-local fn = t.fn
-local api = t.api
-local command = t.command
-local exc_exec = t.exc_exec
-local get_pathsep = t.get_pathsep
-local rmdir = t.rmdir
+local clear = n.clear
+local fn = n.fn
+local api = n.api
+local command = n.command
+local exc_exec = n.exc_exec
+local get_pathsep = n.get_pathsep
+local rmdir = n.rmdir
 local pcall_err = t.pcall_err
 local mkdir = t.mkdir
 

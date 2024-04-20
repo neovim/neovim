@@ -1,10 +1,12 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
 local eq, ok = t.eq, t.ok
-local fn = t.fn
-local api = t.api
-local command, eval, next_msg = t.command, t.eval, t.next_msg
-local nvim_prog = t.nvim_prog
+local fn = n.fn
+local api = n.api
+local command, eval, next_msg = n.command, n.eval, n.next_msg
+local nvim_prog = n.nvim_prog
 local pcall_err = t.pcall_err
 local sleep = vim.uv.sleep
 local write_file = t.write_file
@@ -511,11 +513,11 @@ describe('API: buffer events:', function()
 
     -- create several new sessions, in addition to our main API
     local sessions = {}
-    local pipe = t.new_pipename()
+    local pipe = n.new_pipename()
     eval("serverstart('" .. pipe .. "')")
-    sessions[1] = t.connect(pipe)
-    sessions[2] = t.connect(pipe)
-    sessions[3] = t.connect(pipe)
+    sessions[1] = n.connect(pipe)
+    sessions[2] = n.connect(pipe)
+    sessions[3] = n.connect(pipe)
 
     local function request(sessionnr, method, ...)
       local status, rv = sessions[sessionnr]:request(method, ...)
@@ -814,7 +816,7 @@ describe('API: buffer events:', function()
     clear()
     sleep(250)
     -- response
-    eq(true, t.request('nvim_buf_attach', 0, false, {}))
+    eq(true, n.request('nvim_buf_attach', 0, false, {}))
     -- notification
     eq({
       [1] = 'notification',

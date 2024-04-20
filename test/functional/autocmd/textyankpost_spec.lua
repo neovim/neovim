@@ -1,7 +1,9 @@
-local t = require('test.functional.testutil')()
-local clear, eval, eq = t.clear, t.eval, t.eq
-local feed, command, expect = t.feed, t.command, t.expect
-local api, fn, neq = t.api, t.fn, t.neq
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, eval, eq = n.clear, n.eval, t.eq
+local feed, command, expect = n.feed, n.command, n.expect
+local api, fn, neq = n.api, n.fn, t.neq
 
 describe('TextYankPost', function()
   before_each(function()

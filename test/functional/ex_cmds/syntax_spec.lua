@@ -1,8 +1,9 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local eq = t.eq
-local clear = t.clear
-local exc_exec = t.exc_exec
+local clear = n.clear
+local exc_exec = n.exc_exec
 
 describe(':syntax', function()
   before_each(clear)

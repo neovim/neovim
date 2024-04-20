@@ -1,12 +1,13 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local eq = t.eq
-local clear = t.clear
-local insert = t.insert
-local feed = t.feed
-local expect = t.expect
-local feed_command = t.feed_command
-local exc_exec = t.exc_exec
+local clear = n.clear
+local insert = n.insert
+local feed = n.feed
+local expect = n.expect
+local feed_command = n.feed_command
+local exc_exec = n.exc_exec
 
 describe(':undojoin command', function()
   before_each(function()

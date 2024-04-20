@@ -1,10 +1,10 @@
 -- Some tests for buffer-local autocommands
 
-local t = require('test.functional.testutil')()
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local expect = t.expect
-local command = t.command
+local clear = n.clear
+local expect = n.expect
+local command = n.command
 
 local fname = 'Xtest-functional-legacy-054'
 

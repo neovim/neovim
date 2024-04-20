@@ -1,14 +1,15 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local exec_lua = t.exec_lua
+local exec_lua = n.exec_lua
 local eq = t.eq
 
 describe('vim.lsp.codelens', function()
   before_each(function()
-    t.clear()
+    n.clear()
     exec_lua('require("vim.lsp")')
   end)
-  after_each(t.clear)
+  after_each(n.clear)
 
   it('on_codelens_stores_and_displays_lenses', function()
     local fake_uri = 'file:///fake/uri'

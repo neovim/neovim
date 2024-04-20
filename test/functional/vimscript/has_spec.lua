@@ -1,11 +1,13 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear = t.clear
-local connect = t.connect
+
+local clear = n.clear
+local connect = n.connect
 local eq = t.eq
-local fn = t.fn
+local fn = n.fn
 local is_os = t.is_os
-local nvim_prog = t.nvim_prog
+local nvim_prog = n.nvim_prog
 
 describe('has()', function()
   before_each(clear)

@@ -1,15 +1,17 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear = t.clear
-local command = t.command
+
+local clear = n.clear
+local command = n.command
 local eq = t.eq
-local exec = t.exec
-local eval = t.eval
-local exec_lua = t.exec_lua
-local feed = t.feed
-local api = t.api
+local exec = n.exec
+local eval = n.eval
+local exec_lua = n.exec_lua
+local feed = n.feed
+local api = n.api
 local pcall_err = t.pcall_err
-local assert_alive = t.assert_alive
+local assert_alive = n.assert_alive
 
 local mousemodels = { 'extend', 'popup', 'popup_setpos' }
 
