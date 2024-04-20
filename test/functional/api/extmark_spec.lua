@@ -173,7 +173,7 @@ describe('API/extmarks', function()
     })
   end)
 
-  it('col_end is -1', function()
+  it('end_col is -1', function()
     set_extmark(ns, marks[1], 0, 0, {
       end_col = -1,
       end_row = 0,
