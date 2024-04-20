@@ -271,7 +271,7 @@ static void add_buff(buffheader_T *const buf, const char *const s, ptrdiff_t sle
   size_t len;
   if (buf->bh_space >= (size_t)slen) {
     len = strlen(buf->bh_curr->b_str);
-    xstrlcpy(buf->bh_curr->b_str + len, s, (size_t)slen + 1);
+    xmemcpyz(buf->bh_curr->b_str + len, s, (size_t)slen);
     buf->bh_space -= (size_t)slen;
   } else {
     if (slen < MINIMAL_SIZE) {
@@ -281,7 +281,7 @@ static void add_buff(buffheader_T *const buf, const char *const s, ptrdiff_t sle
     }
     buffblock_T *p = xmalloc(offsetof(buffblock_T, b_str) + len + 1);
     buf->bh_space = len - (size_t)slen;
-    xstrlcpy(p->b_str, s, (size_t)slen + 1);
+    xmemcpyz(p->b_str, s, (size_t)slen);
 
     p->b_next = buf->bh_curr->b_next;
     buf->bh_curr->b_next = p;

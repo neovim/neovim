@@ -1628,14 +1628,14 @@ static inline char *add_dir(char *dest, const char *const dir, const size_t dir_
     const char *appname = get_appname();
     size_t appname_len = strlen(appname);
     assert(appname_len < (IOSIZE - sizeof("-data")));
-    xstrlcpy(IObuff, appname, appname_len + 1);
+    xmemcpyz(IObuff, appname, appname_len);
 #if defined(MSWIN)
     if (type == kXDGDataHome || type == kXDGStateHome) {
       xstrlcat(IObuff, "-data", IOSIZE);
       appname_len += 5;
     }
 #endif
-    xstrlcpy(dest, IObuff, appname_len + 1);
+    xmemcpyz(dest, IObuff, appname_len);
     dest += appname_len;
     if (suf1 != NULL) {
       *dest++ = PATHSEP;

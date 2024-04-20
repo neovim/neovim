@@ -1138,7 +1138,7 @@ static char *get_view_file(char c)
   }
   *s++ = '=';
   *s++ = c;
-  xstrlcpy(s, ".vim", 5);
+  xmemcpyz(s, S_LEN(".vim"));
 
   xfree(sname);
   return retval;

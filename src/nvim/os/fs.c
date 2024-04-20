@@ -374,7 +374,7 @@ static bool is_executable_in_path(const char *name, char **abspath)
     char *e = xstrchrnul(p, ENV_SEPCHAR);
 
     // Combine the $PATH segment with `name`.
-    xstrlcpy(buf, p, (size_t)(e - p) + 1);
+    xmemcpyz(buf, p, (size_t)(e - p));
     (void)append_path(buf, name, buf_len);
 
 #ifdef MSWIN

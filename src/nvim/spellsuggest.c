@@ -561,7 +561,7 @@ void spell_suggest(int count)
       xstrlcpy(wcopy, stp->st_word, MAXWLEN + 1);
       int el = sug.su_badlen - stp->st_orglen;
       if (el > 0 && stp->st_wordlen + el <= MAXWLEN) {
-        xstrlcpy(wcopy + stp->st_wordlen, sug.su_badptr + stp->st_orglen, (size_t)el + 1);
+        xmemcpyz(wcopy + stp->st_wordlen, sug.su_badptr + stp->st_orglen, (size_t)el);
       }
       vim_snprintf(IObuff, IOSIZE, "%2d", i + 1);
       if (cmdmsg_rl) {
@@ -733,7 +733,7 @@ static void spell_find_suggest(char *badptr, int badlen, suginfo_T *su, int maxc
   if (su->su_badlen >= MAXWLEN) {
     su->su_badlen = MAXWLEN - 1;        // just in case
   }
-  xstrlcpy(su->su_badword, su->su_badptr, (size_t)su->su_badlen + 1);
+  xmemcpyz(su->su_badword, su->su_badptr, (size_t)su->su_badlen);
   spell_casefold(curwin, su->su_badptr, su->su_badlen, su->su_fbadword,
                  MAXWLEN);
 
@@ -1367,9 +1367,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
 
           compflags[sp->ts_complen] = (uint8_t)((unsigned)flags >> 24);
           compflags[sp->ts_complen + 1] = NUL;
-          xstrlcpy(preword + sp->ts_prewordlen,
+          xmemcpyz(preword + sp->ts_prewordlen,
                    tword + sp->ts_splitoff,
-                   (size_t)(sp->ts_twordlen - sp->ts_splitoff) + 1);
+                   (size_t)(sp->ts_twordlen - sp->ts_splitoff));
 
           // Verify CHECKCOMPOUNDPATTERN  rules.
           if (match_checkcompoundpattern(preword,  sp->ts_prewordlen,
@@ -2646,8 +2646,8 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char *ba
     // Add part of the bad word to the good word, so that we soundfold
     // what replaces the bad word.
     STRCPY(goodword, stp->st_word);
-    xstrlcpy(goodword + stp->st_wordlen,
-             su->su_badptr + su->su_badlen - lendiff, (size_t)lendiff + 1);
+    xmemcpyz(goodword + stp->st_wordlen,
+             su->su_badptr + su->su_badlen - lendiff, (size_t)lendiff);
     pgood = goodword;
   } else {
     pgood = stp->st_word;

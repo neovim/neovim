@@ -347,7 +347,7 @@ static void set_maparg_rhs(const char *const orig_rhs, const size_t orig_rhs_len
   if (rhs_lua == LUA_NOREF) {
     mapargs->orig_rhs_len = orig_rhs_len;
     mapargs->orig_rhs = xcalloc(mapargs->orig_rhs_len + 1, sizeof(char));
-    xstrlcpy(mapargs->orig_rhs, orig_rhs, mapargs->orig_rhs_len + 1);
+    xmemcpyz(mapargs->orig_rhs, orig_rhs, mapargs->orig_rhs_len);
     if (STRICMP(orig_rhs, "<nop>") == 0) {  // "<Nop>" means nothing
       mapargs->rhs = xcalloc(1, sizeof(char));  // single NUL-char
       mapargs->rhs_len = 0;
@@ -477,7 +477,7 @@ static int str_to_mapargs(const char *strargs, bool is_unmap, MapArguments *mapa
     return 1;
   }
   char lhs_to_replace[256];
-  xstrlcpy(lhs_to_replace, to_parse, orig_lhs_len + 1);
+  xmemcpyz(lhs_to_replace, to_parse, orig_lhs_len);
 
   size_t orig_rhs_len = strlen(rhs_start);
   if (!set_maparg_lhs_rhs(lhs_to_replace, orig_lhs_len,

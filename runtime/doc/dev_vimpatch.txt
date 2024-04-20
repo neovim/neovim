@@ -185,7 +185,7 @@ information.
   mch_memmove                                             memmove
   vim_memset copy_chars copy_spaces                       memset
   vim_strbyte                                             strchr
-  vim_strncpy strncpy                                    xstrlcpy
+  vim_strncpy strncpy                               xstrlcpy/xmemcpyz
   vim_strcat strncat                                     xstrlcat
   VIM_ISWHITE                                          ascii_iswhite
   IS_WHITE_OR_NUL                                  ascii_iswhite_or_nul

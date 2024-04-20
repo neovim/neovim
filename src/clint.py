@@ -1989,12 +1989,12 @@ def CheckLanguage(filename, clean_lines, linenum, error):
     match = Search(r'\b(strncpy|STRNCPY)\b', line)
     if match:
         error(filename, linenum, 'runtime/printf', 4,
-              'Use xstrlcpy or snprintf instead of %s (unless this is from Vim)'
+              'Use xstrlcpy, xmemcpyz or snprintf instead of %s (unless this is from Vim)'
               % match.group(1))
     match = Search(r'\b(strcpy)\b', line)
     if match:
         error(filename, linenum, 'runtime/printf', 4,
-              'Use xstrlcpy or snprintf instead of %s' % match.group(1))
+              'Use xstrlcpy, xmemcpyz or snprintf instead of %s' % match.group(1))
     match = Search(r'\b(STRNCAT|strncat|strcat|vim_strcat)\b', line)
     if match:
         error(filename, linenum, 'runtime/printf', 4,

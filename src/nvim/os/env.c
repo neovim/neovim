@@ -1195,7 +1195,7 @@ bool os_setenv_append_path(const char *fname)
   const char *tail = path_tail_with_sep((char *)fname);
   size_t dirlen = (size_t)(tail - fname);
   assert(tail >= fname && dirlen + 1 < sizeof(os_buf));
-  xstrlcpy(os_buf, fname, dirlen + 1);
+  xmemcpyz(os_buf, fname, dirlen);
   const char *path = os_getenv("PATH");
   const size_t pathlen = path ? strlen(path) : 0;
   const size_t newlen = pathlen + dirlen + 2;
