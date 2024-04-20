@@ -1,12 +1,14 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear = t.clear
-local feed, command, insert = t.feed, t.command, t.insert
+
+local clear = n.clear
+local feed, command, insert = n.feed, n.command, n.insert
 local eq = t.eq
-local fn = t.fn
-local api = t.api
-local curwin = t.api.nvim_get_current_win
-local poke_eventloop = t.poke_eventloop
+local fn = n.fn
+local api = n.api
+local curwin = n.api.nvim_get_current_win
+local poke_eventloop = n.poke_eventloop
 
 
 describe('ext_multigrid', function()

@@ -1,12 +1,14 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear = t.clear
+local t_shada = require('test.functional.shada.testutil')
+
+local clear = n.clear
 local eq, api, nvim_eval, nvim_command, exc_exec, fn, nvim_feed =
-  t.eq, t.api, t.eval, t.command, t.exc_exec, t.fn, t.feed
+  t.eq, n.api, n.eval, n.command, n.exc_exec, n.fn, n.feed
 local neq = t.neq
 local read_file = t.read_file
 
-local t_shada = require('test.functional.shada.testutil')
 local get_shada_rw = t_shada.get_shada_rw
 
 local function reset(shada_file)

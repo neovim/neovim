@@ -1,27 +1,29 @@
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local t = require('test.functional.testutil')()
+
 local uv = vim.uv
-local eq, eval, expect, exec = t.eq, t.eval, t.expect, t.exec
-local assert_alive = t.assert_alive
-local clear = t.clear
-local command = t.command
-local feed = t.feed
-local fn = t.fn
-local nvim_prog = t.nvim_prog
+local eq, eval, expect, exec = t.eq, n.eval, n.expect, n.exec
+local assert_alive = n.assert_alive
+local clear = n.clear
+local command = n.command
+local feed = n.feed
+local fn = n.fn
+local nvim_prog = n.nvim_prog
 local ok = t.ok
-local rmdir = t.rmdir
-local new_argv = t.new_argv
-local new_pipename = t.new_pipename
+local rmdir = n.rmdir
+local new_argv = n.new_argv
+local new_pipename = n.new_pipename
 local pesc = vim.pesc
-local os_kill = t.os_kill
-local set_session = t.set_session
-local spawn = t.spawn
-local async_meths = t.async_meths
-local expect_msg_seq = t.expect_msg_seq
+local os_kill = n.os_kill
+local set_session = n.set_session
+local spawn = n.spawn
+local async_meths = n.async_meths
+local expect_msg_seq = n.expect_msg_seq
 local pcall_err = t.pcall_err
 local mkdir = t.mkdir
-local poke_eventloop = t.poke_eventloop
-local api = t.api
+local poke_eventloop = n.poke_eventloop
+local api = n.api
 local retry = t.retry
 local write_file = t.write_file
 
@@ -118,7 +120,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
       env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
     })
     screen0:expect({ any = pesc('[No Name]') }) -- Wait for the child process to start.
-    local child_session = t.connect(child_server)
+    local child_session = n.connect(child_server)
     set_session(child_session)
     local swappath1 = setup_swapname()
     set_session(nvim0)

@@ -1,14 +1,15 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local clear = t.clear
-local command = t.command
+local clear = n.clear
+local command = n.command
 local eq = t.eq
-local expect = t.expect
-local eval = t.eval
-local next_msg = t.next_msg
-local feed = t.feed
-local api = t.api
+local expect = n.expect
+local eval = n.eval
+local next_msg = n.next_msg
+local feed = n.feed
+local api = n.api
 
 describe('cmdline autocommands', function()
   local channel

@@ -1,15 +1,17 @@
 -- Test suite for testing interactions with API bindings
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local fn = t.fn
-local api = t.api
-local clear = t.clear
+
+local fn = n.fn
+local api = n.api
+local clear = n.clear
 local sleep = vim.uv.sleep
-local feed = t.feed
+local feed = n.feed
 local eq = t.eq
-local eval = t.eval
+local eval = n.eval
 local matches = t.matches
-local exec_lua = t.exec_lua
+local exec_lua = n.exec_lua
 local retry = t.retry
 
 before_each(clear)

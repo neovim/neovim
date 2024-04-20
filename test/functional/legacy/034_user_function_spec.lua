@@ -3,9 +3,10 @@
 -- Also test that a builtin function cannot be replaced.
 -- Also test for regression when calling arbitrary expression.
 
-local t = require('test.functional.testutil')()
-local feed, insert, source = t.feed, t.insert, t.source
-local clear, feed_command, expect = t.clear, t.feed_command, t.expect
+local n = require('test.functional.testnvim')()
+
+local feed, insert, source = n.feed, n.insert, n.source
+local clear, feed_command, expect = n.clear, n.feed_command, n.expect
 
 describe(
   'user functions, expr-mappings, overwrite protected builtin functions and regression on calling expressions',

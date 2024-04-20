@@ -1,8 +1,9 @@
 -- Test for floating point and logical operators.
 
-local t = require('test.functional.testutil')()
-local insert, source = t.insert, t.source
-local clear, expect = t.clear, t.expect
+local n = require('test.functional.testnvim')()
+
+local insert, source = n.insert, n.source
+local clear, expect = n.clear, n.expect
 
 describe('floating point and logical operators', function()
   setup(clear)

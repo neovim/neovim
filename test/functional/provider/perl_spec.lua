@@ -1,14 +1,16 @@
-local t = require('test.functional.testutil')()
-local eq, clear = t.eq, t.clear
-local missing_provider = t.missing_provider
-local command = t.command
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local eq, clear = t.eq, n.clear
+local missing_provider = n.missing_provider
+local command = n.command
 local write_file = t.write_file
-local eval = t.eval
+local eval = n.eval
 local retry = t.retry
-local api = t.api
-local insert = t.insert
-local expect = t.expect
-local feed = t.feed
+local api = n.api
+local insert = n.insert
+local expect = n.expect
+local feed = n.feed
 
 do
   clear()

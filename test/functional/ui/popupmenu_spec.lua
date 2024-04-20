@@ -1,17 +1,19 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local assert_alive = t.assert_alive
-local clear, feed = t.clear, t.feed
-local source = t.source
-local insert = t.insert
-local api = t.api
-local async_meths = t.async_meths
-local command = t.command
-local fn = t.fn
+
+local assert_alive = n.assert_alive
+local clear, feed = n.clear, n.feed
+local source = n.source
+local insert = n.insert
+local api = n.api
+local async_meths = n.async_meths
+local command = n.command
+local fn = n.fn
 local eq = t.eq
 local pcall_err = t.pcall_err
-local exec_lua = t.exec_lua
-local exec = t.exec
+local exec_lua = n.exec_lua
+local exec = n.exec
 
 describe('ui/ext_popupmenu', function()
   local screen

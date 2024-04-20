@@ -16,6 +16,7 @@ local function shell_quote(str)
   return str
 end
 
+--- This module uses functions from the context of the test runner.
 --- @class test.testutil
 local M = {
   paths = Paths,
@@ -254,7 +255,7 @@ function M.pcall_err_withtrace(fn, ...)
 
   return (
     errmsg
-      :gsub('^%.%.%./testutil%.lua:0: ', '')
+      :gsub('^%.%.%./testnvim%.lua:0: ', '')
       :gsub('^Error executing lua:- ', '')
       :gsub('^%[string "<nvim>"%]:0: ', '')
   )
@@ -774,6 +775,56 @@ end
 function M.mkdir(path)
   -- 493 is 0755 in decimal
   return (uv.fs_mkdir(path, 493))
+end
+
+--- @param expected any[]
+--- @param received any[]
+--- @param kind string
+--- @return any
+function M.expect_events(expected, received, kind)
+  if not pcall(M.eq, expected, received) then
+    local msg = 'unexpected ' .. kind .. ' received.\n\n'
+
+    msg = msg .. 'received events:\n'
+    for _, e in ipairs(received) do
+      msg = msg .. '  ' .. vim.inspect(e) .. ';\n'
+    end
+    msg = msg .. '\nexpected events:\n'
+    for _, e in ipairs(expected) do
+      msg = msg .. '  ' .. vim.inspect(e) .. ';\n'
+    end
+    M.fail(msg)
+  end
+  return received
+end
+
+--- @param cond boolean
+--- @param reason? string
+--- @return boolean
+function M.skip(cond, reason)
+  if cond then
+    --- @type fun(reason: string)
+    local pending = getfenv(2).pending
+    pending(reason or 'FIXME')
+    return true
+  end
+  return false
+end
+
+-- Calls pending() and returns `true` if the system is too slow to
+-- run fragile or expensive tests. Else returns `false`.
+function M.skip_fragile(pending_fn, cond)
+  if pending_fn == nil or type(pending_fn) ~= type(function() end) then
+    error('invalid pending_fn')
+  end
+  if cond then
+    pending_fn('skipped (test is fragile on this system)', function() end)
+    return true
+  elseif os.getenv('TEST_SKIP_FRAGILE') then
+    pending_fn('skipped (TEST_SKIP_FRAGILE)', function() end)
+    return true
+  end
+  return false
 end
 
 return M

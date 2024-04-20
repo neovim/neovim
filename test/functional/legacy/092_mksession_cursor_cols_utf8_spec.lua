@@ -3,9 +3,10 @@
 --
 -- Same as legacy test 93 but using UTF-8 file encoding.
 
-local t = require('test.functional.testutil')()
-local feed, insert = t.feed, t.insert
-local clear, feed_command, expect = t.clear, t.feed_command, t.expect
+local n = require('test.functional.testnvim')()
+
+local feed, insert = n.feed, n.insert
+local clear, feed_command, expect = n.clear, n.feed_command, n.expect
 
 describe('store cursor position in session file in UTF-8', function()
   setup(clear)

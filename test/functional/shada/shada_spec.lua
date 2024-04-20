@@ -1,15 +1,16 @@
 -- Other ShaDa tests
-local t = require('test.functional.testutil')()
-local api, nvim_command, fn, eq = t.api, t.command, t.fn, t.eq
-local write_file, spawn, set_session, nvim_prog, exc_exec =
-  t.write_file, t.spawn, t.set_session, t.nvim_prog, t.exc_exec
-local is_os = t.is_os
-local skip = t.skip
-
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+local t_shada = require('test.functional.shada.testutil')
 local uv = vim.uv
 local paths = t.paths
 
-local t_shada = require('test.functional.shada.testutil')
+local api, nvim_command, fn, eq = n.api, n.command, n.fn, t.eq
+local write_file, spawn, set_session, nvim_prog, exc_exec =
+  t.write_file, n.spawn, n.set_session, n.nvim_prog, n.exc_exec
+local is_os = t.is_os
+local skip = t.skip
+
 local reset, clear, get_shada_rw = t_shada.reset, t_shada.clear, t_shada.get_shada_rw
 local read_shada_file = t_shada.read_shada_file
 

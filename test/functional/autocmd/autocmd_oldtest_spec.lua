@@ -1,14 +1,15 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local clear = t.clear
+local clear = n.clear
 local eq = t.eq
-local api = t.api
-local fn = t.fn
-local exec = t.exec
-local feed = t.feed
+local api = n.api
+local fn = n.fn
+local exec = n.exec
+local feed = n.feed
 local assert_log = t.assert_log
-local check_close = t.check_close
+local check_close = n.check_close
 local is_os = t.is_os
 
 local testlog = 'Xtest_autocmd_oldtest_log'

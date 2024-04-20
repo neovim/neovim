@@ -1,7 +1,9 @@
-local t = require('test.functional.testutil')()
-local eq, clear, call, write_file, command = t.eq, t.clear, t.call, t.write_file, t.command
-local exc_exec = t.exc_exec
-local eval = t.eval
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local eq, clear, call, write_file, command = t.eq, n.clear, n.call, t.write_file, n.command
+local exc_exec = n.exc_exec
+local eval = n.eval
 local is_os = t.is_os
 
 describe('executable()', function()

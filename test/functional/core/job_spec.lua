@@ -1,38 +1,39 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 local tt = require('test.functional.terminal.testutil')
 
-local clear = t.clear
+local clear = n.clear
 local eq = t.eq
-local eval = t.eval
-local exc_exec = t.exc_exec
-local feed_command = t.feed_command
-local feed = t.feed
-local insert = t.insert
+local eval = n.eval
+local exc_exec = n.exc_exec
+local feed_command = n.feed_command
+local feed = n.feed
+local insert = n.insert
 local neq = t.neq
-local next_msg = t.next_msg
-local testprg = t.testprg
+local next_msg = n.next_msg
+local testprg = n.testprg
 local ok = t.ok
-local source = t.source
+local source = n.source
 local write_file = t.write_file
 local mkdir = t.mkdir
-local rmdir = t.rmdir
-local assert_alive = t.assert_alive
-local command = t.command
-local fn = t.fn
-local os_kill = t.os_kill
+local rmdir = n.rmdir
+local assert_alive = n.assert_alive
+local command = n.command
+local fn = n.fn
+local os_kill = n.os_kill
 local retry = t.retry
-local api = t.api
+local api = n.api
 local NIL = vim.NIL
-local poke_eventloop = t.poke_eventloop
-local get_pathsep = t.get_pathsep
-local pathroot = t.pathroot
-local exec_lua = t.exec_lua
-local nvim_set = t.nvim_set
-local expect_twostreams = t.expect_twostreams
-local expect_msg_seq = t.expect_msg_seq
+local poke_eventloop = n.poke_eventloop
+local get_pathsep = n.get_pathsep
+local pathroot = n.pathroot
+local exec_lua = n.exec_lua
+local nvim_set = n.nvim_set
+local expect_twostreams = n.expect_twostreams
+local expect_msg_seq = n.expect_msg_seq
 local pcall_err = t.pcall_err
 local matches = t.matches
-local Screen = require('test.functional.ui.screen')
 local skip = t.skip
 local is_os = t.is_os
 
@@ -732,7 +733,7 @@ describe('jobs', function()
   describe('jobwait()', function()
     before_each(function()
       if is_os('win') then
-        t.set_shell_powershell()
+        n.set_shell_powershell()
       end
     end)
 
@@ -1239,7 +1240,7 @@ describe('pty process teardown', function()
     skip(fn.executable('sleep') == 0, 'missing "sleep" command')
     -- Use a nested nvim (in :term) to test without --headless.
     fn.termopen({
-      t.nvim_prog,
+      n.nvim_prog,
       '-u',
       'NONE',
       '-i',

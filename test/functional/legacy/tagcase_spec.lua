@@ -1,11 +1,13 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
 local eq = t.eq
-local eval = t.eval
-local exc_exec = t.exc_exec
-local expect = t.expect
-local insert = t.insert
-local source = t.source
+local eval = n.eval
+local exc_exec = n.exc_exec
+local expect = n.expect
+local insert = n.insert
+local source = n.source
 local write_file = t.write_file
 
 describe("'tagcase' option", function()

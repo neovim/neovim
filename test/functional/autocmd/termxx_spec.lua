@@ -1,15 +1,16 @@
-local uv = vim.uv
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local tt = require('test.functional.terminal.testutil')
+local uv = vim.uv
 
-local clear, command, testprg = t.clear, t.command, t.testprg
-local eval, eq, neq, retry = t.eval, t.eq, t.neq, t.retry
+local clear, command, testprg = n.clear, n.command, n.testprg
+local eval, eq, neq, retry = n.eval, t.eq, t.neq, t.retry
 local matches = t.matches
 local ok = t.ok
-local feed = t.feed
-local api = t.api
+local feed = n.feed
+local api = n.api
 local pcall_err = t.pcall_err
-local assert_alive = t.assert_alive
+local assert_alive = n.assert_alive
 local skip = t.skip
 local is_os = t.is_os
 

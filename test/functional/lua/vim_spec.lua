@@ -1,32 +1,33 @@
 -- Test suite for testing interactions with API bindings
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local nvim_prog = t.nvim_prog
-local fn = t.fn
-local api = t.api
-local command = t.command
+local nvim_prog = n.nvim_prog
+local fn = n.fn
+local api = n.api
+local command = n.command
 local dedent = t.dedent
-local insert = t.insert
-local clear = t.clear
+local insert = n.insert
+local clear = n.clear
 local eq = t.eq
 local ok = t.ok
 local pesc = vim.pesc
-local eval = t.eval
-local feed = t.feed
+local eval = n.eval
+local feed = n.feed
 local pcall_err = t.pcall_err
-local exec_lua = t.exec_lua
+local exec_lua = n.exec_lua
 local matches = t.matches
-local exec = t.exec
+local exec = n.exec
 local NIL = vim.NIL
 local retry = t.retry
-local next_msg = t.next_msg
+local next_msg = n.next_msg
 local remove_trace = t.remove_trace
-local mkdir_p = t.mkdir_p
-local rmdir = t.rmdir
+local mkdir_p = n.mkdir_p
+local rmdir = n.rmdir
 local write_file = t.write_file
-local poke_eventloop = t.poke_eventloop
-local assert_alive = t.assert_alive
+local poke_eventloop = n.poke_eventloop
+local assert_alive = n.assert_alive
 
 describe('lua stdlib', function()
   before_each(clear)
@@ -1574,7 +1575,7 @@ describe('lua stdlib', function()
     eq(NIL, exec_lua([[return vim.g.Unknown_script_func]]))
 
     -- Check if autoload works properly
-    local pathsep = t.get_pathsep()
+    local pathsep = n.get_pathsep()
     local xconfig = 'Xhome' .. pathsep .. 'Xconfig'
     local xdata = 'Xhome' .. pathsep .. 'Xdata'
     local autoload_folder = table.concat({ xconfig, 'nvim', 'autoload' }, pathsep)
@@ -4076,7 +4077,7 @@ describe('vim.keymap', function()
     feed('asdf\n')
 
     eq(1, exec_lua [[return GlobalCount]])
-    eq('\nNo mapping found', t.exec_capture('nmap asdf'))
+    eq('\nNo mapping found', n.exec_capture('nmap asdf'))
   end)
 
   it('works with buffer-local mappings', function()
@@ -4100,7 +4101,7 @@ describe('vim.keymap', function()
     feed('asdf\n')
 
     eq(1, exec_lua [[return GlobalCount]])
-    eq('\nNo mapping found', t.exec_capture('nmap asdf'))
+    eq('\nNo mapping found', n.exec_capture('nmap asdf'))
   end)
 
   it('does not mutate the opts parameter', function()

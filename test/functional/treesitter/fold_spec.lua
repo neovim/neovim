@@ -1,12 +1,14 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local eq = t.eq
-local insert = t.insert
-local exec_lua = t.exec_lua
-local command = t.command
-local feed = t.feed
-local poke_eventloop = t.poke_eventloop
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+
+local clear = n.clear
+local eq = t.eq
+local insert = n.insert
+local exec_lua = n.exec_lua
+local command = n.command
+local feed = n.feed
+local poke_eventloop = n.poke_eventloop
 
 before_each(clear)
 

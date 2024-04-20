@@ -1,9 +1,10 @@
 -- Test suite for testing interactions with API bindings
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local exec_lua = t.exec_lua
-local command = t.command
-local clear = t.clear
+local exec_lua = n.exec_lua
+local command = n.command
+local clear = n.clear
 local eq = t.eq
 
 describe('vim.loader', function()

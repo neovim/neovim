@@ -1,15 +1,17 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local assert_alive = t.assert_alive
-local clear, poke_eventloop = t.clear, t.poke_eventloop
-local testprg, source, eq = t.testprg, t.source, t.eq
-local feed = t.feed
-local feed_command, eval = t.feed_command, t.eval
-local fn = t.fn
-local api = t.api
+
+local assert_alive = n.assert_alive
+local clear, poke_eventloop = n.clear, n.poke_eventloop
+local testprg, source, eq = n.testprg, n.source, t.eq
+local feed = n.feed
+local feed_command, eval = n.feed_command, n.eval
+local fn = n.fn
+local api = n.api
 local retry = t.retry
 local ok = t.ok
-local command = t.command
+local command = n.command
 local skip = t.skip
 local is_os = t.is_os
 local is_ci = t.is_ci

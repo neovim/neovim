@@ -1,36 +1,37 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local uv = vim.uv
 
 local fmt = string.format
 local dedent = t.dedent
-local assert_alive = t.assert_alive
+local assert_alive = n.assert_alive
 local NIL = vim.NIL
-local clear, eq, neq = t.clear, t.eq, t.neq
-local command = t.command
-local command_output = t.api.nvim_command_output
-local exec = t.exec
-local exec_capture = t.exec_capture
-local eval = t.eval
-local expect = t.expect
-local fn = t.fn
-local api = t.api
+local clear, eq, neq = n.clear, t.eq, t.neq
+local command = n.command
+local command_output = n.api.nvim_command_output
+local exec = n.exec
+local exec_capture = n.exec_capture
+local eval = n.eval
+local expect = n.expect
+local fn = n.fn
+local api = n.api
 local matches = t.matches
 local pesc = vim.pesc
-local mkdir_p = t.mkdir_p
-local ok, nvim_async, feed = t.ok, t.nvim_async, t.feed
-local async_meths = t.async_meths
+local mkdir_p = n.mkdir_p
+local ok, nvim_async, feed = t.ok, n.nvim_async, n.feed
+local async_meths = n.async_meths
 local is_os = t.is_os
-local parse_context = t.parse_context
-local request = t.request
-local rmdir = t.rmdir
-local source = t.source
-local next_msg = t.next_msg
+local parse_context = n.parse_context
+local request = n.request
+local rmdir = n.rmdir
+local source = n.source
+local next_msg = n.next_msg
 local tmpname = t.tmpname
 local write_file = t.write_file
-local exec_lua = t.exec_lua
-local exc_exec = t.exc_exec
-local insert = t.insert
+local exec_lua = n.exec_lua
+local exc_exec = n.exc_exec
+local insert = n.insert
 local skip = t.skip
 
 local pcall_err = t.pcall_err
@@ -722,12 +723,12 @@ describe('API', function()
     end)
 
     after_each(function()
-      t.rmdir('Xtestdir')
+      n.rmdir('Xtestdir')
     end)
 
     it('works', function()
       api.nvim_set_current_dir('Xtestdir')
-      eq(start_dir .. t.get_pathsep() .. 'Xtestdir', fn.getcwd())
+      eq(start_dir .. n.get_pathsep() .. 'Xtestdir', fn.getcwd())
     end)
 
     it('sets previous directory', function()
@@ -1487,7 +1488,7 @@ describe('API', function()
       eq(NIL, api.nvim_get_var('Unknown_script_func'))
 
       -- Check if autoload works properly
-      local pathsep = t.get_pathsep()
+      local pathsep = n.get_pathsep()
       local xconfig = 'Xhome' .. pathsep .. 'Xconfig'
       local xdata = 'Xhome' .. pathsep .. 'Xdata'
       local autoload_folder = table.concat({ xconfig, 'nvim', 'autoload' }, pathsep)
@@ -1971,7 +1972,7 @@ describe('API', function()
 
   describe('RPC (K_EVENT)', function()
     it('does not complete ("interrupt") normal-mode operator-pending #6166', function()
-      t.insert([[
+      n.insert([[
         FIRST LINE
         SECOND LINE]])
       api.nvim_input('gg')
@@ -2008,7 +2009,7 @@ describe('API', function()
 
     it('does not complete ("interrupt") normal-mode map-pending #6166', function()
       command("nnoremap dd :let g:foo='it worked...'<CR>")
-      t.insert([[
+      n.insert([[
         FIRST LINE
         SECOND LINE]])
       api.nvim_input('gg')
@@ -2020,13 +2021,13 @@ describe('API', function()
       expect([[
         FIRST LINE
         SECOND LINE]])
-      eq('it worked...', t.eval('g:foo'))
+      eq('it worked...', n.eval('g:foo'))
     end)
 
     it('does not complete ("interrupt") insert-mode map-pending #6166', function()
       command('inoremap xx foo')
       command('set timeoutlen=9999')
-      t.insert([[
+      n.insert([[
         FIRST LINE
         SECOND LINE]])
       api.nvim_input('ix')
@@ -2173,32 +2174,32 @@ describe('API', function()
 
   describe('nvim_replace_termcodes', function()
     it('escapes K_SPECIAL as K_SPECIAL KS_SPECIAL KE_FILLER', function()
-      eq('\128\254X', t.api.nvim_replace_termcodes('\128', true, true, true))
+      eq('\128\254X', n.api.nvim_replace_termcodes('\128', true, true, true))
     end)
 
     it('leaves non-K_SPECIAL string unchanged', function()
-      eq('abc', t.api.nvim_replace_termcodes('abc', true, true, true))
+      eq('abc', n.api.nvim_replace_termcodes('abc', true, true, true))
     end)
 
     it('converts <expressions>', function()
-      eq('\\', t.api.nvim_replace_termcodes('<Leader>', true, true, true))
+      eq('\\', n.api.nvim_replace_termcodes('<Leader>', true, true, true))
     end)
 
     it('converts <LeftMouse> to K_SPECIAL KS_EXTRA KE_LEFTMOUSE', function()
       -- K_SPECIAL KS_EXTRA KE_LEFTMOUSE
       -- 0x80      0xfd     0x2c
       -- 128       253      44
-      eq('\128\253\44', t.api.nvim_replace_termcodes('<LeftMouse>', true, true, true))
+      eq('\128\253\44', n.api.nvim_replace_termcodes('<LeftMouse>', true, true, true))
     end)
 
     it('converts keycodes', function()
-      eq('\nx\27x\rx<x', t.api.nvim_replace_termcodes('<NL>x<Esc>x<CR>x<lt>x', true, true, true))
+      eq('\nx\27x\rx<x', n.api.nvim_replace_termcodes('<NL>x<Esc>x<CR>x<lt>x', true, true, true))
     end)
 
     it('does not convert keycodes if special=false', function()
       eq(
         '<NL>x<Esc>x<CR>x<lt>x',
-        t.api.nvim_replace_termcodes('<NL>x<Esc>x<CR>x<lt>x', true, true, false)
+        n.api.nvim_replace_termcodes('<NL>x<Esc>x<CR>x<lt>x', true, true, false)
       )
     end)
 
@@ -2227,18 +2228,18 @@ describe('API', function()
         api.nvim_feedkeys(':let x1="…"\n', '', true)
 
         -- Both nvim_replace_termcodes and nvim_feedkeys escape \x80
-        local inp = t.api.nvim_replace_termcodes(':let x2="…"<CR>', true, true, true)
+        local inp = n.api.nvim_replace_termcodes(':let x2="…"<CR>', true, true, true)
         api.nvim_feedkeys(inp, '', true) -- escape_ks=true
 
         -- nvim_feedkeys with K_SPECIAL escaping disabled
-        inp = t.api.nvim_replace_termcodes(':let x3="…"<CR>', true, true, true)
+        inp = n.api.nvim_replace_termcodes(':let x3="…"<CR>', true, true, true)
         api.nvim_feedkeys(inp, '', false) -- escape_ks=false
 
-        t.stop()
+        n.stop()
       end
 
       -- spin the loop a bit
-      t.run(nil, nil, on_setup)
+      n.run(nil, nil, on_setup)
 
       eq('…', api.nvim_get_var('x1'))
       -- Because of the double escaping this is neq
@@ -2381,7 +2382,7 @@ describe('API', function()
         {0:~                                       }|*6
         {1:very fail}                               |
       ]])
-      t.poke_eventloop()
+      n.poke_eventloop()
 
       -- shows up to &cmdheight lines
       async_meths.nvim_err_write('more fail\ntoo fail\n')
@@ -2693,7 +2694,7 @@ describe('API', function()
 
   describe('nvim_list_runtime_paths', function()
     setup(function()
-      local pathsep = t.get_pathsep()
+      local pathsep = n.get_pathsep()
       mkdir_p('Xtest' .. pathsep .. 'a')
       mkdir_p('Xtest' .. pathsep .. 'b')
     end)
@@ -3200,7 +3201,7 @@ describe('API', function()
   end)
 
   describe('nvim_get_runtime_file', function()
-    local p = t.alter_slashes
+    local p = n.alter_slashes
     it('can find files', function()
       eq({}, api.nvim_get_runtime_file('bork.borkbork', false))
       eq({}, api.nvim_get_runtime_file('bork.borkbork', true))

@@ -1,16 +1,17 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local command = t.command
-local eval = t.eval
-local expect = t.expect
+local clear = n.clear
+local command = n.command
+local eval = n.eval
+local expect = n.expect
 local eq = t.eq
-local feed = t.feed
-local feed_command = t.feed_command
-local insert = t.insert
-local fn = t.fn
-local exec = t.exec
-local exec_lua = t.exec_lua
+local feed = n.feed
+local feed_command = n.feed_command
+local insert = n.insert
+local fn = n.fn
+local exec = n.exec
+local exec_lua = n.exec_lua
 
 local function lastmessage()
   local messages = fn.split(fn.execute('messages'), '\n')
@@ -44,7 +45,7 @@ describe('u CTRL-R g- g+', function()
   local function undo_and_redo(hist_pos, undo, redo, expect_str)
     command('enew!')
     create_history(hist_pos)
-    local cur_contents = t.curbuf_contents()
+    local cur_contents = n.curbuf_contents()
     feed(undo)
     expect(expect_str)
     feed(redo)

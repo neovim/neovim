@@ -1,17 +1,18 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local clear = t.clear
-local feed = t.feed
-local insert = t.insert
-local exec_lua = t.exec_lua
-local exec = t.exec
+local clear = n.clear
+local feed = n.feed
+local insert = n.insert
+local exec_lua = n.exec_lua
+local exec = n.exec
 local expect_events = t.expect_events
-local api = t.api
-local fn = t.fn
-local command = t.command
+local api = n.api
+local fn = n.fn
+local command = n.command
 local eq = t.eq
-local assert_alive = t.assert_alive
+local assert_alive = n.assert_alive
 local pcall_err = t.pcall_err
 
 describe('decorations providers', function()
@@ -723,7 +724,7 @@ describe('decorations providers', function()
     end
     ]]
 
-    t.assert_alive()
+    n.assert_alive()
   end)
 
   it('supports subpriorities (order of definitions in a query file #27131)', function()
@@ -2438,7 +2439,7 @@ describe('extmark decorations', function()
                                                         |
     ]]}
 
-    t.assert_alive()
+    n.assert_alive()
   end)
 
   it('priority ordering of overlay or win_col virtual text at same position', function()
@@ -5153,8 +5154,8 @@ l5
     insert(example_test3)
     feed 'gg'
 
-    t.command('sign define Oldsign text=x')
-    t.command([[exe 'sign place 42 line=2 name=Oldsign buffer=' . bufnr('')]])
+    n.command('sign define Oldsign text=x')
+    n.command([[exe 'sign place 42 line=2 name=Oldsign buffer=' . bufnr('')]])
 
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S1'})
     api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='S2'})
@@ -5177,8 +5178,8 @@ l5
     insert(example_test3)
     feed 'gg'
 
-    t.command('sign define Oldsign text=x')
-    t.command([[exe 'sign place 42 line=2 name=Oldsign buffer=' . bufnr('')]])
+    n.command('sign define Oldsign text=x')
+    n.command([[exe 'sign place 42 line=2 name=Oldsign buffer=' . bufnr('')]])
 
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S1'})
     api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='S2'})

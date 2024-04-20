@@ -1,13 +1,15 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear = t.clear
-local command = t.command
+
+local clear = n.clear
+local command = n.command
 local eq = t.eq
-local eval = t.eval
-local feed = t.feed
-local fn = t.fn
-local poke_eventloop = t.poke_eventloop
-local exec = t.exec
+local eval = n.eval
+local feed = n.feed
+local fn = n.fn
+local poke_eventloop = n.poke_eventloop
+local exec = n.exec
 
 describe('search cmdline', function()
   local screen

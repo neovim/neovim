@@ -1,7 +1,9 @@
 -- Tests for :setlocal and :setglobal
 
-local t = require('test.functional.testutil')()
-local clear, feed_command, eval, eq, api = t.clear, t.feed_command, t.eval, t.eq, t.api
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, feed_command, eval, eq, api = n.clear, n.feed_command, n.eval, t.eq, n.api
 
 local function should_fail(opt, value, errmsg)
   feed_command('setglobal ' .. opt .. '=' .. value)

@@ -1,7 +1,7 @@
-local t = require('test.functional.testutil')()
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local exec_lua = t.exec_lua
+local clear = n.clear
+local exec_lua = n.exec_lua
 
 local N = 7500
 

@@ -1,8 +1,10 @@
-local t = require('test.functional.testutil')()
-local clear, insert, eq = t.clear, t.insert, t.eq
-local command, expect = t.command, t.expect
-local feed, eval = t.feed, t.eval
-local exc_exec = t.exc_exec
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, insert, eq = n.clear, n.insert, t.eq
+local command, expect = n.command, n.expect
+local feed, eval = n.feed, n.eval
+local exc_exec = n.exc_exec
 
 describe('gu and gU', function()
   before_each(clear)

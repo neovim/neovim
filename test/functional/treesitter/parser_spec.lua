@@ -1,12 +1,13 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
+local clear = n.clear
 local dedent = t.dedent
 local eq = t.eq
-local insert = t.insert
-local exec_lua = t.exec_lua
+local insert = n.insert
+local exec_lua = n.exec_lua
 local pcall_err = t.pcall_err
-local feed = t.feed
+local feed = n.feed
 
 describe('treesitter parser API', function()
   before_each(function()
@@ -381,7 +382,7 @@ int x = INT_MAX;
           { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
-        t.feed('ggo<esc>')
+        n.feed('ggo<esc>')
         eq(5, exec_lua('return #parser:children().c:trees()'))
         eq({
           { 0, 0, 8, 0 }, -- root tree
@@ -418,7 +419,7 @@ int x = INT_MAX;
           -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
-        t.feed('ggo<esc>')
+        n.feed('ggo<esc>')
         eq('table', exec_lua('return type(parser:children().c)'))
         eq(2, exec_lua('return #parser:children().c:trees()'))
         eq({
@@ -430,7 +431,7 @@ int x = INT_MAX;
           -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
-        t.feed('7ggI//<esc>')
+        n.feed('7ggI//<esc>')
         exec_lua([[parser:parse({6, 7})]])
         eq('table', exec_lua('return type(parser:children().c)'))
         eq(2, exec_lua('return #parser:children().c:trees()'))
@@ -468,7 +469,7 @@ int x = INT_MAX;
           { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
-        t.feed('ggo<esc>')
+        n.feed('ggo<esc>')
         eq(5, exec_lua('return #parser:children().c:trees()'))
         eq({
           { 0, 0, 8, 0 }, -- root tree
@@ -657,7 +658,7 @@ int x = INT_MAX;
       { 'declaration', 1, 2, 1, 12 },
     }, run_query())
 
-    t.command 'normal ggO'
+    n.command 'normal ggO'
     insert('int a;')
 
     eq({

@@ -1,6 +1,8 @@
-local t = require('test.functional.testutil')()
-local clear, eval, eq = t.clear, t.eval, t.eq
-local command = t.command
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, eval, eq = n.clear, n.eval, t.eq
+local command = n.command
 describe('v:event', function()
   before_each(clear)
   it('is empty before any autocommand', function()

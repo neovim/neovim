@@ -1,11 +1,12 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local command = t.command
-local get_pathsep = t.get_pathsep
+local clear = n.clear
+local command = n.command
+local get_pathsep = n.get_pathsep
 local eq = t.eq
-local fn = t.fn
-local rmdir = t.rmdir
+local fn = n.fn
+local rmdir = n.rmdir
 local mkdir = t.mkdir
 
 local file_prefix = 'Xtest-functional-ex_cmds-mkview_spec'

@@ -1,12 +1,13 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
+local clear = n.clear
 local eq = t.eq
-local feed = t.feed
+local feed = n.feed
 local retry = t.retry
-local exec = t.source
+local exec = n.source
 local sleep = vim.uv.sleep
-local api = t.api
+local api = n.api
 
 before_each(clear)
 

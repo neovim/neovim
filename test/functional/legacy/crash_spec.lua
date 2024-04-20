@@ -1,8 +1,9 @@
-local t = require('test.functional.testutil')()
-local assert_alive = t.assert_alive
-local clear = t.clear
-local command = t.command
-local feed = t.feed
+local n = require('test.functional.testnvim')()
+
+local assert_alive = n.assert_alive
+local clear = n.clear
+local command = n.command
+local feed = n.feed
 
 before_each(clear)
 

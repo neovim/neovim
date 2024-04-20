@@ -4,31 +4,33 @@
 -- "bracketed paste" terminal feature:
 -- http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Bracketed-Paste-Mode
 
-local t = require('test.functional.testutil')()
-local tt = require('test.functional.terminal.testutil')
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+local tt = require('test.functional.terminal.testutil')
+
 local eq = t.eq
 local feed_data = tt.feed_data
-local clear = t.clear
-local command = t.command
+local clear = n.clear
+local command = n.command
 local dedent = t.dedent
-local exec = t.exec
-local exec_lua = t.exec_lua
-local testprg = t.testprg
+local exec = n.exec
+local exec_lua = n.exec_lua
+local testprg = n.testprg
 local retry = t.retry
-local nvim_prog = t.nvim_prog
-local nvim_set = t.nvim_set
+local nvim_prog = n.nvim_prog
+local nvim_set = n.nvim_set
 local ok = t.ok
 local read_file = t.read_file
-local fn = t.fn
-local api = t.api
+local fn = n.fn
+local api = n.api
 local is_ci = t.is_ci
 local is_os = t.is_os
-local new_pipename = t.new_pipename
-local spawn_argv = t.spawn_argv
-local set_session = t.set_session
+local new_pipename = n.new_pipename
+local spawn_argv = n.spawn_argv
+local set_session = n.set_session
 local write_file = t.write_file
-local eval = t.eval
+local eval = n.eval
 local assert_log = t.assert_log
 
 local testlog = 'Xtest-tui-log'
@@ -64,7 +66,7 @@ describe('TUI', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
-    child_session = t.connect(child_server)
+    child_session = n.connect(child_server)
     child_exec_lua = tt.make_lua_executor(child_session)
   end)
 
@@ -2248,7 +2250,7 @@ describe('TUI FocusGained/FocusLost', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
-    child_session = t.connect(child_server)
+    child_session = n.connect(child_server)
     child_session:request(
       'nvim_exec2',
       [[
@@ -2891,7 +2893,7 @@ describe('TUI', function()
 
     screen:expect({ any = '%[No Name%]' })
 
-    local child_session = t.connect(child_server)
+    local child_session = n.connect(child_server)
     retry(nil, 1000, function()
       eq({
         Tc = true,
@@ -2937,7 +2939,7 @@ describe('TUI', function()
 
     screen:expect({ any = '%[No Name%]' })
 
-    local child_session = t.connect(child_server)
+    local child_session = n.connect(child_server)
     retry(nil, 1000, function()
       eq('Ms', eval("get(g:, 'xtgettcap', '')"))
       eq({ true, 'OSC 52' }, { child_session:request('nvim_eval', 'g:clipboard.name') })
@@ -2965,7 +2967,7 @@ describe('TUI bg color', function()
       'set noswapfile',
     })
     screen:expect({ any = '%[No Name%]' })
-    local child_session = t.connect(child_server)
+    local child_session = n.connect(child_server)
     retry(nil, nil, function()
       eq({ true, 'dark' }, { child_session:request('nvim_eval', '&background') })
     end)
@@ -2988,7 +2990,7 @@ describe('TUI bg color', function()
       'set noswapfile',
     })
     screen:expect({ any = '%[No Name%]' })
-    local child_session = t.connect(child_server)
+    local child_session = n.connect(child_server)
     retry(nil, nil, function()
       eq({ true, 'light' }, { child_session:request('nvim_eval', '&background') })
     end)

@@ -1,21 +1,23 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear = t.clear
+
+local clear = n.clear
 local eq = t.eq
 local ok = t.ok
-local describe_lua_and_rpc = t.describe_lua_and_rpc(describe)
-local api = t.api
-local fn = t.fn
-local request = t.request
-local exc_exec = t.exc_exec
-local exec_lua = t.exec_lua
-local feed_command = t.feed_command
-local insert = t.insert
+local describe_lua_and_rpc = n.describe_lua_and_rpc(describe)
+local api = n.api
+local fn = n.fn
+local request = n.request
+local exc_exec = n.exc_exec
+local exec_lua = n.exec_lua
+local feed_command = n.feed_command
+local insert = n.insert
 local NIL = vim.NIL
-local command = t.command
-local feed = t.feed
+local command = n.command
+local feed = n.feed
 local pcall_err = t.pcall_err
-local assert_alive = t.assert_alive
+local assert_alive = n.assert_alive
 
 describe('api/buf', function()
   before_each(clear)
@@ -2066,7 +2068,7 @@ describe('api/buf', function()
       end)
 
       after_each(function()
-        t.rmdir(topdir .. '/Xacd')
+        n.rmdir(topdir .. '/Xacd')
       end)
 
       it('does not change cwd with non-current buffer', function()

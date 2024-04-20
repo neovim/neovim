@@ -1,9 +1,10 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local clear, feed, insert = t.clear, t.feed, t.insert
-local command, neq = t.command, t.neq
-local api = t.api
+local clear, feed, insert = n.clear, n.feed, n.insert
+local command, neq = n.command, t.neq
+local api = n.api
 local eq = t.eq
 local pcall_err = t.pcall_err
 local set_virtual_text = api.nvim_buf_set_virtual_text

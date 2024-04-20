@@ -1,13 +1,14 @@
 -- Tests for :[count]close! and :[count]hide
 
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local eq = t.eq
-local poke_eventloop = t.poke_eventloop
-local eval = t.eval
-local feed = t.feed
-local clear = t.clear
-local command = t.command
+local poke_eventloop = n.poke_eventloop
+local eval = n.eval
+local feed = n.feed
+local clear = n.clear
+local command = n.command
 
 describe('close_count', function()
   setup(clear)

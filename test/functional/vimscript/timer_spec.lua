@@ -1,11 +1,13 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local feed, eq, eval, ok = t.feed, t.eq, t.eval, t.ok
-local source, async_meths, run = t.source, t.async_meths, t.run
-local clear, command, fn = t.clear, t.command, t.fn
-local exc_exec = t.exc_exec
-local api = t.api
-local load_adjust = t.load_adjust
+
+local feed, eq, eval, ok = n.feed, t.eq, n.eval, t.ok
+local source, async_meths, run = n.source, n.async_meths, n.run
+local clear, command, fn = n.clear, n.command, n.fn
+local exc_exec = n.exc_exec
+local api = n.api
+local load_adjust = n.load_adjust
 local retry = t.retry
 
 describe('timers', function()

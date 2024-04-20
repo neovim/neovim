@@ -1,11 +1,13 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local assert_alive = t.assert_alive
-local clear = t.clear
-local feed = t.feed
+
+local assert_alive = n.assert_alive
+local clear = n.clear
+local feed = n.feed
 local eq = t.eq
-local exec_lua = t.exec_lua
-local next_msg = t.next_msg
+local exec_lua = n.exec_lua
+local next_msg = n.next_msg
 local NIL = vim.NIL
 local pcall_err = t.pcall_err
 

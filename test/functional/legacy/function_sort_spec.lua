@@ -1,11 +1,12 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local eq = t.eq
 local neq = t.neq
-local eval = t.eval
-local clear = t.clear
-local source = t.source
-local exc_exec = t.exc_exec
+local eval = n.eval
+local clear = n.clear
+local source = n.source
+local exc_exec = n.exc_exec
 
 describe('sort', function()
   before_each(clear)

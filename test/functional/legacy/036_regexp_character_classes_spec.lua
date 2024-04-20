@@ -1,8 +1,10 @@
 -- Test character classes in regexp using regexpengine 0, 1, 2.
 
-local t = require('test.functional.testutil')()
-local clear, command, expect = t.clear, t.command, t.expect
-local source, write_file = t.source, t.write_file
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, command, expect = n.clear, n.command, n.expect
+local source, write_file = n.source, t.write_file
 
 local function sixlines(text)
   local result = ''
@@ -15,7 +17,7 @@ end
 local function diff(text, nodedent)
   local fname = t.tmpname()
   command('w! ' .. fname)
-  t.poke_eventloop()
+  n.poke_eventloop()
   local data = io.open(fname):read('*all')
   if nodedent then
     t.eq(text, data)

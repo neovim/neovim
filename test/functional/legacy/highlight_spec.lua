@@ -1,12 +1,14 @@
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local t = require('test.functional.testutil')()
-local clear, feed = t.clear, t.feed
-local expect = t.expect
+
+local clear, feed = n.clear, n.feed
+local expect = n.expect
 local eq = t.eq
-local poke_eventloop = t.poke_eventloop
-local exc_exec = t.exc_exec
-local feed_command = t.feed_command
-local exec = t.exec
+local poke_eventloop = n.poke_eventloop
+local exc_exec = n.exc_exec
+local feed_command = n.feed_command
+local exec = n.exec
 
 before_each(clear)
 

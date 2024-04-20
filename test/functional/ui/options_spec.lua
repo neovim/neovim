@@ -1,10 +1,12 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear = t.clear
-local command = t.command
+
+local clear = n.clear
+local command = n.command
 local eq = t.eq
 local shallowcopy = t.shallowcopy
-local eval = t.eval
+local eval = n.eval
 
 describe('UI receives option updates', function()
   local screen

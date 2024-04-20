@@ -1,13 +1,14 @@
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local t = require('test.functional.testutil')()
 
-local clear = t.clear
-local exec = t.exec
-local exec_lua = t.exec_lua
+local clear = n.clear
+local exec = n.exec
+local exec_lua = n.exec_lua
 local eq = t.eq
-local fn = t.fn
-local api = t.api
-local insert = t.insert
+local fn = n.fn
+local api = n.api
+local insert = n.insert
 
 local function html_syntax_match()
   local styles =

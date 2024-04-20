@@ -1,8 +1,9 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local command = t.command
-local feed = t.feed
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+
+local clear = n.clear
+local command = n.command
+local feed = n.feed
 
 describe(':digraphs', function()
   local screen

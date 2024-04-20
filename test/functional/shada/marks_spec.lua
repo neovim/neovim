@@ -1,11 +1,13 @@
 -- ShaDa marks saving/reading support
-local t = require('test.functional.testutil')()
-local api, nvim_command, fn, eq = t.api, t.command, t.fn, t.eq
-local feed = t.feed
-local exc_exec, exec_capture = t.exc_exec, t.exec_capture
-local expect_exit = t.expect_exit
-
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local t_shada = require('test.functional.shada.testutil')
+
+local api, nvim_command, fn, eq = n.api, n.command, n.fn, t.eq
+local feed = n.feed
+local exc_exec, exec_capture = n.exc_exec, n.exec_capture
+local expect_exit = n.expect_exit
+
 local reset, clear = t_shada.reset, t_shada.clear
 
 local nvim_current_line = function()
@@ -216,7 +218,7 @@ describe('ShaDa support code', function()
   -- -c temporary sets lnum to zero to make `+/pat` work, so calling setpcmark()
   -- during -c used to add item with zero lnum to jump list.
   it('does not create incorrect file for non-existent buffers when writing from -c', function()
-    local argv = t.new_argv {
+    local argv = n.new_argv {
       args_rm = {
         '-i',
         '--embed', -- no --embed
@@ -235,7 +237,7 @@ describe('ShaDa support code', function()
   end)
 
   it('does not create incorrect file for non-existent buffers opened from -c', function()
-    local argv = t.new_argv {
+    local argv = n.new_argv {
       args_rm = {
         '-i',
         '--embed', -- no --embed

@@ -1,8 +1,9 @@
 -- Tests for sha256() function.
 
-local t = require('test.functional.testutil')()
-local insert, source = t.insert, t.source
-local clear, expect = t.clear, t.expect
+local n = require('test.functional.testnvim')()
+
+local insert, source = n.insert, n.source
+local clear, expect = n.clear, n.expect
 
 describe('sha256()', function()
   setup(clear)

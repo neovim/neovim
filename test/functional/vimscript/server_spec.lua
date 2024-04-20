@@ -1,13 +1,15 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
 local assert_log = t.assert_log
-local eq, neq, eval = t.eq, t.neq, t.eval
-local clear, fn, api = t.clear, t.fn, t.api
+local eq, neq, eval = t.eq, t.neq, n.eval
+local clear, fn, api = n.clear, n.fn, n.api
 local ok = t.ok
 local matches = t.matches
 local pcall_err = t.pcall_err
-local check_close = t.check_close
+local check_close = n.check_close
 local mkdir = t.mkdir
-local rmdir = t.rmdir
+local rmdir = n.rmdir
 local is_os = t.is_os
 
 local testlog = 'Xtest-server-log'
@@ -148,7 +150,7 @@ describe('server', function()
   it('serverlist() returns the list of servers', function()
     clear()
     -- There should already be at least one server.
-    local n = eval('len(serverlist())')
+    local _n = eval('len(serverlist())')
 
     -- Add some servers.
     local servs = (
@@ -162,25 +164,25 @@ describe('server', function()
     local new_servs = eval('serverlist()')
 
     -- Exactly #servs servers should be added.
-    eq(n + #servs, #new_servs)
+    eq(_n + #servs, #new_servs)
     -- The new servers should be at the end of the list.
     for i = 1, #servs do
-      eq(servs[i], new_servs[i + n])
+      eq(servs[i], new_servs[i + _n])
       eq(1, eval("serverstop('" .. servs[i] .. "')"))
     end
     -- After serverstop() the servers should NOT be in the list.
-    eq(n, eval('len(serverlist())'))
+    eq(_n, eval('len(serverlist())'))
   end)
 end)
 
 describe('startup --listen', function()
   it('validates', function()
     clear()
-    local cmd = { unpack(t.nvim_argv) }
+    local cmd = { unpack(n.nvim_argv) }
     table.insert(cmd, '--listen')
     matches('nvim.*: Argument missing after: "%-%-listen"', fn.system(cmd))
 
-    cmd = { unpack(t.nvim_argv) }
+    cmd = { unpack(n.nvim_argv) }
     table.insert(cmd, '--listen2')
     matches('nvim.*: Garbage after option argument: "%-%-listen2"', fn.system(cmd))
   end)

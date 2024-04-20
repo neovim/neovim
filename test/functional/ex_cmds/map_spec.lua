@@ -1,16 +1,17 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local eq = t.eq
-local exec = t.exec
-local exec_capture = t.exec_capture
-local feed = t.feed
-local api = t.api
-local clear = t.clear
-local command = t.command
-local expect = t.expect
-local insert = t.insert
-local eval = t.eval
+local exec = n.exec
+local exec_capture = n.exec_capture
+local feed = n.feed
+local api = n.api
+local clear = n.clear
+local command = n.command
+local expect = n.expect
+local insert = n.insert
+local eval = n.eval
 
 describe(':*map', function()
   before_each(clear)
