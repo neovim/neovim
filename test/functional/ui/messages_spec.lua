@@ -1,25 +1,27 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear, feed = t.clear, t.feed
-local eval = t.eval
+
+local clear, feed = n.clear, n.feed
+local eval = n.eval
 local eq = t.eq
 local neq = t.neq
-local command = t.command
-local set_method_error = t.set_method_error
-local api = t.api
-local async_meths = t.async_meths
+local command = n.command
+local set_method_error = n.set_method_error
+local api = n.api
+local async_meths = n.async_meths
 local test_build_dir = t.paths.test_build_dir
-local nvim_prog = t.nvim_prog
-local testprg = t.testprg
-local exec = t.exec
-local exec_capture = t.exec_capture
-local exc_exec = t.exc_exec
-local exec_lua = t.exec_lua
-local poke_eventloop = t.poke_eventloop
-local assert_alive = t.assert_alive
+local nvim_prog = n.nvim_prog
+local testprg = n.testprg
+local exec = n.exec
+local exec_capture = n.exec_capture
+local exc_exec = n.exc_exec
+local exec_lua = n.exec_lua
+local poke_eventloop = n.poke_eventloop
+local assert_alive = n.assert_alive
 local retry = t.retry
 local is_os = t.is_os
-local fn = t.fn
+local fn = n.fn
 local skip = t.skip
 
 describe('ui/ext_messages', function()
@@ -2723,13 +2725,13 @@ end)
 it('pager works in headless mode with UI attached', function()
   skip(is_os('win'))
   clear()
-  local child_server = assert(t.new_pipename())
+  local child_server = assert(n.new_pipename())
   fn.jobstart({ nvim_prog, '--clean', '--headless', '--listen', child_server })
   retry(nil, nil, function()
     neq(nil, vim.uv.fs_stat(child_server))
   end)
 
-  local child_session = t.connect(child_server)
+  local child_session = n.connect(child_server)
   local child_screen = Screen.new(40, 6)
   child_screen:attach(nil, child_session)
   child_screen._default_attr_ids = nil -- TODO: unskip with new color scheme

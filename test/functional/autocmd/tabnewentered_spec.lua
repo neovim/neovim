@@ -1,13 +1,14 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local command = t.command
+local clear = n.clear
+local command = n.command
 local dedent = t.dedent
-local eval = t.eval
+local eval = n.eval
 local eq = t.eq
-local feed = t.feed
-local api = t.api
-local exec_capture = t.exec_capture
+local feed = n.feed
+local api = n.api
+local exec_capture = n.exec_capture
 
 describe('TabNewEntered', function()
   describe('au TabNewEntered', function()

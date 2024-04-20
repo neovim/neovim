@@ -1,20 +1,20 @@
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 local uv = vim.uv
 
-local t = require('test.functional.testutil')()
-local Screen = require('test.functional.ui.screen')
-
-local api = t.api
-local feed = t.feed
+local api = n.api
+local feed = n.feed
 local eq = t.eq
 local neq = t.neq
-local clear = t.clear
+local clear = n.clear
 local ok = t.ok
-local fn = t.fn
-local nvim_prog = t.nvim_prog
+local fn = n.fn
+local nvim_prog = n.nvim_prog
 local retry = t.retry
 local write_file = t.write_file
 local assert_log = t.assert_log
-local check_close = t.check_close
+local check_close = n.check_close
 local is_os = t.is_os
 
 local testlog = 'Xtest-embed-log'
@@ -258,7 +258,7 @@ describe('--embed UI', function()
     }
 
     -- Change global cwd
-    t.command(string.format('cd %s/src/nvim', t.paths.test_source_path))
+    n.command(string.format('cd %s/src/nvim', t.paths.test_source_path))
 
     screen:expect {
       condition = function()
@@ -267,8 +267,8 @@ describe('--embed UI', function()
     }
 
     -- Split the window and change the cwd in the split
-    t.command('new')
-    t.command(string.format('lcd %s/test', t.paths.test_source_path))
+    n.command('new')
+    n.command(string.format('lcd %s/test', t.paths.test_source_path))
 
     screen:expect {
       condition = function()
@@ -277,7 +277,7 @@ describe('--embed UI', function()
     }
 
     -- Move to the original window
-    t.command('wincmd p')
+    n.command('wincmd p')
 
     screen:expect {
       condition = function()
@@ -286,7 +286,7 @@ describe('--embed UI', function()
     }
 
     -- Change global cwd again
-    t.command(string.format('cd %s', t.paths.test_source_path))
+    n.command(string.format('cd %s', t.paths.test_source_path))
 
     screen:expect {
       condition = function()
@@ -300,7 +300,7 @@ describe('--embed --listen UI', function()
   it('waits for connection on listening address', function()
     t.skip(t.is_os('win'))
     clear()
-    local child_server = assert(t.new_pipename())
+    local child_server = assert(n.new_pipename())
     fn.jobstart({
       nvim_prog,
       '--embed',
@@ -314,7 +314,7 @@ describe('--embed --listen UI', function()
       neq(nil, uv.fs_stat(child_server))
     end)
 
-    local child_session = t.connect(child_server)
+    local child_session = n.connect(child_server)
 
     local info_ok, api_info = child_session:request('nvim_get_api_info')
     ok(info_ok)

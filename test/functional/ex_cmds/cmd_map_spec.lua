@@ -1,15 +1,17 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local feed = t.feed
-local eq = t.eq
-local expect = t.expect
-local eval = t.eval
-local fn = t.fn
-local insert = t.insert
-local write_file = t.write_file
-local exc_exec = t.exc_exec
-local command = t.command
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+
+local clear = n.clear
+local feed = n.feed
+local eq = t.eq
+local expect = n.expect
+local eval = n.eval
+local fn = n.fn
+local insert = n.insert
+local write_file = t.write_file
+local exc_exec = n.exc_exec
+local command = n.command
 
 describe('mappings with <Cmd>', function()
   local screen

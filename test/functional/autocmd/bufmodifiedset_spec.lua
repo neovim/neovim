@@ -1,10 +1,11 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
+local clear = n.clear
 local eq = t.eq
-local eval = t.eval
-local source = t.source
-local request = t.request
+local eval = n.eval
+local source = n.source
+local request = n.request
 
 describe('BufModified', function()
   before_each(clear)

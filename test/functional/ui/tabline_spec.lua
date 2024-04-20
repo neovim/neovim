@@ -1,9 +1,11 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear, command, eq = t.clear, t.command, t.eq
-local insert = t.insert
-local api = t.api
-local assert_alive = t.assert_alive
+
+local clear, command, eq = n.clear, n.command, t.eq
+local insert = n.insert
+local api = n.api
+local assert_alive = n.assert_alive
 
 describe('ui/ext_tabline', function()
   local screen

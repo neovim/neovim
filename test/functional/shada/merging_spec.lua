@@ -1,10 +1,12 @@
 -- ShaDa merging data support
-local t = require('test.functional.testutil')()
-local nvim_command, fn, eq = t.command, t.fn, t.eq
-local exc_exec, exec_capture = t.exc_exec, t.exec_capture
-local api = t.api
-
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local t_shada = require('test.functional.shada.testutil')
+
+local nvim_command, fn, eq = n.command, n.fn, t.eq
+local exc_exec, exec_capture = n.exc_exec, n.exec_capture
+local api = n.api
+
 local reset, clear, get_shada_rw = t_shada.reset, t_shada.clear, t_shada.get_shada_rw
 local read_shada_file = t_shada.read_shada_file
 

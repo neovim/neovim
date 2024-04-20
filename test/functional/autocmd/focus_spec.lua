@@ -1,7 +1,9 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local tt = require('test.functional.terminal.testutil')
-local clear = t.clear
-local feed_command = t.feed_command
+
+local clear = n.clear
+local feed_command = n.feed_command
 local feed_data = tt.feed_data
 
 if t.skip(t.is_os('win')) then

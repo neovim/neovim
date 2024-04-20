@@ -1,17 +1,19 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local eval = t.eval
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
+local eval = n.eval
 local eq = t.eq
-local feed_command = t.feed_command
+local feed_command = n.feed_command
 local retry = t.retry
 local ok = t.ok
-local source = t.source
-local poke_eventloop = t.poke_eventloop
-local load_adjust = t.load_adjust
+local source = n.source
+local poke_eventloop = n.poke_eventloop
+local load_adjust = n.load_adjust
 local write_file = t.write_file
 local is_os = t.is_os
 local is_ci = t.is_ci
-local is_asan = t.is_asan
+local is_asan = n.is_asan
 
 clear()
 if is_asan() then

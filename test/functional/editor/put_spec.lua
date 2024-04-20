@@ -1,17 +1,18 @@
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local t = require('test.functional.testutil')()
 
-local clear = t.clear
-local insert = t.insert
-local feed = t.feed
-local expect = t.expect
+local clear = n.clear
+local insert = n.insert
+local feed = n.feed
+local expect = n.expect
 local eq = t.eq
 local map = vim.tbl_map
 local filter = vim.tbl_filter
-local feed_command = t.feed_command
-local command = t.command
-local curbuf_contents = t.curbuf_contents
-local fn = t.fn
+local feed_command = n.feed_command
+local command = n.command
+local curbuf_contents = n.curbuf_contents
+local fn = n.fn
 local dedent = t.dedent
 
 local function reset()

@@ -1,4 +1,5 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+
 local eq = t.eq
 
 local parser = require('scripts/luacats_parser')

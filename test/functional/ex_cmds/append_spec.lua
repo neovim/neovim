@@ -1,14 +1,15 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 
 local eq = t.eq
 local dedent = t.dedent
-local exec = t.exec
-local feed = t.feed
-local clear = t.clear
-local fn = t.fn
-local command = t.command
-local api = t.api
-local Screen = require('test.functional.ui.screen')
+local exec = n.exec
+local feed = n.feed
+local clear = n.clear
+local fn = n.fn
+local command = n.command
+local api = n.api
 
 local cmdtest = function(cmd, prep, ret1)
   describe(':' .. cmd, function()

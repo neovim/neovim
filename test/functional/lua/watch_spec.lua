@@ -1,7 +1,9 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
 local eq = t.eq
-local exec_lua = t.exec_lua
-local clear = t.clear
+local exec_lua = n.exec_lua
+local clear = n.clear
 local is_ci = t.is_ci
 local is_os = t.is_os
 local skip = t.skip
@@ -24,7 +26,7 @@ describe('vim._watch', function()
       if watchfunc == 'fswatch' then
         skip(is_os('win'), 'not supported on windows')
         skip(is_os('mac'), 'flaky test on mac')
-        skip(not is_ci() and t.fn.executable('fswatch') == 0, 'fswatch not installed and not on CI')
+        skip(not is_ci() and n.fn.executable('fswatch') == 0, 'fswatch not installed and not on CI')
       end
 
       if watchfunc == 'watch' then

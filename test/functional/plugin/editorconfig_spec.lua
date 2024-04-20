@@ -1,11 +1,13 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local command = t.command
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
+local command = n.command
 local eq = t.eq
-local pathsep = t.get_pathsep()
-local fn = t.fn
-local api = t.api
-local exec_lua = t.exec_lua
+local pathsep = n.get_pathsep()
+local fn = n.fn
+local api = n.api
+local exec_lua = n.exec_lua
 
 local testdir = 'Xtest-editorconfig'
 
@@ -20,7 +22,7 @@ local function test_case(name, expected)
 end
 
 setup(function()
-  t.mkdir_p(testdir)
+  n.mkdir_p(testdir)
   t.write_file(
     testdir .. pathsep .. '.editorconfig',
     [[
@@ -96,7 +98,7 @@ setup(function()
 end)
 
 teardown(function()
-  t.rmdir(testdir)
+  n.rmdir(testdir)
 end)
 
 describe('editorconfig', function()

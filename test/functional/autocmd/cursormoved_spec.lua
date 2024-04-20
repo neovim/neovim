@@ -1,11 +1,12 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
+local clear = n.clear
 local eq = t.eq
-local eval = t.eval
-local api = t.api
-local source = t.source
-local command = t.command
+local eval = n.eval
+local api = n.api
+local source = n.source
+local command = n.command
 
 describe('CursorMoved', function()
   before_each(clear)

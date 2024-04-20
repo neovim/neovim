@@ -1,14 +1,14 @@
-local t = require('test.functional.testutil')()
+local n = require('test.functional.testnvim')()
 
-local eval = t.eval
-local clear = t.clear
-local command = t.command
+local eval = n.eval
+local clear = n.clear
+local command = n.command
 
 describe('autocmd FileType', function()
   before_each(clear)
 
   it('is triggered by :help only once', function()
-    t.add_builddir_to_rtp()
+    n.add_builddir_to_rtp()
     command('let g:foo = 0')
     command('autocmd FileType help let g:foo = g:foo + 1')
     command('help help')

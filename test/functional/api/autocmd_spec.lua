@@ -1,13 +1,14 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local command = t.command
+local clear = n.clear
+local command = n.command
 local eq = t.eq
 local neq = t.neq
-local exec_lua = t.exec_lua
+local exec_lua = n.exec_lua
 local matches = t.matches
-local api = t.api
-local source = t.source
+local api = n.api
+local source = n.source
 local pcall_err = t.pcall_err
 
 before_each(clear)

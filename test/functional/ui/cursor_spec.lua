@@ -1,8 +1,10 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear, api = t.clear, t.api
+
+local clear, api = n.clear, n.api
 local eq = t.eq
-local command = t.command
+local command = n.command
 
 describe('ui/cursor', function()
   local screen
@@ -213,8 +215,8 @@ describe('ui/cursor', function()
     }
 
     -- Change the cursor style.
-    t.command('hi Cursor guibg=DarkGray')
-    t.command(
+    n.command('hi Cursor guibg=DarkGray')
+    n.command(
       'set guicursor=n-v-c:block,i-ci-ve:ver25,r-cr-o:hor20'
         .. ',a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor'
         .. ',sm:block-blinkwait175-blinkoff150-blinkon175'
@@ -260,8 +262,8 @@ describe('ui/cursor', function()
     end)
 
     -- Change hl groups only, should update the styles
-    t.command('hi Cursor guibg=Red')
-    t.command('hi lCursor guibg=Green')
+    n.command('hi Cursor guibg=Red')
+    n.command('hi lCursor guibg=Green')
 
     -- Update the expected values.
     for _, m in ipairs(expected_mode_info) do
@@ -280,7 +282,7 @@ describe('ui/cursor', function()
     end)
 
     -- update the highlight again to hide cursor
-    t.command('hi Cursor blend=100')
+    n.command('hi Cursor blend=100')
 
     for _, m in ipairs(expected_mode_info) do
       if m.hl_id then

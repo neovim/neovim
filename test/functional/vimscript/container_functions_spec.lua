@@ -1,9 +1,10 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local eq = t.eq
-local eval = t.eval
-local api = t.api
-local clear = t.clear
+local eval = n.eval
+local api = n.api
+local clear = n.clear
 
 before_each(clear)
 

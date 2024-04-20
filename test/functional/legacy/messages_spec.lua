@@ -1,12 +1,13 @@
-local t = require('test.functional.testutil')()
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear = t.clear
-local command = t.command
-local exec = t.exec
-local feed = t.feed
-local api = t.api
-local nvim_dir = t.nvim_dir
-local assert_alive = t.assert_alive
+
+local clear = n.clear
+local command = n.command
+local exec = n.exec
+local feed = n.feed
+local api = n.api
+local nvim_dir = n.nvim_dir
+local assert_alive = n.assert_alive
 
 before_each(clear)
 

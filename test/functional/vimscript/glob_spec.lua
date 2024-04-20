@@ -1,5 +1,7 @@
-local t = require('test.functional.testutil')()
-local clear, command, eval, eq = t.clear, t.command, t.eval, t.eq
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, command, eval, eq = n.clear, n.command, n.eval, t.eq
 local mkdir = t.mkdir
 
 before_each(function()

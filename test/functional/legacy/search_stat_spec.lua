@@ -1,6 +1,7 @@
-local t = require('test.functional.testutil')()
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear, feed, exec, command = t.clear, t.feed, t.exec, t.command
+
+local clear, feed, exec, command = n.clear, n.feed, n.exec, n.command
 
 describe('search stat', function()
   local screen

@@ -1,7 +1,8 @@
 -- Tests for signs
 
-local t = require('test.functional.testutil')()
-local clear, command, expect = t.clear, t.command, t.expect
+local n = require('test.functional.testnvim')()
+
+local clear, command, expect = n.clear, n.command, n.expect
 
 describe('signs', function()
   setup(clear)

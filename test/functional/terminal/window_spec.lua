@@ -1,12 +1,14 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
 local tt = require('test.functional.terminal.testutil')
 local feed_data = tt.feed_data
-local feed, clear = t.feed, t.clear
-local poke_eventloop = t.poke_eventloop
-local command = t.command
+local feed, clear = n.feed, n.clear
+local poke_eventloop = n.poke_eventloop
+local command = n.command
 local retry = t.retry
 local eq = t.eq
-local eval = t.eval
+local eval = n.eval
 local skip = t.skip
 local is_os = t.is_os
 

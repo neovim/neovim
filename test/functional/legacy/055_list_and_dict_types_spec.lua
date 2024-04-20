@@ -1,8 +1,9 @@
 -- Tests for List and Dictionary types.
 
-local t = require('test.functional.testutil')()
-local feed, source = t.feed, t.source
-local clear, feed_command, expect = t.clear, t.feed_command, t.expect
+local n = require('test.functional.testnvim')()
+
+local feed, source = n.feed, n.source
+local clear, feed_command, expect = n.clear, n.feed_command, n.expect
 
 describe('list and dictionary types', function()
   before_each(clear)

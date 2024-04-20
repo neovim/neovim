@@ -9,15 +9,15 @@
 -- :buf
 -- :edit
 
-local t = require('test.functional.testutil')()
+local n = require('test.functional.testnvim')()
 
-local feed = t.feed
-local clear = t.clear
-local source = t.source
-local insert = t.insert
-local expect = t.expect
-local feed_command = t.feed_command
-local expect_exit = t.expect_exit
+local feed = n.feed
+local clear = n.clear
+local source = n.source
+local insert = n.insert
+local expect = n.expect
+local feed_command = n.feed_command
+local expect_exit = n.expect_exit
 
 describe('Commands that close windows and/or buffers', function()
   local function cleanup()

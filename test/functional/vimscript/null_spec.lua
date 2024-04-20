@@ -1,10 +1,11 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local exc_exec = t.exc_exec
-local command = t.command
-local clear = t.clear
-local api = t.api
-local fn = t.fn
+local exc_exec = n.exc_exec
+local command = n.command
+local clear = n.clear
+local api = n.api
+local fn = n.fn
 local eq = t.eq
 
 local function redir_exec(cmd)

@@ -1,15 +1,16 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local clear = t.clear
-local command = t.command
+local clear = n.clear
+local command = n.command
 local dedent = t.dedent
 local eq = t.eq
-local fn = t.fn
-local feed = t.feed
-local exec_capture = t.exec_capture
+local fn = n.fn
+local feed = n.feed
+local exec_capture = n.exec_capture
 local write_file = t.write_file
-local api = t.api
+local api = n.api
 
 describe('jumplist', function()
   local fname1 = 'Xtest-functional-normal-jump'

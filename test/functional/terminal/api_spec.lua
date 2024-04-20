@@ -1,4 +1,6 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
 local tt = require('test.functional.terminal.testutil')
 local ok = t.ok
 
@@ -11,7 +13,7 @@ describe('api', function()
   local socket_name = './Xtest_functional_api.sock'
 
   before_each(function()
-    t.clear()
+    n.clear()
     os.remove(socket_name)
     screen = tt.setup_child_nvim({
       '-u',
@@ -21,7 +23,7 @@ describe('api', function()
       '--cmd',
       'colorscheme vim',
       '--cmd',
-      t.nvim_set .. ' notermguicolors',
+      n.nvim_set .. ' notermguicolors',
     })
   end)
   after_each(function()
@@ -49,8 +51,8 @@ describe('api', function()
       {3:-- TERMINAL --}                                    |
     ]])
 
-    local socket_session1 = t.connect(socket_name)
-    local socket_session2 = t.connect(socket_name)
+    local socket_session1 = n.connect(socket_name)
+    local socket_session2 = n.connect(socket_name)
 
     tt.feed_data('i[tui] insert-mode')
     -- Wait for stdin to be processed.

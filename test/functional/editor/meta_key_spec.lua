@@ -1,10 +1,12 @@
-local t = require('test.functional.testutil')()
-local clear, feed, insert = t.clear, t.feed, t.insert
-local command = t.command
-local exec_lua = t.exec_lua
-local eval = t.eval
-local expect = t.expect
-local fn = t.fn
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, feed, insert = n.clear, n.feed, n.insert
+local command = n.command
+local exec_lua = n.exec_lua
+local eval = n.eval
+local expect = n.expect
+local fn = n.fn
 local eq = t.eq
 
 describe('meta-keys #8226 #13042', function()

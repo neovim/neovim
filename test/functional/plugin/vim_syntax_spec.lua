@@ -1,15 +1,16 @@
-local t = require('test.functional.testutil')()
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear = t.clear
-local exec = t.exec
-local api = t.api
+
+local clear = n.clear
+local exec = n.exec
+local api = n.api
 
 describe('Vimscript syntax highlighting', function()
   local screen --- @type test.functional.ui.screen
 
   before_each(function()
     clear()
-    t.add_builddir_to_rtp()
+    n.add_builddir_to_rtp()
     exec([[
       setfiletype vim
       syntax on

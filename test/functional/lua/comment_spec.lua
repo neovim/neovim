@@ -1,11 +1,12 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local api = t.api
-local clear = t.clear
+local api = n.api
+local clear = n.clear
 local eq = t.eq
-local exec_capture = t.exec_capture
-local exec_lua = t.exec_lua
-local feed = t.feed
+local exec_capture = n.exec_capture
+local exec_lua = n.exec_lua
+local feed = n.feed
 
 -- Reference text
 -- aa

@@ -1,16 +1,17 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local eq = t.eq
 local NIL = vim.NIL
-local eval = t.eval
-local clear = t.clear
-local api = t.api
-local fn = t.fn
-local source = t.source
+local eval = n.eval
+local clear = n.clear
+local api = n.api
+local fn = n.fn
+local source = n.source
 local dedent = t.dedent
-local command = t.command
-local exc_exec = t.exc_exec
-local exec_capture = t.exec_capture
+local command = n.command
+local exc_exec = n.exc_exec
+local exec_capture = n.exec_capture
 local matches = t.matches
 
 describe(':echo :echon :echomsg :echoerr', function()
@@ -349,8 +350,8 @@ describe(':echo :echon :echomsg :echoerr', function()
   end)
 
   describe('used to represent special values', function()
-    local function chr(n)
-      return ('%c'):format(n)
+    local function chr(_n)
+      return ('%c'):format(_n)
     end
     local function ctrl(c)
       return ('%c'):format(c:upper():byte() - 0x40)

@@ -1,14 +1,15 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local eq = t.eq
-local feed = t.feed
-local api = t.api
-local clear = t.clear
-local source = t.source
-local command = t.command
-local exc_exec = t.exc_exec
-local async_meths = t.async_meths
+local feed = n.feed
+local api = n.api
+local clear = n.clear
+local source = n.source
+local command = n.command
+local exc_exec = n.exc_exec
+local async_meths = n.async_meths
 local NIL = vim.NIL
 
 local screen

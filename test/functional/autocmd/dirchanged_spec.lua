@@ -1,10 +1,11 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local command = t.command
+local clear = n.clear
+local command = n.command
 local eq = t.eq
-local eval = t.eval
-local request = t.request
+local eval = n.eval
+local request = n.request
 local is_os = t.is_os
 
 describe('autocmd DirChanged and DirChangedPre', function()
@@ -27,7 +28,7 @@ describe('autocmd DirChanged and DirChangedPre', function()
   end)
   teardown(function()
     for _, dir in pairs(dirs) do
-      t.rmdir(dir)
+      n.rmdir(dir)
     end
   end)
 

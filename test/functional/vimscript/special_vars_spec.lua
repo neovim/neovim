@@ -1,11 +1,13 @@
-local t = require('test.functional.testutil')()
-local exc_exec = t.exc_exec
-local command = t.command
-local fn = t.fn
-local clear = t.clear
-local eval = t.eval
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local exc_exec = n.exc_exec
+local command = n.command
+local fn = n.fn
+local clear = n.clear
+local eval = n.eval
 local eq = t.eq
-local api = t.api
+local api = n.api
 local NIL = vim.NIL
 
 describe('Special values', function()

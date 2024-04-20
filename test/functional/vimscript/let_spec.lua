@@ -1,15 +1,16 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local eq = t.eq
-local clear = t.clear
-local command = t.command
-local eval = t.eval
-local api = t.api
-local exec = t.exec
-local exec_capture = t.exec_capture
-local expect_exit = t.expect_exit
-local source = t.source
-local testprg = t.testprg
+local clear = n.clear
+local command = n.command
+local eval = n.eval
+local api = n.api
+local exec = n.exec
+local exec_capture = n.exec_capture
+local expect_exit = n.expect_exit
+local source = n.source
+local testprg = n.testprg
 
 before_each(clear)
 

@@ -1,17 +1,19 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear = t.clear
+
+local clear = n.clear
 local eq = t.eq
-local eval = t.eval
-local command = t.command
+local eval = n.eval
+local command = n.command
 local pcall_err = t.pcall_err
-local feed = t.feed
-local poke_eventloop = t.poke_eventloop
+local feed = n.feed
+local poke_eventloop = n.poke_eventloop
 local is_os = t.is_os
-local api = t.api
-local async_meths = t.async_meths
-local testprg = t.testprg
-local assert_alive = t.assert_alive
+local api = n.api
+local async_meths = n.async_meths
+local testprg = n.testprg
+local assert_alive = n.assert_alive
 
 describe('terminal channel is closed and later released if', function()
   local screen

@@ -1,11 +1,12 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
+local clear = n.clear
 local eq = t.eq
-local exec = t.exec
-local exec_capture = t.exec_capture
+local exec = n.exec
+local exec_capture = n.exec_capture
 local write_file = t.write_file
-local call_viml_function = t.api.nvim_call_function
+local call_viml_function = n.api.nvim_call_function
 
 local function last_set_tests(cmd)
   local script_location, script_file
@@ -15,7 +16,7 @@ local function last_set_tests(cmd)
     script_file = 'test_verbose.lua'
     local current_dir = call_viml_function('getcwd', {})
     current_dir = call_viml_function('fnamemodify', { current_dir, ':~' })
-    script_location = table.concat { current_dir, t.get_pathsep(), script_file }
+    script_location = table.concat { current_dir, n.get_pathsep(), script_file }
 
     write_file(
       script_file,

@@ -1,6 +1,8 @@
-local t = require('test.functional.testutil')()
-local clear, fn, eq = t.clear, t.fn, t.eq
-local api = t.api
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, fn, eq = n.clear, n.fn, t.eq
+local api = n.api
 
 local function read_mpack_file(fname)
   local fd = io.open(fname, 'rb')

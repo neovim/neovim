@@ -1,6 +1,7 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local exec_lua = t.exec_lua
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
+local exec_lua = n.exec_lua
 
 describe("Nvim API calls with 'winfixbuf'", function()
   before_each(function()

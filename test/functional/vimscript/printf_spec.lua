@@ -1,11 +1,12 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
+local clear = n.clear
 local eq = t.eq
-local eval = t.eval
-local fn = t.fn
-local api = t.api
-local exc_exec = t.exc_exec
+local eval = n.eval
+local fn = n.fn
+local api = n.api
+local exc_exec = n.exc_exec
 
 describe('printf()', function()
   before_each(clear)

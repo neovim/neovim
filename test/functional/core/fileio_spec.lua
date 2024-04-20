@@ -1,37 +1,38 @@
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 local uv = vim.uv
-local t = require('test.functional.testutil')()
 
 local assert_log = t.assert_log
 local assert_nolog = t.assert_nolog
-local clear = t.clear
-local command = t.command
+local clear = n.clear
+local command = n.command
 local eq = t.eq
 local neq = t.neq
 local ok = t.ok
-local feed = t.feed
-local fn = t.fn
-local nvim_prog = t.nvim_prog
-local request = t.request
+local feed = n.feed
+local fn = n.fn
+local nvim_prog = n.nvim_prog
+local request = n.request
 local retry = t.retry
-local rmdir = t.rmdir
+local rmdir = n.rmdir
 local matches = t.matches
-local api = t.api
+local api = n.api
 local mkdir = t.mkdir
 local sleep = vim.uv.sleep
 local read_file = t.read_file
 local trim = vim.trim
-local currentdir = t.fn.getcwd
-local assert_alive = t.assert_alive
-local check_close = t.check_close
-local expect_exit = t.expect_exit
+local currentdir = n.fn.getcwd
+local assert_alive = n.assert_alive
+local check_close = n.check_close
+local expect_exit = n.expect_exit
 local write_file = t.write_file
-local Screen = require('test.functional.ui.screen')
-local feed_command = t.feed_command
+local feed_command = n.feed_command
 local skip = t.skip
 local is_os = t.is_os
 local is_ci = t.is_ci
-local spawn = t.spawn
-local set_session = t.set_session
+local spawn = n.spawn
+local set_session = n.set_session
 
 describe('fileio', function()
   before_each(function() end)
@@ -228,7 +229,7 @@ describe('fileio', function()
 
     local initial_content = 'foo'
     local backup_dir = 'Xtest_backupdir'
-    local sep = t.get_pathsep()
+    local sep = n.get_pathsep()
     local link_file_name = 'Xtest_startup_file2'
     local backup_file_name = backup_dir .. sep .. link_file_name .. '~'
 

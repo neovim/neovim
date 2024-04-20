@@ -1,13 +1,15 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
 local eq = t.eq
 local ok = t.ok
-local exec_lua = t.exec_lua
-local clear = t.clear
-local feed = t.feed
-local eval = t.eval
+local exec_lua = n.exec_lua
+local clear = n.clear
+local feed = n.feed
+local eval = n.eval
 local is_ci = t.is_ci
 local is_os = t.is_os
-local poke_eventloop = t.poke_eventloop
+local poke_eventloop = n.poke_eventloop
 
 describe('vim.ui', function()
   before_each(function()

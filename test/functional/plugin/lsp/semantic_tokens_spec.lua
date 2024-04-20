@@ -1,16 +1,17 @@
-local t = require('test.functional.testutil')()
-local t_lsp = require('test.functional.plugin.lsp.testutil')
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+local t_lsp = require('test.functional.plugin.lsp.testutil')
 
-local command = t.command
+local command = n.command
 local dedent = t.dedent
 local eq = t.eq
-local exec_lua = t.exec_lua
-local feed = t.feed
-local feed_command = t.feed_command
-local insert = t.insert
+local exec_lua = n.exec_lua
+local feed = n.feed
+local feed_command = n.feed_command
+local insert = n.insert
 local matches = t.matches
-local api = t.api
+local api = n.api
 
 local clear_notrace = t_lsp.clear_notrace
 local create_server_definition = t_lsp.create_server_definition

@@ -1,14 +1,15 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local exec_lua = t.exec_lua
+local clear = n.clear
+local exec_lua = n.exec_lua
 local eq = t.eq
-local mkdir_p = t.mkdir_p
-local rmdir = t.rmdir
-local nvim_dir = t.nvim_dir
+local mkdir_p = n.mkdir_p
+local rmdir = n.rmdir
+local nvim_dir = n.nvim_dir
 local test_build_dir = t.paths.test_build_dir
 local test_source_path = t.paths.test_source_path
-local nvim_prog = t.nvim_prog
+local nvim_prog = n.nvim_prog
 local is_os = t.is_os
 local mkdir = t.mkdir
 

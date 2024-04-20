@@ -1,17 +1,19 @@
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local t = require('test.functional.testutil')()
 local tt = require('test.functional.terminal.testutil')
-local clear, eq = t.clear, t.eq
-local feed, testprg = t.feed, t.testprg
-local eval = t.eval
-local command = t.command
-local poke_eventloop = t.poke_eventloop
+
+local clear, eq = n.clear, t.eq
+local feed, testprg = n.feed, n.testprg
+local eval = n.eval
+local command = n.command
+local poke_eventloop = n.poke_eventloop
 local retry = t.retry
-local api = t.api
+local api = n.api
 local feed_data = tt.feed_data
 local pcall_err = t.pcall_err
-local exec_lua = t.exec_lua
-local assert_alive = t.assert_alive
+local exec_lua = n.exec_lua
+local assert_alive = n.assert_alive
 local skip = t.skip
 local is_os = t.is_os
 

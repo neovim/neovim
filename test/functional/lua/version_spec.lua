@@ -1,11 +1,13 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
 local eq = t.eq
 local ok = t.ok
-local exec_lua = t.exec_lua
+local exec_lua = n.exec_lua
 local matches = t.matches
 local pcall_err = t.pcall_err
-local fn = t.fn
+local fn = n.fn
 
 local function v(ver)
   return vim.version._version(ver)

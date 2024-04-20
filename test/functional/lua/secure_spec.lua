@@ -1,16 +1,17 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local eq = t.eq
-local clear = t.clear
-local command = t.command
-local pathsep = t.get_pathsep()
+local clear = n.clear
+local command = n.command
+local pathsep = n.get_pathsep()
 local is_os = t.is_os
-local api = t.api
-local exec_lua = t.exec_lua
-local feed_command = t.feed_command
-local feed = t.feed
-local fn = t.fn
+local api = n.api
+local exec_lua = n.exec_lua
+local feed_command = n.feed_command
+local feed = n.feed
+local fn = n.fn
 local stdpath = fn.stdpath
 local pcall_err = t.pcall_err
 local matches = t.matches
@@ -22,7 +23,7 @@ describe('vim.secure', function()
 
     setup(function()
       clear { env = { XDG_STATE_HOME = xstate } }
-      t.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
+      n.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
       t.write_file(
         'Xfile',
         [[
@@ -33,7 +34,7 @@ describe('vim.secure', function()
 
     teardown(function()
       os.remove('Xfile')
-      t.rmdir(xstate)
+      n.rmdir(xstate)
     end)
 
     it('works', function()
@@ -181,11 +182,11 @@ describe('vim.secure', function()
 
     setup(function()
       clear { env = { XDG_STATE_HOME = xstate } }
-      t.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
+      n.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
     end)
 
     teardown(function()
-      t.rmdir(xstate)
+      n.rmdir(xstate)
     end)
 
     before_each(function()

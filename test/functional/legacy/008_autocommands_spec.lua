@@ -1,12 +1,14 @@
 -- Test for BufWritePre autocommand that deletes or unloads the buffer.
 -- Test for BufUnload autocommand that unloads all other buffers.
 
-local t = require('test.functional.testutil')()
-local source = t.source
-local clear, command, expect, eq, eval = t.clear, t.command, t.expect, t.eq, t.eval
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local source = n.source
+local clear, command, expect, eq, eval = n.clear, n.command, n.expect, t.eq, n.eval
 local write_file, dedent = t.write_file, t.dedent
 local read_file = t.read_file
-local expect_exit = t.expect_exit
+local expect_exit = n.expect_exit
 
 describe('autocommands that delete and unload buffers:', function()
   local test_file = 'Xtest-008_autocommands.out'

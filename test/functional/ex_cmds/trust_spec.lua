@@ -1,23 +1,24 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local eq = t.eq
-local clear = t.clear
-local command = t.command
-local exec_capture = t.exec_capture
+local clear = n.clear
+local command = n.command
+local exec_capture = n.exec_capture
 local matches = t.matches
-local pathsep = t.get_pathsep()
+local pathsep = n.get_pathsep()
 local is_os = t.is_os
-local fn = t.fn
+local fn = n.fn
 
 describe(':trust', function()
   local xstate = 'Xstate'
 
   setup(function()
-    t.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
+    n.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
   end)
 
   teardown(function()
-    t.rmdir(xstate)
+    n.rmdir(xstate)
   end)
 
   before_each(function()

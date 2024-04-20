@@ -9,37 +9,38 @@
 --    test/functional/vimscript/<funcname>_spec.lua
 --    test/functional/vimscript/functions_spec.lua
 
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local mkdir = t.mkdir
-local clear = t.clear
+local clear = n.clear
 local eq = t.eq
-local exec = t.exec
-local exc_exec = t.exc_exec
-local exec_lua = t.exec_lua
-local exec_capture = t.exec_capture
-local eval = t.eval
-local command = t.command
+local exec = n.exec
+local exc_exec = n.exc_exec
+local exec_lua = n.exec_lua
+local exec_capture = n.exec_capture
+local eval = n.eval
+local command = n.command
 local write_file = t.write_file
-local api = t.api
+local api = n.api
 local sleep = vim.uv.sleep
 local matches = t.matches
 local pcall_err = t.pcall_err
-local assert_alive = t.assert_alive
-local poke_eventloop = t.poke_eventloop
-local feed = t.feed
-local expect_exit = t.expect_exit
+local assert_alive = n.assert_alive
+local poke_eventloop = n.poke_eventloop
+local feed = n.feed
+local expect_exit = n.expect_exit
 
 describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
   local max_func_args = 20 -- from eval.h
-  local range = t.fn.range
+  local range = n.fn.range
 
   before_each(clear)
 
   it('printf()', function()
-    local printf = t.fn.printf
-    local rep = t.fn['repeat']
+    local printf = n.fn.printf
+    local rep = n.fn['repeat']
     local expected = '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,'
     eq(expected, printf(rep('%d,', max_func_args - 1), unpack(range(2, max_func_args))))
     local ret = exc_exec('call printf("", 2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21)')
@@ -47,7 +48,7 @@ describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
   end)
 
   it('rpcnotify()', function()
-    local rpcnotify = t.fn.rpcnotify
+    local rpcnotify = n.fn.rpcnotify
     local ret = rpcnotify(0, 'foo', unpack(range(3, max_func_args)))
     eq(1, ret)
     ret = exc_exec('call rpcnotify(0, "foo", 3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21)')
@@ -69,7 +70,7 @@ describe('backtick expansion', function()
   end)
 
   teardown(function()
-    t.rmdir('test-backticks')
+    n.rmdir('test-backticks')
   end)
 
   it("with default 'shell'", function()

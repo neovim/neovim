@@ -3,9 +3,11 @@
 -- And test "ra" on multibyte characters.
 -- Also test byteidx() and byteidxcomp()
 
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
 local feed, insert, eq, eval, clear, feed_command, expect =
-  t.feed, t.insert, t.eq, t.eval, t.clear, t.feed_command, t.expect
+  n.feed, n.insert, t.eq, n.eval, n.clear, n.feed_command, n.expect
 
 describe('multibyte text', function()
   before_each(clear)

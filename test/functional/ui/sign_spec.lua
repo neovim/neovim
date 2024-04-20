@@ -1,7 +1,9 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local api, clear, eq = t.api, t.clear, t.eq
-local eval, exec, feed = t.eval, t.exec, t.feed
+
+local api, clear, eq = n.api, n.clear, t.eq
+local eval, exec, feed = n.eval, n.exec, n.feed
 
 describe('Signs', function()
   local screen

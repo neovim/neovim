@@ -1,17 +1,18 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
+local clear = n.clear
 local eq = t.eq
-local eval = t.eval
-local exec = t.exec
-local fn = t.fn
-local mkdir_p = t.mkdir_p
-local rmdir = t.rmdir
+local eval = n.eval
+local exec = n.exec
+local fn = n.fn
+local mkdir_p = n.mkdir_p
+local rmdir = n.rmdir
 local write_file = t.write_file
 
 describe('runtime:', function()
   local plug_dir = 'Test_Plugin'
-  local sep = t.get_pathsep()
+  local sep = n.get_pathsep()
   local init = 'dummy_init.lua'
 
   setup(function()

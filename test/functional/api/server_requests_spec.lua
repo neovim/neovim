@@ -1,17 +1,18 @@
 -- Test server -> client RPC scenarios. Note: unlike `rpcnotify`, to evaluate
 -- `rpcrequest` calls we need the client event loop to be running.
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear, eval = t.clear, t.eval
-local eq, neq, run, stop = t.eq, t.neq, t.run, t.stop
-local nvim_prog, command, fn = t.nvim_prog, t.command, t.fn
-local source, next_msg = t.source, t.next_msg
+local clear, eval = n.clear, n.eval
+local eq, neq, run, stop = t.eq, t.neq, n.run, n.stop
+local nvim_prog, command, fn = n.nvim_prog, n.command, n.fn
+local source, next_msg = n.source, n.next_msg
 local ok = t.ok
-local api = t.api
-local spawn, merge_args = t.spawn, t.merge_args
-local set_session = t.set_session
+local api = n.api
+local spawn, merge_args = n.spawn, n.merge_args
+local set_session = n.set_session
 local pcall_err = t.pcall_err
-local assert_alive = t.assert_alive
+local assert_alive = n.assert_alive
 
 describe('server -> client', function()
   local cid
@@ -91,19 +92,19 @@ describe('server -> client', function()
 
       local function on_request(method, args)
         eq('rcall', method)
-        local n = unpack(args) * 2
-        if n <= 16 then
+        local _n = unpack(args) * 2
+        if _n <= 16 then
           local cmd
-          if n == 4 then
-            cmd = 'let g:result2 = rpcrequest(' .. cid .. ', "rcall", ' .. n .. ')'
-          elseif n == 8 then
-            cmd = 'let g:result3 = rpcrequest(' .. cid .. ', "rcall", ' .. n .. ')'
-          elseif n == 16 then
-            cmd = 'let g:result4 = rpcrequest(' .. cid .. ', "rcall", ' .. n .. ')'
+          if _n == 4 then
+            cmd = 'let g:result2 = rpcrequest(' .. cid .. ', "rcall", ' .. _n .. ')'
+          elseif _n == 8 then
+            cmd = 'let g:result3 = rpcrequest(' .. cid .. ', "rcall", ' .. _n .. ')'
+          elseif _n == 16 then
+            cmd = 'let g:result4 = rpcrequest(' .. cid .. ', "rcall", ' .. _n .. ')'
           end
           command(cmd)
         end
-        return n
+        return _n
       end
       run(on_request, nil, on_setup)
     end)
@@ -280,7 +281,7 @@ describe('server -> client', function()
   end)
 
   describe('connecting to another (peer) nvim', function()
-    local nvim_argv = merge_args(t.nvim_argv, { '--headless' })
+    local nvim_argv = merge_args(n.nvim_argv, { '--headless' })
     local function connect_test(server, mode, address)
       local serverpid = fn.getpid()
       local client = spawn(nvim_argv, false, nil, true)

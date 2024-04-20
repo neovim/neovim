@@ -1,9 +1,10 @@
 -- Tests for case-insensitive UTF-8 comparisons (utf_strnicmp() in mbyte.c)
 -- Also test "g~ap".
 
-local t = require('test.functional.testutil')()
-local feed, source = t.feed, t.source
-local clear, feed_command, expect = t.clear, t.feed_command, t.expect
+local n = require('test.functional.testnvim')()
+
+local feed, source = n.feed, n.source
+local clear, feed_command, expect = n.clear, n.feed_command, n.expect
 
 describe('case-insensitive string comparison in UTF-8', function()
   setup(clear)

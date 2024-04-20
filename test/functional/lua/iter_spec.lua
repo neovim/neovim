@@ -1,4 +1,5 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+
 local eq = t.eq
 local matches = t.matches
 local pcall_err = t.pcall_err
