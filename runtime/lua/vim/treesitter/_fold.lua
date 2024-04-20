@@ -149,27 +149,43 @@ local function get_folds_levels(bufnr, info, srow, erow, parse_injections)
 
     -- Collect folds starting from srow - 1, because we should first subtract the folds that end at
     -- srow - 1 from the level of srow - 1 to get accurate level of srow.
-    for id, node, metadata in query:iter_captures(tree:root(), bufnr, math.max(srow - 1, 0), erow) do
-      if query.captures[id] == 'fold' then
-        local range = ts.get_range(node, bufnr, metadata[id])
-        local start, _, stop, stop_col = Range.unpack4(range)
+    for _, match, metadata in
+      query:iter_matches(tree:root(), bufnr, math.max(srow - 1, 0), erow, { all = true })
+    do
+      for id, nodes in pairs(match) do
+        if query.captures[id] == 'fold' then
+          local range = ts.get_range(nodes[1], bufnr, metadata[id])
+          local start, _, stop, stop_col = Range.unpack4(range)
 
-        if stop_col == 0 then
-          stop = stop - 1
-        end
+          for i = 2, #nodes, 1 do
+            local node_range = ts.get_range(nodes[i], bufnr, metadata[id])
+            local node_start, _, node_stop, node_stop_col = Range.unpack4(node_range)
+            if node_start < start then
+              start = node_start
+            end
+            if node_stop > stop then
+              stop = node_stop
+              stop_col = node_stop_col
+            end
+          end
 
-        local fold_length = stop - start + 1
+          if stop_col == 0 then
+            stop = stop - 1
+          end
 
-        -- Fold only multiline nodes that are not exactly the same as previously met folds
-        -- Checking against just the previously found fold is sufficient if nodes
-        -- are returned in preorder or postorder when traversing tree
-        if
-          fold_length > vim.wo.foldminlines and not (start == prev_start and stop == prev_stop)
-        then
-          enter_counts[start + 1] = (enter_counts[start + 1] or 0) + 1
-          leave_counts[stop + 1] = (leave_counts[stop + 1] or 0) + 1
-          prev_start = start
-          prev_stop = stop
+          local fold_length = stop - start + 1
+
+          -- Fold only multiline nodes that are not exactly the same as previously met folds
+          -- Checking against just the previously found fold is sufficient if nodes
+          -- are returned in preorder or postorder when traversing tree
+          if
+            fold_length > vim.wo.foldminlines and not (start == prev_start and stop == prev_stop)
+          then
+            enter_counts[start + 1] = (enter_counts[start + 1] or 0) + 1
+            leave_counts[stop + 1] = (leave_counts[stop + 1] or 0) + 1
+            prev_start = start
+            prev_stop = stop
+          end
         end
       end
     end
