@@ -5,6 +5,7 @@ if exists('b:did_ftplugin') || &filetype !=# 'man'
   finish
 endif
 let b:did_ftplugin = 1
+let b:pager = 1
 
 setlocal noexpandtab tabstop=8 softtabstop=8 shiftwidth=8
 setlocal wrap breakindent linebreak
