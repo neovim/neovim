@@ -261,6 +261,8 @@ static const struct key_name_entry {
 
   { K_HELP,            "Help" },
   { K_UNDO,            "Undo" },
+  { K_FIND,            "Find" },        // DEC key, often used as 'Home'
+  { K_KSELECT,         "Select" },      // DEC key, often used as 'End'
   { K_INS,             "Insert" },
   { K_INS,             "Ins" },         // Alternative name
   { K_KINS,            "kInsert" },

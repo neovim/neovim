@@ -352,6 +352,8 @@ enum key_extra {
 
 #define K_HELP          TERMCAP2KEY('%', '1')
 #define K_UNDO          TERMCAP2KEY('&', '8')
+#define K_FIND          TERMCAP2KEY('@', '0')   // DEC key, often used as Home
+#define K_KSELECT       TERMCAP2KEY('*', '6')   // DEC key, often used as End
 
 #define K_BS            TERMCAP2KEY('k', 'b')
 

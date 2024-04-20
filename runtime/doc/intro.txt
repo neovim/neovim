@@ -272,6 +272,8 @@ notation        meaning             equivalent  decimal value(s)        ~
 <S-F1> - <S-F12> shift-function keys 1 to 12    *<S-F1>*
 <Help>          help key
 <Undo>          undo key
+<Find>          find key
+<Select>        select key
 <Insert>        insert key
 <Home>          home                            *home*
 <End>           end                             *end*
