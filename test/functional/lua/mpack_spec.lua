@@ -22,7 +22,7 @@ describe('lua vim.mpack', function()
       { { {}, 'foo', {} }, true, false },
       exec_lua [[
       local var = vim.mpack.decode(vim.mpack.encode({{}, "foo", vim.empty_dict()}))
-      return {var, vim.tbl_islist(var[1]), vim.tbl_islist(var[3])}
+      return {var, vim.islist(var[1]), vim.islist(var[3])}
     ]]
     )
   end)

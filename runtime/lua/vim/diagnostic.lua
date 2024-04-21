@@ -974,7 +974,7 @@ function M.set(namespace, bufnr, diagnostics, opts)
     bufnr = { bufnr, 'n' },
     diagnostics = {
       diagnostics,
-      vim.tbl_islist,
+      vim.islist,
       'a list of diagnostics',
     },
     opts = { opts, 't', true },
@@ -1186,7 +1186,7 @@ M.handlers.signs = {
       bufnr = { bufnr, 'n' },
       diagnostics = {
         diagnostics,
-        vim.tbl_islist,
+        vim.islist,
         'a list of diagnostics',
       },
       opts = { opts, 't', true },
@@ -1309,7 +1309,7 @@ M.handlers.underline = {
       bufnr = { bufnr, 'n' },
       diagnostics = {
         diagnostics,
-        vim.tbl_islist,
+        vim.islist,
         'a list of diagnostics',
       },
       opts = { opts, 't', true },
@@ -1382,7 +1382,7 @@ M.handlers.virtual_text = {
       bufnr = { bufnr, 'n' },
       diagnostics = {
         diagnostics,
-        vim.tbl_islist,
+        vim.islist,
         'a list of diagnostics',
       },
       opts = { opts, 't', true },
@@ -1576,7 +1576,7 @@ function M.show(namespace, bufnr, diagnostics, opts)
     diagnostics = {
       diagnostics,
       function(v)
-        return v == nil or vim.tbl_islist(v)
+        return v == nil or vim.islist(v)
       end,
       'a list of diagnostics',
     },
@@ -2120,7 +2120,7 @@ function M.toqflist(diagnostics)
   vim.validate({
     diagnostics = {
       diagnostics,
-      vim.tbl_islist,
+      vim.islist,
       'a list of diagnostics',
     },
   })
@@ -2160,7 +2160,7 @@ function M.fromqflist(list)
   vim.validate({
     list = {
       list,
-      vim.tbl_islist,
+      vim.islist,
       'a list of quickfix items',
     },
   })
