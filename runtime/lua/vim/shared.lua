@@ -601,7 +601,7 @@ end
 
 --- Tests if `t` is an "array": a table indexed _only_ by integers (potentially non-contiguous).
 ---
---- If the indexes start from 1 and are contiguous then the array is also a list. |vim.tbl_islist()|
+--- If the indexes start from 1 and are contiguous then the array is also a list. |vim.islist()|
 ---
 --- Empty table `{}` is an array, unless it was created by |vim.empty_dict()| or returned as
 --- a dict-like |API| or Vimscript result, for example from |rpcrequest()| or |vim.fn|.
@@ -640,6 +640,12 @@ function vim.tbl_isarray(t)
   end
 end
 
+--- @deprecated
+function vim.tbl_islist(t)
+  vim.deprecate('vim.tbl_islist', 'vim.islist', '0.12')
+  return vim.islist(t)
+end
+
 --- Tests if `t` is a "list": a table indexed _only_ by contiguous integers starting from 1 (what
 --- |lua-length| calls a "regular array").
 ---
@@ -648,9 +654,9 @@ end
 ---
 ---@see |vim.tbl_isarray()|
 ---
----@param t table
+---@param t? table
 ---@return boolean `true` if list-like table, else `false`.
-function vim.tbl_islist(t)
+function vim.islist(t)
   if type(t) ~= 'table' then
     return false
   end

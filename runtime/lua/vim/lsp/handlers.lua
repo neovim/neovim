@@ -428,7 +428,7 @@ local function location_handler(_, result, ctx, config)
 
   -- textDocument/definition can return Location or Location[]
   -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition
-  if not vim.tbl_islist(result) then
+  if not vim.islist(result) then
     result = { result }
   end
 

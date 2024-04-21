@@ -642,7 +642,7 @@ end
 --- @param t table<any,any>
 --- @param val any
 local function remove_one_item(t, val)
-  if vim.tbl_islist(t) then
+  if vim.islist(t) then
     local remove_index = nil
     for i, v in ipairs(t) do
       if v == val then
