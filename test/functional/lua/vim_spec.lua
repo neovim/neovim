@@ -929,7 +929,7 @@ describe('lua stdlib', function()
       local b = vim.empty_dict()
       local c = vim.tbl_extend("keep", a, b)
 
-      return vim.tbl_islist(c) and vim.tbl_count(c) == 0
+      return not vim.tbl_islist(c) and vim.tbl_count(c) == 0
     ]]))
 
     ok(exec_lua([[
@@ -941,6 +941,26 @@ describe('lua stdlib', function()
       for _ in pairs(c) do count = count + 1 end
 
       return c.x.a == 1 and c.x.b == 2 and c.x.c == nil and count == 1
+    ]]))
+
+    ok(exec_lua([[
+      local a = { x = 1 }
+      local b = { y = 2 }
+      setmetatable(a, { __tostring = function() return "table a" end })
+      setmetatable(b, { __tostring = function() return "table b" end })
+      local c = vim.tbl_extend("force", a, b)
+
+      return c.x == 1 and c.y == 2 and tostring(c) == "table b"
+    ]]))
+
+    ok(exec_lua([[
+      local a = { x = 1 }
+      local b = { y = 2 }
+      setmetatable(a, { __tostring = function() return "table a" end })
+      setmetatable(b, { __tostring = function() return "table b" end })
+      local c = vim.tbl_extend("keep", a, b)
+
+      return c.x == 1 and c.y == 2 and tostring(c) == "table a"
     ]]))
 
     matches(
@@ -980,10 +1000,7 @@ describe('lua stdlib', function()
       local b = {x = {a = 2, c = {y = 3}}}
       local c = vim.tbl_deep_extend("keep", a, b)
 
-      local count = 0
-      for _ in pairs(c) do count = count + 1 end
-
-      return c.x.a == 1 and c.x.b == 2 and c.x.c.y == 3 and count == 1
+      return c.x.a == 1 and c.x.b == 2 and c.x.c.y == 3 and vim.tbl_count(c) == 1
     ]]))
 
     ok(exec_lua([[
@@ -991,10 +1008,7 @@ describe('lua stdlib', function()
       local b = {x = {a = 2, c = {y = 3}}}
       local c = vim.tbl_deep_extend("force", a, b)
 
-      local count = 0
-      for _ in pairs(c) do count = count + 1 end
-
-      return c.x.a == 2 and c.x.b == 2 and c.x.c.y == 3 and count == 1
+      return c.x.a == 2 and c.x.b == 2 and c.x.c.y == 3 and vim.tbl_count(c) == 1
     ]]))
 
     ok(exec_lua([[
@@ -1003,10 +1017,7 @@ describe('lua stdlib', function()
       local c = {x = {c = 4, d = {y = 4}}}
       local d = vim.tbl_deep_extend("keep", a, b, c)
 
-      local count = 0
-      for _ in pairs(c) do count = count + 1 end
-
-      return d.x.a == 1 and d.x.b == 2 and d.x.c.y == 3 and d.x.d.y == 4 and count == 1
+      return d.x.a == 1 and d.x.b == 2 and d.x.c.y == 3 and d.x.d.y == 4 and vim.tbl_count(c) == 1
     ]]))
 
     ok(exec_lua([[
@@ -1015,10 +1026,7 @@ describe('lua stdlib', function()
       local c = {x = {c = 4, d = {y = 4}}}
       local d = vim.tbl_deep_extend("force", a, b, c)
 
-      local count = 0
-      for _ in pairs(c) do count = count + 1 end
-
-      return d.x.a == 2 and d.x.b == 2 and d.x.c == 4 and d.x.d.y == 4 and count == 1
+      return d.x.a == 2 and d.x.b == 2 and d.x.c == 4 and d.x.d.y == 4 and vim.tbl_count(c) == 1
     ]]))
 
     ok(exec_lua([[
@@ -1026,10 +1034,7 @@ describe('lua stdlib', function()
       local b = {}
       local c = vim.tbl_deep_extend("keep", a, b)
 
-      local count = 0
-      for _ in pairs(c) do count = count + 1 end
-
-      return not vim.tbl_islist(c) and count == 0
+      return not vim.tbl_islist(c) and vim.tbl_count(c) == 0
     ]]))
 
     ok(exec_lua([[
@@ -1037,10 +1042,27 @@ describe('lua stdlib', function()
       local b = vim.empty_dict()
       local c = vim.tbl_deep_extend("keep", a, b)
 
-      local count = 0
-      for _ in pairs(c) do count = count + 1 end
+      return not vim.tbl_islist(c) and vim.tbl_count(c) == 0
+    ]]))
 
-      return vim.tbl_islist(c) and count == 0
+    ok(exec_lua([[
+      local a = { a = { x = 1 } }
+      local b = { a = { y = 2 } }
+      setmetatable(a.a, { __tostring = function() return "table a" end })
+      setmetatable(b.a, { __tostring = function() return "table b" end })
+      local c = vim.tbl_deep_extend("keep", a, b)
+
+      return c.a.x == 1 and c.a.y == nil and tostring(c.a) == "table a"
+    ]]))
+
+    ok(exec_lua([[
+      local a = { a = { x = 1 } }
+      local b = { a = { y = 2 } }
+      setmetatable(a.a, { __tostring = function() return "table a" end })
+      setmetatable(b.a, { __tostring = function() return "table b" end })
+      local c = vim.tbl_deep_extend("force", a, b)
+
+      return c.a.x == nil and c.a.y == 2 and tostring(c.a) == "table b"
     ]]))
 
     eq(
