@@ -62,6 +62,35 @@ int tslua_has_language(lua_State *L)
   return 1;
 }
 
+static TSLanguage *load_language(lua_State *L, const char *path, const char *lang_name,
+                                 const char *symbol)
+{
+  uv_lib_t lib;
+  if (uv_dlopen(path, &lib)) {
+    uv_dlclose(&lib);
+    luaL_error(L, "Failed to load parser for language '%s': uv_dlopen: %s",
+               lang_name, uv_dlerror(&lib));
+  }
+
+  char symbol_buf[128];
+  snprintf(symbol_buf, sizeof(symbol_buf), "tree_sitter_%s", symbol);
+
+  TSLanguage *(*lang_parser)(void);
+  if (uv_dlsym(&lib, symbol_buf, (void **)&lang_parser)) {
+    uv_dlclose(&lib);
+    luaL_error(L, "Failed to load parser: uv_dlsym: %s", uv_dlerror(&lib));
+  }
+
+  TSLanguage *lang = lang_parser();
+
+  if (lang == NULL) {
+    uv_dlclose(&lib);
+    luaL_error(L, "Failed to load parser %s: internal error", path);
+  }
+
+  return lang;
+}
+
 // Creates the language into the internal language map.
 //
 // Returns true if the language is correctly loaded in the language map
@@ -80,34 +109,7 @@ int tslua_add_language(lua_State *L)
     return 1;
   }
 
-#define BUFSIZE 128
-  char symbol_buf[BUFSIZE];
-  snprintf(symbol_buf, BUFSIZE, "tree_sitter_%s", symbol_name);
-#undef BUFSIZE
-
-  uv_lib_t lib;
-  if (uv_dlopen(path, &lib)) {
-    snprintf(IObuff, IOSIZE, "Failed to load parser for language '%s': uv_dlopen: %s",
-             lang_name, uv_dlerror(&lib));
-    uv_dlclose(&lib);
-    lua_pushstring(L, IObuff);
-    return lua_error(L);
-  }
-
-  TSLanguage *(*lang_parser)(void);
-  if (uv_dlsym(&lib, symbol_buf, (void **)&lang_parser)) {
-    snprintf(IObuff, IOSIZE, "Failed to load parser: uv_dlsym: %s",
-             uv_dlerror(&lib));
-    uv_dlclose(&lib);
-    lua_pushstring(L, IObuff);
-    return lua_error(L);
-  }
-
-  TSLanguage *lang = lang_parser();
-  if (lang == NULL) {
-    uv_dlclose(&lib);
-    return luaL_error(L, "Failed to load parser %s: internal error", path);
-  }
+  TSLanguage *lang = load_language(L, path, lang_name, symbol_name);
 
   uint32_t lang_version = ts_language_version(lang);
   if (lang_version < TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION
@@ -184,8 +186,7 @@ int tslua_inspect_lang(lua_State *L)
 
   lua_setfield(L, -2, "fields");  // [retval]
 
-  uint32_t lang_version = ts_language_version(lang);
-  lua_pushinteger(L, lang_version);  // [retval, version]
+  lua_pushinteger(L, ts_language_version(lang));  // [retval, version]
   lua_setfield(L, -2, "_abi_version");
 
   return 1;
