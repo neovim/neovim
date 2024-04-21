@@ -60,8 +60,16 @@ local TSNode = {}
 ---@field captures string[]
 ---@field patterns table<integer, (integer|string)[][]>
 
+--- @param lang string
+vim._ts_inspect_language = function(lang) end
+
 ---@return integer
 vim._ts_get_language_version = function() end
+
+--- @param path string
+--- @param lang string
+--- @param symbol_name? string
+vim._ts_add_language = function(path, lang, symbol_name) end
 
 ---@return integer
 vim._ts_get_minimum_language_version = function() end
