@@ -461,6 +461,21 @@ nasm_loose_syntax	unofficial parser allowed syntax not as Error
 nasm_ctx_outside_macro	contexts outside macro not as Error
 nasm_no_warn		potentially risky syntax not as ToDo
 
+ASTRO						*astro.vim* *ft-astro-syntax*
+
+Configuration
+
+The following variables control certain syntax highlighting features.
+You can add them to your .vimrc: >
+	let g:astro_typescript = "enable"
+<
+Enables TypeScript and TSX for ".astro" files. Default Value: "disable" >
+	let g:astro_stylus = "enable"
+<
+Enables Stylus for ".astro" files. Default Value: "disable"
+
+NOTE: You need to install an external plugin to support stylus in astro files.
+
 
 ASPPERL and ASPVBS			*ft-aspperl-syntax* *ft-aspvbs-syntax*
 
@@ -5306,6 +5321,5 @@ literal text specify the size of that text (in bytes):
 "<\@<=span"	Matches "span" in "<span".  This tries matching with "<" in
 		many places.
 "<\@1<=span"	Matches the same, but only tries one byte before "span".
-
 
  vim:tw=78:sw=4:ts=8:noet:ft=help:norl:
