@@ -54,7 +54,7 @@ describe('fileio', function()
   --- Starts a new nvim session and returns an attached screen.
   local function startup(extra_args)
     extra_args = extra_args or {}
-    local argv = vim.tbl_flatten({ args, '--embed', extra_args })
+    local argv = vim.iter({ args, '--embed', extra_args }):flatten():totable()
     local screen_nvim = spawn(argv)
     set_session(screen_nvim)
     local screen = Screen.new(70, 10)
@@ -100,7 +100,7 @@ describe('fileio', function()
     eq('foozubbaz', trim(read_file('Xtest_startup_file1')))
 
     -- 4. Exit caused by deadly signal (+ 'swapfile').
-    local j = fn.jobstart(vim.tbl_flatten({ args, '--embed' }), { rpc = true })
+    local j = fn.jobstart(vim.iter({ args, '--embed' }):flatten():totable(), { rpc = true })
     fn.rpcrequest(
       j,
       'nvim_exec2',

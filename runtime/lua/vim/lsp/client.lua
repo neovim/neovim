@@ -722,7 +722,7 @@ local wait_result_reason = { [-1] = 'timeout', [-2] = 'interrupted', [-3] = 'err
 ---
 --- @param ... string List to write to the buffer
 local function err_message(...)
-  local message = table.concat(vim.tbl_flatten({ ... }))
+  local message = table.concat(vim.iter({ ... }):flatten():totable())
   if vim.in_fast_event() then
     vim.schedule(function()
       api.nvim_err_writeln(message)
