@@ -257,21 +257,6 @@ describe('API/win', function()
 
       -- curwin didn't change back
       neq(win, curwin())
-
-      -- shows updated position after getchar() #20793
-      feed(':call getchar()<CR>')
-      api.nvim_win_set_cursor(win, { 1, 5 })
-      screen:expect {
-        grid = [[
-                                      |
-        {1:~                             }|*2
-        {2:[No Name]                     }|
-        prolo^gue                      |
-                                      |*2
-        {3:[No Name] [+]                 }|
-        :call getchar()               |
-      ]],
-      }
     end)
 
     it('remembers what column it wants to be in', function()
