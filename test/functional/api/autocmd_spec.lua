@@ -393,6 +393,27 @@ describe('autocmd api', function()
         ]])
       )
     end)
+
+    it('can set namespace scope', function()
+      api.nvim_set_var('called', 0)
+
+      local ns = api.nvim_create_namespace('test')
+      api.nvim_win_add_ns(0, ns)
+
+      api.nvim_create_autocmd('FileType', {
+        command = 'let g:called = g:called + 1',
+        ns_id = ns,
+      })
+
+      command 'set filetype=txt'
+      eq(1, api.nvim_get_var('called'))
+
+      -- switch to a new window
+      command 'vnew'
+      command 'set filetype=python'
+
+      eq(1, api.nvim_get_var('called'))
+    end)
   end)
 
   describe('nvim_get_autocmds', function()

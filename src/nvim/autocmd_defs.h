@@ -44,6 +44,7 @@ typedef struct {
   sctx_T script_ctx;        ///< Script context where it is defined
   bool once;                ///< "One shot": removed after execution
   bool nested;              ///< If autocommands nest here
+  uint32_t ns;              ///< !=0 for namespace scoped autocmd
 } AutoCmd;
 
 /// Struct used to keep status while executing autocommands for an event.
