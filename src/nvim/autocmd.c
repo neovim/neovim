@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "klib/kvec.h"
+#include "nvim/api/extmark.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
@@ -91,12 +92,11 @@ static const char e_autocommand_nesting_too_deep[]
 // Code for automatic commands.
 static AutoPatCmd *active_apc_list = NULL;  // stack of active autocommands
 
-// ID for associating autocmds created via nvim_create_autocmd
-// Used to delete autocmds from nvim_del_autocmd
-static int next_augroup_id = 1;
-
-// use get_deleted_augroup() to get this
-static const char *deleted_augroup = NULL;
+// The ID of the deleted group.
+// Zero until the group is initialized.
+static int deleted_augroup_id = 0;
+static const char *deleted_augroup_name = "--Deleted--";
+static Set(int) deleted_augroup_map = SET_INIT;
 
 // The ID of the current group.
 static int current_augroup = AUGROUP_DEFAULT;
@@ -112,31 +112,16 @@ static bool autocmd_include_groups = false;
 
 static char *old_termresponse = NULL;
 
-// Map of autocmd group names and ids.
-//  name -> ID
-//  ID -> name
-static Map(String, int) map_augroup_name_to_id = MAP_INIT;
-static Map(int, String) map_augroup_id_to_name = MAP_INIT;
-
-static void augroup_map_del(int id, const char *name)
+static void augroup_map_del(int id)
 {
-  if (name != NULL) {
-    String key;
-    map_del(String, int)(&map_augroup_name_to_id, cstr_as_string(name), &key);
-    api_free_string(key);
-  }
-  if (id > 0) {
-    String mapped = map_del(int, String)(&map_augroup_id_to_name, id, NULL);
-    api_free_string(mapped);
-  }
+  set_put(int, &deleted_augroup_map, id);
 }
 
-static inline const char *get_deleted_augroup(void) FUNC_ATTR_ALWAYS_INLINE
+static int get_deleted_augroup_id(void)
 {
-  if (deleted_augroup == NULL) {
-    deleted_augroup = _("--Deleted--");
-  }
-  return deleted_augroup;
+  int id = augroup_add(deleted_augroup_name);
+  deleted_augroup_id = id;
+  return id;
 }
 
 static void au_show_for_all_events(int group, const char *pat)
@@ -220,7 +205,7 @@ static void au_show_for_event(int group, event_T event, const char *pat)
         // show the group name, if it's not the default group
         if (ac->pat->group != AUGROUP_DEFAULT) {
           if (last_group_name == NULL) {
-            msg_puts_attr(get_deleted_augroup(), HL_ATTR(HLF_E));
+            msg_puts_attr(deleted_augroup_name, HL_ATTR(HLF_E));
           } else {
             msg_puts_attr(last_group_name, HL_ATTR(HLF_T));
           }
@@ -396,25 +381,17 @@ void aubuflocal_remove(buf_T *buf)
 // Return its ID.
 int augroup_add(const char *name)
 {
-  assert(STRICMP(name, "end") != 0);
-
-  int existing_id = augroup_find(name);
-  if (existing_id > 0) {
-    assert(existing_id != AUGROUP_DELETED);
-    return existing_id;
+  if (STRICMP(name, "") == 0) {
+    return AUGROUP_ERROR;
   }
 
-  if (existing_id == AUGROUP_DELETED) {
-    augroup_map_del(existing_id, name);
+  int id = (int)nvim_create_namespace(cstr_as_string(name));
+
+  if (set_has(int, &deleted_augroup_map, id)) {
+    set_del(int, &deleted_augroup_map, id);
   }
 
-  int next_id = next_augroup_id++;
-  String name_key = cstr_to_string(name);
-  String name_val = cstr_to_string(name);
-  map_put(String, int)(&map_augroup_name_to_id, name_key, next_id);
-  map_put(int, String)(&map_augroup_id_to_name, next_id, name_val);
-
-  return next_id;
+  return id;
 }
 
 /// Delete the augroup that matches name.
@@ -446,9 +423,7 @@ void augroup_del(char *name, bool stupid_legacy_mode)
         AutoPat *const ap = kv_A(*acs, i).pat;
         if (ap != NULL && ap->group == group) {
           give_warning(_("W19: Deleting augroup that is still in use"), true);
-          map_put(String, int)(&map_augroup_name_to_id, cstr_as_string(name), AUGROUP_DELETED);
-          augroup_map_del(ap->group, NULL);
-          return;
+          ap->group = get_deleted_augroup_id();
         }
       }
     }
@@ -465,7 +440,7 @@ void augroup_del(char *name, bool stupid_legacy_mode)
   }
 
   // Remove the group because it's not currently in use.
-  augroup_map_del(group, name);
+  augroup_map_del(group);
   au_cleanup();
 }
 
@@ -477,11 +452,10 @@ void augroup_del(char *name, bool stupid_legacy_mode)
 int augroup_find(const char *name)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  int existing_id = map_get(String, int)(&map_augroup_name_to_id, cstr_as_string(name));
-  if (existing_id == AUGROUP_DELETED) {
-    return existing_id;
+  int existing_id = map_get(String, int)(&namespace_ids, cstr_as_string(name));
+  if (set_has(int, &deleted_augroup_map, existing_id)) {
+    return AUGROUP_ERROR;
   }
-
   if (existing_id > 0) {
     return existing_id;
   }
@@ -494,38 +468,34 @@ char *augroup_name(int group)
 {
   assert(group != 0);
 
-  if (group == AUGROUP_DELETED) {
-    return (char *)get_deleted_augroup();
-  }
-
   if (group == AUGROUP_ALL) {
     group = current_augroup;
   }
 
-  // next_augroup_id is the "source of truth" about what autocmds have existed
-  //
-  // The map_size is not the source of truth because groups can be removed from
-  // the map. When this happens, the map size is reduced. That's why this function
-  // relies on next_augroup_id instead.
+  if (group < 0) {
+    return (char *)deleted_augroup_name;
+  }
 
   // "END" is always considered the last augroup ID.
   // Used for expand_get_event_name and expand_get_augroup_name
-  if (group == next_augroup_id) {
+  if (group == next_namespace_id) {
     return "END";
   }
-
-  // If it's larger than the largest group, then it doesn't have a name
-  if (group > next_augroup_id) {
+  if (group > next_namespace_id) {
     return NULL;
   }
-
-  String key = map_get(int, String)(&map_augroup_id_to_name, group);
-  if (key.data != NULL) {
-    return key.data;
+  if (set_has(int, &deleted_augroup_map, group)) {
+    return "";
   }
 
-  // If it's not in the map anymore, then it must have been deleted.
-  return (char *)get_deleted_augroup();
+  String name;
+  int value;
+  map_foreach(&namespace_ids, name, value, {
+    if (value == group) {
+      return name.data;
+    }
+  });
+  return "";
 }
 
 /// Return true if augroup "name" exists.
@@ -555,14 +525,11 @@ void do_augroup(char *arg, bool del_group)
 
     String name;
     int value;
-    map_foreach(&map_augroup_name_to_id, name, value, {
-      if (value > 0) {
+    map_foreach(&namespace_ids, name, value, {
+      if (value > 0 && !set_has(int, &deleted_augroup_map, value)) {
         msg_puts(name.data);
-      } else {
-        msg_puts(augroup_name(value));
+        msg_puts("  ");
       }
-
-      msg_puts("  ");
     });
 
     msg_clr_eos();
@@ -582,17 +549,7 @@ void free_all_autocmds(void)
     au_need_clean = false;
   }
 
-  // Delete the augroup_map, including free the data
-  String name;
-  map_foreach_key(&map_augroup_name_to_id, name, {
-    api_free_string(name);
-  })
-  map_destroy(String, &map_augroup_name_to_id);
-
-  map_foreach_value(&map_augroup_id_to_name, name, {
-    api_free_string(name);
-  })
-  map_destroy(int, &map_augroup_id_to_name);
+  set_destroy(int, &deleted_augroup_map);
 
   // aucmd_win[] is freed in win_free_all()
 }
@@ -2043,10 +2000,12 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
       abort();  // unreachable
     case AUGROUP_DEFAULT:
     case AUGROUP_ALL:
-    case AUGROUP_DELETED:
       // omit group in these cases
       break;
     default:
+      if (group == deleted_augroup_id) {
+        break;
+      }
       PUT_C(data, "group", INTEGER_OBJ(group));
       break;
     }
@@ -2247,7 +2206,7 @@ char *expand_get_event_name(expand_T *xp, int idx)
   char *name = augroup_name(idx + 1);
   if (name != NULL) {
     // skip when not including groups or skip deleted entries
-    if (!autocmd_include_groups || name == get_deleted_augroup()) {
+    if (!autocmd_include_groups || name == deleted_augroup_name) {
       return "";
     }
 
@@ -2255,7 +2214,7 @@ char *expand_get_event_name(expand_T *xp, int idx)
   }
 
   // List event names
-  return event_names[idx - next_augroup_id].name;
+  return event_names[idx - next_namespace_id].name;
 }
 
 /// Function given to ExpandGeneric() to obtain the list of event names. Don't

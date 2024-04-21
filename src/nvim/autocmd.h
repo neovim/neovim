@@ -58,8 +58,6 @@ enum {
   AUGROUP_DEFAULT = -1,  ///< default autocmd group
   AUGROUP_ERROR   = -2,  ///< erroneous autocmd group
   AUGROUP_ALL     = -3,  ///< all autocmd groups
-  AUGROUP_DELETED = -4,  ///< all autocmd groups
-  // AUGROUP_NS      = -5,  // TODO(tjdevries): Support namespaced based augroups
 };
 
 enum { BUFLOCAL_PAT_LEN = 25, };

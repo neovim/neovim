@@ -1540,4 +1540,140 @@ describe('autocmd api', function()
       eq(1, #with_group)
     end)
   end)
+
+  describe('autocmd as namespace:', function()
+    it('named namespaces work as augroups', function()
+      local ns = api.nvim_create_namespace('test')
+      eq(true, pcall(api.nvim_get_autocmds, { group = 'test' }))
+      eq(true, pcall(api.nvim_get_autocmds, { group = ns }))
+      eq(true, pcall(api.nvim_create_autocmd, 'BufNew', { command = '', group = 'test' }))
+      eq(true, pcall(api.nvim_create_autocmd, 'BufNew', { command = '', group = ns }))
+    end)
+
+    it('anonymous namespaces error when used as augroups', function()
+      local ns = api.nvim_create_namespace('')
+      eq(false, pcall(api.nvim_get_autocmds, { group = ns }))
+      eq(false, pcall(api.nvim_create_autocmd, 'BufNew', { command = '', group = ns }))
+      eq(false, pcall(api.nvim_create_augroup, '', {}))
+    end)
+    it('legacy style deleted autocmds work as expected', function()
+      api.nvim_create_augroup('TEMP_A', {})
+      api.nvim_create_autocmd('BufNew', { command = '', group = 'TEMP_A' })
+
+      local ns = api.nvim_create_namespace('')
+
+      command('augroup! TEMP_A')
+
+      api.nvim_create_augroup('TEMP_B', {})
+      api.nvim_create_autocmd('BufNew', { command = '', group = 'TEMP_B' })
+      command('augroup! TEMP_B')
+
+      eq(ns + 1, api.nvim_get_namespaces()['--Deleted--'])
+      local autocmds = api.nvim_get_autocmds({ event = 'BufNew' })
+      eq(ns + 1, autocmds[1].group)
+      eq(ns + 1, autocmds[2].group)
+
+      eq('--Deleted--', autocmds[2].group_name)
+
+      eq(2, #api.nvim_get_autocmds({ group = ns + 1 }))
+      eq(false, pcall(api.nvim_create_autocmd, 'BufNew', { command = '', group = ns }))
+    end)
+
+    it('listing augroups show named namespaces', function()
+      api.nvim_create_namespace('')
+      api.nvim_create_namespace('test')
+      api.nvim_create_namespace('')
+
+      eq(
+        { 'END', 'nvim_cmdwin', 'nvim_popupmenu', 'nvim_swapfile', 'nvim_terminal', 'test' },
+        exec_lua([[return vim.fn.getcompletion("","augroup")]])
+      )
+      eq(
+        'nvim_popupmenu  nvim_terminal  nvim_cmdwin  nvim_swapfile  test  ',
+        api.nvim_exec2('augroup', { output = true }).output
+      )
+    end)
+
+    it('deleted augroup are sometimes not shown when listing augroups', function()
+      api.nvim_create_namespace('test')
+      api.nvim_del_augroup_by_name('test')
+
+      --eq(
+      --  { '--Deleted--', 'END', 'nvim_cmdwin', 'nvim_swapfile', 'nvim_terminal' },
+      --  exec_lua([[return vim.fn.getcompletion("","augroup")]])
+      --)
+
+      api.nvim_create_augroup('test', {})
+      api.nvim_del_augroup_by_name('test')
+
+      --eq(
+      --  { '--Deleted--', '--Deleted--', 'END', 'nvim_cmdwin', 'nvim_swapfile', 'nvim_terminal' },
+      --  exec_lua([[return vim.fn.getcompletion("","augroup")]])
+      --)
+
+      eq(
+        'nvim_popupmenu  nvim_terminal  nvim_cmdwin  nvim_swapfile  ',
+        api.nvim_exec2('augroup', { output = true }).output
+      )
+    end)
+
+    it(
+      'legacy deleted augroup are sometimes shown as `--Deleted--` when listing augroups',
+      function()
+        api.nvim_create_augroup('TEMP_A', {})
+        api.nvim_create_autocmd('BufNew', { command = '', group = 'TEMP_A' })
+        command('augroup! TEMP_A')
+
+        eq({
+          '--Deleted--',
+          'END',
+          'nvim_cmdwin',
+          'nvim_popupmenu',
+          'nvim_swapfile',
+          'nvim_terminal',
+        }, exec_lua([[return vim.fn.getcompletion("","augroup")]]))
+        eq(
+          'nvim_popupmenu  nvim_terminal  nvim_cmdwin  nvim_swapfile  --Deleted--  ',
+          api.nvim_exec2('augroup', { output = true }).output
+        )
+
+        api.nvim_create_augroup('TEMP_A', {})
+        api.nvim_create_autocmd('BufNew', { command = '', group = 'TEMP_A' })
+        command('augroup! TEMP_A')
+
+        eq(
+          'nvim_popupmenu  nvim_terminal  nvim_cmdwin  nvim_swapfile  --Deleted--  ',
+          api.nvim_exec2('augroup', { output = true }).output
+        )
+
+        --api.nvim_create_augroup('TEMP_B', {})
+        --api.nvim_create_autocmd('BufNew', { command = '', group = 'TEMP_B' })
+        --command('augroup! TEMP_B')
+        --
+        --eq(
+        --  'nvim_terminal  nvim_cmdwin  nvim_swapfile  --Deleted--  --Deleted--  ',
+        --  api.nvim_exec2('augroup', { output = true }).output
+        --)
+        --
+        --api.nvim_create_augroup('TEMP_B', {})
+        --api.nvim_create_autocmd('BufNew', { command = '', group = 'TEMP_B' })
+        --command('augroup! TEMP_B')
+        --
+        --eq({
+        --  '--Deleted--',
+        --  '--Deleted--',
+        --  '--Deleted--',
+        --  '--Deleted--',
+        --  'END',
+        --  'nvim_cmdwin',
+        --  'nvim_swapfile',
+        --  'nvim_terminal',
+        --}, exec_lua([[return vim.fn.getcompletion("","augroup")]]))
+        --eq(
+        --  'nvim_terminal  nvim_cmdwin  nvim_swapfile  --Deleted--  --Deleted--  ',
+        --  api.nvim_exec2('augroup', { output = true }).output
+        --)
+      end
+    )
+  end)
 end)
