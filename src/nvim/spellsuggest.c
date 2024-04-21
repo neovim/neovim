@@ -561,6 +561,7 @@ void spell_suggest(int count)
       xstrlcpy(wcopy, stp->st_word, MAXWLEN + 1);
       int el = sug.su_badlen - stp->st_orglen;
       if (el > 0 && stp->st_wordlen + el <= MAXWLEN) {
+        assert(sug.su_badptr != NULL);
         xmemcpyz(wcopy + stp->st_wordlen, sug.su_badptr + stp->st_orglen, (size_t)el);
       }
       vim_snprintf(IObuff, IOSIZE, "%2d", i + 1);
