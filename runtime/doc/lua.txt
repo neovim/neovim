@@ -2029,6 +2029,43 @@ vim.is_callable({f})                                       *vim.is_callable()*
     Return: ~
         (`boolean`) `true` if `f` is callable, else `false`
 
+vim.isarray({t})                                               *vim.isarray()*
+    Tests if `t` is an "array": a table indexed only by integers (potentially
+    non-contiguous).
+
+    If the indexes start from 1 and are contiguous then the array is also a
+    list. |vim.islist()|
+
+    Empty table `{}` is an array, unless it was created by |vim.empty_dict()|
+    or returned as a dict-like |API| or Vimscript result, for example from
+    |rpcrequest()| or |vim.fn|.
+
+    Parameters: ~
+      • {t}  (`table?`)
+
+    Return: ~
+        (`boolean`) `true` if array-like table, else `false`.
+
+    See also: ~
+      • https://github.com/openresty/luajit2#tableisarray
+
+vim.islist({t})                                                 *vim.islist()*
+    Tests if `t` is a "list": a table indexed only by contiguous integers
+    starting from 1 (what |lua-length| calls a "regular array").
+
+    Empty table `{}` is a list, unless it was created by |vim.empty_dict()| or
+    returned as a dict-like |API| or Vimscript result, for example from
+    |rpcrequest()| or |vim.fn|.
+
+    Parameters: ~
+      • {t}  (`table?`)
+
+    Return: ~
+        (`boolean`) `true` if list-like table, else `false`.
+
+    See also: ~
+      • |vim.isarray()|
+
 vim.list_contains({t}, {value})                          *vim.list_contains()*
     Checks if a list-like table (integer keys without gaps) contains `value`.
 
@@ -2279,26 +2316,6 @@ vim.tbl_get({o}, {...})                                        *vim.tbl_get()*
     Return: ~
         (`any`) Nested value indexed by key (if it exists), else nil
 
-vim.tbl_isarray({t})                                       *vim.tbl_isarray()*
-    Tests if `t` is an "array": a table indexed only by integers (potentially
-    non-contiguous).
-
-    If the indexes start from 1 and are contiguous then the array is also a
-    list. |vim.tbl_islist()|
-
-    Empty table `{}` is an array, unless it was created by |vim.empty_dict()|
-    or returned as a dict-like |API| or Vimscript result, for example from
-    |rpcrequest()| or |vim.fn|.
-
-    Parameters: ~
-      • {t}  (`table`)
-
-    Return: ~
-        (`boolean`) `true` if array-like table, else `false`.
-
-    See also: ~
-      • https://github.com/openresty/luajit2#tableisarray
-
 vim.tbl_isempty({t})                                       *vim.tbl_isempty()*
     Checks if a table is empty.
 
@@ -2310,23 +2327,6 @@ vim.tbl_isempty({t})                                       *vim.tbl_isempty()*
 
     See also: ~
       • https://github.com/premake/premake-core/blob/master/src/base/table.lua
-
-vim.tbl_islist({t})                                         *vim.tbl_islist()*
-    Tests if `t` is a "list": a table indexed only by contiguous integers
-    starting from 1 (what |lua-length| calls a "regular array").
-
-    Empty table `{}` is a list, unless it was created by |vim.empty_dict()| or
-    returned as a dict-like |API| or Vimscript result, for example from
-    |rpcrequest()| or |vim.fn|.
-
-    Parameters: ~
-      • {t}  (`table`)
-
-    Return: ~
-        (`boolean`) `true` if list-like table, else `false`.
-
-    See also: ~
-      • |vim.tbl_isarray()|
 
 vim.tbl_keys({t})                                             *vim.tbl_keys()*
     Return a list of all keys used in a table. However, the order of the

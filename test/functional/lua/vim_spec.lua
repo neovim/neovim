@@ -673,21 +673,21 @@ describe('lua stdlib', function()
       local a = {}
       local b = vim.deepcopy(a)
 
-      return vim.tbl_islist(b) and vim.tbl_count(b) == 0 and tostring(a) ~= tostring(b)
+      return vim.islist(b) and vim.tbl_count(b) == 0 and tostring(a) ~= tostring(b)
     ]]))
 
     ok(exec_lua([[
       local a = vim.empty_dict()
       local b = vim.deepcopy(a)
 
-      return not vim.tbl_islist(b) and vim.tbl_count(b) == 0
+      return not vim.islist(b) and vim.tbl_count(b) == 0
     ]]))
 
     ok(exec_lua([[
       local a = {x = vim.empty_dict(), y = {}}
       local b = vim.deepcopy(a)
 
-      return not vim.tbl_islist(b.x) and vim.tbl_islist(b.y)
+      return not vim.islist(b.x) and vim.islist(b.y)
         and vim.tbl_count(b) == 2
         and tostring(a) ~= tostring(b)
     ]]))
@@ -825,30 +825,30 @@ describe('lua stdlib', function()
     )
   end)
 
-  it('vim.tbl_isarray', function()
-    eq(true, exec_lua('return vim.tbl_isarray({})'))
-    eq(false, exec_lua('return vim.tbl_isarray(vim.empty_dict())'))
-    eq(true, exec_lua("return vim.tbl_isarray({'a', 'b', 'c'})"))
-    eq(false, exec_lua("return vim.tbl_isarray({'a', '32', a='hello', b='baz'})"))
-    eq(false, exec_lua("return vim.tbl_isarray({1, a='hello', b='baz'})"))
-    eq(false, exec_lua("return vim.tbl_isarray({a='hello', b='baz', 1})"))
-    eq(false, exec_lua("return vim.tbl_isarray({1, 2, nil, a='hello'})"))
-    eq(true, exec_lua('return vim.tbl_isarray({1, 2, nil, 4})'))
-    eq(true, exec_lua('return vim.tbl_isarray({nil, 2, 3, 4})'))
-    eq(false, exec_lua('return vim.tbl_isarray({1, [1.5]=2, [3]=3})'))
+  it('vim.isarray', function()
+    eq(true, exec_lua('return vim.isarray({})'))
+    eq(false, exec_lua('return vim.isarray(vim.empty_dict())'))
+    eq(true, exec_lua("return vim.isarray({'a', 'b', 'c'})"))
+    eq(false, exec_lua("return vim.isarray({'a', '32', a='hello', b='baz'})"))
+    eq(false, exec_lua("return vim.isarray({1, a='hello', b='baz'})"))
+    eq(false, exec_lua("return vim.isarray({a='hello', b='baz', 1})"))
+    eq(false, exec_lua("return vim.isarray({1, 2, nil, a='hello'})"))
+    eq(true, exec_lua('return vim.isarray({1, 2, nil, 4})'))
+    eq(true, exec_lua('return vim.isarray({nil, 2, 3, 4})'))
+    eq(false, exec_lua('return vim.isarray({1, [1.5]=2, [3]=3})'))
   end)
 
-  it('vim.tbl_islist', function()
-    eq(true, exec_lua('return vim.tbl_islist({})'))
-    eq(false, exec_lua('return vim.tbl_islist(vim.empty_dict())'))
-    eq(true, exec_lua("return vim.tbl_islist({'a', 'b', 'c'})"))
-    eq(false, exec_lua("return vim.tbl_islist({'a', '32', a='hello', b='baz'})"))
-    eq(false, exec_lua("return vim.tbl_islist({1, a='hello', b='baz'})"))
-    eq(false, exec_lua("return vim.tbl_islist({a='hello', b='baz', 1})"))
-    eq(false, exec_lua("return vim.tbl_islist({1, 2, nil, a='hello'})"))
-    eq(false, exec_lua('return vim.tbl_islist({1, 2, nil, 4})'))
-    eq(false, exec_lua('return vim.tbl_islist({nil, 2, 3, 4})'))
-    eq(false, exec_lua('return vim.tbl_islist({1, [1.5]=2, [3]=3})'))
+  it('vim.islist', function()
+    eq(true, exec_lua('return vim.islist({})'))
+    eq(false, exec_lua('return vim.islist(vim.empty_dict())'))
+    eq(true, exec_lua("return vim.islist({'a', 'b', 'c'})"))
+    eq(false, exec_lua("return vim.islist({'a', '32', a='hello', b='baz'})"))
+    eq(false, exec_lua("return vim.islist({1, a='hello', b='baz'})"))
+    eq(false, exec_lua("return vim.islist({a='hello', b='baz', 1})"))
+    eq(false, exec_lua("return vim.islist({1, 2, nil, a='hello'})"))
+    eq(false, exec_lua('return vim.islist({1, 2, nil, 4})'))
+    eq(false, exec_lua('return vim.islist({nil, 2, 3, 4})'))
+    eq(false, exec_lua('return vim.islist({1, [1.5]=2, [3]=3})'))
   end)
 
   it('vim.tbl_isempty', function()
@@ -921,7 +921,7 @@ describe('lua stdlib', function()
       local b = {}
       local c = vim.tbl_extend("keep", a, b)
 
-      return not vim.tbl_islist(c) and vim.tbl_count(c) == 0
+      return not vim.islist(c) and vim.tbl_count(c) == 0
     ]]))
 
     ok(exec_lua([[
@@ -929,7 +929,7 @@ describe('lua stdlib', function()
       local b = vim.empty_dict()
       local c = vim.tbl_extend("keep", a, b)
 
-      return vim.tbl_islist(c) and vim.tbl_count(c) == 0
+      return vim.islist(c) and vim.tbl_count(c) == 0
     ]]))
 
     ok(exec_lua([[
@@ -1029,7 +1029,7 @@ describe('lua stdlib', function()
       local count = 0
       for _ in pairs(c) do count = count + 1 end
 
-      return not vim.tbl_islist(c) and count == 0
+      return not vim.islist(c) and count == 0
     ]]))
 
     ok(exec_lua([[
@@ -1040,7 +1040,7 @@ describe('lua stdlib', function()
       local count = 0
       for _ in pairs(c) do count = count + 1 end
 
-      return vim.tbl_islist(c) and count == 0
+      return vim.islist(c) and count == 0
     ]]))
 
     eq(
@@ -1285,7 +1285,7 @@ describe('lua stdlib', function()
       vim.rpcrequest(chan, 'nvim_exec', 'let xx = {}\nlet yy = []', false)
       local dict = vim.rpcrequest(chan, 'nvim_eval', 'xx')
       local list = vim.rpcrequest(chan, 'nvim_eval', 'yy')
-      return {dict, list, vim.tbl_islist(dict), vim.tbl_islist(list)}
+      return {dict, list, vim.islist(dict), vim.islist(list)}
      ]])
     )
 
@@ -1358,7 +1358,7 @@ describe('lua stdlib', function()
       vim.api.nvim_set_var('dicty', vim.empty_dict())
       local listy = vim.fn.eval("listy")
       local dicty = vim.fn.eval("dicty")
-      return {vim.tbl_islist(listy), vim.tbl_islist(dicty), next(listy) == nil, next(dicty) == nil}
+      return {vim.islist(listy), vim.islist(dicty), next(listy) == nil, next(dicty) == nil}
     ]])
     )
 

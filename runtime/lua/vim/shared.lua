@@ -356,7 +356,7 @@ end
 
 --- We only merge empty tables or tables that are not an array (indexed by integers)
 local function can_merge(v)
-  return type(v) == 'table' and (vim.tbl_isempty(v) or not vim.tbl_isarray(v))
+  return type(v) == 'table' and (vim.tbl_isempty(v) or not vim.isarray(v))
 end
 
 local function tbl_extend(behavior, deep_extend, ...)
@@ -502,7 +502,7 @@ end
 ---
 ---@param o table Table to index
 ---@param ... any Optional keys (0 or more, variadic) via which to index the table
----@return any : Nested value indexed by key (if it exists), else nil
+---@return any # Nested value indexed by key (if it exists), else nil
 function vim.tbl_get(o, ...)
   local keys = { ... }
   if #keys == 0 then
@@ -599,18 +599,24 @@ function vim.spairs(t)
     t
 end
 
+--- @deprecated
+function vim.tbl_isarray()
+  vim.deprecate('vim.tbl_isarray', 'vim.isarray', '0.10-dev')
+  error('vim.tbl_isarray was renamed to vim.isarray')
+end
+
 --- Tests if `t` is an "array": a table indexed _only_ by integers (potentially non-contiguous).
 ---
---- If the indexes start from 1 and are contiguous then the array is also a list. |vim.tbl_islist()|
+--- If the indexes start from 1 and are contiguous then the array is also a list. |vim.islist()|
 ---
 --- Empty table `{}` is an array, unless it was created by |vim.empty_dict()| or returned as
 --- a dict-like |API| or Vimscript result, for example from |rpcrequest()| or |vim.fn|.
 ---
 ---@see https://github.com/openresty/luajit2#tableisarray
 ---
----@param t table
+---@param t? table
 ---@return boolean `true` if array-like table, else `false`.
-function vim.tbl_isarray(t)
+function vim.isarray(t)
   if type(t) ~= 'table' then
     return false
   end
@@ -640,17 +646,23 @@ function vim.tbl_isarray(t)
   end
 end
 
+--- @deprecated
+function vim.tbl_islist(t)
+  vim.deprecate('vim.tbl_islist', 'vim.islist', '0.12')
+  return vim.islist(t)
+end
+
 --- Tests if `t` is a "list": a table indexed _only_ by contiguous integers starting from 1 (what
 --- |lua-length| calls a "regular array").
 ---
 --- Empty table `{}` is a list, unless it was created by |vim.empty_dict()| or returned as
 --- a dict-like |API| or Vimscript result, for example from |rpcrequest()| or |vim.fn|.
 ---
----@see |vim.tbl_isarray()|
+---@see |vim.isarray()|
 ---
----@param t table
+---@param t? table
 ---@return boolean `true` if list-like table, else `false`.
-function vim.tbl_islist(t)
+function vim.islist(t)
   if type(t) ~= 'table' then
     return false
   end

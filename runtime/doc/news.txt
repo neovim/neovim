@@ -22,10 +22,10 @@ The following changes may require adaptations in user config or plugins.
 
     set guicursor+=n-v-c:blinkon500-blinkoff500
 <
-• |vim.tbl_islist()| now checks whether a table is actually list-like (i.e.,
+• |vim.islist()| now checks whether a table is actually list-like (i.e.,
   has integer keys without gaps and starting from 1). For the previous
   behavior (only check for integer keys, allow gaps or not starting with 1),
-  use |vim.tbl_isarray()|.
+  use |vim.isarray()|.
 
 • "#" followed by a digit no longer stands for a function key at the start of
   the lhs of a mapping.
@@ -154,6 +154,8 @@ unreleased features on Nvim HEAD.
 • Changed the signature of `vim.diagnostic.enable()`.
 
 • Removed vim.iter.map(), vim.iter.filter(), vim.iter.totable().
+
+• Renamed vim.tbl_isarray() to vim.isarray().
 
 ==============================================================================
 NEW FEATURES                                                    *news-features*
@@ -561,7 +563,8 @@ release.
   populated. Background color detection is now performed in Lua by the Nvim
   core, not the TUI.
 
-• vim.shared functions:
+• Lua stdlib:
   - |vim.tbl_add_reverse_lookup()|
+  - |vim.tbl_islist()|
 
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:

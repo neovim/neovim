@@ -173,6 +173,7 @@ LUA
 - *vim.pretty_print()*			Use |vim.print()| instead.
 - *vim.loop*				Use |vim.uv| instead.
 - *vim.tbl_add_reverse_lookup()*
+- *vim.tbl_islist()*			Use |vim.islist()| instead.
 
 NORMAL COMMANDS
 - *]f* *[f*		Same as "gf".
