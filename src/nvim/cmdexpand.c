@@ -2986,7 +2986,6 @@ static void expand_shellcmd(char *filepat, char ***matches, int *numMatches, int
   char *path = NULL;
   garray_T ga;
   char *buf = xmalloc(MAXPATHL);
-  char *e;
   int flags = flagsarg;
   bool did_curdir = false;
 
@@ -3022,7 +3021,7 @@ static void expand_shellcmd(char *filepat, char ***matches, int *numMatches, int
   ga_init(&ga, (int)sizeof(char *), 10);
   hashtab_T found_ht;
   hash_init(&found_ht);
-  for (char *s = path;; s = e) {
+  for (char *s = path, *e;; s = e) {
     e = vim_strchr(s, ENV_SEPCHAR);
     if (e == NULL) {
       e = s + strlen(s);
@@ -3047,6 +3046,7 @@ static void expand_shellcmd(char *filepat, char ***matches, int *numMatches, int
     if (l > MAXPATHL - 5) {
       break;
     }
+    assert(l <= strlen(s));
     expand_shellcmd_onedir(buf, s, l, pat, matches, numMatches, flags, &found_ht, &ga);
     if (*e != NUL) {
       e++;
