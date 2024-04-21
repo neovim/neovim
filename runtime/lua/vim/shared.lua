@@ -544,6 +544,7 @@ function vim.list_extend(dst, src, start, finish)
   return dst
 end
 
+--- @deprecated
 --- Creates a copy of a list-like table such that any nested tables are
 --- "unrolled" and appended to the result.
 ---
