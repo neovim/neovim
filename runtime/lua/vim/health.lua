@@ -366,17 +366,20 @@ end
 local PATTERNS = { '/autoload/health/*.vim', '/lua/**/**/health.lua', '/lua/**/**/health/init.lua' }
 --- :checkhealth completion function used by cmdexpand.c get_healthcheck_names()
 M._complete = function()
-  local names = vim.tbl_flatten(vim.tbl_map(function(pattern)
-    return vim.tbl_map(path2name, vim.api.nvim_get_runtime_file(pattern, true))
-  end, PATTERNS))
-  -- Remove duplicates
-  local unique = {}
-  vim.tbl_map(function(f)
-    unique[f] = true
-  end, names)
+  local unique = vim
+    .iter(vim.tbl_map(function(pattern)
+      return vim.tbl_map(path2name, vim.api.nvim_get_runtime_file(pattern, true))
+    end, PATTERNS))
+    :flatten()
+    :fold({}, function(t, name)
+      t[name] = true -- Remove duplicates
+      return t
+    end)
   -- vim.health is this file, which is not a healthcheck
   unique['vim'] = nil
-  return vim.tbl_keys(unique)
+  local rv = vim.tbl_keys(unique)
+  table.sort(rv)
+  return rv
 end
 
 --- Runs the specified healthchecks.

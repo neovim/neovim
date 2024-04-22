@@ -2285,20 +2285,6 @@ vim.tbl_filter({func}, {t})                                 *vim.tbl_filter()*
     Return: ~
         (`any[]`) Table of filtered values
 
-vim.tbl_flatten({t})                                       *vim.tbl_flatten()*
-    Creates a copy of a list-like table such that any nested tables are
-    "unrolled" and appended to the result.
-
-    Parameters: ~
-      • {t}  (`table`) List-like table
-
-    Return: ~
-        (`table`) Flattened copy of the given list-like table
-
-    See also: ~
-      • From
-        https://github.com/premake/premake-core/blob/master/src/base/table.lua
-
 vim.tbl_get({o}, {...})                                        *vim.tbl_get()*
     Index into a table (first argument) via string keys passed as subsequent
     arguments. Return `nil` if the key does not exist.
