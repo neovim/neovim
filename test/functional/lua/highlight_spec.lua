@@ -7,9 +7,15 @@ local command = t.command
 local clear = t.clear
 local api = t.api
 
+local testlog = 'Xtest-highlight-log'
+
 describe('vim.highlight.on_yank', function()
   before_each(function()
     clear()
+  end)
+
+  after_each(function()
+    os.remove(testlog)
   end)
 
   it('does not show errors even if buffer is wiped before timeout', function()
@@ -35,6 +41,7 @@ describe('vim.highlight.on_yank', function()
   end)
 
   it('does not show in another window', function()
+    clear({ env = { NVIM_LOG_FILE = testlog } })
     command('vsplit')
     exec_lua([[
       vim.api.nvim_buf_set_mark(0,"[",1,1,{})
@@ -44,9 +51,13 @@ describe('vim.highlight.on_yank', function()
     neq({}, api.nvim_win_get_ns(0))
     command('wincmd w')
     eq({}, api.nvim_win_get_ns(0))
+    if t.is_asan() then
+      t.assert_log('uv_loop_close', testlog, 100)
+    end
   end)
 
   it('removes old highlight if new one is created before old one times out', function()
+    clear({ env = { NVIM_LOG_FILE = testlog } })
     command('vnew')
     exec_lua([[
       vim.api.nvim_buf_set_mark(0,"[",1,1,{})
@@ -62,5 +73,8 @@ describe('vim.highlight.on_yank', function()
     ]])
     command('wincmd w')
     eq({}, api.nvim_win_get_ns(0))
+    if t.is_asan() then
+      t.assert_log('uv_loop_close', testlog, 100)
+    end
   end)
 end)
