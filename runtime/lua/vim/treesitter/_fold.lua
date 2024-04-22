@@ -103,20 +103,6 @@ local function edit_range(range, srow, erow_old, erow_new)
   range[2] = math.max(range[2], erow_new)
 end
 
---- If a parser doesn't have any ranges explicitly set, treesitter will
---- return a range with end_row and end_bytes with a value of UINT32_MAX,
---- so clip end_row to the max buffer line.
----
---- TODO(lewis6991): Handle this generally
----
---- @param bufnr integer
---- @param erow integer? 0-indexed, exclusive
---- @return integer
-local function normalise_erow(bufnr, erow)
-  local max_erow = api.nvim_buf_line_count(bufnr)
-  return math.min(erow or max_erow, max_erow)
-end
-
 -- TODO(lewis6991): Setup a decor provider so injections folds can be parsed
 -- as the window is redrawn
 ---@param bufnr integer
@@ -126,7 +112,7 @@ end
 ---@param parse_injections? boolean
 local function compute_folds_levels(bufnr, info, srow, erow, parse_injections)
   srow = srow or 0
-  erow = normalise_erow(bufnr, erow)
+  erow = erow or api.nvim_buf_line_count(bufnr)
 
   local parser = ts.get_parser(bufnr)
 
@@ -314,9 +300,16 @@ end
 local function on_changedtree(bufnr, foldinfo, tree_changes)
   schedule_if_loaded(bufnr, function()
     local srow_upd, erow_upd ---@type integer?, integer?
+    local max_erow = api.nvim_buf_line_count(bufnr)
     for _, change in ipairs(tree_changes) do
       local srow, _, erow, ecol = Range.unpack4(change)
-      if ecol > 0 then
+      -- If a parser doesn't have any ranges explicitly set, treesitter will
+      -- return a range with end_row and end_bytes with a value of UINT32_MAX,
+      -- so clip end_row to the max buffer line.
+      -- TODO(lewis6991): Handle this generally
+      if erow > max_erow then
+        erow = max_erow
+      elseif ecol > 0 then
         erow = erow + 1
       end
       -- Start from `srow - foldminlines`, because this edit may have shrunken the fold below limit.
