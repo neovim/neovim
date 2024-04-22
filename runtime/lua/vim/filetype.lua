@@ -1503,6 +1503,7 @@ local filename = {
   ['.octaverc'] = 'octave',
   octaverc = 'octave',
   ['octave.conf'] = 'octave',
+  ['.ondirrc'] = 'ondir',
   opam = 'opam',
   ['pacman.log'] = 'pacmanlog',
   ['/etc/pam.conf'] = 'pamconf',
