@@ -2869,7 +2869,8 @@ int win_close(win_T *win, bool free_buf, bool force)
         if (wp == curwin) {
           break;
         }
-        if (!wp->w_p_pvw && !bt_quickfix(wp->w_buffer)) {
+        if (!wp->w_p_pvw && !bt_quickfix(wp->w_buffer)
+            && !(wp->w_floating && !wp->w_config.focusable)) {
           curwin = wp;
           break;
         }

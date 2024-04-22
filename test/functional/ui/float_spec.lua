@@ -434,6 +434,25 @@ describe('float window', function()
     eq(winid, eval('win_getid()'))
   end)
 
+  it('is not active after closing window when non-focusable #28454', function()
+    command('copen')
+    local winid = exec_lua([[
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      local opts = {
+        relative = 'editor',
+        focusable = false,
+        height = 5,
+        width = 5,
+        col = 5,
+        row = 5,
+      }
+      return vim.api.nvim_open_win(bufnr, false, opts)
+    ]])
+    command('wincmd t')
+    command('wincmd q')
+    neq(winid, curwin())
+  end)
+
   it('supports windo with focusable and non-focusable floats', function()
     local winids = exec_lua([[
       local result = {vim.api.nvim_get_current_win()}
