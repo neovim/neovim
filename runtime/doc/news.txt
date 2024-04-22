@@ -565,6 +565,7 @@ release.
 
 • Lua stdlib:
   - |vim.tbl_add_reverse_lookup()|
+  - |vim.tbl_flatten()|
   - |vim.tbl_islist()|
 
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:
