@@ -549,19 +549,21 @@ static int nlua_iconv(lua_State *lstate)
 static int nlua_foldupdate(lua_State *lstate)
 {
   handle_T window = (handle_T)luaL_checkinteger(lstate, 1);
-  Error err = ERROR_INIT;
-  win_T *win = find_window_by_handle(window, &err);
-  if (ERROR_SET(&err)) {
-    nlua_push_errstr(lstate, err.msg);
-    api_clear_error(&err);
-    lua_error(lstate);
-    return 0;
+  win_T *win = handle_get_window(window);
+  if (!win) {
+    return luaL_error(lstate, "invalid window");
+  }
+  // input is zero-based end-exclusive range
+  linenr_T top = (linenr_T)luaL_checkinteger(lstate, 2) + 1;
+  if (top < 1 || top > win->w_buffer->b_ml.ml_line_count) {
+    return luaL_error(lstate, "invalid top");
+  }
+  linenr_T bot = (linenr_T)luaL_checkinteger(lstate, 3);
+  if (top > bot) {
+    return luaL_error(lstate, "invalid bot");
   }
 
-  linenr_T start = (linenr_T)luaL_checkinteger(lstate, 2);
-  linenr_T end = (linenr_T)luaL_checkinteger(lstate, 3);
-
-  foldUpdate(win, start + 1, end);
+  foldUpdate(win, top, bot);
 
   return 0;
 }
