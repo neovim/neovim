@@ -311,6 +311,10 @@ api.nvim_set_decoration_provider(namespace, {
     if bufstate.version ~= util.buf_versions[bufnr] then
       return
     end
+
+    if not bufstate.client_hints then
+      return
+    end
     local hints_by_client = assert(bufstate.client_hints)
 
     for lnum = topline, botline do
