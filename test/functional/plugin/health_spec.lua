@@ -6,6 +6,8 @@ local curbuf_contents = t.curbuf_contents
 local command = t.command
 local eq, neq, matches = t.eq, t.neq, t.matches
 local getcompletion = t.fn.getcompletion
+local exec_lua = t.exec_lua
+local assert_alive = t.assert_alive
 local insert = t.insert
 local source = t.source
 local fn = t.fn
@@ -20,6 +22,7 @@ describe(':checkhealth', function()
     eq(false, status)
     eq('Invalid $VIMRUNTIME: bogus', string.match(err, 'Invalid.*'))
   end)
+
   it("detects invalid 'runtimepath'", function()
     clear()
     command('set runtimepath=bogus')
@@ -27,6 +30,7 @@ describe(':checkhealth', function()
     eq(false, status)
     eq("Invalid 'runtimepath'", string.match(err, 'Invalid.*'))
   end)
+
   it('detects invalid $VIM', function()
     clear()
     -- Do this after startup, otherwise it just breaks $VIMRUNTIME.
@@ -34,12 +38,22 @@ describe(':checkhealth', function()
     command('checkhealth nvim')
     matches('ERROR $VIM .* zub', curbuf_contents())
   end)
+
   it('completions can be listed via getcompletion()', function()
     clear()
     eq('nvim', getcompletion('nvim', 'checkhealth')[1])
     eq('provider.clipboard', getcompletion('prov', 'checkhealth')[1])
     eq('vim.lsp', getcompletion('vim.ls', 'checkhealth')[1])
     neq('vim', getcompletion('^vim', 'checkhealth')[1]) -- should not complete vim.health
+  end)
+
+  it('completion checks for vim.health._complete() return type #28456', function()
+    clear()
+    exec_lua([[vim.health._complete = function() return 1 end]])
+    eq({}, getcompletion('', 'checkhealth'))
+    exec_lua([[vim.health._complete = function() return { 1 } end]])
+    eq({}, getcompletion('', 'checkhealth'))
+    assert_alive()
   end)
 end)
 
