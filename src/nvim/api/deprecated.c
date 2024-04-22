@@ -20,6 +20,9 @@
 #include "nvim/lua/executor.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
+#include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/channel_defs.h"
+#include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/pos_defs.h"
@@ -696,4 +699,90 @@ static void set_option_to(uint64_t channel_id, void *to, OptReqScope req_scope, 
   WITH_SCRIPT_CONTEXT(channel_id, {
     set_option_value_for(name.data, opt_idx, optval, opt_flags, req_scope, to, err);
   });
+}
+
+/// @deprecated Use nvim_exec_lua() instead.
+///
+/// Calls many API methods atomically.
+///
+/// This has two main usages:
+/// 1. To perform several requests from an async context atomically, i.e.
+///    without interleaving redraws, RPC requests from other clients, or user
+///    interactions (however API methods may trigger autocommands or event
+///    processing which have such side effects, e.g. |:sleep| may wake timers).
+/// 2. To minimize RPC overhead (roundtrips) of a sequence of many requests.
+///
+/// @param channel_id
+/// @param calls an array of calls, where each call is described by an array
+///              with two elements: the request name, and an array of arguments.
+/// @param[out] err Validation error details (malformed `calls` parameter),
+///             if any. Errors from batched calls are given in the return value.
+///
+/// @return Array of two elements. The first is an array of return
+/// values. The second is NIL if all calls succeeded. If a call resulted in
+/// an error, it is a three-element array with the zero-based index of the call
+/// which resulted in an error, the error type and the error message. If an
+/// error occurred, the values from all preceding calls will still be returned.
+Array nvim_call_atomic(uint64_t channel_id, Array calls, Arena *arena, Error *err)
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(12) FUNC_API_REMOTE_ONLY
+{
+  Array rv = arena_array(arena, 2);
+  Array results = arena_array(arena, calls.size);
+  Error nested_error = ERROR_INIT;
+
+  size_t i;  // also used for freeing the variables
+  for (i = 0; i < calls.size; i++) {
+    VALIDATE_T("'calls' item", kObjectTypeArray, calls.items[i].type, {
+      goto theend;
+    });
+    Array call = calls.items[i].data.array;
+    VALIDATE_EXP((call.size == 2), "'calls' item", "2-item Array", NULL, {
+      goto theend;
+    });
+    VALIDATE_T("name", kObjectTypeString, call.items[0].type, {
+      goto theend;
+    });
+    String name = call.items[0].data.string;
+    VALIDATE_T("call args", kObjectTypeArray, call.items[1].type, {
+      goto theend;
+    });
+    Array args = call.items[1].data.array;
+
+    MsgpackRpcRequestHandler handler =
+      msgpack_rpc_get_handler_for(name.data,
+                                  name.size,
+                                  &nested_error);
+
+    if (ERROR_SET(&nested_error)) {
+      break;
+    }
+
+    Object result = handler.fn(channel_id, args, arena, &nested_error);
+    if (ERROR_SET(&nested_error)) {
+      // error handled after loop
+      break;
+    }
+    // TODO(bfredl): wasteful copy. It could be avoided to encoding to msgpack
+    // directly here. But `result` might become invalid when next api function
+    // is called in the loop.
+    ADD_C(results, copy_object(result, arena));
+    if (handler.ret_alloc) {
+      api_free_object(result);
+    }
+  }
+
+  ADD_C(rv, ARRAY_OBJ(results));
+  if (ERROR_SET(&nested_error)) {
+    Array errval = arena_array(arena, 3);
+    ADD_C(errval, INTEGER_OBJ((Integer)i));
+    ADD_C(errval, INTEGER_OBJ(nested_error.type));
+    ADD_C(errval, STRING_OBJ(copy_string(cstr_as_string(nested_error.msg), arena)));
+    ADD_C(rv, ARRAY_OBJ(errval));
+  } else {
+    ADD_C(rv, NIL);
+  }
+
+theend:
+  api_clear_error(&nested_error);
+  return rv;
 }
