@@ -2776,11 +2776,11 @@ func Test_short_option()
   call s:make_buffer_pairs()
 
   set winfixbuf
-  call assert_fails("edit something_else", "E1513")
+  call assert_fails("edit something_else", "E1513:")
 
   set nowinfixbuf
   set wfb
-  call assert_fails("edit another_place", "E1513")
+  call assert_fails("edit another_place", "E1513:")
 
   set nowfb
   edit last_place
