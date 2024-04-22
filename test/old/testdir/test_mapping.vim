@@ -236,21 +236,25 @@ func Test_map_meta_multibyte()
 endfunc
 
 func Test_map_super_quotes()
-  if has('gui_gtk') || has('gui_gtk3') || has("macos")
-    imap <D-"> foo
-    call feedkeys("Go-\<*D-\">-\<Esc>", "xt")
-    call assert_equal("-foo-", getline('$'))
-    set nomodified
-    iunmap <D-">
+  if "\<D-j>"[-1:] == '>'
+    throw 'Skipped: <D- modifier not supported'
   endif
+
+  imap <D-"> foo
+  call feedkeys("Go-\<*D-\">-\<Esc>", "xt")
+  call assert_equal("-foo-", getline('$'))
+  set nomodified
+  iunmap <D-">
 endfunc
 
 func Test_map_super_multibyte()
-  if has('gui_gtk') || has('gui_gtk3') || has("macos")
-    imap <D-á> foo
-    call assert_match('i  <D-á>\s*foo', execute('imap'))
-    iunmap <D-á>
+  if "\<D-j>"[-1:] == '>'
+    throw 'Skipped: <D- modifier not supported'
   endif
+
+  imap <D-á> foo
+  call assert_match('i  <D-á>\s*foo', execute('imap'))
+  iunmap <D-á>
 endfunc
 
 func Test_abbr_after_line_join()
