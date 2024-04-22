@@ -2598,7 +2598,8 @@ static char *get_healthcheck_names(expand_T *xp FUNC_ATTR_UNUSED, int idx)
     last_gen = get_cmdline_last_prompt_id();
   }
 
-  if (names.type == kObjectTypeArray && idx < (int)names.data.array.size) {
+  if (names.type == kObjectTypeArray && idx < (int)names.data.array.size
+      && names.data.array.items[idx].type == kObjectTypeString) {
     return names.data.array.items[idx].data.string.data;
   }
   return NULL;
