@@ -377,7 +377,9 @@ M._complete = function()
     end)
   -- vim.health is this file, which is not a healthcheck
   unique['vim'] = nil
-  return vim.tbl_keys(unique)
+  local rv = vim.tbl_keys(unique)
+  table.sort(rv)
+  return rv
 end
 
 --- Runs the specified healthchecks.
