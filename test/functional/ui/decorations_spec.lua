@@ -4268,7 +4268,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     screen:expect{grid=[[
       {16:refactor(khash): }take size of values as parameter |
       Author: Dev Devsson, {18:Tue Aug 31 10:13:37 2021}     |
-      ^if (h->n_buckets < new_n_buckets) { // expand     |
+      if (h->n_buckets < new_n_buckets) { // expand     |
         khkey_t *new_keys = (khkey_t *)krealloc((void *)|
       h->keys, new_n_buckets * sizeof(khkey_t));        |
         h->keys = new_keys;                             |
@@ -4276,7 +4276,7 @@ if (h->n_buckets < new_n_buckets) { // expand
           char *new_vals = krealloc( h->vals_buf, new_n_|
       buckets * val_size);                              |
           h->vals_buf = new_vals;                       |
-        }                                               |
+        ^}                                               |
                                                         |
     ]]}
   end)
@@ -4949,8 +4949,8 @@ if (h->n_buckets < new_n_buckets) { // expand
       VIRT2               |
       11                  |
       12                  |
-      ^13                  |
-      14                  |
+      13                  |
+      ^14                  |
                           |
     ]])
     feed('<C-B>')

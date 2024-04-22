@@ -2492,22 +2492,26 @@ int pagescroll(Direction dir, int count, bool half)
     } else {
       cursor_up_inner(curwin, curscount);
     }
-
-    if (get_scrolloff_value(curwin) > 0) {
-      cursor_correct(curwin);
-    }
-    // Move cursor to first line of closed fold.
-    foldAdjustCursor(curwin);
-
-    nochange = nochange
-               && prev_col == curwin->w_cursor.col
-               && prev_lnum == curwin->w_cursor.lnum;
   } else {
     // Scroll [count] times 'window' or current window height lines.
     count *= ((ONE_WINDOW && p_window > 0 && p_window < Rows - 1)
               ? MAX(1, (int)p_window - 2) : get_scroll_overlap(dir));
     nochange = scroll_with_sms(dir, count);
+
+    // Place cursor at top or bottom of window.
+    validate_botline(curwin);
+    curwin->w_cursor.lnum = (dir == FORWARD ? curwin->w_topline : curwin->w_botline - 1);
   }
+
+  if (get_scrolloff_value(curwin) > 0) {
+    cursor_correct(curwin);
+  }
+  // Move cursor to first line of closed fold.
+  foldAdjustCursor(curwin);
+
+  nochange = nochange
+             && prev_col == curwin->w_cursor.col
+             && prev_lnum == curwin->w_cursor.lnum;
 
   // Error if both the viewport and cursor did not change.
   if (nochange) {
