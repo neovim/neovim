@@ -2212,8 +2212,8 @@ perl_string_as_statement, it will be highlighted as in the second line.
 The syncing has 3 options.  The first two switch off some triggering of
 synchronization and should only be needed in case it fails to work properly.
 If while scrolling all of a sudden the whole screen changes color completely
-then you should try and switch off one of those.  Let me know if you can
-figure out the line that causes the mistake.
+then you should try and switch off one of those.  Let the developer know if
+you can figure out the line that causes the mistake.
 
 One triggers on "^\s*sub\s*" and the other on "^[$@%]" more or less. >
 
@@ -5321,5 +5321,6 @@ literal text specify the size of that text (in bytes):
 "<\@<=span"	Matches "span" in "<span".  This tries matching with "<" in
 		many places.
 "<\@1<=span"	Matches the same, but only tries one byte before "span".
+
 
  vim:tw=78:sw=4:ts=8:noet:ft=help:norl:

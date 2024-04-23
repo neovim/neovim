@@ -199,7 +199,7 @@ visited about once a year to check the progress (at our own cost).  I have
 visited the centre myself many times, starting in 1993.  The visit reports are
 on the ICCF web site.
 
-If you have any further questions, send me e-mail: <Bram@vim.org>.
+If you have any further questions, send e-mail: <Bram@vim.org>.
 
 The address of the centre is:
 			Kibaale Children's Centre
@@ -219,9 +219,8 @@ Canada:		Contact Kuwasha in Surrey, Canada.  They take care of the
 		Canadian sponsors for the children in Kibaale.  Kuwasha
 		forwards 100% of the money to the project in Uganda.  You can
 		send them a one time donation directly.
-		Please send me a note so that I know what has been donated
-		because of Vim.  Look on their site for information about
-		sponsorship: https://www.kuwasha.net/
+		Look on their site for information about sponsorship:
+		https://www.kuwasha.net/
 		If you make a donation to Kuwasha you will receive a tax
 		receipt which can be submitted with your tax return.
 
