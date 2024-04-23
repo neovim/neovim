@@ -717,7 +717,7 @@ local function get_diagnostics(bufnr, opts, clamp)
   ---@param b integer
   ---@param d vim.Diagnostic
   local function add(b, d)
-    if not opts.lnum or d.lnum == opts.lnum then
+    if not opts.lnum or (opts.lnum >= d.lnum and opts.lnum <= (d.end_lnum or d.lnum)) then
       if clamp and api.nvim_buf_is_loaded(b) then
         local line_count = buf_line_count[b] - 1
         if
@@ -1140,7 +1140,7 @@ end
 --- Limit diagnostics to one or more namespaces.
 --- @field namespace? integer[]|integer
 ---
---- Limit diagnostics to the given line number.
+--- Limit diagnostics to those spanning the specified line number.
 --- @field lnum? integer
 ---
 --- See |diagnostic-severity|.
