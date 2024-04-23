@@ -147,8 +147,10 @@ describe('lua stdlib', function()
       end)
 
       it('when plugin = nil', function()
+        local cur = vim.version.parse(current_version)
+        local cur_to_compare = cur.major .. '.' .. cur.minor
         local was_removed = (
-          vim.version.ge(current_version, '0.10') and 'was removed' or 'will be removed'
+          vim.version.ge(cur_to_compare, '0.10') and 'was removed' or 'will be removed'
         )
         eq(
           dedent([[
