@@ -217,7 +217,7 @@ The following new APIs and features were added.
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_inlayHint
   • Implemented pull diagnostic textDocument/diagnostic: |vim.lsp.diagnostic.on_diagnostic()|
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_diagnostic
-  • Implemented LSP type hierarchy: |vim.lsp.buf.supertypes()| and |vim.lsp.buf.subtypes()|
+  • Implemented LSP type hierarchy: |vim.lsp.buf.typehierarchy()|
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_prepareTypeHierarchy
   • |vim.lsp.status()| consumes the last progress messages as a string.
   • LSP client now always saves and restores named buffer marks when applying
