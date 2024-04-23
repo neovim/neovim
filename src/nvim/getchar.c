@@ -66,12 +66,11 @@
 
 /// State for adding bytes to a recording or 'showcmd'.
 typedef struct {
-  int prev_c;
   uint8_t buf[MB_MAXBYTES * 3 + 4];
+  int prev_c;
   size_t buflen;
-  unsigned pending;
-  bool in_special;
-  bool in_mbyte;
+  unsigned pending_special;
+  unsigned pending_mbyte;
 } gotchars_state_T;
 
 /// Index in scriptin
@@ -1129,27 +1128,25 @@ static bool gotchars_add_byte(gotchars_state_T *state, uint8_t byte)
 {
   int c = state->buf[state->buflen++] = byte;
   bool retval = false;
+  const bool in_special = state->pending_special > 0;
+  const bool in_mbyte = state->pending_mbyte > 0;
 
-  if (state->pending > 0) {
-    state->pending--;
+  if (in_special) {
+    state->pending_special--;
+  } else if (c == K_SPECIAL) {
+    // When receiving a special key sequence, store it until we have all
+    // the bytes and we can decide what to do with it.
+    state->pending_special = 2;
   }
 
-  // When receiving a special key sequence, store it until we have all
-  // the bytes and we can decide what to do with it.
-  if ((state->pending == 0 || state->in_mbyte) && c == K_SPECIAL) {
-    state->pending += 2;
-    if (!state->in_mbyte) {
-      state->in_special = true;
-    }
-  }
-
-  if (state->pending > 0) {
+  if (state->pending_special > 0) {
     goto ret_false;
   }
 
-  if (!state->in_mbyte) {
-    if (state->in_special) {
-      state->in_special = false;
+  if (in_mbyte) {
+    state->pending_mbyte--;
+  } else {
+    if (in_special) {
       if (state->prev_c == KS_MODIFIER) {
         // When receiving a modifier, wait for the modified key.
         goto ret_false;
@@ -1159,14 +1156,11 @@ static bool gotchars_add_byte(gotchars_state_T *state, uint8_t byte)
     // When receiving a multibyte character, store it until we have all
     // the bytes, so that it won't be split between two buffer blocks,
     // and delete_buff_tail() will work properly.
-    state->pending = MB_BYTE2LEN_CHECK(c) - 1;
-    if (state->pending > 0) {
-      state->in_mbyte = true;
-      goto ret_false;
-    }
-  } else {
-    // Stored all bytes of a multibyte character.
-    state->in_mbyte = false;
+    state->pending_mbyte = MB_BYTE2LEN_CHECK(c) - 1;
+  }
+
+  if (state->pending_mbyte > 0) {
+    goto ret_false;
   }
 
   retval = true;
