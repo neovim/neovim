@@ -410,11 +410,15 @@ static void terminfo_start(TUIData *tui)
 
   // Query support for mode 2026 (Synchronized Output). Some terminals also
   // support an older DCS sequence for synchronized output, but we will only use
-  // mode 2026
-  tui_request_term_mode(tui, kTermModeSynchronizedOutput);
+  // mode 2026.
+  // Some terminals (such as Terminal.app) do not support DECRQM, so skip the query.
+  if (!nsterm) {
+    tui_request_term_mode(tui, kTermModeSynchronizedOutput);
+  }
 
   // Don't use DECRQSS in screen or tmux, as they behave strangely when receiving it.
-  if (tui->unibi_ext.set_underline_style == -1 && !(screen || tmux)) {
+  // Terminal.app also doesn't support DECRQSS.
+  if (tui->unibi_ext.set_underline_style == -1 && !(screen || tmux || nsterm)) {
     // Query the terminal to see if it supports extended underline.
     tui_query_extended_underline(tui);
   }
