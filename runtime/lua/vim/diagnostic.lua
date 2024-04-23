@@ -953,8 +953,6 @@ M.handlers.signs = {
         api.nvim_create_namespace(string.format('%s/diagnostic/signs', ns.name))
     end
 
-    resolve_legacy_diagnostic_sign_definitions(opts)
-
     local text = {} ---@type table<string, string>
     for k in pairs(M.severity) do
       if opts.signs.text and opts.signs.text[k] then
@@ -1287,6 +1285,7 @@ function M.show(namespace, bufnr, diagnostics, opts)
 
   opts = get_resolved_options(opts, namespace, bufnr)
 
+  -- TODO(#26927): Remove this in 0.12 release cycle
   resolve_legacy_diagnostic_sign_definitions(opts)
 
   if opts.update_in_insert then
