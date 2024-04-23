@@ -1159,7 +1159,7 @@ end
 --- @field wrap? boolean
 ---
 --- See |diagnostic-severity|.
---- @field severity vim.diagnostic.Severity
+--- @field severity? vim.diagnostic.Severity
 ---
 --- If `true`, call |vim.diagnostic.open_float()| after moving.
 --- If a table, pass the table as the {opts} parameter to |vim.diagnostic.open_float()|.
