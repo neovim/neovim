@@ -373,7 +373,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
     Fields: ~
       • {namespace}?  (`integer[]|integer`) Limit diagnostics to one or more
                       namespaces.
-      • {lnum}?       (`integer`) Limit diagnostics to the given line number.
+      • {lnum}?       (`integer`) Limit diagnostics to those spanning the
+                      specified line number.
       • {severity}?   (`vim.diagnostic.SeverityFilter`) See
                       |diagnostic-severity|.
 

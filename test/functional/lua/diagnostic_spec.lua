@@ -1076,13 +1076,13 @@ describe('vim.diagnostic', function()
 
     it('allows filtering by line', function()
       eq(
-        1,
+        2,
         exec_lua [[
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
           make_error("Error 1", 1, 1, 1, 5),
           make_warning("Warning on Server 1", 1, 1, 2, 3),
           make_info("Ignored information", 1, 1, 2, 3),
-          make_error("Error On Other Line", 2, 1, 1, 5),
+          make_error("Error On Other Line", 3, 1, 3, 5),
         })
 
         return #vim.diagnostic.get(diagnostic_bufnr, {lnum = 2})
@@ -1192,13 +1192,16 @@ describe('vim.diagnostic', function()
 
     it('allows filtering by line', function()
       eq(
-        exec_lua [[return { [vim.diagnostic.severity.ERROR] = 1 }]],
+        exec_lua [[return {
+          [vim.diagnostic.severity.WARN] = 1,
+          [vim.diagnostic.severity.INFO] = 1,
+        }]],
         exec_lua [[
           vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
             make_error("Error 1", 1, 1, 1, 5),
             make_warning("Warning on Server 1", 1, 1, 2, 3),
             make_info("Ignored information", 1, 1, 2, 3),
-            make_error("Error On Other Line", 2, 1, 1, 5),
+            make_error("Error On Other Line", 3, 1, 3, 5),
           })
 
           return vim.diagnostic.count(diagnostic_bufnr, {lnum = 2})
