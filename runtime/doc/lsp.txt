@@ -1431,21 +1431,19 @@ signature_help()                                *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a
     floating window.
 
-subtypes()                                            *vim.lsp.buf.subtypes()*
-    Lists all the subtypes of the symbol under the cursor in the |quickfix|
-    window. If the symbol can resolve to multiple items, the user can pick one
-    using |vim.ui.select()|.
-
-supertypes()                                        *vim.lsp.buf.supertypes()*
-    Lists all the supertypes of the symbol under the cursor in the |quickfix|
-    window. If the symbol can resolve to multiple items, the user can pick one
-    using |vim.ui.select()|.
-
 type_definition({options})                     *vim.lsp.buf.type_definition()*
     Jumps to the definition of the type of the symbol under the cursor.
 
     Parameters: ~
       • {options}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
+
+typehierarchy({kind})                            *vim.lsp.buf.typehierarchy()*
+    Lists all the subtypes or supertypes of the symbol under the cursor in the
+    |quickfix| window. If the symbol can resolve to multiple items, the user
+    can pick one using |vim.ui.select()|.
+
+    Parameters: ~
+      • {kind}  (`"subtypes"|"supertypes"`)
 
 workspace_symbol({query}, {options})          *vim.lsp.buf.workspace_symbol()*
     Lists all symbols in the current workspace in the quickfix window.

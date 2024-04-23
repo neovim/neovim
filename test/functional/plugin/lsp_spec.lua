@@ -3461,7 +3461,7 @@ describe('LSP', function()
     end)
   end)
 
-  describe('vim.lsp.buf.subtypes', function()
+  describe('vim.lsp.buf.typehierarchy subtypes', function()
     it('does nothing for an empty response', function()
       local qflist_count = exec_lua([=[
         require'vim.lsp.handlers'['typeHierarchy/subtypes'](nil, nil, {})
@@ -3679,7 +3679,7 @@ describe('LSP', function()
     end)
   end)
 
-  describe('vim.lsp.buf.supertypes', function()
+  describe('vim.lsp.buf.typehierarchy supertypes', function()
     it('does nothing for an empty response', function()
       local qflist_count = exec_lua([=[
         require'vim.lsp.handlers'['typeHierarchy/supertypes'](nil, nil, {})
