@@ -201,7 +201,9 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			code if 'filetype' is "lua" or its filename ends with
 			".lua".  When sourcing commands or Lua code from the
 			current buffer, the same script-ID |<SID>| is used
-			even if the buffer is sourced multiple times.
+			even if the buffer is sourced multiple times. If a
+			buffer is sourced more than once, then the functions
+			in the buffer are redefined again.
 
 							*:source!*
 :so[urce]! {file}
@@ -394,10 +396,10 @@ An alternative is to put the commands in a file, and execute them with the
 ':source!' command.  Useful for long command sequences.  Can be combined with
 the ':map' command to put complicated commands under a function key.
 
-The ':source' command reads Ex commands from a file line by line.  You will
-have to type any needed keyboard input.  The ':source!' command reads from a
-script file character by character, interpreting each character as if you
-typed it.
+The ':source' command reads Ex commands from a file or a buffer line by line.
+You will have to type any needed keyboard input.  The ':source!' command reads
+from a script file character by character, interpreting each character as if
+you typed it.
 
 Example: When you give the ":!ls" command you get the |hit-enter| prompt.  If
 you ':source' a file with the line "!ls" in it, you will have to type the

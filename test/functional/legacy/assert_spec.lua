@@ -148,10 +148,10 @@ describe('assert function:', function()
         call assert_true('', 'file two')
       ]])
       expected_errors({
-        'nvim_exec2(): equal assertion failed: Expected 1 but got 100',
-        "nvim_exec2(): true  assertion failed: Expected False but got 'true'",
-        "nvim_exec2(): false assertion failed: Expected True but got 'false'",
-        "nvim_exec2(): file two: Expected True but got ''",
+        'nvim_exec2() line 1: equal assertion failed: Expected 1 but got 100',
+        "nvim_exec2() line 2: true  assertion failed: Expected False but got 'true'",
+        "nvim_exec2() line 3: false assertion failed: Expected True but got 'false'",
+        "nvim_exec2() line 1: file two: Expected True but got ''",
       })
     end)
   end)

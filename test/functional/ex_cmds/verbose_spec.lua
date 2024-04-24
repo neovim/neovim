@@ -256,7 +256,7 @@ TestHL2        xxx guibg=Green
     local result = exec_capture(':verbose set tw?')
     local loc = get_last_set_location(40)
     if loc == 'Lua (run Nvim with -V1 for more details)' then
-      loc = 'anonymous :source (script id 1)'
+      loc = 'anonymous :source (script id 1) line 5'
     end
     eq(
       string.format(

@@ -3956,7 +3956,7 @@ stack traceback:
 
     it('failure modes', function()
       matches(
-        'nvim_exec2%(%): Vim:E492: Not an editor command: fooooo',
+        'nvim_exec2%(%), line 1: Vim:E492: Not an editor command: fooooo',
         pcall_err(exec_lua, [[vim.api.nvim_win_call(0, function() vim.cmd 'fooooo' end)]])
       )
       eq(

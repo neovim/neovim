@@ -140,7 +140,7 @@ describe('API', function()
     it(':verbose set {option}?', function()
       api.nvim_exec2('set nowrap', { output = false })
       eq(
-        { output = 'nowrap\n\tLast set from anonymous :source' },
+        { output = 'nowrap\n\tLast set from anonymous :source line 1' },
         api.nvim_exec2('verbose set wrap?', { output = true })
       )
 
@@ -153,7 +153,7 @@ describe('API', function()
         { output = false }
       )
       eq(
-        { output = 'nowrap\n\tLast set from anonymous :source (script id 1)' },
+        { output = 'nowrap\n\tLast set from anonymous :source (script id 1) line 2' },
         api.nvim_exec2('verbose set wrap?', { output = true })
       )
     end)
@@ -296,16 +296,21 @@ describe('API', function()
       eq('ñxx', api.nvim_get_current_line())
     end)
 
+    it('can use :finish', function()
+      api.nvim_exec2('let g:var = 123\nfinish\nlet g:var = 456', {})
+      eq(123, api.nvim_get_var('var'))
+    end)
+
     it('execution error', function()
       eq(
-        'nvim_exec2(): Vim:E492: Not an editor command: bogus_command',
+        'nvim_exec2(), line 1: Vim:E492: Not an editor command: bogus_command',
         pcall_err(request, 'nvim_exec2', 'bogus_command', {})
       )
       eq('', api.nvim_eval('v:errmsg')) -- v:errmsg was not updated.
       eq('', eval('v:exception'))
 
       eq(
-        'nvim_exec2(): Vim(buffer):E86: Buffer 23487 does not exist',
+        'nvim_exec2(), line 1: Vim(buffer):E86: Buffer 23487 does not exist',
         pcall_err(request, 'nvim_exec2', 'buffer 23487', {})
       )
       eq('', eval('v:errmsg')) -- v:errmsg was not updated.
@@ -338,16 +343,27 @@ describe('API', function()
       write_file(sourcing_fname, 'call nvim_exec2("source ' .. fname .. '", {"output": v:false})\n')
       api.nvim_exec2('set verbose=2', { output = false })
       local traceback_output = dedent([[
-        line 0: sourcing "%s"
-        line 0: sourcing "%s"
+        sourcing "nvim_exec2()"
+        line 1: sourcing "nvim_exec2() called at nvim_exec2():1"
+        line 1: sourcing "%s"
+        line 1: sourcing "nvim_exec2() called at %s:1"
+        line 1: sourcing "%s"
         hello
         finished sourcing %s
         continuing in nvim_exec2() called at %s:1
+        finished sourcing nvim_exec2() called at %s:1
+        continuing in %s
         finished sourcing %s
-        continuing in nvim_exec2() called at nvim_exec2():0]]):format(
+        continuing in nvim_exec2() called at nvim_exec2():1
+        finished sourcing nvim_exec2() called at nvim_exec2():1
+        continuing in nvim_exec2()
+        finished sourcing nvim_exec2()]]):format(
+        sourcing_fname,
         sourcing_fname,
         fname,
         fname,
+        sourcing_fname,
+        sourcing_fname,
         sourcing_fname,
         sourcing_fname
       )
