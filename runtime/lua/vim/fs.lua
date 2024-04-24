@@ -334,13 +334,13 @@ end
 ---
 --- ```lua
 --- -- Find the root of a Python project, starting from file 'main.py'
---- vim.fs.findroot(vim.env.PWD .. 'main.py', {'pyproject.toml', 'setup.py' })
+--- vim.fs.root(vim.env.PWD .. 'main.py', {'pyproject.toml', 'setup.py' })
 ---
 --- -- Find the root of a git repository
---- vim.fs.findroot(0, '.git')
+--- vim.fs.root(0, '.git')
 ---
 --- -- Find the parent directory containing any file with a .csproj extension
---- vim.fs.findroot(', function(name, path)
+--- vim.fs.root(', function(name, path)
 ---   return name:match('%.csproj$') ~= nil
 --- end)
 --- ```
@@ -352,7 +352,7 @@ end
 ---               evaluated item and should return true if {name} and {path} are a match.
 --- @return string? # Directory name containing one of the given markers, or nil if no directory was
 ---         found.
-function M.findroot(source, marker)
+function M.root(source, marker)
   assert(source, 'missing required argument: source')
   assert(marker, 'missing required argument: marker')
 
@@ -367,7 +367,7 @@ function M.findroot(source, marker)
 
   local paths = M.find(marker, {
     upward = true,
-    path = path
+    path = path,
   })
 
   if #paths == 0 then
