@@ -675,6 +675,8 @@ Highlight groups:
         \|setlocal winhighlight=StatusLine:StatusLineTerm,StatusLineNC:StatusLineTermNC
         \|else|setlocal winhighlight=|endif
 <
+Normal commands:
+  *gs*
 
 Options:
   *'aleph'* *'al'*

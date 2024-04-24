@@ -5525,11 +5525,6 @@ static void nv_g_cmd(cmdarg_T *cap)
     nv_gomark(cap);
     break;
 
-  // "gs": Goto sleep.
-  case 's':
-    do_sleep(cap->count1 * 1000);
-    break;
-
   // "ga": Display the ascii value of the character under the
   // cursor.    It is displayed in decimal, hex, and octal. -- webb
   case 'a':
