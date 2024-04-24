@@ -2,6 +2,7 @@ local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
 local ms = require('vim.lsp.protocol').Methods
 local api = vim.api
+local validate = vim.validate
 local M = {}
 
 --- bufnr → true|nil
@@ -104,8 +105,16 @@ function M.run()
   end
 end
 
+--- Returns the buffer number for the given {bufnr}.
+---
+--- @param bufnr (integer|nil) Buffer number to resolve. Defaults to current buffer
+--- @return integer bufnr
 local function resolve_bufnr(bufnr)
-  return bufnr == 0 and api.nvim_get_current_buf() or bufnr
+  validate({ bufnr = { bufnr, 'n', true } })
+  if bufnr == nil or bufnr == 0 then
+    return api.nvim_get_current_buf()
+  end
+  return bufnr
 end
 
 --- Clear the lenses
@@ -296,9 +305,14 @@ end
 --- @param opts? vim.lsp.codelens.refresh.Opts Optional fields
 function M.refresh(opts)
   opts = opts or {}
-  local bufnr = opts.bufnr and resolve_bufnr(opts.bufnr)
-  local buffers = bufnr and { bufnr }
-    or vim.tbl_filter(api.nvim_buf_is_loaded, api.nvim_list_bufs())
+  ---@type integer[]
+  local buffers
+  if opts.bufnr then
+    local bufnr = resolve_bufnr(opts.bufnr)
+    buffers = { bufnr }
+  else
+    buffers = vim.tbl_filter(api.nvim_buf_is_loaded, api.nvim_list_bufs())
+  end
 
   for _, buf in ipairs(buffers) do
     if not active_refreshes[buf] then
