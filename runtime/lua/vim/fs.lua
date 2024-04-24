@@ -333,31 +333,41 @@ end
 --- Example:
 ---
 --- ```lua
---- -- Find the root of a Python project
---- vim.fs.findroot(0, {'pyproject.toml', 'setup.py' })
+--- -- Find the root of a Python project, starting from file 'main.py'
+--- vim.fs.findroot(vim.env.PWD .. 'main.py', {'pyproject.toml', 'setup.py' })
 ---
 --- -- Find the root of a git repository
 --- vim.fs.findroot(0, '.git')
 ---
 --- -- Find the parent directory containing any file with a .csproj extension
---- vim.fs.findroot(0, function(name, path)
+--- vim.fs.findroot(', function(name, path)
 ---   return name:match('%.csproj$') ~= nil
 --- end)
 --- ```
 ---
---- @param bufnr integer Buffer number, or 0 for current buffer.
+--- @param source integer|string Buffer number (0 for current buffer) or file path to begin the
+---               search from.
 --- @param marker (string|string[]|fun(name: string, path: string): boolean) A marker, or list
 ---               of markers, to search for. If a function, the function is called for each
 ---               evaluated item and should return true if {name} and {path} are a match.
 --- @return string? # Directory containing one of the given markers, or nil if no directory was
 --- found.
-function M.findroot(bufnr, marker)
-  assert(bufnr, 'missing required argument: bufnr')
+function M.findroot(source, marker)
+  assert(source, 'missing required argument: source')
   assert(marker, 'missing required argument: marker')
+
+  local path ---@type string
+  if type(source) == 'string' then
+    path = source
+  elseif type(source) == 'number' then
+    path = vim.api.nvim_buf_get_name(source)
+  else
+    error('invalid type for argument "source": expected string or buffer number')
+  end
+
   local paths = M.find(marker, {
     upward = true,
-    path = vim.fs.dirname(vim.api.nvim_buf_get_name(bufnr)),
-    stop = vim.uv.os_homedir(),
+    path = path
   })
 
   if #paths == 0 then
