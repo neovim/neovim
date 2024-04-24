@@ -2726,6 +2726,7 @@ static char *get_one_sourceline(source_cookie_T *sp)
       ga_grow(&ga, 1);
       buf = (char *)ga.ga_data;
       buf[ga.ga_len++] = NUL;
+      len = ga.ga_len;
     } else {
       buf = ga.ga_data;
 retry:
@@ -2736,8 +2737,8 @@ retry:
         }
         break;
       }
+      len = ga.ga_len + (int)strlen(buf + ga.ga_len);
     }
-    len = ga.ga_len + (int)strlen(buf + ga.ga_len);
 #ifdef USE_CRNL
     // Ignore a trailing CTRL-Z, when in Dos mode. Only recognize the
     // CTRL-Z by its own, or after a NL.

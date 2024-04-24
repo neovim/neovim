@@ -644,6 +644,17 @@ func Test_source_buffer_long_line()
   norm300gr0
   so
   bwipe!
+
+  let lines =<< trim END
+      new
+      norm 10a0000000000ø00000000000
+      norm i0000000000000000000
+      silent! so
+  END
+  call writefile(lines, 'Xtest.vim')
+  source Xtest.vim
+  bwipe!
+  call delete('Xtest.vim')
 endfunc
 
 
