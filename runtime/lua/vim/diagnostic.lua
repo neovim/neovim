@@ -1186,7 +1186,7 @@ end
 --- (default: `true`)
 --- @field wrap? boolean
 ---
---- See |diagnostic-severity|. Additionaly, the value "auto" is supported which jumps to the next
+--- See |diagnostic-severity|. Additionally, the value "auto" is supported which jumps to the next
 --- diagnostic with the highest severity.
 --- @field severity vim.diagnostic.Severity|'auto'
 ---

@@ -390,7 +390,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {wrap}?             (`boolean`, default: `true`) Whether to loop
                             around file or not. Similar to 'wrapscan'.
       • {severity}          (`vim.diagnostic.Severity|'auto'`) See
-                            |diagnostic-severity|. Additionaly, the value
+                            |diagnostic-severity|. Additionally, the value
                             "auto" is supported which jumps to the next
                             diagnostic with the highest severity.
       • {float}?            (`boolean|vim.diagnostic.Opts.Float`, default:
