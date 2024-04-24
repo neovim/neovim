@@ -1426,13 +1426,14 @@ type_definition({opts})                        *vim.lsp.buf.type_definition()*
     Parameters: ~
       • {opts}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
 
-typehierarchy({kind})                            *vim.lsp.buf.typehierarchy()*
+typehierarchy({kind}, {opts})                    *vim.lsp.buf.typehierarchy()*
     Lists all the subtypes or supertypes of the symbol under the cursor in the
     |quickfix| window. If the symbol can resolve to multiple items, the user
     can pick one using |vim.ui.select()|.
 
     Parameters: ~
       • {kind}  (`"subtypes"|"supertypes"`)
+      • {opts}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
 
 workspace_symbol({query}, {opts})             *vim.lsp.buf.workspace_symbol()*
     Lists all symbols in the current workspace in the quickfix window.

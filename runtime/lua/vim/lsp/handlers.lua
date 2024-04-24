@@ -572,7 +572,7 @@ M[ms.callHierarchy_outgoingCalls] = make_call_hierarchy_handler('to')
 --- Displays type hierarchy in the quickfix window.
 local function make_type_hierarchy_handler()
   --- @param result lsp.TypeHierarchyItem[]
-  return function(_, result, ctx, _)
+  return function(_, result, ctx, config)
     if not result then
       return
     end
@@ -597,8 +597,19 @@ local function make_type_hierarchy_handler()
         col = col + 1,
       })
     end
-    vim.fn.setqflist({}, ' ', { title = 'LSP type hierarchy', items = items })
-    vim.cmd('botright copen')
+    config = config or {}
+    local list = { title = 'LSP type hierarchy', items = items, context = ctx }
+
+    if config.loclist then
+      vim.fn.setloclist(0, {}, ' ', list)
+      vim.cmd.lopen()
+    elseif config.on_list then
+      assert(vim.is_callable(config.on_list), 'on_list is not a function')
+      config.on_list(list)
+    else
+      vim.fn.setqflist({}, ' ', list)
+      vim.cmd.copen({ mods = { split = 'botright' } })
+    end
   end
 end
 

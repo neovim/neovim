@@ -47,6 +47,17 @@ local function request_with_opts(name, params, opts)
   request(name, params, req_handler)
 end
 
+--- Calls client.request with the given `opts`.
+local function client_request_with_options(client, name, params, opts, bufnr)
+  local req_handler --- @type function?
+  if opts then
+    req_handler = function(err, result, ctx, config)
+      local handler = client.handlers[name] or vim.lsp.handlers[name]
+      handler(err, result, ctx, vim.tbl_extend('force', config or {}, opts))
+    end
+  end
+  client.request(name, params, req_handler, bufnr)
+end
 --- @class vim.lsp.ListOpts
 ---
 --- list-handler replacing the default handler.
@@ -498,7 +509,8 @@ end
 --- cursor in the |quickfix| window. If the symbol can resolve to
 --- multiple items, the user can pick one using |vim.ui.select()|.
 ---@param kind "subtypes"|"supertypes"
-function M.typehierarchy(kind)
+---@param opts? vim.lsp.ListOpts
+function M.typehierarchy(kind, opts)
   local method = kind == 'subtypes' and ms.typeHierarchy_subtypes or ms.typeHierarchy_supertypes
 
   --- Merge results from multiple clients into a single table. Client-ID is preserved.
@@ -533,7 +545,8 @@ function M.typehierarchy(kind)
       local item = merged_results[1]
       local client = vim.lsp.get_client_by_id(item[1])
       if client then
-        client.request(method, { item = item[2] }, nil, bufnr)
+        --- @type lsp.TypeHierarchyItem
+        client_request_with_options(client, method, { item = item[2] }, opts, bufnr)
       else
         vim.notify(
           string.format('Client with id=%d disappeared during call hierarchy request', item[1]),
@@ -556,7 +569,7 @@ function M.typehierarchy(kind)
         local client = vim.lsp.get_client_by_id(item[1])
         if client then
           --- @type lsp.TypeHierarchyItem
-          client.request(method, { item = item[2] }, nil, bufnr)
+          client_request_with_options(client, method, { item = item[2] }, opts, bufnr)
         else
           vim.notify(
             string.format('Client with id=%d disappeared during call hierarchy request', item[1]),

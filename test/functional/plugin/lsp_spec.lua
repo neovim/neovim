@@ -3597,6 +3597,92 @@ describe('LSP', function()
       eq(expected, qflist)
     end)
 
+    it('Opens the loclist if config contains `loclist`', function()
+      exec_lua(create_server_definition)
+      local loclist = exec_lua([=[
+        local response = { {
+          name = "foo",
+          range = {
+            ["end"] = {
+              character = 8,
+              line = 9
+            },
+            start = {
+              character = 6,
+              line = 9
+            }
+          },
+          uri = "file://foo.cpp"
+        }}
+
+        local server = _create_server({
+          capabilities = {
+            positionEncoding = "utf-8"
+          },
+        })
+        local client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        local handler = require'vim.lsp.handlers'['typeHierarchy/subtypes']
+        handler(nil, response, { client_id = client_id, bufnr = 1 }, { loclist = true })
+        return vim.fn.getloclist(0)
+      ]=])
+
+      eq({
+        {
+          bufnr = 2,
+          col = 7,
+          end_col = 0,
+          end_lnum = 0,
+          lnum = 10,
+          module = '',
+          nr = 0,
+          pattern = '',
+          text = 'foo',
+          type = '',
+          valid = 1,
+          vcol = 0,
+        },
+      }, loclist)
+    end)
+
+    it('Calls on_list if given', function()
+      exec_lua(create_server_definition)
+      local items = exec_lua([=[
+        local response = { {
+          name = "foo",
+          range = {
+            ["end"] = {
+              character = 8,
+              line = 9
+            },
+            start = {
+              character = 6,
+              line = 9
+            }
+          },
+          uri = "file://foo.cpp"
+        }}
+
+        local server = _create_server({
+          capabilities = {
+            positionEncoding = "utf-8"
+          },
+        })
+        local client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        local handler = require'vim.lsp.handlers'['typeHierarchy/subtypes']
+        local items
+        handler(nil, response, { client_id = client_id, bufnr = 1 }, { on_list = function(list) items = list.items end })
+        return items
+      ]=])
+
+      eq({
+        {
+          filename = '/foo.cpp',
+          text = 'foo',
+          lnum = 10,
+          col = 7,
+        },
+      }, items)
+    end)
     it('opens the quickfix list with the right subtypes and details', function()
       clear()
       exec_lua(create_server_definition)
