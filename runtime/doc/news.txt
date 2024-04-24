@@ -291,10 +291,6 @@ The following new APIs and features were added.
 • Functions that take a severity as an optional parameter (e.g.
   |vim.diagnostic.get()|) now also accept a list of severities |vim.diagnostic.severity|
 
-• |vim.diagnostic.goto_next()| and |vim.diagnostic.goto_prev()| accept the
-  "auto" keyword for the "severity" option to move to the next (previous)
-  diagnostic with the highest severity.
-
 • New RPC client type `msgpack-rpc` is added for |nvim_set_client_info()| to
   support fully MessagePack-RPC compliant clients.
 
@@ -385,6 +381,11 @@ The following changes to existing APIs or features add new behavior.
 
 • |vim.diagnostic.config()| now accepts a function for the virtual_text.prefix
   option, which allows for rendering e.g., diagnostic severities differently.
+
+• |vim.diagnostic.goto_next()| and |vim.diagnostic.goto_prev()| jump to the
+  diagnostic with the highest severity when the "severity" option is
+  unspecified. To use the old behavior, use: >lua
+    vim.diagnostic.goto_next({ severity = { min = vim.diagnostic.severity.HINT } })
 
 • Defaults:
   • On Windows 'isfname' does not include ":". Drive letters are handled
