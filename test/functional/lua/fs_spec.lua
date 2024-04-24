@@ -7,6 +7,8 @@ local eq = t.eq
 local mkdir_p = n.mkdir_p
 local rmdir = n.rmdir
 local nvim_dir = n.nvim_dir
+local command = n.command
+local api = n.api
 local test_build_dir = t.paths.test_build_dir
 local test_source_path = t.paths.test_source_path
 local nvim_prog = n.nvim_prog
@@ -275,6 +277,36 @@ describe('vim.fs', function()
           end, opts)
         )
       )
+    end)
+  end)
+
+  describe('findroot()', function()
+    before_each(function()
+      command(
+        string.format('edit %s', vim.fs.joinpath('test', 'functional', 'fixtures', 'tty-test.c'))
+      )
+    end)
+
+    it('works with a single marker', function()
+      eq(test_source_path, exec_lua([[return vim.fs.findroot(0, '.git')]]))
+    end)
+
+    it('works with multiple markers', function()
+      local bufnr = api.nvim_get_current_buf()
+      eq(
+        vim.fs.joinpath(test_source_path, 'test', 'functional', 'fixtures'),
+        exec_lua([[return vim.fs.findroot(..., {'CMakeLists.txt', '.git'})]], bufnr)
+      )
+    end)
+
+    it('works with a function', function()
+      ---@type string
+      local result = exec_lua([[
+        return vim.fs.findroot(0, function(name, path)
+          return name:match('%.txt$')
+        end)
+      ]])
+      eq(vim.fs.joinpath(test_source_path, 'test', 'functional', 'fixtures'), result)
     end)
   end)
 
