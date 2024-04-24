@@ -411,15 +411,13 @@ local function find_man()
   return false
 end
 
----@param pager boolean
-local function set_options(pager)
+local function set_options()
   vim.bo.swapfile = false
   vim.bo.buftype = 'nofile'
   vim.bo.bufhidden = 'unload'
   vim.bo.modified = false
   vim.bo.readonly = true
   vim.bo.modifiable = false
-  vim.b.pager = pager
   vim.bo.filetype = 'man'
 end
 
@@ -475,7 +473,7 @@ local function put_page(page)
   vim.cmd([[silent! keeppatterns keepjumps %s/\s\{199,}/\=repeat(' ', 10)/g]])
   vim.cmd('1') -- Move cursor to first line
   highlight_man_page()
-  set_options(false)
+  set_options()
 end
 
 local function format_candidate(path, psect)
@@ -662,7 +660,8 @@ function M.init_pager()
     vim.cmd.file({ 'man://' .. fn.fnameescape(ref):lower(), mods = { silent = true } })
   end
 
-  set_options(true)
+  vim.g.pager = true
+  set_options()
 end
 
 ---@param count integer
@@ -730,7 +729,7 @@ function M.open_page(count, smods, args)
   if not ok then
     error(ret)
   else
-    set_options(false)
+    set_options()
   end
 
   vim.b.man_sect = sect
