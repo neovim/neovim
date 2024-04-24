@@ -340,7 +340,7 @@ end
 --- vim.fs.root(0, '.git')
 ---
 --- -- Find the parent directory containing any file with a .csproj extension
---- vim.fs.root(', function(name, path)
+--- vim.fs.root(0, function(name, path)
 ---   return name:match('%.csproj$') ~= nil
 --- end)
 --- ```
@@ -350,7 +350,7 @@ end
 --- @param marker (string|string[]|fun(name: string, path: string): boolean) A marker, or list
 ---               of markers, to search for. If a function, the function is called for each
 ---               evaluated item and should return true if {name} and {path} are a match.
---- @return string? # Directory name containing one of the given markers, or nil if no directory was
+--- @return string? # Directory path containing one of the given markers, or nil if no directory was
 ---         found.
 function M.root(source, marker)
   assert(source, 'missing required argument: source')
