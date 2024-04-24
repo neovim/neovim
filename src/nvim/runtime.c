@@ -75,6 +75,7 @@ typedef struct {
   FILE *fp;                     ///< opened file for sourcing
   char *nextline;               ///< if not NULL: line that was read ahead
   linenr_T sourcing_lnum;       ///< line number of the source file
+  bool source_str_from_lua;     ///< true if sourcing a string from Lua
   bool finished;                ///< ":finish" used
   bool source_from_buf;         ///< true if sourcing from a buffer or string
   int buf_lnum;                 ///< line number in the buffer or string
@@ -1944,6 +1945,7 @@ static bool concat_continued_line(garray_T *const ga, const int init_growsize, c
 ///
 /// @return  pointer to the created script item.
 scriptitem_T *new_script_item(char *const name, scid_T *const sid_out)
+  FUNC_ATTR_NONNULL_RET
 {
   static scid_T last_current_SID = 0;
   const scid_T sid = ++last_current_SID;
@@ -2016,6 +2018,7 @@ static void do_source_str_init(source_cookie_T *sp, const char *cmd)
     GA_APPEND(char *, &sp->buflines, xmemdupz(cmd, (size_t)(eol - cmd)));
     cmd = eol + (*eol != NUL);
   }
+  sp->source_str_from_lua = script_is_lua(current_sctx.sc_sid);
   sp->buf_lnum = 0;
   sp->source_from_buf = true;
 }
@@ -2035,7 +2038,7 @@ int do_source_str(const char *cmd, char *traceback_name)
 ///
 /// @see do_source_str
 ///
-/// @param fname
+/// @param fname        if NULL, source from the current buffer
 /// @param check_other  check for .vimrc and _vimrc
 /// @param is_vimrc     DOSO_ value
 /// @param ret_sid      if not NULL and we loaded the script before, don't load it again
@@ -2045,8 +2048,9 @@ int do_source_str(const char *cmd, char *traceback_name)
 /// @return  FAIL if file could not be opened, OK otherwise
 ///
 /// If a scriptitem_T was found or created "*ret_sid" is set to the SID.
-static int do_source_ext(char *fname, bool check_other, int is_vimrc, int *ret_sid,
-                         const exarg_T *eap, bool ex_lua, const char *cmd)
+static int do_source_ext(char *const fname, const bool check_other, const int is_vimrc,
+                         int *const ret_sid, const exarg_T *const eap, const bool ex_lua,
+                         const char *const cmd)
 {
   source_cookie_T cookie;
   uint8_t *firstline = NULL;
@@ -2059,6 +2063,7 @@ static int do_source_ext(char *fname, bool check_other, int is_vimrc, int *ret_s
   CLEAR_FIELD(cookie);
   char *fname_exp = NULL;
   if (fname == NULL) {
+    assert(cmd == NULL);
     // sourcing lines from a buffer
     fname_exp = do_source_buffer_init(&cookie, eap, ex_lua);
     if (fname_exp == NULL) {
@@ -2084,7 +2089,7 @@ static int do_source_ext(char *fname, bool check_other, int is_vimrc, int *ret_s
   }
 
   // See if we loaded this script before.
-  int sid = find_script_by_name(fname_exp);
+  int sid = cmd != NULL ? SID_STR : find_script_by_name(fname_exp);
   if (sid > 0 && ret_sid != NULL) {
     // Already loaded and no need to load again, return here.
     *ret_sid = sid;
@@ -2188,15 +2193,13 @@ static int do_source_ext(char *fname, bool check_other, int is_vimrc, int *ret_s
 
   const sctx_T save_current_sctx = current_sctx;
 
-  current_sctx.sc_lnum = 0;
-
   // Always use a new sequence number.
   current_sctx.sc_seq = ++last_current_SID_seq;
 
   if (sid > 0) {
     // loading the same script again
     si = SCRIPT_ITEM(sid);
-  } else {
+  } else if (cmd == NULL) {
     // It's new, generate a new SID.
     si = new_script_item(fname_exp, &sid);
     si->sn_lua = path_with_extension(fname_exp, "lua");
@@ -2205,12 +2208,15 @@ static int do_source_ext(char *fname, bool check_other, int is_vimrc, int *ret_s
       *ret_sid = sid;
     }
   }
-  current_sctx.sc_sid = sid;
+  if (!cookie.source_str_from_lua) {
+    current_sctx.sc_sid = sid;
+    current_sctx.sc_lnum = 0;
+  }
 
   // Keep the sourcing name/lnum, for recursive calls.
-  estack_push(ETYPE_SCRIPT, si->sn_name, 0);
+  estack_push(ETYPE_SCRIPT, si != NULL ? si->sn_name : fname_exp, 0);
 
-  if (l_do_profiling == PROF_YES) {
+  if (l_do_profiling == PROF_YES && si != NULL) {
     bool forceit = false;
 
     // Check if we do profiling for this script.
@@ -2230,6 +2236,7 @@ static int do_source_ext(char *fname, bool check_other, int is_vimrc, int *ret_s
   if (fname == NULL
       && (ex_lua || strequal(curbuf->b_p_ft, "lua")
           || (curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua")))) {
+    // Source lines from the current buffer as lua
     nlua_exec_ga(&cookie.buflines, fname_exp);
   } else if (cmd == NULL && si->sn_lua) {
     // Source the file as lua
@@ -2254,7 +2261,7 @@ static int do_source_ext(char *fname, bool check_other, int is_vimrc, int *ret_s
   }
   retval = OK;
 
-  if (l_do_profiling == PROF_YES) {
+  if (l_do_profiling == PROF_YES && si != NULL) {
     // Get "si" again, "script_items" may have been reallocated.
     si = SCRIPT_ITEM(current_sctx.sc_sid);
     if (si->sn_prof_on) {
