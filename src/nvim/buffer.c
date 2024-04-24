@@ -1853,6 +1853,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
   char *ffname = ffname_arg;
   char *sfname = sfname_arg;
   buf_T *buf;
+  printf("buflist_new\n");
 
   fname_expand(curbuf, &ffname, &sfname);       // will allocate ffname
 
@@ -1894,6 +1895,14 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
   // (A spell file buffer is allocated in spell.c, but that's not a normal
   // buffer.)
   buf = NULL;
+
+  if (curbuf != NULL) {
+    // If bufhidden = delete for the current buffer
+    if (curbuf->b_p_bh[0] == 'd') {
+      // delete it when the new buffer replaces it in the window
+      free_buffer(curbuf);
+    }
+  }
   if ((flags & BLN_CURBUF) && curbuf_reusable()) {
     assert(curbuf != NULL);
     buf = curbuf;
