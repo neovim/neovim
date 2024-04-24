@@ -832,9 +832,10 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
 
     -- Find the first diagnostic where the severity does not match the highest severity, and remove
     -- that element and all subsequent elements from the array
+    local worst = diagnostics[1].severity
     local len = #diagnostics
     for i = 2, len do
-      if diagnostics[i].severity ~= diagnostics[i - 1].severity then
+      if diagnostics[i].severity ~= worst then
         for j = i, len do
           diagnostics[j] = nil
         end
