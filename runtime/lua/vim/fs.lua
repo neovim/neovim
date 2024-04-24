@@ -334,7 +334,7 @@ end
 ---
 --- ```lua
 --- -- Find the root of a Python project, starting from file 'main.py'
---- vim.fs.root(vim.env.PWD .. 'main.py', {'pyproject.toml', 'setup.py' })
+--- vim.fs.root(vim.fs.joinpath(vim.env.PWD, 'main.py'), {'pyproject.toml', 'setup.py' })
 ---
 --- -- Find the root of a git repository
 --- vim.fs.root(0, '.git')

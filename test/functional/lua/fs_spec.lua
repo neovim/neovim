@@ -282,9 +282,7 @@ describe('vim.fs', function()
 
   describe('root()', function()
     before_each(function()
-      command(
-        string.format('edit %s', vim.fs.joinpath('test', 'functional', 'fixtures', 'tty-test.c'))
-      )
+      command('edit test/functional/fixtures/tty-test.c')
     end)
 
     it('works with a single marker', function()
@@ -294,7 +292,7 @@ describe('vim.fs', function()
     it('works with multiple markers', function()
       local bufnr = api.nvim_get_current_buf()
       eq(
-        vim.fs.joinpath(test_source_path, 'test', 'functional', 'fixtures'),
+        vim.fs.joinpath(test_source_path, 'test/functional/fixtures'),
         exec_lua([[return vim.fs.root(..., {'CMakeLists.txt', '.git'})]], bufnr)
       )
     end)
@@ -306,7 +304,11 @@ describe('vim.fs', function()
           return name:match('%.txt$')
         end)
       ]])
-      eq(vim.fs.joinpath(test_source_path, 'test', 'functional', 'fixtures'), result)
+      eq(vim.fs.joinpath(test_source_path, 'test/functional/fixtures'), result)
+    end)
+
+    it('works with a filename argument', function()
+      eq(test_source_path, exec_lua([[return vim.fs.root(..., '.git')]], nvim_prog))
     end)
   end)
 
