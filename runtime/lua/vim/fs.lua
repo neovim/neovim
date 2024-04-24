@@ -350,8 +350,8 @@ end
 --- @param marker (string|string[]|fun(name: string, path: string): boolean) A marker, or list
 ---               of markers, to search for. If a function, the function is called for each
 ---               evaluated item and should return true if {name} and {path} are a match.
---- @return string? # Directory containing one of the given markers, or nil if no directory was
---- found.
+--- @return string? # Directory name containing one of the given markers, or nil if no directory was
+---         found.
 function M.findroot(source, marker)
   assert(source, 'missing required argument: source')
   assert(marker, 'missing required argument: marker')

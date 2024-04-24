@@ -2930,33 +2930,34 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
         (`string[]`) Normalized paths |vim.fs.normalize()| of all matching
         items
 
-vim.fs.findroot({bufnr}, {marker})                         *vim.fs.findroot()*
+vim.fs.findroot({source}, {marker})                        *vim.fs.findroot()*
     Find the first parent directory containing a specific "marker", relative
     to a buffer's directory.
 
     Example: >lua
-        -- Find the root of a Python project
-        vim.fs.findroot(0, {'pyproject.toml', 'setup.py' })
+        -- Find the root of a Python project, starting from file 'main.py'
+        vim.fs.findroot(vim.env.PWD .. 'main.py', {'pyproject.toml', 'setup.py' })
 
         -- Find the root of a git repository
         vim.fs.findroot(0, '.git')
 
         -- Find the parent directory containing any file with a .csproj extension
-        vim.fs.findroot(0, function(name, path)
+        vim.fs.findroot(', function(name, path)
           return name:match('%.csproj$') ~= nil
         end)
 <
 
     Parameters: ~
-      • {bufnr}   (`integer`) Buffer number, or 0 for current buffer.
+      • {source}  (`integer|string`) Buffer number (0 for current buffer) or
+                  file path to begin the search from.
       • {marker}  (`string|string[]|fun(name: string, path: string): boolean`)
                   A marker, or list of markers, to search for. If a function,
                   the function is called for each evaluated item and should
                   return true if {name} and {path} are a match.
 
     Return: ~
-        (`string?`) Directory containing one of the given markers, or nil if
-        no directory was found.
+        (`string?`) Directory name containing one of the given markers, or nil
+        if no directory was found.
 
 vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
     Concatenate directories and/or file paths into a single path with
