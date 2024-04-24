@@ -813,11 +813,39 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
   position[1] = position[1] - 1
   bufnr = get_bufnr(bufnr)
   local wrap = if_nil(opts.wrap, true)
-  local line_count = api.nvim_buf_line_count(bufnr)
+
+  local auto_severity = opts.severity == 'auto'
+  if auto_severity then
+    -- Clear the severity filter so that we get all diagnostics
+    opts.severity = nil
+  end
+
   local diagnostics =
     get_diagnostics(bufnr, vim.tbl_extend('keep', opts, { namespace = namespace }), true)
+
+  -- When 'auto' severity is set, sort the diagnostics by severity. The first diagnostic then
+  -- contains the highest severity, and we can discard all diagnostics with a lower severity.
+  if auto_severity then
+    table.sort(diagnostics, function(a, b)
+      return a.severity < b.severity
+    end)
+
+    -- Find the first diagnostic where the severity does not match the highest severity, and remove
+    -- that element and all subsequent elements from the array
+    local len = #diagnostics
+    for i = 2, len do
+      if diagnostics[i].severity ~= diagnostics[i - 1].severity then
+        for j = i, len do
+          diagnostics[j] = nil
+        end
+        break
+      end
+    end
+  end
+
   local line_diagnostics = diagnostic_lines(diagnostics)
 
+  local line_count = api.nvim_buf_line_count(bufnr)
   for i = 0, line_count do
     local offset = i * (search_forward and 1 or -1)
     local lnum = position[1] + offset
@@ -1158,8 +1186,9 @@ end
 --- (default: `true`)
 --- @field wrap? boolean
 ---
---- See |diagnostic-severity|.
---- @field severity vim.diagnostic.Severity
+--- See |diagnostic-severity|. Additionaly, the value "auto" is supported which jumps to the next
+--- diagnostic with the highest severity.
+--- @field severity vim.diagnostic.Severity|'auto'
 ---
 --- If `true`, call |vim.diagnostic.open_float()| after moving.
 --- If a table, pass the table as the {opts} parameter to |vim.diagnostic.open_float()|.
