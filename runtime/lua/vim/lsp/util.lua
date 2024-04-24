@@ -113,6 +113,18 @@ local function create_window_without_focus()
   return new
 end
 
+--- Returns the buffer number for the given {bufnr}.
+---
+---@param bufnr (integer|nil) Buffer number to resolve. Defaults to current buffer
+---@return integer bufnr
+function M.resolve_bufnr(bufnr)
+  validate({ bufnr = { bufnr, 'n', true } })
+  if bufnr == nil or bufnr == 0 then
+    return api.nvim_get_current_buf()
+  end
+  return bufnr
+end
+
 --- Convert byte index to `encoding` index.
 --- Convenience wrapper around vim.str_utfindex
 ---@param line string line to be indexed
