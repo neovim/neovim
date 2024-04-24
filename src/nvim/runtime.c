@@ -2723,7 +2723,9 @@ static char *get_one_sourceline(source_cookie_T *sp)
       }
       ga_concat(&ga, ((char **)sp->buflines.ga_data)[sp->buf_lnum]);
       sp->buf_lnum++;
+      ga_grow(&ga, 1);
       buf = (char *)ga.ga_data;
+      buf[ga.ga_len++] = NUL;
     } else {
       buf = ga.ga_data;
 retry:

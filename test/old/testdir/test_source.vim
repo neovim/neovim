@@ -638,4 +638,13 @@ func Test_source_buffer_vim9()
   %bw!
 endfunc
 
+func Test_source_buffer_long_line()
+  " This was reading past the end of the line.
+  new
+  norm300gr0
+  so
+  bwipe!
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab
