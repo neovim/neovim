@@ -195,10 +195,13 @@ end
 --- Predicate used to decide if a client should be re-used. Used on all
 --- running clients. The default implementation re-uses a client if name and
 --- root_dir matches.
---- @field reuse_client fun(client: vim.lsp.Client, config: table): boolean
+--- @field reuse_client fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
 ---
 --- Buffer handle to attach to if starting or re-using a client (0 for current).
 --- @field bufnr integer
+---
+--- Suppress error reporting if the LSP server fails to start (default false).
+--- @field silent boolean
 
 --- Create a new LSP client and start a language server or reuses an already
 --- running client if one is found matching `name` and `root_dir`.
@@ -246,19 +249,25 @@ function lsp.start(config, opts)
 
   for _, client in pairs(all_clients) do
     if reuse_client(client, config) then
-      lsp.buf_attach_client(bufnr, client.id)
-      return client.id
+      if lsp.buf_attach_client(bufnr, client.id) then
+        return client.id
+      end
     end
   end
 
-  local client_id = lsp.start_client(config)
-
-  if not client_id then
-    return -- lsp.start_client will have printed an error
+  local client_id, err = lsp.start_client(config)
+  if err then
+    if not opts.silent then
+      vim.notify(err, vim.log.levels.WARN)
+    end
+    return nil
   end
 
-  lsp.buf_attach_client(bufnr, client_id)
-  return client_id
+  if client_id and lsp.buf_attach_client(bufnr, client_id) then
+    return client_id
+  end
+
+  return nil
 end
 
 --- Consumes the latest progress messages from all clients and formats them as a string.
@@ -420,15 +429,17 @@ end
 
 --- Starts and initializes a client with the given configuration.
 --- @param config vim.lsp.ClientConfig Configuration for the server.
---- @return integer|nil client_id |vim.lsp.get_client_by_id()| Note: client may not be
---- fully initialized. Use `on_init` to do any actions once
---- the client has been initialized.
+--- @return integer? client_id |vim.lsp.get_client_by_id()| Note: client may not be
+---         fully initialized. Use `on_init` to do any actions once
+---         the client has been initialized.
+--- @return string? # Error message, if any
 function lsp.start_client(config)
-  local client = require('vim.lsp.client').create(config)
-
-  if not client then
-    return
+  local ok, res = pcall(require('vim.lsp.client').create, config)
+  if not ok then
+    return nil, res --[[@as string]]
   end
+
+  local client = assert(res)
 
   --- @diagnostic disable-next-line: invisible
   table.insert(client._on_exit_cbs, on_client_exit)
@@ -437,7 +448,7 @@ function lsp.start_client(config)
 
   client:initialize()
 
-  return client.id
+  return client.id, nil
 end
 
 --- Notify all attached clients that a buffer has changed.
