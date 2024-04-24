@@ -291,6 +291,10 @@ The following new APIs and features were added.
 • Functions that take a severity as an optional parameter (e.g.
   |vim.diagnostic.get()|) now also accept a list of severities |vim.diagnostic.severity|
 
+• |vim.diagnostic.goto_next()| and |vim.diagnostic.goto_prev()| accept the
+  "auto" keyword for the "severity" option to move to the next (previous)
+  diagnostic with the highest severity.
+
 • New RPC client type `msgpack-rpc` is added for |nvim_set_client_info()| to
   support fully MessagePack-RPC compliant clients.
 
