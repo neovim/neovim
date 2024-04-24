@@ -133,6 +133,20 @@ describe('vim.uv', function()
       {5:-- INSERT --}                                      |
     ]])
     eq({ blocking = false, mode = 'n' }, exec_lua('return _G.mode'))
+
+    exec_lua([[
+      local timer = vim.uv.new_timer()
+      timer:start(20, 0, function ()
+        _G.is_fast = vim.in_fast_event()
+        timer:close()
+        _G.value = vim.fn.has("nvim-0.5")
+        _G.unvalue = vim.fn.has("python3")
+      end)
+    ]])
+
+    screen:expect({ any = [[{3:Vim:E5560: Vimscript function must not be called i}]] })
+    feed('<cr>')
+    eq({ 1, nil }, exec_lua('return {_G.value, _G.unvalue}'))
   end)
 
   it("is equal to require('luv')", function()

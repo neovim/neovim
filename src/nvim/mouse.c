@@ -467,7 +467,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       if (regname == '.') {
         insert_reg(regname, true);
       } else {
-        if (regname == 0 && eval_has_provider("clipboard")) {
+        if (regname == 0 && eval_has_provider("clipboard", false)) {
           regname = '*';
         }
         if ((State & REPLACE_FLAG) && !yank_register_mline(regname)) {
@@ -819,7 +819,7 @@ popupexit:
   // Middle mouse click: Put text before cursor.
   if (which_button == MOUSE_MIDDLE) {
     int c2;
-    if (regname == 0 && eval_has_provider("clipboard")) {
+    if (regname == 0 && eval_has_provider("clipboard", false)) {
       regname = '*';
     }
     if (yank_register_mline(regname)) {

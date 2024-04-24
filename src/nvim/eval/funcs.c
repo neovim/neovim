@@ -3435,19 +3435,19 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     } else if (STRICMP(name, "syntax_items") == 0) {
       n = syntax_present(curwin);
     } else if (STRICMP(name, "clipboard_working") == 0) {
-      n = eval_has_provider("clipboard");
+      n = eval_has_provider("clipboard", true);
     } else if (STRICMP(name, "pythonx") == 0) {
-      n = eval_has_provider("python3");
+      n = eval_has_provider("python3", true);
     } else if (STRICMP(name, "wsl") == 0) {
       n = has_wsl();
 #ifdef UNIX
     } else if (STRICMP(name, "unnamedplus") == 0) {
-      n = eval_has_provider("clipboard");
+      n = eval_has_provider("clipboard", true);
 #endif
     }
   }
 
-  if (!n && eval_has_provider(name)) {
+  if (!n && eval_has_provider(name, true)) {
     n = true;
   }
 
