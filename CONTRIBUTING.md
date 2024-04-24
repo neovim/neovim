@@ -319,9 +319,8 @@ check from cmake.
 
 Alternatively, you may point the URL as a local path where the repository is.
 This is convenient when bisecting a problem in a dependency with `git bisect`.
-This requires running `make distclean` the first time once to remove traces of
-the previous build. Hash checking is always skipped in this case regardless of
-`DEPS_IGNORE_SHA`.
+This may require running `make distclean` between each build. Hash checking is
+always skipped in this case regardless of `DEPS_IGNORE_SHA`.
 
 ```bash
 LUAJIT_URL /home/user/luajit
