@@ -12,76 +12,82 @@ They should not be used in new scripts, and old scripts should be updated.
 ==============================================================================
 Deprecated features
 
-DEPRECATED IN 0.11 *deprecated-0.11*
+------------------------------------------------------------------------------
+DEPRECATED IN 0.11					*deprecated-0.11*
 
-• N/A
+API
+- nvim_subscribe()	Plugins must maintain their own "multicast" channels list.
+- nvim_unsubscribe()	Plugins must maintain their own "multicast" channels list.
 
-DEPRECATED IN 0.10 *deprecated-0.10*
 
+------------------------------------------------------------------------------
+DEPRECATED IN 0.10					*deprecated-0.10*
+
+API
+• *nvim_buf_get_option()*	Use |nvim_get_option_value()| instead.
+• *nvim_buf_set_option()*	Use |nvim_set_option_value()| instead.
+• *nvim_call_atomic()*		Use |nvim_exec_lua()| instead.
+• *nvim_get_option()*		Use |nvim_get_option_value()| instead.
+• *nvim_set_option()*		Use |nvim_set_option_value()| instead.
+• *nvim_win_get_option()*	Use |nvim_get_option_value()| instead.
+• *nvim_win_set_option()*	Use |nvim_set_option_value()| instead.
+
+CHECKHEALTH
+• *health#report_error* *vim.health.report_error()*	Use |vim.health.error()| instead.
+• *health#report_info* *vim.health.report_info()*	Use |vim.health.info()| instead.
+• *health#report_ok* *vim.health.report_ok()*		Use |vim.health.ok()| instead.
+• *health#report_start* *vim.health.report_start()*	Use |vim.health.start()| instead.
+• *health#report_warn* *vim.health.report_warn()*	Use |vim.health.warn()| instead.
+
+DIAGNOSTICS
 • Configuring |diagnostic-signs| using |:sign-define| or |sign_define()|. Use
   the "signs" key of |vim.diagnostic.config()| instead.
-
-• Checkhealth functions:
-  - *health#report_error* *vim.health.report_error()*	Use |vim.health.error()| instead.
-  - *health#report_info* *vim.health.report_info()*	Use |vim.health.info()| instead.
-  - *health#report_ok* *vim.health.report_ok()*		Use |vim.health.ok()| instead.
-  - *health#report_start* *vim.health.report_start()*	Use |vim.health.start()| instead.
-  - *health#report_warn* *vim.health.report_warn()*	Use |vim.health.warn()| instead.
-
-• |API| functions:
-  - *nvim_buf_get_option()*	Use |nvim_get_option_value()| instead.
-  - *nvim_buf_set_option()*	Use |nvim_set_option_value()| instead.
-  - *nvim_call_atomic()*		Use |nvim_exec_lua()| instead.
-  - *nvim_get_option()*		Use |nvim_get_option_value()| instead.
-  - *nvim_set_option()*		Use |nvim_set_option_value()| instead.
-  - *nvim_win_get_option()*	Use |nvim_get_option_value()| instead.
-  - *nvim_win_set_option()*	Use |nvim_set_option_value()| instead.
-
 • vim.diagnostic functions:
-  - *vim.diagnostic.disable()*		Use |vim.diagnostic.enable()|
-  - *vim.diagnostic.is_disabled()*	Use |vim.diagnostic.is_enabled()|
-  - Legacy signature: `vim.diagnostic.enable(buf:number, namespace:number)`
+  • *vim.diagnostic.disable()*		Use |vim.diagnostic.enable()|
+  • *vim.diagnostic.is_disabled()*	Use |vim.diagnostic.is_enabled()|
+  • Legacy signature: `vim.diagnostic.enable(buf:number, namespace:number)`
 
-• vim.lsp functions:
-  - *vim.lsp.util.get_progress_messages()*	Use |vim.lsp.status()| instead.
-  - *vim.lsp.get_active_clients()*		Use |vim.lsp.get_clients()| instead.
-  - *vim.lsp.for_each_buffer_client()*		Use |vim.lsp.get_clients()| instead.
-  - *vim.lsp.util.trim_empty_lines()*		Use |vim.split()| with `trimempty` instead.
-  - *vim.lsp.util.try_trim_markdown_code_blocks()*
-  - *vim.lsp.util.set_lines()*
-  - *vim.lsp.util.extract_completion_items()*
-  - *vim.lsp.util.parse_snippet()*
-  - *vim.lsp.util.text_document_completion_list_to_complete_items()*
-  - *vim.lsp.util.lookup_section()*		Use |vim.tbl_get()| instead: >
+LSP
+• *vim.lsp.util.get_progress_messages()*	Use |vim.lsp.status()| instead.
+• *vim.lsp.get_active_clients()*		Use |vim.lsp.get_clients()| instead.
+• *vim.lsp.for_each_buffer_client()*		Use |vim.lsp.get_clients()| instead.
+• *vim.lsp.util.trim_empty_lines()*		Use |vim.split()| with `trimempty` instead.
+• *vim.lsp.util.try_trim_markdown_code_blocks()*
+• *vim.lsp.util.set_lines()*
+• *vim.lsp.util.extract_completion_items()*
+• *vim.lsp.util.parse_snippet()*
+• *vim.lsp.util.text_document_completion_list_to_complete_items()*
+• *vim.lsp.util.lookup_section()*		Use |vim.tbl_get()| instead: >
 						local keys = vim.split(section, '.', { plain = true })
 						local  vim.tbl_get(table, unpack(keys))
 
+LUA
 • *vim.loop*				Use |vim.uv| instead.
+• *vim.tbl_add_reverse_lookup()*
+• *vim.tbl_flatten()*			Use |Iter:flatten()| instead.
+• *vim.tbl_islist()*			Use |vim.islist()| instead.
 
-• vim.treesitter functions:
-  - *LanguageTree:for_each_child()*		Use |LanguageTree:children()| (non-recursive) instead.
-
+OPTIONS
 • The "term_background" UI option |ui-ext-options| is deprecated and no longer
   populated. Background color detection is now performed in Lua by the Nvim
   core, not the TUI.
 
-• Lua stdlib:
-  - *vim.tbl_add_reverse_lookup()*
-  - *vim.tbl_flatten()*			Use |Iter:flatten()| instead.
-  - *vim.tbl_islist()*			Use |vim.islist()| instead.
+TREESITTER
+• *LanguageTree:for_each_child()*	Use |LanguageTree:children()| (non-recursive) instead.
 
-DEPRECATED IN 0.9 *deprecated-0.9*
 
-• vim.treesitter functions
-  - *vim.treesitter.language.require_language()*	Use |vim.treesitter.language.add()| instead.
-  - *vim.treesitter.get_node_at_pos()*			Use |vim.treesitter.get_node()| instead.
-  - *vim.treesitter.get_node_at_cursor()*		Use |vim.treesitter.get_node()|
-							and |TSNode:type()| instead.
+------------------------------------------------------------------------------
+DEPRECATED IN 0.9					*deprecated-0.9*
 
-• |API| functions:
-  - *nvim_get_hl_by_name()*		Use |nvim_get_hl()| instead.
-  - *nvim_get_hl_by_id()*		Use |nvim_get_hl()| instead.
+API
+- *nvim_get_hl_by_name()*		Use |nvim_get_hl()| instead.
+- *nvim_get_hl_by_id()*			Use |nvim_get_hl()| instead.
 
+TREESITTER
+- *vim.treesitter.language.require_language()*	Use |vim.treesitter.language.add()| instead.
+- *vim.treesitter.get_node_at_pos()*		Use |vim.treesitter.get_node()| instead.
+- *vim.treesitter.get_node_at_cursor()*		Use |vim.treesitter.get_node()|
+						and |TSNode:type()| instead.
 • The following top level Treesitter functions have been moved:
   - *vim.treesitter.inspect_language()*    -> |vim.treesitter.language.inspect()|
   - *vim.treesitter.get_query_files()*     -> |vim.treesitter.query.get_files()|
@@ -98,10 +104,12 @@ DEPRECATED IN 0.9 *deprecated-0.9*
   - *vim.treesitter.query.get_range()*     -> |vim.treesitter.get_range()|
   - *vim.treesitter.query.get_node_text()* -> |vim.treesitter.get_node_text()|
 
-• Lua stdlib:
+LUA
   - *nvim_exec()*				Use |nvim_exec2()| instead.
   - *vim.pretty_print()*			Use |vim.print()| instead.
 
+
+------------------------------------------------------------------------------
 DEPRECATED IN 0.8 OR EARLIER
 
 API

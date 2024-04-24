@@ -1,7 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local assert_log = t.assert_log
 local eq, clear, eval, command, next_msg = t.eq, n.clear, n.eval, n.command, n.next_msg
 local api = n.api
 local exec_lua = n.exec_lua
@@ -34,18 +33,18 @@ describe('notify', function()
     end)
   end)
 
-  describe('passing 0 as the channel id', function()
-    it('sends the notification/args to all subscribed channels', function()
-      api.nvim_subscribe('event2')
+  describe('channel id 0', function()
+    it('broadcasts the notification/args to all channels', function()
       eval('rpcnotify(0, "event1", 1, 2, 3)')
       eval('rpcnotify(0, "event2", 4, 5, 6)')
       eval('rpcnotify(0, "event2", 7, 8, 9)')
+      eq({ 'notification', 'event1', { 1, 2, 3 } }, next_msg())
       eq({ 'notification', 'event2', { 4, 5, 6 } }, next_msg())
       eq({ 'notification', 'event2', { 7, 8, 9 } }, next_msg())
-      api.nvim_unsubscribe('event2')
-      api.nvim_subscribe('event1')
+
       eval('rpcnotify(0, "event2", 10, 11, 12)')
       eval('rpcnotify(0, "event1", 13, 14, 15)')
+      eq({ 'notification', 'event2', { 10, 11, 12 } }, next_msg())
       eq({ 'notification', 'event1', { 13, 14, 15 } }, next_msg())
     end)
 
@@ -78,17 +77,6 @@ describe('notify', function()
     end)
   end)
 
-  it('unsubscribe non-existing event #8745', function()
-    clear { env = {
-      NVIM_LOG_FILE = testlog,
-    } }
-    api.nvim_subscribe('event1')
-    api.nvim_unsubscribe('doesnotexist')
-    assert_log("tried to unsubscribe unknown event 'doesnotexist'", testlog, 10)
-    api.nvim_unsubscribe('event1')
-    assert_alive()
-  end)
-
   it('cancels stale events on channel close', function()
     local catchan = eval("jobstart(['cat'], {'rpc': v:true})")
     local catpath = eval('exepath("cat")')
@@ -97,7 +85,6 @@ describe('notify', function()
       exec_lua(
         [[
       vim.rpcnotify(..., "nvim_call_function", 'chanclose', {..., 'rpc'})
-      vim.rpcnotify(..., "nvim_subscribe", "daily_rant")
       return vim.api.nvim_get_chan_info(...)
     ]],
         catchan
