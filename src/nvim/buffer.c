@@ -1853,7 +1853,6 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
   char *ffname = ffname_arg;
   char *sfname = sfname_arg;
   buf_T *buf;
-  printf("buflist_new\n");
 
   fname_expand(curbuf, &ffname, &sfname);       // will allocate ffname
 
