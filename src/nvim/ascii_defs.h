@@ -12,7 +12,6 @@
                           : (uint8_t)(x) - 'a')
 #define CHAR_ORD_LOW(x)   ((uint8_t)(x) - 'a')
 #define CHAR_ORD_UP(x)    ((uint8_t)(x) - 'A')
-#define ROT13(c, a)     (((((c) - (a)) + 13) % 26) + (a))
 
 #define NUL             '\000'
 #define BELL            '\007'

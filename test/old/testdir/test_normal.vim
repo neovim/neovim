@@ -1908,6 +1908,7 @@ endfunc
 
 func Test_normal24_rot13()
   " Testing for g?? g?g?
+  throw 'Skipped: Nvim has removed g?'
   new
   call append(0, 'abcdefghijklmnopqrstuvwxyzäüö')
   1

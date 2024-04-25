@@ -333,16 +333,6 @@ gu{motion}		Make {motion} text lowercase.
 gugu							*gugu* *guu*
 guu			Make current line lowercase.
 
-							*g?* *rot13*
-g?{motion}		Rot13 encode {motion} text.
-
-							*v_g?*
-{Visual}g?		Rot13 encode the highlighted text (for {Visual} see
-			|Visual-mode|).
-
-g?g?							*g?g?* *g??*
-g??			Rot13 encode current line.
-
 To turn one line into title caps, make every first letter of a word
 uppercase: >
 	:s/\v<(.)(\w*)/\u\1\L\2/g

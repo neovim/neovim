@@ -80,7 +80,7 @@ enum {
   OP_LOWER        = 12,  ///< "gu" make lower case operator
   OP_JOIN         = 13,  ///< "J"  join operator, only for Visual mode
   OP_JOIN_NS      = 14,  ///< "gJ"  join operator, only for Visual mode
-  OP_ROT13        = 15,  ///< "g?" rot-13 encoding
+  // UNUSED       = 15,  ///< Previously used by OP_ROT13
   OP_REPLACE      = 16,  ///< "r"  replace chars, only for Visual mode
   OP_INSERT       = 17,  ///< "I"  Insert column, only for Visual mode
   OP_APPEND       = 18,  ///< "A"  Append column, only for Visual mode

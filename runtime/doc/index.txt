@@ -722,9 +722,6 @@ tag		char	      note action in Normal mode	~
 				   character under the cursor
 |g;|		g;		1  go to N older position in change list
 |g<|		g<		   display previous command output
-|g?|		g?		2  Rot13 encoding operator
-|g?g?|		g??		2  Rot13 encode current line
-|g?g?|		g?g?		2  Rot13 encode current line
 |gD|		gD		1  go to definition of word under the cursor
 				   in current file
 |gE|		gE		1  go backwards to the end of the previous

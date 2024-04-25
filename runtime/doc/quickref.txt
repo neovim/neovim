@@ -413,10 +413,6 @@ In Insert or Command-line mode:
 			   lowercase
 |gU|	     gU{motion} make the text that is moved over with {motion}
 			   uppercase
-|v_g?|	     {visual}g? perform rot13 encoding on highlighted text
-|g?|	     g?{motion} perform rot13 encoding on the text that is moved over
-			   with {motion}
-
 |CTRL-A|  N  CTRL-A	add N to the number at or after the cursor
 |CTRL-X|  N  CTRL-X	subtract N from the number at or after the cursor
 

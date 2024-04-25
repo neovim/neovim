@@ -114,7 +114,6 @@ static char opchars[][3] = {
   { 'g', 'u', OPF_CHANGE },              // OP_LOWER
   { 'J', NUL, OPF_LINES | OPF_CHANGE },  // DO_JOIN
   { 'g', 'J', OPF_LINES | OPF_CHANGE },  // DO_JOIN_NS
-  { 'g', '?', OPF_CHANGE },              // OP_ROT13
   { 'r', NUL, OPF_CHANGE },              // OP_REPLACE
   { 'I', NUL, OPF_CHANGE },              // OP_INSERT
   { 'A', NUL, OPF_CHANGE },              // OP_APPEND
@@ -2131,7 +2130,6 @@ static int swapchars(int op_type, pos_T *pos, int length)
 /// @param op_type
 ///                 == OP_UPPER: make uppercase,
 ///                 == OP_LOWER: make lowercase,
-///                 == OP_ROT13: do rot13 encoding,
 ///                 else swap case of character at 'pos'
 ///
 /// @return  true when something actually changed.
@@ -2139,11 +2137,6 @@ bool swapchar(int op_type, pos_T *pos)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   const int c = gchar_pos(pos);
-
-  // Only do rot13 encoding for ASCII characters.
-  if (c >= 0x80 && op_type == OP_ROT13) {
-    return false;
-  }
 
   // ~ is OP_NOP, g~ is OP_TILDE, gU is OP_UPPER
   if ((op_type == OP_UPPER || op_type == OP_NOP || op_type == OP_TILDE) && c == 0xdf) {
@@ -2158,18 +2151,10 @@ bool swapchar(int op_type, pos_T *pos)
   }
 
   int nc = c;
-  if (mb_islower(c)) {
-    if (op_type == OP_ROT13) {
-      nc = ROT13(c, 'a');
-    } else if (op_type != OP_LOWER) {
-      nc = mb_toupper(c);
-    }
-  } else if (mb_isupper(c)) {
-    if (op_type == OP_ROT13) {
-      nc = ROT13(c, 'A');
-    } else if (op_type != OP_UPPER) {
-      nc = mb_tolower(c);
-    }
+  if (mb_islower(c) && op_type != OP_LOWER) {
+    nc = mb_toupper(c);
+  } else if (mb_isupper(c) && op_type != OP_UPPER) {
+    nc = mb_tolower(c);
   }
   if (nc != c) {
     if (c >= 0x80 || nc >= 0x80) {
@@ -6213,7 +6198,6 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     case OP_TILDE:
     case OP_UPPER:
     case OP_LOWER:
-    case OP_ROT13:
       if (empty_region_error) {
         vim_beep(BO_OPER);
         CancelRedo();

@@ -3921,14 +3921,6 @@ static void nv_search(cmdarg_T *cap)
   oparg_T *oap = cap->oap;
   pos_T save_cursor = curwin->w_cursor;
 
-  if (cap->cmdchar == '?' && cap->oap->op_type == OP_ROT13) {
-    // Translate "g??" to "g?g?"
-    cap->cmdchar = 'g';
-    cap->nchar = '?';
-    nv_operator(cap);
-    return;
-  }
-
   // When using 'incsearch' the cursor may be moved to set a different search
   // start position.
   cap->searchbuf = getcmdline(cap->cmdchar, cap->count1, 0, true);
@@ -5559,7 +5551,6 @@ static void nv_g_cmd(cmdarg_T *cap)
   //  "g~"       Toggle the case of the text.
   //  "gu"       Change text to lower case.
   //  "gU"       Change text to upper case.
-  //  "g?"       rot13 encoding
   //  "g@"       call 'operatorfunc'
   case 'q':
   case 'w':
@@ -5568,7 +5559,6 @@ static void nv_g_cmd(cmdarg_T *cap)
   case '~':
   case 'u':
   case 'U':
-  case '?':
   case '@':
     nv_operator(cap);
     break;

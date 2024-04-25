@@ -142,6 +142,8 @@ The following changes may require adaptations in user config or plugins.
 
 • Removed the |gs| normal command.
 
+• Removed the |g?| normal command.
+
 ==============================================================================
 BREAKING CHANGES IN HEAD                                    *news-breaking-dev*
 

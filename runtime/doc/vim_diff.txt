@@ -677,6 +677,7 @@ Highlight groups:
 <
 Normal commands:
   *gs*
+  *g?* *g??* *g?g?* *v_g?*
 
 Options:
   *'aleph'* *'al'*

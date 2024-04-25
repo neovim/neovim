@@ -47,7 +47,6 @@ or change text.  The following operators are available:
 	|=|	=	filter through 'equalprg' or C-indenting if empty
 	|gq|	gq	text formatting
 	|gw|	gw	text formatting with no cursor movement
-	|g?|	g?	ROT13 encoding
 	|>|	>	shift right
 	|<|	<	shift left
 	|zf|	zf	define a fold
