@@ -630,7 +630,7 @@ function Iter:find(f)
   return unpack(result)
 end
 
---- Gets the first value in a |list-iterator| that satisfies a predicate, starting from the end.
+--- Gets the first value satisfying a predicate, from the end of a |list-iterator|.
 ---
 --- Advances the iterator. Returns nil and drains the iterator if no value is found.
 ---
@@ -717,19 +717,19 @@ end
 ---
 --- ```lua
 --- local it = vim.iter({1, 2, 3, 4})
---- it:nextback()
+--- it:pop()
 --- -- 4
---- it:nextback()
+--- it:pop()
 --- -- 3
 --- ```
 ---
 ---@return any
-function Iter:nextback()
-  error('nextback() requires a list-like table')
+function Iter:pop()
+  error('pop() requires a list-like table')
 end
 
 --- @nodoc
-function ListIter:nextback()
+function ListIter:pop()
   if self._head ~= self._tail then
     local inc = self._head < self._tail and 1 or -1
     self._tail = self._tail - inc
@@ -739,27 +739,27 @@ end
 
 --- Gets the last value of a |list-iterator| without consuming it.
 ---
---- See also |Iter:last()|.
----
 --- Example:
 ---
 --- ```lua
 --- local it = vim.iter({1, 2, 3, 4})
---- it:peekback()
+--- it:rpeek()
 --- -- 4
---- it:peekback()
+--- it:rpeek()
 --- -- 4
---- it:nextback()
+--- it:pop()
 --- -- 4
 --- ```
 ---
+---@see Iter.last
+---
 ---@return any
-function Iter:peekback()
-  error('peekback() requires a list-like table')
+function Iter:rpeek()
+  error('rpeek() requires a list-like table')
 end
 
 ---@nodoc
-function ListIter:peekback()
+function ListIter:rpeek()
   if self._head ~= self._tail then
     local inc = self._head < self._tail and 1 or -1
     return self._table[self._tail - inc]
@@ -797,27 +797,27 @@ function ListIter:skip(n)
   return self
 end
 
---- Skips `n` values backwards from the end of a |list-iterator| pipeline.
+--- Discards `n` values from the end of a |list-iterator| pipeline.
 ---
 --- Example:
 ---
 --- ```lua
---- local it = vim.iter({ 1, 2, 3, 4, 5 }):skipback(2)
+--- local it = vim.iter({ 1, 2, 3, 4, 5 }):rskip(2)
 --- it:next()
 --- -- 1
---- it:nextback()
+--- it:pop()
 --- -- 3
 --- ```
 ---
 ---@param n number Number of values to skip.
 ---@return Iter
 ---@diagnostic disable-next-line: unused-local
-function Iter:skipback(n) -- luacheck: no unused args
-  error('skipback() requires a list-like table')
+function Iter:rskip(n) -- luacheck: no unused args
+  error('rskip() requires a list-like table')
 end
 
 ---@private
-function ListIter:skipback(n)
+function ListIter:rskip(n)
   local inc = self._head < self._tail and n or -n
   self._tail = self._tail - inc
   if (inc > 0 and self._head > self._tail) or (inc < 0 and self._head < self._tail) then
@@ -828,51 +828,37 @@ end
 
 --- Gets the nth value of an iterator (and advances to it).
 ---
+--- If `n` is negative, offsets from the end of a |list-iterator|.
+---
 --- Example:
 ---
 --- ```lua
----
 --- local it = vim.iter({ 3, 6, 9, 12 })
 --- it:nth(2)
 --- -- 6
 --- it:nth(2)
 --- -- 12
 ---
+--- local it2 = vim.iter({ 3, 6, 9, 12 })
+--- it2:nth(-2)
+--- -- 9
+--- it2:nth(-2)
+--- -- 3
 --- ```
 ---
----@param n number The index of the value to return.
+---@param n number Index of the value to return. May be negative if the source is a |list-iterator|.
 ---@return any
 function Iter:nth(n)
   if n > 0 then
     return self:skip(n - 1):next()
-  end
-end
-
---- Gets the nth value from the end of a |list-iterator| (and advances to it).
----
---- Example:
----
---- ```lua
----
---- local it = vim.iter({ 3, 6, 9, 12 })
---- it:nthback(2)
---- -- 9
---- it:nthback(2)
---- -- 3
----
---- ```
----
----@param n number The index of the value to return.
----@return any
-function Iter:nthback(n)
-  if n > 0 then
-    return self:skipback(n - 1):nextback()
+  elseif n < 0 then
+    return self:rskip(math.abs(n) - 1):pop()
   end
 end
 
 --- Sets the start and end of a |list-iterator| pipeline.
 ---
---- Equivalent to `:skip(first - 1):skipback(len - last + 1)`.
+--- Equivalent to `:skip(first - 1):rskip(len - last + 1)`.
 ---
 ---@param first number
 ---@param last number
@@ -884,7 +870,7 @@ end
 
 ---@private
 function ListIter:slice(first, last)
-  return self:skip(math.max(0, first - 1)):skipback(math.max(0, self._tail - last - 1))
+  return self:skip(math.max(0, first - 1)):rskip(math.max(0, self._tail - last - 1))
 end
 
 --- Returns true if any of the items in the iterator match the given predicate.
@@ -950,6 +936,8 @@ end
 ---
 --- ```
 ---
+---@see Iter.rpeek
+---
 ---@return any
 function Iter:last()
   local last = self:next()
@@ -1014,6 +1002,26 @@ function ListIter:enumerate()
     self._table[i] = pack(i, v)
   end
   return self
+end
+
+---@deprecated
+function Iter:nextback()
+  error('Iter:nextback() was renamed to Iter:pop()')
+end
+
+---@deprecated
+function Iter:peekback()
+  error('Iter:peekback() was renamed to Iter:rpeek()')
+end
+
+---@deprecated
+function Iter:skipback()
+  error('Iter:skipback() was renamed to Iter:rskip()')
+end
+
+---@deprecated
+function Iter:nthback()
+  error('Iter:nthback() was removed, use Iter:nth() with negative index')
 end
 
 --- Creates a new Iter object from a table or other |iterable|.

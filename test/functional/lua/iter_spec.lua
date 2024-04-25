@@ -169,19 +169,19 @@ describe('vim.iter', function()
     end
   end)
 
-  it('skipback()', function()
+  it('rskip()', function()
     do
       local q = { 4, 3, 2, 1 }
-      eq(q, vim.iter(q):skipback(0):totable())
-      eq({ 4, 3, 2 }, vim.iter(q):skipback(1):totable())
-      eq({ 4, 3 }, vim.iter(q):skipback(2):totable())
-      eq({ 4 }, vim.iter(q):skipback(#q - 1):totable())
-      eq({}, vim.iter(q):skipback(#q):totable())
-      eq({}, vim.iter(q):skipback(#q + 1):totable())
+      eq(q, vim.iter(q):rskip(0):totable())
+      eq({ 4, 3, 2 }, vim.iter(q):rskip(1):totable())
+      eq({ 4, 3 }, vim.iter(q):rskip(2):totable())
+      eq({ 4 }, vim.iter(q):rskip(#q - 1):totable())
+      eq({}, vim.iter(q):rskip(#q):totable())
+      eq({}, vim.iter(q):rskip(#q + 1):totable())
     end
 
     local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
-    matches('skipback%(%) requires a list%-like table', pcall_err(it.skipback, it, 0))
+    matches('rskip%(%) requires a list%-like table', pcall_err(it.rskip, it, 0))
   end)
 
   it('slice()', function()
@@ -222,19 +222,19 @@ describe('vim.iter', function()
     end
   end)
 
-  it('nthback()', function()
+  it('nth(-x) advances in reverse order starting from end', function()
     do
       local q = { 4, 3, 2, 1 }
-      eq(nil, vim.iter(q):nthback(0))
-      eq(1, vim.iter(q):nthback(1))
-      eq(2, vim.iter(q):nthback(2))
-      eq(3, vim.iter(q):nthback(3))
-      eq(4, vim.iter(q):nthback(4))
-      eq(nil, vim.iter(q):nthback(5))
+      eq(nil, vim.iter(q):nth(0))
+      eq(1, vim.iter(q):nth(-1))
+      eq(2, vim.iter(q):nth(-2))
+      eq(3, vim.iter(q):nth(-3))
+      eq(4, vim.iter(q):nth(-4))
+      eq(nil, vim.iter(q):nth(-5))
     end
 
     local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
-    matches('skipback%(%) requires a list%-like table', pcall_err(it.nthback, it, 1))
+    matches('rskip%(%) requires a list%-like table', pcall_err(it.nth, it, -1))
   end)
 
   it('take()', function()
@@ -421,34 +421,34 @@ describe('vim.iter', function()
     end
   end)
 
-  it('nextback()', function()
+  it('pop()', function()
     do
       local it = vim.iter({ 1, 2, 3, 4 })
-      eq(4, it:nextback())
-      eq(3, it:nextback())
-      eq(2, it:nextback())
-      eq(1, it:nextback())
-      eq(nil, it:nextback())
-      eq(nil, it:nextback())
+      eq(4, it:pop())
+      eq(3, it:pop())
+      eq(2, it:pop())
+      eq(1, it:pop())
+      eq(nil, it:pop())
+      eq(nil, it:pop())
     end
 
     do
       local it = vim.iter(vim.gsplit('hi', ''))
-      matches('nextback%(%) requires a list%-like table', pcall_err(it.nextback, it))
+      matches('pop%(%) requires a list%-like table', pcall_err(it.pop, it))
     end
   end)
 
-  it('peekback()', function()
+  it('rpeek()', function()
     do
       local it = vim.iter({ 1, 2, 3, 4 })
-      eq(4, it:peekback())
-      eq(4, it:peekback())
-      eq(4, it:nextback())
+      eq(4, it:rpeek())
+      eq(4, it:rpeek())
+      eq(4, it:pop())
     end
 
     do
       local it = vim.iter(vim.gsplit('hi', ''))
-      matches('peekback%(%) requires a list%-like table', pcall_err(it.peekback, it))
+      matches('rpeek%(%) requires a list%-like table', pcall_err(it.rpeek, it))
     end
   end)
 
