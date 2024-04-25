@@ -157,6 +157,8 @@ unreleased features on Nvim HEAD.
 
 • Renamed vim.tbl_isarray() to vim.isarray().
 
+• Changed |vim.ui.open()| return-signature to match pcall() convention.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 
