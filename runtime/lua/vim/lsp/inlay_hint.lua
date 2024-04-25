@@ -210,8 +210,8 @@ local function clear(bufnr)
     return
   end
   local bufstate = bufstates[bufnr]
-  local client_lens = (bufstate or {}).client_hints or {}
-  local client_ids = vim.tbl_keys(client_lens) --- @type integer[]
+  local client_hints = (bufstate or {}).client_hints or {}
+  local client_ids = vim.tbl_keys(client_hints) --- @type integer[]
   for _, iter_client_id in ipairs(client_ids) do
     if bufstate then
       bufstate.client_hints[iter_client_id] = {}
