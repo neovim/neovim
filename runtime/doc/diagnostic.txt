@@ -389,8 +389,9 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                             |nvim_win_get_cursor()|.
       • {wrap}?             (`boolean`, default: `true`) Whether to loop
                             around file or not. Similar to 'wrapscan'.
-      • {severity}          (`vim.diagnostic.Severity`) See
-                            |diagnostic-severity|.
+      • {severity}?         (`vim.diagnostic.Severity`) See
+                            |diagnostic-severity|. If `nil`, go to the
+                            diagnostic with the highest severity.
       • {float}?            (`boolean|vim.diagnostic.Opts.Float`, default:
                             `true`) If `true`, call
                             |vim.diagnostic.open_float()| after moving. If a

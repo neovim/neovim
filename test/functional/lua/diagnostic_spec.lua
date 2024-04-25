@@ -18,12 +18,12 @@ describe('vim.diagnostic', function()
     exec_lua [[
       require('vim.diagnostic')
 
-      function make_diagnostic(msg, x1, y1, x2, y2, severity, source, code)
+      function make_diagnostic(msg, lnum, col, end_lnum, end_col, severity, source, code)
         return {
-          lnum = x1,
-          col = y1,
-          end_lnum = x2,
-          end_col = y2,
+          lnum = lnum,
+          col = col,
+          end_lnum = end_lnum,
+          end_col = end_col,
           message = msg,
           severity = severity,
           source = source,
@@ -31,20 +31,20 @@ describe('vim.diagnostic', function()
         }
       end
 
-      function make_error(msg, x1, y1, x2, y2, source, code)
-        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.ERROR, source, code)
+      function make_error(msg, lnum, col, end_lnum, end_col, source, code)
+        return make_diagnostic(msg, lnum, col, end_lnum, end_col, vim.diagnostic.severity.ERROR, source, code)
       end
 
-      function make_warning(msg, x1, y1, x2, y2, source, code)
-        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.WARN, source, code)
+      function make_warning(msg, lnum, col, end_lnum, end_col, source, code)
+        return make_diagnostic(msg, lnum, col, end_lnum, end_col, vim.diagnostic.severity.WARN, source, code)
       end
 
-      function make_info(msg, x1, y1, x2, y2, source, code)
-        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.INFO, source, code)
+      function make_info(msg, lnum, col, end_lnum, end_col, source, code)
+        return make_diagnostic(msg, lnum, col, end_lnum, end_col, vim.diagnostic.severity.INFO, source, code)
       end
 
-      function make_hint(msg, x1, y1, x2, y2, source, code)
-        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.HINT, source, code)
+      function make_hint(msg, lnum, col, end_lnum, end_col, source, code)
+        return make_diagnostic(msg, lnum, col, end_lnum, end_col, vim.diagnostic.severity.HINT, source, code)
       end
 
       function count_diagnostics(bufnr, severity, namespace)
@@ -934,15 +934,112 @@ describe('vim.diagnostic', function()
       eq(
         { 4, 0 },
         exec_lua [[
-    vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
-        make_error('Diagnostic #1', 3, 9001, 3, 9001),
-        make_error('Diagnostic #2', 4, -1, 4, -1),
-    })
-    vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
-    vim.api.nvim_win_set_cursor(0, {1, 1})
-    vim.diagnostic.goto_next { float = false }
-    return vim.diagnostic.get_next_pos { namespace = diagnostic_ns }
-    ]]
+          vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+            make_error('Diagnostic #1', 3, 9001, 3, 9001),
+            make_error('Diagnostic #2', 4, -1, 4, -1),
+          })
+          vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+          vim.api.nvim_win_set_cursor(0, {1, 1})
+          vim.diagnostic.goto_next { float = false }
+          return vim.diagnostic.get_next_pos { namespace = diagnostic_ns }
+        ]]
+      )
+    end)
+
+    it('jumps to diagnostic with highest severity', function()
+      exec_lua([[
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_info('Info', 1, 0, 1, 1),
+          make_error('Error', 2, 0, 2, 1),
+          make_warning('Warning', 3, 0, 3, 1),
+          make_error('Error', 4, 0, 4, 1),
+        })
+
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.api.nvim_win_set_cursor(0, {1, 0})
+      ]])
+
+      eq(
+        { 3, 0 },
+        exec_lua([[
+        vim.diagnostic.goto_next()
+        return vim.api.nvim_win_get_cursor(0)
+      ]])
+      )
+
+      eq(
+        { 5, 0 },
+        exec_lua([[
+        vim.diagnostic.goto_next()
+        return vim.api.nvim_win_get_cursor(0)
+      ]])
+      )
+
+      exec_lua([[
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_info('Info', 1, 0, 1, 1),
+          make_hint('Hint', 2, 0, 2, 1),
+          make_warning('Warning', 3, 0, 3, 1),
+          make_hint('Hint', 4, 0, 4, 1),
+          make_warning('Warning', 5, 0, 5, 1),
+        })
+
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.api.nvim_win_set_cursor(0, {1, 0})
+      ]])
+
+      eq(
+        { 4, 0 },
+        exec_lua([[
+        vim.diagnostic.goto_next()
+        return vim.api.nvim_win_get_cursor(0)
+      ]])
+      )
+
+      eq(
+        { 6, 0 },
+        exec_lua([[
+        vim.diagnostic.goto_next()
+        return vim.api.nvim_win_get_cursor(0)
+      ]])
+      )
+    end)
+
+    it('jumps to next diagnostic if severity is non-nil', function()
+      exec_lua([[
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_info('Info', 1, 0, 1, 1),
+          make_error('Error', 2, 0, 2, 1),
+          make_warning('Warning', 3, 0, 3, 1),
+          make_error('Error', 4, 0, 4, 1),
+        })
+
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.api.nvim_win_set_cursor(0, {1, 0})
+      ]])
+
+      eq(
+        { 2, 0 },
+        exec_lua([[
+        vim.diagnostic.goto_next({ severity = { min = vim.diagnostic.severity.HINT } })
+        return vim.api.nvim_win_get_cursor(0)
+      ]])
+      )
+
+      eq(
+        { 3, 0 },
+        exec_lua([[
+        vim.diagnostic.goto_next({ severity = { min = vim.diagnostic.severity.HINT } })
+        return vim.api.nvim_win_get_cursor(0)
+      ]])
+      )
+
+      eq(
+        { 4, 0 },
+        exec_lua([[
+        vim.diagnostic.goto_next({ severity = { min = vim.diagnostic.severity.HINT } })
+        return vim.api.nvim_win_get_cursor(0)
+      ]])
       )
     end)
   end)
