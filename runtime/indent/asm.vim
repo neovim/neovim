@@ -1,8 +1,9 @@
 " Vim indent file
-" Language:             asm
-" Maintainer:           Philip Jones <philj56@gmail.com>
-" Upstream:             https://github.com/philj56/vim-asm-indent
-" Latest Revision:      2017-07-01
+" Language:	asm
+" Maintainer:	Philip Jones <philj56@gmail.com>
+" Upstream:	https://github.com/philj56/vim-asm-indent
+" Last Change:	2017-Jul-01
+"		2024 Apr 25 by Vim Project (undo_indent)
 
 if exists("b:did_indent")
   finish
@@ -12,7 +13,7 @@ let b:did_indent = 1
 setlocal indentexpr=s:getAsmIndent()
 setlocal indentkeys=<:>,!^F,o,O
 
-let b:undo_ftplugin .= "indentexpr< indentkeys<"
+let b:undo_indent = "indentexpr< indentkeys<"
 
 function! s:getAsmIndent()
   let line = getline(v:lnum)
