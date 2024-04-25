@@ -20,6 +20,7 @@ error('Cannot require a meta file')
 ---@field descendant_for_range fun(self: TSNode, start_row: integer, start_col: integer, end_row: integer, end_col: integer): TSNode?
 ---@field named_descendant_for_range fun(self: TSNode, start_row: integer, start_col: integer, end_row: integer, end_col: integer): TSNode?
 ---@field parent fun(self: TSNode): TSNode?
+---@field child_containing_descendant fun(self: TSNode, descendant: TSNode): TSNode?
 ---@field next_sibling fun(self: TSNode): TSNode?
 ---@field prev_sibling fun(self: TSNode): TSNode?
 ---@field next_named_sibling fun(self: TSNode): TSNode?

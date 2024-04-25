@@ -78,6 +78,8 @@ An instance `TSNode` of a treesitter node supports the following methods.
 
 TSNode:parent()                                         *TSNode:parent()*
     Get the node's immediate parent.
+    Prefer |TSNode:child_containing_descendant()|
+    for iterating over the node's ancestors.
 
 TSNode:next_sibling()                                   *TSNode:next_sibling()*
     Get the node's next sibling.
@@ -113,6 +115,9 @@ TSNode:named_child_count()                         *TSNode:named_child_count()*
 TSNode:named_child({index})                              *TSNode:named_child()*
     Get the node's named child at the given {index}, where zero represents the
     first named child.
+
+TSNode:child_containing_descendant({descendant})  *TSNode:child_containing_descendant()*
+    Get the node's child that contains {descendant}.
 
 TSNode:start()                                          *TSNode:start()*
     Get the node's start position. Return three values: the row, column and
