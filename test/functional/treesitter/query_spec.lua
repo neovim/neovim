@@ -10,6 +10,22 @@ local pcall_err = t.pcall_err
 local api = n.api
 local fn = n.fn
 
+local get_query_result_code = [[
+  function get_query_result(query_text)
+    cquery = vim.treesitter.query.parse("c", query_text)
+    parser = vim.treesitter.get_parser(0, "c")
+    tree = parser:parse()[1]
+    res = {}
+    for cid, node in cquery:iter_captures(tree:root(), 0) do
+      -- can't transmit node over RPC. just check the name, range, and text
+      local text = vim.treesitter.get_node_text(node, 0)
+      local range = {node:range()}
+      table.insert(res, { cquery.captures[cid], node:type(), range, text })
+    end
+    return res
+  end
+]]
+
 describe('treesitter query API', function()
   before_each(function()
     clear()
@@ -291,21 +307,7 @@ void ui_refresh(void)
         return 0;
       }
     ]])
-    exec_lua([[
-      function get_query_result(query_text)
-        cquery = vim.treesitter.query.parse("c", query_text)
-        parser = vim.treesitter.get_parser(0, "c")
-        tree = parser:parse()[1]
-        res = {}
-        for cid, node in cquery:iter_captures(tree:root(), 0) do
-          -- can't transmit node over RPC. just check the name, range, and text
-          local text = vim.treesitter.get_node_text(node, 0)
-          local range = {node:range()}
-          table.insert(res, { cquery.captures[cid], node:type(), range, text })
-        end
-        return res
-      end
-    ]])
+    exec_lua(get_query_result_code)
 
     local res0 = exec_lua(
       [[return get_query_result(...)]],
@@ -331,6 +333,38 @@ void ui_refresh(void)
       { 'fizzbuzz-strings', 'string_literal', { 8, 15, 8, 34 }, '"number= %d Fizz\\n"' },
       { 'fizzbuzz-strings', 'string_literal', { 10, 15, 10, 34 }, '"number= %d Buzz\\n"' },
     }, res1)
+  end)
+
+  it('supports builtin predicate has-ancestor?', function()
+    insert([[
+      int x = 123;
+      enum C { y = 124 };
+      int main() { int z = 125; }]])
+    exec_lua(get_query_result_code)
+
+    local result = exec_lua(
+      [[return get_query_result(...)]],
+      [[((number_literal) @literal (#has-ancestor? @literal "function_definition"))]]
+    )
+    eq({ { 'literal', 'number_literal', { 2, 21, 2, 24 }, '125' } }, result)
+
+    result = exec_lua(
+      [[return get_query_result(...)]],
+      [[((number_literal) @literal (#has-ancestor? @literal "function_definition" "enum_specifier"))]]
+    )
+    eq({
+      { 'literal', 'number_literal', { 1, 13, 1, 16 }, '124' },
+      { 'literal', 'number_literal', { 2, 21, 2, 24 }, '125' },
+    }, result)
+
+    result = exec_lua(
+      [[return get_query_result(...)]],
+      [[((number_literal) @literal (#not-has-ancestor? @literal "enum_specifier"))]]
+    )
+    eq({
+      { 'literal', 'number_literal', { 0, 8, 0, 11 }, '123' },
+      { 'literal', 'number_literal', { 2, 21, 2, 24 }, '125' },
+    }, result)
   end)
 
   it('allows loading query with escaped quotes and capture them `#{lua,vim}-match`?', function()
