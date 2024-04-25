@@ -348,7 +348,7 @@ function lsp._set_defaults(client, bufnr)
       and is_empty_or_default(bufnr, 'keywordprg')
       and vim.fn.maparg('K', 'n', false, false) == ''
     then
-      vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = bufnr })
+      vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = bufnr, desc = 'vim.lsp.buf.hover()' })
     end
   end)
   if client.supports_method(ms.textDocument_diagnostic) then

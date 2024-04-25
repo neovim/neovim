@@ -400,6 +400,10 @@ The following changes to existing APIs or features add new behavior.
   • 'comments' includes "fb:•".
   • 'shortmess' includes the "C" flag.
   • 'grepprg' defaults to using ripgrep if available.
+  • |crn| in Normal mode maps to |vim.lsp.buf.rename()|.
+  • |crr| in Normal and Visual mode maps to |vim.lsp.buf.code_action()|.
+  • "gr" in Normal mode maps to |vim.lsp.buf.references()| |gr-default|
+  • |i_CTRL-S| in Insert mode maps to |vim.lsp.buf.signature_help()|
   • Automatic linting of treesitter query files (see |ft-query-plugin|).
     Can be disabled via: >lua
       vim.g.query_lint_on = {}
@@ -430,9 +434,10 @@ The following changes to existing APIs or features add new behavior.
 
   :call netrw#BrowseX(expand(exists("g:netrw_gx")? g:netrw_gx : '<cfile>'), netrw#CheckIfRemote())<CR>
 
-• |vim.lsp.start()| now maps |K| to use |vim.lsp.buf.hover()| if the server
-  supports it, unless |'keywordprg'| was customized before calling
-  |vim.lsp.start()|.
+• |vim.lsp.start()| now creates the following default keymaps (assuming the
+  server supports the feature):
+  - |K| in Normal mode maps to |vim.lsp.buf.hover()|, unless |'keywordprg'|
+    was customized before calling |vim.lsp.start()|.
 
 • Terminal buffers started with no arguments (and use 'shell') close
   automatically if the job exited without error, eliminating the (often

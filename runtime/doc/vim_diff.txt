@@ -137,6 +137,10 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
 - * |v_star-default|
 - gc |gc-default| |v_gc-default| |o_gc-default|
 - gcc |gcc-default|
+- |crn|
+- |crr|
+- gr |gr-default|
+- <C-S> |i_CTRL-S|
 - Nvim LSP client defaults |lsp-defaults|
   - K |K-lsp-default|
 
