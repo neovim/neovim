@@ -7904,8 +7904,8 @@ hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, const char 
           .channel_id = LUA_INTERNAL_CALL,
         };
         bool should_free;
-        // should_free is ignored as script_sctx will be resolved to a fnmae
-        // & new_script_item will consume it.
+        // should_free is ignored as script_ctx will be resolved to a fname
+        // and new_script_item() will consume it.
         char *sc_name = get_scriptname(last_set, &should_free);
         new_script_item(sc_name, &current_sctx.sc_sid);
       }

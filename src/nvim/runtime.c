@@ -1889,11 +1889,6 @@ static bool concat_continued_line(garray_T *const ga, const int init_growsize, c
 }
 
 typedef struct {
-  linenr_T curr_lnum;
-  const linenr_T final_lnum;
-} GetBufferLineCookie;
-
-typedef struct {
   char *buf;
   size_t offset;
 } GetStrLineCookie;
@@ -2009,15 +2004,15 @@ void cmd_source_buffer(const exarg_T *const eap, bool ex_lua)
     ga_append(&ga, NL);
   }
   ((char *)ga.ga_data)[ga.ga_len - 1] = NUL;
-  const GetStrLineCookie cookie = {
-    .buf = ga.ga_data,
-    .offset = 0,
-  };
   if (ex_lua || strequal(curbuf->b_p_ft, "lua")
       || (curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua"))) {
     char *name = ex_lua ? ":{range}lua" : ":source (no file)";
-    nlua_source_using_linegetter(get_str_line, (void *)&cookie, name);
+    nlua_source_str(ga.ga_data, name);
   } else {
+    const GetStrLineCookie cookie = {
+      .buf = ga.ga_data,
+      .offset = 0,
+    };
     source_using_linegetter((void *)&cookie, get_str_line, ":source (no file)");
   }
   ga_clear(&ga);
