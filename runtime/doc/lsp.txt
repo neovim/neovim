@@ -34,7 +34,7 @@ Follow these steps to get LSP features:
     vim.lsp.start({
       name = 'my-server-name',
       cmd = {'name-of-language-server-executable'},
-      root_dir = vim.fs.dirname(vim.fs.find({'setup.py', 'pyproject.toml'}, { upward = true })[1]),
+      root_dir = vim.fs.root(0, {'setup.py', 'pyproject.toml'}),
     })
 <
 3. Check that the server attached to the buffer: >
@@ -836,7 +836,7 @@ start({config}, {opts})                                      *vim.lsp.start()*
         vim.lsp.start({
            name = 'my-server-name',
            cmd = {'name-of-language-server-executable'},
-           root_dir = vim.fs.dirname(vim.fs.find({'pyproject.toml', 'setup.py'}, { upward = true })[1]),
+           root_dir = vim.fs.root(0, {'pyproject.toml', 'setup.py'}),
         })
 <
 
@@ -848,7 +848,7 @@ start({config}, {opts})                                      *vim.lsp.start()*
       |vim.lsp.start_client()|.
     • `root_dir` path to the project root. By default this is used to decide
       if an existing client should be re-used. The example above uses
-      |vim.fs.find()| and |vim.fs.dirname()| to detect the root by traversing
+      |vim.fs.root()| and |vim.fs.dirname()| to detect the root by traversing
       the file system upwards starting from the current directory until either
       a `pyproject.toml` or `setup.py` file is found.
     • `workspace_folders` list of `{ uri:string, name: string }` tables

@@ -210,7 +210,7 @@ end
 --- vim.lsp.start({
 ---    name = 'my-server-name',
 ---    cmd = {'name-of-language-server-executable'},
----    root_dir = vim.fs.dirname(vim.fs.find({'pyproject.toml', 'setup.py'}, { upward = true })[1]),
+---    root_dir = vim.fs.root(0, {'pyproject.toml', 'setup.py'}),
 --- })
 --- ```
 ---
@@ -219,9 +219,9 @@ end
 --- - `name` arbitrary name for the LSP client. Should be unique per language server.
 --- - `cmd` command string[] or function, described at |vim.lsp.start_client()|.
 --- - `root_dir` path to the project root. By default this is used to decide if an existing client
----   should be re-used. The example above uses |vim.fs.find()| and |vim.fs.dirname()| to detect the
----   root by traversing the file system upwards starting from the current directory until either
----   a `pyproject.toml` or `setup.py` file is found.
+---   should be re-used. The example above uses |vim.fs.root()| and |vim.fs.dirname()| to detect
+---   the root by traversing the file system upwards starting from the current directory until
+---   either a `pyproject.toml` or `setup.py` file is found.
 --- - `workspace_folders` list of `{ uri:string, name: string }` tables specifying the project root
 ---   folders used by the language server. If `nil` the property is derived from `root_dir` for
 ---   convenience.

@@ -365,6 +365,9 @@ The following new APIs and features were added.
 
 • Added built-in |commenting| support.
 
+• |vim.fs.root()| finds project root directories from a list of "root
+  markers".
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
