@@ -98,18 +98,19 @@ do
   --- Map |gx| to call |vim.ui.open| on the <cfile> at cursor.
   do
     local function do_open(uri)
-      local cmd, err = vim.ui.open(uri)
-      local rv = cmd and cmd:wait(1000) or nil
-      if cmd and rv and rv.code ~= 0 then
-        err = ('vim.ui.open: command %s (%d): %s'):format(
+      local ok, cmd_or_err = vim.ui.open(uri)
+      local rv = ok and (cmd_or_err --[[@as vim.SystemObj]]):wait(1000) or nil
+      if rv and rv.code ~= 0 then
+        ok = false
+        cmd_or_err = ('vim.ui.open: command %s (%d): %s'):format(
           (rv.code == 124 and 'timeout' or 'failed'),
           rv.code,
-          vim.inspect(cmd.cmd)
+          vim.inspect(cmd_or_err.cmd)
         )
       end
 
-      if err then
-        vim.notify(err, vim.log.levels.ERROR)
+      if not ok then
+        vim.notify(cmd_or_err --[[@as string]], vim.log.levels.ERROR)
       end
     end
 
