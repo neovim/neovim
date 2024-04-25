@@ -1454,6 +1454,40 @@ describe('API/win', function()
       }, layout)
     end)
 
+    it('opens floating windows in other tabpages', function()
+      local first_win = api.nvim_get_current_win()
+      local first_tab = api.nvim_get_current_tabpage()
+
+      command('tabnew')
+      local new_tab = api.nvim_get_current_tabpage()
+      local win = api.nvim_open_win(0, false, {
+        relative = 'win',
+        win = first_win,
+        width = 5,
+        height = 5,
+        row = 1,
+        col = 1,
+      })
+      eq(api.nvim_win_get_tabpage(win), first_tab)
+      eq(api.nvim_get_current_tabpage(), new_tab)
+    end)
+
+    it('switches to new windows in non-current tabpages when enter=true', function()
+      local first_win = api.nvim_get_current_win()
+      local first_tab = api.nvim_get_current_tabpage()
+      command('tabnew')
+      local win = api.nvim_open_win(0, true, {
+        relative = 'win',
+        win = first_win,
+        width = 5,
+        height = 5,
+        row = 1,
+        col = 1,
+      })
+      eq(api.nvim_win_get_tabpage(win), first_tab)
+      eq(api.nvim_get_current_tabpage(), first_tab)
+    end)
+
     local function setup_tabbed_autocmd_test()
       local info = {}
       info.orig_buf = api.nvim_get_current_buf()

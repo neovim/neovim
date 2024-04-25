@@ -478,7 +478,8 @@ The following changes to existing APIs or features add new behavior.
   |:vertical|, |:horizontal| and |:botright|.
 
 • |nvim_open_win()| and |nvim_win_set_config()| now support opening normal (split)
-  windows, and moving floating windows into split windows.
+  windows, moving floating windows into split windows, and opening windows in
+  non-current tabpages.
 
 • 'errorfile' (|-q|) accepts `-` as an alias for stdin.
 

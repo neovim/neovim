@@ -41,7 +41,24 @@
 win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
 {
   if (wp == NULL) {
-    wp = win_alloc(last ? lastwin : lastwin_nofloating(), false);
+    tabpage_T *tp = NULL;
+    win_T *tp_last = last ? lastwin : lastwin_nofloating();
+    if (fconfig.window != 0) {
+      assert(!last);
+      win_T *parent_wp = find_window_by_handle(fconfig.window, err);
+      if (!parent_wp) {
+        return NULL;
+      }
+      tp = win_find_tabpage(parent_wp);
+      if (!tp) {
+        return NULL;
+      }
+      tp_last = tp->tp_lastwin;
+      while (tp_last->w_floating && tp_last->w_prev) {
+        tp_last = tp_last->w_prev;
+      }
+    }
+    wp = win_alloc(tp_last, false);
     win_init(wp, curwin, 0);
   } else {
     assert(!last);

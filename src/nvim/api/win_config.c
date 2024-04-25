@@ -236,19 +236,19 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
 
   win_T *wp = NULL;
   tabpage_T *tp = curtab;
-  if (is_split) {
-    win_T *parent = NULL;
-    if (config->win != -1) {
-      parent = find_window_by_handle(fconfig.window, err);
-      if (!parent) {
-        // find_window_by_handle has already set the error
-        goto cleanup;
-      } else if (parent->w_floating) {
-        api_set_error(err, kErrorTypeException, "Cannot split a floating window");
-        goto cleanup;
-      }
+  win_T *parent = NULL;
+  if (config->win != -1) {
+    parent = find_window_by_handle(fconfig.window, err);
+    if (!parent) {
+      // find_window_by_handle has already set the error
+      goto cleanup;
+    } else if (is_split && parent->w_floating) {
+      api_set_error(err, kErrorTypeException, "Cannot split a floating window");
+      goto cleanup;
     }
-
+    tp = win_find_tabpage(parent);
+  }
+  if (is_split) {
     if (!check_split_disallowed_err(parent ? parent : curwin, err)) {
       goto cleanup;  // error already set
     }
@@ -267,7 +267,6 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
       if (parent == NULL || parent == curwin) {
         wp = win_split_ins(size, flags, NULL, 0, NULL);
       } else {
-        tp = win_find_tabpage(parent);
         switchwin_T switchwin;
         // `parent` is valid in `tp`, so switch_win should not fail.
         const int result = switch_win(&switchwin, parent, tp, true);
@@ -395,6 +394,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
   if (!win) {
     return;
   }
+
   tabpage_T *win_tp = win_find_tabpage(win);
   bool was_split = !win->w_floating;
   bool has_split = HAS_KEY_X(config, split);
@@ -409,23 +409,28 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
   if (!parse_win_config(win, config, &fconfig, !was_split || to_split, err)) {
     return;
   }
+  win_T *parent = NULL;
+  if (config->win != -1) {
+    parent = find_window_by_handle(fconfig.window, err);
+    if (!parent) {
+      return;
+    } else if (to_split && parent->w_floating) {
+      api_set_error(err, kErrorTypeException, "Cannot split a floating window");
+      return;
+    }
+
+    // Prevent autocmd window from being moved into another tabpage
+    if (is_aucmd_win(win) && win_find_tabpage(win) != win_find_tabpage(parent)) {
+      api_set_error(err, kErrorTypeException, "Cannot move autocmd win to another tabpage");
+      return;
+    }
+  }
   if (was_split && !to_split) {
     if (!win_new_float(win, false, fconfig, err)) {
       return;
     }
     redraw_later(win, UPD_NOT_VALID);
   } else if (to_split) {
-    win_T *parent = NULL;
-    if (config->win != -1) {
-      parent = find_window_by_handle(fconfig.window, err);
-      if (!parent) {
-        return;
-      } else if (parent->w_floating) {
-        api_set_error(err, kErrorTypeException, "Cannot split a floating window");
-        return;
-      }
-    }
-
     WinSplit old_split = win_split_dir(win);
     if (has_vertical && !has_split) {
       if (config->vertical) {

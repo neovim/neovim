@@ -532,7 +532,10 @@ describe('float window', function()
     local closed_win = api.nvim_get_current_win()
     command('close')
     local buf = api.nvim_create_buf(false,false)
-    api.nvim_open_win(buf, true, {relative='win', win=closed_win, width=1, height=1, bufpos={0,0}})
+    eq(
+      'Invalid window id: ' .. closed_win,
+      pcall_err(api.nvim_open_win, buf, true, {relative='win', win=closed_win, width=1, height=1, bufpos={0,0}})
+    )
     assert_alive()
   end)
 
