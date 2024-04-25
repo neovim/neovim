@@ -6395,7 +6395,7 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
     goto end;
   }
 
-  if (!eval_has_provider("clipboard")) {
+  if (!eval_has_provider("clipboard", false)) {
     if (batch_change_count <= 1 && !quiet
         && (!clipboard_didwarn || (explicit_cb_reg && !redirecting()))) {
       clipboard_didwarn = true;

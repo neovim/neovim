@@ -8782,7 +8782,7 @@ void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 ///                 an empty typval_T.
 typval_T eval_call_provider(char *provider, char *method, list_T *arguments, bool discard)
 {
-  if (!eval_has_provider(provider)) {
+  if (!eval_has_provider(provider, false)) {
     semsg("E319: No \"%s\" provider found. Run \":checkhealth provider\"",
           provider);
     return (typval_T){
@@ -8840,7 +8840,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
 }
 
 /// Checks if provider for feature `feat` is enabled.
-bool eval_has_provider(const char *feat)
+bool eval_has_provider(const char *feat, bool throw_if_fast)
 {
   if (!strequal(feat, "clipboard")
       && !strequal(feat, "python3")
@@ -8850,6 +8850,11 @@ bool eval_has_provider(const char *feat)
       && !strequal(feat, "ruby")
       && !strequal(feat, "node")) {
     // Avoid autoload for non-provider has() features.
+    return false;
+  }
+
+  if (throw_if_fast && !nlua_is_deferred_safe()) {
+    semsg(e_luv_api_disabled, "Vimscript function");
     return false;
   }
 
