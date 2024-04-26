@@ -1385,7 +1385,7 @@ Finally, these constructs are unique to Perl:
 		rules.  Both methods can be used to conceal text.
 
 		Thus the matching functions like |matchadd()| won't consider
-		syntax rules and functions like |synconcealend()| and the
+		syntax rules and functions like |synconcealed()| and the
 		other way around.
 
 							*:mat* *:match*
