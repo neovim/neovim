@@ -291,7 +291,7 @@ Platform-specific requirements are listed below.
 ### Ubuntu / Debian
 
 ```sh
-sudo apt-get install ninja-build gettext cmake unzip curl build-essential
+sudo apt-get install ninja-build gettext cmake unzip curl build-essential libnsl-dev
 ```
 
 ### RHEL / Fedora
