@@ -194,15 +194,6 @@ void ui_refresh(void)
     abort();
   }
 
-  if (!ui_active()) {
-    return;
-  }
-
-  if (updating_screen) {
-    ui_schedule_refresh();
-    return;
-  }
-
   int width = INT_MAX;
   int height = INT_MAX;
   bool ext_widgets[kUIExtCount];
@@ -234,9 +225,17 @@ void ui_refresh(void)
     }
     ui_ext[i] = ext_widgets[i];
     if (i < kUIGlobalCount) {
-      ui_call_option_set(cstr_as_string(ui_ext_names[i]),
-                         BOOLEAN_OBJ(ext_widgets[i]));
+      ui_call_option_set(cstr_as_string(ui_ext_names[i]), BOOLEAN_OBJ(ext_widgets[i]));
     }
+  }
+
+  if (!ui_active()) {
+    return;
+  }
+
+  if (updating_screen) {
+    ui_schedule_refresh();
+    return;
   }
 
   ui_default_colors_set();
