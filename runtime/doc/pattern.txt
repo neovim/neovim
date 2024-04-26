@@ -1375,6 +1375,19 @@ Finally, these constructs are unique to Perl:
 ==============================================================================
 10. Highlighting matches				*match-highlight*
 
+							*syntax-vs-match*
+		Note that the match highlight mechanism is independent
+		of |syntax-highlighting|, which is (usually) a buffer-local
+		highlighting, while matching is window-local, both methods
+		can be freely mixed.  Match highlighting functions give you
+		a bit more flexibility in when and how to apply, but are
+		typically only used for temporary highlighting, without strict
+		rules.  Both methods can be used to conceal text.
+
+		Thus the matching functions like |matchadd()| won't consider
+		syntax rules and functions like |synconcealed()| and the
+		other way around.
+
 							*:mat* *:match*
 :mat[ch] {group} /{pattern}/
 		Define a pattern to highlight in the current window.  It will
