@@ -1617,6 +1617,7 @@ enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*
       • {filter}  (`table?`) Optional filters |kwargs|, or `nil` for all.
                   • {bufnr} (`integer?`) Buffer number, or 0/nil for current
                     buffer.
+                  • {client_id} (`integer?`) Client id, or nil for all.
 
 get({filter})                                       *vim.lsp.inlay_hint.get()*
     Get the list of inlay hints, (optionally) restricted by buffer or range.
@@ -1641,6 +1642,7 @@ get({filter})                                       *vim.lsp.inlay_hint.get()*
     Parameters: ~
       • {filter}  (`table?`) Optional filters |kwargs|:
                   • {bufnr} (`integer?`)
+                  • {client_id} (`integer?`)
                   • {range} (`lsp.Range?`)
 
     Return: ~
@@ -1649,13 +1651,14 @@ get({filter})                                       *vim.lsp.inlay_hint.get()*
         • {client_id} (`integer`)
         • {inlay_hint} (`lsp.InlayHint`)
 
-is_enabled({bufnr})                          *vim.lsp.inlay_hint.is_enabled()*
+is_enabled({bufnr}, {client_id})             *vim.lsp.inlay_hint.is_enabled()*
 
     Note: ~
       • This API is pre-release (unstable).
 
     Parameters: ~
-      • {bufnr}  (`integer?`) Buffer handle, or 0 for current
+      • {bufnr}      (`integer?`) Buffer handle, or 0 for current
+      • {client_id}  (`integer?`) Client id, or nil for all
 
     Return: ~
         (`boolean`)

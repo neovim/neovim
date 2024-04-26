@@ -8,7 +8,7 @@ local M = {}
 ---@field version? integer
 ---@field client_hints? table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
 ---@field applied table<integer, integer> Last version of hints applied to this line
----@field enabled boolean Whether inlay hints are enabled for this buffer
+---@field enabled boolean|integer[]  The client_id of inlay_hint is enabled on this buffer, true for all
 ---@type table<integer, vim.lsp.inlay_hint.bufstate>
 local bufstates = {}
 
@@ -111,6 +111,7 @@ end
 --- @class vim.lsp.inlay_hint.get.Filter
 --- @inlinedoc
 --- @field bufnr integer?
+--- @field client_id integer?
 --- @field range lsp.Range?
 
 --- @class vim.lsp.inlay_hint.get.ret
@@ -169,6 +170,10 @@ function M.get(filter)
   if #clients == 0 then
     return {}
   end
+  ---@param c vim.lsp.Client
+  clients = vim.tbl_filter(function(c)
+    return not filter.client_id or c.id == filter.client_id
+  end, clients)
 
   local range = filter.range
   if not range then
@@ -235,35 +240,45 @@ end
 
 --- Disable inlay hints for a buffer
 ---@param bufnr (integer|nil) Buffer handle, or 0 or nil for current
-local function _disable(bufnr)
+---@param client_id (integer|nil) Client id, or nil for all
+local function _disable(bufnr, client_id)
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
-  clear(bufnr)
+  clear(bufnr, client_id)
   if bufstates[bufnr] then
-    bufstates[bufnr] = { enabled = false, applied = {} }
+    local enabled = bufstates[bufnr].enabled
+    if client_id and type(enabled) == 'table' and #enabled ~= 1 then
+      vim.list_remove(enabled, client_id)
+      bufstates[bufnr] = { enabled = enabled, applied = {} }
+    else
+      bufstates[bufnr] = { enabled = false, applied = {} }
+    end
   end
 end
 
 --- Refresh inlay hints, only if we have attached clients that support it
 ---@param bufnr (integer) Buffer handle, or 0 for current
+---@param client_id (integer|nil) Client id, or nil for all
 ---@param opts? vim.lsp.util._refresh.Opts Additional options to pass to util._refresh
 ---@private
-local function _refresh(bufnr, opts)
+local function _refresh(bufnr, client_id, opts)
   opts = opts or {}
   opts['bufnr'] = bufnr
+  opts['client_id'] = client_id
   util._refresh(ms.textDocument_inlayHint, opts)
 end
 
 --- Enable inlay hints for a buffer
 ---@param bufnr (integer|nil) Buffer handle, or 0 or nil for current
-local function _enable(bufnr)
+---@param client_id (integer|nil) Client id, or nil for all
+local function _enable(bufnr, client_id)
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
   local bufstate = bufstates[bufnr]
   if not bufstate then
-    bufstates[bufnr] = { applied = {}, enabled = true }
+    bufstates[bufnr] = { applied = {}, enabled = client_id and { client_id } or true }
     api.nvim_create_autocmd('LspNotify', {
       buffer = bufnr,
       callback = function(opts)
@@ -274,7 +289,10 @@ local function _enable(bufnr)
           return
         end
         if bufstates[bufnr] and bufstates[bufnr].enabled then
-          _refresh(bufnr, { client_id = opts.data.client_id })
+          local enabled = bufstates[bufnr].enabled
+          if type(enabled) ~= 'table' or vim.tbl_contains(enabled, opts.data.client_id) then
+            _refresh(bufnr, opts.data.client_id)
+          end
         end
       end,
       group = augroup,
@@ -308,7 +326,14 @@ local function _enable(bufnr)
       group = augroup,
     })
   else
-    bufstate.enabled = true
+    local enabled = bufstate.enabled
+    if type(enabled) == 'table' then
+      if not vim.tbl_contains(enabled, client_id) then
+        table.insert(enabled, client_id)
+      end
+    else
+      bufstate.enabled = true
+    end
     _refresh(bufnr)
   end
 end
@@ -375,14 +400,23 @@ do
 end
 
 --- @param bufnr (integer|nil) Buffer handle, or 0 for current
+--- @param client_id (integer|nil) Client id, or nil for all
 --- @return boolean
 --- @since 12
-function M.is_enabled(bufnr)
+function M.is_enabled(bufnr, client_id)
   vim.validate({ bufnr = { bufnr, 'number', true } })
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
-  return bufstates[bufnr] and bufstates[bufnr].enabled or false
+  if bufstates[bufnr] then
+    local enabled = bufstates[bufnr].enabled
+    if type(enabled) == 'table' then
+      return vim.tbl_contains(enabled, client_id)
+    end
+    return enabled
+  else
+    return false
+  end
 end
 
 --- Optional filters |kwargs|, or `nil` for all.
@@ -390,6 +424,8 @@ end
 --- @inlinedoc
 --- Buffer number, or 0/nil for current buffer.
 --- @field bufnr integer?
+--- Client id, or nil for all.
+--- @field client_id integer?
 
 --- Enables or disables inlay hints for a buffer.
 ---
@@ -415,9 +451,9 @@ function M.enable(enable, filter)
   vim.validate({ enable = { enable, 'boolean', true }, filter = { filter, 'table', true } })
   filter = filter or {}
   if enable == false then
-    _disable(filter.bufnr)
+    _disable(filter.bufnr, filter.client_id)
   else
-    _enable(filter.bufnr)
+    _enable(filter.bufnr, filter.client_id)
   end
 end
 
