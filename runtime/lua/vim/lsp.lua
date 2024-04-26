@@ -201,7 +201,7 @@ end
 --- @field bufnr integer
 ---
 --- Suppress error reporting if the LSP server fails to start (default false).
---- @field silent boolean
+--- @field silent? boolean
 
 --- Create a new LSP client and start a language server or reuses an already
 --- running client if one is found matching `name` and `root_dir`.
