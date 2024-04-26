@@ -41,13 +41,13 @@ function M.on_inlayhint(err, result, ctx, _)
     bufstate.client_hints = vim.defaulttable()
     bufstate.version = ctx.version
   end
-  local hints_by_client = bufstate.client_hints
+  local client_hints = bufstate.client_hints
   local client = assert(vim.lsp.get_client_by_id(client_id))
 
-  local new_hints_by_lnum = vim.defaulttable()
+  local new_lnum_hints = vim.defaulttable()
   local num_unprocessed = #result
   if num_unprocessed == 0 then
-    hints_by_client[client_id] = {}
+    client_hints[client_id] = {}
     bufstate.version = ctx.version
     api.nvim__buf_redraw_range(bufnr, 0, -1)
     return
@@ -73,10 +73,10 @@ function M.on_inlayhint(err, result, ctx, _)
   for _, hint in ipairs(result) do
     local lnum = hint.position.line
     hint.position.character = pos_to_byte(hint.position)
-    table.insert(new_hints_by_lnum[lnum], hint)
+    table.insert(new_lnum_hints[lnum], hint)
   end
 
-  hints_by_client[client_id] = new_hints_by_lnum
+  client_hints[client_id] = new_lnum_hints
   bufstate.version = ctx.version
   api.nvim__buf_redraw_range(bufnr, 0, -1)
 end
@@ -175,19 +175,19 @@ function M.get(filter)
   end
 
   --- @type vim.lsp.inlay_hint.get.ret[]
-  local hints = {}
+  local result = {}
   for _, client in pairs(clients) do
-    local hints_by_lnum = bufstate.client_hints[client.id]
-    if hints_by_lnum then
+    local lnum_hints = bufstate.client_hints[client.id]
+    if lnum_hints then
       for lnum = range.start.line, range['end'].line do
-        local line_hints = hints_by_lnum[lnum] or {}
-        for _, hint in pairs(line_hints) do
+        local hints = lnum_hints[lnum] or {}
+        for _, hint in pairs(hints) do
           local line, char = hint.position.line, hint.position.character
           if
             (line > range.start.line or char >= range.start.character)
             and (line < range['end'].line or char <= range['end'].character)
           then
-            table.insert(hints, {
+            table.insert(result, {
               bufnr = bufnr,
               client_id = client.id,
               inlay_hint = hint,
@@ -197,7 +197,7 @@ function M.get(filter)
       end
     end
   end
-  return hints
+  return result
 end
 
 --- Clear inlay hints
@@ -315,14 +315,14 @@ api.nvim_set_decoration_provider(namespace, {
     if not bufstate.client_hints then
       return
     end
-    local hints_by_client = assert(bufstate.client_hints)
+    local client_hints = assert(bufstate.client_hints)
 
     for lnum = topline, botline do
       if bufstate.applied[lnum] ~= bufstate.version then
         api.nvim_buf_clear_namespace(bufnr, namespace, lnum, lnum + 1)
-        for _, hints_by_lnum in pairs(hints_by_client) do
-          local line_hints = hints_by_lnum[lnum] or {}
-          for _, hint in pairs(line_hints) do
+        for _, lnum_hints in pairs(client_hints) do
+          local hints = lnum_hints[lnum] or {}
+          for _, hint in pairs(hints) do
             local text = ''
             local label = hint.label
             if type(label) == 'string' then
