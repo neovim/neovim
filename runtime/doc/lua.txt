@@ -678,44 +678,47 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
     Parameters: ~
       • {a}     (`string`) First string to compare
       • {b}     (`string`) Second string to compare
-      • {opts}  (`table<string,any>`) Optional parameters:
-                • `on_hunk` (callback): Invoked for each hunk in the diff.
-                  Return a negative number to cancel the callback for any
-                  remaining hunks. Args:
-                  • `start_a` (integer): Start line of hunk in {a}.
-                  • `count_a` (integer): Hunk size in {a}.
-                  • `start_b` (integer): Start line of hunk in {b}.
-                  • `count_b` (integer): Hunk size in {b}.
-                • `result_type` (string): Form of the returned diff:
-                  • "unified": (default) String in unified format.
-                  • "indices": Array of hunk locations. Note: This option is
+      • {opts}  (`table`) Optional parameters:
+                • {on_hunk}
+                  (`fun(start_a: integer, count_a: integer, start_b: integer, count_b: integer): integer`)
+                  Invoked for each hunk in the diff. Return a negative number
+                  to cancel the callback for any remaining hunks. Arguments:
+                  • `start_a` (`integer`): Start line of hunk in {a}.
+                  • `count_a` (`integer`): Hunk size in {a}.
+                  • `start_b` (`integer`): Start line of hunk in {b}.
+                  • `count_b` (`integer`): Hunk size in {b}.
+                • {result_type} (`'unified'|'indices'`, default: `'unified'`)
+                  Form of the returned diff:
+                  • `unified`: String in unified format.
+                  • `indices`: Array of hunk locations. Note: This option is
                     ignored if `on_hunk` is used.
-                • `linematch` (boolean|integer): Run linematch on the
+                • {linematch} (`boolean|integer`) Run linematch on the
                   resulting hunks from xdiff. When integer, only hunks upto
                   this size in lines are run through linematch. Requires
                   `result_type = indices`, ignored otherwise.
-                • `algorithm` (string): Diff algorithm to use. Values:
-                  • "myers" the default algorithm
-                  • "minimal" spend extra time to generate the smallest
+                • {algorithm} (`'myers'|'minimal'|'patience'|'histogram'`,
+                  default: `'myers'`) Diff algorithm to use. Values:
+                  • `myers`: the default algorithm
+                  • `minimal`: spend extra time to generate the smallest
                     possible diff
-                  • "patience" patience diff algorithm
-                  • "histogram" histogram diff algorithm
-                • `ctxlen` (integer): Context length
-                • `interhunkctxlen` (integer): Inter hunk context length
-                • `ignore_whitespace` (boolean): Ignore whitespace
-                • `ignore_whitespace_change` (boolean): Ignore whitespace
+                  • `patience`: patience diff algorithm
+                  • `histogram`: histogram diff algorithm
+                • {ctxlen} (`integer`) Context length
+                • {interhunkctxlen} (`integer`) Inter hunk context length
+                • {ignore_whitespace} (`boolean`) Ignore whitespace
+                • {ignore_whitespace_change} (`boolean`) Ignore whitespace
                   change
-                • `ignore_whitespace_change_at_eol` (boolean) Ignore
+                • {ignore_whitespace_change_at_eol} (`boolean`) Ignore
                   whitespace change at end-of-line.
-                • `ignore_cr_at_eol` (boolean) Ignore carriage return at
+                • {ignore_cr_at_eol} (`boolean`) Ignore carriage return at
                   end-of-line
-                • `ignore_blank_lines` (boolean) Ignore blank lines
-                • `indent_heuristic` (boolean): Use the indent heuristic for
+                • {ignore_blank_lines} (`boolean`) Ignore blank lines
+                • {indent_heuristic} (`boolean`) Use the indent heuristic for
                   the internal diff library.
 
     Return: ~
-        (`string|table?`) See {opts.result_type}. `nil` if {opts.on_hunk} is
-        given.
+        (`string|integer[]`) See {opts.result_type}. `nil` if {opts.on_hunk}
+        is given.
 
 
 ==============================================================================
@@ -829,8 +832,8 @@ vim.spell.check({str})                                     *vim.spell.check()*
       • {str}  (`string`)
 
     Return: ~
-        (`{[1]: string, [2]: string, [3]: string}[]`) List of tuples with
-        three items:
+        (`{[1]: string, [2]: 'bad'|'rare'|'local'|'caps', [3]: integer}[]`)
+        List of tuples with three items:
         • The badly spelled word.
         • The type of the spelling error: "bad" spelling mistake "rare" rare
           word "local" word only valid in another region "caps" word should
@@ -911,7 +914,7 @@ vim.empty_dict()                                            *vim.empty_dict()*
     Return: ~
         (`table`)
 
-vim.iconv({str}, {from}, {to}, {opts})                           *vim.iconv()*
+vim.iconv({str}, {from}, {to})                                   *vim.iconv()*
     The result is a String, which is the text {str} converted from encoding
     {from} to encoding {to}. When the conversion fails `nil` is returned. When
     some characters could not be converted they are replaced with "?". The
@@ -920,9 +923,8 @@ vim.iconv({str}, {from}, {to}, {opts})                           *vim.iconv()*
 
     Parameters: ~
       • {str}   (`string`) Text to convert
-      • {from}  (`number`) Encoding of {str}
-      • {to}    (`number`) Target encoding
-      • {opts}  (`table<string,any>?`)
+      • {from}  (`string`) Encoding of {str}
+      • {to}    (`string`) Target encoding
 
     Return: ~
         (`string?`) Converted string if conversion succeeds, `nil` otherwise.
@@ -962,7 +964,7 @@ vim.schedule({fn})                                            *vim.schedule()*
     |textlock| or other temporary restrictions.
 
     Parameters: ~
-      • {fn}  (`function`)
+      • {fn}  (`fun()`)
 
 vim.str_byteindex({str}, {index}, {use_utf16})           *vim.str_byteindex()*
     Convert UTF-32 or UTF-16 {index} to byte index. If {use_utf16} is not
@@ -974,8 +976,8 @@ vim.str_byteindex({str}, {index}, {use_utf16})           *vim.str_byteindex()*
 
     Parameters: ~
       • {str}        (`string`)
-      • {index}      (`number`)
-      • {use_utf16}  (`any?`)
+      • {index}      (`integer`)
+      • {use_utf16}  (`boolean?`)
 
 vim.str_utf_end({str}, {index})                            *vim.str_utf_end()*
     Gets the distance (in bytes) from the last byte of the codepoint
@@ -993,10 +995,10 @@ vim.str_utf_end({str}, {index})                            *vim.str_utf_end()*
 
     Parameters: ~
       • {str}    (`string`)
-      • {index}  (`number`)
+      • {index}  (`integer`)
 
     Return: ~
-        (`number`)
+        (`integer`)
 
 vim.str_utf_pos({str})                                     *vim.str_utf_pos()*
     Gets a list of the starting byte positions of each UTF-8 codepoint in the
@@ -1008,7 +1010,7 @@ vim.str_utf_pos({str})                                     *vim.str_utf_pos()*
       • {str}  (`string`)
 
     Return: ~
-        (`table`)
+        (`integer[]`)
 
 vim.str_utf_start({str}, {index})                        *vim.str_utf_start()*
     Gets the distance (in bytes) from the starting byte of the codepoint
@@ -1029,10 +1031,10 @@ vim.str_utf_start({str}, {index})                        *vim.str_utf_start()*
 
     Parameters: ~
       • {str}    (`string`)
-      • {index}  (`number`)
+      • {index}  (`integer`)
 
     Return: ~
-        (`number`)
+        (`integer`)
 
 vim.str_utfindex({str}, {index})                          *vim.str_utfindex()*
     Convert byte index to UTF-32 and UTF-16 indices. If {index} is not
@@ -1045,7 +1047,7 @@ vim.str_utfindex({str}, {index})                          *vim.str_utfindex()*
 
     Parameters: ~
       • {str}    (`string`)
-      • {index}  (`number?`)
+      • {index}  (`integer?`)
 
     Return (multiple): ~
         (`integer`) UTF-32 index
