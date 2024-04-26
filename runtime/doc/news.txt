@@ -412,6 +412,10 @@ The following changes to existing APIs or features add new behavior.
   • |crr| in Normal and Visual mode maps to |vim.lsp.buf.code_action()|.
   • "gr" in Normal mode maps to |vim.lsp.buf.references()| |gr-default|
   • |i_CTRL-S| in Insert mode maps to |vim.lsp.buf.signature_help()|
+  • "]d" and "[d" in Normal mode map to |vim.diagnostic.goto_next()| and
+    |vim.diagnostic.goto_prev()|, respectively. |]d-default| |[d-default|
+  • <C-W>d (and <C-W><C-D>) map to |vim.diagnostic.open_float()|
+    |CTRL-W_d-default|
   • Automatic linting of treesitter query files (see |ft-query-plugin|).
     Can be disabled via: >lua
       vim.g.query_lint_on = {}
