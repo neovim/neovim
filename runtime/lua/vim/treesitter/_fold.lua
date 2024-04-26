@@ -258,7 +258,7 @@ function FoldInfo:foldupdate(bufnr, srow, erow)
     self.foldupdate_range = { srow, erow }
   end
 
-  if api.nvim_get_mode().mode == 'i' then
+  if api.nvim_get_mode().mode:match('^i') then
     -- foldUpdate() is guarded in insert mode. So update folds on InsertLeave
     if #(api.nvim_get_autocmds({
       group = group,
