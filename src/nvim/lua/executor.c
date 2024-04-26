@@ -46,6 +46,7 @@
 #include "nvim/lua/treesitter.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
+#include "nvim/mapping.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
@@ -2358,11 +2359,17 @@ void nlua_init_defaults(void)
   lua_State *const L = global_lstate;
   assert(L);
 
+  // All maps created here are marked as default maps.
+  map_set_default(true);
+
   lua_getglobal(L, "require");
   lua_pushstring(L, "vim._defaults");
   if (nlua_pcall(L, 1, 0)) {
     fprintf(stderr, "%s\n", lua_tostring(L, -1));
   }
+
+  // All maps created after this function exits are not default maps.
+  map_set_default(false);
 }
 
 /// check lua function exist

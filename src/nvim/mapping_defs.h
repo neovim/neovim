@@ -24,4 +24,5 @@ struct mapblock {
   sctx_T m_script_ctx;      ///< SCTX where map was defined
   char *m_desc;             ///< description of mapping
   bool m_replace_keycodes;  ///< replace keycodes in result of expression
+  bool m_default;           ///< true if this is a |default-mapping|
 };
