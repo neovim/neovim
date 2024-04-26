@@ -869,7 +869,7 @@ start({config}, {opts})                                      *vim.lsp.start()*
                     re-uses a client if name and root_dir matches.
                   • {bufnr} (`integer`) Buffer handle to attach to if starting
                     or re-using a client (0 for current).
-                  • {silent} (`boolean`) Suppress error reporting if the LSP
+                  • {silent}? (`boolean`) Suppress error reporting if the LSP
                     server fails to start (default false).
 
     Return: ~
