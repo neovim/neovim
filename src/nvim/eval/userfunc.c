@@ -2208,7 +2208,9 @@ void ex_function(exarg_T *eap)
 
   // An error in a function call during evaluation of an expression in magic
   // braces should not cause the function not to be defined.
+  const int saved_rd = RedrawingDisabled;
   const int saved_did_emsg = did_emsg;
+  RedrawingDisabled = 0;
   did_emsg = false;
 
   //
@@ -2787,6 +2789,7 @@ ret_free:
   xfree(name);
   did_emsg |= saved_did_emsg;
   need_wait_return |= saved_wait_return;
+  RedrawingDisabled = saved_rd;
   if (show_block) {
     ui_ext_cmdline_block_leave();
   }

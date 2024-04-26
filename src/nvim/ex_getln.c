@@ -2685,8 +2685,12 @@ static int command_line_changed(CommandLineState *s)
 /// Abandon the command line.
 static void abandon_cmdline(void)
 {
+  ccline.redraw_state = kCmdRedrawAll;
+  ccline.cmdbuff[0] = NUL;
+  ccline.cmdfirstc = NUL;
+  ccline.cmdpos = 0;
+  cmdline_ui_flush();
   XFREE_CLEAR(ccline.cmdbuff);
-  ccline.redraw_state = kCmdRedrawNone;
   if (msg_scrolled == 0) {
     compute_cmdrow();
   }
@@ -3457,7 +3461,10 @@ void cmdline_ui_flush(void)
   while (level > 0 && line) {
     if (line->level == level) {
       if (line->redraw_state == kCmdRedrawAll) {
+        redrawing_cmdline = true;
         ui_ext_cmdline_show(line);
+        update_screen();
+        redrawing_cmdline = false;
       } else if (line->redraw_state == kCmdRedrawPos) {
         ui_call_cmdline_pos(line->cmdpos, line->level);
       }
@@ -3487,6 +3494,7 @@ void putcmdline(char c, bool shift)
     char charbuf[2] = { c, 0 };
     ui_call_cmdline_special_char(cstr_as_string(charbuf), shift,
                                  ccline.level);
+    update_screen();
   }
   cursorcmd();
   ccline.special_char = c;

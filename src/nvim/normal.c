@@ -1041,6 +1041,8 @@ normal_end:
     }
   }
 
+  ui_flush_msg_show();
+
   if (restart_VIsual_select == 2) {
     restart_VIsual_select = 1;
   }
@@ -2075,6 +2077,7 @@ static void display_showcmd(void)
       ADD_C(content, ARRAY_OBJ(chunk));
     }
     ui_call_msg_showcmd(content);
+    update_screen();
     return;
   }
   if (p_ch == 0) {

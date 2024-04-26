@@ -254,6 +254,17 @@ for _, ui in ipairs(vim.api.nvim_list_uis()) do
 end
 
 if tty then
+  --- Default cmdline and message UI
+  local ext = require('vim.ui.ext')
+  ext.cmd = require('vim.ui.ext.cmdline')
+  ext.msg = require('vim.ui.ext.messages')
+  vim.ui_attach(ext.ns, { ext_cmdline = true, ext_messages = true }, function(event, ...)
+    local handler = event:find('msg_') and ext.msg[event] or ext.cmd[event] ---@type fun(...)
+    ext.tab_check_wins()
+    handler(...)
+  end)
+  vim.o.cmdheight = 1
+  --- Default tty handling
   local group = vim.api.nvim_create_augroup('nvim_tty', {})
 
   --- Set an option after startup (so that OptionSet is fired), but only if not
