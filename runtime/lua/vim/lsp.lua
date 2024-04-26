@@ -451,30 +451,6 @@ function lsp.start_client(config)
   return client.id, nil
 end
 
---- Notify all attached clients that a buffer has changed.
----@param _ integer
----@param bufnr integer
----@param changedtick integer
----@param firstline integer
----@param lastline integer
----@param new_lastline integer
----@return true?
-local function text_document_did_change_handler(
-  _,
-  bufnr,
-  changedtick,
-  firstline,
-  lastline,
-  new_lastline
-)
-  -- Detach (nvim_buf_attach) via returning True to on_lines if no clients are attached
-  if #lsp.get_clients({ bufnr = bufnr }) == 0 then
-    return true
-  end
-  util.buf_versions[bufnr] = changedtick
-  changetracking.send_changes(bufnr, firstline, lastline, new_lastline)
-end
-
 ---Buffer lifecycle handler for textDocument/didSave
 --- @param bufnr integer
 local function text_document_did_save_handler(bufnr)
@@ -516,11 +492,18 @@ local function text_document_did_save_handler(bufnr)
   end
 end
 
+--- @type table<integer,true>
+local attached_buffers = {}
+
 --- @param bufnr integer
---- @param client_id integer
-local function buf_attach(bufnr, client_id)
+local function buf_attach(bufnr)
+  if attached_buffers[bufnr] then
+    return
+  end
+  attached_buffers[bufnr] = true
+
   local uri = vim.uri_from_bufnr(bufnr)
-  local augroup = ('lsp_c_%d_b_%d_save'):format(client_id, bufnr)
+  local augroup = ('lsp_b_%d_save'):format(bufnr)
   local group = api.nvim_create_augroup(augroup, { clear = true })
   api.nvim_create_autocmd('BufWritePre', {
     group = group,
@@ -559,7 +542,14 @@ local function buf_attach(bufnr, client_id)
   })
   -- First time, so attach and set up stuff.
   api.nvim_buf_attach(bufnr, false, {
-    on_lines = text_document_did_change_handler,
+    on_lines = function(_, _, changedtick, firstline, lastline, new_lastline)
+      if #lsp.get_clients({ bufnr = bufnr }) == 0 then
+        return true -- detach
+      end
+      util.buf_versions[bufnr] = changedtick
+      changetracking.send_changes(bufnr, firstline, lastline, new_lastline)
+    end,
+
     on_reload = function()
       local params = { textDocument = { uri = uri } }
       for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
@@ -570,6 +560,7 @@ local function buf_attach(bufnr, client_id)
         client:_text_document_did_open_handler(bufnr)
       end
     end,
+
     on_detach = function()
       local params = { textDocument = { uri = uri } }
       for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
@@ -582,7 +573,9 @@ local function buf_attach(bufnr, client_id)
         client.attached_buffers[bufnr] = nil
       end
       util.buf_versions[bufnr] = nil
+      attached_buffers[bufnr] = nil
     end,
+
     -- TODO if we know all of the potential clients ahead of time, then we
     -- could conditionally set this.
     --      utf_sizes = size_index > 1;
@@ -608,15 +601,13 @@ function lsp.buf_attach_client(bufnr, client_id)
     log.warn(string.format('buf_attach_client called on unloaded buffer (id: %d): ', bufnr))
     return false
   end
-  -- This is our first time attaching to this buffer.
-  if #lsp.get_clients({ bufnr = bufnr, _uninitialized = true }) == 0 then
-    buf_attach(bufnr, client_id)
-  end
 
   local client = lsp.get_client_by_id(client_id)
   if not client then
     return false
   end
+
+  buf_attach(bufnr)
 
   if client.attached_buffers[bufnr] then
     return true
