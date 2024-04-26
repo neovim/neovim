@@ -218,10 +218,13 @@ void ui_refresh(void)
     if (i < kUIGlobalCount) {
       ext_widgets[i] |= ui_cb_ext[i];
     }
-    // Set 'cmdheight' to zero when ext_messages becomes active.
+    // Set 'cmdheight' to zero when ext_messages becomes active for all tabpages.
     if (i == kUIMessages && !ui_ext[i] && ext_widgets[i]) {
       set_option_value(kOptCmdheight, NUMBER_OPTVAL(0), 0);
       command_height();
+      FOR_ALL_TABS(tp) {
+        tp->tp_ch_used = 0;
+      }
     }
     ui_ext[i] = ext_widgets[i];
     if (i < kUIGlobalCount) {

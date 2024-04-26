@@ -163,6 +163,13 @@ describe('vim.ui_attach', function()
     screen:attach()
     eq(1, n.api.nvim_get_option_value('cmdheight', {}))
   end)
+
+  it("ui_refresh() sets 'cmdheight' for all open tabpages with ext_messages", function()
+    exec_lua('vim.cmd.tabnew()')
+    exec_lua('vim.ui_attach(ns, { ext_messages = true }, on_event)')
+    exec_lua('vim.cmd.tabnext()')
+    eq(0, n.api.nvim_get_option_value('cmdheight', {}))
+  end)
 end)
 
 describe('vim.ui_attach', function()
