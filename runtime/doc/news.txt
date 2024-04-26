@@ -137,6 +137,12 @@ DEFAULTS
     on a URL.
   • Mouse |popup-menu| includes a "Go to definition" item when LSP is active
     in the buffer.
+  • Mappings inspired by Tim Pope's vim-unimpaired:
+    • |[q|, |]q|, |[Q|, |]Q|, |[CTRL-Q|, |]CTRL-Q| navigate through the |quickfix| list
+    • |[l|, |]l|, |[L|, |]L|, |[CTRL-L|, |]CTRL-L| navigate through the |location-list|
+    • |[t|, |]t|, |[T|, |]T|, |[CTRL-T|, |]CTRL-T| navigate through the |tag-matchlist|
+    • |[a|, |]a|, |[A|, |]A| navigate through the |argument-list|
+    • |[b|, |]b|, |[B|, |]B| navigate through the |buffer-list|
 
 • Snippet:
   • `<Tab>` in Insert and Select mode maps to `vim.snippet.jump({ direction = 1 })`
