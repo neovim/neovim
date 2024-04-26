@@ -192,6 +192,7 @@ describe(':Man', function()
       '--headless',
       '+autocmd VimLeave * echo "quit works!!"',
       '+Man!',
+      '+tag ls',
       '+call nvim_input("q")',
     }
     matches('quit works!!', fn.system(args, { 'manpage contents' }))
