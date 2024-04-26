@@ -722,7 +722,7 @@ end
 --- @param cmd string[] Command to start the LSP server.
 --- @param dispatchers? vim.lsp.rpc.Dispatchers
 --- @param extra_spawn_params? vim.lsp.rpc.ExtraSpawnParams
---- @return vim.lsp.rpc.PublicClient? : Client RPC object, with these methods:
+--- @return vim.lsp.rpc.PublicClient : Client RPC object, with these methods:
 ---   - `notify()` |vim.lsp.rpc.notify()|
 ---   - `request()` |vim.lsp.rpc.request()|
 ---   - `is_closing()` returns a boolean indicating if the RPC is closing.
@@ -797,8 +797,7 @@ function M.start(cmd, dispatchers, extra_spawn_params)
     end
     local msg =
       string.format('Spawning language server with cmd: `%s` failed%s', vim.inspect(cmd), sfx)
-    vim.notify(msg, vim.log.levels.WARN)
-    return nil
+    error(msg)
   end
 
   sysobj = sysobj_or_err --[[@as vim.SystemObj]]

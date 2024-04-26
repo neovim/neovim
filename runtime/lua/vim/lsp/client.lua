@@ -37,7 +37,7 @@ local validate = vim.validate
 --- `is_closing` and `terminate`.
 --- See |vim.lsp.rpc.request()|, |vim.lsp.rpc.notify()|.
 ---  For TCP there is a builtin RPC client factory: |vim.lsp.rpc.connect()|
---- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient?
+--- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient
 ---
 --- Directory to launch the `cmd` process. Not related to `root_dir`.
 --- (default: cwd)
@@ -506,24 +506,16 @@ function Client.create(config)
   }
 
   -- Start the RPC client.
-  local rpc --- @type vim.lsp.rpc.PublicClient?
   local config_cmd = config.cmd
   if type(config_cmd) == 'function' then
-    rpc = config_cmd(dispatchers)
+    self.rpc = config_cmd(dispatchers)
   else
-    rpc = lsp.rpc.start(config_cmd, dispatchers, {
+    self.rpc = lsp.rpc.start(config_cmd, dispatchers, {
       cwd = config.cmd_cwd,
       env = config.cmd_env,
       detached = config.detached,
     })
   end
-
-  -- Return nil if the rpc client fails to start
-  if not rpc then
-    return
-  end
-
-  self.rpc = rpc
 
   setmetatable(self, Client)
 

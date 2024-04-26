@@ -869,12 +869,14 @@ start({config}, {opts})                                      *vim.lsp.start()*
                   |vim.lsp.ClientConfig|.
       • {opts}    (`table?`) Optional keyword arguments
                   • {reuse_client}
-                    (`fun(client: vim.lsp.Client, config: table): boolean`)
+                    (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
                     Predicate used to decide if a client should be re-used.
                     Used on all running clients. The default implementation
                     re-uses a client if name and root_dir matches.
                   • {bufnr} (`integer`) Buffer handle to attach to if starting
                     or re-using a client (0 for current).
+                  • {silent} (`boolean`) Suppress error reporting if the LSP
+                    server fails to start (default false).
 
     Return: ~
         (`integer?`) client_id
@@ -886,10 +888,11 @@ start_client({config})                                *vim.lsp.start_client()*
       • {config}  (`vim.lsp.ClientConfig`) Configuration for the server. See
                   |vim.lsp.ClientConfig|.
 
-    Return: ~
+    Return (multiple): ~
         (`integer?`) client_id |vim.lsp.get_client_by_id()| Note: client may
         not be fully initialized. Use `on_init` to do any actions once the
         client has been initialized.
+        (`string?`) Error message, if any
 
 status()                                                    *vim.lsp.status()*
     Consumes the latest progress messages from all clients and formats them as
@@ -1073,7 +1076,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
 *vim.lsp.ClientConfig*
 
     Fields: ~
-      • {cmd}                 (`string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient?`)
+      • {cmd}                 (`string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient`)
                               command string[] that launches the language
                               server (treated as in |jobstart()|, must be
                               absolute or on `$PATH`, shell constructs like
@@ -2340,7 +2343,7 @@ start({cmd}, {dispatchers}, {extra_spawn_params})        *vim.lsp.rpc.start()*
                                 See |vim.system()|
 
     Return: ~
-        (`vim.lsp.rpc.PublicClient?`) Client RPC object, with these methods:
+        (`vim.lsp.rpc.PublicClient`) Client RPC object, with these methods:
         • `notify()` |vim.lsp.rpc.notify()|
         • `request()` |vim.lsp.rpc.request()|
         • `is_closing()` returns a boolean indicating if the RPC is closing.

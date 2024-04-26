@@ -243,6 +243,8 @@ The following new APIs and features were added.
     (e.g. `commitCharacters`). Note that this might affect plugins and
     language servers that don't support the feature, and in such cases the
     respective capability can be unset.
+  • |vim.lsp.start()| accepts a "silent" option for suppressing messages
+    if an LSP server failed to start.
 
 • Treesitter
   • Bundled parsers and queries (highlight, folds) for Markdown, Python, and
