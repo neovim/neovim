@@ -11621,6 +11621,10 @@ M.funcs = {
       	synconcealed(lnum, 4)   [1, 'X', 2]
       	synconcealed(lnum, 5)   [1, 'X', 2]
       	synconcealed(lnum, 6)   [0, '', 0]
+
+      Note: Doesn't consider |matchadd()| highlighting items,
+      since syntax and matching highlighting are two different
+      mechanisms |syntax-vs-match|.
     ]=],
     name = 'synconcealed',
     params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
