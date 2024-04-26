@@ -159,6 +159,14 @@ unreleased features on Nvim HEAD.
 
 • Changed |vim.ui.open()| return-signature to match pcall() convention.
 
+• Renamed Iter:nextback() to Iter:pop()
+
+• Renamed Iter:peekback() to Iter:rpeek()
+
+• Renamed Iter:skipback() to Iter:rskip()
+
+• Removed Iter:nthback(), use Iter:nth() with negative index instead.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 

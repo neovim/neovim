@@ -4053,6 +4053,9 @@ Iter:last()                                                      *Iter:last()*
     Return: ~
         (`any`)
 
+    See also: ~
+      • Iter.rpeek
+
 Iter:map({f})                                                     *Iter:map()*
     Maps the items of an iterator pipeline to the values returned by `f`.
 
@@ -4094,53 +4097,28 @@ Iter:next()                                                      *Iter:next()*
     Return: ~
         (`any`)
 
-Iter:nextback()                                              *Iter:nextback()*
-    "Pops" a value from a |list-iterator| (gets the last value and decrements
-    the tail).
-
-    Example: >lua
-        local it = vim.iter({1, 2, 3, 4})
-        it:nextback()
-        -- 4
-        it:nextback()
-        -- 3
-<
-
-    Return: ~
-        (`any`)
-
 Iter:nth({n})                                                     *Iter:nth()*
     Gets the nth value of an iterator (and advances to it).
 
-    Example: >lua
+    If `n` is negative, offsets from the end of a |list-iterator|.
 
+    Example: >lua
         local it = vim.iter({ 3, 6, 9, 12 })
         it:nth(2)
         -- 6
         it:nth(2)
         -- 12
-<
 
-    Parameters: ~
-      • {n}  (`number`) The index of the value to return.
-
-    Return: ~
-        (`any`)
-
-Iter:nthback({n})                                             *Iter:nthback()*
-    Gets the nth value from the end of a |list-iterator| (and advances to it).
-
-    Example: >lua
-
-        local it = vim.iter({ 3, 6, 9, 12 })
-        it:nthback(2)
+        local it2 = vim.iter({ 3, 6, 9, 12 })
+        it2:nth(-2)
         -- 9
-        it:nthback(2)
+        it2:nth(-2)
         -- 3
 <
 
     Parameters: ~
-      • {n}  (`number`) The index of the value to return.
+      • {n}  (`number`) Index of the value to return. May be negative if the
+             source is a |list-iterator|.
 
     Return: ~
         (`any`)
@@ -4162,19 +4140,16 @@ Iter:peek()                                                      *Iter:peek()*
     Return: ~
         (`any`)
 
-Iter:peekback()                                              *Iter:peekback()*
-    Gets the last value of a |list-iterator| without consuming it.
-
-    See also |Iter:last()|.
+Iter:pop()                                                        *Iter:pop()*
+    "Pops" a value from a |list-iterator| (gets the last value and decrements
+    the tail).
 
     Example: >lua
         local it = vim.iter({1, 2, 3, 4})
-        it:peekback()
+        it:pop()
         -- 4
-        it:peekback()
-        -- 4
-        it:nextback()
-        -- 4
+        it:pop()
+        -- 3
 <
 
     Return: ~
@@ -4194,8 +4169,8 @@ Iter:rev()                                                        *Iter:rev()*
         (`Iter`)
 
 Iter:rfind({f})                                                 *Iter:rfind()*
-    Gets the first value in a |list-iterator| that satisfies a predicate,
-    starting from the end.
+    Gets the first value satisfying a predicate, from the end of a
+    |list-iterator|.
 
     Advances the iterator. Returns nil and drains the iterator if no value is
     found.
@@ -4218,6 +4193,42 @@ Iter:rfind({f})                                                 *Iter:rfind()*
     See also: ~
       • Iter.find
 
+Iter:rpeek()                                                    *Iter:rpeek()*
+    Gets the last value of a |list-iterator| without consuming it.
+
+    Example: >lua
+        local it = vim.iter({1, 2, 3, 4})
+        it:rpeek()
+        -- 4
+        it:rpeek()
+        -- 4
+        it:pop()
+        -- 4
+<
+
+    Return: ~
+        (`any`)
+
+    See also: ~
+      • Iter.last
+
+Iter:rskip({n})                                                 *Iter:rskip()*
+    Discards `n` values from the end of a |list-iterator| pipeline.
+
+    Example: >lua
+        local it = vim.iter({ 1, 2, 3, 4, 5 }):rskip(2)
+        it:next()
+        -- 1
+        it:pop()
+        -- 3
+<
+
+    Parameters: ~
+      • {n}  (`number`) Number of values to skip.
+
+    Return: ~
+        (`Iter`)
+
 Iter:skip({n})                                                   *Iter:skip()*
     Skips `n` values of an iterator pipeline.
 
@@ -4234,27 +4245,10 @@ Iter:skip({n})                                                   *Iter:skip()*
     Return: ~
         (`Iter`)
 
-Iter:skipback({n})                                           *Iter:skipback()*
-    Skips `n` values backwards from the end of a |list-iterator| pipeline.
-
-    Example: >lua
-        local it = vim.iter({ 1, 2, 3, 4, 5 }):skipback(2)
-        it:next()
-        -- 1
-        it:nextback()
-        -- 3
-<
-
-    Parameters: ~
-      • {n}  (`number`) Number of values to skip.
-
-    Return: ~
-        (`Iter`)
-
 Iter:slice({first}, {last})                                     *Iter:slice()*
     Sets the start and end of a |list-iterator| pipeline.
 
-    Equivalent to `:skip(first - 1):skipback(len - last + 1)`.
+    Equivalent to `:skip(first - 1):rskip(len - last + 1)`.
 
     Parameters: ~
       • {first}  (`number`)
