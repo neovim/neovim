@@ -341,20 +341,6 @@ Example: >lua
     })
 <
 ==============================================================================
-MAPS                                                    *diagnostic-maps*
-
-                                                       *]d-default*
-]d                        Goto the next diagnostic in the buffer.
-                            |vim.diagnostic.goto_next()|
-                                                       *[d-default*
-[d                        Goto the previous diagnostic in the buffer.
-                            |vim.diagnostic.goto_prev()|
-
-CTRL-W CTRL-D                                          *CTRL-W_d-default*
-CTRL-W d                  Open a floating window for diagnostics under
-                          the cursor. |vim.diagnostic.open_float()|.
-
-==============================================================================
 Lua module: vim.diagnostic                                    *diagnostic-api*
 
 *vim.Diagnostic*

@@ -780,8 +780,16 @@ CTRL-W i		Open a new window, with the cursor on the first line
 			beginning of the file.  If a count is given, the
 			count'th matching line is displayed.
 
+							*[d-default*
+			Mapped to |vim.diagnostic.goto_prev()| by default.
+			|default-mappings|
+
 							*]d*
 ]d			like "[d", but start at the current cursor position.
+
+							*]d-default*
+			Mapped to |vim.diagnostic.goto_next()| by default.
+			|default-mappings|
 
 							*:ds* *:dsearch*
 :[range]ds[earch][!] [count] [/]string[/]
@@ -828,6 +836,10 @@ CTRL-W d		Open a new window, with the cursor on the first
 			under the cursor.  The search starts from the
 			beginning of the file.  If a count is given, the
 			count'th matching line is jumped to.
+
+						*CTRL-W_d-default*
+			Mapped to |vim.diagnostic.open_float()| by default.
+			|default-mappings|
 
 							*:dsp* *:dsplit*
 :[range]dsp[lit][!] [count] [/]string[/]
