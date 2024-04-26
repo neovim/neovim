@@ -282,7 +282,7 @@ gr{char}		Replace the virtual characters under the cursor with
 			most CTRL-keys, cannot be used.
 
 							*gr-default*
-			Mapped to |vim.lsp.buf.references() by default.
+			Mapped to |vim.lsp.buf.references()| by default.
 			|default-mappings|
 
 						*digraph-arg*
