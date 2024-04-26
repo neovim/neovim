@@ -47,8 +47,8 @@ typedef struct {
 #define VALID_VIRTCOL   0x04    // w_virtcol (file col) is valid
 #define VALID_CHEIGHT   0x08    // w_cline_height and w_cline_folded valid
 #define VALID_CROW      0x10    // w_cline_row is valid
-#define VALID_BOTLINE   0x20    // w_botine and w_empty_rows are valid
-#define VALID_BOTLINE_AP 0x40   // w_botine is approximated
+#define VALID_BOTLINE   0x20    // w_botline and w_empty_rows are valid
+#define VALID_BOTLINE_AP 0x40   // w_botline is approximated
 #define VALID_TOPLINE   0x80    // w_topline is valid (for cursor position)
 
 // flags for b_flags
