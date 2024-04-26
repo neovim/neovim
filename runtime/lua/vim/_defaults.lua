@@ -196,6 +196,7 @@ do
     group = nvim_terminal_augroup,
     desc = 'Respond to OSC foreground/background color requests',
     callback = function(args)
+      --- @type integer
       local channel = vim.bo[args.buf].channel
       if channel == 0 then
         return
@@ -270,6 +271,7 @@ if tty then
     -- Wait until Nvim is finished starting to set the option to ensure the
     -- OptionSet event fires.
     if vim.v.vim_did_enter == 1 then
+      --- @diagnostic disable-next-line:no-unknown
       vim.o[option] = value
     else
       vim.api.nvim_create_autocmd('VimEnter', {

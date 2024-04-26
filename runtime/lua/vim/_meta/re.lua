@@ -30,8 +30,8 @@ function vim.re.compile(string, defs) end
 --- @param subject string
 --- @param pattern vim.lpeg.Pattern|string
 --- @param init? integer
---- @return integer|nil the index where the occurrence starts, nil if no match
---- @return integer|nil the index where the occurrence ends, nil if no match
+--- @return integer|nil : the index where the occurrence starts, nil if no match
+--- @return integer|nil : the index where the occurrence ends, nil if no match
 function vim.re.find(subject, pattern, init) end
 
 --- Does a global substitution, replacing all occurrences of {pattern} in the given {subject} by

@@ -1,5 +1,46 @@
 ---@meta
 
+--- Optional parameters:
+--- @class vim.diff.Opts
+--- @inlinedoc
+---
+--- Invoked for each hunk in the diff. Return a negative number
+--- to cancel the callback for any remaining hunks.
+--- Arguments:
+---   - `start_a` (`integer`): Start line of hunk in {a}.
+---   - `count_a` (`integer`): Hunk size in {a}.
+---   - `start_b` (`integer`): Start line of hunk in {b}.
+---   - `count_b` (`integer`): Hunk size in {b}.
+--- @field on_hunk fun(start_a: integer, count_a: integer, start_b: integer, count_b: integer): integer
+---
+--- Form of the returned diff:
+---   - `unified`: String in unified format.
+---   - `indices`: Array of hunk locations.
+--- Note: This option is ignored if `on_hunk` is used.
+--- (default: `'unified'`)
+--- @field result_type 'unified'|'indices'
+---
+--- Run linematch on the resulting hunks from xdiff. When integer, only hunks
+--- upto this size in lines are run through linematch.
+--- Requires `result_type = indices`, ignored otherwise.
+--- @field linematch boolean|integer
+---
+--- Diff algorithm to use. Values:
+---   - `myers`: the default algorithm
+---   - `minimal`: spend extra time to generate the smallest possible diff
+---   - `patience`: patience diff algorithm
+---   - `histogram`: histogram diff algorithm
+--- (default: `'myers'`)
+--- @field algorithm 'myers'|'minimal'|'patience'|'histogram'
+--- @field ctxlen integer Context length
+--- @field interhunkctxlen integer Inter hunk context length
+--- @field ignore_whitespace boolean Ignore whitespace
+--- @field ignore_whitespace_change boolean Ignore whitespace change
+--- @field ignore_whitespace_change_at_eol boolean Ignore whitespace change at end-of-line.
+--- @field ignore_cr_at_eol boolean Ignore carriage return at end-of-line
+--- @field ignore_blank_lines boolean Ignore blank lines
+--- @field indent_heuristic boolean Use the indent heuristic for the internal diff library.
+
 -- luacheck: no unused args
 
 --- Run diff on strings {a} and {b}. Any indices returned by this function,
@@ -24,47 +65,7 @@
 ---
 ---@param a string First string to compare
 ---@param b string Second string to compare
----@param opts table<string,any> Optional parameters:
----     - `on_hunk` (callback):
----       Invoked for each hunk in the diff. Return a negative number
----       to cancel the callback for any remaining hunks.
----       Args:
----       - `start_a` (integer): Start line of hunk in {a}.
----       - `count_a` (integer): Hunk size in {a}.
----       - `start_b` (integer): Start line of hunk in {b}.
----       - `count_b` (integer): Hunk size in {b}.
----     - `result_type` (string): Form of the returned diff:
----       - "unified": (default) String in unified format.
----       - "indices": Array of hunk locations.
----       Note: This option is ignored if `on_hunk` is used.
----     - `linematch` (boolean|integer): Run linematch on the resulting hunks
----       from xdiff. When integer, only hunks upto this size in
----       lines are run through linematch. Requires `result_type = indices`,
----       ignored otherwise.
----     - `algorithm` (string):
----       Diff algorithm to use. Values:
----       - "myers"      the default algorithm
----       - "minimal"    spend extra time to generate the
----                      smallest possible diff
----       - "patience"   patience diff algorithm
----       - "histogram"  histogram diff algorithm
----     - `ctxlen` (integer): Context length
----     - `interhunkctxlen` (integer):
----       Inter hunk context length
----     - `ignore_whitespace` (boolean):
----       Ignore whitespace
----     - `ignore_whitespace_change` (boolean):
----       Ignore whitespace change
----     - `ignore_whitespace_change_at_eol` (boolean)
----       Ignore whitespace change at end-of-line.
----     - `ignore_cr_at_eol` (boolean)
----       Ignore carriage return at end-of-line
----     - `ignore_blank_lines` (boolean)
----       Ignore blank lines
----     - `indent_heuristic` (boolean):
----       Use the indent heuristic for the internal
----       diff library.
----
----@return string|table|nil
+---@param opts vim.diff.Opts
+---@return string|integer[][]?
 ---     See {opts.result_type}. `nil` if {opts.on_hunk} is given.
 function vim.diff(a, b, opts) end

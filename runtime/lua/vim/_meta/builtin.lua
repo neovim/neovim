@@ -119,15 +119,15 @@ function vim.stricmp(a, b) end
 --- An {index} in the middle of a UTF-16 sequence is rounded upwards to
 --- the end of that sequence.
 --- @param str string
---- @param index number
---- @param use_utf16? any
+--- @param index integer
+--- @param use_utf16? boolean
 function vim.str_byteindex(str, index, use_utf16) end
 
 --- Gets a list of the starting byte positions of each UTF-8 codepoint in the given string.
 ---
 --- Embedded NUL bytes are treated as terminating the string.
 --- @param str string
---- @return table
+--- @return integer[]
 function vim.str_utf_pos(str) end
 
 --- Gets the distance (in bytes) from the starting byte of the codepoint (character) that {index}
@@ -148,8 +148,8 @@ function vim.str_utf_pos(str) end
 --- ```
 ---
 --- @param str string
---- @param index number
---- @return number
+--- @param index integer
+--- @return integer
 function vim.str_utf_start(str, index) end
 
 --- Gets the distance (in bytes) from the last byte of the codepoint (character) that {index} points
@@ -168,8 +168,8 @@ function vim.str_utf_start(str, index) end
 --- ```
 ---
 --- @param str string
---- @param index number
---- @return number
+--- @param index integer
+--- @return integer
 function vim.str_utf_end(str, index) end
 
 --- Convert byte index to UTF-32 and UTF-16 indices. If {index} is not
@@ -180,7 +180,7 @@ function vim.str_utf_end(str, index) end
 --- {index} in the middle of a UTF-8 sequence is rounded upwards to the end of
 --- that sequence.
 --- @param str string
---- @param index? number
+--- @param index? integer
 --- @return integer UTF-32 index
 --- @return integer UTF-16 index
 function vim.str_utfindex(str, index) end
@@ -193,15 +193,14 @@ function vim.str_utfindex(str, index) end
 --- can accept, see ":Man 3 iconv".
 ---
 --- @param str string Text to convert
---- @param from number Encoding of {str}
---- @param to number Target encoding
---- @param opts? table<string,any>
---- @return string|nil Converted string if conversion succeeds, `nil` otherwise.
+--- @param from string Encoding of {str}
+--- @param to string Target encoding
+--- @return string? : Converted string if conversion succeeds, `nil` otherwise.
 function vim.iconv(str, from, to, opts) end
 
 --- Schedules {fn} to be invoked soon by the main event-loop. Useful
 --- to avoid |textlock| or other temporary restrictions.
---- @param fn function
+--- @param fn fun()
 function vim.schedule(fn) end
 
 --- Wait for {time} in milliseconds until {callback} returns `true`.
