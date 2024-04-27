@@ -153,7 +153,7 @@ local M = {}
 ---
 --- @field focus_id? string
 ---
---- @field border? string see |vim.api.nvim_open_win()|.
+--- @field border? string see |nvim_open_win()|.
 
 --- @class vim.diagnostic.Opts.Underline
 ---
