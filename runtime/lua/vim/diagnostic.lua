@@ -867,14 +867,14 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
           return a.col < b.col
         end
         is_next = function(d)
-          return math.min(d.col, line_length - 1) > position[2]
+          return math.min(d.col, math.max(line_length - 1, 0)) > position[2]
         end
       else
         sort_diagnostics = function(a, b)
           return a.col > b.col
         end
         is_next = function(d)
-          return math.min(d.col, line_length - 1) < position[2]
+          return math.min(d.col, math.max(line_length - 1, 0)) < position[2]
         end
       end
       table.sort(line_diagnostics[lnum], sort_diagnostics)
