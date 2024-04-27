@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	JSON
-" Maintainer:	vacancy
+" Maintainer:	Vito <vito.blog@gmail.com>
 " Previous Maintainer:	Eli Parra <eli@elzr.com>
 " Last Change:	2019 Sep 17
 " Version:      0.12
