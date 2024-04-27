@@ -459,8 +459,7 @@ function M.expand(input)
       end
       -- Add the base indentation.
       if i > 1 then
-        line = #line ~= 0 and base_indent .. line
-          or (expandtab and (' '):rep(shiftwidth) or '\t'):rep(vim.fn.indent('.') / shiftwidth + 1)
+        line = base_indent .. line
       end
       lines[#lines + 1] = line
     end
