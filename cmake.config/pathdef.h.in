@@ -1,4 +1,3 @@
-#include "${PROJECT_SOURCE_DIR}/src/nvim/vim_defs.h"
 char *default_vim_dir = "${CMAKE_INSTALL_FULL_DATAROOTDIR}/nvim";
 char *default_vimruntime_dir = "";
 char *default_lib_dir = "${CMAKE_INSTALL_FULL_LIBDIR}/nvim";

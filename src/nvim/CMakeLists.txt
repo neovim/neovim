@@ -327,7 +327,7 @@ set(GENERATED_UI_EVENTS_CALL ${GENERATED_DIR}/ui_events_call.generated.h)
 set(GENERATED_UI_EVENTS_CLIENT ${GENERATED_DIR}/ui_events_client.generated.h)
 set(GENERATED_UI_EVENTS_REMOTE ${GENERATED_DIR}/ui_events_remote.generated.h)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
-set(LUA_API_C_BINDINGS ${GENERATED_DIR}/lua_api_c_bindings.generated.c)
+set(LUA_API_C_BINDINGS ${GENERATED_DIR}/lua_api_c_bindings.generated.h)
 set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
 
 # NVIM_RUNTIME_DIR
@@ -505,7 +505,6 @@ set(LUA_GEN_DEPS ${GENERATOR_PRELOAD} $<TARGET_FILE:nlua0>)
 
 # NVIM_GENERATED_FOR_HEADERS: generated headers to be included in headers
 # NVIM_GENERATED_FOR_SOURCES: generated headers to be included in sources
-# NVIM_GENERATED_SOURCES: generated source files
 # These lists must be mutually exclusive.
 foreach(sfile ${NVIM_SOURCES}
               ${GENERATED_API_DISPATCH}
@@ -620,10 +619,6 @@ add_custom_command(
   VERBATIM
 )
 
-list(APPEND NVIM_GENERATED_SOURCES
-  "${LUA_API_C_BINDINGS}"
-)
-
 add_custom_command(
   OUTPUT ${GENERATED_UI_EVENTS_CALL}
          ${GENERATED_UI_EVENTS_REMOTE}
@@ -657,10 +652,7 @@ list(APPEND NVIM_GENERATED_FOR_SOURCES
   "${GENERATED_OPTIONS_MAP}"
   "${GENERATED_UNICODE_TABLES}"
   "${VIM_MODULE_FILE}"
-)
-
-list(APPEND NVIM_GENERATED_SOURCES
-  "${PROJECT_BINARY_DIR}/cmake.config/auto/pathdef.c"
+  "${PROJECT_BINARY_DIR}/cmake.config/auto/pathdef.h"
 )
 
 add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
@@ -709,7 +701,6 @@ endif()
 target_sources(main_lib INTERFACE
   ${NVIM_GENERATED_FOR_SOURCES}
   ${NVIM_GENERATED_FOR_HEADERS}
-  ${NVIM_GENERATED_SOURCES}
   ${NVIM_SOURCES}
   ${NVIM_HEADERS}
   ${EXTERNAL_SOURCES}
@@ -909,7 +900,6 @@ add_subdirectory(po)
 add_custom_target(generated-sources DEPENDS
   ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_FOR_SOURCES}
-  ${NVIM_GENERATED_SOURCES}
 )
 
 file(GLOB API_SOURCES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/nvim/api/*.c)
