@@ -190,7 +190,7 @@ do
     })
 
     vim.keymap.set('n', '<C-W>d', function()
-      vim.diagnostic.open_float({ border = 'rounded' })
+      vim.diagnostic.open_float()
     end, {
       desc = 'Open a floating window showing diagnostics under the cursor',
     })
