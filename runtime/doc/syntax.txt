@@ -1614,6 +1614,15 @@ To disable syntax highlighting of errors: >
 	let g:vim_json_warnings = 0
 
 
+JQ				*jq.vim* *jq_quote_highlight* *ft-jq-syntax*
+
+To disable numbers having their own color add the following to your vimrc: >
+	hi link jqNumber Normal
+
+If you want quotes to have different highlighting than strings >
+	let g:jq_quote_highlight = 1
+
+
 LACE						*lace.vim* *ft-lace-syntax*
 
 Lace (Language for Assembly of Classes in Eiffel) is case insensitive, but the
