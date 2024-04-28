@@ -10,7 +10,9 @@ local M = {}
 ---@field applied table<integer, integer> Last version of hints applied to this line
 ---@field enabled boolean Whether inlay hints are enabled for this buffer
 ---@type table<integer, vim.lsp.inlay_hint.bufstate>
-local bufstates = {}
+local bufstates = vim.defaulttable(function(_)
+  return { enabled = false, applied = {} }
+end)
 
 local namespace = api.nvim_create_namespace('vim_lsp_inlayhint')
 local augroup = api.nvim_create_augroup('vim_lsp_inlayhint', {})
@@ -34,7 +36,7 @@ function M.on_inlayhint(err, result, ctx, _)
     return
   end
   local bufstate = bufstates[bufnr]
-  if not bufstate or not bufstate.enabled then
+  if not bufstate.enabled then
     return
   end
   if not (bufstate.client_hints and bufstate.version) then
@@ -91,11 +93,7 @@ function M.on_refresh(err, _, ctx, _)
   for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(ctx.client_id)) do
     for _, winid in ipairs(api.nvim_list_wins()) do
       if api.nvim_win_get_buf(winid) == bufnr then
-        local bufstate = bufstates[bufnr]
-        if bufstate then
-          util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr })
-          break
-        end
+        util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr })
       end
     end
   end
@@ -154,7 +152,7 @@ function M.get(filter)
   end
 
   local bufstate = bufstates[bufnr]
-  if not (bufstate and bufstate.client_hints) then
+  if not bufstate.client_hints then
     return {}
   end
 
@@ -206,9 +204,6 @@ local function clear(bufnr)
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
-  if not bufstates[bufnr] then
-    return
-  end
   local bufstate = bufstates[bufnr]
   local client_lens = (bufstate or {}).client_hints or {}
   local client_ids = vim.tbl_keys(client_lens) --- @type integer[]
@@ -228,9 +223,7 @@ local function _disable(bufnr)
     bufnr = api.nvim_get_current_buf()
   end
   clear(bufnr)
-  if bufstates[bufnr] then
-    bufstates[bufnr] = { enabled = false, applied = {} }
-  end
+  bufstates[bufnr] = { enabled = false, applied = {} }
 end
 
 --- Refresh inlay hints, only if we have attached clients that support it
@@ -250,13 +243,8 @@ local function _enable(bufnr)
     bufnr = api.nvim_get_current_buf()
   end
   local bufstate = bufstates[bufnr]
-  if not bufstate then
-    bufstates[bufnr] = { applied = {}, enabled = true }
-    _refresh(bufnr)
-  else
-    bufstate.enabled = true
-    _refresh(bufnr)
-  end
+  bufstate.enabled = true
+  _refresh(bufnr)
 end
 
 api.nvim_create_autocmd('LspNotify', {
@@ -270,7 +258,7 @@ api.nvim_create_autocmd('LspNotify', {
     then
       return
     end
-    if bufstates[bufnr] and bufstates[bufnr].enabled then
+    if bufstates[bufnr].enabled then
       _refresh(bufnr, { client_id = args.data.client_id })
     end
   end,
@@ -291,6 +279,7 @@ api.nvim_create_autocmd('LspAttach', {
       end,
       on_detach = function(_, cb_bufnr)
         _disable(cb_bufnr)
+        bufstates[cb_bufnr] = nil
       end,
     })
   end,
@@ -312,7 +301,8 @@ api.nvim_create_autocmd('LspDetach', {
 })
 api.nvim_set_decoration_provider(namespace, {
   on_win = function(_, _, bufnr, topline, botline)
-    local bufstate = bufstates[bufnr]
+    ---@type vim.lsp.inlay_hint.bufstate
+    local bufstate = rawget(bufstates, bufnr)
     if not bufstate then
       return
     end
@@ -370,7 +360,7 @@ function M.is_enabled(bufnr)
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
-  return bufstates[bufnr] and bufstates[bufnr].enabled or false
+  return bufstates[bufnr].enabled
 end
 
 --- Optional filters |kwargs|, or `nil` for all.
