@@ -178,15 +178,15 @@ do
   --- See |[d-default|, |]d-default|, and |CTRL-W_d-default|.
   do
     vim.keymap.set('n', ']d', function()
-      vim.diagnostic.goto_next({ float = false })
+      vim.diagnostic.goto_next({ float = false, severity = { min = vim.diagnostic.severity.HINT } })
     end, {
-      desc = 'Jump to the next diagnostic with the highest severity',
+      desc = 'Jump to the next diagnostic',
     })
 
     vim.keymap.set('n', '[d', function()
-      vim.diagnostic.goto_prev({ float = false })
+      vim.diagnostic.goto_prev({ float = false, severity = { min = vim.diagnostic.severity.HINT } })
     end, {
-      desc = 'Jump to the previous diagnostic with the highest severity',
+      desc = 'Jump to the previous diagnostic',
     })
 
     vim.keymap.set('n', '<C-W>d', function()
