@@ -152,6 +152,8 @@ local M = {}
 --- @field suffix? string|table|(fun(diagnostic:vim.Diagnostic,i:integer,total:integer): string, string)
 ---
 --- @field focus_id? string
+---
+--- @field border? string see |vim.api.nvim_open_win()|.
 
 --- @class vim.diagnostic.Opts.Underline
 ---
