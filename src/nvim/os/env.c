@@ -49,6 +49,7 @@
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "auto/pathdef.h"
 # include "os/env.c.generated.h"
 #endif
 
