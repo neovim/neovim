@@ -252,22 +252,35 @@ local function _enable(bufnr)
   local bufstate = bufstates[bufnr]
   if not bufstate then
     bufstates[bufnr] = { applied = {}, enabled = true }
-    api.nvim_create_autocmd('LspNotify', {
-      buffer = bufnr,
-      callback = function(opts)
-        if
-          opts.data.method ~= ms.textDocument_didChange
-          and opts.data.method ~= ms.textDocument_didOpen
-        then
-          return
-        end
-        if bufstates[bufnr] and bufstates[bufnr].enabled then
-          _refresh(bufnr, { client_id = opts.data.client_id })
-        end
-      end,
-      group = augroup,
-    })
     _refresh(bufnr)
+  else
+    bufstate.enabled = true
+    _refresh(bufnr)
+  end
+end
+
+api.nvim_create_autocmd('LspNotify', {
+  callback = function(args)
+    ---@type integer
+    local bufnr = args.buf
+
+    if
+      args.data.method ~= ms.textDocument_didChange
+      and args.data.method ~= ms.textDocument_didOpen
+    then
+      return
+    end
+    if bufstates[bufnr] and bufstates[bufnr].enabled then
+      _refresh(bufnr, { client_id = args.data.client_id })
+    end
+  end,
+  group = augroup,
+})
+api.nvim_create_autocmd('LspAttach', {
+  callback = function(args)
+    ---@type integer
+    local bufnr = args.buf
+
     api.nvim_buf_attach(bufnr, false, {
       on_reload = function(_, cb_bufnr)
         clear(cb_bufnr)
@@ -280,27 +293,23 @@ local function _enable(bufnr)
         _disable(cb_bufnr)
       end,
     })
-    api.nvim_create_autocmd('LspDetach', {
-      buffer = bufnr,
-      callback = function(args)
-        local clients = vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_inlayHint })
+  end,
+  group = augroup,
+})
+api.nvim_create_autocmd('LspDetach', {
+  callback = function(args)
+    ---@type integer
+    local bufnr = args.buf
+    local clients = vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_inlayHint })
 
-        if
-          not vim.iter(clients):any(function(c)
-            return c.id ~= args.data.client_id
-          end)
-        then
-          _disable(bufnr)
-        end
-      end,
-      group = augroup,
-    })
-  else
-    bufstate.enabled = true
-    _refresh(bufnr)
-  end
-end
-
+    if not vim.iter(clients):any(function(c)
+      return c.id ~= args.data.client_id
+    end) then
+      _disable(bufnr)
+    end
+  end,
+  group = augroup,
+})
 api.nvim_set_decoration_provider(namespace, {
   on_win = function(_, _, bufnr, topline, botline)
     local bufstate = bufstates[bufnr]
