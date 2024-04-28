@@ -410,7 +410,8 @@ The following changes to existing APIs or features add new behavior.
   • 'grepprg' uses the -H and -I flags for grep by default,
     and defaults to using ripgrep if available.
   • |crn| in Normal mode maps to |vim.lsp.buf.rename()|.
-  • |crr| in Normal and Visual mode maps to |vim.lsp.buf.code_action()|.
+  • |crr| in Normal mode maps to |vim.lsp.buf.code_action()|.
+  • |v_CTRL-R_CTRL-R| in Visual mode maps to |vim.lsp.buf.code_action()|.
   • "gr" in Normal mode maps to |vim.lsp.buf.references()| |gr-default|
   • |i_CTRL-S| in Insert mode maps to |vim.lsp.buf.signature_help()|
   • "]d" and "[d" in Normal mode map to |vim.diagnostic.goto_next()| and

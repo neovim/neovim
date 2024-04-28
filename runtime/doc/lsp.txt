@@ -61,10 +61,12 @@ options are not restored when the LSP client is stopped or detached.
 - |K| is mapped to |vim.lsp.buf.hover()| unless |'keywordprg'| is customized or
   a custom keymap for `K` exists.
 
-                                                  *crr* *v_crr* *crn* *i_CTRL-S*
+                 *crr* *v_crr* *crn* *i_CTRL-S* *v_CTRL-R_CTRL-R* *v_CTRL-R_r*
 Some keymaps are created unconditionally when Nvim starts:
 - "crn" is mapped in Normal mode to |vim.lsp.buf.rename()|
-- "crr" is mapped in Normal and Visual mode to |vim.lsp.buf.code_action()|
+- "crr" is mapped in Normal mode to |vim.lsp.buf.code_action()|
+- CTRL-R CTRL-R (also "CTRL-R r") is mapped in Visual mode to
+  |vim.lsp.buf.code_action()|
 - "gr" is mapped in Normal mode to |vim.lsp.buf.references()| |gr-default|
 - CTRL-S is mapped in Insert mode to |vim.lsp.buf.signature_help()|
 
