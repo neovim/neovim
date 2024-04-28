@@ -88,7 +88,7 @@ function M.add(lang, opts)
     filetype = { filetype, { 'string', 'table' }, true },
   })
 
-  -- parser names are assumed to be lowercase
+  -- parser names are assumed to be lowercase (consistent behavior on case-insensitive file systems)
   lang = lang:lower()
 
   if vim._ts_has_language(lang) then
