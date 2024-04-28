@@ -2,7 +2,7 @@
 " Language:	SubStation Alpha
 " Maintainer:	ObserverOfTime <chronobserver@disroot.org>
 " Filenames:	*.ass,*.ssa
-" Last Change:	2022 Oct 10
+" Last Change:	2024 Apr 28
 
 if exists('b:current_syntax')
     finish
@@ -20,16 +20,20 @@ syn match ssaSection /^\[[a-zA-Z0-9+ ]\+\]$/
 syn match ssaHeader /^[^;!:]\+:/ skipwhite nextgroup=ssaField
 
 " Fields
-syn match ssaField /[^,]*/ contained skipwhite nextgroup=ssaDelimiter
+syn match ssaField /[^,]*\(,\|$\)/ contained skipwhite contains=ssaDelimiter,ssaTime nextgroup=ssaField
 
 " Time
-syn match ssaTime /\d:\d\d:\d\d\.\d\d/ contained skipwhite nextgroup=ssaDelimiter
+syn match ssaTime /\d:\d\d:\d\d\.\d\d/ contained
 
 " Delimiter
-syn match ssaDelimiter /,/ contained skipwhite nextgroup=ssaField,ssaTime,ssaText
+syn match ssaDelimiter /,/ contained
+
+" Dialogue
+syn match ssaDialogue /^Dialogue:/ transparent skipwhite nextgroup=ssaDialogueFields
+syn match ssaDialogueFields /\([^,]*,\)\{9\}/ contained transparent skipwhite contains=ssaField,ssaDelimiter nextgroup=ssaText
 
 " Text
-syn match ssaText /\(^Dialogue:\(.*,\)\{9}\)\@<=.*$/ contained contains=@ssaTags,@Spell
+syn match ssaText /.*$/ contained contains=@ssaTags,@Spell
 syn cluster ssaTags contains=ssaOverrideTag,ssaEscapeChar,ssaTextComment,ssaItalics,ssaBold,ssaUnderline,ssaStrikeout
 
 " Override tags
@@ -60,4 +64,4 @@ hi ssaItalics cterm=italic gui=italic
 hi ssaStrikeout cterm=strikethrough gui=strikethrough
 hi ssaUnderline cterm=underline gui=underline
 
-let b:current_syntax = 'srt'
+let b:current_syntax = 'ssa'
