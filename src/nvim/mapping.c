@@ -2130,7 +2130,9 @@ static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhs
   PUT_C(dict, "mode", CSTR_AS_OBJ(mapmode));
   PUT_C(dict, "abbr", INTEGER_OBJ(abbr ? 1 : 0));
   PUT_C(dict, "mode_bits", INTEGER_OBJ(mp->m_mode));
-  PUT_C(dict, "default", BOOLEAN_OBJ(mp->m_default));
+  if (mp->m_default) {
+    PUT_C(dict, "default", INTEGER_OBJ(1));
+  }
 
   return dict;
 }
