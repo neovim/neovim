@@ -1051,7 +1051,7 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
   linenr_T lnum = pos->lnum;
   if (lnum >= wp->w_topline && lnum <= wp->w_botline) {
     is_folded = hasFolding(wp, lnum, &lnum, NULL);
-    row = plines_m_win(wp, wp->w_topline, lnum - 1, false);
+    row = plines_m_win(wp, wp->w_topline, lnum - 1, INT_MAX);
     // "row" should be the screen line where line "lnum" begins, which can
     // be negative if "lnum" is "w_topline" and "w_skipcol" is non-zero.
     row -= adjust_plines_for_skipcol(wp);
@@ -2466,12 +2466,13 @@ int pagescroll(Direction dir, int count, bool half)
 
     int curscount = count;
     // Adjust count so as to not reveal end of buffer lines.
-    if (dir == FORWARD) {
+    if (dir == FORWARD
+        && (curwin->w_topline + curwin->w_height + count > buflen || hasAnyFolding(curwin))) {
       int n = plines_correct_topline(curwin, curwin->w_topline, NULL, false, NULL);
       if (n - count < curwin->w_height_inner && curwin->w_topline < buflen) {
-        n += plines_m_win(curwin, curwin->w_topline + 1, buflen, false);
+        n += plines_m_win(curwin, curwin->w_topline + 1, buflen, curwin->w_height_inner + count);
       }
-      if (n - count < curwin->w_height_inner) {
+      if (n < curwin->w_height_inner + count) {
         count = n - curwin->w_height_inner;
       }
     }

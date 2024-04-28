@@ -866,21 +866,21 @@ int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const nextp, bool *const
           (lnum == wp->w_topline ? wp->w_topfill : win_get_fill(wp, lnum)));
 }
 
-/// Get the number of screen lines a range of buffer lines will take in window "wp".
-/// This takes care of both folds and topfill.
+/// Return number of window lines a physical line range will occupy in window "wp".
+/// Takes into account folding, 'wrap', topfill and filler lines beyond the end of the buffer.
 ///
 /// XXX: Because of topfill, this only makes sense when first >= wp->w_topline.
 ///
-/// @param first            first line number
-/// @param last             last line number
-/// @param limit_winheight  when true limit each line to window height
+/// @param first  first line number
+/// @param last   last line number
+/// @param max    number of lines to limit the height to
 ///
 /// @see win_text_height
-int plines_m_win(win_T *wp, linenr_T first, linenr_T last, bool limit_winheight)
+int plines_m_win(win_T *wp, linenr_T first, linenr_T last, int max)
 {
   int count = 0;
 
-  while (first <= last && (!limit_winheight || count < wp->w_height_inner)) {
+  while (first <= last && count < max) {
     linenr_T next = first;
     count += plines_win_full(wp, first, &next, NULL, false, false);
     first = next + 1;
@@ -888,10 +888,7 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last, bool limit_winheight)
   if (first == wp->w_buffer->b_ml.ml_line_count + 1) {
     count += win_get_fill(wp, first);
   }
-  if (limit_winheight && count > wp->w_height_inner) {
-    return wp->w_height_inner;
-  }
-  return count;
+  return MIN(max, count);
 }
 
 /// Get the number of screen lines a range of text will take in window "wp".
