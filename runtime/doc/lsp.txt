@@ -1611,8 +1611,8 @@ enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*
     Parameters: ~
       • {enable}  (`boolean?`) true/nil to enable, false to disable
       • {filter}  (`table?`) Optional filters |kwargs|, or `nil` for all.
-                  • {bufnr} (`integer?`) Buffer number, or 0/nil for current
-                    buffer.
+                  • {bufnr} (`integer?`) Buffer number, or 0 for current
+                    buffer, or nil for all.
 
 get({filter})                                       *vim.lsp.inlay_hint.get()*
     Get the list of inlay hints, (optionally) restricted by buffer or range.

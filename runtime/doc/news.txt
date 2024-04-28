@@ -148,6 +148,8 @@ BREAKING CHANGES IN HEAD                                    *news-breaking-dev*
 The following changes to UNRELEASED features were made during the development
 cycle (Nvim HEAD, the "master" branch).
 
+• `vim.lsp.inlay_hint.enable()` now take effect on all buffers by default.
+
 • Removed `vim.treesitter.foldtext` as transparent foldtext is now supported
   https://github.com/neovim/neovim/pull/20750
 

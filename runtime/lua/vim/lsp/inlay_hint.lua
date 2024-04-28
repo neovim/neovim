@@ -212,7 +212,7 @@ end
 --- Clear inlay hints
 ---@param bufnr (integer) Buffer handle, or 0 for current
 local function clear(bufnr)
-  if bufnr == nil or bufnr == 0 then
+  if bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
   local bufstate = bufstates[bufnr]
@@ -228,9 +228,9 @@ local function clear(bufnr)
 end
 
 --- Disable inlay hints for a buffer
----@param bufnr (integer|nil) Buffer handle, or 0 or nil for current
+---@param bufnr (integer) Buffer handle, or 0 for current
 local function _disable(bufnr)
-  if bufnr == nil or bufnr == 0 then
+  if bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
   clear(bufnr)
@@ -249,9 +249,9 @@ local function _refresh(bufnr, opts)
 end
 
 --- Enable inlay hints for a buffer
----@param bufnr (integer|nil) Buffer handle, or 0 or nil for current
+---@param bufnr (integer) Buffer handle, or 0 for current
 local function _enable(bufnr)
-  if bufnr == nil or bufnr == 0 then
+  if bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
   bufstates[bufnr] = nil
@@ -378,7 +378,7 @@ end
 --- Optional filters |kwargs|, or `nil` for all.
 --- @class vim.lsp.inlay_hint.enable.Filter
 --- @inlinedoc
---- Buffer number, or 0/nil for current buffer.
+--- Buffer number, or 0 for current buffer, or nil for all.
 --- @field bufnr integer?
 
 --- Enables or disables inlay hints for a buffer.
@@ -403,11 +403,28 @@ function M.enable(enable, filter)
   end
 
   vim.validate({ enable = { enable, 'boolean', true }, filter = { filter, 'table', true } })
+  enable = enable == nil or enable
   filter = filter or {}
-  if enable == false then
-    _disable(filter.bufnr)
+
+  if filter.bufnr == nil then
+    globalstate.enabled = enable
+    for bufnr, _ in pairs(bufstates) do
+      if api.nvim_buf_is_loaded(bufnr) then
+        if enable == false then
+          _disable(bufnr)
+        else
+          _enable(bufnr)
+        end
+      else
+        bufstates[bufnr] = nil
+      end
+    end
   else
-    _enable(filter.bufnr)
+    if enable == false then
+      _disable(filter.bufnr)
+    else
+      _enable(filter.bufnr)
+    end
   end
 end
 
