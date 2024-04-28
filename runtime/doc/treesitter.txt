@@ -30,6 +30,9 @@ A parser can also be loaded manually using a full path: >lua
 
     vim.treesitter.language.add('python', { path = "/path/to/python.so" })
 <
+Parser names are assumed to be lower case if the file system is
+case-sensitive.
+
 To associate certain |filetypes| with a treesitter language (name of parser),
 use |vim.treesitter.language.register()|. For example, to use the `xml`
 treesitter parser for buffers with filetype `svg` or `xslt`, use: >lua
