@@ -758,7 +758,6 @@ local has_parser = vim.func._memoize(1, function(lang)
 end)
 
 --- Return parser name for language (if exists) or filetype (if registered and exists).
---- Also attempts with the input lower-cased.
 ---
 ---@param alias string language or filetype name
 ---@return string? # resolved parser name
@@ -772,16 +771,7 @@ local function resolve_lang(alias)
     return alias
   end
 
-  if has_parser(alias:lower()) then
-    return alias:lower()
-  end
-
   local lang = vim.treesitter.language.get_lang(alias)
-  if lang and has_parser(lang) then
-    return lang
-  end
-
-  lang = vim.treesitter.language.get_lang(alias:lower())
   if lang and has_parser(lang) then
     return lang
   end
@@ -808,7 +798,7 @@ function LanguageTree:_get_injection(match, metadata)
       -- Lang should override any other language tag
       if name == 'injection.language' then
         local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
-        lang = resolve_lang(text)
+        lang = resolve_lang(text:lower()) -- language names are always lower case
       elseif name == 'injection.filename' then
         local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
         local ft = vim.filetype.match({ filename = text })
