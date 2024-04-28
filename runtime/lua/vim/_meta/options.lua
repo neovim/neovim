@@ -2638,12 +2638,6 @@ vim.go.gfm = vim.go.grepformat
 --- line.  The placeholder "$*" is allowed to specify where the arguments
 --- will be included.  Environment variables are expanded `:set_env`.  See
 --- `option-backslash` about including spaces and backslashes.
---- When your "grep" accepts the "-H" argument, use this to make ":grep"
---- also work well with a single file:
----
---- ```vim
---- 	set grepprg=grep\ -nH
---- ```
 --- Special value: When 'grepprg' is set to "internal" the `:grep` command
 --- works like `:vimgrep`, `:lgrep` like `:lvimgrep`, `:grepadd` like
 --- `:vimgrepadd` and `:lgrepadd` like `:lvimgrepadd`.
@@ -2652,18 +2646,18 @@ vim.go.gfm = vim.go.grepformat
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 --- This option defaults to:
---- - `rg --vimgrep -uuu $* ...` if ripgrep is available (`:checkhealth`),
---- - `grep -n $* /dev/null` on Unix,
+--- - `rg --vimgrep -uu ` if ripgrep is available (`:checkhealth`),
+--- - `grep -HIn $* /dev/null` on Unix,
 --- - `findstr /n $* nul` on Windows.
 --- Ripgrep can perform additional filtering such as using .gitignore rules
---- and skipping hidden or binary files. This is disabled by default (see the -u option)
+--- and skipping hidden files. This is disabled by default (see the -u option)
 --- to more closely match the behaviour of standard grep.
 --- You can make ripgrep match Vim's case handling using the
 --- -i/--ignore-case and -S/--smart-case options.
 --- An `OptionSet` autocmd can be used to set it up to match automatically.
 ---
 --- @type string
-vim.o.grepprg = "grep -n $* /dev/null"
+vim.o.grepprg = "grep -HIn $* /dev/null"
 vim.o.gp = vim.o.grepprg
 vim.bo.grepprg = vim.o.grepprg
 vim.bo.gp = vim.bo.grepprg

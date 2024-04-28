@@ -560,9 +560,8 @@ end
 do
   --- Default 'grepprg' to ripgrep if available.
   if vim.fn.executable('rg') == 1 then
-    -- Match :grep default, otherwise rg searches cwd by default
-    -- Use -uuu to make ripgrep not do its default filtering
-    vim.o.grepprg = 'rg --vimgrep -uuu $* ' .. (vim.fn.has('unix') == 1 and '/dev/null' or 'nul')
+    -- Use -uu to make ripgrep not check ignore files/skip dot-files
+    vim.o.grepprg = 'rg --vimgrep -uu '
     vim.o.grepformat = '%f:%l:%c:%m'
   end
 end

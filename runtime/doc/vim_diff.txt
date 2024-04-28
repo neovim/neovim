@@ -52,7 +52,8 @@ Defaults					            *nvim-defaults*
 - 'encoding' is UTF-8 (cf. 'fileencoding' for file-content encoding)
 - 'fillchars' defaults (in effect) to "vert:│,fold:·,foldsep:│"
 - 'formatoptions' defaults to "tcqj"
-- 'grepprg' defaults to using ripgrep if available
+- 'grepprg' uses the -H and -I flags for regular grep,
+  and defaults to using ripgrep if available
 - 'hidden' is enabled
 - 'history' defaults to 10000 (the maximum)
 - 'hlsearch' is enabled
