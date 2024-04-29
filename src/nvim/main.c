@@ -63,6 +63,7 @@
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
 #include "nvim/lua/secure.h"
+#include "nvim/lua/treesitter.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
