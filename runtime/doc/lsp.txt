@@ -562,9 +562,8 @@ LspProgress                                                       *LspProgress*
     `result` properties. `result` will contain the request params sent by the
     server.
 
-    Example: >vim
-        autocmd LspProgress * redrawstatus
-<
+    |:redrawstatus| happens implicitly with LspProgress events.
+
 
 LspRequest                                                        *LspRequest*
     For each request sent to an LSP server, this event is triggered for

@@ -21,40 +21,81 @@ M[ms.workspace_executeCommand] = function(_, _, _, _)
   -- Error handling is done implicitly by wrapping all handlers; see end of this file
 end
 
---- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress
----@param result lsp.ProgressParams
----@param ctx lsp.HandlerContext
-M[ms.dollar_progress] = function(_, result, ctx)
-  local client = vim.lsp.get_client_by_id(ctx.client_id)
-  if not client then
-    err_message('LSP[id=', tostring(ctx.client_id), '] client has shut down during progress update')
-    return vim.NIL
-  end
-  local kind = nil
-  local value = result.value
+do
+  local timer1 = nil
+  local timer2 = nil
 
-  if type(value) == 'table' then
-    kind = value.kind
-    -- Carry over title of `begin` messages to `report` and `end` messages
-    -- So that consumers always have it available, even if they consume a
-    -- subset of the full sequence
-    if kind == 'begin' then
-      client.progress.pending[result.token] = value.title
-    else
-      value.title = client.progress.pending[result.token]
-      if kind == 'end' then
-        client.progress.pending[result.token] = nil
+  --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress
+  ---@param result lsp.ProgressParams
+  ---@param ctx lsp.HandlerContext
+  M[ms.dollar_progress] = function(_, result, ctx)
+    local client = vim.lsp.get_client_by_id(ctx.client_id)
+    if not client then
+      err_message(
+        'LSP[id=',
+        tostring(ctx.client_id),
+        '] client has shut down during progress update'
+      )
+      return vim.NIL
+    end
+    local kind = nil
+    local value = result.value
+
+    if type(value) == 'table' then
+      kind = value.kind
+      -- Carry over title of `begin` messages to `report` and `end` messages
+      -- So that consumers always have it available, even if they consume a
+      -- subset of the full sequence
+      if kind == 'begin' then
+        client.progress.pending[result.token] = value.title
+      else
+        value.title = client.progress.pending[result.token]
+        if kind == 'end' then
+          client.progress.pending[result.token] = nil
+        end
       end
     end
+
+    client.progress:push(result)
+
+    -- Refresh status debounced to 60 FPS
+    -- The first timer ensures new messages are shown quickly
+    --
+    -- The second timer ensures the last message gets cleared in case the server stops sending
+    -- progress for some time. Otherwise there's a stale message until something else triggers a
+    -- redraw.
+    timer1 = timer1 or vim.uv.new_timer()
+    timer2 = timer2 or vim.uv.new_timer()
+    if timer1 then
+      timer1:stop()
+      timer1:start(
+        16.66,
+        0,
+        vim.schedule_wrap(function()
+          timer1:stop()
+          vim.cmd.redrawstatus()
+
+          if timer2 then
+            timer2:stop()
+            timer2:start(
+              500,
+              0,
+              vim.schedule_wrap(function()
+                timer2:stop()
+                vim.cmd.redrawstatus()
+              end)
+            )
+          end
+        end)
+      )
+    end
+
+    api.nvim_exec_autocmds('LspProgress', {
+      pattern = kind,
+      modeline = false,
+      data = { client_id = ctx.client_id, result = result },
+    })
   end
-
-  client.progress:push(result)
-
-  api.nvim_exec_autocmds('LspProgress', {
-    pattern = kind,
-    modeline = false,
-    data = { client_id = ctx.client_id, result = result },
-  })
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_workDoneProgress_create
