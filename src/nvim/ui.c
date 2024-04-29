@@ -198,7 +198,7 @@ void ui_refresh(void)
   int height = INT_MAX;
   bool ext_widgets[kUIExtCount];
   for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
-    ext_widgets[i] = true;
+    ext_widgets[i] = ui_active();
   }
 
   bool inclusive = ui_override();
