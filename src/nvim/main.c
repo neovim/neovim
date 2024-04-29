@@ -355,6 +355,12 @@ int main(int argc, char **argv)
     ui_client_channel_id = rv;
   }
 
+  if (ui_client_channel_id) {
+    time_finish();
+    ui_client_run(remote_ui);  // NORETURN
+  }
+  assert(!ui_client_channel_id && !use_builtin_ui);
+
   TIME_MSG("expanding arguments");
 
   if (params.diff_mode && params.window_count == -1) {
@@ -396,12 +402,6 @@ int main(int argc, char **argv)
   if (!stdin_isatty && !params.input_istext && silent_mode && exmode_active) {
     input_start();
   }
-
-  if (ui_client_channel_id) {
-    time_finish();
-    ui_client_run(remote_ui);  // NORETURN
-  }
-  assert(!ui_client_channel_id && !use_builtin_ui);
 
   // Wait for UIs to set up Nvim or show early messages
   // and prompts (--cmd, swapfile dialog, …).
