@@ -1318,6 +1318,7 @@ int tslua_parse_query(lua_State *L)
   size_t len;
   const char *src = lua_tolstring(L, 2, &len);
 
+  tslua_query_parse_count++;
   uint32_t error_offset;
   TSQueryError error_type;
   TSQuery *query = ts_query_new(lang, src, (uint32_t)len, &error_offset, &error_type);

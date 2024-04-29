@@ -7,7 +7,6 @@ local eq = t.eq
 local insert = n.insert
 local exec_lua = n.exec_lua
 local pcall_err = t.pcall_err
-local is_os = t.is_os
 local api = n.api
 local fn = n.fn
 
@@ -72,11 +71,14 @@ void ui_refresh(void)
       return exec_lua(
         [[
           local query, n = ...
-          local before = vim.uv.hrtime()
+          local before = vim.api.nvim__stats().ts_query_parse_count
+          collectgarbage("stop")
           for i=1, n, 1 do
             cquery = vim.treesitter.query.parse("c", ...)
           end
-          local after = vim.uv.hrtime()
+          collectgarbage("restart")
+          collectgarbage("collect")
+          local after = vim.api.nvim__stats().ts_query_parse_count
           return after - before
         ]],
         long_query,
@@ -84,15 +86,9 @@ void ui_refresh(void)
       )
     end
 
-    local firstrun = q(1)
-    local manyruns = q(100)
-
-    -- First run should be at least 200x slower than an 100 subsequent runs.
-    local factor = is_os('win') and 100 or 200
-    assert(
-      factor * manyruns < firstrun,
-      ('firstrun: %f ms, manyruns: %f ms'):format(firstrun / 1e6, manyruns / 1e6)
-    )
+    eq(1, q(1))
+    -- cache is cleared by garbage collection even if valid "cquery" reference is kept around
+    eq(1, q(100))
   end)
 
   it('supports query and iter by capture (iter_captures)', function()
