@@ -19,7 +19,7 @@ setlocal noundofile
 setlocal keywordprg=:help
 setlocal iskeyword=@,-,_
 
-" The user will have to enable the folds himself, but we provide the foldexpr
+" The user will have to enable the folds themself, but we provide the foldexpr
 " function.
 setlocal foldmethod=manual
 setlocal foldexpr=tutor#TutorFolds()

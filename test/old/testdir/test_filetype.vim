@@ -1682,14 +1682,14 @@ func Test_mod_file()
   call assert_equal('pim', b:modula2.dialect)
   bwipe!
 
-  " Modula-2 program MODULE with priorty (and uppercase extension)
+  " Modula-2 program MODULE with priority (and uppercase extension)
   call writefile(['MODULE Module2Mod [42];'], 'Xfile.MOD')
   split Xfile.MOD
   call assert_equal('modula2', &filetype)
   call assert_equal('pim', b:modula2.dialect)
   bwipe!
 
-  " Modula-2 implementation MODULE with priorty (and uppercase extension)
+  " Modula-2 implementation MODULE with priority (and uppercase extension)
   call writefile(['IMPLEMENTATION MODULE Module2Mod [42];'], 'Xfile.MOD')
   split Xfile.MOD
   call assert_equal('modula2', &filetype)

@@ -6583,7 +6583,7 @@ function vim.fn.prevnonblank(lnum) end
 ---
 --- @param fmt any
 --- @param expr1? any
---- @return any
+--- @return string
 function vim.fn.printf(fmt, expr1) end
 
 --- Returns the effective prompt text for buffer {buf}.  {buf} can

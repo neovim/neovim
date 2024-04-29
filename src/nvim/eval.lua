@@ -7902,6 +7902,7 @@ M.funcs = {
     name = 'printf',
     params = { { 'fmt', 'any' }, { 'expr1', 'any' } },
     signature = 'printf({fmt}, {expr1} ...)',
+    returns = 'string',
   },
   prompt_getprompt = {
     args = 1,

@@ -1442,7 +1442,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'commentstring' 'cms'	string	(default "")
 			local to buffer
 	A template for a comment.  The "%s" in the value is replaced with the
-	comment text.  For example, C uses "/*%s*/". Currently only used to
+	comment text. For example, C uses "/*%s*/". Used for |commenting| and to
 	add markers for folding, see |fold-marker|.
 
 						*'complete'* *'cpt'* *E535*

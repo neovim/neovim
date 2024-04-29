@@ -80,7 +80,7 @@ local function make_comment_check(parts)
   -- <possible whitespace> <left> <anything> <right> <possible whitespace>
   local nonblank_regex = '^%s-' .. l_esc .. '.*' .. r_esc .. '%s-$'
 
-  -- Commented blank line can have any amoung of whitespace around parts
+  -- Commented blank line can have any amount of whitespace around parts
   local blank_regex = '^%s-' .. vim.trim(l_esc) .. '%s*' .. vim.trim(r_esc) .. '%s-$'
 
   return function(line)
