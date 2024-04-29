@@ -97,9 +97,9 @@ describe('vim.snippet', function()
 
   it('does not jump outside snippet range', function()
     test_expand_success({ 'function $1($2)', '  $0', 'end' }, { 'function ()', '  ', 'end' })
-    eq(false, exec_lua('return vim.snippet.jumpable(-1)'))
+    eq(false, exec_lua('return vim.snippet.active({ direction = -1 })'))
     feed('<Tab><Tab>i')
-    eq(false, exec_lua('return vim.snippet.jumpable(1)'))
+    eq(false, exec_lua('return vim.snippet.active( { direction = 1 })'))
   end)
 
   it('navigates backwards', function()

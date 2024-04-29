@@ -4306,8 +4306,33 @@ Iter:totable()                                                *Iter:totable()*
 ==============================================================================
 Lua module: vim.snippet                                          *vim.snippet*
 
-vim.snippet.active()                                    *vim.snippet.active()*
-    Returns `true` if there's an active snippet in the current buffer.
+*vim.snippet.ActiveFilter*
+
+    Fields: ~
+      • {direction}  (`vim.snippet.Direction`) Navigation direction. -1 for
+                     previous, 1 for next.
+
+
+vim.snippet.active({filter})                            *vim.snippet.active()*
+    Returns `true` if there's an active snippet in the current buffer,
+    applying the given filter if provided.
+
+    You can use this function to navigate a snippet as follows: >lua
+        vim.keymap.set({ 'i', 's' }, '<Tab>', function()
+           if vim.snippet.active({ direction = 1 }) then
+             return '<cmd>lua vim.snippet.jump(1)<cr>'
+           else
+             return '<Tab>'
+           end
+         end, { expr = true })
+<
+
+    Parameters: ~
+      • {filter}  (`vim.snippet.ActiveFilter?`) Filter to constrain the search
+                  with:
+                  • `direction` (vim.snippet.Direction): Navigation direction.
+                    Will return `true` if the snippet can be jumped in the
+                    given direction. See |vim.snippet.ActiveFilter|.
 
     Return: ~
         (`boolean`)
@@ -4342,26 +4367,6 @@ vim.snippet.jump({direction})                             *vim.snippet.jump()*
     Parameters: ~
       • {direction}  (`vim.snippet.Direction`) Navigation direction. -1 for
                      previous, 1 for next.
-
-vim.snippet.jumpable({direction})                     *vim.snippet.jumpable()*
-    Returns `true` if there is an active snippet which can be jumped in the
-    given direction. You can use this function to navigate a snippet as
-    follows: >lua
-        vim.keymap.set({ 'i', 's' }, '<Tab>', function()
-           if vim.snippet.jumpable(1) then
-             return '<cmd>lua vim.snippet.jump(1)<cr>'
-           else
-             return '<Tab>'
-           end
-         end, { expr = true })
-<
-
-    Parameters: ~
-      • {direction}  (`vim.snippet.Direction`) Navigation direction. -1 for
-                     previous, 1 for next.
-
-    Return: ~
-        (`boolean`)
 
 
 ==============================================================================

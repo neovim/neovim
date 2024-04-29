@@ -532,29 +532,6 @@ end
 
 --- @alias vim.snippet.Direction -1 | 1
 
---- Returns `true` if there is an active snippet which can be jumped in the given direction.
---- You can use this function to navigate a snippet as follows:
----
---- ```lua
---- vim.keymap.set({ 'i', 's' }, '<Tab>', function()
----    if vim.snippet.jumpable(1) then
----      return '<cmd>lua vim.snippet.jump(1)<cr>'
----    else
----      return '<Tab>'
----    end
----  end, { expr = true })
---- ```
----
---- @param direction (vim.snippet.Direction) Navigation direction. -1 for previous, 1 for next.
---- @return boolean
-function M.jumpable(direction)
-  if not M.active() then
-    return false
-  end
-
-  return M._session:get_dest_index(direction) ~= nil
-end
-
 --- Jumps within the active snippet in the given direction.
 --- If the jump isn't possible, the function call does nothing.
 ---
@@ -604,11 +581,37 @@ function M.jump(direction)
   setup_autocmds(M._session.bufnr)
 end
 
---- Returns `true` if there's an active snippet in the current buffer.
+--- @class vim.snippet.ActiveFilter
+--- @field direction vim.snippet.Direction Navigation direction. -1 for previous, 1 for next.
+
+--- Returns `true` if there's an active snippet in the current buffer,
+--- applying the given filter if provided.
 ---
+--- You can use this function to navigate a snippet as follows:
+---
+--- ```lua
+--- vim.keymap.set({ 'i', 's' }, '<Tab>', function()
+---    if vim.snippet.active({ direction = 1 }) then
+---      return '<cmd>lua vim.snippet.jump(1)<cr>'
+---    else
+---      return '<Tab>'
+---    end
+---  end, { expr = true })
+--- ```
+---
+--- @param filter? vim.snippet.ActiveFilter Filter to constrain the search with:
+--- - `direction` (vim.snippet.Direction): Navigation direction. Will return `true` if the snippet
+--- can be jumped in the given direction.
 --- @return boolean
-function M.active()
-  return M._session ~= nil and M._session.bufnr == vim.api.nvim_get_current_buf()
+function M.active(filter)
+  local active = M._session ~= nil and M._session.bufnr == vim.api.nvim_get_current_buf()
+
+  local in_direction = true
+  if active and filter and filter.direction then
+    in_direction = M._session:get_dest_index(filter.direction) ~= nil
+  end
+
+  return active and in_direction
 end
 
 --- Exits the current snippet.
