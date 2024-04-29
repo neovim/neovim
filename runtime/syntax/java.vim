@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Apr 22
+" Last Change:		2024 Apr 28
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -292,10 +292,23 @@ syn cluster javaTop add=javaString,javaStrTempl,javaCharacter,javaNumber,javaSpe
 if exists("java_highlight_functions")
   syn cluster javaFuncParams contains=javaAnnotation,@javaClasses,javaType,javaVarArg,javaComment,javaLineComment
 
-  if java_highlight_functions == "indent"
+  if java_highlight_functions =~# '^indent[1-8]\=$'
+    let s:last = java_highlight_functions[-1 :]
+    let s:indent = s:last != 't' ? repeat("\x20", s:last) : "\t"
     syn cluster javaFuncParams add=javaScopeDecl,javaConceptKind,javaStorageClass,javaExternal
-    syn match javaFuncDef "^\%(\t\|  \%( \{6\}\)\=\)\K\%(\k\|[ .,<>\[\]]\)*([^-+*/]*)" contains=@javaFuncParams
-    syn region javaFuncDef start=+^\%(\t\|  \%( \{6\}\)\=\)\K\%(\k\|[ .,<>\[\]]\)*([^-+*/]*,\s*+ end=+)+ contains=@javaFuncParams
+    " Try to not match other type members, initialiser blocks, enum
+    " constants (JLS-17, §8.9.1), and constructors (JLS-17, §8.1.7):
+    " at any _conventional_ indentation, skip over all fields with
+    " "[^=]*", all records with "\<record\s", and let the "*Skip*"
+    " definitions take care of constructor declarations and enum
+    " constants (with no support for @Foo(value = "bar")).
+    exec 'syn region javaFuncDef start=+^' . s:indent . '\%(<[^>]\+>\+\s\+\|\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)\+\)\=\%(\<\K\k*\>\.\)*\K\k*\>[^=]*\%(\<record\)\@6<!\s\K\k*\s*(+ end=+)+ contains=@javaFuncParams'
+    " As long as package-private constructors cannot be matched with
+    " javaFuncDef, do not look with javaConstructorSkipDeclarator for
+    " them.
+    exec 'syn match javaConstructorSkipDeclarator transparent +^' . s:indent . '\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*p\%(ublic\|rotected\|rivate\)\s\+\%(<[^>]\+>\+\s\+\)\=\K\k*\s*\ze(+ contains=javaAnnotation,javaScopeDecl'
+    exec 'syn match javaEnumSkipArgumentativeConstant transparent +^' . s:indent . '\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*\K\k*\s*\ze(+ contains=javaAnnotation'
+    unlet s:indent s:last
   else
     " This is the "style" variant (:help ft-java-syntax).
     syn cluster javaFuncParams add=javaScopeDecl,javaConceptKind,javaStorageClass,javaExternal
