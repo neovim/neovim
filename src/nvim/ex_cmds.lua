@@ -337,7 +337,7 @@ M.cmds = {
   {
     command = 'caddbuffer',
     flags = bit.bor(RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_OTHER',
+    addr_type = 'ADDR_LINES',
     func = 'ex_cbuffer',
   },
   {
@@ -373,7 +373,7 @@ M.cmds = {
   {
     command = 'cbuffer',
     flags = bit.bor(BANG, RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_OTHER',
+    addr_type = 'ADDR_LINES',
     func = 'ex_cbuffer',
   },
   {
@@ -459,7 +459,7 @@ M.cmds = {
   {
     command = 'cgetbuffer',
     flags = bit.bor(RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_OTHER',
+    addr_type = 'ADDR_LINES',
     func = 'ex_cbuffer',
   },
   {
@@ -1329,7 +1329,7 @@ M.cmds = {
   {
     command = 'laddbuffer',
     flags = bit.bor(RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_OTHER',
+    addr_type = 'ADDR_LINES',
     func = 'ex_cbuffer',
   },
   {
@@ -1353,7 +1353,7 @@ M.cmds = {
   {
     command = 'lbuffer',
     flags = bit.bor(BANG, RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_OTHER',
+    addr_type = 'ADDR_LINES',
     func = 'ex_cbuffer',
   },
   {
@@ -1451,7 +1451,7 @@ M.cmds = {
   {
     command = 'lgetbuffer',
     flags = bit.bor(RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_OTHER',
+    addr_type = 'ADDR_LINES',
     func = 'ex_cbuffer',
   },
   {
