@@ -275,7 +275,8 @@ processing a quickfix or location list command, it will be aborted.
 			current window is used instead of the quickfix list.
 
 						*:cb* *:cbuffer* *E681*
-:cb[uffer][!] [bufnr]	Read the error list from the current buffer.
+:[range]cb[uffer][!] [bufnr]
+			Read the error list from the current buffer.
 			When [bufnr] is given it must be the number of a
 			loaded buffer.  That buffer will then be used instead
 			of the current buffer.
@@ -284,26 +285,31 @@ processing a quickfix or location list command, it will be aborted.
 			See |:cc| for [!].
 
 						*:lb* *:lbuffer*
-:lb[uffer][!] [bufnr]	Same as ":cbuffer", except the location list for the
+:[range]lb[uffer][!] [bufnr]
+			Same as ":cbuffer", except the location list for the
 			current window is used instead of the quickfix list.
 
 						*:cgetb* *:cgetbuffer*
-:cgetb[uffer] [bufnr]	Read the error list from the current buffer.  Just
+:[range]cgetb[uffer] [bufnr]
+			Read the error list from the current buffer.  Just
 			like ":cbuffer" but don't jump to the first error.
 
 						*:lgetb* *:lgetbuffer*
-:lgetb[uffer] [bufnr]	Same as ":cgetbuffer", except the location list for
+:[range]lgetb[uffer] [bufnr]
+			Same as ":cgetbuffer", except the location list for
 			the current window is used instead of the quickfix
 			list.
 
 						*:cad* *:cadd* *:caddbuffer*
-:cad[dbuffer] [bufnr]	Read the error list from the current buffer and add
+:[range]cad[dbuffer] [bufnr]
+			Read the error list from the current buffer and add
 			the errors to the current quickfix list.  If a
 			quickfix list is not present, then a new list is
 			created. Otherwise, same as ":cbuffer".
 
 							*:laddb* *:laddbuffer*
-:laddb[uffer] [bufnr]	Same as ":caddbuffer", except the location list for
+:[range]laddb[uffer] [bufnr]
+			Same as ":caddbuffer", except the location list for
 			the current window is used instead of the quickfix
 			list.
 
