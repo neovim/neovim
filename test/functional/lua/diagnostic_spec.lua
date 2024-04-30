@@ -962,7 +962,7 @@ describe('vim.diagnostic', function()
       eq(
         { 3, 0 },
         exec_lua([[
-        vim.diagnostic.goto_next()
+        vim.diagnostic.goto_next({_highest = true})
         return vim.api.nvim_win_get_cursor(0)
       ]])
       )
@@ -970,7 +970,7 @@ describe('vim.diagnostic', function()
       eq(
         { 5, 0 },
         exec_lua([[
-        vim.diagnostic.goto_next()
+        vim.diagnostic.goto_next({_highest = true})
         return vim.api.nvim_win_get_cursor(0)
       ]])
       )
@@ -991,7 +991,7 @@ describe('vim.diagnostic', function()
       eq(
         { 4, 0 },
         exec_lua([[
-        vim.diagnostic.goto_next()
+        vim.diagnostic.goto_next({_highest = true})
         return vim.api.nvim_win_get_cursor(0)
       ]])
       )
@@ -999,7 +999,7 @@ describe('vim.diagnostic', function()
       eq(
         { 6, 0 },
         exec_lua([[
-        vim.diagnostic.goto_next()
+        vim.diagnostic.goto_next({_highest = true})
         return vim.api.nvim_win_get_cursor(0)
       ]])
       )
@@ -1021,7 +1021,7 @@ describe('vim.diagnostic', function()
       eq(
         { 2, 0 },
         exec_lua([[
-        vim.diagnostic.goto_next({ severity = { min = vim.diagnostic.severity.HINT } })
+        vim.diagnostic.goto_next()
         return vim.api.nvim_win_get_cursor(0)
       ]])
       )
@@ -1029,7 +1029,7 @@ describe('vim.diagnostic', function()
       eq(
         { 3, 0 },
         exec_lua([[
-        vim.diagnostic.goto_next({ severity = { min = vim.diagnostic.severity.HINT } })
+        vim.diagnostic.goto_next()
         return vim.api.nvim_win_get_cursor(0)
       ]])
       )
@@ -1037,7 +1037,7 @@ describe('vim.diagnostic', function()
       eq(
         { 4, 0 },
         exec_lua([[
-        vim.diagnostic.goto_next({ severity = { min = vim.diagnostic.severity.HINT } })
+        vim.diagnostic.goto_next()
         return vim.api.nvim_win_get_cursor(0)
       ]])
       )
