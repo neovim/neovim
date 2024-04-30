@@ -173,6 +173,21 @@ describe('vim.ui_attach', function()
     exec_lua('vim.cmd.tabnext()')
     eq(0, n.api.nvim_get_option_value('cmdheight', {}))
   end)
+
+  it('avoids recursive flushing and invalid memory access with :redraw', function()
+    exec_lua([[
+      _G.cmdline = 0
+      vim.ui_attach(ns, { ext_messages = true }, function(ev)
+        vim.cmd.redraw()
+        _G.cmdline = _G.cmdline + (ev == 'cmdline_show' and 1 or 0)
+      end
+    )]])
+    feed(':')
+    eq(1, exec_lua('return _G.cmdline'))
+    n.assert_alive()
+    feed('version<CR><CR>v<Esc>')
+    n.assert_alive()
+  end)
 end)
 
 describe('vim.ui_attach', function()

@@ -134,7 +134,7 @@ bool keep_msg_more = false;    // keep_msg was set by msgmore()
 
 // Extended msg state, currently used for external UIs with ext_messages
 static const char *msg_ext_kind = NULL;
-static Array msg_ext_chunks = ARRAY_DICT_INIT;
+static Array *msg_ext_chunks = NULL;
 static garray_T msg_ext_last_chunk = GA_INIT(sizeof(char), 40);
 static sattr_T msg_ext_last_attr = -1;
 static size_t msg_ext_cur_len = 0;
@@ -2131,6 +2131,9 @@ void msg_printf_attr(const int attr, const char *const fmt, ...)
 
 static void msg_ext_emit_chunk(void)
 {
+  if (msg_ext_chunks == NULL) {
+    msg_ext_init_chunks();
+  }
   // Color was changed or a message flushed, end current chunk.
   if (msg_ext_last_attr == -1) {
     return;  // no chunk
@@ -2140,7 +2143,7 @@ static void msg_ext_emit_chunk(void)
   msg_ext_last_attr = -1;
   String text = ga_take_string(&msg_ext_last_chunk);
   ADD(chunk, STRING_OBJ(text));
-  ADD(msg_ext_chunks, ARRAY_OBJ(chunk));
+  ADD(*msg_ext_chunks, ARRAY_OBJ(chunk));
 }
 
 /// The display part of msg_puts_len().
@@ -3056,6 +3059,16 @@ bool msg_end(void)
   return true;
 }
 
+/// Clear "msg_ext_chunks" before flushing so that ui_flush() does not re-emit
+/// the same message recursively.
+static Array *msg_ext_init_chunks(void)
+{
+  Array *tofree = msg_ext_chunks;
+  msg_ext_chunks = xcalloc(1, sizeof(*msg_ext_chunks));
+  msg_ext_cur_len = 0;
+  return tofree;
+}
+
 void msg_ext_ui_flush(void)
 {
   if (!ui_has(kUIMessages)) {
@@ -3064,17 +3077,16 @@ void msg_ext_ui_flush(void)
   }
 
   msg_ext_emit_chunk();
-  if (msg_ext_chunks.size > 0) {
-    ui_call_msg_show(cstr_as_string(msg_ext_kind),
-                     msg_ext_chunks, msg_ext_overwrite);
+  if (msg_ext_chunks->size > 0) {
+    Array *tofree = msg_ext_init_chunks();
+    ui_call_msg_show(cstr_as_string(msg_ext_kind), *tofree, msg_ext_overwrite);
+    api_free_array(*tofree);
+    xfree(tofree);
     if (!msg_ext_overwrite) {
       msg_ext_visible++;
     }
-    msg_ext_kind = NULL;
-    api_free_array(msg_ext_chunks);
-    msg_ext_chunks = (Array)ARRAY_DICT_INIT;
-    msg_ext_cur_len = 0;
     msg_ext_overwrite = false;
+    msg_ext_kind = NULL;
   }
 }
 
@@ -3084,10 +3096,10 @@ void msg_ext_flush_showmode(void)
   // separate event. Still reuse the same chunking logic, for simplicity.
   if (ui_has(kUIMessages)) {
     msg_ext_emit_chunk();
-    ui_call_msg_showmode(msg_ext_chunks);
-    api_free_array(msg_ext_chunks);
-    msg_ext_chunks = (Array)ARRAY_DICT_INIT;
-    msg_ext_cur_len = 0;
+    Array *tofree = msg_ext_init_chunks();
+    ui_call_msg_showmode(*tofree);
+    api_free_array(*tofree);
+    xfree(tofree);
   }
 }
 

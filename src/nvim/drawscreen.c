@@ -927,7 +927,13 @@ int showmode(void)
     msg_ext_clear(true);
   }
 
-  // don't make non-flushed message part of the showmode
+  // Don't make non-flushed message part of the showmode and reset global
+  // variables before flushing to to avoid recursiveness.
+  bool draw_mode = redraw_mode;
+  bool clear_cmd = clear_cmdline;
+  redraw_cmdline = false;
+  redraw_mode = false;
+  clear_cmdline = false;
   msg_ext_ui_flush();
 
   msg_grid_validate();
@@ -950,8 +956,8 @@ int showmode(void)
     msg_check_for_delay(false);
 
     // if the cmdline is more than one line high, erase top lines
-    bool need_clear = clear_cmdline;
-    if (clear_cmdline && cmdline_row < Rows - 1) {
+    bool need_clear = clear_cmd;
+    if (clear_cmd && cmdline_row < Rows - 1) {
       msg_clr_cmdline();  // will reset clear_cmdline
     }
 
@@ -1073,7 +1079,7 @@ int showmode(void)
     }
 
     mode_displayed = true;
-    if (need_clear || clear_cmdline || redraw_mode) {
+    if (need_clear || clear_cmd || draw_mode) {
       msg_clr_eos();
     }
     msg_didout = false;                 // overwrite this message
@@ -1082,10 +1088,10 @@ int showmode(void)
     msg_no_more = false;
     lines_left = save_lines_left;
     need_wait_return = nwr_save;        // never ask for hit-return for this
-  } else if (clear_cmdline && msg_silent == 0) {
+  } else if (clear_cmd && msg_silent == 0) {
     // Clear the whole command line.  Will reset "clear_cmdline".
     msg_clr_cmdline();
-  } else if (redraw_mode) {
+  } else if (draw_mode) {
     msg_pos_mode();
     msg_clr_eos();
   }
@@ -1107,10 +1113,6 @@ int showmode(void)
     win_redr_ruler(ruler_win);
     grid_line_flush();
   }
-
-  redraw_cmdline = false;
-  redraw_mode = false;
-  clear_cmdline = false;
 
   return length;
 }
