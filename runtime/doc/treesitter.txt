@@ -956,10 +956,7 @@ get_lang({filetype})                      *vim.treesitter.language.get_lang()*
         (`string?`)
 
 inspect({lang})                            *vim.treesitter.language.inspect()*
-    Inspects the provided language.
-
-    Inspecting provides some useful information on the language like node
-    names, ...
+    Gets some useful information on the language like node names, ...
 
     Parameters: ~
       • {lang}  (`string`) Language

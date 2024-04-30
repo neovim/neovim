@@ -10,13 +10,13 @@
 --
 -- USAGE (GENERATE HTML):
 --   1. `:helptags ALL` first; this script depends on vim.fn.taglist().
---   2. nvim -V1 -es --clean +"lua require('scripts.gen_help_html').gen('./runtime/doc', 'target/dir/')" +q
+--   2. rm -rf build/runtime/doc/ && make && nvim -V1 -es --clean +"lua require('scripts.gen_help_html').gen('./runtime/doc', 'target/dir/')" +q
 --      - Read the docstring at gen().
 --   3. cd target/dir/ && jekyll serve --host 0.0.0.0
 --   4. Visit http://localhost:4000/…/help.txt.html
 --
 -- USAGE (VALIDATE):
---   1. nvim -V1 -es +"lua require('scripts.gen_help_html').validate('./runtime/doc')" +q
+--   1. rm -rf build/runtime/doc/ && make && nvim -V1 -es +"lua require('scripts.gen_help_html').validate('./runtime/doc')" +q
 --      - validate() is 10x faster than gen(), so it is used in CI.
 --
 -- SELF-TEST MODE:
@@ -28,6 +28,7 @@
 --   * visit_node() is the core function used by gen() to traverse the document tree and produce HTML.
 --   * visit_validate() is the core function used by validate().
 --   * Files in `new_layout` will be generated with a "flow" layout instead of preformatted/fixed-width layout.
+--     All Nvim-owned files should migrate to "flow" layout.
 
 local tagmap = nil ---@type table<string, string>
 local helpfiles = nil ---@type string[]
@@ -57,6 +58,7 @@ local M = {}
 
 -- These files are generated with "flow" layout (non fixed-width, wrapped text paragraphs).
 -- All other files are "legacy" files which require fixed-width layout.
+-- All Nvim-owned files should migrate to "flow" layout.
 local new_layout = {
   ['api.txt'] = true,
   ['lsp.txt'] = true,
@@ -328,7 +330,7 @@ local function ignore_parse_error(fname, s)
   end
   -- Ignore parse errors for unclosed tag.
   -- This is common in vimdocs and is treated as plaintext by :help.
-  return s:find("^[`'|*]")
+  return s:find('^``') or s:find("^['|]")
 end
 
 ---@param node TSNode
@@ -607,11 +609,20 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
     return s
-  elseif vim.list_contains({ 'codespan', 'keycode' }, node_name) then
+  elseif vim.list_contains({ 'codespan', 'keycode', 'optional' }, node_name) then
     if root:has_error() then
       return text
     end
-    local s = ('%s<code>%s</code>'):format(ws(), trimmed)
+    local class = node_name == 'optional' and ' class="optional"' or ''
+    if node_name == 'optional' then
+      return ('%s<code%s>%s</code>'):format(ws(), class, trimmed)
+    end
+    local s = (
+      node_name == 'keycode'
+        -- TODO: use <kbd>. Currently has a layout issue, example: ":help _".
+        and ('%s<code>%s</code>'):format(ws(), trimmed)
+      or ('%s<code%s>%s</code>'):format(ws(), class, trimmed)
+    )
     if opt.old and node_name == 'codespan' then
       s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
@@ -765,9 +776,10 @@ local function parse_buf(fname, parser_path)
     vim.cmd('sbuffer ' .. tostring(fname)) -- Buffer number.
   end
   if parser_path then
-    vim.treesitter.language.add('vimdoc', { path = parser_path })
+    vim.treesitter.language.add('vimdoc2', { path = parser_path })
   end
-  local lang_tree = vim.treesitter.get_parser(buf)
+  local lang_tree = vim.treesitter.get_parser(buf, 'vimdoc2')
+  -- vim.print(lang_tree)
   return lang_tree, buf
 end
 
@@ -1013,11 +1025,13 @@ local function gen_css(fname)
   local css = [[
     :root {
       --code-color: #004b4b;
+      --kbd-color: red;
       --tag-color: #095943;
     }
     @media (prefers-color-scheme: dark) {
       :root {
         --code-color: #00c243;
+        --kbd-color: red;
         --tag-color: #00b7b7;
       }
     }
@@ -1087,7 +1101,7 @@ local function gen_css(fname)
       /* Tabs are used for alignment in old docs, so we must match Vim's 8-char expectation. */
       tab-size: 8;
       white-space: pre;
-      font-size: 16px;
+      font-size: 15px;
       font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
     }
     .old-help-para pre {
@@ -1146,7 +1160,14 @@ local function gen_css(fname)
     }
     code {
       color: var(--code-color);
-      font-size: 16px;
+      font-size: 15px;
+    }
+    code.optional {
+      color: yellow;
+    }
+    kbd {
+      /* color: var(--kbd-color); */
+      font-size: 15px;
     }
     pre {
       /* Tabs are used in codeblocks only for indentation, not alignment, so we can aggressively shrink them. */
@@ -1155,7 +1176,7 @@ local function gen_css(fname)
       line-height: 1.3;  /* Important for ascii art. */
       overflow: visible;
       /* font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace; */
-      font-size: 16px;
+      font-size: 15px;
       margin-top: 10px;
     }
     pre:last-child {

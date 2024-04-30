@@ -91,7 +91,7 @@ static TSLanguage *load_language(lua_State *L, const char *path, const char *lan
   return lang;
 }
 
-// Creates the language into the internal language map.
+// Creates and adds a language to the internal language map.
 //
 // Returns true if the language is correctly loaded in the language map
 int tslua_add_language(lua_State *L)
@@ -121,6 +121,12 @@ int tslua_add_language(lua_State *L)
                       TREE_SITTER_LANGUAGE_VERSION, lang_version);
   }
 
+  bool present = map_has(cstr_t, &langs, lang_name);
+  if (present) {
+    cstr_t key;
+    pmap_del(cstr_t)(&langs, lang_name, &key);
+    xfree((void *)key);
+  }
   pmap_put(cstr_t)(&langs, xstrdup(lang_name), lang);
 
   lua_pushboolean(L, true);

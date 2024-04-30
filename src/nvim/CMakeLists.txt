@@ -943,6 +943,8 @@ add_dependencies(doc doc-vim doc-eval)
 
 add_target(lintdoc
   COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l scripts/lintdoc.lua
-  DEPENDS ${DOCFILES}
+  DEPENDS
+    ${DOCFILES}
+    ${PROJECT_SOURCE_DIR}/scripts/gen_help_html.lua
   CUSTOM_COMMAND_ARGS USES_TERMINAL)
 add_dependencies(lintdoc nvim)

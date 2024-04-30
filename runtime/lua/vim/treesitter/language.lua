@@ -109,6 +109,7 @@ function M.add(lang, opts)
     path = paths[1]
   end
 
+  vim._ts_remove_language(lang)
   vim._ts_add_language(path, lang, symbol_name)
   M.register(lang, filetype)
 end
@@ -142,9 +143,7 @@ function M.register(lang, filetype)
   end
 end
 
---- Inspects the provided language.
----
---- Inspecting provides some useful information on the language like node names, ...
+--- Gets some useful information on the language like node names, ...
 ---
 ---@param lang string Language
 ---@return table

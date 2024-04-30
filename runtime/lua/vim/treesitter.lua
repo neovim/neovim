@@ -72,12 +72,12 @@ local function valid_lang(lang)
   return lang and lang ~= ''
 end
 
---- Returns the parser for a specific buffer and attaches it to the buffer
+--- Gets the parser for a buffer and attaches it to the buffer.
 ---
---- If needed, this will create the parser.
+--- Creates the parser, if needed.
 ---
----@param bufnr (integer|nil) Buffer the parser should be tied to (default: current buffer)
----@param lang (string|nil) Language of this parser (default: from buffer filetype)
+---@param bufnr (integer|nil) Buffer to parse (default: current buffer)
+---@param lang (string|nil) Language of this parser (default: buffer 'filetype')
 ---@param opts (table|nil) Options to pass to the created language tree
 ---
 ---@return vim.treesitter.LanguageTree object to use for parsing
@@ -96,15 +96,13 @@ function M.get_parser(bufnr, lang, opts)
     if not parsers[bufnr] then
       error(
         string.format(
-          'There is no parser available for buffer %d and one could not be'
-            .. ' created because lang could not be determined. Either pass lang'
-            .. ' or set the buffer filetype',
+          "No parser for buffer %d with unknown lang. Either pass lang or set 'filetype'.",
           bufnr
         )
       )
     end
   elseif parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
-    assert(lang, 'lang should be valid')
+    assert(lang, 'invalid lang')
     parsers[bufnr] = M._create_parser(bufnr, lang, opts)
   end
 

@@ -926,13 +926,13 @@ a `return` statement, then the function returns with no results.
 
                                                             *lua-colonsyntax*
 The colon syntax is used for defining methods, that is, functions that have an
-implicit extra parameter `self`. Thus, the statement
+implicit extra parameter `self`. Thus, the statement >
 
-       `function t.a.b.c:f (`  `params`  `)`  `body`  `end`
+       function t.a.b.c:f (  params  )  body  end
 
-is syntactic sugar for
+is syntactic sugar for >
 
-       `t.a.b.c:f = function (`  `self`,  `params`  `)`  `body`  `end`
+       t.a.b.c:f = function (  self,  params  )  body  end
 
 ==============================================================================
 2.6  Visibility Rules                                    *lua-visibility*
