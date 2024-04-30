@@ -381,15 +381,15 @@ cleanup:
 ///             - desc (string) optional: description (for documentation and troubleshooting).
 ///             - callback (function|string) optional: Lua function (or Vimscript function name, if
 ///             string) called when the event(s) is triggered. Lua callback can return a truthy
-///             value (not `false` or `nil`) to delete the autocommand. Receives a table argument
-///             with these keys:
+///             value (not `false` or `nil`) to delete the autocommand. Receives one argument,
+///             a table with these keys: [event-args]()
 ///                 - id: (number) autocommand id
 ///                 - event: (string) name of the triggered event |autocmd-events|
 ///                 - group: (number|nil) autocommand group id, if any
 ///                 - match: (string) expanded value of [<amatch>]
 ///                 - buf: (number) expanded value of [<abuf>]
 ///                 - file: (string) expanded value of [<afile>]
-///                 - data: (any) arbitrary data passed from [nvim_exec_autocmds()]
+///                 - data: (any) arbitrary data passed from [nvim_exec_autocmds()] [event-data]()
 ///             - command (string) optional: Vim command to execute on event. Cannot be used with
 ///             {callback}
 ///             - once (boolean) optional: defaults to false. Run the autocommand

@@ -1,26 +1,3 @@
----@brief
----
---- Nvim includes a function for highlighting a selection on yank.
----
---- To enable it, add the following to your `init.vim`:
----
---- ```vim
---- au TextYankPost * silent! lua vim.highlight.on_yank()
---- ```
----
---- You can customize the highlight group and the duration of the highlight via:
----
---- ```vim
---- au TextYankPost * silent! lua vim.highlight.on_yank {higroup="IncSearch", timeout=150}
---- ```
----
---- If you want to exclude visual selections from highlighting on yank, use:
----
---- ```vim
---- au TextYankPost * silent! lua vim.highlight.on_yank {on_visual=false}
---- ```
----
-
 local api = vim.api
 
 local M = {}
@@ -97,7 +74,13 @@ local yank_ns = api.nvim_create_namespace('hlyank')
 local yank_timer --- @type uv.uv_timer_t?
 local yank_cancel --- @type fun()?
 
---- Highlight the yanked text
+--- Highlight the yanked text during a |TextYankPost| event.
+---
+--- Add the following to your `init.vim`:
+---
+--- ```vim
+--- autocmd TextYankPost * silent! lua vim.highlight.on_yank {higroup='Visual', timeout=300}
+--- ```
 ---
 --- @param opts table|nil Optional parameters
 ---              - higroup   highlight group for yanked region (default "IncSearch")

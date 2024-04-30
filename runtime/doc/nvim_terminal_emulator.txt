@@ -126,6 +126,46 @@ color index is just forwarded.
 Editor highlighting (|syntax-highlighting|, |highlight-groups|, etc.) has
 higher precedence: it is applied after terminal colors are resolved.
 
+------------------------------------------------------------------------------
+EVENTS						*terminal-events*
+
+Applications running in a :terminal buffer can send requests, which Nvim
+exposes via the |TermRequest| event.
+
+OSC 7: change working directory			*terminal-osc7*
+
+To handle OSC 7 emitted from :terminal processes, this code will :cd to the
+directory indicated in the request. >lua
+
+  vim.api.nvim_create_autocmd({ 'TermRequest' }, {
+    desc = 'Handles OSC 7 dir change requests',
+    callback = function(ev)
+      if string.sub(vim.v.termrequest, 1, 4) == '\x1b]7;' then
+        local dir = string.gsub(vim.v.termrequest, '\x1b]7;file://[^/]*', '')
+        if vim.fn.isdirectory(dir) == 0 then
+          vim.notify('invalid dir: '..dir)
+          return
+        end
+        vim.api.nvim_buf_set_var(ev.buf, 'osc7_dir', dir)
+        if vim.o.autochdir and vim.api.nvim_get_current_buf() == ev.buf then
+          vim.cmd.cd(dir)
+        end
+      end
+    end
+  })
+  vim.api.nvim_create_autocmd({ 'BufEnter', 'WinEnter', 'DirChanged' }, {
+    callback = function(ev)
+      if vim.b.osc7_dir and vim.fn.isdirectory(vim.b.osc7_dir) == 1 then
+        vim.cmd.cd(vim.b.osc7_dir)
+      end
+    end
+  })
+
+To try it out, select the above code and source it with `:'<,'>lua`, then run
+this command in a :terminal buffer: >
+
+   printf "\033]7;file://./foo/bar\033\\"
+
 ==============================================================================
 Status Variables				*terminal-status*
 

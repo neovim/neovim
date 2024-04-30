@@ -112,7 +112,11 @@ Basic types ~
   Dictionary (msgpack: map)
   Object
 <
-  Note: empty Array is accepted as a valid argument for Dictionary parameter.
+  Note:
+    - Empty Array is accepted as a valid Dictionary parameter.
+    - Functions cannot cross RPC boundaries. But API functions (e.g.
+      |nvim_create_autocmd()|) may support Lua function parameters for non-RPC
+      invocations.
 
 Special types (msgpack EXT) ~
 
@@ -504,8 +508,9 @@ Extended marks (extmarks) represent buffer annotations that track text changes
 in the buffer. They can represent cursors, folds, misspelled words, anything
 that needs to track a logical location in the buffer over time. |api-indexing|
 
-Extmark position works like "bar" cursor: it exists between characters. Thus,
-the maximum extmark index on a line is 1 more than the character index: >
+Extmark position works like a "vertical bar" cursor: it exists between
+characters. Thus, the maximum extmark index on a line is 1 more than the
+character index: >
 
      f o o b a r      line contents
      0 1 2 3 4 5      character positions (0-based)
@@ -3447,7 +3452,8 @@ nvim_create_autocmd({event}, {opts})                   *nvim_create_autocmd()*
                    Vimscript function name, if string) called when the
                    event(s) is triggered. Lua callback can return a truthy
                    value (not `false` or `nil`) to delete the autocommand.
-                   Receives a table argument with these keys:
+                   Receives one argument, a table with these keys:
+                                                                  *event-args*
                    • id: (number) autocommand id
                    • event: (string) name of the triggered event
                      |autocmd-events|
@@ -3456,7 +3462,7 @@ nvim_create_autocmd({event}, {opts})                   *nvim_create_autocmd()*
                    • buf: (number) expanded value of <abuf>
                    • file: (string) expanded value of <afile>
                    • data: (any) arbitrary data passed from
-                     |nvim_exec_autocmds()|
+                     |nvim_exec_autocmds()|                       *event-data*
                  • command (string) optional: Vim command to execute on event.
                    Cannot be used with {callback}
                  • once (boolean) optional: defaults to false. Run the

@@ -1,7 +1,9 @@
 # CMAKE REFERENCE
-#   intro: https://codingnest.com/basic-cmake/
-#   best practices (3.0+): https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
-#   pitfalls: https://izzys.casa/2019/02/everything-you-never-wanted-to-know-about-cmake/
+#   - intro: https://codingnest.com/basic-cmake/
+#   - best practices (3.0+): https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
+#   - pitfalls: https://izzys.casa/2019/02/everything-you-never-wanted-to-know-about-cmake/
+#   - troubleshooting:
+#     - variable_watch https://cmake.org/cmake/help/latest/command/variable_watch.html
 
 # Version should match the tested CMAKE_URL in .github/workflows/build.yml.
 cmake_minimum_required(VERSION 3.13)
@@ -167,6 +169,7 @@ endif()
 
 option(ENABLE_ASAN_UBSAN "Enable Clang address & undefined behavior sanitizer for nvim binary." OFF)
 option(ENABLE_MSAN "Enable Clang memory sanitizer for nvim binary." OFF)
+# TSAN exists to test Luv threads.
 option(ENABLE_TSAN "Enable Clang thread sanitizer for nvim binary." OFF)
 
 if((ENABLE_ASAN_UBSAN AND ENABLE_MSAN)

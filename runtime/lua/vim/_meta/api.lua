@@ -897,8 +897,8 @@ function vim.api.nvim_create_augroup(name, opts) end
 ---             • callback (function|string) optional: Lua function (or
 ---               Vimscript function name, if string) called when the event(s)
 ---               is triggered. Lua callback can return a truthy value (not
----               `false` or `nil`) to delete the autocommand. Receives a
----               table argument with these keys:
+---               `false` or `nil`) to delete the autocommand. Receives one
+---               argument, a table with these keys:              *event-args*
 ---               • id: (number) autocommand id
 ---               • event: (string) name of the triggered event
 ---                 `autocmd-events`
@@ -907,7 +907,7 @@ function vim.api.nvim_create_augroup(name, opts) end
 ---               • buf: (number) expanded value of <abuf>
 ---               • file: (string) expanded value of <afile>
 ---               • data: (any) arbitrary data passed from
----                 `nvim_exec_autocmds()`
+---                 `nvim_exec_autocmds()`                        *event-data*
 ---             • command (string) optional: Vim command to execute on event.
 ---               Cannot be used with {callback}
 ---             • once (boolean) optional: defaults to false. Run the

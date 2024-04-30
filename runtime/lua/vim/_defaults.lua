@@ -255,7 +255,7 @@ do
 
   vim.api.nvim_create_autocmd('TermRequest', {
     group = nvim_terminal_augroup,
-    desc = 'Respond to OSC foreground/background color requests',
+    desc = 'Handles OSC foreground/background color requests',
     callback = function(args)
       --- @type integer
       local channel = vim.bo[args.buf].channel

@@ -903,18 +903,18 @@ ShellFilterPost			After executing a shell command with
 				":{range}!cmd", ":w !cmd" or ":r !cmd".
 				Can be used to check for any changed files.
 							*SourcePre*
-SourcePre			Before sourcing a vim/lua file. |:source|
+SourcePre			Before sourcing a Vimscript/Lua file. |:source|
 				<afile> is the name of the file being sourced.
 							*SourcePost*
-SourcePost			After sourcing a vim/lua file. |:source|
+SourcePost			After sourcing a Vimscript/Lua file. |:source|
 				<afile> is the name of the file being sourced.
 				Not triggered when sourcing was interrupted.
 				Also triggered after a SourceCmd autocommand
 				was triggered.
 							*SourceCmd*
-SourceCmd			When sourcing a vim/lua file. |:source|
+SourceCmd			When sourcing a Vimscript/Lua file. |:source|
 				<afile> is the name of the file being sourced.
-				The autocommand must source this file.
+				The autocommand must source that file.
 				|Cmd-event|
 							*SpellFileMissing*
 SpellFileMissing		When trying to load a spell checking file and
@@ -989,18 +989,16 @@ TermClose			When a |terminal| job ends.
 				Sets these |v:event| keys:
 				    status
 							*TermRequest*
-TermRequest			When a |terminal| job emits an OSC or DCS
-				sequence. Sets |v:termrequest|. When used from
-				Lua, the request string is included in the
-				"data" field of the autocommand callback.
+TermRequest			When a |:terminal| child process emits an OSC
+				or DCS sequence. Sets |v:termrequest|. The
+				|event-data| is the request string.
 							*TermResponse*
 TermResponse			When Nvim receives an OSC or DCS response from
-				the terminal.  Sets |v:termresponse|. When used
-				from Lua, the response string is included in
-				the "data" field of the autocommand callback.
-				May be triggered halfway through another event
-				(file I/O, a shell command, or anything else
-				that takes time). Example: >lua
+				the host terminal. Sets |v:termresponse|. The
+				|event-data| is the response string. May be
+				triggered during another event (file I/O,
+				a shell command, or anything else that takes
+				time). Example: >lua
 
 				-- Query the terminal palette for the RGB value of color 1
 				-- (red) using OSC 4

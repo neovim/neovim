@@ -450,20 +450,24 @@ function Iter:join(delim)
   return table.concat(self:totable(), delim)
 end
 
---- Folds ("reduces") an iterator into a single value.
+--- Folds ("reduces") an iterator into a single value. [Iter:reduce()]()
 ---
 --- Examples:
 ---
 --- ```lua
 --- -- Create a new table with only even values
---- local t = { a = 1, b = 2, c = 3, d = 4 }
---- local it = vim.iter(t)
---- it:filter(function(k, v) return v % 2 == 0 end)
---- it:fold({}, function(t, k, v)
----   t[k] = v
----   return t
---- end)
---- -- { b = 2, d = 4 }
+--- vim.iter({ a = 1, b = 2, c = 3, d = 4 })
+---   :filter(function(k, v) return v % 2 == 0 end)
+---   :fold({}, function(acc, k, v)
+---     acc[k] = v
+---     return acc
+---   end) --> { b = 2, d = 4 }
+---
+--- -- Get the "maximum" item of an iterable.
+--- vim.iter({ -99, -4, 3, 42, 0, 0, 7 })
+---   :fold({}, function(acc, v)
+---     acc.max = math.max(v, acc.max or v) return acc
+---   end) --> { max = 42 }
 --- ```
 ---
 ---@generic A

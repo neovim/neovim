@@ -532,6 +532,8 @@ External UIs are expected to implement these common features:
   published in this event. See also "mouse_on", "mouse_off".
 - UIs generally should NOT set |$NVIM_APPNAME| (unless explicitly requested by
   the user).
+- Support the text decorations/attributes given by |ui-event-hl_attr_define|.
+  The "url" attr should be presented as a clickable hyperlink.
 
 
  vim:tw=78:ts=8:sw=4:et:ft=help:norl:
