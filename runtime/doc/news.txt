@@ -385,6 +385,9 @@ The following new APIs and features were added.
 • |vim.fs.root()| finds project root directories from a list of "root
   markers".
 
+• |complete_info()| returns a `pum_matches` item to indicate which items are put
+  in the |ins-completion-menu|.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

@@ -1101,6 +1101,7 @@ func Test_popup_complete_info_02()
     \     {'word': 'May', 'menu': 'May', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}
     \   ],
     \   'selected': 0,
+    \   'pum_matches': [0, 1, 2, 3, 4],
     \ }
 
   let g:compl_what = []
@@ -1109,6 +1110,7 @@ func Test_popup_complete_info_02()
 
   let g:compl_what = ['mode', 'pum_visible', 'selected']
   call remove(d, 'items')
+  call remove(d, 'pum_matches')
   call feedkeys("i\<C-X>\<C-U>\<F5>", 'tx')
   call assert_equal(d, g:compl_info)
 
@@ -1129,6 +1131,7 @@ func Test_popup_complete_info_no_pum()
         \   'pum_visible': 0,
         \   'items': [],
         \   'selected': -1,
+        \   'pum_matches': [],
         \  }
   call assert_equal( d, complete_info() )
   bwipe!

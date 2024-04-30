@@ -2741,8 +2741,9 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
 #define CI_WHAT_MODE            0x01
 #define CI_WHAT_PUM_VISIBLE     0x02
 #define CI_WHAT_ITEMS           0x04
-#define CI_WHAT_SELECTED        0x08
-#define CI_WHAT_INSERTED        0x10
+#define CI_WHAT_PUM_MATCHES     0x08
+#define CI_WHAT_SELECTED        0x10
+#define CI_WHAT_INSERTED        0x20
 #define CI_WHAT_ALL             0xff
   int what_flag;
 
@@ -2761,6 +2762,8 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
         what_flag |= CI_WHAT_PUM_VISIBLE;
       } else if (strcmp(what, "items") == 0) {
         what_flag |= CI_WHAT_ITEMS;
+      } else if (strcmp(what, "pum_matches") == 0) {
+        what_flag |= CI_WHAT_PUM_MATCHES;
       } else if (strcmp(what, "selected") == 0) {
         what_flag |= CI_WHAT_SELECTED;
       } else if (strcmp(what, "inserted") == 0) {
@@ -2778,18 +2781,31 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
     ret = tv_dict_add_nr(retdict, S_LEN("pum_visible"), pum_visible());
   }
 
-  if (ret == OK && (what_flag & CI_WHAT_ITEMS || what_flag & CI_WHAT_SELECTED)) {
-    list_T *li = NULL;
+  if (ret == OK
+      && (what_flag & CI_WHAT_ITEMS || what_flag & CI_WHAT_PUM_MATCHES
+          || what_flag & CI_WHAT_SELECTED)) {
+    list_T *items = NULL;
+    list_T *pum_matches = NULL;
     int selected_idx = -1;
+    const int lead_len
+      = (what_flag & CI_WHAT_PUM_MATCHES) && compl_leader != NULL ? (int)strlen(compl_leader) : 0;
+
     if (what_flag & CI_WHAT_ITEMS) {
-      li = tv_list_alloc(kListLenMayKnow);
-      ret = tv_dict_add_list(retdict, S_LEN("items"), li);
+      items = tv_list_alloc(kListLenMayKnow);
+      ret = tv_dict_add_list(retdict, S_LEN("items"), items);
     }
-    if (ret == OK && what_flag & CI_WHAT_SELECTED) {
+
+    if (ret == OK && (what_flag & CI_WHAT_PUM_MATCHES)) {
+      pum_matches = tv_list_alloc(kListLenUnknown);
+      ret = tv_dict_add_list(retdict, S_LEN("pum_matches"), pum_matches);
+    }
+
+    if (ret == OK && (what_flag & CI_WHAT_SELECTED)) {
       if (compl_curr_match != NULL && compl_curr_match->cp_number == -1) {
         ins_compl_update_sequence_numbers();
       }
     }
+
     if (ret == OK && compl_first_match != NULL) {
       int list_idx = 0;
       compl_T *match = compl_first_match;
@@ -2797,7 +2813,7 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
         if (!match_at_original_text(match)) {
           if (what_flag & CI_WHAT_ITEMS) {
             dict_T *di = tv_dict_alloc();
-            tv_list_append_dict(li, di);
+            tv_list_append_dict(items, di);
             tv_dict_add_str(di, S_LEN("word"), match->cp_str);
             tv_dict_add_str(di, S_LEN("abbr"), match->cp_text[CPT_ABBR]);
             tv_dict_add_str(di, S_LEN("menu"), match->cp_text[CPT_MENU]);
@@ -2810,6 +2826,12 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
               tv_dict_add_tv(di, S_LEN("user_data"), &match->cp_user_data);
             }
           }
+
+          if ((what_flag & CI_WHAT_PUM_MATCHES)
+              && (compl_leader == NULL || ins_compl_equal(match, compl_leader, (size_t)lead_len))) {
+            tv_list_append_number(pum_matches, list_idx);
+          }
+
           if (compl_curr_match != NULL
               && compl_curr_match->cp_number == match->cp_number) {
             selected_idx = list_idx;

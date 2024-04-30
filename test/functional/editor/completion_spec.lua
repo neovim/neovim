@@ -1080,6 +1080,34 @@ describe('completion', function()
     ]])
   end)
 
+  describe('complete_info() pum_matches', function()
+    before_each(function()
+      source([[
+        function! TestComplete() abort
+          call complete(1, ['abcd', 'acbd', 'xyz', 'foobar'])
+          return ''
+        endfunction
+
+        set completeopt+=noinsert
+        inoremap <C-x> <c-r>=TestComplete()<cr>
+      ]])
+    end)
+
+    it('works', function()
+      feed('i<C-x>')
+      eq({ pum_matches = { 0, 1, 2, 3 } }, fn.complete_info({ 'pum_matches' }))
+
+      feed('a')
+      eq({ pum_matches = { 0, 1 } }, fn.complete_info({ 'pum_matches' }))
+
+      feed('c')
+      eq({ pum_matches = { 1 } }, fn.complete_info({ 'pum_matches' }))
+
+      feed('x')
+      eq({ pum_matches = {} }, fn.complete_info({ 'pum_matches' }))
+    end)
+  end)
+
   -- oldtest: Test_complete_changed_complete_info()
   it('no crash calling complete_info() in CompleteChanged', function()
     source([[
