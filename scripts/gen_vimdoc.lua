@@ -768,10 +768,17 @@ local function render_funs(funs, classes, cfg)
     ret[#ret + 1] = render_fun(f, classes, cfg)
   end
 
-  -- Sort via prototype
+  -- Sort via prototype. Experimental API functions ("nvim__") sort last.
   table.sort(ret, function(a, b)
     local a1 = ('\n' .. a):match('\n[a-zA-Z_][^\n]+\n')
     local b1 = ('\n' .. b):match('\n[a-zA-Z_][^\n]+\n')
+
+    local a1__ = a1:find('^%s*nvim__') and 1 or 0
+    local b1__ = b1:find('^%s*nvim__') and 1 or 0
+    if a1__ ~= b1__ then
+      return a1__ < b1__
+    end
+
     return a1:lower() < b1:lower()
   end)
 

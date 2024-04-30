@@ -24,7 +24,7 @@ function vim.api.nvim__buf_redraw_range(buffer, first, last) end
 function vim.api.nvim__buf_stats(buffer) end
 
 --- @private
---- EXPERIMENTAL: this api may change in the future.
+--- EXPERIMENTAL: this API may change in the future.
 ---
 --- Sets info for the completion item at the given index. If the info text was
 --- shown in a window, returns the window and buffer ids, or empty dict if not

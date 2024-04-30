@@ -2282,7 +2282,7 @@ void nvim_error_event(uint64_t channel_id, Integer lvl, String data)
   ELOG("async error on channel %" PRId64 ": %s", channel_id, data.size ? data.data : "");
 }
 
-/// EXPERIMENTAL: this api may change in the future.
+/// EXPERIMENTAL: this API may change in the future.
 ///
 /// Sets info for the completion item at the given index. If the info text was shown in a window,
 /// returns the window and buffer ids, or empty dict if not shown.
