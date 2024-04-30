@@ -584,6 +584,23 @@ created for extmark changes.
 ==============================================================================
 Global Functions                                                  *api-global*
 
+nvim__complete_set({index}, {opts})                     *nvim__complete_set()*
+    EXPERIMENTAL: this api may change in the future.
+
+    Sets info for the completion item at the given index. If the info text was
+    shown in a window, returns the window and buffer ids, or empty dict if not
+    shown.
+
+    Parameters: ~
+      • {index}  Completion candidate index
+      • {opts}   Optional parameters.
+                 • info: (string) info text.
+
+    Return: ~
+        Dictionary containing these keys:
+        • winid: (number) floating window id
+        • bufnr: (number) buffer id in floating window
+
 nvim__get_runtime({pat}, {all}, {opts})                  *nvim__get_runtime()*
     Find files in runtime directories
 
@@ -677,21 +694,6 @@ nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
     Parameters: ~
       • {chan}  id of the channel
       • {data}  data to write. 8-bit clean: can contain NUL bytes.
-
-nvim_complete_set({index}, {opts})                       *nvim_complete_set()*
-    Set info for the completion candidate index. if the info was shown in a
-    window, then the window and buffer ids are returned for further
-    customization. If the text was not shown, an empty dict is returned.
-
-    Parameters: ~
-      • {index}  the completion candidate index
-      • {opts}   Optional parameters.
-                 • info: (string) info text.
-
-    Return: ~
-        Dictionary containing these keys:
-        • winid: (number) floating window id
-        • bufnr: (number) buffer id in floating window
 
 nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
     Creates a new, empty, unnamed buffer.

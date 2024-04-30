@@ -732,7 +732,7 @@ static void pum_adjust_info_position(win_T *wp, int height, int width)
   win_config_float(wp, wp->w_config);
 }
 
-/// Used for nvim_complete_set
+/// Used for nvim__complete_set
 ///
 /// @param selected the selected compl item.
 /// @parma info     Info string.

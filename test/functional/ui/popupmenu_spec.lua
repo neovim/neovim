@@ -1608,7 +1608,7 @@ describe('builtin popupmenu', function()
           funct Set_info()
             let comp_info = complete_info()
             if comp_info['selected'] == 2
-              call nvim_complete_set(comp_info['selected'], {"info": "3info"})
+              call nvim__complete_set(comp_info['selected'], {"info": "3info"})
             endif
           endfunc
           autocmd CompleteChanged * call Set_info()
@@ -1728,7 +1728,7 @@ describe('builtin popupmenu', function()
           }
         end
 
-        -- test nvim_complete_set_info
+        -- test nvim__complete_set_info
         feed('<ESC>cc<C-X><C-O><C-N><C-N>')
         vim.uv.sleep(10)
         if multigrid then
