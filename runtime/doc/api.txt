@@ -584,99 +584,6 @@ created for extmark changes.
 ==============================================================================
 Global Functions                                                  *api-global*
 
-nvim__complete_set({index}, {opts})                     *nvim__complete_set()*
-    EXPERIMENTAL: this api may change in the future.
-
-    Sets info for the completion item at the given index. If the info text was
-    shown in a window, returns the window and buffer ids, or empty dict if not
-    shown.
-
-    Parameters: ~
-      • {index}  Completion candidate index
-      • {opts}   Optional parameters.
-                 • info: (string) info text.
-
-    Return: ~
-        Dictionary containing these keys:
-        • winid: (number) floating window id
-        • bufnr: (number) buffer id in floating window
-
-nvim__get_runtime({pat}, {all}, {opts})                  *nvim__get_runtime()*
-    Find files in runtime directories
-
-    Attributes: ~
-        |api-fast|
-
-    Parameters: ~
-      • {pat}   pattern of files to search for
-      • {all}   whether to return all matches or only the first
-      • {opts}  is_lua: only search Lua subdirs
-
-    Return: ~
-        list of absolute paths to the found files
-
-nvim__id({obj})                                                   *nvim__id()*
-    Returns object given as argument.
-
-    This API function is used for testing. One should not rely on its presence
-    in plugins.
-
-    Parameters: ~
-      • {obj}  Object to return.
-
-    Return: ~
-        its argument.
-
-nvim__id_array({arr})                                       *nvim__id_array()*
-    Returns array given as argument.
-
-    This API function is used for testing. One should not rely on its presence
-    in plugins.
-
-    Parameters: ~
-      • {arr}  Array to return.
-
-    Return: ~
-        its argument.
-
-nvim__id_dictionary({dct})                             *nvim__id_dictionary()*
-    Returns dictionary given as argument.
-
-    This API function is used for testing. One should not rely on its presence
-    in plugins.
-
-    Parameters: ~
-      • {dct}  Dictionary to return.
-
-    Return: ~
-        its argument.
-
-nvim__id_float({flt})                                       *nvim__id_float()*
-    Returns floating-point value given as argument.
-
-    This API function is used for testing. One should not rely on its presence
-    in plugins.
-
-    Parameters: ~
-      • {flt}  Value to return.
-
-    Return: ~
-        its argument.
-
-nvim__inspect_cell({grid}, {row}, {col})                *nvim__inspect_cell()*
-    NB: if your UI doesn't use hlstate, this will not return hlstate first
-    time.
-
-nvim__invalidate_glyph_cache()                *nvim__invalidate_glyph_cache()*
-    For testing. The condition in schar_cache_clear_if_full is hard to reach,
-    so this function can be used to force a cache clear in a test.
-
-nvim__stats()                                                  *nvim__stats()*
-    Gets internal stats.
-
-    Return: ~
-        Map of various internal stats.
-
 nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
     Send data to channel `id`. For a job, it writes it to the stdin of the
     process. For the stdio channel |channel-stdio|, it writes to Nvim's
@@ -1571,6 +1478,99 @@ nvim_unsubscribe({event})                                 *nvim_unsubscribe()*
 
     Parameters: ~
       • {event}  Event type string
+
+nvim__complete_set({index}, {opts})                     *nvim__complete_set()*
+    EXPERIMENTAL: this API may change in the future.
+
+    Sets info for the completion item at the given index. If the info text was
+    shown in a window, returns the window and buffer ids, or empty dict if not
+    shown.
+
+    Parameters: ~
+      • {index}  Completion candidate index
+      • {opts}   Optional parameters.
+                 • info: (string) info text.
+
+    Return: ~
+        Dictionary containing these keys:
+        • winid: (number) floating window id
+        • bufnr: (number) buffer id in floating window
+
+nvim__get_runtime({pat}, {all}, {opts})                  *nvim__get_runtime()*
+    Find files in runtime directories
+
+    Attributes: ~
+        |api-fast|
+
+    Parameters: ~
+      • {pat}   pattern of files to search for
+      • {all}   whether to return all matches or only the first
+      • {opts}  is_lua: only search Lua subdirs
+
+    Return: ~
+        list of absolute paths to the found files
+
+nvim__id({obj})                                                   *nvim__id()*
+    Returns object given as argument.
+
+    This API function is used for testing. One should not rely on its presence
+    in plugins.
+
+    Parameters: ~
+      • {obj}  Object to return.
+
+    Return: ~
+        its argument.
+
+nvim__id_array({arr})                                       *nvim__id_array()*
+    Returns array given as argument.
+
+    This API function is used for testing. One should not rely on its presence
+    in plugins.
+
+    Parameters: ~
+      • {arr}  Array to return.
+
+    Return: ~
+        its argument.
+
+nvim__id_dictionary({dct})                             *nvim__id_dictionary()*
+    Returns dictionary given as argument.
+
+    This API function is used for testing. One should not rely on its presence
+    in plugins.
+
+    Parameters: ~
+      • {dct}  Dictionary to return.
+
+    Return: ~
+        its argument.
+
+nvim__id_float({flt})                                       *nvim__id_float()*
+    Returns floating-point value given as argument.
+
+    This API function is used for testing. One should not rely on its presence
+    in plugins.
+
+    Parameters: ~
+      • {flt}  Value to return.
+
+    Return: ~
+        its argument.
+
+nvim__inspect_cell({grid}, {row}, {col})                *nvim__inspect_cell()*
+    NB: if your UI doesn't use hlstate, this will not return hlstate first
+    time.
+
+nvim__invalidate_glyph_cache()                *nvim__invalidate_glyph_cache()*
+    For testing. The condition in schar_cache_clear_if_full is hard to reach,
+    so this function can be used to force a cache clear in a test.
+
+nvim__stats()                                                  *nvim__stats()*
+    Gets internal stats.
+
+    Return: ~
+        Map of various internal stats.
 
 
 ==============================================================================
