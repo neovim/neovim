@@ -1307,6 +1307,14 @@ void ins_compl_show_pum(void)
   }
 }
 
+/// get current leader for completion
+///
+/// @return char * current compl_leader
+char *compl_current_leader(void)
+{
+  return compl_leader;
+}
+
 /// check selected is current match.
 ///
 /// @param selected the item which is selected.

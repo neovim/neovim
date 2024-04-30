@@ -434,6 +434,39 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
   pum_redraw();
 }
 
+/// Put text with attributes into the grid, highlighting matches with leader.
+static void pum_grid_put_with_attr(int col, char *text, int textlen, int attr)
+{
+  char *leader = compl_current_leader();
+  char *rt_leader = NULL;
+  if (leader != NULL && pum_rl) {
+    rt_leader = reverse_text(leader);
+  }
+  int match_start = 0, match_end = 0;
+  char *match_leader = rt_leader != NULL ? rt_leader : leader;
+  if (match_leader != NULL) {
+    char *result = strstr(text, match_leader);
+    if (result != NULL) {
+      match_start = (int)(result - text);
+      match_end = match_start + (int)strlen(match_leader);
+    }
+  }
+
+  int attr_match = win_hl_attr(curwin, HLF_PMI);
+  int text_length = (int)strlen(text);
+  for (int i = 0; i < text_length; i++) {
+    int new_attr = attr;
+    if (match_end > 0 && i >= match_start && i < match_end) {
+      new_attr = attr_match;
+    }
+    grid_line_put_schar(col, (schar_T)text[i], new_attr);
+    col += 1;
+  }
+  if (rt_leader) {
+    xfree(rt_leader);
+  }
+}
+
 /// Redraw the popup menu, using "pum_first" and "pum_selected".
 void pum_redraw(void)
 {
@@ -592,13 +625,12 @@ void pum_redraw(void)
                   size++;
                 }
               }
-              grid_line_puts(grid_col - size + 1, rt, -1, attr);
+              pum_grid_put_with_attr(grid_col - size + 1, rt, -1, attr);
               xfree(rt_start);
               xfree(st);
               grid_col -= width;
             } else {
-              // use grid_line_puts() to truncate the text
-              grid_line_puts(grid_col, st, -1, attr);
+              pum_grid_put_with_attr(grid_col, st, -1, attr);
               xfree(st);
               grid_col += width;
             }

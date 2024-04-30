@@ -54,6 +54,7 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_SPL] = "SpellLocal",
   [HLF_PNI] = "Pmenu",
   [HLF_PSI] = "PmenuSel",
+  [HLF_PMI] = "PmenuMatch",
   [HLF_PNK] = "PmenuKind",
   [HLF_PSK] = "PmenuKindSel",
   [HLF_PNX] = "PmenuExtra",
