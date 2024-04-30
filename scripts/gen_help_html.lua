@@ -66,10 +66,12 @@ local new_layout = {
   ['lua.txt'] = true,
   ['luaref.txt'] = true,
   ['news.txt'] = true,
+  ['news-0.9.txt'] = true,
   ['nvim.txt'] = true,
   ['pi_health.txt'] = true,
   ['provider.txt'] = true,
   ['ui.txt'] = true,
+  ['vim_diff.txt'] = true,
 }
 
 -- TODO: These known invalid |links| require an update to the relevant docs.
