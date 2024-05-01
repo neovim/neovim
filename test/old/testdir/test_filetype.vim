@@ -348,6 +348,7 @@ func s:GetFilenameChecks() abort
     \ 'ipfilter': ['ipf.conf', 'ipf6.conf', 'ipf.rules'],
     \ 'iss': ['file.iss'],
     \ 'ist': ['file.ist', 'file.mst'],
+    \ 'inko': ['file.inko'],
     \ 'j': ['file.ijs'],
     \ 'jal': ['file.jal', 'file.JAL'],
     \ 'jam': ['file.jpl', 'file.jpr', 'JAM-file.file', 'JAM.file', 'Prl-file.file', 'Prl.file'],
