@@ -1047,7 +1047,6 @@ local extension = {
   pgf = 'tex',
   nlo = 'tex',
   nls = 'tex',
-  out = 'tex',
   thm = 'tex',
   eps_tex = 'tex',
   pygtex = 'tex',
