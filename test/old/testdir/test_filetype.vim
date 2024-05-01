@@ -687,6 +687,7 @@ func s:GetFilenameChecks() abort
     \ 'starlark': ['file.ipd', 'file.star', 'file.starlark'],
     \ 'stata': ['file.ado', 'file.do', 'file.imata', 'file.mata'],
     \ 'stp': ['file.stp'],
+    \ 'stylus': ['a.styl', 'file.stylus'],
     \ 'sudoers': ['any/etc/sudoers', 'sudoers.tmp', '/etc/sudoers', 'any/etc/sudoers.d/file'],
     \ 'supercollider': ['file.quark'],
     \ 'surface': ['file.sface'],
