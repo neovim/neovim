@@ -1480,6 +1480,7 @@ local filename = {
   ['/etc/mail/aliases'] = 'mailaliases',
   mailcap = 'mailcap',
   ['.mailcap'] = 'mailcap',
+  Kbuild = 'make',
   ['/etc/man.conf'] = 'manconf',
   ['man.config'] = 'manconf',
   ['maxima-init.mac'] = 'maxima',
