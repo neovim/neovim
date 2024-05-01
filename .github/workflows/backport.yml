@@ -24,7 +24,8 @@ jobs:
               "detect_merge_method": true
             }
 
-      - uses: actions/github-script@v7
+      - if: ${{steps.backport.outputs.was_successful == 'true'}}
+        uses: actions/github-script@v7
         with:
           script: |
             github.rest.issues.addLabels({
