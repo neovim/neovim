@@ -67,7 +67,6 @@ static void mpack_str_small(char **buf, const char *str, size_t len)
 static void remote_ui_destroy(RemoteUI *ui)
   FUNC_ATTR_NONNULL_ALL
 {
-  kv_destroy(ui->call_buf);
   xfree(ui->packer.startptr);
   XFREE_CLEAR(ui->term_name);
   xfree(ui);
@@ -190,8 +189,6 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dictiona
     .anydata = ui,
   };
   ui->wildmenu_active = false;
-  ui->call_buf = (Array)ARRAY_DICT_INIT;
-  kv_ensure_space(ui->call_buf, 16);
 
   pmap_put(uint64_t)(&connected_uis, channel_id, ui);
   ui_attach_impl(ui, channel_id);
@@ -583,7 +580,7 @@ static void ui_flush_callback(PackerBuffer *packer)
 
 void remote_ui_grid_clear(RemoteUI *ui, Integer grid)
 {
-  Array args = ui->call_buf;
+  MAXSIZE_TEMP_ARRAY(args, 1);
   if (ui->ui_ext[kUILinegrid]) {
     ADD_C(args, INTEGER_OBJ(grid));
   }
@@ -593,7 +590,7 @@ void remote_ui_grid_clear(RemoteUI *ui, Integer grid)
 
 void remote_ui_grid_resize(RemoteUI *ui, Integer grid, Integer width, Integer height)
 {
-  Array args = ui->call_buf;
+  MAXSIZE_TEMP_ARRAY(args, 3);
   if (ui->ui_ext[kUILinegrid]) {
     ADD_C(args, INTEGER_OBJ(grid));
   } else {
@@ -609,7 +606,7 @@ void remote_ui_grid_scroll(RemoteUI *ui, Integer grid, Integer top, Integer bot,
                            Integer right, Integer rows, Integer cols)
 {
   if (ui->ui_ext[kUILinegrid]) {
-    Array args = ui->call_buf;
+    MAXSIZE_TEMP_ARRAY(args, 7);
     ADD_C(args, INTEGER_OBJ(grid));
     ADD_C(args, INTEGER_OBJ(top));
     ADD_C(args, INTEGER_OBJ(bot));
@@ -619,20 +616,19 @@ void remote_ui_grid_scroll(RemoteUI *ui, Integer grid, Integer top, Integer bot,
     ADD_C(args, INTEGER_OBJ(cols));
     push_call(ui, "grid_scroll", args);
   } else {
-    Array args = ui->call_buf;
+    MAXSIZE_TEMP_ARRAY(args, 4);
     ADD_C(args, INTEGER_OBJ(top));
     ADD_C(args, INTEGER_OBJ(bot - 1));
     ADD_C(args, INTEGER_OBJ(left));
     ADD_C(args, INTEGER_OBJ(right - 1));
     push_call(ui, "set_scroll_region", args);
 
-    args = ui->call_buf;
+    kv_size(args) = 0;
     ADD_C(args, INTEGER_OBJ(rows));
     push_call(ui, "scroll", args);
 
-    // some clients have "clear" being affected by scroll region,
-    // so reset it.
-    args = ui->call_buf;
+    // some clients have "clear" being affected by scroll region, so reset it.
+    kv_size(args) = 0;
     ADD_C(args, INTEGER_OBJ(0));
     ADD_C(args, INTEGER_OBJ(ui->height - 1));
     ADD_C(args, INTEGER_OBJ(0));
@@ -647,7 +643,7 @@ void remote_ui_default_colors_set(RemoteUI *ui, Integer rgb_fg, Integer rgb_bg, 
   if (!ui->ui_ext[kUITermColors]) {
     HL_SET_DEFAULT_COLORS(rgb_fg, rgb_bg, rgb_sp);
   }
-  Array args = ui->call_buf;
+  MAXSIZE_TEMP_ARRAY(args, 5);
   ADD_C(args, INTEGER_OBJ(rgb_fg));
   ADD_C(args, INTEGER_OBJ(rgb_bg));
   ADD_C(args, INTEGER_OBJ(rgb_sp));
@@ -657,15 +653,15 @@ void remote_ui_default_colors_set(RemoteUI *ui, Integer rgb_fg, Integer rgb_bg, 
 
   // Deprecated
   if (!ui->ui_ext[kUILinegrid]) {
-    args = ui->call_buf;
+    kv_size(args) = 0;
     ADD_C(args, INTEGER_OBJ(ui->rgb ? rgb_fg : cterm_fg - 1));
     push_call(ui, "update_fg", args);
 
-    args = ui->call_buf;
+    kv_size(args) = 0;
     ADD_C(args, INTEGER_OBJ(ui->rgb ? rgb_bg : cterm_bg - 1));
     push_call(ui, "update_bg", args);
 
-    args = ui->call_buf;
+    kv_size(args) = 0;
     ADD_C(args, INTEGER_OBJ(ui->rgb ? rgb_sp : -1));
     push_call(ui, "update_sp", args);
   }
@@ -678,7 +674,7 @@ void remote_ui_hl_attr_define(RemoteUI *ui, Integer id, HlAttrs rgb_attrs, HlAtt
     return;
   }
 
-  Array args = ui->call_buf;
+  MAXSIZE_TEMP_ARRAY(args, 4);
   ADD_C(args, INTEGER_OBJ(id));
   MAXSIZE_TEMP_DICT(rgb, HLATTRS_DICT_SIZE);
   MAXSIZE_TEMP_DICT(cterm, HLATTRS_DICT_SIZE);
@@ -706,14 +702,14 @@ void remote_ui_hl_attr_define(RemoteUI *ui, Integer id, HlAttrs rgb_attrs, HlAtt
 
 void remote_ui_highlight_set(RemoteUI *ui, int id)
 {
-  Array args = ui->call_buf;
-
   if (ui->hl_id == id) {
     return;
   }
+
   ui->hl_id = id;
   MAXSIZE_TEMP_DICT(dict, HLATTRS_DICT_SIZE);
   hlattrs2dict(&dict, NULL, syn_attr2entry(id), ui->rgb, false);
+  MAXSIZE_TEMP_ARRAY(args, 1);
   ADD_C(args, DICTIONARY_OBJ(dict));
   push_call(ui, "highlight_set", args);
 }
@@ -722,7 +718,7 @@ void remote_ui_highlight_set(RemoteUI *ui, int id)
 void remote_ui_grid_cursor_goto(RemoteUI *ui, Integer grid, Integer row, Integer col)
 {
   if (ui->ui_ext[kUILinegrid]) {
-    Array args = ui->call_buf;
+    MAXSIZE_TEMP_ARRAY(args, 3);
     ADD_C(args, INTEGER_OBJ(grid));
     ADD_C(args, INTEGER_OBJ(row));
     ADD_C(args, INTEGER_OBJ(col));
@@ -742,7 +738,7 @@ void remote_ui_cursor_goto(RemoteUI *ui, Integer row, Integer col)
   }
   ui->client_row = row;
   ui->client_col = col;
-  Array args = ui->call_buf;
+  MAXSIZE_TEMP_ARRAY(args, 2);
   ADD_C(args, INTEGER_OBJ(row));
   ADD_C(args, INTEGER_OBJ(col));
   push_call(ui, "cursor_goto", args);
@@ -751,7 +747,7 @@ void remote_ui_cursor_goto(RemoteUI *ui, Integer row, Integer col)
 void remote_ui_put(RemoteUI *ui, const char *cell)
 {
   ui->client_col++;
-  Array args = ui->call_buf;
+  MAXSIZE_TEMP_ARRAY(args, 1);
   ADD_C(args, CSTR_AS_OBJ(cell));
   push_call(ui, "put", args);
 }
@@ -950,12 +946,12 @@ void remote_ui_event(RemoteUI *ui, char *name, Array args)
       push_call(ui, name, new_args);
       goto free_ret;
     } else if (strequal(name, "cmdline_block_show")) {
-      Array new_args = ui->call_buf;
       Array block = args.items[0].data.array;
       Array new_block = arena_array(&arena, block.size);
       for (size_t i = 0; i < block.size; i++) {
         ADD_C(new_block, ARRAY_OBJ(translate_contents(ui, block.items[i].data.array, &arena)));
       }
+      MAXSIZE_TEMP_ARRAY(new_args, 1);
       ADD_C(new_args, ARRAY_OBJ(new_block));
       push_call(ui, name, new_args);
       goto free_ret;
@@ -972,18 +968,18 @@ void remote_ui_event(RemoteUI *ui, char *name, Array args)
       ui->wildmenu_active = (args.items[4].data.integer == -1)
                             || !ui->ui_ext[kUIPopupmenu];
       if (ui->wildmenu_active) {
-        Array new_args = ui->call_buf;
         Array items = args.items[0].data.array;
         Array new_items = arena_array(&arena, items.size);
         for (size_t i = 0; i < items.size; i++) {
           ADD_C(new_items, items.items[i].data.array.items[0]);
         }
+        MAXSIZE_TEMP_ARRAY(new_args, 1);
         ADD_C(new_args, ARRAY_OBJ(new_items));
         push_call(ui, "wildmenu_show", new_args);
         if (args.items[1].data.integer != -1) {
-          Array new_args2 = ui->call_buf;
-          ADD_C(new_args2, args.items[1]);
-          push_call(ui, "wildmenu_select", new_args2);
+          kv_size(new_args) = 0;
+          ADD_C(new_args, args.items[1]);
+          push_call(ui, "wildmenu_select", new_args);
         }
         goto free_ret;
       }
