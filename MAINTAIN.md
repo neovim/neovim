@@ -231,7 +231,7 @@ https://github.com/neovim/neovim-backup
 
 Some github labels are used to trigger certain jobs:
 
-* `backport release-x.y` - backport to release branch
+* `ci:backport release-x.y` - backport to branch `release-x.y`
 * `ci:s390x` - enable s390x CI
 * `ci:skip-news` - skip news.yml workflows
 * `ci:windows-asan` - test windows with ASAN enabled
