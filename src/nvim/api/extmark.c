@@ -761,32 +761,20 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       col2 = c;
     }
 
-    DecorPriority subpriority = DECOR_PRIORITY_BASE;
-    if (HAS_KEY(opts, set_extmark, _subpriority)) {
-      VALIDATE_RANGE((opts->_subpriority >= 0 && opts->_subpriority <= UINT16_MAX),
-                     "_subpriority", {
-        goto error;
-      });
-      subpriority = (DecorPriority)opts->_subpriority;
-    }
-
     if (kv_size(virt_text.data.virt_text)) {
-      decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_text, NULL), true,
-                           subpriority);
+      decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_text, NULL), true);
     }
     if (kv_size(virt_lines.data.virt_lines)) {
-      decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_lines, NULL), true,
-                           subpriority);
+      decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_lines, NULL), true);
     }
     if (url != NULL) {
       DecorSignHighlight sh = DECOR_SIGN_HIGHLIGHT_INIT;
       sh.url = url;
-      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, 0, 0, subpriority);
+      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, 0, 0);
     }
     if (has_hl) {
       DecorSignHighlight sh = decor_sh_from_inline(hl);
-      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, (uint32_t)ns_id, id,
-                         subpriority);
+      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, (uint32_t)ns_id, id);
     }
   } else {
     if (opts->ephemeral) {

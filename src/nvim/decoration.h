@@ -48,8 +48,6 @@ typedef struct {
   int attr_id;  ///< cached lookup of inl.hl_id if it was a highlight
   bool owned;   ///< ephemeral decoration, free memory immediately
   DecorPriority priority;
-  DecorPriority subpriority;  ///< Secondary priority value used for ordering (#27131).
-                              ///< Reflects the order of patterns/captures in the query file.
   DecorRangeKind kind;
   /// Screen column to draw the virtual text.
   /// When -1, it should be drawn on the current screen line after deciding where.

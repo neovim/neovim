@@ -253,7 +253,6 @@ error('Cannot require a meta file')
 --- @field undo_restore? boolean
 --- @field url? string
 --- @field scoped? boolean
---- @field _subpriority? integer
 
 --- @class vim.api.keyset.user_command
 --- @field addr? any
