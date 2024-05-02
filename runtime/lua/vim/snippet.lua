@@ -401,7 +401,7 @@ end
 --- Refer to https://microsoft.github.io/language-server-protocol/specification/#snippet_syntax
 --- for the specification of valid input.
 ---
---- Tabstops are highlighted with hl-SnippetTabstop.
+--- Tabstops are highlighted with |hl-SnippetTabstop|.
 ---
 --- @param input string
 function M.expand(input)

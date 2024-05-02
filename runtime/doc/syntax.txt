@@ -5054,6 +5054,8 @@ QuickFixLine	Current |quickfix| item in the quickfix window. Combined with
 							*hl-Search*
 Search		Last search pattern highlighting (see 'hlsearch').
 		Also used for similar items that need to stand out.
+							*hl-SnippetTabstop*
+SnippetTabstop	Tabstops in snippets. |vim.snippet|
 							*hl-SpecialKey*
 SpecialKey	Unprintable characters: Text displayed differently from what
 		it really is. But not 'listchars' whitespace. |hl-Whitespace|
