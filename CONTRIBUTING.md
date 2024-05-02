@@ -11,7 +11,8 @@ low-risk/isolated tasks:
 - Fix bugs found by [Coverity](#coverity).
 - [Merge a Vim patch] (requires strong familiarity with Vim)
   - NOTE: read the above link before sending improvements to "runtime files" (anything in `runtime/`).
-    - Vimscript and documentation files are (mostly) maintained by [Vim](https://github.com/vim/vim), not Nvim.
+    - Vimscript and documentation files are (mostly) maintained by [Vim], not Nvim.
+    - Nvim's [filetype detection](https://github.com/neovim/neovim/blob/master/runtime/lua/vim/filetype.lua) behavior matches Vim, so changes to filetype detection should be submitted to [Vim] first.
     - Lua files are maintained by Nvim.
 
 Reporting problems
@@ -352,6 +353,7 @@ as context, use the `-W` argument as well.
 [Cirrus CI]: https://cirrus-ci.com/github/neovim/neovim
 [Clang report]: https://neovim.io/doc/reports/clang/
 [GitHub Actions]: https://github.com/neovim/neovim/actions
+[Vim]: https://github.com/vim/vim
 [clangd]: https://clangd.llvm.org
 [Merge a Vim patch]: https://neovim.io/doc/user/dev_vimpatch.html
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
