@@ -748,6 +748,7 @@ func s:GetFilenameChecks() abort
     \ 'tcl': ['file.tcl', 'file.tm', 'file.tk', 'file.itcl', 'file.itk', 'file.jacl', '.tclshrc', 'tclsh.rc', '.wishrc', '.tclsh-history', '.xsctcmdhistory', '.xsdbcmdhistory'],
     \ 'tablegen': ['file.td'],
     \ 'teal': ['file.tl'],
+    \ 'templ': ['file.templ'],
     \ 'template': ['file.tmpl'],
     \ 'teraterm': ['file.ttl'],
     \ 'terminfo': ['file.ti'],
