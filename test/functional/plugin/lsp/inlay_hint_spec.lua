@@ -163,7 +163,7 @@ describe('vim.lsp.inlay_hint', function()
         screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
 
         exec_lua(
-          [[vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled(bufnr), { bufnr = bufnr })]]
+          [[vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr }), { bufnr = bufnr })]]
         )
         screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
 

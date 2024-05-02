@@ -364,12 +364,29 @@ api.nvim_set_decoration_provider(namespace, {
   end,
 })
 
---- @param bufnr (integer|nil) Buffer handle, or 0 for current
+--- @param filter vim.lsp.inlay_hint.enable.Filter
 --- @return boolean
 --- @since 12
-function M.is_enabled(bufnr)
+function M.is_enabled(filter)
+  ---@type integer
+  local bufnr
+  if type(filter) == 'number' then
+    vim.deprecate(
+      'vim.lsp.inlay_hint.is_enabled(bufnr:number)',
+      'vim.lsp.inlay_hint.is_enabled(filter:table)',
+      '0.10-dev'
+    )
+    bufnr = filter
+  else
+    vim.validate({ filter = { filter, 'table', true } })
+    filter = filter or {}
+    bufnr = filter.bufnr
+  end
+
   vim.validate({ bufnr = { bufnr, 'number', true } })
-  if bufnr == nil or bufnr == 0 then
+  if bufnr == nil then
+    return globalstate.enabled
+  elseif bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
   return bufstates[bufnr].enabled
