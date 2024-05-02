@@ -230,20 +230,6 @@ Boolean nvim_buf_detach(uint64_t channel_id, Buffer buffer, Error *err)
   return true;
 }
 
-/// @nodoc
-void nvim__buf_redraw_range(Buffer buffer, Integer first, Integer last, Error *err)
-{
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
-    return;
-  }
-  if (last < 0) {
-    last = buf->b_ml.ml_line_count;
-  }
-
-  redraw_buf_range_later(buf, (linenr_T)first + 1, (linenr_T)last);
-}
-
 /// Gets a line-range from the buffer.
 ///
 /// Indexing is zero-based, end-exclusive. Negative indices are interpreted

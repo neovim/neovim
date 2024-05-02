@@ -1281,7 +1281,7 @@ void pum_show_popupmenu(vimmenu_T *menu)
     pum_is_drawn = true;
     pum_grid.zindex = kZIndexCmdlinePopupMenu;  // show above cmdline area #23275
     pum_redraw();
-    setcursor_mayforce(true);
+    setcursor_mayforce(curwin, true);
 
     int c = vgetc();
 

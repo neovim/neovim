@@ -207,6 +207,18 @@ error('Cannot require a meta file')
 --- @field buf? integer
 --- @field filetype? string
 
+--- @class vim.api.keyset.redraw
+--- @field flush? boolean
+--- @field cursor? boolean
+--- @field valid? boolean
+--- @field statuscolumn? boolean
+--- @field statusline? boolean
+--- @field tabline? boolean
+--- @field winbar? boolean
+--- @field range? any[]
+--- @field win? integer
+--- @field buf? integer
+
 --- @class vim.api.keyset.runtime
 --- @field is_lua? boolean
 --- @field do_source? boolean

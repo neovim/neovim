@@ -14,12 +14,6 @@ function vim.api.nvim__buf_debug_extmarks(buffer, keys, dot) end
 
 --- @private
 --- @param buffer integer
---- @param first integer
---- @param last integer
-function vim.api.nvim__buf_redraw_range(buffer, first, last) end
-
---- @private
---- @param buffer integer
 --- @return table<string,any>
 function vim.api.nvim__buf_stats(buffer) end
 
@@ -104,6 +98,32 @@ function vim.api.nvim__inspect_cell(grid, row, col) end
 --- so this function can be used to force a cache clear in a test.
 ---
 function vim.api.nvim__invalidate_glyph_cache() end
+
+--- @private
+--- EXPERIMENTAL: this API may change in the future.
+---
+--- Instruct Nvim to redraw various components.
+---
+--- @param opts vim.api.keyset.redraw Optional parameters.
+---             • win: Target a specific `window-ID` as described below.
+---             • buf: Target a specific buffer number as described below.
+---             • flush: Update the screen with pending updates.
+---             • valid: When present mark `win`, `buf`, or all windows for
+---               redraw. When `true`, only redraw changed lines (useful for
+---               decoration providers). When `false`, forcefully redraw.
+---             • range: Redraw a range in `buf`, the buffer in `win` or the
+---               current buffer (useful for decoration providers). Expects a
+---               tuple `[first, last]` with the first and last line number of
+---               the range, 0-based end-exclusive `api-indexing`.
+---             • cursor: Immediately update cursor position on the screen in
+---               `win` or the current window.
+---             • statuscolumn: Redraw the 'statuscolumn' in `buf`, `win` or
+---               all windows.
+---             • statusline: Redraw the 'statusline' in `buf`, `win` or all
+---               windows.
+---             • winbar: Redraw the 'winbar' in `buf`, `win` or all windows.
+---             • tabline: Redraw the 'tabline'.
+function vim.api.nvim__redraw(opts) end
 
 --- @private
 --- @return any[]

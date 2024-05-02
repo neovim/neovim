@@ -5016,4 +5016,216 @@ describe('API', function()
       eq(false, exec_lua('return _G.success'))
     end)
   end)
+
+  it('nvim__redraw', function()
+    local screen = Screen.new(60, 5)
+    screen:attach()
+    local win = api.nvim_get_current_win()
+    eq('at least one action required', pcall_err(api.nvim__redraw, {}))
+    eq('at least one action required', pcall_err(api.nvim__redraw, { buf = 0 }))
+    eq('at least one action required', pcall_err(api.nvim__redraw, { win = 0 }))
+    eq("cannot use both 'buf' and 'win'", pcall_err(api.nvim__redraw, { buf = 0, win = 0 }))
+    feed(':echo getchar()<CR>')
+    fn.setline(1, 'foobar')
+    command('vnew')
+    fn.setline(1, 'foobaz')
+    -- Can flush pending screen updates
+    api.nvim__redraw({ flush = true })
+    screen:expect({
+      grid = [[
+        foobaz                        │foobar                       |
+        {1:~                             }│{1:~                            }|*2
+        {3:[No Name] [+]                  }{2:[No Name] [+]                }|
+        ^:echo getchar()                                             |
+      ]],
+    })
+    -- Can update the grid cursor position #20793
+    api.nvim__redraw({ cursor = true })
+    screen:expect({
+      grid = [[
+        ^foobaz                        │foobar                       |
+        {1:~                             }│{1:~                            }|*2
+        {3:[No Name] [+]                  }{2:[No Name] [+]                }|
+        :echo getchar()                                             |
+      ]],
+    })
+    -- Also in non-current window
+    api.nvim__redraw({ cursor = true, win = win })
+    screen:expect({
+      grid = [[
+        foobaz                        │^foobar                       |
+        {1:~                             }│{1:~                            }|*2
+        {3:[No Name] [+]                  }{2:[No Name] [+]                }|
+        :echo getchar()                                             |
+      ]],
+    })
+    -- Can update the 'statusline' in a single window
+    api.nvim_set_option_value('statusline', 'statusline1', { win = 0 })
+    api.nvim_set_option_value('statusline', 'statusline2', { win = win })
+    api.nvim__redraw({ cursor = true, win = 0, statusline = true })
+    screen:expect({
+      grid = [[
+        ^foobaz                        │foobar                       |
+        {1:~                             }│{1:~                            }|*2
+        {3:statusline1                    }{2:[No Name] [+]                }|
+        :echo getchar()                                             |
+      ]],
+    })
+    api.nvim__redraw({ win = win, statusline = true })
+    screen:expect({
+      grid = [[
+        ^foobaz                        │foobar                       |
+        {1:~                             }│{1:~                            }|*2
+        {3:statusline1                    }{2:statusline2                  }|
+        :echo getchar()                                             |
+      ]],
+    })
+    -- Can update the 'statusline' in all windows
+    api.nvim_set_option_value('statusline', '', { win = win })
+    api.nvim_set_option_value('statusline', 'statusline3', {})
+    api.nvim__redraw({ statusline = true })
+    screen:expect({
+      grid = [[
+        ^foobaz                        │foobar                       |
+        {1:~                             }│{1:~                            }|*2
+        {3:statusline3                    }{2:statusline3                  }|
+        :echo getchar()                                             |
+      ]],
+    })
+    -- Can update the 'statuscolumn'
+    api.nvim_set_option_value('statuscolumn', 'statuscolumn', { win = win })
+    api.nvim__redraw({ statuscolumn = true })
+    screen:expect({
+      grid = [[
+        ^foobaz                        │{8:statuscolumn}foobar           |
+        {1:~                             }│{1:~                            }|*2
+        {3:statusline3                    }{2:statusline3                  }|
+        :echo getchar()                                             |
+      ]],
+    })
+    -- Can update the 'winbar'
+    api.nvim_set_option_value('winbar', 'winbar', { win = 0 })
+    api.nvim__redraw({ win = 0, winbar = true })
+    screen:expect({
+      grid = [[
+        {5:^winbar                        }│{8:statuscolumn}foobar           |
+        foobaz                        │{1:~                            }|
+        {1:~                             }│{1:~                            }|
+        {3:statusline3                    }{2:statusline3                  }|
+        :echo getchar()                                             |
+      ]],
+    })
+    -- Can update the 'tabline'
+    api.nvim_set_option_value('showtabline', 2, {})
+    api.nvim_set_option_value('tabline', 'tabline', {})
+    api.nvim__redraw({ tabline = true })
+    screen:expect({
+      grid = [[
+        {2:^tabline                                                     }|
+        {5:winbar                        }│{8:statuscolumn}foobar           |
+        foobaz                        │{1:~                            }|
+        {3:statusline3                    }{2:statusline3                  }|
+        :echo getchar()                                             |
+      ]],
+    })
+    -- Can update multiple status widgets
+    api.nvim_set_option_value('tabline', 'tabline2', {})
+    api.nvim_set_option_value('statusline', 'statusline4', {})
+    api.nvim__redraw({ statusline = true, tabline = true })
+    screen:expect({
+      grid = [[
+        {2:^tabline2                                                    }|
+        {5:winbar                        }│{8:statuscolumn}foobar           |
+        foobaz                        │{1:~                            }|
+        {3:statusline4                    }{2:statusline4                  }|
+        :echo getchar()                                             |
+      ]],
+    })
+    -- Can update all status widgets
+    api.nvim_set_option_value('tabline', 'tabline3', {})
+    api.nvim_set_option_value('statusline', 'statusline5', {})
+    api.nvim_set_option_value('statuscolumn', 'statuscolumn2', {})
+    api.nvim_set_option_value('winbar', 'winbar2', {})
+    api.nvim__redraw({ statuscolumn = true, statusline = true, tabline = true, winbar = true })
+    screen:expect({
+      grid = [[
+        {2:^tabline3                                                    }|
+        {5:winbar2                       }│{5:winbar2                      }|
+        {8:statuscolumn2}foobaz           │{8:statuscolumn}foobar           |
+        {3:statusline5                    }{2:statusline5                  }|
+        :echo getchar()                                             |
+      ]],
+    })
+    -- Can update status widget for a specific window
+    feed('<CR><CR>')
+    command('let g:status=0')
+    api.nvim_set_option_value('statusline', '%{%g:status%}', { win = 0 })
+    command('vsplit')
+    screen:expect({
+      grid = [[
+        {2:tabline3                                                    }|
+        {5:winbar2             }│{5:winbar2            }│{5:winbar2            }|
+        {8:statuscolumn2}^foobaz │{8:statuscolumn2}foobaz│{8:statuscolumn}foobar |
+        {3:0                    }{2:0                   statusline5        }|
+        13                                                          |
+      ]],
+    })
+    command('let g:status=1')
+    api.nvim__redraw({ win = 0, statusline = true })
+    screen:expect({
+      grid = [[
+        {2:tabline3                                                    }|
+        {5:winbar2             }│{5:winbar2            }│{5:winbar2            }|
+        {8:statuscolumn2}^foobaz │{8:statuscolumn2}foobaz│{8:statuscolumn}foobar |
+        {3:1                    }{2:0                   statusline5        }|
+        13                                                          |
+      ]],
+    })
+    -- Can update status widget for a specific buffer
+    command('let g:status=2')
+    api.nvim__redraw({ buf = 0, statusline = true })
+    screen:expect({
+      grid = [[
+        {2:tabline3                                                    }|
+        {5:winbar2             }│{5:winbar2            }│{5:winbar2            }|
+        {8:statuscolumn2}^foobaz │{8:statuscolumn2}foobaz│{8:statuscolumn}foobar |
+        {3:2                    }{2:2                   statusline5        }|
+        13                                                          |
+      ]],
+    })
+    -- valid = true does not draw any lines on its own
+    exec_lua([[
+      lines = 0
+      ns = vim.api.nvim_create_namespace('')
+      on_win = function()
+        if do_win then
+          vim.api.nvim_buf_set_extmark(0, ns, 0, 0, { hl_group = 'IncSearch', end_col = 6 })
+        end
+      end
+      vim.api.nvim_set_decoration_provider(ns, {
+        on_win = on_win,
+        on_line = function()
+          lines = lines + 1
+        end,
+      })
+    ]])
+    local lines = exec_lua('return lines')
+    api.nvim__redraw({ buf = 0, valid = true, flush = true })
+    eq(lines, exec_lua('return lines'))
+    -- valid = false does
+    api.nvim__redraw({ buf = 0, valid = false, flush = true })
+    neq(lines, exec_lua('return lines'))
+    -- valid = true does redraw lines if affected by on_win callback
+    exec_lua('do_win = true')
+    api.nvim__redraw({ buf = 0, valid = true, flush = true })
+    screen:expect({
+      grid = [[
+        {2:tabline3                                                    }|
+        {5:winbar2             }│{5:winbar2            }│{5:winbar2            }|
+        {8:statuscolumn2}{2:^foobaz} │{8:statuscolumn2}{2:foobaz}│{8:statuscolumn}foobar |
+        {3:2                    }{2:2                   statusline5        }|
+        13                                                          |
+      ]],
+    })
+  end)
 end)

@@ -2594,6 +2594,12 @@ it(':substitute with inccommand, timer-induced :redraw #9777', function()
     {2:[Preview]                     }|
     :%s/foo/ZZZ^                   |
   ]])
+
+  -- Also with nvim__redraw()
+  command('call timer_start(10, {-> nvim__redraw(#{flush:1})}, {"repeat":-1})')
+  command('call timer_start(10, {-> nvim__redraw(#{statusline:1})}, {"repeat":-1})')
+  sleep(20) -- Allow some timer activity.
+  screen:expect_unchanged()
 end)
 
 it(':substitute with inccommand, allows :redraw before first separator is typed #18857', function()

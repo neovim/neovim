@@ -918,4 +918,57 @@ describe('statuscolumn', function()
                                        |
     ]])
   end)
+
+  it('forces a rebuild with nvim__redraw', function()
+    screen:try_resize(40, 4)
+    -- Current window
+    command([[
+      let g:insert = v:false
+      set nonu stc=%{g:insert?'insert':''}
+      vsplit
+      au InsertEnter * let g:insert = v:true | call nvim__redraw(#{statuscolumn:1, win:0})
+      au InsertLeave * let g:insert = v:false | call nvim__redraw(#{statuscolumn:1, win:0})
+    ]])
+    feed('i')
+    screen:expect({
+      grid = [[
+        {8:insert}^aaaaa         │aaaaa              |
+        {8:insert}aaaaa         │aaaaa              |
+        {3:[No Name] [+]        }{2:[No Name] [+]      }|
+        {5:-- INSERT --}                            |
+      ]],
+    })
+    feed('<esc>')
+    screen:expect({
+      grid = [[
+        ^aaaaa               │aaaaa              |
+        aaaaa               │aaaaa              |
+        {3:[No Name] [+]        }{2:[No Name] [+]      }|
+                                                |
+      ]],
+    })
+    -- All windows
+    command([[
+      au! InsertEnter * let g:insert = v:true | call nvim__redraw(#{statuscolumn:1})
+      au! InsertLeave * let g:insert = v:false | call nvim__redraw(#{statuscolumn:1})
+    ]])
+    feed('i')
+    screen:expect({
+      grid = [[
+        {8:insert}^aaaaa         │{8:insert}aaaaa        |
+        {8:insert}aaaaa         │{8:insert}aaaaa        |
+        {3:[No Name] [+]        }{2:[No Name] [+]      }|
+        {5:-- INSERT --}                            |
+      ]],
+    })
+    feed('<esc>')
+    screen:expect({
+      grid = [[
+        ^aaaaa               │aaaaa              |
+        aaaaa               │aaaaa              |
+        {3:[No Name] [+]        }{2:[No Name] [+]      }|
+                                                |
+      ]],
+    })
+  end)
 end)

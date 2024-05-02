@@ -77,6 +77,23 @@ int xctz(uint64_t x)
 #endif
 }
 
+/// Count number of set bits in bit field.
+int popcount(uint64_t x)
+{
+  // Use compiler builtin if possible.
+#if defined(__clang__) || defined(__GNUC__)
+  return __builtin_popcountll(x);
+#else
+  int count = 0;
+  for (; x != 0; x >>= 1) {
+    if (x & 1) {
+      count++;
+    }
+  }
+  return count;
+#endif
+}
+
 /// For overflow detection, add a digit safely to an int value.
 int vim_append_digit_int(int *value, int digit)
 {

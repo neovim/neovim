@@ -5886,7 +5886,7 @@ static void ex_equal(exarg_T *eap)
 static void ex_sleep(exarg_T *eap)
 {
   if (cursor_valid(curwin)) {
-    setcursor_mayforce(true);
+    setcursor_mayforce(curwin, true);
   }
 
   int64_t len = eap->line2;
