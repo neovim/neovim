@@ -226,7 +226,7 @@ function TSTreeView:draw(bufnr)
         text = string.format('(%s', item.node:type())
       end
     else
-      text = string.format('"%s"', item.node:type():gsub('\n', '\\n'):gsub('"', '\\"'))
+      text = string.format('%q', item.node:type()):gsub('\n', 'n')
     end
 
     local next = self:get(i + 1)
