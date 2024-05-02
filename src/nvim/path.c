@@ -999,7 +999,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
       memmove(path, path_cutoff, strlen(path_cutoff) + 1);
     } else {
       // Here all files can be reached without path, so get shortest
-      // unique path.  We start at the end of the path. */
+      // unique path.  We start at the end of the path.
       char *pathsep_p = path + len - 1;
       while (find_previous_pathsep(path, &pathsep_p)) {
         if (vim_regexec(&regmatch, pathsep_p + 1, 0)

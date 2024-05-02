@@ -4082,7 +4082,7 @@ void separate_nextcmd(exarg_T *eap)
         break;
       }
     } else if (
-               // Check for '"': start of comment or '|': next command */
+               // Check for '"': start of comment or '|': next command
                // :@" does not start a comment!
                // :redir @" doesn't either.
                (*p == '"'
