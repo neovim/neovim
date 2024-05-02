@@ -1645,13 +1645,15 @@ get({filter})                                       *vim.lsp.inlay_hint.get()*
         • {client_id} (`integer`)
         • {inlay_hint} (`lsp.InlayHint`)
 
-is_enabled({bufnr})                          *vim.lsp.inlay_hint.is_enabled()*
+is_enabled({filter})                         *vim.lsp.inlay_hint.is_enabled()*
 
     Note: ~
       • This API is pre-release (unstable).
 
     Parameters: ~
-      • {bufnr}  (`integer?`) Buffer handle, or 0 for current
+      • {filter}  (`table`) Optional filters |kwargs|, or `nil` for all.
+                  • {bufnr} (`integer?`) Buffer number, or 0 for current
+                    buffer, or nil for all.
 
     Return: ~
         (`boolean`)
