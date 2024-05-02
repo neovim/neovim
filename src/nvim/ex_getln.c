@@ -728,7 +728,9 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
 
   redir_off = true;             // don't redirect the typed command
   if (!cmd_silent) {
-    gotocmdline(true);
+    if (!ui_has(kUICmdline)) {
+      gotocmdline(true);
+    }
     redrawcmdprompt();          // draw prompt or indent
     ccline.cmdspos = cmd_startcol();
     if (!msg_scroll) {
@@ -3877,9 +3879,10 @@ void cursorcmd(void)
 
 void gotocmdline(bool clr)
 {
-  if (ui_has(kUICmdline)) {
+  if (ui_has(kUIMessages) && !clr) {
     return;
   }
+
   msg_start();
   msg_col = 0;  // always start in column 0
   if (clr) {  // clear the bottom line(s)
