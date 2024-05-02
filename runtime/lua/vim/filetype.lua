@@ -545,6 +545,7 @@ local extension = {
   inf = 'inform',
   INF = 'inform',
   ii = 'initng',
+  inko = 'inko',
   inp = detect.inp,
   ms = detect_seq(detect.nroff, 'xmath'),
   iss = 'iss',
