@@ -137,20 +137,51 @@ describe('vim.lsp.inlay_hint', function()
       )
     end)
 
-    it('clears/applies inlay hints when passed false/true/nil', function()
-      exec_lua([[vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })]])
-      screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
+    describe('clears/applies inlay hints when passed false/true/nil', function()
+      before_each(function()
+        exec_lua([[
+          bufnr2 = vim.api.nvim_create_buf(true, false)
+          vim.lsp.buf_attach_client(bufnr2, client_id)
+          vim.api.nvim_win_set_buf(0, bufnr2)
+        ]])
+        insert(text)
+        exec_lua([[vim.lsp.inlay_hint.enable(true, { bufnr = bufnr2 })]])
+        exec_lua([[vim.api.nvim_win_set_buf(0, bufnr)]])
+        screen:expect({ grid = grid_with_inlay_hints })
+      end)
 
-      exec_lua([[vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })]])
-      screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
+      it('for one single buffer', function()
+        exec_lua([[
+          vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })
+          vim.api.nvim_win_set_buf(0, bufnr2)
+        ]])
+        screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
+        exec_lua([[vim.api.nvim_win_set_buf(0, bufnr)]])
+        screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
 
-      exec_lua(
-        [[vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled(bufnr), { bufnr = bufnr })]]
-      )
-      screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
+        exec_lua([[vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })]])
+        screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
 
-      exec_lua([[vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })]])
-      screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
+        exec_lua(
+          [[vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled(bufnr), { bufnr = bufnr })]]
+        )
+        screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
+
+        exec_lua([[vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })]])
+        screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
+      end)
+
+      it('for all buffers', function()
+        exec_lua([[vim.lsp.inlay_hint.enable(false)]])
+        screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
+        exec_lua([[vim.api.nvim_win_set_buf(0, bufnr2)]])
+        screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
+
+        exec_lua([[vim.lsp.inlay_hint.enable(true)]])
+        screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
+        exec_lua([[vim.api.nvim_win_set_buf(0, bufnr)]])
+        screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
+      end)
     end)
   end)
 
