@@ -377,6 +377,7 @@ void ui_attach_impl(RemoteUI *ui, uint64_t chanid)
   if (ui_count == MAX_UI_COUNT) {
     abort();
   }
+
   if (!ui->ui_ext[kUIMultigrid] && !ui->ui_ext[kUIFloatDebug]
       && !ui_client_channel_id) {
     ui_comp_attach(ui);
