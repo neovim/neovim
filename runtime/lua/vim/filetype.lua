@@ -1037,6 +1037,7 @@ local extension = {
   tk = 'tcl',
   jacl = 'tcl',
   tl = 'teal',
+  templ = 'templ',
   tmpl = 'template',
   ti = 'terminfo',
   dtx = 'tex',
