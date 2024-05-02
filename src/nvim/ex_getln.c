@@ -3879,7 +3879,10 @@ void cursorcmd(void)
 
 void gotocmdline(bool clr)
 {
-  if (ui_has(kUIMessages) && !clr) {
+  if (ui_has(kUIMessages) && clr) {
+    msg_ext_clear(true);
+    return;
+  } else if (ui_has(kUIMessages) && !clr) {
     return;
   }
 
