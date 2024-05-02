@@ -859,10 +859,10 @@ void ui_ext_win_position(win_T *wp, bool validate)
       }
     } else {
       bool valid = (wp->w_redr_type == 0);
-      if (!valid && !validate) {
-        wp->w_pos_changed = true;
-        return;
-      }
+      // if (!valid && !validate) {
+      //   wp->w_pos_changed = true;
+      //   return;
+      // }
       // TODO(bfredl): ideally, compositor should work like any multigrid UI
       // and use standard win_pos events.
       bool east = c.anchor & kFloatAnchorEast;
