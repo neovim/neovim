@@ -4,27 +4,29 @@
 # changelog header
 header = """
 # Changelog\n
-All notable changes to this project will be documented in this file.\n
+For notable changes, see runtime/doc/news.txt (or `:help news` in Nvim).\n
+Following is a list of fixes/features commits.\n
 """
 # template for the changelog body
 # https://github.com/Keats/tera
 # https://keats.github.io/tera/docs/
 body = """
 {% if version %}\
-    ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+    # [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
 {% else %}\
-    ## [unreleased]
+    # [unreleased]
 {% endif %}\
 {% for group, commits in commits | group_by(attribute="group") %}
-    ### {{ group | striptags | upper_first }}
+    {{ group | striptags | upper_first }}
+    --------------------------------------------------------------------------------
     {% for commit in commits | sort(attribute="message")%}\
         {% if not commit.scope %}\
-            - {{ commit.message }}
+            - {{ commit.id | truncate(length=12, end="") }} {{ commit.message }}
         {% endif %}\
     {% endfor %}\
     {% for group, commits in commits | group_by(attribute="scope") %}\
         {% for commit in commits | sort(attribute="message") %}\
-            - **{{commit.scope}}**: {{ commit.message }}
+            - {{ commit.id | truncate(length=12, end="") }} {{commit.scope}}: {{ commit.message }}
         {% endfor %}\
     {% endfor %}
 {% endfor %}\n
