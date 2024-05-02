@@ -709,5 +709,27 @@ func Test_virtualedit_replace_after_tab()
   bwipe!
 endfunc
 
+" Test that setpos('.') and cursor() behave the same for v:maxcol
+func Test_virtualedit_set_cursor_pos_maxcol()
+  new
+  set virtualedit=all
+
+  call setline(1, 'foobar')
+  exe "normal! V\<Esc>"
+  call assert_equal([0, 1, 1, 0], getpos("'<"))
+  call assert_equal([0, 1, v:maxcol, 0], getpos("'>"))
+  let pos = getpos("'>")
+
+  call cursor(1, 1)
+  call setpos('.', pos)
+  call assert_equal([0, 1, 7, 0], getpos('.'))
+
+  call cursor(1, 1)
+  call cursor(pos[1:])
+  call assert_equal([0, 1, 7, 0], getpos('.'))
+
+  set virtualedit&
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
