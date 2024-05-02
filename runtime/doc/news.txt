@@ -417,6 +417,7 @@ The following changes to existing APIs or features add new behavior.
   • 'shortmess' includes the "C" flag.
   • 'grepprg' uses the -H and -I flags for grep by default,
     and defaults to using ripgrep if available.
+  • "]d" and "[d" in Normal mode map to |vim.diagnostic.goto_next()| and
     |vim.diagnostic.goto_prev()|, respectively. |]d-default| |[d-default|
   • <C-W>d (and <C-W><C-D>) map to |vim.diagnostic.open_float()|
     |CTRL-W_d-default|

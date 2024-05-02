@@ -281,10 +281,6 @@ gr{char}		Replace the virtual characters under the cursor with
 			that have a special meaning in Insert mode, such as
 			most CTRL-keys, cannot be used.
 
-							*gr-default*
-			Mapped to |vim.lsp.buf.references()| by default.
-			|default-mappings|
-
 						*digraph-arg*
 The argument for Normal mode commands like |r| and |t| is a single character.
 When 'cpo' doesn't contain the 'D' flag, this character can also be entered

@@ -897,12 +897,12 @@ end
 ---@param bufnr (integer) Buffer handle, or 0 for current.
 ---@param method (string) LSP method name
 ---@param params (table|nil) Parameters to send to the server
----@param handler fun(results: table<integer, {error: lsp.ResponseError, result: any}>) (function)
+---@param handler fun(results: table<integer, {error: lsp.ResponseError?, result: any}>) (function)
 --- Handler called after all requests are completed. Server results are passed as
 --- a `client_id:result` map.
 ---@return function cancel Function that cancels all requests.
 function lsp.buf_request_all(bufnr, method, params, handler)
-  local results = {} --- @type table<integer,{error:lsp.ResponseError, result:any}>
+  local results = {} --- @type table<integer,{error: lsp.ResponseError?, result: any}>
   local result_count = 0
   local expected_result_count = 0
 
@@ -940,7 +940,7 @@ end
 ---@param params table? Parameters to send to the server
 ---@param timeout_ms integer? Maximum time in milliseconds to wait for a result.
 ---                           (default: `1000`)
----@return table<integer, {err: lsp.ResponseError, result: any}>? result Map of client_id:request_result.
+---@return table<integer, {error: lsp.ResponseError?, result: any}>? result Map of client_id:request_result.
 ---@return string? err On timeout, cancel, or error, `err` is a string describing the failure reason, and `result` is nil.
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   local request_results ---@type table

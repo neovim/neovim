@@ -443,7 +443,7 @@ int grid_line_puts(int col, const char *text, int textlen, int attr)
 
     if (col + mbyte_cells > max_col) {
       // Only 1 cell left, but character requires 2 cells:
-      // display a '>' in the last column to avoid wrapping. */
+      // display a '>' in the last column to avoid wrapping.
       schar = schar_from_ascii('>');
       mbyte_cells = 1;
     }

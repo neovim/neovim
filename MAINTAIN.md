@@ -22,7 +22,7 @@ In practice we haven't found a way to forecast more precisely than "next" and
 * Next feature-release (1.x.0)
 
 The forecasting problem might be solved with an explicit priority system (like
-Bram's todo.txt). Meanwhile the Neovim priority system is defined by:
+Vim's todo.txt). Meanwhile the Neovim priority system is defined by:
 
 * PRs nearing completion.
 * Issue labels. E.g. the `has:plan` label increases the ticket's priority merely
@@ -57,8 +57,8 @@ has a major bug:
 
 ### Release automation
 
-Neovim automation includes a [backport bot](https://github.com/zeebe-io/backport-action).
-Trigger the action by labeling a PR with `backport release-X.Y`. See `.github/workflows/backport.yml`.
+Neovim automation includes a [backport bot](https://github.com/korthout/backport-action).
+Trigger the action by labeling a PR with `ci:backport release-x.y`. See `.github/workflows/backport.yml`.
 
 Deprecating and removing features
 ---------------------------------
@@ -74,7 +74,7 @@ When a (non-experimental) feature is slated to be removed it should:
 1. Be _soft_ deprecated in the _next_ release
   - Use of the deprecated feature will still work.
   - This means deprecating via documentation and annotation (`@deprecated`).
-  - Include a note in `news.txt` under `DEPRECATIONS`.
+  - Include a note in `deprecated.txt`.
   - For Lua features, use `vim.deprecate()`. The specified version is the
     current minor version + 2. For example, if the current version is
     `v0.10.0-dev-1957+gd676746c33` then use `0.12`.
@@ -132,7 +132,7 @@ Some can be auto-bumped by `scripts/bump_deps.lua`.
 * [gettext](https://ftp.gnu.org/pub/gnu/gettext/)
 * [libiconv](https://ftp.gnu.org/pub/gnu/libiconv)
 * [libuv](https://github.com/libuv/libuv)
-* [libvterm](http://www.leonerd.org.uk/code/libvterm/)
+* [libvterm](https://www.leonerd.org.uk/code/libvterm/)
   * Downloading from the original source is unreliable, so we use our [mirror](https://github.com/neovim/libvterm) instead.
 * [lua-compat](https://github.com/keplerproject/lua-compat-5.3)
 * [tree-sitter](https://github.com/tree-sitter/tree-sitter)

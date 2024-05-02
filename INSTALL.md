@@ -36,7 +36,7 @@ Windows 8+ is required. Windows 7 or older is not supported.
 
 ### [Chocolatey](https://chocolatey.org)
 
-- **Release (v0.7):** `choco install neovim` (use -y for automatically skipping confirmation messages)
+- **Latest Release:** `choco install neovim` (use -y for automatically skipping confirmation messages)
 - **Development (pre-release):** `choco install neovim --pre`
 
 ### [Scoop](https://scoop.sh/)

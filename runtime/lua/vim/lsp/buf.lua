@@ -503,7 +503,7 @@ function M.typehierarchy(kind)
 
   --- Merge results from multiple clients into a single table. Client-ID is preserved.
   ---
-  --- @param results table<integer, {error: lsp.ResponseError, result: lsp.TypeHierarchyItem[]?}>
+  --- @param results table<integer, {error: lsp.ResponseError?, result: lsp.TypeHierarchyItem[]?}>
   --- @return [integer, lsp.TypeHierarchyItem][]
   local function merge_results(results)
     local merged_results = {}
@@ -521,7 +521,7 @@ function M.typehierarchy(kind)
 
   local bufnr = api.nvim_get_current_buf()
   local params = util.make_position_params()
-  --- @param results table<integer, {error: lsp.ResponseError, result: lsp.TypeHierarchyItem[]?}>
+  --- @param results table<integer, {error: lsp.ResponseError?, result: lsp.TypeHierarchyItem[]?}>
   vim.lsp.buf_request_all(bufnr, ms.textDocument_prepareTypeHierarchy, params, function(results)
     local merged_results = merge_results(results)
     if #merged_results == 0 then

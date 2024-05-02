@@ -694,8 +694,8 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
                       milliseconds to wait for a result.
 
     Return (multiple): ~
-        (`table<integer, {err: lsp.ResponseError, result: any}>?`) result Map
-        of client_id:request_result.
+        (`table<integer, {error: lsp.ResponseError?, result: any}>?`) result
+        Map of client_id:request_result.
         (`string?`) err On timeout, cancel, or error, `err` is a string
         describing the failure reason, and `result` is nil.
 
@@ -1589,7 +1589,7 @@ save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
 Lua module: vim.lsp.inlay_hint                                *lsp-inlay_hint*
 
 enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*
-    Enables or disables inlay hints for a buffer.
+    Enables or disables inlay hints for the {filter}ed scope.
 
     To "toggle", pass the inverse of `is_enabled()`: >lua
         vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
@@ -1636,6 +1636,7 @@ get({filter})                                       *vim.lsp.inlay_hint.get()*
         • {inlay_hint} (`lsp.InlayHint`)
 
 is_enabled({filter})                         *vim.lsp.inlay_hint.is_enabled()*
+    Query whether inlay hint is enabled in the {filter}ed scope
 
     Note: ~
       • This API is pre-release (unstable).
