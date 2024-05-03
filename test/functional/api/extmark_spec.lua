@@ -1896,6 +1896,24 @@ describe('Extmarks buffer api with many marks', function()
     end
     eq(ns_marks[ns1], get_marks(ns1))
     eq(ns_marks[ns2], get_marks(ns2))
+
+    api.nvim_buf_clear_namespace(0, ns1, 0, 10)
+    for id, mark in pairs(ns_marks[ns1]) do
+      if mark[1] < 10 then
+        ns_marks[ns1][id] = nil
+      end
+    end
+    eq(ns_marks[ns1], get_marks(ns1))
+    eq(ns_marks[ns2], get_marks(ns2))
+
+    api.nvim_buf_clear_namespace(0, ns1, 20, -1)
+    for id, mark in pairs(ns_marks[ns1]) do
+      if mark[1] >= 20 then
+        ns_marks[ns1][id] = nil
+      end
+    end
+    eq(ns_marks[ns1], get_marks(ns1))
+    eq(ns_marks[ns2], get_marks(ns2))
   end)
 
   it('can delete line', function()

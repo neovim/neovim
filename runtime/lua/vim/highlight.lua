@@ -129,13 +129,13 @@ function M.on_yank(opts)
     yank_cancel()
   end
 
+  vim.api.nvim_win_add_ns(winid, yank_ns)
   M.range(bufnr, yank_ns, higroup, "'[", "']", {
     regtype = event.regtype,
     inclusive = event.inclusive,
     priority = opts.priority or M.priorities.user,
     _scoped = true,
   })
-  vim.api.nvim_win_add_ns(winid, yank_ns)
 
   yank_cancel = function()
     yank_timer = nil
