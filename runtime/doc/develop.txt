@@ -309,6 +309,11 @@ See also |dev-naming|.
   - return iterable instead of table
   - mimic the pairs() or ipairs() interface if the function is intended to be
     used in a "for" loop.
+  - when a result-or-error interface is needed, return `result|nil, errmsg|nil`: >
+    ---@return Foo|nil # Result object, or nil if not found.
+    ---@return nil|string # Error message on failure, or nil on success.
+<
+    - Examples: |vim.ui.open()| |io.open()| |luv-error-handling|
 
 Interface conventions ~
 

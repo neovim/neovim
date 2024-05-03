@@ -163,7 +163,7 @@ cycle (Nvim HEAD, the "master" branch).
 
 • Renamed vim.tbl_isarray() to vim.isarray().
 
-• Changed |vim.ui.open()| return-signature to match pcall() convention.
+• Changed |vim.ui.open()| return-signature to match `result|nil, errormsg|nil` convention.
 
 • Renamed Iter:nextback() to Iter:pop()
 

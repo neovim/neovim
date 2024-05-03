@@ -2551,8 +2551,8 @@ vim.ui.open({path})                                            *vim.ui.open()*
         vim.ui.open("https://neovim.io/")
         vim.ui.open("~/path/to/file")
         -- Synchronous (wait until the process exits).
-        local ok, cmd = vim.ui.open("$VIMRUNTIME")
-        if ok then
+        local cmd, err = vim.ui.open("$VIMRUNTIME")
+        if cmd then
           cmd:wait()
         end
 <
@@ -2561,8 +2561,8 @@ vim.ui.open({path})                                            *vim.ui.open()*
       • {path}  (`string`) Path or URL to open
 
     Return (multiple): ~
-        (`boolean`) false if command not found, else true.
-        (`vim.SystemObj|string`) Command object, or error message on failure
+        (`vim.SystemObj?`) Command object, or nil if not found.
+        (`string?`) Error message on failure, or nil on success.
 
     See also: ~
       • |vim.system()|

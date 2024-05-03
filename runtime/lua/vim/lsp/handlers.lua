@@ -654,15 +654,15 @@ M[ms.window_showDocument] = function(_, result, ctx, _)
 
   if result.external then
     -- TODO(lvimuser): ask the user for confirmation
-    local ok, cmd_or_err = vim.ui.open(uri)
-    local ret = ok and (cmd_or_err --[[@as vim.SystemObj]]):wait(2000) or nil
+    local cmd, err = vim.ui.open(uri)
+    local ret = cmd and cmd:wait(2000) or nil
 
     if ret == nil or ret.code ~= 0 then
       return {
         success = false,
         error = {
           code = protocol.ErrorCodes.UnknownErrorCode,
-          message = ret and ret.stderr or cmd_or_err,
+          message = ret and ret.stderr or err,
         },
       }
     end
