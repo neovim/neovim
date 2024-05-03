@@ -20,7 +20,11 @@ local bufstates = vim.defaulttable(function(_)
   return setmetatable({ applied = {} }, {
     __index = globalstate,
     __newindex = function(state, key, value)
-      rawset(state, key, (globalstate[key] ~= value) and value or nil)
+      if globalstate[key] == value then
+        rawset(state, key, nil)
+      else
+        rawset(state, key, value)
+      end
     end,
   })
 end)
