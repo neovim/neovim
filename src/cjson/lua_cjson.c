@@ -174,9 +174,9 @@ typedef struct {
 
 typedef struct {
     /* convert null in json objects to lua nil instead of vim.NIL */
-    int luanil_object;
+    bool luanil_object;
     /* convert null in json arrays to lua nil instead of vim.NIL */
-    int luanil_array;
+    bool luanil_array;
 } json_options_t;
 
 typedef struct {
@@ -1453,15 +1453,11 @@ static int json_decode(lua_State *l)
         luaL_checktype(l, -1, LUA_TTABLE);
 
         lua_getfield(l, -1, "object");
-        if (!lua_isnil(l, -1)) {
-            options.luanil_object = true;
-        }
+        options.luanil_object = lua_toboolean(l, -1);
         lua_pop(l, 1);
 
         lua_getfield(l, -1, "array");
-        if (!lua_isnil(l, -1)) {
-            options.luanil_array = true;
-        }
+        options.luanil_array = lua_toboolean(l, -1);
         /* Also pop the luanil table */
         lua_pop(l, 2);
         break;
