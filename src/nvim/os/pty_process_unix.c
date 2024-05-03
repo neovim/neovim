@@ -175,8 +175,8 @@ int pty_process_spawn(PtyProcess *ptyproc)
   ptyproc->winsize = (struct winsize){
     ptyproc->height,
     ptyproc->width,
-    ptyproc->winsize.ws_xpixel / ptyproc->winsize.ws_col * ptyproc->width,
-    ptyproc->winsize.ws_ypixel / ptyproc->winsize.ws_row * ptyproc->height,
+    (ptyproc->winsize.ws_xpixel / ptyproc->winsize.ws_col) * ptyproc->width,
+    (ptyproc->winsize.ws_ypixel / ptyproc->winsize.ws_row) * ptyproc->height,
   };
   uv_disable_stdio_inheritance();
   int master;
@@ -242,8 +242,8 @@ void pty_process_resize(PtyProcess *ptyproc, uint16_t width, uint16_t height)
   ptyproc->winsize = (struct winsize){
     height,
     width,
-    ptyproc->winsize.ws_xpixel / ptyproc->winsize.ws_col * width,
-    ptyproc->winsize.ws_ypixel / ptyproc->winsize.ws_row * height,
+    (ptyproc->winsize.ws_xpixel / ptyproc->winsize.ws_col) * width,
+    (ptyproc->winsize.ws_ypixel / ptyproc->winsize.ws_row) * height,
   };
   ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
 }
