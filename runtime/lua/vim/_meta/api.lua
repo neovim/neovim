@@ -2257,6 +2257,9 @@ function vim.api.nvim_win_set_config(window, config) end
 
 --- Sets the (1,0)-indexed cursor position in the window. `api-indexing` This
 --- scrolls the window even if it is not the current one.
+--- Alerts if row outside buffer and col greater than `v:maxcol` If col is
+--- greater than the maximum col of the line and the `virtualedit` option is
+--- not set, col will be moved to end of the line while no alert
 ---
 --- @param window integer Window handle, or 0 for current window
 --- @param pos integer[] (row, col) tuple representing the new position
