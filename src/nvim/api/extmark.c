@@ -1234,7 +1234,9 @@ Boolean nvim_win_add_ns(Window window, Integer ns_id, Error *err)
 
   set_put(uint32_t, &win->w_ns_set, (uint32_t)ns_id);
 
-  changed_window_setting(win);
+  if (map_has(uint32_t, win->w_buffer->b_extmark_ns, (uint32_t)ns_id)) {
+    changed_window_setting(win);
+  }
 
   return true;
 }
@@ -1279,7 +1281,9 @@ Boolean nvim_win_remove_ns(Window window, Integer ns_id, Error *err)
 
   set_del(uint32_t, &win->w_ns_set, (uint32_t)ns_id);
 
-  changed_window_setting(win);
+  if (map_has(uint32_t, win->w_buffer->b_extmark_ns, (uint32_t)ns_id)) {
+    changed_window_setting(win);
+  }
 
   return true;
 }
