@@ -22,16 +22,16 @@ M[ms.workspace_executeCommand] = function(_, _, _, _)
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress
----@param result lsp.ProgressParams
+---@param params lsp.ProgressParams
 ---@param ctx lsp.HandlerContext
-M[ms.dollar_progress] = function(_, result, ctx)
+M[ms.dollar_progress] = function(_, params, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
     err_message('LSP[id=', tostring(ctx.client_id), '] client has shut down during progress update')
     return vim.NIL
   end
   local kind = nil
-  local value = result.value
+  local value = params.value
 
   if type(value) == 'table' then
     kind = value.kind
@@ -39,21 +39,21 @@ M[ms.dollar_progress] = function(_, result, ctx)
     -- So that consumers always have it available, even if they consume a
     -- subset of the full sequence
     if kind == 'begin' then
-      client.progress.pending[result.token] = value.title
+      client.progress.pending[params.token] = value.title
     else
-      value.title = client.progress.pending[result.token]
+      value.title = client.progress.pending[params.token]
       if kind == 'end' then
-        client.progress.pending[result.token] = nil
+        client.progress.pending[params.token] = nil
       end
     end
   end
 
-  client.progress:push(result)
+  client.progress:push(params)
 
   api.nvim_exec_autocmds('LspProgress', {
     pattern = kind,
     modeline = false,
-    data = { client_id = ctx.client_id, result = result },
+    data = { client_id = ctx.client_id, params = params },
   })
 end
 

@@ -178,6 +178,8 @@ cycle (Nvim HEAD, the "master" branch).
 
 • Renamed vim.snippet.exit() to  vim.snippet.stop().
 
+• Changed |event-data| table for |LspProgress|: renamed `result` to `params`.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 
