@@ -5195,28 +5195,27 @@ describe('API', function()
     })
     -- valid = true does not draw any lines on its own
     exec_lua([[
-      lines = 0
+      _G.lines = 0
       ns = vim.api.nvim_create_namespace('')
-      on_win = function()
-        if do_win then
-          vim.api.nvim_buf_set_extmark(0, ns, 0, 0, { hl_group = 'IncSearch', end_col = 6 })
-        end
-      end
       vim.api.nvim_set_decoration_provider(ns, {
-        on_win = on_win,
+        on_win = function()
+          if _G.do_win then
+            vim.api.nvim_buf_set_extmark(0, ns, 0, 0, { hl_group = 'IncSearch', end_col = 6 })
+          end
+        end,
         on_line = function()
-          lines = lines + 1
+          _G.lines = _G.lines + 1
         end,
       })
     ]])
     local lines = exec_lua('return lines')
     api.nvim__redraw({ buf = 0, valid = true, flush = true })
-    eq(lines, exec_lua('return lines'))
+    eq(lines, exec_lua('return _G.lines'))
     -- valid = false does
     api.nvim__redraw({ buf = 0, valid = false, flush = true })
-    neq(lines, exec_lua('return lines'))
+    neq(lines, exec_lua('return _G.lines'))
     -- valid = true does redraw lines if affected by on_win callback
-    exec_lua('do_win = true')
+    exec_lua('_G.do_win = true')
     api.nvim__redraw({ buf = 0, valid = true, flush = true })
     screen:expect({
       grid = [[
@@ -5227,5 +5226,8 @@ describe('API', function()
         13                                                          |
       ]],
     })
+    -- takes buffer line count from correct buffer with "win" and {0, -1} "range"
+    api.nvim__redraw({ win = 0, range = { 0, -1 } })
+    n.assert_alive()
   end)
 end)
