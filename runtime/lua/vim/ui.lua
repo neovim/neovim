@@ -162,4 +162,24 @@ function M.open(path)
   return vim.system(cmd, { text = true, detach = true }), nil
 end
 
+--- Gets the URL at cursor, if any.
+function M._get_url()
+  if vim.bo.filetype == 'markdown' then
+    local range = vim.api.nvim_win_get_cursor(0)
+    vim.treesitter.get_parser():parse(range)
+    -- marking the node as `markdown_inline` is required. Setting it to `markdown` does not
+    -- work.
+    local current_node = vim.treesitter.get_node { lang = 'markdown_inline' }
+    while current_node do
+      local type = current_node:type()
+      if type == 'inline_link' or type == 'image' then
+        local child = assert(current_node:named_child(1))
+        return vim.treesitter.get_node_text(child, 0)
+      end
+      current_node = current_node:parent()
+    end
+  end
+  return vim.fn.expand('<cfile>')
+end
+
 return M

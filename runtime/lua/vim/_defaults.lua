@@ -107,22 +107,25 @@ do
           vim.inspect(cmd.cmd)
         )
       end
-
-      if err then
-        vim.notify(err, vim.log.levels.ERROR)
-      end
+      return err
     end
 
     local gx_desc =
       'Opens filepath or URI under cursor with the system handler (file explorer, web browser, …)'
     vim.keymap.set({ 'n' }, 'gx', function()
-      do_open(vim.fn.expand('<cfile>'))
+      local err = do_open(require('vim.ui')._get_url())
+      if err then
+        vim.notify(err, vim.log.levels.ERROR)
+      end
     end, { desc = gx_desc })
     vim.keymap.set({ 'x' }, 'gx', function()
       local lines =
         vim.fn.getregion(vim.fn.getpos('.'), vim.fn.getpos('v'), { type = vim.fn.mode() })
       -- Trim whitespace on each line and concatenate.
-      do_open(table.concat(vim.iter(lines):map(vim.trim):totable()))
+      local err = do_open(table.concat(vim.iter(lines):map(vim.trim):totable()))
+      if err then
+        vim.notify(err, vim.log.levels.ERROR)
+      end
     end, { desc = gx_desc })
   end
 
