@@ -2415,10 +2415,11 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
     });
     linenr_T first = (linenr_T)kv_A(opts->range, 0).data.integer + 1;
     linenr_T last = (linenr_T)kv_A(opts->range, 1).data.integer;
-    if (last < 0) {
-      last = buf->b_ml.ml_line_count;
+    buf_T *rbuf = win ? win->w_buffer : (buf ? buf : curbuf);
+    if (last == -1) {
+      last = rbuf->b_ml.ml_line_count;
     }
-    redraw_buf_range_later(win ? win->w_buffer : (buf ? buf : curbuf), first, last);
+    redraw_buf_range_later(rbuf, first, last);
   }
 
   if (opts->cursor) {
