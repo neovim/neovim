@@ -176,6 +176,8 @@ cycle (Nvim HEAD, the "master" branch).
 • Renamed nvim_complete_set to nvim__complete_set and marked it as
   experimental.
 
+• Renamed vim.snippet.exit() to  vim.snippet.stop().
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 

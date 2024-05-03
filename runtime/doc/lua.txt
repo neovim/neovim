@@ -4330,9 +4330,6 @@ vim.snippet.active({filter})                            *vim.snippet.active()*
     Return: ~
         (`boolean`)
 
-vim.snippet.exit()                                        *vim.snippet.exit()*
-    Exits the current snippet.
-
 vim.snippet.expand({input})                             *vim.snippet.expand()*
     Expands the given snippet text. Refer to
     https://microsoft.github.io/language-server-protocol/specification/#snippet_syntax
@@ -4360,6 +4357,9 @@ vim.snippet.jump({direction})                             *vim.snippet.jump()*
     Parameters: ~
       • {direction}  (`vim.snippet.Direction`) Navigation direction. -1 for
                      previous, 1 for next.
+
+vim.snippet.stop()                                        *vim.snippet.stop()*
+    Exits the current snippet.
 
 
 ==============================================================================

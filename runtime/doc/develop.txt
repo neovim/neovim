@@ -373,6 +373,9 @@ Use existing common {verb} names (actions) if possible:
     - add:          Appends or inserts into a collection
     - attach:       Listens to something to get events from it (TODO: rename to "on"?)
     - call:         Calls a function
+    - cancel:       Cancels or dismisses an event or interaction, typically
+                    user-initiated and without error. (Compare "abort", which
+                    cancels and signals error/failure.)
     - clear:        Clears state but does not destroy the container
     - create:       Creates a new (non-trivial) thing (TODO: rename to "def"?)
     - del:          Deletes a thing (or group of things)
@@ -388,10 +391,14 @@ Use existing common {verb} names (actions) if possible:
     - open:         Opens something (a buffer, window, …)
     - parse:        Parses something into a structured form
     - set:          Sets a thing (or group of things)
+    - start:        Spin up a long-lived process. Prefer "enable" except when
+                    "start" is obviously more appropriate.
+    - stop:         Inverse of "start". Teardown a long-lived process.
     - try_{verb}:   Best-effort operation, failure returns null or error obj
 
 Do NOT use these deprecated verbs:
     - disable:      Prefer `enable(enable: boolean)`.
+    - exit:         Prefer "cancel" (or "stop" if appropriate).
     - is_disabled:  Prefer `is_enabled()`.
     - list:         Redundant with "get"
     - notify:       Redundant with "print", "echo"
