@@ -189,13 +189,13 @@
 ///     ```
 ///   - title: Title (optional) in window border, string or list.
 ///     List should consist of `[text, highlight]` tuples.
-///     If string, the default highlight group is `FloatTitle`.
+///     If string, or a tuple lacks a highlight, the default highlight group is `FloatTitle`.
 ///   - title_pos: Title position. Must be set with `title` option.
 ///     Value can be one of "left", "center", or "right".
 ///     Default is `"left"`.
 ///   - footer: Footer (optional) in window border, string or list.
 ///     List should consist of `[text, highlight]` tuples.
-///     If string, the default highlight group is `FloatFooter`.
+///     If string, or a tuple lacks a highlight, the default highlight group is `FloatFooter`.
 ///   - footer_pos: Footer position. Must be set with `footer` option.
 ///     Value can be one of "left", "center", or "right".
 ///     Default is `"left"`.
@@ -851,7 +851,6 @@ static void parse_bordertext(Object bordertext, BorderTextType bordertext_type, 
   bool *is_present;
   VirtText *chunks;
   int *width;
-  int default_hl_id;
   switch (bordertext_type) {
   case kBorderTextTitle:
     if (fconfig->title) {
@@ -861,7 +860,6 @@ static void parse_bordertext(Object bordertext, BorderTextType bordertext_type, 
     is_present = &fconfig->title;
     chunks = &fconfig->title_chunks;
     width = &fconfig->title_width;
-    default_hl_id = syn_check_group(S_LEN("FloatTitle"));
     break;
   case kBorderTextFooter:
     if (fconfig->footer) {
@@ -871,7 +869,6 @@ static void parse_bordertext(Object bordertext, BorderTextType bordertext_type, 
     is_present = &fconfig->footer;
     chunks = &fconfig->footer_chunks;
     width = &fconfig->footer_width;
-    default_hl_id = syn_check_group(S_LEN("FloatFooter"));
     break;
   }
 
@@ -881,7 +878,7 @@ static void parse_bordertext(Object bordertext, BorderTextType bordertext_type, 
       return;
     }
     kv_push(*chunks, ((VirtTextChunk){ .text = xstrdup(bordertext.data.string.data),
-                                       .hl_id = default_hl_id }));
+                                       .hl_id = -1 }));
     *width = (int)mb_string2cells(bordertext.data.string.data);
     *is_present = true;
     return;
