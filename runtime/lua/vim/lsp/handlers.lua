@@ -253,14 +253,15 @@ M[ms.textDocument_references] = function(_, result, ctx, config)
   local title = 'References'
   local items = util.locations_to_items(result, client.offset_encoding)
 
+  local list = { title = title, items = items, context = ctx }
   if config.loclist then
-    vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
+    vim.fn.setloclist(0, {}, ' ', list)
     api.nvim_command('lopen')
   elseif config.on_list then
     assert(vim.is_callable(config.on_list), 'on_list is not a function')
-    config.on_list({ title = title, items = items, context = ctx })
+    config.on_list(list)
   else
-    vim.fn.setqflist({}, ' ', { title = title, items = items, context = ctx })
+    vim.fn.setqflist({}, ' ', list)
     api.nvim_command('botright copen')
   end
 end
@@ -286,14 +287,15 @@ local function response_to_list(map_result, entity, title_fn)
     local title = title_fn(ctx)
     local items = map_result(result, ctx.bufnr)
 
+    local list = { title = title, items = items, context = ctx }
     if config.loclist then
-      vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
+      vim.fn.setloclist(0, {}, ' ', list)
       api.nvim_command('lopen')
     elseif config.on_list then
       assert(vim.is_callable(config.on_list), 'on_list is not a function')
-      config.on_list({ title = title, items = items, context = ctx })
+      config.on_list(list)
     else
-      vim.fn.setqflist({}, ' ', { title = title, items = items, context = ctx })
+      vim.fn.setqflist({}, ' ', list)
       api.nvim_command('botright copen')
     end
   end
