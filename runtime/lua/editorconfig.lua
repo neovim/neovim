@@ -190,6 +190,27 @@ function properties.insert_final_newline(bufnr, val)
   end
 end
 
+--- A code of the format ss or ss-TT, where ss is an ISO 639 language code and TT is an ISO 3166 territory identifier.
+--- Sets the 'spell' and 'spelllang' options.
+function properties.spelling_language(bufnr, val)
+  local errorMsg =
+    'spelling_language must be of the format ss or ss-TT, where ss is an ISO 639 language code and TT is an ISO 3166 territory identifier.'
+
+  assert(val:len() == 2 or val:len() == 5, errorMsg)
+
+  local languageCode = val:sub(1, 2):lower()
+  assert(languageCode:match('%l%l'), errorMsg)
+  if val:len() == 2 then
+    vim.bo[bufnr].spelllang = languageCode
+  else
+    local territoryCode = val:sub(4, 5):lower()
+    assert(languageCode:match('%l%l'), errorMsg)
+    vim.bo[bufnr].spelllang = languageCode .. '_' .. territoryCode
+  end
+
+  vim.o.spell = true
+end
+
 --- @private
 --- Modified version of [glob2regpat()] that does not match path separators on `*`.
 ---
