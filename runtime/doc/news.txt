@@ -266,6 +266,9 @@ The following new APIs and features were added.
     respective capability can be unset.
   • |vim.lsp.start()| accepts a "silent" option for suppressing messages
     if an LSP server failed to start.
+  • |vim.lsp.buf.definition()|, |vim.lsp.buf.declaration()|,
+    |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()| now
+    support the `loclist` field of |vim.lsp.ListOpts|.
 
 • Treesitter
   • Bundled parsers and queries (highlight, folds) for Markdown, Python, and

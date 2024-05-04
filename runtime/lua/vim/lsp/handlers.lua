@@ -443,8 +443,13 @@ local function location_handler(_, result, ctx, config)
     util.jump_to_location(result[1], client.offset_encoding, config.reuse_win)
     return
   end
-  vim.fn.setqflist({}, ' ', { title = title, items = items })
-  vim.cmd('botright copen')
+  if config.loclist then
+    vim.fn.setloclist(0, {}, ' ', { title = title, items = items })
+    vim.cmd.lopen()
+  else
+    vim.fn.setqflist({}, ' ', { title = title, items = items })
+    vim.cmd('botright copen')
+  end
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_declaration
