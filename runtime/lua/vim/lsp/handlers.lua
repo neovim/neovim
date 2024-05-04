@@ -257,7 +257,7 @@ M[ms.textDocument_references] = function(_, result, ctx, config)
     vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
     api.nvim_command('lopen')
   elseif config.on_list then
-    assert(type(config.on_list) == 'function', 'on_list is not a function')
+    assert(vim.is_callable(config.on_list), 'on_list is not a function')
     config.on_list({ title = title, items = items, context = ctx })
   else
     vim.fn.setqflist({}, ' ', { title = title, items = items, context = ctx })
@@ -290,7 +290,7 @@ local function response_to_list(map_result, entity, title_fn)
       vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
       api.nvim_command('lopen')
     elseif config.on_list then
-      assert(type(config.on_list) == 'function', 'on_list is not a function')
+      assert(vim.is_callable(config.on_list), 'on_list is not a function')
       config.on_list({ title = title, items = items, context = ctx })
     else
       vim.fn.setqflist({}, ' ', { title = title, items = items, context = ctx })
@@ -436,7 +436,7 @@ local function location_handler(_, result, ctx, config)
   local items = util.locations_to_items(result, client.offset_encoding)
 
   if config.on_list then
-    assert(type(config.on_list) == 'function', 'on_list is not a function')
+    assert(vim.is_callable(config.on_list), 'on_list is not a function')
     config.on_list({ title = title, items = items })
     return
   end
