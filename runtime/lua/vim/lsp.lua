@@ -310,6 +310,7 @@ local function is_empty_or_default(bufnr, option)
   end
 
   local info = api.nvim_get_option_info2(option, { buf = bufnr })
+  ---@param e vim.fn.getscriptinfo.ret
   local scriptinfo = vim.tbl_filter(function(e)
     return e.sid == info.last_set_sid
   end, vim.fn.getscriptinfo())
@@ -515,7 +516,7 @@ local function buf_attach(bufnr)
           textDocument = {
             uri = uri,
           },
-          reason = protocol.TextDocumentSaveReason.Manual,
+          reason = protocol.TextDocumentSaveReason.Manual, ---@type integer
         }
         if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'willSave') then
           client.notify(ms.textDocument_willSave, params)
@@ -899,7 +900,7 @@ end
 --- a `client_id:result` map.
 ---@return function cancel Function that cancels all requests.
 function lsp.buf_request_all(bufnr, method, params, handler)
-  local results = {} --- @type table<integer,{error:string, result:any}>
+  local results = {} --- @type table<integer,{error:lsp.ResponseError, result:any}>
   local result_count = 0
   local expected_result_count = 0
 
@@ -940,7 +941,7 @@ end
 ---@return table<integer, {err: lsp.ResponseError, result: any}>? result Map of client_id:request_result.
 ---@return string? err On timeout, cancel, or error, `err` is a string describing the failure reason, and `result` is nil.
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
-  local request_results
+  local request_results ---@type table
 
   local cancel = lsp.buf_request_all(bufnr, method, params, function(it)
     request_results = it
