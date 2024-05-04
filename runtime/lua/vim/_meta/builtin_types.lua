@@ -127,3 +127,11 @@
 --- @field skipcol integer
 --- @field topfill integer
 --- @field topline integer
+
+--- @class vim.fn.getscriptinfo.ret
+--- @field autoload false
+--- @field functions? string[]
+--- @field name string
+--- @field sid string
+--- @field variables? table<string, any>
+--- @field version 1

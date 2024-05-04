@@ -3632,7 +3632,7 @@ function vim.fn.getregtype(regname) end
 --- <
 ---
 --- @param opts? table
---- @return any
+--- @return vim.fn.getscriptinfo.ret[]
 function vim.fn.getscriptinfo(opts) end
 
 --- If {tabnr} is not specified, then information about all the

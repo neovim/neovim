@@ -327,7 +327,7 @@ function M.get_captures_at_cursor(winnr)
 end
 
 --- Optional keyword arguments:
---- @class vim.treesitter.get_node.Opts
+--- @class vim.treesitter.get_node.Opts : vim.treesitter.LanguageTree.tree_for_range.Opts
 --- @inlinedoc
 ---
 --- Buffer number (nil or 0 for current buffer)

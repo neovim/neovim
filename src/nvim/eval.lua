@@ -4475,6 +4475,7 @@ M.funcs = {
     ]=],
     name = 'getscriptinfo',
     params = { { 'opts', 'table' } },
+    returns = 'vim.fn.getscriptinfo.ret[]',
     signature = 'getscriptinfo([{opts}])',
   },
   gettabinfo = {

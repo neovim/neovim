@@ -124,7 +124,7 @@ error('Cannot require a meta file')
 --- @field commalist boolean
 --- @field flaglist boolean
 --- @field was_set boolean
---- @field last_set_id integer
+--- @field last_set_sid integer
 --- @field last_set_linenr integer
 --- @field last_set_chan integer
 --- @field type 'string'|'boolean'|'number'
