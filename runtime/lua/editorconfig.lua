@@ -193,19 +193,19 @@ end
 --- A code of the format ss or ss-TT, where ss is an ISO 639 language code and TT is an ISO 3166 territory identifier.
 --- Sets the 'spell' and 'spelllang' options.
 function properties.spelling_language(bufnr, val)
-  local errorMsg =
+  local error_msg =
     'spelling_language must be of the format ss or ss-TT, where ss is an ISO 639 language code and TT is an ISO 3166 territory identifier.'
 
-  assert(val:len() == 2 or val:len() == 5, errorMsg)
+  assert(val:len() == 2 or val:len() == 5, error_msg)
 
-  local languageCode = val:sub(1, 2):lower()
-  assert(languageCode:match('%l%l'), errorMsg)
+  local language_code = val:sub(1, 2):lower()
+  assert(language_code:match('%l%l'), error_msg)
   if val:len() == 2 then
-    vim.bo[bufnr].spelllang = languageCode
+    vim.bo[bufnr].spelllang = language_code
   else
-    local territoryCode = val:sub(4, 5):lower()
-    assert(languageCode:match('%l%l'), errorMsg)
-    vim.bo[bufnr].spelllang = languageCode .. '_' .. territoryCode
+    local territory_code = val:sub(4, 5):lower()
+    assert(language_code:match('%l%l'), error_msg)
+    vim.bo[bufnr].spelllang = language_code .. '_' .. territory_code
   end
 
   vim.o.spell = true
