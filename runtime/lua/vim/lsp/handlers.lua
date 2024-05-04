@@ -273,7 +273,7 @@ end
 ---
 ---   loclist: (boolean) use the location list (default is to use the quickfix list)
 ---
----@param map_result function `((resp, bufnr) -> list)` to convert the response
+---@param map_result fun(resp, bufnr: integer): table to convert the response
 ---@param entity string name of the resource used in a `not found` error message
 ---@param title_fn fun(ctx: lsp.HandlerContext): string Function to call to generate list title
 ---@return lsp.Handler
