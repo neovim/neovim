@@ -256,13 +256,13 @@ M[ms.textDocument_references] = function(_, result, ctx, config)
   local list = { title = title, items = items, context = ctx }
   if config.loclist then
     vim.fn.setloclist(0, {}, ' ', list)
-    api.nvim_command('lopen')
+    vim.cmd.lopen()
   elseif config.on_list then
     assert(vim.is_callable(config.on_list), 'on_list is not a function')
     config.on_list(list)
   else
     vim.fn.setqflist({}, ' ', list)
-    api.nvim_command('botright copen')
+    vim.cmd('botright copen')
   end
 end
 
@@ -290,13 +290,13 @@ local function response_to_list(map_result, entity, title_fn)
     local list = { title = title, items = items, context = ctx }
     if config.loclist then
       vim.fn.setloclist(0, {}, ' ', list)
-      api.nvim_command('lopen')
+      vim.cmd.lopen()
     elseif config.on_list then
       assert(vim.is_callable(config.on_list), 'on_list is not a function')
       config.on_list(list)
     else
       vim.fn.setqflist({}, ' ', list)
-      api.nvim_command('botright copen')
+      vim.cmd('botright copen')
     end
   end
 end
@@ -447,7 +447,7 @@ local function location_handler(_, result, ctx, config)
     return
   end
   vim.fn.setqflist({}, ' ', { title = title, items = items })
-  api.nvim_command('botright copen')
+  vim.cmd('botright copen')
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_declaration
@@ -557,7 +557,7 @@ local function make_call_hierarchy_handler(direction)
       end
     end
     vim.fn.setqflist({}, ' ', { title = 'LSP call hierarchy', items = items })
-    api.nvim_command('botright copen')
+    vim.cmd('botright copen')
   end
 end
 
@@ -596,7 +596,7 @@ local function make_type_hierarchy_handler()
       })
     end
     vim.fn.setqflist({}, ' ', { title = 'LSP type hierarchy', items = items })
-    api.nvim_command('botright copen')
+    vim.cmd('botright copen')
   end
 end
 
