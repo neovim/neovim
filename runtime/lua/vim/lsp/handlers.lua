@@ -268,10 +268,7 @@ end
 
 --- Return a function that converts LSP responses to list items and opens the list
 ---
---- The returned function has an optional {config} parameter that accepts a table
---- with the following keys:
----
----   loclist: (boolean) use the location list (default is to use the quickfix list)
+--- The returned function has an optional {config} parameter that accepts |vim.lsp.ListOpts|
 ---
 ---@param map_result fun(resp, bufnr: integer): table to convert the response
 ---@param entity string name of the resource used in a `not found` error message

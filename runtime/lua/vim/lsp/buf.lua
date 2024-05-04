@@ -62,14 +62,13 @@ end
 --- vim.lsp.buf.references(nil, { on_list = on_list })
 --- ```
 ---
---- If you prefer loclist do something like this:
+--- If you prefer loclist instead of qflist:
 --- ```lua
---- local function on_list(options)
----   vim.fn.setloclist(0, {}, ' ', options)
----   vim.cmd.lopen()
---- end
+--- vim.lsp.buf.definition({ loclist = true })
+--- vim.lsp.buf.references(nil, { loclist = true })
 --- ```
 --- @field on_list? fun(t: vim.lsp.LocationOpts.OnList)
+--- @field loclist? boolean
 
 --- @class vim.lsp.LocationOpts.OnList
 --- @field items table[] Structured like |setqflist-what|
