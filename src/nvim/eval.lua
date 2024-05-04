@@ -4470,7 +4470,7 @@ M.funcs = {
 
       Examples: >vim
       	echo getscriptinfo({'name': 'myscript'})
-      	echo getscriptinfo({'sid': 15}).variables
+      	echo getscriptinfo({'sid': 15})[0].variables
       <
     ]=],
     name = 'getscriptinfo',
