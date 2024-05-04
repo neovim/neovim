@@ -463,6 +463,11 @@ int update_screen(void)
   display_tick++;  // let syntax code know we're in a next round of
                    // display updating
 
+  if (cmdpreview_may_refresh(type)) {
+    type = MAX(type, must_redraw);
+    must_redraw = 0;
+  }
+
   // glyph cache full, very rare
   if (schar_cache_clear_if_full()) {
     // must use CLEAR, as the contents of screen buffers cannot be
