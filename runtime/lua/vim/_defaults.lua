@@ -183,26 +183,22 @@ do
   do
     vim.keymap.set('n', ']d', function()
       vim.diagnostic.goto_next({ float = false })
-    end, {
-      desc = 'Jump to the next diagnostic with the highest severity',
-    })
+    end, { desc = 'Jump to the next diagnostic' })
 
     vim.keymap.set('n', '[d', function()
       vim.diagnostic.goto_prev({ float = false })
-    end, {
-      desc = 'Jump to the previous diagnostic with the highest severity',
-    })
+    end, { desc = 'Jump to the previous diagnostic' })
 
     vim.keymap.set('n', '<C-W>d', function()
       vim.diagnostic.open_float()
-    end, {
-      desc = 'Open a floating window showing diagnostics under the cursor',
-    })
+    end, { desc = 'Show diagnostics under the cursor' })
 
-    vim.keymap.set('n', '<C-W><C-D>', '<C-W>d', {
-      remap = true,
-      desc = 'Open a floating window showing diagnostics under the cursor',
-    })
+    vim.keymap.set(
+      'n',
+      '<C-W><C-D>',
+      '<C-W>d',
+      { remap = true, desc = 'Show diagnostics under the cursor' }
+    )
   end
 end
 
