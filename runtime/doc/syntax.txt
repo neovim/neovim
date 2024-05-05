@@ -477,7 +477,8 @@ Enables Stylus for ".astro" files. Default Value: "disable"
 NOTE: You need to install an external plugin to support stylus in astro files.
 
 
-ASPPERL and ASPVBS			*ft-aspperl-syntax* *ft-aspvbs-syntax*
+ASPPERL							*ft-aspperl-syntax*
+ASPVBS							*ft-aspvbs-syntax*
 
 `*.asp` and `*.asa` files could be either Perl or Visual Basic script.  Since it's
 hard to detect this you can set two global variables to tell Vim what you are
