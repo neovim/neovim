@@ -33,10 +33,17 @@
   ] @markup.link
   (#set! conceal ""))
 
+[
+  (link_label)
+  (link_text)
+  (link_title)
+  (image_description)
+] @markup.link.label
+
 (inline_link
-  (link_text) @markup.link.label
-  (link_destination) @markup.link
-  (#set! @markup.link.label "url" @markup.link))
+  (link_text) @_label
+  (link_destination) @_url
+  (#set! @_label "url" @_url))
 
 ; Conceal image links
 (image
@@ -79,13 +86,6 @@
   (link_destination)
   (uri_autolink)
 ] @markup.link.url @nospell
-
-[
-  (link_label)
-  (link_text)
-  (link_title)
-  (image_description)
-] @markup.link.label
 
 ; Replace common HTML entities.
 ((entity_reference) @character.special

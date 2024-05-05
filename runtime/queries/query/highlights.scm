@@ -53,17 +53,17 @@
   .
   (comment)*
   .
-  (comment) @keyword.import)
+  (comment) @keyword.import @nospell)
   (#lua-match? @keyword.import "^;+ *inherits *:"))
 
 ((program
   .
   (comment)*
   .
-  (comment) @keyword.directive)
+  (comment) @keyword.directive @nospell)
   (#lua-match? @keyword.directive "^;+ *extends *$"))
 
-((comment) @keyword.directive
+((comment) @keyword.directive @nospell
   (#lua-match? @keyword.directive "^;+%s*format%-ignore%s*$"))
 
 ((predicate

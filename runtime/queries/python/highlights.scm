@@ -188,7 +188,7 @@
 
 ((module
   .
-  (comment) @keyword.directive)
+  (comment) @keyword.directive @nospell)
   (#lua-match? @keyword.directive "^#!/"))
 
 (string) @string
@@ -204,19 +204,41 @@
   (comment)*
   .
   (expression_statement
-    (string) @string.documentation @spell))
+    (string) @string.documentation))
 
 (class_definition
   body: (block
     .
     (expression_statement
-      (string) @string.documentation @spell)))
+      (string) @string.documentation)))
 
 (function_definition
   body: (block
     .
     (expression_statement
-      (string) @string.documentation @spell)))
+      (string) @string.documentation)))
+
+(module
+  .
+  (comment)*
+  .
+  (expression_statement
+    (string
+      (string_content) @spell)))
+
+(class_definition
+  body: (block
+    .
+    (expression_statement
+      (string
+        (string_content) @spell))))
+
+(function_definition
+  body: (block
+    .
+    (expression_statement
+      (string
+        (string_content) @spell))))
 
 ; Tokens
 [
@@ -278,7 +300,6 @@
 
 [
   "assert"
-  "class"
   "exec"
   "global"
   "nonlocal"
@@ -286,8 +307,12 @@
   "print"
   "with"
   "as"
-  "type"
 ] @keyword
+
+[
+  "type"
+  "class"
+] @keyword.type
 
 [
   "async"
