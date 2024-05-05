@@ -2144,6 +2144,10 @@ text...
 :cons[t] {var-name} = {expr1}
 :cons[t] [{name1}, {name2}, ...] = {expr1}
 :cons[t] [{name}, ..., ; {lastname}] = {expr1}
+:cons[t] {var-name} =<< [trim] [eval] {marker}
+text...
+text...
+{marker}
 			Similar to |:let|, but additionally lock the variable
 			after setting the value.  This is the same as locking
 			the variable with |:lockvar| just after |:let|, thus: >
