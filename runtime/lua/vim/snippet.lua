@@ -343,7 +343,7 @@ local function setup_autocmds(bufnr)
         or cursor_row > snippet_range[3]
         or (cursor_row == snippet_range[3] and cursor_col > snippet_range[4])
       then
-        M.exit()
+        M.stop()
         return true
       end
 
@@ -362,7 +362,7 @@ local function setup_autocmds(bufnr)
       end
 
       -- The cursor is either not on a tabstop or we reached the end, so exit the session.
-      M.exit()
+      M.stop()
       return true
     end,
   })
@@ -378,7 +378,7 @@ local function setup_autocmds(bufnr)
         (snippet_range[1] == snippet_range[3] and snippet_range[2] == snippet_range[4])
         or snippet_range[3] + 1 > vim.fn.line('$')
       then
-        M.exit()
+        M.stop()
       end
 
       if not M.active() then
@@ -615,7 +615,7 @@ function M.active(filter)
 end
 
 --- Exits the current snippet.
-function M.exit()
+function M.stop()
   if not M.active() then
     return
   end
