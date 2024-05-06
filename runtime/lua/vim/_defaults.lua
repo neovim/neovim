@@ -146,36 +146,6 @@ do
     vim.keymap.set({ 'o' }, 'gc', textobject_rhs, { desc = 'Comment textobject' })
   end
 
-  --- Default maps for LSP functions.
-  ---
-  --- These are mapped unconditionally to avoid confusion. If no server is attached, or if a server
-  --- does not support a capability, an error message is displayed rather than exhibiting different
-  --- behavior.
-  ---
-  --- See |gr-default|, |crn|, |crr|, |i_CTRL-S|.
-  do
-    vim.keymap.set('n', 'crn', function()
-      vim.lsp.buf.rename()
-    end, { desc = 'vim.lsp.buf.rename()' })
-
-    local function map_codeaction(mode, lhs)
-      vim.keymap.set(mode, lhs, function()
-        vim.lsp.buf.code_action()
-      end, { desc = 'vim.lsp.buf.code_action()' })
-    end
-    map_codeaction('n', 'crr')
-    map_codeaction('x', '<C-R>r')
-    map_codeaction('x', '<C-R><C-R>')
-
-    vim.keymap.set('n', 'gr', function()
-      vim.lsp.buf.references()
-    end, { desc = 'vim.lsp.buf.references()' })
-
-    vim.keymap.set('i', '<C-S>', function()
-      vim.lsp.buf.signature_help()
-    end, { desc = 'vim.lsp.buf.signature_help()' })
-  end
-
   --- Map [d and ]d to move to the previous/next diagnostic. Map <C-W>d to open a floating window
   --- for the diagnostic under the cursor.
   ---
