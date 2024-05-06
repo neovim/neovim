@@ -49,8 +49,8 @@ TREESITTER_VIM_URL https://github.com/neovim/tree-sitter-vim/archive/v0.4.0.tar.
 TREESITTER_VIM_SHA256 9f856f8b4a10ab43348550fa2d3cb2846ae3d8e60f45887200549c051c66f9d5
 TREESITTER_VIMDOC_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v2.5.1.tar.gz
 TREESITTER_VIMDOC_SHA256 063645096504b21603585507c41c6d8718ff3c11b2150c5bfc31e8f3ee9afea3
-TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/archive/v0.2.0.tar.gz
-TREESITTER_QUERY_SHA256 5a0ee26c4af94adb9ab850a518613f75e7040354f5b049a5b85457ebf579ae8b
+TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/archive/v0.3.0.tar.gz
+TREESITTER_QUERY_SHA256 f878ff37abcb83250e31a6569e997546f3dbab74dcb26683cb2d613f7568cfc0
 TREESITTER_PYTHON_URL https://github.com/tree-sitter/tree-sitter-python/archive/v0.21.0.tar.gz
 TREESITTER_PYTHON_SHA256 720304a603271fa89e4430a14d6a81a023d6d7d1171b1533e49c0ab44f1e1c13
 TREESITTER_BASH_URL https://github.com/tree-sitter/tree-sitter-bash/archive/v0.21.0.tar.gz
