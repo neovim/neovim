@@ -93,6 +93,12 @@ setup(function()
 
     [max_line_length.txt]
     max_line_length = 42
+
+    [short_spelling_language.txt]
+    spelling_language = en
+
+    [long_spelling_language.txt]
+    spelling_language = en-US
     ]]
   )
 end)
@@ -221,5 +227,10 @@ But not this one
     ]]))
 
     eq(true, ok, err)
+  end)
+
+  it('sets spell, spelllang options', function()
+    test_case('short_spelling_language.txt', { spell = true, spelllang = 'en' })
+    test_case('long_spelling_language.txt', { spell = true, spelllang = 'en_us' })
   end)
 end)
