@@ -1,12 +1,15 @@
 local options_file = arg[1]
 
+local gen_values = options_file:find('_values') and true or false
+
 local opt_fd = assert(io.open(options_file, 'w'))
 
-local w = function(s)
-  if s:match('^    %.') then
-    opt_fd:write(s .. ',\n')
-  else
-    opt_fd:write(s .. '\n')
+local w = function(s, ...)
+  local is_values = select(1, ...) or false
+  if gen_values and is_values then
+    opt_fd:write(s)
+  elseif not gen_values then
+    opt_fd:write(s .. (s:match('^    %.') and ',\n' or '\n'))
   end
 end
 
@@ -174,7 +177,50 @@ local get_defaults = function(d, n)
   return get_opt_val(d)
 end
 
---- @type [string,string][]
+---@param opt vim.option_meta
+local function generate_valid_values(opt)
+  local item -- [[string | nil]]
+  local child_item -- [[string | nil]]
+  local abbr = opt.abbreviation
+  local varname = opt.varname or ('p_' .. abbr)
+  if abbr == 'bh' or abbr == 'bt' or abbr == 'sbo' then
+    local field = abbr == 'bh' and 'bufhidden' or (abbr == 'sbo' and 'scbopt' or 'buftype')
+    item = ('static char *(p_%s_values[]) = { '):format(field)
+  else
+    item = ('static char *(%s_values[]) = { '):format(varname)
+  end
+  if opt.enable_if then
+    item = '#ifdef ' .. opt.enable_if .. '\n' .. item
+  end
+  for idx, val in ipairs(opt.valid_values) do
+    if type(val) == 'string' then
+      item = item .. '"' .. val .. '", '
+    else
+      for j, k in pairs(val) do
+        child_item = ('static char *(p_%s_%s_values[]) = { '):format(opt.abbreviation, j)
+        for subidx, subval in ipairs(k) do
+          child_item = child_item .. '"' .. subval .. '", '
+          if subidx == #k then
+            child_item = ('%s NULL };\n'):format(child_item)
+          end
+        end
+      end
+    end
+
+    if idx == #opt.valid_values then
+      item = item .. ' NULL };\n'
+      if opt.enable_if then
+        item = item .. '#endif\n'
+      end
+    end
+  end
+  w(item, true)
+  if child_item then
+    w(child_item, true)
+  end
+end
+
+--- @type {[1]:string,[2]:string}[]
 local defines = {}
 
 --- @param i integer
@@ -255,6 +301,9 @@ local function dump_option(i, o)
     end
   else
     w('    .def_val=NIL_OPTVAL')
+  end
+  if gen_values and o.valid_values then
+    generate_valid_values(o)
   end
   w('  },')
 end

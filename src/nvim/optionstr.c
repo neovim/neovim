@@ -50,6 +50,7 @@
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "options_values.generated.h"
 # include "optionstr.c.generated.h"
 #endif
 
@@ -67,84 +68,6 @@ static const char e_wrong_number_of_characters_for_field_str[]
   = N_("E1511: Wrong number of characters for field \"%s\"");
 static const char e_wrong_character_width_for_field_str[]
   = N_("E1512: Wrong character width for field \"%s\"");
-
-static char *(p_ambw_values[]) = { "single", "double", NULL };
-static char *(p_bg_values[]) = { "light", "dark", NULL };
-static char *(p_bkc_values[]) = { "yes", "auto", "no", "breaksymlink", "breakhardlink", NULL };
-static char *(p_bo_values[]) = { "all", "backspace", "cursor", "complete", "copy", "ctrlg", "error",
-                                 "esc", "ex", "hangul", "insertmode", "lang", "mess", "showmatch",
-                                 "operator", "register", "shell", "spell", "term", "wildmode",
-                                 NULL };
-// Note: Keep this in sync with briopt_check()
-static char *(p_briopt_values[]) = { "shift:", "min:", "sbr", "list:", "column:", NULL };
-// Note: Keep this in sync with diffopt_changed()
-static char *(p_dip_values[]) = { "filler", "context:", "iblank", "icase",
-                                  "iwhite", "iwhiteall", "iwhiteeol", "horizontal", "vertical",
-                                  "closeoff", "hiddenoff", "foldcolumn:", "followwrap", "internal",
-                                  "indent-heuristic", "linematch:", "algorithm:", NULL };
-static char *(p_dip_algorithm_values[]) = { "myers", "minimal", "patience", "histogram", NULL };
-static char *(p_nf_values[]) = { "bin", "octal", "hex", "alpha", "unsigned", "blank", NULL };
-static char *(p_ff_values[]) = { FF_UNIX, FF_DOS, FF_MAC, NULL };
-static char *(p_cb_values[]) = { "unnamed", "unnamedplus", NULL };
-static char *(p_cmp_values[]) = { "internal", "keepascii", NULL };
-// Note: Keep this in sync with fill_culopt_flags()
-static char *(p_culopt_values[]) = { "line", "screenline", "number", "both", NULL };
-static char *(p_dy_values[]) = { "lastline", "truncate", "uhex", "msgsep", NULL };
-static char *(p_fdo_values[]) = { "all", "block", "hor", "mark", "percent", "quickfix", "search",
-                                  "tag", "insert", "undo", "jump", NULL };
-// Note: Keep this in sync with spell_check_sps()
-static char *(p_sps_values[]) = { "best", "fast", "double", "expr:", "file:", "timeout:", NULL };
-/// Also used for 'viewoptions'!  Keep in sync with SSOP_ flags.
-static char *(p_ssop_values[]) = { "buffers", "winpos", "resize", "winsize", "localoptions",
-                                   "options", "help", "blank", "globals", "slash", "unix", "sesdir",
-                                   "curdir", "folds", "cursor", "tabpages", "terminal", "skiprtp",
-                                   NULL };
-// Keep in sync with SWB_ flags in option_vars.h
-static char *(p_swb_values[]) = { "useopen", "usetab", "split", "newtab", "vsplit", "uselast",
-                                  NULL };
-static char *(p_spk_values[]) = { "cursor", "screen", "topline", NULL };
-static char *(p_tc_values[]) = { "followic", "ignore", "match", "followscs", "smart", NULL };
-// Keep in sync with TCL_ flags in option_vars.h
-static char *(p_tcl_values[]) = { "left", "uselast", NULL };
-static char *(p_ve_values[]) = { "block", "insert", "all", "onemore", "none", "NONE", NULL };
-// Note: Keep this in sync with check_opt_wim()
-static char *(p_wim_values[]) = { "full", "longest", "list", "lastused", NULL };
-static char *(p_wop_values[]) = { "fuzzy", "tagfile", "pum", NULL };
-static char *(p_wak_values[]) = { "yes", "menu", "no", NULL };
-static char *(p_mousem_values[]) = { "extend", "popup", "popup_setpos", "mac", NULL };
-static char *(p_sel_values[]) = { "inclusive", "exclusive", "old", NULL };
-static char *(p_slm_values[]) = { "mouse", "key", "cmd", NULL };
-static char *(p_km_values[]) = { "startsel", "stopsel", NULL };
-static char *(p_scbopt_values[]) = { "ver", "hor", "jump", NULL };
-static char *(p_debug_values[]) = { "msg", "throw", "beep", NULL };
-static char *(p_ead_values[]) = { "both", "ver", "hor", NULL };
-static char *(p_buftype_values[]) = { "nofile", "nowrite", "quickfix", "help", "acwrite",
-                                      "terminal", "prompt", NULL };
-static char *(p_bufhidden_values[]) = { "hide", "unload", "delete", "wipe", NULL };
-static char *(p_bs_values[]) = { "indent", "eol", "start", "nostop", NULL };
-static char *(p_fdm_values[]) = { "manual", "expr", "marker", "indent",
-                                  "syntax",  "diff", NULL };
-static char *(p_fcl_values[]) = { "all", NULL };
-static char *(p_cot_values[]) = { "menu", "menuone", "longest", "preview", "popup",
-                                  "noinsert", "noselect", "fuzzy", NULL };
-#ifdef BACKSLASH_IN_FILENAME
-static char *(p_csl_values[]) = { "slash", "backslash", NULL };
-#endif
-
-static char *(p_scl_values[]) = { "yes", "no", "auto", "auto:1", "auto:2", "auto:3", "auto:4",
-                                  "auto:5", "auto:6", "auto:7", "auto:8", "auto:9", "yes:1",
-                                  "yes:2", "yes:3", "yes:4", "yes:5", "yes:6", "yes:7", "yes:8",
-                                  "yes:9", "number", NULL };
-static char *(p_fdc_values[]) = { "auto", "auto:1", "auto:2", "auto:3", "auto:4", "auto:5",
-                                  "auto:6", "auto:7", "auto:8", "auto:9", "0", "1", "2", "3", "4",
-                                  "5", "6", "7", "8", "9", NULL };
-static char *(p_spo_values[]) = { "camel", "noplainbuffer", NULL };
-static char *(p_icm_values[]) = { "nosplit", "split", NULL };
-static char *(p_jop_values[]) = { "stack", "view", "clean", NULL };
-static char *(p_tpf_values[]) = { "BS", "HT", "FF", "ESC", "DEL", "C0", "C1", NULL };
-static char *(p_rdb_values[]) = { "compositor", "nothrottle", "invalid", "nodelta", "line",
-                                  "flush", NULL };
-static char *(p_sloc_values[]) = { "last", "statusline", "tabline", NULL };
 
 /// All possible flags for 'shm'.
 /// the literal chars before 0 are removed flags. these are safely ignored
