@@ -544,14 +544,14 @@ LspNotify                                                          *LspNotify*
 LspProgress                                                       *LspProgress*
     Upon receipt of a progress notification from the server. Notifications can
     be polled from a `progress` ring buffer of a |vim.lsp.Client| or use
-    |vim.lsp.status()| to get an aggregate message
+    |vim.lsp.status()| to get an aggregate message.
 
     If the server sends a "work done progress", the `pattern` is set to `kind`
     (one of `begin`, `report` or `end`).
 
     When used from Lua, the event contains a `data` table with `client_id` and
-    `result` properties. `result` will contain the request params sent by the
-    server.
+    `params` properties. `params` will contain the request params sent by the
+    server (see `lsp.ProgressParams`).
 
     Example: >vim
         autocmd LspProgress * redrawstatus
