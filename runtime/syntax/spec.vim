@@ -3,7 +3,7 @@
 " Language:    SPEC: Build/install scripts for Linux RPM packages
 " Maintainer:  Igor Gnatenko i.gnatenko.brain@gmail.com
 " Former Maintainer:  Donovan Rebbechi elflord@panix.com (until March 2014)
-" Last Change: 2020 May 25
+" Last Change: 2024 May  7
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -80,7 +80,7 @@ syn keyword specMacroNameLocal contained _arch _binary_payload _bindir _build _b
 
 "One line macros - valid in all ScriptAreas
 "tip: remember do include new items on specScriptArea's skip section
-syn region specSectionMacroArea oneline matchgroup=specSectionMacro start='^%\(define\|global\|patch\d*\|setup\|autosetup\|autopatch\|configure\|GNUconfigure\|find_lang\|make_build\|makeinstall\|make_install\|include\)\>' end='$' contains=specCommandOpts,specMacroIdentifier
+syn region specSectionMacroArea oneline matchgroup=specSectionMacro start='^%\(define\|global\|patch\d*\|setup\|autosetup\|autopatch\|configure\|GNUconfigure\|find_lang\|make_build\|makeinstall\|make_install\|cmake\|cmake_build\|cmake_install\|meson\|meson_build\|meson_install\|ninja_build\|ninja_install\|include\)\>' end='$' contains=specCommandOpts,specMacroIdentifier
 syn region specSectionMacroBracketArea oneline matchgroup=specSectionMacro start='^%{\(configure\|GNUconfigure\|find_lang\|make_build\|makeinstall\|make_install\)}' end='$' contains=specCommandOpts,specMacroIdentifier
 
 "%% Files Section %%
@@ -102,7 +102,7 @@ syn case ignore
 "%% PreAmble Section %%
 "Copyright and Serial were deprecated by License and Epoch
 syn region specPreAmbleDeprecated oneline matchgroup=specError start='^\(Copyright\|Serial\)' end='$' contains=specEmail,specURL,specURLMacro,specLicense,specColon,specVariables,specSpecialChar,specMacroIdentifier
-syn region specPreAmble oneline matchgroup=specCommand start='^\(Prereq\|Summary\|Name\|Version\|Packager\|Requires\|Recommends\|Suggests\|Supplements\|Enhances\|Icon\|URL\|SourceLicense\|Source\d*\|Patch\d*\|Prefix\|Packager\|Group\|License\|Release\|BuildRoot\|Distribution\|Vendor\|Provides\|ExclusiveArch\|ExcludeArch\|ExclusiveOS\|Obsoletes\|BuildArch\|BuildArchitectures\|BuildRequires\|BuildConflicts\|BuildPreReq\|Conflicts\|AutoRequires\|AutoReq\|AutoReqProv\|AutoProv\|Epoch\)' end='$' contains=specEmail,specURL,specURLMacro,specLicense,specColon,specVariables,specSpecialChar,specMacroIdentifier
+syn region specPreAmble oneline matchgroup=specCommand start='^\(Prereq\|Summary\|Name\|Version\|Packager\|Requires\|Recommends\|Suggests\|Supplements\|Enhances\|Icon\|URL\|SourceLicense\|Source\d*\|Patch\d*\|Prefix\|Packager\|Group\|License\|Release\|BuildRoot\|Distribution\|Vendor\|Provides\|ExclusiveArch\|ExcludeArch\|ExclusiveOS\|Obsoletes\|BuildArch\|BuildArchitectures\|BuildRequires\|BuildConflicts\|BuildPreReq\|Conflicts\|AutoRequires\|AutoReq\|AutoReqProv\|AutoProv\|Epoch\|\BuildSystem\|BuildOption\)' end='$' contains=specEmail,specURL,specURLMacro,specLicense,specColon,specVariables,specSpecialChar,specMacroIdentifier
 
 "%% Description Section %%
 syn region specDescriptionArea matchgroup=specSection start='^%description' end='^%'me=e-1 contains=specDescriptionOpts,specEmail,specURL,specNumber,specMacroIdentifier,specComment
@@ -111,7 +111,7 @@ syn region specDescriptionArea matchgroup=specSection start='^%description' end=
 syn region specPackageArea matchgroup=specSection start='^%package' end='^%'me=e-1 contains=specPackageOpts,specPreAmble,specComment
 
 "%% Scripts Section %%
-syn region specScriptArea matchgroup=specSection start='^%\(prep\|build\|install\|clean\|check\|pre\|postun\|preun\|post\|posttrans\)\>' skip='^%{\|^%\(define\|patch\d*\|configure\|GNUconfigure\|setup\|autosetup\|autopatch\|find_lang\|make_build\|makeinstall\|make_install\)\>' end='^%'me=e-1 contains=specSpecialVariables,specVariables,@specCommands,specVariables,shDo,shFor,shCaseEsac,specNoNumberHilite,specCommandOpts,shComment,shIf,specSpecialChar,specMacroIdentifier,specSectionMacroArea,specSectionMacroBracketArea,shOperator,shQuote1,shQuote2
+syn region specScriptArea matchgroup=specSection start='^%\(prep\|conf\|generate_buildrequires\|build\|install\|clean\|check\|pre\|postun\|preun\|post\|posttrans\|patchlist\|sourcelist\)\>' skip='^%{\|^%\(define\|patch\d*\|configure\|GNUconfigure\|setup\|autosetup\|autopatch\|find_lang\|make_build\|makeinstall\|make_install\|cmake\|cmake_build\|cmake_install\|ninja_build\|ninja_install\|meson\|meson_build\|meson_install\)\>' end='^%'me=e-1 contains=specSpecialVariables,specVariables,@specCommands,specVariables,shDo,shFor,shCaseEsac,specNoNumberHilite,specCommandOpts,shComment,shIf,specSpecialChar,specMacroIdentifier,specSectionMacroArea,specSectionMacroBracketArea,shOperator,shQuote1,shQuote2
 
 "%% Changelog Section %%
 syn region specChangelogArea matchgroup=specSection start='^%changelog' end='^%'me=e-1 contains=specEmail,specURL,specWeekday,specMonth,specNumber,specComment,specLicense
