@@ -130,6 +130,9 @@ PLUGINS
 
 • TODO
 
+• Editorconfig
+  • spelling_language property is now supported.
+
 STARTUP
 
 • TODO
