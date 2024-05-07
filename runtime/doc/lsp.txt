@@ -1201,12 +1201,11 @@ Lua module: vim.lsp.buf                                              *lsp-buf*
                         vim.lsp.buf.references(nil, { on_list = on_list })
 <
 
-                    If you prefer loclist do something like this: >lua
-                        local function on_list(options)
-                          vim.fn.setloclist(0, {}, ' ', options)
-                          vim.cmd.lopen()
-                        end
+                    If you prefer loclist instead of qflist: >lua
+                        vim.lsp.buf.definition({ loclist = true })
+                        vim.lsp.buf.references(nil, { loclist = true })
 <
+      • {loclist}?  (`boolean`)
 
 *vim.lsp.LocationOpts*
     Extends: |vim.lsp.ListOpts|
@@ -1235,30 +1234,30 @@ add_workspace_folder({workspace_folder})
 clear_references()                            *vim.lsp.buf.clear_references()*
     Removes document highlights from current buffer.
 
-code_action({options})                             *vim.lsp.buf.code_action()*
+code_action({opts})                                *vim.lsp.buf.code_action()*
     Selects a code action available at the current cursor position.
 
     Parameters: ~
-      • {options}  (`table?`) A table with the following fields:
-                   • {context}? (`lsp.CodeActionContext`) Corresponds to
-                     `CodeActionContext` of the LSP specification:
-                     • {diagnostics}? (`table`) LSP `Diagnostic[]`. Inferred
-                       from the current position if not provided.
-                     • {only}? (`table`) List of LSP `CodeActionKind`s used to
-                       filter the code actions. Most language servers support
-                       values like `refactor` or `quickfix`.
-                     • {triggerKind}? (`integer`) The reason why code actions
-                       were requested.
-                   • {filter}? (`fun(x: lsp.CodeAction|lsp.Command):boolean`)
-                     Predicate taking an `CodeAction` and returning a boolean.
-                   • {apply}? (`boolean`) When set to `true`, and there is
-                     just one remaining action (after filtering), the action
-                     is applied without user query.
-                   • {range}? (`{start: integer[], end: integer[]}`) Range for
-                     which code actions should be requested. If in visual mode
-                     this defaults to the active selection. Table must contain
-                     `start` and `end` keys with {row,col} tuples using
-                     mark-like indexing. See |api-indexing|
+      • {opts}  (`table?`) A table with the following fields:
+                • {context}? (`lsp.CodeActionContext`) Corresponds to
+                  `CodeActionContext` of the LSP specification:
+                  • {diagnostics}? (`table`) LSP `Diagnostic[]`. Inferred from
+                    the current position if not provided.
+                  • {only}? (`table`) List of LSP `CodeActionKind`s used to
+                    filter the code actions. Most language servers support
+                    values like `refactor` or `quickfix`.
+                  • {triggerKind}? (`integer`) The reason why code actions
+                    were requested.
+                • {filter}? (`fun(x: lsp.CodeAction|lsp.Command):boolean`)
+                  Predicate taking an `CodeAction` and returning a boolean.
+                • {apply}? (`boolean`) When set to `true`, and there is just
+                  one remaining action (after filtering), the action is
+                  applied without user query.
+                • {range}? (`{start: integer[], end: integer[]}`) Range for
+                  which code actions should be requested. If in visual mode
+                  this defaults to the active selection. Table must contain
+                  `start` and `end` keys with {row,col} tuples using mark-like
+                  indexing. See |api-indexing|
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
@@ -1277,7 +1276,7 @@ completion({context})                               *vim.lsp.buf.completion()*
     See also: ~
       • vim.lsp.protocol.CompletionTriggerKind
 
-declaration({options})                             *vim.lsp.buf.declaration()*
+declaration({opts})                                *vim.lsp.buf.declaration()*
     Jumps to the declaration of the symbol under the cursor.
 
     Note: ~
@@ -1285,13 +1284,13 @@ declaration({options})                             *vim.lsp.buf.declaration()*
         |vim.lsp.buf.definition()| instead.
 
     Parameters: ~
-      • {options}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
+      • {opts}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
 
-definition({options})                               *vim.lsp.buf.definition()*
+definition({opts})                                  *vim.lsp.buf.definition()*
     Jumps to the definition of the symbol under the cursor.
 
     Parameters: ~
-      • {options}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
+      • {opts}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
 
 document_highlight()                        *vim.lsp.buf.document_highlight()*
     Send request to the server to resolve document highlights for the current
@@ -1307,11 +1306,11 @@ document_highlight()                        *vim.lsp.buf.document_highlight()*
     highlights. |hl-LspReferenceText| |hl-LspReferenceRead|
     |hl-LspReferenceWrite|
 
-document_symbol({options})                     *vim.lsp.buf.document_symbol()*
+document_symbol({opts})                        *vim.lsp.buf.document_symbol()*
     Lists all symbols in the current buffer in the quickfix window.
 
     Parameters: ~
-      • {options}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
+      • {opts}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
 
 execute_command({command_params})              *vim.lsp.buf.execute_command()*
     Executes an LSP server command.
@@ -1322,53 +1321,53 @@ execute_command({command_params})              *vim.lsp.buf.execute_command()*
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
 
-format({options})                                       *vim.lsp.buf.format()*
+format({opts})                                          *vim.lsp.buf.format()*
     Formats a buffer using the attached (and optionally filtered) language
     server clients.
 
     Parameters: ~
-      • {options}  (`table?`) A table with the following fields:
-                   • {formatting_options}? (`table`) Can be used to specify
-                     FormattingOptions. Some unspecified options will be
-                     automatically derived from the current Nvim options. See
-                     https://microsoft.github.io/language-server-protocol/specification/#formattingOptions
-                   • {timeout_ms}? (`integer`, default: `1000`) Time in
-                     milliseconds to block for formatting requests. No effect
-                     if async=true.
-                   • {bufnr}? (`integer`, default: current buffer) Restrict
-                     formatting to the clients attached to the given buffer.
-                   • {filter}? (`fun(client: vim.lsp.Client): boolean?`)
-                     Predicate used to filter clients. Receives a client as
-                     argument and must return a boolean. Clients matching the
-                     predicate are included. Example: >lua
-                       -- Never request typescript-language-server for formatting
-                       vim.lsp.buf.format {
-                         filter = function(client) return client.name ~= "tsserver" end
-                       }
+      • {opts}  (`table?`) A table with the following fields:
+                • {formatting_options}? (`table`) Can be used to specify
+                  FormattingOptions. Some unspecified options will be
+                  automatically derived from the current Nvim options. See
+                  https://microsoft.github.io/language-server-protocol/specification/#formattingOptions
+                • {timeout_ms}? (`integer`, default: `1000`) Time in
+                  milliseconds to block for formatting requests. No effect if
+                  async=true.
+                • {bufnr}? (`integer`, default: current buffer) Restrict
+                  formatting to the clients attached to the given buffer.
+                • {filter}? (`fun(client: vim.lsp.Client): boolean?`)
+                  Predicate used to filter clients. Receives a client as
+                  argument and must return a boolean. Clients matching the
+                  predicate are included. Example: >lua
+                    -- Never request typescript-language-server for formatting
+                    vim.lsp.buf.format {
+                      filter = function(client) return client.name ~= "tsserver" end
+                    }
 <
-                   • {async}? (`boolean`, default: false) If true the method
-                     won't block. Editing the buffer while formatting
-                     asynchronous can lead to unexpected changes.
-                   • {id}? (`integer`) Restrict formatting to the client with
-                     ID (client.id) matching this field.
-                   • {name}? (`string`) Restrict formatting to the client with
-                     name (client.name) matching this field.
-                   • {range}? (`{start:integer[],end:integer[]}`, default:
-                     current selection in visual mode, `nil` in other modes,
-                     formatting the full buffer) Range to format. Table must
-                     contain `start` and `end` keys with {row,col} tuples
-                     using (1,0) indexing.
+                • {async}? (`boolean`, default: false) If true the method
+                  won't block. Editing the buffer while formatting
+                  asynchronous can lead to unexpected changes.
+                • {id}? (`integer`) Restrict formatting to the client with ID
+                  (client.id) matching this field.
+                • {name}? (`string`) Restrict formatting to the client with
+                  name (client.name) matching this field.
+                • {range}? (`{start:integer[],end:integer[]}`, default:
+                  current selection in visual mode, `nil` in other modes,
+                  formatting the full buffer) Range to format. Table must
+                  contain `start` and `end` keys with {row,col} tuples using
+                  (1,0) indexing.
 
 hover()                                                  *vim.lsp.buf.hover()*
     Displays hover information about the symbol under the cursor in a floating
     window. Calling the function twice will jump into the floating window.
 
-implementation({options})                       *vim.lsp.buf.implementation()*
+implementation({opts})                          *vim.lsp.buf.implementation()*
     Lists all the implementations for the symbol under the cursor in the
     quickfix window.
 
     Parameters: ~
-      • {options}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
+      • {opts}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
 
 incoming_calls()                                *vim.lsp.buf.incoming_calls()*
     Lists all the call sites of the symbol under the cursor in the |quickfix|
@@ -1383,13 +1382,13 @@ outgoing_calls()                                *vim.lsp.buf.outgoing_calls()*
     |quickfix| window. If the symbol can resolve to multiple items, the user
     can pick one in the |inputlist()|.
 
-references({context}, {options})                    *vim.lsp.buf.references()*
+references({context}, {opts})                       *vim.lsp.buf.references()*
     Lists all the references to the symbol under the cursor in the quickfix
     window.
 
     Parameters: ~
       • {context}  (`table?`) Context for the request
-      • {options}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
+      • {opts}     (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
@@ -1402,13 +1401,13 @@ remove_workspace_folder({workspace_folder})
     Parameters: ~
       • {workspace_folder}  (`string?`)
 
-rename({new_name}, {options})                           *vim.lsp.buf.rename()*
+rename({new_name}, {opts})                              *vim.lsp.buf.rename()*
     Renames all references to the symbol under the cursor.
 
     Parameters: ~
       • {new_name}  (`string?`) If not provided, the user will be prompted for
                     a new name using |vim.ui.input()|.
-      • {options}   (`table?`) Additional options:
+      • {opts}      (`table?`) Additional options:
                     • {filter}? (`fun(client: vim.lsp.Client): boolean?`)
                       Predicate used to filter clients. Receives a client as
                       argument and must return a boolean. Clients matching the
@@ -1421,11 +1420,11 @@ signature_help()                                *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a
     floating window.
 
-type_definition({options})                     *vim.lsp.buf.type_definition()*
+type_definition({opts})                        *vim.lsp.buf.type_definition()*
     Jumps to the definition of the type of the symbol under the cursor.
 
     Parameters: ~
-      • {options}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
+      • {opts}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
 
 typehierarchy({kind})                            *vim.lsp.buf.typehierarchy()*
     Lists all the subtypes or supertypes of the symbol under the cursor in the
@@ -1435,7 +1434,7 @@ typehierarchy({kind})                            *vim.lsp.buf.typehierarchy()*
     Parameters: ~
       • {kind}  (`"subtypes"|"supertypes"`)
 
-workspace_symbol({query}, {options})          *vim.lsp.buf.workspace_symbol()*
+workspace_symbol({query}, {opts})             *vim.lsp.buf.workspace_symbol()*
     Lists all symbols in the current workspace in the quickfix window.
 
     The list is filtered against {query}; if the argument is omitted from the
@@ -1443,8 +1442,8 @@ workspace_symbol({query}, {options})          *vim.lsp.buf.workspace_symbol()*
     string means no filtering is done.
 
     Parameters: ~
-      • {query}    (`string?`) optional
-      • {options}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
+      • {query}  (`string?`) optional
+      • {opts}   (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
 
 
 ==============================================================================

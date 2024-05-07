@@ -253,26 +253,24 @@ M[ms.textDocument_references] = function(_, result, ctx, config)
   local title = 'References'
   local items = util.locations_to_items(result, client.offset_encoding)
 
+  local list = { title = title, items = items, context = ctx }
   if config.loclist then
-    vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
-    api.nvim_command('lopen')
+    vim.fn.setloclist(0, {}, ' ', list)
+    vim.cmd.lopen()
   elseif config.on_list then
-    assert(type(config.on_list) == 'function', 'on_list is not a function')
-    config.on_list({ title = title, items = items, context = ctx })
+    assert(vim.is_callable(config.on_list), 'on_list is not a function')
+    config.on_list(list)
   else
-    vim.fn.setqflist({}, ' ', { title = title, items = items, context = ctx })
-    api.nvim_command('botright copen')
+    vim.fn.setqflist({}, ' ', list)
+    vim.cmd('botright copen')
   end
 end
 
 --- Return a function that converts LSP responses to list items and opens the list
 ---
---- The returned function has an optional {config} parameter that accepts a table
---- with the following keys:
+--- The returned function has an optional {config} parameter that accepts |vim.lsp.ListOpts|
 ---
----   loclist: (boolean) use the location list (default is to use the quickfix list)
----
----@param map_result function `((resp, bufnr) -> list)` to convert the response
+---@param map_result fun(resp, bufnr: integer): table to convert the response
 ---@param entity string name of the resource used in a `not found` error message
 ---@param title_fn fun(ctx: lsp.HandlerContext): string Function to call to generate list title
 ---@return lsp.Handler
@@ -286,15 +284,16 @@ local function response_to_list(map_result, entity, title_fn)
     local title = title_fn(ctx)
     local items = map_result(result, ctx.bufnr)
 
+    local list = { title = title, items = items, context = ctx }
     if config.loclist then
-      vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
-      api.nvim_command('lopen')
+      vim.fn.setloclist(0, {}, ' ', list)
+      vim.cmd.lopen()
     elseif config.on_list then
-      assert(type(config.on_list) == 'function', 'on_list is not a function')
-      config.on_list({ title = title, items = items, context = ctx })
+      assert(vim.is_callable(config.on_list), 'on_list is not a function')
+      config.on_list(list)
     else
-      vim.fn.setqflist({}, ' ', { title = title, items = items, context = ctx })
-      api.nvim_command('botright copen')
+      vim.fn.setqflist({}, ' ', list)
+      vim.cmd('botright copen')
     end
   end
 end
@@ -436,7 +435,7 @@ local function location_handler(_, result, ctx, config)
   local items = util.locations_to_items(result, client.offset_encoding)
 
   if config.on_list then
-    assert(type(config.on_list) == 'function', 'on_list is not a function')
+    assert(vim.is_callable(config.on_list), 'on_list is not a function')
     config.on_list({ title = title, items = items })
     return
   end
@@ -444,8 +443,13 @@ local function location_handler(_, result, ctx, config)
     util.jump_to_location(result[1], client.offset_encoding, config.reuse_win)
     return
   end
-  vim.fn.setqflist({}, ' ', { title = title, items = items })
-  api.nvim_command('botright copen')
+  if config.loclist then
+    vim.fn.setloclist(0, {}, ' ', { title = title, items = items })
+    vim.cmd.lopen()
+  else
+    vim.fn.setqflist({}, ' ', { title = title, items = items })
+    vim.cmd('botright copen')
+  end
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_declaration
@@ -555,7 +559,7 @@ local function make_call_hierarchy_handler(direction)
       end
     end
     vim.fn.setqflist({}, ' ', { title = 'LSP call hierarchy', items = items })
-    api.nvim_command('botright copen')
+    vim.cmd('botright copen')
   end
 end
 
@@ -594,7 +598,7 @@ local function make_type_hierarchy_handler()
       })
     end
     vim.fn.setqflist({}, ' ', { title = 'LSP type hierarchy', items = items })
-    api.nvim_command('botright copen')
+    vim.cmd('botright copen')
   end
 end
 
