@@ -114,6 +114,9 @@ LSP
 • Completion side effects (including snippet expansion, execution of commands
   and application of additional text edits) is now built-in.
 • |vim.lsp.util.locations_to_items()| sets `end_col` and `end_lnum` fields.
+• Add a new `related_information` field to |vim.Diagnostic| in favor of
+  `vim.Diagnostic.user_data.lsp.relatedInformation` (now deprecated). See
+  |vim.diagnostic.RelatedInformation|.
 
 LUA
 

@@ -350,21 +350,25 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
     0-based rows and columns). |api-indexing|
 
     Fields: ~
-      • {bufnr}?      (`integer`) Buffer number
-      • {lnum}        (`integer`) The starting line of the diagnostic
-                      (0-indexed)
-      • {end_lnum}?   (`integer`) The final line of the diagnostic (0-indexed)
-      • {col}         (`integer`) The starting column of the diagnostic
-                      (0-indexed)
-      • {end_col}?    (`integer`) The final column of the diagnostic
-                      (0-indexed)
-      • {severity}?   (`vim.diagnostic.Severity`) The severity of the
-                      diagnostic |vim.diagnostic.severity|
-      • {message}     (`string`) The diagnostic text
-      • {source}?     (`string`) The source of the diagnostic
-      • {code}?       (`string|integer`) The diagnostic code
-      • {user_data}?  (`any`) arbitrary data plugins can add
-      • {namespace}?  (`integer`)
+      • {bufnr}?                (`integer`) Buffer number
+      • {lnum}                  (`integer`) The starting line of the
+                                diagnostic (0-indexed)
+      • {end_lnum}?             (`integer`) The final line of the diagnostic
+                                (0-indexed)
+      • {col}                   (`integer`) The starting column of the
+                                diagnostic (0-indexed)
+      • {end_col}?              (`integer`) The final column of the diagnostic
+                                (0-indexed)
+      • {severity}?             (`vim.diagnostic.Severity`) The severity of
+                                the diagnostic |vim.diagnostic.severity|
+      • {message}               (`string`) The diagnostic text
+      • {related_information}?  (`vim.diagnostic.RelatedInformation[]`) An
+                                array of related diagnostic information. See
+                                |vim.diagnostic.RelatedInformation|.
+      • {source}?               (`string`) The source of the diagnostic
+      • {code}?                 (`string|integer`) The diagnostic code
+      • {user_data}?            (`any`) arbitrary data plugins can add
+      • {namespace}?            (`integer`)
 
 *vim.diagnostic.GetOpts*
     A table with the following keys:
@@ -596,6 +600,23 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                               |nvim_buf_set_extmark()|.
       • {virt_text_win_col}?  (`integer`) See |nvim_buf_set_extmark()|.
       • {virt_text_hide}?     (`boolean`) See |nvim_buf_set_extmark()|.
+
+*vim.diagnostic.RelatedInformation*
+    Related message and location for a diagnostic. This can be used to point
+    to code locations that cause or are related to a diagnostic, e.g when
+    duplicating a symbol in a scope.
+
+    Fields: ~
+      • {bufnr}?     (`integer`) Buffer number
+      • {lnum}       (`integer`) The starting line of the related information
+                     (0-indexed)
+      • {end_lnum}?  (`integer`) The final line of the related information
+                     (0-indexed)
+      • {col}        (`integer`) The starting column of the related
+                     information (0-indexed)
+      • {end_col}?   (`integer`) The final column of the related information
+                     (0-indexed)
+      • {message}    (`string`) The related information text
 
 
 config({opts}, {namespace})                          *vim.diagnostic.config()*

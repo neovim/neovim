@@ -29,6 +29,9 @@ local M = {}
 --- The diagnostic text
 --- @field message string
 ---
+--- An array of related diagnostic information
+--- @field related_information? vim.diagnostic.RelatedInformation[]
+---
 --- The source of the diagnostic
 --- @field source? string
 ---
@@ -41,6 +44,29 @@ local M = {}
 --- @field user_data? any arbitrary data plugins can add
 ---
 --- @field namespace? integer
+
+--- Related message and location for a diagnostic.
+--- This can be used to point to code locations that cause or are related to
+--- a diagnostic, e.g when duplicating a symbol in a scope.
+--- @class vim.diagnostic.RelatedInformation
+---
+--- Buffer number
+--- @field bufnr? integer
+---
+--- The starting line of the related information (0-indexed)
+--- @field lnum integer
+---
+--- The final line of the related information (0-indexed)
+--- @field end_lnum? integer
+---
+--- The starting column of the related information (0-indexed)
+--- @field col integer
+---
+--- The final column of the related information (0-indexed)
+--- @field end_col? integer
+---
+--- The related information text
+--- @field message string
 
 --- Many of the configuration options below accept one of the following:
 --- - `false`: Disable this feature
