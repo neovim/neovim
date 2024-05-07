@@ -429,7 +429,7 @@ function M.enable(enable, filter)
 
   if filter.bufnr == nil then
     globalstate.enabled = enable
-    for bufnr, _ in pairs(bufstates) do
+    for _, bufnr in ipairs(api.nvim_list_bufs()) do
       if api.nvim_buf_is_loaded(bufnr) then
         if enable == false then
           _disable(bufnr)
