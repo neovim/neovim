@@ -16,8 +16,18 @@ local testdir = 'Xtest-editorconfig'
 local function test_case(name, expected)
   local filename = testdir .. pathsep .. name
   command('edit ' .. filename)
+
   for opt, val in pairs(expected) do
-    eq(val, api.nvim_get_option_value(opt, { buf = 0 }), name)
+    local opt_info = api.nvim_get_option_info2(opt)
+    if opt_info.scope == 'win' then
+      eq(val, api.nvim_get_option_value(opt, { win = 0 }), name)
+    else
+      if opt_info.scope == 'buf' then
+        eq(val, api.nvim_get_option_value(opt, { buf = 0 }), name)
+      else
+        eq(val, api.nvim_get_option_value(opt), name)
+      end
+    end
   end
 end
 
