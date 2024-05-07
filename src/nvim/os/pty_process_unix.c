@@ -171,13 +171,17 @@ int pty_process_spawn(PtyProcess *ptyproc)
   Process *proc = (Process *)ptyproc;
   assert(proc->err.closed);
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
-  ioctl(1, TIOCGWINSZ, &ptyproc->winsize);
-  ptyproc->winsize = (struct winsize){
-    ptyproc->height,
-    ptyproc->width,
-    (ptyproc->winsize.ws_xpixel / ptyproc->winsize.ws_col) * ptyproc->width,
-    (ptyproc->winsize.ws_ypixel / ptyproc->winsize.ws_row) * ptyproc->height,
-  };
+  if (isatty(1)) {
+    ioctl(1, TIOCGWINSZ, &ptyproc->winsize);
+    ptyproc->winsize = (struct winsize){
+      ptyproc->height,
+      ptyproc->width,
+      (ptyproc->winsize.ws_xpixel / ptyproc->winsize.ws_col) * ptyproc->width,
+      (ptyproc->winsize.ws_ypixel / ptyproc->winsize.ws_row) * ptyproc->height,
+    };
+  } else {
+    ptyproc->winsize = (struct winsize){ ptyproc->height, ptyproc->width, 0, 0 };
+  }
   uv_disable_stdio_inheritance();
   int master;
   int pid = forkpty(&master, NULL, &termios_default, &ptyproc->winsize);
