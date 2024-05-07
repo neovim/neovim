@@ -103,10 +103,10 @@ setup(function()
     max_line_length = 42
 
     [short_spelling_language.txt]
-    spelling_language = en
+    spelling_language = de
 
     [long_spelling_language.txt]
-    spelling_language = en-US
+    spelling_language = en-NZ
     ]]
   )
 end)
@@ -238,7 +238,7 @@ But not this one
   end)
 
   it('sets spell, spelllang options', function()
-    test_case('short_spelling_language.txt', { spell = true, spelllang = 'en' })
-    test_case('long_spelling_language.txt', { spell = true, spelllang = 'en_us' })
+    test_case('short_spelling_language.txt', { spell = true, spelllang = 'de' })
+    test_case('long_spelling_language.txt', { spell = true, spelllang = 'en_nz' })
   end)
 end)
