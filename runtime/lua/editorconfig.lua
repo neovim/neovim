@@ -206,7 +206,7 @@ function properties.spelling_language(bufnr, val)
     assert(val:sub(3, 3) == '-', error_msg)
 
     local territory_code = val:sub(4, 5):lower()
-    assert(language_code:match('%l%l'), error_msg)
+    assert(territory_code:match('%l%l'), error_msg)
     vim.bo[bufnr].spelllang = language_code .. '_' .. territory_code
   end
 
