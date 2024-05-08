@@ -446,10 +446,6 @@ settings are described below, in |netrw-browser-options|, and in
 			      messages don't always seem to show up this
 			      way, but one doesn't have to quit the window.
 
- *g:netrw_win95ftp*	=1 if using Win95, will remove four trailing blank
-			   lines that o/s's ftp "provides" on transfers
-			=0 force normal ftp behavior (no trailing line removal)
-
  *g:netrw_cygwin*	=1 assume scp under windows is from cygwin. Also
 			   permits network browsing to use ls with time and
 			   size sorting (default if windows)
@@ -825,8 +821,6 @@ set in the user's <.vimrc> file: (see also |netrw-settings| |netrw-protocol|)
         g:netrw_uid             Holds current user-id for ftp.
         g:netrw_use_nt_rcp      =0 don't use WinNT/2K/XP's rcp (default)
                                 =1 use WinNT/2K/XP's rcp, binary mode
-        g:netrw_win95ftp        =0 use unix-style ftp even if win95/98/ME/etc
-                                =1 use default method to do ftp >
 	-----------------------------------------------------------------------
 <
 						*netrw-internal-variables*
@@ -955,21 +949,8 @@ messages) you may write a NetReadFixup() function:
     endfunction
 >
 The NetReadFixup() function will be called if it exists and thus allows you to
-customize your reading process.  As a further example, <netrw.vim> contains
-just such a function to handle Windows 95 ftp.  For whatever reason, Windows
-95's ftp dumps four blank lines at the end of a transfer, and so it is
-desirable to automate their removal.  Here's some code taken from <netrw.vim>
-itself:
->
-    if has("win95") && g:netrw_win95ftp
-     fun! NetReadFixup(method, line1, line2)
-       if method == 3   " ftp (no <.netrc>)
-        let fourblanklines= line2 - 3
-        silent fourblanklines .. "," .. line2 .. "g/^\s*/d"
-       endif
-     endfunction
-    endif
->
+customize your reading process.
+
 (Related topics: |ftp| |netrw-userpass| |netrw-start|)
 
 ==============================================================================
@@ -3397,16 +3378,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
 	(This section is likely to grow as I get feedback)
 	(also see |netrw-debug|)
 								*netrw-p1*
-	P1. I use windows 95, and my ftp dumps four blank lines at the      {{{2
-	    end of every read.
-
-		See |netrw-fixup|, and put the following into your
-		<.vimrc> file:
-
-			let g:netrw_win95ftp= 1
-
-								*netrw-p2*
-	P2. I use Windows, and my network browsing with ftp doesn't sort by {{{2
+	P1. I use Windows, and my network browsing with ftp doesn't sort by {{{2
 	    time or size!  -or-  The remote system is a Windows server; why
 	    don't I get sorts by time or size?
 
@@ -3432,8 +3404,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 		modify its listing behavior.
 
 
-								*netrw-p3*
-	P3. I tried rcp://user@host/ (or protocol other than ftp) and netrw {{{2
+								*netrw-p2*
+	P2. I tried rcp://user@host/ (or protocol other than ftp) and netrw {{{2
 	    used ssh!  That wasn't what I asked for...
 
 		Netrw has two methods for browsing remote directories: ssh
@@ -3441,8 +3413,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 		When it comes time to do download a file (not just a directory
 		listing), netrw will use the given protocol to do so.
 
-								*netrw-p4*
-	P4. I would like long listings to be the default.                   {{{2
+								*netrw-p3*
+	P3. I would like long listings to be the default.                   {{{2
 
 		Put the following statement into your |vimrc|: >
 
@@ -3451,8 +3423,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 		Check out |netrw-browser-var| for more customizations that
 		you can set.
 
-								*netrw-p5*
-	P5. My times come up oddly in local browsing                        {{{2
+								*netrw-p4*
+	P4. My times come up oddly in local browsing                        {{{2
 
 		Does your system's strftime() accept the "%c" to yield dates
 		such as "Sun Apr 27 11:49:23 1997"?  If not, do a
@@ -3461,16 +3433,16 @@ Example: Clear netrw's marked file list via a mapping on gu >
 
 			let g:netrw_timefmt= "%X"  (where X is the option)
 <
-								*netrw-p6*
-	P6. I want my current directory to track my browsing.               {{{2
+								*netrw-p5*
+	P5. I want my current directory to track my browsing.               {{{2
 	    How do I do that?
 
 	    Put the following line in your |vimrc|:
 >
 		let g:netrw_keepdir= 0
 <
-								*netrw-p7*
-	P7. I use Chinese (or other non-ascii) characters in my filenames,  {{{2
+								*netrw-p6*
+	P6. I use Chinese (or other non-ascii) characters in my filenames,  {{{2
 	    and netrw (Explore, Sexplore, Hexplore, etc) doesn't display them!
 
 		(taken from an answer provided by Wu Yongwei on the vim
@@ -3484,8 +3456,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 
 		(...it is one more reason to recommend that people use utf-8!)
 
-								*netrw-p8*
-	P8. I'm getting "ssh is not executable on your system" -- what do I {{{2
+								*netrw-p7*
+	P7. I'm getting "ssh is not executable on your system" -- what do I {{{2
 	    do?
 
 		(Dudley Fox) Most people I know use putty for windows ssh.  It
@@ -3567,8 +3539,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 		of the others will use the string in g:netrw_ssh_cmd by
 		default.
 
-						*netrw-p9* *netrw-ml_get*
-	P9. I'm browsing, changing directory, and bang!  ml_get errors      {{{2
+						*netrw-p8* *netrw-ml_get*
+	P8. I'm browsing, changing directory, and bang!  ml_get errors      {{{2
 	    appear and I have to kill vim.  Any way around this?
 
 		Normally netrw attempts to avoid writing swapfiles for
@@ -3578,8 +3550,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 		in your <.vimrc>: >
 			let g:netrw_use_noswf= 0
 <
-								*netrw-p10*
-	P10. I'm being pestered with "[something] is a directory" and       {{{2
+								*netrw-p9*
+	P9. I'm being pestered with "[something] is a directory" and       {{{2
 	     "Press ENTER or type command to continue" prompts...
 
 		The "[something] is a directory" prompt is issued by Vim,
@@ -3589,8 +3561,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 		I also suggest that you set your |'cmdheight'| to 2 (or more) in
 		your <.vimrc> file.
 
-								*netrw-p11*
-	P11. I want to have two windows; a thin one on the left and my      {{{2
+								*netrw-p10*
+	P10. I want to have two windows; a thin one on the left and my      {{{2
 	     editing window on the right.  How may I accomplish this?
 
 	     You probably want netrw running as in a side window.  If so, you
@@ -3615,8 +3587,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 		  <middlemouse> to select the file.
 
 
-								*netrw-p12*
-	P12. My directory isn't sorting correctly, or unwanted letters are  {{{2
+								*netrw-p11*
+	P11. My directory isn't sorting correctly, or unwanted letters are  {{{2
 	     appearing in the listed filenames, or things aren't lining
 	     up properly in the wide listing, ...
 
@@ -3625,8 +3597,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 	     Multibyte encodings use two (or more) bytes per character.
 	     You may need to change |g:netrw_sepchr| and/or |g:netrw_xstrlen|.
 
-								*netrw-p13*
-	P13. I'm a Windows + putty + ssh user, and when I attempt to        {{{2
+								*netrw-p12*
+	P12. I'm a Windows + putty + ssh user, and when I attempt to        {{{2
 	     browse, the directories are missing trailing "/"s so netrw treats
 	     them as file transfers instead of as attempts to browse
 	     subdirectories.  How may I fix this?
@@ -3646,8 +3618,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 	    "let g:netrw_sftp_cmd = "d:\\dev\\putty\\PSFTP.exe"
 	    "let g:netrw_scp_cmd = "d:\\dev\\putty\\PSCP.exe"
 <
-								*netrw-p14*
-	P14. I would like to speed up writes using Nwrite and scp/ssh       {{{2
+								*netrw-p13*
+	P13. I would like to speed up writes using Nwrite and scp/ssh       {{{2
 	     style connections.  How?  (Thomer M. Gil)
 
 	     Try using ssh's ControlMaster and ControlPath (see the ssh_config
@@ -3673,8 +3645,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 
 		vim scp://host.domain.com//home/user/.bashrc
 <
-								*netrw-p15*
-	P15. How may I use a double-click instead of netrw's usual single   {{{2
+								*netrw-p14*
+	P14. How may I use a double-click instead of netrw's usual single   {{{2
 	     click to open a file or directory?  (Ben Fritz)
 
 	     First, disable netrw's mapping with >
@@ -3686,8 +3658,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 	     all netrw's mouse mappings, not just the <leftmouse> one.
 	     (see |g:netrw_mousemaps|)
 
-								*netrw-p16*
-	P16. When editing remote files (ex. :e ftp://hostname/path/file),   {{{2
+								*netrw-p15*
+	P15. When editing remote files (ex. :e ftp://hostname/path/file),   {{{2
 	     under Windows I get an |E303| message complaining that its unable
 	     to open a swap file.
 
@@ -3695,8 +3667,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 	     directory.  Start netrw from your $HOME or other writable
 	     directory.
 
-								*netrw-p17*
-	P17. Netrw is closing buffers on its own.                           {{{2
+								*netrw-p16*
+	P16. Netrw is closing buffers on its own.                           {{{2
 	     What steps will reproduce the problem?
 		1. :Explore, navigate directories, open a file
 		2. :Explore, open another file
@@ -3709,15 +3681,15 @@ Example: Clear netrw's marked file list via a mapping on gu >
 	            It appears that the buffers are not exactly closed;
 		    a ":ls!" will show them (although ":ls" does not).
 
-								*netrw-P18*
-	P18. How to locally edit a file that's only available via           {{{2
+								*netrw-P17*
+	P17. How to locally edit a file that's only available via           {{{2
 	     another server accessible via ssh?
 	     See http://stackoverflow.com/questions/12469645/
 	     "Using Vim to Remotely Edit A File on ServerB Only
 	      Accessible From ServerA"
 
-								*netrw-P19*
-	P19. How do I get numbering on in directory listings?               {{{2
+								*netrw-P18*
+	P18. How do I get numbering on in directory listings?               {{{2
 		With |g:netrw_bufsettings|, you can control netrw's buffer
 		settings; try putting >
 		  let g:netrw_bufsettings="noma nomod nu nobl nowrap ro nornu"
@@ -3725,8 +3697,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 		instead, try >
 		  let g:netrw_bufsettings="noma nomod nonu nobl nowrap ro rnu"
 <
-								*netrw-P20*
-	P20. How may I have gvim start up showing a directory listing?      {{{2
+								*netrw-P19*
+	P19. How may I have gvim start up showing a directory listing?      {{{2
 		Try putting the following code snippet into your .vimrc: >
 		    augroup VimStartup
 		      au!
@@ -3738,8 +3710,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 		This snippet assumes that you have client-server enabled
 		(ie. a "huge" vim version).
 
-								*netrw-P21*
-	P21. I've made a directory (or file) with an accented character,    {{{2
+								*netrw-P20*
+	P20. I've made a directory (or file) with an accented character,    {{{2
 		but netrw isn't letting me enter that directory/read that file:
 
 		Its likely that the shell or o/s is using a different encoding
@@ -3749,8 +3721,8 @@ Example: Clear netrw's marked file list via a mapping on gu >
 
 			au FileType netrw set enc=latin1
 <
-								*netrw-P22*
-	P22. I get an error message when I try to copy or move a file:      {{{2
+								*netrw-P21*
+	P21. I get an error message when I try to copy or move a file:      {{{2
 >
 		**error** (netrw) tried using g:netrw_localcopycmd<cp>; it doesn't work!
 <
