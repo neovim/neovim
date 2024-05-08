@@ -570,6 +570,7 @@ local extension = {
   jsx = 'javascriptreact',
   clp = 'jess',
   jgr = 'jgraph',
+  jjdescription = 'jj',
   j73 = 'jovial',
   jov = 'jovial',
   jovial = 'jovial',
