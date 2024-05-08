@@ -913,6 +913,119 @@ describe('smoothscroll', function()
     assert_alive()
   end)
 
+  -- oldtest: Test_smoothscroll_insert_bottom()
+  it('works in Insert mode at bottom of window', function()
+    screen:try_resize(40, 9)
+    exec([[
+      call setline(1, repeat([repeat('A very long line ...', 10)], 5))
+      set wrap smoothscroll scrolloff=0
+    ]])
+    feed('Go123456789<CR>')
+    screen:expect([[
+      {1:<<<}ery long line ...A very long line ...|
+      A very long line ...A very long line ...|*5
+      123456789                               |
+      ^                                        |
+      {5:-- INSERT --}                            |
+    ]])
+  end)
+
+  -- oldtest: Test_smoothscroll_in_qf_window()
+  it('works in quickfix window when changing quickfix list', function()
+    screen:try_resize(60, 20)
+    exec([[
+      set nocompatible display=lastline
+      copen 5
+      setlocal number smoothscroll
+      let g:l = [{'text': 'foo'}] + repeat([{'text': join(range(30))}], 10)
+      call setqflist(g:l, 'r')
+      normal! G
+      wincmd t
+      let g:l1 = [{'text': join(range(1000))}]
+    ]])
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*11
+      {3:[No Name]                                                   }|
+      {1:<<<}{8: }21 22 23 24 25 26 27 28 29                              |
+      {8: 10 }|| 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 |
+      {8:    }21 22 23 24 25 26 27 28 29                              |
+      {8: 11 }|| 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 |
+      {8:    }21 22 23 24 25 26 27 28 29                              |
+      {2:[Quickfix List]                                             }|
+                                                                  |
+    ]])
+
+    feed([[:call setqflist([], 'r')<CR>]])
+    local screen_empty = [[
+      ^                                                            |
+      {1:~                                                           }|*11
+      {3:[No Name]                                                   }|
+      {8:  1 }                                                        |
+      {1:~                                                           }|*4
+      {2:[Quickfix List]                                             }|
+      :call setqflist([], 'r')                                    |
+    ]]
+    screen:expect(screen_empty)
+
+    feed([[:call setqflist(g:l, 'r')<CR>]])
+    local screen_l_top = [[
+      ^                                                            |
+      {1:~                                                           }|*11
+      {3:[No Name]                                                   }|
+      {8:  1 }{10:|| foo                                                  }|
+      {8:  2 }|| 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 |
+      {8:    }21 22 23 24 25 26 27 28 29                              |
+      {8:  3 }|| 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 |
+      {8:    }21 22 23 24 25 26 27 28 29                              |
+      {2:[Quickfix List]                                             }|
+      :call setqflist(g:l, 'r')                                   |
+    ]]
+    screen:expect(screen_l_top)
+
+    feed([[:call setqflist(g:l1, 'r')<CR>]])
+    local screen_l1_top = [[
+      ^                                                            |
+      {1:~                                                           }|*11
+      {3:[No Name]                                                   }|
+      {8:  1 }{10:|| 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 }|
+      {8:    }{10:21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39}|
+      {8:    }{10: 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 5}|
+      {8:    }{10:8 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 }|
+      {8:    }{10:77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95}|
+      {2:[Quickfix List]                                             }|
+      :call setqflist(g:l1, 'r')                                  |
+    ]]
+    screen:expect(screen_l1_top)
+
+    feed('<C-W>b$<C-W>t')
+    local screen_l1_bot = [[
+      ^                                                            |
+      {1:~                                                           }|*11
+      {3:[No Name]                                                   }|
+      {1:<<<}{8: }{10: 937 938 939 940 941 942 943 944 945 946 947 948 949 950}|
+      {8:    }{10: 951 952 953 954 955 956 957 958 959 960 961 962 963 964}|
+      {8:    }{10: 965 966 967 968 969 970 971 972 973 974 975 976 977 978}|
+      {8:    }{10: 979 980 981 982 983 984 985 986 987 988 989 990 991 992}|
+      {8:    }{10: 993 994 995 996 997 998 999                            }|
+      {2:[Quickfix List]                                             }|
+      :call setqflist(g:l1, 'r')                                  |
+    ]]
+    screen:expect(screen_l1_bot)
+
+    feed([[:call setqflist([], 'r')<CR>]])
+    screen:expect(screen_empty)
+
+    feed([[:call setqflist(g:l1, 'r')<CR>]])
+    screen:expect(screen_l1_top)
+
+    feed('<C-W>b$<C-W>t')
+    screen:expect(screen_l1_bot)
+
+    feed([[:call setqflist(g:l, 'r')<CR>]])
+    screen:expect(screen_l_top)
+  end)
+
   it('works with virt_lines above and below', function()
     screen:try_resize(55, 7)
     exec([=[
@@ -983,22 +1096,6 @@ describe('smoothscroll', function()
       some text with some text with some text with some text |
       {1:~                                                      }|
                                                              |
-    ]])
-  end)
-
-  it('works in Insert mode at bottom of window', function()
-    screen:try_resize(40, 9)
-    exec([[
-      call setline(1, repeat([repeat('A very long line ...', 10)], 5))
-      set wrap smoothscroll scrolloff=0
-    ]])
-    feed('Go123456789<CR>')
-    screen:expect([[
-      {1:<<<}ery long line ...A very long line ...|
-      A very long line ...A very long line ...|*5
-      123456789                               |
-      ^                                        |
-      {5:-- INSERT --}                            |
     ]])
   end)
 
