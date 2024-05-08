@@ -221,7 +221,7 @@ static void changed_lines_invalidate_win(win_T *wp, linenr_T lnum, colnr_T col, 
 void changed_lines_invalidate_buf(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnume,
                                   linenr_T xtra)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == buf) {
       changed_lines_invalidate_win(wp, lnum, col, lnume, xtra);
     }
