@@ -286,6 +286,7 @@ void update_topline(win_T *wp)
     }
     wp->w_topline = 1;
     wp->w_botline = 2;
+    wp->w_skipcol = 0;
     wp->w_valid |= VALID_BOTLINE|VALID_BOTLINE_AP;
     wp->w_viewport_invalid = true;
     wp->w_scbind_pos = 1;

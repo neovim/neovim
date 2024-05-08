@@ -4195,6 +4195,12 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
       }
     }
 
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      if (wp->w_buffer == curbuf) {
+        wp->w_skipcol = 0;
+      }
+    }
+
     // Remove all undo information
     u_clearallandblockfree(curbuf);
   }
