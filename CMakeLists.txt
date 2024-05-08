@@ -50,11 +50,6 @@ file(GLOB DOCFILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/runtime/doc/*.txt)
 set_directory_properties(PROPERTIES
   EP_PREFIX "${DEPS_BUILD_DIR}")
 
-find_program(CCACHE_PRG ccache)
-if(CCACHE_PRG)
-  set(CMAKE_C_COMPILER_LAUNCHER ${CMAKE_COMMAND} -E env CCACHE_SLOPPINESS=pch_defines,time_macros ${CCACHE_PRG})
-endif()
-
 if(NOT CI_BUILD)
   set(CMAKE_INSTALL_MESSAGE NEVER)
 endif()
