@@ -2456,8 +2456,8 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
   // redrawing a status component may have changed the grid dimensions.
   if (flush && !cmdpreview) {
     update_screen();
+    ui_flush();
   }
-  ui_flush();
 
   RedrawingDisabled = save_rd;
   p_lz = save_lz;
