@@ -9,6 +9,7 @@
 "   2024 Feb 19 by Vim Project: (announce adoption)
 "   2024 Feb 29 by Vim Project: handle symlinks in tree mode correctly
 "   2024 Apr 03 by Vim Project: detect filetypes for remote edited files
+"   2024 May 08 by Vim Project: cleanup legacy Win9X checks
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 2016 Charles E. Campbell {{{1
@@ -281,7 +282,7 @@ if !exists("g:netrw_scp_cmd")
  if executable("scp")
   call s:NetrwInit("g:netrw_scp_cmd" , "scp -q")
  elseif executable("pscp")
-  if (has("win32") || has("win95") || has("win64") || has("win16")) && filereadable('c:\private.ppk')
+  if has("win32") && filereadable('c:\private.ppk')
    call s:NetrwInit("g:netrw_scp_cmd", 'pscp -i c:\private.ppk')
   else
    call s:NetrwInit("g:netrw_scp_cmd", 'pscp -q')
@@ -294,7 +295,7 @@ endif
 call s:NetrwInit("g:netrw_sftp_cmd" , "sftp")
 call s:NetrwInit("g:netrw_ssh_cmd"  , "ssh")
 
-if (has("win32") || has("win95") || has("win64") || has("win16"))
+if has("win32")
   \ && exists("g:netrw_use_nt_rcp")
   \ && g:netrw_use_nt_rcp
   \ && executable( $SystemRoot .'/system32/rcp.exe')
@@ -309,12 +310,8 @@ endif
 " Default values for netrw's global variables {{{2
 " Cygwin Detection ------- {{{3
 if !exists("g:netrw_cygwin")
- if has("win32") || has("win95") || has("win64") || has("win16")
-  if  has("win32unix") && &shell =~ '\%(\<bash\>\|\<zsh\>\)\%(\.exe\)\=$'
-   let g:netrw_cygwin= 1
-  else
-   let g:netrw_cygwin= 0
-  endif
+ if has("win32unix") && &shell =~ '\%(\<bash\>\|\<zsh\>\)\%(\.exe\)\=$'
+  let g:netrw_cygwin= 1
  else
   let g:netrw_cygwin= 0
  endif
@@ -370,7 +367,7 @@ endif
 call s:NetrwInit("g:netrw_keepdir",1)
 if !exists("g:netrw_list_cmd")
  if g:netrw_scp_cmd =~ '^pscp' && executable("pscp")
-  if (has("win32") || has("win95") || has("win64") || has("win16")) && filereadable("c:\\private.ppk")
+  if has("win32") && filereadable("c:\\private.ppk")
    " provide a pscp-based listing command
    let g:netrw_scp_cmd ="pscp -i C:\\private.ppk"
   endif
@@ -401,7 +398,7 @@ if !exists("g:netrw_localcmdshell")
  let g:netrw_localcmdshell= ""
 endif
 if !exists("g:netrw_localcopycmd")
- if has("win32") || has("win95") || has("win64") || has("win16")
+ if has("win32")
   if g:netrw_cygwin
    let g:netrw_localcopycmd= "cp"
   else
@@ -415,7 +412,7 @@ if !exists("g:netrw_localcopycmd")
  endif
 endif
 if !exists("g:netrw_localcopydircmd")
- if has("win32") || has("win95") || has("win64") || has("win16")
+ if has("win32")
   if g:netrw_cygwin
    let g:netrw_localcopydircmd   = "cp"
    let g:netrw_localcopydircmdopt= " -R"
@@ -437,7 +434,7 @@ if exists("g:netrw_local_mkdir")
  let g:netrw_localmkdir= g:netrw_local_mkdir
  call netrw#ErrorMsg(s:NOTE,"g:netrw_local_mkdir is deprecated in favor of g:netrw_localmkdir",87)
 endif
-if has("win32") || has("win95") || has("win64") || has("win16")
+if has("win32")
   if g:netrw_cygwin
    call s:NetrwInit("g:netrw_localmkdir","mkdir")
   else
@@ -453,7 +450,7 @@ if exists("g:netrw_local_movecmd")
  call netrw#ErrorMsg(s:NOTE,"g:netrw_local_movecmd is deprecated in favor of g:netrw_localmovecmd",88)
 endif
 if !exists("g:netrw_localmovecmd")
- if has("win32") || has("win95") || has("win64") || has("win16")
+ if has("win32")
   if g:netrw_cygwin
    let g:netrw_localmovecmd= "mv"
   else
@@ -486,7 +483,7 @@ call s:NetrwInit("g:netrw_mousemaps"     , (exists("+mouse") && &mouse =~# '[anh
 call s:NetrwInit("g:netrw_retmap"        , 0)
 if has("unix") || (exists("g:netrw_cygwin") && g:netrw_cygwin)
  call s:NetrwInit("g:netrw_chgperm"       , "chmod PERM FILENAME")
-elseif has("win32") || has("win95") || has("win64") || has("win16")
+elseif has("win32")
  call s:NetrwInit("g:netrw_chgperm"       , "cacls FILENAME /e /p PERM")
 else
  call s:NetrwInit("g:netrw_chgperm"       , "chmod PERM FILENAME")
@@ -545,14 +542,13 @@ if !exists("g:netrw_xstrlen")
  endif
 endif
 call s:NetrwInit("g:NetrwTopLvlMenu","Netrw.")
-call s:NetrwInit("g:netrw_win95ftp",1)
 call s:NetrwInit("g:netrw_winsize",50)
 call s:NetrwInit("g:netrw_wiw",1)
 if g:netrw_winsize > 100|let g:netrw_winsize= 100|endif
 " ---------------------------------------------------------------------
 " Default values for netrw's script variables: {{{2
 call s:NetrwInit("g:netrw_fname_escape",' ?&;%')
-if has("win32") || has("win95") || has("win64") || has("win16")
+if has("win32")
  call s:NetrwInit("g:netrw_glob_escape",'*?`{[]$')
 else
  call s:NetrwInit("g:netrw_glob_escape",'*[]?`{~$\')
@@ -684,7 +680,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
   " record current directory
   let curdir     = simplify(b:netrw_curdir)
   let curfiledir = substitute(expand("%:p"),'^\(.*[/\\]\)[^/\\]*$','\1','e')
-  if !exists("g:netrw_cygwin") && (has("win32") || has("win95") || has("win64") || has("win16"))
+  if !exists("g:netrw_cygwin") && has("win32")
    let curdir= substitute(curdir,'\','/','g')
   endif
 "  call Decho("curdir<".curdir.">  curfiledir<".curfiledir.">",'~'.expand("<slnum>"))
@@ -837,7 +833,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
    " handle .../**/.../filepat
 "   call Decho("case starpat=4: Explore .../**/.../filepat",'~'.expand("<slnum>"))
    let prefixdir= substitute(dirname,'^\(.\{-}\)\*\*.*$','\1','')
-   if prefixdir =~ '^/' || (prefixdir =~ '^\a:/' && (has("win32") || has("win95") || has("win64") || has("win16")))
+   if prefixdir =~ '^/' || (prefixdir =~ '^\a:/' && has("win32"))
     let b:netrw_curdir = prefixdir
    else
     let b:netrw_curdir= getcwd().'/'.prefixdir
@@ -874,7 +870,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
    else
     if dirname == ""
      let dirname= getcwd()
-    elseif (has("win32") || has("win95") || has("win64") || has("win16")) && !g:netrw_cygwin
+    elseif has("win32") && !g:netrw_cygwin
      " Windows : check for a drive specifier, or else for a remote share name ('\\Foo' or '//Foo',
      " depending on whether backslashes have been converted to forward slashes by earlier code).
      if dirname !~ '^[a-zA-Z]:' && dirname !~ '^\\\\\w\+' && dirname !~ '^//\w\+'
@@ -1383,7 +1379,7 @@ fun! netrw#Obtain(islocal,fname,...)
 "   call Decho("obtain a file from local ".b:netrw_curdir." to ".tgtdir,'~'.expand("<slnum>"))
    if exists("b:netrw_curdir") && getcwd() != b:netrw_curdir
     let topath= s:ComposePath(tgtdir,"")
-    if (has("win32") || has("win95") || has("win64") || has("win16"))
+    if has("win32")
      " transfer files one at time
 "     call Decho("transfer files one at a time",'~'.expand("<slnum>"))
      for fname in fnamelist
@@ -2254,7 +2250,7 @@ fun! netrw#NetRead(mode,...)
     endif
     " 'C' in 'C:\path\to\file' is handled as hostname on windows.
     " This is workaround to avoid mis-handle windows local-path:
-    if g:netrw_scp_cmd =~ '^scp' && (has("win32") || has("win95") || has("win64") || has("win16"))
+    if g:netrw_scp_cmd =~ '^scp' && has("win32")
       let tmpfile_get = substitute(tr(tmpfile, '\', '/'), '^\(\a\):[/\\]\(.*\)$', '/\1/\2', '')
     else
       let tmpfile_get = tmpfile
@@ -3174,7 +3170,7 @@ fun! s:NetrwMethod(choice)
     if exists("s:netrw_hup[host]")
      call NetUserPass("ftp:".host)
 
-    elseif (has("win32") || has("win95") || has("win64") || has("win16")) && s:netrw_ftp_cmd =~# '-[sS]:'
+    elseif has("win32") && s:netrw_ftp_cmd =~# '-[sS]:'
 "     call Decho("has -s: : s:netrw_ftp_cmd<".s:netrw_ftp_cmd.">",'~'.expand("<slnum>"))
 "     call Decho("          g:netrw_ftp_cmd<".g:netrw_ftp_cmd.">",'~'.expand("<slnum>"))
      if g:netrw_ftp_cmd =~# '-[sS]:\S*MACHINE\>'
@@ -3288,38 +3284,6 @@ fun! s:NetrwMethod(choice)
 "  call Decho("b:netrw_fname  <".b:netrw_fname.">",'~'.expand("<slnum>"))
 "  call Dret("s:NetrwMethod : b:netrw_method=".b:netrw_method." g:netrw_port=".g:netrw_port)
 endfun
-
-" ------------------------------------------------------------------------
-" NetReadFixup: this sort of function is typically written by the user {{{2
-"               to handle extra junk that their system's ftp dumps
-"               into the transfer.  This function is provided as an
-"               example and as a fix for a Windows 95 problem: in my
-"               experience, win95's ftp always dumped four blank lines
-"               at the end of the transfer.
-if has("win95") && exists("g:netrw_win95ftp") && g:netrw_win95ftp
- fun! NetReadFixup(method, line1, line2)
-"   call Dfunc("NetReadFixup(method<".a:method."> line1=".a:line1." line2=".a:line2.")")
-
-   " sanity checks -- attempt to convert inputs to integers
-   let method = a:method + 0
-   let line1  = a:line1 + 0
-   let line2  = a:line2 + 0
-   if type(method) != 0 || type(line1) != 0 || type(line2) != 0 || method < 0 || line1 <= 0 || line2 <= 0
-"    call Dret("NetReadFixup")
-    return
-   endif
-
-   if method == 3   " ftp (no <.netrc>)
-    let fourblanklines= line2 - 3
-    if fourblanklines >= line1
-     exe "sil NetrwKeepj ".fourblanklines.",".line2."g/^\s*$/d"
-     call histdel("/",-1)
-    endif
-   endif
-
-"   call Dret("NetReadFixup")
- endfun
-endif
 
 " ---------------------------------------------------------------------
 " NetUserPass: set username and password for subsequent ftp transfer {{{2
@@ -3943,7 +3907,7 @@ fun! s:NetrwBrowse(islocal,dirname)
   if b:netrw_curdir =~ '[/\\]$'
    let b:netrw_curdir= substitute(b:netrw_curdir,'[/\\]$','','e')
   endif
-  if b:netrw_curdir =~ '\a:$' && (has("win32") || has("win95") || has("win64") || has("win16"))
+  if b:netrw_curdir =~ '\a:$' && has("win32")
    let b:netrw_curdir= b:netrw_curdir."/"
   endif
   if b:netrw_curdir == ''
@@ -4097,7 +4061,7 @@ fun! s:NetrwFile(fname)
     let b:netrw_curdir= getcwd()
    endif
 
-   if !exists("g:netrw_cygwin") && (has("win32") || has("win95") || has("win64") || has("win16"))
+   if !exists("g:netrw_cygwin") && has("win32")
     if fname =~ '^\' || fname =~ '^\a:\'
      " windows, but full path given
      let ret= fname
@@ -4817,7 +4781,7 @@ fun! s:NetrwBrowseChgDir(islocal,newdir,...)
   call s:SavePosn(s:netrw_posn)
   NetrwKeepj call s:NetrwOptionsSave("s:")
   NetrwKeepj call s:NetrwOptionsSafe(a:islocal)
-  if (has("win32") || has("win95") || has("win64") || has("win16"))
+  if has("win32")
    let dirname = substitute(b:netrw_curdir,'\\','/','ge')
   else
    let dirname = b:netrw_curdir
@@ -5064,7 +5028,7 @@ fun! s:NetrwBrowseChgDir(islocal,newdir,...)
     endif
 "    call Decho("go-up: amiga: dirname<".dirname."> (go up one dir)",'~'.expand("<slnum>"))
 
-   elseif !g:netrw_cygwin && (has("win32") || has("win95") || has("win64") || has("win16"))
+   elseif !g:netrw_cygwin && has("win32")
     " windows
     if a:islocal
      let dirname= substitute(dirname,'^\(.*\)/\([^/]\+\)/$','\1','')
@@ -5349,7 +5313,7 @@ fun! netrw#BrowseX(fname,remote)
   " set up the filename
   " (lower case the extension, make a local copy of a remote file)
   let exten= substitute(a:fname,'.*\.\(.\{-}\)','\1','e')
-  if has("win32") || has("win95") || has("win64") || has("win16")
+  if has("win32")
    let exten= substitute(exten,'^.*$','\L&\E','')
   endif
   if exten =~ "[\\/]"
@@ -5396,12 +5360,12 @@ fun! netrw#BrowseX(fname,remote)
   " by default, g:netrw_suppress_gx_mesg is true
   if g:netrw_suppress_gx_mesg
    if &srr =~ "%s"
-    if (has("win32") || has("win95") || has("win64") || has("win16"))
+    if has("win32")
      let redir= substitute(&srr,"%s","nul","")
     else
      let redir= substitute(&srr,"%s","/dev/null","")
     endif
-   elseif (has("win32") || has("win95") || has("win64") || has("win16"))
+   elseif has("win32")
     let redir= &srr . "nul"
    else
     let redir= &srr . "/dev/null"
@@ -5444,7 +5408,7 @@ fun! netrw#BrowseX(fname,remote)
    call s:NetrwExe("sil !".viewer." ".viewopt.s:ShellEscape(fname,1).redir)
    let ret= v:shell_error
 
-  elseif has("win32") || has("win64")
+  elseif has("win32")
 "   call Decho("(netrw#BrowseX) win".(has("win32")? "32" : "64"),'~'.expand("<slnum>"))
    if executable("start")
     call s:NetrwExe('sil! !start rundll32 url.dll,FileProtocolHandler '.s:ShellEscape(fname,1))
@@ -7167,7 +7131,7 @@ fun! s:NetrwMarkFileCopy(islocal,...)
     let args= join(map(deepcopy(s:netrwmarkfilelist_{bufnr('%')}),"s:ShellEscape(b:netrw_curdir.\"/\".v:val)"))
     let tgt = s:ShellEscape(s:netrwmftgt)
    endif
-   if !g:netrw_cygwin && (has("win32") || has("win95") || has("win64") || has("win16"))
+   if !g:netrw_cygwin && has("win32")
     let args= substitute(args,'/','\\','g')
     let tgt = substitute(tgt, '/','\\','g')
    endif
@@ -7181,7 +7145,7 @@ fun! s:NetrwMarkFileCopy(islocal,...)
 "    call Decho("args<".args."> is a directory",'~'.expand("<slnum>"))
     let copycmd= g:netrw_localcopydircmd
 "    call Decho("using copydircmd<".copycmd.">",'~'.expand("<slnum>"))
-    if !g:netrw_cygwin && (has("win32") || has("win95") || has("win64") || has("win16"))
+    if !g:netrw_cygwin && has("win32")
      " window's xcopy doesn't copy a directory to a target properly.  Instead, it copies a directory's
      " contents to a target.  One must append the source directory name to the target to get xcopy to
      " do the right thing.
@@ -7799,7 +7763,7 @@ fun! s:NetrwMarkFileMove(islocal)
    endif
    let tgt = s:ShellEscape(s:netrwmftgt)
 "   call Decho("tgt<".tgt.">",'~'.expand("<slnum>"))
-   if !g:netrw_cygwin && (has("win32") || has("win95") || has("win64") || has("win16"))
+   if !g:netrw_cygwin && has("win32")
     let tgt= substitute(tgt, '/','\\','g')
 "    call Decho("windows exception: tgt<".tgt.">",'~'.expand("<slnum>"))
     if g:netrw_localmovecmd =~ '\s'
@@ -7820,7 +7784,7 @@ fun! s:NetrwMarkFileMove(islocal)
     " Jul 19, 2022: fixing file move when g:netrw_keepdir is 1
      let fname= b:netrw_curdir."/".fname
     endif
-    if !g:netrw_cygwin && (has("win32") || has("win95") || has("win64") || has("win16"))
+    if !g:netrw_cygwin && has("win32")
      let fname= substitute(fname,'/','\\','g')
     endif
 "    call Decho("system(".movecmd." ".s:ShellEscape(fname)." ".tgt.")",'~'.expand("<slnum>"))
@@ -10239,7 +10203,7 @@ fun! s:NetrwRemoteFtpCmd(path,listcmd)
   endif
 
   " cleanup for Windows " {{{3
-  if has("win32") || has("win95") || has("win64") || has("win16")
+  if has("win32")
    sil! NetrwKeepj %s/\r$//e
    NetrwKeepj call histdel("/",-1)
   endif
@@ -10747,7 +10711,7 @@ fun! netrw#FileUrlEdit(fname)
    let fname= substitute(fname,'^file://localhost/','file:///','')
 "   call Decho("fname<".fname.">",'~'.expand("<slnum>"))
   endif
-  if (has("win32") || has("win95") || has("win64") || has("win16"))
+  if has("win32")
    if fname  =~ '^file:///\=\a[|:]/'
 "    call Decho('converting file:///\a|/   -to-  file://\a:/','~'.expand("<slnum>"))
     let fname = substitute(fname,'^file:///\=\(\a\)[|:]/','file://\1:/','')
@@ -10757,7 +10721,7 @@ fun! netrw#FileUrlEdit(fname)
   let fname2396 = netrw#RFC2396(fname)
   let fname2396e= fnameescape(fname2396)
   let plainfname= substitute(fname2396,'file://\(.*\)','\1',"")
-  if (has("win32") || has("win95") || has("win64") || has("win16"))
+  if has("win32")
 "   call Decho("windows exception for plainfname",'~'.expand("<slnum>"))
    if plainfname =~ '^/\+\a:'
 "    call Decho('removing leading "/"s','~'.expand("<slnum>"))
@@ -10969,7 +10933,7 @@ fun! s:LocalFastBrowser()
    let s:netrw_events= 1
    augroup AuNetrwEvent
     au!
-    if (has("win32") || has("win95") || has("win64") || has("win16"))
+    if has("win32")
 "     call Decho("installing autocmd: ShellCmdPost",'~'.expand("<slnum>"))
      au ShellCmdPost			*	call s:LocalBrowseRefresh()
     else
@@ -11011,7 +10975,7 @@ fun! s:LocalListing()
   let filelist   = filelist + s:NetrwGlob(dirname,".*",0)
 "  call Decho("filelist=".string(filelist),'~'.expand("<slnum>"))
 
-  if g:netrw_cygwin == 0 && (has("win32") || has("win95") || has("win64") || has("win16"))
+  if g:netrw_cygwin == 0 && has("win32")
 "   call Decho("filelist=".string(filelist),'~'.expand("<slnum>"))
   elseif index(filelist,'..') == -1 && b:netrw_curdir !~ '/'
     " include ../ in the glob() entry if its missing
@@ -11057,7 +11021,7 @@ fun! s:LocalListing()
     let pfile= filename."/"
 
    elseif exists("b:netrw_curdir") && b:netrw_curdir !~ '^.*://' && !isdirectory(s:NetrwFile(filename))
-    if (has("win32") || has("win95") || has("win64") || has("win16"))
+    if has("win32")
      if filename =~ '\.[eE][xX][eE]$' || filename =~ '\.[cC][oO][mM]$' || filename =~ '\.[bB][aA][tT]$'
       " indicate an executable
 "      call Decho("indicate <".filename."> is executable with trailing *",'~'.expand("<slnum>"))
@@ -11534,7 +11498,7 @@ endfun
 " netrw#WinPath: tries to insure that the path is windows-acceptable, whether cygwin is used or not {{{2
 fun! netrw#WinPath(path)
 "  call Dfunc("netrw#WinPath(path<".a:path.">)")
-  if (!g:netrw_cygwin || &shell !~ '\%(\<bash\>\|\<zsh\>\)\%(\.exe\)\=$') && (has("win32") || has("win95") || has("win64") || has("win16"))
+  if (!g:netrw_cygwin || &shell !~ '\%(\<bash\>\|\<zsh\>\)\%(\.exe\)\=$') && has("win32")
    " remove cygdrive prefix, if present
    let path = substitute(a:path,g:netrw_cygdrive.'/\(.\)','\1:','')
    " remove trailing slash (Win95)
@@ -11594,11 +11558,11 @@ fun! s:ComposePath(base,subdir)
    endif
 
    " COMBAK: test on windows with changing to root directory: :e C:/
-  elseif a:subdir =~ '^\a:[/\\]\([^/\\]\|$\)' && (has("win32") || has("win95") || has("win64") || has("win16"))
+  elseif a:subdir =~ '^\a:[/\\]\([^/\\]\|$\)' && has("win32")
 "   call Decho("windows",'~'.expand("<slnum>"))
    let ret= a:subdir
 
-  elseif a:base =~ '^\a:[/\\]\([^/\\]\|$\)' && (has("win32") || has("win95") || has("win64") || has("win16"))
+  elseif a:base =~ '^\a:[/\\]\([^/\\]\|$\)' && has("win32")
 "   call Decho("windows",'~'.expand("<slnum>"))
    if a:base =~ '[/\\]$'
     let ret= a:base.a:subdir
@@ -11710,7 +11674,7 @@ fun! s:GetTempfile(fname)
    " o/s dependencies
    if g:netrw_cygwin != 0
     let tmpfile = substitute(tmpfile,'^\(\a\):',g:netrw_cygdrive.'/\1','e')
-   elseif has("win32") || has("win95") || has("win64") || has("win16")
+   elseif has("win32")
     if !exists("+shellslash") || !&ssl
      let tmpfile = substitute(tmpfile,'/','\','g')
     endif
@@ -11926,7 +11890,7 @@ fun! s:NetrwDelete(path)
 "  call Dfunc("s:NetrwDelete(path<".a:path.">)")
 
   let path = netrw#WinPath(a:path)
-  if !g:netrw_cygwin && (has("win32") || has("win95") || has("win64") || has("win16"))
+  if !g:netrw_cygwin && has("win32")
    if exists("+shellslash")
     let sskeep= &shellslash
     setl noshellslash
@@ -12117,7 +12081,7 @@ fun! s:NetrwLcd(newdir)
      " 'root' (ie. '\').  The share name may start with either backslashes ('\\Foo') or
      " forward slashes ('//Foo'), depending on whether backslashes have been converted to
      " forward slashes by earlier code; so check for both.
-     if (has("win32") || has("win95") || has("win64") || has("win16")) && !g:netrw_cygwin
+     if has("win32") && !g:netrw_cygwin
        if a:newdir =~ '^\\\\\w\+' || a:newdir =~ '^//\w\+'
          let dirname = '\'
          exe 'NetrwKeepj sil lcd '.fnameescape(dirname)
@@ -12590,7 +12554,7 @@ endfun
 " ---------------------------------------------------------------------
 " s:ShellEscape: shellescape(), or special windows handling {{{2
 fun! s:ShellEscape(s, ...)
-  if (has('win32') || has('win64')) && $SHELL == '' && &shellslash
+  if has('win32') && $SHELL == '' && &shellslash
     return printf('"%s"', substitute(a:s, '"', '""', 'g'))
   endif 
   let f = a:0 > 0 ? a:1 : 0

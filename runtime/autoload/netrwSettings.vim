@@ -3,6 +3,8 @@
 " Maintainer:   This runtime file is looking for a new maintainer.
 " Former Maintainer: Charles E Campbell
 " Version:	18
+" Last Change:
+"   2024 May 08 by Vim Project: cleanup legacy Win9X checks
 " Copyright:    Copyright (C) 1999-2007 Charles E. Campbell {{{1
 "               Permission is hereby granted to use and distribute this code,
 "               with or without modifications, provided that this copyright
@@ -91,7 +93,6 @@ fun! netrwSettings#NetrwSettings()
   put = 'let g:netrw_sshport           = '.g:netrw_sshport
   put = 'let g:netrw_silent            = '.g:netrw_silent
   put = 'let g:netrw_use_nt_rcp        = '.g:netrw_use_nt_rcp
-  put = 'let g:netrw_win95ftp          = '.g:netrw_win95ftp
   let s:netrw_xfer_stop= line(".")
   put =''
   put ='+ Netrw Messages'

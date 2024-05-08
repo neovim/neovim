@@ -2,6 +2,8 @@
 "            PLUGIN SECTION
 " Maintainer:	This runtime file is looking for a new maintainer.
 " Date:		Feb 09, 2021
+" Last Change:
+"   2024 May 08 by Vim Project: cleanup legacy Win9X checks
 " Former Maintainer:   Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 1999-2021 Charles E. Campbell {{{1
@@ -35,7 +37,7 @@ augroup FileExplorer
  au BufLeave *  if &ft != "netrw"|let w:netrw_prvfile= expand("%:p")|endif
  au BufEnter *	sil call s:LocalBrowse(expand("<amatch>"))
  au VimEnter *	sil call s:VimEnter(expand("<amatch>"))
- if has("win32") || has("win95") || has("win64") || has("win16")
+ if has("win32")
   au BufEnter .* sil call s:LocalBrowse(expand("<amatch>"))
  endif
 augroup END
