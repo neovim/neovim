@@ -101,6 +101,10 @@ For arm64:
 
 ## Linux
 
+<a href="https://repology.org/project/neovim/versions">
+    <img src="https://repology.org/badge/vertical-allrepos/neovim.svg" alt="Packaging status" align="right" >
+</a>
+
 ### Pre-built archives
 
 The [Releases](https://github.com/neovim/neovim/releases) page provides pre-built binaries for Linux systems.
