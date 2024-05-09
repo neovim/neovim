@@ -10,6 +10,7 @@
 "   2024 Feb 29 by Vim Project: handle symlinks in tree mode correctly
 "   2024 Apr 03 by Vim Project: detect filetypes for remote edited files
 "   2024 May 08 by Vim Project: cleanup legacy Win9X checks
+"   2024 May 09 by Vim Project: remove hard-coded private.ppk
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 2016 Charles E. Campbell {{{1
@@ -279,14 +280,8 @@ call s:NetrwInit("g:netrw_rcp_cmd"  , "rcp")
 call s:NetrwInit("g:netrw_rsync_cmd", "rsync")
 call s:NetrwInit("g:netrw_rsync_sep", "/")
 if !exists("g:netrw_scp_cmd")
- if executable("scp")
-  call s:NetrwInit("g:netrw_scp_cmd" , "scp -q")
- elseif executable("pscp")
-  if has("win32") && filereadable('c:\private.ppk')
-   call s:NetrwInit("g:netrw_scp_cmd", 'pscp -i c:\private.ppk')
-  else
-   call s:NetrwInit("g:netrw_scp_cmd", 'pscp -q')
-  endif
+ if executable("pscp")
+  call s:NetrwInit("g:netrw_scp_cmd", 'pscp -q')
  else
   call s:NetrwInit("g:netrw_scp_cmd" , "scp -q")
  endif
@@ -367,10 +362,6 @@ endif
 call s:NetrwInit("g:netrw_keepdir",1)
 if !exists("g:netrw_list_cmd")
  if g:netrw_scp_cmd =~ '^pscp' && executable("pscp")
-  if has("win32") && filereadable("c:\\private.ppk")
-   " provide a pscp-based listing command
-   let g:netrw_scp_cmd ="pscp -i C:\\private.ppk"
-  endif
   if exists("g:netrw_list_cmd_options")
    let g:netrw_list_cmd= g:netrw_scp_cmd." -ls USEPORT HOSTNAME: ".g:netrw_list_cmd_options
   else
