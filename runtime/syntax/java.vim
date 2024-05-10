@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Apr 28
+" Last Change:		2024 May 07
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -90,7 +90,6 @@ if s:module_info_cur_buf
   syn keyword javaModuleStorageClass	module transitive
   syn keyword javaModuleStmt		open requires exports opens uses provides
   syn keyword javaModuleExternal	to with
-  syn cluster javaTop add=javaModuleStorageClass,javaModuleStmt,javaModuleExternal
 endif
 
 if exists("java_highlight_java_lang_ids")
@@ -107,7 +106,6 @@ if exists("java_highlight_all")  || exists("java_highlight_java")  || exists("ja
   " the current keyword placement. The below _match_es follow suit.
 
   syn keyword javaR_JavaLang ArithmeticException ArrayIndexOutOfBoundsException ArrayStoreException ClassCastException IllegalArgumentException IllegalMonitorStateException IllegalThreadStateException IndexOutOfBoundsException NegativeArraySizeException NullPointerException NumberFormatException RuntimeException SecurityException StringIndexOutOfBoundsException IllegalStateException UnsupportedOperationException EnumConstantNotPresentException TypeNotPresentException IllegalCallerException LayerInstantiationException WrongThreadException MatchException
-  syn cluster javaTop add=javaR_JavaLang
   syn cluster javaClasses add=javaR_JavaLang
   hi def link javaR_JavaLang javaR_Java
   " Member enumerations:
@@ -128,15 +126,12 @@ if exists("java_highlight_all")  || exists("java_highlight_java")  || exists("ja
   syn match   javaC_JavaLang "\<System\>"	" See javaDebug.
   " As of JDK 21, java.lang.Compiler is no more (deprecated in JDK 9).
   syn keyword javaLangDeprecated Compiler
-  syn cluster javaTop add=javaC_JavaLang
   syn cluster javaClasses add=javaC_JavaLang
   hi def link javaC_JavaLang javaC_Java
   syn keyword javaE_JavaLang AbstractMethodError ClassCircularityError ClassFormatError Error IllegalAccessError IncompatibleClassChangeError InstantiationError InternalError LinkageError NoClassDefFoundError NoSuchFieldError NoSuchMethodError OutOfMemoryError StackOverflowError ThreadDeath UnknownError UnsatisfiedLinkError VerifyError VirtualMachineError ExceptionInInitializerError UnsupportedClassVersionError AssertionError BootstrapMethodError
-  syn cluster javaTop add=javaE_JavaLang
   syn cluster javaClasses add=javaE_JavaLang
   hi def link javaE_JavaLang javaE_Java
   syn keyword javaX_JavaLang ClassNotFoundException CloneNotSupportedException Exception IllegalAccessException InstantiationException InterruptedException NoSuchMethodException Throwable NoSuchFieldException ReflectiveOperationException
-  syn cluster javaTop add=javaX_JavaLang
   syn cluster javaClasses add=javaX_JavaLang
   hi def link javaX_JavaLang javaX_Java
 
@@ -152,7 +147,6 @@ if exists("java_highlight_all")  || exists("java_highlight_java")  || exists("ja
   syn keyword javaLangObject clone equals finalize getClass hashCode
   syn keyword javaLangObject notify notifyAll toString wait
   hi def link javaLangObject		     javaConstant
-  syn cluster javaTop add=javaLangObject
 endif
 
 if filereadable(expand("<sfile>:p:h")."/javaid.vim")
@@ -187,13 +181,6 @@ hi def link javaLabelVarType	javaOperator
 hi def link javaLabelNumber	javaNumber
 hi def link javaLabelCastType	javaType
 
-" highlighting C++ keywords as errors removed, too many people find it
-" annoying.  Was: if !exists("java_allow_cpp_keywords")
-
-" The following cluster contains all java groups except the contained ones
-syn cluster javaTop add=javaExternal,javaError,javaBranch,javaLabelRegion,javaConditional,javaRepeat,javaBoolean,javaConstant,javaTypedef,javaOperator,javaType,javaStatement,javaStorageClass,javaAssert,javaExceptions,javaMethodDecl,javaClassDecl,javaScopeDecl,javaConceptKind,javaError2,javaUserLabel,javaLangObject,javaAnnotation,javaVarArg
-
-
 " Comments
 syn keyword javaTodo		 contained TODO FIXME XXX
 
@@ -222,8 +209,6 @@ hi def link javaCommentCharacter javaCharacter
 syn match   javaCommentError contained "/\*"me=e-1 display
 hi def link javaCommentError javaError
 hi def link javaCommentStart javaComment
-
-syn cluster javaTop add=javaComment,javaLineComment
 
 if !exists("java_ignore_javadoc") && main_syntax != 'jsp'
   syntax case ignore
@@ -266,8 +251,6 @@ syn match   javaTextBlockError	+"""\s*"""+
 syn region  javaStrTemplEmbExp	 contained matchgroup=javaStrTempl start="\\{" end="}" contains=TOP
 syn region  javaStrTempl	 start=+\%(\.[[:space:]\n]*\)\@<="+ end=+"+ contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,@Spell
 syn region  javaStrTempl	 start=+\%(\.[[:space:]\n]*\)\@<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,javaTextBlockError,@Spell
-" The next line is commented out, it can cause a crash for a long line
-"syn match   javaStringError	  +"\%([^"\\]\|\\.\)*$+
 syn match   javaCharacter	 "'[^']*'" contains=javaSpecialChar,javaSpecialCharError
 syn match   javaCharacter	 "'\\''" contains=javaSpecialChar
 syn match   javaCharacter	 "'[^\\]'"
@@ -285,8 +268,6 @@ syn match   javaNumber		 "\<0[xX]\%(\x\%(_*\x\)*\.\=\|\%(\x\%(_*\x\)*\)\=\.\x\%(
 
 " Unicode characters
 syn match   javaSpecial "\\u\x\x\x\x"
-
-syn cluster javaTop add=javaString,javaStrTempl,javaCharacter,javaNumber,javaSpecial,javaStringError,javaTextBlockError
 
 " Method declarations (JLS-17, §8.4.3, §8.4.4, §9.4).
 if exists("java_highlight_functions")
@@ -328,7 +309,6 @@ if exists("java_highlight_functions")
 
   syn match   javaLambdaDef "\<\K\k*\>\%(\<default\>\)\@<!\s*->"
   syn match  javaBraces  "[{}]"
-  syn cluster javaTop add=javaFuncDef,javaBraces,javaLambdaDef
 endif
 
 if exists("java_highlight_debug")
@@ -341,8 +321,6 @@ if exists("java_highlight_debug")
   syn region  javaDebugStrTemplEmbExp	contained matchgroup=javaDebugStrTempl start="\\{" end="}" contains=javaComment,javaLineComment,javaDebug\%(Paren\)\@!.*
   syn region  javaDebugStrTempl		contained start=+\%(\.[[:space:]\n]*\)\@<="+ end=+"+ contains=javaDebugStrTemplEmbExp,javaDebugSpecial
   syn region  javaDebugStrTempl		contained start=+\%(\.[[:space:]\n]*\)\@<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaDebugStrTemplEmbExp,javaDebugSpecial,javaDebugTextBlockError
-  " The next line is commented out, it can cause a crash for a long line
-" syn match   javaDebugStringError	contained +"\%([^"\\]\|\\.\)*$+
   syn match   javaDebugTextBlockError	contained +"""\s*"""+
   syn match   javaDebugCharacter	contained "'[^\\]'"
   syn match   javaDebugSpecialCharacter contained "'\\.'"
@@ -366,13 +344,10 @@ if exists("java_highlight_debug")
 " FIXME: What API do "trace*" belong to?
 " syn match javaDebug "\<trace[SL]\=\s*("me=e-1 contains=javaDebug.* nextgroup=javaDebugParen
 
-  syn cluster javaTop add=javaDebug
-
   hi def link javaDebug		 Debug
   hi def link javaDebugString		 DebugString
   hi def link javaDebugStrTempl		 Macro
-  hi def link javaDebugStringError	 javaError
-  hi def link javaDebugTextBlockError	 javaDebugStringError
+  hi def link javaDebugTextBlockError	 Error
   hi def link javaDebugType		 DebugType
   hi def link javaDebugBoolean		 DebugBoolean
   hi def link javaDebugNumber		 Debug
@@ -390,7 +365,6 @@ endif
 if exists("java_mark_braces_in_parens_as_errors")
   syn match javaInParen		 contained "[{}]"
   hi def link javaInParen	javaError
-  syn cluster javaTop add=javaInParen
 endif
 
 " catch errors caused by wrong parenthesis
@@ -410,6 +384,10 @@ if exists("java_highlight_functions")
   " Make ()-matching definitions after the parenthesis error catcher.
   syn match javaLambdaDef "\k\@4<!(\%(\k\|[[:space:]<>?\[\]@,.]\)*)\s*->"
 endif
+
+" The @javaTop cluster comprises non-contained Java syntax groups.
+" Note that the syntax file "aidl.vim" relies on its availability.
+syn cluster javaTop contains=TOP,javaDocComment,javaFold,javaParenError,javaParenT
 
 if !exists("java_minlines")
   let java_minlines = 10
@@ -452,8 +430,7 @@ hi def link javaCharacter		Character
 hi def link javaSpecialChar		SpecialChar
 hi def link javaNumber			Number
 hi def link javaError			Error
-hi def link javaStringError		Error
-hi def link javaTextBlockError		javaStringError
+hi def link javaTextBlockError		Error
 hi def link javaStatement		Statement
 hi def link javaOperator		Operator
 hi def link javaComment		Comment
@@ -497,4 +474,4 @@ let b:spell_options = "contained"
 let &cpo = s:cpo_save
 unlet s:selectable_regexp_engine s:module_info_cur_buf s:cpo_save
 
-" vim: ts=8
+" vim: sw=2 ts=8 noet sta
