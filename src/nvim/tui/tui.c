@@ -23,6 +23,7 @@
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/grid_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
@@ -165,6 +166,15 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
   tui->seen_error_exit = 0;
   tui->loop = &main_loop;
   tui->url = -1;
+  // Because setting the default colors is delayed until after startup to avoid
+  // flickering with the default colorscheme background, any flush that happens
+  // during startup in turn would result in clearing invalidated regions with
+  // uninitialized attrs(black). Instead initialize clear_attrs with current
+  // terminal background so that it is at least not perceived as flickering, even
+  // though it may be different from the colorscheme that is set during startup.
+  tui->clear_attrs.rgb_bg_color = normal_bg;
+  tui->clear_attrs.cterm_bg_color = (int16_t)cterm_normal_bg_color;
+
   kv_init(tui->invalid_regions);
   kv_init(tui->urlbuf);
   signal_watcher_init(tui->loop, &tui->winch_handle, tui);
