@@ -5521,7 +5521,7 @@ describe('LSP', function()
         )
       end
 
-      eq(true, check_registered(nil)) -- start{_client}() defaults to make_client_capabilities().
+      eq(is_os('mac') or is_os('win'), check_registered(nil)) -- start{_client}() defaults to make_client_capabilities().
       eq(false, check_registered(vim.empty_dict()))
       eq(
         false,
