@@ -1141,12 +1141,14 @@ end
 --- Distinguish between "default", Prolog and Cproto prototype file.
 --- @type vim.filetype.mapfn
 function M.proto(_, bufnr)
-  -- Cproto files have a comment in the first line and a function prototype in
-  -- the second line, it always ends in ";".  Indent files may also have
-  -- comments, thus we can't match comments to see the difference.
-  -- IDL files can have a single ';' in the second line, require at least one
-  -- character before the ';'.
-  if getline(bufnr, 2):find('.;$') then
+  if getline(bufnr, 2):find('/%* Generated automatically %*/') then
+    return 'c'
+  elseif getline(bufnr, 2):find('.;$') then
+    -- Cproto files have a comment in the first line and a function prototype in
+    -- the second line, it always ends in ";".  Indent files may also have
+    -- comments, thus we can't match comments to see the difference.
+    -- IDL files can have a single ';' in the second line, require at least one
+    -- character before the ';'.
     return 'cpp'
   end
   -- Recognize Prolog by specific text in the first non-empty line;
