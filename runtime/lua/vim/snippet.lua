@@ -535,18 +535,6 @@ end
 --- Jumps within the active snippet in the given direction.
 --- If the jump isn't possible, the function call does nothing.
 ---
---- You can use this function to navigate a snippet as follows:
----
---- ```lua
---- vim.keymap.set({ 'i', 's' }, '<Tab>', function()
----    if vim.snippet.jumpable(1) then
----      return '<cmd>lua vim.snippet.jump(1)<cr>'
----    else
----      return '<Tab>'
----    end
----  end, { expr = true })
---- ```
----
 --- @param direction (vim.snippet.Direction) Navigation direction. -1 for previous, 1 for next.
 function M.jump(direction)
   -- Get the tabstop index to jump to.
