@@ -121,7 +121,7 @@ Array virt_text_to_array(VirtText vt, bool hl_name, Arena *arena)
     Array hl_array = arena_array(arena, i < j ? j - i + 1 : 0);
     for (; i < j; i++) {
       int hl_id = kv_A(vt, i).hl_id;
-      if (hl_id > 0) {
+      if (hl_id >= 0) {
         ADD_C(hl_array, hl_group_name(hl_id, hl_name));
       }
     }
@@ -131,11 +131,11 @@ Array virt_text_to_array(VirtText vt, bool hl_name, Arena *arena)
     Array chunk = arena_array(arena, 2);
     ADD_C(chunk, CSTR_AS_OBJ(text));
     if (hl_array.size > 0) {
-      if (hl_id > 0) {
+      if (hl_id >= 0) {
         ADD_C(hl_array, hl_group_name(hl_id, hl_name));
       }
       ADD_C(chunk, ARRAY_OBJ(hl_array));
-    } else if (hl_id > 0) {
+    } else if (hl_id >= 0) {
       ADD_C(chunk, hl_group_name(hl_id, hl_name));
     }
     ADD_C(chunks, ARRAY_OBJ(chunk));
@@ -1165,7 +1165,7 @@ VirtText parse_virt_text(Array chunks, Error *err, int *width)
 
     String str = chunk.items[0].data.string;
 
-    int hl_id = 0;
+    int hl_id = -1;
     if (chunk.size == 2) {
       Object hl = chunk.items[1];
       if (hl.type == kObjectTypeArray) {

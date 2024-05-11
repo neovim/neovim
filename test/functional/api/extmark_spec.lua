@@ -1569,7 +1569,7 @@ describe('API/extmarks', function()
       sign_text = '>>',
       spell = true,
       virt_lines = {
-        { { 'lines', 'Macro' }, { '???' } },
+        { { 'lines', 'Macro' }, { '???' }, { ';;;', '' } },
         { { 'stack', { 'Type', 'Search' } }, { '!!!' } },
       },
       virt_lines_above = true,
@@ -1604,7 +1604,7 @@ describe('API/extmarks', function()
         sign_text = '>>',
         spell = true,
         virt_lines = {
-          { { 'lines', 'Macro' }, { '???' } },
+          { { 'lines', 'Macro' }, { '???' }, { ';;;', '' } },
           { { 'stack', { 'Type', 'Search' } }, { '!!!' } },
         },
         virt_lines_above = true,
