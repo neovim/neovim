@@ -646,6 +646,67 @@ import hello]])
     }
   end)
 
+  it('does not extend closed fold with `o`/`O`', function()
+    local screen = Screen.new(60, 24)
+    screen:attach()
+
+    insert(test_text)
+    parse('c')
+    command([[set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr() foldcolumn=1]])
+
+    feed('5ggzco')
+    screen:expect({
+      grid = [[
+        {7:-}void ui_refresh(void)                                      |
+        {7:│}{                                                          |
+        {7:│}  int width = INT_MAX, height = INT_MAX;                   |
+        {7:│}  bool ext_widgets[kUIExtCount];                           |
+        {7:+}{13:+---  3 lines: for (UIExtension i = 0; (int)i < kUIExtCount}|
+        {7:│}^                                                           |
+        {7:│}                                                           |
+        {7:│}  bool inclusive = ui_override();                          |
+        {7:-}  for (size_t i = 0; i < ui_count; i++) {                  |
+        {7:2}    UI *ui = uis[i];                                       |
+        {7:2}    width = MIN(ui->width, width);                         |
+        {7:2}    height = MIN(ui->height, height);                      |
+        {7:2}    foo = BAR(ui->bazaar, bazaar);                         |
+        {7:-}    for (UIExtension j = 0; (int)j < kUIExtCount; j++) {   |
+        {7:3}      ext_widgets[j] &= (ui->ui_ext[j] || inclusive);      |
+        {7:3}    }                                                      |
+        {7:2}  }                                                        |
+        {7:│}}                                                          |
+        {1:~                                                           }|*5
+        {5:-- INSERT --}                                                |
+      ]],
+    })
+
+    feed('<Esc>O')
+    screen:expect({
+      grid = [[
+        {7:-}void ui_refresh(void)                                      |
+        {7:│}{                                                          |
+        {7:│}  int width = INT_MAX, height = INT_MAX;                   |
+        {7:│}  bool ext_widgets[kUIExtCount];                           |
+        {7:+}{13:+---  3 lines: for (UIExtension i = 0; (int)i < kUIExtCount}|
+        {7:│}^                                                           |
+        {7:│}                                                           |*2
+        {7:│}  bool inclusive = ui_override();                          |
+        {7:-}  for (size_t i = 0; i < ui_count; i++) {                  |
+        {7:2}    UI *ui = uis[i];                                       |
+        {7:2}    width = MIN(ui->width, width);                         |
+        {7:2}    height = MIN(ui->height, height);                      |
+        {7:2}    foo = BAR(ui->bazaar, bazaar);                         |
+        {7:-}    for (UIExtension j = 0; (int)j < kUIExtCount; j++) {   |
+        {7:3}      ext_widgets[j] &= (ui->ui_ext[j] || inclusive);      |
+        {7:3}    }                                                      |
+        {7:2}  }                                                        |
+        {7:│}}                                                          |
+        {1:~                                                           }|*4
+        {5:-- INSERT --}                                                |
+      ]],
+    })
+  end)
+
   it("doesn't open folds that are not touched", function()
     local screen = Screen.new(40, 8)
     screen:set_default_attr_ids({
@@ -674,7 +735,7 @@ t2]])
       grid = [[
       {1:-}# h1                                   |
       {1:│}t1                                     |
-      {1:│}^                                       |
+      {1:-}^                                       |
       {1:+}{2:+--  2 lines: # h2·····················}|
       {3:~                                       }|*3
       {4:-- INSERT --}                            |
