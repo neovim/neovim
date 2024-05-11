@@ -12,11 +12,11 @@ func Test_check_URLs()
   else
     let s:outdev = '/dev/null'
   endif
-" Restorer: For Windows users. If "curl" or "weget" is installed on the system
-" but not in %PATH%, add the full routes for them to this environment variable.
+" Restorer: For Windows users. If "curl" or "wget" is installed on the system
+" but not in %PATH%, add the full path to them to %PATH% environment variable.
   if executable('curl')
     " Note: does not follow redirects!
-    let s:command1 = 'curl --silent --fail --output ' ..s:outdev.. ' --head '
+    let s:command1 = 'curl --silent --max-time 5 --fail --output ' ..s:outdev.. ' --head '
     let s:command2 = ""
   elseif executable('wget')
     " Note: only allow a couple of redirects
