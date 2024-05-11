@@ -2029,11 +2029,7 @@ passwords:
     better way to do that: I can use a regular ssh account which uses a
     password to access the material without the need to key-in the password
     each time. It's good for security and convenience. I tried ssh public key
-    authorization + ssh-agent, implementing this, and it works! Here are two
-    links with instructions:
-
-    http://www.ibm.com/developerworks/library/l-keyc2/
-    http://sial.org/howto/openssh/publickey-auth/
+    authorization + ssh-agent, implementing this, and it works!
 
 
     Ssh hints:
