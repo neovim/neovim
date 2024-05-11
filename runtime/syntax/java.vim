@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 May 07
+" Last Change:		2024 May 10
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -20,8 +20,33 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
+"""" STRIVE TO REMAIN COMPATIBLE FOR AT LEAST VIM 7.0.
+let s:ff = {}
+
+function! s:ff.LeftConstant(x, y) abort
+  return a:x
+endfunction
+
+function! s:ff.RightConstant(x, y) abort
+  return a:y
+endfunction
+
+if !exists("*s:ReportOnce")
+  function s:ReportOnce(message) abort
+    echomsg 'syntax/java.vim: ' . a:message
+  endfunction
+else
+  function! s:ReportOnce(dummy)
+  endfunction
+endif
+
 " Admit the ASCII dollar sign to keyword characters (JLS-17, §3.8):
-execute printf('syntax iskeyword %s,$', &l:iskeyword)
+try
+  exec 'syntax iskeyword ' . &l:iskeyword . ',$'
+catch /\<E410:/
+  call s:ReportOnce(v:exception)
+  setlocal iskeyword+=$
+endtry
 
 " some characters that cannot be in a java program (outside a string)
 syn match javaError "[\\@`]"
@@ -42,6 +67,7 @@ syn keyword javaConstant	null
 syn keyword javaTypedef		this super
 syn keyword javaOperator	new instanceof
 syn match   javaOperator	"\<var\>\%(\s*(\)\@!"
+
 " Since the yield statement, which could take a parenthesised operand,
 " and _qualified_ yield methods get along within the switch block
 " (JLS-17, §3.8), it seems futile to make a region definition for this
@@ -49,7 +75,15 @@ syn match   javaOperator	"\<var\>\%(\s*(\)\@!"
 " backtrack (arbitrarily) 80 bytes, at most, on the matched line and,
 " if necessary, on the line before that (h: \@<=), trying to match
 " neither a method reference nor a qualified method invocation.
-syn match   javaOperator	"\%(\%(::\|\.\)[[:space:]\n]*\)\@80<!\<yield\>"
+try
+  syn match   javaOperator	"\%(\%(::\|\.\)[[:space:]\n]*\)\@80<!\<yield\>"
+  let s:ff.Peek = s:ff.LeftConstant
+catch /\<E59:/
+  call s:ReportOnce(v:exception)
+  syn match   javaOperator	"\%(\%(::\|\.\)[[:space:]\n]*\)\@<!\<yield\>"
+  let s:ff.Peek = s:ff.RightConstant
+endtry
+
 syn keyword javaType		boolean char byte short int long float double
 syn keyword javaType		void
 syn keyword javaStatement	return
@@ -82,8 +116,16 @@ syn match   javaConceptKind	"\<default\>\%(\s*\%(:\|->\)\)\@!"
 " ".java\=" extension used for a production version and an arbitrary
 " extension used for a testing version.
 let s:module_info_cur_buf = fnamemodify(bufname("%"), ":t") =~ '^module-info\%(\.class\>\)\@!'
-let s:selectable_regexp_engine = !(v:version < 704)
-lockvar s:selectable_regexp_engine s:module_info_cur_buf
+lockvar s:module_info_cur_buf
+
+if !(v:version < 704)
+  " Request the new regexp engine for [:upper:] and [:lower:].
+  let [s:ff.Engine, s:ff.UpperCase, s:ff.LowerCase] = repeat([s:ff.LeftConstant], 3)
+else
+  " XXX: \C\<[^a-z0-9]\k*\> rejects "type", but matches "τύπος".
+  " XXX: \C\<[^A-Z0-9]\k*\> rejects "Method", but matches "Μέθοδος".
+  let [s:ff.Engine, s:ff.UpperCase, s:ff.LowerCase] = repeat([s:ff.RightConstant], 3)
+endif
 
 " Java modules (since Java 9, for "module-info.java" file).
 if s:module_info_cur_buf
@@ -109,19 +151,19 @@ if exists("java_highlight_all")  || exists("java_highlight_java")  || exists("ja
   syn cluster javaClasses add=javaR_JavaLang
   hi def link javaR_JavaLang javaR_Java
   " Member enumerations:
-  syn match   javaC_JavaLang "\%(\<Thread\.\)\@<=\<State\>"
-  syn match   javaC_JavaLang "\%(\<Character\.\)\@<=\<UnicodeScript\>"
-  syn match   javaC_JavaLang "\%(\<ProcessBuilder\.Redirect\.\)\@<=\<Type\>"
-  syn match   javaC_JavaLang "\%(\<StackWalker\.\)\@<=\<Option\>"
-  syn match   javaC_JavaLang "\%(\<System\.Logger\.\)\@<=\<Level\>"
+  exec 'syn match javaC_JavaLang "\%(\<Thread\.\)\@' . s:ff.Peek('7', '') . '<=\<State\>"'
+  exec 'syn match javaC_JavaLang "\%(\<Character\.\)\@' . s:ff.Peek('10', '') . '<=\<UnicodeScript\>"'
+  exec 'syn match javaC_JavaLang "\%(\<ProcessBuilder\.Redirect\.\)\@' . s:ff.Peek('24', '') . '<=\<Type\>"'
+  exec 'syn match javaC_JavaLang "\%(\<StackWalker\.\)\@' . s:ff.Peek('12', '') . '<=\<Option\>"'
+  exec 'syn match javaC_JavaLang "\%(\<System\.Logger\.\)\@' . s:ff.Peek('14', '') . '<=\<Level\>"'
   " Member classes:
-  syn match   javaC_JavaLang "\%(\<Character\.\)\@<=\<Subset\>"
-  syn match   javaC_JavaLang "\%(\<Character\.\)\@<=\<UnicodeBlock\>"
-  syn match   javaC_JavaLang "\%(\<ProcessBuilder\.\)\@<=\<Redirect\>"
-  syn match   javaC_JavaLang "\%(\<ModuleLayer\.\)\@<=\<Controller\>"
-  syn match   javaC_JavaLang "\%(\<Runtime\.\)\@<=\<Version\>"
-  syn match   javaC_JavaLang "\%(\<System\.\)\@<=\<LoggerFinder\>"
-  syn match   javaC_JavaLang "\%(\<Enum\.\)\@<=\<EnumDesc\>"
+  exec 'syn match javaC_JavaLang "\%(\<Character\.\)\@' . s:ff.Peek('10', '') . '<=\<Subset\>"'
+  exec 'syn match javaC_JavaLang "\%(\<Character\.\)\@' . s:ff.Peek('10', '') . '<=\<UnicodeBlock\>"'
+  exec 'syn match javaC_JavaLang "\%(\<ProcessBuilder\.\)\@' . s:ff.Peek('15', '') . '<=\<Redirect\>"'
+  exec 'syn match javaC_JavaLang "\%(\<ModuleLayer\.\)\@' . s:ff.Peek('12', '') . '<=\<Controller\>"'
+  exec 'syn match javaC_JavaLang "\%(\<Runtime\.\)\@' . s:ff.Peek('8', '') . '<=\<Version\>"'
+  exec 'syn match javaC_JavaLang "\%(\<System\.\)\@' . s:ff.Peek('7', '') . '<=\<LoggerFinder\>"'
+  exec 'syn match javaC_JavaLang "\%(\<Enum\.\)\@' . s:ff.Peek('5', '') . '<=\<EnumDesc\>"'
   syn keyword javaC_JavaLang Boolean Character Class ClassLoader Compiler Double Float Integer Long Math Number Object Process Runtime SecurityManager String StringBuffer Thread ThreadGroup Byte Short Void InheritableThreadLocal Package RuntimePermission ThreadLocal StrictMath StackTraceElement Enum ProcessBuilder StringBuilder ClassValue Module ModuleLayer StackWalker Record
   syn match   javaC_JavaLang "\<System\>"	" See javaDebug.
   " As of JDK 21, java.lang.Compiler is no more (deprecated in JDK 9).
@@ -149,7 +191,7 @@ if exists("java_highlight_all")  || exists("java_highlight_java")  || exists("ja
   hi def link javaLangObject		     javaConstant
 endif
 
-if filereadable(expand("<sfile>:p:h")."/javaid.vim")
+if filereadable(expand("<sfile>:p:h") . "/javaid.vim")
   source <sfile>:p:h/javaid.vim
 endif
 
@@ -162,7 +204,7 @@ if exists("java_space_errors")
   endif
 endif
 
-syn match   javaUserLabel	"^\s*\<\K\k*\>\%(\<default\>\)\@<!\s*:"he=e-1
+exec 'syn match javaUserLabel "^\s*\<\K\k*\>\%(\<default\>\)\@' . s:ff.Peek('7', '') . '<!\s*:"he=e-1'
 syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" matchgroup=NONE end=":\|->" contains=javaLabelCastType,javaLabelNumber,javaCharacter,javaString,javaConstant,@javaClasses,javaLabelDefault,javaLabelVarType,javaLabelWhenClause
 syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<default\>\%(\s*\%(:\|->\)\)\@=" matchgroup=NONE end=":\|->" oneline
 " Consider grouped _default_ _case_ labels, i.e.
@@ -201,7 +243,7 @@ syn match   javaCommentStar	 contained "^\s*\*$"
 syn match   javaLineComment	"//.*" contains=@javaCommentSpecial2,javaTodo,javaCommentMarkupTag,javaSpaceError,@Spell
 syn match   javaCommentMarkupTag contained "@\%(end\|highlight\|link\|replace\|start\)\>" nextgroup=javaCommentMarkupTagAttr,javaSpaceError skipwhite
 syn match   javaCommentMarkupTagAttr contained "\<region\>" nextgroup=javaCommentMarkupTagAttr,javaSpaceError skipwhite
-syn region  javaCommentMarkupTagAttr contained transparent matchgroup=htmlArg start=/\<\%(re\%(gex\|gion\|placement\)\|substring\|t\%(arget\|ype\)\)\%(\s*=\)\@=/ matchgroup=htmlString end=/\%(=\s*\)\@<=\%("[^"]\+"\|'[^']\+'\|\%([.-]\|\k\)\+\)/ nextgroup=javaCommentMarkupTagAttr,javaSpaceError skipwhite oneline
+exec 'syn region javaCommentMarkupTagAttr contained transparent matchgroup=htmlArg start=/\<\%(re\%(gex\|gion\|placement\)\|substring\|t\%(arget\|ype\)\)\%(\s*=\)\@=/ matchgroup=htmlString end=/\%(=\s*\)\@' . s:ff.Peek('80', '') . '<=\%("[^"]\+"\|' . "\x27[^\x27]\\+\x27" . '\|\%([.-]\|\k\)\+\)/ nextgroup=javaCommentMarkupTagAttr,javaSpaceError skipwhite oneline'
 hi def link javaCommentMarkupTagAttr htmlArg
 hi def link javaCommentString javaString
 hi def link javaComment2String javaString
@@ -212,16 +254,22 @@ hi def link javaCommentStart javaComment
 
 if !exists("java_ignore_javadoc") && main_syntax != 'jsp'
   syntax case ignore
-  " syntax coloring for javadoc comments (HTML)
+
+  " Include HTML syntax coloring for Javadoc comments.
   syntax include @javaHtml syntax/html.vim
   unlet b:current_syntax
-  " HTML enables spell checking for all text that is not in a syntax item. This
-  " is wrong for Java (all identifiers would be spell-checked), so it's undone
-  " here.
-  syntax spell default
+
+  " HTML enables spell checking for all text that is not in a syntax
+  " item (:syntax spell toplevel); instead, limit spell checking to
+  " items matchable with syntax groups containing the @Spell cluster.
+  try
+    syntax spell default
+  catch /\<E390:/
+    call s:ReportOnce(v:exception)
+  endtry
 
   syn region javaDocComment	start="/\*\*" end="\*/" keepend contains=javaCommentTitle,@javaHtml,javaDocTags,javaDocSeeTag,javaDocCodeTag,javaDocSnippetTag,javaTodo,javaCommentError,javaSpaceError,@Spell
-  syn region javaCommentTitle	contained matchgroup=javaDocComment start="/\*\*" matchgroup=javaCommentTitle end="\.$" end="\.[ \t\r]\@=" end="\%(^\s*\**\s*\)\@<=@"me=s-2,he=s-1 end="\*/"me=s-1,he=s-1 contains=@javaHtml,javaCommentStar,javaTodo,javaCommentError,javaSpaceError,@Spell,javaDocTags,javaDocSeeTag,javaDocCodeTag,javaDocSnippetTag
+  exec 'syn region javaCommentTitle contained matchgroup=javaDocComment start="/\*\*" matchgroup=javaCommentTitle end="\.$" end="\.[ \t\r]\@=" end="\%(^\s*\**\s*\)\@' . s:ff.Peek('80', '') . '<=@"me=s-2,he=s-1 end="\*/"me=s-1,he=s-1 contains=@javaHtml,javaCommentStar,javaTodo,javaCommentError,javaSpaceError,@Spell,javaDocTags,javaDocSeeTag,javaDocCodeTag,javaDocSnippetTag'
   syn region javaCommentTitle	contained matchgroup=javaDocComment start="/\*\*\s*\r\=\n\=\s*\**\s*\%({@return\>\)\@=" matchgroup=javaCommentTitle end="}\%(\s*\.*\)*" contains=@javaHtml,javaCommentStar,javaTodo,javaCommentError,javaSpaceError,@Spell,javaDocTags,javaDocSeeTag,javaDocCodeTag,javaDocSnippetTag
   syn region javaDocTags	contained start="{@\%(li\%(teral\|nk\%(plain\)\=\)\|inherit[Dd]oc\|doc[rR]oot\|value\)\>" end="}"
   syn match  javaDocTags	contained "@\%(param\|exception\|throws\|since\)\s\+\S\+" contains=javaDocParam
@@ -231,9 +279,10 @@ if !exists("java_ignore_javadoc") && main_syntax != 'jsp'
   syn match  javaDocSeeTagParam	contained @"\_[^"]\+"\|<a\s\+\_.\{-}</a>\|\%(\k\|\.\)*\%(#\k\+\%((\_[^)]*)\)\=\)\=@ contains=@javaHtml extend
   syn region javaCodeSkipBlock	contained transparent start="{\%(@code\>\)\@!" end="}" contains=javaCodeSkipBlock,javaDocCodeTag
   syn region javaDocCodeTag	contained start="{@code\>" end="}" contains=javaDocCodeTag,javaCodeSkipBlock
-  syn region javaDocSnippetTagAttr contained transparent matchgroup=htmlArg start=/\<\%(class\|file\|id\|lang\|region\)\%(\s*=\)\@=/ matchgroup=htmlString end=/:$/ end=/\%(=\s*\)\@<=\%("[^"]\+"\|'[^']\+'\|\%([.\\/-]\|\k\)\+\)/ nextgroup=javaDocSnippetTagAttr skipwhite skipnl
+  exec 'syn region javaDocSnippetTagAttr contained transparent matchgroup=htmlArg start=/\<\%(class\|file\|id\|lang\|region\)\%(\s*=\)\@=/ matchgroup=htmlString end=/:$/ end=/\%(=\s*\)\@' . s:ff.Peek('80', '') . '<=\%("[^"]\+"\|' . "\x27[^\x27]\\+\x27" . '\|\%([.\\/-]\|\k\)\+\)/ nextgroup=javaDocSnippetTagAttr skipwhite skipnl'
   syn region javaSnippetSkipBlock contained transparent start="{\%(@snippet\>\)\@!" end="}" contains=javaSnippetSkipBlock,javaDocSnippetTag,javaCommentMarkupTag
   syn region javaDocSnippetTag	contained start="{@snippet\>" end="}" contains=javaDocSnippetTag,javaSnippetSkipBlock,javaDocSnippetTagAttr,javaCommentMarkupTag
+
   syntax case match
 endif
 
@@ -249,8 +298,8 @@ syn region  javaString		start=+"+ end=+"+ end=+$+ contains=javaSpecialChar,javaS
 syn region  javaString		start=+"""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaSpecialChar,javaSpecialError,javaTextBlockError,@Spell
 syn match   javaTextBlockError	+"""\s*"""+
 syn region  javaStrTemplEmbExp	 contained matchgroup=javaStrTempl start="\\{" end="}" contains=TOP
-syn region  javaStrTempl	 start=+\%(\.[[:space:]\n]*\)\@<="+ end=+"+ contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,@Spell
-syn region  javaStrTempl	 start=+\%(\.[[:space:]\n]*\)\@<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,javaTextBlockError,@Spell
+exec 'syn region javaStrTempl start=+\%(\.[[:space:]\n]*\)\@' . s:ff.Peek('80', '') . '<="+ end=+"+ contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,@Spell'
+exec 'syn region javaStrTempl start=+\%(\.[[:space:]\n]*\)\@' . s:ff.Peek('80', '') . '<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,javaTextBlockError,@Spell'
 syn match   javaCharacter	 "'[^']*'" contains=javaSpecialChar,javaSpecialCharError
 syn match   javaCharacter	 "'\\''" contains=javaSpecialChar
 syn match   javaCharacter	 "'[^\\]'"
@@ -283,7 +332,7 @@ if exists("java_highlight_functions")
     " "[^=]*", all records with "\<record\s", and let the "*Skip*"
     " definitions take care of constructor declarations and enum
     " constants (with no support for @Foo(value = "bar")).
-    exec 'syn region javaFuncDef start=+^' . s:indent . '\%(<[^>]\+>\+\s\+\|\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)\+\)\=\%(\<\K\k*\>\.\)*\K\k*\>[^=]*\%(\<record\)\@6<!\s\K\k*\s*(+ end=+)+ contains=@javaFuncParams'
+    exec 'syn region javaFuncDef start=+^' . s:indent . '\%(<[^>]\+>\+\s\+\|\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)\+\)\=\%(\<\K\k*\>\.\)*\K\k*\>[^=]*\%(\<record\)\@' . s:ff.Peek('6', '') . '<!\s\K\k*\s*(+ end=+)+ contains=@javaFuncParams'
     " As long as package-private constructors cannot be matched with
     " javaFuncDef, do not look with javaConstructorSkipDeclarator for
     " them.
@@ -296,19 +345,11 @@ if exists("java_highlight_functions")
 
     " Match arbitrarily indented camelCasedName method declarations.
     " Match: [@ɐ] [abstract] [<α, β>] Τʬ[<γ>][[][]] μʭʭ(/* ... */);
-
-    if s:selectable_regexp_engine
-      " Request the new regexp engine for [:upper:] and [:lower:].
-      syn region javaFuncDef start=/\%#=2^\s\+\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*\%(p\%(ublic\|rotected\|rivate\)\s\+\)\=\%(\%(abstract\|default\)\s\+\|\%(\%(final\|\%(native\|strictfp\)\|s\%(tatic\|ynchronized\)\)\s\+\)*\)\=\%(<.*[[:space:]-]\@1<!>\s\+\)\=\%(void\|\%(b\%(oolean\|yte\)\|char\|short\|int\|long\|float\|double\|\%(\<\K\k*\>\.\)*\<[$_[:upper:]]\k*\>\%(<[^(){}]*[[:space:]-]\@1<!>\)\=\)\%(\[\]\)*\)\s\+\<[$_[:lower:]]\k*\>\s*(/ end=/)/ skip=/\/\*.\{-}\*\/\|\/\/.*$/ contains=@javaFuncParams
-    else
-      " XXX: \C\<[^a-z0-9]\k*\> rejects "type", but matches "τύπος".
-      " XXX: \C\<[^A-Z0-9]\k*\> rejects "Method", but matches "Μέθοδος".
-      syn region javaFuncDef start=/^\s\+\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*\%(p\%(ublic\|rotected\|rivate\)\s\+\)\=\%(\%(abstract\|default\)\s\+\|\%(\%(final\|\%(native\|strictfp\)\|s\%(tatic\|ynchronized\)\)\s\+\)*\)\=\%(<.*[[:space:]-]\@1<!>\s\+\)\=\%(void\|\%(b\%(oolean\|yte\)\|char\|short\|int\|long\|float\|double\|\%(\<\K\k*\>\.\)*\<[^a-z0-9]\k*\>\%(<[^(){}]*[[:space:]-]\@1<!>\)\=\)\%(\[\]\)*\)\s\+\<[^A-Z0-9]\k*\>\s*(/ end=/)/ skip=/\/\*.\{-}\*\/\|\/\/.*$/ contains=@javaFuncParams
-    endif
+    exec 'syn region javaFuncDef start=/' . s:ff.Engine('\%#=2', '') . '^\s\+\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*\%(p\%(ublic\|rotected\|rivate\)\s\+\)\=\%(\%(abstract\|default\)\s\+\|\%(\%(final\|\%(native\|strictfp\)\|s\%(tatic\|ynchronized\)\)\s\+\)*\)\=\%(<.*[[:space:]-]\@' . s:ff.Peek('1', '') . '<!>\s\+\)\=\%(void\|\%(b\%(oolean\|yte\)\|char\|short\|int\|long\|float\|double\|\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\>\%(<[^(){}]*[[:space:]-]\@' . s:ff.Peek('1', '') . '<!>\)\=\)\%(\[\]\)*\)\s\+\<' . s:ff.LowerCase('[$_[:lower:]]', '[^A-Z0-9]') . '\k*\>\s*(/ end=/)/ skip=/\/\*.\{-}\*\/\|\/\/.*$/ contains=@javaFuncParams'
   endif
 
-  syn match   javaLambdaDef "\<\K\k*\>\%(\<default\>\)\@<!\s*->"
-  syn match  javaBraces  "[{}]"
+  exec 'syn match javaLambdaDef "\<\K\k*\>\%(\<default\>\)\@' . s:ff.Peek('7', '') . '<!\s*->"'
+  syn match javaBraces "[{}]"
 endif
 
 if exists("java_highlight_debug")
@@ -319,8 +360,8 @@ if exists("java_highlight_debug")
   " The highlight groups of java{StrTempl,Debug{,Paren,StrTempl}}\,
   " share one colour by default. Do not conflate unrelated parens.
   syn region  javaDebugStrTemplEmbExp	contained matchgroup=javaDebugStrTempl start="\\{" end="}" contains=javaComment,javaLineComment,javaDebug\%(Paren\)\@!.*
-  syn region  javaDebugStrTempl		contained start=+\%(\.[[:space:]\n]*\)\@<="+ end=+"+ contains=javaDebugStrTemplEmbExp,javaDebugSpecial
-  syn region  javaDebugStrTempl		contained start=+\%(\.[[:space:]\n]*\)\@<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaDebugStrTemplEmbExp,javaDebugSpecial,javaDebugTextBlockError
+  exec 'syn region javaDebugStrTempl contained start=+\%(\.[[:space:]\n]*\)\@' . s:ff.Peek('80', '') . '<="+ end=+"+ contains=javaDebugStrTemplEmbExp,javaDebugSpecial'
+  exec 'syn region javaDebugStrTempl contained start=+\%(\.[[:space:]\n]*\)\@' . s:ff.Peek('80', '') . '<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaDebugStrTemplEmbExp,javaDebugSpecial,javaDebugTextBlockError'
   syn match   javaDebugTextBlockError	contained +"""\s*"""+
   syn match   javaDebugCharacter	contained "'[^\\]'"
   syn match   javaDebugSpecialCharacter contained "'\\.'"
@@ -382,7 +423,7 @@ hi def link javaParenError	javaError
 
 if exists("java_highlight_functions")
   " Make ()-matching definitions after the parenthesis error catcher.
-  syn match javaLambdaDef "\k\@4<!(\%(\k\|[[:space:]<>?\[\]@,.]\)*)\s*->"
+  exec 'syn match javaLambdaDef "\k\@' . s:ff.Peek('4', '') . '<!(\%(\k\|[[:space:]<>?\[\]@,.]\)*)\s*->"'
 endif
 
 " The @javaTop cluster comprises non-contained Java syntax groups.
@@ -472,6 +513,6 @@ endif
 
 let b:spell_options = "contained"
 let &cpo = s:cpo_save
-unlet s:selectable_regexp_engine s:module_info_cur_buf s:cpo_save
+unlet s:module_info_cur_buf s:ff s:cpo_save
 
 " vim: sw=2 ts=8 noet sta
