@@ -790,7 +790,7 @@ void buf_signcols_count_range(buf_T *buf, int row1, int row2, int add, TriState 
   }
 
   // Allocate an array of integers holding the number of signs in the range.
-  int *count = xcalloc(sizeof(int), (size_t)(row2 + 1 - row1));
+  int *count = xcalloc((size_t)(row2 + 1 - row1), sizeof(int));
   MarkTreeIter itr[1];
   MTPair pair = { 0 };
 

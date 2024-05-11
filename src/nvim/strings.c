@@ -943,7 +943,7 @@ static int adjust_types(const char ***ap_types, int arg, int *num_posarg, const 
 {
   if (*ap_types == NULL || *num_posarg < arg) {
     const char **new_types = *ap_types == NULL
-                             ? xcalloc(sizeof(const char *), (size_t)arg)
+                             ? xcalloc((size_t)arg, sizeof(const char *))
                              : xrealloc(*ap_types, (size_t)arg * sizeof(const char *));
 
     for (int idx = *num_posarg; idx < arg; idx++) {
