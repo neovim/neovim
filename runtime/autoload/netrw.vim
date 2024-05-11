@@ -11,6 +11,7 @@
 "   2024 Apr 03 by Vim Project: detect filetypes for remote edited files
 "   2024 May 08 by Vim Project: cleanup legacy Win9X checks
 "   2024 May 09 by Vim Project: remove hard-coded private.ppk
+"   2024 May 10 by Vim Project: recursively delete directories by default
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 2016 Charles E. Campbell {{{1
@@ -11346,7 +11347,7 @@ fun! s:NetrwLocalRmFile(path,fname,all)
    if !all
     echohl Statement
     call inputsave()
-    let ok= input("Confirm deletion of directory<".rmfile."> ","[{y(es)},n(o),a(ll),q(uit)] ")
+    let ok= input("Confirm *recursive* deletion of directory<".rmfile."> ","[{y(es)},n(o),a(ll),q(uit)] ")
     call inputrestore()
     let ok= substitute(ok,'\[{y(es)},n(o),a(ll),q(uit)]\s*','','e')
     if ok == ""
@@ -11359,7 +11360,7 @@ fun! s:NetrwLocalRmFile(path,fname,all)
    let rmfile= substitute(rmfile,'[\/]$','','e')
 
    if all || ok =~# 'y\%[es]' || ok == ""
-    if delete(rmfile,"d")
+    if delete(rmfile,"rf")
      call netrw#ErrorMsg(s:ERROR,"unable to delete directory <".rmfile.">!",103)
     endif
    endif
