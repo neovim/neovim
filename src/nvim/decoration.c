@@ -346,7 +346,12 @@ char *next_virt_text_chunk(VirtText vt, size_t *pos, int *attr)
   for (; text == NULL && *pos < kv_size(vt); (*pos)++) {
     text = kv_A(vt, *pos).text;
     int hl_id = kv_A(vt, *pos).hl_id;
-    *attr = hl_combine_attr(*attr, hl_id > 0 ? syn_id2attr(hl_id) : 0);
+    if (hl_id >= 0) {
+      *attr = MAX(*attr, 0);
+      if (hl_id > 0) {
+        *attr = hl_combine_attr(*attr, syn_id2attr(hl_id));
+      }
+    }
   }
   return text;
 }

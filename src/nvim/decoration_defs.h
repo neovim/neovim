@@ -10,7 +10,7 @@
 
 typedef struct {
   char *text;
-  int hl_id;
+  int hl_id;  ///< -1 if not specified
 } VirtTextChunk;
 
 typedef kvec_t(VirtTextChunk) VirtText;
