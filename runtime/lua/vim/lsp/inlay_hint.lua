@@ -372,20 +372,9 @@ api.nvim_set_decoration_provider(namespace, {
 --- @return boolean
 --- @since 12
 function M.is_enabled(filter)
-  ---@type integer
-  local bufnr
-  if type(filter) == 'number' then
-    vim.deprecate(
-      'vim.lsp.inlay_hint.is_enabled(bufnr:number)',
-      'vim.lsp.inlay_hint.is_enabled(filter:table)',
-      '0.10-dev'
-    )
-    bufnr = filter
-  else
-    vim.validate({ filter = { filter, 'table', true } })
-    filter = filter or {}
-    bufnr = filter.bufnr
-  end
+  vim.validate({ filter = { filter, 'table', true } })
+  filter = filter or {}
+  local bufnr = filter.bufnr
 
   vim.validate({ bufnr = { bufnr, 'number', true } })
   if bufnr == nil then
@@ -414,15 +403,6 @@ end
 --- @param filter vim.lsp.inlay_hint.enable.Filter?
 --- @since 12
 function M.enable(enable, filter)
-  if type(enable) == 'number' or type(filter) == 'boolean' then
-    vim.deprecate(
-      'vim.lsp.inlay_hint.enable(bufnr:number, enable:boolean)',
-      'vim.lsp.inlay_hint.enable(enable:boolean, filter:table)',
-      '0.10-dev'
-    )
-    error('see :help vim.lsp.inlay_hint.enable() for updated parameters')
-  end
-
   vim.validate({ enable = { enable, 'boolean', true }, filter = { filter, 'table', true } })
   enable = enable == nil or enable
   filter = filter or {}

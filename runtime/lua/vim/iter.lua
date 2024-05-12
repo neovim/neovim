@@ -1008,26 +1008,6 @@ function ListIter:enumerate()
   return self
 end
 
----@deprecated
-function Iter:nextback()
-  error('Iter:nextback() was renamed to Iter:pop()')
-end
-
----@deprecated
-function Iter:peekback()
-  error('Iter:peekback() was renamed to Iter:rpeek()')
-end
-
----@deprecated
-function Iter:skipback()
-  error('Iter:skipback() was renamed to Iter:rskip()')
-end
-
----@deprecated
-function Iter:nthback()
-  error('Iter:nthback() was removed, use Iter:nth() with negative index')
-end
-
 --- Creates a new Iter object from a table or other |iterable|.
 ---
 ---@param src table|function Table or iterator to drain values from
