@@ -200,11 +200,13 @@ function M.watchdirs(path, opts, callback)
   local max_depth = 100
 
   for name, type in vim.fs.dir(path, { depth = max_depth }) do
-    local filepath = vim.fs.joinpath(path, name)
-    if type == 'directory' and not skip(filepath, opts) then
-      local handle = assert(uv.new_fs_event())
-      handles[filepath] = handle
-      handle:start(filepath, {}, create_on_change(filepath))
+    if type == 'directory' then
+      local filepath = vim.fs.joinpath(path, name)
+      if not skip(filepath, opts) then
+        local handle = assert(uv.new_fs_event())
+        handles[filepath] = handle
+        handle:start(filepath, {}, create_on_change(filepath))
+      end
     end
   end
 
