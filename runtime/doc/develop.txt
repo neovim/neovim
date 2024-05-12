@@ -383,7 +383,7 @@ Use existing common {verb} names (actions) if possible:
     - enable:       Enables/disables functionality. Signature should be
                     `enable(enable?:boolean, filter?:table)`.
     - eval:         Evaluates an expression
-    - exec:         Executes code
+    - exec:         Executes code, may return a result
     - fmt:          Formats
     - get:          Gets things (often by a query)
     - inspect:      Presents a high-level, often interactive, view
@@ -405,8 +405,8 @@ Do NOT use these deprecated verbs:
     - show:         Redundant with "print", "echo"
     - toggle:       Prefer `enable(not is_enabled())`.
 
-Use consistent names for {noun} (nouns) in API functions: buffer is called
-"buf" everywhere, not "buffer" in some places and "buf" in others.
+Use consistent names for {topic} in API functions: buffer is called "buf"
+everywhere, not "buffer" in some places and "buf" in others.
     - buf:          Buffer
     - chan:         |channel|
     - cmd:          Command
@@ -419,10 +419,10 @@ Use consistent names for {noun} (nouns) in API functions: buffer is called
     - win:          Window
 
 Do NOT use these deprecated nouns:
-    - buffer
+    - buffer        Use "buf" instead
     - callback      Use on_foo instead
-    - command
-    - window
+    - command       Use "cmd" instead
+    - window        Use "win" instead
 
 							*dev-name-events*
 Use the "on_" prefix to name event-handling callbacks and also the interface for
@@ -440,12 +440,15 @@ Example: >
 <
 							*dev-name-api*
 Use this format to name new RPC |API| functions: >
-    nvim_{noun}_{verb}_{arbitrary-qualifiers}
+    nvim_{topic}_{verb}_{arbitrary-qualifiers}
 
-If the function acts on an object then {noun} is the name of that object
-(e.g. "buf" or "win"). If the function operates in a "global" context then
-{noun} is usually omitted (but consider "namespacing" your global operations
-with a {noun} that groups functions under a common concept).
+Do not add new nvim_buf/nvim_win/nvim_tabpage APIs, unless you are certain the
+concept will NEVER be applied to more than one "scope". That is, {topic}
+should be the TOPIC ("ns", "extmark", "option", …) that acts on the scope(s)
+(buf/win/tabpage/global), it should NOT be the scope. Instead the scope should
+be a parameter (typically manifest as mutually-exclusive buf/win/… flags like
+|nvim_get_option_value()|, or less commonly as a `scope: string` field like
+|nvim_get_option_info2()|).
 
 - Example: `nvim_get_keymap('v')` operates in a global context (first
   parameter is not a Buffer). The "get" verb indicates that it gets anything
@@ -454,6 +457,58 @@ with a {noun} that groups functions under a common concept).
 - Example: `nvim_buf_del_mark` acts on a `Buffer` object (the first parameter)
   and uses the "del" {verb}.
 
+
+INTERFACE PATTERNS                                      *dev-patterns*
+
+Prefer adding a single `nvim_{topic}_{verb}_…` interface for a given topic.
+
+Example: >
+
+    nvim_ns_add(
+      ns_id: int,
+      filter: {
+        handle: integer (buf/win/tabpage id)
+        scope: "global" | "win" | "buf" | "tabpage"
+      }
+    ): { ok: boolean }
+
+    nvim_ns_get(
+      ns_id: int,
+      filter: {
+        handle: integer (buf/win/tabpage id)
+        scope: "global" | "win" | "buf" | "tabpage"
+      }
+    ): { ids: int[] }
+
+    nvim_ns_del(
+      ns_id: int,
+      filter: {
+        handle: integer (buf/win/tabpage id)
+        scope: "global" | "win" | "buf" | "tabpage"
+      }
+    ): { ok: boolean }
+
+
+Anti-Example:
+
+Creating separate `nvim_xx`, `nvim_buf_xx`, `nvim_win_xx`, and
+`nvim_tabpage_xx`, functions all for the same `xx` topic, requires 4x the
+amount of documentation, tests, boilerplate, and interfaces, which users must
+comprehend, maintainers must maintain, etc. Thus the following is NOT
+recommended (compare these 12(!) functions to the above 3 functions): >
+
+    nvim_add_ns(…)
+    nvim_buf_add_ns(…)
+    nvim_win_add_ns(…)
+    nvim_tabpage_add_ns(…)
+    nvim_del_ns(…)
+    nvim_buf_del_ns(…)
+    nvim_win_del_ns(…)
+    nvim_tabpage_del_ns(…)
+    nvim_get_ns(…)
+    nvim_buf_get_ns(…)
+    nvim_win_get_ns(…)
+    nvim_tabpage_get_ns(…)
 
 API-CLIENT						*dev-api-client*
 

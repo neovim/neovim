@@ -144,6 +144,36 @@ function vim.api.nvim__stats() end
 --- @return any
 function vim.api.nvim__unpack(str) end
 
+--- @private
+--- EXPERIMENTAL: this API will change in the future.
+---
+--- Scopes a namespace to the a window, so extmarks in the namespace will be
+--- active only in the given window.
+---
+--- @param window integer Window handle, or 0 for current window
+--- @param ns_id integer Namespace
+--- @return boolean
+function vim.api.nvim__win_add_ns(window, ns_id) end
+
+--- @private
+--- EXPERIMENTAL: this API will change in the future.
+---
+--- Unscopes a namespace (un-binds it from the given scope).
+---
+--- @param window integer Window handle, or 0 for current window
+--- @param ns_id integer the namespace to remove
+--- @return boolean
+function vim.api.nvim__win_del_ns(window, ns_id) end
+
+--- @private
+--- EXPERIMENTAL: this API will change in the future.
+---
+--- Gets the namespace scopes for a given window.
+---
+--- @param window integer Window handle, or 0 for current window
+--- @return integer[]
+function vim.api.nvim__win_get_ns(window) end
+
 --- Adds a highlight to buffer.
 ---
 --- Useful for plugins that dynamically generate highlights to a buffer (like
@@ -656,8 +686,8 @@ function vim.api.nvim_buf_line_count(buffer) end
 ---             • url: A URL to associate with this extmark. In the TUI, the
 ---               OSC 8 control sequence is used to generate a clickable
 ---               hyperlink to this URL.
----             • scoped: boolean that indicates that the extmark should only
----               be displayed in the namespace scope. (experimental)
+---             • scoped: boolean (EXPERIMENTAL) enables "scoping" for the
+---               extmark. See `nvim__win_add_ns()`
 --- @return integer
 function vim.api.nvim_buf_set_extmark(buffer, ns_id, line, col, opts) end
 
@@ -2114,13 +2144,6 @@ function vim.api.nvim_tabpage_set_var(tabpage, name, value) end
 --- @param win integer Window handle, must already belong to {tabpage}
 function vim.api.nvim_tabpage_set_win(tabpage, win) end
 
---- Adds the namespace scope to the window.
----
---- @param window integer Window handle, or 0 for current window
---- @param ns_id integer the namespace to add
---- @return boolean
-function vim.api.nvim_win_add_ns(window, ns_id) end
-
 --- Calls a function with window as temporary current window.
 ---
 --- @param window integer Window handle, or 0 for current window
@@ -2172,12 +2195,6 @@ function vim.api.nvim_win_get_cursor(window) end
 --- @param window integer Window handle, or 0 for current window
 --- @return integer
 function vim.api.nvim_win_get_height(window) end
-
---- Gets all the namespaces scopes associated with a window.
----
---- @param window integer Window handle, or 0 for current window
---- @return integer[]
-function vim.api.nvim_win_get_ns(window) end
 
 --- Gets the window number
 ---
@@ -2231,13 +2248,6 @@ function vim.api.nvim_win_hide(window) end
 --- @param window integer Window handle, or 0 for current window
 --- @return boolean
 function vim.api.nvim_win_is_valid(window) end
-
---- Removes the namespace scope from the window.
----
---- @param window integer Window handle, or 0 for current window
---- @param ns_id integer the namespace to remove
---- @return boolean
-function vim.api.nvim_win_remove_ns(window, ns_id) end
 
 --- Sets the current buffer in a window, without side effects
 ---

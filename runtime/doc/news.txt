@@ -206,7 +206,18 @@ The following new APIs and features were added.
 • |'smoothscroll'| option to scroll by screen line rather than by text line
   when |'wrap'| is set.
 
-• |nvim_buf_set_extmark()| supports inline virtual text.
+• API enhancements
+  • |nvim_buf_set_extmark()| supports inline virtual text.
+  • |nvim_win_text_height()| computes the number of screen lines occupied
+    by a range of text in a given window.
+  • New RPC client type `msgpack-rpc` is added for |nvim_set_client_info()| to
+    support fully MessagePack-RPC compliant clients.
+  • Floating windows can now be hidden by setting `hide` in |nvim_open_win()| or
+    |nvim_win_set_config()|.
+  • |nvim_input_mouse()| supports mouse buttons "x1" and "x2".
+  • Added |nvim_tabpage_set_win()| to set the current window of a tabpage.
+  • |nvim__win_add_ns()| can bind a |namespace| to a window-local scope(s).
+    • Extmarks opt-in to this scoping via the `scoped` flag of |nvim_buf_set_extmark()|.
 
 • 'foldtext' now supports virtual text format. |fold-foldtext|
 
@@ -217,9 +228,6 @@ The following new APIs and features were added.
 
 • |vim.lpeg| and |vim.re| expose the bundled Lpeg expression grammar parser
   and its regex interface.
-
-• |nvim_win_text_height()| computes the number of screen lines occupied
-  by a range of text in a given window.
 
 • Mapping APIs now support abbreviations when mode short-name has suffix "a".
 
@@ -321,14 +329,8 @@ The following new APIs and features were added.
 • Functions that take a severity as an optional parameter (e.g.
   |vim.diagnostic.get()|) now also accept a list of severities |vim.diagnostic.severity|
 
-• New RPC client type `msgpack-rpc` is added for |nvim_set_client_info()| to
-  support fully MessagePack-RPC compliant clients.
-
 • Floating windows can now show footer with new `footer` and `footer_pos`
   config fields. Uses |hl-FloatFooter| by default.
-
-• Floating windows can now be hidden by setting `hide` in |nvim_open_win()| or
-  |nvim_win_set_config()|.
 
 • |:terminal| command now accepts some |:command-modifiers| (specifically
   |:horizontal| and those that affect splitting a window).
@@ -360,8 +362,6 @@ The following new APIs and features were added.
 • 'completeopt' option supports "popup" flag to show extra information in a
   floating window.
 
-• |nvim_input_mouse()| supports mouse buttons "x1" and "x2".
-
 • |v_Q-default| and |v_@-default| repeat a register for each line of a linewise
   visual selection.
 
@@ -386,13 +386,7 @@ The following new APIs and features were added.
   using the OSC 8 control sequence, enabling clickable text in supporting
   terminals.
 
-• Added |nvim_tabpage_set_win()| to set the current window of a tabpage.
-
 • Clicking on a tabpage in the tabline with the middle mouse button closes it.
-
-• |namespace| can now have window scopes. |nvim_win_add_ns()|
-
-• |extmarks| option `scoped`: only show the extmarks in its namespace's scope.
 
 • Added built-in |commenting| support.
 

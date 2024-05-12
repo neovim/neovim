@@ -5610,7 +5610,7 @@ describe('decorations: window scoped', function()
 
     screen:expect(noextmarks)
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5645,7 +5645,7 @@ describe('decorations: window scoped', function()
 
     screen:expect(noextmarks)
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5667,7 +5667,7 @@ describe('decorations: window scoped', function()
 
     screen:expect(noextmarks)
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5691,7 +5691,7 @@ describe('decorations: window scoped', function()
 
     screen:expect(noextmarks)
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5701,7 +5701,7 @@ describe('decorations: window scoped', function()
                           |
     ]]}
 
-    api.nvim_win_remove_ns(0, ns)
+    api.nvim__win_del_ns(0, ns)
 
     screen:expect(noextmarks)
   end)
@@ -5716,7 +5716,7 @@ describe('decorations: window scoped', function()
 
     screen:expect(noextmarks)
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5748,7 +5748,7 @@ describe('decorations: window scoped', function()
                           |
     ]]}
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5787,7 +5787,7 @@ describe('decorations: window scoped', function()
                           |
     ]]}
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5815,7 +5815,7 @@ describe('decorations: window scoped', function()
 
     screen:expect(noextmarks)
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5836,7 +5836,7 @@ describe('decorations: window scoped', function()
       end_col = 3,
     })
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5880,8 +5880,8 @@ describe('decorations: window scoped', function()
       end_col = 3,
     })
 
-    eq(true, api.nvim_win_add_ns(0, ns))
-    eq({ ns }, api.nvim_win_get_ns(0))
+    eq(true, api.nvim__win_add_ns(0, ns))
+    eq({ ns }, api.nvim__win_get_ns(0))
 
     screen:expect {
       grid = [[
@@ -5892,12 +5892,12 @@ describe('decorations: window scoped', function()
 
     command 'split'
     command 'only'
-    eq({}, api.nvim_win_get_ns(0))
+    eq({}, api.nvim__win_get_ns(0))
 
     screen:expect(noextmarks)
 
-    eq(true, api.nvim_win_add_ns(0, ns))
-    eq({ ns }, api.nvim_win_get_ns(0))
+    eq(true, api.nvim__win_add_ns(0, ns))
+    eq({ ns }, api.nvim__win_get_ns(0))
 
     screen:expect {
       grid = [[
@@ -5906,8 +5906,8 @@ describe('decorations: window scoped', function()
                           |
     ]]}
 
-    eq(true, api.nvim_win_remove_ns(0, ns))
-    eq({}, api.nvim_win_get_ns(0))
+    eq(true, api.nvim__win_del_ns(0, ns))
+    eq({}, api.nvim__win_get_ns(0))
 
     screen:expect(noextmarks)
   end)
