@@ -74,7 +74,7 @@ end
 
 --- Returns the parser for a specific buffer and attaches it to the buffer
 ---
---- If needed, this will create the parser.
+--- This will create the parser if needed or if passed `opts.reload = true`
 ---
 ---@param bufnr (integer|nil) Buffer the parser should be tied to (default: current buffer)
 ---@param lang (string|nil) Language of this parser (default: from buffer filetype)
@@ -106,6 +106,16 @@ function M.get_parser(bufnr, lang, opts)
   elseif parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
     assert(lang, 'lang should be valid')
     parsers[bufnr] = M._create_parser(bufnr, lang, opts)
+  elseif opts.reload then
+    opts.reload = nil -- do not pass reload to _create_parser
+    assert(lang, 'lang should be valid')
+    parsers[bufnr]:destroy()
+    parsers[bufnr] = M._create_parser(bufnr, lang, opts)
+
+    if M.highlighter.active[bufnr] then
+      M.highlighter.active[bufnr]:destroy()
+      M.highlighter.new(parsers[bufnr])
+    end
   end
 
   parsers[bufnr]:register_cbs(opts.buf_attach_cbs)
