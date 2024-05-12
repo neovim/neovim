@@ -24,7 +24,7 @@ function M.check()
     else
       local lang = ts.language.inspect(parsername)
       health.ok(
-        string.format('Parser: %-10s ABI: %d, path: %s', parsername, lang._abi_version, parser)
+        string.format('Parser: %-20s ABI: %d, path: %s', parsername, lang._abi_version, parser)
       )
     end
   end
