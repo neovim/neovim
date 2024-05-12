@@ -2626,6 +2626,8 @@ describe('LSP', function()
           filename = '/fake/uri',
           lnum = 1,
           col = 3,
+          end_lnum = 1,
+          end_col = 4,
           text = 'testing',
           user_data = {
             uri = 'file:///fake/uri',
@@ -2659,6 +2661,8 @@ describe('LSP', function()
           filename = '/fake/uri',
           lnum = 1,
           col = 3,
+          end_lnum = 1,
+          end_col = 4,
           text = 'testing',
           user_data = {
             targetUri = 'file:///fake/uri',
