@@ -41,7 +41,10 @@ EVENTS
 
 LSP
 
-• TODO
+• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|
+  |vim.lsp.buf.type_definition()|, |vim.lsp.buf.implementation()|,
+  and |vim.lsp.buf.references()| open the quickfix list containing the
+  end position.
 
 LUA
 

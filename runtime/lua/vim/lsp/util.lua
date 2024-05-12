@@ -1748,7 +1748,7 @@ function M.locations_to_items(locations, offset_encoding)
   end
 
   local items = {}
-  ---@type table<string, {start: lsp.Position, location: lsp.Location|lsp.LocationLink}[]>
+  ---@type table<string, {start: lsp.Position, end: lsp.Position, location: lsp.Location|lsp.LocationLink}[]>
   local grouped = setmetatable({}, {
     __index = function(t, k)
       local v = {}
@@ -1760,7 +1760,11 @@ function M.locations_to_items(locations, offset_encoding)
     -- locations may be Location or LocationLink
     local uri = d.uri or d.targetUri
     local range = d.range or d.targetSelectionRange
-    table.insert(grouped[uri], { start = range.start, location = d })
+    table.insert(grouped[uri], {
+      start = range.start,
+      ['end'] = range['end'],
+      location = d,
+    })
   end
 
   ---@type string[]
@@ -1773,22 +1777,31 @@ function M.locations_to_items(locations, offset_encoding)
     local filename = vim.uri_to_fname(uri)
 
     local start_line_numbers = {}
+    local end_line_numbers = {}
     for _, temp in ipairs(rows) do
       table.insert(start_line_numbers, temp.start.line)
+      table.insert(end_line_numbers, temp['end'].line)
     end
 
     -- get all the lines for this uri
     local start_lines = get_lines(vim.uri_to_bufnr(uri), start_line_numbers)
+    local end_lines = get_lines(vim.uri_to_bufnr(uri), end_line_numbers)
 
     for _, temp in ipairs(rows) do
       local start_pos = temp.start
       local start_row = start_pos.line
       local start_line = start_lines[start_row] or ''
       local start_col = M._str_byteindex_enc(start_line, start_pos.character, offset_encoding)
+      local end_pos = temp['end']
+      local end_row = end_pos.line
+      local end_line = end_lines[end_row] or ''
+      local end_col = M._str_byteindex_enc(end_line, end_pos.character, offset_encoding)
       table.insert(items, {
         filename = filename,
         lnum = start_row + 1,
+        end_lnum = end_row + 1,
         col = start_col + 1,
+        end_col = end_col + 1,
         text = start_line,
         user_data = temp.location,
       })
