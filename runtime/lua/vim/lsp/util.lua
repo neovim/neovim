@@ -1772,24 +1772,24 @@ function M.locations_to_items(locations, offset_encoding)
     table.sort(rows, position_sort)
     local filename = vim.uri_to_fname(uri)
 
-    local line_numbers = {}
+    local start_line_numbers = {}
     for _, temp in ipairs(rows) do
-      table.insert(line_numbers, temp.start.line)
+      table.insert(start_line_numbers, temp.start.line)
     end
 
     -- get all the lines for this uri
-    local lines = get_lines(vim.uri_to_bufnr(uri), line_numbers)
+    local start_lines = get_lines(vim.uri_to_bufnr(uri), start_line_numbers)
 
     for _, temp in ipairs(rows) do
-      local pos = temp.start
-      local row = pos.line
-      local line = lines[row] or ''
-      local col = M._str_byteindex_enc(line, pos.character, offset_encoding)
+      local start_pos = temp.start
+      local start_row = start_pos.line
+      local start_line = start_lines[start_row] or ''
+      local start_col = M._str_byteindex_enc(start_line, start_pos.character, offset_encoding)
       table.insert(items, {
         filename = filename,
-        lnum = row + 1,
-        col = col + 1,
-        text = line,
+        lnum = start_row + 1,
+        col = start_col + 1,
+        text = start_line,
         user_data = temp.location,
       })
     end
