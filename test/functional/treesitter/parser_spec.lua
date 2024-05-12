@@ -959,4 +959,57 @@ int x = INT_MAX;
       )
     end)
   end)
+
+  it('option reload works', function()
+    eq(
+      true,
+      exec_lua('return vim.treesitter.get_parser(0, "lua") == vim.treesitter.get_parser(0, "lua")')
+    )
+    eq(
+      false,
+      exec_lua(
+        'return vim.treesitter.get_parser(0, "lua") == vim.treesitter.get_parser(0, "lua", {reload=true})'
+      )
+    )
+  end)
+
+  it('reloading parser refreshes queries', function()
+    local plug_dir = vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname()) .. '/pluginXXXXXX')
+    local query_dir = plug_dir .. '/queries/lua'
+
+    exec_lua('vim.fn.mkdir(..., "p")', query_dir)
+
+    t.write_file(
+      query_dir .. '/injections.scm',
+      [[;; extends
+        (string 
+          content: _ @injection.content
+          (#lua-match? @injection.content "^TEST_INJ")
+          (#set! injection.language "c"))
+      ]]
+    )
+
+    insert([[
+      local s = "TEST_INJ test"
+    ]])
+
+    local langs = exec_lua(
+      [[
+      vim.treesitter.get_parser(0, "lua")
+      vim.opt.rtp:append(...)
+      collectgarbage() -- without it keeps cached queries
+      parser = vim.treesitter.get_parser(0, "lua", {reload = true})
+      parser:parse(true)
+      local langs = {}
+      parser:for_each_tree(function(tstree, tree)
+        table.insert(langs, tree:lang())
+      end)
+      return langs
+    ]],
+      plug_dir
+    )
+
+    eq(true, vim.list_contains(langs, 'lua'))
+    eq(true, vim.list_contains(langs, 'c'))
+  end)
 end)
