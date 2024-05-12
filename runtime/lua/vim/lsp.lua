@@ -938,7 +938,7 @@ end
 ---@param params table? Parameters to send to the server
 ---@param timeout_ms integer? Maximum time in milliseconds to wait for a result.
 ---                           (default: `1000`)
----@return table<integer, {err: lsp.ResponseError, result: any}>? result Map of client_id:request_result.
+---@return table<integer, {error: lsp.ResponseError, result: any}>? result Map of client_id:request_result.
 ---@return string? err On timeout, cancel, or error, `err` is a string describing the failure reason, and `result` is nil.
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   local request_results ---@type table
