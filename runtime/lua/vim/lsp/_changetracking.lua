@@ -38,6 +38,7 @@ local M = {}
 --- @field refs integer how many clients are using this group
 ---
 --- @class vim.lsp.CTGroupState
+--- @field group vim.lsp.CTGroup
 --- @field buffers table<integer,vim.lsp.CTBufferState>
 --- @field debounce integer debounce duration in ms
 --- @field clients table<integer, table> clients using this state. {client_id, client}
@@ -138,6 +139,7 @@ function M.init(client, bufnr)
     state.clients[client.id] = client
   else
     state = {
+      group = group,
       buffers = {},
       debounce = client.flags.debounce_text_changes or 150,
       clients = {
@@ -219,6 +221,19 @@ function M.reset(client)
       reset_timer(buf_state)
     end
     state.buffers = {}
+  end
+end
+
+--- @param bufnr integer
+function M.reload(bufnr)
+  for _, state in pairs(state_by_group) do
+    assert(state.buffers, 'CTGroupState must have buffers')
+    if state.group.sync_kind == protocol.TextDocumentSyncKind.Incremental then
+      local buf_state = state.buffers[bufnr]
+      if buf_state then
+        buf_state.lines = api.nvim_buf_get_lines(bufnr, 0, -1, true)
+      end
+    end
   end
 end
 

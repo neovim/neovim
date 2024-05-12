@@ -554,6 +554,7 @@ local function buf_attach(bufnr)
     end,
 
     on_reload = function()
+      changetracking.reload(bufnr)
       local params = { textDocument = { uri = uri } }
       for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
         changetracking.reset_buf(client, bufnr)
