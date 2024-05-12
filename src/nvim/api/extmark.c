@@ -490,7 +490,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///               - url: A URL to associate with this extmark. In the TUI, the OSC 8 control
 ///                   sequence is used to generate a clickable hyperlink to this URL.
 ///               - scoped: boolean (EXPERIMENTAL) enables "scoping" for the extmark. See
-///                 |nvim_win_add_ns()|
+///                 |nvim__win_add_ns()|
 ///
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
@@ -1215,14 +1215,15 @@ String nvim__buf_debug_extmarks(Buffer buffer, Boolean keys, Boolean dot, Error 
   return mt_inspect(buf->b_marktree, keys, dot);
 }
 
+/// EXPERIMENTAL: this API will change in the future.
+///
 /// Scopes a namespace to the a window, so extmarks in the namespace will be active only in the
 /// given window.
 ///
 /// @param window Window handle, or 0 for current window
 /// @param ns_id Namespace
 /// @return true if the namespace was added, else false
-Boolean nvim_win_add_ns(Window window, Integer ns_id, Error *err)
-  FUNC_API_SINCE(12)
+Boolean nvim__win_add_ns(Window window, Integer ns_id, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
   if (!win) {
@@ -1242,12 +1243,13 @@ Boolean nvim_win_add_ns(Window window, Integer ns_id, Error *err)
   return true;
 }
 
+/// EXPERIMENTAL: this API will change in the future.
+///
 /// Gets the namespace scopes for a given window.
 ///
 /// @param window Window handle, or 0 for current window
 /// @return a list of namespaces ids
-ArrayOf(Integer) nvim_win_get_ns(Window window, Arena *arena, Error *err)
-  FUNC_API_SINCE(12)
+ArrayOf(Integer) nvim__win_get_ns(Window window, Arena *arena, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
   if (!win) {
@@ -1263,13 +1265,14 @@ ArrayOf(Integer) nvim_win_get_ns(Window window, Arena *arena, Error *err)
   return rv;
 }
 
+/// EXPERIMENTAL: this API will change in the future.
+///
 /// Unscopes a namespace (un-binds it from the given scope).
 ///
 /// @param window Window handle, or 0 for current window
 /// @param ns_id the namespace to remove
 /// @return true if the namespace was removed, else false
-Boolean nvim_win_del_ns(Window window, Integer ns_id, Error *err)
-  FUNC_API_SINCE(12)
+Boolean nvim__win_del_ns(Window window, Integer ns_id, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
   if (!win) {

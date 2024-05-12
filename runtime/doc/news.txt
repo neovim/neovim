@@ -216,7 +216,7 @@ The following new APIs and features were added.
     |nvim_win_set_config()|.
   • |nvim_input_mouse()| supports mouse buttons "x1" and "x2".
   • Added |nvim_tabpage_set_win()| to set the current window of a tabpage.
-  • |nvim_win_add_ns()| can bind a |namespace| to a window-local scope(s).
+  • |nvim__win_add_ns()| can bind a |namespace| to a window-local scope(s).
     • Extmarks opt-in to this scoping via the `scoped` flag of |nvim_buf_set_extmark()|.
 
 • 'foldtext' now supports virtual text format. |fold-foldtext|
