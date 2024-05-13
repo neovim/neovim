@@ -49,7 +49,6 @@ typedef struct {
                             ///< buffer-local option: global value
   idopt_T indir;            ///< global option: PV_NONE;
                             ///< local option: indirect option index
-  bool hidden;              ///< option is hidden, any attempt to set its value will be ignored.
   bool immutable;           ///< option is immutable, trying to set its value will give an error.
 
   /// callback function to invoke after an option is modified to validate and
