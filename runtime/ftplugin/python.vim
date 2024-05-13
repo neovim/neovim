@@ -3,7 +3,7 @@
 " Maintainer:	Tom Picton <tom@tompicton.com>
 " Previous Maintainer: James Sully <sullyj3@gmail.com>
 " Previous Maintainer: Johannes Zellner <johannes@zellner.org>
-" Last Change:	2024/05/11
+" Last Change:	2024/05/13
 " https://github.com/tpict/vim-ftplugin-python
 
 if exists("b:did_ftplugin") | finish | endif
@@ -14,7 +14,7 @@ set cpo&vim
 setlocal cinkeys-=0#
 setlocal indentkeys-=0#
 setlocal include=^\\s*\\(from\\\|import\\)
-setlocal define=^\\s*\\([async ]\\?def\\\|class\\)
+setlocal define=^\\s*\\(\\(async\\s\\+\\)\\?def\\\|class\\)
 
 " For imports with leading .., append / and replace additional .s with ../
 let b:grandparent_match = '^\(.\.\)\(\.*\)'
