@@ -1,22 +1,58 @@
-lsp:
+build:
   - changed-files:
-    - any-glob-to-any-file: [ runtime/lua/vim/lsp.lua, runtime/lua/vim/lsp/* ]
+    - any-glob-to-any-file: [ CMakeLists.txt, "**/CMakeLists.txt", "**/Makefile", "**/*.cmake", cmake.deps/**/* ]
 
-tui:
+ci:
   - changed-files:
-    - any-glob-to-any-file: [ src/nvim/tui/tui.* ]
+    - any-glob-to-any-file: [ .github/actions/**, .github/workflows/**, .github/scripts/** ]
 
-treesitter:
+clipboard:
   - changed-files:
-    - any-glob-to-any-file: [ src/nvim/lua/treesitter.*, runtime/lua/vim/treesitter.lua, runtime/lua/vim/treesitter/*, runtime/queries/**/* ]
+    - any-glob-to-any-file: [ runtime/autoload/provider/clipboard.vim ]
+
+column:
+  - changed-files:
+    - any-glob-to-any-file: [ src/nvim/sign* ]
 
 diagnostic:
   - changed-files:
     - any-glob-to-any-file: [ runtime/lua/vim/diagnostic.lua ]
 
-dependencies:
+diff:
   - changed-files:
-    - any-glob-to-any-file: [ cmake.deps/**/* ]
+    - any-glob-to-any-file: [ src/nvim/diff.* ]
+
+documentation:
+  - changed-files:
+    - any-glob-to-all-files: [ runtime/doc/*, "**/*.md" ]
+
+editorconfig:
+  - changed-files:
+    - any-glob-to-any-file: [ .editorconfig, runtime/lua/editorconfig.lua, runtime/plugin/editorconfig.lua ]
+
+filetype:
+  - changed-files:
+    - any-glob-to-any-file: [ runtime/lua/vim/filetype.lua, runtime/lua/vim/filetype/detect.lua ]
+
+folds:
+  - changed-files:
+    - any-glob-to-any-file: [ src/nvim/fold* ]
+
+lsp:
+  - changed-files:
+    - any-glob-to-any-file: [ runtime/lua/vim/lsp.lua, runtime/lua/vim/lsp/* ]
+
+mouse:
+  - changed-files:
+    - any-glob-to-any-file: [ src/nvim/mouse* ]
+
+platform:nix:
+  - changed-files:
+    - any-glob-to-any-file: [ contrib/flake.lock, contrib/flake.nix ]
+
+snippet:
+  - changed-files:
+    - any-glob-to-any-file: [ runtime/lua/vim/snippet.lua ]
 
 spell:
   - changed-files:
@@ -26,46 +62,14 @@ terminal:
   - changed-files:
     - any-glob-to-any-file: [ src/nvim/terminal.* ]
 
-column:
-  - changed-files:
-    - any-glob-to-any-file: [ src/nvim/sign* ]
-
-folds:
-  - changed-files:
-    - any-glob-to-any-file: [ src/nvim/fold* ]
-
-mouse:
-  - changed-files:
-    - any-glob-to-any-file: [ src/nvim/mouse* ]
-
-documentation:
-  - changed-files:
-    - any-glob-to-all-files: [ runtime/doc/*, "**/*.md" ]
-
-clipboard:
-  - changed-files:
-    - any-glob-to-any-file: [ runtime/autoload/provider/clipboard.vim ]
-
-diff:
-  - changed-files:
-    - any-glob-to-any-file: [ src/nvim/diff.* ]
-
-build:
-  - changed-files:
-    - any-glob-to-any-file: [ CMakeLists.txt, "**/CMakeLists.txt", "**/Makefile", "**/*.cmake" ]
-
 test:
   - changed-files:
     - any-glob-to-all-files: [test/**/*]
 
-ci:
+treesitter:
   - changed-files:
-    - any-glob-to-any-file: [ .github/actions/**, .github/workflows/**, .github/scripts/** ]
+    - any-glob-to-any-file: [ src/nvim/lua/treesitter.*, runtime/lua/vim/treesitter.lua, runtime/lua/vim/treesitter/*, runtime/queries/**/* ]
 
-filetype:
+tui:
   - changed-files:
-    - any-glob-to-any-file: [ runtime/lua/vim/filetype.lua, runtime/lua/vim/filetype/detect.lua ]
-
-platform:nix:
-  - changed-files:
-    - any-glob-to-any-file: [ contrib/flake.lock, contrib/flake.nix ]
+    - any-glob-to-any-file: [ src/nvim/tui/tui.* ]
