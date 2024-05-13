@@ -601,12 +601,6 @@ function vim.spairs(t)
     t
 end
 
---- @deprecated
-function vim.tbl_isarray()
-  vim.deprecate('vim.tbl_isarray', 'vim.isarray', '0.10-dev')
-  error('vim.tbl_isarray was renamed to vim.isarray')
-end
-
 --- Tests if `t` is an "array": a table indexed _only_ by integers (potentially non-contiguous).
 ---
 --- If the indexes start from 1 and are contiguous then the array is also a list. |vim.islist()|

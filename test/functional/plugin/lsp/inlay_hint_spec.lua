@@ -126,14 +126,12 @@ describe('vim.lsp.inlay_hint', function()
         t.pcall_err(exec_lua, [[vim.lsp.inlay_hint.enable({}, { bufnr = bufnr })]])
       )
       t.matches(
+        'enable: expected boolean, got number',
+        t.pcall_err(exec_lua, [[vim.lsp.inlay_hint.enable(42)]])
+      )
+      t.matches(
         'filter: expected table, got number',
         t.pcall_err(exec_lua, [[vim.lsp.inlay_hint.enable(true, 42)]])
-      )
-
-      exec_lua [[vim.notify = function() end]]
-      t.matches(
-        'see %:help vim%.lsp%.inlay_hint%.enable',
-        t.pcall_err(exec_lua, [[vim.lsp.inlay_hint.enable(42)]])
       )
     end)
 
