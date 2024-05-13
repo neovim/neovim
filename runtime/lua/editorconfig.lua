@@ -1,10 +1,9 @@
 --- @brief
---- Nvim supports EditorConfig. When a file is opened, Nvim searches all parent
---- directories of that file for ".editorconfig" files, parses them, and applies
---- any properties that match the opened file. Think of it like 'modeline' for an
---- entire (recursive) directory. For more information see
---- https://editorconfig.org/.
----
+--- Nvim supports EditorConfig. When a file is opened, after running |ftplugin|s
+--- and |FileType| autocommands, Nvim searches all parent directories of that file
+--- for ".editorconfig" files, parses them, and applies any properties that match
+--- the opened file. Think of it like 'modeline' for an entire (recursive)
+--- directory. For more information see https://editorconfig.org/.
 
 --- @brief [g:editorconfig]() [b:editorconfig]()
 ---
