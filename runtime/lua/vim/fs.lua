@@ -120,8 +120,9 @@ function M.dir(path, opts)
     skip = { opts.skip, { 'function' }, true },
   })
 
+  path = M.normalize(path)
   if not opts.depth or opts.depth == 1 then
-    local fs = vim.uv.fs_scandir(M.normalize(path))
+    local fs = vim.uv.fs_scandir(path)
     return function()
       if not fs then
         return
@@ -137,7 +138,7 @@ function M.dir(path, opts)
       --- @type string, integer
       local dir0, level = unpack(table.remove(dirs, 1))
       local dir = level == 1 and dir0 or M.joinpath(path, dir0)
-      local fs = vim.uv.fs_scandir(M.normalize(dir))
+      local fs = vim.uv.fs_scandir(dir)
       while fs do
         local name, t = vim.uv.fs_scandir_next(fs)
         if not name then
