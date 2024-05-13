@@ -2,7 +2,7 @@
 " Language: i3 config file
 " Original Author: Josef Litos (JosefLitos/i3config.vim)
 " Maintainer: Quentin Hibon (github user hiqua)
-" Version: 1.2.1
+" Version: 1.2.2
 " Last Change: 2024-04-14
 
 " References:
@@ -46,7 +46,7 @@ syn match i3ConfigIncludeCommand /`[^`]*`/ contained contains=@i3ConfigSh
 syn region i3ConfigParamLine matchgroup=i3ConfigKeyword start=/include / end=/$/ contained contains=@i3ConfigStrVar,i3ConfigIncludeCommand,i3ConfigShOper keepend
 
 " 4.2 Comments
-syn match i3ConfigComment /^\s*#.*$/ contained contains=i3ConfigTodo
+syn match i3ConfigComment /#.*$/ contained contains=i3ConfigTodo
 
 " 4.3 Fonts
 syn match i3ConfigFontSize / \d\+\(px\)\?$/ contained
@@ -64,7 +64,7 @@ syn region i3ConfigBind start=/\zs/ skip=/\\$/ end=/$/ contained contains=@i3Con
 syn keyword i3ConfigBindKeyword bindsym bindcode contained skipwhite nextgroup=i3ConfigBindArgument,i3ConfigBindCombo
 
 " 4.6 Binding modes
-syn region i3ConfigModeBlock matchgroup=i3ConfigKeyword start=/^mode\ze\( --pango_markup\)\? \([^'" {]\+\|'[^']\+'\|".\+"\)\s\+{$/ end=/^}\zs$/ contained contains=i3ConfigShParam,@i3ConfigStrVar,i3ConfigBindKeyword,i3ConfigComment,i3ConfigParen fold keepend extend
+syn region i3ConfigModeBlock matchgroup=i3ConfigKeyword start=/mode\ze\( --pango_markup\)\? \([^'" {]\+\|'[^']\+'\|".\+"\)\s\+{$/ end=/^}\zs$/ contained contains=i3ConfigShParam,@i3ConfigStrVar,i3ConfigBindKeyword,i3ConfigComment,i3ConfigParen fold keepend extend
 
 " 4.7 Floating modifier
 syn keyword i3ConfigKeyword floating_modifier contained skipwhite nextgroup=i3ConfigVariable,i3ConfigBindModkey
@@ -122,8 +122,8 @@ syn match  i3ConfigShDelim /[[\]{}();`]\+/ contained
 syn match  i3ConfigShOper /[<>&|+=~^*!.?]\+/ contained
 syn match i3ConfigShParam /\<-[A-Za-z-][0-9A-Za-z_-]*\>/ contained
 syn cluster i3ConfigSh contains=@i3ConfigIdent,i3ConfigShOper,i3ConfigShDelim,i3ConfigShParam,i3ConfigShCommand
-syn region i3ConfigExec start=/ [^{]/ skip=/\\$/ end=/$/ contained contains=i3ConfigExecAction,@i3ConfigSh keepend
-syn match i3ConfigKeyword /^\(exec_always\|exec\)/ contained nextgroup=i3ConfigExec
+syn region i3ConfigExec start=/ \ze[^{]/ skip=/\\$/ end=/$/ contained contains=i3ConfigExecAction,@i3ConfigSh keepend
+syn keyword i3ConfigKeyword exec_always exec contained nextgroup=i3ConfigExec
 
 " 4.21 Workspaces per output
 syn match i3ConfigOutputIdent /[^'",; ]\+/ contained contains=@i3ConfigIdent,i3ConfigColonOperator skipwhite nextgroup=i3ConfigOutputIdent
@@ -189,7 +189,7 @@ syn keyword i3ConfigBarOpts modifier contained skipwhite nextgroup=i3ConfigBindC
 syn keyword i3ConfigBarOpts i3bar_command status_command workspace_command contained skipwhite nextgroup=@i3ConfigSh
 syn keyword i3ConfigBarOpts mode hidden_state id position output tray_output tray_padding separator_symbol workspace_buttons workspace_min_width strip_workspace_numbers strip_workspace_name binding_mode_indicator padding contained skipwhite nextgroup=i3ConfigBarOptVals,@i3ConfigValue,i3ConfigShOper
 syn keyword i3ConfigBarOptVals dock hide invisible show none top bottom primary nonprimary contained
-syn region i3ConfigBarBlock matchgroup=i3ConfigKeyword start=/^bar\ze {$/ end=/^}\zs$/ contained contains=i3ConfigBarOpts,i3ConfigComment,i3ConfigParen,i3ConfigBindKeyword,i3ConfigColorsBlock fold keepend extend
+syn region i3ConfigBarBlock matchgroup=i3ConfigKeyword start=/bar\ze {$/ end=/^\s*}\zs$/ contained contains=i3ConfigBarOpts,i3ConfigComment,i3ConfigParen,i3ConfigBindKeyword,i3ConfigColorsBlock fold keepend extend
 
 " 5.16 Color block
 syn match i3ConfigColorSeq /#[0-9A-Fa-f]\{3,8}\|\$[0-9A-Za-z_:|[\]-]\+/ contained contains=@i3ConfigColVar skipwhite nextgroup=i3ConfigColorSeq
@@ -221,7 +221,7 @@ syn keyword i3ConfigFocusOpts left right up down parent child next prev sibling 
 syn keyword i3ConfigOutputDir left right down up current primary nonprimary next prev contained skipwhite
 syn keyword i3ConfigFocusOutput output contained skipwhite nextgroup=i3ConfigOutputIdent,i3ConfigOutputDir
 syn keyword i3ConfigActionKeyword focus contained skipwhite nextgroup=i3ConfigFocusOpts,i3ConfigFocusOutput
-syn match i3ConfigKeyword /^focus / contained nextgroup=i3ConfigFocusOutput
+syn keyword i3ConfigKeyword focus skipwhite contained nextgroup=i3ConfigFocusOutput
 
 " 6.8 Focusing workspaces (4.21)
 syn keyword i3ConfigWorkspaceDir prev next back_and_forth contained
@@ -260,7 +260,7 @@ syn match i3ConfigMarkOpt /--\(add\|replace\)\( --toggle\)\?/ contained contains
 syn keyword i3ConfigActionKeyword mark contained skipwhite nextgroup=i3ConfigMarkOpt,i3ConfigOutputIdent
 
 " Commands usable for direct config calls - for enforcing start of line for Commands
-syn match i3ConfigTopLevelDirective /^/ skipwhite nextgroup=i3ConfigComment,i3ConfigKeyword,i3ConfigCommand,i3ConfigBindKeyword,i3ConfigParamLine,i3ConfigModeBlock,i3ConfigBarBlock,i3ConfigError
+syn match i3ConfigTopLevelDirective /^\s*/ nextgroup=i3ConfigComment,i3ConfigKeyword,i3ConfigCommand,i3ConfigBindKeyword,i3ConfigParamLine,i3ConfigModeBlock,i3ConfigBarBlock,i3ConfigError
 
 " Commands useable in keybinds
 syn keyword i3ConfigActionKeyword mode append_layout kill open fullscreen sticky split floating swap unmark title_window_icon title_format border restart reload exit scratchpad nop bar contained skipwhite nextgroup=i3ConfigOption,@i3ConfigValue
