@@ -109,6 +109,9 @@ function M.get_parser(bufnr, lang, opts)
   elseif opts.reload then
     opts.reload = nil -- do not pass reload to _create_parser
     assert(lang, 'lang should be valid')
+
+    vim.treesitter.query._reset_cache(lang)
+
     parsers[bufnr]:destroy()
     parsers[bufnr] = M._create_parser(bufnr, lang, opts)
 
