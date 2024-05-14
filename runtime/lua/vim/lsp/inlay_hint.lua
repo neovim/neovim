@@ -98,7 +98,7 @@ function M.on_inlayhint(err, result, ctx, _)
   api.nvim__redraw({ buf = bufnr, valid = true })
 end
 
---- |lsp-handler| for the method `textDocument/inlayHint/refresh`
+--- |lsp-handler| for the method `workspace/inlayHint/refresh`
 ---@param ctx lsp.HandlerContext
 ---@private
 function M.on_refresh(err, _, ctx, _)
@@ -368,6 +368,7 @@ api.nvim_set_decoration_provider(namespace, {
   end,
 })
 
+--- Query whether inlay hint is enabled in the {filter}ed scope
 --- @param filter vim.lsp.inlay_hint.enable.Filter
 --- @return boolean
 --- @since 12
@@ -391,7 +392,7 @@ end
 --- Buffer number, or 0 for current buffer, or nil for all.
 --- @field bufnr integer?
 
---- Enables or disables inlay hints for a buffer.
+--- Enables or disables inlay hints for the {filter}ed scope.
 ---
 --- To "toggle", pass the inverse of `is_enabled()`:
 ---

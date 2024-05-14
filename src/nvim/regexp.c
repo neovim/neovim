@@ -10555,7 +10555,7 @@ nfa_do_multibyte:
       // NFA_END_COMPOSING is the ). Note that right now we are
       // building the postfix form, not the NFA itself;
       // a composing char could be: a, b, c, NFA_COMPOSING
-      // where 'b' and 'c' are chars with codes > 256. */
+      // where 'b' and 'c' are chars with codes > 256.
       while (true) {
         EMIT(c);
         if (i > 0) {

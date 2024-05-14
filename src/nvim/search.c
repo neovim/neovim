@@ -2460,7 +2460,7 @@ int current_search(int count, bool forward)
     // beginning of the file (cursor might be on the search match)
     // except when Visual mode is active, so that extending the visual
     // selection works.
-    if (i == 1 && !result) {  // not found, abort */
+    if (i == 1 && !result) {  // not found, abort
       curwin->w_cursor = orig_pos;
       if (VIsual_active) {
         VIsual = save_VIsual;
@@ -3677,9 +3677,8 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
                                 true) & kEqualFiles) {
             if (type != CHECK_PATH
                 && action == ACTION_SHOW_ALL && files[i].matched) {
-              msg_putchar('\n');  // cursor below last one */
-              if (!got_int) {  // don't display if 'q' typed at "--more--"
-                               // message
+              msg_putchar('\n');  // cursor below last one
+              if (!got_int) {  // don't display if 'q' typed at "--more--" message
                 msg_home_replace_hl(new_fname);
                 msg_puts(_(" (includes previously listed match)"));
                 prev_fname = NULL;

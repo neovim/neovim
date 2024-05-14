@@ -2673,7 +2673,6 @@ vim.filetype.add({filetypes})                             *vim.filetype.add()*
         vim.filetype.add {
           pattern = {
             ['.*'] = {
-              priority = -math.huge,
               function(path, bufnr)
                 local content = vim.api.nvim_buf_get_lines(bufnr, 0, 1, false)[1] or ''
                 if vim.regex([[^#!.*\\<mine\\>]]):match_str(content) ~= nil then
@@ -2682,6 +2681,7 @@ vim.filetype.add({filetypes})                             *vim.filetype.add()*
                   return 'drawing'
                 end
               end,
+              { priority = -math.huge },
             },
           },
         }
@@ -4005,7 +4005,8 @@ Iter:fold({init}, {f})                                           *Iter:fold()*
         -- Get the "maximum" item of an iterable.
         vim.iter({ -99, -4, 3, 42, 0, 0, 7 })
           :fold({}, function(acc, v)
-            acc.max = math.max(v, acc.max or v) return acc
+            acc.max = math.max(v, acc.max or v)
+            return acc
           end) --> { max = 42 }
 <
 
@@ -4346,7 +4347,7 @@ vim.snippet.jump({direction})                             *vim.snippet.jump()*
 
     You can use this function to navigate a snippet as follows: >lua
         vim.keymap.set({ 'i', 's' }, '<Tab>', function()
-           if vim.snippet.jumpable(1) then
+           if vim.snippet.active({ direction = 1 }) then
              return '<cmd>lua vim.snippet.jump(1)<cr>'
            else
              return '<Tab>'

@@ -29,13 +29,6 @@ Use the stable (release) https://github.com/neovim/neovim/releases/latest
 version for a more predictable experience.
 
 
-CAN I USE RUBY-BASED VIM PLUGINS (E.G. LUSTYEXPLORER)? ~
-
-Yes, starting with Nvim 0.1.5 PR #4980
-https://github.com/neovim/neovim/pull/4980 the legacy Vim `if_ruby` interface
-is supported.
-
-
 CAN I USE LUA-BASED VIM PLUGINS (E.G. NEOCOMPLETE)? ~
 
 No. Starting with Nvim 0.2 PR #4411

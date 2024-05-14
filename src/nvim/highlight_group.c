@@ -1963,7 +1963,7 @@ int syn_name2id_len(const char *name, size_t len)
     return 0;
   }
 
-  // Avoid using stricmp() too much, it's slow on some systems */
+  // Avoid using stricmp() too much, it's slow on some systems
   // Avoid alloc()/free(), these are slow too.
   vim_memcpy_up(name_u, name, len);
   name_u[len] = '\0';

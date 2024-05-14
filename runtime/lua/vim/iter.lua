@@ -466,7 +466,8 @@ end
 --- -- Get the "maximum" item of an iterable.
 --- vim.iter({ -99, -4, 3, 42, 0, 0, 7 })
 ---   :fold({}, function(acc, v)
----     acc.max = math.max(v, acc.max or v) return acc
+---     acc.max = math.max(v, acc.max or v)
+---     return acc
 ---   end) --> { max = 42 }
 --- ```
 ---
