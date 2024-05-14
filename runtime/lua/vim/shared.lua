@@ -1053,6 +1053,73 @@ do
   end
 end
 
+
+do
+  ---@class vim.Buflocal<T>
+  ---@field private _values table<integer, any>
+  ---@field private _default any|fun(b: integer):any
+
+  ---@class vim.Buflocal<T>
+  local Buflocal = {}
+
+  local buflocal_mt = {
+    __index = Buflocal,
+  }
+
+  ---@generic T : any
+  ---@param bufnr integer
+  ---@return T
+  function Buflocal:get(bufnr)
+    bufnr = assert(bufnr) == 0 and vim.api.nvim_get_current_buf() or bufnr
+    local value = self._values[bufnr]
+    if not value then
+      if type(self._default) == "function" then
+        value = self._default(bufnr)
+      else
+        value = self._default or {}
+      end
+      self._values[bufnr] = value
+      vim.api.nvim_buf_attach(bufnr, false, {
+        on_detach = function(_, b)
+          self._values[b] = nil
+        end,
+      })
+      vim.api.nvim_create_autocmd("BufWipeout", {
+        buffer = bufnr,
+        callback = function(args)
+          self._values[args.buf] = nil
+        end
+      })
+    end
+    return value
+  end
+
+  function Buflocal:pairs()
+    return pairs(self._values)
+  end
+
+  ---@param bufnr integer?
+  function Buflocal:clear(bufnr)
+    if bufnr == nil then
+      self._values = {}
+    else
+      self._values[bufnr == 0 and vim.api.nvim_get_current_buf() or bufnr] = nil
+    end
+  end
+
+  ---@generic T
+  ---@param default? T|fun(b: integer):T
+  ---@return vim.Buflocal
+  function vim.buflocal(default)
+    local state = {
+      _values = {},
+      _default = default,
+    }
+    return setmetatable(state, buflocal_mt)
+  end
+end
+
+
 --- @private
 --- @generic T
 --- @param root string

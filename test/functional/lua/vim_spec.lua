@@ -3942,6 +3942,38 @@ describe('lua stdlib', function()
     }
     eq(expected, results)
   end)
+
+  it("vim.buflocal", function()
+    local result = exec_lua([[
+      local buflocal = vim.buflocal()
+      local buf1 = vim.api.nvim_create_buf(true, true)
+      local buf2 = vim.api.nvim_create_buf(true, true)
+
+      local state1 = buflocal:get(buf1)
+      state1.x = 10
+
+      local state2 = buflocal:get(buf2)
+      state2.x = 20
+
+      local results = {}
+      results.values = {}
+      results.x1 = buflocal:get(buf1).x
+      results.x2 = buflocal:get(buf2).x
+
+      for _, value in buflocal:pairs() do
+        table.insert(results.values, value)
+      end
+
+      vim.api.nvim_buf_delete(buf1, { force = true })
+      local ok, err = pcall(buflocal.get, buflocal, buf1)
+      results.deleted_buf = {ok, err}
+      return results
+    ]])
+    eq(10, result.x1)
+    eq(20, result.x2)
+    eq(false, result.deleted_buf[1])
+    eq(true, vim.startswith(result.deleted_buf[2], "vim/shared.lua:0: Invalid buffer id: "))
+  end)
 end)
 
 describe('lua: builtin modules', function()

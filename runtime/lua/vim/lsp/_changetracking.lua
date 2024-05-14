@@ -38,7 +38,7 @@ local M = {}
 --- @field refs integer how many clients are using this group
 ---
 --- @class vim.lsp.CTGroupState
---- @field buffers table<integer,vim.lsp.CTBufferState>
+--- @field buffers vim.Buflocal
 --- @field debounce integer debounce duration in ms
 --- @field clients table<integer, table> clients using this state. {client_id, client}
 
@@ -138,7 +138,20 @@ function M.init(client, bufnr)
     state.clients[client.id] = client
   else
     state = {
-      buffers = {},
+      buffers = vim.buflocal(function(b)
+        local bufstate = {
+          name = api.nvim_buf_get_name(b),
+          lines = {},
+          lines_tmp = {},
+          pending_changes = {},
+          needs_flush = false,
+          refs = 0,
+        }
+        if group.sync_kind == protocol.TextDocumentSyncKind.Incremental then
+          bufstate.lines = api.nvim_buf_get_lines(b, 0, -1, true)
+        end
+        return bufstate
+      end),
       debounce = client.flags.debounce_text_changes or 150,
       clients = {
         [client.id] = client,
@@ -146,23 +159,8 @@ function M.init(client, bufnr)
     }
     state_by_group[group] = state
   end
-  local buf_state = state.buffers[bufnr]
-  if buf_state then
-    buf_state.refs = buf_state.refs + 1
-  else
-    buf_state = {
-      name = api.nvim_buf_get_name(bufnr),
-      lines = {},
-      lines_tmp = {},
-      pending_changes = {},
-      needs_flush = false,
-      refs = 1,
-    }
-    state.buffers[bufnr] = buf_state
-    if group.sync_kind == protocol.TextDocumentSyncKind.Incremental then
-      buf_state.lines = api.nvim_buf_get_lines(bufnr, 0, -1, true)
-    end
-  end
+  local buf_state = state.buffers:get(bufnr)
+  buf_state.refs = buf_state.refs + 1
 end
 
 --- @param client vim.lsp.Client
@@ -171,7 +169,7 @@ end
 --- @return string
 function M._get_and_set_name(client, bufnr, name)
   local state = state_by_group[get_group(client)] or {}
-  local buf_state = (state.buffers or {})[bufnr]
+  local buf_state = state.buffers:get(bufnr)
   local old_name = buf_state.name
   buf_state.name = name
   return old_name
@@ -198,11 +196,11 @@ function M.reset_buf(client, bufnr)
     return
   end
   assert(state.buffers, 'CTGroupState must have buffers')
-  local buf_state = state.buffers[bufnr]
+  local buf_state = state.buffers:get(bufnr)
   buf_state.refs = buf_state.refs - 1
   assert(buf_state.refs >= 0, 'refcount on buffer state must not get negative')
   if buf_state.refs == 0 then
-    state.buffers[bufnr] = nil
+    state.buffers:clear(bufnr)
     reset_timer(buf_state)
   end
 end
@@ -215,10 +213,10 @@ function M.reset(client)
   end
   state.clients[client.id] = nil
   if vim.tbl_count(state.clients) == 0 then
-    for _, buf_state in pairs(state.buffers) do
+    for _, buf_state in state.buffers:pairs() do
       reset_timer(buf_state)
     end
-    state.buffers = {}
+    state.buffers:clear()
   end
 end
 
@@ -301,7 +299,7 @@ local function send_changes_for_group(bufnr, firstline, lastline, new_lastline, 
       )
     )
   end
-  local buf_state = state.buffers[bufnr]
+  local buf_state = state.buffers:get(bufnr)
   buf_state.needs_flush = true
   reset_timer(buf_state)
   local debounce = next_debounce(state.debounce, buf_state)
@@ -359,11 +357,11 @@ function M.flush(client, bufnr)
     return
   end
   if bufnr then
-    local buf_state = state.buffers[bufnr] or {}
+    local buf_state = state.buffers:get(bufnr)
     reset_timer(buf_state)
     send_changes(bufnr, group.sync_kind, state, buf_state)
   else
-    for buf, buf_state in pairs(state.buffers) do
+    for buf, buf_state in state.buffers:pairs() do
       reset_timer(buf_state)
       send_changes(buf, group.sync_kind, state, buf_state)
     end
