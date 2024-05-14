@@ -251,6 +251,8 @@ function lsp.start(config, opts)
     if reuse_client(client, config) then
       if lsp.buf_attach_client(bufnr, client.id) then
         return client.id
+      else
+        return nil
       end
     end
   end
