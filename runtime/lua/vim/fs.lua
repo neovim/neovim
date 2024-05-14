@@ -488,6 +488,8 @@ end
 --- (default: `true`)
 --- @field expand_env? boolean
 ---
+--- @field package _fast? boolean
+---
 --- Path is a Windows path.
 --- (default: `true` in Windows, `false` otherwise)
 --- @field win? boolean
@@ -527,11 +529,13 @@ end
 function M.normalize(path, opts)
   opts = opts or {}
 
-  vim.validate({
-    path = { path, { 'string' } },
-    expand_env = { opts.expand_env, { 'boolean' }, true },
-    win = { opts.win, { 'boolean' }, true },
-  })
+  if not opts._fast then
+    vim.validate({
+      path = { path, { 'string' } },
+      expand_env = { opts.expand_env, { 'boolean' }, true },
+      win = { opts.win, { 'boolean' }, true },
+    })
+  end
 
   local win = opts.win == nil and iswin or not not opts.win
   local os_sep_local = win and '\\' or '/'
@@ -555,11 +559,17 @@ function M.normalize(path, opts)
     path = path:gsub('%$([%w_]+)', vim.uv.os_getenv)
   end
 
-  -- Convert path separator to `/`
-  path = path:gsub(os_sep_local, '/')
+  if win then
+    -- Convert path separator to `/`
+    path = path:gsub(os_sep_local, '/')
+  end
 
   -- Check for double slashes at the start of the path because they have special meaning
-  local double_slash = vim.startswith(path, '//') and not vim.startswith(path, '///')
+  local double_slash = false
+  if not opts._fast then
+    double_slash = vim.startswith(path, '//') and not vim.startswith(path, '///')
+  end
+
   local prefix = ''
 
   if win then
@@ -576,10 +586,15 @@ function M.normalize(path, opts)
     prefix = prefix:gsub('/+', '/')
   end
 
-  -- Resolve `.` and `..` components and remove extraneous slashes from path, then recombine prefix
-  -- and path. Preserve leading double slashes as they indicate UNC paths and DOS device paths in
+  if not opts._fast then
+    -- Resolve `.` and `..` components and remove extraneous slashes from path, then recombine prefix
+    -- and path.
+    path = path_resolve_dot(path)
+  end
+
+  -- Preserve leading double slashes as they indicate UNC paths and DOS device paths in
   -- Windows and have implementation-defined behavior in POSIX.
-  path = (double_slash and '/' or '') .. prefix .. path_resolve_dot(path)
+  path = (double_slash and '/' or '') .. prefix .. path
 
   -- Change empty path to `.`
   if path == '' then
