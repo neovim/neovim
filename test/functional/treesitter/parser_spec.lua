@@ -554,7 +554,7 @@ print()
       ]])
     end)
 
-    it('should not error when encountering optional captures #23100', function()
+    it('ignores optional captures #23100', function()
       local result = exec_lua([[
         parser = vim.treesitter.get_parser(0, "lua", {
           injections = {
