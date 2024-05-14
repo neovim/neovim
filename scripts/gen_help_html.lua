@@ -1088,13 +1088,13 @@ local function gen_css(fname)
       padding-bottom: 10px;
       /* Tabs are used for alignment in old docs, so we must match Vim's 8-char expectation. */
       tab-size: 8;
-      white-space: pre;
+      white-space: normal;
       font-size: 16px;
       font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
+      word-wrap: break-word;
     }
     .old-help-para pre {
-      /* All text in .old-help-para is formatted as "white-space:pre" so text following <pre> is
-         already visually separated by the linebreak. */
+      /* Text following <pre> is already visually separated by the linebreak. */
       margin-bottom: 0;
     }
 
