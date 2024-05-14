@@ -51,6 +51,29 @@ end
 
 local function check_watcher()
   vim.health.start('vim.lsp: File watcher')
+
+  -- Only run the check if file watching has been enabled by a client.
+  local clients = vim.lsp.get_clients()
+  if
+    --- @param client vim.lsp.Client
+    vim.iter(clients):all(function(client)
+      local has_capability = vim.tbl_get(
+        client.capabilities,
+        'workspace',
+        'didChangeWatchedFiles',
+        'dynamicRegistration'
+      )
+      local has_dynamic_capability =
+        client.dynamic_capabilities:get(vim.lsp.protocol.Methods.workspace_didChangeWatchedFiles)
+      return has_capability == nil
+        or has_dynamic_capability == nil
+        or client.workspace_folders == nil
+    end)
+  then
+    report_info('file watching "(workspace/didChangeWatchedFiles)" disabled on all clients')
+    return
+  end
+
   local watchfunc = vim.lsp._watchfiles._watchfunc
   assert(watchfunc)
   local watchfunc_name --- @type string
