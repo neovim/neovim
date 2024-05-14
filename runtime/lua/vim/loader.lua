@@ -85,7 +85,7 @@ function Loader.get_hash(path)
 end
 
 local function normalize(path)
-  return fs.normalize(path, { expand_env = false })
+  return fs.normalize(path, { expand_env = false, _fast = true })
 end
 
 --- Gets the rtp excluding after directories.
