@@ -332,6 +332,7 @@ static dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
   tv_dict_add_nr(dict, S_LEN("textoff"), win_col_off(wp));
   tv_dict_add_nr(dict, S_LEN("terminal"), bt_terminal(wp->w_buffer));
   tv_dict_add_nr(dict, S_LEN("quickfix"), bt_quickfix(wp->w_buffer));
+  tv_dict_add_nr(dict, S_LEN("lastused"), wp->w_last_used);
   tv_dict_add_nr(dict, S_LEN("loclist"),
                  (bt_quickfix(wp->w_buffer) && wp->w_llist_ref != NULL));
 

@@ -2435,6 +2435,8 @@ void leaving_window(win_T *const win)
 void entering_window(win_T *const win)
   FUNC_ATTR_NONNULL_ALL
 {
+  win->w_last_used = time(NULL);
+
   // Only matters for a prompt window.
   if (!bt_prompt(win->w_buffer)) {
     return;
@@ -2468,6 +2470,7 @@ void win_init_empty(win_T *wp)
   wp->w_topfill = 0;
   wp->w_botline = 2;
   wp->w_valid = 0;
+  wp->w_last_used = 0;
   wp->w_s = &wp->w_buffer->b_s;
 }
 

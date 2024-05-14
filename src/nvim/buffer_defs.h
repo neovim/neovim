@@ -1328,4 +1328,6 @@ struct window_S {
   StlClickDefinition *w_statuscol_click_defs;
   // Size of the w_statuscol_click_defs array
   size_t w_statuscol_click_defs_size;
+
+  time_t w_last_used;  // time when the window was last used
 };
