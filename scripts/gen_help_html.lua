@@ -1094,8 +1094,7 @@ local function gen_css(fname)
       word-wrap: break-word;
     }
     .old-help-para pre {
-      /* All text in .old-help-para is formatted as "white-space:pre" so text following <pre> is
-         already visually separated by the linebreak. */
+      /* Text following <pre> is already visually separated by the linebreak. */
       margin-bottom: 0;
     }
 
