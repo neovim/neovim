@@ -63,8 +63,11 @@ local function check_watcher()
         'didChangeWatchedFiles',
         'dynamicRegistration'
       )
-      local has_dynamic_capability = client.dynamic_capabilities:get(vim.lsp.protocol.Methods.workspace_didChangeWatchedFiles)
-      return has_capability == nil or has_dynamic_capability == nil or client.workspace_folders == nil
+      local has_dynamic_capability =
+        client.dynamic_capabilities:get(vim.lsp.protocol.Methods.workspace_didChangeWatchedFiles)
+      return has_capability == nil
+        or has_dynamic_capability == nil
+        or client.workspace_folders == nil
     end)
   then
     report_info('file watching "(workspace/didChangeWatchedFiles)" disabled on all clients')
