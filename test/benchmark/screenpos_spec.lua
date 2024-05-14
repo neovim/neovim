@@ -80,7 +80,7 @@ local N = 10000
 local function benchmark(lines, expected_value)
   local lnum = #lines
 
-  local results = t.exec_lua(
+  local results = n.exec_lua(
     [==[
     local N, lnum = ...
 
