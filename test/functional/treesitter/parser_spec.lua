@@ -547,6 +547,36 @@ int x = INT_MAX;
     end)
   end)
 
+  describe('when setting the node for an injection', function()
+    before_each(function()
+      insert([[
+print()
+      ]])
+    end)
+
+    it('ignores optional captures #23100', function()
+      local result = exec_lua([[
+        parser = vim.treesitter.get_parser(0, "lua", {
+          injections = {
+            lua = (
+            '(function_call ' ..
+              '(arguments ' ..
+                '(string)? @injection.content ' ..
+                '(number)? @injection.content ' ..
+                '(#offset! @injection.content 0 1 0 -1) ' ..
+                '(#set! injection.language "c")))'
+            )
+          }
+        })
+        parser:parse(true)
+
+        return parser:is_valid()
+      ]])
+
+      eq(true, result)
+    end)
+  end)
+
   describe('when getting/setting match data', function()
     describe('when setting for the whole match', function()
       it('should set/get the data correctly', function()
