@@ -1412,7 +1412,7 @@ Option:remove({value})                                      *vim.opt:remove()*
     Parameters: ~
       • {value}  (`string`) Value to remove
 
-vim.bo                                                                *vim.bo*
+vim.bo[{bufnr}]                                                       *vim.bo*
     Get or set buffer-scoped |options| for the buffer with number {bufnr}. If
     {bufnr} is omitted then the current buffer is used. Invalid {bufnr} or key
     is an error.
@@ -1462,7 +1462,7 @@ vim.o                                                                  *vim.o*
         print(vim.o.foo)     -- error: invalid key
 <
 
-vim.wo                                                                *vim.wo*
+vim.wo[{winid}][{bufnr}]                                              *vim.wo*
     Get or set window-scoped |options| for the window with handle {winid} and
     buffer with number {bufnr}. Like `:setlocal` if setting a |global-local|
     option or if {bufnr} is provided, like `:set` otherwise. If {winid} is

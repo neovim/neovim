@@ -614,6 +614,12 @@ local function render_fun_header(fun, cfg)
   if fun.classvar then
     nm = fmt('%s:%s', fun.classvar, nm)
   end
+  if nm == 'vim.bo' then
+    nm = 'vim.bo[{bufnr}]'
+  end
+  if nm == 'vim.wo' then
+    nm = 'vim.wo[{winid}][{bufnr}]'
+  end
 
   local proto = fun.table and nm or nm .. '(' .. table.concat(args, ', ') .. ')'
 
