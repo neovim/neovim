@@ -1219,7 +1219,7 @@ static void cursor_correct_sms(win_T *wp)
   }
 
   // Not enough screen lines in topline: ignore 'scrolloff'.
-  while (so_cols > size && so_cols - width2 >= width1) {
+  while (so_cols > size && so_cols - width2 >= width1 && width1 > 0) {
     so_cols -= width2;
   }
   if (so_cols >= width1 && so_cols > size) {
