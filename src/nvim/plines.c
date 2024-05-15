@@ -57,7 +57,7 @@ int win_chartabsize(win_T *wp, char *p, colnr_T col)
 
 /// Like linetabsize_str(), but "s" starts at virtual column "startvcol".
 ///
-/// @param startcol
+/// @param startvcol
 /// @param s
 ///
 /// @return Number of cells the string will take on the screen.
@@ -76,7 +76,7 @@ int linetabsize_col(int startvcol, char *s)
 /// screen, taking into account the size of a tab and inline virtual text.
 int linetabsize(win_T *wp, linenr_T lnum)
 {
-  return win_linetabsize(wp, lnum, ml_get_buf(wp->w_buffer, lnum), (colnr_T)MAXCOL);
+  return win_linetabsize(wp, lnum, ml_get_buf(wp->w_buffer, lnum), MAXCOL);
 }
 
 static const uint32_t inline_filter[4] = {[kMTMetaInline] = kMTFilterSelect };
@@ -421,48 +421,63 @@ static bool in_win_border(win_T *wp, colnr_T vcol)
 
 /// Calculate virtual column until the given "len".
 ///
-/// @param arg  Argument to charsize functions.
-/// @param vcol Starting virtual column.
-/// @param len  First byte of the end character, or MAXCOL.
+/// @param csarg    Argument to charsize functions.
+/// @param vcol_arg Starting virtual column.
+/// @param len      First byte of the end character, or MAXCOL.
 ///
 /// @return virtual column before the character at "len",
-/// or full size of the line if "len" is MAXCOL.
-int linesize_regular(CharsizeArg *const csarg, int vcol, colnr_T const len)
+///         or full size of the line if "len" is MAXCOL.
+int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len)
 {
   char *const line = csarg->line;
+  int64_t vcol = vcol_arg;
 
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   while (ci.ptr - line < len && *ci.ptr != NUL) {
-    vcol += charsize_regular(csarg, ci.ptr, vcol, ci.chr.value).width;
+    vcol += charsize_regular(csarg, ci.ptr, vcol_arg, ci.chr.value).width;
     ci = utfc_next(ci);
+    if (vcol > MAXCOL) {
+      vcol_arg = MAXCOL;
+      break;
+    } else {
+      vcol_arg = (int)vcol;
+    }
   }
 
   // Check for inline virtual text after the end of the line.
-  if (len == MAXCOL && csarg->virt_row >= 0) {
-    (void)charsize_regular(csarg, ci.ptr, vcol, ci.chr.value);
+  if (len == MAXCOL && csarg->virt_row >= 0 && *ci.ptr == NUL) {
+    (void)charsize_regular(csarg, ci.ptr, vcol_arg, ci.chr.value);
     vcol += csarg->cur_text_width_left + csarg->cur_text_width_right;
+    vcol_arg = vcol > MAXCOL ? MAXCOL : (int)vcol;
   }
 
-  return vcol;
+  return vcol_arg;
 }
 
-/// Like linesize_regular(), but can be used when CStype is kCharsizeFast.
+/// Like linesize_regular(), but can be used when CSType is kCharsizeFast.
 ///
 /// @see linesize_regular
-int linesize_fast(CharsizeArg const *const csarg, int vcol, colnr_T const len)
+int linesize_fast(CharsizeArg const *const csarg, int vcol_arg, colnr_T const len)
 {
   win_T *const wp = csarg->win;
   bool const use_tabstop = csarg->use_tabstop;
 
   char *const line = csarg->line;
+  int64_t vcol = vcol_arg;
 
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   while (ci.ptr - line < len && *ci.ptr != NUL) {
-    vcol += charsize_fast_impl(wp, use_tabstop, vcol, ci.chr.value).width;
+    vcol += charsize_fast_impl(wp, use_tabstop, vcol_arg, ci.chr.value).width;
     ci = utfc_next(ci);
+    if (vcol > MAXCOL) {
+      vcol_arg = MAXCOL;
+      break;
+    } else {
+      vcol_arg = (int)vcol;
+    }
   }
 
-  return vcol;
+  return vcol_arg;
 }
 
 /// Get how many virtual columns inline virtual text should offset the cursor.
@@ -572,7 +587,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
 ///
 /// @param posp
 ///
-/// @retujrn The virtual cursor column.
+/// @return The virtual cursor column.
 colnr_T getvcol_nolist(pos_T *posp)
 {
   int list_save = curwin->w_p_list;

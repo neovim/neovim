@@ -4278,4 +4278,14 @@ func Test_halfpage_longline()
   call assert_equal(2, line('.'))
   bwipe!
 endfunc
+
+" Test for Ctrl-E with long line and very narrow window,
+" used to cause an inifite loop
+func Test_scroll_longline_no_loop()
+  4vnew
+  setl smoothscroll number showbreak=> scrolloff=2
+  call setline(1, repeat(['Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'], 3))
+  exe "normal! \<C-E>"
+  bwipe!
+endfunc
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
