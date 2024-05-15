@@ -301,8 +301,8 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 ExternalProject_Add(uncrustify
-  URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.78.1.tar.gz
-  URL_HASH SHA256=ecaf4c0adca14c36dfffa30bc28e69865115ecd602c90eb16a8cddccb41caad2
+  URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.79.0.tar.gz
+  URL_HASH SHA256=e7afaeabf636b7f0ce4e3e9747b95f7bd939613a8db49579755dddf44fedca5f
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/uncrustify
   CMAKE_ARGS ${DEPS_CMAKE_ARGS}
   EXCLUDE_FROM_ALL TRUE
