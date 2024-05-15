@@ -43,17 +43,15 @@ __API_LEVEL=$(grep 'set(NVIM_API_LEVEL ' CMakeLists.txt\
   &&  { echo "ERROR: version parse failed: '${__VERSION}'"; exit 1; }
 __RELEASE_MSG="NVIM v${__VERSION}
 
-FEATURES:
-
-FIXES:
-
-CHANGES:
-
 "
 __BUMP_MSG="version bump"
 
 echo "Most recent tag: ${__LAST_TAG}"
 echo "Release version: ${__VERSION}"
+
+_git_log_pretty() {
+  git cliff --config scripts/cliff.toml --unreleased || echo 'git cliff failed'
+}
 
 _do_release_commit() {
   $__sed -i.bk 's/(NVIM_VERSION_PRERELEASE) "-dev"/\1 ""/' CMakeLists.txt
@@ -73,7 +71,7 @@ _do_release_commit() {
     echo "Building changelog since ${__LAST_TAG}..."
 
     git add CMakeLists.txt
-    (echo "${__RELEASE_MSG}"; ./scripts/git-log-pretty-since.sh "$__LAST_TAG" 'vim-patch:[^[:space:]]') | git commit --edit -F -
+    (echo "${__RELEASE_MSG}"; _git_log_pretty) | git commit --edit -F -
   fi
 
   git tag --sign -a v"${__VERSION}" -m "NVIM v${__VERSION}"

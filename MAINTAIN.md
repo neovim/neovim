@@ -50,9 +50,7 @@ has a major bug:
 1. Fix the bug on `master`.
 2. Cherry-pick the fix to `release-x.y`.
 3. Cut a release from `release-x.y`.
-    * Run `git cliff --config scripts/cliff.toml --unreleased -o CHANGELOG.md`
-    * Run `./scripts/release.sh`
-    * Paste `CHANGELOG.md` into the release commit message.
+    * Run `./scripts/release.sh` (requires [git cliff](https://github.com/orhun/git-cliff))
     * The [CI job](https://github.com/neovim/neovim/blob/3d45706478cd030c3ee05b4f336164bb96138095/.github/workflows/release.yml#L11-L13)
       will update the release assets and [force-push to the "stable" tag](https://github.com/neovim/neovim/blob/cdd87222c86c5b2274a13d36f23de0637462e317/.github/workflows/release.yml#L229).
 

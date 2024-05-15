@@ -47,18 +47,18 @@ commit_preprocessors = [
 ]
 # regex for parsing and grouping commits
 commit_parsers = [
-    { message = "!:", group = "<!-- 0 -->Breaking"},
-    { message = "^feat", group = "<!-- 1 -->Features"},
-    { message = "^fix", group = "<!-- 2 -->Bug Fixes"},
-    { message = "^perf", group = "<!-- 3 -->Performance"},
-    { message = "^build", group = "<!-- 4 -->Build System"},
-    { message = "^vim-patch", group = "<!-- 5 -->Vim patches"},
-    { message = "^refactor", group = "<!-- 6 -->Refactor" },
+    { message = "!:", group = "<!-- 0 -->BREAKING"},
+    { message = "^feat", group = "<!-- 1 -->FEATURES"},
+    { message = "^fix", group = "<!-- 2 -->FIXES"},
+    { message = "^perf", group = "<!-- 3 -->PERFORMANCE"},
+    { message = "^build", group = "<!-- 4 -->BUILD"},
+    { message = "^vim-patch", group = "<!-- 5 -->VIM PATCHES"},
+    { message = "^refactor", group = "<!-- 6 -->REFACTOR" },
     { message = "^ci", group = "<!-- 8 -->CI" },
-    { message = "^test", group = "<!-- 9 -->Testing" },
-    { message = "^docs", group = "<!-- 99 -->Documentation" },
-    { message = "^revert", group = "<!-- 999 -->Reverted Changes" },
-    { message = ".*", group = "<!-- 9999 -->Other"},
+    { message = "^test", group = "<!-- 9 -->TESTING" },
+    { message = "^docs", group = "<!-- 99 -->DOCUMENTATION" },
+    { message = "^revert", group = "<!-- 999 -->REVERTED CHANGES" },
+    { message = ".*", group = "<!-- 9999 -->OTHER"},
 ]
 # filter out the commits that are not matched by commit parsers
 filter_commits = true
