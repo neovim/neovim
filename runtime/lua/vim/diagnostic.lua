@@ -1985,15 +1985,9 @@ function M.setloclist(opts)
   set_list(true, opts)
 end
 
---- @deprecated use `vim.diagnostic.enabled(…, false)`
+--- @deprecated use `vim.diagnostic.enable(false, …)`
 function M.disable(bufnr, namespace)
-  vim.deprecate(
-    'vim.diagnostic.disable()',
-    'vim.diagnostic.enabled(false, …)',
-    '0.12',
-    nil,
-    false
-  )
+  vim.deprecate('vim.diagnostic.disable()', 'vim.diagnostic.enable(false, …)', '0.12', nil, false)
   M.enable(false, { bufnr = bufnr, ns_id = namespace })
 end
 
