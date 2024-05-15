@@ -31,14 +31,14 @@ __DATE=$(date +'%Y-%m-%d')
 __LAST_TAG=$(git describe --abbrev=0)
 [ -z "$__LAST_TAG" ] && { echo 'ERROR: no tag found'; exit 1; }
 __VERSION_MAJOR=$(grep 'set(NVIM_VERSION_MAJOR' CMakeLists.txt\
-  |$__sed 's/.*NVIM_VERSION_MAJOR ([[:digit:]]).*/\1/')
+  |$__sed 's/.*NVIM_VERSION_MAJOR ([[:digit:]]+).*/\1/')
 __VERSION_MINOR=$(grep 'set(NVIM_VERSION_MINOR' CMakeLists.txt\
-  |$__sed 's/.*NVIM_VERSION_MINOR ([[:digit:]]).*/\1/')
+  |$__sed 's/.*NVIM_VERSION_MINOR ([[:digit:]]+).*/\1/')
 __VERSION_PATCH=$(grep 'set(NVIM_VERSION_PATCH' CMakeLists.txt\
-  |$__sed 's/.*NVIM_VERSION_PATCH ([[:digit:]]).*/\1/')
+  |$__sed 's/.*NVIM_VERSION_PATCH ([[:digit:]]+).*/\1/')
 __VERSION="${__VERSION_MAJOR}.${__VERSION_MINOR}.${__VERSION_PATCH}"
 __API_LEVEL=$(grep 'set(NVIM_API_LEVEL ' CMakeLists.txt\
-  |$__sed 's/.*NVIM_API_LEVEL ([[:digit:]]).*/\1/')
+  |$__sed 's/.*NVIM_API_LEVEL ([[:digit:]]+).*/\1/')
 { [ -z "$__VERSION_MAJOR" ] || [ -z "$__VERSION_MINOR" ] || [ -z "$__VERSION_PATCH" ]; } \
   &&  { echo "ERROR: version parse failed: '${__VERSION}'"; exit 1; }
 __RELEASE_MSG="NVIM v${__VERSION}
