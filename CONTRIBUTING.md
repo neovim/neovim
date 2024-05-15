@@ -114,11 +114,6 @@ the VCS/git logs more valuable. The structure of a commit message is:
   BREAKING CHANGE: refactor to use Python 3 features since Python 2 is no longer supported.
   ```
 
-### News
-
-High level release notes are maintained in [news.txt](runtime/doc/news.txt). A PR is not required to add a news item
-but is generally recommended.
-
 ### Automated builds (CI)
 
 Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Actions].

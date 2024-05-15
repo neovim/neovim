@@ -136,7 +136,8 @@ end
 --- local hint = vim.lsp.inlay_hint.get({ bufnr = 0 })[1] -- 0 for current buffer
 ---
 --- local client = vim.lsp.get_client_by_id(hint.client_id)
---- resolved_hint = client.request_sync('inlayHint/resolve', hint.inlay_hint, 100, 0).result
+--- local resp = client.request_sync('inlayHint/resolve', hint.inlay_hint, 100, 0)
+--- local resolved_hint = assert(resp and resp.result, resp.err)
 --- vim.lsp.util.apply_text_edits(resolved_hint.textEdits, 0, client.encoding)
 ---
 --- location = resolved_hint.label[1].location

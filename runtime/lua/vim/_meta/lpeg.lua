@@ -6,11 +6,10 @@ error('Cannot require a meta file')
 -- with types being renamed to include the vim namespace and with some descriptions made less verbose.
 
 --- @brief <pre>help
---- LPeg is a pattern-matching library for Lua, based on
---- Parsing Expression Grammars (https://bford.info/packrat/) (PEGs).
+--- LPeg is a pattern-matching library for Lua, based on Parsing Expression
+--- Grammars (PEGs). https://bford.info/packrat/
 ---
----                                                                     *lua-lpeg*
----                                                             *vim.lpeg.Pattern*
+---                                                  *lua-lpeg* *vim.lpeg.Pattern*
 --- The LPeg library for parsing expression grammars is included as `vim.lpeg`
 --- (https://www.inf.puc-rio.br/~roberto/lpeg/).
 ---

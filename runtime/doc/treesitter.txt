@@ -1321,7 +1321,11 @@ LanguageTree:included_regions()              *LanguageTree:included_regions()*
         (`table<integer, Range6[]>`)
 
 LanguageTree:invalidate({reload})                  *LanguageTree:invalidate()*
-    Invalidates this parser and all its children
+    Invalidates this parser and its children.
+
+    Should only be called when the tracked state of the LanguageTree is not
+    valid against the parse tree in treesitter. Doesn't clear filesystem
+    cache. Called often, so needs to be fast.
 
     Parameters: ~
       • {reload}  (`boolean?`)

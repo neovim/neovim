@@ -34,10 +34,11 @@ Nvim ever ships with Lua 5.4+, a Lua 5.1 compatibility shim will be provided
 so that old plugins continue to work transparently.
 
                                                                   *lua-luajit*
-Nvim is built with luajit on platforms which support it, which provides
-extra functionality. Lua code in |init.lua| and plugins can assume its presence
-on installations on common platforms. For maximum compatibility with less
-common platforms, availability can be checked using the `jit` global variable: >lua
+On supported platforms, Nvim is built with LuaJIT, which provides extra
+functionality (compared to PUC Lua) such as "bit" and various utilities (see
+|lua-profile|). Lua code in |init.lua| and plugins can assume its presence on
+many platforms, but for maximum compatibility should check the `jit` global
+variable: >lua
   if jit then
     -- code for luajit
   else
@@ -45,9 +46,21 @@ common platforms, availability can be checked using the `jit` global variable: >
   end
 <
                                                                   *lua-bit*
-In particular, the luajit "bit" extension module is _always_ available.
-A fallback implementation is included when nvim is built with PUC Lua 5.1,
-and will be transparently used when `require("bit")` is invoked.
+The LuaJIT "bit" extension module is _always_ available: when built with PUC
+Lua, Nvim includes a fallback implementation which provides `require("bit")`.
+
+                                                                  *lua-profile*
+To profile Lua code (with LuaJIT-enabled Nvim), the basic steps are: >lua
+    -- Start a profiling session:
+    require('jit.p').start('ri1', '/tmp/profile')
+
+    -- Perform arbitrary tasks (use plugins, scripts, etc.) ...
+
+    -- Stop the session. Profile is written to /tmp/profile.
+    require('jit.p').stop()
+
+See https://luajit.org/ext_profiler.html or the "p.lua" source for details: >
+    :lua vim.cmd.edit(package.searchpath('jit.p', package.path))
 
 ==============================================================================
 LUA CONCEPTS AND IDIOMS                                         *lua-concepts*
@@ -244,8 +257,8 @@ arguments separated by " " (space) instead of "\t" (tab).
                                                                   *:lua=* *:lua*
 :lua {chunk}
     Executes Lua chunk {chunk}. If {chunk} starts with "=" the rest of the
-    chunk is evaluated as an expression and printed. `:lua =expr` or `:=expr` is
-    equivalent to `:lua print(vim.inspect(expr))`.
+    chunk is evaluated as an expression and printed. `:lua =expr` and `:=expr`
+    are equivalent to `:lua vim.print(expr)`.
 
     Examples: >vim
         :lua vim.api.nvim_command('echo "Hello, Nvim!"')
@@ -3060,11 +3073,10 @@ vim.glob.to_lpeg({pattern})                               *vim.glob.to_lpeg()*
 VIM.LPEG                                                            *vim.lpeg*
 
 
-LPeg is a pattern-matching library for Lua, based on
-Parsing Expression Grammars (https://bford.info/packrat/) (PEGs).
+LPeg is a pattern-matching library for Lua, based on Parsing Expression
+Grammars (PEGs). https://bford.info/packrat/
 
-                                                                    *lua-lpeg*
-                                                            *vim.lpeg.Pattern*
+                                                   *lua-lpeg* *vim.lpeg.Pattern*
 The LPeg library for parsing expression grammars is included as `vim.lpeg`
 (https://www.inf.puc-rio.br/~roberto/lpeg/).
 
@@ -3457,10 +3469,11 @@ vim.lpeg.version()                                        *vim.lpeg.version()*
 VIM.RE                                                                *vim.re*
 
 The `vim.re` module provides a conventional regex-like syntax for pattern
-usage within LPeg |vim.lpeg|.
+usage within LPeg |vim.lpeg|. (Unrelated to |vim.regex| which provides Vim
+|regexp| from Lua.)
 
 See https://www.inf.puc-rio.br/~roberto/lpeg/re.html for the original
-documentation including regex syntax and more concrete examples.
+documentation including regex syntax and examples.
 
 
 vim.re.compile({string}, {defs})                            *vim.re.compile()*
@@ -4342,10 +4355,10 @@ vim.snippet.expand({input})                             *vim.snippet.expand()*
       • {input}  (`string`)
 
 vim.snippet.jump({direction})                             *vim.snippet.jump()*
-    Jumps within the active snippet in the given direction. If the jump isn't
-    possible, the function call does nothing.
+    Jumps to the next (or previous) placeholder in the current snippet, if
+    possible.
 
-    You can use this function to navigate a snippet as follows: >lua
+    For example, map `<Tab>` to jump while a snippet is active: >lua
         vim.keymap.set({ 'i', 's' }, '<Tab>', function()
            if vim.snippet.active({ direction = 1 }) then
              return '<cmd>lua vim.snippet.jump(1)<cr>'
