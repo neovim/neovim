@@ -274,25 +274,25 @@ g CTRL-]		Like CTRL-], but use ":tjump" instead of ":tag".
 {Visual}g CTRL-]	Same as "g CTRL-]", but use the highlighted text as
 			the identifier.
 
-							*:tn* *:tnext*
+							*:tn* *:tnext* *]t*
 :[count]tn[ext][!]	Jump to [count] next matching tag (default 1).  See
 			|tag-!| for [!].
 
-							*:tp* *:tprevious*
+							*:tp* *:tprevious* *[t*
 :[count]tp[revious][!]	Jump to [count] previous matching tag (default 1).
 			See |tag-!| for [!].
 
 							*:tN* *:tNext*
 :[count]tN[ext][!]	Same as ":tprevious".
 
-							*:tr* *:trewind*
+							*:tr* *:trewind* *[T*
 :[count]tr[ewind][!]	Jump to first matching tag.  If [count] is given, jump
 			to [count]th matching tag.  See |tag-!| for [!].
 
 							*:tf* *:tfirst*
 :[count]tf[irst][!]	Same as ":trewind".
 
-							*:tl* *:tlast*
+							*:tl* *:tlast* *]T*
 :tl[ast][!]		Jump to last matching tag.  See |tag-!| for [!].
 
 							*:lt* *:ltag*
@@ -335,10 +335,10 @@ the same as above, with a "p" prepended.
 :ptj[ump][!] [name]	Does ":tjump[!] [name]" and shows the new tag in a
 			"Preview" window.  See |:ptag| for more info.
 
-							*:ptn* *:ptnext*
+							*:ptn* *:ptnext* *]CTRL-T*
 :[count]ptn[ext][!]	":tnext" in the preview window.  See |:ptag|.
 
-							*:ptp* *:ptprevious*
+							*:ptp* *:ptprevious* *[CTRL-T*
 :[count]ptp[revious][!]	":tprevious" in the preview window.  See |:ptag|.
 
 							*:ptN* *:ptNext*
