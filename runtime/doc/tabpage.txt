@@ -216,8 +216,8 @@ gT		Go to the previous tab page.  Wraps around from the first one
 :tabl[ast]	Go to the last tab page.
 
 <C-Tab>						*CTRL-<Tab>* *<C-Tab>*
-CTRL-W g<Tab>					*g<Tab>* *CTRL-W_g<Tab>*
-g<Tab>		Go to the last accessed tab page.
+g<Tab>						*g<Tab>* *CTRL-W_g<Tab>*
+CTRL-W g<Tab>	Go to the last accessed tab page.
 
 Other commands:
 							*:tabs*
