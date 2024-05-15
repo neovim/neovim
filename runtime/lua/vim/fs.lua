@@ -455,11 +455,9 @@ end
 --- @return string Resolved path.
 local function path_resolve_dot(path)
   local is_path_absolute = vim.startswith(path, '/')
-  -- Split the path into components and process them
-  local path_components = vim.split(path, '/')
   local new_path_components = {}
 
-  for _, component in ipairs(path_components) do
+  for component in vim.gsplit(path, '/') do
     if component == '.' or component == '' then -- luacheck: ignore 542
       -- Skip `.` components and empty components
     elseif component == '..' then
