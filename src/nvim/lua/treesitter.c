@@ -725,6 +725,8 @@ static struct luaL_Reg node_meta[] = {
   { "descendant_for_range", node_descendant_for_range },
   { "named_descendant_for_range", node_named_descendant_for_range },
   { "parent", node_parent },
+  { "__has_ancestor", __has_ancestor },
+  { "child_containing_descendant", node_child_containing_descendant },
   { "iter_children", node_iter_children },
   { "next_sibling", node_next_sibling },
   { "prev_sibling", node_prev_sibling },
@@ -1049,6 +1051,49 @@ static int node_parent(lua_State *L)
   TSNode node = node_check(L, 1);
   TSNode parent = ts_node_parent(node);
   push_node(L, parent, 1);
+  return 1;
+}
+
+static int __has_ancestor(lua_State *L)
+{
+  TSNode descendant = node_check(L, 1);
+  if (lua_type(L, 2) != LUA_TTABLE) {
+    lua_pushboolean(L, false);
+    return 1;
+  }
+  int const pred_len = (int)lua_objlen(L, 2);
+
+  TSNode node = ts_tree_root_node(descendant.tree);
+  while (!ts_node_is_null(node)) {
+    char const *node_type = ts_node_type(node);
+    size_t node_type_len = strlen(node_type);
+
+    for (int i = 3; i <= pred_len; i++) {
+      lua_rawgeti(L, 2, i);
+      if (lua_type(L, -1) == LUA_TSTRING) {
+        size_t check_len;
+        char const *check_str = lua_tolstring(L, -1, &check_len);
+        if (node_type_len == check_len && memcmp(node_type, check_str, check_len) == 0) {
+          lua_pushboolean(L, true);
+          return 1;
+        }
+      }
+      lua_pop(L, 1);
+    }
+
+    node = ts_node_child_containing_descendant(node, descendant);
+  }
+
+  lua_pushboolean(L, false);
+  return 1;
+}
+
+static int node_child_containing_descendant(lua_State *L)
+{
+  TSNode node = node_check(L, 1);
+  TSNode descendant = node_check(L, 2);
+  TSNode child = ts_node_child_containing_descendant(node, descendant);
+  push_node(L, child, 1);
   return 1;
 }
 

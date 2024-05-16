@@ -457,17 +457,8 @@ local predicate_handlers = {
     end
 
     for _, node in ipairs(nodes) do
-      local ancestor_types = {} --- @type table<string, boolean>
-      for _, type in ipairs({ unpack(predicate, 3) }) do
-        ancestor_types[type] = true
-      end
-
-      local cur = node:parent()
-      while cur do
-        if ancestor_types[cur:type()] then
-          return true
-        end
-        cur = cur:parent()
+      if node:__has_ancestor(predicate) then
+        return true
       end
     end
     return false
