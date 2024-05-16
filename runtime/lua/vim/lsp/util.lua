@@ -1,5 +1,4 @@
 local protocol = require('vim.lsp.protocol')
-local snippet = require('vim.lsp._snippet_grammar')
 local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
@@ -343,68 +342,6 @@ local function get_line_byte_from_position(bufnr, position, offset_encoding)
   return col
 end
 
---- Process and return progress reports from lsp server
----@private
----@deprecated Use vim.lsp.status() or access client.progress directly
-function M.get_progress_messages()
-  vim.deprecate('vim.lsp.util.get_progress_messages()', 'vim.lsp.status()', '0.11')
-  local new_messages = {}
-  local progress_remove = {}
-
-  for _, client in ipairs(vim.lsp.get_clients()) do
-    local groups = {}
-    for progress in client.progress do
-      local value = progress.value
-      if type(value) == 'table' and value.kind then
-        local group = groups[progress.token]
-        if not group then
-          group = {
-            done = false,
-            progress = true,
-            title = 'empty title',
-          }
-          groups[progress.token] = group
-        end
-        group.title = value.title or group.title
-        group.cancellable = value.cancellable or group.cancellable
-        if value.kind == 'end' then
-          group.done = true
-        end
-        group.message = value.message or group.message
-        group.percentage = value.percentage or group.percentage
-      end
-    end
-
-    for _, group in pairs(groups) do
-      table.insert(new_messages, group)
-    end
-
-    local messages = client.messages
-    local data = messages
-    for token, ctx in pairs(data.progress) do
-      local new_report = {
-        name = data.name,
-        title = ctx.title or 'empty title',
-        message = ctx.message,
-        percentage = ctx.percentage,
-        done = ctx.done,
-        progress = true,
-      }
-      table.insert(new_messages, new_report)
-
-      if ctx.done then
-        table.insert(progress_remove, { client = client, token = token })
-      end
-    end
-  end
-
-  for _, item in ipairs(progress_remove) do
-    item.client.messages.progress[item.token] = nil
-  end
-
-  return new_messages
-end
-
 --- Applies a list of text edits to a buffer.
 ---@param text_edits table list of `TextEdit` objects
 ---@param bufnr integer Buffer id
@@ -541,38 +478,6 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   end
 end
 
--- local valid_windows_path_characters = "[^<>:\"/\\|?*]"
--- local valid_unix_path_characters = "[^/]"
--- https://github.com/davidm/lua-glob-pattern
--- https://stackoverflow.com/questions/1976007/what-characters-are-forbidden-in-windows-and-linux-directory-names
--- function M.glob_to_regex(glob)
--- end
-
---- Can be used to extract the completion items from a
---- `textDocument/completion` request, which may return one of
---- `CompletionItem[]`, `CompletionList` or null.
----
---- Note that this method doesn't apply `itemDefaults` to `CompletionList`s, and hence the returned
---- results might be incorrect.
----
----@deprecated
----@param result table The result of a `textDocument/completion` request
----@return lsp.CompletionItem[] List of completion items
----@see https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
-function M.extract_completion_items(result)
-  vim.deprecate('vim.lsp.util.extract_completion_items()', nil, '0.11')
-  if type(result) == 'table' and result.items then
-    -- result is a `CompletionList`
-    return result.items
-  elseif result ~= nil then
-    -- result is `CompletionItem[]`
-    return result
-  else
-    -- result is `null`
-    return {}
-  end
-end
-
 --- Applies a `TextDocumentEdit`, which is a list of changes to a single
 --- document.
 ---
@@ -613,38 +518,6 @@ function M.apply_text_document_edit(text_document_edit, index, offset_encoding)
   end
 
   M.apply_text_edits(text_document_edit.edits, bufnr, offset_encoding)
-end
-
---- Parses snippets in a completion entry.
----
----@deprecated
----@param input string unparsed snippet
----@return string parsed snippet
-function M.parse_snippet(input)
-  vim.deprecate('vim.lsp.util.parse_snippet()', nil, '0.11')
-  local ok, parsed = pcall(function()
-    return snippet.parse(input)
-  end)
-  if not ok then
-    return input
-  end
-
-  return tostring(parsed)
-end
-
---- Turns the result of a `textDocument/completion` request into vim-compatible
---- |complete-items|.
----
----@deprecated
----@param result table The result of a `textDocument/completion` call, e.g.
---- from |vim.lsp.buf.completion()|, which may be one of `CompletionItem[]`,
---- `CompletionList` or `null`
----@param prefix (string) the prefix to filter the completion items
----@return table[] items
----@see complete-items
-function M.text_document_completion_list_to_complete_items(result, prefix)
-  vim.deprecate('vim.lsp.util.text_document_completion_list_to_complete_items()', nil, '0.11')
-  return vim.lsp._completion._lsp_to_complete_items(result, prefix)
 end
 
 local function path_components(path)

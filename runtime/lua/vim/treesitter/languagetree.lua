@@ -463,24 +463,6 @@ function LanguageTree:parse(range)
   return self._trees
 end
 
----@deprecated Misleading name. Use `LanguageTree:children()` (non-recursive) instead,
----            add recursion yourself if needed.
---- Invokes the callback for each |LanguageTree| and its children recursively
----
----@param fn fun(tree: vim.treesitter.LanguageTree, lang: string)
----@param include_self? boolean Whether to include the invoking tree in the results
-function LanguageTree:for_each_child(fn, include_self)
-  vim.deprecate('LanguageTree:for_each_child()', 'LanguageTree:children()', '0.11')
-  if include_self then
-    fn(self, self._lang)
-  end
-
-  for _, child in pairs(self._children) do
-    --- @diagnostic disable-next-line:deprecated
-    child:for_each_child(fn, true)
-  end
-end
-
 --- Invokes the callback for each |LanguageTree| recursively.
 ---
 --- Note: This includes the invoking tree's child trees as well.
