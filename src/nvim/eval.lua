@@ -9903,10 +9903,11 @@ M.funcs = {
       Otherwise encloses {string} in single-quotes and replaces all
       "'" with "'\''".
 
-      If {special} is a |non-zero-arg|:
-      - Special items such as "!", "%", "#" and "<cword>" will be
-        preceded by a backslash. The backslash will be removed again
-        by the |:!| command.
+      The {special} argument adds additional escaping of keywords
+      used in Vim commands. If it is a |non-zero-arg|:
+      - Special items such as "!", "%", "#" and "<cword>" (as listed
+        in |expand()|) will be preceded by a backslash.
+        The backslash will be removed again by the |:!| command.
       - The <NL> character is escaped.
 
       If 'shell' contains "csh" in the tail:
