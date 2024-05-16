@@ -532,6 +532,8 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     return ('%s<a href="%s">%s</a>%s'):format(ws(), fixed_url, fixed_url, removed_chars)
   elseif node_name == 'word' or node_name == 'uppercase_name' then
     return text
+  elseif node_name == 'note' then
+    return ('<b>%s</b>'):format(text)
   elseif node_name == 'h1' or node_name == 'h2' or node_name == 'h3' then
     if is_noise(text, stats.noise_lines) then
       return '' -- Discard common "noise" lines.
@@ -694,6 +696,8 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       return string.format('%s</span>', s)
     end
     return s
+  elseif node_name == 'modeline' then
+    return ''
   elseif node_name == 'ERROR' then
     if ignore_parse_error(opt.fname, trimmed) then
       return text
