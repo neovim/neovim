@@ -185,53 +185,6 @@ function M.error(msg, ...)
   collect_output(input)
 end
 
---- @param type string
-local function deprecate(type)
-  local before = string.format('vim.health.report_%s()', type)
-  local after = string.format('vim.health.%s()', type)
-  local message = vim.deprecate(before, after, '0.11')
-  if message then
-    M.warn(message)
-  end
-  vim.cmd.redraw()
-  vim.print('Running healthchecks...')
-end
-
---- @deprecated
---- @param name string
-function M.report_start(name)
-  deprecate('start')
-  M.start(name)
-end
-
---- @deprecated
---- @param msg string
-function M.report_info(msg)
-  deprecate('info')
-  M.info(msg)
-end
-
---- @deprecated
---- @param msg string
-function M.report_ok(msg)
-  deprecate('ok')
-  M.ok(msg)
-end
-
---- @deprecated
---- @param msg string
-function M.report_warn(msg, ...)
-  deprecate('warn')
-  M.warn(msg, ...)
-end
-
---- @deprecated
---- @param msg string
-function M.report_error(msg, ...)
-  deprecate('error')
-  M.error(msg, ...)
-end
-
 function M.provider_disabled(provider)
   local loaded_var = 'loaded_' .. provider .. '_provider'
   local v = vim.g[loaded_var]
