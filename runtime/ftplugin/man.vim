@@ -17,7 +17,7 @@ setlocal iskeyword=@-@,:,a-z,A-Z,48-57,_,.,-,(,)
 
 " man page content is likely preformatted for the terminal width, so
 " narrowing display by any additional columns leads to Embarrassing Line Wrap
-setlocal nonumber norelativenumber foldcolumn=0
+setlocal nonumber norelativenumber foldcolumn=0 signcolumn=auto
 
 setlocal tagfunc=v:lua.require'man'.goto_tag
 
