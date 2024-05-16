@@ -281,19 +281,17 @@ Run the following from the command line:
 >bash
     locale | grep -E '(LANG|LC_CTYPE|LC_ALL)=(.*\.)?(UTF|utf)-?8'
 <
-If there's no results, then you might not be using a UTF-8 locale. See the
-following issues:
-#1601 https://github.com/neovim/neovim/issues/1601
-#1858 https://github.com/neovim/neovim/issues/1858
-#2386 https://github.com/neovim/neovim/issues/2386
+If there's no results, you might not be using a UTF-8 locale. See these issues:
+- https://github.com/neovim/neovim/issues/1601
+- https://github.com/neovim/neovim/issues/1858
+- https://github.com/neovim/neovim/issues/2386
 
 
 ESC IN TMUX OR GNU SCREEN IS DELAYED ~
 
 This is a common problem
 https://www.google.com/?q=tmux%20vim%20escape%20delay in `tmux` / `screen`
-(see also tmux/#131
-https://github.com/tmux/tmux/issues/131#issuecomment-145853211). The
+(see also https://github.com/tmux/tmux/issues/131#issuecomment-145853211). The
 corresponding timeout needs to be tweaked to a low value (10-20ms).
 
 `.tmux.conf`:
@@ -310,11 +308,11 @@ corresponding timeout needs to be tweaked to a low value (10-20ms).
 "WHY DOESN'T THIS HAPPEN IN VIM?"
 
 It does happen (try `vim -N -u NONE`), but if you hit a key quickly after
-ESC_ then Vim interprets the ESC as ESC instead of ALT (META). You won't
+ESC then Vim interprets the ESC as ESC instead of ALT (META). You won't
 notice the delay unless you closely observe the cursor. The tradeoff is that
 Vim won't understand ALT (META) key-chords, so for example `nnoremap <M-a>`
-won't work. ALT (META) key-chords always work in Nvim. See also `:help
-xterm-cursor-keys` in Vim.
+won't work. ALT (META) key-chords always work in Nvim.
+See also `:help xterm-cursor-keys` in Vim.
 
 Nvim 0.3 mimics the Vim behavior while still fully supporting ALT mappings. See
 |i_ALT|.
@@ -322,7 +320,7 @@ Nvim 0.3 mimics the Vim behavior while still fully supporting ALT mappings. See
 
 ESC IN GNU SCREEN IS LOST WHEN MOUSE MODE IS ENABLED ~
 
-This happens because of a bug in screen https://savannah.gnu.org/bugs/?60196:
+This happens because of a bug in screen https://savannah.gnu.org/bugs/?60196 :
 in mouse mode, screen assumes that `ESC` is part of a mouse sequence and will
 wait an unlimited time for the rest of the sequence, regardless of
 `maptimeout`. Until it's fixed in screen, there's no known workaround for
@@ -332,10 +330,11 @@ passed through to Nvim.
 
 CALLING INPUTLIST(), ECHOMSG, ... IN FILETYPE PLUGINS AND AUTOCMD DOES NOT WORK ~
 
-#10008 https://github.com/neovim/neovim/issues/10008,
-#10116 https://github.com/neovim/neovim/issues/10116,
-#12288 https://github.com/neovim/neovim/issues/12288,
-# vim/vim#4379 https://github.com/vim/vim/issues/4379.
+- https://github.com/neovim/neovim/issues/10008
+- https://github.com/neovim/neovim/issues/10116
+- https://github.com/neovim/neovim/issues/12288
+- https://github.com/vim/vim/issues/4379
+
 This is because Nvim sets `shortmess+=F` by default. Vim behaves the same way
 with `set shortmes+=F`. There are plans to improve this, but meanwhile as a
 workaround, use `set shortmess-=F` or use `unsilent` as follows.
@@ -393,8 +392,8 @@ CMAKE ERRORS ~
 `configure_file Problem configuring file`
 
 This is probably a permissions issue, which can happen if you run `make` as the
-root user, then later run an unprivileged `make`. To fix this, run `rm -rf
-build` and try again.
+root user, then later run an unprivileged `make`. To fix this, run
+`rm -rf build` and try again.
 
 
 GENERATING HELPTAGS FAILED ~
@@ -427,7 +426,7 @@ WHY EMBED LUA INSTEAD OF X? ~
 - Nvim also uses Lua internally as an alternative to C. Extra performance is
   useful there, as opposed to a slow language like Python or Vim9script.
 - LuaJIT is one of the fastest runtimes on the planet, 10x faster than Python
-  and "Vim9script" https://vimhelp.org/vim9.txt.html, 100x faster than
+  and "Vim9script" https://vimhelp.org/vim9.txt.html , 100x faster than
   Vimscript.
 - Python/JS cost more than Lua in terms of size and portability, and there are
   already numerous Python/JS-based editors. So Python/JS would make Nvim
