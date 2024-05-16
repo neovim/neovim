@@ -116,7 +116,7 @@ end
 --- @param ... any
 --- @return any
 function M.request(method, ...)
-  assert(session)
+  assert(session, 'no Nvim session')
   local status, rv = session:request(method, ...)
   if not status then
     if loop_running then
