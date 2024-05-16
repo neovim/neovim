@@ -50,6 +50,7 @@ local spell_dict = {
 local spell_ignore_files = {
   ['backers.txt'] = true,
   ['news.txt'] = { 'tree-sitter' }, -- in news, may refer to the upstream "tree-sitter" library
+  ['news-0.10.txt'] = { 'tree-sitter' },
 }
 local language = nil
 
