@@ -260,7 +260,11 @@ fixdict(1 + #version)
 for _, item in ipairs(version) do
   -- NB: all items are mandatory. But any error will be less confusing
   -- with placeholder vim.NIL (than invalid mpack data)
-  put(item[1], item[2] or vim.NIL)
+  local val = item[2]
+  if val == nil then
+    val = vim.NIL
+  end
+  put(item[1], val)
 end
 put('build', version_build)
 
