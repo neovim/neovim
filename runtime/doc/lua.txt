@@ -3830,6 +3830,7 @@ chained to create iterator "pipelines": the output of each pipeline stage is
 input to the next stage. The first stage depends on the type passed to
 `vim.iter()`:
 • List tables (arrays, |lua-list|) yield only the value of each element.
+  • Holes (nil values) are allowed.
   • Use |Iter:enumerate()| to also pass the index to the next stage.
   • Or initialize with ipairs(): `vim.iter(ipairs(…))`.
 • Non-list tables (|lua-dict|) yield both the key and value of each element.
@@ -4287,9 +4288,9 @@ Iter:totable()                                                *Iter:totable()*
     Collect the iterator into a table.
 
     The resulting table depends on the initial source in the iterator
-    pipeline. List-like tables and function iterators will be collected into a
-    list-like table. If multiple values are returned from the final stage in
-    the iterator pipeline, each value will be included in a table.
+    pipeline. Array-like tables and function iterators will be collected into
+    an array-like table. If multiple values are returned from the final stage
+    in the iterator pipeline, each value will be included in a table.
 
     Examples: >lua
         vim.iter(string.gmatch('100 20 50', '%d+')):map(tonumber):totable()
@@ -4302,7 +4303,7 @@ Iter:totable()                                                *Iter:totable()*
         -- { { 'a', 1 }, { 'c', 3 } }
 <
 
-    The generated table is a list-like table with consecutive, numeric
+    The generated table is an array-like table with consecutive, numeric
     indices. To create a map-like table with arbitrary keys, use
     |Iter:fold()|.
 
