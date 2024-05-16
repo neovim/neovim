@@ -439,6 +439,9 @@ These existing features changed their behavior.
     automatically if the job exited without error, eliminating the (often
     unwanted) "[Process exited 0]" message.
 
+• |vim.fs.find()| accepts `opts.follow_symlinks` to find files in symlinked
+  directories.
+
 • Treesitter
   • |Query:iter_matches()|, |vim.treesitter.query.add_predicate()|, and
     |vim.treesitter.query.add_directive()| accept a new `all` option which
