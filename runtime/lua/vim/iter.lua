@@ -111,8 +111,9 @@ end
 
 local function sanitize(t)
   if type(t) == 'table' and getmetatable(t) == packedmt then
-    -- Remove length tag
+    -- Remove length tag and metatable
     t.n = nil
+    setmetatable(t, nil)
   end
   return t
 end
@@ -414,7 +415,7 @@ function ArrayIter:totable()
     return Iter.totable(self)
   end
 
-  local needs_sanitize = getmetatable(self._table[1]) == packedmt
+  local needs_sanitize = getmetatable(self._table[self._head]) == packedmt
 
   -- Reindex and sanitize.
   local len = self._tail - self._head
