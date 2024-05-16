@@ -1743,7 +1743,7 @@ describe('API/extmarks', function()
     command('silent undo')
     screen:expect([[
       S1{7:  }^aaa bbb ccc                         |
-      S1S2aaa bbb ccc                         |
+      S2S1aaa bbb ccc                         |
       S2{7:  }aaa bbb ccc                         |
       {7:    }aaa bbb ccc                         |*2
                                               |

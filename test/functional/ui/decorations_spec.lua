@@ -5062,7 +5062,7 @@ l5
       {7:    }^l1                                            |
       S2{7:  }l2                                            |
       S2{7:  }l3                                            |
-      S1S2l4                                            |
+      S2S1l4                                            |
       {7:    }l5                                            |
       {7:    }                                              |
       {1:~                                                 }|*3
@@ -5081,7 +5081,7 @@ l5
     screen:expect{grid=[[
       {7:    }^l1                                            |
       S1{7:  }l2                                            |
-      S1S2l3                                            |
+      S2S1l3                                            |
       S2{7:  }l4                                            |
       {7:    }l5                                            |
       {7:    }                                              |
@@ -5122,8 +5122,8 @@ l5
     api.nvim_buf_set_extmark(0, ns, 2, -1, {sign_text='S5'})
 
     screen:expect{grid=[[
-      S1S4^l1                                            |
-      x S2l2                                            |
+      S4S1^l1                                            |
+      S2x l2                                            |
       S5{7:  }l3                                            |
       {7:    }l4                                            |
       {7:    }l5                                            |
@@ -5147,9 +5147,9 @@ l5
     api.nvim_buf_set_extmark(0, ns, 2, -1, {sign_text='S5'})
 
     screen:expect{grid=[[
-      S1S3S4^l1                                          |
-      x S2S3l2                                          |
-      S3S5{7:  }l3                                          |
+      S4S3S1^l1                                          |
+      S3S2x l2                                          |
+      S5S3{7:  }l3                                          |
       S3{7:    }l4                                          |
       S3{7:    }l5                                          |
       {7:      }                                            |
@@ -5196,8 +5196,8 @@ l5
     end
 
     screen:expect{grid=[[
-      W X Y Z {100:a} {100:b} {100:c} {100:d} {100:e} {100:f} {100:g} {100:h}                 |*8
-      W X Y Z {100:a} {100:b} {100:c} {100:d} {100:e} {100:f} {100:g} {100:^h}                 |
+      Z Y X W {100:a} {100:b} {100:c} {100:d} {100:e} {100:f} {100:g} {100:h}                 |*8
+      Z Y X W {100:a} {100:b} {100:c} {100:d} {100:e} {100:f} {100:g} {100:^h}                 |
                                               |
     ]]}
   end)
@@ -5216,7 +5216,7 @@ l5
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S1', priority=1})
 
     screen:expect{grid=[[
-      S1S2O3S4S5^l1        |
+      S5S4O3S2S1^l1        |
       {7:          }l2        |
                           |
     ]]}
@@ -5256,7 +5256,7 @@ l5
 
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S5', priority=200})
     screen:expect{grid=[[
-      O3O3O3O3O3O3O3O3S5^  |
+      S5O3O3O3O3O3O3O3O3^  |
       {1:~                   }|
                           |
     ]]}
@@ -5302,9 +5302,9 @@ l5
     feed('gg')
 
     local s1 = [[
-      S1S2^l1              |
-      S2S3l2              |
-      S2S3l3              |
+      S2S1^l1              |
+      S3S2l2              |
+      S3S2l3              |
                           |
     ]]
     screen:expect{grid=s1}
@@ -5312,7 +5312,7 @@ l5
     command('move2')
     screen:expect{grid=[[
       S3{7:    }l2            |
-      S1S2S3^l1            |
+      S3S2S1^l1            |
       {7:      }l3            |
                           |
     ]]}
@@ -5320,14 +5320,14 @@ l5
     screen:expect{grid=s1}
     command('d')
     screen:expect{grid=[[
-      S1S2S3^l2            |
-      S2S3{7:  }l3            |
+      S3S2S1^l2            |
+      S3S2{7:  }l3            |
       {7:      }l4            |
                           |
     ]]}
     command('d')
     screen:expect{grid=[[
-      S1S2S3^l3            |
+      S3S2S1^l3            |
       {7:      }l4            |
       {7:      }l5            |
                           |
@@ -5376,7 +5376,7 @@ l5
     ]])
     screen:expect{grid=[[
       {7:    }l3              |
-      S1S2l5              |
+      S2S1l5              |
       {7:    }^                |
                           |
     ]]}
@@ -5468,7 +5468,7 @@ l5
     api.nvim_buf_set_extmark(0, ns2, 0, 0, {sign_text = 'S2', id = 1})
 
     screen:expect{grid=[[
-      S1S2^                                              |
+      S2S1^                                              |
       {1:~                                                 }|*8
                                                         |
     ]]}
@@ -5489,7 +5489,7 @@ l5
     command('0d29')
 
     screen:expect{grid=[[
-      S1S2S3S4{9:^foo}                                       |
+      S4S3S2S1{9:^foo}                                       |
       S5{7:      }{9:foo}                                       |
       {1:~                                                 }|*7
       29 fewer lines                                    |
