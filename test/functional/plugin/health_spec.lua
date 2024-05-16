@@ -42,7 +42,7 @@ describe(':checkhealth', function()
 
   it('completions can be listed via getcompletion()', function()
     clear()
-    eq('vim.health', getcompletion('vim', 'checkhealth')[1])
+    eq('vim.deprecated', getcompletion('vim', 'checkhealth')[1])
     eq('vim.provider', getcompletion('vim.prov', 'checkhealth')[1])
     eq('vim.lsp', getcompletion('vim.ls', 'checkhealth')[1])
   end)

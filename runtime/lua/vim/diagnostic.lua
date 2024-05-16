@@ -1279,9 +1279,7 @@ M.handlers.signs = {
           vim.deprecate(
             'Defining diagnostic signs with :sign-define or sign_define()',
             'vim.diagnostic.config()',
-            '0.12',
-            nil,
-            false -- suppress backtrace
+            '0.12'
           )
 
           if not opts.signs.text then
