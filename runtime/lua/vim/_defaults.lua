@@ -431,7 +431,9 @@ do
     --- response indicates that it does support truecolor enable 'termguicolors',
     --- but only if the user has not already disabled it.
     do
-      if tty.rgb then
+      if vim.api.nvim_get_option_info2('termguicolors', {}).was_set then -- luacheck: ignore 542
+        -- Do nothing, option was already set by the user
+      elseif tty.rgb then
         -- The TUI was able to determine truecolor support
         setoption('termguicolors', true)
       else
