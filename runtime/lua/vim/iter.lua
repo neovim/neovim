@@ -1034,7 +1034,7 @@ function Iter.new(src, ...)
     -- O(n): scan the source table to decide if it is an array (only positive integer indices).
     local length = 0
     for k, v in pairs(src) do
-      if type(k) ~= 'number' then
+      if type(k) ~= 'number' or math.floor(k) ~= k then
         return Iter.new(pairs(src))
       end
       if k > length then
