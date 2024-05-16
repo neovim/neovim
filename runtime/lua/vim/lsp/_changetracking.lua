@@ -231,6 +231,8 @@ function M.reload(bufnr)
     if state.group.sync_kind == protocol.TextDocumentSyncKind.Incremental then
       local buf_state = state.buffers[bufnr]
       if buf_state then
+        buf_state.needs_flush = false
+        buf_state.pending_changes = {}
         buf_state.lines = api.nvim_buf_get_lines(bufnr, 0, -1, true)
       end
     end
