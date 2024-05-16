@@ -117,6 +117,9 @@ describe('vim.iter', function()
       eq({ { 1, 1 }, { 2, 4 }, { 3, 9 } }, it:totable())
     end
 
+    -- Array-like tables are preserved
+    eq({ 1, nil, 2, nil, 3 }, vim.iter({ 1, nil, 2, nil, 3 }):totable())
+
     do
       local it = vim.iter(string.gmatch('1,4,lol,17,blah,2,9,3', '%d+')):map(tonumber)
       eq({ 1, 4, 17, 2, 9, 3 }, it:totable())

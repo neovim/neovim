@@ -1031,7 +1031,7 @@ function Iter.new(src, ...)
 
     local t = {}
 
-    -- O(n): scan the source table to decide if it is an array (only integer indices).
+    -- O(n): scan the source table to decide if it is an array (only positive integer indices).
     local length = 0
     for k, v in pairs(src) do
       if type(k) ~= 'number' then
@@ -1042,7 +1042,6 @@ function Iter.new(src, ...)
       end
       t[k] = v
     end
-    -- print("creating new ArrayLiter with length", length)
     return ArrayIter.new(t, length)
   end
 
@@ -1073,7 +1072,9 @@ end
 
 --- Create a new ArrayIter
 ---
----@param t table Array-like table. Caller guarantees that this table is a valid array.
+---@param t table Array-like table. Caller guarantees that this table is a valid array. Can have
+---               holes (nil values).
+---@param length integer Length of the table (largest positive integer index).
 ---@return Iter
 ---@private
 function ArrayIter.new(t, length)
