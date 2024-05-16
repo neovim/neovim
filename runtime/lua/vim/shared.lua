@@ -553,7 +553,7 @@ end
 ---@param t table List-like table
 ---@return table Flattened copy of the given list-like table
 function vim.tbl_flatten(t)
-  vim.deprecate('vim.tbl_flatten', 'vim.iter(…):flatten():totable()', '0.12')
+  vim.deprecate('vim.tbl_flatten', 'vim.iter(…):flatten():totable()', '0.13')
   local result = {}
   --- @param _t table<any,any>
   local function _tbl_flatten(_t)
