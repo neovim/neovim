@@ -7,6 +7,7 @@
 --- `vim.iter()`:
 ---
 --- - List tables (arrays, |lua-list|) yield only the value of each element.
+---   - Holes (nil values) are allowed.
 ---   - Use |Iter:enumerate()| to also pass the index to the next stage.
 ---   - Or initialize with ipairs(): `vim.iter(ipairs(…))`.
 --- - Non-list tables (|lua-dict|) yield both the key and value of each element.
@@ -80,13 +81,13 @@ end
 
 --- Special case implementations for iterators on list tables.
 ---@nodoc
----@class ListIter : Iter
+---@class ArrayIter : Iter
 ---@field _table table Underlying table data
 ---@field _head number Index to the front of a table iterator
 ---@field _tail number Index to the end of a table iterator (exclusive)
-local ListIter = {}
-ListIter.__index = setmetatable(ListIter, Iter)
-ListIter.__call = function(self)
+local ArrayIter = {}
+ArrayIter.__index = setmetatable(ArrayIter, Iter)
+ArrayIter.__call = function(self)
   return self:next()
 end
 
@@ -116,7 +117,7 @@ local function sanitize(t)
   return t
 end
 
---- Flattens a single list-like table. Errors if it attempts to flatten a
+--- Flattens a single array-like table. Errors if it attempts to flatten a
 --- dict-like table
 ---@param v table table which should be flattened
 ---@param max_depth number depth to which the table should be flattened
@@ -138,7 +139,7 @@ local function flatten(v, max_depth, depth, result)
         return nil
       end
     end
-  else
+  elseif v ~= nil then
     result[#result + 1] = v
   end
 
@@ -198,7 +199,7 @@ function Iter:filter(f)
 end
 
 ---@private
-function ListIter:filter(f)
+function ArrayIter:filter(f)
   local inc = self._head < self._tail and 1 or -1
   local n = self._head
   for i = self._head, self._tail - inc, inc do
@@ -233,11 +234,11 @@ end
 ---@return Iter
 ---@diagnostic disable-next-line:unused-local
 function Iter:flatten(depth) -- luacheck: no unused args
-  error('flatten() requires a list-like table')
+  error('flatten() requires an array-like table')
 end
 
 ---@private
-function ListIter:flatten(depth)
+function ArrayIter:flatten(depth)
   depth = depth or 1
   local inc = self._head < self._tail and 1 or -1
   local target = {}
@@ -247,7 +248,7 @@ function ListIter:flatten(depth)
 
     -- exit early if we try to flatten a dict-like table
     if flattened == nil then
-      error('flatten() requires a list-like table')
+      error('flatten() requires an array-like table')
     end
 
     for _, v in pairs(flattened) do
@@ -327,7 +328,7 @@ function Iter:map(f)
 end
 
 ---@private
-function ListIter:map(f)
+function ArrayIter:map(f)
   local inc = self._head < self._tail and 1 or -1
   local n = self._head
   for i = self._head, self._tail - inc, inc do
@@ -360,7 +361,7 @@ function Iter:each(f)
 end
 
 ---@private
-function ListIter:each(f)
+function ArrayIter:each(f)
   local inc = self._head < self._tail and 1 or -1
   for i = self._head, self._tail - inc, inc do
     f(unpack(self._table[i]))
@@ -371,7 +372,7 @@ end
 --- Collect the iterator into a table.
 ---
 --- The resulting table depends on the initial source in the iterator pipeline.
---- List-like tables and function iterators will be collected into a list-like
+--- Array-like tables and function iterators will be collected into an array-like
 --- table. If multiple values are returned from the final stage in the iterator
 --- pipeline, each value will be included in a table.
 ---
@@ -388,7 +389,7 @@ end
 --- -- { { 'a', 1 }, { 'c', 3 } }
 --- ```
 ---
---- The generated table is a list-like table with consecutive, numeric indices.
+--- The generated table is an array-like table with consecutive, numeric indices.
 --- To create a map-like table with arbitrary keys, use |Iter:fold()|.
 ---
 ---
@@ -408,8 +409,8 @@ function Iter:totable()
 end
 
 ---@private
-function ListIter:totable()
-  if self.next ~= ListIter.next or self._head >= self._tail then
+function ArrayIter:totable()
+  if self.next ~= ArrayIter.next or self._head >= self._tail then
     return Iter.totable(self)
   end
 
@@ -493,7 +494,7 @@ function Iter:fold(init, f)
 end
 
 ---@private
-function ListIter:fold(init, f)
+function ArrayIter:fold(init, f)
   local acc = init
   local inc = self._head < self._tail and 1 or -1
   for i = self._head, self._tail - inc, inc do
@@ -525,7 +526,7 @@ function Iter:next()
 end
 
 ---@private
-function ListIter:next()
+function ArrayIter:next()
   if self._head ~= self._tail then
     local v = self._table[self._head]
     local inc = self._head < self._tail and 1 or -1
@@ -548,11 +549,11 @@ end
 ---
 ---@return Iter
 function Iter:rev()
-  error('rev() requires a list-like table')
+  error('rev() requires an array-like table')
 end
 
 ---@private
-function ListIter:rev()
+function ArrayIter:rev()
   local inc = self._head < self._tail and 1 or -1
   self._head, self._tail = self._tail - inc, self._head - inc
   return self
@@ -576,11 +577,11 @@ end
 ---
 ---@return any
 function Iter:peek()
-  error('peek() requires a list-like table')
+  error('peek() requires an array-like table')
 end
 
 ---@private
-function ListIter:peek()
+function ArrayIter:peek()
   if self._head ~= self._tail then
     return self._table[self._head]
   end
@@ -657,11 +658,11 @@ end
 ---@return any
 ---@diagnostic disable-next-line: unused-local
 function Iter:rfind(f) -- luacheck: no unused args
-  error('rfind() requires a list-like table')
+  error('rfind() requires an array-like table')
 end
 
 ---@private
-function ListIter:rfind(f)
+function ArrayIter:rfind(f)
   if type(f) ~= 'function' then
     local val = f
     f = function(v)
@@ -709,10 +710,10 @@ function Iter:take(n)
 end
 
 ---@private
-function ListIter:take(n)
-  local inc = self._head < self._tail and 1 or -1
+function ArrayIter:take(n)
+  local inc = self._head < self._tail and n or -n
   local cmp = self._head < self._tail and math.min or math.max
-  self._tail = cmp(self._tail, self._head + n * inc)
+  self._tail = cmp(self._tail, self._head + inc)
   return self
 end
 
@@ -730,11 +731,11 @@ end
 ---
 ---@return any
 function Iter:pop()
-  error('pop() requires a list-like table')
+  error('pop() requires an array-like table')
 end
 
 --- @nodoc
-function ListIter:pop()
+function ArrayIter:pop()
   if self._head ~= self._tail then
     local inc = self._head < self._tail and 1 or -1
     self._tail = self._tail - inc
@@ -760,11 +761,11 @@ end
 ---
 ---@return any
 function Iter:rpeek()
-  error('rpeek() requires a list-like table')
+  error('rpeek() requires an array-like table')
 end
 
 ---@nodoc
-function ListIter:rpeek()
+function ArrayIter:rpeek()
   if self._head ~= self._tail then
     local inc = self._head < self._tail and 1 or -1
     return self._table[self._tail - inc]
@@ -793,7 +794,7 @@ function Iter:skip(n)
 end
 
 ---@private
-function ListIter:skip(n)
+function ArrayIter:skip(n)
   local inc = self._head < self._tail and n or -n
   self._head = self._head + inc
   if (inc > 0 and self._head > self._tail) or (inc < 0 and self._head < self._tail) then
@@ -818,11 +819,11 @@ end
 ---@return Iter
 ---@diagnostic disable-next-line: unused-local
 function Iter:rskip(n) -- luacheck: no unused args
-  error('rskip() requires a list-like table')
+  error('rskip() requires an array-like table')
 end
 
 ---@private
-function ListIter:rskip(n)
+function ArrayIter:rskip(n)
   local inc = self._head < self._tail and n or -n
   self._tail = self._tail - inc
   if (inc > 0 and self._head > self._tail) or (inc < 0 and self._head < self._tail) then
@@ -870,11 +871,11 @@ end
 ---@return Iter
 ---@diagnostic disable-next-line: unused-local
 function Iter:slice(first, last) -- luacheck: no unused args
-  error('slice() requires a list-like table')
+  error('slice() requires an array-like table')
 end
 
 ---@private
-function ListIter:slice(first, last)
+function ArrayIter:slice(first, last)
   return self:skip(math.max(0, first - 1)):rskip(math.max(0, self._tail - last - 1))
 end
 
@@ -955,7 +956,7 @@ function Iter:last()
 end
 
 ---@private
-function ListIter:last()
+function ArrayIter:last()
   local inc = self._head < self._tail and 1 or -1
   local v = self._table[self._tail - inc]
   self._head = self._tail
@@ -1000,7 +1001,7 @@ function Iter:enumerate()
 end
 
 ---@private
-function ListIter:enumerate()
+function ArrayIter:enumerate()
   local inc = self._head < self._tail and 1 or -1
   for i = self._head, self._tail - inc, inc do
     local v = self._table[i]
@@ -1030,17 +1031,19 @@ function Iter.new(src, ...)
 
     local t = {}
 
-    -- O(n): scan the source table to decide if it is a list (consecutive integer indices 1…n).
-    local count = 0
-    for _ in pairs(src) do
-      count = count + 1
-      local v = src[count]
-      if v == nil then
+    -- O(n): scan the source table to decide if it is an array (only integer indices).
+    local length = 0
+    for k, v in pairs(src) do
+      if type(k) ~= 'number' then
         return Iter.new(pairs(src))
       end
-      t[count] = v
+      if k > length then
+        length = k
+      end
+      t[k] = v
     end
-    return ListIter.new(t)
+    -- print("creating new ArrayLiter with length", length)
+    return ArrayIter.new(t, length)
   end
 
   if type(src) == 'function' then
@@ -1068,17 +1071,17 @@ function Iter.new(src, ...)
   return it
 end
 
---- Create a new ListIter
+--- Create a new ArrayIter
 ---
----@param t table List-like table. Caller guarantees that this table is a valid list.
+---@param t table Array-like table. Caller guarantees that this table is a valid array.
 ---@return Iter
 ---@private
-function ListIter.new(t)
+function ArrayIter.new(t, length)
   local it = {}
   it._table = t
   it._head = 1
-  it._tail = #t + 1
-  setmetatable(it, ListIter)
+  it._tail = length + 1
+  setmetatable(it, ArrayIter)
   return it
 end
 
