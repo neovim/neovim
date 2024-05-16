@@ -387,3 +387,8 @@ typedef struct {
   Window win;
   Buffer buf;
 } Dict(redraw);
+
+typedef struct {
+  OptionalKeys is_set__ns_opts_;
+  Array wins;
+} Dict(ns_opts);

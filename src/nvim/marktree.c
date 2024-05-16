@@ -2286,7 +2286,7 @@ static void marktree_itr_fix_pos(MarkTree *b, MarkTreeIter *itr)
 void marktree_put_test(MarkTree *b, uint32_t ns, uint32_t id, int row, int col, bool right_gravity,
                        int end_row, int end_col, bool end_right, bool meta_inline)
 {
-  uint16_t flags = mt_flags(right_gravity, false, false, false, false);
+  uint16_t flags = mt_flags(right_gravity, false, false, false);
   // The specific choice is irrelevant here, we pick one counted decor
   // type to test the counting and filtering logic.
   flags |= meta_inline ? MT_FLAG_DECOR_VIRT_TEXT_INLINE : 0;

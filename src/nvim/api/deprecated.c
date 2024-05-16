@@ -170,7 +170,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, A
   DecorInline decor = { .ext = true, .data.ext.vt = vt, .data.ext.sh_idx = DECOR_ID_INVALID };
 
   extmark_set(buf, ns_id, NULL, (int)line, 0, -1, -1, decor, 0, true,
-              false, false, false, false, NULL);
+              false, false, false, NULL);
   return src_id;
 }
 

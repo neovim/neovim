@@ -155,8 +155,6 @@ The following new features were added.
   • |nvim_input_mouse()| supports mouse buttons "x1" and "x2".
   • Added "force_crlf" option field in |nvim_open_term()|.
   • Added |nvim_tabpage_set_win()| to set the current window of a tabpage.
-  • |nvim__win_add_ns()| can bind a |namespace| to a window-local scope(s).
-    • Extmarks opt-in to this scoping via the `scoped` flag of |nvim_buf_set_extmark()|.
   • Mapping APIs now support abbreviations when mode short-name has suffix "a".
   • Floating windows can now show footer with new `footer` and `footer_pos`
     config fields. Uses |hl-FloatFooter| by default.
