@@ -498,6 +498,8 @@ describe('vim.iter', function()
     local also_not_list_like = { nil, 2 }
     eq({ 2 }, vim.iter(also_not_list_like):flatten():totable())
 
+    eq({ 1, 2, 3 }, vim.iter({ nil, { 1, nil, 2 }, 3 }):flatten():totable())
+
     local nested_non_lists = vim.iter({ 1, { { a = 2 } }, { { nil } }, { 3 } })
     eq({ 1, { a = 2 }, { nil }, 3 }, nested_non_lists:flatten():totable())
     -- only error if we're going deep enough to flatten a dict-like table

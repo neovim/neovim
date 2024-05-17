@@ -120,28 +120,25 @@ end
 
 --- Flattens a single array-like table. Errors if it attempts to flatten a
 --- dict-like table
----@param v table table which should be flattened
+---@param t table table which should be flattened
 ---@param max_depth number depth to which the table should be flattened
 ---@param depth number current iteration depth
 ---@param result table output table that contains flattened result
 ---@return table|nil flattened table if it can be flattened, otherwise nil
-local function flatten(v, max_depth, depth, result)
-  if depth < max_depth and type(v) == 'table' then
-    local i = 0
-    for _ in pairs(v) do
-      i = i + 1
-
-      if v[i] == nil then
+local function flatten(t, max_depth, depth, result)
+  if depth < max_depth and type(t) == 'table' then
+    for k, v in pairs(t) do
+      if type(k) ~= 'number' or k <= 0 or math.floor(k) ~= k then
         -- short-circuit: this is not a list like table
         return nil
       end
 
-      if flatten(v[i], max_depth, depth + 1, result) == nil then
+      if flatten(v, max_depth, depth + 1, result) == nil then
         return nil
       end
     end
-  elseif v ~= nil then
-    result[#result + 1] = v
+  elseif t ~= nil then
+    result[#result + 1] = t
   end
 
   return result
