@@ -32,5 +32,5 @@ jobs:
               issue_number: ${{steps.backport.outputs.created_pull_numbers}},
               owner: context.repo.owner,
               repo: context.repo.repo,
-              labels: ['backport']
+              labels: ['target:release']
             })
