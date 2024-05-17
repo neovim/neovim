@@ -8308,7 +8308,7 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
   size_t len = 0;
   if (argvars[0].v_type == VAR_UNKNOWN) {
     // Find the start and length of the badly spelled word.
-    len = spell_move_to(curwin, FORWARD, true, true, &attr);
+    len = spell_move_to(curwin, FORWARD, SMT_ALL, true, &attr);
     if (len != 0) {
       word = get_cursor_pos_ptr();
       curwin->w_set_curswant = true;

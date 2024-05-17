@@ -484,7 +484,7 @@ void spell_suggest(int count)
       badlen = get_cursor_line_len() - curwin->w_cursor.col;
     }
     // Find the start of the badly spelled word.
-  } else if (spell_move_to(curwin, FORWARD, true, true, NULL) == 0
+  } else if (spell_move_to(curwin, FORWARD, SMT_ALL, true, NULL) == 0
              || curwin->w_cursor.col > prev_cursor.col) {
     // No bad word or it starts after the cursor: use the word under the
     // cursor.

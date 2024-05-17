@@ -4570,7 +4570,7 @@ void free_insexpand_stuff(void)
 static void spell_back_to_badword(void)
 {
   pos_T tpos = curwin->w_cursor;
-  spell_bad_len = spell_move_to(curwin, BACKWARD, true, true, NULL);
+  spell_bad_len = spell_move_to(curwin, BACKWARD, SMT_ALL, true, NULL);
   if (curwin->w_cursor.col != tpos.col) {
     start_arrow(&tpos);
   }
