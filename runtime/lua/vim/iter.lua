@@ -1033,17 +1033,13 @@ function Iter.new(src, ...)
     local t = {}
 
     -- O(n): scan the source table to decide if it is an array (only positive integer indices).
-    local length = 0
     for k, v in pairs(src) do
-      if type(k) ~= 'number' or math.floor(k) ~= k then
+      if type(k) ~= 'number' or k <= 0 or math.floor(k) ~= k then
         return Iter.new(pairs(src))
       end
-      if k > length then
-        length = k
-      end
-      t[k] = v
+      t[#t + 1] = v
     end
-    return ArrayIter.new(t, length)
+    return ArrayIter.new(t)
   end
 
   if type(src) == 'function' then
@@ -1075,14 +1071,13 @@ end
 ---
 ---@param t table Array-like table. Caller guarantees that this table is a valid array. Can have
 ---               holes (nil values).
----@param length integer Length of the table (largest positive integer index).
 ---@return Iter
 ---@private
-function ArrayIter.new(t, length)
+function ArrayIter.new(t)
   local it = {}
   it._table = t
   it._head = 1
-  it._tail = length + 1
+  it._tail = #t + 1
   setmetatable(it, ArrayIter)
   return it
 end
