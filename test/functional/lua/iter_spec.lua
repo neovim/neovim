@@ -117,6 +117,9 @@ describe('vim.iter', function()
       eq({ { 1, 1 }, { 2, 4 }, { 3, 9 } }, it:totable())
     end
 
+    -- Holes in array-like tables are removed
+    eq({ 1, 2, 3 }, vim.iter({ 1, nil, 2, nil, 3 }):totable())
+
     do
       local it = vim.iter(string.gmatch('1,4,lol,17,blah,2,9,3', '%d+')):map(tonumber)
       eq({ 1, 4, 17, 2, 9, 3 }, it:totable())
@@ -142,7 +145,7 @@ describe('vim.iter', function()
     eq({ 3, 2, 1 }, vim.iter({ 1, 2, 3 }):rev():totable())
 
     local it = vim.iter(string.gmatch('abc', '%w'))
-    matches('rev%(%) requires a list%-like table', pcall_err(it.rev, it))
+    matches('rev%(%) requires an array%-like table', pcall_err(it.rev, it))
   end)
 
   it('skip()', function()
@@ -181,7 +184,7 @@ describe('vim.iter', function()
     end
 
     local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
-    matches('rskip%(%) requires a list%-like table', pcall_err(it.rskip, it, 0))
+    matches('rskip%(%) requires an array%-like table', pcall_err(it.rskip, it, 0))
   end)
 
   it('slice()', function()
@@ -195,7 +198,7 @@ describe('vim.iter', function()
     eq({ 8, 9, 10 }, vim.iter(q):slice(8, 11):totable())
 
     local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
-    matches('slice%(%) requires a list%-like table', pcall_err(it.slice, it, 1, 3))
+    matches('slice%(%) requires an array%-like table', pcall_err(it.slice, it, 1, 3))
   end)
 
   it('nth()', function()
@@ -234,7 +237,7 @@ describe('vim.iter', function()
     end
 
     local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
-    matches('rskip%(%) requires a list%-like table', pcall_err(it.nth, it, -1))
+    matches('rskip%(%) requires an array%-like table', pcall_err(it.nth, it, -1))
   end)
 
   it('take()', function()
@@ -356,7 +359,7 @@ describe('vim.iter', function()
 
     do
       local it = vim.iter(vim.gsplit('hi', ''))
-      matches('peek%(%) requires a list%-like table', pcall_err(it.peek, it))
+      matches('peek%(%) requires an array%-like table', pcall_err(it.peek, it))
     end
   end)
 
@@ -417,7 +420,7 @@ describe('vim.iter', function()
 
     do
       local it = vim.iter(vim.gsplit('AbCdE', ''))
-      matches('rfind%(%) requires a list%-like table', pcall_err(it.rfind, it, 'E'))
+      matches('rfind%(%) requires an array%-like table', pcall_err(it.rfind, it, 'E'))
     end
   end)
 
@@ -434,7 +437,7 @@ describe('vim.iter', function()
 
     do
       local it = vim.iter(vim.gsplit('hi', ''))
-      matches('pop%(%) requires a list%-like table', pcall_err(it.pop, it))
+      matches('pop%(%) requires an array%-like table', pcall_err(it.pop, it))
     end
   end)
 
@@ -448,7 +451,7 @@ describe('vim.iter', function()
 
     do
       local it = vim.iter(vim.gsplit('hi', ''))
-      matches('rpeek%(%) requires a list%-like table', pcall_err(it.rpeek, it))
+      matches('rpeek%(%) requires an array%-like table', pcall_err(it.rpeek, it))
     end
   end)
 
@@ -482,18 +485,20 @@ describe('vim.iter', function()
     local m = { a = 1, b = { 2, 3 }, d = { 4 } }
     local it = vim.iter(m)
 
-    local flat_err = 'flatten%(%) requires a list%-like table'
+    local flat_err = 'flatten%(%) requires an array%-like table'
     matches(flat_err, pcall_err(it.flatten, it))
 
     -- cases from the documentation
     local simple_example = { 1, { 2 }, { { 3 } } }
     eq({ 1, 2, { 3 } }, vim.iter(simple_example):flatten():totable())
 
-    local not_list_like = vim.iter({ [2] = 2 })
-    matches(flat_err, pcall_err(not_list_like.flatten, not_list_like))
+    local not_list_like = { [2] = 2 }
+    eq({ 2 }, vim.iter(not_list_like):flatten():totable())
 
-    local also_not_list_like = vim.iter({ nil, 2 })
-    matches(flat_err, pcall_err(not_list_like.flatten, also_not_list_like))
+    local also_not_list_like = { nil, 2 }
+    eq({ 2 }, vim.iter(also_not_list_like):flatten():totable())
+
+    eq({ 1, 2, 3 }, vim.iter({ nil, { 1, nil, 2 }, 3 }):flatten():totable())
 
     local nested_non_lists = vim.iter({ 1, { { a = 2 } }, { { nil } }, { 3 } })
     eq({ 1, { a = 2 }, { nil }, 3 }, nested_non_lists:flatten():totable())
