@@ -2488,7 +2488,7 @@ int pagescroll(Direction dir, int count, bool half)
     int curscount = count;
     // Adjust count so as to not reveal end of buffer lines.
     if (dir == FORWARD
-        && (curwin->w_topline + curwin->w_height + count > buflen || hasAnyFolding(curwin))) {
+        && (curwin->w_topline + curwin->w_height_inner + count > buflen || hasAnyFolding(curwin))) {
       int n = plines_correct_topline(curwin, curwin->w_topline, NULL, false, NULL);
       if (n - count < curwin->w_height_inner && curwin->w_topline < buflen) {
         n += plines_m_win(curwin, curwin->w_topline + 1, buflen, curwin->w_height_inner + count);
