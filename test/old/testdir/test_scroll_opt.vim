@@ -1156,4 +1156,39 @@ func Test_smoothscroll_long_line_zb()
   bwipe!
 endfunc
 
+func Test_smooth_long_scrolloff()
+  CheckScreendump
+
+  let lines =<< trim END
+    set smoothscroll scrolloff=3
+    call setline(1, ['one', 'two long '->repeat(100), 'three', 'four', 'five', 'six'])
+  END
+  call writefile(lines, 'XSmoothLongScrolloff', 'D')
+  let buf = RunVimInTerminal('-u NONE -S XSmoothLongScrolloff', #{rows: 8, cols: 40})
+  "FIXME: empty screen due to reset_skipcol()/curs_columns() shenanigans
+  call term_sendkeys(buf, ":norm j721|\<CR>")
+  call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_1', {})
+
+  call term_sendkeys(buf, "gj")
+  call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_2', {})
+
+  call term_sendkeys(buf, "gj")
+  call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_3', {})
+
+  call term_sendkeys(buf, "gj")
+  call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_4', {})
+
+  call term_sendkeys(buf, "gj")
+  call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_5', {})
+
+  call term_sendkeys(buf, "gj")
+  call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_6', {})
+
+  call term_sendkeys(buf, "gk")
+  "FIXME: empty screen due to reset_skipcol()/curs_columns() shenanigans
+  call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_7', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
