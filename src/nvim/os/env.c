@@ -474,17 +474,9 @@ void init_homedir(void)
     var = os_homedir();
   }
 
-  if (var != NULL) {
-    // Change to the directory and get the actual path.  This resolves
-    // links.  Don't do it when we can't return.
-    if (os_dirname(os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
-      if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
-        var = IObuff;
-      }
-      if (os_chdir(os_buf) != 0) {
-        emsg(_(e_prev_dir));
-      }
-    }
+  // Get the actual path.  This resolves links.
+  if (var != NULL && os_realpath(var, IObuff, IOSIZE) != NULL) {
+    var = IObuff;
   }
 
   // Fall back to current working directory if home is not found
