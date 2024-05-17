@@ -91,11 +91,11 @@ return {
     {
       abbreviation = 'al',
       defaults = { if_true = 224 },
-      enable_if = false,
       full_name = 'aleph',
       scope = { 'global' },
       short_desc = N_('ASCII code of the letter Aleph (Hebrew)'),
       type = 'number',
+      hidden = true,
     },
     {
       abbreviation = 'ari',
@@ -791,11 +791,11 @@ return {
            current	Use the current directory.
            {path}	Use the specified directory
       ]=],
-      enable_if = false,
       full_name = 'browsedir',
       scope = { 'global' },
       short_desc = N_('which directory to start browsing in'),
       type = 'string',
+      hidden = true,
     },
     {
       abbreviation = 'bh',
@@ -1465,27 +1465,12 @@ return {
     },
     {
       abbreviation = 'csl',
-      cb = 'did_set_completeslash',
       defaults = { if_true = '' },
-      desc = [=[
-        		only for MS-Windows
-        When this option is set it overrules 'shellslash' for completion:
-        - When this option is set to "slash", a forward slash is used for path
-          completion in insert mode. This is useful when editing HTML tag, or
-          Makefile with 'noshellslash' on MS-Windows.
-        - When this option is set to "backslash", backslash is used. This is
-          useful when editing a batch file with 'shellslash' set on MS-Windows.
-        - When this option is empty, same character is used as for
-          'shellslash'.
-        For Insert mode completion the buffer-local value is used.  For
-        command line completion the global value is used.
-      ]=],
-      enable_if = 'BACKSLASH_IN_FILENAME',
-      expand_cb = 'expand_set_completeslash',
       full_name = 'completeslash',
       scope = { 'buffer' },
+      short_desc = N_('No description'),
       type = 'string',
-      varname = 'p_csl',
+      hidden = true,
     },
     {
       abbreviation = 'cocu',
@@ -3717,12 +3702,12 @@ return {
         	try to keep 'lines' and 'columns' the same when adding and
         	removing GUI components.
       ]=],
-      enable_if = false,
       full_name = 'guioptions',
       list = 'flags',
       scope = { 'global' },
       short_desc = N_('GUI: Which components and options are used'),
       type = 'string',
+      hidden = true,
     },
     {
       abbreviation = 'gtl',
@@ -3741,13 +3726,13 @@ return {
         present in 'guioptions'.  For the non-GUI tab pages line 'tabline' is
         used.
       ]=],
-      enable_if = false,
       full_name = 'guitablabel',
       modelineexpr = true,
       redraw = { 'current_window' },
       scope = { 'global' },
       short_desc = N_('GUI: custom label for a tab page'),
       type = 'string',
+      hidden = true,
     },
     {
       abbreviation = 'gtt',
@@ -3759,12 +3744,12 @@ return {
         	let &guitabtooltip = "line one\nline two"
         <
       ]=],
-      enable_if = false,
       full_name = 'guitabtooltip',
       redraw = { 'current_window' },
       scope = { 'global' },
       short_desc = N_('GUI: custom tooltip for a tab page'),
       type = 'string',
+      hidden = true,
     },
     {
       abbreviation = 'hf',
@@ -4006,11 +3991,11 @@ return {
         English characters directly, e.g., when it's used to type accented
         characters with dead keys.
       ]=],
-      enable_if = false,
       full_name = 'imcmdline',
       scope = { 'global' },
       short_desc = N_('use IM when starting to edit a command line'),
       type = 'boolean',
+      hidden = true,
     },
     {
       abbreviation = 'imd',
@@ -4024,11 +4009,11 @@ return {
         Currently this option is on by default for SGI/IRIX machines.  This
         may change in later releases.
       ]=],
-      enable_if = false,
       full_name = 'imdisable',
       scope = { 'global' },
       short_desc = N_('do not use the IM in any mode'),
       type = 'boolean',
+      hidden = true,
     },
     {
       abbreviation = 'imi',
@@ -5652,13 +5637,13 @@ return {
         indicate no input when the hit-enter prompt is displayed (since
         clicking the mouse has no effect in this state.)
       ]=],
-      enable_if = false,
       full_name = 'mouseshape',
       list = 'onecomma',
       scope = { 'global' },
       short_desc = N_('shape of the mouse pointer in different modes'),
       tags = { 'E547' },
       type = 'string',
+      hidden = true,
     },
     {
       abbreviation = 'mouset',
@@ -5806,11 +5791,11 @@ return {
         Note that on Windows editing "aux.h", "lpt1.txt" and the like also
         result in editing a device.
       ]=],
-      enable_if = false,
       full_name = 'opendevice',
       scope = { 'global' },
       short_desc = N_('allow reading/writing devices on MS-Windows'),
       type = 'boolean',
+      hidden = true,
     },
     {
       abbreviation = 'opfunc',
@@ -5883,11 +5868,11 @@ return {
     {
       abbreviation = 'pt',
       defaults = { if_true = '' },
-      enable_if = false,
       full_name = 'pastetoggle',
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'string',
+      hidden = true,
     },
     {
       abbreviation = 'pex',
@@ -6983,8 +6968,8 @@ return {
       },
       desc = [=[
         Name of the shell to use for ! and :! commands.  When changing the
-        value also check these options: 'shellpipe', 'shellslash'
-        'shellredir', 'shellquote', 'shellxquote' and 'shellcmdflag'.
+        value also check these options: 'shellpipe', 'shellredir',
+        'shellquote', 'shellxquote' and 'shellcmdflag'.
         It is allowed to give an argument to the command, e.g.  "csh -f".
         See |option-backslash| about including spaces and backslashes.
         Environment variables are expanded |:set_env|.
@@ -7177,28 +7162,12 @@ return {
     },
     {
       abbreviation = 'ssl',
-      cb = 'did_set_shellslash',
-      defaults = { if_true = false },
-      desc = [=[
-        		only for MS-Windows
-        When set, a forward slash is used when expanding file names.  This is
-        useful when a Unix-like shell is used instead of cmd.exe.  Backward
-        slashes can still be typed, but they are changed to forward slashes by
-        Vim.
-        Note that setting or resetting this option has no effect for some
-        existing file names, thus this option needs to be set before opening
-        any file for best results.  This might change in the future.
-        'shellslash' only works when a backslash can be used as a path
-        separator.  To test if this is so use: >vim
-        	if exists('+shellslash')
-        <	Also see 'completeslash'.
-      ]=],
-      enable_if = 'BACKSLASH_IN_FILENAME',
+      defaults = { if_true = true },
       full_name = 'shellslash',
       scope = { 'global' },
-      short_desc = N_('use forward slash for shell file names'),
+      short_desc = N_('No description'),
       type = 'boolean',
-      varname = 'p_ssl',
+      hidden = true,
     },
     {
       abbreviation = 'stmp',
@@ -8775,11 +8744,11 @@ return {
     {
       abbreviation = 'tenc',
       defaults = { if_true = '' },
-      enable_if = false,
       full_name = 'termencoding',
       scope = { 'global' },
       short_desc = N_('Terminal encoding'),
       type = 'string',
+      hidden = true,
     },
     {
       abbreviation = 'tgc',

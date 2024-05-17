@@ -801,15 +801,7 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
     // Expand environment variables in the pattern.  Set 'shellslash', we want
     // forward slashes here.
     if (vim_strchr(pat, '$') != NULL || vim_strchr(pat, '~') != NULL) {
-#ifdef BACKSLASH_IN_FILENAME
-      int p_ssl_save = p_ssl;
-
-      p_ssl = true;
-#endif
       envpat = expand_env_save(pat);
-#ifdef BACKSLASH_IN_FILENAME
-      p_ssl = p_ssl_save;
-#endif
       if (envpat != NULL) {
         pat = envpat;
       }
@@ -1728,9 +1720,9 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   // Replace all backslashes with forward slashes. This makes the
   // autocommand patterns portable between Unix and Windows.
   if (sfname != NULL) {
-    forward_slash(sfname);
+    slash_adjust(sfname);
   }
-  forward_slash(fname);
+  slash_adjust(fname);
 #endif
 
   // Set the name to be used for <amatch>.
@@ -2146,8 +2138,8 @@ bool has_autocmd(event_T event, char *sfname, buf_T *buf)
   // Replace all backslashes with forward slashes. This makes the
   // autocommand patterns portable between Unix and Windows.
   sfname = xstrdup(sfname);
-  forward_slash(sfname);
-  forward_slash(fname);
+  slash_adjust(sfname);
+  slash_adjust(fname);
 #endif
 
   AutoCmdVec *const acs = &autocmds[(int)event];

@@ -200,13 +200,6 @@ char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newli
   // First count the number of extra bytes required.
   size_t length = strlen(string) + 3;       // two quotes and a trailing NUL
   for (const char *p = string; *p != NUL; MB_PTR_ADV(p)) {
-#ifdef MSWIN
-    if (!p_ssl) {
-      if (*p == '"') {
-        length++;                       // " -> ""
-      }
-    } else
-#endif
     if (*p == '\'') {
       length += 3;                      // ' => '\''
     }
@@ -231,24 +224,9 @@ char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newli
   char *d = escaped_string;
 
   // add opening quote
-#ifdef MSWIN
-  if (!p_ssl) {
-    *d++ = '"';
-  } else
-#endif
   *d++ = '\'';
 
   for (const char *p = string; *p != NUL;) {
-#ifdef MSWIN
-    if (!p_ssl) {
-      if (*p == '"') {
-        *d++ = '"';
-        *d++ = '"';
-        p++;
-        continue;
-      }
-    } else
-#endif
     if (*p == '\'') {
       *d++ = '\'';
       *d++ = '\\';
@@ -283,11 +261,6 @@ char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newli
   }
 
   // add terminating quote and finish with a NUL
-#ifdef MSWIN
-  if (!p_ssl) {
-    *d++ = '"';
-  } else
-#endif
   *d++ = '\'';
   *d = NUL;
 

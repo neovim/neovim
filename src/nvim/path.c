@@ -1409,37 +1409,23 @@ static int expand_backtick(garray_T *gap, char *pat, int flags)
   return cnt;
 }
 
-#ifdef BACKSLASH_IN_FILENAME
-/// Replace all slashes by backslashes.
-/// This used to be the other way around, but MS-DOS sometimes has problems
-/// with slashes (e.g. in a command name).  We can't have mixed slashes and
-/// backslashes, because comparing file names will not work correctly.  The
-/// commands that use a file name should try to avoid the need to type a
-/// backslash twice.
-/// When 'shellslash' set do it the other way around.
-/// When the path looks like a URL leave it unmodified.
-void slash_adjust(char *p)
+/// Replace backslashes with slashes, except when the path looks like a URL.
+/// Does nothing if the OS is not Windows.
+void slash_adjust(char *fname)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (path_with_url(p)) {
+#ifdef BACKSLASH_IN_FILENAME
+  if (path_with_url(fname)) {
     return;
   }
 
-  if (*p == '`') {
-    // don't replace backslash in backtick quoted strings
-    const size_t len = strlen(p);
-    if (len > 2 && *(p + len - 1) == '`') {
-      return;
+  for (char *p = fname; *p != NUL; MB_PTR_ADV(p)) {
+    if (*p == '\\') {
+      *p = '/';
     }
   }
-
-  while (*p) {
-    if (*p == psepcN) {
-      *p = psepc;
-    }
-    MB_PTR_ADV(p);
-  }
-}
 #endif
+}
 
 /// Add a file to a file list.  Accepted flags:
 /// EW_DIR      add directories

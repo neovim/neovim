@@ -8288,10 +8288,8 @@ function vim.fn.sha256(string) end
 
 --- Escape {string} for use as a shell command argument.
 ---
---- On Windows when 'shellslash' is not set, encloses {string} in
---- double-quotes and doubles all double-quotes within {string}.
---- Otherwise encloses {string} in single-quotes and replaces all
---- "'" with "'\''".
+--- On Windows, encloses {string} in single-quotes and replaces
+--- all "'" with "'\''".
 ---
 --- The {special} argument adds additional escaping of keywords
 --- used in Vim commands. If it is a |non-zero-arg|:
