@@ -14,10 +14,10 @@ itself. See also |debug.txt| for advice that applies to Vim.
 ==============================================================================
 Backtraces                                            *dev-tools-backtrace*
 
-LINUX ~
+LINUX
 
-Core dumps are disabled by default on Ubuntu
-https://stackoverflow.com/a/18368068, CentOS and others. To enable core dumps:
+Core dumps are disabled by default on Ubuntu, CentOS and others.
+To enable core dumps:
 >bash
     ulimit -c unlimited
 <
@@ -25,21 +25,29 @@ On systemd-based systems getting a backtrace is as easy as:
 >bash
     coredumpctl -1 gdb
 <
-It's an optional tool, so you may need to install it:
+`coredumpctl` is an optional tool, so you may need to install it:
 >bash
     sudo apt install systemd-coredump
 <
 
-The full backtrace is most useful, send us the `bt.txt` file:
+The full backtrace is most useful; please send us the `backtrace.txt` file
+when reporting a bug related to a crash:
 >bash
-    2>&1 coredumpctl -1 gdb | tee -a bt.txt
-    thread apply all bt full
+    2>&1 coredumpctl -1 gdb | tee -a backtrace.txt
+    (gdb) thread apply all bt full
 <
-On older systems a `core` file will appear in the current directory. To get
-a backtrace from the `core` file:
+
+On systems without `coredumpctl`, you may find a `core` dump file appearing
+in the current directory or in other locations. On Linux systems where
+`apport` is installed (such as Ubuntu), the directory where core dump files
+are saved can be `/var/lib/apport/coredump` or elsewhere, depending on the
+system configuration (see `/proc/sys/kernel/core_pattern`). See also:
+https://stackoverflow.com/a/18368068
+
+To get a backtrace from the `./core` dump file:
 >bash
-    gdb build/bin/nvim core 2>&1 | tee backtrace.txt
-    thread apply all bt full
+    gdb build/bin/nvim ./core 2>&1 | tee backtrace.txt
+    (gdb) thread apply all bt full
 <
 
 MACOS
@@ -76,7 +84,7 @@ core dumps with `/etc/launchd.conf`).
 ==============================================================================
 Gdb                                                          *dev-tools-gdb*
 
-USING GDB TO STEP THROUGH FUNCTIONAL TESTS ~
+USING GDB TO STEP THROUGH FUNCTIONAL TESTS
 
 Use `TEST_TAG` to run tests matching busted tags (of the form `#foo` e.g.
 `it("test #foo ...", ...)`):
@@ -86,19 +94,19 @@ Use `TEST_TAG` to run tests matching busted tags (of the form `#foo` e.g.
 Then, in another terminal:
 >bash
     gdb build/bin/nvim
-    target remote localhost:7777
+    (gdb) target remote localhost:7777
 
 -- See `nvim_argv` in https://github.com/neovim/neovim/blob/master/test/functional/testnvim.lua.
 
-USING LLDB TO STEP THROUGH UNIT TESTS ~
+USING LLDB TO STEP THROUGH UNIT TESTS
 
->bash
+>
     lldb .deps/usr/bin/luajit -- .deps/usr/bin/busted --lpath="./build/?.lua" test/unit/
 <
+USING GDB
 
-USING GDB ~
-
-To attach to a running `nvim` process with a pid of 1234:
+To attach to a running `nvim` process with a pid of 1234 (Tip: the pid of a
+running Nvim instance can be obtained by calling |getpid()|), for instance:
 >bash
     gdb -tui -p 1234 build/bin/nvim
 <
@@ -117,8 +125,7 @@ The `gdb` interactive prompt will appear. At any time you can:
   need for a gdb "frontend".
 - `<up>` and `<down>` to scroll the source file view
 
-
-GDB "REVERSE DEBUGGING" ~
+GDB REVERSE DEBUGGING
 
 - `set record full insn-number-max unlimited`
 - `continue` for a bit (at least until `main()` is executed
@@ -126,8 +133,7 @@ GDB "REVERSE DEBUGGING" ~
 - provoke the bug, then use `revert-next`, `reverse-step`, etc. to rewind the
   debugger
 
-
-USING GDBSERVER ~
+USING GDBSERVER
 
 You may want to connect multiple `gdb` clients to the same running `nvim`
 process, or you may want to connect to a remote `nvim` process with a local
@@ -145,12 +151,12 @@ debugging session in another terminal:
 <
 Once you've entered `gdb`, you need to attach to the remote session:
 >
-    target remote localhost:6666
+    (gdb) target remote localhost:6666
 <
 In case gdbserver puts the TUI as a background process, the TUI can become
 unable to read input from pty (and receives SIGTTIN signal) and/or output data
 (SIGTTOU signal). To force the TUI as the foreground process, you can add
->
+>c
     signal (SIGTTOU, SIG_IGN);
     if (!tcsetpgrp(data->input.in_fd, getpid())) {
         perror("tcsetpgrp failed");
@@ -158,8 +164,7 @@ unable to read input from pty (and receives SIGTTIN signal) and/or output data
 <
 to `tui.c:terminfo_start`.
 
-
-USING GDBSERVER IN TMUX ~
+USING GDBSERVER IN TMUX
 
 Consider using a custom makefile
 https://github.com/neovim/neovim/blob/master/BUILD.md#custom-makefile to
@@ -184,8 +189,8 @@ Here `gdb_start.sh` includes `gdb` commands to be called when the debugger
 starts. It needs to attach to the server started by the `dbg-start` rule. For
 example:
 >
-    target remote localhost:6666
-    br main
+    (gdb) target remote localhost:6666
+    (gdb) br main
 <
 
 vim:tw=78:ts=8:et:ft=help:norl:
