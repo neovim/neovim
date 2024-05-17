@@ -25,7 +25,12 @@ These changes may require adaptations in your config or plugins.
 
 API
 
-• TODO
+• `vim.rpcnotify(0)` and `rpcnotify(0)` broadcast to ALL channels. Previously
+  they would "multicast" only to subscribed channels (controlled by
+  `nvim_subscribe()`). Plugins and clients that want "multicast" behavior must
+  now maintain their own list of channels.
+  • In the future, |vim.rpcnotify()| may accept a list of channels, if there
+    is demand for this use-case.
 
 DEFAULTS
 

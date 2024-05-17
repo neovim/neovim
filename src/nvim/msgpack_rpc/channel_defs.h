@@ -37,7 +37,6 @@ typedef struct {
 } RequestEvent;
 
 typedef struct {
-  Set(cstr_t) subscribed_events[1];
   bool closed;
   Unpacker *unpacker;
   uint32_t next_request_id;

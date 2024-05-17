@@ -67,8 +67,6 @@ static void log_notify(char *dir, uint64_t channel_id, const char *name)
 # define log_notify(...)
 #endif
 
-static Set(cstr_t) event_strings = SET_INIT;
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/channel.c.generated.h"
 #endif
@@ -111,9 +109,9 @@ static Channel *find_rpc_channel(uint64_t id)
   return chan;
 }
 
-/// Publishes an event to a channel.
+/// Publishes an event to a channel (emits a notification to method `name`).
 ///
-/// @param id Channel id. 0 means "broadcast to all subscribed channels"
+/// @param id Channel id, or 0 to broadcast to all RPC channels.
 /// @param name Event name (application-defined)
 /// @param args Array of event arguments
 /// @return True if the event was sent successfully, false otherwise.
@@ -202,41 +200,6 @@ Object rpc_send_call(uint64_t id, const char *method_name, Array args, ArenaMem 
   *result_mem = frame.result_mem;
 
   return frame.errored ? NIL : frame.result;
-}
-
-/// Subscribes to event broadcasts
-///
-/// @param id The channel id
-/// @param event The event type string
-void rpc_subscribe(uint64_t id, char *event)
-{
-  Channel *channel;
-
-  if (!(channel = find_rpc_channel(id))) {
-    abort();
-  }
-
-  const char **key_alloc = NULL;
-  if (set_put_ref(cstr_t, &event_strings, event, &key_alloc)) {
-    *key_alloc = xstrdup(event);
-  }
-
-  set_put(cstr_t, channel->rpc.subscribed_events, *key_alloc);
-}
-
-/// Unsubscribes to event broadcasts
-///
-/// @param id The channel id
-/// @param event The event type string
-void rpc_unsubscribe(uint64_t id, char *event)
-{
-  Channel *channel;
-
-  if (!(channel = find_rpc_channel(id))) {
-    abort();
-  }
-
-  unsubscribe(channel, event);
 }
 
 static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c, void *data, bool eof)
@@ -494,34 +457,24 @@ static void send_error(Channel *chan, MsgpackRpcRequestHandler handler, MessageT
   api_clear_error(&e);
 }
 
+/// Broadcasts a notification to all RPC channels.
 static void broadcast_event(const char *name, Array args)
 {
-  kvec_withinit_t(Channel *, 4) subscribed = KV_INITIAL_VALUE;
-  kvi_init(subscribed);
+  kvec_withinit_t(Channel *, 4) chans = KV_INITIAL_VALUE;
+  kvi_init(chans);
   Channel *channel;
 
   map_foreach_value(&channels, channel, {
-    if (channel->is_rpc
-        && set_has(cstr_t, channel->rpc.subscribed_events, name)) {
-      kv_push(subscribed, channel);
+    if (channel->is_rpc) {
+      kv_push(chans, channel);
     }
   });
 
-  if (kv_size(subscribed)) {
-    serialize_request(subscribed.items, kv_size(subscribed), 0, name, args);
+  if (kv_size(chans)) {
+    serialize_request(chans.items, kv_size(chans), 0, name, args);
   }
 
-  kvi_destroy(subscribed);
-}
-
-static void unsubscribe(Channel *channel, char *event)
-{
-  if (!set_has(cstr_t, &event_strings, event)) {
-    WLOG("RPC: ch %" PRIu64 ": tried to unsubscribe unknown event '%s'",
-         channel->id, event);
-    return;
-  }
-  set_del(cstr_t, channel->rpc.subscribed_events, event);
+  kvi_destroy(chans);
 }
 
 /// Mark rpc state as closed, and release its reference to the channel.
@@ -551,7 +504,6 @@ void rpc_free(Channel *channel)
   unpacker_teardown(channel->rpc.unpacker);
   xfree(channel->rpc.unpacker);
 
-  set_destroy(cstr_t, channel->rpc.subscribed_events);
   kv_destroy(channel->rpc.call_stack);
   api_free_dictionary(channel->rpc.info);
 }
@@ -719,12 +671,6 @@ const char *get_client_info(Channel *chan, const char *key)
 #ifdef EXITFREE
 void rpc_free_all_mem(void)
 {
-  cstr_t key;
-  set_foreach(&event_strings, key, {
-    xfree((void *)key);
-  });
-  set_destroy(cstr_t, &event_strings);
-
   multiqueue_free(ch_before_blocking_events);
 }
 #endif

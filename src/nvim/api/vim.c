@@ -1334,36 +1334,6 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow,
   });
 }
 
-/// Subscribes to event broadcasts.
-///
-/// @param channel_id Channel id (passed automatically by the dispatcher)
-/// @param event      Event type string
-void nvim_subscribe(uint64_t channel_id, String event)
-  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
-{
-  size_t length = (event.size < METHOD_MAXLEN ? event.size : METHOD_MAXLEN);
-  char e[METHOD_MAXLEN + 1];
-  memcpy(e, event.data, length);
-  e[length] = NUL;
-  rpc_subscribe(channel_id, e);
-}
-
-/// Unsubscribes to event broadcasts.
-///
-/// @param channel_id Channel id (passed automatically by the dispatcher)
-/// @param event      Event type string
-void nvim_unsubscribe(uint64_t channel_id, String event)
-  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
-{
-  size_t length = (event.size < METHOD_MAXLEN
-                   ? event.size
-                   : METHOD_MAXLEN);
-  char e[METHOD_MAXLEN + 1];
-  memcpy(e, event.data, length);
-  e[length] = NUL;
-  rpc_unsubscribe(channel_id, e);
-}
-
 /// Returns the 24-bit RGB value of a |nvim_get_color_map()| color name or
 /// "#rrggbb" hexadecimal string.
 ///

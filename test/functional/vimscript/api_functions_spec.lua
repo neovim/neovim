@@ -181,8 +181,8 @@ describe('eval-API', function()
     eq('Vim(call):E117: Unknown function: buffer_get_line', err)
 
     -- some api functions are only useful from a msgpack-rpc channel
-    err = exc_exec('call nvim_subscribe("fancyevent")')
-    eq('Vim(call):E117: Unknown function: nvim_subscribe', err)
+    err = exc_exec('call nvim_set_client_info()')
+    eq('Vim(call):E117: Unknown function: nvim_set_client_info', err)
   end)
 
   it('have metadata accessible with api_info()', function()

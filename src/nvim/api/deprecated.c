@@ -786,3 +786,23 @@ theend:
   api_clear_error(&nested_error);
   return rv;
 }
+
+/// @deprecated
+///
+/// @param channel_id Channel id (passed automatically by the dispatcher)
+/// @param event      Event type string
+void nvim_subscribe(uint64_t channel_id, String event)
+  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+{
+  // Does nothing. `rpcnotify(0,…)` broadcasts to all channels, there are no "subscriptions".
+}
+
+/// @deprecated
+///
+/// @param channel_id Channel id (passed automatically by the dispatcher)
+/// @param event      Event type string
+void nvim_unsubscribe(uint64_t channel_id, String event)
+  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+{
+  // Does nothing. `rpcnotify(0,…)` broadcasts to all channels, there are no "subscriptions".
+}

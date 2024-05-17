@@ -1461,24 +1461,6 @@ nvim_strwidth({text})                                        *nvim_strwidth()*
     Return: ~
         Number of cells
 
-nvim_subscribe({event})                                     *nvim_subscribe()*
-    Subscribes to event broadcasts.
-
-    Attributes: ~
-        |RPC| only
-
-    Parameters: ~
-      • {event}  Event type string
-
-nvim_unsubscribe({event})                                 *nvim_unsubscribe()*
-    Unsubscribes to event broadcasts.
-
-    Attributes: ~
-        |RPC| only
-
-    Parameters: ~
-      • {event}  Event type string
-
 nvim__complete_set({index}, {opts})                     *nvim__complete_set()*
     EXPERIMENTAL: this API may change in the future.
 
