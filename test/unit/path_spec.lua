@@ -22,11 +22,16 @@ local buffer = nil
 
 describe('path.c', function()
   describe('path_full_dir_name', function()
+    local old_dir
+
     setup(function()
+      old_dir = uv.cwd()
       mkdir('unit-test-directory')
+      uv.fs_symlink(old_dir .. '/unit-test-directory', 'unit-test-symlink')
     end)
 
     teardown(function()
+      uv.fs_unlink('unit-test-symlink')
       uv.fs_rmdir('unit-test-directory')
     end)
 
@@ -37,35 +42,64 @@ describe('path.c', function()
 
     before_each(function()
       -- Create empty string buffer which will contain the resulting path.
-      length = string.len(uv.cwd()) + 22
+      length = string.len(old_dir) + 22
       buffer = cstr(length, '')
     end)
 
+    after_each(function()
+      uv.chdir(old_dir)
+    end)
+
     itp('returns the absolute directory name of a given relative one', function()
-      local result = path_full_dir_name('..', buffer, length)
-      eq(OK, result)
-      local old_dir = uv.cwd()
+      eq(OK, path_full_dir_name('..', buffer, length))
       uv.chdir('..')
       local expected = uv.cwd()
       uv.chdir(old_dir)
-      eq(expected, (ffi.string(buffer)))
+      eq(expected, ffi.string(buffer))
     end)
 
     itp('returns the current directory name if the given string is empty', function()
-      eq(OK, (path_full_dir_name('', buffer, length)))
-      eq(uv.cwd(), (ffi.string(buffer)))
+      eq(OK, path_full_dir_name('', buffer, length))
+      eq(old_dir, ffi.string(buffer))
+    end)
+
+    local function test_full_dir_absolute()
+      itp('works with a normal absolute dir', function()
+        eq(OK, path_full_dir_name(old_dir .. '/unit-test-directory', buffer, length))
+        eq(old_dir .. '/unit-test-directory', ffi.string(buffer))
+      end)
+
+      itp('works with a symlinked absolute dir', function()
+        eq(OK, path_full_dir_name(old_dir .. '/unit-test-symlink', buffer, length))
+        eq(old_dir .. '/unit-test-directory', ffi.string(buffer))
+      end)
+    end
+
+    test_full_dir_absolute()
+
+    describe('when cwd does not exist #28786', function()
+      before_each(function()
+        mkdir('dir-to-remove')
+        uv.chdir('dir-to-remove')
+        uv.fs_rmdir(old_dir .. '/dir-to-remove')
+      end)
+
+      test_full_dir_absolute()
     end)
 
     itp('works with a normal relative dir', function()
-      local result = path_full_dir_name('unit-test-directory', buffer, length)
-      eq(uv.cwd() .. '/unit-test-directory', (ffi.string(buffer)))
-      eq(OK, result)
+      eq(OK, path_full_dir_name('unit-test-directory', buffer, length))
+      eq(old_dir .. '/unit-test-directory', ffi.string(buffer))
+    end)
+
+    itp('works with a symlinked relative dir', function()
+      eq(OK, path_full_dir_name('unit-test-symlink', buffer, length))
+      eq(old_dir .. '/unit-test-directory', ffi.string(buffer))
     end)
 
     itp('works with a non-existing relative dir', function()
-      local result = path_full_dir_name('does-not-exist', buffer, length)
-      eq(uv.cwd() .. '/does-not-exist', (ffi.string(buffer)))
-      eq(OK, result)
+      eq(OK, path_full_dir_name('does-not-exist', buffer, length))
+      eq(old_dir .. '/does-not-exist', ffi.string(buffer))
     end)
 
     itp('fails with a non-existing absolute dir', function()

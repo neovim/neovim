@@ -2273,12 +2273,19 @@ bool match_suffix(char *fname)
 /// @return `FAIL` for failure, `OK` for success.
 int path_full_dir_name(char *directory, char *buffer, size_t len)
 {
-  int SUCCESS = 0;
-  int retval = OK;
-
   if (strlen(directory) == 0) {
     return os_dirname(buffer, len);
   }
+
+  if (os_realpath(directory, buffer, len) != NULL) {
+    return OK;
+  }
+
+  // Path does not exist (yet).  For a full path fail, will use the path as-is.
+  if (path_is_absolute(directory)) {
+    return FAIL;
+  }
+  // For a relative path use the current directory and append the file name.
 
   char old_dir[MAXPATHL];
 
@@ -2287,36 +2294,12 @@ int path_full_dir_name(char *directory, char *buffer, size_t len)
     return FAIL;
   }
 
-  // We have to get back to the current dir at the end, check if that works.
-  if (os_chdir(old_dir) != SUCCESS) {
+  xstrlcpy(buffer, old_dir, len);
+  if (append_path(buffer, directory, len) == FAIL) {
     return FAIL;
   }
 
-  if (os_chdir(directory) != SUCCESS) {
-    // Path does not exist (yet).  For a full path fail,
-    // will use the path as-is.  For a relative path use
-    // the current directory and append the file name.
-    if (path_is_absolute(directory)) {
-      // Do not return immediately since we may be in the wrong directory.
-      retval = FAIL;
-    } else {
-      xstrlcpy(buffer, old_dir, len);
-      if (append_path(buffer, directory, len) == FAIL) {
-        retval = FAIL;
-      }
-    }
-  } else if (os_dirname(buffer, len) == FAIL) {
-    // Do not return immediately since we are in the wrong directory.
-    retval = FAIL;
-  }
-
-  if (os_chdir(old_dir) != SUCCESS) {
-    // That shouldn't happen, since we've tested if it works.
-    retval = FAIL;
-    emsg(_(e_prev_dir));
-  }
-
-  return retval;
+  return OK;
 }
 
 // Append to_append to path with a slash in between.
