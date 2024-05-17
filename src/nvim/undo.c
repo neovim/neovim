@@ -2428,13 +2428,14 @@ static void u_undoredo(bool undo, bool do_buf_event)
   // Adjust Extmarks
   if (undo) {
     for (int i = (int)kv_size(curhead->uh_extmark) - 1; i > -1; i--) {
-      extmark_apply_undo(kv_A(curhead->uh_extmark, i), undo);
+      extmark_apply_undo(kv_A(curhead->uh_extmark, i), true);
     }
     // redo
   } else {
     for (int i = 0; i < (int)kv_size(curhead->uh_extmark); i++) {
-      extmark_apply_undo(kv_A(curhead->uh_extmark, i), undo);
+      extmark_apply_undo(kv_A(curhead->uh_extmark, i), false);
     }
+    extmark_redraw_after_delete(&curhead->uh_extmark, 0);
   }
   if (curhead->uh_flags & UH_RELOAD) {
     // TODO(bfredl): this is a bit crude. When 'undoreload' is used we
