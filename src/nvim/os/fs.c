@@ -1320,22 +1320,22 @@ bool os_fileid_equal_fileinfo(const FileID *file_id, const FileInfo *file_info)
 /// Return the canonicalized absolute pathname.
 ///
 /// @param[in] name Filename to be canonicalized.
-/// @param[out] buf Buffer to store the canonicalized values. A minimum length
-//                  of MAXPATHL+1 is required. If it is NULL, memory is
-//                  allocated. In that case, the caller should deallocate this
-//                  buffer.
+/// @param[out] buf Buffer to store the canonicalized values.
+///                 If it is NULL, memory is allocated. In that case, the caller
+///                 should deallocate this buffer.
+/// @param[in] len  The length of the buffer.
 ///
 /// @return pointer to the buf on success, or NULL.
-char *os_realpath(const char *name, char *buf)
+char *os_realpath(const char *name, char *buf, size_t len)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   uv_fs_t request;
   int result = uv_fs_realpath(NULL, &request, name, NULL);
   if (result == kLibuvSuccess) {
     if (buf == NULL) {
-      buf = xmallocz(MAXPATHL);
+      buf = xmalloc(len);
     }
-    xstrlcpy(buf, request.ptr, MAXPATHL + 1);
+    xstrlcpy(buf, request.ptr, len);
   }
   uv_fs_req_cleanup(&request);
   return result == kLibuvSuccess ? buf : NULL;
