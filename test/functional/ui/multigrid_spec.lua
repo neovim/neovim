@@ -741,6 +741,75 @@ describe('ext_multigrid', function()
         [4] = {-1, "SW", 1, 13, 5, false, 250};
       }}
     end)
+
+    it('half-page scrolling stops at end of buffer', function()
+      command('set number')
+      insert(('foobar\n'):rep(100))
+      feed('7<C-Y>')
+      screen:expect({
+        grid = [[
+        ## grid 1
+          [2:-----------------------------------------------------]|*12
+          {11:[No Name] [+]                                        }|
+          [3:-----------------------------------------------------]|
+        ## grid 2
+          {19: 75 }foobar                                                  |
+          {19: 76 }foobar                                                  |
+          {19: 77 }foobar                                                  |
+          {19: 78 }foobar                                                  |
+          {19: 79 }foobar                                                  |
+          {19: 80 }foobar                                                  |
+          {19: 81 }foobar                                                  |
+          {19: 82 }foobar                                                  |
+          {19: 83 }foobar                                                  |
+          {19: 84 }foobar                                                  |
+          {19: 85 }foobar                                                  |
+          {19: 86 }foobar                                                  |
+          {19: 87 }foobar                                                  |
+          {19: 88 }foobar                                                  |
+          {19: 89 }foobar                                                  |
+          {19: 90 }foobar                                                  |
+          {19: 91 }foobar                                                  |
+          {19: 92 }foobar                                                  |
+          {19: 93 }foobar                                                  |
+          {19: 94 }^foobar                                                  |
+        ## grid 3
+                                                               |
+        ]],
+      })
+      feed('<C-D>')
+      screen:expect({
+        grid = [[
+        ## grid 1
+          [2:-----------------------------------------------------]|*12
+          {11:[No Name] [+]                                        }|
+          [3:-----------------------------------------------------]|
+        ## grid 2
+          {19: 82 }foobar                                                  |
+          {19: 83 }foobar                                                  |
+          {19: 84 }foobar                                                  |
+          {19: 85 }foobar                                                  |
+          {19: 86 }foobar                                                  |
+          {19: 87 }foobar                                                  |
+          {19: 88 }foobar                                                  |
+          {19: 89 }foobar                                                  |
+          {19: 90 }foobar                                                  |
+          {19: 91 }foobar                                                  |
+          {19: 92 }foobar                                                  |
+          {19: 93 }foobar                                                  |
+          {19: 94 }foobar                                                  |
+          {19: 95 }foobar                                                  |
+          {19: 96 }foobar                                                  |
+          {19: 97 }foobar                                                  |
+          {19: 98 }foobar                                                  |
+          {19: 99 }foobar                                                  |
+          {19:100 }foobar                                                  |
+          {19:101 }^                                                        |
+        ## grid 3
+                                                               |
+        ]],
+      })
+    end)
   end)
 
   it('multiline messages scroll over windows', function()
