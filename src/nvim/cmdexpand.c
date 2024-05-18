@@ -3242,6 +3242,7 @@ static int ExpandUserLua(expand_T *xp, int *num_file, char ***file)
 /// Adds matches to `ga`.
 /// If "dirs" is true only expand directory names.
 void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dirs)
+  FUNC_ATTR_NONNULL_ALL
 {
   expand_T xpc;
   ExpandInit(&xpc);
