@@ -2916,6 +2916,10 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                  • {limit}? (`number`, default: `1`) Stop the search after
                    finding this many matches. Use `math.huge` to place no
                    limit on the number of matches.
+                 • {follow_symlinks}? (`boolean`, default: `false`) Follow
+                   symlinks that point to directories. This does not resolve
+                   them, i.e. doesn't change the path to the one the link
+                   points to.
 
     Return: ~
         (`string[]`) Normalized paths |vim.fs.normalize()| of all matching

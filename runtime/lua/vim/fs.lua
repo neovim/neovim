@@ -183,6 +183,11 @@ end
 --- Use `math.huge` to place no limit on the number of matches.
 --- (default: `1`)
 --- @field limit? number
+---
+--- Follow symlinks that point to directories.
+--- This does not resolve them, i.e. doesn't change the path to the one the link points to.
+--- (default: `false`)
+--- @field follow_symlinks? boolean
 
 --- Find files or directories (or other items as specified by `opts.type`) in the given path.
 ---
@@ -228,6 +233,7 @@ function M.find(names, opts)
     stop = { opts.stop, 's', true },
     type = { opts.type, 's', true },
     limit = { opts.limit, 'n', true },
+    follow_symlinks = { opts.follow_symlinks, 'b', true },
   })
 
   if type(names) == 'string' then
@@ -315,6 +321,13 @@ function M.find(names, opts)
                 return matches
               end
             end
+          end
+        end
+
+        if opts.follow_symlinks and type_ == 'link' then
+          local stat = vim.uv.fs_stat(f)
+          if stat and stat.type == 'directory' then
+            dirs[#dirs + 1] = f
           end
         end
 
