@@ -221,7 +221,7 @@ is right aligned, and the "O" is underlined, to indicate it is the shortcut.
 
 					*:am*  *:amenu*  *:an*      *:anoremenu*
 The ":amenu" command can be used to define menu entries for all modes at once,
-expect for Terminal mode.  To make the command work correctly, a character is
+except for Terminal mode.  To make the command work correctly, a character is
 automatically inserted for some modes:
 	mode		inserted	appended	~
 	Normal		nothing		nothing

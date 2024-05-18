@@ -276,14 +276,14 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 --- @return boolean
 function vim.api.nvim_buf_attach(buffer, send_buffer, opts) end
 
---- call a function with buffer as temporary current buffer
+--- Call a function with buffer as temporary current buffer.
 ---
 --- This temporarily switches current buffer to "buffer". If the current
---- window already shows "buffer", the window is not switched If a window
---- inside the current tabpage (including a float) already shows the buffer
---- One of these windows will be set as current window temporarily. Otherwise
---- a temporary scratch window (called the "autocmd window" for historical
---- reasons) will be used.
+--- window already shows "buffer", the window is not switched. If a window
+--- inside the current tabpage (including a float) already shows the buffer,
+--- then one of these windows will be set as current window temporarily.
+--- Otherwise a temporary scratch window (called the "autocmd window" for
+--- historical reasons) will be used.
 ---
 --- This is useful e.g. to call Vimscript functions that only work with the
 --- current buffer/window currently, like `termopen()`.
@@ -1953,7 +1953,7 @@ function vim.api.nvim_set_current_win(window) end
 ---
 ---             • on_win: called when starting to redraw a specific window.
 --- ```
----                ["win", winid, bufnr, topline, botline]
+---                ["win", winid, bufnr, toprow, botrow]
 --- ```
 ---
 ---             • on_line: called for each buffer line being redrawn. (The

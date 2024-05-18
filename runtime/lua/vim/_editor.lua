@@ -608,10 +608,9 @@ end
 
 --- Displays a notification to the user.
 ---
---- This function can be overridden by plugins to display notifications using a
---- custom provider (such as the system notification provider). By default,
+--- This function can be overridden by plugins to display notifications using
+--- a custom provider (such as the system notification provider). By default,
 --- writes to |:messages|.
----
 ---@param msg string Content of the notification to show to the user.
 ---@param level integer|nil One of the values from |vim.log.levels|.
 ---@param opts table|nil Optional parameters. Unused by default.
