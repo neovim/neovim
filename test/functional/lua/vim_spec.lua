@@ -131,51 +131,8 @@ describe('lua stdlib', function()
 
   --- @param prerel string | nil
   local function test_vim_deprecate(prerel)
-    -- vim.deprecate(name, alternative, version, plugin, backtrace)
-    -- See MAINTAIN.md for the soft/hard deprecation policy
-
     describe(('vim.deprecate prerel=%s,'):format(prerel or 'nil'), function()
-      it('plugin=nil', function()
-        local curver = exec_lua('return vim.version()') --[[@as {major:number, minor:number}]]
-        -- "0.10" or "0.10-dev+xxx"
-        local curstr = ('%s.%s%s'):format(curver.major, curver.minor, prerel or '')
-        -- "0.10" or "0.11"
-        local nextver = ('%s.%s'):format(curver.major, curver.minor + (prerel and 0 or 1))
-        local was_removed = prerel and 'was removed' or 'will be removed'
-
-        eq(
-          dedent([[
-            foo.bar() is deprecated, use zub.wooo{ok=yay} instead. :help deprecated
-            Feature was removed in Nvim %s]]):format(curstr),
-          exec_lua('return vim.deprecate(...)', 'foo.bar()', 'zub.wooo{ok=yay}', curstr)
-        )
-        -- Same message as above; skipped this time.
-        eq(vim.NIL, exec_lua('return vim.deprecate(...)', 'foo.bar()', 'zub.wooo{ok=yay}', curstr))
-
-        -- No error if soft-deprecated.
-        eq(
-          vim.NIL,
-          exec_lua('return vim.deprecate(...)', 'foo.baz()', 'foo.better_baz()', '0.99.0')
-        )
-
-        -- Show error if hard-deprecated.
-        eq(
-          dedent([[
-            foo.hard_dep() is deprecated, use vim.new_api() instead. :help deprecated
-            Feature %s in Nvim %s]]):format(was_removed, nextver),
-          exec_lua('return vim.deprecate(...)', 'foo.hard_dep()', 'vim.new_api()', nextver)
-        )
-
-        -- To be deleted in the next major version (1.0)
-        eq(
-          dedent [[
-            foo.baz() is deprecated. :help deprecated
-            Feature will be removed in Nvim 1.0]],
-          exec_lua [[ return vim.deprecate('foo.baz()', nil, '1.0') ]]
-        )
-      end)
-
-      it('plugin specified', function()
+      it('works', function()
         -- When `plugin` is specified, don't show ":help deprecated". #22235
         eq(
           dedent [[
@@ -209,8 +166,58 @@ describe('lua stdlib', function()
     end)
   end
 
+  --- @param prerel string | nil
+  local function test_vim_internal_deprecate(prerel)
+    -- vim._deprecate(name, alternative, version, backtrace)
+    -- See MAINTAIN.md for the soft/hard deprecation policy
+
+    describe(('vim._deprecate prerel=%s,'):format(prerel or 'nil'), function()
+      it('works', function()
+        local curver = exec_lua('return vim.version()') --[[@as {major:number, minor:number}]]
+        -- "0.10" or "0.10-dev+xxx"
+        local curstr = ('%s.%s%s'):format(curver.major, curver.minor, prerel or '')
+        -- "0.10" or "0.11"
+        local nextver = ('%s.%s'):format(curver.major, curver.minor + (prerel and 0 or 1))
+        local was_removed = prerel and 'was removed' or 'will be removed'
+
+        eq(
+          dedent([[
+            foo.bar() is deprecated, use zub.wooo{ok=yay} instead. :help deprecated
+            Feature was removed in Nvim %s]]):format(curstr),
+          exec_lua('return vim._deprecate(...)', 'foo.bar()', 'zub.wooo{ok=yay}', curstr)
+        )
+        -- Same message as above; skipped this time.
+        eq(vim.NIL, exec_lua('return vim._deprecate(...)', 'foo.bar()', 'zub.wooo{ok=yay}', curstr))
+
+        -- No error if soft-deprecated.
+        eq(
+          vim.NIL,
+          exec_lua('return vim._deprecate(...)', 'foo.baz()', 'foo.better_baz()', '0.99.0')
+        )
+
+        -- Show error if hard-deprecated.
+        eq(
+          dedent([[
+            foo.hard_dep() is deprecated, use vim.new_api() instead. :help deprecated
+            Feature %s in Nvim %s]]):format(was_removed, nextver),
+          exec_lua('return vim._deprecate(...)', 'foo.hard_dep()', 'vim.new_api()', nextver)
+        )
+
+        -- To be deleted in the next major version (1.0)
+        eq(
+          dedent [[
+            foo.baz() is deprecated. :help deprecated
+            Feature will be removed in Nvim 1.0]],
+          exec_lua [[ return vim._deprecate('foo.baz()', nil, '1.0') ]]
+        )
+      end)
+    end)
+  end
+
   test_vim_deprecate()
   test_vim_deprecate('-dev+g0000000')
+  test_vim_internal_deprecate()
+  test_vim_internal_deprecate('-dev+g0000000')
 
   it('vim.startswith', function()
     eq(true, fn.luaeval('vim.startswith("123", "1")'))

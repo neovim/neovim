@@ -221,7 +221,7 @@ end
 
 local function convert_severity(opt)
   if type(opt) == 'table' and not opt.severity and opt.severity_limit then
-    vim.deprecate('severity_limit', '{min = severity} See vim.diagnostic.severity', '0.11')
+    vim._deprecate('severity_limit', '{min = severity} See vim.diagnostic.severity', '0.11')
     opt.severity = { min = severity_lsp_to_vim(opt.severity_limit) }
   end
 end

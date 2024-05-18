@@ -1276,11 +1276,10 @@ M.handlers.signs = {
         local sign = vim.fn.sign_getdefined(name)[1]
         if sign then
           local severity = M.severity[v:upper()]
-          vim.deprecate(
+          vim._deprecate(
             'Defining diagnostic signs with :sign-define or sign_define()',
             'vim.diagnostic.config()',
             '0.12',
-            nil,
             false
           )
 
@@ -1596,7 +1595,7 @@ end
 
 --- @deprecated use `vim.diagnostic.is_enabled()`
 function M.is_disabled(bufnr, namespace)
-  vim.deprecate('vim.diagnostic.is_disabled()', 'vim.diagnostic.is_enabled()', '0.12', nil, false)
+  vim._deprecate('vim.diagnostic.is_disabled()', 'vim.diagnostic.is_enabled()', '0.12', false)
   return not M.is_enabled { bufnr = bufnr or 0, ns_id = namespace }
 end
 
@@ -1987,7 +1986,7 @@ end
 
 --- @deprecated use `vim.diagnostic.enable(false, …)`
 function M.disable(bufnr, namespace)
-  vim.deprecate('vim.diagnostic.disable()', 'vim.diagnostic.enable(false, …)', '0.12', nil, false)
+  vim._deprecate('vim.diagnostic.disable()', 'vim.diagnostic.enable(false, …)', '0.12', false)
   M.enable(false, { bufnr = bufnr, ns_id = namespace })
 end
 
@@ -2008,11 +2007,10 @@ function M.enable(enable, filter)
     and vim.tbl_contains({ 'number', 'nil' }, type(filter))
 
   if legacy then
-    vim.deprecate(
+    vim._deprecate(
       'vim.diagnostic.enable(buf:number, namespace:number)',
       'vim.diagnostic.enable(enable:boolean, filter:table)',
       '0.12',
-      nil,
       false
     )
 

@@ -179,7 +179,7 @@ local _str_byteindex_enc = M._str_byteindex_enc
 ---@param new_lines (table) list of strings to replace the original
 ---@return table The modified {lines} object
 function M.set_lines(lines, A, B, new_lines)
-  vim.deprecate('vim.lsp.util.set_lines()', 'nil', '0.12')
+  vim._deprecate('vim.lsp.util.set_lines()', 'nil', '0.12')
   -- 0-indexing to 1-indexing
   local i_0 = A[1] + 1
   -- If it extends past the end, truncate it to the end. This is because the
@@ -1850,7 +1850,7 @@ end
 ---@param lines table list of lines to trim
 ---@return table trimmed list of lines
 function M.trim_empty_lines(lines)
-  vim.deprecate('vim.lsp.util.trim_empty_lines()', 'vim.split() with `trimempty`', '0.12')
+  vim._deprecate('vim.lsp.util.trim_empty_lines()', 'vim.split() with `trimempty`', '0.12')
   local start = 1
   for i = 1, #lines do
     if lines[i] ~= nil and #lines[i] > 0 then
@@ -1877,7 +1877,7 @@ end
 ---@param lines table list of lines
 ---@return string filetype or "markdown" if it was unchanged.
 function M.try_trim_markdown_code_blocks(lines)
-  vim.deprecate('vim.lsp.util.try_trim_markdown_code_blocks()', 'nil', '0.12')
+  vim._deprecate('vim.lsp.util.try_trim_markdown_code_blocks()', 'nil', '0.12')
   local language_id = lines[1]:match('^```(.*)')
   if language_id then
     local has_inner_code_fence = false
@@ -2106,7 +2106,7 @@ end
 ---@return table|string|vim.NIL The value of settings accessed via section. `vim.NIL` if not found.
 ---@deprecated
 function M.lookup_section(settings, section)
-  vim.deprecate('vim.lsp.util.lookup_section()', 'vim.tbl_get() with `vim.split`', '0.12')
+  vim._deprecate('vim.lsp.util.lookup_section()', 'vim.tbl_get() with `vim.split`', '0.12')
   for part in vim.gsplit(section, '.', { plain = true }) do
     settings = settings[part]
     if settings == nil then

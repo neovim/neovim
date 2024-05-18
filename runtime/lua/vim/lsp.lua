@@ -782,7 +782,7 @@ end
 ---@private
 ---@deprecated
 function lsp.get_active_clients(filter)
-  vim.deprecate('vim.lsp.get_active_clients()', 'vim.lsp.get_clients()', '0.12')
+  vim._deprecate('vim.lsp.get_active_clients()', 'vim.lsp.get_clients()', '0.12')
   return lsp.get_clients(filter)
 end
 
@@ -1089,7 +1089,7 @@ end
 ---@return table result is table of (client_id, client) pairs
 ---@deprecated Use |vim.lsp.get_clients()| instead.
 function lsp.buf_get_clients(bufnr)
-  vim.deprecate('vim.lsp.buf_get_clients()', 'vim.lsp.get_clients()', '0.12')
+  vim._deprecate('vim.lsp.buf_get_clients()', 'vim.lsp.get_clients()', '0.12')
   local result = {} --- @type table<integer,vim.lsp.Client>
   for _, client in ipairs(lsp.get_clients({ bufnr = resolve_bufnr(bufnr) })) do
     result[client.id] = client
@@ -1140,7 +1140,7 @@ end
 ---                   buffer number as arguments.
 ---@deprecated use lsp.get_clients({ bufnr = bufnr }) with regular loop
 function lsp.for_each_buffer_client(bufnr, fn)
-  vim.deprecate(
+  vim._deprecate(
     'vim.lsp.for_each_buffer_client()',
     'lsp.get_clients({ bufnr = bufnr }) with regular loop',
     '0.12'
