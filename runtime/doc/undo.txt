@@ -76,7 +76,7 @@ Examples	Vim way			Vi-compatible way	~
 "uu"		two times undo		no-op
 "u CTRL-R"	no-op			two times undo
 
-Rationale:  Nvi uses the "." command instead of CTRL-R.  Unfortunately, this
+Rationale:  Nvim uses the "." command instead of CTRL-R.  Unfortunately, this
 	    is not Vi compatible.  For example "dwdwu." in Vi deletes two
 	    words, in Nvi it does nothing.
 
