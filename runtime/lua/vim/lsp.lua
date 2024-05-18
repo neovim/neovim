@@ -64,6 +64,8 @@ lsp._request_name_to_capability = {
   [ms.textDocument_inlayHint] = { 'inlayHintProvider' },
   [ms.textDocument_diagnostic] = { 'diagnosticProvider' },
   [ms.inlayHint_resolve] = { 'inlayHintProvider', 'resolveProvider' },
+  [ms.textDocument_documentLink] = { 'documentLinkProvider' },
+  [ms.documentLink_resolve] = { 'documentLinkProvider', 'resolveProvider' },
 }
 
 -- TODO improve handling of scratch buffers with LSP attached.
