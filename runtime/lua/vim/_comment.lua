@@ -3,6 +3,11 @@
 ---@field left string Left part of comment
 ---@field right string Right part of comment
 
+local M = {}
+
+---@type fun(row: integer, col: integer): string?
+M.cs_hook = nil
+
 --- Get 'commentstring' at cursor
 ---@param ref_position integer[]
 ---@return string
@@ -18,6 +23,13 @@ local function get_commentstring(ref_position)
   -- This is useful for injected languages (like markdown with code blocks).
   local row, col = ref_position[1] - 1, ref_position[2]
   local ref_range = { row, col, row, col + 1 }
+
+  if M.cs_hook then
+    local cs = M.cs_hook(row, col)
+    if cs then
+      return cs
+    end
+  end
 
   -- - Get 'commentstring' from the deepest LanguageTree which both contains
   --   reference range and has valid 'commentstring' (meaning it has at least
@@ -181,7 +193,7 @@ end
 ---@param line_start integer
 ---@param line_end integer
 ---@param ref_position? integer[]
-local function toggle_lines(line_start, line_end, ref_position)
+function M.toggle_lines(line_start, line_end, ref_position)
   ref_position = ref_position or { line_start, 0 }
   local parts = get_comment_parts(ref_position)
   local lines = vim.api.nvim_buf_get_lines(0, line_start - 1, line_end, false)
@@ -212,7 +224,7 @@ end
 ---|"'line'"
 ---|"'char'"
 ---|"'block'"
-local function operator(mode)
+function M.operator(mode)
   -- Used without arguments as part of expression mapping. Otherwise it is
   -- called as 'operatorfunc'.
   if mode == nil then
@@ -233,12 +245,12 @@ local function operator(mode)
   -- NOTE: use cursor position as reference for possibly computing local
   -- tree-sitter-based 'commentstring'. Recompute every time for a proper
   -- dot-repeat. In Visual and sometimes Normal mode it uses start position.
-  toggle_lines(lnum_from, lnum_to, vim.api.nvim_win_get_cursor(0))
+  M.toggle_lines(lnum_from, lnum_to, vim.api.nvim_win_get_cursor(0))
   return ''
 end
 
 --- Select contiguous commented lines at cursor
-local function textobject()
+function M.textobject()
   local lnum_cur = vim.fn.line('.')
   local parts = get_comment_parts({ lnum_cur, vim.fn.col('.') })
   local comment_check = make_comment_check(parts)
@@ -263,4 +275,4 @@ local function textobject()
   vim.cmd('normal! ' .. lnum_from .. 'GV' .. lnum_to .. 'G')
 end
 
-return { operator = operator, textobject = textobject, toggle_lines = toggle_lines }
+return M

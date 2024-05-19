@@ -585,6 +585,28 @@ to look up the value of 'commentstring' corresponding to the cursor position.
 (This can be different from the buffer's 'commentstring' in case of
 |treesitter-language-injections|.)
 
+The comment module can take a custom hook to allow for more control when
+determining the 'commentstring'. For example, the following can be used to get
+more accurate comments in JSX-family files (assuming the appropriate
+|treesitter| parser has been installed): >lua
+
+    require('vim._comment').cs_hook = function(row, col)
+      local ft = vim.bo.filetype
+      if ft == 'typescriptreact' or ft == 'javascriptreact' then
+        local current_node = vim.treesitter.get_node({ pos = { row, col } })
+        while current_node do
+          if current_node:type() == 'jsx_element' then
+            return '{/*%s*/}'
+          end
+          current_node = current_node:parent()
+        end
+      else
+        -- the hook is ignored when it returns `nil`
+        return nil
+      end
+    end
+<
+
 							*gc* *gc-default*
 gc{motion}		Comment or uncomment lines covered by {motion}.
 

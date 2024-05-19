@@ -364,6 +364,19 @@ describe('commenting', function()
       toggle_lines(1, 4)
       eq(get_lines(), { ' aa  ', ' aa\t', '', '' })
     end)
+
+    it('works with custom commentstring hook', function()
+      -- Without right-hand side
+      set_commentstring('# %s')
+      require('vim._comment').cs_hook = function()
+        return '// %s'
+      end
+      set_lines({ ' aa', ' aa  ', '  ' })
+      toggle_lines(1, 3)
+      eq(get_lines(), { ' // aa', ' // aa  ', ' //' })
+      toggle_lines(1, 3)
+      eq(get_lines(), { ' aa', ' aa  ', '' })
+    end)
   end)
 
   describe('Operator', function()
