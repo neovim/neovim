@@ -66,6 +66,10 @@ lsp._request_name_to_capability = {
   [ms.inlayHint_resolve] = { 'inlayHintProvider', 'resolveProvider' },
   [ms.textDocument_documentLink] = { 'documentLinkProvider' },
   [ms.documentLink_resolve] = { 'documentLinkProvider', 'resolveProvider' },
+  [ms.textDocument_didClose] = { 'textDocumentSync', 'openClose' },
+  [ms.textDocument_didOpen] = { 'textDocumentSync', 'openClose' },
+  [ms.textDocument_willSave] = { 'textDocumentSync', 'willSave' },
+  [ms.textDocument_willSaveWaitUntil] = { 'textDocumentSync', 'willSaveWaitUntil' },
 }
 
 -- TODO improve handling of scratch buffers with LSP attached.
@@ -522,10 +526,10 @@ local function buf_attach(bufnr)
           },
           reason = protocol.TextDocumentSaveReason.Manual, ---@type integer
         }
-        if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'willSave') then
+        if client.supports_method(ms.textDocument_willSave) then
           client.notify(ms.textDocument_willSave, params)
         end
-        if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'willSaveWaitUntil') then
+        if client.supports_method(ms.textDocument_willSaveWaitUntil) then
           local result, err =
             client.request_sync(ms.textDocument_willSaveWaitUntil, params, 1000, ctx.buf)
           if result and result.result then
@@ -560,7 +564,7 @@ local function buf_attach(bufnr)
       local params = { textDocument = { uri = uri } }
       for _, client in ipairs(clients) do
         changetracking.reset_buf(client, bufnr)
-        if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
+        if client.supports_method(ms.textDocument_didClose) then
           client.notify(ms.textDocument_didClose, params)
         end
       end
@@ -573,7 +577,7 @@ local function buf_attach(bufnr)
       local params = { textDocument = { uri = uri } }
       for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
         changetracking.reset_buf(client, bufnr)
-        if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
+        if client.supports_method(ms.textDocument_didClose) then
           client.notify(ms.textDocument_didClose, params)
         end
       end
@@ -665,7 +669,7 @@ function lsp.buf_detach_client(bufnr, client_id)
 
   changetracking.reset_buf(client, bufnr)
 
-  if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
+  if client.supports_method(ms.textDocument_didClose) then
     local uri = vim.uri_from_bufnr(bufnr)
     local params = { textDocument = { uri = uri } }
     client.notify(ms.textDocument_didClose, params)

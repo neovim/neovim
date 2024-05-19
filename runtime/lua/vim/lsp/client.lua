@@ -905,7 +905,7 @@ end
 --- @param bufnr integer Number of the buffer, or 0 for current
 function Client:_text_document_did_open_handler(bufnr)
   changetracking.init(self, bufnr)
-  if not vim.tbl_get(self.server_capabilities, 'textDocumentSync', 'openClose') then
+  if not self.supports_method(ms.textDocument_didOpen) then
     return
   end
   if not api.nvim_buf_is_loaded(bufnr) then
