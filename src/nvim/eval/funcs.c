@@ -3008,6 +3008,11 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void add_regionpos_range(typval_T *rettv, int bufnr, int lnum1, int col1, int coladd1,
                                 int lnum2, int col2, int coladd2)
 {
+  buf_T *findbuf = bufnr != 0 ? buflist_findnr(bufnr) : curbuf;
+  if (findbuf == NULL || findbuf->b_ml.ml_mfp == NULL) {
+    return;
+  }
+
   list_T *l1 = tv_list_alloc(2);
   tv_list_append_list(rettv->vval.v_list, l1);
 
@@ -3016,8 +3021,6 @@ static void add_regionpos_range(typval_T *rettv, int bufnr, int lnum1, int col1,
 
   list_T *l3 = tv_list_alloc(4);
   tv_list_append_list(l1, l3);
-
-  buf_T *findbuf = bufnr != 0 ? buflist_findnr(bufnr) : curbuf;
 
   int max_col1 = ml_get_buf_len(findbuf, lnum1);
   tv_list_append_number(l2, bufnr);
