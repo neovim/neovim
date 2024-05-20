@@ -415,6 +415,18 @@ To disable folding everything under the title use this: >
 	let asciidoc_fold_under_title = 0
 
 
+ARDUINO							*ft-arduino-plugin*
+
+By default the following options are set, in accordance with the default
+settings of Arduino IDE: >
+
+	setlocal expandtab tabstop=2 softtabstop=2 shiftwidth=2
+
+To disable this behavior, set the following variable in your vimrc: >
+
+	let g:arduino_recommended_style = 0
+
+
 AWK							*ft-awk-plugin*
 
 Support for features specific to GNU Awk, like @include, can be enabled by
