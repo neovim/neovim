@@ -3128,3 +3128,39 @@ void f_trim(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
   rettv->vval.v_string = xstrnsave(head, (size_t)(tail - head));
 }
+
+/// compare two keyvalue_T structs by case sensitive value
+int cmp_keyvalue_value(const void *a, const void *b)
+{
+  keyvalue_T *kv1 = (keyvalue_T *)a;
+  keyvalue_T *kv2 = (keyvalue_T *)b;
+
+  return strcmp(kv1->value, kv2->value);
+}
+
+/// compare two keyvalue_T structs by value with length
+int cmp_keyvalue_value_n(const void *a, const void *b)
+{
+  keyvalue_T *kv1 = (keyvalue_T *)a;
+  keyvalue_T *kv2 = (keyvalue_T *)b;
+
+  return strncmp(kv1->value, kv2->value, MAX(kv1->length, kv2->length));
+}
+
+/// compare two keyvalue_T structs by case insensitive value
+int cmp_keyvalue_value_i(const void *a, const void *b)
+{
+  keyvalue_T *kv1 = (keyvalue_T *)a;
+  keyvalue_T *kv2 = (keyvalue_T *)b;
+
+  return STRICMP(kv1->value, kv2->value);
+}
+
+/// compare two keyvalue_T structs by case insensitive value with length
+int cmp_keyvalue_value_ni(const void *a, const void *b)
+{
+  keyvalue_T *kv1 = (keyvalue_T *)a;
+  keyvalue_T *kv2 = (keyvalue_T *)b;
+
+  return STRNICMP(kv1->value, kv2->value, MAX(kv1->length, kv2->length));
+}
