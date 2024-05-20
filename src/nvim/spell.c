@@ -2665,16 +2665,16 @@ void ex_spellrepall(exarg_T *eap)
   const size_t repl_to_len = strlen(repl_to);
   const int addlen = (int)(repl_to_len - repl_from_len);
 
-  const size_t frompatlen = repl_from_len + 7;
-  char *frompat = xmalloc(frompatlen);
-  snprintf(frompat, frompatlen, "\\V\\<%s\\>", repl_from);
+  const size_t frompatsize = repl_from_len + 7;
+  char *frompat = xmalloc(frompatsize);
+  size_t frompatlen = (size_t)snprintf(frompat, frompatsize, "\\V\\<%s\\>", repl_from);
   p_ws = false;
 
   sub_nsubs = 0;
   sub_nlines = 0;
   curwin->w_cursor.lnum = 0;
   while (!got_int) {
-    if (do_search(NULL, '/', '/', frompat, 1, SEARCH_KEEP, NULL) == 0
+    if (do_search(NULL, '/', '/', frompat, frompatlen, 1, SEARCH_KEEP, NULL) == 0
         || u_save_cursor() == FAIL) {
       break;
     }

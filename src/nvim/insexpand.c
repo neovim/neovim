@@ -253,6 +253,7 @@ static int ctrl_x_mode = CTRL_X_NORMAL;
 
 static int compl_matches = 0;           ///< number of completion matches
 static char *compl_pattern = NULL;
+static size_t compl_patternlen = 0;
 static Direction compl_direction = FORWARD;
 static Direction compl_shows_dir = FORWARD;
 static int compl_pending = 0;           ///< > 1 for postponed CTRL-N
@@ -1583,6 +1584,7 @@ static char *find_line_end(char *ptr)
 static void ins_compl_free(void)
 {
   XFREE_CLEAR(compl_pattern);
+  compl_patternlen = 0;
   XFREE_CLEAR(compl_leader);
 
   if (compl_first_match == NULL) {
@@ -1617,6 +1619,7 @@ void ins_compl_clear(void)
   compl_started = false;
   compl_matches = 0;
   XFREE_CLEAR(compl_pattern);
+  compl_patternlen = 0;
   XFREE_CLEAR(compl_leader);
   edit_submode_extra = NULL;
   kv_destroy(compl_orig_extmarks);
@@ -2991,7 +2994,7 @@ done:
 static void get_next_include_file_completion(int compl_type)
 {
   find_pattern_in_path(compl_pattern, compl_direction,
-                       strlen(compl_pattern), false, false,
+                       compl_patternlen, false, false,
                        ((compl_type == CTRL_X_PATH_DEFINES
                          && !(compl_cont_status & CONT_SOL))
                         ? FIND_DEFINE : FIND_ANY),
@@ -3074,8 +3077,7 @@ static void get_next_cmdline_completion(void)
   char **matches;
   int num_matches;
   if (expand_cmdline(&compl_xp, compl_pattern,
-                     (int)strlen(compl_pattern),
-                     &num_matches, &matches) == EXPAND_OK) {
+                     (int)compl_patternlen, &num_matches, &matches) == EXPAND_OK) {
     ins_compl_add_matches(num_matches, matches, false);
   }
 }
@@ -3217,8 +3219,8 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
                                               compl_direction, compl_pattern);
     } else {
       found_new_match = searchit(NULL, st->ins_buf, st->cur_match_pos,
-                                 NULL, compl_direction, compl_pattern, 1,
-                                 SEARCH_KEEP + SEARCH_NFMSG, RE_LAST, NULL);
+                                 NULL, compl_direction, compl_pattern, compl_patternlen,
+                                 1, SEARCH_KEEP + SEARCH_NFMSG, RE_LAST, NULL);
     }
     msg_silent--;
     if (!compl_started || st->set_match_pos) {
@@ -3902,7 +3904,8 @@ static bool ins_compl_use_match(int c)
 
 /// Get the pattern, column and length for normal completion (CTRL-N CTRL-P
 /// completion)
-/// Sets the global variables: compl_col, compl_length and compl_pattern.
+/// Sets the global variables: compl_col, compl_length, compl_pattern and
+/// compl_patternlen.
 /// Uses the global variables: compl_cont_status and ctrl_x_mode
 static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
 {
@@ -3919,21 +3922,23 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
     }
   } else if (compl_status_adding()) {
     char *prefix = "\\<";
+    size_t prefixlen = STRLEN_LITERAL("\\<");
 
     // we need up to 2 extra chars for the prefix
-    compl_pattern = xmalloc(quote_meta(NULL, line + compl_col, compl_length) + 2);
+    compl_pattern = xmalloc(quote_meta(NULL, line + compl_col,
+                                       compl_length) + prefixlen);
     if (!vim_iswordp(line + compl_col)
         || (compl_col > 0
             && (vim_iswordp(mb_prevptr(line, line + compl_col))))) {
       prefix = "";
+      prefixlen = 0;
     }
     STRCPY(compl_pattern, prefix);
-    quote_meta(compl_pattern + strlen(prefix),
-               line + compl_col, compl_length);
+    quote_meta(compl_pattern + prefixlen, line + compl_col, compl_length);
   } else if (--startcol < 0
              || !vim_iswordp(mb_prevptr(line, line + startcol + 1))) {
     // Match any word of at least two chars
-    compl_pattern = xstrdup("\\<\\k\\k");
+    compl_pattern = xstrnsave(S_LEN("\\<\\k\\k"));
     compl_col += curs_col;
     compl_length = 0;
   } else {
@@ -3965,6 +3970,8 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
     }
   }
 
+  compl_patternlen = strlen(compl_pattern);
+
   return OK;
 }
 
@@ -3983,6 +3990,8 @@ static int get_wholeline_compl_info(char *line, colnr_T curs_col)
   } else {
     compl_pattern = xstrnsave(line + compl_col, (size_t)compl_length);
   }
+
+  compl_patternlen = strlen(compl_pattern);
 
   return OK;
 }
@@ -4009,6 +4018,7 @@ static int get_filename_compl_info(char *line, int startcol, colnr_T curs_col)
   compl_col += startcol;
   compl_length = (int)curs_col - startcol;
   compl_pattern = addstar(line + compl_col, (size_t)compl_length, EXPAND_FILES);
+  compl_patternlen = strlen(compl_pattern);
 
   return OK;
 }
@@ -4018,7 +4028,8 @@ static int get_filename_compl_info(char *line, int startcol, colnr_T curs_col)
 static int get_cmdline_compl_info(char *line, colnr_T curs_col)
 {
   compl_pattern = xstrnsave(line, (size_t)curs_col);
-  set_cmd_context(&compl_xp, compl_pattern, (int)strlen(compl_pattern), curs_col, false);
+  compl_patternlen = (size_t)curs_col;
+  set_cmd_context(&compl_xp, compl_pattern, (int)compl_patternlen, curs_col, false);
   if (compl_xp.xp_context == EXPAND_UNSUCCESSFUL
       || compl_xp.xp_context == EXPAND_NOTHING) {
     // No completion possible, use an empty pattern to get a
@@ -4104,6 +4115,7 @@ static int get_userdefined_compl_info(colnr_T curs_col)
   char *line = ml_get(curwin->w_cursor.lnum);
   compl_length = curs_col - compl_col;
   compl_pattern = xstrnsave(line + compl_col, (size_t)compl_length);
+  compl_patternlen = (size_t)compl_length;
 
   return OK;
 }
@@ -4129,6 +4141,7 @@ static int get_spell_compl_info(int startcol, colnr_T curs_col)
   // Need to obtain "line" again, it may have become invalid.
   char *line = ml_get(curwin->w_cursor.lnum);
   compl_pattern = xstrnsave(line + compl_col, (size_t)compl_length);
+  compl_patternlen = (size_t)compl_length;
 
   return OK;
 }
@@ -4324,6 +4337,7 @@ static int ins_compl_start(void)
   if (ins_compl_add(compl_orig_text, -1, NULL, NULL, false, NULL, 0,
                     flags, false) != OK) {
     XFREE_CLEAR(compl_pattern);
+    compl_patternlen = 0;
     XFREE_CLEAR(compl_orig_text);
     kv_destroy(compl_orig_extmarks);
     return FAIL;

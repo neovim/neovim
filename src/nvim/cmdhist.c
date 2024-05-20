@@ -294,7 +294,7 @@ static int last_maptick = -1;           // last seen maptick
 /// @param histype  may be one of the HIST_ values.
 /// @param in_map   consider maptick when inside a mapping
 /// @param sep      separator character used (search hist)
-void add_to_history(int histype, const char *new_entry, int in_map, int sep)
+void add_to_history(int histype, const char *new_entry, size_t new_entrylen, bool in_map, int sep)
 {
   histentry_T *hisptr;
 
@@ -334,11 +334,10 @@ void add_to_history(int histype, const char *new_entry, int in_map, int sep)
   hist_free_entry(hisptr);
 
   // Store the separator after the NUL of the string.
-  size_t len = strlen(new_entry);
-  hisptr->hisstr = xstrnsave(new_entry, len + 2);
+  hisptr->hisstr = xstrnsave(new_entry, new_entrylen + 2);
   hisptr->timestamp = os_time();
   hisptr->additional_elements = NULL;
-  hisptr->hisstr[len + 1] = (char)sep;
+  hisptr->hisstr[new_entrylen + 1] = (char)sep;
 
   hisptr->hisnum = ++hisnum[histype];
   if (histype == HIST_SEARCH && in_map) {
@@ -536,7 +535,7 @@ void f_histadd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   init_history();
-  add_to_history(histype, str, false, NUL);
+  add_to_history(histype, str, strlen(str), false, NUL);
   rettv->vval.v_number = true;
 }
 

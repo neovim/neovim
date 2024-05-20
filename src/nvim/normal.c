@@ -2349,13 +2349,15 @@ bool find_decl(char *ptr, size_t len, bool locally, bool thisblock, int flags_ar
   bool incll;
   int searchflags = flags_arg;
 
-  size_t patlen = len + 7;
-  char *pat = xmalloc(patlen);
+  size_t patsize = len + 7;
+  char *pat = xmalloc(patsize);
 
   // Put "\V" before the pattern to avoid that the special meaning of "."
   // and "~" causes trouble.
-  assert(patlen <= INT_MAX);
-  snprintf(pat, patlen, vim_iswordp(ptr) ? "\\V\\<%.*s\\>" : "\\V%.*s", (int)len, ptr);
+  assert(patsize <= INT_MAX);
+  size_t patlen = (size_t)snprintf(pat, patsize,
+                                   vim_iswordp(ptr) ? "\\V\\<%.*s\\>" : "\\V%.*s",
+                                   (int)len, ptr);
   pos_T old_pos = curwin->w_cursor;
   bool save_p_ws = p_ws;
   bool save_p_scs = p_scs;
@@ -2382,7 +2384,7 @@ bool find_decl(char *ptr, size_t len, bool locally, bool thisblock, int flags_ar
   clearpos(&found_pos);
   while (true) {
     t = searchit(curwin, curbuf, &curwin->w_cursor, NULL, FORWARD,
-                 pat, 1, searchflags, RE_LAST, NULL);
+                 pat, patlen, 1, searchflags, RE_LAST, NULL);
     if (curwin->w_cursor.lnum >= old_pos.lnum) {
       t = false;         // match after start is failure too
     }
@@ -3296,21 +3298,22 @@ void do_nv_ident(int c1, int c2)
 /// 'K' normal-mode command. Get the command to lookup the keyword under the
 /// cursor.
 static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, char **ptr_arg,
-                          size_t n, char *buf, size_t buf_size)
+                          size_t n, char *buf, size_t bufsize, size_t *buflen)
 {
   if (kp_help) {
     // in the help buffer
     STRCPY(buf, "he! ");
+    *buflen = STRLEN_LITERAL("he! ");
     return n;
   }
 
   if (kp_ex) {
+    *buflen = 0;
     // 'keywordprg' is an ex command
     if (cap->count0 != 0) {  // Send the count to the ex command.
-      snprintf(buf, buf_size, "%" PRId64, (int64_t)(cap->count0));
+      *buflen = (size_t)snprintf(buf, bufsize, "%" PRId64, (int64_t)(cap->count0));
     }
-    STRCAT(buf, kp);
-    STRCAT(buf, " ");
+    *buflen += (size_t)snprintf(buf + *buflen, bufsize - *buflen, "%s ", kp);
     return n;
   }
 
@@ -3335,21 +3338,19 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, cha
   bool isman = (strcmp(kp, "man") == 0);
   bool isman_s = (strcmp(kp, "man -s") == 0);
   if (cap->count0 != 0 && !(isman || isman_s)) {
-    snprintf(buf, buf_size, ".,.+%" PRId64, (int64_t)(cap->count0 - 1));
+    *buflen = (size_t)snprintf(buf, bufsize, ".,.+%" PRId64, (int64_t)(cap->count0 - 1));
   }
 
   do_cmdline_cmd("tabnew");
-  STRCAT(buf, "terminal ");
+  *buflen += (size_t)snprintf(buf + *buflen, bufsize - *buflen, "terminal ");
   if (cap->count0 == 0 && isman_s) {
-    STRCAT(buf, "man");
+    *buflen += (size_t)snprintf(buf + *buflen, bufsize - *buflen, "man ");
   } else {
-    STRCAT(buf, kp);
+    *buflen += (size_t)snprintf(buf + *buflen, bufsize - *buflen, "%s ", kp);
   }
-  STRCAT(buf, " ");
   if (cap->count0 != 0 && (isman || isman_s)) {
-    snprintf(buf + strlen(buf), buf_size - strlen(buf), "%" PRId64,
-             (int64_t)cap->count0);
-    STRCAT(buf, " ");
+    *buflen += (size_t)snprintf(buf + *buflen, bufsize - *buflen,
+                                "%" PRId64 " ", (int64_t)cap->count0);
   }
 
   *ptr_arg = ptr;
@@ -3412,9 +3413,10 @@ static void nv_ident(cmdarg_T *cap)
     return;
   }
   bool kp_ex = (*kp == ':');  // 'keywordprg' is an ex command
-  size_t buf_size = n * 2 + 30 + strlen(kp);
-  char *buf = xmalloc(buf_size);
+  size_t bufsize = n * 2 + 30 + strlen(kp);
+  char *buf = xmalloc(bufsize);
   buf[0] = NUL;
+  size_t buflen = 0;
 
   switch (cmdchar) {
   case '*':
@@ -3428,12 +3430,13 @@ static void nv_ident(cmdarg_T *cap)
 
     if (!g_cmd && vim_iswordp(ptr)) {
       STRCPY(buf, "\\<");
+      buflen = STRLEN_LITERAL("\\<");
     }
     no_smartcase = true;                // don't use 'smartcase' now
     break;
 
   case 'K':
-    n = nv_K_getcmd(cap, kp, kp_help, kp_ex, &ptr, n, buf, buf_size);
+    n = nv_K_getcmd(cap, kp, kp_help, kp_ex, &ptr, n, buf, bufsize, &buflen);
     if (n == 0) {
       return;
     }
@@ -3442,19 +3445,23 @@ static void nv_ident(cmdarg_T *cap)
   case ']':
     tag_cmd = true;
     STRCPY(buf, "ts ");
+    buflen = STRLEN_LITERAL("ts ");
     break;
 
   default:
     tag_cmd = true;
     if (curbuf->b_help) {
       STRCPY(buf, "he! ");
+      buflen = STRLEN_LITERAL("he! ");
     } else {
       if (g_cmd) {
         STRCPY(buf, "tj ");
+        buflen = STRLEN_LITERAL("tj ");
       } else if (cap->count0 == 0) {
         STRCPY(buf, "ta ");
+        buflen = STRLEN_LITERAL("ta ");
       } else {
-        snprintf(buf, buf_size, ":%" PRId64 "ta ", (int64_t)cap->count0);
+        buflen = (size_t)snprintf(buf, bufsize, ":%" PRId64 "ta ", (int64_t)cap->count0);
       }
     }
   }
@@ -3470,9 +3477,11 @@ static void nv_ident(cmdarg_T *cap)
       p = vim_strsave_shellescape(ptr, true, true);
     }
     xfree(ptr);
-    char *newbuf = xrealloc(buf, strlen(buf) + strlen(p) + 1);
+    size_t plen = strlen(p);
+    char *newbuf = xrealloc(buf, buflen + plen + 1);
     buf = newbuf;
-    STRCAT(buf, p);
+    STRCPY(buf + buflen, p);
+    buflen += plen;
     xfree(p);
   } else {
     char *aux_ptr;
@@ -3491,12 +3500,13 @@ static void nv_ident(cmdarg_T *cap)
       aux_ptr = "\\|\"\n*?[";
     }
 
-    p = buf + strlen(buf);
+    p = buf + buflen;
     while (n-- > 0) {
       // put a backslash before \ and some others
       if (vim_strchr(aux_ptr, (uint8_t)(*ptr)) != NULL) {
         *p++ = '\\';
       }
+
       // When current byte is a part of multibyte character, copy all
       // bytes of that character.
       const size_t len = (size_t)(utfc_ptr2len(ptr) - 1);
@@ -3506,20 +3516,21 @@ static void nv_ident(cmdarg_T *cap)
       *p++ = *ptr++;
     }
     *p = NUL;
+    buflen = (size_t)(p - buf);
   }
 
   // Execute the command.
   if (cmdchar == '*' || cmdchar == '#') {
-    if (!g_cmd
-        && vim_iswordp(mb_prevptr(get_cursor_line_ptr(), ptr))) {
-      STRCAT(buf, "\\>");
+    if (!g_cmd && vim_iswordp(mb_prevptr(get_cursor_line_ptr(), ptr))) {
+      STRCPY(buf + buflen, "\\>");
+      buflen += STRLEN_LITERAL("\\>");
     }
 
     // put pattern in search history
     init_history();
-    add_to_history(HIST_SEARCH, buf, true, NUL);
+    add_to_history(HIST_SEARCH, buf, buflen, true, NUL);
 
-    normal_search(cap, cmdchar == '*' ? '/' : '?', buf, 0, NULL);
+    normal_search(cap, cmdchar == '*' ? '/' : '?', buf, buflen, 0, NULL);
   } else {
     g_tag_at_cursor = true;
     do_cmdline_cmd(buf);
@@ -3940,7 +3951,7 @@ static void nv_search(cmdarg_T *cap)
     return;
   }
 
-  normal_search(cap, cap->cmdchar, cap->searchbuf,
+  normal_search(cap, cap->cmdchar, cap->searchbuf, strlen(cap->searchbuf),
                 (cap->arg || !equalpos(save_cursor, curwin->w_cursor))
                 ? 0 : SEARCH_MARK, NULL);
 }
@@ -3951,14 +3962,14 @@ static void nv_next(cmdarg_T *cap)
 {
   pos_T old = curwin->w_cursor;
   int wrapped = false;
-  int i = normal_search(cap, 0, NULL, SEARCH_MARK | cap->arg, &wrapped);
+  int i = normal_search(cap, 0, NULL, 0, SEARCH_MARK | cap->arg, &wrapped);
 
   if (i == 1 && !wrapped && equalpos(old, curwin->w_cursor)) {
     // Avoid getting stuck on the current cursor position, which can happen when
     // an offset is given and the cursor is on the last char in the buffer:
     // Repeat with count + 1.
     cap->count1 += 1;
-    normal_search(cap, 0, NULL, SEARCH_MARK | cap->arg, NULL);
+    normal_search(cap, 0, NULL, 0, SEARCH_MARK | cap->arg, NULL);
     cap->count1 -= 1;
   }
 }
@@ -3969,7 +3980,7 @@ static void nv_next(cmdarg_T *cap)
 /// @param opt  extra flags for do_search()
 ///
 /// @return 0 for failure, 1 for found, 2 for found and line offset added.
-static int normal_search(cmdarg_T *cap, int dir, char *pat, int opt, int *wrapped)
+static int normal_search(cmdarg_T *cap, int dir, char *pat, size_t patlen, int opt, int *wrapped)
 {
   searchit_arg_T sia;
 
@@ -3979,7 +3990,7 @@ static int normal_search(cmdarg_T *cap, int dir, char *pat, int opt, int *wrappe
   curwin->w_set_curswant = true;
 
   CLEAR_FIELD(sia);
-  int i = do_search(cap->oap, dir, dir, pat, cap->count1,
+  int i = do_search(cap->oap, dir, dir, pat, patlen, cap->count1,
                     opt | SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG, &sia);
   if (wrapped != NULL) {
     *wrapped = sia.sa_wrapped;
@@ -3999,6 +4010,7 @@ static int normal_search(cmdarg_T *cap, int dir, char *pat, int opt, int *wrappe
   // "/$" will put the cursor after the end of the line, may need to
   // correct that here
   check_cursor(curwin);
+
   return i;
 }
 
