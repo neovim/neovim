@@ -888,7 +888,7 @@ NOTE: If you want to ignore case for just one search command, use [\c](/\c)
 
 Neovim has a comprehensive online help system.
 
-To get started, try one of these three:
+To get started, try one of these two:
 
   - press the `<F1>`{normal} key (if you have one)
   - type `:help`{vim}
