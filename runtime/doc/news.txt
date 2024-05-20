@@ -163,6 +163,9 @@ TREESITTER
     local p = vim.treesitter.get_parser(0, 'c')
     p:parse()
 <
+• |LanguageTree:trees()| no longer guarantees that the returned table is
+  list-like even after a full parse. Always use |next()| or |pairs()| to
+  access it.
 
 TUI
 
@@ -358,6 +361,9 @@ TREESITTER
   descendant itself.
 • |LanguageTree:parse()| optionally supports asynchronous invocation, which is
   activated by passing the `on_parse` callback parameter.
+• |LanguageTree:parse()| runs injection query only on the provided list of
+  ranges as long as the language does not have a combined injection,
+  significantly improving |treesitter-highlight| performance.
 
 TUI
 
