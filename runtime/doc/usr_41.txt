@@ -794,6 +794,7 @@ Cursor and mark position:		*cursor-functions* *mark-functions*
 Working with text in the current buffer:		*text-functions*
 	getline()		get a line or list of lines from the buffer
 	getregion()		get a region of text from the buffer
+	getregionpos()		get a list of positions for a region
 	setline()		replace a line in the buffer
 	append()		append line or list of lines in the buffer
 	indent()		indent of a specific line

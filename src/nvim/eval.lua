@@ -4414,6 +4414,33 @@ M.funcs = {
     returns = 'string[]',
     signature = 'getregion({pos1}, {pos2} [, {opts}])',
   },
+  getregionpos = {
+    args = { 2, 3 },
+    base = 1,
+    desc = [=[
+      Same as |getregion()|, but returns a list of positions
+      describing the buffer text segments bound by {pos1} and
+      {pos2}.
+      The segments are a pair of positions for every line: >
+      	[[{start_pos}, {end_pos}], ...]
+      <
+      The position is a |List| with four numbers:
+          [bufnum, lnum, col, off]
+      "bufnum" is the buffer number.
+      "lnum" and "col" are the position in the buffer.  The first
+      column is 1.
+      If the "off" number of a starting position is non-zero, it is
+      the offset in screen columns from the start of the character.
+      E.g., a position within a <Tab> or after the last character.
+      If the "off" number of an ending position is non-zero, it is
+      the character's number of cells included in the selection,
+      otherwise the whole character is included.
+    ]=],
+    name = 'getregionpos',
+    params = { { 'pos1', 'table' }, { 'pos2', 'table' }, { 'opts', 'table' } },
+    returns = 'integer[][][]',
+    signature = 'getregionpos({pos1}, {pos2} [, {opts}])',
+  },
   getregtype = {
     args = { 0, 1 },
     base = 1,

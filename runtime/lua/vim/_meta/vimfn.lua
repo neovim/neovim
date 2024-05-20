@@ -3581,6 +3581,30 @@ function vim.fn.getreginfo(regname) end
 --- @return string[]
 function vim.fn.getregion(pos1, pos2, opts) end
 
+--- Same as |getregion()|, but returns a list of positions
+--- describing the buffer text segments bound by {pos1} and
+--- {pos2}.
+--- The segments are a pair of positions for every line: >
+---   [[{start_pos}, {end_pos}], ...]
+--- <
+--- The position is a |List| with four numbers:
+---     [bufnum, lnum, col, off]
+--- "bufnum" is the buffer number.
+--- "lnum" and "col" are the position in the buffer.  The first
+--- column is 1.
+--- If the "off" number of a starting position is non-zero, it is
+--- the offset in screen columns from the start of the character.
+--- E.g., a position within a <Tab> or after the last character.
+--- If the "off" number of an ending position is non-zero, it is
+--- the character's number of cells included in the selection,
+--- otherwise the whole character is included.
+---
+--- @param pos1 table
+--- @param pos2 table
+--- @param opts? table
+--- @return integer[][][]
+function vim.fn.getregionpos(pos1, pos2, opts) end
+
 --- The result is a String, which is type of register {regname}.
 --- The value will be one of:
 ---     "v"      for |charwise| text

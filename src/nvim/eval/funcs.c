@@ -2823,24 +2823,24 @@ static char *block_def2str(struct block_def *bd)
   return ret;
 }
 
-/// "getregion()" function
-static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+static int getregionpos(typval_T *argvars, typval_T *rettv, pos_T *p1, pos_T *p2,
+                        bool *const inclusive, MotionType *region_type, oparg_T *oa)
+  FUNC_ATTR_NONNULL_ALL
 {
   tv_list_alloc_ret(rettv, kListLenMayKnow);
 
   if (tv_check_for_list_arg(argvars, 0) == FAIL
       || tv_check_for_list_arg(argvars, 1) == FAIL
       || tv_check_for_opt_dict_arg(argvars, 2) == FAIL) {
-    return;
+    return FAIL;
   }
 
   int fnum1 = -1;
   int fnum2 = -1;
-  pos_T p1, p2;
-  if (list2fpos(&argvars[0], &p1, &fnum1, NULL, false) != OK
-      || list2fpos(&argvars[1], &p2, &fnum2, NULL, false) != OK
+  if (list2fpos(&argvars[0], p1, &fnum1, NULL, false) != OK
+      || list2fpos(&argvars[1], p2, &fnum2, NULL, false) != OK
       || fnum1 != fnum2) {
-    return;
+    return FAIL;
   }
 
   bool is_select_exclusive;
@@ -2858,108 +2858,120 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     type = default_type;
   }
 
-  MotionType region_type = kMTUnknown;
   if (type[0] == 'v' && type[1] == NUL) {
-    region_type = kMTCharWise;
+    *region_type = kMTCharWise;
   } else if (type[0] == 'V' && type[1] == NUL) {
-    region_type = kMTLineWise;
+    *region_type = kMTLineWise;
   } else if (type[0] == Ctrl_V && type[1] == NUL) {
-    region_type = kMTBlockWise;
+    *region_type = kMTBlockWise;
   } else {
     semsg(_(e_invargNval), "type", type);
-    return;
+    return FAIL;
   }
 
   buf_T *findbuf = fnum1 != 0 ? buflist_findnr(fnum1) : curbuf;
   if (findbuf == NULL || findbuf->b_ml.ml_mfp == NULL) {
     emsg(_(e_buffer_is_not_loaded));
-    return;
+    return FAIL;
   }
 
-  if (p1.lnum < 1 || p1.lnum > findbuf->b_ml.ml_line_count) {
-    semsg(_(e_invalid_line_number_nr), p1.lnum);
-    return;
+  if (p1->lnum < 1 || p1->lnum > findbuf->b_ml.ml_line_count) {
+    semsg(_(e_invalid_line_number_nr), p1->lnum);
+    return FAIL;
   }
-  if (p1.col == MAXCOL) {
-    p1.col = ml_get_buf_len(findbuf, p1.lnum) + 1;
-  } else if (p1.col < 1 || p1.col > ml_get_buf_len(findbuf, p1.lnum) + 1) {
-    semsg(_(e_invalid_column_number_nr), p1.col);
-    return;
-  }
-
-  if (p2.lnum < 1 || p2.lnum > findbuf->b_ml.ml_line_count) {
-    semsg(_(e_invalid_line_number_nr), p2.lnum);
-    return;
-  }
-  if (p2.col == MAXCOL) {
-    p2.col = ml_get_buf_len(findbuf, p2.lnum) + 1;
-  } else if (p2.col < 1 || p2.col > ml_get_buf_len(findbuf, p2.lnum) + 1) {
-    semsg(_(e_invalid_column_number_nr), p2.col);
-    return;
+  if (p1->col == MAXCOL) {
+    p1->col = ml_get_buf_len(findbuf, p1->lnum) + 1;
+  } else if (p1->col < 1 || p1->col > ml_get_buf_len(findbuf, p1->lnum) + 1) {
+    semsg(_(e_invalid_column_number_nr), p1->col);
+    return FAIL;
   }
 
-  buf_T *const save_curbuf = curbuf;
+  if (p2->lnum < 1 || p2->lnum > findbuf->b_ml.ml_line_count) {
+    semsg(_(e_invalid_line_number_nr), p2->lnum);
+    return FAIL;
+  }
+  if (p2->col == MAXCOL) {
+    p2->col = ml_get_buf_len(findbuf, p2->lnum) + 1;
+  } else if (p2->col < 1 || p2->col > ml_get_buf_len(findbuf, p2->lnum) + 1) {
+    semsg(_(e_invalid_column_number_nr), p2->col);
+    return FAIL;
+  }
+
   curbuf = findbuf;
   curwin->w_buffer = curbuf;
-  const TriState save_virtual = virtual_op;
   virtual_op = virtual_active(curwin);
 
-  // NOTE: Adjust is needed.
-  p1.col--;
-  p2.col--;
+  // NOTE: Adjustment is needed.
+  p1->col--;
+  p2->col--;
 
-  if (!lt(p1, p2)) {
+  if (!lt(*p1, *p2)) {
     // swap position
-    pos_T p = p1;
-    p1 = p2;
-    p2 = p;
+    pos_T p = *p1;
+    *p1 = *p2;
+    *p2 = p;
   }
 
-  oparg_T oa;
-  bool inclusive = true;
-
-  if (region_type == kMTCharWise) {
+  if (*region_type == kMTCharWise) {
     // handle 'selection' == "exclusive"
-    if (is_select_exclusive && !equalpos(p1, p2)) {
-      if (p2.coladd > 0) {
-        p2.coladd--;
-      } else if (p2.col > 0) {
-        p2.col--;
-        mark_mb_adjustpos(curbuf, &p2);
-      } else if (p2.lnum > 1) {
-        p2.lnum--;
-        p2.col = ml_get_len(p2.lnum);
-        if (p2.col > 0) {
-          p2.col--;
-          mark_mb_adjustpos(curbuf, &p2);
+    if (is_select_exclusive && !equalpos(*p1, *p2)) {
+      if (p2->coladd > 0) {
+        p2->coladd--;
+      } else if (p2->col > 0) {
+        p2->col--;
+        mark_mb_adjustpos(curbuf, p2);
+      } else if (p2->lnum > 1) {
+        p2->lnum--;
+        p2->col = ml_get_len(p2->lnum);
+        if (p2->col > 0) {
+          p2->col--;
+          mark_mb_adjustpos(curbuf, p2);
         }
       }
     }
     // if fp2 is on NUL (empty line) inclusive becomes false
-    if (*ml_get_pos(&p2) == NUL && !virtual_op) {
-      inclusive = false;
+    if (*ml_get_pos(p2) == NUL && !virtual_op) {
+      *inclusive = false;
     }
-  } else if (region_type == kMTBlockWise) {
+  } else if (*region_type == kMTBlockWise) {
     colnr_T sc1, ec1, sc2, ec2;
-    getvvcol(curwin, &p1, &sc1, NULL, &ec1);
-    getvvcol(curwin, &p2, &sc2, NULL, &ec2);
-    oa.motion_type = kMTBlockWise;
-    oa.inclusive = true;
-    oa.op_type = OP_NOP;
-    oa.start = p1;
-    oa.end = p2;
-    oa.start_vcol = MIN(sc1, sc2);
+    getvvcol(curwin, p1, &sc1, NULL, &ec1);
+    getvvcol(curwin, p2, &sc2, NULL, &ec2);
+    oa->motion_type = kMTBlockWise;
+    oa->inclusive = true;
+    oa->op_type = OP_NOP;
+    oa->start = *p1;
+    oa->end = *p2;
+    oa->start_vcol = MIN(sc1, sc2);
     if (is_select_exclusive && ec1 < sc2 && 0 < sc2 && ec2 > ec1) {
-      oa.end_vcol = sc2 - 1;
+      oa->end_vcol = sc2 - 1;
     } else {
-      oa.end_vcol = MAX(ec1, ec2);
+      oa->end_vcol = MAX(ec1, ec2);
     }
   }
 
   // Include the trailing byte of a multi-byte char.
-  int l = utfc_ptr2len(ml_get_pos(&p2));
+  int l = utfc_ptr2len(ml_get_pos(p2));
   if (l > 1) {
-    p2.col += l - 1;
+    p2->col += l - 1;
+  }
+
+  return OK;
+}
+
+/// "getregion()" function
+static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  buf_T *const save_curbuf = curbuf;
+  const TriState save_virtual = virtual_op;
+
+  pos_T p1, p2;
+  bool inclusive = true;
+  MotionType region_type = kMTUnknown;
+  oparg_T oa;
+
+  if (getregionpos(argvars, rettv, &p1, &p2, &inclusive, &region_type, &oa) == FAIL) {
+    return;
   }
 
   for (linenr_T lnum = p1.lnum; lnum <= p2.lnum; lnum++) {
@@ -2983,6 +2995,88 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tv_list_append_allocated_string(rettv->vval.v_list, akt);
   }
 
+  // getregionpos() may change curbuf and virtual_op
+  curbuf = save_curbuf;
+  curwin->w_buffer = curbuf;
+  virtual_op = save_virtual;
+}
+
+static void add_regionpos_range(typval_T *rettv, pos_T p1, pos_T p2)
+{
+  list_T *l1 = tv_list_alloc(2);
+  tv_list_append_list(rettv->vval.v_list, l1);
+
+  list_T *l2 = tv_list_alloc(4);
+  tv_list_append_list(l1, l2);
+
+  list_T *l3 = tv_list_alloc(4);
+  tv_list_append_list(l1, l3);
+
+  int max_col1 = ml_get_len(p1.lnum);
+  tv_list_append_number(l2, curbuf->b_fnum);
+  tv_list_append_number(l2, p1.lnum);
+  tv_list_append_number(l2, p1.col > max_col1 ? max_col1 : p1.col);
+  tv_list_append_number(l2, p1.coladd);
+
+  int max_col2 = ml_get_len(p2.lnum);
+  tv_list_append_number(l3, curbuf->b_fnum);
+  tv_list_append_number(l3, p2.lnum);
+  tv_list_append_number(l3, p2.col > max_col2 ? max_col2 : p2.col);
+  tv_list_append_number(l3, p2.coladd);
+}
+
+/// "getregionpos()" function
+static void f_getregionpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  buf_T *const save_curbuf = curbuf;
+  const TriState save_virtual = virtual_op;
+
+  pos_T p1, p2;
+  bool inclusive = true;
+  MotionType region_type = kMTUnknown;
+  oparg_T oa;
+
+  if (getregionpos(argvars, rettv, &p1, &p2, &inclusive, &region_type, &oa) == FAIL) {
+    return;
+  }
+
+  for (linenr_T lnum = p1.lnum; lnum <= p2.lnum; lnum++) {
+    struct block_def bd;
+    pos_T ret_p1, ret_p2;
+
+    if (region_type == kMTLineWise) {
+      ret_p1.col = 1;
+      ret_p1.coladd = 0;
+      ret_p2.col = MAXCOL;
+      ret_p2.coladd = 0;
+    } else {
+      if (region_type == kMTBlockWise) {
+        block_prep(&oa, &bd, lnum, false);
+      } else {
+        charwise_block_prep(p1, p2, &bd, lnum, inclusive);
+      }
+      if (bd.startspaces > 0) {
+        ret_p1.col = bd.textcol;
+        ret_p1.coladd = bd.start_char_vcols - bd.startspaces;
+      } else {
+        ret_p1.col = bd.textcol + 1;
+        ret_p1.coladd = 0;
+      }
+      if (bd.endspaces > 0) {
+        ret_p2.col = bd.textcol + bd.textlen + 1;
+        ret_p2.coladd = bd.endspaces;
+      } else {
+        ret_p2.col = bd.textcol + bd.textlen;
+        ret_p2.coladd = 0;
+      }
+    }
+
+    ret_p1.lnum = lnum;
+    ret_p2.lnum = lnum;
+    add_regionpos_range(rettv, ret_p1, ret_p2);
+  }
+
+  // getregionpos() may change curbuf and virtual_op
   curbuf = save_curbuf;
   curwin->w_buffer = curbuf;
   virtual_op = save_virtual;
