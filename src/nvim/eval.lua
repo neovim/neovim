@@ -4429,10 +4429,12 @@ M.funcs = {
       "bufnum" is the buffer number.
       "lnum" and "col" are the position in the buffer.  The first
       column is 1.
-      The "off" number is zero, unless 'virtualedit' is used.  Then
-      it is the offset in screen columns from the start of the
-      character.  E.g., a position within a <Tab> or after the last
-      character.
+      If the "off" number of a starting position is non-zero, it is
+      the offset in screen columns from the start of the character.
+      E.g., a position within a <Tab> or after the last character.
+      If the "off" number of an ending position is non-zero, it is
+      the character's number of cells included in the selection,
+      otherwise the whole character is included.
     ]=],
     name = 'getregionpos',
     params = { { 'pos1', 'table' }, { 'pos2', 'table' }, { 'opts', 'table' } },

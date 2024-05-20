@@ -2824,8 +2824,7 @@ static char *block_def2str(struct block_def *bd)
 }
 
 static int getregionpos(typval_T *argvars, typval_T *rettv, pos_T *p1, pos_T *p2,
-                        bool *const inclusive, MotionType *region_type, oparg_T *oa,
-                        int *const fnum)
+                        bool *const inclusive, MotionType *region_type, oparg_T *oa)
   FUNC_ATTR_NONNULL_ALL
 {
   tv_list_alloc_ret(rettv, kListLenMayKnow);
@@ -2871,7 +2870,6 @@ static int getregionpos(typval_T *argvars, typval_T *rettv, pos_T *p1, pos_T *p2
   }
 
   buf_T *findbuf = fnum1 != 0 ? buflist_findnr(fnum1) : curbuf;
-  *fnum = fnum1 != 0 ? fnum1 : curbuf->b_fnum;
   if (findbuf == NULL || findbuf->b_ml.ml_mfp == NULL) {
     emsg(_(e_buffer_is_not_loaded));
     return FAIL;
@@ -2971,10 +2969,8 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   bool inclusive = true;
   MotionType region_type = kMTUnknown;
   oparg_T oa;
-  int fnum;
 
-  if (getregionpos(argvars, rettv,
-                   &p1, &p2, &inclusive, &region_type, &oa, &fnum) == FAIL) {
+  if (getregionpos(argvars, rettv, &p1, &p2, &inclusive, &region_type, &oa) == FAIL) {
     return;
   }
 
@@ -2999,20 +2995,14 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tv_list_append_allocated_string(rettv->vval.v_list, akt);
   }
 
-  // getregionpos() breaks curbuf and virtual_op
+  // getregionpos() may change curbuf and virtual_op
   curbuf = save_curbuf;
   curwin->w_buffer = curbuf;
   virtual_op = save_virtual;
 }
 
-static void add_regionpos_range(typval_T *rettv, int bufnr, int lnum1, int col1, int coladd1,
-                                int lnum2, int col2, int coladd2)
+static void add_regionpos_range(typval_T *rettv, pos_T p1, pos_T p2)
 {
-  buf_T *findbuf = bufnr != 0 ? buflist_findnr(bufnr) : curbuf;
-  if (findbuf == NULL || findbuf->b_ml.ml_mfp == NULL) {
-    return;
-  }
-
   list_T *l1 = tv_list_alloc(2);
   tv_list_append_list(rettv->vval.v_list, l1);
 
@@ -3022,17 +3012,17 @@ static void add_regionpos_range(typval_T *rettv, int bufnr, int lnum1, int col1,
   list_T *l3 = tv_list_alloc(4);
   tv_list_append_list(l1, l3);
 
-  int max_col1 = ml_get_buf_len(findbuf, lnum1);
-  tv_list_append_number(l2, bufnr);
-  tv_list_append_number(l2, lnum1);
-  tv_list_append_number(l2, col1 > max_col1 ? max_col1 : col1);
-  tv_list_append_number(l2, coladd1);
+  int max_col1 = ml_get_len(p1.lnum);
+  tv_list_append_number(l2, curbuf->b_fnum);
+  tv_list_append_number(l2, p1.lnum);
+  tv_list_append_number(l2, p1.col > max_col1 ? max_col1 : p1.col);
+  tv_list_append_number(l2, p1.coladd);
 
-  int max_col2 = ml_get_buf_len(findbuf, lnum2);
-  tv_list_append_number(l3, bufnr);
-  tv_list_append_number(l3, lnum2);
-  tv_list_append_number(l3, col2 > max_col2 ? max_col2 : col2);
-  tv_list_append_number(l3, coladd2);
+  int max_col2 = ml_get_len(p2.lnum);
+  tv_list_append_number(l3, curbuf->b_fnum);
+  tv_list_append_number(l3, p2.lnum);
+  tv_list_append_number(l3, p2.col > max_col2 ? max_col2 : p2.col);
+  tv_list_append_number(l3, p2.coladd);
 }
 
 /// "getregionpos()" function
@@ -3045,34 +3035,45 @@ static void f_getregionpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
   bool inclusive = true;
   MotionType region_type = kMTUnknown;
   oparg_T oa;
-  int fnum;
 
-  if (getregionpos(argvars, rettv,
-                   &p1, &p2, &inclusive, &region_type, &oa, &fnum) == FAIL) {
+  if (getregionpos(argvars, rettv, &p1, &p2, &inclusive, &region_type, &oa) == FAIL) {
     return;
   }
 
   for (linenr_T lnum = p1.lnum; lnum <= p2.lnum; lnum++) {
-    int start_col, end_col;
+    struct block_def bd;
+    pos_T ret_p1, ret_p2;
 
     if (region_type == kMTLineWise) {
-      start_col = 1;
-      end_col = MAXCOL;
-    } else if (region_type == kMTBlockWise) {
-      struct block_def bd;
-      block_prep(&oa, &bd, lnum, false);
-      start_col = bd.start_vcol + 1;
-      end_col = bd.end_vcol;
-    } else if (p1.lnum < lnum && lnum < p2.lnum) {
-      start_col = 1;
-      end_col = MAXCOL;
+      ret_p1.col = 1;
+      ret_p1.coladd = 0;
+      ret_p2.col = MAXCOL;
+      ret_p2.coladd = 0;
     } else {
-      start_col = p1.lnum == lnum ? p1.col + 1 : 1;
-      end_col = p2.lnum == lnum ? p2.col + 1 : MAXCOL;
+      if (region_type == kMTBlockWise) {
+        block_prep(&oa, &bd, lnum, false);
+      } else {
+        charwise_block_prep(p1, p2, &bd, lnum, inclusive);
+      }
+      if (bd.startspaces > 0) {
+        ret_p1.col = bd.textcol;
+        ret_p1.coladd = bd.start_char_vcols - bd.startspaces;
+      } else {
+        ret_p1.col = bd.textcol + 1;
+        ret_p1.coladd = 0;
+      }
+      if (bd.endspaces > 0) {
+        ret_p2.col = bd.textcol + bd.textlen + 1;
+        ret_p2.coladd = bd.endspaces;
+      } else {
+        ret_p2.col = bd.textcol + bd.textlen;
+        ret_p2.coladd = 0;
+      }
     }
 
-    add_regionpos_range(rettv, fnum, lnum, start_col,
-                        p1.coladd, lnum, end_col, p2.coladd);
+    ret_p1.lnum = lnum;
+    ret_p2.lnum = lnum;
+    add_regionpos_range(rettv, ret_p1, ret_p2);
   }
 
   // getregionpos() may change curbuf and virtual_op
