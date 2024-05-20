@@ -3451,8 +3451,10 @@ static void nv_ident(cmdarg_T *cap)
     } else {
       if (g_cmd) {
         STRCPY(buf, "tj ");
+      } else if (cap->count0 == 0) {
+        STRCPY(buf, "ta ");
       } else {
-        snprintf(buf, buf_size, "%" PRId64 "ta ", (int64_t)cap->count0);
+        snprintf(buf, buf_size, ":%" PRId64 "ta ", (int64_t)cap->count0);
       }
     }
   }
