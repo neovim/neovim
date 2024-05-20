@@ -845,6 +845,7 @@ local extension = {
   psf = 'psf',
   psl = 'psl',
   pug = 'pug',
+  purs = 'purescript',
   arr = 'pyret',
   pxd = 'pyrex',
   pyx = 'pyrex',
