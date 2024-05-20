@@ -2105,4 +2105,12 @@ func Test_getregion_maxcol()
   bwipe!
 endfunc
 
+func Test_visual_block_cursor_delete()
+  new
+  call setline(1, 'ab')
+  exe ":norm! $\<c-v>hI\<Del>\<ESC>"
+  call assert_equal(['b'], getline(1, 1))
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
