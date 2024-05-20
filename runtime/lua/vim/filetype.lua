@@ -970,6 +970,7 @@ local extension = {
   cdf = 'skill',
   sl = 'slang',
   ice = 'slice',
+  slint = 'slint',
   score = 'slrnsc',
   sol = 'solidity',
   smali = 'smali',
