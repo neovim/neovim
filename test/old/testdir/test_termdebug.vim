@@ -232,26 +232,26 @@ endfunc
 
 func Test_termdebug_mapping()
   %bw!
-  call assert_equal(maparg('K', 'n', 0, 1)->empty(), 1)
-  call assert_equal(maparg('-', 'n', 0, 1)->empty(), 1)
-  call assert_equal(maparg('+', 'n', 0, 1)->empty(), 1)
+  call assert_true(maparg('K', 'n', 0, 1)->empty())
+  call assert_true(maparg('-', 'n', 0, 1)->empty())
+  call assert_true(maparg('+', 'n', 0, 1)->empty())
   Termdebug
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   wincmd b
-  call assert_equal(maparg('K', 'n', 0, 1)->empty(), 0)
-  call assert_equal(maparg('-', 'n', 0, 1)->empty(), 0)
-  call assert_equal(maparg('+', 'n', 0, 1)->empty(), 0)
-  call assert_equal(maparg('K', 'n', 0, 1).buffer, 0)
-  call assert_equal(maparg('-', 'n', 0, 1).buffer, 0)
-  call assert_equal(maparg('+', 'n', 0, 1).buffer, 0)
-  call assert_equal(maparg('K', 'n', 0, 1).rhs, ':Evaluate<CR>')
+  call assert_false(maparg('K', 'n', 0, 1)->empty())
+  call assert_false(maparg('-', 'n', 0, 1)->empty())
+  call assert_false(maparg('+', 'n', 0, 1)->empty())
+  call assert_false(maparg('K', 'n', 0, 1).buffer)
+  call assert_false(maparg('-', 'n', 0, 1).buffer)
+  call assert_false(maparg('+', 'n', 0, 1).buffer)
+  call assert_equal(':Evaluate<CR>', maparg('K', 'n', 0, 1).rhs)
   wincmd t
   quit!
   redraw!
   call WaitForAssert({-> assert_equal(1, winnr('$'))})
-  call assert_equal(maparg('K', 'n', 0, 1)->empty(), 1)
-  call assert_equal(maparg('-', 'n', 0, 1)->empty(), 1)
-  call assert_equal(maparg('+', 'n', 0, 1)->empty(), 1)
+  call assert_true(maparg('K', 'n', 0, 1)->empty())
+  call assert_true(maparg('-', 'n', 0, 1)->empty())
+  call assert_true(maparg('+', 'n', 0, 1)->empty())
 
   %bw!
   nnoremap K :echom "K"<cr>
@@ -260,24 +260,24 @@ func Test_termdebug_mapping()
   Termdebug
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   wincmd b
-  call assert_equal(maparg('K', 'n', 0, 1)->empty(), 0)
-  call assert_equal(maparg('-', 'n', 0, 1)->empty(), 0)
-  call assert_equal(maparg('+', 'n', 0, 1)->empty(), 0)
-  call assert_equal(maparg('K', 'n', 0, 1).buffer, 0)
-  call assert_equal(maparg('-', 'n', 0, 1).buffer, 0)
-  call assert_equal(maparg('+', 'n', 0, 1).buffer, 0)
-  call assert_equal(maparg('K', 'n', 0, 1).rhs, ':Evaluate<CR>')
+  call assert_false(maparg('K', 'n', 0, 1)->empty())
+  call assert_false(maparg('-', 'n', 0, 1)->empty())
+  call assert_false(maparg('+', 'n', 0, 1)->empty())
+  call assert_false(maparg('K', 'n', 0, 1).buffer)
+  call assert_false(maparg('-', 'n', 0, 1).buffer)
+  call assert_false(maparg('+', 'n', 0, 1).buffer)
+  call assert_equal(':Evaluate<CR>', maparg('K', 'n', 0, 1).rhs)
   wincmd t
   quit!
   redraw!
   call WaitForAssert({-> assert_equal(1, winnr('$'))})
-  call assert_equal(maparg('K', 'n', 0, 1)->empty(), 0)
-  call assert_equal(maparg('-', 'n', 0, 1)->empty(), 0)
-  call assert_equal(maparg('+', 'n', 0, 1)->empty(), 0)
-  call assert_equal(maparg('K', 'n', 0, 1).buffer, 0)
-  call assert_equal(maparg('-', 'n', 0, 1).buffer, 0)
-  call assert_equal(maparg('+', 'n', 0, 1).buffer, 0)
-  call assert_equal(maparg('K', 'n', 0, 1).rhs, ':echom "K"<cr>')
+  call assert_false(maparg('K', 'n', 0, 1)->empty())
+  call assert_false(maparg('-', 'n', 0, 1)->empty())
+  call assert_false(maparg('+', 'n', 0, 1)->empty())
+  call assert_false(maparg('K', 'n', 0, 1).buffer)
+  call assert_false(maparg('-', 'n', 0, 1).buffer)
+  call assert_false(maparg('+', 'n', 0, 1).buffer)
+  call assert_equal(':echom "K"<cr>', maparg('K', 'n', 0, 1).rhs)
 
   %bw!
   nnoremap <buffer> K :echom "bK"<cr>
@@ -286,18 +286,18 @@ func Test_termdebug_mapping()
   Termdebug
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   wincmd b
-  call assert_equal(maparg('K', 'n', 0, 1).buffer, 1)
-  call assert_equal(maparg('-', 'n', 0, 1).buffer, 1)
-  call assert_equal(maparg('+', 'n', 0, 1).buffer, 1)
+  call assert_true(maparg('K', 'n', 0, 1).buffer)
+  call assert_true(maparg('-', 'n', 0, 1).buffer)
+  call assert_true(maparg('+', 'n', 0, 1).buffer)
   call assert_equal(maparg('K', 'n', 0, 1).rhs, ':echom "bK"<cr>')
   wincmd t
   quit!
   redraw!
   call WaitForAssert({-> assert_equal(1, winnr('$'))})
-  call assert_equal(maparg('K', 'n', 0, 1).buffer, 1)
-  call assert_equal(maparg('-', 'n', 0, 1).buffer, 1)
-  call assert_equal(maparg('+', 'n', 0, 1).buffer, 1)
-  call assert_equal(maparg('K', 'n', 0, 1).rhs, ':echom "bK"<cr>')
+  call assert_true(maparg('K', 'n', 0, 1).buffer)
+  call assert_true(maparg('-', 'n', 0, 1).buffer)
+  call assert_true(maparg('+', 'n', 0, 1).buffer)
+  call assert_equal(':echom "bK"<cr>', maparg('K', 'n', 0, 1).rhs)
 
   %bw!
 endfunc
