@@ -686,9 +686,8 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
 
   CpInfo cpinfo;
   cmdpreview_info_init(&cpinfo);
-  bool save_cmdpreview = cmdpreview;
+  bool save_cmdpreview = cmdpreview_is_enabled();
   CpInfo *save_cpinfo = cp_info;
-  cmdpreview = false;
   cp_info = &cpinfo;
   CommandLineState state = {
     .firstc = firstc,
@@ -934,8 +933,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
 
   set_option_direct(kOptInccommand, CSTR_AS_OPTVAL(s->save_p_icm), 0, SID_NONE);
   State = s->save_State;
-  if (cmdpreview != save_cmdpreview) {
-    cmdpreview = save_cmdpreview;  // restore preview state
+  if (cmdpreview_is_enabled() != save_cmdpreview) {
     redraw_all_later(UPD_SOME_VALID);
   }
   cmdpreview_close();
@@ -2624,6 +2622,12 @@ bool cmdpreview_may_refresh(int redraw_type)
   return need_refresh;
 }
 
+bool cmdpreview_is_enabled(void)
+{
+  return cp_info != NULL && cp_info->type != 0;
+}
+
+
 /// Show 'inccommand' preview if command is previewable. It works like this:
 ///    1. Store current undo information so we can revert to current state later.
 ///    2. Execute the preview callback with the parsed command, preview buffer number and preview
@@ -2696,9 +2700,6 @@ static bool cmdpreview_may_show(bool redrawing)
     cmdpreview_ns = (int)nvim_create_namespace((String)STRING_INIT);
   }
 
-  // Set cmdpreview state.
-  cmdpreview = true;
-
   // Execute the preview callback and use its return value to determine whether to show preview or
   // open the preview window. The preview callback also handles doing the changes and highlights for
   // the preview.
@@ -2740,7 +2741,7 @@ end:
     cmdpreview_close();
   }
   cmdpreview_may_show_level--;
-  return (cmdpreview = cp_info->type != 0);
+  return cp_info->type != 0;
 }
 
 /// Trigger CmdlineChanged autocommands.
@@ -2781,7 +2782,7 @@ static int command_line_changed(CommandLineState *s)
   // Trigger CmdlineChanged autocommands.
   do_autocmd_cmdlinechanged(s->firstc > 0 ? s->firstc : '-');
 
-  const bool prev_cmdpreview = cmdpreview;
+  const bool prev_cmdpreview = cmdpreview_is_enabled();
   if (s->firstc == ':'
       && current_sctx.sc_sid == 0    // only if interactive
       && *p_icm != NUL       // 'inccommand' is set
@@ -2792,7 +2793,6 @@ static int command_line_changed(CommandLineState *s)
       && cmdpreview_may_show(false)) {
     // 'inccommand' preview has been shown.
   } else {
-    cmdpreview = false;
     // TODO(theofabilous): do some cmdpreview cleanup here?
     if (prev_cmdpreview) {
       // TODO(bfredl): add an immediate redraw flag for cmdline mode which will trigger
