@@ -72,9 +72,10 @@ on the same line, the attributes of the sign with the highest priority is used
 independently of the sign group. The default priority for a sign is 10. The
 priority is assigned at the time of placing a sign.
 
-When two signs with the same priority are present, and one has an icon or text
-in the signcolumn while the other has line highlighting, then both are
-displayed.
+When multiple signs that each have an icon or text are present, signs are
+ordered with increasing priority from left to right, up until the maximum
+width set in 'signcolumn'. Lower priority signs that do not fit are hidden.
+Highest priority signs with highlight attributes are always shown.
 
 When the line on which the sign is placed is deleted, the sign is removed along
 with it.

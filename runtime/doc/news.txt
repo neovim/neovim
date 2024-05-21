@@ -38,7 +38,7 @@ DEFAULTS
 
 EDITOR
 
-• TODO
+• The order in which signs are placed was changed. Higher priority signs will now appear left of lower priority signs.
 
 EVENTS
 

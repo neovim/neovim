@@ -207,7 +207,7 @@ describe('Signs', function()
       screen:expect([[
         {2:    }{6:  1 }a                                            |
         {2:    }{6:  2 }b                                            |
-        {1:>>}WW{6:  3 }c                                            |
+        WW{1:>>}{6:  3 }c                                            |
         {2:    }{6:  4 }^                                             |
         {0:~                                                    }|*9
                                                              |
@@ -220,9 +220,9 @@ describe('Signs', function()
         sign place 3 line=2 name=pietError buffer=1
       ]])
       screen:expect([[
-        {1:>>}{8:XX}{6:  1 }a                                            |
-        {8:XX}{1:>>}{6:  2 }b                                            |
-        {1:>>}WW{6:  3 }c                                            |
+        {8:XX}{1:>>}{6:  1 }a                                            |
+        {1:>>}{8:XX}{6:  2 }b                                            |
+        WW{1:>>}{6:  3 }c                                            |
         {2:    }{6:  4 }^                                             |
         {0:~                                                    }|*9
                                                              |
@@ -240,9 +240,9 @@ describe('Signs', function()
       -- "auto:3" accommodates all the signs we defined so far.
       exec('set signcolumn=auto:3')
       local s3 = [[
-        {1:>>}{8:XX}{2:  }{6:  1 }a                                          |
-        {8:XX}{1:>>}{2:  }{6:  2 }b                                          |
-        {8:XX}{1:>>}WW{6:  3 }c                                          |
+        {8:XX}{1:>>}{2:  }{6:  1 }a                                          |
+        {1:>>}{8:XX}{2:  }{6:  2 }b                                          |
+        WW{1:>>}{8:XX}{6:  3 }c                                          |
         {2:      }{6:  4 }^                                           |
         {0:~                                                    }|*9
                                                              |
@@ -251,9 +251,9 @@ describe('Signs', function()
       -- Check "yes:9".
       exec('set signcolumn=yes:9')
       screen:expect([[
-        {1:>>}{8:XX}{2:              }{6:  1 }a                              |
-        {8:XX}{1:>>}{2:              }{6:  2 }b                              |
-        {8:XX}{1:>>}WW{2:            }{6:  3 }c                              |
+        {8:XX}{1:>>}{2:              }{6:  1 }a                              |
+        {1:>>}{8:XX}{2:              }{6:  2 }b                              |
+        WW{1:>>}{8:XX}{2:            }{6:  3 }c                              |
         {2:                  }{6:  4 }^                               |
         {0:~                                                    }|*9
                                                              |
@@ -266,8 +266,8 @@ describe('Signs', function()
       exec('3move1')
       exec('2d')
       screen:expect([[
-        {1:>>}{8:XX}{6:  1 }a                                            |
-        {8:XX}{1:>>}{6:  2 }^b                                            |
+        {8:XX}{1:>>}{6:  1 }a                                            |
+        {1:>>}{8:XX}{6:  2 }^b                                            |
         {2:    }{6:  3 }                                             |
         {0:~                                                    }|*10
                                                              |
@@ -275,8 +275,8 @@ describe('Signs', function()
       -- character deletion does not delete signs.
       feed('x')
       screen:expect([[
-        {1:>>}{8:XX}{6:  1 }a                                            |
-        {8:XX}{1:>>}{6:  2 }^                                             |
+        {8:XX}{1:>>}{6:  1 }a                                            |
+        {1:>>}{8:XX}{6:  2 }^                                             |
         {2:    }{6:  3 }                                             |
         {0:~                                                    }|*10
                                                              |

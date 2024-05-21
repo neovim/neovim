@@ -3918,13 +3918,13 @@ describe('API', function()
           norm 4G
         ]])
         eq({
-          str = '││aabb 4 ',
+          str = '││bbaa 4 ',
           width = 9,
           highlights = {
             { group = 'CursorLineFold', start = 0 },
             { group = 'Normal', start = 6 },
-            { group = 'IncSearch', start = 6 },
-            { group = 'ErrorMsg', start = 8 },
+            { group = 'ErrorMsg', start = 6 },
+            { group = 'IncSearch', start = 8 },
             { group = 'Normal', start = 10 },
           },
         }, api.nvim_eval_statusline(

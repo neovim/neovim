@@ -237,7 +237,7 @@ describe('statuscolumn', function()
       {2:    }{1:  │ }aaaaa                                        |
       {0:>!}{2:  }{1: 5│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2:    }{1:  │ }aaaaa                                        |
-      {1:>>}{0:>!}{1: 6│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {0:>!}{1:>> 6│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2:    }{1:  │ }aaaaa                                        |
       {2:    }{1: 7│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2:    }{1:  │ }aaaaa                                        |
@@ -256,7 +256,7 @@ describe('statuscolumn', function()
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 5│}{0:>!}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 6│>>}{0:>!}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1: 6│}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 7│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
@@ -273,7 +273,7 @@ describe('statuscolumn', function()
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 5│}{0:>!}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 6│>>}{0:>!}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1: 6│}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 7│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
@@ -291,7 +291,7 @@ describe('statuscolumn', function()
       {2: }{1: 4│}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 5│}{0:>!}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 5│}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 6│>>}{0:>!}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1: 6│}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 6│}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 7│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 7│}{2:    }{1: }aaaaaa                                      |
@@ -309,7 +309,7 @@ describe('statuscolumn', function()
       {2: }{1: 4│}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 3│}{0:>!}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 3│}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 2│>>}{0:>!}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1: 2│}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 2│}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 1│}{2:    }{1: }aaaaaa                                      |
@@ -326,7 +326,7 @@ describe('statuscolumn', function()
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 3│}{0:>!}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 2│>>}{0:>!}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1: 2│}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
