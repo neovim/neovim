@@ -502,10 +502,6 @@ static void terminfo_stop(TUIData *tui)
   // Disable focus reporting
   unibi_out_ext(tui, tui->unibi_ext.disable_focus_reporting);
 
-  // Disable synchronized output
-  UNIBI_SET_NUM_VAR(tui->params[0], 0);
-  unibi_out_ext(tui, tui->unibi_ext.sync);
-
   flush_buf(tui);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&tui->output_handle, NULL);
