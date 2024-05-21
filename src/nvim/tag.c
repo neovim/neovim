@@ -2978,7 +2978,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
             // Guess again: "^char * \<func  ("
             pbuflen = (size_t)snprintf(pbuf, LSIZE, "^\\[#a-zA-Z_]\\.\\*\\<%s\\s\\*(",
                                        tagp.tagname);
-            if (!do_search(NULL, '/', '/', pbuf, len, 1, search_options, NULL)) {
+            if (!do_search(NULL, '/', '/', pbuf, pbuflen, 1, search_options, NULL)) {
               found = 0;
             }
           }
