@@ -145,6 +145,12 @@ typedef struct {
   buf_T *b_im_ptr_buf;  ///< buffer where b_im_ptr is valid
 } CommandLineState;
 
+typedef enum {
+  kPreviewNone = 0,
+  kPreviewSplit = 1,
+  kPreviewNoSplit = 2,
+} CommandPreviewType;
+
 typedef struct {
   u_header_T *save_b_u_oldhead;
   u_header_T *save_b_u_newhead;
@@ -187,7 +193,7 @@ typedef struct {
   garray_T save_view;
   bool did_prepare;
   bool icm_split;
-  int type;
+  CommandPreviewType type;
   buf_T *buf;
   win_T *win;
 } CpInfo;
@@ -2527,7 +2533,7 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
 static void cmdpreview_close(void)
 {
   bool need_close_win = cp_info->icm_split
-    && cp_info->type == 2
+    && cp_info->type == kPreviewSplit
     && cp_info->win != NULL;
   if (!(need_close_win || cp_info->did_prepare)) {
     goto end;
@@ -2594,7 +2600,7 @@ static void cmdpreview_info_init(CpInfo *cpinfo)
 
 bool cmdpreview_may_refresh(int redraw_type)
 {
-  if (cp_info == NULL || cmdpreview_may_show_level > 0 || cp_info->type == 0) {
+  if (cp_info == NULL || cmdpreview_may_show_level > 0 || cp_info->type == kPreviewNone) {
     return false;
   }
 
@@ -2624,7 +2630,7 @@ bool cmdpreview_may_refresh(int redraw_type)
 
 bool cmdpreview_is_enabled(void)
 {
-  return cp_info != NULL && cp_info->type != 0;
+  return cp_info != NULL && cp_info->type != kPreviewNone;
 }
 
 
@@ -2648,8 +2654,8 @@ static bool cmdpreview_may_show(bool redrawing)
   cmdpreview_may_show_level++;
   assert(cp_info != NULL);
 
-  bool was_enabled = cp_info->type != 0;
-  cp_info->type = 0;
+  bool was_enabled = cp_info->type != kPreviewNone;
+  cp_info->type = kPreviewNone;
 
   exarg_T ea;
   CmdParseInfo cmdinfo;
@@ -2705,26 +2711,26 @@ static bool cmdpreview_may_show(bool redrawing)
   // the preview.
   Error err = ERROR_INIT;
   try_start();
-  cp_info->type = execute_cmd(&ea, &cmdinfo, true);
+  cp_info->type = (CommandPreviewType)execute_cmd(&ea, &cmdinfo, true);
   if (try_end(&err)) {
     DLOGN("error occured during cmdpreview: `%s`\n", err.msg == NULL ? "??" : err.msg);
     api_clear_error(&err);
-    cp_info->type = 0;
+    cp_info->type = kPreviewNone;
   }
 
   // If inccommand=split and preview callback returns 2, open preview window.
-  if (cp_info->icm_split && cp_info->type == 2) {
+  if (cp_info->icm_split && cp_info->type == kPreviewSplit) {
     if (cp_info->win == NULL) {
       cp_info->win = cmdpreview_open_win(cp_info->buf);
     }
     if (cp_info->win == NULL) {
       // If there's not enough room to open the preview window, just preview without the window.
-      cp_info->type = 1;
+      cp_info->type = kPreviewNoSplit;
     }
   }
 
   // If preview callback return value is nonzero, update screen now.
-  if (!redrawing && cp_info->type != 0) {
+  if (!redrawing && cp_info->type != kPreviewNone) {
     int save_rd = RedrawingDisabled;
     RedrawingDisabled = 0;
     update_screen();
@@ -2737,11 +2743,11 @@ static bool cmdpreview_may_show(bool redrawing)
 
 end:
   xfree(cmdline);
-  if ((was_enabled || cp_info->did_prepare) && cp_info->type == 0) {
+  if ((was_enabled || cp_info->did_prepare) && cp_info->type == kPreviewNone) {
     cmdpreview_close();
   }
   cmdpreview_may_show_level--;
-  return cp_info->type != 0;
+  return cp_info->type != kPreviewNone;
 }
 
 /// Trigger CmdlineChanged autocommands.
