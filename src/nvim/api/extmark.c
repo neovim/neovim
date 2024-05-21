@@ -1038,7 +1038,7 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 ///               ```
 ///             - on_win: called when starting to redraw a specific window.
 ///               ```
-///                 ["win", winid, bufnr, topline, botline]
+///                 ["win", winid, bufnr, toprow, botrow]
 ///               ```
 ///             - on_line: called for each buffer line being redrawn.
 ///                 (The interaction with fold lines is subject to change)

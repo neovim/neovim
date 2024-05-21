@@ -1951,7 +1951,7 @@ function vim.api.nvim_set_current_win(window) end
 ---
 ---             • on_win: called when starting to redraw a specific window.
 --- ```
----                ["win", winid, bufnr, topline, botline]
+---                ["win", winid, bufnr, toprow, botrow]
 --- ```
 ---
 ---             • on_line: called for each buffer line being redrawn. (The
