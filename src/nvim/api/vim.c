@@ -2424,7 +2424,7 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
 
   // Flush pending screen updates if "flush" or "clear" is true, or when
   // redrawing a status component may have changed the grid dimensions.
-  if (flush && !cmdpreview) {
+  if (flush) {
     update_screen();
   }
   ui_flush();
