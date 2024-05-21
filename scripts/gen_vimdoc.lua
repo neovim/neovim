@@ -373,8 +373,8 @@ local config = {
     section_fmt = function(_name)
       return 'Checkhealth'
     end,
-    helptag_fmt = function(name)
-      return name:lower()
+    helptag_fmt = function()
+      return 'vim.health* *health' -- HACK
     end,
   },
 }

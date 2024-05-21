@@ -138,15 +138,15 @@ DOCUMENTATION                                           *dev-doc*
 - Write docstrings (as opposed to inline comments) with present tense ("Gets"),
   not imperative ("Get"). This tends to reduce ambiguity and improve clarity
   by describing "What" instead of "How". >
-    GOOD:
+    ✅ OK:
     /// Gets a highlight definition.
-    BAD:
+    ❌ NO:
     /// Get a highlight definition.
 - Avoid starting docstrings with "The" or "A" unless needed to avoid
   ambiguity. This is a visual aid and reduces noise. >
-    GOOD:
+    ✅ OK:
     /// @param dirname Path fragment before `pend`
-    BAD:
+    ❌ NO:
     /// @param dirname The path fragment before `pend`
 - Vim differences:
     - Do not prefix help tags with "nvim-". Use |vim_diff.txt| to catalog
@@ -329,13 +329,20 @@ Where possible, these patterns apply to _both_ Lua and the API:
 - When accepting a buffer id, etc., 0 means "current buffer", nil means "all
   buffers".  Likewise for window id, tabpage id, etc.
   - Examples: |vim.lsp.codelens.clear()| |vim.diagnostic.enable()|
-- Any function signature that accepts a callback function should define the
-  callback as the LAST parameter, if possible. This improves readability of
-  calls by placing the less "noisy" arguments near the start. >
-    GOOD:
-    filter(table, opts, function() … end)
-    BAD:
-    filter(function() … end, table, opts)
+- Any function signature that accepts a callback (example: |table.foreach()|)
+  should place it as the LAST parameter (after opts), if possible (or ALWAYS
+  for "continuation callbacks"—functions called exactly once).
+  - Improves readability by placing the less "noisy" arguments near the start.
+  - Consistent with luv.
+  - Useful for future async lib which transforms functions of the form
+    `function(<args>, cb(<ret)>))` => `function(<args>) -> <ret>`.
+  - Example: >lua
+    -- ✅ OK:
+    filter(…, opts, function() … end)
+    -- ❌ NO:
+    filter(function() … end, …, opts)
+    -- ❌ NO:
+    filter(…, function() … end, opts)
 - "Enable" ("toggle") interface and behavior:
   - `enable(…, nil)` and `enable(…, {buf=nil})` are synonyms and control the
     the "global" enablement of a feature.
@@ -566,10 +573,10 @@ a good name: it's idiomatic and unambiguous. If the package is named "neovim",
 it confuses users, and complicates documentation and discussions.
 
 Examples of API-client package names:
-- GOOD: nvim-racket
-- GOOD: pynvim
-- BAD:  python-client
-- BAD:  neovim_
+- ✅ OK: nvim-racket
+- ✅ OK: pynvim
+- ❌ NO: python-client
+- ❌ NO: neovim_
 
 API client implementation guidelines ~
 

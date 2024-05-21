@@ -597,7 +597,7 @@ end
 
 --- @class vim.lsp.completion.BufferOpts
 --- @field autotrigger? boolean Whether to trigger completion automatically. Default: false
---- @field convert? fun(item: lsp.CompletionItem): table An optional function used to customize the transformation of an LSP CompletionItem to |complete-items|.
+--- @field convert? fun(item: lsp.CompletionItem): table Transforms an LSP CompletionItem to |complete-items|.
 
 ---@param client_id integer
 ---@param bufnr integer

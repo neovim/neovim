@@ -6,10 +6,12 @@
 --- of each pipeline stage is input to the next stage. The first stage depends on the type passed to
 --- `vim.iter()`:
 ---
---- - List tables (arrays, |lua-list|) yield only the value of each element.
----   - Holes (nil values) are allowed.
+--- - Lists or arrays (|lua-list|) yield only the value of each element.
+---   - Holes (nil values) are allowed (but discarded).
+---   - Use pairs() to treat array/list tables as dicts (preserve holes and non-contiguous integer
+---     keys): `vim.iter(pairs(…))`.
 ---   - Use |Iter:enumerate()| to also pass the index to the next stage.
----   - Or initialize with ipairs(): `vim.iter(ipairs(…))`.
+---     - Or initialize with ipairs(): `vim.iter(ipairs(…))`.
 --- - Non-list tables (|lua-dict|) yield both the key and value of each element.
 --- - Function |iterator|s yield all values returned by the underlying function.
 --- - Tables with a |__call()| metamethod are treated as function iterators.
@@ -1034,7 +1036,7 @@ function Iter.new(src, ...)
       if type(k) ~= 'number' or k <= 0 or math.floor(k) ~= k then
         return Iter.new(pairs(src))
       end
-      t[#t + 1] = v
+      t[#t + 1] = v -- Coerce to list-like table.
     end
     return ArrayIter.new(t)
   end

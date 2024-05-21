@@ -6442,6 +6442,7 @@ M.funcs = {
         "lhsrawalt" The {lhs} of the mapping as raw bytes, alternate
       	      form, only present when it differs from "lhsraw"
         "rhs"	     The {rhs} of the mapping as typed.
+        "callback" Lua function, if RHS was defined as such.
         "silent"   1 for a |:map-silent| mapping, else 0.
         "noremap"  1 if the {rhs} of the mapping is not remappable.
         "script"   1 if mapping was defined with <script>.
