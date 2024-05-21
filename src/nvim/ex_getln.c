@@ -185,7 +185,6 @@ typedef struct {
   bool save_hls;
   cmdmod_T save_cmdmod;
   garray_T save_view;
-  bool enabled;
   bool did_prepare;
   bool icm_split;
   int cmdpreview_type;
@@ -2584,7 +2583,6 @@ static void cmdpreview_info_init(CpInfo *cpinfo)
     .save_hls = false,
     .save_cmdmod = { 0 },
     .save_view = { 0 },
-    .enabled = false,
     .did_prepare = false,
     .icm_split = false,
     .cmdpreview_type = 0,
@@ -2598,7 +2596,7 @@ static void cmdpreview_info_init(CpInfo *cpinfo)
 
 bool cmdpreview_may_refresh(int redraw_type)
 {
-  if (cp_info == NULL || cmdpreview_may_show_level > 0 || !cp_info->enabled) {
+  if (cp_info == NULL || cmdpreview_may_show_level > 0 || cp_info->cmdpreview_type == 0) {
     return false;
   }
 
@@ -2646,7 +2644,7 @@ static bool cmdpreview_may_show(bool redrawing)
   cmdpreview_may_show_level++;
   assert(cp_info != NULL);
 
-  bool was_enabled = cp_info->enabled;
+  bool was_enabled = cp_info->cmdpreview_type != 0;
   cp_info->cmdpreview_type = 0;
 
   exarg_T ea;
@@ -2738,12 +2736,11 @@ static bool cmdpreview_may_show(bool redrawing)
 
 end:
   xfree(cmdline);
-  cp_info->enabled = (cp_info->cmdpreview_type != 0);
-  if ((was_enabled || cp_info->did_prepare) && !cp_info->enabled) {
+  if ((was_enabled || cp_info->did_prepare) && cp_info->cmdpreview_type == 0) {
     cmdpreview_close();
   }
   cmdpreview_may_show_level--;
-  return (cmdpreview = cp_info->enabled);
+  return (cmdpreview = cp_info->cmdpreview_type != 0);
 }
 
 /// Trigger CmdlineChanged autocommands.
