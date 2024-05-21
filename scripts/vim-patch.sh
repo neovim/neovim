@@ -122,7 +122,7 @@ commit_message() {
   if [[ "${vim_message}" == "vim-patch:${vim_version}:"* ]]; then
     printf '%s\n\n%s\n\n%s' "${vim_message}" "${vim_commit_url}" "${vim_coauthors}"
   else
-    printf 'vim-patch:%s\n\n%s\n\n%s\n\n%s' "$vim_version" "$vim_message" "$vim_commit_url" "$vim_coauthors"
+    printf 'vim-patch:%s: %s\n\n%s\n\n%s' "${vim_version:0:7}" "${vim_message}" "${vim_commit_url}" "${vim_coauthors}"
   fi
 }
 
