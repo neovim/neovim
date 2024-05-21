@@ -556,12 +556,15 @@ local function buf_attach(bufnr)
     end,
 
     on_reload = function()
+      local clients = lsp.get_clients({ bufnr = bufnr })
       local params = { textDocument = { uri = uri } }
-      for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
+      for _, client in ipairs(clients) do
         changetracking.reset_buf(client, bufnr)
         if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
           client.notify(ms.textDocument_didClose, params)
         end
+      end
+      for _, client in ipairs(clients) do
         client:_text_document_did_open_handler(bufnr)
       end
     end,
