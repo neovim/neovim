@@ -7076,12 +7076,13 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
     .sa_tm = &tm,
   };
 
+  const size_t patlen = strlen(pat);
   int subpatnum;
 
   // Repeat until {skip} returns false.
   while (true) {
-    subpatnum
-      = searchit(curwin, curbuf, &pos, NULL, dir, (char *)pat, 1, options, RE_SEARCH, &sia);
+    subpatnum = searchit(curwin, curbuf, &pos, NULL, dir, (char *)pat, patlen, 1,
+                         options, RE_SEARCH, &sia);
     // finding the first match again means there is no match where {skip}
     // evaluates to zero.
     if (firstpos.lnum != 0 && equalpos(pos, firstpos)) {
@@ -7636,16 +7637,20 @@ int do_searchpair(const char *spat, const char *mpat, const char *epat, int dir,
 
   // Make two search patterns: start/end (pat2, for in nested pairs) and
   // start/middle/end (pat3, for the top pair).
-  const size_t pat2_len = strlen(spat) + strlen(epat) + 17;
-  char *pat2 = xmalloc(pat2_len);
-  const size_t pat3_len = strlen(spat) + strlen(mpat) + strlen(epat) + 25;
-  char *pat3 = xmalloc(pat3_len);
-  snprintf(pat2, pat2_len, "\\m\\(%s\\m\\)\\|\\(%s\\m\\)", spat, epat);
+  const size_t spatlen = strlen(spat);
+  const size_t epatlen = strlen(epat);
+  const size_t pat2size = spatlen + epatlen + 17;
+  char *pat2 = xmalloc(pat2size);
+  const size_t pat3size = spatlen + strlen(mpat) + epatlen + 25;
+  char *pat3 = xmalloc(pat3size);
+  int pat2len = snprintf(pat2, pat2size, "\\m\\(%s\\m\\)\\|\\(%s\\m\\)", spat, epat);
+  int pat3len;
   if (*mpat == NUL) {
     STRCPY(pat3, pat2);
+    pat3len = pat2len;
   } else {
-    snprintf(pat3, pat3_len,
-             "\\m\\(%s\\m\\)\\|\\(%s\\m\\)\\|\\(%s\\m\\)", spat, epat, mpat);
+    pat3len = snprintf(pat3, pat3size,
+                       "\\m\\(%s\\m\\)\\|\\(%s\\m\\)\\|\\(%s\\m\\)", spat, epat, mpat);
   }
   if (flags & SP_START) {
     options |= SEARCH_START;
@@ -7662,13 +7667,15 @@ int do_searchpair(const char *spat, const char *mpat, const char *epat, int dir,
   pos_T foundpos;
   clearpos(&foundpos);
   char *pat = pat3;
+  assert(pat3len >= 0);
+  size_t patlen = (size_t)pat3len;
   while (true) {
     searchit_arg_T sia = {
       .sa_stop_lnum = lnum_stop,
       .sa_tm = &tm,
     };
 
-    int n = searchit(curwin, curbuf, &pos, NULL, dir, pat, 1,
+    int n = searchit(curwin, curbuf, &pos, NULL, dir, pat, patlen, 1,
                      options, RE_SEARCH, &sia);
     if (n == FAIL || (firstpos.lnum != 0 && equalpos(pos, firstpos))) {
       // didn't find it or found the first match again: FAIL

@@ -1551,14 +1551,14 @@ func Test_tagbsearch()
         \ "third\tXfoo\t3",
         \ "second\tXfoo\t2",
         \ "first\tXfoo\t1"],
-        \ 'Xtags')
+        \ 'Xtags', 'D')
   set tags=Xtags
   let code =<< trim [CODE]
     int first() {}
     int second() {}
     int third() {}
   [CODE]
-  call writefile(code, 'Xfoo')
+  call writefile(code, 'Xfoo', 'D')
 
   enew
   set tagbsearch
@@ -1618,9 +1618,25 @@ func Test_tagbsearch()
         \ 'Xtags')
   call assert_fails('tag bbb', 'E426:')
 
-  call delete('Xtags')
-  call delete('Xfoo')
   set tags& tagbsearch&
+endfunc
+
+" Test tag guessing with very short names
+func Test_tag_guess_short()
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "y\tXf\t/^y()/"],
+        \ 'Xt', 'D')
+  set tags=Xt cpoptions+=t
+  call writefile(['', 'int * y () {}', ''], 'Xf', 'D')
+
+  let v:statusmsg = ''
+  let @/ = ''
+  ta y
+  call assert_match('E435:', v:statusmsg)
+  call assert_equal(2, line('.'))
+  call assert_match('<y', @/)
+
+  set tags& cpoptions-=t
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

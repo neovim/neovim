@@ -35,9 +35,10 @@ itp('pat_has_uppercase', function()
 end)
 
 describe('search_regcomp', function()
-  local search_regcomp = function(pat, pat_save, pat_use, options)
+  local search_regcomp = function(pat, patlen, pat_save, pat_use, options)
     local regmatch = ffi.new('regmmatch_T')
-    local fail = search.search_regcomp(to_cstr(pat), nil, pat_save, pat_use, options, regmatch)
+    local fail =
+      search.search_regcomp(to_cstr(pat), patlen, nil, pat_save, pat_use, options, regmatch)
     return fail, regmatch
   end
 
@@ -50,7 +51,7 @@ describe('search_regcomp', function()
     globals.curwin.w_onebuf_opt.wo_rl = 1
     globals.curwin.w_onebuf_opt.wo_rlc = to_cstr('s')
     globals.cmdmod.cmod_flags = globals.CMOD_KEEPPATTERNS
-    local fail = search_regcomp('a\192', 0, 0, 0)
+    local fail = search_regcomp('a\192', 2, 0, 0, 0)
     eq(1, fail)
     eq('\192a', get_search_pat())
   end)
