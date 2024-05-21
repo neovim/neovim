@@ -273,6 +273,63 @@ describe('semantic token highlighting', function()
       end
     )
 
+    it('highlights start and stop when using "0" for current buffer', function()
+      exec_lua([[
+        bufnr = vim.api.nvim_get_current_buf()
+        vim.api.nvim_win_set_buf(0, bufnr)
+        client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+      ]])
+
+      insert(text)
+
+      exec_lua([[
+        vim.notify = function() end
+        vim.lsp.semantic_tokens.stop(0, client_id)
+      ]])
+
+      screen:expect {
+        grid = [[
+        #include <iostream>                     |
+                                                |
+        int main()                              |
+        {                                       |
+            int x;                              |
+        #ifdef __cplusplus                      |
+            std::cout << x << "\n";             |
+        #else                                   |
+            printf("%d\n", x);                  |
+        #endif                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|*3
+                                                |
+      ]],
+      }
+
+      exec_lua([[
+        vim.lsp.semantic_tokens.start(0, client_id)
+      ]])
+
+      screen:expect {
+        grid = [[
+        #include <iostream>                     |
+                                                |
+        int {8:main}()                              |
+        {                                       |
+            int {7:x};                              |
+        #ifdef {5:__cplusplus}                      |
+            {4:std}::{2:cout} << {2:x} << "\n";             |
+        {6:#else}                                   |
+        {6:    printf("%d\n", x);}                  |
+        {6:#endif}                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|*3
+                                                |
+      ]],
+      }
+    end)
+
     it('buffer is re-highlighted when force refreshed', function()
       exec_lua([[
         bufnr = vim.api.nvim_get_current_buf()

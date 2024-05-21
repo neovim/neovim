@@ -570,9 +570,9 @@ local M = {}
 --- client.server_capabilities.semanticTokensProvider = nil
 --- ```
 ---
----@param bufnr integer
----@param client_id integer
----@param opts? table Optional keyword arguments
+---@param bufnr (integer) Buffer number, or `0` for current buffer
+---@param client_id (integer) The ID of the |vim.lsp.Client|
+---@param opts? (table) Optional keyword arguments
 ---  - debounce (integer, default: 200): Debounce token requests
 ---        to the server by the given number in milliseconds
 function M.start(bufnr, client_id, opts)
@@ -580,6 +580,10 @@ function M.start(bufnr, client_id, opts)
     bufnr = { bufnr, 'n', false },
     client_id = { client_id, 'n', false },
   })
+
+  if bufnr == 0 then
+    bufnr = api.nvim_get_current_buf()
+  end
 
   opts = opts or {}
   assert(
@@ -626,13 +630,17 @@ end
 --- of `start()`, so you should only need this function to manually disengage the semantic
 --- token engine without fully detaching the LSP client from the buffer.
 ---
----@param bufnr integer
----@param client_id integer
+---@param bufnr (integer) Buffer number, or `0` for current buffer
+---@param client_id (integer) The ID of the |vim.lsp.Client|
 function M.stop(bufnr, client_id)
   vim.validate({
     bufnr = { bufnr, 'n', false },
     client_id = { client_id, 'n', false },
   })
+
+  if bufnr == 0 then
+    bufnr = api.nvim_get_current_buf()
+  end
 
   local highlighter = STHighlighter.active[bufnr]
   if not highlighter then
@@ -741,12 +749,15 @@ end
 --- mark will be deleted by the semantic token engine when appropriate; for
 --- example, when the LSP sends updated tokens. This function is intended for
 --- use inside |LspTokenUpdate| callbacks.
----@param token (table) a semantic token, found as `args.data.token` in |LspTokenUpdate|.
----@param bufnr (integer) the buffer to highlight
+---@param token (table) A semantic token, found as `args.data.token` in |LspTokenUpdate|
+---@param bufnr (integer) The buffer to highlight, or `0` for current buffer
 ---@param client_id (integer) The ID of the |vim.lsp.Client|
 ---@param hl_group (string) Highlight group name
 ---@param opts? vim.lsp.semantic_tokens.highlight_token.Opts  Optional parameters:
 function M.highlight_token(token, bufnr, client_id, hl_group, opts)
+  if bufnr == 0 then
+    bufnr = api.nvim_get_current_buf()
+  end
   local highlighter = STHighlighter.active[bufnr]
   if not highlighter then
     return

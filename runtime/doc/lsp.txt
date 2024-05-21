@@ -1686,9 +1686,10 @@ highlight_token({token}, {bufnr}, {client_id}, {hl_group}, {opts})
     use inside |LspTokenUpdate| callbacks.
 
     Parameters: ~
-      • {token}      (`table`) a semantic token, found as `args.data.token` in
-                     |LspTokenUpdate|.
-      • {bufnr}      (`integer`) the buffer to highlight
+      • {token}      (`table`) A semantic token, found as `args.data.token` in
+                     |LspTokenUpdate|
+      • {bufnr}      (`integer`) The buffer to highlight, or `0` for current
+                     buffer
       • {client_id}  (`integer`) The ID of the |vim.lsp.Client|
       • {hl_group}   (`string`) Highlight group name
       • {opts}       (`table?`) Optional parameters:
@@ -1709,8 +1710,8 @@ start({bufnr}, {client_id}, {opts})          *vim.lsp.semantic_tokens.start()*
 <
 
     Parameters: ~
-      • {bufnr}      (`integer`)
-      • {client_id}  (`integer`)
+      • {bufnr}      (`integer`) Buffer number, or `0` for current buffer
+      • {client_id}  (`integer`) The ID of the |vim.lsp.Client|
       • {opts}       (`table?`) Optional keyword arguments
                      • debounce (integer, default: 200): Debounce token
                        requests to the server by the given number in
@@ -1726,8 +1727,8 @@ stop({bufnr}, {client_id})                    *vim.lsp.semantic_tokens.stop()*
     from the buffer.
 
     Parameters: ~
-      • {bufnr}      (`integer`)
-      • {client_id}  (`integer`)
+      • {bufnr}      (`integer`) Buffer number, or `0` for current buffer
+      • {client_id}  (`integer`) The ID of the |vim.lsp.Client|
 
 
 ==============================================================================
