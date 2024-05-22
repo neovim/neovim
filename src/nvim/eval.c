@@ -4778,6 +4778,88 @@ bool set_ref_in_list_items(list_T *l, int copyID, ht_stack_T **ht_stack)
   return abort;
 }
 
+/// Mark the dict "dd" with "copyID".
+/// Also see set_ref_in_item().
+static bool set_ref_in_item_dict(dict_T *dd, int copyID, ht_stack_T **ht_stack,
+                                 list_stack_T **list_stack)
+{
+  if (dd == NULL || dd->dv_copyID == copyID) {
+    return false;
+  }
+
+  // Didn't see this dict yet.
+  dd->dv_copyID = copyID;
+  if (ht_stack == NULL) {
+    return set_ref_in_ht(&dd->dv_hashtab, copyID, list_stack);
+  }
+
+  ht_stack_T *const newitem = xmalloc(sizeof(ht_stack_T));
+  newitem->ht = &dd->dv_hashtab;
+  newitem->prev = *ht_stack;
+  *ht_stack = newitem;
+
+  QUEUE *w = NULL;
+  DictWatcher *watcher = NULL;
+  QUEUE_FOREACH(w, &dd->watchers, {
+    watcher = tv_dict_watcher_node_data(w);
+    set_ref_in_callback(&watcher->callback, copyID, ht_stack, list_stack);
+  })
+
+  return false;
+}
+
+/// Mark the list "ll" with "copyID".
+/// Also see set_ref_in_item().
+static bool set_ref_in_item_list(list_T *ll, int copyID, ht_stack_T **ht_stack,
+                                 list_stack_T **list_stack)
+{
+  if (ll == NULL || ll->lv_copyID == copyID) {
+    return false;
+  }
+
+  // Didn't see this list yet.
+  ll->lv_copyID = copyID;
+  if (list_stack == NULL) {
+    return set_ref_in_list_items(ll, copyID, ht_stack);
+  }
+
+  list_stack_T *const newitem = xmalloc(sizeof(list_stack_T));
+  newitem->list = ll;
+  newitem->prev = *list_stack;
+  *list_stack = newitem;
+
+  return false;
+}
+
+/// Mark the partial "pt" with "copyID".
+/// Also see set_ref_in_item().
+static bool set_ref_in_item_partial(partial_T *pt, int copyID, ht_stack_T **ht_stack,
+                                    list_stack_T **list_stack)
+{
+  if (pt == NULL || pt->pt_copyID == copyID) {
+    return false;
+  }
+
+  // Didn't see this partial yet.
+  pt->pt_copyID = copyID;
+
+  bool abort = set_ref_in_func(pt->pt_name, pt->pt_func, copyID);
+
+  if (pt->pt_dict != NULL) {
+    typval_T dtv;
+
+    dtv.v_type = VAR_DICT;
+    dtv.vval.v_dict = pt->pt_dict;
+    abort = abort || set_ref_in_item(&dtv, copyID, ht_stack, list_stack);
+  }
+
+  for (int i = 0; i < pt->pt_argc; i++) {
+    abort = abort || set_ref_in_item(&pt->pt_argv[i], copyID, ht_stack, list_stack);
+  }
+
+  return abort;
+}
+
 /// Mark all lists and dicts referenced through typval "tv" with "copyID".
 ///
 /// @param tv            Typval content will be marked.
@@ -4792,73 +4874,15 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack, list_stack
   bool abort = false;
 
   switch (tv->v_type) {
-  case VAR_DICT: {
-    dict_T *dd = tv->vval.v_dict;
-    if (dd != NULL && dd->dv_copyID != copyID) {
-      // Didn't see this dict yet.
-      dd->dv_copyID = copyID;
-      if (ht_stack == NULL) {
-        abort = set_ref_in_ht(&dd->dv_hashtab, copyID, list_stack);
-      } else {
-        ht_stack_T *const newitem = xmalloc(sizeof(ht_stack_T));
-        newitem->ht = &dd->dv_hashtab;
-        newitem->prev = *ht_stack;
-        *ht_stack = newitem;
-      }
-
-      QUEUE *w = NULL;
-      DictWatcher *watcher = NULL;
-      QUEUE_FOREACH(w, &dd->watchers, {
-          watcher = tv_dict_watcher_node_data(w);
-          set_ref_in_callback(&watcher->callback, copyID, ht_stack, list_stack);
-        })
-    }
-    break;
-  }
-
-  case VAR_LIST: {
-    list_T *ll = tv->vval.v_list;
-    if (ll != NULL && ll->lv_copyID != copyID) {
-      // Didn't see this list yet.
-      ll->lv_copyID = copyID;
-      if (list_stack == NULL) {
-        abort = set_ref_in_list_items(ll, copyID, ht_stack);
-      } else {
-        list_stack_T *const newitem = xmalloc(sizeof(list_stack_T));
-        newitem->list = ll;
-        newitem->prev = *list_stack;
-        *list_stack = newitem;
-      }
-    }
-    break;
-  }
-
-  case VAR_PARTIAL: {
-    partial_T *pt = tv->vval.v_partial;
-
-    if (pt != NULL && pt->pt_copyID != copyID) {
-      // Didn't see this partial yet.
-      pt->pt_copyID = copyID;
-
-      abort = set_ref_in_func(pt->pt_name, pt->pt_func, copyID);
-      if (pt->pt_dict != NULL) {
-        typval_T dtv;
-
-        dtv.v_type = VAR_DICT;
-        dtv.vval.v_dict = pt->pt_dict;
-        abort = abort || set_ref_in_item(&dtv, copyID, ht_stack, list_stack);
-      }
-
-      for (int i = 0; i < pt->pt_argc; i++) {
-        abort = abort || set_ref_in_item(&pt->pt_argv[i], copyID,
-                                         ht_stack, list_stack);
-      }
-    }
-    break;
-  }
+  case VAR_DICT:
+    return set_ref_in_item_dict(tv->vval.v_dict, copyID, ht_stack, list_stack);
+  case VAR_LIST:
+    return set_ref_in_item_list(tv->vval.v_list, copyID, ht_stack, list_stack);
   case VAR_FUNC:
     abort = set_ref_in_func(tv->vval.v_string, NULL, copyID);
     break;
+  case VAR_PARTIAL:
+    return set_ref_in_item_partial(tv->vval.v_partial, copyID, ht_stack, list_stack);
   case VAR_UNKNOWN:
   case VAR_BOOL:
   case VAR_SPECIAL:
