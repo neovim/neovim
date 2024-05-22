@@ -75,7 +75,6 @@ local new_layout = {
   ['news-0.9.txt'] = true,
   ['news-0.10.txt'] = true,
   ['nvim.txt'] = true,
-  ['pi_health.txt'] = true,
   ['provider.txt'] = true,
   ['ui.txt'] = true,
   ['vim_diff.txt'] = true,
@@ -1440,9 +1439,9 @@ function M.test_gen(help_dir)
     help_dir,
     tmpdir,
     -- Because gen() is slow (~30s), this test is limited to a few files.
-    { 'pi_health.txt', 'help.txt', 'index.txt', 'nvim.txt' }
+    { 'help.txt', 'index.txt', 'nvim.txt' }
   )
-  eq(4, #rv.helpfiles)
+  eq(3, #rv.helpfiles)
   eq(0, rv.err_count, 'parse errors in :help docs')
   eq({}, rv.invalid_links, 'invalid tags in :help docs')
 end

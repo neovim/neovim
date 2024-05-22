@@ -1,3 +1,91 @@
+--- @brief
+---<pre>help
+--- health.vim is a minimal framework to help users troubleshoot configuration and
+--- any other environment conditions that a plugin might care about. Nvim ships
+--- with healthchecks for configuration, performance, python support, ruby
+--- support, clipboard support, and more.
+---
+--- To run all healthchecks, use: >vim
+---
+---         :checkhealth
+--- <
+--- Plugin authors are encouraged to write new healthchecks. |health-dev|
+---
+--- Commands                                *health-commands*
+---
+---                                                              *:che* *:checkhealth*
+--- :che[ckhealth]  Run all healthchecks.
+---                                         *E5009*
+---                 Nvim depends on |$VIMRUNTIME|, 'runtimepath' and 'packpath' to
+---                 find the standard "runtime files" for syntax highlighting,
+---                 filetype-specific behavior, and standard plugins (including
+---                 :checkhealth).  If the runtime files cannot be found then
+---                 those features will not work.
+---
+--- :che[ckhealth] {plugins}
+---                 Run healthcheck(s) for one or more plugins. E.g. to run only
+---                 the standard Nvim healthcheck: >vim
+---                         :checkhealth vim.health
+--- <
+---                 To run the healthchecks for the "foo" and "bar" plugins
+---                 (assuming they are on 'runtimepath' and they have implemented
+---                 the Lua `require("foo.health").check()` interface): >vim
+---                         :checkhealth foo bar
+--- <
+---                 To run healthchecks for Lua submodules, use dot notation or
+---                 "*" to refer to all submodules. For example Nvim provides
+---                 `vim.lsp` and `vim.treesitter`:  >vim
+---                         :checkhealth vim.lsp vim.treesitter
+---                         :checkhealth vim*
+--- <
+---
+--- Create a healthcheck                                    *health-dev*
+---
+--- Healthchecks are functions that check the user environment, configuration, or
+--- any other prerequisites that a plugin cares about. Nvim ships with
+--- healthchecks in:
+---         - $VIMRUNTIME/autoload/health/
+---         - $VIMRUNTIME/lua/vim/lsp/health.lua
+---         - $VIMRUNTIME/lua/vim/treesitter/health.lua
+---         - and more...
+---
+--- To add a new healthcheck for your own plugin, simply create a "health.lua"
+--- module on 'runtimepath' that returns a table with a "check()" function. Then
+--- |:checkhealth| will automatically find and invoke the function.
+---
+--- For example if your plugin is named "foo", define your healthcheck module at
+--- one of these locations (on 'runtimepath'):
+---         - lua/foo/health/init.lua
+---         - lua/foo/health.lua
+---
+--- If your plugin also provides a submodule named "bar" for which you want
+--- a separate healthcheck, define the healthcheck at one of these locations:
+---         - lua/foo/bar/health/init.lua
+---         - lua/foo/bar/health.lua
+---
+--- All such health modules must return a Lua table containing a `check()`
+--- function.
+---
+--- Copy this sample code into `lua/foo/health.lua`, replacing "foo" in the path
+--- with your plugin name: >lua
+---
+---         local M = {}
+---
+---         M.check = function()
+---           vim.health.start("foo report")
+---           -- make sure setup function parameters are ok
+---           if check_setup() then
+---             vim.health.ok("Setup is correct")
+---           else
+---             vim.health.error("Setup is incorrect")
+---           end
+---           -- do some more checking
+---           -- ...
+---         end
+---
+---         return M
+---</pre>
+
 local M = {}
 
 local s_output = {} ---@type string[]
@@ -143,7 +231,9 @@ local function collect_output(output)
   vim.list_extend(s_output, vim.split(output, '\n'))
 end
 
---- Starts a new report.
+--- Starts a new report. Most plugins should call this only once, but if
+--- you want different sections to appear in your report, call this once
+--- per section.
 ---
 --- @param name string
 function M.start(name)
@@ -151,7 +241,7 @@ function M.start(name)
   collect_output(input)
 end
 
---- Reports a message in the current section.
+--- Reports an informational message.
 ---
 --- @param msg string
 function M.info(msg)
@@ -159,7 +249,7 @@ function M.info(msg)
   collect_output(input)
 end
 
---- Reports a successful healthcheck.
+--- Reports a "success" message.
 ---
 --- @param msg string
 function M.ok(msg)
@@ -167,7 +257,7 @@ function M.ok(msg)
   collect_output(input)
 end
 
---- Reports a health warning.
+--- Reports a warning.
 ---
 --- @param msg string
 --- @param ... string|string[] Optional advice
@@ -176,7 +266,7 @@ function M.warn(msg, ...)
   collect_output(input)
 end
 
---- Reports a failed healthcheck.
+--- Reports an error.
 ---
 --- @param msg string
 --- @param ... string|string[] Optional advice
@@ -185,7 +275,7 @@ function M.error(msg, ...)
   collect_output(input)
 end
 
-function M.provider_disabled(provider)
+function M._provider_disabled(provider)
   local loaded_var = 'loaded_' .. provider .. '_provider'
   local v = vim.g[loaded_var]
   if v == 0 then
@@ -225,7 +315,7 @@ local function shellify(cmd)
   return table.concat(escaped, ' ')
 end
 
-function M.cmd_ok(cmd)
+function M._cmd_ok(cmd)
   local out = vim.fn.system(cmd)
   return vim.v.shell_error == 0, out
 end
@@ -238,7 +328,7 @@ end
 ---                   - stderr (boolean): Append stderr to stdout
 ---                   - ignore_error (boolean): If true, ignore error output
 ---                   - timeout (number): Number of seconds to wait before timing out (default 30)
-function M.system(cmd, args)
+function M._system(cmd, args)
   args = args or {}
   local stdin = args.stdin or ''
   local stderr = vim.F.if_nil(args.stderr, false)

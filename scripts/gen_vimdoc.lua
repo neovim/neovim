@@ -162,6 +162,7 @@ local config = {
       'snippet.lua',
       'text.lua',
       'tohtml.lua',
+      'health.lua',
     },
     files = {
       'runtime/lua/vim/iter.lua',
@@ -181,6 +182,7 @@ local config = {
       'runtime/lua/vim/snippet.lua',
       'runtime/lua/vim/text.lua',
       'runtime/lua/vim/glob.lua',
+      'runtime/lua/vim/health.lua',
       'runtime/lua/vim/_meta/builtin.lua',
       'runtime/lua/vim/_meta/diff.lua',
       'runtime/lua/vim/_meta/mpack.lua',
