@@ -463,6 +463,9 @@ int update_screen(void)
   display_tick++;  // let syntax code know we're in a next round of
                    // display updating
 
+  // if redraw changes the visible region of buffers/windows affected
+  // by 'inccommand', refresh the preview callback before updating
+  // the screen
   if (cmdpreview_may_refresh(type)) {
     type = MAX(type, must_redraw);
     must_redraw = 0;

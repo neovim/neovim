@@ -2591,12 +2591,32 @@ static inline void cmdpreview_free_info(CpInfo *cpinfo)
   }
 }
 
+/// Re-invoke 'inccommand' preview during a screen update, if necessary.
+/// Preview callbacks may choose to only show changes and decorations based on what
+/// is currently visible within the editor. As such, redraws that affect the viewport
+/// (like resizing and scrolling) must first re-execute the preview callbacks, otherwise
+/// we risk exposing new window/buffer regions that do not properly reflect the command
+/// preview.
+///
+/// For example, `:substitute` preview only applies changes within the window's visible
+/// region. @see do_sub
+///
+/// @param redraw_type The maximum redraw type value. @see must_redraw
+///
+/// @return whether preview was refreshed or not.
 bool cmdpreview_may_refresh(int redraw_type)
 {
   if (cp_info == NULL || cmdpreview_may_show_level > 0 || cp_info->type == kPreviewNone) {
     return false;
   }
 
+  // TODO(theofabilous): this may not be correct.
+  // don't necessarily need to re-invoke if redraw_type >= UPD_NOT_VALID,
+  // e.g. if a non-managed buffer needs such a redraw. should probably just
+  // remove that check and the redraw_type param.
+  // See comment at top of drawscreen.c for logical meaning
+  // (wrt to resizing & scrolling) for redraw values.
+  // --> Once revised, add a comment explaining the logic here
   bool need_refresh = false;
   if (redraw_type >= UPD_NOT_VALID) {
     need_refresh = true;
@@ -2626,7 +2646,7 @@ bool cmdpreview_is_enabled(void)
   return cp_info != NULL && cp_info->type != kPreviewNone;
 }
 
-
+/// TODO(theofabilous): update this docstring to reflect new logic
 /// Show 'inccommand' preview if command is previewable. It works like this:
 ///    1. Store current undo information so we can revert to current state later.
 ///    2. Execute the preview callback with the parsed command, preview buffer number and preview
