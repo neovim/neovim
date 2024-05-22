@@ -198,6 +198,19 @@ typedef struct {
   win_T *win;
 } CpInfo;
 
+#define CPINFO_INIT ((CpInfo) {         \
+    .win_info = KV_INITIAL_VALUE,       \
+    .buf_info = KV_INITIAL_VALUE,       \
+    .save_hls = false,                  \
+    .save_cmdmod = { 0 },               \
+    .save_view = { 0 },                 \
+    .did_prepare = false,               \
+    .icm_split = false,                 \
+    .type = 0,                          \
+    .buf = NULL,                        \
+    .win = NULL,                        \
+  })                                    \
+
 static CpInfo *cp_info = NULL;
 static int cmdpreview_may_show_level = 0;
 
@@ -690,8 +703,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   static int cmdline_level = 0;
   cmdline_level++;
 
-  CpInfo cpinfo;
-  cmdpreview_info_init(&cpinfo);
+  CpInfo cpinfo = CPINFO_INIT;
   bool save_cmdpreview = cmdpreview_is_enabled();
   CpInfo *save_cpinfo = cp_info;
   cp_info = &cpinfo;
@@ -2562,7 +2574,7 @@ static void cmdpreview_close(void)
 
 end:
   cmdpreview_free_info(cp_info);
-  cmdpreview_info_init(cp_info);
+  *cp_info = CPINFO_INIT;
 }
 
 static inline void cmdpreview_free_info(CpInfo *cpinfo)
@@ -2577,25 +2589,6 @@ static inline void cmdpreview_free_info(CpInfo *cpinfo)
   if (cpinfo->buf_info.items != NULL) {
     kv_destroy(cpinfo->buf_info);
   }
-}
-
-static void cmdpreview_info_init(CpInfo *cpinfo)
-{
-  *cpinfo = (CpInfo) {
-    /*.win_info = { 0 },*/
-    /*.buf_info = { 0 },*/
-    .save_hls = false,
-    .save_cmdmod = { 0 },
-    .save_view = { 0 },
-    .did_prepare = false,
-    .icm_split = false,
-    .type = 0,
-    .buf = NULL,
-    .win = NULL,
-  };
-
-  kv_init(cpinfo->win_info);
-  kv_init(cpinfo->buf_info);
 }
 
 bool cmdpreview_may_refresh(int redraw_type)
