@@ -4253,11 +4253,12 @@ void charwise_block_prep(pos_T start, pos_T end, struct block_def *bdp, linenr_T
 {
   colnr_T startcol = 0;
   colnr_T endcol = MAXCOL;
-  bool is_oneChar = false;
   colnr_T cs, ce;
   char *p = ml_get(lnum);
+
   bdp->startspaces = 0;
   bdp->endspaces = 0;
+  bdp->is_oneChar = false;
   bdp->start_char_vcols = 0;
 
   if (lnum == start.lnum) {
@@ -4287,7 +4288,7 @@ void charwise_block_prep(pos_T start, pos_T end, struct block_def *bdp, linenr_T
                                && utf_head_off(p, p + endcol) == 0)) {
         if (start.lnum == end.lnum && start.col == end.col) {
           // Special case: inside a single char
-          is_oneChar = true;
+          bdp->is_oneChar = true;
           bdp->startspaces = end.coladd - start.coladd + inclusive;
           endcol = startcol;
         } else {
@@ -4300,7 +4301,7 @@ void charwise_block_prep(pos_T start, pos_T end, struct block_def *bdp, linenr_T
   if (endcol == MAXCOL) {
     endcol = ml_get_len(lnum);
   }
-  if (startcol > endcol || is_oneChar) {
+  if (startcol > endcol || bdp->is_oneChar) {
     bdp->textlen = 0;
   } else {
     bdp->textlen = endcol - startcol + inclusive;

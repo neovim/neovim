@@ -4433,8 +4433,8 @@ M.funcs = {
       the offset in screen columns from the start of the character.
       E.g., a position within a <Tab> or after the last character.
       If the "off" number of an ending position is non-zero, it is
-      the character's number of cells included in the selection,
-      otherwise the whole character is included.
+      the offset of the character's first cell not included in the
+      selection, otherwise all its cells are included.
     ]=],
     name = 'getregionpos',
     params = { { 'pos1', 'table' }, { 'pos2', 'table' }, { 'opts', 'table' } },
