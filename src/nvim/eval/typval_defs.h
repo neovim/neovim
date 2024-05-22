@@ -364,6 +364,7 @@ struct ufunc {
 
 struct partial_S {
   int pt_refcount;    ///< Reference count.
+  int pt_copyID;
   char *pt_name;      ///< Function name; when NULL use pt_func->name.
   ufunc_T *pt_func;   ///< Function pointer; when NULL lookup function with pt_name.
   bool pt_auto;       ///< When true the partial was created by using dict.member
