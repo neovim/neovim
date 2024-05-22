@@ -70,7 +70,7 @@ end
 local function download(url)
   local has_curl = vim.fn.executable('curl') == 1
   if has_curl and vim.fn.system({ 'curl', '-V' }):find('Protocols:.*https') then
-    local out, rc = health.system({ 'curl', '-sL', url }, { stderr = true, ignore_error = true })
+    local out, rc = health._system({ 'curl', '-sL', url }, { stderr = true, ignore_error = true })
     if rc ~= 0 then
       return 'curl error with ' .. url .. ': ' .. rc
     else
@@ -83,7 +83,7 @@ local function download(url)
           from urllib2 import urlopen\n\
           response = urlopen('" .. url .. "')\n\
           print(response.read().decode('utf8'))\n"
-    local out, rc = health.system({ 'python', '-c', script })
+    local out, rc = health._system({ 'python', '-c', script })
     if out == '' and rc ~= 0 then
       return 'python urllib.request error: ' .. rc
     else
@@ -140,7 +140,7 @@ end
 local function version_info(python)
   local pypi_version = latest_pypi_version()
 
-  local python_version, rc = health.system({
+  local python_version, rc = health._system({
     python,
     '-c',
     'import sys; print(".".join(str(x) for x in sys.version_info[:3]))',
@@ -151,7 +151,7 @@ local function version_info(python)
   end
 
   local nvim_path
-  nvim_path, rc = health.system({
+  nvim_path, rc = health._system({
     python,
     '-c',
     'import sys; sys.path = [p for p in sys.path if p != ""]; import neovim; print(neovim.__file__)',
@@ -176,7 +176,7 @@ local function version_info(python)
 
   -- Try to get neovim.VERSION (added in 0.1.11dev).
   local nvim_version
-  nvim_version, rc = health.system({
+  nvim_version, rc = health._system({
     python,
     '-c',
     'from neovim import VERSION as v; print("{}.{}.{}{}".format(v.major, v.minor, v.patch, v.prerelease))',
@@ -223,7 +223,7 @@ function M.check()
   local host_prog_var = pyname .. '_host_prog'
   local python_multiple = {}
 
-  if health.provider_disabled(pyname) then
+  if health._provider_disabled(pyname) then
     return
   end
 
@@ -265,7 +265,7 @@ function M.check()
     end
 
     if pyenv ~= '' then
-      python_exe = health.system({ pyenv, 'which', pyname }, { stderr = true })
+      python_exe = health._system({ pyenv, 'which', pyname }, { stderr = true })
       if python_exe == '' then
         health.warn('pyenv could not find ' .. pyname .. '.')
       end
@@ -488,7 +488,7 @@ function M.check()
     health.info(msg)
     health.info(
       'Python version: '
-        .. health.system(
+        .. health._system(
           'python -c "import platform, sys; sys.stdout.write(platform.python_version())"'
         )
     )

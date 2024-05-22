@@ -6,7 +6,7 @@ local M = {}
 function M.check()
   health.start('Ruby provider (optional)')
 
-  if health.provider_disabled('ruby') then
+  if health._provider_disabled('ruby') then
     return
   end
 
@@ -17,7 +17,7 @@ function M.check()
     )
     return
   end
-  health.info('Ruby: ' .. health.system({ 'ruby', '-v' }))
+  health.info('Ruby: ' .. health._system({ 'ruby', '-v' }))
 
   local host, _ = vim.provider.ruby.detect()
   if (not host) or host:find('^%s*$') then
@@ -33,7 +33,7 @@ function M.check()
   health.info('Host: ' .. host)
 
   local latest_gem_cmd = (iswin and 'cmd /c gem list -ra "^^neovim$"' or 'gem list -ra ^neovim$')
-  local ok, latest_gem = health.cmd_ok(vim.split(latest_gem_cmd, ' '))
+  local ok, latest_gem = health._cmd_ok(vim.split(latest_gem_cmd, ' '))
   if not ok or latest_gem:find('^%s*$') then
     health.error(
       'Failed to run: ' .. latest_gem_cmd,
@@ -46,7 +46,7 @@ function M.check()
 
   local current_gem_cmd = { host, '--version' }
   local current_gem
-  ok, current_gem = health.cmd_ok(current_gem_cmd)
+  ok, current_gem = health._cmd_ok(current_gem_cmd)
   if not ok then
     health.error(
       'Failed to run: ' .. table.concat(current_gem_cmd, ' '),

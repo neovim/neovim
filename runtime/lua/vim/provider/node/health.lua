@@ -6,7 +6,7 @@ local M = {}
 function M.check()
   health.start('Node.js provider (optional)')
 
-  if health.provider_disabled('node') then
+  if health._provider_disabled('node') then
     return
   end
 
@@ -26,7 +26,7 @@ function M.check()
   end
 
   -- local node_v = vim.fn.split(system({'node', '-v'}), "\n")[1] or ''
-  local ok, node_v = health.cmd_ok({ 'node', '-v' })
+  local ok, node_v = health._cmd_ok({ 'node', '-v' })
   health.info('Node.js: ' .. node_v)
   if not ok or vim.version.lt(node_v, '6.0.0') then
     health.warn('Nvim node.js host does not support Node ' .. node_v)
@@ -63,7 +63,7 @@ function M.check()
     iswin and 'cmd /c ' .. manager .. ' info neovim --json' or manager .. ' info neovim --json'
   )
   local latest_npm
-  ok, latest_npm = health.cmd_ok(vim.split(latest_npm_cmd, ' '))
+  ok, latest_npm = health._cmd_ok(vim.split(latest_npm_cmd, ' '))
   if not ok or latest_npm:find('^%s$') then
     health.error(
       'Failed to run: ' .. latest_npm_cmd,
@@ -81,7 +81,7 @@ function M.check()
 
   local current_npm_cmd = { 'node', host, '--version' }
   local current_npm
-  ok, current_npm = health.cmd_ok(current_npm_cmd)
+  ok, current_npm = health._cmd_ok(current_npm_cmd)
   if not ok then
     health.error(
       'Failed to run: ' .. table.concat(current_npm_cmd, ' '),

@@ -9,7 +9,7 @@ function M.check()
     os.getenv('TMUX')
     and vim.fn.executable('tmux') == 1
     and vim.fn.executable('pbpaste') == 1
-    and not health.cmd_ok('pbpaste')
+    and not health._cmd_ok('pbpaste')
   then
     local tmux_version = string.match(vim.fn.system('tmux -V'), '%d+%.%d+')
     local advice = {
