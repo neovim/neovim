@@ -1091,4 +1091,16 @@ function vim._defer_require(root, mod)
   })
 end
 
+--- Returns the buffer number for the given {bufnr}.
+---
+---@param bufnr (integer|nil) Buffer number to resolve. Defaults to current buffer
+---@return integer bufnr
+function vim.resolve_bufnr(bufnr)
+  vim.validate({ bufnr = { bufnr, 'n', true } })
+  if bufnr == nil or bufnr == 0 then
+    return vim.api.nvim_get_current_buf()
+  end
+  return bufnr
+end
+
 return vim

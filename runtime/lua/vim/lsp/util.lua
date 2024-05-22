@@ -239,11 +239,7 @@ end
 ---@return table<integer, string>|string a table mapping rows to lines
 local function get_lines(bufnr, rows)
   rows = type(rows) == 'table' and rows or { rows }
-
-  -- This is needed for bufload and bufloaded
-  if bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
+  bufnr = vim.resolve_bufnr(bufnr)
 
   local function buf_lines()
     local lines = {}
@@ -2157,10 +2153,7 @@ end
 ---@param opts? vim.lsp.util._refresh.Opts Options table
 function M._refresh(method, opts)
   opts = opts or {}
-  local bufnr = opts.bufnr
-  if bufnr == nil or bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
+  local bufnr = vim.resolve_bufnr(opts.bufnr)
 
   local clients = vim.lsp.get_clients({ bufnr = bufnr, method = method, id = opts.client_id })
 

@@ -420,10 +420,7 @@ end
 ---@param bufnr (integer) Buffer handle, or 0 for current
 ---@private
 function M._enable(bufnr)
-  if bufnr == nil or bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
-
+  bufnr = vim.resolve_bufnr(bufnr)
   if not bufstates[bufnr] then
     bufstates[bufnr] = { enabled = true }
 

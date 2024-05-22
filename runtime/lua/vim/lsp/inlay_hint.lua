@@ -217,9 +217,7 @@ end
 --- Clear inlay hints
 ---@param bufnr (integer) Buffer handle, or 0 for current
 local function clear(bufnr)
-  if bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
+  bufnr = vim.resolve_bufnr(bufnr)
   local bufstate = bufstates[bufnr]
   local client_lens = (bufstate or {}).client_hints or {}
   local client_ids = vim.tbl_keys(client_lens) --- @type integer[]
@@ -235,9 +233,7 @@ end
 --- Disable inlay hints for a buffer
 ---@param bufnr (integer) Buffer handle, or 0 for current
 local function _disable(bufnr)
-  if bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
+  bufnr = vim.resolve_bufnr(bufnr)
   clear(bufnr)
   bufstates[bufnr] = nil
   bufstates[bufnr].enabled = false
@@ -256,9 +252,7 @@ end
 --- Enable inlay hints for a buffer
 ---@param bufnr (integer) Buffer handle, or 0 for current
 local function _enable(bufnr)
-  if bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
+  bufnr = vim.resolve_bufnr(bufnr)
   bufstates[bufnr] = nil
   bufstates[bufnr].enabled = true
   _refresh(bufnr)

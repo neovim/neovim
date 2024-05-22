@@ -633,18 +633,6 @@ function Client:_resolve_handler(method)
   return self.handlers[method] or lsp.handlers[method]
 end
 
---- Returns the buffer number for the given {bufnr}.
----
---- @param bufnr (integer|nil) Buffer number to resolve. Defaults to current buffer
---- @return integer bufnr
-local function resolve_bufnr(bufnr)
-  validate({ bufnr = { bufnr, 'n', true } })
-  if bufnr == nil or bufnr == 0 then
-    return api.nvim_get_current_buf()
-  end
-  return bufnr
-end
-
 --- @private
 --- Sends a request to the server.
 ---
@@ -672,7 +660,7 @@ function Client:_request(method, params, handler, bufnr)
   -- Ensure pending didChange notifications are sent so that the server doesn't operate on a stale state
   changetracking.flush(self, bufnr)
   local version = lsp.util.buf_versions[bufnr]
-  bufnr = resolve_bufnr(bufnr)
+  bufnr = vim.resolve_bufnr(bufnr)
   log.debug(self._log_prefix, 'client.request', self.id, method, params, handler, bufnr)
   local success, request_id = self.rpc.request(method, params, function(err, result)
     local context = {

@@ -2124,6 +2124,16 @@ vim.pesc({s})                                                     *vim.pesc()*
     See also: ~
       • https://github.com/rxi/lume
 
+vim.resolve_bufnr({bufnr})                               *vim.resolve_bufnr()*
+    Returns the buffer number for the given {bufnr}.
+
+    Parameters: ~
+      • {bufnr}  (`integer?`) Buffer number to resolve. Defaults to current
+                 buffer
+
+    Return: ~
+        (`integer`) bufnr
+
 vim.ringbuf({size})                                            *vim.ringbuf()*
     Create a ring buffer limited to a maximal number of items. Once the buffer
     is full, adding a new entry overrides the oldest entry. >lua
