@@ -612,7 +612,10 @@ function Client:initialize()
     self:_run_callbacks(self._on_init_cbs, lsp.client_errors.ON_INIT_CALLBACK_ERROR, self, result)
 
     for buf in pairs(reattach_bufs) do
-      self:_on_attach(buf)
+      -- The buffer may have been detached in the on_init callback.
+      if self.attached_buffers[buf] then
+        self:_on_attach(buf)
+      end
     end
 
     log.info(
