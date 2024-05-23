@@ -114,6 +114,7 @@ API (EXTENSIBILITY/SCRIPTING/PLUGINS)
 |vimscript-functions|	Vimscript functions
 |testing.txt|		Vimscript testing functions
 |remote-plugin|		Nvim remote plugins
+|health|		Health checking
 
 ------------------------------------------------------------------------------
 PROGRAMMING LANGUAGE SUPPORT

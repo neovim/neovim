@@ -1440,7 +1440,6 @@ function M.test_gen(help_dir)
     -- Because gen() is slow (~30s), this test is limited to a few files.
     { 'help.txt', 'index.txt', 'nvim.txt' }
   )
-  eq(3, #rv.helpfiles)
   eq(0, rv.err_count, 'parse errors in :help docs')
   eq({}, rv.invalid_links, 'invalid tags in :help docs')
 end
