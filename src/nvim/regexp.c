@@ -774,6 +774,7 @@ char *skip_regexp_ex(char *startp, int dirc, int magic, char **newp, int *droppe
 {
   magic_T mymagic;
   char *p = startp;
+  size_t startplen = strlen(startp);
 
   if (magic) {
     mymagic = MAGIC_ON;
@@ -793,11 +794,9 @@ char *skip_regexp_ex(char *startp, int dirc, int magic, char **newp, int *droppe
         break;
       }
     } else if (p[0] == '\\' && p[1] != NUL) {
-      size_t startplen = 0;
       if (dirc == '?' && newp != NULL && p[1] == '?') {
         // change "\?" to "?", make a copy first.
         if (*newp == NULL) {
-          startplen = strlen(startp);
           *newp = xstrnsave(startp, startplen);
           p = *newp + (p - startp);
         }
