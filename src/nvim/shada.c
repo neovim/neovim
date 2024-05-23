@@ -1188,6 +1188,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           .off = cur_entry.data.search_pattern.offset,
         },
         .pat = cur_entry.data.search_pattern.pat,
+        .patlen = strlen(cur_entry.data.search_pattern.pat),
         .additional_data = cur_entry.data.search_pattern.additional_data,
         .timestamp = cur_entry.timestamp,
       };
