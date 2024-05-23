@@ -95,11 +95,11 @@ describe('semantic token highlighting', function()
             },
           },
           handlers = {
-            ['textDocument/semanticTokens/full'] = function()
-              return vim.fn.json_decode(response)
+            ['textDocument/semanticTokens/full'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(response))
             end,
-            ['textDocument/semanticTokens/full/delta'] = function()
-              return vim.fn.json_decode(edit_response)
+            ['textDocument/semanticTokens/full/delta'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(edit_response))
             end,
           }
         })
@@ -503,11 +503,11 @@ describe('semantic token highlighting', function()
             },
           },
           handlers = {
-            ['textDocument/semanticTokens/full'] = function()
-              return nil
+            ['textDocument/semanticTokens/full'] = function(_, _, callback)
+              callback(nil, nil)
             end,
             ['textDocument/semanticTokens/full/delta'] = function()
-              return nil
+              callback(nil, nil)
             end,
           }
         })
@@ -551,11 +551,11 @@ describe('semantic token highlighting', function()
             },
           },
           handlers = {
-            ['textDocument/semanticTokens/full'] = function()
-              return vim.fn.json_decode(response)
+            ['textDocument/semanticTokens/full'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(response))
             end,
-            ['textDocument/semanticTokens/full/delta'] = function()
-              return vim.fn.json_decode(edit_response)
+            ['textDocument/semanticTokens/full/delta'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(edit_response))
             end,
           }
         })
@@ -1018,8 +1018,8 @@ b = "as"]],
               },
             },
             handlers = {
-              ['textDocument/semanticTokens/full'] = function()
-                return vim.fn.json_decode(resp)
+              ['textDocument/semanticTokens/full'] = function(_, _, callback)
+                callback(nil, vim.fn.json_decode(resp))
               end,
             }
           })
@@ -1404,11 +1404,11 @@ int main()
               },
             },
             handlers = {
-              ['textDocument/semanticTokens/full'] = function()
-                return vim.fn.json_decode(resp1)
+              ['textDocument/semanticTokens/full'] = function(_, _, callback)
+                callback(nil, vim.fn.json_decode(resp1))
               end,
-              ['textDocument/semanticTokens/full/delta'] = function()
-                return vim.fn.json_decode(resp2)
+              ['textDocument/semanticTokens/full/delta'] = function(_, _, callback)
+                callback(nil, vim.fn.json_decode(resp2))
               end,
             }
           })

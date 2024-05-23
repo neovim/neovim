@@ -501,6 +501,35 @@ describe('LSP', function()
       eq(true, result.detach_called)
     end)
 
+    it('should not re-attach buffer if it was deleted in on_init #28575', function()
+      clear()
+      exec_lua(create_server_definition)
+      exec_lua([[
+        local server = _create_server({
+          handlers = {
+            initialize = function(method, params, callback)
+              vim.schedule(function()
+                callback(nil, { capabilities = {} })
+              end)
+            end
+          }
+        })
+        local bufnr = vim.api.nvim_create_buf(false, true)
+        local on_init_called = false
+        local client_id = vim.lsp.start({
+          name = 'detach-dummy',
+          cmd = server.cmd,
+          on_init = function()
+            vim.api.nvim_buf_delete(bufnr, {})
+            on_init_called = true
+          end
+        })
+        vim.lsp.buf_attach_client(bufnr, client_id)
+        local ok = vim.wait(1000, function() return on_init_called end)
+        assert(ok, "on_init was not called")
+      ]])
+    end)
+
     it('client should return settings via workspace/configuration handler', function()
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },
@@ -670,7 +699,7 @@ describe('LSP', function()
             }
           },
           handlers = {
-            ['textDocument/willSaveWaitUntil'] = function()
+            ['textDocument/willSaveWaitUntil'] = function(_, _, callback)
               local text_edit = {
                 range = {
                   start = { line = 0, character = 0 },
@@ -678,7 +707,7 @@ describe('LSP', function()
                 },
                 newText = 'Hello'
               }
-              return { text_edit, }
+              callback(nil, { text_edit, })
             end
           },
         })
@@ -4144,8 +4173,8 @@ describe('LSP', function()
             }
           },
           handlers = {
-            ["textDocument/codeAction"] = function()
-              return {
+            ["textDocument/codeAction"] = function(_, _, callback)
+              callback(nil, {
                 {
                   title = "Code Action 1",
                   command = {
@@ -4153,10 +4182,10 @@ describe('LSP', function()
                     command = "command:1",
                   }
                 }
-              }
+              })
             end,
-            ["codeAction/resolve"] = function()
-              return nil, "resolve failed"
+            ["codeAction/resolve"] = function(_, _, callback)
+              callback("resolve failed", nil)
             end,
           }
         })
@@ -4344,7 +4373,7 @@ describe('LSP', function()
               },
             },
             handlers = {
-              ["textDocument/codeLens"] = function(method, params)
+              ["textDocument/codeLens"] = function(method, params, callback)
                 local lenses = {
                   {
                     range = {
@@ -4357,7 +4386,7 @@ describe('LSP', function()
                     },
                   },
                 }
-                return lenses
+                callback(nil, lenses)
               end,
             }
           })
@@ -4665,13 +4694,13 @@ describe('LSP', function()
           },
           handlers = {
             ---@return lsp.Location[]
-            ['textDocument/definition'] = function()
-              return { _G.mock_locations[1] }
+            ['textDocument/definition'] = function(_, _, callback)
+              callback(nil, { _G.mock_locations[1] })
             end,
             ---@return lsp.WorkspaceSymbol[]
-            ['workspace/symbol'] = function(_, request)
+            ['workspace/symbol'] = function(_, request, callback)
               assert(request.query == 'foobar')
-              return {
+              callback(nil, {
                 {
                   name = 'foobar',
                   kind = 13, ---@type lsp.SymbolKind
@@ -4682,7 +4711,7 @@ describe('LSP', function()
                   kind = 12, ---@type lsp.SymbolKind
                   location = _G.mock_locations[2],
                 }
-              }
+              })
             end,
           },
         })

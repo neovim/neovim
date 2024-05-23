@@ -70,8 +70,8 @@ before_each(function()
         inlayHintProvider = true,
       },
       handlers = {
-        ['textDocument/inlayHint'] = function()
-          return vim.json.decode(response)
+        ['textDocument/inlayHint'] = function(_, _, callback)
+          callback(nil, vim.json.decode(response))
         end,
       }
     })
@@ -106,8 +106,8 @@ describe('vim.lsp.inlay_hint', function()
           inlayHintProvider = true,
         },
         handlers = {
-          ['textDocument/inlayHint'] = function()
-            return {}
+          ['textDocument/inlayHint'] = function(_, _, callback)
+            callback(nil, {})
           end,
         }
       })
@@ -206,8 +206,8 @@ describe('vim.lsp.inlay_hint', function()
             inlayHintProvider = true,
           },
           handlers = {
-            ['textDocument/inlayHint'] = function()
-              return { expected2 }
+            ['textDocument/inlayHint'] = function(_, _, callback)
+              callback(nil, { expected2 })
             end,
           }
         })
