@@ -328,8 +328,11 @@ function M.find(names, opts)
   return matches
 end
 
---- Find the first parent directory containing a specific "marker", relative to a buffer's
---- directory.
+--- Find the first parent directory containing a specific "marker", relative to a file path or
+--- buffer.
+---
+--- If the buffer is unnamed (has no backing file) then the search begins from Nvim's current
+--- working directory |:pwd|.
 ---
 --- Example:
 ---
@@ -352,7 +355,7 @@ end
 ---               of markers, to search for. If a function, the function is called for each
 ---               evaluated item and should return true if {name} and {path} are a match.
 --- @return string? # Directory path containing one of the given markers, or nil if no directory was
----         found.
+---                   found.
 function M.root(source, marker)
   assert(source, 'missing required argument: source')
   assert(marker, 'missing required argument: marker')
@@ -368,7 +371,7 @@ function M.root(source, marker)
 
   local paths = M.find(marker, {
     upward = true,
-    path = path,
+    path = vim.fn.fnamemodify(path, ':p:h'),
   })
 
   if #paths == 0 then

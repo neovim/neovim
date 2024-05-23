@@ -3012,7 +3012,10 @@ vim.fs.parents({start})                                     *vim.fs.parents()*
 
 vim.fs.root({source}, {marker})                                *vim.fs.root()*
     Find the first parent directory containing a specific "marker", relative
-    to a buffer's directory.
+    to a file path or buffer.
+
+    If the buffer is unnamed (has no backing file) then the search begins from
+    Nvim's current working directory |:pwd|.
 
     Example: >lua
         -- Find the root of a Python project, starting from file 'main.py'
