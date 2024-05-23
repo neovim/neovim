@@ -572,10 +572,19 @@ local function buf_attach(bufnr)
     on_detach = function()
       local params = { textDocument = { uri = uri } }
       for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
+        api.nvim_exec_autocmds('LspDetach', {
+          buffer = bufnr,
+          modeline = false,
+          data = { client_id = client.id },
+        })
+
         changetracking.reset_buf(client, bufnr)
         if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
           client.notify(ms.textDocument_didClose, params)
         end
+
+        local namespace = lsp.diagnostic.get_namespace(client.id)
+        vim.diagnostic.reset(namespace, bufnr)
       end
       for _, client in ipairs(all_clients) do
         client.attached_buffers[bufnr] = nil

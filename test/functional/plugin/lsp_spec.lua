@@ -475,6 +475,12 @@ describe('LSP', function()
         local server = _create_server()
         local bufnr = vim.api.nvim_create_buf(false, true)
         vim.api.nvim_set_current_buf(bufnr)
+        local detach_called = false
+        vim.api.nvim_create_autocmd("LspDetach", {
+          callback = function()
+            detach_called = true
+          end
+        })
         local client_id = vim.lsp.start({ name = 'detach-dummy', cmd = server.cmd })
         assert(client_id, "lsp.start must return client_id")
         local client = vim.lsp.get_client_by_id(client_id)
@@ -486,11 +492,13 @@ describe('LSP', function()
           client_id = client_id,
           num_attached_before = num_attached_before,
           num_attached_after = num_attached_after,
+          detach_called = detach_called,
         }
       ]])
       eq(true, result ~= nil, 'exec_lua must return result')
       eq(1, result.num_attached_before)
       eq(0, result.num_attached_after)
+      eq(true, result.detach_called)
     end)
 
     it('client should return settings via workspace/configuration handler', function()
