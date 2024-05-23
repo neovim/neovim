@@ -2,8 +2,8 @@
 " Language: i3 config file
 " Original Author: Josef Litos (JosefLitos/i3config.vim)
 " Maintainer: Quentin Hibon (github user hiqua)
-" Version: 1.2.2
-" Last Change: 2024-04-14
+" Version: 1.2.3
+" Last Change: 2024-05-23
 
 " References:
 " http://i3wm.org/docs/userguide.html#configuring
@@ -67,7 +67,7 @@ syn keyword i3ConfigBindKeyword bindsym bindcode contained skipwhite nextgroup=i
 syn region i3ConfigModeBlock matchgroup=i3ConfigKeyword start=/mode\ze\( --pango_markup\)\? \([^'" {]\+\|'[^']\+'\|".\+"\)\s\+{$/ end=/^}\zs$/ contained contains=i3ConfigShParam,@i3ConfigStrVar,i3ConfigBindKeyword,i3ConfigComment,i3ConfigParen fold keepend extend
 
 " 4.7 Floating modifier
-syn keyword i3ConfigKeyword floating_modifier contained skipwhite nextgroup=i3ConfigVariable,i3ConfigBindModkey
+syn match i3ConfigKeyword /^floating_modifier [$0-9A-Za-z]*$/ contains=i3ConfigVariable,i3ConfigBindModkey
 
 " 4.8 Floating window size
 syn keyword i3ConfigSizeSpecial x contained
