@@ -2,8 +2,8 @@
 " Language: sway config file
 " Original Author: Josef Litos (JosefLitos/i3config.vim)
 " Maintainer: James Eapen <james.eapen@vai.org>
-" Version: 1.2.2
-" Last Change: 2024-05-12
+" Version: 1.2.3
+" Last Change: 2024-05-23
 
 " References:
 " http://i3wm.org/docs/userguide.html#configuring
@@ -38,8 +38,8 @@ syn region swayConfigBlockOrphan start=/^\s\+\(--[a-z-]\+ \)*\([A-Z$][$a-zA-Z0-9
 
 syn region i3ConfigExec start=/ {$/ end=/^\s*}$/ contained contains=i3ConfigExecAction,@i3ConfigSh,i3ConfigComment fold keepend extend
 
-syn keyword swayConfigFloatingModifierOpts normal inverse contained
-syn match i3ConfigKeyword /floating_modifier [$a-zA-Z0-9+]\+ \(normal\|inverse\)$/ contained contains=i3ConfigVariable,i3ConfigBindModkey,swayConfigFloatingModifierOpts
+syn keyword swayConfigFloatingModifierOpts normal inverse none contained
+syn match i3ConfigKeyword /floating_modifier \(none\|[$a-zA-Z0-9+]\+ \(normal\|inverse\)\)$/ contained contains=i3ConfigVariable,i3ConfigBindModkey,swayConfigFloatingModifierOpts
 
 syn match swayConfigI3Param /--i3/ contains=i3ConfigShParam skipwhite nextgroup=i3ConfigEdgeOpts
 syn keyword i3ConfigKeyword hide_edge_borders contained skipwhite nextgroup=swayConfigI3Param,i3ConfigEdgeOpts
