@@ -162,7 +162,6 @@ local config = {
       'snippet.lua',
       'text.lua',
       'tohtml.lua',
-      'health.lua',
     },
     files = {
       'runtime/lua/vim/iter.lua',
@@ -182,7 +181,6 @@ local config = {
       'runtime/lua/vim/snippet.lua',
       'runtime/lua/vim/text.lua',
       'runtime/lua/vim/glob.lua',
-      'runtime/lua/vim/health.lua',
       'runtime/lua/vim/_meta/builtin.lua',
       'runtime/lua/vim/_meta/diff.lua',
       'runtime/lua/vim/_meta/mpack.lua',
@@ -361,6 +359,21 @@ local config = {
     fn_xform = function(fun)
       fun.table = true
       fun.name = vim.split(fun.name, '.', { plain = true })[2]
+    end,
+  },
+  health = {
+    filename = 'health.txt',
+    files = {
+      'runtime/lua/vim/health.lua',
+    },
+    section_order = {
+      'health.lua',
+    },
+    section_fmt = function(_name)
+      return 'Checkhealth'
+    end,
+    helptag_fmt = function(name)
+      return name:lower()
     end,
   },
 }

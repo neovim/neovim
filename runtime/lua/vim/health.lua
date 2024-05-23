@@ -39,7 +39,7 @@
 ---                         :checkhealth vim*
 --- <
 ---
---- Create a healthcheck                                    *health-dev*
+--- Create a healthcheck                                    *health-dev* *vim.health*
 ---
 --- Healthchecks are functions that check the user environment, configuration, or
 --- any other prerequisites that a plugin cares about. Nvim ships with

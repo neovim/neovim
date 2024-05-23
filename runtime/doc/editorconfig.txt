@@ -3,6 +3,8 @@
 
                             NVIM REFERENCE MANUAL
 
+                                       Type |gO| to see the table of contents.
+
 ==============================================================================
 EditorConfig integration                                        *editorconfig*
 

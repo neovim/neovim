@@ -159,6 +159,12 @@ DOCUMENTATION                                           *dev-doc*
       not "the user host terminal".
     - Use "tui-" to prefix help tags related to the host terminal, and "TUI"
       in prose if possible.
+- Rough guidelines on where Lua documentation should end up:
+    - Nvim API functions `vim.api.nvim_*` should be in `api.txt`.
+    - If the module is big and not relevant to generic and lower-level Lua
+      functionality, then it's a strong candidate for separation. Example:
+      `treesitter.txt`
+    - Otherwise, add them to `lua.txt`
 
 Documentation format ~
 
