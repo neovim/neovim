@@ -2913,24 +2913,13 @@ static int getregionpos(typval_T *argvars, typval_T *rettv, pos_T *p1, pos_T *p2
   }
 
   if (*region_type == kMTCharWise) {
-    // handle 'selection' == "exclusive"
+    // Handle 'selection' == "exclusive".
     if (is_select_exclusive && !equalpos(*p1, *p2)) {
-      if (p2->coladd > 0) {
-        p2->coladd--;
-      } else if (p2->col > 0) {
-        p2->col--;
-        mark_mb_adjustpos(curbuf, p2);
-      } else if (p2->lnum > 1) {
-        p2->lnum--;
-        p2->col = ml_get_len(p2->lnum);
-        if (p2->col > 0) {
-          p2->col--;
-          mark_mb_adjustpos(curbuf, p2);
-        }
-      }
+      // When backing up to previous line, inclusive becomes false.
+      *inclusive = !unadjust_for_sel_inner(p2);
     }
-    // if fp2 is on NUL (empty line) inclusive becomes false
-    if (*ml_get_pos(p2) == NUL && !virtual_op) {
+    // If p2 is on NUL (end of line), inclusive becomes false.
+    if (*inclusive && !virtual_op && *ml_get_pos(p2) == NUL) {
       *inclusive = false;
     }
   } else if (*region_type == kMTBlockWise) {
