@@ -501,6 +501,30 @@ local function text_document_did_save_handler(bufnr)
   end
 end
 
+---@param bufnr integer resolved buffer
+---@param client vim.lsp.Client
+local function buf_detach_client(bufnr, client)
+  api.nvim_exec_autocmds('LspDetach', {
+    buffer = bufnr,
+    modeline = false,
+    data = { client_id = client.id },
+  })
+
+  changetracking.reset_buf(client, bufnr)
+
+  if client.supports_method(ms.textDocument_didClose) then
+    local uri = vim.uri_from_bufnr(bufnr)
+    local params = { textDocument = { uri = uri } }
+    client.notify(ms.textDocument_didClose, params)
+  end
+
+  client.attached_buffers[bufnr] = nil
+  util.buf_versions[bufnr] = nil
+
+  local namespace = lsp.diagnostic.get_namespace(client.id)
+  vim.diagnostic.reset(namespace, bufnr)
+end
+
 --- @type table<integer,true>
 local attached_buffers = {}
 
@@ -574,26 +598,10 @@ local function buf_attach(bufnr)
     end,
 
     on_detach = function()
-      local params = { textDocument = { uri = uri } }
-      for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
-        api.nvim_exec_autocmds('LspDetach', {
-          buffer = bufnr,
-          modeline = false,
-          data = { client_id = client.id },
-        })
-
-        changetracking.reset_buf(client, bufnr)
-        if client.supports_method(ms.textDocument_didClose) then
-          client.notify(ms.textDocument_didClose, params)
-        end
-
-        local namespace = lsp.diagnostic.get_namespace(client.id)
-        vim.diagnostic.reset(namespace, bufnr)
+      local clients = lsp.get_clients({ bufnr = bufnr, _uninitialized = true })
+      for _, client in ipairs(clients) do
+        buf_detach_client(bufnr, client)
       end
-      for _, client in ipairs(all_clients) do
-        client.attached_buffers[bufnr] = nil
-      end
-      util.buf_versions[bufnr] = nil
       attached_buffers[bufnr] = nil
     end,
 
@@ -668,27 +676,9 @@ function lsp.buf_detach_client(bufnr, client_id)
       )
     )
     return
+  else
+    buf_detach_client(bufnr, client)
   end
-
-  api.nvim_exec_autocmds('LspDetach', {
-    buffer = bufnr,
-    modeline = false,
-    data = { client_id = client_id },
-  })
-
-  changetracking.reset_buf(client, bufnr)
-
-  if client.supports_method(ms.textDocument_didClose) then
-    local uri = vim.uri_from_bufnr(bufnr)
-    local params = { textDocument = { uri = uri } }
-    client.notify(ms.textDocument_didClose, params)
-  end
-
-  client.attached_buffers[bufnr] = nil
-  util.buf_versions[bufnr] = nil
-
-  local namespace = lsp.diagnostic.get_namespace(client_id)
-  vim.diagnostic.reset(namespace, bufnr)
 end
 
 --- Checks if a buffer is attached for a particular client.
