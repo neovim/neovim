@@ -29,6 +29,12 @@ local function resolve_variable(var, default)
     return expansion == '' and default or expansion
   end
 
+  --- @param str string
+  --- @return string
+  local function expand_date(str)
+    return tostring(os.date(str))
+  end
+
   if var == 'TM_SELECTED_TEXT' then
     -- Snippets are expanded in insert mode only, so there's no selection.
     return default
@@ -48,6 +54,79 @@ local function resolve_variable(var, default)
     return expand_or_default('%:p:h:t')
   elseif var == 'TM_FILEPATH' then
     return expand_or_default('%:p')
+  elseif var == 'RELATIVE_FILEPATH' then
+    return expand_or_default('%:.')
+  elseif var == 'CLIPBOARD' then
+    -- prefer system clipboard over unnamed register as snippets are sometimes used to insert things
+    -- copypasted elsewhere
+    return vim.fn.getreg('+')
+  elseif var == 'WORKSPACE_NAME' then
+    return vim.fs.basename(vim.uv.cwd() or '')
+  elseif var == 'WORKSPACE_FOLDER' then
+    return vim.uv.cwd() or default
+  elseif var == 'CURSOR_INDEX' then
+    -- vim does not support multiple cursors yet
+    return default
+  elseif var == 'CURSOR_NUMBER' then
+    -- vim does not support multiple cursors yet
+    return default
+  elseif var == 'CURRENT_YEAR' then
+    return expand_date('%Y')
+  elseif var == 'CURRENT_YEAR_SHORT' then
+    return expand_date('%y')
+  elseif var == 'CURRENT_MONTH' then
+    return expand_date('%m')
+  elseif var == 'CURRENT_MONTH_NAME' then
+    return expand_date('%B')
+  elseif var == 'CURRENT_MONTH_SHORT' then
+    return expand_date('%b')
+  elseif var == 'CURRENT_DATE' then
+    return expand_date('%d')
+  elseif var == 'CURRENT_DAY_NAME' then
+    return expand_date('%A')
+  elseif var == 'CURRENT_DAY_SHORT' then
+    return expand_date('%a')
+  elseif var == 'CURRENT_HOUR' then
+    return expand_date('%H')
+  elseif var == 'CURRENT_MINUTE' then
+    return expand_date('%M')
+  elseif var == 'CURRENT_SECOND' then
+    return expand_date('%S')
+  elseif var == 'CURRENT_SECONDS_UNIX' then
+    return expand_date('%s')
+  elseif var == 'CURRENT_TIMEZONE_OFFSET' then
+    local tz = expand_date('%z')
+    local tz_with_colon = tz:sub(1, 3) .. ':' .. tz:sub(4)
+    return tz_with_colon
+  elseif var == 'RANDOM' then
+    local digits = ''
+    for _ = 1, 6 do
+      digits = digits .. tostring(math.random(0, 9))
+    end
+    return digits
+  elseif var == 'RANDOM_HEX' then
+    local hex = ''
+    for _ = 1, 6 do
+      hex = hex .. ('%x'):format(math.random(0, 15))
+    end
+    return hex
+  elseif var == 'UUID' then
+    local random = math.random
+    math.randomseed(os.time())
+    local template = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+    local uuid = template:gsub('[xy]', function(char)
+      local rand = (char == 'x') and random(0, 0xf) or random(8, 0xb)
+      return ('%x'):format(rand)
+    end)
+    return uuid
+  elseif var == 'LINE_COMMENT' then
+    return vim.bo.commentstring:format('')
+  elseif var == 'BLOCK_COMMENT_START' then
+    -- vim does have have a block comment string
+    return default
+  elseif var == 'BLOCK_COMMENT_END' then
+    -- vim does have have a block comment string
+    return default
   end
 
   -- Unknown variable.
