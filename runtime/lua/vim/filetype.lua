@@ -948,6 +948,7 @@ local extension = {
   sexp = 'sexplib',
   bash = detect.bash,
   bats = detect.bash,
+  cygport = detect.bash,
   ebuild = detect.bash,
   eclass = detect.bash,
   env = detect.sh,
