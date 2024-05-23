@@ -301,27 +301,34 @@ describe('commenting', function()
       eq(get_lines(), { 'aa', '', '  ', '\t', 'aa' })
     end)
 
-    it('matches comment parts strictly when detecting comment/uncomment', function()
+    it('correctly matches comment parts during checking and uncommenting', function()
       local validate = function(from, to, ref_lines)
-        set_lines({ '#aa', '# aa', '#  aa' })
+        set_lines({ '/*aa*/', '/* aa */', '/*  aa  */' })
         toggle_lines(from, to)
         eq(get_lines(), ref_lines)
       end
 
-      set_commentstring('#%s')
-      validate(1, 3, { 'aa', ' aa', '  aa' })
-      validate(2, 3, { '#aa', ' aa', '  aa' })
-      validate(3, 3, { '#aa', '# aa', '  aa' })
+      -- Should first try to match 'commentstring' parts exactly with their
+      -- whitespace, with fallback on trimmed parts
+      set_commentstring('/*%s*/')
+      validate(1, 3, { 'aa', ' aa ', '  aa  ' })
+      validate(2, 3, { '/*aa*/', ' aa ', '  aa  ' })
+      validate(3, 3, { '/*aa*/', '/* aa */', '  aa  ' })
 
-      set_commentstring('# %s')
-      validate(1, 3, { '# #aa', '# # aa', '# #  aa' })
-      validate(2, 3, { '#aa', 'aa', ' aa' })
-      validate(3, 3, { '#aa', '# aa', ' aa' })
+      set_commentstring('/* %s */')
+      validate(1, 3, { 'aa', 'aa', ' aa ' })
+      validate(2, 3, { '/*aa*/', 'aa', ' aa ' })
+      validate(3, 3, { '/*aa*/', '/* aa */', ' aa ' })
 
-      set_commentstring('#  %s')
-      validate(1, 3, { '#  #aa', '#  # aa', '#  #  aa' })
-      validate(2, 3, { '#aa', '#  # aa', '#  #  aa' })
-      validate(3, 3, { '#aa', '# aa', 'aa' })
+      set_commentstring('/*  %s  */')
+      validate(1, 3, { 'aa', ' aa ', 'aa' })
+      validate(2, 3, { '/*aa*/', ' aa ', 'aa' })
+      validate(3, 3, { '/*aa*/', '/* aa */', 'aa' })
+
+      set_commentstring(' /*%s*/ ')
+      validate(1, 3, { 'aa', ' aa ', '  aa  ' })
+      validate(2, 3, { '/*aa*/', ' aa ', '  aa  ' })
+      validate(3, 3, { '/*aa*/', '/* aa */', '  aa  ' })
     end)
 
     it('uncomments on inconsistent indent levels', function()
