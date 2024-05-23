@@ -46,10 +46,6 @@ mouse:
   - changed-files:
     - any-glob-to-any-file: [ src/nvim/mouse* ]
 
-platform:nix:
-  - changed-files:
-    - any-glob-to-any-file: [ contrib/flake.lock, contrib/flake.nix ]
-
 snippet:
   - changed-files:
     - any-glob-to-any-file: [ runtime/lua/vim/snippet.lua ]
