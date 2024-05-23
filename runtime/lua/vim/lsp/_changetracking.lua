@@ -1,6 +1,5 @@
 local protocol = require('vim.lsp.protocol')
 local sync = require('vim.lsp.sync')
-local util = require('vim.lsp.util')
 
 local api = vim.api
 local uv = vim.uv
@@ -277,7 +276,7 @@ local function send_changes(bufnr, sync_kind, state, buf_state)
       client.notify(protocol.Methods.textDocument_didChange, {
         textDocument = {
           uri = uri,
-          version = util.buf_versions[bufnr],
+          version = vim.b[bufnr].changedtick,
         },
         contentChanges = changes,
       })
