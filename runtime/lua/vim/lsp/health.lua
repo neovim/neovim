@@ -148,6 +148,8 @@ local function check_position_encodings()
         table.concat(lines, '\n'),
         'Use the positionEncodings client capability to ensure all clients use the same position encoding'
       )
+    else
+      report_info('No buffers contain mixed position encodings')
     end
   else
     report_info('No active clients')
