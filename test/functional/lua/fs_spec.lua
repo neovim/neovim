@@ -310,6 +310,25 @@ describe('vim.fs', function()
     it('works with a filename argument', function()
       eq(test_source_path, exec_lua([[return vim.fs.root(..., '.git')]], nvim_prog))
     end)
+
+    it('works with a relative path', function()
+      eq(
+        test_source_path,
+        exec_lua([[return vim.fs.root(..., '.git')]], vim.fs.basename(nvim_prog))
+      )
+    end)
+
+    it('uses cwd for unnamed buffers', function()
+      command('new')
+      eq(test_source_path, exec_lua([[return vim.fs.root(0, '.git')]]))
+    end)
+
+    it("uses cwd for buffers with non-empty 'buftype'", function()
+      command('new')
+      command('set buftype=nofile')
+      command('file lua://')
+      eq(test_source_path, exec_lua([[return vim.fs.root(0, '.git')]]))
+    end)
   end)
 
   describe('joinpath()', function()
