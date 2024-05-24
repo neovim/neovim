@@ -306,7 +306,7 @@ function M.system(cmd, args)
 
   if jobid < 1 then
     local message =
-      string.format('Command error (job=%d): %s (in %s)', jobid, shellify(cmd), vim.loop.cwd())
+      string.format('Command error (job=%d): %s (in %s)', jobid, shellify(cmd), vim.uv.cwd())
     error(message)
     return opts.output, 1
   end
@@ -325,7 +325,7 @@ function M.system(cmd, args)
       jobid,
       shell_error_code,
       shellify(cmd),
-      vim.loop.cwd()
+      vim.uv.cwd()
     )
     if opts.output:find('%S') then
       emsg = string.format('%s\noutput: %s', emsg, opts.output)
