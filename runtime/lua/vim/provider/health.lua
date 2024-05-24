@@ -1,5 +1,5 @@
 local health = vim.health
-local iswin = vim.loop.os_uname().sysname == 'Windows_NT'
+local iswin = vim.uv.os_uname().sysname == 'Windows_NT'
 
 local M = {}
 
@@ -229,7 +229,7 @@ local function is(path, ty)
   if not path then
     return false
   end
-  local stat = vim.loop.fs_stat(path)
+  local stat = vim.uv.fs_stat(path)
   if not stat then
     return false
   end
