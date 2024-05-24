@@ -2354,8 +2354,8 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
     }
   }
 
-  int count = (win != NULL) + (buf != NULL);
-  VALIDATE(popcount(opts->is_set__redraw_) > count, "%s", "at least one action required", {
+  unsigned count = (win != NULL) + (buf != NULL);
+  VALIDATE(xpopcount(opts->is_set__redraw_) > count, "%s", "at least one action required", {
     return;
   });
 

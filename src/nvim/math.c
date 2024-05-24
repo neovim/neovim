@@ -78,13 +78,15 @@ int xctz(uint64_t x)
 }
 
 /// Count number of set bits in bit field.
-int popcount(uint64_t x)
+unsigned xpopcount(uint64_t x)
 {
   // Use compiler builtin if possible.
-#if defined(__clang__) || defined(__GNUC__)
-  return __builtin_popcountll(x);
+#if defined(__NetBSD__)
+  return popcount64(x);
+#elif defined(__clang__) || defined(__GNUC__)
+  return (unsigned)__builtin_popcountll(x);
 #else
-  int count = 0;
+  unsigned count = 0;
   for (; x != 0; x >>= 1) {
     if (x & 1) {
       count++;
