@@ -117,7 +117,14 @@ static void extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col, bool
   MarkTreeIter itr[1] = { 0 };
   MTKey key = marktree_lookup(buf->b_marktree, mark, itr);
   if (key.pos.row < 0 || (key.pos.row == row && key.pos.col == col)) {
+    // Does this hold? If it doesn't, we should still revalidate.
+    assert(!invalid || !mt_invalid(key));
     return;
+  }
+
+  // Key already revalidated(how?) Avoid adding to decor again.
+  if (invalid && !mt_invalid(key)) {
+    invalid = false;
   }
 
   // Only the position before undo needs to be redrawn here,
@@ -140,8 +147,8 @@ static void extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col, bool
   marktree_move(buf->b_marktree, itr, row, col);
 
   if (invalid) {
-    MTPos end = marktree_get_altpos(buf->b_marktree, key, NULL);
-    buf_put_decor(buf, mt_decor(key), row, end.row);
+    row2 = mt_paired(key) ? marktree_get_altpos(buf->b_marktree, key, NULL).row : row;
+    buf_put_decor(buf, mt_decor(key), row, row2);
   } else if (key.flags & MT_FLAG_DECOR_SIGNTEXT && buf->b_signcols.autom) {
     buf_signcols_count_range(buf, row1, row2, 0, kNone);
   }
