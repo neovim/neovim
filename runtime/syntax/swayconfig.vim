@@ -2,8 +2,8 @@
 " Language: sway config file
 " Original Author: Josef Litos (JosefLitos/i3config.vim)
 " Maintainer: James Eapen <james.eapen@vai.org>
-" Version: 1.2.3
-" Last Change: 2024-05-23
+" Version: 1.2.4
+" Last Change: 2024-05-24
 
 " References:
 " http://i3wm.org/docs/userguide.html#configuring
@@ -34,12 +34,12 @@ syn region i3ConfigBindArgument start=/--input-device=['"]/ end=/\s/ contained c
 
 syn region i3ConfigBindCombo matchgroup=i3ConfigParen start=/{$/ end=/^\s*}$/ contained contains=i3ConfigBindArgument,i3ConfigBindCombo,i3ConfigComment fold keepend extend
 " hack for blocks with start outside parsing range
-syn region swayConfigBlockOrphan start=/^\s\+\(--[a-z-]\+ \)*\([A-Z$][$a-zA-Z0-9_+]\+\|[a-z]\) [a-z[]/ skip=/\\$\|$\n^\s*}$/ end=/$/ contains=i3ConfigBindArgument,i3ConfigBindCombo,i3ConfigParen keepend extend
+syn region swayConfigBlockOrphan start=/^\s\+\(--[a-z-]\+ \)*\([$A-Z][$0-9A-Za-z_+]\+\|[a-z]\) [a-z[]/ skip=/\\$\|$\n^\s*}$/ end=/$/ contains=i3ConfigBindArgument,i3ConfigBindCombo,i3ConfigParen keepend extend
 
 syn region i3ConfigExec start=/ {$/ end=/^\s*}$/ contained contains=i3ConfigExecAction,@i3ConfigSh,i3ConfigComment fold keepend extend
 
 syn keyword swayConfigFloatingModifierOpts normal inverse none contained
-syn match i3ConfigKeyword /floating_modifier \(none\|[$a-zA-Z0-9+]\+ \(normal\|inverse\)\)$/ contained contains=i3ConfigVariable,i3ConfigBindModkey,swayConfigFloatingModifierOpts
+syn match i3ConfigKeyword /floating_modifier \(none\|[$A-Z][0-9A-Za-z]\+ \(normal\|inverse\)\)$/ contained contains=i3ConfigVariable,i3ConfigBindModkey,swayConfigFloatingModifierOpts
 
 syn match swayConfigI3Param /--i3/ contains=i3ConfigShParam skipwhite nextgroup=i3ConfigEdgeOpts
 syn keyword i3ConfigKeyword hide_edge_borders contained skipwhite nextgroup=swayConfigI3Param,i3ConfigEdgeOpts
@@ -71,7 +71,7 @@ syn keyword i3ConfigBindKeyword bindswitch contained skipwhite nextgroup=swayCon
 syn region swayConfigBlockOrphan start=/^\s\+\(lid\|tablet\):/ skip=/\\$\|$\n^\s*}$/ end=/$/ contains=swayConfigBindswitchArgument,swayConfigBindswitchType,i3ConfigParen keepend extend
 
 " Bindgesture
-syn match swayConfigBindgestureArgument /--\(exact\|input-device=[:0-9a-zA-Z_/-]\+\|no-warn\) / contained nextgroup=swayConfigBindgestureArgument,swayConfigBindgestureCombo
+syn match swayConfigBindgestureArgument /--\(exact\|input-device=[:0-9A-Za-z_/-]\+\|no-warn\) / contained nextgroup=swayConfigBindgestureArgument,swayConfigBindgestureCombo
 syn keyword swayConfigBindgestureType hold swipe pinch contained
 syn keyword swayConfigBindgestureDir up down left right inward outward clockwise counterclockwise contained
 syn match swayConfigBindgestureCombo /\(hold\(:[1-5]\)\?\|swipe\(:[3-5]\)\?\(:up\|:down\|:left\|:right\)\?\|pinch\(:[2-5]\)\?:\(+\?\(inward\|outward\|clockwise\|counterclockwise\|up\|down\|left\|right\)\)\+\) / contained contains=i3ConfigNumber,swayConfigBindgestureType,i3ConfigColonOperator,swayConfigBindgestureDir,i3ConfigBindModifier nextgroup=swayConfigBindgestureCombo,i3ConfigBind
