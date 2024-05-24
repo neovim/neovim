@@ -269,7 +269,10 @@ do
         return
       end
       vim.v.swapchoice = 'e' -- Choose "(E)dit".
-      vim.notify(('W325: Ignoring swapfile from Nvim process %d'):format(info.pid))
+      vim.notify(
+        ('W325: Ignoring swapfile from Nvim process %d'):format(info.pid),
+        vim.log.levels.WARN
+      )
     end,
   })
 
