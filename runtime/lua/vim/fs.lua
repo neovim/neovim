@@ -331,8 +331,8 @@ end
 --- Find the first parent directory containing a specific "marker", relative to a file path or
 --- buffer.
 ---
---- If the buffer is unnamed (has no backing file) then the search begins from Nvim's current
---- working directory |:pwd|.
+--- If the buffer is unnamed (has no backing file) then the search begins from Nvim's
+--- |current-directory|.
 ---
 --- Example:
 ---
@@ -349,8 +349,8 @@ end
 --- end)
 --- ```
 ---
---- @param source integer|string Buffer number (0 for current buffer) or file path to begin the
----               search from.
+--- @param source integer|string Buffer number (0 for current buffer) or file path (absolute or
+---               relative to the |current-directory|) to begin the search from.
 --- @param marker (string|string[]|fun(name: string, path: string): boolean) A marker, or list
 ---               of markers, to search for. If a function, the function is called for each
 ---               evaluated item and should return true if {name} and {path} are a match.

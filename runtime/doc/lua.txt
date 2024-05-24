@@ -3015,7 +3015,7 @@ vim.fs.root({source}, {marker})                                *vim.fs.root()*
     to a file path or buffer.
 
     If the buffer is unnamed (has no backing file) then the search begins from
-    Nvim's current working directory |:pwd|.
+    Nvim's |current-directory|.
 
     Example: >lua
         -- Find the root of a Python project, starting from file 'main.py'
@@ -3032,7 +3032,8 @@ vim.fs.root({source}, {marker})                                *vim.fs.root()*
 
     Parameters: ~
       • {source}  (`integer|string`) Buffer number (0 for current buffer) or
-                  file path to begin the search from.
+                  file path (absolute or relative to the |current-directory|)
+                  to begin the search from.
       • {marker}  (`string|string[]|fun(name: string, path: string): boolean`)
                   A marker, or list of markers, to search for. If a function,
                   the function is called for each evaluated item and should
