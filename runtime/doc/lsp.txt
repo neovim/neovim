@@ -28,9 +28,8 @@ Follow these steps to get LSP features:
    upstream installation instructions. You can find language servers here:
    https://microsoft.github.io/language-server-protocol/implementors/servers/
 
-2. Configure the LSP client per language server. See |vim.lsp.start()| or use
-   this minimal example as a guide: >lua
-
+2. Use |vim.lsp.start()| to start the LSP server (or attach to an existing
+   one) when a file is opened. Example: >lua
     -- Create an event handler for the FileType autocommand
     vim.api.nvim_create_autocmd('FileType', {
       -- This handler will fire when the buffer's 'filetype' is "python"
@@ -40,21 +39,22 @@ Follow these steps to get LSP features:
           name = 'my-server-name',
           cmd = {'name-of-language-server-executable', '--option', 'arg1', 'arg2'},
 
-          -- Set the "root directory" to the parent directory of the
-          -- file in the current buffer (`ev.buf`) that contains either
-          -- a "setup.py" or a "pyproject.toml" file.
+          -- Set the "root directory" to the parent directory of the file in the
+          -- current buffer (`ev.buf`) that contains either a "setup.py" or a
+          -- "pyproject.toml" file. Files that share a root directory will reuse
+          -- the connection to the same LSP server.
           root_dir = vim.fs.root(ev.buf, {'setup.py', 'pyproject.toml'}),
         })
       end,
     })
 <
-3. Check that the server attached to the buffer: >
+3. Check that the buffer is attached to the server: >vim
     :checkhealth lsp
 
 4. (Optional) Configure keymaps and autocommands to use LSP features. |lsp-config|
 
                                                         *lsp-defaults*
-When the LSP client starts it enables diagnostics |vim.diagnostic| (see
+When the Nvim LSP client starts it enables diagnostics |vim.diagnostic| (see
 |vim.diagnostic.config()| to customize). It also sets various default options,
 listed below, if (1) the language server supports the functionality and (2)
 the options are empty or were set by the builtin runtime (ftplugin) files. The
