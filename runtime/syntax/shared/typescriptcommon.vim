@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:     TypeScript and TypeScriptReact
 " Maintainer:   Herrington Darkholme
-" Last Change:	2023 Aug 24
+" Last Change:  2024 May 24
 " Based On:     Herrington Darkholme's yats.vim
 " Changes:      See https://github.com/HerringtonDarkholme/yats.vim
 " Credits:      See yats.vim on github
@@ -49,13 +49,13 @@ syntax match   typescriptProp contained /\K\k*!\?/
   \ nextgroup=@afterIdentifier
   \ skipwhite skipempty
 
-syntax region  typescriptIndexExpr      contained matchgroup=typescriptProperty start=/\[/rs=s+1 end=/]/he=e-1 contains=@typescriptValue nextgroup=@typescriptSymbols,typescriptDotNotation,typescriptFuncCallArg skipwhite skipempty
+syntax region  typescriptIndexExpr      contained matchgroup=typescriptProperty start=/\[/ end=/]/ contains=@typescriptValue,typescriptCastKeyword nextgroup=@typescriptSymbols,typescriptDotNotation,typescriptFuncCallArg skipwhite skipempty
 
 syntax match   typescriptDotNotation           /\.\|?\.\|!\./ nextgroup=typescriptProp skipnl
 syntax match   typescriptDotStyleNotation      /\.style\./ nextgroup=typescriptDOMStyle transparent
 " syntax match   typescriptFuncCall              contained /[a-zA-Z]\k*\ze(/ nextgroup=typescriptFuncCallArg
 syntax region  typescriptParenExp              matchgroup=typescriptParens start=/(/ end=/)/ contains=@typescriptComments,@typescriptValue,typescriptCastKeyword nextgroup=@typescriptSymbols skipwhite skipempty
-syntax region  typescriptFuncCallArg           contained matchgroup=typescriptParens start=/(/ end=/)/ contains=@typescriptValue,@typescriptComments nextgroup=@typescriptSymbols,typescriptDotNotation skipwhite skipempty skipnl
+syntax region  typescriptFuncCallArg           contained matchgroup=typescriptParens start=/(/ end=/)/ contains=@typescriptValue,@typescriptComments,typescriptCastKeyword nextgroup=@typescriptSymbols,typescriptDotNotation skipwhite skipempty skipnl
 syntax region  typescriptEventFuncCallArg      contained matchgroup=typescriptParens start=/(/ end=/)/ contains=@typescriptEventExpression
 syntax region  typescriptEventString           contained start=/\z(["']\)/  skip=/\\\\\|\\\z1\|\\\n/  end=/\z1\|$/ contains=typescriptASCII,@events
 
@@ -116,20 +116,33 @@ syntax match   typescriptASCII                 contained /\\\d\d\d/
 
 syntax region  typescriptTemplateSubstitution matchgroup=typescriptTemplateSB
   \ start=/\${/ end=/}/
-  \ contains=@typescriptValue
+  \ contains=@typescriptValue,typescriptCastKeyword
   \ contained
 
 
-syntax region  typescriptString 
+syntax region  typescriptString
   \ start=+\z(["']\)+  skip=+\\\%(\z1\|$\)+  end=+\z1+ end=+$+
   \ contains=typescriptSpecial,@Spell
+  \ nextgroup=@typescriptSymbols
+  \ skipwhite skipempty
   \ extend
 
 syntax match   typescriptSpecial            contained "\v\\%(x\x\x|u%(\x{4}|\{\x{1,6}})|c\u|.)"
 
-" From vim runtime
-" <https://github.com/vim/vim/blob/master/runtime/syntax/javascript.vim#L48>
-syntax region  typescriptRegexpString          start=+/[^/*]+me=e-1 skip=+\\\\\|\\/+ end=+/[gimuy]\{0,5\}\s*$+ end=+/[gimuy]\{0,5\}\s*[;.,)\]}:]+me=e-1 nextgroup=typescriptDotNotation oneline
+" From pangloss/vim-javascript
+" <https://github.com/pangloss/vim-javascript/blob/d6e137563c47fb59f26ed25d044c0c7532304f18/syntax/javascript.vim#L64-L72>
+syntax region  typescriptRegexpCharClass    contained start=+\[+ skip=+\\.+ end=+\]+ contains=typescriptSpecial extend
+syntax match   typescriptRegexpBoundary     contained "\v\c[$^]|\\b"
+syntax match   typescriptRegexpBackRef      contained "\v\\[1-9]\d*"
+syntax match   typescriptRegexpQuantifier   contained "\v[^\\]%([?*+]|\{\d+%(,\d*)?})\??"lc=1
+syntax match   typescriptRegexpOr           contained "|"
+syntax match   typescriptRegexpMod          contained "\v\(\?[:=!>]"lc=1
+syntax region  typescriptRegexpGroup        contained start="[^\\]("lc=1 skip="\\.\|\[\(\\.\|[^]]\+\)\]" end=")" contains=typescriptRegexpCharClass,@typescriptRegexpSpecial keepend
+syntax region  typescriptRegexpString
+  \ start=+\%(\%(\<return\|\<typeof\|\_[^)\]'"[:blank:][:alnum:]_$]\)\s*\)\@<=/\ze[^*/]+ skip=+\\.\|\[[^]]\{1,}\]+ end=+/[gimyus]\{,6}+
+  \ contains=typescriptRegexpCharClass,typescriptRegexpGroup,@typescriptRegexpSpecial
+  \ oneline keepend extend
+syntax cluster typescriptRegexpSpecial    contains=typescriptSpecial,typescriptRegexpBoundary,typescriptRegexpBackRef,typescriptRegexpQuantifier,typescriptRegexpOr,typescriptRegexpMod
 
 syntax region  typescriptTemplate
   \ start=/`/  skip=/\\\\\|\\`\|\n/  end=/`\|$/
@@ -140,7 +153,7 @@ syntax region  typescriptTemplate
 "Array
 syntax region  typescriptArray matchgroup=typescriptBraces
   \ start=/\[/ end=/]/
-  \ contains=@typescriptValue,@typescriptComments
+  \ contains=@typescriptValue,@typescriptComments,typescriptCastKeyword
   \ nextgroup=@typescriptSymbols,typescriptDotNotation
   \ skipwhite skipempty fold
 
@@ -153,7 +166,7 @@ syntax match typescriptNumber /\<\%(\d[0-9_]*\%(\.\d[0-9_]*\)\=\|\.\d[0-9_]*\)\%
 
 syntax region  typescriptObjectLiteral         matchgroup=typescriptBraces
   \ start=/{/ end=/}/
-  \ contains=@typescriptComments,typescriptObjectLabel,typescriptStringProperty,typescriptComputedPropertyName,typescriptObjectAsyncKeyword
+  \ contains=@typescriptComments,typescriptObjectLabel,typescriptStringProperty,typescriptComputedPropertyName,typescriptObjectAsyncKeyword,typescriptTernary,typescriptCastKeyword
   \ fold contained
 
 syntax keyword typescriptObjectAsyncKeyword async contained
@@ -223,11 +236,11 @@ syntax match typescriptBinaryOp contained /\*\*=\?/ nextgroup=@typescriptValue
 
 syntax cluster typescriptSymbols               contains=typescriptBinaryOp,typescriptKeywordOp,typescriptTernary,typescriptAssign,typescriptCastKeyword
 
-" runtime syntax/basic/reserved.vim
+" runtime syntax/ts-common/reserved.vim
 "Import
 syntax keyword typescriptImport                from as
 syntax keyword typescriptImport                import
-  \ nextgroup=typescriptImportType
+  \ nextgroup=typescriptImportType,typescriptTypeBlock,typescriptDefaultImportName
   \ skipwhite
 syntax keyword typescriptImportType            type
   \ contained
@@ -238,19 +251,10 @@ syntax match typescriptExportType              /\<type\s*{\@=/
   \ contained skipwhite skipempty skipnl
 syntax keyword typescriptModule                namespace module
 
-"this
 
-"JavaScript Prototype
-syntax keyword typescriptPrototype             prototype
-  \ nextgroup=@afterIdentifier
-
-syntax keyword typescriptCastKeyword           as
+syntax keyword typescriptCastKeyword           as satisfies
   \ nextgroup=@typescriptType
   \ skipwhite
-
-"Program Keywords
-syntax keyword typescriptIdentifier            arguments this super
-  \ nextgroup=@afterIdentifier
 
 syntax keyword typescriptVariable              let var
   \ nextgroup=@typescriptVariableDeclarations
@@ -258,6 +262,10 @@ syntax keyword typescriptVariable              let var
 
 syntax keyword typescriptVariable const
   \ nextgroup=typescriptEnum,@typescriptVariableDeclarations
+  \ skipwhite skipempty
+
+syntax keyword typescriptUsing              using
+  \ nextgroup=@typescriptVariableDeclarations
   \ skipwhite skipempty
 
 syntax region typescriptEnum matchgroup=typescriptEnumKeyword start=/enum / end=/\ze{/
@@ -272,7 +280,6 @@ syntax keyword typescriptOperator              delete new typeof void
 
 syntax keyword typescriptForOperator           contained in of
 syntax keyword typescriptBoolean               true false nextgroup=@typescriptSymbols skipwhite skipempty
-syntax keyword typescriptNull                  null undefined nextgroup=@typescriptSymbols skipwhite skipempty
 syntax keyword typescriptMessage               alert confirm prompt status
   \ nextgroup=typescriptDotNotation,typescriptFuncCallArg
 syntax keyword typescriptGlobal                self top parent
@@ -290,10 +297,10 @@ syntax keyword typescriptCase                  case nextgroup=@typescriptPrimiti
 syntax keyword typescriptDefault               default containedin=typescriptBlock nextgroup=@typescriptValue,typescriptClassKeyword,typescriptInterfaceKeyword skipwhite oneline
 syntax keyword typescriptStatementKeyword      with
 syntax keyword typescriptStatementKeyword      yield skipwhite nextgroup=@typescriptValue containedin=typescriptBlock
-syntax keyword typescriptStatementKeyword      return skipwhite contained nextgroup=@typescriptValue containedin=typescriptBlock
 
 syntax keyword typescriptTry                   try
-syntax keyword typescriptExceptions            catch throw finally
+syntax keyword typescriptExceptions            throw finally
+syntax keyword typescriptExceptions            catch nextgroup=typescriptCall skipwhite skipempty oneline
 syntax keyword typescriptDebugger              debugger
 
 syntax keyword typescriptAsyncFor              await nextgroup=typescriptLoopParen skipwhite skipempty contained
@@ -320,6 +327,24 @@ syntax cluster typescriptAmbients contains=
   \ typescriptAbstract,
   \ typescriptEnumKeyword,typescriptEnum,
   \ typescriptModule
+
+syntax keyword typescriptIdentifier            arguments  nextgroup=@afterIdentifier
+syntax match typescriptDefaultImportName /\v\h\k*( |,)/
+  \ contained
+  \ nextgroup=typescriptTypeBlock
+  \ skipwhite skipempty
+
+syntax region  typescriptTypeBlock
+  \ matchgroup=typescriptBraces
+  \ start=/{/ end=/}/
+  \ contained
+  \ contains=typescriptIdentifierName,typescriptImportType
+  \ fold
+
+"Program Keywords
+syntax keyword typescriptNull null undefined nextgroup=@typescriptSymbols skipwhite skipempty
+syntax keyword typescriptIdentifier this super prototype nextgroup=@afterIdentifier
+syntax keyword typescriptStatementKeyword return skipwhite contained nextgroup=@typescriptValue containedin=typescriptBlock
 
 "Syntax coloring for Node.js shebang line
 syntax match   shellbang "^#!.*node\>"
@@ -536,7 +561,7 @@ syntax region typescriptGenericFunc matchgroup=typescriptTypeBrackets
   \ contained skipwhite skipnl
 
 syntax region typescriptFuncType matchgroup=typescriptParens
-  \ start=/(/ end=/)\s*=>/me=e-2
+  \ start=/(\(\k\+:\|)\)\@=/ end=/)\s*=>/me=e-2
   \ contains=@typescriptParameterList
   \ nextgroup=typescriptFuncTypeArrow
   \ contained skipwhite skipnl oneline
@@ -545,7 +570,6 @@ syntax match typescriptFuncTypeArrow /=>/
   \ nextgroup=@typescriptType
   \ containedin=typescriptFuncType
   \ contained skipwhite skipnl
-
 
 syntax keyword typescriptConstructorType new
   \ nextgroup=@typescriptFunctionType
@@ -623,25 +647,24 @@ syntax keyword typescriptReadonlyArrayKeyword readonly
 
 
 " extension
-if get(g:, 'yats_host_keyword', 1)
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Function Boolean
-  " use of nextgroup Suggested by Doug Kearns
+if get(g:, 'typescript_host_keyword', 1)
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Function Boolean nextgroup=typescriptFuncCallArg
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Error EvalError nextgroup=typescriptFuncCallArg
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName InternalError
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName RangeError ReferenceError
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName StopIteration
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName SyntaxError TypeError
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName URIError Date
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Float32Array
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Float64Array
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Int16Array Int32Array
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Int8Array Uint16Array
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Uint32Array Uint8Array
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Uint8ClampedArray
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName ParallelArray
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName ArrayBuffer DataView
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Iterator Generator
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Reflect Proxy
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName InternalError nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName RangeError ReferenceError nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName StopIteration nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName SyntaxError TypeError nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName URIError Date nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Float32Array nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Float64Array nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Int16Array Int32Array nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Int8Array Uint16Array nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Uint32Array Uint8Array nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Uint8ClampedArray nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName ParallelArray nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName ArrayBuffer DataView nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Iterator Generator nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Reflect Proxy nextgroup=typescriptFuncCallArg
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName arguments
   hi def link typescriptGlobal Structure
   syntax keyword typescriptGlobalMethod containedin=typescriptIdentifierName eval uneval nextgroup=typescriptFuncCallArg
@@ -675,12 +698,12 @@ if get(g:, 'yats_host_keyword', 1)
   hi def link typescriptStringStaticMethod Keyword
   syntax keyword typescriptStringMethod contained anchor charAt charCodeAt codePointAt nextgroup=typescriptFuncCallArg
   syntax keyword typescriptStringMethod contained concat endsWith includes indexOf lastIndexOf nextgroup=typescriptFuncCallArg
-  syntax keyword typescriptStringMethod contained link localeCompare match normalize nextgroup=typescriptFuncCallArg
-  syntax keyword typescriptStringMethod contained padStart padEnd repeat replace search nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptStringMethod contained link localeCompare match matchAll normalize nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptStringMethod contained padStart padEnd repeat replace replaceAll search nextgroup=typescriptFuncCallArg
   syntax keyword typescriptStringMethod contained slice split startsWith substr substring nextgroup=typescriptFuncCallArg
   syntax keyword typescriptStringMethod contained toLocaleLowerCase toLocaleUpperCase nextgroup=typescriptFuncCallArg
   syntax keyword typescriptStringMethod contained toLowerCase toString toUpperCase trim nextgroup=typescriptFuncCallArg
-  syntax keyword typescriptStringMethod contained valueOf nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptStringMethod contained trimEnd trimStart valueOf nextgroup=typescriptFuncCallArg
   syntax cluster props add=typescriptStringMethod
   hi def link typescriptStringMethod Keyword
 
@@ -689,18 +712,18 @@ if get(g:, 'yats_host_keyword', 1)
   syntax keyword typescriptArrayStaticMethod contained from isArray of nextgroup=typescriptFuncCallArg
   hi def link typescriptArrayStaticMethod Keyword
   syntax keyword typescriptArrayMethod contained concat copyWithin entries every fill nextgroup=typescriptFuncCallArg
-  syntax keyword typescriptArrayMethod contained filter find findIndex forEach indexOf nextgroup=typescriptFuncCallArg
-  syntax keyword typescriptArrayMethod contained includes join keys lastIndexOf map nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptArrayMethod contained filter find findIndex flat flatMap forEach nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptArrayMethod contained includes indexOf join keys lastIndexOf map nextgroup=typescriptFuncCallArg
   syntax keyword typescriptArrayMethod contained pop push reduce reduceRight reverse nextgroup=typescriptFuncCallArg
   syntax keyword typescriptArrayMethod contained shift slice some sort splice toLocaleString nextgroup=typescriptFuncCallArg
-  syntax keyword typescriptArrayMethod contained toSource toString unshift nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptArrayMethod contained toSource toString unshift values nextgroup=typescriptFuncCallArg
   syntax cluster props add=typescriptArrayMethod
   hi def link typescriptArrayMethod Keyword
 
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Object nextgroup=typescriptGlobalObjectDot,typescriptFuncCallArg
   syntax match   typescriptGlobalObjectDot /\./ contained nextgroup=typescriptObjectStaticMethod,typescriptProp
   syntax keyword typescriptObjectStaticMethod contained create defineProperties defineProperty nextgroup=typescriptFuncCallArg
-  syntax keyword typescriptObjectStaticMethod contained entries freeze getOwnPropertyDescriptors nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptObjectStaticMethod contained entries freeze fromEntries getOwnPropertyDescriptors nextgroup=typescriptFuncCallArg
   syntax keyword typescriptObjectStaticMethod contained getOwnPropertyDescriptor getOwnPropertyNames nextgroup=typescriptFuncCallArg
   syntax keyword typescriptObjectStaticMethod contained getOwnPropertySymbols getPrototypeOf nextgroup=typescriptFuncCallArg
   syntax keyword typescriptObjectStaticMethod contained is isExtensible isFrozen isSealed nextgroup=typescriptFuncCallArg
@@ -715,7 +738,7 @@ if get(g:, 'yats_host_keyword', 1)
 
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Symbol nextgroup=typescriptGlobalSymbolDot,typescriptFuncCallArg
   syntax match   typescriptGlobalSymbolDot /\./ contained nextgroup=typescriptSymbolStaticProp,typescriptSymbolStaticMethod,typescriptProp
-  syntax keyword typescriptSymbolStaticProp contained length iterator match replace
+  syntax keyword typescriptSymbolStaticProp contained description length iterator match matchAll replace
   syntax keyword typescriptSymbolStaticProp contained search split hasInstance isConcatSpreadable
   syntax keyword typescriptSymbolStaticProp contained unscopables species toPrimitive
   syntax keyword typescriptSymbolStaticProp contained toStringTag
@@ -771,7 +794,7 @@ if get(g:, 'yats_host_keyword', 1)
   syntax match   typescriptGlobalRegExpDot /\./ contained nextgroup=typescriptRegExpStaticProp,typescriptProp
   syntax keyword typescriptRegExpStaticProp contained lastIndex
   hi def link typescriptRegExpStaticProp Keyword
-  syntax keyword typescriptRegExpProp contained global ignoreCase multiline source sticky
+  syntax keyword typescriptRegExpProp contained dotAll global ignoreCase multiline source sticky
   syntax cluster props add=typescriptRegExpProp
   hi def link typescriptRegExpProp Keyword
   syntax keyword typescriptRegExpMethod contained exec test nextgroup=typescriptFuncCallArg
@@ -805,7 +828,7 @@ if get(g:, 'yats_host_keyword', 1)
 
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Promise nextgroup=typescriptGlobalPromiseDot,typescriptFuncCallArg
   syntax match   typescriptGlobalPromiseDot /\./ contained nextgroup=typescriptPromiseStaticMethod,typescriptProp
-  syntax keyword typescriptPromiseStaticMethod contained resolve reject all race nextgroup=typescriptFuncCallArg
+  syntax keyword typescriptPromiseStaticMethod contained all allSettled any race reject resolve nextgroup=typescriptFuncCallArg
   hi def link typescriptPromiseStaticMethod Keyword
   syntax keyword typescriptPromiseMethod contained then catch finally nextgroup=typescriptFuncCallArg
   syntax cluster props add=typescriptPromiseMethod
@@ -1232,7 +1255,8 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptBOMHistoryMethod
   hi def link typescriptBOMHistoryMethod Keyword
 
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName console
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName console nextgroup=typescriptGlobalConsoleDot
+  syntax match   typescriptGlobalConsoleDot /\./ contained nextgroup=typescriptConsoleMethod,typescriptProp
   syntax keyword typescriptConsoleMethod contained count dir error group groupCollapsed nextgroup=typescriptFuncCallArg
   syntax keyword typescriptConsoleMethod contained groupEnd info log time timeEnd trace nextgroup=typescriptFuncCallArg
   syntax keyword typescriptConsoleMethod contained warn nextgroup=typescriptFuncCallArg
@@ -1735,8 +1759,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax keyword typescriptServiceWorkerEvent contained install activate fetch
   syntax cluster events add=typescriptServiceWorkerEvent
   hi def link typescriptServiceWorkerEvent Title
-
-
 endif
 
 " patch
@@ -1764,6 +1786,7 @@ syntax cluster typescriptPropertyMemberDeclaration contains=
   \ typescriptClassStatic,
   \ typescriptAccessibilityModifier,
   \ typescriptReadonlyModifier,
+  \ typescriptAutoAccessor,
   \ typescriptMethodAccessor,
   \ @typescriptMembers
   " \ typescriptMemberVariableDeclaration
@@ -1780,7 +1803,9 @@ syntax keyword typescriptClassStatic static
 
 syntax keyword typescriptAccessibilityModifier public private protected contained
 
-syntax keyword typescriptReadonlyModifier readonly contained
+syntax keyword typescriptReadonlyModifier readonly override contained
+
+syntax keyword typescriptAutoAccessor accessor contained
 
 syntax region  typescriptStringMember   contained
   \ start=/\z(["']\)/  skip=/\\\\\|\\\z1\|\\\n/  end=/\z1/
@@ -1789,7 +1814,7 @@ syntax region  typescriptStringMember   contained
 
 syntax region  typescriptComputedMember   contained matchgroup=typescriptProperty
   \ start=/\[/rs=s+1 end=/]/
-  \ contains=@typescriptValue,typescriptMember,typescriptMappedIn
+  \ contains=@typescriptValue,typescriptMember,typescriptMappedIn,typescriptCastKeyword
   \ nextgroup=@memberNextGroup
   \ skipwhite skipempty
 
@@ -1861,7 +1886,7 @@ syntax match typescriptInterfaceComma /,/ contained nextgroup=typescriptInterfac
 
 "Block VariableStatement EmptyStatement ExpressionStatement IfStatement IterationStatement ContinueStatement BreakStatement ReturnStatement WithStatement LabelledStatement SwitchStatement ThrowStatement TryStatement DebuggerStatement
 syntax cluster typescriptStatement
-  \ contains=typescriptBlock,typescriptVariable,
+  \ contains=typescriptBlock,typescriptVariable,typescriptUsing,
   \ @typescriptTopExpression,typescriptAssign,
   \ typescriptConditional,typescriptRepeat,typescriptBranch,
   \ typescriptLabel,typescriptStatementKeyword,
@@ -1899,16 +1924,14 @@ syntax cluster typescriptValue
 syntax cluster typescriptEventExpression       contains=typescriptArrowFuncDef,typescriptParenExp,@typescriptValue,typescriptRegexpString,@typescriptEventTypes,typescriptOperator,typescriptGlobal,jsxRegion
 
 syntax keyword typescriptAsyncFuncKeyword      async
-  \ nextgroup=typescriptFuncKeyword,typescriptArrowFuncDef
+  \ nextgroup=typescriptFuncKeyword,typescriptArrowFuncDef,typescriptArrowFuncTypeParameter
   \ skipwhite
 
 syntax keyword typescriptAsyncFuncKeyword      await
-  \ nextgroup=@typescriptValue
+  \ nextgroup=@typescriptValue,typescriptUsing
   \ skipwhite
 
-syntax keyword typescriptFuncKeyword           function
-  \ nextgroup=typescriptAsyncFunc,typescriptFuncName,@typescriptCallSignature
-  \ skipwhite skipempty
+syntax keyword typescriptFuncKeyword function nextgroup=typescriptAsyncFunc,typescriptFuncName,@typescriptCallSignature skipwhite skipempty
 
 syntax match   typescriptAsyncFunc             contained /*/
   \ nextgroup=typescriptFuncName,@typescriptCallSignature
@@ -1918,39 +1941,33 @@ syntax match   typescriptFuncName              contained /\K\k*/
   \ nextgroup=@typescriptCallSignature
   \ skipwhite
 
-" destructuring ({ a: ee }) =>
-syntax match   typescriptArrowFuncDef          contained /(\(\s*\({\_[^}]*}\|\k\+\)\(:\_[^)]\)\?,\?\)\+)\s*=>/
-  \ contains=typescriptArrowFuncArg,typescriptArrowFunc
-  \ nextgroup=@typescriptExpression,typescriptBlock
-  \ skipwhite skipempty
-
-" matches `(a) =>` or `([a]) =>` or
-" `(
-"  a) =>`
-syntax match   typescriptArrowFuncDef          contained /(\(\_s*[a-zA-Z\$_\[.]\_[^)]*\)*)\s*=>/
-  \ contains=typescriptArrowFuncArg,typescriptArrowFunc
-  \ nextgroup=@typescriptExpression,typescriptBlock
-  \ skipwhite skipempty
-
 syntax match   typescriptArrowFuncDef          contained /\K\k*\s*=>/
   \ contains=typescriptArrowFuncArg,typescriptArrowFunc
   \ nextgroup=@typescriptExpression,typescriptBlock
   \ skipwhite skipempty
 
-" TODO: optimize this pattern
-syntax region   typescriptArrowFuncDef          contained start=/(\_[^(^)]*):/ end=/=>/
-  \ contains=typescriptArrowFuncArg,typescriptArrowFunc,typescriptTypeAnnotation
+syntax match   typescriptArrowFuncDef          contained /(\%(\_[^()]\+\|(\_[^()]*)\)*)\_s*=>/
+  \ contains=typescriptArrowFuncArg,typescriptArrowFunc,@typescriptCallSignature
+  \ nextgroup=@typescriptExpression,typescriptBlock
+  \ skipwhite skipempty
+
+syntax region  typescriptArrowFuncDef          contained start=/(\%(\_[^()]\+\|(\_[^()]*)\)*):/ matchgroup=typescriptArrowFunc end=/=>/
+  \ contains=typescriptArrowFuncArg,typescriptTypeAnnotation,@typescriptCallSignature
   \ nextgroup=@typescriptExpression,typescriptBlock
   \ skipwhite skipempty keepend
 
+syntax region  typescriptArrowFuncTypeParameter start=/</ end=/>/
+  \ contains=@typescriptTypeParameterCluster
+  \ nextgroup=typescriptArrowFuncDef
+  \ contained skipwhite skipnl
+
 syntax match   typescriptArrowFunc             /=>/
 syntax match   typescriptArrowFuncArg          contained /\K\k*/
-syntax region  typescriptArrowFuncArg          contained start=/<\|(/ end=/\ze=>/ contains=@typescriptCallSignature
 
 syntax region typescriptReturnAnnotation contained start=/:/ end=/{/me=e-1 contains=@typescriptType nextgroup=typescriptBlock
 
 
-syntax region typescriptFuncImpl contained start=/function\>/ end=/{/me=e-1
+syntax region typescriptFuncImpl contained start=/function\>/ end=/{\|;\|\n/me=e-1
   \ contains=typescriptFuncKeyword
   \ nextgroup=typescriptBlock
 
@@ -1970,7 +1987,7 @@ syntax match typescriptDecorator /@\([_$a-zA-Z][_$a-zA-Z0-9]*\.\)*[_$a-zA-Z][_$a
   \ nextgroup=typescriptFuncCallArg,typescriptTypeArguments
   \ contains=@_semantic,typescriptDotNotation
 
-" Define the default highlighting.
+
 hi def link typescriptReserved             Error
 
 hi def link typescriptEndColons            Exception
@@ -2013,6 +2030,7 @@ hi def link typescriptDefault              typescriptCase
 hi def link typescriptBranch               Conditional
 hi def link typescriptIdentifier           Structure
 hi def link typescriptVariable             Identifier
+hi def link typescriptUsing                Identifier
 hi def link typescriptDestructureVariable  PreProc
 hi def link typescriptEnumKeyword          Identifier
 hi def link typescriptRepeat               Repeat
@@ -2050,16 +2068,13 @@ hi def link typescriptFuncKeyword          Keyword
 hi def link typescriptAsyncFunc            Keyword
 hi def link typescriptArrowFunc            Type
 hi def link typescriptFuncName             Function
-hi def link typescriptFuncArg              PreProc
+hi def link typescriptFuncCallArg          PreProc
 hi def link typescriptArrowFuncArg         PreProc
 hi def link typescriptFuncComma            Operator
 
 hi def link typescriptClassKeyword         Keyword
 hi def link typescriptClassExtends         Keyword
-" hi def link typescriptClassName            Function
 hi def link typescriptAbstract             Special
-" hi def link typescriptClassHeritage        Function
-" hi def link typescriptInterfaceHeritage    Function
 hi def link typescriptClassStatic          StorageClass
 hi def link typescriptReadonlyModifier     Keyword
 hi def link typescriptInterfaceKeyword     Keyword
@@ -2077,6 +2092,7 @@ hi def link typescriptFuncTypeArrow         Function
 hi def link typescriptConstructorType       Function
 hi def link typescriptTypeQuery             Keyword
 hi def link typescriptAccessibilityModifier Keyword
+hi def link typescriptAutoAccessor          Keyword
 hi def link typescriptOptionalMark          PreProc
 hi def link typescriptFuncType              Special
 hi def link typescriptMappedIn              Special
