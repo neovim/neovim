@@ -36,17 +36,14 @@ Follow these steps to get LSP features:
       -- This handler will fire when the buffer's 'filetype' is "python"
       pattern = 'python',
       callback = function(ev)
-        -- The buffer number this event is associated with
-        local bufnr = ev.buf
-
         vim.lsp.start({
           name = 'my-server-name',
           cmd = {'name-of-language-server-executable', '--option', 'arg1', 'arg2'},
 
-          -- The "root directory" of the project is the parent directory,
-          -- relative to the buffer's file, containing a "setup.py" or
-          -- "pyproject.toml" file
-          root_dir = vim.fs.root(bufnr, {'setup.py', 'pyproject.toml'}),
+          -- Set the "root directory" to the parent directory of the
+          -- file in the current buffer (`ev.buf`) that contains either
+          -- a "setup.py" or a "pyproject.toml" file.
+          root_dir = vim.fs.root(ev.buf, {'setup.py', 'pyproject.toml'}),
         })
       end,
     })
@@ -54,7 +51,7 @@ Follow these steps to get LSP features:
 3. Check that the server attached to the buffer: >
     :checkhealth lsp
 
-4. (Optional) Configure keymaps and autocmds to use LSP features. |lsp-config|
+4. (Optional) Configure keymaps and autocommands to use LSP features. |lsp-config|
 
                                                         *lsp-defaults*
 When the LSP client starts it enables diagnostics |vim.diagnostic| (see
