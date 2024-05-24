@@ -226,10 +226,7 @@ describe('lua stdlib', function()
     eq(false, fn.luaeval('vim.startswith("123", "2")'))
     eq(false, fn.luaeval('vim.startswith("123", "1234")'))
 
-    matches(
-      'expected string, got nil',
-      pcall_err(exec_lua, 'return vim.startswith("123", nil)')
-    )
+    matches('expected string, got nil', pcall_err(exec_lua, 'return vim.startswith("123", nil)'))
     matches('expected string, got nil', pcall_err(exec_lua, 'return vim.startswith(nil, "123")'))
   end)
 
@@ -243,10 +240,7 @@ describe('lua stdlib', function()
     eq(false, fn.luaeval('vim.endswith("123", "2")'))
     eq(false, fn.luaeval('vim.endswith("123", "1234")'))
 
-    matches(
-      'expected string, got nil',
-      pcall_err(exec_lua, 'return vim.endswith("123", nil)')
-    )
+    matches('expected string, got nil', pcall_err(exec_lua, 'return vim.endswith("123", nil)'))
     matches('expected string, got nil', pcall_err(exec_lua, 'return vim.endswith(nil, "123")'))
   end)
 
