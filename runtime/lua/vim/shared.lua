@@ -10,6 +10,21 @@
 ---@diagnostic disable-next-line: lowercase-global
 vim = vim or {}
 
+--- Assert that a value has the expected type.
+---
+--- @generic T
+--- @param v T
+--- @param expected string Expected type
+local function expecttype(v, expected)
+  local actual = type(v)
+
+  -- Use an if statement with error() instead of assert() to avoid calling string.format if we don't
+  -- need it.
+  if actual ~= expected then
+    error(('expected %s, got %s'):format(expected, actual))
+  end
+end
+
 ---@generic T
 ---@param orig T
 ---@param cache? table<any,any>
@@ -214,7 +229,7 @@ end
 ---@param t table<T, any> (table) Table
 ---@return T[] : List of keys
 function vim.tbl_keys(t)
-  vim.validate({ t = { t, 't' } })
+  expecttype(t, 'table')
   --- @cast t table<any,any>
 
   local keys = {}
@@ -231,7 +246,7 @@ end
 ---@param t table<any, T> (table) Table
 ---@return T[] : List of values
 function vim.tbl_values(t)
-  vim.validate({ t = { t, 't' } })
+  expecttype(t, 'table')
 
   local values = {}
   for _, v in
@@ -332,7 +347,7 @@ end
 ---@param value any Value to compare
 ---@return boolean `true` if `t` contains `value`
 function vim.list_contains(t, value)
-  vim.validate({ t = { t, 't' } })
+  expecttype(t, 'table')
   --- @cast t table<any,any>
 
   for _, v in ipairs(t) do
@@ -350,7 +365,7 @@ end
 ---@param t table Table to check
 ---@return boolean `true` if `t` is empty
 function vim.tbl_isempty(t)
-  vim.validate({ t = { t, 't' } })
+  expecttype(t, 'table')
   return next(t) == nil
 end
 
@@ -580,7 +595,9 @@ end
 ---@return fun(table: table<K, V>, index?: K):K, V # |for-in| iterator over sorted keys and their values
 ---@return T
 function vim.spairs(t)
-  assert(type(t) == 'table', ('expected table, got %s'):format(type(t)))
+  if type(t) ~= 'table' then
+    error(('expected table, got %s'):format(type(t)))
+  end
   --- @cast t table<any,any>
 
   -- collect the keys
@@ -691,7 +708,9 @@ end
 ---@param t table Table
 ---@return integer : Number of non-nil values in table
 function vim.tbl_count(t)
-  vim.validate({ t = { t, 't' } })
+  if type(t) ~= 'table' then
+    error(('expected table, got %s'):format(type(t)))
+  end
   --- @cast t table<any,any>
 
   local count = 0
@@ -723,7 +742,9 @@ end
 ---@param s string String to trim
 ---@return string String with whitespace removed from its beginning and end
 function vim.trim(s)
-  vim.validate({ s = { s, 's' } })
+  if type(s) ~= 'string' then
+    error(('expected string, got %s'):format(type(s)))
+  end
   return s:match('^%s*(.*%S)') or ''
 end
 
@@ -733,7 +754,7 @@ end
 ---@param s string String to escape
 ---@return string %-escaped pattern string
 function vim.pesc(s)
-  vim.validate({ s = { s, 's' } })
+  expecttype(s, 'string')
   return (s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1'))
 end
 
@@ -743,7 +764,8 @@ end
 ---@param prefix string Prefix to match
 ---@return boolean `true` if `prefix` is a prefix of `s`
 function vim.startswith(s, prefix)
-  vim.validate({ s = { s, 's' }, prefix = { prefix, 's' } })
+  expecttype(s, 'string')
+  expecttype(prefix, 'string')
   return s:sub(1, #prefix) == prefix
 end
 
@@ -753,7 +775,8 @@ end
 ---@param suffix string Suffix to match
 ---@return boolean `true` if `suffix` is a suffix of `s`
 function vim.endswith(s, suffix)
-  vim.validate({ s = { s, 's' }, suffix = { suffix, 's' } })
+  expecttype(s, 'string')
+  expecttype(suffix, 'string')
   return #suffix == 0 or s:sub(-#suffix) == suffix
 end
 
