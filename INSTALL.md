@@ -204,7 +204,7 @@ You can also get nightly builds of git master from the [Copr automated build sys
     dnf copr enable agriffis/neovim-nightly
     dnf install -y neovim python3-neovim
 
-See the [blog post](https://arongriffis.com/2019/03/02/neovim-nightly-builds) for information on how these are built.
+See the [blog post](https://arongriffis.com/2019-03-02-neovim-nightly-builds) for information on how these are built.
 
 ### Flatpak
 
