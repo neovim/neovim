@@ -69,7 +69,7 @@ Some keymaps are created unconditionally when Nvim starts:
 - CTRL-S is mapped in Insert mode to |vim.lsp.buf.signature_help()|
 
 If not wanted, these keymaps can be removed at any time using
-|vim.keymap.del()| or |:unmap|.
+|vim.keymap.del()| or |:unmap| (see also |gr-default|).
 
                                                         *lsp-defaults-disable*
 To override the above defaults, set or unset the options on |LspAttach|: >lua
