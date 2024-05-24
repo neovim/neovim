@@ -33,16 +33,25 @@ local function check_active_clients()
   local clients = vim.lsp.get_clients()
   if next(clients) then
     for _, client in pairs(clients) do
-      local attached_to = table.concat(vim.tbl_keys(client.attached_buffers or {}), ',')
-      report_info(
+      local cmd ---@type string
+      if type(client.config.cmd) == 'table' then
+        cmd = table.concat(client.config.cmd --[[@as table]], ' ')
+      elseif type(client.config.cmd) == 'function' then
+        cmd = tostring(client.config.cmd)
+      end
+      report_info(table.concat({
+        client.name,
+        string.format('  ID: %d', client.id),
+        string.format('  Root directory: %s', vim.fn.fnamemodify(client.root_dir, ':~')),
+        string.format('  Command: %s', cmd),
+        string.format('  Offset encoding: %s', string.upper(client.offset_encoding)),
+        string.format('  Settings: %s', vim.inspect(client.settings, { newline = '\n  ' })),
+        string.format('  Flags: %s', vim.inspect(client.flags, { newline = '\n  ' })),
         string.format(
-          '%s (id=%s, root_dir=%s, attached_to=[%s])',
-          client.name,
-          client.id,
-          vim.fn.fnamemodify(client.root_dir, ':~'),
-          attached_to
-        )
-      )
+          '  Attached buffers: %s',
+          vim.iter(pairs(client.attached_buffers)):map(tostring):join(', ')
+        ),
+      }, '\n'))
     end
   else
     report_info('No active clients')
