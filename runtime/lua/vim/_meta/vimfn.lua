@@ -3536,14 +3536,13 @@ function vim.fn.getreginfo(regname) end
 --- The optional argument {opts} is a Dict and supports the
 --- following items:
 ---
----   type    Specify the region's selection type
----       (default: "v"):
----       "v"    for |charwise| mode
----       "V"    for |linewise| mode
----       "<CTRL-V>"  for |blockwise-visual| mode
+---   type    Specify the region's selection type.
+---       See |getregtype()| for possible values,
+---       except it cannot be an empty string.
+---       (default: "v")
 ---
 ---   exclusive  If |TRUE|, use exclusive selection
----       for the end position
+---       for the end position.
 ---       (default: follow 'selection')
 ---
 --- You can get the last selection type by |visualmode()|.
