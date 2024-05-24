@@ -12,8 +12,7 @@ vim = vim or {}
 
 --- Assert that a value has the expected type.
 ---
---- @generic T
---- @param v T Value to check
+--- @param v any Value to check
 --- @param expected string Expected type
 local function expecttype(v, expected)
   local actual = type(v)
