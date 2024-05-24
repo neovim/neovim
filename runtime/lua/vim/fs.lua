@@ -328,8 +328,11 @@ function M.find(names, opts)
   return matches
 end
 
---- Find the first parent directory containing a specific "marker", relative to a buffer's
---- directory.
+--- Find the first parent directory containing a specific "marker", relative to a file path or
+--- buffer.
+---
+--- If the buffer is unnamed (has no backing file) or has a non-empty 'buftype' then the search
+--- begins from Nvim's |current-directory|.
 ---
 --- Example:
 ---
@@ -346,13 +349,13 @@ end
 --- end)
 --- ```
 ---
---- @param source integer|string Buffer number (0 for current buffer) or file path to begin the
----               search from.
+--- @param source integer|string Buffer number (0 for current buffer) or file path (absolute or
+---               relative to the |current-directory|) to begin the search from.
 --- @param marker (string|string[]|fun(name: string, path: string): boolean) A marker, or list
 ---               of markers, to search for. If a function, the function is called for each
 ---               evaluated item and should return true if {name} and {path} are a match.
 --- @return string? # Directory path containing one of the given markers, or nil if no directory was
----         found.
+---                   found.
 function M.root(source, marker)
   assert(source, 'missing required argument: source')
   assert(marker, 'missing required argument: marker')
@@ -361,14 +364,18 @@ function M.root(source, marker)
   if type(source) == 'string' then
     path = source
   elseif type(source) == 'number' then
-    path = vim.api.nvim_buf_get_name(source)
+    if vim.bo[source].buftype ~= '' then
+      path = assert(vim.uv.cwd())
+    else
+      path = vim.api.nvim_buf_get_name(source)
+    end
   else
     error('invalid type for argument "source": expected string or buffer number')
   end
 
   local paths = M.find(marker, {
     upward = true,
-    path = path,
+    path = vim.fn.fnamemodify(path, ':p:h'),
   })
 
   if #paths == 0 then
