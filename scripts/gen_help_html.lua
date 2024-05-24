@@ -1434,12 +1434,10 @@ function M.test_gen(help_dir)
   help_dir = vim.fn.expand(help_dir or '$VIMRUNTIME/doc')
   print('doc path = ' .. vim.uv.fs_realpath(help_dir))
 
-  local rv = M.gen(
-    help_dir,
-    tmpdir,
-    -- Because gen() is slow (~30s), this test is limited to a few files.
-    { 'help.txt', 'index.txt', 'nvim.txt' }
-  )
+  -- Because gen() is slow (~30s), this test is limited to a few files.
+  local input = { 'help.txt', 'index.txt', 'nvim.txt' }
+  local rv = M.gen(help_dir, tmpdir, input)
+  eq(#input, #rv.helpfiles)
   eq(0, rv.err_count, 'parse errors in :help docs')
   eq({}, rv.invalid_links, 'invalid tags in :help docs')
 end
