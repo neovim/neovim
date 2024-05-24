@@ -40,13 +40,11 @@ local function check_active_clients()
         cmd = tostring(client.config.cmd)
       end
       report_info(table.concat({
-        client.name,
-        string.format('  ID: %d', client.id),
+        string.format('%s (id: %d)', client.name, client.id),
         string.format('  Root directory: %s', vim.fn.fnamemodify(client.root_dir, ':~')),
         string.format('  Command: %s', cmd),
         string.format('  Offset encoding: %s', string.upper(client.offset_encoding)),
         string.format('  Settings: %s', vim.inspect(client.settings, { newline = '\n  ' })),
-        string.format('  Flags: %s', vim.inspect(client.flags, { newline = '\n  ' })),
         string.format(
           '  Attached buffers: %s',
           vim.iter(pairs(client.attached_buffers)):map(tostring):join(', ')
