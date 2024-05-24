@@ -96,7 +96,16 @@ func Test_global_newline()
   close!
 endfunc
 
-func Test_wrong_delimiter()
+" Test :g with ? as delimiter.
+func Test_global_question_delimiter()
+  new
+  call setline(1, ['aaaaa', 'b?bbb', 'ccccc', 'ddd?d', 'eeeee'])
+  g?\??delete
+  call assert_equal(['aaaaa', 'ccccc', 'eeeee'], getline(1, '$'))
+  bwipe!
+endfunc
+
+func Test_global_wrong_delimiter()
   call assert_fails('g x^bxd', 'E146:')
 endfunc
 
