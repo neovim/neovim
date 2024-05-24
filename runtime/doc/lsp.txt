@@ -61,6 +61,16 @@ options are not restored when the LSP client is stopped or detached.
 - |K| is mapped to |vim.lsp.buf.hover()| unless |'keywordprg'| is customized or
   a custom keymap for `K` exists.
 
+                                                *grr* *gra* *grn* *i_CTRL-S*
+Some keymaps are created unconditionally when Nvim starts:
+- "grn" is mapped in Normal mode to |vim.lsp.buf.rename()|
+- "gra" is mapped in Normal and Visual mode to |vim.lsp.buf.code_action()|
+- "grr" is mapped in Normal mode to |vim.lsp.buf.references()|
+- CTRL-S is mapped in Insert mode to |vim.lsp.buf.signature_help()|
+
+If not wanted, these keymaps can be removed at any time using
+|vim.keymap.del()| or |:unmap| (see also |gr-default|).
+
                                                         *lsp-defaults-disable*
 To override the above defaults, set or unset the options on |LspAttach|: >lua
 
@@ -80,9 +90,6 @@ Example: >lua
     vim.api.nvim_create_autocmd('LspAttach', {
       callback = function(args)
         local client = vim.lsp.get_client_by_id(args.data.client_id)
-        if client.supports_method('textDocument/rename') then
-          -- Create a keymap for vim.lsp.buf.rename()
-        end
         if client.supports_method('textDocument/implementation') then
           -- Create a keymap for vim.lsp.buf.implementation
         end

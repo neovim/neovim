@@ -138,6 +138,11 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
 - * |v_star-default|
 - gc |gc-default| |v_gc-default| |o_gc-default|
 - gcc |gcc-default|
+- gr prefix |gr-default|
+  - |grn|
+  - |grr|
+  - |gra|
+- <C-S> |i_CTRL-S|
 - ]d |]d-default|
 - [d |[d-default|
 - <C-W>d |CTRL-W_d-default|
