@@ -4119,7 +4119,7 @@ static void f_islocked(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
                                    FNE_CHECK_START);
   if (end != NULL && lv.ll_name != NULL) {
     if (*end != NUL) {
-      semsg(_(e_trailing_arg), end);
+      semsg(_(lv.ll_name_len == 0 ? e_invarg2 : e_trailing_arg), end);
     } else {
       if (lv.ll_tv == NULL) {
         dictitem_T *di = find_var(lv.ll_name, lv.ll_name_len, NULL, true);

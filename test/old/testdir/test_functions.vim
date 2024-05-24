@@ -98,6 +98,11 @@ func Test_err_teapot()
   call assert_fails('call err_teapot(expr)', "E503: Coffee is currently not available")
 endfunc
 
+func Test_islocked()
+  call assert_fails('call islocked(99)', 'E475:')
+  call assert_fails('call islocked("s: x")', 'E488:')
+endfunc
+
 func Test_len()
   call assert_equal(1, len(0))
   call assert_equal(2, len(12))

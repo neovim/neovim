@@ -1737,6 +1737,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
   }
 
   tv_clear(&var1);
+  lp->ll_name_len = (size_t)(p - lp->ll_name);
   return p;
 }
 
