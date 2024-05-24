@@ -400,6 +400,7 @@ gx			Opens the current filepath or URL (decided by
 			   |:command|    - filter by command name
 			   |:files|      - filter by file name
 			   |:highlight|  - filter by highlight group
+			   |:history|    - filter by history commands
 			   |:jumps|      - filter by file name
 			   |:let|        - filter by variable name
 			   |:list|       - filter whole line

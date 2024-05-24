@@ -96,6 +96,60 @@ function Test_History()
   call assert_fails('history xyz', 'E488:')
   call assert_fails('history ,abc', 'E488:')
   call assert_fails('call histdel(":", "\\%(")', 'E53:')
+
+  " Test for filtering the history list
+  let hist_filter = execute(':filter /_\d/ :history all')->split('\n')
+  call assert_equal(20, len(hist_filter))
+  let expected = ['      #  cmd history',
+               \ '      2  text_2',
+               \ '      3  text_3',
+               \ '>     4  text_4',
+               \ '      #  search history',
+               \ '      2  text_2',
+               \ '      3  text_3',
+               \ '>     4  text_4',
+               \ '      #  expr history',
+               \ '      2  text_2',
+               \ '      3  text_3',
+               \ '>     4  text_4',
+               \ '      #  input history',
+               \ '      2  text_2',
+               \ '      3  text_3',
+               \ '>     4  text_4',
+               \ '      #  debug history',
+               \ '      2  text_2',
+               \ '      3  text_3',
+               \ '>     4  text_4']
+  call assert_equal(expected, hist_filter)
+
+  let cmds = {'c': 'cmd', 's': 'search', 'e': 'expr', 'i': 'input', 'd': 'debug'}
+  for h in sort(keys(cmds))
+    " find some items
+    let hist_filter = execute(':filter /_\d/ :history ' .. h)->split('\n')
+    call assert_equal(4, len(hist_filter))
+
+    let expected = ['      #  ' .. cmds[h] .. ' history',
+               \ '      2  text_2',
+               \ '      3  text_3',
+               \ '>     4  text_4']
+    call assert_equal(expected, hist_filter)
+
+    " Search for an item that is not there
+    let hist_filter = execute(':filter /XXXX/ :history ' .. h)->split('\n')
+    call assert_equal(1, len(hist_filter))
+
+    let expected = ['      #  ' .. cmds[h] .. ' history']
+    call assert_equal(expected, hist_filter)
+
+    " Invert the filter condition, find non-matches
+    let hist_filter = execute(':filter! /_3$/ :history ' .. h)->split('\n')
+    call assert_equal(3, len(hist_filter))
+
+    let expected = ['      #  ' .. cmds[h] .. ' history',
+               \ '      2  text_2',
+               \ '>     4  text_4']
+    call assert_equal(expected, hist_filter)
+  endfor
 endfunction
 
 function Test_history_truncates_long_entry()
