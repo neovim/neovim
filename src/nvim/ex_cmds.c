@@ -98,6 +98,7 @@
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 /// Case matching style to use for :substitute
 typedef enum {
@@ -2617,6 +2618,10 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     changed_line_abv_curs();
 
     maketitle();
+    if (curwin->w_floating && curwin->w_p_pvw) {
+      win_float_set_title(curwin, false);
+      win_float_adjust_position(curwin);
+    }
   }
 
   // Tell the diff stuff that this buffer is new and/or needs updating.
@@ -4559,24 +4564,40 @@ void free_old_sub(void)
 /// @param undo_sync  sync undo when leaving the window
 ///
 /// @return           true when it was created.
-bool prepare_tagpreview(bool undo_sync)
+bool prepare_tagpreview(bool undo_sync, bool use_float)
 {
   if (curwin->w_p_pvw) {
     return false;
   }
 
-  // If there is already a preview window open, use that one.
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_p_pvw) {
+  if (use_float) {
+    win_T *wp = win_float_find_preview(false);
+    if (wp) {
       win_enter(wp, undo_sync);
-      return false;
+    } else {
+      wp = win_float_create(false, true, kFloatPreview);
+      if (!wp) {
+        return false;
+      }
+      win_enter(wp, undo_sync);
+      return true;
+    }
+  } else {
+    // If there is already a preview window open, use that one.
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_p_pvw) {
+        win_enter(wp, undo_sync);
+        return false;
+      }
     }
   }
 
-  // There is no preview window open yet.  Create one.
-  if (win_split(g_do_tagpreview > 0 ? g_do_tagpreview : 0, 0)
-      == FAIL) {
-    return false;
+  if (!use_float) {
+    // There is no preview window open yet.  Create one.
+    if (win_split(g_do_tagpreview > 0 ? g_do_tagpreview : 0, 0)
+        == FAIL) {
+      return false;
+    }
   }
   curwin->w_p_pvw = true;
   curwin->w_p_wfh = true;

@@ -4834,6 +4834,10 @@ static void ex_pclose(exarg_T *eap)
       break;
     }
   }
+
+  if (*p_pvp != NUL) {
+    win_float_close(kFloatPreview);
+  }
 }
 
 /// Close window "win" and take care of handling closing the last window for a
@@ -6790,7 +6794,7 @@ static void ex_pedit(exarg_T *eap)
 
   // Open the preview window or popup and make it the current window.
   g_do_tagpreview = (int)p_pvh;
-  prepare_tagpreview(true);
+  prepare_tagpreview(true, *p_pvp != NUL);
 
   // Edit the file.
   do_exedit(eap, NULL);
@@ -7565,7 +7569,7 @@ static void ex_terminal(exarg_T *eap)
 /// ":fclose"
 static void ex_fclose(exarg_T *eap)
 {
-  win_float_remove(eap->forceit, eap->line1);
+  win_float_remove_by_zindex(eap->forceit, eap->line1);
 }
 
 void verify_command(char *cmd)

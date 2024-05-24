@@ -99,7 +99,7 @@ LUA
 
 OPTIONS
 
-• TODO
+• Added 'previewpopup' option.
 
 PERFORMANCE
 
@@ -128,7 +128,6 @@ TUI
 UI
 
 • TODO
-
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*

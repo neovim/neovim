@@ -904,6 +904,11 @@ typedef enum {
   kFloatRelativeMouse = 3,
 } FloatRelative;
 
+typedef enum {
+  kFloatInfo = 0,
+  kFloatPreview = 1,
+} FloatType;
+
 /// Keep in sync with win_split_str[] in nvim_win_get_config() (api/win_config.c)
 typedef enum {
   kWinSplitLeft = 0,
@@ -1295,7 +1300,7 @@ struct window_S {
   ScreenGrid w_grid_alloc;              // the grid specific to the window
   bool w_pos_changed;                   // true if window position changed
   bool w_floating;                      ///< whether the window is floating
-  bool w_float_is_info;                 // the floating window is info float
+  FloatType w_float_is;                 // the floating window is info float
   WinConfig w_config;
 
   // w_fraction is the fractional row of the cursor within the window, from
