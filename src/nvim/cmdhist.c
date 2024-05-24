@@ -662,7 +662,8 @@ void ex_history(exarg_T *eap)
           i = 0;
         }
         if (hist[i].hisstr != NULL
-            && hist[i].hisnum >= j && hist[i].hisnum <= k) {
+            && hist[i].hisnum >= j && hist[i].hisnum <= k
+            && !message_filtered(hist[i].hisstr)) {
           msg_putchar('\n');
           snprintf(IObuff, IOSIZE, "%c%6d  ", i == idx ? '>' : ' ',
                    hist[i].hisnum);
