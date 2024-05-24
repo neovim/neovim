@@ -174,8 +174,8 @@ func Test_substitute_repeat()
   bwipe!
 endfunc
 
-" Test :s with ? as separator.
-func Test_substitute_question_separator()
+" Test :s with ? as delimiter.
+func Test_substitute_question_delimiter()
   new
   call setline(1, '??:??')
   %s?\?\??!!?g
