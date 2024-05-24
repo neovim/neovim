@@ -312,7 +312,10 @@ describe('vim.fs', function()
     end)
 
     it('works with a relative path', function()
-      eq(test_source_path, exec_lua([[return vim.fs.root(..., '.git')]], vim.fs.basename(nvim_prog)))
+      eq(
+        test_source_path,
+        exec_lua([[return vim.fs.root(..., '.git')]], vim.fs.basename(nvim_prog))
+      )
     end)
 
     it('uses cwd for unnamed buffers', function()
