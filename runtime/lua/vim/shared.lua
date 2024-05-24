@@ -13,7 +13,7 @@ vim = vim or {}
 --- Assert that a value has the expected type.
 ---
 --- @generic T
---- @param v T
+--- @param v T Value to check
 --- @param expected string Expected type
 local function expecttype(v, expected)
   local actual = type(v)
@@ -21,7 +21,7 @@ local function expecttype(v, expected)
   -- Use an if statement with error() instead of assert() to avoid calling string.format if we don't
   -- need it.
   if actual ~= expected then
-    error(('expected %s, got %s (%s)'):format(expected, v, actual))
+    error(('expected %s, got %s (%s)'):format(expected, actual, v))
   end
 end
 

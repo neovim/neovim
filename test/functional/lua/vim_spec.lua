@@ -227,10 +227,10 @@ describe('lua stdlib', function()
     eq(false, fn.luaeval('vim.startswith("123", "1234")'))
 
     matches(
-      'prefix: expected string, got nil',
+      'expected string, got nil',
       pcall_err(exec_lua, 'return vim.startswith("123", nil)')
     )
-    matches('s: expected string, got nil', pcall_err(exec_lua, 'return vim.startswith(nil, "123")'))
+    matches('expected string, got nil', pcall_err(exec_lua, 'return vim.startswith(nil, "123")'))
   end)
 
   it('vim.endswith', function()
@@ -244,10 +244,10 @@ describe('lua stdlib', function()
     eq(false, fn.luaeval('vim.endswith("123", "1234")'))
 
     matches(
-      'suffix: expected string, got nil',
+      'expected string, got nil',
       pcall_err(exec_lua, 'return vim.endswith("123", nil)')
     )
-    matches('s: expected string, got nil', pcall_err(exec_lua, 'return vim.endswith(nil, "123")'))
+    matches('expected string, got nil', pcall_err(exec_lua, 'return vim.endswith(nil, "123")'))
   end)
 
   it('vim.str_utfindex/str_byteindex', function()
@@ -631,7 +631,7 @@ describe('lua stdlib', function()
     end
 
     -- Validates args.
-    matches('s: expected string, got number', pcall_err(trim, 2))
+    matches('expected string, got number', pcall_err(trim, 2))
   end)
 
   it('vim.inspect', function()
@@ -738,7 +738,7 @@ describe('lua stdlib', function()
     eq({ 'x' }, exec_lua([[return {vim.pesc('x')}]]))
 
     -- Validates args.
-    matches('s: expected string, got number', pcall_err(exec_lua, [[return vim.pesc(2)]]))
+    matches('expected string, got number', pcall_err(exec_lua, [[return vim.pesc(2)]]))
   end)
 
   it('vim.list_contains', function()
