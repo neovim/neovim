@@ -12,7 +12,7 @@ enhanced LSP tools.
 
     https://microsoft.github.io/language-server-protocol/
 
-LSP facilitates features like go-to-definition, find-references, hover,
+LSP facilitates features like go-to-definition, find references, hover,
 completion, rename, format, refactor, etc., using semantic whole-project
 analysis (unlike |ctags|).
 
@@ -25,26 +25,36 @@ Nvim provides an LSP client, but the servers are provided by third parties.
 Follow these steps to get LSP features:
 
 1. Install language servers using your package manager or by following the
-   upstream installation instruction. You can find language servers here:
+   upstream installation instructions. You can find language servers here:
    https://microsoft.github.io/language-server-protocol/implementors/servers/
 
-2. Configure the LSP client per language server. See |vim.lsp.start()| or use
-   this minimal example as a guide: >lua
+2. Use |vim.lsp.start()| to start the LSP server (or attach to an existing
+   one) when a file is opened. Example: >lua
+    -- Create an event handler for the FileType autocommand
+    vim.api.nvim_create_autocmd('FileType', {
+      -- This handler will fire when the buffer's 'filetype' is "python"
+      pattern = 'python',
+      callback = function(ev)
+        vim.lsp.start({
+          name = 'my-server-name',
+          cmd = {'name-of-language-server-executable', '--option', 'arg1', 'arg2'},
 
-    vim.lsp.start({
-      name = 'my-server-name',
-      cmd = {'name-of-language-server-executable'},
-      root_dir = vim.fs.root(0, {'setup.py', 'pyproject.toml'}),
+          -- Set the "root directory" to the parent directory of the file in the
+          -- current buffer (`ev.buf`) that contains either a "setup.py" or a
+          -- "pyproject.toml" file. Files that share a root directory will reuse
+          -- the connection to the same LSP server.
+          root_dir = vim.fs.root(ev.buf, {'setup.py', 'pyproject.toml'}),
+        })
+      end,
     })
 <
-3. Check that the server attached to the buffer: >
-    :lua =vim.lsp.get_clients()
+3. Check that the buffer is attached to the server: >vim
+    :checkhealth lsp
 
-4. Configure keymaps and autocmds to use LSP features. See |lsp-config|.
+4. (Optional) Configure keymaps and autocommands to use LSP features. |lsp-config|
 
-                                                        *lsp-config*
                                                         *lsp-defaults*
-When the LSP client starts it enables diagnostics |vim.diagnostic| (see
+When the Nvim LSP client starts it enables diagnostics |vim.diagnostic| (see
 |vim.diagnostic.config()| to customize). It also sets various default options,
 listed below, if (1) the language server supports the functionality and (2)
 the options are empty or were set by the builtin runtime (ftplugin) files. The
@@ -57,7 +67,7 @@ options are not restored when the LSP client is stopped or detached.
   |CTRL-W_}| to utilize the language server.
 - 'formatexpr' is set to |vim.lsp.formatexpr()|, so you can format lines via
   |gq| if the language server supports it.
-  - To opt out of this use |gw| instead of gq, or set 'formatexpr' on LspAttach.
+  - To opt out of this use |gw| instead of gq, or clear 'formatexpr' on |LspAttach|.
 - |K| is mapped to |vim.lsp.buf.hover()| unless |'keywordprg'| is customized or
   a custom keymap for `K` exists.
 
@@ -72,7 +82,8 @@ If not wanted, these keymaps can be removed at any time using
 |vim.keymap.del()| or |:unmap| (see also |gr-default|).
 
                                                         *lsp-defaults-disable*
-To override the above defaults, set or unset the options on |LspAttach|: >lua
+To override or delete any of the above defaults, set or unset the options on
+|LspAttach|: >lua
 
     vim.api.nvim_create_autocmd('LspAttach', {
       callback = function(ev)
@@ -81,7 +92,8 @@ To override the above defaults, set or unset the options on |LspAttach|: >lua
         vim.keymap.del('n', 'K', { buffer = ev.buf })
       end,
     })
-
+<
+                                                        *lsp-config*
 To use other LSP features, set keymaps on |LspAttach|. Not all language
 servers provide the same capabilities. To ensure you only set keymaps if the
 language server supports a feature, guard keymaps behind capability checks.
