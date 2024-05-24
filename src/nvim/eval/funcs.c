@@ -3001,16 +3001,14 @@ static void add_regionpos_range(typval_T *rettv, pos_T p1, pos_T p2)
   list_T *l3 = tv_list_alloc(4);
   tv_list_append_list(l1, l3);
 
-  int max_col1 = ml_get_len(p1.lnum);
   tv_list_append_number(l2, curbuf->b_fnum);
   tv_list_append_number(l2, p1.lnum);
-  tv_list_append_number(l2, p1.col > max_col1 ? max_col1 : p1.col);
+  tv_list_append_number(l2, p1.col);
   tv_list_append_number(l2, p1.coladd);
 
-  int max_col2 = ml_get_len(p2.lnum);
   tv_list_append_number(l3, curbuf->b_fnum);
   tv_list_append_number(l3, p2.lnum);
-  tv_list_append_number(l3, p2.col > max_col2 ? max_col2 : p2.col);
+  tv_list_append_number(l3, p2.col);
   tv_list_append_number(l3, p2.coladd);
 }
 
@@ -3023,14 +3021,20 @@ static void f_getregionpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
   pos_T p1, p2;
   bool inclusive = true;
   MotionType region_type = kMTUnknown;
+  bool allow_eol = false;
   oparg_T oa;
 
   if (getregionpos(argvars, rettv, &p1, &p2, &inclusive, &region_type, &oa) == FAIL) {
     return;
   }
 
+  if (argvars[2].v_type == VAR_DICT) {
+    allow_eol = tv_dict_get_bool(argvars[2].vval.v_dict, "eol", false);
+  }
+
   for (linenr_T lnum = p1.lnum; lnum <= p2.lnum; lnum++) {
     pos_T ret_p1, ret_p2;
+    colnr_T line_len = ml_get_len(lnum);
 
     if (region_type == kMTLineWise) {
       ret_p1.col = 1;
@@ -3054,6 +3058,11 @@ static void f_getregionpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
           ret_p1.col = p1.col + 1;
           ret_p1.coladd = p1.coladd;
         }
+      } else if (region_type == kMTBlockWise && oa.start_vcol > bd.start_vcol) {
+        // blockwise selection entirely beyond end of line
+        ret_p1.col = MAXCOL;
+        ret_p1.coladd = oa.start_vcol - bd.start_vcol;
+        bd.is_oneChar = true;
       } else if (bd.startspaces > 0) {
         ret_p1.col = bd.textcol;
         ret_p1.coladd = bd.start_char_vcols - bd.startspaces;
@@ -3064,7 +3073,7 @@ static void f_getregionpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 
       if (bd.is_oneChar) {  // selection entirely inside one char
         ret_p2.col = ret_p1.col;
-        ret_p2.coladd = ret_p1.coladd + bd.startspaces;
+        ret_p2.coladd = ret_p1.coladd + bd.startspaces + bd.endspaces;
       } else if (bd.endspaces > 0) {
         ret_p2.col = bd.textcol + bd.textlen + 1;
         ret_p2.coladd = bd.endspaces;
@@ -3072,6 +3081,20 @@ static void f_getregionpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
         ret_p2.col = bd.textcol + bd.textlen;
         ret_p2.coladd = 0;
       }
+    }
+
+    if (!allow_eol && ret_p1.col > line_len) {
+      ret_p1.col = 0;
+      ret_p1.coladd = 0;
+    } else if (ret_p1.col > line_len + 1) {
+      ret_p1.col = line_len + 1;
+    }
+
+    if (!allow_eol && ret_p2.col > line_len) {
+      ret_p2.col = ret_p1.col == 0 ? 0 : line_len;
+      ret_p2.coladd = 0;
+    } else if (ret_p2.col > line_len + 1) {
+      ret_p2.col = line_len + 1;
     }
 
     ret_p1.lnum = lnum;

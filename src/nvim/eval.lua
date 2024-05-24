@@ -4435,6 +4435,19 @@ M.funcs = {
       If the "off" number of an ending position is non-zero, it is
       the offset of the character's first cell not included in the
       selection, otherwise all its cells are included.
+
+      Apart from the options supported by |getregion()|, {opts} also
+      supports the following:
+
+      	eol		If |TRUE|, indicate positions beyond
+      			the end of a line with "col" values
+      			one more than the length of the line.
+      			If |FALSE|, positions are limited
+      			within their lines, and if a line is
+      			empty or the selection is entirely
+      			beyond the end of a line, a "col"
+      			value of 0 is used for both positions.
+      			(default: |FALSE|)
     ]=],
     name = 'getregionpos',
     params = { { 'pos1', 'table' }, { 'pos2', 'table' }, { 'opts', 'table' } },
