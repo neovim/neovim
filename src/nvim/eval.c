@@ -1382,112 +1382,24 @@ Object eval_foldtext(win_T *wp)
   return retval;
 }
 
-/// Get an lvalue
+/// Get the lval of a list/dict/blob subitem starting at "p". Loop
+/// until no more [idx] or .key is following.
 ///
-/// Lvalue may be
-/// - variable: "name", "na{me}"
-/// - dictionary item: "dict.key", "dict['key']"
-/// - list item: "list[expr]"
-/// - list slice: "list[expr:expr]"
-///
-/// Indexing only works if trying to use it with an existing List or Dictionary.
-///
-/// @param[in]  name  Name to parse.
-/// @param  rettv  Pointer to the value to be assigned or NULL.
-/// @param[out]  lp  Lvalue definition. When evaluation errors occur `->ll_name`
-///                  is NULL.
-/// @param[in]  unlet  True if using `:unlet`. This results in slightly
-///                    different behaviour when something is wrong; must end in
-///                    space or cmd separator.
-/// @param[in]  skip  True when skipping.
 /// @param[in]  flags  @see GetLvalFlags.
-/// @param[in]  fne_flags  Flags for find_name_end().
 ///
-/// @return A pointer to just after the name, including indexes. Returns NULL
-///         for a parsing error, but it is still needed to free items in lp.
-char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const bool unlet,
-               const bool skip, const int flags, const int fne_flags)
-  FUNC_ATTR_NONNULL_ARG(1, 3)
+/// @return A pointer to the character after the subscript on success or NULL on
+///         failure.
+static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv, hashtab_T *ht,
+                                dictitem_T *v, int unlet, int flags)
 {
-  bool empty1 = false;
   int quiet = flags & GLV_QUIET;
-
-  // Clear everything in "lp".
-  CLEAR_POINTER(lp);
-
-  if (skip) {
-    // When skipping just find the end of the name.
-    lp->ll_name = name;
-    return (char *)find_name_end(name, NULL, NULL, FNE_INCL_BR | fne_flags);
-  }
-
-  // Find the end of the name.
-  char *expr_start;
-  char *expr_end;
-  char *p = (char *)find_name_end(name, (const char **)&expr_start,
-                                  (const char **)&expr_end,
-                                  fne_flags);
-  if (expr_start != NULL) {
-    // Don't expand the name when we already know there is an error.
-    if (unlet && !ascii_iswhite(*p) && !ends_excmd(*p)
-        && *p != '[' && *p != '.') {
-      semsg(_(e_trailing_arg), p);
-      return NULL;
-    }
-
-    lp->ll_exp_name = make_expanded_name(name, expr_start, expr_end, p);
-    lp->ll_name = lp->ll_exp_name;
-    if (lp->ll_exp_name == NULL) {
-      // Report an invalid expression in braces, unless the
-      // expression evaluation has been cancelled due to an
-      // aborting error, an interrupt, or an exception.
-      if (!aborting() && !quiet) {
-        emsg_severe = true;
-        semsg(_(e_invarg2), name);
-        return NULL;
-      }
-      lp->ll_name_len = 0;
-    } else {
-      lp->ll_name_len = strlen(lp->ll_name);
-    }
-  } else {
-    lp->ll_name = name;
-    lp->ll_name_len = (size_t)(p - lp->ll_name);
-  }
-
-  // Without [idx] or .key we are done.
-  if ((*p != '[' && *p != '.') || lp->ll_name == NULL) {
-    return p;
-  }
-
-  hashtab_T *ht = NULL;
-
-  // Only pass &ht when we would write to the variable, it prevents autoload
-  // as well.
-  dictitem_T *v = find_var(lp->ll_name, lp->ll_name_len,
-                           (flags & GLV_READ_ONLY) ? NULL : &ht,
-                           flags & GLV_NO_AUTOLOAD);
-  if (v == NULL && !quiet) {
-    semsg(_("E121: Undefined variable: %.*s"),
-          (int)lp->ll_name_len, lp->ll_name);
-  }
-  if (v == NULL) {
-    return NULL;
-  }
-
-  lp->ll_tv = &v->di_tv;
-
-  if (tv_is_luafunc(lp->ll_tv)) {
-    // For v:lua just return a pointer to the "." after the "v:lua".
-    // If the caller is trans_function_name() it will check for a Lua function name.
-    return p;
-  }
-
-  // Loop until no more [idx] or .key is following.
   typval_T var1;
   var1.v_type = VAR_UNKNOWN;
   typval_T var2;
   var2.v_type = VAR_UNKNOWN;
+  bool empty1 = false;
+
+  // Loop until no more [idx] or .key is following.
   while (*p == '[' || (*p == '.' && p[1] != '=' && p[1] != '.')) {
     if (*p == '.' && lp->ll_tv->v_type != VAR_DICT) {
       if (!quiet) {
@@ -1522,6 +1434,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
     char *key = NULL;
     if (*p == '.') {
       key = p + 1;
+
       for (len = 0; ASCII_ISALNUM(key[len]) || key[len] == '_'; len++) {}
       if (len == 0) {
         if (!quiet) {
@@ -1737,6 +1650,115 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
   }
 
   tv_clear(&var1);
+  return p;
+}
+
+/// Get an lvalue
+///
+/// Lvalue may be
+/// - variable: "name", "na{me}"
+/// - dictionary item: "dict.key", "dict['key']"
+/// - list item: "list[expr]"
+/// - list slice: "list[expr:expr]"
+///
+/// Indexing only works if trying to use it with an existing List or Dictionary.
+///
+/// @param[in]  name  Name to parse.
+/// @param  rettv  Pointer to the value to be assigned or NULL.
+/// @param[out]  lp  Lvalue definition. When evaluation errors occur `->ll_name`
+///                  is NULL.
+/// @param[in]  unlet  True if using `:unlet`. This results in slightly
+///                    different behaviour when something is wrong; must end in
+///                    space or cmd separator.
+/// @param[in]  skip  True when skipping.
+/// @param[in]  flags  @see GetLvalFlags.
+/// @param[in]  fne_flags  Flags for find_name_end().
+///
+/// @return A pointer to just after the name, including indexes. Returns NULL
+///         for a parsing error, but it is still needed to free items in lp.
+char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const bool unlet,
+               const bool skip, const int flags, const int fne_flags)
+  FUNC_ATTR_NONNULL_ARG(1, 3)
+{
+  int quiet = flags & GLV_QUIET;
+
+  // Clear everything in "lp".
+  CLEAR_POINTER(lp);
+
+  if (skip) {
+    // When skipping just find the end of the name.
+    lp->ll_name = name;
+    return (char *)find_name_end(name, NULL, NULL, FNE_INCL_BR | fne_flags);
+  }
+
+  // Find the end of the name.
+  char *expr_start;
+  char *expr_end;
+  char *p = (char *)find_name_end(name, (const char **)&expr_start,
+                                  (const char **)&expr_end,
+                                  fne_flags);
+  if (expr_start != NULL) {
+    // Don't expand the name when we already know there is an error.
+    if (unlet && !ascii_iswhite(*p) && !ends_excmd(*p)
+        && *p != '[' && *p != '.') {
+      semsg(_(e_trailing_arg), p);
+      return NULL;
+    }
+
+    lp->ll_exp_name = make_expanded_name(name, expr_start, expr_end, p);
+    lp->ll_name = lp->ll_exp_name;
+    if (lp->ll_exp_name == NULL) {
+      // Report an invalid expression in braces, unless the
+      // expression evaluation has been cancelled due to an
+      // aborting error, an interrupt, or an exception.
+      if (!aborting() && !quiet) {
+        emsg_severe = true;
+        semsg(_(e_invarg2), name);
+        return NULL;
+      }
+      lp->ll_name_len = 0;
+    } else {
+      lp->ll_name_len = strlen(lp->ll_name);
+    }
+  } else {
+    lp->ll_name = name;
+    lp->ll_name_len = (size_t)(p - lp->ll_name);
+  }
+
+  // Without [idx] or .key we are done.
+  if ((*p != '[' && *p != '.') || lp->ll_name == NULL) {
+    return p;
+  }
+
+  hashtab_T *ht = NULL;
+
+  // Only pass &ht when we would write to the variable, it prevents autoload
+  // as well.
+  dictitem_T *v = find_var(lp->ll_name, lp->ll_name_len,
+                           (flags & GLV_READ_ONLY) ? NULL : &ht,
+                           flags & GLV_NO_AUTOLOAD);
+  if (v == NULL && !quiet) {
+    semsg(_("E121: Undefined variable: %.*s"),
+          (int)lp->ll_name_len, lp->ll_name);
+  }
+  if (v == NULL) {
+    return NULL;
+  }
+
+  lp->ll_tv = &v->di_tv;
+
+  if (tv_is_luafunc(lp->ll_tv)) {
+    // For v:lua just return a pointer to the "." after the "v:lua".
+    // If the caller is trans_function_name() it will check for a Lua function name.
+    return p;
+  }
+
+  // If the next character is a "." or a "[", then process the subitem.
+  p = get_lval_subscript(lp, p, name, rettv, ht, v, unlet, flags);
+  if (p == NULL) {
+    return NULL;
+  }
+
   lp->ll_name_len = (size_t)(p - lp->ll_name);
   return p;
 }
