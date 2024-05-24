@@ -646,8 +646,8 @@ vim.highlight.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
       • {finish}   (`integer[]|string`) End of region as a (line, column)
                    tuple or string accepted by |getpos()|
       • {opts}     (`table?`) A table with the following fields:
-                   • {regtype}? (`string`, default: `'charwise'`) Type of
-                     range. See |setreg()|
+                   • {regtype}? (`string`, default: `'v'` i.e. charwise) Type
+                     of range. See |getregtype()|
                    • {inclusive}? (`boolean`, default: `false`) Indicates
                      whether the range is end-inclusive
                    • {priority}? (`integer`, default:
