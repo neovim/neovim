@@ -130,6 +130,9 @@ UI
 • TODO
 
 
+• |CompleteDone| now sets the `reason` key in `v:event` which specifies the reason
+  for completion being done.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

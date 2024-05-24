@@ -568,6 +568,18 @@ static bool is_first_match(const compl_T *const match)
   return match == compl_first_match;
 }
 
+static void do_autocmd_completedone(int c)
+{
+  save_v_event_T save_v_event;
+  dict_T *v_event = get_v_event(&save_v_event);
+
+  tv_dict_add_str(v_event, S_LEN("reason"), (c == Ctrl_Y ? "accept" : "cancel"));
+  tv_dict_set_keys_readonly(v_event);
+
+  ins_apply_autocmds(EVENT_COMPLETEDONE);
+  restore_v_event(v_event, &save_v_event);
+}
+
 /// Check that character "c" is part of the item currently being
 /// completed.  Used to decide whether to abandon complete mode when the menu
 /// is visible.
@@ -2110,7 +2122,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   }
   // Trigger the CompleteDone event to give scripts a chance to act
   // upon the end of completion.
-  ins_apply_autocmds(EVENT_COMPLETEDONE);
+  do_autocmd_completedone(c);
 
   return retval;
 }
@@ -2199,7 +2211,7 @@ bool ins_compl_prep(int c)
   } else if (ctrl_x_mode == CTRL_X_LOCAL_MSG) {
     // Trigger the CompleteDone event to give scripts a chance to act
     // upon the (possibly failed) completion.
-    ins_apply_autocmds(EVENT_COMPLETEDONE);
+    do_autocmd_completedone(c);
   }
 
   may_trigger_modechanged();

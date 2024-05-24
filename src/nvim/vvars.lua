@@ -215,6 +215,7 @@ M.vars = {
         changed_window   Is |v:true| if the event fired while
                          changing window  (or tab) on |DirChanged|.
         status           Job status or exit code, -1 means "unknown". |TermClose|
+        reason           Reason for completion being done. |CompleteDone|
     ]=],
   },
   exception = {
