@@ -21,7 +21,7 @@ local function expecttype(v, expected)
   -- Use an if statement with error() instead of assert() to avoid calling string.format if we don't
   -- need it.
   if actual ~= expected then
-    error(('expected %s, got %s'):format(expected, actual))
+    error(('expected %s, got %s (%s)'):format(expected, v, actual))
   end
 end
 
