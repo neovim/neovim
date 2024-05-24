@@ -595,9 +595,7 @@ end
 ---@return fun(table: table<K, V>, index?: K):K, V # |for-in| iterator over sorted keys and their values
 ---@return T
 function vim.spairs(t)
-  if type(t) ~= 'table' then
-    error(('expected table, got %s'):format(type(t)))
-  end
+  expecttype(t, 'table')
   --- @cast t table<any,any>
 
   -- collect the keys
@@ -708,9 +706,7 @@ end
 ---@param t table Table
 ---@return integer : Number of non-nil values in table
 function vim.tbl_count(t)
-  if type(t) ~= 'table' then
-    error(('expected table, got %s'):format(type(t)))
-  end
+  expecttype(t, 'table')
   --- @cast t table<any,any>
 
   local count = 0
@@ -742,9 +738,7 @@ end
 ---@param s string String to trim
 ---@return string String with whitespace removed from its beginning and end
 function vim.trim(s)
-  if type(s) ~= 'string' then
-    error(('expected string, got %s'):format(type(s)))
-  end
+  expecttype(s, 'string')
   return s:match('^%s*(.*%S)') or ''
 end
 
