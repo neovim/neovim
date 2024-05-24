@@ -34,7 +34,7 @@ API
 
 DEFAULTS
 
-• TODO
+• |:terminal| starts in insert mode.
 
 EDITOR
 

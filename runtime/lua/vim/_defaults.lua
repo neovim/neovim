@@ -538,3 +538,11 @@ do
     vim.o.grepformat = '%f:%l:%c:%m'
   end
 end
+
+do
+  -- terminal
+  vim.api.nvim_create_autocmd({ 'TermOpen' }, {
+    group = nvim_terminal_augroup,
+    command = 'startinsert',
+  })
+end
