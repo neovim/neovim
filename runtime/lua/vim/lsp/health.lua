@@ -33,16 +33,22 @@ local function check_active_clients()
   local clients = vim.lsp.get_clients()
   if next(clients) then
     for _, client in pairs(clients) do
-      local attached_to = table.concat(vim.tbl_keys(client.attached_buffers or {}), ',')
-      report_info(
+      local cmd ---@type string
+      if type(client.config.cmd) == 'table' then
+        cmd = table.concat(client.config.cmd --[[@as table]], ' ')
+      elseif type(client.config.cmd) == 'function' then
+        cmd = tostring(client.config.cmd)
+      end
+      report_info(table.concat({
+        string.format('%s (id: %d)', client.name, client.id),
+        string.format('  Root directory: %s', vim.fn.fnamemodify(client.root_dir, ':~')),
+        string.format('  Command: %s', cmd),
+        string.format('  Settings: %s', vim.inspect(client.settings, { newline = '\n  ' })),
         string.format(
-          '%s (id=%s, root_dir=%s, attached_to=[%s])',
-          client.name,
-          client.id,
-          vim.fn.fnamemodify(client.root_dir, ':~'),
-          attached_to
-        )
-      )
+          '  Attached buffers: %s',
+          vim.iter(pairs(client.attached_buffers)):map(tostring):join(', ')
+        ),
+      }, '\n'))
     end
   else
     report_info('No active clients')
@@ -50,7 +56,7 @@ local function check_active_clients()
 end
 
 local function check_watcher()
-  vim.health.start('vim.lsp: File watcher')
+  vim.health.start('vim.lsp: File Watcher')
 
   -- Only run the check if file watching has been enabled by a client.
   local clients = vim.lsp.get_clients()
@@ -94,11 +100,68 @@ local function check_watcher()
   end
 end
 
+local function check_position_encodings()
+  vim.health.start('vim.lsp: Position Encodings')
+  local clients = vim.lsp.get_clients()
+  if next(clients) then
+    local position_encodings = {} ---@type table<integer, table<string, integer[]>>
+    for _, client in pairs(clients) do
+      for bufnr in pairs(client.attached_buffers) do
+        if not position_encodings[bufnr] then
+          position_encodings[bufnr] = {}
+        end
+        if not position_encodings[bufnr][client.offset_encoding] then
+          position_encodings[bufnr][client.offset_encoding] = {}
+        end
+        table.insert(position_encodings[bufnr][client.offset_encoding], client.id)
+      end
+    end
+
+    -- Check if any buffers are attached to multiple clients with different position encodings
+    local buffers = {} ---@type integer[]
+    for bufnr, encodings in pairs(position_encodings) do
+      local list = {} ---@type string[]
+      for k in pairs(encodings) do
+        list[#list + 1] = k
+      end
+
+      if #list > 1 then
+        buffers[#buffers + 1] = bufnr
+      end
+    end
+
+    if #buffers > 0 then
+      local lines =
+        { 'Found buffers attached to multiple clients with different position encodings.' }
+      for _, bufnr in ipairs(buffers) do
+        local encodings = position_encodings[bufnr]
+        local parts = {}
+        for encoding, client_ids in pairs(encodings) do
+          table.insert(
+            parts,
+            string.format('%s (client id(s): %s)', encoding:upper(), table.concat(client_ids, ', '))
+          )
+        end
+        table.insert(lines, string.format('- Buffer %d: %s', bufnr, table.concat(parts, ', ')))
+      end
+      report_warn(
+        table.concat(lines, '\n'),
+        'Use the positionEncodings client capability to ensure all clients use the same position encoding'
+      )
+    else
+      report_info('No buffers contain mixed position encodings')
+    end
+  else
+    report_info('No active clients')
+  end
+end
+
 --- Performs a healthcheck for LSP
 function M.check()
   check_log()
   check_active_clients()
   check_watcher()
+  check_position_encodings()
 end
 
 return M
