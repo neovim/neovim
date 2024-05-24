@@ -331,8 +331,8 @@ end
 --- Find the first parent directory containing a specific "marker", relative to a file path or
 --- buffer.
 ---
---- If the buffer is unnamed (has no backing file) then the search begins from Nvim's
---- |current-directory|.
+--- If the buffer is unnamed (has no backing file) or has a non-empty 'buftype' then the search
+--- begins from Nvim's |current-directory|.
 ---
 --- Example:
 ---
@@ -364,7 +364,11 @@ function M.root(source, marker)
   if type(source) == 'string' then
     path = source
   elseif type(source) == 'number' then
-    path = vim.api.nvim_buf_get_name(source)
+    if vim.bo[source].buftype ~= '' then
+      path = assert(vim.uv.cwd())
+    else
+      path = vim.api.nvim_buf_get_name(source)
+    end
   else
     error('invalid type for argument "source": expected string or buffer number')
   end
