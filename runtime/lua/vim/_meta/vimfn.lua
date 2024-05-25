@@ -3538,7 +3538,8 @@ function vim.fn.getreginfo(regname) end
 ---
 ---   type    Specify the region's selection type.
 ---       See |getregtype()| for possible values,
----       except it cannot be an empty string.
+---       except that the width can be omitted
+---       and an empty string cannot be used.
 ---       (default: "v")
 ---
 ---   exclusive  If |TRUE|, use exclusive selection
