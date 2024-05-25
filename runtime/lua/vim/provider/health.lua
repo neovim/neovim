@@ -3,6 +3,112 @@ local iswin = vim.uv.os_uname().sysname == 'Windows_NT'
 
 local M = {}
 
+local function cmd_ok(cmd)
+  local out = vim.fn.system(cmd)
+  return vim.v.shell_error == 0, out
+end
+
+-- Attempts to construct a shell command from an args list.
+-- Only for display, to help users debug a failed command.
+local function shellify(cmd)
+  if type(cmd) ~= 'table' then
+    return cmd
+  end
+  local escaped = {}
+  for i, v in ipairs(cmd) do
+    if v:match('[^A-Za-z_/.-]') then
+      escaped[i] = vim.fn.shellescape(v)
+    else
+      escaped[i] = v
+    end
+  end
+  return table.concat(escaped, ' ')
+end
+
+-- Handler for s:system() function.
+local function system_handler(self, _, data, event)
+  if event == 'stderr' then
+    if self.add_stderr_to_output then
+      self.output = self.output .. table.concat(data, '')
+    else
+      self.stderr = self.stderr .. table.concat(data, '')
+    end
+  elseif event == 'stdout' then
+    self.output = self.output .. table.concat(data, '')
+  end
+end
+
+--- @param cmd table List of command arguments to execute
+--- @param args? table Optional arguments:
+---                   - stdin (string): Data to write to the job's stdin
+---                   - stderr (boolean): Append stderr to stdout
+---                   - ignore_error (boolean): If true, ignore error output
+---                   - timeout (number): Number of seconds to wait before timing out (default 30)
+local function system(cmd, args)
+  args = args or {}
+  local stdin = args.stdin or ''
+  local stderr = vim.F.if_nil(args.stderr, false)
+  local ignore_error = vim.F.if_nil(args.ignore_error, false)
+
+  local shell_error_code = 0
+  local opts = {
+    add_stderr_to_output = stderr,
+    output = '',
+    stderr = '',
+    on_stdout = system_handler,
+    on_stderr = system_handler,
+    on_exit = function(_, data)
+      shell_error_code = data
+    end,
+  }
+  local jobid = vim.fn.jobstart(cmd, opts)
+
+  if jobid < 1 then
+    local message =
+      string.format('Command error (job=%d): %s (in %s)', jobid, shellify(cmd), vim.uv.cwd())
+    error(message)
+    return opts.output, 1
+  end
+
+  if stdin:find('^%s$') then
+    vim.fn.chansend(jobid, stdin)
+  end
+
+  local res = vim.fn.jobwait({ jobid }, vim.F.if_nil(args.timeout, 30) * 1000)
+  if res[1] == -1 then
+    error('Command timed out: ' .. shellify(cmd))
+    vim.fn.jobstop(jobid)
+  elseif shell_error_code ~= 0 and not ignore_error then
+    local emsg = string.format(
+      'Command error (job=%d, exit code %d): %s (in %s)',
+      jobid,
+      shell_error_code,
+      shellify(cmd),
+      vim.uv.cwd()
+    )
+    if opts.output:find('%S') then
+      emsg = string.format('%s\noutput: %s', emsg, opts.output)
+    end
+    if opts.stderr:find('%S') then
+      emsg = string.format('%s\nstderr: %s', emsg, opts.stderr)
+    end
+    error(emsg)
+  end
+
+  -- return opts.output
+  return vim.trim(vim.fn.system(cmd)), shell_error_code
+end
+
+local function provider_disabled(provider)
+  local loaded_var = 'loaded_' .. provider .. '_provider'
+  local v = vim.g[loaded_var]
+  if v == 0 then
+    health.info('Disabled (' .. loaded_var .. '=' .. v .. ').')
+    return true
+  end
+  return false
+end
+
 local function clipboard()
   health.start('Clipboard (optional)')
 
@@ -10,7 +116,7 @@ local function clipboard()
     os.getenv('TMUX')
     and vim.fn.executable('tmux') == 1
     and vim.fn.executable('pbpaste') == 1
-    and not health._cmd_ok('pbpaste')
+    and not cmd_ok('pbpaste')
   then
     local tmux_version = string.match(vim.fn.system('tmux -V'), '%d+%.%d+')
     local advice = {
@@ -40,7 +146,7 @@ end
 local function node()
   health.start('Node.js provider (optional)')
 
-  if health._provider_disabled('node') then
+  if provider_disabled('node') then
     return
   end
 
@@ -60,7 +166,7 @@ local function node()
   end
 
   -- local node_v = vim.fn.split(system({'node', '-v'}), "\n")[1] or ''
-  local ok, node_v = health._cmd_ok({ 'node', '-v' })
+  local ok, node_v = cmd_ok({ 'node', '-v' })
   health.info('Node.js: ' .. node_v)
   if not ok or vim.version.lt(node_v, '6.0.0') then
     health.warn('Nvim node.js host does not support Node ' .. node_v)
@@ -97,7 +203,7 @@ local function node()
     iswin and 'cmd /c ' .. manager .. ' info neovim --json' or manager .. ' info neovim --json'
   )
   local latest_npm
-  ok, latest_npm = health._cmd_ok(vim.split(latest_npm_cmd, ' '))
+  ok, latest_npm = cmd_ok(vim.split(latest_npm_cmd, ' '))
   if not ok or latest_npm:find('^%s$') then
     health.error(
       'Failed to run: ' .. latest_npm_cmd,
@@ -115,7 +221,7 @@ local function node()
 
   local current_npm_cmd = { 'node', host, '--version' }
   local current_npm
-  ok, current_npm = health._cmd_ok(current_npm_cmd)
+  ok, current_npm = cmd_ok(current_npm_cmd)
   if not ok then
     health.error(
       'Failed to run: ' .. table.concat(current_npm_cmd, ' '),
@@ -143,7 +249,7 @@ end
 local function perl()
   health.start('Perl provider (optional)')
 
-  if health._provider_disabled('perl') then
+  if provider_disabled('perl') then
     return
   end
 
@@ -162,7 +268,7 @@ local function perl()
 
   -- we cannot use cpanm that is on the path, as it may not be for the perl
   -- set with g:perl_host_prog
-  local ok = health._cmd_ok({ perl_exec, '-W', '-MApp::cpanminus', '-e', '' })
+  local ok = cmd_ok({ perl_exec, '-W', '-MApp::cpanminus', '-e', '' })
   if not ok then
     return { perl_exec, '"App::cpanminus" module is not installed' }
   end
@@ -174,7 +280,7 @@ local function perl()
     'my $app = App::cpanminus::script->new; $app->parse_options ("--info", "-q", "Neovim::Ext"); exit $app->doit',
   }
   local latest_cpan
-  ok, latest_cpan = health._cmd_ok(latest_cpan_cmd)
+  ok, latest_cpan = cmd_ok(latest_cpan_cmd)
   if not ok or latest_cpan:find('^%s*$') then
     health.error(
       'Failed to run: ' .. table.concat(latest_cpan_cmd, ' '),
@@ -205,7 +311,7 @@ local function perl()
 
   local current_cpan_cmd = { perl_exec, '-W', '-MNeovim::Ext', '-e', 'print $Neovim::Ext::VERSION' }
   local current_cpan
-  ok, current_cpan = health._cmd_ok(current_cpan_cmd)
+  ok, current_cpan = cmd_ok(current_cpan_cmd)
   if not ok then
     health.error(
       'Failed to run: ' .. table.concat(current_cpan_cmd, ' '),
@@ -292,7 +398,7 @@ end
 local function download(url)
   local has_curl = vim.fn.executable('curl') == 1
   if has_curl and vim.fn.system({ 'curl', '-V' }):find('Protocols:.*https') then
-    local out, rc = health._system({ 'curl', '-sL', url }, { stderr = true, ignore_error = true })
+    local out, rc = system({ 'curl', '-sL', url }, { stderr = true, ignore_error = true })
     if rc ~= 0 then
       return 'curl error with ' .. url .. ': ' .. rc
     else
@@ -305,7 +411,7 @@ local function download(url)
           from urllib2 import urlopen\n\
           response = urlopen('" .. url .. "')\n\
           print(response.read().decode('utf8'))\n"
-    local out, rc = health._system({ 'python', '-c', script })
+    local out, rc = system({ 'python', '-c', script })
     if out == '' and rc ~= 0 then
       return 'python urllib.request error: ' .. rc
     else
@@ -362,7 +468,7 @@ end
 local function version_info(python)
   local pypi_version = latest_pypi_version()
 
-  local python_version, rc = health._system({
+  local python_version, rc = system({
     python,
     '-c',
     'import sys; print(".".join(str(x) for x in sys.version_info[:3]))',
@@ -373,7 +479,7 @@ local function version_info(python)
   end
 
   local nvim_path
-  nvim_path, rc = health._system({
+  nvim_path, rc = system({
     python,
     '-c',
     'import sys; sys.path = [p for p in sys.path if p != ""]; import neovim; print(neovim.__file__)',
@@ -398,7 +504,7 @@ local function version_info(python)
 
   -- Try to get neovim.VERSION (added in 0.1.11dev).
   local nvim_version
-  nvim_version, rc = health._system({
+  nvim_version, rc = system({
     python,
     '-c',
     'from neovim import VERSION as v; print("{}.{}.{}{}".format(v.major, v.minor, v.patch, v.prerelease))',
@@ -445,7 +551,7 @@ local function python()
   local host_prog_var = pyname .. '_host_prog'
   local python_multiple = {}
 
-  if health._provider_disabled(pyname) then
+  if provider_disabled(pyname) then
     return
   end
 
@@ -487,7 +593,7 @@ local function python()
     end
 
     if pyenv ~= '' then
-      python_exe = health._system({ pyenv, 'which', pyname }, { stderr = true })
+      python_exe = system({ pyenv, 'which', pyname }, { stderr = true })
       if python_exe == '' then
         health.warn('pyenv could not find ' .. pyname .. '.')
       end
@@ -710,9 +816,7 @@ local function python()
     health.info(msg)
     health.info(
       'Python version: '
-        .. health._system(
-          'python -c "import platform, sys; sys.stdout.write(platform.python_version())"'
-        )
+        .. system('python -c "import platform, sys; sys.stdout.write(platform.python_version())"')
     )
     health.ok('$VIRTUAL_ENV provides :!python.')
   end
@@ -721,7 +825,7 @@ end
 local function ruby()
   health.start('Ruby provider (optional)')
 
-  if health._provider_disabled('ruby') then
+  if provider_disabled('ruby') then
     return
   end
 
@@ -732,7 +836,7 @@ local function ruby()
     )
     return
   end
-  health.info('Ruby: ' .. health._system({ 'ruby', '-v' }))
+  health.info('Ruby: ' .. system({ 'ruby', '-v' }))
 
   local host, _ = vim.provider.ruby.detect()
   if (not host) or host:find('^%s*$') then
@@ -748,7 +852,7 @@ local function ruby()
   health.info('Host: ' .. host)
 
   local latest_gem_cmd = (iswin and 'cmd /c gem list -ra "^^neovim$"' or 'gem list -ra ^neovim$')
-  local ok, latest_gem = health._cmd_ok(vim.split(latest_gem_cmd, ' '))
+  local ok, latest_gem = cmd_ok(vim.split(latest_gem_cmd, ' '))
   if not ok or latest_gem:find('^%s*$') then
     health.error(
       'Failed to run: ' .. latest_gem_cmd,
@@ -761,7 +865,7 @@ local function ruby()
 
   local current_gem_cmd = { host, '--version' }
   local current_gem
-  ok, current_gem = health._cmd_ok(current_gem_cmd)
+  ok, current_gem = cmd_ok(current_gem_cmd)
   if not ok then
     health.error(
       'Failed to run: ' .. table.concat(current_gem_cmd, ' '),
