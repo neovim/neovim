@@ -3881,7 +3881,23 @@ static void f_json_decode(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void f_json_encode(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = encode_tv2json(&argvars[0], NULL);
+  rettv->vval.v_string = NULL;
+
+  MAXSIZE_TEMP_ARRAY(args, 1);
+  Arena arena = ARENA_EMPTY;
+  ADD_C(args, vim_to_object(&argvars[0], &arena, false));
+  Error err = ERROR_INIT;
+  Object result = NLUA_EXEC_STATIC("return vim.json.encode(...)", args, kRetObject, NULL, &err);
+
+  if (ERROR_SET(&err)) {
+    semsg(_("E474: %s"), err.msg);
+  } else if (result.type == kObjectTypeString) {
+    rettv->vval.v_string = xmemdupz(result.data.string.data, result.data.string.size);
+  }
+
+  api_free_object(result);
+  api_clear_error(&err);
+  arena_mem_free(arena_finish(&arena));
 }
 
 /// "keytrans()" function
