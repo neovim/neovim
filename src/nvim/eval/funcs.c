@@ -71,6 +71,7 @@
 #include "nvim/input.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
+#include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
@@ -3840,7 +3841,34 @@ static void f_json_decode(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void f_json_encode(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = encode_tv2json(&argvars[0], NULL);
+  rettv->vval.v_string = NULL;
+
+  lua_State *const lstate = get_global_lstate();
+  const int top = lua_gettop(lstate);
+
+  lua_getglobal(lstate, "vim");
+  lua_getfield(lstate, -1, "json");
+  lua_getfield(lstate, -1, "encode");
+  lua_remove(lstate, -2);
+  lua_remove(lstate, -2);
+
+  if (!nlua_push_typval_json(lstate, &argvars[0])) {
+    lua_settop(lstate, top);
+    return;
+  }
+
+  if (nlua_pcall(lstate, 1, 1)) {
+    semsg(_("E474: %s"), lua_tostring(lstate, -1));
+    lua_settop(lstate, top);
+    return;
+  }
+
+  size_t len = 0;
+  const char *s = lua_tolstring(lstate, -1, &len);
+  if (s) {
+    rettv->vval.v_string = xmemdupz(s, len);
+  }
+  lua_settop(lstate, top);
 }
 
 /// "keytrans()" function

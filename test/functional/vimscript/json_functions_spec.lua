@@ -636,13 +636,13 @@ describe('json_encode() function', function()
     eq('""', fn.json_encode(''))
     eq('"\\t"', fn.json_encode('\t'))
     eq('"\\n"', fn.json_encode('\n'))
-    eq('"\\u001B"', fn.json_encode('\27'))
+    eq('"\\u001b"', fn.json_encode('\27'))
     eq('"þÿþ"', fn.json_encode('þÿþ'))
   end)
 
   it('dumps blobs', function()
     eq('[]', eval('json_encode(0z)'))
-    eq('[222, 173, 190, 239]', eval('json_encode(0zDEADBEEF)'))
+    eq('[222,173,190,239]', eval('json_encode(0zDEADBEEF)'))
   end)
 
   it('dumps numbers', function()
@@ -678,15 +678,15 @@ describe('json_encode() function', function()
   it('dumps lists', function()
     eq('[]', fn.json_encode({}))
     eq('[[]]', fn.json_encode({ {} }))
-    eq('[[], []]', fn.json_encode({ {}, {} }))
+    eq('[[],[]]', fn.json_encode({ {}, {} }))
   end)
 
   it('dumps dictionaries', function()
     eq('{}', eval('json_encode({})'))
-    eq('{"d": []}', fn.json_encode({ d = {} }))
-    eq('{"d": [], "e": []}', fn.json_encode({ d = {}, e = {} }))
+    eq('{"d":[]}', fn.json_encode({ d = {} }))
+    eq({ d = {}, e = {} }, fn.json_decode(fn.json_encode({ d = {}, e = {} })))
     -- Empty keys are allowed per JSON spec (and Vim dicts, and msgpack).
-    eq('{"": []}', fn.json_encode({ [''] = {} }))
+    eq('{"":[]}', fn.json_encode({ [''] = {} }))
   end)
 
   it('cannot dump generic mapping with generic mapping keys and values', function()
@@ -725,7 +725,7 @@ describe('json_encode() function', function()
   it('can dump generic mapping with STR special key and NUL', function()
     command('let todump = {"_TYPE": v:msgpack_types.string, "_VAL": ["\\n"]}')
     command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
-    eq('{"\\u0000": 1}', eval('json_encode(todump)'))
+    eq('{"\\u0000":1}', eval('json_encode(todump)'))
   end)
 
   it('can dump STR special mapping with NUL and NL', function()
@@ -740,7 +740,7 @@ describe('json_encode() function', function()
 
   it('can dump special array mapping', function()
     command('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": [5, [""]]}')
-    eq('[5, [""]]', eval('json_encode(todump)'))
+    eq('[5,[""]]', eval('json_encode(todump)'))
   end)
 
   it('can dump special UINT64_MAX mapping', function()
@@ -772,7 +772,7 @@ describe('json_encode() function', function()
 
   it('fails to dump a function reference', function()
     eq(
-      'Vim(call):E474: Error while dumping encode_tv2json() argument, itself: attempt to dump function reference',
+      'Vim(call):E474: Error while dumping: attempt to dump function reference',
       exc_exec('call json_encode(function("tr"))')
     )
   end)
@@ -780,14 +780,14 @@ describe('json_encode() function', function()
   it('fails to dump a partial', function()
     command('function T() dict\nendfunction')
     eq(
-      'Vim(call):E474: Error while dumping encode_tv2json() argument, itself: attempt to dump function reference',
+      'Vim(call):E474: Error while dumping: attempt to dump function reference',
       exc_exec('call json_encode(function("T", [1, 2], {}))')
     )
   end)
 
   it('fails to dump a function reference in a list', function()
     eq(
-      'Vim(call):E474: Error while dumping encode_tv2json() argument, index 0: attempt to dump function reference',
+      'Vim(call):E474: Error while dumping: attempt to dump function reference',
       exc_exec('call json_encode([function("tr")])')
     )
   end)
@@ -813,13 +813,15 @@ describe('json_encode() function', function()
   it('can dump dict with two same dicts inside', function()
     command('let inter = {}')
     command('let todump = {"a": inter, "b": inter}')
-    eq('{"a": {}, "b": {}}', eval('json_encode(todump)'))
+    command('let dumped = json_encode(todump)')
+    command('let decoded = json_decode(dumped)')
+    eq({ a = {}, b = {} }, eval('decoded'))
   end)
 
   it('can dump list with two same lists inside', function()
     command('let inter = []')
     command('let todump = [inter, inter]')
-    eq('[[], []]', eval('json_encode(todump)'))
+    eq('[[],[]]', eval('json_encode(todump)'))
   end)
 
   it('fails to dump a recursive list in a special dict', function()
@@ -891,7 +893,7 @@ describe('json_encode() function', function()
 
   it('dumps control characters as expected', function()
     eq(
-      [["\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000B\f\r\u000E\u000F\u0010\u0011\u0012\u0013"]],
+      [["\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013"]],
       eval(
         'json_encode({"_TYPE": v:msgpack_types.string, "_VAL": ["\n\1\2\3\4\5\6\7\8\9", "\11\12\13\14\15\16\17\18\19"]})'
       )

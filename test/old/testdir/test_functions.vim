@@ -3120,8 +3120,7 @@ func Test_range()
   call assert_equal('0 1 2 3 4', join(range(5)))
 
   " json_encode()
-  " call assert_equal('[0,1,2,3]', json_encode(range(4)))
-  call assert_equal('[0, 1, 2, 3]', json_encode(range(4)))
+  call assert_equal('[0,1,2,3]', json_encode(range(4)))
 
   " len()
   call assert_equal(0, len(range(0)))

@@ -572,26 +572,32 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
     ga_concat(gap, numbuf); \
   } while (0)
 
+/// Check if float value is valid for JSON encoding.
+/// @return true if valid, false if NaN or Infinity (emits error).
+bool encode_check_json_float(float_T flt)
+{
+  switch (xfpclassify(flt)) {
+  case FP_NAN:
+    emsg(_("E474: Unable to represent NaN value in JSON"));
+    return false;
+  case FP_INFINITE:
+    emsg(_("E474: Unable to represent infinity in JSON"));
+    return false;
+  default:
+    return true;
+  }
+}
+
 #undef TYPVAL_ENCODE_CONV_FLOAT
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
   do { \
     const float_T flt_ = (flt); \
-    switch (xfpclassify(flt_)) { \
-    case FP_NAN: { \
-        emsg(_("E474: Unable to represent NaN value in JSON")); \
-        return FAIL; \
+    if (!encode_check_json_float(flt_)) { \
+      return FAIL; \
     } \
-    case FP_INFINITE: { \
-        emsg(_("E474: Unable to represent infinity in JSON")); \
-        return FAIL; \
-    } \
-    default: { \
-        char numbuf[NUMBUFLEN]; \
-        vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%g", flt_); \
-        ga_concat(gap, numbuf); \
-        break; \
-    } \
-    } \
+    char numbuf[NUMBUFLEN]; \
+    vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%g", flt_); \
+    ga_concat(gap, numbuf); \
   } while (0)
 
 /// Escape sequences used in JSON
@@ -606,6 +612,34 @@ static const char escapes[][3] = {
 };
 
 static const char xdigits[] = "0123456789ABCDEF";
+
+/// Check if string contains valid UTF-8 for JSON encoding (no invalid bytes, no surrogates).
+/// @return true if valid, false otherwise (emits error).
+bool encode_check_json_string_utf8(const char *const buf, const size_t len)
+{
+  if (buf == NULL) {
+    return true;
+  }
+  for (size_t i = 0; i < len;) {
+    const int ch = utf_ptr2char(buf + i);
+    const size_t shift = (ch == 0 ? 1 : ((size_t)utf_ptr2len(buf + i)));
+    assert(shift > 0);
+    i += shift;
+    if (ch > 0x7F && shift == 1) {
+      semsg(_("E474: String \"%.*s\" contains byte that does not start "
+              "any UTF-8 character"),
+            (int)(len - (i - shift)), buf + i - shift);
+      return false;
+    } else if ((SURROGATE_HI_START <= ch && ch <= SURROGATE_HI_END)
+               || (SURROGATE_LO_START <= ch && ch <= SURROGATE_LO_END)) {
+      semsg(_("E474: UTF-8 string contains code point which belongs "
+              "to a surrogate pair: %.*s"),
+            (int)(len - (i - shift)), buf + i - shift);
+      return false;
+    }
+  }
+  return true;
+}
 
 /// Convert given string to JSON string
 ///
@@ -624,6 +658,10 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
   } else {
     size_t utf_len = len;
     char *tofree = NULL;
+    if (!encode_check_json_string_utf8(utf_buf, utf_len)) {
+      xfree(tofree);
+      return FAIL;
+    }
     size_t str_len = 0;
     // Encode character as \uNNNN if
     // 1. It is an ASCII control character (0x0 .. 0x1F; 0x7F not
@@ -649,20 +687,7 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
         str_len += 2;
         break;
       default:
-        if (ch > 0x7F && shift == 1) {
-          semsg(_("E474: String \"%.*s\" contains byte that does not start "
-                  "any UTF-8 character"),
-                (int)(utf_len - (i - shift)), utf_buf + i - shift);
-          xfree(tofree);
-          return FAIL;
-        } else if ((SURROGATE_HI_START <= ch && ch <= SURROGATE_HI_END)
-                   || (SURROGATE_LO_START <= ch && ch <= SURROGATE_LO_END)) {
-          semsg(_("E474: UTF-8 string contains code point which belongs "
-                  "to a surrogate pair: %.*s"),
-                (int)(utf_len - (i - shift)), utf_buf + i - shift);
-          xfree(tofree);
-          return FAIL;
-        } else if (ENCODE_RAW(ch)) {
+        if (ENCODE_RAW(ch)) {
           str_len += shift;
         } else {
           str_len += ((sizeof("\\u1234") - 1)

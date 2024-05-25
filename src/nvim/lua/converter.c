@@ -24,6 +24,7 @@
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/message.h"
+#include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
@@ -583,6 +584,238 @@ static bool typval_conv_special = false;
 #undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
 #undef TYPVAL_ENCODE_CONV_RECURSE
 #undef TYPVAL_ENCODE_ALLOW_SPECIALS
+
+/// Push blob as Lua array table [byte0, byte1, ...]
+static void nlua_push_blob_as_array(lua_State *lstate, const blob_T *blob, int len)
+{
+  lua_createtable(lstate, len, 0);
+  for (int i = 0; i < len; i++) {
+    lua_pushnumber(lstate, (lua_Number)tv_blob_get(blob, i));
+    lua_rawseti(lstate, -2, i + 1);
+  }
+}
+
+/// push a raw JSON literal as userdata with __tojson metamethod.
+/// Used for values that can't be represented in Lua numbers (e.g. uint64 > INT64_MAX).
+static int nlua_json_raw_tojson(lua_State *L)
+{
+  lua_pushstring(L, (const char *)lua_touserdata(L, 1));
+  return 1;
+}
+
+static void nlua_push_json_raw(lua_State *L, const char *s)
+{
+  size_t len = strlen(s);
+  char *ud = (char *)lua_newuserdata(L, len + 1);
+  memcpy(ud, s, len + 1);
+  if (luaL_newmetatable(L, "cjson.raw")) {
+    lua_pushcfunction(L, nlua_json_raw_tojson);
+    lua_setfield(L, -2, "__tojson");
+  }
+  lua_setmetatable(L, -2);
+}
+
+#define TYPVAL_ENCODE_ALLOW_SPECIALS true
+#define TYPVAL_ENCODE_CHECK_BEFORE
+
+#define TYPVAL_ENCODE_CONV_NIL(tv) \
+  nlua_pushref(lstate, nlua_global_refs->nil_ref)
+
+#define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
+  lua_pushboolean(lstate, (bool)(num))
+
+#define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
+  do { \
+    const int64_t num_ = (int64_t)(num); \
+    if (num_ >= -((int64_t)1 << 53) && num_ <= ((int64_t)1 << 53)) { \
+      lua_pushnumber(lstate, (lua_Number)num_); \
+    } else { \
+      char numbuf[NUMBUFLEN]; \
+      snprintf(numbuf, sizeof(numbuf), "%" PRId64, num_); \
+      nlua_push_json_raw(lstate, numbuf); \
+    } \
+  } while (0)
+
+#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, num) \
+  do { \
+    const uint64_t num_ = (uint64_t)(num); \
+    if (num_ <= ((uint64_t)1 << 53)) { \
+      lua_pushnumber(lstate, (lua_Number)num_); \
+    } else { \
+      char numbuf[NUMBUFLEN]; \
+      snprintf(numbuf, sizeof(numbuf), "%" PRIu64, num_); \
+      nlua_push_json_raw(lstate, numbuf); \
+    } \
+  } while (0)
+
+#define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
+  do { \
+    if (!encode_check_json_float((float_T)(flt))) { \
+      return FAIL; \
+    } \
+    char numbuf[NUMBUFLEN]; \
+    vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%g", (double)(flt)); \
+    if (!strchr(numbuf, '.') && !strchr(numbuf, 'e') \
+        && !strchr(numbuf, 'E')) { \
+      xstrlcat(numbuf, ".0", sizeof(numbuf)); \
+    } \
+    nlua_push_json_raw(lstate, numbuf); \
+  } while (0)
+
+#define TYPVAL_ENCODE_CONV_STRING(tv, str, len) \
+  do { \
+    if (!encode_check_json_string_utf8((str), (len))) { \
+      return FAIL; \
+    } \
+    lua_pushlstring(lstate, (str), (len)); \
+  } while (0)
+
+#define TYPVAL_ENCODE_CONV_STR_STRING TYPVAL_ENCODE_CONV_STRING
+
+#define TYPVAL_ENCODE_CONV_EXT_STRING(tv, str, len, type) \
+  do { \
+    xfree(str); \
+    emsg(_("E474: Unable to convert EXT string to JSON")); \
+    return FAIL; \
+  } while (0)
+
+#define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
+  nlua_push_blob_as_array(lstate, (blob), (len))
+
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun, prefix) \
+  do { \
+    emsg(_("E474: Error while dumping: " \
+           "attempt to dump function reference")); \
+    return FAIL; \
+  } while (0)
+
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len)
+#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len)
+#define TYPVAL_ENCODE_CONV_FUNC_END(tv)
+
+#define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
+  lua_createtable(lstate, 0, 0)
+
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
+  do { \
+    lua_createtable(lstate, 0, 0); \
+    nlua_pushref(lstate, nlua_global_refs->empty_dict_ref); \
+    lua_setmetatable(lstate, -2); \
+  } while (0)
+
+#define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
+  do { \
+    if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) { \
+      semsg(_("E5102: Lua failed to grow stack to %i"), \
+            lua_gettop(lstate) + 3); \
+      return FAIL; \
+    } \
+    lua_createtable(lstate, (int)(len), 0); \
+    lua_pushnumber(lstate, 1); \
+  } while (0)
+
+#define TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, mpsv)
+
+#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(tv) \
+  do { \
+    lua_Number idx = lua_tonumber(lstate, -2); \
+    lua_rawset(lstate, -3); \
+    lua_pushnumber(lstate, idx + 1); \
+  } while (0)
+
+#define TYPVAL_ENCODE_CONV_LIST_END(tv) \
+  lua_rawset(lstate, -3)
+
+#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
+  do { \
+    if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) { \
+      semsg(_("E5102: Lua failed to grow stack to %i"), \
+            lua_gettop(lstate) + 3); \
+      return FAIL; \
+    } \
+    lua_createtable(lstate, 0, (int)(len)); \
+  } while (0)
+
+#define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, key) \
+  do { \
+    if (!encode_check_json_key(&(key))) { \
+      emsg(_("E474: Invalid key in special dictionary")); \
+      goto label; \
+    } \
+  } while (0)
+
+#define TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(tv, dict, mpsv)
+#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict)
+
+#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict) \
+  lua_rawset(lstate, -3)
+
+#define TYPVAL_ENCODE_CONV_DICT_END(tv, dict) \
+  TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict)
+
+#define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
+  do { \
+    emsg(_("E724: unable to correctly dump variable " \
+           "with self-referencing container")); \
+    return FAIL; \
+  } while (0)
+
+#define TYPVAL_ENCODE_SCOPE static
+#define TYPVAL_ENCODE_NAME json_lua
+#define TYPVAL_ENCODE_FIRST_ARG_TYPE lua_State *const
+#define TYPVAL_ENCODE_FIRST_ARG_NAME lstate
+#include "nvim/eval/typval_encode.c.h"
+#undef TYPVAL_ENCODE_SCOPE
+#undef TYPVAL_ENCODE_NAME
+#undef TYPVAL_ENCODE_FIRST_ARG_TYPE
+#undef TYPVAL_ENCODE_FIRST_ARG_NAME
+#undef TYPVAL_ENCODE_CONV_STRING
+#undef TYPVAL_ENCODE_CONV_STR_STRING
+#undef TYPVAL_ENCODE_CONV_EXT_STRING
+#undef TYPVAL_ENCODE_CONV_BLOB
+#undef TYPVAL_ENCODE_CONV_NUMBER
+#undef TYPVAL_ENCODE_CONV_FLOAT
+#undef TYPVAL_ENCODE_CONV_FUNC_START
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS
+#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF
+#undef TYPVAL_ENCODE_CONV_FUNC_END
+#undef TYPVAL_ENCODE_CONV_EMPTY_LIST
+#undef TYPVAL_ENCODE_CONV_LIST_START
+#undef TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
+#undef TYPVAL_ENCODE_CONV_EMPTY_DICT
+#undef TYPVAL_ENCODE_CHECK_BEFORE
+#undef TYPVAL_ENCODE_CONV_NIL
+#undef TYPVAL_ENCODE_CONV_BOOL
+#undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
+#undef TYPVAL_ENCODE_CONV_DICT_START
+#undef TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START
+#undef TYPVAL_ENCODE_CONV_DICT_END
+#undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
+#undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS
+#undef TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
+#undef TYPVAL_ENCODE_CONV_LIST_END
+#undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
+#undef TYPVAL_ENCODE_CONV_RECURSE
+#undef TYPVAL_ENCODE_ALLOW_SPECIALS
+
+/// Push typval to Lua stack with JSON validation.
+/// Resolves _TYPE/_VAL special dicts, validates keys, rejects funcrefs,
+/// checks float/string validity, detects recursion.
+///
+/// @return true on success (one value pushed), false on error.
+bool nlua_push_typval_json(lua_State *lstate, typval_T *const tv)
+{
+  const int initial_size = lua_gettop(lstate);
+  if (!lua_checkstack(lstate, initial_size + 2)) {
+    semsg(_("E1502: Lua failed to grow stack to %i"), initial_size + 4);
+    return false;
+  }
+  if (encode_vim_to_json_lua(lstate, tv, "json_encode() argument") == FAIL) {
+    return false;
+  }
+  assert(lua_gettop(lstate) == initial_size + 1);
+  return true;
+}
 
 /// Convert Vimscript typval_T to Lua value
 ///

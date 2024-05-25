@@ -1159,9 +1159,18 @@ static int json_append_data(lua_State *l, json_encode_t *ctx,
         if (is_nil) {
             strbuf_append_mem(json, "null", 4);
             break;
-        } else {
-          FALLTHROUGH;
         }
+        // Support __tojson metamethod for raw JSON output (e.g. uint64 numbers)
+        if (luaL_callmeta(l, -1, "__tojson")) {
+          size_t raw_len;
+          const char *raw_json = lua_tolstring(l, -1, &raw_len);
+          if (raw_json) {
+            strbuf_append_mem(json, raw_json, raw_len);
+          }
+          lua_pop(l, 1);
+          break;
+        }
+        FALLTHROUGH;
     default:
         /* Remaining types (LUA_TFUNCTION, LUA_TUSERDATA, LUA_TTHREAD,
          * and LUA_TLIGHTUSERDATA) cannot be serialised */
@@ -2085,4 +2094,3 @@ int luaopen_cjson_safe(lua_State *l)
     /* Return cjson.safe table */
     return 1;
 }
-
