@@ -89,6 +89,8 @@
 local M = {}
 
 local s_output = {} ---@type string[]
+local checks = {}
+local current_name ---@type string
 
 -- From a path return a list [{name}, {func}, {type}] representing a healthcheck
 local function filepath_to_healthcheck(path)
@@ -114,13 +116,16 @@ local function filepath_to_healthcheck(path)
     func = 'require("' .. name .. '.health").check()'
     filetype = 'l'
   end
-  return { name, func, filetype }
+
+  if name ~= 'vim' then
+    checks[name] = checks[name] or {}
+    checks[name].func = func ---@type string
+    checks[name].filetype = filetype ---@type string
+  end
 end
 
 --- @param plugin_names string
---- @return table<any,string[]> { {name, func, type}, ... } representing healthchecks
 local function get_healthcheck_list(plugin_names)
-  local healthchecks = {} --- @type table<any,string[]>
   local plugin_names_list = vim.split(plugin_names, ' ')
   for _, p in pairs(plugin_names_list) do
     -- support vim/lsp/health{/init/}.lua as :checkhealth vim.lsp
@@ -135,9 +140,7 @@ local function get_healthcheck_list(plugin_names)
     )
     vim.list_extend(paths, vim.api.nvim_get_runtime_file('lua/**/' .. p .. '/health.lua', true))
 
-    if vim.tbl_count(paths) == 0 then
-      healthchecks[#healthchecks + 1] = { p, '', '' } -- healthcheck not found
-    else
+    if vim.tbl_count(paths) > 0 then
       local unique_paths = {} --- @type table<string, boolean>
       for _, v in pairs(paths) do
         unique_paths[v] = true
@@ -148,39 +151,10 @@ local function get_healthcheck_list(plugin_names)
       end
 
       for _, v in ipairs(paths) do
-        healthchecks[#healthchecks + 1] = filepath_to_healthcheck(v)
+        filepath_to_healthcheck(v)
       end
     end
   end
-  return healthchecks
-end
-
---- @param plugin_names string
---- @return table<string, string[]> {name: [func, type], ..} representing healthchecks
-local function get_healthcheck(plugin_names)
-  local health_list = get_healthcheck_list(plugin_names)
-  local healthchecks = {} --- @type table<string, string[]>
-  for _, c in pairs(health_list) do
-    if c[1] ~= 'vim' then
-      healthchecks[c[1]] = { c[2], c[3] }
-    end
-  end
-
-  return healthchecks
-end
-
---- Indents lines *except* line 1 of a string if it contains newlines.
----
---- @param s string
---- @param columns integer
---- @return string
-local function indent_after_line1(s, columns)
-  local lines = vim.split(s, '\n')
-  local indent = string.rep(' ', columns)
-  for i = 2, #lines do
-    lines[i] = indent .. lines[i]
-  end
-  return table.concat(lines, '\n')
 end
 
 --- Changes ':h clipboard' to ':help |clipboard|'.
@@ -191,44 +165,9 @@ local function help_to_link(s)
   return vim.fn.substitute(s, [[\v:h%[elp] ([^|][^"\r\n ]+)]], [[:help |\1|]], [[g]])
 end
 
---- Format a message for a specific report item.
----
---- @param status string
---- @param msg string
---- @param ... string|string[] Optional advice
---- @return string
-local function format_report_message(status, msg, ...)
-  local output = '- ' .. status
-  if status ~= '' then
-    output = output .. ' '
-  end
-
-  output = output .. indent_after_line1(msg, 2)
-
-  local varargs = ...
-
-  -- Optional parameters
-  if varargs then
-    if type(varargs) == 'string' then
-      varargs = { varargs }
-    end
-
-    output = output .. '\n  - ADVICE:'
-
-    -- Report each suggestion
-    for _, v in ipairs(varargs) do
-      if v then
-        output = output .. '\n    - ' .. indent_after_line1(v, 6)
-      end
-    end
-  end
-
-  return help_to_link(output)
-end
-
---- @param output string
-local function collect_output(output)
-  vim.list_extend(s_output, vim.split(output, '\n'))
+local function collect_output(text, type, advice)
+  checks[current_name].output = checks[current_name].output or {}
+  table.insert(checks[current_name].output, { text = text, type = type, advice = advice })
 end
 
 --- Starts a new report. Most plugins should call this only once, but if
@@ -237,24 +176,21 @@ end
 ---
 --- @param name string
 function M.start(name)
-  local input = string.format('\n%s ~', name)
-  collect_output(input)
+  collect_output(name, 'start')
 end
 
 --- Reports an informational message.
 ---
 --- @param msg string
 function M.info(msg)
-  local input = format_report_message('', msg)
-  collect_output(input)
+  collect_output(msg, 'info')
 end
 
 --- Reports a "success" message.
 ---
 --- @param msg string
 function M.ok(msg)
-  local input = format_report_message('OK', msg)
-  collect_output(input)
+  collect_output(msg, 'ok')
 end
 
 --- Reports a warning.
@@ -262,8 +198,13 @@ end
 --- @param msg string
 --- @param ... string|string[] Optional advice
 function M.warn(msg, ...)
-  local input = format_report_message('WARNING', msg, ...)
-  collect_output(input)
+  local varargs = ...
+  if varargs then
+    if type(varargs) == 'string' then
+      varargs = { varargs }
+    end
+  end
+  collect_output(msg, 'warn', varargs)
 end
 
 --- Reports an error.
@@ -271,8 +212,13 @@ end
 --- @param msg string
 --- @param ... string|string[] Optional advice
 function M.error(msg, ...)
-  local input = format_report_message('ERROR', msg, ...)
-  collect_output(input)
+  local varargs = ...
+  if varargs then
+    if type(varargs) == 'string' then
+      varargs = { varargs }
+    end
+  end
+  collect_output(msg, 'error', varargs)
 end
 
 local path2name = function(path)
@@ -319,6 +265,59 @@ M._complete = function()
   return rv
 end
 
+local function format_output(output)
+  local text_string = output.text
+  local text = vim.split(text_string, '\n')
+
+  local type = output.type
+  local advice = output.advice
+  local formatted_output = {}
+
+  if type == 'start' then
+    vim.list_extend(formatted_output, { '', '' })
+    text[1] = text[1] .. ' ~'
+    vim.list_extend(formatted_output, text)
+  elseif type == 'info' then
+    vim.list_extend(formatted_output, { '- ' })
+    vim.list_extend(formatted_output, text)
+  elseif type == 'ok' then
+    vim.list_extend(formatted_output, { '- OK ' })
+    vim.list_extend(formatted_output, text)
+  elseif type == 'warn' then
+    vim.list_extend(formatted_output, { '- WARNING ' })
+    vim.list_extend(formatted_output, text)
+  elseif type == 'error' then
+    vim.list_extend(formatted_output, { '- ERROR ' })
+    vim.list_extend(formatted_output, text)
+  end
+  local it = vim.iter(formatted_output)
+  local elem1 = it:rev():pop()
+  local elem2 = it:pop()
+  formatted_output = { elem1 .. elem2 }
+  local other_lines = it:rev()
+    :map(function(v)
+      if type ~= 'start' then
+        return '  ' .. v
+      else
+        return v
+      end
+    end)
+    :totable()
+
+  vim.list_extend(formatted_output, other_lines)
+
+  if advice then
+    vim.list_extend(formatted_output, { '  - ADVICE:' })
+    it = vim.iter(advice)
+    it:map(function(v)
+      return '    - ' .. help_to_link(v)
+    end)
+    vim.list_extend(formatted_output, it:totable())
+  end
+
+  return formatted_output
+end
+
 --- Runs the specified healthchecks.
 --- Runs all discovered healthchecks if plugin_names is empty.
 ---
@@ -327,7 +326,11 @@ end
 ---                            `:checkhealth vim.* nvim` will healthcheck `vim.lsp`, `vim.treesitter`
 ---                            and `nvim` modules.
 function M._check(mods, plugin_names)
-  local healthchecks = plugin_names == '' and get_healthcheck('*') or get_healthcheck(plugin_names)
+  if plugin_names == '' then
+    get_healthcheck_list('*')
+  else
+    get_healthcheck_list(plugin_names)
+  end
 
   local emptybuf = vim.fn.bufnr('$') == 1 and vim.fn.getline(1) == '' and 1 == vim.fn.line('$')
 
@@ -346,22 +349,22 @@ function M._check(mods, plugin_names)
   vim.cmd.setfiletype('checkhealth')
 
   -- This should only happen when doing `:checkhealth vim`
-  if next(healthchecks) == nil then
+  if next(checks) == nil then
     vim.fn.setline(1, 'ERROR: No healthchecks found.')
     return
   end
   vim.cmd.redraw()
   vim.print('Running healthchecks...')
 
-  for name, value in vim.spairs(healthchecks) do
-    local func = value[1]
-    local type = value[2]
-    s_output = {}
+  for name, value in vim.spairs(checks) do
+    current_name = name
+    local func = value.func
+    local type = value.filetype
 
     if func == '' then
-      s_output = {}
       M.error('No healthcheck found for "' .. name .. '" plugin.')
     end
+
     if type == 'v' then
       vim.fn.call(func, {})
     else
@@ -373,12 +376,13 @@ function M._check(mods, plugin_names)
         )
       end
     end
+
     -- in the event the healthcheck doesn't return anything
     -- (the plugin author should avoid this possibility)
-    if next(s_output) == nil then
-      s_output = {}
+    if checks[name].output == nil then
       M.error('The healthcheck report for "' .. name .. '" plugin is empty.')
     end
+
     local header = { string.rep('=', 78), name .. ': ' .. func, '' }
     -- remove empty line after header from report_start
     if s_output[1] == '' then
@@ -392,10 +396,14 @@ function M._check(mods, plugin_names)
       end
     end
     s_output[#s_output + 1] = ''
-    s_output = vim.list_extend(header, s_output)
-    vim.fn.append(vim.fn.line('$'), s_output)
-    vim.cmd.redraw()
+    s_output = vim.list_extend(s_output, header)
+
+    for _, v in ipairs(checks[name].output) do
+      local formatted_output = format_output(v)
+      vim.list_extend(s_output, formatted_output)
+    end
   end
+  vim.fn.append(vim.fn.line('$'), s_output)
 
   -- Clear the 'Running healthchecks...' message.
   vim.cmd.redraw()
