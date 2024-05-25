@@ -1642,7 +1642,7 @@ function vim.fn.execute(command, silent) end
 --- If {expr} starts with "./" the |current-directory| is used.
 ---
 --- @param expr any
---- @return any
+--- @return string
 function vim.fn.exepath(expr) end
 
 --- The result is a Number, which is |TRUE| if {expr} is

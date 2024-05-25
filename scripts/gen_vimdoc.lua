@@ -813,7 +813,7 @@ local function get_script_path()
 end
 
 local script_path = get_script_path()
-local base_dir = vim.fs.dirname(assert(vim.fs.dirname(script_path)))
+local base_dir = vim.fs.dirname(vim.fs.dirname(script_path))
 
 local function delete_lines_below(doc_file, tokenstr)
   local lines = {} --- @type string[]
@@ -965,7 +965,7 @@ local function gen_target(cfg)
       end
     end
     -- FIXME: Using f_base will confuse `_meta/protocol.lua` with `protocol.lua`
-    local f_base = assert(vim.fs.basename(f))
+    local f_base = vim.fs.basename(f)
     sections[f_base] = make_section(f_base, cfg, briefs_txt, funs_txt)
   end
 

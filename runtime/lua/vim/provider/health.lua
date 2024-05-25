@@ -95,10 +95,10 @@ local function system(cmd, args)
     error(emsg)
   end
 
-  -- return opts.output
   return vim.trim(vim.fn.system(cmd)), shell_error_code
 end
 
+---@param provider string
 local function provider_disabled(provider)
   local loaded_var = 'loaded_' .. provider .. '_provider'
   local v = vim.g[loaded_var]
@@ -126,9 +126,9 @@ local function clipboard()
     health.error('pbcopy does not work with tmux version: ' .. tmux_version, advice)
   end
 
-  local clipboard_tool = vim.fn['provider#clipboard#Executable']()
+  local clipboard_tool = vim.fn['provider#clipboard#Executable']() ---@type string
   if vim.g.clipboard ~= nil and clipboard_tool == '' then
-    local error_message = vim.fn['provider#clipboard#Error']()
+    local error_message = vim.fn['provider#clipboard#Error']() ---@type string
     health.error(
       error_message,
       "Use the example in :help g:clipboard as a template, or don't set g:clipboard at all."
@@ -179,7 +179,7 @@ local function node()
     )
   end
 
-  local node_detect_table = vim.fn['provider#node#Detect']()
+  local node_detect_table = vim.fn['provider#node#Detect']() ---@type string[]
   local host = node_detect_table[1]
   if host:find('^%s*$') then
     health.warn('Missing "neovim" npm (or yarn, pnpm) package.', {
@@ -290,7 +290,7 @@ local function perl()
   elseif latest_cpan[1] == '!' then
     local cpanm_errs = vim.split(latest_cpan, '!')
     if cpanm_errs[1]:find("Can't write to ") then
-      local advice = {}
+      local advice = {} ---@type string[]
       for i = 2, #cpanm_errs do
         advice[#advice + 1] = cpanm_errs[i]
       end
@@ -303,7 +303,7 @@ local function perl()
       return
     end
   end
-  latest_cpan = vim.fn.matchstr(latest_cpan, [[\(\.\?\d\)\+]])
+  latest_cpan = tostring(vim.fn.matchstr(latest_cpan, [[\(\.\?\d\)\+]]))
   if latest_cpan:find('^%s*$') then
     health.error('Cannot parse version number from cpanm output: ' .. latest_cpan)
     return
@@ -349,9 +349,11 @@ local function python_exepath(invocation)
   return vim.fs.normalize(vim.trim(p.stdout))
 end
 
--- Check if pyenv is available and a valid pyenv root can be found, then return
--- their respective paths. If either of those is invalid, return two empty
--- strings, effectively ignoring pyenv.
+--- Check if pyenv is available and a valid pyenv root can be found, then return
+--- their respective paths. If either of those is invalid, return two empty
+--- strings, effectively ignoring pyenv.
+---
+--- @return {[1]: string, [2]: string}
 local function check_for_pyenv()
   local pyenv_path = vim.fn.resolve(vim.fn.exepath('pyenv'))
 
@@ -394,7 +396,9 @@ local function check_bin(bin)
   return true
 end
 
--- Fetch the contents of a URL.
+--- Fetch the contents of a URL.
+---
+--- @param url string
 local function download(url)
   local has_curl = vim.fn.executable('curl') == 1
   if has_curl and vim.fn.system({ 'curl', '-V' }):find('Protocols:.*https') then
@@ -429,25 +433,24 @@ local function download(url)
   return message
 end
 
--- Get the latest Nvim Python client (pynvim) version from PyPI.
+--- Get the latest Nvim Python client (pynvim) version from PyPI.
 local function latest_pypi_version()
   local pypi_version = 'unable to get pypi response'
   local pypi_response = download('https://pypi.python.org/pypi/pynvim/json')
   if pypi_response ~= '' then
     local pcall_ok, output = pcall(vim.fn.json_decode, pypi_response)
-    local pypi_data
-    if pcall_ok then
-      pypi_data = output
-    else
+    if not pcall_ok then
       return 'error: ' .. pypi_response
     end
 
+    local pypi_data = output
     local pypi_element = pypi_data['info'] or {}
     pypi_version = pypi_element['version'] or 'unable to parse'
   end
   return pypi_version
 end
 
+--- @param s string
 local function is_bad_response(s)
   local lower = s:lower()
   return vim.startswith(lower, 'unable')
@@ -455,16 +458,18 @@ local function is_bad_response(s)
     or vim.startswith(lower, 'outdated')
 end
 
--- Get version information using the specified interpreter.  The interpreter is
--- used directly in case breaking changes were introduced since the last time
--- Nvim's Python client was updated.
---
--- Returns: {
---     {python executable version},
---     {current nvim version},
---     {current pypi nvim status},
---     {installed version status}
--- }
+--- Get version information using the specified interpreter.  The interpreter is
+--- used directly in case breaking changes were introduced since the last time
+--- Nvim's Python client was updated.
+---
+--- @param python string
+---
+--- Returns: {
+---     {python executable version},
+---     {current nvim version},
+---     {current pypi nvim status},
+---     {installed version status}
+--- }
 local function version_info(python)
   local pypi_version = latest_pypi_version()
 
@@ -512,9 +517,9 @@ local function version_info(python)
   if rc ~= 0 or nvim_version == '' then
     nvim_version = 'unable to find pynvim module version'
     local base = vim.fs.basename(nvim_path)
-    local metas = vim.fn.glob(base .. '-*/METADATA', 1, 1)
-    vim.list_extend(metas, vim.fn.glob(base .. '-*/PKG-INFO', 1, 1))
-    vim.list_extend(metas, vim.fn.glob(base .. '.egg-info/PKG-INFO', 1, 1))
+    local metas = vim.fn.glob(base .. '-*/METADATA', true, 1)
+    vim.list_extend(metas, vim.fn.glob(base .. '-*/PKG-INFO', true, 1))
+    vim.list_extend(metas, vim.fn.glob(base .. '.egg-info/PKG-INFO', true, 1))
     metas = table.sort(metas, compare)
 
     if metas and next(metas) ~= nil then
@@ -544,14 +549,13 @@ end
 local function python()
   health.start('Python 3 provider (optional)')
 
-  local pyname = 'python3' ---@type string?
   local python_exe = ''
   local virtual_env = os.getenv('VIRTUAL_ENV')
   local venv = virtual_env and vim.fn.resolve(virtual_env) or ''
-  local host_prog_var = pyname .. '_host_prog'
-  local python_multiple = {}
+  local host_prog_var = 'python3_host_prog'
+  local python_multiple = {} ---@type string[]
 
-  if provider_disabled(pyname) then
+  if provider_disabled('python3') then
     return
   end
 
@@ -564,8 +568,7 @@ local function python()
     health.info(message)
   end
 
-  local pythonx_warnings
-  pyname, pythonx_warnings = vim.provider.python.detect_by_module('neovim')
+  local pyname, pythonx_warnings = vim.provider.python.detect_by_module('neovim')
 
   if not pyname then
     health.warn(
@@ -653,12 +656,7 @@ local function python()
       )
       health.warn('pyenv is not set up optimally.', advice)
     elseif venv ~= '' then
-      local venv_root
-      if pyenv_root ~= '' then
-        venv_root = pyenv_root
-      else
-        venv_root = vim.fs.dirname(venv)
-      end
+      local venv_root = pyenv_root ~= '' and pyenv_root or vim.fs.dirname(venv)
 
       if vim.startswith(vim.fn.resolve(python_exe), venv_root .. '/') then
         local advice = string.format(
@@ -743,9 +741,9 @@ local function python()
     health.ok('no $VIRTUAL_ENV')
     return
   end
-  local errors = {}
+  local errors = {} ---@type string[]
   -- Keep hints as dict keys in order to discard duplicates.
-  local hints = {}
+  local hints = {} ---@type table<string, boolean>
   -- The virtualenv should contain some Python executables, and those
   -- executables should be first both on Nvim's $PATH and the $PATH of
   -- subshells launched from Nvim.

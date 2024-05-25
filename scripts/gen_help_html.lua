@@ -1372,7 +1372,7 @@ function M.validate(help_dir, include, parser_path)
   parser_path = parser_path and vim.fn.expand(parser_path) or nil
 
   for _, f in ipairs(helpfiles) do
-    local helpfile = assert(vim.fs.basename(f))
+    local helpfile = vim.fs.basename(f)
     local rv = validate_one(f, parser_path)
     print(('validated (%-4s errors): %s'):format(#rv.parse_errors, helpfile))
     if #rv.parse_errors > 0 then
@@ -1430,7 +1430,7 @@ end
 ---    :help files, we can be precise about the tolerances here.
 --- @param help_dir? string e.g. '$VIMRUNTIME/doc' or './runtime/doc'
 function M.test_gen(help_dir)
-  local tmpdir = assert(vim.fs.dirname(vim.fn.tempname()))
+  local tmpdir = vim.fs.dirname(vim.fn.tempname())
   help_dir = vim.fn.expand(help_dir or '$VIMRUNTIME/doc')
   print('doc path = ' .. vim.uv.fs_realpath(help_dir))
 

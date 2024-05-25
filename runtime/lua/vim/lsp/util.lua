@@ -616,7 +616,7 @@ function M.rename(old_fname, new_fname, opts)
     buf_rename[b] = { from = old_bname, to = new_bname }
   end
 
-  local newdir = assert(vim.fs.dirname(new_fname))
+  local newdir = vim.fs.dirname(new_fname)
   vim.fn.mkdir(newdir, 'p')
 
   local ok, err = os.rename(old_fname_full, new_fname)
@@ -625,7 +625,7 @@ function M.rename(old_fname, new_fname, opts)
   local old_undofile = vim.fn.undofile(old_fname_full)
   if uv.fs_stat(old_undofile) ~= nil then
     local new_undofile = vim.fn.undofile(new_fname)
-    vim.fn.mkdir(assert(vim.fs.dirname(new_undofile)), 'p')
+    vim.fn.mkdir(vim.fs.dirname(new_undofile), 'p')
     os.rename(old_undofile, new_undofile)
   end
 
