@@ -315,7 +315,7 @@ local function select_tabstop(tabstop)
     move_cursor_to(range[1] + 1, range[2] + 1)
     feedkeys('v')
     move_cursor_to(range[3] + 1, range[4])
-    feedkeys('o<c-g>')
+    feedkeys('o<c-g><c-r>_')
   end
 end
 
