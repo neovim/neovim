@@ -602,6 +602,12 @@ The mapping can be disabled with: >
 	let g:no_gprof_maps = 1
 
 
+HARE							*ft-hare*
+
+Since the text for this plugin is rather long it has been put in a separate
+file: |ft_hare.txt|.
+
+
 JAVA							*ft-java-plugin*
 
 Whenever the variable "g:ftplugin_java_source_path" is defined and its value

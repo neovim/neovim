@@ -1,19 +1,16 @@
 " Vim indent file
-" Language: Hare
-" Maintainer: Amelia Clarke <me@rsaihe.dev>
-" Last Change: 2022 Sep 22
-"              2023 Aug 28 by Vim Project (undo_indent)
+" Language:    Hare
+" Maintainer:  Amelia Clarke <selene@perilune.dev>
+" Last Change: 2024-04-14
+" Upstream:    https://git.sr.ht/~sircmpwn/hare.vim
 
-if exists("b:did_indent")
+if exists('b:did_indent')
   finish
 endif
 let b:did_indent = 1
 
-if !has("cindent") || !has("eval")
-  finish
-endif
-
-setlocal cindent
+let s:cpo_save = &cpo
+set cpo&vim
 
 " L0 -> don't deindent labels
 " (s -> use one indent after a trailing (
@@ -41,7 +38,11 @@ setlocal cinwords=if,else,for,switch,match
 
 setlocal indentexpr=GetHareIndent()
 
-let b:undo_indent = "setl cin< cino< cinw< inde< indk<"
+let b:undo_indent = 'setl cino< cinw< inde< indk<'
+
+if exists('*GetHareIndent()')
+  finish
+endif
 
 function! FloorCindent(lnum)
   return cindent(a:lnum) / shiftwidth() * shiftwidth()
@@ -122,7 +123,8 @@ function! GetHareIndent()
   " Indent the body of a case.
   " If the previous line ended in a semicolon and the line before that was a
   " case, don't do any special indenting.
-  if prevline =~# '\v;\s*(//.*)?$' && prevprevline =~# '\v\=\>\s*(//.*)?$' && line !~# '\v^\s*}'
+  if prevline =~# '\v;\s*(//.*)?$' && prevprevline =~# '\v\=\>\s*(//.*)?$'
+        \ && line !~# '\v^\s*}'
     return indent(prevlnum)
   endif
 
@@ -138,4 +140,7 @@ function! GetHareIndent()
   return l:indent
 endfunction
 
-" vim: tabstop=2 shiftwidth=2 expandtab
+let &cpo = s:cpo_save
+unlet s:cpo_save
+
+" vim: et sw=2 sts=2 ts=8

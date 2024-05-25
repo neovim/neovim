@@ -1511,6 +1511,41 @@ func Test_git_file()
   filetype off
 endfunc
 
+func Test_haredoc_file()
+  filetype on
+  call assert_true(mkdir('foo/bar', 'pR'))
+
+  call writefile([], 'README', 'D')
+  split README
+  call assert_notequal('haredoc', &filetype)
+  bwipe!
+
+  let g:filetype_haredoc = 1
+  split README
+  call assert_notequal('haredoc', &filetype)
+  bwipe!
+
+  call writefile([], 'foo/quux.ha')
+  split README
+  call assert_equal('haredoc', &filetype)
+  bwipe!
+  call delete('foo/quux.ha')
+
+  call writefile([], 'foo/bar/baz.ha', 'D')
+  split README
+  call assert_notequal('haredoc', &filetype)
+  bwipe!
+
+  let g:haredoc_search_depth = 2
+  split README
+  call assert_equal('haredoc', &filetype)
+  bwipe!
+  unlet g:filetype_haredoc
+  unlet g:haredoc_search_depth
+
+  filetype off
+endfunc
+
 func Test_hook_file()
   filetype on
 

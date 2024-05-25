@@ -650,6 +650,30 @@ function M.header(_, bufnr)
   end
 end
 
+--- Recursively search for Hare source files in a directory and any
+--- subdirectories, up to a given depth.
+--- @param dir string
+--- @param depth number
+--- @return boolean
+local function is_hare_module(dir, depth)
+  depth = math.max(depth, 0)
+  for name, _ in vim.fs.dir(dir, { depth = depth + 1 }) do
+    if name:find('%.ha$') then
+      return true
+    end
+  end
+  return false
+end
+
+--- @type vim.filetype.mapfn
+function M.haredoc(path, _)
+  if vim.g.filetype_haredoc then
+    if is_hare_module(vim.fs.dirname(path), vim.g.haredoc_search_depth or 1) then
+      return 'haredoc'
+    end
+  end
+end
+
 --- @type vim.filetype.mapfn
 function M.html(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 10)) do
