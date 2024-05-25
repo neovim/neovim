@@ -182,7 +182,7 @@ local validate = vim.validate
 --- It can be `null` if the client supports workspace folders but none are
 --- configured.
 --- @field workspace_folders lsp.WorkspaceFolder[]?
---- @field root_dir string
+--- @field root_dir string?
 ---
 --- @field attached_buffers table<integer,true>
 ---
@@ -470,7 +470,6 @@ function Client.create(config)
     _on_exit_cbs = ensure_list(config.on_exit),
     _on_attach_cbs = ensure_list(config.on_attach),
     _on_error_cb = config.on_error,
-    _root_dir = config.root_dir,
     _trace = get_trace(config.trace),
 
     --- Contains $/progress report messages.
