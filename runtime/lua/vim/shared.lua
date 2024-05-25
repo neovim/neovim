@@ -12,15 +12,19 @@ vim = vim or {}
 
 --- Assert that a value has the expected type.
 ---
+--- @param name string Name of the value to check (used in error message)
 --- @param v any Value to check
 --- @param expected string Expected type
-local function expecttype(v, expected)
+--- @param optional? boolean If true, {v} may be nil.
+local function expecttype(name, v, expected, optional)
   local actual = type(v)
 
   -- Use an if statement with error() instead of assert() to avoid calling string.format if we don't
   -- need it.
-  if actual ~= expected then
-    error(('expected %s, got %s%s'):format(expected, actual, v and (' (%s)'):format(v) or ''))
+  if actual ~= expected and (v ~= nil or not optional) then
+    error(
+      ('%s: expected %s, got %s%s'):format(name, expected, actual, v and (' (%s)'):format(v) or '')
+    )
   end
 end
 
@@ -228,7 +232,7 @@ end
 ---@param t table<T, any> (table) Table
 ---@return T[] : List of keys
 function vim.tbl_keys(t)
-  expecttype(t, 'table')
+  vim.validate('t', t, 'table')
   --- @cast t table<any,any>
 
   local keys = {}
@@ -245,7 +249,7 @@ end
 ---@param t table<any, T> (table) Table
 ---@return T[] : List of values
 function vim.tbl_values(t)
-  expecttype(t, 'table')
+  vim.validate('t', t, 'table')
 
   local values = {}
   for _, v in
@@ -346,7 +350,7 @@ end
 ---@param value any Value to compare
 ---@return boolean `true` if `t` contains `value`
 function vim.list_contains(t, value)
-  expecttype(t, 'table')
+  vim.validate('t', t, 'table')
   --- @cast t table<any,any>
 
   for _, v in ipairs(t) do
@@ -364,7 +368,7 @@ end
 ---@param t table Table to check
 ---@return boolean `true` if `t` is empty
 function vim.tbl_isempty(t)
-  expecttype(t, 'table')
+  vim.validate('t', t, 'table')
   return next(t) == nil
 end
 
@@ -594,7 +598,7 @@ end
 ---@return fun(table: table<K, V>, index?: K):K, V # |for-in| iterator over sorted keys and their values
 ---@return T
 function vim.spairs(t)
-  expecttype(t, 'table')
+  vim.validate('t', t, 'table')
   --- @cast t table<any,any>
 
   -- collect the keys
@@ -705,7 +709,7 @@ end
 ---@param t table Table
 ---@return integer : Number of non-nil values in table
 function vim.tbl_count(t)
-  expecttype(t, 'table')
+  vim.validate('t', t, 'table')
   --- @cast t table<any,any>
 
   local count = 0
@@ -737,7 +741,7 @@ end
 ---@param s string String to trim
 ---@return string String with whitespace removed from its beginning and end
 function vim.trim(s)
-  expecttype(s, 'string')
+  vim.validate('s', s, 'string')
   return s:match('^%s*(.*%S)') or ''
 end
 
@@ -747,7 +751,7 @@ end
 ---@param s string String to escape
 ---@return string %-escaped pattern string
 function vim.pesc(s)
-  expecttype(s, 'string')
+  vim.validate('s', s, 'string')
   return (s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1'))
 end
 
@@ -757,8 +761,8 @@ end
 ---@param prefix string Prefix to match
 ---@return boolean `true` if `prefix` is a prefix of `s`
 function vim.startswith(s, prefix)
-  expecttype(s, 'string')
-  expecttype(prefix, 'string')
+  vim.validate('s', s, 'string')
+  vim.validate('prefix', prefix, 'string')
   return s:sub(1, #prefix) == prefix
 end
 
@@ -768,8 +772,8 @@ end
 ---@param suffix string Suffix to match
 ---@return boolean `true` if `suffix` is a suffix of `s`
 function vim.endswith(s, suffix)
-  expecttype(s, 'string')
-  expecttype(suffix, 'string')
+  vim.validate('s', s, 'string')
+  vim.validate('suffix', suffix, 'string')
   return #suffix == 0 or s:sub(-#suffix) == suffix
 end
 
@@ -893,8 +897,28 @@ do
     return true
   end
 
-  --- Validates a parameter specification (types and values). Specs are evaluated in alphanumeric
-  --- order, until the first failure.
+  --- Validate function arguments.
+  ---
+  --- This function has two valid forms:
+  ---
+  --- 1. vim.validate(name: str, value: any, type: string, optional: bool)
+  --- 2. vim.validate(spec: table)
+  ---
+  --- Form 1 validates that argument {name} with value {value} has the type
+  --- {type}. If {optional} is true, then {value} may be null. This form should
+  --- be preferred for simple cases.
+  ---
+  --- Example:
+  ---
+  --- ```lua
+  --- function vim.startswith(s, prefix)
+  ---   vim.validate('s', s, 'string')
+  ---   vim.validate('prefix', prefix, 'string')
+  ---   ...
+  --- end
+  ---
+  --- Form 2 validates a parameter specification (types and values). Specs are
+  --- evaluated in alphanumeric order, until the first failure.
   ---
   --- Usage example:
   ---
@@ -946,7 +970,15 @@ do
   ---               only if the argument is valid. Can optionally return an additional
   ---               informative error message as the second returned value.
   ---             - msg: (optional) error string if validation fails
-  function vim.validate(opt)
+  --- @overload fun(name: string, val: any, expected: string, optional?: boolean)
+  function vim.validate(opt, ...)
+    if select('#', ...) >= 2 then
+      -- Overloaded signature for fast/simple cases
+      local name = opt --[[@as string]]
+      local v, expected, optional = ... ---@type string, string, boolean?
+      return expecttype(name, v, expected, optional)
+    end
+
     local ok, err_msg = is_valid(opt)
     if not ok then
       error(err_msg, 2)
