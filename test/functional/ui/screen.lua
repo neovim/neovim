@@ -255,6 +255,7 @@ end
 
 function Screen:set_default_attr_ids(attr_ids)
   self._default_attr_ids = attr_ids
+  self._attrs_overridden = true
 end
 
 function Screen:add_extra_attr_ids(extra_attr_ids)
@@ -699,9 +700,9 @@ screen:redraw_debug() to show all intermediate screen states.]]
   end, expected)
 end
 
-function Screen:expect_unchanged(intermediate, waittime_ms, ignore_attrs)
+function Screen:expect_unchanged(intermediate, waittime_ms)
   -- Collect the current screen state.
-  local kwargs = self:get_snapshot(nil, ignore_attrs)
+  local kwargs = self:get_snapshot()
 
   if intermediate then
     kwargs.intermediate = true
@@ -1536,13 +1537,14 @@ end
 -- Use snapshot_util({}) to generate a text-only (no attributes) test.
 --
 -- @see Screen:redraw_debug()
-function Screen:snapshot_util(attrs, ignore, request_cb)
+function Screen:snapshot_util(request_cb)
+  -- TODO: simplify this later when existing tests have been updated
   self:sleep(250, request_cb)
-  self:print_snapshot(attrs, ignore)
+  self:print_snapshot()
 end
 
-function Screen:redraw_debug(attrs, ignore, timeout)
-  self:print_snapshot(attrs, ignore)
+function Screen:redraw_debug(timeout)
+  self:print_snapshot()
   local function notification_cb(method, args)
     assert(method == 'redraw')
     for _, update in ipairs(args) do
@@ -1552,7 +1554,7 @@ function Screen:redraw_debug(attrs, ignore, timeout)
       end
     end
     self:_redraw(args)
-    self:print_snapshot(attrs, ignore)
+    self:print_snapshot()
     return true
   end
   if timeout == nil then
@@ -1596,23 +1598,12 @@ end
 
 -- Returns the current screen state in the form of a screen:expect()
 -- keyword-args map.
-function Screen:get_snapshot(attrs, ignore)
-  if ignore == nil then
-    ignore = self._default_attr_ignore
-  end
+function Screen:get_snapshot()
   local attr_state = {
     ids = {},
-    ignore = ignore,
     mutable = true, -- allow _row_repr to add missing highlights
   }
-  if attrs == nil then
-    attrs = self._default_attr_ids
-  elseif isempty(attrs) then
-    attrs = nil
-    attr_state.ids = nil
-  else
-    attr_state.modified = true
-  end
+  local attrs = self._default_attr_ids
 
   if attrs ~= nil then
     for i, a in pairs(attrs) do
@@ -1708,9 +1699,10 @@ local function fmt_ext_state(name, state)
   end
 end
 
-function Screen:_print_snapshot(attrs, ignore)
-  local kwargs, ext_state, attr_state = self:get_snapshot(attrs, ignore)
+function Screen:_print_snapshot()
+  local kwargs, ext_state, attr_state = self:get_snapshot()
   local attrstr = ''
+  local modify_attrs = not self._attrs_overridden
   if attr_state.modified then
     local attrstrs = {}
     for i, a in pairs(attr_state.ids) do
@@ -1721,16 +1713,20 @@ function Screen:_print_snapshot(attrs, ignore)
         dict = '{ ' .. self:_pprint_attrs(a) .. ' }'
       end
       local keyval = (type(i) == 'number') and '[' .. tostring(i) .. ']' or i
-      table.insert(attrstrs, '  ' .. keyval .. ' = ' .. dict .. ',')
+      if not (type(i) == 'number' and modify_attrs and i <= 30) then
+        table.insert(attrstrs, '  ' .. keyval .. ' = ' .. dict .. ',')
+      end
+      if modify_attrs then
+        self._default_attr_ids = attr_state.ids
+      end
     end
-    attrstr = (',\n  attr_ids = {\n  ' .. table.concat(attrstrs, '\n  ') .. '\n  },')
-  elseif isempty(attrs) then
-    attrstr = ',\n  attr_ids = {},'
+    local fn_name = modify_attrs and 'add_extra_attr_ids' or 'set_default_attr_ids'
+    attrstr = ('screen:' .. fn_name .. ' {\n' .. table.concat(attrstrs, '\n') .. '\n}\n\n')
   end
 
-  local result = ('screen:expect({\n  grid = [[\n  %s\n  ]]%s'):format(
-    kwargs.grid:gsub('\n', '\n  '),
-    attrstr
+  local result = ('%sscreen:expect({\n  grid = [[\n  %s\n  ]]'):format(
+    attrstr,
+    kwargs.grid:gsub('\n', '\n  ')
   )
   for _, k in ipairs(ext_keys) do
     if ext_state[k] ~= nil and not (k == 'win_viewport' and not self.options.ext_multigrid) then
@@ -1742,8 +1738,8 @@ function Screen:_print_snapshot(attrs, ignore)
   return result
 end
 
-function Screen:print_snapshot(attrs, ignore)
-  print('\n' .. self:_print_snapshot(attrs, ignore) .. '\n')
+function Screen:print_snapshot()
+  print('\n' .. self:_print_snapshot() .. '\n')
   io.stdout:flush()
 end
 
