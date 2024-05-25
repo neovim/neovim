@@ -2,7 +2,7 @@
 " Language:     Debian control files
 " Maintainer:   Debian Vim Maintainers
 " Former Maintainer:    Pierre Habouzit <madcoder@debian.org>
-" Last Change:  2023 Jan 16
+" Last Change:  2024 May 25
 " URL:          https://salsa.debian.org/vim-team/vim-debian/blob/main/ftplugin/debcontrol.vim
 
 " Do these settings once per buffer
@@ -19,8 +19,11 @@ if exists('g:debcontrol_fold_enable')
 endif
 setlocal textwidth=0
 
+setlocal comments=:#
+setlocal commentstring=#\ %s
+
 " Clean unloading
-let b:undo_ftplugin = 'setlocal tw< foldmethod< foldexpr< foldtext<'
+let b:undo_ftplugin = 'setlocal tw< foldmethod< foldexpr< foldtext< comments< commentstring<'
 
 " }}}1
 
