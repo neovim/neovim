@@ -1548,6 +1548,7 @@ static void win_update(win_T *wp)
   // Force redraw when width of 'number' or 'relativenumber' column changes.
   if (wp->w_nrwidth != nrwidth_new) {
     type = UPD_NOT_VALID;
+    changed_line_abv_curs_win(wp);
     wp->w_nrwidth = nrwidth_new;
   } else {
     // Set mod_top to the first line that needs displaying because of
