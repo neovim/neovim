@@ -367,14 +367,11 @@ describe('API', function()
     it('displays messages when opts.output=false', function()
       local screen = Screen.new(40, 8)
       screen:attach()
-      screen:set_default_attr_ids({
-        [0] = { bold = true, foreground = Screen.colors.Blue },
-      })
       api.nvim_exec2("echo 'hello'", { output = false })
       screen:expect {
         grid = [[
         ^                                        |
-        {0:~                                       }|*6
+        {1:~                                       }|*6
         hello                                   |
       ]],
       }
@@ -383,14 +380,11 @@ describe('API', function()
     it("doesn't display messages when output=true", function()
       local screen = Screen.new(40, 6)
       screen:attach()
-      screen:set_default_attr_ids({
-        [0] = { bold = true, foreground = Screen.colors.Blue },
-      })
       api.nvim_exec2("echo 'hello'", { output = true })
       screen:expect {
         grid = [[
         ^                                        |
-        {0:~                                       }|*4
+        {1:~                                       }|*4
                                                 |
       ]],
       }
@@ -403,7 +397,7 @@ describe('API', function()
       screen:expect {
         grid = [[
         ^                                        |
-        {0:~                                       }|*4
+        {1:~                                       }|*4
         15                                      |
       ]],
       }
@@ -1533,16 +1527,12 @@ describe('API', function()
       eq({ 1, 5 }, api.nvim_win_get_cursor(0))
 
       local screen = Screen.new(60, 3)
-      screen:set_default_attr_ids({
-        [0] = { bold = true, foreground = Screen.colors.Blue },
-        [1] = { background = Screen.colors.Yellow },
-      })
       screen:attach()
       eq(1, eval('v:hlsearch'))
       screen:expect {
         grid = [[
-         {1:foo} {1:^foo} {1:foo}                                                |
-        {0:~                                                           }|
+         {10:foo} {10:^foo} {10:foo}                                                |
+        {1:~                                                           }|
                                                                     |
       ]],
       }
@@ -1551,7 +1541,7 @@ describe('API', function()
       screen:expect {
         grid = [[
          foo ^foo foo                                                |
-        {0:~                                                           }|
+        {1:~                                                           }|
                                                                     |
       ]],
       }
@@ -1559,8 +1549,8 @@ describe('API', function()
       eq(1, eval('v:hlsearch'))
       screen:expect {
         grid = [[
-         {1:foo} {1:^foo} {1:foo}                                                |
-        {0:~                                                           }|
+         {10:foo} {10:^foo} {10:foo}                                                |
+        {1:~                                                           }|
                                                                     |
       ]],
       }
@@ -2254,12 +2244,6 @@ describe('API', function()
     before_each(function()
       screen = Screen.new(40, 8)
       screen:attach()
-      screen:set_default_attr_ids({
-        [0] = { bold = true, foreground = Screen.colors.Blue },
-        [1] = { bold = true, foreground = Screen.colors.SeaGreen },
-        [2] = { bold = true, reverse = true },
-        [3] = { foreground = Screen.colors.Blue },
-      })
     end)
 
     it('prints long messages correctly #20534', function()
@@ -2287,11 +2271,11 @@ describe('API', function()
       screen:expect {
         grid = [[
                                                 |
-        {0:~                                       }|*3
-        {2:                                        }|
+        {1:~                                       }|*3
+        {3:                                        }|
                                                 |
         a                                       |
-        {1:Press ENTER or type command to continue}^ |
+        {6:Press ENTER or type command to continue}^ |
       ]],
       }
       feed('<CR>')
@@ -2299,12 +2283,12 @@ describe('API', function()
       screen:expect {
         grid = [[
                                                 |
-        {0:~                                       }|*2
-        {2:                                        }|
+        {1:~                                       }|*2
+        {3:                                        }|
         b                                       |
                                                 |
         c                                       |
-        {1:Press ENTER or type command to continue}^ |
+        {6:Press ENTER or type command to continue}^ |
       ]],
       }
     end)
@@ -2314,11 +2298,11 @@ describe('API', function()
       screen:expect {
         grid = [[
                                                 |
-        {0:~                                       }|*3
-        {2:                                        }|
-        aaa{3:^@}bbb{3:^@^@}ccc                         |
-        ddd{3:^@^@^@}eee                            |
-        {1:Press ENTER or type command to continue}^ |
+        {1:~                                       }|*3
+        {3:                                        }|
+        aaa{18:^@}bbb{18:^@^@}ccc                         |
+        ddd{18:^@^@^@}eee                            |
+        {6:Press ENTER or type command to continue}^ |
       ]],
       }
     end)
@@ -2330,20 +2314,14 @@ describe('API', function()
     before_each(function()
       screen = Screen.new(40, 8)
       screen:attach()
-      screen:set_default_attr_ids({
-        [0] = { bold = true, foreground = Screen.colors.Blue },
-        [1] = { foreground = Screen.colors.White, background = Screen.colors.Red },
-        [2] = { bold = true, foreground = Screen.colors.SeaGreen },
-        [3] = { bold = true, reverse = true },
-      })
     end)
 
     it('can show one line', function()
       async_meths.nvim_err_write('has bork\n')
       screen:expect([[
         ^                                        |
-        {0:~                                       }|*6
-        {1:has bork}                                |
+        {1:~                                       }|*6
+        {9:has bork}                                |
       ]])
     end)
 
@@ -2351,11 +2329,11 @@ describe('API', function()
       async_meths.nvim_err_write('something happened\nvery bad\n')
       screen:expect([[
                                                 |
-        {0:~                                       }|*3
+        {1:~                                       }|*3
         {3:                                        }|
-        {1:something happened}                      |
-        {1:very bad}                                |
-        {2:Press ENTER or type command to continue}^ |
+        {9:something happened}                      |
+        {9:very bad}                                |
+        {6:Press ENTER or type command to continue}^ |
       ]])
     end)
 
@@ -2363,13 +2341,13 @@ describe('API', function()
       async_meths.nvim_err_write('FAILURE\nERROR\nEXCEPTION\nTRACEBACK\n')
       screen:expect([[
                                                 |
-        {0:~                                       }|
+        {1:~                                       }|
         {3:                                        }|
-        {1:FAILURE}                                 |
-        {1:ERROR}                                   |
-        {1:EXCEPTION}                               |
-        {1:TRACEBACK}                               |
-        {2:Press ENTER or type command to continue}^ |
+        {9:FAILURE}                                 |
+        {9:ERROR}                                   |
+        {9:EXCEPTION}                               |
+        {9:TRACEBACK}                               |
+        {6:Press ENTER or type command to continue}^ |
       ]])
     end)
 
@@ -2379,8 +2357,8 @@ describe('API', function()
       async_meths.nvim_err_write('fail\n')
       screen:expect([[
         ^                                        |
-        {0:~                                       }|*6
-        {1:very fail}                               |
+        {1:~                                       }|*6
+        {9:very fail}                               |
       ]])
       n.poke_eventloop()
 
@@ -2388,11 +2366,11 @@ describe('API', function()
       async_meths.nvim_err_write('more fail\ntoo fail\n')
       screen:expect([[
                                                 |
-        {0:~                                       }|*3
+        {1:~                                       }|*3
         {3:                                        }|
-        {1:more fail}                               |
-        {1:too fail}                                |
-        {2:Press ENTER or type command to continue}^ |
+        {9:more fail}                               |
+        {9:too fail}                                |
+        {6:Press ENTER or type command to continue}^ |
       ]])
       feed('<cr>') -- exit the press ENTER screen
     end)
@@ -2402,11 +2380,11 @@ describe('API', function()
       screen:expect {
         grid = [[
                                                 |
-        {0:~                                       }|*3
+        {1:~                                       }|*3
         {3:                                        }|
-        {1:aaa^@bbb^@^@ccc}                         |
-        {1:ddd^@^@^@eee}                            |
-        {2:Press ENTER or type command to continue}^ |
+        {9:aaa^@bbb^@^@ccc}                         |
+        {9:ddd^@^@^@eee}                            |
+        {6:Press ENTER or type command to continue}^ |
       ]],
       }
     end)
@@ -2418,30 +2396,24 @@ describe('API', function()
     before_each(function()
       screen = Screen.new(40, 8)
       screen:attach()
-      screen:set_default_attr_ids({
-        [0] = { bold = true, foreground = Screen.colors.Blue },
-        [1] = { foreground = Screen.colors.White, background = Screen.colors.Red },
-        [2] = { bold = true, foreground = Screen.colors.SeaGreen },
-        [3] = { bold = true, reverse = true },
-      })
     end)
 
     it('shows only one return prompt after all lines are shown', function()
       async_meths.nvim_err_writeln('FAILURE\nERROR\nEXCEPTION\nTRACEBACK')
       screen:expect([[
                                                 |
-        {0:~                                       }|
+        {1:~                                       }|
         {3:                                        }|
-        {1:FAILURE}                                 |
-        {1:ERROR}                                   |
-        {1:EXCEPTION}                               |
-        {1:TRACEBACK}                               |
-        {2:Press ENTER or type command to continue}^ |
+        {9:FAILURE}                                 |
+        {9:ERROR}                                   |
+        {9:EXCEPTION}                               |
+        {9:TRACEBACK}                               |
+        {6:Press ENTER or type command to continue}^ |
       ]])
       feed('<CR>')
       screen:expect([[
         ^                                        |
-        {0:~                                       }|*6
+        {1:~                                       }|*6
                                                 |
       ]])
     end)
@@ -3102,9 +3074,6 @@ describe('API', function()
       eq(1, api.nvim_get_current_buf())
 
       local screen = Screen.new(20, 4)
-      screen:set_default_attr_ids({
-        [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      })
       screen:attach()
 
       --
@@ -3458,13 +3427,6 @@ describe('API', function()
     before_each(function()
       screen = Screen.new(40, 8)
       screen:attach()
-      screen:set_default_attr_ids({
-        [0] = { bold = true, foreground = Screen.colors.Blue },
-        [1] = { bold = true, foreground = Screen.colors.SeaGreen },
-        [2] = { bold = true, reverse = true },
-        [3] = { foreground = Screen.colors.Brown, bold = true }, -- Statement
-        [4] = { foreground = Screen.colors.SlateBlue }, -- Special
-      })
       command('highlight Statement gui=bold guifg=Brown')
       command('highlight Special guifg=SlateBlue')
     end)
@@ -3474,7 +3436,7 @@ describe('API', function()
       screen:expect {
         grid = [[
         ^                                        |
-        {0:~                                       }|*6
+        {1:~                                       }|*6
         msg                                     |
       ]],
       }
@@ -3489,8 +3451,8 @@ describe('API', function()
       screen:expect {
         grid = [[
         ^                                        |
-        {0:~                                       }|*6
-        msg_a{3:msg_b}{4:msg_c}                         |
+        {1:~                                       }|*6
+        msg_a{15:msg_b}{16:msg_c}                         |
       ]],
       }
     end)
@@ -3500,11 +3462,11 @@ describe('API', function()
       screen:expect {
         grid = [[
                                                 |
-        {0:~                                       }|*3
-        {2:                                        }|
-        {3:msg_a}                                   |
-        {3:msg_a}{4:msg_b}                              |
-        {1:Press ENTER or type command to continue}^ |
+        {1:~                                       }|*3
+        {3:                                        }|
+        {15:msg_a}                                   |
+        {15:msg_a}{16:msg_b}                              |
+        {6:Press ENTER or type command to continue}^ |
       ]],
       }
     end)
@@ -3528,24 +3490,16 @@ describe('API', function()
     before_each(function()
       screen = Screen.new(100, 35)
       screen:attach()
-      screen:set_default_attr_ids({
-        [0] = { bold = true, foreground = Screen.colors.Blue },
-        [1] = { background = Screen.colors.Plum1 },
-        [2] = { background = tonumber('0xffff40'), bg_indexed = true },
-        [3] = {
-          background = Screen.colors.Plum1,
-          fg_indexed = true,
-          foreground = tonumber('0x00e000'),
-        },
-        [4] = { bold = true, reverse = true, background = Screen.colors.Plum1 },
-        [5] = {
-          foreground = Screen.colors.Blue,
+      screen:add_extra_attr_ids {
+        [100] = { background = tonumber('0xffff40'), bg_indexed = true },
+        [101] = {
           background = Screen.colors.LightMagenta,
-          bold = true,
+          foreground = tonumber('0x00e000'),
+          fg_indexed = true,
         },
-        [6] = { bold = true },
-        [7] = { reverse = true, background = Screen.colors.LightMagenta },
-      })
+        [102] = { background = Screen.colors.LightMagenta, reverse = true },
+        [103] = { background = Screen.colors.LightMagenta, bold = true, reverse = true },
+      }
     end)
 
     it('can batch process sequences', function()
@@ -3561,38 +3515,38 @@ describe('API', function()
       screen:expect {
         grid = [[
         ^                                                                                                    |
-        {0:~}{1::smile                                                                         }{0:                    }|
-        {0:~}{1:                            }{2:oooo$$$$$$$$$$$$oooo}{1:                               }{0:                    }|
-        {0:~}{1:                        }{2:oo$$$$$$$$$$$$$$$$$$$$$$$$o}{1:                            }{0:                    }|
-        {0:~}{1:                     }{2:oo$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$o}{1:         }{2:o$}{1:   }{2:$$}{1: }{2:o$}{1:      }{0:                    }|
-        {0:~}{1:     }{2:o}{1: }{2:$}{1: }{2:oo}{1:        }{2:o$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$o}{1:       }{2:$$}{1: }{2:$$}{1: }{2:$$o$}{1:     }{0:                    }|
-        {0:~}{1:  }{2:oo}{1: }{2:$}{1: }{2:$}{1: "}{2:$}{1:      }{2:o$$$$$$$$$}{1:    }{2:$$$$$$$$$$$$$}{1:    }{2:$$$$$$$$$o}{1:       }{2:$$$o$$o$}{1:      }{0:                    }|
-        {0:~}{1:  "}{2:$$$$$$o$}{1:     }{2:o$$$$$$$$$}{1:      }{2:$$$$$$$$$$$}{1:      }{2:$$$$$$$$$$o}{1:    }{2:$$$$$$$$}{1:       }{0:                    }|
-        {0:~}{1:    }{2:$$$$$$$}{1:    }{2:$$$$$$$$$$$}{1:      }{2:$$$$$$$$$$$}{1:      }{2:$$$$$$$$$$$$$$$$$$$$$$$}{1:       }{0:                    }|
-        {0:~}{1:    }{2:$$$$$$$$$$$$$$$$$$$$$$$}{1:    }{2:$$$$$$$$$$$$$}{1:    }{2:$$$$$$$$$$$$$$}{1:  """}{2:$$$}{1:         }{0:                    }|
-        {0:~}{1:     "}{2:$$$}{1:""""}{2:$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{1:     "}{2:$$$}{1:        }{0:                    }|
-        {0:~}{1:      }{2:$$$}{1:   }{2:o$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{1:     "}{2:$$$o}{1:      }{0:                    }|
-        {0:~}{1:     }{2:o$$}{1:"   }{2:$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{1:       }{2:$$$o}{1:     }{0:                    }|
-        {0:~}{1:     }{2:$$$}{1:    }{2:$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{1:" "}{2:$$$$$$ooooo$$$$o}{1:   }{0:                    }|
-        {0:~}{1:    }{2:o$$$oooo$$$$$}{1:  }{2:$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{1:   }{2:o$$$$$$$$$$$$$$$$$}{1:  }{0:                    }|
-        {0:~}{1:    }{2:$$$$$$$$}{1:"}{2:$$$$}{1:   }{2:$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{1:     }{2:$$$$}{1:""""""""        }{0:                    }|
-        {0:~}{1:   """"       }{2:$$$$}{1:    "}{2:$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{1:"      }{2:o$$$}{1:                 }{0:                    }|
-        {0:~}{1:              "}{2:$$$o}{1:     """}{2:$$$$$$$$$$$$$$$$$$}{1:"}{2:$$}{1:"         }{2:$$$}{1:                  }{0:                    }|
-        {0:~}{1:                }{2:$$$o}{1:          "}{2:$$}{1:""}{2:$$$$$$}{1:""""           }{2:o$$$}{1:                   }{0:                    }|
-        {0:~}{1:                 }{2:$$$$o}{1:                                }{2:o$$$}{1:"                    }{0:                    }|
-        {0:~}{1:                  "}{2:$$$$o}{1:      }{2:o$$$$$$o}{1:"}{2:$$$$o}{1:        }{2:o$$$$}{1:                      }{0:                    }|
-        {0:~}{1:                    "}{2:$$$$$oo}{1:     ""}{2:$$$$o$$$$$o}{1:   }{2:o$$$$}{1:""                       }{0:                    }|
-        {0:~}{1:                       ""}{2:$$$$$oooo}{1:  "}{2:$$$o$$$$$$$$$}{1:"""                          }{0:                    }|
-        {0:~}{1:                          ""}{2:$$$$$$$oo}{1: }{2:$$$$$$$$$$}{1:                               }{0:                    }|
-        {0:~}{1:                                  """"}{2:$$$$$$$$$$$}{1:                              }{0:                    }|
-        {0:~}{1:                                      }{2:$$$$$$$$$$$$}{1:                             }{0:                    }|
-        {0:~}{1:                                       }{2:$$$$$$$$$$}{1:"                             }{0:                    }|
-        {0:~}{1:                                        "}{2:$$$}{1:""""                               }{0:                    }|
-        {0:~}{1:                                                                               }{0:                    }|
-        {0:~}{3:Press ENTER or type command to continue}{1:                                        }{0:                    }|
-        {0:~}{4:term://~/config2/docs/pres//32693:vim --clean +smile         29,39          All}{0:                    }|
-        {0:~}{1::call nvim__screenshot("smile2.cat")                                           }{0:                    }|
-        {0:~                                                                                                   }|*2
+        {1:~}{4::smile                                                                         }{1:                    }|
+        {1:~}{4:                            }{100:oooo$$$$$$$$$$$$oooo}{4:                               }{1:                    }|
+        {1:~}{4:                        }{100:oo$$$$$$$$$$$$$$$$$$$$$$$$o}{4:                            }{1:                    }|
+        {1:~}{4:                     }{100:oo$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$o}{4:         }{100:o$}{4:   }{100:$$}{4: }{100:o$}{4:      }{1:                    }|
+        {1:~}{4:     }{100:o}{4: }{100:$}{4: }{100:oo}{4:        }{100:o$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$o}{4:       }{100:$$}{4: }{100:$$}{4: }{100:$$o$}{4:     }{1:                    }|
+        {1:~}{4:  }{100:oo}{4: }{100:$}{4: }{100:$}{4: "}{100:$}{4:      }{100:o$$$$$$$$$}{4:    }{100:$$$$$$$$$$$$$}{4:    }{100:$$$$$$$$$o}{4:       }{100:$$$o$$o$}{4:      }{1:                    }|
+        {1:~}{4:  "}{100:$$$$$$o$}{4:     }{100:o$$$$$$$$$}{4:      }{100:$$$$$$$$$$$}{4:      }{100:$$$$$$$$$$o}{4:    }{100:$$$$$$$$}{4:       }{1:                    }|
+        {1:~}{4:    }{100:$$$$$$$}{4:    }{100:$$$$$$$$$$$}{4:      }{100:$$$$$$$$$$$}{4:      }{100:$$$$$$$$$$$$$$$$$$$$$$$}{4:       }{1:                    }|
+        {1:~}{4:    }{100:$$$$$$$$$$$$$$$$$$$$$$$}{4:    }{100:$$$$$$$$$$$$$}{4:    }{100:$$$$$$$$$$$$$$}{4:  """}{100:$$$}{4:         }{1:                    }|
+        {1:~}{4:     "}{100:$$$}{4:""""}{100:$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{4:     "}{100:$$$}{4:        }{1:                    }|
+        {1:~}{4:      }{100:$$$}{4:   }{100:o$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{4:     "}{100:$$$o}{4:      }{1:                    }|
+        {1:~}{4:     }{100:o$$}{4:"   }{100:$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{4:       }{100:$$$o}{4:     }{1:                    }|
+        {1:~}{4:     }{100:$$$}{4:    }{100:$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{4:" "}{100:$$$$$$ooooo$$$$o}{4:   }{1:                    }|
+        {1:~}{4:    }{100:o$$$oooo$$$$$}{4:  }{100:$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{4:   }{100:o$$$$$$$$$$$$$$$$$}{4:  }{1:                    }|
+        {1:~}{4:    }{100:$$$$$$$$}{4:"}{100:$$$$}{4:   }{100:$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{4:     }{100:$$$$}{4:""""""""        }{1:                    }|
+        {1:~}{4:   """"       }{100:$$$$}{4:    "}{100:$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{4:"      }{100:o$$$}{4:                 }{1:                    }|
+        {1:~}{4:              "}{100:$$$o}{4:     """}{100:$$$$$$$$$$$$$$$$$$}{4:"}{100:$$}{4:"         }{100:$$$}{4:                  }{1:                    }|
+        {1:~}{4:                }{100:$$$o}{4:          "}{100:$$}{4:""}{100:$$$$$$}{4:""""           }{100:o$$$}{4:                   }{1:                    }|
+        {1:~}{4:                 }{100:$$$$o}{4:                                }{100:o$$$}{4:"                    }{1:                    }|
+        {1:~}{4:                  "}{100:$$$$o}{4:      }{100:o$$$$$$o}{4:"}{100:$$$$o}{4:        }{100:o$$$$}{4:                      }{1:                    }|
+        {1:~}{4:                    "}{100:$$$$$oo}{4:     ""}{100:$$$$o$$$$$o}{4:   }{100:o$$$$}{4:""                       }{1:                    }|
+        {1:~}{4:                       ""}{100:$$$$$oooo}{4:  "}{100:$$$o$$$$$$$$$}{4:"""                          }{1:                    }|
+        {1:~}{4:                          ""}{100:$$$$$$$oo}{4: }{100:$$$$$$$$$$}{4:                               }{1:                    }|
+        {1:~}{4:                                  """"}{100:$$$$$$$$$$$}{4:                              }{1:                    }|
+        {1:~}{4:                                      }{100:$$$$$$$$$$$$}{4:                             }{1:                    }|
+        {1:~}{4:                                       }{100:$$$$$$$$$$}{4:"                             }{1:                    }|
+        {1:~}{4:                                        "}{100:$$$}{4:""""                               }{1:                    }|
+        {1:~}{4:                                                                               }{1:                    }|
+        {1:~}{101:Press ENTER or type command to continue}{4:                                        }{1:                    }|
+        {1:~}{103:term://~/config2/docs/pres//32693:vim --clean +smile         29,39          All}{1:                    }|
+        {1:~}{4::call nvim__screenshot("smile2.cat")                                           }{1:                    }|
+        {1:~                                                                                                   }|*2
                                                                                                             |
       ]],
       }
@@ -3624,9 +3578,9 @@ describe('API', function()
       screen:expect {
         grid = [[
                                                           |
-        {0:~}{1:^                                        }{0:         }|
-        {0:~}{1:                                        }{0:         }|*4
-        {0:~                                                 }|*3
+        {1:~}{4:^                                        }{1:         }|
+        {1:~}{4:                                        }{1:         }|*4
+        {1:~                                                 }|*3
                                                           |
       ]],
       }
@@ -3635,10 +3589,10 @@ describe('API', function()
       screen:expect {
         grid = [[
                                                           |
-        {0:~}{7: }{1:                                       }{0:         }|
-        {0:~}{1:                                        }{0:         }|*4
-        {0:~                                                 }|*3
-        {6:-- TERMINAL --}                                    |
+        {1:~}{102: }{4:                                       }{1:         }|
+        {1:~}{4:                                        }{1:         }|*4
+        {1:~                                                 }|*3
+        {5:-- TERMINAL --}                                    |
       ]],
       }
 
@@ -3651,10 +3605,10 @@ describe('API', function()
       screen:expect {
         grid = [[
                                                           |
-        {0:~}{1:herrejösses!}{7: }{1:                           }{0:         }|
-        {0:~}{1:                                        }{0:         }|*4
-        {0:~                                                 }|*3
-        {6:-- TERMINAL --}                                    |
+        {1:~}{4:herrejösses!}{102: }{4:                           }{1:         }|
+        {1:~}{4:                                        }{1:         }|*4
+        {1:~                                                 }|*3
+        {5:-- TERMINAL --}                                    |
       ]],
       }
       eq('ba\024blaherrejösses!', exec_lua [[ return stream ]])
@@ -4472,10 +4426,6 @@ describe('API', function()
     end)
     it('does not interfere with printing line in Ex mode #19400', function()
       local screen = Screen.new(60, 7)
-      screen:set_default_attr_ids({
-        [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-        [1] = { bold = true, reverse = true }, -- MsgSeparator
-      })
       screen:attach()
       insert([[
         foo
@@ -4484,8 +4434,8 @@ describe('API', function()
       screen:expect([[
         foo                                                         |
         bar                                                         |
-        {0:~                                                           }|*2
-        {1:                                                            }|
+        {1:~                                                           }|*2
+        {3:                                                            }|
         Entering Ex mode.  Type "visual" to go to Normal mode.      |
         :1^                                                          |
       ]])
@@ -4494,7 +4444,7 @@ describe('API', function()
       screen:expect([[
         foo                                                         |
         bar                                                         |
-        {1:                                                            }|
+        {3:                                                            }|
         Entering Ex mode.  Type "visual" to go to Normal mode.      |
         :1                                                          |
         foo                                                         |
@@ -4934,14 +4884,11 @@ describe('API', function()
     it("doesn't display messages when output=true", function()
       local screen = Screen.new(40, 6)
       screen:attach()
-      screen:set_default_attr_ids({
-        [0] = { bold = true, foreground = Screen.colors.Blue },
-      })
       api.nvim_cmd({ cmd = 'echo', args = { [['hello']] } }, { output = true })
       screen:expect {
         grid = [[
         ^                                        |
-        {0:~                                       }|*4
+        {1:~                                       }|*4
                                                 |
       ]],
       }
@@ -4954,7 +4901,7 @@ describe('API', function()
       screen:expect {
         grid = [[
         ^                                        |
-        {0:~                                       }|*4
+        {1:~                                       }|*4
         15                                      |
       ]],
       }
