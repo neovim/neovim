@@ -1,8 +1,8 @@
 " Vim filetype plugin.
-" Language:     Hare
+" Language:     Haredoc (Hare documentation format)
 " Maintainer:   Amelia Clarke <selene@perilune.dev>
-" Last Updated: 2024-05-10
-" Upstream:     https://git.sr.ht/~sircmpwn/hare.vim
+" Last Updated: 2024-05-02
+" Upstream:     https://git.sr.ht/~selene/hare.vim
 
 if exists('b:did_ftplugin')
   finish
@@ -12,17 +12,12 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-" Set the default compiler.
-compiler hare
-
 " Formatting settings.
-setlocal comments=://
-setlocal commentstring=//\ %s
+setlocal comments=:\	
 setlocal formatlistpat=^\ \\?-\ 
-setlocal formatoptions+=croqnlj/ formatoptions-=t
+setlocal formatoptions+=tnlj formatoptions-=c formatoptions-=q
 
 " Search for Hare modules.
-setlocal include=^\\s*use\\>
 setlocal includeexpr=hare#FindModule(v:fname)
 setlocal isfname+=:
 setlocal suffixesadd=.ha
@@ -31,7 +26,7 @@ setlocal suffixesadd=.ha
 setlocal path-=/usr/include,,
 let &l:path .= ',' .. hare#GetPath() .. ',,'
 
-let b:undo_ftplugin = 'setl cms< com< flp< fo< inc< inex< isf< pa< sua< mp<'
+let b:undo_ftplugin = 'setl com< flp< fo< inex< isf< pa< sua<'
 
 " Follow the Hare style guide by default.
 if get(g:, 'hare_recommended_style', 1)
@@ -42,16 +37,6 @@ if get(g:, 'hare_recommended_style', 1)
   setlocal textwidth=80
   let b:undo_ftplugin .= ' et< sts< sw< ts< tw<'
 endif
-
-augroup hare.vim
-  autocmd!
-
-  " Highlight whitespace errors by default.
-  if get(g:, 'hare_space_error', 1)
-    autocmd InsertEnter * hi link hareSpaceError NONE
-    autocmd InsertLeave * hi link hareSpaceError Error
-  endif
-augroup END
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
