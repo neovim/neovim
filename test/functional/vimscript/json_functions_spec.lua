@@ -646,7 +646,7 @@ describe('json_encode() function', function()
     eq('""', fn.json_encode(''))
     eq('"\\t"', fn.json_encode('\t'))
     eq('"\\n"', fn.json_encode('\n'))
-    eq('"\\u001B"', fn.json_encode('\27'))
+    eq('"\\u001b"', fn.json_encode('\27'))
     eq('"þÿþ"', fn.json_encode('þÿþ'))
   end)
 
