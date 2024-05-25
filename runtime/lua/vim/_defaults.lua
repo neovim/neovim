@@ -147,6 +147,22 @@ do
       require('vim._comment').textobject()
     end
     vim.keymap.set({ 'o' }, 'gc', textobject_rhs, { desc = 'Comment textobject' })
+
+    local insert_rhs = function()
+      return require('vim._comment').insert()
+    end
+    vim.keymap.set(
+      'i',
+      '<C-/>',
+      insert_rhs,
+      { expr = true, desc = 'Put comment markers around the cursor' }
+    )
+    vim.keymap.set(
+      'i',
+      '<C-_>', -- <C-/> is registered as <C-_> in some terminal emulators
+      insert_rhs,
+      { expr = true, desc = 'Put comment markers around the cursor' }
+    )
   end
 
   --- Default maps for LSP functions.

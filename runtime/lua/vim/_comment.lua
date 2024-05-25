@@ -260,4 +260,17 @@ local function textobject()
   vim.cmd('normal! ' .. lnum_from .. 'GV' .. lnum_to .. 'G')
 end
 
-return { operator = operator, textobject = textobject, toggle_lines = toggle_lines }
+local function insert()
+  local parts = get_comment_parts({ vim.fn.line('.'), vim.fn.col('.') })
+  return parts.left
+    .. parts.right
+    -- don't set undo point while moving the cursor
+    .. string.rep('<C-G>U<Left>', vim.fn.strchars(parts.right))
+end
+
+return {
+  insert = insert,
+  operator = operator,
+  textobject = textobject,
+  toggle_lines = toggle_lines,
+}

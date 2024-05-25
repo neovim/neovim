@@ -605,4 +605,7 @@ gc			Text object for the largest contiguous block of
 			`gcgc` uncomments a comment block; `dgc` deletes it).
 			Works only in Operator-pending mode.
 
+					*i_CTRL-/-default* *i_CTRL-_-default*
+<C-/>, <C-_>		In Insert-mode, put comment markers around the cursor.
+
  vim:noet:tw=78:ts=8:ft=help:norl:
