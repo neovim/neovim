@@ -239,6 +239,7 @@ local function check_tmux()
     return
   end
 
+  ---@param option string
   local get_tmux_option = function(option)
     local cmd = 'tmux show-option -qvg ' .. option -- try global scope
     local out = vim.fn.system(vim.fn.split(cmd))
@@ -378,7 +379,7 @@ local function check_terminal()
     'SSH_TTY',
   }) do
     if vim.env[env_var] then
-      health.info(vim.fn.printf('$%s="%s"', env_var, vim.env[env_var]))
+      health.info(string.format('$%s="%s"', env_var, vim.env[env_var]))
     end
   end
 end

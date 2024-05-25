@@ -458,7 +458,7 @@ local function dump_uncommitted(filename, uncommitted)
   local out_path = 'luacats-uncommited/' .. filename:gsub('/', '%%') .. '.txt'
   if #uncommitted > 0 then
     print(string.format('Could not commit %d objects in %s', #uncommitted, filename))
-    vim.fn.mkdir(assert(vim.fs.dirname(out_path)), 'p')
+    vim.fn.mkdir(vim.fs.dirname(out_path), 'p')
     local f = assert(io.open(out_path, 'w'))
     for i, x in ipairs(uncommitted) do
       f:write(i)

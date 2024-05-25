@@ -65,9 +65,7 @@ local function notify(msg)
   if #notifications == 0 then
     vim.schedule(function()
       if #notifications > 1 then
-        vim.notify(
-          ('TOhtml: %s (+ %d more warnings)'):format(notifications[1], tostring(#notifications - 1))
-        )
+        vim.notify(('TOhtml: %s (+ %d more warnings)'):format(notifications[1], #notifications - 1))
       elseif #notifications == 1 then
         vim.notify('TOhtml: ' .. notifications[1])
       end

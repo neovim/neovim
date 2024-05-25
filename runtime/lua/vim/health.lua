@@ -104,10 +104,10 @@ local function filepath_to_healthcheck(path)
     local subpath = path:gsub('.*lua/', '')
     if vim.fs.basename(subpath) == 'health.lua' then
       -- */health.lua
-      name = assert(vim.fs.dirname(subpath))
+      name = vim.fs.dirname(subpath)
     else
       -- */health/init.lua
-      name = assert(vim.fs.dirname(assert(vim.fs.dirname(subpath))))
+      name = vim.fs.dirname(vim.fs.dirname(subpath))
     end
     name = name:gsub('/', '.')
 
@@ -301,11 +301,13 @@ end
 local PATTERNS = { '/autoload/health/*.vim', '/lua/**/**/health.lua', '/lua/**/**/health/init.lua' }
 --- :checkhealth completion function used by cmdexpand.c get_healthcheck_names()
 M._complete = function()
-  local unique = vim
+  local unique = vim ---@type table<string,boolean>
+    ---@param pattern string
     .iter(vim.tbl_map(function(pattern)
       return vim.tbl_map(path2name, vim.api.nvim_get_runtime_file(pattern, true))
     end, PATTERNS))
     :flatten()
+    ---@param t table<string,boolean>
     :fold({}, function(t, name)
       t[name] = true -- Remove duplicates
       return t
@@ -364,7 +366,7 @@ function M._check(mods, plugin_names)
       vim.fn.call(func, {})
     else
       local f = assert(loadstring(func))
-      local ok, output = pcall(f)
+      local ok, output = pcall(f) ---@type boolean, string
       if not ok then
         M.error(
           string.format('Failed to run healthcheck for "%s" plugin. Exception:\n%s\n', name, output)
@@ -391,7 +393,7 @@ function M._check(mods, plugin_names)
     end
     s_output[#s_output + 1] = ''
     s_output = vim.list_extend(header, s_output)
-    vim.fn.append('$', s_output)
+    vim.fn.append(vim.fn.line('$'), s_output)
     vim.cmd.redraw()
   end
 

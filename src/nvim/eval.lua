@@ -2133,6 +2133,7 @@ M.funcs = {
     name = 'exepath',
     params = { { 'expr', 'any' } },
     signature = 'exepath({expr})',
+    returns = 'string',
   },
   exists = {
     args = 1,
