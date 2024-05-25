@@ -41,7 +41,10 @@ local function check_active_clients()
       end
       report_info(table.concat({
         string.format('%s (id: %d)', client.name, client.id),
-        string.format('  Root directory: %s', vim.fn.fnamemodify(client.root_dir, ':~')),
+        string.format(
+          '  Root directory: %s',
+          client.root_dir and vim.fn.fnamemodify(client.root_dir, ':~') or nil
+        ),
         string.format('  Command: %s', cmd),
         string.format('  Settings: %s', vim.inspect(client.settings, { newline = '\n  ' })),
         string.format(
