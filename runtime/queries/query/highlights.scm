@@ -5,9 +5,6 @@
 (capture
   (identifier) @type)
 
-(anonymous_node
-  (identifier) @string)
-
 (predicate
   name: (identifier) @function.call)
 
