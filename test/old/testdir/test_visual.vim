@@ -2077,16 +2077,40 @@ func Test_visual_getregion()
           \ getregion(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
     call assert_equal([
           \   [[bufnr('%'), 1, 5, 0], [bufnr('%'), 1, 5, 0]],
-          \   [[bufnr('%'), 2, 10, 1], [bufnr('%'), 2, 10, 2]],
+          \   [[bufnr('%'), 2, 7, 1], [bufnr('%'), 2, 7, 2]],
           \   [[bufnr('%'), 3, 5, 0], [bufnr('%'), 3, 5, 0]],
           \ ],
           \ getregionpos(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
+    call assert_equal(['efghijk«', '🇦«🇧«🇨«🇩', '12345'],
+          \ getregion(getpos('v'), getpos('.'), {'type': 'v' }))
     call assert_equal([
           \   [[bufnr('%'), 1, 5, 0], [bufnr('%'), 1, 13, 0]],
           \   [[bufnr('%'), 2, 1, 0], [bufnr('%'), 2, 22, 0]],
           \   [[bufnr('%'), 3, 1, 0], [bufnr('%'), 3, 5, 0]],
           \ ],
           \ getregionpos(getpos('v'), getpos('.'), {'type': 'v' }))
+
+    call cursor(1, 5)
+    call feedkeys("\<Esc>\<C-v>5l2j", 'xt')
+    call assert_equal(['efghij', ' «🇨« ', '567890'],
+          \ getregion(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
+    call assert_equal([
+          \   [[bufnr('%'), 1, 5, 0], [bufnr('%'), 1, 10, 0]],
+          \   [[bufnr('%'), 2, 7, 1], [bufnr('%'), 2, 19, 1]],
+          \   [[bufnr('%'), 3, 5, 0], [bufnr('%'), 3, 10, 0]],
+          \ ],
+          \ getregionpos(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
+
+    call cursor(1, 4)
+    call feedkeys("\<Esc>\<C-v>02j", 'xt')
+    call assert_equal(['abcd', '🇦« ', '1234'],
+          \ getregion(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
+    call assert_equal([
+          \   [[bufnr('%'), 1, 1, 0], [bufnr('%'), 1, 4, 0]],
+          \   [[bufnr('%'), 2, 1, 0], [bufnr('%'), 2, 7, 1]],
+          \   [[bufnr('%'), 3, 1, 0], [bufnr('%'), 3, 4, 0]],
+          \ ],
+          \ getregionpos(getpos('v'), getpos('.'), {'type': "\<C-v>" }))
 
     #" characterwise selection with multibyte chars
     call cursor(1, 1)
