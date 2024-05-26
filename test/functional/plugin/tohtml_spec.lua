@@ -287,7 +287,13 @@ describe(':TOhtml', function()
         0,
         { virt_text = { { 'foo' } }, virt_text_pos = 'overlay' }
       )
-      api.nvim_buf_set_extmark(0, ns, 2, 0, { virt_text = { { 'foo' } }, virt_text_pos = 'inline' })
+      api.nvim_buf_set_extmark(
+        0,
+        ns,
+        2,
+        0,
+        { virt_text = { { 'fo┊o', { 'Conceal', 'Comment' } } }, virt_text_pos = 'inline' }
+      )
       --api.nvim_buf_set_extmark(0,ns,3,0,{virt_text={{'foo'}},virt_text_pos='right_align'})
       run_tohtml_and_assert(screen)
     end)

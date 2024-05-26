@@ -188,6 +188,8 @@ local background_color_cache = nil
 --- @type string?
 local foreground_color_cache = nil
 
+local len = vim.api.nvim_strwidth
+
 --- @see https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
 --- @param color "background"|"foreground"|integer
 --- @return string?
@@ -312,9 +314,12 @@ local function style_line_insert_virt_text(style_line, col, val)
 end
 
 --- @param state vim.tohtml.state
---- @param hl string|integer|nil
+--- @param hl string|integer|string[]|integer[]?
 --- @return nil|integer
 local function register_hl(state, hl)
+  if type(hl) == 'table' then
+    hl = hl[#hl]
+  end
   if type(hl) == 'nil' then
     return
   elseif type(hl) == 'string' then
@@ -537,7 +542,7 @@ local function _styletable_extmarks_virt_text(state, extmark, namespaces)
       else
         style_line_insert_virt_text(styletable[row + 1], col + 1, { i[1], hlid })
       end
-      virt_text_len = virt_text_len + #i[1]
+      virt_text_len = virt_text_len + len(i[1])
     end
     if extmark[4].virt_text_pos == 'overlay' then
       styletable_insert_range(state, row + 1, col + 1, row + 1, col + virt_text_len + 1, HIDE_ID)
@@ -782,7 +787,7 @@ local function styletable_statuscolumn(state)
       statuscolumn,
       { winid = state.winid, use_statuscol_lnum = row, highlights = true }
     )
-    local width = vim.api.nvim_strwidth(status.str)
+    local width = len(status.str)
     if width > minwidth then
       minwidth = width
     end
@@ -797,7 +802,7 @@ local function styletable_statuscolumn(state)
     for k, v in ipairs(hls) do
       local text = str:sub(v.start + 1, hls[k + 1] and hls[k + 1].start or nil)
       if k == #hls then
-        text = text .. (' '):rep(minwidth - vim.api.nvim_strwidth(str))
+        text = text .. (' '):rep(minwidth - len(str))
       end
       if text ~= '' then
         local hlid = register_hl(state, v.group)
@@ -817,7 +822,6 @@ local function styletable_listchars(state)
   local function utf8_sub(str, i, j)
     return vim.fn.strcharpart(str, i - 1, j and j - i + 1 or nil)
   end
-  local len = vim.api.nvim_strwidth
   --- @type table<string,string>
   local listchars = vim.opt_local.listchars:get()
   local ids = setmetatable({}, {
