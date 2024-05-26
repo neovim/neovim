@@ -356,35 +356,6 @@ typedef struct {
   PMap(cstr_t) file_marks;  ///< All file marks.
 } WriteMergerState;
 
-typedef struct sd_read_def ShaDaReadDef;
-
-/// Function used to close files defined by ShaDaReadDef
-typedef void (*ShaDaReadCloser)(ShaDaReadDef *const sd_reader)
-  REAL_FATTR_NONNULL_ALL;
-
-/// Function used to read ShaDa files
-typedef ptrdiff_t (*ShaDaFileReader)(ShaDaReadDef *const sd_reader,
-                                     void *const dest,
-                                     const size_t size)
-  REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
-
-/// Function used to skip in ShaDa files
-typedef int (*ShaDaFileSkipper)(ShaDaReadDef *const sd_reader,
-                                const size_t offset)
-  REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
-
-/// Structure containing necessary pointers for reading ShaDa files
-struct sd_read_def {
-  ShaDaFileReader read;   ///< Reader function.
-  ShaDaReadCloser close;  ///< Close function.
-  ShaDaFileSkipper skip;  ///< Function used to skip some bytes.
-  void *cookie;           ///< Data describing object read from.
-  bool eof;               ///< True if reader reached end of file.
-  const char *error;      ///< Error message in case of error.
-  uintmax_t fpos;         ///< Current position (amount of bytes read since
-                          ///< reader structure initialization). May overflow.
-};
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "shada.c.generated.h"
 #endif
@@ -587,70 +558,6 @@ static inline void hmll_dealloc(HMLList *const hmll)
   xfree(hmll->entries);
 }
 
-/// Wrapper for reading from file descriptors
-///
-/// @return -1 or number of bytes read.
-static ptrdiff_t read_file(ShaDaReadDef *const sd_reader, void *const dest, const size_t size)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  const ptrdiff_t ret = file_read(sd_reader->cookie, dest, size);
-  sd_reader->eof = file_eof(sd_reader->cookie);
-  if (ret < 0) {
-    sd_reader->error = os_strerror((int)ret);
-    return -1;
-  }
-  sd_reader->fpos += (size_t)ret;
-  return ret;
-}
-
-/// Read one character
-static int read_char(ShaDaReadDef *const sd_reader)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  uint8_t ret;
-  ptrdiff_t read_bytes = sd_reader->read(sd_reader, &ret, 1);
-  if (read_bytes != 1) {
-    return EOF;
-  }
-  return (int)ret;
-}
-
-/// Wrapper for closing file descriptors opened for reading
-static void close_sd_reader(ShaDaReadDef *const sd_reader)
-  FUNC_ATTR_NONNULL_ALL
-{
-  close_file(sd_reader->cookie);
-  xfree(sd_reader->cookie);
-}
-
-/// Wrapper for read that reads to IObuff and ignores bytes read
-///
-/// Used for skipping.
-///
-/// @param[in,out]  sd_reader  File read.
-/// @param[in]      offset     Amount of bytes to skip.
-///
-/// @return FAIL in case of failure, OK in case of success. May set
-///         sd_reader->eof or sd_reader->error.
-static int sd_reader_skip_read(ShaDaReadDef *const sd_reader, const size_t offset)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  const ptrdiff_t skip_bytes = file_skip(sd_reader->cookie, offset);
-  if (skip_bytes < 0) {
-    sd_reader->error = os_strerror((int)skip_bytes);
-    return FAIL;
-  } else if (skip_bytes != (ptrdiff_t)offset) {
-    assert(skip_bytes < (ptrdiff_t)offset);
-    sd_reader->eof = file_eof(sd_reader->cookie);
-    if (!sd_reader->eof) {
-      sd_reader->error = _("too few bytes read");
-    }
-    return FAIL;
-  }
-  sd_reader->fpos += (size_t)skip_bytes;
-  return OK;
-}
-
 /// Wrapper for read that can be used when lseek cannot be used
 ///
 /// E.g. when trying to read from a pipe.
@@ -660,53 +567,28 @@ static int sd_reader_skip_read(ShaDaReadDef *const sd_reader, const size_t offse
 ///
 /// @return kSDReadStatusReadError, kSDReadStatusNotShaDa or
 ///         kSDReadStatusSuccess.
-static ShaDaReadResult sd_reader_skip(ShaDaReadDef *const sd_reader, const size_t offset)
+static ShaDaReadResult sd_reader_skip(FileDescriptor *const sd_reader, const size_t offset)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  if (sd_reader->skip(sd_reader, offset) != OK) {
-    if (sd_reader->error != NULL) {
-      semsg(_(SERR "System error while skipping in ShaDa file: %s"),
-            sd_reader->error);
-      return kSDReadStatusReadError;
-    } else if (sd_reader->eof) {
+  const ptrdiff_t skip_bytes = file_skip(sd_reader, offset);
+  if (skip_bytes < 0) {
+    semsg(_(SERR "System error while skipping in ShaDa file: %s"),
+          os_strerror((int)skip_bytes));
+    return kSDReadStatusReadError;
+  } else if (skip_bytes != (ptrdiff_t)offset) {
+    assert(skip_bytes < (ptrdiff_t)offset);
+    if (file_eof(sd_reader)) {
       semsg(_(RCERR "Error while reading ShaDa file: "
               "last entry specified that it occupies %" PRIu64 " bytes, "
               "but file ended earlier"),
             (uint64_t)offset);
-      return kSDReadStatusNotShaDa;
+    } else {
+      semsg(_(SERR "System error while skipping in ShaDa file: %s"),
+            _("too few bytes read"));
     }
-    abort();
+    return kSDReadStatusNotShaDa;
   }
   return kSDReadStatusSuccess;
-}
-
-/// Open ShaDa file for reading
-///
-/// @param[in]   fname      File name to open.
-/// @param[out]  sd_reader  Location where reader structure will be saved.
-///
-/// @return libuv error in case of error, 0 otherwise.
-static int open_shada_file_for_reading(const char *const fname, ShaDaReadDef *sd_reader)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
-{
-  *sd_reader = (ShaDaReadDef) {
-    .read = &read_file,
-    .close = &close_sd_reader,
-    .skip = &sd_reader_skip_read,
-    .error = NULL,
-    .eof = false,
-    .fpos = 0,
-    .cookie = xmalloc(sizeof(FileDescriptor)),
-  };
-  int error = file_open(sd_reader->cookie, fname, kFileReadOnly, 0);
-  if (error) {
-    XFREE_CLEAR(sd_reader->cookie);
-    return error;
-  }
-
-  assert(strcmp(p_enc, "utf-8") == 0);
-
-  return 0;
 }
 
 /// Wrapper for closing file descriptors
@@ -757,8 +639,8 @@ static int shada_read_file(const char *const file, const int flags)
 
   char *const fname = shada_filename(file);
 
-  ShaDaReadDef sd_reader;
-  const int of_ret = open_shada_file_for_reading(fname, &sd_reader);
+  FileDescriptor sd_reader;
+  int of_ret = file_open(&sd_reader, fname, kFileReadOnly, 0);
 
   if (p_verbose > 1) {
     verbose_enter();
@@ -782,7 +664,7 @@ static int shada_read_file(const char *const file, const int flags)
   xfree(fname);
 
   shada_read(&sd_reader, flags);
-  sd_reader.close(&sd_reader);
+  close_file(&sd_reader);
 
   return OK;
 }
@@ -1094,7 +976,7 @@ static inline bool marks_equal(const pos_T a, const pos_T b)
 ///
 /// @param[in]  sd_reader  Structure containing file reader definition.
 /// @param[in]  flags      What to read, see ShaDaReadFileFlags enum.
-static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
+static void shada_read(FileDescriptor *const sd_reader, const int flags)
   FUNC_ATTR_NONNULL_ALL
 {
   list_T *oldfiles_list = get_vim_var_list(VV_OLDFILES);
@@ -1849,13 +1731,13 @@ static int compare_file_marks(const void *a, const void *b)
 ///
 /// @return kSDReadStatusNotShaDa, kSDReadStatusReadError or
 ///         kSDReadStatusSuccess.
-static inline ShaDaReadResult shada_parse_msgpack(ShaDaReadDef *const sd_reader,
+static inline ShaDaReadResult shada_parse_msgpack(FileDescriptor *const sd_reader,
                                                   const size_t length,
                                                   msgpack_unpacked *ret_unpacked,
                                                   char **const ret_buf)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
-  const uintmax_t initial_fpos = sd_reader->fpos;
+  const uintmax_t initial_fpos = sd_reader->bytes_read;
   char *const buf = xmalloc(length);
 
   const ShaDaReadResult fl_ret = fread_len(sd_reader, buf, length);
@@ -2021,7 +1903,7 @@ static const char *shada_format_pfreed_entry(const PossiblyFreedShadaEntry pfs_e
 /// @param[in,out]  ret_wms     Location where results are saved.
 /// @param[out]     packer      MessagePack packer for entries which are not
 ///                             merged.
-static inline ShaDaWriteResult shada_read_when_writing(ShaDaReadDef *const sd_reader,
+static inline ShaDaWriteResult shada_read_when_writing(FileDescriptor *const sd_reader,
                                                        const unsigned srni_flags,
                                                        const size_t max_kbyte,
                                                        WriteMergerState *const wms,
@@ -2483,7 +2365,8 @@ static int hist_type2char(const int type)
 /// @param[in]  sd_reader  Structure containing file reader definition. If it is
 ///                        not NULL then contents of this file will be merged
 ///                        with current Neovim runtime.
-static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer, ShaDaReadDef *const sd_reader)
+static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
+                                    FileDescriptor *const sd_reader)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   ShaDaWriteResult ret = kSDWriteSuccessful;
@@ -2958,12 +2841,13 @@ int shada_write_file(const char *const file, bool nomerge)
   char *const fname = shada_filename(file);
   char *tempname = NULL;
   FileDescriptor sd_writer;
-  ShaDaReadDef sd_reader = { .close = NULL };
+  FileDescriptor sd_reader;
   bool did_open_writer = false;
+  bool did_open_reader = false;
 
   if (!nomerge) {
     int error;
-    if ((error = open_shada_file_for_reading(fname, &sd_reader)) != 0) {
+    if ((error = file_open(&sd_reader, fname, kFileReadOnly, 0)) != 0) {
       if (error != UV_ENOENT) {
         semsg(_(SERR "System error while opening ShaDa file %s for reading "
                 "to merge before writing it: %s"),
@@ -2973,6 +2857,8 @@ int shada_write_file(const char *const file, bool nomerge)
       }
       nomerge = true;
       goto shada_write_file_nomerge;
+    } else {
+      did_open_reader = true;
     }
     tempname = modname(fname, ".tmp.a", false);
     if (tempname == NULL) {
@@ -3001,8 +2887,9 @@ shada_write_file_open: {}
                 fname);
           xfree(fname);
           xfree(tempname);
-          assert(sd_reader.close != NULL);
-          sd_reader.close(&sd_reader);
+          if (did_open_reader) {
+            close_file(&sd_reader);
+          }
           return FAIL;
         }
         (*wp)++;
@@ -3047,8 +2934,8 @@ shada_write_file_nomerge: {}
   if (!did_open_writer) {
     xfree(fname);
     xfree(tempname);
-    if (sd_reader.cookie != NULL) {
-      sd_reader.close(&sd_reader);
+    if (did_open_reader) {
+      close_file(&sd_reader);
     }
     return FAIL;
   }
@@ -3062,7 +2949,9 @@ shada_write_file_nomerge: {}
   const ShaDaWriteResult sw_ret = shada_write(&sd_writer, (nomerge ? NULL : &sd_reader));
   assert(sw_ret != kSDWriteIgnError);
   if (!nomerge) {
-    sd_reader.close(&sd_reader);
+    if (did_open_reader) {
+      close_file(&sd_reader);
+    }
     bool did_remove = false;
     if (sw_ret == kSDWriteSuccessful) {
       FileInfo old_info;
@@ -3235,18 +3124,18 @@ static inline uint64_t be64toh(uint64_t big_endian_64_bits)
 /// @return kSDReadStatusSuccess if everything was OK, kSDReadStatusNotShaDa if
 ///         there were not enough bytes to read or kSDReadStatusReadError if
 ///         there was some error while reading.
-static ShaDaReadResult fread_len(ShaDaReadDef *const sd_reader, char *const buffer,
+static ShaDaReadResult fread_len(FileDescriptor *const sd_reader, char *const buffer,
                                  const size_t length)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const ptrdiff_t read_bytes = sd_reader->read(sd_reader, buffer, length);
+  const ptrdiff_t read_bytes = file_read(sd_reader, buffer, length);
+  if (read_bytes < 0) {
+    semsg(_(SERR "System error while reading ShaDa file: %s"),
+          os_strerror((int)read_bytes));
+    return kSDReadStatusReadError;
+  }
 
   if (read_bytes != (ptrdiff_t)length) {
-    if (sd_reader->error != NULL) {
-      semsg(_(SERR "System error while reading ShaDa file: %s"),
-            sd_reader->error);
-      return kSDReadStatusReadError;
-    }
     semsg(_(RCERR "Error while reading ShaDa file: "
             "last entry specified that it occupies %" PRIu64 " bytes, "
             "but file ended earlier"),
@@ -3272,26 +3161,32 @@ static ShaDaReadResult fread_len(ShaDaReadDef *const sd_reader, char *const buff
 /// @return kSDReadStatusSuccess if reading was successful,
 ///         kSDReadStatusNotShaDa if there were not enough bytes to read or
 ///         kSDReadStatusReadError if reading failed for whatever reason.
-static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const int first_char,
+///         kSDReadStatusFinished if eof and that was allowed
+static ShaDaReadResult msgpack_read_uint64(FileDescriptor *const sd_reader, bool allow_eof,
                                            uint64_t *const result)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const uintmax_t fpos = sd_reader->fpos - 1;
+  const uintmax_t fpos = sd_reader->bytes_read;
 
-  if (first_char == EOF) {
-    if (sd_reader->error) {
-      semsg(_(SERR "System error while reading integer from ShaDa file: %s"),
-            sd_reader->error);
-      return kSDReadStatusReadError;
-    } else if (sd_reader->eof) {
-      semsg(_(RCERR "Error while reading ShaDa file: "
-              "expected positive integer at position %" PRIu64
-              ", but got nothing"),
-            (uint64_t)fpos);
-      return kSDReadStatusNotShaDa;
+  uint8_t ret;
+  ptrdiff_t read_bytes = file_read(sd_reader, (char *)&ret, 1);
+
+  if (read_bytes < 0) {
+    semsg(_(SERR "System error while reading integer from ShaDa file: %s"),
+          os_strerror((int)read_bytes));
+    return kSDReadStatusReadError;
+  } else if (read_bytes == 0) {
+    if (allow_eof && file_eof(sd_reader)) {
+      return kSDReadStatusFinished;
     }
+    semsg(_(RCERR "Error while reading ShaDa file: "
+            "expected positive integer at position %" PRIu64
+            ", but got nothing"),
+          (uint64_t)fpos);
+    return kSDReadStatusNotShaDa;
   }
 
+  int first_char = (int)ret;
   if (~first_char & 0x80) {
     // Positive fixnum
     *result = (uint64_t)((uint8_t)first_char);
@@ -3465,8 +3360,9 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
 ///                         greater then given.
 ///
 /// @return Any value from ShaDaReadResult enum.
-static ShaDaReadResult shada_read_next_item(ShaDaReadDef *const sd_reader, ShadaEntry *const entry,
-                                            const unsigned flags, const size_t max_kbyte)
+static ShaDaReadResult shada_read_next_item(FileDescriptor *const sd_reader,
+                                            ShadaEntry *const entry, const unsigned flags,
+                                            const size_t max_kbyte)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   ShaDaReadResult ret = kSDReadStatusMalformed;
@@ -3476,7 +3372,7 @@ shada_read_next_item_start:
   // somebody calls goto shada_read_next_item_error before anything is set in
   // the switch.
   CLEAR_POINTER(entry);
-  if (sd_reader->eof) {
+  if (file_eof(sd_reader)) {
     return kSDReadStatusFinished;
   }
 
@@ -3486,19 +3382,15 @@ shada_read_next_item_start:
   uint64_t timestamp_u64;
   uint64_t length_u64;
 
-  const uint64_t initial_fpos = (uint64_t)sd_reader->fpos;
-  const int first_char = read_char(sd_reader);
-  if (first_char == EOF && sd_reader->eof) {
-    return kSDReadStatusFinished;
-  }
+  const uint64_t initial_fpos = sd_reader->bytes_read;
 
   ShaDaReadResult mru_ret;
-  if (((mru_ret = msgpack_read_uint64(sd_reader, first_char, &type_u64))
+  if (((mru_ret = msgpack_read_uint64(sd_reader, true, &type_u64))
        != kSDReadStatusSuccess)
-      || ((mru_ret = msgpack_read_uint64(sd_reader, read_char(sd_reader),
+      || ((mru_ret = msgpack_read_uint64(sd_reader, false,
                                          &timestamp_u64))
           != kSDReadStatusSuccess)
-      || ((mru_ret = msgpack_read_uint64(sd_reader, read_char(sd_reader),
+      || ((mru_ret = msgpack_read_uint64(sd_reader, false,
                                          &length_u64))
           != kSDReadStatusSuccess)) {
     return mru_ret;
@@ -4158,63 +4050,6 @@ void shada_encode_gvars(msgpack_sbuffer *const sbuf)
   } while (var_iter != NULL);
 }
 
-/// Wrapper for reading from msgpack_sbuffer.
-///
-/// @return number of bytes read.
-static ptrdiff_t read_sbuf(ShaDaReadDef *const sd_reader, void *const dest, const size_t size)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  msgpack_sbuffer *sbuf = (msgpack_sbuffer *)sd_reader->cookie;
-  const uintmax_t bytes_read = MIN(size, sbuf->size - sd_reader->fpos);
-  if (bytes_read < size) {
-    sd_reader->eof = true;
-  }
-  memcpy(dest, sbuf->data + sd_reader->fpos, (size_t)bytes_read);
-  sd_reader->fpos += bytes_read;
-  return (ptrdiff_t)bytes_read;
-}
-
-/// Wrapper for read that ignores bytes read from msgpack_sbuffer.
-///
-/// Used for skipping.
-///
-/// @param[in,out]  sd_reader  ShaDaReadDef with msgpack_sbuffer.
-/// @param[in]      offset     Amount of bytes to skip.
-///
-/// @return FAIL in case of failure, OK in case of success. May set
-///         sd_reader->eof.
-static int sd_sbuf_reader_skip_read(ShaDaReadDef *const sd_reader, const size_t offset)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  msgpack_sbuffer *sbuf = (msgpack_sbuffer *)sd_reader->cookie;
-  assert(sbuf->size >= sd_reader->fpos);
-  const uintmax_t skip_bytes = MIN(offset, sbuf->size - sd_reader->fpos);
-  if (skip_bytes < offset) {
-    sd_reader->eof = true;
-    return FAIL;
-  }
-  sd_reader->fpos += offset;
-  return OK;
-}
-
-/// Prepare ShaDaReadDef with msgpack_sbuffer for reading.
-///
-/// @param[in]   sbuf       msgpack_sbuffer to read from.
-/// @param[out]  sd_reader  Location where reader structure will be saved.
-static void open_shada_sbuf_for_reading(const msgpack_sbuffer *const sbuf, ShaDaReadDef *sd_reader)
-  FUNC_ATTR_NONNULL_ALL
-{
-  *sd_reader = (ShaDaReadDef) {
-    .read = &read_sbuf,
-    .close = NULL,
-    .skip = &sd_sbuf_reader_skip_read,
-    .error = NULL,
-    .eof = false,
-    .fpos = 0,
-    .cookie = (void *)sbuf,
-  };
-}
-
 /// Read ShaDa from msgpack_sbuffer.
 ///
 /// @param[in]  file   msgpack_sbuffer to read from.
@@ -4226,7 +4061,8 @@ void shada_read_sbuf(msgpack_sbuffer *const sbuf, const int flags)
   if (sbuf->data == NULL) {
     return;
   }
-  ShaDaReadDef sd_reader;
-  open_shada_sbuf_for_reading(sbuf, &sd_reader);
+  FileDescriptor sd_reader;
+  file_open_buffer(&sd_reader, sbuf->data, sbuf->size);
   shada_read(&sd_reader, flags);
+  close_file(&sd_reader);
 }

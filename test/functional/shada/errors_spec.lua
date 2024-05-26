@@ -28,7 +28,7 @@ describe('ShaDa error handling', function()
   it('fails on zero', function()
     wshada('\000')
     eq(
-      'Vim(rshada):E576: Error while reading ShaDa file: expected positive integer at position 0, but got nothing',
+      'Vim(rshada):E576: Error while reading ShaDa file: expected positive integer at position 1, but got nothing',
       exc_exec(sdrcmd())
     )
   end)
