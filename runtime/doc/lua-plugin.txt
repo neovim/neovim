@@ -1,0 +1,290 @@
+*lua-plugin.txt*                       Nvim
+
+                            NVIM REFERENCE MANUAL
+
+                    Tutorial on how to write a Lua plugin
+
+
+                                       Type |gO| to see the table of contents.
+
+==============================================================================
+Introduction                                                        *lua-plugin*
+
+Writing a Lua plugin from scratch can be overwhelming. This tutorial is aimed
+to provide basic guidance for it in the form of hands-on example. We will be
+building a plugin called "no-trailing" with scope to provide functionality
+to remove last (i.e. trailing) blank lines (i.e. containing only whitespace)
+in the buffer.
+
+An important disclaimer: Nvim allows flexible approaches to creating Lua
+plugins and is constantly evolving. This tutorial intentionally omits
+providing hard guidelines preferring instead to list some common approaches
+with their pros and cons.
+
+It is a good idea to understand at least basics of the following topics:
+
+• Lua language. See |luaref| and |lua-concepts|.
+• Lua in Nvim. See |lua-guide|.
+• Reading and searching help. See |help.txt| and |:helpgrep|.
+• File system operations, like creating file and directories.
+
+==============================================================================
+Lua code                                                        *lua-plugin-lua*
+
+The core functionality of any Lua plugin is its code. It is located in `lua/`
+subdirectory of the plugin.
+
+First start by creating a directory `no-trailing/` inside your 'runtimepath'.
+In this tutorial let's use the following path:
+`$XDG_DATA_HOME/nvim/site/pack/tutorial/start/no-trailing` (see |$XDG_DATA_HOME
+for its value on your system). The reason to choose this complicated path is
+because it utilizes built-in |packages| functionality to make this plugin
+installed in your config.
+
+The newly created `no-trailing/` directory will be treated as root for all
+relative paths used here. In particular as a first commented line in code
+blocks to describe where it should be placed.
+
+Now let's create a `lua/no-trailing/init.lua` file. It will contain the Lua
+code implementing core functionality. For plugin that removes trailing lines
+it can be something like this:
+>lua
+    -- lua/no-trailing/init.lua
+
+    -- Create a table to store and later return module's user facing functions
+    -- Using `M` is a popular convention, but any name is possible
+    local M = {}
+
+    -- Create user facing function
+    M.trim = function(buf_id, opts)
+      -- Validate required arguments
+      local ok, is_buf_valid = pcall(vim.api.nvim_buf_is_valid, buf_id)
+      assert(ok and is_buf_valid, '`buf_id` is not a valid buffer identifier')
+
+      -- Infer and validate optional arguments
+      opts = vim.tbl_deep_extend('force', { empty = false }, opts or {})
+      assert(type(opts.empty) == 'boolean', '`opts.empty` is not boolean')
+
+      -- Compute number of the first line to be removed: iterate from the end
+      -- backwards and stop when line is not target depending on `empty`
+      local target_pattern = opts.empty and '^$' or '^%s*$'
+      local lines = vim.api.nvim_buf_get_lines(buf_id, 0, -1, false)
+      local start_line
+      for i = #lines, 1, -1 do
+        if lines[i]:find(target_pattern) == nil then
+          start_line = i
+          break
+        end
+      end
+      start_line = start_line or 0
+
+      -- Remove trailing lines
+      vim.api.nvim_buf_set_lines(buf_id, start_line, -1, false, {})
+    end
+
+    -- Return the module. This must be the last of the file.
+    return M
+<
+And this is it. You have create a Lua plugin. Users now can install it
+(i.e. put the whole `no-trailing/` directory in their 'runtimepath' manually
+or via plugin manager) and use it directly with `require()`:
+
+• Any of `require('no-trailing').trim(0)`, `require('no-trailing').trim(0, {})`,
+  or `require('no-trailing').trim(0, { empty = false })` removes all
+  blank trailing lines.
+
+• `require('no-trailing').trim(0, { empty = true })` removes only empty
+  trailing lines.
+
+• Any of `require('no-trailing').trim()`, `require('no-trailing').setup('a')`,
+  `require('no-trailing').trim(0, { empty = 'a' })` will throw an error.
+
+Notes:
+
+• Choosing function scope (i.e. what it does) is up to you. Usually preferring
+  the functionality just enough for it to be useful for target audience is
+  a good approach. You can see what Nvim does in |dev-lua|.
+
+• Choosing names for plugin/function/arguments/options is up to you. Usually
+  choosing a short "to the point" yet descriptive name is a good approach.
+  You can see what Nvim does in |dev-naming|.
+
+• Choosing function signature (i.e its arguments) is up to you. Preferring
+  first mandatory arguments followed by a single optional table `opts` with
+  optional arguments is a common convention.
+  You can see what Nvim uses in |dev-patterns| and |dev-api|.
+
+• To interactively test latest plugin functionality, open separate fresh Nvim
+  instance with plugin loaded and interact with it.
+
+------------------------------------------------------------------------------
+Restructuring Lua code                                  *lua-plugin-restructure*
+
+Using single Lua file in plugin is possible, yet may become not easy to manage
+if it becomes too big. To overcome this, code can be split into separate
+modules and used inside each other with |require()|.
+
+In our 'no-trailing' plugin computation of the first trailing line can be
+moved into a separate `lua/no-trailing/utils.lua` file:
+>lua
+    -- lua/no-trailing/utils.lua
+
+    local M = {}
+
+    M.get_last_trailing = function(buf_id, empty)
+      local target_pattern = empty and '^$' or '^%s*$'
+      local lines = vim.api.nvim_buf_get_lines(buf_id, 0, -1, false)
+      for i = #lines, 1, -1 do
+        if lines[i]:find(target_pattern) == nil then
+          -- Moving computation into a separate function allows using the
+          -- "early return" pattern
+          return i
+        end
+      end
+      return 0
+    end
+
+    return M
+<
+
+Now there are two main approaches on how this can be used in main module:
+eager loading and lazy loading.
+
+Eager approach is about sourcing "helper" module during source "main" module:
+>lua
+    -- lua/no-trailing/init.lua
+
+    local M = {}
+
+    -- This will make initial source of 'no-trailing.utils' module
+    -- during initial source of this module
+    local utils = require('no-trailing.utils')
+
+    M.trim = function(buf_id, opts)
+      local ok, is_buf_valid = pcall(vim.api.nvim_buf_is_valid, buf_id)
+      assert(ok and is_buf_valid, '`buf_id` is not a valid buffer identifier')
+
+      opts = vim.tbl_deep_extend('force', { empty = false }, opts or {})
+      assert(type(opts.empty) == 'boolean', '`opts.empty` is not boolean')
+
+      local start_line = utils.get_last_trailing(buf_id, opts.empty)
+      vim.api.nvim_buf_set_lines(buf_id, start_line, -1, false, {})
+    end
+
+    return M
+<
+Lazy approach is about sourcing "helper" module during function execution:
+>lua
+    -- lua/no-trailing/init.lua
+
+    local M = {}
+
+    M.trim = function(buf_id, opts)
+      local ok, is_buf_valid = pcall(vim.api.nvim_buf_is_valid, buf_id)
+      assert(ok and is_buf_valid, '`buf_id` is not a valid buffer identifier')
+
+      opts = vim.tbl_deep_extend('force', { empty = false }, opts or {})
+      assert(type(opts.empty) == 'boolean', '`opts.empty` is not boolean')
+
+      -- This will make initial source of 'no-trailing.utils' module
+      -- during first function execution
+      local utils = require('no-trailing.utils')
+      local start_line = utils.get_last_trailing(buf_id, opts.empty)
+      vim.api.nvim_buf_set_lines(buf_id, start_line, -1, false, {})
+    end
+
+    return M
+<
+Both eager and lazy loading Lua modules have pros and cons:
+
+• Eager loading leads to spending more time during initial source of main
+  module, which is often during startup.
+  Lazy loading spends that extra time only when it is needed.
+  This rarely matters for small modules which only consists from function
+  definitions, but can be significant for modules which do something time
+  consuming during their initial source or in case of large amount of modules.
+
+• Eager loading results in a more structured code with less lines.
+
+• Lazy loading results in a constant calls of `require()` during each function
+  execution. Although it caches its results, the time it spends to search the
+  cache is not strictly zero, which leads to a very small overhead (usually
+  order of fractions of a microsecond). This might matter for frequently
+  called functions.
+
+Usually both approaches are fine. Using eager loading and preferring lazy
+loading for expensive to source modules is usually a good idea.
+
+==============================================================================
+Creating side effects                                  *lua-plugin-side-effects*
+
+TODO:
+- Justification.
+- Where to put code: 'plugin/' directory or exported `setup()` in 'init.lua'.
+  List pros and cons of each.
+
+------------------------------------------------------------------------------
+Mappings                                                   *lua-plugin-mappings*
+
+TODO:
+- How to manage mappings: create directly, create via `<Plug>`, or export Lua
+  function.
+
+------------------------------------------------------------------------------
+User commands                                         *lua-plugin-user-commands*
+
+TODO:
+- How to create a user command.
+
+------------------------------------------------------------------------------
+Autocommands                                           *lua-plugin-autocommands*
+
+TODO:
+- How to create autocommands.
+
+------------------------------------------------------------------------------
+Highlight groups                                   *lua-plugin-highlight-groups*
+
+TODO:
+- How to create default highlight groups which are used in the plugin.
+
+==============================================================================
+Documentation                                         *lua-plugin-documentation*
+
+TODO:
+- Justification.
+- Help files.
+- README.
+
+==============================================================================
+Miscellaneous                                                  *lua-plugin-misc*
+
+All the basics of how to create a Lua plugin which nicely interacts with Nvim
+is covered in previous sections.
+
+However, there are still miscellaneous (completely optional!) recommendations
+which can transform your plugin into a more stable project (if that is what
+you want):
+
+• Use version control system and releases. It enables more structured and
+  streamlined updates. A popular choice is Git (https://git-scm.com/) with
+  its tags following semantic versioning (https://semver.org/).
+
+• Use public hosting. It enables easier installation and updates.
+  A popular choice is GitHub (https://github.com/).
+
+• Use automated formatter. It allows you and your future contributors to not
+  think about formatting too much. A popular choice is StyLua
+  (https://github.com/JohnnyMorganz/StyLua).
+
+• Use type annotations. It provides additional safety during writing code,
+  relevant completion suggestions, and more. A popular choice is style from
+  Lua language server (https://luals.github.io/).
+
+• Use automated testing. It increases chances of new changes not breaking
+  existing functionality. A popular choice is Busted Lua framework
+  (https://github.com/lunarmodules/busted).
+
+• Use continuous integration. This even more increases chances of not
+  introducing unintentional breaking changes. A popular choice is Github
+  Actions (https://docs.github.com/en/actions).
