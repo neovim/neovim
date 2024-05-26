@@ -48,18 +48,14 @@ describe('cmdline', function()
 
   it('redraws statusline when toggling overstrike', function()
     local screen = Screen.new(60, 4)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { reverse = true, bold = true }, -- StatusLine
-    })
     screen:attach()
     command('set laststatus=2 statusline=%!mode(1)')
     feed(':')
     screen:expect {
       grid = [[
                                                                   |
-      {0:~                                                           }|
-      {1:c                                                           }|
+      {1:~                                                           }|
+      {3:c                                                           }|
       :^                                                           |
     ]],
     }
@@ -67,8 +63,8 @@ describe('cmdline', function()
     screen:expect {
       grid = [[
                                                                   |
-      {0:~                                                           }|
-      {1:cr                                                          }|
+      {1:~                                                           }|
+      {3:cr                                                          }|
       :^                                                           |
     ]],
     }

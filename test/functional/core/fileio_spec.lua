@@ -276,11 +276,6 @@ describe('fileio', function()
     write_file('Xtest-overwrite-forced', 'foobar')
     command('set nofixendofline')
     local screen = Screen.new(40, 4)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
-    })
     screen:attach()
     command('set shortmess-=F')
 
@@ -300,9 +295,9 @@ describe('fileio', function()
     -- use async feed_command because nvim basically hangs on the prompt
     feed_command('w')
     screen:expect([[
-      {2:WARNING: The file has been changed since}|
-      {2: reading it!!!}                          |
-      {3:Do you really want to write to it (y/n)?}|
+      {9:WARNING: The file has been changed since}|
+      {9: reading it!!!}                          |
+      {6:Do you really want to write to it (y/n)?}|
       ^                                        |
     ]])
 
