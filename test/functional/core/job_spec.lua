@@ -910,11 +910,6 @@ describe('jobs', function()
 
     it('hides cursor and flushes messages before blocking', function()
       local screen = Screen.new(50, 6)
-      screen:set_default_attr_ids({
-        [0] = { foreground = Screen.colors.Blue, bold = true }, -- NonText
-        [1] = { bold = true, reverse = true }, -- MsgSeparator
-        [2] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
-      })
       screen:attach()
       command([[let g:id = jobstart([v:progpath, '--clean', '--headless'])]])
       source([[
@@ -928,8 +923,8 @@ describe('jobs', function()
       screen:expect {
         grid = [[
                                                           |
-        {0:~                                                 }|*2
-        {1:                                                  }|
+        {1:~                                                 }|*2
+        {3:                                                  }|
         aaa                                               |
         bbb                                               |
       ]],
@@ -938,11 +933,11 @@ describe('jobs', function()
       screen:expect {
         grid = [[
                                                           |
-        {1:                                                  }|
+        {3:                                                  }|
         aaa                                               |
         bbb                                               |
         ccc                                               |
-        {2:Press ENTER or type command to continue}^           |
+        {6:Press ENTER or type command to continue}^           |
       ]],
       }
       feed('<CR>')

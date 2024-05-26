@@ -180,12 +180,6 @@ describe('insert-mode', function()
 
   it('multi-char mapping updates screen properly #25626', function()
     local screen = Screen.new(60, 6)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { bold = true, reverse = true }, -- StatusLine
-      [2] = { reverse = true }, -- StatusLineNC
-      [3] = { bold = true }, -- ModeMsg
-    })
     screen:attach()
     command('vnew')
     insert('foo\nfoo\nfoo')
@@ -197,10 +191,10 @@ describe('insert-mode', function()
       grid = [[
       foo                           │                             |
       foo                           │β^jβ                          |
-      foo                           │{0:~                            }|
-      {0:~                             }│{0:~                            }|
-      {2:[No Name] [+]                  }{1:[No Name] [+]                }|
-      {3:-- INSERT --}                                                |
+      foo                           │{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {2:[No Name] [+]                  }{3:[No Name] [+]                }|
+      {5:-- INSERT --}                                                |
     ]],
     }
     feed('k')
@@ -208,9 +202,9 @@ describe('insert-mode', function()
       grid = [[
       foo                           │                             |
       foo                           │^βββ                          |
-      foo                           │{0:~                            }|
-      {0:~                             }│{0:~                            }|
-      {2:[No Name] [+]                  }{1:[No Name] [+]                }|
+      foo                           │{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {2:[No Name] [+]                  }{3:[No Name] [+]                }|
                                                                   |
     ]],
     }
