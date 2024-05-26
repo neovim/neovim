@@ -57,6 +57,26 @@
 --- @field [3] any[][] virt_text
 --- @field [4] any[][] overlay_text
 
+--- @type string[]
+local notifications = {}
+
+---@param msg string
+local function notify(msg)
+  if #notifications == 0 then
+    vim.schedule(function()
+      if #notifications > 1 then
+        vim.notify(
+          ('TOhtml: %s (+ %d more warnings)'):format(notifications[1], tostring(#notifications - 1))
+        )
+      elseif #notifications == 1 then
+        vim.notify('TOhtml: ' .. notifications[1])
+      end
+      notifications = {}
+    end)
+  end
+  table.insert(notifications, msg)
+end
+
 local HIDE_ID = -1
 -- stylua: ignore start
 local cterm_8_to_hex={
@@ -215,7 +235,7 @@ local function cterm_to_hex(colorstr)
   if hex then
     cterm_color_cache[color] = hex
   else
-    vim.notify_once("Info(TOhtml): Couldn't get terminal colors, using fallback")
+    notify("Couldn't get terminal colors, using fallback")
     local t_Co = tonumber(vim.api.nvim_eval('&t_Co'))
     if t_Co <= 8 then
       cterm_color_cache = cterm_8_to_hex
@@ -241,7 +261,7 @@ local function get_background_color()
   end
   local hex = try_query_terminal_color('background')
   if not hex or not hex:match('#%x%x%x%x%x%x') then
-    vim.notify_once("Info(TOhtml): Couldn't get terminal background colors, using fallback")
+    notify("Couldn't get terminal background colors, using fallback")
     hex = vim.o.background == 'light' and '#ffffff' or '#000000'
   end
   background_color_cache = hex
@@ -259,7 +279,7 @@ local function get_foreground_color()
   end
   local hex = try_query_terminal_color('foreground')
   if not hex or not hex:match('#%x%x%x%x%x%x') then
-    vim.notify_once("Info(TOhtml): Couldn't get terminal foreground colors, using fallback")
+    notify("Couldn't get terminal foreground colors, using fallback")
     hex = vim.o.background == 'light' and '#000000' or '#ffffff'
   end
   foreground_color_cache = hex
@@ -467,7 +487,7 @@ local function _styletable_extmarks_highlight(state, extmark, namespaces)
   ---TODO(altermo) LSP semantic tokens (and some other extmarks) are only
   ---generated in visible lines, and not in the whole buffer.
   if (namespaces[extmark[4].ns_id] or ''):find('vim_lsp_semantic_tokens') then
-    vim.notify_once('Info(TOhtml): lsp semantic tokens are not supported, HTML may be incorrect')
+    notify('lsp semantic tokens are not supported, HTML may be incorrect')
     return
   end
   local srow, scol, erow, ecol =
@@ -489,7 +509,7 @@ local function _styletable_extmarks_virt_text(state, extmark, namespaces)
   ---TODO(altermo) LSP semantic tokens (and some other extmarks) are only
   ---generated in visible lines, and not in the whole buffer.
   if (namespaces[extmark[4].ns_id] or ''):find('vim_lsp_inlayhint') then
-    vim.notify_once('Info(TOhtml): lsp inlay hints are not supported, HTML may be incorrect')
+    notify('lsp inlay hints are not supported, HTML may be incorrect')
     return
   end
   local styletable = state.style
@@ -530,9 +550,7 @@ local function _styletable_extmarks_virt_text(state, extmark, namespaces)
   }
   for opt, val in pairs(not_supported) do
     if extmark[4][opt] == val then
-      vim.notify_once(
-        ('Info(TOhtml): extmark.%s="%s" is not supported, HTML may be incorrect'):format(opt, val)
-      )
+      notify(('extmark.%s="%s" is not supported, HTML may be incorrect'):format(opt, val))
     end
   end
 end
@@ -618,9 +636,7 @@ local function styletable_folds(state)
     end
   end
   if has_folded and type(({ pcall(vim.api.nvim_eval, vim.o.foldtext) })[2]) == 'table' then
-    vim.notify_once(
-      'Info(TOhtml): foldtext returning a table is half supported, HTML may be incorrect'
-    )
+    notify('foldtext returning a table with highlights is not supported, HTML may be incorrect')
   end
 end
 
