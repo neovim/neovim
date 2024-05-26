@@ -325,7 +325,10 @@ function M.inspect_tree(opts)
 
   opts = opts or {}
 
+  -- source buffer
   local buf = api.nvim_get_current_buf()
+
+  -- window id for source buffer
   local win = api.nvim_get_current_win()
   local treeview = assert(TSTreeView:new(buf, opts.lang))
 
@@ -334,12 +337,14 @@ function M.inspect_tree(opts)
     close_win(vim.b[buf].dev_inspect)
   end
 
+  -- window id for tree buffer
   local w = opts.winid
   if not w then
     vim.cmd(opts.command or '60vnew')
     w = api.nvim_get_current_win()
   end
 
+  -- tree buffer
   local b = opts.bufnr
   if b then
     api.nvim_win_set_buf(w, b)
@@ -375,6 +380,12 @@ function M.inspect_tree(opts)
     callback = function()
       local row = api.nvim_win_get_cursor(w)[1]
       local lnum, col = treeview:get(row).node:start()
+
+      -- update source window if original was closed
+      if not api.nvim_win_is_valid(win) then
+        win = vim.fn.win_findbuf(buf)[1]
+      end
+
       api.nvim_set_current_win(win)
       api.nvim_win_set_cursor(win, { lnum + 1, col })
     end,
@@ -432,6 +443,7 @@ function M.inspect_tree(opts)
         return true
       end
 
+      w = api.nvim_get_current_win()
       api.nvim_buf_clear_namespace(buf, treeview.ns, 0, -1)
       local row = api.nvim_win_get_cursor(w)[1]
       local lnum, col, end_lnum, end_col = treeview:get(row).node:range()
@@ -440,6 +452,11 @@ function M.inspect_tree(opts)
         end_col = math.max(0, end_col),
         hl_group = 'Visual',
       })
+
+      -- update source window if original was closed
+      if not api.nvim_win_is_valid(win) then
+        win = vim.fn.win_findbuf(buf)[1]
+      end
 
       local topline, botline = vim.fn.line('w0', win), vim.fn.line('w$', win)
 
@@ -506,7 +523,10 @@ function M.inspect_tree(opts)
     buffer = buf,
     once = true,
     callback = function()
-      close_win(w)
+      -- close all tree windows
+      for _, window in pairs(vim.fn.win_findbuf(b)) do
+        close_win(window)
+      end
     end,
   })
 end
