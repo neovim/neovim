@@ -481,8 +481,15 @@ end
 
 --- @param state vim.tohtml.state
 --- @param extmark {[1]:integer,[2]:integer,[3]:integer,[4]:vim.api.keyset.set_extmark|any}
-local function _styletable_extmarks_virt_text(state, extmark)
+--- @param namespaces table<integer,string>
+local function _styletable_extmarks_virt_text(state, extmark, namespaces)
   if not extmark[4].virt_text then
+    return
+  end
+  ---TODO(altermo) LSP semantic tokens (and some other extmarks) are only
+  ---generated in visible lines, and not in the whole buffer.
+  if (namespaces[extmark[4].ns_id] or ''):find('vim_lsp_inlayhint') then
+    vim.notify_once('Info(TOhtml): lsp inlay hints are not supported, HTML may be incorrect')
     return
   end
   local styletable = state.style
@@ -586,7 +593,7 @@ local function styletable_extmarks(state)
     _styletable_extmarks_conceal(state, v)
   end
   for _, v in ipairs(extmarks) do
-    _styletable_extmarks_virt_text(state, v)
+    _styletable_extmarks_virt_text(state, v, namespaces)
   end
   for _, v in ipairs(extmarks) do
     _styletable_extmarks_virt_lines(state, v)
