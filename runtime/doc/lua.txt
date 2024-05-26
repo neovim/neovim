@@ -2383,13 +2383,12 @@ vim.validate({opt})                                           *vim.validate()*
           vim.validate('prefix', prefix, 'string')
           ...
         end
+<
 
-        Form 2 validates a parameter specification (types and values). Specs are
-        evaluated in alphanumeric order, until the first failure.
+    Form 2 validates a parameter specification (types and values). Specs are
+    evaluated in alphanumeric order, until the first failure.
 
-        Usage example:
-
-        ```lua
+    Usage example: >lua
         function user.new(name, age, hobbies)
           vim.validate{
             name={name, 'string'},

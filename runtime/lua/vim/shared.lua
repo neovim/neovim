@@ -917,6 +917,7 @@ do
   ---   vim.validate('prefix', prefix, 'string')
   ---   ...
   --- end
+  --- ```
   ---
   --- Form 2 validates a parameter specification (types and values). Specs are
   --- evaluated in alphanumeric order, until the first failure.
