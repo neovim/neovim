@@ -1395,14 +1395,13 @@ M.handlers.underline = {
         end
       end
 
-      vim.highlight.range(
-        bufnr,
-        underline_ns,
-        higroup,
-        { diagnostic.lnum, diagnostic.col },
-        { diagnostic.end_lnum, diagnostic.end_col },
-        { priority = vim.highlight.priorities.diagnostics }
-      )
+      vim.api.nvim_buf_set_extmark(bufnr, underline_ns, diagnostic.lnum, diagnostic.col, {
+        end_row = diagnostic.end_lnum,
+        end_col = diagnostic.end_col,
+        hl_group = higroup,
+        priority = vim.highlight.priorities.diagnostics,
+        strict = false,
+      })
     end
     save_extmarks(underline_ns, bufnr)
   end,
