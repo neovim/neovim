@@ -901,12 +901,13 @@ do
   ---
   --- This function has two valid forms:
   ---
-  --- 1. vim.validate(name: str, value: any, type: string, optional: bool)
+  --- 1. vim.validate(name: str, value: any, type: string, optional?: bool)
   --- 2. vim.validate(spec: table)
   ---
   --- Form 1 validates that argument {name} with value {value} has the type
-  --- {type}. If {optional} is true, then {value} may be null. This form should
-  --- be preferred for simple cases.
+  --- {type}. {type} must be a string value as returned by |lua-type()|. If
+  --- {optional} is true, then {value} may be null. This form should be
+  --- preferred for simple cases.
   ---
   --- Example:
   ---
