@@ -521,7 +521,7 @@ local function _styletable_extmarks_virt_text(state, extmark)
     hl_mode = 'blend',
     hl_group = 'combine',
   }
-  for opt, val in ipairs(not_supported) do
+  for opt, val in pairs(not_supported) do
     if extmark[4][opt] == val then
       vim.notify_once(
         ('Info(TOhtml): extmark.%s="%s" is not supported, HTML may be incorrect'):format(opt, val)
