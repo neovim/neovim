@@ -2003,38 +2003,39 @@ describe('TUI', function()
     ]])
   end)
 
-  it('invalidated regions are cleared with terminal background attr', function()
-    local screen = Screen.new(50, 10)
-    screen:set_default_attr_ids({ [1] = { foreground = Screen.colors.Black } })
-    screen:attach()
-    fn.termopen({
-      nvim_prog,
-      '--clean',
-      '--cmd',
-      'set termguicolors',
-      '--cmd',
-      'sleep 10',
-    }, {
-      env = {
-        VIMRUNTIME = os.getenv('VIMRUNTIME'),
-      },
-    })
-    screen:expect({
-      grid = [[
-        {1:^                                                  }|
-        {1:                                                  }|*8
-                                                          |
-      ]],
-    })
-    screen:try_resize(51, 11)
-    screen:expect({
-      grid = [[
-        {1:^                                                   }|
-        {1:                                                   }|*9
-                                                           |
-      ]],
-    })
-  end)
+  -- #28667, #28668
+  for _, guicolors in ipairs({ 'notermguicolors', 'termguicolors' }) do
+    it('has no black flicker when clearing regions during startup with ' .. guicolors, function()
+      local screen = Screen.new(50, 10)
+      screen:attach()
+      fn.termopen({
+        nvim_prog,
+        '--clean',
+        '--cmd',
+        'set ' .. guicolors,
+        '--cmd',
+        'sleep 10',
+      }, {
+        env = {
+          VIMRUNTIME = os.getenv('VIMRUNTIME'),
+        },
+      })
+      screen:expect({
+        grid = [[
+          ^                                                  |
+                                                            |*9
+        ]],
+        intermediate = true,
+      })
+      screen:try_resize(51, 11)
+      screen:expect({
+        grid = [[
+          ^                                                   |
+                                                             |*10
+        ]],
+      })
+    end)
+  end
 
   it('argv[0] can be overridden #23953', function()
     if not exec_lua('return pcall(require, "ffi")') then

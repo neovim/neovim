@@ -115,6 +115,7 @@ struct TUIData {
   kvec_t(HlAttrs) attrs;
   int print_attr_id;
   bool default_attr;
+  bool set_default_colors;
   bool can_clear_attr;
   ModeShape showing_mode;
   Integer verbose;
@@ -166,14 +167,6 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
   tui->seen_error_exit = 0;
   tui->loop = &main_loop;
   tui->url = -1;
-  // Because setting the default colors is delayed until after startup to avoid
-  // flickering with the default colorscheme background, any flush that happens
-  // during startup in turn would result in clearing invalidated regions with
-  // uninitialized attrs(black). Instead initialize clear_attrs with current
-  // terminal background so that it is at least not perceived as flickering, even
-  // though it may be different from the colorscheme that is set during startup.
-  tui->clear_attrs.rgb_bg_color = normal_bg;
-  tui->clear_attrs.cterm_bg_color = (int16_t)cterm_normal_bg_color;
 
   kv_init(tui->invalid_regions);
   kv_init(tui->urlbuf);
@@ -1016,7 +1009,16 @@ static void clear_region(TUIData *tui, int top, int bot, int left, int right, in
 {
   UGrid *grid = &tui->grid;
 
-  update_attrs(tui, attr_id);
+  // Setting the default colors is delayed until after startup to avoid flickering
+  // with the default colorscheme background. Consequently, any flush that happens
+  // during startup would result in clearing invalidated regions with zeroed
+  // clear_attrs, perceived as a black flicker. Reset attributes to clear with
+  // current terminal background instead(#28667, #28668).
+  if (tui->set_default_colors) {
+    update_attrs(tui, attr_id);
+  } else {
+    unibi_out(tui, unibi_exit_attribute_mode);
+  }
 
   // Background is set to the default color and the right edge matches the
   // screen end, try to use terminal codes for clearing the requested area.
@@ -1419,6 +1421,7 @@ void tui_default_colors_set(TUIData *tui, Integer rgb_fg, Integer rgb_bg, Intege
   tui->clear_attrs.cterm_bg_color = (int16_t)cterm_bg;
 
   tui->print_attr_id = -1;
+  tui->set_default_colors = true;
   invalidate(tui, 0, tui->grid.height, 0, tui->grid.width);
 }
 
