@@ -905,9 +905,9 @@ do
   --- 2. vim.validate(spec: table)
   ---
   --- Form 1 validates that argument {name} with value {value} has the type
-  --- {type}. {type} must be a string value as returned by |lua-type()|. If
-  --- {optional} is true, then {value} may be null. This form should be
-  --- preferred for simple cases.
+  --- {type}. {type} must be a value returned by |lua-type()|. If {optional} is
+  --- true, then {value} may be null. This form should be preferred for simple
+  --- cases.
   ---
   --- Example:
   ---
