@@ -391,8 +391,8 @@ end
 local function on_client_exit(code, signal, client_id)
   local client = all_clients[client_id]
 
-  for bufnr in pairs(client.attached_buffers) do
-    vim.schedule(function()
+  vim.schedule(function()
+    for bufnr in pairs(client.attached_buffers) do
       if client and client.attached_buffers[bufnr] then
         api.nvim_exec_autocmds('LspDetach', {
           buffer = bufnr,
@@ -401,15 +401,16 @@ local function on_client_exit(code, signal, client_id)
         })
       end
 
-      local namespace = vim.lsp.diagnostic.get_namespace(client_id)
-      vim.diagnostic.reset(namespace, bufnr)
       client.attached_buffers[bufnr] = nil
 
       if #lsp.get_clients({ bufnr = bufnr, _uninitialized = true }) == 0 then
         reset_defaults(bufnr)
       end
-    end)
-  end
+    end
+
+    local namespace = vim.lsp.diagnostic.get_namespace(client_id)
+    vim.diagnostic.reset(namespace)
+  end)
 
   local name = client.name or 'unknown'
 
