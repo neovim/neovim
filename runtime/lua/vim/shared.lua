@@ -10,24 +10,6 @@
 ---@diagnostic disable-next-line: lowercase-global
 vim = vim or {}
 
---- Assert that a value has the expected type.
----
---- @param name string Name of the value to check (used in error message)
---- @param v any Value to check
---- @param expected string Expected type
---- @param optional? boolean If true, {v} may be nil.
-local function expecttype(name, v, expected, optional)
-  local actual = type(v)
-
-  -- Use an if statement with error() instead of assert() to avoid calling string.format if we don't
-  -- need it.
-  if actual ~= expected and (v ~= nil or not optional) then
-    error(
-      ('%s: expected %s, got %s%s'):format(name, expected, actual, v and (' (%s)'):format(v) or '')
-    )
-  end
-end
-
 ---@generic T
 ---@param orig T
 ---@param cache? table<any,any>
@@ -974,14 +956,25 @@ do
   ---             - msg: (optional) error string if validation fails
   --- @overload fun(name: string, val: any, expected: string, optional?: boolean)
   function vim.validate(opt, ...)
-    if select('#', ...) >= 2 then
+    local ok = false
+    local err_msg ---@type string?
+    local narg = select('#', ...)
+    if narg == 0 then
+      ok, err_msg = is_valid(opt)
+    elseif narg >= 2 then
       -- Overloaded signature for fast/simple cases
       local name = opt --[[@as string]]
       local v, expected, optional = ... ---@type string, string, boolean?
-      return expecttype(name, v, expected, optional)
+      local actual = type(v)
+
+      ok = (actual == expected) or (v == nil and optional == true)
+      if not ok then
+        err_msg = ('%s: expected %s, got %s%s'):format(name, expected, actual, v and (' (%s)'):format(v) or '')
+      end
+    else
+      error('invalid arguments')
     end
 
-    local ok, err_msg = is_valid(opt)
     if not ok then
       error(err_msg, 2)
     end
