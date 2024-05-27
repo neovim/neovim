@@ -530,6 +530,34 @@ describe('LSP', function()
       ]])
     end)
 
+    it('should allow on_lines + nvim_buf_delete during LSP initialization #28575', function()
+      clear()
+      exec_lua(create_server_definition)
+      exec_lua([[
+        local initialized = false
+        local server = _create_server({
+          handlers = {
+            initialize = function(method, params, callback)
+              vim.schedule(function()
+                callback(nil, { capabilities = {} })
+                initialized = true
+              end)
+            end
+          }
+        })
+        local bufnr = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_set_current_buf(bufnr)
+        local client_id = vim.lsp.start({
+          name = 'detach-dummy',
+          cmd = server.cmd,
+        })
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {"hello"})
+        vim.api.nvim_buf_delete(bufnr, {})
+        local ok = vim.wait(1000, function() return initialized end)
+        assert(ok, "lsp did not initialize")
+      ]])
+    end)
+
     it('client should return settings via workspace/configuration handler', function()
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },

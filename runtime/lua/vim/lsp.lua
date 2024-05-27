@@ -577,7 +577,8 @@ local function buf_attach(bufnr)
   api.nvim_buf_attach(bufnr, false, {
     on_lines = function(_, _, changedtick, firstline, lastline, new_lastline)
       if #lsp.get_clients({ bufnr = bufnr }) == 0 then
-        return true -- detach
+        -- detach if there are no clients
+        return #lsp.get_clients({ bufnr = bufnr, _uninitialized = true }) == 0
       end
       util.buf_versions[bufnr] = changedtick
       changetracking.send_changes(bufnr, firstline, lastline, new_lastline)
