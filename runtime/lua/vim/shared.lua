@@ -969,7 +969,12 @@ do
 
       ok = (actual == expected) or (v == nil and optional == true)
       if not ok then
-        err_msg = ('%s: expected %s, got %s%s'):format(name, expected, actual, v and (' (%s)'):format(v) or '')
+        err_msg = ('%s: expected %s, got %s%s'):format(
+          name,
+          expected,
+          actual,
+          v and (' (%s)'):format(v) or ''
+        )
       end
     else
       error('invalid arguments')
