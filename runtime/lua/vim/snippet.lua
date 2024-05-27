@@ -395,6 +395,15 @@ local function setup_autocmds(bufnr)
       end
     end,
   })
+
+  vim.api.nvim_create_autocmd('BufLeave', {
+    group = snippet_group,
+    desc = 'Stop the snippet session when leaving the buffer',
+    buffer = bufnr,
+    callback = function()
+      M.stop()
+    end,
+  })
 end
 
 --- Expands the given snippet text.
