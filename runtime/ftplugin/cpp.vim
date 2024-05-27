@@ -10,7 +10,8 @@ if exists("b:did_ftplugin")
 endif
 
 " Behaves mostly just like C
-runtime! ftplugin/c.{vim,lua} ftplugin/c_*.{vim,lua} ftplugin/c/*.{vim,lua}
+" XXX: "[.]" in the first pattern makes it a wildcard on Windows
+runtime! ftplugin/c[.]{vim,lua} ftplugin/c_*.{vim,lua} ftplugin/c/*.{vim,lua}
 
 " C++ uses templates with <things>
 " Disabled, because it gives an error for typing an unmatched ">".
