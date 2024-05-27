@@ -14,15 +14,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Create backport PR
         id: backport
-        uses: korthout/backport-action@v2
+        uses: korthout/backport-action@v3
         with:
           pull_title: "${pull_title}"
           label_pattern: "^ci:backport ([^ ]+)$"
-          # https://github.com/korthout/backport-action/pull/399
-          experimental: >
-            {
-              "detect_merge_method": true
-            }
 
       - if: ${{steps.backport.outputs.was_successful == 'true'}}
         uses: actions/github-script@v7
