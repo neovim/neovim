@@ -365,14 +365,3 @@ ptrdiff_t file_skip(FileDescriptor *const fp, const size_t size)
 
   return (ptrdiff_t)read_bytes;
 }
-
-/// Print error which occurs when failing to write msgpack data
-///
-/// @param[in]  error  Error code of the error to print.
-///
-/// @return -1 (error return for msgpack_packer callbacks).
-int msgpack_file_write_error(const int error)
-{
-  semsg(_("E5420: Failed to write to file: %s"), os_strerror(error));
-  return -1;
-}
