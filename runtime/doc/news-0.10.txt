@@ -307,7 +307,7 @@ The following new features were added.
     a predicate function that is checked for each value. (Use
     |vim.list_contains()| for checking list-like tables (integer keys without
     gaps) for literal values.)
-  • |vim.region()| can use a string accepted by |getpos()| as position.
+  • vim.region() can use a string accepted by |getpos()| as position.
 
 • Options:
   • 'winfixbuf' keeps a window focused onto a specific buffer

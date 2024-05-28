@@ -19,6 +19,8 @@ API
 - nvim_subscribe()	Plugins must maintain their own "multicast" channels list.
 - nvim_unsubscribe()	Plugins must maintain their own "multicast" channels list.
 
+LUA
+- vim.region()		Use |getregionpos()| instead.
 
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.10					*deprecated-0.10*

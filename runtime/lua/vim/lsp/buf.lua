@@ -135,7 +135,7 @@ end
 ---@param mode "v"|"V"
 ---@return table {start={row,col}, end={row,col}} using (1, 0) indexing
 local function range_from_selection(bufnr, mode)
-  -- TODO: Use `vim.region()` instead https://github.com/neovim/neovim/pull/13896
+  -- TODO: Use `vim.fn.getregionpos()` instead.
 
   -- [bufnum, lnum, col, off]; both row and column 1-indexed
   local start = vim.fn.getpos('v')

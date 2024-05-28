@@ -494,6 +494,7 @@ do
   vim.t = make_dict_accessor('t')
 end
 
+--- @deprecated
 --- Gets a dict of line segment ("chunk") positions for the region from `pos1` to `pos2`.
 ---
 --- Input and output positions are byte positions, (0,0)-indexed. "End of line" column
@@ -507,6 +508,8 @@ end
 ---@return table region Dict of the form `{linenr = {startcol,endcol}}`. `endcol` is exclusive, and
 ---whole lines are returned as `{startcol,endcol} = {0,-1}`.
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
+  vim.deprecate('vim.region', 'vim.fn.getregionpos()', '0.13')
+
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
   end

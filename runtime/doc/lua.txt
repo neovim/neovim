@@ -1708,30 +1708,6 @@ vim.print({...})                                                 *vim.print()*
       • |vim.inspect()|
       • |:=|
 
-                                                                *vim.region()*
-vim.region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})
-    Gets a dict of line segment ("chunk") positions for the region from `pos1`
-    to `pos2`.
-
-    Input and output positions are byte positions, (0,0)-indexed. "End of
-    line" column position (for example, |linewise| visual selection) is
-    returned as |v:maxcol| (big number).
-
-    Parameters: ~
-      • {bufnr}      (`integer`) Buffer number, or 0 for current buffer
-      • {pos1}       (`integer[]|string`) Start of region as a (line, column)
-                     tuple or |getpos()|-compatible string
-      • {pos2}       (`integer[]|string`) End of region as a (line, column)
-                     tuple or |getpos()|-compatible string
-      • {regtype}    (`string`) |setreg()|-style selection type
-      • {inclusive}  (`boolean`) Controls whether the ending column is
-                     inclusive (see also 'selection').
-
-    Return: ~
-        (`table`) region Dict of the form `{linenr = {startcol,endcol}}`.
-        `endcol` is exclusive, and whole lines are returned as
-        `{startcol,endcol} = {0,-1}`.
-
 vim.schedule_wrap({fn})                                  *vim.schedule_wrap()*
     Returns a function which calls {fn} via |vim.schedule()|.
 
