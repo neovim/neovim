@@ -1100,23 +1100,13 @@ static void command_line_scan(mparm_T *parmp)
           // set stdout to binary to avoid crlf in --api-info output
           _setmode(STDOUT_FILENO, _O_BINARY);
 #endif
-          FileDescriptor fp;
-          const int fof_ret = file_open_fd(&fp, STDOUT_FILENO,
-                                           kFileWriteOnly);
-          if (fof_ret != 0) {
-            semsg(_("E5421: Failed to open stdin: %s"), os_strerror(fof_ret));
-          }
 
           String data = api_metadata_raw();
-          const ptrdiff_t written_bytes = file_write(&fp, data.data, data.size);
+          const ptrdiff_t written_bytes = os_write(STDOUT_FILENO, data.data, data.size, false);
           if (written_bytes < 0) {
-            msgpack_file_write_error((int)written_bytes);
+            semsg(_("E5420: Failed to write to file: %s"), os_strerror((int)written_bytes));
           }
 
-          const int ff_ret = file_flush(&fp);
-          if (ff_ret < 0) {
-            msgpack_file_write_error(ff_ret);
-          }
           os_exit(0);
         } else if (STRICMP(argv[0] + argv_idx, "headless") == 0) {
           headless_mode = true;
