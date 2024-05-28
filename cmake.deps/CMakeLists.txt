@@ -74,25 +74,6 @@ if(APPLE)
   message(STATUS "Using deployment target ${CMAKE_OSX_DEPLOYMENT_TARGET}")
 endif()
 
-set_directory_properties(PROPERTIES
-  EP_PREFIX "${DEPS_BUILD_DIR}"
-  CMAKE_CONFIGURE_DEPENDS deps.txt)
-
-file(READ deps.txt DEPENDENCIES)
-STRING(REGEX REPLACE "\n" ";" DEPENDENCIES "${DEPENDENCIES}")
-foreach(dep ${DEPENDENCIES})
-  STRING(REGEX REPLACE " " ";" dep "${dep}")
-  list(GET dep 0 name)
-  list(GET dep 1 value)
-  if(NOT ${name})
-    # _URL variables must NOT be set when USE_EXISTING_SRC_DIR is set,
-    # otherwise ExternalProject will try to re-download the sources.
-    if(NOT USE_EXISTING_SRC_DIR)
-      set(${name} ${value})
-    endif()
-  endif()
-endforeach()
-
 if(USE_BUNDLED_LUAJIT)
   set(LUA_ENGINE LuaJit)
 elseif(USE_BUNDLED_LUA)
