@@ -2532,6 +2532,10 @@ static bool cmdpreview_may_show(CommandLineState *s)
     goto end;
   }
 
+  // Flush now: external cmdline may itself wish to update the screen which is
+  // currently disallowed during cmdpreview(no longer needed in case that changes).
+  cmdline_ui_flush();
+
   // Swap invalid command range if needed
   if ((ea.argt & EX_RANGE) && ea.line1 > ea.line2) {
     linenr_T lnum = ea.line1;
