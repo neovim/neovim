@@ -381,7 +381,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 *vim.diagnostic.JumpOpts*
     Extends: |vim.diagnostic.GetOpts|
 
-    Configuration table with the following keys:
+    Configuration table with the keys listed below. Some parameters can have
+    their default values changed with |vim.diagnostic.config()|.
 
     Fields: ~
       • {diagnostic}?  (`vim.Diagnostic`) The diagnostic to jump to. Mutually
@@ -419,7 +420,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {disabled}?  (`boolean`)
 
 *vim.diagnostic.Opts*
-    Each of the configuration options below accepts one of the following:
+    Many of the configuration options below accept one of the following:
     • `false`: Disable this feature
     • `true`: Enable this feature, use default settings.
     • `table`: Enable this feature with overrides. Use an empty table to use
@@ -450,6 +451,9 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                              displayed before lower severities (e.g. ERROR is
                              displayed before WARN). Options:
                              • {reverse}? (boolean) Reverse sort order
+      • {jump}?              (`vim.diagnostic.Opts.Jump`) Default values for
+                             |vim.diagnostic.jump()|. See
+                             |vim.diagnostic.Opts.Jump|.
 
 *vim.diagnostic.Opts.Float*
 
@@ -508,6 +512,16 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                           setting from |vim.diagnostic.config()|.
       • {focus_id}?       (`string`)
       • {border}?         (`string`) see |nvim_open_win()|.
+
+*vim.diagnostic.Opts.Jump*
+
+    Fields: ~
+      • {float}?     (`boolean|vim.diagnostic.Opts.Float`) Default value of
+                     the {float} parameter of |vim.diagnostic.jump()|.
+      • {wrap}?      (`boolean`) Default value of the {wrap} parameter of
+                     |vim.diagnostic.jump()|.
+      • {severity}?  (`vim.diagnostic.SeverityFilter`) Default value of the
+                     {severity} parameter of |vim.diagnostic.jump()|.
 
 *vim.diagnostic.Opts.Signs*
 

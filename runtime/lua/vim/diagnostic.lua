@@ -42,7 +42,7 @@ local M = {}
 ---
 --- @field namespace? integer
 
---- Each of the configuration options below accepts one of the following:
+--- Many of the configuration options below accept one of the following:
 --- - `false`: Disable this feature
 --- - `true`: Enable this feature, use default settings.
 --- - `table`: Enable this feature with overrides. Use an empty table to use default values.
@@ -78,6 +78,9 @@ local M = {}
 ---   - {reverse}? (boolean) Reverse sort order
 --- (default: `false`)
 --- @field severity_sort? boolean|{reverse?:boolean}
+---
+--- Default values for |vim.diagnostic.jump()|. See |vim.diagnostic.Opts.Jump|.
+--- @field jump? vim.diagnostic.Opts.Jump
 
 --- @class (private) vim.diagnostic.OptsResolved
 --- @field float vim.diagnostic.Opts.Float
@@ -241,6 +244,20 @@ local M = {}
 --- whole line the sign is placed in.
 --- @field linehl? table<vim.diagnostic.Severity,string>
 
+--- @class vim.diagnostic.Opts.Jump
+---
+--- Default value of the {float} parameter of |vim.diagnostic.jump()|.
+--- @field float? boolean|vim.diagnostic.Opts.Float
+---
+--- Default value of the {wrap} parameter of |vim.diagnostic.jump()|.
+--- @field wrap? boolean
+---
+--- Default value of the {severity} parameter of |vim.diagnostic.jump()|.
+--- @field severity? vim.diagnostic.SeverityFilter
+---
+--- Default value of the {_highest} parameter of |vim.diagnostic.jump()|.
+--- @field package _highest? boolean
+
 -- TODO: inherit from `vim.diagnostic.Opts`, implement its fields.
 --- Optional filters |kwargs|, or `nil` for all.
 --- @class vim.diagnostic.Filter
@@ -284,6 +301,13 @@ local global_diagnostic_options = {
   float = true,
   update_in_insert = false,
   severity_sort = false,
+  jump = {
+    -- Do not show floating window
+    float = false,
+
+    -- Wrap around buffer
+    wrap = true,
+  },
 }
 
 --- @class (private) vim.diagnostic.Handler
@@ -1212,7 +1236,8 @@ end
 --- See |diagnostic-severity|.
 --- @field severity? vim.diagnostic.SeverityFilter
 
---- Configuration table with the following keys:
+--- Configuration table with the keys listed below. Some parameters can have their default values
+--- changed with |vim.diagnostic.config()|.
 --- @class vim.diagnostic.JumpOpts : vim.diagnostic.GetOpts
 ---
 --- The diagnostic to jump to. Mutually exclusive with {count}, {namespace},
@@ -1256,11 +1281,16 @@ end
 --- @param opts vim.diagnostic.JumpOpts
 --- @return vim.Diagnostic? # The diagnostic that was moved to.
 function M.jump(opts)
+  vim.validate('opts', opts, 'table')
+
   -- One of "diagnostic" or "count" must be provided
   assert(
     opts.diagnostic or opts.count,
     'One of "diagnostic" or "count" must be specified in the options to vim.diagnostic.jump()'
   )
+
+  -- Apply configuration options from vim.diagnostic.config()
+  opts = vim.tbl_deep_extend('keep', opts, global_diagnostic_options.jump)
 
   if opts.diagnostic then
     goto_diagnostic(opts.diagnostic, opts)
@@ -1279,18 +1309,15 @@ function M.jump(opts)
     opts.cursor_position = nil
   end
 
-  -- Copy the opts table so that we can modify it
-  local opts_ = vim.deepcopy(opts, true)
-
   local diag = nil
   while count ~= 0 do
-    local next = next_diagnostic(count > 0, opts_)
+    local next = next_diagnostic(count > 0, opts)
     if not next then
       break
     end
 
     -- Update cursor position
-    opts_.pos = { next.lnum + 1, next.col }
+    opts.pos = { next.lnum + 1, next.col }
 
     if count > 0 then
       count = count - 1

@@ -379,7 +379,7 @@ local function tbl_extend(behavior, deep_extend, ...)
 
   for i = 1, select('#', ...) do
     local tbl = select(i, ...)
-    vim.validate({ ['after the second argument'] = { tbl, 't' } })
+    vim.validate('after the second argument', tbl, 'table')
     --- @cast tbl table<any,any>
     if tbl then
       for k, v in pairs(tbl) do

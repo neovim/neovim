@@ -38,6 +38,11 @@ DEFAULTS
 • |[D-default| and |]D-default| jump to the first and last diagnostic in the
   current buffer, respectively.
 
+DIAGNOSTICS
+
+• |vim.diagnostic.config()| accepts a "jump" table to specify defaults for
+  |vim.diagnostic.jump()|.
+
 EDITOR
 
 • The order in which signs are placed was changed. Higher priority signs will
