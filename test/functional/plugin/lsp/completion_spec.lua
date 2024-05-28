@@ -78,32 +78,6 @@ describe('vim.lsp.completion: item conversion', function()
         textEdit = { newText = 'foobar', range = range0 },
       },
       { label = 'foocar', sortText = 'f', textEdit = { newText = 'foobar', range = range0 } },
-      -- real-world snippet text
-      {
-        label = 'foocar',
-        sortText = 'g',
-        insertText = 'foodar',
-        insertTextFormat = 2,
-        textEdit = {
-          newText = 'foobar(${1:place holder}, ${2:more ...holder{\\}})',
-          range = range0,
-        },
-      },
-      {
-        label = 'foocar',
-        sortText = 'h',
-        insertText = 'foodar(${1:var1} typ1, ${2:var2} *typ2) {$0\\}',
-        insertTextFormat = 2,
-      },
-      -- nested snippet tokens
-      {
-        label = 'foocar',
-        sortText = 'i',
-        insertText = 'foodar(${1:${2|typ1,typ2|}}) {$0\\}',
-        insertTextFormat = 2,
-      },
-      -- braced tabstop
-      { label = 'foocar', sortText = 'j', insertText = 'foodar()${0}', insertTextFormat = 2 },
       -- plain text
       {
         label = 'foocar',
@@ -139,23 +113,87 @@ describe('vim.lsp.completion: item conversion', function()
       },
       {
         abbr = 'foocar',
-        word = 'foobar(place holder, more ...holder{})',
+        word = 'foodar(${1:var1})', -- marked as PlainText, text is used as is
+      },
+    }
+    local result = complete('|', completion_list)
+    result = vim.tbl_map(function(x)
+      return {
+        abbr = x.abbr,
+        word = x.word,
+      }
+    end, result.items)
+    eq(expected, result)
+  end)
+
+  it('prefers wordlike components for snippets', function()
+    -- There are two goals here:
+    --
+    -- 1. The `word` should match what the user started typing, so that vim.fn.complete() doesn't
+    --    filter it away, preventing snippet expansion
+    --
+    -- For example, if they type `items@ins`, luals returns `table.insert(items, $0)` as
+    -- textEdit.newText and `insert` as label.
+    -- There would be no prefix match if textEdit.newText is used as `word`
+    --
+    -- 2. If users do not expand a snippet, but continue typing, they should see a somewhat reasonable
+    --    `word` getting inserted.
+    --
+    -- For example in:
+    --
+    --  insertText: "testSuites ${1:Env}"
+    --  label: "testSuites"
+    --
+    -- "testSuites" should have priority as `word`, as long as the full snippet gets expanded on accept (<c-y>)
+    local range0 = {
+      start = { line = 0, character = 0 },
+      ['end'] = { line = 0, character = 0 },
+    }
+    local completion_list = {
+      -- luals postfix snippet (typed text: items@ins|)
+      {
+        label = 'insert',
+        insertTextFormat = 2,
+        textEdit = {
+          newText = 'table.insert(items, $0)',
+          range = range0,
+        },
+      },
+
+      -- eclipse.jdt.ls `new` snippet
+      {
+        label = 'new',
+        insertTextFormat = 2,
+        textEdit = {
+          newText = '${1:Object} ${2:foo} = new ${1}(${3});\n${0}',
+          range = range0,
+        },
+        textEditText = '${1:Object} ${2:foo} = new ${1}(${3});\n${0}',
+      },
+
+      -- eclipse.jdt.ls `List.copyO` function call completion
+      {
+        label = 'copyOf(Collection<? extends E> coll) : List<E>',
+        insertTextFormat = 2,
+        insertText = 'copyOf',
+        textEdit = {
+          newText = 'copyOf(${1:coll})',
+          range = range0,
+        },
+      },
+    }
+    local expected = {
+      {
+        abbr = 'copyOf(Collection<? extends E> coll) : List<E>',
+        word = 'copyOf',
       },
       {
-        abbr = 'foocar',
-        word = 'foodar(var1 typ1, var2 *typ2) {}',
+        abbr = 'insert',
+        word = 'insert',
       },
       {
-        abbr = 'foocar',
-        word = 'foodar(typ1) {}',
-      },
-      {
-        abbr = 'foocar',
-        word = 'foodar()',
-      },
-      {
-        abbr = 'foocar',
-        word = 'foodar(${1:var1})',
+        abbr = 'new',
+        word = 'new',
       },
     }
     local result = complete('|', completion_list)
