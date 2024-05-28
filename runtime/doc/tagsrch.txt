@@ -781,15 +781,15 @@ CTRL-W i		Open a new window, with the cursor on the first line
 			count'th matching line is displayed.
 
 							*[d-default*
-			Mapped to |vim.diagnostic.goto_prev()| by default.
-			|default-mappings|
+			Jumps to the previous diagnostic in the current buffer
+			by default. |vim.diagnostic.jump()| |default-mappings|
 
 							*]d*
 ]d			like "[d", but start at the current cursor position.
 
 							*]d-default*
-			Mapped to |vim.diagnostic.goto_next()| by default.
-			|default-mappings|
+			Jumps to the next diagnostic in the current buffer by
+			default. |vim.diagnostic.jump()| |default-mappings|
 
 							*:ds* *:dsearch*
 :[range]ds[earch][!] [count] [/]string[/]
@@ -803,8 +803,16 @@ CTRL-W i		Open a new window, with the cursor on the first line
 			displayed for the found lines.  The search starts
 			from the beginning of the file.
 
+							*[D-default*
+			Jumps to the first diagnostic in the current buffer by
+			default. |vim.diagnostic.jump()| |default-mappings|
+
 							*]D*
 ]D			like "[D", but start at the current cursor position.
+
+							*]D-default*
+			Jumps to the last diagnostic in the current buffer by
+			default. |vim.diagnostic.jump()| |default-mappings|
 
 							*:dli* *:dlist*
 :[range]dli[st][!] [/]string[/]

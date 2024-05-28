@@ -180,12 +180,20 @@ do
   --- See |[d-default|, |]d-default|, and |CTRL-W_d-default|.
   do
     vim.keymap.set('n', ']d', function()
-      vim.diagnostic.goto_next({ float = false })
-    end, { desc = 'Jump to the next diagnostic' })
+      vim.diagnostic.jump({ count = vim.v.count1, float = false })
+    end, { desc = 'Jump to the next diagnostic in the current buffer' })
 
     vim.keymap.set('n', '[d', function()
-      vim.diagnostic.goto_prev({ float = false })
-    end, { desc = 'Jump to the previous diagnostic' })
+      vim.diagnostic.jump({ count = -vim.v.count1, float = false })
+    end, { desc = 'Jump to the previous diagnostic in the current buffer' })
+
+    vim.keymap.set('n', ']D', function()
+      vim.diagnostic.jump({ count = math.huge, wrap = false, float = false })
+    end, { desc = 'Jump to the last diagnostic in the current buffer' })
+
+    vim.keymap.set('n', '[D', function()
+      vim.diagnostic.jump({ count = -math.huge, wrap = false, float = false })
+    end, { desc = 'Jump to the first diagnostic in the current buffer' })
 
     vim.keymap.set('n', '<C-W>d', function()
       vim.diagnostic.open_float()
