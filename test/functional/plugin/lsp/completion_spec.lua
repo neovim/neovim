@@ -228,7 +228,7 @@ describe('vim.lsp.completion: item conversion', function()
           },
         },
         {
-          filterText = 'notthis_thread',
+          filterText = 'no_match',
           insertText = 'notthis_thread',
           insertTextFormat = 1,
           kind = 9,

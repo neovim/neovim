@@ -201,11 +201,17 @@ function M._lsp_to_complete_items(result, prefix, client_id)
     return {}
   end
 
-  local function matches_prefix(item)
-    return vim.startswith(get_completion_word(item), prefix)
-  end
+  if prefix ~= '' then
+    ---@param item lsp.CompletionItem
+    local function match_prefix(item)
+      if item.filterText then
+        return next(vim.fn.matchfuzzy({ item.filterText }, prefix))
+      end
+      return true
+    end
 
-  items = vim.tbl_filter(matches_prefix, items) --[[@as lsp.CompletionItem[]|]]
+    items = vim.tbl_filter(match_prefix, items) --[[@as lsp.CompletionItem[]|]]
+  end
   table.sort(items, function(a, b)
     return (a.sortText or a.label) < (b.sortText or b.label)
   end)
