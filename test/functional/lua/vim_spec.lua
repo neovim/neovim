@@ -4035,6 +4035,37 @@ describe('vim.keymap', function()
     eq(1, exec_lua [[return GlobalCount]])
   end)
 
+  it('can make a mapping with multiple lhs at once', function()
+    eq(
+      0,
+      exec_lua [[
+      GlobalCount = 0
+      vim.keymap.set('n', { 'asdf', 'ghjk' }, function() GlobalCount = GlobalCount + 1 end)
+      return GlobalCount
+    ]]
+    )
+
+    feed('asdf\n')
+    feed('ghjk\n')
+
+    eq(2, exec_lua [[return GlobalCount]])
+  end)
+
+  it('can make a mapping with rhs as last parameter', function()
+    eq(
+      0,
+      exec_lua [[
+      GlobalCount = 0
+      vim.keymap.set('n', 'asdf',, {}, function() GlobalCount = GlobalCount + 1 end)
+      return GlobalCount
+    ]]
+    )
+
+    feed('asdf\n')
+
+    eq(1, exec_lua [[return GlobalCount]])
+  end)
+
   it('can make an expr mapping', function()
     exec_lua [[
       vim.keymap.set('n', 'aa', function() return '<Insert>π<C-V><M-π>foo<lt><Esc>' end, {expr = true})

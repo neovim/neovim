@@ -35,26 +35,37 @@ local keymap = {}
 ---
 ---@param mode string|string[] Mode short-name, see |nvim_set_keymap()|.
 ---                            Can also be list of modes to create mapping on multiple modes.
----@param lhs string           Left-hand side |{lhs}| of the mapping.
+---@param lhs string|string[]  Left-hand side |{lhs}| of the mapping.
+---                            Can also be list of strings to map different key sequences to the
+---                            same rhs.
+---@param opts? vim.keymap.set.Opts
 ---@param rhs string|function  Right-hand side |{rhs}| of the mapping, can be a Lua function.
 ---
----@param opts? vim.keymap.set.Opts
 ---@see |nvim_set_keymap()|
 ---@see |maparg()|
 ---@see |mapcheck()|
 ---@see |mapset()|
-function keymap.set(mode, lhs, rhs, opts)
+---@overload fun(mode: string|string[], lhs: string|string[], rhs: string|function, opts: vim.keymap.set.Opts?)
+function keymap.set(mode, lhs, opts, rhs)
   vim.validate({
     mode = { mode, { 's', 't' } },
-    lhs = { lhs, 's' },
-    rhs = { rhs, { 's', 'f' } },
-    opts = { opts, 't', true },
+    lhs = { lhs, { 's', 't' } },
+    opts = { opts, { 't', 'f', 's' }, true },
+    rhs = { rhs, { 's', 'f', 't' }, true },
   })
 
+  if type(opts) == 'function' or type(opts) == 'string' then
+    rhs, opts = opts, rhs
+  end
+
+  ---@type vim.keymap.set.Opts
   opts = vim.deepcopy(opts or {}, true)
 
   ---@cast mode string[]
   mode = type(mode) == 'string' and { mode } or mode
+
+  ---@cast lhs string[]
+  lhs = type(lhs) == 'string' and { lhs } or lhs
 
   if opts.expr and opts.replace_keycodes ~= false then
     opts.replace_keycodes = true
@@ -78,12 +89,16 @@ function keymap.set(mode, lhs, rhs, opts)
     local bufnr = opts.buffer == true and 0 or opts.buffer --[[@as integer]]
     opts.buffer = nil ---@type integer?
     for _, m in ipairs(mode) do
-      vim.api.nvim_buf_set_keymap(bufnr, m, lhs, rhs, opts)
+      for _, l in ipairs(lhs) do
+        vim.api.nvim_buf_set_keymap(bufnr, m, l, rhs, opts)
+      end
     end
   else
     opts.buffer = nil
     for _, m in ipairs(mode) do
-      vim.api.nvim_set_keymap(m, lhs, rhs, opts)
+      for _, l in ipairs(lhs) do
+        vim.api.nvim_set_keymap(m, l, rhs, opts)
+      end
     end
   end
 end

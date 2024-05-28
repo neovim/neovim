@@ -2797,7 +2797,7 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
     See also: ~
       • |vim.keymap.set()|
 
-vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
+vim.keymap.set({mode}, {lhs}, {opts}, {rhs})                *vim.keymap.set()*
     Adds a new |mapping|. Examples: >lua
         -- Map to a Lua function:
         vim.keymap.set('n', 'lhs', function() print("real lua function") end)
@@ -2816,9 +2816,9 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
     Parameters: ~
       • {mode}  (`string|string[]`) Mode short-name, see |nvim_set_keymap()|.
                 Can also be list of modes to create mapping on multiple modes.
-      • {lhs}   (`string`) Left-hand side |{lhs}| of the mapping.
-      • {rhs}   (`string|function`) Right-hand side |{rhs}| of the mapping,
-                can be a Lua function.
+      • {lhs}   (`string|string[]`) Left-hand side |{lhs}| of the mapping. Can
+                also be list of strings to map different key sequences to the
+                same rhs.
       • {opts}  (`table?`) Table of |:map-arguments|. Same as
                 |nvim_set_keymap()| {opts}, except:
                 • {replace_keycodes} defaults to `true` if "expr" is `true`.
@@ -2828,6 +2828,8 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
                   `0` or `true` for current buffer.
                 • {remap}? (`boolean`, default: `false`) Make the mapping
                   recursive. Inverse of {noremap}.
+      • {rhs}   (`string|function`) Right-hand side |{rhs}| of the mapping,
+                can be a Lua function.
 
     See also: ~
       • |nvim_set_keymap()|

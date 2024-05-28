@@ -108,7 +108,9 @@ LSP
 
 LUA
 
-• TODO
+• |vim.keymap.set()| now allows passing the rhs as last parameter.
+• |vim.keymap.set()| now allows passing a table of strings as lhs to map
+  multiple keys to the same rhs.
 
 OPTIONS
 
