@@ -4,17 +4,7 @@
 " Filenames: *.styl, *.stylus
 " Based On: Tim Pope (sass.vim)
 " Created:	Dec 14, 2011
-" Modified:	Apr 29, 2024
-
-if main_syntax == "css"
-  syn sync minlines=10
-endif
-
-" let b:current_syntax = "css"
-"
-if main_syntax == 'css'
-  unlet main_syntax
-endif
+" Modified:	May 28, 2024
 
 syn case ignore
 
