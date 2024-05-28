@@ -33,7 +33,7 @@ DIAGNOSTICS
 	|vim.diagnostic.get_prev()| instead.
 - The "win_id" parameter used by various functions is deprecated in favor of
   "winid" |winid|
-- The "cursor_position" parameter of |vim.diagnostic.GotoOpts| is renamed to
+- The "cursor_position" parameter of |vim.diagnostic.JumpOpts| is renamed to
   "pos"
 
 ------------------------------------------------------------------------------
