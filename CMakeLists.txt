@@ -40,15 +40,18 @@ include(PreventInTreeBuilds)
 include(Util)
 
 #-------------------------------------------------------------------------------
+# User settings
+#-------------------------------------------------------------------------------
+
+set(DEPS_IGNORE_SHA FALSE)
+
+#-------------------------------------------------------------------------------
 # Variables
 #-------------------------------------------------------------------------------
 set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
 
 file(GLOB DOCFILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/runtime/doc/*.txt)
-
-set_directory_properties(PROPERTIES
-  EP_PREFIX "${DEPS_BUILD_DIR}")
 
 if(NOT CI_BUILD)
   set(CMAKE_INSTALL_MESSAGE NEVER)
@@ -241,7 +244,7 @@ add_glob_target(
   GLOB_DIRS runtime scripts src test
   GLOB_PAT *.lua
   TOUCH_STRATEGY PER_DIR)
-add_dependencies(lintlua-luacheck lua-dev-deps)
+add_dependencies(lintlua-luacheck lua_dev_deps)
 
 add_glob_target(
   TARGET lintlua-stylua
@@ -300,26 +303,24 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   add_subdirectory(cmake.packaging)
 endif()
 
+get_externalproject_options(uncrustify ${DEPS_IGNORE_SHA})
 ExternalProject_Add(uncrustify
-  URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.79.0.tar.gz
-  URL_HASH SHA256=e7afaeabf636b7f0ce4e3e9747b95f7bd939613a8db49579755dddf44fedca5f
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/uncrustify
   CMAKE_ARGS ${DEPS_CMAKE_ARGS}
   EXCLUDE_FROM_ALL TRUE
-  DOWNLOAD_NO_PROGRESS TRUE)
+  ${EXTERNALPROJECT_OPTIONS})
 
 option(USE_BUNDLED_BUSTED "Use bundled busted" ON)
 if(USE_BUNDLED_BUSTED)
-  ExternalProject_Add(lua-dev-deps
-    URL https://github.com/neovim/deps/raw/5a1f71cceb24990a0b15fd9a472a5f549f019248/opt/lua-dev-deps.tar.gz
-    URL_HASH SHA256=27db2495f5eddc7fc191701ec9b291486853530c6125609d3197d03481e8d5a2
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/lua-dev-deps
+  get_externalproject_options(lua_dev_deps ${DEPS_IGNORE_SHA})
+  ExternalProject_Add(lua_dev_deps
+    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/lua_dev_deps
     SOURCE_DIR ${DEPS_SHARE_DIR}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND ""
     EXCLUDE_FROM_ALL TRUE
-    DOWNLOAD_NO_PROGRESS TRUE)
+    ${EXTERNALPROJECT_OPTIONS})
 else()
-  add_custom_target(lua-dev-deps)
+  add_custom_target(lua_dev_deps)
 endif()

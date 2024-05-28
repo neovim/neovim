@@ -58,6 +58,32 @@ if(CMAKE_OSX_SYSROOT)
   set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
 endif()
 
+get_filename_component(rootdir ${PROJECT_SOURCE_DIR} NAME)
+if(${rootdir} MATCHES "cmake.deps")
+  set(depsfile ${PROJECT_SOURCE_DIR}/deps.txt)
+else()
+  set(depsfile ${PROJECT_SOURCE_DIR}/cmake.deps/deps.txt)
+endif()
+
+set_directory_properties(PROPERTIES
+  EP_PREFIX "${DEPS_BUILD_DIR}"
+  CMAKE_CONFIGURE_DEPENDS ${depsfile})
+
+file(READ ${depsfile} DEPENDENCIES)
+STRING(REGEX REPLACE "\n" ";" DEPENDENCIES "${DEPENDENCIES}")
+foreach(dep ${DEPENDENCIES})
+  STRING(REGEX REPLACE " " ";" dep "${dep}")
+  list(GET dep 0 name)
+  list(GET dep 1 value)
+  if(NOT ${name})
+    # _URL variables must NOT be set when USE_EXISTING_SRC_DIR is set,
+    # otherwise ExternalProject will try to re-download the sources.
+    if(NOT USE_EXISTING_SRC_DIR)
+      set(${name} ${value})
+    endif()
+  endif()
+endforeach()
+
 function(get_externalproject_options name DEPS_IGNORE_SHA)
   string(TOUPPER ${name} name_allcaps)
   set(url ${${name_allcaps}_URL})
