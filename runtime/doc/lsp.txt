@@ -162,8 +162,9 @@ creating and managing clients.
 The `vim.lsp.buf_…` functions perform operations for all LSP clients attached
 to the given buffer. |lsp-buf|
 
-LSP request/response handlers are implemented as Lua functions (see
-|lsp-handler|).
+LSP request/response/notification handlers are implemented as Lua functions
+(see |lsp-handler|).
+
                                                                   *lsp-method*
 
 Requests and notifications defined by the LSP specification are referred to as
@@ -175,76 +176,132 @@ Requests and notifications defined by the LSP specification are referred to as
 They are also listed below. Note that handlers depend on server support: they
 won't run if your server doesn't support them.
 
-- callHierarchy/incomingCalls
-- callHierarchy/outgoingCalls
-- textDocument/codeAction
-- textDocument/completion
-- textDocument/declaration*
-- textDocument/definition
-- textDocument/diagnostic
-- textDocument/documentHighlight
-- textDocument/documentSymbol
-- textDocument/formatting
-- textDocument/hover
-- textDocument/implementation*
-- textDocument/inlayHint
-- textDocument/prepareTypeHierarchy
-- textDocument/publishDiagnostics
-- textDocument/rangeFormatting
-- textDocument/references
-- textDocument/rename
-- textDocument/semanticTokens/full
-- textDocument/semanticTokens/full/delta
-- textDocument/signatureHelp
-- textDocument/typeDefinition*
-- typeHierarchy/subtypes
-- typeHierarchy/supertypes
-- window/logMessage
-- window/showMessage
-- window/showDocument
-- window/showMessageRequest
-- workspace/applyEdit
-- workspace/configuration
-- workspace/executeCommand
-- workspace/inlayHint/refresh
-- workspace/symbol
-- workspace/workspaceFolders
+  handler                                    type ~
+  ------------------------------------------ -------------- ~
+  $/progress                                 notification
+  workspace/executeCommand                   response
+  window/workDoneProgress/create             request
+  window/showMessageRequest                  request
+  client/registerCapability                  request
+  client/unregisterCapability                request
+  workspace/applyEdit                        request
+  workspace/configuration                    request
+  workspace/workspaceFolders                 request
+  textDocument/publishDiagnostics            notification
+  textDocument/diagnostic                    response
+  textDocument/codeLens                      response
+  textDocument/inlayHint                     response
+  workspace/inlayHint/refresh                request
+  textDocument/references                    response
+  textDocument/documentSymbol                response
+  workspace/symbol                           response
+  textDocument/rename                        response
+  textDocument/formatting                    response
+  textDocument/rangeFormatting               response
+  textDocument/completion                    response
+  textDocument/hover                         response
+  textDocument/declaration*                  response
+  textDocument/definition                    response
+  textDocument/implementation*               response
+  textDocument/typeDefinition*               response
+  textDocument/signatureHelp                 response
+  textDocument/documentHighlight             response
+  callHierarchy/incomingCalls                response
+  callHierarchy/outgoingCalls                response
+  typeHierarchy/subtypes                     response
+  typeHierarchy/supertypes                   response
+  window/logMessage                          notification
+  window/showMessage                         notification
+  window/showDocument                        request
+  workspace/semanticTokens/refresh           request
+
+Legend (see |lsp-handler|): ~
+  response     : LSP server sends a response to request made by client (Nvim)
+  request      : LSP server sends a request to client (Nvim)
+  notification : LSP server sends a notification to client (Nvim)
+
 
                                                                  *lsp-handler*
-LSP handlers are functions that handle |lsp-response|s to requests made by Nvim
-to the server. (Notifications, as opposed to requests, are fire-and-forget:
-there is no response, so they can't be handled. |lsp-notification|)
+LSP handlers are functions executed on the Nvim's side (LSP client):
+(i)  that handle |lsp-response|s to requests made by Nvim to LSP server
+     (Lua type: `vim.lsp.ResponseHandler`), or
+(ii) that handle |lsp-request|s or |lsp-notification|s made by LSP server
+     (Lua type: `vim.lsp.RequestHandler` or `vim.lsp.NotificationHandler`).
 
-Each response handler has this signature: >
+Notifications (|lsp-notification|) made by Nvim, as opposed to requests, are
+fire-and-forget: there is no response from LSP server, so they can't be
+handled.
 
-    function(err, result, ctx, config)
+Each type of the LSP handlers has the following signature (`vim.lsp.Handler`):
+>
+    vim.lsp.ResponseHandler:
+        fun(err, result, ctx, config)
+
+    vim.lsp.NotificationHandler:
+        fun(err, params, ctx, config)
+
+    vim.lsp.RequestHandler:
+        fun(err, params, ctx, config): Result?, lsp.ResponseError?
 <
     Parameters: ~
-        - {err}     (table|nil) Error info dict, or `nil` if the request
-                    completed.
-        - {result}  (Result | Params | nil) `result` key of the |lsp-response| or
-                    `nil` if the request failed.
-        - {ctx}     (table) Table of calling state associated with the
-                    handler, with these keys:
-                    - {method}  (string) |lsp-method| name.
-                    - {client_id} (number) |vim.lsp.Client| identifier.
-                    - {bufnr}   (Buffer) Buffer handle.
-                    - {params}  (table|nil) Request parameters table.
-                    - {version} (number) Document version at time of
+        • {err}     (`lsp.LspResponseError?`) Error info table, or `nil` if
+                    the request completed without errors.
+        • {result}  (`Result`) readout of `result` key in the |lsp-response|,
+                    or `nil` if the request failed (i.e. {err} `~= nil`); or
+          {request} (`Params`) readout of `params` key in the |lsp-request| or
+                    |lsp-notification|, or `nil` if the method does not
+                    require params.
+        • {ctx}     (`lsp.HandlerContext`) table of calling state associated
+                    with the handler, with these keys:
+                    • {method}  (`string`) |lsp-method| name.
+                    • {client_id} (`number`) |vim.lsp.Client| identifier.
+                    • {bufnr}   (`number`) Buffer handle.
+                    • {params}  (`table?`) Request parameters table.
+                    • {version} (`number`) Document version at time of
                                 request. Handlers can compare this to the
                                 current document version to check if the
                                 response is "stale". See also |b:changedtick|.
-        - {config}  (table) Handler-defined configuration table, which allows
+        • {config}  (`table`) Handler-defined configuration table, which allows
                     users to customize handler behavior.
                     For an example, see:
                         |vim.lsp.diagnostic.on_publish_diagnostics()|
                     To configure a particular |lsp-handler|, see:
-                        |lsp-handler-configuration|
+                        |lsp-handler-configuration| |vim.lsp.with()|
 
-    Returns: ~
-        Two values `result, err` where `err` is shaped like an RPC error: >
+    Return (multiple): ~
+        (`Result?`) `result` on successful request, or `nil` otherwise.
+                         See |lsp-handler-return|
+        (`lsp.ResponseError?`) `error` on unsuccessful request, or `nil` otherwise.
+
+        |lsp-response| and |lsp-notification| handlers do not have return
+        values, i.e., equivalent to both being `nil`.
+
+                                                          *lsp-handler-return*
+Return values and error handling of |lsp-handler|:
+
+    For |lsp-response| and |lsp-notification| handlers, there are no return values
+    (i.e. both `result` and `error` are `nil`).
+
+    For |lsp-request| handlers, return either non-nil `result` (on success) or
+    `error` (on failure), but not both.
+
+    Request handlers |lsp-request| should return a valid `result` object as
+    specified in the LSP protocol, which will be sent back to the LSP server
+    via JSON RPC (as a part of |lsp-response| message), indicating the request
+    was handled successfully. Any null or void values in the result (the
+    entire `result` or any null values contained in a list, table, etc.) must
+    be converted to and represented by |vim.NIL|, rather than `nil`.
+
+    If an error happens and the request is not succesful, handler functions
+    must return `nil` for `result` and an `lsp.ResponseError` object for `error`.
+    The first return value `nil` (not `vim.NIL`) of a LSP response handler means
+    that the LSP request was not successful. `error` (`lsp.ResponseError`) is
+    structured like: >
             { code, message, data? }
-<        You can use |vim.lsp.rpc.rpc_response_error()| to create this object.
+<    You can use |vim.lsp.rpc.rpc_response_error()| to create this object.
+
+    See also: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#responseMessage
+
 
                                                    *lsp-handler-configuration*
 
@@ -354,6 +411,7 @@ in the following order:
 Log levels are defined in |vim.log.levels|
 
 
+------------------------------------------------------------------------------
 VIM.LSP.PROTOCOL                                              *vim.lsp.protocol*
 
 Module `vim.lsp.protocol` defines constants dictated by the LSP specification,
@@ -366,14 +424,22 @@ name: >lua
     vim.lsp.protocol.TextDocumentSyncKind.Full == 1
     vim.lsp.protocol.TextDocumentSyncKind[1] == "Full"
 <
+                                                                *lsp-request*
+LSP request shape: >
+    { id: integer|string, method: string, params?: Params }
+< https://microsoft.github.io/language-server-protocol/specifications/specification-current/#requestMessage
 
                                                                 *lsp-response*
-LSP response shape:
-https://microsoft.github.io/language-server-protocol/specifications/specification-current/#responseMessage
+LSP response shape: >
+    { id: integer|string|nil, result: Result, error: nil }       (on success)
+    { id: integer|string|nil, result: nil, error: ResponseError }  (on error)
+< https://microsoft.github.io/language-server-protocol/specifications/specification-current/#responseMessage
 
                                                                 *lsp-notification*
-LSP notification shape:
-https://microsoft.github.io/language-server-protocol/specifications/specification-current/#notificationMessage
+LSP notification shape: >
+    { method: string, params?: Params }
+< https://microsoft.github.io/language-server-protocol/specifications/specification-current/#notificationMessage
+
 
 ================================================================================
 LSP HIGHLIGHT                                                    *lsp-highlight*
@@ -942,7 +1008,7 @@ with({handler}, {override_config})                            *vim.lsp.with()*
     Function to manage overriding defaults for LSP handlers.
 
     Parameters: ~
-      • {handler}          (`lsp.Handler`) See |lsp-handler|
+      • {handler}          (`vim.lsp.Handler`) See |lsp-handler|
       • {override_config}  (`table`) Table containing the keys to override
                            behavior of the {handler}
 
@@ -964,7 +1030,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 with the server. You can modify this in the
                                 `config`'s `on_init` method before text is
                                 sent to the server.
-      • {handlers}              (`table<string,lsp.Handler>`) The handlers
+      • {handlers}              (`table<string,vim.lsp.Handler>`) The handlers
                                 used by the client as described in
                                 |lsp-handler|.
       • {requests}              (`table<integer,{ type: string, bufnr: integer, method: string}>`)
@@ -1028,7 +1094,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {capabilities}          (`lsp.ClientCapabilities`) The capabilities
                                 provided by the client (editor or tool)
       • {dynamic_capabilities}  (`lsp.DynamicCapabilities`)
-      • {request}               (`fun(method: string, params: table?, handler: lsp.Handler?, bufnr: integer?): boolean, integer?`)
+      • {request}               (`fun(method: string, params: table?, handler: vim.lsp.Handler?, bufnr: integer): boolean, integer?`)
                                 Sends a request to the server. This is a thin
                                 wrapper around {client.rpc.request} with some
                                 additional checking. If {handler} is not
@@ -1224,7 +1290,8 @@ Lua module: vim.lsp.buf                                              *lsp-buf*
                         vim.lsp.buf.definition({ loclist = true })
                         vim.lsp.buf.references(nil, { loclist = true })
 <
-      • {loclist}?  (`boolean`)
+      • {loclist}?  (`boolean`) whether use the location list (defaults to
+                    `false`, i.e. using the quickfix list by default)
 
 *vim.lsp.LocationOpts*
     Extends: |vim.lsp.ListOpts|
@@ -1504,13 +1571,13 @@ on_diagnostic({_}, {result}, {ctx}, {config})
 <
 
     Parameters: ~
-      • {result}  (`lsp.DocumentDiagnosticReport`)
+      • {result}  (`lsp.DocumentDiagnosticReport`) TODO verify partial results
       • {ctx}     (`lsp.HandlerContext`)
       • {config}  (`vim.diagnostic.Opts`) Configuration table (see
                   |vim.diagnostic.config()|).
 
                                  *vim.lsp.diagnostic.on_publish_diagnostics()*
-on_publish_diagnostics({_}, {result}, {ctx}, {config})
+on_publish_diagnostics({_}, {params}, {ctx}, {config})
     |lsp-handler| for the method "textDocument/publishDiagnostics"
 
     See |vim.diagnostic.config()| for configuration options. Handler-specific
@@ -1535,7 +1602,7 @@ on_publish_diagnostics({_}, {result}, {ctx}, {config})
 <
 
     Parameters: ~
-      • {result}  (`lsp.PublishDiagnosticsParams`)
+      • {params}  (`lsp.PublishDiagnosticsParams`)
       • {ctx}     (`lsp.HandlerContext`)
       • {config}  (`vim.diagnostic.Opts?`) Configuration table (see
                   |vim.diagnostic.config()|).
@@ -1575,7 +1642,7 @@ on_codelens({err}, {result}, {ctx})           *vim.lsp.codelens.on_codelens()*
 
     Parameters: ~
       • {err}     (`lsp.ResponseError?`)
-      • {result}  (`lsp.CodeLens[]`)
+      • {result}  (`lsp.CodeLens[]?`)
       • {ctx}     (`lsp.HandlerContext`)
 
 refresh({opts})                                   *vim.lsp.codelens.refresh()*
@@ -1766,7 +1833,7 @@ hover({_}, {result}, {ctx}, {config})               *vim.lsp.handlers.hover()*
 <
 
     Parameters: ~
-      • {result}  (`lsp.Hover`)
+      • {result}  (`lsp.Hover?`)
       • {ctx}     (`lsp.HandlerContext`)
       • {config}  (`table`) Configuration table.
                   • border: (default=nil)
@@ -1788,7 +1855,7 @@ signature_help({_}, {result}, {ctx}, {config})
 <
 
     Parameters: ~
-      • {result}  (`lsp.SignatureHelp`) Response from the language server
+      • {result}  (`lsp.SignatureHelp?`) Response from the language server
       • {ctx}     (`lsp.HandlerContext`) Client context
       • {config}  (`table`) Configuration table.
                   • border: (default=nil)
@@ -1819,7 +1886,7 @@ apply_text_edits({text_edits}, {bufnr}, {offset_encoding})
     Applies a list of text edits to a buffer.
 
     Parameters: ~
-      • {text_edits}       (`table`) list of `TextEdit` objects
+      • {text_edits}       (`lsp.TextEdit[]`) list of `TextEdit` objects
       • {bufnr}            (`integer`) Buffer id
       • {offset_encoding}  (`string`) utf-8|utf-16|utf-32
 
@@ -1849,8 +1916,8 @@ buf_highlight_references({bufnr}, {references}, {offset_encoding})
 
     Parameters: ~
       • {bufnr}            (`integer`) Buffer id
-      • {references}       (`table`) List of `DocumentHighlight` objects to
-                           highlight
+      • {references}       (`lsp.DocumentHighlight[]`) List of
+                           `DocumentHighlight` objects to highlight
       • {offset_encoding}  (`string`) One of "utf-8", "utf-16", "utf-32".
 
     See also: ~
@@ -2190,8 +2257,11 @@ symbols_to_items({symbols}, {bufnr})         *vim.lsp.util.symbols_to_items()*
     Converts symbols to quickfix list items.
 
     Parameters: ~
-      • {symbols}  (`table`) DocumentSymbol[] or SymbolInformation[]
-      • {bufnr}    (`integer`)
+      • {symbols}  (`lsp.DocumentSymbol[]|lsp.WorkspaceSymbol[]|lsp.SymbolInformation[]`)
+      • {bufnr}    (`integer?`)
+
+    Return: ~
+        (`vim.lsp.util.LocationItem[]`)
 
 
 ==============================================================================

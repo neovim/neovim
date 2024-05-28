@@ -258,9 +258,10 @@ end
 
 --- |lsp-handler| for the method `textDocument/codeLens`
 ---
----@param err lsp.ResponseError?
----@param result lsp.CodeLens[]
----@param ctx lsp.HandlerContext
+--- @param err lsp.ResponseError?
+--- @param result lsp.CodeLens[]?
+--- @param ctx lsp.HandlerContext
+--- @type vim.lsp.ResponseHandler
 function M.on_codelens(err, result, ctx, _)
   if err then
     active_refreshes[assert(ctx.bufnr)] = nil

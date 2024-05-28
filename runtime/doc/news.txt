@@ -46,7 +46,7 @@ EVENTS
 
 LSP
 
-• TODO
+• Lua type annotations for LSP protocol and |lsp-handler|s.
 
 LUA
 
