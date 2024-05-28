@@ -42,7 +42,7 @@ local M = {}
 ---
 --- @field namespace? integer
 
---- Each of the configuration options below accepts one of the following:
+--- Many of the configuration options below accept one of the following:
 --- - `false`: Disable this feature
 --- - `true`: Enable this feature, use default settings.
 --- - `table`: Enable this feature with overrides. Use an empty table to use default values.
@@ -80,7 +80,7 @@ local M = {}
 --- @field severity_sort? boolean|{reverse?:boolean}
 ---
 --- Default values for |vim.diagnostic.jump()|. See |vim.diagnostic.Opts.Jump|.
---- @field jump? vim.diagnostic.Opts.Jump|fun(namespace: integer, bufnr: integer): vim.diagnostic.Opts.Jump
+--- @field jump? vim.diagnostic.Opts.Jump
 
 --- @class (private) vim.diagnostic.OptsResolved
 --- @field float vim.diagnostic.Opts.Float
@@ -1290,7 +1290,7 @@ function M.jump(opts)
   )
 
   -- Apply configuration options from vim.diagnostic.config()
-  opts = vim.tbl_deep_extend('keep', opts, global_diagnostic_options.jump) ---@type vim.diagnostic.JumpOpts
+  opts = vim.tbl_deep_extend('keep', opts, global_diagnostic_options.jump)
 
   if opts.diagnostic then
     goto_diagnostic(opts.diagnostic, opts)
