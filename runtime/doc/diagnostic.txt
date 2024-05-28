@@ -384,32 +384,31 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
     Configuration table with the following keys:
 
     Fields: ~
-      • {diagnostic}?       (`vim.Diagnostic`) The diagnostic to jump to.
-                            Mutually exclusive with {count}, {namespace}, and
-                            {severity}. See |vim.Diagnostic|.
-      • {count}?            (`integer`) The number of diagnostics to move by,
-                            starting from {cursor_position}. A positive
-                            integer moves forward by {count} diagnostics,
-                            while a negative integer moves backward by {count}
-                            diagnostics. Mutually exclusive with {diagnostic}.
-      • {cursor_position}?  (`{[1]:integer,[2]:integer}`) Cursor position as a
-                            `(row, col)` tuple. See |nvim_win_get_cursor()|.
-                            Used to find the nearest diagnostic when {count}
-                            is used. Only used when {count} is non-nil.
-                            Default is the current cursor position.
-      • {wrap}?             (`boolean`, default: `true`) Whether to loop
-                            around file or not. Similar to 'wrapscan'.
-      • {severity}?         (`vim.diagnostic.SeverityFilter`) See
-                            |diagnostic-severity|.
-      • {float}?            (`boolean|vim.diagnostic.Opts.Float`, default:
-                            `true`) If `true`, call
-                            |vim.diagnostic.open_float()| after moving. If a
-                            table, pass the table as the {opts} parameter to
-                            |vim.diagnostic.open_float()|. Unless overridden,
-                            the float will show diagnostics at the new cursor
-                            position (as if "cursor" were passed to the
-                            "scope" option).
-      • {winid}?            (`integer`, default: `0`) Window ID
+      • {diagnostic}?  (`vim.Diagnostic`) The diagnostic to jump to. Mutually
+                       exclusive with {count}, {namespace}, and {severity}.
+                       See |vim.Diagnostic|.
+      • {count}?       (`integer`) The number of diagnostics to move by,
+                       starting from {pos}. A positive integer moves forward
+                       by {count} diagnostics, while a negative integer moves
+                       backward by {count} diagnostics. Mutually exclusive
+                       with {diagnostic}.
+      • {pos}?         (`{[1]:integer,[2]:integer}`) Cursor position as a
+                       `(row, col)` tuple. See |nvim_win_get_cursor()|. Used
+                       to find the nearest diagnostic when {count} is used.
+                       Only used when {count} is non-nil. Default is the
+                       current cursor position.
+      • {wrap}?        (`boolean`, default: `true`) Whether to loop around
+                       file or not. Similar to 'wrapscan'.
+      • {severity}?    (`vim.diagnostic.SeverityFilter`) See
+                       |diagnostic-severity|.
+      • {float}?       (`boolean|vim.diagnostic.Opts.Float`, default: `true`)
+                       If `true`, call |vim.diagnostic.open_float()| after
+                       moving. If a table, pass the table as the {opts}
+                       parameter to |vim.diagnostic.open_float()|. Unless
+                       overridden, the float will show diagnostics at the new
+                       cursor position (as if "cursor" were passed to the
+                       "scope" option).
+      • {winid}?       (`integer`, default: `0`) Window ID
 
 *vim.diagnostic.NS*
 

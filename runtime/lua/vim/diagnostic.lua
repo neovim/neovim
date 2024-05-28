@@ -848,9 +848,16 @@ local function next_diagnostic(search_forward, opts)
     opts.win_id = nil
   end
 
+  -- Support deprecated cursor_position alias
+  if opts.cursor_position then
+    vim.deprecate('opts.cursor_position', 'opts.pos', '0.13')
+    opts.pos = opts.cursor_position
+    opts.cursor_position = nil
+  end
+
   local winid = opts.winid or api.nvim_get_current_win()
   local bufnr = api.nvim_win_get_buf(winid)
-  local position = opts.cursor_position or api.nvim_win_get_cursor(winid)
+  local position = opts.pos or api.nvim_win_get_cursor(winid)
 
   -- Adjust row to be 0-indexed
   position[1] = position[1] - 1
@@ -1212,16 +1219,15 @@ end
 --- and {severity}.
 --- @field diagnostic? vim.Diagnostic
 ---
---- The number of diagnostics to move by, starting from {cursor_position}. A
---- positive integer moves forward by {count} diagnostics, while a negative
---- integer moves backward by {count} diagnostics. Mutually exclusive with
---- {diagnostic}.
+--- The number of diagnostics to move by, starting from {pos}. A positive
+--- integer moves forward by {count} diagnostics, while a negative integer moves
+--- backward by {count} diagnostics. Mutually exclusive with {diagnostic}.
 --- @field count? integer
 ---
 --- Cursor position as a `(row, col)` tuple. See |nvim_win_get_cursor()|. Used
 --- to find the nearest diagnostic when {count} is used. Only used when {count}
 --- is non-nil. Default is the current cursor position.
---- @field cursor_position? {[1]:integer,[2]:integer}
+--- @field pos? {[1]:integer,[2]:integer}
 ---
 --- Whether to loop around file or not. Similar to 'wrapscan'.
 --- (default: `true`)
@@ -1266,6 +1272,13 @@ function M.jump(opts)
     return nil
   end
 
+  -- Support deprecated cursor_position alias
+  if opts.cursor_position then
+    vim.deprecate('opts.cursor_position', 'opts.pos', '0.13')
+    opts.pos = opts.cursor_position
+    opts.cursor_position = nil
+  end
+
   -- Copy the opts table so that we can modify it
   local opts_ = vim.deepcopy(opts, true)
 
@@ -1277,7 +1290,7 @@ function M.jump(opts)
     end
 
     -- Update cursor position
-    opts_.cursor_position = { next.lnum + 1, next.col }
+    opts_.pos = { next.lnum + 1, next.col }
 
     if count > 0 then
       count = count - 1
