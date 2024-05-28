@@ -969,7 +969,7 @@ describe('vim.diagnostic', function()
       eq(
         { 3, 0 },
         exec_lua([[
-        vim.diagnostic.goto_next({_highest = true})
+        vim.diagnostic.jump({ count = 1, _highest = true })
         return vim.api.nvim_win_get_cursor(0)
       ]])
       )
@@ -977,7 +977,7 @@ describe('vim.diagnostic', function()
       eq(
         { 5, 0 },
         exec_lua([[
-        vim.diagnostic.goto_next({_highest = true})
+        vim.diagnostic.jump({ count = 1, _highest = true })
         return vim.api.nvim_win_get_cursor(0)
       ]])
       )
@@ -998,7 +998,7 @@ describe('vim.diagnostic', function()
       eq(
         { 4, 0 },
         exec_lua([[
-        vim.diagnostic.goto_next({_highest = true})
+        vim.diagnostic.jump({ count = 1, _highest = true })
         return vim.api.nvim_win_get_cursor(0)
       ]])
       )
@@ -1006,7 +1006,7 @@ describe('vim.diagnostic', function()
       eq(
         { 6, 0 },
         exec_lua([[
-        vim.diagnostic.goto_next({_highest = true})
+        vim.diagnostic.jump({ count = 1, _highest = true })
         return vim.api.nvim_win_get_cursor(0)
       ]])
       )
@@ -1028,7 +1028,7 @@ describe('vim.diagnostic', function()
       eq(
         { 2, 0 },
         exec_lua([[
-        vim.diagnostic.goto_next()
+        vim.diagnostic.jump({ count = 1 })
         return vim.api.nvim_win_get_cursor(0)
       ]])
       )
@@ -1036,7 +1036,7 @@ describe('vim.diagnostic', function()
       eq(
         { 3, 0 },
         exec_lua([[
-        vim.diagnostic.goto_next()
+        vim.diagnostic.jump({ count = 1 })
         return vim.api.nvim_win_get_cursor(0)
       ]])
       )
@@ -1044,7 +1044,7 @@ describe('vim.diagnostic', function()
       eq(
         { 4, 0 },
         exec_lua([[
-        vim.diagnostic.goto_next()
+        vim.diagnostic.jump({ count = 1 })
         return vim.api.nvim_win_get_cursor(0)
       ]])
       )
@@ -1107,7 +1107,7 @@ describe('vim.diagnostic', function()
           })
           vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
           vim.api.nvim_win_set_cursor(0, {3, 1})
-          local prev = vim.diagnostic.get_prev({ namespace = diagnostic_ns, wrap = false})
+          local prev = vim.diagnostic.get_prev({ namespace = diagnostic_ns, wrap = false })
           return prev
         ]]
       )
