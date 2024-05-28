@@ -3,7 +3,6 @@ local validate = vim.validate
 
 local lsp = vim._defer_require('vim.lsp', {
   _changetracking = ..., --- @module 'vim.lsp._changetracking'
-  _completion = ..., --- @module 'vim.lsp._completion'
   _dynamic = ..., --- @module 'vim.lsp._dynamic'
   _snippet_grammar = ..., --- @module 'vim.lsp._snippet_grammar'
   _tagfunc = ..., --- @module 'vim.lsp._tagfunc'
@@ -11,6 +10,7 @@ local lsp = vim._defer_require('vim.lsp', {
   buf = ..., --- @module 'vim.lsp.buf'
   client = ..., --- @module 'vim.lsp.client'
   codelens = ..., --- @module 'vim.lsp.codelens'
+  completion = ..., --- @module 'vim.lsp.completion'
   diagnostic = ..., --- @module 'vim.lsp.diagnostic'
   handlers = ..., --- @module 'vim.lsp.handlers'
   inlay_hint = ..., --- @module 'vim.lsp.inlay_hint'
@@ -1003,8 +1003,7 @@ end
 --- - findstart=0: column where the completion starts, or -2 or -3
 --- - findstart=1: list of matches (actually just calls |complete()|)
 function lsp.omnifunc(findstart, base)
-  log.debug('omnifunc.findstart', { findstart = findstart, base = base })
-  return vim.lsp._completion.omnifunc(findstart, base)
+  return vim.lsp.completion._omnifunc(findstart, base)
 end
 
 --- @class vim.lsp.formatexpr.Opts

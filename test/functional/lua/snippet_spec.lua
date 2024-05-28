@@ -1,3 +1,5 @@
+---@diagnostic disable: no-unknown
+
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
@@ -16,11 +18,6 @@ local retry = t.retry
 describe('vim.snippet', function()
   before_each(function()
     clear()
-
-    exec_lua([[
-      vim.keymap.set({ 'i', 's' }, '<Tab>', function() vim.snippet.jump(1) end, { buffer = true })
-      vim.keymap.set({ 'i', 's' }, '<S-Tab>', function() vim.snippet.jump(-1) end, { buffer = true })
-    ]])
   end)
   after_each(clear)
 
@@ -285,5 +282,25 @@ describe('vim.snippet', function()
       vim.opt.expandtab = false
     ]]
     )
+  end)
+
+  it('restores snippet navigation keymaps', function()
+    -- Create a buffer keymap in insert mode that deletes all lines.
+    local curbuf = api.nvim_get_current_buf()
+    exec_lua('vim.api.nvim_buf_set_keymap(..., "i", "<Tab>", "<cmd>normal ggdG<cr>", {})', curbuf)
+
+    test_expand_success({ 'var $1 = $2' }, { 'var  = ' })
+
+    -- While the snippet is active, <Tab> should navigate between tabstops.
+    feed('x')
+    poke_eventloop()
+    feed('<Tab>0')
+    eq({ 'var x = 0' }, buf_lines(0))
+
+    exec_lua('vim.snippet.stop()')
+
+    -- After exiting the snippet, the buffer keymap should be restored.
+    feed('<Esc>O<cr><Tab>')
+    eq({ '' }, buf_lines(0))
   end)
 end)

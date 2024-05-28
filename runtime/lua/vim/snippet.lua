@@ -2,6 +2,8 @@ local G = vim.lsp._snippet_grammar
 local snippet_group = vim.api.nvim_create_augroup('vim/snippet', {})
 local snippet_ns = vim.api.nvim_create_namespace('vim/snippet')
 local hl_group = 'SnippetTabstop'
+local jump_forward_key = '<tab>'
+local jump_backward_key = '<s-tab>'
 
 --- Returns the 0-based cursor position.
 ---
@@ -182,6 +184,8 @@ end
 --- @field extmark_id integer
 --- @field tabstops table<integer, vim.snippet.Tabstop[]>
 --- @field current_tabstop vim.snippet.Tabstop
+--- @field tab_keymaps { i: table<string, any>?, s: table<string, any>? }
+--- @field shift_tab_keymaps { i: table<string, any>?, s: table<string, any>? }
 local Session = {}
 
 --- Creates a new snippet session in the current buffer.
@@ -197,6 +201,8 @@ function Session.new(bufnr, snippet_extmark, tabstop_data)
     extmark_id = snippet_extmark,
     tabstops = {},
     current_tabstop = Tabstop.new(0, bufnr, { 0, 0, 0, 0 }),
+    tab_keymaps = { i = nil, s = nil },
+    shift_tab_keymaps = { i = nil, s = nil },
   }, { __index = Session })
 
   -- Create the tabstops.
@@ -207,7 +213,62 @@ function Session.new(bufnr, snippet_extmark, tabstop_data)
     end
   end
 
+  self:set_keymaps()
+
   return self
+end
+
+--- Sets the snippet navigation keymaps.
+---
+--- @package
+function Session:set_keymaps()
+  local function maparg(key, mode)
+    local map = vim.fn.maparg(key, mode, false, true) --[[ @as table ]]
+    if not vim.tbl_isempty(map) and map.buffer == 1 then
+      return map
+    else
+      return nil
+    end
+  end
+
+  local function set(jump_key, direction)
+    vim.keymap.set({ 'i', 's' }, jump_key, function()
+      return vim.snippet.active({ direction = direction })
+          and '<cmd>lua vim.snippet.jump(' .. direction .. ')<cr>'
+        or jump_key
+    end, { expr = true, silent = true, buffer = self.bufnr })
+  end
+
+  self.tab_keymaps = {
+    i = maparg(jump_forward_key, 'i'),
+    s = maparg(jump_forward_key, 's'),
+  }
+  self.shift_tab_keymaps = {
+    i = maparg(jump_backward_key, 'i'),
+    s = maparg(jump_backward_key, 's'),
+  }
+  set(jump_forward_key, 1)
+  set(jump_backward_key, -1)
+end
+
+--- Restores/deletes the keymaps used for snippet navigation.
+---
+--- @package
+function Session:restore_keymaps()
+  local function restore(keymap, lhs, mode)
+    if keymap then
+      vim.api.nvim_buf_call(self.bufnr, function()
+        vim.fn.mapset(keymap)
+      end)
+    else
+      vim.api.nvim_buf_del_keymap(self.bufnr, mode, lhs)
+    end
+  end
+
+  restore(self.tab_keymaps.i, jump_forward_key, 'i')
+  restore(self.tab_keymaps.s, jump_forward_key, 's')
+  restore(self.shift_tab_keymaps.i, jump_backward_key, 'i')
+  restore(self.shift_tab_keymaps.s, jump_backward_key, 's')
 end
 
 --- Returns the destination tabstop index when jumping in the given direction.
@@ -627,6 +688,8 @@ function M.stop()
   if not M.active() then
     return
   end
+
+  M._session:restore_keymaps()
 
   vim.api.nvim_clear_autocmds({ group = snippet_group, buffer = M._session.bufnr })
   vim.api.nvim_buf_clear_namespace(M._session.bufnr, snippet_ns, 0, -1)

@@ -273,6 +273,7 @@ local config = {
       'buf.lua',
       'diagnostic.lua',
       'codelens.lua',
+      'completion.lua',
       'inlay_hint.lua',
       'tagfunc.lua',
       'semantic_tokens.lua',

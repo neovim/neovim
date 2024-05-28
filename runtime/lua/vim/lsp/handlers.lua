@@ -3,7 +3,7 @@ local protocol = require('vim.lsp.protocol')
 local ms = protocol.Methods
 local util = require('vim.lsp.util')
 local api = vim.api
-local completion = require('vim.lsp._completion')
+local completion = require('vim.lsp.completion')
 
 --- @type table<string,lsp.Handler>
 local M = {}

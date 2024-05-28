@@ -1,9 +1,16 @@
 ---@diagnostic disable: no-unknown
 local t = require('test.testutil')
+local t_lsp = require('test.functional.plugin.lsp.testutil')
 local n = require('test.functional.testnvim')()
 
+local clear = n.clear
 local eq = t.eq
+local neq = t.neq
 local exec_lua = n.exec_lua
+local feed = n.feed
+local retry = t.retry
+
+local create_server_definition = t_lsp.create_server_definition
 
 --- Convert completion results.
 ---
@@ -21,10 +28,11 @@ local function complete(line, candidates, lnum)
     local line, cursor_col, lnum, result = ...
     local line_to_cursor = line:sub(1, cursor_col)
     local client_start_boundary = vim.fn.match(line_to_cursor, '\\k*$')
-    local items, server_start_boundary = require("vim.lsp._completion")._convert_results(
+    local items, server_start_boundary = require("vim.lsp.completion")._convert_results(
       line,
       lnum,
       cursor_col,
+      1,
       client_start_boundary,
       nil,
       result,
@@ -42,7 +50,7 @@ local function complete(line, candidates, lnum)
   )
 end
 
-describe('vim.lsp._completion', function()
+describe('vim.lsp.completion: item conversion', function()
   before_each(n.clear)
 
   -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
@@ -159,6 +167,7 @@ describe('vim.lsp._completion', function()
     end, result.items)
     eq(expected, result)
   end)
+
   it('uses correct start boundary', function()
     local completion_list = {
       isIncomplete = false,
@@ -186,6 +195,7 @@ describe('vim.lsp._completion', function()
       dup = 1,
       empty = 1,
       icase = 1,
+      info = '',
       kind = 'Module',
       menu = '',
       word = 'this_thread',
@@ -240,6 +250,7 @@ describe('vim.lsp._completion', function()
       dup = 1,
       empty = 1,
       icase = 1,
+      info = '',
       kind = 'Module',
       menu = '',
       word = 'this_thread',
@@ -277,5 +288,225 @@ describe('vim.lsp._completion', function()
     eq(2, item.insertTextFormat)
     eq('item-property-has-priority', item.data)
     eq({ line = 1, character = 1 }, item.textEdit.range.start)
+  end)
+
+  it(
+    'uses insertText as textEdit.newText if there are editRange defaults but no textEditText',
+    function()
+      --- @type lsp.CompletionList
+      local completion_list = {
+        isIncomplete = false,
+        itemDefaults = {
+          editRange = {
+            start = { line = 1, character = 1 },
+            ['end'] = { line = 1, character = 4 },
+          },
+          insertTextFormat = 2,
+          data = 'foobar',
+        },
+        items = {
+          {
+            insertText = 'the-insertText',
+            label = 'hello',
+            data = 'item-property-has-priority',
+          },
+        },
+      }
+      local result = complete('|', completion_list)
+      eq(1, #result.items)
+      local text = result.items[1].user_data.nvim.lsp.completion_item.textEdit.newText
+      eq('the-insertText', text)
+    end
+  )
+end)
+
+describe('vim.lsp.completion: protocol', function()
+  before_each(function()
+    clear()
+    exec_lua(create_server_definition)
+    exec_lua([[
+      _G.capture = {}
+      vim.fn.complete = function(col, matches)
+        _G.capture.col = col
+        _G.capture.matches = matches
+      end
+    ]])
+  end)
+
+  after_each(clear)
+
+  --- @param completion_result lsp.CompletionList
+  --- @return integer
+  local function create_server(completion_result)
+    return exec_lua(
+      [[
+      local result = ...
+      local server = _create_server({
+        capabilities = {
+          completionProvider = {
+            triggerCharacters = { '.' }
+          }
+        },
+        handlers = {
+          ['textDocument/completion'] = function(_, _, callback)
+            callback(nil, result)
+          end
+        }
+      })
+
+      bufnr = vim.api.nvim_get_current_buf()
+      vim.api.nvim_win_set_buf(0, bufnr)
+      return vim.lsp.start({ name = 'dummy', cmd = server.cmd, on_attach = function(client, bufnr)
+        vim.lsp.completion.enable(true, client.id, bufnr)
+      end})
+    ]],
+      completion_result
+    )
+  end
+
+  local function assert_matches(fn)
+    retry(nil, nil, function()
+      fn(exec_lua('return _G.capture.matches'))
+    end)
+  end
+
+  --- @param pos { [1]: integer, [2]: integer }
+  local function trigger_at_pos(pos)
+    exec_lua(
+      [[
+      local win = vim.api.nvim_get_current_win()
+      vim.api.nvim_win_set_cursor(win, ...)
+      vim.lsp.completion.trigger()
+    ]],
+      pos
+    )
+
+    retry(nil, nil, function()
+      neq(nil, exec_lua('return _G.capture.col'))
+    end)
+  end
+
+  it('fetches completions and shows them using complete on trigger', function()
+    create_server({
+      isIncomplete = false,
+      items = {
+        {
+          label = 'hello',
+        },
+      },
+    })
+
+    feed('ih')
+    trigger_at_pos({ 1, 1 })
+
+    assert_matches(function(matches)
+      eq({
+        {
+          abbr = 'hello',
+          dup = 1,
+          empty = 1,
+          icase = 1,
+          info = '',
+          kind = 'Unknown',
+          menu = '',
+          user_data = {
+            nvim = {
+              lsp = {
+                client_id = 1,
+                completion_item = {
+                  label = 'hello',
+                },
+              },
+            },
+          },
+          word = 'hello',
+        },
+      }, matches)
+    end)
+  end)
+
+  it('merges results from multiple clients', function()
+    create_server({
+      isIncomplete = false,
+      items = {
+        {
+          label = 'hello',
+        },
+      },
+    })
+    create_server({
+      isIncomplete = false,
+      items = {
+        {
+          label = 'hallo',
+        },
+      },
+    })
+
+    feed('ih')
+    trigger_at_pos({ 1, 1 })
+
+    assert_matches(function(matches)
+      eq(2, #matches)
+      eq('hello', matches[1].word)
+      eq('hallo', matches[2].word)
+    end)
+  end)
+
+  it('executes commands', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        {
+          label = 'hello',
+          command = {
+            arguments = { '1', '0' },
+            command = 'dummy',
+            title = '',
+          },
+        },
+      },
+    }
+    local client_id = create_server(completion_list)
+
+    exec_lua(
+      [[
+      _G.called = false
+      local client = vim.lsp.get_client_by_id(...)
+      client.commands.dummy = function ()
+        _G.called = true
+      end
+    ]],
+      client_id
+    )
+
+    feed('ih')
+    trigger_at_pos({ 1, 1 })
+
+    exec_lua(
+      [[
+      local client_id, item = ...
+      vim.v.completed_item = {
+        user_data = {
+          nvim = {
+            lsp = {
+              client_id = client_id,
+              completion_item = item
+            }
+          }
+        }
+      }
+    ]],
+      client_id,
+      completion_list.items[1]
+    )
+
+    feed('<C-x><C-o><C-y>')
+
+    assert_matches(function(matches)
+      eq(1, #matches)
+      eq('hello', matches[1].word)
+      eq(true, exec_lua('return _G.called'))
+    end)
   end)
 end)
