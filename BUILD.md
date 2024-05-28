@@ -84,7 +84,7 @@ make deps
       - Right-click _CMakeLists.txt → Delete Cache_.
       - Right-click _CMakeLists.txt → Generate Cache_.
     - If you see an "access violation" from `ntdll`, you can ignore it and continue.
-4. If you set an error like `msgpackc.dll not found`, try the `nvim.exe (Install)` target. Then switch back to `nvim.exe (bin\nvim.exe)`.
+4. If you see an error like `msgpackc.dll not found`, try the `nvim.exe (Install)` target. Then switch back to `nvim.exe (bin\nvim.exe)`.
 
 ### Windows / MSVC PowerShell
 
