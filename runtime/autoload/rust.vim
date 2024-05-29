@@ -144,14 +144,8 @@ endfunction
 function! s:Expand(dict, pretty, args)
     try
         let rustc = exists("g:rustc_path") ? g:rustc_path : "rustc"
-
-        if a:pretty =~? '^\%(everybody_loops$\|flowgraph=\)'
-            let flag = '--xpretty'
-        else
-            let flag = '--pretty'
-        endif
         let relpath = get(a:dict, 'tmpdir_relpath', a:dict.path)
-        let args = [relpath, '-Z', 'unstable-options', l:flag, a:pretty] + a:args
+        let args = [relpath, $"-Zunpretty={a:pretty}"] + a:args
         let pwd = a:dict.istemp ? a:dict.tmpdir : ''
         let output = s:system(pwd, shellescape(rustc) . " " . join(map(args, 'shellescape(v:val)')))
         if v:shell_error
