@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "nvim/func_attr.h"
 #include "nvim/rbuffer_defs.h"
@@ -13,6 +14,7 @@ typedef struct {
   bool wr;            ///< True if file is in write mode.
   bool eof;           ///< True if end of file was encountered.
   bool non_blocking;  ///< True if EAGAIN should not restart syscalls.
+  uint64_t bytes_read;  ///< total bytes read so far
 } FileDescriptor;
 
 static inline bool file_eof(const FileDescriptor *fp)
