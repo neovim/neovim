@@ -23,6 +23,10 @@ module.exports = async ({ github, context }) => {
     reviewers.add("lewis6991");
   }
 
+  if (labels.includes("comment")) {
+    reviewers.add("echasnovski");
+  }
+
   if (labels.includes("defaults")) {
     reviewers.add("gpanders");
   }
@@ -43,7 +47,7 @@ module.exports = async ({ github, context }) => {
     reviewers.add("gpanders");
   }
 
-  if (labels.includes("extmarks")) {
+  if (labels.includes("marks")) {
     reviewers.add("bfredl");
   }
 
@@ -52,9 +56,17 @@ module.exports = async ({ github, context }) => {
     reviewers.add("gpanders");
   }
 
+  if (labels.includes("inccommand")) {
+    reviewers.add("famiu");
+  }
+
   if (labels.includes("lsp")) {
     reviewers.add("MariaSolOs");
     reviewers.add("mfussenegger");
+  }
+
+  if (labels.includes("netrw")) {
+    reviewers.add("justinmk");
   }
 
   if (labels.includes("options")) {
