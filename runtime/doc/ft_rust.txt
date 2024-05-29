@@ -388,7 +388,7 @@ functionality from other plugins.
 
 :RustExpand  [args]                                              *:RustExpand*
 :RustExpand! [TYPE] [args]
-		Expands the current file using `--pretty` and displays the
+		Expands the current file using `--Zunpretty` and displays the
 		results in a new split. If the current file has unsaved
 		changes, it will be saved first using |:update|. If the
 		current file is an unnamed buffer, it will be written to a
@@ -399,7 +399,7 @@ functionality from other plugins.
 		configurations.
 
 		If ! is specified, the first argument is the expansion type to
-		pass to `rustc --pretty` . Otherwise it will default to
+		pass to `rustc --Zunpretty` . Otherwise it will default to
 		"expanded".
 
 		If |g:rustc_path| is defined, it is used as the path to rustc.
