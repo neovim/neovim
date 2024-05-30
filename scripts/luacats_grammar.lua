@@ -170,7 +170,7 @@ local grammar = P {
   ltype = parenOpt(v.ty_union),
 
   ty_union = v.ty_opt * rep(Pf('|') * v.ty_opt),
-  ty = v.ty_fun + ident + v.ty_table + literal + paren(v.ty) + v.ty_generic,
+  ty = v.ty_fun + ident + v.ty_table + literal + paren(v.ty) + v.ty_generic + v.ty_tuple,
   ty_param = Pf('<') * comma1(v.ltype) * fill * P('>'),
   ty_opt = v.ty * opt(v.ty_param) * opt(P('[]')) * opt(P('?')),
   ty_index = (Pf('[') * (v.ltype + ident + rep1(num)) * fill * P(']')),
@@ -180,6 +180,7 @@ local grammar = P {
   fun_param = lname * opt(colon * v.ltype),
   ty_fun = Pf('fun') * paren(comma(lname * opt(colon * v.ltype))) * opt(colon * comma1(v.ltype)),
   ty_generic = P('`') * letter * P('`'),
+  ty_tuple = Pf('[') * comma(v.ty_opt) * fill * P(']')
 }
 
 return grammar --[[@as nvim.luacats.grammar]]
