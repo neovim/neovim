@@ -1081,6 +1081,22 @@ stack traceback:
       },
     })
   end)
+
+  it('does not do showmode unnecessarily #29086', function()
+    local screen_showmode = screen._handle_msg_showmode
+    local showmode = 0
+    screen._handle_msg_showmode = function(...)
+      screen_showmode(...)
+      showmode = showmode + 1
+    end
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+    })
+    eq(showmode, 1)
+  end)
 end)
 
 describe('ui/builtin messages', function()
