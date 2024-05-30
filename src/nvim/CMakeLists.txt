@@ -51,7 +51,7 @@ if(ENABLE_LIBINTL)
 endif()
 
 if(ENABLE_WASMTIME)
-  find_package(Wasmtime 20.0.2 EXACT REQUIRED)
+  find_package(Wasmtime 23.0.1 EXACT REQUIRED)
   target_link_libraries(main_lib INTERFACE wasmtime)
   target_compile_definitions(nvim_bin PRIVATE HAVE_WASMTIME)
 endif()
