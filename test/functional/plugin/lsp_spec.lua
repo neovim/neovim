@@ -255,7 +255,7 @@ describe('LSP', function()
         return
       end
       local expected_handlers = {
-        { NIL, {}, { method = 'shutdown', bufnr = 1, client_id = 1 } },
+        { NIL, {}, { method = 'shutdown', bufnr = 1, client_id = 1, version = 2 } },
         { NIL, {}, { method = 'test', client_id = 1 } },
       }
       test_rpc_server {
@@ -948,7 +948,11 @@ describe('LSP', function()
     it('should forward ContentModified to callback', function()
       local expected_handlers = {
         { NIL, {}, { method = 'finish', client_id = 1 } },
-        { { code = -32801 }, NIL, { method = 'error_code_test', bufnr = 1, client_id = 1 } },
+        {
+          { code = -32801 },
+          NIL,
+          { method = 'error_code_test', bufnr = 1, client_id = 1, version = 2 },
+        },
       }
       local client --- @type vim.lsp.Client
       test_rpc_server {
@@ -978,7 +982,7 @@ describe('LSP', function()
     it('should track pending requests to the language server', function()
       local expected_handlers = {
         { NIL, {}, { method = 'finish', client_id = 1 } },
-        { NIL, {}, { method = 'slow_request', bufnr = 1, client_id = 1 } },
+        { NIL, {}, { method = 'slow_request', bufnr = 1, client_id = 1, version = 2 } },
       }
       local client --- @type vim.lsp.Client
       test_rpc_server {
@@ -1045,7 +1049,7 @@ describe('LSP', function()
     it('should clear pending and cancel requests on reply', function()
       local expected_handlers = {
         { NIL, {}, { method = 'finish', client_id = 1 } },
-        { NIL, {}, { method = 'slow_request', bufnr = 1, client_id = 1 } },
+        { NIL, {}, { method = 'slow_request', bufnr = 1, client_id = 1, version = 2 } },
       }
       local client --- @type vim.lsp.Client
       test_rpc_server {
@@ -1084,7 +1088,7 @@ describe('LSP', function()
     it('should trigger LspRequest autocmd when requests table changes', function()
       local expected_handlers = {
         { NIL, {}, { method = 'finish', client_id = 1 } },
-        { NIL, {}, { method = 'slow_request', bufnr = 1, client_id = 1 } },
+        { NIL, {}, { method = 'slow_request', bufnr = 1, client_id = 1, version = 2 } },
       }
       local client --- @type vim.lsp.Client
       test_rpc_server {
@@ -1364,6 +1368,7 @@ describe('LSP', function()
             },
             bufnr = 2,
             client_id = 1,
+            version = 2,
           },
         },
         { NIL, {}, { method = 'start', client_id = 1 } },
@@ -2117,7 +2122,6 @@ describe('LSP', function()
         local args = {...}
         local bufnr = select(1, ...)
         local text_edit = select(2, ...)
-        vim.lsp.util.buf_versions[bufnr] = 10
         vim.lsp.util.apply_text_document_edit(text_edit, nil, 'utf-16')
       ]],
         target_bufnr,
@@ -2134,7 +2138,6 @@ describe('LSP', function()
           [[
           local args = {...}
           local versionedBuf = args[2]
-          vim.lsp.util.buf_versions[versionedBuf.bufnr] = versionedBuf.currentVersion
           vim.lsp.util.apply_text_document_edit(args[1], nil, 'utf-16')
         ]],
           edit,
@@ -2239,18 +2242,6 @@ describe('LSP', function()
         }
 
         vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-
-        local update_changed_tick = function()
-          vim.lsp.util.buf_versions[bufnr] = vim.api.nvim_buf_get_var(bufnr, 'changedtick')
-        end
-
-        update_changed_tick()
-        vim.api.nvim_buf_attach(bufnr, false, {
-          on_changedtick = function()
-            update_changed_tick()
-          end
-        })
-
         return {bufnr, vim.api.nvim_buf_get_var(bufnr, 'changedtick')}
       ]]
 

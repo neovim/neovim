@@ -22,6 +22,9 @@ API
 LUA
 - vim.region()		Use |getregionpos()| instead.
 
+LSP
+- *vim.lsp.util.buf_versions*	Use |b:changedtick| instead.
+
 DIAGNOSTICS
 - *vim.diagnostic.goto_next()*	Use |vim.diagnostic.jump()| with `{count = 1}` instead.
 - *vim.diagnostic.goto_prev()*	Use |vim.diagnostic.jump()| with `{count = -1}` instead.
