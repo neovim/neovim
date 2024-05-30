@@ -55,7 +55,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
   wchar_t *env = NULL;
   const char *emsg = NULL;
 
-  assert(proc->err.closed);
+  assert(proc->err.s.closed);
 
   if (!os_has_conpty_working() || (conpty_object = os_conpty_init(&in_name,
                                                                   &out_name, ptyproc->width,
@@ -72,10 +72,10 @@ int pty_process_spawn(PtyProcess *ptyproc)
                     pty_process_connect_cb);
   }
 
-  if (!proc->out.closed) {
+  if (!proc->out.s.closed) {
     out_req = xmalloc(sizeof(uv_connect_t));
     uv_pipe_connect(out_req,
-                    &proc->out.uv.pipe,
+                    &proc->out.s.uv.pipe,
                     out_name,
                     pty_process_connect_cb);
   }
@@ -216,7 +216,7 @@ static void wait_eof_timer_cb(uv_timer_t *wait_eof_timer)
   Process *proc = (Process *)ptyproc;
 
   assert(ptyproc->finish_wait != NULL);
-  if (proc->out.closed || proc->out.did_eof || !uv_is_readable(proc->out.uvstream)) {
+  if (proc->out.s.closed || proc->out.did_eof || !uv_is_readable(proc->out.s.uvstream)) {
     uv_timer_stop(&ptyproc->wait_eof_timer);
     pty_process_finish2(ptyproc);
   }

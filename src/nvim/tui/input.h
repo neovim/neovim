@@ -33,7 +33,7 @@ typedef struct {
   TermKey_Terminfo_Getstr_Hook *tk_ti_hook_fn;  ///< libtermkey terminfo hook
   uv_timer_t timer_handle;
   Loop *loop;
-  Stream read_stream;
+  RStream read_stream;
   RBuffer *key_buffer;
   TUIData *tui_data;
 } TermInput;

@@ -89,7 +89,7 @@ void rpc_start(Channel *channel)
   kv_init(rpc->call_stack);
 
   if (channel->streamtype != kChannelStreamInternal) {
-    Stream *out = channel_outstream(channel);
+    RStream *out = channel_outstream(channel);
 #ifdef NVIM_LOG_DEBUG
     Stream *in = channel_instream(channel);
     DLOG("rpc ch %" PRIu64 " in-stream=%p out-stream=%p", channel->id,
@@ -202,7 +202,7 @@ Object rpc_send_call(uint64_t id, const char *method_name, Array args, ArenaMem 
   return frame.errored ? NIL : frame.result;
 }
 
-static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c, void *data, bool eof)
+static void receive_msgpack(RStream *stream, RBuffer *rbuf, size_t c, void *data, bool eof)
 {
   Channel *channel = data;
   channel_incref(channel);

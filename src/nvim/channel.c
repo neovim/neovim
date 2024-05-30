@@ -126,19 +126,19 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
       *error = e_invstream;
       return false;
     }
-    stream_may_close(&chan->stream.socket);
+    rstream_may_close(&chan->stream.socket);
     break;
 
   case kChannelStreamProc:
     proc = &chan->stream.proc;
     if (part == kChannelPartStdin || close_main) {
-      stream_may_close(&proc->in);
+      wstream_may_close(&proc->in);
     }
     if (part == kChannelPartStdout || close_main) {
-      stream_may_close(&proc->out);
+      rstream_may_close(&proc->out);
     }
     if (part == kChannelPartStderr || part == kChannelPartAll) {
-      stream_may_close(&proc->err);
+      rstream_may_close(&proc->err);
     }
     if (proc->type == kProcessTypePty && part == kChannelPartAll) {
       pty_process_close_master(&chan->stream.pty);
@@ -148,10 +148,10 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
 
   case kChannelStreamStdio:
     if (part == kChannelPartStdin || close_main) {
-      stream_may_close(&chan->stream.stdio.in);
+      rstream_may_close(&chan->stream.stdio.in);
     }
     if (part == kChannelPartStdout || close_main) {
-      stream_may_close(&chan->stream.stdio.out);
+      wstream_may_close(&chan->stream.stdio.out);
     }
     if (part == kChannelPartStderr) {
       *error = e_invstream;
@@ -480,9 +480,9 @@ uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader
     return 0;
   }
 
-  channel->stream.socket.internal_close_cb = close_cb;
-  channel->stream.socket.internal_data = channel;
-  wstream_init(&channel->stream.socket, 0);
+  channel->stream.socket.s.internal_close_cb = close_cb;
+  channel->stream.socket.s.internal_data = channel;
+  wstream_init(&channel->stream.socket.s, 0);
   rstream_init(&channel->stream.socket, 0);
 
   if (rpc) {
@@ -505,9 +505,9 @@ void channel_from_connection(SocketWatcher *watcher)
 {
   Channel *channel = channel_alloc(kChannelStreamSocket);
   socket_watcher_accept(watcher, &channel->stream.socket);
-  channel->stream.socket.internal_close_cb = close_cb;
-  channel->stream.socket.internal_data = channel;
-  wstream_init(&channel->stream.socket, 0);
+  channel->stream.socket.s.internal_close_cb = close_cb;
+  channel->stream.socket.s.internal_data = channel;
+  wstream_init(&channel->stream.socket.s, 0);
   rstream_init(&channel->stream.socket, 0);
   rpc_start(channel);
   channel_create_event(channel, watcher->addr);
@@ -647,19 +647,19 @@ static inline list_T *buffer_to_tv_list(const char *const buf, const size_t len)
   return l;
 }
 
-void on_channel_data(Stream *stream, RBuffer *buf, size_t count, void *data, bool eof)
+void on_channel_data(RStream *stream, RBuffer *buf, size_t count, void *data, bool eof)
 {
   Channel *chan = data;
   on_channel_output(stream, chan, buf, eof, &chan->on_data);
 }
 
-void on_job_stderr(Stream *stream, RBuffer *buf, size_t count, void *data, bool eof)
+void on_job_stderr(RStream *stream, RBuffer *buf, size_t count, void *data, bool eof)
 {
   Channel *chan = data;
   on_channel_output(stream, chan, buf, eof, &chan->on_stderr);
 }
 
-static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf, bool eof,
+static void on_channel_output(RStream *stream, Channel *chan, RBuffer *buf, bool eof,
                               CallbackReader *reader)
 {
   size_t count;
@@ -864,7 +864,7 @@ static void term_resize(uint16_t width, uint16_t height, void *data)
 static inline void term_delayed_free(void **argv)
 {
   Channel *chan = argv[0];
-  if (chan->stream.proc.in.pending_reqs || chan->stream.proc.out.pending_reqs) {
+  if (chan->stream.proc.in.pending_reqs || chan->stream.proc.out.s.pending_reqs) {
     multiqueue_put(chan->events, term_delayed_free, chan);
     return;
   }

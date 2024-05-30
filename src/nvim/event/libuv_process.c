@@ -70,19 +70,19 @@ int libuv_process_spawn(LibuvProcess *uvproc)
     uvproc->uvstdio[0].data.stream = (uv_stream_t *)(&proc->in.uv.pipe);
   }
 
-  if (!proc->out.closed) {
+  if (!proc->out.s.closed) {
     uvproc->uvstdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
 #ifdef MSWIN
     // pipe must be readable for IOCP to work on Windows.
     uvproc->uvstdio[1].flags |= proc->overlapped
                                 ? (UV_READABLE_PIPE | UV_OVERLAPPED_PIPE) : 0;
 #endif
-    uvproc->uvstdio[1].data.stream = (uv_stream_t *)(&proc->out.uv.pipe);
+    uvproc->uvstdio[1].data.stream = (uv_stream_t *)(&proc->out.s.uv.pipe);
   }
 
-  if (!proc->err.closed) {
+  if (!proc->err.s.closed) {
     uvproc->uvstdio[2].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
-    uvproc->uvstdio[2].data.stream = (uv_stream_t *)(&proc->err.uv.pipe);
+    uvproc->uvstdio[2].data.stream = (uv_stream_t *)(&proc->err.s.uv.pipe);
   } else if (proc->fwd_err) {
     uvproc->uvstdio[2].flags = UV_INHERIT_FD;
     uvproc->uvstdio[2].data.fd = STDERR_FILENO;

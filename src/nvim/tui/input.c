@@ -167,7 +167,7 @@ void tinput_destroy(TermInput *input)
   map_destroy(int, &kitty_key_map);
   rbuffer_free(input->key_buffer);
   uv_close((uv_handle_t *)&input->timer_handle, NULL);
-  stream_close(&input->read_stream, NULL, NULL);
+  rstream_may_close(&input->read_stream);
   termkey_destroy(input->tk);
 }
 
@@ -737,7 +737,7 @@ static void handle_raw_buffer(TermInput *input, bool force)
   }
 }
 
-static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_, void *data, bool eof)
+static void tinput_read_cb(RStream *stream, RBuffer *buf, size_t count_, void *data, bool eof)
 {
   TermInput *input = data;
 

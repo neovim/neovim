@@ -41,7 +41,7 @@ typedef enum {
   kInputEof,
 } InbufPollResult;
 
-static Stream read_stream = { .closed = true };  // Input before UI starts.
+static RStream read_stream = { .s.closed = true };  // Input before UI starts.
 static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
 static bool blocking = false;
@@ -59,7 +59,7 @@ void input_init(void)
 
 void input_start(void)
 {
-  if (!read_stream.closed) {
+  if (!read_stream.s.closed) {
     return;
   }
 
@@ -70,12 +70,12 @@ void input_start(void)
 
 void input_stop(void)
 {
-  if (read_stream.closed) {
+  if (read_stream.s.closed) {
     return;
   }
 
   rstream_stop(&read_stream);
-  stream_close(&read_stream, NULL, NULL);
+  rstream_may_close(&read_stream);
 }
 
 #ifdef EXITFREE
@@ -138,7 +138,7 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
     uint64_t wait_start = os_hrtime();
     cursorhold_time = MIN(cursorhold_time, (int)p_ut);
     if ((result = inbuf_poll((int)p_ut - cursorhold_time, events)) == kInputNone) {
-      if (read_stream.closed && silent_mode) {
+      if (read_stream.s.closed && silent_mode) {
         // Drained eventloop & initial input; exit silent/batch-mode (-es/-Es).
         read_error_exit();
       }
@@ -489,7 +489,7 @@ bool input_available(void)
   return rbuffer_size(input_buffer) != 0;
 }
 
-static void input_read_cb(Stream *stream, RBuffer *buf, size_t c, void *data, bool at_eof)
+static void input_read_cb(RStream *stream, RBuffer *buf, size_t c, void *data, bool at_eof)
 {
   if (at_eof) {
     input_eof = true;
